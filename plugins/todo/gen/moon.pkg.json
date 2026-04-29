@@ -1,1 +1,20 @@
-{ "name": "moui/plugin/gen" }
+{
+      "warn-list": "-44",
+      "import": [
+      { "path" : "moui/plugin/gen/world/uiPlugin", "alias" : "uiPlugin" }
+      ],
+      "link": {
+            "wasm": {
+                  "export-memory-name": "memory",
+                  "heap-start-address": 16,
+                  "exports": [
+                  "mbt_ffi_cabi_realloc:cabi_realloc",
+                  "wasmExportHandleEvent:handle-event",
+                  "wasmExportHandleEventPostReturn:cabi_post_handle-event",
+                  "wasmExportRender:render",
+                  "wasmExportRenderPostReturn:cabi_post_render"
+                  ]
+            }
+      }
+
+}

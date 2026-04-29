@@ -1,1 +1,6 @@
-{ "name": "moui/plugin/gen/world/uiPlugin" }
+{
+  "warn-list": "-44",
+  "import": [
+    { "path" : "moui/plugin/interface/moui/plugin/uiTypes", "alias" : "uiTypes" }
+  ]
+}
