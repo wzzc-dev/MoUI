@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::collections::HashMap;
 use gpui::prelude::*;
 use gpui::{App, Application, Bounds, WindowBounds, WindowOptions, px, size};
 use moui_host::PluginRuntime;
@@ -23,6 +24,8 @@ pub fn run(plugin_path: &std::path::Path) -> Result<()> {
                 cx.new(|_| MoUIView {
                     root_node,
                     runtime: Some(runtime),
+                    input_states: HashMap::new(),
+                    last_error: None,
                 })
             },
         )

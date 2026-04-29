@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::path::PathBuf;
+use log::info;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -21,6 +22,9 @@ fn print_usage() {
 }
 
 fn main() -> Result<()> {
+    // 初始化日志系统
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    
     let args: Vec<String> = std::env::args().collect();
     
     if args.len() < 2 {
@@ -51,7 +55,7 @@ fn main() -> Result<()> {
         eprintln!("Warning: File does not have .wasm extension: {}", plugin_path.display());
     }
 
-    eprintln!("Loading plugin: {}", plugin_path.display());
+    info!("Loading plugin: {}", plugin_path.display());
     
     match moui_renderer::run(&plugin_path) {
         Ok(()) => Ok(()),

@@ -16,3 +16,5 @@ moui-renderer = { path = "crates/moui-renderer" }
 anyhow = "1"
 wasmtime = "30"
 wasmtime-wasi = "30"
+log = "0.4"
+env_logger = "0.11"

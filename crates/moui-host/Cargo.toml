@@ -8,3 +8,4 @@ publish.workspace = true
 anyhow = { workspace = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
+log = { workspace = true }

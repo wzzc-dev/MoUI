@@ -73,9 +73,10 @@ fn render_button(node: &Node, cx: &mut Context<MoUIView>) -> Stateful<Div> {
 }
 
 fn render_input(node: &Node, cx: &mut Context<MoUIView>) -> Stateful<Div> {
+    let node_id = node.id;
     let value = node.props.value.clone().unwrap_or_default();
     let event_id = node.props.on_input;
-    let input_id = SharedString::from(format!("input-{}", node.id));
+    let input_id = SharedString::from(format!("input-{}", node_id));
     let placeholder = node.props.text.clone();
 
     let display_text = if value.is_empty() {
@@ -107,11 +108,12 @@ fn render_input(node: &Node, cx: &mut Context<MoUIView>) -> Stateful<Div> {
         });
 
     if let Some(eid) = event_id {
-        let value_clone = value.clone();
         el = el.on_key_down(cx.listener(move |this, event: &KeyDownEvent, _window, cx| {
+            let current_value = this.get_input_value(node_id).unwrap_or(&value).to_string();
             let keystroke = &event.keystroke;
-            let new_value = handle_key_input(&value_clone, keystroke);
-            if new_value != value_clone {
+            let new_value = handle_key_input(&current_value, keystroke);
+            if new_value != current_value {
+                this.set_input_value(node_id, new_value.clone());
                 this.dispatch_event(eid, Some(new_value), cx);
             }
         }));
