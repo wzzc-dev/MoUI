@@ -104,3 +104,182 @@ pub struct Node {
     pub props: Props,
     pub children: Vec<Node>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_props_default() {
+        let props = Props::default();
+        assert!(props.width.is_none());
+        assert!(props.height.is_none());
+        assert!(props.padding.is_none());
+        assert!(props.background_color.is_none());
+        assert!(props.text.is_none());
+        assert!(props.value.is_none());
+        assert!(props.on_click.is_none());
+        assert!(props.on_input.is_none());
+    }
+
+    #[test]
+    fn test_uitree_empty() {
+        let tree = UiTree { nodes: vec![] };
+        assert!(tree.build_node_tree().is_none());
+    }
+
+    #[test]
+    fn test_uitree_single_node() {
+        let tree = UiTree {
+            nodes: vec![FlatNode {
+                id: 0,
+                parent_id: None,
+                kind: NodeKind::View,
+                props: Props::default(),
+            }],
+        };
+
+        let root = tree.build_node_tree();
+        assert!(root.is_some());
+        let root = root.unwrap();
+        assert_eq!(root.id, 0);
+        assert!(matches!(root.kind, NodeKind::View));
+        assert!(root.children.is_empty());
+    }
+
+    #[test]
+    fn test_uitree_simple_hierarchy() {
+        let tree = UiTree {
+            nodes: vec![
+                FlatNode {
+                    id: 0,
+                    parent_id: None,
+                    kind: NodeKind::View,
+                    props: Props::default(),
+                },
+                FlatNode {
+                    id: 1,
+                    parent_id: Some(0),
+                    kind: NodeKind::Text,
+                    props: Props {
+                        text: Some("Hello".to_string()),
+                        ..Default::default()
+                    },
+                },
+                FlatNode {
+                    id: 2,
+                    parent_id: Some(0),
+                    kind: NodeKind::Button,
+                    props: Props {
+                        text: Some("Click".to_string()),
+                        on_click: Some(1),
+                        ..Default::default()
+                    },
+                },
+            ],
+        };
+
+        let root = tree.build_node_tree();
+        assert!(root.is_some());
+        let root = root.unwrap();
+        assert_eq!(root.id, 0);
+        assert_eq!(root.children.len(), 2);
+
+        let text_child = &root.children[0];
+        assert_eq!(text_child.id, 1);
+        assert!(matches!(text_child.kind, NodeKind::Text));
+        assert_eq!(text_child.props.text, Some("Hello".to_string()));
+
+        let button_child = &root.children[1];
+        assert_eq!(button_child.id, 2);
+        assert!(matches!(button_child.kind, NodeKind::Button));
+        assert_eq!(button_child.props.on_click, Some(1));
+    }
+
+    #[test]
+    fn test_uitree_nested_hierarchy() {
+        let tree = UiTree {
+            nodes: vec![
+                FlatNode {
+                    id: 0,
+                    parent_id: None,
+                    kind: NodeKind::View,
+                    props: Props::default(),
+                },
+                FlatNode {
+                    id: 1,
+                    parent_id: Some(0),
+                    kind: NodeKind::View,
+                    props: Props::default(),
+                },
+                FlatNode {
+                    id: 2,
+                    parent_id: Some(1),
+                    kind: NodeKind::Text,
+                    props: Props {
+                        text: Some("Nested".to_string()),
+                        ..Default::default()
+                    },
+                },
+            ],
+        };
+
+        let root = tree.build_node_tree();
+        assert!(root.is_some());
+        let root = root.unwrap();
+        assert_eq!(root.id, 0);
+        assert_eq!(root.children.len(), 1);
+
+        let nested_view = &root.children[0];
+        assert_eq!(nested_view.id, 1);
+        assert_eq!(nested_view.children.len(), 1);
+
+        let nested_text = &nested_view.children[0];
+        assert_eq!(nested_text.id, 2);
+        assert_eq!(nested_text.props.text, Some("Nested".to_string()));
+    }
+
+    #[test]
+    fn test_uitree_no_root_returns_none() {
+        let tree = UiTree {
+            nodes: vec![
+                FlatNode {
+                    id: 1,
+                    parent_id: Some(0),
+                    kind: NodeKind::Text,
+                    props: Props::default(),
+                },
+                FlatNode {
+                    id: 2,
+                    parent_id: Some(0),
+                    kind: NodeKind::Button,
+                    props: Props::default(),
+                },
+            ],
+        };
+
+        assert!(tree.build_node_tree().is_none());
+    }
+
+    #[test]
+    fn test_color_struct() {
+        let color = Color {
+            r: 255,
+            g: 128,
+            b: 64,
+            a: 200,
+        };
+        assert_eq!(color.r, 255);
+        assert_eq!(color.g, 128);
+        assert_eq!(color.b, 64);
+        assert_eq!(color.a, 200);
+    }
+
+    #[test]
+    fn test_nodekind_variants() {
+        assert!(matches!(NodeKind::View, NodeKind::View));
+        assert!(matches!(NodeKind::Text, NodeKind::Text));
+        assert!(matches!(NodeKind::Button, NodeKind::Button));
+        assert!(matches!(NodeKind::Input, NodeKind::Input));
+    }
+}
