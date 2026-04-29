@@ -1,0 +1,389 @@
+{
+  "packages": [
+    {
+      "root": "moonbitlang/core",
+      "rel": "abort",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/abort/abort.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "argparse",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/argparse/argparse.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "array",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/array/array.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "bench",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/bench/bench.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "bigint",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/bigint/bigint.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "bool",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/bool/bool.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "buffer",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/buffer/buffer.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "builtin",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/builtin/builtin.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "byte",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/byte/byte.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "bytes",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/bytes/bytes.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "bytes/internal/regex_engine",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/bytes/internal/regex_engine/regex_engine.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "bytes/internal/regex_engine/ast",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/bytes/internal/regex_engine/ast/ast.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "bytes/internal/regex_engine/symbol_map",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/bytes/internal/regex_engine/symbol_map/symbol_map.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "char",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/char/char.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "cmp",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/cmp/cmp.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "coverage",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/coverage/coverage.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "debug",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/debug/debug.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "deque",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/deque/deque.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "double",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/double/double.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "encoding/ascii",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/encoding/ascii/ascii.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "encoding/base64",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/encoding/base64/base64.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "encoding/utf16",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/encoding/utf16/utf16.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "encoding/utf8",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/encoding/utf8/utf8.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "env",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/env/env.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "error",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/error/error.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "float",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/float/float.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "hashmap",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/hashmap/hashmap.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "hashset",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/hashset/hashset.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/array",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/array/array.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/hashmap",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/hashmap/hashmap.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/hashset",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/hashset/hashset.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/internal/path",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/internal/path/path.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/internal/sparse_array",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/internal/sparse_array/sparse_array.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/priority_queue",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/priority_queue/priority_queue.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/sorted_map",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/sorted_map/sorted_map.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/sorted_set",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/sorted_set/sorted_set.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "immut/vector",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/immut/vector/vector.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "int",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/int/int.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "int16",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/int16/int16.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "int64",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/int64/int64.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "internal/regex_engine/automata",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/internal/regex_engine/automata/automata.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "internal/regex_engine/shared_types",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/internal/regex_engine/shared_types/shared_types.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "internal/regex_engine/shared_types/rechar_set",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/internal/regex_engine/shared_types/rechar_set/rechar_set.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "internal/strconv",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/internal/strconv/strconv.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "json",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/json/json.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "list",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/list/list.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "math",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/math/math.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "option",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/option/option.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "prelude",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/prelude/prelude.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "priority_queue",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/priority_queue/priority_queue.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "queue",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/queue/queue.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "quickcheck",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/quickcheck/quickcheck.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "quickcheck/splitmix",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/quickcheck/splitmix/splitmix.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "random",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/random/random.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "random/internal/random_source",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/random/internal/random_source/random_source.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "ref",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/ref/ref.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "result",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/result/result.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "set",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/set/set.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "sorted_map",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/sorted_map/sorted_map.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "sorted_set",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/sorted_set/sorted_set.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "strconv",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/strconv/strconv.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "string",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/string/string.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "string/internal/regex_engine",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/string/internal/regex_engine/regex_engine.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "string/internal/regex_engine/ast",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/string/internal/regex_engine/ast/ast.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "string/internal/regex_engine/symbol_map",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/string/internal/regex_engine/symbol_map/symbol_map.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "string/internal/regex_parser",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/string/internal/regex_parser/regex_parser.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "test",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/test/test.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "tuple",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/tuple/tuple.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "uint",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/uint/uint.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "uint16",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/uint16/uint16.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "uint64",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/uint64/uint64.mi"
+    },
+    {
+      "root": "moonbitlang/core",
+      "rel": "unit",
+      "artifact": "/root/.moon/lib/core/_build/wasm/release/bundle/unit/unit.mi"
+    },
+    {
+      "root": "moui/plugin",
+      "rel": "gen",
+      "artifact": "/workspace/plugins/todo/_build/wasm/debug/build/gen/gen.mi"
+    },
+    {
+      "root": "moui/plugin",
+      "rel": "gen/interface/moui/plugin/uiTypes",
+      "artifact": "/workspace/plugins/todo/_build/wasm/debug/build/gen/interface/moui/plugin/uiTypes/uiTypes.mi"
+    },
+    {
+      "root": "moui/plugin",
+      "rel": "gen/world/uiPlugin",
+      "artifact": "/workspace/plugins/todo/_build/wasm/debug/build/gen/world/uiPlugin/uiPlugin.mi"
+    },
+    {
+      "root": "moui/plugin",
+      "rel": "interface/moui/plugin/uiTypes",
+      "artifact": "/workspace/plugins/todo/_build/wasm/debug/build/interface/moui/plugin/uiTypes/uiTypes.mi"
+    },
+    {
+      "root": "moui/plugin",
+      "rel": "world/uiPlugin",
+      "artifact": "/workspace/plugins/todo/_build/wasm/debug/build/world/uiPlugin/uiPlugin.mi"
+    }
+  ]
+}

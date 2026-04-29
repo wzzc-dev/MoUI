@@ -1,0 +1,47 @@
+package moui:plugin@0.1.0;
+
+interface ui-types {
+    enum node-kind {
+        view,
+        text,
+        button,
+        input
+    }
+
+    record color {
+        r: u8,
+        g: u8,
+        b: u8,
+        a: u8
+    }
+
+    record props {
+        width: option<f32>,
+        height: option<f32>,
+        padding: option<f32>,
+        background-color: option<color>,
+        text: option<string>,
+        value: option<string>,
+        on-click: option<u32>,
+        on-input: option<u32>
+    }
+
+    record flat-node {
+        id: u32,
+        parent-id: option<u32>,
+        kind: node-kind,
+        props: props
+    }
+
+    record ui-tree {
+        nodes: list<flat-node>
+    }
+}
+
+world ui-plugin {
+    use ui-types.{ui-tree};
+
+    export ui-types;
+    export render: func() -> ui-tree;
+    export handle-event: func(event-id: u32, payload: option<string>) -> ui-tree;
+}
