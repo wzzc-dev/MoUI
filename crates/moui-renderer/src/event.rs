@@ -9,6 +9,8 @@ impl MoUIView {
         payload: Option<String>,
         cx: &mut Context<Self>,
     ) {
+        self.clear_error();
+        
         if let Some(ref mut runtime) = self.runtime {
             match runtime.handle_event(event_id, payload) {
                 Ok(ui_tree) => {
@@ -16,7 +18,10 @@ impl MoUIView {
                     cx.notify();
                 }
                 Err(e) => {
-                    eprintln!("Error handling event {}: {}", event_id, e);
+                    let error_msg = format!("Error handling event {}: {}", event_id, e);
+                    eprintln!("{}", error_msg);
+                    self.set_error(error_msg);
+                    cx.notify();
                 }
             }
         }

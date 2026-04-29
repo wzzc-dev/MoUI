@@ -12,3 +12,5 @@ path = "src/main.rs"
 moui-host = { workspace = true }
 moui-renderer = { workspace = true }
 anyhow = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }

@@ -8,3 +8,4 @@ publish.workspace = true
 moui-host = { workspace = true }
 anyhow = { workspace = true }
 gpui = "0.2.2"
+log = { workspace = true }
