@@ -1,0 +1,10 @@
+[package]
+name = "moui-renderer"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+moui-host = { workspace = true }
+anyhow = { workspace = true }
+gpui = "0.2.2"
