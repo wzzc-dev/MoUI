@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn button(String, width? : Double, height? : Double) -> @core.ViewNode
+
+pub fn button_on_click(String, () -> Unit, width? : Double, height? : Double) -> @core.ViewNode
+
+pub fn button_with_state(String, @core.ButtonState) -> @core.ViewNode
+
+pub fn column(Array[@core.ViewNode], spacing? : Double) -> @core.ViewNode
+
+pub fn handle_button_pointer(@core.ViewNode, @core.PointerEvent, @core.Rect) -> @core.ViewNode
+
+pub fn label(String, width? : Double, height? : Double) -> @core.ViewNode
+
+pub fn padding(@core.ViewNode, Double) -> @core.ViewNode
+
+pub fn padding_insets(@core.ViewNode, @core.Insets) -> @core.ViewNode
+
+pub fn row(Array[@core.ViewNode], spacing? : Double) -> @core.ViewNode
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

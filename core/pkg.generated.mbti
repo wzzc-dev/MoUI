@@ -1,0 +1,184 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/core"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn hit_test(LayoutResult, Point) -> Bool
+
+pub fn layout_node(ViewNode, Rect) -> LayoutResult
+
+pub fn measure_node(ViewNode, Constraints) -> Size
+
+// Errors
+
+// Types and methods
+pub(all) enum AppEvent {
+  Pointer(PointerEvent)
+  Keyboard(KeyboardEvent)
+  Resize(Size)
+  Redraw(RedrawReason)
+  CloseRequested
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum Axis {
+  Horizontal
+  Vertical
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ButtonData {
+  text : String
+  size : Size
+  mut state : ButtonState
+  on_click : (() -> Unit)?
+}
+
+pub(all) enum ButtonState {
+  Normal
+  Hovered
+  Pressed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct Color {
+  r : Double
+  g : Double
+  b : Double
+  a : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Color::black() -> Self
+pub fn Color::blue() -> Self
+pub fn Color::gray() -> Self
+pub fn Color::rgba(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> Self
+pub fn Color::white() -> Self
+
+pub(all) struct Constraints {
+  min : Size
+  max : Size
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Constraints::deflate(Self, Insets) -> Self
+pub fn Constraints::loose(Size) -> Self
+pub fn Constraints::tight(Size) -> Self
+
+pub(all) enum DrawCommand {
+  Clear(Color)
+  FillRect(Rect, Color)
+  PushClip(Rect)
+  PopClip
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct FlexData {
+  axis : Axis
+  spacing : Double
+  children : Array[ViewNode]
+}
+
+pub(all) struct Insets {
+  top : Double
+  right : Double
+  bottom : Double
+  left : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Insets::all(Double) -> Self
+pub fn Insets::symmetric(horizontal? : Double, vertical? : Double) -> Self
+
+pub(all) struct KeyboardEvent {
+  key : String
+  pressed : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct LabelData {
+  text : String
+  size : Size
+  color : Color
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct LayoutResult {
+  frame : Rect
+  children : Array[LayoutResult]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct PaddingData {
+  insets : Insets
+  child : ViewNode
+}
+
+pub(all) struct Point {
+  x : Double
+  y : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Point::new(x~ : Double, y~ : Double) -> Self
+
+pub(all) struct PointerDispatch {
+  node : ViewNode
+  changed : Bool
+  activated : Bool
+}
+
+pub(all) struct PointerEvent {
+  position : Point
+  phase : PointerPhase
+  button : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int) -> Self
+
+pub(all) enum PointerPhase {
+  Move
+  Down
+  Up
+  Cancel
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct Rect {
+  origin : Point
+  size : Size
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Rect::contains(Self, Point) -> Bool
+pub fn Rect::inset(Self, Insets) -> Self
+pub fn Rect::new(x~ : Double, y~ : Double, width~ : Double, height~ : Double) -> Self
+pub fn Rect::offset(Self, dx? : Double, dy? : Double) -> Self
+
+pub(all) enum RedrawReason {
+  Initial
+  Input
+  Resize
+  Explicit
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RuntimeState {
+  mut root : ViewNode
+  mut size : Size
+  mut needs_redraw : Bool
+  mut needs_rebuild : Bool
+}
+pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
+pub fn RuntimeState::dispatch_event(Self, AppEvent) -> Unit
+pub fn RuntimeState::layout(Self) -> LayoutResult
+pub fn RuntimeState::new(root~ : ViewNode, size~ : Size) -> Self
+pub fn RuntimeState::set_root(Self, ViewNode) -> Unit
+
+pub(all) struct Size {
+  width : Double
+  height : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Size::clamp(Self, Constraints) -> Self
+pub fn Size::inflate(Self, Insets) -> Self
+pub fn Size::new(width~ : Double, height~ : Double) -> Self
+
+pub(all) enum ViewNode {
+  Empty
+  Label(LabelData)
+  Button(ButtonData)
+  Flex(FlexData)
+  Padding(PaddingData)
+}
+pub fn ViewNode::handle_pointer(Self, PointerEvent, Rect) -> PointerDispatch
+pub fn ViewNode::intrinsic_size(Self) -> Size
+pub fn ViewNode::paint(Self, Rect, Array[DrawCommand]) -> Unit
+
+// Type aliases
+pub type ClickHandler = () -> Unit
+
+// Traits
+

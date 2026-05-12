@@ -1,0 +1,9 @@
+/target/
+/.moon/
+/.repos/
+*.log
+*.asan
+*.tmp
+.DS_Store
+.mooncakes/
+_build/

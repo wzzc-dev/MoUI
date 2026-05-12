@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/render"
+
+import {
+  "Milky2018/wgpu_mbt",
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn collect_rect_batches(Array[@core.DrawCommand]) -> Array[RectBatch]
+
+pub fn create_wgpu_renderer_placeholder() -> RendererHandle
+
+pub fn rect_shader_wgsl() -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct RectBatch {
+  rect : @core.Rect
+  color : @core.Color
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct RendererHandle {
+  mut size : @core.Size
+  mut last_batches : Array[RectBatch]
+  mut configured : Bool
+  mut present_count : Int
+  // private fields
+}
+pub fn RendererHandle::create(@core.Size) -> Self raise @wgpu_mbt.WgpuError
+pub fn RendererHandle::dispose(Self) -> Unit
+pub fn RendererHandle::new() -> Self
+pub fn RendererHandle::render(Self, Array[@core.DrawCommand]) -> Unit
+pub fn RendererHandle::resize(Self, @core.Size) -> Unit
+
+// Type aliases
+
+// Traits
+

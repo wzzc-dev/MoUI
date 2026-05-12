@@ -1,0 +1,10 @@
+import {
+  "wzzc-dev/moui/core",
+  "Milky2018/wgpu_mbt" @wgpu,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)
