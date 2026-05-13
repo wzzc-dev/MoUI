@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/backend/windows" @backend_windows,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
+)

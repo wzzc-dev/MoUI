@@ -4,7 +4,6 @@ MoUI 是一个面向 macOS native 的 MoonBit GUI 框架原型，底层复用 `M
 
 ## 首版范围
 
-- macOS native 单平台。
 - 声明式 `ViewNode` 视图树。
 - 几何、约束、布局、命中测试与绘制命令。
 - 基础视图：`label`、`button`、`row`、`column`、`padding`。

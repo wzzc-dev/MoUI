@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/windows"
+
+// Values
+pub fn run_counter_demo(String, @wzzc-dev/moui/core.RuntimeState) -> Unit
+
+pub fn window_event_to_core(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
+
+// Errors
+
+// Types and methods
+type WindowsApp
+pub impl @Milky2018/window/windows.ApplicationHandler for WindowsApp
+
+// Type aliases
+
+// Traits
+

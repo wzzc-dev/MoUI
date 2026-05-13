@@ -12,7 +12,11 @@ pub fn collect_rect_batches(Array[@core.DrawCommand]) -> Array[RectBatch]
 
 pub fn create_wgpu_renderer_placeholder() -> RendererHandle
 
+pub fn rect_batches_to_vertices(Array[RectBatch], @core.Size) -> Array[RectVertex]
+
 pub fn rect_shader_wgsl() -> String
+
+pub fn rect_vertices_to_bytes(Array[RectVertex]) -> Bytes
 
 // Errors
 
@@ -20,6 +24,15 @@ pub fn rect_shader_wgsl() -> String
 pub(all) struct RectBatch {
   rect : @core.Rect
   color : @core.Color
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RectVertex {
+  x : Double
+  y : Double
+  r : Double
+  g : Double
+  b : Double
+  a : Double
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct RendererHandle {
@@ -30,6 +43,7 @@ pub struct RendererHandle {
   // private fields
 }
 pub fn RendererHandle::create(@core.Size) -> Self raise @wgpu_mbt.WgpuError
+pub fn RendererHandle::create_for_windows_hwnd(@core.Size, UInt64) -> Self raise @wgpu_mbt.WgpuError
 pub fn RendererHandle::dispose(Self) -> Unit
 pub fn RendererHandle::new() -> Self
 pub fn RendererHandle::render(Self, Array[@core.DrawCommand]) -> Unit

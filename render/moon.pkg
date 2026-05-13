@@ -1,10 +1,12 @@
 import {
   "wzzc-dev/moui/core",
   "Milky2018/wgpu_mbt" @wgpu,
+  "Milky2018/wgpu_mbt/c" @wgpu_c,
 }
 
 supported_targets = "native"
 
 options(
+  "native-stub": [ "win32_surface.c" ],
   targets: { },
 )
