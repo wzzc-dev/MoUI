@@ -64,6 +64,7 @@ pub fn Constraints::tight(Size) -> Self
 pub(all) enum DrawCommand {
   Clear(Color)
   FillRect(Rect, Color)
+  DrawText(TextRun)
   PushClip(Rect)
   PopClip
 } derive(Eq, ToJson, @debug.Debug)
@@ -73,6 +74,13 @@ pub(all) struct FlexData {
   spacing : Double
   children : Array[ViewNode]
 }
+
+pub(all) struct FontSpec {
+  family : String
+  size : Double
+  weight : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FontSpec::new(family? : String, size? : Double, weight? : Int) -> Self
 
 pub(all) struct Insets {
   top : Double
@@ -165,6 +173,13 @@ pub(all) struct Size {
 pub fn Size::clamp(Self, Constraints) -> Self
 pub fn Size::inflate(Self, Insets) -> Self
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
+
+pub(all) struct TextRun {
+  text : String
+  frame : Rect
+  font : FontSpec
+  color : Color
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum ViewNode {
   Empty

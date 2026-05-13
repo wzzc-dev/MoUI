@@ -13,11 +13,20 @@ pub fn default_surface_bridge_info() -> SurfaceBridgeInfo
 
 pub fn event_kind_to_core(BackendEventKind, size? : @core.Size, position? : @core.Point) -> @core.AppEvent
 
-pub fn run_counter_demo(String, @core.RuntimeState) -> Unit
-
 // Errors
 
 // Types and methods
+pub struct AppRuntime {
+  state : @core.RuntimeState
+}
+pub fn AppRuntime::dispatch_event(Self, @core.AppEvent) -> Unit
+pub fn AppRuntime::draw_commands(Self) -> Array[@core.DrawCommand]
+pub fn AppRuntime::needs_rebuild(Self) -> Bool
+pub fn AppRuntime::needs_redraw(Self) -> Bool
+pub fn AppRuntime::new(root~ : @core.ViewNode, size~ : @core.Size) -> Self
+pub fn AppRuntime::set_root(Self, @core.ViewNode) -> Unit
+pub fn AppRuntime::size(Self) -> @core.Size
+
 pub(all) enum BackendEventKind {
   Resize
   Redraw

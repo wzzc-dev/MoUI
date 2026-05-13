@@ -1,8 +1,7 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/views",
-  "wzzc-dev/moui/backend",
-  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/backend/native" @backend_native,
+  "wzzc-dev/moui/examples/counter_app" @counter_app,
 }
 
 supported_targets = "native"

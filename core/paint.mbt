@@ -7,9 +7,25 @@ pub(all) struct Color {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct FontSpec {
+  family : String
+  size : Double
+  weight : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct TextRun {
+  text : String
+  frame : Rect
+  font : FontSpec
+  color : Color
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum DrawCommand {
   Clear(Color)
   FillRect(Rect, Color)
+  DrawText(TextRun)
   PushClip(Rect)
   PopClip
 } derive(Eq, Debug, ToJson)
@@ -42,4 +58,13 @@ pub fn Color::blue() -> Color {
 ///|
 pub fn Color::gray() -> Color {
   Color::rgba(r=0.82, g=0.84, b=0.88)
+}
+
+///|
+pub fn FontSpec::new(
+  family? : String = "system-ui, sans-serif",
+  size? : Double = 16.0,
+  weight? : Int = 400,
+) -> FontSpec {
+  { family, size, weight }
 }

@@ -44,19 +44,3 @@ pub fn event_kind_to_core(
       )
   }
 }
-
-///|
-pub fn run_counter_demo(title : String, runtime : @core.RuntimeState) -> Unit {
-  let config = WindowConfig::default(title~)
-  let renderer = @render.RendererHandle::new()
-  renderer.resize(@core.Size::new(width=config.width, height=config.height))
-  runtime.dispatch_event(
-    @core.AppEvent::Resize(
-      @core.Size::new(width=config.width, height=config.height),
-    ),
-  )
-  renderer.render(runtime.build_draw_commands())
-  println(
-    "MoUI demo prepared: \{config.title} \{runtime.size.width}x\{runtime.size.height}",
-  )
-}

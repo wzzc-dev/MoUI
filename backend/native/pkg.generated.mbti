@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/native"
+
+import {
+  "wzzc-dev/moui/backend",
+}
+
+// Values
+pub fn run_counter_demo(String, @backend.AppRuntime) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

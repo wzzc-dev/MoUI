@@ -2,6 +2,8 @@ import {
   "wzzc-dev/moui/core",
 }
 
+supported_targets = "js"
+
 options(
   targets: { },
 )

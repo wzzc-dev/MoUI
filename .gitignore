@@ -10,3 +10,5 @@ _build/
 .local_repos/
 .tools/
 .claude/
+examples/counter_web/counter_web.js.map
+examples/counter_web/bootstrap.js

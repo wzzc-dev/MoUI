@@ -7,6 +7,6 @@ pub fn label(
   @core.ViewNode::Label({
     text,
     size: @core.Size::new(width~, height~),
-    color: @core.Color::gray(),
+    color: @core.Color::black(),
   })
 }

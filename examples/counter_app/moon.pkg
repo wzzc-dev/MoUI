@@ -1,5 +1,7 @@
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/backend",
 }
 
 options(

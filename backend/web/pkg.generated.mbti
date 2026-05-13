@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/web"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn default_web_backend_info() -> WebBackendInfo
+
+pub fn runtime_for_canvas(root~ : @core.ViewNode, width~ : Double, height~ : Double) -> @backend.AppRuntime
+
+// Errors
+
+// Types and methods
+pub(all) struct WebBackendInfo {
+  uses_dom_events : Bool
+  uses_webgpu_surface : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

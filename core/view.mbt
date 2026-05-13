@@ -93,7 +93,15 @@ pub fn ViewNode::paint(
 ) -> Unit {
   match self {
     Empty => ()
-    Label(data) => commands.push(FillRect(frame, data.color))
+    Label(data) =>
+      commands.push(
+        DrawText({
+          text: data.text,
+          frame,
+          font: FontSpec::new(size=16.0, weight=500),
+          color: data.color,
+        }),
+      )
     Button(data) => {
       let color = match data.state {
         Normal => Color::gray()
@@ -101,6 +109,18 @@ pub fn ViewNode::paint(
         Pressed => Color::blue()
       }
       commands.push(FillRect(frame, color))
+      let text_color = match data.state {
+        Pressed => Color::white()
+        Normal | Hovered => Color::black()
+      }
+      commands.push(
+        DrawText({
+          text: data.text,
+          frame,
+          font: FontSpec::new(size=16.0, weight=600),
+          color: text_color,
+        }),
+      )
     }
     Flex(data) => paint_flex(data, frame, commands)
     Padding(data) => {

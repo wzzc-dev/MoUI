@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/render/native_wgpu"
+
+import {
+  "Milky2018/wgpu_mbt",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+}
+
+// Values
+pub fn create_wgpu_renderer_placeholder() -> RendererHandle
+
+// Errors
+
+// Types and methods
+pub struct RendererHandle {
+  mut size : @core.Size
+  mut last_batches : Array[@render.RectBatch]
+  mut configured : Bool
+  mut present_count : Int
+  // private fields
+}
+pub fn RendererHandle::create(@core.Size) -> Self raise @wgpu_mbt.WgpuError
+pub fn RendererHandle::create_for_windows_hwnd(@core.Size, UInt64) -> Self raise @wgpu_mbt.WgpuError
+pub fn RendererHandle::dispose(Self) -> Unit
+pub fn RendererHandle::new() -> Self
+pub fn RendererHandle::render(Self, Array[@core.DrawCommand]) -> Unit
+pub fn RendererHandle::resize(Self, @core.Size) -> Unit
+
+// Type aliases
+
+// Traits
+

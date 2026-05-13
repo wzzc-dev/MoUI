@@ -2,13 +2,13 @@
 struct WindowsApp {
   title : String
   mut window : @win.Window?
-  mut renderer : @render.RendererHandle?
-  runtime : @core.RuntimeState
+  mut renderer : @native_wgpu.RendererHandle?
+  runtime : @backend.AppRuntime
   mut last_pointer : @core.Point
 }
 
 ///|
-pub fn run_counter_demo(title : String, runtime : @core.RuntimeState) -> Unit {
+pub fn run_counter_demo(title : String, runtime : @backend.AppRuntime) -> Unit {
   let event_loop = @win.EventLoop::new()
   event_loop.run_app(WindowsApp::{
     title,
@@ -71,8 +71,8 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
   event_loop,
 ) {
   let initial_size = @dpi.PhysicalSize::new(
-    size_dim_to_int(self.runtime.size.width),
-    size_dim_to_int(self.runtime.size.height),
+    size_dim_to_int(self.runtime.size().width),
+    size_dim_to_int(self.runtime.size().height),
   )
   let attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
@@ -88,8 +88,8 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
     Some(window) => {
       let size = physical_size_to_core(window.surface_size())
       self.runtime.dispatch_event(@core.AppEvent::Resize(size))
-      let renderer : @render.RendererHandle? = Some(
-        @render.RendererHandle::create_for_windows_hwnd(
+      let renderer : @native_wgpu.RendererHandle? = Some(
+        @native_wgpu.RendererHandle::create_for_windows_hwnd(
           size,
           window.window_handle(),
         ),
@@ -124,7 +124,7 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       self.dispatch_window_event(event)
       match (self.window, self.renderer) {
         (Some(window), Some(renderer)) => {
-          renderer.resize(self.runtime.size)
+          renderer.resize(self.runtime.size())
           window.request_redraw()
         }
         _ => ()
@@ -144,7 +144,7 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       match (self.window, self.renderer) {
         (Some(window), Some(renderer)) => {
           window.pre_present_notify()
-          renderer.render(self.runtime.build_draw_commands())
+          renderer.render(self.runtime.draw_commands())
           self.runtime.dispatch_event(
             @core.AppEvent::Redraw(@core.RedrawReason::Explicit),
           )
@@ -168,7 +168,7 @@ fn WindowsApp::dispatch_window_event(
 
 ///|
 fn WindowsApp::request_redraw(self : WindowsApp) -> Unit {
-  if self.runtime.needs_redraw {
+  if self.runtime.needs_redraw() {
     match self.window {
       Some(window) => window.request_redraw()
       None => ()
