@@ -22,10 +22,19 @@ pub fn collect_rect_batches(
   for command in commands {
     match command {
       @core.DrawCommand::FillRect(rect, color) => batches.push({ rect, color })
+      @core.DrawCommand::FillRoundedRect(rounded, color) =>
+        batches.push({ rect: rounded.rect, color })
       @core.DrawCommand::Clear(_)
+      | @core.DrawCommand::StrokeRect(_, _, _)
+      | @core.DrawCommand::StrokeRoundedRect(_, _, _)
       | @core.DrawCommand::DrawText(_)
+      | @core.DrawCommand::DrawImage(_)
       | @core.DrawCommand::PushClip(_)
-      | @core.DrawCommand::PopClip => ()
+      | @core.DrawCommand::PopClip
+      | @core.DrawCommand::PushTransform(_)
+      | @core.DrawCommand::PopTransform
+      | @core.DrawCommand::PushOpacity(_)
+      | @core.DrawCommand::PopOpacity => ()
     }
   }
   batches

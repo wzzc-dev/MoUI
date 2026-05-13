@@ -12,7 +12,11 @@ pub fn button_on_click(String, () -> Unit, width? : Double, height? : Double) ->
 
 pub fn button_with_state(String, @core.ButtonState) -> @core.ViewNode
 
-pub fn column(Array[@core.ViewNode], spacing? : Double) -> @core.ViewNode
+pub fn column(Array[@core.ViewNode], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewNode
+
+pub fn container(@core.ViewNode, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double) -> @core.ViewNode
+
+pub fn environment(theme? : @core.Theme) -> @core.Environment
 
 pub fn handle_button_pointer(@core.ViewNode, @core.PointerEvent, @core.Rect) -> @core.ViewNode
 
@@ -22,7 +26,11 @@ pub fn padding(@core.ViewNode, Double) -> @core.ViewNode
 
 pub fn padding_insets(@core.ViewNode, @core.Insets) -> @core.ViewNode
 
-pub fn row(Array[@core.ViewNode], spacing? : Double) -> @core.ViewNode
+pub fn row(Array[@core.ViewNode], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewNode
+
+pub fn spacer(min_length? : Double) -> @core.ViewNode
+
+pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double) -> @core.Theme
 
 // Errors
 

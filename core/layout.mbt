@@ -15,6 +15,18 @@ pub fn measure_node(node : ViewNode, constraints : Constraints) -> Size {
       child.inflate(data.insets).clamp(constraints)
     }
     Flex(data) => measure_flex(data, constraints)
+    Container(data) =>
+      match data.size {
+        Some(size) => size.clamp(constraints)
+        None => measure_node(data.child, constraints)
+      }
+    Spacer(data) =>
+      Size::new(width=data.min_length, height=data.min_length).clamp(
+        constraints,
+      )
+    Styled(data) => measure_node(data.child, constraints)
+    Keyed(data) => measure_node(data.child, constraints)
+    EnvironmentNode(data) => measure_node(data.child, constraints)
   }
 }
 
@@ -27,7 +39,29 @@ pub fn layout_node(node : ViewNode, bounds : Rect) -> LayoutResult {
       { frame: bounds, children: [layout_node(data.child, child_frame)] }
     }
     Flex(data) => layout_flex(data, bounds)
+    Container(data) => {
+      let child_frame = match data.size {
+        Some(size) =>
+          Rect::new(
+            x=bounds.origin.x,
+            y=bounds.origin.y,
+            width=size.width,
+            height=size.height,
+          )
+        None => bounds
+      }
+      { frame: child_frame, children: [layout_node(data.child, child_frame)] }
+    }
+    Spacer(_) => { frame: bounds, children: [] }
+    Styled(data) => layout_node(data.child, bounds)
+    Keyed(data) => layout_node(data.child, bounds)
+    EnvironmentNode(data) => layout_node(data.child, bounds)
   }
+}
+
+///|
+pub fn layout_spec(spec : ViewSpec, bounds : Rect) -> LayoutResult {
+  mount_view_spec(spec).render(bounds).to_layout_result()
 }
 
 ///|
@@ -73,32 +107,19 @@ fn layout_flex(data : FlexData, bounds : Rect) -> LayoutResult {
   let children : Array[LayoutResult] = []
   let count = data.children.length()
   if count > 0 {
-    let total_spacing = data.spacing * (count.to_double() - 1.0)
-    let main = match data.axis {
-      Horizontal =>
-        max_double(0.0, bounds.size.width - total_spacing) / count.to_double()
-      Vertical =>
-        max_double(0.0, bounds.size.height - total_spacing) / count.to_double()
-    }
+    let sizes = data.children.map(child => {
+      measure_node(child, Constraints::loose(bounds.size))
+    })
+    let frames = flex_child_frames(
+      data.axis,
+      data.spacing,
+      data.main_axis_alignment,
+      data.cross_axis_alignment,
+      sizes,
+      bounds,
+    )
     for index, child in data.children {
-      let offset = index.to_double() * (main + data.spacing)
-      let child_frame = match data.axis {
-        Horizontal =>
-          Rect::new(
-            x=bounds.origin.x + offset,
-            y=bounds.origin.y,
-            width=main,
-            height=bounds.size.height,
-          )
-        Vertical =>
-          Rect::new(
-            x=bounds.origin.x,
-            y=bounds.origin.y + offset,
-            width=bounds.size.width,
-            height=main,
-          )
-      }
-      children.push(layout_node(child, child_frame))
+      children.push(layout_node(child, frames[index]))
     }
   }
   { frame: bounds, children }

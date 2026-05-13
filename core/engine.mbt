@@ -1,0 +1,946 @@
+///|
+pub(all) struct Key {
+  value : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ElementId {
+  value : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct DirtyFlags {
+  mut needs_build : Bool
+  mut needs_layout : Bool
+  mut needs_paint : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct StateSlot[T] {
+  mut value : T
+  mut version : Int
+}
+
+///|
+pub(all) enum MainAxisAlignment {
+  MainStart
+  MainCenter
+  MainEnd
+  SpaceBetween
+  SpaceAround
+  SpaceEvenly
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum CrossAxisAlignment {
+  CrossStart
+  CrossCenter
+  CrossEnd
+  CrossStretch
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ViewStyle {
+  font : FontSpec?
+  foreground : Color?
+  background : Color?
+  corner_radius : Double?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct TextViewSpec {
+  key : Key?
+  text : String
+  size : Size
+  font : FontSpec
+  color : Color
+}
+
+///|
+pub(all) struct ButtonViewSpec {
+  key : Key?
+  text : String
+  size : Size
+  font : FontSpec
+  foreground : Color
+  background : Color
+  hovered_background : Color
+  pressed_background : Color
+  corner_radius : Double
+  on_click : ClickHandler?
+}
+
+///|
+pub(all) struct FlexViewSpec {
+  key : Key?
+  axis : Axis
+  spacing : Double
+  main_axis_alignment : MainAxisAlignment
+  cross_axis_alignment : CrossAxisAlignment
+  children : Array[ViewSpec]
+}
+
+///|
+pub(all) struct PaddingViewSpec {
+  key : Key?
+  insets : Insets
+  child : ViewSpec
+}
+
+///|
+pub(all) struct ContainerViewSpec {
+  key : Key?
+  size : Size?
+  background : Color?
+  corner_radius : Double
+  child : ViewSpec?
+}
+
+///|
+pub(all) struct SpacerViewSpec {
+  key : Key?
+  min_length : Double
+}
+
+///|
+pub(all) enum ViewSpec {
+  EmptySpec
+  TextSpec(TextViewSpec)
+  ButtonSpec(ButtonViewSpec)
+  FlexSpec(FlexViewSpec)
+  PaddingSpec(PaddingViewSpec)
+  ContainerSpec(ContainerViewSpec)
+  SpacerSpec(SpacerViewSpec)
+}
+
+///|
+pub(all) struct ElementNode {
+  id : ElementId
+  mut key : Key?
+  mut spec : ViewSpec
+  mut children : Array[ElementNode]
+  mut dirty : DirtyFlags
+  mut button_state : ButtonState
+}
+
+///|
+pub(all) struct RenderNode {
+  element_id : ElementId
+  frame : Rect
+  children : Array[RenderNode]
+  hit_testable : Bool
+  paint_commands : Array[DrawCommand]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ElementEventResult {
+  changed : Bool
+  activated : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+priv struct MountResult {
+  node : ElementNode
+  next_id : Int
+}
+
+///|
+priv struct ReconcileResult {
+  node : ElementNode
+  next_id : Int
+}
+
+///|
+pub fn Key::new(value : String) -> Key {
+  { value, }
+}
+
+///|
+pub fn ElementId::new(value : Int) -> ElementId {
+  { value, }
+}
+
+///|
+pub fn DirtyFlags::clean() -> DirtyFlags {
+  { needs_build: false, needs_layout: false, needs_paint: false }
+}
+
+///|
+pub fn DirtyFlags::all() -> DirtyFlags {
+  { needs_build: true, needs_layout: true, needs_paint: true }
+}
+
+///|
+pub fn DirtyFlags::mark_build(self : DirtyFlags) -> Unit {
+  self.needs_build = true
+  self.needs_layout = true
+  self.needs_paint = true
+}
+
+///|
+pub fn DirtyFlags::mark_layout(self : DirtyFlags) -> Unit {
+  self.needs_layout = true
+  self.needs_paint = true
+}
+
+///|
+pub fn DirtyFlags::mark_paint(self : DirtyFlags) -> Unit {
+  self.needs_paint = true
+}
+
+///|
+pub fn DirtyFlags::clear(self : DirtyFlags) -> Unit {
+  self.needs_build = false
+  self.needs_layout = false
+  self.needs_paint = false
+}
+
+///|
+pub fn[T] StateSlot::new(value : T) -> StateSlot[T] {
+  { value, version: 0 }
+}
+
+///|
+pub fn[T] StateSlot::get(self : StateSlot[T]) -> T {
+  self.value
+}
+
+///|
+pub fn[T] StateSlot::set(self : StateSlot[T], value : T) -> Unit {
+  self.value = value
+  self.version = self.version + 1
+}
+
+///|
+pub fn[T] StateSlot::update(
+  self : StateSlot[T],
+  f : (T) -> T raise?,
+) -> Unit raise? {
+  self.set(f(self.value))
+}
+
+///|
+pub fn ViewStyle::empty() -> ViewStyle {
+  { font: None, foreground: None, background: None, corner_radius: None }
+}
+
+///|
+pub fn ViewStyle::merge(self : ViewStyle, next : ViewStyle) -> ViewStyle {
+  {
+    font: option_prefer(next.font, self.font),
+    foreground: option_prefer(next.foreground, self.foreground),
+    background: option_prefer(next.background, self.background),
+    corner_radius: option_prefer(next.corner_radius, self.corner_radius),
+  }
+}
+
+///|
+fn[T] option_prefer(value : T?, fallback : T?) -> T? {
+  match value {
+    Some(_) => value
+    None => fallback
+  }
+}
+
+///|
+pub fn ViewSpec::key(self : ViewSpec) -> Key? {
+  match self {
+    EmptySpec => None
+    TextSpec(data) => data.key
+    ButtonSpec(data) => data.key
+    FlexSpec(data) => data.key
+    PaddingSpec(data) => data.key
+    ContainerSpec(data) => data.key
+    SpacerSpec(data) => data.key
+  }
+}
+
+///|
+pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
+  match self {
+    EmptySpec => EmptySpec
+    TextSpec(data) => TextSpec({ ..data, key: Some(key) })
+    ButtonSpec(data) => ButtonSpec({ ..data, key: Some(key) })
+    FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
+    PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
+    ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
+    SpacerSpec(data) => SpacerSpec({ ..data, key: Some(key) })
+  }
+}
+
+///|
+pub fn ViewSpec::kind(self : ViewSpec) -> Int {
+  match self {
+    EmptySpec => 0
+    TextSpec(_) => 1
+    ButtonSpec(_) => 2
+    FlexSpec(_) => 3
+    PaddingSpec(_) => 4
+    ContainerSpec(_) => 5
+    SpacerSpec(_) => 6
+  }
+}
+
+///|
+pub fn ViewSpec::same_identity(self : ViewSpec, next : ViewSpec) -> Bool {
+  self.kind() == next.kind() && self.key() == next.key()
+}
+
+///|
+pub fn ViewSpec::to_view_node(self : ViewSpec) -> ViewNode {
+  match self {
+    EmptySpec => ViewNode::Empty
+    TextSpec(data) =>
+      ViewNode::Label({ text: data.text, size: data.size, color: data.color })
+    ButtonSpec(data) =>
+      ViewNode::Button({
+        text: data.text,
+        size: data.size,
+        state: ButtonState::Normal,
+        on_click: data.on_click,
+      })
+    FlexSpec(data) =>
+      ViewNode::Flex({
+        axis: data.axis,
+        spacing: data.spacing,
+        main_axis_alignment: data.main_axis_alignment,
+        cross_axis_alignment: data.cross_axis_alignment,
+        children: data.children.map(child => child.to_view_node()),
+      })
+    PaddingSpec(data) =>
+      ViewNode::Padding({
+        insets: data.insets,
+        child: data.child.to_view_node(),
+      })
+    ContainerSpec(data) => {
+      let child = match data.child {
+        Some(child) => child.to_view_node()
+        None => ViewNode::Empty
+      }
+      ViewNode::Container({
+        size: data.size,
+        background: data.background,
+        corner_radius: data.corner_radius,
+        child,
+      })
+    }
+    SpacerSpec(data) => ViewNode::Spacer({ min_length: data.min_length })
+  }
+}
+
+///|
+pub fn ViewNode::to_spec(self : ViewNode) -> ViewSpec {
+  self.to_spec_with_style(ViewStyle::empty(), None)
+}
+
+///|
+fn ViewNode::to_spec_with_style(
+  self : ViewNode,
+  style : ViewStyle,
+  key : Key?,
+) -> ViewSpec {
+  match self {
+    Empty => EmptySpec
+    Label(data) =>
+      TextSpec({
+        key,
+        text: data.text,
+        size: data.size,
+        font: style.font.unwrap_or(FontSpec::new(size=16.0, weight=500)),
+        color: style.foreground.unwrap_or(data.color),
+      })
+    Button(data) =>
+      ButtonSpec({
+        key,
+        text: data.text,
+        size: data.size,
+        font: style.font.unwrap_or(FontSpec::new(size=16.0, weight=600)),
+        foreground: style.foreground.unwrap_or(Color::black()),
+        background: style.background.unwrap_or(Color::gray()),
+        hovered_background: Color::rgba(r=0.72, g=0.78, b=0.92),
+        pressed_background: Color::blue(),
+        corner_radius: style.corner_radius.unwrap_or(0.0),
+        on_click: data.on_click,
+      })
+    Flex(data) =>
+      FlexSpec({
+        key,
+        axis: data.axis,
+        spacing: data.spacing,
+        main_axis_alignment: data.main_axis_alignment,
+        cross_axis_alignment: data.cross_axis_alignment,
+        children: data.children.map(child => {
+          child.to_spec_with_style(style, None)
+        }),
+      })
+    Padding(data) =>
+      PaddingSpec({ key, insets: data.insets, child: data.child.to_spec() })
+    Container(data) =>
+      ContainerSpec({
+        key,
+        size: data.size,
+        background: option_prefer(data.background, style.background),
+        corner_radius: data.corner_radius,
+        child: Some(data.child.to_spec()),
+      })
+    Spacer(data) => SpacerSpec({ key, min_length: data.min_length })
+    Styled(data) => data.child.to_spec_with_style(style.merge(data.style), key)
+    Keyed(data) => data.child.to_spec_with_style(style, Some(data.key))
+    EnvironmentNode(data) =>
+      data.child.to_spec_with_style(
+        style.merge(ViewStyle::from_theme(data.environment.theme)),
+        key,
+      )
+  }
+}
+
+///|
+pub fn mount_view_spec(spec : ViewSpec) -> ElementNode {
+  mount_view_spec_with_next(spec, 1).node
+}
+
+///|
+fn mount_view_spec_with_next(spec : ViewSpec, next_id : Int) -> MountResult {
+  let id = ElementId::new(next_id)
+  let mut next = next_id + 1
+  let children : Array[ElementNode] = []
+  match spec {
+    FlexSpec(data) =>
+      for child_spec in data.children {
+        let mounted = mount_view_spec_with_next(child_spec, next)
+        children.push(mounted.node)
+        next = mounted.next_id
+      }
+    PaddingSpec(data) => {
+      let mounted = mount_view_spec_with_next(data.child, next)
+      children.push(mounted.node)
+      next = mounted.next_id
+    }
+    ContainerSpec(data) =>
+      match data.child {
+        Some(child) => {
+          let mounted = mount_view_spec_with_next(child, next)
+          children.push(mounted.node)
+          next = mounted.next_id
+        }
+        None => ()
+      }
+    _ => ()
+  }
+  {
+    node: {
+      id,
+      key: spec.key(),
+      spec,
+      children,
+      dirty: DirtyFlags::all(),
+      button_state: ButtonState::Normal,
+    },
+    next_id: next,
+  }
+}
+
+///|
+pub fn reconcile_element(
+  old : ElementNode,
+  next_spec : ViewSpec,
+) -> ElementNode {
+  reconcile_element_with_next(old, next_spec, 1).node
+}
+
+///|
+fn reconcile_element_with_next(
+  old : ElementNode,
+  next_spec : ViewSpec,
+  next_id : Int,
+) -> ReconcileResult {
+  if !old.spec.same_identity(next_spec) {
+    let mounted = mount_view_spec_with_next(next_spec, next_id)
+    { node: mounted.node, next_id: mounted.next_id }
+  } else {
+    let children_result = reconcile_children(old.children, next_spec, next_id)
+    old.spec = next_spec
+    old.key = old.spec.key()
+    old.children = children_result.children
+    old.dirty.mark_build()
+    { node: old, next_id: children_result.next_id }
+  }
+}
+
+///|
+priv struct ChildrenReconcileResult {
+  children : Array[ElementNode]
+  next_id : Int
+}
+
+///|
+fn reconcile_children(
+  old_children : Array[ElementNode],
+  next_spec : ViewSpec,
+  next_id : Int,
+) -> ChildrenReconcileResult {
+  let next_specs = child_specs(next_spec)
+  let children : Array[ElementNode] = []
+  let used : Array[Bool] = []
+  for _ in old_children {
+    used.push(false)
+  }
+  let mut next = next_id
+  for index, child_spec in next_specs {
+    let old_index = find_reusable_child(old_children, used, child_spec, index)
+    match old_index {
+      Some(old_index) => {
+        used[old_index] = true
+        let result = reconcile_element_with_next(
+          old_children[old_index],
+          child_spec,
+          next,
+        )
+        children.push(result.node)
+        next = result.next_id
+      }
+      None => {
+        let mounted = mount_view_spec_with_next(child_spec, next)
+        children.push(mounted.node)
+        next = mounted.next_id
+      }
+    }
+  }
+  { children, next_id: next }
+}
+
+///|
+fn find_reusable_child(
+  old_children : Array[ElementNode],
+  used : Array[Bool],
+  child_spec : ViewSpec,
+  index : Int,
+) -> Int? {
+  match child_spec.key() {
+    Some(key) => {
+      for old_index, old_child in old_children {
+        if !used[old_index] &&
+          old_child.key == Some(key) &&
+          old_child.spec.kind() == child_spec.kind() {
+          return Some(old_index)
+        }
+      }
+      None
+    }
+    None =>
+      if index < old_children.length() &&
+        !used[index] &&
+        old_children[index].key is None &&
+        old_children[index].spec.kind() == child_spec.kind() {
+        Some(index)
+      } else {
+        None
+      }
+  }
+}
+
+///|
+fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
+  match spec {
+    FlexSpec(data) => data.children
+    PaddingSpec(data) => [data.child]
+    ContainerSpec(data) =>
+      match data.child {
+        Some(child) => [child]
+        None => []
+      }
+    _ => []
+  }
+}
+
+///|
+pub fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
+  let children : Array[RenderNode] = []
+  let commands : Array[DrawCommand] = []
+  match self.spec {
+    EmptySpec => ()
+    SpacerSpec(_) => ()
+    TextSpec(data) =>
+      commands.push(
+        DrawText({
+          text: data.text,
+          frame: bounds,
+          font: data.font,
+          color: data.color,
+        }),
+      )
+    ButtonSpec(data) => {
+      let background = match self.button_state {
+        ButtonState::Normal => data.background
+        ButtonState::Hovered => data.hovered_background
+        ButtonState::Pressed => data.pressed_background
+      }
+      if data.corner_radius > 0.0 {
+        commands.push(
+          FillRoundedRect(
+            RoundedRect::new(rect=bounds, radius=data.corner_radius),
+            background,
+          ),
+        )
+      } else {
+        commands.push(FillRect(bounds, background))
+      }
+      let foreground = match self.button_state {
+        ButtonState::Pressed => Color::white()
+        ButtonState::Normal | ButtonState::Hovered => data.foreground
+      }
+      commands.push(
+        DrawText({
+          text: data.text,
+          frame: bounds,
+          font: data.font,
+          color: foreground,
+        }),
+      )
+    }
+    FlexSpec(data) => {
+      let frames = flex_child_frames(
+        data.axis,
+        data.spacing,
+        data.main_axis_alignment,
+        data.cross_axis_alignment,
+        self.children.map(child => child.intrinsic_size()),
+        bounds,
+      )
+      for index, child in self.children {
+        children.push(child.render(frames[index]))
+      }
+    }
+    PaddingSpec(data) => {
+      let child_frame = bounds.inset(data.insets)
+      if self.children.length() > 0 {
+        children.push(self.children[0].render(child_frame))
+      }
+    }
+    ContainerSpec(data) => {
+      let frame = match data.size {
+        Some(size) =>
+          Rect::new(
+            x=bounds.origin.x,
+            y=bounds.origin.y,
+            width=size.width,
+            height=size.height,
+          )
+        None => bounds
+      }
+      match data.background {
+        Some(color) =>
+          if data.corner_radius > 0.0 {
+            commands.push(
+              FillRoundedRect(
+                RoundedRect::new(rect=frame, radius=data.corner_radius),
+                color,
+              ),
+            )
+          } else {
+            commands.push(FillRect(frame, color))
+          }
+        None => ()
+      }
+      if self.children.length() > 0 {
+        children.push(self.children[0].render(frame))
+      }
+    }
+  }
+  self.dirty.clear()
+  {
+    element_id: self.id,
+    frame: bounds,
+    children,
+    hit_testable: element_hit_testable(self.spec),
+    paint_commands: commands,
+  }
+}
+
+///|
+pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
+  match self.spec {
+    EmptySpec => Size::new(width=0.0, height=0.0)
+    TextSpec(data) => data.size
+    ButtonSpec(data) => data.size
+    SpacerSpec(data) => Size::new(width=data.min_length, height=data.min_length)
+    PaddingSpec(data) =>
+      if self.children.length() > 0 {
+        self.children[0].intrinsic_size().inflate(data.insets)
+      } else {
+        Size::new(width=0.0, height=0.0).inflate(data.insets)
+      }
+    ContainerSpec(data) =>
+      match data.size {
+        Some(size) => size
+        None =>
+          if self.children.length() > 0 {
+            self.children[0].intrinsic_size()
+          } else {
+            Size::new(width=0.0, height=0.0)
+          }
+      }
+    FlexSpec(data) => measure_flex_sizes(data.axis, data.spacing, self.children)
+  }
+}
+
+///|
+fn element_hit_testable(spec : ViewSpec) -> Bool {
+  match spec {
+    ButtonSpec(_) => true
+    ContainerSpec(data) => data.background is Some(_)
+    _ => false
+  }
+}
+
+///|
+pub fn ElementNode::dispatch_pointer(
+  self : ElementNode,
+  event : PointerEvent,
+  render : RenderNode,
+) -> ElementEventResult {
+  match self.spec {
+    ButtonSpec(data) =>
+      handle_button_element_pointer(self, data, event, render.frame)
+    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) => {
+      let mut changed = false
+      let mut activated = false
+      for index, child in self.children {
+        if index < render.children.length() {
+          let result = child.dispatch_pointer(event, render.children[index])
+          changed = changed || result.changed
+          activated = activated || result.activated
+        }
+      }
+      if changed {
+        self.dirty.mark_paint()
+      }
+      { changed, activated }
+    }
+    EmptySpec | TextSpec(_) | SpacerSpec(_) =>
+      { changed: false, activated: false }
+  }
+}
+
+///|
+fn handle_button_element_pointer(
+  element : ElementNode,
+  data : ButtonViewSpec,
+  event : PointerEvent,
+  frame : Rect,
+) -> ElementEventResult {
+  let inside = frame.contains(event.position)
+  let was_pressed = element.button_state == ButtonState::Pressed
+  let next = match event.phase {
+    PointerPhase::Move =>
+      if inside {
+        ButtonState::Hovered
+      } else {
+        ButtonState::Normal
+      }
+    PointerPhase::Down =>
+      if inside {
+        ButtonState::Pressed
+      } else {
+        ButtonState::Normal
+      }
+    PointerPhase::Up =>
+      if inside {
+        ButtonState::Hovered
+      } else {
+        ButtonState::Normal
+      }
+    PointerPhase::Cancel => ButtonState::Normal
+  }
+  let activated = event.phase == PointerPhase::Up && inside && was_pressed
+  if activated {
+    match data.on_click {
+      Some(handler) => handler()
+      None => ()
+    }
+  }
+  let changed = next != element.button_state || activated
+  element.button_state = next
+  if changed {
+    element.dirty.mark_paint()
+  }
+  { changed, activated }
+}
+
+///|
+fn measure_flex_sizes(
+  axis : Axis,
+  spacing : Double,
+  children : Array[ElementNode],
+) -> Size {
+  let mut main = 0.0
+  let mut cross = 0.0
+  for index, child in children {
+    let size = child.intrinsic_size()
+    match axis {
+      Axis::Horizontal => {
+        main = main + size.width
+        cross = max_double(cross, size.height)
+      }
+      Axis::Vertical => {
+        main = main + size.height
+        cross = max_double(cross, size.width)
+      }
+    }
+    if index > 0 {
+      main = main + spacing
+    }
+  }
+  match axis {
+    Axis::Horizontal => Size::new(width=main, height=cross)
+    Axis::Vertical => Size::new(width=cross, height=main)
+  }
+}
+
+///|
+fn flex_child_frames(
+  axis : Axis,
+  spacing : Double,
+  main_axis_alignment : MainAxisAlignment,
+  cross_axis_alignment : CrossAxisAlignment,
+  child_sizes : Array[Size],
+  bounds : Rect,
+) -> Array[Rect] {
+  let count = child_sizes.length()
+  let frames : Array[Rect] = []
+  if count == 0 {
+    frames
+  } else {
+    let total_spacing = spacing * (count.to_double() - 1.0)
+    let mut child_main_total = 0.0
+    for size in child_sizes {
+      let child_main = match axis {
+        Axis::Horizontal => size.width
+        Axis::Vertical => size.height
+      }
+      child_main_total = child_main_total + child_main
+    }
+    let available_main = match axis {
+      Axis::Horizontal => bounds.size.width
+      Axis::Vertical => bounds.size.height
+    }
+    let remaining = max_double(
+      0.0,
+      available_main - child_main_total - total_spacing,
+    )
+    let offsets = flex_offsets(main_axis_alignment, remaining, spacing, count)
+    let mut cursor = offsets.leading
+    for size in child_sizes {
+      let main_size = match axis {
+        Axis::Horizontal => size.width
+        Axis::Vertical => size.height
+      }
+      let cross_size = match axis {
+        Axis::Horizontal => size.height
+        Axis::Vertical => size.width
+      }
+      let cross_available = match axis {
+        Axis::Horizontal => bounds.size.height
+        Axis::Vertical => bounds.size.width
+      }
+      let cross = cross_axis_offset(
+        cross_axis_alignment, cross_available, cross_size,
+      )
+      let frame = match axis {
+        Axis::Horizontal =>
+          Rect::new(
+            x=bounds.origin.x + cursor,
+            y=bounds.origin.y + cross.offset,
+            width=main_size,
+            height=cross.size,
+          )
+        Axis::Vertical =>
+          Rect::new(
+            x=bounds.origin.x + cross.offset,
+            y=bounds.origin.y + cursor,
+            width=cross.size,
+            height=main_size,
+          )
+      }
+      frames.push(frame)
+      cursor = cursor + main_size + offsets.gap
+    }
+    frames
+  }
+}
+
+///|
+priv struct FlexOffsets {
+  leading : Double
+  gap : Double
+}
+
+///|
+fn flex_offsets(
+  alignment : MainAxisAlignment,
+  remaining : Double,
+  base_gap : Double,
+  count : Int,
+) -> FlexOffsets {
+  match alignment {
+    MainStart => { leading: 0.0, gap: base_gap }
+    MainCenter => { leading: remaining / 2.0, gap: base_gap }
+    MainEnd => { leading: remaining, gap: base_gap }
+    SpaceBetween =>
+      if count > 1 {
+        { leading: 0.0, gap: base_gap + remaining / (count.to_double() - 1.0) }
+      } else {
+        { leading: 0.0, gap: base_gap }
+      }
+    SpaceAround => {
+      let extra = remaining / count.to_double()
+      { leading: extra / 2.0, gap: base_gap + extra }
+    }
+    SpaceEvenly => {
+      let extra = remaining / (count.to_double() + 1.0)
+      { leading: extra, gap: base_gap + extra }
+    }
+  }
+}
+
+///|
+priv struct CrossAxisOffset {
+  offset : Double
+  size : Double
+}
+
+///|
+fn cross_axis_offset(
+  alignment : CrossAxisAlignment,
+  available : Double,
+  child : Double,
+) -> CrossAxisOffset {
+  match alignment {
+    CrossStart => { offset: 0.0, size: child }
+    CrossCenter =>
+      { offset: max_double(0.0, available - child) / 2.0, size: child }
+    CrossEnd => { offset: max_double(0.0, available - child), size: child }
+    CrossStretch => { offset: 0.0, size: available }
+  }
+}
+
+///|
+pub fn RenderNode::collect_draw_commands(
+  self : RenderNode,
+  commands : Array[DrawCommand],
+) -> Unit {
+  for command in self.paint_commands {
+    commands.push(command)
+  }
+  for child in self.children {
+    child.collect_draw_commands(commands)
+  }
+}
+
+///|
+pub fn RenderNode::to_layout_result(self : RenderNode) -> LayoutResult {
+  {
+    frame: self.frame,
+    children: self.children.map(child => child.to_layout_result()),
+  }
+}

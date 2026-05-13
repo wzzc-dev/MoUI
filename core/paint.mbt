@@ -22,12 +22,43 @@ pub(all) struct TextRun {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct RoundedRect {
+  rect : Rect
+  radius : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ImageRun {
+  source : String
+  frame : Rect
+  opacity : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct Transform2D {
+  a : Double
+  b : Double
+  c : Double
+  d : Double
+  tx : Double
+  ty : Double
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum DrawCommand {
   Clear(Color)
   FillRect(Rect, Color)
+  StrokeRect(Rect, Color, Double)
+  FillRoundedRect(RoundedRect, Color)
+  StrokeRoundedRect(RoundedRect, Color, Double)
   DrawText(TextRun)
+  DrawImage(ImageRun)
   PushClip(Rect)
   PopClip
+  PushTransform(Transform2D)
+  PopTransform
+  PushOpacity(Double)
+  PopOpacity
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -67,4 +98,14 @@ pub fn FontSpec::new(
   weight? : Int = 400,
 ) -> FontSpec {
   { family, size, weight }
+}
+
+///|
+pub fn RoundedRect::new(rect~ : Rect, radius? : Double = 0.0) -> RoundedRect {
+  { rect, radius }
+}
+
+///|
+pub fn Transform2D::identity() -> Transform2D {
+  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: 0.0, ty: 0.0 }
 }

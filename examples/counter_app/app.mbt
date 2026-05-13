@@ -31,8 +31,8 @@ pub fn CounterApp::runtime(
   width? : Double = 800.0,
   height? : Double = 600.0,
 ) -> @backend.AppRuntime {
-  @backend.AppRuntime::new(
-    root=self.root(),
+  @backend.AppRuntime::new_dynamic(
+    root=() => self.root(),
     size=@core.Size::new(width~, height~),
   )
 }

@@ -1,21 +1,117 @@
 ///|
 pub(all) struct RuntimeState {
-  mut root : ViewNode
+  mut root_spec : ViewSpec
+  mut element_tree : ElementNode
+  mut render_tree : RenderNode
   mut size : Size
   mut needs_redraw : Bool
   mut needs_rebuild : Bool
+  mut needs_layout : Bool
+  mut needs_paint : Bool
+  mut next_element_id : Int
+  root_builder : (() -> ViewNode)?
 }
 
 ///|
 pub fn RuntimeState::new(root~ : ViewNode, size~ : Size) -> RuntimeState {
-  { root, size, needs_redraw: true, needs_rebuild: false }
+  RuntimeState::new_spec(root=root.to_spec(), size~)
+}
+
+///|
+pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
+  let mounted = mount_view_spec_with_next(root, 1)
+  let render_tree = mounted.node.render(
+    Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
+  )
+  {
+    root_spec: root,
+    element_tree: mounted.node,
+    render_tree,
+    size,
+    needs_redraw: true,
+    needs_rebuild: false,
+    needs_layout: false,
+    needs_paint: false,
+    next_element_id: mounted.next_id,
+    root_builder: None,
+  }
+}
+
+///|
+pub fn RuntimeState::new_dynamic(
+  root~ : () -> ViewNode,
+  size~ : Size,
+) -> RuntimeState {
+  let spec = root().to_spec()
+  let mounted = mount_view_spec_with_next(spec, 1)
+  let render_tree = mounted.node.render(
+    Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
+  )
+  {
+    root_spec: spec,
+    element_tree: mounted.node,
+    render_tree,
+    size,
+    needs_redraw: true,
+    needs_rebuild: false,
+    needs_layout: false,
+    needs_paint: false,
+    next_element_id: mounted.next_id,
+    root_builder: Some(root),
+  }
 }
 
 ///|
 pub fn RuntimeState::set_root(self : RuntimeState, root : ViewNode) -> Unit {
-  self.root = root
-  self.needs_rebuild = false
+  self.set_root_spec(root.to_spec())
+}
+
+///|
+pub fn RuntimeState::set_root_spec(
+  self : RuntimeState,
+  root : ViewSpec,
+) -> Unit {
+  self.root_spec = root
+  self.rebuild()
   self.needs_redraw = true
+}
+
+///|
+pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
+  let mounted = mount_view_spec_with_next(root, 1)
+  self.root_spec = root
+  self.element_tree = mounted.node
+  self.next_element_id = mounted.next_id
+  self.needs_rebuild = false
+  self.needs_layout = true
+  self.needs_paint = true
+  self.needs_redraw = true
+  self.layout_pass()
+}
+
+///|
+pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
+  let result = reconcile_element_with_next(
+    self.element_tree,
+    self.root_spec,
+    self.next_element_id,
+  )
+  self.element_tree = result.node
+  self.next_element_id = result.next_id
+  self.needs_rebuild = false
+  self.needs_layout = true
+  self.needs_paint = true
+  self.layout_pass()
+}
+
+///|
+pub fn RuntimeState::layout_pass(self : RuntimeState) -> Unit {
+  self.render_current_tree()
+}
+
+///|
+pub fn RuntimeState::paint_pass(self : RuntimeState) -> Array[DrawCommand] {
+  self.build_draw_commands()
 }
 
 ///|
@@ -27,19 +123,17 @@ pub fn RuntimeState::dispatch_event(
     Resize(size) => {
       self.size = size
       self.needs_redraw = true
+      self.needs_layout = true
+      self.needs_paint = true
     }
     Redraw(_) => self.needs_redraw = false
     Pointer(event) => {
-      let bounds = Rect::new(
-        x=0.0,
-        y=0.0,
-        width=self.size.width,
-        height=self.size.height,
-      )
-      let result = self.root.handle_pointer(event, bounds)
-      self.root = result.node
+      self.ensure_render_tree()
+      let result = self.element_tree.dispatch_pointer(event, self.render_tree)
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
+      self.needs_paint = self.needs_paint || result.changed
+      self.rebuild_if_possible()
     }
     Keyboard(_) => self.needs_redraw = true
     CloseRequested => ()
@@ -48,10 +142,8 @@ pub fn RuntimeState::dispatch_event(
 
 ///|
 pub fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
-  layout_node(
-    self.root,
-    Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
-  )
+  self.ensure_render_tree()
+  self.render_tree.to_layout_result()
 }
 
 ///|
@@ -59,9 +151,37 @@ pub fn RuntimeState::build_draw_commands(
   self : RuntimeState,
 ) -> Array[DrawCommand] {
   let commands : Array[DrawCommand] = [Clear(Color::white())]
-  self.root.paint(
-    Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
-    commands,
-  )
+  self.ensure_render_tree()
+  self.render_tree.collect_draw_commands(commands)
   commands
+}
+
+///|
+pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
+  if self.needs_rebuild {
+    match self.root_builder {
+      Some(builder) => {
+        self.root_spec = builder().to_spec()
+        self.rebuild()
+        self.needs_redraw = true
+      }
+      None => ()
+    }
+  }
+}
+
+///|
+fn RuntimeState::ensure_render_tree(self : RuntimeState) -> Unit {
+  if self.needs_layout || self.needs_paint {
+    self.render_current_tree()
+  }
+}
+
+///|
+fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
+  self.render_tree = self.element_tree.render(
+    Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
+  )
+  self.needs_layout = false
+  self.needs_paint = false
 }

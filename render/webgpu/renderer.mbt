@@ -75,6 +75,52 @@ fn render_commands(
         )
         trace_call(trace, "rect")
       }
+      @core.DrawCommand::StrokeRect(rect, color, width) => {
+        js_webgpu_stroke_rect(
+          renderer,
+          rect.origin.x,
+          rect.origin.y,
+          rect.size.width,
+          rect.size.height,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
+          width,
+        )
+        trace_call(trace, "stroke_rect")
+      }
+      @core.DrawCommand::FillRoundedRect(rounded, color) => {
+        js_webgpu_fill_rounded_rect(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
+        )
+        trace_call(trace, "rounded_rect")
+      }
+      @core.DrawCommand::StrokeRoundedRect(rounded, color, width) => {
+        js_webgpu_stroke_rounded_rect(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
+          width,
+        )
+        trace_call(trace, "stroke_rounded_rect")
+      }
       @core.DrawCommand::DrawText(run) => {
         js_webgpu_draw_text(
           renderer,
@@ -93,6 +139,18 @@ fn render_commands(
         )
         trace_call(trace, "text")
       }
+      @core.DrawCommand::DrawImage(run) => {
+        js_webgpu_draw_image(
+          renderer,
+          run.source,
+          run.frame.origin.x,
+          run.frame.origin.y,
+          run.frame.size.width,
+          run.frame.size.height,
+          run.opacity,
+        )
+        trace_call(trace, "image")
+      }
       @core.DrawCommand::PushClip(rect) => {
         js_webgpu_push_clip(
           renderer,
@@ -106,6 +164,30 @@ fn render_commands(
       @core.DrawCommand::PopClip => {
         js_webgpu_pop_clip(renderer)
         trace_call(trace, "pop_clip")
+      }
+      @core.DrawCommand::PushTransform(transform) => {
+        js_webgpu_push_transform(
+          renderer,
+          transform.a,
+          transform.b,
+          transform.c,
+          transform.d,
+          transform.tx,
+          transform.ty,
+        )
+        trace_call(trace, "push_transform")
+      }
+      @core.DrawCommand::PopTransform => {
+        js_webgpu_pop_transform(renderer)
+        trace_call(trace, "pop_transform")
+      }
+      @core.DrawCommand::PushOpacity(opacity) => {
+        js_webgpu_push_opacity(renderer, opacity)
+        trace_call(trace, "push_opacity")
+      }
+      @core.DrawCommand::PopOpacity => {
+        js_webgpu_pop_opacity(renderer)
+        trace_call(trace, "pop_opacity")
       }
     }
   }
@@ -174,6 +256,62 @@ extern "js" fn js_webgpu_fill_rect(
   #|}
 
 ///|
+extern "js" fn js_webgpu_stroke_rect(
+  renderer : WebGpuRenderer,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
+  stroke_width : Double,
+) -> Unit =
+  #|(renderer, x, y, width, height, r, g, b, a, strokeWidth) => {
+  #|  renderer?.strokeRect?.(x, y, width, height, r, g, b, a, strokeWidth);
+  #|}
+
+///|
+extern "js" fn js_webgpu_fill_rounded_rect(
+  renderer : WebGpuRenderer,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  radius : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
+) -> Unit =
+  #|(renderer, x, y, width, height, radius, r, g, b, a) => {
+  #|  if (renderer?.fillRoundedRect) {
+  #|    renderer.fillRoundedRect(x, y, width, height, radius, r, g, b, a);
+  #|  } else {
+  #|    renderer?.fillRect?.(x, y, width, height, r, g, b, a);
+  #|  }
+  #|}
+
+///|
+extern "js" fn js_webgpu_stroke_rounded_rect(
+  renderer : WebGpuRenderer,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  radius : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
+  stroke_width : Double,
+) -> Unit =
+  #|(renderer, x, y, width, height, radius, r, g, b, a, strokeWidth) => {
+  #|  renderer?.strokeRoundedRect?.(x, y, width, height, radius, r, g, b, a, strokeWidth);
+  #|}
+
+///|
 extern "js" fn js_webgpu_draw_text(
   renderer : WebGpuRenderer,
   text : String,
@@ -194,6 +332,20 @@ extern "js" fn js_webgpu_draw_text(
   #|}
 
 ///|
+extern "js" fn js_webgpu_draw_image(
+  renderer : WebGpuRenderer,
+  source : String,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  opacity : Double,
+) -> Unit =
+  #|(renderer, source, x, y, width, height, opacity) => {
+  #|  renderer?.drawImage?.(source, x, y, width, height, opacity);
+  #|}
+
+///|
 extern "js" fn js_webgpu_push_clip(
   renderer : WebGpuRenderer,
   x : Double,
@@ -209,6 +361,41 @@ extern "js" fn js_webgpu_push_clip(
 extern "js" fn js_webgpu_pop_clip(renderer : WebGpuRenderer) -> Unit =
   #|(renderer) => {
   #|  renderer?.popClip?.();
+  #|}
+
+///|
+extern "js" fn js_webgpu_push_transform(
+  renderer : WebGpuRenderer,
+  a : Double,
+  b : Double,
+  c : Double,
+  d : Double,
+  tx : Double,
+  ty : Double,
+) -> Unit =
+  #|(renderer, a, b, c, d, tx, ty) => {
+  #|  renderer?.pushTransform?.(a, b, c, d, tx, ty);
+  #|}
+
+///|
+extern "js" fn js_webgpu_pop_transform(renderer : WebGpuRenderer) -> Unit =
+  #|(renderer) => {
+  #|  renderer?.popTransform?.();
+  #|}
+
+///|
+extern "js" fn js_webgpu_push_opacity(
+  renderer : WebGpuRenderer,
+  opacity : Double,
+) -> Unit =
+  #|(renderer, opacity) => {
+  #|  renderer?.pushOpacity?.(opacity);
+  #|}
+
+///|
+extern "js" fn js_webgpu_pop_opacity(renderer : WebGpuRenderer) -> Unit =
+  #|(renderer) => {
+  #|  renderer?.popOpacity?.();
   #|}
 
 ///|

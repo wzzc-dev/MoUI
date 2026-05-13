@@ -45,3 +45,20 @@ test "clear only commands produce empty rect vertices" {
     content="0",
   )
 }
+
+///|
+test "rounded rects are collectable as rect batches for simple renderers" {
+  let batches = @render.collect_rect_batches([
+    @core.DrawCommand::FillRoundedRect(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0),
+        radius=6.0,
+      ),
+      @core.Color::gray(),
+    ),
+  ])
+  inspect(batches.length(), content="1")
+  assert_true(
+    batches[0].rect == @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0),
+  )
+}
