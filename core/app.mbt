@@ -9,6 +9,7 @@ pub(all) struct RuntimeState {
   mut needs_layout : Bool
   mut needs_paint : Bool
   mut next_element_id : Int
+  mut dirty_elements : Array[ElementId]
   root_builder : (() -> ViewNode)?
 }
 
@@ -33,6 +34,7 @@ pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
     needs_layout: false,
     needs_paint: false,
     next_element_id: mounted.next_id,
+    dirty_elements: [],
     root_builder: None,
   }
 }
@@ -57,6 +59,7 @@ pub fn RuntimeState::new_dynamic(
     needs_layout: false,
     needs_paint: false,
     next_element_id: mounted.next_id,
+    dirty_elements: [],
     root_builder: Some(root),
   }
 }
@@ -86,6 +89,7 @@ pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
   self.needs_layout = true
   self.needs_paint = true
   self.needs_redraw = true
+  self.mark_dirty(mounted.node.id)
   self.layout_pass()
 }
 
@@ -101,6 +105,7 @@ pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
   self.needs_rebuild = false
   self.needs_layout = true
   self.needs_paint = true
+  self.mark_dirty(self.element_tree.id)
   self.layout_pass()
 }
 
@@ -125,6 +130,7 @@ pub fn RuntimeState::dispatch_event(
       self.needs_redraw = true
       self.needs_layout = true
       self.needs_paint = true
+      self.mark_dirty(self.element_tree.id)
     }
     Redraw(_) => self.needs_redraw = false
     Pointer(event) => {
@@ -133,6 +139,9 @@ pub fn RuntimeState::dispatch_event(
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
       self.needs_paint = self.needs_paint || result.changed
+      if result.changed || result.activated {
+        self.mark_dirty(self.element_tree.id)
+      }
       self.rebuild_if_possible()
     }
     Keyboard(_) => self.needs_redraw = true
@@ -151,6 +160,7 @@ pub fn RuntimeState::build_draw_commands(
   self : RuntimeState,
 ) -> Array[DrawCommand] {
   let commands : Array[DrawCommand] = [Clear(Color::white())]
+  self.rebuild_if_possible()
   self.ensure_render_tree()
   self.render_tree.collect_draw_commands(commands)
   commands
@@ -184,4 +194,24 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   )
   self.needs_layout = false
   self.needs_paint = false
+  self.clear_dirty_queue()
+}
+
+///|
+pub fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
+  if !self.dirty_elements.any(existing => existing == id) {
+    self.dirty_elements.push(id)
+  }
+  self.needs_paint = true
+  self.needs_redraw = true
+}
+
+///|
+pub fn RuntimeState::dirty_count(self : RuntimeState) -> Int {
+  self.dirty_elements.length()
+}
+
+///|
+pub fn RuntimeState::clear_dirty_queue(self : RuntimeState) -> Unit {
+  self.dirty_elements.clear()
 }

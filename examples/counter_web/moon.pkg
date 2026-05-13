@@ -1,12 +1,18 @@
 import {
   "wzzc-dev/moui/backend/web" @web,
   "wzzc-dev/moui/examples/counter_app" @counter_app,
+  "wzzc-dev/moui/examples/todo_app" @todo_app,
 }
 
 supported_targets = "js"
 
 options(
   "is-main": true,
-  link: { "js": { "exports": [ "start_counter_web" ], "format": "iife" } },
+  link: {
+    "js": {
+      "exports": [ "start_counter_web", "start_todo_web" ],
+      "format": "iife",
+    },
+  },
   targets: { "main.mbt": [ "js" ] },
 )

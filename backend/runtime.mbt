@@ -97,3 +97,8 @@ pub fn AppRuntime::needs_layout(self : AppRuntime) -> Bool {
 pub fn AppRuntime::needs_paint(self : AppRuntime) -> Bool {
   self.state.needs_paint
 }
+
+///|
+pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
+  self.state.dirty_count()
+}

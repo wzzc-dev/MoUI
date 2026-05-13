@@ -16,6 +16,8 @@ pub fn measure_node(ViewNode, Constraints) -> Size
 
 pub fn mount_view_spec(ViewSpec) -> ElementNode
 
+pub fn recognize_button_tap(ButtonState, Bool, PointerPhase) -> TapGestureResult
+
 pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 
 // Errors
@@ -33,6 +35,13 @@ pub(all) enum Axis {
   Horizontal
   Vertical
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct Binding[T] {
+  state : State[T]
+}
+pub fn[T] Binding::get(Self[T]) -> T
+pub fn[T] Binding::set(Self[T], T) -> Unit
+pub fn[T] Binding::update(Self[T], (T) -> T raise?) -> Unit raise?
 
 pub(all) struct ButtonData {
   text : String
@@ -316,12 +325,16 @@ pub(all) struct RuntimeState {
   mut needs_layout : Bool
   mut needs_paint : Bool
   mut next_element_id : Int
+  mut dirty_elements : Array[ElementId]
   root_builder : (() -> ViewNode)?
 }
 pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
+pub fn RuntimeState::clear_dirty_queue(Self) -> Unit
+pub fn RuntimeState::dirty_count(Self) -> Int
 pub fn RuntimeState::dispatch_event(Self, AppEvent) -> Unit
 pub fn RuntimeState::layout(Self) -> LayoutResult
 pub fn RuntimeState::layout_pass(Self) -> Unit
+pub fn RuntimeState::mark_dirty(Self, ElementId) -> Unit
 pub fn RuntimeState::mount(Self, ViewSpec) -> Unit
 pub fn RuntimeState::new(root~ : ViewNode, size~ : Size) -> Self
 pub fn RuntimeState::new_dynamic(root~ : () -> ViewNode, size~ : Size) -> Self
@@ -349,6 +362,16 @@ pub(all) struct SpacerViewSpec {
   min_length : Double
 }
 
+pub(all) struct State[T] {
+  slot : StateSlot[T]
+}
+pub fn[T] State::binding(Self[T]) -> Binding[T]
+pub fn[T] State::get(Self[T]) -> T
+pub fn[T] State::new(T) -> Self[T]
+pub fn[T] State::set(Self[T], T) -> Unit
+pub fn[T] State::update(Self[T], (T) -> T raise?) -> Unit raise?
+pub fn[T] State::version(Self[T]) -> Int
+
 pub(all) struct StateSlot[T] {
   mut value : T
   mut version : Int
@@ -362,6 +385,11 @@ pub(all) struct StyledData {
   style : ViewStyle
   child : ViewNode
 }
+
+pub(all) struct TapGestureResult {
+  next_state : ButtonState
+  activated : Bool
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TextRun {
   text : String

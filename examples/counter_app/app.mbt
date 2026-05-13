@@ -1,16 +1,16 @@
 ///|
 pub struct CounterApp {
-  mut count : Int
+  count : @core.State[Int]
 }
 
 ///|
 pub fn CounterApp::new() -> CounterApp {
-  { count: 0 }
+  { count: @core.State::new(0) }
 }
 
 ///|
 pub fn CounterApp::increment(self : CounterApp) -> Unit {
-  self.count = self.count + 1
+  self.count.update(value => value + 1)
 }
 
 ///|
@@ -18,7 +18,7 @@ pub fn CounterApp::root(self : CounterApp) -> @core.ViewNode {
   @views.column(
     [
       @views.label("MoUI Counter"),
-      @views.label("Count: \{self.count}"),
+      @views.label("Count: \{self.count.get()}"),
       @views.button_on_click("Increment", () => self.increment()),
     ],
     spacing=12.0,
@@ -42,7 +42,6 @@ pub fn CounterApp::sync_runtime(
   self : CounterApp,
   runtime : @backend.AppRuntime,
 ) -> Unit {
-  if runtime.needs_rebuild() {
-    runtime.set_root(self.root())
-  }
+  ignore(self)
+  ignore(runtime)
 }

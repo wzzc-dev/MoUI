@@ -19,6 +19,7 @@ pub fn event_kind_to_core(BackendEventKind, size? : @core.Size, position? : @cor
 pub struct AppRuntime {
   state : @core.RuntimeState
 }
+pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dispatch_event(Self, @core.AppEvent) -> Unit
 pub fn AppRuntime::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn AppRuntime::layout_pass(Self) -> Unit

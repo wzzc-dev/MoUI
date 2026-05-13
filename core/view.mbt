@@ -428,15 +428,8 @@ fn handle_button_pointer(
   frame : Rect,
 ) -> PointerDispatch {
   let inside = frame.contains(event.position)
-  let was_pressed = data.state == Pressed
-  let next = match event.phase {
-    Move => if inside { Hovered } else { Normal }
-    Down => if inside { Pressed } else { Normal }
-    Up => if inside { Hovered } else { Normal }
-    Cancel => Normal
-  }
-  let activated = event.phase == Up && inside && was_pressed
-  if activated {
+  let tap = recognize_button_tap(data.state, inside, event.phase)
+  if tap.activated {
     match data.on_click {
       Some(handler) => handler()
       None => ()
@@ -446,11 +439,11 @@ fn handle_button_pointer(
     node: Button({
       text: data.text,
       size: data.size,
-      state: next,
+      state: tap.next_state,
       on_click: data.on_click,
     }),
-    changed: next != data.state || activated,
-    activated,
+    changed: tap.next_state != data.state || tap.activated,
+    activated: tap.activated,
   }
 }
 

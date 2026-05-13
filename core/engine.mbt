@@ -663,7 +663,12 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     EmptySpec => Size::new(width=0.0, height=0.0)
     TextSpec(data) => data.size
     ButtonSpec(data) => data.size
-    SpacerSpec(data) => Size::new(width=data.min_length, height=data.min_length)
+    SpacerSpec(data) =>
+      if data.min_length == 0.0 {
+        Size::new(width=0.0, height=0.0)
+      } else {
+        Size::new(width=data.min_length, height=data.min_length)
+      }
     PaddingSpec(data) =>
       if self.children.length() > 0 {
         self.children[0].intrinsic_size().inflate(data.insets)
@@ -730,41 +735,19 @@ fn handle_button_element_pointer(
   frame : Rect,
 ) -> ElementEventResult {
   let inside = frame.contains(event.position)
-  let was_pressed = element.button_state == ButtonState::Pressed
-  let next = match event.phase {
-    PointerPhase::Move =>
-      if inside {
-        ButtonState::Hovered
-      } else {
-        ButtonState::Normal
-      }
-    PointerPhase::Down =>
-      if inside {
-        ButtonState::Pressed
-      } else {
-        ButtonState::Normal
-      }
-    PointerPhase::Up =>
-      if inside {
-        ButtonState::Hovered
-      } else {
-        ButtonState::Normal
-      }
-    PointerPhase::Cancel => ButtonState::Normal
-  }
-  let activated = event.phase == PointerPhase::Up && inside && was_pressed
-  if activated {
+  let tap = recognize_button_tap(element.button_state, inside, event.phase)
+  if tap.activated {
     match data.on_click {
       Some(handler) => handler()
       None => ()
     }
   }
-  let changed = next != element.button_state || activated
-  element.button_state = next
+  let changed = tap.next_state != element.button_state || tap.activated
+  element.button_state = tap.next_state
   if changed {
     element.dirty.mark_paint()
   }
-  { changed, activated }
+  { changed, activated: tap.activated }
 }
 
 ///|
@@ -813,12 +796,18 @@ fn flex_child_frames(
   } else {
     let total_spacing = spacing * (count.to_double() - 1.0)
     let mut child_main_total = 0.0
+    let mut spacer_count = 0
     for size in child_sizes {
       let child_main = match axis {
         Axis::Horizontal => size.width
         Axis::Vertical => size.height
       }
       child_main_total = child_main_total + child_main
+    }
+    for child_size in child_sizes {
+      if child_size.width == 0.0 && child_size.height == 0.0 {
+        spacer_count = spacer_count + 1
+      }
     }
     let available_main = match axis {
       Axis::Horizontal => bounds.size.width
@@ -828,12 +817,25 @@ fn flex_child_frames(
       0.0,
       available_main - child_main_total - total_spacing,
     )
-    let offsets = flex_offsets(main_axis_alignment, remaining, spacing, count)
+    let spacer_main = if spacer_count > 0 {
+      remaining / spacer_count.to_double()
+    } else {
+      0.0
+    }
+    let alignment_remaining = if spacer_count > 0 { 0.0 } else { remaining }
+    let offsets = flex_offsets(
+      main_axis_alignment, alignment_remaining, spacing, count,
+    )
     let mut cursor = offsets.leading
     for size in child_sizes {
-      let main_size = match axis {
+      let intrinsic_main_size = match axis {
         Axis::Horizontal => size.width
         Axis::Vertical => size.height
+      }
+      let main_size = if size.width == 0.0 && size.height == 0.0 {
+        spacer_main
+      } else {
+        intrinsic_main_size
       }
       let cross_size = match axis {
         Axis::Horizontal => size.height

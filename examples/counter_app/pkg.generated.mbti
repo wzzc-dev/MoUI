@@ -12,7 +12,7 @@ import {
 
 // Types and methods
 pub struct CounterApp {
-  mut count : Int
+  count : @core.State[Int]
 }
 pub fn CounterApp::increment(Self) -> Unit
 pub fn CounterApp::new() -> Self

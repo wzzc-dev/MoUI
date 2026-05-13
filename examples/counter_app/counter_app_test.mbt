@@ -27,9 +27,8 @@ test "counter app rebuilds root through dynamic runtime after click" {
     ),
   )
   inspect(runtime.needs_rebuild(), content="false")
-  app.sync_runtime(runtime)
   inspect(runtime.needs_rebuild(), content="false")
-  inspect(app.count, content="1")
+  inspect(app.count.get(), content="1")
   let commands = runtime.draw_commands()
   guard commands
     is [

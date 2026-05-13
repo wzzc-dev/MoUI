@@ -46,6 +46,26 @@ test "engine applies flex main and cross axis alignment" {
 }
 
 ///|
+test "engine allocates remaining flex space to spacers" {
+  let spec = ViewNode::Flex({
+    axis: Axis::Horizontal,
+    spacing: 0.0,
+    main_axis_alignment: MainStart,
+    cross_axis_alignment: CrossStretch,
+    children: [
+      test_label("A"),
+      ViewNode::Spacer({ min_length: 0.0 }),
+      test_label("B"),
+    ],
+  }).to_spec()
+  let render = mount_view_spec(spec).render(
+    Rect::new(x=0.0, y=0.0, width=240.0, height=40.0),
+  )
+  inspect(render.children[1].frame.size.width, content="80")
+  inspect(render.children[2].frame.origin.x, content="160")
+}
+
+///|
 test "engine reconciles keyed children by identity" {
   let old = mount_view_spec(
     ViewNode::Flex({
@@ -104,6 +124,44 @@ test "state slot version increments on set and update" {
   slot.update(value => value + 1)
   inspect(slot.get(), content="3")
   inspect(slot.version, content="2")
+}
+
+///|
+test "state and binding share updates" {
+  let state = State::new(1)
+  let binding = state.binding()
+  binding.set(2)
+  inspect(state.get(), content="2")
+  binding.update(value => value + 3)
+  inspect(state.get(), content="5")
+  inspect(state.version(), content="2")
+}
+
+///|
+test "dirty queue records and clears runtime work" {
+  let runtime = RuntimeState::new_spec(
+    root=test_label("A").to_spec(),
+    size=Size::new(width=100.0, height=40.0),
+  )
+  inspect(runtime.dirty_count(), content="0")
+  runtime.mark_dirty(runtime.element_tree.id)
+  runtime.mark_dirty(runtime.element_tree.id)
+  inspect(runtime.dirty_count(), content="1")
+  ignore(runtime.build_draw_commands())
+  inspect(runtime.dirty_count(), content="0")
+}
+
+///|
+test "tap recognizer activates only pressed pointer up inside" {
+  let down = recognize_button_tap(Normal, true, Down)
+  assert_true(down.next_state == Pressed)
+  inspect(down.activated, content="false")
+  let up = recognize_button_tap(Pressed, true, Up)
+  assert_true(up.next_state == Hovered)
+  inspect(up.activated, content="true")
+  let cancel = recognize_button_tap(Pressed, false, Cancel)
+  assert_true(cancel.next_state == Normal)
+  inspect(cancel.activated, content="false")
 }
 
 ///|

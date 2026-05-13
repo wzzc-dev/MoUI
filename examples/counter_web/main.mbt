@@ -14,6 +14,22 @@ pub fn start_counter_web(context : @web.WebBootContext) -> @web.WebApp {
 }
 
 ///|
+pub fn start_todo_web(context : @web.WebBootContext) -> @web.WebApp {
+  let app_state = @todo_app.TodoApp::new()
+  app_state.add("Try MoUI")
+  let runtime = app_state.runtime(
+    width=context.width(),
+    height=context.height(),
+  )
+  let app = @web.WebApp::new(runtime~, renderer=context.renderer(), rebuild=runtime => {
+    ignore(runtime)
+  })
+  app.attach_dom_events(context)
+  app.start()
+  app
+}
+
+///|
 extern "js" fn has_boot_context() -> Bool =
   #|() => globalThis.__mouiBootContext !== undefined
 

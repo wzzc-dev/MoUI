@@ -35,6 +35,7 @@ test "app runtime dispatches events and draws" {
     @core.AppEvent::Resize(@core.Size::new(width=240.0, height=160.0)),
   )
   assert_true(runtime.size() == @core.Size::new(width=240.0, height=160.0))
+  inspect(runtime.dirty_count(), content="1")
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
@@ -44,4 +45,6 @@ test "app runtime dispatches events and draws" {
     ),
   )
   inspect(runtime.needs_redraw(), content="true")
+  ignore(runtime.draw_commands())
+  inspect(runtime.dirty_count(), content="0")
 }
