@@ -36,6 +36,15 @@ moon run examples/counter --target native
 GitHub release 下载器，可将 `MBT_WGPU_NATIVE_ROOT` 指向已解压的官方
 `wgpu-macos-aarch64-release` 目录。
 
+### web 示例   
+
+```bash
+moon build examples/counter_web --target js
+Copy-Item examples/counter_web/bootstrap.js  _build\js\debug\build\examples\counter_web\bootstrap.js -Force
+Copy-Item examples/counter_web/index.html _build\js\debug\build\examples\counter_web\index.html -Force
+python -m http.server 8080 --bind 127.0.0.1 --directory _build\js\debug\build\examples\counter_web\
+```
+
 ## 已知限制
 
 - 文本渲染首版使用占位几何，不包含字体栅格化。
