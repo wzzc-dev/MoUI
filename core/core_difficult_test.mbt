@@ -28,7 +28,7 @@ test "runtime event marks redraw" {
 
 ///|
 test "button click requires press then release inside" {
-  let clicks = Ref::new(0)
+  let clicks = Ref(0)
   let root = ViewNode::Button({
     text: "tap",
     size: Size::new(width=100.0, height=40.0),

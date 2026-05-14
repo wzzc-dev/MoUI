@@ -166,7 +166,7 @@ test "tap recognizer activates only pressed pointer up inside" {
 
 ///|
 test "runtime dynamic builder rebuilds after activated pointer" {
-  let clicks = Ref::new(0)
+  let clicks = Ref(0)
   let runtime = RuntimeState::new_dynamic(
     root=() => {
       ViewNode::Button({

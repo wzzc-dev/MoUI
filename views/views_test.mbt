@@ -31,7 +31,7 @@ test "button pointer states" {
 
 ///|
 test "button on click callback" {
-  let clicks = Ref::new(0)
+  let clicks = Ref(0)
   let frame = @core.Rect::new(x=0.0, y=0.0, width=100.0, height=50.0)
   let pressed = @views.handle_button_pointer(
     @views.button_on_click("Tap", () => clicks.val = clicks.val + 1),
