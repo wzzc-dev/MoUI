@@ -6,6 +6,39 @@ pub(all) struct HostSurfaceMetrics {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum HostBackendKind {
+  Native
+  Web
+  WebWasm
+  Test
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostAppInfo {
+  backend : HostBackendKind
+  uses_shared_event_model : Bool
+  uses_shared_surface_model : Bool
+  uses_shared_input_model : Bool
+  description : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct InputHostState {
+  mut focused : Bool
+  mut modifiers : @core.KeyModifiers
+  text_input_supported : Bool
+  ime_supported : Bool
+  clipboard_supported : Bool
+}
+
+///|
+pub(all) struct SurfaceHostState {
+  mut metrics : HostSurfaceMetrics
+  owns_surface : Bool
+  can_reconfigure : Bool
+}
+
+///|
 pub(all) enum HostEvent {
   Resized(HostSurfaceMetrics)
   PointerMoved(@core.Point)
@@ -59,6 +92,112 @@ pub fn HostSurfaceMetrics::from_logical(
     ),
     scale_factor,
   }
+}
+
+///|
+pub fn HostAppInfo::new(
+  backend~ : HostBackendKind,
+  description? : String = "",
+  uses_shared_event_model? : Bool = true,
+  uses_shared_surface_model? : Bool = true,
+  uses_shared_input_model? : Bool = true,
+) -> HostAppInfo {
+  {
+    backend,
+    uses_shared_event_model,
+    uses_shared_surface_model,
+    uses_shared_input_model,
+    description,
+  }
+}
+
+///|
+pub fn InputHostState::new(
+  focused? : Bool = false,
+  modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
+  text_input_supported? : Bool = true,
+  ime_supported? : Bool = false,
+  clipboard_supported? : Bool = false,
+) -> InputHostState {
+  {
+    focused,
+    modifiers,
+    text_input_supported,
+    ime_supported,
+    clipboard_supported,
+  }
+}
+
+///|
+pub fn InputHostState::focus(self : InputHostState) -> Unit {
+  self.focused = true
+}
+
+///|
+pub fn InputHostState::blur(self : InputHostState) -> Unit {
+  self.focused = false
+}
+
+///|
+pub fn InputHostState::set_modifiers(
+  self : InputHostState,
+  modifiers : @core.KeyModifiers,
+) -> Unit {
+  self.modifiers = modifiers
+}
+
+///|
+pub fn InputHostState::keyboard_event(
+  self : InputHostState,
+  key~ : String,
+  text? : String? = None,
+  pressed? : Bool = true,
+  repeat? : Bool = false,
+) -> HostEvent {
+  HostEvent::Keyboard(
+    @core.KeyboardEvent::new(
+      key~,
+      text~,
+      pressed~,
+      repeat~,
+      modifiers=self.modifiers,
+    ),
+  )
+}
+
+///|
+pub fn InputHostState::text_input_event(
+  self : InputHostState,
+  text : String,
+) -> HostEvent? {
+  if self.focused && self.text_input_supported {
+    Some(HostEvent::TextInput(text))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn SurfaceHostState::new(
+  metrics~ : HostSurfaceMetrics,
+  owns_surface? : Bool = false,
+  can_reconfigure? : Bool = true,
+) -> SurfaceHostState {
+  { metrics, owns_surface, can_reconfigure }
+}
+
+///|
+pub fn SurfaceHostState::resize(
+  self : SurfaceHostState,
+  metrics : HostSurfaceMetrics,
+) -> HostEvent {
+  self.metrics = metrics
+  HostEvent::Resized(metrics)
+}
+
+///|
+pub fn SurfaceHostState::logical_size(self : SurfaceHostState) -> @core.Size {
+  self.metrics.logical_size
 }
 
 ///|

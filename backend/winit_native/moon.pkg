@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/host" @host,
+  "wzzc-dev/moui/backend/windows" @windows,
+  "Milky2018/window/core" @window_core,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

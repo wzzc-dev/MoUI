@@ -57,6 +57,37 @@ pub fn canvas_metrics(
 }
 
 ///|
+pub fn web_wasm_host_info() -> @host.HostAppInfo {
+  @host.HostAppInfo::new(
+    backend=@host.HostBackendKind::WebWasm,
+    description="future winit canvas + wgpu wasm host",
+  )
+}
+
+///|
+pub fn canvas_surface_host(
+  logical_width~ : Double,
+  logical_height~ : Double,
+  scale_factor? : Double = 1.0,
+) -> @host.SurfaceHostState {
+  @host.SurfaceHostState::new(
+    metrics=canvas_metrics(logical_width~, logical_height~, scale_factor~),
+    owns_surface=false,
+    can_reconfigure=true,
+  )
+}
+
+///|
+pub fn canvas_input_host() -> @host.InputHostState {
+  @host.InputHostState::new(
+    focused=false,
+    text_input_supported=true,
+    ime_supported=false,
+    clipboard_supported=false,
+  )
+}
+
+///|
 pub fn request_animation_frame_event() -> @host.HostEvent {
   @host.HostEvent::RedrawRequested
 }

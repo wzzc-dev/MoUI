@@ -10,6 +10,71 @@ test "host surface metrics tracks logical physical and dpr" {
 }
 
 ///|
+test "host app info records shared model boundaries" {
+  let info = HostAppInfo::new(
+    backend=HostBackendKind::Native,
+    description="winit native",
+  )
+  assert_true(info.backend == HostBackendKind::Native)
+  inspect(info.uses_shared_event_model, content="true")
+  inspect(info.uses_shared_surface_model, content="true")
+  inspect(info.uses_shared_input_model, content="true")
+}
+
+///|
+test "input host owns focus modifiers and text input gating" {
+  let input = InputHostState::new()
+  match input.text_input_event("a") {
+    None => ()
+    Some(_) => fail("unfocused input host should not emit text")
+  }
+  input.focus()
+  input.set_modifiers(@core.KeyModifiers::new(shift=true))
+  let key_event = input.keyboard_event(key="A", text=Some("A"))
+  match key_event {
+    HostEvent::Keyboard(event) => {
+      inspect(event.key, content="A")
+      inspect(event.modifiers.shift, content="true")
+    }
+    _ => fail("expected keyboard event")
+  }
+  match input.text_input_event("A") {
+    Some(HostEvent::TextInput(text)) => inspect(text, content="A")
+    _ => fail("expected focused text input")
+  }
+  input.blur()
+  match input.text_input_event("b") {
+    None => ()
+    Some(_) => fail("blurred input host should not emit text")
+  }
+}
+
+///|
+test "surface host resizes through host event" {
+  let surface = SurfaceHostState::new(
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=10.0, height=10.0),
+    ),
+    owns_surface=true,
+  )
+  let event = surface.resize(
+    HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=20.0, height=12.0),
+      scale_factor=2.0,
+    ),
+  )
+  match event {
+    HostEvent::Resized(metrics) => {
+      assert_true(surface.logical_size() == @core.Size::new(width=20.0, height=12.0))
+      assert_true(metrics.physical_size == @core.Size::new(width=40.0, height=24.0))
+      inspect(surface.owns_surface, content="true")
+      inspect(surface.can_reconfigure, content="true")
+    }
+    _ => fail("expected resize event")
+  }
+}
+
+///|
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
   let runtime = @backend.AppRuntime::new(

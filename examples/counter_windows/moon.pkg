@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/backend/windows" @backend_windows,
+  "wzzc-dev/moui/backend/winit_native" @winit_native,
   "wzzc-dev/moui/examples/counter_app" @counter_app,
 }
 
