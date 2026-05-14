@@ -2,8 +2,9 @@
 test "web wasm backend is experimental and keeps js fallback" {
   let info = experimental_backend_info()
   assert_true(info.status == WebWasmBackendStatus::Experimental)
+  inspect(info.uses_window_web_backend, content="true")
   inspect(info.uses_winit_canvas_host, content="true")
-  inspect(info.uses_wgpu_wasm_surface, content="true")
+  inspect(info.uses_wgpu_wasm_surface, content="false")
   inspect(info.keeps_js_webgpu_fallback, content="true")
 }
 

@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/host" @host,
+  "Milky2018/window/core" @window_core,
+  "Milky2018/window/dpi" @dpi,
+  "Milky2018/window/web" @web,
+}
+
+supported_targets = "wasm-gc"
+
+options(
+  link: { "wasm-gc": { "exports": [ "web_dispatch_event" ] } },
+  targets: { },
+)

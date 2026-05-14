@@ -7,6 +7,7 @@ pub(all) enum WebWasmBackendStatus {
 ///|
 pub(all) struct WebWasmBackendInfo {
   status : WebWasmBackendStatus
+  uses_window_web_backend : Bool
   uses_winit_canvas_host : Bool
   uses_wgpu_wasm_surface : Bool
   keeps_js_webgpu_fallback : Bool
@@ -26,10 +27,11 @@ pub(all) struct CanvasHostConstraints {
 pub fn experimental_backend_info() -> WebWasmBackendInfo {
   {
     status: WebWasmBackendStatus::Experimental,
+    uses_window_web_backend: true,
     uses_winit_canvas_host: true,
-    uses_wgpu_wasm_surface: true,
+    uses_wgpu_wasm_surface: false,
     keeps_js_webgpu_fallback: true,
-    description: "Experimental boundary for future winit canvas + wgpu wasm hosting; current JS WebGPU backend remains the default path.",
+    description: "Milky2018/window web can host wasm-gc canvas events; wgpu wasm renderer remains pending, so current JS WebGPU backend remains the fallback path.",
   }
 }
 
