@@ -2,7 +2,7 @@
 struct WindowsApp {
   title : String
   mut window : @win.Window?
-  mut renderer : @native_wgpu.RendererHandle?
+  mut renderer : @wgpu_renderer.WgpuRenderer?
   runtime : @backend.AppRuntime
   driver : @host.HostRuntimeDriver
   mut last_pointer : @core.Point
@@ -153,13 +153,8 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
           ),
         ),
       )
-      let renderer : @native_wgpu.RendererHandle? = Some(
-        @native_wgpu.RendererHandle::create_with_host_surface(
-          size,
-          @native_wgpu.NativeSurfaceFactory::create_windows_hwnd(
-            window.window_handle(),
-          ),
-        ),
+      let renderer : @wgpu_renderer.WgpuRenderer? = Some(
+        @wgpu_renderer.create_with_windows_hwnd(size, window.window_handle()),
       ) catch {
         err => {
           println("error creating Windows WGPU renderer: \{err.message()}")
