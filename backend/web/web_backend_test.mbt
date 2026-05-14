@@ -32,7 +32,7 @@ test "web app maps resize and schedules redraw" {
 
 ///|
 test "web app maps pointer click, rebuilds dynamic root, and requests redraw" {
-  let clicked = Ref::new(false)
+  let clicked = Ref(false)
   let runtime = @backend.AppRuntime::new_dynamic(
     root=() => {
       @core.ViewNode::Button({
@@ -62,6 +62,31 @@ test "web app maps pointer click, rebuilds dynamic root, and requests redraw" {
     ] else {
     fail("expected dynamic runtime to rebuild clicked button text")
   }
+}
+
+///|
+test "web app maps keyboard into focused text field" {
+  let text = @core.State::new("")
+  let runtime = @backend.AppRuntime::new(
+    root=@core.ViewNode::TextField({
+      value: text.binding(),
+      placeholder: "Type",
+      size: @core.Size::new(width=240.0, height=40.0),
+      on_submit: None,
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let app = @web.WebApp::new(runtime~, renderer=test_renderer())
+  ignore(app.keyboard("a", text=Some("a")))
+  inspect(text.get(), content="")
+  ignore(app.pointer_down(10.0, 10.0))
+  let result = app.keyboard(
+    "a",
+    text=Some("a"),
+    modifiers=@core.KeyModifiers::new(shift=true),
+  )
+  inspect(text.get(), content="a")
+  inspect(result.redraw_requested, content="true")
 }
 
 ///|

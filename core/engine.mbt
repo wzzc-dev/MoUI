@@ -83,6 +83,23 @@ pub(all) struct ButtonViewSpec {
 }
 
 ///|
+pub(all) struct TextFieldViewSpec {
+  key : Key?
+  value : Binding[String]
+  placeholder : String
+  size : Size
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Color
+  border_color : Color
+  focused_border_color : Color
+  cursor_color : Color
+  corner_radius : Double
+  on_submit : (() -> Unit)?
+}
+
+///|
 pub(all) struct FlexViewSpec {
   key : Key?
   axis : Axis
@@ -119,6 +136,7 @@ pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
   ButtonSpec(ButtonViewSpec)
+  TextFieldSpec(TextFieldViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)
@@ -148,6 +166,7 @@ pub(all) struct RenderNode {
 pub(all) struct ElementEventResult {
   changed : Bool
   activated : Bool
+  focused : ElementId?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -295,6 +314,7 @@ pub fn ViewSpec::key(self : ViewSpec) -> Key? {
     EmptySpec => None
     TextSpec(data) => data.key
     ButtonSpec(data) => data.key
+    TextFieldSpec(data) => data.key
     FlexSpec(data) => data.key
     PaddingSpec(data) => data.key
     ContainerSpec(data) => data.key
@@ -308,6 +328,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     EmptySpec => EmptySpec
     TextSpec(data) => TextSpec({ ..data, key: Some(key) })
     ButtonSpec(data) => ButtonSpec({ ..data, key: Some(key) })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, key: Some(key) })
     FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
     PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
     ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
@@ -321,10 +342,11 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     EmptySpec => 0
     TextSpec(_) => 1
     ButtonSpec(_) => 2
-    FlexSpec(_) => 3
-    PaddingSpec(_) => 4
-    ContainerSpec(_) => 5
-    SpacerSpec(_) => 6
+    TextFieldSpec(_) => 3
+    FlexSpec(_) => 4
+    PaddingSpec(_) => 5
+    ContainerSpec(_) => 6
+    SpacerSpec(_) => 7
   }
 }
 
@@ -345,6 +367,13 @@ pub fn ViewSpec::to_view_node(self : ViewSpec) -> ViewNode {
         size: data.size,
         state: ButtonState::Normal,
         on_click: data.on_click,
+      })
+    TextFieldSpec(data) =>
+      ViewNode::TextField({
+        value: data.value,
+        placeholder: data.placeholder,
+        size: data.size,
+        on_submit: data.on_submit,
       })
     FlexSpec(data) =>
       ViewNode::Flex({
@@ -408,6 +437,22 @@ fn ViewNode::to_spec_with_style(
         pressed_background: Color::blue(),
         corner_radius: style.corner_radius.unwrap_or(0.0),
         on_click: data.on_click,
+      })
+    TextField(data) =>
+      TextFieldSpec({
+        key,
+        value: data.value,
+        placeholder: data.placeholder,
+        size: data.size,
+        font: style.font.unwrap_or(FontSpec::new(size=16.0, weight=400)),
+        foreground: style.foreground.unwrap_or(Color::black()),
+        placeholder_color: Color::gray(),
+        background: style.background.unwrap_or(Color::white()),
+        border_color: Color::gray(),
+        focused_border_color: Color::blue(),
+        cursor_color: Color::blue(),
+        corner_radius: style.corner_radius.unwrap_or(0.0),
+        on_submit: data.on_submit,
       })
     Flex(data) =>
       FlexSpec({
@@ -602,6 +647,15 @@ fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
 
 ///|
 pub fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
+  self.render_with_focus(bounds, None)
+}
+
+///|
+fn ElementNode::render_with_focus(
+  self : ElementNode,
+  bounds : Rect,
+  focused : ElementId?,
+) -> RenderNode {
   let children : Array[RenderNode] = []
   let commands : Array[DrawCommand] = []
   match self.spec {
@@ -645,6 +699,13 @@ pub fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
         }),
       )
     }
+    TextFieldSpec(data) =>
+      append_text_field_commands(
+        commands,
+        data,
+        bounds,
+        focused == Some(self.id),
+      )
     FlexSpec(data) => {
       let frames = flex_child_frames(
         data.axis,
@@ -655,13 +716,13 @@ pub fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
         bounds,
       )
       for index, child in self.children {
-        children.push(child.render(frames[index]))
+        children.push(child.render_with_focus(frames[index], focused))
       }
     }
     PaddingSpec(data) => {
       let child_frame = bounds.inset(data.insets)
       if self.children.length() > 0 {
-        children.push(self.children[0].render(child_frame))
+        children.push(self.children[0].render_with_focus(child_frame, focused))
       }
     }
     ContainerSpec(data) => {
@@ -690,7 +751,7 @@ pub fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
         None => ()
       }
       if self.children.length() > 0 {
-        children.push(self.children[0].render(frame))
+        children.push(self.children[0].render_with_focus(frame, focused))
       }
     }
   }
@@ -710,6 +771,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     EmptySpec => Size::new(width=0.0, height=0.0)
     TextSpec(data) => data.size
     ButtonSpec(data) => data.size
+    TextFieldSpec(data) => data.size
     SpacerSpec(data) =>
       if data.min_length == 0.0 {
         Size::new(width=0.0, height=0.0)
@@ -740,6 +802,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
 fn element_hit_testable(spec : ViewSpec) -> Bool {
   match spec {
     ButtonSpec(_) => true
+    TextFieldSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     _ => false
   }
@@ -754,23 +817,37 @@ pub fn ElementNode::dispatch_pointer(
   match self.spec {
     ButtonSpec(data) =>
       handle_button_element_pointer(self, data, event, render.frame)
+    TextFieldSpec(_) => {
+      let focused = if event.phase == PointerPhase::Down &&
+        render.frame.contains(event.position) {
+        Some(self.id)
+      } else {
+        None
+      }
+      { changed: false, activated: false, focused }
+    }
     FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) => {
       let mut changed = false
       let mut activated = false
+      let mut focused : ElementId? = None
       for index, child in self.children {
         if index < render.children.length() {
           let result = child.dispatch_pointer(event, render.children[index])
           changed = changed || result.changed
           activated = activated || result.activated
+          match result.focused {
+            Some(_) => focused = result.focused
+            None => ()
+          }
         }
       }
       if changed {
         self.dirty.mark_paint()
       }
-      { changed, activated }
+      { changed, activated, focused }
     }
     EmptySpec | TextSpec(_) | SpacerSpec(_) =>
-      { changed: false, activated: false }
+      { changed: false, activated: false, focused: None }
   }
 }
 
@@ -794,7 +871,162 @@ fn handle_button_element_pointer(
   if changed {
     element.dirty.mark_paint()
   }
-  { changed, activated: tap.activated }
+  { changed, activated: tap.activated, focused: None }
+}
+
+///|
+pub fn ElementNode::render_focused(
+  self : ElementNode,
+  bounds : Rect,
+  focused~ : ElementId?,
+) -> RenderNode {
+  self.render_with_focus(bounds, focused)
+}
+
+///|
+pub fn ElementNode::find_text_field_at(
+  self : ElementNode,
+  point : Point,
+  render : RenderNode,
+) -> ElementId? {
+  match self.spec {
+    TextFieldSpec(_) =>
+      if render.frame.contains(point) {
+        Some(self.id)
+      } else {
+        None
+      }
+    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) => {
+      for index, child in self.children {
+        if index < render.children.length() {
+          match child.find_text_field_at(point, render.children[index]) {
+            Some(id) => return Some(id)
+            None => ()
+          }
+        }
+      }
+      None
+    }
+    _ => None
+  }
+}
+
+///|
+pub fn ElementNode::dispatch_keyboard(
+  self : ElementNode,
+  target : ElementId,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  if self.id == target {
+    match self.spec {
+      TextFieldSpec(data) => handle_text_field_keyboard(self, data, event)
+      _ => { changed: false, activated: false, focused: None }
+    }
+  } else {
+    let mut changed = false
+    let mut activated = false
+    for child in self.children {
+      let result = child.dispatch_keyboard(target, event)
+      changed = changed || result.changed
+      activated = activated || result.activated
+    }
+    if changed {
+      self.dirty.mark_paint()
+    }
+    { changed, activated, focused: None }
+  }
+}
+
+///|
+fn handle_text_field_keyboard(
+  element : ElementNode,
+  data : TextFieldViewSpec,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  if !event.pressed {
+    return { changed: false, activated: false, focused: None }
+  }
+  if event.key == "Enter" {
+    match data.on_submit {
+      Some(handler) => handler()
+      None => ()
+    }
+    element.dirty.mark_paint()
+    return { changed: true, activated: true, focused: None }
+  }
+  if event.key == "Backspace" {
+    let next = remove_last_character(data.value.get())
+    if next != data.value.get() {
+      data.value.set(next)
+      element.dirty.mark_paint()
+      return { changed: true, activated: false, focused: None }
+    }
+    return { changed: false, activated: false, focused: None }
+  }
+  match event.text {
+    Some(text) =>
+      if text != "" {
+        data.value.set(data.value.get() + text)
+        element.dirty.mark_paint()
+        { changed: true, activated: false, focused: None }
+      } else {
+        { changed: false, activated: false, focused: None }
+      }
+    None => { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn remove_last_character(text : String) -> String {
+  let chars = text.to_array()
+  ignore(chars.pop())
+  String::from_array(chars)
+}
+
+///|
+fn append_text_field_commands(
+  commands : Array[DrawCommand],
+  data : TextFieldViewSpec,
+  frame : Rect,
+  focused : Bool,
+) -> Unit {
+  let border = if focused { data.focused_border_color } else { data.border_color }
+  if data.corner_radius > 0.0 {
+    commands.push(
+      FillRoundedRect(
+        RoundedRect::new(rect=frame, radius=data.corner_radius),
+        data.background,
+      ),
+    )
+    commands.push(
+      StrokeRoundedRect(
+        RoundedRect::new(rect=frame, radius=data.corner_radius),
+        border,
+        if focused { 2.0 } else { 1.0 },
+      ),
+    )
+  } else {
+    commands.push(FillRect(frame, data.background))
+    commands.push(StrokeRect(frame, border, if focused { 2.0 } else { 1.0 }))
+  }
+  let text = data.value.get()
+  let display = if text == "" { data.placeholder } else { text }
+  let color = if text == "" { data.placeholder_color } else { data.foreground }
+  let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
+  commands.push(
+    DrawText({ text: display, frame: text_frame, font: data.font, color }),
+  )
+  if focused {
+    let cursor_x = text_frame.origin.x +
+      text.to_array().length().to_double() * data.font.size * 0.55
+    let cursor = Rect::new(
+      x=cursor_x,
+      y=text_frame.origin.y + 6.0,
+      width=1.5,
+      height=max_double(8.0, text_frame.size.height - 12.0),
+    )
+    commands.push(FillRect(cursor, data.cursor_color))
+  }
 }
 
 ///|

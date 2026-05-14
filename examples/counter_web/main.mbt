@@ -37,7 +37,11 @@ extern "js" fn boot_context() -> @web.WebBootContext =
 fn main {
   if has_boot_context() && !has_started() {
     mark_started()
-    ignore(start_counter_web(boot_context()))
+    if web_app_name() == "todo" {
+      ignore(start_todo_web(boot_context()))
+    } else {
+      ignore(start_counter_web(boot_context()))
+    }
   }
 }
 
@@ -50,3 +54,7 @@ extern "js" fn mark_started() -> Unit =
   #|() => {
   #|  globalThis.__mouiStarted = true;
   #|}
+
+///|
+extern "js" fn web_app_name() -> String =
+  #|() => new URLSearchParams(globalThis.location?.search ?? "").get("app") ?? "counter"

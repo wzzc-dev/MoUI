@@ -24,6 +24,14 @@ pub(all) struct ButtonData {
 }
 
 ///|
+pub(all) struct TextFieldData {
+  value : Binding[String]
+  placeholder : String
+  size : Size
+  on_submit : (() -> Unit)?
+}
+
+///|
 pub(all) struct FlexData {
   axis : Axis
   spacing : Double
@@ -74,6 +82,7 @@ pub(all) enum ViewNode {
   Empty
   Label(LabelData)
   Button(ButtonData)
+  TextField(TextFieldData)
   Flex(FlexData)
   Padding(PaddingData)
   Container(ContainerData)
@@ -96,6 +105,7 @@ pub fn ViewNode::intrinsic_size(self : ViewNode) -> Size {
     Empty => Size::new(width=0.0, height=0.0)
     Label(data) => data.size
     Button(data) => data.size
+    TextField(data) => data.size
     Flex(_) => Size::new(width=0.0, height=0.0)
     Padding(data) => data.child.intrinsic_size().inflate(data.insets)
     Container(data) =>
@@ -119,6 +129,7 @@ pub fn ViewNode::handle_pointer(
   match self {
     Empty | Label(_) => { node: self, changed: false, activated: false }
     Button(data) => handle_button_pointer(data, event, frame)
+    TextField(_) => { node: self, changed: false, activated: false }
     Flex(data) => handle_flex_pointer(data, event, frame)
     Padding(data) => {
       let child_frame = frame.inset(data.insets)
@@ -227,6 +238,25 @@ fn ViewNode::paint_with_style(
           frame,
           font: style.font.unwrap_or(FontSpec::new(size=16.0, weight=600)),
           color: text_color,
+        }),
+      )
+    }
+    TextField(data) => {
+      commands.push(FillRect(frame, style.background.unwrap_or(Color::white())))
+      commands.push(StrokeRect(frame, Color::gray(), 1.0))
+      let text = data.value.get()
+      let display = if text == "" { data.placeholder } else { text }
+      let color = if text == "" {
+        Color::gray()
+      } else {
+        style.foreground.unwrap_or(Color::black())
+      }
+      commands.push(
+        DrawText({
+          text: display,
+          frame: frame.inset(Insets::symmetric(horizontal=10.0)),
+          font: style.font.unwrap_or(FontSpec::new(size=16.0, weight=400)),
+          color,
         }),
       )
     }

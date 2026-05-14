@@ -10,6 +10,7 @@ pub(all) struct RuntimeState {
   mut needs_paint : Bool
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
+  mut focused_element : ElementId?
   mut root_builder : (() -> ViewNode)?
   mut component_root : Component?
   mut subscriptions : Array[StateSubscription]
@@ -48,6 +49,7 @@ pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
     needs_paint: false,
     next_element_id: mounted.next_id,
     dirty_elements: [],
+    focused_element: None,
     root_builder: None,
     component_root: None,
     subscriptions: [],
@@ -76,6 +78,7 @@ pub fn RuntimeState::new_dynamic(
     needs_paint: false,
     next_element_id: mounted.next_id,
     dirty_elements: [],
+    focused_element: None,
     root_builder: Some(root),
     component_root: None,
     subscriptions: [],
@@ -104,6 +107,7 @@ pub fn RuntimeState::new_component(
     needs_paint: false,
     next_element_id: mounted.next_id,
     dirty_elements: [],
+    focused_element: None,
     root_builder: None,
     component_root: Some(root),
     subscriptions: [],
@@ -150,6 +154,7 @@ pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
   self.root_spec = root
   self.element_tree = mounted.node
   self.next_element_id = mounted.next_id
+  self.focused_element = None
   self.needs_rebuild = false
   self.needs_layout = true
   self.needs_paint = true
@@ -208,6 +213,16 @@ pub fn RuntimeState::dispatch_event(
     Redraw(_) => self.needs_redraw = false
     Pointer(event) => {
       self.ensure_render_tree()
+      if event.phase == PointerPhase::Down {
+        let previous_focus = self.focused_element
+        self.focused_element = self.element_tree.find_text_field_at(
+          event.position,
+          self.render_tree,
+        )
+        if previous_focus != self.focused_element {
+          self.mark_dirty(self.element_tree.id)
+        }
+      }
       let result = self.element_tree.dispatch_pointer(event, self.render_tree)
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
@@ -217,7 +232,21 @@ pub fn RuntimeState::dispatch_event(
       }
       self.rebuild_if_possible()
     }
-    Keyboard(_) => self.needs_redraw = true
+    Keyboard(event) => {
+      match self.focused_element {
+        Some(target) => {
+          let result = self.element_tree.dispatch_keyboard(target, event)
+          self.needs_redraw = self.needs_redraw || result.changed
+          self.needs_rebuild = self.needs_rebuild || result.activated
+          self.needs_paint = self.needs_paint || result.changed
+          if result.changed || result.activated {
+            self.mark_dirty(self.element_tree.id)
+          }
+          self.rebuild_if_possible()
+        }
+        None => ()
+      }
+    }
     CloseRequested => ()
   }
 }
@@ -295,8 +324,9 @@ fn RuntimeState::ensure_render_tree(self : RuntimeState) -> Unit {
 
 ///|
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
-  self.render_tree = self.element_tree.render(
+  self.render_tree = self.element_tree.render_focused(
     Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
+    focused=self.focused_element,
   )
   self.needs_layout = false
   self.needs_paint = false

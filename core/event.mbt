@@ -14,9 +14,20 @@ pub(all) struct PointerEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct KeyModifiers {
+  shift : Bool
+  control : Bool
+  alt : Bool
+  meta : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct KeyboardEvent {
   key : String
+  text : String?
   pressed : Bool
+  repeat : Bool
+  modifiers : KeyModifiers
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -43,4 +54,30 @@ pub fn PointerEvent::new(
   button? : Int = 0,
 ) -> PointerEvent {
   { position, phase, button }
+}
+
+///|
+pub fn KeyModifiers::none() -> KeyModifiers {
+  { shift: false, control: false, alt: false, meta: false }
+}
+
+///|
+pub fn KeyModifiers::new(
+  shift? : Bool = false,
+  control? : Bool = false,
+  alt? : Bool = false,
+  meta? : Bool = false,
+) -> KeyModifiers {
+  { shift, control, alt, meta }
+}
+
+///|
+pub fn KeyboardEvent::new(
+  key~ : String,
+  pressed? : Bool = true,
+  text? : String? = None,
+  repeat? : Bool = false,
+  modifiers? : KeyModifiers = KeyModifiers::none(),
+) -> KeyboardEvent {
+  { key, text, pressed, repeat, modifiers }
 }

@@ -10,6 +10,7 @@ pub fn measure_node(node : ViewNode, constraints : Constraints) -> Size {
     Empty => Size::new(width=0.0, height=0.0).clamp(constraints)
     Label(data) => data.size.clamp(constraints)
     Button(data) => data.size.clamp(constraints)
+    TextField(data) => data.size.clamp(constraints)
     Padding(data) => {
       let child = measure_node(data.child, constraints.deflate(data.insets))
       child.inflate(data.insets).clamp(constraints)
@@ -33,7 +34,8 @@ pub fn measure_node(node : ViewNode, constraints : Constraints) -> Size {
 ///|
 pub fn layout_node(node : ViewNode, bounds : Rect) -> LayoutResult {
   match node {
-    Empty | Label(_) | Button(_) => { frame: bounds, children: [] }
+    Empty | Label(_) | Button(_) | TextField(_) =>
+      { frame: bounds, children: [] }
     Padding(data) => {
       let child_frame = bounds.inset(data.insets)
       { frame: bounds, children: [layout_node(data.child, child_frame)] }

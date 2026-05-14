@@ -60,3 +60,92 @@ test "windows backend converts close event" {
     _ => fail("expected close event")
   }
 }
+
+///|
+test "windows backend converts keyboard input event" {
+  let key_event = @window_core.KeyEvent::new(
+    @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::KeyA),
+    @window_core.Key::Character("a"),
+    @window_core.Key::Character("a"),
+    @window_core.KeyLocation::Standard,
+    @window_core.ElementState::Pressed,
+    false,
+    Some("a"),
+    Some("A"),
+  )
+  let event = window_event_to_core_with_modifiers(
+    @window_core.WindowEvent::KeyboardInput(None, key_event, false),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::new(shift=true),
+  )
+  match event {
+    Some(@core.AppEvent::Keyboard(event)) => {
+      inspect(event.key, content="a")
+      match event.text {
+        Some(text) => inspect(text, content="a")
+        None => fail("expected text")
+      }
+      inspect(event.pressed, content="true")
+      inspect(event.repeat, content="false")
+      inspect(event.modifiers.shift, content="true")
+    }
+    _ => fail("expected keyboard event")
+  }
+}
+
+///|
+test "windows backend converts named keys and ignores synthetic input" {
+  let key_event = @window_core.KeyEvent::new(
+    @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::Backspace),
+    @window_core.Key::Named(@window_core.NamedKey::Backspace),
+    @window_core.Key::Named(@window_core.NamedKey::Backspace),
+    @window_core.KeyLocation::Standard,
+    @window_core.ElementState::Released,
+    true,
+    None,
+    None,
+  )
+  let event = window_event_to_core(
+    @window_core.WindowEvent::KeyboardInput(None, key_event, false),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match event {
+    Some(@core.AppEvent::Keyboard(event)) => {
+      inspect(event.key, content="Backspace")
+      match event.text {
+        None => ()
+        Some(_) => fail("expected no text")
+      }
+      inspect(event.pressed, content="false")
+      inspect(event.repeat, content="true")
+    }
+    _ => fail("expected backspace keyboard event")
+  }
+  let synthetic = window_event_to_core(
+    @window_core.WindowEvent::KeyboardInput(None, key_event, true),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match synthetic {
+    None => ()
+    Some(_) => fail("expected synthetic keyboard input to be ignored")
+  }
+}
+
+///|
+test "windows backend converts ime commit into text input" {
+  let event = window_event_to_core(
+    @window_core.WindowEvent::Ime(@window_core.Ime::Commit("x")),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match event {
+    Some(@core.AppEvent::Keyboard(event)) => {
+      inspect(event.key, content="x")
+      match event.text {
+        Some(text) => inspect(text, content="x")
+        None => fail("expected committed text")
+      }
+      inspect(event.pressed, content="true")
+    }
+    _ => fail("expected keyboard text input")
+  }
+}

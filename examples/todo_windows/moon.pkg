@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui/backend/windows" @backend_windows,
+  "wzzc-dev/moui/examples/todo_app" @todo_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: { "native": { "cc-link-flags": "-Wl,--subsystem,windows" } },
+  targets: { "main.mbt": [ "native" ] },
+)

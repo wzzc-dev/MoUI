@@ -98,6 +98,16 @@ pub fn WebApp::attach_dom_events(
     (x, y, button) => ignore(self.pointer_down(x, y, button~)),
     (x, y, button) => ignore(self.pointer_up(x, y, button~)),
     () => ignore(self.pointer_cancel()),
+    (key, text, pressed, repeat, shift, control, alt, meta) =>
+      ignore(
+        self.keyboard(
+          key,
+          text~,
+          pressed~,
+          repeat~,
+          modifiers=@core.KeyModifiers::new(shift~, control~, alt~, meta~),
+        ),
+      ),
   )
 }
 
@@ -147,6 +157,32 @@ pub fn WebApp::pointer_up(
 ///|
 pub fn WebApp::pointer_cancel(self : WebApp) -> WebEventResult {
   self.dispatch_pointer(-1.0, -1.0, @core.PointerPhase::Cancel, button=0)
+}
+
+///|
+pub fn WebApp::keyboard(
+  self : WebApp,
+  key : String,
+  text? : String? = None,
+  pressed? : Bool = true,
+  repeat? : Bool = false,
+  modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
+) -> WebEventResult {
+  self.runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key~,
+        text~,
+        pressed~,
+        repeat~,
+        modifiers~,
+      ),
+    ),
+  )
+  if self.runtime.needs_redraw() {
+    self.request_redraw()
+  }
+  event_result(self)
 }
 
 ///|
@@ -244,13 +280,44 @@ extern "js" fn bind_dom_events(
   on_pointer_down : (Double, Double, Int) -> Unit,
   on_pointer_up : (Double, Double, Int) -> Unit,
   on_pointer_cancel : () -> Unit,
+  on_keyboard : (
+    String,
+    String?,
+    Bool,
+    Bool,
+    Bool,
+    Bool,
+    Bool,
+    Bool
+  ) -> Unit,
 ) -> Unit =
-  #|(context, onResize, onPointerMove, onPointerDown, onPointerUp, onPointerCancel) => {
+  #|(context, onResize, onPointerMove, onPointerDown, onPointerUp, onPointerCancel, onKeyboard) => {
   #|  const canvas = context.canvas;
   #|  if (!canvas) return;
+  #|  if (!canvas.hasAttribute("tabindex")) canvas.tabIndex = 0;
   #|  const point = (event) => {
   #|    const rect = canvas.getBoundingClientRect();
   #|    return [event.clientX - rect.left, event.clientY - rect.top];
+  #|  };
+  #|  const textForKeyEvent = (event) => {
+  #|    if (event.ctrlKey || event.metaKey || event.altKey) return undefined;
+  #|    return event.key && event.key.length === 1 ? event.key : undefined;
+  #|  };
+  #|  const emitKeyboard = (event, pressed) => {
+  #|    const text = pressed ? textForKeyEvent(event) : undefined;
+  #|    onKeyboard(
+  #|      event.key ?? "",
+  #|      text,
+  #|      pressed,
+  #|      event.repeat === true,
+  #|      event.shiftKey === true,
+  #|      event.ctrlKey === true,
+  #|      event.altKey === true,
+  #|      event.metaKey === true,
+  #|    );
+  #|    if (pressed && (text !== undefined || event.key === "Backspace" || event.key === "Enter" || event.key === "Tab")) {
+  #|      event.preventDefault();
+  #|    }
   #|  };
   #|  const resize = () => onResize();
   #|  globalThis.addEventListener?.("resize", resize);
@@ -264,6 +331,7 @@ extern "js" fn bind_dom_events(
   #|    onPointerMove(x, y);
   #|  });
   #|  canvas.addEventListener("pointerdown", (event) => {
+  #|    canvas.focus?.();
   #|    canvas.setPointerCapture?.(event.pointerId);
   #|    const [x, y] = point(event);
   #|    onPointerDown(x, y, event.button ?? 0);
@@ -273,4 +341,6 @@ extern "js" fn bind_dom_events(
   #|    onPointerUp(x, y, event.button ?? 0);
   #|  });
   #|  canvas.addEventListener("pointercancel", () => onPointerCancel());
+  #|  canvas.addEventListener("keydown", (event) => emitKeyboard(event, true));
+  #|  canvas.addEventListener("keyup", (event) => emitKeyboard(event, false));
   #|}

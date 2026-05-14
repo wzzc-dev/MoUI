@@ -547,11 +547,18 @@ async function main() {
       height: () => canvas.clientHeight,
     };
     globalThis.__mouiBootContext = bootContext;
-    if (typeof globalThis.start_counter_web === "function") {
+    const appName = new URLSearchParams(globalThis.location?.search ?? "").get(
+      "app",
+    );
+    const start =
+      appName === "todo"
+        ? globalThis.start_todo_web
+        : globalThis.start_counter_web;
+    if (typeof start === "function") {
       globalThis.__mouiStarted = true;
-      globalThis.__mouiApp = globalThis.start_counter_web(bootContext);
+      globalThis.__mouiApp = start(bootContext);
     } else {
-      throw new Error("MoonBit counter entrypoint was not exported.");
+      throw new Error("MoonBit web entrypoint was not exported.");
     }
   } catch (error) {
     console.error(error);

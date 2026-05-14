@@ -160,3 +160,25 @@ test "container and spacer participate in layout" {
   inspect(layout.children.length(), content="2")
   inspect(layout.children[0].frame.size.width, content="120")
 }
+
+///|
+test "text field constructs binding backed spec" {
+  let state = @core.State::new("Draft")
+  let submitted = Ref(false)
+  let spec = @views.text_field_on_submit(
+    state.binding(),
+    () => submitted.val = true,
+    placeholder="New todo",
+    width=220.0,
+    height=40.0,
+  ).to_spec()
+  guard spec
+    is @core.ViewSpec::TextFieldSpec(
+      { placeholder: "New todo", size: { width: 220.0, height: 40.0 }, value, .. }
+    ) else {
+    fail("expected text field spec")
+  }
+  value.set("Changed")
+  inspect(state.get(), content="Changed")
+  ignore(submitted)
+}

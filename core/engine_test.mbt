@@ -12,6 +12,19 @@ fn test_label(text : String, key? : String) -> ViewNode {
 }
 
 ///|
+fn test_text_field(
+  value : Binding[String],
+  on_submit? : (() -> Unit)? = None,
+) -> ViewNode {
+  ViewNode::TextField({
+    value,
+    placeholder: "Type",
+    size: Size::new(width=120.0, height=40.0),
+    on_submit,
+  })
+}
+
+///|
 test "engine mounts view spec into element and render trees" {
   let spec = ViewNode::Flex({
     axis: Axis::Vertical,
@@ -199,4 +212,104 @@ test "runtime dynamic builder rebuilds after activated pointer" {
   guard runtime.build_draw_commands() is [_, _, DrawText({ text: "Tap 1", .. })] else {
     fail("expected rebuilt button label")
   }
+}
+
+///|
+test "runtime focuses text field and keyboard edits binding" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()).to_spec(),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Keyboard(KeyboardEvent::new(key="a", text=Some("a"))),
+  )
+  inspect(state.get(), content="")
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Keyboard(KeyboardEvent::new(key="a", text=Some("a"))),
+  )
+  runtime.dispatch_event(
+    Keyboard(KeyboardEvent::new(key="b", text=Some("b"))),
+  )
+  inspect(state.get(), content="ab")
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Backspace")))
+  inspect(state.get(), content="a")
+}
+
+///|
+test "text field submit is triggered by enter" {
+  let state = State::new("Task")
+  let submits = Ref(0)
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(
+      state.binding(),
+      on_submit=Some(() => submits.val = submits.val + 1),
+    ).to_spec(),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Enter")))
+  inspect(submits.val, content="1")
+  inspect(state.get(), content="Task")
+}
+
+///|
+test "clicking outside text field clears focus" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=ViewNode::Flex({
+      axis: Axis::Vertical,
+      spacing: 8.0,
+      main_axis_alignment: MainStart,
+      cross_axis_alignment: CrossStretch,
+      children: [
+        test_text_field(state.binding()),
+        ViewNode::Button({
+          text: "Outside",
+          size: Size::new(width=120.0, height=40.0),
+          state: ButtonState::Normal,
+          on_click: None,
+        }),
+      ],
+    }).to_spec(),
+    size=Size::new(width=160.0, height=120.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Keyboard(KeyboardEvent::new(key="a", text=Some("a"))),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=58.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Keyboard(KeyboardEvent::new(key="b", text=Some("b"))),
+  )
+  inspect(state.get(), content="a")
 }

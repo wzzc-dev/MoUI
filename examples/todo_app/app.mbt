@@ -9,6 +9,7 @@ pub(all) struct TodoItem {
 pub struct TodoApp {
   items : @core.State[Array[TodoItem]]
   next_id : @core.State[Int]
+  draft : @core.State[String]
 }
 
 ///|
@@ -27,7 +28,11 @@ pub fn TodoItem::display_text(self : TodoItem) -> String {
 
 ///|
 pub fn TodoApp::new() -> TodoApp {
-  { items: @core.State::new([]), next_id: @core.State::new(0) }
+  {
+    items: @core.State::new([]),
+    next_id: @core.State::new(0),
+    draft: @core.State::new(""),
+  }
 }
 
 ///|
@@ -55,6 +60,20 @@ pub fn TodoApp::add_sample(self : TodoApp) -> Unit {
 }
 
 ///|
+pub fn TodoApp::set_draft(self : TodoApp, text : String) -> Unit {
+  self.draft.set(text)
+}
+
+///|
+pub fn TodoApp::submit_draft(self : TodoApp) -> Unit {
+  let text = self.draft.get()
+  if text != "" {
+    self.add(text)
+    self.draft.set("")
+  }
+}
+
+///|
 pub fn TodoApp::toggle(self : TodoApp, id : Int) -> Unit {
   self.items.update(items => {
     items.map(item => {
@@ -76,7 +95,19 @@ pub fn TodoApp::remove(self : TodoApp, id : Int) -> Unit {
 pub fn TodoApp::root(self : TodoApp) -> @core.ViewNode {
   let children : Array[@core.ViewNode] = [
     @views.label("MoUI Todo"),
-    @views.button_on_click("Add", () => self.add_sample(), width=120.0),
+    @views.row(
+      [
+        @views.text_field_on_submit(
+          self.draft.binding(),
+          () => self.submit_draft(),
+          placeholder="New todo",
+          width=220.0,
+        ),
+        @views.button_on_click("Add", () => self.submit_draft(), width=120.0),
+      ],
+      spacing=8.0,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    ),
   ]
   for item in self.items.get() {
     children.push(self.todo_row(item))

@@ -5,6 +5,7 @@ struct WindowsApp {
   mut renderer : @native_wgpu.RendererHandle?
   runtime : @backend.AppRuntime
   mut last_pointer : @core.Point
+  mut modifiers : @core.KeyModifiers
 }
 
 ///|
@@ -16,6 +17,7 @@ pub fn run_counter_demo(title : String, runtime : @backend.AppRuntime) -> Unit {
     renderer: None,
     runtime,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
+    modifiers: @core.KeyModifiers::none(),
   })
 }
 
@@ -23,6 +25,19 @@ pub fn run_counter_demo(title : String, runtime : @backend.AppRuntime) -> Unit {
 pub fn window_event_to_core(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
+) -> @core.AppEvent? {
+  window_event_to_core_with_modifiers(
+    event,
+    last_pointer,
+    @core.KeyModifiers::none(),
+  )
+}
+
+///|
+pub fn window_event_to_core_with_modifiers(
+  event : @window_core.WindowEvent,
+  last_pointer : @core.Point,
+  modifiers : @core.KeyModifiers,
 ) -> @core.AppEvent? {
   match event {
     @window_core.WindowEvent::SurfaceResized(size) =>
@@ -61,6 +76,22 @@ pub fn window_event_to_core(
       Some(@core.AppEvent::CloseRequested)
     @window_core.WindowEvent::RedrawRequested =>
       Some(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+    @window_core.WindowEvent::KeyboardInput(_, key_event, is_synthetic) =>
+      if is_synthetic {
+        None
+      } else {
+        Some(
+          @core.AppEvent::Keyboard(
+            keyboard_event_to_core(key_event, modifiers),
+          ),
+        )
+      }
+    @window_core.WindowEvent::Ime(@window_core.Ime::Commit(text)) =>
+      Some(
+        @core.AppEvent::Keyboard(
+          @core.KeyboardEvent::new(key=text, text=Some(text)),
+        ),
+      )
     _ => None
   }
 }
@@ -140,6 +171,17 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       self.dispatch_window_event(event)
       self.request_redraw()
     }
+    @window_core.WindowEvent::KeyboardInput(_, _, _) => {
+      self.dispatch_window_event(event)
+      self.request_redraw()
+    }
+    @window_core.WindowEvent::Ime(_) => {
+      self.dispatch_window_event(event)
+      self.request_redraw()
+    }
+    @window_core.WindowEvent::ModifiersChanged(_) => {
+      self.dispatch_window_event(event)
+    }
     @window_core.WindowEvent::RedrawRequested =>
       match (self.window, self.renderer) {
         (Some(window), Some(renderer)) => {
@@ -160,7 +202,16 @@ fn WindowsApp::dispatch_window_event(
   self : WindowsApp,
   event : @window_core.WindowEvent,
 ) -> Unit {
-  match window_event_to_core(event, self.last_pointer) {
+  match event {
+    @window_core.WindowEvent::ModifiersChanged(modifiers) =>
+      self.modifiers = modifiers_to_core(modifiers)
+    _ => ()
+  }
+  match window_event_to_core_with_modifiers(
+    event,
+    self.last_pointer,
+    self.modifiers,
+  ) {
     Some(core_event) => self.runtime.dispatch_event(core_event)
     None => ()
   }
@@ -213,6 +264,77 @@ fn element_state_to_pointer_phase(
     @window_core.ElementState::Pressed => @core.PointerPhase::Down
     @window_core.ElementState::Released => @core.PointerPhase::Up
   }
+}
+
+///|
+fn element_state_pressed(state : @window_core.ElementState) -> Bool {
+  match state {
+    @window_core.ElementState::Pressed => true
+    @window_core.ElementState::Released => false
+  }
+}
+
+///|
+fn keyboard_event_to_core(
+  event : @window_core.KeyEvent,
+  modifiers : @core.KeyModifiers,
+) -> @core.KeyboardEvent {
+  @core.KeyboardEvent::new(
+    key=key_event_name(event),
+    text=key_event_text(event),
+    pressed=element_state_pressed(event.state()),
+    repeat=event.repeat(),
+    modifiers~,
+  )
+}
+
+///|
+fn key_event_text(event : @window_core.KeyEvent) -> String? {
+  match event.text() {
+    Some(text) =>
+      if text == "" {
+        None
+      } else {
+        Some(text)
+      }
+    None => None
+  }
+}
+
+///|
+fn key_event_name(event : @window_core.KeyEvent) -> String {
+  match event.logical_key() {
+    @window_core.Key::Character(text) => text
+    @window_core.Key::Named(named) => named_key_name(named)
+    @window_core.Key::Dead(_) => "Dead"
+    @window_core.Key::Unidentified(_) => "Unidentified"
+  }
+}
+
+///|
+fn named_key_name(key : @window_core.NamedKey) -> String {
+  match key {
+    @window_core.NamedKey::Enter => "Enter"
+    @window_core.NamedKey::Tab => "Tab"
+    @window_core.NamedKey::Backspace => "Backspace"
+    @window_core.NamedKey::Escape => "Escape"
+    @window_core.NamedKey::Delete => "Delete"
+    @window_core.NamedKey::ArrowLeft => "ArrowLeft"
+    @window_core.NamedKey::ArrowRight => "ArrowRight"
+    @window_core.NamedKey::ArrowUp => "ArrowUp"
+    @window_core.NamedKey::ArrowDown => "ArrowDown"
+    _ => "\{key}"
+  }
+}
+
+///|
+fn modifiers_to_core(modifiers : @window_core.Modifiers) -> @core.KeyModifiers {
+  @core.KeyModifiers::new(
+    shift=modifiers.shift_key(),
+    control=modifiers.control_key(),
+    alt=modifiers.alt_key(),
+    meta=modifiers.meta_key(),
+  )
 }
 
 ///|
