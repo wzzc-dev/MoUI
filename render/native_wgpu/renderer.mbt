@@ -19,6 +19,20 @@ pub struct RendererHandle {
   priv mut pipeline : @wgpu.RenderPipeline?
   priv mut vertex_buffer : @wgpu.Buffer?
   priv mut vertex_buffer_capacity : UInt64
+  priv mut text_shader : @wgpu.ShaderModule?
+  priv mut text_pipeline : @wgpu.RenderPipeline?
+  priv mut text_vertex_buffer : @wgpu.Buffer?
+  priv mut text_vertex_buffer_capacity : UInt64
+  priv mut text_atlas_texture : @wgpu.Texture?
+  priv mut text_atlas_view : @wgpu.TextureView?
+  priv mut text_sampler : @wgpu.Sampler?
+  priv mut text_bind_group_layout : @wgpu.BindGroupLayout?
+  priv mut text_pipeline_layout : @wgpu.PipelineLayout?
+  priv mut text_bind_group : @wgpu.BindGroup?
+  priv font_cache : NativeFontCache
+  priv glyph_atlas : GlyphAtlas
+  priv mut text_vertices : Array[TextVertex]
+  priv mut text_atlas_dirty : Bool
 }
 
 ///|
@@ -37,6 +51,20 @@ pub fn RendererHandle::new() -> RendererHandle {
     pipeline: None,
     vertex_buffer: None,
     vertex_buffer_capacity: 0UL,
+    text_shader: None,
+    text_pipeline: None,
+    text_vertex_buffer: None,
+    text_vertex_buffer_capacity: 0UL,
+    text_atlas_texture: None,
+    text_atlas_view: None,
+    text_sampler: None,
+    text_bind_group_layout: None,
+    text_pipeline_layout: None,
+    text_bind_group: None,
+    font_cache: NativeFontCache::new(),
+    glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
+    text_vertices: [],
+    text_atlas_dirty: false,
   }
 }
 
@@ -83,6 +111,27 @@ fn create_with_surface(
   )
   let shader = device.create_shader_module_wgsl(@render.rect_shader_wgsl())
   let pipeline = create_rect_pipeline(device, shader, format)
+  let text_shader = device.create_shader_module_wgsl(text_shader_wgsl())
+  let text_bind_group_layout = device.create_bind_group_layout_sampler_texture_2d()
+  let text_pipeline_layout = device.create_pipeline_layout_1(
+    text_bind_group_layout,
+  )
+  let text_pipeline = create_text_pipeline(
+    device, text_shader, format, text_pipeline_layout,
+  )
+  let text_usage = @wgpu.TextureUsage::from_u64(
+    @wgpu.TEXTURE_USAGE_TEXTURE_BINDING | @wgpu.TEXTURE_USAGE_COPY_DST,
+  )
+  let text_atlas_texture = device.create_texture_rgba8_2d_with_usage(
+    atlas_width.reinterpret_as_uint(),
+    atlas_height.reinterpret_as_uint(),
+    text_usage,
+  )
+  let text_atlas_view = text_atlas_texture.create_view()
+  let text_sampler = device.create_sampler_nearest_clamp()
+  let text_bind_group = device.create_bind_group_sampler_texture_2d(
+    text_bind_group_layout, text_sampler, text_atlas_view,
+  )
   {
     size,
     last_batches: [],
@@ -97,6 +146,20 @@ fn create_with_surface(
     pipeline: Some(pipeline),
     vertex_buffer: None,
     vertex_buffer_capacity: 0UL,
+    text_shader: Some(text_shader),
+    text_pipeline: Some(text_pipeline),
+    text_vertex_buffer: None,
+    text_vertex_buffer_capacity: 0UL,
+    text_atlas_texture: Some(text_atlas_texture),
+    text_atlas_view: Some(text_atlas_view),
+    text_sampler: Some(text_sampler),
+    text_bind_group_layout: Some(text_bind_group_layout),
+    text_pipeline_layout: Some(text_pipeline_layout),
+    text_bind_group: Some(text_bind_group),
+    font_cache: NativeFontCache::new(),
+    glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
+    text_vertices: [],
+    text_atlas_dirty: true,
   }
 }
 
@@ -129,6 +192,14 @@ pub fn RendererHandle::render(
   commands : Array[@core.DrawCommand],
 ) -> Unit {
   self.last_batches = @render.collect_rect_batches(commands)
+  let text = build_native_text_frame(
+    self.font_cache,
+    self.glyph_atlas,
+    commands,
+    self.size,
+  )
+  self.text_vertices = text.vertices
+  self.text_atlas_dirty = text.atlas_dirty
   self.render_wgpu(commands)
 }
 
@@ -136,6 +207,42 @@ pub fn RendererHandle::render(
 pub fn RendererHandle::dispose(self : RendererHandle) -> Unit {
   match self.vertex_buffer {
     Some(buffer) => buffer.release()
+    None => ()
+  }
+  match self.text_vertex_buffer {
+    Some(buffer) => buffer.release()
+    None => ()
+  }
+  match self.text_bind_group {
+    Some(bind_group) => bind_group.release()
+    None => ()
+  }
+  match self.text_pipeline {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.text_pipeline_layout {
+    Some(layout) => layout.release()
+    None => ()
+  }
+  match self.text_bind_group_layout {
+    Some(layout) => layout.release()
+    None => ()
+  }
+  match self.text_sampler {
+    Some(sampler) => sampler.release()
+    None => ()
+  }
+  match self.text_atlas_view {
+    Some(view) => view.release()
+    None => ()
+  }
+  match self.text_atlas_texture {
+    Some(texture) => texture.release()
+    None => ()
+  }
+  match self.text_shader {
+    Some(shader) => shader.release()
     None => ()
   }
   match self.pipeline {
@@ -180,6 +287,18 @@ pub fn RendererHandle::dispose(self : RendererHandle) -> Unit {
   self.instance = None
   self.vertex_buffer = None
   self.vertex_buffer_capacity = 0UL
+  self.text_vertex_buffer = None
+  self.text_vertex_buffer_capacity = 0UL
+  self.text_bind_group = None
+  self.text_pipeline = None
+  self.text_pipeline_layout = None
+  self.text_bind_group_layout = None
+  self.text_sampler = None
+  self.text_atlas_view = None
+  self.text_atlas_texture = None
+  self.text_shader = None
+  self.text_vertices = []
+  self.text_atlas_dirty = false
   self.configured = false
 }
 
@@ -196,6 +315,21 @@ fn RendererHandle::render_wgpu(
         surface_texture.release()
         let view = texture.create_view()
         let clear = @render.first_clear_color(commands)
+        if self.text_atlas_dirty {
+          match self.text_atlas_texture {
+            Some(atlas_texture) => {
+              queue.write_texture_rgba8_2d(
+                atlas_texture,
+                self.glyph_atlas.width.reinterpret_as_uint(),
+                self.glyph_atlas.height.reinterpret_as_uint(),
+                self.glyph_atlas.to_bytes(),
+              )
+              self.text_atlas_dirty = false
+              self.glyph_atlas.dirty = false
+            }
+            None => ()
+          }
+        }
         let encoder = device.create_command_encoder()
         let pass = encoder.begin_render_pass_color_clear(
           view,
@@ -224,6 +358,38 @@ fn RendererHandle::render_wgpu(
               pass.draw(vertices.length().reinterpret_as_uint(), 1U, 0U, 0U)
             }
             None => ()
+          }
+        }
+        if self.text_vertices.length() > 0 {
+          match (self.text_pipeline, self.text_bind_group) {
+            (Some(text_pipeline), Some(text_bind_group)) => {
+              let vertex_bytes = text_vertices_to_bytes(self.text_vertices)
+              self.ensure_text_vertex_buffer(
+                device,
+                vertex_bytes.length().to_uint64(),
+              )
+              match self.text_vertex_buffer {
+                Some(buffer) => {
+                  queue.write_buffer(buffer, 0UL, vertex_bytes)
+                  pass.set_pipeline(text_pipeline)
+                  pass.set_bind_group0(text_bind_group)
+                  pass.set_vertex_buffer(
+                    0U,
+                    buffer,
+                    0UL,
+                    vertex_bytes.length().to_uint64(),
+                  )
+                  pass.draw(
+                    self.text_vertices.length().reinterpret_as_uint(),
+                    1U,
+                    0U,
+                    0U,
+                  )
+                }
+                None => ()
+              }
+            }
+            _ => ()
           }
         }
         pass.end()
@@ -267,6 +433,28 @@ fn RendererHandle::ensure_vertex_buffer(
 }
 
 ///|
+fn RendererHandle::ensure_text_vertex_buffer(
+  self : RendererHandle,
+  device : @wgpu.Device,
+  required : UInt64,
+) -> Unit {
+  if required == 0UL || self.text_vertex_buffer_capacity >= required {
+    ()
+  } else {
+    match self.text_vertex_buffer {
+      Some(buffer) => buffer.release()
+      None => ()
+    }
+    let capacity = @render.grow_capacity(required)
+    let usage = @wgpu.BufferUsage::from_u64(
+      @wgpu.BUFFER_USAGE_VERTEX | @wgpu.BUFFER_USAGE_COPY_DST,
+    )
+    self.text_vertex_buffer = Some(device.create_buffer(size=capacity, usage~))
+    self.text_vertex_buffer_capacity = capacity
+  }
+}
+
+///|
 fn create_rect_pipeline(
   device : @wgpu.Device,
   shader : @wgpu.ShaderModule,
@@ -277,5 +465,22 @@ fn create_rect_pipeline(
   try! builder.set_vertex_buffer_layout(24UL, @wgpu.VERTEX_STEP_MODE_VERTEX)
   try! builder.add_vertex_attribute(@wgpu.VERTEX_FORMAT_FLOAT32X2, 0UL, 0U)
   try! builder.add_vertex_attribute(@wgpu.VERTEX_FORMAT_FLOAT32X4, 8UL, 1U)
+  try! builder.create_pipeline(device)
+}
+
+///|
+fn create_text_pipeline(
+  device : @wgpu.Device,
+  shader : @wgpu.ShaderModule,
+  format : @wgpu.TextureFormat,
+  layout : @wgpu.PipelineLayout,
+) -> @wgpu.RenderPipeline {
+  let builder = try! @wgpu.RenderPipelineDescBuilder::new(shader, layout~)
+  try! builder.set_color_target_format(format)
+  try! builder.enable_alpha_blend()
+  try! builder.set_vertex_buffer_layout(32UL, @wgpu.VERTEX_STEP_MODE_VERTEX)
+  try! builder.add_vertex_attribute(@wgpu.VERTEX_FORMAT_FLOAT32X2, 0UL, 0U)
+  try! builder.add_vertex_attribute(@wgpu.VERTEX_FORMAT_FLOAT32X2, 8UL, 1U)
+  try! builder.add_vertex_attribute(@wgpu.VERTEX_FORMAT_FLOAT32X4, 16UL, 2U)
   try! builder.create_pipeline(device)
 }

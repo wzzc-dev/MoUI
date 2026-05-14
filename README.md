@@ -45,6 +45,8 @@ GitHub release 下载器，可将 `MBT_WGPU_NATIVE_ROOT` 指向已解压的官�
 
 ## Windows native（静态 wgpu，MSYS2 / MinGW）
 
+> Milky2018/window 不支持 Windows 需要 clone git@github.com:wzzc-dev/window.git 到 .local_repos 使用本地依赖
+
 ### 1. 安装依赖
 
 先安装 MSYS2，并确保存在 `C:\msys64\ucrt64\bin`。然后安装 UCRT64 编译链和 Vulkan 依赖：
@@ -128,4 +130,46 @@ moon build examples/counter_web --target js
 Copy-Item examples/counter_web/bootstrap.js _build\js\debug\build\examples\counter_web\bootstrap.js -Force
 Copy-Item examples/counter_web/index.html _build\js\debug\build\examples\counter_web\index.html -Force
 python -m http.server 8080 --bind 127.0.0.1 --directory _build\js\debug\build\examples\counter_web\
+```
+
+## Windows native text rendering dependencies
+
+Windows native text rendering uses the existing MoonBit packages below:
+
+- `bikallem/freetype`: glyph bitmap rasterization.
+- `moonbit-community/harfbuzz`: text shaping.
+- `moonbitlang/x`: filesystem access for loading system font files.
+
+The renderer loads system fonts from Windows instead of bundling font assets:
+
+```text
+C:\Windows\Fonts\segoeui.ttf
+C:\Windows\Fonts\segoeuib.ttf
+```
+
+Install the native build/runtime dependencies with MSYS2 UCRT64:
+
+```powershell
+C:\msys64\usr\bin\pacman.exe -S --needed --noconfirm `
+  mingw-w64-ucrt-x86_64-gcc `
+  mingw-w64-ucrt-x86_64-vulkan-loader `
+  mingw-w64-ucrt-x86_64-vulkan-headers
+```
+
+Use the static Windows GNU `wgpu-native` release expected by the helper script:
+
+```text
+.local_deps\wgpu-native\v27.0.4.0\wgpu-windows-x86_64-gnu-release
+```
+
+Build only:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\counter_windows_static.ps1 -BuildOnly
+```
+
+Build and run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\counter_windows_static.ps1
 ```
