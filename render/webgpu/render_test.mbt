@@ -20,7 +20,7 @@ test "render commands call js bridge in draw order" {
   inspect(
     trace.calls,
     content=(
-      #|["begin", "clear", "rect", "text", "present"]
+      #|[begin, clear, rect, text, present]
     ),
   )
 }
@@ -39,7 +39,7 @@ test "clip commands are preserved in bridge traversal" {
   inspect(
     trace.calls,
     content=(
-      #|["begin", "push_clip", "pop_clip", "present"]
+      #|[begin, push_clip, pop_clip, present]
     ),
   )
 }
@@ -70,7 +70,7 @@ test "expanded paint commands are preserved in bridge traversal" {
   inspect(
     trace.calls,
     content=(
-      #|["begin", "rounded_rect", "push_opacity", "push_transform", "image", "pop_transform", "pop_opacity", "present"]
+      #|[begin, rounded_rect, push_opacity, push_transform, image, pop_transform, pop_opacity, present]
     ),
   )
 }

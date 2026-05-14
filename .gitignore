@@ -8,5 +8,6 @@
 .mooncakes/
 _build/
 .local_repos/
+.local_deps/
 .tools/
 .claude/

@@ -94,8 +94,8 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
           window.window_handle(),
         ),
       ) catch {
-        _ => {
-          println("error creating Windows WGPU renderer")
+        err => {
+          println("error creating Windows WGPU renderer: \{err.message()}")
           event_loop.exit()
           None
         }
