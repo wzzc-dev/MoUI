@@ -10,7 +10,20 @@ pub(all) struct RuntimeState {
   mut needs_paint : Bool
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
-  root_builder : (() -> ViewNode)?
+  mut root_builder : (() -> ViewNode)?
+  mut component_root : Component?
+  mut subscriptions : Array[StateSubscription]
+  mut redraw_callback : (() -> Unit)?
+}
+
+///|
+pub(all) struct BuildContext {
+  runtime : RuntimeState
+}
+
+///|
+pub(all) struct Component {
+  build : (BuildContext) -> ViewNode
 }
 
 ///|
@@ -36,6 +49,9 @@ pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
     next_element_id: mounted.next_id,
     dirty_elements: [],
     root_builder: None,
+    component_root: None,
+    subscriptions: [],
+    redraw_callback: None,
   }
 }
 
@@ -61,7 +77,52 @@ pub fn RuntimeState::new_dynamic(
     next_element_id: mounted.next_id,
     dirty_elements: [],
     root_builder: Some(root),
+    component_root: None,
+    subscriptions: [],
+    redraw_callback: None,
   }
+}
+
+///|
+pub fn RuntimeState::new_component(
+  root~ : Component,
+  size~ : Size,
+) -> RuntimeState {
+  let initial_spec = Empty.to_spec()
+  let mounted = mount_view_spec_with_next(initial_spec, 1)
+  let render_tree = mounted.node.render(
+    Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
+  )
+  let state = {
+    root_spec: initial_spec,
+    element_tree: mounted.node,
+    render_tree,
+    size,
+    needs_redraw: true,
+    needs_rebuild: true,
+    needs_layout: false,
+    needs_paint: false,
+    next_element_id: mounted.next_id,
+    dirty_elements: [],
+    root_builder: None,
+    component_root: Some(root),
+    subscriptions: [],
+    redraw_callback: None,
+  }
+  state.rebuild_if_possible()
+  state
+}
+
+///|
+pub fn Component::new(build : (BuildContext) -> ViewNode) -> Component {
+  { build, }
+}
+
+///|
+pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
+  let subscription = state.subscribe(() => self.runtime.request_rebuild())
+  self.runtime.subscriptions.push(subscription)
+  state.get()
 }
 
 ///|
@@ -74,6 +135,8 @@ pub fn RuntimeState::set_root_spec(
   self : RuntimeState,
   root : ViewSpec,
 ) -> Unit {
+  self.cancel_subscriptions()
+  self.component_root = None
   self.root_spec = root
   self.rebuild()
   self.needs_redraw = true
@@ -81,6 +144,8 @@ pub fn RuntimeState::set_root_spec(
 
 ///|
 pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
+  self.cancel_subscriptions()
+  self.component_root = None
   let mounted = mount_view_spec_with_next(root, 1)
   self.root_spec = root
   self.element_tree = mounted.node
@@ -107,6 +172,14 @@ pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
   self.needs_paint = true
   self.mark_dirty(self.element_tree.id)
   self.layout_pass()
+}
+
+///|
+pub fn RuntimeState::set_redraw_callback(
+  self : RuntimeState,
+  callback : () -> Unit,
+) -> Unit {
+  self.redraw_callback = Some(callback)
 }
 
 ///|
@@ -169,15 +242,48 @@ pub fn RuntimeState::build_draw_commands(
 ///|
 pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
   if self.needs_rebuild {
-    match self.root_builder {
-      Some(builder) => {
-        self.root_spec = builder().to_spec()
+    match self.component_root {
+      Some(component) => {
+        self.cancel_subscriptions()
+        let context = BuildContext::{ runtime: self }
+        self.root_spec = (component.build)(context).to_spec()
         self.rebuild()
         self.needs_redraw = true
       }
-      None => ()
+      None =>
+        match self.root_builder {
+          Some(builder) => {
+            self.cancel_subscriptions()
+            self.component_root = None
+            self.root_spec = builder().to_spec()
+            self.rebuild()
+            self.needs_redraw = true
+          }
+          None => ()
+        }
     }
   }
+}
+
+///|
+pub fn RuntimeState::request_rebuild(self : RuntimeState) -> Unit {
+  self.needs_rebuild = true
+  self.needs_layout = true
+  self.needs_paint = true
+  self.needs_redraw = true
+  self.mark_dirty(self.element_tree.id)
+  match self.redraw_callback {
+    Some(callback) => callback()
+    None => ()
+  }
+}
+
+///|
+fn RuntimeState::cancel_subscriptions(self : RuntimeState) -> Unit {
+  for subscription in self.subscriptions {
+    subscription.cancel()
+  }
+  self.subscriptions.clear()
 }
 
 ///|

@@ -5,9 +5,7 @@ pub fn start_counter_web(context : @web.WebBootContext) -> @web.WebApp {
     width=context.width(),
     height=context.height(),
   )
-  let app = @web.WebApp::new(runtime~, renderer=context.renderer(), rebuild=runtime => {
-    app_state.sync_runtime(runtime)
-  })
+  let app = @web.WebApp::new(runtime~, renderer=context.renderer())
   app.attach_dom_events(context)
   app.start()
   app
@@ -21,9 +19,7 @@ pub fn start_todo_web(context : @web.WebBootContext) -> @web.WebApp {
     width=context.width(),
     height=context.height(),
   )
-  let app = @web.WebApp::new(runtime~, renderer=context.renderer(), rebuild=runtime => {
-    ignore(runtime)
-  })
+  let app = @web.WebApp::new(runtime~, renderer=context.renderer())
   app.attach_dom_events(context)
   app.start()
   app

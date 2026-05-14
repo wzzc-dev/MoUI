@@ -39,6 +39,14 @@ pub fn[T] State::version(self : State[T]) -> Int {
 }
 
 ///|
+pub fn[T] State::subscribe(
+  self : State[T],
+  callback : () -> Unit,
+) -> StateSubscription {
+  self.slot.subscribe(callback)
+}
+
+///|
 pub fn[T] Binding::get(self : Binding[T]) -> T {
   self.state.get()
 }

@@ -28,6 +28,14 @@ pub fn AppRuntime::new_dynamic(
 }
 
 ///|
+pub fn AppRuntime::new_component(
+  root~ : @core.Component,
+  size~ : @core.Size,
+) -> AppRuntime {
+  { state: @core.RuntimeState::new_component(root~, size~) }
+}
+
+///|
 pub fn AppRuntime::dispatch_event(
   self : AppRuntime,
   event : @core.AppEvent,
@@ -101,4 +109,12 @@ pub fn AppRuntime::needs_paint(self : AppRuntime) -> Bool {
 ///|
 pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
   self.state.dirty_count()
+}
+
+///|
+pub fn AppRuntime::set_redraw_callback(
+  self : AppRuntime,
+  callback : () -> Unit,
+) -> Unit {
+  self.state.set_redraw_callback(callback)
 }

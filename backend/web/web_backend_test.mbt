@@ -24,36 +24,44 @@ test "web app maps resize and schedules redraw" {
     width=100.0,
     height=80.0,
   )
-  let app = @web.WebApp::new(runtime~, renderer=test_renderer(), rebuild=_ => ())
+  let app = @web.WebApp::new(runtime~, renderer=test_renderer())
   let result = app.resize(320.0, 240.0)
   assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
   inspect(result.redraw_requested, content="true")
 }
 
 ///|
-test "web app maps pointer click, rebuilds root, and requests redraw" {
+test "web app maps pointer click, rebuilds dynamic root, and requests redraw" {
   let clicked = Ref::new(false)
-  let runtime = @web.runtime_for_canvas(
-    root=@core.ViewNode::Button({
-      text: "Tap",
-      size: @core.Size::new(width=100.0, height=40.0),
-      state: @core.ButtonState::Normal,
-      on_click: Some(() => clicked.val = true),
-    }),
-    width=100.0,
-    height=40.0,
+  let runtime = @backend.AppRuntime::new_dynamic(
+    root=() => {
+      @core.ViewNode::Button({
+        text: if clicked.val {
+          "Tapped"
+        } else {
+          "Tap"
+        },
+        size: @core.Size::new(width=100.0, height=40.0),
+        state: @core.ButtonState::Normal,
+        on_click: Some(() => clicked.val = true),
+      })
+    },
+    size=@core.Size::new(width=100.0, height=40.0),
   )
-  let rebuilt = Ref::new(false)
-  let app = @web.WebApp::new(runtime~, renderer=test_renderer(), rebuild=runtime => {
-    rebuilt.val = true
-    runtime.set_root(@core.ViewNode::Empty)
-  })
+  let app = @web.WebApp::new(runtime~, renderer=test_renderer())
   ignore(app.pointer_down(10.0, 10.0))
   let result = app.pointer_up(10.0, 10.0)
   inspect(clicked.val, content="true")
-  inspect(rebuilt.val, content="true")
   inspect(result.needs_rebuild, content="false")
   inspect(result.redraw_requested, content="true")
+  guard runtime.draw_commands()
+    is [
+      _,
+      @core.DrawCommand::FillRect(_, _),
+      @core.DrawCommand::DrawText({ text: "Tapped", .. }),
+    ] else {
+    fail("expected dynamic runtime to rebuild clicked button text")
+  }
 }
 
 ///|

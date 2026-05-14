@@ -6,9 +6,6 @@ pub(all) struct WebBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub type RootRebuild = (@backend.AppRuntime) -> Unit
-
-///|
 #external
 pub type WebBootContext
 
@@ -16,7 +13,6 @@ pub type WebBootContext
 pub(all) struct WebApp {
   runtime : @backend.AppRuntime
   renderer : @webgpu.WebGpuRenderer
-  rebuild : RootRebuild
   mut redraw_requested : Bool
   mut redraw_count : Int
 }
@@ -47,6 +43,18 @@ pub fn runtime_for_canvas(
 }
 
 ///|
+pub fn component_runtime_for_canvas(
+  root~ : @core.Component,
+  width~ : Double,
+  height~ : Double,
+) -> @backend.AppRuntime {
+  @backend.AppRuntime::new_component(
+    root~,
+    size=@core.Size::new(width~, height~),
+  )
+}
+
+///|
 pub fn WebBootContext::renderer(
   self : WebBootContext,
 ) -> @webgpu.WebGpuRenderer {
@@ -67,9 +75,10 @@ pub fn WebBootContext::height(self : WebBootContext) -> Double {
 pub fn WebApp::new(
   runtime~ : @backend.AppRuntime,
   renderer~ : @webgpu.WebGpuRenderer,
-  rebuild~ : RootRebuild,
 ) -> WebApp {
-  { runtime, renderer, rebuild, redraw_requested: false, redraw_count: 0 }
+  let app = { runtime, renderer, redraw_requested: false, redraw_count: 0 }
+  runtime.set_redraw_callback(() => app.request_redraw())
+  app
 }
 
 ///|
@@ -167,9 +176,6 @@ fn WebApp::dispatch_pointer(
       ),
     ),
   )
-  if self.runtime.needs_rebuild() {
-    (self.rebuild)(self.runtime)
-  }
   if self.runtime.needs_redraw() {
     self.request_redraw()
   }

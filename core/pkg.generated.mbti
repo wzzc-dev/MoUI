@@ -43,6 +43,11 @@ pub fn[T] Binding::get(Self[T]) -> T
 pub fn[T] Binding::set(Self[T], T) -> Unit
 pub fn[T] Binding::update(Self[T], (T) -> T raise?) -> Unit raise?
 
+pub(all) struct BuildContext {
+  runtime : RuntimeState
+}
+pub fn[T] BuildContext::watch(Self, State[T]) -> T
+
 pub(all) struct ButtonData {
   text : String
   size : Size
@@ -80,6 +85,11 @@ pub fn Color::blue() -> Self
 pub fn Color::gray() -> Self
 pub fn Color::rgba(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> Self
 pub fn Color::white() -> Self
+
+pub(all) struct Component {
+  build : (BuildContext) -> ViewNode
+}
+pub fn Component::new((BuildContext) -> ViewNode) -> Self
 
 pub(all) struct Constraints {
   min : Size
@@ -326,7 +336,10 @@ pub(all) struct RuntimeState {
   mut needs_paint : Bool
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
-  root_builder : (() -> ViewNode)?
+  mut root_builder : (() -> ViewNode)?
+  mut component_root : Component?
+  mut subscriptions : Array[StateSubscription]
+  mut redraw_callback : (() -> Unit)?
 }
 pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
 pub fn RuntimeState::clear_dirty_queue(Self) -> Unit
@@ -337,11 +350,14 @@ pub fn RuntimeState::layout_pass(Self) -> Unit
 pub fn RuntimeState::mark_dirty(Self, ElementId) -> Unit
 pub fn RuntimeState::mount(Self, ViewSpec) -> Unit
 pub fn RuntimeState::new(root~ : ViewNode, size~ : Size) -> Self
+pub fn RuntimeState::new_component(root~ : Component, size~ : Size) -> Self
 pub fn RuntimeState::new_dynamic(root~ : () -> ViewNode, size~ : Size) -> Self
 pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> Self
 pub fn RuntimeState::paint_pass(Self) -> Array[DrawCommand]
 pub fn RuntimeState::rebuild(Self) -> Unit
 pub fn RuntimeState::rebuild_if_possible(Self) -> Unit
+pub fn RuntimeState::request_rebuild(Self) -> Unit
+pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root(Self, ViewNode) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 
@@ -369,17 +385,32 @@ pub fn[T] State::binding(Self[T]) -> Binding[T]
 pub fn[T] State::get(Self[T]) -> T
 pub fn[T] State::new(T) -> Self[T]
 pub fn[T] State::set(Self[T], T) -> Unit
+pub fn[T] State::subscribe(Self[T], () -> Unit) -> StateSubscription
 pub fn[T] State::update(Self[T], (T) -> T raise?) -> Unit raise?
 pub fn[T] State::version(Self[T]) -> Int
+
+pub(all) struct StateListener {
+  mut active : Bool
+  callback : () -> Unit
+}
+pub fn StateListener::new(() -> Unit) -> Self
 
 pub(all) struct StateSlot[T] {
   mut value : T
   mut version : Int
+  mut listeners : Array[StateListener]
 }
 pub fn[T] StateSlot::get(Self[T]) -> T
 pub fn[T] StateSlot::new(T) -> Self[T]
 pub fn[T] StateSlot::set(Self[T], T) -> Unit
+pub fn[T] StateSlot::subscribe(Self[T], () -> Unit) -> StateSubscription
 pub fn[T] StateSlot::update(Self[T], (T) -> T raise?) -> Unit raise?
+
+pub(all) struct StateSubscription {
+  listener : StateListener
+}
+pub fn StateSubscription::cancel(Self) -> Unit
+pub fn StateSubscription::is_active(Self) -> Bool
 
 pub(all) struct StyledData {
   style : ViewStyle

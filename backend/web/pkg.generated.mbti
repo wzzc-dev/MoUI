@@ -5,9 +5,12 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render/webgpu",
 }
 
 // Values
+pub fn component_runtime_for_canvas(root~ : @core.Component, width~ : Double, height~ : Double) -> @backend.AppRuntime
+
 pub fn default_web_backend_info() -> WebBackendInfo
 
 pub fn runtime_for_canvas(root~ : @core.ViewNode, width~ : Double, height~ : Double) -> @backend.AppRuntime
@@ -15,13 +18,41 @@ pub fn runtime_for_canvas(root~ : @core.ViewNode, width~ : Double, height~ : Dou
 // Errors
 
 // Types and methods
+pub(all) struct WebApp {
+  runtime : @backend.AppRuntime
+  renderer : @webgpu.WebGpuRenderer
+  mut redraw_requested : Bool
+  mut redraw_count : Int
+}
+pub fn WebApp::attach_dom_events(Self, WebBootContext) -> Unit
+pub fn WebApp::dispose(Self) -> Unit
+pub fn WebApp::new(runtime~ : @backend.AppRuntime, renderer~ : @webgpu.WebGpuRenderer) -> Self
+pub fn WebApp::pointer_cancel(Self) -> WebEventResult
+pub fn WebApp::pointer_down(Self, Double, Double, button? : Int) -> WebEventResult
+pub fn WebApp::pointer_move(Self, Double, Double) -> WebEventResult
+pub fn WebApp::pointer_up(Self, Double, Double, button? : Int) -> WebEventResult
+pub fn WebApp::redraw(Self) -> Unit
+pub fn WebApp::resize(Self, Double, Double) -> WebEventResult
+pub fn WebApp::start(Self) -> Unit
+
 pub(all) struct WebBackendInfo {
   uses_dom_events : Bool
   uses_webgpu_surface : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
+#external
+pub type WebBootContext
+pub fn WebBootContext::height(Self) -> Double
+pub fn WebBootContext::renderer(Self) -> @webgpu.WebGpuRenderer
+pub fn WebBootContext::width(Self) -> Double
+
+pub(all) struct WebEventResult {
+  needs_rebuild : Bool
+  needs_redraw : Bool
+  redraw_requested : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
 // Type aliases
 
 // Traits
-

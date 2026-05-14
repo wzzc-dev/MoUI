@@ -29,10 +29,12 @@ pub fn AppRuntime::needs_paint(Self) -> Bool
 pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
 pub fn AppRuntime::new(root~ : @core.ViewNode, size~ : @core.Size) -> Self
+pub fn AppRuntime::new_component(root~ : @core.Component, size~ : @core.Size) -> Self
 pub fn AppRuntime::new_dynamic(root~ : () -> @core.ViewNode, size~ : @core.Size) -> Self
 pub fn AppRuntime::new_spec(root~ : @core.ViewSpec, size~ : @core.Size) -> Self
 pub fn AppRuntime::paint_pass(Self) -> Array[@core.DrawCommand]
 pub fn AppRuntime::rebuild(Self) -> Unit
+pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_root(Self, @core.ViewNode) -> Unit
 pub fn AppRuntime::set_root_spec(Self, @core.ViewSpec) -> Unit
 pub fn AppRuntime::size(Self) -> @core.Size
