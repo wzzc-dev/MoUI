@@ -12,8 +12,8 @@ pub type WebBootContext
 ///|
 pub(all) struct WebApp {
   runtime : @backend.AppRuntime
+  driver : @host.HostRuntimeDriver
   renderer : @webgpu.WebGpuRenderer
-  mut redraw_requested : Bool
   mut redraw_count : Int
 }
 
@@ -76,8 +76,16 @@ pub fn WebApp::new(
   runtime~ : @backend.AppRuntime,
   renderer~ : @webgpu.WebGpuRenderer,
 ) -> WebApp {
-  let app = { runtime, renderer, redraw_requested: false, redraw_count: 0 }
-  runtime.set_redraw_callback(() => app.request_redraw())
+  let app = {
+    runtime,
+    driver: @host.HostRuntimeDriver::new(
+      runtime~,
+      schedule_redraw=() => (),
+    ),
+    renderer,
+    redraw_count: 0,
+  }
+  app.driver.set_redraw_scheduler(() => app.schedule_redraw())
   app
 }
 
@@ -118,11 +126,14 @@ pub fn WebApp::resize(
   height : Double,
 ) -> WebEventResult {
   self.renderer.resize(@core.Size::new(width~, height~))
-  self.runtime.dispatch_event(
-    @core.AppEvent::Resize(@core.Size::new(width~, height~)),
+  let result = self.driver.dispatch(
+    @host.HostEvent::Resized(
+      @host.HostSurfaceMetrics::from_logical(
+        size=@core.Size::new(width~, height~),
+      ),
+    ),
   )
-  self.request_redraw()
-  event_result(self)
+  web_event_result(result)
 }
 
 ///|
@@ -168,8 +179,8 @@ pub fn WebApp::keyboard(
   repeat? : Bool = false,
   modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
 ) -> WebEventResult {
-  self.runtime.dispatch_event(
-    @core.AppEvent::Keyboard(
+  let result = self.driver.dispatch(
+    @host.HostEvent::Keyboard(
       @core.KeyboardEvent::new(
         key~,
         text~,
@@ -179,10 +190,7 @@ pub fn WebApp::keyboard(
       ),
     ),
   )
-  if self.runtime.needs_redraw() {
-    self.request_redraw()
-  }
-  event_result(self)
+  web_event_result(result)
 }
 
 ///|
@@ -203,46 +211,85 @@ fn WebApp::dispatch_pointer(
   phase : @core.PointerPhase,
   button~ : Int,
 ) -> WebEventResult {
-  self.runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x~, y~),
-        phase~,
-        button~,
-      ),
-    ),
-  )
-  if self.runtime.needs_redraw() {
-    self.request_redraw()
+  let position = @core.Point::new(x~, y~)
+  let result = match phase {
+    @core.PointerPhase::Move =>
+      self.driver.dispatch(@host.HostEvent::PointerMoved(position))
+    _ =>
+      self.driver.dispatch(
+        @host.HostEvent::PointerButton(position, phase, button),
+      )
   }
-  event_result(self)
+  web_event_result(result)
 }
 
 ///|
-fn WebApp::request_redraw(self : WebApp) -> Unit {
-  if !self.redraw_requested {
-    self.redraw_requested = true
-    request_animation_frame(() => self.render_now())
-  }
+fn WebApp::schedule_redraw(self : WebApp) -> Unit {
+  request_animation_frame(() => self.render_now())
 }
 
 ///|
 fn WebApp::render_now(self : WebApp) -> Unit {
-  self.redraw_requested = false
-  self.renderer.render(self.runtime.draw_commands(), self.runtime.size())
-  self.runtime.dispatch_event(
-    @core.AppEvent::Redraw(@core.RedrawReason::Explicit),
-  )
+  self.driver.begin_redraw()
+  self.renderer.render(self.driver.draw_commands(), self.driver.size())
+  self.driver.finish_redraw()
   self.redraw_count = self.redraw_count + 1
 }
 
 ///|
-fn event_result(app : WebApp) -> WebEventResult {
+fn web_event_result(result : @host.HostEventResult) -> WebEventResult {
   {
-    needs_rebuild: app.runtime.needs_rebuild(),
-    needs_redraw: app.runtime.needs_redraw(),
-    redraw_requested: app.redraw_requested,
+    needs_rebuild: result.needs_rebuild,
+    needs_redraw: result.needs_redraw,
+    redraw_requested: result.redraw_requested,
   }
+}
+
+///|
+pub fn WebApp::host_dispatch(
+  self : WebApp,
+  event : @host.HostEvent,
+) -> WebEventResult {
+  web_event_result(self.driver.dispatch(event))
+}
+
+///|
+pub fn WebApp::text_input(
+  self : WebApp,
+  text : String,
+) -> WebEventResult {
+  web_event_result(self.driver.dispatch(@host.HostEvent::TextInput(text)))
+}
+
+///|
+pub fn WebApp::surface_metrics(
+  self : WebApp,
+) -> @host.HostSurfaceMetrics {
+  @host.HostSurfaceMetrics::from_logical(size=self.runtime.size())
+}
+
+///|
+pub fn WebApp::driver(self : WebApp) -> @host.HostRuntimeDriver {
+  self.driver
+}
+
+///|
+pub fn web_keyboard_event(
+  key~ : String,
+  text? : String? = None,
+  pressed? : Bool = true,
+  repeat? : Bool = false,
+  modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
+) -> @host.HostEvent {
+  @host.HostEvent::Keyboard(
+    @core.KeyboardEvent::new(
+      key~,
+      text~,
+      pressed~,
+      repeat~,
+      modifiers~,
+    ),
+  )
 }
 
 ///|

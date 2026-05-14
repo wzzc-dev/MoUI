@@ -1,11 +1,7 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/host" @host,
-  "wzzc-dev/moui/render/webgpu" @webgpu,
 }
-
-supported_targets = "js"
 
 options(
   targets: { },

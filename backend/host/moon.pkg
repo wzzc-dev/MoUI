@@ -1,0 +1,8 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend",
+}
+
+options(
+  targets: { },
+)

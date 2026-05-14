@@ -90,6 +90,43 @@ test "web app maps keyboard into focused text field" {
 }
 
 ///|
+test "web app can dispatch host text input directly" {
+  let text = @core.State::new("")
+  let runtime = @backend.AppRuntime::new(
+    root=@core.ViewNode::TextField({
+      value: text.binding(),
+      placeholder: "Type",
+      size: @core.Size::new(width=240.0, height=40.0),
+      on_submit: None,
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let app = @web.WebApp::new(runtime~, renderer=test_renderer())
+  ignore(app.pointer_down(10.0, 10.0))
+  let result = app.text_input("z")
+  inspect(text.get(), content="z")
+  inspect(result.redraw_requested, content="true")
+}
+
+///|
+test "web keyboard bridge creates host keyboard event" {
+  let event = @web.web_keyboard_event(
+    key="Enter",
+    pressed=true,
+    repeat=true,
+    modifiers=@core.KeyModifiers::new(control=true),
+  )
+  match event {
+    @host.HostEvent::Keyboard(keyboard) => {
+      inspect(keyboard.key, content="Enter")
+      inspect(keyboard.repeat, content="true")
+      inspect(keyboard.modifiers.control, content="true")
+    }
+    _ => fail("expected host keyboard event")
+  }
+}
+
+///|
 test "web boot context exposes renderer and size" {
   let context = test_boot_context_impl()
   ignore(context.renderer())

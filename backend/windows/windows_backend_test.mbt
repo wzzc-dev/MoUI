@@ -12,6 +12,22 @@ test "windows backend converts resize event" {
 }
 
 ///|
+test "windows backend converts resize event to host metrics" {
+  let event = window_event_to_host(
+    @window_core.WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(10, 20)),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match event {
+    Some(@host.HostEvent::Resized(metrics)) => {
+      assert_true(metrics.logical_size == @core.Size::new(width=10.0, height=20.0))
+      assert_true(metrics.physical_size == @core.Size::new(width=10.0, height=20.0))
+      inspect(metrics.scale_factor, content="1")
+    }
+    _ => fail("expected host resize event")
+  }
+}
+
+///|
 test "windows backend converts pointer movement and left button" {
   let moved = window_event_to_core(
     @window_core.WindowEvent::PointerMoved(
@@ -147,5 +163,17 @@ test "windows backend converts ime commit into text input" {
       inspect(event.pressed, content="true")
     }
     _ => fail("expected keyboard text input")
+  }
+}
+
+///|
+test "windows backend keeps ime commit separate at host layer" {
+  let event = window_event_to_host(
+    @window_core.WindowEvent::Ime(@window_core.Ime::Commit("x")),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match event {
+    Some(@host.HostEvent::TextInput(text)) => inspect(text, content="x")
+    _ => fail("expected host text input")
   }
 }

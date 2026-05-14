@@ -4,6 +4,7 @@ struct WindowsApp {
   mut window : @win.Window?
   mut renderer : @native_wgpu.RendererHandle?
   runtime : @backend.AppRuntime
+  driver : @host.HostRuntimeDriver
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
@@ -11,14 +12,17 @@ struct WindowsApp {
 ///|
 pub fn run_counter_demo(title : String, runtime : @backend.AppRuntime) -> Unit {
   let event_loop = @win.EventLoop::new()
-  event_loop.run_app(WindowsApp::{
+  let app = WindowsApp::{
     title,
     window: None,
     renderer: None,
     runtime,
+    driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
-  })
+  }
+  app.driver.set_redraw_scheduler(() => app.request_redraw())
+  event_loop.run_app(app)
 }
 
 ///|
@@ -26,11 +30,14 @@ pub fn window_event_to_core(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
 ) -> @core.AppEvent? {
-  window_event_to_core_with_modifiers(
+  match window_event_to_host_with_modifiers(
     event,
     last_pointer,
     @core.KeyModifiers::none(),
-  )
+  ) {
+    Some(host_event) => host_event.to_core()
+    None => None
+  }
 }
 
 ///|
@@ -39,59 +46,77 @@ pub fn window_event_to_core_with_modifiers(
   last_pointer : @core.Point,
   modifiers : @core.KeyModifiers,
 ) -> @core.AppEvent? {
+  match window_event_to_host_with_modifiers(event, last_pointer, modifiers) {
+    Some(host_event) => host_event.to_core()
+    None => None
+  }
+}
+
+///|
+pub fn window_event_to_host(
+  event : @window_core.WindowEvent,
+  last_pointer : @core.Point,
+) -> @host.HostEvent? {
+  window_event_to_host_with_modifiers(
+    event,
+    last_pointer,
+    @core.KeyModifiers::none(),
+  )
+}
+
+///|
+pub fn window_event_to_host_with_modifiers(
+  event : @window_core.WindowEvent,
+  last_pointer : @core.Point,
+  modifiers : @core.KeyModifiers,
+) -> @host.HostEvent? {
   match event {
     @window_core.WindowEvent::SurfaceResized(size) =>
-      Some(@core.AppEvent::Resize(physical_size_to_core(size)))
-    @window_core.WindowEvent::PointerMoved(_, position, _, _) =>
       Some(
-        @core.AppEvent::Pointer(
-          @core.PointerEvent::new(
-            position=physical_position_to_core(position),
-            phase=@core.PointerPhase::Move,
+        @host.HostEvent::Resized(
+          @host.HostSurfaceMetrics::new(
+            logical_size=physical_size_to_core(size),
+            physical_size=physical_size_to_core(size),
           ),
         ),
       )
+    @window_core.WindowEvent::PointerMoved(_, position, _, _) =>
+      Some(@host.HostEvent::PointerMoved(physical_position_to_core(position)))
     @window_core.WindowEvent::PointerButton(_, state, position, _, source) =>
       match source.mouse_button() {
         Some(@window_core.MouseButton::Left) =>
           Some(
-            @core.AppEvent::Pointer(
-              @core.PointerEvent::new(
-                position=physical_position_to_core(position),
-                phase=element_state_to_pointer_phase(state),
-              ),
+            @host.HostEvent::PointerButton(
+              physical_position_to_core(position),
+              element_state_to_pointer_phase(state),
+              0,
             ),
           )
         _ =>
           Some(
-            @core.AppEvent::Pointer(
-              @core.PointerEvent::new(
-                position=last_pointer,
-                phase=@core.PointerPhase::Cancel,
-              ),
+            @host.HostEvent::PointerButton(
+              last_pointer,
+              @core.PointerPhase::Cancel,
+              0,
             ),
           )
       }
     @window_core.WindowEvent::CloseRequested =>
-      Some(@core.AppEvent::CloseRequested)
+      Some(@host.HostEvent::CloseRequested)
     @window_core.WindowEvent::RedrawRequested =>
-      Some(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+      Some(@host.HostEvent::RedrawRequested)
     @window_core.WindowEvent::KeyboardInput(_, key_event, is_synthetic) =>
       if is_synthetic {
         None
       } else {
         Some(
-          @core.AppEvent::Keyboard(
+          @host.HostEvent::Keyboard(
             keyboard_event_to_core(key_event, modifiers),
           ),
         )
       }
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit(text)) =>
-      Some(
-        @core.AppEvent::Keyboard(
-          @core.KeyboardEvent::new(key=text, text=Some(text)),
-        ),
-      )
+      Some(@host.HostEvent::TextInput(text))
     _ => None
   }
 }
@@ -118,11 +143,22 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
   match window {
     Some(window) => {
       let size = physical_size_to_core(window.surface_size())
-      self.runtime.dispatch_event(@core.AppEvent::Resize(size))
+      ignore(
+        self.driver.dispatch(
+          @host.HostEvent::Resized(
+            @host.HostSurfaceMetrics::new(
+              logical_size=size,
+              physical_size=size,
+            ),
+          ),
+        ),
+      )
       let renderer : @native_wgpu.RendererHandle? = Some(
-        @native_wgpu.RendererHandle::create_for_windows_hwnd(
+        @native_wgpu.RendererHandle::create_with_host_surface(
           size,
-          window.window_handle(),
+          @native_wgpu.NativeSurfaceFactory::create_windows_hwnd(
+            window.window_handle(),
+          ),
         ),
       ) catch {
         err => {
@@ -148,6 +184,7 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
 ) {
   match event {
     @window_core.WindowEvent::CloseRequested => {
+      self.dispatch_window_event(event)
       self.dispose()
       event_loop.exit()
     }
@@ -164,20 +201,16 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
       self.last_pointer = physical_position_to_core(position)
       self.dispatch_window_event(event)
-      self.request_redraw()
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
       self.last_pointer = physical_position_to_core(position)
       self.dispatch_window_event(event)
-      self.request_redraw()
     }
     @window_core.WindowEvent::KeyboardInput(_, _, _) => {
       self.dispatch_window_event(event)
-      self.request_redraw()
     }
     @window_core.WindowEvent::Ime(_) => {
       self.dispatch_window_event(event)
-      self.request_redraw()
     }
     @window_core.WindowEvent::ModifiersChanged(_) => {
       self.dispatch_window_event(event)
@@ -186,10 +219,9 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       match (self.window, self.renderer) {
         (Some(window), Some(renderer)) => {
           window.pre_present_notify()
-          renderer.render(self.runtime.draw_commands())
-          self.runtime.dispatch_event(
-            @core.AppEvent::Redraw(@core.RedrawReason::Explicit),
-          )
+          self.driver.begin_redraw()
+          renderer.render(self.driver.draw_commands())
+          self.driver.finish_redraw()
         }
         _ => ()
       }
@@ -207,12 +239,12 @@ fn WindowsApp::dispatch_window_event(
       self.modifiers = modifiers_to_core(modifiers)
     _ => ()
   }
-  match window_event_to_core_with_modifiers(
+  match window_event_to_host_with_modifiers(
     event,
     self.last_pointer,
     self.modifiers,
   ) {
-    Some(core_event) => self.runtime.dispatch_event(core_event)
+    Some(host_event) => ignore(self.driver.dispatch(host_event))
     None => ()
   }
 }

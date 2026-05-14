@@ -1,10 +1,4 @@
 ///|
-extern "C" fn win32_hinstance() -> @wgpu_c.OpaquePtr = "moui_win32_hinstance"
-
-///|
-extern "C" fn win32_hwnd_from_u64(hwnd : UInt64) -> @wgpu_c.OpaquePtr = "moui_win32_hwnd_from_u64"
-
-///|
 pub struct RendererHandle {
   mut size : @core.Size
   mut last_batches : Array[@render.RectBatch]
@@ -72,9 +66,8 @@ pub fn RendererHandle::new() -> RendererHandle {
 pub fn RendererHandle::create(
   size : @core.Size,
 ) -> RendererHandle raise @wgpu.WgpuError {
-  let instance = @wgpu.Instance::create()
-  let surface = instance.create_surface_metal_layer()
-  create_with_surface(size, instance, surface)
+  let surface = NativeSurfaceFactory::create_metal_layer()
+  RendererHandle::create_with_host_surface(size, surface)
 }
 
 ///|
@@ -82,12 +75,16 @@ pub fn RendererHandle::create_for_windows_hwnd(
   size : @core.Size,
   hwnd : UInt64,
 ) -> RendererHandle raise @wgpu.WgpuError {
-  let instance = @wgpu.Instance::create()
-  let surface = instance.create_surface_windows_hwnd(
-    win32_hinstance(),
-    win32_hwnd_from_u64(hwnd),
-  )
-  create_with_surface(size, instance, surface)
+  let surface = NativeSurfaceFactory::create_windows_hwnd(hwnd)
+  RendererHandle::create_with_host_surface(size, surface)
+}
+
+///|
+pub fn RendererHandle::create_with_host_surface(
+  size : @core.Size,
+  host_surface : HostWgpuSurface,
+) -> RendererHandle raise @wgpu.WgpuError {
+  create_with_surface(size, host_surface.instance, host_surface.surface)
 }
 
 ///|
