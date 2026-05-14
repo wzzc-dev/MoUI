@@ -20,6 +20,16 @@ test "surface bridge info" {
 }
 
 ///|
+test "platform surface host info" {
+  let info = @backend.platform_surface_host_info(platform="windows")
+  inspect(info.uses_external_layer, content="true")
+  inspect(
+    info.description,
+    content="windows backend owns platform surface creation and passes HostWgpuSurface to render/wgpu",
+  )
+}
+
+///|
 test "app runtime dispatches events and draws" {
   let runtime = @backend.AppRuntime::new(
     root=@core.ViewNode::Button({

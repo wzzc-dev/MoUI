@@ -1,27 +1,37 @@
 ///|
-pub fn start_counter_web(context : @web.WebBootContext) -> @web.WebApp {
+pub fn start_counter_web(
+  context : @winit_web.WinitWebBootContext,
+) -> @winit_web.WinitWebApp {
   let app_state = @counter_app.CounterApp::new()
   let runtime = app_state.runtime(
-    width=context.width(),
-    height=context.height(),
+    width=@winit_web.width(context),
+    height=@winit_web.height(context),
   )
-  let app = @web.WebApp::new(runtime~, renderer=context.renderer())
-  app.attach_dom_events(context)
-  app.start()
+  let app = @winit_web.new_app(
+    runtime~,
+    renderer=@winit_web.renderer(context),
+  )
+  @winit_web.attach_dom_events(app, context)
+  @winit_web.start(app)
   app
 }
 
 ///|
-pub fn start_todo_web(context : @web.WebBootContext) -> @web.WebApp {
+pub fn start_todo_web(
+  context : @winit_web.WinitWebBootContext,
+) -> @winit_web.WinitWebApp {
   let app_state = @todo_app.TodoApp::new()
   app_state.add("Try MoUI")
   let runtime = app_state.runtime(
-    width=context.width(),
-    height=context.height(),
+    width=@winit_web.width(context),
+    height=@winit_web.height(context),
   )
-  let app = @web.WebApp::new(runtime~, renderer=context.renderer())
-  app.attach_dom_events(context)
-  app.start()
+  let app = @winit_web.new_app(
+    runtime~,
+    renderer=@winit_web.renderer(context),
+  )
+  @winit_web.attach_dom_events(app, context)
+  @winit_web.start(app)
   app
 }
 
@@ -30,7 +40,7 @@ extern "js" fn has_boot_context() -> Bool =
   #|() => globalThis.__mouiBootContext !== undefined
 
 ///|
-extern "js" fn boot_context() -> @web.WebBootContext =
+extern "js" fn boot_context() -> @winit_web.WinitWebBootContext =
   #|() => globalThis.__mouiBootContext
 
 ///|

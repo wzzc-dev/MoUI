@@ -1,4 +1,13 @@
 ///|
+extern "C" fn win32_surface_host_hinstance() -> @wgpu_c.OpaquePtr =
+  "moui_windows_surface_host_hinstance"
+
+///|
+extern "C" fn win32_surface_host_hwnd_from_u64(
+  hwnd : UInt64,
+) -> @wgpu_c.OpaquePtr = "moui_windows_surface_host_hwnd_from_u64"
+
+///|
 struct WindowsApp {
   title : String
   mut window : @win.Window?
@@ -122,6 +131,27 @@ pub fn window_event_to_host_with_modifiers(
 }
 
 ///|
+pub fn create_windows_host_surface(
+  hwnd : UInt64,
+) -> @wgpu_surface.HostWgpuSurface raise @wgpu.WgpuError {
+  let instance = @wgpu.Instance::create()
+  let surface = instance.create_surface_windows_hwnd(
+    win32_surface_host_hinstance(),
+    win32_surface_host_hwnd_from_u64(hwnd),
+  )
+  @wgpu_surface.HostWgpuSurface::new(instance~, surface~)
+}
+
+///|
+pub fn windows_surface_host_info() -> @wgpu_surface.SurfaceHostInfo {
+  {
+    platform: "windows",
+    owns_instance: true,
+    description: "Windows backend owns HWND surface creation and passes HostWgpuSurface to render/wgpu.",
+  }
+}
+
+///|
 pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
   self,
   event_loop,
@@ -154,7 +184,10 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
         ),
       )
       let renderer : @wgpu_renderer.WgpuRenderer? = Some(
-        @wgpu_renderer.create_with_windows_hwnd(size, window.window_handle()),
+        @wgpu_renderer.create_with_host_surface(
+          size,
+          create_windows_host_surface(window.window_handle()),
+        ),
       ) catch {
         err => {
           println("error creating Windows WGPU renderer: \{err.message()}")

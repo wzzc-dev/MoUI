@@ -177,3 +177,10 @@ test "windows backend keeps ime commit separate at host layer" {
     _ => fail("expected host text input")
   }
 }
+
+///|
+test "windows backend exposes platform-owned surface host metadata" {
+  let info = windows_surface_host_info()
+  inspect(info.platform, content="windows")
+  inspect(info.owns_instance, content="true")
+}

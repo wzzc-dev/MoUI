@@ -3,7 +3,9 @@ import {
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/host" @host,
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
-  "Milky2018/wgpu_mbt",
+  "wzzc-dev/moui/render/wgpu_surface" @wgpu_surface,
+  "Milky2018/wgpu_mbt" @wgpu,
+  "Milky2018/wgpu_mbt/c" @wgpu_c,
   "Milky2018/window/core" @window_core,
   "Milky2018/window/dpi" @dpi,
   "Milky2018/window/windows" @win,
@@ -12,5 +14,6 @@ import {
 supported_targets = "native"
 
 options(
+  "native-stub": [ "win32_surface_host.c" ],
   targets: { },
 )

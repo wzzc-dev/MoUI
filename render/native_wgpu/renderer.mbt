@@ -66,6 +66,8 @@ pub fn RendererHandle::new() -> RendererHandle {
 pub fn RendererHandle::create(
   size : @core.Size,
 ) -> RendererHandle raise @wgpu.WgpuError {
+  // Compatibility path for the old native renderer API. New platform hosts
+  // should create HostWgpuSurface themselves and call render/wgpu instead.
   let surface = NativeSurfaceFactory::create_metal_layer()
   RendererHandle::create_with_host_surface(size, surface)
 }
@@ -75,6 +77,8 @@ pub fn RendererHandle::create_for_windows_hwnd(
   size : @core.Size,
   hwnd : UInt64,
 ) -> RendererHandle raise @wgpu.WgpuError {
+  // Compatibility path for the old Windows renderer API. Windows backend now
+  // owns HWND surface creation and passes HostWgpuSurface into render/wgpu.
   let surface = NativeSurfaceFactory::create_windows_hwnd(hwnd)
   RendererHandle::create_with_host_surface(size, surface)
 }
@@ -84,7 +88,11 @@ pub fn RendererHandle::create_with_host_surface(
   size : @core.Size,
   host_surface : HostWgpuSurface,
 ) -> RendererHandle raise @wgpu.WgpuError {
-  create_with_surface(size, host_surface.instance, host_surface.surface)
+  create_with_surface(
+    size,
+    host_surface.instance,
+    host_surface.surface,
+  )
 }
 
 ///|
