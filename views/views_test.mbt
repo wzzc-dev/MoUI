@@ -129,6 +129,13 @@ test "theme modifier feeds environment style into view spec" {
 }
 
 ///|
+test "theme helper selects dark token scheme" {
+  let theme = @views.theme(scheme=@core.ColorScheme::Dark)
+  assert_true(theme.scheme == @core.ColorScheme::Dark)
+  assert_true(theme.background == theme.palette.background)
+}
+
+///|
 test "container and spacer participate in layout" {
   let root = @views.column([
     @views.surface(

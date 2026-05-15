@@ -95,6 +95,24 @@ pub fn Color::gray() -> Self
 pub fn Color::rgba(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> Self
 pub fn Color::white() -> Self
 
+pub(all) struct ColorPalette {
+  foreground : Color
+  background : Color
+  surface : Color
+  surface_variant : Color
+  primary : Color
+  primary_foreground : Color
+  outline : Color
+  muted : Color
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ColorPalette::dark() -> Self
+pub fn ColorPalette::light() -> Self
+
+pub(all) enum ColorScheme {
+  Light
+  Dark
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct Component {
   build : (BuildContext) -> ViewSpec
 }
@@ -181,8 +199,10 @@ pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?) -> RenderN
 
 pub(all) struct Environment {
   theme : Theme
+  color_scheme : ColorScheme
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Environment::default() -> Self
+pub fn Environment::with_color_scheme(Self, ColorScheme) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
 
 pub(all) struct FlexViewSpec {
@@ -290,6 +310,14 @@ pub(all) enum PointerPhase {
   Cancel
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct RadiusScale {
+  sm : Double
+  md : Double
+  lg : Double
+  pill : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RadiusScale::default() -> Self
+
 pub(all) struct Rect {
   origin : Point
   size : Size
@@ -369,6 +397,15 @@ pub(all) struct SpacerViewSpec {
   weight : Double
 }
 
+pub(all) struct SpacingScale {
+  xs : Double
+  sm : Double
+  md : Double
+  lg : Double
+  xl : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SpacingScale::default() -> Self
+
 pub(all) struct State[T] {
   slot : StateSlot[T]
 }
@@ -440,6 +477,11 @@ pub(all) struct TextViewSpec {
 }
 
 pub(all) struct Theme {
+  scheme : ColorScheme
+  palette : ColorPalette
+  spacing_scale : SpacingScale
+  radius_scale : RadiusScale
+  typography : TypographyScale
   font : FontSpec
   foreground : Color
   background : Color
@@ -447,13 +489,19 @@ pub(all) struct Theme {
   spacing : Double
   corner_radius : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Theme::dark() -> Self
 pub fn Theme::default() -> Self
+pub fn Theme::light() -> Self
 pub fn Theme::with_accent(Self, Color) -> Self
 pub fn Theme::with_background(Self, Color) -> Self
 pub fn Theme::with_corner_radius(Self, Double) -> Self
 pub fn Theme::with_font(Self, FontSpec) -> Self
 pub fn Theme::with_foreground(Self, Color) -> Self
+pub fn Theme::with_palette(Self, ColorPalette) -> Self
+pub fn Theme::with_radius_scale(Self, RadiusScale) -> Self
 pub fn Theme::with_spacing(Self, Double) -> Self
+pub fn Theme::with_spacing_scale(Self, SpacingScale) -> Self
+pub fn Theme::with_typography(Self, TypographyScale) -> Self
 
 pub(all) struct Transform2D {
   a : Double
@@ -464,6 +512,14 @@ pub(all) struct Transform2D {
   ty : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Transform2D::identity() -> Self
+
+pub(all) struct TypographyScale {
+  body : FontSpec
+  title : FontSpec
+  caption : FontSpec
+  control : FontSpec
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TypographyScale::default() -> Self
 
 pub(all) enum ViewSpec {
   EmptySpec
