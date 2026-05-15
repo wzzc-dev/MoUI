@@ -1,7 +1,7 @@
 ///|
 test "views construct layout" {
   let root = @views.padding(
-    @views.column([@views.label("A"), @views.button("B")], spacing=8.0),
+    @views.column([@views.text("A"), @views.button("B")], spacing=8.0),
     4.0,
   )
   let layout = @core.layout_spec(
@@ -15,7 +15,7 @@ test "views construct layout" {
 test "button on click callback" {
   let clicks = Ref(0)
   let runtime = @core.AppRuntime::new_spec(
-    root=@views.button_on_click("Tap", () => clicks.val = clicks.val + 1),
+    root=@views.button("Tap", on_click=() => clicks.val = clicks.val + 1),
     size=@core.Size::new(width=100.0, height=50.0),
   )
   runtime.dispatch_event(
@@ -40,7 +40,7 @@ test "button on click callback" {
 ///|
 test "label paints text" {
   let runtime = @core.AppRuntime::new_spec(
-    root=@views.label("Title"),
+    root=@views.text("Title"),
     size=@core.Size::new(width=160.0, height=32.0),
   )
   guard runtime.draw_commands()
@@ -72,7 +72,7 @@ test "button paints background and text command" {
 
 ///|
 test "modifiers build styled view specs" {
-  let spec = @views.label("Styled")
+  let spec = @views.text("Styled")
     .font(@core.FontSpec::new(size=20.0, weight=700))
     .foreground(@core.Color::blue())
     .key("title")
@@ -92,7 +92,7 @@ test "modifiers build styled view specs" {
 
 ///|
 test "flex alignment modifiers build view specs" {
-  let spec = @views.row([@views.label("A")])
+  let spec = @views.row([@views.text("A")])
     .main_axis_alignment(@core.MainAxisAlignment::MainCenter)
     .cross_axis_alignment(@core.CrossAxisAlignment::CrossEnd)
   guard spec
@@ -131,8 +131,8 @@ test "theme modifier feeds environment style into view spec" {
 ///|
 test "container and spacer participate in layout" {
   let root = @views.column([
-    @views.container(
-      @views.label("A"),
+    @views.surface(
+      @views.text("A"),
       width=120.0,
       height=40.0,
       background=@core.Color::gray(),
@@ -152,9 +152,9 @@ test "container and spacer participate in layout" {
 test "text field constructs binding backed spec" {
   let state = @core.State::new("Draft")
   let submitted = Ref(false)
-  let spec = @views.text_field_on_submit(
+  let spec = @views.text_field(
     state.binding(),
-    () => submitted.val = true,
+    on_submit=Some(() => submitted.val = true),
     placeholder="New todo",
     width=220.0,
     height=40.0,

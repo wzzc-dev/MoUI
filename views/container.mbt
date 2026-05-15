@@ -1,5 +1,5 @@
 ///|
-pub fn container(
+pub fn surface(
   child : @core.ViewSpec,
   width? : Double,
   height? : Double,

@@ -6,17 +6,11 @@ import {
 }
 
 // Values
-pub fn button(String, width? : Double, height? : Double) -> @core.ViewSpec
-
-pub fn button_on_click(String, () -> Unit, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn button(String, on_click? : () -> Unit, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn column(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
-pub fn container(@core.ViewSpec, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double) -> @core.ViewSpec
-
 pub fn environment(theme? : @core.Theme) -> @core.Environment
-
-pub fn label(String, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn padding(@core.ViewSpec, Double) -> @core.ViewSpec
 
@@ -26,9 +20,11 @@ pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @cor
 
 pub fn spacer(min_length? : Double) -> @core.ViewSpec
 
-pub fn text_field(@core.Binding[String], placeholder? : String, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn surface(@core.ViewSpec, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double) -> @core.ViewSpec
 
-pub fn text_field_on_submit(@core.Binding[String], () -> Unit, placeholder? : String, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn text(String, width? : Double, height? : Double) -> @core.ViewSpec
+
+pub fn text_field(@core.Binding[String], on_submit? : (() -> Unit)?, placeholder? : String, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double) -> @core.Theme
 

@@ -94,16 +94,20 @@ pub fn TodoApp::remove(self : TodoApp, id : Int) -> Unit {
 ///|
 pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
   let children : Array[@core.ViewSpec] = [
-    @views.label("MoUI Todo"),
+    @views.text("MoUI Todo"),
     @views.row(
       [
-        @views.text_field_on_submit(
+        @views.text_field(
           self.draft.binding(),
-          () => self.submit_draft(),
+          on_submit=Some(() => self.submit_draft()),
           placeholder="New todo",
           width=220.0,
         ),
-        @views.button_on_click("Add", () => self.submit_draft(), width=120.0),
+        @views.button(
+          "Add",
+          on_click=() => self.submit_draft(),
+          width=120.0,
+        ),
       ],
       spacing=8.0,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
@@ -119,12 +123,16 @@ pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
 fn TodoApp::todo_row(self : TodoApp, item : TodoItem) -> @core.ViewSpec {
   @views.row(
     [
-      @views.button_on_click(
+      @views.button(
         item.display_text(),
-        () => self.toggle(item.id),
+        on_click=() => self.toggle(item.id),
         width=220.0,
       ),
-      @views.button_on_click("Remove", () => self.remove(item.id), width=120.0),
+      @views.button(
+        "Remove",
+        on_click=() => self.remove(item.id),
+        width=120.0,
+      ),
     ],
     spacing=8.0,
     cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,

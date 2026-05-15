@@ -17,9 +17,9 @@ pub fn CounterApp::increment(self : CounterApp) -> Unit {
 pub fn CounterApp::root(self : CounterApp) -> @core.ViewSpec {
   @views.column(
     [
-      @views.label("MoUI Counter"),
-      @views.label("Count: \{self.count.get()}"),
-      @views.button_on_click("Increment", () => self.increment()),
+      @views.text("MoUI Counter"),
+      @views.text("Count: \{self.count.get()}"),
+      @views.button("Increment", on_click=() => self.increment()),
     ],
     spacing=12.0,
   )

@@ -1,5 +1,5 @@
 ///|
-pub fn label(
+pub fn text(
   text : String,
   width? : Double = 160.0,
   height? : Double = 32.0,

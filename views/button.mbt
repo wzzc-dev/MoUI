@@ -1,28 +1,9 @@
 ///|
 pub fn button(
   text : String,
+  on_click? : @core.ClickHandler,
   width? : Double = 180.0,
   height? : Double = 44.0,
-) -> @core.ViewSpec {
-  button_base(text, None, width~, height~)
-}
-
-///|
-pub fn button_on_click(
-  text : String,
-  on_click : @core.ClickHandler,
-  width? : Double = 180.0,
-  height? : Double = 44.0,
-) -> @core.ViewSpec {
-  button_base(text, Some(on_click), width~, height~)
-}
-
-///|
-fn button_base(
-  text : String,
-  on_click : @core.ClickHandler?,
-  width~ : Double,
-  height~ : Double,
 ) -> @core.ViewSpec {
   @core.ViewSpec::ButtonSpec({
     key: None,

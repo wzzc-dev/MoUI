@@ -5,7 +5,7 @@ MoUI is a MoonBit GUI framework prototype. The current architecture keeps the ap
 ## Scope
 
 - Platform-neutral `core` runtime, view specs, layout, hit testing, and draw commands.
-- Basic views in `views`, including labels, buttons, layout containers, and controlled text fields.
+- Spec-first views in `views`, including `text`, `button`, `text_field`, `surface`, row/column layout, and spacer primitives.
 - Unified host boundaries in `backend/host`, with shared `backend/common` window-event mapping and platform hosts normalizing events into `HostEvent`.
 - Native rendering through `render/wgpu`.
 - Web rendering through `render/webgpu` on `wasm-gc` only. The old JS-target WebGPU path is intentionally removed.
@@ -29,6 +29,28 @@ examples/counter_macos/       macOS native counter
 examples/todo_windows/        Windows native todo
 examples/counter_web_wasm/    Web counter on wasm-gc
 ```
+
+## V2 Spec API
+
+MoUI uses a breaking, spec-only runtime. Public view constructors return
+`@core.ViewSpec` directly; the old `ViewNode` compatibility API has been
+removed.
+
+```moonbit
+let app =
+  @views.column([
+    @views.text("MoUI Counter"),
+    @views.button("Increment", on_click=() => println("clicked")),
+  ], spacing=12.0)
+
+let runtime = @core.AppRuntime::new_spec(
+  root=app,
+  size=@core.Size::new(width=320.0, height=240.0),
+)
+```
+
+Stateful apps should use `AppRuntime::new_component` with a `Component` that
+returns `ViewSpec`.
 
 ## Web Wasm-GC
 
