@@ -199,6 +199,17 @@ pub(all) struct FontSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontSpec::new(family? : String, size? : Double, weight? : Int) -> Self
 
+pub(all) struct FrameViewSpec {
+  key : Key?
+  width : Double?
+  height : Double?
+  min_width : Double?
+  min_height : Double?
+  max_width : Double?
+  max_height : Double?
+  child : ViewSpec
+}
+
 pub(all) struct ImageRun {
   source : String
   frame : Rect
@@ -353,6 +364,7 @@ pub fn Size::new(width~ : Double, height~ : Double) -> Self
 pub(all) struct SpacerViewSpec {
   key : Key?
   min_length : Double
+  weight : Double
 }
 
 pub(all) struct State[T] {
@@ -460,6 +472,7 @@ pub(all) enum ViewSpec {
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)
   SpacerSpec(SpacerViewSpec)
+  FrameSpec(FrameViewSpec)
 }
 pub fn ViewSpec::background(Self, Color) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self
@@ -467,6 +480,7 @@ pub fn ViewSpec::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
 pub fn ViewSpec::environment(Self, Environment) -> Self
 pub fn ViewSpec::font(Self, FontSpec) -> Self
 pub fn ViewSpec::foreground(Self, Color) -> Self
+pub fn ViewSpec::frame(Self, width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self
 pub fn ViewSpec::key(Self, String) -> Self
 pub fn ViewSpec::kind(Self) -> Int
 pub fn ViewSpec::main_axis_alignment(Self, MainAxisAlignment) -> Self

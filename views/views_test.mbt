@@ -149,6 +149,17 @@ test "container and spacer participate in layout" {
 }
 
 ///|
+test "frame helper constrains child layout" {
+  let root = @views.frame(@views.text("A"), width=64.0, height=24.0)
+  let layout = @core.layout_spec(
+    root,
+    @core.Rect::new(x=0.0, y=0.0, width=200.0, height=100.0),
+  )
+  inspect(layout.children[0].frame.size.width, content="64")
+  inspect(layout.children[0].frame.size.height, content="24")
+}
+
+///|
 test "text field constructs binding backed spec" {
   let state = @core.State::new("Draft")
   let submitted = Ref(false)

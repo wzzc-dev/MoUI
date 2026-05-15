@@ -12,13 +12,15 @@ pub fn column(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @
 
 pub fn environment(theme? : @core.Theme) -> @core.Environment
 
+pub fn frame(@core.ViewSpec, width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.ViewSpec
+
 pub fn padding(@core.ViewSpec, Double) -> @core.ViewSpec
 
 pub fn padding_insets(@core.ViewSpec, @core.Insets) -> @core.ViewSpec
 
 pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
-pub fn spacer(min_length? : Double) -> @core.ViewSpec
+pub fn spacer(min_length? : Double, weight? : Double) -> @core.ViewSpec
 
 pub fn surface(@core.ViewSpec, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double) -> @core.ViewSpec
 

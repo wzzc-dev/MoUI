@@ -139,6 +139,19 @@ pub(all) struct ContainerViewSpec {
 pub(all) struct SpacerViewSpec {
   key : Key?
   min_length : Double
+  weight : Double
+}
+
+///|
+pub(all) struct FrameViewSpec {
+  key : Key?
+  width : Double?
+  height : Double?
+  min_width : Double?
+  min_height : Double?
+  max_width : Double?
+  max_height : Double?
+  child : ViewSpec
 }
 
 ///|
@@ -151,6 +164,7 @@ pub(all) enum ViewSpec {
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)
   SpacerSpec(SpacerViewSpec)
+  FrameSpec(FrameViewSpec)
 }
 
 ///|
@@ -329,6 +343,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     PaddingSpec(data) => data.key
     ContainerSpec(data) => data.key
     SpacerSpec(data) => data.key
+    FrameSpec(data) => data.key
   }
 }
 
@@ -343,6 +358,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
     ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
     SpacerSpec(data) => SpacerSpec({ ..data, key: Some(key) })
+    FrameSpec(data) => FrameSpec({ ..data, key: Some(key) })
   }
 }
 
@@ -357,6 +373,7 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     PaddingSpec(_) => 5
     ContainerSpec(_) => 6
     SpacerSpec(_) => 7
+    FrameSpec(_) => 8
   }
 }
 
@@ -384,6 +401,7 @@ pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
         ..data,
         child: map_view_spec(data.child, child => child.font(font)),
       })
+    FrameSpec(data) => FrameSpec({ ..data, child: data.child.font(font) })
     EmptySpec | SpacerSpec(_) => self
   }
 }
@@ -406,6 +424,7 @@ pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
         ..data,
         child: map_view_spec(data.child, child => child.foreground(color)),
       })
+    FrameSpec(data) => FrameSpec({ ..data, child: data.child.foreground(color) })
     EmptySpec | SpacerSpec(_) => self
   }
 }
@@ -416,6 +435,7 @@ pub fn ViewSpec::background(self : ViewSpec, color : Color) -> ViewSpec {
     ButtonSpec(data) => ButtonSpec({ ..data, background: color })
     TextFieldSpec(data) => TextFieldSpec({ ..data, background: color })
     ContainerSpec(data) => ContainerSpec({ ..data, background: Some(color) })
+    FrameSpec(data) => FrameSpec({ ..data, child: data.child.background(color) })
     _ =>
       ContainerSpec({
         key: self.identity_key(),
@@ -433,6 +453,8 @@ pub fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
     ButtonSpec(data) => ButtonSpec({ ..data, corner_radius: radius })
     TextFieldSpec(data) => TextFieldSpec({ ..data, corner_radius: radius })
     ContainerSpec(data) => ContainerSpec({ ..data, corner_radius: radius })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.corner_radius(radius) })
     _ =>
       ContainerSpec({
         key: self.identity_key(),
@@ -459,6 +481,7 @@ pub fn ViewSpec::spacing(self : ViewSpec, spacing : Double) -> ViewSpec {
         ..data,
         child: map_view_spec(data.child, child => child.spacing(spacing)),
       })
+    FrameSpec(data) => FrameSpec({ ..data, child: data.child.spacing(spacing) })
     _ => self
   }
 }
@@ -480,6 +503,8 @@ pub fn ViewSpec::main_axis_alignment(
           child => child.main_axis_alignment(alignment),
         ),
       })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
     _ => self
   }
 }
@@ -501,6 +526,8 @@ pub fn ViewSpec::cross_axis_alignment(
           child => child.cross_axis_alignment(alignment),
         ),
       })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
     _ => self
   }
 }
@@ -519,6 +546,28 @@ pub fn ViewSpec::environment(
   environment : Environment,
 ) -> ViewSpec {
   self.theme(environment.theme)
+}
+
+///|
+pub fn ViewSpec::frame(
+  self : ViewSpec,
+  width? : Double,
+  height? : Double,
+  min_width? : Double,
+  min_height? : Double,
+  max_width? : Double,
+  max_height? : Double,
+) -> ViewSpec {
+  FrameSpec({
+    key: None,
+    width,
+    height,
+    min_width,
+    min_height,
+    max_width,
+    max_height,
+    child: self,
+  })
 }
 
 ///|
@@ -547,6 +596,11 @@ fn mount_view_spec_with_next(spec : ViewSpec, next_id : Int) -> MountResult {
         next = mounted.next_id
       }
     PaddingSpec(data) => {
+      let mounted = mount_view_spec_with_next(data.child, next)
+      children.push(mounted.node)
+      next = mounted.next_id
+    }
+    FrameSpec(data) => {
       let mounted = mount_view_spec_with_next(data.child, next)
       children.push(mounted.node)
       next = mounted.next_id
@@ -679,6 +733,7 @@ fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
   match spec {
     FlexSpec(data) => data.children
     PaddingSpec(data) => [data.child]
+    FrameSpec(data) => [data.child]
     ContainerSpec(data) =>
       match data.child {
         Some(child) => [child]
@@ -755,7 +810,7 @@ fn ElementNode::render_with_focus(
         data.spacing,
         data.main_axis_alignment,
         data.cross_axis_alignment,
-        self.children.map(child => child.intrinsic_size()),
+        self.children,
         bounds,
       )
       for index, child in self.children {
@@ -797,6 +852,12 @@ fn ElementNode::render_with_focus(
         children.push(self.children[0].render_with_focus(frame, focused))
       }
     }
+    FrameSpec(data) => {
+      let frame = frame_rect_for_spec(data, bounds)
+      if self.children.length() > 0 {
+        children.push(self.children[0].render_with_focus(frame, focused))
+      }
+    }
   }
   self.dirty.clear()
   {
@@ -816,7 +877,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     ButtonSpec(data) => data.size
     TextFieldSpec(data) => data.size
     SpacerSpec(data) =>
-      if data.min_length == 0.0 {
+      if data.weight > 0.0 {
         Size::new(width=0.0, height=0.0)
       } else {
         Size::new(width=data.min_length, height=data.min_length)
@@ -838,6 +899,14 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
           }
       }
     FlexSpec(data) => measure_flex_sizes(data.axis, data.spacing, self.children)
+    FrameSpec(data) => {
+      let child_size = if self.children.length() > 0 {
+        self.children[0].intrinsic_size()
+      } else {
+        Size::new(width=0.0, height=0.0)
+      }
+      resolve_frame_size(data, child_size)
+    }
   }
 }
 
@@ -869,7 +938,7 @@ pub fn ElementNode::dispatch_pointer(
       }
       { changed: false, activated: false, focused }
     }
-    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) => {
+    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) => {
       let mut changed = false
       let mut activated = false
       let mut focused : ElementId? = None
@@ -939,7 +1008,7 @@ pub fn ElementNode::find_text_field_at(
       } else {
         None
       }
-    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) => {
+    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) => {
       for index, child in self.children {
         if index < render.children.length() {
           match child.find_text_field_at(point, render.children[index]) {
@@ -1111,32 +1180,74 @@ fn measure_flex_sizes(
 }
 
 ///|
+fn resolve_frame_size(data : FrameViewSpec, child : Size) -> Size {
+  let width = data.width.unwrap_or(child.width)
+  let height = data.height.unwrap_or(child.height)
+  let min_width = data.min_width.unwrap_or(0.0)
+  let min_height = data.min_height.unwrap_or(0.0)
+  let max_width = data.max_width.unwrap_or(width)
+  let max_height = data.max_height.unwrap_or(height)
+  Size::new(width~, height~).clamp({
+    min: Size::new(width=min_width, height=min_height),
+    max: Size::new(
+      width=max_double(min_width, max_width),
+      height=max_double(min_height, max_height),
+    ),
+  })
+}
+
+///|
+fn frame_rect_for_spec(data : FrameViewSpec, bounds : Rect) -> Rect {
+  let size = resolve_frame_size(data, bounds.size)
+  Rect::new(
+    x=bounds.origin.x,
+    y=bounds.origin.y,
+    width=size.width,
+    height=size.height,
+  )
+}
+
+///|
+fn spacer_weight(child : ElementNode) -> Double {
+  match child.spec {
+    SpacerSpec(data) => data.weight
+    _ => 0.0
+  }
+}
+
+///|
+fn child_main_size(axis : Axis, size : Size) -> Double {
+  match axis {
+    Axis::Horizontal => size.width
+    Axis::Vertical => size.height
+  }
+}
+
+///|
 fn flex_child_frames(
   axis : Axis,
   spacing : Double,
   main_axis_alignment : MainAxisAlignment,
   cross_axis_alignment : CrossAxisAlignment,
-  child_sizes : Array[Size],
+  children : Array[ElementNode],
   bounds : Rect,
 ) -> Array[Rect] {
-  let count = child_sizes.length()
+  let count = children.length()
   let frames : Array[Rect] = []
   if count == 0 {
     frames
   } else {
     let total_spacing = spacing * (count.to_double() - 1.0)
     let mut child_main_total = 0.0
-    let mut spacer_count = 0
-    for size in child_sizes {
-      let child_main = match axis {
-        Axis::Horizontal => size.width
-        Axis::Vertical => size.height
-      }
-      child_main_total = child_main_total + child_main
-    }
-    for child_size in child_sizes {
-      if child_size.width == 0.0 && child_size.height == 0.0 {
-        spacer_count = spacer_count + 1
+    let mut total_weight = 0.0
+    let child_sizes = children.map(child => child.intrinsic_size())
+    for index, size in child_sizes {
+      let weight = spacer_weight(children[index])
+      if weight > 0.0 {
+        total_weight = total_weight + weight
+        child_main_total = child_main_total + child_main_size(axis, size)
+      } else {
+        child_main_total = child_main_total + child_main_size(axis, size)
       }
     }
     let available_main = match axis {
@@ -1147,25 +1258,17 @@ fn flex_child_frames(
       0.0,
       available_main - child_main_total - total_spacing,
     )
-    let spacer_main = if spacer_count > 0 {
-      remaining / spacer_count.to_double()
-    } else {
-      0.0
-    }
-    let alignment_remaining = if spacer_count > 0 { 0.0 } else { remaining }
+    let alignment_remaining = if total_weight > 0.0 { 0.0 } else { remaining }
     let offsets = flex_offsets(
       main_axis_alignment, alignment_remaining, spacing, count,
     )
     let mut cursor = offsets.leading
-    for size in child_sizes {
-      let intrinsic_main_size = match axis {
-        Axis::Horizontal => size.width
-        Axis::Vertical => size.height
-      }
-      let main_size = if size.width == 0.0 && size.height == 0.0 {
-        spacer_main
+    for index, size in child_sizes {
+      let weight = spacer_weight(children[index])
+      let main_size = if weight > 0.0 && total_weight > 0.0 {
+        child_main_size(axis, size) + remaining * weight / total_weight
       } else {
-        intrinsic_main_size
+        child_main_size(axis, size)
       }
       let cross_size = match axis {
         Axis::Horizontal => size.height

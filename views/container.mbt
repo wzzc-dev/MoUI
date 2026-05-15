@@ -20,6 +20,9 @@ pub fn surface(
 }
 
 ///|
-pub fn spacer(min_length? : Double = 0.0) -> @core.ViewSpec {
-  @core.ViewSpec::SpacerSpec({ key: None, min_length })
+pub fn spacer(
+  min_length? : Double = 0.0,
+  weight? : Double = 1.0,
+) -> @core.ViewSpec {
+  @core.ViewSpec::SpacerSpec({ key: None, min_length, weight })
 }
