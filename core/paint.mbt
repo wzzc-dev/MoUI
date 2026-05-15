@@ -28,6 +28,29 @@ pub(all) struct RoundedRect {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct LinearGradientSpec {
+  start : Point
+  end : Point
+  start_color : Color
+  end_color : Color
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum Brush {
+  Solid(Color)
+  LinearGradient(LinearGradientSpec)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ShadowSpec {
+  rect : RoundedRect
+  color : Color
+  offset : Point
+  blur_radius : Double
+  spread : Double
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct ImageRun {
   source : String
   frame : Rect
@@ -51,6 +74,9 @@ pub(all) enum DrawCommand {
   StrokeRect(Rect, Color, Double)
   FillRoundedRect(RoundedRect, Color)
   StrokeRoundedRect(RoundedRect, Color, Double)
+  FillRoundedRectBrush(RoundedRect, Brush)
+  StrokeRoundedRectBrush(RoundedRect, Brush, Double)
+  DrawShadow(ShadowSpec)
   DrawText(TextRun)
   DrawImage(ImageRun)
   PushClip(Rect)
@@ -103,6 +129,42 @@ pub fn FontSpec::new(
 ///|
 pub fn RoundedRect::new(rect~ : Rect, radius? : Double = 0.0) -> RoundedRect {
   { rect, radius }
+}
+
+///|
+pub fn LinearGradientSpec::new(
+  start~ : Point,
+  end~ : Point,
+  start_color~ : Color,
+  end_color~ : Color,
+) -> LinearGradientSpec {
+  { start, end, start_color, end_color }
+}
+
+///|
+pub fn Brush::solid(color : Color) -> Brush {
+  Solid(color)
+}
+
+///|
+pub fn Brush::linear_gradient(
+  start~ : Point,
+  end~ : Point,
+  start_color~ : Color,
+  end_color~ : Color,
+) -> Brush {
+  LinearGradient(LinearGradientSpec::new(start~, end~, start_color~, end_color~))
+}
+
+///|
+pub fn ShadowSpec::new(
+  rect~ : RoundedRect,
+  color~ : Color,
+  offset? : Point = Point::new(x=0.0, y=2.0),
+  blur_radius? : Double = 8.0,
+  spread? : Double = 0.0,
+) -> ShadowSpec {
+  { rect, color, offset, blur_radius, spread }
 }
 
 ///|

@@ -51,6 +51,9 @@ pub(all) enum WebGpuHostCall {
   StrokeRect(@core.Rect, @core.Color, Double)
   FillRoundedRect(@core.RoundedRect, @core.Color)
   StrokeRoundedRect(@core.RoundedRect, @core.Color, Double)
+  FillRoundedRectBrush(@core.RoundedRect, @core.Brush)
+  StrokeRoundedRectBrush(@core.RoundedRect, @core.Brush, Double)
+  DrawShadow(@core.ShadowSpec)
   DrawText(@core.TextRun)
   DrawImage(@core.ImageRun)
   PushClip(@core.Rect)
@@ -329,6 +332,12 @@ pub fn draw_commands_to_host_calls(
         calls.push(WebGpuHostCall::FillRoundedRect(rect, color))
       @core.DrawCommand::StrokeRoundedRect(rect, color, width) =>
         calls.push(WebGpuHostCall::StrokeRoundedRect(rect, color, width))
+      @core.DrawCommand::FillRoundedRectBrush(rect, brush) =>
+        calls.push(WebGpuHostCall::FillRoundedRectBrush(rect, brush))
+      @core.DrawCommand::StrokeRoundedRectBrush(rect, brush, width) =>
+        calls.push(WebGpuHostCall::StrokeRoundedRectBrush(rect, brush, width))
+      @core.DrawCommand::DrawShadow(shadow) =>
+        calls.push(WebGpuHostCall::DrawShadow(shadow))
       @core.DrawCommand::DrawText(run) =>
         calls.push(WebGpuHostCall::DrawText(run))
       @core.DrawCommand::DrawImage(run) =>
@@ -439,6 +448,43 @@ fn submit_host_calls(
             width,
           ),
         )
+      FillRoundedRectBrush(rounded, brush) => {
+        let color = brush_fallback_color(brush)
+        raise_for_host_status(
+          host_fill_rounded_rect(
+            renderer,
+            rounded.rect.origin.x,
+            rounded.rect.origin.y,
+            rounded.rect.size.width,
+            rounded.rect.size.height,
+            rounded.radius,
+            color.r,
+            color.g,
+            color.b,
+            color.a,
+          ),
+        )
+      }
+      StrokeRoundedRectBrush(rounded, brush, width) => {
+        let color = brush_fallback_color(brush)
+        raise_for_host_status(
+          host_stroke_rounded_rect(
+            renderer,
+            rounded.rect.origin.x,
+            rounded.rect.origin.y,
+            rounded.rect.size.width,
+            rounded.rect.size.height,
+            rounded.radius,
+            color.r,
+            color.g,
+            color.b,
+            color.a,
+            width,
+          ),
+        )
+      }
+      DrawShadow(shadow) =>
+        submit_shadow_fallback(renderer, shadow)
       DrawText(run) =>
         raise_for_host_status(
           host_draw_text(
@@ -498,6 +544,40 @@ fn submit_host_calls(
       PopOpacity => raise_for_host_status(host_pop_opacity(renderer))
       Present => raise_for_host_status(host_present(renderer))
     }
+  }
+}
+
+///|
+fn brush_fallback_color(brush : @core.Brush) -> @core.Color {
+  match brush {
+    @core.Brush::Solid(color) => color
+    @core.Brush::LinearGradient(gradient) => gradient.start_color
+  }
+}
+
+///|
+fn submit_shadow_fallback(
+  renderer : HostWebGpuRenderer,
+  shadow : @core.ShadowSpec,
+) -> Unit raise WebGpuHostError {
+  let layers = 3
+  for index in 0..<layers {
+    let grow = shadow.spread + (index + 1).to_double() * shadow.blur_radius / 3.0
+    let alpha = shadow.color.a / (index + 2).to_double()
+    raise_for_host_status(
+      host_fill_rounded_rect(
+        renderer,
+        shadow.rect.rect.origin.x + shadow.offset.x - grow,
+        shadow.rect.rect.origin.y + shadow.offset.y - grow,
+        shadow.rect.rect.size.width + grow * 2.0,
+        shadow.rect.rect.size.height + grow * 2.0,
+        shadow.rect.radius + grow,
+        shadow.color.r,
+        shadow.color.g,
+        shadow.color.b,
+        alpha,
+      ),
+    )
   }
 }
 

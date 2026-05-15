@@ -116,6 +116,14 @@ pub fn collect_rect_batches(
         append_stroke_rect_batches(batches, rect, color, width)
       @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
         append_stroke_rect_batches(batches, rounded.rect, color, width)
+      @core.DrawCommand::FillRoundedRectBrush(rounded, brush) =>
+        batches.push({ rect: rounded.rect, color: brush_fallback_color(brush) })
+      @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
+        append_stroke_rect_batches(
+          batches, rounded.rect, brush_fallback_color(brush), width,
+        )
+      @core.DrawCommand::DrawShadow(shadow) =>
+        append_shadow_batches(batches, shadow)
       @core.DrawCommand::Clear(_)
       | @core.DrawCommand::DrawText(_)
       | @core.DrawCommand::DrawImage(_)
@@ -128,6 +136,40 @@ pub fn collect_rect_batches(
     }
   }
   batches
+}
+
+///|
+fn brush_fallback_color(brush : @core.Brush) -> @core.Color {
+  match brush {
+    @core.Brush::Solid(color) => color
+    @core.Brush::LinearGradient(gradient) => gradient.start_color
+  }
+}
+
+///|
+fn append_shadow_batches(
+  batches : Array[RectBatch],
+  shadow : @core.ShadowSpec,
+) -> Unit {
+  let layers = 3
+  for index in 0..<layers {
+    let grow = shadow.spread + (index + 1).to_double() * shadow.blur_radius / 3.0
+    let alpha = shadow.color.a / (index + 2).to_double()
+    batches.push({
+      rect: @core.Rect::new(
+        x=shadow.rect.rect.origin.x + shadow.offset.x - grow,
+        y=shadow.rect.rect.origin.y + shadow.offset.y - grow,
+        width=shadow.rect.rect.size.width + grow * 2.0,
+        height=shadow.rect.rect.size.height + grow * 2.0,
+      ),
+      color: @core.Color::rgba(
+        r=shadow.color.r,
+        g=shadow.color.g,
+        b=shadow.color.b,
+        a=alpha,
+      ),
+    })
+  }
 }
 
 ///|

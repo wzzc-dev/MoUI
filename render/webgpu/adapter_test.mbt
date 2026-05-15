@@ -133,6 +133,26 @@ test "wgpu web command bridge preserves full draw command parity order" {
       @core.DrawCommand::StrokeRect(rect, @core.Color::gray(), 1.0),
       @core.DrawCommand::FillRoundedRect(rounded, @core.Color::gray()),
       @core.DrawCommand::StrokeRoundedRect(rounded, @core.Color::blue(), 2.0),
+      @core.DrawCommand::FillRoundedRectBrush(
+        rounded,
+        @core.Brush::linear_gradient(
+          start=@core.Point::new(x=0.0, y=0.0),
+          end=@core.Point::new(x=1.0, y=1.0),
+          start_color=@core.Color::blue(),
+          end_color=@core.Color::gray(),
+        ),
+      ),
+      @core.DrawCommand::StrokeRoundedRectBrush(
+        rounded,
+        @core.Brush::solid(@core.Color::gray()),
+        1.0,
+      ),
+      @core.DrawCommand::DrawShadow(
+        @core.ShadowSpec::new(
+          rect=rounded,
+          color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.4),
+        ),
+      ),
       @core.DrawCommand::DrawText({
         text: "Hello",
         frame: rect,
@@ -153,22 +173,25 @@ test "wgpu web command bridge preserves full draw command parity order" {
     ],
     @core.Size::new(width=100.0, height=50.0),
   )
-  inspect(calls.length(), content="15")
+  inspect(calls.length(), content="18")
   assert_true(calls[0] is WebGpuHostCall::BeginFrame(_))
   assert_true(calls[1] is WebGpuHostCall::Clear(_))
   assert_true(calls[2] is WebGpuHostCall::FillRect(_, _))
   assert_true(calls[3] is WebGpuHostCall::StrokeRect(_, _, _))
   assert_true(calls[4] is WebGpuHostCall::FillRoundedRect(_, _))
   assert_true(calls[5] is WebGpuHostCall::StrokeRoundedRect(_, _, _))
-  assert_true(calls[6] is WebGpuHostCall::DrawText(_))
-  assert_true(calls[7] is WebGpuHostCall::DrawImage(_))
-  assert_true(calls[8] is WebGpuHostCall::PushClip(_))
-  assert_true(calls[9] is WebGpuHostCall::PushTransform(_))
-  assert_true(calls[10] is WebGpuHostCall::PushOpacity(_))
-  assert_true(calls[11] is WebGpuHostCall::PopOpacity)
-  assert_true(calls[12] is WebGpuHostCall::PopTransform)
-  assert_true(calls[13] is WebGpuHostCall::PopClip)
-  assert_true(calls[14] is WebGpuHostCall::Present)
+  assert_true(calls[6] is WebGpuHostCall::FillRoundedRectBrush(_, _))
+  assert_true(calls[7] is WebGpuHostCall::StrokeRoundedRectBrush(_, _, _))
+  assert_true(calls[8] is WebGpuHostCall::DrawShadow(_))
+  assert_true(calls[9] is WebGpuHostCall::DrawText(_))
+  assert_true(calls[10] is WebGpuHostCall::DrawImage(_))
+  assert_true(calls[11] is WebGpuHostCall::PushClip(_))
+  assert_true(calls[12] is WebGpuHostCall::PushTransform(_))
+  assert_true(calls[13] is WebGpuHostCall::PushOpacity(_))
+  assert_true(calls[14] is WebGpuHostCall::PopOpacity)
+  assert_true(calls[15] is WebGpuHostCall::PopTransform)
+  assert_true(calls[16] is WebGpuHostCall::PopClip)
+  assert_true(calls[17] is WebGpuHostCall::Present)
 }
 
 ///|

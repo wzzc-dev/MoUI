@@ -59,6 +59,13 @@ pub fn[T] Binding::get(Self[T]) -> T
 pub fn[T] Binding::set(Self[T], T) -> Unit
 pub fn[T] Binding::update(Self[T], (T) -> T raise?) -> Unit raise?
 
+pub(all) enum Brush {
+  Solid(Color)
+  LinearGradient(LinearGradientSpec)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Brush::linear_gradient(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
+pub fn Brush::solid(Color) -> Self
+
 pub(all) struct BuildContext {
   runtime : RuntimeState
 }
@@ -159,6 +166,9 @@ pub(all) enum DrawCommand {
   StrokeRect(Rect, Color, Double)
   FillRoundedRect(RoundedRect, Color)
   StrokeRoundedRect(RoundedRect, Color, Double)
+  FillRoundedRectBrush(RoundedRect, Brush)
+  StrokeRoundedRectBrush(RoundedRect, Brush, Double)
+  DrawShadow(ShadowSpec)
   DrawText(TextRun)
   DrawImage(ImageRun)
   PushClip(Rect)
@@ -275,6 +285,14 @@ pub(all) struct LayoutResult {
   children : Array[LayoutResult]
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct LinearGradientSpec {
+  start : Point
+  end : Point
+  start_color : Color
+  end_color : Color
+} derive(Eq, ToJson, @debug.Debug)
+pub fn LinearGradientSpec::new(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
+
 pub(all) enum MainAxisAlignment {
   MainStart
   MainCenter
@@ -382,6 +400,15 @@ pub fn RuntimeState::rebuild_if_possible(Self) -> Unit
 pub fn RuntimeState::request_rebuild(Self) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
+
+pub(all) struct ShadowSpec {
+  rect : RoundedRect
+  color : Color
+  offset : Point
+  blur_radius : Double
+  spread : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShadowSpec::new(rect~ : RoundedRect, color~ : Color, offset? : Point, blur_radius? : Double, spread? : Double) -> Self
 
 pub(all) struct Size {
   width : Double

@@ -165,3 +165,48 @@ test "non-rect commands do not leak into native rect batches" {
   ])
   inspect(batches.length(), content="0")
 }
+
+///|
+test "brush commands degrade to deterministic rect batches" {
+  let rounded = @core.RoundedRect::new(
+    rect=@core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0),
+    radius=6.0,
+  )
+  let batches = @render.collect_rect_batches([
+    @core.DrawCommand::FillRoundedRectBrush(
+      rounded,
+      @core.Brush::linear_gradient(
+        start=@core.Point::new(x=0.0, y=0.0),
+        end=@core.Point::new(x=1.0, y=1.0),
+        start_color=@core.Color::blue(),
+        end_color=@core.Color::gray(),
+      ),
+    ),
+    @core.DrawCommand::StrokeRoundedRectBrush(
+      rounded,
+      @core.Brush::solid(@core.Color::gray()),
+      1.0,
+    ),
+  ])
+  inspect(batches.length(), content="5")
+  assert_true(batches[0].color == @core.Color::blue())
+  assert_true(batches[1].color == @core.Color::gray())
+}
+
+///|
+test "shadow command degrades to layered rect batches" {
+  let batches = @render.collect_rect_batches([
+    @core.DrawCommand::DrawShadow(
+      @core.ShadowSpec::new(
+        rect=@core.RoundedRect::new(
+          rect=@core.Rect::new(x=10.0, y=10.0, width=20.0, height=20.0),
+          radius=4.0,
+        ),
+        color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.6),
+        blur_radius=6.0,
+      ),
+    ),
+  ])
+  inspect(batches.length(), content="3")
+  assert_true(batches[0].color.a > batches[2].color.a)
+}
