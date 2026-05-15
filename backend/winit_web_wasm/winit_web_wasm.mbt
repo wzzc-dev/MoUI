@@ -4,6 +4,8 @@ pub(all) struct WinitWebWasmBackendInfo {
   uses_window_web_backend : Bool
   has_wgpu_wasm_renderer : Bool
   keeps_js_webgpu_fallback : Bool
+  renderer_info : @render.RendererBackendInfo
+  surface_contract : @render.WgpuSurfaceContract
   description : String
 } derive(Eq, Debug, ToJson)
 
@@ -19,16 +21,35 @@ struct WinitWebWasmApp {
 
 ///|
 pub fn backend_info() -> WinitWebWasmBackendInfo {
+  let adapter = @wgpu_web.adapter_info()
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::WebWasm,
-      description="Milky2018/window web host on wasm-gc",
+      description="canonical Milky2018/window web host on wasm-gc",
     ),
     uses_window_web_backend: true,
-    has_wgpu_wasm_renderer: false,
+    has_wgpu_wasm_renderer: adapter.renderer.status ==
+    @render.RendererCapabilityStatus::Ready,
     keeps_js_webgpu_fallback: true,
-    description: "Window/web can now host canvas events on wasm-gc; rendering still waits for a wasm-capable wgpu binding.",
+    renderer_info: adapter.renderer,
+    surface_contract: adapter.surface_contract,
+    description: "Canonical wasm host path: window/web owns canvas events on wasm-gc; browser WebGPU rendering stays behind render/wgpu_web until JS FFI or WIT bindings are ready.",
   }
+}
+
+///|
+pub fn renderer_backend_info() -> @render.RendererBackendInfo {
+  @wgpu_web.backend_info()
+}
+
+///|
+pub fn wasm_renderer_ready() -> Bool {
+  @wgpu_web.adapter_contract_ready()
+}
+
+///|
+pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
+  @wgpu_web.canvas_surface_contract()
 }
 
 ///|
@@ -211,9 +232,8 @@ pub impl @web.ApplicationHandler for WinitWebWasmApp with window_event(
       self.last_pointer = physical_position_to_core(position)
       self.dispatch_window_event(event)
     }
-    @window_core.WindowEvent::ModifiersChanged(modifiers) => {
+    @window_core.WindowEvent::ModifiersChanged(modifiers) =>
       self.modifiers = modifiers_to_core(modifiers)
-    }
     @window_core.WindowEvent::RedrawRequested => {
       self.driver.begin_redraw()
       self.driver.finish_redraw()
@@ -227,11 +247,12 @@ fn WinitWebWasmApp::dispatch_window_event(
   self : WinitWebWasmApp,
   event : @window_core.WindowEvent,
 ) -> Unit {
-  match window_event_to_host_with_modifiers(
-    event,
-    self.last_pointer,
-    self.modifiers,
-  ) {
+  match
+    window_event_to_host_with_modifiers(
+      event,
+      self.last_pointer,
+      self.modifiers,
+    ) {
     Some(host_event) => ignore(self.driver.dispatch(host_event))
     None => ()
   }
@@ -297,12 +318,7 @@ fn keyboard_event_to_core(
 ///|
 fn key_event_text(event : @window_core.KeyEvent) -> String? {
   match event.text() {
-    Some(text) =>
-      if text == "" {
-        None
-      } else {
-        Some(text)
-      }
+    Some(text) => if text == "" { None } else { Some(text) }
     None => None
   }
 }

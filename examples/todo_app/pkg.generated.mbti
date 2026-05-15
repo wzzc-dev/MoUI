@@ -15,6 +15,7 @@ import {
 pub struct TodoApp {
   items : @core.State[Array[TodoItem]]
   next_id : @core.State[Int]
+  draft : @core.State[String]
 }
 pub fn TodoApp::add(Self, String) -> Unit
 pub fn TodoApp::add_sample(Self) -> Unit
@@ -24,6 +25,8 @@ pub fn TodoApp::new() -> Self
 pub fn TodoApp::remove(Self, Int) -> Unit
 pub fn TodoApp::root(Self) -> @core.ViewNode
 pub fn TodoApp::runtime(Self, width? : Double, height? : Double) -> @backend.AppRuntime
+pub fn TodoApp::set_draft(Self, String) -> Unit
+pub fn TodoApp::submit_draft(Self) -> Unit
 pub fn TodoApp::toggle(Self, Int) -> Unit
 
 pub(all) struct TodoItem {

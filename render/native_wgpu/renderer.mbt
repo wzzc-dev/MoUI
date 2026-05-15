@@ -88,11 +88,7 @@ pub fn RendererHandle::create_with_host_surface(
   size : @core.Size,
   host_surface : HostWgpuSurface,
 ) -> RendererHandle raise @wgpu.WgpuError {
-  create_with_surface(
-    size,
-    host_surface.instance,
-    host_surface.surface,
-  )
+  create_with_surface(size, host_surface.instance, host_surface.surface)
 }
 
 ///|

@@ -227,9 +227,7 @@ pub fn RedrawScheduler::set_schedule(
 }
 
 ///|
-pub fn RedrawScheduler::is_redraw_requested(
-  self : RedrawScheduler,
-) -> Bool {
+pub fn RedrawScheduler::is_redraw_requested(self : RedrawScheduler) -> Bool {
   self.redraw_requested
 }
 

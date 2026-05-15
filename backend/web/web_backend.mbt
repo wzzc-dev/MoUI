@@ -78,10 +78,7 @@ pub fn WebApp::new(
 ) -> WebApp {
   let app = {
     runtime,
-    driver: @host.HostRuntimeDriver::new(
-      runtime~,
-      schedule_redraw=() => (),
-    ),
+    driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     renderer,
     redraw_count: 0,
   }
@@ -106,7 +103,7 @@ pub fn WebApp::attach_dom_events(
     (x, y, button) => ignore(self.pointer_down(x, y, button~)),
     (x, y, button) => ignore(self.pointer_up(x, y, button~)),
     () => ignore(self.pointer_cancel()),
-    (key, text, pressed, repeat, shift, control, alt, meta) =>
+    (key, text, pressed, repeat, shift, control, alt, meta) => {
       ignore(
         self.keyboard(
           key,
@@ -115,7 +112,8 @@ pub fn WebApp::attach_dom_events(
           repeat~,
           modifiers=@core.KeyModifiers::new(shift~, control~, alt~, meta~),
         ),
-      ),
+      )
+    },
   )
 }
 
@@ -181,13 +179,7 @@ pub fn WebApp::keyboard(
 ) -> WebEventResult {
   let result = self.driver.dispatch(
     @host.HostEvent::Keyboard(
-      @core.KeyboardEvent::new(
-        key~,
-        text~,
-        pressed~,
-        repeat~,
-        modifiers~,
-      ),
+      @core.KeyboardEvent::new(key~, text~, pressed~, repeat~, modifiers~),
     ),
   )
   web_event_result(result)
@@ -254,17 +246,12 @@ pub fn WebApp::host_dispatch(
 }
 
 ///|
-pub fn WebApp::text_input(
-  self : WebApp,
-  text : String,
-) -> WebEventResult {
+pub fn WebApp::text_input(self : WebApp, text : String) -> WebEventResult {
   web_event_result(self.driver.dispatch(@host.HostEvent::TextInput(text)))
 }
 
 ///|
-pub fn WebApp::surface_metrics(
-  self : WebApp,
-) -> @host.HostSurfaceMetrics {
+pub fn WebApp::surface_metrics(self : WebApp) -> @host.HostSurfaceMetrics {
   @host.HostSurfaceMetrics::from_logical(size=self.runtime.size())
 }
 
@@ -282,13 +269,7 @@ pub fn web_keyboard_event(
   modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
 ) -> @host.HostEvent {
   @host.HostEvent::Keyboard(
-    @core.KeyboardEvent::new(
-      key~,
-      text~,
-      pressed~,
-      repeat~,
-      modifiers~,
-    ),
+    @core.KeyboardEvent::new(key~, text~, pressed~, repeat~, modifiers~),
   )
 }
 
@@ -327,16 +308,7 @@ extern "js" fn bind_dom_events(
   on_pointer_down : (Double, Double, Int) -> Unit,
   on_pointer_up : (Double, Double, Int) -> Unit,
   on_pointer_cancel : () -> Unit,
-  on_keyboard : (
-    String,
-    String?,
-    Bool,
-    Bool,
-    Bool,
-    Bool,
-    Bool,
-    Bool
-  ) -> Unit,
+  on_keyboard : (String, String?, Bool, Bool, Bool, Bool, Bool, Bool) -> Unit,
 ) -> Unit =
   #|(context, onResize, onPointerMove, onPointerDown, onPointerUp, onPointerCancel, onKeyboard) => {
   #|  const canvas = context.canvas;

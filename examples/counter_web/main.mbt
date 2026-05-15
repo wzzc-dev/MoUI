@@ -7,10 +7,7 @@ pub fn start_counter_web(
     width=@winit_web.width(context),
     height=@winit_web.height(context),
   )
-  let app = @winit_web.new_app(
-    runtime~,
-    renderer=@winit_web.renderer(context),
-  )
+  let app = @winit_web.new_app(runtime~, renderer=@winit_web.renderer(context))
   @winit_web.attach_dom_events(app, context)
   @winit_web.start(app)
   app
@@ -26,10 +23,7 @@ pub fn start_todo_web(
     width=@winit_web.width(context),
     height=@winit_web.height(context),
   )
-  let app = @winit_web.new_app(
-    runtime~,
-    renderer=@winit_web.renderer(context),
-  )
+  let app = @winit_web.new_app(runtime~, renderer=@winit_web.renderer(context))
   @winit_web.attach_dom_events(app, context)
   @winit_web.start(app)
   app

@@ -44,6 +44,9 @@ test "winit web facade creates app and forwards host dispatch" {
       ),
     ),
   )
-  assert_true(surface_metrics(app).logical_size == @core.Size::new(width=120.0, height=60.0))
+  assert_true(
+    surface_metrics(app).logical_size ==
+    @core.Size::new(width=120.0, height=60.0),
+  )
   inspect(result.redraw_requested, content="true")
 }

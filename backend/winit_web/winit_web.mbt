@@ -91,10 +91,7 @@ pub fn host_dispatch(
 }
 
 ///|
-pub fn text_input(
-  app : WinitWebApp,
-  text : String,
-) -> WinitWebEventResult {
+pub fn text_input(app : WinitWebApp, text : String) -> WinitWebEventResult {
   app.text_input(text)
 }
 

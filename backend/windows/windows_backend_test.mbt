@@ -19,8 +19,12 @@ test "windows backend converts resize event to host metrics" {
   )
   match event {
     Some(@host.HostEvent::Resized(metrics)) => {
-      assert_true(metrics.logical_size == @core.Size::new(width=10.0, height=20.0))
-      assert_true(metrics.physical_size == @core.Size::new(width=10.0, height=20.0))
+      assert_true(
+        metrics.logical_size == @core.Size::new(width=10.0, height=20.0),
+      )
+      assert_true(
+        metrics.physical_size == @core.Size::new(width=10.0, height=20.0),
+      )
       inspect(metrics.scale_factor, content="1")
     }
     _ => fail("expected host resize event")

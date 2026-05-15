@@ -5,7 +5,9 @@ test "host surface metrics tracks logical physical and dpr" {
     scale_factor=2.0,
   )
   assert_true(metrics.logical_size == @core.Size::new(width=120.0, height=80.0))
-  assert_true(metrics.physical_size == @core.Size::new(width=240.0, height=160.0))
+  assert_true(
+    metrics.physical_size == @core.Size::new(width=240.0, height=160.0),
+  )
   inspect(metrics.scale_factor, content="2")
 }
 
@@ -65,8 +67,12 @@ test "surface host resizes through host event" {
   )
   match event {
     HostEvent::Resized(metrics) => {
-      assert_true(surface.logical_size() == @core.Size::new(width=20.0, height=12.0))
-      assert_true(metrics.physical_size == @core.Size::new(width=40.0, height=24.0))
+      assert_true(
+        surface.logical_size() == @core.Size::new(width=20.0, height=12.0),
+      )
+      assert_true(
+        metrics.physical_size == @core.Size::new(width=40.0, height=24.0),
+      )
       inspect(surface.owns_surface, content="true")
       inspect(surface.can_reconfigure, content="true")
     }
@@ -81,10 +87,9 @@ test "host driver dispatches resize and deduplicates redraw requests" {
     root=@core.ViewNode::Empty,
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = HostRuntimeDriver::new(
-    runtime~,
-    schedule_redraw=() => scheduled.val = scheduled.val + 1,
-  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    scheduled.val = scheduled.val + 1
+  })
   let metrics = HostSurfaceMetrics::from_logical(
     size=@core.Size::new(width=320.0, height=240.0),
   )

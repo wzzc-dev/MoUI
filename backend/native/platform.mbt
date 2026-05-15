@@ -7,9 +7,7 @@ pub fn run_counter_demo(title : String, runtime : @backend.AppRuntime) -> Unit {
   renderer.resize(@core.Size::new(width=config.width, height=config.height))
   ignore(
     driver.dispatch(
-      @host.HostEvent::Resized(
-        @host.HostSurfaceMetrics::from_logical(size~),
-      ),
+      @host.HostEvent::Resized(@host.HostSurfaceMetrics::from_logical(size~)),
     ),
   )
   driver.begin_redraw()

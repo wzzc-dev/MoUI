@@ -5,6 +5,7 @@ import {
   "Milky2018/wgpu_mbt",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/wgpu_surface",
 }
 
 // Values
@@ -13,6 +14,12 @@ pub fn create_wgpu_renderer_placeholder() -> RendererHandle
 // Errors
 
 // Types and methods
+pub(all) struct NativeSurfaceFactory {
+}
+pub fn NativeSurfaceFactory::create_metal_layer() -> @wgpu_surface.HostWgpuSurface raise @wgpu_mbt.WgpuError
+pub fn NativeSurfaceFactory::create_windows_hwnd(UInt64) -> @wgpu_surface.HostWgpuSurface raise @wgpu_mbt.WgpuError
+pub fn NativeSurfaceFactory::info() -> @wgpu_surface.SurfaceHostInfo
+
 pub struct RendererHandle {
   mut size : @core.Size
   mut last_batches : Array[@render.RectBatch]
@@ -22,12 +29,16 @@ pub struct RendererHandle {
 }
 pub fn RendererHandle::create(@core.Size) -> Self raise @wgpu_mbt.WgpuError
 pub fn RendererHandle::create_for_windows_hwnd(@core.Size, UInt64) -> Self raise @wgpu_mbt.WgpuError
+pub fn RendererHandle::create_with_host_surface(@core.Size, @wgpu_surface.HostWgpuSurface) -> Self raise @wgpu_mbt.WgpuError
 pub fn RendererHandle::dispose(Self) -> Unit
 pub fn RendererHandle::new() -> Self
 pub fn RendererHandle::render(Self, Array[@core.DrawCommand]) -> Unit
 pub fn RendererHandle::resize(Self, @core.Size) -> Unit
 
 // Type aliases
+pub using @wgpu_surface {type HostWgpuSurface}
+
+pub using @wgpu_surface {type SurfaceHostInfo}
 
 // Traits
 

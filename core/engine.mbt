@@ -990,7 +990,11 @@ fn append_text_field_commands(
   frame : Rect,
   focused : Bool,
 ) -> Unit {
-  let border = if focused { data.focused_border_color } else { data.border_color }
+  let border = if focused {
+    data.focused_border_color
+  } else {
+    data.border_color
+  }
   if data.corner_radius > 0.0 {
     commands.push(
       FillRoundedRect(
@@ -1002,7 +1006,11 @@ fn append_text_field_commands(
       StrokeRoundedRect(
         RoundedRect::new(rect=frame, radius=data.corner_radius),
         border,
-        if focused { 2.0 } else { 1.0 },
+        if focused {
+          2.0
+        } else {
+          1.0
+        },
       ),
     )
   } else {

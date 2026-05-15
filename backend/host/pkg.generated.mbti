@@ -1,0 +1,109 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/host"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct HostAppInfo {
+  backend : HostBackendKind
+  uses_shared_event_model : Bool
+  uses_shared_surface_model : Bool
+  uses_shared_input_model : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostAppInfo::new(backend~ : HostBackendKind, description? : String, uses_shared_event_model? : Bool, uses_shared_surface_model? : Bool, uses_shared_input_model? : Bool) -> Self
+
+pub(all) enum HostBackendKind {
+  Native
+  Web
+  WebWasm
+  Test
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostEvent {
+  Resized(HostSurfaceMetrics)
+  PointerMoved(@core.Point)
+  PointerButton(@core.Point, @core.PointerPhase, Int)
+  Keyboard(@core.KeyboardEvent)
+  TextInput(String)
+  RedrawRequested
+  CloseRequested
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostEvent::to_core(Self) -> @core.AppEvent?
+
+pub(all) struct HostEventResult {
+  needs_rebuild : Bool
+  needs_redraw : Bool
+  redraw_requested : Bool
+  close_requested : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostRuntimeDriver {
+  runtime : @backend.AppRuntime
+  scheduler : RedrawScheduler
+  mut close_requested : Bool
+}
+pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
+pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
+pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@core.DrawCommand]
+pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
+pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
+pub fn HostRuntimeDriver::new(runtime~ : @backend.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
+pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
+pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit
+pub fn HostRuntimeDriver::size(Self) -> @core.Size
+
+pub(all) struct HostSurfaceMetrics {
+  logical_size : @core.Size
+  physical_size : @core.Size
+  scale_factor : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostSurfaceMetrics::from_logical(size~ : @core.Size, scale_factor? : Double) -> Self
+pub fn HostSurfaceMetrics::new(logical_size~ : @core.Size, physical_size~ : @core.Size, scale_factor? : Double) -> Self
+
+pub(all) struct InputHostState {
+  mut focused : Bool
+  mut modifiers : @core.KeyModifiers
+  text_input_supported : Bool
+  ime_supported : Bool
+  clipboard_supported : Bool
+}
+pub fn InputHostState::blur(Self) -> Unit
+pub fn InputHostState::focus(Self) -> Unit
+pub fn InputHostState::keyboard_event(Self, key~ : String, text? : String?, pressed? : Bool, repeat? : Bool) -> HostEvent
+pub fn InputHostState::new(focused? : Bool, modifiers? : @core.KeyModifiers, text_input_supported? : Bool, ime_supported? : Bool, clipboard_supported? : Bool) -> Self
+pub fn InputHostState::set_modifiers(Self, @core.KeyModifiers) -> Unit
+pub fn InputHostState::text_input_event(Self, String) -> HostEvent?
+
+pub(all) struct RedrawScheduler {
+  mut redraw_requested : Bool
+  mut schedule : () -> Unit
+}
+pub fn RedrawScheduler::begin_redraw(Self) -> Unit
+pub fn RedrawScheduler::is_redraw_requested(Self) -> Bool
+pub fn RedrawScheduler::new(schedule~ : () -> Unit) -> Self
+pub fn RedrawScheduler::request(Self) -> Unit
+pub fn RedrawScheduler::set_schedule(Self, () -> Unit) -> Unit
+
+pub(all) struct SurfaceHostState {
+  mut metrics : HostSurfaceMetrics
+  owns_surface : Bool
+  can_reconfigure : Bool
+}
+pub fn SurfaceHostState::logical_size(Self) -> @core.Size
+pub fn SurfaceHostState::new(metrics~ : HostSurfaceMetrics, owns_surface? : Bool, can_reconfigure? : Bool) -> Self
+pub fn SurfaceHostState::resize(Self, HostSurfaceMetrics) -> HostEvent
+
+// Type aliases
+
+// Traits
+

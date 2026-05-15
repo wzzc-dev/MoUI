@@ -1,4 +1,122 @@
 ///|
+pub(all) enum RendererBackendKind {
+  NativeWgpu
+  WebGpuJs
+  WebGpuWasm
+  Noop
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum RendererCapabilityStatus {
+  Ready
+  Experimental
+  Unsupported
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RendererSurfaceMetrics {
+  logical_size : @core.Size
+  physical_size : @core.Size
+  scale_factor : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RendererBackendInfo {
+  backend : RendererBackendKind
+  status : RendererCapabilityStatus
+  can_render : Bool
+  can_resize : Bool
+  owns_surface : Bool
+  description : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct CanvasWgpuSurface {
+  canvas_id : String
+  metrics : RendererSurfaceMetrics
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum WgpuSurfaceSourceKind {
+  NativeHostSurface
+  WebCanvasSurface
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct WgpuSurfaceContract {
+  source : WgpuSurfaceSourceKind
+  backend : RendererBackendKind
+  ready : Bool
+  description : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn RendererSurfaceMetrics::new(
+  logical_size~ : @core.Size,
+  physical_size~ : @core.Size,
+  scale_factor? : Double = 1.0,
+) -> RendererSurfaceMetrics {
+  { logical_size, physical_size, scale_factor }
+}
+
+///|
+pub fn RendererSurfaceMetrics::from_logical(
+  size~ : @core.Size,
+  scale_factor? : Double = 1.0,
+) -> RendererSurfaceMetrics {
+  {
+    logical_size: size,
+    physical_size: @core.Size::new(
+      width=size.width * scale_factor,
+      height=size.height * scale_factor,
+    ),
+    scale_factor,
+  }
+}
+
+///|
+pub fn RendererBackendInfo::new(
+  backend~ : RendererBackendKind,
+  status~ : RendererCapabilityStatus,
+  can_render~ : Bool,
+  can_resize~ : Bool,
+  owns_surface~ : Bool,
+  description? : String = "",
+) -> RendererBackendInfo {
+  { backend, status, can_render, can_resize, owns_surface, description }
+}
+
+///|
+pub fn CanvasWgpuSurface::new(
+  canvas_id~ : String,
+  metrics~ : RendererSurfaceMetrics,
+) -> CanvasWgpuSurface {
+  { canvas_id, metrics }
+}
+
+///|
+pub fn CanvasWgpuSurface::from_logical(
+  canvas_id~ : String,
+  size~ : @core.Size,
+  scale_factor? : Double = 1.0,
+) -> CanvasWgpuSurface {
+  {
+    canvas_id,
+    metrics: RendererSurfaceMetrics::from_logical(size~, scale_factor~),
+  }
+}
+
+///|
+pub fn WgpuSurfaceContract::new(
+  source~ : WgpuSurfaceSourceKind,
+  backend~ : RendererBackendKind,
+  ready~ : Bool,
+  description? : String = "",
+) -> WgpuSurfaceContract {
+  { source, backend, ready, description }
+}
+
+///|
 pub(all) struct RectBatch {
   rect : @core.Rect
   color : @core.Color

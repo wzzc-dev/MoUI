@@ -22,7 +22,10 @@ test "renderer remembers resize and batches" {
 ///|
 test "renderer wgpu surface smoke" {
   if is_windows {
-    inspect(@native_wgpu.NativeSurfaceFactory::info().platform, content="native")
+    inspect(
+      @native_wgpu.NativeSurfaceFactory::info().platform,
+      content="native",
+    )
   } else {
     try {
       let renderer = @native_wgpu.RendererHandle::create(

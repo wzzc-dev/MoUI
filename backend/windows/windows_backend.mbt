@@ -1,6 +1,5 @@
 ///|
-extern "C" fn win32_surface_host_hinstance() -> @wgpu_c.OpaquePtr =
-  "moui_windows_surface_host_hinstance"
+extern "C" fn win32_surface_host_hinstance() -> @wgpu_c.OpaquePtr = "moui_windows_surface_host_hinstance"
 
 ///|
 extern "C" fn win32_surface_host_hwnd_from_u64(
@@ -39,11 +38,12 @@ pub fn window_event_to_core(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
 ) -> @core.AppEvent? {
-  match window_event_to_host_with_modifiers(
-    event,
-    last_pointer,
-    @core.KeyModifiers::none(),
-  ) {
+  match
+    window_event_to_host_with_modifiers(
+      event,
+      last_pointer,
+      @core.KeyModifiers::none(),
+    ) {
     Some(host_event) => host_event.to_core()
     None => None
   }
@@ -176,10 +176,7 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
       ignore(
         self.driver.dispatch(
           @host.HostEvent::Resized(
-            @host.HostSurfaceMetrics::new(
-              logical_size=size,
-              physical_size=size,
-            ),
+            @host.HostSurfaceMetrics::new(logical_size=size, physical_size=size),
           ),
         ),
       )
@@ -234,15 +231,11 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       self.last_pointer = physical_position_to_core(position)
       self.dispatch_window_event(event)
     }
-    @window_core.WindowEvent::KeyboardInput(_, _, _) => {
+    @window_core.WindowEvent::KeyboardInput(_, _, _) =>
       self.dispatch_window_event(event)
-    }
-    @window_core.WindowEvent::Ime(_) => {
+    @window_core.WindowEvent::Ime(_) => self.dispatch_window_event(event)
+    @window_core.WindowEvent::ModifiersChanged(_) =>
       self.dispatch_window_event(event)
-    }
-    @window_core.WindowEvent::ModifiersChanged(_) => {
-      self.dispatch_window_event(event)
-    }
     @window_core.WindowEvent::RedrawRequested =>
       match (self.window, self.renderer) {
         (Some(window), Some(renderer)) => {
@@ -267,11 +260,12 @@ fn WindowsApp::dispatch_window_event(
       self.modifiers = modifiers_to_core(modifiers)
     _ => ()
   }
-  match window_event_to_host_with_modifiers(
-    event,
-    self.last_pointer,
-    self.modifiers,
-  ) {
+  match
+    window_event_to_host_with_modifiers(
+      event,
+      self.last_pointer,
+      self.modifiers,
+    ) {
     Some(host_event) => ignore(self.driver.dispatch(host_event))
     None => ()
   }
@@ -351,12 +345,7 @@ fn keyboard_event_to_core(
 ///|
 fn key_event_text(event : @window_core.KeyEvent) -> String? {
   match event.text() {
-    Some(text) =>
-      if text == "" {
-        None
-      } else {
-        Some(text)
-      }
+    Some(text) => if text == "" { None } else { Some(text) }
     None => None
   }
 }

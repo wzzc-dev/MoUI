@@ -10,6 +10,28 @@ pub type HostWgpuSurface = @wgpu_surface.HostWgpuSurface
 pub type SurfaceHostInfo = @wgpu_surface.SurfaceHostInfo
 
 ///|
+pub fn backend_info() -> @render.RendererBackendInfo {
+  @render.RendererBackendInfo::new(
+    backend=@render.RendererBackendKind::NativeWgpu,
+    status=@render.RendererCapabilityStatus::Ready,
+    can_render=true,
+    can_resize=true,
+    owns_surface=false,
+    description="Native wgpu facade over wgpu_mbt/libwgpu_native; platform hosts provide HostWgpuSurface.",
+  )
+}
+
+///|
+pub fn native_surface_contract() -> @render.WgpuSurfaceContract {
+  @render.WgpuSurfaceContract::new(
+    source=@render.WgpuSurfaceSourceKind::NativeHostSurface,
+    backend=@render.RendererBackendKind::NativeWgpu,
+    ready=true,
+    description="Native host owns HWND/Metal/window handles and passes an initialized wgpu surface to render/wgpu.",
+  )
+}
+
+///|
 pub fn create_renderer_placeholder() -> WgpuRenderer {
   { backend: @native_wgpu.RendererHandle::new() }
 }
@@ -26,17 +48,13 @@ pub fn create_with_host_surface(
 ) -> WgpuRenderer raise @wgpu_mbt.WgpuError {
   {
     backend: @native_wgpu.RendererHandle::create_with_host_surface(
-      size,
-      surface,
+      size, surface,
     ),
   }
 }
 
 ///|
-pub fn WgpuRenderer::resize(
-  self : WgpuRenderer,
-  size : @core.Size,
-) -> Unit {
+pub fn WgpuRenderer::resize(self : WgpuRenderer, size : @core.Size) -> Unit {
   self.backend.resize(size)
 }
 
@@ -51,6 +69,22 @@ pub fn WgpuRenderer::render(
 ///|
 pub fn WgpuRenderer::dispose(self : WgpuRenderer) -> Unit {
   self.backend.dispose()
+}
+
+///|
+pub fn WgpuRenderer::backend_kind(
+  self : WgpuRenderer,
+) -> @render.RendererBackendKind {
+  let _ = self
+  @render.RendererBackendKind::NativeWgpu
+}
+
+///|
+pub fn WgpuRenderer::backend_info(
+  self : WgpuRenderer,
+) -> @render.RendererBackendInfo {
+  let _ = self
+  backend_info()
 }
 
 ///|

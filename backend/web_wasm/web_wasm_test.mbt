@@ -6,6 +6,17 @@ test "web wasm backend is experimental and keeps js fallback" {
   inspect(info.uses_winit_canvas_host, content="true")
   inspect(info.uses_wgpu_wasm_surface, content="false")
   inspect(info.keeps_js_webgpu_fallback, content="true")
+  assert_true(
+    info.renderer_info.backend == @render.RendererBackendKind::WebGpuWasm,
+  )
+  assert_true(
+    info.renderer_info.status == @render.RendererCapabilityStatus::Unsupported,
+  )
+  assert_true(
+    info.surface_contract.source ==
+    @render.WgpuSurfaceSourceKind::WebCanvasSurface,
+  )
+  inspect(info.surface_contract.ready, content="false")
 }
 
 ///|
@@ -15,8 +26,12 @@ test "canvas metrics promote dpr to host surface metrics" {
     logical_height=100.0,
     scale_factor=2.0,
   )
-  assert_true(metrics.logical_size == @core.Size::new(width=200.0, height=100.0))
-  assert_true(metrics.physical_size == @core.Size::new(width=400.0, height=200.0))
+  assert_true(
+    metrics.logical_size == @core.Size::new(width=200.0, height=100.0),
+  )
+  assert_true(
+    metrics.physical_size == @core.Size::new(width=400.0, height=200.0),
+  )
   inspect(metrics.scale_factor, content="2")
 }
 
@@ -36,7 +51,9 @@ test "canvas host creates surface and input contracts" {
     logical_height=50.0,
     scale_factor=1.5,
   )
-  assert_true(surface.logical_size() == @core.Size::new(width=100.0, height=50.0))
+  assert_true(
+    surface.logical_size() == @core.Size::new(width=100.0, height=50.0),
+  )
   inspect(surface.owns_surface, content="false")
   inspect(surface.can_reconfigure, content="true")
   let input = canvas_input_host()

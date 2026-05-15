@@ -30,6 +30,10 @@ pub fn row(Array[@core.ViewNode], spacing? : Double, main_axis_alignment? : @cor
 
 pub fn spacer(min_length? : Double) -> @core.ViewNode
 
+pub fn text_field(@core.Binding[String], placeholder? : String, width? : Double, height? : Double) -> @core.ViewNode
+
+pub fn text_field_on_submit(@core.Binding[String], () -> Unit, placeholder? : String, width? : Double, height? : Double) -> @core.ViewNode
+
 pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double) -> @core.Theme
 
 // Errors

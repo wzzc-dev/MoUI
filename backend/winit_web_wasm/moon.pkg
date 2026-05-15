@@ -2,6 +2,8 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/host" @host,
+  "wzzc-dev/moui/render" @render,
+  "wzzc-dev/moui/render/wgpu_web" @wgpu_web,
   "Milky2018/window/core" @window_core,
   "Milky2018/window/dpi" @dpi,
   "Milky2018/window/web" @web,

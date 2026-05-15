@@ -152,6 +152,7 @@ pub(all) enum DrawCommand {
 pub(all) struct ElementEventResult {
   changed : Bool
   activated : Bool
+  focused : ElementId?
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ElementId {
@@ -167,9 +168,12 @@ pub(all) struct ElementNode {
   mut dirty : DirtyFlags
   mut button_state : ButtonState
 }
+pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode) -> ElementEventResult
+pub fn ElementNode::find_text_field_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::intrinsic_size(Self) -> Size
 pub fn ElementNode::render(Self, Rect) -> RenderNode
+pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?) -> RenderNode
 
 pub(all) struct Environment {
   theme : Theme
@@ -226,10 +230,23 @@ pub(all) struct Key {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Key::new(String) -> Self
 
+pub(all) struct KeyModifiers {
+  shift : Bool
+  control : Bool
+  alt : Bool
+  meta : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn KeyModifiers::new(shift? : Bool, control? : Bool, alt? : Bool, meta? : Bool) -> Self
+pub fn KeyModifiers::none() -> Self
+
 pub(all) struct KeyboardEvent {
   key : String
+  text : String?
   pressed : Bool
+  repeat : Bool
+  modifiers : KeyModifiers
 } derive(Eq, ToJson, @debug.Debug)
+pub fn KeyboardEvent::new(key~ : String, pressed? : Bool, text? : String?, repeat? : Bool, modifiers? : KeyModifiers) -> Self
 
 pub(all) struct KeyedData {
   key : Key
@@ -336,6 +353,7 @@ pub(all) struct RuntimeState {
   mut needs_paint : Bool
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
+  mut focused_element : ElementId?
   mut root_builder : (() -> ViewNode)?
   mut component_root : Component?
   mut subscriptions : Array[StateSubscription]
@@ -422,6 +440,29 @@ pub(all) struct TapGestureResult {
   activated : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct TextFieldData {
+  value : Binding[String]
+  placeholder : String
+  size : Size
+  on_submit : (() -> Unit)?
+}
+
+pub(all) struct TextFieldViewSpec {
+  key : Key?
+  value : Binding[String]
+  placeholder : String
+  size : Size
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Color
+  border_color : Color
+  focused_border_color : Color
+  cursor_color : Color
+  corner_radius : Double
+  on_submit : (() -> Unit)?
+}
+
 pub(all) struct TextRun {
   text : String
   frame : Rect
@@ -467,6 +508,7 @@ pub(all) enum ViewNode {
   Empty
   Label(LabelData)
   Button(ButtonData)
+  TextField(TextFieldData)
   Flex(FlexData)
   Padding(PaddingData)
   Container(ContainerData)
@@ -495,6 +537,7 @@ pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
   ButtonSpec(ButtonViewSpec)
+  TextFieldSpec(TextFieldViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)

@@ -221,9 +221,7 @@ test "runtime focuses text field and keyboard edits binding" {
     root=test_text_field(state.binding()).to_spec(),
     size=Size::new(width=160.0, height=60.0),
   )
-  runtime.dispatch_event(
-    Keyboard(KeyboardEvent::new(key="a", text=Some("a"))),
-  )
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="a", text=Some("a"))))
   inspect(state.get(), content="")
   runtime.dispatch_event(
     Pointer(
@@ -233,12 +231,8 @@ test "runtime focuses text field and keyboard edits binding" {
       ),
     ),
   )
-  runtime.dispatch_event(
-    Keyboard(KeyboardEvent::new(key="a", text=Some("a"))),
-  )
-  runtime.dispatch_event(
-    Keyboard(KeyboardEvent::new(key="b", text=Some("b"))),
-  )
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="a", text=Some("a"))))
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="b", text=Some("b"))))
   inspect(state.get(), content="ab")
   runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Backspace")))
   inspect(state.get(), content="a")
@@ -297,9 +291,7 @@ test "clicking outside text field clears focus" {
       ),
     ),
   )
-  runtime.dispatch_event(
-    Keyboard(KeyboardEvent::new(key="a", text=Some("a"))),
-  )
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="a", text=Some("a"))))
   runtime.dispatch_event(
     Pointer(
       PointerEvent::new(
@@ -308,8 +300,6 @@ test "clicking outside text field clears focus" {
       ),
     ),
   )
-  runtime.dispatch_event(
-    Keyboard(KeyboardEvent::new(key="b", text=Some("b"))),
-  )
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="b", text=Some("b"))))
   inspect(state.get(), content="a")
 }

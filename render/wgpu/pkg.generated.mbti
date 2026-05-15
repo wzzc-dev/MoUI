@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/render/wgpu"
+
+import {
+  "Milky2018/wgpu_mbt",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/native_wgpu",
+  "wzzc-dev/moui/render/wgpu_surface",
+}
+
+// Values
+pub fn backend_info() -> @render.RendererBackendInfo
+
+pub fn create_placeholder() -> WgpuRenderer
+
+pub fn create_renderer_placeholder() -> WgpuRenderer
+
+pub fn create_with_host_surface(@core.Size, @wgpu_surface.HostWgpuSurface) -> WgpuRenderer raise @wgpu_mbt.WgpuError
+
+pub fn native_surface_contract() -> @render.WgpuSurfaceContract
+
+// Errors
+
+// Types and methods
+pub struct WgpuRenderer {
+  backend : @native_wgpu.RendererHandle
+}
+pub fn WgpuRenderer::backend_info(Self) -> @render.RendererBackendInfo
+pub fn WgpuRenderer::backend_kind(Self) -> @render.RendererBackendKind
+pub fn WgpuRenderer::dispose(Self) -> Unit
+pub fn WgpuRenderer::last_batch_count(Self) -> Int
+pub fn WgpuRenderer::present_count(Self) -> Int
+pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
+pub fn WgpuRenderer::resize(Self, @core.Size) -> Unit
+
+// Type aliases
+pub using @wgpu_surface {type HostWgpuSurface}
+
+pub using @wgpu_surface {type SurfaceHostInfo}
+
+// Traits
+

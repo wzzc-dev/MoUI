@@ -11,6 +11,8 @@ pub(all) struct WebWasmBackendInfo {
   uses_winit_canvas_host : Bool
   uses_wgpu_wasm_surface : Bool
   keeps_js_webgpu_fallback : Bool
+  renderer_info : @render.RendererBackendInfo
+  surface_contract : @render.WgpuSurfaceContract
   description : String
 } derive(Eq, Debug, ToJson)
 
@@ -25,12 +27,15 @@ pub(all) struct CanvasHostConstraints {
 
 ///|
 pub fn experimental_backend_info() -> WebWasmBackendInfo {
+  let adapter = @wgpu_web.adapter_info()
   {
     status: WebWasmBackendStatus::Experimental,
     uses_window_web_backend: true,
     uses_winit_canvas_host: true,
-    uses_wgpu_wasm_surface: false,
+    uses_wgpu_wasm_surface: adapter.surface_contract.ready,
     keeps_js_webgpu_fallback: true,
+    renderer_info: adapter.renderer,
+    surface_contract: adapter.surface_contract,
     description: "Milky2018/window web can host wasm-gc canvas events; wgpu wasm renderer remains pending, so current JS WebGPU backend remains the fallback path.",
   }
 }

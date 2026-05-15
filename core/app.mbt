@@ -232,7 +232,7 @@ pub fn RuntimeState::dispatch_event(
       }
       self.rebuild_if_possible()
     }
-    Keyboard(event) => {
+    Keyboard(event) =>
       match self.focused_element {
         Some(target) => {
           let result = self.element_tree.dispatch_keyboard(target, event)
@@ -246,7 +246,6 @@ pub fn RuntimeState::dispatch_event(
         }
         None => ()
       }
-    }
     CloseRequested => ()
   }
 }

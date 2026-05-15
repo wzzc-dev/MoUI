@@ -1,4 +1,52 @@
 ///|
+test "renderer backend info records unified renderer capability" {
+  let info = @render.RendererBackendInfo::new(
+    backend=@render.RendererBackendKind::WebGpuWasm,
+    status=@render.RendererCapabilityStatus::Unsupported,
+    can_render=false,
+    can_resize=false,
+    owns_surface=false,
+    description="wasm WebGPU adapter contract only",
+  )
+  assert_true(info.backend == @render.RendererBackendKind::WebGpuWasm)
+  assert_true(info.status == @render.RendererCapabilityStatus::Unsupported)
+  inspect(info.can_render, content="false")
+  inspect(info.can_resize, content="false")
+}
+
+///|
+test "canvas surface contract carries logical physical and dpr metrics" {
+  let surface = @render.CanvasWgpuSurface::from_logical(
+    canvas_id="moui-canvas",
+    size=@core.Size::new(width=160.0, height=90.0),
+    scale_factor=2.0,
+  )
+  inspect(surface.canvas_id, content="moui-canvas")
+  assert_true(
+    surface.metrics.logical_size == @core.Size::new(width=160.0, height=90.0),
+  )
+  assert_true(
+    surface.metrics.physical_size == @core.Size::new(width=320.0, height=180.0),
+  )
+  inspect(surface.metrics.scale_factor, content="2")
+}
+
+///|
+test "wgpu surface contract distinguishes native and web canvas sources" {
+  let contract = @render.WgpuSurfaceContract::new(
+    source=@render.WgpuSurfaceSourceKind::WebCanvasSurface,
+    backend=@render.RendererBackendKind::WebGpuWasm,
+    ready=false,
+    description="browser WebGPU surface pending",
+  )
+  assert_true(
+    contract.source == @render.WgpuSurfaceSourceKind::WebCanvasSurface,
+  )
+  assert_true(contract.backend == @render.RendererBackendKind::WebGpuWasm)
+  inspect(contract.ready, content="false")
+}
+
+///|
 test "collect rect batches" {
   let commands : Array[@core.DrawCommand] = [
     @core.DrawCommand::Clear(@core.Color::white()),

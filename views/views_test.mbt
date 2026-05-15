@@ -174,7 +174,12 @@ test "text field constructs binding backed spec" {
   ).to_spec()
   guard spec
     is @core.ViewSpec::TextFieldSpec(
-      { placeholder: "New todo", size: { width: 220.0, height: 40.0 }, value, .. }
+      {
+        placeholder: "New todo",
+        size: { width: 220.0, height: 40.0 },
+        value,
+        ..,
+      }
     ) else {
     fail("expected text field spec")
   }

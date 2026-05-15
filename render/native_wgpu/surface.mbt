@@ -11,8 +11,7 @@ pub type HostWgpuSurface = @wgpu_surface.HostWgpuSurface
 pub type SurfaceHostInfo = @wgpu_surface.SurfaceHostInfo
 
 ///|
-pub(all) struct NativeSurfaceFactory {
-}
+pub(all) struct NativeSurfaceFactory {}
 
 ///|
 pub fn NativeSurfaceFactory::info() -> SurfaceHostInfo {
@@ -24,8 +23,7 @@ pub fn NativeSurfaceFactory::info() -> SurfaceHostInfo {
 }
 
 ///|
-pub fn NativeSurfaceFactory::create_metal_layer(
-) -> HostWgpuSurface raise @wgpu.WgpuError {
+pub fn NativeSurfaceFactory::create_metal_layer() -> HostWgpuSurface raise @wgpu.WgpuError {
   let instance = @wgpu.Instance::create()
   let surface = instance.create_surface_metal_layer()
   @wgpu_surface.HostWgpuSurface::new(instance~, surface~)
