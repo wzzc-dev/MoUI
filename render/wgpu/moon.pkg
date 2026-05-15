@@ -1,9 +1,14 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render" @render,
-  "wzzc-dev/moui/render/native_wgpu" @native_wgpu,
-  "wzzc-dev/moui/render/wgpu_surface" @wgpu_surface,
   "Milky2018/wgpu_mbt" @wgpu_mbt,
+  "bikallem/freetype" @freetype,
+  "bikallem/freetype/base" @ft_base,
+  "bikallem/freetype/types" @ft_types,
+  "moonbit-community/harfbuzz/font" @hb_font,
+  "moonbit-community/harfbuzz/buffer" @hb_buffer,
+  "moonbit-community/harfbuzz/shape" @hb_shape,
+  "moonbitlang/x/fs" @fs,
 }
 
 supported_targets = "native"

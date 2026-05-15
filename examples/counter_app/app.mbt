@@ -30,8 +30,8 @@ pub fn CounterApp::runtime(
   self : CounterApp,
   width? : Double = 800.0,
   height? : Double = 600.0,
-) -> @backend.AppRuntime {
-  @backend.AppRuntime::new_dynamic(
+) -> @core.AppRuntime {
+  @core.AppRuntime::new_dynamic(
     root=() => self.root(),
     size=@core.Size::new(width~, height~),
   )
@@ -40,7 +40,7 @@ pub fn CounterApp::runtime(
 ///|
 pub fn CounterApp::sync_runtime(
   self : CounterApp,
-  runtime : @backend.AppRuntime,
+  runtime : @core.AppRuntime,
 ) -> Unit {
   ignore(self)
   ignore(runtime)

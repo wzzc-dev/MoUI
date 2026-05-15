@@ -136,8 +136,8 @@ pub fn TodoApp::runtime(
   self : TodoApp,
   width? : Double = 800.0,
   height? : Double = 600.0,
-) -> @backend.AppRuntime {
-  @backend.AppRuntime::new_dynamic(
+) -> @core.AppRuntime {
+  @core.AppRuntime::new_dynamic(
     root=() => self.root(),
     size=@core.Size::new(width~, height~),
   )

@@ -24,13 +24,6 @@ pub fn size_dim_to_uint(Double) -> UInt
 // Errors
 
 // Types and methods
-pub(all) struct CanvasWgpuSurface {
-  canvas_id : String
-  metrics : RendererSurfaceMetrics
-} derive(Eq, ToJson, @debug.Debug)
-pub fn CanvasWgpuSurface::from_logical(canvas_id~ : String, size~ : @core.Size, scale_factor? : Double) -> Self
-pub fn CanvasWgpuSurface::new(canvas_id~ : String, metrics~ : RendererSurfaceMetrics) -> Self
-
 pub(all) struct RectBatch {
   rect : @core.Rect
   color : @core.Color
@@ -57,15 +50,11 @@ pub fn RendererBackendInfo::new(backend~ : RendererBackendKind, status~ : Render
 
 pub(all) enum RendererBackendKind {
   NativeWgpu
-  WebGpuJs
   WebGpuWasm
-  Noop
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum RendererCapabilityStatus {
   Ready
-  Experimental
-  Unsupported
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RendererSurfaceMetrics {

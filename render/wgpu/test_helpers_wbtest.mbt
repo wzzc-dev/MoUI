@@ -1,0 +1,32 @@
+///|
+fn new_test_renderer_handle() -> RendererHandle {
+  {
+    size: @core.Size::new(width=0.0, height=0.0),
+    last_batches: [],
+    configured: false,
+    present_count: 0,
+    instance: None,
+    adapter: None,
+    device: None,
+    queue: None,
+    surface: None,
+    shader: None,
+    pipeline: None,
+    vertex_buffer: None,
+    vertex_buffer_capacity: 0UL,
+    text_shader: None,
+    text_pipeline: None,
+    text_vertex_buffer: None,
+    text_vertex_buffer_capacity: 0UL,
+    text_atlas_texture: None,
+    text_atlas_view: None,
+    text_sampler: None,
+    text_bind_group_layout: None,
+    text_pipeline_layout: None,
+    text_bind_group: None,
+    font_cache: NativeFontCache::new(),
+    glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
+    text_vertices: [],
+    text_atlas_dirty: false,
+  }
+}

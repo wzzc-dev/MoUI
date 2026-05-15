@@ -3,5 +3,5 @@ fn main {
   let app = @todo_app.TodoApp::new()
   app.add("Try MoUI")
   let runtime = app.runtime(width=800.0, height=600.0)
-  @winit_native.run_counter_demo("MoUI Todo", runtime)
+  @windows.run_app("MoUI Todo", runtime)
 }

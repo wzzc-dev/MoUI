@@ -3,7 +3,6 @@ package "wzzc-dev/moui/examples/todo_app"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
 }
 
@@ -24,7 +23,7 @@ pub fn TodoApp::items(Self) -> Array[TodoItem]
 pub fn TodoApp::new() -> Self
 pub fn TodoApp::remove(Self, Int) -> Unit
 pub fn TodoApp::root(Self) -> @core.ViewNode
-pub fn TodoApp::runtime(Self, width? : Double, height? : Double) -> @backend.AppRuntime
+pub fn TodoApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn TodoApp::set_draft(Self, String) -> Unit
 pub fn TodoApp::submit_draft(Self) -> Unit
 pub fn TodoApp::toggle(Self, Int) -> Unit

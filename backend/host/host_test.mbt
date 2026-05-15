@@ -15,7 +15,7 @@ test "host surface metrics tracks logical physical and dpr" {
 test "host app info records shared model boundaries" {
   let info = HostAppInfo::new(
     backend=HostBackendKind::Native,
-    description="winit native",
+    description="native host",
   )
   assert_true(info.backend == HostBackendKind::Native)
   inspect(info.uses_shared_event_model, content="true")
@@ -83,7 +83,7 @@ test "surface host resizes through host event" {
 ///|
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
-  let runtime = @backend.AppRuntime::new(
+  let runtime = @core.AppRuntime::new(
     root=@core.ViewNode::Empty,
     size=@core.Size::new(width=10.0, height=10.0),
   )
@@ -107,7 +107,7 @@ test "host driver dispatches resize and deduplicates redraw requests" {
 ///|
 test "host driver maps focused text input through current core keyboard event" {
   let text = @core.State::new("")
-  let runtime = @backend.AppRuntime::new(
+  let runtime = @core.AppRuntime::new(
     root=@core.ViewNode::TextField({
       value: text.binding(),
       placeholder: "Type",

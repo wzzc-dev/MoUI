@@ -3,7 +3,6 @@ package "wzzc-dev/moui/backend/host"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
 }
 
@@ -24,7 +23,6 @@ pub fn HostAppInfo::new(backend~ : HostBackendKind, description? : String, uses_
 pub(all) enum HostBackendKind {
   Native
   Web
-  WebWasm
   Test
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -47,7 +45,7 @@ pub(all) struct HostEventResult {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct HostRuntimeDriver {
-  runtime : @backend.AppRuntime
+  runtime : @core.AppRuntime
   scheduler : RedrawScheduler
   mut close_requested : Bool
 }
@@ -56,7 +54,7 @@ pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
-pub fn HostRuntimeDriver::new(runtime~ : @backend.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostRuntimeDriver::new(runtime~ : @core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
 pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit

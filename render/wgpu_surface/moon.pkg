@@ -1,9 +1,0 @@
-import {
-  "Milky2018/wgpu_mbt" @wgpu,
-}
-
-supported_targets = "native"
-
-options(
-  targets: { },
-)

@@ -1,16 +1,12 @@
 ///|
 pub(all) enum RendererBackendKind {
   NativeWgpu
-  WebGpuJs
   WebGpuWasm
-  Noop
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) enum RendererCapabilityStatus {
   Ready
-  Experimental
-  Unsupported
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -28,12 +24,6 @@ pub(all) struct RendererBackendInfo {
   can_resize : Bool
   owns_surface : Bool
   description : String
-} derive(Eq, Debug, ToJson)
-
-///|
-pub(all) struct CanvasWgpuSurface {
-  canvas_id : String
-  metrics : RendererSurfaceMetrics
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -87,26 +77,6 @@ pub fn RendererBackendInfo::new(
 }
 
 ///|
-pub fn CanvasWgpuSurface::new(
-  canvas_id~ : String,
-  metrics~ : RendererSurfaceMetrics,
-) -> CanvasWgpuSurface {
-  { canvas_id, metrics }
-}
-
-///|
-pub fn CanvasWgpuSurface::from_logical(
-  canvas_id~ : String,
-  size~ : @core.Size,
-  scale_factor? : Double = 1.0,
-) -> CanvasWgpuSurface {
-  {
-    canvas_id,
-    metrics: RendererSurfaceMetrics::from_logical(size~, scale_factor~),
-  }
-}
-
-///|
 pub fn WgpuSurfaceContract::new(
   source~ : WgpuSurfaceSourceKind,
   backend~ : RendererBackendKind,
@@ -142,9 +112,11 @@ pub fn collect_rect_batches(
       @core.DrawCommand::FillRect(rect, color) => batches.push({ rect, color })
       @core.DrawCommand::FillRoundedRect(rounded, color) =>
         batches.push({ rect: rounded.rect, color })
+      @core.DrawCommand::StrokeRect(rect, color, width) =>
+        append_stroke_rect_batches(batches, rect, color, width)
+      @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
+        append_stroke_rect_batches(batches, rounded.rect, color, width)
       @core.DrawCommand::Clear(_)
-      | @core.DrawCommand::StrokeRect(_, _, _)
-      | @core.DrawCommand::StrokeRoundedRect(_, _, _)
       | @core.DrawCommand::DrawText(_)
       | @core.DrawCommand::DrawImage(_)
       | @core.DrawCommand::PushClip(_)
@@ -156,6 +128,66 @@ pub fn collect_rect_batches(
     }
   }
   batches
+}
+
+///|
+fn append_stroke_rect_batches(
+  batches : Array[RectBatch],
+  rect : @core.Rect,
+  color : @core.Color,
+  width : Double,
+) -> Unit {
+  if width <= 0.0 || rect.size.width <= 0.0 || rect.size.height <= 0.0 {
+    return
+  }
+  let stroke_width = clamp_stroke_width(width, rect)
+  let x = rect.origin.x
+  let y = rect.origin.y
+  let w = rect.size.width
+  let h = rect.size.height
+  batches.push({
+    rect: @core.Rect::new(x~, y~, width=w, height=stroke_width),
+    color,
+  })
+  batches.push({
+    rect: @core.Rect::new(
+      x~,
+      y=y + h - stroke_width,
+      width=w,
+      height=stroke_width,
+    ),
+    color,
+  })
+  if h > stroke_width * 2.0 {
+    batches.push({
+      rect: @core.Rect::new(
+        x~,
+        y=y + stroke_width,
+        width=stroke_width,
+        height=h - stroke_width * 2.0,
+      ),
+      color,
+    })
+    batches.push({
+      rect: @core.Rect::new(
+        x=x + w - stroke_width,
+        y=y + stroke_width,
+        width=stroke_width,
+        height=h - stroke_width * 2.0,
+      ),
+      color,
+    })
+  }
+}
+
+///|
+fn clamp_stroke_width(width : Double, rect : @core.Rect) -> Double {
+  let max_width = rect.size.width.min(rect.size.height) / 2.0
+  if width > max_width {
+    max_width
+  } else {
+    width
+  }
 }
 
 ///|

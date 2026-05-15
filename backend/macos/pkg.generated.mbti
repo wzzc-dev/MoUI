@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/macos"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn backend_info() -> MacosBackendInfo
+
+pub fn run_app(String, @core.AppRuntime) -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) struct MacosBackendInfo {
+  host_info : @host.HostAppInfo
+  renderer_ready : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

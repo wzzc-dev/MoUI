@@ -2,33 +2,16 @@
 test "renderer backend info records unified renderer capability" {
   let info = @render.RendererBackendInfo::new(
     backend=@render.RendererBackendKind::WebGpuWasm,
-    status=@render.RendererCapabilityStatus::Unsupported,
-    can_render=false,
-    can_resize=false,
+    status=@render.RendererCapabilityStatus::Ready,
+    can_render=true,
+    can_resize=true,
     owns_surface=false,
-    description="wasm WebGPU adapter contract only",
+    description="wasm-gc browser WebGPU host imports",
   )
   assert_true(info.backend == @render.RendererBackendKind::WebGpuWasm)
-  assert_true(info.status == @render.RendererCapabilityStatus::Unsupported)
-  inspect(info.can_render, content="false")
-  inspect(info.can_resize, content="false")
-}
-
-///|
-test "canvas surface contract carries logical physical and dpr metrics" {
-  let surface = @render.CanvasWgpuSurface::from_logical(
-    canvas_id="moui-canvas",
-    size=@core.Size::new(width=160.0, height=90.0),
-    scale_factor=2.0,
-  )
-  inspect(surface.canvas_id, content="moui-canvas")
-  assert_true(
-    surface.metrics.logical_size == @core.Size::new(width=160.0, height=90.0),
-  )
-  assert_true(
-    surface.metrics.physical_size == @core.Size::new(width=320.0, height=180.0),
-  )
-  inspect(surface.metrics.scale_factor, content="2")
+  assert_true(info.status == @render.RendererCapabilityStatus::Ready)
+  inspect(info.can_render, content="true")
+  inspect(info.can_resize, content="true")
 }
 
 ///|
@@ -56,6 +39,30 @@ test "collect rect batches" {
     ),
   ]
   inspect(@render.collect_rect_batches(commands).length(), content="1")
+}
+
+///|
+test "collect rect batches expands strokes into border rects" {
+  let batches = @render.collect_rect_batches([
+    @core.DrawCommand::StrokeRect(
+      @core.Rect::new(x=2.0, y=3.0, width=10.0, height=8.0),
+      @core.Color::blue(),
+      1.0,
+    ),
+  ])
+  inspect(batches.length(), content="4")
+  assert_true(
+    batches[0].rect == @core.Rect::new(x=2.0, y=3.0, width=10.0, height=1.0),
+  )
+  assert_true(
+    batches[1].rect == @core.Rect::new(x=2.0, y=10.0, width=10.0, height=1.0),
+  )
+  assert_true(
+    batches[2].rect == @core.Rect::new(x=2.0, y=4.0, width=1.0, height=6.0),
+  )
+  assert_true(
+    batches[3].rect == @core.Rect::new(x=11.0, y=4.0, width=1.0, height=6.0),
+  )
 }
 
 ///|

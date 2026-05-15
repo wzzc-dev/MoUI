@@ -9,7 +9,6 @@ pub(all) struct HostSurfaceMetrics {
 pub(all) enum HostBackendKind {
   Native
   Web
-  WebWasm
   Test
 } derive(Eq, Debug, ToJson)
 
@@ -65,7 +64,7 @@ pub(all) struct RedrawScheduler {
 
 ///|
 pub(all) struct HostRuntimeDriver {
-  runtime : @backend.AppRuntime
+  runtime : @core.AppRuntime
   scheduler : RedrawScheduler
   mut close_requested : Bool
 }
@@ -233,7 +232,7 @@ pub fn RedrawScheduler::is_redraw_requested(self : RedrawScheduler) -> Bool {
 
 ///|
 pub fn HostRuntimeDriver::new(
-  runtime~ : @backend.AppRuntime,
+  runtime~ : @core.AppRuntime,
   schedule_redraw~ : () -> Unit,
 ) -> HostRuntimeDriver {
   let driver = {

@@ -1,9 +1,8 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/host" @host,
+  "wzzc-dev/moui/backend/common" @common,
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
-  "wzzc-dev/moui/render/wgpu_surface" @wgpu_surface,
   "Milky2018/wgpu_mbt" @wgpu,
   "Milky2018/wgpu_mbt/c" @wgpu_c,
   "Milky2018/window/core" @window_core,

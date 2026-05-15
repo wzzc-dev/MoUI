@@ -11,14 +11,14 @@ struct WindowsApp {
   title : String
   mut window : @win.Window?
   mut renderer : @wgpu_renderer.WgpuRenderer?
-  runtime : @backend.AppRuntime
+  runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
 
 ///|
-pub fn run_counter_demo(title : String, runtime : @backend.AppRuntime) -> Unit {
+pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
   let event_loop = @win.EventLoop::new()
   let app = WindowsApp::{
     title,
@@ -38,15 +38,7 @@ pub fn window_event_to_core(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
 ) -> @core.AppEvent? {
-  match
-    window_event_to_host_with_modifiers(
-      event,
-      last_pointer,
-      @core.KeyModifiers::none(),
-    ) {
-    Some(host_event) => host_event.to_core()
-    None => None
-  }
+  @common.window_event_to_core(event, last_pointer)
 }
 
 ///|
@@ -66,11 +58,7 @@ pub fn window_event_to_host(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
 ) -> @host.HostEvent? {
-  window_event_to_host_with_modifiers(
-    event,
-    last_pointer,
-    @core.KeyModifiers::none(),
-  )
+  @common.window_event_to_host(event, last_pointer)
 }
 
 ///|
@@ -79,71 +67,23 @@ pub fn window_event_to_host_with_modifiers(
   last_pointer : @core.Point,
   modifiers : @core.KeyModifiers,
 ) -> @host.HostEvent? {
-  match event {
-    @window_core.WindowEvent::SurfaceResized(size) =>
-      Some(
-        @host.HostEvent::Resized(
-          @host.HostSurfaceMetrics::new(
-            logical_size=physical_size_to_core(size),
-            physical_size=physical_size_to_core(size),
-          ),
-        ),
-      )
-    @window_core.WindowEvent::PointerMoved(_, position, _, _) =>
-      Some(@host.HostEvent::PointerMoved(physical_position_to_core(position)))
-    @window_core.WindowEvent::PointerButton(_, state, position, _, source) =>
-      match source.mouse_button() {
-        Some(@window_core.MouseButton::Left) =>
-          Some(
-            @host.HostEvent::PointerButton(
-              physical_position_to_core(position),
-              element_state_to_pointer_phase(state),
-              0,
-            ),
-          )
-        _ =>
-          Some(
-            @host.HostEvent::PointerButton(
-              last_pointer,
-              @core.PointerPhase::Cancel,
-              0,
-            ),
-          )
-      }
-    @window_core.WindowEvent::CloseRequested =>
-      Some(@host.HostEvent::CloseRequested)
-    @window_core.WindowEvent::RedrawRequested =>
-      Some(@host.HostEvent::RedrawRequested)
-    @window_core.WindowEvent::KeyboardInput(_, key_event, is_synthetic) =>
-      if is_synthetic {
-        None
-      } else {
-        Some(
-          @host.HostEvent::Keyboard(
-            keyboard_event_to_core(key_event, modifiers),
-          ),
-        )
-      }
-    @window_core.WindowEvent::Ime(@window_core.Ime::Commit(text)) =>
-      Some(@host.HostEvent::TextInput(text))
-    _ => None
-  }
+  @common.window_event_to_host_with_modifiers(event, last_pointer, modifiers)
 }
 
 ///|
 pub fn create_windows_host_surface(
   hwnd : UInt64,
-) -> @wgpu_surface.HostWgpuSurface raise @wgpu.WgpuError {
+) -> @wgpu_renderer.HostWgpuSurface raise @wgpu.WgpuError {
   let instance = @wgpu.Instance::create()
   let surface = instance.create_surface_windows_hwnd(
     win32_surface_host_hinstance(),
     win32_surface_host_hwnd_from_u64(hwnd),
   )
-  @wgpu_surface.HostWgpuSurface::new(instance~, surface~)
+  @wgpu_renderer.HostWgpuSurface::new(instance~, surface~)
 }
 
 ///|
-pub fn windows_surface_host_info() -> @wgpu_surface.SurfaceHostInfo {
+pub fn windows_surface_host_info() -> @wgpu_renderer.SurfaceHostInfo {
   {
     platform: "windows",
     owns_instance: true,
@@ -172,7 +112,7 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
   }
   match window {
     Some(window) => {
-      let size = physical_size_to_core(window.surface_size())
+      let size = @common.physical_size_to_core(window.surface_size())
       ignore(
         self.driver.dispatch(
           @host.HostEvent::Resized(
@@ -224,11 +164,11 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       }
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = physical_position_to_core(position)
+      self.last_pointer = @common.physical_position_to_core(position)
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = physical_position_to_core(position)
+      self.last_pointer = @common.physical_position_to_core(position)
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::KeyboardInput(_, _, _) =>
@@ -257,7 +197,7 @@ fn WindowsApp::dispatch_window_event(
 ) -> Unit {
   match event {
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
-      self.modifiers = modifiers_to_core(modifiers)
+      self.modifiers = @common.modifiers_to_core(modifiers)
     _ => ()
   }
   match
@@ -293,97 +233,6 @@ fn WindowsApp::dispose(self : WindowsApp) -> Unit {
   }
   self.renderer = None
   self.window = None
-}
-
-///|
-fn physical_size_to_core(size : @dpi.PhysicalSize) -> @core.Size {
-  @core.Size::new(
-    width=size.width().to_double(),
-    height=size.height().to_double(),
-  )
-}
-
-///|
-fn physical_position_to_core(
-  position : @dpi.PhysicalPositionF64,
-) -> @core.Point {
-  @core.Point::new(x=position.x(), y=position.y())
-}
-
-///|
-fn element_state_to_pointer_phase(
-  state : @window_core.ElementState,
-) -> @core.PointerPhase {
-  match state {
-    @window_core.ElementState::Pressed => @core.PointerPhase::Down
-    @window_core.ElementState::Released => @core.PointerPhase::Up
-  }
-}
-
-///|
-fn element_state_pressed(state : @window_core.ElementState) -> Bool {
-  match state {
-    @window_core.ElementState::Pressed => true
-    @window_core.ElementState::Released => false
-  }
-}
-
-///|
-fn keyboard_event_to_core(
-  event : @window_core.KeyEvent,
-  modifiers : @core.KeyModifiers,
-) -> @core.KeyboardEvent {
-  @core.KeyboardEvent::new(
-    key=key_event_name(event),
-    text=key_event_text(event),
-    pressed=element_state_pressed(event.state()),
-    repeat=event.repeat(),
-    modifiers~,
-  )
-}
-
-///|
-fn key_event_text(event : @window_core.KeyEvent) -> String? {
-  match event.text() {
-    Some(text) => if text == "" { None } else { Some(text) }
-    None => None
-  }
-}
-
-///|
-fn key_event_name(event : @window_core.KeyEvent) -> String {
-  match event.logical_key() {
-    @window_core.Key::Character(text) => text
-    @window_core.Key::Named(named) => named_key_name(named)
-    @window_core.Key::Dead(_) => "Dead"
-    @window_core.Key::Unidentified(_) => "Unidentified"
-  }
-}
-
-///|
-fn named_key_name(key : @window_core.NamedKey) -> String {
-  match key {
-    @window_core.NamedKey::Enter => "Enter"
-    @window_core.NamedKey::Tab => "Tab"
-    @window_core.NamedKey::Backspace => "Backspace"
-    @window_core.NamedKey::Escape => "Escape"
-    @window_core.NamedKey::Delete => "Delete"
-    @window_core.NamedKey::ArrowLeft => "ArrowLeft"
-    @window_core.NamedKey::ArrowRight => "ArrowRight"
-    @window_core.NamedKey::ArrowUp => "ArrowUp"
-    @window_core.NamedKey::ArrowDown => "ArrowDown"
-    _ => "\{key}"
-  }
-}
-
-///|
-fn modifiers_to_core(modifiers : @window_core.Modifiers) -> @core.KeyModifiers {
-  @core.KeyModifiers::new(
-    shift=modifiers.shift_key(),
-    control=modifiers.control_key(),
-    alt=modifiers.alt_key(),
-    meta=modifiers.meta_key(),
-  )
 }
 
 ///|

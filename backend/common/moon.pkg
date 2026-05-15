@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend/host" @host,
+  "Milky2018/window/core" @window_core,
+  "Milky2018/window/dpi" @dpi,
+}
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

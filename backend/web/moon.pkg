@@ -1,12 +1,17 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/host" @host,
+  "wzzc-dev/moui/backend/common" @common,
+  "wzzc-dev/moui/render" @render,
   "wzzc-dev/moui/render/webgpu" @webgpu,
+  "Milky2018/window/core" @window_core,
+  "Milky2018/window/dpi" @dpi,
+  "Milky2018/window/web" @window_web,
 }
 
-supported_targets = "js"
+supported_targets = "wasm-gc"
 
 options(
+  link: { "wasm-gc": { "exports": [ "web_dispatch_event" ] } },
   targets: { },
 )

@@ -1,0 +1,434 @@
+///|
+struct RendererHandle {
+  mut size : @core.Size
+  mut last_batches : Array[@render.RectBatch]
+  mut configured : Bool
+  mut present_count : Int
+  mut instance : @wgpu_mbt.Instance?
+  mut adapter : @wgpu_mbt.Adapter?
+  mut device : @wgpu_mbt.Device?
+  mut queue : @wgpu_mbt.Queue?
+  mut surface : @wgpu_mbt.Surface?
+  mut shader : @wgpu_mbt.ShaderModule?
+  mut pipeline : @wgpu_mbt.RenderPipeline?
+  mut vertex_buffer : @wgpu_mbt.Buffer?
+  mut vertex_buffer_capacity : UInt64
+  mut text_shader : @wgpu_mbt.ShaderModule?
+  mut text_pipeline : @wgpu_mbt.RenderPipeline?
+  mut text_vertex_buffer : @wgpu_mbt.Buffer?
+  mut text_vertex_buffer_capacity : UInt64
+  mut text_atlas_texture : @wgpu_mbt.Texture?
+  mut text_atlas_view : @wgpu_mbt.TextureView?
+  mut text_sampler : @wgpu_mbt.Sampler?
+  mut text_bind_group_layout : @wgpu_mbt.BindGroupLayout?
+  mut text_pipeline_layout : @wgpu_mbt.PipelineLayout?
+  mut text_bind_group : @wgpu_mbt.BindGroup?
+  font_cache : NativeFontCache
+  glyph_atlas : GlyphAtlas
+  mut text_vertices : Array[TextVertex]
+  mut text_atlas_dirty : Bool
+}
+
+///|
+fn RendererHandle::create_with_host_surface(
+  size : @core.Size,
+  host_surface : HostWgpuSurface,
+) -> RendererHandle raise @wgpu_mbt.WgpuError {
+  create_with_surface(size, host_surface.instance, host_surface.surface)
+}
+
+///|
+fn create_with_surface(
+  size : @core.Size,
+  instance : @wgpu_mbt.Instance,
+  surface : @wgpu_mbt.Surface,
+) -> RendererHandle raise @wgpu_mbt.WgpuError {
+  let adapter = instance.request_adapter_sync_options_surface_u32(surface)
+  let device = adapter.request_device_sync(instance)
+  let queue = device.queue()
+  let usage = @wgpu_mbt.TextureUsage::from_u64(
+    @wgpu_mbt.TEXTURE_USAGE_RENDER_ATTACHMENT | @wgpu_mbt.TEXTURE_USAGE_COPY_SRC,
+  )
+  let format = surface.configure_default(
+    adapter,
+    device,
+    @render.size_dim_to_uint(size.width),
+    @render.size_dim_to_uint(size.height),
+    usage,
+  )
+  let shader = device.create_shader_module_wgsl(@render.rect_shader_wgsl())
+  let pipeline = create_rect_pipeline(device, shader, format)
+  let text_shader = device.create_shader_module_wgsl(text_shader_wgsl())
+  let text_bind_group_layout = device.create_bind_group_layout_sampler_texture_2d()
+  let text_pipeline_layout = device.create_pipeline_layout_1(
+    text_bind_group_layout,
+  )
+  let text_pipeline = create_text_pipeline(
+    device, text_shader, format, text_pipeline_layout,
+  )
+  let text_usage = @wgpu_mbt.TextureUsage::from_u64(
+    @wgpu_mbt.TEXTURE_USAGE_TEXTURE_BINDING | @wgpu_mbt.TEXTURE_USAGE_COPY_DST,
+  )
+  let text_atlas_texture = device.create_texture_rgba8_2d_with_usage(
+    atlas_width.reinterpret_as_uint(),
+    atlas_height.reinterpret_as_uint(),
+    text_usage,
+  )
+  let text_atlas_view = text_atlas_texture.create_view()
+  let text_sampler = device.create_sampler_nearest_clamp()
+  let text_bind_group = device.create_bind_group_sampler_texture_2d(
+    text_bind_group_layout, text_sampler, text_atlas_view,
+  )
+  {
+    size,
+    last_batches: [],
+    configured: true,
+    present_count: 0,
+    instance: Some(instance),
+    adapter: Some(adapter),
+    device: Some(device),
+    queue: Some(queue),
+    surface: Some(surface),
+    shader: Some(shader),
+    pipeline: Some(pipeline),
+    vertex_buffer: None,
+    vertex_buffer_capacity: 0UL,
+    text_shader: Some(text_shader),
+    text_pipeline: Some(text_pipeline),
+    text_vertex_buffer: None,
+    text_vertex_buffer_capacity: 0UL,
+    text_atlas_texture: Some(text_atlas_texture),
+    text_atlas_view: Some(text_atlas_view),
+    text_sampler: Some(text_sampler),
+    text_bind_group_layout: Some(text_bind_group_layout),
+    text_pipeline_layout: Some(text_pipeline_layout),
+    text_bind_group: Some(text_bind_group),
+    font_cache: NativeFontCache::new(),
+    glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
+    text_vertices: [],
+    text_atlas_dirty: true,
+  }
+}
+
+///|
+fn RendererHandle::resize(self : RendererHandle, size : @core.Size) -> Unit {
+  self.size = size
+  match (self.surface, self.adapter, self.device) {
+    (Some(surface), Some(adapter), Some(device)) => {
+      let usage = @wgpu_mbt.TextureUsage::from_u64(
+        @wgpu_mbt.TEXTURE_USAGE_RENDER_ATTACHMENT |
+        @wgpu_mbt.TEXTURE_USAGE_COPY_SRC,
+      )
+      ignore(
+        surface.configure_default(
+          adapter,
+          device,
+          @render.size_dim_to_uint(size.width),
+          @render.size_dim_to_uint(size.height),
+          usage,
+        ),
+      )
+      self.configured = true
+    }
+    _ => ()
+  }
+}
+
+///|
+fn RendererHandle::render(
+  self : RendererHandle,
+  commands : Array[@core.DrawCommand],
+) -> Unit {
+  self.last_batches = @render.collect_rect_batches(commands)
+  let text = build_native_text_frame(
+    self.font_cache,
+    self.glyph_atlas,
+    commands,
+    self.size,
+  )
+  self.text_vertices = text.vertices
+  self.text_atlas_dirty = text.atlas_dirty
+  self.render_wgpu(commands)
+}
+
+///|
+fn RendererHandle::dispose(self : RendererHandle) -> Unit {
+  match self.vertex_buffer {
+    Some(buffer) => buffer.release()
+    None => ()
+  }
+  match self.text_vertex_buffer {
+    Some(buffer) => buffer.release()
+    None => ()
+  }
+  match self.text_bind_group {
+    Some(bind_group) => bind_group.release()
+    None => ()
+  }
+  match self.text_pipeline {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.text_pipeline_layout {
+    Some(layout) => layout.release()
+    None => ()
+  }
+  match self.text_bind_group_layout {
+    Some(layout) => layout.release()
+    None => ()
+  }
+  match self.text_sampler {
+    Some(sampler) => sampler.release()
+    None => ()
+  }
+  match self.text_atlas_view {
+    Some(view) => view.release()
+    None => ()
+  }
+  match self.text_atlas_texture {
+    Some(texture) => texture.release()
+    None => ()
+  }
+  match self.text_shader {
+    Some(shader) => shader.release()
+    None => ()
+  }
+  match self.pipeline {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.shader {
+    Some(shader) => shader.release()
+    None => ()
+  }
+  match self.surface {
+    Some(surface) => {
+      if self.configured {
+        surface.unconfigure()
+      }
+      surface.release()
+    }
+    None => ()
+  }
+  match self.queue {
+    Some(queue) => queue.release()
+    None => ()
+  }
+  match self.device {
+    Some(device) => device.release()
+    None => ()
+  }
+  match self.adapter {
+    Some(adapter) => adapter.release()
+    None => ()
+  }
+  match self.instance {
+    Some(instance) => instance.release()
+    None => ()
+  }
+  self.pipeline = None
+  self.shader = None
+  self.surface = None
+  self.queue = None
+  self.device = None
+  self.adapter = None
+  self.instance = None
+  self.vertex_buffer = None
+  self.vertex_buffer_capacity = 0UL
+  self.text_vertex_buffer = None
+  self.text_vertex_buffer_capacity = 0UL
+  self.text_bind_group = None
+  self.text_pipeline = None
+  self.text_pipeline_layout = None
+  self.text_bind_group_layout = None
+  self.text_sampler = None
+  self.text_atlas_view = None
+  self.text_atlas_texture = None
+  self.text_shader = None
+  self.text_vertices = []
+  self.text_atlas_dirty = false
+  self.configured = false
+}
+
+///|
+fn RendererHandle::render_wgpu(
+  self : RendererHandle,
+  commands : Array[@core.DrawCommand],
+) -> Unit {
+  match (self.surface, self.device, self.queue, self.pipeline) {
+    (Some(surface), Some(device), Some(queue), Some(pipeline)) => {
+      let surface_texture = surface.get_current_texture()
+      if surface_texture.is_success() {
+        let texture = surface_texture.take_texture()
+        surface_texture.release()
+        let view = texture.create_view()
+        let clear = @render.first_clear_color(commands)
+        if self.text_atlas_dirty {
+          match self.text_atlas_texture {
+            Some(atlas_texture) => {
+              queue.write_texture_rgba8_2d(
+                atlas_texture,
+                self.glyph_atlas.width.reinterpret_as_uint(),
+                self.glyph_atlas.height.reinterpret_as_uint(),
+                self.glyph_atlas.to_bytes(),
+              )
+              self.text_atlas_dirty = false
+              self.glyph_atlas.dirty = false
+            }
+            None => ()
+          }
+        }
+        let encoder = device.create_command_encoder()
+        let pass = encoder.begin_render_pass_color_clear(
+          view,
+          Float::from_double(clear.r),
+          Float::from_double(clear.g),
+          Float::from_double(clear.b),
+          Float::from_double(clear.a),
+        )
+        if self.last_batches.length() > 0 {
+          let vertices = @render.rect_batches_to_vertices(
+            self.last_batches,
+            self.size,
+          )
+          let vertex_bytes = @render.rect_vertices_to_bytes(vertices)
+          self.ensure_vertex_buffer(device, vertex_bytes.length().to_uint64())
+          match self.vertex_buffer {
+            Some(buffer) => {
+              queue.write_buffer(buffer, 0UL, vertex_bytes)
+              pass.set_pipeline(pipeline)
+              pass.set_vertex_buffer(
+                0U,
+                buffer,
+                0UL,
+                vertex_bytes.length().to_uint64(),
+              )
+              pass.draw(vertices.length().reinterpret_as_uint(), 1U, 0U, 0U)
+            }
+            None => ()
+          }
+        }
+        if self.text_vertices.length() > 0 {
+          match (self.text_pipeline, self.text_bind_group) {
+            (Some(text_pipeline), Some(text_bind_group)) => {
+              let vertex_bytes = text_vertices_to_bytes(self.text_vertices)
+              self.ensure_text_vertex_buffer(
+                device,
+                vertex_bytes.length().to_uint64(),
+              )
+              match self.text_vertex_buffer {
+                Some(buffer) => {
+                  queue.write_buffer(buffer, 0UL, vertex_bytes)
+                  pass.set_pipeline(text_pipeline)
+                  pass.set_bind_group0(text_bind_group)
+                  pass.set_vertex_buffer(
+                    0U,
+                    buffer,
+                    0UL,
+                    vertex_bytes.length().to_uint64(),
+                  )
+                  pass.draw(
+                    self.text_vertices.length().reinterpret_as_uint(),
+                    1U,
+                    0U,
+                    0U,
+                  )
+                }
+                None => ()
+              }
+            }
+            _ => ()
+          }
+        }
+        pass.end()
+        pass.release()
+        let command_buffer = encoder.finish()
+        queue.submit_one(command_buffer)
+        ignore(surface.present())
+        command_buffer.release()
+        encoder.release()
+        view.release()
+        texture.release()
+        self.present_count += 1
+      } else {
+        surface_texture.release()
+      }
+    }
+    _ => ()
+  }
+}
+
+///|
+fn RendererHandle::ensure_vertex_buffer(
+  self : RendererHandle,
+  device : @wgpu_mbt.Device,
+  required : UInt64,
+) -> Unit {
+  if required == 0UL || self.vertex_buffer_capacity >= required {
+    ()
+  } else {
+    match self.vertex_buffer {
+      Some(buffer) => buffer.release()
+      None => ()
+    }
+    let capacity = @render.grow_capacity(required)
+    let usage = @wgpu_mbt.BufferUsage::from_u64(
+      @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+    )
+    self.vertex_buffer = Some(device.create_buffer(size=capacity, usage~))
+    self.vertex_buffer_capacity = capacity
+  }
+}
+
+///|
+fn RendererHandle::ensure_text_vertex_buffer(
+  self : RendererHandle,
+  device : @wgpu_mbt.Device,
+  required : UInt64,
+) -> Unit {
+  if required == 0UL || self.text_vertex_buffer_capacity >= required {
+    ()
+  } else {
+    match self.text_vertex_buffer {
+      Some(buffer) => buffer.release()
+      None => ()
+    }
+    let capacity = @render.grow_capacity(required)
+    let usage = @wgpu_mbt.BufferUsage::from_u64(
+      @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+    )
+    self.text_vertex_buffer = Some(device.create_buffer(size=capacity, usage~))
+    self.text_vertex_buffer_capacity = capacity
+  }
+}
+
+///|
+fn create_rect_pipeline(
+  device : @wgpu_mbt.Device,
+  shader : @wgpu_mbt.ShaderModule,
+  format : @wgpu_mbt.TextureFormat,
+) -> @wgpu_mbt.RenderPipeline {
+  let builder = try! @wgpu_mbt.RenderPipelineDescBuilder::new(shader)
+  try! builder.set_color_target_format(format)
+  try! builder.set_vertex_buffer_layout(24UL, @wgpu_mbt.VERTEX_STEP_MODE_VERTEX)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 0UL, 0U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 8UL, 1U)
+  try! builder.create_pipeline(device)
+}
+
+///|
+fn create_text_pipeline(
+  device : @wgpu_mbt.Device,
+  shader : @wgpu_mbt.ShaderModule,
+  format : @wgpu_mbt.TextureFormat,
+  layout : @wgpu_mbt.PipelineLayout,
+) -> @wgpu_mbt.RenderPipeline {
+  let builder = try! @wgpu_mbt.RenderPipelineDescBuilder::new(shader, layout~)
+  try! builder.set_color_target_format(format)
+  try! builder.enable_alpha_blend()
+  try! builder.set_vertex_buffer_layout(32UL, @wgpu_mbt.VERTEX_STEP_MODE_VERTEX)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 0UL, 0U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 8UL, 1U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 16UL, 2U)
+  try! builder.create_pipeline(device)
+}

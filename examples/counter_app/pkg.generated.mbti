@@ -2,7 +2,6 @@
 package "wzzc-dev/moui/examples/counter_app"
 
 import {
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
 }
 
@@ -17,8 +16,8 @@ pub struct CounterApp {
 pub fn CounterApp::increment(Self) -> Unit
 pub fn CounterApp::new() -> Self
 pub fn CounterApp::root(Self) -> @core.ViewNode
-pub fn CounterApp::runtime(Self, width? : Double, height? : Double) -> @backend.AppRuntime
-pub fn CounterApp::sync_runtime(Self, @backend.AppRuntime) -> Unit
+pub fn CounterApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn CounterApp::sync_runtime(Self, @core.AppRuntime) -> Unit
 
 // Type aliases
 

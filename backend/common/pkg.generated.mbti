@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/common"
+
+import {
+  "Milky2018/window/dpi",
+  "wzzc-dev/moui/backend/host",
+}
+
+// Values
+pub fn element_state_pressed(@Milky2018/window/core.ElementState) -> Bool
+
+pub fn element_state_to_pointer_phase(@Milky2018/window/core.ElementState) -> @wzzc-dev/moui/core.PointerPhase
+
+pub fn key_event_name(@Milky2018/window/core.KeyEvent) -> String
+
+pub fn key_event_text(@Milky2018/window/core.KeyEvent) -> String?
+
+pub fn keyboard_event_to_core(@Milky2018/window/core.KeyEvent, @wzzc-dev/moui/core.KeyModifiers) -> @wzzc-dev/moui/core.KeyboardEvent
+
+pub fn modifiers_to_core(@Milky2018/window/core.Modifiers) -> @wzzc-dev/moui/core.KeyModifiers
+
+pub fn named_key_name(@Milky2018/window/core.NamedKey) -> String
+
+pub fn physical_position_to_core(@dpi.PhysicalPositionF64) -> @wzzc-dev/moui/core.Point
+
+pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
+
+pub fn surface_metrics_from_physical(@dpi.PhysicalSize, scale_factor? : Double) -> @host.HostSurfaceMetrics
+
+pub fn window_event_to_core(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
+
+pub fn window_event_to_host(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @host.HostEvent?
+
+pub fn window_event_to_host_with_modifiers(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers, scale_factor? : Double, blur_to_cancel? : Bool) -> @host.HostEvent?
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,10 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend/host" @host,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

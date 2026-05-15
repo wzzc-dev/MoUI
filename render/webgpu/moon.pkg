@@ -1,8 +1,9 @@
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
 }
 
-supported_targets = "js"
+supported_targets = "wasm-gc"
 
 options(
   targets: { },

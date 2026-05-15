@@ -1,13 +1,7 @@
 ///|
 pub struct WgpuRenderer {
-  backend : @native_wgpu.RendererHandle
+  priv backend : RendererHandle
 }
-
-///|
-pub type HostWgpuSurface = @wgpu_surface.HostWgpuSurface
-
-///|
-pub type SurfaceHostInfo = @wgpu_surface.SurfaceHostInfo
 
 ///|
 pub fn backend_info() -> @render.RendererBackendInfo {
@@ -32,25 +26,11 @@ pub fn native_surface_contract() -> @render.WgpuSurfaceContract {
 }
 
 ///|
-pub fn create_renderer_placeholder() -> WgpuRenderer {
-  { backend: @native_wgpu.RendererHandle::new() }
-}
-
-///|
-pub fn create_placeholder() -> WgpuRenderer {
-  create_renderer_placeholder()
-}
-
-///|
 pub fn create_with_host_surface(
   size : @core.Size,
   surface : HostWgpuSurface,
 ) -> WgpuRenderer raise @wgpu_mbt.WgpuError {
-  {
-    backend: @native_wgpu.RendererHandle::create_with_host_surface(
-      size, surface,
-    ),
-  }
+  { backend: RendererHandle::create_with_host_surface(size, surface) }
 }
 
 ///|

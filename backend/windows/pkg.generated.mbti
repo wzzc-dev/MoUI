@@ -3,15 +3,14 @@ package "wzzc-dev/moui/backend/windows"
 
 import {
   "Milky2018/wgpu_mbt",
-  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/render/wgpu_surface",
+  "wzzc-dev/moui/render/wgpu",
 }
 
 // Values
-pub fn create_windows_host_surface(UInt64) -> @wgpu_surface.HostWgpuSurface raise @wgpu_mbt.WgpuError
+pub fn create_windows_host_surface(UInt64) -> @wgpu.HostWgpuSurface raise @wgpu_mbt.WgpuError
 
-pub fn run_counter_demo(String, @backend.AppRuntime) -> Unit
+pub fn run_app(String, @wzzc-dev/moui/core.AppRuntime) -> Unit
 
 pub fn window_event_to_core(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
 
@@ -21,7 +20,7 @@ pub fn window_event_to_host(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/c
 
 pub fn window_event_to_host_with_modifiers(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers) -> @host.HostEvent?
 
-pub fn windows_surface_host_info() -> @wgpu_surface.SurfaceHostInfo
+pub fn windows_surface_host_info() -> @wgpu.SurfaceHostInfo
 
 // Errors
 
