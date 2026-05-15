@@ -21,7 +21,7 @@ pub fn modifiers_to_core(@Milky2018/window/core.Modifiers) -> @wzzc-dev/moui/cor
 
 pub fn named_key_name(@Milky2018/window/core.NamedKey) -> String
 
-pub fn physical_position_to_core(@dpi.PhysicalPositionF64) -> @wzzc-dev/moui/core.Point
+pub fn physical_position_to_core(@dpi.PhysicalPositionF64, scale_factor? : Double) -> @wzzc-dev/moui/core.Point
 
 pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
 

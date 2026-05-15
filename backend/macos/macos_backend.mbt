@@ -209,11 +209,17 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
       }
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(position)
+      self.last_pointer = @common.physical_position_to_core(
+        position,
+        scale_factor=self.current_scale_factor(),
+      )
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(position)
+      self.last_pointer = @common.physical_position_to_core(
+        position,
+        scale_factor=self.current_scale_factor(),
+      )
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::KeyboardInput(_, _, _) =>
@@ -245,10 +251,7 @@ fn MacosApp::dispatch_window_event(
       self.modifiers = @common.modifiers_to_core(modifiers)
     _ => ()
   }
-  let scale_factor = match self.window {
-    Some(window) => window.scale_factor()
-    None => 1.0
-  }
+  let scale_factor = self.current_scale_factor()
   match
     window_event_to_host_with_modifiers(
       event,
@@ -258,6 +261,14 @@ fn MacosApp::dispatch_window_event(
     ) {
     Some(host_event) => ignore(self.driver.dispatch(host_event))
     None => ()
+  }
+}
+
+///|
+fn MacosApp::current_scale_factor(self : MacosApp) -> Double {
+  match self.window {
+    Some(window) => window.scale_factor()
+    None => 1.0
   }
 }
 

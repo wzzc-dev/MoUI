@@ -65,6 +65,45 @@ test "macos backend converts pointer movement and left button" {
 }
 
 ///|
+test "macos backend converts scaled pointer coordinates to logical host points" {
+  let moved = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::PointerMoved(
+      None,
+      @dpi.PhysicalPositionF64::new(120.0, 80.0),
+      true,
+      @window_core.PointerSource::Mouse,
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match moved {
+    Some(@host.HostEvent::PointerMoved(position)) =>
+      assert_true(position == @core.Point::new(x=60.0, y=40.0))
+    _ => fail("expected scaled pointer move")
+  }
+  let down = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::PointerButton(
+      None,
+      @window_core.ElementState::Pressed,
+      @dpi.PhysicalPositionF64::new(140.0, 100.0),
+      true,
+      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match down {
+    Some(@host.HostEvent::PointerButton(position, phase, _)) => {
+      assert_true(position == @core.Point::new(x=70.0, y=50.0))
+      assert_true(phase == @core.PointerPhase::Down)
+    }
+    _ => fail("expected scaled pointer button")
+  }
+}
+
+///|
 test "macos backend converts close event" {
   let event = window_event_to_core(
     @window_core.WindowEvent::CloseRequested,

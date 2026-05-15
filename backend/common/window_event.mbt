@@ -9,8 +9,10 @@ pub fn physical_size_to_core(size : @dpi.PhysicalSize) -> @core.Size {
 ///|
 pub fn physical_position_to_core(
   position : @dpi.PhysicalPositionF64,
+  scale_factor? : Double = 1.0,
 ) -> @core.Point {
-  @core.Point::new(x=position.x(), y=position.y())
+  let scale = if scale_factor > 0.0 { scale_factor } else { 1.0 }
+  @core.Point::new(x=position.x() / scale, y=position.y() / scale)
 }
 
 ///|
@@ -133,13 +135,17 @@ pub fn window_event_to_host_with_modifiers(
         ),
       )
     @window_core.WindowEvent::PointerMoved(_, position, _, _) =>
-      Some(@host.HostEvent::PointerMoved(physical_position_to_core(position)))
+      Some(
+        @host.HostEvent::PointerMoved(
+          physical_position_to_core(position, scale_factor~),
+        ),
+      )
     @window_core.WindowEvent::PointerButton(_, state, position, _, source) =>
       match source.mouse_button() {
         Some(@window_core.MouseButton::Left) =>
           Some(
             @host.HostEvent::PointerButton(
-              physical_position_to_core(position),
+              physical_position_to_core(position, scale_factor~),
               element_state_to_pointer_phase(state),
               0,
             ),

@@ -169,12 +169,56 @@ test "tap recognizer activates only pressed pointer up inside" {
   let down = recognize_button_tap(Normal, true, Down)
   assert_true(down.next_state == Pressed)
   inspect(down.activated, content="false")
+  let move_inside = recognize_button_tap(Pressed, true, Move)
+  assert_true(move_inside.next_state == Pressed)
+  inspect(move_inside.activated, content="false")
   let up = recognize_button_tap(Pressed, true, Up)
   assert_true(up.next_state == Hovered)
   inspect(up.activated, content="true")
   let cancel = recognize_button_tap(Pressed, false, Cancel)
   assert_true(cancel.next_state == Normal)
   inspect(cancel.activated, content="false")
+}
+
+///|
+test "runtime dynamic button activates after press-preserving move inside" {
+  let clicks = Ref(0)
+  let runtime = RuntimeState::new_dynamic(
+    root=() => {
+      ViewNode::Button({
+        text: "Tap \{clicks.val}",
+        size: Size::new(width=100.0, height=40.0),
+        state: ButtonState::Normal,
+        on_click: Some(() => clicks.val = clicks.val + 1),
+      })
+    },
+    size=Size::new(width=100.0, height=40.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Move,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(clicks.val, content="1")
 }
 
 ///|

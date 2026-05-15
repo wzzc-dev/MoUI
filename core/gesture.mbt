@@ -11,7 +11,14 @@ pub fn recognize_button_tap(
   phase : PointerPhase,
 ) -> TapGestureResult {
   let next_state = match phase {
-    Move => if inside { Hovered } else { Normal }
+    Move =>
+      if current == Pressed && inside {
+        Pressed
+      } else if inside {
+        Hovered
+      } else {
+        Normal
+      }
     Down => if inside { Pressed } else { Normal }
     Up => if inside { Hovered } else { Normal }
     Cancel => Normal
