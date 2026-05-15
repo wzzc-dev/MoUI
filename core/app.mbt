@@ -11,7 +11,6 @@ pub(all) struct RuntimeState {
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
-  mut root_builder : (() -> ViewNode)?
   mut component_root : Component?
   mut subscriptions : Array[StateSubscription]
   mut redraw_callback : (() -> Unit)?
@@ -24,12 +23,7 @@ pub(all) struct BuildContext {
 
 ///|
 pub(all) struct Component {
-  build : (BuildContext) -> ViewNode
-}
-
-///|
-pub fn RuntimeState::new(root~ : ViewNode, size~ : Size) -> RuntimeState {
-  RuntimeState::new_spec(root=root.to_spec(), size~)
+  build : (BuildContext) -> ViewSpec
 }
 
 ///|
@@ -50,36 +44,6 @@ pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
     next_element_id: mounted.next_id,
     dirty_elements: [],
     focused_element: None,
-    root_builder: None,
-    component_root: None,
-    subscriptions: [],
-    redraw_callback: None,
-  }
-}
-
-///|
-pub fn RuntimeState::new_dynamic(
-  root~ : () -> ViewNode,
-  size~ : Size,
-) -> RuntimeState {
-  let spec = root().to_spec()
-  let mounted = mount_view_spec_with_next(spec, 1)
-  let render_tree = mounted.node.render(
-    Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
-  )
-  {
-    root_spec: spec,
-    element_tree: mounted.node,
-    render_tree,
-    size,
-    needs_redraw: true,
-    needs_rebuild: false,
-    needs_layout: false,
-    needs_paint: false,
-    next_element_id: mounted.next_id,
-    dirty_elements: [],
-    focused_element: None,
-    root_builder: Some(root),
     component_root: None,
     subscriptions: [],
     redraw_callback: None,
@@ -91,7 +55,7 @@ pub fn RuntimeState::new_component(
   root~ : Component,
   size~ : Size,
 ) -> RuntimeState {
-  let initial_spec = Empty.to_spec()
+  let initial_spec = EmptySpec
   let mounted = mount_view_spec_with_next(initial_spec, 1)
   let render_tree = mounted.node.render(
     Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
@@ -108,7 +72,6 @@ pub fn RuntimeState::new_component(
     next_element_id: mounted.next_id,
     dirty_elements: [],
     focused_element: None,
-    root_builder: None,
     component_root: Some(root),
     subscriptions: [],
     redraw_callback: None,
@@ -118,7 +81,7 @@ pub fn RuntimeState::new_component(
 }
 
 ///|
-pub fn Component::new(build : (BuildContext) -> ViewNode) -> Component {
+pub fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
   { build, }
 }
 
@@ -127,11 +90,6 @@ pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
   let subscription = state.subscribe(() => self.runtime.request_rebuild())
   self.runtime.subscriptions.push(subscription)
   state.get()
-}
-
-///|
-pub fn RuntimeState::set_root(self : RuntimeState, root : ViewNode) -> Unit {
-  self.set_root_spec(root.to_spec())
 }
 
 ///|
@@ -274,21 +232,11 @@ pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
       Some(component) => {
         self.cancel_subscriptions()
         let context = BuildContext::{ runtime: self }
-        self.root_spec = (component.build)(context).to_spec()
+        self.root_spec = (component.build)(context)
         self.rebuild()
         self.needs_redraw = true
       }
-      None =>
-        match self.root_builder {
-          Some(builder) => {
-            self.cancel_subscriptions()
-            self.component_root = None
-            self.root_spec = builder().to_spec()
-            self.rebuild()
-            self.needs_redraw = true
-          }
-          None => ()
-        }
+      None => ()
     }
   }
 }

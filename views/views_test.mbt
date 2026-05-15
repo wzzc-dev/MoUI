@@ -4,7 +4,7 @@ test "views construct layout" {
     @views.column([@views.label("A"), @views.button("B")], spacing=8.0),
     4.0,
   )
-  let layout = @core.layout_node(
+  let layout = @core.layout_spec(
     root,
     @core.Rect::new(x=0.0, y=0.0, width=200.0, height=120.0),
   )
@@ -12,43 +12,26 @@ test "views construct layout" {
 }
 
 ///|
-test "button pointer states" {
-  let node = @views.button("Tap")
-  let frame = @core.Rect::new(x=0.0, y=0.0, width=100.0, height=50.0)
-  let moved = @views.handle_button_pointer(
-    node,
-    @core.PointerEvent::new(
-      position=@core.Point::new(x=10.0, y=10.0),
-      phase=@core.PointerPhase::Move,
-    ),
-    frame,
-  )
-  guard moved
-    is @core.ViewNode::Button({ state: @core.ButtonState::Hovered, .. }) else {
-    fail("expected hovered")
-  }
-}
-
-///|
 test "button on click callback" {
   let clicks = Ref(0)
-  let frame = @core.Rect::new(x=0.0, y=0.0, width=100.0, height=50.0)
-  let pressed = @views.handle_button_pointer(
-    @views.button_on_click("Tap", () => clicks.val = clicks.val + 1),
-    @core.PointerEvent::new(
-      position=@core.Point::new(x=10.0, y=10.0),
-      phase=@core.PointerPhase::Down,
-    ),
-    frame,
+  let runtime = @core.AppRuntime::new_spec(
+    root=@views.button_on_click("Tap", () => clicks.val = clicks.val + 1),
+    size=@core.Size::new(width=100.0, height=50.0),
   )
-  ignore(
-    @views.handle_button_pointer(
-      pressed,
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=10.0, y=10.0),
         phase=@core.PointerPhase::Up,
       ),
-      frame,
     ),
   )
   inspect(clicks.val, content="1")
@@ -56,32 +39,35 @@ test "button on click callback" {
 
 ///|
 test "label paints text" {
-  let commands : Array[@core.DrawCommand] = []
-  @views.label("Title").paint(
-    @core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
-    commands,
+  let runtime = @core.AppRuntime::new_spec(
+    root=@views.label("Title"),
+    size=@core.Size::new(width=160.0, height=32.0),
   )
-  guard commands is [@core.DrawCommand::DrawText({ text: "Title", color, .. })] else {
+  guard runtime.draw_commands()
+    is [
+      @core.DrawCommand::Clear(_),
+      @core.DrawCommand::DrawText({ text: "Title", color, .. }),
+    ] else {
     fail("expected label DrawText")
   }
   assert_true(color == @core.Color::black())
 }
 
 ///|
-test "button paints background and centered text command" {
-  let commands : Array[@core.DrawCommand] = []
-  @views.button("Tap").paint(
-    @core.Rect::new(x=4.0, y=8.0, width=180.0, height=44.0),
-    commands,
+test "button paints background and text command" {
+  let runtime = @core.AppRuntime::new_spec(
+    root=@views.button("Tap"),
+    size=@core.Size::new(width=180.0, height=44.0),
   )
-  guard commands
+  guard runtime.draw_commands()
     is [
+      @core.DrawCommand::Clear(_),
       @core.DrawCommand::FillRect(_, _),
       @core.DrawCommand::DrawText({ text: "Tap", frame, .. }),
     ] else {
     fail("expected button rect and DrawText")
   }
-  assert_true(frame == @core.Rect::new(x=4.0, y=8.0, width=180.0, height=44.0))
+  assert_true(frame == @core.Rect::new(x=0.0, y=0.0, width=180.0, height=44.0))
 }
 
 ///|
@@ -90,7 +76,6 @@ test "modifiers build styled view specs" {
     .font(@core.FontSpec::new(size=20.0, weight=700))
     .foreground(@core.Color::blue())
     .key("title")
-    .to_spec()
   guard spec
     is @core.ViewSpec::TextSpec(
       {
@@ -110,7 +95,6 @@ test "flex alignment modifiers build view specs" {
   let spec = @views.row([@views.label("A")])
     .main_axis_alignment(@core.MainAxisAlignment::MainCenter)
     .cross_axis_alignment(@core.CrossAxisAlignment::CrossEnd)
-    .to_spec()
   guard spec
     is @core.ViewSpec::FlexSpec(
       {
@@ -130,11 +114,14 @@ test "theme modifier feeds environment style into view spec" {
     background=@core.Color::gray(),
     corner_radius=10.0,
   )
-  let spec = @views.button("Themed").theme(theme).to_spec()
+  let spec = @views.button("Themed").theme(theme)
   guard spec
-    is @core.ViewSpec::ButtonSpec(
-      { foreground, background, corner_radius: 10.0, .. }
-    ) else {
+    is @core.ViewSpec::ButtonSpec({
+      foreground,
+      background,
+      corner_radius: 10.0,
+      ..
+    }) else {
     fail("expected themed button spec")
   }
   assert_true(foreground == @core.Color::blue())
@@ -153,12 +140,12 @@ test "container and spacer participate in layout" {
     ),
     @views.spacer(min_length=12.0),
   ]).spacing(6.0)
-  let layout = @core.layout_node(
+  let layout = @core.layout_spec(
     root,
     @core.Rect::new(x=0.0, y=0.0, width=200.0, height=100.0),
   )
   inspect(layout.children.length(), content="2")
-  inspect(layout.children[0].frame.size.width, content="120")
+  inspect(layout.children[0].children[0].frame.size.width, content="120")
 }
 
 ///|
@@ -171,7 +158,7 @@ test "text field constructs binding backed spec" {
     placeholder="New todo",
     width=220.0,
     height=40.0,
-  ).to_spec()
+  )
   guard spec
     is @core.ViewSpec::TextFieldSpec(
       {

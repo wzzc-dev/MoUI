@@ -12,12 +12,14 @@ test "geometry and constraints" {
 
 ///|
 test "paint commands" {
-  let root = ViewNode::Label({
+  let root = ViewSpec::TextSpec({
+    key: None,
     text: "box",
     size: Size::new(width=20.0, height=10.0),
+    font: FontSpec::new(size=16.0, weight=500),
     color: Color::blue(),
   })
-  let runtime = RuntimeState::new(
+  let runtime = RuntimeState::new_spec(
     root~,
     size=Size::new(width=40.0, height=30.0),
   )

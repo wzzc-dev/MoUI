@@ -83,8 +83,8 @@ test "surface host resizes through host event" {
 ///|
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
-  let runtime = @core.AppRuntime::new(
-    root=@core.ViewNode::Empty,
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::EmptySpec,
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
@@ -107,11 +107,20 @@ test "host driver dispatches resize and deduplicates redraw requests" {
 ///|
 test "host driver maps focused text input through current core keyboard event" {
   let text = @core.State::new("")
-  let runtime = @core.AppRuntime::new(
-    root=@core.ViewNode::TextField({
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::TextFieldSpec({
+      key: None,
       value: text.binding(),
       placeholder: "Type",
       size: @core.Size::new(width=240.0, height=40.0),
+      font: @core.FontSpec::new(size=16.0, weight=400),
+      foreground: @core.Color::black(),
+      placeholder_color: @core.Color::gray(),
+      background: @core.Color::white(),
+      border_color: @core.Color::gray(),
+      focused_border_color: @core.Color::blue(),
+      cursor_color: @core.Color::blue(),
+      corner_radius: 0.0,
       on_submit: None,
     }),
     size=@core.Size::new(width=240.0, height=60.0),

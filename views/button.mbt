@@ -3,7 +3,7 @@ pub fn button(
   text : String,
   width? : Double = 180.0,
   height? : Double = 44.0,
-) -> @core.ViewNode {
+) -> @core.ViewSpec {
   button_base(text, None, width~, height~)
 }
 
@@ -13,7 +13,7 @@ pub fn button_on_click(
   on_click : @core.ClickHandler,
   width? : Double = 180.0,
   height? : Double = 44.0,
-) -> @core.ViewNode {
+) -> @core.ViewSpec {
   button_base(text, Some(on_click), width~, height~)
 }
 
@@ -23,33 +23,17 @@ fn button_base(
   on_click : @core.ClickHandler?,
   width~ : Double,
   height~ : Double,
-) -> @core.ViewNode {
-  @core.ViewNode::Button({
+) -> @core.ViewSpec {
+  @core.ViewSpec::ButtonSpec({
+    key: None,
     text,
     size: @core.Size::new(width~, height~),
-    state: @core.ButtonState::Normal,
+    font: @core.FontSpec::new(size=16.0, weight=600),
+    foreground: @core.Color::black(),
+    background: @core.Color::gray(),
+    hovered_background: @core.Color::rgba(r=0.72, g=0.78, b=0.92),
+    pressed_background: @core.Color::blue(),
+    corner_radius: 0.0,
     on_click,
   })
-}
-
-///|
-pub fn button_with_state(
-  text : String,
-  state : @core.ButtonState,
-) -> @core.ViewNode {
-  @core.ViewNode::Button({
-    text,
-    size: @core.Size::new(width=180.0, height=44.0),
-    state,
-    on_click: None,
-  })
-}
-
-///|
-pub fn handle_button_pointer(
-  node : @core.ViewNode,
-  event : @core.PointerEvent,
-  frame : @core.Rect,
-) -> @core.ViewNode {
-  node.handle_pointer(event, frame).node
 }

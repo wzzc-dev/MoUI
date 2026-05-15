@@ -92,8 +92,8 @@ pub fn TodoApp::remove(self : TodoApp, id : Int) -> Unit {
 }
 
 ///|
-pub fn TodoApp::root(self : TodoApp) -> @core.ViewNode {
-  let children : Array[@core.ViewNode] = [
+pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
+  let children : Array[@core.ViewSpec] = [
     @views.label("MoUI Todo"),
     @views.row(
       [
@@ -116,7 +116,7 @@ pub fn TodoApp::root(self : TodoApp) -> @core.ViewNode {
 }
 
 ///|
-fn TodoApp::todo_row(self : TodoApp, item : TodoItem) -> @core.ViewNode {
+fn TodoApp::todo_row(self : TodoApp, item : TodoItem) -> @core.ViewSpec {
   @views.row(
     [
       @views.button_on_click(
@@ -137,8 +137,8 @@ pub fn TodoApp::runtime(
   width? : Double = 800.0,
   height? : Double = 600.0,
 ) -> @core.AppRuntime {
-  @core.AppRuntime::new_dynamic(
-    root=() => self.root(),
+  @core.AppRuntime::new_component(
+    root=@core.Component::new(_ctx => self.root()),
     size=@core.Size::new(width~, height~),
   )
 }

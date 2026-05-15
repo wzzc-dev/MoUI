@@ -1,19 +1,25 @@
 ///|
 pub fn container(
-  child : @core.ViewNode,
+  child : @core.ViewSpec,
   width? : Double,
   height? : Double,
   background? : @core.Color,
   corner_radius? : Double = 0.0,
-) -> @core.ViewNode {
+) -> @core.ViewSpec {
   let size = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  @core.ViewNode::Container({ size, background, corner_radius, child })
+  @core.ViewSpec::ContainerSpec({
+    key: None,
+    size,
+    background,
+    corner_radius,
+    child: Some(child),
+  })
 }
 
 ///|
-pub fn spacer(min_length? : Double = 0.0) -> @core.ViewNode {
-  @core.ViewNode::Spacer({ min_length, })
+pub fn spacer(min_length? : Double = 0.0) -> @core.ViewSpec {
+  @core.ViewSpec::SpacerSpec({ key: None, min_length })
 }

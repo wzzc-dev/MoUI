@@ -52,6 +52,16 @@ pub(all) enum CrossAxisAlignment {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub type ClickHandler = () -> Unit
+
+///|
+pub(all) enum ButtonState {
+  Normal
+  Hovered
+  Pressed
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct ViewStyle {
   font : FontSpec?
   foreground : Color?
@@ -309,7 +319,7 @@ fn[T] option_prefer(value : T?, fallback : T?) -> T? {
 }
 
 ///|
-pub fn ViewSpec::key(self : ViewSpec) -> Key? {
+fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
   match self {
     EmptySpec => None
     TextSpec(data) => data.key
@@ -352,137 +362,170 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
 
 ///|
 pub fn ViewSpec::same_identity(self : ViewSpec, next : ViewSpec) -> Bool {
-  self.kind() == next.kind() && self.key() == next.key()
+  self.kind() == next.kind() && self.identity_key() == next.identity_key()
 }
 
 ///|
-pub fn ViewSpec::to_view_node(self : ViewSpec) -> ViewNode {
+pub fn ViewSpec::key(self : ViewSpec, value : String) -> ViewSpec {
+  self.with_key(Key::new(value))
+}
+
+///|
+pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
   match self {
-    EmptySpec => ViewNode::Empty
-    TextSpec(data) =>
-      ViewNode::Label({ text: data.text, size: data.size, color: data.color })
-    ButtonSpec(data) =>
-      ViewNode::Button({
-        text: data.text,
-        size: data.size,
-        state: ButtonState::Normal,
-        on_click: data.on_click,
-      })
-    TextFieldSpec(data) =>
-      ViewNode::TextField({
-        value: data.value,
-        placeholder: data.placeholder,
-        size: data.size,
-        on_submit: data.on_submit,
-      })
+    TextSpec(data) => TextSpec({ ..data, font })
+    ButtonSpec(data) => ButtonSpec({ ..data, font })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, font })
     FlexSpec(data) =>
-      ViewNode::Flex({
-        axis: data.axis,
-        spacing: data.spacing,
-        main_axis_alignment: data.main_axis_alignment,
-        cross_axis_alignment: data.cross_axis_alignment,
-        children: data.children.map(child => child.to_view_node()),
+      FlexSpec({ ..data, children: data.children.map(child => child.font(font)) })
+    PaddingSpec(data) => PaddingSpec({ ..data, child: data.child.font(font) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(data.child, child => child.font(font)),
       })
-    PaddingSpec(data) =>
-      ViewNode::Padding({
-        insets: data.insets,
-        child: data.child.to_view_node(),
-      })
-    ContainerSpec(data) => {
-      let child = match data.child {
-        Some(child) => child.to_view_node()
-        None => ViewNode::Empty
-      }
-      ViewNode::Container({
-        size: data.size,
-        background: data.background,
-        corner_radius: data.corner_radius,
-        child,
-      })
-    }
-    SpacerSpec(data) => ViewNode::Spacer({ min_length: data.min_length })
+    EmptySpec | SpacerSpec(_) => self
   }
 }
 
 ///|
-pub fn ViewNode::to_spec(self : ViewNode) -> ViewSpec {
-  self.to_spec_with_style(ViewStyle::empty(), None)
+pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
+  match self {
+    TextSpec(data) => TextSpec({ ..data, color })
+    ButtonSpec(data) => ButtonSpec({ ..data, foreground: color })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, foreground: color })
+    FlexSpec(data) =>
+      FlexSpec({
+        ..data,
+        children: data.children.map(child => child.foreground(color)),
+      })
+    PaddingSpec(data) =>
+      PaddingSpec({ ..data, child: data.child.foreground(color) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(data.child, child => child.foreground(color)),
+      })
+    EmptySpec | SpacerSpec(_) => self
+  }
 }
 
 ///|
-fn ViewNode::to_spec_with_style(
-  self : ViewNode,
-  style : ViewStyle,
-  key : Key?,
+pub fn ViewSpec::background(self : ViewSpec, color : Color) -> ViewSpec {
+  match self {
+    ButtonSpec(data) => ButtonSpec({ ..data, background: color })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, background: color })
+    ContainerSpec(data) => ContainerSpec({ ..data, background: Some(color) })
+    _ =>
+      ContainerSpec({
+        key: self.identity_key(),
+        size: None,
+        background: Some(color),
+        corner_radius: 0.0,
+        child: Some(self),
+      })
+  }
+}
+
+///|
+pub fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
+  match self {
+    ButtonSpec(data) => ButtonSpec({ ..data, corner_radius: radius })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, corner_radius: radius })
+    ContainerSpec(data) => ContainerSpec({ ..data, corner_radius: radius })
+    _ =>
+      ContainerSpec({
+        key: self.identity_key(),
+        size: None,
+        background: None,
+        corner_radius: radius,
+        child: Some(self),
+      })
+  }
+}
+
+///|
+pub fn ViewSpec::padding(self : ViewSpec, value : Double) -> ViewSpec {
+  PaddingSpec({ key: None, insets: Insets::all(value), child: self })
+}
+
+///|
+pub fn ViewSpec::spacing(self : ViewSpec, spacing : Double) -> ViewSpec {
+  match self {
+    FlexSpec(data) => FlexSpec({ ..data, spacing })
+    PaddingSpec(data) => PaddingSpec({ ..data, child: data.child.spacing(spacing) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(data.child, child => child.spacing(spacing)),
+      })
+    _ => self
+  }
+}
+
+///|
+pub fn ViewSpec::main_axis_alignment(
+  self : ViewSpec,
+  alignment : MainAxisAlignment,
 ) -> ViewSpec {
   match self {
-    Empty => EmptySpec
-    Label(data) =>
-      TextSpec({
-        key,
-        text: data.text,
-        size: data.size,
-        font: style.font.unwrap_or(FontSpec::new(size=16.0, weight=500)),
-        color: style.foreground.unwrap_or(data.color),
-      })
-    Button(data) =>
-      ButtonSpec({
-        key,
-        text: data.text,
-        size: data.size,
-        font: style.font.unwrap_or(FontSpec::new(size=16.0, weight=600)),
-        foreground: style.foreground.unwrap_or(Color::black()),
-        background: style.background.unwrap_or(Color::gray()),
-        hovered_background: Color::rgba(r=0.72, g=0.78, b=0.92),
-        pressed_background: Color::blue(),
-        corner_radius: style.corner_radius.unwrap_or(0.0),
-        on_click: data.on_click,
-      })
-    TextField(data) =>
-      TextFieldSpec({
-        key,
-        value: data.value,
-        placeholder: data.placeholder,
-        size: data.size,
-        font: style.font.unwrap_or(FontSpec::new(size=16.0, weight=400)),
-        foreground: style.foreground.unwrap_or(Color::black()),
-        placeholder_color: Color::gray(),
-        background: style.background.unwrap_or(Color::white()),
-        border_color: Color::gray(),
-        focused_border_color: Color::blue(),
-        cursor_color: Color::blue(),
-        corner_radius: style.corner_radius.unwrap_or(0.0),
-        on_submit: data.on_submit,
-      })
-    Flex(data) =>
-      FlexSpec({
-        key,
-        axis: data.axis,
-        spacing: data.spacing,
-        main_axis_alignment: data.main_axis_alignment,
-        cross_axis_alignment: data.cross_axis_alignment,
-        children: data.children.map(child => {
-          child.to_spec_with_style(style, None)
-        }),
-      })
-    Padding(data) =>
-      PaddingSpec({ key, insets: data.insets, child: data.child.to_spec() })
-    Container(data) =>
+    FlexSpec(data) => FlexSpec({ ..data, main_axis_alignment: alignment })
+    PaddingSpec(data) =>
+      PaddingSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
+    ContainerSpec(data) =>
       ContainerSpec({
-        key,
-        size: data.size,
-        background: option_prefer(data.background, style.background),
-        corner_radius: data.corner_radius,
-        child: Some(data.child.to_spec()),
+        ..data,
+        child: map_view_spec(
+          data.child,
+          child => child.main_axis_alignment(alignment),
+        ),
       })
-    Spacer(data) => SpacerSpec({ key, min_length: data.min_length })
-    Styled(data) => data.child.to_spec_with_style(style.merge(data.style), key)
-    Keyed(data) => data.child.to_spec_with_style(style, Some(data.key))
-    EnvironmentNode(data) =>
-      data.child.to_spec_with_style(
-        style.merge(ViewStyle::from_theme(data.environment.theme)),
-        key,
-      )
+    _ => self
+  }
+}
+
+///|
+pub fn ViewSpec::cross_axis_alignment(
+  self : ViewSpec,
+  alignment : CrossAxisAlignment,
+) -> ViewSpec {
+  match self {
+    FlexSpec(data) => FlexSpec({ ..data, cross_axis_alignment: alignment })
+    PaddingSpec(data) =>
+      PaddingSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(
+          data.child,
+          child => child.cross_axis_alignment(alignment),
+        ),
+      })
+    _ => self
+  }
+}
+
+///|
+pub fn ViewSpec::theme(self : ViewSpec, theme : Theme) -> ViewSpec {
+  self.font(theme.font)
+    .foreground(theme.foreground)
+    .background(theme.background)
+    .corner_radius(theme.corner_radius)
+}
+
+///|
+pub fn ViewSpec::environment(
+  self : ViewSpec,
+  environment : Environment,
+) -> ViewSpec {
+  self.theme(environment.theme)
+}
+
+///|
+fn map_view_spec(value : ViewSpec?, f : (ViewSpec) -> ViewSpec) -> ViewSpec? {
+  match value {
+    Some(value) => Some(f(value))
+    None => None
   }
 }
 
@@ -522,7 +565,7 @@ fn mount_view_spec_with_next(spec : ViewSpec, next_id : Int) -> MountResult {
   {
     node: {
       id,
-      key: spec.key(),
+      key: spec.identity_key(),
       spec,
       children,
       dirty: DirtyFlags::all(),
@@ -552,7 +595,7 @@ fn reconcile_element_with_next(
   } else {
     let children_result = reconcile_children(old.children, next_spec, next_id)
     old.spec = next_spec
-    old.key = old.spec.key()
+    old.key = old.spec.identity_key()
     old.children = children_result.children
     old.dirty.mark_build()
     { node: old, next_id: children_result.next_id }
@@ -608,7 +651,7 @@ fn find_reusable_child(
   child_spec : ViewSpec,
   index : Int,
 ) -> Int? {
-  match child_spec.key() {
+  match child_spec.identity_key() {
     Some(key) => {
       for old_index, old_child in old_children {
         if !used[old_index] &&

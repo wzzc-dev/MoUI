@@ -4,7 +4,7 @@ pub fn text_field(
   placeholder? : String = "",
   width? : Double = 240.0,
   height? : Double = 40.0,
-) -> @core.ViewNode {
+) -> @core.ViewSpec {
   text_field_base(value, placeholder~, width~, height~, None)
 }
 
@@ -15,7 +15,7 @@ pub fn text_field_on_submit(
   placeholder? : String = "",
   width? : Double = 240.0,
   height? : Double = 40.0,
-) -> @core.ViewNode {
+) -> @core.ViewSpec {
   text_field_base(value, placeholder~, width~, height~, Some(on_submit))
 }
 
@@ -26,11 +26,20 @@ fn text_field_base(
   width~ : Double,
   height~ : Double,
   on_submit : (() -> Unit)?,
-) -> @core.ViewNode {
-  @core.ViewNode::TextField({
+) -> @core.ViewSpec {
+  @core.ViewSpec::TextFieldSpec({
+    key: None,
     value,
     placeholder,
     size: @core.Size::new(width~, height~),
+    font: @core.FontSpec::new(size=16.0, weight=400),
+    foreground: @core.Color::black(),
+    placeholder_color: @core.Color::gray(),
+    background: @core.Color::white(),
+    border_color: @core.Color::gray(),
+    focused_border_color: @core.Color::blue(),
+    cursor_color: @core.Color::blue(),
+    corner_radius: 0.0,
     on_submit,
   })
 }

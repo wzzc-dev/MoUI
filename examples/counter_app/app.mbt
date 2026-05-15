@@ -14,7 +14,7 @@ pub fn CounterApp::increment(self : CounterApp) -> Unit {
 }
 
 ///|
-pub fn CounterApp::root(self : CounterApp) -> @core.ViewNode {
+pub fn CounterApp::root(self : CounterApp) -> @core.ViewSpec {
   @views.column(
     [
       @views.label("MoUI Counter"),
@@ -31,8 +31,8 @@ pub fn CounterApp::runtime(
   width? : Double = 800.0,
   height? : Double = 600.0,
 ) -> @core.AppRuntime {
-  @core.AppRuntime::new_dynamic(
-    root=() => self.root(),
+  @core.AppRuntime::new_component(
+    root=@core.Component::new(_ctx => self.root()),
     size=@core.Size::new(width~, height~),
   )
 }

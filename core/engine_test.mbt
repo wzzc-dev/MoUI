@@ -1,13 +1,15 @@
 ///|
-fn test_label(text : String, key? : String) -> ViewNode {
-  let node = ViewNode::Label({
+fn test_label(text : String, key? : String) -> ViewSpec {
+  let spec = ViewSpec::TextSpec({
+    key: None,
     text,
     size: Size::new(width=80.0, height=20.0),
+    font: FontSpec::new(size=16.0, weight=500),
     color: Color::black(),
   })
   match key {
-    Some(key) => node.key(key)
-    None => node
+    Some(key) => spec.key(key)
+    None => spec
   }
 }
 
@@ -15,24 +17,34 @@ fn test_label(text : String, key? : String) -> ViewNode {
 fn test_text_field(
   value : Binding[String],
   on_submit? : (() -> Unit)? = None,
-) -> ViewNode {
-  ViewNode::TextField({
+) -> ViewSpec {
+  ViewSpec::TextFieldSpec({
+    key: None,
     value,
     placeholder: "Type",
     size: Size::new(width=120.0, height=40.0),
+    font: FontSpec::new(size=16.0, weight=400),
+    foreground: Color::black(),
+    placeholder_color: Color::gray(),
+    background: Color::white(),
+    border_color: Color::gray(),
+    focused_border_color: Color::blue(),
+    cursor_color: Color::blue(),
+    corner_radius: 0.0,
     on_submit,
   })
 }
 
 ///|
 test "engine mounts view spec into element and render trees" {
-  let spec = ViewNode::Flex({
+  let spec = ViewSpec::FlexSpec({
+    key: None,
     axis: Axis::Vertical,
     spacing: 4.0,
     main_axis_alignment: MainStart,
     cross_axis_alignment: CrossStretch,
     children: [test_label("A"), test_label("B")],
-  }).to_spec()
+  })
   let element = mount_view_spec(spec)
   inspect(element.children.length(), content="2")
   let render = element.render(Rect::new(x=0.0, y=0.0, width=100.0, height=80.0))
@@ -42,13 +54,14 @@ test "engine mounts view spec into element and render trees" {
 
 ///|
 test "engine applies flex main and cross axis alignment" {
-  let spec = ViewNode::Flex({
+  let spec = ViewSpec::FlexSpec({
+    key: None,
     axis: Axis::Vertical,
     spacing: 0.0,
     main_axis_alignment: MainCenter,
     cross_axis_alignment: CrossEnd,
     children: [test_label("A")],
-  }).to_spec()
+  })
   let render = mount_view_spec(spec).render(
     Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
   )
@@ -60,17 +73,18 @@ test "engine applies flex main and cross axis alignment" {
 
 ///|
 test "engine allocates remaining flex space to spacers" {
-  let spec = ViewNode::Flex({
+  let spec = ViewSpec::FlexSpec({
+    key: None,
     axis: Axis::Horizontal,
     spacing: 0.0,
     main_axis_alignment: MainStart,
     cross_axis_alignment: CrossStretch,
     children: [
       test_label("A"),
-      ViewNode::Spacer({ min_length: 0.0 }),
+      ViewSpec::SpacerSpec({ key: None, min_length: 0.0 }),
       test_label("B"),
     ],
-  }).to_spec()
+  })
   let render = mount_view_spec(spec).render(
     Rect::new(x=0.0, y=0.0, width=240.0, height=40.0),
   )
@@ -81,25 +95,27 @@ test "engine allocates remaining flex space to spacers" {
 ///|
 test "engine reconciles keyed children by identity" {
   let old = mount_view_spec(
-    ViewNode::Flex({
+    ViewSpec::FlexSpec({
+      key: None,
       axis: Axis::Vertical,
       spacing: 0.0,
       main_axis_alignment: MainStart,
       cross_axis_alignment: CrossStretch,
       children: [test_label("A", key="a"), test_label("B", key="b")],
-    }).to_spec(),
+    }),
   )
   let old_a = old.children[0].id
   let old_b = old.children[1].id
   let next = reconcile_element(
     old,
-    ViewNode::Flex({
+    ViewSpec::FlexSpec({
+      key: None,
       axis: Axis::Vertical,
       spacing: 0.0,
       main_axis_alignment: MainStart,
       cross_axis_alignment: CrossStretch,
       children: [test_label("B", key="b"), test_label("A", key="a")],
-    }).to_spec(),
+    }),
   )
   assert_true(next.children[0].id == old_b)
   assert_true(next.children[1].id == old_a)
@@ -108,14 +124,14 @@ test "engine reconciles keyed children by identity" {
 ///|
 test "runtime exposes mount rebuild layout and paint passes" {
   let runtime = RuntimeState::new_spec(
-    root=test_label("A").to_spec(),
+    root=test_label("A"),
     size=Size::new(width=100.0, height=40.0),
   )
-  runtime.mount(test_label("B").to_spec())
+  runtime.mount(test_label("B"))
   guard runtime.paint_pass() is [_, DrawText({ text: "B", .. })] else {
     fail("expected mounted label")
   }
-  runtime.root_spec = test_label("C").to_spec()
+  runtime.root_spec = test_label("C")
   runtime.needs_rebuild = true
   runtime.rebuild()
   guard runtime.paint_pass() is [_, DrawText({ text: "C", .. })] else {
@@ -153,7 +169,7 @@ test "state and binding share updates" {
 ///|
 test "dirty queue records and clears runtime work" {
   let runtime = RuntimeState::new_spec(
-    root=test_label("A").to_spec(),
+    root=test_label("A"),
     size=Size::new(width=100.0, height=40.0),
   )
   inspect(runtime.dirty_count(), content="0")
@@ -183,15 +199,21 @@ test "tap recognizer activates only pressed pointer up inside" {
 ///|
 test "runtime dynamic button activates after press-preserving move inside" {
   let clicks = Ref(0)
-  let runtime = RuntimeState::new_dynamic(
-    root=() => {
-      ViewNode::Button({
+  let runtime = RuntimeState::new_component(
+    root=Component::new(_ctx => {
+      ViewSpec::ButtonSpec({
+        key: None,
         text: "Tap \{clicks.val}",
         size: Size::new(width=100.0, height=40.0),
-        state: ButtonState::Normal,
+        font: FontSpec::new(size=16.0, weight=600),
+        foreground: Color::black(),
+        background: Color::gray(),
+        hovered_background: Color::rgba(r=0.72, g=0.78, b=0.92),
+        pressed_background: Color::blue(),
+        corner_radius: 0.0,
         on_click: Some(() => clicks.val = clicks.val + 1),
       })
-    },
+    }),
     size=Size::new(width=100.0, height=40.0),
   )
   runtime.dispatch_event(
@@ -224,15 +246,21 @@ test "runtime dynamic button activates after press-preserving move inside" {
 ///|
 test "runtime dynamic builder rebuilds after activated pointer" {
   let clicks = Ref(0)
-  let runtime = RuntimeState::new_dynamic(
-    root=() => {
-      ViewNode::Button({
+  let runtime = RuntimeState::new_component(
+    root=Component::new(_ctx => {
+      ViewSpec::ButtonSpec({
+        key: None,
         text: "Tap \{clicks.val}",
         size: Size::new(width=100.0, height=40.0),
-        state: ButtonState::Normal,
+        font: FontSpec::new(size=16.0, weight=600),
+        foreground: Color::black(),
+        background: Color::gray(),
+        hovered_background: Color::rgba(r=0.72, g=0.78, b=0.92),
+        pressed_background: Color::blue(),
+        corner_radius: 0.0,
         on_click: Some(() => clicks.val = clicks.val + 1),
       })
-    },
+    }),
     size=Size::new(width=100.0, height=40.0),
   )
   runtime.dispatch_event(
@@ -262,7 +290,7 @@ test "runtime dynamic builder rebuilds after activated pointer" {
 test "runtime focuses text field and keyboard edits binding" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(
-    root=test_text_field(state.binding()).to_spec(),
+    root=test_text_field(state.binding()),
     size=Size::new(width=160.0, height=60.0),
   )
   runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="a", text=Some("a"))))
@@ -290,7 +318,7 @@ test "text field submit is triggered by enter" {
     root=test_text_field(
       state.binding(),
       on_submit=Some(() => submits.val = submits.val + 1),
-    ).to_spec(),
+    ),
     size=Size::new(width=160.0, height=60.0),
   )
   runtime.dispatch_event(
@@ -310,21 +338,28 @@ test "text field submit is triggered by enter" {
 test "clicking outside text field clears focus" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(
-    root=ViewNode::Flex({
+    root=ViewSpec::FlexSpec({
+      key: None,
       axis: Axis::Vertical,
       spacing: 8.0,
       main_axis_alignment: MainStart,
       cross_axis_alignment: CrossStretch,
       children: [
         test_text_field(state.binding()),
-        ViewNode::Button({
+        ViewSpec::ButtonSpec({
+          key: None,
           text: "Outside",
           size: Size::new(width=120.0, height=40.0),
-          state: ButtonState::Normal,
+          font: FontSpec::new(size=16.0, weight=600),
+          foreground: Color::black(),
+          background: Color::gray(),
+          hovered_background: Color::rgba(r=0.72, g=0.78, b=0.92),
+          pressed_background: Color::blue(),
+          corner_radius: 0.0,
           on_click: None,
         }),
       ],
-    }).to_spec(),
+    }),
     size=Size::new(width=160.0, height=120.0),
   )
   runtime.dispatch_event(

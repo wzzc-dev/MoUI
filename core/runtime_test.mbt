@@ -1,10 +1,16 @@
 ///|
 test "app runtime dispatches events and draws" {
-  let runtime = AppRuntime::new(
-    root=ViewNode::Button({
+  let runtime = AppRuntime::new_spec(
+    root=ViewSpec::ButtonSpec({
+      key: None,
       text: "Click",
       size: Size::new(width=100.0, height=50.0),
-      state: ButtonState::Normal,
+      font: FontSpec::new(size=16.0, weight=600),
+      foreground: Color::black(),
+      background: Color::gray(),
+      hovered_background: Color::rgba(r=0.72, g=0.78, b=0.92),
+      pressed_background: Color::blue(),
+      corner_radius: 0.0,
       on_click: None,
     }),
     size=Size::new(width=120.0, height=80.0),

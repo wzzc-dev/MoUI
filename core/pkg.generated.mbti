@@ -8,11 +8,7 @@ import {
 // Values
 pub fn hit_test(LayoutResult, Point) -> Bool
 
-pub fn layout_node(ViewNode, Rect) -> LayoutResult
-
 pub fn layout_spec(ViewSpec, Rect) -> LayoutResult
-
-pub fn measure_node(ViewNode, Constraints) -> Size
 
 pub fn mount_view_spec(ViewSpec) -> ElementNode
 
@@ -43,14 +39,11 @@ pub fn AppRuntime::needs_layout(Self) -> Bool
 pub fn AppRuntime::needs_paint(Self) -> Bool
 pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
-pub fn AppRuntime::new(root~ : ViewNode, size~ : Size) -> Self
 pub fn AppRuntime::new_component(root~ : Component, size~ : Size) -> Self
-pub fn AppRuntime::new_dynamic(root~ : () -> ViewNode, size~ : Size) -> Self
 pub fn AppRuntime::new_spec(root~ : ViewSpec, size~ : Size) -> Self
 pub fn AppRuntime::paint_pass(Self) -> Array[DrawCommand]
 pub fn AppRuntime::rebuild(Self) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
-pub fn AppRuntime::set_root(Self, ViewNode) -> Unit
 pub fn AppRuntime::set_root_spec(Self, ViewSpec) -> Unit
 pub fn AppRuntime::size(Self) -> Size
 
@@ -70,13 +63,6 @@ pub(all) struct BuildContext {
   runtime : RuntimeState
 }
 pub fn[T] BuildContext::watch(Self, State[T]) -> T
-
-pub(all) struct ButtonData {
-  text : String
-  size : Size
-  mut state : ButtonState
-  on_click : (() -> Unit)?
-}
 
 pub(all) enum ButtonState {
   Normal
@@ -110,9 +96,9 @@ pub fn Color::rgba(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> Self
 pub fn Color::white() -> Self
 
 pub(all) struct Component {
-  build : (BuildContext) -> ViewNode
+  build : (BuildContext) -> ViewSpec
 }
-pub fn Component::new((BuildContext) -> ViewNode) -> Self
+pub fn Component::new((BuildContext) -> ViewSpec) -> Self
 
 pub(all) struct Constraints {
   min : Size
@@ -121,13 +107,6 @@ pub(all) struct Constraints {
 pub fn Constraints::deflate(Self, Insets) -> Self
 pub fn Constraints::loose(Size) -> Self
 pub fn Constraints::tight(Size) -> Self
-
-pub(all) struct ContainerData {
-  size : Size?
-  background : Color?
-  corner_radius : Double
-  child : ViewNode
-}
 
 pub(all) struct ContainerViewSpec {
   key : Key?
@@ -204,19 +183,6 @@ pub(all) struct Environment {
 pub fn Environment::default() -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
 
-pub(all) struct EnvironmentData {
-  environment : Environment
-  child : ViewNode
-}
-
-pub(all) struct FlexData {
-  axis : Axis
-  spacing : Double
-  main_axis_alignment : MainAxisAlignment
-  cross_axis_alignment : CrossAxisAlignment
-  children : Array[ViewNode]
-}
-
 pub(all) struct FlexViewSpec {
   key : Key?
   axis : Axis
@@ -271,17 +237,6 @@ pub(all) struct KeyboardEvent {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn KeyboardEvent::new(key~ : String, pressed? : Bool, text? : String?, repeat? : Bool, modifiers? : KeyModifiers) -> Self
 
-pub(all) struct KeyedData {
-  key : Key
-  child : ViewNode
-}
-
-pub(all) struct LabelData {
-  text : String
-  size : Size
-  color : Color
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct LayoutResult {
   frame : Rect
   children : Array[LayoutResult]
@@ -296,11 +251,6 @@ pub(all) enum MainAxisAlignment {
   SpaceEvenly
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct PaddingData {
-  insets : Insets
-  child : ViewNode
-}
-
 pub(all) struct PaddingViewSpec {
   key : Key?
   insets : Insets
@@ -312,12 +262,6 @@ pub(all) struct Point {
   y : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Point::new(x~ : Double, y~ : Double) -> Self
-
-pub(all) struct PointerDispatch {
-  node : ViewNode
-  changed : Bool
-  activated : Bool
-}
 
 pub(all) struct PointerEvent {
   position : Point
@@ -377,7 +321,6 @@ pub(all) struct RuntimeState {
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
-  mut root_builder : (() -> ViewNode)?
   mut component_root : Component?
   mut subscriptions : Array[StateSubscription]
   mut redraw_callback : (() -> Unit)?
@@ -390,16 +333,13 @@ pub fn RuntimeState::layout(Self) -> LayoutResult
 pub fn RuntimeState::layout_pass(Self) -> Unit
 pub fn RuntimeState::mark_dirty(Self, ElementId) -> Unit
 pub fn RuntimeState::mount(Self, ViewSpec) -> Unit
-pub fn RuntimeState::new(root~ : ViewNode, size~ : Size) -> Self
 pub fn RuntimeState::new_component(root~ : Component, size~ : Size) -> Self
-pub fn RuntimeState::new_dynamic(root~ : () -> ViewNode, size~ : Size) -> Self
 pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> Self
 pub fn RuntimeState::paint_pass(Self) -> Array[DrawCommand]
 pub fn RuntimeState::rebuild(Self) -> Unit
 pub fn RuntimeState::rebuild_if_possible(Self) -> Unit
 pub fn RuntimeState::request_rebuild(Self) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
-pub fn RuntimeState::set_root(Self, ViewNode) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 
 pub(all) struct Size {
@@ -409,10 +349,6 @@ pub(all) struct Size {
 pub fn Size::clamp(Self, Constraints) -> Self
 pub fn Size::inflate(Self, Insets) -> Self
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
-
-pub(all) struct SpacerData {
-  min_length : Double
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SpacerViewSpec {
   key : Key?
@@ -453,22 +389,10 @@ pub(all) struct StateSubscription {
 pub fn StateSubscription::cancel(Self) -> Unit
 pub fn StateSubscription::is_active(Self) -> Bool
 
-pub(all) struct StyledData {
-  style : ViewStyle
-  child : ViewNode
-}
-
 pub(all) struct TapGestureResult {
   next_state : ButtonState
   activated : Bool
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct TextFieldData {
-  value : Binding[String]
-  placeholder : String
-  size : Size
-  on_submit : (() -> Unit)?
-}
 
 pub(all) struct TextFieldViewSpec {
   key : Key?
@@ -527,35 +451,6 @@ pub(all) struct Transform2D {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Transform2D::identity() -> Self
 
-pub(all) enum ViewNode {
-  Empty
-  Label(LabelData)
-  Button(ButtonData)
-  TextField(TextFieldData)
-  Flex(FlexData)
-  Padding(PaddingData)
-  Container(ContainerData)
-  Spacer(SpacerData)
-  Styled(StyledData)
-  Keyed(KeyedData)
-  EnvironmentNode(EnvironmentData)
-}
-pub fn ViewNode::background(Self, Color) -> Self
-pub fn ViewNode::corner_radius(Self, Double) -> Self
-pub fn ViewNode::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
-pub fn ViewNode::environment(Self, Environment) -> Self
-pub fn ViewNode::font(Self, FontSpec) -> Self
-pub fn ViewNode::foreground(Self, Color) -> Self
-pub fn ViewNode::handle_pointer(Self, PointerEvent, Rect) -> PointerDispatch
-pub fn ViewNode::intrinsic_size(Self) -> Size
-pub fn ViewNode::key(Self, String) -> Self
-pub fn ViewNode::main_axis_alignment(Self, MainAxisAlignment) -> Self
-pub fn ViewNode::padding(Self, Double) -> Self
-pub fn ViewNode::paint(Self, Rect, Array[DrawCommand]) -> Unit
-pub fn ViewNode::spacing(Self, Double) -> Self
-pub fn ViewNode::theme(Self, Theme) -> Self
-pub fn ViewNode::to_spec(Self) -> ViewSpec
-
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -566,10 +461,19 @@ pub(all) enum ViewSpec {
   ContainerSpec(ContainerViewSpec)
   SpacerSpec(SpacerViewSpec)
 }
-pub fn ViewSpec::key(Self) -> Key?
+pub fn ViewSpec::background(Self, Color) -> Self
+pub fn ViewSpec::corner_radius(Self, Double) -> Self
+pub fn ViewSpec::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
+pub fn ViewSpec::environment(Self, Environment) -> Self
+pub fn ViewSpec::font(Self, FontSpec) -> Self
+pub fn ViewSpec::foreground(Self, Color) -> Self
+pub fn ViewSpec::key(Self, String) -> Self
 pub fn ViewSpec::kind(Self) -> Int
+pub fn ViewSpec::main_axis_alignment(Self, MainAxisAlignment) -> Self
+pub fn ViewSpec::padding(Self, Double) -> Self
 pub fn ViewSpec::same_identity(Self, Self) -> Bool
-pub fn ViewSpec::to_view_node(Self) -> ViewNode
+pub fn ViewSpec::spacing(Self, Double) -> Self
+pub fn ViewSpec::theme(Self, Theme) -> Self
 pub fn ViewSpec::with_key(Self, Key) -> Self
 
 pub(all) struct ViewStyle {

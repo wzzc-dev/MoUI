@@ -4,21 +4,8 @@ pub struct AppRuntime {
 }
 
 ///|
-pub fn AppRuntime::new(root~ : ViewNode, size~ : Size) -> AppRuntime {
-  { state: RuntimeState::new(root~, size~) }
-}
-
-///|
 pub fn AppRuntime::new_spec(root~ : ViewSpec, size~ : Size) -> AppRuntime {
   { state: RuntimeState::new_spec(root~, size~) }
-}
-
-///|
-pub fn AppRuntime::new_dynamic(
-  root~ : () -> ViewNode,
-  size~ : Size,
-) -> AppRuntime {
-  { state: RuntimeState::new_dynamic(root~, size~) }
 }
 
 ///|
@@ -29,11 +16,6 @@ pub fn AppRuntime::new_component(root~ : Component, size~ : Size) -> AppRuntime 
 ///|
 pub fn AppRuntime::dispatch_event(self : AppRuntime, event : AppEvent) -> Unit {
   self.state.dispatch_event(event)
-}
-
-///|
-pub fn AppRuntime::set_root(self : AppRuntime, root : ViewNode) -> Unit {
-  self.state.set_root(root)
 }
 
 ///|
