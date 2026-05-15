@@ -63,6 +63,7 @@ pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Brush::fallback_color(Self) -> Color
 pub fn Brush::linear_gradient(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
 pub fn Brush::solid(Color) -> Self
 
@@ -76,6 +77,17 @@ pub(all) enum ButtonState {
   Hovered
   Pressed
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ButtonStyle {
+  normal : ControlStateStyle
+  hovered : ControlStateStyle
+  pressed : ControlStateStyle
+  disabled : ControlStateStyle
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonStyle::filled(theme? : Theme) -> Self
+pub fn ButtonStyle::ghost(theme? : Theme) -> Self
+pub fn ButtonStyle::outline(theme? : Theme) -> Self
+pub fn ButtonStyle::tonal(theme? : Theme) -> Self
 
 pub(all) struct ButtonViewSpec {
   key : Key?
@@ -140,6 +152,15 @@ pub(all) struct ContainerViewSpec {
   corner_radius : Double
   child : ViewSpec?
 }
+
+pub(all) struct ControlStateStyle {
+  foreground : Color
+  background : Brush
+  border : Brush?
+  border_width : Double
+  radius : Double
+  shadow : ShadowSpec?
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum CrossAxisAlignment {
   CrossStart
@@ -467,10 +488,31 @@ pub(all) struct StateSubscription {
 pub fn StateSubscription::cancel(Self) -> Unit
 pub fn StateSubscription::is_active(Self) -> Bool
 
+pub(all) struct SurfaceStyle {
+  brush : Brush
+  border : Brush?
+  border_width : Double
+  radius : Double
+  shadow : ShadowSpec?
+  padding : Insets
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceStyle::default(theme? : Theme) -> Self
+
 pub(all) struct TapGestureResult {
   next_state : ButtonState
   activated : Bool
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextFieldStyle {
+  normal : ControlStateStyle
+  focused : ControlStateStyle
+  disabled : ControlStateStyle
+  placeholder_color : Color
+  cursor_color : Color
+  font : FontSpec
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldStyle::filled(theme? : Theme) -> Self
+pub fn TextFieldStyle::outline(theme? : Theme) -> Self
 
 pub(all) struct TextFieldViewSpec {
   key : Key?
@@ -494,6 +536,13 @@ pub(all) struct TextRun {
   font : FontSpec
   color : Color
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextStyle {
+  font : FontSpec
+  color : Color
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextStyle::body(theme? : Theme) -> Self
+pub fn TextStyle::title(theme? : Theme) -> Self
 
 pub(all) struct TextViewSpec {
   key : Key?

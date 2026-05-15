@@ -157,6 +157,14 @@ pub fn Brush::linear_gradient(
 }
 
 ///|
+pub fn Brush::fallback_color(self : Brush) -> Color {
+  match self {
+    Solid(color) => color
+    LinearGradient(gradient) => gradient.start_color
+  }
+}
+
+///|
 pub fn ShadowSpec::new(
   rect~ : RoundedRect,
   color~ : Color,

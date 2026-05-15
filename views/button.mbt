@@ -2,19 +2,23 @@
 pub fn button(
   text : String,
   on_click? : @core.ClickHandler,
+  style? : @core.ButtonStyle = @core.ButtonStyle::filled(),
   width? : Double = 180.0,
   height? : Double = 44.0,
 ) -> @core.ViewSpec {
+  let normal = style.normal
+  let hovered = style.hovered
+  let pressed = style.pressed
   @core.ViewSpec::ButtonSpec({
     key: None,
     text,
     size: @core.Size::new(width~, height~),
-    font: @core.FontSpec::new(size=16.0, weight=600),
-    foreground: @core.Color::black(),
-    background: @core.Color::gray(),
-    hovered_background: @core.Color::rgba(r=0.72, g=0.78, b=0.92),
-    pressed_background: @core.Color::blue(),
-    corner_radius: 0.0,
+    font: @core.Theme::default().typography.control,
+    foreground: normal.foreground,
+    background: normal.background.fallback_color(),
+    hovered_background: hovered.background.fallback_color(),
+    pressed_background: pressed.background.fallback_color(),
+    corner_radius: normal.radius,
     on_click,
   })
 }

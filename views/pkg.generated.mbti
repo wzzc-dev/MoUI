@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn button(String, on_click? : () -> Unit, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn button(String, on_click? : () -> Unit, style? : @core.ButtonStyle, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn column(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
@@ -26,11 +26,11 @@ pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @cor
 
 pub fn spacer(min_length? : Double, weight? : Double) -> @core.ViewSpec
 
-pub fn surface(@core.ViewSpec, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double) -> @core.ViewSpec
+pub fn surface(@core.ViewSpec, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, style? : @core.SurfaceStyle) -> @core.ViewSpec
 
 pub fn text(String, width? : Double, height? : Double) -> @core.ViewSpec
 
-pub fn text_field(@core.Binding[String], on_submit? : (() -> Unit)?, placeholder? : String, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn text_field(@core.Binding[String], on_submit? : (() -> Unit)?, placeholder? : String, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale) -> @core.Theme
 

@@ -62,12 +62,21 @@ test "button paints background and text command" {
   guard runtime.draw_commands()
     is [
       @core.DrawCommand::Clear(_),
-      @core.DrawCommand::FillRect(_, _),
+      @core.DrawCommand::FillRoundedRect(_, _),
       @core.DrawCommand::DrawText({ text: "Tap", frame, .. }),
     ] else {
     fail("expected button rect and DrawText")
   }
   assert_true(frame == @core.Rect::new(x=0.0, y=0.0, width=180.0, height=44.0))
+}
+
+///|
+test "button accepts visual v2 styles" {
+  let style = @core.ButtonStyle::outline(theme=@core.Theme::light())
+  let spec = @views.button("Outline", style~)
+  guard spec is @core.ViewSpec::ButtonSpec({ corner_radius: 8.0, .. }) else {
+    fail("expected styled button spec")
+  }
 }
 
 ///|
@@ -191,4 +200,16 @@ test "text field constructs binding backed spec" {
   value.set("Changed")
   inspect(state.get(), content="Changed")
   ignore(submitted)
+}
+
+///|
+test "text field accepts visual v2 styles" {
+  let state = @core.State::new("")
+  let style = @core.TextFieldStyle::outline(theme=@core.Theme::dark())
+  let spec = @views.text_field(state.binding(), style~)
+  guard spec
+    is @core.ViewSpec::TextFieldSpec({ focused_border_color, cursor_color, .. }) else {
+    fail("expected styled text field spec")
+  }
+  assert_true(focused_border_color == cursor_color)
 }
