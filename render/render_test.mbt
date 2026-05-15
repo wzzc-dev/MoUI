@@ -117,3 +117,51 @@ test "rounded rects are collectable as rect batches for simple renderers" {
     batches[0].rect == @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0),
   )
 }
+
+///|
+test "stroke rounded rects use the same fallback batch geometry as stroke rects" {
+  let rounded = @render.collect_rect_batches([
+    @core.DrawCommand::StrokeRoundedRect(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=2.0, y=3.0, width=10.0, height=8.0),
+        radius=5.0,
+      ),
+      @core.Color::blue(),
+      1.0,
+    ),
+  ])
+  let square = @render.collect_rect_batches([
+    @core.DrawCommand::StrokeRect(
+      @core.Rect::new(x=2.0, y=3.0, width=10.0, height=8.0),
+      @core.Color::blue(),
+      1.0,
+    ),
+  ])
+  assert_true(rounded == square)
+}
+
+///|
+test "non-rect commands do not leak into native rect batches" {
+  let batches = @render.collect_rect_batches([
+    @core.DrawCommand::DrawText({
+      text: "Hello",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
+      font: @core.FontSpec::new(size=14.0),
+      color: @core.Color::black(),
+    }),
+    @core.DrawCommand::DrawImage({
+      source: "logo.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
+      opacity: 0.8,
+    }),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+    ),
+    @core.DrawCommand::PushTransform(@core.Transform2D::identity()),
+    @core.DrawCommand::PushOpacity(0.5),
+    @core.DrawCommand::PopOpacity,
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PopClip,
+  ])
+  inspect(batches.length(), content="0")
+}

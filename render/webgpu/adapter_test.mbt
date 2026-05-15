@@ -123,6 +123,55 @@ test "wgpu web command bridge covers image command in host ABI" {
 }
 
 ///|
+test "wgpu web command bridge preserves full draw command parity order" {
+  let rect = @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0)
+  let rounded = @core.RoundedRect::new(rect~, radius=6.0)
+  let calls = draw_commands_to_host_calls(
+    [
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::FillRect(rect, @core.Color::blue()),
+      @core.DrawCommand::StrokeRect(rect, @core.Color::gray(), 1.0),
+      @core.DrawCommand::FillRoundedRect(rounded, @core.Color::gray()),
+      @core.DrawCommand::StrokeRoundedRect(rounded, @core.Color::blue(), 2.0),
+      @core.DrawCommand::DrawText({
+        text: "Hello",
+        frame: rect,
+        font: @core.FontSpec::new(size=14.0),
+        color: @core.Color::black(),
+      }),
+      @core.DrawCommand::DrawImage({
+        source: "logo.png",
+        frame: rect,
+        opacity: 0.75,
+      }),
+      @core.DrawCommand::PushClip(rect),
+      @core.DrawCommand::PushTransform(@core.Transform2D::identity()),
+      @core.DrawCommand::PushOpacity(0.5),
+      @core.DrawCommand::PopOpacity,
+      @core.DrawCommand::PopTransform,
+      @core.DrawCommand::PopClip,
+    ],
+    @core.Size::new(width=100.0, height=50.0),
+  )
+  inspect(calls.length(), content="15")
+  assert_true(calls[0] is WebGpuHostCall::BeginFrame(_))
+  assert_true(calls[1] is WebGpuHostCall::Clear(_))
+  assert_true(calls[2] is WebGpuHostCall::FillRect(_, _))
+  assert_true(calls[3] is WebGpuHostCall::StrokeRect(_, _, _))
+  assert_true(calls[4] is WebGpuHostCall::FillRoundedRect(_, _))
+  assert_true(calls[5] is WebGpuHostCall::StrokeRoundedRect(_, _, _))
+  assert_true(calls[6] is WebGpuHostCall::DrawText(_))
+  assert_true(calls[7] is WebGpuHostCall::DrawImage(_))
+  assert_true(calls[8] is WebGpuHostCall::PushClip(_))
+  assert_true(calls[9] is WebGpuHostCall::PushTransform(_))
+  assert_true(calls[10] is WebGpuHostCall::PushOpacity(_))
+  assert_true(calls[11] is WebGpuHostCall::PopOpacity)
+  assert_true(calls[12] is WebGpuHostCall::PopTransform)
+  assert_true(calls[13] is WebGpuHostCall::PopClip)
+  assert_true(calls[14] is WebGpuHostCall::Present)
+}
+
+///|
 fn test_port(
   created~ : Ref[Int],
   capabilities? : WebGpuHostCapabilities = required_capabilities(),
