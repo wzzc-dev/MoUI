@@ -1,10 +1,21 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend/host" @host,
+  "wzzc-dev/moui/backend/common" @common,
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+  "Milky2018/wgpu_mbt" @wgpu,
+  "Milky2018/wgpu_mbt/c" @wgpu_c,
+  "Milky2018/window/core" @window_core,
+  "Milky2018/window/dpi" @dpi,
+  "Milky2018/window/macos" @window_macos,
 }
 
 supported_targets = "native"
 
 options(
+  link: {
+    "native": { "cc-link-flags": "-framework AppKit -framework QuartzCore" },
+  },
+  "native-stub": [ "macos_surface_host.m" ],
   targets: { },
 )

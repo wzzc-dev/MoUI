@@ -1,0 +1,11 @@
+import {
+  "wzzc-dev/moui/backend/macos" @macos,
+  "wzzc-dev/moui/examples/counter_app" @counter_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
+)

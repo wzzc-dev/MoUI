@@ -18,13 +18,14 @@ views/                        public view constructors
 backend/host/                 shared HostEvent, metrics, input, redraw driver
 backend/common/               shared window/core + dpi event conversion
 backend/windows/              Windows native host
-backend/macos/                macOS host scaffold
+backend/macos/                macOS native host
 backend/linux/                Linux host scaffold
 backend/web/                  canonical Web host on wasm-gc
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
 render/webgpu/                browser WebGPU host-import renderer for wasm-gc
 examples/counter_windows/     Windows native counter
+examples/counter_macos/       macOS native counter
 examples/todo_windows/        Windows native todo
 examples/counter_web_wasm/    Web counter on wasm-gc
 ```
@@ -48,6 +49,21 @@ The Web path requires browser WebGPU. Startup fails clearly if `navigator.gpu`, 
 
 Note: The Milky2018/window package does not support Windows/Web targets. Instead, clone the wzzc-dev/window repository to `.local_repos/window` using: `git clone git@github.com:wzzc-dev/window.git .local_repos/window`. 
 
+## macOS Native
+
+Build the native counter:
+
+```sh
+moon build examples/counter_macos --target native
+```
+
+Run it:
+
+```sh
+moon run examples/counter_macos --target native
+```
+
+The macOS host uses `Milky2018/window/macos` for AppKit windows and installs a `CAMetalLayer` on the window `NSView` for the native `render/wgpu` renderer.
 
 ## Windows Native
 
@@ -92,6 +108,7 @@ moon test render/webgpu --target wasm-gc
 moon test backend/web --target wasm-gc
 moon build examples/counter_web_wasm --target wasm-gc
 moon test --target native
+moon build examples/counter_macos --target native
 moon build examples/counter_windows --target native
 moon build examples/todo_windows --target native
 ```

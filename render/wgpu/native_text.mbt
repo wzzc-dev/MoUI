@@ -112,13 +112,46 @@ fn GlyphAtlas::to_bytes(self : GlyphAtlas) -> Bytes {
 }
 
 ///|
-fn native_regular_font_path() -> String {
+fn windows_regular_font_path() -> String {
   "C:\\Windows\\Fonts\\segoeui.ttf"
 }
 
 ///|
-fn native_bold_font_path() -> String {
+fn windows_bold_font_path() -> String {
   "C:\\Windows\\Fonts\\segoeuib.ttf"
+}
+
+///|
+fn macos_regular_font_path() -> String {
+  "/System/Library/Fonts/Supplemental/Arial.ttf"
+}
+
+///|
+fn macos_bold_font_path() -> String {
+  "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+}
+
+///|
+fn native_regular_font_path() -> String {
+  first_existing_font_path([
+    windows_regular_font_path(),
+    macos_regular_font_path(),
+  ])
+}
+
+///|
+fn native_bold_font_path() -> String {
+  first_existing_font_path([windows_bold_font_path(), macos_bold_font_path()])
+}
+
+///|
+fn first_existing_font_path(paths : Array[String]) -> String {
+  for path in paths {
+    if @fs.path_exists(path) {
+      return path
+    }
+  }
+  paths[0]
 }
 
 ///|

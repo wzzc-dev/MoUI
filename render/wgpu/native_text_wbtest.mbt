@@ -1,13 +1,13 @@
 ///|
-test "native text font path selects Segoe UI weight" {
+test "native text font path selects platform font weight" {
   let regular = native_text_font_path_for_spec(@core.FontSpec::new(weight=500))
   let bold = native_text_font_path_for_spec(@core.FontSpec::new(weight=600))
-  inspect(regular.contains("segoeui.ttf"), content="true")
-  inspect(bold.contains("segoeuib.ttf"), content="true")
+  inspect(@fs.path_exists(regular), content="true")
+  inspect(@fs.path_exists(bold), content="true")
 }
 
 ///|
-test "native text shaping produces glyphs when Segoe UI is available" {
+test "native text shaping produces glyphs when platform font is available" {
   if @fs.path_exists(native_regular_font_path()) {
     let cache = NativeFontCache::new()
     match cache.face_for_font(@core.FontSpec::new(size=16.0, weight=500)) {
