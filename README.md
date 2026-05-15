@@ -46,6 +46,9 @@ http://127.0.0.1:8080/examples/counter_web_wasm/index.html
 
 The Web path requires browser WebGPU. Startup fails clearly if `navigator.gpu`, an adapter, or a device is unavailable. There is no JS-target fallback branch.
 
+Note: The Milky2018/window package does not support Windows/Web targets. Instead, clone the wzzc-dev/window repository to `.local_repos/window` using: `git clone git@github.com:wzzc-dev/window.git .local_repos/window`. 
+
+
 ## Windows Native
 
 Install the native build/runtime dependencies with MSYS2 UCRT64:
