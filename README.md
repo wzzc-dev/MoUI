@@ -37,11 +37,18 @@ MoUI uses a breaking, spec-only runtime. Public view constructors return
 removed.
 
 ```moonbit
-let app =
+let theme = @core.Theme::light()
+let app = @views.surface(
   @views.column([
-    @views.text("MoUI Counter"),
-    @views.button("Increment", on_click=() => println("clicked")),
-  ], spacing=12.0)
+    @views.text("MoUI Counter").font(theme.typography.title),
+    @views.button(
+      "Increment",
+      on_click=() => println("clicked"),
+      style=@core.ButtonStyle::filled(theme~),
+    ),
+  ], spacing=theme.spacing_scale.md),
+  style=@core.SurfaceStyle::default(theme~),
+)
 
 let runtime = @core.AppRuntime::new_spec(
   root=app,
@@ -51,6 +58,19 @@ let runtime = @core.AppRuntime::new_spec(
 
 Stateful apps should use `AppRuntime::new_component` with a `Component` that
 returns `ViewSpec`.
+
+## Visual V2
+
+Visual V2 adds platform-neutral tokens and styles:
+
+- `Theme::light()` and `Theme::dark()` expose color palettes, spacing, radius,
+  and typography scales.
+- `ButtonStyle::filled/tonal/outline/ghost` and
+  `TextFieldStyle::filled/outline` project state styles into core draw
+  commands.
+- `SurfaceStyle` supports surface brushes, radius, padding, border metadata,
+  and shadow metadata; renderers use deterministic fallbacks where a backend
+  does not yet have a richer native primitive.
 
 ## Web Wasm-GC
 

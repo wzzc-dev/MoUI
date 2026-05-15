@@ -93,19 +93,24 @@ pub fn TodoApp::remove(self : TodoApp, id : Int) -> Unit {
 
 ///|
 pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
+  let theme = @core.Theme::light()
   let children : Array[@core.ViewSpec] = [
-    @views.text("MoUI Todo"),
+    @views.text("MoUI Todo")
+      .font(theme.typography.title)
+      .foreground(theme.palette.foreground),
     @views.row(
       [
         @views.text_field(
           self.draft.binding(),
           on_submit=Some(() => self.submit_draft()),
           placeholder="New todo",
+          style=@core.TextFieldStyle::filled(theme~),
           width=220.0,
         ),
         @views.button(
           "Add",
           on_click=() => self.submit_draft(),
+          style=@core.ButtonStyle::filled(theme~),
           width=120.0,
         ),
       ],
@@ -114,23 +119,34 @@ pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
     ),
   ]
   for item in self.items.get() {
-    children.push(self.todo_row(item))
+    children.push(self.todo_row(item, theme))
   }
-  @views.column(children, spacing=8.0)
+  @views.surface(
+    @views.column(children, spacing=theme.spacing_scale.sm),
+    width=420.0,
+    height=520.0,
+    style=@core.SurfaceStyle::default(theme~),
+  )
 }
 
 ///|
-fn TodoApp::todo_row(self : TodoApp, item : TodoItem) -> @core.ViewSpec {
+fn TodoApp::todo_row(
+  self : TodoApp,
+  item : TodoItem,
+  theme : @core.Theme,
+) -> @core.ViewSpec {
   @views.row(
     [
       @views.button(
         item.display_text(),
         on_click=() => self.toggle(item.id),
+        style=@core.ButtonStyle::tonal(theme~),
         width=220.0,
       ),
       @views.button(
         "Remove",
         on_click=() => self.remove(item.id),
+        style=@core.ButtonStyle::outline(theme~),
         width=120.0,
       ),
     ],

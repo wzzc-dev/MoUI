@@ -15,13 +15,27 @@ pub fn CounterApp::increment(self : CounterApp) -> Unit {
 
 ///|
 pub fn CounterApp::root(self : CounterApp) -> @core.ViewSpec {
-  @views.column(
-    [
-      @views.text("MoUI Counter"),
-      @views.text("Count: \{self.count.get()}"),
-      @views.button("Increment", on_click=() => self.increment()),
-    ],
-    spacing=12.0,
+  let theme = @core.Theme::light()
+  @views.surface(
+    @views.column(
+      [
+        @views.text("MoUI Counter")
+          .font(theme.typography.title)
+          .foreground(theme.palette.foreground),
+        @views.text("Count: \{self.count.get()}")
+          .font(theme.typography.body)
+          .foreground(theme.palette.muted),
+        @views.button(
+          "Increment",
+          on_click=() => self.increment(),
+          style=@core.ButtonStyle::filled(theme~),
+        ),
+      ],
+      spacing=theme.spacing_scale.md,
+    ),
+    width=360.0,
+    height=180.0,
+    style=@core.SurfaceStyle::default(theme~),
   )
 }
 

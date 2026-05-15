@@ -221,6 +221,7 @@ pub(all) struct ElementNode {
 }
 pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode) -> ElementEventResult
+pub fn ElementNode::find_keyed(Self, String) -> ElementId?
 pub fn ElementNode::find_text_field_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
 pub fn ElementNode::intrinsic_size(Self) -> Size

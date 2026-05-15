@@ -21,11 +21,11 @@ test "todo runtime reuses keyed rows after toggle" {
   app.add("One")
   app.add("Two")
   let runtime = app.runtime(width=400.0, height=240.0)
-  let first_row_id = runtime.state.element_tree.children[2].id
+  let first_row_id = runtime.state.element_tree.find_keyed("todo-0").unwrap()
   app.toggle(0)
   runtime.state.needs_rebuild = true
   ignore(runtime.draw_commands())
-  assert_true(runtime.state.element_tree.children[2].id == first_row_id)
+  assert_true(runtime.state.element_tree.find_keyed("todo-0") == Some(first_row_id))
 }
 
 ///|
@@ -36,7 +36,7 @@ test "todo runtime click updates item through shared pipeline" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=10.0, y=92.0),
+        position=@core.Point::new(x=20.0, y=120.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -44,7 +44,7 @@ test "todo runtime click updates item through shared pipeline" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=10.0, y=92.0),
+        position=@core.Point::new(x=20.0, y=120.0),
         phase=@core.PointerPhase::Up,
       ),
     ),
