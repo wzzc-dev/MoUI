@@ -942,16 +942,23 @@ pub fn ElementNode::dispatch_pointer(
       let mut changed = false
       let mut activated = false
       let mut focused : ElementId? = None
-      for index, child in self.children {
-        if index < render.children.length() {
-          let result = child.dispatch_pointer(event, render.children[index])
-          changed = changed || result.changed
-          activated = activated || result.activated
+      let mut index = self.children.length() - 1
+      while index >= 0 {
+        if index < render.children.length() &&
+          render.children[index].frame.contains(event.position) {
+          let result = self.children[index].dispatch_pointer(
+            event,
+            render.children[index],
+          )
+          changed = result.changed
+          activated = result.activated
           match result.focused {
             Some(_) => focused = result.focused
             None => ()
           }
+          break
         }
+        index = index - 1
       }
       if changed {
         self.dirty.mark_paint()
@@ -1009,17 +1016,70 @@ pub fn ElementNode::find_text_field_at(
         None
       }
     FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) => {
-      for index, child in self.children {
-        if index < render.children.length() {
-          match child.find_text_field_at(point, render.children[index]) {
+      let mut index = self.children.length() - 1
+      while index >= 0 {
+        if index < render.children.length() &&
+          render.children[index].frame.contains(point) {
+          match self.children[index].find_text_field_at(point, render.children[index]) {
             Some(id) => return Some(id)
             None => ()
           }
         }
+        index = index - 1
       }
       None
     }
     _ => None
+  }
+}
+
+///|
+pub fn ElementNode::focusable_ids(
+  self : ElementNode,
+  ids : Array[ElementId],
+) -> Unit {
+  match self.spec {
+    TextFieldSpec(_) => ids.push(self.id)
+    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) =>
+      for child in self.children {
+        child.focusable_ids(ids)
+      }
+    _ => ()
+  }
+}
+
+///|
+pub fn ElementNode::next_focus(
+  self : ElementNode,
+  current~ : ElementId?,
+  reverse~ : Bool,
+) -> ElementId? {
+  let ids : Array[ElementId] = []
+  self.focusable_ids(ids)
+  if ids.length() == 0 {
+    None
+  } else {
+    let mut index = -1
+    match current {
+      Some(current) =>
+        for i, id in ids {
+          if id == current {
+            index = i
+          }
+        }
+      None => ()
+    }
+    if reverse {
+      let next = if index <= 0 { ids.length() - 1 } else { index - 1 }
+      Some(ids[next])
+    } else {
+      let next = if index < 0 || index + 1 >= ids.length() {
+        0
+      } else {
+        index + 1
+      }
+      Some(ids[next])
+    }
   }
 }
 
