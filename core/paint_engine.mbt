@@ -550,10 +550,16 @@ fn append_text_field_commands(
     }),
   )
   if focused {
-    let cursor_x = text_frame.origin.x +
-      clamp_int(element.caret, 0, text_length(text)).to_double() *
-      environment.font.unwrap_or(data.font).size *
-      0.55
+    let font = environment.font.unwrap_or(data.font)
+    let layout = measure_text_layout(
+      TextLayoutInput::new(
+        text~,
+        font~,
+        max_width=text_frame.size.width,
+      ),
+    )
+    let caret = clamp_int(element.caret, 0, layout.caret_positions.length() - 1)
+    let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
     let cursor = Rect::new(
       x=cursor_x,
       y=text_frame.origin.y + 6.0,

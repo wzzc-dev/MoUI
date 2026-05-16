@@ -263,6 +263,22 @@ test "custom spec measures paints and exposes semantics" {
 }
 
 ///|
+test "text layout measures size baseline and caret positions" {
+  let layout = measure_text_layout(
+    TextLayoutInput::new(
+      text="abcd",
+      font=FontSpec::new(size=20.0),
+      max_width=30.0,
+    ),
+  )
+  inspect(layout.size.width, content="30")
+  inspect(layout.size.height, content="25")
+  inspect(layout.baseline, content="16")
+  inspect(layout.caret_positions.length(), content="5")
+  inspect(layout.caret_positions[4], content="30")
+}
+
+///|
 test "checkbox toggles binding and exposes semantics" {
   let checked = State::new(false)
   let runtime = RuntimeState::new_spec(

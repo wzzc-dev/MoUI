@@ -10,6 +10,8 @@ pub fn hit_test(LayoutResult, Point) -> Bool
 
 pub fn layout_spec(ViewSpec, Rect) -> LayoutResult
 
+pub fn measure_text_layout(TextLayoutInput) -> TextLayoutResult
+
 pub fn mount_view_spec(ViewSpec) -> ElementNode
 
 pub fn recognize_button_tap(ButtonState, Bool, PointerPhase) -> TapGestureResult
@@ -752,6 +754,19 @@ pub(all) enum TextInputEvent {
   CompositionEnd(String)
   DeleteRange(TextRange)
   DeleteSurrounding(Int, Int)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextLayoutInput {
+  text : String
+  font : FontSpec
+  max_width : Double?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextLayoutInput::new(text~ : String, font~ : FontSpec, max_width? : Double) -> Self
+
+pub(all) struct TextLayoutResult {
+  size : Size
+  baseline : Double
+  caret_positions : Array[Double]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TextRange {
