@@ -5,23 +5,6 @@
 
 static NSString *const MOUI_MACOS_SURFACE_LAYER_NAME = @"moui_macos_surface_layer";
 
-static inline CGSize moui_macos_surface_layer_size(NSView *view, int32_t width,
-                                                   int32_t height, double scale) {
-  double layer_scale = scale > 0.0 ? scale : view.window.backingScaleFactor;
-  if (layer_scale <= 0.0) {
-    layer_scale = 1.0;
-  }
-  double logical_width = width > 0 ? ((double)width) / layer_scale : view.bounds.size.width;
-  double logical_height = height > 0 ? ((double)height) / layer_scale : view.bounds.size.height;
-  if (logical_width <= 0.0) {
-    logical_width = 1.0;
-  }
-  if (logical_height <= 0.0) {
-    logical_height = 1.0;
-  }
-  return CGSizeMake(logical_width, logical_height);
-}
-
 MOONBIT_FFI_EXPORT
 void *moui_macos_surface_host_layer_from_view(uint64_t raw_view_handle, int32_t width,
                                               int32_t height, double scale_factor) {
@@ -55,13 +38,22 @@ void *moui_macos_surface_host_layer_from_view(uint64_t raw_view_handle, int32_t 
   if (layer_scale <= 0.0) {
     layer_scale = 1.0;
   }
-  CGSize logical_size = moui_macos_surface_layer_size(view, width, height, layer_scale);
-  CGRect bounds = CGRectMake(0.0, 0.0, logical_size.width, logical_size.height);
+  CGRect bounds = view.bounds;
+  if (bounds.size.width <= 0.0 || bounds.size.height <= 0.0) {
+    bounds = CGRectMake(0.0, 0.0, width / layer_scale, height / layer_scale);
+  }
+  if (bounds.size.width <= 0.0) {
+    bounds.size.width = 1.0;
+  }
+  if (bounds.size.height <= 0.0) {
+    bounds.size.height = 1.0;
+  }
   metal_layer.frame = bounds;
-  metal_layer.bounds = bounds;
+  metal_layer.bounds = CGRectMake(0.0, 0.0, bounds.size.width, bounds.size.height);
+  metal_layer.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
   metal_layer.contentsScale = layer_scale;
-  metal_layer.drawableSize = CGSizeMake(logical_size.width * layer_scale,
-                                        logical_size.height * layer_scale);
+  metal_layer.drawableSize = CGSizeMake(width > 0 ? width : bounds.size.width * layer_scale,
+                                        height > 0 ? height : bounds.size.height * layer_scale);
   metal_layer.opaque = YES;
 
   return (void *)metal_layer;

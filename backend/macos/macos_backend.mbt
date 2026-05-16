@@ -124,17 +124,18 @@ pub fn macos_surface_host_info() -> @wgpu_renderer.SurfaceHostInfo {
 }
 
 ///|
+fn runtime_size_to_window_surface_size(size : @core.Size) -> @dpi.Size {
+  @dpi.LogicalSize::new(size.width, size.height).into_size()
+}
+
+///|
 pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
   self,
   event_loop,
 ) {
-  let initial_size = @dpi.PhysicalSize::new(
-    size_dim_to_int(self.runtime.size().width),
-    size_dim_to_int(self.runtime.size().height),
-  )
   let attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
-    .with_surface_size(initial_size.into_size())
+    .with_surface_size(runtime_size_to_window_surface_size(self.runtime.size()))
   let window : @window_macos.Window? = Some(
     event_loop.try_create_window(attributes),
   ) catch {
