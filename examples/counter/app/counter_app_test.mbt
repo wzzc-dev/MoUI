@@ -1,6 +1,6 @@
 ///|
 test "counter app constructs runtime" {
-  let app = @counter_app.CounterApp::new()
+  let app = @app.CounterApp::new()
   let runtime = app.runtime(width=320.0, height=240.0)
   assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
   assert_true(runtime.draw_commands().length() >= 6)
@@ -8,7 +8,7 @@ test "counter app constructs runtime" {
 
 ///|
 test "counter app rebuilds root through dynamic runtime after click" {
-  let app = @counter_app.CounterApp::new()
+  let app = @app.CounterApp::new()
   let runtime = app.runtime(width=300.0, height=300.0)
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
@@ -30,6 +30,14 @@ test "counter app rebuilds root through dynamic runtime after click" {
   inspect(runtime.needs_rebuild(), content="false")
   inspect(app.count.get(), content="1")
   let commands = runtime.draw_commands()
-  assert_true(commands.any(command => command is @core.DrawCommand::DrawText({ text: "MoUI Counter", .. })))
-  assert_true(commands.any(command => command is @core.DrawCommand::DrawText({ text: "Count: 1", .. })))
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "MoUI Counter", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Count: 1", .. })
+    }),
+  )
 }

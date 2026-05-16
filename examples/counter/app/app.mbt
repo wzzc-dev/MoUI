@@ -20,11 +20,11 @@ pub fn CounterApp::root(self : CounterApp) -> @core.ViewSpec {
     @views.column(
       [
         @views.text("MoUI Counter")
-          .font(theme.typography.title)
-          .foreground(theme.palette.foreground),
+        .font(theme.typography.title)
+        .foreground(theme.palette.foreground),
         @views.text("Count: \{self.count.get()}")
-          .font(theme.typography.body)
-          .foreground(theme.palette.muted),
+        .font(theme.typography.body)
+        .foreground(theme.palette.muted),
         @views.button(
           "Increment",
           on_click=() => self.increment(),

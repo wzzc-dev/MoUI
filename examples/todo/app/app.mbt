@@ -96,8 +96,8 @@ pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
   let theme = @core.Theme::light()
   let children : Array[@core.ViewSpec] = [
     @views.text("MoUI Todo")
-      .font(theme.typography.title)
-      .foreground(theme.palette.foreground),
+    .font(theme.typography.title)
+    .foreground(theme.palette.foreground),
     @views.row(
       [
         @views.text_field(

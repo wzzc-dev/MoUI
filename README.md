@@ -24,10 +24,12 @@ backend/web/                  canonical Web host on wasm-gc
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
 render/webgpu/                browser WebGPU host-import renderer for wasm-gc
-examples/counter_windows/     Windows native counter
-examples/counter_macos/       macOS native counter
-examples/todo_windows/        Windows native todo
-examples/counter_web_wasm/    Web counter on wasm-gc
+examples/counter/app/         shared counter app
+examples/counter/windows/     Windows native counter
+examples/counter/macos/       macOS native counter
+examples/counter/web_wasm/    Web counter on wasm-gc
+examples/todo/app/            shared todo app
+examples/todo/windows/        Windows native todo
 ```
 
 ## V2 Spec API
@@ -79,14 +81,14 @@ Visual V2 adds platform-neutral tokens and styles:
 Build the Web example:
 
 ```powershell
-moon build examples/counter_web_wasm --target wasm-gc
+moon build examples/counter/web_wasm --target wasm-gc
 python -m http.server 8080 --bind 127.0.0.1
 ```
 
 Then open:
 
 ```text
-http://127.0.0.1:8080/examples/counter_web_wasm/index.html
+http://127.0.0.1:8080/examples/counter/web_wasm/index.html
 ```
 
 The Web path requires browser WebGPU. Startup fails clearly if `navigator.gpu`, an adapter, or a device is unavailable. There is no JS-target fallback branch. Browser font APIs may be used to populate hidden glyph atlas bitmaps, but visible text composition is performed by WebGPU.
@@ -98,13 +100,13 @@ Note: The Milky2018/window package does not support Windows/Web targets. Instead
 Build the native counter:
 
 ```sh
-moon build examples/counter_macos --target native
+moon build examples/counter/macos --target native
 ```
 
 Run it:
 
 ```sh
-moon run examples/counter_macos --target native
+moon run examples/counter/macos --target native
 ```
 
 The macOS host uses `Milky2018/window/macos` for AppKit windows and installs a `CAMetalLayer` on the window `NSView` for the native `render/wgpu` renderer.
@@ -142,8 +144,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\counter_windows_stati
 Build todo on Windows:
 
 ```powershell
-moon build examples/todo_windows --target native
-.\_build\native\debug\build\examples\todo_windows\todo_windows.exe
+moon build examples/todo/windows --target native
+.\_build\native\debug\build\examples\todo\windows\windows.exe
 ```
 
 ## Validation
@@ -151,9 +153,9 @@ moon build examples/todo_windows --target native
 ```powershell
 moon test render/webgpu --target wasm-gc
 moon test backend/web --target wasm-gc
-moon build examples/counter_web_wasm --target wasm-gc
+moon build examples/counter/web_wasm --target wasm-gc
 moon test --target native
-moon build examples/counter_macos --target native
-moon build examples/counter_windows --target native
-moon build examples/todo_windows --target native
+moon build examples/counter/macos --target native
+moon build examples/counter/windows --target native
+moon build examples/todo/windows --target native
 ```

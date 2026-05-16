@@ -1,6 +1,6 @@
 import {
-  "wzzc-dev/moui/backend/windows" @windows,
-  "wzzc-dev/moui/examples/todo_app" @todo_app,
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui/examples/counter/app" @counter_app,
 }
 
 supported_targets = "native"

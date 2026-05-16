@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/backend/web" @web,
-  "wzzc-dev/moui/examples/counter_app" @counter_app,
+  "wzzc-dev/moui/examples/counter/app" @counter_app,
 }
 
 supported_targets = "wasm-gc"

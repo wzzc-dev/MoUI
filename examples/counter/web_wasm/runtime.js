@@ -1,7 +1,7 @@
 import {
   connectWindowWeb,
   createWindowWebImports,
-} from "../../backend/web/browser_runtime.js";
+} from "../../../backend/web/browser_runtime.js";
 
 const VISUAL_STRIDE_FLOATS = 22;
 const TEXT_STRIDE_FLOATS = 8;
@@ -685,7 +685,7 @@ export async function bootCounterWasm(options = {}) {
   const wasmUrl =
     options.wasmUrl ??
     new URL(
-      "../../_build/wasm-gc/debug/build/examples/counter_web_wasm/counter_web_wasm.wasm",
+      "../../../_build/wasm-gc/debug/build/examples/counter/web_wasm/web_wasm.wasm",
       import.meta.url,
     );
   report("Preparing window/web host imports...");

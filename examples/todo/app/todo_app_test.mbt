@@ -1,6 +1,6 @@
 ///|
 test "todo app add toggle and remove update shared state" {
-  let app = @todo_app.TodoApp::new()
+  let app = @app.TodoApp::new()
   app.add("Write tests")
   app.add("Ship runtime")
   inspect(app.count(), content="2")
@@ -17,7 +17,7 @@ test "todo app add toggle and remove update shared state" {
 
 ///|
 test "todo runtime reuses keyed rows after toggle" {
-  let app = @todo_app.TodoApp::new()
+  let app = @app.TodoApp::new()
   app.add("One")
   app.add("Two")
   let runtime = app.runtime(width=400.0, height=240.0)
@@ -25,12 +25,14 @@ test "todo runtime reuses keyed rows after toggle" {
   app.toggle(0)
   runtime.state.needs_rebuild = true
   ignore(runtime.draw_commands())
-  assert_true(runtime.state.element_tree.find_keyed("todo-0") == Some(first_row_id))
+  assert_true(
+    runtime.state.element_tree.find_keyed("todo-0") == Some(first_row_id),
+  )
 }
 
 ///|
 test "todo runtime click updates item through shared pipeline" {
-  let app = @todo_app.TodoApp::new()
+  let app = @app.TodoApp::new()
   app.add("One")
   let runtime = app.runtime(width=400.0, height=240.0)
   runtime.dispatch_event(
