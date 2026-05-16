@@ -44,6 +44,11 @@ pub fn AppRuntime::paint_pass(self : AppRuntime) -> Array[DrawCommand] {
 }
 
 ///|
+pub fn AppRuntime::semantics(self : AppRuntime) -> SemanticsNode {
+  self.state.semantics()
+}
+
+///|
 pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[DrawCommand] {
   self.state.build_draw_commands()
 }

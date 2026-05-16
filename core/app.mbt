@@ -241,6 +241,12 @@ pub fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
 }
 
 ///|
+pub fn RuntimeState::semantics(self : RuntimeState) -> SemanticsNode {
+  self.ensure_render_tree()
+  self.element_tree.semantics(self.render_tree, focused=self.focused_element)
+}
+
+///|
 pub fn RuntimeState::build_draw_commands(
   self : RuntimeState,
 ) -> Array[DrawCommand] {

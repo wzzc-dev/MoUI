@@ -44,6 +44,7 @@ pub fn AppRuntime::new_component(root~ : Component, size~ : Size) -> Self
 pub fn AppRuntime::new_spec(root~ : ViewSpec, size~ : Size) -> Self
 pub fn AppRuntime::paint_pass(Self) -> Array[DrawCommand]
 pub fn AppRuntime::rebuild(Self) -> Unit
+pub fn AppRuntime::semantics(Self) -> SemanticsNode
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_root_spec(Self, ViewSpec) -> Unit
 pub fn AppRuntime::size(Self) -> Size
@@ -239,6 +240,7 @@ pub fn ElementNode::intrinsic_size(Self) -> Size
 pub fn ElementNode::next_focus(Self, current~ : ElementId?, reverse~ : Bool) -> ElementId?
 pub fn ElementNode::render(Self, Rect) -> RenderNode
 pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?) -> RenderNode
+pub fn ElementNode::semantics(Self, RenderNode, focused? : ElementId?) -> SemanticsNode
 
 pub(all) struct Environment {
   theme : Theme
@@ -446,6 +448,7 @@ pub fn RuntimeState::paint_pass(Self) -> Array[DrawCommand]
 pub fn RuntimeState::rebuild(Self) -> Unit
 pub fn RuntimeState::rebuild_if_possible(Self) -> Unit
 pub fn RuntimeState::request_rebuild(Self) -> Unit
+pub fn RuntimeState::semantics(Self) -> SemanticsNode
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 
@@ -455,6 +458,46 @@ pub(all) struct ScrollViewSpec {
   viewport : Size?
   child : ViewSpec
 }
+
+pub(all) enum SemanticsAction {
+  Activate
+  Focus
+  SetText
+  Submit
+  Scroll
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsNode {
+  element_id : ElementId
+  role : SemanticsRole
+  label : String
+  value : String
+  state : SemanticsState
+  actions : Array[SemanticsAction]
+  focus_order : Int?
+  frame : Rect
+  children : Array[SemanticsNode]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SemanticsRole {
+  None
+  Text
+  Button
+  TextField
+  List
+  ListItem
+  Grid
+  ScrollView
+  Group
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsState {
+  focused : Bool
+  disabled : Bool
+  selected : Bool
+  expanded : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsState::default() -> Self
 
 pub(all) struct ShadowSpec {
   rect : RoundedRect
