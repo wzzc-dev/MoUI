@@ -62,11 +62,31 @@ export function createWindowWebImports(options = {}) {
   const canvasValue = canvas =>
     canvas instanceof HTMLCanvasElement ? canvas : canvases.get(canvas) ?? null;
 
+  const canvasHostSize = canvas => {
+    const host = canvas?.parentElement;
+    const rect = host?.getBoundingClientRect?.();
+    return {
+      width: Math.max(1, Math.round(rect?.width || globalThis.window?.innerWidth || 1)),
+      height: Math.max(1, Math.round(rect?.height || globalThis.window?.innerHeight || 1)),
+    };
+  };
+
+  const resizeCanvasToHost = canvas => {
+    if (!canvas) return;
+    const size = canvasHostSize(canvas);
+    const scale = devicePixelRatio();
+    canvas.width = Math.max(1, Math.round(size.width * scale));
+    canvas.height = Math.max(1, Math.round(size.height * scale));
+    canvas.style.width = `${size.width}px`;
+    canvas.style.height = `${size.height}px`;
+  };
+
   const pointerPosition = (canvas, event) => {
     const rect = canvas.getBoundingClientRect();
+    const scale = devicePixelRatio();
     return {
-      x: Math.round(event.clientX - rect.left),
-      y: Math.round(event.clientY - rect.top),
+      x: Math.round((event.clientX - rect.left) * scale),
+      y: Math.round((event.clientY - rect.top) * scale),
     };
   };
 
@@ -122,12 +142,10 @@ export function createWindowWebImports(options = {}) {
       canvas.id = stringValue(id) || `moonbit-window-web-${nextCanvasId++}`;
       canvas.width = Math.max(1, width | 0);
       canvas.height = Math.max(1, height | 0);
-      const scale = devicePixelRatio();
-      canvas.style.width = `${Math.max(1, Math.round(canvas.width / scale))}px`;
-      canvas.style.height = `${Math.max(1, Math.round(canvas.height / scale))}px`;
       canvas.tabIndex = 0;
       canvas.style.display = "block";
       resolveCanvasHost().appendChild(canvas);
+      resizeCanvasToHost(canvas);
       canvases.set(canvas.id, canvas);
       return canvas;
     },
@@ -173,11 +191,18 @@ export function createWindowWebImports(options = {}) {
     set_canvas_size(handle, width, height) {
       const canvas = canvasValue(handle);
       if (canvas) {
-        canvas.width = Math.max(1, width | 0);
-        canvas.height = Math.max(1, height | 0);
+        let logicalWidth = Math.max(1, Math.round(width / devicePixelRatio()));
+        let logicalHeight = Math.max(1, Math.round(height / devicePixelRatio()));
+        const host = canvasHostSize(canvas);
+        if (host.width > 1 || host.height > 1) {
+          logicalWidth = host.width;
+          logicalHeight = host.height;
+        }
         const scale = devicePixelRatio();
-        canvas.style.width = `${Math.max(1, Math.round(canvas.width / scale))}px`;
-        canvas.style.height = `${Math.max(1, Math.round(canvas.height / scale))}px`;
+        canvas.width = Math.max(1, Math.round(logicalWidth * scale));
+        canvas.height = Math.max(1, Math.round(logicalHeight * scale));
+        canvas.style.width = `${logicalWidth}px`;
+        canvas.style.height = `${logicalHeight}px`;
       }
     },
     set_canvas_visible(handle, visible) {
@@ -224,29 +249,82 @@ export function createWindowWebImports(options = {}) {
       const canvas = canvasValue(handle);
       if (!canvas) return;
       const handlers = [];
+      let lastPointerEventAt = 0;
+      let lastButtonEventAt = 0;
       const add = (target, type, handler, options) => {
         target.addEventListener(type, handler, options);
         handlers.push([target, type, handler, options]);
       };
+      const markPointerEvent = () => {
+        lastPointerEventAt = Date.now();
+      };
+      const markButtonEvent = () => {
+        lastButtonEventAt = Date.now();
+      };
+      const shouldUseMouseFallback = () => Date.now() - lastPointerEventAt > 250;
+      const shouldUseClickFallback = () => Date.now() - lastButtonEventAt > 250;
       add(canvas, "pointerenter", event => {
+        markPointerEvent();
         const p = pointerPosition(canvas, event);
         emit(20, rawId, p.x, p.y);
       });
       add(canvas, "pointermove", event => {
+        markPointerEvent();
         const p = pointerPosition(canvas, event);
         emit(21, rawId, p.x, p.y);
       });
       add(canvas, "pointerleave", event => {
+        markPointerEvent();
         const p = pointerPosition(canvas, event);
         emit(22, rawId, p.x, p.y);
       });
       add(canvas, "pointerdown", event => {
+        markPointerEvent();
+        markButtonEvent();
         canvas.focus();
         const p = pointerPosition(canvas, event);
         emit(23, rawId, p.x, p.y, event.button);
       });
       add(canvas, "pointerup", event => {
+        markPointerEvent();
+        markButtonEvent();
         const p = pointerPosition(canvas, event);
+        emit(24, rawId, p.x, p.y, event.button);
+      });
+      add(canvas, "mouseenter", event => {
+        if (!shouldUseMouseFallback()) return;
+        const p = pointerPosition(canvas, event);
+        emit(20, rawId, p.x, p.y);
+      });
+      add(canvas, "mousemove", event => {
+        if (!shouldUseMouseFallback()) return;
+        const p = pointerPosition(canvas, event);
+        emit(21, rawId, p.x, p.y);
+      });
+      add(canvas, "mouseleave", event => {
+        if (!shouldUseMouseFallback()) return;
+        const p = pointerPosition(canvas, event);
+        emit(22, rawId, p.x, p.y);
+      });
+      add(canvas, "mousedown", event => {
+        if (!shouldUseMouseFallback()) return;
+        markButtonEvent();
+        canvas.focus();
+        const p = pointerPosition(canvas, event);
+        emit(23, rawId, p.x, p.y, event.button);
+      });
+      add(canvas, "mouseup", event => {
+        if (!shouldUseMouseFallback()) return;
+        markButtonEvent();
+        const p = pointerPosition(canvas, event);
+        emit(24, rawId, p.x, p.y, event.button);
+      });
+      add(canvas, "click", event => {
+        if (!shouldUseClickFallback()) return;
+        markButtonEvent();
+        canvas.focus();
+        const p = pointerPosition(canvas, event);
+        emit(23, rawId, p.x, p.y, event.button);
         emit(24, rawId, p.x, p.y, event.button);
       });
       add(canvas, "wheel", event => {
@@ -264,9 +342,11 @@ export function createWindowWebImports(options = {}) {
       add(canvas, "input", event =>
         emit(42, rawId, 0, 0, 0, event.data || ""),
       );
-      add(window, "resize", () =>
-        emit(10, rawId, physicalCanvasWidth(canvas), physicalCanvasHeight(canvas)),
-      );
+      const emitResize = () => {
+        resizeCanvasToHost(canvas);
+        emit(10, rawId, physicalCanvasWidth(canvas), physicalCanvasHeight(canvas));
+      };
+      add(window, "resize", emitResize);
       const media = window.matchMedia?.("(prefers-color-scheme: dark)");
       if (media) {
         add(media, "change", event => emit(50, rawId, event.matches ? 1 : 0));

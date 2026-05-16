@@ -163,6 +163,21 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
 }
 
 ///|
+pub impl @window_web.ApplicationHandler for WebApp with new_events(
+  self,
+  _event_loop,
+  _cause,
+) {
+  match self.renderer {
+    Some(_) =>
+      if self.runtime.needs_redraw() {
+        self.redraw()
+      }
+    None => ()
+  }
+}
+
+///|
 pub impl @window_web.ApplicationHandler for WebApp with window_event(
   self,
   event_loop,
@@ -193,30 +208,41 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
       self.request_redraw()
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(position)
+      self.last_pointer = @common.physical_position_to_core(
+        position,
+        scale_factor=self.current_scale_factor(),
+      )
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(position)
+      self.last_pointer = @common.physical_position_to_core(
+        position,
+        scale_factor=self.current_scale_factor(),
+      )
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
       self.modifiers = @common.modifiers_to_core(modifiers)
     @window_core.WindowEvent::RedrawRequested => {
-      self.driver.begin_redraw()
-      match self.renderer {
-        Some(renderer) =>
-          renderer.render(self.driver.draw_commands()) catch {
-            err => {
-              let _ = err
-            }
-          }
-        None => ()
-      }
-      self.driver.finish_redraw()
+      self.redraw()
     }
     _ => self.dispatch_window_event(event)
   }
+}
+
+///|
+fn WebApp::redraw(self : WebApp) -> Unit {
+  self.driver.begin_redraw()
+  match self.renderer {
+    Some(renderer) =>
+      renderer.render(self.driver.draw_commands()) catch {
+        err => {
+          let _ = err
+        }
+      }
+    None => ()
+  }
+  self.driver.finish_redraw()
 }
 
 ///|
