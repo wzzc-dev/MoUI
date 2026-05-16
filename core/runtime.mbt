@@ -24,6 +24,19 @@ pub fn AppRuntime::set_root_spec(self : AppRuntime, root : ViewSpec) -> Unit {
 }
 
 ///|
+pub fn AppRuntime::add_animation(
+  self : AppRuntime,
+  controller : AnimationController,
+) -> Unit {
+  self.state.add_animation(controller)
+}
+
+///|
+pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
+  self.state.advance_time(time_ms)
+}
+
+///|
 pub fn AppRuntime::mount(self : AppRuntime, root : ViewSpec) -> Unit {
   self.state.mount(root)
 }
@@ -81,6 +94,11 @@ pub fn AppRuntime::needs_paint(self : AppRuntime) -> Bool {
 ///|
 pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
   self.state.dirty_count()
+}
+
+///|
+pub fn AppRuntime::animation_count(self : AppRuntime) -> Int {
+  self.state.animation_count()
 }
 
 ///|

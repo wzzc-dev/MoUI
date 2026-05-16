@@ -63,6 +63,7 @@ pub(all) enum RedrawReason {
 
 ///|
 pub(all) enum AppEvent {
+  FrameTick(Frame)
   Pointer(PointerEvent)
   Keyboard(KeyboardEvent)
   TextInput(TextInputEvent)

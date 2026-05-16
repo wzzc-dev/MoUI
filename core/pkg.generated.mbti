@@ -19,7 +19,27 @@ pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 // Errors
 
 // Types and methods
+pub(all) struct AnimationController {
+  duration_ms : Double
+  mut elapsed_ms : Double
+  mut status : AnimationStatus
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AnimationController::is_active(Self) -> Bool
+pub fn AnimationController::new(duration_ms~ : Double) -> Self
+pub fn AnimationController::progress(Self) -> Double
+pub fn AnimationController::reset(Self) -> Unit
+pub fn AnimationController::start(Self) -> Unit
+pub fn AnimationController::stop(Self) -> Unit
+pub fn AnimationController::tick(Self, Frame) -> Bool
+
+pub(all) enum AnimationStatus {
+  Idle
+  Running
+  Completed
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum AppEvent {
+  FrameTick(Frame)
   Pointer(PointerEvent)
   Keyboard(KeyboardEvent)
   TextInput(TextInputEvent)
@@ -31,6 +51,9 @@ pub(all) enum AppEvent {
 pub struct AppRuntime {
   state : RuntimeState
 }
+pub fn AppRuntime::add_animation(Self, AnimationController) -> Unit
+pub fn AppRuntime::advance_time(Self, Double) -> Unit
+pub fn AppRuntime::animation_count(Self) -> Int
 pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dispatch_event(Self, AppEvent) -> Unit
 pub fn AppRuntime::draw_commands(Self) -> Array[DrawCommand]
@@ -103,6 +126,12 @@ pub(all) struct ButtonViewSpec {
   corner_radius : Double
   on_click : (() -> Unit)?
 }
+
+pub(all) struct Clock {
+  mut last_time_ms : Double?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Clock::frame(Self, Double) -> Frame
+pub fn Clock::new() -> Self
 
 pub(all) struct Color {
   r : Double
@@ -208,6 +237,14 @@ pub(all) enum DrawCommand {
   PopOpacity
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum Easing {
+  Linear
+  EaseIn
+  EaseOut
+  EaseInOut
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Easing::sample(Self, Double) -> Double
+
 pub(all) struct ElementEventResult {
   changed : Bool
   activated : Bool
@@ -265,6 +302,12 @@ pub(all) struct FontSpec {
   weight : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontSpec::new(family? : String, size? : Double, weight? : Int) -> Self
+
+pub(all) struct Frame {
+  time_ms : Double
+  delta_ms : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Self
 
 pub(all) struct FrameViewSpec {
   key : Key?
@@ -433,7 +476,12 @@ pub(all) struct RuntimeState {
   mut component_root : Component?
   mut subscriptions : Array[StateSubscription]
   mut redraw_callback : (() -> Unit)?
+  clock : Clock
+  mut animations : Array[AnimationController]
 }
+pub fn RuntimeState::add_animation(Self, AnimationController) -> Unit
+pub fn RuntimeState::advance_time(Self, Double) -> Unit
+pub fn RuntimeState::animation_count(Self) -> Int
 pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
 pub fn RuntimeState::clear_dirty_queue(Self) -> Unit
 pub fn RuntimeState::dirty_count(Self) -> Int
@@ -688,6 +736,14 @@ pub(all) struct Transform2D {
   ty : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Transform2D::identity() -> Self
+
+pub(all) struct Tween {
+  from : Double
+  to : Double
+  easing : Easing
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Tween::new(from~ : Double, to~ : Double, easing? : Easing) -> Self
+pub fn Tween::value(Self, Double) -> Double
 
 pub(all) struct TypographyScale {
   body : FontSpec

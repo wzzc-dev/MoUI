@@ -172,6 +172,15 @@ fn max_double(a : Double, b : Double) -> Double {
 }
 
 ///|
+fn min_double(a : Double, b : Double) -> Double {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
 fn min_int(a : Int, b : Int) -> Int {
   if a < b {
     a

@@ -14,6 +14,8 @@ pub(all) struct RuntimeState {
   mut component_root : Component?
   mut subscriptions : Array[StateSubscription]
   mut redraw_callback : (() -> Unit)?
+  clock : Clock
+  mut animations : Array[AnimationController]
 }
 
 ///|
@@ -47,6 +49,8 @@ pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
     component_root: None,
     subscriptions: [],
     redraw_callback: None,
+    clock: Clock::new(),
+    animations: [],
   }
 }
 
@@ -75,6 +79,8 @@ pub fn RuntimeState::new_component(
     component_root: Some(root),
     subscriptions: [],
     redraw_callback: None,
+    clock: Clock::new(),
+    animations: [],
   }
   state.rebuild_if_possible()
   state
@@ -146,6 +152,22 @@ pub fn RuntimeState::set_redraw_callback(
 }
 
 ///|
+pub fn RuntimeState::add_animation(
+  self : RuntimeState,
+  controller : AnimationController,
+) -> Unit {
+  self.animations.push(controller)
+  if controller.is_active() {
+    self.request_redraw()
+  }
+}
+
+///|
+pub fn RuntimeState::animation_count(self : RuntimeState) -> Int {
+  self.animations.length()
+}
+
+///|
 pub fn RuntimeState::layout_pass(self : RuntimeState) -> Unit {
   self.render_current_tree()
 }
@@ -161,6 +183,7 @@ pub fn RuntimeState::dispatch_event(
   event : AppEvent,
 ) -> Unit {
   match event {
+    FrameTick(frame) => self.tick_animations(frame)
     Resize(size) => {
       self.size = size
       self.needs_redraw = true
@@ -168,7 +191,12 @@ pub fn RuntimeState::dispatch_event(
       self.needs_paint = true
       self.mark_dirty(self.element_tree.id)
     }
-    Redraw(_) => self.needs_redraw = false
+    Redraw(_) => {
+      self.needs_redraw = false
+      if self.has_active_animations() {
+        self.request_redraw()
+      }
+    }
     Pointer(event) => {
       self.ensure_render_tree()
       if event.phase == PointerPhase::Down {
@@ -235,6 +263,11 @@ pub fn RuntimeState::dispatch_event(
 }
 
 ///|
+pub fn RuntimeState::advance_time(self : RuntimeState, time_ms : Double) -> Unit {
+  self.dispatch_event(FrameTick(self.clock.frame(time_ms)))
+}
+
+///|
 pub fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
   self.ensure_render_tree()
   self.render_tree.to_layout_result()
@@ -278,8 +311,35 @@ pub fn RuntimeState::request_rebuild(self : RuntimeState) -> Unit {
   self.needs_rebuild = true
   self.needs_layout = true
   self.needs_paint = true
-  self.needs_redraw = true
   self.mark_dirty(self.element_tree.id)
+  self.request_redraw()
+}
+
+///|
+fn RuntimeState::tick_animations(self : RuntimeState, frame : Frame) -> Unit {
+  let mut active = false
+  let mut changed = false
+  for controller in self.animations {
+    changed = controller.tick(frame) || changed
+    active = controller.is_active() || active
+  }
+  if changed {
+    self.needs_paint = true
+    self.mark_dirty(self.element_tree.id)
+  }
+  if active {
+    self.request_redraw()
+  }
+}
+
+///|
+fn RuntimeState::has_active_animations(self : RuntimeState) -> Bool {
+  self.animations.any(controller => controller.is_active())
+}
+
+///|
+fn RuntimeState::request_redraw(self : RuntimeState) -> Unit {
+  self.needs_redraw = true
   match self.redraw_callback {
     Some(callback) => callback()
     None => ()
