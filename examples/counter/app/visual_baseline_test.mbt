@@ -5,7 +5,7 @@ test "visual v2 counter emits surface title count and styled button commands" {
   assert_true(
     commands.any(command => {
       command
-      is @core.DrawCommand::FillRoundedRect(
+      is @core.DrawCommand::FillRoundedRectBrush(
         { rect: { size: { width: 400.0, height: 240.0 }, .. }, .. },
         _
       )
@@ -38,7 +38,7 @@ test "visual v2 counter surface follows runtime resize" {
   assert_true(
     commands.any(command => {
       command
-      is @core.DrawCommand::FillRoundedRect(
+      is @core.DrawCommand::FillRoundedRectBrush(
         { rect: { size: { width: 640.0, height: 360.0 }, .. }, .. },
         _
       )

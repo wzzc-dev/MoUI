@@ -50,9 +50,12 @@ pub(all) struct ButtonViewSpec {
   size : Size
   font : FontSpec
   foreground : Color
-  background : Color
-  hovered_background : Color
-  pressed_background : Color
+  background : Brush
+  hovered_background : Brush
+  pressed_background : Brush
+  border : Brush?
+  border_width : Double
+  shadow : ShadowSpec?
   corner_radius : Double
   on_click : ClickHandler?
 }
@@ -66,9 +69,11 @@ pub(all) struct TextFieldViewSpec {
   font : FontSpec
   foreground : Color
   placeholder_color : Color
-  background : Color
-  border_color : Color
-  focused_border_color : Color
+  background : Brush
+  border : Brush?
+  focused_border : Brush?
+  border_width : Double
+  focused_border_width : Double
   cursor_color : Color
   corner_radius : Double
   on_submit : (() -> Unit)?
@@ -115,8 +120,11 @@ pub(all) struct PaddingViewSpec {
 pub(all) struct ContainerViewSpec {
   key : Key?
   size : Size?
-  background : Color?
+  background : Brush?
+  border : Brush?
+  border_width : Double
   corner_radius : Double
+  shadow : ShadowSpec?
   child : ViewSpec?
 }
 

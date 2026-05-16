@@ -51,15 +51,18 @@ fn ElementNode::render_with_environment(
         ButtonState::Hovered => data.hovered_background
         ButtonState::Pressed => data.pressed_background
       }
-      if data.corner_radius > 0.0 {
-        commands.push(
-          FillRoundedRect(
-            RoundedRect::new(rect=bounds, radius=data.corner_radius),
-            background,
-          ),
-        )
-      } else {
-        commands.push(FillRect(bounds, background))
+      let rounded = RoundedRect::new(rect=bounds, radius=data.corner_radius)
+      match data.shadow {
+        Some(shadow) => commands.push(DrawShadow(shadow))
+        None => ()
+      }
+      commands.push(FillRoundedRectBrush(rounded, background))
+      match data.border {
+        Some(border) =>
+          if data.border_width > 0.0 {
+            commands.push(StrokeRoundedRectBrush(rounded, border, data.border_width))
+          }
+        None => ()
       }
       let foreground = match self.button_state {
         ButtonState::Pressed => Color::white()
@@ -147,19 +150,41 @@ fn ElementNode::render_with_environment(
         None => bounds
       }
       match data.background {
-        Some(color) =>
+        Some(brush) =>
           if environment.corner_radius.unwrap_or(data.corner_radius) > 0.0 {
             commands.push(
-              FillRoundedRect(
+              FillRoundedRectBrush(
                 RoundedRect::new(
                   rect=frame,
                   radius=environment.corner_radius.unwrap_or(data.corner_radius),
                 ),
-                color,
+                brush,
               ),
             )
           } else {
-            commands.push(FillRect(frame, color))
+            commands.push(
+              FillRoundedRectBrush(RoundedRect::new(rect=frame), brush),
+            )
+          }
+        None => ()
+      }
+      match data.shadow {
+        Some(shadow) => commands.push(DrawShadow(shadow))
+        None => ()
+      }
+      match data.border {
+        Some(border) =>
+          if data.border_width > 0.0 {
+            commands.push(
+              StrokeRoundedRectBrush(
+                RoundedRect::new(
+                  rect=frame,
+                  radius=environment.corner_radius.unwrap_or(data.corner_radius),
+                ),
+                border,
+                data.border_width,
+              ),
+            )
           }
         None => ()
       }
@@ -473,31 +498,32 @@ fn append_text_field_commands(
   environment : RenderEnvironment,
 ) -> Unit {
   let border = if focused {
-    data.focused_border_color
+    data.focused_border
   } else {
-    data.border_color
+    data.border
   }
+  let border_width = if focused {
+    data.focused_border_width
+  } else {
+    data.border_width
+  }
+  let rounded = RoundedRect::new(rect=frame, radius=data.corner_radius)
   if data.corner_radius > 0.0 {
     commands.push(
-      FillRoundedRect(
-        RoundedRect::new(rect=frame, radius=data.corner_radius),
+      FillRoundedRectBrush(
+        rounded,
         data.background,
       ),
     )
-    commands.push(
-      StrokeRoundedRect(
-        RoundedRect::new(rect=frame, radius=data.corner_radius),
-        border,
-        if focused {
-          2.0
-        } else {
-          1.0
-        },
-      ),
-    )
   } else {
-    commands.push(FillRect(frame, data.background))
-    commands.push(StrokeRect(frame, border, if focused { 2.0 } else { 1.0 }))
+    commands.push(FillRoundedRectBrush(rounded, data.background))
+  }
+  match border {
+    Some(border) =>
+      if border_width > 0.0 {
+        commands.push(StrokeRoundedRectBrush(rounded, border, border_width))
+      }
+    None => ()
   }
   let text = data.value.get()
   let display_text = text_with_composition(text, element, focused)

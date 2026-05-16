@@ -17,21 +17,13 @@ pub fn text_field(
     font: style.font,
     foreground: normal.foreground,
     placeholder_color: style.placeholder_color,
-    background: normal.background.fallback_color(),
-    border_color: optional_brush_color(normal.border, @core.Color::gray()),
-    focused_border_color: optional_brush_color(
-      focused.border, @core.Color::blue(),
-    ),
+    background: normal.background,
+    border: normal.border,
+    focused_border: focused.border,
+    border_width: normal.border_width,
+    focused_border_width: focused.border_width,
     cursor_color: style.cursor_color,
     corner_radius: normal.radius,
     on_submit,
   })
-}
-
-///|
-fn optional_brush_color(brush : @core.Brush?, fallback : @core.Color) -> @core.Color {
-  match brush {
-    Some(brush) => brush.fallback_color()
-    None => fallback
-  }
 }

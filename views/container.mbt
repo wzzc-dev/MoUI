@@ -14,7 +14,7 @@ pub fn surface(
   let (background, corner_radius, child) = match style {
     Some(surface_style) =>
       (
-        Some(surface_style.brush.fallback_color()),
+        Some(surface_style.brush),
         surface_style.radius,
         @core.ViewSpec::PaddingSpec({
           key: None,
@@ -22,13 +22,21 @@ pub fn surface(
           child,
         }),
       )
-    None => (background, corner_radius, child)
+    None => (background.map(color => @core.Brush::solid(color)), corner_radius, child)
+  }
+  let (border, border_width, shadow) = match style {
+    Some(surface_style) =>
+      (surface_style.border, surface_style.border_width, surface_style.shadow)
+    None => (None, 0.0, None)
   }
   @core.ViewSpec::ContainerSpec({
     key: None,
     size,
     background,
+    border,
+    border_width,
     corner_radius,
+    shadow,
     child: Some(child),
   })
 }

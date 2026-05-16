@@ -4,7 +4,7 @@ test "visual v2 todo emits field button and keyed row text commands" {
   app.add("Visual baseline")
   let commands = app.runtime(width=480.0, height=560.0).draw_commands()
   assert_true(
-    commands.any(command => command is @core.DrawCommand::FillRoundedRect(_, _)),
+    commands.any(command => command is @core.DrawCommand::FillRoundedRectBrush(_, _)),
   )
   assert_true(
     commands.any(command => {
@@ -24,7 +24,7 @@ test "visual v2 todo emits field button and keyed row text commands" {
   )
   assert_true(
     commands.any(command => {
-      command is @core.DrawCommand::StrokeRoundedRect(_, _, _)
+      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, _)
     }),
   )
 }
