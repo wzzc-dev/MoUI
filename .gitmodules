@@ -1,0 +1,3 @@
+[submodule ".agents/skills/moonbit-skills"]
+	path = .agents/skills/moonbit-skills
+	url = git@github.com:moonbitlang/skills.git
