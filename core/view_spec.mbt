@@ -1,0 +1,612 @@
+///|
+pub(all) enum MainAxisAlignment {
+  MainStart
+  MainCenter
+  MainEnd
+  SpaceBetween
+  SpaceAround
+  SpaceEvenly
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum CrossAxisAlignment {
+  CrossStart
+  CrossCenter
+  CrossEnd
+  CrossStretch
+} derive(Eq, Debug, ToJson)
+
+///|
+pub type ClickHandler = () -> Unit
+
+///|
+pub(all) enum ButtonState {
+  Normal
+  Hovered
+  Pressed
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ViewStyle {
+  font : FontSpec?
+  foreground : Color?
+  background : Color?
+  corner_radius : Double?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct TextViewSpec {
+  key : Key?
+  text : String
+  size : Size
+  font : FontSpec
+  color : Color
+}
+
+///|
+pub(all) struct ButtonViewSpec {
+  key : Key?
+  text : String
+  size : Size
+  font : FontSpec
+  foreground : Color
+  background : Color
+  hovered_background : Color
+  pressed_background : Color
+  corner_radius : Double
+  on_click : ClickHandler?
+}
+
+///|
+pub(all) struct TextFieldViewSpec {
+  key : Key?
+  value : Binding[String]
+  placeholder : String
+  size : Size
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Color
+  border_color : Color
+  focused_border_color : Color
+  cursor_color : Color
+  corner_radius : Double
+  on_submit : (() -> Unit)?
+}
+
+///|
+pub(all) struct ImageViewSpec {
+  key : Key?
+  source : String
+  size : Size?
+  opacity : Double
+  corner_radius : Double
+}
+
+///|
+pub(all) struct CheckboxViewSpec {
+  key : Key?
+  label : String
+  checked : Binding[Bool]
+  font : FontSpec
+  foreground : Color
+  check_color : Color
+  size : Size
+}
+
+///|
+pub(all) struct FlexViewSpec {
+  key : Key?
+  axis : Axis
+  spacing : Double
+  main_axis_alignment : MainAxisAlignment
+  cross_axis_alignment : CrossAxisAlignment
+  children : Array[ViewSpec]
+}
+
+///|
+pub(all) struct PaddingViewSpec {
+  key : Key?
+  insets : Insets
+  child : ViewSpec
+}
+
+///|
+pub(all) struct ContainerViewSpec {
+  key : Key?
+  size : Size?
+  background : Color?
+  corner_radius : Double
+  child : ViewSpec?
+}
+
+///|
+pub(all) struct SpacerViewSpec {
+  key : Key?
+  min_length : Double
+  weight : Double
+}
+
+///|
+pub(all) struct FrameViewSpec {
+  key : Key?
+  width : Double?
+  height : Double?
+  min_width : Double?
+  min_height : Double?
+  max_width : Double?
+  max_height : Double?
+  child : ViewSpec
+}
+
+///|
+pub(all) struct StackViewSpec {
+  key : Key?
+  children : Array[ViewSpec]
+}
+
+///|
+pub(all) struct ScrollViewSpec {
+  key : Key?
+  offset : Point
+  viewport : Size?
+  child : ViewSpec
+}
+
+///|
+pub(all) struct GridViewSpec {
+  key : Key?
+  columns : Int
+  row_spacing : Double
+  column_spacing : Double
+  children : Array[ViewSpec]
+}
+
+///|
+pub(all) struct ListViewSpec {
+  key : Key?
+  spacing : Double
+  children : Array[ViewSpec]
+}
+
+///|
+pub(all) enum ViewSpec {
+  EmptySpec
+  TextSpec(TextViewSpec)
+  ButtonSpec(ButtonViewSpec)
+  TextFieldSpec(TextFieldViewSpec)
+  ImageSpec(ImageViewSpec)
+  CheckboxSpec(CheckboxViewSpec)
+  FlexSpec(FlexViewSpec)
+  PaddingSpec(PaddingViewSpec)
+  ContainerSpec(ContainerViewSpec)
+  SpacerSpec(SpacerViewSpec)
+  FrameSpec(FrameViewSpec)
+  StackSpec(StackViewSpec)
+  ScrollSpec(ScrollViewSpec)
+  GridSpec(GridViewSpec)
+  ListSpec(ListViewSpec)
+}
+
+///|
+pub fn ViewStyle::empty() -> ViewStyle {
+  { font: None, foreground: None, background: None, corner_radius: None }
+}
+
+///|
+pub fn ViewStyle::merge(self : ViewStyle, next : ViewStyle) -> ViewStyle {
+  {
+    font: option_prefer(next.font, self.font),
+    foreground: option_prefer(next.foreground, self.foreground),
+    background: option_prefer(next.background, self.background),
+    corner_radius: option_prefer(next.corner_radius, self.corner_radius),
+  }
+}
+
+///|
+fn[T] option_prefer(value : T?, fallback : T?) -> T? {
+  match value {
+    Some(_) => value
+    None => fallback
+  }
+}
+
+///|
+fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
+  match self {
+    EmptySpec => None
+    TextSpec(data) => data.key
+    ButtonSpec(data) => data.key
+    TextFieldSpec(data) => data.key
+    ImageSpec(data) => data.key
+    CheckboxSpec(data) => data.key
+    FlexSpec(data) => data.key
+    PaddingSpec(data) => data.key
+    ContainerSpec(data) => data.key
+    SpacerSpec(data) => data.key
+    FrameSpec(data) => data.key
+    StackSpec(data) => data.key
+    ScrollSpec(data) => data.key
+    GridSpec(data) => data.key
+    ListSpec(data) => data.key
+  }
+}
+
+///|
+pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
+  match self {
+    EmptySpec => EmptySpec
+    TextSpec(data) => TextSpec({ ..data, key: Some(key) })
+    ButtonSpec(data) => ButtonSpec({ ..data, key: Some(key) })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, key: Some(key) })
+    ImageSpec(data) => ImageSpec({ ..data, key: Some(key) })
+    CheckboxSpec(data) => CheckboxSpec({ ..data, key: Some(key) })
+    FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
+    PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
+    ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
+    SpacerSpec(data) => SpacerSpec({ ..data, key: Some(key) })
+    FrameSpec(data) => FrameSpec({ ..data, key: Some(key) })
+    StackSpec(data) => StackSpec({ ..data, key: Some(key) })
+    ScrollSpec(data) => ScrollSpec({ ..data, key: Some(key) })
+    GridSpec(data) => GridSpec({ ..data, key: Some(key) })
+    ListSpec(data) => ListSpec({ ..data, key: Some(key) })
+  }
+}
+
+///|
+pub fn ViewSpec::kind(self : ViewSpec) -> Int {
+  match self {
+    EmptySpec => 0
+    TextSpec(_) => 1
+    ButtonSpec(_) => 2
+    TextFieldSpec(_) => 3
+    ImageSpec(_) => 4
+    CheckboxSpec(_) => 5
+    FlexSpec(_) => 6
+    PaddingSpec(_) => 7
+    ContainerSpec(_) => 8
+    SpacerSpec(_) => 9
+    FrameSpec(_) => 10
+    StackSpec(_) => 11
+    ScrollSpec(_) => 12
+    GridSpec(_) => 13
+    ListSpec(_) => 14
+  }
+}
+
+///|
+pub fn ViewSpec::same_identity(self : ViewSpec, next : ViewSpec) -> Bool {
+  self.kind() == next.kind() && self.identity_key() == next.identity_key()
+}
+
+///|
+pub fn ViewSpec::key(self : ViewSpec, value : String) -> ViewSpec {
+  self.with_key(Key::new(value))
+}
+
+///|
+pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
+  match self {
+    TextSpec(data) => TextSpec({ ..data, font, })
+    ButtonSpec(data) => ButtonSpec({ ..data, font, })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, font, })
+    CheckboxSpec(data) => CheckboxSpec({ ..data, font, })
+    FlexSpec(data) =>
+      FlexSpec({
+        ..data,
+        children: data.children.map(child => child.font(font)),
+      })
+    PaddingSpec(data) => PaddingSpec({ ..data, child: data.child.font(font) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(data.child, child => child.font(font)),
+      })
+    FrameSpec(data) => FrameSpec({ ..data, child: data.child.font(font) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.font(font)),
+      })
+    ScrollSpec(data) => ScrollSpec({ ..data, child: data.child.font(font) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => child.font(font)),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => child.font(font)),
+      })
+    EmptySpec | SpacerSpec(_) | ImageSpec(_) => self
+  }
+}
+
+///|
+pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
+  match self {
+    TextSpec(data) => TextSpec({ ..data, color, })
+    ButtonSpec(data) => ButtonSpec({ ..data, foreground: color })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, foreground: color })
+    CheckboxSpec(data) => CheckboxSpec({ ..data, foreground: color })
+    FlexSpec(data) =>
+      FlexSpec({
+        ..data,
+        children: data.children.map(child => child.foreground(color)),
+      })
+    PaddingSpec(data) =>
+      PaddingSpec({ ..data, child: data.child.foreground(color) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(data.child, child => child.foreground(color)),
+      })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.foreground(color) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.foreground(color)),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.foreground(color) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => child.foreground(color)),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => child.foreground(color)),
+      })
+    EmptySpec | SpacerSpec(_) | ImageSpec(_) => self
+  }
+}
+
+///|
+pub fn ViewSpec::background(self : ViewSpec, color : Color) -> ViewSpec {
+  match self {
+    ButtonSpec(data) => ButtonSpec({ ..data, background: color })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, background: color })
+    ContainerSpec(data) => ContainerSpec({ ..data, background: Some(color) })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.background(color) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.background(color)),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.background(color) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => child.background(color)),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => child.background(color)),
+      })
+    _ =>
+      ContainerSpec({
+        key: self.identity_key(),
+        size: None,
+        background: Some(color),
+        corner_radius: 0.0,
+        child: Some(self),
+      })
+  }
+}
+
+///|
+pub fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
+  match self {
+    ButtonSpec(data) => ButtonSpec({ ..data, corner_radius: radius })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, corner_radius: radius })
+    ImageSpec(data) => ImageSpec({ ..data, corner_radius: radius })
+    ContainerSpec(data) => ContainerSpec({ ..data, corner_radius: radius })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.corner_radius(radius) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.corner_radius(radius)),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.corner_radius(radius) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => child.corner_radius(radius)),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => child.corner_radius(radius)),
+      })
+    _ =>
+      ContainerSpec({
+        key: self.identity_key(),
+        size: None,
+        background: None,
+        corner_radius: radius,
+        child: Some(self),
+      })
+  }
+}
+
+///|
+pub fn ViewSpec::padding(self : ViewSpec, value : Double) -> ViewSpec {
+  PaddingSpec({ key: None, insets: Insets::all(value), child: self })
+}
+
+///|
+pub fn ViewSpec::spacing(self : ViewSpec, spacing : Double) -> ViewSpec {
+  match self {
+    FlexSpec(data) => FlexSpec({ ..data, spacing, })
+    PaddingSpec(data) =>
+      PaddingSpec({ ..data, child: data.child.spacing(spacing) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(data.child, child => child.spacing(spacing)),
+      })
+    FrameSpec(data) => FrameSpec({ ..data, child: data.child.spacing(spacing) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.spacing(spacing)),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.spacing(spacing) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        row_spacing: spacing,
+        column_spacing: spacing,
+      })
+    ListSpec(data) => ListSpec({ ..data, spacing, })
+    _ => self
+  }
+}
+
+///|
+pub fn ViewSpec::main_axis_alignment(
+  self : ViewSpec,
+  alignment : MainAxisAlignment,
+) -> ViewSpec {
+  match self {
+    FlexSpec(data) => FlexSpec({ ..data, main_axis_alignment: alignment })
+    PaddingSpec(data) =>
+      PaddingSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(data.child, child => {
+          child.main_axis_alignment(alignment)
+        }),
+      })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.main_axis_alignment(alignment)
+        }),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.main_axis_alignment(alignment)
+        }),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.main_axis_alignment(alignment)
+        }),
+      })
+    _ => self
+  }
+}
+
+///|
+pub fn ViewSpec::cross_axis_alignment(
+  self : ViewSpec,
+  alignment : CrossAxisAlignment,
+) -> ViewSpec {
+  match self {
+    FlexSpec(data) => FlexSpec({ ..data, cross_axis_alignment: alignment })
+    PaddingSpec(data) =>
+      PaddingSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
+    ContainerSpec(data) =>
+      ContainerSpec({
+        ..data,
+        child: map_view_spec(data.child, child => {
+          child.cross_axis_alignment(alignment)
+        }),
+      })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.cross_axis_alignment(alignment)
+        }),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.cross_axis_alignment(alignment)
+        }),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.cross_axis_alignment(alignment)
+        }),
+      })
+    _ => self
+  }
+}
+
+///|
+pub fn ViewSpec::theme(self : ViewSpec, theme : Theme) -> ViewSpec {
+  self
+  .font(theme.font)
+  .foreground(theme.foreground)
+  .background(theme.background)
+  .corner_radius(theme.corner_radius)
+}
+
+///|
+pub fn ViewSpec::environment(
+  self : ViewSpec,
+  environment : Environment,
+) -> ViewSpec {
+  self.theme(environment.theme)
+}
+
+///|
+pub fn ViewSpec::frame(
+  self : ViewSpec,
+  width? : Double,
+  height? : Double,
+  min_width? : Double,
+  min_height? : Double,
+  max_width? : Double,
+  max_height? : Double,
+) -> ViewSpec {
+  FrameSpec({
+    key: None,
+    width,
+    height,
+    min_width,
+    min_height,
+    max_width,
+    max_height,
+    child: self,
+  })
+}
+
+///|
+fn map_view_spec(value : ViewSpec?, f : (ViewSpec) -> ViewSpec) -> ViewSpec? {
+  match value {
+    Some(value) => Some(f(value))
+    None => None
+  }
+}
+
