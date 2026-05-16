@@ -33,8 +33,6 @@ pub fn CounterApp::root(self : CounterApp) -> @core.ViewSpec {
       ],
       spacing=theme.spacing_scale.md,
     ),
-    width=360.0,
-    height=180.0,
     style=@core.SurfaceStyle::default(theme~),
   )
 }
