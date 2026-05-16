@@ -169,6 +169,22 @@ pub(all) struct ScrollViewSpec {
 }
 
 ///|
+pub(all) struct GridViewSpec {
+  key : Key?
+  columns : Int
+  row_spacing : Double
+  column_spacing : Double
+  children : Array[ViewSpec]
+}
+
+///|
+pub(all) struct ListViewSpec {
+  key : Key?
+  spacing : Double
+  children : Array[ViewSpec]
+}
+
+///|
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -181,6 +197,8 @@ pub(all) enum ViewSpec {
   FrameSpec(FrameViewSpec)
   StackSpec(StackViewSpec)
   ScrollSpec(ScrollViewSpec)
+  GridSpec(GridViewSpec)
+  ListSpec(ListViewSpec)
 }
 
 ///|
@@ -362,6 +380,8 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     FrameSpec(data) => data.key
     StackSpec(data) => data.key
     ScrollSpec(data) => data.key
+    GridSpec(data) => data.key
+    ListSpec(data) => data.key
   }
 }
 
@@ -379,6 +399,8 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     FrameSpec(data) => FrameSpec({ ..data, key: Some(key) })
     StackSpec(data) => StackSpec({ ..data, key: Some(key) })
     ScrollSpec(data) => ScrollSpec({ ..data, key: Some(key) })
+    GridSpec(data) => GridSpec({ ..data, key: Some(key) })
+    ListSpec(data) => ListSpec({ ..data, key: Some(key) })
   }
 }
 
@@ -396,6 +418,8 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     FrameSpec(_) => 8
     StackSpec(_) => 9
     ScrollSpec(_) => 10
+    GridSpec(_) => 11
+    ListSpec(_) => 12
   }
 }
 
@@ -433,6 +457,16 @@ pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
         children: data.children.map(child => child.font(font)),
       })
     ScrollSpec(data) => ScrollSpec({ ..data, child: data.child.font(font) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => child.font(font)),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => child.font(font)),
+      })
     EmptySpec | SpacerSpec(_) => self
   }
 }
@@ -464,6 +498,16 @@ pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
       })
     ScrollSpec(data) =>
       ScrollSpec({ ..data, child: data.child.foreground(color) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => child.foreground(color)),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => child.foreground(color)),
+      })
     EmptySpec | SpacerSpec(_) => self
   }
 }
@@ -483,6 +527,16 @@ pub fn ViewSpec::background(self : ViewSpec, color : Color) -> ViewSpec {
       })
     ScrollSpec(data) =>
       ScrollSpec({ ..data, child: data.child.background(color) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => child.background(color)),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => child.background(color)),
+      })
     _ =>
       ContainerSpec({
         key: self.identity_key(),
@@ -509,6 +563,16 @@ pub fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
       })
     ScrollSpec(data) =>
       ScrollSpec({ ..data, child: data.child.corner_radius(radius) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => child.corner_radius(radius)),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => child.corner_radius(radius)),
+      })
     _ =>
       ContainerSpec({
         key: self.identity_key(),
@@ -544,6 +608,13 @@ pub fn ViewSpec::spacing(self : ViewSpec, spacing : Double) -> ViewSpec {
       })
     ScrollSpec(data) =>
       ScrollSpec({ ..data, child: data.child.spacing(spacing) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        row_spacing: spacing,
+        column_spacing: spacing,
+      })
+    ListSpec(data) => ListSpec({ ..data, spacing, })
     _ => self
   }
 }
@@ -575,6 +646,20 @@ pub fn ViewSpec::main_axis_alignment(
       })
     ScrollSpec(data) =>
       ScrollSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.main_axis_alignment(alignment)
+        }),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.main_axis_alignment(alignment)
+        }),
+      })
     _ => self
   }
 }
@@ -606,6 +691,20 @@ pub fn ViewSpec::cross_axis_alignment(
       })
     ScrollSpec(data) =>
       ScrollSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
+    GridSpec(data) =>
+      GridSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.cross_axis_alignment(alignment)
+        }),
+      })
+    ListSpec(data) =>
+      ListSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.cross_axis_alignment(alignment)
+        }),
+      })
     _ => self
   }
 }
@@ -695,6 +794,18 @@ fn mount_view_spec_with_next(spec : ViewSpec, next_id : Int) -> MountResult {
       children.push(mounted.node)
       next = mounted.next_id
     }
+    GridSpec(data) =>
+      for child_spec in data.children {
+        let mounted = mount_view_spec_with_next(child_spec, next)
+        children.push(mounted.node)
+        next = mounted.next_id
+      }
+    ListSpec(data) =>
+      for child_spec in data.children {
+        let mounted = mount_view_spec_with_next(child_spec, next)
+        children.push(mounted.node)
+        next = mounted.next_id
+      }
     ContainerSpec(data) =>
       match data.child {
         Some(child) => {
@@ -826,6 +937,8 @@ fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
     FrameSpec(data) => [data.child]
     StackSpec(data) => data.children
     ScrollSpec(data) => [data.child]
+    GridSpec(data) => data.children
+    ListSpec(data) => data.children
     ContainerSpec(data) =>
       match data.child {
         Some(child) => [child]
@@ -973,6 +1086,24 @@ fn ElementNode::render_with_focus(
       }
       commands.push(PopClip)
     }
+    GridSpec(data) => {
+      let frames = grid_child_frames(
+        data.columns,
+        data.row_spacing,
+        data.column_spacing,
+        self.children,
+        bounds,
+      )
+      for index, child in self.children {
+        children.push(child.render_with_focus(frames[index], focused))
+      }
+    }
+    ListSpec(data) => {
+      let frames = list_child_frames(data.spacing, self.children, bounds)
+      for index, child in self.children {
+        children.push(child.render_with_focus(frames[index], focused))
+      }
+    }
   }
   self.dirty.clear()
   {
@@ -1033,6 +1164,14 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
             Size::new(width=0.0, height=0.0)
           }
       }
+    GridSpec(data) =>
+      measure_grid_size(
+        data.columns,
+        data.row_spacing,
+        data.column_spacing,
+        self.children,
+      )
+    ListSpec(data) => measure_list_size(data.spacing, self.children)
   }
 }
 
@@ -1069,7 +1208,9 @@ pub fn ElementNode::dispatch_pointer(
     | ContainerSpec(_)
     | FrameSpec(_)
     | StackSpec(_)
-    | ScrollSpec(_) => {
+    | ScrollSpec(_)
+    | GridSpec(_)
+    | ListSpec(_) => {
       let mut changed = false
       let mut activated = false
       let mut focused : ElementId? = None
@@ -1151,7 +1292,9 @@ pub fn ElementNode::find_text_field_at(
     | ContainerSpec(_)
     | FrameSpec(_)
     | StackSpec(_)
-    | ScrollSpec(_) => {
+    | ScrollSpec(_)
+    | GridSpec(_)
+    | ListSpec(_) => {
       let mut index = self.children.length() - 1
       while index >= 0 {
         if index < render.children.length() &&
@@ -1185,7 +1328,9 @@ pub fn ElementNode::focusable_ids(
     | ContainerSpec(_)
     | FrameSpec(_)
     | StackSpec(_)
-    | ScrollSpec(_) =>
+    | ScrollSpec(_)
+    | GridSpec(_)
+    | ListSpec(_) =>
       for child in self.children {
         child.focusable_ids(ids)
       }
@@ -1412,6 +1557,50 @@ fn measure_stack_size(children : Array[ElementNode]) -> Size {
 }
 
 ///|
+fn measure_grid_size(
+  columns : Int,
+  row_spacing : Double,
+  column_spacing : Double,
+  children : Array[ElementNode],
+) -> Size {
+  let count = children.length()
+  if count == 0 {
+    Size::new(width=0.0, height=0.0)
+  } else {
+    let columns = max_int(1, columns)
+    let rows = grid_row_count(count, columns)
+    let mut cell_width = 0.0
+    let mut cell_height = 0.0
+    for child in children {
+      let size = child.intrinsic_size()
+      cell_width = max_double(cell_width, size.width)
+      cell_height = max_double(cell_height, size.height)
+    }
+    Size::new(
+      width=cell_width * columns.to_double() +
+        column_spacing * max_int(0, columns - 1).to_double(),
+      height=cell_height * rows.to_double() +
+        row_spacing * max_int(0, rows - 1).to_double(),
+    )
+  }
+}
+
+///|
+fn measure_list_size(spacing : Double, children : Array[ElementNode]) -> Size {
+  let mut width = 0.0
+  let mut height = 0.0
+  for index, child in children {
+    let size = child.intrinsic_size()
+    width = max_double(width, size.width)
+    height = height + size.height
+    if index > 0 {
+      height = height + spacing
+    }
+  }
+  Size::new(width~, height~)
+}
+
+///|
 fn resolve_frame_size(data : FrameViewSpec, child : Size) -> Size {
   let width = data.width.unwrap_or(child.width)
   let height = data.height.unwrap_or(child.height)
@@ -1588,6 +1777,107 @@ fn cross_axis_offset(
       { offset: max_double(0.0, available - child) / 2.0, size: child }
     CrossEnd => { offset: max_double(0.0, available - child), size: child }
     CrossStretch => { offset: 0.0, size: available }
+  }
+}
+
+///|
+fn grid_row_count(count : Int, columns : Int) -> Int {
+  let columns = max_int(1, columns)
+  (count + columns - 1) / columns
+}
+
+///|
+fn grid_child_frames(
+  columns : Int,
+  row_spacing : Double,
+  column_spacing : Double,
+  children : Array[ElementNode],
+  bounds : Rect,
+) -> Array[Rect] {
+  let frames : Array[Rect] = []
+  if children.length() == 0 {
+    frames
+  } else {
+    let columns = max_int(1, columns)
+    let rows = grid_row_count(children.length(), columns)
+    let total_column_spacing = column_spacing *
+      max_int(0, columns - 1).to_double()
+    let total_row_spacing = row_spacing * max_int(0, rows - 1).to_double()
+    let cell_width = max_double(
+      0.0,
+      (bounds.size.width - total_column_spacing) / columns.to_double(),
+    )
+    let measured = measure_grid_size(
+      columns,
+      row_spacing,
+      column_spacing,
+      children,
+    )
+    let fallback_height = if rows > 0 {
+      max_double(
+        0.0,
+        (bounds.size.height - total_row_spacing) / rows.to_double(),
+      )
+    } else {
+      0.0
+    }
+    let cell_height = if measured.height > 0.0 {
+      max_double(
+        0.0,
+        (measured.height - total_row_spacing) / rows.to_double(),
+      )
+    } else {
+      fallback_height
+    }
+    for index, _child in children {
+      let column = index - (index / columns) * columns
+      let row = index / columns
+      frames.push(
+        Rect::new(
+          x=bounds.origin.x +
+            column.to_double() * (cell_width + column_spacing),
+          y=bounds.origin.y + row.to_double() * (cell_height + row_spacing),
+          width=cell_width,
+          height=cell_height,
+        ),
+      )
+    }
+    frames
+  }
+}
+
+///|
+fn list_child_frames(
+  spacing : Double,
+  children : Array[ElementNode],
+  bounds : Rect,
+) -> Array[Rect] {
+  let frames : Array[Rect] = []
+  let mut cursor = bounds.origin.y
+  for index, child in children {
+    if index > 0 {
+      cursor = cursor + spacing
+    }
+    let size = child.intrinsic_size()
+    frames.push(
+      Rect::new(
+        x=bounds.origin.x,
+        y=cursor,
+        width=bounds.size.width,
+        height=size.height,
+      ),
+    )
+    cursor = cursor + size.height
+  }
+  frames
+}
+
+///|
+fn max_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
   }
 }
 

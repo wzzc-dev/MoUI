@@ -16,7 +16,11 @@ pub fn environment(theme? : @core.Theme) -> @core.Environment
 
 pub fn frame(@core.ViewSpec, width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.ViewSpec
 
+pub fn grid(Array[@core.ViewSpec], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.ViewSpec
+
 pub fn light_theme() -> @core.Theme
+
+pub fn list(Array[@core.ViewSpec], spacing? : Double) -> @core.ViewSpec
 
 pub fn overlay(@core.ViewSpec, @core.ViewSpec) -> @core.ViewSpec
 

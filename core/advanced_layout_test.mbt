@@ -50,3 +50,76 @@ test "scroll view emits clip and offsets child frame" {
   }
   inspect(render.children[0].frame.origin.y, content="-6")
 }
+
+///|
+test "grid lays children into fixed columns" {
+  let grid = ViewSpec::GridSpec({
+    key: None,
+    columns: 2,
+    row_spacing: 4.0,
+    column_spacing: 8.0,
+    children: [
+      ViewSpec::TextSpec({
+        key: None,
+        text: "A",
+        size: Size::new(width=40.0, height=20.0),
+        font: FontSpec::new(),
+        color: Color::black(),
+      }),
+      ViewSpec::TextSpec({
+        key: None,
+        text: "B",
+        size: Size::new(width=40.0, height=20.0),
+        font: FontSpec::new(),
+        color: Color::black(),
+      }),
+      ViewSpec::TextSpec({
+        key: None,
+        text: "C",
+        size: Size::new(width=40.0, height=20.0),
+        font: FontSpec::new(),
+        color: Color::black(),
+      }),
+    ],
+  })
+  let layout = layout_spec(
+    grid,
+    Rect::new(x=0.0, y=0.0, width=108.0, height=80.0),
+  )
+  inspect(layout.children.length(), content="3")
+  inspect(layout.children[0].frame.size.width, content="50")
+  inspect(layout.children[1].frame.origin.x, content="58")
+  inspect(layout.children[2].frame.origin.y, content="24")
+}
+
+///|
+test "list lays out keyed rows and reconcile preserves keyed identity" {
+  let first = ViewSpec::TextSpec({
+    key: None,
+    text: "First",
+    size: Size::new(width=40.0, height=20.0),
+    font: FontSpec::new(),
+    color: Color::black(),
+  }).key("first")
+  let second = ViewSpec::TextSpec({
+    key: None,
+    text: "Second",
+    size: Size::new(width=40.0, height=30.0),
+    font: FontSpec::new(),
+    color: Color::black(),
+  }).key("second")
+  let old = mount_view_spec(
+    ViewSpec::ListSpec({ key: None, spacing: 6.0, children: [first, second] }),
+  )
+  let first_id = old.children[0].id
+  let second_id = old.children[1].id
+  let next = reconcile_element(
+    old,
+    ViewSpec::ListSpec({ key: None, spacing: 6.0, children: [second, first] }),
+  )
+  assert_true(next.children[0].id == second_id)
+  assert_true(next.children[1].id == first_id)
+  let layout = next.render(Rect::new(x=0.0, y=0.0, width=120.0, height=80.0))
+    .to_layout_result()
+  inspect(layout.children[1].frame.origin.y, content="36")
+}

@@ -193,6 +193,34 @@ test "stack overlay and scroll helpers build advanced specs" {
 }
 
 ///|
+test "grid and list helpers build keyed collection specs" {
+  let grid = @views.grid(
+    [@views.text("A"), @views.text("B"), @views.text("C")],
+    columns=2,
+    row_spacing=4.0,
+    column_spacing=8.0,
+  )
+  guard grid
+    is @core.ViewSpec::GridSpec(
+      { columns: 2, row_spacing: 4.0, column_spacing: 8.0, children, .. }
+    ) else {
+    fail("expected grid spec")
+  }
+  inspect(children.length(), content="3")
+  let list = @views.list(
+    [@views.text("One").key("one"), @views.text("Two").key("two")],
+    spacing=6.0,
+  )
+  guard list
+    is @core.ViewSpec::ListSpec({ spacing: 6.0, children: [first, _], .. }) else {
+    fail("expected list spec")
+  }
+  guard first is @core.ViewSpec::TextSpec({ key: Some({ value: "one" }), .. }) else {
+    fail("expected keyed list item")
+  }
+}
+
+///|
 test "text field constructs binding backed spec" {
   let state = @core.State::new("Draft")
   let submitted = Ref(false)

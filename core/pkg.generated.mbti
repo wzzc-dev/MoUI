@@ -264,6 +264,14 @@ pub(all) struct FrameViewSpec {
   child : ViewSpec
 }
 
+pub(all) struct GridViewSpec {
+  key : Key?
+  columns : Int
+  row_spacing : Double
+  column_spacing : Double
+  children : Array[ViewSpec]
+}
+
 pub(all) struct ImageRun {
   source : String
   frame : Rect
@@ -314,6 +322,12 @@ pub(all) struct LinearGradientSpec {
   end_color : Color
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LinearGradientSpec::new(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
+
+pub(all) struct ListViewSpec {
+  key : Key?
+  spacing : Double
+  children : Array[ViewSpec]
+}
 
 pub(all) enum MainAxisAlignment {
   MainStart
@@ -623,6 +637,8 @@ pub(all) enum ViewSpec {
   FrameSpec(FrameViewSpec)
   StackSpec(StackViewSpec)
   ScrollSpec(ScrollViewSpec)
+  GridSpec(GridViewSpec)
+  ListSpec(ListViewSpec)
 }
 pub fn ViewSpec::background(Self, Color) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self
