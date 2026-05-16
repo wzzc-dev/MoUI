@@ -14,15 +14,19 @@ pub fn CounterApp::increment(self : CounterApp) -> Unit {
 }
 
 ///|
-pub fn CounterApp::root(self : CounterApp) -> @core.ViewSpec {
+pub fn CounterApp::root(
+  self : CounterApp,
+  ctx : @core.BuildContext,
+) -> @core.ViewSpec {
   let theme = @core.Theme::light()
+  let count = ctx.watch(self.count)
   @views.surface(
     @views.column(
       [
         @views.text("MoUI Counter")
         .font(theme.typography.title)
         .foreground(theme.palette.foreground),
-        @views.text("Count: \{self.count.get()}")
+        @views.text("Count: \{count}")
         .font(theme.typography.body)
         .foreground(theme.palette.muted),
         @views.button(
@@ -44,7 +48,7 @@ pub fn CounterApp::runtime(
   height? : Double = 600.0,
 ) -> @core.AppRuntime {
   @core.AppRuntime::new_component(
-    root=@core.Component::new(_ctx => self.root()),
+    root=@core.Component::new(ctx => self.root(ctx)),
     size=@core.Size::new(width~, height~),
   )
 }

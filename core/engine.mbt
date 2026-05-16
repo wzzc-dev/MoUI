@@ -317,6 +317,7 @@ pub fn[T] StateSlot::subscribe(
   self : StateSlot[T],
   callback : () -> Unit,
 ) -> StateSubscription {
+  self.prune_inactive_listeners()
   let listener = StateListener::new(callback)
   self.listeners.push(listener)
   { listener, }
@@ -329,6 +330,11 @@ fn[T] StateSlot::notify(self : StateSlot[T]) -> Unit {
       (listener.callback)()
     }
   }
+}
+
+///|
+fn[T] StateSlot::prune_inactive_listeners(self : StateSlot[T]) -> Unit {
+  self.listeners = self.listeners.filter(listener => listener.active)
 }
 
 ///|

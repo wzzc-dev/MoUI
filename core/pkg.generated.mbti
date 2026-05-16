@@ -95,6 +95,7 @@ pub fn Brush::solid(Color) -> Self
 pub(all) struct BuildContext {
   runtime : RuntimeState
 }
+pub fn[T] BuildContext::binding(Self, State[T]) -> Binding[T]
 pub fn[T] BuildContext::watch(Self, State[T]) -> T
 
 pub(all) enum ButtonState {

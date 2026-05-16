@@ -92,8 +92,13 @@ pub fn TodoApp::remove(self : TodoApp, id : Int) -> Unit {
 }
 
 ///|
-pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
+pub fn TodoApp::root(
+  self : TodoApp,
+  ctx : @core.BuildContext,
+) -> @core.ViewSpec {
   let theme = @core.Theme::light()
+  let items = ctx.watch(self.items)
+  let draft = ctx.binding(self.draft)
   let children : Array[@core.ViewSpec] = [
     @views.text("MoUI Todo")
     .font(theme.typography.title)
@@ -101,7 +106,7 @@ pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
     @views.row(
       [
         @views.text_field(
-          self.draft.binding(),
+          draft,
           on_submit=Some(() => self.submit_draft()),
           placeholder="New todo",
           style=@core.TextFieldStyle::filled(theme~),
@@ -118,7 +123,7 @@ pub fn TodoApp::root(self : TodoApp) -> @core.ViewSpec {
       cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
     ),
   ]
-  for item in self.items.get() {
+  for item in items {
     children.push(self.todo_row(item, theme))
   }
   @views.surface(
@@ -162,7 +167,7 @@ pub fn TodoApp::runtime(
   height? : Double = 600.0,
 ) -> @core.AppRuntime {
   @core.AppRuntime::new_component(
-    root=@core.Component::new(_ctx => self.root()),
+    root=@core.Component::new(ctx => self.root(ctx)),
     size=@core.Size::new(width~, height~),
   )
 }

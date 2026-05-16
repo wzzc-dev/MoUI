@@ -15,7 +15,7 @@ pub struct CounterApp {
 }
 pub fn CounterApp::increment(Self) -> Unit
 pub fn CounterApp::new() -> Self
-pub fn CounterApp::root(Self) -> @core.ViewSpec
+pub fn CounterApp::root(Self, @core.BuildContext) -> @core.ViewSpec
 pub fn CounterApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn CounterApp::sync_runtime(Self, @core.AppRuntime) -> Unit
 

@@ -99,6 +99,16 @@ pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
 }
 
 ///|
+pub fn[T] BuildContext::binding(
+  self : BuildContext,
+  state : State[T],
+) -> Binding[T] {
+  let subscription = state.subscribe(() => self.runtime.request_rebuild())
+  self.runtime.subscriptions.push(subscription)
+  state.binding()
+}
+
+///|
 pub fn RuntimeState::set_root_spec(
   self : RuntimeState,
   root : ViewSpec,
