@@ -340,8 +340,9 @@ pub(all) struct PointerEvent {
   position : Point
   phase : PointerPhase
   button : Int
+  wheel_delta : Point
 } derive(Eq, ToJson, @debug.Debug)
-pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int) -> Self
+pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int, wheel_delta? : Point) -> Self
 
 pub(all) enum PointerPhase {
   Move
@@ -423,6 +424,13 @@ pub fn RuntimeState::request_rebuild(Self) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 
+pub(all) struct ScrollViewSpec {
+  key : Key?
+  offset : Point
+  viewport : Size?
+  child : ViewSpec
+}
+
 pub(all) struct ShadowSpec {
   rect : RoundedRect
   color : Color
@@ -454,6 +462,11 @@ pub(all) struct SpacingScale {
   xl : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SpacingScale::default() -> Self
+
+pub(all) struct StackViewSpec {
+  key : Key?
+  children : Array[ViewSpec]
+}
 
 pub(all) struct State[T] {
   slot : StateSlot[T]
@@ -608,6 +621,8 @@ pub(all) enum ViewSpec {
   ContainerSpec(ContainerViewSpec)
   SpacerSpec(SpacerViewSpec)
   FrameSpec(FrameViewSpec)
+  StackSpec(StackViewSpec)
+  ScrollSpec(ScrollViewSpec)
 }
 pub fn ViewSpec::background(Self, Color) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self

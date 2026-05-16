@@ -155,6 +155,20 @@ pub(all) struct FrameViewSpec {
 }
 
 ///|
+pub(all) struct StackViewSpec {
+  key : Key?
+  children : Array[ViewSpec]
+}
+
+///|
+pub(all) struct ScrollViewSpec {
+  key : Key?
+  offset : Point
+  viewport : Size?
+  child : ViewSpec
+}
+
+///|
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -165,6 +179,8 @@ pub(all) enum ViewSpec {
   ContainerSpec(ContainerViewSpec)
   SpacerSpec(SpacerViewSpec)
   FrameSpec(FrameViewSpec)
+  StackSpec(StackViewSpec)
+  ScrollSpec(ScrollViewSpec)
 }
 
 ///|
@@ -344,6 +360,8 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     ContainerSpec(data) => data.key
     SpacerSpec(data) => data.key
     FrameSpec(data) => data.key
+    StackSpec(data) => data.key
+    ScrollSpec(data) => data.key
   }
 }
 
@@ -359,6 +377,8 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
     SpacerSpec(data) => SpacerSpec({ ..data, key: Some(key) })
     FrameSpec(data) => FrameSpec({ ..data, key: Some(key) })
+    StackSpec(data) => StackSpec({ ..data, key: Some(key) })
+    ScrollSpec(data) => ScrollSpec({ ..data, key: Some(key) })
   }
 }
 
@@ -374,6 +394,8 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     ContainerSpec(_) => 6
     SpacerSpec(_) => 7
     FrameSpec(_) => 8
+    StackSpec(_) => 9
+    ScrollSpec(_) => 10
   }
 }
 
@@ -390,11 +412,14 @@ pub fn ViewSpec::key(self : ViewSpec, value : String) -> ViewSpec {
 ///|
 pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
   match self {
-    TextSpec(data) => TextSpec({ ..data, font })
-    ButtonSpec(data) => ButtonSpec({ ..data, font })
-    TextFieldSpec(data) => TextFieldSpec({ ..data, font })
+    TextSpec(data) => TextSpec({ ..data, font, })
+    ButtonSpec(data) => ButtonSpec({ ..data, font, })
+    TextFieldSpec(data) => TextFieldSpec({ ..data, font, })
     FlexSpec(data) =>
-      FlexSpec({ ..data, children: data.children.map(child => child.font(font)) })
+      FlexSpec({
+        ..data,
+        children: data.children.map(child => child.font(font)),
+      })
     PaddingSpec(data) => PaddingSpec({ ..data, child: data.child.font(font) })
     ContainerSpec(data) =>
       ContainerSpec({
@@ -402,6 +427,12 @@ pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
         child: map_view_spec(data.child, child => child.font(font)),
       })
     FrameSpec(data) => FrameSpec({ ..data, child: data.child.font(font) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.font(font)),
+      })
+    ScrollSpec(data) => ScrollSpec({ ..data, child: data.child.font(font) })
     EmptySpec | SpacerSpec(_) => self
   }
 }
@@ -409,7 +440,7 @@ pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
 ///|
 pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
   match self {
-    TextSpec(data) => TextSpec({ ..data, color })
+    TextSpec(data) => TextSpec({ ..data, color, })
     ButtonSpec(data) => ButtonSpec({ ..data, foreground: color })
     TextFieldSpec(data) => TextFieldSpec({ ..data, foreground: color })
     FlexSpec(data) =>
@@ -424,7 +455,15 @@ pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
         ..data,
         child: map_view_spec(data.child, child => child.foreground(color)),
       })
-    FrameSpec(data) => FrameSpec({ ..data, child: data.child.foreground(color) })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.foreground(color) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.foreground(color)),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.foreground(color) })
     EmptySpec | SpacerSpec(_) => self
   }
 }
@@ -435,7 +474,15 @@ pub fn ViewSpec::background(self : ViewSpec, color : Color) -> ViewSpec {
     ButtonSpec(data) => ButtonSpec({ ..data, background: color })
     TextFieldSpec(data) => TextFieldSpec({ ..data, background: color })
     ContainerSpec(data) => ContainerSpec({ ..data, background: Some(color) })
-    FrameSpec(data) => FrameSpec({ ..data, child: data.child.background(color) })
+    FrameSpec(data) =>
+      FrameSpec({ ..data, child: data.child.background(color) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.background(color)),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.background(color) })
     _ =>
       ContainerSpec({
         key: self.identity_key(),
@@ -455,6 +502,13 @@ pub fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
     ContainerSpec(data) => ContainerSpec({ ..data, corner_radius: radius })
     FrameSpec(data) =>
       FrameSpec({ ..data, child: data.child.corner_radius(radius) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.corner_radius(radius)),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.corner_radius(radius) })
     _ =>
       ContainerSpec({
         key: self.identity_key(),
@@ -474,14 +528,22 @@ pub fn ViewSpec::padding(self : ViewSpec, value : Double) -> ViewSpec {
 ///|
 pub fn ViewSpec::spacing(self : ViewSpec, spacing : Double) -> ViewSpec {
   match self {
-    FlexSpec(data) => FlexSpec({ ..data, spacing })
-    PaddingSpec(data) => PaddingSpec({ ..data, child: data.child.spacing(spacing) })
+    FlexSpec(data) => FlexSpec({ ..data, spacing, })
+    PaddingSpec(data) =>
+      PaddingSpec({ ..data, child: data.child.spacing(spacing) })
     ContainerSpec(data) =>
       ContainerSpec({
         ..data,
         child: map_view_spec(data.child, child => child.spacing(spacing)),
       })
     FrameSpec(data) => FrameSpec({ ..data, child: data.child.spacing(spacing) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => child.spacing(spacing)),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.spacing(spacing) })
     _ => self
   }
 }
@@ -498,13 +560,21 @@ pub fn ViewSpec::main_axis_alignment(
     ContainerSpec(data) =>
       ContainerSpec({
         ..data,
-        child: map_view_spec(
-          data.child,
-          child => child.main_axis_alignment(alignment),
-        ),
+        child: map_view_spec(data.child, child => {
+          child.main_axis_alignment(alignment)
+        }),
       })
     FrameSpec(data) =>
       FrameSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.main_axis_alignment(alignment)
+        }),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
     _ => self
   }
 }
@@ -521,23 +591,32 @@ pub fn ViewSpec::cross_axis_alignment(
     ContainerSpec(data) =>
       ContainerSpec({
         ..data,
-        child: map_view_spec(
-          data.child,
-          child => child.cross_axis_alignment(alignment),
-        ),
+        child: map_view_spec(data.child, child => {
+          child.cross_axis_alignment(alignment)
+        }),
       })
     FrameSpec(data) =>
       FrameSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
+    StackSpec(data) =>
+      StackSpec({
+        ..data,
+        children: data.children.map(child => {
+          child.cross_axis_alignment(alignment)
+        }),
+      })
+    ScrollSpec(data) =>
+      ScrollSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
     _ => self
   }
 }
 
 ///|
 pub fn ViewSpec::theme(self : ViewSpec, theme : Theme) -> ViewSpec {
-  self.font(theme.font)
-    .foreground(theme.foreground)
-    .background(theme.background)
-    .corner_radius(theme.corner_radius)
+  self
+  .font(theme.font)
+  .foreground(theme.foreground)
+  .background(theme.background)
+  .corner_radius(theme.corner_radius)
 }
 
 ///|
@@ -601,6 +680,17 @@ fn mount_view_spec_with_next(spec : ViewSpec, next_id : Int) -> MountResult {
       next = mounted.next_id
     }
     FrameSpec(data) => {
+      let mounted = mount_view_spec_with_next(data.child, next)
+      children.push(mounted.node)
+      next = mounted.next_id
+    }
+    StackSpec(data) =>
+      for child_spec in data.children {
+        let mounted = mount_view_spec_with_next(child_spec, next)
+        children.push(mounted.node)
+        next = mounted.next_id
+      }
+    ScrollSpec(data) => {
       let mounted = mount_view_spec_with_next(data.child, next)
       children.push(mounted.node)
       next = mounted.next_id
@@ -734,6 +824,8 @@ fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
     FlexSpec(data) => data.children
     PaddingSpec(data) => [data.child]
     FrameSpec(data) => [data.child]
+    StackSpec(data) => data.children
+    ScrollSpec(data) => [data.child]
     ContainerSpec(data) =>
       match data.child {
         Some(child) => [child]
@@ -858,6 +950,29 @@ fn ElementNode::render_with_focus(
         children.push(self.children[0].render_with_focus(frame, focused))
       }
     }
+    StackSpec(_) =>
+      for child in self.children {
+        children.push(child.render_with_focus(bounds, focused))
+      }
+    ScrollSpec(data) => {
+      let viewport = data.viewport.unwrap_or(bounds.size)
+      let clip = Rect::new(
+        x=bounds.origin.x,
+        y=bounds.origin.y,
+        width=viewport.width,
+        height=viewport.height,
+      )
+      commands.push(PushClip(clip))
+      if self.children.length() > 0 {
+        children.push(
+          self.children[0].render_with_focus(
+            bounds.offset(dx=-data.offset.x, dy=-data.offset.y),
+            focused,
+          ),
+        )
+      }
+      commands.push(PopClip)
+    }
   }
   self.dirty.clear()
   {
@@ -907,6 +1022,17 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
       }
       resolve_frame_size(data, child_size)
     }
+    StackSpec(_) => measure_stack_size(self.children)
+    ScrollSpec(data) =>
+      match data.viewport {
+        Some(size) => size
+        None =>
+          if self.children.length() > 0 {
+            self.children[0].intrinsic_size()
+          } else {
+            Size::new(width=0.0, height=0.0)
+          }
+      }
   }
 }
 
@@ -938,7 +1064,12 @@ pub fn ElementNode::dispatch_pointer(
       }
       { changed: false, activated: false, focused }
     }
-    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) => {
+    FlexSpec(_)
+    | PaddingSpec(_)
+    | ContainerSpec(_)
+    | FrameSpec(_)
+    | StackSpec(_)
+    | ScrollSpec(_) => {
       let mut changed = false
       let mut activated = false
       let mut focused : ElementId? = None
@@ -1015,12 +1146,21 @@ pub fn ElementNode::find_text_field_at(
       } else {
         None
       }
-    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) => {
+    FlexSpec(_)
+    | PaddingSpec(_)
+    | ContainerSpec(_)
+    | FrameSpec(_)
+    | StackSpec(_)
+    | ScrollSpec(_) => {
       let mut index = self.children.length() - 1
       while index >= 0 {
         if index < render.children.length() &&
           render.children[index].frame.contains(point) {
-          match self.children[index].find_text_field_at(point, render.children[index]) {
+          match
+            self.children[index].find_text_field_at(
+              point,
+              render.children[index],
+            ) {
             Some(id) => return Some(id)
             None => ()
           }
@@ -1040,7 +1180,12 @@ pub fn ElementNode::focusable_ids(
 ) -> Unit {
   match self.spec {
     TextFieldSpec(_) => ids.push(self.id)
-    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) =>
+    FlexSpec(_)
+    | PaddingSpec(_)
+    | ContainerSpec(_)
+    | FrameSpec(_)
+    | StackSpec(_)
+    | ScrollSpec(_) =>
       for child in self.children {
         child.focusable_ids(ids)
       }
@@ -1084,10 +1229,7 @@ pub fn ElementNode::next_focus(
 }
 
 ///|
-pub fn ElementNode::find_keyed(
-  self : ElementNode,
-  key : String,
-) -> ElementId? {
+pub fn ElementNode::find_keyed(self : ElementNode, key : String) -> ElementId? {
   if self.key == Some(Key::new(key)) {
     Some(self.id)
   } else {
@@ -1255,6 +1397,18 @@ fn measure_flex_sizes(
     Axis::Horizontal => Size::new(width=main, height=cross)
     Axis::Vertical => Size::new(width=cross, height=main)
   }
+}
+
+///|
+fn measure_stack_size(children : Array[ElementNode]) -> Size {
+  let mut width = 0.0
+  let mut height = 0.0
+  for child in children {
+    let size = child.intrinsic_size()
+    width = max_double(width, size.width)
+    height = max_double(height, size.height)
+  }
+  Size::new(width~, height~)
 }
 
 ///|

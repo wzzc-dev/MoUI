@@ -125,12 +125,9 @@ test "theme modifier feeds environment style into view spec" {
   )
   let spec = @views.button("Themed").theme(theme)
   guard spec
-    is @core.ViewSpec::ButtonSpec({
-      foreground,
-      background,
-      corner_radius: 10.0,
-      ..
-    }) else {
+    is @core.ViewSpec::ButtonSpec(
+      { foreground, background, corner_radius: 10.0, .. }
+    ) else {
     fail("expected themed button spec")
   }
   assert_true(foreground == @core.Color::blue())
@@ -173,6 +170,26 @@ test "frame helper constrains child layout" {
   )
   inspect(layout.children[0].frame.size.width, content="64")
   inspect(layout.children[0].frame.size.height, content="24")
+}
+
+///|
+test "stack overlay and scroll helpers build advanced specs" {
+  let spec = @views.overlay(@views.text("Base"), @views.text("Top"))
+  guard spec is @core.ViewSpec::StackSpec({ children: [_, _], .. }) else {
+    fail("expected stack spec")
+  }
+  let scroll = @views.scroll_view(
+    @views.text("Long"),
+    offset=@core.Point::new(x=0.0, y=8.0),
+    width=80.0,
+    height=40.0,
+  )
+  guard scroll
+    is @core.ViewSpec::ScrollSpec(
+      { viewport: Some({ width: 80.0, height: 40.0 }), .. }
+    ) else {
+    fail("expected scroll spec")
+  }
 }
 
 ///|

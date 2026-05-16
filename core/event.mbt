@@ -11,6 +11,7 @@ pub(all) struct PointerEvent {
   position : Point
   phase : PointerPhase
   button : Int
+  wheel_delta : Point
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -52,8 +53,9 @@ pub fn PointerEvent::new(
   position~ : Point,
   phase~ : PointerPhase,
   button? : Int = 0,
+  wheel_delta? : Point = Point::new(x=0.0, y=0.0),
 ) -> PointerEvent {
-  { position, phase, button }
+  { position, phase, button, wheel_delta }
 }
 
 ///|

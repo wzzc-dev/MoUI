@@ -18,13 +18,19 @@ pub fn frame(@core.ViewSpec, width? : Double, height? : Double, min_width? : Dou
 
 pub fn light_theme() -> @core.Theme
 
+pub fn overlay(@core.ViewSpec, @core.ViewSpec) -> @core.ViewSpec
+
 pub fn padding(@core.ViewSpec, Double) -> @core.ViewSpec
 
 pub fn padding_insets(@core.ViewSpec, @core.Insets) -> @core.ViewSpec
 
 pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
+pub fn scroll_view(@core.ViewSpec, offset? : @core.Point, width? : Double, height? : Double) -> @core.ViewSpec
+
 pub fn spacer(min_length? : Double, weight? : Double) -> @core.ViewSpec
+
+pub fn stack(Array[@core.ViewSpec]) -> @core.ViewSpec
 
 pub fn surface(@core.ViewSpec, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, style? : @core.SurfaceStyle) -> @core.ViewSpec
 
