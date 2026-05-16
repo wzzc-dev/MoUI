@@ -80,6 +80,51 @@ pub fn Constraints::loose(max : Size) -> Constraints {
 }
 
 ///|
+pub fn Constraints::unbounded() -> Constraints {
+  {
+    min: Size::new(width=0.0, height=0.0),
+    max: Size::new(width=1.0e9, height=1.0e9),
+  }
+}
+
+///|
+pub fn Constraints::is_tight(self : Constraints) -> Bool {
+  self.min == self.max
+}
+
+///|
+pub fn Constraints::loosen(self : Constraints) -> Constraints {
+  { min: Size::new(width=0.0, height=0.0), max: self.max }
+}
+
+///|
+pub fn Constraints::tighten(
+  self : Constraints,
+  width? : Double,
+  height? : Double,
+) -> Constraints {
+  let min_width = width.unwrap_or(self.min.width)
+  let max_width = width.unwrap_or(self.max.width)
+  let min_height = height.unwrap_or(self.min.height)
+  let max_height = height.unwrap_or(self.max.height)
+  {
+    min: Size::new(
+      width=clamp_double(min_width, self.min.width, self.max.width),
+      height=clamp_double(min_height, self.min.height, self.max.height),
+    ),
+    max: Size::new(
+      width=clamp_double(max_width, self.min.width, self.max.width),
+      height=clamp_double(max_height, self.min.height, self.max.height),
+    ),
+  }
+}
+
+///|
+pub fn Constraints::constrain(self : Constraints, size : Size) -> Size {
+  size.clamp(self)
+}
+
+///|
 pub fn Size::clamp(self : Size, constraints : Constraints) -> Size {
   {
     width: clamp_double(

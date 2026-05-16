@@ -123,3 +123,101 @@ test "list lays out keyed rows and reconcile preserves keyed identity" {
     .to_layout_result()
   inspect(layout.children[1].frame.origin.y, content="36")
 }
+
+///|
+test "measure pass deflates padding constraints and inflates size" {
+  let root = ViewSpec::PaddingSpec({
+    key: None,
+    insets: Insets::all(5.0),
+    child: ViewSpec::TextSpec({
+      key: None,
+      text: "A",
+      size: Size::new(width=100.0, height=80.0),
+      font: FontSpec::new(),
+      color: Color::black(),
+    }),
+  })
+  let measured = mount_view_spec(root).measure(
+    Constraints::loose(Size::new(width=60.0, height=50.0)),
+  )
+  inspect(measured.children[0].size.width, content="50")
+  inspect(measured.children[0].size.height, content="40")
+  inspect(measured.size.width, content="60")
+  inspect(measured.size.height, content="50")
+}
+
+///|
+test "measure pass applies frame constraints before placement" {
+  let root = ViewSpec::FrameSpec({
+    key: None,
+    width: Some(64.0),
+    height: Some(24.0),
+    min_width: None,
+    min_height: None,
+    max_width: None,
+    max_height: None,
+    child: ViewSpec::TextSpec({
+      key: None,
+      text: "A",
+      size: Size::new(width=100.0, height=80.0),
+      font: FontSpec::new(),
+      color: Color::black(),
+    }),
+  })
+  let measured = mount_view_spec(root).measure(Constraints::unbounded())
+  inspect(measured.size.width, content="64")
+  inspect(measured.size.height, content="24")
+}
+
+///|
+test "measure pass keeps flex size from measured children" {
+  let root = ViewSpec::FlexSpec({
+    key: None,
+    axis: Axis::Horizontal,
+    spacing: 4.0,
+    main_axis_alignment: MainStart,
+    cross_axis_alignment: CrossStart,
+    children: [
+      ViewSpec::TextSpec({
+        key: None,
+        text: "A",
+        size: Size::new(width=20.0, height=10.0),
+        font: FontSpec::new(),
+        color: Color::black(),
+      }),
+      ViewSpec::TextSpec({
+        key: None,
+        text: "B",
+        size: Size::new(width=30.0, height=16.0),
+        font: FontSpec::new(),
+        color: Color::black(),
+      }),
+    ],
+  })
+  let measured = mount_view_spec(root).measure(Constraints::unbounded())
+  inspect(measured.size.width, content="54")
+  inspect(measured.size.height, content="16")
+}
+
+///|
+test "scroll measure allows child to exceed viewport constraints" {
+  let root = ViewSpec::ScrollSpec({
+    key: None,
+    offset: Point::new(x=0.0, y=0.0),
+    viewport: Some(Size::new(width=40.0, height=30.0)),
+    child: ViewSpec::TextSpec({
+      key: None,
+      text: "Large",
+      size: Size::new(width=100.0, height=90.0),
+      font: FontSpec::new(),
+      color: Color::black(),
+    }),
+  })
+  let measured = mount_view_spec(root).measure(
+    Constraints::loose(Size::new(width=40.0, height=30.0)),
+  )
+  inspect(measured.size.width, content="40")
+  inspect(measured.size.height, content="30")
+  inspect(measured.children[0].size.width, content="100")
+  inspect(measured.children[0].size.height, content="90")
+}

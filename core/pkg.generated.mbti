@@ -191,9 +191,14 @@ pub(all) struct Constraints {
   min : Size
   max : Size
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Constraints::constrain(Self, Size) -> Size
 pub fn Constraints::deflate(Self, Insets) -> Self
+pub fn Constraints::is_tight(Self) -> Bool
 pub fn Constraints::loose(Size) -> Self
+pub fn Constraints::loosen(Self) -> Self
 pub fn Constraints::tight(Size) -> Self
+pub fn Constraints::tighten(Self, width? : Double, height? : Double) -> Self
+pub fn Constraints::unbounded() -> Self
 
 pub(all) struct ContainerViewSpec {
   key : Key?
@@ -287,7 +292,9 @@ pub fn ElementNode::find_keyed(Self, String) -> ElementId?
 pub fn ElementNode::find_text_field_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
 pub fn ElementNode::intrinsic_size(Self) -> Size
+pub fn ElementNode::measure(Self, Constraints) -> MeasuredNode
 pub fn ElementNode::next_focus(Self, current~ : ElementId?, reverse~ : Bool) -> ElementId?
+pub fn ElementNode::place(Self, Rect) -> PlacedNode
 pub fn ElementNode::render(Self, Rect) -> RenderNode
 pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?) -> RenderNode
 pub fn ElementNode::semantics(Self, RenderNode, focused? : ElementId?) -> SemanticsNode
@@ -415,11 +422,24 @@ pub(all) enum MainAxisAlignment {
   SpaceEvenly
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct MeasuredNode {
+  element_id : ElementId
+  size : Size
+  children : Array[MeasuredNode]
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct PaddingViewSpec {
   key : Key?
   insets : Insets
   child : ViewSpec
 }
+
+pub(all) struct PlacedNode {
+  element_id : ElementId
+  frame : Rect
+  children : Array[PlacedNode]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PlacedNode::to_layout_result(Self) -> LayoutResult
 
 pub(all) struct Point {
   x : Double
