@@ -167,7 +167,12 @@ fn ElementNode::semantics_info(
       { role: None, label: data.source, value: "", actions: [] }
     EmptySpec | SpacerSpec(_) =>
       { role: None, label: "", value: "", actions: [] }
-    FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) | StackSpec(_) =>
+    FlexSpec(_)
+    | PaddingSpec(_)
+    | ContainerSpec(_)
+    | FrameSpec(_)
+    | StackSpec(_)
+    | ModifiedSpec(_) =>
       { role: Group, label: "", value: "", actions: [] }
   }
 }

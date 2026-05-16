@@ -329,6 +329,15 @@ pub(all) struct Frame {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Self
 
+pub(all) struct FrameModifierSpec {
+  width : Double?
+  height : Double?
+  min_width : Double?
+  min_height : Double?
+  max_width : Double?
+  max_height : Double?
+}
+
 pub(all) struct FrameViewSpec {
   key : Key?
   width : Double?
@@ -427,6 +436,12 @@ pub(all) struct MeasuredNode {
   size : Size
   children : Array[MeasuredNode]
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ModifiedViewSpec {
+  key : Key?
+  modifier : ViewModifier
+  child : ViewSpec
+}
 
 pub(all) struct PaddingViewSpec {
   key : Key?
@@ -796,6 +811,15 @@ pub(all) struct TypographyScale {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TypographyScale::default() -> Self
 
+pub(all) enum ViewModifier {
+  PaddingModifier(Insets)
+  FrameModifier(FrameModifierSpec)
+  BackgroundModifier(Color)
+  ForegroundModifier(Color)
+  FontModifier(FontSpec)
+  CornerRadiusModifier(Double)
+}
+
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -812,6 +836,7 @@ pub(all) enum ViewSpec {
   ScrollSpec(ScrollViewSpec)
   GridSpec(GridViewSpec)
   ListSpec(ListViewSpec)
+  ModifiedSpec(ModifiedViewSpec)
 }
 pub fn ViewSpec::background(Self, Color) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self
@@ -823,6 +848,7 @@ pub fn ViewSpec::frame(Self, width? : Double, height? : Double, min_width? : Dou
 pub fn ViewSpec::key(Self, String) -> Self
 pub fn ViewSpec::kind(Self) -> Int
 pub fn ViewSpec::main_axis_alignment(Self, MainAxisAlignment) -> Self
+pub fn ViewSpec::modified(Self, ViewModifier) -> Self
 pub fn ViewSpec::padding(Self, Double) -> Self
 pub fn ViewSpec::same_identity(Self, Self) -> Bool
 pub fn ViewSpec::spacing(Self, Double) -> Self

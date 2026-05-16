@@ -98,6 +98,11 @@ fn mount_view_spec_with_next(spec : ViewSpec, next_id : Int) -> MountResult {
         }
         None => ()
       }
+    ModifiedSpec(data) => {
+      let mounted = mount_view_spec_with_next(data.child, next)
+      children.push(mounted.node)
+      next = mounted.next_id
+    }
     _ => ()
   }
   {
@@ -230,7 +235,7 @@ fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
         Some(child) => [child]
         None => []
       }
+    ModifiedSpec(data) => [data.child]
     _ => []
   }
 }
-

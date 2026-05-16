@@ -113,6 +113,52 @@ fn frame_rect_for_spec(data : FrameViewSpec, bounds : Rect) -> Rect {
 }
 
 ///|
+fn resolve_frame_modifier_size(data : FrameModifierSpec, child : Size) -> Size {
+  let width = data.width.unwrap_or(child.width)
+  let height = data.height.unwrap_or(child.height)
+  let min_width = data.min_width.unwrap_or(0.0)
+  let min_height = data.min_height.unwrap_or(0.0)
+  let max_width = data.max_width.unwrap_or(width)
+  let max_height = data.max_height.unwrap_or(height)
+  Size::new(width~, height~).clamp({
+    min: Size::new(width=min_width, height=min_height),
+    max: Size::new(
+      width=max_double(min_width, max_width),
+      height=max_double(min_height, max_height),
+    ),
+  })
+}
+
+///|
+fn frame_rect_for_modifier(data : FrameModifierSpec, bounds : Rect) -> Rect {
+  let size = resolve_frame_modifier_size(data, bounds.size)
+  Rect::new(
+    x=bounds.origin.x,
+    y=bounds.origin.y,
+    width=size.width,
+    height=size.height,
+  )
+}
+
+///|
+fn modified_intrinsic_size(
+  modifier : ViewModifier,
+  children : Array[ElementNode],
+) -> Size {
+  let child_size = if children.length() > 0 {
+    children[0].intrinsic_size()
+  } else {
+    Size::new(width=0.0, height=0.0)
+  }
+  match modifier {
+    PaddingModifier(insets) => child_size.inflate(insets)
+    FrameModifier(data) => resolve_frame_modifier_size(data, child_size)
+    BackgroundModifier(_) | ForegroundModifier(_) | FontModifier(_) | CornerRadiusModifier(_) =>
+      child_size
+  }
+}
+
+///|
 fn spacer_weight(child : ElementNode) -> Double {
   match child.spec {
     SpacerSpec(data) => data.weight
@@ -364,4 +410,3 @@ fn max_int(a : Int, b : Int) -> Int {
     b
   }
 }
-

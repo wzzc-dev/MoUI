@@ -116,16 +116,21 @@ test "modifiers build styled view specs" {
     .font(@core.FontSpec::new(size=20.0, weight=700))
     .foreground(@core.Color::blue())
     .key("title")
-  guard spec
-    is @core.ViewSpec::TextSpec(
-      {
-        key: Some({ value: "title" }),
-        font: { size: 20.0, weight: 700, .. },
-        color,
-        ..,
-      }
-    ) else {
-    fail("expected styled text spec")
+  guard spec is @core.ViewSpec::ModifiedSpec({ key: Some({ value: "title" }), .. }) else {
+    fail("expected keyed modified spec")
+  }
+  let runtime = @core.AppRuntime::new_spec(
+    root=spec,
+    size=@core.Size::new(width=120.0, height=32.0),
+  )
+  guard runtime.draw_commands()
+    is [
+      _,
+      @core.DrawCommand::DrawText(
+        { text: "Styled", font: { size: 20.0, weight: 700, .. }, color, .. },
+      ),
+    ] else {
+    fail("expected styled draw text")
   }
   assert_true(color == @core.Color::blue())
 }
@@ -155,14 +160,54 @@ test "theme modifier feeds environment style into view spec" {
     corner_radius=10.0,
   )
   let spec = @views.button("Themed").theme(theme)
-  guard spec
-    is @core.ViewSpec::ButtonSpec(
-      { foreground, background, corner_radius: 10.0, .. }
-    ) else {
-    fail("expected themed button spec")
+  let runtime = @core.AppRuntime::new_spec(
+    root=spec,
+    size=@core.Size::new(width=180.0, height=44.0),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(
+    commands.any(command => {
+      match command {
+        @core.DrawCommand::FillRoundedRect(_, color) => color == @core.Color::gray()
+        _ => false
+      }
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      match command {
+        @core.DrawCommand::DrawText({ text: "Themed", color, .. }) =>
+          color == @core.Color::blue()
+        _ => false
+      }
+    }),
+  )
+}
+
+///|
+test "modifier order changes background frame" {
+  let padded_background = @views.text("A")
+    .padding(8.0)
+    .background(@core.Color::gray())
+  let background_padded = @views.text("A")
+    .background(@core.Color::gray())
+    .padding(8.0)
+  let first = @core.AppRuntime::new_spec(
+    root=padded_background,
+    size=@core.Size::new(width=80.0, height=40.0),
+  ).draw_commands()
+  let second = @core.AppRuntime::new_spec(
+    root=background_padded,
+    size=@core.Size::new(width=80.0, height=40.0),
+  ).draw_commands()
+  guard first is [_, @core.DrawCommand::FillRect(first_rect, _), ..] else {
+    fail("expected first background")
   }
-  assert_true(foreground == @core.Color::blue())
-  assert_true(background == @core.Color::gray())
+  guard second is [_, @core.DrawCommand::FillRect(second_rect, _), ..] else {
+    fail("expected second background")
+  }
+  assert_true(first_rect.size.width == 80.0)
+  assert_true(second_rect.size.width == 64.0)
 }
 
 ///|

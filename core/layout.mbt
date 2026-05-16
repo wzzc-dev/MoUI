@@ -138,6 +138,7 @@ fn ElementNode::measured_size_from_children(
         children,
       )
     ListSpec(data) => measure_list_measured(data.spacing, children)
+    ModifiedSpec(data) => modified_measured_size(data.modifier, children)
   }
 }
 
@@ -149,6 +150,7 @@ fn child_constraints_for_measure(
   match spec {
     PaddingSpec(data) => constraints.deflate(data.insets)
     FrameSpec(data) => frame_constraints_for_measure(data, constraints)
+    ModifiedSpec(data) => modified_child_constraints(data.modifier, constraints)
     ScrollSpec(_) => Constraints::unbounded()
     _ => constraints.loosen()
   }
@@ -157,6 +159,19 @@ fn child_constraints_for_measure(
 ///|
 fn frame_constraints_for_measure(
   data : FrameViewSpec,
+  constraints : Constraints,
+) -> Constraints {
+  match (data.width, data.height) {
+    (Some(width), Some(height)) => constraints.tighten(width~, height~).loosen()
+    (Some(width), None) => constraints.tighten(width~).loosen()
+    (None, Some(height)) => constraints.tighten(height~).loosen()
+    (None, None) => constraints.loosen()
+  }
+}
+
+///|
+fn frame_modifier_constraints_for_measure(
+  data : FrameModifierSpec,
   constraints : Constraints,
 ) -> Constraints {
   match (data.width, data.height) {
@@ -210,7 +225,52 @@ fn ElementNode::child_frames_for_place(self : ElementNode, frame : Rect) -> Arra
         frame,
       )
     ListSpec(data) => list_child_frames(data.spacing, self.children, frame)
+    ModifiedSpec(data) => modified_child_frames(data.modifier, frame)
     _ => []
+  }
+}
+
+///|
+fn modified_measured_size(
+  modifier : ViewModifier,
+  children : Array[MeasuredNode],
+) -> Size {
+  let child_size = if children.length() > 0 {
+    children[0].size
+  } else {
+    Size::new(width=0.0, height=0.0)
+  }
+  match modifier {
+    PaddingModifier(insets) => child_size.inflate(insets)
+    FrameModifier(data) => resolve_frame_modifier_size(data, child_size)
+    BackgroundModifier(_) | ForegroundModifier(_) | FontModifier(_) | CornerRadiusModifier(_) =>
+      child_size
+  }
+}
+
+///|
+fn modified_child_constraints(
+  modifier : ViewModifier,
+  constraints : Constraints,
+) -> Constraints {
+  match modifier {
+    PaddingModifier(insets) => constraints.deflate(insets)
+    FrameModifier(data) => frame_modifier_constraints_for_measure(data, constraints)
+    BackgroundModifier(_) | ForegroundModifier(_) | FontModifier(_) | CornerRadiusModifier(_) =>
+      constraints.loosen()
+  }
+}
+
+///|
+fn modified_child_frames(
+  modifier : ViewModifier,
+  frame : Rect,
+) -> Array[Rect] {
+  match modifier {
+    PaddingModifier(insets) => [frame.inset(insets)]
+    FrameModifier(data) => [frame_rect_for_modifier(data, frame)]
+    BackgroundModifier(_) | ForegroundModifier(_) | FontModifier(_) | CornerRadiusModifier(_) =>
+      [frame]
   }
 }
 

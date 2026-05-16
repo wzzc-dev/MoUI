@@ -27,7 +27,8 @@ pub fn ElementNode::dispatch_pointer(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_) => {
+    | ListSpec(_)
+    | ModifiedSpec(_) => {
       let mut changed = false
       let mut activated = false
       let mut focused : ElementId? = None
@@ -126,7 +127,8 @@ pub fn ElementNode::find_text_field_at(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_) => {
+    | ListSpec(_)
+    | ModifiedSpec(_) => {
       let mut index = self.children.length() - 1
       while index >= 0 {
         if index < render.children.length() &&
@@ -162,7 +164,8 @@ pub fn ElementNode::focusable_ids(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_) =>
+    | ListSpec(_)
+    | ModifiedSpec(_) =>
       for child in self.children {
         child.focusable_ids(ids)
       }
@@ -414,4 +417,3 @@ fn handle_text_field_input(
     }
   }
 }
-

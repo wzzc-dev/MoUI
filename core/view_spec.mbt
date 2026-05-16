@@ -170,6 +170,33 @@ pub(all) struct ListViewSpec {
 }
 
 ///|
+pub(all) struct FrameModifierSpec {
+  width : Double?
+  height : Double?
+  min_width : Double?
+  min_height : Double?
+  max_width : Double?
+  max_height : Double?
+}
+
+///|
+pub(all) enum ViewModifier {
+  PaddingModifier(Insets)
+  FrameModifier(FrameModifierSpec)
+  BackgroundModifier(Color)
+  ForegroundModifier(Color)
+  FontModifier(FontSpec)
+  CornerRadiusModifier(Double)
+}
+
+///|
+pub(all) struct ModifiedViewSpec {
+  key : Key?
+  modifier : ViewModifier
+  child : ViewSpec
+}
+
+///|
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -186,6 +213,7 @@ pub(all) enum ViewSpec {
   ScrollSpec(ScrollViewSpec)
   GridSpec(GridViewSpec)
   ListSpec(ListViewSpec)
+  ModifiedSpec(ModifiedViewSpec)
 }
 
 ///|
@@ -229,6 +257,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     ScrollSpec(data) => data.key
     GridSpec(data) => data.key
     ListSpec(data) => data.key
+    ModifiedSpec(data) => data.key
   }
 }
 
@@ -250,6 +279,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     ScrollSpec(data) => ScrollSpec({ ..data, key: Some(key) })
     GridSpec(data) => GridSpec({ ..data, key: Some(key) })
     ListSpec(data) => ListSpec({ ..data, key: Some(key) })
+    ModifiedSpec(data) => ModifiedSpec({ ..data, key: Some(key) })
   }
 }
 
@@ -271,6 +301,7 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     ScrollSpec(_) => 12
     GridSpec(_) => 13
     ListSpec(_) => 14
+    ModifiedSpec(_) => 15
   }
 }
 
@@ -286,161 +317,27 @@ pub fn ViewSpec::key(self : ViewSpec, value : String) -> ViewSpec {
 
 ///|
 pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
-  match self {
-    TextSpec(data) => TextSpec({ ..data, font, })
-    ButtonSpec(data) => ButtonSpec({ ..data, font, })
-    TextFieldSpec(data) => TextFieldSpec({ ..data, font, })
-    CheckboxSpec(data) => CheckboxSpec({ ..data, font, })
-    FlexSpec(data) =>
-      FlexSpec({
-        ..data,
-        children: data.children.map(child => child.font(font)),
-      })
-    PaddingSpec(data) => PaddingSpec({ ..data, child: data.child.font(font) })
-    ContainerSpec(data) =>
-      ContainerSpec({
-        ..data,
-        child: map_view_spec(data.child, child => child.font(font)),
-      })
-    FrameSpec(data) => FrameSpec({ ..data, child: data.child.font(font) })
-    StackSpec(data) =>
-      StackSpec({
-        ..data,
-        children: data.children.map(child => child.font(font)),
-      })
-    ScrollSpec(data) => ScrollSpec({ ..data, child: data.child.font(font) })
-    GridSpec(data) =>
-      GridSpec({
-        ..data,
-        children: data.children.map(child => child.font(font)),
-      })
-    ListSpec(data) =>
-      ListSpec({
-        ..data,
-        children: data.children.map(child => child.font(font)),
-      })
-    EmptySpec | SpacerSpec(_) | ImageSpec(_) => self
-  }
+  self.modified(FontModifier(font))
 }
 
 ///|
 pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
-  match self {
-    TextSpec(data) => TextSpec({ ..data, color, })
-    ButtonSpec(data) => ButtonSpec({ ..data, foreground: color })
-    TextFieldSpec(data) => TextFieldSpec({ ..data, foreground: color })
-    CheckboxSpec(data) => CheckboxSpec({ ..data, foreground: color })
-    FlexSpec(data) =>
-      FlexSpec({
-        ..data,
-        children: data.children.map(child => child.foreground(color)),
-      })
-    PaddingSpec(data) =>
-      PaddingSpec({ ..data, child: data.child.foreground(color) })
-    ContainerSpec(data) =>
-      ContainerSpec({
-        ..data,
-        child: map_view_spec(data.child, child => child.foreground(color)),
-      })
-    FrameSpec(data) =>
-      FrameSpec({ ..data, child: data.child.foreground(color) })
-    StackSpec(data) =>
-      StackSpec({
-        ..data,
-        children: data.children.map(child => child.foreground(color)),
-      })
-    ScrollSpec(data) =>
-      ScrollSpec({ ..data, child: data.child.foreground(color) })
-    GridSpec(data) =>
-      GridSpec({
-        ..data,
-        children: data.children.map(child => child.foreground(color)),
-      })
-    ListSpec(data) =>
-      ListSpec({
-        ..data,
-        children: data.children.map(child => child.foreground(color)),
-      })
-    EmptySpec | SpacerSpec(_) | ImageSpec(_) => self
-  }
+  self.modified(ForegroundModifier(color))
 }
 
 ///|
 pub fn ViewSpec::background(self : ViewSpec, color : Color) -> ViewSpec {
-  match self {
-    ButtonSpec(data) => ButtonSpec({ ..data, background: color })
-    TextFieldSpec(data) => TextFieldSpec({ ..data, background: color })
-    ContainerSpec(data) => ContainerSpec({ ..data, background: Some(color) })
-    FrameSpec(data) =>
-      FrameSpec({ ..data, child: data.child.background(color) })
-    StackSpec(data) =>
-      StackSpec({
-        ..data,
-        children: data.children.map(child => child.background(color)),
-      })
-    ScrollSpec(data) =>
-      ScrollSpec({ ..data, child: data.child.background(color) })
-    GridSpec(data) =>
-      GridSpec({
-        ..data,
-        children: data.children.map(child => child.background(color)),
-      })
-    ListSpec(data) =>
-      ListSpec({
-        ..data,
-        children: data.children.map(child => child.background(color)),
-      })
-    _ =>
-      ContainerSpec({
-        key: self.identity_key(),
-        size: None,
-        background: Some(color),
-        corner_radius: 0.0,
-        child: Some(self),
-      })
-  }
+  self.modified(BackgroundModifier(color))
 }
 
 ///|
 pub fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
-  match self {
-    ButtonSpec(data) => ButtonSpec({ ..data, corner_radius: radius })
-    TextFieldSpec(data) => TextFieldSpec({ ..data, corner_radius: radius })
-    ImageSpec(data) => ImageSpec({ ..data, corner_radius: radius })
-    ContainerSpec(data) => ContainerSpec({ ..data, corner_radius: radius })
-    FrameSpec(data) =>
-      FrameSpec({ ..data, child: data.child.corner_radius(radius) })
-    StackSpec(data) =>
-      StackSpec({
-        ..data,
-        children: data.children.map(child => child.corner_radius(radius)),
-      })
-    ScrollSpec(data) =>
-      ScrollSpec({ ..data, child: data.child.corner_radius(radius) })
-    GridSpec(data) =>
-      GridSpec({
-        ..data,
-        children: data.children.map(child => child.corner_radius(radius)),
-      })
-    ListSpec(data) =>
-      ListSpec({
-        ..data,
-        children: data.children.map(child => child.corner_radius(radius)),
-      })
-    _ =>
-      ContainerSpec({
-        key: self.identity_key(),
-        size: None,
-        background: None,
-        corner_radius: radius,
-        child: Some(self),
-      })
-  }
+  self.modified(CornerRadiusModifier(radius))
 }
 
 ///|
 pub fn ViewSpec::padding(self : ViewSpec, value : Double) -> ViewSpec {
-  PaddingSpec({ key: None, insets: Insets::all(value), child: self })
+  self.modified(PaddingModifier(Insets::all(value)))
 }
 
 ///|
@@ -469,6 +366,8 @@ pub fn ViewSpec::spacing(self : ViewSpec, spacing : Double) -> ViewSpec {
         column_spacing: spacing,
       })
     ListSpec(data) => ListSpec({ ..data, spacing, })
+    ModifiedSpec(data) =>
+      ModifiedSpec({ ..data, child: data.child.spacing(spacing) })
     _ => self
   }
 }
@@ -513,6 +412,11 @@ pub fn ViewSpec::main_axis_alignment(
         children: data.children.map(child => {
           child.main_axis_alignment(alignment)
         }),
+      })
+    ModifiedSpec(data) =>
+      ModifiedSpec({
+        ..data,
+        child: data.child.main_axis_alignment(alignment),
       })
     _ => self
   }
@@ -559,6 +463,11 @@ pub fn ViewSpec::cross_axis_alignment(
           child.cross_axis_alignment(alignment)
         }),
       })
+    ModifiedSpec(data) =>
+      ModifiedSpec({
+        ..data,
+        child: data.child.cross_axis_alignment(alignment),
+      })
     _ => self
   }
 }
@@ -590,16 +499,22 @@ pub fn ViewSpec::frame(
   max_width? : Double,
   max_height? : Double,
 ) -> ViewSpec {
-  FrameSpec({
-    key: None,
+  self.modified(FrameModifier({
     width,
     height,
     min_width,
     min_height,
     max_width,
     max_height,
-    child: self,
-  })
+  }))
+}
+
+///|
+pub fn ViewSpec::modified(
+  self : ViewSpec,
+  modifier : ViewModifier,
+) -> ViewSpec {
+  ModifiedSpec({ key: None, modifier, child: self })
 }
 
 ///|
@@ -609,4 +524,3 @@ fn map_view_spec(value : ViewSpec?, f : (ViewSpec) -> ViewSpec) -> ViewSpec? {
     None => None
   }
 }
-

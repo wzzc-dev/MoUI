@@ -1,4 +1,16 @@
 ///|
+priv struct RenderEnvironment {
+  font : FontSpec?
+  foreground : Color?
+  corner_radius : Double?
+}
+
+///|
+fn RenderEnvironment::default() -> RenderEnvironment {
+  { font: None, foreground: None, corner_radius: None }
+}
+
+///|
 pub fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
   self.render_with_focus(bounds, None)
 }
@@ -8,6 +20,16 @@ fn ElementNode::render_with_focus(
   self : ElementNode,
   bounds : Rect,
   focused : ElementId?,
+) -> RenderNode {
+  self.render_with_environment(bounds, focused, RenderEnvironment::default())
+}
+
+///|
+fn ElementNode::render_with_environment(
+  self : ElementNode,
+  bounds : Rect,
+  focused : ElementId?,
+  environment : RenderEnvironment,
 ) -> RenderNode {
   let children : Array[RenderNode] = []
   let commands : Array[DrawCommand] = []
@@ -19,8 +41,8 @@ fn ElementNode::render_with_focus(
         DrawText({
           text: data.text,
           frame: bounds,
-          font: data.font,
-          color: data.color,
+          font: environment.font.unwrap_or(data.font),
+          color: environment.foreground.unwrap_or(data.color),
         }),
       )
     ButtonSpec(data) => {
@@ -41,13 +63,14 @@ fn ElementNode::render_with_focus(
       }
       let foreground = match self.button_state {
         ButtonState::Pressed => Color::white()
-        ButtonState::Normal | ButtonState::Hovered => data.foreground
+        ButtonState::Normal | ButtonState::Hovered =>
+          environment.foreground.unwrap_or(data.foreground)
       }
       commands.push(
         DrawText({
           text: data.text,
           frame: bounds,
-          font: data.font,
+          font: environment.font.unwrap_or(data.font),
           color: foreground,
         }),
       )
@@ -59,6 +82,7 @@ fn ElementNode::render_with_focus(
         data,
         bounds,
         focused == Some(self.id),
+        environment,
       )
     ImageSpec(data) => {
       let frame = match data.size {
@@ -71,17 +95,19 @@ fn ElementNode::render_with_focus(
           )
         None => bounds
       }
-      if data.corner_radius > 0.0 {
+      let corner_radius = environment.corner_radius.unwrap_or(data.corner_radius)
+      if corner_radius > 0.0 {
         commands.push(PushClip(frame))
       }
       commands.push(
         DrawImage({ source: data.source, frame, opacity: data.opacity }),
       )
-      if data.corner_radius > 0.0 {
+      if corner_radius > 0.0 {
         commands.push(PopClip)
       }
     }
-    CheckboxSpec(data) => append_checkbox_commands(commands, data, bounds)
+    CheckboxSpec(data) =>
+      append_checkbox_commands(commands, data, bounds, environment)
     FlexSpec(data) => {
       let frames = flex_child_frames(
         data.axis,
@@ -92,13 +118,21 @@ fn ElementNode::render_with_focus(
         bounds,
       )
       for index, child in self.children {
-        children.push(child.render_with_focus(frames[index], focused))
+        children.push(
+          child.render_with_environment(frames[index], focused, environment),
+        )
       }
     }
     PaddingSpec(data) => {
       let child_frame = bounds.inset(data.insets)
       if self.children.length() > 0 {
-        children.push(self.children[0].render_with_focus(child_frame, focused))
+        children.push(
+          self.children[0].render_with_environment(
+            child_frame,
+            focused,
+            environment,
+          ),
+        )
       }
     }
     ContainerSpec(data) => {
@@ -114,10 +148,13 @@ fn ElementNode::render_with_focus(
       }
       match data.background {
         Some(color) =>
-          if data.corner_radius > 0.0 {
+          if environment.corner_radius.unwrap_or(data.corner_radius) > 0.0 {
             commands.push(
               FillRoundedRect(
-                RoundedRect::new(rect=frame, radius=data.corner_radius),
+                RoundedRect::new(
+                  rect=frame,
+                  radius=environment.corner_radius.unwrap_or(data.corner_radius),
+                ),
                 color,
               ),
             )
@@ -127,18 +164,22 @@ fn ElementNode::render_with_focus(
         None => ()
       }
       if self.children.length() > 0 {
-        children.push(self.children[0].render_with_focus(frame, focused))
+        children.push(
+          self.children[0].render_with_environment(frame, focused, environment),
+        )
       }
     }
     FrameSpec(data) => {
       let frame = frame_rect_for_spec(data, bounds)
       if self.children.length() > 0 {
-        children.push(self.children[0].render_with_focus(frame, focused))
+        children.push(
+          self.children[0].render_with_environment(frame, focused, environment),
+        )
       }
     }
     StackSpec(_) =>
       for child in self.children {
-        children.push(child.render_with_focus(bounds, focused))
+        children.push(child.render_with_environment(bounds, focused, environment))
       }
     ScrollSpec(data) => {
       let viewport = data.viewport.unwrap_or(bounds.size)
@@ -151,9 +192,10 @@ fn ElementNode::render_with_focus(
       commands.push(PushClip(clip))
       if self.children.length() > 0 {
         children.push(
-          self.children[0].render_with_focus(
+          self.children[0].render_with_environment(
             bounds.offset(dx=-data.offset.x, dy=-data.offset.y),
             focused,
+            environment,
           ),
         )
       }
@@ -168,15 +210,29 @@ fn ElementNode::render_with_focus(
         bounds,
       )
       for index, child in self.children {
-        children.push(child.render_with_focus(frames[index], focused))
+        children.push(
+          child.render_with_environment(frames[index], focused, environment),
+        )
       }
     }
     ListSpec(data) => {
       let frames = list_child_frames(data.spacing, self.children, bounds)
       for index, child in self.children {
-        children.push(child.render_with_focus(frames[index], focused))
+        children.push(
+          child.render_with_environment(frames[index], focused, environment),
+        )
       }
     }
+    ModifiedSpec(data) =>
+      render_modified_node(
+        self,
+        data,
+        bounds,
+        focused,
+        environment,
+        children,
+        commands,
+      )
   }
   self.dirty.clear()
   {
@@ -185,6 +241,87 @@ fn ElementNode::render_with_focus(
     children,
     hit_testable: element_hit_testable(self.spec),
     paint_commands: commands,
+  }
+}
+
+///|
+fn render_modified_node(
+  element : ElementNode,
+  data : ModifiedViewSpec,
+  bounds : Rect,
+  focused : ElementId?,
+  environment : RenderEnvironment,
+  children : Array[RenderNode],
+  commands : Array[DrawCommand],
+) -> Unit {
+  match data.modifier {
+    PaddingModifier(insets) =>
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds.inset(insets),
+            focused,
+            environment,
+          ),
+        )
+      }
+    FrameModifier(frame) =>
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            frame_rect_for_modifier(frame, bounds),
+            focused,
+            environment,
+          ),
+        )
+      }
+    BackgroundModifier(color) => {
+      let radius = environment.corner_radius.unwrap_or(0.0)
+      if radius > 0.0 {
+        commands.push(FillRoundedRect(RoundedRect::new(rect=bounds, radius~), color))
+      } else {
+        commands.push(FillRect(bounds, color))
+      }
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds,
+            focused,
+            environment,
+          ),
+        )
+      }
+    }
+    ForegroundModifier(color) =>
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds,
+            focused,
+            { ..environment, foreground: Some(color) },
+          ),
+        )
+      }
+    FontModifier(font) =>
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds,
+            focused,
+            { ..environment, font: Some(font) },
+          ),
+        )
+      }
+    CornerRadiusModifier(radius) =>
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds,
+            focused,
+            { ..environment, corner_radius: Some(radius) },
+          ),
+        )
+      }
   }
 }
 
@@ -247,6 +384,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
         self.children,
       )
     ListSpec(data) => measure_list_size(data.spacing, self.children)
+    ModifiedSpec(data) => modified_intrinsic_size(data.modifier, self.children)
   }
 }
 
@@ -257,6 +395,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     TextFieldSpec(_) => true
     CheckboxSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
+    ModifiedSpec(data) => data.modifier is BackgroundModifier(_)
     _ => false
   }
 }
@@ -285,6 +424,7 @@ fn append_checkbox_commands(
   commands : Array[DrawCommand],
   data : CheckboxViewSpec,
   frame : Rect,
+  environment : RenderEnvironment,
 ) -> Unit {
   let box_side = data.size.width
   let box_y = frame.origin.y + max_double(0.0, (frame.size.height - box_side) / 2.0)
@@ -317,8 +457,8 @@ fn append_checkbox_commands(
         width=max_double(0.0, frame.size.width - box_side - 8.0),
         height=frame.size.height,
       ),
-      font: data.font,
-      color: data.foreground,
+      font: environment.font.unwrap_or(data.font),
+      color: environment.foreground.unwrap_or(data.foreground),
     }),
   )
 }
@@ -330,6 +470,7 @@ fn append_text_field_commands(
   data : TextFieldViewSpec,
   frame : Rect,
   focused : Bool,
+  environment : RenderEnvironment,
 ) -> Unit {
   let border = if focused {
     data.focused_border_color
@@ -361,15 +502,24 @@ fn append_text_field_commands(
   let text = data.value.get()
   let display_text = text_with_composition(text, element, focused)
   let display = if display_text == "" { data.placeholder } else { display_text }
-  let color = if text == "" { data.placeholder_color } else { data.foreground }
+  let color = if text == "" {
+    data.placeholder_color
+  } else {
+    environment.foreground.unwrap_or(data.foreground)
+  }
   let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
   commands.push(
-    DrawText({ text: display, frame: text_frame, font: data.font, color }),
+    DrawText({
+      text: display,
+      frame: text_frame,
+      font: environment.font.unwrap_or(data.font),
+      color,
+    }),
   )
   if focused {
     let cursor_x = text_frame.origin.x +
       clamp_int(element.caret, 0, text_length(text)).to_double() *
-      data.font.size *
+      environment.font.unwrap_or(data.font).size *
       0.55
     let cursor = Rect::new(
       x=cursor_x,
@@ -401,4 +551,3 @@ pub fn RenderNode::to_layout_result(self : RenderNode) -> LayoutResult {
     children: self.children.map(child => child.to_layout_result()),
   }
 }
-
