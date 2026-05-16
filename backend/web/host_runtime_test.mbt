@@ -185,14 +185,36 @@ test "web maps named keys and ignores synthetic keyboard input" {
 }
 
 ///|
-test "web maps ime commit and redraw" {
+test "web maps ime composition lifecycle and redraw" {
+  let preedit = window_event_to_host(
+    @window_core.WindowEvent::Ime(
+      @window_core.Ime::Preedit(
+        "ni",
+        Some(@window_core.ImeCursorRange::new(0, 2)),
+      ),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match preedit {
+    Some(
+      @host.HostEvent::TextInputEvent(
+        @core.TextInputEvent::CompositionUpdate({ text: "ni", cursor: Some({ start: 0, end: 2 }) })
+      )
+    ) => ()
+    _ => fail("expected composition update")
+  }
+
   let ime = window_event_to_host(
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("hello")),
     @core.Point::new(x=0.0, y=0.0),
   )
   match ime {
-    Some(@host.HostEvent::TextInput(text)) => inspect(text, content="hello")
-    _ => fail("expected text input")
+    Some(
+      @host.HostEvent::TextInputEvent(
+        @core.TextInputEvent::CompositionEnd(text)
+      )
+    ) => inspect(text, content="hello")
+    _ => fail("expected composition end")
   }
 
   let redraw = window_event_to_host(

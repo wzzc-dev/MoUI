@@ -31,6 +31,7 @@ pub(all) enum HostEvent {
   PointerMoved(@core.Point)
   PointerButton(@core.Point, @core.PointerPhase, Int)
   Keyboard(@core.KeyboardEvent)
+  TextInputEvent(@core.TextInputEvent)
   TextInput(String)
   RedrawRequested
   CloseRequested

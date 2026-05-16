@@ -509,3 +509,80 @@ test "tab traverses text field focus forward and backward" {
   inspect(first.get(), content="ac")
   inspect(second.get(), content="b")
 }
+
+///|
+test "text input events edit at caret and support delete ranges" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("abc")))
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="ArrowLeft")))
+  runtime.dispatch_event(TextInput(InsertText("Z")))
+  inspect(state.get(), content="abZc")
+  runtime.dispatch_event(TextInput(DeleteRange(TextRange::new(start=1, end=2))))
+  inspect(state.get(), content="aZc")
+}
+
+///|
+test "ime composition updates paint preview and commit into text field" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=180.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(CompositionStart))
+  runtime.dispatch_event(
+    TextInput(
+      CompositionUpdate(CompositionUpdate::new(text="ni", cursor=None)),
+    ),
+  )
+  let preview = runtime.build_draw_commands()
+  guard preview[3] is DrawText({ text: "ni", .. }) else {
+    fail("expected composition preview")
+  }
+  inspect(state.get(), content="")
+  runtime.dispatch_event(TextInput(CompositionEnd("你")))
+  inspect(state.get(), content="你")
+  let committed = runtime.build_draw_commands()
+  guard committed[3] is DrawText({ text: "你", .. }) else {
+    fail("expected committed text")
+  }
+}
+
+///|
+test "ime delete surrounding removes text around caret" {
+  let state = State::new("abc")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="ArrowLeft")))
+  runtime.dispatch_event(TextInput(DeleteSurrounding(1, 1)))
+  inspect(state.get(), content="a")
+}

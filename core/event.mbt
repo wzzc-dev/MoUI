@@ -32,6 +32,28 @@ pub(all) struct KeyboardEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct TextRange {
+  start : Int
+  end : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct CompositionUpdate {
+  text : String
+  cursor : TextRange?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum TextInputEvent {
+  InsertText(String)
+  CompositionStart
+  CompositionUpdate(CompositionUpdate)
+  CompositionEnd(String)
+  DeleteRange(TextRange)
+  DeleteSurrounding(Int, Int)
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum RedrawReason {
   Initial
   Input
@@ -43,6 +65,7 @@ pub(all) enum RedrawReason {
 pub(all) enum AppEvent {
   Pointer(PointerEvent)
   Keyboard(KeyboardEvent)
+  TextInput(TextInputEvent)
   Resize(Size)
   Redraw(RedrawReason)
   CloseRequested
@@ -82,4 +105,36 @@ pub fn KeyboardEvent::new(
   modifiers? : KeyModifiers = KeyModifiers::none(),
 ) -> KeyboardEvent {
   { key, text, pressed, repeat, modifiers }
+}
+
+///|
+pub fn TextRange::new(start~ : Int, end~ : Int) -> TextRange {
+  { start, end }
+}
+
+///|
+pub fn TextRange::collapsed(index : Int) -> TextRange {
+  { start: index, end: index }
+}
+
+///|
+pub fn TextRange::normalized(self : TextRange) -> TextRange {
+  if self.start <= self.end {
+    self
+  } else {
+    { start: self.end, end: self.start }
+  }
+}
+
+///|
+pub fn TextRange::is_collapsed(self : TextRange) -> Bool {
+  self.start == self.end
+}
+
+///|
+pub fn CompositionUpdate::new(
+  text~ : String,
+  cursor? : TextRange? = None,
+) -> CompositionUpdate {
+  { text, cursor }
 }

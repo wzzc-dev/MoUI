@@ -209,6 +209,9 @@ pub(all) struct ElementNode {
   mut children : Array[ElementNode]
   mut dirty : DirtyFlags
   mut button_state : ButtonState
+  mut caret : Int
+  mut selection : TextRange?
+  mut composition : String?
 }
 
 ///|
@@ -825,6 +828,9 @@ fn mount_view_spec_with_next(spec : ViewSpec, next_id : Int) -> MountResult {
       children,
       dirty: DirtyFlags::all(),
       button_state: ButtonState::Normal,
+      caret: 0,
+      selection: None,
+      composition: None,
     },
     next_id: next,
   }
@@ -1005,6 +1011,7 @@ fn ElementNode::render_with_focus(
     TextFieldSpec(data) =>
       append_text_field_commands(
         commands,
+        self,
         data,
         bounds,
         focused == Some(self.id),
@@ -1197,6 +1204,9 @@ pub fn ElementNode::dispatch_pointer(
     TextFieldSpec(_) => {
       let focused = if event.phase == PointerPhase::Down &&
         render.frame.contains(event.position) {
+        self.caret = text_field_text_length(self.spec)
+        self.selection = None
+        self.composition = None
         Some(self.id)
       } else {
         None
@@ -1239,6 +1249,14 @@ pub fn ElementNode::dispatch_pointer(
     }
     EmptySpec | TextSpec(_) | SpacerSpec(_) =>
       { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn text_field_text_length(spec : ViewSpec) -> Int {
+  match spec {
+    TextFieldSpec(data) => text_length(data.value.get())
+    _ => 0
   }
 }
 
@@ -1415,6 +1433,32 @@ pub fn ElementNode::dispatch_keyboard(
 }
 
 ///|
+pub fn ElementNode::dispatch_text_input(
+  self : ElementNode,
+  target : ElementId,
+  event : TextInputEvent,
+) -> ElementEventResult {
+  if self.id == target {
+    match self.spec {
+      TextFieldSpec(data) => handle_text_field_input(self, data, event)
+      _ => { changed: false, activated: false, focused: None }
+    }
+  } else {
+    let mut changed = false
+    let mut activated = false
+    for child in self.children {
+      let result = child.dispatch_text_input(target, event)
+      changed = changed || result.changed
+      activated = activated || result.activated
+    }
+    if changed {
+      self.dirty.mark_paint()
+    }
+    { changed, activated, focused: None }
+  }
+}
+
+///|
 fn handle_text_field_keyboard(
   element : ElementNode,
   data : TextFieldViewSpec,
@@ -1432,20 +1476,35 @@ fn handle_text_field_keyboard(
     return { changed: true, activated: true, focused: None }
   }
   if event.key == "Backspace" {
-    let next = remove_last_character(data.value.get())
-    if next != data.value.get() {
-      data.value.set(next)
-      element.dirty.mark_paint()
-      return { changed: true, activated: false, focused: None }
-    }
-    return { changed: false, activated: false, focused: None }
+    return handle_text_field_input(
+      element,
+      data,
+      DeleteSurrounding(1, 0),
+    )
+  }
+  if event.key == "Delete" {
+    return handle_text_field_input(
+      element,
+      data,
+      DeleteSurrounding(0, 1),
+    )
+  }
+  if event.key == "ArrowLeft" {
+    element.caret = clamp_int(element.caret - 1, 0, text_length(data.value.get()))
+    element.selection = None
+    element.dirty.mark_paint()
+    return { changed: true, activated: false, focused: None }
+  }
+  if event.key == "ArrowRight" {
+    element.caret = clamp_int(element.caret + 1, 0, text_length(data.value.get()))
+    element.selection = None
+    element.dirty.mark_paint()
+    return { changed: true, activated: false, focused: None }
   }
   match event.text {
     Some(text) =>
       if text != "" {
-        data.value.set(data.value.get() + text)
-        element.dirty.mark_paint()
-        { changed: true, activated: false, focused: None }
+        handle_text_field_input(element, data, InsertText(text))
       } else {
         { changed: false, activated: false, focused: None }
       }
@@ -1454,15 +1513,182 @@ fn handle_text_field_keyboard(
 }
 
 ///|
-fn remove_last_character(text : String) -> String {
+fn handle_text_field_input(
+  element : ElementNode,
+  data : TextFieldViewSpec,
+  event : TextInputEvent,
+) -> ElementEventResult {
+  match event {
+    InsertText(text) => {
+      if text == "" {
+        return { changed: false, activated: false, focused: None }
+      }
+      let edit = replace_current_selection(
+        data.value.get(),
+        element.caret,
+        element.selection,
+        text,
+      )
+      apply_text_edit(element, data, edit)
+    }
+    CompositionStart => {
+      element.composition = Some("")
+      element.selection = None
+      element.dirty.mark_paint()
+      { changed: true, activated: false, focused: None }
+    }
+    CompositionUpdate(update) => {
+      element.composition = if update.text == "" {
+        None
+      } else {
+        Some(update.text)
+      }
+      match update.cursor {
+        Some(cursor) => {
+          let normalized = cursor.normalized()
+          let start = clamp_int(normalized.start, 0, text_length(update.text))
+          let end = clamp_int(normalized.end, 0, text_length(update.text))
+          element.selection = Some(TextRange::new(start~, end~))
+        }
+        None => ()
+      }
+      element.dirty.mark_paint()
+      { changed: true, activated: false, focused: None }
+    }
+    CompositionEnd(text) => {
+      element.composition = None
+      element.selection = None
+      if text == "" {
+        element.dirty.mark_paint()
+        { changed: true, activated: false, focused: None }
+      } else {
+        let edit = replace_current_selection(
+          data.value.get(),
+          element.caret,
+          None,
+          text,
+        )
+        apply_text_edit(element, data, edit)
+      }
+    }
+    DeleteRange(range) => {
+      let edit = replace_text_range(data.value.get(), range, "")
+      apply_text_edit(element, data, edit)
+    }
+    DeleteSurrounding(before, after) => {
+      let text = data.value.get()
+      let range = surrounding_delete_range(text, element.caret, before, after)
+      let edit = replace_text_range(text, range, "")
+      apply_text_edit(element, data, edit)
+    }
+  }
+}
+
+///|
+priv struct TextEditResult {
+  text : String
+  caret : Int
+}
+
+///|
+fn apply_text_edit(
+  element : ElementNode,
+  data : TextFieldViewSpec,
+  edit : TextEditResult,
+) -> ElementEventResult {
+  if edit.text != data.value.get() ||
+    edit.caret != element.caret ||
+    element.selection is Some(_) ||
+    element.composition is Some(_) {
+    data.value.set(edit.text)
+    element.caret = edit.caret
+    element.selection = None
+    element.composition = None
+    element.dirty.mark_paint()
+    { changed: true, activated: false, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn replace_current_selection(
+  text : String,
+  caret : Int,
+  selection : TextRange?,
+  replacement : String,
+) -> TextEditResult {
+  let range = match selection {
+    Some(selection) => selection
+    None => TextRange::collapsed(caret)
+  }
+  replace_text_range(text, range, replacement)
+}
+
+///|
+fn replace_text_range(
+  text : String,
+  range : TextRange,
+  replacement : String,
+) -> TextEditResult {
   let chars = text.to_array()
-  ignore(chars.pop())
-  String::from_array(chars)
+  let normalized = range.normalized()
+  let start = clamp_int(normalized.start, 0, chars.length())
+  let end = clamp_int(normalized.end, start, chars.length())
+  let replacement_chars = replacement.to_array()
+  {
+    text: String::from_array(chars[:start] + replacement_chars + chars[end:]),
+    caret: start + replacement_chars.length(),
+  }
+}
+
+///|
+fn surrounding_delete_range(
+  text : String,
+  caret : Int,
+  before : Int,
+  after : Int,
+) -> TextRange {
+  let length = text_length(text)
+  let caret = clamp_int(caret, 0, length)
+  let before = max_int(0, before)
+  let after = max_int(0, after)
+  TextRange::new(
+    start=max_int(0, caret - before),
+    end=min_int(length, caret + after),
+  )
+}
+
+///|
+fn text_with_composition(
+  text : String,
+  element : ElementNode,
+  focused : Bool,
+) -> String {
+  if !focused {
+    text
+  } else {
+    match element.composition {
+      Some(composition) =>
+        replace_text_range(
+          text,
+          TextRange::collapsed(element.caret),
+          composition,
+        ).text
+      None => text
+    }
+  }
+}
+
+///|
+fn text_length(text : String) -> Int {
+  text.to_array().length()
 }
 
 ///|
 fn append_text_field_commands(
   commands : Array[DrawCommand],
+  element : ElementNode,
   data : TextFieldViewSpec,
   frame : Rect,
   focused : Bool,
@@ -1495,7 +1721,8 @@ fn append_text_field_commands(
     commands.push(StrokeRect(frame, border, if focused { 2.0 } else { 1.0 }))
   }
   let text = data.value.get()
-  let display = if text == "" { data.placeholder } else { text }
+  let display_text = text_with_composition(text, element, focused)
+  let display = if display_text == "" { data.placeholder } else { display_text }
   let color = if text == "" { data.placeholder_color } else { data.foreground }
   let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
   commands.push(
@@ -1503,7 +1730,9 @@ fn append_text_field_commands(
   )
   if focused {
     let cursor_x = text_frame.origin.x +
-      text.to_array().length().to_double() * data.font.size * 0.55
+      clamp_int(element.caret, 0, text_length(text)).to_double() *
+      data.font.size *
+      0.55
     let cursor = Rect::new(
       x=cursor_x,
       y=text_frame.origin.y + 6.0,

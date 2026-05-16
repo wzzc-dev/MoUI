@@ -152,33 +152,44 @@ test "windows backend converts named keys and ignores synthetic input" {
 }
 
 ///|
-test "windows backend converts ime commit into text input" {
+test "windows backend converts ime commit into core composition end" {
   let event = window_event_to_core(
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("x")),
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(@core.AppEvent::Keyboard(event)) => {
-      inspect(event.key, content="x")
-      match event.text {
-        Some(text) => inspect(text, content="x")
-        None => fail("expected committed text")
-      }
-      inspect(event.pressed, content="true")
-    }
-    _ => fail("expected keyboard text input")
+    Some(
+      @core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))
+    ) => inspect(text, content="x")
+    _ => fail("expected composition end")
   }
 }
 
 ///|
-test "windows backend keeps ime commit separate at host layer" {
+test "windows backend keeps ime composition separate at host layer" {
+  let delete = window_event_to_host(
+    @window_core.WindowEvent::Ime(@window_core.Ime::DeleteSurrounding(1, 2)),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match delete {
+    Some(
+      @host.HostEvent::TextInputEvent(
+        @core.TextInputEvent::DeleteSurrounding(1, 2)
+      )
+    ) => ()
+    _ => fail("expected delete surrounding")
+  }
   let event = window_event_to_host(
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("x")),
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(@host.HostEvent::TextInput(text)) => inspect(text, content="x")
-    _ => fail("expected host text input")
+    Some(
+      @host.HostEvent::TextInputEvent(
+        @core.TextInputEvent::CompositionEnd(text)
+      )
+    ) => inspect(text, content="x")
+    _ => fail("expected host composition end")
   }
 }
 

@@ -173,8 +173,39 @@ pub fn window_event_to_host_with_modifiers(
           ),
         )
       }
+    @window_core.WindowEvent::Ime(@window_core.Ime::Enabled) =>
+      Some(
+        @host.HostEvent::TextInputEvent(@core.TextInputEvent::CompositionStart),
+      )
+    @window_core.WindowEvent::Ime(@window_core.Ime::Preedit(text, cursor)) =>
+      Some(
+        @host.HostEvent::TextInputEvent(
+          @core.TextInputEvent::CompositionUpdate(
+            @core.CompositionUpdate::new(
+              text~,
+              cursor=ime_cursor_range_to_core(cursor),
+            ),
+          ),
+        ),
+      )
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit(text)) =>
-      Some(@host.HostEvent::TextInput(text))
+      Some(
+        @host.HostEvent::TextInputEvent(
+          @core.TextInputEvent::CompositionEnd(text),
+        ),
+      )
+    @window_core.WindowEvent::Ime(
+      @window_core.Ime::DeleteSurrounding(before, after)
+    ) =>
+      Some(
+        @host.HostEvent::TextInputEvent(
+          @core.TextInputEvent::DeleteSurrounding(before, after),
+        ),
+      )
+    @window_core.WindowEvent::Ime(@window_core.Ime::Disabled) =>
+      Some(
+        @host.HostEvent::TextInputEvent(@core.TextInputEvent::CompositionEnd("")),
+      )
     @window_core.WindowEvent::Focused(focused) =>
       if blur_to_cancel && !focused {
         Some(
@@ -188,6 +219,17 @@ pub fn window_event_to_host_with_modifiers(
         None
       }
     _ => None
+  }
+}
+
+///|
+fn ime_cursor_range_to_core(
+  cursor : @window_core.ImeCursorRange?,
+) -> @core.TextRange? {
+  match cursor {
+    Some(cursor) =>
+      Some(@core.TextRange::new(start=cursor.start(), end=cursor.end()))
+    None => None
   }
 }
 

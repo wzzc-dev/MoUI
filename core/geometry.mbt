@@ -170,3 +170,23 @@ fn max_double(a : Double, b : Double) -> Double {
     b
   }
 }
+
+///|
+fn min_int(a : Int, b : Int) -> Int {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
+  }
+}

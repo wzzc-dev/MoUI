@@ -22,6 +22,7 @@ pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 pub(all) enum AppEvent {
   Pointer(PointerEvent)
   Keyboard(KeyboardEvent)
+  TextInput(TextInputEvent)
   Resize(Size)
   Redraw(RedrawReason)
   CloseRequested
@@ -137,6 +138,12 @@ pub(all) struct Component {
 }
 pub fn Component::new((BuildContext) -> ViewSpec) -> Self
 
+pub(all) struct CompositionUpdate {
+  text : String
+  cursor : TextRange?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn CompositionUpdate::new(text~ : String, cursor? : TextRange?) -> Self
+
 pub(all) struct Constraints {
   min : Size
   max : Size
@@ -218,9 +225,13 @@ pub(all) struct ElementNode {
   mut children : Array[ElementNode]
   mut dirty : DirtyFlags
   mut button_state : ButtonState
+  mut caret : Int
+  mut selection : TextRange?
+  mut composition : String?
 }
 pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode) -> ElementEventResult
+pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> ElementEventResult
 pub fn ElementNode::find_keyed(Self, String) -> ElementId?
 pub fn ElementNode::find_text_field_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
@@ -557,6 +568,24 @@ pub(all) struct TextFieldViewSpec {
   corner_radius : Double
   on_submit : (() -> Unit)?
 }
+
+pub(all) enum TextInputEvent {
+  InsertText(String)
+  CompositionStart
+  CompositionUpdate(CompositionUpdate)
+  CompositionEnd(String)
+  DeleteRange(TextRange)
+  DeleteSurrounding(Int, Int)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextRange {
+  start : Int
+  end : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextRange::collapsed(Int) -> Self
+pub fn TextRange::is_collapsed(Self) -> Bool
+pub fn TextRange::new(start~ : Int, end~ : Int) -> Self
+pub fn TextRange::normalized(Self) -> Self
 
 pub(all) struct TextRun {
   text : String

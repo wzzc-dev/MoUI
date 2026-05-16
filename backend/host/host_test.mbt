@@ -105,7 +105,7 @@ test "host driver dispatches resize and deduplicates redraw requests" {
 }
 
 ///|
-test "host driver maps focused text input through current core keyboard event" {
+test "host driver maps focused text input through core text input event" {
   let text = @core.State::new("")
   let runtime = @core.AppRuntime::new_spec(
     root=@core.ViewSpec::TextFieldSpec({
@@ -143,16 +143,64 @@ test "host driver maps focused text input through current core keyboard event" {
 }
 
 ///|
+test "host driver dispatches ime composition text input events" {
+  let text = @core.State::new("")
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::TextFieldSpec({
+      key: None,
+      value: text.binding(),
+      placeholder: "Type",
+      size: @core.Size::new(width=240.0, height=40.0),
+      font: @core.FontSpec::new(size=16.0, weight=400),
+      foreground: @core.Color::black(),
+      placeholder_color: @core.Color::gray(),
+      background: @core.Color::white(),
+      border_color: @core.Color::gray(),
+      focused_border_color: @core.Color::blue(),
+      cursor_color: @core.Color::blue(),
+      corner_radius: 0.0,
+      on_submit: None,
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  ignore(
+    driver.dispatch(
+      HostEvent::PointerButton(
+        @core.Point::new(x=10.0, y=10.0),
+        @core.PointerPhase::Down,
+        0,
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInputEvent(@core.TextInputEvent::CompositionStart),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInputEvent(@core.TextInputEvent::CompositionEnd("你")),
+    ),
+  )
+  inspect(text.get(), content="你")
+}
+
+///|
 test "host event converts to current core event model" {
   let event = HostEvent::TextInput("x").to_core()
   match event {
-    Some(@core.AppEvent::Keyboard(keyboard)) => {
-      inspect(keyboard.key, content="x")
-      match keyboard.text {
-        Some(text) => inspect(text, content="x")
-        None => fail("expected text")
-      }
+    Some(@core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text))) => {
+      inspect(text, content="x")
     }
-    _ => fail("expected keyboard event")
+    _ => fail("expected text input event")
+  }
+  let composition = HostEvent::TextInputEvent(
+    @core.TextInputEvent::CompositionEnd("你"),
+  ).to_core()
+  match composition {
+    Some(@core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
+      inspect(text, content="你")
+    _ => fail("expected composition text input event")
   }
 }

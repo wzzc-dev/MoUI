@@ -146,14 +146,35 @@ test "macos backend converts keyboard input event" {
 }
 
 ///|
-test "macos backend keeps ime commit separate at host layer" {
+test "macos backend keeps ime composition separate at host layer" {
+  let preedit = window_event_to_host(
+    @window_core.WindowEvent::Ime(
+      @window_core.Ime::Preedit(
+        "ni",
+        Some(@window_core.ImeCursorRange::new(0, 2)),
+      ),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match preedit {
+    Some(
+      @host.HostEvent::TextInputEvent(
+        @core.TextInputEvent::CompositionUpdate({ text: "ni", cursor: Some({ start: 0, end: 2 }) })
+      )
+    ) => ()
+    _ => fail("expected composition update")
+  }
   let event = window_event_to_host(
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("x")),
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(@host.HostEvent::TextInput(text)) => inspect(text, content="x")
-    _ => fail("expected host text input")
+    Some(
+      @host.HostEvent::TextInputEvent(
+        @core.TextInputEvent::CompositionEnd(text)
+      )
+    ) => inspect(text, content="x")
+    _ => fail("expected host composition end")
   }
 }
 

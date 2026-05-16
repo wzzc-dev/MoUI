@@ -43,6 +43,7 @@ pub(all) enum HostEvent {
   PointerMoved(@core.Point)
   PointerButton(@core.Point, @core.PointerPhase, Int)
   Keyboard(@core.KeyboardEvent)
+  TextInputEvent(@core.TextInputEvent)
   TextInput(String)
   RedrawRequested
   CloseRequested
@@ -274,11 +275,13 @@ pub fn HostRuntimeDriver::dispatch(
       self.runtime.dispatch_event(@core.AppEvent::Keyboard(event))
       self.request_redraw_if_needed()
     }
+    TextInputEvent(event) => {
+      self.runtime.dispatch_event(@core.AppEvent::TextInput(event))
+      self.request_redraw_if_needed()
+    }
     TextInput(text) => {
       self.runtime.dispatch_event(
-        @core.AppEvent::Keyboard(
-          @core.KeyboardEvent::new(key=text, text=Some(text)),
-        ),
+        @core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text)),
       )
       self.request_redraw_if_needed()
     }
@@ -369,11 +372,10 @@ pub fn HostEvent::to_core(self : HostEvent) -> @core.AppEvent? {
         ),
       )
     Keyboard(event) => Some(@core.AppEvent::Keyboard(event))
+    TextInputEvent(event) => Some(@core.AppEvent::TextInput(event))
     TextInput(text) =>
       Some(
-        @core.AppEvent::Keyboard(
-          @core.KeyboardEvent::new(key=text, text=Some(text)),
-        ),
+        @core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text)),
       )
     RedrawRequested =>
       Some(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))

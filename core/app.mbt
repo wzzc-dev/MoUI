@@ -216,6 +216,20 @@ pub fn RuntimeState::dispatch_event(
           None => ()
         }
       }
+    TextInput(event) =>
+      match self.focused_element {
+        Some(target) => {
+          let result = self.element_tree.dispatch_text_input(target, event)
+          self.needs_redraw = self.needs_redraw || result.changed
+          self.needs_rebuild = self.needs_rebuild || result.activated
+          self.needs_paint = self.needs_paint || result.changed
+          if result.changed || result.activated {
+            self.mark_dirty(self.element_tree.id)
+          }
+          self.rebuild_if_possible()
+        }
+        None => ()
+      }
     CloseRequested => ()
   }
 }
