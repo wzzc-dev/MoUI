@@ -55,7 +55,7 @@ pub fn ElementNode::dispatch_pointer(
       }
       { changed, activated, focused }
     }
-    EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) =>
+    EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
       { changed: false, activated: false, focused: None }
   }
 }

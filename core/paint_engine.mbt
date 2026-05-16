@@ -258,6 +258,11 @@ fn ElementNode::render_with_environment(
         children,
         commands,
       )
+    CustomSpec(data) => {
+      for command in (data.paint)(bounds) {
+        commands.push(command)
+      }
+    }
   }
   self.dirty.clear()
   {
@@ -410,6 +415,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
       )
     ListSpec(data) => measure_list_size(data.spacing, self.children)
     ModifiedSpec(data) => modified_intrinsic_size(data.modifier, self.children)
+    CustomSpec(data) => (data.measure)(Constraints::unbounded())
   }
 }
 
@@ -421,6 +427,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     CheckboxSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     ModifiedSpec(data) => data.modifier is BackgroundModifier(_)
+    CustomSpec(_) => true
     _ => false
   }
 }

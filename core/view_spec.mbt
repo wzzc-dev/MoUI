@@ -205,6 +205,15 @@ pub(all) struct ModifiedViewSpec {
 }
 
 ///|
+pub(all) struct CustomViewSpec {
+  key : Key?
+  measure : (Constraints) -> Size
+  paint : (Rect) -> Array[DrawCommand]
+  semantics_role : SemanticsRole
+  semantics_label : String
+}
+
+///|
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -222,6 +231,7 @@ pub(all) enum ViewSpec {
   GridSpec(GridViewSpec)
   ListSpec(ListViewSpec)
   ModifiedSpec(ModifiedViewSpec)
+  CustomSpec(CustomViewSpec)
 }
 
 ///|
@@ -266,6 +276,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     GridSpec(data) => data.key
     ListSpec(data) => data.key
     ModifiedSpec(data) => data.key
+    CustomSpec(data) => data.key
   }
 }
 
@@ -288,6 +299,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     GridSpec(data) => GridSpec({ ..data, key: Some(key) })
     ListSpec(data) => ListSpec({ ..data, key: Some(key) })
     ModifiedSpec(data) => ModifiedSpec({ ..data, key: Some(key) })
+    CustomSpec(data) => CustomSpec({ ..data, key: Some(key) })
   }
 }
 
@@ -310,6 +322,7 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     GridSpec(_) => 13
     ListSpec(_) => 14
     ModifiedSpec(_) => 15
+    CustomSpec(_) => 16
   }
 }
 
@@ -523,6 +536,22 @@ pub fn ViewSpec::modified(
   modifier : ViewModifier,
 ) -> ViewSpec {
   ModifiedSpec({ key: None, modifier, child: self })
+}
+
+///|
+pub fn ViewSpec::custom(
+  measure~ : (Constraints) -> Size,
+  paint~ : (Rect) -> Array[DrawCommand],
+  semantics_role? : SemanticsRole = SemanticsRole::Group,
+  semantics_label? : String = "",
+) -> ViewSpec {
+  CustomSpec({
+    key: None,
+    measure,
+    paint,
+    semantics_role,
+    semantics_label,
+  })
 }
 
 ///|

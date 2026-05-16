@@ -232,6 +232,37 @@ test "image spec emits draw image command" {
 }
 
 ///|
+test "custom spec measures paints and exposes semantics" {
+  let spec = ViewSpec::custom(
+    measure=constraints => constraints.constrain(Size::new(width=32.0, height=20.0)),
+    paint=frame => [
+      DrawCommand::FillRoundedRectBrush(
+        RoundedRect::new(rect=frame, radius=3.0),
+        Brush::solid(Color::blue()),
+      ),
+    ],
+    semantics_role=SemanticsRole::Group,
+    semantics_label="Custom swatch",
+  ).key("custom")
+  let runtime = RuntimeState::new_spec(
+    root=spec,
+    size=Size::new(width=80.0, height=60.0),
+  )
+  let measured = runtime.element_tree.measure(
+    Constraints::loose(Size::new(width=40.0, height=30.0)),
+  )
+  inspect(measured.size.width, content="32")
+  assert_true(
+    runtime.build_draw_commands().any(command => {
+      command is DrawCommand::FillRoundedRectBrush(_, Brush::Solid(_))
+    }),
+  )
+  let semantics = runtime.semantics()
+  inspect(semantics.label, content="Custom swatch")
+  assert_true(runtime.element_tree.find_keyed("custom") == Some(runtime.element_tree.id))
+}
+
+///|
 test "checkbox toggles binding and exposes semantics" {
   let checked = State::new(false)
   let runtime = RuntimeState::new_spec(

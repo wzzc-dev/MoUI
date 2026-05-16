@@ -165,6 +165,13 @@ fn ElementNode::semantics_info(
       { role: ScrollView, label: "", value: "", actions: [Scroll] }
     ImageSpec(data) =>
       { role: None, label: data.source, value: "", actions: [] }
+    CustomSpec(data) =>
+      {
+        role: data.semantics_role,
+        label: data.semantics_label,
+        value: data.semantics_label,
+        actions: [],
+      }
     EmptySpec | SpacerSpec(_) =>
       { role: None, label: "", value: "", actions: [] }
     FlexSpec(_)

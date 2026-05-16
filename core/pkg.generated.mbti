@@ -230,6 +230,14 @@ pub(all) enum CrossAxisAlignment {
   CrossStretch
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct CustomViewSpec {
+  key : Key?
+  measure : (Constraints) -> Size
+  paint : (Rect) -> Array[DrawCommand]
+  semantics_role : SemanticsRole
+  semantics_label : String
+}
+
 pub(all) struct DirtyFlags {
   mut needs_build : Bool
   mut needs_layout : Bool
@@ -856,10 +864,12 @@ pub(all) enum ViewSpec {
   GridSpec(GridViewSpec)
   ListSpec(ListViewSpec)
   ModifiedSpec(ModifiedViewSpec)
+  CustomSpec(CustomViewSpec)
 }
 pub fn ViewSpec::background(Self, Color) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self
 pub fn ViewSpec::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
+pub fn ViewSpec::custom(measure~ : (Constraints) -> Size, paint~ : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self
 pub fn ViewSpec::environment(Self, Environment) -> Self
 pub fn ViewSpec::font(Self, FontSpec) -> Self
 pub fn ViewSpec::foreground(Self, Color) -> Self

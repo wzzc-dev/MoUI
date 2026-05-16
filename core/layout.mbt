@@ -139,6 +139,7 @@ fn ElementNode::measured_size_from_children(
       )
     ListSpec(data) => measure_list_measured(data.spacing, children)
     ModifiedSpec(data) => modified_measured_size(data.modifier, children)
+    CustomSpec(data) => (data.measure)(Constraints::unbounded())
   }
 }
 
