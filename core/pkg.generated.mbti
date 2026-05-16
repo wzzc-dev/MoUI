@@ -297,6 +297,7 @@ pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> Elem
 pub fn ElementNode::find_keyed(Self, String) -> ElementId?
 pub fn ElementNode::find_text_field_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
+pub fn ElementNode::hit_test_path(Self, Point, RenderNode) -> HitTestResult
 pub fn ElementNode::intrinsic_size(Self) -> Size
 pub fn ElementNode::measure(Self, Constraints) -> MeasuredNode
 pub fn ElementNode::next_focus(Self, current~ : ElementId?, reverse~ : Bool) -> ElementId?
@@ -362,6 +363,16 @@ pub(all) struct GridViewSpec {
   column_spacing : Double
   children : Array[ViewSpec]
 }
+
+pub(all) struct HitTestEntry {
+  element_id : ElementId
+  local_position : Point
+  frame : Rect
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HitTestResult {
+  path : Array[HitTestEntry]
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ImageRun {
   source : String

@@ -5,6 +5,18 @@ pub(all) struct TapGestureResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HitTestEntry {
+  element_id : ElementId
+  local_position : Point
+  frame : Rect
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HitTestResult {
+  path : Array[HitTestEntry]
+} derive(Eq, Debug, ToJson)
+
+///|
 pub fn recognize_button_tap(
   current : ButtonState,
   inside : Bool,

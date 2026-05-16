@@ -387,6 +387,24 @@ test "runtime dynamic builder rebuilds after activated pointer" {
 }
 
 ///|
+test "hit test path records root to topmost leaf" {
+  let root = ViewSpec::StackSpec({
+    key: None,
+    children: [
+      test_label("Bottom", key="bottom"),
+      test_label("Top", key="top"),
+    ],
+  })
+  let element = mount_view_spec(root)
+  let render = element.render(Rect::new(x=0.0, y=0.0, width=100.0, height=40.0))
+  let path = element.hit_test_path(Point::new(x=10.0, y=10.0), render).path
+  inspect(path.length(), content="2")
+  assert_true(path[0].element_id == element.id)
+  assert_true(path[1].element_id == element.children[1].id)
+  inspect(path[1].local_position.x, content="10")
+}
+
+///|
 test "runtime focuses text field and keyboard edits binding" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(
