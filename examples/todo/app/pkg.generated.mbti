@@ -18,6 +18,7 @@ pub struct TodoApp {
 }
 pub fn TodoApp::add(Self, String) -> Unit
 pub fn TodoApp::add_sample(Self) -> Unit
+pub fn TodoApp::completed_binding(Self, Int) -> @core.Binding[Bool]
 pub fn TodoApp::count(Self) -> Int
 pub fn TodoApp::items(Self) -> Array[TodoItem]
 pub fn TodoApp::new() -> Self

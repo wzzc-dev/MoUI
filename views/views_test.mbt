@@ -38,6 +38,37 @@ test "button on click callback" {
 }
 
 ///|
+test "image view builds draw image" {
+  let runtime = @core.AppRuntime::new_spec(
+    root=@views.image("logo.png", width=24.0, height=24.0),
+    size=@core.Size::new(width=40.0, height=40.0),
+  )
+  assert_true(
+    runtime.draw_commands().any(command => {
+      command is @core.DrawCommand::DrawImage({ source: "logo.png", .. })
+    }),
+  )
+}
+
+///|
+test "checkbox view toggles binding" {
+  let checked = @core.State::new(false)
+  let runtime = @core.AppRuntime::new_spec(
+    root=@views.checkbox("Done", checked=checked.binding()),
+    size=@core.Size::new(width=120.0, height=40.0),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(checked.get(), content="true")
+}
+
+///|
 test "label paints text" {
   let runtime = @core.AppRuntime::new_spec(
     root=@views.text("Title"),

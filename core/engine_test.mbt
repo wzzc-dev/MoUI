@@ -199,6 +199,66 @@ test "state and binding share updates" {
 }
 
 ///|
+test "custom binding delegates get and set" {
+  let value = Ref(false)
+  let binding = Binding::new(get=() => value.val, set=next => value.val = next)
+  inspect(binding.get(), content="false")
+  binding.set(true)
+  inspect(value.val, content="true")
+  binding.update(current => !current)
+  inspect(value.val, content="false")
+}
+
+///|
+test "image spec emits draw image command" {
+  let runtime = RuntimeState::new_spec(
+    root=ViewSpec::ImageSpec({
+      key: None,
+      source: "logo.png",
+      size: Some(Size::new(width=48.0, height=32.0)),
+      opacity: 0.75,
+      corner_radius: 0.0,
+    }),
+    size=Size::new(width=100.0, height=80.0),
+  )
+  guard runtime.build_draw_commands() is [
+    _,
+    DrawImage({ source: "logo.png", opacity: 0.75, frame: { size: { width: 48.0, height: 32.0 }, .. } }),
+  ] else {
+    fail("expected image draw command")
+  }
+}
+
+///|
+test "checkbox toggles binding and exposes semantics" {
+  let checked = State::new(false)
+  let runtime = RuntimeState::new_spec(
+    root=ViewSpec::CheckboxSpec({
+      key: None,
+      label: "Buy milk",
+      checked: checked.binding(),
+      font: FontSpec::new(size=16.0, weight=400),
+      foreground: Color::black(),
+      check_color: Color::blue(),
+      size: Size::new(width=20.0, height=32.0),
+    }),
+    size=Size::new(width=180.0, height=48.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(checked.get(), content="true")
+  let semantics = runtime.semantics()
+  assert_true(semantics.role == SemanticsRole::Checkbox)
+  inspect(semantics.state.checked, content="true")
+}
+
+///|
 test "dirty queue records and clears runtime work" {
   let runtime = RuntimeState::new_spec(
     root=test_label("A"),

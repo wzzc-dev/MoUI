@@ -8,6 +8,8 @@ import {
 // Values
 pub fn button(String, on_click? : () -> Unit, style? : @core.ButtonStyle, width? : Double, height? : Double) -> @core.ViewSpec
 
+pub fn checkbox(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.ViewSpec
+
 pub fn column(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
 pub fn dark_theme() -> @core.Theme
@@ -17,6 +19,8 @@ pub fn environment(theme? : @core.Theme) -> @core.Environment
 pub fn frame(@core.ViewSpec, width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.ViewSpec
 
 pub fn grid(Array[@core.ViewSpec], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.ViewSpec
+
+pub fn image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double) -> @core.ViewSpec
 
 pub fn light_theme() -> @core.Theme
 

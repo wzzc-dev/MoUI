@@ -5,7 +5,8 @@ pub(all) struct State[T] {
 
 ///|
 pub(all) struct Binding[T] {
-  state : State[T]
+  get_value : () -> T
+  set_value : (T) -> Unit
 }
 
 ///|
@@ -30,7 +31,7 @@ pub fn[T] State::update(self : State[T], f : (T) -> T raise?) -> Unit raise? {
 
 ///|
 pub fn[T] State::binding(self : State[T]) -> Binding[T] {
-  { state: self }
+  Binding::new(get=() => self.get(), set=value => self.set(value))
 }
 
 ///|
@@ -48,12 +49,12 @@ pub fn[T] State::subscribe(
 
 ///|
 pub fn[T] Binding::get(self : Binding[T]) -> T {
-  self.state.get()
+  (self.get_value)()
 }
 
 ///|
 pub fn[T] Binding::set(self : Binding[T], value : T) -> Unit {
-  self.state.set(value)
+  (self.set_value)(value)
 }
 
 ///|
@@ -61,5 +62,10 @@ pub fn[T] Binding::update(
   self : Binding[T],
   f : (T) -> T raise?,
 ) -> Unit raise? {
-  self.state.update(f)
+  self.set(f(self.get()))
+}
+
+///|
+pub fn[T] Binding::new(get~ : () -> T, set~ : (T) -> Unit) -> Binding[T] {
+  { get_value: get, set_value: set }
 }

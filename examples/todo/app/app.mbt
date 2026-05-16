@@ -92,6 +92,34 @@ pub fn TodoApp::remove(self : TodoApp, id : Int) -> Unit {
 }
 
 ///|
+pub fn TodoApp::completed_binding(
+  self : TodoApp,
+  id : Int,
+) -> @core.Binding[Bool] {
+  @core.Binding::new(
+    get=() => {
+      for item in self.items.get() {
+        if item.id == id {
+          return item.completed
+        }
+      }
+      false
+    },
+    set=completed => {
+      self.items.update(items => {
+        items.map(item => {
+          if item.id == id {
+            { ..item, completed }
+          } else {
+            item
+          }
+        })
+      })
+    },
+  )
+}
+
+///|
 pub fn TodoApp::root(
   self : TodoApp,
   ctx : @core.BuildContext,
@@ -142,12 +170,12 @@ fn TodoApp::todo_row(
 ) -> @core.ViewSpec {
   @views.row(
     [
-      @views.button(
-        item.display_text(),
-        on_click=() => self.toggle(item.id),
-        style=@core.ButtonStyle::tonal(theme~),
-        width=220.0,
-      ),
+      @views.checkbox(
+        item.text,
+        checked=self.completed_binding(item.id),
+        foreground=theme.palette.foreground,
+        check_color=theme.palette.primary,
+      ).frame(width=220.0, height=36.0),
       @views.button(
         "Remove",
         on_click=() => self.remove(item.id),

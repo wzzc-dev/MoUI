@@ -78,9 +78,11 @@ pub(all) enum Axis {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Binding[T] {
-  state : State[T]
+  get_value : () -> T
+  set_value : (T) -> Unit
 }
 pub fn[T] Binding::get(Self[T]) -> T
+pub fn[T] Binding::new(get~ : () -> T, set~ : (T) -> Unit) -> Self[T]
 pub fn[T] Binding::set(Self[T], T) -> Unit
 pub fn[T] Binding::update(Self[T], (T) -> T raise?) -> Unit raise?
 
@@ -126,6 +128,16 @@ pub(all) struct ButtonViewSpec {
   pressed_background : Color
   corner_radius : Double
   on_click : (() -> Unit)?
+}
+
+pub(all) struct CheckboxViewSpec {
+  key : Key?
+  label : String
+  checked : Binding[Bool]
+  font : FontSpec
+  foreground : Color
+  check_color : Color
+  size : Size
 }
 
 pub(all) struct Clock {
@@ -335,6 +347,14 @@ pub(all) struct ImageRun {
   opacity : Double
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct ImageViewSpec {
+  key : Key?
+  source : String
+  size : Size?
+  opacity : Double
+  corner_radius : Double
+}
+
 pub(all) struct Insets {
   top : Double
   right : Double
@@ -532,6 +552,7 @@ pub(all) enum SemanticsRole {
   None
   Text
   Button
+  Checkbox
   TextField
   List
   ListItem
@@ -544,6 +565,7 @@ pub(all) struct SemanticsState {
   focused : Bool
   disabled : Bool
   selected : Bool
+  checked : Bool
   expanded : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsState::default() -> Self
@@ -759,6 +781,8 @@ pub(all) enum ViewSpec {
   TextSpec(TextViewSpec)
   ButtonSpec(ButtonViewSpec)
   TextFieldSpec(TextFieldViewSpec)
+  ImageSpec(ImageViewSpec)
+  CheckboxSpec(CheckboxViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)

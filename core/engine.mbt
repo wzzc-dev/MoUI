@@ -110,6 +110,26 @@ pub(all) struct TextFieldViewSpec {
 }
 
 ///|
+pub(all) struct ImageViewSpec {
+  key : Key?
+  source : String
+  size : Size?
+  opacity : Double
+  corner_radius : Double
+}
+
+///|
+pub(all) struct CheckboxViewSpec {
+  key : Key?
+  label : String
+  checked : Binding[Bool]
+  font : FontSpec
+  foreground : Color
+  check_color : Color
+  size : Size
+}
+
+///|
 pub(all) struct FlexViewSpec {
   key : Key?
   axis : Axis
@@ -190,6 +210,8 @@ pub(all) enum ViewSpec {
   TextSpec(TextViewSpec)
   ButtonSpec(ButtonViewSpec)
   TextFieldSpec(TextFieldViewSpec)
+  ImageSpec(ImageViewSpec)
+  CheckboxSpec(CheckboxViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)
@@ -382,6 +404,8 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     TextSpec(data) => data.key
     ButtonSpec(data) => data.key
     TextFieldSpec(data) => data.key
+    ImageSpec(data) => data.key
+    CheckboxSpec(data) => data.key
     FlexSpec(data) => data.key
     PaddingSpec(data) => data.key
     ContainerSpec(data) => data.key
@@ -401,6 +425,8 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     TextSpec(data) => TextSpec({ ..data, key: Some(key) })
     ButtonSpec(data) => ButtonSpec({ ..data, key: Some(key) })
     TextFieldSpec(data) => TextFieldSpec({ ..data, key: Some(key) })
+    ImageSpec(data) => ImageSpec({ ..data, key: Some(key) })
+    CheckboxSpec(data) => CheckboxSpec({ ..data, key: Some(key) })
     FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
     PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
     ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
@@ -420,15 +446,17 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     TextSpec(_) => 1
     ButtonSpec(_) => 2
     TextFieldSpec(_) => 3
-    FlexSpec(_) => 4
-    PaddingSpec(_) => 5
-    ContainerSpec(_) => 6
-    SpacerSpec(_) => 7
-    FrameSpec(_) => 8
-    StackSpec(_) => 9
-    ScrollSpec(_) => 10
-    GridSpec(_) => 11
-    ListSpec(_) => 12
+    ImageSpec(_) => 4
+    CheckboxSpec(_) => 5
+    FlexSpec(_) => 6
+    PaddingSpec(_) => 7
+    ContainerSpec(_) => 8
+    SpacerSpec(_) => 9
+    FrameSpec(_) => 10
+    StackSpec(_) => 11
+    ScrollSpec(_) => 12
+    GridSpec(_) => 13
+    ListSpec(_) => 14
   }
 }
 
@@ -448,6 +476,7 @@ pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
     TextSpec(data) => TextSpec({ ..data, font, })
     ButtonSpec(data) => ButtonSpec({ ..data, font, })
     TextFieldSpec(data) => TextFieldSpec({ ..data, font, })
+    CheckboxSpec(data) => CheckboxSpec({ ..data, font, })
     FlexSpec(data) =>
       FlexSpec({
         ..data,
@@ -476,7 +505,7 @@ pub fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
         ..data,
         children: data.children.map(child => child.font(font)),
       })
-    EmptySpec | SpacerSpec(_) => self
+    EmptySpec | SpacerSpec(_) | ImageSpec(_) => self
   }
 }
 
@@ -486,6 +515,7 @@ pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
     TextSpec(data) => TextSpec({ ..data, color, })
     ButtonSpec(data) => ButtonSpec({ ..data, foreground: color })
     TextFieldSpec(data) => TextFieldSpec({ ..data, foreground: color })
+    CheckboxSpec(data) => CheckboxSpec({ ..data, foreground: color })
     FlexSpec(data) =>
       FlexSpec({
         ..data,
@@ -517,7 +547,7 @@ pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
         ..data,
         children: data.children.map(child => child.foreground(color)),
       })
-    EmptySpec | SpacerSpec(_) => self
+    EmptySpec | SpacerSpec(_) | ImageSpec(_) => self
   }
 }
 
@@ -562,6 +592,7 @@ pub fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
   match self {
     ButtonSpec(data) => ButtonSpec({ ..data, corner_radius: radius })
     TextFieldSpec(data) => TextFieldSpec({ ..data, corner_radius: radius })
+    ImageSpec(data) => ImageSpec({ ..data, corner_radius: radius })
     ContainerSpec(data) => ContainerSpec({ ..data, corner_radius: radius })
     FrameSpec(data) =>
       FrameSpec({ ..data, child: data.child.corner_radius(radius) })
@@ -1022,6 +1053,28 @@ fn ElementNode::render_with_focus(
         bounds,
         focused == Some(self.id),
       )
+    ImageSpec(data) => {
+      let frame = match data.size {
+        Some(size) =>
+          Rect::new(
+            x=bounds.origin.x,
+            y=bounds.origin.y,
+            width=size.width,
+            height=size.height,
+          )
+        None => bounds
+      }
+      if data.corner_radius > 0.0 {
+        commands.push(PushClip(frame))
+      }
+      commands.push(
+        DrawImage({ source: data.source, frame, opacity: data.opacity }),
+      )
+      if data.corner_radius > 0.0 {
+        commands.push(PopClip)
+      }
+    }
+    CheckboxSpec(data) => append_checkbox_commands(commands, data, bounds)
     FlexSpec(data) => {
       let frames = flex_child_frames(
         data.axis,
@@ -1135,6 +1188,8 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     TextSpec(data) => data.size
     ButtonSpec(data) => data.size
     TextFieldSpec(data) => data.size
+    ImageSpec(data) => data.size.unwrap_or(Size::new(width=0.0, height=0.0))
+    CheckboxSpec(data) => checkbox_intrinsic_size(data)
     SpacerSpec(data) =>
       if data.weight > 0.0 {
         Size::new(width=0.0, height=0.0)
@@ -1193,6 +1248,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
   match spec {
     ButtonSpec(_) => true
     TextFieldSpec(_) => true
+    CheckboxSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     _ => false
   }
@@ -1207,6 +1263,8 @@ pub fn ElementNode::dispatch_pointer(
   match self.spec {
     ButtonSpec(data) =>
       handle_button_element_pointer(self, data, event, render.frame)
+    CheckboxSpec(data) =>
+      handle_checkbox_element_pointer(self, data, event, render.frame)
     TextFieldSpec(_) => {
       let focused = if event.phase == PointerPhase::Down &&
         render.frame.contains(event.position) {
@@ -1253,7 +1311,7 @@ pub fn ElementNode::dispatch_pointer(
       }
       { changed, activated, focused }
     }
-    EmptySpec | TextSpec(_) | SpacerSpec(_) =>
+    EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) =>
       { changed: false, activated: false, focused: None }
   }
 }
@@ -1287,6 +1345,22 @@ fn handle_button_element_pointer(
     element.dirty.mark_paint()
   }
   { changed, activated: tap.activated, focused: None }
+}
+
+///|
+fn handle_checkbox_element_pointer(
+  element : ElementNode,
+  data : CheckboxViewSpec,
+  event : PointerEvent,
+  frame : Rect,
+) -> ElementEventResult {
+  if event.phase == PointerPhase::Up && frame.contains(event.position) {
+    data.checked.set(!data.checked.get())
+    element.dirty.mark_paint()
+    { changed: true, activated: true, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
+  }
 }
 
 ///|
@@ -1346,7 +1420,7 @@ pub fn ElementNode::focusable_ids(
   ids : Array[ElementId],
 ) -> Unit {
   match self.spec {
-    TextFieldSpec(_) => ids.push(self.id)
+    TextFieldSpec(_) | CheckboxSpec(_) => ids.push(self.id)
     FlexSpec(_)
     | PaddingSpec(_)
     | ContainerSpec(_)
@@ -1421,6 +1495,7 @@ pub fn ElementNode::dispatch_keyboard(
   if self.id == target {
     match self.spec {
       TextFieldSpec(data) => handle_text_field_keyboard(self, data, event)
+      CheckboxSpec(data) => handle_checkbox_keyboard(self, data, event)
       _ => { changed: false, activated: false, focused: None }
     }
   } else {
@@ -1515,6 +1590,22 @@ fn handle_text_field_keyboard(
         { changed: false, activated: false, focused: None }
       }
     None => { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn handle_checkbox_keyboard(
+  element : ElementNode,
+  data : CheckboxViewSpec,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  if event.pressed &&
+    (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+    data.checked.set(!data.checked.get())
+    element.dirty.mark_paint()
+    { changed: true, activated: true, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
   }
 }
 
@@ -1689,6 +1780,59 @@ fn text_with_composition(
 ///|
 fn text_length(text : String) -> Int {
   text.to_array().length()
+}
+
+///|
+fn checkbox_intrinsic_size(data : CheckboxViewSpec) -> Size {
+  let spacing = 8.0
+  let label_width = text_length(data.label).to_double() * data.font.size * 0.58
+  Size::new(
+    width=data.size.width + spacing + label_width,
+    height=max_double(data.size.height, data.font.size * 1.25),
+  )
+}
+
+///|
+fn append_checkbox_commands(
+  commands : Array[DrawCommand],
+  data : CheckboxViewSpec,
+  frame : Rect,
+) -> Unit {
+  let box_side = data.size.width
+  let box_y = frame.origin.y + max_double(0.0, (frame.size.height - box_side) / 2.0)
+  let box_rect = Rect::new(
+    x=frame.origin.x,
+    y=box_y,
+    width=box_side,
+    height=box_side,
+  )
+  let box = RoundedRect::new(rect=box_rect, radius=4.0)
+  if data.checked.get() {
+    commands.push(FillRoundedRect(box, data.check_color))
+    commands.push(
+      DrawText({
+        text: "✓",
+        frame: box_rect,
+        font: FontSpec::new(size=box_side * 0.78, weight=700),
+        color: Color::white(),
+      }),
+    )
+  } else {
+    commands.push(StrokeRoundedRect(box, data.check_color, 2.0))
+  }
+  commands.push(
+    DrawText({
+      text: data.label,
+      frame: Rect::new(
+        x=frame.origin.x + box_side + 8.0,
+        y=frame.origin.y,
+        width=max_double(0.0, frame.size.width - box_side - 8.0),
+        height=frame.size.height,
+      ),
+      font: data.font,
+      color: data.foreground,
+    }),
+  )
 }
 
 ///|

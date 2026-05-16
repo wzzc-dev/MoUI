@@ -3,6 +3,7 @@ pub(all) enum SemanticsRole {
   None
   Text
   Button
+  Checkbox
   TextField
   List
   ListItem
@@ -25,6 +26,7 @@ pub(all) struct SemanticsState {
   focused : Bool
   disabled : Bool
   selected : Bool
+  checked : Bool
   expanded : Bool
 } derive(Eq, Debug, ToJson)
 
@@ -43,7 +45,13 @@ pub(all) struct SemanticsNode {
 
 ///|
 pub fn SemanticsState::default() -> SemanticsState {
-  { focused: false, disabled: false, selected: false, expanded: false }
+  {
+    focused: false,
+    disabled: false,
+    selected: false,
+    checked: false,
+    expanded: false,
+  }
 }
 
 ///|
@@ -77,6 +85,7 @@ fn ElementNode::build_semantics(
     focused: focused == Some(self.id),
     disabled: false,
     selected: false,
+    checked: self.is_semantics_checked(),
     expanded: false,
   }
   let children : Array[SemanticsNode] = []
@@ -134,6 +143,13 @@ fn ElementNode::semantics_info(
         value: "",
         actions: [Focus, Activate],
       }
+    CheckboxSpec(data) =>
+      {
+        role: Checkbox,
+        label: data.label,
+        value: if data.checked.get() { "true" } else { "false" },
+        actions: [Focus, Activate],
+      }
     TextFieldSpec(data) =>
       {
         role: TextField,
@@ -147,9 +163,19 @@ fn ElementNode::semantics_info(
       { role: Grid, label: "", value: "", actions: [] }
     ScrollSpec(_) =>
       { role: ScrollView, label: "", value: "", actions: [Scroll] }
+    ImageSpec(data) =>
+      { role: None, label: data.source, value: "", actions: [] }
     EmptySpec | SpacerSpec(_) =>
       { role: None, label: "", value: "", actions: [] }
     FlexSpec(_) | PaddingSpec(_) | ContainerSpec(_) | FrameSpec(_) | StackSpec(_) =>
       { role: Group, label: "", value: "", actions: [] }
+  }
+}
+
+///|
+fn ElementNode::is_semantics_checked(self : ElementNode) -> Bool {
+  match self.spec {
+    CheckboxSpec(data) => data.checked.get()
+    _ => false
   }
 }
