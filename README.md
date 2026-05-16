@@ -20,7 +20,7 @@ backend/common/               shared window/core + dpi event conversion
 backend/windows/              Windows native host
 backend/macos/                macOS native host
 backend/linux/                Linux host scaffold
-backend/web/                  canonical Web host on wasm-gc
+backend/web/                  canonical Web host on wasm-gc plus browser JS assets
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
 render/webgpu/                browser WebGPU host-import renderer for wasm-gc
@@ -92,6 +92,8 @@ http://127.0.0.1:8080/examples/counter/web_wasm/index.html
 ```
 
 The Web path requires browser WebGPU. Startup fails clearly if `navigator.gpu`, an adapter, or a device is unavailable. There is no JS-target fallback branch. Browser font APIs may be used to populate hidden glyph atlas bitmaps, but visible text composition is performed by WebGPU.
+
+The reusable browser runtime assets live under `backend/web/*.js`; `examples/counter/web_wasm/` is only the counter app's Web entrypoint and supplies the example-specific wasm URL.
 
 Note: The Milky2018/window package does not support Windows/Web targets. Instead, clone the wzzc-dev/window repository to `.local_repos/window` using: `git clone git@github.com:wzzc-dev/window.git .local_repos/window` and checkout the `web-support` branch with: git checkout web-support`. 
 

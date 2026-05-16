@@ -76,7 +76,7 @@
     </aside>
 
     <script type="module">
-      import { bootCounterWasm } from "./runtime.js";
+      import { bootMouiWasmGcApp } from "../../../backend/web/runtime.js";
 
       if (new URLSearchParams(window.location.search).get("debug") === "1") {
         document.body.classList.add("debug");
@@ -96,7 +96,12 @@
         append(message);
       };
 
-      bootCounterWasm({
+      bootMouiWasmGcApp({
+        wasmUrl: new URL(
+          "../../../_build/wasm-gc/debug/build/examples/counter/web_wasm/web_wasm.wasm",
+          import.meta.url,
+        ),
+        canvasHost: "#canvas-host",
         onStatus: setStatus,
         onPrint(ch) {
           if (ch === "\n") {

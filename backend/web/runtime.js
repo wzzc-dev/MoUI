@@ -1,7 +1,7 @@
 import {
   connectWindowWeb,
   createWindowWebImports,
-} from "../../../backend/web/browser_runtime.js";
+} from "./browser_runtime.js";
 
 const VISUAL_STRIDE_FLOATS = 22;
 const TEXT_STRIDE_FLOATS = 8;
@@ -680,14 +680,12 @@ async function instantiateWasm(url, imports, report) {
   return WebAssembly.instantiate(bytes, imports);
 }
 
-export async function bootCounterWasm(options = {}) {
+export async function bootMouiWasmGcApp(options = {}) {
   const report = options.onStatus ?? (() => {});
-  const wasmUrl =
-    options.wasmUrl ??
-    new URL(
-      "../../../_build/wasm-gc/debug/build/examples/counter/web_wasm/web_wasm.wasm",
-      import.meta.url,
-    );
+  if (!options.wasmUrl) {
+    throw new Error("bootMouiWasmGcApp requires a wasmUrl option.");
+  }
+  const wasmUrl = options.wasmUrl;
   report("Preparing window/web host imports...");
   const windowWeb = createWindowWebImports({
     canvasHost: options.canvasHost ?? "#canvas-host",
