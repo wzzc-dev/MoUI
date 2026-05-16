@@ -11,7 +11,6 @@ export function createWindowWebImports(options = {}) {
   const stringHandles = new Map();
   const eventTexts = new Map();
   let nextCanvasId = 1;
-  let nextCanvasHandle = 1;
   let nextStringHandle = 1;
   let nextEventTextId = 1;
   let dispatchEvent = null;
@@ -60,16 +59,8 @@ export function createWindowWebImports(options = {}) {
     return canvas.id;
   };
 
-  const createCanvasHandle = canvas => {
-    if (!(canvas instanceof HTMLCanvasElement)) {
-      return 0;
-    }
-    const handle = nextCanvasHandle++;
-    canvases.set(handle, canvas);
-    return handle;
-  };
-
-  const canvasValue = handle => canvases.get(handle) ?? null;
+  const canvasValue = canvas =>
+    canvas instanceof HTMLCanvasElement ? canvas : canvases.get(canvas) ?? null;
 
   const pointerPosition = (canvas, event) => {
     const rect = canvas.getBoundingClientRect();
@@ -137,21 +128,23 @@ export function createWindowWebImports(options = {}) {
       canvas.tabIndex = 0;
       canvas.style.display = "block";
       resolveCanvasHost().appendChild(canvas);
-      return createCanvasHandle(canvas);
+      canvases.set(canvas.id, canvas);
+      return canvas;
     },
     get_canvas_by_id(id) {
       const canvas = document.getElementById(stringValue(id));
       if (canvas instanceof HTMLCanvasElement) {
-        return createCanvasHandle(canvas);
+        canvases.set(canvas.id, canvas);
+        return canvas;
       }
-      return 0;
+      return null;
     },
     canvas_is_valid(handle) {
       return canvasValue(handle) instanceof HTMLCanvasElement;
     },
     canvas_id(handle) {
       const canvas = canvasValue(handle);
-      return createStringHandle(canvas ? ensureCanvasId(canvas) : "");
+      return canvas ? ensureCanvasId(canvas) : "";
     },
     canvas_width(handle) {
       const canvas = canvasValue(handle);

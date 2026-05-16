@@ -448,43 +448,29 @@ fn submit_host_calls(
             width,
           ),
         )
-      FillRoundedRectBrush(rounded, brush) => {
-        let color = brush_fallback_color(brush)
-        raise_for_host_status(
-          host_fill_rounded_rect(
-            renderer,
-            rounded.rect.origin.x,
-            rounded.rect.origin.y,
-            rounded.rect.size.width,
-            rounded.rect.size.height,
-            rounded.radius,
-            color.r,
-            color.g,
-            color.b,
-            color.a,
-          ),
-        )
-      }
-      StrokeRoundedRectBrush(rounded, brush, width) => {
-        let color = brush_fallback_color(brush)
-        raise_for_host_status(
-          host_stroke_rounded_rect(
-            renderer,
-            rounded.rect.origin.x,
-            rounded.rect.origin.y,
-            rounded.rect.size.width,
-            rounded.rect.size.height,
-            rounded.radius,
-            color.r,
-            color.g,
-            color.b,
-            color.a,
-            width,
-          ),
-        )
-      }
+      FillRoundedRectBrush(rounded, brush) =>
+        submit_fill_rounded_rect_brush(renderer, rounded, brush)
+      StrokeRoundedRectBrush(rounded, brush, width) =>
+        submit_stroke_rounded_rect_brush(renderer, rounded, brush, width)
       DrawShadow(shadow) =>
-        submit_shadow_fallback(renderer, shadow)
+        raise_for_host_status(
+          host_draw_shadow(
+            renderer,
+            shadow.rect.rect.origin.x,
+            shadow.rect.rect.origin.y,
+            shadow.rect.rect.size.width,
+            shadow.rect.rect.size.height,
+            shadow.rect.radius,
+            shadow.offset.x,
+            shadow.offset.y,
+            shadow.blur_radius,
+            shadow.spread,
+            shadow.color.r,
+            shadow.color.g,
+            shadow.color.b,
+            shadow.color.a,
+          ),
+        )
       DrawText(run) =>
         raise_for_host_status(
           host_draw_text(
@@ -548,36 +534,101 @@ fn submit_host_calls(
 }
 
 ///|
-fn brush_fallback_color(brush : @core.Brush) -> @core.Color {
+fn submit_fill_rounded_rect_brush(
+  renderer : HostWebGpuRenderer,
+  rounded : @core.RoundedRect,
+  brush : @core.Brush,
+) -> Unit raise WebGpuHostError {
   match brush {
-    @core.Brush::Solid(color) => color
-    @core.Brush::LinearGradient(gradient) => gradient.start_color
+    @core.Brush::Solid(color) =>
+      raise_for_host_status(
+        host_fill_rounded_rect(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
+        ),
+      )
+    @core.Brush::LinearGradient(gradient) =>
+      raise_for_host_status(
+        host_fill_rounded_rect_gradient(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          gradient.start.x,
+          gradient.start.y,
+          gradient.end.x,
+          gradient.end.y,
+          gradient.start_color.r,
+          gradient.start_color.g,
+          gradient.start_color.b,
+          gradient.start_color.a,
+          gradient.end_color.r,
+          gradient.end_color.g,
+          gradient.end_color.b,
+          gradient.end_color.a,
+        ),
+      )
   }
 }
 
 ///|
-fn submit_shadow_fallback(
+fn submit_stroke_rounded_rect_brush(
   renderer : HostWebGpuRenderer,
-  shadow : @core.ShadowSpec,
+  rounded : @core.RoundedRect,
+  brush : @core.Brush,
+  width : Double,
 ) -> Unit raise WebGpuHostError {
-  let layers = 3
-  for index in 0..<layers {
-    let grow = shadow.spread + (index + 1).to_double() * shadow.blur_radius / 3.0
-    let alpha = shadow.color.a / (index + 2).to_double()
-    raise_for_host_status(
-      host_fill_rounded_rect(
-        renderer,
-        shadow.rect.rect.origin.x + shadow.offset.x - grow,
-        shadow.rect.rect.origin.y + shadow.offset.y - grow,
-        shadow.rect.rect.size.width + grow * 2.0,
-        shadow.rect.rect.size.height + grow * 2.0,
-        shadow.rect.radius + grow,
-        shadow.color.r,
-        shadow.color.g,
-        shadow.color.b,
-        alpha,
-      ),
-    )
+  match brush {
+    @core.Brush::Solid(color) =>
+      raise_for_host_status(
+        host_stroke_rounded_rect(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
+          width,
+        ),
+      )
+    @core.Brush::LinearGradient(gradient) =>
+      raise_for_host_status(
+        host_stroke_rounded_rect_gradient(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          width,
+          gradient.start.x,
+          gradient.start.y,
+          gradient.end.x,
+          gradient.end.y,
+          gradient.start_color.r,
+          gradient.start_color.g,
+          gradient.start_color.b,
+          gradient.start_color.a,
+          gradient.end_color.r,
+          gradient.end_color.g,
+          gradient.end_color.b,
+          gradient.end_color.a,
+        ),
+      )
   }
 }
 
@@ -735,6 +786,69 @@ fn host_stroke_rounded_rect(
   a : Double,
   stroke_width : Double,
 ) -> Int = "webgpu" "stroke_rounded_rect"
+
+///|
+fn host_fill_rounded_rect_gradient(
+  renderer : HostWebGpuRenderer,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  radius : Double,
+  start_x : Double,
+  start_y : Double,
+  end_x : Double,
+  end_y : Double,
+  r0 : Double,
+  g0 : Double,
+  b0 : Double,
+  a0 : Double,
+  r1 : Double,
+  g1 : Double,
+  b1 : Double,
+  a1 : Double,
+) -> Int = "webgpu" "fill_rounded_rect_gradient"
+
+///|
+fn host_stroke_rounded_rect_gradient(
+  renderer : HostWebGpuRenderer,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  radius : Double,
+  stroke_width : Double,
+  start_x : Double,
+  start_y : Double,
+  end_x : Double,
+  end_y : Double,
+  r0 : Double,
+  g0 : Double,
+  b0 : Double,
+  a0 : Double,
+  r1 : Double,
+  g1 : Double,
+  b1 : Double,
+  a1 : Double,
+) -> Int = "webgpu" "stroke_rounded_rect_gradient"
+
+///|
+fn host_draw_shadow(
+  renderer : HostWebGpuRenderer,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  radius : Double,
+  offset_x : Double,
+  offset_y : Double,
+  blur_radius : Double,
+  spread : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
+) -> Int = "webgpu" "draw_shadow"
 
 ///|
 fn host_draw_text(

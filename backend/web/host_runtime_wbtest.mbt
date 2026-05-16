@@ -19,3 +19,9 @@ test "web maps surface resize through current scale factor" {
     _ => fail("expected scaled resize event")
   }
 }
+
+///|
+test "web derives window default canvas id without host string return" {
+  inspect(window_web_default_canvas_id(1), content="moonbit-window-web-1")
+  inspect(window_web_default_canvas_id(42), content="moonbit-window-web-42")
+}

@@ -71,9 +71,9 @@ priv struct TextVertex {
 }
 
 ///|
-priv struct TextBuildResult {
+priv struct TextRunBuildResult {
   vertices : Array[TextVertex]
-  atlas_dirty : Bool
+  atlas_full : Bool
 }
 
 ///|
@@ -269,36 +269,15 @@ fn fixed_26_6_to_double(value : Int) -> Double {
 }
 
 ///|
-fn build_native_text_frame(
+fn build_native_text_run(
   cache : NativeFontCache,
   atlas : GlyphAtlas,
-  commands : Array[@core.DrawCommand],
+  run : @core.TextRun,
   size : @core.Size,
-) -> TextBuildResult {
-  let was_dirty = atlas.dirty
-  for attempt in 0..<2 {
-    let vertices : Array[TextVertex] = []
-    let mut full = false
-    for command in commands {
-      if !full {
-        match command {
-          @core.DrawCommand::DrawText(run) =>
-            if append_text_run_vertices(cache, atlas, run, size, vertices) {
-              full = true
-            }
-          _ => ()
-        }
-      }
-    }
-    if !full {
-      return { vertices, atlas_dirty: was_dirty || atlas.dirty }
-    }
-    atlas.clear()
-    if attempt == 1 {
-      return { vertices: [], atlas_dirty: true }
-    }
-  }
-  { vertices: [], atlas_dirty: atlas.dirty }
+) -> TextRunBuildResult {
+  let vertices : Array[TextVertex] = []
+  let atlas_full = append_text_run_vertices(cache, atlas, run, size, vertices)
+  { vertices, atlas_full }
 }
 
 ///|

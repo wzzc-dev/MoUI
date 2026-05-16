@@ -1,14 +1,14 @@
 # MoUI
 
-MoUI is a MoonBit GUI framework prototype. The current architecture keeps the app/runtime/view model platform-neutral, with native hosts using `window + wgpu-native` and the Web host using a single `wasm-gc + window/web + browser WebGPU host imports` path.
+MoUI is a multi-platform MoonBit GUI framework prototype. The current architecture keeps the app/runtime/view model platform-neutral, with native hosts using `window + wgpu-native` and the Web host using a single `wasm-gc + window/web + browser WebGPU host imports` path.
 
 ## Scope
 
 - Platform-neutral `core` runtime, view specs, layout, hit testing, and draw commands.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `surface`, row/column layout, and spacer primitives.
 - Unified host boundaries in `backend/host`, with shared `backend/common` window-event mapping and platform hosts normalizing events into `HostEvent`.
-- Native rendering through `render/wgpu`.
-- Web rendering through `render/webgpu` on `wasm-gc` only. The old JS-target WebGPU path is intentionally removed.
+- Native rendering through `render/wgpu`, including GPU text, rounded geometry, gradients, and soft shadows.
+- Web rendering through `render/webgpu` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
 
 ## Packages
 
@@ -69,8 +69,10 @@ Visual V2 adds platform-neutral tokens and styles:
   `TextFieldStyle::filled/outline` project state styles into core draw
   commands.
 - `SurfaceStyle` supports surface brushes, radius, padding, border metadata,
-  and shadow metadata; renderers use deterministic fallbacks where a backend
-  does not yet have a richer native primitive.
+  and shadow metadata.
+- Native and WebGPU renderers draw text through glyph-atlas GPU pipelines,
+  evaluate linear gradients in shader code, and render rounded soft shadows as
+  renderer primitives rather than start-color or layered-rectangle fallbacks.
 
 ## Web Wasm-GC
 
@@ -87,7 +89,7 @@ Then open:
 http://127.0.0.1:8080/examples/counter_web_wasm/index.html
 ```
 
-The Web path requires browser WebGPU. Startup fails clearly if `navigator.gpu`, an adapter, or a device is unavailable. There is no JS-target fallback branch.
+The Web path requires browser WebGPU. Startup fails clearly if `navigator.gpu`, an adapter, or a device is unavailable. There is no JS-target fallback branch. Browser font APIs may be used to populate hidden glyph atlas bitmaps, but visible text composition is performed by WebGPU.
 
 Note: The Milky2018/window package does not support Windows/Web targets. Instead, clone the wzzc-dev/window repository to `.local_repos/window` using: `git clone git@github.com:wzzc-dev/window.git .local_repos/window` and checkout the `web-support` branch with: git checkout web-support`. 
 

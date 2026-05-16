@@ -109,6 +109,11 @@ fn window_event_to_host_with_scale(
 }
 
 ///|
+fn window_web_default_canvas_id(raw_id : Int) -> String {
+  "moonbit-window-web-\{raw_id}"
+}
+
+///|
 pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
   self,
   event_loop,
@@ -136,7 +141,7 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
         window.scale_factor(),
       )
       let renderer_result = try? WebRenderer::create(
-        canvas_id=window.canvas_id(),
+        canvas_id=window_web_default_canvas_id(window.id().into_raw()),
         metrics~,
       )
       match renderer_result {

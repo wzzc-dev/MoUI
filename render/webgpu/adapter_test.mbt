@@ -195,6 +195,51 @@ test "wgpu web command bridge preserves full draw command parity order" {
 }
 
 ///|
+test "wgpu web command bridge preserves gradient and shadow command payloads" {
+  let rounded = @core.RoundedRect::new(
+    rect=@core.Rect::new(x=10.0, y=20.0, width=80.0, height=40.0),
+    radius=8.0,
+  )
+  let gradient = @core.Brush::linear_gradient(
+    start=@core.Point::new(x=10.0, y=20.0),
+    end=@core.Point::new(x=90.0, y=60.0),
+    start_color=@core.Color::blue(),
+    end_color=@core.Color::gray(),
+  )
+  let shadow = @core.ShadowSpec::new(
+    rect=rounded,
+    color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.4),
+    blur_radius=12.0,
+    spread=2.0,
+  )
+  let calls = draw_commands_to_host_calls(
+    [
+      @core.DrawCommand::FillRoundedRectBrush(rounded, gradient),
+      @core.DrawCommand::StrokeRoundedRectBrush(rounded, gradient, 2.0),
+      @core.DrawCommand::DrawShadow(shadow),
+    ],
+    @core.Size::new(width=120.0, height=80.0),
+  )
+  inspect(calls.length(), content="5")
+  assert_true(
+    calls[1]
+    is WebGpuHostCall::FillRoundedRectBrush(_, @core.Brush::LinearGradient(_)),
+  )
+  assert_true(
+    calls[2]
+    is WebGpuHostCall::StrokeRoundedRectBrush(
+      _,
+      @core.Brush::LinearGradient(_),
+      _
+    ),
+  )
+  assert_true(
+    calls[3]
+    is WebGpuHostCall::DrawShadow({ blur_radius: 12.0, spread: 2.0, .. }),
+  )
+}
+
+///|
 fn test_port(
   created~ : Ref[Int],
   capabilities? : WebGpuHostCapabilities = required_capabilities(),

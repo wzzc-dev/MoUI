@@ -41,3 +41,35 @@ test "native renderer builds text vertices and atlas entries" {
     inspect("skipped", content="skipped")
   }
 }
+
+///|
+test "native renderer keeps text in draw item order" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let renderer = new_test_renderer_handle()
+    renderer.resize(@core.Size::new(width=320.0, height=200.0))
+    renderer.render([
+      @core.DrawCommand::DrawText({
+        text: "A",
+        frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
+        font: @core.FontSpec::new(size=16.0, weight=500),
+        color: @core.Color::black(),
+      }),
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=0.0, y=20.0, width=10.0, height=10.0),
+        @core.Color::blue(),
+      ),
+      @core.DrawCommand::DrawText({
+        text: "B",
+        frame: @core.Rect::new(x=0.0, y=40.0, width=40.0, height=20.0),
+        font: @core.FontSpec::new(size=16.0, weight=500),
+        color: @core.Color::black(),
+      }),
+    ])
+    inspect(renderer.draw_items.length(), content="3")
+    assert_true(renderer.draw_items[0] is NativeDrawItem::NativeText(_, _))
+    assert_true(renderer.draw_items[1] is NativeDrawItem::NativeVisual(_, _))
+    assert_true(renderer.draw_items[2] is NativeDrawItem::NativeText(_, _))
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}

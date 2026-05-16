@@ -17,8 +17,11 @@
     "gui",
     "ui",
     "macos",
+    "windows",
+    "webgpu",
+    "wasm-gc",
     "wgpu"
   ],
-  "description": "A native macOS GUI framework prototype for MoonBit.",
+  "description": "A multi-platform MoonBit GUI framework prototype for native macOS/Windows and wasm-gc WebGPU.",
   "preferred-target": "native"
 }
