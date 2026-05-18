@@ -118,6 +118,16 @@ pub fn Color::gray() -> Color {
 }
 
 ///|
+pub fn Color::with_alpha(self : Color, alpha : Double) -> Color {
+  { ..self, a: clamp_double(alpha, 0.0, 1.0) }
+}
+
+///|
+pub fn Color::multiply_alpha(self : Color, opacity : Double) -> Color {
+  self.with_alpha(self.a * clamp_double(opacity, 0.0, 1.0))
+}
+
+///|
 pub fn FontSpec::new(
   family? : String = "system-ui, sans-serif",
   size? : Double = 16.0,
@@ -153,7 +163,9 @@ pub fn Brush::linear_gradient(
   start_color~ : Color,
   end_color~ : Color,
 ) -> Brush {
-  LinearGradient(LinearGradientSpec::new(start~, end~, start_color~, end_color~))
+  LinearGradient(
+    LinearGradientSpec::new(start~, end~, start_color~, end_color~),
+  )
 }
 
 ///|
@@ -161,6 +173,19 @@ pub fn Brush::fallback_color(self : Brush) -> Color {
   match self {
     Solid(color) => color
     LinearGradient(gradient) => gradient.start_color
+  }
+}
+
+///|
+pub fn Brush::multiply_alpha(self : Brush, opacity : Double) -> Brush {
+  match self {
+    Solid(color) => Solid(color.multiply_alpha(opacity))
+    LinearGradient(gradient) =>
+      LinearGradient({
+        ..gradient,
+        start_color: gradient.start_color.multiply_alpha(opacity),
+        end_color: gradient.end_color.multiply_alpha(opacity),
+      })
   }
 }
 
@@ -178,4 +203,14 @@ pub fn ShadowSpec::new(
 ///|
 pub fn Transform2D::identity() -> Transform2D {
   { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: 0.0, ty: 0.0 }
+}
+
+///|
+pub fn Transform2D::translation(dx~ : Double, dy~ : Double) -> Transform2D {
+  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: dx, ty: dy }
+}
+
+///|
+pub fn Transform2D::scale(sx~ : Double, sy~ : Double) -> Transform2D {
+  { a: sx, b: 0.0, c: 0.0, d: sy, tx: 0.0, ty: 0.0 }
 }

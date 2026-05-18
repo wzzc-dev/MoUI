@@ -21,6 +21,33 @@ pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 // Errors
 
 // Types and methods
+pub(all) struct AnimatedColor {
+  from : Color
+  to : Color
+  duration_ms : Double
+  easing : Easing
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AnimatedColor::new(from~ : Color, to~ : Color, duration_ms? : Double, easing? : Easing) -> Self
+pub fn AnimatedColor::value(Self, Double) -> Color
+
+pub(all) struct AnimatedDouble {
+  from : Double
+  to : Double
+  duration_ms : Double
+  easing : Easing
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AnimatedDouble::new(from~ : Double, to~ : Double, duration_ms? : Double, easing? : Easing) -> Self
+pub fn AnimatedDouble::value(Self, Double) -> Double
+
+pub(all) struct AnimatedPoint {
+  from : Point
+  to : Point
+  duration_ms : Double
+  easing : Easing
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AnimatedPoint::new(from~ : Point, to~ : Point, duration_ms? : Double, easing? : Easing) -> Self
+pub fn AnimatedPoint::value(Self, Double) -> Point
+
 pub(all) struct AnimationController {
   duration_ms : Double
   mut elapsed_ms : Double
@@ -88,12 +115,19 @@ pub fn[T] Binding::new(get~ : () -> T, set~ : (T) -> Unit) -> Self[T]
 pub fn[T] Binding::set(Self[T], T) -> Unit
 pub fn[T] Binding::update(Self[T], (T) -> T raise?) -> Unit raise?
 
+pub(all) struct BorderStyle {
+  brush : Brush
+  width : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn BorderStyle::new(brush~ : Brush, width? : Double) -> Self
+
 pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Brush::fallback_color(Self) -> Color
 pub fn Brush::linear_gradient(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
+pub fn Brush::multiply_alpha(Self, Double) -> Self
 pub fn Brush::solid(Color) -> Self
 
 pub(all) struct BuildContext {
@@ -128,9 +162,8 @@ pub(all) struct ButtonViewSpec {
   background : Brush
   hovered_background : Brush
   pressed_background : Brush
-  border : Brush?
-  border_width : Double
-  shadow : ShadowSpec?
+  border : BorderStyle?
+  shadow : ShadowStyle?
   corner_radius : Double
   on_click : (() -> Unit)?
 }
@@ -160,8 +193,10 @@ pub(all) struct Color {
 pub fn Color::black() -> Self
 pub fn Color::blue() -> Self
 pub fn Color::gray() -> Self
+pub fn Color::multiply_alpha(Self, Double) -> Self
 pub fn Color::rgba(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> Self
 pub fn Color::white() -> Self
+pub fn Color::with_alpha(Self, Double) -> Self
 
 pub(all) struct ColorPalette {
   foreground : Color
@@ -209,20 +244,18 @@ pub(all) struct ContainerViewSpec {
   key : Key?
   size : Size?
   background : Brush?
-  border : Brush?
-  border_width : Double
+  border : BorderStyle?
   corner_radius : Double
-  shadow : ShadowSpec?
+  shadow : ShadowStyle?
   child : ViewSpec?
 }
 
 pub(all) struct ControlStateStyle {
   foreground : Color
   background : Brush
-  border : Brush?
-  border_width : Double
+  border : BorderStyle?
   radius : Double
-  shadow : ShadowSpec?
+  shadow : ShadowStyle?
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum CrossAxisAlignment {
@@ -384,6 +417,11 @@ pub(all) struct HitTestResult {
   path : Array[HitTestEntry]
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum ImageFit {
+  Contain
+  Cover
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct ImageRun {
   source : String
   frame : Rect
@@ -396,6 +434,7 @@ pub(all) struct ImageViewSpec {
   size : Size?
   opacity : Double
   corner_radius : Double
+  fit : ImageFit
 }
 
 pub(all) struct Insets {
@@ -470,6 +509,14 @@ pub(all) struct ModifiedViewSpec {
   child : ViewSpec
 }
 
+pub(all) struct MotionScale {
+  fast_ms : Double
+  normal_ms : Double
+  slow_ms : Double
+  easing : Easing
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MotionScale::default() -> Self
+
 pub(all) struct PaddingViewSpec {
   key : Key?
   insets : Insets
@@ -534,6 +581,7 @@ pub(all) struct RenderNode {
   children : Array[RenderNode]
   hit_testable : Bool
   paint_commands : Array[DrawCommand]
+  post_paint_commands : Array[DrawCommand]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderNode::collect_draw_commands(Self, Array[DrawCommand]) -> Unit
 pub fn RenderNode::to_layout_result(Self) -> LayoutResult
@@ -632,6 +680,13 @@ pub(all) struct SemanticsState {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsState::default() -> Self
 
+pub(all) struct ShadowScale {
+  sm : ShadowStyle
+  md : ShadowStyle
+  lg : ShadowStyle
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShadowScale::default(scheme? : ColorScheme) -> Self
+
 pub(all) struct ShadowSpec {
   rect : RoundedRect
   color : Color
@@ -640,6 +695,14 @@ pub(all) struct ShadowSpec {
   spread : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ShadowSpec::new(rect~ : RoundedRect, color~ : Color, offset? : Point, blur_radius? : Double, spread? : Double) -> Self
+
+pub(all) struct ShadowStyle {
+  color : Color
+  offset : Point
+  blur_radius : Double
+  spread : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShadowStyle::new(color~ : Color, offset? : Point, blur_radius? : Double, spread? : Double) -> Self
 
 pub(all) struct Size {
   width : Double
@@ -703,15 +766,29 @@ pub(all) struct StateSubscription {
 pub fn StateSubscription::cancel(Self) -> Unit
 pub fn StateSubscription::is_active(Self) -> Bool
 
+pub(all) enum SurfaceLevel {
+  Base
+  Raised
+  Overlay
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SurfaceScale {
+  base : Brush
+  raised : Brush
+  overlay : Brush
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceScale::default(ColorPalette, ColorScheme) -> Self
+
 pub(all) struct SurfaceStyle {
   brush : Brush
-  border : Brush?
-  border_width : Double
+  border : BorderStyle?
   radius : Double
-  shadow : ShadowSpec?
+  shadow : ShadowStyle?
   padding : Insets
+  level : SurfaceLevel
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SurfaceStyle::default(theme? : Theme) -> Self
+pub fn SurfaceStyle::raised(theme? : Theme) -> Self
 
 pub(all) struct TapGestureResult {
   next_state : ButtonState
@@ -738,10 +815,8 @@ pub(all) struct TextFieldViewSpec {
   foreground : Color
   placeholder_color : Color
   background : Brush
-  border : Brush?
-  focused_border : Brush?
-  border_width : Double
-  focused_border_width : Double
+  border : BorderStyle?
+  focused_border : BorderStyle?
   cursor_color : Color
   corner_radius : Double
   on_submit : (() -> Unit)?
@@ -806,6 +881,9 @@ pub(all) struct Theme {
   spacing_scale : SpacingScale
   radius_scale : RadiusScale
   typography : TypographyScale
+  shadow_scale : ShadowScale
+  motion : MotionScale
+  surfaces : SurfaceScale
   font : FontSpec
   foreground : Color
   background : Color
@@ -816,15 +894,19 @@ pub(all) struct Theme {
 pub fn Theme::dark() -> Self
 pub fn Theme::default() -> Self
 pub fn Theme::light() -> Self
+pub fn Theme::surface_brush(Self, SurfaceLevel) -> Brush
 pub fn Theme::with_accent(Self, Color) -> Self
 pub fn Theme::with_background(Self, Color) -> Self
 pub fn Theme::with_corner_radius(Self, Double) -> Self
 pub fn Theme::with_font(Self, FontSpec) -> Self
 pub fn Theme::with_foreground(Self, Color) -> Self
+pub fn Theme::with_motion(Self, MotionScale) -> Self
 pub fn Theme::with_palette(Self, ColorPalette) -> Self
 pub fn Theme::with_radius_scale(Self, RadiusScale) -> Self
+pub fn Theme::with_shadow_scale(Self, ShadowScale) -> Self
 pub fn Theme::with_spacing(Self, Double) -> Self
 pub fn Theme::with_spacing_scale(Self, SpacingScale) -> Self
+pub fn Theme::with_surfaces(Self, SurfaceScale) -> Self
 pub fn Theme::with_typography(Self, TypographyScale) -> Self
 
 pub(all) struct Transform2D {
@@ -836,6 +918,8 @@ pub(all) struct Transform2D {
   ty : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Transform2D::identity() -> Self
+pub fn Transform2D::scale(sx~ : Double, sy~ : Double) -> Self
+pub fn Transform2D::translation(dx~ : Double, dy~ : Double) -> Self
 
 pub(all) struct Tween {
   from : Double
@@ -856,10 +940,16 @@ pub fn TypographyScale::default() -> Self
 pub(all) enum ViewModifier {
   PaddingModifier(Insets)
   FrameModifier(FrameModifierSpec)
-  BackgroundModifier(Color)
+  BackgroundModifier(Brush)
   ForegroundModifier(Color)
   FontModifier(FontSpec)
   CornerRadiusModifier(Double)
+  OpacityModifier(Double)
+  ShadowModifier(ShadowStyle)
+  BorderModifier(BorderStyle)
+  OffsetModifier(Double, Double)
+  ClipModifier
+  ScaleModifier(Double, Double)
 }
 
 pub(all) enum ViewSpec {
@@ -882,6 +972,9 @@ pub(all) enum ViewSpec {
   CustomSpec(CustomViewSpec)
 }
 pub fn ViewSpec::background(Self, Color) -> Self
+pub fn ViewSpec::background_brush(Self, Brush) -> Self
+pub fn ViewSpec::border(Self, BorderStyle) -> Self
+pub fn ViewSpec::clip(Self) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self
 pub fn ViewSpec::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
 pub fn ViewSpec::custom(measure~ : (Constraints) -> Size, paint~ : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self
@@ -893,8 +986,12 @@ pub fn ViewSpec::key(Self, String) -> Self
 pub fn ViewSpec::kind(Self) -> Int
 pub fn ViewSpec::main_axis_alignment(Self, MainAxisAlignment) -> Self
 pub fn ViewSpec::modified(Self, ViewModifier) -> Self
+pub fn ViewSpec::offset(Self, dx? : Double, dy? : Double) -> Self
+pub fn ViewSpec::opacity(Self, Double) -> Self
 pub fn ViewSpec::padding(Self, Double) -> Self
 pub fn ViewSpec::same_identity(Self, Self) -> Bool
+pub fn ViewSpec::scale(Self, sx? : Double, sy? : Double) -> Self
+pub fn ViewSpec::shadow(Self, ShadowStyle) -> Self
 pub fn ViewSpec::spacing(Self, Double) -> Self
 pub fn ViewSpec::theme(Self, Theme) -> Self
 pub fn ViewSpec::with_key(Self, Key) -> Self
@@ -902,12 +999,22 @@ pub fn ViewSpec::with_key(Self, Key) -> Self
 pub(all) struct ViewStyle {
   font : FontSpec?
   foreground : Color?
-  background : Color?
+  background : Brush?
   corner_radius : Double?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ViewStyle::empty() -> Self
 pub fn ViewStyle::from_theme(Theme) -> Self
 pub fn ViewStyle::merge(Self, Self) -> Self
+
+pub(all) struct VisualStyle {
+  background : Brush?
+  foreground : Color?
+  border : BorderStyle?
+  shadow : ShadowStyle?
+  radius : Double?
+  opacity : Double?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn VisualStyle::empty() -> Self
 
 // Type aliases
 pub type ClickHandler = () -> Unit

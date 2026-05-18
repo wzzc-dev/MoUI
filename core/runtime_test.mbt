@@ -11,7 +11,6 @@ test "app runtime dispatches events and draws" {
       hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
       pressed_background: Brush::solid(Color::blue()),
       border: None,
-      border_width: 0.0,
       shadow: None,
       corner_radius: 0.0,
       on_click: None,

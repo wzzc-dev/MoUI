@@ -2,14 +2,15 @@
 test "build context watch rebuilds and replaces old subscription" {
   let state = State::new(0)
   let runtime = RuntimeState::new_component(
-    root=Component::new(ctx =>
+    root=Component::new(ctx => {
       ViewSpec::TextSpec({
         key: None,
         text: "Value: \{ctx.watch(state)}",
         size: Size::new(width=100.0, height=24.0),
         font: FontSpec::new(size=16.0, weight=400),
         color: Color::black(),
-      })),
+      })
+    }),
     size=Size::new(width=120.0, height=40.0),
   )
   inspect(state.slot.listeners.length(), content="1")
@@ -30,7 +31,7 @@ test "build context watch rebuilds and replaces old subscription" {
 test "build context binding subscribes control state" {
   let state = State::new("")
   let runtime = RuntimeState::new_component(
-    root=Component::new(ctx =>
+    root=Component::new(ctx => {
       ViewSpec::TextFieldSpec({
         key: None,
         value: ctx.binding(state),
@@ -40,14 +41,17 @@ test "build context binding subscribes control state" {
         foreground: Color::black(),
         placeholder_color: Color::gray(),
         background: Brush::solid(Color::white()),
-        border: Some(Brush::solid(Color::gray())),
-        focused_border: Some(Brush::solid(Color::blue())),
-        border_width: 1.0,
-        focused_border_width: 2.0,
+        border: Some(
+          BorderStyle::new(brush=Brush::solid(Color::gray()), width=1.0),
+        ),
+        focused_border: Some(
+          BorderStyle::new(brush=Brush::solid(Color::blue()), width=2.0),
+        ),
         cursor_color: Color::blue(),
         corner_radius: 0.0,
         on_submit: None,
-      })),
+      })
+    }),
     size=Size::new(width=160.0, height=60.0),
   )
   inspect(state.slot.listeners.length(), content="1")

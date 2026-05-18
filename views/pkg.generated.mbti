@@ -20,7 +20,7 @@ pub fn frame(@core.ViewSpec, width? : Double, height? : Double, min_width? : Dou
 
 pub fn grid(Array[@core.ViewSpec], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.ViewSpec
 
-pub fn image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double) -> @core.ViewSpec
+pub fn image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.ViewSpec
 
 pub fn light_theme() -> @core.Theme
 

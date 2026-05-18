@@ -44,7 +44,9 @@ test "image view builds draw image" {
     size=@core.Size::new(width=40.0, height=40.0),
   )
   assert_true(
-    runtime.draw_commands().any(command => {
+    runtime
+    .draw_commands()
+    .any(command => {
       command is @core.DrawCommand::DrawImage({ source: "logo.png", .. })
     }),
   )
@@ -93,6 +95,7 @@ test "button paints background and text command" {
   guard runtime.draw_commands()
     is [
       @core.DrawCommand::Clear(_),
+      @core.DrawCommand::DrawShadow(_),
       @core.DrawCommand::FillRoundedRectBrush(_, _),
       @core.DrawCommand::DrawText({ text: "Tap", frame, .. }),
     ] else {
@@ -116,7 +119,8 @@ test "modifiers build styled view specs" {
     .font(@core.FontSpec::new(size=20.0, weight=700))
     .foreground(@core.Color::blue())
     .key("title")
-  guard spec is @core.ViewSpec::ModifiedSpec({ key: Some({ value: "title" }), .. }) else {
+  guard spec
+    is @core.ViewSpec::ModifiedSpec({ key: Some({ value: "title" }), .. }) else {
     fail("expected keyed modified spec")
   }
   let runtime = @core.AppRuntime::new_spec(
@@ -127,7 +131,7 @@ test "modifiers build styled view specs" {
     is [
       _,
       @core.DrawCommand::DrawText(
-        { text: "Styled", font: { size: 20.0, weight: 700, .. }, color, .. },
+        { text: "Styled", font: { size: 20.0, weight: 700, .. }, color, .. }
       ),
     ] else {
     fail("expected styled draw text")
@@ -168,7 +172,8 @@ test "theme modifier feeds environment style into view spec" {
   assert_true(
     commands.any(command => {
       match command {
-        @core.DrawCommand::FillRoundedRect(_, color) => color == @core.Color::gray()
+        @core.DrawCommand::FillRoundedRectBrush(_, brush) =>
+          brush == @core.Brush::solid(@core.Color::gray())
         _ => false
       }
     }),
@@ -200,14 +205,113 @@ test "modifier order changes background frame" {
     root=background_padded,
     size=@core.Size::new(width=80.0, height=40.0),
   ).draw_commands()
-  guard first is [_, @core.DrawCommand::FillRect(first_rect, _), ..] else {
+  guard first
+    is [
+      _,
+      @core.DrawCommand::FillRoundedRectBrush({ rect: first_rect, .. }, _),
+      ..,
+    ] else {
     fail("expected first background")
   }
-  guard second is [_, @core.DrawCommand::FillRect(second_rect, _), ..] else {
+  guard second
+    is [
+      _,
+      @core.DrawCommand::FillRoundedRectBrush({ rect: second_rect, .. }, _),
+      ..,
+    ] else {
     fail("expected second background")
   }
   assert_true(first_rect.size.width == 80.0)
   assert_true(second_rect.size.width == 64.0)
+}
+
+///|
+test "visual modifiers emit wrapper commands in order" {
+  let spec = @views.image(
+      "logo.png",
+      width=40.0,
+      height=24.0,
+      fit=@core.ImageFit::Cover,
+    )
+    .corner_radius(6.0)
+    .clip()
+    .opacity(0.6)
+    .offset(dx=4.0, dy=3.0)
+    .border(
+      @core.BorderStyle::new(
+        brush=@core.Brush::solid(@core.Color::blue()),
+        width=2.0,
+      ),
+    )
+    .shadow(
+      @core.ShadowStyle::new(
+        color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.25),
+      ),
+    )
+  let commands = @core.AppRuntime::new_spec(
+    root=spec,
+    size=@core.Size::new(width=80.0, height=48.0),
+  ).draw_commands()
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::DrawShadow(_)),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, 2.0)
+    }),
+  )
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::PushOpacity(0.6)),
+  )
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::PushClip(_)),
+  )
+  assert_true(
+    command_index(commands, "shadow") < command_index(commands, "border"),
+  )
+  assert_true(
+    command_index(commands, "border") < command_index(commands, "opacity"),
+  )
+  assert_true(
+    command_index(commands, "opacity") < command_index(commands, "clip"),
+  )
+  assert_true(
+    command_index(commands, "clip") < command_index(commands, "image"),
+  )
+  assert_true(
+    command_index(commands, "image") < command_index(commands, "pop_clip"),
+  )
+  assert_true(
+    command_index(commands, "pop_clip") < command_index(commands, "pop_opacity"),
+  )
+  assert_true(
+    commands.any(command => {
+      command
+      is @core.DrawCommand::DrawImage(
+        { frame: { origin: { x: 4.0, y: 3.0 }, .. }, .. }
+      )
+    }),
+  )
+}
+
+///|
+fn command_index(commands : Array[@core.DrawCommand], name : String) -> Int {
+  for index, command in commands {
+    let matched = match (name, command) {
+      ("shadow", @core.DrawCommand::DrawShadow(_)) => true
+      ("border", @core.DrawCommand::StrokeRoundedRectBrush(_, _, _)) => true
+      ("opacity", @core.DrawCommand::PushOpacity(_)) => true
+      ("clip", @core.DrawCommand::PushClip(_)) => true
+      ("image", @core.DrawCommand::DrawImage(_)) => true
+      ("pop_clip", @core.DrawCommand::PopClip) => true
+      ("pop_opacity", @core.DrawCommand::PopOpacity) => true
+      _ => false
+    }
+    if matched {
+      return index
+    }
+  }
+  -1
 }
 
 ///|
@@ -329,8 +433,11 @@ test "text field accepts visual styles" {
   let style = @core.TextFieldStyle::outline(theme=@core.Theme::dark())
   let spec = @views.text_field(state.binding(), style~)
   guard spec
-    is @core.ViewSpec::TextFieldSpec({ focused_border: Some(focused_border), cursor_color, .. }) else {
+    is @core.ViewSpec::TextFieldSpec(
+      { focused_border: Some(focused_border), cursor_color, .. }
+    ) else {
     fail("expected styled text field spec")
   }
-  assert_true(focused_border == @core.Brush::solid(cursor_color))
+  assert_true(focused_border.brush == @core.Brush::solid(cursor_color))
+  inspect(focused_border.width, content="2")
 }

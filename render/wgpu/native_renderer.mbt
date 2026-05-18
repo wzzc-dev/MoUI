@@ -29,6 +29,7 @@ struct RendererHandle {
   mut text_vertices : Array[TextVertex]
   mut draw_items : Array[NativeDrawItem]
   mut text_atlas_dirty : Bool
+  mut unsupported_command_count : Int
 }
 
 ///|
@@ -111,6 +112,7 @@ fn create_with_surface(
     text_vertices: [],
     draw_items: [],
     text_atlas_dirty: true,
+    unsupported_command_count: 0,
   }
 }
 
@@ -154,6 +156,7 @@ fn RendererHandle::render(
   self.text_vertices = plan.text_vertices
   self.draw_items = plan.items
   self.text_atlas_dirty = plan.atlas_dirty
+  self.unsupported_command_count = count_native_unsupported_commands(commands)
   self.render_wgpu(commands)
 }
 
@@ -255,7 +258,28 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
   self.text_vertices = []
   self.draw_items = []
   self.text_atlas_dirty = false
+  self.unsupported_command_count = 0
   self.configured = false
+}
+
+///|
+fn count_native_unsupported_commands(
+  commands : Array[@core.DrawCommand],
+) -> Int {
+  let mut count = 0
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawImage(_)
+      | @core.DrawCommand::PushClip(_)
+      | @core.DrawCommand::PopClip
+      | @core.DrawCommand::PushTransform(_)
+      | @core.DrawCommand::PopTransform
+      | @core.DrawCommand::PushOpacity(_)
+      | @core.DrawCommand::PopOpacity => count = count + 1
+      _ => ()
+    }
+  }
+  count
 }
 
 ///|

@@ -30,5 +30,6 @@ fn new_test_renderer_handle() -> RendererHandle {
     text_vertices: [],
     draw_items: [],
     text_atlas_dirty: false,
+    unsupported_command_count: 0,
   }
 }

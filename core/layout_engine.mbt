@@ -153,8 +153,16 @@ fn modified_intrinsic_size(
   match modifier {
     PaddingModifier(insets) => child_size.inflate(insets)
     FrameModifier(data) => resolve_frame_modifier_size(data, child_size)
-    BackgroundModifier(_) | ForegroundModifier(_) | FontModifier(_) | CornerRadiusModifier(_) =>
-      child_size
+    BackgroundModifier(_)
+    | ForegroundModifier(_)
+    | FontModifier(_)
+    | CornerRadiusModifier(_)
+    | OpacityModifier(_)
+    | ShadowModifier(_)
+    | BorderModifier(_)
+    | OffsetModifier(_, _)
+    | ClipModifier
+    | ScaleModifier(_, _) => child_size
   }
 }
 
@@ -338,10 +346,7 @@ fn grid_child_frames(
       (bounds.size.width - total_column_spacing) / columns.to_double(),
     )
     let measured = measure_grid_size(
-      columns,
-      row_spacing,
-      column_spacing,
-      children,
+      columns, row_spacing, column_spacing, children,
     )
     let fallback_height = if rows > 0 {
       max_double(
@@ -352,20 +357,16 @@ fn grid_child_frames(
       0.0
     }
     let cell_height = if measured.height > 0.0 {
-      max_double(
-        0.0,
-        (measured.height - total_row_spacing) / rows.to_double(),
-      )
+      max_double(0.0, (measured.height - total_row_spacing) / rows.to_double())
     } else {
       fallback_height
     }
     for index, _child in children {
-      let column = index - (index / columns) * columns
+      let column = index - index / columns * columns
       let row = index / columns
       frames.push(
         Rect::new(
-          x=bounds.origin.x +
-            column.to_double() * (cell_width + column_spacing),
+          x=bounds.origin.x + column.to_double() * (cell_width + column_spacing),
           y=bounds.origin.y + row.to_double() * (cell_height + row_spacing),
           width=cell_width,
           height=cell_height,

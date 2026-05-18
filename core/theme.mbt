@@ -1,4 +1,5 @@
 ///|
+
 ///|
 pub(all) enum ColorScheme {
   Light
@@ -43,12 +44,44 @@ pub(all) struct TypographyScale {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct ShadowScale {
+  sm : ShadowStyle
+  md : ShadowStyle
+  lg : ShadowStyle
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct MotionScale {
+  fast_ms : Double
+  normal_ms : Double
+  slow_ms : Double
+  easing : Easing
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct SurfaceScale {
+  base : Brush
+  raised : Brush
+  overlay : Brush
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum SurfaceLevel {
+  Base
+  Raised
+  Overlay
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
   spacing_scale : SpacingScale
   radius_scale : RadiusScale
   typography : TypographyScale
+  shadow_scale : ShadowScale
+  motion : MotionScale
+  surfaces : SurfaceScale
   font : FontSpec
   foreground : Color
   background : Color
@@ -112,17 +145,89 @@ pub fn TypographyScale::default() -> TypographyScale {
 }
 
 ///|
+pub fn ShadowScale::default(
+  scheme? : ColorScheme = ColorScheme::Light,
+) -> ShadowScale {
+  let alpha = match scheme {
+    Light => 0.18
+    Dark => 0.36
+  }
+  {
+    sm: ShadowStyle::new(
+      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 0.65),
+      offset=Point::new(x=0.0, y=1.0),
+      blur_radius=6.0,
+    ),
+    md: ShadowStyle::new(
+      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha),
+      offset=Point::new(x=0.0, y=4.0),
+      blur_radius=16.0,
+    ),
+    lg: ShadowStyle::new(
+      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 1.2),
+      offset=Point::new(x=0.0, y=10.0),
+      blur_radius=28.0,
+      spread=2.0,
+    ),
+  }
+}
+
+///|
+pub fn MotionScale::default() -> MotionScale {
+  {
+    fast_ms: 120.0,
+    normal_ms: 180.0,
+    slow_ms: 280.0,
+    easing: Easing::EaseInOut,
+  }
+}
+
+///|
+pub fn SurfaceScale::default(
+  palette : ColorPalette,
+  scheme : ColorScheme,
+) -> SurfaceScale {
+  let raised = match scheme {
+    Light =>
+      Brush::linear_gradient(
+        start=Point::new(x=0.0, y=0.0),
+        end=Point::new(x=0.0, y=120.0),
+        start_color=Color::white(),
+        end_color=palette.surface,
+      )
+    Dark =>
+      Brush::linear_gradient(
+        start=Point::new(x=0.0, y=0.0),
+        end=Point::new(x=0.0, y=120.0),
+        start_color=palette.surface_variant,
+        end_color=palette.surface,
+      )
+  }
+  {
+    base: Brush::solid(palette.surface),
+    raised,
+    overlay: Brush::solid(palette.surface_variant),
+  }
+}
+
+///|
 pub fn Theme::light() -> Theme {
   let palette = ColorPalette::light()
   let spacing_scale = SpacingScale::default()
   let radius_scale = RadiusScale::default()
   let typography = TypographyScale::default()
+  let shadow_scale = ShadowScale::default(scheme=ColorScheme::Light)
+  let motion = MotionScale::default()
+  let surfaces = SurfaceScale::default(palette, ColorScheme::Light)
   {
     scheme: ColorScheme::Light,
     palette,
     spacing_scale,
     radius_scale,
     typography,
+    shadow_scale,
+    motion,
+    surfaces,
     font: typography.body,
     foreground: palette.foreground,
     background: palette.background,
@@ -138,12 +243,18 @@ pub fn Theme::dark() -> Theme {
   let spacing_scale = SpacingScale::default()
   let radius_scale = RadiusScale::default()
   let typography = TypographyScale::default()
+  let shadow_scale = ShadowScale::default(scheme=ColorScheme::Dark)
+  let motion = MotionScale::default()
+  let surfaces = SurfaceScale::default(palette, ColorScheme::Dark)
   {
     scheme: ColorScheme::Dark,
     palette,
     spacing_scale,
     radius_scale,
     typography,
+    shadow_scale,
+    motion,
+    surfaces,
     font: typography.body,
     foreground: palette.foreground,
     background: palette.background,
@@ -185,14 +296,20 @@ pub fn Theme::with_spacing(self : Theme, spacing : Double) -> Theme {
 
 ///|
 pub fn Theme::with_corner_radius(self : Theme, radius : Double) -> Theme {
-  { ..self, corner_radius: radius, radius_scale: { ..self.radius_scale, md: radius } }
+  {
+    ..self,
+    corner_radius: radius,
+    radius_scale: { ..self.radius_scale, md: radius },
+  }
 }
 
 ///|
 pub fn Theme::with_palette(self : Theme, palette : ColorPalette) -> Theme {
+  let surfaces = SurfaceScale::default(palette, self.scheme)
   {
     ..self,
     palette,
+    surfaces,
     foreground: palette.foreground,
     background: palette.background,
     accent: palette.primary,
@@ -221,6 +338,33 @@ pub fn Theme::with_typography(
   typography : TypographyScale,
 ) -> Theme {
   { ..self, typography, font: typography.body }
+}
+
+///|
+pub fn Theme::with_shadow_scale(
+  self : Theme,
+  shadow_scale : ShadowScale,
+) -> Theme {
+  { ..self, shadow_scale, }
+}
+
+///|
+pub fn Theme::with_motion(self : Theme, motion : MotionScale) -> Theme {
+  { ..self, motion, }
+}
+
+///|
+pub fn Theme::with_surfaces(self : Theme, surfaces : SurfaceScale) -> Theme {
+  { ..self, surfaces, }
+}
+
+///|
+pub fn Theme::surface_brush(self : Theme, level : SurfaceLevel) -> Brush {
+  match level {
+    Base => self.surfaces.base
+    Raised => self.surfaces.raised
+    Overlay => self.surfaces.overlay
+  }
 }
 
 ///|
@@ -256,7 +400,7 @@ pub fn ViewStyle::from_theme(theme : Theme) -> ViewStyle {
   {
     font: Some(theme.font),
     foreground: Some(theme.foreground),
-    background: Some(theme.background),
+    background: Some(theme.surface_brush(SurfaceLevel::Base)),
     corner_radius: Some(theme.corner_radius),
   }
 }

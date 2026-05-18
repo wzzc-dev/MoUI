@@ -12,10 +12,10 @@ fn semantics_text_field(
     foreground: Color::black(),
     placeholder_color: Color::gray(),
     background: Brush::solid(Color::white()),
-    border: Some(Brush::solid(Color::gray())),
-    focused_border: Some(Brush::solid(Color::blue())),
-    border_width: 1.0,
-    focused_border_width: 2.0,
+    border: Some(BorderStyle::new(brush=Brush::solid(Color::gray()), width=1.0)),
+    focused_border: Some(
+      BorderStyle::new(brush=Brush::solid(Color::blue()), width=2.0),
+    ),
     cursor_color: Color::blue(),
     corner_radius: 0.0,
     on_submit: None,
@@ -43,7 +43,6 @@ test "semantics exports button text field labels actions and focus order" {
           hovered_background: Brush::solid(Color::gray()),
           pressed_background: Brush::solid(Color::blue()),
           border: None,
-          border_width: 0.0,
           shadow: None,
           corner_radius: 0.0,
           on_click: None,
@@ -69,7 +68,7 @@ test "semantics exports button text field labels actions and focus order" {
       label: "Save",
       focus_order: Some(0),
       actions,
-      ..
+      ..,
     } else {
     fail("expected button semantics")
   }
@@ -81,7 +80,7 @@ test "semantics exports button text field labels actions and focus order" {
       value: "Ada",
       focus_order: Some(1),
       state: { focused: true, .. },
-      ..
+      ..,
     } else {
     fail("expected focused text field semantics")
   }

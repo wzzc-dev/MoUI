@@ -33,6 +33,7 @@ fn ElementNode::render_with_environment(
 ) -> RenderNode {
   let children : Array[RenderNode] = []
   let commands : Array[DrawCommand] = []
+  let post_commands : Array[DrawCommand] = []
   match self.spec {
     EmptySpec => ()
     SpacerSpec(_) => ()
@@ -53,14 +54,19 @@ fn ElementNode::render_with_environment(
       }
       let rounded = RoundedRect::new(rect=bounds, radius=data.corner_radius)
       match data.shadow {
-        Some(shadow) => commands.push(DrawShadow(shadow))
+        Some(shadow) =>
+          commands.push(
+            DrawShadow(shadow_style_to_spec(shadow, bounds, data.corner_radius)),
+          )
         None => ()
       }
       commands.push(FillRoundedRectBrush(rounded, background))
       match data.border {
         Some(border) =>
-          if data.border_width > 0.0 {
-            commands.push(StrokeRoundedRectBrush(rounded, border, data.border_width))
+          if border.width > 0.0 {
+            commands.push(
+              StrokeRoundedRectBrush(rounded, border.brush, border.width),
+            )
           }
         None => ()
       }
@@ -98,7 +104,9 @@ fn ElementNode::render_with_environment(
           )
         None => bounds
       }
-      let corner_radius = environment.corner_radius.unwrap_or(data.corner_radius)
+      let corner_radius = environment.corner_radius.unwrap_or(
+        data.corner_radius,
+      )
       if corner_radius > 0.0 {
         commands.push(PushClip(frame))
       }
@@ -131,9 +139,7 @@ fn ElementNode::render_with_environment(
       if self.children.length() > 0 {
         children.push(
           self.children[0].render_with_environment(
-            child_frame,
-            focused,
-            environment,
+            child_frame, focused, environment,
           ),
         )
       }
@@ -169,20 +175,29 @@ fn ElementNode::render_with_environment(
         None => ()
       }
       match data.shadow {
-        Some(shadow) => commands.push(DrawShadow(shadow))
+        Some(shadow) =>
+          commands.push(
+            DrawShadow(
+              shadow_style_to_spec(
+                shadow,
+                frame,
+                environment.corner_radius.unwrap_or(data.corner_radius),
+              ),
+            ),
+          )
         None => ()
       }
       match data.border {
         Some(border) =>
-          if data.border_width > 0.0 {
+          if border.width > 0.0 {
             commands.push(
               StrokeRoundedRectBrush(
                 RoundedRect::new(
                   rect=frame,
                   radius=environment.corner_radius.unwrap_or(data.corner_radius),
                 ),
-                border,
-                data.border_width,
+                border.brush,
+                border.width,
               ),
             )
           }
@@ -204,7 +219,9 @@ fn ElementNode::render_with_environment(
     }
     StackSpec(_) =>
       for child in self.children {
-        children.push(child.render_with_environment(bounds, focused, environment))
+        children.push(
+          child.render_with_environment(bounds, focused, environment),
+        )
       }
     ScrollSpec(data) => {
       let viewport = data.viewport.unwrap_or(bounds.size)
@@ -250,19 +267,12 @@ fn ElementNode::render_with_environment(
     }
     ModifiedSpec(data) =>
       render_modified_node(
-        self,
-        data,
-        bounds,
-        focused,
-        environment,
-        children,
-        commands,
+        self, data, bounds, focused, environment, children, commands, post_commands,
       )
-    CustomSpec(data) => {
+    CustomSpec(data) =>
       for command in (data.paint)(bounds) {
         commands.push(command)
       }
-    }
   }
   self.dirty.clear()
   {
@@ -271,6 +281,7 @@ fn ElementNode::render_with_environment(
     children,
     hit_testable: element_hit_testable(self.spec),
     paint_commands: commands,
+    post_paint_commands: post_commands,
   }
 }
 
@@ -283,6 +294,7 @@ fn render_modified_node(
   environment : RenderEnvironment,
   children : Array[RenderNode],
   commands : Array[DrawCommand],
+  post_commands : Array[DrawCommand],
 ) -> Unit {
   match data.modifier {
     PaddingModifier(insets) =>
@@ -308,16 +320,18 @@ fn render_modified_node(
     BackgroundModifier(color) => {
       let radius = environment.corner_radius.unwrap_or(0.0)
       if radius > 0.0 {
-        commands.push(FillRoundedRect(RoundedRect::new(rect=bounds, radius~), color))
+        commands.push(
+          FillRoundedRectBrush(RoundedRect::new(rect=bounds, radius~), color),
+        )
       } else {
-        commands.push(FillRect(bounds, color))
+        commands.push(
+          FillRoundedRectBrush(RoundedRect::new(rect=bounds), color),
+        )
       }
       if element.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds,
-            focused,
-            environment,
+            bounds, focused, environment,
           ),
         )
       }
@@ -325,33 +339,110 @@ fn render_modified_node(
     ForegroundModifier(color) =>
       if element.children.length() > 0 {
         children.push(
-          element.children[0].render_with_environment(
-            bounds,
-            focused,
-            { ..environment, foreground: Some(color) },
-          ),
+          element.children[0].render_with_environment(bounds, focused, {
+            ..environment,
+            foreground: Some(color),
+          }),
         )
       }
     FontModifier(font) =>
       if element.children.length() > 0 {
         children.push(
-          element.children[0].render_with_environment(
-            bounds,
-            focused,
-            { ..environment, font: Some(font) },
-          ),
+          element.children[0].render_with_environment(bounds, focused, {
+            ..environment,
+            font: Some(font),
+          }),
         )
       }
     CornerRadiusModifier(radius) =>
       if element.children.length() > 0 {
         children.push(
+          element.children[0].render_with_environment(bounds, focused, {
+            ..environment,
+            corner_radius: Some(radius),
+          }),
+        )
+      }
+    OpacityModifier(opacity) => {
+      commands.push(PushOpacity(opacity))
+      if element.children.length() > 0 {
+        children.push(
           element.children[0].render_with_environment(
-            bounds,
-            focused,
-            { ..environment, corner_radius: Some(radius) },
+            bounds, focused, environment,
           ),
         )
       }
+      post_commands.push(PopOpacity)
+    }
+    ShadowModifier(style) => {
+      commands.push(
+        DrawShadow(
+          shadow_style_to_spec(
+            style,
+            bounds,
+            environment.corner_radius.unwrap_or(0.0),
+          ),
+        ),
+      )
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds, focused, environment,
+          ),
+        )
+      }
+    }
+    BorderModifier(style) => {
+      let radius = environment.corner_radius.unwrap_or(0.0)
+      if style.width > 0.0 {
+        commands.push(
+          StrokeRoundedRectBrush(
+            RoundedRect::new(rect=bounds, radius~),
+            style.brush,
+            style.width,
+          ),
+        )
+      }
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds, focused, environment,
+          ),
+        )
+      }
+    }
+    OffsetModifier(dx, dy) => {
+      let child_bounds = bounds.offset(dx~, dy~)
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            child_bounds, focused, environment,
+          ),
+        )
+      }
+    }
+    ClipModifier => {
+      commands.push(PushClip(bounds))
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds, focused, environment,
+          ),
+        )
+      }
+      post_commands.push(PopClip)
+    }
+    ScaleModifier(sx, sy) => {
+      commands.push(PushTransform(Transform2D::scale(sx~, sy~)))
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds, focused, environment,
+          ),
+        )
+      }
+      post_commands.push(PopTransform)
+    }
   }
 }
 
@@ -426,7 +517,10 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     TextFieldSpec(_) => true
     CheckboxSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
-    ModifiedSpec(data) => data.modifier is BackgroundModifier(_)
+    ModifiedSpec(data) =>
+      data.modifier is BackgroundModifier(_) ||
+      data.modifier is BorderModifier(_) ||
+      data.modifier is ShadowModifier(_)
     CustomSpec(_) => true
     _ => false
   }
@@ -459,7 +553,8 @@ fn append_checkbox_commands(
   environment : RenderEnvironment,
 ) -> Unit {
   let box_side = data.size.width
-  let box_y = frame.origin.y + max_double(0.0, (frame.size.height - box_side) / 2.0)
+  let box_y = frame.origin.y +
+    max_double(0.0, (frame.size.height - box_side) / 2.0)
   let box_rect = Rect::new(
     x=frame.origin.x,
     y=box_y,
@@ -504,31 +599,19 @@ fn append_text_field_commands(
   focused : Bool,
   environment : RenderEnvironment,
 ) -> Unit {
-  let border = if focused {
-    data.focused_border
-  } else {
-    data.border
-  }
-  let border_width = if focused {
-    data.focused_border_width
-  } else {
-    data.border_width
-  }
+  let border = if focused { data.focused_border } else { data.border }
   let rounded = RoundedRect::new(rect=frame, radius=data.corner_radius)
   if data.corner_radius > 0.0 {
-    commands.push(
-      FillRoundedRectBrush(
-        rounded,
-        data.background,
-      ),
-    )
+    commands.push(FillRoundedRectBrush(rounded, data.background))
   } else {
     commands.push(FillRoundedRectBrush(rounded, data.background))
   }
   match border {
     Some(border) =>
-      if border_width > 0.0 {
-        commands.push(StrokeRoundedRectBrush(rounded, border, border_width))
+      if border.width > 0.0 {
+        commands.push(
+          StrokeRoundedRectBrush(rounded, border.brush, border.width),
+        )
       }
     None => ()
   }
@@ -552,11 +635,7 @@ fn append_text_field_commands(
   if focused {
     let font = environment.font.unwrap_or(data.font)
     let layout = measure_text_layout(
-      TextLayoutInput::new(
-        text~,
-        font~,
-        max_width=text_frame.size.width,
-      ),
+      TextLayoutInput::new(text~, font~, max_width=text_frame.size.width),
     )
     let caret = clamp_int(element.caret, 0, layout.caret_positions.length() - 1)
     let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
@@ -581,6 +660,24 @@ pub fn RenderNode::collect_draw_commands(
   for child in self.children {
     child.collect_draw_commands(commands)
   }
+  for command in self.post_paint_commands {
+    commands.push(command)
+  }
+}
+
+///|
+fn shadow_style_to_spec(
+  style : ShadowStyle,
+  rect : Rect,
+  radius : Double,
+) -> ShadowSpec {
+  ShadowSpec::new(
+    rect=RoundedRect::new(rect~, radius~),
+    color=style.color,
+    offset=style.offset,
+    blur_radius=style.blur_radius,
+    spread=style.spread,
+  )
 }
 
 ///|

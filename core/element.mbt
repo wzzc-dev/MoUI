@@ -18,6 +18,7 @@ pub(all) struct RenderNode {
   children : Array[RenderNode]
   hit_testable : Bool
   paint_commands : Array[DrawCommand]
+  post_paint_commands : Array[DrawCommand]
 } derive(Eq, Debug, ToJson)
 
 ///|

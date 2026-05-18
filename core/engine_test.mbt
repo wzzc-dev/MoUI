@@ -27,10 +27,10 @@ fn test_text_field(
     foreground: Color::black(),
     placeholder_color: Color::gray(),
     background: Brush::solid(Color::white()),
-    border: Some(Brush::solid(Color::gray())),
-    focused_border: Some(Brush::solid(Color::blue())),
-    border_width: 1.0,
-    focused_border_width: 2.0,
+    border: Some(BorderStyle::new(brush=Brush::solid(Color::gray()), width=1.0)),
+    focused_border: Some(
+      BorderStyle::new(brush=Brush::solid(Color::blue()), width=2.0),
+    ),
     cursor_color: Color::blue(),
     corner_radius: 0.0,
     on_submit,
@@ -220,13 +220,21 @@ test "image spec emits draw image command" {
       size: Some(Size::new(width=48.0, height=32.0)),
       opacity: 0.75,
       corner_radius: 0.0,
+      fit: ImageFit::Contain,
     }),
     size=Size::new(width=100.0, height=80.0),
   )
-  guard runtime.build_draw_commands() is [
-    _,
-    DrawImage({ source: "logo.png", opacity: 0.75, frame: { size: { width: 48.0, height: 32.0 }, .. } }),
-  ] else {
+  guard runtime.build_draw_commands()
+    is [
+      _,
+      DrawImage(
+        {
+          source: "logo.png",
+          opacity: 0.75,
+          frame: { size: { width: 48.0, height: 32.0 }, .. },
+        }
+      ),
+    ] else {
     fail("expected image draw command")
   }
 }
@@ -234,13 +242,17 @@ test "image spec emits draw image command" {
 ///|
 test "custom spec measures paints and exposes semantics" {
   let spec = ViewSpec::custom(
-    measure=constraints => constraints.constrain(Size::new(width=32.0, height=20.0)),
-    paint=frame => [
-      DrawCommand::FillRoundedRectBrush(
-        RoundedRect::new(rect=frame, radius=3.0),
-        Brush::solid(Color::blue()),
-      ),
-    ],
+    measure=constraints => {
+      constraints.constrain(Size::new(width=32.0, height=20.0))
+    },
+    paint=frame => {
+      [
+        DrawCommand::FillRoundedRectBrush(
+          RoundedRect::new(rect=frame, radius=3.0),
+          Brush::solid(Color::blue()),
+        ),
+      ]
+    },
     semantics_role=SemanticsRole::Group,
     semantics_label="Custom swatch",
   ).key("custom")
@@ -253,13 +265,17 @@ test "custom spec measures paints and exposes semantics" {
   )
   inspect(measured.size.width, content="32")
   assert_true(
-    runtime.build_draw_commands().any(command => {
+    runtime
+    .build_draw_commands()
+    .any(command => {
       command is DrawCommand::FillRoundedRectBrush(_, Brush::Solid(_))
     }),
   )
   let semantics = runtime.semantics()
   inspect(semantics.label, content="Custom swatch")
-  assert_true(runtime.element_tree.find_keyed("custom") == Some(runtime.element_tree.id))
+  assert_true(
+    runtime.element_tree.find_keyed("custom") == Some(runtime.element_tree.id),
+  )
 }
 
 ///|
@@ -352,7 +368,6 @@ test "runtime dynamic button activates after press-preserving move inside" {
         hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
         pressed_background: Brush::solid(Color::blue()),
         border: None,
-        border_width: 0.0,
         shadow: None,
         corner_radius: 0.0,
         on_click: Some(() => clicks.val = clicks.val + 1),
@@ -402,7 +417,6 @@ test "runtime dynamic builder rebuilds after activated pointer" {
         hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
         pressed_background: Brush::solid(Color::blue()),
         border: None,
-        border_width: 0.0,
         shadow: None,
         corner_radius: 0.0,
         on_click: Some(() => clicks.val = clicks.val + 1),
@@ -437,10 +451,7 @@ test "runtime dynamic builder rebuilds after activated pointer" {
 test "hit test path records root to topmost leaf" {
   let root = ViewSpec::StackSpec({
     key: None,
-    children: [
-      test_label("Bottom", key="bottom"),
-      test_label("Top", key="top"),
-    ],
+    children: [test_label("Bottom", key="bottom"), test_label("Top", key="top")],
   })
   let element = mount_view_spec(root)
   let render = element.render(Rect::new(x=0.0, y=0.0, width=100.0, height=40.0))
@@ -521,7 +532,6 @@ test "clicking outside text field clears focus" {
           hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
           pressed_background: Brush::solid(Color::blue()),
           border: None,
-          border_width: 0.0,
           shadow: None,
           corner_radius: 0.0,
           on_click: None,
@@ -573,7 +583,6 @@ test "pointer dispatch chooses topmost overlapping child" {
           hovered_background: Brush::solid(Color::gray()),
           pressed_background: Brush::solid(Color::blue()),
           border: None,
-          border_width: 0.0,
           shadow: None,
           corner_radius: 0.0,
           on_click: Some(() => bottom_clicks.val = bottom_clicks.val + 1),
@@ -588,7 +597,6 @@ test "pointer dispatch chooses topmost overlapping child" {
           hovered_background: Brush::solid(Color::gray()),
           pressed_background: Brush::solid(Color::blue()),
           border: None,
-          border_width: 0.0,
           shadow: None,
           corner_radius: 0.0,
           on_click: Some(() => top_clicks.val = top_clicks.val + 1),
@@ -641,10 +649,7 @@ test "tab traverses text field focus forward and backward" {
   runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="b", text=Some("b"))))
   runtime.dispatch_event(
     Keyboard(
-      KeyboardEvent::new(
-        key="Tab",
-        modifiers=KeyModifiers::new(shift=true),
-      ),
+      KeyboardEvent::new(key="Tab", modifiers=KeyModifiers::new(shift=true)),
     ),
   )
   runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="c", text=Some("c"))))
@@ -692,9 +697,7 @@ test "ime composition updates paint preview and commit into text field" {
   )
   runtime.dispatch_event(TextInput(CompositionStart))
   runtime.dispatch_event(
-    TextInput(
-      CompositionUpdate(CompositionUpdate::new(text="ni", cursor=None)),
-    ),
+    TextInput(CompositionUpdate(CompositionUpdate::new(text="ni", cursor=None))),
   )
   let preview = runtime.build_draw_commands()
   guard preview[3] is DrawText({ text: "ni", .. }) else {

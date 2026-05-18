@@ -19,7 +19,6 @@ pub fn button(
     hovered_background: hovered.background,
     pressed_background: pressed.background,
     border: normal.border,
-    border_width: normal.border_width,
     shadow: normal.shadow,
     corner_radius: normal.radius,
     on_click,

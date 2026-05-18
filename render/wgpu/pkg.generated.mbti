@@ -42,6 +42,7 @@ pub fn WgpuRenderer::last_batch_count(Self) -> Int
 pub fn WgpuRenderer::present_count(Self) -> Int
 pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
 pub fn WgpuRenderer::resize(Self, @core.Size) -> Unit
+pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
 
 // Type aliases
 

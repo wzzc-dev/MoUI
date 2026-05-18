@@ -184,7 +184,10 @@ fn frame_modifier_constraints_for_measure(
 }
 
 ///|
-fn ElementNode::child_frames_for_place(self : ElementNode, frame : Rect) -> Array[Rect] {
+fn ElementNode::child_frames_for_place(
+  self : ElementNode,
+  frame : Rect,
+) -> Array[Rect] {
   match self.spec {
     FlexSpec(data) =>
       flex_child_frames(
@@ -207,7 +210,11 @@ fn ElementNode::child_frames_for_place(self : ElementNode, frame : Rect) -> Arra
           )
         None => frame
       }
-      if self.children.length() > 0 { [child_frame] } else { [] }
+      if self.children.length() > 0 {
+        [child_frame]
+      } else {
+        []
+      }
     }
     FrameSpec(data) => [frame_rect_for_spec(data, frame)]
     StackSpec(_) => self.children.map(_child => frame)
@@ -244,8 +251,16 @@ fn modified_measured_size(
   match modifier {
     PaddingModifier(insets) => child_size.inflate(insets)
     FrameModifier(data) => resolve_frame_modifier_size(data, child_size)
-    BackgroundModifier(_) | ForegroundModifier(_) | FontModifier(_) | CornerRadiusModifier(_) =>
-      child_size
+    BackgroundModifier(_)
+    | ForegroundModifier(_)
+    | FontModifier(_)
+    | CornerRadiusModifier(_)
+    | OpacityModifier(_)
+    | ShadowModifier(_)
+    | BorderModifier(_)
+    | OffsetModifier(_, _)
+    | ClipModifier
+    | ScaleModifier(_, _) => child_size
   }
 }
 
@@ -256,22 +271,36 @@ fn modified_child_constraints(
 ) -> Constraints {
   match modifier {
     PaddingModifier(insets) => constraints.deflate(insets)
-    FrameModifier(data) => frame_modifier_constraints_for_measure(data, constraints)
-    BackgroundModifier(_) | ForegroundModifier(_) | FontModifier(_) | CornerRadiusModifier(_) =>
-      constraints.loosen()
+    FrameModifier(data) =>
+      frame_modifier_constraints_for_measure(data, constraints)
+    BackgroundModifier(_)
+    | ForegroundModifier(_)
+    | FontModifier(_)
+    | CornerRadiusModifier(_)
+    | OpacityModifier(_)
+    | ShadowModifier(_)
+    | BorderModifier(_)
+    | OffsetModifier(_, _)
+    | ClipModifier
+    | ScaleModifier(_, _) => constraints.loosen()
   }
 }
 
 ///|
-fn modified_child_frames(
-  modifier : ViewModifier,
-  frame : Rect,
-) -> Array[Rect] {
+fn modified_child_frames(modifier : ViewModifier, frame : Rect) -> Array[Rect] {
   match modifier {
     PaddingModifier(insets) => [frame.inset(insets)]
     FrameModifier(data) => [frame_rect_for_modifier(data, frame)]
-    BackgroundModifier(_) | ForegroundModifier(_) | FontModifier(_) | CornerRadiusModifier(_) =>
-      [frame]
+    BackgroundModifier(_)
+    | ForegroundModifier(_)
+    | FontModifier(_)
+    | CornerRadiusModifier(_)
+    | OpacityModifier(_)
+    | ShadowModifier(_)
+    | BorderModifier(_)
+    | ClipModifier
+    | ScaleModifier(_, _) => [frame]
+    OffsetModifier(dx, dy) => [frame.offset(dx~, dy~)]
   }
 }
 

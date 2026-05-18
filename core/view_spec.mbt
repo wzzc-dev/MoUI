@@ -30,8 +30,38 @@ pub(all) enum ButtonState {
 pub(all) struct ViewStyle {
   font : FontSpec?
   foreground : Color?
-  background : Color?
+  background : Brush?
   corner_radius : Double?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum ImageFit {
+  Contain
+  Cover
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ShadowStyle {
+  color : Color
+  offset : Point
+  blur_radius : Double
+  spread : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct BorderStyle {
+  brush : Brush
+  width : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct VisualStyle {
+  background : Brush?
+  foreground : Color?
+  border : BorderStyle?
+  shadow : ShadowStyle?
+  radius : Double?
+  opacity : Double?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -53,9 +83,8 @@ pub(all) struct ButtonViewSpec {
   background : Brush
   hovered_background : Brush
   pressed_background : Brush
-  border : Brush?
-  border_width : Double
-  shadow : ShadowSpec?
+  border : BorderStyle?
+  shadow : ShadowStyle?
   corner_radius : Double
   on_click : ClickHandler?
 }
@@ -70,10 +99,8 @@ pub(all) struct TextFieldViewSpec {
   foreground : Color
   placeholder_color : Color
   background : Brush
-  border : Brush?
-  focused_border : Brush?
-  border_width : Double
-  focused_border_width : Double
+  border : BorderStyle?
+  focused_border : BorderStyle?
   cursor_color : Color
   corner_radius : Double
   on_submit : (() -> Unit)?
@@ -86,6 +113,7 @@ pub(all) struct ImageViewSpec {
   size : Size?
   opacity : Double
   corner_radius : Double
+  fit : ImageFit
 }
 
 ///|
@@ -121,10 +149,9 @@ pub(all) struct ContainerViewSpec {
   key : Key?
   size : Size?
   background : Brush?
-  border : Brush?
-  border_width : Double
+  border : BorderStyle?
   corner_radius : Double
-  shadow : ShadowSpec?
+  shadow : ShadowStyle?
   child : ViewSpec?
 }
 
@@ -191,10 +218,16 @@ pub(all) struct FrameModifierSpec {
 pub(all) enum ViewModifier {
   PaddingModifier(Insets)
   FrameModifier(FrameModifierSpec)
-  BackgroundModifier(Color)
+  BackgroundModifier(Brush)
   ForegroundModifier(Color)
   FontModifier(FontSpec)
   CornerRadiusModifier(Double)
+  OpacityModifier(Double)
+  ShadowModifier(ShadowStyle)
+  BorderModifier(BorderStyle)
+  OffsetModifier(Double, Double)
+  ClipModifier
+  ScaleModifier(Double, Double)
 }
 
 ///|
@@ -237,6 +270,33 @@ pub(all) enum ViewSpec {
 ///|
 pub fn ViewStyle::empty() -> ViewStyle {
   { font: None, foreground: None, background: None, corner_radius: None }
+}
+
+///|
+pub fn ShadowStyle::new(
+  color~ : Color,
+  offset? : Point = Point::new(x=0.0, y=2.0),
+  blur_radius? : Double = 8.0,
+  spread? : Double = 0.0,
+) -> ShadowStyle {
+  { color, offset, blur_radius, spread }
+}
+
+///|
+pub fn BorderStyle::new(brush~ : Brush, width? : Double = 1.0) -> BorderStyle {
+  { brush, width }
+}
+
+///|
+pub fn VisualStyle::empty() -> VisualStyle {
+  {
+    background: None,
+    foreground: None,
+    border: None,
+    shadow: None,
+    radius: None,
+    opacity: None,
+  }
 }
 
 ///|
@@ -348,12 +408,55 @@ pub fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
 
 ///|
 pub fn ViewSpec::background(self : ViewSpec, color : Color) -> ViewSpec {
-  self.modified(BackgroundModifier(color))
+  self.background_brush(Brush::solid(color))
+}
+
+///|
+pub fn ViewSpec::background_brush(self : ViewSpec, brush : Brush) -> ViewSpec {
+  self.modified(BackgroundModifier(brush))
 }
 
 ///|
 pub fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
   self.modified(CornerRadiusModifier(radius))
+}
+
+///|
+pub fn ViewSpec::opacity(self : ViewSpec, opacity : Double) -> ViewSpec {
+  self.modified(OpacityModifier(opacity))
+}
+
+///|
+pub fn ViewSpec::shadow(self : ViewSpec, style : ShadowStyle) -> ViewSpec {
+  self.modified(ShadowModifier(style))
+}
+
+///|
+pub fn ViewSpec::border(self : ViewSpec, style : BorderStyle) -> ViewSpec {
+  self.modified(BorderModifier(style))
+}
+
+///|
+pub fn ViewSpec::offset(
+  self : ViewSpec,
+  dx? : Double = 0.0,
+  dy? : Double = 0.0,
+) -> ViewSpec {
+  self.modified(OffsetModifier(dx, dy))
+}
+
+///|
+pub fn ViewSpec::clip(self : ViewSpec) -> ViewSpec {
+  self.modified(ClipModifier)
+}
+
+///|
+pub fn ViewSpec::scale(
+  self : ViewSpec,
+  sx? : Double = 1.0,
+  sy? : Double = 1.0,
+) -> ViewSpec {
+  self.modified(ScaleModifier(sx, sy))
 }
 
 ///|
@@ -381,11 +484,7 @@ pub fn ViewSpec::spacing(self : ViewSpec, spacing : Double) -> ViewSpec {
     ScrollSpec(data) =>
       ScrollSpec({ ..data, child: data.child.spacing(spacing) })
     GridSpec(data) =>
-      GridSpec({
-        ..data,
-        row_spacing: spacing,
-        column_spacing: spacing,
-      })
+      GridSpec({ ..data, row_spacing: spacing, column_spacing: spacing })
     ListSpec(data) => ListSpec({ ..data, spacing, })
     ModifiedSpec(data) =>
       ModifiedSpec({ ..data, child: data.child.spacing(spacing) })
@@ -435,10 +534,7 @@ pub fn ViewSpec::main_axis_alignment(
         }),
       })
     ModifiedSpec(data) =>
-      ModifiedSpec({
-        ..data,
-        child: data.child.main_axis_alignment(alignment),
-      })
+      ModifiedSpec({ ..data, child: data.child.main_axis_alignment(alignment) })
     _ => self
   }
 }
@@ -485,10 +581,7 @@ pub fn ViewSpec::cross_axis_alignment(
         }),
       })
     ModifiedSpec(data) =>
-      ModifiedSpec({
-        ..data,
-        child: data.child.cross_axis_alignment(alignment),
-      })
+      ModifiedSpec({ ..data, child: data.child.cross_axis_alignment(alignment) })
     _ => self
   }
 }
@@ -498,7 +591,7 @@ pub fn ViewSpec::theme(self : ViewSpec, theme : Theme) -> ViewSpec {
   self
   .font(theme.font)
   .foreground(theme.foreground)
-  .background(theme.background)
+  .background_brush(Brush::solid(theme.background))
   .corner_radius(theme.corner_radius)
 }
 
@@ -520,21 +613,20 @@ pub fn ViewSpec::frame(
   max_width? : Double,
   max_height? : Double,
 ) -> ViewSpec {
-  self.modified(FrameModifier({
-    width,
-    height,
-    min_width,
-    min_height,
-    max_width,
-    max_height,
-  }))
+  self.modified(
+    FrameModifier({
+      width,
+      height,
+      min_width,
+      min_height,
+      max_width,
+      max_height,
+    }),
+  )
 }
 
 ///|
-pub fn ViewSpec::modified(
-  self : ViewSpec,
-  modifier : ViewModifier,
-) -> ViewSpec {
+pub fn ViewSpec::modified(self : ViewSpec, modifier : ViewModifier) -> ViewSpec {
   ModifiedSpec({ key: None, modifier, child: self })
 }
 
@@ -545,13 +637,7 @@ pub fn ViewSpec::custom(
   semantics_role? : SemanticsRole = SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> ViewSpec {
-  CustomSpec({
-    key: None,
-    measure,
-    paint,
-    semantics_role,
-    semantics_label,
-  })
+  CustomSpec({ key: None, measure, paint, semantics_role, semantics_label })
 }
 
 ///|

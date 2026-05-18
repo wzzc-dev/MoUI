@@ -54,3 +54,28 @@ test "runtime requests redraw while animations are active" {
   runtime.dispatch_event(Redraw(Explicit))
   inspect(runtime.needs_redraw, content="false")
 }
+
+///|
+test "animated values sample visual properties" {
+  let opacity = AnimatedDouble::new(from=0.2, to=1.0, duration_ms=100.0)
+  inspect(opacity.value(0.0), content="0.2")
+  inspect(opacity.value(100.0), content="1")
+  let point = AnimatedPoint::new(
+    from=Point::new(x=0.0, y=4.0),
+    to=Point::new(x=10.0, y=14.0),
+    duration_ms=100.0,
+    easing=Easing::Linear,
+  )
+  inspect(point.value(50.0).x, content="5")
+  inspect(point.value(50.0).y, content="9")
+  let color = AnimatedColor::new(
+    from=Color::rgba(r=0.0, g=0.0, b=0.0, a=0.5),
+    to=Color::rgba(r=1.0, g=0.5, b=0.25, a=1.0),
+    duration_ms=100.0,
+    easing=Easing::Linear,
+  )
+  let sampled = color.value(50.0)
+  inspect(sampled.r, content="0.5")
+  inspect(sampled.g, content="0.25")
+  inspect(sampled.a, content="0.75")
+}

@@ -30,6 +30,9 @@ examples/counter/macos/       macOS native counter
 examples/counter/web_wasm/    Web counter on wasm-gc
 examples/todo/app/            shared todo app
 examples/todo/windows/        Windows native todo
+examples/showcase/app/        shared visual showcase app
+examples/showcase/macos/      macOS native showcase
+examples/showcase/web_wasm/   Web showcase on wasm-gc
 ```
 
 ## Spec API
@@ -123,20 +126,27 @@ rewriting every child spec. This keeps modifier order observable:
 
 The first paints the background outside the padding; the second paints it
 inside. `font`, `foreground`, and `corner_radius` flow through a render
-environment, while `padding`, `frame`, and `background` are interpreted by
-layout/paint.
+environment, while layout and paint modifiers stay as ordered wrappers.
+MoUI currently supports background brushes, opacity, shadow, border, offset,
+clip, and scale modifiers in addition to padding and frame.
 
 ## Visual
 
-platform-neutral tokens and styles:
+The visual system keeps platform-neutral tokens and styles:
 
 - `Theme::light()` and `Theme::dark()` expose color palettes, spacing, radius,
-  and typography scales.
+  typography, shadow, motion, and surface scales.
 - `ButtonStyle::filled/tonal/outline/ghost` and
   `TextFieldStyle::filled/outline` project state styles into core draw
   commands.
 - `SurfaceStyle` supports surface brushes, radius, padding, border metadata,
   and shadow metadata.
+- `ShadowStyle` and `BorderStyle` are view-level style inputs; paint converts
+  them into concrete `DrawCommand` payloads once the final frame is known.
+- `AnimatedDouble`, `AnimatedPoint`, and `AnimatedColor` provide small
+  property-animation samplers for state-driven visuals.
+- `ImageFit::Contain/Cover` records image intent, with source, opacity, and
+  rounded clipping preserved in the view spec.
 - Native and WebGPU renderers draw text through glyph-atlas GPU pipelines,
   evaluate linear gradients in shader code, and render rounded soft shadows as
   renderer primitives rather than start-color or layered-rectangle fallbacks.
@@ -144,6 +154,11 @@ platform-neutral tokens and styles:
 View constructors pass `Brush`, border, and shadow data into `DrawCommand`
 without calling `Brush::fallback_color`; fallback is centralized in renderer
 capability layers.
+
+The native wgpu renderer currently renders rounded fills, gradients, shadows,
+and GPU text directly. Image, clip, opacity, and transform commands are kept in
+the command stream and tracked as native renderer capability gaps. The WebGPU
+host-import renderer forwards the full command set to the browser runtime.
 
 ## Built-In And Custom Views
 
@@ -189,6 +204,19 @@ Then open:
 http://127.0.0.1:8080/examples/counter/web_wasm/index.html
 ```
 
+Build the visual showcase for Web:
+
+```powershell
+moon build examples/showcase/web_wasm --target wasm-gc
+python -m http.server 8080 --bind 127.0.0.1
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8080/examples/showcase/web_wasm/index.html
+```
+
 The Web path requires browser WebGPU. Startup fails clearly if `navigator.gpu`, an adapter, or a device is unavailable. There is no JS-target fallback branch. Browser font APIs may be used to populate hidden glyph atlas bitmaps, but visible text composition is performed by WebGPU.
 
 The reusable browser runtime assets live under `backend/web/*.js`; `examples/counter/web_wasm/` is only the counter app's Web entrypoint and supplies the example-specific wasm URL.
@@ -210,6 +238,12 @@ moon run examples/counter/macos --target native
 ```
 
 The macOS host uses `Milky2018/window/macos` for AppKit windows and installs a `CAMetalLayer` on the window `NSView` for the native `render/wgpu` renderer.
+
+Build the native showcase:
+
+```sh
+moon build examples/showcase/macos --target native
+```
 
 ## Windows Native
 
@@ -253,9 +287,12 @@ moon build examples/todo/windows --target native
 ```powershell
 moon test render/webgpu --target wasm-gc
 moon test backend/web --target wasm-gc
+moon test examples/showcase/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
+moon build examples/showcase/web_wasm --target wasm-gc
 moon test --target native
 moon build examples/counter/macos --target native
+moon build examples/showcase/macos --target native
 moon build examples/counter/windows --target native
 moon build examples/todo/windows --target native
 ```

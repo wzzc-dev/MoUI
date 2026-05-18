@@ -22,25 +22,23 @@ pub fn surface(
           child,
         }),
       )
-    None => (background.map(color => @core.Brush::solid(color)), corner_radius, child)
+    None =>
+      (background.map(color => @core.Brush::solid(color)), corner_radius, child)
   }
-  let (border, border_width, shadow) = match style {
-    Some(surface_style) =>
-      (surface_style.border, surface_style.border_width, surface_style.shadow)
-    None => (None, 0.0, None)
+  let (border, shadow) = match style {
+    Some(surface_style) => (surface_style.border, surface_style.shadow)
+    None => (None, None)
   }
   @core.ViewSpec::ContainerSpec({
     key: None,
     size,
     background,
     border,
-    border_width,
     corner_radius,
     shadow,
     child: Some(child),
   })
 }
-
 
 ///|
 pub fn spacer(

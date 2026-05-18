@@ -117,10 +117,18 @@ test "host driver maps focused text input through core text input event" {
       foreground: @core.Color::black(),
       placeholder_color: @core.Color::gray(),
       background: @core.Brush::solid(@core.Color::white()),
-      border: Some(@core.Brush::solid(@core.Color::gray())),
-      focused_border: Some(@core.Brush::solid(@core.Color::blue())),
-      border_width: 1.0,
-      focused_border_width: 2.0,
+      border: Some(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(@core.Color::gray()),
+          width=1.0,
+        ),
+      ),
+      focused_border: Some(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(@core.Color::blue()),
+          width=2.0,
+        ),
+      ),
       cursor_color: @core.Color::blue(),
       corner_radius: 0.0,
       on_submit: None,
@@ -157,10 +165,18 @@ test "host driver dispatches ime composition text input events" {
       foreground: @core.Color::black(),
       placeholder_color: @core.Color::gray(),
       background: @core.Brush::solid(@core.Color::white()),
-      border: Some(@core.Brush::solid(@core.Color::gray())),
-      focused_border: Some(@core.Brush::solid(@core.Color::blue())),
-      border_width: 1.0,
-      focused_border_width: 2.0,
+      border: Some(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(@core.Color::gray()),
+          width=1.0,
+        ),
+      ),
+      focused_border: Some(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(@core.Color::blue()),
+          width=2.0,
+        ),
+      ),
       cursor_color: @core.Color::blue(),
       corner_radius: 0.0,
       on_submit: None,
@@ -194,9 +210,8 @@ test "host driver dispatches ime composition text input events" {
 test "host event converts to current core event model" {
   let event = HostEvent::TextInput("x").to_core()
   match event {
-    Some(@core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text))) => {
+    Some(@core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text))) =>
       inspect(text, content="x")
-    }
     _ => fail("expected text input event")
   }
   let composition = HostEvent::TextInputEvent(

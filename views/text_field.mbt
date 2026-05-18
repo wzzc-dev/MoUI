@@ -20,8 +20,6 @@ pub fn text_field(
     background: normal.background,
     border: normal.border,
     focused_border: focused.border,
-    border_width: normal.border_width,
-    focused_border_width: focused.border_width,
     cursor_color: style.cursor_color,
     corner_radius: normal.radius,
     on_submit,

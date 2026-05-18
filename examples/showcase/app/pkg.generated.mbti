@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/examples/showcase/app"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct ShowcaseApp {
+  dark : @core.State[Bool]
+  active : @core.State[Bool]
+  draft : @core.State[String]
+}
+pub fn ShowcaseApp::new() -> Self
+pub fn ShowcaseApp::root(Self, @core.BuildContext) -> @core.ViewSpec
+pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn ShowcaseApp::toggle_active(Self) -> Unit
+pub fn ShowcaseApp::toggle_scheme(Self) -> Unit
+
+// Type aliases
+
+// Traits
+

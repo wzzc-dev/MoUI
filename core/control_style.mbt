@@ -7,21 +7,20 @@ pub(all) struct TextStyle {
 ///|
 pub(all) struct SurfaceStyle {
   brush : Brush
-  border : Brush?
-  border_width : Double
+  border : BorderStyle?
   radius : Double
-  shadow : ShadowSpec?
+  shadow : ShadowStyle?
   padding : Insets
+  level : SurfaceLevel
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct ControlStateStyle {
   foreground : Color
   background : Brush
-  border : Brush?
-  border_width : Double
+  border : BorderStyle?
   radius : Double
-  shadow : ShadowSpec?
+  shadow : ShadowStyle?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -55,12 +54,26 @@ pub fn TextStyle::title(theme? : Theme = Theme::default()) -> TextStyle {
 ///|
 pub fn SurfaceStyle::default(theme? : Theme = Theme::default()) -> SurfaceStyle {
   {
-    brush: Brush::solid(theme.palette.surface),
+    brush: theme.surface_brush(SurfaceLevel::Base),
     border: None,
-    border_width: 0.0,
     radius: theme.radius_scale.md,
     shadow: None,
     padding: Insets::all(theme.spacing_scale.md),
+    level: SurfaceLevel::Base,
+  }
+}
+
+///|
+pub fn SurfaceStyle::raised(theme? : Theme = Theme::default()) -> SurfaceStyle {
+  {
+    brush: theme.surface_brush(SurfaceLevel::Raised),
+    border: Some(
+      BorderStyle::new(brush=Brush::solid(theme.palette.outline), width=1.0),
+    ),
+    radius: theme.radius_scale.lg,
+    shadow: Some(theme.shadow_scale.md),
+    padding: Insets::all(theme.spacing_scale.lg),
+    level: SurfaceLevel::Raised,
   }
 }
 
@@ -68,12 +81,11 @@ pub fn SurfaceStyle::default(theme? : Theme = Theme::default()) -> SurfaceStyle 
 fn control_state(
   foreground~ : Color,
   background~ : Brush,
-  border? : Brush,
-  border_width? : Double = 0.0,
+  border? : BorderStyle,
   radius? : Double = 0.0,
-  shadow? : ShadowSpec,
+  shadow? : ShadowStyle,
 ) -> ControlStateStyle {
-  { foreground, background, border, border_width, radius, shadow }
+  { foreground, background, border, radius, shadow }
 }
 
 ///|
@@ -82,11 +94,13 @@ pub fn ButtonStyle::filled(theme? : Theme = Theme::default()) -> ButtonStyle {
     foreground=theme.palette.primary_foreground,
     background=Brush::solid(theme.palette.primary),
     radius=theme.radius_scale.md,
+    shadow=theme.shadow_scale.sm,
   )
   let hovered = control_state(
     foreground=theme.palette.primary_foreground,
     background=Brush::solid(Color::rgba(r=0.18, g=0.42, b=1.0)),
     radius=theme.radius_scale.md,
+    shadow=theme.shadow_scale.md,
   )
   let pressed = control_state(
     foreground=theme.palette.primary_foreground,
@@ -116,8 +130,10 @@ pub fn ButtonStyle::outline(theme? : Theme = Theme::default()) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.foreground,
     background=Brush::solid(Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
-    border=Brush::solid(theme.palette.outline),
-    border_width=1.0,
+    border=BorderStyle::new(
+      brush=Brush::solid(theme.palette.outline),
+      width=1.0,
+    ),
     radius=theme.radius_scale.md,
   )
   { normal, hovered: normal, pressed: normal, disabled: normal }
@@ -134,25 +150,40 @@ pub fn ButtonStyle::ghost(theme? : Theme = Theme::default()) -> ButtonStyle {
 }
 
 ///|
-pub fn TextFieldStyle::filled(theme? : Theme = Theme::default()) -> TextFieldStyle {
+pub fn TextFieldStyle::filled(
+  theme? : Theme = Theme::default(),
+) -> TextFieldStyle {
   let normal = control_state(
     foreground=theme.foreground,
     background=Brush::solid(theme.palette.surface),
-    border=Brush::solid(theme.palette.outline),
-    border_width=1.0,
+    border=BorderStyle::new(
+      brush=Brush::solid(theme.palette.outline),
+      width=1.0,
+    ),
     radius=theme.radius_scale.md,
   )
   let focused = control_state(
     foreground=theme.foreground,
     background=Brush::solid(theme.palette.surface),
-    border=Brush::solid(theme.palette.primary),
-    border_width=2.0,
+    border=BorderStyle::new(
+      brush=Brush::solid(theme.palette.primary),
+      width=2.0,
+    ),
     radius=theme.radius_scale.md,
   )
-  { normal, focused, disabled: normal, placeholder_color: theme.palette.muted, cursor_color: theme.palette.primary, font: theme.typography.body }
+  {
+    normal,
+    focused,
+    disabled: normal,
+    placeholder_color: theme.palette.muted,
+    cursor_color: theme.palette.primary,
+    font: theme.typography.body,
+  }
 }
 
 ///|
-pub fn TextFieldStyle::outline(theme? : Theme = Theme::default()) -> TextFieldStyle {
+pub fn TextFieldStyle::outline(
+  theme? : Theme = Theme::default(),
+) -> TextFieldStyle {
   TextFieldStyle::filled(theme~)
 }
