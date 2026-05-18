@@ -74,26 +74,30 @@ test "sibling components rebuild only the watched subtree" {
     main_axis_alignment: MainAxisAlignment::MainStart,
     cross_axis_alignment: CrossAxisAlignment::CrossStart,
     children: [
-      ViewSpec::component(Component::new(ctx => {
-        left_builds.val = left_builds.val + 1
-        ViewSpec::TextSpec({
-          key: None,
-          text: "L\{ctx.watch(left)}",
-          size: Size::new(width=40.0, height=20.0),
-          font: FontSpec::new(size=12.0, weight=400),
-          color: Color::black(),
-        })
-      })).key("left"),
-      ViewSpec::component(Component::new(ctx => {
-        right_builds.val = right_builds.val + 1
-        ViewSpec::TextSpec({
-          key: None,
-          text: "R\{ctx.watch(right)}",
-          size: Size::new(width=40.0, height=20.0),
-          font: FontSpec::new(size=12.0, weight=400),
-          color: Color::black(),
-        })
-      })).key("right"),
+      ViewSpec::component(
+        Component::new(ctx => {
+          left_builds.val = left_builds.val + 1
+          ViewSpec::TextSpec({
+            key: None,
+            text: "L\{ctx.watch(left)}",
+            size: Size::new(width=40.0, height=20.0),
+            font: FontSpec::new(size=12.0, weight=400),
+            color: Color::black(),
+          })
+        }),
+      ).key("left"),
+      ViewSpec::component(
+        Component::new(ctx => {
+          right_builds.val = right_builds.val + 1
+          ViewSpec::TextSpec({
+            key: None,
+            text: "R\{ctx.watch(right)}",
+            size: Size::new(width=40.0, height=20.0),
+            font: FontSpec::new(size=12.0, weight=400),
+            color: Color::black(),
+          })
+        }),
+      ).key("right"),
     ],
   })
   let runtime = RuntimeState::new_spec(
@@ -118,26 +122,30 @@ test "keyed component reorder preserves subscriptions" {
   let flip = State::new(false)
   let first_builds = Ref(0)
   let second_builds = Ref(0)
-  let first_component = ViewSpec::component(Component::new(ctx => {
-    first_builds.val = first_builds.val + 1
-    ViewSpec::TextSpec({
-      key: None,
-      text: "A\{ctx.watch(first)}",
-      size: Size::new(width=40.0, height=20.0),
-      font: FontSpec::new(size=12.0, weight=400),
-      color: Color::black(),
-    })
-  })).key("first")
-  let second_component = ViewSpec::component(Component::new(ctx => {
-    second_builds.val = second_builds.val + 1
-    ViewSpec::TextSpec({
-      key: None,
-      text: "B\{ctx.watch(second)}",
-      size: Size::new(width=40.0, height=20.0),
-      font: FontSpec::new(size=12.0, weight=400),
-      color: Color::black(),
-    })
-  })).key("second")
+  let first_component = ViewSpec::component(
+    Component::new(ctx => {
+      first_builds.val = first_builds.val + 1
+      ViewSpec::TextSpec({
+        key: None,
+        text: "A\{ctx.watch(first)}",
+        size: Size::new(width=40.0, height=20.0),
+        font: FontSpec::new(size=12.0, weight=400),
+        color: Color::black(),
+      })
+    }),
+  ).key("first")
+  let second_component = ViewSpec::component(
+    Component::new(ctx => {
+      second_builds.val = second_builds.val + 1
+      ViewSpec::TextSpec({
+        key: None,
+        text: "B\{ctx.watch(second)}",
+        size: Size::new(width=40.0, height=20.0),
+        font: FontSpec::new(size=12.0, weight=400),
+        color: Color::black(),
+      })
+    }),
+  ).key("second")
   let runtime = RuntimeState::new_component(
     root=Component::new(ctx => {
       let children = if ctx.watch(flip) {
@@ -177,15 +185,17 @@ test "removed component cancels subscriptions" {
   let runtime = RuntimeState::new_component(
     root=Component::new(ctx => {
       if ctx.watch(visible) {
-        ViewSpec::component(Component::new(child_ctx => {
-          ViewSpec::TextSpec({
-            key: None,
-            text: "Child \{child_ctx.watch(child_state)}",
-            size: Size::new(width=80.0, height=20.0),
-            font: FontSpec::new(size=12.0, weight=400),
-            color: Color::black(),
-          })
-        })).key("child")
+        ViewSpec::component(
+          Component::new(child_ctx => {
+            ViewSpec::TextSpec({
+              key: None,
+              text: "Child \{child_ctx.watch(child_state)}",
+              size: Size::new(width=80.0, height=20.0),
+              font: FontSpec::new(size=12.0, weight=400),
+              color: Color::black(),
+            })
+          }),
+        ).key("child")
       } else {
         EmptySpec
       }
@@ -215,28 +225,30 @@ test "layout and paint caches skip unchanged sibling components" {
     measure_count : Ref[Int],
     paint_count : Ref[Int],
   ) -> ViewSpec {
-    ViewSpec::component(Component::new(ctx => {
-      let value = ctx.watch(state)
-      ViewSpec::custom(
-        measure=constraints => {
-          measure_count.val = measure_count.val + 1
-          constraints.constrain(Size::new(width=40.0, height=20.0))
-        },
-        paint=frame => {
-          paint_count.val = paint_count.val + 1
-          [
-            DrawText(
-              TextRun::new(
-                text="\{label}\{value}",
-                frame~,
-                font=FontSpec::new(size=12.0, weight=400),
-                color=Color::black(),
+    ViewSpec::component(
+      Component::new(ctx => {
+        let value = ctx.watch(state)
+        ViewSpec::custom(
+          measure=constraints => {
+            measure_count.val = measure_count.val + 1
+            constraints.constrain(Size::new(width=40.0, height=20.0))
+          },
+          paint=frame => {
+            paint_count.val = paint_count.val + 1
+            [
+              DrawText(
+                TextRun::new(
+                  text="\{label}\{value}",
+                  frame~,
+                  font=FontSpec::new(size=12.0, weight=400),
+                  color=Color::black(),
+                ),
               ),
-            ),
-          ]
-        },
-      )
-    }))
+            ]
+          },
+        )
+      }),
+    )
   }
   let root = ViewSpec::FlexSpec({
     key: None,

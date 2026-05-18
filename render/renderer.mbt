@@ -120,7 +120,10 @@ pub fn collect_rect_batches(
         batches.push({ rect: rounded.rect, color: brush_fallback_color(brush) })
       @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
         append_stroke_rect_batches(
-          batches, rounded.rect, brush_fallback_color(brush), width,
+          batches,
+          rounded.rect,
+          brush_fallback_color(brush),
+          width,
         )
       @core.DrawCommand::DrawShadow(shadow) =>
         append_shadow_batches(batches, shadow)
@@ -153,7 +156,8 @@ fn append_shadow_batches(
 ) -> Unit {
   let layers = 3
   for index in 0..<layers {
-    let grow = shadow.spread + (index + 1).to_double() * shadow.blur_radius / 3.0
+    let grow = shadow.spread +
+      (index + 1).to_double() * shadow.blur_radius / 3.0
     let alpha = shadow.color.a / (index + 2).to_double()
     batches.push({
       rect: @core.Rect::new(

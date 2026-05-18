@@ -20,6 +20,7 @@ struct MacosApp {
   mut renderer : @wgpu_renderer.WgpuRenderer?
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
+  text_input_session : @host.TextInputSession
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
@@ -45,6 +46,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
     renderer: None,
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+    text_input_session: @host.TextInputSession::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
@@ -235,6 +237,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
           self.driver.begin_redraw()
           renderer.render(self.driver.draw_commands())
           self.driver.finish_redraw()
+          self.sync_text_input_session()
         }
         _ => ()
       }
@@ -260,7 +263,27 @@ fn MacosApp::dispatch_window_event(
       self.modifiers,
       scale_factor~,
     ) {
-    Some(host_event) => ignore(self.driver.dispatch(host_event))
+    Some(host_event) => {
+      ignore(self.driver.dispatch(host_event))
+      self.sync_text_input_session()
+    }
+    None => ()
+  }
+}
+
+///|
+fn MacosApp::sync_text_input_session(self : MacosApp) -> Unit {
+  match self.window {
+    Some(window) =>
+      match self.text_input_session.sync(self.runtime.focused_text_input()) {
+        @host.TextInputSessionAction::EnableIme(request)
+        | @host.TextInputSessionAction::UpdateIme(request)
+        | @host.TextInputSessionAction::DisableIme(request) =>
+          window.request_ime_update(request) catch {
+            _ => ()
+          }
+        @host.TextInputSessionAction::NoImeChange => ()
+      }
     None => ()
   }
 }

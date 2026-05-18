@@ -1,6 +1,11 @@
 import {
   "wzzc-dev/moui/core",
+  "Milky2018/window/core" @window_core,
+  "Milky2018/window/dpi" @dpi,
+  "moonbitlang/core/encoding/utf8",
 }
+
+supported_targets = "+native+wasm-gc"
 
 options(
   targets: { },

@@ -9,19 +9,30 @@ let atlas_padding : Int = 1
 
 ///|
 priv struct NativeFontFace {
+  key : String
   path : String
+  face_index : Int
   ft_face : @ft_base.FaceRec
   hb_font : @hb_font.Font
 }
 
 ///|
 priv struct NativeFontCache {
-  faces : Map[String, NativeFontFace]
+  faces : Map[String, Array[NativeFontFace]]
   warned_paths : Map[String, Bool]
 }
 
 ///|
 priv struct ShapedGlyph {
+  glyph_id : UInt
+  unicode : UInt
+  x_offset : Double
+  y_offset : Double
+}
+
+///|
+priv struct RenderGlyph {
+  face : NativeFontFace
   glyph_id : UInt
   x_advance : Double
   x_offset : Double
@@ -132,6 +143,22 @@ fn macos_bold_font_path() -> String {
 }
 
 ///|
+fn windows_cjk_font_path() -> String {
+  first_existing_font_path([
+    "C:\\Windows\\Fonts\\msyh.ttc", "C:\\Windows\\Fonts\\simsun.ttc", "C:\\Windows\\Fonts\\simhei.ttf",
+  ])
+}
+
+///|
+fn macos_cjk_font_path() -> String {
+  first_existing_font_path([
+    "/System/Library/Fonts/STHeiti Medium.ttc", "/System/Library/Fonts/STHeiti Light.ttc",
+    "/System/Library/Fonts/PingFang.ttc", "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/System/Library/Fonts/Supplemental/Songti.ttc",
+  ])
+}
+
+///|
 fn native_regular_font_path() -> String {
   first_existing_font_path([
     windows_regular_font_path(),
@@ -142,6 +169,11 @@ fn native_regular_font_path() -> String {
 ///|
 fn native_bold_font_path() -> String {
   first_existing_font_path([windows_bold_font_path(), macos_bold_font_path()])
+}
+
+///|
+fn native_cjk_font_path() -> String {
+  first_existing_font_path([windows_cjk_font_path(), macos_cjk_font_path()])
 }
 
 ///|
@@ -164,33 +196,106 @@ fn native_text_font_path_for_spec(font : @core.FontSpec) -> String {
 }
 
 ///|
-fn NativeFontCache::face_for_font(
-  self : NativeFontCache,
+fn native_text_fallback_font_paths_for_spec(
   font : @core.FontSpec,
-) -> NativeFontFace? {
-  let path = native_text_font_path_for_spec(font)
+) -> Array[String] {
+  [native_text_font_path_for_spec(font), native_cjk_font_path()]
+}
+
+///|
+fn NativeFontCache::faces_for_path(
+  self : NativeFontCache,
+  path : String,
+) -> Array[NativeFontFace] {
   match self.faces.get(path) {
-    Some(face) => Some(face)
+    Some(faces) => faces
     None => {
       if !@fs.path_exists(path) {
         self.warn_font_once(path)
-        return None
+        return []
       }
       try {
         let bytes = @fs.read_file_to_bytes(path)
-        let ft_face = @freetype.from_bytes(bytes)
-        let hb_font = @hb_font.Font::from_bytes(bytes)
-        let face = { path, ft_face, hb_font }
-        self.faces[path] = face
-        Some(face)
+        let probe_face = @freetype.from_bytes(bytes)
+        let face_count = native_font_face_count(probe_face)
+        let faces : Array[NativeFontFace] = []
+        for face_index in 0..<face_count {
+          match load_native_font_face(path, bytes, face_index) {
+            Some(face) => faces.push(face)
+            None => ()
+          }
+        }
+        if faces.is_empty() {
+          self.warn_font_once(path)
+        }
+        self.faces[path] = faces
+        faces
       } catch {
         _ => {
           self.warn_font_once(path)
-          None
+          []
         }
       }
     }
   }
+}
+
+///|
+fn native_font_face_count(face : @ft_base.FaceRec) -> Int {
+  let count = face.num_faces().to_int()
+  if count < 1 {
+    1
+  } else {
+    count
+  }
+}
+
+///|
+fn load_native_font_face(
+  path : String,
+  bytes : Bytes,
+  face_index : Int,
+) -> NativeFontFace? {
+  try {
+    let ft_face = @freetype.from_bytes(bytes, face_index~)
+    let hb_face = @hb_face.Face::from_bytes(bytes, index=face_index)
+    let hb_font = @hb_font.Font::new(hb_face)
+    Some({
+      key: native_font_face_key(path, face_index),
+      path,
+      face_index,
+      ft_face,
+      hb_font,
+    })
+  } catch {
+    _ => None
+  }
+}
+
+///|
+fn native_font_face_key(path : String, face_index : Int) -> String {
+  "\{path}#\{face_index}"
+}
+
+///|
+fn NativeFontCache::faces_for_font(
+  self : NativeFontCache,
+  font : @core.FontSpec,
+) -> Array[NativeFontFace] {
+  let faces : Array[NativeFontFace] = []
+  for path in native_text_fallback_font_paths_for_spec(font) {
+    for face in self.faces_for_path(path) {
+      if !faces.any(existing => same_native_font_face(existing, face)) {
+        faces.push(face)
+      }
+    }
+  }
+  faces
+}
+
+///|
+fn same_native_font_face(left : NativeFontFace, right : NativeFontFace) -> Bool {
+  left.path == right.path && left.face_index == right.face_index
 }
 
 ///|
@@ -269,7 +374,7 @@ fn shaped_glyphs_from_buffer(buffer : @hb_buffer.Buffer) -> Array[ShapedGlyph] {
     let pos = positions[i]
     glyphs.push({
       glyph_id: info.codepoint,
-      x_advance: fixed_26_6_to_double(pos.x_advance),
+      unicode: info.unicode,
       x_offset: fixed_26_6_to_double(pos.x_offset),
       y_offset: fixed_26_6_to_double(pos.y_offset),
     })
@@ -302,41 +407,194 @@ fn append_text_run_vertices(
   size : @core.Size,
   vertices : Array[TextVertex],
 ) -> Bool {
-  match cache.face_for_font(run.font) {
-    None => false
-    Some(face) => {
-      let pixel_size = text_pixel_size(run.font)
-      let shaped = shape_text(face, run.text, pixel_size)
-      if shaped.is_empty() {
-        return false
-      }
-      let mut total_width = 0.0
-      for glyph in shaped {
-        total_width = total_width + glyph.x_advance
-      }
-      let frame = run.frame
-      let start_extra = text_align_extra(run.align, frame.size.width, total_width)
-      let mut cursor_x = frame.origin.x + start_extra
-      let center_ascent = pixel_size.to_double() * 0.72
-      let baseline_extra = (frame.size.height + center_ascent) / 2.0
-      let baseline = frame.origin.y + pixel_size.to_double().max(baseline_extra)
-      for glyph in shaped {
-        match atlas.ensure_glyph(face, run.font, pixel_size, glyph.glyph_id) {
-          GlyphReady(entry) => {
-            if entry.width > 0 && entry.height > 0 {
-              let gx = cursor_x + glyph.x_offset + entry.bearing_x.to_double()
-              let gy = baseline - glyph.y_offset - entry.bearing_y.to_double()
-              append_text_quad(vertices, gx, gy, entry, atlas, size, run.color)
-            }
-            cursor_x = cursor_x + glyph.x_advance
+  let faces = cache.faces_for_font(run.font)
+  if faces.length() == 0 {
+    false
+  } else {
+    let face = faces[0]
+    let pixel_size = text_pixel_size(run.font)
+    let shaped = shape_text(face, run.text, pixel_size)
+    if shaped.is_empty() {
+      return false
+    }
+    let resolved = resolve_shaped_glyphs(
+      faces,
+      face,
+      shaped,
+      pixel_size,
+      run.font,
+    )
+    if resolved.is_empty() {
+      return false
+    }
+    let mut total_width = 0.0
+    for glyph in resolved {
+      total_width = total_width + glyph.x_advance
+    }
+    let frame = run.frame
+    let start_extra = text_align_extra(run.align, frame.size.width, total_width)
+    let mut cursor_x = frame.origin.x + start_extra
+    let center_ascent = pixel_size.to_double() * 0.72
+    let baseline_extra = (frame.size.height + center_ascent) / 2.0
+    let baseline = frame.origin.y + pixel_size.to_double().max(baseline_extra)
+    for glyph in resolved {
+      match
+        atlas.ensure_glyph(glyph.face, run.font, pixel_size, glyph.glyph_id) {
+        GlyphReady(entry) => {
+          if entry.width > 0 && entry.height > 0 {
+            let gx = cursor_x + glyph.x_offset + entry.bearing_x.to_double()
+            let gy = baseline - glyph.y_offset - entry.bearing_y.to_double()
+            append_text_quad(vertices, gx, gy, entry, atlas, size, run.color)
           }
-          GlyphMissing => cursor_x = cursor_x + glyph.x_advance
-          GlyphAtlasFull => return true
+          cursor_x = cursor_x + glyph.x_advance
         }
+        GlyphMissing => cursor_x = cursor_x + glyph.x_advance
+        GlyphAtlasFull => return true
       }
-      false
+    }
+    false
+  }
+}
+
+///|
+fn resolve_shaped_glyphs(
+  faces : Array[NativeFontFace],
+  primary : NativeFontFace,
+  shaped : Array[ShapedGlyph],
+  pixel_size : Int,
+  font : @core.FontSpec,
+) -> Array[RenderGlyph] {
+  let resolved : Array[RenderGlyph] = []
+  for glyph in shaped {
+    resolved.push(resolve_shaped_glyph(faces, primary, glyph, pixel_size, font))
+  }
+  resolved
+}
+
+///|
+fn resolve_shaped_glyph(
+  faces : Array[NativeFontFace],
+  primary : NativeFontFace,
+  glyph : ShapedGlyph,
+  pixel_size : Int,
+  font : @core.FontSpec,
+) -> RenderGlyph {
+  if glyph.glyph_id != 0U {
+    return render_glyph_for_face(primary, glyph, font)
+  }
+  match fallback_face_for_codepoint(faces, primary, glyph.unicode) {
+    Some(face) =>
+      match shape_codepoint(face, glyph.unicode, pixel_size) {
+        Some(fallback_glyph) =>
+          render_glyph_for_face(face, fallback_glyph, font)
+        None => render_glyph_for_face(primary, glyph, font)
+      }
+    None => render_glyph_for_face(primary, glyph, font)
+  }
+}
+
+///|
+fn render_glyph_for_face(
+  face : NativeFontFace,
+  glyph : ShapedGlyph,
+  font : @core.FontSpec,
+) -> RenderGlyph {
+  {
+    face,
+    glyph_id: glyph.glyph_id,
+    x_advance: @core.text_layout_codepoint_advance(font, glyph.unicode),
+    x_offset: glyph.x_offset,
+    y_offset: glyph.y_offset,
+  }
+}
+
+///|
+fn fallback_face_for_codepoint(
+  faces : Array[NativeFontFace],
+  primary : NativeFontFace,
+  codepoint : UInt,
+) -> NativeFontFace? {
+  for face in faces {
+    if face.key != primary.key && face_supports_codepoint(face, codepoint) {
+      return Some(face)
     }
   }
+  None
+}
+
+///|
+fn face_supports_codepoint(face : NativeFontFace, codepoint : UInt) -> Bool {
+  @freetype.get_char_index(face.ft_face, codepoint) != 0U
+}
+
+///|
+fn shape_codepoint(
+  face : NativeFontFace,
+  codepoint : UInt,
+  pixel_size : Int,
+) -> ShapedGlyph? {
+  match shape_codepoint_with_harfbuzz(face, codepoint, pixel_size) {
+    Some(glyph) => Some(glyph)
+    None => shape_codepoint_with_freetype(face, codepoint, pixel_size)
+  }
+}
+
+///|
+fn shape_codepoint_with_harfbuzz(
+  face : NativeFontFace,
+  codepoint : UInt,
+  pixel_size : Int,
+) -> ShapedGlyph? {
+  let scale = pixel_size * 64
+  face.hb_font.set_scale(scale, scale)
+  face.hb_font.set_ppem(pixel_size, pixel_size)
+  let buffer = @hb_buffer.Buffer::new()
+  buffer.add_codepoint(codepoint)
+  match @hb_shape.shape(face.hb_font, buffer) {
+    Ok(_) => first_non_missing_glyph(buffer)
+    Err(_) => {
+      let fallback = @hb_buffer.Buffer::new()
+      fallback.add_codepoint(codepoint)
+      match fallback.shape_basic(face.hb_font) {
+        Ok(_) => first_non_missing_glyph(fallback)
+        Err(_) => None
+      }
+    }
+  }
+}
+
+///|
+fn shape_codepoint_with_freetype(
+  face : NativeFontFace,
+  codepoint : UInt,
+  pixel_size : Int,
+) -> ShapedGlyph? {
+  let glyph_id = @freetype.get_char_index(face.ft_face, codepoint)
+  if glyph_id == 0U {
+    return None
+  }
+  try {
+    let size = pixel_size.reinterpret_as_uint()
+    @freetype.set_pixel_sizes(face.ft_face, 0U, size)
+    @freetype.load_glyph(
+      face.ft_face,
+      glyph_id,
+      load_flags=@ft_base.LOAD_DEFAULT,
+    )
+    Some({ glyph_id, unicode: codepoint, x_offset: 0.0, y_offset: 0.0 })
+  } catch {
+    _ => Some({ glyph_id, unicode: codepoint, x_offset: 0.0, y_offset: 0.0 })
+  }
+}
+
+///|
+fn first_non_missing_glyph(buffer : @hb_buffer.Buffer) -> ShapedGlyph? {
+  for glyph in shaped_glyphs_from_buffer(buffer) {
+    if glyph.glyph_id != 0U {
+      return Some(glyph)
+    }
+  }
+  None
 }
 
 ///|
@@ -347,7 +605,7 @@ fn GlyphAtlas::ensure_glyph(
   pixel_size : Int,
   glyph_id : UInt,
 ) -> GlyphLookup {
-  let key = glyph_cache_key(face.path, pixel_size, font.weight, glyph_id)
+  let key = glyph_cache_key(face.key, pixel_size, font.weight, glyph_id)
   match self.entries.get(key) {
     Some(entry) => GlyphReady(entry)
     None =>

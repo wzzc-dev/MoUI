@@ -5,6 +5,7 @@ import {
   "bikallem/freetype" @freetype,
   "bikallem/freetype/base" @ft_base,
   "bikallem/freetype/types" @ft_types,
+  "moonbit-community/harfbuzz/face" @hb_face,
   "moonbit-community/harfbuzz/font" @hb_font,
   "moonbit-community/harfbuzz/buffer" @hb_buffer,
   "moonbit-community/harfbuzz/shape" @hb_shape,

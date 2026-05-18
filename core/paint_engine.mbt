@@ -771,9 +771,17 @@ fn append_text_field_commands(
   if focused {
     let font = environment.font.unwrap_or(data.font)
     let layout = measure_text_layout(
-      TextLayoutInput::new(text~, font~, max_width=text_frame.size.width),
+      TextLayoutInput::new(
+        text=display_text,
+        font~,
+        max_width=text_frame.size.width,
+      ),
     )
-    let caret = clamp_int(element.caret, 0, layout.caret_positions.length() - 1)
+    let caret = clamp_int(
+      text_field_visual_caret(text, element, focused),
+      0,
+      layout.caret_positions.length() - 1,
+    )
     let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
     let cursor = Rect::new(
       x=cursor_x,

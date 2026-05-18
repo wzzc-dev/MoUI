@@ -59,4 +59,3 @@ pub fn DirtyFlags::clear(self : DirtyFlags) -> Unit {
   self.needs_layout = false
   self.needs_paint = false
 }
-
