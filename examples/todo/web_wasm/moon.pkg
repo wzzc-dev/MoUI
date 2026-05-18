@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui/backend/web" @web,
+  "wzzc-dev/moui/examples/todo/app" @todo_app,
+}
+
+supported_targets = "wasm-gc"
+
+options(
+  "is-main": true,
+  link: { "wasm-gc": { "exports": [ "web_dispatch_event" ] } },
+  targets: { "main.mbt": [ "wasm-gc" ] },
+)

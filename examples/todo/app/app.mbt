@@ -109,7 +109,7 @@ pub fn TodoApp::completed_binding(
       self.items.update(items => {
         items.map(item => {
           if item.id == id {
-            { ..item, completed }
+            { ..item, completed, }
           } else {
             item
           }
@@ -117,6 +117,17 @@ pub fn TodoApp::completed_binding(
       })
     },
   )
+}
+
+///|
+fn flat_filled_button_style(theme : @core.Theme) -> @core.ButtonStyle {
+  let style = @core.ButtonStyle::filled(theme~)
+  {
+    normal: { ..style.normal, shadow: None },
+    hovered: { ..style.hovered, shadow: None },
+    pressed: { ..style.pressed, shadow: None },
+    disabled: { ..style.disabled, shadow: None },
+  }
 }
 
 ///|
@@ -143,7 +154,7 @@ pub fn TodoApp::root(
         @views.button(
           "Add",
           on_click=() => self.submit_draft(),
-          style=@core.ButtonStyle::filled(theme~),
+          style=flat_filled_button_style(theme),
           width=120.0,
         ),
       ],

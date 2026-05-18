@@ -20,23 +20,23 @@ test "visual todo emits field button and keyed row text commands" {
   assert_true(
     commands.any(command => {
       command
-      is @core.DrawCommand::DrawText({
-        text: "New todo",
-        frame: { origin: { x: 76.0, .. }, .. },
-        ..
-      })
+      is @core.DrawCommand::DrawText(
+        { text: "New todo", frame: { origin: { x: 76.0, .. }, .. }, .. }
+      )
     }),
   )
   assert_true(
     commands.any(command => {
-      command
-      is @core.DrawCommand::DrawText({ text: "Visual baseline", .. })
+      command is @core.DrawCommand::DrawText({ text: "Visual baseline", .. })
     }),
   )
   assert_true(
     commands.any(command => {
       command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, _)
     }),
+  )
+  assert_false(
+    commands.any(command => command is @core.DrawCommand::DrawShadow(_)),
   )
 }
 

@@ -334,10 +334,10 @@ export function createWindowWebImports(options = {}) {
       add(canvas, "focus", () => emit(11, rawId));
       add(canvas, "blur", () => emit(12, rawId));
       add(canvas, "keydown", event =>
-        emit(40, rawId, 0, 0, 0, event.code || event.key || ""),
+        emit(40, rawId, 0, 0, 0, event.key || event.code || ""),
       );
       add(canvas, "keyup", event =>
-        emit(41, rawId, 0, 0, 0, event.code || event.key || ""),
+        emit(41, rawId, 0, 0, 0, event.key || event.code || ""),
       );
       add(canvas, "input", event =>
         emit(42, rawId, 0, 0, 0, event.data || ""),
