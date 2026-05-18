@@ -21,6 +21,17 @@ pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 // Errors
 
 // Types and methods
+pub(all) struct Alignment {
+  x : Double
+  y : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Alignment::bottom_leading() -> Self
+pub fn Alignment::bottom_trailing() -> Self
+pub fn Alignment::center() -> Self
+pub fn Alignment::new(x~ : Double, y~ : Double) -> Self
+pub fn Alignment::top_leading() -> Self
+pub fn Alignment::top_trailing() -> Self
+
 pub(all) struct AnimatedColor {
   from : Color
   to : Color
@@ -135,6 +146,9 @@ pub(all) struct BuildContext {
 }
 pub fn[T] BuildContext::binding(Self, State[T]) -> Binding[T]
 pub fn[T] BuildContext::watch(Self, State[T]) -> T
+pub fn BuildContext::watch_focus(Self, FocusState) -> String?
+pub fn BuildContext::watch_navigation(Self, NavigationState) -> Array[String]
+pub fn BuildContext::watch_scroll(Self, ScrollState) -> Point
 
 pub(all) enum ButtonState {
   Normal
@@ -335,6 +349,7 @@ pub(all) struct ElementNode {
   mut composition : String?
 }
 pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
+pub fn ElementNode::dispatch_keyboard_shortcut(Self, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode) -> ElementEventResult
 pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> ElementEventResult
 pub fn ElementNode::find_keyed(Self, String) -> ElementId?
@@ -352,9 +367,17 @@ pub fn ElementNode::semantics(Self, RenderNode, focused? : ElementId?) -> Semant
 pub(all) struct Environment {
   theme : Theme
   color_scheme : ColorScheme
+  scale_factor : Double
+  text_scale : Double
+  locale : String
+  enabled : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Environment::default() -> Self
 pub fn Environment::with_color_scheme(Self, ColorScheme) -> Self
+pub fn Environment::with_enabled(Self, Bool) -> Self
+pub fn Environment::with_locale(Self, String) -> Self
+pub fn Environment::with_scale_factor(Self, Double) -> Self
+pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
 
 pub(all) struct FlexViewSpec {
@@ -365,6 +388,15 @@ pub(all) struct FlexViewSpec {
   cross_axis_alignment : CrossAxisAlignment
   children : Array[ViewSpec]
 }
+
+pub struct FocusState {
+  key_slot : State[String?]
+}
+pub fn FocusState::binding(Self) -> Binding[String?]
+pub fn FocusState::clear(Self) -> Unit
+pub fn FocusState::focus(Self, String) -> Unit
+pub fn FocusState::focused_key(Self) -> String?
+pub fn FocusState::new(key? : String?) -> Self
 
 pub(all) struct FontSpec {
   family : String
@@ -469,6 +501,13 @@ pub(all) struct KeyboardEvent {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn KeyboardEvent::new(key~ : String, pressed? : Bool, text? : String?, repeat? : Bool, modifiers? : KeyModifiers) -> Self
 
+pub(all) struct KeyboardShortcut {
+  key : String
+  modifiers : KeyModifiers
+} derive(Eq, ToJson, @debug.Debug)
+pub fn KeyboardShortcut::matches(Self, KeyboardEvent) -> Bool
+pub fn KeyboardShortcut::new(key~ : String, modifiers? : KeyModifiers) -> Self
+
 pub(all) struct LayoutResult {
   frame : Rect
   children : Array[LayoutResult]
@@ -516,6 +555,17 @@ pub(all) struct MotionScale {
   easing : Easing
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MotionScale::default() -> Self
+
+pub struct NavigationState {
+  stack_slot : State[Array[String]]
+}
+pub fn NavigationState::binding(Self) -> Binding[Array[String]]
+pub fn NavigationState::current(Self) -> String
+pub fn NavigationState::new(initial? : String) -> Self
+pub fn NavigationState::pop(Self) -> Bool
+pub fn NavigationState::push(Self, String) -> Unit
+pub fn NavigationState::replace(Self, String) -> Unit
+pub fn NavigationState::stack(Self) -> Array[String]
 
 pub(all) struct PaddingViewSpec {
   key : Key?
@@ -631,6 +681,15 @@ pub fn RuntimeState::semantics(Self) -> SemanticsNode
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 
+pub struct ScrollState {
+  offset_slot : State[Point]
+}
+pub fn ScrollState::binding(Self) -> Binding[Point]
+pub fn ScrollState::new(offset? : Point) -> Self
+pub fn ScrollState::offset(Self) -> Point
+pub fn ScrollState::scroll_to(Self, x~ : Double, y~ : Double) -> Unit
+pub fn ScrollState::set_offset(Self, Point) -> Unit
+
 pub(all) struct ScrollViewSpec {
   key : Key?
   offset : Point
@@ -668,6 +727,14 @@ pub(all) enum SemanticsRole {
   ListItem
   Grid
   ScrollView
+  Switch
+  Radio
+  Slider
+  Progress
+  Tab
+  Dialog
+  Tooltip
+  Menu
   Group
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -958,6 +1025,17 @@ pub(all) enum ViewModifier {
   OffsetModifier(Double, Double)
   ClipModifier
   ScaleModifier(Double, Double)
+  DisabledModifier(Bool)
+  AccessibilityLabelModifier(String)
+  SemanticsRoleModifier(SemanticsRole)
+  FocusableModifier(Bool)
+  OnTapModifier(() -> Unit)
+  KeyboardShortcutModifier(KeyboardShortcut)
+  FlexibleModifier(Double)
+  AlignModifier(Alignment)
+  AspectRatioModifier(Double)
+  IntrinsicWidthModifier
+  IntrinsicHeightModifier
 }
 
 pub(all) enum ViewSpec {
@@ -979,6 +1057,9 @@ pub(all) enum ViewSpec {
   ModifiedSpec(ModifiedViewSpec)
   CustomSpec(CustomViewSpec)
 }
+pub fn ViewSpec::accessibility_label(Self, String) -> Self
+pub fn ViewSpec::align(Self, alignment? : Alignment) -> Self
+pub fn ViewSpec::aspect_ratio(Self, Double) -> Self
 pub fn ViewSpec::background(Self, Color) -> Self
 pub fn ViewSpec::background_brush(Self, Brush) -> Self
 pub fn ViewSpec::border(Self, BorderStyle) -> Self
@@ -986,19 +1067,28 @@ pub fn ViewSpec::clip(Self) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self
 pub fn ViewSpec::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
 pub fn ViewSpec::custom(measure~ : (Constraints) -> Size, paint~ : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self
+pub fn ViewSpec::disabled(Self, disabled? : Bool) -> Self
 pub fn ViewSpec::environment(Self, Environment) -> Self
+pub fn ViewSpec::expanded(Self, weight? : Double) -> Self
+pub fn ViewSpec::flexible(Self, weight? : Double) -> Self
+pub fn ViewSpec::focusable(Self, focusable? : Bool) -> Self
 pub fn ViewSpec::font(Self, FontSpec) -> Self
 pub fn ViewSpec::foreground(Self, Color) -> Self
 pub fn ViewSpec::frame(Self, width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self
+pub fn ViewSpec::intrinsic_height(Self) -> Self
+pub fn ViewSpec::intrinsic_width(Self) -> Self
 pub fn ViewSpec::key(Self, String) -> Self
+pub fn ViewSpec::keyboard_shortcut(Self, KeyboardShortcut) -> Self
 pub fn ViewSpec::kind(Self) -> Int
 pub fn ViewSpec::main_axis_alignment(Self, MainAxisAlignment) -> Self
 pub fn ViewSpec::modified(Self, ViewModifier) -> Self
 pub fn ViewSpec::offset(Self, dx? : Double, dy? : Double) -> Self
+pub fn ViewSpec::on_tap(Self, () -> Unit) -> Self
 pub fn ViewSpec::opacity(Self, Double) -> Self
 pub fn ViewSpec::padding(Self, Double) -> Self
 pub fn ViewSpec::same_identity(Self, Self) -> Bool
 pub fn ViewSpec::scale(Self, sx? : Double, sy? : Double) -> Self
+pub fn ViewSpec::semantics_role(Self, SemanticsRole) -> Self
 pub fn ViewSpec::shadow(Self, ShadowStyle) -> Self
 pub fn ViewSpec::spacing(Self, Double) -> Self
 pub fn ViewSpec::theme(Self, Theme) -> Self

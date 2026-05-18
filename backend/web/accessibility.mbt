@@ -34,13 +34,23 @@ fn aria_role(role : @core.SemanticsRole) -> String {
     @core.SemanticsRole::ListItem => "listitem"
     @core.SemanticsRole::Grid => "grid"
     @core.SemanticsRole::ScrollView => "region"
+    @core.SemanticsRole::Switch => "switch"
+    @core.SemanticsRole::Radio => "radio"
+    @core.SemanticsRole::Slider => "slider"
+    @core.SemanticsRole::Progress => "progressbar"
+    @core.SemanticsRole::Tab => "tab"
+    @core.SemanticsRole::Dialog => "dialog"
+    @core.SemanticsRole::Tooltip => "tooltip"
+    @core.SemanticsRole::Menu => "menu"
     @core.SemanticsRole::Group => "group"
   }
 }
 
 ///|
 fn aria_checked(node : @core.SemanticsNode) -> Bool? {
-  if node.role == @core.SemanticsRole::Checkbox {
+  if node.role == @core.SemanticsRole::Checkbox ||
+    node.role == @core.SemanticsRole::Switch ||
+    node.role == @core.SemanticsRole::Radio {
     Some(node.state.checked)
   } else {
     None

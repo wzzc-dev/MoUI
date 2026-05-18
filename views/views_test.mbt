@@ -441,3 +441,70 @@ test "text field accepts visual styles" {
   assert_true(focused_border.brush == @core.Brush::solid(cursor_color))
   inspect(focused_border.width, content="2")
 }
+
+///|
+test "navigation stack selects current route" {
+  let nav = @core.NavigationState::new(initial="controls")
+  let spec = @views.navigation_stack(nav, [
+    @views.navigation_destination(
+      route="overview",
+      view=@views.text("Overview"),
+    ),
+    @views.navigation_destination(
+      route="controls",
+      view=@views.text("Controls"),
+    ),
+  ])
+  guard spec is @core.ViewSpec::TextSpec({ text: "Controls", .. }) else {
+    fail("expected selected navigation destination")
+  }
+}
+
+///|
+test "lazy list windows visible rows" {
+  let scroll = @core.ScrollState::new(offset=@core.Point::new(x=0.0, y=32.0))
+  let items = ["One", "Two", "Three", "Four", "Five", "Six"]
+  let spec = @views.lazy_list(
+    items,
+    item => item,
+    item => @views.text(item, width=120.0, height=24.0),
+    state=scroll,
+    item_height=24.0,
+    viewport_height=40.0,
+    spacing=4.0,
+  )
+  guard spec is @core.ViewSpec::ListSpec({ children, .. }) else {
+    fail("expected list spec")
+  }
+  assert_true(children.length() >= 2)
+  assert_true(children.length() <= 4)
+}
+
+///|
+test "dialog host wraps presented dialog" {
+  let spec = @views.dialog_host(
+    @views.text("Base"),
+    dialog=Some(@views.text("Dialog")),
+    presented=true,
+  )
+  guard spec is @core.ViewSpec::StackSpec({ children: [_, _], .. }) else {
+    fail("expected stack host")
+  }
+}
+
+///|
+test "toggle and slider helpers build wrapper views" {
+  let checked = @core.State::new(false)
+  let value = @core.State::new(0.4)
+  let toggle = @views.toggle("Enabled", checked.binding())
+  let slider = @views.slider(value.binding(), width=200.0)
+  guard toggle
+    is @core.ViewSpec::ModifiedSpec(
+      { modifier: @core.ViewModifier::SemanticsRoleModifier(_), .. }
+    ) else {
+    fail("expected toggle semantics wrapper")
+  }
+  guard slider is @core.ViewSpec::CustomSpec(_) else {
+    fail("expected slider custom view")
+  }
+}

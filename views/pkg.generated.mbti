@@ -6,15 +6,27 @@ import {
 }
 
 // Values
+pub fn align(@core.ViewSpec, alignment? : @core.Alignment) -> @core.ViewSpec
+
+pub fn aspect_ratio(@core.ViewSpec, Double) -> @core.ViewSpec
+
 pub fn button(String, on_click? : () -> Unit, style? : @core.ButtonStyle, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn checkbox(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn column(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
+pub fn custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.ViewSpec
+
 pub fn dark_theme() -> @core.Theme
 
+pub fn dialog_host(@core.ViewSpec, dialog? : @core.ViewSpec?, presented? : Bool) -> @core.ViewSpec
+
 pub fn environment(theme? : @core.Theme) -> @core.Environment
+
+pub fn expanded(@core.ViewSpec, weight? : Double) -> @core.ViewSpec
+
+pub fn flexible(@core.ViewSpec, weight? : Double) -> @core.ViewSpec
 
 pub fn frame(@core.ViewSpec, width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.ViewSpec
 
@@ -22,9 +34,21 @@ pub fn grid(Array[@core.ViewSpec], columns? : Int, row_spacing? : Double, column
 
 pub fn image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.ViewSpec
 
+pub fn intrinsic_height(@core.ViewSpec) -> @core.ViewSpec
+
+pub fn intrinsic_width(@core.ViewSpec) -> @core.ViewSpec
+
+pub fn[T] lazy_list(Array[T], (T) -> String, (T) -> @core.ViewSpec, state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double) -> @core.ViewSpec
+
 pub fn light_theme() -> @core.Theme
 
 pub fn list(Array[@core.ViewSpec], spacing? : Double) -> @core.ViewSpec
+
+pub fn menu_button(String, on_click? : () -> Unit, style? : @core.ButtonStyle, width? : Double, height? : Double) -> @core.ViewSpec
+
+pub fn navigation_destination(route~ : String, view~ : @core.ViewSpec) -> NavigationDestination
+
+pub fn navigation_stack(@core.NavigationState, Array[NavigationDestination], fallback? : @core.ViewSpec) -> @core.ViewSpec
 
 pub fn overlay(@core.ViewSpec, @core.ViewSpec) -> @core.ViewSpec
 
@@ -32,9 +56,15 @@ pub fn padding(@core.ViewSpec, Double) -> @core.ViewSpec
 
 pub fn padding_insets(@core.ViewSpec, @core.Insets) -> @core.ViewSpec
 
+pub fn progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.ViewSpec
+
+pub fn radio(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
+
 pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
 pub fn scroll_view(@core.ViewSpec, offset? : @core.Point, width? : Double, height? : Double) -> @core.ViewSpec
+
+pub fn slider(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.ViewSpec
 
 pub fn spacer(min_length? : Double, weight? : Double) -> @core.ViewSpec
 
@@ -42,15 +72,35 @@ pub fn stack(Array[@core.ViewSpec]) -> @core.ViewSpec
 
 pub fn surface(@core.ViewSpec, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, style? : @core.SurfaceStyle) -> @core.ViewSpec
 
+pub fn tab_item(route~ : String, label~ : String, view~ : @core.ViewSpec) -> TabItem
+
+pub fn tab_view(@core.Binding[String], Array[TabItem], spacing? : Double) -> @core.ViewSpec
+
 pub fn text(String, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn text_field(@core.Binding[String], on_submit? : (() -> Unit)?, placeholder? : String, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale) -> @core.Theme
 
+pub fn toggle(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
+
+pub fn toggle_switch(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
+
+pub fn tooltip(@core.ViewSpec, String, visible? : Bool) -> @core.ViewSpec
+
 // Errors
 
 // Types and methods
+pub(all) struct NavigationDestination {
+  route : String
+  view : @core.ViewSpec
+}
+
+pub(all) struct TabItem {
+  route : String
+  label : String
+  view : @core.ViewSpec
+}
 
 // Type aliases
 

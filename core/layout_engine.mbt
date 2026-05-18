@@ -162,7 +162,18 @@ fn modified_intrinsic_size(
     | BorderModifier(_)
     | OffsetModifier(_, _)
     | ClipModifier
-    | ScaleModifier(_, _) => child_size
+    | ScaleModifier(_, _)
+    | DisabledModifier(_)
+    | AccessibilityLabelModifier(_)
+    | SemanticsRoleModifier(_)
+    | FocusableModifier(_)
+    | OnTapModifier(_)
+    | KeyboardShortcutModifier(_)
+    | FlexibleModifier(_)
+    | AlignModifier(_)
+    | IntrinsicWidthModifier
+    | IntrinsicHeightModifier => child_size
+    AspectRatioModifier(ratio) => aspect_ratio_size(child_size, ratio)
   }
 }
 
@@ -170,6 +181,16 @@ fn modified_intrinsic_size(
 fn spacer_weight(child : ElementNode) -> Double {
   match child.spec {
     SpacerSpec(data) => data.weight
+    ModifiedSpec(data) =>
+      match data.modifier {
+        FlexibleModifier(weight) => weight
+        _ =>
+          if child.children.length() > 0 {
+            spacer_weight(child.children[0])
+          } else {
+            0.0
+          }
+      }
     _ => 0.0
   }
 }

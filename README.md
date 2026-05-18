@@ -75,6 +75,8 @@ ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand 
 - `ViewSpec` is the immutable description produced by app code.
 - `ElementNode` owns identity, keys, control state, focus, and text-editing
   runtime state.
+- `ScrollState`, `FocusState`, and `NavigationState` are the preferred state
+  holders for reusable app structure instead of ad hoc view-local fields.
 - Layout uses constraints down, measured size up, then parent placement.
 - Paint emits platform-neutral `DrawCommand` values. Renderers may degrade
   based on capability, but view constructors preserve brush, border, shadow,
@@ -117,7 +119,9 @@ participate in the measured/placed layout pass while preserving the existing
 ## Modifiers And Environment
 
 Modifiers are represented as `ModifiedSpec` wrappers instead of recursively
-rewriting every child spec. This keeps modifier order observable:
+rewriting every child spec. This keeps modifier order observable and makes
+stateful wrappers like disabled, focusable, semantics, and shortcuts compose
+predictably:
 
 ```moonbit
 @views.text("A").padding(8.0).background(@core.Color::gray())
@@ -128,7 +132,9 @@ The first paints the background outside the padding; the second paints it
 inside. `font`, `foreground`, and `corner_radius` flow through a render
 environment, while layout and paint modifiers stay as ordered wrappers.
 MoUI currently supports background brushes, opacity, shadow, border, offset,
-clip, and scale modifiers in addition to padding and frame.
+clip, scale, disabled, accessibility labels, semantics roles, focusability,
+tap actions, keyboard shortcuts, and simple flexible/alignment wrappers in
+addition to padding and frame.
 
 ## Visual
 
@@ -163,8 +169,9 @@ host-import renderer forwards the full command set to the browser runtime.
 ## Built-In And Custom Views
 
 The public `views` package includes text, button, text field, checkbox, image,
-surface/container, row/column, stack, scroll, grid, list, frame, padding, and
-spacer helpers.
+surface/container, row/column, stack, scroll, grid, list, frame, padding,
+spacer, navigation stack, tab view, dialog host, lazy list, toggle, radio,
+slider, progress, menu button, tooltip, and layout helper functions.
 
 Advanced users can use `ViewSpec::custom` to provide measurement, paint, and
 semantics callbacks without adding a new core enum variant:

@@ -3,11 +3,12 @@ priv struct RenderEnvironment {
   font : FontSpec?
   foreground : Color?
   corner_radius : Double?
+  enabled : Bool
 }
 
 ///|
 fn RenderEnvironment::default() -> RenderEnvironment {
-  { font: None, foreground: None, corner_radius: None }
+  { font: None, foreground: None, corner_radius: None, enabled: true }
 }
 
 ///|
@@ -44,7 +45,7 @@ fn ElementNode::render_with_environment(
             text=data.text,
             frame=bounds,
             font=environment.font.unwrap_or(data.font),
-            color=environment.foreground.unwrap_or(data.color),
+            color=environment_color(environment, data.color),
           ),
         ),
       )
@@ -290,6 +291,19 @@ fn ElementNode::render_with_environment(
 }
 
 ///|
+fn environment_color(
+  environment : RenderEnvironment,
+  fallback : Color,
+) -> Color {
+  let color = environment.foreground.unwrap_or(fallback)
+  if environment.enabled {
+    color
+  } else {
+    color.multiply_alpha(0.7)
+  }
+}
+
+///|
 fn render_modified_node(
   element : ElementNode,
   data : ModifiedViewSpec,
@@ -447,7 +461,78 @@ fn render_modified_node(
       }
       post_commands.push(PopTransform)
     }
+    DisabledModifier(disabled) => {
+      let child_environment = { ..environment, enabled: !disabled }
+      if disabled {
+        commands.push(PushOpacity(0.42))
+      }
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds, focused, child_environment,
+          ),
+        )
+      }
+      if disabled {
+        post_commands.push(PopOpacity)
+      }
+    }
+    AccessibilityLabelModifier(_)
+    | SemanticsRoleModifier(_)
+    | FocusableModifier(_)
+    | OnTapModifier(_)
+    | KeyboardShortcutModifier(_)
+    | FlexibleModifier(_)
+    | IntrinsicWidthModifier
+    | IntrinsicHeightModifier =>
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            bounds, focused, environment,
+          ),
+        )
+      }
+    AlignModifier(alignment) =>
+      if element.children.length() > 0 {
+        let child_bounds = aligned_rect(
+          bounds,
+          element.children[0].intrinsic_size(),
+          alignment,
+        )
+        children.push(
+          element.children[0].render_with_environment(
+            child_bounds, focused, environment,
+          ),
+        )
+      }
+    AspectRatioModifier(ratio) =>
+      if element.children.length() > 0 {
+        children.push(
+          element.children[0].render_with_environment(
+            aspect_ratio_rect(bounds, ratio),
+            focused,
+            environment,
+          ),
+        )
+      }
   }
+}
+
+///|
+fn aligned_rect(
+  bounds : Rect,
+  child_size : Size,
+  alignment : Alignment,
+) -> Rect {
+  let width = min_double(bounds.size.width, child_size.width)
+  let height = min_double(bounds.size.height, child_size.height)
+  let dx = max_double(0.0, bounds.size.width - width) *
+    (alignment.x + 1.0) /
+    2.0
+  let dy = max_double(0.0, bounds.size.height - height) *
+    (alignment.y + 1.0) /
+    2.0
+  Rect::new(x=bounds.origin.x + dx, y=bounds.origin.y + dy, width~, height~)
 }
 
 ///|
@@ -524,7 +609,9 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     ModifiedSpec(data) =>
       data.modifier is BackgroundModifier(_) ||
       data.modifier is BorderModifier(_) ||
-      data.modifier is ShadowModifier(_)
+      data.modifier is ShadowModifier(_) ||
+      data.modifier is OnTapModifier(_) ||
+      data.modifier is FocusableModifier(true)
     CustomSpec(_) => true
     _ => false
   }

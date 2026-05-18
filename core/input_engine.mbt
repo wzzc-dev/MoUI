@@ -1,3 +1,4 @@
+///|
 pub fn ElementNode::dispatch_pointer(
   self : ElementNode,
   event : PointerEvent,
@@ -27,36 +28,81 @@ pub fn ElementNode::dispatch_pointer(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_)
-    | ModifiedSpec(_) => {
-      let mut changed = false
-      let mut activated = false
-      let mut focused : ElementId? = None
-      let mut index = self.children.length() - 1
-      while index >= 0 {
-        if index < render.children.length() &&
-          render.children[index].frame.contains(event.position) {
-          let result = self.children[index].dispatch_pointer(
-            event,
-            render.children[index],
-          )
-          changed = result.changed
-          activated = result.activated
-          match result.focused {
-            Some(_) => focused = result.focused
-            None => ()
-          }
-          break
-        }
-        index = index - 1
-      }
-      if changed {
-        self.dirty.mark_paint()
-      }
-      { changed, activated, focused }
-    }
+    | ListSpec(_) => self.dispatch_pointer_to_children(event, render)
+    ModifiedSpec(data) => self.dispatch_modified_pointer(data, event, render)
     EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
       { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn ElementNode::dispatch_pointer_to_children(
+  self : ElementNode,
+  event : PointerEvent,
+  render : RenderNode,
+) -> ElementEventResult {
+  let mut changed = false
+  let mut activated = false
+  let mut focused : ElementId? = None
+  let mut index = self.children.length() - 1
+  while index >= 0 {
+    if index < render.children.length() &&
+      render.children[index].frame.contains(event.position) {
+      let result = self.children[index].dispatch_pointer(
+        event,
+        render.children[index],
+      )
+      changed = result.changed
+      activated = result.activated
+      match result.focused {
+        Some(_) => focused = result.focused
+        None => ()
+      }
+      break
+    }
+    index = index - 1
+  }
+  if changed {
+    self.dirty.mark_paint()
+  }
+  { changed, activated, focused }
+}
+
+///|
+fn ElementNode::dispatch_modified_pointer(
+  self : ElementNode,
+  data : ModifiedViewSpec,
+  event : PointerEvent,
+  render : RenderNode,
+) -> ElementEventResult {
+  match data.modifier {
+    DisabledModifier(true) =>
+      { changed: false, activated: false, focused: None }
+    OnTapModifier(handler) => {
+      let child_result = self.dispatch_pointer_to_children(event, render)
+      if child_result.activated {
+        child_result
+      } else {
+        let inside = render.frame.contains(event.position)
+        let tap = recognize_button_tap(self.button_state, inside, event.phase)
+        if tap.activated {
+          handler()
+        }
+        let changed = child_result.changed ||
+          tap.next_state != self.button_state ||
+          tap.activated
+        self.button_state = tap.next_state
+        if changed {
+          self.dirty.mark_paint()
+        }
+        {
+          changed,
+          activated: child_result.activated || tap.activated,
+          focused: child_result.focused,
+        }
+      }
+    }
+    _ => self.dispatch_pointer_to_children(event, render)
   }
 }
 
@@ -175,8 +221,7 @@ pub fn ElementNode::find_text_field_at(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_)
-    | ModifiedSpec(_) => {
+    | ListSpec(_) => {
       let mut index = self.children.length() - 1
       while index >= 0 {
         if index < render.children.length() &&
@@ -194,6 +239,28 @@ pub fn ElementNode::find_text_field_at(
       }
       None
     }
+    ModifiedSpec(data) =>
+      match data.modifier {
+        DisabledModifier(true) => None
+        _ => {
+          let mut index = self.children.length() - 1
+          while index >= 0 {
+            if index < render.children.length() &&
+              render.children[index].frame.contains(point) {
+              match
+                self.children[index].find_text_field_at(
+                  point,
+                  render.children[index],
+                ) {
+                Some(id) => return Some(id)
+                None => ()
+              }
+            }
+            index = index - 1
+          }
+          None
+        }
+      }
     _ => None
   }
 }
@@ -205,6 +272,15 @@ pub fn ElementNode::focusable_ids(
 ) -> Unit {
   match self.spec {
     TextFieldSpec(_) | CheckboxSpec(_) => ids.push(self.id)
+    ModifiedSpec(data) =>
+      match data.modifier {
+        DisabledModifier(true) => ()
+        FocusableModifier(true) => ids.push(self.id)
+        _ =>
+          for child in self.children {
+            child.focusable_ids(ids)
+          }
+      }
     FlexSpec(_)
     | PaddingSpec(_)
     | ContainerSpec(_)
@@ -212,8 +288,7 @@ pub fn ElementNode::focusable_ids(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_)
-    | ModifiedSpec(_) =>
+    | ListSpec(_) =>
       for child in self.children {
         child.focusable_ids(ids)
       }
@@ -277,6 +352,9 @@ pub fn ElementNode::dispatch_keyboard(
   target : ElementId,
   event : KeyboardEvent,
 ) -> ElementEventResult {
+  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) {
+    return { changed: false, activated: false, focused: None }
+  }
   if self.id == target {
     match self.spec {
       TextFieldSpec(data) => handle_text_field_keyboard(self, data, event)
@@ -304,6 +382,9 @@ pub fn ElementNode::dispatch_text_input(
   target : ElementId,
   event : TextInputEvent,
 ) -> ElementEventResult {
+  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) {
+    return { changed: false, activated: false, focused: None }
+  }
   if self.id == target {
     match self.spec {
       TextFieldSpec(data) => handle_text_field_input(self, data, event)
@@ -325,6 +406,91 @@ pub fn ElementNode::dispatch_text_input(
 }
 
 ///|
+pub fn ElementNode::dispatch_keyboard_shortcut(
+  self : ElementNode,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  match self.spec {
+    ModifiedSpec(data) =>
+      match data.modifier {
+        DisabledModifier(true) =>
+          { changed: false, activated: false, focused: None }
+        KeyboardShortcutModifier(shortcut) =>
+          if shortcut.matches(event) {
+            self.activate_primary()
+          } else {
+            self.dispatch_keyboard_shortcut_to_children(event)
+          }
+        _ => self.dispatch_keyboard_shortcut_to_children(event)
+      }
+    _ => self.dispatch_keyboard_shortcut_to_children(event)
+  }
+}
+
+///|
+fn ElementNode::dispatch_keyboard_shortcut_to_children(
+  self : ElementNode,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  let mut changed = false
+  let mut activated = false
+  for child in self.children {
+    let result = child.dispatch_keyboard_shortcut(event)
+    changed = changed || result.changed
+    activated = activated || result.activated
+    if result.activated {
+      break
+    }
+  }
+  if changed {
+    self.dirty.mark_paint()
+  }
+  { changed, activated, focused: None }
+}
+
+///|
+fn ElementNode::activate_primary(self : ElementNode) -> ElementEventResult {
+  match self.spec {
+    ButtonSpec(data) => {
+      match data.on_click {
+        Some(handler) => handler()
+        None => ()
+      }
+      self.dirty.mark_paint()
+      { changed: true, activated: true, focused: None }
+    }
+    CheckboxSpec(data) => {
+      data.checked.set(!data.checked.get())
+      self.dirty.mark_paint()
+      { changed: true, activated: true, focused: None }
+    }
+    ModifiedSpec(data) =>
+      match data.modifier {
+        DisabledModifier(true) =>
+          { changed: false, activated: false, focused: None }
+        OnTapModifier(handler) => {
+          handler()
+          self.dirty.mark_paint()
+          { changed: true, activated: true, focused: None }
+        }
+        _ => self.activate_first_child()
+      }
+    _ => self.activate_first_child()
+  }
+}
+
+///|
+fn ElementNode::activate_first_child(self : ElementNode) -> ElementEventResult {
+  for child in self.children {
+    let result = child.activate_primary()
+    if result.activated || result.changed {
+      return result
+    }
+  }
+  { changed: false, activated: false, focused: None }
+}
+
+///|
 fn handle_text_field_keyboard(
   element : ElementNode,
   data : TextFieldViewSpec,
@@ -342,27 +508,27 @@ fn handle_text_field_keyboard(
     return { changed: true, activated: true, focused: None }
   }
   if event.key == "Backspace" {
-    return handle_text_field_input(
-      element,
-      data,
-      DeleteSurrounding(1, 0),
-    )
+    return handle_text_field_input(element, data, DeleteSurrounding(1, 0))
   }
   if event.key == "Delete" {
-    return handle_text_field_input(
-      element,
-      data,
-      DeleteSurrounding(0, 1),
-    )
+    return handle_text_field_input(element, data, DeleteSurrounding(0, 1))
   }
   if event.key == "ArrowLeft" {
-    element.caret = clamp_int(element.caret - 1, 0, text_length(data.value.get()))
+    element.caret = clamp_int(
+      element.caret - 1,
+      0,
+      text_length(data.value.get()),
+    )
     element.selection = None
     element.dirty.mark_paint()
     return { changed: true, activated: false, focused: None }
   }
   if event.key == "ArrowRight" {
-    element.caret = clamp_int(element.caret + 1, 0, text_length(data.value.get()))
+    element.caret = clamp_int(
+      element.caret + 1,
+      0,
+      text_length(data.value.get()),
+    )
     element.selection = None
     element.dirty.mark_paint()
     return { changed: true, activated: false, focused: None }

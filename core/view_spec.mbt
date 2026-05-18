@@ -17,7 +17,19 @@ pub(all) enum CrossAxisAlignment {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct Alignment {
+  x : Double
+  y : Double
+} derive(Eq, Debug, ToJson)
+
+///|
 pub type ClickHandler = () -> Unit
+
+///|
+pub(all) struct KeyboardShortcut {
+  key : String
+  modifiers : KeyModifiers
+} derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) enum ButtonState {
@@ -228,6 +240,17 @@ pub(all) enum ViewModifier {
   OffsetModifier(Double, Double)
   ClipModifier
   ScaleModifier(Double, Double)
+  DisabledModifier(Bool)
+  AccessibilityLabelModifier(String)
+  SemanticsRoleModifier(SemanticsRole)
+  FocusableModifier(Bool)
+  OnTapModifier(ClickHandler)
+  KeyboardShortcutModifier(KeyboardShortcut)
+  FlexibleModifier(Double)
+  AlignModifier(Alignment)
+  AspectRatioModifier(Double)
+  IntrinsicWidthModifier
+  IntrinsicHeightModifier
 }
 
 ///|
@@ -297,6 +320,52 @@ pub fn VisualStyle::empty() -> VisualStyle {
     radius: None,
     opacity: None,
   }
+}
+
+///|
+pub fn Alignment::new(x~ : Double, y~ : Double) -> Alignment {
+  { x: clamp_double(x, -1.0, 1.0), y: clamp_double(y, -1.0, 1.0) }
+}
+
+///|
+pub fn Alignment::center() -> Alignment {
+  Alignment::new(x=0.0, y=0.0)
+}
+
+///|
+pub fn Alignment::top_leading() -> Alignment {
+  Alignment::new(x=-1.0, y=-1.0)
+}
+
+///|
+pub fn Alignment::top_trailing() -> Alignment {
+  Alignment::new(x=1.0, y=-1.0)
+}
+
+///|
+pub fn Alignment::bottom_leading() -> Alignment {
+  Alignment::new(x=-1.0, y=1.0)
+}
+
+///|
+pub fn Alignment::bottom_trailing() -> Alignment {
+  Alignment::new(x=1.0, y=1.0)
+}
+
+///|
+pub fn KeyboardShortcut::new(
+  key~ : String,
+  modifiers? : KeyModifiers = KeyModifiers::none(),
+) -> KeyboardShortcut {
+  { key, modifiers }
+}
+
+///|
+pub fn KeyboardShortcut::matches(
+  self : KeyboardShortcut,
+  event : KeyboardEvent,
+) -> Bool {
+  event.pressed && event.key == self.key && event.modifiers == self.modifiers
 }
 
 ///|
@@ -460,6 +529,81 @@ pub fn ViewSpec::scale(
 }
 
 ///|
+pub fn ViewSpec::disabled(self : ViewSpec, disabled? : Bool = true) -> ViewSpec {
+  self.modified(DisabledModifier(disabled))
+}
+
+///|
+pub fn ViewSpec::accessibility_label(
+  self : ViewSpec,
+  label : String,
+) -> ViewSpec {
+  self.modified(AccessibilityLabelModifier(label))
+}
+
+///|
+pub fn ViewSpec::semantics_role(
+  self : ViewSpec,
+  role : SemanticsRole,
+) -> ViewSpec {
+  self.modified(SemanticsRoleModifier(role))
+}
+
+///|
+pub fn ViewSpec::focusable(
+  self : ViewSpec,
+  focusable? : Bool = true,
+) -> ViewSpec {
+  self.modified(FocusableModifier(focusable))
+}
+
+///|
+pub fn ViewSpec::on_tap(self : ViewSpec, handler : ClickHandler) -> ViewSpec {
+  self.modified(OnTapModifier(handler))
+}
+
+///|
+pub fn ViewSpec::keyboard_shortcut(
+  self : ViewSpec,
+  shortcut : KeyboardShortcut,
+) -> ViewSpec {
+  self.modified(KeyboardShortcutModifier(shortcut))
+}
+
+///|
+pub fn ViewSpec::flexible(self : ViewSpec, weight? : Double = 1.0) -> ViewSpec {
+  self.modified(FlexibleModifier(max_double(0.0, weight)))
+}
+
+///|
+pub fn ViewSpec::expanded(self : ViewSpec, weight? : Double = 1.0) -> ViewSpec {
+  self.flexible(weight~)
+}
+
+///|
+pub fn ViewSpec::align(
+  self : ViewSpec,
+  alignment? : Alignment = Alignment::center(),
+) -> ViewSpec {
+  self.modified(AlignModifier(alignment))
+}
+
+///|
+pub fn ViewSpec::aspect_ratio(self : ViewSpec, ratio : Double) -> ViewSpec {
+  self.modified(AspectRatioModifier(max_double(0.01, ratio)))
+}
+
+///|
+pub fn ViewSpec::intrinsic_width(self : ViewSpec) -> ViewSpec {
+  self.modified(IntrinsicWidthModifier)
+}
+
+///|
+pub fn ViewSpec::intrinsic_height(self : ViewSpec) -> ViewSpec {
+  self.modified(IntrinsicHeightModifier)
+}
+
+///|
 pub fn ViewSpec::padding(self : ViewSpec, value : Double) -> ViewSpec {
   self.modified(PaddingModifier(Insets::all(value)))
 }
@@ -600,7 +744,7 @@ pub fn ViewSpec::environment(
   self : ViewSpec,
   environment : Environment,
 ) -> ViewSpec {
-  self.theme(environment.theme)
+  self.theme(environment.theme).disabled(disabled=!environment.enabled)
 }
 
 ///|

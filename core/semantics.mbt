@@ -9,6 +9,14 @@ pub(all) enum SemanticsRole {
   ListItem
   Grid
   ScrollView
+  Switch
+  Radio
+  Slider
+  Progress
+  Tab
+  Dialog
+  Tooltip
+  Menu
   Group
 } derive(Eq, Debug, ToJson)
 
@@ -58,7 +66,7 @@ pub fn SemanticsState::default() -> SemanticsState {
 pub fn ElementNode::semantics(
   self : ElementNode,
   render : RenderNode,
-  focused~ : ElementId? = None,
+  focused? : ElementId? = None,
 ) -> SemanticsNode {
   let next_order = Ref(0)
   self.build_semantics(render, focused, next_order, list_item=false)
@@ -83,7 +91,7 @@ fn ElementNode::build_semantics(
   }
   let state = {
     focused: focused == Some(self.id),
-    disabled: false,
+    disabled: self.is_semantics_disabled(),
     selected: false,
     checked: self.is_semantics_checked(),
     expanded: false,
@@ -131,23 +139,26 @@ fn ElementNode::semantics_info(
   match self.spec {
     TextSpec(data) =>
       {
-        role: if list_item { ListItem } else { Text },
+        role: if list_item {
+          ListItem
+        } else {
+          Text
+        },
         label: data.text,
         value: data.text,
         actions: [],
       }
     ButtonSpec(data) =>
-      {
-        role: Button,
-        label: data.text,
-        value: "",
-        actions: [Focus, Activate],
-      }
+      { role: Button, label: data.text, value: "", actions: [Focus, Activate] }
     CheckboxSpec(data) =>
       {
         role: Checkbox,
         label: data.label,
-        value: if data.checked.get() { "true" } else { "false" },
+        value: if data.checked.get() {
+          "true"
+        } else {
+          "false"
+        },
         actions: [Focus, Activate],
       }
     TextFieldSpec(data) =>
@@ -157,10 +168,8 @@ fn ElementNode::semantics_info(
         value: data.value.get(),
         actions: [Focus, SetText, Submit],
       }
-    ListSpec(_) =>
-      { role: List, label: "", value: "", actions: [] }
-    GridSpec(_) =>
-      { role: Grid, label: "", value: "", actions: [] }
+    ListSpec(_) => { role: List, label: "", value: "", actions: [] }
+    GridSpec(_) => { role: Grid, label: "", value: "", actions: [] }
     ScrollSpec(_) =>
       { role: ScrollView, label: "", value: "", actions: [Scroll] }
     ImageSpec(data) =>
@@ -178,8 +187,48 @@ fn ElementNode::semantics_info(
     | PaddingSpec(_)
     | ContainerSpec(_)
     | FrameSpec(_)
-    | StackSpec(_)
-    | ModifiedSpec(_) =>
+    | StackSpec(_) => { role: Group, label: "", value: "", actions: [] }
+    ModifiedSpec(data) => modified_semantics_info(data.modifier)
+  }
+}
+
+///|
+fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
+  match modifier {
+    AccessibilityLabelModifier(label) =>
+      { role: Group, label, value: label, actions: [] }
+    SemanticsRoleModifier(role) => { role, label: "", value: "", actions: [] }
+    FocusableModifier(focusable) =>
+      {
+        role: Group,
+        label: "",
+        value: "",
+        actions: if focusable {
+          [Focus]
+        } else {
+          []
+        },
+      }
+    OnTapModifier(_) | KeyboardShortcutModifier(_) =>
+      { role: Button, label: "", value: "", actions: [Focus, Activate] }
+    DisabledModifier(_)
+    | PaddingModifier(_)
+    | FrameModifier(_)
+    | BackgroundModifier(_)
+    | ForegroundModifier(_)
+    | FontModifier(_)
+    | CornerRadiusModifier(_)
+    | OpacityModifier(_)
+    | ShadowModifier(_)
+    | BorderModifier(_)
+    | OffsetModifier(_, _)
+    | ClipModifier
+    | ScaleModifier(_, _)
+    | FlexibleModifier(_)
+    | AlignModifier(_)
+    | AspectRatioModifier(_)
+    | IntrinsicWidthModifier
+    | IntrinsicHeightModifier =>
       { role: Group, label: "", value: "", actions: [] }
   }
 }
@@ -188,6 +237,20 @@ fn ElementNode::semantics_info(
 fn ElementNode::is_semantics_checked(self : ElementNode) -> Bool {
   match self.spec {
     CheckboxSpec(data) => data.checked.get()
+    ModifiedSpec(_) =>
+      if self.children.length() > 0 {
+        self.children[0].is_semantics_checked()
+      } else {
+        false
+      }
+    _ => false
+  }
+}
+
+///|
+fn ElementNode::is_semantics_disabled(self : ElementNode) -> Bool {
+  match self.spec {
+    ModifiedSpec(data) => data.modifier is DisabledModifier(true)
     _ => false
   }
 }

@@ -228,8 +228,15 @@ pub fn RuntimeState::dispatch_event(
       }
       self.rebuild_if_possible()
     }
-    Keyboard(event) =>
-      if event.pressed && event.key == "Tab" {
+    Keyboard(event) => {
+      let shortcut = self.element_tree.dispatch_keyboard_shortcut(event)
+      if shortcut.changed || shortcut.activated {
+        self.needs_redraw = self.needs_redraw || shortcut.changed
+        self.needs_rebuild = self.needs_rebuild || shortcut.activated
+        self.needs_paint = self.needs_paint || shortcut.changed
+        self.mark_dirty(self.element_tree.id)
+        self.rebuild_if_possible()
+      } else if event.pressed && event.key == "Tab" {
         self.ensure_render_tree()
         let previous_focus = self.focused_element
         self.focused_element = self.element_tree.next_focus(
@@ -254,6 +261,7 @@ pub fn RuntimeState::dispatch_event(
           None => ()
         }
       }
+    }
     TextInput(event) =>
       match self.focused_element {
         Some(target) => {
@@ -273,7 +281,10 @@ pub fn RuntimeState::dispatch_event(
 }
 
 ///|
-pub fn RuntimeState::advance_time(self : RuntimeState, time_ms : Double) -> Unit {
+pub fn RuntimeState::advance_time(
+  self : RuntimeState,
+  time_ms : Double,
+) -> Unit {
   self.dispatch_event(FrameTick(self.clock.frame(time_ms)))
 }
 

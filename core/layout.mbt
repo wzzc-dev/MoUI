@@ -260,7 +260,18 @@ fn modified_measured_size(
     | BorderModifier(_)
     | OffsetModifier(_, _)
     | ClipModifier
-    | ScaleModifier(_, _) => child_size
+    | ScaleModifier(_, _)
+    | DisabledModifier(_)
+    | AccessibilityLabelModifier(_)
+    | SemanticsRoleModifier(_)
+    | FocusableModifier(_)
+    | OnTapModifier(_)
+    | KeyboardShortcutModifier(_)
+    | FlexibleModifier(_)
+    | AlignModifier(_)
+    | IntrinsicWidthModifier
+    | IntrinsicHeightModifier => child_size
+    AspectRatioModifier(ratio) => aspect_ratio_size(child_size, ratio)
   }
 }
 
@@ -282,7 +293,18 @@ fn modified_child_constraints(
     | BorderModifier(_)
     | OffsetModifier(_, _)
     | ClipModifier
-    | ScaleModifier(_, _) => constraints.loosen()
+    | ScaleModifier(_, _)
+    | DisabledModifier(_)
+    | AccessibilityLabelModifier(_)
+    | SemanticsRoleModifier(_)
+    | FocusableModifier(_)
+    | OnTapModifier(_)
+    | KeyboardShortcutModifier(_)
+    | FlexibleModifier(_)
+    | AlignModifier(_)
+    | AspectRatioModifier(_)
+    | IntrinsicWidthModifier
+    | IntrinsicHeightModifier => constraints.loosen()
   }
 }
 
@@ -299,9 +321,44 @@ fn modified_child_frames(modifier : ViewModifier, frame : Rect) -> Array[Rect] {
     | ShadowModifier(_)
     | BorderModifier(_)
     | ClipModifier
-    | ScaleModifier(_, _) => [frame]
+    | ScaleModifier(_, _)
+    | DisabledModifier(_)
+    | AccessibilityLabelModifier(_)
+    | SemanticsRoleModifier(_)
+    | FocusableModifier(_)
+    | OnTapModifier(_)
+    | KeyboardShortcutModifier(_)
+    | FlexibleModifier(_)
+    | AlignModifier(_)
+    | IntrinsicWidthModifier
+    | IntrinsicHeightModifier => [frame]
     OffsetModifier(dx, dy) => [frame.offset(dx~, dy~)]
+    AspectRatioModifier(ratio) => [aspect_ratio_rect(frame, ratio)]
   }
+}
+
+///|
+fn aspect_ratio_size(size : Size, ratio : Double) -> Size {
+  if size.width > 0.0 {
+    Size::new(width=size.width, height=size.width / ratio)
+  } else if size.height > 0.0 {
+    Size::new(width=size.height * ratio, height=size.height)
+  } else {
+    size
+  }
+}
+
+///|
+fn aspect_ratio_rect(frame : Rect, ratio : Double) -> Rect {
+  let target = aspect_ratio_size(frame.size, ratio).clamp(
+    Constraints::loose(frame.size),
+  )
+  Rect::new(
+    x=frame.origin.x,
+    y=frame.origin.y,
+    width=target.width,
+    height=target.height,
+  )
 }
 
 ///|

@@ -94,6 +94,10 @@ pub(all) struct Theme {
 pub(all) struct Environment {
   theme : Theme
   color_scheme : ColorScheme
+  scale_factor : Double
+  text_scale : Double
+  locale : String
+  enabled : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -370,7 +374,14 @@ pub fn Theme::surface_brush(self : Theme, level : SurfaceLevel) -> Brush {
 ///|
 pub fn Environment::default() -> Environment {
   let theme = Theme::default()
-  { theme, color_scheme: theme.scheme }
+  {
+    theme,
+    color_scheme: theme.scheme,
+    scale_factor: 1.0,
+    text_scale: 1.0,
+    locale: "en-US",
+    enabled: true,
+  }
 }
 
 ///|
@@ -378,8 +389,7 @@ pub fn Environment::with_theme(
   self : Environment,
   theme : Theme,
 ) -> Environment {
-  ignore(self)
-  { theme, color_scheme: theme.scheme }
+  { ..self, theme, color_scheme: theme.scheme }
 }
 
 ///|
@@ -391,8 +401,39 @@ pub fn Environment::with_color_scheme(
     Light => Theme::light()
     Dark => Theme::dark()
   }
-  ignore(self)
-  { theme, color_scheme }
+  { ..self, theme, color_scheme }
+}
+
+///|
+pub fn Environment::with_scale_factor(
+  self : Environment,
+  scale_factor : Double,
+) -> Environment {
+  { ..self, scale_factor: max_double(0.1, scale_factor) }
+}
+
+///|
+pub fn Environment::with_text_scale(
+  self : Environment,
+  text_scale : Double,
+) -> Environment {
+  { ..self, text_scale: max_double(0.1, text_scale) }
+}
+
+///|
+pub fn Environment::with_locale(
+  self : Environment,
+  locale : String,
+) -> Environment {
+  { ..self, locale, }
+}
+
+///|
+pub fn Environment::with_enabled(
+  self : Environment,
+  enabled : Bool,
+) -> Environment {
+  { ..self, enabled, }
 }
 
 ///|
