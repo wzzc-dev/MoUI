@@ -46,3 +46,10 @@ pub fn custom_layout(
 ) -> @core.ViewSpec {
   @core.ViewSpec::custom(measure~, paint~, semantics_role~, semantics_label~)
 }
+
+///|
+pub fn component(
+  build : (@core.BuildContext) -> @core.ViewSpec,
+) -> @core.ViewSpec {
+  @core.ViewSpec::component(@core.Component::new(build))
+}

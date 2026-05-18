@@ -143,6 +143,8 @@ pub fn Brush::solid(Color) -> Self
 
 pub(all) struct BuildContext {
   runtime : RuntimeState
+  component_id : ElementId
+  subscriptions : Array[StateSubscription]
 }
 pub fn[T] BuildContext::binding(Self, State[T]) -> Binding[T]
 pub fn[T] BuildContext::watch(Self, State[T]) -> T
@@ -234,6 +236,11 @@ pub(all) struct Component {
   build : (BuildContext) -> ViewSpec
 }
 pub fn Component::new((BuildContext) -> ViewSpec) -> Self
+
+pub(all) struct ComponentViewSpec {
+  key : Key?
+  component : Component
+}
 
 pub(all) struct CompositionUpdate {
   text : String
@@ -347,6 +354,16 @@ pub(all) struct ElementNode {
   mut caret : Int
   mut selection : TextRange?
   mut composition : String?
+  mut component_child_spec : ViewSpec?
+  mut component_subscriptions : Array[StateSubscription]
+  mut cached_intrinsic_size : Size?
+  mut cached_measure_constraints : Constraints?
+  mut cached_measured : MeasuredNode?
+  mut cached_place_frame : Rect?
+  mut cached_placed : PlacedNode?
+  mut cached_render_frame : Rect?
+  mut cached_render_focused : ElementId?
+  mut cached_render : RenderNode?
 }
 pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_keyboard_shortcut(Self, KeyboardEvent) -> ElementEventResult
@@ -654,8 +671,6 @@ pub(all) struct RuntimeState {
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
-  mut component_root : Component?
-  mut subscriptions : Array[StateSubscription]
   mut redraw_callback : (() -> Unit)?
   clock : Clock
   mut animations : Array[AnimationController]
@@ -1056,6 +1071,7 @@ pub(all) enum ViewSpec {
   ListSpec(ListViewSpec)
   ModifiedSpec(ModifiedViewSpec)
   CustomSpec(CustomViewSpec)
+  ComponentSpec(ComponentViewSpec)
 }
 pub fn ViewSpec::accessibility_label(Self, String) -> Self
 pub fn ViewSpec::align(Self, alignment? : Alignment) -> Self
@@ -1064,6 +1080,7 @@ pub fn ViewSpec::background(Self, Color) -> Self
 pub fn ViewSpec::background_brush(Self, Brush) -> Self
 pub fn ViewSpec::border(Self, BorderStyle) -> Self
 pub fn ViewSpec::clip(Self) -> Self
+pub fn ViewSpec::component(Component) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self
 pub fn ViewSpec::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
 pub fn ViewSpec::custom(measure~ : (Constraints) -> Size, paint~ : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self

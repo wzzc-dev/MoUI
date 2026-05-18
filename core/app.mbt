@@ -11,8 +11,6 @@ pub(all) struct RuntimeState {
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
-  mut component_root : Component?
-  mut subscriptions : Array[StateSubscription]
   mut redraw_callback : (() -> Unit)?
   clock : Clock
   mut animations : Array[AnimationController]
@@ -21,6 +19,8 @@ pub(all) struct RuntimeState {
 ///|
 pub(all) struct BuildContext {
   runtime : RuntimeState
+  component_id : ElementId
+  subscriptions : Array[StateSubscription]
 }
 
 ///|
@@ -29,29 +29,36 @@ pub(all) struct Component {
 }
 
 ///|
+priv struct ComponentBuildResult {
+  child_spec : ViewSpec
+  subscriptions : Array[StateSubscription]
+}
+
+///|
 pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
-  let mounted = mount_view_spec_with_next(root, 1)
-  let render_tree = mounted.node.render(
-    Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
-  )
-  {
+  let initial = mount_view_spec_with_next(root, 1)
+  let state = {
     root_spec: root,
-    element_tree: mounted.node,
-    render_tree,
+    element_tree: initial.node,
+    render_tree: RenderNode::empty(),
     size,
     needs_redraw: true,
     needs_rebuild: false,
-    needs_layout: false,
-    needs_paint: false,
-    next_element_id: mounted.next_id,
+    needs_layout: true,
+    needs_paint: true,
+    next_element_id: initial.next_id,
     dirty_elements: [],
     focused_element: None,
-    component_root: None,
-    subscriptions: [],
     redraw_callback: None,
     clock: Clock::new(),
     animations: [],
   }
+  let mounted = mount_view_spec_for_runtime(root, Some(state), 1)
+  state.element_tree = mounted.node
+  state.next_element_id = mounted.next_id
+  state.mark_dirty(state.element_tree.id)
+  state.render_current_tree()
+  state
 }
 
 ///|
@@ -59,30 +66,29 @@ pub fn RuntimeState::new_component(
   root~ : Component,
   size~ : Size,
 ) -> RuntimeState {
-  let initial_spec = EmptySpec
-  let mounted = mount_view_spec_with_next(initial_spec, 1)
-  let render_tree = mounted.node.render(
-    Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
-  )
+  let root_spec = ViewSpec::component(root)
+  let mounted = mount_view_spec_for_runtime(root_spec, None, 1)
   let state = {
-    root_spec: initial_spec,
+    root_spec,
     element_tree: mounted.node,
-    render_tree,
+    render_tree: RenderNode::empty(),
     size,
     needs_redraw: true,
-    needs_rebuild: true,
-    needs_layout: false,
-    needs_paint: false,
+    needs_rebuild: false,
+    needs_layout: true,
+    needs_paint: true,
     next_element_id: mounted.next_id,
     dirty_elements: [],
     focused_element: None,
-    component_root: Some(root),
-    subscriptions: [],
     redraw_callback: None,
     clock: Clock::new(),
     animations: [],
   }
-  state.rebuild_if_possible()
+  let mounted = mount_view_spec_for_runtime(root_spec, Some(state), 1)
+  state.element_tree = mounted.node
+  state.next_element_id = mounted.next_id
+  state.mark_dirty(state.element_tree.id)
+  state.render_current_tree()
   state
 }
 
@@ -93,8 +99,11 @@ pub fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
 
 ///|
 pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
-  let subscription = state.subscribe(() => self.runtime.request_rebuild())
-  self.runtime.subscriptions.push(subscription)
+  let component_id = self.component_id
+  let subscription = state.subscribe(
+    () => self.runtime.request_component_rebuild(component_id),
+  )
+  self.subscriptions.push(subscription)
   state.get()
 }
 
@@ -103,8 +112,11 @@ pub fn[T] BuildContext::binding(
   self : BuildContext,
   state : State[T],
 ) -> Binding[T] {
-  let subscription = state.subscribe(() => self.runtime.request_rebuild())
-  self.runtime.subscriptions.push(subscription)
+  let component_id = self.component_id
+  let subscription = state.subscribe(
+    () => self.runtime.request_component_rebuild(component_id),
+  )
+  self.subscriptions.push(subscription)
   state.binding()
 }
 
@@ -113,8 +125,7 @@ pub fn RuntimeState::set_root_spec(
   self : RuntimeState,
   root : ViewSpec,
 ) -> Unit {
-  self.cancel_subscriptions()
-  self.component_root = None
+  self.element_tree.cancel_component_tree_subscriptions()
   self.root_spec = root
   self.rebuild()
   self.needs_redraw = true
@@ -122,9 +133,8 @@ pub fn RuntimeState::set_root_spec(
 
 ///|
 pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
-  self.cancel_subscriptions()
-  self.component_root = None
-  let mounted = mount_view_spec_with_next(root, 1)
+  self.element_tree.cancel_component_tree_subscriptions()
+  let mounted = mount_view_spec_for_runtime(root, Some(self), 1)
   self.root_spec = root
   self.element_tree = mounted.node
   self.next_element_id = mounted.next_id
@@ -139,9 +149,10 @@ pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
 
 ///|
 pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
-  let result = reconcile_element_with_next(
+  let result = reconcile_element_for_runtime(
     self.element_tree,
     self.root_spec,
+    Some(self),
     self.next_element_id,
   )
   self.element_tree = result.node
@@ -199,6 +210,7 @@ pub fn RuntimeState::dispatch_event(
       self.needs_redraw = true
       self.needs_layout = true
       self.needs_paint = true
+      self.element_tree.mark_subtree_layout_dirty()
       self.mark_dirty(self.element_tree.id)
     }
     Redraw(_) => {
@@ -226,6 +238,9 @@ pub fn RuntimeState::dispatch_event(
       if result.changed || result.activated {
         self.mark_dirty(self.element_tree.id)
       }
+      if result.activated {
+        self.request_activation_rebuild()
+      }
       self.rebuild_if_possible()
     }
     Keyboard(event) => {
@@ -235,6 +250,9 @@ pub fn RuntimeState::dispatch_event(
         self.needs_rebuild = self.needs_rebuild || shortcut.activated
         self.needs_paint = self.needs_paint || shortcut.changed
         self.mark_dirty(self.element_tree.id)
+        if shortcut.activated {
+          self.request_activation_rebuild()
+        }
         self.rebuild_if_possible()
       } else if event.pressed && event.key == "Tab" {
         self.ensure_render_tree()
@@ -256,6 +274,9 @@ pub fn RuntimeState::dispatch_event(
             if result.changed || result.activated {
               self.mark_dirty(self.element_tree.id)
             }
+            if result.activated {
+              self.request_activation_rebuild()
+            }
             self.rebuild_if_possible()
           }
           None => ()
@@ -271,6 +292,9 @@ pub fn RuntimeState::dispatch_event(
           self.needs_paint = self.needs_paint || result.changed
           if result.changed || result.activated {
             self.mark_dirty(self.element_tree.id)
+          }
+          if result.activated {
+            self.request_activation_rebuild()
           }
           self.rebuild_if_possible()
         }
@@ -314,25 +338,50 @@ pub fn RuntimeState::build_draw_commands(
 ///|
 pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
   if self.needs_rebuild {
-    match self.component_root {
-      Some(component) => {
-        self.cancel_subscriptions()
-        let context = BuildContext::{ runtime: self }
-        self.root_spec = (component.build)(context)
-        self.rebuild()
-        self.needs_redraw = true
-      }
-      None => ()
+    if self.element_tree.has_dirty_build() {
+      let result = self.element_tree.rebuild_dirty_components(
+        self,
+        self.next_element_id,
+      )
+      self.element_tree = result.node
+      self.next_element_id = result.next_id
+      self.needs_rebuild = self.element_tree.has_dirty_build()
+      self.needs_layout = self.needs_layout ||
+        self.element_tree.has_dirty_layout()
+      self.needs_paint = self.needs_paint || self.element_tree.has_dirty_paint()
+      self.needs_redraw = true
     }
   }
 }
 
 ///|
 pub fn RuntimeState::request_rebuild(self : RuntimeState) -> Unit {
+  self.request_component_rebuild(self.element_tree.id)
+  self.request_redraw()
+}
+
+///|
+fn RuntimeState::request_component_rebuild(
+  self : RuntimeState,
+  id : ElementId,
+) -> Unit {
+  ignore(self.element_tree.mark_build_dirty_by_id(id))
   self.needs_rebuild = true
   self.needs_layout = true
   self.needs_paint = true
-  self.mark_dirty(self.element_tree.id)
+  self.mark_dirty(id)
+  self.request_redraw()
+}
+
+///|
+fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
+  self.needs_rebuild = true
+  if !self.element_tree.has_dirty_build() &&
+    self.element_tree.mark_root_component_build_dirty() {
+    self.needs_layout = true
+    self.needs_paint = true
+    self.mark_dirty(self.element_tree.id)
+  }
   self.request_redraw()
 }
 
@@ -368,26 +417,20 @@ fn RuntimeState::request_redraw(self : RuntimeState) -> Unit {
 }
 
 ///|
-fn RuntimeState::cancel_subscriptions(self : RuntimeState) -> Unit {
-  for subscription in self.subscriptions {
-    subscription.cancel()
-  }
-  self.subscriptions.clear()
-}
-
-///|
 fn RuntimeState::ensure_render_tree(self : RuntimeState) -> Unit {
-  if self.needs_layout || self.needs_paint {
+  if self.needs_rebuild || self.needs_layout || self.needs_paint {
     self.render_current_tree()
   }
 }
 
 ///|
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
+  self.rebuild_if_possible()
   self.render_tree = self.element_tree.render_focused(
     Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
     focused=self.focused_element,
   )
+  self.needs_rebuild = false
   self.needs_layout = false
   self.needs_paint = false
   self.clear_dirty_queue()
@@ -398,6 +441,7 @@ pub fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
   if !self.dirty_elements.any(existing => existing == id) {
     self.dirty_elements.push(id)
   }
+  ignore(self.element_tree.mark_paint_dirty_by_id(id))
   self.needs_paint = true
   self.needs_redraw = true
 }
@@ -410,4 +454,23 @@ pub fn RuntimeState::dirty_count(self : RuntimeState) -> Int {
 ///|
 pub fn RuntimeState::clear_dirty_queue(self : RuntimeState) -> Unit {
   self.dirty_elements.clear()
+}
+
+///|
+fn build_component_spec(
+  component : Component,
+  runtime : RuntimeState,
+  component_id : ElementId,
+  old_subscriptions : Array[StateSubscription],
+) -> ComponentBuildResult {
+  for subscription in old_subscriptions {
+    subscription.cancel()
+  }
+  let subscriptions : Array[StateSubscription] = []
+  let context = BuildContext::{
+    runtime,
+    component_id,
+    subscriptions,
+  }
+  { child_spec: (component.build)(context), subscriptions }
 }

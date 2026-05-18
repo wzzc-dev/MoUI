@@ -270,6 +270,12 @@ pub(all) struct CustomViewSpec {
 }
 
 ///|
+pub(all) struct ComponentViewSpec {
+  key : Key?
+  component : Component
+}
+
+///|
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -288,6 +294,7 @@ pub(all) enum ViewSpec {
   ListSpec(ListViewSpec)
   ModifiedSpec(ModifiedViewSpec)
   CustomSpec(CustomViewSpec)
+  ComponentSpec(ComponentViewSpec)
 }
 
 ///|
@@ -406,6 +413,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     ListSpec(data) => data.key
     ModifiedSpec(data) => data.key
     CustomSpec(data) => data.key
+    ComponentSpec(data) => data.key
   }
 }
 
@@ -429,6 +437,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     ListSpec(data) => ListSpec({ ..data, key: Some(key) })
     ModifiedSpec(data) => ModifiedSpec({ ..data, key: Some(key) })
     CustomSpec(data) => CustomSpec({ ..data, key: Some(key) })
+    ComponentSpec(data) => ComponentSpec({ ..data, key: Some(key) })
   }
 }
 
@@ -452,6 +461,7 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     ListSpec(_) => 14
     ModifiedSpec(_) => 15
     CustomSpec(_) => 16
+    ComponentSpec(_) => 17
   }
 }
 
@@ -782,6 +792,11 @@ pub fn ViewSpec::custom(
   semantics_label? : String = "",
 ) -> ViewSpec {
   CustomSpec({ key: None, measure, paint, semantics_role, semantics_label })
+}
+
+///|
+pub fn ViewSpec::component(component : Component) -> ViewSpec {
+  ComponentSpec({ key: None, component })
 }
 
 ///|
