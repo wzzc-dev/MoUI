@@ -102,7 +102,7 @@ test "button paints background and text command" {
 }
 
 ///|
-test "button accepts visual v2 styles" {
+test "button accepts visual styles" {
   let style = @core.ButtonStyle::outline(theme=@core.Theme::light())
   let spec = @views.button("Outline", style~)
   guard spec is @core.ViewSpec::ButtonSpec({ corner_radius: 8.0, .. }) else {
@@ -324,7 +324,7 @@ test "text field constructs binding backed spec" {
 }
 
 ///|
-test "text field accepts visual v2 styles" {
+test "text field accepts visual styles" {
   let state = @core.State::new("")
   let style = @core.TextFieldStyle::outline(theme=@core.Theme::dark())
   let spec = @views.text_field(state.binding(), style~)

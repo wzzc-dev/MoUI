@@ -32,7 +32,7 @@ examples/todo/app/            shared todo app
 examples/todo/windows/        Windows native todo
 ```
 
-## V2 Spec API
+## Spec API
 
 MoUI uses a breaking, spec-only runtime. Public view constructors return
 `@core.ViewSpec` directly; the old `ViewNode` compatibility API has been
@@ -126,9 +126,9 @@ inside. `font`, `foreground`, and `corner_radius` flow through a render
 environment, while `padding`, `frame`, and `background` are interpreted by
 layout/paint.
 
-## Visual V2
+## Visual
 
-Visual V2 adds platform-neutral tokens and styles:
+platform-neutral tokens and styles:
 
 - `Theme::light()` and `Theme::dark()` expose color palettes, spacing, radius,
   and typography scales.
