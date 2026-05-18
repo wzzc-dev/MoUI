@@ -487,6 +487,7 @@ fn submit_host_calls(
             run.color.g,
             run.color.b,
             run.color.a,
+            text_align_host_code(run.align),
           ),
         )
       DrawImage(run) =>
@@ -865,7 +866,17 @@ fn host_draw_text(
   g : Double,
   b : Double,
   a : Double,
+  align : Int,
 ) -> Int = "webgpu" "draw_text"
+
+///|
+fn text_align_host_code(align : @core.TextAlign) -> Int {
+  match align {
+    @core.TextAlign::TextStart => 0
+    @core.TextAlign::TextCenter => 1
+    @core.TextAlign::TextEnd => 2
+  }
+}
 
 ///|
 fn host_draw_image(

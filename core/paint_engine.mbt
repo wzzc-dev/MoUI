@@ -39,12 +39,14 @@ fn ElementNode::render_with_environment(
     SpacerSpec(_) => ()
     TextSpec(data) =>
       commands.push(
-        DrawText({
-          text: data.text,
-          frame: bounds,
-          font: environment.font.unwrap_or(data.font),
-          color: environment.foreground.unwrap_or(data.color),
-        }),
+        DrawText(
+          TextRun::new(
+            text=data.text,
+            frame=bounds,
+            font=environment.font.unwrap_or(data.font),
+            color=environment.foreground.unwrap_or(data.color),
+          ),
+        ),
       )
     ButtonSpec(data) => {
       let background = match self.button_state {
@@ -76,12 +78,14 @@ fn ElementNode::render_with_environment(
           environment.foreground.unwrap_or(data.foreground)
       }
       commands.push(
-        DrawText({
-          text: data.text,
-          frame: bounds,
-          font: environment.font.unwrap_or(data.font),
-          color: foreground,
-        }),
+        DrawText(
+          TextRun::new(
+            text=data.text,
+            frame=bounds,
+            font=environment.font.unwrap_or(data.font),
+            color=foreground,
+          ),
+        ),
       )
     }
     TextFieldSpec(data) =>
@@ -565,28 +569,33 @@ fn append_checkbox_commands(
   if data.checked.get() {
     commands.push(FillRoundedRect(box, data.check_color))
     commands.push(
-      DrawText({
-        text: "✓",
-        frame: box_rect,
-        font: FontSpec::new(size=box_side * 0.78, weight=700),
-        color: Color::white(),
-      }),
+      DrawText(
+        TextRun::new(
+          text="✓",
+          frame=box_rect,
+          font=FontSpec::new(size=box_side * 0.78, weight=700),
+          color=Color::white(),
+        ),
+      ),
     )
   } else {
     commands.push(StrokeRoundedRect(box, data.check_color, 2.0))
   }
   commands.push(
-    DrawText({
-      text: data.label,
-      frame: Rect::new(
-        x=frame.origin.x + box_side + 8.0,
-        y=frame.origin.y,
-        width=max_double(0.0, frame.size.width - box_side - 8.0),
-        height=frame.size.height,
+    DrawText(
+      TextRun::new(
+        text=data.label,
+        frame=Rect::new(
+          x=frame.origin.x + box_side + 8.0,
+          y=frame.origin.y,
+          width=max_double(0.0, frame.size.width - box_side - 8.0),
+          height=frame.size.height,
+        ),
+        font=environment.font.unwrap_or(data.font),
+        color=environment.foreground.unwrap_or(data.foreground),
+        align=TextAlign::TextStart,
       ),
-      font: environment.font.unwrap_or(data.font),
-      color: environment.foreground.unwrap_or(data.foreground),
-    }),
+    ),
   )
 }
 
@@ -625,12 +634,15 @@ fn append_text_field_commands(
   }
   let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
   commands.push(
-    DrawText({
-      text: display,
-      frame: text_frame,
-      font: environment.font.unwrap_or(data.font),
-      color,
-    }),
+    DrawText(
+      TextRun::new(
+        text=display,
+        frame=text_frame,
+        font=environment.font.unwrap_or(data.font),
+        color~,
+        align=TextAlign::TextStart,
+      ),
+    ),
   )
   if focused {
     let font = environment.font.unwrap_or(data.font)

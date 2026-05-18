@@ -795,6 +795,12 @@ pub(all) struct TapGestureResult {
   activated : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum TextAlign {
+  TextStart
+  TextCenter
+  TextEnd
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct TextFieldStyle {
   normal : ControlStateStyle
   focused : ControlStateStyle
@@ -858,7 +864,9 @@ pub(all) struct TextRun {
   frame : Rect
   font : FontSpec
   color : Color
+  align : TextAlign
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextRun::new(text~ : String, frame~ : Rect, font~ : FontSpec, color~ : Color, align? : TextAlign) -> Self
 
 pub(all) struct TextStyle {
   font : FontSpec

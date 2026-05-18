@@ -72,6 +72,7 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
       font: @core.FontSpec::new(size=14.0),
       color: @core.Color::black(),
+      align: @core.TextAlign::TextCenter,
     }),
   ])
   renderer.dispose()
@@ -158,6 +159,7 @@ test "wgpu web command bridge preserves full draw command parity order" {
         frame: rect,
         font: @core.FontSpec::new(size=14.0),
         color: @core.Color::black(),
+        align: @core.TextAlign::TextStart,
       }),
       @core.DrawCommand::DrawImage({
         source: "logo.png",
@@ -183,7 +185,10 @@ test "wgpu web command bridge preserves full draw command parity order" {
   assert_true(calls[6] is WebGpuHostCall::FillRoundedRectBrush(_, _))
   assert_true(calls[7] is WebGpuHostCall::StrokeRoundedRectBrush(_, _, _))
   assert_true(calls[8] is WebGpuHostCall::DrawShadow(_))
-  assert_true(calls[9] is WebGpuHostCall::DrawText(_))
+  guard calls[9] is WebGpuHostCall::DrawText({ align, .. }) else {
+    fail("expected text call")
+  }
+  assert_true(align == @core.TextAlign::TextStart)
   assert_true(calls[10] is WebGpuHostCall::DrawImage(_))
   assert_true(calls[11] is WebGpuHostCall::PushClip(_))
   assert_true(calls[12] is WebGpuHostCall::PushTransform(_))

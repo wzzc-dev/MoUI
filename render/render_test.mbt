@@ -148,6 +148,7 @@ test "non-rect commands do not leak into native rect batches" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
       font: @core.FontSpec::new(size=14.0),
       color: @core.Color::black(),
+      align: @core.TextAlign::TextCenter,
     }),
     @core.DrawCommand::DrawImage({
       source: "logo.png",

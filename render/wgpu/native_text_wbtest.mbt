@@ -33,6 +33,7 @@ test "native renderer builds text vertices and atlas entries" {
         frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
         font: @core.FontSpec::new(size=16.0, weight=500),
         color: @core.Color::black(),
+        align: @core.TextAlign::TextCenter,
       }),
     ])
     inspect(renderer.text_vertices.length() > 0, content="true")
@@ -53,6 +54,7 @@ test "native renderer keeps text in draw item order" {
         frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
         font: @core.FontSpec::new(size=16.0, weight=500),
         color: @core.Color::black(),
+        align: @core.TextAlign::TextCenter,
       }),
       @core.DrawCommand::FillRect(
         @core.Rect::new(x=0.0, y=20.0, width=10.0, height=10.0),
@@ -63,12 +65,48 @@ test "native renderer keeps text in draw item order" {
         frame: @core.Rect::new(x=0.0, y=40.0, width=40.0, height=20.0),
         font: @core.FontSpec::new(size=16.0, weight=500),
         color: @core.Color::black(),
+        align: @core.TextAlign::TextCenter,
       }),
     ])
     inspect(renderer.draw_items.length(), content="3")
     assert_true(renderer.draw_items[0] is NativeDrawItem::NativeText(_, _))
     assert_true(renderer.draw_items[1] is NativeDrawItem::NativeVisual(_, _))
     assert_true(renderer.draw_items[2] is NativeDrawItem::NativeText(_, _))
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "native renderer applies text alignment" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let font = @core.FontSpec::new(size=16.0, weight=500)
+    let frame = @core.Rect::new(x=10.0, y=0.0, width=160.0, height=24.0)
+    let left = new_test_renderer_handle()
+    left.resize(@core.Size::new(width=320.0, height=120.0))
+    left.render([
+      @core.DrawCommand::DrawText({
+        text: "Align",
+        frame,
+        font,
+        color: @core.Color::black(),
+        align: @core.TextAlign::TextStart,
+      }),
+    ])
+    let centered = new_test_renderer_handle()
+    centered.resize(@core.Size::new(width=320.0, height=120.0))
+    centered.render([
+      @core.DrawCommand::DrawText({
+        text: "Align",
+        frame,
+        font,
+        color: @core.Color::black(),
+        align: @core.TextAlign::TextCenter,
+      }),
+    ])
+    assert_true(left.text_vertices.length() > 0)
+    assert_true(centered.text_vertices.length() > 0)
+    assert_true(centered.text_vertices[0].x > left.text_vertices[0].x)
   } else {
     inspect("skipped", content="skipped")
   }

@@ -14,11 +14,19 @@ pub(all) struct FontSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum TextAlign {
+  TextStart
+  TextCenter
+  TextEnd
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct TextRun {
   text : String
   frame : Rect
   font : FontSpec
   color : Color
+  align : TextAlign
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -134,6 +142,17 @@ pub fn FontSpec::new(
   weight? : Int = 400,
 ) -> FontSpec {
   { family, size, weight }
+}
+
+///|
+pub fn TextRun::new(
+  text~ : String,
+  frame~ : Rect,
+  font~ : FontSpec,
+  color~ : Color,
+  align? : TextAlign = TextAlign::TextCenter,
+) -> TextRun {
+  { text, frame, font, color, align }
 }
 
 ///|

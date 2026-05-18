@@ -345,7 +345,19 @@ export function createWebGpuImports(options = {}) {
     push(x1, y0, u1, v0);
   };
 
-  const pushTextRun = (renderer, text, x, y, width, height, family, size, weight, color) => {
+  const textAlignExtra = (align, width, total) => {
+    const extra = Math.max(0, Number(width) - total);
+    switch (Number(align) || 0) {
+      case 1:
+        return extra / 2;
+      case 2:
+        return extra;
+      default:
+        return 0;
+    }
+  };
+
+  const pushTextRun = (renderer, text, x, y, width, height, family, size, weight, color, align) => {
     const font = {
       family: family || "Segoe UI, system-ui, sans-serif",
       size: Math.max(1, Number(size) || 14),
@@ -361,7 +373,7 @@ export function createWebGpuImports(options = {}) {
       total += glyph.advance;
     }
     const startIndex = renderer.textVertices.length / TEXT_STRIDE_FLOATS;
-    let cursor = Number(x) + Math.max(0, (Number(width) - total) / 2);
+    let cursor = Number(x) + textAlignExtra(align, width, total);
     const baseline = Number(y) + Math.max(font.size, (Number(height) + font.size * 0.72) / 2);
     for (const glyph of glyphs) {
       pushTextQuad(renderer, cursor + glyph.offsetX, baseline + glyph.offsetY, glyph, color);
@@ -539,10 +551,10 @@ export function createWebGpuImports(options = {}) {
       pushVisualQuad(renderer, rect, Number(radius) + grow, 2, 0, blur, { x: rect.x, y: rect.y }, { x: rect.x + 1, y: rect.y }, { r, g, b, a }, { r, g, b, a });
       return ok();
     },
-    draw_text(rendererHandle, text, x, y, width, height, family, size, weight, r, g, b, a) {
+    draw_text(rendererHandle, text, x, y, width, height, family, size, weight, r, g, b, a, align) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
-      pushTextRun(renderer, stringValue(text), x, y, width, height, stringValue(family), size, weight, { r, g, b, a });
+      pushTextRun(renderer, stringValue(text), x, y, width, height, stringValue(family), size, weight, { r, g, b, a }, align);
       return ok();
     },
     draw_image() {

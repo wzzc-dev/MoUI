@@ -700,16 +700,50 @@ test "ime composition updates paint preview and commit into text field" {
     TextInput(CompositionUpdate(CompositionUpdate::new(text="ni", cursor=None))),
   )
   let preview = runtime.build_draw_commands()
-  guard preview[3] is DrawText({ text: "ni", .. }) else {
+  guard preview[3] is DrawText({ text: "ni", align: TextAlign::TextStart, .. }) else {
     fail("expected composition preview")
   }
   inspect(state.get(), content="")
   runtime.dispatch_event(TextInput(CompositionEnd("你")))
   inspect(state.get(), content="你")
   let committed = runtime.build_draw_commands()
-  guard committed[3] is DrawText({ text: "你", .. }) else {
+  guard committed[3] is DrawText({ text: "你", align: TextAlign::TextStart, .. }) else {
     fail("expected committed text")
   }
+}
+
+///|
+test "text field aligns rendered text with caret origin" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("abc")))
+  let commands = runtime.build_draw_commands()
+  guard commands[3] is DrawText({ frame: text_frame, align: TextAlign::TextStart, .. }) else {
+    fail("expected left-aligned text field text")
+  }
+  guard commands[4] is FillRect(cursor, _) else {
+    fail("expected focused text field cursor")
+  }
+  let layout = measure_text_layout(
+    TextLayoutInput::new(
+      text="abc",
+      font=FontSpec::new(size=16.0, weight=400),
+      max_width=text_frame.size.width,
+    ),
+  )
+  assert_true(text_frame.origin.x == 10.0)
+  assert_true(cursor.origin.x == text_frame.origin.x + layout.caret_positions[3])
 }
 
 ///|

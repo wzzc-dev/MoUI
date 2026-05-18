@@ -218,6 +218,20 @@ fn text_pixel_size(font : @core.FontSpec) -> Int {
 }
 
 ///|
+fn text_align_extra(
+  align : @core.TextAlign,
+  frame_width : Double,
+  text_width : Double,
+) -> Double {
+  let extra = (frame_width - text_width).max(0.0)
+  match align {
+    @core.TextAlign::TextStart => 0.0
+    @core.TextAlign::TextCenter => extra / 2.0
+    @core.TextAlign::TextEnd => extra
+  }
+}
+
+///|
 fn shape_text(
   face : NativeFontFace,
   text : String,
@@ -301,7 +315,7 @@ fn append_text_run_vertices(
         total_width = total_width + glyph.x_advance
       }
       let frame = run.frame
-      let start_extra = (frame.size.width - total_width).max(0.0) / 2.0
+      let start_extra = text_align_extra(run.align, frame.size.width, total_width)
       let mut cursor_x = frame.origin.x + start_extra
       let center_ascent = pixel_size.to_double() * 0.72
       let baseline_extra = (frame.size.height + center_ascent) / 2.0
