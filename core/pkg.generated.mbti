@@ -18,6 +18,8 @@ pub fn recognize_button_tap(ButtonState, Bool, PointerPhase) -> TapGestureResult
 
 pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 
+pub fn text_layout_codepoint_advance(FontSpec, UInt) -> Double
+
 // Errors
 
 // Types and methods
@@ -97,6 +99,7 @@ pub fn AppRuntime::animation_count(Self) -> Int
 pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dispatch_event(Self, AppEvent) -> Unit
 pub fn AppRuntime::draw_commands(Self) -> Array[DrawCommand]
+pub fn AppRuntime::focused_text_input(Self) -> TextInputState
 pub fn AppRuntime::layout_pass(Self) -> Unit
 pub fn AppRuntime::mount(Self, ViewSpec) -> Unit
 pub fn AppRuntime::needs_layout(Self) -> Bool
@@ -372,6 +375,7 @@ pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> Elem
 pub fn ElementNode::find_keyed(Self, String) -> ElementId?
 pub fn ElementNode::find_text_field_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
+pub fn ElementNode::focused_text_input(Self, ElementId, RenderNode) -> TextInputState?
 pub fn ElementNode::hit_test_path(Self, Point, RenderNode) -> HitTestResult
 pub fn ElementNode::intrinsic_size(Self) -> Size
 pub fn ElementNode::measure(Self, Constraints) -> MeasuredNode
@@ -682,6 +686,7 @@ pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
 pub fn RuntimeState::clear_dirty_queue(Self) -> Unit
 pub fn RuntimeState::dirty_count(Self) -> Int
 pub fn RuntimeState::dispatch_event(Self, AppEvent) -> Unit
+pub fn RuntimeState::focused_text_input(Self) -> TextInputState
 pub fn RuntimeState::layout(Self) -> LayoutResult
 pub fn RuntimeState::layout_pass(Self) -> Unit
 pub fn RuntimeState::mark_dirty(Self, ElementId) -> Unit
@@ -918,6 +923,18 @@ pub(all) enum TextInputEvent {
   DeleteRange(TextRange)
   DeleteSurrounding(Int, Int)
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextInputState {
+  focused : Bool
+  element_id : ElementId?
+  text : String
+  caret : Int
+  selection : TextRange?
+  composition : String?
+  frame : Rect
+  caret_rect : Rect
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextInputState::none() -> Self
 
 pub(all) struct TextLayoutInput {
   text : String

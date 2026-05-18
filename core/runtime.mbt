@@ -62,6 +62,11 @@ pub fn AppRuntime::semantics(self : AppRuntime) -> SemanticsNode {
 }
 
 ///|
+pub fn AppRuntime::focused_text_input(self : AppRuntime) -> TextInputState {
+  self.state.focused_text_input()
+}
+
+///|
 pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[DrawCommand] {
   self.state.build_draw_commands()
 }

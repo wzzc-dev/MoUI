@@ -91,7 +91,9 @@ fn mount_view_spec_for_runtime(
           component_child_spec = Some(built.child_spec)
           component_subscriptions = built.subscriptions
           let mounted = mount_view_spec_for_runtime(
-            built.child_spec, Some(runtime), next,
+            built.child_spec,
+            Some(runtime),
+            next,
           )
           children.push(mounted.node)
           next = mounted.next_id
@@ -357,7 +359,9 @@ fn ElementNode::rebuild_dirty_components(
           )
         } else {
           let mounted = mount_view_spec_for_runtime(
-            built.child_spec, Some(runtime), next,
+            built.child_spec,
+            Some(runtime),
+            next,
           )
           { node: mounted.node, next_id: mounted.next_id }
         }
@@ -408,7 +412,10 @@ fn ElementNode::has_dirty_paint(self : ElementNode) -> Bool {
 }
 
 ///|
-fn ElementNode::mark_build_dirty_by_id(self : ElementNode, id : ElementId) -> Bool {
+fn ElementNode::mark_build_dirty_by_id(
+  self : ElementNode,
+  id : ElementId,
+) -> Bool {
   if self.id == id {
     self.dirty.mark_build()
     self.clear_cached_layout_and_paint()
@@ -427,7 +434,10 @@ fn ElementNode::mark_build_dirty_by_id(self : ElementNode, id : ElementId) -> Bo
 }
 
 ///|
-fn ElementNode::mark_paint_dirty_by_id(self : ElementNode, id : ElementId) -> Bool {
+fn ElementNode::mark_paint_dirty_by_id(
+  self : ElementNode,
+  id : ElementId,
+) -> Bool {
   if self.id == id {
     self.dirty.mark_paint()
     self.cached_render_frame = None

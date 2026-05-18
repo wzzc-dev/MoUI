@@ -374,9 +374,7 @@ pub fn HostEvent::to_core(self : HostEvent) -> @core.AppEvent? {
     Keyboard(event) => Some(@core.AppEvent::Keyboard(event))
     TextInputEvent(event) => Some(@core.AppEvent::TextInput(event))
     TextInput(text) =>
-      Some(
-        @core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text)),
-      )
+      Some(@core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text)))
     RedrawRequested =>
       Some(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
     CloseRequested => Some(@core.AppEvent::CloseRequested)

@@ -14,6 +14,7 @@ struct WebApp {
   mut window : @window_web.Window?
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
+  text_input_session : @host.TextInputSession
   mut renderer : WebRenderer?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
@@ -58,6 +59,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
     window: None,
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+    text_input_session: @host.TextInputSession::new(),
     renderer: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
@@ -169,10 +171,7 @@ pub impl @window_web.ApplicationHandler for WebApp with new_events(
   _cause,
 ) {
   match self.renderer {
-    Some(_) =>
-      if self.runtime.needs_redraw() {
-        self.redraw()
-      }
+    Some(_) => if self.runtime.needs_redraw() { self.redraw() }
     None => ()
   }
 }
@@ -223,9 +222,7 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
     }
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
       self.modifiers = @common.modifiers_to_core(modifiers)
-    @window_core.WindowEvent::RedrawRequested => {
-      self.redraw()
-    }
+    @window_core.WindowEvent::RedrawRequested => self.redraw()
     _ => self.dispatch_window_event(event)
   }
 }
@@ -243,6 +240,7 @@ fn WebApp::redraw(self : WebApp) -> Unit {
     None => ()
   }
   self.driver.finish_redraw()
+  self.sync_text_input_session()
 }
 
 ///|
@@ -263,7 +261,25 @@ fn WebApp::dispatch_window_event(
         _ => ()
       }
       ignore(self.driver.dispatch(host_event))
+      self.sync_text_input_session()
     }
+    None => ()
+  }
+}
+
+///|
+fn WebApp::sync_text_input_session(self : WebApp) -> Unit {
+  match self.window {
+    Some(window) =>
+      match self.text_input_session.sync(self.runtime.focused_text_input()) {
+        @host.TextInputSessionAction::EnableIme(request)
+        | @host.TextInputSessionAction::UpdateIme(request)
+        | @host.TextInputSessionAction::DisableIme(request) =>
+          window.request_ime_update(request) catch {
+            _ => ()
+          }
+        @host.TextInputSessionAction::NoImeChange => ()
+      }
     None => ()
   }
 }

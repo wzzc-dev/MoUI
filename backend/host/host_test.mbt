@@ -207,6 +207,102 @@ test "host driver dispatches ime composition text input events" {
 }
 
 ///|
+test "text input session enables updates and disables ime requests" {
+  let text = @core.State::new("ab")
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::FlexSpec({
+      key: None,
+      axis: @core.Axis::Vertical,
+      spacing: 4.0,
+      main_axis_alignment: @core.MainAxisAlignment::MainStart,
+      cross_axis_alignment: @core.CrossAxisAlignment::CrossStart,
+      children: [
+        @core.ViewSpec::TextFieldSpec({
+          key: None,
+          value: text.binding(),
+          placeholder: "Type",
+          size: @core.Size::new(width=120.0, height=40.0),
+          font: @core.FontSpec::new(size=16.0, weight=400),
+          foreground: @core.Color::black(),
+          placeholder_color: @core.Color::gray(),
+          background: @core.Brush::solid(@core.Color::white()),
+          border: None,
+          focused_border: None,
+          cursor_color: @core.Color::blue(),
+          corner_radius: 0.0,
+          on_submit: None,
+        }),
+      ],
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let session = TextInputSession::new()
+  match session.sync(runtime.focused_text_input()) {
+    NoImeChange => ()
+    _ => fail("unfocused runtime should not change ime")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  match session.sync(runtime.focused_text_input()) {
+    EnableIme(@window_core.ImeRequest::Enable(_)) => ()
+    _ => fail("focused text field should enable ime")
+  }
+  match session.sync(runtime.focused_text_input()) {
+    UpdateIme(@window_core.ImeRequest::Update(data)) => {
+      match data.cursor_area() {
+        Some((_, size)) => assert_true(size.to_logical(1.0).height() > 0.0)
+        None => fail("expected cursor area")
+      }
+      match data.surrounding_text() {
+        Some(surrounding) => inspect(surrounding.text(), content="ab")
+        None => fail("expected surrounding text")
+      }
+    }
+    _ => fail("focused text field should update active ime")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=230.0, y=55.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  match session.sync(runtime.focused_text_input()) {
+    DisableIme(@window_core.ImeRequest::Disable) => ()
+    _ => fail("blur should disable ime")
+  }
+}
+
+///|
+test "text input session enables ime when surrounding text is too long" {
+  let session = TextInputSession::new()
+  let state = @core.TextInputState::{
+    focused: true,
+    element_id: None,
+    text: "a".repeat(@window_core.ImeSurroundingText::max_text_bytes() + 1),
+    caret: 0,
+    selection: None,
+    composition: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
+  }
+  match session.sync(state) {
+    EnableIme(@window_core.ImeRequest::Enable(request)) => {
+      assert_true(!request.capabilities().surrounding_text())
+      assert_true(!request.request_data().has_surrounding_text())
+    }
+    _ => fail("focused text field should still enable ime")
+  }
+}
+
+///|
 test "host event converts to current core event model" {
   let event = HostEvent::TextInput("x").to_core()
   match event {

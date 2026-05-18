@@ -95,7 +95,39 @@ fn text_with_composition(
 }
 
 ///|
+fn text_field_visual_caret(
+  text : String,
+  element : ElementNode,
+  focused : Bool,
+) -> Int {
+  let caret = clamp_int(element.caret, 0, text_length(text))
+  if !focused {
+    caret
+  } else {
+    match element.composition {
+      Some(composition) =>
+        caret + composition_cursor_offset(element, composition)
+      None => caret
+    }
+  }
+}
+
+///|
+fn composition_cursor_offset(
+  element : ElementNode,
+  composition : String,
+) -> Int {
+  let length = text_length(composition)
+  match element.selection {
+    Some(cursor) => {
+      let normalized = cursor.normalized()
+      clamp_int(normalized.end, 0, length)
+    }
+    None => length
+  }
+}
+
+///|
 fn text_length(text : String) -> Int {
   text.to_array().length()
 }
-

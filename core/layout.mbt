@@ -261,12 +261,7 @@ fn ElementNode::child_frames_for_place(
       )
     ListSpec(data) => list_child_frames(data.spacing, self.children, frame)
     ModifiedSpec(data) => modified_child_frames(data.modifier, frame)
-    ComponentSpec(_) =>
-      if self.children.length() > 0 {
-        [frame]
-      } else {
-        []
-      }
+    ComponentSpec(_) => if self.children.length() > 0 { [frame] } else { [] }
     _ => []
   }
 }

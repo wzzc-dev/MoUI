@@ -16,6 +16,7 @@ pub(all) struct StateSubscription {
   listener : StateListener
 }
 
+///|
 pub fn[T] StateSlot::new(value : T) -> StateSlot[T] {
   { value, version: 0, listeners: [] }
 }
@@ -79,4 +80,3 @@ pub fn StateSubscription::cancel(self : StateSubscription) -> Unit {
 pub fn StateSubscription::is_active(self : StateSubscription) -> Bool {
   self.listener.active
 }
-

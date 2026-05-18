@@ -3,10 +3,10 @@ package "wzzc-dev/moui/backend/host"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/core",
 }
 
 // Values
+pub fn text_input_ime_request_data(@wzzc-dev/moui/core.TextInputState) -> @Milky2018/window/core.ImeRequestData
 
 // Errors
 
@@ -28,15 +28,15 @@ pub(all) enum HostBackendKind {
 
 pub(all) enum HostEvent {
   Resized(HostSurfaceMetrics)
-  PointerMoved(@core.Point)
-  PointerButton(@core.Point, @core.PointerPhase, Int)
-  Keyboard(@core.KeyboardEvent)
-  TextInputEvent(@core.TextInputEvent)
+  PointerMoved(@wzzc-dev/moui/core.Point)
+  PointerButton(@wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.PointerPhase, Int)
+  Keyboard(@wzzc-dev/moui/core.KeyboardEvent)
+  TextInputEvent(@wzzc-dev/moui/core.TextInputEvent)
   TextInput(String)
   RedrawRequested
   CloseRequested
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostEvent::to_core(Self) -> @core.AppEvent?
+pub fn HostEvent::to_core(Self) -> @wzzc-dev/moui/core.AppEvent?
 
 pub(all) struct HostEventResult {
   needs_rebuild : Bool
@@ -46,32 +46,32 @@ pub(all) struct HostEventResult {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct HostRuntimeDriver {
-  runtime : @core.AppRuntime
+  runtime : @wzzc-dev/moui/core.AppRuntime
   scheduler : RedrawScheduler
   mut close_requested : Bool
 }
 pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
-pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@core.DrawCommand]
+pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
 pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
-pub fn HostRuntimeDriver::new(runtime~ : @core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostRuntimeDriver::new(runtime~ : @wzzc-dev/moui/core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
 pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit
-pub fn HostRuntimeDriver::size(Self) -> @core.Size
+pub fn HostRuntimeDriver::size(Self) -> @wzzc-dev/moui/core.Size
 
 pub(all) struct HostSurfaceMetrics {
-  logical_size : @core.Size
-  physical_size : @core.Size
+  logical_size : @wzzc-dev/moui/core.Size
+  physical_size : @wzzc-dev/moui/core.Size
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostSurfaceMetrics::from_logical(size~ : @core.Size, scale_factor? : Double) -> Self
-pub fn HostSurfaceMetrics::new(logical_size~ : @core.Size, physical_size~ : @core.Size, scale_factor? : Double) -> Self
+pub fn HostSurfaceMetrics::from_logical(size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
+pub fn HostSurfaceMetrics::new(logical_size~ : @wzzc-dev/moui/core.Size, physical_size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
 
 pub(all) struct InputHostState {
   mut focused : Bool
-  mut modifiers : @core.KeyModifiers
+  mut modifiers : @wzzc-dev/moui/core.KeyModifiers
   text_input_supported : Bool
   ime_supported : Bool
   clipboard_supported : Bool
@@ -79,8 +79,8 @@ pub(all) struct InputHostState {
 pub fn InputHostState::blur(Self) -> Unit
 pub fn InputHostState::focus(Self) -> Unit
 pub fn InputHostState::keyboard_event(Self, key~ : String, text? : String?, pressed? : Bool, repeat? : Bool) -> HostEvent
-pub fn InputHostState::new(focused? : Bool, modifiers? : @core.KeyModifiers, text_input_supported? : Bool, ime_supported? : Bool, clipboard_supported? : Bool) -> Self
-pub fn InputHostState::set_modifiers(Self, @core.KeyModifiers) -> Unit
+pub fn InputHostState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, text_input_supported? : Bool, ime_supported? : Bool, clipboard_supported? : Bool) -> Self
+pub fn InputHostState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
 pub fn InputHostState::text_input_event(Self, String) -> HostEvent?
 
 pub(all) struct RedrawScheduler {
@@ -98,9 +98,22 @@ pub(all) struct SurfaceHostState {
   owns_surface : Bool
   can_reconfigure : Bool
 }
-pub fn SurfaceHostState::logical_size(Self) -> @core.Size
+pub fn SurfaceHostState::logical_size(Self) -> @wzzc-dev/moui/core.Size
 pub fn SurfaceHostState::new(metrics~ : HostSurfaceMetrics, owns_surface? : Bool, can_reconfigure? : Bool) -> Self
 pub fn SurfaceHostState::resize(Self, HostSurfaceMetrics) -> HostEvent
+
+pub(all) struct TextInputSession {
+  mut enabled : Bool
+}
+pub fn TextInputSession::new() -> Self
+pub fn TextInputSession::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
+
+pub(all) enum TextInputSessionAction {
+  NoImeChange
+  EnableIme(@Milky2018/window/core.ImeRequest)
+  UpdateIme(@Milky2018/window/core.ImeRequest)
+  DisableIme(@Milky2018/window/core.ImeRequest)
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

@@ -295,6 +295,22 @@ test "text layout measures size baseline and caret positions" {
 }
 
 ///|
+test "text layout uses fullwidth advance for cjk caret positions" {
+  let ascii = measure_text_layout(
+    TextLayoutInput::new(text="a", font=FontSpec::new(size=20.0)),
+  )
+  let digit = measure_text_layout(
+    TextLayoutInput::new(text="1234", font=FontSpec::new(size=20.0)),
+  )
+  let cjk = measure_text_layout(
+    TextLayoutInput::new(text="你", font=FontSpec::new(size=20.0)),
+  )
+  inspect(ascii.caret_positions[1], content="11")
+  inspect(digit.caret_positions[4], content="46.4")
+  inspect(cjk.caret_positions[1], content="20")
+}
+
+///|
 test "checkbox toggles binding and exposes semantics" {
   let checked = State::new(false)
   let runtime = RuntimeState::new_spec(
@@ -707,7 +723,8 @@ test "ime composition updates paint preview and commit into text field" {
   runtime.dispatch_event(TextInput(CompositionEnd("你")))
   inspect(state.get(), content="你")
   let committed = runtime.build_draw_commands()
-  guard committed[3] is DrawText({ text: "你", align: TextAlign::TextStart, .. }) else {
+  guard committed[3]
+    is DrawText({ text: "你", align: TextAlign::TextStart, .. }) else {
     fail("expected committed text")
   }
 }
@@ -729,7 +746,8 @@ test "text field aligns rendered text with caret origin" {
   )
   runtime.dispatch_event(TextInput(InsertText("abc")))
   let commands = runtime.build_draw_commands()
-  guard commands[3] is DrawText({ frame: text_frame, align: TextAlign::TextStart, .. }) else {
+  guard commands[3]
+    is DrawText({ frame: text_frame, align: TextAlign::TextStart, .. }) else {
     fail("expected left-aligned text field text")
   }
   guard commands[4] is FillRect(cursor, _) else {
@@ -743,7 +761,108 @@ test "text field aligns rendered text with caret origin" {
     ),
   )
   assert_true(text_frame.origin.x == 10.0)
-  assert_true(cursor.origin.x == text_frame.origin.x + layout.caret_positions[3])
+  assert_true(
+    cursor.origin.x == text_frame.origin.x + layout.caret_positions[3],
+  )
+}
+
+///|
+test "text field caret follows ime composition cursor" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(CompositionStart))
+  runtime.dispatch_event(
+    TextInput(
+      CompositionUpdate(
+        CompositionUpdate::new(
+          text="ni",
+          cursor=Some(TextRange::new(start=1, end=1)),
+        ),
+      ),
+    ),
+  )
+  let commands = runtime.build_draw_commands()
+  guard commands[4] is FillRect(cursor, _) else {
+    fail("expected focused text field cursor")
+  }
+  let layout = measure_text_layout(
+    TextLayoutInput::new(
+      text="ni",
+      font=FontSpec::new(size=16.0, weight=400),
+      max_width=140.0,
+    ),
+  )
+  inspect(cursor.origin.x, content="18.8")
+  assert_true(cursor.origin.x == 10.0 + layout.caret_positions[1])
+}
+
+///|
+test "runtime exposes focused text input state for hosts" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  inspect(runtime.focused_text_input().focused, content="false")
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("abc")))
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="ArrowLeft")))
+  let input = runtime.focused_text_input()
+  inspect(input.focused, content="true")
+  inspect(input.text, content="abc")
+  inspect(input.caret, content="2")
+  assert_true(input.frame == Rect::new(x=0.0, y=0.0, width=160.0, height=60.0))
+  assert_true(input.caret_rect.origin.x > input.frame.origin.x)
+  assert_true(input.caret_rect.origin.y > input.frame.origin.y)
+}
+
+///|
+test "focused text input caret rect follows ime composition cursor" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(CompositionStart))
+  runtime.dispatch_event(
+    TextInput(
+      CompositionUpdate(
+        CompositionUpdate::new(
+          text="你",
+          cursor=Some(TextRange::new(start=1, end=1)),
+        ),
+      ),
+    ),
+  )
+  let input = runtime.focused_text_input()
+  inspect(input.caret, content="0")
+  inspect(input.caret_rect.origin.x, content="26")
 }
 
 ///|

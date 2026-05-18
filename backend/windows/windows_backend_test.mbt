@@ -158,9 +158,8 @@ test "windows backend converts ime commit into core composition end" {
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(
-      @core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))
-    ) => inspect(text, content="x")
+    Some(@core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
+      inspect(text, content="x")
     _ => fail("expected composition end")
   }
 }

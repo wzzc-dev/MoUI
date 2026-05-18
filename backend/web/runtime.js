@@ -292,7 +292,7 @@ export function createWebGpuImports(options = {}) {
       height,
       offsetX: -(left + 2),
       offsetY: -(ascent + 2),
-      advance: Math.max(metrics.width, width - 4),
+      advance: textLayoutAdvance(char, font.size),
     };
     renderer.glyphs.set(key, glyph);
     return glyph;
@@ -355,6 +355,56 @@ export function createWebGpuImports(options = {}) {
       default:
         return 0;
     }
+  };
+
+  const inRange = (value, start, end) => value >= start && value <= end;
+
+  const isZeroWidthTextCodepoint = codepoint =>
+    inRange(codepoint, 0x0300, 0x036f) ||
+    inRange(codepoint, 0x1ab0, 0x1aff) ||
+    inRange(codepoint, 0x1dc0, 0x1dff) ||
+    inRange(codepoint, 0x20d0, 0x20ff) ||
+    inRange(codepoint, 0xfe20, 0xfe2f);
+
+  const isFullwidthTextCodepoint = codepoint =>
+    inRange(codepoint, 0x1100, 0x115f) ||
+    inRange(codepoint, 0x2329, 0x232a) ||
+    inRange(codepoint, 0x2e80, 0xa4cf) ||
+    inRange(codepoint, 0xac00, 0xd7a3) ||
+    inRange(codepoint, 0xf900, 0xfaff) ||
+    inRange(codepoint, 0xfe10, 0xfe19) ||
+    inRange(codepoint, 0xfe30, 0xfe6f) ||
+    inRange(codepoint, 0xff00, 0xff60) ||
+    inRange(codepoint, 0xffe0, 0xffe6);
+
+  const textLayoutAdvance = (char, fontSize) => {
+    const codepoint = char.codePointAt(0) || 0;
+    if (isZeroWidthTextCodepoint(codepoint)) return 0;
+    if (isFullwidthTextCodepoint(codepoint)) return fontSize;
+    if (inRange(codepoint, 0x30, 0x39)) return fontSize * 0.58;
+    if (codepoint === 0x20) return fontSize * 0.33;
+    if (codepoint === 0x49) return fontSize * 0.34;
+    if (codepoint === 0x4d || codepoint === 0x57) return fontSize * 0.9;
+    if (inRange(codepoint, 0x41, 0x5a)) return fontSize * 0.67;
+    if (codepoint === 0x69 || codepoint === 0x6a || codepoint === 0x6c) return fontSize * 0.3;
+    if (codepoint === 0x66 || codepoint === 0x72 || codepoint === 0x74) return fontSize * 0.4;
+    if (codepoint === 0x6d || codepoint === 0x77) return fontSize * 0.82;
+    if (inRange(codepoint, 0x61, 0x7a)) return fontSize * 0.55;
+    if (
+      codepoint === 0x21 ||
+      codepoint === 0x2c ||
+      codepoint === 0x2e ||
+      codepoint === 0x3a ||
+      codepoint === 0x3b ||
+      codepoint === 0x7c
+    ) return fontSize * 0.3;
+    if (
+      inRange(codepoint, 0x21, 0x2f) ||
+      inRange(codepoint, 0x3a, 0x40) ||
+      inRange(codepoint, 0x5b, 0x60) ||
+      inRange(codepoint, 0x7b, 0x7e)
+    ) return fontSize * 0.4;
+    return fontSize * 0.6;
   };
 
   const pushTextRun = (renderer, text, x, y, width, height, family, size, weight, color, align) => {

@@ -100,9 +100,9 @@ pub fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
 ///|
 pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
   let component_id = self.component_id
-  let subscription = state.subscribe(
-    () => self.runtime.request_component_rebuild(component_id),
-  )
+  let subscription = state.subscribe(() => {
+    self.runtime.request_component_rebuild(component_id)
+  })
   self.subscriptions.push(subscription)
   state.get()
 }
@@ -113,9 +113,9 @@ pub fn[T] BuildContext::binding(
   state : State[T],
 ) -> Binding[T] {
   let component_id = self.component_id
-  let subscription = state.subscribe(
-    () => self.runtime.request_component_rebuild(component_id),
-  )
+  let subscription = state.subscribe(() => {
+    self.runtime.request_component_rebuild(component_id)
+  })
   self.subscriptions.push(subscription)
   state.binding()
 }
@@ -325,6 +325,19 @@ pub fn RuntimeState::semantics(self : RuntimeState) -> SemanticsNode {
 }
 
 ///|
+pub fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
+  self.ensure_render_tree()
+  match self.focused_element {
+    Some(target) =>
+      match self.element_tree.focused_text_input(target, self.render_tree) {
+        Some(state) => state
+        None => TextInputState::none()
+      }
+    None => TextInputState::none()
+  }
+}
+
+///|
 pub fn RuntimeState::build_draw_commands(
   self : RuntimeState,
 ) -> Array[DrawCommand] {
@@ -467,10 +480,6 @@ fn build_component_spec(
     subscription.cancel()
   }
   let subscriptions : Array[StateSubscription] = []
-  let context = BuildContext::{
-    runtime,
-    component_id,
-    subscriptions,
-  }
+  let context = BuildContext::{ runtime, component_id, subscriptions }
   { child_spec: (component.build)(context), subscriptions }
 }

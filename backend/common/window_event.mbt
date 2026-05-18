@@ -204,7 +204,9 @@ pub fn window_event_to_host_with_modifiers(
       )
     @window_core.WindowEvent::Ime(@window_core.Ime::Disabled) =>
       Some(
-        @host.HostEvent::TextInputEvent(@core.TextInputEvent::CompositionEnd("")),
+        @host.HostEvent::TextInputEvent(
+          @core.TextInputEvent::CompositionEnd(""),
+        ),
       )
     @window_core.WindowEvent::Focused(focused) =>
       if blur_to_cancel && !focused {
