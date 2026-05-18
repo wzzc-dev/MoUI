@@ -4,7 +4,7 @@ priv struct RenderEnvironment {
   foreground : Color?
   corner_radius : Double?
   enabled : Bool
-}
+} derive(Eq)
 
 ///|
 fn RenderEnvironment::default() -> RenderEnvironment {
@@ -32,6 +32,16 @@ fn ElementNode::render_with_environment(
   focused : ElementId?,
   environment : RenderEnvironment,
 ) -> RenderNode {
+  if environment == RenderEnvironment::default() &&
+    !self.dirty.needs_paint &&
+    !self.dirty.needs_layout &&
+    self.cached_render_frame == Some(bounds) &&
+    self.cached_render_focused == focused {
+    match self.cached_render {
+      Some(render) => return render
+      None => ()
+    }
+  }
   let children : Array[RenderNode] = []
   let commands : Array[DrawCommand] = []
   let post_commands : Array[DrawCommand] = []
@@ -278,9 +288,15 @@ fn ElementNode::render_with_environment(
       for command in (data.paint)(bounds) {
         commands.push(command)
       }
+    ComponentSpec(_) =>
+      if self.children.length() > 0 {
+        children.push(
+          self.children[0].render_with_environment(bounds, focused, environment),
+        )
+      }
   }
   self.dirty.clear()
-  {
+  let render = {
     element_id: self.id,
     frame: bounds,
     children,
@@ -288,6 +304,12 @@ fn ElementNode::render_with_environment(
     paint_commands: commands,
     post_paint_commands: post_commands,
   }
+  if environment == RenderEnvironment::default() {
+    self.cached_render_frame = Some(bounds)
+    self.cached_render_focused = focused
+    self.cached_render = Some(render)
+  }
+  render
 }
 
 ///|
@@ -537,7 +559,13 @@ fn aligned_rect(
 
 ///|
 pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
-  match self.spec {
+  if !self.dirty.needs_layout {
+    match self.cached_intrinsic_size {
+      Some(size) => return size
+      None => ()
+    }
+  }
+  let size = match self.spec {
     EmptySpec => Size::new(width=0.0, height=0.0)
     TextSpec(data) => data.size
     ButtonSpec(data) => data.size
@@ -596,7 +624,15 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     ListSpec(data) => measure_list_size(data.spacing, self.children)
     ModifiedSpec(data) => modified_intrinsic_size(data.modifier, self.children)
     CustomSpec(data) => (data.measure)(Constraints::unbounded())
+    ComponentSpec(_) =>
+      if self.children.length() > 0 {
+        self.children[0].intrinsic_size()
+      } else {
+        Size::new(width=0.0, height=0.0)
+      }
   }
+  self.cached_intrinsic_size = Some(size)
+  size
 }
 
 ///|
@@ -613,6 +649,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
       data.modifier is OnTapModifier(_) ||
       data.modifier is FocusableModifier(true)
     CustomSpec(_) => true
+    ComponentSpec(_) => false
     _ => false
   }
 }

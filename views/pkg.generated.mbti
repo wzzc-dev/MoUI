@@ -16,6 +16,8 @@ pub fn checkbox(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, 
 
 pub fn column(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
+pub fn component((@core.BuildContext) -> @core.ViewSpec) -> @core.ViewSpec
+
 pub fn custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.ViewSpec
 
 pub fn dark_theme() -> @core.Theme

@@ -28,7 +28,8 @@ pub fn ElementNode::dispatch_pointer(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_) => self.dispatch_pointer_to_children(event, render)
+    | ListSpec(_)
+    | ComponentSpec(_) => self.dispatch_pointer_to_children(event, render)
     ModifiedSpec(data) => self.dispatch_modified_pointer(data, event, render)
     EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
       { changed: false, activated: false, focused: None }
@@ -221,7 +222,8 @@ pub fn ElementNode::find_text_field_at(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_) => {
+    | ListSpec(_)
+    | ComponentSpec(_) => {
       let mut index = self.children.length() - 1
       while index >= 0 {
         if index < render.children.length() &&
@@ -288,7 +290,8 @@ pub fn ElementNode::focusable_ids(
     | StackSpec(_)
     | ScrollSpec(_)
     | GridSpec(_)
-    | ListSpec(_) =>
+    | ListSpec(_)
+    | ComponentSpec(_) =>
       for child in self.children {
         child.focusable_ids(ids)
       }

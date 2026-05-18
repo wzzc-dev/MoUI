@@ -187,7 +187,8 @@ fn ElementNode::semantics_info(
     | PaddingSpec(_)
     | ContainerSpec(_)
     | FrameSpec(_)
-    | StackSpec(_) => { role: Group, label: "", value: "", actions: [] }
+    | StackSpec(_)
+    | ComponentSpec(_) => { role: Group, label: "", value: "", actions: [] }
     ModifiedSpec(data) => modified_semantics_info(data.modifier)
   }
 }

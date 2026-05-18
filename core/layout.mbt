@@ -39,23 +39,43 @@ pub fn ElementNode::measure(
   self : ElementNode,
   constraints : Constraints,
 ) -> MeasuredNode {
+  if !self.dirty.needs_layout &&
+    self.cached_measure_constraints == Some(constraints) {
+    match self.cached_measured {
+      Some(measured) => return measured
+      None => ()
+    }
+  }
   let child_constraints = child_constraints_for_measure(self.spec, constraints)
   let children : Array[MeasuredNode] = []
   for child in self.children {
     children.push(child.measure(child_constraints))
   }
-  {
+  let measured = {
     element_id: self.id,
     size: constraints.constrain(self.measured_size_from_children(children)),
     children,
   }
+  self.cached_measure_constraints = Some(constraints)
+  self.cached_measured = Some(measured)
+  self.dirty.needs_layout = false
+  measured
 }
 
 ///|
 pub fn ElementNode::place(self : ElementNode, bounds : Rect) -> PlacedNode {
+  if !self.dirty.needs_layout && self.cached_place_frame == Some(bounds) {
+    match self.cached_placed {
+      Some(placed) => return placed
+      None => ()
+    }
+  }
   let constraints = Constraints::tight(bounds.size)
   let measured = self.measure(constraints)
-  self.place_measured(measured, bounds)
+  let placed = self.place_measured(measured, bounds)
+  self.cached_place_frame = Some(bounds)
+  self.cached_placed = Some(placed)
+  placed
 }
 
 ///|
@@ -140,6 +160,12 @@ fn ElementNode::measured_size_from_children(
     ListSpec(data) => measure_list_measured(data.spacing, children)
     ModifiedSpec(data) => modified_measured_size(data.modifier, children)
     CustomSpec(data) => (data.measure)(Constraints::unbounded())
+    ComponentSpec(_) =>
+      if children.length() > 0 {
+        children[0].size
+      } else {
+        Size::new(width=0.0, height=0.0)
+      }
   }
 }
 
@@ -153,6 +179,7 @@ fn child_constraints_for_measure(
     FrameSpec(data) => frame_constraints_for_measure(data, constraints)
     ModifiedSpec(data) => modified_child_constraints(data.modifier, constraints)
     ScrollSpec(_) => Constraints::unbounded()
+    ComponentSpec(_) => constraints
     _ => constraints.loosen()
   }
 }
@@ -234,6 +261,12 @@ fn ElementNode::child_frames_for_place(
       )
     ListSpec(data) => list_child_frames(data.spacing, self.children, frame)
     ModifiedSpec(data) => modified_child_frames(data.modifier, frame)
+    ComponentSpec(_) =>
+      if self.children.length() > 0 {
+        [frame]
+      } else {
+        []
+      }
     _ => []
   }
 }
