@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui/examples/counter/app",
+  "wzzc-dev/moui/examples/todo/app",
 }
 
 supported_targets = "native"

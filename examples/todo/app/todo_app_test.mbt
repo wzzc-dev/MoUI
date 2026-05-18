@@ -38,7 +38,7 @@ test "todo runtime click updates item through shared pipeline" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=20.0, y=120.0),
+        position=@core.Point::new(x=40.0, y=120.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -46,7 +46,7 @@ test "todo runtime click updates item through shared pipeline" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=20.0, y=120.0),
+        position=@core.Point::new(x=40.0, y=120.0),
         phase=@core.PointerPhase::Up,
       ),
     ),

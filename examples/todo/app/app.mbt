@@ -155,9 +155,11 @@ pub fn TodoApp::root(
     children.push(self.todo_row(item, theme))
   }
   @views.surface(
-    @views.column(children, spacing=theme.spacing_scale.sm),
-    width=420.0,
-    height=520.0,
+    @views.column(
+      children,
+      spacing=theme.spacing_scale.sm,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    ),
     style=@core.SurfaceStyle::default(theme~),
   )
 }
