@@ -1,0 +1,62 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @core {type Alignment}
+
+pub using @core {type AppEvent}
+
+pub using @core {type AppRuntime}
+
+pub using @core {type Binding}
+
+pub using @core {type BorderStyle}
+
+pub using @core {type Brush}
+
+pub using @core {type BuildContext}
+
+pub using @core {type ButtonStyle}
+
+pub using @core {type Color}
+
+pub using @core {type ColorScheme}
+
+pub using @core {type Component}
+
+pub using @core {type DrawCommand}
+
+pub using @core {type Environment}
+
+pub using @core {type FontSpec}
+
+pub using @core {type Insets}
+
+pub using @core {type Point}
+
+pub using @core {type Rect}
+
+pub using @core {type Size}
+
+pub using @core {type State}
+
+pub using @core {type SurfaceStyle}
+
+pub using @core {type TextFieldStyle}
+
+pub using @core {type Theme}
+
+pub using @core {type ViewSpec}
+
+// Traits
+

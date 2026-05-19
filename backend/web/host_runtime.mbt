@@ -86,7 +86,7 @@ pub fn window_event_to_host_with_modifiers(
   last_pointer : @core.Point,
   modifiers : @core.KeyModifiers,
 ) -> @host.HostEvent? {
-  @common.window_event_to_host_with_modifiers(
+  @host.window_event_to_host_with_modifiers(
     event,
     last_pointer,
     modifiers,
@@ -101,7 +101,7 @@ fn window_event_to_host_with_scale(
   modifiers : @core.KeyModifiers,
   scale_factor~ : Double,
 ) -> @host.HostEvent? {
-  @common.window_event_to_host_with_modifiers(
+  @host.window_event_to_host_with_modifiers(
     event,
     last_pointer,
     modifiers,
@@ -207,21 +207,21 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
       self.request_redraw()
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(
+      self.last_pointer = @host.physical_position_to_core(
         position,
         scale_factor=self.current_scale_factor(),
       )
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(
+      self.last_pointer = @host.physical_position_to_core(
         position,
         scale_factor=self.current_scale_factor(),
       )
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
-      self.modifiers = @common.modifiers_to_core(modifiers)
+      self.modifiers = @host.modifiers_to_core(modifiers)
     @window_core.WindowEvent::RedrawRequested => self.redraw()
     _ => self.dispatch_window_event(event)
   }
@@ -323,7 +323,7 @@ fn surface_metrics_from_physical(
   size : @dpi.PhysicalSize,
   scale_factor : Double,
 ) -> @host.HostSurfaceMetrics {
-  @common.surface_metrics_from_physical(size, scale_factor~)
+  @host.surface_metrics_from_physical(size, scale_factor~)
 }
 
 ///|

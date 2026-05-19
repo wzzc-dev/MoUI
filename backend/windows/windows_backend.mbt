@@ -40,7 +40,7 @@ pub fn window_event_to_core(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
 ) -> @core.AppEvent? {
-  @common.window_event_to_core(event, last_pointer)
+  @host.window_event_to_core(event, last_pointer)
 }
 
 ///|
@@ -60,7 +60,7 @@ pub fn window_event_to_host(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
 ) -> @host.HostEvent? {
-  @common.window_event_to_host(event, last_pointer)
+  @host.window_event_to_host(event, last_pointer)
 }
 
 ///|
@@ -69,7 +69,7 @@ pub fn window_event_to_host_with_modifiers(
   last_pointer : @core.Point,
   modifiers : @core.KeyModifiers,
 ) -> @host.HostEvent? {
-  @common.window_event_to_host_with_modifiers(event, last_pointer, modifiers)
+  @host.window_event_to_host_with_modifiers(event, last_pointer, modifiers)
 }
 
 ///|
@@ -114,7 +114,7 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
   }
   match window {
     Some(window) => {
-      let size = @common.physical_size_to_core(window.surface_size())
+      let size = @host.physical_size_to_core(window.surface_size())
       ignore(
         self.driver.dispatch(
           @host.HostEvent::Resized(
@@ -166,11 +166,11 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       }
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(position)
+      self.last_pointer = @host.physical_position_to_core(position)
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(position)
+      self.last_pointer = @host.physical_position_to_core(position)
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::KeyboardInput(_, _, _) =>
@@ -200,7 +200,7 @@ fn WindowsApp::dispatch_window_event(
 ) -> Unit {
   match event {
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
-      self.modifiers = @common.modifiers_to_core(modifiers)
+      self.modifiers = @host.modifiers_to_core(modifiers)
     _ => ()
   }
   match

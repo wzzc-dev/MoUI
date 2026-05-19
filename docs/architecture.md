@@ -5,25 +5,28 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 ## Scope
 
 - Platform-neutral `core` runtime, view specs, layout, hit testing, and draw commands.
+- Public root package aliases the most common core/style types for `@wzzc-dev/moui` consumers.
+- `style` is the MoonBit package boundary for visual tokens and style type aliases during the gradual split from `core`.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `surface`, row/column layout, and spacer primitives.
-- Unified host boundaries in `backend/host`, with shared `backend/common` window-event mapping and platform hosts normalizing events into `HostEvent`.
+- Unified host boundaries in `backend/host`, with shared window-event mapping and platform hosts normalizing events into `HostEvent`.
 - Native rendering through `render/wgpu`, including GPU text, rounded geometry, gradients, and soft shadows.
-- Web rendering through `render/webgpu` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
+- Web rendering through `render/webgpu_adapter` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
 
 ## Packages
 
 ```text
+./                            root public facade package
 core/                         platform-neutral runtime and view model
+style/                        visual token and control style compatibility package
 views/                        public view constructors
-backend/host/                 shared HostEvent, metrics, input, redraw driver
-backend/common/               shared window/core + dpi event conversion
+backend/host/                 shared HostEvent, metrics, input, redraw driver, window/core + dpi event conversion
 backend/windows/              Windows native host
 backend/macos/                macOS native host
 backend/linux/                Linux host scaffold
 backend/web/                  canonical Web host on wasm-gc plus browser JS assets
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
-render/webgpu/                browser WebGPU host-import renderer for wasm-gc
+render/webgpu_adapter/        browser WebGPU host-import renderer for wasm-gc
 examples/counter/app/         shared counter app
 examples/counter/windows/     Windows native counter
 examples/counter/macos/       macOS native counter

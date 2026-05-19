@@ -1,6 +1,6 @@
 # WebGPU Wasm-GC Host Boundary
 
-`render/webgpu` is the only Web renderer path. It targets MoonBit `wasm-gc` and calls a browser-provided `webgpu` import module.
+`render/webgpu_adapter` is the only Web renderer path. It targets MoonBit `wasm-gc` and calls a browser-provided `webgpu` import module.
 
 This package intentionally does not depend on WIT/component today. The public boundary is kept thin so a future WIT/component migration can replace only the port implementation:
 

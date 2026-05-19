@@ -16,7 +16,7 @@ moon build examples/todo/windows --target native
 
 ## Web Wasm-GC 说明
 
-Web host 已切到单一路径：`examples/counter/web_wasm --target wasm-gc`。Todo 如果需要 Web 入口，应按 `examples/counter/web_wasm` 的模式新增 `examples/todo/web_wasm`，直接复用 `backend/web` 和 `render/webgpu`，不要走 JS target fallback。
+Web host 已切到单一路径：`examples/counter/web_wasm --target wasm-gc`。Todo 如果需要 Web 入口，应按 `examples/counter/web_wasm` 的模式新增 `examples/todo/web_wasm`，直接复用 `backend/web` 和 `render/webgpu_adapter`，不要走 JS target fallback。
 
 当前 Web 示例从仓库根目录启动：
 
