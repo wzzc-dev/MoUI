@@ -11,6 +11,8 @@ pub fn ElementNode::dispatch_pointer(
       handle_checkbox_element_pointer(self, data, event, render.frame)
     PickerSpec(data) =>
       handle_picker_element_pointer(self, data, event, render.frame)
+    DatePickerSpec(data) =>
+      handle_datepicker_element_pointer(self, data, event, render.frame)
     TextFieldSpec(_) => {
       let focused = if event.phase == PointerPhase::Down &&
         render.frame.contains(event.position) {
@@ -272,13 +274,127 @@ fn handle_picker_element_pointer(
 }
 
 ///|
+fn handle_datepicker_element_pointer(
+  element : ElementNode,
+  data : DatePickerViewSpec,
+  event : PointerEvent,
+  frame : Rect,
+) -> ElementEventResult {
+  let main_button_clicked = event.phase == PointerPhase::Up && frame.contains(event.position)
+  if element.datepicker_expanded {
+    let panel_width = max_double(frame.size.width, 280.0)
+    let panel_height = 350.0
+    let panel_frame = Rect::new(
+      x=frame.origin.x,
+      y=frame.origin.y + frame.size.height + 4.0,
+      width=panel_width,
+      height=panel_height,
+    )
+    if main_button_clicked && !panel_frame.contains(event.position) {
+      // 点击了外部区域，收起面板
+      element.datepicker_expanded = false
+      element.dirty.mark_paint()
+      { changed: true, activated: false, focused: None }
+    } else if main_button_clicked && panel_frame.contains(event.position) {
+      // 点击了面板内容，处理各种情况
+      let header_height = 50.0
+      let day_header_height = 36.0
+      let cell_height = 36.0
+      let start_y = panel_frame.origin.y + header_height + day_header_height
+      
+      let button_size = 32.0
+      let left_button_frame = Rect::new(
+        x=panel_frame.origin.x + 8.0,
+        y=panel_frame.origin.y + (header_height - button_size) / 2.0,
+        width=button_size,
+        height=button_size,
+      )
+      let right_button_frame = Rect::new(
+        x=panel_frame.origin.x + panel_frame.size.width - button_size - 8.0,
+        y=panel_frame.origin.y + (header_height - button_size) / 2.0,
+        width=button_size,
+        height=button_size,
+      )
+      
+      if left_button_frame.contains(event.position) {
+        // 左导航按钮：上一个月
+        let view_date = element.datepicker_view
+        let new_view_date = if view_date.month == 1 {
+          { ..view_date, year: view_date.year - 1, month: 12 }
+        } else {
+          { ..view_date, month: view_date.month - 1 }
+        }
+        element.datepicker_view = new_view_date
+        element.dirty.mark_paint()
+        { changed: true, activated: false, focused: None }
+      } else if right_button_frame.contains(event.position) {
+        // 右导航按钮：下一个月
+        let view_date = element.datepicker_view
+        let new_view_date = if view_date.month == 12 {
+          { ..view_date, year: view_date.year + 1, month: 1 }
+        } else {
+          { ..view_date, month: view_date.month + 1 }
+        }
+        element.datepicker_view = new_view_date
+        element.dirty.mark_paint()
+        { changed: true, activated: false, focused: None }
+      } else if event.position.y >= start_y {
+        // 点击了日期单元格
+        let year = element.datepicker_view.year
+        let month = element.datepicker_view.month
+        let q = 1
+        let m = if month < 3 { month + 12 } else { month }
+        let y = if month < 3 { year - 1 } else { year }
+        let k = y % 100
+        let j = y / 100
+        let h = (q + (13 * (m + 1)) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
+        let first_day_weekday = h
+        
+        let day_cell_width = panel_frame.size.width / 7.0
+        let clicked_x = event.position.x - panel_frame.origin.x
+        let clicked_y = event.position.y - start_y
+        let col = (clicked_x / day_cell_width).to_int()
+        let row = (clicked_y / cell_height).to_int()
+        let total_index = row * 7 + col
+        let day = total_index - first_day_weekday + 1
+        
+        let days_in_month_count = days_in_month(year, month)
+        if day >= 1 && day <= days_in_month_count {
+          // 有效日期，选中它
+          let selected = data.selected.get()
+          let new_selected = { ..selected, year: year, month: month, day: day }
+          data.selected.set(new_selected)
+          element.datepicker_expanded = false
+          element.dirty.mark_paint()
+          { changed: true, activated: true, focused: None }
+        } else {
+          { changed: false, activated: false, focused: None }
+        }
+      } else {
+        { changed: false, activated: false, focused: None }
+      }
+    } else {
+      { changed: false, activated: false, focused: None }
+    }
+  } else if main_button_clicked {
+    // 打开日期选择器
+    element.datepicker_expanded = true
+    element.datepicker_view = data.selected.get()
+    element.dirty.mark_paint()
+    { changed: true, activated: false, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
 pub fn ElementNode::find_focusable_at(
   self : ElementNode,
   point : Point,
   render : RenderNode,
 ) -> ElementId? {
   match self.spec {
-    TextFieldSpec(_) | CheckboxSpec(_) | ButtonSpec(_) | PickerSpec(_) =>
+    TextFieldSpec(_) | CheckboxSpec(_) | ButtonSpec(_) | PickerSpec(_) | DatePickerSpec(_) =>
       if render.frame.contains(point) {
         Some(self.id)
       } else {

@@ -7,6 +7,8 @@ pub(all) struct ElementNode {
   mut dirty : DirtyFlags
   mut button_state : ButtonState
   mut picker_expanded : Bool
+  mut datepicker_expanded : Bool
+  mut datepicker_view : DateValue
   mut caret : Int
   mut selection : TextRange?
   mut composition : String?
@@ -166,6 +168,8 @@ fn mount_view_spec_for_runtime(
       dirty: DirtyFlags::all(),
       button_state: ButtonState::Normal,
       picker_expanded: false,
+      datepicker_expanded: false,
+      datepicker_view: DateValue::today(),
       caret: 0,
       selection: None,
       composition: None,
