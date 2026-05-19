@@ -184,6 +184,9 @@ surface/container, row/column, stack, scroll, grid, list, frame, padding,
 spacer, navigation stack, tab view, dialog host, lazy list, toggle, radio,
 slider, progress, menu button, tooltip, and layout helper functions.
 
+See [View catalog](view-catalog.md) for the current public constructor matrix,
+test coverage, and example coverage.
+
 Advanced users can use `ViewSpec::custom` to provide measurement, paint, and
 semantics callbacks without adding a new core enum variant:
 

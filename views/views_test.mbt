@@ -543,18 +543,160 @@ test "dialog host wraps presented dialog" {
 }
 
 ///|
-test "toggle and slider helpers build wrapper views" {
+test "toggle radio progress and slider helpers build accessible specs" {
   let checked = @core.State::new(false)
   let value = @core.State::new(0.4)
-  let toggle = @views.toggle("Enabled", checked.binding())
+  let toggle = @views.toggle_switch("Enabled", checked.binding())
+  let radio = @views.radio("Choice", checked.binding())
+  let progress = @views.progress(0.7, width=120.0)
   let slider = @views.slider(value.binding(), width=200.0)
   guard toggle
     is @core.ViewSpec::ModifiedSpec(
-      { modifier: @core.ViewModifier::SemanticsRoleModifier(_), .. }
+      {
+        modifier: @core.ViewModifier::SemanticsRoleModifier(
+          @core.SemanticsRole::Switch
+        ),
+        ..,
+      }
     ) else {
     fail("expected toggle semantics wrapper")
   }
+  guard radio
+    is @core.ViewSpec::ModifiedSpec(
+      {
+        modifier: @core.ViewModifier::SemanticsRoleModifier(
+          @core.SemanticsRole::Radio
+        ),
+        ..,
+      }
+    ) else {
+    fail("expected radio semantics wrapper")
+  }
+  guard progress is @core.ViewSpec::CustomSpec(_) else {
+    fail("expected progress custom view")
+  }
   guard slider is @core.ViewSpec::CustomSpec(_) else {
     fail("expected slider custom view")
+  }
+}
+
+///|
+test "tab view selects content and updates binding" {
+  let selected = @core.State::new("code")
+  let spec = @views.tab_view(selected.binding(), [
+    @views.tab_item(
+      route="preview",
+      label="Preview",
+      view=@views.text("Preview pane"),
+    ),
+    @views.tab_item(route="code", label="Code", view=@views.text("Code pane")),
+  ])
+  let commands = @core.AppRuntime::new_spec(
+    root=spec,
+    size=@core.Size::new(width=260.0, height=120.0),
+  ).draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Code pane", .. })
+    }),
+  )
+  guard spec is @core.ViewSpec::FlexSpec({ children: [tabs, _], .. }) else {
+    fail("expected tab view column")
+  }
+  guard tabs is @core.ViewSpec::FlexSpec({ children: [first_tab, _], .. }) else {
+    fail("expected tab row")
+  }
+  let runtime = @core.AppRuntime::new_spec(
+    root=first_tab,
+    size=@core.Size::new(width=112.0, height=36.0),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.get(), content="preview")
+}
+
+///|
+test "menu button and tooltip add presentation semantics" {
+  let menu = @views.menu_button("More")
+  guard menu
+    is @core.ViewSpec::ModifiedSpec(
+      {
+        modifier: @core.ViewModifier::SemanticsRoleModifier(
+          @core.SemanticsRole::Menu
+        ),
+        ..,
+      }
+    ) else {
+    fail("expected menu semantics wrapper")
+  }
+  let tooltip = @views.tooltip(
+    @views.text("Help"),
+    "Keyboard: Meta+K",
+    visible=true,
+  )
+  guard tooltip is @core.ViewSpec::StackSpec({ children: [_, overlay], .. }) else {
+    fail("expected tooltip overlay")
+  }
+  let commands = @core.AppRuntime::new_spec(
+    root=overlay,
+    size=@core.Size::new(width=220.0, height=80.0),
+  ).draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Keyboard: Meta+K", .. })
+    }),
+  )
+}
+
+///|
+test "layout helper constructors build modifier and custom specs" {
+  let child = @views.text("A")
+  guard @views.expanded(child, weight=2.0)
+    is @core.ViewSpec::ModifiedSpec(
+      { modifier: @core.ViewModifier::FlexibleModifier(2.0), .. }
+    ) else {
+    fail("expected flexible modifier")
+  }
+  guard @views.align(child, alignment=@core.Alignment::top_leading())
+    is @core.ViewSpec::ModifiedSpec(
+      { modifier: @core.ViewModifier::AlignModifier(_), .. }
+    ) else {
+    fail("expected align modifier")
+  }
+  guard @views.aspect_ratio(child, 1.5)
+    is @core.ViewSpec::ModifiedSpec(
+      { modifier: @core.ViewModifier::AspectRatioModifier(1.5), .. }
+    ) else {
+    fail("expected aspect ratio modifier")
+  }
+  guard @views.intrinsic_width(child)
+    is @core.ViewSpec::ModifiedSpec(
+      { modifier: @core.ViewModifier::IntrinsicWidthModifier, .. }
+    ) else {
+    fail("expected intrinsic width modifier")
+  }
+  guard @views.custom_layout(
+      measure=constraints => {
+        constraints.constrain(@core.Size::new(width=10.0, height=8.0))
+      },
+      paint=_frame => [],
+      semantics_label="Custom",
+    )
+    is @core.ViewSpec::CustomSpec(_) else {
+    fail("expected custom layout spec")
   }
 }
