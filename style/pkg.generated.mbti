@@ -1,0 +1,64 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/style"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @core {type AnimatedColor}
+
+pub using @core {type AnimatedDouble}
+
+pub using @core {type AnimatedPoint}
+
+pub using @core {type AnimationController}
+
+pub using @core {type AnimationStatus}
+
+pub using @core {type ButtonStyle}
+
+pub using @core {type ColorPalette}
+
+pub using @core {type ColorScheme}
+
+pub using @core {type ControlStateStyle}
+
+pub using @core {type Easing}
+
+pub using @core {type Environment}
+
+pub using @core {type Frame}
+
+pub using @core {type MotionScale}
+
+pub using @core {type RadiusScale}
+
+pub using @core {type ShadowScale}
+
+pub using @core {type SpacingScale}
+
+pub using @core {type SurfaceLevel}
+
+pub using @core {type SurfaceScale}
+
+pub using @core {type SurfaceStyle}
+
+pub using @core {type TextFieldStyle}
+
+pub using @core {type TextStyle}
+
+pub using @core {type Theme}
+
+pub using @core {type Tween}
+
+pub using @core {type TypographyScale}
+
+// Traits
+

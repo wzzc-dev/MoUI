@@ -59,7 +59,7 @@ pub fn window_event_to_core(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
 ) -> @core.AppEvent? {
-  @common.window_event_to_core(event, last_pointer)
+  @host.window_event_to_core(event, last_pointer)
 }
 
 ///|
@@ -79,7 +79,7 @@ pub fn window_event_to_host(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
 ) -> @host.HostEvent? {
-  @common.window_event_to_host(event, last_pointer)
+  @host.window_event_to_host(event, last_pointer)
 }
 
 ///|
@@ -89,7 +89,7 @@ pub fn window_event_to_host_with_modifiers(
   modifiers : @core.KeyModifiers,
   scale_factor? : Double = 1.0,
 ) -> @host.HostEvent? {
-  @common.window_event_to_host_with_modifiers(
+  @host.window_event_to_host_with_modifiers(
     event,
     last_pointer,
     modifiers,
@@ -149,7 +149,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
   }
   match window {
     Some(window) => {
-      let metrics = @common.surface_metrics_from_physical(
+      let metrics = @host.surface_metrics_from_physical(
         window.surface_size(),
         scale_factor=window.scale_factor(),
       )
@@ -212,14 +212,14 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
       }
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(
+      self.last_pointer = @host.physical_position_to_core(
         position,
         scale_factor=self.current_scale_factor(),
       )
       self.dispatch_window_event(event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @common.physical_position_to_core(
+      self.last_pointer = @host.physical_position_to_core(
         position,
         scale_factor=self.current_scale_factor(),
       )
@@ -252,7 +252,7 @@ fn MacosApp::dispatch_window_event(
 ) -> Unit {
   match event {
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
-      self.modifiers = @common.modifiers_to_core(modifiers)
+      self.modifiers = @host.modifiers_to_core(modifiers)
     _ => ()
   }
   let scale_factor = self.current_scale_factor()

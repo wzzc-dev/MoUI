@@ -19,10 +19,10 @@ pub fn physical_position_to_core(
 pub fn surface_metrics_from_physical(
   size : @dpi.PhysicalSize,
   scale_factor? : Double = 1.0,
-) -> @host.HostSurfaceMetrics {
+) -> HostSurfaceMetrics {
   let scale = if scale_factor > 0.0 { scale_factor } else { 1.0 }
   let physical = physical_size_to_core(size)
-  @host.HostSurfaceMetrics::new(
+  HostSurfaceMetrics::new(
     logical_size=@core.Size::new(
       width=physical.width / scale,
       height=physical.height / scale,
@@ -123,14 +123,12 @@ pub fn mouse_button_to_core(button : @window_core.MouseButton) -> Int? {
 }
 
 ///|
-pub fn touch_phase_to_host(
-  phase : @window_core.TouchPhase,
-) -> @host.HostScrollPhase {
+pub fn touch_phase_to_host(phase : @window_core.TouchPhase) -> HostScrollPhase {
   match phase {
-    @window_core.TouchPhase::Started => @host.HostScrollPhase::Started
-    @window_core.TouchPhase::Moved => @host.HostScrollPhase::Moved
-    @window_core.TouchPhase::Ended => @host.HostScrollPhase::Ended
-    @window_core.TouchPhase::Cancelled => @host.HostScrollPhase::Cancelled
+    @window_core.TouchPhase::Started => HostScrollPhase::Started
+    @window_core.TouchPhase::Moved => HostScrollPhase::Moved
+    @window_core.TouchPhase::Ended => HostScrollPhase::Ended
+    @window_core.TouchPhase::Cancelled => HostScrollPhase::Cancelled
   }
 }
 
@@ -138,12 +136,12 @@ pub fn touch_phase_to_host(
 pub fn mouse_scroll_delta_to_host(
   delta : @window_core.MouseScrollDelta,
   scale_factor? : Double = 1.0,
-) -> @host.HostScrollDelta {
+) -> HostScrollDelta {
   match delta {
     @window_core.MouseScrollDelta::LineDelta(x, y) =>
-      @host.HostScrollDelta::Lines(@core.Point::new(x~, y~))
+      HostScrollDelta::Lines(@core.Point::new(x~, y~))
     @window_core.MouseScrollDelta::PixelDelta(position) =>
-      @host.HostScrollDelta::Pixels(
+      HostScrollDelta::Pixels(
         physical_position_to_core(position, scale_factor~),
       )
   }
@@ -156,17 +154,15 @@ pub fn window_event_to_host_with_modifiers(
   modifiers : @core.KeyModifiers,
   scale_factor? : Double = 1.0,
   blur_to_cancel? : Bool = false,
-) -> @host.HostEvent? {
+) -> HostEvent? {
   match event {
     @window_core.WindowEvent::SurfaceResized(size) =>
       Some(
-        @host.HostEvent::Resized(
-          surface_metrics_from_physical(size, scale_factor~),
-        ),
+        HostEvent::Resized(surface_metrics_from_physical(size, scale_factor~)),
       )
     @window_core.WindowEvent::ScaleFactorChanged(scale, writer) =>
       Some(
-        @host.HostEvent::Resized(
+        HostEvent::Resized(
           surface_metrics_from_physical(
             writer.surface_size(),
             scale_factor=scale,
@@ -175,7 +171,7 @@ pub fn window_event_to_host_with_modifiers(
       )
     @window_core.WindowEvent::PointerMoved(_, position, _, _) =>
       Some(
-        @host.HostEvent::Pointer(
+        HostEvent::Pointer(
           @core.PointerEvent::new(
             position=physical_position_to_core(position, scale_factor~),
             phase=@core.PointerPhase::Move,
@@ -188,7 +184,7 @@ pub fn window_event_to_host_with_modifiers(
           match mouse_button_to_core(button) {
             Some(button) =>
               Some(
-                @host.HostEvent::Pointer(
+                HostEvent::Pointer(
                   @core.PointerEvent::new(
                     position=physical_position_to_core(position, scale_factor~),
                     phase=element_state_to_pointer_phase(state),
@@ -202,33 +198,28 @@ pub fn window_event_to_host_with_modifiers(
       }
     @window_core.WindowEvent::MouseWheel(_, delta, phase) =>
       Some(
-        @host.HostEvent::Scroll(
-          @host.HostScrollEvent::new(
+        HostEvent::Scroll(
+          HostScrollEvent::new(
             position=last_pointer,
             delta=mouse_scroll_delta_to_host(delta, scale_factor~),
             phase=touch_phase_to_host(phase),
           ),
         ),
       )
-    @window_core.WindowEvent::CloseRequested =>
-      Some(@host.HostEvent::CloseRequested)
+    @window_core.WindowEvent::CloseRequested => Some(HostEvent::CloseRequested)
     @window_core.WindowEvent::RedrawRequested =>
-      Some(@host.HostEvent::RedrawRequested)
+      Some(HostEvent::RedrawRequested)
     @window_core.WindowEvent::KeyboardInput(_, key_event, is_synthetic) =>
       if is_synthetic {
         None
       } else {
-        Some(
-          @host.HostEvent::Keyboard(
-            keyboard_event_to_core(key_event, modifiers),
-          ),
-        )
+        Some(HostEvent::Keyboard(keyboard_event_to_core(key_event, modifiers)))
       }
     @window_core.WindowEvent::Ime(@window_core.Ime::Enabled) =>
-      Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionStart))
+      Some(HostEvent::TextInput(@core.TextInputEvent::CompositionStart))
     @window_core.WindowEvent::Ime(@window_core.Ime::Preedit(text, cursor)) =>
       Some(
-        @host.HostEvent::TextInput(
+        HostEvent::TextInput(
           @core.TextInputEvent::CompositionUpdate(
             @core.CompositionUpdate::new(
               text~,
@@ -238,23 +229,21 @@ pub fn window_event_to_host_with_modifiers(
         ),
       )
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit(text)) =>
-      Some(
-        @host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text)),
-      )
+      Some(HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text)))
     @window_core.WindowEvent::Ime(
       @window_core.Ime::DeleteSurrounding(before, after)
     ) =>
       Some(
-        @host.HostEvent::TextInput(
+        HostEvent::TextInput(
           @core.TextInputEvent::DeleteSurrounding(before, after),
         ),
       )
     @window_core.WindowEvent::Ime(@window_core.Ime::Disabled) =>
-      Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd("")))
+      Some(HostEvent::TextInput(@core.TextInputEvent::CompositionEnd("")))
     @window_core.WindowEvent::Focused(focused) =>
       Some(
-        @host.HostEvent::Focus(
-          @host.HostFocusEvent::new(
+        HostEvent::Focus(
+          HostFocusEvent::new(
             focused~,
             pointer_cancel_position=if blur_to_cancel && !focused {
               Some(last_pointer)
@@ -283,7 +272,7 @@ fn ime_cursor_range_to_core(
 pub fn window_event_to_host(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
-) -> @host.HostEvent? {
+) -> HostEvent? {
   window_event_to_host_with_modifiers(
     event,
     last_pointer,
