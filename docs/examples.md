@@ -42,12 +42,12 @@ moon build examples/markdown_editor/macos --target native
 
 Run the generated executable under `_build/native/debug/build/...` for the
 example you built. If `moon run` exposes linker issues, use the build-and-execute
-flow described in `docs/platform-notes.md`.
+flow described in `platform-notes.md`.
 
 ## Windows Native
 
 Windows examples use MSYS2 UCRT64 and the static Windows GNU `wgpu-native`
-release documented in `docs/platform-notes.md`:
+release documented in `platform-notes.md`:
 
 ```sh
 moon build examples/counter/windows --target native

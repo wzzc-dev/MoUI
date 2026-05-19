@@ -142,7 +142,7 @@ moon run examples/counter/macos --target native
 ```
 
 For macOS `moon run` linker errors, see
-[Platform notes](platform-notes.md#macos-native).
+[Platform notes](docs/platform-notes.md#macos-native).
 
 Build the visual showcase:
 

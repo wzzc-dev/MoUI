@@ -137,7 +137,7 @@ Validation:
 moon test render --target native
 moon test render/wgpu --target native
 moon test render/webgpu_adapter --target wasm-gc
-moon test render/capabilities_test.mbt --target native
+moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
 ## Workstream 5: Platform Contracts
@@ -223,3 +223,21 @@ Before a release, the project should have:
 - Renderer capability report synchronized with tests and code.
 - Updated docs for changed commands, package layout, platform behavior, or
   user-facing APIs.
+
+## Release Readiness Snapshot
+
+Use this snapshot as the final handoff checklist for the current project shape:
+
+- README explains the project value, package map, and Web/native example entrypoints.
+- Architecture, development, platform, examples, testing, renderer capability, AI
+  collaboration, and view catalog docs are linked from the README.
+- Counter, Todo, Showcase, and Markdown Editor keep shared app logic under
+  `examples/*/app/` with platform packages as thin entrypoints.
+- Showcase surfaces renderer capability status for visual review.
+- Daily validation is centralized in `sh scripts/dev-check.sh` and includes core,
+  views, render, native wgpu, backend host/web, example app tests, and Web
+  wasm-gc example builds.
+- Platform validation remains opt-in through `--platform-examples-test` and
+  `--platform-examples-build` because native executable builds depend on the
+  current host setup.
+- Linux remains an explicit scaffold until a real backend is implemented.
