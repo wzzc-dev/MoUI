@@ -223,7 +223,7 @@ test "macos backend keeps ime composition separate at host layer" {
 }
 
 ///|
-test "macos backend exposes platform-owned surface host metadata" {
+test "macos backend exposes content-view surface host metadata" {
   let info = macos_surface_host_info()
   inspect(info.platform, content="macos")
   inspect(info.owns_instance, content="true")

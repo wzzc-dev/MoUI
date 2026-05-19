@@ -6,13 +6,13 @@
 static NSString *const MOUI_MACOS_SURFACE_LAYER_NAME = @"moui_macos_surface_layer";
 
 MOONBIT_FFI_EXPORT
-void *moui_macos_surface_host_layer_from_view(uint64_t raw_view_handle, int32_t width,
+void *moui_macos_surface_host_layer_from_view(uint64_t raw_content_view_handle, int32_t width,
                                               int32_t height, double scale_factor) {
-  if (raw_view_handle == 0) {
+  if (raw_content_view_handle == 0) {
     return NULL;
   }
 
-  NSView *view = (__bridge NSView *)(void *)raw_view_handle;
+  NSView *view = (__bridge NSView *)(void *)raw_content_view_handle;
   if (view == nil) {
     return NULL;
   }
@@ -22,8 +22,6 @@ void *moui_macos_surface_host_layer_from_view(uint64_t raw_view_handle, int32_t 
   CAMetalLayer *metal_layer = nil;
   CALayer *existing_layer = view.layer;
   if ([existing_layer isKindOfClass:[CAMetalLayer class]]) {
-    metal_layer = (CAMetalLayer *)existing_layer;
-  } else if ([existing_layer.name isEqualToString:MOUI_MACOS_SURFACE_LAYER_NAME]) {
     metal_layer = (CAMetalLayer *)existing_layer;
   }
 
