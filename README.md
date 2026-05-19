@@ -172,6 +172,21 @@ moon build examples/markdown_editor/windows --target native
 
 ## Validation
 
+For routine local development, prefer the bounded daily check:
+
+```sh
+sh scripts/dev-check.sh
+```
+
+It runs stable package-level tests and Web wasm-gc example builds without
+invoking all-repository native or wasm-gc test targets.
+
+Native platform example builds can be included explicitly:
+
+```sh
+sh scripts/dev-check.sh --platform-examples
+```
+
 ```sh
 moon test render/webgpu --target wasm-gc
 moon test backend/web --target wasm-gc
