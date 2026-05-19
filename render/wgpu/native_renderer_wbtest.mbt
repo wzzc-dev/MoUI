@@ -47,7 +47,7 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
 }
 
 ///|
-test "native renderer records unsupported visual wrapper commands" {
+test "native renderer plans image clip transform and opacity commands" {
   let renderer = new_test_renderer_handle()
   renderer.resize(@core.Size::new(width=320.0, height=200.0))
   renderer.render([
@@ -67,6 +67,13 @@ test "native renderer records unsupported visual wrapper commands" {
     @core.DrawCommand::PopClip,
     @core.DrawCommand::PopOpacity,
   ])
-  inspect(renderer.unsupported_command_count, content="7")
-  inspect(renderer.draw_items.length(), content="0")
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.draw_items.length(), content="1")
+  inspect(renderer.visual_vertices.length(), content="6")
+  assert_true(
+    renderer.draw_items[0] is NativeDrawItem::NativeVisual(_, _, Some(_)),
+  )
+  assert_true(renderer.visual_vertices[0].a0 > 0.47)
+  assert_true(renderer.visual_vertices[0].a0 < 0.49)
+  assert_true(renderer.visual_vertices[0].x > -1.0)
 }

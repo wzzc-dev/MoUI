@@ -392,10 +392,13 @@ fn build_native_text_run(
   cache : NativeFontCache,
   atlas : GlyphAtlas,
   run : @core.TextRun,
+  state : NativePaintState,
   size : @core.Size,
 ) -> TextRunBuildResult {
   let vertices : Array[TextVertex] = []
-  let atlas_full = append_text_run_vertices(cache, atlas, run, size, vertices)
+  let atlas_full = append_text_run_vertices(
+    cache, atlas, run, state, size, vertices,
+  )
   { vertices, atlas_full }
 }
 
@@ -404,6 +407,7 @@ fn append_text_run_vertices(
   cache : NativeFontCache,
   atlas : GlyphAtlas,
   run : @core.TextRun,
+  state : NativePaintState,
   size : @core.Size,
   vertices : Array[TextVertex],
 ) -> Bool {
@@ -444,7 +448,16 @@ fn append_text_run_vertices(
           if entry.width > 0 && entry.height > 0 {
             let gx = cursor_x + glyph.x_offset + entry.bearing_x.to_double()
             let gy = baseline - glyph.y_offset - entry.bearing_y.to_double()
-            append_text_quad(vertices, gx, gy, entry, atlas, size, run.color)
+            append_text_quad(
+              vertices,
+              gx,
+              gy,
+              entry,
+              atlas,
+              state,
+              size,
+              run.color.multiply_alpha(state.opacity),
+            )
           }
           cursor_x = cursor_x + glyph.x_advance
         }
@@ -787,35 +800,49 @@ fn append_text_quad(
   y : Double,
   entry : GlyphAtlasEntry,
   atlas : GlyphAtlas,
+  state : NativePaintState,
   size : @core.Size,
   color : @core.Color,
 ) -> Unit {
-  let x0 = pixel_x_to_ndc(x, size.width)
-  let x1 = pixel_x_to_ndc(x + entry.width.to_double(), size.width)
-  let y0 = pixel_y_to_ndc(y, size.height)
-  let y1 = pixel_y_to_ndc(y + entry.height.to_double(), size.height)
+  let p0 = transform_point(state.transform, x, y)
+  let p1 = transform_point(state.transform, x, y + entry.height.to_double())
+  let p2 = transform_point(
+    state.transform,
+    x + entry.width.to_double(),
+    y + entry.height.to_double(),
+  )
+  let p3 = transform_point(state.transform, x + entry.width.to_double(), y)
   let u0 = entry.x.to_double() / atlas.width.to_double()
   let v0 = entry.y.to_double() / atlas.height.to_double()
   let u1 = (entry.x + entry.width).to_double() / atlas.width.to_double()
   let v1 = (entry.y + entry.height).to_double() / atlas.height.to_double()
-  push_text_vertex(vertices, x0, y0, u0, v0, color)
-  push_text_vertex(vertices, x0, y1, u0, v1, color)
-  push_text_vertex(vertices, x1, y1, u1, v1, color)
-  push_text_vertex(vertices, x0, y0, u0, v0, color)
-  push_text_vertex(vertices, x1, y1, u1, v1, color)
-  push_text_vertex(vertices, x1, y0, u1, v0, color)
+  push_text_vertex(vertices, p0, size, u0, v0, color)
+  push_text_vertex(vertices, p1, size, u0, v1, color)
+  push_text_vertex(vertices, p2, size, u1, v1, color)
+  push_text_vertex(vertices, p0, size, u0, v0, color)
+  push_text_vertex(vertices, p2, size, u1, v1, color)
+  push_text_vertex(vertices, p3, size, u1, v0, color)
 }
 
 ///|
 fn push_text_vertex(
   vertices : Array[TextVertex],
-  x : Double,
-  y : Double,
+  point : @core.Point,
+  size : @core.Size,
   u : Double,
   v : Double,
   color : @core.Color,
 ) -> Unit {
-  vertices.push({ x, y, u, v, r: color.r, g: color.g, b: color.b, a: color.a })
+  vertices.push({
+    x: pixel_x_to_ndc(point.x, size.width),
+    y: pixel_y_to_ndc(point.y, size.height),
+    u,
+    v,
+    r: color.r,
+    g: color.g,
+    b: color.b,
+    a: color.a,
+  })
 }
 
 ///|

@@ -1,7 +1,7 @@
 ///|
 priv enum NativeDrawItem {
-  NativeVisual(Int, Int)
-  NativeText(Int, Int)
+  NativeVisual(Int, Int, NativeScissor?)
+  NativeText(Int, Int, NativeScissor?)
 }
 
 ///|
@@ -10,6 +10,21 @@ priv struct NativeDrawPlan {
   text_vertices : Array[TextVertex]
   items : Array[NativeDrawItem]
   atlas_dirty : Bool
+}
+
+///|
+priv struct NativeScissor {
+  x : Int
+  y : Int
+  width : Int
+  height : Int
+}
+
+///|
+priv struct NativePaintState {
+  opacity : Double
+  transform : @core.Transform2D
+  clip : @core.Rect?
 }
 
 ///|
@@ -50,6 +65,8 @@ fn build_native_draw_plan(
     let visual_vertices : Array[VisualVertex] = []
     let text_vertices : Array[TextVertex] = []
     let items : Array[NativeDrawItem] = []
+    let mut state = native_paint_state_default()
+    let state_stack : Array[NativePaintState] = []
     let mut full = false
     for command in commands {
       if !full {
@@ -65,6 +82,7 @@ fn build_native_draw_plan(
               mode=visual_mode_fill,
               stroke_width=0.0,
               blur_radius=0.0,
+              state~,
               size~,
             )
           @core.DrawCommand::StrokeRect(rect, color, width) =>
@@ -77,6 +95,7 @@ fn build_native_draw_plan(
               mode=visual_mode_stroke,
               stroke_width=width,
               blur_radius=0.0,
+              state~,
               size~,
             )
           @core.DrawCommand::FillRoundedRect(rounded, color) =>
@@ -89,6 +108,7 @@ fn build_native_draw_plan(
               mode=visual_mode_fill,
               stroke_width=0.0,
               blur_radius=0.0,
+              state~,
               size~,
             )
           @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
@@ -101,6 +121,7 @@ fn build_native_draw_plan(
               mode=visual_mode_stroke,
               stroke_width=width,
               blur_radius=0.0,
+              state~,
               size~,
             )
           @core.DrawCommand::FillRoundedRectBrush(rounded, brush) =>
@@ -113,6 +134,7 @@ fn build_native_draw_plan(
               mode=visual_mode_fill,
               stroke_width=0.0,
               blur_radius=0.0,
+              state~,
               size~,
             )
           @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
@@ -125,29 +147,54 @@ fn build_native_draw_plan(
               mode=visual_mode_stroke,
               stroke_width=width,
               blur_radius=0.0,
+              state~,
               size~,
             )
           @core.DrawCommand::DrawShadow(shadow) =>
-            append_shadow_item(visual_vertices, items, shadow, size)
+            append_shadow_item(visual_vertices, items, shadow, state, size)
           @core.DrawCommand::DrawText(run) => {
             let start = text_vertices.length()
-            let result = build_native_text_run(cache, atlas, run, size)
+            let result = build_native_text_run(cache, atlas, run, state, size)
             for vertex in result.vertices {
               text_vertices.push(vertex)
             }
             let count = text_vertices.length() - start
             if count > 0 {
-              items.push(NativeDrawItem::NativeText(start, count))
+              items.push(
+                NativeDrawItem::NativeText(
+                  start,
+                  count,
+                  native_scissor_for_state(state, size),
+                ),
+              )
             }
             full = result.atlas_full
           }
-          @core.DrawCommand::DrawImage(_)
-          | @core.DrawCommand::PushClip(_)
-          | @core.DrawCommand::PopClip
-          | @core.DrawCommand::PushTransform(_)
-          | @core.DrawCommand::PopTransform
-          | @core.DrawCommand::PushOpacity(_)
-          | @core.DrawCommand::PopOpacity => ()
+          @core.DrawCommand::DrawImage(run) =>
+            append_image_placeholder_item(
+              visual_vertices, items, run, state, size,
+            )
+          @core.DrawCommand::PushClip(rect) => {
+            state_stack.push(state)
+            state = { ..state, clip: intersect_clip(state.clip, rect) }
+          }
+          @core.DrawCommand::PopClip =>
+            state = pop_native_paint_state(state_stack, state)
+          @core.DrawCommand::PushTransform(transform) => {
+            state_stack.push(state)
+            state = {
+              ..state,
+              transform: multiply_transform(state.transform, transform),
+            }
+          }
+          @core.DrawCommand::PopTransform =>
+            state = pop_native_paint_state(state_stack, state)
+          @core.DrawCommand::PushOpacity(opacity) => {
+            state_stack.push(state)
+            state = { ..state, opacity: state.opacity * clamp_opacity(opacity) }
+          }
+          @core.DrawCommand::PopOpacity =>
+            state = pop_native_paint_state(state_stack, state)
         }
       }
     }
@@ -178,6 +225,132 @@ fn build_native_draw_plan(
 }
 
 ///|
+fn native_paint_state_default() -> NativePaintState {
+  { opacity: 1.0, transform: @core.Transform2D::identity(), clip: None }
+}
+
+///|
+fn pop_native_paint_state(
+  stack : Array[NativePaintState],
+  fallback : NativePaintState,
+) -> NativePaintState {
+  match stack.pop() {
+    Some(state) => state
+    None => fallback
+  }
+}
+
+///|
+fn clamp_opacity(value : Double) -> Double {
+  value.max(0.0).min(1.0)
+}
+
+///|
+fn multiply_transform(
+  a : @core.Transform2D,
+  b : @core.Transform2D,
+) -> @core.Transform2D {
+  {
+    a: a.a * b.a + a.c * b.b,
+    b: a.b * b.a + a.d * b.b,
+    c: a.a * b.c + a.c * b.d,
+    d: a.b * b.c + a.d * b.d,
+    tx: a.a * b.tx + a.c * b.ty + a.tx,
+    ty: a.b * b.tx + a.d * b.ty + a.ty,
+  }
+}
+
+///|
+fn transform_point(
+  transform : @core.Transform2D,
+  x : Double,
+  y : Double,
+) -> @core.Point {
+  @core.Point::new(
+    x=transform.a * x + transform.c * y + transform.tx,
+    y=transform.b * x + transform.d * y + transform.ty,
+  )
+}
+
+///|
+fn transform_rect(
+  rect : @core.Rect,
+  transform : @core.Transform2D,
+) -> @core.Rect {
+  let p0 = transform_point(transform, rect.origin.x, rect.origin.y)
+  let p1 = transform_point(
+    transform,
+    rect.origin.x + rect.size.width,
+    rect.origin.y,
+  )
+  let p2 = transform_point(
+    transform,
+    rect.origin.x + rect.size.width,
+    rect.origin.y + rect.size.height,
+  )
+  let p3 = transform_point(
+    transform,
+    rect.origin.x,
+    rect.origin.y + rect.size.height,
+  )
+  let min_x = p0.x.min(p1.x).min(p2.x).min(p3.x)
+  let max_x = p0.x.max(p1.x).max(p2.x).max(p3.x)
+  let min_y = p0.y.min(p1.y).min(p2.y).min(p3.y)
+  let max_y = p0.y.max(p1.y).max(p2.y).max(p3.y)
+  @core.Rect::new(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y)
+}
+
+///|
+fn intersect_clip(current : @core.Rect?, next : @core.Rect) -> @core.Rect? {
+  match current {
+    Some(current) => rect_intersection(current, next)
+    None => Some(next)
+  }
+}
+
+///|
+fn rect_intersection(a : @core.Rect, b : @core.Rect) -> @core.Rect? {
+  let x0 = a.origin.x.max(b.origin.x)
+  let y0 = a.origin.y.max(b.origin.y)
+  let x1 = (a.origin.x + a.size.width).min(b.origin.x + b.size.width)
+  let y1 = (a.origin.y + a.size.height).min(b.origin.y + b.size.height)
+  if x1 <= x0 || y1 <= y0 {
+    None
+  } else {
+    Some(@core.Rect::new(x=x0, y=y0, width=x1 - x0, height=y1 - y0))
+  }
+}
+
+///|
+fn native_scissor_for_state(
+  state : NativePaintState,
+  size : @core.Size,
+) -> NativeScissor? {
+  match state.clip {
+    Some(clip) =>
+      Some(native_scissor_for_rect(transform_rect(clip, state.transform), size))
+    None => None
+  }
+}
+
+///|
+fn native_scissor_for_rect(
+  rect : @core.Rect,
+  size : @core.Size,
+) -> NativeScissor {
+  let x0 = rect.origin.x.max(0.0).min(size.width.max(0.0))
+  let y0 = rect.origin.y.max(0.0).min(size.height.max(0.0))
+  let x1 = (rect.origin.x + rect.size.width).max(0.0).min(size.width.max(0.0))
+  let y1 = (rect.origin.y + rect.size.height).max(0.0).min(size.height.max(0.0))
+  {
+    x: x0.floor().to_int(),
+    y: y0.floor().to_int(),
+    width: (x1 - x0).ceil().max(0.0).to_int(),
+    height: (y1 - y0).ceil().max(0.0).to_int(),
+  }
+}
+
+///|
 fn append_visual_item(
   vertices : Array[VisualVertex],
   items : Array[NativeDrawItem],
@@ -187,6 +360,7 @@ fn append_visual_item(
   mode~ : Double,
   stroke_width~ : Double,
   blur_radius~ : Double,
+  state~ : NativePaintState,
   size~ : @core.Size,
 ) -> Unit {
   if rect.size.width <= 0.0 || rect.size.height <= 0.0 {
@@ -204,9 +378,16 @@ fn append_visual_item(
     mode~,
     stroke_width~,
     blur_radius~,
+    state~,
     size~,
   )
-  items.push(NativeDrawItem::NativeVisual(start, vertices.length() - start))
+  items.push(
+    NativeDrawItem::NativeVisual(
+      start,
+      vertices.length() - start,
+      native_scissor_for_state(state, size),
+    ),
+  )
 }
 
 ///|
@@ -214,6 +395,7 @@ fn append_shadow_item(
   vertices : Array[VisualVertex],
   items : Array[NativeDrawItem],
   shadow : @core.ShadowSpec,
+  state : NativePaintState,
   size : @core.Size,
 ) -> Unit {
   let blur = shadow.blur_radius.max(0.0)
@@ -234,7 +416,43 @@ fn append_shadow_item(
     mode=visual_mode_shadow,
     stroke_width=0.0,
     blur_radius=blur,
+    state~,
     size~,
+  )
+}
+
+///|
+fn append_image_placeholder_item(
+  vertices : Array[VisualVertex],
+  items : Array[NativeDrawItem],
+  run : @core.ImageRun,
+  state : NativePaintState,
+  size : @core.Size,
+) -> Unit {
+  append_visual_item(
+    vertices,
+    items,
+    run.frame,
+    radius=0.0,
+    brush=image_placeholder_brush(run),
+    mode=visual_mode_fill,
+    stroke_width=0.0,
+    blur_radius=0.0,
+    state~,
+    size~,
+  )
+}
+
+///|
+fn image_placeholder_brush(run : @core.ImageRun) -> @core.Brush {
+  @core.Brush::linear_gradient(
+    start=run.frame.origin,
+    end=@core.Point::new(
+      x=run.frame.origin.x + run.frame.size.width,
+      y=run.frame.origin.y + run.frame.size.height,
+    ),
+    start_color=@core.Color::rgba(r=0.72, g=0.78, b=0.86, a=run.opacity),
+    end_color=@core.Color::rgba(r=0.42, g=0.50, b=0.62, a=run.opacity),
   )
 }
 
@@ -247,6 +465,7 @@ fn append_visual_quad(
   mode~ : Double,
   stroke_width~ : Double,
   blur_radius~ : Double,
+  state~ : NativePaintState,
   size~ : @core.Size,
 ) -> Unit {
   let x0 = rect.origin.x
@@ -263,6 +482,7 @@ fn append_visual_quad(
     mode~,
     stroke_width~,
     blur_radius~,
+    state~,
     size~,
   )
   push_visual_vertex(
@@ -275,6 +495,7 @@ fn append_visual_quad(
     mode~,
     stroke_width~,
     blur_radius~,
+    state~,
     size~,
   )
   push_visual_vertex(
@@ -287,6 +508,7 @@ fn append_visual_quad(
     mode~,
     stroke_width~,
     blur_radius~,
+    state~,
     size~,
   )
   push_visual_vertex(
@@ -299,6 +521,7 @@ fn append_visual_quad(
     mode~,
     stroke_width~,
     blur_radius~,
+    state~,
     size~,
   )
   push_visual_vertex(
@@ -311,6 +534,7 @@ fn append_visual_quad(
     mode~,
     stroke_width~,
     blur_radius~,
+    state~,
     size~,
   )
   push_visual_vertex(
@@ -323,6 +547,7 @@ fn append_visual_quad(
     mode~,
     stroke_width~,
     blur_radius~,
+    state~,
     size~,
   )
 }
@@ -338,12 +563,14 @@ fn push_visual_vertex(
   mode~ : Double,
   stroke_width~ : Double,
   blur_radius~ : Double,
+  state~ : NativePaintState,
   size~ : @core.Size,
 ) -> Unit {
   let gradient = visual_gradient(brush)
+  let transformed = transform_point(state.transform, x, y)
   vertices.push({
-    x: visual_pixel_x_to_ndc(x, size.width),
-    y: visual_pixel_y_to_ndc(y, size.height),
+    x: visual_pixel_x_to_ndc(transformed.x, size.width),
+    y: visual_pixel_y_to_ndc(transformed.y, size.height),
     local_x: x - rect.origin.x,
     local_y: y - rect.origin.y,
     width: rect.size.width,
@@ -359,11 +586,11 @@ fn push_visual_vertex(
     r0: gradient.start_color.r,
     g0: gradient.start_color.g,
     b0: gradient.start_color.b,
-    a0: gradient.start_color.a,
+    a0: gradient.start_color.a * state.opacity,
     r1: gradient.end_color.r,
     g1: gradient.end_color.g,
     b1: gradient.end_color.b,
-    a1: gradient.end_color.a,
+    a1: gradient.end_color.a * state.opacity,
   })
 }
 
