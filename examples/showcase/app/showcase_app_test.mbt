@@ -28,6 +28,22 @@ test "showcase app emits visual polish commands" {
       )
     }),
   )
+  assert_true(
+    commands.any(command => {
+      command
+      is @core.DrawCommand::DrawText({ text: "Renderer capability", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "image", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "partial", .. })
+    }),
+  )
 }
 
 ///|
