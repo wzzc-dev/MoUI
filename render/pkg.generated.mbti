@@ -19,6 +19,12 @@ pub fn rect_shader_wgsl() -> String
 
 pub fn rect_vertices_to_bytes(Array[RectVertex]) -> Bytes
 
+pub fn renderer_feature_capability(RendererFeature) -> RendererFeatureCapability?
+
+pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability]
+
+pub fn renderer_feature_follow_ups() -> Array[RendererFeatureCapability]
+
 pub fn size_dim_to_uint(Double) -> UInt
 
 // Errors
@@ -56,6 +62,36 @@ pub(all) enum RendererBackendKind {
 pub(all) enum RendererCapabilityStatus {
   Ready
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum RendererFeature {
+  Rect
+  RoundedRect
+  Gradient
+  Shadow
+  Text
+  Image
+  Clip
+  Transform
+  Opacity
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererFeature::label(Self) -> String
+
+pub(all) struct RendererFeatureCapability {
+  feature : RendererFeature
+  native_status : RendererFeatureStatus
+  web_status : RendererFeatureStatus
+  native_note : String
+  web_note : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum RendererFeatureStatus {
+  Ready
+  Partial
+  Gap
+  HostForwarded
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererFeatureStatus::label(Self) -> String
+pub fn RendererFeatureStatus::needs_follow_up(Self) -> Bool
 
 pub(all) struct RendererSurfaceMetrics {
   logical_size : @core.Size

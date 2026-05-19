@@ -164,9 +164,10 @@ without calling `Brush::fallback_color`; fallback is centralized in renderer
 capability layers.
 
 The native wgpu renderer currently renders rounded fills, gradients, shadows,
-and GPU text directly. Image, clip, opacity, and transform commands are kept in
-the command stream and tracked as native renderer capability gaps. The WebGPU
-host-import renderer forwards the full command set to the browser runtime.
+GPU text, and opacity directly. Image, clip, and transform commands have
+partial native support and are tracked in the renderer capability report. The
+WebGPU host-import renderer forwards the full command set to the browser
+runtime. See [Renderer capability report](renderer-capability-report.md).
 
 ## Built-In And Custom Views
 
