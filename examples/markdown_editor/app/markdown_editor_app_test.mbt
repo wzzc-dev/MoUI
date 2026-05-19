@@ -30,42 +30,49 @@ test "markdown editor app emits wysiwyg and source commands" {
 ///|
 test "markdown parser recognizes supported block and inline subset" {
   let blocks = parse_markdown(
-    "# Title\n## Section\nText with **bold** and *italic* and `code`\n- bullet\n1. one\n> quote\n---\n```\ncode\n```",
+    "# Title\n## Section\n### Detail\nText with **bold** and *italic* and `code`\n- bullet\n- [ ] todo\n- [x] done\n1. one\n> quote\n---\n```\ncode\n```",
   )
-  inspect(blocks.length(), content="8")
+  inspect(blocks.length(), content="11")
   guard blocks[0].kind is Heading(1) else { fail("expected h1") }
   guard blocks[1].kind is Heading(2) else { fail("expected h2") }
-  guard blocks[2].kind is Paragraph else { fail("expected paragraph") }
+  guard blocks[2].kind is Heading(3) else { fail("expected h3") }
+  guard blocks[3].kind is Paragraph else { fail("expected paragraph") }
   assert_true(
-    blocks[2].inlines.any(span => span.kind == MarkdownInlineKind::Bold),
+    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Bold),
   )
   assert_true(
-    blocks[2].inlines.any(span => span.kind == MarkdownInlineKind::Italic),
+    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Italic),
   )
   assert_true(
-    blocks[2].inlines.any(span => span.kind == MarkdownInlineKind::Code),
+    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Code),
   )
-  guard blocks[3].kind is UnorderedListItem else {
+  guard blocks[4].kind is UnorderedListItem else {
     fail("expected unordered list")
   }
-  guard blocks[4].kind is OrderedListItem(1) else {
+  guard blocks[5].kind is TaskListItem(false) else {
+    fail("expected open task")
+  }
+  guard blocks[6].kind is TaskListItem(true) else {
+    fail("expected checked task")
+  }
+  guard blocks[7].kind is OrderedListItem(1) else {
     fail("expected ordered list")
   }
-  guard blocks[5].kind is Blockquote else { fail("expected quote") }
-  guard blocks[6].kind is HorizontalRule else { fail("expected rule") }
-  guard blocks[7].kind is CodeBlock else { fail("expected code block") }
+  guard blocks[8].kind is Blockquote else { fail("expected quote") }
+  guard blocks[9].kind is HorizontalRule else { fail("expected rule") }
+  guard blocks[10].kind is CodeBlock else { fail("expected code block") }
 }
 
 ///|
 test "markdown parser preserves unsupported and malformed inline syntax as plain text" {
   let blocks = parse_markdown(
-    "### Three\nText with **open and `dangling\n+ plus list",
+    "#### Four\nText with **open and `dangling\n+ plus list",
   )
   inspect(blocks.length(), content="3")
   guard blocks[0].kind is Paragraph else {
-    fail("expected unsupported h3 as paragraph")
+    fail("expected unsupported h4 as paragraph")
   }
-  inspect(blocks[0].text, content="### Three")
+  inspect(blocks[0].text, content="#### Four")
   guard blocks[1].kind is Paragraph else {
     fail("expected malformed inline paragraph")
   }
@@ -104,8 +111,8 @@ test "markdown parser recognizes star bullets and ordered list numbers" {
 
 ///|
 test "markdown inline parser emits separated plain and styled spans" {
-  let spans = parse_markdown_inlines("a **b** c `d` *e*")
-  inspect(spans.length(), content="6")
+  let spans = parse_markdown_inlines("a **b** c `d` *e* __f__ _g_")
+  inspect(spans.length(), content="10")
   guard spans[0] is { kind: MarkdownInlineKind::Plain, text: "a " } else {
     fail("expected leading plain span")
   }
@@ -118,20 +125,27 @@ test "markdown inline parser emits separated plain and styled spans" {
   guard spans[5] is { kind: MarkdownInlineKind::Italic, text: "e" } else {
     fail("expected italic span")
   }
+  guard spans[7] is { kind: MarkdownInlineKind::Bold, text: "f" } else {
+    fail("expected underscore bold span")
+  }
+  guard spans[9] is { kind: MarkdownInlineKind::Italic, text: "g" } else {
+    fail("expected underscore italic span")
+  }
 }
 
 ///|
 test "markdown formatter produces rich text blocks and styled runs" {
   let document = markdown_to_rich_text(
-    "# Title\n- item\n> quote\n```\ncode\n```\n---",
+    "# Title\n- item\n- [x] done\n> quote\n```\ncode\n```\n---",
   )
-  inspect(document.blocks.length(), content="5")
+  inspect(document.blocks.length(), content="6")
   inspect(document.blocks[0].runs[0].text, content="Title")
   inspect(document.blocks[0].runs[0].font.unwrap().weight, content="700")
   inspect(document.blocks[1].prefix, content="• ")
-  assert_true(document.blocks[2].border_left is Some(_))
-  assert_true(document.blocks[3].background is Some(_))
-  assert_true(document.blocks[4].rule)
+  inspect(document.blocks[2].prefix, content="☑ ")
+  assert_true(document.blocks[3].border_left is Some(_))
+  assert_true(document.blocks[4].background is Some(_))
+  assert_true(document.blocks[5].rule)
 }
 
 ///|
@@ -148,8 +162,8 @@ test "markdown editor toolbar actions update canonical markdown" {
 test "markdown editor toolbar seeds every supported action from empty document" {
   for
     expected in [
-      "**bold text**", "*italic text*", "`code`", "# Heading", "## Section", "- List item",
-      "1. List item", "> Quote", "```\ncode block\n```",
+      "**bold text**", "*italic text*", "`code`", "# Heading", "## Section", "### Detail",
+      "- List item", "- [ ] Task item", "1. List item", "> Quote", "```\ncode block\n```",
     ] {
     let app = @app.MarkdownEditorApp::new()
     app.clear()
@@ -164,7 +178,7 @@ test "markdown editor toolbar appends every supported action to existing documen
   app.set_document("Base")
   for
     action in [
-      "bold", "italic", "code", "h1", "h2", "ul", "ol", "quote", "codeblock",
+      "bold", "italic", "code", "h1", "h2", "h3", "ul", "task", "ol", "quote", "codeblock",
     ] {
     app.apply_action(action)
   }
@@ -174,7 +188,9 @@ test "markdown editor toolbar appends every supported action to existing documen
   assert_true(document.contains("`code`"))
   assert_true(document.contains("# Heading"))
   assert_true(document.contains("## Section"))
+  assert_true(document.contains("### Detail"))
   assert_true(document.contains("- List item"))
+  assert_true(document.contains("- [ ] Task item"))
   assert_true(document.contains("1. List item"))
   assert_true(document.contains("> Quote"))
   assert_true(document.contains("```\ncode block\n```"))
@@ -194,8 +210,12 @@ fn markdown_action_from_seed(expected : String) -> String {
     "h1"
   } else if expected == "## Section" {
     "h2"
+  } else if expected == "### Detail" {
+    "h3"
   } else if expected == "- List item" {
     "ul"
+  } else if expected == "- [ ] Task item" {
+    "task"
   } else if expected == "1. List item" {
     "ol"
   } else if expected == "> Quote" {
@@ -213,7 +233,7 @@ test "markdown editor runtime typing updates document" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=32.0, y=160.0),
+        position=@core.Point::new(x=32.0, y=184.0),
         phase=@core.PointerPhase::Down,
       ),
     ),

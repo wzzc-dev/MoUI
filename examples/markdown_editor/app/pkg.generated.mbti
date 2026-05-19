@@ -28,6 +28,7 @@ pub(all) enum MarkdownBlockKind {
   Heading(Int)
   Paragraph
   UnorderedListItem
+  TaskListItem(Bool)
   OrderedListItem(Int)
   Blockquote
   CodeBlock
