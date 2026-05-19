@@ -98,7 +98,7 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
   self,
   event_loop,
 ) {
-  let initial_size = @dpi.PhysicalSize::new(
+  let initial_size = @dpi.PhysicalSize::PhysicalSize(
     size_dim_to_int(self.runtime.size().width),
     size_dim_to_int(self.runtime.size().height),
   )

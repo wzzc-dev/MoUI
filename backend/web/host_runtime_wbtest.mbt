@@ -1,7 +1,9 @@
 ///|
 test "web maps surface resize through current scale factor" {
   let event = window_event_to_host_with_scale(
-    @window_core.WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(800, 600)),
+    @window_core.WindowEvent::SurfaceResized(
+      @dpi.PhysicalSize::PhysicalSize(800, 600),
+    ),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=2.0,
@@ -26,7 +28,7 @@ test "web maps physical pointer positions through current scale factor" {
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
-      @dpi.PhysicalPositionF64::new(240.0, 120.0),
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(240.0, 120.0),
       true,
       @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
     ),

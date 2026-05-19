@@ -1,7 +1,9 @@
 ///|
 test "windows backend converts resize event" {
   let event = window_event_to_core(
-    @window_core.WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(10, 20)),
+    @window_core.WindowEvent::SurfaceResized(
+      @dpi.PhysicalSize::PhysicalSize(10, 20),
+    ),
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
@@ -14,7 +16,9 @@ test "windows backend converts resize event" {
 ///|
 test "windows backend converts resize event to host metrics" {
   let event = window_event_to_host(
-    @window_core.WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(10, 20)),
+    @window_core.WindowEvent::SurfaceResized(
+      @dpi.PhysicalSize::PhysicalSize(10, 20),
+    ),
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
@@ -36,7 +40,7 @@ test "windows backend converts pointer movement and left button" {
   let moved = window_event_to_core(
     @window_core.WindowEvent::PointerMoved(
       None,
-      @dpi.PhysicalPositionF64::new(3.0, 4.0),
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
       true,
       @window_core.PointerSource::Mouse,
     ),
@@ -54,7 +58,7 @@ test "windows backend converts pointer movement and left button" {
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
-      @dpi.PhysicalPositionF64::new(5.0, 6.0),
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(5.0, 6.0),
       true,
       @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
     ),
@@ -115,7 +119,7 @@ test "windows backend converts close event" {
 
 ///|
 test "windows backend converts keyboard input event" {
-  let key_event = @window_core.KeyEvent::new(
+  let key_event = @window_core.KeyEvent::KeyEvent(
     @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::KeyA),
     @window_core.Key::Character("a"),
     @window_core.Key::Character("a"),
@@ -147,7 +151,7 @@ test "windows backend converts keyboard input event" {
 
 ///|
 test "windows backend converts named keys and ignores synthetic input" {
-  let key_event = @window_core.KeyEvent::new(
+  let key_event = @window_core.KeyEvent::KeyEvent(
     @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::Backspace),
     @window_core.Key::Named(@window_core.NamedKey::Backspace),
     @window_core.Key::Named(@window_core.NamedKey::Backspace),
