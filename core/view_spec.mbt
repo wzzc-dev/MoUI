@@ -343,6 +343,37 @@ pub(all) struct PickerViewSpec {
 }
 
 ///|
+pub(all) enum DatePickerMode {
+  Date
+  DateAndTime
+  Time
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct DateValue {
+  year : Int
+  month : Int
+  day : Int
+  hour : Int
+  minute : Int
+  second : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct DatePickerViewSpec {
+  key : Key?
+  selected : Binding[DateValue]
+  mode : DatePickerMode
+  placeholder : String
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  corner_radius : Double
+  min_date : DateValue?
+  max_date : DateValue?
+}
+
+///|
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -352,6 +383,7 @@ pub(all) enum ViewSpec {
   ImageSpec(ImageViewSpec)
   CheckboxSpec(CheckboxViewSpec)
   PickerSpec(PickerViewSpec)
+  DatePickerSpec(DatePickerViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)
@@ -540,6 +572,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     ImageSpec(data) => data.key
     CheckboxSpec(data) => data.key
     PickerSpec(data) => data.key
+    DatePickerSpec(data) => data.key
     FlexSpec(data) => data.key
     PaddingSpec(data) => data.key
     ContainerSpec(data) => data.key
@@ -566,6 +599,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     ImageSpec(data) => ImageSpec({ ..data, key: Some(key) })
     CheckboxSpec(data) => CheckboxSpec({ ..data, key: Some(key) })
     PickerSpec(data) => PickerSpec({ ..data, key: Some(key) })
+    DatePickerSpec(data) => DatePickerSpec({ ..data, key: Some(key) })
     FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
     PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
     ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
@@ -591,19 +625,20 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     ImageSpec(_) => 4
     CheckboxSpec(_) => 5
     PickerSpec(_) => 6
-    FlexSpec(_) => 7
-    PaddingSpec(_) => 8
-    ContainerSpec(_) => 9
-    SpacerSpec(_) => 10
-    FrameSpec(_) => 11
-    StackSpec(_) => 12
-    ScrollSpec(_) => 13
-    GridSpec(_) => 14
-    ListSpec(_) => 15
-    ModifiedSpec(_) => 16
-    CustomSpec(_) => 17
-    ComponentSpec(_) => 18
-    RichTextEditorSpec(_) => 19
+    DatePickerSpec(_) => 7
+    FlexSpec(_) => 8
+    PaddingSpec(_) => 9
+    ContainerSpec(_) => 10
+    SpacerSpec(_) => 11
+    FrameSpec(_) => 12
+    StackSpec(_) => 13
+    ScrollSpec(_) => 14
+    GridSpec(_) => 15
+    ListSpec(_) => 16
+    ModifiedSpec(_) => 17
+    CustomSpec(_) => 18
+    ComponentSpec(_) => 19
+    RichTextEditorSpec(_) => 20
   }
 }
 
@@ -942,6 +977,46 @@ pub fn ViewSpec::component(component : Component) -> ViewSpec {
 }
 
 ///|
+pub fn DateValue::new(
+  year~ : Int,
+  month~ : Int,
+  day~ : Int,
+  hour? : Int = 0,
+  minute? : Int = 0,
+  second? : Int = 0,
+) -> DateValue {
+  { year, month, day, hour, minute, second }
+}
+
+///|
+pub fn DateValue::today() -> DateValue {
+  { year: 2024, month: 1, day: 1, hour: 0, minute: 0, second: 0 }
+}
+
+///|
+pub fn DateValue::format(self : DateValue, mode : DatePickerMode) -> String {
+  match mode {
+    DatePickerMode::Date => "{self.year}-{self.month}-{self.day}"
+    DatePickerMode::DateAndTime => "{self.year}-{self.month}-{self.day} {self.hour}:{self.minute}"
+    DatePickerMode::Time => "{self.hour}:{self.minute}"
+  }
+}
+
+///|
+fn is_leap_year(year : Int) -> Bool {
+  year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+}
+
+///|
+fn days_in_month(year : Int, month : Int) -> Int {
+  match month {
+    1 | 3 | 5 | 7 | 8 | 10 | 12 => 31
+    4 | 6 | 9 | 11 => 30
+    2 => if is_leap_year(year) { 29 } else { 28 }
+    _ => 31
+  }
+}
+
 fn map_view_spec(value : ViewSpec?, f : (ViewSpec) -> ViewSpec) -> ViewSpec? {
   match value {
     Some(value) => Some(f(value))

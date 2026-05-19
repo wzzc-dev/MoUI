@@ -176,6 +176,8 @@ fn ElementNode::render_with_environment(
       append_checkbox_commands(commands, data, bounds, environment)
     PickerSpec(data) =>
       append_picker_commands(commands, self, data, bounds, environment)
+    DatePickerSpec(data) =>
+      append_datepicker_commands(commands, self, data, bounds, environment)
     FlexSpec(data) => {
       let frames = flex_child_frames(
         data.axis,
@@ -629,6 +631,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     ImageSpec(data) => data.size.unwrap_or(Size::new(width=0.0, height=0.0))
     CheckboxSpec(data) => checkbox_intrinsic_size(data)
     PickerSpec(_) => Size::new(width=200.0, height=40.0)
+    DatePickerSpec(_) => Size::new(width=200.0, height=40.0)
     SpacerSpec(data) =>
       if data.weight > 0.0 {
         Size::new(width=0.0, height=0.0)
@@ -700,6 +703,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     RichTextEditorSpec(_) => true
     CheckboxSpec(_) => true
     PickerSpec(_) => true
+    DatePickerSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     ModifiedSpec(data) =>
       data.modifier is BackgroundModifier(_) ||
@@ -1046,6 +1050,222 @@ fn append_picker_commands(
           ),
         ),
       )
+    }
+  }
+}
+
+///|
+fn append_datepicker_commands(
+  commands : Array[DrawCommand],
+  element : ElementNode,
+  data : DatePickerViewSpec,
+  frame : Rect,
+  environment : RenderEnvironment,
+) -> Unit {
+  let rounded = RoundedRect::new(rect=frame, radius=data.corner_radius)
+  let theme = Theme::default()
+  let border_color = Brush::solid(theme.palette.outline.with_alpha(0.5))
+  
+  // 绘制选择器背景和边框
+  commands.push(FillRoundedRectBrush(rounded, data.background))
+  commands.push(StrokeRoundedRectBrush(rounded, border_color, 1.0))
+  
+  // 显示选中的日期或占位符
+  let selected = data.selected.get()
+  let display_text = selected.format(data.mode)
+  let font = environment_font(environment, data.font)
+  let color = environment_color(environment, data.foreground)
+  commands.push(
+    DrawText(
+      TextRun::new(
+        text=display_text,
+        frame=frame.inset(Insets::symmetric(horizontal=12.0, vertical=0.0)),
+        font~,
+        color~,
+        align=TextAlign::TextStart,
+      ),
+    ),
+  )
+  
+  // 绘制箭头指示器
+  let arrow_size = 16.0
+  let arrow_frame = Rect::new(
+    x=frame.origin.x + frame.size.width - arrow_size - 12.0,
+    y=frame.origin.y + (frame.size.height - arrow_size) / 2.0,
+    width=arrow_size,
+    height=arrow_size,
+  )
+  commands.push(
+    DrawText(
+      TextRun::new(
+        text="▼",
+        frame=arrow_frame,
+        font=FontSpec::new(size=12.0),
+        color=data.foreground,
+      ),
+    ),
+  )
+  
+  // 展开时显示日期选择面板
+  if element.datepicker_expanded {
+    let panel_width = max_double(frame.size.width, 280.0)
+    let panel_height = 350.0
+    let panel_frame = Rect::new(
+      x=frame.origin.x,
+      y=frame.origin.y + frame.size.height + 4.0,
+      width=panel_width,
+      height=panel_height,
+    )
+    let panel_rounded = RoundedRect::new(rect=panel_frame, radius=8.0)
+    commands.push(DrawShadow(ShadowSpec::new(
+      rect=panel_rounded,
+      color=Color::black().with_alpha(0.15),
+      offset=Point::new(x=0.0, y=4.0),
+      blur_radius=12.0,
+      spread=0.0,
+    )))
+    commands.push(FillRoundedRectBrush(panel_rounded, data.background))
+    
+    // 绘制标题和导航
+    let header_height = 50.0
+    let header_frame = Rect::new(
+      x=panel_frame.origin.x,
+      y=panel_frame.origin.y,
+      width=panel_frame.size.width,
+      height=header_height,
+    )
+    let view_date = element.datepicker_view
+    let header_text = "{view_date.year}年{view_date.month}月"
+    commands.push(
+      DrawText(
+        TextRun::new(
+          text=header_text,
+          frame=header_frame,
+          font=FontSpec::new(size=16.0, weight=600),
+          color=data.foreground,
+        ),
+      ),
+    )
+    
+    // 绘制左右导航按钮
+    let button_size = 32.0
+    let left_button_frame = Rect::new(
+      x=panel_frame.origin.x + 8.0,
+      y=panel_frame.origin.y + (header_height - button_size) / 2.0,
+      width=button_size,
+      height=button_size,
+    )
+    let right_button_frame = Rect::new(
+      x=panel_frame.origin.x + panel_frame.size.width - button_size - 8.0,
+      y=panel_frame.origin.y + (header_height - button_size) / 2.0,
+      width=button_size,
+      height=button_size,
+    )
+    commands.push(
+      DrawText(
+        TextRun::new(
+          text="◀",
+          frame=left_button_frame,
+          font=FontSpec::new(size=18.0),
+          color=data.foreground,
+        ),
+      ),
+    )
+    commands.push(
+      DrawText(
+        TextRun::new(
+          text="▶",
+          frame=right_button_frame,
+          font=FontSpec::new(size=18.0),
+          color=data.foreground,
+        ),
+      ),
+    )
+    
+    // 绘制星期标题
+    let day_header_height = 36.0
+    let day_cell_width = panel_frame.size.width / 7.0
+    let day_names = ["日", "一", "二", "三", "四", "五", "六"]
+    let mut day_index = 0
+    while day_index < 7 {
+      let day = day_names[day_index]
+      let day_frame = Rect::new(
+        x=panel_frame.origin.x + day_index.to_double() * day_cell_width,
+        y=panel_frame.origin.y + header_height,
+        width=day_cell_width,
+        height=day_header_height,
+      )
+      commands.push(
+        DrawText(
+          TextRun::new(
+            text=day,
+            frame=day_frame,
+            font=FontSpec::new(size=12.0, weight=500),
+            color=data.foreground.with_alpha(0.6),
+          ),
+        ),
+      )
+      day_index = day_index + 1
+    }
+    
+    // 绘制日期网格
+    let cell_height = 36.0
+    let start_y = panel_frame.origin.y + header_height + day_header_height
+    
+    // 计算该月第一天是星期几 (0=周日, 1=周一...)
+    // 使用 Zeller 公式的简化版本
+    let year = view_date.year
+    let month = view_date.month
+    let q = 1
+    let m = if month < 3 { month + 12 } else { month }
+    let y = if month < 3 { year - 1 } else { year }
+    let k = y % 100
+    let j = y / 100
+    let h = (q + (13 * (m + 1)) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
+    let first_day_weekday = h
+    
+    let days_in_month_count = days_in_month(year, month)
+    
+    // 绘制当前月的日期
+    let mut day = 1
+    while day <= days_in_month_count {
+      let total_index = first_day_weekday + day - 1
+      let col = total_index % 7
+      let row = total_index / 7
+      let cell_frame = Rect::new(
+        x=panel_frame.origin.x + col.to_double() * day_cell_width,
+        y=start_y + row.to_double() * cell_height,
+        width=day_cell_width,
+        height=cell_height,
+      )
+      
+      let is_selected = selected.year == year && selected.month == month && selected.day == day
+      let cell_rounded = RoundedRect::new(
+        rect=cell_frame.inset(Insets::all(4.0)),
+        radius=18.0,
+      )
+      
+      if is_selected {
+        commands.push(FillRoundedRect(cell_rounded, theme.palette.primary))
+      }
+      
+      let day_color = if is_selected {
+        Color::white()
+      } else {
+        data.foreground
+      }
+      
+      commands.push(
+        DrawText(
+          TextRun::new(
+            text="{day}",
+            frame=cell_frame,
+            font=FontSpec::new(size=14.0),
+            color=day_color,
+          ),
+        ),
+      )
+      day = day + 1
     }
   }
 }

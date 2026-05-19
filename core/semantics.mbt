@@ -168,6 +168,13 @@ fn ElementNode::semantics_info(
         value: data.selected.get(),
         actions: [Focus, Activate],
       }
+    DatePickerSpec(data) =>
+      {
+        role: Menu,
+        label: data.placeholder,
+        value: data.selected.get().format(data.mode),
+        actions: [Focus, Activate],
+      }
     TextFieldSpec(data) =>
       {
         role: TextField,
