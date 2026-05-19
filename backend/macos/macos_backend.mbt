@@ -1,10 +1,15 @@
 ///|
 extern "C" fn macos_surface_host_layer_from_view(
-  raw_view_handle : UInt64,
+  raw_content_view_handle : UInt64,
   width : Int,
   height : Int,
   scale_factor : Double,
 ) -> @wgpu_c.OpaquePtr = "moui_macos_surface_host_layer_from_view"
+
+///|
+pub(all) suberror MacosSurfaceHostError {
+  MacosSurfaceHostLayerUnavailable(String)
+}
 
 ///|
 pub(all) struct MacosBackendInfo {
@@ -99,21 +104,55 @@ pub fn window_event_to_host_with_modifiers(
 
 ///|
 pub fn create_macos_host_surface(
-  raw_view_handle : UInt64,
+  raw_content_view_handle : UInt64,
   size : @core.Size,
   scale_factor? : Double = 1.0,
-) -> @wgpu_renderer.HostWgpuSurface raise @wgpu.WgpuError {
+) -> @wgpu_renderer.HostWgpuSurface raise Error {
   let instance = @wgpu.Instance::create()
-  let layer = macos_surface_host_layer_from_view(
-    raw_view_handle,
-    size_dim_to_int(size.width),
-    size_dim_to_int(size.height),
-    scale_factor,
+  let layer = macos_surface_host_layer_from_content_view(
+    raw_content_view_handle,
+    size,
+    scale_factor~,
   )
   let desc = @wgpu.surface_descriptor_metal_layer_new(layer)
   let surface = instance.create_surface(desc)
   @wgpu.surface_descriptor_free(desc)
   @wgpu_renderer.HostWgpuSurface::new(instance~, surface~)
+}
+
+///|
+fn sync_macos_host_surface(
+  raw_content_view_handle : UInt64,
+  size : @core.Size,
+  scale_factor? : Double = 1.0,
+) -> Unit raise Error {
+  ignore(
+    macos_surface_host_layer_from_content_view(
+      raw_content_view_handle,
+      size,
+      scale_factor~,
+    ),
+  )
+}
+
+///|
+fn macos_surface_host_layer_from_content_view(
+  raw_content_view_handle : UInt64,
+  size : @core.Size,
+  scale_factor~ : Double,
+) -> @wgpu_c.OpaquePtr raise MacosSurfaceHostError {
+  let layer = macos_surface_host_layer_from_view(
+    raw_content_view_handle,
+    size_dim_to_int(size.width),
+    size_dim_to_int(size.height),
+    scale_factor,
+  )
+  guard !@wgpu_c.opaque_ptr_is_null(layer) else {
+    raise MacosSurfaceHostError::MacosSurfaceHostLayerUnavailable(
+      "macOS CAMetalLayer bridge returned a null layer",
+    )
+  }
+  layer
 }
 
 ///|
@@ -154,21 +193,33 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
         scale_factor=window.scale_factor(),
       )
       ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
-      let renderer : @wgpu_renderer.WgpuRenderer? = Some(
-        @wgpu_renderer.create_with_host_surface(
-          renderer_metrics_from_host(metrics),
-          create_macos_host_surface(
-            window.window_handle(),
-            metrics.physical_size,
-            scale_factor=metrics.scale_factor,
-          ),
-        ),
-      ) catch {
+      let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
         err => {
-          println("error creating macOS WGPU renderer: \{err.message()}")
+          println("error resolving macOS content view handle: \{err}")
           event_loop.exit()
           None
         }
+      }
+      let renderer : @wgpu_renderer.WgpuRenderer? = match
+        raw_content_view_handle {
+        Some(raw_content_view_handle) =>
+          Some(
+            @wgpu_renderer.create_with_host_surface(
+              renderer_metrics_from_host(metrics),
+              create_macos_host_surface(
+                raw_content_view_handle,
+                metrics.physical_size,
+                scale_factor=metrics.scale_factor,
+              ),
+            ),
+          ) catch {
+            err => {
+              println("error creating macOS WGPU renderer: \{err}")
+              event_loop.exit()
+              None
+            }
+          }
+        None => None
       }
       self.renderer = renderer
       self.window = Some(window)
@@ -199,6 +250,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
             window.surface_size(),
             scale_factor=window.scale_factor(),
           )
+          self.sync_macos_surface_layer(window, metrics)
           renderer.resize(renderer_metrics_from_host(metrics))
           window.request_redraw()
         }
@@ -213,6 +265,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
             window.surface_size(),
             scale_factor=window.scale_factor(),
           )
+          self.sync_macos_surface_layer(window, metrics)
           renderer.resize(renderer_metrics_from_host(metrics))
           window.request_redraw()
         }
@@ -250,6 +303,32 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
         _ => ()
       }
     _ => self.dispatch_window_event(event)
+  }
+}
+
+///|
+fn MacosApp::sync_macos_surface_layer(
+  self : MacosApp,
+  window : @window_macos.Window,
+  metrics : @host.HostSurfaceMetrics,
+) -> Unit {
+  let _ = self
+  let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
+    err => {
+      println("error resolving macOS content view handle: \{err}")
+      None
+    }
+  }
+  match raw_content_view_handle {
+    Some(raw_content_view_handle) =>
+      sync_macos_host_surface(
+        raw_content_view_handle,
+        metrics.physical_size,
+        scale_factor=metrics.scale_factor,
+      ) catch {
+        err => println("error syncing macOS CAMetalLayer: \{err}")
+      }
+    None => ()
   }
 }
 
