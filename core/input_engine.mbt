@@ -9,6 +9,8 @@ pub fn ElementNode::dispatch_pointer(
       handle_button_element_pointer(self, data, event, render.frame)
     CheckboxSpec(data) =>
       handle_checkbox_element_pointer(self, data, event, render.frame)
+    PickerSpec(data) =>
+      handle_picker_element_pointer(self, data, event, render.frame)
     TextFieldSpec(_) => {
       let focused = if event.phase == PointerPhase::Down &&
         render.frame.contains(event.position) {
@@ -224,13 +226,59 @@ fn handle_checkbox_element_pointer(
 }
 
 ///|
+fn handle_picker_element_pointer(
+  element : ElementNode,
+  data : PickerViewSpec,
+  event : PointerEvent,
+  frame : Rect,
+) -> ElementEventResult {
+  let main_button_clicked = event.phase == PointerPhase::Up && frame.contains(event.position)
+  if element.picker_expanded {
+    let item_height = 36.0
+    let count = data.items.length().to_double()
+    let list_height = min_double(data.maxHeight, count * item_height)
+    let list_frame = Rect::new(
+      x=frame.origin.x,
+      y=frame.origin.y + frame.size.height + 4.0,
+      width=frame.size.width,
+      height=list_height,
+    )
+    if main_button_clicked && !list_frame.contains(event.position) {
+      element.picker_expanded = false
+      element.dirty.mark_paint()
+      { changed: true, activated: false, focused: None }
+    } else if main_button_clicked && list_frame.contains(event.position) {
+      let clicked_y = event.position.y - list_frame.origin.y
+      let clicked_index = (clicked_y / item_height).to_int()
+      if clicked_index >= 0 && clicked_index < data.items.length() {
+        let clicked_item = data.items[clicked_index]
+        data.selected.set(clicked_item.id)
+        element.picker_expanded = false
+        element.dirty.mark_paint()
+        { changed: true, activated: true, focused: None }
+      } else {
+        { changed: false, activated: false, focused: None }
+      }
+    } else {
+      { changed: false, activated: false, focused: None }
+    }
+  } else if main_button_clicked {
+    element.picker_expanded = true
+    element.dirty.mark_paint()
+    { changed: true, activated: false, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
 pub fn ElementNode::find_focusable_at(
   self : ElementNode,
   point : Point,
   render : RenderNode,
 ) -> ElementId? {
   match self.spec {
-    TextFieldSpec(_) | CheckboxSpec(_) | ButtonSpec(_) =>
+    TextFieldSpec(_) | CheckboxSpec(_) | ButtonSpec(_) | PickerSpec(_) =>
       if render.frame.contains(point) {
         Some(self.id)
       } else {

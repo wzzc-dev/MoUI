@@ -174,6 +174,8 @@ fn ElementNode::render_with_environment(
     }
     CheckboxSpec(data) =>
       append_checkbox_commands(commands, data, bounds, environment)
+    PickerSpec(data) =>
+      append_picker_commands(commands, self, data, bounds, environment)
     FlexSpec(data) => {
       let frames = flex_child_frames(
         data.axis,
@@ -626,6 +628,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     RichTextEditorSpec(data) => data.size
     ImageSpec(data) => data.size.unwrap_or(Size::new(width=0.0, height=0.0))
     CheckboxSpec(data) => checkbox_intrinsic_size(data)
+    PickerSpec(_) => Size::new(width=200.0, height=40.0)
     SpacerSpec(data) =>
       if data.weight > 0.0 {
         Size::new(width=0.0, height=0.0)
@@ -696,6 +699,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     TextFieldSpec(_) => true
     RichTextEditorSpec(_) => true
     CheckboxSpec(_) => true
+    PickerSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     ModifiedSpec(data) =>
       data.modifier is BackgroundModifier(_) ||
@@ -932,6 +936,118 @@ fn shadow_style_to_spec(
     blur_radius=style.blur_radius,
     spread=style.spread,
   )
+}
+
+///|
+fn append_picker_commands(
+  commands : Array[DrawCommand],
+  element : ElementNode,
+  data : PickerViewSpec,
+  frame : Rect,
+  environment : RenderEnvironment,
+) -> Unit {
+  let rounded = RoundedRect::new(rect=frame, radius=data.cornerRadius)
+  commands.push(FillRoundedRectBrush(rounded, data.background))
+  commands.push(
+    StrokeRoundedRectBrush(
+      rounded,
+      Brush::solid(Theme::default().palette.surface_variant),
+      1.0,
+    ),
+  )
+  let mut selected_label = data.placeholder
+  for item in data.items {
+    if item.id == data.selected.get() {
+      selected_label = item.label
+      break
+    }
+  }
+  let text_frame = frame.inset(Insets::symmetric(horizontal=12.0, vertical=0.0))
+  commands.push(
+    DrawText(
+      TextRun::new(
+        text=selected_label,
+        frame=text_frame,
+        font=environment_font(environment, data.font),
+        color=environment_color(environment, data.foreground),
+        align=TextAlign::TextStart,
+      ),
+    ),
+  )
+  let arrow_size = 12.0
+  let arrow_x = frame.origin.x + frame.size.width - arrow_size - 12.0
+  let arrow_y = frame.origin.y + (frame.size.height - arrow_size) / 2.0
+  let arrow_text = if element.picker_expanded { "▲" } else { "▼" }
+  commands.push(
+    DrawText(
+      TextRun::new(
+        text=arrow_text,
+        frame=Rect::new(
+          x=arrow_x,
+          y=arrow_y,
+          width=arrow_size,
+          height=arrow_size,
+        ),
+        font=FontSpec::new(size=arrow_size * 0.9, weight=400),
+        color=environment_color(environment, data.foreground),
+        align=TextAlign::TextCenter,
+      ),
+    ),
+  )
+  if element.picker_expanded {
+    let item_height = 36.0
+    let count = data.items.length().to_double()
+    let list_height = min_double(data.maxHeight, count * item_height)
+    let list_frame = Rect::new(
+      x=frame.origin.x,
+      y=frame.origin.y + frame.size.height + 4.0,
+      width=frame.size.width,
+      height=list_height,
+    )
+    let list_rounded = RoundedRect::new(rect=list_frame, radius=data.cornerRadius)
+    commands.push(DrawShadow(ShadowSpec::new(
+      rect=list_rounded,
+      color=Color::black().with_alpha(0.15),
+      offset=Point::new(x=0.0, y=4.0),
+      blur_radius=12.0,
+      spread=0.0,
+    )))
+    commands.push(FillRoundedRectBrush(list_rounded, data.background))
+    for i, item in data.items {
+      let index = i.to_double()
+      let item_frame = Rect::new(
+        x=list_frame.origin.x,
+        y=list_frame.origin.y + index * item_height,
+        width=list_frame.size.width,
+        height=item_height,
+      )
+      let is_selected = item.id == data.selected.get()
+      if is_selected {
+        commands.push(FillRoundedRectBrush(
+          RoundedRect::new(
+            rect=item_frame.inset(Insets::symmetric(horizontal=4.0, vertical=2.0)),
+            radius=4.0,
+          ),
+          Brush::solid(Theme::default().palette.primary.with_alpha(0.1)),
+        ))
+      }
+      commands.push(
+        DrawText(
+          TextRun::new(
+            text=item.label,
+            frame=item_frame.inset(Insets::symmetric(horizontal=12.0, vertical=0.0)),
+            font=environment_font(environment, data.font),
+            color=environment_color(environment, if is_selected {
+              Theme::default().palette.primary
+            } else {
+              data.foreground
+            }),
+            align=TextAlign::TextStart,
+          ),
+        ),
+      )
+    }
+  }
 }
 
 ///|

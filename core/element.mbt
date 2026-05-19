@@ -6,6 +6,7 @@ pub(all) struct ElementNode {
   mut children : Array[ElementNode]
   mut dirty : DirtyFlags
   mut button_state : ButtonState
+  mut picker_expanded : Bool
   mut caret : Int
   mut selection : TextRange?
   mut composition : String?
@@ -164,6 +165,7 @@ fn mount_view_spec_for_runtime(
       children,
       dirty: DirtyFlags::all(),
       button_state: ButtonState::Normal,
+      picker_expanded: false,
       caret: 0,
       selection: None,
       composition: None,

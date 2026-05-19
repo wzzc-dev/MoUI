@@ -161,6 +161,13 @@ fn ElementNode::semantics_info(
         },
         actions: [Focus, Activate],
       }
+    PickerSpec(data) =>
+      {
+        role: Menu,
+        label: data.placeholder,
+        value: data.selected.get(),
+        actions: [Focus, Activate],
+      }
     TextFieldSpec(data) =>
       {
         role: TextField,

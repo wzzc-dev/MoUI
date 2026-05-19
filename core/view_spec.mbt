@@ -324,6 +324,25 @@ pub(all) struct ComponentViewSpec {
 }
 
 ///|
+pub(all) struct PickerItem {
+  id : String
+  label : String
+}
+
+///|
+pub(all) struct PickerViewSpec {
+  key : Key?
+  items : Array[PickerItem]
+  selected : Binding[String]
+  placeholder : String
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  cornerRadius : Double
+  maxHeight : Double
+}
+
+///|
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -332,6 +351,7 @@ pub(all) enum ViewSpec {
   RichTextEditorSpec(RichTextEditorViewSpec)
   ImageSpec(ImageViewSpec)
   CheckboxSpec(CheckboxViewSpec)
+  PickerSpec(PickerViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)
@@ -519,6 +539,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     RichTextEditorSpec(data) => data.key
     ImageSpec(data) => data.key
     CheckboxSpec(data) => data.key
+    PickerSpec(data) => data.key
     FlexSpec(data) => data.key
     PaddingSpec(data) => data.key
     ContainerSpec(data) => data.key
@@ -544,6 +565,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     RichTextEditorSpec(data) => RichTextEditorSpec({ ..data, key: Some(key) })
     ImageSpec(data) => ImageSpec({ ..data, key: Some(key) })
     CheckboxSpec(data) => CheckboxSpec({ ..data, key: Some(key) })
+    PickerSpec(data) => PickerSpec({ ..data, key: Some(key) })
     FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
     PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
     ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
@@ -568,19 +590,20 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     TextFieldSpec(_) => 3
     ImageSpec(_) => 4
     CheckboxSpec(_) => 5
-    FlexSpec(_) => 6
-    PaddingSpec(_) => 7
-    ContainerSpec(_) => 8
-    SpacerSpec(_) => 9
-    FrameSpec(_) => 10
-    StackSpec(_) => 11
-    ScrollSpec(_) => 12
-    GridSpec(_) => 13
-    ListSpec(_) => 14
-    ModifiedSpec(_) => 15
-    CustomSpec(_) => 16
-    ComponentSpec(_) => 17
-    RichTextEditorSpec(_) => 18
+    PickerSpec(_) => 6
+    FlexSpec(_) => 7
+    PaddingSpec(_) => 8
+    ContainerSpec(_) => 9
+    SpacerSpec(_) => 10
+    FrameSpec(_) => 11
+    StackSpec(_) => 12
+    ScrollSpec(_) => 13
+    GridSpec(_) => 14
+    ListSpec(_) => 15
+    ModifiedSpec(_) => 16
+    CustomSpec(_) => 17
+    ComponentSpec(_) => 18
+    RichTextEditorSpec(_) => 19
   }
 }
 
