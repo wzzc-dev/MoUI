@@ -12,8 +12,9 @@ Run the bounded development check for routine work:
 sh scripts/dev-check.sh
 ```
 
-This keeps feedback fast by running stable package-level tests and Web wasm-gc
-example builds without invoking every native or wasm-gc target.
+This keeps feedback fast by running stable package-level tests, native renderer
+contract tests, and Web wasm-gc example builds without invoking every native or
+wasm-gc target.
 
 ## Focused Package Tests
 
@@ -32,6 +33,11 @@ moon test examples/markdown_editor/app --target native
 ```
 
 Run `moon fmt` before handoff so MoonBit source stays normalized.
+
+Use `moon check --warn-list +unnecessary_annotation` as a cleanup audit before
+or during public API reviews. Treat new unnecessary annotations as cleanup work,
+but do not require this stricter audit to be warning-free for every inner-loop
+change until existing warnings are resolved.
 
 ## Platform Validation
 
@@ -94,4 +100,6 @@ moon info
 ```
 
 Also confirm README and docs mention current commands, platform constraints,
-example paths, and renderer capability status.
+example paths, and renderer capability status. If the release includes warning
+cleanup, include `moon check --warn-list +unnecessary_annotation` and review the
+remaining diagnostics explicitly.
