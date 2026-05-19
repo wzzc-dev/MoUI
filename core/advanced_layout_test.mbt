@@ -85,6 +85,45 @@ test "scroll clip wraps child draw commands in collected paint order" {
 }
 
 ///|
+test "modifier order changes background frame around padding" {
+  let inner_background = test_label("A").background(Color::blue()).padding(8.0)
+  let outer_background = test_label("A").padding(8.0).background(Color::blue())
+  let inner_commands : Array[DrawCommand] = []
+  mount_view_spec(inner_background)
+  .render(Rect::new(x=0.0, y=0.0, width=96.0, height=40.0))
+  .collect_draw_commands(inner_commands)
+  let outer_commands : Array[DrawCommand] = []
+  mount_view_spec(outer_background)
+  .render(Rect::new(x=0.0, y=0.0, width=96.0, height=40.0))
+  .collect_draw_commands(outer_commands)
+  guard inner_commands[0] is FillRoundedRectBrush({ rect: inner_rect, .. }, _) else {
+    fail("expected inner background")
+  }
+  guard outer_commands[0] is FillRoundedRectBrush({ rect: outer_rect, .. }, _) else {
+    fail("expected outer background")
+  }
+  inspect(inner_rect.origin.x, content="8")
+  inspect(inner_rect.size.width, content="80")
+  inspect(outer_rect.origin.x, content="0")
+  inspect(outer_rect.size.width, content="96")
+}
+
+///|
+test "opacity and clip modifiers preserve nested push pop order" {
+  let spec = test_label("A").clip().opacity(0.5)
+  let commands : Array[DrawCommand] = []
+  mount_view_spec(spec)
+  .render(Rect::new(x=0.0, y=0.0, width=80.0, height=20.0))
+  .collect_draw_commands(commands)
+  inspect(commands.length(), content="5")
+  assert_true(commands[0] is PushOpacity(0.5))
+  assert_true(commands[1] is PushClip(_))
+  assert_true(commands[2] is DrawText(_))
+  assert_true(commands[3] is PopClip)
+  assert_true(commands[4] is PopOpacity)
+}
+
+///|
 test "grid lays children into fixed columns" {
   let grid = ViewSpec::GridSpec({
     key: None,
