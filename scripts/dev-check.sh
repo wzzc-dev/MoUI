@@ -48,6 +48,7 @@ run moon check
 run moon test core --target native
 run moon test views --target native
 run moon test render --target native
+run moon test render/wgpu --target native
 run moon test backend/host --target native
 
 run moon test render/webgpu_adapter --target wasm-gc

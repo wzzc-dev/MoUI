@@ -47,8 +47,9 @@ For routine local development, prefer the bounded daily check:
 sh scripts/dev-check.sh
 ```
 
-It runs stable package-level tests and Web wasm-gc example builds without
-invoking all-repository native or wasm-gc test targets.
+It runs stable package-level tests, native renderer contract tests, and Web
+wasm-gc example builds without invoking all-repository native or wasm-gc test
+targets.
 
 Current-platform backend tests can be included without native example builds:
 
@@ -68,6 +69,7 @@ sh scripts/dev-check.sh --platform-examples-build
 Useful focused commands:
 
 ```sh
+moon test render/wgpu --target native
 moon test render/webgpu_adapter --target wasm-gc
 moon test backend/web --target wasm-gc
 moon test examples/showcase/app --target native
