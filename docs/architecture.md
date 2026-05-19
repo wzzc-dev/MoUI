@@ -41,6 +41,7 @@ examples/showcase/web_wasm/   Web showcase on wasm-gc
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos/ macOS native Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
+examples/markdown_editor/windows/ Windows native Markdown editor
 ```
 
 ## Spec API
@@ -93,6 +94,9 @@ ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand 
   clip, image, and text intent.
 - Backends normalize platform events into `HostEvent`; they do not own UI
   state or mutate element/render trees directly.
+- `HostRuntimeDriver` owns redraw scheduling at the host boundary, dispatches
+  normalized events into `AppRuntime`, and exposes platform-neutral draw
+  commands for renderers.
 
 ## State And Binding
 
@@ -202,6 +206,19 @@ let swatch = @core.ViewSpec::custom(
   semantics_label="Color swatch",
 )
 ```
+
+## Platform Host Contract
+
+`backend/host` is the shared boundary between platform packages and the
+platform-neutral runtime. It defines `HostSurfaceMetrics`, input capabilities,
+coordinate policies, `HostEvent`, text input session synchronization, and
+`HostRuntimeDriver`. Web, macOS, and Windows should convert their native window
+events into `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
+`DrawCommand` values. Linux currently keeps the same contract shape as a
+scaffold until a real window backend exists.
+
+See [Platform notes](platform-notes.md) for setup, backend-specific constraints,
+and validation commands.
 
 ## Accessibility
 
