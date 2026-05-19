@@ -33,7 +33,9 @@ supported targets.
 
 Use `sh scripts/setup-local-deps.sh` to create or repair the local checkout and
 `sh scripts/check-local-deps.sh` to verify that it points at the
-`wzzc-dev/window` fork on the `moui-support` branch.
+`wzzc-dev/window` fork on the `moui-support` branch. The upstream remote is
+`https://github.com/moonbit-community/window.git`; the MoUI fork remote is
+`git@github.com:wzzc-dev/window.git`.
 
 `.local_repos/window` is an editable local dependency, not a vendored snapshot
 or submodule. It exists because upstream `moonbit-community/window` currently
@@ -43,6 +45,12 @@ platform packages and their package-local tests/docs when possible. Avoid
 changing `macos/`, shared packages such as `core/` and `dpi/`, or common
 behavior unless the task explicitly requires it; keeping the fork narrow makes
 future upstreaming safer.
+
+When asked to merge upstream `window` changes, work inside `.local_repos/window`
+on `moui-support`, fetch `upstream`, and merge the upstream branch into the fork
+branch. Preserve upstream macOS and shared behavior where possible; resolve
+conflicts by keeping MoUI-specific additions scoped to Web, Windows, and Linux
+unless the user explicitly approves broader fork changes.
 
 ## MoonBit Package Rules
 

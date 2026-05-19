@@ -20,6 +20,14 @@ case "$(git -C "$WINDOW_DIR" remote get-url origin 2>/dev/null || true)" in
     ;;
 esac
 
+case "$(git -C "$WINDOW_DIR" remote get-url upstream 2>/dev/null || true)" in
+  *moonbit-community/window.git|*moonbit-community/window)
+    ;;
+  *)
+    fail ".local_repos/window upstream remote must point at moonbit-community/window; run sh scripts/setup-local-deps.sh"
+    ;;
+esac
+
 [ "$(git -C "$WINDOW_DIR" branch --show-current)" = "$WINDOW_BRANCH" ] ||
   fail ".local_repos/window must be on branch $WINDOW_BRANCH"
 
