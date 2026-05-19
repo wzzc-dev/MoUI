@@ -5,6 +5,20 @@ priv struct TextEditResult {
 }
 
 ///|
+priv enum TextCaretDirection {
+  MoveLeft
+  MoveRight
+  MoveStart
+  MoveEnd
+}
+
+///|
+priv struct TextCaretMoveResult {
+  caret : Int
+  selection : TextRange?
+}
+
+///|
 fn apply_text_edit(
   element : ElementNode,
   data : TextFieldViewSpec,
@@ -18,6 +32,28 @@ fn apply_text_edit(
     element.caret = edit.caret
     element.selection = None
     element.composition = None
+    element.composition_cursor = None
+    element.dirty.mark_paint()
+    { changed: true, activated: false, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn apply_text_caret_move(
+  element : ElementNode,
+  caret_move : TextCaretMoveResult,
+) -> ElementEventResult {
+  let changed = element.caret != caret_move.caret ||
+    element.selection != caret_move.selection ||
+    element.composition is Some(_) ||
+    element.composition_cursor is Some(_)
+  if changed {
+    element.caret = caret_move.caret
+    element.selection = caret_move.selection
+    element.composition = None
+    element.composition_cursor = None
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
   } else {
@@ -34,11 +70,13 @@ fn apply_multiline_text_edit(
   if edit.text != data.value.get() ||
     edit.caret != element.caret ||
     element.selection is Some(_) ||
-    element.composition is Some(_) {
+    element.composition is Some(_) ||
+    element.composition_cursor is Some(_) {
     data.value.set(edit.text)
     element.caret = edit.caret
     element.selection = None
     element.composition = None
+    element.composition_cursor = None
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
   } else {
@@ -78,6 +116,87 @@ fn replace_text_range(
 }
 
 ///|
+fn active_text_selection(selection : TextRange?) -> TextRange? {
+  match selection {
+    Some(selection) => {
+      let normalized = selection.normalized()
+      if normalized.is_collapsed() {
+        None
+      } else {
+        Some(normalized)
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn text_selection_anchor(caret : Int, selection : TextRange?) -> Int {
+  match selection {
+    Some(selection) =>
+      if caret == selection.start {
+        selection.end
+      } else {
+        selection.start
+      }
+    None => caret
+  }
+}
+
+///|
+fn move_text_caret(
+  text : String,
+  caret : Int,
+  selection : TextRange?,
+  direction : TextCaretDirection,
+  extend~ : Bool,
+) -> TextCaretMoveResult {
+  let length = text_length(text)
+  let caret = clamp_int(caret, 0, length)
+  if extend {
+    let anchor = clamp_int(text_selection_anchor(caret, selection), 0, length)
+    let next = move_text_caret_index(caret, length, direction)
+    {
+      caret: next,
+      selection: if next == anchor {
+        None
+      } else {
+        Some(TextRange::new(start=anchor, end=next))
+      },
+    }
+  } else {
+    match active_text_selection(selection) {
+      Some(selection) =>
+        match direction {
+          MoveLeft => { caret: selection.start, selection: None }
+          MoveRight => { caret: selection.end, selection: None }
+          MoveStart => { caret: 0, selection: None }
+          MoveEnd => { caret: length, selection: None }
+        }
+      None =>
+        {
+          caret: move_text_caret_index(caret, length, direction),
+          selection: None,
+        }
+    }
+  }
+}
+
+///|
+fn move_text_caret_index(
+  caret : Int,
+  length : Int,
+  direction : TextCaretDirection,
+) -> Int {
+  match direction {
+    MoveLeft => clamp_int(caret - 1, 0, length)
+    MoveRight => clamp_int(caret + 1, 0, length)
+    MoveStart => 0
+    MoveEnd => length
+  }
+}
+
+///|
 fn surrounding_delete_range(
   text : String,
   caret : Int,
@@ -105,9 +224,10 @@ fn text_with_composition(
   } else {
     match element.composition {
       Some(composition) =>
-        replace_text_range(
+        replace_current_selection(
           text,
-          TextRange::collapsed(element.caret),
+          element.caret,
+          element.selection,
           composition,
         ).text
       None => text
@@ -127,9 +247,22 @@ fn text_field_visual_caret(
   } else {
     match element.composition {
       Some(composition) =>
-        caret + composition_cursor_offset(element, composition)
+        composition_start_index(text, element.caret, element.selection) +
+        composition_cursor_offset(element, composition)
       None => caret
     }
+  }
+}
+
+///|
+fn composition_start_index(
+  text : String,
+  caret : Int,
+  selection : TextRange?,
+) -> Int {
+  match active_text_selection(selection) {
+    Some(selection) => selection.start
+    None => clamp_int(caret, 0, text_length(text))
   }
 }
 
@@ -139,7 +272,7 @@ fn composition_cursor_offset(
   composition : String,
 ) -> Int {
   let length = text_length(composition)
-  match element.selection {
+  match element.composition_cursor {
     Some(cursor) => {
       let normalized = cursor.normalized()
       clamp_int(normalized.end, 0, length)
@@ -201,6 +334,8 @@ fn move_multiline_caret_vertical(
   }
   element.caret = min_int(next_start + column, next_end)
   element.selection = None
+  element.composition = None
+  element.composition_cursor = None
   element.dirty.mark_paint()
   { changed: true, activated: false, focused: None }
 }
@@ -226,7 +361,7 @@ fn handle_rich_text_editor_input(
     }
     CompositionStart => {
       element.composition = Some("")
-      element.selection = None
+      element.composition_cursor = None
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
@@ -241,24 +376,25 @@ fn handle_rich_text_editor_input(
           let normalized = cursor.normalized()
           let start = clamp_int(normalized.start, 0, text_length(update.text))
           let end = clamp_int(normalized.end, 0, text_length(update.text))
-          element.selection = Some(TextRange::new(start~, end~))
+          element.composition_cursor = Some(TextRange::new(start~, end~))
         }
-        None => ()
+        None => element.composition_cursor = None
       }
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
     CompositionEnd(text) => {
       element.composition = None
-      element.selection = None
+      element.composition_cursor = None
       if text == "" {
+        element.selection = None
         element.dirty.mark_paint()
         { changed: true, activated: false, focused: None }
       } else {
         let edit = replace_current_selection(
           data.value.get(),
           element.caret,
-          None,
+          element.selection,
           text,
         )
         apply_multiline_text_edit(element, data, edit)

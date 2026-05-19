@@ -697,6 +697,93 @@ test "text input events edit at caret and support delete ranges" {
 }
 
 ///|
+test "text field keyboard selection replaces and deletes ranges" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("abcd")))
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(
+        key="ArrowLeft",
+        modifiers=KeyModifiers::new(shift=true),
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(
+        key="ArrowLeft",
+        modifiers=KeyModifiers::new(shift=true),
+      ),
+    ),
+  )
+  let input = runtime.focused_text_input()
+  inspect(input.caret, content="2")
+  match input.selection {
+    Some(selection) => {
+      inspect(selection.normalized().start, content="2")
+      inspect(selection.normalized().end, content="4")
+    }
+    None => fail("expected selection")
+  }
+  runtime.dispatch_event(TextInput(InsertText("X")))
+  inspect(state.get(), content="abX")
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Home")))
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(key="End", modifiers=KeyModifiers::new(shift=true)),
+    ),
+  )
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Backspace")))
+  inspect(state.get(), content="")
+}
+
+///|
+test "text field selection draws highlight before text" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("abc")))
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(
+        key="ArrowLeft",
+        modifiers=KeyModifiers::new(shift=true),
+      ),
+    ),
+  )
+  let commands = runtime.build_draw_commands()
+  guard commands[3] is FillRect(_, color) else {
+    fail("expected selection highlight")
+  }
+  inspect(color.a, content="0.18")
+  guard commands[4] is DrawText({ text: "abc", .. }) else {
+    fail("expected text after highlight")
+  }
+}
+
+///|
 test "ime composition updates paint preview and commit into text field" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(
@@ -862,7 +949,50 @@ test "focused text input caret rect follows ime composition cursor" {
   )
   let input = runtime.focused_text_input()
   inspect(input.caret, content="0")
+  match input.composition_cursor {
+    Some(cursor) => inspect(cursor.end, content="1")
+    None => fail("expected composition cursor")
+  }
   inspect(input.caret_rect.origin.x, content="26")
+}
+
+///|
+test "buttons participate in focus traversal and keyboard activation" {
+  let clicks = Ref(0)
+  let value = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=ViewSpec::FlexSpec({
+      key: None,
+      axis: Axis::Vertical,
+      spacing: 8.0,
+      main_axis_alignment: MainStart,
+      cross_axis_alignment: CrossStretch,
+      children: [
+        ViewSpec::ButtonSpec({
+          key: None,
+          text: "Run",
+          size: Size::new(width=120.0, height=40.0),
+          font: FontSpec::new(size=16.0, weight=600),
+          foreground: Color::black(),
+          background: Brush::solid(Color::gray()),
+          hovered_background: Brush::solid(Color::gray()),
+          pressed_background: Brush::solid(Color::blue()),
+          border: None,
+          shadow: None,
+          corner_radius: 0.0,
+          on_click: Some(() => clicks.val = clicks.val + 1),
+        }),
+        test_text_field(value.binding()),
+      ],
+    }),
+    size=Size::new(width=160.0, height=120.0),
+  )
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Tab")))
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Enter")))
+  inspect(clicks.val, content="1")
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Tab")))
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="x", text=Some("x"))))
+  inspect(value.get(), content="x")
 }
 
 ///|

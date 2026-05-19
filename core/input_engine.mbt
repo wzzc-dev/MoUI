@@ -15,6 +15,7 @@ pub fn ElementNode::dispatch_pointer(
         self.caret = text_field_text_length(self.spec)
         self.selection = None
         self.composition = None
+        self.composition_cursor = None
         Some(self.id)
       } else {
         None
@@ -223,13 +224,13 @@ fn handle_checkbox_element_pointer(
 }
 
 ///|
-pub fn ElementNode::find_text_field_at(
+pub fn ElementNode::find_focusable_at(
   self : ElementNode,
   point : Point,
   render : RenderNode,
 ) -> ElementId? {
   match self.spec {
-    TextFieldSpec(_) =>
+    TextFieldSpec(_) | CheckboxSpec(_) | ButtonSpec(_) =>
       if render.frame.contains(point) {
         Some(self.id)
       } else {
@@ -255,7 +256,7 @@ pub fn ElementNode::find_text_field_at(
         if index < render.children.length() &&
           render.children[index].frame.contains(point) {
           match
-            self.children[index].find_text_field_at(
+            self.children[index].find_focusable_at(
               point,
               render.children[index],
             ) {
@@ -270,13 +271,19 @@ pub fn ElementNode::find_text_field_at(
     ModifiedSpec(data) =>
       match data.modifier {
         DisabledModifier(true) => None
+        FocusableModifier(true) =>
+          if render.frame.contains(point) {
+            Some(self.id)
+          } else {
+            None
+          }
         _ => {
           let mut index = self.children.length() - 1
           while index >= 0 {
             if index < render.children.length() &&
               render.children[index].frame.contains(point) {
               match
-                self.children[index].find_text_field_at(
+                self.children[index].find_focusable_at(
                   point,
                   render.children[index],
                 ) {
@@ -299,8 +306,10 @@ pub fn ElementNode::focusable_ids(
   ids : Array[ElementId],
 ) -> Unit {
   match self.spec {
-    TextFieldSpec(_) | RichTextEditorSpec(_) | CheckboxSpec(_) =>
-      ids.push(self.id)
+    TextFieldSpec(_)
+    | RichTextEditorSpec(_)
+    | ButtonSpec(_)
+    | CheckboxSpec(_) => ids.push(self.id)
     ModifiedSpec(data) =>
       match data.modifier {
         DisabledModifier(true) => ()
@@ -390,7 +399,9 @@ pub fn ElementNode::dispatch_keyboard(
       TextFieldSpec(data) => handle_text_field_keyboard(self, data, event)
       RichTextEditorSpec(data) =>
         handle_rich_text_editor_keyboard(self, data, event)
+      ButtonSpec(data) => handle_button_keyboard(self, data, event)
       CheckboxSpec(data) => handle_checkbox_keyboard(self, data, event)
+      ModifiedSpec(data) => handle_focused_modified_keyboard(self, data, event)
       _ => { changed: false, activated: false, focused: None }
     }
   } else {
@@ -542,30 +553,68 @@ fn handle_text_field_keyboard(
     return { changed: true, activated: true, focused: None }
   }
   if event.key == "Backspace" {
-    return handle_text_field_input(element, data, DeleteSurrounding(1, 0))
+    match active_text_selection(element.selection) {
+      Some(selection) =>
+        return handle_text_field_input(element, data, DeleteRange(selection))
+      None =>
+        return handle_text_field_input(element, data, DeleteSurrounding(1, 0))
+    }
   }
   if event.key == "Delete" {
-    return handle_text_field_input(element, data, DeleteSurrounding(0, 1))
+    match active_text_selection(element.selection) {
+      Some(selection) =>
+        return handle_text_field_input(element, data, DeleteRange(selection))
+      None =>
+        return handle_text_field_input(element, data, DeleteSurrounding(0, 1))
+    }
   }
   if event.key == "ArrowLeft" {
-    element.caret = clamp_int(
-      element.caret - 1,
-      0,
-      text_length(data.value.get()),
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.value.get(),
+        element.caret,
+        element.selection,
+        MoveLeft,
+        extend=event.modifiers.shift,
+      ),
     )
-    element.selection = None
-    element.dirty.mark_paint()
-    return { changed: true, activated: false, focused: None }
   }
   if event.key == "ArrowRight" {
-    element.caret = clamp_int(
-      element.caret + 1,
-      0,
-      text_length(data.value.get()),
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.value.get(),
+        element.caret,
+        element.selection,
+        MoveRight,
+        extend=event.modifiers.shift,
+      ),
     )
-    element.selection = None
-    element.dirty.mark_paint()
-    return { changed: true, activated: false, focused: None }
+  }
+  if event.key == "Home" {
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.value.get(),
+        element.caret,
+        element.selection,
+        MoveStart,
+        extend=event.modifiers.shift,
+      ),
+    )
+  }
+  if event.key == "End" {
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.value.get(),
+        element.caret,
+        element.selection,
+        MoveEnd,
+        extend=event.modifiers.shift,
+      ),
+    )
   }
   match event.text {
     Some(text) =>
@@ -591,30 +640,60 @@ fn handle_rich_text_editor_keyboard(
     return handle_rich_text_editor_input(element, data, InsertText("\n"))
   }
   if event.key == "Backspace" {
-    return handle_rich_text_editor_input(element, data, DeleteSurrounding(1, 0))
+    match active_text_selection(element.selection) {
+      Some(selection) =>
+        return handle_rich_text_editor_input(
+          element,
+          data,
+          DeleteRange(selection),
+        )
+      None =>
+        return handle_rich_text_editor_input(
+          element,
+          data,
+          DeleteSurrounding(1, 0),
+        )
+    }
   }
   if event.key == "Delete" {
-    return handle_rich_text_editor_input(element, data, DeleteSurrounding(0, 1))
+    match active_text_selection(element.selection) {
+      Some(selection) =>
+        return handle_rich_text_editor_input(
+          element,
+          data,
+          DeleteRange(selection),
+        )
+      None =>
+        return handle_rich_text_editor_input(
+          element,
+          data,
+          DeleteSurrounding(0, 1),
+        )
+    }
   }
   if event.key == "ArrowLeft" {
-    element.caret = clamp_int(
-      element.caret - 1,
-      0,
-      text_length(data.value.get()),
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.value.get(),
+        element.caret,
+        element.selection,
+        MoveLeft,
+        extend=event.modifiers.shift,
+      ),
     )
-    element.selection = None
-    element.dirty.mark_paint()
-    return { changed: true, activated: false, focused: None }
   }
   if event.key == "ArrowRight" {
-    element.caret = clamp_int(
-      element.caret + 1,
-      0,
-      text_length(data.value.get()),
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.value.get(),
+        element.caret,
+        element.selection,
+        MoveRight,
+        extend=event.modifiers.shift,
+      ),
     )
-    element.selection = None
-    element.dirty.mark_paint()
-    return { changed: true, activated: false, focused: None }
   }
   if event.key == "ArrowUp" {
     return move_multiline_caret_vertical(element, data, -1)
@@ -642,6 +721,45 @@ fn handle_rich_text_editor_keyboard(
         { changed: false, activated: false, focused: None }
       }
     None => { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn handle_button_keyboard(
+  element : ElementNode,
+  data : ButtonViewSpec,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  if event.pressed &&
+    (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+    match data.on_click {
+      Some(handler) => handler()
+      None => ()
+    }
+    element.dirty.mark_paint()
+    { changed: true, activated: true, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn handle_focused_modified_keyboard(
+  element : ElementNode,
+  data : ModifiedViewSpec,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  match data.modifier {
+    DisabledModifier(true) =>
+      { changed: false, activated: false, focused: None }
+    FocusableModifier(true) =>
+      if event.pressed &&
+        (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+        element.activate_first_child()
+      } else {
+        { changed: false, activated: false, focused: None }
+      }
+    _ => { changed: false, activated: false, focused: None }
   }
 }
 
@@ -682,7 +800,7 @@ fn handle_text_field_input(
     }
     CompositionStart => {
       element.composition = Some("")
-      element.selection = None
+      element.composition_cursor = None
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
@@ -697,24 +815,25 @@ fn handle_text_field_input(
           let normalized = cursor.normalized()
           let start = clamp_int(normalized.start, 0, text_length(update.text))
           let end = clamp_int(normalized.end, 0, text_length(update.text))
-          element.selection = Some(TextRange::new(start~, end~))
+          element.composition_cursor = Some(TextRange::new(start~, end~))
         }
-        None => ()
+        None => element.composition_cursor = None
       }
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
     CompositionEnd(text) => {
       element.composition = None
-      element.selection = None
+      element.composition_cursor = None
       if text == "" {
+        element.selection = None
         element.dirty.mark_paint()
         { changed: true, activated: false, focused: None }
       } else {
         let edit = replace_current_selection(
           data.value.get(),
           element.caret,
-          None,
+          element.selection,
           text,
         )
         apply_text_edit(element, data, edit)

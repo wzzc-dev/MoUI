@@ -308,6 +308,7 @@ test "text input session enables ime when surrounding text is too long" {
     caret: 0,
     selection: None,
     composition: None,
+    composition_cursor: None,
     frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
     caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
   }
