@@ -286,3 +286,39 @@ test "layout and paint caches skip unchanged sibling components" {
   inspect(left_measure.val, content="3")
   inspect(right_measure.val, content="2")
 }
+
+///|
+test "derived state recomputes through build context subscriptions" {
+  let left = State::new(1)
+  let right = State::new(2)
+  let total = DerivedState::combine(left, right, (a, b) => a + b)
+  let builds = Ref(0)
+  let runtime = RuntimeState::new_component(
+    root=Component::new(ctx => {
+      builds.val = builds.val + 1
+      ViewSpec::TextSpec({
+        key: None,
+        text: "Total \{ctx.watch_derived(total)}",
+        size: Size::new(width=120.0, height=24.0),
+        font: FontSpec::new(size=12.0, weight=400),
+        color: Color::black(),
+      })
+    }),
+    size=Size::new(width=120.0, height=24.0),
+  )
+  let first = runtime.build_draw_commands()
+  guard first[1] is DrawText({ text: "Total 3", .. }) else {
+    fail("expected initial derived value")
+  }
+  left.set(4)
+  let second = runtime.build_draw_commands()
+  guard second[1] is DrawText({ text: "Total 6", .. }) else {
+    fail("expected derived value after left update")
+  }
+  right.set(10)
+  let third = runtime.build_draw_commands()
+  guard third[1] is DrawText({ text: "Total 14", .. }) else {
+    fail("expected derived value after right update")
+  }
+  assert_true(builds.val >= 3)
+}

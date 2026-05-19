@@ -99,6 +99,7 @@ pub fn AppRuntime::animation_count(Self) -> Int
 pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dispatch_event(Self, AppEvent) -> Unit
 pub fn AppRuntime::draw_commands(Self) -> Array[DrawCommand]
+pub fn AppRuntime::environment(Self) -> Environment
 pub fn AppRuntime::focused_text_input(Self) -> TextInputState
 pub fn AppRuntime::layout_pass(Self) -> Unit
 pub fn AppRuntime::mount(Self, ViewSpec) -> Unit
@@ -106,11 +107,12 @@ pub fn AppRuntime::needs_layout(Self) -> Bool
 pub fn AppRuntime::needs_paint(Self) -> Bool
 pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
-pub fn AppRuntime::new_component(root~ : Component, size~ : Size) -> Self
-pub fn AppRuntime::new_spec(root~ : ViewSpec, size~ : Size) -> Self
+pub fn AppRuntime::new_component(root~ : Component, size~ : Size, environment? : Environment) -> Self
+pub fn AppRuntime::new_spec(root~ : ViewSpec, size~ : Size, environment? : Environment) -> Self
 pub fn AppRuntime::paint_pass(Self) -> Array[DrawCommand]
 pub fn AppRuntime::rebuild(Self) -> Unit
 pub fn AppRuntime::semantics(Self) -> SemanticsNode
+pub fn AppRuntime::set_environment(Self, Environment) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_root_spec(Self, ViewSpec) -> Unit
 pub fn AppRuntime::size(Self) -> Size
@@ -148,9 +150,18 @@ pub(all) struct BuildContext {
   runtime : RuntimeState
   component_id : ElementId
   subscriptions : Array[StateSubscription]
+  environment : Environment
 }
 pub fn[T] BuildContext::binding(Self, State[T]) -> Binding[T]
+pub fn BuildContext::color_scheme(Self) -> ColorScheme
+pub fn BuildContext::enabled(Self) -> Bool
+pub fn BuildContext::environment(Self) -> Environment
+pub fn BuildContext::locale(Self) -> String
+pub fn BuildContext::scale_factor(Self) -> Double
+pub fn BuildContext::text_scale(Self) -> Double
+pub fn BuildContext::theme(Self) -> Theme
 pub fn[T] BuildContext::watch(Self, State[T]) -> T
+pub fn[T] BuildContext::watch_derived(Self, DerivedState[T]) -> T
 pub fn BuildContext::watch_focus(Self, FocusState) -> String?
 pub fn BuildContext::watch_navigation(Self, NavigationState) -> Array[String]
 pub fn BuildContext::watch_scroll(Self, ScrollState) -> Point
@@ -297,6 +308,16 @@ pub(all) struct CustomViewSpec {
   semantics_label : String
 }
 
+pub(all) struct DerivedState[T] {
+  get_value : () -> T
+  subscribe_value : (() -> Unit) -> Array[StateSubscription]
+}
+pub fn[A, B, T] DerivedState::combine(State[A], State[B], (A, B) -> T) -> Self[T]
+pub fn[T, U] DerivedState::from_state(State[T], (T) -> U) -> Self[U]
+pub fn[T] DerivedState::get(Self[T]) -> T
+pub fn[T] DerivedState::new(get~ : () -> T, subscribe~ : (() -> Unit) -> Array[StateSubscription]) -> Self[T]
+pub fn[T] DerivedState::subscribe(Self[T], () -> Unit) -> Array[StateSubscription]
+
 pub(all) struct DirtyFlags {
   mut needs_build : Bool
   mut needs_layout : Bool
@@ -383,7 +404,7 @@ pub fn ElementNode::measure(Self, Constraints) -> MeasuredNode
 pub fn ElementNode::next_focus(Self, current~ : ElementId?, reverse~ : Bool) -> ElementId?
 pub fn ElementNode::place(Self, Rect) -> PlacedNode
 pub fn ElementNode::render(Self, Rect) -> RenderNode
-pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?) -> RenderNode
+pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?, environment? : Environment) -> RenderNode
 pub fn ElementNode::semantics(Self, RenderNode, focused? : ElementId?) -> SemanticsNode
 
 pub(all) struct Environment {
@@ -721,6 +742,7 @@ pub(all) struct RuntimeState {
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
+  mut environment : Environment
   mut redraw_callback : (() -> Unit)?
   clock : Clock
   mut animations : Array[AnimationController]
@@ -732,18 +754,20 @@ pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
 pub fn RuntimeState::clear_dirty_queue(Self) -> Unit
 pub fn RuntimeState::dirty_count(Self) -> Int
 pub fn RuntimeState::dispatch_event(Self, AppEvent) -> Unit
+pub fn RuntimeState::environment(Self) -> Environment
 pub fn RuntimeState::focused_text_input(Self) -> TextInputState
 pub fn RuntimeState::layout(Self) -> LayoutResult
 pub fn RuntimeState::layout_pass(Self) -> Unit
 pub fn RuntimeState::mark_dirty(Self, ElementId) -> Unit
 pub fn RuntimeState::mount(Self, ViewSpec) -> Unit
-pub fn RuntimeState::new_component(root~ : Component, size~ : Size) -> Self
-pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> Self
+pub fn RuntimeState::new_component(root~ : Component, size~ : Size, environment? : Environment) -> Self
+pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size, environment? : Environment) -> Self
 pub fn RuntimeState::paint_pass(Self) -> Array[DrawCommand]
 pub fn RuntimeState::rebuild(Self) -> Unit
 pub fn RuntimeState::rebuild_if_possible(Self) -> Unit
 pub fn RuntimeState::request_rebuild(Self) -> Unit
 pub fn RuntimeState::semantics(Self) -> SemanticsNode
+pub fn RuntimeState::set_environment(Self, Environment) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 
@@ -869,6 +893,7 @@ pub(all) struct State[T] {
   slot : StateSlot[T]
 }
 pub fn[T] State::binding(Self[T]) -> Binding[T]
+pub fn[T, U] State::derived(Self[T], (T) -> U) -> DerivedState[U]
 pub fn[T] State::get(Self[T]) -> T
 pub fn[T] State::new(T) -> Self[T]
 pub fn[T] State::set(Self[T], T) -> Unit

@@ -474,6 +474,27 @@ fn ElementNode::mark_root_component_build_dirty(self : ElementNode) -> Bool {
 }
 
 ///|
+fn ElementNode::mark_component_tree_build_dirty(self : ElementNode) -> Bool {
+  let mut found = false
+  match self.spec {
+    ComponentSpec(_) => {
+      self.dirty.mark_build()
+      self.clear_cached_layout_and_paint()
+      found = true
+    }
+    _ => ()
+  }
+  for child in self.children {
+    found = child.mark_component_tree_build_dirty() || found
+  }
+  if found {
+    self.dirty.mark_layout()
+    self.clear_cached_layout_and_paint()
+  }
+  found
+}
+
+///|
 fn ElementNode::mark_subtree_layout_dirty(self : ElementNode) -> Unit {
   self.dirty.mark_layout()
   self.clear_cached_layout_and_paint()

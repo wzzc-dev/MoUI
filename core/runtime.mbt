@@ -4,13 +4,21 @@ pub struct AppRuntime {
 }
 
 ///|
-pub fn AppRuntime::new_spec(root~ : ViewSpec, size~ : Size) -> AppRuntime {
-  { state: RuntimeState::new_spec(root~, size~) }
+pub fn AppRuntime::new_spec(
+  root~ : ViewSpec,
+  size~ : Size,
+  environment? : Environment = Environment::default(),
+) -> AppRuntime {
+  { state: RuntimeState::new_spec(root~, size~, environment~) }
 }
 
 ///|
-pub fn AppRuntime::new_component(root~ : Component, size~ : Size) -> AppRuntime {
-  { state: RuntimeState::new_component(root~, size~) }
+pub fn AppRuntime::new_component(
+  root~ : Component,
+  size~ : Size,
+  environment? : Environment = Environment::default(),
+) -> AppRuntime {
+  { state: RuntimeState::new_component(root~, size~, environment~) }
 }
 
 ///|
@@ -21,6 +29,19 @@ pub fn AppRuntime::dispatch_event(self : AppRuntime, event : AppEvent) -> Unit {
 ///|
 pub fn AppRuntime::set_root_spec(self : AppRuntime, root : ViewSpec) -> Unit {
   self.state.set_root_spec(root)
+}
+
+///|
+pub fn AppRuntime::environment(self : AppRuntime) -> Environment {
+  self.state.environment()
+}
+
+///|
+pub fn AppRuntime::set_environment(
+  self : AppRuntime,
+  environment : Environment,
+) -> Unit {
+  self.state.set_environment(environment)
 }
 
 ///|

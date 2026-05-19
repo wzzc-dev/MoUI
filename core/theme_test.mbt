@@ -29,3 +29,44 @@ test "environment tracks theme color scheme" {
   assert_true(environment.color_scheme == ColorScheme::Dark)
   assert_true(environment.theme.scheme == ColorScheme::Dark)
 }
+
+///|
+test "theme environment propagates through build context and render scale" {
+  let environment = Environment::default()
+    .with_theme(Theme::dark())
+    .with_text_scale(2.0)
+    .with_locale("zh-CN")
+  let runtime = RuntimeState::new_component(
+    root=Component::new(ctx => {
+      let theme = ctx.theme()
+      ViewSpec::TextSpec({
+        key: None,
+        text: ctx.locale(),
+        size: Size::new(width=160.0, height=40.0),
+        font: FontSpec::new(size=10.0, weight=400),
+        color: theme.foreground,
+      })
+    }),
+    size=Size::new(width=160.0, height=40.0),
+    environment~,
+  )
+  let first = runtime.build_draw_commands()
+  guard first[1]
+    is DrawText(
+      { text: "zh-CN", font: { size: 20.0, .. }, color: color_first, .. }
+    ) else {
+    fail("expected environment-driven text")
+  }
+  assert_true(color_first == Theme::dark().foreground)
+  runtime.set_environment(
+    Environment::default().with_theme(Theme::light()).with_locale("fr-FR"),
+  )
+  let second = runtime.build_draw_commands()
+  guard second[1]
+    is DrawText(
+      { text: "fr-FR", font: { size: 10.0, .. }, color: color_second, .. }
+    ) else {
+    fail("expected updated environment")
+  }
+  assert_true(color_second == Theme::light().foreground)
+}
