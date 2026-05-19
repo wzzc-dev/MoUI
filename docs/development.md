@@ -26,9 +26,18 @@ This keeps `Milky2018/window` resolved through the local path override in
 
 The checkout is intentionally a normal editable Git repository, not a submodule.
 MoUI uses the `wzzc-dev/window` fork on the `moui-support` branch because the
-current upstream package is macOS-only. Keep fork changes focused on the Web,
-Windows, and Linux platform packages when possible. Avoid touching macOS or
-shared window logic unless a task explicitly requires that broader change.
+current upstream package is macOS-only.
+
+- Upstream: `https://github.com/moonbit-community/window.git`
+- MoUI fork: `git@github.com:wzzc-dev/window.git`
+- Fork branch: `moui-support`
+
+`scripts/setup-local-deps.sh` configures the fork as `origin` and upstream as
+`upstream`. When merging new upstream commits into the fork, fetch `upstream`
+inside `.local_repos/window` and merge into `moui-support`. Keep fork changes
+focused on the Web, Windows, and Linux platform packages when possible. Avoid
+touching macOS or shared window logic unless a task explicitly requires that
+broader change.
 
 ## Validation
 
