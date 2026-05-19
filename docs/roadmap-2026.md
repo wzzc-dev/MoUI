@@ -183,10 +183,10 @@ Planned documentation set:
 - `docs/ai-collaboration.md`: AI workflow, prompt templates, and review
   checklist.
 
-The project should also include a MoUI-specific Claude Code skill at:
+The project also includes a MoUI-specific Claude Code skill at:
 
 ```text
-.claude/skills/moui-skill/SKILL.md
+.agents/skills/moui-skill/SKILL.md
 ```
 
 The skill should guide agents to read `AGENTS.md`, respect package boundaries,
