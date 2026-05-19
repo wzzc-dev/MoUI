@@ -1,6 +1,6 @@
 # Architecture
 
-MoUI is a multi-platform MoonBit GUI framework prototype. The current architecture keeps the app/runtime/view model platform-neutral, with native hosts using `window + wgpu-native` and the Web host using a single `wasm-gc + window/web + browser WebGPU host imports` path.
+MoUI is a multi-platform MoonBit GUI framework prototype. The current architecture keeps the app/runtime/view model platform-neutral, with native hosts using `window + wgpu-native` and the Web host using a single `wasm-gc + window/web + browser WebGPU host imports` path. The project roadmap keeps this architecture focused on shared app logic, explicit backend contracts, transparent renderer capabilities, and bounded validation.
 
 ## Scope
 
@@ -38,6 +38,9 @@ examples/todo/web_wasm/       Web todo on wasm-gc
 examples/showcase/app/        shared visual showcase app
 examples/showcase/macos/      macOS native showcase
 examples/showcase/web_wasm/   Web showcase on wasm-gc
+examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
+examples/markdown_editor/macos/ macOS native Markdown editor
+examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
 ```
 
 ## Spec API
@@ -67,7 +70,9 @@ let runtime = @core.AppRuntime::new_spec(
 ```
 
 Stateful apps should use `AppRuntime::new_component` with a `Component` that
-returns `ViewSpec`.
+returns `ViewSpec`. The long-term direction is tracked in
+[2026 roadmap](roadmap-2026.md), while renderer-specific gaps are tracked in
+[Renderer capability report](renderer-capability-report.md).
 
 ## Runtime Mental Model
 

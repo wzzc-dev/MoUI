@@ -1,8 +1,15 @@
 # MoUI
 
-MoUI is a multi-platform MoonBit GUI framework prototype. The app/runtime/view
-model stays platform-neutral, with native hosts using `window + wgpu-native`
-and the Web host using `wasm-gc + window/web + browser WebGPU host imports`.
+MoUI is a multi-platform MoonBit GUI framework prototype for building
+declarative UI apps with shared platform-neutral app logic. Native hosts use
+`window + wgpu-native`; the Web host uses a single
+`wasm-gc + window/web + browser WebGPU host imports` path.
+
+The runtime pipeline is explicit:
+
+```text
+ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+```
 
 Detailed notes live in:
 
@@ -10,10 +17,27 @@ Detailed notes live in:
 - [Development](docs/development.md)
 - [Platform notes](docs/platform-notes.md)
 - [Renderer capability report](docs/renderer-capability-report.md)
+- [2026 roadmap](docs/roadmap-2026.md)
 
-The WYSIWYG Markdown example is intentionally layered: `core` provides the
-generic multiline rich text editor, while the example app owns Markdown parsing
-and conversion into styled text runs.
+The example suite demonstrates increasing slices of the framework:
+
+- Counter: minimal state and event handling.
+- Todo: text input, lists, and shared app state.
+- Showcase: controls, layout, theme, and renderer capability visibility.
+- WYSIWYG Markdown editor: practical rich text editing with app-owned Markdown
+  parsing and styled text runs.
+
+## Project Shape
+
+- `core/` owns the platform-neutral runtime, state, layout, input, semantics,
+  and draw command model.
+- `views/` exposes public view constructors returning `@core.ViewSpec`.
+- `backend/host/` defines shared host contracts; platform backends normalize
+  window and input events into `HostEvent`.
+- `render/` provides the renderer facade, with native wgpu and WebGPU adapter
+  implementations under `render/wgpu/` and `render/webgpu_adapter/`.
+- `examples/*/app/` contains shared app logic, while platform subpackages are
+  thin entrypoints.
 
 ## Quick Start
 
