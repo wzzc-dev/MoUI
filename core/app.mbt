@@ -223,7 +223,7 @@ pub fn RuntimeState::dispatch_event(
       self.ensure_render_tree()
       if event.phase == PointerPhase::Down {
         let previous_focus = self.focused_element
-        self.focused_element = self.element_tree.find_text_field_at(
+        self.focused_element = self.element_tree.find_focusable_at(
           event.position,
           self.render_tree,
         )

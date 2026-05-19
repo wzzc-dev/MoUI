@@ -6,6 +6,7 @@ pub(all) struct TextInputState {
   caret : Int
   selection : TextRange?
   composition : String?
+  composition_cursor : TextRange?
   frame : Rect
   caret_rect : Rect
 } derive(Eq, Debug, ToJson)
@@ -19,6 +20,7 @@ pub fn TextInputState::none() -> TextInputState {
     caret: 0,
     selection: None,
     composition: None,
+    composition_cursor: None,
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     caret_rect: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
   }
@@ -62,6 +64,7 @@ fn TextInputState::for_text_field(
     caret,
     selection: element.selection,
     composition: element.composition,
+    composition_cursor: element.composition_cursor,
     frame: render.frame,
     caret_rect,
   }
@@ -97,6 +100,7 @@ fn TextInputState::for_rich_text_editor(
     caret,
     selection: element.selection,
     composition: element.composition,
+    composition_cursor: element.composition_cursor,
     frame: render.frame,
     caret_rect,
   }

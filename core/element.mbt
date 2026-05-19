@@ -9,6 +9,7 @@ pub(all) struct ElementNode {
   mut caret : Int
   mut selection : TextRange?
   mut composition : String?
+  mut composition_cursor : TextRange?
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut cached_intrinsic_size : Size?
@@ -166,6 +167,7 @@ fn mount_view_spec_for_runtime(
       caret: 0,
       selection: None,
       composition: None,
+      composition_cursor: None,
       component_child_spec,
       component_subscriptions,
       cached_intrinsic_size: None,

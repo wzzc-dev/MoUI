@@ -762,25 +762,40 @@ fn append_text_field_commands(
   let text = data.value.get()
   let display_text = text_with_composition(text, element, focused)
   let display = if display_text == "" { data.placeholder } else { display_text }
+  let font = environment.font.unwrap_or(data.font)
   let color = if text == "" {
     data.placeholder_color
   } else {
     environment.foreground.unwrap_or(data.foreground)
   }
   let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
+  if focused && element.composition is None {
+    let layout = measure_text_layout(
+      TextLayoutInput::new(
+        text=display_text,
+        font~,
+        max_width=text_frame.size.width,
+      ),
+    )
+    append_text_field_selection_commands(
+      commands,
+      text_frame,
+      layout,
+      element.selection,
+    )
+  }
   commands.push(
     DrawText(
       TextRun::new(
         text=display,
         frame=text_frame,
-        font=environment.font.unwrap_or(data.font),
+        font~,
         color~,
         align=TextAlign::TextStart,
       ),
     ),
   )
   if focused {
-    let font = environment.font.unwrap_or(data.font)
     let layout = measure_text_layout(
       TextLayoutInput::new(
         text=display_text,
@@ -801,6 +816,45 @@ fn append_text_field_commands(
       height=max_double(8.0, text_frame.size.height - 12.0),
     )
     commands.push(FillRect(cursor, data.cursor_color))
+  }
+}
+
+///|
+fn append_text_field_selection_commands(
+  commands : Array[DrawCommand],
+  text_frame : Rect,
+  layout : TextLayoutResult,
+  selection : TextRange?,
+) -> Unit {
+  match active_text_selection(selection) {
+    Some(selection) => {
+      let start = clamp_int(
+        selection.start,
+        0,
+        layout.caret_positions.length() - 1,
+      )
+      let end = clamp_int(
+        selection.end,
+        start,
+        layout.caret_positions.length() - 1,
+      )
+      let x0 = text_frame.origin.x + layout.caret_positions[start]
+      let x1 = text_frame.origin.x + layout.caret_positions[end]
+      if x1 > x0 {
+        commands.push(
+          FillRect(
+            Rect::new(
+              x=x0,
+              y=text_frame.origin.y + 6.0,
+              width=x1 - x0,
+              height=max_double(8.0, text_frame.size.height - 12.0),
+            ),
+            Color::blue().with_alpha(0.18),
+          ),
+        )
+      }
+    }
+    None => ()
   }
 }
 

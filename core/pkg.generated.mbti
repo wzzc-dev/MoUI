@@ -357,6 +357,7 @@ pub(all) struct ElementNode {
   mut caret : Int
   mut selection : TextRange?
   mut composition : String?
+  mut composition_cursor : TextRange?
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut cached_intrinsic_size : Size?
@@ -372,8 +373,8 @@ pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> Element
 pub fn ElementNode::dispatch_keyboard_shortcut(Self, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode) -> ElementEventResult
 pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> ElementEventResult
+pub fn ElementNode::find_focusable_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::find_keyed(Self, String) -> ElementId?
-pub fn ElementNode::find_text_field_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
 pub fn ElementNode::focused_text_input(Self, ElementId, RenderNode) -> TextInputState?
 pub fn ElementNode::hit_test_path(Self, Point, RenderNode) -> HitTestResult
@@ -976,6 +977,7 @@ pub(all) struct TextInputState {
   caret : Int
   selection : TextRange?
   composition : String?
+  composition_cursor : TextRange?
   frame : Rect
   caret_rect : Rect
 } derive(Eq, ToJson, @debug.Debug)
