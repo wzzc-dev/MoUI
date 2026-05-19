@@ -69,9 +69,12 @@ pub fn scaffold_surface_host(
 pub fn scaffold_input_host() -> @host.InputHostState {
   @host.InputHostState::new(
     focused=false,
-    text_input_supported=false,
-    ime_supported=false,
-    clipboard_supported=false,
+    contract=@host.HostInputContract::new(
+      capabilities=@host.HostInputCapabilities::none(),
+      coordinates=@host.HostCoordinatePolicy::logical(
+        description="Linux scaffold keeps the host contract shape but does not emit input events yet.",
+      ),
+    ),
   )
 }
 

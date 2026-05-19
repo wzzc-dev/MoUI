@@ -70,6 +70,38 @@ test "windows backend converts pointer movement and left button" {
 }
 
 ///|
+test "windows backend converts wheel and focus into host input events" {
+  let wheel = window_event_to_host(
+    @window_core.WindowEvent::MouseWheel(
+      None,
+      @window_core.MouseScrollDelta::LineDelta(2.0, -1.0),
+      @window_core.TouchPhase::Moved,
+    ),
+    @core.Point::new(x=11.0, y=12.0),
+  )
+  match wheel {
+    Some(
+      @host.HostEvent::Scroll(
+        {
+          position: { x: 11.0, y: 12.0 },
+          delta: @host.HostScrollDelta::Lines({ x: 2.0, y: -1.0 }),
+          ..,
+        }
+      )
+    ) => ()
+    _ => fail("expected wheel event")
+  }
+  let focus = window_event_to_host(
+    @window_core.WindowEvent::Focused(true),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match focus {
+    Some(@host.HostEvent::Focus({ focused: true, .. })) => ()
+    _ => fail("expected focus event")
+  }
+}
+
+///|
 test "windows backend converts close event" {
   let event = window_event_to_core(
     @window_core.WindowEvent::CloseRequested,
@@ -172,9 +204,7 @@ test "windows backend keeps ime composition separate at host layer" {
   )
   match delete {
     Some(
-      @host.HostEvent::TextInputEvent(
-        @core.TextInputEvent::DeleteSurrounding(1, 2)
-      )
+      @host.HostEvent::TextInput(@core.TextInputEvent::DeleteSurrounding(1, 2))
     ) => ()
     _ => fail("expected delete surrounding")
   }
@@ -183,11 +213,8 @@ test "windows backend keeps ime composition separate at host layer" {
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(
-      @host.HostEvent::TextInputEvent(
-        @core.TextInputEvent::CompositionEnd(text)
-      )
-    ) => inspect(text, content="x")
+    Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
+      inspect(text, content="x")
     _ => fail("expected host composition end")
   }
 }

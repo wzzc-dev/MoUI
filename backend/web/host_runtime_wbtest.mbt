@@ -35,7 +35,7 @@ test "web maps physical pointer positions through current scale factor" {
     scale_factor=2.0,
   )
   match event {
-    Some(@host.HostEvent::PointerButton(position, phase, _)) => {
+    Some(@host.HostEvent::Pointer({ position, phase, .. })) => {
       assert_true(position == @core.Point::new(x=120.0, y=60.0))
       assert_true(phase == @core.PointerPhase::Down)
     }

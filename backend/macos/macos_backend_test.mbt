@@ -78,8 +78,11 @@ test "macos backend converts scaled pointer coordinates to logical host points" 
     scale_factor=2.0,
   )
   match moved {
-    Some(@host.HostEvent::PointerMoved(position)) =>
-      assert_true(position == @core.Point::new(x=60.0, y=40.0))
+    Some(
+      @host.HostEvent::Pointer(
+        { position, phase: @core.PointerPhase::Move, .. }
+      )
+    ) => assert_true(position == @core.Point::new(x=60.0, y=40.0))
     _ => fail("expected scaled pointer move")
   }
   let down = window_event_to_host_with_modifiers(
@@ -95,11 +98,51 @@ test "macos backend converts scaled pointer coordinates to logical host points" 
     scale_factor=2.0,
   )
   match down {
-    Some(@host.HostEvent::PointerButton(position, phase, _)) => {
+    Some(@host.HostEvent::Pointer({ position, phase, .. })) => {
       assert_true(position == @core.Point::new(x=70.0, y=50.0))
       assert_true(phase == @core.PointerPhase::Down)
     }
     _ => fail("expected scaled pointer button")
+  }
+}
+
+///|
+test "macos backend converts wheel and focus into host input contract" {
+  let wheel = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::MouseWheel(
+      None,
+      @window_core.MouseScrollDelta::PixelDelta(
+        @dpi.PhysicalPositionF64::new(16.0, -24.0),
+      ),
+      @window_core.TouchPhase::Moved,
+    ),
+    @core.Point::new(x=4.0, y=5.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match wheel {
+    Some(
+      @host.HostEvent::Scroll(
+        {
+          position: { x: 4.0, y: 5.0 },
+          delta: @host.HostScrollDelta::Pixels({ x: 8.0, y: -12.0 }),
+          ..,
+        }
+      )
+    ) => ()
+    _ => fail("expected scaled wheel event")
+  }
+  let blur = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::Focused(false),
+    @core.Point::new(x=7.0, y=9.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match blur {
+    Some(
+      @host.HostEvent::Focus({ focused: false, pointer_cancel_position: None })
+    ) => ()
+    _ => fail("expected focus loss event")
   }
 }
 
@@ -158,7 +201,7 @@ test "macos backend keeps ime composition separate at host layer" {
   )
   match preedit {
     Some(
-      @host.HostEvent::TextInputEvent(
+      @host.HostEvent::TextInput(
         @core.TextInputEvent::CompositionUpdate(
           { text: "ni", cursor: Some({ start: 0, end: 2 }) }
         )
@@ -171,11 +214,8 @@ test "macos backend keeps ime composition separate at host layer" {
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(
-      @host.HostEvent::TextInputEvent(
-        @core.TextInputEvent::CompositionEnd(text)
-      )
-    ) => inspect(text, content="x")
+    Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
+      inspect(text, content="x")
     _ => fail("expected host composition end")
   }
 }

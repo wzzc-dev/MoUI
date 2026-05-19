@@ -111,6 +111,45 @@ pub fn named_key_name(key : @window_core.NamedKey) -> String {
 }
 
 ///|
+pub fn mouse_button_to_core(button : @window_core.MouseButton) -> Int? {
+  match button {
+    @window_core.MouseButton::Left => Some(0)
+    @window_core.MouseButton::Right => Some(1)
+    @window_core.MouseButton::Middle => Some(2)
+    @window_core.MouseButton::Back => Some(3)
+    @window_core.MouseButton::Forward => Some(4)
+    _ => None
+  }
+}
+
+///|
+pub fn touch_phase_to_host(
+  phase : @window_core.TouchPhase,
+) -> @host.HostScrollPhase {
+  match phase {
+    @window_core.TouchPhase::Started => @host.HostScrollPhase::Started
+    @window_core.TouchPhase::Moved => @host.HostScrollPhase::Moved
+    @window_core.TouchPhase::Ended => @host.HostScrollPhase::Ended
+    @window_core.TouchPhase::Cancelled => @host.HostScrollPhase::Cancelled
+  }
+}
+
+///|
+pub fn mouse_scroll_delta_to_host(
+  delta : @window_core.MouseScrollDelta,
+  scale_factor? : Double = 1.0,
+) -> @host.HostScrollDelta {
+  match delta {
+    @window_core.MouseScrollDelta::LineDelta(x, y) =>
+      @host.HostScrollDelta::Lines(@core.Point::new(x~, y~))
+    @window_core.MouseScrollDelta::PixelDelta(position) =>
+      @host.HostScrollDelta::Pixels(
+        physical_position_to_core(position, scale_factor~),
+      )
+  }
+}
+
+///|
 pub fn window_event_to_host_with_modifiers(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
@@ -136,29 +175,41 @@ pub fn window_event_to_host_with_modifiers(
       )
     @window_core.WindowEvent::PointerMoved(_, position, _, _) =>
       Some(
-        @host.HostEvent::PointerMoved(
-          physical_position_to_core(position, scale_factor~),
+        @host.HostEvent::Pointer(
+          @core.PointerEvent::new(
+            position=physical_position_to_core(position, scale_factor~),
+            phase=@core.PointerPhase::Move,
+          ),
         ),
       )
     @window_core.WindowEvent::PointerButton(_, state, position, _, source) =>
       match source.mouse_button() {
-        Some(@window_core.MouseButton::Left) =>
-          Some(
-            @host.HostEvent::PointerButton(
-              physical_position_to_core(position, scale_factor~),
-              element_state_to_pointer_phase(state),
-              0,
-            ),
-          )
-        _ =>
-          Some(
-            @host.HostEvent::PointerButton(
-              last_pointer,
-              @core.PointerPhase::Cancel,
-              0,
-            ),
-          )
+        Some(button) =>
+          match mouse_button_to_core(button) {
+            Some(button) =>
+              Some(
+                @host.HostEvent::Pointer(
+                  @core.PointerEvent::new(
+                    position=physical_position_to_core(position, scale_factor~),
+                    phase=element_state_to_pointer_phase(state),
+                    button~,
+                  ),
+                ),
+              )
+            None => None
+          }
+        None => None
       }
+    @window_core.WindowEvent::MouseWheel(_, delta, phase) =>
+      Some(
+        @host.HostEvent::Scroll(
+          @host.HostScrollEvent::new(
+            position=last_pointer,
+            delta=mouse_scroll_delta_to_host(delta, scale_factor~),
+            phase=touch_phase_to_host(phase),
+          ),
+        ),
+      )
     @window_core.WindowEvent::CloseRequested =>
       Some(@host.HostEvent::CloseRequested)
     @window_core.WindowEvent::RedrawRequested =>
@@ -174,12 +225,10 @@ pub fn window_event_to_host_with_modifiers(
         )
       }
     @window_core.WindowEvent::Ime(@window_core.Ime::Enabled) =>
-      Some(
-        @host.HostEvent::TextInputEvent(@core.TextInputEvent::CompositionStart),
-      )
+      Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionStart))
     @window_core.WindowEvent::Ime(@window_core.Ime::Preedit(text, cursor)) =>
       Some(
-        @host.HostEvent::TextInputEvent(
+        @host.HostEvent::TextInput(
           @core.TextInputEvent::CompositionUpdate(
             @core.CompositionUpdate::new(
               text~,
@@ -190,36 +239,31 @@ pub fn window_event_to_host_with_modifiers(
       )
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit(text)) =>
       Some(
-        @host.HostEvent::TextInputEvent(
-          @core.TextInputEvent::CompositionEnd(text),
-        ),
+        @host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text)),
       )
     @window_core.WindowEvent::Ime(
       @window_core.Ime::DeleteSurrounding(before, after)
     ) =>
       Some(
-        @host.HostEvent::TextInputEvent(
+        @host.HostEvent::TextInput(
           @core.TextInputEvent::DeleteSurrounding(before, after),
         ),
       )
     @window_core.WindowEvent::Ime(@window_core.Ime::Disabled) =>
+      Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd("")))
+    @window_core.WindowEvent::Focused(focused) =>
       Some(
-        @host.HostEvent::TextInputEvent(
-          @core.TextInputEvent::CompositionEnd(""),
+        @host.HostEvent::Focus(
+          @host.HostFocusEvent::new(
+            focused~,
+            pointer_cancel_position=if blur_to_cancel && !focused {
+              Some(last_pointer)
+            } else {
+              None
+            },
+          ),
         ),
       )
-    @window_core.WindowEvent::Focused(focused) =>
-      if blur_to_cancel && !focused {
-        Some(
-          @host.HostEvent::PointerButton(
-            last_pointer,
-            @core.PointerPhase::Cancel,
-            0,
-          ),
-        )
-      } else {
-        None
-      }
     _ => None
   }
 }

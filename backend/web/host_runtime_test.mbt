@@ -94,8 +94,11 @@ test "web maps pointer move and left button to host events" {
     @core.Point::new(x=0.0, y=0.0),
   )
   match moved {
-    Some(@host.HostEvent::PointerMoved(position)) =>
-      assert_true(position == @core.Point::new(x=12.0, y=34.0))
+    Some(
+      @host.HostEvent::Pointer(
+        { position, phase: @core.PointerPhase::Move, .. }
+      )
+    ) => assert_true(position == @core.Point::new(x=12.0, y=34.0))
     _ => fail("expected pointer move")
   }
 
@@ -110,12 +113,44 @@ test "web maps pointer move and left button to host events" {
     @core.Point::new(x=0.0, y=0.0),
   )
   match down {
-    Some(@host.HostEvent::PointerButton(position, phase, button)) => {
+    Some(@host.HostEvent::Pointer({ position, phase, button, .. })) => {
       assert_true(position == @core.Point::new(x=5.0, y=6.0))
       assert_true(phase == @core.PointerPhase::Down)
       inspect(button, content="0")
     }
     _ => fail("expected pointer button")
+  }
+}
+
+///|
+test "web maps wheel and focus to host input events" {
+  let wheel = window_event_to_host(
+    @window_core.WindowEvent::MouseWheel(
+      None,
+      @window_core.MouseScrollDelta::LineDelta(0.0, -3.0),
+      @window_core.TouchPhase::Moved,
+    ),
+    @core.Point::new(x=12.0, y=34.0),
+  )
+  match wheel {
+    Some(
+      @host.HostEvent::Scroll(
+        {
+          position: { x: 12.0, y: 34.0 },
+          delta: @host.HostScrollDelta::Lines({ y: -3.0, .. }),
+          ..,
+        }
+      )
+    ) => ()
+    _ => fail("expected scroll event")
+  }
+  let focus = window_event_to_host(
+    @window_core.WindowEvent::Focused(true),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match focus {
+    Some(@host.HostEvent::Focus({ focused: true, .. })) => ()
+    _ => fail("expected focus event")
   }
 }
 
@@ -197,7 +232,7 @@ test "web maps ime composition lifecycle and redraw" {
   )
   match preedit {
     Some(
-      @host.HostEvent::TextInputEvent(
+      @host.HostEvent::TextInput(
         @core.TextInputEvent::CompositionUpdate(
           { text: "ni", cursor: Some({ start: 0, end: 2 }) }
         )
@@ -211,11 +246,8 @@ test "web maps ime composition lifecycle and redraw" {
     @core.Point::new(x=0.0, y=0.0),
   )
   match ime {
-    Some(
-      @host.HostEvent::TextInputEvent(
-        @core.TextInputEvent::CompositionEnd(text)
-      )
-    ) => inspect(text, content="hello")
+    Some(@host.HostEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
+      inspect(text, content="hello")
     _ => fail("expected composition end")
   }
 

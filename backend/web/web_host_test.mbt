@@ -55,8 +55,10 @@ test "canvas host creates surface and input contracts" {
   inspect(surface.can_reconfigure, content="true")
   let input = canvas_input_host()
   inspect(input.focused, content="false")
-  inspect(input.text_input_supported, content="true")
-  inspect(input.ime_supported, content="false")
+  inspect(input.capabilities().text_input, content="true")
+  inspect(input.capabilities().scroll, content="true")
+  inspect(input.capabilities().ime, content="false")
+  inspect(input.coordinate_policy().scale_factor_applied, content="true")
 }
 
 ///|
