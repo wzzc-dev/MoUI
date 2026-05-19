@@ -62,6 +62,67 @@ test "build context binding subscribes control state" {
 }
 
 ///|
+test "build context binding drives text field input and dependent label" {
+  let draft = State::new("")
+  let runtime = RuntimeState::new_component(
+    root=Component::new(ctx => {
+      ViewSpec::FlexSpec({
+        key: None,
+        axis: Axis::Vertical,
+        spacing: 4.0,
+        main_axis_alignment: MainStart,
+        cross_axis_alignment: CrossStart,
+        children: [
+          ViewSpec::TextSpec({
+            key: None,
+            text: "Draft: \{ctx.watch(draft)}",
+            size: Size::new(width=160.0, height=24.0),
+            font: FontSpec::new(size=16.0, weight=400),
+            color: Color::black(),
+          }),
+          ViewSpec::TextFieldSpec({
+            key: None,
+            value: ctx.binding(draft),
+            placeholder: "Type",
+            size: Size::new(width=160.0, height=32.0),
+            font: FontSpec::new(size=16.0, weight=400),
+            foreground: Color::black(),
+            placeholder_color: Color::gray(),
+            background: Brush::solid(Color::white()),
+            border: Some(
+              BorderStyle::new(brush=Brush::solid(Color::gray()), width=1.0),
+            ),
+            focused_border: Some(
+              BorderStyle::new(brush=Brush::solid(Color::blue()), width=2.0),
+            ),
+            cursor_color: Color::blue(),
+            corner_radius: 0.0,
+            on_submit: None,
+          }),
+        ],
+      })
+    }),
+    size=Size::new(width=200.0, height=80.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=34.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  inspect(draft.slot.listeners.length(), content="2")
+  runtime.dispatch_event(TextInput(TextInputEvent::InsertText("Hi")))
+  inspect(draft.get(), content="Hi")
+  let commands = runtime.build_draw_commands()
+  assert_true(
+    commands.any(command => command is DrawText({ text: "Draft: Hi", .. })),
+  )
+  inspect(draft.slot.listeners.length(), content="2")
+}
+
+///|
 test "sibling components rebuild only the watched subtree" {
   let left = State::new(0)
   let right = State::new(10)
