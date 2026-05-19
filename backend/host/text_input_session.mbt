@@ -34,7 +34,8 @@ pub fn TextInputSession::sync(
     if self.enabled {
       UpdateIme(update.into_request())
     } else {
-      match @window_core.ImeEnableRequest::new(capabilities, update) {
+      match
+        @window_core.ImeEnableRequest::from_capabilities(capabilities, update) {
         Some(request) => {
           self.enabled = true
           EnableIme(request.into_request())
@@ -55,11 +56,11 @@ pub fn text_input_ime_request_data(
       @window_core.ImePurpose::Normal,
     )
     .with_cursor_area(
-      @dpi.LogicalPosition::new(
+      @dpi.LogicalPosition::LogicalPosition(
         state.caret_rect.origin.x,
         state.caret_rect.origin.y,
       ).into_position(),
-      @dpi.LogicalSize::new(
+      @dpi.LogicalSize::LogicalSize(
         max_double(1.0, state.caret_rect.size.width),
         max_double(1.0, state.caret_rect.size.height),
       ).into_size(),
@@ -92,7 +93,13 @@ fn text_input_surrounding_text(
   let chars = state.text.to_array()
   let before = String::from_array(chars[:caret])
   let cursor = @utf8.encode(before[:], bom=false).length()
-  Some(@window_core.ImeSurroundingText::new(state.text, cursor, cursor)) catch {
+  Some(
+    @window_core.ImeSurroundingText::ImeSurroundingText(
+      state.text,
+      cursor,
+      cursor,
+    ),
+  ) catch {
     _ => None
   }
 }

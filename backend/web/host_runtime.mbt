@@ -120,7 +120,7 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
   self,
   event_loop,
 ) {
-  let initial_size = @dpi.LogicalSize::new(
+  let initial_size = @dpi.LogicalSize::LogicalSize(
     self.runtime.size().width,
     self.runtime.size().height,
   )

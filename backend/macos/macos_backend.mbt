@@ -39,7 +39,7 @@ pub fn backend_info() -> MacosBackendInfo {
 
 ///|
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
-  let event_loop = @window_macos.EventLoop::new()
+  let event_loop = @window_macos.EventLoop::EventLoop()
   let app = MacosApp::{
     title,
     window: None,
@@ -127,7 +127,7 @@ pub fn macos_surface_host_info() -> @wgpu_renderer.SurfaceHostInfo {
 
 ///|
 fn runtime_size_to_window_surface_size(size : @core.Size) -> @dpi.Size {
-  @dpi.LogicalSize::new(size.width, size.height).into_size()
+  @dpi.LogicalSize::LogicalSize(size.width, size.height).into_size()
 }
 
 ///|

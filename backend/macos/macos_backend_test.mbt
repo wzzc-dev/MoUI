@@ -8,7 +8,9 @@ test "macos backend is native renderer ready" {
 ///|
 test "macos backend converts resize event to host metrics" {
   let event = window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(20, 40)),
+    @window_core.WindowEvent::SurfaceResized(
+      @dpi.PhysicalSize::PhysicalSize(20, 40),
+    ),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=2.0,
@@ -32,7 +34,7 @@ test "macos backend converts pointer movement and left button" {
   let moved = window_event_to_core(
     @window_core.WindowEvent::PointerMoved(
       None,
-      @dpi.PhysicalPositionF64::new(3.0, 4.0),
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
       true,
       @window_core.PointerSource::Mouse,
     ),
@@ -49,7 +51,7 @@ test "macos backend converts pointer movement and left button" {
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
-      @dpi.PhysicalPositionF64::new(5.0, 6.0),
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(5.0, 6.0),
       true,
       @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
     ),
@@ -69,7 +71,7 @@ test "macos backend converts scaled pointer coordinates to logical host points" 
   let moved = window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerMoved(
       None,
-      @dpi.PhysicalPositionF64::new(120.0, 80.0),
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(120.0, 80.0),
       true,
       @window_core.PointerSource::Mouse,
     ),
@@ -89,7 +91,7 @@ test "macos backend converts scaled pointer coordinates to logical host points" 
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
-      @dpi.PhysicalPositionF64::new(140.0, 100.0),
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(140.0, 100.0),
       true,
       @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
     ),
@@ -112,7 +114,7 @@ test "macos backend converts wheel and focus into host input contract" {
     @window_core.WindowEvent::MouseWheel(
       None,
       @window_core.MouseScrollDelta::PixelDelta(
-        @dpi.PhysicalPositionF64::new(16.0, -24.0),
+        @dpi.PhysicalPositionF64::PhysicalPositionF64(16.0, -24.0),
       ),
       @window_core.TouchPhase::Moved,
     ),
@@ -160,7 +162,7 @@ test "macos backend converts close event" {
 
 ///|
 test "macos backend converts keyboard input event" {
-  let key_event = @window_core.KeyEvent::new(
+  let key_event = @window_core.KeyEvent::KeyEvent(
     @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::KeyA),
     @window_core.Key::Character("a"),
     @window_core.Key::Character("a"),
@@ -194,7 +196,7 @@ test "macos backend keeps ime composition separate at host layer" {
     @window_core.WindowEvent::Ime(
       @window_core.Ime::Preedit(
         "ni",
-        Some(@window_core.ImeCursorRange::new(0, 2)),
+        Some(@window_core.ImeCursorRange::ImeCursorRange(0, 2)),
       ),
     ),
     @core.Point::new(x=0.0, y=0.0),
