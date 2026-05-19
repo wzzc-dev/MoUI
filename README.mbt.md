@@ -20,6 +20,7 @@ Detailed notes live in:
 - [View catalog](docs/view-catalog.md)
 - [Examples](docs/examples.md)
 - [Testing](docs/testing.md)
+- [AI collaboration](docs/ai-collaboration.md)
 - [2026 roadmap](docs/roadmap-2026.md)
 
 The example suite demonstrates increasing slices of the framework:
