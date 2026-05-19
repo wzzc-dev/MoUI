@@ -21,6 +21,18 @@ pub fn ElementNode::dispatch_pointer(
       }
       { changed: false, activated: false, focused }
     }
+    RichTextEditorSpec(_) => {
+      let focused = if event.phase == PointerPhase::Down &&
+        render.frame.contains(event.position) {
+        self.caret = rich_text_editor_text_length(self.spec)
+        self.selection = None
+        self.composition = None
+        Some(self.id)
+      } else {
+        None
+      }
+      { changed: false, activated: false, focused }
+    }
     FlexSpec(_)
     | PaddingSpec(_)
     | ContainerSpec(_)
@@ -164,6 +176,14 @@ fn text_field_text_length(spec : ViewSpec) -> Int {
 }
 
 ///|
+fn rich_text_editor_text_length(spec : ViewSpec) -> Int {
+  match spec {
+    RichTextEditorSpec(data) => text_length(data.value.get())
+    _ => 0
+  }
+}
+
+///|
 fn handle_button_element_pointer(
   element : ElementNode,
   data : ButtonViewSpec,
@@ -210,6 +230,12 @@ pub fn ElementNode::find_text_field_at(
 ) -> ElementId? {
   match self.spec {
     TextFieldSpec(_) =>
+      if render.frame.contains(point) {
+        Some(self.id)
+      } else {
+        None
+      }
+    RichTextEditorSpec(_) =>
       if render.frame.contains(point) {
         Some(self.id)
       } else {
@@ -273,7 +299,8 @@ pub fn ElementNode::focusable_ids(
   ids : Array[ElementId],
 ) -> Unit {
   match self.spec {
-    TextFieldSpec(_) | CheckboxSpec(_) => ids.push(self.id)
+    TextFieldSpec(_) | RichTextEditorSpec(_) | CheckboxSpec(_) =>
+      ids.push(self.id)
     ModifiedSpec(data) =>
       match data.modifier {
         DisabledModifier(true) => ()
@@ -361,6 +388,8 @@ pub fn ElementNode::dispatch_keyboard(
   if self.id == target {
     match self.spec {
       TextFieldSpec(data) => handle_text_field_keyboard(self, data, event)
+      RichTextEditorSpec(data) =>
+        handle_rich_text_editor_keyboard(self, data, event)
       CheckboxSpec(data) => handle_checkbox_keyboard(self, data, event)
       _ => { changed: false, activated: false, focused: None }
     }
@@ -391,6 +420,8 @@ pub fn ElementNode::dispatch_text_input(
   if self.id == target {
     match self.spec {
       TextFieldSpec(data) => handle_text_field_input(self, data, event)
+      RichTextEditorSpec(data) =>
+        handle_rich_text_editor_input(self, data, event)
       _ => { changed: false, activated: false, focused: None }
     }
   } else {
@@ -540,6 +571,73 @@ fn handle_text_field_keyboard(
     Some(text) =>
       if text != "" {
         handle_text_field_input(element, data, InsertText(text))
+      } else {
+        { changed: false, activated: false, focused: None }
+      }
+    None => { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn handle_rich_text_editor_keyboard(
+  element : ElementNode,
+  data : RichTextEditorViewSpec,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  if !event.pressed {
+    return { changed: false, activated: false, focused: None }
+  }
+  if event.key == "Enter" {
+    return handle_rich_text_editor_input(element, data, InsertText("\n"))
+  }
+  if event.key == "Backspace" {
+    return handle_rich_text_editor_input(element, data, DeleteSurrounding(1, 0))
+  }
+  if event.key == "Delete" {
+    return handle_rich_text_editor_input(element, data, DeleteSurrounding(0, 1))
+  }
+  if event.key == "ArrowLeft" {
+    element.caret = clamp_int(
+      element.caret - 1,
+      0,
+      text_length(data.value.get()),
+    )
+    element.selection = None
+    element.dirty.mark_paint()
+    return { changed: true, activated: false, focused: None }
+  }
+  if event.key == "ArrowRight" {
+    element.caret = clamp_int(
+      element.caret + 1,
+      0,
+      text_length(data.value.get()),
+    )
+    element.selection = None
+    element.dirty.mark_paint()
+    return { changed: true, activated: false, focused: None }
+  }
+  if event.key == "ArrowUp" {
+    return move_multiline_caret_vertical(element, data, -1)
+  }
+  if event.key == "ArrowDown" {
+    return move_multiline_caret_vertical(element, data, 1)
+  }
+  if event.key == "Home" {
+    element.caret = multiline_line_start(data.value.get(), element.caret)
+    element.selection = None
+    element.dirty.mark_paint()
+    return { changed: true, activated: false, focused: None }
+  }
+  if event.key == "End" {
+    element.caret = multiline_line_end(data.value.get(), element.caret)
+    element.selection = None
+    element.dirty.mark_paint()
+    return { changed: true, activated: false, focused: None }
+  }
+  match event.text {
+    Some(text) =>
+      if text != "" {
+        handle_rich_text_editor_input(element, data, InsertText(text))
       } else {
         { changed: false, activated: false, focused: None }
       }

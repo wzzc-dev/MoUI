@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui/examples/markdown_editor/app" @markdown_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: { "native": { "cc-link-flags": "-Wl,--subsystem,windows" } },
+  targets: { "main.mbt": [ "native" ] },
+)

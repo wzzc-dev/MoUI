@@ -119,6 +119,54 @@ pub(all) struct TextFieldViewSpec {
 }
 
 ///|
+pub type RichTextFormatter = (String) -> RichTextDocument
+
+///|
+pub(all) struct RichTextRun {
+  text : String
+  font : FontSpec?
+  color : Color?
+  background : Brush?
+  background_radius : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RichTextBlock {
+  runs : Array[RichTextRun]
+  prefix : String
+  font : FontSpec?
+  color : Color?
+  background : Brush?
+  border_left : BorderStyle?
+  inset : Insets
+  line_height : Double?
+  corner_radius : Double
+  rule : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RichTextDocument {
+  blocks : Array[RichTextBlock]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RichTextEditorViewSpec {
+  key : Key?
+  value : Binding[String]
+  placeholder : String
+  size : Size
+  format : RichTextFormatter
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Brush
+  border : BorderStyle?
+  focused_border : BorderStyle?
+  cursor_color : Color
+  corner_radius : Double
+}
+
+///|
 pub(all) struct ImageViewSpec {
   key : Key?
   source : String
@@ -281,6 +329,7 @@ pub(all) enum ViewSpec {
   TextSpec(TextViewSpec)
   ButtonSpec(ButtonViewSpec)
   TextFieldSpec(TextFieldViewSpec)
+  RichTextEditorSpec(RichTextEditorViewSpec)
   ImageSpec(ImageViewSpec)
   CheckboxSpec(CheckboxViewSpec)
   FlexSpec(FlexViewSpec)
@@ -300,6 +349,73 @@ pub(all) enum ViewSpec {
 ///|
 pub fn ViewStyle::empty() -> ViewStyle {
   { font: None, foreground: None, background: None, corner_radius: None }
+}
+
+///|
+pub fn RichTextRun::new(
+  text~ : String,
+  font? : FontSpec? = None,
+  color? : Color? = None,
+  background? : Brush? = None,
+  background_radius? : Double = 4.0,
+) -> RichTextRun {
+  { text, font, color, background, background_radius }
+}
+
+///|
+pub fn RichTextBlock::new(
+  runs~ : Array[RichTextRun],
+  prefix? : String = "",
+  font? : FontSpec? = None,
+  color? : Color? = None,
+  background? : Brush? = None,
+  border_left? : BorderStyle? = None,
+  inset? : Insets = Insets::symmetric(),
+  line_height? : Double? = None,
+  corner_radius? : Double = 0.0,
+  rule? : Bool = false,
+) -> RichTextBlock {
+  {
+    runs,
+    prefix,
+    font,
+    color,
+    background,
+    border_left,
+    inset,
+    line_height,
+    corner_radius,
+    rule,
+  }
+}
+
+///|
+pub fn RichTextDocument::new(
+  blocks~ : Array[RichTextBlock],
+) -> RichTextDocument {
+  { blocks, }
+}
+
+///|
+pub fn RichTextDocument::plain(text : String) -> RichTextDocument {
+  let blocks : Array[RichTextBlock] = []
+  let current : Array[Char] = []
+  for ch in text {
+    if ch == '\n' {
+      blocks.push(
+        RichTextBlock::new(runs=[
+          RichTextRun::new(text=String::from_array(current)),
+        ]),
+      )
+      current.clear()
+    } else {
+      current.push(ch)
+    }
+  }
+  blocks.push(
+    RichTextBlock::new(runs=[RichTextRun::new(text=String::from_array(current))]),
+  )
+  RichTextDocument::new(blocks~)
 }
 
 ///|
@@ -400,6 +516,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     TextSpec(data) => data.key
     ButtonSpec(data) => data.key
     TextFieldSpec(data) => data.key
+    RichTextEditorSpec(data) => data.key
     ImageSpec(data) => data.key
     CheckboxSpec(data) => data.key
     FlexSpec(data) => data.key
@@ -424,6 +541,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     TextSpec(data) => TextSpec({ ..data, key: Some(key) })
     ButtonSpec(data) => ButtonSpec({ ..data, key: Some(key) })
     TextFieldSpec(data) => TextFieldSpec({ ..data, key: Some(key) })
+    RichTextEditorSpec(data) => RichTextEditorSpec({ ..data, key: Some(key) })
     ImageSpec(data) => ImageSpec({ ..data, key: Some(key) })
     CheckboxSpec(data) => CheckboxSpec({ ..data, key: Some(key) })
     FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
@@ -462,6 +580,7 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     ModifiedSpec(_) => 15
     CustomSpec(_) => 16
     ComponentSpec(_) => 17
+    RichTextEditorSpec(_) => 18
   }
 }
 

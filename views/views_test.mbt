@@ -443,6 +443,56 @@ test "text field accepts visual styles" {
 }
 
 ///|
+test "rich text editor constructs binding backed spec" {
+  let state = @core.State::new("# Draft")
+  let spec = @views.rich_text_editor(
+    state.binding(),
+    text => @core.RichTextDocument::plain(text),
+    placeholder="Write notes",
+    width=420.0,
+    height=280.0,
+  )
+  guard spec
+    is @core.ViewSpec::RichTextEditorSpec(
+      {
+        placeholder: "Write notes",
+        size: { width: 420.0, height: 280.0 },
+        value,
+        ..,
+      }
+    ) else {
+    fail("expected rich text editor spec")
+  }
+  value.set("Changed")
+  inspect(state.get(), content="Changed")
+}
+
+///|
+test "markdown editor wrapper composes rich text editor with visual styles" {
+  let state = @core.State::new("")
+  let style = @core.TextFieldStyle::outline(theme=@core.Theme::dark())
+  let spec = @views.markdown_editor(
+    state.binding(),
+    text => @core.RichTextDocument::plain(text),
+    style~,
+  )
+  guard spec
+    is @core.ViewSpec::RichTextEditorSpec(
+      {
+        focused_border: Some(focused_border),
+        cursor_color,
+        placeholder_color,
+        ..,
+      }
+    ) else {
+    fail("expected styled rich text editor spec")
+  }
+  assert_true(focused_border.brush == @core.Brush::solid(cursor_color))
+  assert_true(placeholder_color == @core.Theme::dark().palette.muted)
+  inspect(focused_border.width, content="2")
+}
+
+///|
 test "navigation stack selects current route" {
   let nav = @core.NavigationState::new(initial="controls")
   let spec = @views.navigation_stack(nav, [

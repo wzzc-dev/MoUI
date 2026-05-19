@@ -7,6 +7,10 @@ Detailed design notes live in:
 - [Architecture](docs/architecture.md)
 - [Platform notes](docs/platform-notes.md)
 
+The WYSIWYG Markdown example is intentionally layered: `core` provides the
+generic multiline rich text editor, while the example app owns Markdown parsing
+and conversion into styled text runs.
+
 ## Local Dependencies
 
 The upstream `Milky2018/window` package does not currently cover the targets
@@ -61,6 +65,19 @@ Open:
 http://127.0.0.1:8080/examples/showcase/web_wasm/index.html
 ```
 
+Build and serve the WYSIWYG Markdown editor:
+
+```sh
+moon build examples/markdown_editor/web_wasm --target wasm-gc
+python3 -m http.server 8080 --bind 127.0.0.1
+```
+
+Open:
+
+```text
+http://127.0.0.1:8080/examples/markdown_editor/web_wasm/index.html
+```
+
 ## macOS Native
 
 Build and run the todo example:
@@ -95,6 +112,13 @@ Build the visual showcase:
 
 ```sh
 moon build examples/showcase/macos --target native
+```
+
+Build and run the WYSIWYG Markdown editor:
+
+```sh
+moon build examples/markdown_editor/macos --target native
+./_build/native/debug/build/examples/markdown_editor/macos/macos.exe
 ```
 
 ## Windows Native
@@ -139,20 +163,30 @@ moon build examples/todo/windows --target native
 .\_build\native\debug\build\examples\todo\windows\windows.exe
 ```
 
+Build and run the WYSIWYG Markdown editor:
+
+```powershell
+moon build examples/markdown_editor/windows --target native
+.\_build\native\debug\build\examples\markdown_editor\windows\windows.exe
+```
+
 ## Validation
 
 ```sh
 moon test render/webgpu --target wasm-gc
 moon test backend/web --target wasm-gc
 moon test examples/showcase/app --target native
+moon test examples/markdown_editor/app --target native
 moon build examples/todo/web_wasm --target wasm-gc
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
+moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon test --target native
 moon build examples/todo/macos --target native
 moon build examples/counter/macos --target native
 moon build examples/showcase/macos --target native
+moon build examples/markdown_editor/macos --target native
 moon build examples/todo/windows --target native
 moon build examples/counter/windows --target native
+moon build examples/markdown_editor/windows --target native
 ```
-

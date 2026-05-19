@@ -46,6 +46,8 @@ pub fn light_theme() -> @core.Theme
 
 pub fn list(Array[@core.ViewSpec], spacing? : Double) -> @core.ViewSpec
 
+pub fn markdown_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.ViewSpec
+
 pub fn menu_button(String, on_click? : () -> Unit, style? : @core.ButtonStyle, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn navigation_destination(route~ : String, view~ : @core.ViewSpec) -> NavigationDestination
@@ -61,6 +63,8 @@ pub fn padding_insets(@core.ViewSpec, @core.Insets) -> @core.ViewSpec
 pub fn progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.ViewSpec
 
 pub fn radio(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
+
+pub fn rich_text_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.ViewSpec
 
 pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 

@@ -657,6 +657,51 @@ pub(all) struct RenderNode {
 pub fn RenderNode::collect_draw_commands(Self, Array[DrawCommand]) -> Unit
 pub fn RenderNode::to_layout_result(Self) -> LayoutResult
 
+pub(all) struct RichTextBlock {
+  runs : Array[RichTextRun]
+  prefix : String
+  font : FontSpec?
+  color : Color?
+  background : Brush?
+  border_left : BorderStyle?
+  inset : Insets
+  line_height : Double?
+  corner_radius : Double
+  rule : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RichTextBlock::new(runs~ : Array[RichTextRun], prefix? : String, font? : FontSpec?, color? : Color?, background? : Brush?, border_left? : BorderStyle?, inset? : Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool) -> Self
+
+pub(all) struct RichTextDocument {
+  blocks : Array[RichTextBlock]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RichTextDocument::new(blocks~ : Array[RichTextBlock]) -> Self
+pub fn RichTextDocument::plain(String) -> Self
+
+pub(all) struct RichTextEditorViewSpec {
+  key : Key?
+  value : Binding[String]
+  placeholder : String
+  size : Size
+  format : (String) -> RichTextDocument
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Brush
+  border : BorderStyle?
+  focused_border : BorderStyle?
+  cursor_color : Color
+  corner_radius : Double
+}
+
+pub(all) struct RichTextRun {
+  text : String
+  font : FontSpec?
+  color : Color?
+  background : Brush?
+  background_radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RichTextRun::new(text~ : String, font? : FontSpec?, color? : Color?, background? : Brush?, background_radius? : Double) -> Self
+
 pub(all) struct RoundedRect {
   rect : Rect
   radius : Double
@@ -1075,6 +1120,7 @@ pub(all) enum ViewSpec {
   TextSpec(TextViewSpec)
   ButtonSpec(ButtonViewSpec)
   TextFieldSpec(TextFieldViewSpec)
+  RichTextEditorSpec(RichTextEditorViewSpec)
   ImageSpec(ImageViewSpec)
   CheckboxSpec(CheckboxViewSpec)
   FlexSpec(FlexViewSpec)
@@ -1150,6 +1196,8 @@ pub fn VisualStyle::empty() -> Self
 
 // Type aliases
 pub type ClickHandler = () -> Unit
+
+pub type RichTextFormatter = (String) -> RichTextDocument
 
 // Traits
 
