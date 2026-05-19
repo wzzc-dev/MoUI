@@ -26,13 +26,27 @@ pub(all) enum HostBackendKind {
   Test
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct HostCoordinatePolicy {
+  input_space : HostCoordinateSpace
+  surface_space : HostCoordinateSpace
+  scale_factor_applied : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostCoordinatePolicy::logical(description? : String) -> Self
+pub fn HostCoordinatePolicy::physical(description? : String) -> Self
+
+pub(all) enum HostCoordinateSpace {
+  LogicalPixels
+  PhysicalPixels
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum HostEvent {
   Resized(HostSurfaceMetrics)
-  PointerMoved(@wzzc-dev/moui/core.Point)
-  PointerButton(@wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.PointerPhase, Int)
+  Pointer(@wzzc-dev/moui/core.PointerEvent)
+  Scroll(HostScrollEvent)
+  Focus(HostFocusEvent)
   Keyboard(@wzzc-dev/moui/core.KeyboardEvent)
-  TextInputEvent(@wzzc-dev/moui/core.TextInputEvent)
-  TextInput(String)
+  TextInput(@wzzc-dev/moui/core.TextInputEvent)
   RedrawRequested
   CloseRequested
 } derive(Eq, ToJson, @debug.Debug)
@@ -44,6 +58,31 @@ pub(all) struct HostEventResult {
   redraw_requested : Bool
   close_requested : Bool
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostFocusEvent {
+  focused : Bool
+  pointer_cancel_position : @wzzc-dev/moui/core.Point?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostFocusEvent::new(focused~ : Bool, pointer_cancel_position? : @wzzc-dev/moui/core.Point?) -> Self
+pub fn HostFocusEvent::to_core(Self) -> @wzzc-dev/moui/core.AppEvent?
+
+pub(all) struct HostInputCapabilities {
+  pointer : Bool
+  scroll : Bool
+  keyboard : Bool
+  focus : Bool
+  text_input : Bool
+  ime : Bool
+  clipboard : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostInputCapabilities::new(pointer? : Bool, scroll? : Bool, keyboard? : Bool, focus? : Bool, text_input? : Bool, ime? : Bool, clipboard? : Bool) -> Self
+pub fn HostInputCapabilities::none() -> Self
+
+pub(all) struct HostInputContract {
+  capabilities : HostInputCapabilities
+  coordinates : HostCoordinatePolicy
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostInputContract::new(capabilities? : HostInputCapabilities, coordinates? : HostCoordinatePolicy) -> Self
 
 pub(all) struct HostRuntimeDriver {
   runtime : @wzzc-dev/moui/core.AppRuntime
@@ -61,6 +100,27 @@ pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
 pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit
 pub fn HostRuntimeDriver::size(Self) -> @wzzc-dev/moui/core.Size
 
+pub(all) enum HostScrollDelta {
+  Lines(@wzzc-dev/moui/core.Point)
+  Pixels(@wzzc-dev/moui/core.Point)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostScrollDelta::to_logical_pixels(Self, line_extent? : Double) -> @wzzc-dev/moui/core.Point
+
+pub(all) struct HostScrollEvent {
+  position : @wzzc-dev/moui/core.Point
+  delta : HostScrollDelta
+  phase : HostScrollPhase
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostScrollEvent::new(position~ : @wzzc-dev/moui/core.Point, delta~ : HostScrollDelta, phase? : HostScrollPhase) -> Self
+pub fn HostScrollEvent::to_pointer_event(Self) -> @wzzc-dev/moui/core.PointerEvent
+
+pub(all) enum HostScrollPhase {
+  Started
+  Moved
+  Ended
+  Cancelled
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct HostSurfaceMetrics {
   logical_size : @wzzc-dev/moui/core.Size
   physical_size : @wzzc-dev/moui/core.Size
@@ -72,16 +132,18 @@ pub fn HostSurfaceMetrics::new(logical_size~ : @wzzc-dev/moui/core.Size, physica
 pub(all) struct InputHostState {
   mut focused : Bool
   mut modifiers : @wzzc-dev/moui/core.KeyModifiers
-  text_input_supported : Bool
-  ime_supported : Bool
-  clipboard_supported : Bool
+  contract : HostInputContract
 }
 pub fn InputHostState::blur(Self) -> Unit
+pub fn InputHostState::capabilities(Self) -> HostInputCapabilities
+pub fn InputHostState::coordinate_policy(Self) -> HostCoordinatePolicy
 pub fn InputHostState::focus(Self) -> Unit
-pub fn InputHostState::keyboard_event(Self, key~ : String, text? : String?, pressed? : Bool, repeat? : Bool) -> HostEvent
-pub fn InputHostState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, text_input_supported? : Bool, ime_supported? : Bool, clipboard_supported? : Bool) -> Self
+pub fn InputHostState::focus_event(Self, focused~ : Bool, pointer_cancel_position? : @wzzc-dev/moui/core.Point?) -> HostEvent?
+pub fn InputHostState::insert_text(Self, String) -> HostEvent?
+pub fn InputHostState::keyboard_event(Self, key~ : String, text? : String?, pressed? : Bool, repeat? : Bool) -> HostEvent?
+pub fn InputHostState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, contract? : HostInputContract) -> Self
 pub fn InputHostState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
-pub fn InputHostState::text_input_event(Self, String) -> HostEvent?
+pub fn InputHostState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> HostEvent?
 
 pub(all) struct RedrawScheduler {
   mut redraw_requested : Bool

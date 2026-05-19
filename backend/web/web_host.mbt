@@ -55,9 +55,20 @@ pub fn canvas_surface_host(
 pub fn canvas_input_host() -> @host.InputHostState {
   @host.InputHostState::new(
     focused=false,
-    text_input_supported=true,
-    ime_supported=false,
-    clipboard_supported=false,
+    contract=@host.HostInputContract::new(
+      capabilities=@host.HostInputCapabilities::new(
+        pointer=true,
+        scroll=true,
+        keyboard=true,
+        focus=true,
+        text_input=true,
+        ime=false,
+        clipboard=false,
+      ),
+      coordinates=@host.HostCoordinatePolicy::logical(
+        description="Web canvas host reports logical event coordinates after DPR mapping.",
+      ),
+    ),
   )
 }
 

@@ -24,28 +24,40 @@ test "host app info records shared model boundaries" {
 }
 
 ///|
-test "input host owns focus modifiers and text input gating" {
+test "input host owns capabilities focus modifiers and text input gating" {
   let input = InputHostState::new()
-  match input.text_input_event("a") {
+  let capabilities = input.capabilities()
+  inspect(capabilities.pointer, content="true")
+  inspect(capabilities.scroll, content="true")
+  inspect(capabilities.ime, content="false")
+  inspect(input.coordinate_policy().scale_factor_applied, content="true")
+  match input.insert_text("a") {
     None => ()
     Some(_) => fail("unfocused input host should not emit text")
   }
-  input.focus()
+  match input.focus_event(focused=true) {
+    Some(HostEvent::Focus({ focused: true, .. })) => ()
+    _ => fail("expected focus event")
+  }
   input.set_modifiers(@core.KeyModifiers::new(shift=true))
   let key_event = input.keyboard_event(key="A", text=Some("A"))
   match key_event {
-    HostEvent::Keyboard(event) => {
+    Some(HostEvent::Keyboard(event)) => {
       inspect(event.key, content="A")
       inspect(event.modifiers.shift, content="true")
     }
     _ => fail("expected keyboard event")
   }
-  match input.text_input_event("A") {
-    Some(HostEvent::TextInput(text)) => inspect(text, content="A")
+  match input.insert_text("A") {
+    Some(HostEvent::TextInput(@core.TextInputEvent::InsertText(text))) =>
+      inspect(text, content="A")
     _ => fail("expected focused text input")
   }
-  input.blur()
-  match input.text_input_event("b") {
+  match input.focus_event(focused=false) {
+    Some(HostEvent::Focus({ focused: false, .. })) => ()
+    _ => fail("expected blur event")
+  }
+  match input.insert_text("b") {
     None => ()
     Some(_) => fail("blurred input host should not emit text")
   }
@@ -136,18 +148,23 @@ test "host driver maps focused text input through core text input event" {
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
-  ignore(driver.dispatch(HostEvent::TextInput("a")))
+  ignore(
+    driver.dispatch(HostEvent::TextInput(@core.TextInputEvent::InsertText("a"))),
+  )
   inspect(text.get(), content="")
   ignore(
     driver.dispatch(
-      HostEvent::PointerButton(
-        @core.Point::new(x=10.0, y=10.0),
-        @core.PointerPhase::Down,
-        0,
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
       ),
     ),
   )
-  let result = driver.dispatch(HostEvent::TextInput("a"))
+  let result = driver.dispatch(
+    HostEvent::TextInput(@core.TextInputEvent::InsertText("a")),
+  )
   inspect(text.get(), content="a")
   inspect(result.redraw_requested, content="true")
 }
@@ -186,21 +203,22 @@ test "host driver dispatches ime composition text input events" {
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   ignore(
     driver.dispatch(
-      HostEvent::PointerButton(
-        @core.Point::new(x=10.0, y=10.0),
-        @core.PointerPhase::Down,
-        0,
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
       ),
     ),
   )
   ignore(
     driver.dispatch(
-      HostEvent::TextInputEvent(@core.TextInputEvent::CompositionStart),
+      HostEvent::TextInput(@core.TextInputEvent::CompositionStart),
     ),
   )
   ignore(
     driver.dispatch(
-      HostEvent::TextInputEvent(@core.TextInputEvent::CompositionEnd("你")),
+      HostEvent::TextInput(@core.TextInputEvent::CompositionEnd("你")),
     ),
   )
   inspect(text.get(), content="你")
@@ -304,18 +322,40 @@ test "text input session enables ime when surrounding text is too long" {
 
 ///|
 test "host event converts to current core event model" {
-  let event = HostEvent::TextInput("x").to_core()
+  let event = HostEvent::TextInput(@core.TextInputEvent::InsertText("x")).to_core()
   match event {
     Some(@core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text))) =>
       inspect(text, content="x")
     _ => fail("expected text input event")
   }
-  let composition = HostEvent::TextInputEvent(
+  let composition = HostEvent::TextInput(
     @core.TextInputEvent::CompositionEnd("你"),
   ).to_core()
   match composition {
     Some(@core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
       inspect(text, content="你")
     _ => fail("expected composition text input event")
+  }
+  let scroll = HostEvent::Scroll(
+    HostScrollEvent::new(
+      position=@core.Point::new(x=8.0, y=9.0),
+      delta=HostScrollDelta::Lines(@core.Point::new(x=1.0, y=-2.0)),
+    ),
+  ).to_core()
+  match scroll {
+    Some(@core.AppEvent::Pointer({ wheel_delta: { x: 40.0, y: -80.0 }, .. })) =>
+      ()
+    _ => fail("expected scroll pointer event")
+  }
+  let blur = HostEvent::Focus(
+    HostFocusEvent::new(
+      focused=false,
+      pointer_cancel_position=Some(@core.Point::new(x=2.0, y=3.0)),
+    ),
+  ).to_core()
+  match blur {
+    Some(@core.AppEvent::Pointer({ phase: @core.PointerPhase::Cancel, .. })) =>
+      ()
+    _ => fail("expected blur cancel pointer event")
   }
 }

@@ -21,6 +21,7 @@ test "linux scaffold exposes host contracts without owning a surface" {
   inspect(surface.owns_surface, content="false")
   inspect(surface.can_reconfigure, content="false")
   let input = scaffold_input_host()
-  inspect(input.text_input_supported, content="false")
-  inspect(input.ime_supported, content="false")
+  inspect(input.capabilities().text_input, content="false")
+  inspect(input.capabilities().ime, content="false")
+  inspect(input.capabilities().clipboard, content="false")
 }
