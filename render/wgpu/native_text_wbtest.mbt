@@ -130,9 +130,9 @@ test "native renderer keeps text in draw item order" {
       }),
     ])
     inspect(renderer.draw_items.length(), content="3")
-    assert_true(renderer.draw_items[0] is NativeDrawItem::NativeText(_, _))
-    assert_true(renderer.draw_items[1] is NativeDrawItem::NativeVisual(_, _))
-    assert_true(renderer.draw_items[2] is NativeDrawItem::NativeText(_, _))
+    assert_true(renderer.draw_items[0] is NativeDrawItem::NativeText(_, _, _))
+    assert_true(renderer.draw_items[1] is NativeDrawItem::NativeVisual(_, _, _))
+    assert_true(renderer.draw_items[2] is NativeDrawItem::NativeText(_, _, _))
   } else {
     inspect("skipped", content="skipped")
   }

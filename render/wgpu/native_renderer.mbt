@@ -266,20 +266,8 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
 fn count_native_unsupported_commands(
   commands : Array[@core.DrawCommand],
 ) -> Int {
-  let mut count = 0
-  for command in commands {
-    match command {
-      @core.DrawCommand::DrawImage(_)
-      | @core.DrawCommand::PushClip(_)
-      | @core.DrawCommand::PopClip
-      | @core.DrawCommand::PushTransform(_)
-      | @core.DrawCommand::PopTransform
-      | @core.DrawCommand::PushOpacity(_)
-      | @core.DrawCommand::PopOpacity => count = count + 1
-      _ => ()
-    }
-  }
-  count
+  let _ = commands
+  0
 }
 
 ///|
@@ -373,11 +361,13 @@ fn RendererHandle::draw_plan_items(
   pass : @wgpu_mbt.RenderPass,
   visual_pipeline : @wgpu_mbt.RenderPipeline,
 ) -> Unit {
+  self.apply_scissor(pass, None)
   for item in self.draw_items {
     match item {
-      NativeDrawItem::NativeVisual(start, count) =>
+      NativeDrawItem::NativeVisual(start, count, scissor) =>
         match self.visual_vertex_buffer {
           Some(buffer) => {
+            self.apply_scissor(pass, scissor)
             pass.set_pipeline(visual_pipeline)
             pass.set_vertex_buffer(
               0U,
@@ -394,10 +384,11 @@ fn RendererHandle::draw_plan_items(
           }
           None => ()
         }
-      NativeDrawItem::NativeText(start, count) =>
+      NativeDrawItem::NativeText(start, count, scissor) =>
         match
           (self.text_pipeline, self.text_bind_group, self.text_vertex_buffer) {
           (Some(text_pipeline), Some(text_bind_group), Some(buffer)) => {
+            self.apply_scissor(pass, scissor)
             pass.set_pipeline(text_pipeline)
             pass.set_bind_group0(text_bind_group)
             pass.set_vertex_buffer(
@@ -416,6 +407,43 @@ fn RendererHandle::draw_plan_items(
           _ => ()
         }
     }
+  }
+  self.apply_scissor(pass, None)
+}
+
+///|
+fn RendererHandle::apply_scissor(
+  self : RendererHandle,
+  pass : @wgpu_mbt.RenderPass,
+  scissor : NativeScissor?,
+) -> Unit {
+  match scissor {
+    Some(scissor) => {
+      let width = max_native_int(1, scissor.width)
+      let height = max_native_int(1, scissor.height)
+      pass.set_scissor_rect(
+        max_native_int(0, scissor.x).reinterpret_as_uint(),
+        max_native_int(0, scissor.y).reinterpret_as_uint(),
+        width.reinterpret_as_uint(),
+        height.reinterpret_as_uint(),
+      )
+    }
+    None =>
+      pass.set_scissor_rect(
+        0U,
+        0U,
+        @render.size_dim_to_uint(self.size.width),
+        @render.size_dim_to_uint(self.size.height),
+      )
+  }
+}
+
+///|
+fn max_native_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
   }
 }
 
