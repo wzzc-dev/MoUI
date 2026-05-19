@@ -18,6 +18,8 @@ Detailed notes live in:
 - [Platform notes](docs/platform-notes.md)
 - [Renderer capability report](docs/renderer-capability-report.md)
 - [View catalog](docs/view-catalog.md)
+- [Examples](docs/examples.md)
+- [Testing](docs/testing.md)
 - [2026 roadmap](docs/roadmap-2026.md)
 
 The example suite demonstrates increasing slices of the framework:
