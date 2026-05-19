@@ -156,7 +156,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
       ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
       let renderer : @wgpu_renderer.WgpuRenderer? = Some(
         @wgpu_renderer.create_with_host_surface(
-          metrics.logical_size,
+          renderer_metrics_from_host(metrics),
           create_macos_host_surface(
             window.window_handle(),
             metrics.physical_size,
@@ -195,7 +195,11 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
       self.dispatch_window_event(event)
       match (self.window, self.renderer) {
         (Some(window), Some(renderer)) => {
-          renderer.resize(self.runtime.size())
+          let metrics = @host.surface_metrics_from_physical(
+            window.surface_size(),
+            scale_factor=window.scale_factor(),
+          )
+          renderer.resize(renderer_metrics_from_host(metrics))
           window.request_redraw()
         }
         _ => ()
@@ -205,7 +209,11 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
       self.dispatch_window_event(event)
       match (self.window, self.renderer) {
         (Some(window), Some(renderer)) => {
-          renderer.resize(self.runtime.size())
+          let metrics = @host.surface_metrics_from_physical(
+            window.surface_size(),
+            scale_factor=window.scale_factor(),
+          )
+          renderer.resize(renderer_metrics_from_host(metrics))
           window.request_redraw()
         }
         _ => ()
@@ -243,6 +251,17 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
       }
     _ => self.dispatch_window_event(event)
   }
+}
+
+///|
+fn renderer_metrics_from_host(
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.RendererSurfaceMetrics {
+  @render.RendererSurfaceMetrics::new(
+    logical_size=metrics.logical_size,
+    physical_size=metrics.physical_size,
+    scale_factor=metrics.scale_factor,
+  )
 }
 
 ///|

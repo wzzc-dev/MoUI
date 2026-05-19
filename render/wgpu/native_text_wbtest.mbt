@@ -66,7 +66,11 @@ test "native text shaping produces glyphs when platform font is available" {
 test "native renderer builds text vertices and atlas entries" {
   if @fs.path_exists(native_regular_font_path()) {
     let renderer = new_test_renderer_handle()
-    renderer.resize(@core.Size::new(width=320.0, height=200.0))
+    renderer.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=200.0),
+      ),
+    )
     renderer.render([
       @core.DrawCommand::DrawText({
         text: "MoUI Counter",
@@ -87,7 +91,11 @@ test "native renderer builds text vertices and atlas entries" {
 test "native renderer builds cjk text vertices with fallback font" {
   if @fs.path_exists(native_cjk_font_path()) {
     let renderer = new_test_renderer_handle()
-    renderer.resize(@core.Size::new(width=320.0, height=200.0))
+    renderer.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=200.0),
+      ),
+    )
     renderer.render([
       @core.DrawCommand::DrawText({
         text: "你",
@@ -108,7 +116,11 @@ test "native renderer builds cjk text vertices with fallback font" {
 test "native renderer keeps text in draw item order" {
   if @fs.path_exists(native_regular_font_path()) {
     let renderer = new_test_renderer_handle()
-    renderer.resize(@core.Size::new(width=320.0, height=200.0))
+    renderer.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=200.0),
+      ),
+    )
     renderer.render([
       @core.DrawCommand::DrawText({
         text: "A",
@@ -144,7 +156,11 @@ test "native renderer applies text alignment" {
     let font = @core.FontSpec::new(size=16.0, weight=500)
     let frame = @core.Rect::new(x=10.0, y=0.0, width=160.0, height=24.0)
     let left = new_test_renderer_handle()
-    left.resize(@core.Size::new(width=320.0, height=120.0))
+    left.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=120.0),
+      ),
+    )
     left.render([
       @core.DrawCommand::DrawText({
         text: "Align",
@@ -155,7 +171,11 @@ test "native renderer applies text alignment" {
       }),
     ])
     let centered = new_test_renderer_handle()
-    centered.resize(@core.Size::new(width=320.0, height=120.0))
+    centered.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=120.0),
+      ),
+    )
     centered.render([
       @core.DrawCommand::DrawText({
         text: "Align",

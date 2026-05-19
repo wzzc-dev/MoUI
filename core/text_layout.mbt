@@ -60,7 +60,9 @@ pub fn text_layout_codepoint_advance(
   font : FontSpec,
   codepoint : UInt,
 ) -> Double {
-  font.size * text_layout_advance_em(codepoint)
+  font.size *
+  text_layout_advance_em(codepoint) *
+  text_layout_font_width_factor(font)
 }
 
 ///|
@@ -94,6 +96,23 @@ fn text_layout_advance_em(codepoint : UInt) -> Double {
   } else {
     0.6
   }
+}
+
+///|
+fn text_layout_font_width_factor(font : FontSpec) -> Double {
+  let mut factor = 1.0
+  if font.weight >= 700 {
+    factor = factor * 1.08
+  } else if font.weight >= 600 {
+    factor = factor * 1.04
+  }
+  if font.family.contains("monospace") ||
+    font.family.contains("Mono") ||
+    font.family.contains("Menlo") ||
+    font.family.contains("Consolas") {
+    factor = factor * 1.1
+  }
+  factor
 }
 
 ///|

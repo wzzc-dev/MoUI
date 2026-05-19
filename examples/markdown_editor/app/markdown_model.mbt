@@ -443,7 +443,11 @@ fn markdown_inline_font(
     Bold => { ..font, weight: 700 }
     Italic => { ..font, weight: 500 }
     Code =>
-      { ..font, family: "ui-monospace, monospace", size: font.size * 0.92 }
+      {
+        ..font,
+        family: "SFMono-Regular, ui-monospace, Menlo, Consolas, monospace",
+        size: font.size * 0.92,
+      }
     Plain => font
   }
 }

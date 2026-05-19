@@ -7,12 +7,13 @@ test "renderer capability report tracks draw command support" {
     fail("expected image capability")
   }
   assert_true(image.native_status == @render.RendererFeatureStatus::Partial)
-  assert_true(image.web_status == @render.RendererFeatureStatus::HostForwarded)
+  assert_true(image.web_status == @render.RendererFeatureStatus::Partial)
   guard @render.renderer_feature_capability(@render.RendererFeature::Opacity)
     is Some(opacity) else {
     fail("expected opacity capability")
   }
   assert_true(opacity.native_status == @render.RendererFeatureStatus::Ready)
+  assert_true(opacity.web_status == @render.RendererFeatureStatus::Ready)
 }
 
 ///|

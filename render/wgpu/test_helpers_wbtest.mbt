@@ -2,6 +2,8 @@
 fn new_test_renderer_handle() -> RendererHandle {
   {
     size: @core.Size::new(width=0.0, height=0.0),
+    physical_size: @core.Size::new(width=0.0, height=0.0),
+    scale_factor: 1.0,
     last_batches: [],
     configured: false,
     present_count: 0,

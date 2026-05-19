@@ -11,7 +11,7 @@ import {
 // Values
 pub fn backend_info() -> @render.RendererBackendInfo
 
-pub fn create_with_host_surface(@core.Size, HostWgpuSurface) -> WgpuRenderer raise @wgpu_mbt.WgpuError
+pub fn create_with_host_surface(@render.RendererSurfaceMetrics, HostWgpuSurface) -> WgpuRenderer raise @wgpu_mbt.WgpuError
 
 pub fn native_surface_contract() -> @render.WgpuSurfaceContract
 
@@ -41,7 +41,7 @@ pub fn WgpuRenderer::dispose(Self) -> Unit
 pub fn WgpuRenderer::last_batch_count(Self) -> Int
 pub fn WgpuRenderer::present_count(Self) -> Int
 pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
-pub fn WgpuRenderer::resize(Self, @core.Size) -> Unit
+pub fn WgpuRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit
 pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
 
 // Type aliases

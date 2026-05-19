@@ -15,5 +15,8 @@ import {
 supported_targets = "native"
 
 options(
+  link: {
+    "native": { "cc-link-flags": "-framework AppKit -framework QuartzCore" },
+  },
   targets: { },
 )

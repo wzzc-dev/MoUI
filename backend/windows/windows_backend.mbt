@@ -114,17 +114,14 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
   }
   match window {
     Some(window) => {
-      let size = @host.physical_size_to_core(window.surface_size())
-      ignore(
-        self.driver.dispatch(
-          @host.HostEvent::Resized(
-            @host.HostSurfaceMetrics::new(logical_size=size, physical_size=size),
-          ),
-        ),
+      let metrics = @host.HostSurfaceMetrics::new(
+        logical_size=@host.physical_size_to_core(window.surface_size()),
+        physical_size=@host.physical_size_to_core(window.surface_size()),
       )
+      ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
       let renderer : @wgpu_renderer.WgpuRenderer? = Some(
         @wgpu_renderer.create_with_host_surface(
-          size,
+          renderer_metrics_from_host(metrics),
           create_windows_host_surface(window.window_handle()),
         ),
       ) catch {
@@ -159,7 +156,11 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       self.dispatch_window_event(event)
       match (self.window, self.renderer) {
         (Some(window), Some(renderer)) => {
-          renderer.resize(self.runtime.size())
+          let metrics = @host.HostSurfaceMetrics::new(
+            logical_size=@host.physical_size_to_core(window.surface_size()),
+            physical_size=@host.physical_size_to_core(window.surface_size()),
+          )
+          renderer.resize(renderer_metrics_from_host(metrics))
           window.request_redraw()
         }
         _ => ()
@@ -191,6 +192,17 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       }
     _ => self.dispatch_window_event(event)
   }
+}
+
+///|
+fn renderer_metrics_from_host(
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.RendererSurfaceMetrics {
+  @render.RendererSurfaceMetrics::new(
+    logical_size=metrics.logical_size,
+    physical_size=metrics.physical_size,
+    scale_factor=metrics.scale_factor,
+  )
 }
 
 ///|

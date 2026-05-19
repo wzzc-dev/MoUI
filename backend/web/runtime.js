@@ -6,6 +6,7 @@ import {
 const VISUAL_STRIDE_FLOATS = 22;
 const TEXT_STRIDE_FLOATS = 8;
 const ATLAS_SIZE = 2048;
+const WEB_FONT_STACK = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif';
 
 export function createWebGpuImports(options = {}) {
   if (!options.device || !options.format) {
@@ -50,6 +51,92 @@ export function createWebGpuImports(options = {}) {
     canvas.height = Math.max(1, Math.round(Number(height) * dpr));
     canvas.style.width = `${Math.max(1, Number(width))}px`;
     canvas.style.height = `${Math.max(1, Number(height))}px`;
+  };
+
+  const identityTransform = () => ({ a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 });
+
+  const multiplyTransform = (left, right) => ({
+    a: left.a * right.a + left.c * right.b,
+    b: left.b * right.a + left.d * right.b,
+    c: left.a * right.c + left.c * right.d,
+    d: left.b * right.c + left.d * right.d,
+    tx: left.a * right.tx + left.c * right.ty + left.tx,
+    ty: left.b * right.tx + left.d * right.ty + left.ty,
+  });
+
+  const transformPoint = (transform, x, y) => ({
+    x: transform.a * x + transform.c * y + transform.tx,
+    y: transform.b * x + transform.d * y + transform.ty,
+  });
+
+  const transformRect = (transform, rect) => {
+    const p0 = transformPoint(transform, rect.x, rect.y);
+    const p1 = transformPoint(transform, rect.x + rect.width, rect.y);
+    const p2 = transformPoint(transform, rect.x, rect.y + rect.height);
+    const p3 = transformPoint(transform, rect.x + rect.width, rect.y + rect.height);
+    const minX = Math.min(p0.x, p1.x, p2.x, p3.x);
+    const maxX = Math.max(p0.x, p1.x, p2.x, p3.x);
+    const minY = Math.min(p0.y, p1.y, p2.y, p3.y);
+    const maxY = Math.max(p0.y, p1.y, p2.y, p3.y);
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  };
+
+  const intersectRects = (a, b) => {
+    if (!a) return b;
+    const x0 = Math.max(a.x, b.x);
+    const y0 = Math.max(a.y, b.y);
+    const x1 = Math.min(a.x + a.width, b.x + b.width);
+    const y1 = Math.min(a.y + a.height, b.y + b.height);
+    return {
+      x: x0,
+      y: y0,
+      width: Math.max(0, x1 - x0),
+      height: Math.max(0, y1 - y0),
+    };
+  };
+
+  const rendererState = renderer => renderer.stateStack[renderer.stateStack.length - 1];
+
+  const cloneState = state => ({
+    opacity: state.opacity,
+    transform: { ...state.transform },
+    clip: state.clip ? { ...state.clip } : undefined,
+  });
+
+  const clampOpacity = value => Math.max(0, Math.min(1, Number(value)));
+
+  const multiplyColorAlpha = (color, opacity) => ({
+    r: color.r,
+    g: color.g,
+    b: color.b,
+    a: color.a * opacity,
+  });
+
+  const pushRendererItem = (renderer, item) => {
+    const state = rendererState(renderer);
+    renderer.items.push({
+      ...item,
+      clip: state.clip ? { ...state.clip } : undefined,
+    });
+  };
+
+  const setPassClip = (pass, renderer, clip) => {
+    const dpr = Number(renderer.surface.scaleFactor) || 1;
+    const width = Math.max(1, Math.round(renderer.width * dpr));
+    const height = Math.max(1, Math.round(renderer.height * dpr));
+    if (!clip) {
+      pass.setScissorRect(0, 0, width, height);
+      return true;
+    }
+    const x = Math.max(0, Math.floor(clip.x * dpr));
+    const y = Math.max(0, Math.floor(clip.y * dpr));
+    const right = Math.min(width, Math.ceil((clip.x + clip.width) * dpr));
+    const bottom = Math.min(height, Math.ceil((clip.y + clip.height) * dpr));
+    const scissorWidth = Math.max(0, right - x);
+    const scissorHeight = Math.max(0, bottom - y);
+    if (scissorWidth <= 0 || scissorHeight <= 0) return false;
+    pass.setScissorRect(x, y, scissorWidth, scissorHeight);
+    return true;
   };
 
   const visualModule = device.createShaderModule({
@@ -211,9 +298,10 @@ export function createWebGpuImports(options = {}) {
   const pushVisualVertex = (renderer, rect, px, py, radius, mode, strokeWidth, blurRadius, start, end, c0, c1) => {
     const w = Number(renderer.width || renderer.surface.width || 1);
     const h = Number(renderer.height || renderer.surface.height || 1);
+    const transformed = transformPoint(rendererState(renderer).transform, px, py);
     renderer.visualVertices.push(
-      px / w * 2 - 1,
-      1 - py / h * 2,
+      transformed.x / w * 2 - 1,
+      1 - transformed.y / h * 2,
       px - rect.x,
       py - rect.y,
       rect.width,
@@ -234,17 +322,20 @@ export function createWebGpuImports(options = {}) {
   const pushVisualQuad = (renderer, rect, radius, mode, strokeWidth, blurRadius, start, end, c0, c1) => {
     if (rect.width <= 0 || rect.height <= 0) return;
     const startIndex = renderer.visualVertices.length / VISUAL_STRIDE_FLOATS;
+    const state = rendererState(renderer);
+    const color0 = multiplyColorAlpha(c0, state.opacity);
+    const color1 = multiplyColorAlpha(c1, state.opacity);
     const x0 = rect.x;
     const y0 = rect.y;
     const x1 = rect.x + rect.width;
     const y1 = rect.y + rect.height;
-    pushVisualVertex(renderer, rect, x0, y0, radius, mode, strokeWidth, blurRadius, start, end, c0, c1);
-    pushVisualVertex(renderer, rect, x0, y1, radius, mode, strokeWidth, blurRadius, start, end, c0, c1);
-    pushVisualVertex(renderer, rect, x1, y1, radius, mode, strokeWidth, blurRadius, start, end, c0, c1);
-    pushVisualVertex(renderer, rect, x0, y0, radius, mode, strokeWidth, blurRadius, start, end, c0, c1);
-    pushVisualVertex(renderer, rect, x1, y1, radius, mode, strokeWidth, blurRadius, start, end, c0, c1);
-    pushVisualVertex(renderer, rect, x1, y0, radius, mode, strokeWidth, blurRadius, start, end, c0, c1);
-    renderer.items.push({ type: "visual", start: startIndex, count: 6 });
+    pushVisualVertex(renderer, rect, x0, y0, radius, mode, strokeWidth, blurRadius, start, end, color0, color1);
+    pushVisualVertex(renderer, rect, x0, y1, radius, mode, strokeWidth, blurRadius, start, end, color0, color1);
+    pushVisualVertex(renderer, rect, x1, y1, radius, mode, strokeWidth, blurRadius, start, end, color0, color1);
+    pushVisualVertex(renderer, rect, x0, y0, radius, mode, strokeWidth, blurRadius, start, end, color0, color1);
+    pushVisualVertex(renderer, rect, x1, y1, radius, mode, strokeWidth, blurRadius, start, end, color0, color1);
+    pushVisualVertex(renderer, rect, x1, y0, radius, mode, strokeWidth, blurRadius, start, end, color0, color1);
+    pushRendererItem(renderer, { type: "visual", start: startIndex, count: 6 });
   };
 
   const pushSolidRounded = (renderer, x, y, width, height, radius, color, mode = 0, strokeWidth = 0) => {
@@ -258,26 +349,29 @@ export function createWebGpuImports(options = {}) {
   };
 
   const ensureGlyph = (renderer, char, font) => {
-    const key = `${font.weight}|${font.size}|${font.family}|${char}`;
+    const dpr = Number(renderer.surface.scaleFactor) || 1;
+    const key = `${dpr}|${font.weight}|${font.size}|${font.family}|${char}`;
     const cached = renderer.glyphs.get(key);
     if (cached) return cached;
     const ctx = renderer.glyphContext;
-    ctx.font = `${font.weight} ${font.size}px ${font.family}`;
+    const physicalSize = font.size * dpr;
+    ctx.font = `${font.weight} ${physicalSize}px ${font.family}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     const metrics = ctx.measureText(char);
     const left = Math.ceil(Math.max(1, -metrics.actualBoundingBoxLeft));
     const right = Math.ceil(Math.max(1, metrics.actualBoundingBoxRight));
-    const ascent = Math.ceil(Math.max(font.size * 0.8, metrics.actualBoundingBoxAscent || font.size * 0.8));
-    const descent = Math.ceil(Math.max(font.size * 0.25, metrics.actualBoundingBoxDescent || font.size * 0.25));
-    const width = Math.max(1, left + right + 4);
-    const height = Math.max(1, ascent + descent + 4);
+    const ascent = Math.ceil(Math.max(physicalSize * 0.8, metrics.actualBoundingBoxAscent || physicalSize * 0.8));
+    const descent = Math.ceil(Math.max(physicalSize * 0.25, metrics.actualBoundingBoxDescent || physicalSize * 0.25));
+    const padding = Math.max(2, Math.ceil(2 * dpr));
+    const width = Math.max(1, left + right + padding * 2);
+    const height = Math.max(1, ascent + descent + padding * 2);
     const placed = placeGlyph(renderer, width, height);
     if (!placed) return undefined;
     ctx.clearRect(0, 0, renderer.glyphCanvas.width, renderer.glyphCanvas.height);
     ctx.fillStyle = "white";
-    ctx.font = `${font.weight} ${font.size}px ${font.family}`;
-    ctx.fillText(char, left + 2, ascent + 2);
+    ctx.font = `${font.weight} ${physicalSize}px ${font.family}`;
+    ctx.fillText(char, left + padding, ascent + padding);
     const image = ctx.getImageData(0, 0, width, height);
     device.queue.writeTexture(
       { texture: renderer.atlasTexture, origin: { x: placed.x, y: placed.y } },
@@ -288,11 +382,13 @@ export function createWebGpuImports(options = {}) {
     const glyph = {
       x: placed.x,
       y: placed.y,
-      width,
-      height,
-      offsetX: -(left + 2),
-      offsetY: -(ascent + 2),
-      advance: textLayoutAdvance(char, font.size),
+      width: width / dpr,
+      height: height / dpr,
+      textureWidth: width,
+      textureHeight: height,
+      offsetX: -(left + padding) / dpr,
+      offsetY: -(ascent + padding) / dpr,
+      advance: metrics.width > 0 ? metrics.width / dpr : textLayoutAdvance(char, font.size),
     };
     renderer.glyphs.set(key, glyph);
     return glyph;
@@ -329,14 +425,17 @@ export function createWebGpuImports(options = {}) {
     const y1 = y + glyph.height;
     const u0 = glyph.x / ATLAS_SIZE;
     const v0 = glyph.y / ATLAS_SIZE;
-    const u1 = (glyph.x + glyph.width) / ATLAS_SIZE;
-    const v1 = (glyph.y + glyph.height) / ATLAS_SIZE;
-    const push = (px, py, u, v) => renderer.textVertices.push(
-      px / w * 2 - 1,
-      1 - py / h * 2,
+    const u1 = (glyph.x + glyph.textureWidth) / ATLAS_SIZE;
+    const v1 = (glyph.y + glyph.textureHeight) / ATLAS_SIZE;
+    const push = (px, py, u, v) => {
+      const transformed = transformPoint(rendererState(renderer).transform, px, py);
+      renderer.textVertices.push(
+      transformed.x / w * 2 - 1,
+      1 - transformed.y / h * 2,
       u, v,
       color.r, color.g, color.b, color.a,
-    );
+      );
+    };
     push(x0, y0, u0, v0);
     push(x0, y1, u0, v1);
     push(x1, y1, u1, v1);
@@ -409,7 +508,7 @@ export function createWebGpuImports(options = {}) {
 
   const pushTextRun = (renderer, text, x, y, width, height, family, size, weight, color, align) => {
     const font = {
-      family: family || "Segoe UI, system-ui, sans-serif",
+      family: family || WEB_FONT_STACK,
       size: Math.max(1, Number(size) || 14),
       weight: Number(weight) || 400,
     };
@@ -425,12 +524,14 @@ export function createWebGpuImports(options = {}) {
     const startIndex = renderer.textVertices.length / TEXT_STRIDE_FLOATS;
     let cursor = Number(x) + textAlignExtra(align, width, total);
     const baseline = Number(y) + Math.max(font.size, (Number(height) + font.size * 0.72) / 2);
+    const state = rendererState(renderer);
+    const drawColor = multiplyColorAlpha(color, state.opacity);
     for (const glyph of glyphs) {
-      pushTextQuad(renderer, cursor + glyph.offsetX, baseline + glyph.offsetY, glyph, color);
+      pushTextQuad(renderer, cursor + glyph.offsetX, baseline + glyph.offsetY, glyph, drawColor);
       cursor += glyph.advance;
     }
     const count = renderer.textVertices.length / TEXT_STRIDE_FLOATS - startIndex;
-    if (count > 0) renderer.items.push({ type: "text", start: startIndex, count });
+    if (count > 0) pushRendererItem(renderer, { type: "text", start: startIndex, count });
   };
 
   return {
@@ -521,6 +622,7 @@ export function createWebGpuImports(options = {}) {
         atlasX: 0,
         atlasY: 0,
         atlasShelf: 0,
+        stateStack: [{ opacity: 1, transform: identityTransform(), clip: undefined }],
       };
       const handle = nextRendererHandle++;
       renderers.set(handle, renderer);
@@ -533,6 +635,10 @@ export function createWebGpuImports(options = {}) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
       resizeCanvas(renderer.surface.canvas, width, height, scaleFactor);
+      renderer.surface.context.configure({ device, format, alphaMode: "premultiplied" });
+      renderer.surface.width = width;
+      renderer.surface.height = height;
+      renderer.surface.scaleFactor = scaleFactor;
       return ok();
     },
     begin_frame(rendererHandle, width, height) {
@@ -543,6 +649,7 @@ export function createWebGpuImports(options = {}) {
       renderer.items = [];
       renderer.width = Number(width) || renderer.surface.width || 1;
       renderer.height = Number(height) || renderer.surface.height || 1;
+      renderer.stateStack = [{ opacity: 1, transform: identityTransform(), clip: undefined }];
       return ok();
     },
     clear(rendererHandle, r, g, b, a) {
@@ -607,25 +714,84 @@ export function createWebGpuImports(options = {}) {
       pushTextRun(renderer, stringValue(text), x, y, width, height, stringValue(family), size, weight, { r, g, b, a }, align);
       return ok();
     },
-    draw_image() {
+    draw_image(rendererHandle, source, x, y, width, height, opacity) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      void source;
+      const rect = { x: Number(x), y: Number(y), width: Number(width), height: Number(height) };
+      const alpha = clampOpacity(opacity);
+      pushGradientRounded(
+        renderer,
+        rect.x,
+        rect.y,
+        rect.width,
+        rect.height,
+        0,
+        0,
+        { x: rect.x, y: rect.y },
+        { x: rect.x + rect.width, y: rect.y + rect.height },
+        { r: 0.72, g: 0.78, b: 0.86, a: alpha },
+        { r: 0.42, g: 0.50, b: 0.62, a: alpha },
+        0,
+      );
       return ok();
     },
-    push_clip() {
+    push_clip(rendererHandle, x, y, width, height) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const current = rendererState(renderer);
+      const next = cloneState(current);
+      const transformed = transformRect(current.transform, {
+        x: Number(x),
+        y: Number(y),
+        width: Number(width),
+        height: Number(height),
+      });
+      next.clip = intersectRects(current.clip, transformed);
+      renderer.stateStack.push(next);
       return ok();
     },
-    pop_clip() {
+    pop_clip(rendererHandle) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      if (renderer.stateStack.length > 1) renderer.stateStack.pop();
       return ok();
     },
-    push_transform() {
+    push_transform(rendererHandle, a, b, c, d, tx, ty) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const current = rendererState(renderer);
+      const next = cloneState(current);
+      next.transform = multiplyTransform(current.transform, {
+        a: Number(a),
+        b: Number(b),
+        c: Number(c),
+        d: Number(d),
+        tx: Number(tx),
+        ty: Number(ty),
+      });
+      renderer.stateStack.push(next);
       return ok();
     },
-    pop_transform() {
+    pop_transform(rendererHandle) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      if (renderer.stateStack.length > 1) renderer.stateStack.pop();
       return ok();
     },
-    push_opacity() {
+    push_opacity(rendererHandle, opacity) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const current = rendererState(renderer);
+      const next = cloneState(current);
+      next.opacity = current.opacity * clampOpacity(opacity);
+      renderer.stateStack.push(next);
       return ok();
     },
-    pop_opacity() {
+    pop_opacity(rendererHandle) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      if (renderer.stateStack.length > 1) renderer.stateStack.pop();
       return ok();
     },
     present(rendererHandle) {
@@ -643,6 +809,7 @@ export function createWebGpuImports(options = {}) {
       const visualBuffer = uploadVertexBuffer(renderer.visualVertices);
       const textBuffer = uploadVertexBuffer(renderer.textVertices);
       for (const item of renderer.items) {
+        if (!setPassClip(pass, renderer, item.clip)) continue;
         if (item.type === "visual" && visualBuffer) {
           pass.setPipeline(visualPipeline);
           pass.setVertexBuffer(0, visualBuffer);

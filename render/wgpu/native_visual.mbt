@@ -59,6 +59,7 @@ fn build_native_draw_plan(
   atlas : GlyphAtlas,
   commands : Array[@core.DrawCommand],
   size : @core.Size,
+  scale_factor : Double,
 ) -> NativeDrawPlan {
   let was_dirty = atlas.dirty
   for attempt in 0..<2 {
@@ -84,6 +85,7 @@ fn build_native_draw_plan(
               blur_radius=0.0,
               state~,
               size~,
+              scale_factor~,
             )
           @core.DrawCommand::StrokeRect(rect, color, width) =>
             append_visual_item(
@@ -97,6 +99,7 @@ fn build_native_draw_plan(
               blur_radius=0.0,
               state~,
               size~,
+              scale_factor~,
             )
           @core.DrawCommand::FillRoundedRect(rounded, color) =>
             append_visual_item(
@@ -110,6 +113,7 @@ fn build_native_draw_plan(
               blur_radius=0.0,
               state~,
               size~,
+              scale_factor~,
             )
           @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
             append_visual_item(
@@ -123,6 +127,7 @@ fn build_native_draw_plan(
               blur_radius=0.0,
               state~,
               size~,
+              scale_factor~,
             )
           @core.DrawCommand::FillRoundedRectBrush(rounded, brush) =>
             append_visual_item(
@@ -136,6 +141,7 @@ fn build_native_draw_plan(
               blur_radius=0.0,
               state~,
               size~,
+              scale_factor~,
             )
           @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
             append_visual_item(
@@ -149,9 +155,12 @@ fn build_native_draw_plan(
               blur_radius=0.0,
               state~,
               size~,
+              scale_factor~,
             )
           @core.DrawCommand::DrawShadow(shadow) =>
-            append_shadow_item(visual_vertices, items, shadow, state, size)
+            append_shadow_item(
+              visual_vertices, items, shadow, state, size, scale_factor,
+            )
           @core.DrawCommand::DrawText(run) => {
             let start = text_vertices.length()
             let result = build_native_text_run(cache, atlas, run, state, size)
@@ -164,7 +173,7 @@ fn build_native_draw_plan(
                 NativeDrawItem::NativeText(
                   start,
                   count,
-                  native_scissor_for_state(state, size),
+                  native_scissor_for_state(state, size, scale_factor),
                 ),
               )
             }
@@ -172,7 +181,7 @@ fn build_native_draw_plan(
           }
           @core.DrawCommand::DrawImage(run) =>
             append_image_placeholder_item(
-              visual_vertices, items, run, state, size,
+              visual_vertices, items, run, state, size, scale_factor,
             )
           @core.DrawCommand::PushClip(rect) => {
             state_stack.push(state)
@@ -325,10 +334,17 @@ fn rect_intersection(a : @core.Rect, b : @core.Rect) -> @core.Rect? {
 fn native_scissor_for_state(
   state : NativePaintState,
   size : @core.Size,
+  scale_factor : Double,
 ) -> NativeScissor? {
   match state.clip {
     Some(clip) =>
-      Some(native_scissor_for_rect(transform_rect(clip, state.transform), size))
+      Some(
+        native_scissor_for_rect(
+          transform_rect(clip, state.transform),
+          size,
+          scale_factor,
+        ),
+      )
     None => None
   }
 }
@@ -337,16 +353,27 @@ fn native_scissor_for_state(
 fn native_scissor_for_rect(
   rect : @core.Rect,
   size : @core.Size,
+  scale_factor : Double,
 ) -> NativeScissor {
+  let scale = native_scissor_scale(scale_factor)
   let x0 = rect.origin.x.max(0.0).min(size.width.max(0.0))
   let y0 = rect.origin.y.max(0.0).min(size.height.max(0.0))
   let x1 = (rect.origin.x + rect.size.width).max(0.0).min(size.width.max(0.0))
   let y1 = (rect.origin.y + rect.size.height).max(0.0).min(size.height.max(0.0))
   {
-    x: x0.floor().to_int(),
-    y: y0.floor().to_int(),
-    width: (x1 - x0).ceil().max(0.0).to_int(),
-    height: (y1 - y0).ceil().max(0.0).to_int(),
+    x: (x0 * scale).floor().to_int(),
+    y: (y0 * scale).floor().to_int(),
+    width: ((x1 - x0) * scale).ceil().max(0.0).to_int(),
+    height: ((y1 - y0) * scale).ceil().max(0.0).to_int(),
+  }
+}
+
+///|
+fn native_scissor_scale(scale_factor : Double) -> Double {
+  if scale_factor > 0.0 {
+    scale_factor
+  } else {
+    1.0
   }
 }
 
@@ -362,6 +389,7 @@ fn append_visual_item(
   blur_radius~ : Double,
   state~ : NativePaintState,
   size~ : @core.Size,
+  scale_factor~ : Double,
 ) -> Unit {
   if rect.size.width <= 0.0 || rect.size.height <= 0.0 {
     return
@@ -385,7 +413,7 @@ fn append_visual_item(
     NativeDrawItem::NativeVisual(
       start,
       vertices.length() - start,
-      native_scissor_for_state(state, size),
+      native_scissor_for_state(state, size, scale_factor),
     ),
   )
 }
@@ -397,6 +425,7 @@ fn append_shadow_item(
   shadow : @core.ShadowSpec,
   state : NativePaintState,
   size : @core.Size,
+  scale_factor : Double,
 ) -> Unit {
   let blur = shadow.blur_radius.max(0.0)
   let spread = shadow.spread.max(0.0)
@@ -418,6 +447,7 @@ fn append_shadow_item(
     blur_radius=blur,
     state~,
     size~,
+    scale_factor~,
   )
 }
 
@@ -428,6 +458,7 @@ fn append_image_placeholder_item(
   run : @core.ImageRun,
   state : NativePaintState,
   size : @core.Size,
+  scale_factor : Double,
 ) -> Unit {
   append_visual_item(
     vertices,
@@ -440,6 +471,7 @@ fn append_image_placeholder_item(
     blur_radius=0.0,
     state~,
     size~,
+    scale_factor~,
   )
 }
 

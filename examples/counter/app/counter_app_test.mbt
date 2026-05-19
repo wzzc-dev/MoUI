@@ -13,7 +13,7 @@ test "counter app rebuilds root through dynamic runtime after click" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=20.0, y=112.0),
+        position=@core.Point::new(x=150.0, y=112.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -21,7 +21,7 @@ test "counter app rebuilds root through dynamic runtime after click" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=20.0, y=112.0),
+        position=@core.Point::new(x=150.0, y=112.0),
         phase=@core.PointerPhase::Up,
       ),
     ),
