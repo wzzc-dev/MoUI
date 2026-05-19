@@ -31,6 +31,19 @@ The project expects the modified local `Milky2018/window` checkout at
 `moon.mod.json` and `moon.pkg` files are the source of truth for imports and
 supported targets.
 
+Use `sh scripts/setup-local-deps.sh` to create or repair the local checkout and
+`sh scripts/check-local-deps.sh` to verify that it points at the
+`wzzc-dev/window` fork on the `moui-support` branch.
+
+`.local_repos/window` is an editable local dependency, not a vendored snapshot
+or submodule. It exists because upstream `moonbit-community/window` currently
+only covers macOS, while MoUI needs Web, Windows, and Linux support. Changes in
+that checkout should stay limited to the `web/`, `windows/`, and `linux/`
+platform packages and their package-local tests/docs when possible. Avoid
+changing `macos/`, shared packages such as `core/` and `dpi/`, or common
+behavior unless the task explicitly requires it; keeping the fork narrow makes
+future upstreaming safer.
+
 ## MoonBit Package Rules
 
 MoonBit package boundaries are directories with `moon.pkg` files. File names do

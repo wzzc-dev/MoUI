@@ -11,10 +11,24 @@ MoUI needs, so use the modified local checkout instead.
 From the repository root:
 
 ```sh
-mkdir -p .local_repos
-git clone git@github.com:wzzc-dev/window.git .local_repos/window
-git -C .local_repos/window checkout moui-support
+sh scripts/setup-local-deps.sh
+sh scripts/check-local-deps.sh
 ```
+
+This keeps `Milky2018/window` resolved through the local path override in
+`moon.mod.json`:
+
+```json
+"Milky2018/window": {
+  "path": ".local_repos/window"
+}
+```
+
+The checkout is intentionally a normal editable Git repository, not a submodule.
+MoUI uses the `wzzc-dev/window` fork on the `moui-support` branch because the
+current upstream package is macOS-only. Keep fork changes focused on the Web,
+Windows, and Linux platform packages when possible. Avoid touching macOS or
+shared window logic unless a task explicitly requires that broader change.
 
 ## Validation
 

@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+WINDOW_DIR="$ROOT_DIR/.local_repos/window"
+WINDOW_BRANCH="moui-support"
+
+fail() {
+  printf 'local dependency check failed: %s\n' "$1" >&2
+  exit 1
+}
+
+[ -d "$WINDOW_DIR/.git" ] || fail "missing .local_repos/window checkout; run sh scripts/setup-local-deps.sh"
+
+case "$(git -C "$WINDOW_DIR" remote get-url origin 2>/dev/null || true)" in
+  *wzzc-dev/window.git|*wzzc-dev/window)
+    ;;
+  *)
+    fail ".local_repos/window origin must be the wzzc-dev/window fork"
+    ;;
+esac
+
+[ "$(git -C "$WINDOW_DIR" branch --show-current)" = "$WINDOW_BRANCH" ] ||
+  fail ".local_repos/window must be on branch $WINDOW_BRANCH"
+
+grep -q '"path"[[:space:]]*:[[:space:]]*".local_repos/window"' "$ROOT_DIR/moon.mod.json" ||
+  fail "moon.mod.json must point Milky2018/window at .local_repos/window"
+
+for pkg in core dpi web windows linux macos; do
+  [ -f "$WINDOW_DIR/$pkg/moon.pkg" ] || fail "missing .local_repos/window/$pkg/moon.pkg"
+done
+
+printf 'Local dependency check passed.\n'

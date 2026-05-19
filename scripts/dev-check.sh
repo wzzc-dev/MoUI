@@ -41,6 +41,8 @@ run() {
   "$@"
 }
 
+run sh scripts/check-local-deps.sh
+
 run moon check
 
 run moon test core --target native
