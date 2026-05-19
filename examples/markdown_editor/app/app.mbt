@@ -78,9 +78,16 @@ fn MarkdownEditorApp::header(
       .font(theme.typography.title)
       .foreground(theme.palette.foreground),
       @views.text(
-        "Edit Markdown as formatted content while the source stays canonical.",
+        "Edit formatted Markdown while the canonical source stays visible.",
         width=560.0,
         height=26.0,
+      )
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+      @views.text(
+        "Supports H1-H3, bold, italic, code, lists, tasks, quote, code block, and rule. Toolbar buttons append Markdown snippets.",
+        width=760.0,
+        height=24.0,
       )
       .font(theme.typography.caption)
       .foreground(theme.palette.muted),
@@ -104,7 +111,9 @@ fn MarkdownEditorApp::toolbar(
         toolbar_button("Code", () => self.apply_action("code"), style),
         toolbar_button("H1", () => self.apply_action("h1"), style),
         toolbar_button("H2", () => self.apply_action("h2"), style),
-        toolbar_button("List", () => self.apply_action("ul"), style),
+        toolbar_button("H3", () => self.apply_action("h3"), style),
+        toolbar_button("Bullet", () => self.apply_action("ul"), style),
+        toolbar_button("Task", () => self.apply_action("task"), style),
         toolbar_button("1.", () => self.apply_action("ol"), style),
         toolbar_button("Quote", () => self.apply_action("quote"), style),
         toolbar_button("Block", () => self.apply_action("codeblock"), style),
@@ -263,8 +272,12 @@ pub fn markdown_apply_action(text : String, action : String) -> String {
     text + "\n\n# Heading"
   } else if action == "h2" {
     text + "\n\n## Section"
+  } else if action == "h3" {
+    text + "\n\n### Detail"
   } else if action == "ul" {
     text + "\n\n- List item"
+  } else if action == "task" {
+    text + "\n\n- [ ] Task item"
   } else if action == "ol" {
     text + "\n\n1. List item"
   } else if action == "quote" {
@@ -288,8 +301,12 @@ fn markdown_action_seed(action : String) -> String {
     "# Heading"
   } else if action == "h2" {
     "## Section"
+  } else if action == "h3" {
+    "### Detail"
   } else if action == "ul" {
     "- List item"
+  } else if action == "task" {
+    "- [ ] Task item"
   } else if action == "ol" {
     "1. List item"
   } else if action == "quote" {

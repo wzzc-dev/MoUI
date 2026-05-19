@@ -17,6 +17,7 @@ pub(all) enum MarkdownBlockKind {
   Heading(Int)
   Paragraph
   UnorderedListItem
+  TaskListItem(Bool)
   OrderedListItem(Int)
   Blockquote
   CodeBlock
@@ -78,6 +79,13 @@ fn parse_markdown_line(line : String) -> MarkdownBlock? {
     None
   } else if markdown_is_horizontal_rule(trimmed) {
     Some(markdown_block(MarkdownBlockKind::HorizontalRule, ""))
+  } else if markdown_has_prefix(line, "### ") {
+    Some(
+      markdown_block(
+        MarkdownBlockKind::Heading(3),
+        markdown_substring(line, 4, text_length_for_example(line)),
+      ),
+    )
   } else if markdown_has_prefix(line, "## ") {
     Some(
       markdown_block(
@@ -90,6 +98,24 @@ fn parse_markdown_line(line : String) -> MarkdownBlock? {
       markdown_block(
         MarkdownBlockKind::Heading(1),
         markdown_substring(line, 2, text_length_for_example(line)),
+      ),
+    )
+  } else if markdown_has_prefix(line, "- [ ] ") ||
+    markdown_has_prefix(line, "* [ ] ") {
+    Some(
+      markdown_block(
+        MarkdownBlockKind::TaskListItem(false),
+        markdown_substring(line, 6, text_length_for_example(line)),
+      ),
+    )
+  } else if markdown_has_prefix(line, "- [x] ") ||
+    markdown_has_prefix(line, "* [x] ") ||
+    markdown_has_prefix(line, "- [X] ") ||
+    markdown_has_prefix(line, "* [X] ") {
+    Some(
+      markdown_block(
+        MarkdownBlockKind::TaskListItem(true),
+        markdown_substring(line, 6, text_length_for_example(line)),
       ),
     )
   } else if markdown_has_prefix(line, "- ") || markdown_has_prefix(line, "* ") {
@@ -182,8 +208,40 @@ pub fn parse_markdown_inlines(text : String) -> Array[MarkdownInline] {
           index = index + 1
         }
       }
+    } else if index + 1 < chars.length() &&
+      chars[index] == '_' &&
+      chars[index + 1] == '_' {
+      match markdown_find_marker(chars, index + 2, "__") {
+        Some(end) => {
+          markdown_push_plain_inline(spans, buffer)
+          spans.push({
+            text: String::from_array(chars[index + 2:end]),
+            kind: MarkdownInlineKind::Bold,
+          })
+          index = end + 2
+        }
+        None => {
+          buffer.push(chars[index])
+          index = index + 1
+        }
+      }
     } else if chars[index] == '*' {
       match markdown_find_char(chars, index + 1, '*') {
+        Some(end) => {
+          markdown_push_plain_inline(spans, buffer)
+          spans.push({
+            text: String::from_array(chars[index + 1:end]),
+            kind: MarkdownInlineKind::Italic,
+          })
+          index = end + 1
+        }
+        None => {
+          buffer.push(chars[index])
+          index = index + 1
+        }
+      }
+    } else if chars[index] == '_' {
+      match markdown_find_char(chars, index + 1, '_') {
         Some(end) => {
           markdown_push_plain_inline(spans, buffer)
           spans.push({
@@ -343,8 +401,10 @@ fn markdown_block_to_rich_text(
     Heading(level) => {
       let font = if level == 1 {
         { ..base, size: base.size * 1.45, weight: 700 }
-      } else {
+      } else if level == 2 {
         { ..base, size: base.size * 1.22, weight: 700 }
+      } else {
+        { ..base, size: base.size * 1.08, weight: 700 }
       }
       @core.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, font),
@@ -352,8 +412,10 @@ fn markdown_block_to_rich_text(
         line_height=Some(
           if level == 1 {
             base.size * 2.0
-          } else {
+          } else if level == 2 {
             base.size * 1.65
+          } else {
+            base.size * 1.45
           },
         ),
       )
@@ -362,6 +424,12 @@ fn markdown_block_to_rich_text(
       @core.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base),
         prefix="• ",
+        line_height=Some(base.size * 1.55),
+      )
+    TaskListItem(checked) =>
+      @core.RichTextBlock::new(
+        runs=markdown_inlines_to_rich_text(block.inlines, base),
+        prefix=if checked { "☑ " } else { "☐ " },
         line_height=Some(base.size * 1.55),
       )
     OrderedListItem(number) =>
