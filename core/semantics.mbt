@@ -168,6 +168,13 @@ fn ElementNode::semantics_info(
         value: data.value.get(),
         actions: [Focus, SetText, Submit],
       }
+    RichTextEditorSpec(data) =>
+      {
+        role: TextField,
+        label: data.placeholder,
+        value: data.value.get(),
+        actions: [Focus, SetText],
+      }
     ListSpec(_) => { role: List, label: "", value: "", actions: [] }
     GridSpec(_) => { role: Grid, label: "", value: "", actions: [] }
     ScrollSpec(_) =>

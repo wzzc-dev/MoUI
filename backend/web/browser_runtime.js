@@ -101,10 +101,11 @@ export function createWindowWebImports(options = {}) {
 
   const createHiddenTextInput = canvas => {
     const input = document.createElement("textarea");
-    input.setAttribute("aria-hidden", "true");
+    input.setAttribute("aria-label", "Text input");
     input.autocomplete = "off";
     input.autocapitalize = "off";
     input.spellcheck = false;
+    input.tabIndex = -1;
     input.wrap = "off";
     input.value = "";
     input.style.position = "fixed";
@@ -114,7 +115,7 @@ export function createWindowWebImports(options = {}) {
     input.style.height = "1px";
     input.style.opacity = "0";
     input.style.pointerEvents = "none";
-    input.style.zIndex = "-1";
+    input.style.zIndex = "0";
     (canvas.parentElement ?? document.body).appendChild(input);
     return input;
   };
@@ -125,6 +126,28 @@ export function createWindowWebImports(options = {}) {
     } catch {
       element?.focus?.();
     }
+  };
+
+  const preventDefaultIfCancelable = event => {
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+  };
+
+  const textInputHostHasFocus = state =>
+    document.activeElement === state.canvas ||
+    document.activeElement === state.input;
+
+  const focusTextInputIfHostActive = state => {
+    if (state.imeAllowed && textInputHostHasFocus(state)) {
+      focusWithoutScroll(state.input);
+    }
+  };
+
+  const scheduleTextInputFocus = state => {
+    focusWithoutScroll(state.input);
+    setTimeout(() => focusTextInputIfHostActive(state), 0);
+    setTimeout(() => focusTextInputIfHostActive(state), 16);
   };
 
   const shouldForwardTextInputKey = event =>
@@ -139,6 +162,13 @@ export function createWindowWebImports(options = {}) {
     event.key === "PageUp" ||
     event.key === "PageDown" ||
     event.key === "Escape";
+
+  const isPlainTextKey = event =>
+    event.key &&
+    event.key.length === 1 &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey;
 
   const inputEventData = event => {
     if (event.data) return event.data;
@@ -325,8 +355,7 @@ export function createWindowWebImports(options = {}) {
       };
       const shouldUseMouseFallback = () => Date.now() - lastPointerEventAt > 250;
       const shouldUseClickFallback = () => Date.now() - lastButtonEventAt > 250;
-      const hostHasFocus = () =>
-        document.activeElement === canvas || document.activeElement === textInput;
+      const hostHasFocus = () => textInputHostHasFocus(textState);
       const blurTargetIsHost = event =>
         event.relatedTarget === canvas || event.relatedTarget === textInput;
       const emitBlurIfOutsideHost = event => {
@@ -339,7 +368,7 @@ export function createWindowWebImports(options = {}) {
       };
       const focusInputTarget = () => {
         if (textState.imeAllowed) {
-          focusWithoutScroll(textInput);
+          scheduleTextInputFocus(textState);
         } else {
           focusWithoutScroll(canvas);
         }
@@ -362,6 +391,7 @@ export function createWindowWebImports(options = {}) {
       add(canvas, "pointerdown", event => {
         markPointerEvent();
         markButtonEvent();
+        preventDefaultIfCancelable(event);
         focusInputTarget();
         const p = pointerPosition(canvas, event);
         emit(23, rawId, p.x, p.y, event.button);
@@ -371,6 +401,7 @@ export function createWindowWebImports(options = {}) {
         markButtonEvent();
         const p = pointerPosition(canvas, event);
         emit(24, rawId, p.x, p.y, event.button);
+        focusInputTarget();
       });
       add(canvas, "mouseenter", event => {
         if (!shouldUseMouseFallback()) return;
@@ -388,6 +419,7 @@ export function createWindowWebImports(options = {}) {
         emit(22, rawId, p.x, p.y);
       });
       add(canvas, "mousedown", event => {
+        preventDefaultIfCancelable(event);
         if (!shouldUseMouseFallback()) return;
         markButtonEvent();
         focusInputTarget();
@@ -399,11 +431,13 @@ export function createWindowWebImports(options = {}) {
         markButtonEvent();
         const p = pointerPosition(canvas, event);
         emit(24, rawId, p.x, p.y, event.button);
+        focusInputTarget();
       });
       add(canvas, "click", event => {
+        preventDefaultIfCancelable(event);
+        focusInputTarget();
         if (!shouldUseClickFallback()) return;
         markButtonEvent();
-        focusInputTarget();
         const p = pointerPosition(canvas, event);
         emit(23, rawId, p.x, p.y, event.button);
         emit(24, rawId, p.x, p.y, event.button);
@@ -416,6 +450,14 @@ export function createWindowWebImports(options = {}) {
       add(canvas, "blur", emitBlurIfOutsideHost);
       add(canvas, "keydown", event => {
         if (textState.imeAllowed) {
+          if (document.activeElement !== textInput) {
+            scheduleTextInputFocus(textState);
+            if (!event.isComposing && isPlainTextKey(event)) {
+              event.preventDefault();
+              emit(42, rawId, 0, 0, 0, event.key);
+              return;
+            }
+          }
           if (event.isComposing || !shouldForwardTextInputKey(event)) {
             return;
           }
@@ -550,7 +592,7 @@ export function createWindowWebImports(options = {}) {
       if (!state) return;
       state.imeAllowed = !!allowed;
       if (state.imeAllowed) {
-        focusWithoutScroll(state.input);
+        scheduleTextInputFocus(state);
       } else {
         state.input.value = "";
         state.input.style.left = "-10000px";

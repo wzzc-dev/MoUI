@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/examples/markdown_editor/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn markdown_apply_action(String, String) -> String
+
+pub fn markdown_to_rich_text(String) -> @core.RichTextDocument
+
+pub fn parse_markdown(String) -> Array[MarkdownBlock]
+
+pub fn parse_markdown_inlines(String) -> Array[MarkdownInline]
+
+// Errors
+
+// Types and methods
+pub(all) struct MarkdownBlock {
+  kind : MarkdownBlockKind
+  text : String
+  inlines : Array[MarkdownInline]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum MarkdownBlockKind {
+  Heading(Int)
+  Paragraph
+  UnorderedListItem
+  OrderedListItem(Int)
+  Blockquote
+  CodeBlock
+  HorizontalRule
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct MarkdownEditorApp {
+  document : @core.State[String]
+}
+pub fn MarkdownEditorApp::apply_action(Self, String) -> Unit
+pub fn MarkdownEditorApp::clear(Self) -> Unit
+pub fn MarkdownEditorApp::document(Self) -> String
+pub fn MarkdownEditorApp::new() -> Self
+pub fn MarkdownEditorApp::root(Self, @core.BuildContext) -> @core.ViewSpec
+pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn MarkdownEditorApp::set_document(Self, String) -> Unit
+
+pub(all) struct MarkdownInline {
+  text : String
+  kind : MarkdownInlineKind
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum MarkdownInlineKind {
+  Plain
+  Bold
+  Italic
+  Code
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

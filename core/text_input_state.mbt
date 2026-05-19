@@ -68,6 +68,41 @@ fn TextInputState::for_text_field(
 }
 
 ///|
+fn TextInputState::for_rich_text_editor(
+  element : ElementNode,
+  data : RichTextEditorViewSpec,
+  render : RenderNode,
+) -> TextInputState {
+  let text = data.value.get()
+  let display_text = text_with_composition(text, element, true)
+  let content = render.frame.inset(
+    Insets::symmetric(horizontal=14.0, vertical=12.0),
+  )
+  let caret = clamp_int(element.caret, 0, text_length(text))
+  let visual_caret = clamp_int(
+    text_field_visual_caret(text, element, true),
+    0,
+    text_length(display_text),
+  )
+  let caret_rect = rich_text_caret_rect(
+    display_text,
+    visual_caret,
+    content,
+    data.font,
+  )
+  {
+    focused: true,
+    element_id: Some(element.id),
+    text,
+    caret,
+    selection: element.selection,
+    composition: element.composition,
+    frame: render.frame,
+    caret_rect,
+  }
+}
+
+///|
 pub fn ElementNode::focused_text_input(
   self : ElementNode,
   target : ElementId,
@@ -77,6 +112,8 @@ pub fn ElementNode::focused_text_input(
     match self.spec {
       TextFieldSpec(data) =>
         Some(TextInputState::for_text_field(self, data, render))
+      RichTextEditorSpec(data) =>
+        Some(TextInputState::for_rich_text_editor(self, data, render))
       _ => None
     }
   } else {

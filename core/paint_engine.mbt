@@ -108,6 +108,15 @@ fn ElementNode::render_with_environment(
         focused == Some(self.id),
         environment,
       )
+    RichTextEditorSpec(data) =>
+      append_rich_text_editor_commands(
+        commands,
+        self,
+        data,
+        bounds,
+        focused == Some(self.id),
+        environment,
+      )
     ImageSpec(data) => {
       let frame = match data.size {
         Some(size) =>
@@ -570,6 +579,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     TextSpec(data) => data.size
     ButtonSpec(data) => data.size
     TextFieldSpec(data) => data.size
+    RichTextEditorSpec(data) => data.size
     ImageSpec(data) => data.size.unwrap_or(Size::new(width=0.0, height=0.0))
     CheckboxSpec(data) => checkbox_intrinsic_size(data)
     SpacerSpec(data) =>
@@ -640,6 +650,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
   match spec {
     ButtonSpec(_) => true
     TextFieldSpec(_) => true
+    RichTextEditorSpec(_) => true
     CheckboxSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     ModifiedSpec(data) =>

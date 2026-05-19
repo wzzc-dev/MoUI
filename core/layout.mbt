@@ -106,6 +106,7 @@ fn ElementNode::measured_size_from_children(
     TextSpec(data) => data.size
     ButtonSpec(data) => data.size
     TextFieldSpec(data) => data.size
+    RichTextEditorSpec(data) => data.size
     ImageSpec(data) => data.size.unwrap_or(Size::new(width=0.0, height=0.0))
     CheckboxSpec(data) => checkbox_intrinsic_size(data)
     SpacerSpec(data) =>
