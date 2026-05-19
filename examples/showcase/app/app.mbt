@@ -70,6 +70,7 @@ pub fn ShowcaseApp::root(
         [
           self.visual_card(theme, active, offset, opacity),
           self.gallery_card(theme, slider),
+          self.capability_card(theme),
         ],
         spacing=theme.spacing_scale.lg,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
@@ -276,6 +277,81 @@ fn ShowcaseApp::gallery_card(
     height=284.0,
     style=@core.SurfaceStyle::raised(theme~),
   )
+}
+
+///|
+fn ShowcaseApp::capability_card(
+  self : ShowcaseApp,
+  theme : @core.Theme,
+) -> @core.ViewSpec {
+  ignore(self)
+  let rows : Array[@core.ViewSpec] = []
+  for entry in @render.renderer_feature_capability_report() {
+    rows.push(capability_row(entry, theme))
+  }
+  @views.surface(
+    @views.column(
+      [
+        @views.text("Renderer capability", width=220.0, height=28.0)
+        .font(theme.typography.control)
+        .foreground(theme.palette.foreground),
+        @views.column(
+          rows,
+          spacing=theme.spacing_scale.xs,
+          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+        ),
+      ],
+      spacing=theme.spacing_scale.md,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    ),
+    width=244.0,
+    height=284.0,
+    style=@core.SurfaceStyle::raised(theme~),
+  )
+}
+
+///|
+fn capability_row(
+  entry : @render.RendererFeatureCapability,
+  theme : @core.Theme,
+) -> @core.ViewSpec {
+  let status = capability_status_label(entry)
+  @views.row(
+    [
+      @views.text(entry.feature.label(), width=92.0, height=22.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.foreground),
+      @views.text(status, width=112.0, height=22.0)
+      .font(theme.typography.caption)
+      .foreground(capability_status_color(entry, theme)),
+    ],
+    spacing=theme.spacing_scale.xs,
+    cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+  )
+}
+
+///|
+fn capability_status_label(entry : @render.RendererFeatureCapability) -> String {
+  if entry.native_status == entry.web_status {
+    entry.native_status.label()
+  } else {
+    "native " +
+    entry.native_status.label() +
+    " · web " +
+    entry.web_status.label()
+  }
+}
+
+///|
+fn capability_status_color(
+  entry : @render.RendererFeatureCapability,
+  theme : @core.Theme,
+) -> @core.Color {
+  if entry.native_status.needs_follow_up() || entry.web_status.needs_follow_up() {
+    theme.palette.primary
+  } else {
+    theme.palette.muted
+  }
 }
 
 ///|
