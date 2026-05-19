@@ -11,6 +11,7 @@ pub(all) struct RuntimeState {
   mut next_element_id : Int
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
+  mut environment : Environment
   mut redraw_callback : (() -> Unit)?
   clock : Clock
   mut animations : Array[AnimationController]
@@ -21,6 +22,7 @@ pub(all) struct BuildContext {
   runtime : RuntimeState
   component_id : ElementId
   subscriptions : Array[StateSubscription]
+  environment : Environment
 }
 
 ///|
@@ -35,7 +37,11 @@ priv struct ComponentBuildResult {
 }
 
 ///|
-pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
+pub fn RuntimeState::new_spec(
+  root~ : ViewSpec,
+  size~ : Size,
+  environment? : Environment = Environment::default(),
+) -> RuntimeState {
   let initial = mount_view_spec_with_next(root, 1)
   let state = {
     root_spec: root,
@@ -49,6 +55,7 @@ pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
     next_element_id: initial.next_id,
     dirty_elements: [],
     focused_element: None,
+    environment,
     redraw_callback: None,
     clock: Clock::new(),
     animations: [],
@@ -65,6 +72,7 @@ pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size) -> RuntimeState {
 pub fn RuntimeState::new_component(
   root~ : Component,
   size~ : Size,
+  environment? : Environment = Environment::default(),
 ) -> RuntimeState {
   let root_spec = ViewSpec::component(root)
   let mounted = mount_view_spec_for_runtime(root_spec, None, 1)
@@ -80,6 +88,7 @@ pub fn RuntimeState::new_component(
     next_element_id: mounted.next_id,
     dirty_elements: [],
     focused_element: None,
+    environment,
     redraw_callback: None,
     clock: Clock::new(),
     animations: [],
@@ -108,6 +117,21 @@ pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
 }
 
 ///|
+pub fn[T] BuildContext::watch_derived(
+  self : BuildContext,
+  state : DerivedState[T],
+) -> T {
+  let component_id = self.component_id
+  for
+    subscription in state.subscribe(() => {
+      self.runtime.request_component_rebuild(component_id)
+    }) {
+    self.subscriptions.push(subscription)
+  }
+  state.get()
+}
+
+///|
 pub fn[T] BuildContext::binding(
   self : BuildContext,
   state : State[T],
@@ -121,6 +145,41 @@ pub fn[T] BuildContext::binding(
 }
 
 ///|
+pub fn BuildContext::environment(self : BuildContext) -> Environment {
+  self.environment
+}
+
+///|
+pub fn BuildContext::theme(self : BuildContext) -> Theme {
+  self.environment.theme
+}
+
+///|
+pub fn BuildContext::color_scheme(self : BuildContext) -> ColorScheme {
+  self.environment.color_scheme
+}
+
+///|
+pub fn BuildContext::scale_factor(self : BuildContext) -> Double {
+  self.environment.scale_factor
+}
+
+///|
+pub fn BuildContext::text_scale(self : BuildContext) -> Double {
+  self.environment.text_scale
+}
+
+///|
+pub fn BuildContext::locale(self : BuildContext) -> String {
+  self.environment.locale
+}
+
+///|
+pub fn BuildContext::enabled(self : BuildContext) -> Bool {
+  self.environment.enabled
+}
+
+///|
 pub fn RuntimeState::set_root_spec(
   self : RuntimeState,
   root : ViewSpec,
@@ -129,6 +188,27 @@ pub fn RuntimeState::set_root_spec(
   self.root_spec = root
   self.rebuild()
   self.needs_redraw = true
+}
+
+///|
+pub fn RuntimeState::environment(self : RuntimeState) -> Environment {
+  self.environment
+}
+
+///|
+pub fn RuntimeState::set_environment(
+  self : RuntimeState,
+  environment : Environment,
+) -> Unit {
+  if self.environment != environment {
+    self.environment = environment
+    self.needs_rebuild = self.element_tree.mark_component_tree_build_dirty()
+    self.needs_layout = true
+    self.needs_paint = true
+    self.needs_redraw = true
+    self.element_tree.mark_subtree_layout_dirty()
+    self.mark_dirty(self.element_tree.id)
+  }
 }
 
 ///|
@@ -442,6 +522,7 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   self.render_tree = self.element_tree.render_focused(
     Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
     focused=self.focused_element,
+    environment=self.environment,
   )
   self.needs_rebuild = false
   self.needs_layout = false
@@ -480,6 +561,11 @@ fn build_component_spec(
     subscription.cancel()
   }
   let subscriptions : Array[StateSubscription] = []
-  let context = BuildContext::{ runtime, component_id, subscriptions }
+  let context = BuildContext::{
+    runtime,
+    component_id,
+    subscriptions,
+    environment: runtime.environment,
+  }
   { child_spec: (component.build)(context), subscriptions }
 }

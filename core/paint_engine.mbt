@@ -4,11 +4,37 @@ priv struct RenderEnvironment {
   foreground : Color?
   corner_radius : Double?
   enabled : Bool
+  scale_factor : Double
+  text_scale : Double
+  locale : String
 } derive(Eq)
 
 ///|
 fn RenderEnvironment::default() -> RenderEnvironment {
-  { font: None, foreground: None, corner_radius: None, enabled: true }
+  {
+    font: None,
+    foreground: None,
+    corner_radius: None,
+    enabled: true,
+    scale_factor: 1.0,
+    text_scale: 1.0,
+    locale: "en-US",
+  }
+}
+
+///|
+fn RenderEnvironment::from_environment(
+  environment : Environment,
+) -> RenderEnvironment {
+  {
+    font: None,
+    foreground: None,
+    corner_radius: None,
+    enabled: environment.enabled,
+    scale_factor: environment.scale_factor,
+    text_scale: environment.text_scale,
+    locale: environment.locale,
+  }
 }
 
 ///|
@@ -21,8 +47,13 @@ fn ElementNode::render_with_focus(
   self : ElementNode,
   bounds : Rect,
   focused : ElementId?,
+  environment? : Environment = Environment::default(),
 ) -> RenderNode {
-  self.render_with_environment(bounds, focused, RenderEnvironment::default())
+  self.render_with_environment(
+    bounds,
+    focused,
+    RenderEnvironment::from_environment(environment),
+  )
 }
 
 ///|
@@ -54,7 +85,7 @@ fn ElementNode::render_with_environment(
           TextRun::new(
             text=data.text,
             frame=bounds,
-            font=environment.font.unwrap_or(data.font),
+            font=environment_font(environment, data.font),
             color=environment_color(environment, data.color),
           ),
         ),
@@ -93,8 +124,8 @@ fn ElementNode::render_with_environment(
           TextRun::new(
             text=data.text,
             frame=bounds,
-            font=environment.font.unwrap_or(data.font),
-            color=foreground,
+            font=environment_font(environment, data.font),
+            color=environment_color(environment, foreground),
           ),
         ),
       )
@@ -331,6 +362,19 @@ fn environment_color(
     color
   } else {
     color.multiply_alpha(0.7)
+  }
+}
+
+///|
+fn environment_font(
+  environment : RenderEnvironment,
+  fallback : FontSpec,
+) -> FontSpec {
+  let font = environment.font.unwrap_or(fallback)
+  if environment.text_scale == 1.0 {
+    font
+  } else {
+    { ..font, size: font.size * environment.text_scale }
   }
 }
 
@@ -670,8 +714,9 @@ pub fn ElementNode::render_focused(
   self : ElementNode,
   bounds : Rect,
   focused~ : ElementId?,
+  environment? : Environment = Environment::default(),
 ) -> RenderNode {
-  self.render_with_focus(bounds, focused)
+  self.render_with_focus(bounds, focused, environment~)
 }
 
 ///|
@@ -726,8 +771,8 @@ fn append_checkbox_commands(
           width=max_double(0.0, frame.size.width - box_side - 8.0),
           height=frame.size.height,
         ),
-        font=environment.font.unwrap_or(data.font),
-        color=environment.foreground.unwrap_or(data.foreground),
+        font=environment_font(environment, data.font),
+        color=environment_color(environment, data.foreground),
         align=TextAlign::TextStart,
       ),
     ),
@@ -762,11 +807,11 @@ fn append_text_field_commands(
   let text = data.value.get()
   let display_text = text_with_composition(text, element, focused)
   let display = if display_text == "" { data.placeholder } else { display_text }
-  let font = environment.font.unwrap_or(data.font)
+  let font = environment_font(environment, data.font)
   let color = if text == "" {
-    data.placeholder_color
+    environment_color(environment, data.placeholder_color)
   } else {
-    environment.foreground.unwrap_or(data.foreground)
+    environment_color(environment, data.foreground)
   }
   let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
   if focused && element.composition is None {
