@@ -45,10 +45,43 @@ test "scroll view emits clip and offsets child frame" {
   let render = mount_view_spec(scroll).render(
     Rect::new(x=5.0, y=6.0, width=80.0, height=40.0),
   )
-  guard render.paint_commands is [PushClip(_), PopClip] else {
+  guard render.paint_commands is [PushClip(_)] else {
     fail("expected scroll clip commands")
   }
+  guard render.post_paint_commands is [PopClip] else {
+    fail("expected scroll pop clip after children")
+  }
   inspect(render.children[0].frame.origin.y, content="-6")
+}
+
+///|
+test "scroll clip wraps child draw commands in collected paint order" {
+  let scroll = ViewSpec::ScrollSpec({
+    key: None,
+    offset: Point::new(x=0.0, y=0.0),
+    viewport: Some(Size::new(width=80.0, height=40.0)),
+    child: ViewSpec::ModifiedSpec({
+      key: None,
+      modifier: ClipModifier,
+      child: ViewSpec::TextSpec({
+        key: None,
+        text: "Nested",
+        size: Size::new(width=120.0, height=80.0),
+        font: FontSpec::new(),
+        color: Color::black(),
+      }),
+    }),
+  })
+  let commands : Array[DrawCommand] = []
+  mount_view_spec(scroll)
+  .render(Rect::new(x=0.0, y=0.0, width=80.0, height=40.0))
+  .collect_draw_commands(commands)
+  inspect(commands.length(), content="5")
+  assert_true(commands[0] is PushClip(_))
+  assert_true(commands[1] is PushClip(_))
+  assert_true(commands[2] is DrawText(_))
+  assert_true(commands[3] is PopClip)
+  assert_true(commands[4] is PopClip)
 }
 
 ///|

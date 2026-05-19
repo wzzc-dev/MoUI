@@ -124,39 +124,48 @@ fn ShowcaseApp::header(
         spacing=theme.spacing_scale.xs,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
       ),
-      @views.spacer(),
-      @views.button(
-        "Overview",
-        on_click=() => self.navigation.replace("overview"),
-        style=@core.ButtonStyle::tonal(theme~),
-        width=104.0,
-      ),
-      @views.button(
-        "Controls",
-        on_click=() => self.navigation.replace("controls"),
-        style=@core.ButtonStyle::tonal(theme~),
-        width=104.0,
-      ),
-      @views.button(
-        if dark {
-          "Light"
-        } else {
-          "Dark"
-        },
-        on_click=() => self.toggle_scheme(),
-        style=@core.ButtonStyle::tonal(theme~),
-        width=96.0,
-      ),
-      @views.menu_button(
-        "Dialog",
-        on_click=() => self.show_dialog(),
-        style=@core.ButtonStyle::outline(theme~),
-        width=104.0,
-      ).keyboard_shortcut(
-        @core.KeyboardShortcut::new(
-          key="k",
-          modifiers=@core.KeyModifiers::new(meta=true),
+      @views.scroll_view(
+        @views.row(
+          [
+            @views.button(
+              "Overview",
+              on_click=() => self.navigation.replace("overview"),
+              style=@core.ButtonStyle::tonal(theme~),
+              width=104.0,
+            ),
+            @views.button(
+              "Controls",
+              on_click=() => self.navigation.replace("controls"),
+              style=@core.ButtonStyle::tonal(theme~),
+              width=104.0,
+            ),
+            @views.button(
+              if dark {
+                "Light"
+              } else {
+                "Dark"
+              },
+              on_click=() => self.toggle_scheme(),
+              style=@core.ButtonStyle::tonal(theme~),
+              width=96.0,
+            ),
+            @views.menu_button(
+              "Dialog",
+              on_click=() => self.show_dialog(),
+              style=@core.ButtonStyle::outline(theme~),
+              width=104.0,
+            ).keyboard_shortcut(
+              @core.KeyboardShortcut::new(
+                key="k",
+                modifiers=@core.KeyModifiers::new(meta=true),
+              ),
+            ),
+          ],
+          spacing=theme.spacing_scale.sm,
+          cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
         ),
+        width=432.0,
+        height=46.0,
       ),
     ],
     spacing=theme.spacing_scale.sm,

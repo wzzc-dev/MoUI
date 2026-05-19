@@ -296,7 +296,7 @@ fn ElementNode::render_with_environment(
           ),
         )
       }
-      commands.push(PopClip)
+      post_commands.push(PopClip)
     }
     GridSpec(data) => {
       let frames = grid_child_frames(

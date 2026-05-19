@@ -36,6 +36,7 @@ pub fn CounterApp::root(
         ),
       ],
       spacing=theme.spacing_scale.md,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
     ),
     style=@core.SurfaceStyle::default(theme~),
   )

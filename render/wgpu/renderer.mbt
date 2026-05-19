@@ -27,15 +27,18 @@ pub fn native_surface_contract() -> @render.WgpuSurfaceContract {
 
 ///|
 pub fn create_with_host_surface(
-  size : @core.Size,
+  metrics : @render.RendererSurfaceMetrics,
   surface : HostWgpuSurface,
 ) -> WgpuRenderer raise @wgpu_mbt.WgpuError {
-  { backend: RendererHandle::create_with_host_surface(size, surface) }
+  { backend: RendererHandle::create_with_host_surface(metrics, surface) }
 }
 
 ///|
-pub fn WgpuRenderer::resize(self : WgpuRenderer, size : @core.Size) -> Unit {
-  self.backend.resize(size)
+pub fn WgpuRenderer::resize(
+  self : WgpuRenderer,
+  metrics : @render.RendererSurfaceMetrics,
+) -> Unit {
+  self.backend.resize(metrics)
 }
 
 ///|

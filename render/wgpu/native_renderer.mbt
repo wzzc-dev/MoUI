@@ -1,6 +1,8 @@
 ///|
 struct RendererHandle {
   mut size : @core.Size
+  mut physical_size : @core.Size
+  mut scale_factor : Double
   mut last_batches : Array[@render.RectBatch]
   mut configured : Bool
   mut present_count : Int
@@ -34,15 +36,15 @@ struct RendererHandle {
 
 ///|
 fn RendererHandle::create_with_host_surface(
-  size : @core.Size,
+  metrics : @render.RendererSurfaceMetrics,
   host_surface : HostWgpuSurface,
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
-  create_with_surface(size, host_surface.instance, host_surface.surface)
+  create_with_surface(metrics, host_surface.instance, host_surface.surface)
 }
 
 ///|
 fn create_with_surface(
-  size : @core.Size,
+  metrics : @render.RendererSurfaceMetrics,
   instance : @wgpu_mbt.Instance,
   surface : @wgpu_mbt.Surface,
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
@@ -55,8 +57,8 @@ fn create_with_surface(
   let format = surface.configure_default(
     adapter,
     device,
-    @render.size_dim_to_uint(size.width),
-    @render.size_dim_to_uint(size.height),
+    @render.size_dim_to_uint(metrics.physical_size.width),
+    @render.size_dim_to_uint(metrics.physical_size.height),
     usage,
   )
   let visual_shader = device.create_shader_module_wgsl(visual_shader_wgsl())
@@ -83,7 +85,9 @@ fn create_with_surface(
     text_bind_group_layout, text_sampler, text_atlas_view,
   )
   {
-    size,
+    size: metrics.logical_size,
+    physical_size: metrics.physical_size,
+    scale_factor: metrics.scale_factor,
     last_batches: [],
     configured: true,
     present_count: 0,
@@ -117,8 +121,14 @@ fn create_with_surface(
 }
 
 ///|
-fn RendererHandle::resize(self : RendererHandle, size : @core.Size) -> Unit {
-  self.size = size
+fn RendererHandle::resize(
+  self : RendererHandle,
+  metrics : @render.RendererSurfaceMetrics,
+) -> Unit {
+  self.size = metrics.logical_size
+  self.physical_size = metrics.physical_size
+  self.scale_factor = metrics.scale_factor
+  let physical_size = self.effective_physical_size()
   match (self.surface, self.adapter, self.device) {
     (Some(surface), Some(adapter), Some(device)) => {
       let usage = @wgpu_mbt.TextureUsage::from_u64(
@@ -129,14 +139,26 @@ fn RendererHandle::resize(self : RendererHandle, size : @core.Size) -> Unit {
         surface.configure_default(
           adapter,
           device,
-          @render.size_dim_to_uint(size.width),
-          @render.size_dim_to_uint(size.height),
+          @render.size_dim_to_uint(physical_size.width),
+          @render.size_dim_to_uint(physical_size.height),
           usage,
         ),
       )
       self.configured = true
     }
     _ => ()
+  }
+}
+
+///|
+fn RendererHandle::effective_physical_size(self : RendererHandle) -> @core.Size {
+  if self.physical_size.width > 0.0 && self.physical_size.height > 0.0 {
+    self.physical_size
+  } else {
+    @core.Size::new(
+      width=self.size.width * self.scale_factor,
+      height=self.size.height * self.scale_factor,
+    )
   }
 }
 
@@ -151,6 +173,7 @@ fn RendererHandle::render(
     self.glyph_atlas,
     commands,
     self.size,
+    self.scale_factor,
   )
   self.visual_vertices = plan.visual_vertices
   self.text_vertices = plan.text_vertices
@@ -432,8 +455,8 @@ fn RendererHandle::apply_scissor(
       pass.set_scissor_rect(
         0U,
         0U,
-        @render.size_dim_to_uint(self.size.width),
-        @render.size_dim_to_uint(self.size.height),
+        @render.size_dim_to_uint(self.effective_physical_size().width),
+        @render.size_dim_to_uint(self.effective_physical_size().height),
       )
   }
 }

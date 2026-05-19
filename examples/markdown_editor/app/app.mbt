@@ -49,32 +49,8 @@ pub fn MarkdownEditorApp::root(
       [
         self.header(theme),
         self.toolbar(theme),
-        @views.row(
-          [
-            @views.markdown_editor(
-              binding,
-              markdown_to_rich_text,
-              placeholder="Start writing Markdown",
-              style=editor_style,
-              width=560.0,
-              height=400.0,
-            ).key("markdown-editor"),
-            @views.surface(
-              @views.column(
-                [
-                  @views.text("Markdown source", width=260.0, height=28.0)
-                  .font(theme.typography.control)
-                  .foreground(theme.palette.foreground),
-                  source_preview(document, theme),
-                ],
-                spacing=theme.spacing_scale.sm,
-                cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-              ),
-              style=source_style,
-            ).frame(width=300.0, height=400.0),
-          ],
-          spacing=theme.spacing_scale.lg,
-          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+        editor_source_layout(
+          binding, document, editor_style, source_style, theme,
         ),
         @views.text(
           "\{markdown_word_count(document)} words · \{markdown_line_count(document)} lines",
@@ -120,26 +96,30 @@ fn MarkdownEditorApp::toolbar(
   theme : @core.Theme,
 ) -> @core.ViewSpec {
   let style = flat_toolbar_button_style(theme)
-  @views.row(
-    [
-      toolbar_button("B", () => self.apply_action("bold"), style),
-      toolbar_button("I", () => self.apply_action("italic"), style),
-      toolbar_button("Code", () => self.apply_action("code"), style),
-      toolbar_button("H1", () => self.apply_action("h1"), style),
-      toolbar_button("H2", () => self.apply_action("h2"), style),
-      toolbar_button("List", () => self.apply_action("ul"), style),
-      toolbar_button("1.", () => self.apply_action("ol"), style),
-      toolbar_button("Quote", () => self.apply_action("quote"), style),
-      toolbar_button("Block", () => self.apply_action("codeblock"), style),
-      @views.button(
-        "Clear",
-        on_click=() => self.clear(),
-        style=@core.ButtonStyle::outline(theme~),
-        width=72.0,
-      ),
-    ],
-    spacing=theme.spacing_scale.xs,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+  @views.scroll_view(
+    @views.row(
+      [
+        toolbar_button("B", () => self.apply_action("bold"), style),
+        toolbar_button("I", () => self.apply_action("italic"), style),
+        toolbar_button("Code", () => self.apply_action("code"), style),
+        toolbar_button("H1", () => self.apply_action("h1"), style),
+        toolbar_button("H2", () => self.apply_action("h2"), style),
+        toolbar_button("List", () => self.apply_action("ul"), style),
+        toolbar_button("1.", () => self.apply_action("ol"), style),
+        toolbar_button("Quote", () => self.apply_action("quote"), style),
+        toolbar_button("Block", () => self.apply_action("codeblock"), style),
+        @views.button(
+          "Clear",
+          on_click=() => self.clear(),
+          style=@core.ButtonStyle::outline(theme~),
+          width=72.0,
+        ),
+      ],
+      spacing=theme.spacing_scale.xs,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    ),
+    width=720.0,
+    height=38.0,
   )
 }
 
@@ -166,17 +146,89 @@ fn flat_toolbar_button_style(theme : @core.Theme) -> @core.ButtonStyle {
 ///|
 fn source_preview(text : String, theme : @core.Theme) -> @core.ViewSpec {
   @views.scroll_view(
-    @views.text(markdown_preview_text(text), width=260.0, height=340.0)
-    .font(
-      @core.FontSpec::new(
-        family="ui-monospace, monospace",
-        size=12.0,
-        weight=400,
-      ),
-    )
-    .foreground(theme.palette.foreground),
+    source_preview_lines(text, theme),
     width=260.0,
     height=340.0,
+  )
+}
+
+///|
+fn editor_source_layout(
+  binding : @core.Binding[String],
+  document : String,
+  editor_style : @core.TextFieldStyle,
+  source_style : @core.SurfaceStyle,
+  theme : @core.Theme,
+) -> @core.ViewSpec {
+  @views.row(
+    [
+      @views.markdown_editor(
+        binding,
+        markdown_to_rich_text,
+        placeholder="Start writing Markdown",
+        style=editor_style,
+        width=560.0,
+        height=400.0,
+      ).key("markdown-editor"),
+      @views.surface(
+        @views.column(
+          [
+            @views.text("Markdown source", width=260.0, height=28.0)
+            .font(theme.typography.control)
+            .foreground(theme.palette.foreground),
+            source_preview(document, theme),
+          ],
+          spacing=theme.spacing_scale.sm,
+          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+        ),
+        style=source_style,
+      ).frame(width=300.0, height=400.0),
+    ],
+    spacing=theme.spacing_scale.lg,
+    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+  )
+}
+
+///|
+fn source_preview_lines(text : String, theme : @core.Theme) -> @core.ViewSpec {
+  let font = @core.FontSpec::new(
+    family="SFMono-Regular, ui-monospace, Menlo, Consolas, monospace",
+    size=12.0,
+    weight=400,
+  )
+  let children : Array[@core.ViewSpec] = []
+  for line in markdown_split_lines(markdown_preview_text(text)) {
+    children.push(source_preview_line(line, font, theme.palette.foreground))
+  }
+  @views.column(
+    children,
+    spacing=0.0,
+    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+  )
+}
+
+///|
+fn source_preview_line(
+  line : String,
+  font : @core.FontSpec,
+  color : @core.Color,
+) -> @core.ViewSpec {
+  @views.custom_layout(
+    measure=_ => @core.Size::new(width=260.0, height=18.0),
+    paint=bounds => {
+      [
+        @core.DrawCommand::DrawText(
+          @core.TextRun::new(
+            text=line,
+            frame=bounds,
+            font~,
+            color~,
+            align=@core.TextAlign::TextStart,
+          ),
+        ),
+      ]
+    },
+    semantics_label=line,
   )
 }
 

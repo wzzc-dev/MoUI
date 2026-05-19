@@ -1,7 +1,12 @@
 ///|
 test "renderer remembers resize and batches" {
   let renderer = new_test_renderer_handle()
-  renderer.resize(@core.Size::new(width=320.0, height=200.0))
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=200.0),
+    ),
+  )
+  inspect(renderer.size.width, content="320")
   renderer.render([
     @core.DrawCommand::FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
@@ -12,9 +17,73 @@ test "renderer remembers resize and batches" {
 }
 
 ///|
+test "native renderer tracks logical and physical resize metrics" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::new(
+      logical_size=@core.Size::new(width=320.0, height=200.0),
+      physical_size=@core.Size::new(width=640.0, height=400.0),
+      scale_factor=2.0,
+    ),
+  )
+  inspect(renderer.size.width, content="320")
+  inspect(renderer.physical_size.width, content="640")
+  inspect(renderer.scale_factor, content="2")
+}
+
+///|
+test "native renderer default scissor uses physical surface size" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::new(
+      logical_size=@core.Size::new(width=320.0, height=200.0),
+      physical_size=@core.Size::new(width=640.0, height=400.0),
+      scale_factor=2.0,
+    ),
+  )
+  inspect(renderer.effective_physical_size().width, content="640")
+  inspect(renderer.effective_physical_size().height, content="400")
+}
+
+///|
+test "native renderer clipped scissor uses physical pixels" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::new(
+      logical_size=@core.Size::new(width=320.0, height=200.0),
+      physical_size=@core.Size::new(width=640.0, height=400.0),
+      scale_factor=2.0,
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=10.0, y=20.0, width=30.0, height=40.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopClip,
+  ])
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeVisual(_, _, Some(scissor)) => {
+      inspect(scissor.x, content="20")
+      inspect(scissor.y, content="40")
+      inspect(scissor.width, content="60")
+      inspect(scissor.height, content="80")
+    }
+    _ => inspect("missing scissor", content="native visual scissor")
+  }
+}
+
+///|
 test "native renderer plans visual primitives instead of fallback-only batches" {
   let renderer = new_test_renderer_handle()
-  renderer.resize(@core.Size::new(width=320.0, height=200.0))
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=200.0),
+    ),
+  )
   let rounded = @core.RoundedRect::new(
     rect=@core.Rect::new(x=10.0, y=20.0, width=80.0, height=40.0),
     radius=8.0,
@@ -49,7 +118,11 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
 ///|
 test "native renderer plans image clip transform and opacity commands" {
   let renderer = new_test_renderer_handle()
-  renderer.resize(@core.Size::new(width=320.0, height=200.0))
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=200.0),
+    ),
+  )
   renderer.render([
     @core.DrawCommand::PushOpacity(0.6),
     @core.DrawCommand::PushClip(

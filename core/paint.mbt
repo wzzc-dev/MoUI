@@ -137,7 +137,7 @@ pub fn Color::multiply_alpha(self : Color, opacity : Double) -> Color {
 
 ///|
 pub fn FontSpec::new(
-  family? : String = "system-ui, sans-serif",
+  family? : String = "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif",
   size? : Double = 16.0,
   weight? : Int = 400,
 ) -> FontSpec {

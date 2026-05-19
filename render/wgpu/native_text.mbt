@@ -26,6 +26,7 @@ priv struct NativeFontCache {
 priv struct ShapedGlyph {
   glyph_id : UInt
   unicode : UInt
+  x_advance : Double
   x_offset : Double
   y_offset : Double
 }
@@ -375,6 +376,7 @@ fn shaped_glyphs_from_buffer(buffer : @hb_buffer.Buffer) -> Array[ShapedGlyph] {
     glyphs.push({
       glyph_id: info.codepoint,
       unicode: info.unicode,
+      x_advance: fixed_26_6_to_double(pos.x_advance),
       x_offset: fixed_26_6_to_double(pos.x_offset),
       y_offset: fixed_26_6_to_double(pos.y_offset),
     })
@@ -515,9 +517,18 @@ fn render_glyph_for_face(
   {
     face,
     glyph_id: glyph.glyph_id,
-    x_advance: @core.text_layout_codepoint_advance(font, glyph.unicode),
+    x_advance: native_glyph_advance(font, glyph),
     x_offset: glyph.x_offset,
     y_offset: glyph.y_offset,
+  }
+}
+
+///|
+fn native_glyph_advance(font : @core.FontSpec, glyph : ShapedGlyph) -> Double {
+  if glyph.x_advance > 0.0 {
+    glyph.x_advance
+  } else {
+    @core.text_layout_codepoint_advance(font, glyph.unicode)
   }
 }
 
@@ -594,9 +605,25 @@ fn shape_codepoint_with_freetype(
       glyph_id,
       load_flags=@ft_base.LOAD_DEFAULT,
     )
-    Some({ glyph_id, unicode: codepoint, x_offset: 0.0, y_offset: 0.0 })
+    let advance = fixed_26_6_to_double(
+      face.ft_face.glyph().advance().x().to_int(),
+    )
+    Some({
+      glyph_id,
+      unicode: codepoint,
+      x_advance: advance,
+      x_offset: 0.0,
+      y_offset: 0.0,
+    })
   } catch {
-    _ => Some({ glyph_id, unicode: codepoint, x_offset: 0.0, y_offset: 0.0 })
+    _ =>
+      Some({
+        glyph_id,
+        unicode: codepoint,
+        x_advance: 0.0,
+        x_offset: 0.0,
+        y_offset: 0.0,
+      })
   }
 }
 
