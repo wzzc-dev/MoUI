@@ -13,6 +13,8 @@ pub fn ElementNode::dispatch_pointer(
       handle_picker_element_pointer(self, data, event, render.frame)
     DatePickerSpec(data) =>
       handle_datepicker_element_pointer(self, data, event, render.frame)
+    SearchBarSpec(data) =>
+      handle_searchbar_element_pointer(self, data, event, render.frame)
     TextFieldSpec(_) => {
       let focused = if event.phase == PointerPhase::Down &&
         render.frame.contains(event.position) {
@@ -388,13 +390,54 @@ fn handle_datepicker_element_pointer(
 }
 
 ///|
+fn handle_searchbar_element_pointer(
+  element : ElementNode,
+  data : SearchBarViewSpec,
+  event : PointerEvent,
+  frame : Rect,
+) -> ElementEventResult {
+  // 检查是否点击了清除按钮
+  let text = data.query.get()
+  if text != "" {
+    let clear_frame = Rect::new(
+      x=frame.origin.x + frame.size.width - 26.0,
+      y=frame.origin.y + (frame.size.height - 16.0) / 2.0,
+      width=16.0,
+      height=16.0,
+    )
+    if event.phase == PointerPhase::Up && clear_frame.contains(event.position) {
+      data.query.set("")
+      match data.on_clear {
+        Some(on_clear) => on_clear()
+        None => ()
+      }
+      element.dirty.mark_paint()
+      return { changed: true, activated: true, focused: Some(element.id) }
+    }
+  }
+  
+  // 否则，像 TextField 一样处理
+  let focused = if event.phase == PointerPhase::Down &&
+    frame.contains(event.position) {
+    element.caret = text_length(text)
+    element.selection = None
+    element.composition = None
+    element.composition_cursor = None
+    Some(element.id)
+  } else {
+    None
+  }
+  { changed: false, activated: false, focused }
+}
+
+///|
 pub fn ElementNode::find_focusable_at(
   self : ElementNode,
   point : Point,
   render : RenderNode,
 ) -> ElementId? {
   match self.spec {
-    TextFieldSpec(_) | CheckboxSpec(_) | ButtonSpec(_) | PickerSpec(_) | DatePickerSpec(_) =>
+    TextFieldSpec(_) | CheckboxSpec(_) | ButtonSpec(_) | PickerSpec(_) | DatePickerSpec(_) | SearchBarSpec(_) =>
       if render.frame.contains(point) {
         Some(self.id)
       } else {
@@ -561,6 +604,7 @@ pub fn ElementNode::dispatch_keyboard(
   if self.id == target {
     match self.spec {
       TextFieldSpec(data) => handle_text_field_keyboard(self, data, event)
+      SearchBarSpec(data) => handle_searchbar_keyboard(self, data, event)
       RichTextEditorSpec(data) =>
         handle_rich_text_editor_keyboard(self, data, event)
       ButtonSpec(data) => handle_button_keyboard(self, data, event)
@@ -595,6 +639,7 @@ pub fn ElementNode::dispatch_text_input(
   if self.id == target {
     match self.spec {
       TextFieldSpec(data) => handle_text_field_input(self, data, event)
+      SearchBarSpec(data) => handle_searchbar_input(self, data, event)
       RichTextEditorSpec(data) =>
         handle_rich_text_editor_input(self, data, event)
       _ => { changed: false, activated: false, focused: None }
@@ -788,6 +833,171 @@ fn handle_text_field_keyboard(
         { changed: false, activated: false, focused: None }
       }
     None => { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn handle_searchbar_keyboard(
+  element : ElementNode,
+  data : SearchBarViewSpec,
+  event : KeyboardEvent,
+) -> ElementEventResult {
+  if !event.pressed {
+    return { changed: false, activated: false, focused: None }
+  }
+  if event.key == "Enter" {
+    match data.on_submit {
+      Some(handler) => handler()
+      None => ()
+    }
+    element.dirty.mark_paint()
+    return { changed: true, activated: true, focused: None }
+  }
+  if event.key == "Backspace" {
+    match active_text_selection(element.selection) {
+      Some(selection) =>
+        return handle_searchbar_input(element, data, DeleteRange(selection))
+      None =>
+        return handle_searchbar_input(element, data, DeleteSurrounding(1, 0))
+    }
+  }
+  if event.key == "Delete" {
+    match active_text_selection(element.selection) {
+      Some(selection) =>
+        return handle_searchbar_input(element, data, DeleteRange(selection))
+      None =>
+        return handle_searchbar_input(element, data, DeleteSurrounding(0, 1))
+    }
+  }
+  if event.key == "ArrowLeft" {
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.query.get(),
+        element.caret,
+        element.selection,
+        MoveLeft,
+        extend=event.modifiers.shift,
+      ),
+    )
+  }
+  if event.key == "ArrowRight" {
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.query.get(),
+        element.caret,
+        element.selection,
+        MoveRight,
+        extend=event.modifiers.shift,
+      ),
+    )
+  }
+  if event.key == "Home" {
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.query.get(),
+        element.caret,
+        element.selection,
+        MoveStart,
+        extend=event.modifiers.shift,
+      ),
+    )
+  }
+  if event.key == "End" {
+    return apply_text_caret_move(
+      element,
+      move_text_caret(
+        data.query.get(),
+        element.caret,
+        element.selection,
+        MoveEnd,
+        extend=event.modifiers.shift,
+      ),
+    )
+  }
+  match event.text {
+    Some(text) =>
+      if text != "" {
+        handle_searchbar_input(element, data, InsertText(text))
+      } else {
+        { changed: false, activated: false, focused: None }
+      }
+    None => { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn handle_searchbar_input(
+  element : ElementNode,
+  data : SearchBarViewSpec,
+  event : TextInputEvent,
+) -> ElementEventResult {
+  match event {
+    InsertText(text) => {
+      if text == "" {
+        return { changed: false, activated: false, focused: None }
+      }
+      let edit = replace_current_selection(
+        data.query.get(),
+        element.caret,
+        element.selection,
+        text,
+      )
+      apply_searchbar_edit(element, data, edit)
+    }
+    CompositionStart => {
+      element.composition = Some("")
+      element.composition_cursor = None
+      element.dirty.mark_paint()
+      { changed: true, activated: false, focused: None }
+    }
+    CompositionUpdate(update) => {
+      element.composition = if update.text == "" {
+        None
+      } else {
+        Some(update.text)
+      }
+      match update.cursor {
+        Some(cursor) => {
+          let normalized = cursor.normalized()
+          let start = clamp_int(normalized.start, 0, text_length(update.text))
+          let end = clamp_int(normalized.end, 0, text_length(update.text))
+          element.composition_cursor = Some(TextRange::new(start~, end~))
+        }
+        None => element.composition_cursor = None
+      }
+      element.dirty.mark_paint()
+      { changed: true, activated: false, focused: None }
+    }
+    CompositionEnd(text) => {
+      element.composition = None
+      element.composition_cursor = None
+      if text == "" {
+        element.selection = None
+        element.dirty.mark_paint()
+        { changed: true, activated: false, focused: None }
+      } else {
+        let edit = replace_current_selection(
+          data.query.get(),
+          element.caret,
+          element.selection,
+          text,
+        )
+        apply_searchbar_edit(element, data, edit)
+      }
+    }
+    DeleteRange(range) => {
+      let edit = replace_text_range(data.query.get(), range, "")
+      apply_searchbar_edit(element, data, edit)
+    }
+    DeleteSurrounding(before, after) => {
+      let text = data.query.get()
+      let range = surrounding_delete_range(text, element.caret, before, after)
+      let edit = replace_text_range(text, range, "")
+      apply_searchbar_edit(element, data, edit)
+    }
   }
 }
 

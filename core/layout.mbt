@@ -111,6 +111,7 @@ fn ElementNode::measured_size_from_children(
     CheckboxSpec(data) => checkbox_intrinsic_size(data)
     PickerSpec(_) => Size::new(width=200.0, height=40.0)
     DatePickerSpec(_) => Size::new(width=200.0, height=40.0)
+    SearchBarSpec(_) => Size::new(width=240.0, height=40.0)
     SpacerSpec(data) =>
       if data.weight > 0.0 {
         Size::new(width=0.0, height=0.0)
