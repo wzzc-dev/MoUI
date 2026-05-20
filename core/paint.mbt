@@ -90,6 +90,8 @@ pub(all) enum DrawCommand {
   DrawImage(ImageRun)
   PushClip(Rect)
   PopClip
+  PushRoundedClip(RoundedRect)
+  PopRoundedClip
   PushTransform(Transform2D)
   PopTransform
   PushOpacity(Double)
