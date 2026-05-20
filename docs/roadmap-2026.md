@@ -123,8 +123,8 @@ update all three files together.
 
 Current priorities:
 
-1. Move image rendering beyond placeholder visuals toward decode, texture upload,
-   sampling, fit behavior, and cache management.
+1. Keep the native image pipeline reliable across decoded PNG/JPEG/BMP sources,
+   texture upload, sampling, fit behavior, and cache management.
 2. Keep rectangular clip support reliable while planning richer rounded clips and
    mask stacks.
 3. Make transform behavior explicit and consistent between native wgpu and Web

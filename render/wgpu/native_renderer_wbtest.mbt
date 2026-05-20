@@ -200,48 +200,47 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
   assert_true(renderer.visual_vertices[6].blur_radius == 12.0)
 }
 
-// ///|
-// test "native renderer plans image clip transform and opacity commands" {
-//   let renderer = new_test_renderer_handle()
-//   renderer.resize(
-//     @render.RendererSurfaceMetrics::from_logical(
-//       size=@core.Size::new(width=320.0, height=200.0),
-//     ),
-//   )
-//   renderer.render([
-//     @core.DrawCommand::PushOpacity(0.6),
-//     @core.DrawCommand::PushClip(
-//       @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
-//     ),
-//     @core.DrawCommand::PushTransform(
-//       @core.Transform2D::translation(dx=4.0, dy=8.0),
-//     ),
-//     @core.DrawCommand::DrawImage({
-//       source: "logo.png",
-//       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
-//       opacity: 0.8,
-//       fit: @core.ImageFit::Contain,
-//     }),
-//     @core.DrawCommand::PopTransform,
-//     @core.DrawCommand::PopClip,
-//     @core.DrawCommand::PopOpacity,
-//   ])
-//   inspect(renderer.unsupported_command_count, content="0")
-//   inspect(renderer.draw_items.length(), content="1")
-//   inspect(renderer.visual_vertices.length(), content="6")
-//   assert_true(
-//     renderer.draw_items[0] is NativeDrawItem::NativeImage(_, _, Some(_), _),
-//   )
-//   assert_true(renderer.visual_vertices[0].a0 > 0.47)
-//   assert_true(renderer.visual_vertices[0].a0 < 0.49)
-//   assert_true(renderer.visual_vertices[0].x > -1.0)
-//   match renderer.draw_items[0] {
-//     NativeDrawItem::NativeImage(_, _, _, run) => {
-//       inspect(run.source, content="logo.png")
-//       assert_true(run.fit == @core.ImageFit::Contain)
-//       assert_true(run.opacity > 0.47)
-//       assert_true(run.opacity < 0.49)
-//     }
-//     _ => fail("expected native image item")
-//   }
-// }
+///|
+test "native renderer plans image clip transform and opacity commands" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=200.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushOpacity(0.6),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+    ),
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=4.0, dy=8.0),
+    ),
+    @core.DrawCommand::DrawImage({
+      source: "logo.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      opacity: 0.8,
+      fit: @core.ImageFit::Contain,
+    }),
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopOpacity,
+  ])
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.draw_items.length(), content="1")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeImage(_, _, Some(scissor), run) => {
+      inspect(scissor.x, content="0")
+      inspect(scissor.y, content="0")
+      inspect(scissor.width, content="20")
+      inspect(scissor.height, content="20")
+      inspect(run.source, content="logo.png")
+      assert_true(run.fit == @core.ImageFit::Contain)
+      assert_true(run.opacity > 0.47)
+      assert_true(run.opacity < 0.49)
+      inspect(run.transform.tx, content="4")
+      inspect(run.transform.ty, content="8")
+    }
+    _ => fail("expected native image item")
+  }
+}

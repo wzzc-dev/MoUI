@@ -19,7 +19,7 @@ Status meanings:
 | Gradient | ready | ready | None |
 | Shadow | ready | ready | None |
 | Text | ready | ready | None |
-| Image | ready | ready | Web loads sources into a WebGPU texture cache with contain/cover fit and deterministic fallback while loading or on failure. |
+| Image | ready | ready | Native decodes PNG/JPEG/BMP from local file paths and base64 data URIs through `mizchi/image`; Web loads browser-supported sources into a WebGPU texture cache. |
 | Clip | ready | partial | Rectangular transformed scissor behavior is aligned; rounded clips supported in native with shader SDF masks. |
 | Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices; layer-level transform state remains follow-up work. |
 | Opacity | ready | ready | None |
@@ -28,7 +28,9 @@ Status meanings:
 
 Native wgpu now renders rects, rounded geometry, gradients, soft shadows,
 glyph-atlas text, and images directly. Image commands use a complete pipeline:
-texture caching, GPU sampling, contain/cover fit modes, and fallback handling.
+PNG/JPEG/BMP decoding through `mizchi/image`, local file and base64 data URI
+sources, texture caching, GPU sampling, contain/cover fit modes, and fallback
+handling.
 Clip support uses transformed rectangular scissor rectangles and rounded clips
 with shader SDF masks. Transform support is applied to planned visual, image,
 and text vertices. Opacity is folded into visual and text vertex alpha.

@@ -10,13 +10,15 @@ import {
   "moonbit-community/harfbuzz/buffer" @hb_buffer,
   "moonbit-community/harfbuzz/shape" @hb_shape,
   "moonbitlang/x/fs" @fs,
+  "moonbitlang/core/encoding/base64" @base64,
+  "mizchi/image" @image,
 }
 
 supported_targets = "native"
 
 options(
   link: {
-    "native": { "cc-link-flags": "-framework AppKit -framework QuartzCore" },
+    "native": { "cc-link-flags": "-framework AppKit -framework QuartzCore -lz" },
   },
   targets: { },
 )

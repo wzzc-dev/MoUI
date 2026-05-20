@@ -8,6 +8,8 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(image.native_status == @render.RendererFeatureStatus::Ready)
   assert_true(image.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(image.native_note.contains("mizchi/image"))
+  assert_true(image.native_note.contains("PNG"))
   guard @render.renderer_feature_capability(@render.RendererFeature::Clip)
     is Some(clip) else {
     fail("expected clip capability")
