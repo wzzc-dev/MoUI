@@ -48,11 +48,21 @@ Focus areas:
 - Stabilize `AppRuntime::new_spec` and `AppRuntime::new_component` usage.
 - Keep `BuildContext::watch` and `ctx.binding` as the preferred state access
   patterns during component builds.
+- Use `BuildContext::run_effect` for component-scoped effects with cleanup, and
+  the scoped save/restore helpers for small saveable string state.
 - Preserve ordered modifier semantics through `ModifiedSpec` wrappers.
+- Keep `ViewSpec::custom_layout` as the advanced child layout delegate for
+  package-local custom controls and layout experiments.
 - Keep input, focus, text editing, layout, paint, and semantics behavior in
   platform-neutral packages.
 - Review public API changes with `moon info` and generated `pkg.generated.mbti`
   diffs.
+
+First P0 foundations now exist for component effects, saveable string state,
+and custom child layout delegates. Follow-up work should broaden saveable state
+beyond strings, add effect key diffing instead of rebuild-wide replacement, and
+extend the custom layout protocol with layout cache, alignment guides, and
+baseline support.
 
 Validation:
 
