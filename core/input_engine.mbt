@@ -48,7 +48,8 @@ pub fn ElementNode::dispatch_pointer(
     | ScrollSpec(_)
     | GridSpec(_)
     | ListSpec(_)
-    | ComponentSpec(_) => self.dispatch_pointer_to_children(event, render)
+    | ComponentSpec(_)
+    | SheetSpec(_) => self.dispatch_pointer_to_children(event, render)
     ModifiedSpec(data) => self.dispatch_modified_pointer(data, event, render)
     EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
       { changed: false, activated: false, focused: None }

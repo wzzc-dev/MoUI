@@ -182,6 +182,13 @@ fn ElementNode::semantics_info(
         value: data.query.get(),
         actions: [Focus, SetText, Submit],
       }
+    SheetSpec(_data) =>
+      {
+        role: Dialog,
+        label: "",
+        value: "",
+        actions: [],
+      }
     TextFieldSpec(data) =>
       {
         role: TextField,

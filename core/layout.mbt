@@ -112,6 +112,12 @@ fn ElementNode::measured_size_from_children(
     PickerSpec(_) => Size::new(width=200.0, height=40.0)
     DatePickerSpec(_) => Size::new(width=200.0, height=40.0)
     SearchBarSpec(_) => Size::new(width=240.0, height=40.0)
+    SheetSpec(_) =>
+      if children.length() > 0 {
+        children[0].size.inflate(Insets::symmetric(horizontal=16.0, vertical=16.0))
+      } else {
+        Size::new(width=240.0, height=200.0)
+      }
     SpacerSpec(data) =>
       if data.weight > 0.0 {
         Size::new(width=0.0, height=0.0)

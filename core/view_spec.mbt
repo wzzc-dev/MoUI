@@ -391,6 +391,23 @@ pub(all) struct SearchBarViewSpec {
 }
 
 ///|
+pub(all) enum SheetPresentationMode {
+  Modal
+  BottomSheet
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct SheetViewSpec {
+  key : Key?
+  content : ViewSpec
+  presentation_mode : SheetPresentationMode
+  background : Brush
+  corner_radius : Double
+  shadow : ShadowStyle?
+  on_dismiss : (() -> Unit)?
+}
+
+///|
 pub(all) enum ViewSpec {
   EmptySpec
   TextSpec(TextViewSpec)
@@ -402,6 +419,7 @@ pub(all) enum ViewSpec {
   PickerSpec(PickerViewSpec)
   DatePickerSpec(DatePickerViewSpec)
   SearchBarSpec(SearchBarViewSpec)
+  SheetSpec(SheetViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)
@@ -592,6 +610,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     PickerSpec(data) => data.key
     DatePickerSpec(data) => data.key
     SearchBarSpec(data) => data.key
+    SheetSpec(data) => data.key
     FlexSpec(data) => data.key
     PaddingSpec(data) => data.key
     ContainerSpec(data) => data.key
@@ -620,6 +639,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     PickerSpec(data) => PickerSpec({ ..data, key: Some(key) })
     DatePickerSpec(data) => DatePickerSpec({ ..data, key: Some(key) })
     SearchBarSpec(data) => SearchBarSpec({ ..data, key: Some(key) })
+    SheetSpec(data) => SheetSpec({ ..data, key: Some(key) })
     FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
     PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
     ContainerSpec(data) => ContainerSpec({ ..data, key: Some(key) })
@@ -647,19 +667,20 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     PickerSpec(_) => 6
     DatePickerSpec(_) => 7
     SearchBarSpec(_) => 8
-    FlexSpec(_) => 9
-    PaddingSpec(_) => 9
-    ContainerSpec(_) => 11
-    SpacerSpec(_) => 12
-    FrameSpec(_) => 13
-    StackSpec(_) => 14
-    ScrollSpec(_) => 15
-    GridSpec(_) => 16
-    ListSpec(_) => 17
-    ModifiedSpec(_) => 18
-    CustomSpec(_) => 19
-    ComponentSpec(_) => 20
-    RichTextEditorSpec(_) => 21
+    SheetSpec(_) => 9
+    FlexSpec(_) => 10
+    PaddingSpec(_) => 11
+    ContainerSpec(_) => 12
+    SpacerSpec(_) => 13
+    FrameSpec(_) => 14
+    StackSpec(_) => 15
+    ScrollSpec(_) => 16
+    GridSpec(_) => 17
+    ListSpec(_) => 18
+    ModifiedSpec(_) => 19
+    CustomSpec(_) => 20
+    ComponentSpec(_) => 21
+    RichTextEditorSpec(_) => 22
   }
 }
 
