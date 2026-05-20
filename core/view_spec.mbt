@@ -324,6 +324,10 @@ pub(all) struct CustomLayoutContext {
   child_sizes : Array[Size]
   child_baselines : Array[Double?]
   child_priorities : Array[Double]
+  cache_key : String
+  layout_direction : LayoutDirection
+  safe_area : Insets
+  viewport : Size?
 }
 
 ///|
@@ -333,6 +337,10 @@ pub(all) struct CustomPlacementContext {
   child_sizes : Array[Size]
   child_baselines : Array[Double?]
   child_priorities : Array[Double]
+  cache_key : String
+  layout_direction : LayoutDirection
+  safe_area : Insets
+  viewport : Size?
 }
 
 ///|

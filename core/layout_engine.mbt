@@ -245,6 +245,16 @@ fn ElementNode::layout_priority(self : ElementNode) -> Double {
 }
 
 ///|
+fn custom_layout_cache_key(_spec : ViewSpec, child_sizes : Array[Size]) -> String {
+  let prefix = "custom-layout"
+  let parts : Array[String] = []
+  for size in child_sizes {
+    parts.push("\{size.width}x\{size.height}")
+  }
+  prefix + ":" + parts.join(",")
+}
+
+///|
 fn spacer_weight(child : ElementNode) -> Double {
   match child.spec {
     SpacerSpec(data) => data.weight
