@@ -6,6 +6,9 @@ test "linux backend scaffold is explicit" {
   inspect(info.renderer_ready, content="false")
   inspect(info.capabilities.window, content="false")
   inspect(info.capabilities.accessibility, content="false")
+  inspect(info.services.clipboard, content="false")
+  inspect(info.readiness.ready, content="false")
+  assert_true(info.readiness.blocked_by.length() >= 1)
 }
 
 ///|
@@ -24,4 +27,12 @@ test "linux scaffold exposes host contracts without owning a surface" {
   inspect(input.capabilities().text_input, content="false")
   inspect(input.capabilities().ime, content="false")
   inspect(input.capabilities().clipboard, content="false")
+  let services = scaffold_service_bridge()
+  match services.dispatch(
+    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
+  ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="clipboard service is unavailable")
+    _ => fail("expected unavailable Linux scaffold service")
+  }
 }

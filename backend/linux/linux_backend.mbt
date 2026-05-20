@@ -4,6 +4,8 @@ pub(all) struct LinuxBackendInfo {
   window_backend_available : Bool
   renderer_ready : Bool
   capabilities : LinuxBackendCapabilities
+  services : @host.HostServiceCapabilities
+  readiness : LinuxBackendReadiness
   description : String
 } derive(Eq, Debug, ToJson)
 
@@ -18,6 +20,13 @@ pub(all) struct LinuxBackendCapabilities {
   clipboard : Bool
   accessibility : Bool
   scale_factor : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct LinuxBackendReadiness {
+  ready : Bool
+  blocked_by : Array[String]
+  next_steps : Array[String]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -36,6 +45,28 @@ pub fn capability_matrix() -> LinuxBackendCapabilities {
 }
 
 ///|
+pub fn service_capabilities() -> @host.HostServiceCapabilities {
+  @host.HostServiceCapabilities::none()
+}
+
+///|
+pub fn readiness() -> LinuxBackendReadiness {
+  {
+    ready: false,
+    blocked_by: [
+      "window/linux package is not available in the local window dependency",
+      "native WGPU surface creation for Linux is not wired",
+      "Linux accessibility bridge is not mapped from core semantics",
+    ],
+    next_steps: [
+      "add or consume a window/linux package that emits shared HostEvent values",
+      "create a native WGPU surface path and resize contract for Linux",
+      "map clipboard, menus, file dialogs, and accessibility through host service contracts",
+    ],
+  }
+}
+
+///|
 pub fn backend_info() -> LinuxBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
@@ -45,8 +76,15 @@ pub fn backend_info() -> LinuxBackendInfo {
     window_backend_available: false,
     renderer_ready: false,
     capabilities: capability_matrix(),
+    services: service_capabilities(),
+    readiness: readiness(),
     description: "Linux backend is a scaffold. The local window dependency does not expose a window/linux package yet.",
   }
+}
+
+///|
+pub fn scaffold_service_bridge() -> @host.HostServiceBridge {
+  @host.HostServiceBridge::unavailable()
 }
 
 ///|
