@@ -150,6 +150,7 @@ pub(all) struct BuildContext {
   runtime : RuntimeState
   component_id : ElementId
   subscriptions : Array[StateSubscription]
+  effects : Array[ComponentEffect]
   environment : Environment
 }
 pub fn[T] BuildContext::binding(Self, State[T]) -> Binding[T]
@@ -157,6 +158,10 @@ pub fn BuildContext::color_scheme(Self) -> ColorScheme
 pub fn BuildContext::enabled(Self) -> Bool
 pub fn BuildContext::environment(Self) -> Environment
 pub fn BuildContext::locale(Self) -> String
+pub fn BuildContext::restore_string(Self, key~ : String) -> String?
+pub fn BuildContext::run_effect(Self, key~ : String, () -> (() -> Unit)?) -> Unit
+pub fn BuildContext::save_string(Self, key~ : String, String) -> Unit
+pub fn BuildContext::saveable_string(Self, key~ : String, String) -> State[String]
 pub fn BuildContext::scale_factor(Self) -> Double
 pub fn BuildContext::text_scale(Self) -> Double
 pub fn BuildContext::theme(Self) -> Theme
@@ -250,6 +255,13 @@ pub(all) struct Component {
   build : (BuildContext) -> ViewSpec
 }
 pub fn Component::new((BuildContext) -> ViewSpec) -> Self
+
+pub(all) struct ComponentEffect {
+  key : String
+  cleanup : (() -> Unit)?
+}
+pub fn ComponentEffect::cancel(Self) -> Unit
+pub fn ComponentEffect::new(key~ : String, cleanup? : (() -> Unit)?) -> Self
 
 pub(all) struct ComponentViewSpec {
   key : Key?
@@ -417,6 +429,7 @@ pub(all) struct ElementNode {
   mut composition_cursor : TextRange?
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
+  mut component_effects : Array[ComponentEffect]
   mut cached_intrinsic_size : Size?
   mut cached_measure_constraints : Constraints?
   mut cached_measured : MeasuredNode?
@@ -800,6 +813,7 @@ pub(all) struct RuntimeState {
   mut redraw_callback : (() -> Unit)?
   clock : Clock
   mut animations : Array[AnimationController]
+  mut saveable_state : SaveableStateStore
 }
 pub fn RuntimeState::add_animation(Self, AnimationController) -> Unit
 pub fn RuntimeState::advance_time(Self, Double) -> Unit
@@ -824,6 +838,19 @@ pub fn RuntimeState::semantics(Self) -> SemanticsNode
 pub fn RuntimeState::set_environment(Self, Environment) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
+
+pub(all) struct SaveableStateStore {
+  mut strings : Array[SaveableStringEntry]
+}
+pub fn SaveableStateStore::get_string(Self, String) -> String?
+pub fn SaveableStateStore::new() -> Self
+pub fn SaveableStateStore::remove(Self, String) -> Unit
+pub fn SaveableStateStore::set_string(Self, String, String) -> Unit
+
+pub(all) struct SaveableStringEntry {
+  key : String
+  mut value : String
+} derive(Eq, ToJson, @debug.Debug)
 
 pub struct ScrollState {
   offset_slot : State[Point]

@@ -15,6 +15,7 @@ pub(all) struct RuntimeState {
   mut redraw_callback : (() -> Unit)?
   clock : Clock
   mut animations : Array[AnimationController]
+  mut saveable_state : SaveableStateStore
 }
 
 ///|
@@ -22,6 +23,7 @@ pub(all) struct BuildContext {
   runtime : RuntimeState
   component_id : ElementId
   subscriptions : Array[StateSubscription]
+  effects : Array[ComponentEffect]
   environment : Environment
 }
 
@@ -31,9 +33,27 @@ pub(all) struct Component {
 }
 
 ///|
+pub(all) struct ComponentEffect {
+  key : String
+  cleanup : (() -> Unit)?
+}
+
+///|
+pub(all) struct SaveableStateStore {
+  mut strings : Array[SaveableStringEntry]
+}
+
+///|
+pub(all) struct SaveableStringEntry {
+  key : String
+  mut value : String
+} derive(Eq, Debug, ToJson)
+
+///|
 priv struct ComponentBuildResult {
   child_spec : ViewSpec
   subscriptions : Array[StateSubscription]
+  effects : Array[ComponentEffect]
 }
 
 ///|
@@ -59,6 +79,7 @@ pub fn RuntimeState::new_spec(
     redraw_callback: None,
     clock: Clock::new(),
     animations: [],
+    saveable_state: SaveableStateStore::new(),
   }
   let mounted = mount_view_spec_for_runtime(root, Some(state), 1)
   state.element_tree = mounted.node
@@ -92,6 +113,7 @@ pub fn RuntimeState::new_component(
     redraw_callback: None,
     clock: Clock::new(),
     animations: [],
+    saveable_state: SaveableStateStore::new(),
   }
   let mounted = mount_view_spec_for_runtime(root_spec, Some(state), 1)
   state.element_tree = mounted.node
@@ -104,6 +126,63 @@ pub fn RuntimeState::new_component(
 ///|
 pub fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
   { build, }
+}
+
+///|
+pub fn ComponentEffect::new(
+  key~ : String,
+  cleanup? : (() -> Unit)? = None,
+) -> ComponentEffect {
+  { key, cleanup }
+}
+
+///|
+pub fn ComponentEffect::cancel(self : ComponentEffect) -> Unit {
+  match self.cleanup {
+    Some(cleanup) => cleanup()
+    None => ()
+  }
+}
+
+///|
+pub fn SaveableStateStore::new() -> SaveableStateStore {
+  { strings: [] }
+}
+
+///|
+pub fn SaveableStateStore::get_string(
+  self : SaveableStateStore,
+  key : String,
+) -> String? {
+  for entry in self.strings {
+    if entry.key == key {
+      return Some(entry.value)
+    }
+  }
+  None
+}
+
+///|
+pub fn SaveableStateStore::set_string(
+  self : SaveableStateStore,
+  key : String,
+  value : String,
+) -> Unit {
+  for entry in self.strings {
+    if entry.key == key {
+      entry.value = value
+      return
+    }
+  }
+  self.strings.push({ key, value })
+}
+
+///|
+pub fn SaveableStateStore::remove(
+  self : SaveableStateStore,
+  key : String,
+) -> Unit {
+  self.strings = self.strings.filter(entry => entry.key != key)
 }
 
 ///|
@@ -142,6 +221,57 @@ pub fn[T] BuildContext::binding(
   })
   self.subscriptions.push(subscription)
   state.binding()
+}
+
+///|
+pub fn BuildContext::run_effect(
+  self : BuildContext,
+  key~ : String,
+  effect : () -> (() -> Unit)?,
+) -> Unit {
+  self.effects.push(ComponentEffect::new(key~, cleanup=effect()))
+}
+
+///|
+pub fn BuildContext::save_string(
+  self : BuildContext,
+  key~ : String,
+  value : String,
+) -> Unit {
+  self.runtime.saveable_state.set_string(self.scoped_saveable_key(key), value)
+}
+
+///|
+pub fn BuildContext::restore_string(
+  self : BuildContext,
+  key~ : String,
+) -> String? {
+  self.runtime.saveable_state.get_string(self.scoped_saveable_key(key))
+}
+
+///|
+pub fn BuildContext::saveable_string(
+  self : BuildContext,
+  key~ : String,
+  initial : String,
+) -> State[String] {
+  let scoped = self.scoped_saveable_key(key)
+  let restored = self.runtime.saveable_state
+    .get_string(scoped)
+    .unwrap_or(initial)
+  let state = State::new(restored)
+  let store = self.runtime.saveable_state
+  ignore(state.subscribe(() => store.set_string(scoped, state.get())))
+  store.set_string(scoped, state.get())
+  state
+}
+
+///|
+fn BuildContext::scoped_saveable_key(
+  self : BuildContext,
+  key : String,
+) -> String {
+  "\{self.component_id.value}:\{key}"
 }
 
 ///|
@@ -556,16 +686,27 @@ fn build_component_spec(
   runtime : RuntimeState,
   component_id : ElementId,
   old_subscriptions : Array[StateSubscription],
+  old_effects : Array[ComponentEffect],
 ) -> ComponentBuildResult {
   for subscription in old_subscriptions {
     subscription.cancel()
   }
+  cancel_component_effects(old_effects)
   let subscriptions : Array[StateSubscription] = []
+  let effects : Array[ComponentEffect] = []
   let context = BuildContext::{
     runtime,
     component_id,
     subscriptions,
+    effects,
     environment: runtime.environment,
   }
-  { child_spec: (component.build)(context), subscriptions }
+  { child_spec: (component.build)(context), subscriptions, effects }
+}
+
+///|
+fn cancel_component_effects(effects : Array[ComponentEffect]) -> Unit {
+  for effect in effects {
+    effect.cancel()
+  }
 }

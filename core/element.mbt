@@ -15,6 +15,7 @@ pub(all) struct ElementNode {
   mut composition_cursor : TextRange?
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
+  mut component_effects : Array[ComponentEffect]
   mut cached_intrinsic_size : Size?
   mut cached_measure_constraints : Constraints?
   mut cached_measured : MeasuredNode?
@@ -87,13 +88,15 @@ fn mount_view_spec_for_runtime(
   let children : Array[ElementNode] = []
   let mut component_child_spec : ViewSpec? = None
   let mut component_subscriptions : Array[StateSubscription] = []
+  let mut component_effects : Array[ComponentEffect] = []
   match spec {
     ComponentSpec(data) =>
       match runtime {
         Some(runtime) => {
-          let built = build_component_spec(data.component, runtime, id, [])
+          let built = build_component_spec(data.component, runtime, id, [], [])
           component_child_spec = Some(built.child_spec)
           component_subscriptions = built.subscriptions
+          component_effects = built.effects
           let mounted = mount_view_spec_for_runtime(
             built.child_spec,
             Some(runtime),
@@ -181,6 +184,7 @@ fn mount_view_spec_for_runtime(
       composition_cursor: None,
       component_child_spec,
       component_subscriptions,
+      component_effects,
       cached_intrinsic_size: None,
       cached_measure_constraints: None,
       cached_measured: None,
@@ -361,8 +365,10 @@ fn ElementNode::rebuild_dirty_components(
           runtime,
           self.id,
           self.component_subscriptions,
+          self.component_effects,
         )
         self.component_subscriptions = built.subscriptions
+        self.component_effects = built.effects
         self.component_child_spec = Some(built.child_spec)
         let result = if self.children.length() > 0 {
           reconcile_element_for_runtime(
@@ -518,6 +524,7 @@ fn ElementNode::mark_subtree_layout_dirty(self : ElementNode) -> Unit {
 ///|
 fn ElementNode::cancel_component_tree_subscriptions(self : ElementNode) -> Unit {
   self.cancel_component_subscriptions()
+  self.cancel_component_effects()
   for child in self.children {
     child.cancel_component_tree_subscriptions()
   }
@@ -529,6 +536,12 @@ fn ElementNode::cancel_component_subscriptions(self : ElementNode) -> Unit {
     subscription.cancel()
   }
   self.component_subscriptions.clear()
+}
+
+///|
+fn ElementNode::cancel_component_effects(self : ElementNode) -> Unit {
+  cancel_component_effects(self.component_effects)
+  self.component_effects.clear()
 }
 
 ///|
