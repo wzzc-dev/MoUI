@@ -140,6 +140,31 @@ test "host service bridge gates typed platform requests by capability" {
 }
 
 ///|
+test "host driver dispatches command intents through runtime action map" {
+  let copied = Ref(0)
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::EmptySpec,
+    size=@core.Size::new(width=10.0, height=10.0),
+  )
+  runtime.set_action_commands(
+    @core.ActionCommandMap::new(bindings=[
+      @core.CommandBinding::new(
+        command=@core.ActionCommand::new(intent=@core.CommandIntent::Copy),
+        handle=() => copied.val = copied.val + 1,
+      ),
+    ]),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let result = driver.dispatch(HostEvent::Command(@core.CommandIntent::Copy))
+  inspect(copied.val, content="1")
+  inspect(result.redraw_requested, content="true")
+  match HostEvent::Command(@core.CommandIntent::Copy).to_core() {
+    None => ()
+    Some(_) => fail("host command should dispatch through runtime action map")
+  }
+}
+
+///|
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
   let runtime = @core.AppRuntime::new_spec(

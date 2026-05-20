@@ -111,3 +111,55 @@ test "action command map dispatches shortcuts and intents" {
   inspect(pasted.val, content="0")
   inspect(map.commands().length(), content="2")
 }
+
+///|
+test "runtime dispatches action command shortcuts before focused text input" {
+  let copied = Ref(0)
+  let text = State::new("")
+  let runtime = AppRuntime::new_spec(
+    root=ViewSpec::TextFieldSpec({
+      key: None,
+      value: text.binding(),
+      placeholder: "Type",
+      size: Size::new(width=160.0, height=36.0),
+      font: FontSpec::new(size=12.0, weight=400),
+      foreground: Color::black(),
+      placeholder_color: Color::gray(),
+      background: Brush::solid(Color::white()),
+      border: None,
+      focused_border: None,
+      cursor_color: Color::blue(),
+      corner_radius: 0.0,
+      on_submit: None,
+    }),
+    size=Size::new(width=160.0, height=40.0),
+  )
+  runtime.set_action_commands(
+    ActionCommandMap::new(bindings=[
+      CommandBinding::new(
+        command=ActionCommand::new(
+          intent=CommandIntent::Copy,
+          shortcut=Some(
+            KeyboardShortcut::new(
+              key="c",
+              modifiers=KeyModifiers::new(meta=true),
+            ),
+          ),
+        ),
+        handle=() => copied.val = copied.val + 1,
+      ),
+    ]),
+  )
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(position=Point::new(x=8.0, y=8.0), phase=PointerPhase::Down),
+    ),
+  )
+  runtime.dispatch_event(
+    AppEvent::Keyboard(
+      KeyboardEvent::new(key="c", modifiers=KeyModifiers::new(meta=true)),
+    ),
+  )
+  inspect(copied.val, content="1")
+  inspect(text.get(), content="")
+}

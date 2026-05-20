@@ -13,6 +13,7 @@ pub(all) struct RuntimeState {
   mut focused_element : ElementId?
   mut environment : Environment
   mut redraw_callback : (() -> Unit)?
+  mut action_commands : ActionCommandMap
   clock : Clock
   mut animations : Array[AnimationController]
   mut saveable_state : SaveableStateStore
@@ -85,6 +86,7 @@ pub fn RuntimeState::new_spec(
     focused_element: None,
     environment,
     redraw_callback: None,
+    action_commands: ActionCommandMap::new(),
     clock: Clock::new(),
     animations: [],
     saveable_state: SaveableStateStore::new(),
@@ -119,6 +121,7 @@ pub fn RuntimeState::new_component(
     focused_element: None,
     environment,
     redraw_callback: None,
+    action_commands: ActionCommandMap::new(),
     clock: Clock::new(),
     animations: [],
     saveable_state: SaveableStateStore::new(),
@@ -663,6 +666,32 @@ pub fn RuntimeState::set_redraw_callback(
 }
 
 ///|
+pub fn RuntimeState::set_action_commands(
+  self : RuntimeState,
+  commands : ActionCommandMap,
+) -> Unit {
+  self.action_commands = commands
+}
+
+///|
+pub fn RuntimeState::action_commands(self : RuntimeState) -> Array[ActionCommand] {
+  self.action_commands.commands()
+}
+
+///|
+pub fn RuntimeState::dispatch_command(
+  self : RuntimeState,
+  intent : CommandIntent,
+) -> Bool {
+  if self.action_commands.dispatch_intent(intent) {
+    self.request_activation_rebuild()
+    true
+  } else {
+    false
+  }
+}
+
+///|
 pub fn RuntimeState::add_animation(
   self : RuntimeState,
   controller : AnimationController,
@@ -743,6 +772,9 @@ pub fn RuntimeState::dispatch_event(
         if shortcut.activated {
           self.request_activation_rebuild()
         }
+        self.rebuild_if_possible()
+      } else if self.action_commands.dispatch_shortcut(event) is Some(_) {
+        self.request_activation_rebuild()
         self.rebuild_if_possible()
       } else if event.pressed && event.key == "Tab" {
         ignore(self.move_focus(reverse=event.modifiers.shift))

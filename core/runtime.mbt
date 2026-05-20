@@ -149,3 +149,24 @@ pub fn AppRuntime::set_redraw_callback(
 ) -> Unit {
   self.state.set_redraw_callback(callback)
 }
+
+///|
+pub fn AppRuntime::set_action_commands(
+  self : AppRuntime,
+  commands : ActionCommandMap,
+) -> Unit {
+  self.state.set_action_commands(commands)
+}
+
+///|
+pub fn AppRuntime::action_commands(self : AppRuntime) -> Array[ActionCommand] {
+  self.state.action_commands()
+}
+
+///|
+pub fn AppRuntime::dispatch_command(
+  self : AppRuntime,
+  intent : CommandIntent,
+) -> Bool {
+  self.state.dispatch_command(intent)
+}
