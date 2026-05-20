@@ -20,9 +20,13 @@ pub fn recognize_button_tap(ButtonState, Bool, PointerPhase) -> TapGestureResult
 
 pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 
+pub fn required_field(message? : String) -> (String) -> String?
+
 pub fn resolve_gesture_arena(Array[GestureArenaMember]) -> GestureArenaResult
 
 pub fn text_layout_codepoint_advance(FontSpec, UInt) -> Double
+
+pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
 
 // Errors
 
@@ -573,6 +577,25 @@ pub(all) struct FontSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontSpec::new(family? : String, size? : Double, weight? : Int) -> Self
 
+pub(all) struct FormFieldError {
+  name : String
+  message : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct FormFieldState {
+  name : String
+  value : State[String]
+  validator : (String) -> String?
+}
+pub fn FormFieldState::binding(Self) -> Binding[String]
+pub fn FormFieldState::new(name~ : String, initial? : String, validator? : (String) -> String?) -> Self
+pub fn FormFieldState::validate(Self) -> FormFieldError?
+
+pub(all) struct FormValidationResult {
+  valid : Bool
+  errors : Array[FormFieldError]
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct Frame {
   time_ms : Double
   delta_ms : Double
@@ -587,6 +610,14 @@ pub(all) struct FrameModifierSpec {
   max_width : Double?
   max_height : Double?
 }
+
+pub(all) struct FrameProfile {
+  frame : Frame
+  dirty_count : Int
+  draw_command_count : Int
+  active_animations : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FrameProfile::capture(AppRuntime, Frame) -> Self
 
 pub(all) struct FrameViewSpec {
   key : Key?
@@ -908,6 +939,40 @@ pub(all) struct RoundedRect {
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RoundedRect::new(rect~ : Rect, radius? : Double) -> Self
+
+pub(all) struct RouteLocation {
+  path : String
+  query : Array[RouteQueryParam]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Self
+pub fn RouteLocation::parse(String) -> Self
+pub fn RouteLocation::query_value(Self, String) -> String?
+pub fn RouteLocation::to_route(Self) -> String
+
+pub(all) struct RouteQueryParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RouterState {
+  navigation : NavigationState
+}
+pub fn RouterState::current(Self) -> RouteLocation
+pub fn RouterState::new(initial? : RouteLocation) -> Self
+pub fn RouterState::pop(Self) -> Bool
+pub fn RouterState::push(Self, RouteLocation) -> Unit
+pub fn RouterState::replace(Self, RouteLocation) -> Unit
+
+pub(all) struct RuntimeInspectorSnapshot {
+  size : Size
+  dirty_count : Int
+  needs_rebuild : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+  needs_redraw : Bool
+  draw_command_count : Int
+}
+pub fn RuntimeInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
 pub(all) struct RuntimeState {
   mut root_spec : ViewSpec
