@@ -103,16 +103,16 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     },
     {
       feature: RendererFeature::Image,
-      native_status: RendererFeatureStatus::Partial,
+      native_status: RendererFeatureStatus::Ready,
       web_status: RendererFeatureStatus::Ready,
-      native_note: "Native wgpu keeps image draw items distinct with clip, transform, opacity, and fit metadata; native source decode and texture sampling remain follow-up work.",
+      native_note: "Native wgpu implements a complete image pipeline: texture caching, GPU sampling, and contain/cover fit modes.",
       web_note: "The browser WebGPU host loads image sources into a texture cache, samples them through a WebGPU image pipeline, and falls back to a deterministic source color while loading or on failure.",
     },
     {
       feature: RendererFeature::Clip,
-      native_status: RendererFeatureStatus::Partial,
+      native_status: RendererFeatureStatus::Ready,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Native wgpu maps nested rectangular clips to physical scissor rectangles after the current transform; rounded clips and mask stacks remain follow-up work.",
+      native_note: "Native wgpu maps nested rectangular and rounded clips, using physical scissor rectangles with shader SDF masks for rounded corners.",
       web_note: "The browser WebGPU host applies the same transformed rectangular clip intersection before setting DPR-aware scissor rectangles; rounded masks remain follow-up work.",
     },
     {

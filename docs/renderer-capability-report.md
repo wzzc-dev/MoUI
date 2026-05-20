@@ -19,21 +19,19 @@ Status meanings:
 | Gradient | ready | ready | None |
 | Shadow | ready | ready | None |
 | Text | ready | ready | None |
-| Image | partial | ready | Native still needs source decode and texture sampling; Web now loads sources into a WebGPU texture cache with contain/cover fit and deterministic fallback while loading or on failure. |
-| Clip | partial | partial | Rectangular transformed scissor behavior is aligned; rounded clips and richer mask stacks remain follow-up work. |
+| Image | ready | ready | Web loads sources into a WebGPU texture cache with contain/cover fit and deterministic fallback while loading or on failure. |
+| Clip | ready | partial | Rectangular transformed scissor behavior is aligned; rounded clips supported in native with shader SDF masks. |
 | Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices; layer-level transform state remains follow-up work. |
 | Opacity | ready | ready | None |
 
 ## Current Native Notes
 
-Native wgpu currently renders rects, rounded geometry, gradients, soft shadows,
-and glyph-atlas text directly. Image commands are now represented as distinct
-native image draw items that preserve source, opacity, fit, clip, and transform
-metadata; the actual source decode, upload, and texture sampling path is still
-pending and uses a deterministic visual fallback. Clip support uses transformed
-rectangular scissor rectangles. Transform support is applied to planned visual,
-image fallback, and text vertices. Opacity is folded into visual and text vertex
-alpha.
+Native wgpu now renders rects, rounded geometry, gradients, soft shadows,
+glyph-atlas text, and images directly. Image commands use a complete pipeline:
+texture caching, GPU sampling, contain/cover fit modes, and fallback handling.
+Clip support uses transformed rectangular scissor rectangles and rounded clips
+with shader SDF masks. Transform support is applied to planned visual, image,
+and text vertices. Opacity is folded into visual and text vertex alpha.
 
 ## Current Web Notes
 
