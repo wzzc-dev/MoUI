@@ -8,7 +8,8 @@
     "Milky2018/wgpu_mbt": "0.12.6",
     "bikallem/freetype": "0.5.3",
     "moonbit-community/harfbuzz": "0.1.0",
-    "moonbitlang/x": "0.4.43"
+    "moonbitlang/x": "0.4.43",
+    "mizchi/image": "0.3.0"
   },
   "readme": "README.md",
   "repository": "",

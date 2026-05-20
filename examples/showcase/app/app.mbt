@@ -164,7 +164,7 @@ fn ShowcaseApp::visual_correctness_card(
 
 ///|
 fn showcase_image_source() -> String {
-  "data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20160%2090%27%3E%3Crect%20width%3D%27160%27%20height%3D%2790%27%20fill%3D%27%232565eb%27/%3E%3Ccircle%20cx%3D%27118%27%20cy%3D%2734%27%20r%3D%2724%27%20fill%3D%27%23f8fafc%27%20fill-opacity%3D%270.85%27/%3E%3Cpath%20d%3D%27M0%2080%20L46%2045%20L82%2070%20L124%2038%20L160%2068%20L160%2090%20L0%2090Z%27%20fill%3D%27%2314b8a6%27/%3E%3C/svg%3E"
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAASCAYAAAA6yNxSAAACK0lEQVR42u3Uu6okVRQG4HqIfoXqulBdt66iLt1nZo6nuyr1GTQwMDAQDAwMFEcZFS94YVScEbVRn0gUERER8QVEhPJDOKIwHkcxnOAL1l4L1h/svYPw0Z+WNRExCSkZG3IKSipqtjS0dPQMjOzYc8Y1rnODcy44cGRiJggf+3FZExGTkJKxIaegpKJmS0NLR8/AyI49Z1zjOjc454IDRyZmgvDxH5Y1ETEJKRkbcgpKKmq2NLR09AyM7Nhzxs+//PqHc/UFB45MzAThE98vayJiElIyNuQUlFTUbGlo6egZGNmx58/LL104P3BkYiYIn/xuWRMRk5CSsSGnoKSiZktDS0fPwMiOPWf85R9QX3DgyMRMsPr8tDz08CP/yurd07K6zTu8zVu8yRu8zmu8yiu8zEt/v+P3AKvP+PSfg6zeN/fe6T8FWN3ixdPVAVYnPuFjPuJD7nKHD07/S4DVC9zkeZ47PQjwIMDyG/KhyFi81CXIAAAAAElFTkSuQmCC"
 }
 
 ///|
@@ -263,7 +263,7 @@ fn ShowcaseApp::visual_card(
     @views.column(
       [
         @views.image(
-          "showcase://gradient-photo",
+          showcase_image_source(),
           width=248.0,
           height=96.0,
           opacity~,

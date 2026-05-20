@@ -105,7 +105,7 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::Image,
       native_status: RendererFeatureStatus::Ready,
       web_status: RendererFeatureStatus::Ready,
-      native_note: "Native wgpu implements a complete image pipeline: texture caching, GPU sampling, and contain/cover fit modes.",
+      native_note: "Native wgpu decodes local file paths and base64 data URIs through mizchi/image for PNG, JPEG, and BMP, then caches GPU textures with contain/cover sampling.",
       web_note: "The browser WebGPU host loads image sources into a texture cache, samples them through a WebGPU image pipeline, and falls back to a deterministic source color while loading or on failure.",
     },
     {
@@ -119,7 +119,7 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::Transform,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Native wgpu folds affine transforms into planned visual, image fallback, and text vertices; scissor uses transformed bounding boxes and layer-level transform state remains follow-up work.",
+      native_note: "Native wgpu folds affine transforms into planned visual, image, and text vertices; scissor uses transformed bounding boxes and layer-level transform state remains follow-up work.",
       web_note: "The browser WebGPU host folds affine transforms into visual, image, and text vertices; richer render-pass transform state remains follow-up work.",
     },
     {

@@ -9,6 +9,7 @@ priv enum NativeDrawItem {
 priv struct NativeDrawPlan {
   visual_vertices : Array[VisualVertex]
   text_vertices : Array[TextVertex]
+  image_vertices : Array[ImageVertex]
   items : Array[NativeDrawItem]
   atlas_dirty : Bool
 }
@@ -36,6 +37,7 @@ priv struct NativeImageRun {
   frame : @core.Rect
   opacity : Double
   fit : @core.ImageFit
+  transform : @core.Transform2D
 }
 
 ///|
@@ -76,6 +78,7 @@ fn build_native_draw_plan(
   for attempt in 0..<2 {
     let visual_vertices : Array[VisualVertex] = []
     let text_vertices : Array[TextVertex] = []
+    let image_vertices : Array[ImageVertex] = []
     let items : Array[NativeDrawItem] = []
     let mut state = native_paint_state_default()
     let state_stack : Array[NativePaintState] = []
@@ -174,7 +177,9 @@ fn build_native_draw_plan(
             )
           @core.DrawCommand::DrawText(run) =>
             if native_paint_state_visible(state) &&
-              native_scissor_visible(native_scissor_for_state(state, size, scale_factor)) {
+              native_scissor_visible(
+                native_scissor_for_state(state, size, scale_factor),
+              ) {
               let start = text_vertices.length()
               let result = build_native_text_run(cache, atlas, run, state, size)
               for vertex in result.vertices {
@@ -192,7 +197,10 @@ fn build_native_draw_plan(
               }
               full = result.atlas_full
             }
-          @core.DrawCommand::DrawImage(_) => ()
+          @core.DrawCommand::DrawImage(run) =>
+            append_image_item(
+              image_vertices, items, run, state, size, scale_factor,
+            )
           @core.DrawCommand::PushClip(rect) => {
             state_stack.push(state)
             state = push_clip_state(state, rect)
@@ -227,6 +235,7 @@ fn build_native_draw_plan(
       return {
         visual_vertices,
         text_vertices,
+        image_vertices,
         items,
         atlas_dirty: was_dirty || atlas.dirty,
       }
@@ -236,6 +245,7 @@ fn build_native_draw_plan(
       return {
         visual_vertices: [],
         text_vertices: [],
+        image_vertices: [],
         items: [],
         atlas_dirty: true,
       }
@@ -244,6 +254,7 @@ fn build_native_draw_plan(
   {
     visual_vertices: [],
     text_vertices: [],
+    image_vertices: [],
     items: [],
     atlas_dirty: atlas.dirty,
   }
@@ -289,28 +300,37 @@ fn push_clip_state(
   if state.clip_empty || rect.size.width <= 0.0 || rect.size.height <= 0.0 {
     { ..state, clip: None, clip_empty: true }
   } else {
-    match intersect_clip(state.clip, rect) {
+    match intersect_clip(state.clip, transform_rect(rect, state.transform)) {
       Some(clip) => { ..state, clip: Some(clip), clip_empty: false }
       None => { ..state, clip: None, clip_empty: true }
     }
   }
 }
 
+///|
 fn push_rounded_clip_state(
   state : NativePaintState,
   rounded : @core.RoundedRect,
 ) -> NativePaintState {
-  if state.clip_empty || rounded.rect.size.width <= 0.0 || rounded.rect.size.height <= 0.0 {
+  if state.clip_empty ||
+    rounded.rect.size.width <= 0.0 ||
+    rounded.rect.size.height <= 0.0 {
     { ..state, clip: None, clip_radius: 0.0, clip_empty: true }
   } else {
-    match intersect_clip(state.clip, rounded.rect) {
+    match
+      intersect_clip(state.clip, transform_rect(rounded.rect, state.transform)) {
       Some(clip) => {
         let new_radius = if state.clip_radius > 0.0 {
           state.clip_radius.min(rounded.radius)
         } else {
           rounded.radius
         }
-        { ..state, clip: Some(clip), clip_radius: new_radius, clip_empty: false }
+        {
+          ..state,
+          clip: Some(clip),
+          clip_radius: new_radius,
+          clip_empty: false,
+        }
       }
       None => { ..state, clip: None, clip_radius: 0.0, clip_empty: true }
     }
@@ -400,14 +420,7 @@ fn native_scissor_for_state(
   scale_factor : Double,
 ) -> NativeScissor? {
   match state.clip {
-    Some(clip) =>
-      Some(
-        native_scissor_for_rect(
-          transform_rect(clip, state.transform),
-          size,
-          scale_factor,
-        ),
-      )
+    Some(clip) => Some(native_scissor_for_rect(clip, size, scale_factor))
     None => None
   }
 }
@@ -488,11 +501,7 @@ fn append_visual_item(
     size~,
   )
   items.push(
-    NativeDrawItem::NativeVisual(
-      start,
-      vertices.length() - start,
-      scissor,
-    ),
+    NativeDrawItem::NativeVisual(start, vertices.length() - start, scissor),
   )
 }
 
@@ -549,50 +558,14 @@ fn append_image_item(
     return
   }
   let start = vertices.length()
-  
-  // Apply transform to the frame
-  let transformed_frame = transform_rect(run.frame, state.transform)
-  
-  // Generate vertices with default UV (full image)
-  // The actual UV calculation will happen during rendering when we have the image size
-  let image_verts = generate_image_vertices(
-    transformed_frame,
-    0.0,
-    0.0,
-    1.0,
-    1.0,
-    size,
-  )
-  
-  for vertex in image_verts {
-    vertices.push(vertex)
-  }
-  
   items.push(
-    NativeDrawItem::NativeImage(
-      start,
-      vertices.length() - start,
-      scissor,
-      {
-        source: run.source,
-        frame: run.frame,
-        opacity: clamp_opacity(run.opacity) * state.opacity,
-        fit: run.fit,
-      },
-    ),
-  )
-}
-
-///|
-fn image_placeholder_brush(run : @core.ImageRun) -> @core.Brush {
-  @core.Brush::linear_gradient(
-    start=run.frame.origin,
-    end=@core.Point::new(
-      x=run.frame.origin.x + run.frame.size.width,
-      y=run.frame.origin.y + run.frame.size.height,
-    ),
-    start_color=@core.Color::rgba(r=0.72, g=0.78, b=0.86, a=run.opacity),
-    end_color=@core.Color::rgba(r=0.42, g=0.50, b=0.62, a=run.opacity),
+    NativeDrawItem::NativeImage(start, vertices.length() - start, scissor, {
+      source: run.source,
+      frame: run.frame,
+      opacity: clamp_opacity(run.opacity) * state.opacity,
+      fit: run.fit,
+      transform: state.transform,
+    }),
   )
 }
 
