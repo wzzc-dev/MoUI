@@ -180,6 +180,21 @@ fn ElementNode::render_with_environment(
       append_datepicker_commands(commands, self, data, bounds, environment)
     SearchBarSpec(data) =>
       append_searchbar_commands(commands, self, data, bounds, environment, focused)
+    SheetSpec(data) => {
+      // Sheet background and shadow
+      let rounded = RoundedRect::new(rect=bounds, radius=data.corner_radius)
+      match data.shadow {
+        Some(shadow) => commands.push(DrawShadow(shadow_style_to_spec(shadow, bounds, data.corner_radius)))
+        None => ()
+      }
+      commands.push(FillRoundedRectBrush(rounded, data.background))
+      // Render the content child
+      if self.children.length() > 0 {
+        children.push(
+          self.children[0].render_with_environment(bounds.inset(Insets::symmetric(horizontal=16.0, vertical=16.0)), focused, environment),
+        )
+      }
+    }
     FlexSpec(data) => {
       let frames = flex_child_frames(
         data.axis,
@@ -635,6 +650,13 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     PickerSpec(_) => Size::new(width=200.0, height=40.0)
     DatePickerSpec(_) => Size::new(width=200.0, height=40.0)
     SearchBarSpec(_) => Size::new(width=240.0, height=40.0)
+    SheetSpec(_data) =>
+      if self.children.length() > 0 {
+        // Add padding to child size
+        self.children[0].intrinsic_size().inflate(Insets::symmetric(horizontal=16.0, vertical=16.0))
+      } else {
+        Size::new(width=240.0, height=200.0)
+      }
     SpacerSpec(data) =>
       if data.weight > 0.0 {
         Size::new(width=0.0, height=0.0)
@@ -708,6 +730,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     PickerSpec(_) => true
     DatePickerSpec(_) => true
     SearchBarSpec(_) => true
+    SheetSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     ModifiedSpec(data) =>
       data.modifier is BackgroundModifier(_) ||

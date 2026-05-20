@@ -143,6 +143,11 @@ fn mount_view_spec_for_runtime(
         children.push(mounted.node)
         next = mounted.next_id
       }
+    SheetSpec(data) => {
+      let mounted = mount_view_spec_for_runtime(data.content, runtime, next)
+      children.push(mounted.node)
+      next = mounted.next_id
+    }
     ContainerSpec(data) =>
       match data.child {
         Some(child) => {
@@ -329,6 +334,7 @@ fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
     ScrollSpec(data) => [data.child]
     GridSpec(data) => data.children
     ListSpec(data) => data.children
+    SheetSpec(data) => [data.content]
     ContainerSpec(data) =>
       match data.child {
         Some(child) => [child]
