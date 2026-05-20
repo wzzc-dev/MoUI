@@ -12,10 +12,11 @@ ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand 
 ```
 
 Current P0/P1 foundations include component state subscriptions, keyed
-component-scoped effects with cleanup, scoped saveable string state, an advanced
-custom child layout delegate, environment accessibility signals, gesture/action
-command primitives, a typed host-service bridge, Linux backend readiness
-tracking, and app-framework helpers for routing, forms, and devtool snapshots.
+component-scoped effects with cleanup, scoped saveable string/bool/int state, an
+advanced custom child layout delegate, environment accessibility signals,
+gesture/action command primitives, a typed host-service bridge, Linux backend
+readiness tracking, and app-framework helpers for routing, forms, and devtool
+snapshots.
 
 Detailed notes live in:
 

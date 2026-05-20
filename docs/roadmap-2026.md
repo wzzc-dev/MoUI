@@ -58,11 +58,11 @@ Focus areas:
 - Review public API changes with `moon info` and generated `pkg.generated.mbti`
   diffs.
 
-First P0 foundations now exist for component effects, saveable string state,
-custom child layout delegates, and keyed effect reuse. Follow-up work should
-broaden saveable state beyond strings, add lifecycle hooks with clearer mount
-and dispose naming, and extend the custom layout protocol with layout cache,
-alignment guides, and baseline support.
+First P0 foundations now exist for component effects, saveable string/bool/int
+state, custom child layout delegates, and keyed effect reuse. Follow-up work
+should broaden saveable state into a general codec model, add lifecycle hooks
+with clearer mount and dispose naming, and extend the custom layout protocol
+with layout cache, alignment guides, and baseline support.
 
 Validation:
 

@@ -186,9 +186,15 @@ pub fn BuildContext::environment(Self) -> Environment
 pub fn BuildContext::layout_direction(Self) -> LayoutDirection
 pub fn BuildContext::locale(Self) -> String
 pub fn BuildContext::reduced_motion(Self) -> Bool
+pub fn BuildContext::restore_bool(Self, key~ : String) -> Bool?
+pub fn BuildContext::restore_int(Self, key~ : String) -> Int?
 pub fn BuildContext::restore_string(Self, key~ : String) -> String?
 pub fn BuildContext::run_effect(Self, key~ : String, () -> (() -> Unit)?) -> Unit
+pub fn BuildContext::save_bool(Self, key~ : String, Bool) -> Unit
+pub fn BuildContext::save_int(Self, key~ : String, Int) -> Unit
 pub fn BuildContext::save_string(Self, key~ : String, String) -> Unit
+pub fn BuildContext::saveable_bool(Self, key~ : String, Bool) -> State[Bool]
+pub fn BuildContext::saveable_int(Self, key~ : String, Int) -> State[Int]
 pub fn BuildContext::saveable_string(Self, key~ : String, String) -> State[String]
 pub fn BuildContext::scale_factor(Self) -> Double
 pub fn BuildContext::text_scale(Self) -> Double
@@ -1020,9 +1026,13 @@ pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 pub(all) struct SaveableStateStore {
   mut strings : Array[SaveableStringEntry]
 }
+pub fn SaveableStateStore::get_bool(Self, String) -> Bool?
+pub fn SaveableStateStore::get_int(Self, String) -> Int?
 pub fn SaveableStateStore::get_string(Self, String) -> String?
 pub fn SaveableStateStore::new() -> Self
 pub fn SaveableStateStore::remove(Self, String) -> Unit
+pub fn SaveableStateStore::set_bool(Self, String, Bool) -> Unit
+pub fn SaveableStateStore::set_int(Self, String, Int) -> Unit
 pub fn SaveableStateStore::set_string(Self, String, String) -> Unit
 
 pub(all) struct SaveableStringEntry {
