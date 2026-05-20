@@ -48,6 +48,25 @@ pub fn custom_layout(
 }
 
 ///|
+pub fn custom_children_layout(
+  children~ : Array[@core.ViewSpec],
+  measure~ : (@core.CustomLayoutContext) -> @core.Size,
+  place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
+  paint? : (@core.Rect) -> Array[@core.DrawCommand] = _frame => [],
+  semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
+  semantics_label? : String = "",
+) -> @core.ViewSpec {
+  @core.ViewSpec::custom_layout(
+    children~,
+    measure~,
+    place~,
+    paint~,
+    semantics_role~,
+    semantics_label~,
+  )
+}
+
+///|
 pub fn component(
   build : (@core.BuildContext) -> @core.ViewSpec,
 ) -> @core.ViewSpec {

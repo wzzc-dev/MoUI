@@ -216,6 +216,13 @@ fn ElementNode::semantics_info(
         value: data.semantics_label,
         actions: [],
       }
+    CustomLayoutSpec(data) =>
+      {
+        role: data.semantics_role,
+        label: data.semantics_label,
+        value: data.semantics_label,
+        actions: [],
+      }
     EmptySpec | SpacerSpec(_) =>
       { role: None, label: "", value: "", actions: [] }
     FlexSpec(_)

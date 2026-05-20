@@ -48,6 +48,7 @@ pub fn ElementNode::dispatch_pointer(
     | ScrollSpec(_)
     | GridSpec(_)
     | ListSpec(_)
+    | CustomLayoutSpec(_)
     | ComponentSpec(_)
     | SheetSpec(_) => self.dispatch_pointer_to_children(event, render)
     ModifiedSpec(data) => self.dispatch_modified_pointer(data, event, render)

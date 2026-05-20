@@ -312,6 +312,27 @@ pub(all) enum CrossAxisAlignment {
   CrossStretch
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct CustomLayoutContext {
+  constraints : Constraints
+  child_sizes : Array[Size]
+}
+
+pub(all) struct CustomLayoutSpec {
+  key : Key?
+  children : Array[ViewSpec]
+  measure : (CustomLayoutContext) -> Size
+  place : (CustomPlacementContext) -> Array[Rect]
+  paint : (Rect) -> Array[DrawCommand]
+  semantics_role : SemanticsRole
+  semantics_label : String
+}
+
+pub(all) struct CustomPlacementContext {
+  frame : Rect
+  measured_size : Size
+  child_sizes : Array[Size]
+}
+
 pub(all) struct CustomViewSpec {
   key : Key?
   measure : (Constraints) -> Size
@@ -1277,6 +1298,7 @@ pub(all) enum ViewSpec {
   ListSpec(ListViewSpec)
   ModifiedSpec(ModifiedViewSpec)
   CustomSpec(CustomViewSpec)
+  CustomLayoutSpec(CustomLayoutSpec)
   ComponentSpec(ComponentViewSpec)
 }
 pub fn ViewSpec::accessibility_label(Self, String) -> Self
@@ -1290,6 +1312,7 @@ pub fn ViewSpec::component(Component) -> Self
 pub fn ViewSpec::corner_radius(Self, Double) -> Self
 pub fn ViewSpec::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
 pub fn ViewSpec::custom(measure~ : (Constraints) -> Size, paint~ : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self
+pub fn ViewSpec::custom_layout(children~ : Array[Self], measure~ : (CustomLayoutContext) -> Size, place~ : (CustomPlacementContext) -> Array[Rect], paint? : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self
 pub fn ViewSpec::disabled(Self, disabled? : Bool) -> Self
 pub fn ViewSpec::environment(Self, Environment) -> Self
 pub fn ViewSpec::expanded(Self, weight? : Double) -> Self
