@@ -376,6 +376,10 @@ fn ElementNode::render_with_environment(
         child_sizes: self.children.map(child => child.intrinsic_size()),
         child_baselines: self.children.map(child => child.first_baseline()),
         child_priorities: self.children.map(child => child.layout_priority()),
+        cache_key: custom_layout_cache_key(self.spec, self.children.map(child => child.intrinsic_size())),
+        layout_direction: environment.layout_direction,
+        safe_area: Insets::symmetric(),
+        viewport: Some(bounds.size),
       })
       for index, child in self.children {
         if index < child_frames.length() {
@@ -756,6 +760,10 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
         child_sizes: self.children.map(child => child.intrinsic_size()),
         child_baselines: self.children.map(child => child.first_baseline()),
         child_priorities: self.children.map(child => child.layout_priority()),
+        cache_key: custom_layout_cache_key(self.spec, self.children.map(child => child.intrinsic_size())),
+        layout_direction: LayoutDirection::LeftToRight,
+        safe_area: Insets::symmetric(),
+        viewport: None,
       })
     ComponentSpec(_) =>
       if self.children.length() > 0 {

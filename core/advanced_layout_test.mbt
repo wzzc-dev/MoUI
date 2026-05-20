@@ -210,6 +210,7 @@ test "custom layout delegate measures places paints and exposes child semantics"
     root=spec,
     size=Size::new(width=120.0, height=32.0),
   )
+  ignore(runtime.build_draw_commands())
   let layout = runtime.layout()
   inspect(layout.children.length(), content="2")
   inspect(layout.children[1].frame.origin.x, content="86")
@@ -230,6 +231,9 @@ test "custom layout delegate receives child baselines and layout priorities" {
   let first_baseline_ref : Ref[Double?] = Ref(None)
   let first_priority_ref = Ref(0.0)
   let second_priority_ref = Ref(0.0)
+  let cache_key_ref = Ref("")
+  let rtl_ref = Ref(false)
+  let viewport_ref : Ref[Size?] = Ref(None)
   let spec = ViewSpec::custom_layout(
     children=[
       test_label("Title").layout_priority(2.0),
@@ -245,9 +249,12 @@ test "custom layout delegate receives child baselines and layout priorities" {
       first_baseline_ref.val = ctx.child_baselines[0]
       first_priority_ref.val = ctx.child_priorities[0]
       second_priority_ref.val = ctx.child_priorities[1]
+      cache_key_ref.val = ctx.cache_key
       Size::new(width=132.0, height=32.0)
     },
     place=ctx => {
+      rtl_ref.val = ctx.layout_direction == LayoutDirection::RightToLeft
+      viewport_ref.val = ctx.viewport
       let first_baseline = ctx.child_baselines[0].unwrap_or(0.0)
       let second_baseline = ctx.child_baselines[1].unwrap_or(0.0)
       let shared_baseline = if first_baseline > second_baseline {
@@ -270,10 +277,18 @@ test "custom layout delegate receives child baselines and layout priorities" {
         ),
       ]
     },
+  ).key("custom-metrics")
+  let environment = Environment::default().with_layout_direction(
+    LayoutDirection::RightToLeft,
   )
   let layout = layout_spec(
     spec,
     Rect::new(x=0.0, y=0.0, width=132.0, height=32.0),
+  )
+  let runtime = RuntimeState::new_spec(
+    root=spec,
+    size=Size::new(width=132.0, height=32.0),
+    environment~,
   )
   match first_baseline_ref.val {
     Some(baseline) => inspect(baseline, content="12.8")
@@ -281,6 +296,13 @@ test "custom layout delegate receives child baselines and layout priorities" {
   }
   inspect(first_priority_ref.val, content="2")
   inspect(second_priority_ref.val, content="0")
+  assert_true(cache_key_ref.val.length() > 0)
+  ignore(runtime.build_draw_commands())
+  assert_true(rtl_ref.val)
+  match viewport_ref.val {
+    Some(size) => inspect(size.width, content="132")
+    None => fail("expected placement viewport metadata")
+  }
   inspect(layout.children[0].frame.origin.y, content="0")
   inspect((layout.children[1].frame.origin.y * 10.0).to_int(), content="48")
 }
