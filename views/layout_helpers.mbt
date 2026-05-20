@@ -15,6 +15,14 @@ pub fn flexible(
 }
 
 ///|
+pub fn layout_priority(
+  child : @core.ViewSpec,
+  priority : Double,
+) -> @core.ViewSpec {
+  child.layout_priority(priority)
+}
+
+///|
 pub fn align(
   child : @core.ViewSpec,
   alignment? : @core.Alignment = @core.Alignment::center(),

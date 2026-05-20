@@ -295,6 +295,7 @@ pub(all) enum ViewModifier {
   OnTapModifier(ClickHandler)
   KeyboardShortcutModifier(KeyboardShortcut)
   FlexibleModifier(Double)
+  LayoutPriorityModifier(Double)
   AlignModifier(Alignment)
   AspectRatioModifier(Double)
   IntrinsicWidthModifier
@@ -321,6 +322,8 @@ pub(all) struct CustomViewSpec {
 pub(all) struct CustomLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
+  child_baselines : Array[Double?]
+  child_priorities : Array[Double]
 }
 
 ///|
@@ -328,6 +331,8 @@ pub(all) struct CustomPlacementContext {
   frame : Rect
   measured_size : Size
   child_sizes : Array[Size]
+  child_baselines : Array[Double?]
+  child_priorities : Array[Double]
 }
 
 ///|
@@ -833,6 +838,14 @@ pub fn ViewSpec::flexible(self : ViewSpec, weight? : Double = 1.0) -> ViewSpec {
 }
 
 ///|
+pub fn ViewSpec::layout_priority(
+  self : ViewSpec,
+  priority : Double,
+) -> ViewSpec {
+  self.modified(LayoutPriorityModifier(priority))
+}
+
+///|
 pub fn ViewSpec::expanded(self : ViewSpec, weight? : Double = 1.0) -> ViewSpec {
   self.flexible(weight~)
 }
@@ -1108,6 +1121,7 @@ fn days_in_month(year : Int, month : Int) -> Int {
   }
 }
 
+///|
 fn map_view_spec(value : ViewSpec?, f : (ViewSpec) -> ViewSpec) -> ViewSpec? {
   match value {
     Some(value) => Some(f(value))

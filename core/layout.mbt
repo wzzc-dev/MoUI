@@ -174,6 +174,8 @@ fn ElementNode::measured_size_from_children(
       (data.measure)({
         constraints: Constraints::unbounded(),
         child_sizes: children.map(child => child.size),
+        child_baselines: self.children.map(child => child.first_baseline()),
+        child_priorities: self.children.map(child => child.layout_priority()),
       })
     ComponentSpec(_) =>
       if children.length() > 0 {
@@ -280,6 +282,8 @@ fn ElementNode::child_frames_for_place(
         frame,
         measured_size: frame.size,
         child_sizes: self.children.map(child => child.intrinsic_size()),
+        child_baselines: self.children.map(child => child.first_baseline()),
+        child_priorities: self.children.map(child => child.layout_priority()),
       })
     ModifiedSpec(data) => modified_child_frames(data.modifier, frame)
     ComponentSpec(_) => if self.children.length() > 0 { [frame] } else { [] }
@@ -317,6 +321,7 @@ fn modified_measured_size(
     | OnTapModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
+    | LayoutPriorityModifier(_)
     | AlignModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier => child_size
@@ -350,6 +355,7 @@ fn modified_child_constraints(
     | OnTapModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
+    | LayoutPriorityModifier(_)
     | AlignModifier(_)
     | AspectRatioModifier(_)
     | IntrinsicWidthModifier
@@ -378,6 +384,7 @@ fn modified_child_frames(modifier : ViewModifier, frame : Rect) -> Array[Rect] {
     | OnTapModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
+    | LayoutPriorityModifier(_)
     | AlignModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier => [frame]

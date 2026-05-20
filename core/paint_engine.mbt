@@ -374,6 +374,8 @@ fn ElementNode::render_with_environment(
         frame: bounds,
         measured_size: bounds.size,
         child_sizes: self.children.map(child => child.intrinsic_size()),
+        child_baselines: self.children.map(child => child.first_baseline()),
+        child_priorities: self.children.map(child => child.layout_priority()),
       })
       for index, child in self.children {
         if index < child_frames.length() {
@@ -617,6 +619,7 @@ fn render_modified_node(
     | OnTapModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
+    | LayoutPriorityModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier =>
       if element.children.length() > 0 {
@@ -751,6 +754,8 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
       (data.measure)({
         constraints: Constraints::unbounded(),
         child_sizes: self.children.map(child => child.intrinsic_size()),
+        child_baselines: self.children.map(child => child.first_baseline()),
+        child_priorities: self.children.map(child => child.layout_priority()),
       })
     ComponentSpec(_) =>
       if self.children.length() > 0 {
