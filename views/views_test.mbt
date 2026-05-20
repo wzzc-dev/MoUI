@@ -401,6 +401,60 @@ test "grid and list helpers build keyed collection specs" {
 }
 
 ///|
+test "lazy grid virtualizes rows while preserving scroll extent" {
+  let items = [0, 1, 2, 3, 4, 5, 6, 7]
+  let state = @core.ScrollState::new(
+    offset=@core.Point::new(x=0.0, y=61.0),
+  )
+  let spec = @views.lazy_grid(
+    items,
+    item => "item-\{item}",
+    item => @views.text("Cell \{item}", width=40.0, height=24.0),
+    state~,
+    columns=2,
+    item_height=24.0,
+    viewport_width=120.0,
+    viewport_height=24.0,
+    row_spacing=6.0,
+    column_spacing=8.0,
+  )
+  guard spec
+    is @core.ViewSpec::ScrollSpec(
+      {
+        offset: { y: 61.0, .. },
+        viewport: Some({ width: 120.0, height: 24.0 }),
+        child: @core.ViewSpec::ListSpec({ children, .. }),
+        ..
+      }
+    ) else {
+    fail("expected lazy grid scroll spec")
+  }
+  inspect(children.length(), content="3")
+  guard children[0]
+    is @core.ViewSpec::SpacerSpec(
+      { key: Some({ value: "lazy-grid-before" }), min_length: 60.0, .. }
+    ) else {
+    fail("expected leading virtual spacer")
+  }
+  guard children[1]
+    is @core.ViewSpec::GridSpec({ children: [first, second], columns: 2, .. }) else {
+    fail("expected first visible grid row")
+  }
+  guard first is @core.ViewSpec::TextSpec({ key: Some({ value: "item-4" }), .. }) else {
+    fail("expected first visible item")
+  }
+  guard second is @core.ViewSpec::TextSpec({ key: Some({ value: "item-5" }), .. }) else {
+    fail("expected second visible item")
+  }
+  guard children[2]
+    is @core.ViewSpec::SpacerSpec(
+      { key: Some({ value: "lazy-grid-after" }), min_length: 30.0, .. }
+    ) else {
+    fail("expected trailing virtual spacer")
+  }
+}
+
+///|
 test "text field constructs binding backed spec" {
   let state = @core.State::new("Draft")
   let submitted = Ref(false)
