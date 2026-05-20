@@ -41,6 +41,12 @@ pub(all) struct ComponentEffect {
 }
 
 ///|
+pub(all) struct SaveableCodec[T] {
+  encode : (T) -> String
+  decode : (String) -> T?
+}
+
+///|
 pub(all) struct SaveableStateStore {
   mut strings : Array[SaveableStringEntry]
 }
@@ -147,8 +153,60 @@ pub fn ComponentEffect::cancel(self : ComponentEffect) -> Unit {
 }
 
 ///|
+pub fn[T] SaveableCodec::new(
+  encode~ : (T) -> String,
+  decode~ : (String) -> T?,
+) -> SaveableCodec[T] {
+  { encode, decode }
+}
+
+///|
+pub fn SaveableCodec::string() -> SaveableCodec[String] {
+  SaveableCodec::new(encode=value => value, decode=value => Some(value))
+}
+
+///|
+pub fn SaveableCodec::bool() -> SaveableCodec[Bool] {
+  SaveableCodec::new(
+    encode=value => if value { "true" } else { "false" },
+    decode=value => match value {
+      "true" => Some(true)
+      "false" => Some(false)
+      _ => None
+    },
+  )
+}
+
+///|
+pub fn SaveableCodec::int() -> SaveableCodec[Int] {
+  SaveableCodec::new(encode=value => value.to_string(), decode=parse_saveable_int)
+}
+
+///|
 pub fn SaveableStateStore::new() -> SaveableStateStore {
   { strings: [] }
+}
+
+///|
+pub fn[T] SaveableStateStore::get(
+  self : SaveableStateStore,
+  key : String,
+  codec : SaveableCodec[T],
+) -> T? {
+  match self.get_string(key) {
+    Some(value) => (codec.decode)(value)
+    None => None
+  }
+}
+
+///|
+pub fn[T] SaveableStateStore::set(
+  self : SaveableStateStore,
+  key : String,
+  value : T,
+  codec : SaveableCodec[T],
+) -> Unit {
+  self.set_string(key, (codec.encode)(value))
 }
 
 ///|
@@ -184,11 +242,7 @@ pub fn SaveableStateStore::get_bool(
   self : SaveableStateStore,
   key : String,
 ) -> Bool? {
-  match self.get_string(key) {
-    Some("true") => Some(true)
-    Some("false") => Some(false)
-    _ => None
-  }
+  self.get(key, SaveableCodec::bool())
 }
 
 ///|
@@ -197,7 +251,7 @@ pub fn SaveableStateStore::set_bool(
   key : String,
   value : Bool,
 ) -> Unit {
-  self.set_string(key, if value { "true" } else { "false" })
+  self.set(key, value, SaveableCodec::bool())
 }
 
 ///|
@@ -205,10 +259,7 @@ pub fn SaveableStateStore::get_int(
   self : SaveableStateStore,
   key : String,
 ) -> Int? {
-  match self.get_string(key) {
-    Some(value) => parse_saveable_int(value)
-    None => None
-  }
+  self.get(key, SaveableCodec::int())
 }
 
 ///|
@@ -217,7 +268,7 @@ pub fn SaveableStateStore::set_int(
   key : String,
   value : Int,
 ) -> Unit {
-  self.set_string(key, value.to_string())
+  self.set(key, value, SaveableCodec::int())
 }
 
 ///|
@@ -375,27 +426,54 @@ pub fn BuildContext::restore_int(self : BuildContext, key~ : String) -> Int? {
 }
 
 ///|
-pub fn BuildContext::saveable_string(
+pub fn[T] BuildContext::save(
   self : BuildContext,
   key~ : String,
-  initial : String,
-) -> State[String] {
+  value : T,
+  codec : SaveableCodec[T],
+) -> Unit {
+  self.runtime.saveable_state.set(self.scoped_saveable_key(key), value, codec)
+}
+
+///|
+pub fn[T] BuildContext::restore(
+  self : BuildContext,
+  key~ : String,
+  codec : SaveableCodec[T],
+) -> T? {
+  self.runtime.saveable_state.get(self.scoped_saveable_key(key), codec)
+}
+
+///|
+pub fn[T] BuildContext::saveable(
+  self : BuildContext,
+  key~ : String,
+  initial : T,
+  codec : SaveableCodec[T],
+) -> State[T] {
   let scoped = self.scoped_saveable_key(key)
-  let restored = self.runtime.saveable_state
-    .get_string(scoped)
-    .unwrap_or(initial)
+  let restored = self.runtime.saveable_state.get(scoped, codec).unwrap_or(initial)
   let state = State::new(restored)
   let store = self.runtime.saveable_state
   let runtime = self.runtime
   let component_id = self.component_id
   ignore(
     state.subscribe(() => {
-      store.set_string(scoped, state.get())
+      store.set(scoped, state.get(), codec)
       runtime.request_component_rebuild(component_id)
     }),
   )
-  store.set_string(scoped, state.get())
+  store.set(scoped, state.get(), codec)
   state
+}
+
+///|
+pub fn BuildContext::saveable_string(
+  self : BuildContext,
+  key~ : String,
+  initial : String,
+) -> State[String] {
+  self.saveable(key~, initial, SaveableCodec::string())
 }
 
 ///|
@@ -404,20 +482,7 @@ pub fn BuildContext::saveable_bool(
   key~ : String,
   initial : Bool,
 ) -> State[Bool] {
-  let scoped = self.scoped_saveable_key(key)
-  let restored = self.runtime.saveable_state.get_bool(scoped).unwrap_or(initial)
-  let state = State::new(restored)
-  let store = self.runtime.saveable_state
-  let runtime = self.runtime
-  let component_id = self.component_id
-  ignore(
-    state.subscribe(() => {
-      store.set_bool(scoped, state.get())
-      runtime.request_component_rebuild(component_id)
-    }),
-  )
-  store.set_bool(scoped, state.get())
-  state
+  self.saveable(key~, initial, SaveableCodec::bool())
 }
 
 ///|
@@ -426,20 +491,7 @@ pub fn BuildContext::saveable_int(
   key~ : String,
   initial : Int,
 ) -> State[Int] {
-  let scoped = self.scoped_saveable_key(key)
-  let restored = self.runtime.saveable_state.get_int(scoped).unwrap_or(initial)
-  let state = State::new(restored)
-  let store = self.runtime.saveable_state
-  let runtime = self.runtime
-  let component_id = self.component_id
-  ignore(
-    state.subscribe(() => {
-      store.set_int(scoped, state.get())
-      runtime.request_component_rebuild(component_id)
-    }),
-  )
-  store.set_int(scoped, state.get())
-  state
+  self.saveable(key~, initial, SaveableCodec::int())
 }
 
 ///|

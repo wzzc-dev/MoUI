@@ -199,13 +199,16 @@ pub fn BuildContext::locale(Self) -> String
 pub fn BuildContext::on_dispose(Self, key~ : String, () -> Unit) -> Unit
 pub fn BuildContext::on_mount(Self, key~ : String, () -> Unit) -> Unit
 pub fn BuildContext::reduced_motion(Self) -> Bool
+pub fn[T] BuildContext::restore(Self, key~ : String, SaveableCodec[T]) -> T?
 pub fn BuildContext::restore_bool(Self, key~ : String) -> Bool?
 pub fn BuildContext::restore_int(Self, key~ : String) -> Int?
 pub fn BuildContext::restore_string(Self, key~ : String) -> String?
 pub fn BuildContext::run_effect(Self, key~ : String, () -> (() -> Unit)?) -> Unit
+pub fn[T] BuildContext::save(Self, key~ : String, T, SaveableCodec[T]) -> Unit
 pub fn BuildContext::save_bool(Self, key~ : String, Bool) -> Unit
 pub fn BuildContext::save_int(Self, key~ : String, Int) -> Unit
 pub fn BuildContext::save_string(Self, key~ : String, String) -> Unit
+pub fn[T] BuildContext::saveable(Self, key~ : String, T, SaveableCodec[T]) -> State[T]
 pub fn BuildContext::saveable_bool(Self, key~ : String, Bool) -> State[Bool]
 pub fn BuildContext::saveable_int(Self, key~ : String, Int) -> State[Int]
 pub fn BuildContext::saveable_string(Self, key~ : String, String) -> State[String]
@@ -1046,14 +1049,25 @@ pub fn RuntimeState::set_environment(Self, Environment) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 
+pub(all) struct SaveableCodec[T] {
+  encode : (T) -> String
+  decode : (String) -> T?
+}
+pub fn SaveableCodec::bool() -> Self[Bool]
+pub fn SaveableCodec::int() -> Self[Int]
+pub fn[T] SaveableCodec::new(encode~ : (T) -> String, decode~ : (String) -> T?) -> Self[T]
+pub fn SaveableCodec::string() -> Self[String]
+
 pub(all) struct SaveableStateStore {
   mut strings : Array[SaveableStringEntry]
 }
+pub fn[T] SaveableStateStore::get(Self, String, SaveableCodec[T]) -> T?
 pub fn SaveableStateStore::get_bool(Self, String) -> Bool?
 pub fn SaveableStateStore::get_int(Self, String) -> Int?
 pub fn SaveableStateStore::get_string(Self, String) -> String?
 pub fn SaveableStateStore::new() -> Self
 pub fn SaveableStateStore::remove(Self, String) -> Unit
+pub fn[T] SaveableStateStore::set(Self, String, T, SaveableCodec[T]) -> Unit
 pub fn SaveableStateStore::set_bool(Self, String, Bool) -> Unit
 pub fn SaveableStateStore::set_int(Self, String, Int) -> Unit
 pub fn SaveableStateStore::set_string(Self, String, String) -> Unit

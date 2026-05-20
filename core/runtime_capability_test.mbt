@@ -151,6 +151,62 @@ test "saveable store preserves bools and ints through string storage" {
 }
 
 ///|
+test "saveable codec stores custom values through scoped component state" {
+  let codec = SaveableCodec::new(
+    encode=(value : Int) => "score:" + value.to_string(),
+    decode=value => {
+      if value.length() > 6 && value[:6].to_owned() == "score:" {
+        parse_saveable_score(value[6:].to_owned())
+      } else {
+        None
+      }
+    },
+  )
+  let score_ref : Ref[State[Int]?] = Ref(None)
+  let runtime = RuntimeState::new_component(
+    root=Component::new(ctx => {
+      let score = ctx.saveable(key="score", 9, codec)
+      score_ref.val = Some(score)
+      ViewSpec::TextSpec({
+        key: None,
+        text: "Score \{score.get()}",
+        size: Size::new(width=120.0, height=20.0),
+        font: FontSpec::new(size=12.0, weight=400),
+        color: Color::black(),
+      })
+    }),
+    size=Size::new(width=120.0, height=20.0),
+  )
+  guard runtime.build_draw_commands()[1] is DrawText({ text: "Score 9", .. }) else {
+    fail("expected initial custom saveable state")
+  }
+  match score_ref.val {
+    Some(score) => score.set(17)
+    None => fail("missing score state")
+  }
+  runtime.mount(runtime.root_spec)
+  guard runtime.build_draw_commands()[1] is DrawText({ text: "Score 17", .. }) else {
+    fail("expected custom saveable state after same-root remount")
+  }
+}
+
+///|
+fn parse_saveable_score(value : String) -> Int? {
+  let chars = value.to_array()
+  if chars.length() == 0 {
+    return None
+  }
+  let mut parsed = 0
+  for char in chars {
+    if !char.is_ascii_digit() {
+      return None
+    }
+    parsed = parsed * 10 + char.to_int() - '0'.to_int()
+  }
+  Some(parsed)
+}
+
+///|
 test "saveable bool and int states survive rebuild and remount" {
   let count_ref : Ref[State[Int]?] = Ref(None)
   let flag_ref : Ref[State[Bool]?] = Ref(None)
