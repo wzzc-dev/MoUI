@@ -157,6 +157,7 @@ pub(all) enum HostEvent {
   Focus(HostFocusEvent)
   Keyboard(@core.KeyboardEvent)
   TextInput(@core.TextInputEvent)
+  Command(@core.CommandIntent)
   RedrawRequested
   CloseRequested
 } derive(Eq, Debug, ToJson)
@@ -629,6 +630,11 @@ pub fn HostRuntimeDriver::dispatch(
       self.runtime.dispatch_event(@core.AppEvent::TextInput(event))
       self.request_redraw_if_needed()
     }
+    Command(intent) => {
+      if self.runtime.dispatch_command(intent) {
+        self.request_redraw_if_needed()
+      }
+    }
     RedrawRequested => {
       self.begin_redraw()
       self.finish_redraw()
@@ -708,6 +714,7 @@ pub fn HostEvent::to_core(self : HostEvent) -> @core.AppEvent? {
     Focus(event) => event.to_core()
     Keyboard(event) => Some(@core.AppEvent::Keyboard(event))
     TextInput(event) => Some(@core.AppEvent::TextInput(event))
+    Command(_) => None
     RedrawRequested =>
       Some(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
     CloseRequested => Some(@core.AppEvent::CloseRequested)

@@ -85,6 +85,7 @@ pub(all) enum HostEvent {
   Focus(HostFocusEvent)
   Keyboard(@wzzc-dev/moui/core.KeyboardEvent)
   TextInput(@wzzc-dev/moui/core.TextInputEvent)
+  Command(@wzzc-dev/moui/core.CommandIntent)
   RedrawRequested
   CloseRequested
 } derive(Eq, ToJson, @debug.Debug)
