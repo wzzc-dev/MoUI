@@ -73,6 +73,14 @@ pub(all) enum RendererFeature {
   Clip
   Transform
   Opacity
+  LayerCompositing
+  BlendMode
+  FilterEffect
+  PathVector
+  ShaderEffect
+  TextShaping
+  EmojiText
+  AsyncImage
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererFeature::label(Self) -> String
 

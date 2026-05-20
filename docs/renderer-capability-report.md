@@ -23,6 +23,14 @@ Status meanings:
 | Clip | ready | partial | Rectangular transformed scissor behavior is aligned; rounded clips supported in native with shader SDF masks. |
 | Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices; layer-level transform state remains follow-up work. |
 | Opacity | ready | ready | None |
+| Layer compositing | gap | gap | Offscreen layers, masks, retained render-pass state, and backdrop composition are not modeled yet. |
+| Blend mode | gap | gap | Blend mode intent is not represented in `DrawCommand` payloads yet. |
+| Filter effect | gap | gap | Blur, color matrix, and backdrop filters are not represented in renderer-neutral commands yet. |
+| Path/vector | gap | gap | Arbitrary path/vector draw commands are not modeled yet. |
+| Shader effect | gap | gap | User shader effects are not part of the renderer facade or Web host ABI yet. |
+| Text shaping | partial | partial | Native has HarfBuzz shaping and fallback faces; full bidi, line breaking, and typography conformance remain follow-up work. |
+| Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
+| Async image | partial | partial | Images are cached after load/decode, but loading/error state and resource lifecycle APIs are not surfaced to app code yet. |
 
 ## Current Native Notes
 
@@ -34,6 +42,12 @@ handling.
 Clip support uses transformed rectangular scissor rectangles and rounded clips
 with shader SDF masks. Transform support is applied to planned visual, image,
 and text vertices. Opacity is folded into visual and text vertex alpha.
+Layer compositing, blend modes, filters, vector paths, shader effects, and
+native color emoji remain explicit gaps. Text shaping is partial: HarfBuzz and
+fallback faces exist, but full bidi, line breaking, and typography conformance
+are still follow-up work. Native image support is synchronous from the app
+model's point of view; async loading and resource lifecycle state are not
+surfaced yet.
 
 ## Current Web Notes
 
@@ -48,6 +62,11 @@ while the browser is still loading the source or if loading fails.
 Clip support maps transformed rectangular clip stacks to per-item scissor
 rectangles. Transform support is folded into generated visual, image, and text
 vertices, with clip scissors derived from transformed bounding boxes.
+The Web runtime has browser image loading and canvas-rasterized text, but
+layer compositing, blend modes, filters, arbitrary paths, and user shader
+effects are not yet represented by the MoonBit command model. Emoji and complex
+text shaping rely on browser font behavior and need deterministic conformance
+tests.
 
 ## Update Rule
 
