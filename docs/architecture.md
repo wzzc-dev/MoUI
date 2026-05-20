@@ -88,9 +88,11 @@ ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand 
   runtime state.
 - `ScrollState`, `FocusState`, and `NavigationState` are the preferred state
   holders for reusable app structure instead of ad hoc view-local fields.
-- `BuildContext::run_effect` registers component-scoped effects with cleanup
-  callbacks that are cancelled on rebuild or unmount. `BuildContext` also
-  exposes scoped save/restore helpers for small saveable string state.
+- `BuildContext::run_effect` registers keyed component-scoped effects with
+  cleanup callbacks. Effects with stable keys are reused across rebuilds, and
+  cleanups run when keys disappear or the component leaves the tree.
+  `BuildContext` also exposes scoped save/restore helpers for small saveable
+  string state.
 - Layout uses constraints down, measured size up, then parent placement.
 - Paint emits platform-neutral `DrawCommand` values. Renderers may degrade
   based on capability, but view constructors preserve brush, border, shadow,
@@ -119,8 +121,8 @@ The runtime cancels and replaces build subscriptions on rebuild, so repeated
 builds do not accumulate listeners.
 
 Component-scoped side effects should be registered with `ctx.run_effect`. The
-returned cleanup callback is invoked before the next rebuild of that component
-and when the component leaves the element tree:
+returned cleanup callback is invoked when the effect key is no longer registered
+for that component and when the component leaves the element tree:
 
 ```moonbit
 @core.Component::new(ctx => {
@@ -135,6 +137,11 @@ and when the component leaves the element tree:
 Small string state that needs to survive rebuilds, resize, and same-root remount
 can use `ctx.save_string`, `ctx.restore_string`, or `ctx.saveable_string`. More
 general saveable value support remains a follow-up.
+
+Environment values flow through `BuildContext` so components can react to
+platform and accessibility signals such as color scheme, locale, layout
+direction, accessibility contrast, reduced motion, content size category, text
+scale, and scale factor.
 
 ## Layout
 
@@ -259,12 +266,18 @@ events into `HostEvent` and then let `AppRuntime` update state, rebuild, and emi
 `DrawCommand` values. Linux currently keeps the same contract shape as a
 scaffold until a real window backend exists.
 
+Typed host services live on the same boundary. `HostServiceBridge` exposes
+capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
+system-theme requests. Backends can report unavailable services without
+pretending that app code can call platform APIs directly.
+
 See [Platform notes](platform-notes.md) for setup, backend-specific constraints,
 and validation commands.
 
 ## Accessibility
 
 `core/semantics.mbt` produces a platform-neutral semantics tree with roles,
-labels, values, focus order, and checked state. `backend/web` includes a
-semantics-to-ARIA adapter for the wasm-gc Web path. Native platform bridges are
-kept behind backend boundaries and should map from the same core tree.
+labels, hints, values, focus order, checked state, and live-region metadata.
+`backend/web` includes a semantics-to-ARIA adapter for the wasm-gc Web path.
+Native platform bridges are kept behind backend boundaries and should map from
+the same core tree.

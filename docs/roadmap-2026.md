@@ -59,10 +59,10 @@ Focus areas:
   diffs.
 
 First P0 foundations now exist for component effects, saveable string state,
-and custom child layout delegates. Follow-up work should broaden saveable state
-beyond strings, add effect key diffing instead of rebuild-wide replacement, and
-extend the custom layout protocol with layout cache, alignment guides, and
-baseline support.
+custom child layout delegates, and keyed effect reuse. Follow-up work should
+broaden saveable state beyond strings, add lifecycle hooks with clearer mount
+and dispose naming, and extend the custom layout protocol with layout cache,
+alignment guides, and baseline support.
 
 Validation:
 
@@ -165,6 +165,11 @@ Focus areas:
 - Keep Windows native setup reproducible with MSYS2 UCRT64 and the expected
   static GNU `wgpu-native` release.
 - Keep Linux clearly marked as scaffold until a minimal backend is implemented.
+- Use `HostServiceBridge` as the typed host-service boundary for clipboard,
+  menus, file dialogs, URL opening, and system-theme queries.
+- Keep Linux readiness explicit through its backend readiness report until a
+  real `window/linux` package, native surface path, and accessibility bridge are
+  available.
 
 Validation:
 
