@@ -93,6 +93,16 @@ pub fn AppRuntime::focused_text_input(self : AppRuntime) -> TextInputState {
 }
 
 ///|
+pub fn AppRuntime::focus_next(self : AppRuntime) -> Bool {
+  self.state.move_focus()
+}
+
+///|
+pub fn AppRuntime::focus_previous(self : AppRuntime) -> Bool {
+  self.state.move_focus(reverse=true)
+}
+
+///|
 pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[DrawCommand] {
   self.state.build_draw_commands()
 }

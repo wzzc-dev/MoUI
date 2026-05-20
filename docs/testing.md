@@ -99,8 +99,8 @@ before it grows broad platform claims:
   lazy viewport behavior, clip/transform/opacity/image/text command stability,
   and renderer capability report synchronization.
 - Input/accessibility: gesture arbitration, action-command matching and
-  dispatch, focus traversal, shortcut dispatch, IME/text selection, clipboard
-  service routing, and semantics action roundtrips.
+  dispatch, explicit focus traversal helpers, shortcut dispatch, IME/text
+  selection, clipboard service routing, and semantics action roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, devtool snapshots, frame-profile counters, and example
   builds.
