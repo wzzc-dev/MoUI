@@ -66,6 +66,37 @@ test "app runtime destroy cancels component effects and clears lifecycle state" 
 }
 
 ///|
+test "component lifecycle helpers run mount once and dispose on unmount" {
+  let value = State::new(0)
+  let mounts = Ref(0)
+  let disposes = Ref(0)
+  let runtime = RuntimeState::new_component(
+    root=Component::new(ctx => {
+      let current = ctx.watch(value)
+      ctx.on_mount(key="metrics", () => mounts.val = mounts.val + 1)
+      ctx.on_dispose(key="metrics", () => disposes.val = disposes.val + 1)
+      ViewSpec::TextSpec({
+        key: None,
+        text: "Value \{current}",
+        size: Size::new(width=80.0, height=20.0),
+        font: FontSpec::new(size=12.0, weight=400),
+        color: Color::black(),
+      })
+    }),
+    size=Size::new(width=80.0, height=20.0),
+  )
+  ignore(runtime.build_draw_commands())
+  inspect(mounts.val, content="1")
+  inspect(disposes.val, content="0")
+  value.set(1)
+  ignore(runtime.build_draw_commands())
+  inspect(mounts.val, content="1")
+  inspect(disposes.val, content="0")
+  runtime.mount(ViewSpec::EmptySpec)
+  inspect(disposes.val, content="1")
+}
+
+///|
 test "saveable strings survive rebuild resize and root remount by stable component id" {
   let value = State::new("first")
   let runtime = RuntimeState::new_component(

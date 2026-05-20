@@ -134,6 +134,10 @@ for that component and when the component leaves the element tree:
 })
 ```
 
+For simple lifecycle work, `ctx.on_mount(key=..., ...)` and
+`ctx.on_dispose(key=..., ...)` are named wrappers around the same keyed effect
+model.
+
 Small string, bool, and int state that needs to survive rebuilds, resize, and
 same-root remount can use the scoped `save_*`, `restore_*`, or `saveable_*`
 helpers. `saveable_*` helpers return `State` values that write back to the
