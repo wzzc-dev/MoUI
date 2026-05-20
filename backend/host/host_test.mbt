@@ -165,6 +165,37 @@ test "host driver dispatches command intents through runtime action map" {
 }
 
 ///|
+test "host service bridge routes typed platform channels" {
+  let bridge = HostServiceBridge::unavailable()
+  bridge.register_channel(
+    PlatformChannelHandler::new(channel="clipboard.extra", handle=request => {
+      if request.operation == "echo" {
+        PlatformChannelResponse::Ok(request.payload)
+      } else {
+        PlatformChannelResponse::Error("unknown method")
+      }
+    }),
+  )
+  match bridge.dispatch_channel(
+    PlatformChannelRequest::new(
+      channel="clipboard.extra",
+      operation="echo",
+      payload="hello",
+    ),
+  ) {
+    PlatformChannelResponse::Ok(value) => inspect(value, content="hello")
+    _ => fail("expected platform channel response")
+  }
+  match bridge.dispatch_channel(
+    PlatformChannelRequest::new(channel="missing", operation="echo"),
+  ) {
+    PlatformChannelResponse::Unavailable(message) =>
+      inspect(message, content="platform channel is unavailable: missing")
+    _ => fail("expected unavailable platform channel")
+  }
+}
+
+///|
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
   let runtime = @core.AppRuntime::new_spec(
