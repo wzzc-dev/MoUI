@@ -7,6 +7,10 @@ priv struct RenderEnvironment {
   scale_factor : Double
   text_scale : Double
   locale : String
+  layout_direction : LayoutDirection
+  accessibility_contrast : AccessibilityContrast
+  reduced_motion : Bool
+  content_size_category : ContentSizeCategory
 } derive(Eq)
 
 ///|
@@ -19,6 +23,10 @@ fn RenderEnvironment::default() -> RenderEnvironment {
     scale_factor: 1.0,
     text_scale: 1.0,
     locale: "en-US",
+    layout_direction: LayoutDirection::LeftToRight,
+    accessibility_contrast: AccessibilityContrast::Standard,
+    reduced_motion: false,
+    content_size_category: ContentSizeCategory::Medium,
   }
 }
 
@@ -34,6 +42,10 @@ fn RenderEnvironment::from_environment(
     scale_factor: environment.scale_factor,
     text_scale: environment.text_scale,
     locale: environment.locale,
+    layout_direction: environment.layout_direction,
+    accessibility_contrast: environment.accessibility_contrast,
+    reduced_motion: environment.reduced_motion,
+    content_size_category: environment.content_size_category,
   }
 }
 

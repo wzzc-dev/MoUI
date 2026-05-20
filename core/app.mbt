@@ -326,6 +326,30 @@ pub fn BuildContext::locale(self : BuildContext) -> String {
 }
 
 ///|
+pub fn BuildContext::layout_direction(self : BuildContext) -> LayoutDirection {
+  self.environment.layout_direction
+}
+
+///|
+pub fn BuildContext::accessibility_contrast(
+  self : BuildContext,
+) -> AccessibilityContrast {
+  self.environment.accessibility_contrast
+}
+
+///|
+pub fn BuildContext::reduced_motion(self : BuildContext) -> Bool {
+  self.environment.reduced_motion
+}
+
+///|
+pub fn BuildContext::content_size_category(
+  self : BuildContext,
+) -> ContentSizeCategory {
+  self.environment.content_size_category
+}
+
+///|
 pub fn BuildContext::enabled(self : BuildContext) -> Bool {
   self.environment.enabled
 }

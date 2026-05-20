@@ -23,6 +23,11 @@ pub fn text_layout_codepoint_advance(FontSpec, UInt) -> Double
 // Errors
 
 // Types and methods
+pub(all) enum AccessibilityContrast {
+  Standard
+  High
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct Alignment {
   x : Double
   y : Double
@@ -155,11 +160,15 @@ pub(all) struct BuildContext {
   old_effects : Array[ComponentEffect]
   environment : Environment
 }
+pub fn BuildContext::accessibility_contrast(Self) -> AccessibilityContrast
 pub fn[T] BuildContext::binding(Self, State[T]) -> Binding[T]
 pub fn BuildContext::color_scheme(Self) -> ColorScheme
+pub fn BuildContext::content_size_category(Self) -> ContentSizeCategory
 pub fn BuildContext::enabled(Self) -> Bool
 pub fn BuildContext::environment(Self) -> Environment
+pub fn BuildContext::layout_direction(Self) -> LayoutDirection
 pub fn BuildContext::locale(Self) -> String
+pub fn BuildContext::reduced_motion(Self) -> Bool
 pub fn BuildContext::restore_string(Self, key~ : String) -> String?
 pub fn BuildContext::run_effect(Self, key~ : String, () -> (() -> Unit)?) -> Unit
 pub fn BuildContext::save_string(Self, key~ : String, String) -> Unit
@@ -299,6 +308,15 @@ pub(all) struct ContainerViewSpec {
   shadow : ShadowStyle?
   child : ViewSpec?
 }
+
+pub(all) enum ContentSizeCategory {
+  Small
+  Medium
+  Large
+  ExtraLarge
+  Accessibility
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ContentSizeCategory::text_scale(Self) -> Double
 
 pub(all) struct ControlStateStyle {
   foreground : Color
@@ -486,12 +504,20 @@ pub(all) struct Environment {
   scale_factor : Double
   text_scale : Double
   locale : String
+  layout_direction : LayoutDirection
+  accessibility_contrast : AccessibilityContrast
+  reduced_motion : Bool
+  content_size_category : ContentSizeCategory
   enabled : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Environment::default() -> Self
+pub fn Environment::with_accessibility_contrast(Self, AccessibilityContrast) -> Self
 pub fn Environment::with_color_scheme(Self, ColorScheme) -> Self
+pub fn Environment::with_content_size_category(Self, ContentSizeCategory) -> Self
 pub fn Environment::with_enabled(Self, Bool) -> Self
+pub fn Environment::with_layout_direction(Self, LayoutDirection) -> Self
 pub fn Environment::with_locale(Self, String) -> Self
+pub fn Environment::with_reduced_motion(Self, Bool) -> Self
 pub fn Environment::with_scale_factor(Self, Double) -> Self
 pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
@@ -624,6 +650,11 @@ pub(all) struct KeyboardShortcut {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn KeyboardShortcut::matches(Self, KeyboardEvent) -> Bool
 pub fn KeyboardShortcut::new(key~ : String, modifiers? : KeyModifiers) -> Self
+
+pub(all) enum LayoutDirection {
+  LeftToRight
+  RightToLeft
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct LayoutResult {
   frame : Rect

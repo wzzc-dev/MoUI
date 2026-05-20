@@ -73,6 +73,27 @@ pub(all) enum SurfaceLevel {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum LayoutDirection {
+  LeftToRight
+  RightToLeft
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum AccessibilityContrast {
+  Standard
+  High
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum ContentSizeCategory {
+  Small
+  Medium
+  Large
+  ExtraLarge
+  Accessibility
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
@@ -97,6 +118,10 @@ pub(all) struct Environment {
   scale_factor : Double
   text_scale : Double
   locale : String
+  layout_direction : LayoutDirection
+  accessibility_contrast : AccessibilityContrast
+  reduced_motion : Bool
+  content_size_category : ContentSizeCategory
   enabled : Bool
 } derive(Eq, Debug, ToJson)
 
@@ -380,6 +405,10 @@ pub fn Environment::default() -> Environment {
     scale_factor: 1.0,
     text_scale: 1.0,
     locale: "en-US",
+    layout_direction: LayoutDirection::LeftToRight,
+    accessibility_contrast: AccessibilityContrast::Standard,
+    reduced_motion: false,
+    content_size_category: ContentSizeCategory::Medium,
     enabled: true,
   }
 }
@@ -429,11 +458,58 @@ pub fn Environment::with_locale(
 }
 
 ///|
+pub fn Environment::with_layout_direction(
+  self : Environment,
+  layout_direction : LayoutDirection,
+) -> Environment {
+  { ..self, layout_direction }
+}
+
+///|
+pub fn Environment::with_accessibility_contrast(
+  self : Environment,
+  accessibility_contrast : AccessibilityContrast,
+) -> Environment {
+  { ..self, accessibility_contrast }
+}
+
+///|
+pub fn Environment::with_reduced_motion(
+  self : Environment,
+  reduced_motion : Bool,
+) -> Environment {
+  { ..self, reduced_motion }
+}
+
+///|
+pub fn Environment::with_content_size_category(
+  self : Environment,
+  content_size_category : ContentSizeCategory,
+) -> Environment {
+  {
+    ..self,
+    content_size_category,
+    text_scale: content_size_category.text_scale(),
+  }
+}
+
+///|
 pub fn Environment::with_enabled(
   self : Environment,
   enabled : Bool,
 ) -> Environment {
   { ..self, enabled, }
+}
+
+///|
+pub fn ContentSizeCategory::text_scale(self : ContentSizeCategory) -> Double {
+  match self {
+    Small => 0.9
+    Medium => 1.0
+    Large => 1.15
+    ExtraLarge => 1.3
+    Accessibility => 1.6
+  }
 }
 
 ///|
