@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn default_text_commands() -> Array[ActionCommand]
+
 pub fn hit_test(LayoutResult, Point) -> Bool
 
 pub fn layout_spec(ViewSpec, Rect) -> LayoutResult
@@ -18,6 +20,8 @@ pub fn recognize_button_tap(ButtonState, Bool, PointerPhase) -> TapGestureResult
 
 pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 
+pub fn resolve_gesture_arena(Array[GestureArenaMember]) -> GestureArenaResult
+
 pub fn text_layout_codepoint_advance(FontSpec, UInt) -> Double
 
 // Errors
@@ -27,6 +31,15 @@ pub(all) enum AccessibilityContrast {
   Standard
   High
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ActionCommand {
+  intent : CommandIntent
+  shortcut : KeyboardShortcut?
+  label : String
+  enabled : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ActionCommand::matches(Self, KeyboardEvent) -> Bool
+pub fn ActionCommand::new(intent~ : CommandIntent, label? : String, shortcut? : KeyboardShortcut?, enabled? : Bool) -> Self
 
 pub(all) struct Alignment {
   x : Double
@@ -260,6 +273,19 @@ pub fn ColorPalette::light() -> Self
 pub(all) enum ColorScheme {
   Light
   Dark
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum CommandIntent {
+  Activate
+  Submit
+  Cancel
+  Copy
+  Cut
+  Paste
+  Undo
+  Redo
+  SelectAll
+  OpenContextMenu
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Component {
@@ -572,6 +598,37 @@ pub(all) struct FrameViewSpec {
   max_height : Double?
   child : ViewSpec
 }
+
+pub(all) enum GestureArenaDisposition {
+  Pending
+  Accepted
+  Rejected
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct GestureArenaMember {
+  element_id : ElementId
+  kind : GestureKind
+  priority : Int
+  mut disposition : GestureArenaDisposition
+} derive(Eq, ToJson, @debug.Debug)
+pub fn GestureArenaMember::accept(Self) -> Unit
+pub fn GestureArenaMember::is_pending(Self) -> Bool
+pub fn GestureArenaMember::new(element_id~ : ElementId, kind~ : GestureKind, priority? : Int) -> Self
+pub fn GestureArenaMember::reject(Self) -> Unit
+
+pub(all) struct GestureArenaResult {
+  winner : GestureArenaMember?
+  members : Array[GestureArenaMember]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum GestureKind {
+  Tap
+  Drag
+  LongPress
+  PanZoom
+  Wheel
+  Hover
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct GridViewSpec {
   key : Key?
