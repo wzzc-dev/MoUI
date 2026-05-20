@@ -175,6 +175,13 @@ fn ElementNode::semantics_info(
         value: data.selected.get().format(data.mode),
         actions: [Focus, Activate],
       }
+    SearchBarSpec(data) =>
+      {
+        role: TextField,
+        label: data.placeholder,
+        value: data.query.get(),
+        actions: [Focus, SetText, Submit],
+      }
     TextFieldSpec(data) =>
       {
         role: TextField,

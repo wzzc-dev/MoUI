@@ -178,6 +178,8 @@ fn ElementNode::render_with_environment(
       append_picker_commands(commands, self, data, bounds, environment)
     DatePickerSpec(data) =>
       append_datepicker_commands(commands, self, data, bounds, environment)
+    SearchBarSpec(data) =>
+      append_searchbar_commands(commands, self, data, bounds, environment, focused)
     FlexSpec(data) => {
       let frames = flex_child_frames(
         data.axis,
@@ -632,6 +634,7 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     CheckboxSpec(data) => checkbox_intrinsic_size(data)
     PickerSpec(_) => Size::new(width=200.0, height=40.0)
     DatePickerSpec(_) => Size::new(width=200.0, height=40.0)
+    SearchBarSpec(_) => Size::new(width=240.0, height=40.0)
     SpacerSpec(data) =>
       if data.weight > 0.0 {
         Size::new(width=0.0, height=0.0)
@@ -704,6 +707,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     CheckboxSpec(_) => true
     PickerSpec(_) => true
     DatePickerSpec(_) => true
+    SearchBarSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     ModifiedSpec(data) =>
       data.modifier is BackgroundModifier(_) ||
@@ -1267,6 +1271,134 @@ fn append_datepicker_commands(
       )
       day = day + 1
     }
+  }
+}
+
+///|
+fn append_searchbar_commands(
+  commands : Array[DrawCommand],
+  element : ElementNode,
+  data : SearchBarViewSpec,
+  frame : Rect,
+  environment : RenderEnvironment,
+  focused_id : ElementId?,
+) -> Unit {
+  let rounded = RoundedRect::new(rect=frame, radius=data.corner_radius)
+  let is_focused = focused_id == Some(element.id)
+  let border = if is_focused { data.focused_border } else { data.border }
+  
+  // 绘制背景和边框
+  commands.push(FillRoundedRectBrush(rounded, data.background))
+  match border {
+    Some(border) =>
+      if border.width > 0.0 {
+        commands.push(StrokeRoundedRectBrush(rounded, border.brush, border.width))
+      }
+    None => ()
+  }
+  
+  // 绘制搜索图标
+  let icon_frame = Rect::new(
+    x=frame.origin.x + 10.0,
+    y=frame.origin.y + (frame.size.height - 16.0) / 2.0,
+    width=16.0,
+    height=16.0,
+  )
+  commands.push(
+    DrawText(
+      TextRun::new(
+        text="🔍",
+        frame=icon_frame,
+        font=FontSpec::new(size=14.0),
+        color=data.foreground.with_alpha(0.6),
+      ),
+    ),
+  )
+  
+  // 绘制文本
+  let text = data.query.get()
+  let display_text = text_with_composition(text, element, is_focused)
+  let display = if display_text == "" { data.placeholder } else { display_text }
+  let font = environment_font(environment, data.font)
+  let color = if text == "" {
+    environment_color(environment, data.placeholder_color)
+  } else {
+    environment_color(environment, data.foreground)
+  }
+  let text_frame = Rect::new(
+    x=frame.origin.x + 32.0,
+    y=frame.origin.y,
+    width=if text != "" { frame.size.width - 64.0 } else { frame.size.width - 32.0 },
+    height=frame.size.height,
+  ).inset(Insets::symmetric(vertical=0.0))
+  if is_focused && element.composition is None {
+    let layout = measure_text_layout(
+      TextLayoutInput::new(
+        text=display_text,
+        font~,
+        max_width=text_frame.size.width,
+      ),
+    )
+    append_text_field_selection_commands(
+      commands,
+      text_frame,
+      layout,
+      element.selection,
+    )
+  }
+  commands.push(
+    DrawText(
+      TextRun::new(
+        text=display,
+        frame=text_frame,
+        font~,
+        color~,
+        align=TextAlign::TextStart,
+      ),
+    ),
+  )
+  // 绘制光标
+  if is_focused {
+    let layout = measure_text_layout(
+      TextLayoutInput::new(
+        text=display_text,
+        font~,
+        max_width=text_frame.size.width,
+      ),
+    )
+    let caret = clamp_int(
+      text_field_visual_caret(text, element, is_focused),
+      0,
+      layout.caret_positions.length() - 1,
+    )
+    let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
+    let cursor = Rect::new(
+      x=cursor_x,
+      y=text_frame.origin.y + 6.0,
+      width=1.5,
+      height=max_double(8.0, text_frame.size.height - 12.0),
+    )
+    commands.push(FillRect(cursor, data.cursor_color))
+  }
+  
+  // 如果有查询文本，绘制清除按钮
+  if text != "" {
+    let clear_frame = Rect::new(
+      x=frame.origin.x + frame.size.width - 26.0,
+      y=frame.origin.y + (frame.size.height - 16.0) / 2.0,
+      width=16.0,
+      height=16.0,
+    )
+    commands.push(
+      DrawText(
+        TextRun::new(
+          text="✕",
+          frame=clear_frame,
+          font=FontSpec::new(size=14.0),
+          color=data.foreground.with_alpha(0.6),
+        ),
+      ),
+    )
   }
 }
 

@@ -85,6 +85,29 @@ fn apply_multiline_text_edit(
 }
 
 ///|
+fn apply_searchbar_edit(
+  element : ElementNode,
+  data : SearchBarViewSpec,
+  edit : TextEditResult,
+) -> ElementEventResult {
+  if edit.text != data.query.get() ||
+    edit.caret != element.caret ||
+    element.selection is Some(_) ||
+    element.composition is Some(_) ||
+    element.composition_cursor is Some(_) {
+    data.query.set(edit.text)
+    element.caret = edit.caret
+    element.selection = None
+    element.composition = None
+    element.composition_cursor = None
+    element.dirty.mark_paint()
+    { changed: true, activated: false, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
 fn replace_current_selection(
   text : String,
   caret : Int,
