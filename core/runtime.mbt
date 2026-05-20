@@ -63,6 +63,11 @@ pub fn AppRuntime::mount(self : AppRuntime, root : ViewSpec) -> Unit {
 }
 
 ///|
+pub fn AppRuntime::destroy(self : AppRuntime) -> Unit {
+  self.state.destroy()
+}
+
+///|
 pub fn AppRuntime::rebuild(self : AppRuntime) -> Unit {
   self.state.rebuild()
 }
