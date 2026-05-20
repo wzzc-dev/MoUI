@@ -25,6 +25,7 @@ struct RendererHandle {
   mut text_bind_group_layout : @wgpu_mbt.BindGroupLayout?
   mut text_pipeline_layout : @wgpu_mbt.PipelineLayout?
   mut text_bind_group : @wgpu_mbt.BindGroup?
+  mut image_pipeline : NativeImagePipeline?
   font_cache : NativeFontCache
   glyph_atlas : GlyphAtlas
   mut visual_vertices : Array[VisualVertex]
@@ -84,6 +85,7 @@ fn create_with_surface(
   let text_bind_group = device.create_bind_group_sampler_texture_2d(
     text_bind_group_layout, text_sampler, text_atlas_view,
   )
+  let image_pipeline = NativeImagePipeline::new(device, format)
   {
     size: metrics.logical_size,
     physical_size: metrics.physical_size,
@@ -110,6 +112,7 @@ fn create_with_surface(
     text_bind_group_layout: Some(text_bind_group_layout),
     text_pipeline_layout: Some(text_pipeline_layout),
     text_bind_group: Some(text_bind_group),
+    image_pipeline: Some(image_pipeline),
     font_cache: NativeFontCache::new(),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
