@@ -88,6 +88,9 @@ ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand 
   runtime state.
 - `ScrollState`, `FocusState`, and `NavigationState` are the preferred state
   holders for reusable app structure instead of ad hoc view-local fields.
+- `BuildContext::run_effect` registers component-scoped effects with cleanup
+  callbacks that are cancelled on rebuild or unmount. `BuildContext` also
+  exposes scoped save/restore helpers for small saveable string state.
 - Layout uses constraints down, measured size up, then parent placement.
 - Paint emits platform-neutral `DrawCommand` values. Renderers may degrade
   based on capability, but view constructors preserve brush, border, shadow,
@@ -115,6 +118,24 @@ model methods can still use `state.get()`, `state.set()`, and `state.update()`.
 The runtime cancels and replaces build subscriptions on rebuild, so repeated
 builds do not accumulate listeners.
 
+Component-scoped side effects should be registered with `ctx.run_effect`. The
+returned cleanup callback is invoked before the next rebuild of that component
+and when the component leaves the element tree:
+
+```moonbit
+@core.Component::new(ctx => {
+  ctx.run_effect(key="subscription", () => {
+    connect()
+    Some(() => disconnect())
+  })
+  @views.text("Connected")
+})
+```
+
+Small string state that needs to survive rebuilds, resize, and same-root remount
+can use `ctx.save_string`, `ctx.restore_string`, or `ctx.saveable_string`. More
+general saveable value support remains a follow-up.
+
 ## Layout
 
 Layout follows the Flutter-style protocol internally:
@@ -129,6 +150,11 @@ Constraints down -> Size up -> parent places children
 tightens child constraints. `Flex`, `Grid`, `List`, `Stack`, and `Scroll` all
 participate in the measured/placed layout pass while preserving the existing
 `RenderNode` output expected by renderers and hosts.
+
+Advanced layout authors can use `ViewSpec::custom_layout` to define a child
+layout delegate. The delegate receives measured child sizes, returns its own
+size, and places children with explicit frames; paint and semantics metadata are
+kept on the same spec.
 
 ## Modifiers And Environment
 
@@ -205,6 +231,21 @@ let swatch = @core.ViewSpec::custom(
     ),
   ],
   semantics_label="Color swatch",
+)
+```
+
+For custom layouts with children, use `ViewSpec::custom_layout` or the
+`@views.custom_children_layout` helper:
+
+```moonbit
+let pair = @core.ViewSpec::custom_layout(
+  children=[@views.text("A"), @views.text("B")],
+  measure=ctx => ctx.constraints.constrain(@core.Size::new(width=160.0, height=24.0)),
+  place=ctx => [
+    @core.Rect::new(x=ctx.frame.origin.x, y=ctx.frame.origin.y, width=80.0, height=24.0),
+    @core.Rect::new(x=ctx.frame.origin.x + 80.0, y=ctx.frame.origin.y, width=80.0, height=24.0),
+  ],
+  semantics_label="Custom pair",
 )
 ```
 

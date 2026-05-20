@@ -11,6 +11,10 @@ The runtime pipeline is explicit:
 ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
 ```
 
+Current P0 runtime foundations include component state subscriptions,
+component-scoped effects with cleanup, scoped saveable string state, and an
+advanced custom child layout delegate for framework and package-local controls.
+
 Detailed notes live in:
 
 - [Architecture](docs/architecture.md)

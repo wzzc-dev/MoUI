@@ -93,6 +93,7 @@ let screen = @views.column([
 | `aspect_ratio` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Planned Showcase catalog coverage | Ratio constraint wrapper. |
 | `intrinsic_width` / `intrinsic_height` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Planned Showcase catalog coverage | Intrinsic measurement wrappers. |
 | `custom_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt` | Internal/advanced use | Builds `ViewSpec::custom`. |
+| `custom_children_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Internal/advanced use | Builds `ViewSpec::custom_layout` with child measurement and placement callbacks. |
 | `component` | `views/layout_helpers.mbt` | BuildContext-based | Built child semantics | `views/views_test.mbt` | Examples via app components | Wraps `@core.Component::new`. |
 
 ## Maintenance Checklist
