@@ -93,6 +93,53 @@ test "surface host resizes through host event" {
 }
 
 ///|
+test "host service bridge gates typed platform requests by capability" {
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(
+      clipboard=true,
+      menus=true,
+      system_theme=true,
+    ),
+    handle=request =>
+      match request {
+        Clipboard(WriteText(_)) => HostServiceResponse::ClipboardWritten
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText("copied")
+        ShowMenu(commands) =>
+          if commands.length() > 0 {
+            HostServiceResponse::MenuCommand(commands[0].intent)
+          } else {
+            HostServiceResponse::Unavailable("empty menu")
+          }
+        QuerySystemTheme => HostServiceResponse::SystemTheme(@core.ColorScheme::Dark)
+        _ => HostServiceResponse::Unavailable("not implemented")
+      },
+  )
+  match bridge.dispatch(
+    HostServiceRequest::Clipboard(HostClipboardRequest::ReadText),
+  ) {
+    HostServiceResponse::ClipboardText(text) => inspect(text, content="copied")
+    _ => fail("expected clipboard text")
+  }
+  match bridge.dispatch(
+    HostServiceRequest::ShowMenu([
+      @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+    ]),
+  ) {
+    HostServiceResponse::MenuCommand(@core.CommandIntent::Copy) => ()
+    _ => fail("expected selected menu command")
+  }
+  match bridge.dispatch(
+    HostServiceRequest::FileDialog(
+      HostFileDialogOptions::new(kind=HostFileDialogKind::OpenFile),
+    ),
+  ) {
+    HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="file dialog service is unavailable")
+    _ => fail("expected unavailable file dialog")
+  }
+}
+
+///|
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
   let runtime = @core.AppRuntime::new_spec(

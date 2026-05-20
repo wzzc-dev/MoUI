@@ -47,6 +47,62 @@ pub(all) struct HostInputCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostServiceCapabilities {
+  clipboard : Bool
+  menus : Bool
+  file_dialogs : Bool
+  open_url : Bool
+  system_theme : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum HostClipboardRequest {
+  ReadText
+  WriteText(String)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum HostFileDialogKind {
+  OpenFile
+  SaveFile
+  PickDirectory
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostFileDialogOptions {
+  kind : HostFileDialogKind
+  title : String
+  filters : Array[String]
+  default_name : String?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum HostServiceRequest {
+  Clipboard(HostClipboardRequest)
+  ShowMenu(Array[@core.ActionCommand])
+  FileDialog(HostFileDialogOptions)
+  OpenUrl(String)
+  QuerySystemTheme
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum HostServiceResponse {
+  Unavailable(String)
+  ClipboardText(String)
+  ClipboardWritten
+  MenuCommand(@core.CommandIntent)
+  FileDialogSelection(Array[String])
+  UrlOpened
+  SystemTheme(@core.ColorScheme)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostServiceBridge {
+  capabilities : HostServiceCapabilities
+  handle : (HostServiceRequest) -> HostServiceResponse
+}
+
+///|
 pub(all) struct HostInputContract {
   capabilities : HostInputCapabilities
   coordinates : HostCoordinatePolicy
@@ -214,6 +270,95 @@ pub fn HostInputCapabilities::none() -> HostInputCapabilities {
     text_input: false,
     ime: false,
     clipboard: false,
+  }
+}
+
+///|
+pub fn HostServiceCapabilities::none() -> HostServiceCapabilities {
+  {
+    clipboard: false,
+    menus: false,
+    file_dialogs: false,
+    open_url: false,
+    system_theme: false,
+  }
+}
+
+///|
+pub fn HostServiceCapabilities::new(
+  clipboard? : Bool = false,
+  menus? : Bool = false,
+  file_dialogs? : Bool = false,
+  open_url? : Bool = false,
+  system_theme? : Bool = false,
+) -> HostServiceCapabilities {
+  { clipboard, menus, file_dialogs, open_url, system_theme }
+}
+
+///|
+pub fn HostFileDialogOptions::new(
+  kind~ : HostFileDialogKind,
+  title? : String = "",
+  filters? : Array[String] = [],
+  default_name? : String? = None,
+) -> HostFileDialogOptions {
+  { kind, title, filters, default_name }
+}
+
+///|
+pub fn HostServiceBridge::new(
+  capabilities~ : HostServiceCapabilities,
+  handle~ : (HostServiceRequest) -> HostServiceResponse,
+) -> HostServiceBridge {
+  { capabilities, handle }
+}
+
+///|
+pub fn HostServiceBridge::unavailable() -> HostServiceBridge {
+  HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::none(),
+    handle=request => HostServiceResponse::Unavailable(
+      request.unavailable_message(),
+    ),
+  )
+}
+
+///|
+pub fn HostServiceBridge::dispatch(
+  self : HostServiceBridge,
+  request : HostServiceRequest,
+) -> HostServiceResponse {
+  if self.can_handle(request) {
+    (self.handle)(request)
+  } else {
+    HostServiceResponse::Unavailable(request.unavailable_message())
+  }
+}
+
+///|
+pub fn HostServiceBridge::can_handle(
+  self : HostServiceBridge,
+  request : HostServiceRequest,
+) -> Bool {
+  match request {
+    Clipboard(_) => self.capabilities.clipboard
+    ShowMenu(_) => self.capabilities.menus
+    FileDialog(_) => self.capabilities.file_dialogs
+    OpenUrl(_) => self.capabilities.open_url
+    QuerySystemTheme => self.capabilities.system_theme
+  }
+}
+
+///|
+pub fn HostServiceRequest::unavailable_message(
+  self : HostServiceRequest,
+) -> String {
+  match self {
+    Clipboard(_) => "clipboard service is unavailable"
+    ShowMenu(_) => "menu service is unavailable"
+    FileDialog(_) => "file dialog service is unavailable"
+    OpenUrl(_) => "open URL service is unavailable"
+    QuerySystemTheme => "system theme service is unavailable"
   }
 }
 

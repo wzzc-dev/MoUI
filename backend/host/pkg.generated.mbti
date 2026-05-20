@@ -59,6 +59,11 @@ pub(all) enum HostBackendKind {
   Test
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum HostClipboardRequest {
+  ReadText
+  WriteText(String)
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct HostCoordinatePolicy {
   input_space : HostCoordinateSpace
   surface_space : HostCoordinateSpace
@@ -91,6 +96,20 @@ pub(all) struct HostEventResult {
   redraw_requested : Bool
   close_requested : Bool
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostFileDialogKind {
+  OpenFile
+  SaveFile
+  PickDirectory
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostFileDialogOptions {
+  kind : HostFileDialogKind
+  title : String
+  filters : Array[String]
+  default_name : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostFileDialogOptions::new(kind~ : HostFileDialogKind, title? : String, filters? : Array[String], default_name? : String?) -> Self
 
 pub(all) struct HostFocusEvent {
   focused : Bool
@@ -152,6 +171,44 @@ pub(all) enum HostScrollPhase {
   Moved
   Ended
   Cancelled
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostServiceBridge {
+  capabilities : HostServiceCapabilities
+  handle : (HostServiceRequest) -> HostServiceResponse
+}
+pub fn HostServiceBridge::can_handle(Self, HostServiceRequest) -> Bool
+pub fn HostServiceBridge::dispatch(Self, HostServiceRequest) -> HostServiceResponse
+pub fn HostServiceBridge::new(capabilities~ : HostServiceCapabilities, handle~ : (HostServiceRequest) -> HostServiceResponse) -> Self
+pub fn HostServiceBridge::unavailable() -> Self
+
+pub(all) struct HostServiceCapabilities {
+  clipboard : Bool
+  menus : Bool
+  file_dialogs : Bool
+  open_url : Bool
+  system_theme : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, open_url? : Bool, system_theme? : Bool) -> Self
+pub fn HostServiceCapabilities::none() -> Self
+
+pub(all) enum HostServiceRequest {
+  Clipboard(HostClipboardRequest)
+  ShowMenu(Array[@wzzc-dev/moui/core.ActionCommand])
+  FileDialog(HostFileDialogOptions)
+  OpenUrl(String)
+  QuerySystemTheme
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceRequest::unavailable_message(Self) -> String
+
+pub(all) enum HostServiceResponse {
+  Unavailable(String)
+  ClipboardText(String)
+  ClipboardWritten
+  MenuCommand(@wzzc-dev/moui/core.CommandIntent)
+  FileDialogSelection(Array[String])
+  UrlOpened
+  SystemTheme(@wzzc-dev/moui/core.ColorScheme)
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct HostSurfaceMetrics {
