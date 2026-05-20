@@ -12,11 +12,17 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
+pub fn readiness() -> LinuxBackendReadiness
+
 pub fn run_app(String, @core.AppRuntime) -> Unit
 
 pub fn scaffold_input_host() -> @host.InputHostState
 
+pub fn scaffold_service_bridge() -> @host.HostServiceBridge
+
 pub fn scaffold_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.SurfaceHostState
+
+pub fn service_capabilities() -> @host.HostServiceCapabilities
 
 // Errors
 
@@ -38,7 +44,15 @@ pub(all) struct LinuxBackendInfo {
   window_backend_available : Bool
   renderer_ready : Bool
   capabilities : LinuxBackendCapabilities
+  services : @host.HostServiceCapabilities
+  readiness : LinuxBackendReadiness
   description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct LinuxBackendReadiness {
+  ready : Bool
+  blocked_by : Array[String]
+  next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 
 // Type aliases
