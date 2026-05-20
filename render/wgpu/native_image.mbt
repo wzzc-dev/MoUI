@@ -1,181 +1,106 @@
 ///|
-struct ImageTexture {
-  texture : @wgpu_mbt.Texture
-  texture_view : @wgpu_mbt.TextureView
-  width : Int
-  height : Int
-  last_used : Int
+struct ImageVertex {
+  x : Double
+  y : Double
+  u : Double
+  v : Double
 }
 
 ///|
-struct NativeImagePipeline {
-  shader : @wgpu_mbt.ShaderModule
-  pipeline : @wgpu_mbt.RenderPipeline
-  bind_group_layout : @wgpu_mbt.BindGroupLayout
-  pipeline_layout : @wgpu_mbt.PipelineLayout
-  sampler : @wgpu_mbt.Sampler
-  cache : Map[String, ImageTexture]
-  mut next_last_used : Int
-  max_cache_size : Int
+struct ImageUVResult {
+  u0 : Double
+  v0 : Double
+  u1 : Double
+  v1 : Double
 }
 
 ///|
-fn NativeImagePipeline::new(
-  device : @wgpu_mbt.Device,
-  format : @wgpu_mbt.TextureFormat,
-) -> NativeImagePipeline {
-  let shader = device.create_shader_module_wgsl(image_shader_wgsl())
-  let bind_group_layout = device.create_bind_group_layout_sampler_texture_2d()
-  let pipeline_layout = device.create_pipeline_layout_1(bind_group_layout)
-  let pipeline = create_image_pipeline(device, shader, format, pipeline_layout)
-  let sampler = device.create_sampler_linear_clamp()
-  {
-    shader,
-    pipeline,
-    bind_group_layout,
-    pipeline_layout,
-    sampler,
-    cache: {},
-    next_last_used: 0,
-    max_cache_size: 64,
-  }
-}
+fn calculate_image_uv(
+  image_size : @core.Size,
+  frame_size : @core.Size,
+  fit : @core.ImageFit,
+) -> ImageUVResult {
+  let image_ratio = image_size.width / image_size.height
+  let frame_ratio = frame_size.width / frame_size.height
 
-///|
-fn create_image_pipeline(
-  device : @wgpu_mbt.Device,
-  shader : @wgpu_mbt.ShaderModule,
-  format : @wgpu_mbt.TextureFormat,
-  layout : @wgpu_mbt.PipelineLayout,
-) -> @wgpu_mbt.RenderPipeline {
-  let builder = try! @wgpu_mbt.RenderPipelineDescBuilder::new(shader, layout~)
-  try! builder.set_color_target_format(format)
-  try! builder.enable_alpha_blend()
-  try! builder.set_vertex_buffer_layout(image_vertex_stride, @wgpu_mbt.VERTEX_STEP_MODE_VERTEX)
-  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 0UL, 0U)
-  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 8UL, 1U)
-  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32, 16UL, 2U)
-  try! builder.create_pipeline(device)
-}
-
-///|
-let image_vertex_stride : UInt64 = 20UL
-
-///|
-fn image_shader_wgsl() -> String {
-  let shader =
-    #|struct VSOut {
-    #|  @builtin(position) pos: vec4<f32>,
-    #|  @location(0) uv: vec2<f32>,
-    #|  @location(1) opacity: f32,
-    #|};
-    #|
-    #|@vertex
-    #|fn vs_main(
-    #|  @location(0) pos: vec2<f32>,
-    #|  @location(1) uv: vec2<f32>,
-    #|  @location(2) opacity: f32,
-    #|) -> VSOut {
-    #|  var out: VSOut;
-    #|  out.pos = vec4<f32>(pos, 0.0, 1.0);
-    #|  out.uv = uv;
-    #|  out.opacity = opacity;
-    #|  return out;
-    #|}
-    #|
-    #|@group(0) @binding(0) var image_sampler : sampler;
-    #|@group(0) @binding(1) var image_texture : texture_2d<f32>;
-    #|
-    #|@fragment
-    #|fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
-    #|  let sample = textureSample(image_texture, image_sampler, in.uv);
-    #|  return vec4<f32>(sample.rgb, sample.a * in.opacity);
-    #|}
-    #|
-  shader
-}
-
-///|
-fn NativeImagePipeline::create_image_texture(
-  self : NativeImagePipeline,
-  device : @wgpu_mbt.Device,
-  queue : @wgpu_mbt.Queue,
-  width : Int,
-  height : Int,
-  pixels : Bytes,
-) -> ImageTexture {
-  let texture = device.create_texture_rgba8_2d(
-    width.reinterpret_as_uint(),
-    height.reinterpret_as_uint(),
-  )
-  queue.write_texture_rgba8_2d(texture, width.reinterpret_as_uint(), height.reinterpret_as_uint(), pixels)
-  let texture_view = texture.create_view()
-  {
-    texture,
-    texture_view,
-    width,
-    height,
-    last_used: self.next_last_used,
-  }
-}
-
-///|
-fn NativeImagePipeline::evict_least_recent(self : NativeImagePipeline) -> Unit {
-  if self.cache.length() > 0 {
-    let mut oldest_key : String? = None
-    let mut oldest_used = self.next_last_used + 1
-    for (key, entry) in self.cache {
-      if entry.last_used < oldest_used {
-        oldest_used = entry.last_used
-        oldest_key = Some(key)
-      }
-    }
-    match oldest_key {
-      Some(key) => {
-        match self.cache.remove(key) {
-          Some(entry) => {
-            entry.texture_view.release()
-            entry.texture.release()
-          }
-          None => ()
-        }
-      }
-      None => ()
-    }
-  }
-}
-
-///|
-fn NativeImagePipeline::get_or_load_texture(
-  self : NativeImagePipeline,
-  device : @wgpu_mbt.Device,
-  queue : @wgpu_mbt.Queue,
-  source : String,
-) -> ImageTexture? {
-  match self.cache.get(source) {
-    Some(existing) => {
-      self.next_last_used = self.next_last_used + 1
-      existing.last_used = self.next_last_used
-      Some(existing)
-    }
-    None => {
-      if @fs.path_exists(source) {
-        try {
-          let file_bytes = @fs.read_file_to_bytes(source)
-          let (width, height, pixels) = @image.decode_rgba8(file_bytes)
-          while self.cache.length() >= self.max_cache_size {
-            self.evict_least_recent()
-          }
-          self.next_last_used = self.next_last_used + 1
-          let texture = self.create_image_texture(device, queue, width, height, pixels)
-          self.cache[source] = texture
-          Some(texture)
-        } catch {
-          _ => None
+  match fit {
+    @core.ImageFit::Contain => {
+      if image_ratio > frame_ratio {
+        // Image is wider than frame relative to height
+        let scale = frame_size.width / image_size.width
+        let scaled_height = image_size.height * scale
+        let offset_y = (frame_size.height - scaled_height) / 2.0
+        {
+          u0: 0.0,
+          v0: offset_y / frame_size.height,
+          u1: 1.0,
+          v1: (offset_y + scaled_height) / frame_size.height,
         }
       } else {
-        None
+        // Image is taller than frame relative to width
+        let scale = frame_size.height / image_size.height
+        let scaled_width = image_size.width * scale
+        let offset_x = (frame_size.width - scaled_width) / 2.0
+        {
+          u0: offset_x / frame_size.width,
+          v0: 0.0,
+          u1: (offset_x + scaled_width) / frame_size.width,
+          v1: 1.0,
+        }
+      }
+    }
+    @core.ImageFit::Cover => {
+      if image_ratio > frame_ratio {
+        // Image is wider than frame relative to height
+        let scale = frame_size.height / image_size.height
+        let scaled_width = image_size.width * scale
+        let offset_x = (scaled_width - frame_size.width) / 2.0
+        {
+          u0: offset_x / scaled_width,
+          v0: 0.0,
+          u1: (offset_x + frame_size.width) / scaled_width,
+          v1: 1.0,
+        }
+      } else {
+        // Image is taller than frame relative to width
+        let scale = frame_size.width / image_size.width
+        let scaled_height = image_size.height * scale
+        let offset_y = (scaled_height - frame_size.height) / 2.0
+        {
+          u0: 0.0,
+          v0: offset_y / scaled_height,
+          u1: 1.0,
+          v1: (offset_y + frame_size.height) / scaled_height,
+        }
       }
     }
   }
+}
+
+///|
+fn generate_image_vertices(
+  frame : @core.Rect,
+  u0 : Double,
+  v0 : Double,
+  u1 : Double,
+  v1 : Double,
+  _screen_size : @core.Size,
+) -> Array[ImageVertex] {
+  let x0 = frame.origin.x
+  let y0 = frame.origin.y
+  let x1 = frame.origin.x + frame.size.width
+  let y1 = frame.origin.y + frame.size.height
+
+  let vertices : Array[ImageVertex] = []
+
+  // Triangle strip: v0, v1, v2, v0, v2, v3
+  // Or two triangles: (v0, v1, v2) and (v0, v2, v3)
+  vertices.push({ x: x0, y: y0, u: u0, v: v0 })
+  vertices.push({ x: x0, y: y1, u: u0, v: v1 })
+  vertices.push({ x: x1, y: y1, u: u1, v: v1 })
+  vertices.push({ x: x0, y: y0, u: u0, v: v0 })
+  vertices.push({ x: x1, y: y1, u: u1, v: v1 })
+  vertices.push({ x: x1, y: y0, u: u1, v: v0 })
+
+  vertices
 }

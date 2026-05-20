@@ -132,6 +132,8 @@ pub fn collect_rect_batches(
       | @core.DrawCommand::DrawImage(_)
       | @core.DrawCommand::PushClip(_)
       | @core.DrawCommand::PopClip
+      | @core.DrawCommand::PushRoundedClip(_)
+      | @core.DrawCommand::PopRoundedClip
       | @core.DrawCommand::PushTransform(_)
       | @core.DrawCommand::PopTransform
       | @core.DrawCommand::PushOpacity(_)

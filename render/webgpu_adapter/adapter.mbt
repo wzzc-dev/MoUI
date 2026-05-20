@@ -58,6 +58,8 @@ pub(all) enum WebGpuHostCall {
   DrawImage(@core.ImageRun)
   PushClip(@core.Rect)
   PopClip
+  PushRoundedClip(@core.RoundedRect)
+  PopRoundedClip
   PushTransform(@core.Transform2D)
   PopTransform
   PushOpacity(Double)
@@ -345,6 +347,10 @@ pub fn draw_commands_to_host_calls(
       @core.DrawCommand::PushClip(rect) =>
         calls.push(WebGpuHostCall::PushClip(rect))
       @core.DrawCommand::PopClip => calls.push(WebGpuHostCall::PopClip)
+      @core.DrawCommand::PushRoundedClip(rect) =>
+        calls.push(WebGpuHostCall::PushRoundedClip(rect))
+      @core.DrawCommand::PopRoundedClip =>
+        calls.push(WebGpuHostCall::PopRoundedClip)
       @core.DrawCommand::PushTransform(transform) =>
         calls.push(WebGpuHostCall::PushTransform(transform))
       @core.DrawCommand::PopTransform =>
@@ -514,6 +520,8 @@ fn submit_host_calls(
           ),
         )
       PopClip => raise_for_host_status(host_pop_clip(renderer))
+      PushRoundedClip(_) => () // Temporarily no-op
+      PopRoundedClip => () // Temporarily no-op
       PushTransform(transform) =>
         raise_for_host_status(
           host_push_transform(

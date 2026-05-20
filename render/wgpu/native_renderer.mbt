@@ -25,7 +25,6 @@ struct RendererHandle {
   mut text_bind_group_layout : @wgpu_mbt.BindGroupLayout?
   mut text_pipeline_layout : @wgpu_mbt.PipelineLayout?
   mut text_bind_group : @wgpu_mbt.BindGroup?
-  mut image_pipeline : NativeImagePipeline?
   font_cache : NativeFontCache
   glyph_atlas : GlyphAtlas
   mut visual_vertices : Array[VisualVertex]
@@ -85,7 +84,6 @@ fn create_with_surface(
   let text_bind_group = device.create_bind_group_sampler_texture_2d(
     text_bind_group_layout, text_sampler, text_atlas_view,
   )
-  let image_pipeline = NativeImagePipeline::new(device, format)
   {
     size: metrics.logical_size,
     physical_size: metrics.physical_size,
@@ -112,7 +110,6 @@ fn create_with_surface(
     text_bind_group_layout: Some(text_bind_group_layout),
     text_pipeline_layout: Some(text_pipeline_layout),
     text_bind_group: Some(text_bind_group),
-    image_pipeline: Some(image_pipeline),
     font_cache: NativeFontCache::new(),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
@@ -362,7 +359,9 @@ fn RendererHandle::render_wgpu(
             _ => ()
           }
         }
-        self.draw_plan_items(pass, visual_pipeline)
+        // Note: We don't write image vertices here because we need image size to calculate correct UV
+        // The image vertex writing will happen during draw_plan_items when we have the image
+        self.draw_plan_items(pass, visual_pipeline, device, queue)
         pass.end()
         pass.release()
         let command_buffer = encoder.finish()
@@ -386,11 +385,13 @@ fn RendererHandle::draw_plan_items(
   self : RendererHandle,
   pass : @wgpu_mbt.RenderPass,
   visual_pipeline : @wgpu_mbt.RenderPipeline,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
 ) -> Unit {
   self.apply_scissor(pass, None)
   for item in self.draw_items {
     match item {
-      NativeDrawItem::NativeVisual(start, count, scissor) =>
+      NativeDrawItem::NativeVisual(start, count, scissor) => {
         match self.visual_vertex_buffer {
           Some(buffer) => {
             self.apply_scissor(pass, scissor)
@@ -410,9 +411,9 @@ fn RendererHandle::draw_plan_items(
           }
           None => ()
         }
-      NativeDrawItem::NativeText(start, count, scissor) =>
-        match
-          (self.text_pipeline, self.text_bind_group, self.text_vertex_buffer) {
+      }
+      NativeDrawItem::NativeText(start, count, scissor) => {
+        match (self.text_pipeline, self.text_bind_group, self.text_vertex_buffer) {
           (Some(text_pipeline), Some(text_bind_group), Some(buffer)) => {
             self.apply_scissor(pass, scissor)
             pass.set_pipeline(text_pipeline)
@@ -432,30 +433,8 @@ fn RendererHandle::draw_plan_items(
           }
           _ => ()
         }
-      NativeDrawItem::NativeImage(start, count, scissor, run) =>
-        match self.visual_vertex_buffer {
-          Some(buffer) => {
-            ignore(run.source)
-            ignore(run.frame)
-            ignore(run.opacity)
-            ignore(run.fit)
-            self.apply_scissor(pass, scissor)
-            pass.set_pipeline(visual_pipeline)
-            pass.set_vertex_buffer(
-              0U,
-              buffer,
-              0UL,
-              self.visual_vertex_buffer_capacity,
-            )
-            pass.draw(
-              count.reinterpret_as_uint(),
-              1U,
-              start.reinterpret_as_uint(),
-              0U,
-            )
-          }
-          None => ()
-        }
+      }
+      NativeDrawItem::NativeImage(_, _, _, _) => ()
     }
   }
   self.apply_scissor(pass, None)

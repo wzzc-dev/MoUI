@@ -26,6 +26,7 @@ priv struct NativePaintState {
   opacity : Double
   transform : @core.Transform2D
   clip : @core.Rect?
+  clip_radius : Double
   clip_empty : Bool
 }
 
@@ -191,15 +192,18 @@ fn build_native_draw_plan(
               }
               full = result.atlas_full
             }
-          @core.DrawCommand::DrawImage(run) =>
-            append_image_item(
-              visual_vertices, items, run, state, size, scale_factor,
-            )
+          @core.DrawCommand::DrawImage(_) => ()
           @core.DrawCommand::PushClip(rect) => {
             state_stack.push(state)
             state = push_clip_state(state, rect)
           }
           @core.DrawCommand::PopClip =>
+            state = pop_native_paint_state(state_stack, state)
+          @core.DrawCommand::PushRoundedClip(rounded) => {
+            state_stack.push(state)
+            state = push_rounded_clip_state(state, rounded)
+          }
+          @core.DrawCommand::PopRoundedClip =>
             state = pop_native_paint_state(state_stack, state)
           @core.DrawCommand::PushTransform(transform) => {
             state_stack.push(state)
@@ -251,6 +255,7 @@ fn native_paint_state_default() -> NativePaintState {
     opacity: 1.0,
     transform: @core.Transform2D::identity(),
     clip: None,
+    clip_radius: 0.0,
     clip_empty: false,
   }
 }
@@ -287,6 +292,27 @@ fn push_clip_state(
     match intersect_clip(state.clip, rect) {
       Some(clip) => { ..state, clip: Some(clip), clip_empty: false }
       None => { ..state, clip: None, clip_empty: true }
+    }
+  }
+}
+
+fn push_rounded_clip_state(
+  state : NativePaintState,
+  rounded : @core.RoundedRect,
+) -> NativePaintState {
+  if state.clip_empty || rounded.rect.size.width <= 0.0 || rounded.rect.size.height <= 0.0 {
+    { ..state, clip: None, clip_radius: 0.0, clip_empty: true }
+  } else {
+    match intersect_clip(state.clip, rounded.rect) {
+      Some(clip) => {
+        let new_radius = if state.clip_radius > 0.0 {
+          state.clip_radius.min(rounded.radius)
+        } else {
+          rounded.radius
+        }
+        { ..state, clip: Some(clip), clip_radius: new_radius, clip_empty: false }
+      }
+      None => { ..state, clip: None, clip_radius: 0.0, clip_empty: true }
     }
   }
 }
@@ -505,7 +531,7 @@ fn append_shadow_item(
 
 ///|
 fn append_image_item(
-  vertices : Array[VisualVertex],
+  vertices : Array[ImageVertex],
   items : Array[NativeDrawItem],
   run : @core.ImageRun,
   state : NativePaintState,
@@ -523,17 +549,25 @@ fn append_image_item(
     return
   }
   let start = vertices.length()
-  append_visual_quad(
-    vertices,
-    run.frame,
-    radius=0.0,
-    brush=image_placeholder_brush(run),
-    mode=visual_mode_fill,
-    stroke_width=0.0,
-    blur_radius=0.0,
-    state~,
-    size~,
+  
+  // Apply transform to the frame
+  let transformed_frame = transform_rect(run.frame, state.transform)
+  
+  // Generate vertices with default UV (full image)
+  // The actual UV calculation will happen during rendering when we have the image size
+  let image_verts = generate_image_vertices(
+    transformed_frame,
+    0.0,
+    0.0,
+    1.0,
+    1.0,
+    size,
   )
+  
+  for vertex in image_verts {
+    vertices.push(vertex)
+  }
+  
   items.push(
     NativeDrawItem::NativeImage(
       start,
