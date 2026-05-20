@@ -70,6 +70,17 @@ pub(all) struct ActionCommand {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct CommandBinding {
+  command : ActionCommand
+  handle : () -> Unit
+}
+
+///|
+pub(all) struct ActionCommandMap {
+  bindings : Array[CommandBinding]
+}
+
+///|
 pub fn recognize_button_tap(
   current : ButtonState,
   inside : Bool,
@@ -175,6 +186,67 @@ pub fn ActionCommand::matches(
       None => false
     }
   }
+}
+
+///|
+pub fn CommandBinding::new(
+  command~ : ActionCommand,
+  handle~ : () -> Unit,
+) -> CommandBinding {
+  { command, handle }
+}
+
+///|
+pub fn ActionCommandMap::new(
+  bindings~ : Array[CommandBinding] = [],
+) -> ActionCommandMap {
+  { bindings, }
+}
+
+///|
+pub fn ActionCommandMap::commands(self : ActionCommandMap) -> Array[ActionCommand] {
+  self.bindings.map(binding => binding.command)
+}
+
+///|
+pub fn ActionCommandMap::find_shortcut(
+  self : ActionCommandMap,
+  event : KeyboardEvent,
+) -> ActionCommand? {
+  for binding in self.bindings {
+    if binding.command.matches(event) {
+      return Some(binding.command)
+    }
+  }
+  None
+}
+
+///|
+pub fn ActionCommandMap::dispatch_shortcut(
+  self : ActionCommandMap,
+  event : KeyboardEvent,
+) -> CommandIntent? {
+  for binding in self.bindings {
+    if binding.command.matches(event) {
+      (binding.handle)()
+      return Some(binding.command.intent)
+    }
+  }
+  None
+}
+
+///|
+pub fn ActionCommandMap::dispatch_intent(
+  self : ActionCommandMap,
+  intent : CommandIntent,
+) -> Bool {
+  for binding in self.bindings {
+    if binding.command.enabled && binding.command.intent == intent {
+      (binding.handle)()
+      return true
+    }
+  }
+  false
 }
 
 ///|
