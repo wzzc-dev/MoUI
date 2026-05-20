@@ -45,6 +45,15 @@ pub(all) struct ActionCommand {
 pub fn ActionCommand::matches(Self, KeyboardEvent) -> Bool
 pub fn ActionCommand::new(intent~ : CommandIntent, label? : String, shortcut? : KeyboardShortcut?, enabled? : Bool) -> Self
 
+pub(all) struct ActionCommandMap {
+  bindings : Array[CommandBinding]
+}
+pub fn ActionCommandMap::commands(Self) -> Array[ActionCommand]
+pub fn ActionCommandMap::dispatch_intent(Self, CommandIntent) -> Bool
+pub fn ActionCommandMap::dispatch_shortcut(Self, KeyboardEvent) -> CommandIntent?
+pub fn ActionCommandMap::find_shortcut(Self, KeyboardEvent) -> ActionCommand?
+pub fn ActionCommandMap::new(bindings? : Array[CommandBinding]) -> Self
+
 pub(all) struct Alignment {
   x : Double
   y : Double
@@ -286,6 +295,12 @@ pub(all) enum ColorScheme {
   Light
   Dark
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct CommandBinding {
+  command : ActionCommand
+  handle : () -> Unit
+}
+pub fn CommandBinding::new(command~ : ActionCommand, handle~ : () -> Unit) -> Self
 
 pub(all) enum CommandIntent {
   Activate

@@ -279,6 +279,10 @@ capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
 system-theme requests. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
 
+Keyboard shortcuts, menus, and host command responses share the
+`ActionCommand`/`CommandIntent` model. `ActionCommandMap` is the platform-neutral
+dispatcher for matching shortcuts and invoking enabled command handlers.
+
 See [Platform notes](platform-notes.md) for setup, backend-specific constraints,
 and validation commands.
 
