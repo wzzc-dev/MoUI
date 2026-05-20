@@ -166,7 +166,12 @@ fn ElementNode::render_with_environment(
         commands.push(PushClip(frame))
       }
       commands.push(
-        DrawImage({ source: data.source, frame, opacity: data.opacity }),
+        DrawImage({
+          source: data.source,
+          frame,
+          opacity: data.opacity,
+          fit: data.fit,
+        }),
       )
       if corner_radius > 0.0 {
         commands.push(PopClip)

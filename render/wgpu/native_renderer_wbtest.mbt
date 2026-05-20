@@ -77,6 +77,91 @@ test "native renderer clipped scissor uses physical pixels" {
 }
 
 ///|
+test "native renderer skips draw items for empty nested clip" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+    ),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=20.0, y=20.0, width=10.0, height=10.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopClip,
+  ])
+  inspect(renderer.draw_items.length(), content="0")
+  inspect(renderer.visual_vertices.length(), content="0")
+}
+
+///|
+test "native renderer skips clip that lands exactly on surface edge" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::new(
+      logical_size=@core.Size::new(width=760.0, height=420.0),
+      physical_size=@core.Size::new(width=1520.0, height=840.0),
+      scale_factor=2.0,
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=28.0, y=420.0, width=120.0, height=72.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=28.0, y=420.0, width=120.0, height=72.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopClip,
+  ])
+  inspect(renderer.draw_items.length(), content="0")
+  inspect(renderer.visual_vertices.length(), content="0")
+}
+
+///|
+test "native renderer transforms clip before computing scissor" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::new(
+      logical_size=@core.Size::new(width=100.0, height=100.0),
+      physical_size=@core.Size::new(width=200.0, height=200.0),
+      scale_factor=2.0,
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=5.0, dy=7.0),
+    ),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=10.0, y=10.0, width=20.0, height=20.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=40.0, height=40.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopTransform,
+  ])
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeVisual(_, _, Some(scissor)) => {
+      inspect(scissor.x, content="30")
+      inspect(scissor.y, content="34")
+      inspect(scissor.width, content="40")
+      inspect(scissor.height, content="40")
+    }
+    _ => fail("expected transformed native visual scissor")
+  }
+}
+
+///|
 test "native renderer plans visual primitives instead of fallback-only batches" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
@@ -135,6 +220,7 @@ test "native renderer plans image clip transform and opacity commands" {
       source: "logo.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 0.8,
+      fit: @core.ImageFit::Contain,
     }),
     @core.DrawCommand::PopTransform,
     @core.DrawCommand::PopClip,
@@ -144,9 +230,18 @@ test "native renderer plans image clip transform and opacity commands" {
   inspect(renderer.draw_items.length(), content="1")
   inspect(renderer.visual_vertices.length(), content="6")
   assert_true(
-    renderer.draw_items[0] is NativeDrawItem::NativeVisual(_, _, Some(_)),
+    renderer.draw_items[0] is NativeDrawItem::NativeImage(_, _, Some(_), _),
   )
   assert_true(renderer.visual_vertices[0].a0 > 0.47)
   assert_true(renderer.visual_vertices[0].a0 < 0.49)
   assert_true(renderer.visual_vertices[0].x > -1.0)
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeImage(_, _, _, run) => {
+      inspect(run.source, content="logo.png")
+      assert_true(run.fit == @core.ImageFit::Contain)
+      assert_true(run.opacity > 0.47)
+      assert_true(run.opacity < 0.49)
+    }
+    _ => fail("expected native image item")
+  }
 }

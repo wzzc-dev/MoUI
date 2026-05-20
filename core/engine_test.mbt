@@ -231,6 +231,7 @@ test "image spec emits draw image command" {
         {
           source: "logo.png",
           opacity: 0.75,
+          fit: ImageFit::Contain,
           frame: { size: { width: 48.0, height: 32.0 }, .. },
         }
       ),

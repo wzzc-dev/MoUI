@@ -1038,9 +1038,10 @@ pub fn DateValue::today() -> DateValue {
 ///|
 pub fn DateValue::format(self : DateValue, mode : DatePickerMode) -> String {
   match mode {
-    DatePickerMode::Date => "{self.year}-{self.month}-{self.day}"
-    DatePickerMode::DateAndTime => "{self.year}-{self.month}-{self.day} {self.hour}:{self.minute}"
-    DatePickerMode::Time => "{self.hour}:{self.minute}"
+    DatePickerMode::Date => "\{self.year}-\{self.month}-\{self.day}"
+    DatePickerMode::DateAndTime =>
+      "\{self.year}-\{self.month}-\{self.day} \{self.hour}:\{self.minute}"
+    DatePickerMode::Time => "\{self.hour}:\{self.minute}"
   }
 }
 

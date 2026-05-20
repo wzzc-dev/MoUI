@@ -429,6 +429,30 @@ fn RendererHandle::draw_plan_items(
           }
           _ => ()
         }
+      NativeDrawItem::NativeImage(start, count, scissor, run) =>
+        match self.visual_vertex_buffer {
+          Some(buffer) => {
+            ignore(run.source)
+            ignore(run.frame)
+            ignore(run.opacity)
+            ignore(run.fit)
+            self.apply_scissor(pass, scissor)
+            pass.set_pipeline(visual_pipeline)
+            pass.set_vertex_buffer(
+              0U,
+              buffer,
+              0UL,
+              self.visual_vertex_buffer_capacity,
+            )
+            pass.draw(
+              count.reinterpret_as_uint(),
+              1U,
+              start.reinterpret_as_uint(),
+              0U,
+            )
+          }
+          None => ()
+        }
     }
   }
   self.apply_scissor(pass, None)
@@ -442,8 +466,8 @@ fn RendererHandle::apply_scissor(
 ) -> Unit {
   match scissor {
     Some(scissor) => {
-      let width = max_native_int(1, scissor.width)
-      let height = max_native_int(1, scissor.height)
+      let width = max_native_int(0, scissor.width)
+      let height = max_native_int(0, scissor.height)
       pass.set_scissor_rect(
         max_native_int(0, scissor.x).reinterpret_as_uint(),
         max_native_int(0, scissor.y).reinterpret_as_uint(),
