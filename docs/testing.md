@@ -88,6 +88,23 @@ moon test render/webgpu_adapter --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
+## Conformance-Oriented Coverage
+
+The SwiftUI/Flutter/Compose parity work should grow focused conformance tests
+before it grows broad platform claims:
+
+- Runtime: dirty component rebuilds, keyed effect reuse/cancellation, unmount
+  cleanup, and saveable state restore.
+- Layout/render: custom child layout delegates, baseline/alignment follow-ups,
+  lazy viewport behavior, clip/transform/opacity/image/text command stability,
+  and renderer capability report synchronization.
+- Input/accessibility: gesture arbitration, action-command matching, focus
+  traversal, shortcut dispatch, IME/text selection, clipboard service routing,
+  and semantics action roundtrips.
+- Platform/tooling: host-service capability checks, Linux readiness, Web
+  wasm-gc backend tests, devtool snapshots, frame-profile counters, and example
+  builds.
+
 ## Release-Oriented Checklist
 
 Before a broad handoff or release candidate:

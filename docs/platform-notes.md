@@ -27,6 +27,10 @@ Backends should keep platform details at the edge:
 do not mutate the element tree directly.
 - Renderers consume `DrawCommand` values and remain separate from view
 constructors and platform event conversion.
+- Typed host services are routed through `HostServiceBridge`, with explicit
+  capability flags for clipboard, menus, file dialogs, URL opening, and system
+  theme. Unsupported services should return `Unavailable` responses instead of
+  leaking platform checks into `core` or `views`.
 
 ## Web Wasm-GC
 
@@ -95,8 +99,18 @@ https://github.com/gfx-rs/wgpu-native/releases/tag/v27.0.4.0
 `backend/linux` intentionally preserves the host contract shape while reporting
 that no Linux window backend is available yet. Its capability matrix currently
 marks window, renderer, pointer, keyboard, text input, IME, clipboard,
-accessibility, and scale-factor support as unavailable. Keep the scaffold honest
-until a real `window/linux` package and native renderer surface path exist.
+accessibility, and scale-factor support as unavailable. It also exposes a
+readiness report and an unavailable `HostServiceBridge`, so callers can inspect
+blocked work without treating the scaffold as a runtime backend.
+
+The Linux readiness blockers are:
+
+- Add or consume a `window/linux` package that emits shared `HostEvent` values.
+- Create a native WGPU surface path and resize contract for Linux.
+- Map clipboard, menus, file dialogs, and accessibility through host service
+  contracts.
+
+Keep the scaffold honest until those pieces exist.
 
 ## Platform Validation
 
