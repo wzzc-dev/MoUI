@@ -1,7 +1,7 @@
 ///|
 test "renderer capability report tracks draw command support" {
   let report = @render.renderer_feature_capability_report()
-  inspect(report.length(), content="9")
+  inspect(report.length(), content="17")
   guard @render.renderer_feature_capability(@render.RendererFeature::Image)
     is Some(image) else {
     fail("expected image capability")
@@ -21,14 +21,26 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(opacity.native_status == @render.RendererFeatureStatus::Ready)
   assert_true(opacity.web_status == @render.RendererFeatureStatus::Ready)
+  guard @render.renderer_feature_capability(@render.RendererFeature::LayerCompositing)
+    is Some(layer) else {
+    fail("expected layer compositing capability")
+  }
+  assert_true(layer.native_status == @render.RendererFeatureStatus::Gap)
+  guard @render.renderer_feature_capability(@render.RendererFeature::TextShaping)
+    is Some(text_shaping) else {
+    fail("expected text shaping capability")
+  }
+  assert_true(text_shaping.native_status == @render.RendererFeatureStatus::Partial)
 }
 
 ///|
 test "renderer capability follow ups stay focused on native gaps" {
   let follow_ups = @render.renderer_feature_follow_ups()
-  inspect(follow_ups.length(), content="2")
+  inspect(follow_ups.length(), content="10")
   let mut has_transform = false
   let mut has_clip = false
+  let mut has_layer = false
+  let mut has_async_image = false
   for entry in follow_ups {
     if entry.feature == @render.RendererFeature::Transform {
       has_transform = true
@@ -36,7 +48,15 @@ test "renderer capability follow ups stay focused on native gaps" {
     if entry.feature == @render.RendererFeature::Clip {
       has_clip = true
     }
+    if entry.feature == @render.RendererFeature::LayerCompositing {
+      has_layer = true
+    }
+    if entry.feature == @render.RendererFeature::AsyncImage {
+      has_async_image = true
+    }
   }
   assert_true(has_transform)
   assert_true(has_clip)
+  assert_true(has_layer)
+  assert_true(has_async_image)
 }

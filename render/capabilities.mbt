@@ -9,6 +9,14 @@ pub(all) enum RendererFeature {
   Clip
   Transform
   Opacity
+  LayerCompositing
+  BlendMode
+  FilterEffect
+  PathVector
+  ShaderEffect
+  TextShaping
+  EmojiText
+  AsyncImage
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -40,6 +48,14 @@ pub fn RendererFeature::label(self : RendererFeature) -> String {
     Clip => "clip"
     Transform => "transform"
     Opacity => "opacity"
+    LayerCompositing => "layer-compositing"
+    BlendMode => "blend-mode"
+    FilterEffect => "filter-effect"
+    PathVector => "path-vector"
+    ShaderEffect => "shader-effect"
+    TextShaping => "text-shaping"
+    EmojiText => "emoji-text"
+    AsyncImage => "async-image"
   }
 }
 
@@ -128,6 +144,62 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       web_status: RendererFeatureStatus::Ready,
       native_note: "Native wgpu folds opacity into visual and text vertex alpha.",
       web_note: "The browser WebGPU host folds opacity into visual and text vertex alpha.",
+    },
+    {
+      feature: RendererFeature::LayerCompositing,
+      native_status: RendererFeatureStatus::Gap,
+      web_status: RendererFeatureStatus::Gap,
+      native_note: "Layer-level offscreen composition, masks, and retained render-pass state are not modeled yet.",
+      web_note: "The browser runtime does not expose offscreen layer composition beyond per-command vertices yet.",
+    },
+    {
+      feature: RendererFeature::BlendMode,
+      native_status: RendererFeatureStatus::Gap,
+      web_status: RendererFeatureStatus::Gap,
+      native_note: "Blend mode intent is not represented in DrawCommand payloads yet.",
+      web_note: "Blend mode intent is not represented in the wasm-gc command stream yet.",
+    },
+    {
+      feature: RendererFeature::FilterEffect,
+      native_status: RendererFeatureStatus::Gap,
+      web_status: RendererFeatureStatus::Gap,
+      native_note: "Blur, color matrix, and backdrop filters are not represented in renderer-neutral commands yet.",
+      web_note: "Browser WebGPU filters are not represented in renderer-neutral commands yet.",
+    },
+    {
+      feature: RendererFeature::PathVector,
+      native_status: RendererFeatureStatus::Gap,
+      web_status: RendererFeatureStatus::Gap,
+      native_note: "Arbitrary path/vector draw commands are not modeled yet.",
+      web_note: "Arbitrary path/vector draw commands are not modeled yet.",
+    },
+    {
+      feature: RendererFeature::ShaderEffect,
+      native_status: RendererFeatureStatus::Gap,
+      web_status: RendererFeatureStatus::Gap,
+      native_note: "User shader effects are not part of the renderer facade yet.",
+      web_note: "User shader effects are not part of the browser host import ABI yet.",
+    },
+    {
+      feature: RendererFeature::TextShaping,
+      native_status: RendererFeatureStatus::Partial,
+      web_status: RendererFeatureStatus::Partial,
+      native_note: "Native text uses HarfBuzz shaping and fallback faces, but full bidi, line breaking, and typography conformance remain follow-up work.",
+      web_note: "Web text uses canvas-rasterized glyph atlases, but full shaping, bidi, and line breaking conformance remain follow-up work.",
+    },
+    {
+      feature: RendererFeature::EmojiText,
+      native_status: RendererFeatureStatus::Gap,
+      web_status: RendererFeatureStatus::Partial,
+      native_note: "Color emoji font fallback and atlas upload are not implemented in native wgpu yet.",
+      web_note: "Browser canvas glyph rasterization can surface emoji where fonts support it, but deterministic coverage is not tested.",
+    },
+    {
+      feature: RendererFeature::AsyncImage,
+      native_status: RendererFeatureStatus::Partial,
+      web_status: RendererFeatureStatus::Partial,
+      native_note: "Images are cached after decode, but async loading state and resource lifecycle APIs remain follow-up work.",
+      web_note: "Images load asynchronously in the browser runtime, but loading/error state is not surfaced to app code yet.",
     },
   ]
 }
