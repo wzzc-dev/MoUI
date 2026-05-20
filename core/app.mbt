@@ -180,11 +180,79 @@ pub fn SaveableStateStore::set_string(
 }
 
 ///|
+pub fn SaveableStateStore::get_bool(
+  self : SaveableStateStore,
+  key : String,
+) -> Bool? {
+  match self.get_string(key) {
+    Some("true") => Some(true)
+    Some("false") => Some(false)
+    _ => None
+  }
+}
+
+///|
+pub fn SaveableStateStore::set_bool(
+  self : SaveableStateStore,
+  key : String,
+  value : Bool,
+) -> Unit {
+  self.set_string(key, if value { "true" } else { "false" })
+}
+
+///|
+pub fn SaveableStateStore::get_int(
+  self : SaveableStateStore,
+  key : String,
+) -> Int? {
+  match self.get_string(key) {
+    Some(value) => parse_saveable_int(value)
+    None => None
+  }
+}
+
+///|
+pub fn SaveableStateStore::set_int(
+  self : SaveableStateStore,
+  key : String,
+  value : Int,
+) -> Unit {
+  self.set_string(key, value.to_string())
+}
+
+///|
 pub fn SaveableStateStore::remove(
   self : SaveableStateStore,
   key : String,
 ) -> Unit {
   self.strings = self.strings.filter(entry => entry.key != key)
+}
+
+///|
+fn parse_saveable_int(value : String) -> Int? {
+  let chars = value.to_array()
+  if chars.length() == 0 {
+    return None
+  }
+  let mut index = 0
+  let mut sign = 1
+  if chars[index] == '-' {
+    sign = -1
+    index = index + 1
+  }
+  if index >= chars.length() {
+    return None
+  }
+  let mut parsed = 0
+  while index < chars.length() {
+    let char = chars[index]
+    if !char.is_ascii_digit() {
+      return None
+    }
+    parsed = parsed * 10 + char.to_int() - '0'.to_int()
+    index = index + 1
+  }
+  Some(parsed * sign)
 }
 
 ///|
@@ -258,6 +326,34 @@ pub fn BuildContext::restore_string(
 }
 
 ///|
+pub fn BuildContext::save_bool(
+  self : BuildContext,
+  key~ : String,
+  value : Bool,
+) -> Unit {
+  self.runtime.saveable_state.set_bool(self.scoped_saveable_key(key), value)
+}
+
+///|
+pub fn BuildContext::restore_bool(self : BuildContext, key~ : String) -> Bool? {
+  self.runtime.saveable_state.get_bool(self.scoped_saveable_key(key))
+}
+
+///|
+pub fn BuildContext::save_int(
+  self : BuildContext,
+  key~ : String,
+  value : Int,
+) -> Unit {
+  self.runtime.saveable_state.set_int(self.scoped_saveable_key(key), value)
+}
+
+///|
+pub fn BuildContext::restore_int(self : BuildContext, key~ : String) -> Int? {
+  self.runtime.saveable_state.get_int(self.scoped_saveable_key(key))
+}
+
+///|
 pub fn BuildContext::saveable_string(
   self : BuildContext,
   key~ : String,
@@ -269,8 +365,59 @@ pub fn BuildContext::saveable_string(
     .unwrap_or(initial)
   let state = State::new(restored)
   let store = self.runtime.saveable_state
-  ignore(state.subscribe(() => store.set_string(scoped, state.get())))
+  let runtime = self.runtime
+  let component_id = self.component_id
+  ignore(
+    state.subscribe(() => {
+      store.set_string(scoped, state.get())
+      runtime.request_component_rebuild(component_id)
+    }),
+  )
   store.set_string(scoped, state.get())
+  state
+}
+
+///|
+pub fn BuildContext::saveable_bool(
+  self : BuildContext,
+  key~ : String,
+  initial : Bool,
+) -> State[Bool] {
+  let scoped = self.scoped_saveable_key(key)
+  let restored = self.runtime.saveable_state.get_bool(scoped).unwrap_or(initial)
+  let state = State::new(restored)
+  let store = self.runtime.saveable_state
+  let runtime = self.runtime
+  let component_id = self.component_id
+  ignore(
+    state.subscribe(() => {
+      store.set_bool(scoped, state.get())
+      runtime.request_component_rebuild(component_id)
+    }),
+  )
+  store.set_bool(scoped, state.get())
+  state
+}
+
+///|
+pub fn BuildContext::saveable_int(
+  self : BuildContext,
+  key~ : String,
+  initial : Int,
+) -> State[Int] {
+  let scoped = self.scoped_saveable_key(key)
+  let restored = self.runtime.saveable_state.get_int(scoped).unwrap_or(initial)
+  let state = State::new(restored)
+  let store = self.runtime.saveable_state
+  let runtime = self.runtime
+  let component_id = self.component_id
+  ignore(
+    state.subscribe(() => {
+      store.set_int(scoped, state.get())
+      runtime.request_component_rebuild(component_id)
+    }),
+  )
+  store.set_int(scoped, state.get())
   state
 }
 

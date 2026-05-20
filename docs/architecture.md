@@ -92,7 +92,7 @@ ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand 
   cleanup callbacks. Effects with stable keys are reused across rebuilds, and
   cleanups run when keys disappear or the component leaves the tree.
   `BuildContext` also exposes scoped save/restore helpers for small saveable
-  string state.
+  string, bool, and int state.
 - Layout uses constraints down, measured size up, then parent placement.
 - Paint emits platform-neutral `DrawCommand` values. Renderers may degrade
   based on capability, but view constructors preserve brush, border, shadow,
@@ -134,9 +134,11 @@ for that component and when the component leaves the element tree:
 })
 ```
 
-Small string state that needs to survive rebuilds, resize, and same-root remount
-can use `ctx.save_string`, `ctx.restore_string`, or `ctx.saveable_string`. More
-general saveable value support remains a follow-up.
+Small string, bool, and int state that needs to survive rebuilds, resize, and
+same-root remount can use the scoped `save_*`, `restore_*`, or `saveable_*`
+helpers. `saveable_*` helpers return `State` values that write back to the
+runtime store and request component rebuilds when changed. More general
+saveable value support remains a follow-up.
 
 Environment values flow through `BuildContext` so components can react to
 platform and accessibility signals such as color scheme, locale, layout
