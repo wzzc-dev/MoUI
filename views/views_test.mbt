@@ -523,11 +523,17 @@ test "lazy list windows visible rows" {
     viewport_height=40.0,
     spacing=4.0,
   )
-  guard spec is @core.ViewSpec::ListSpec({ children, .. }) else {
-    fail("expected list spec")
+  guard spec is @core.ViewSpec::ScrollSpec({ viewport: Some({ height: 40.0, .. }), child, .. }) else {
+    fail("expected lazy list scroll viewport")
   }
-  assert_true(children.length() >= 2)
-  assert_true(children.length() <= 4)
+  guard child is @core.ViewSpec::ListSpec({ children, .. }) else {
+    fail("expected virtualized list child")
+  }
+  assert_true(children.length() >= 4)
+  assert_true(children.length() <= 6)
+  guard children[0] is @core.ViewSpec::SpacerSpec({ min_length: 28.0, .. }) else {
+    fail("expected leading virtual spacer")
+  }
 }
 
 ///|
