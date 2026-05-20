@@ -63,6 +63,7 @@ pub(all) struct ImageRun {
   source : String
   frame : Rect
   opacity : Double
+  fit : ImageFit
 } derive(Eq, Debug, ToJson)
 
 ///|

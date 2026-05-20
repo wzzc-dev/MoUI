@@ -154,6 +154,7 @@ test "non-rect commands do not leak into native rect batches" {
       source: "logo.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
       opacity: 0.8,
+      fit: @core.ImageFit::Contain,
     }),
     @core.DrawCommand::PushClip(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),

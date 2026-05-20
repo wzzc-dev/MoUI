@@ -500,6 +500,7 @@ fn submit_host_calls(
             run.frame.size.width,
             run.frame.size.height,
             run.opacity,
+            image_fit_host_code(run.fit),
           ),
         )
       PushClip(rect) =>
@@ -887,7 +888,16 @@ fn host_draw_image(
   width : Double,
   height : Double,
   opacity : Double,
+  fit : Int,
 ) -> Int = "webgpu" "draw_image"
+
+///|
+fn image_fit_host_code(fit : @core.ImageFit) -> Int {
+  match fit {
+    @core.ImageFit::Contain => 0
+    @core.ImageFit::Cover => 1
+  }
+}
 
 ///|
 fn host_push_clip(

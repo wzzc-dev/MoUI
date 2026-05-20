@@ -19,32 +19,35 @@ Status meanings:
 | Gradient | ready | ready | None |
 | Shadow | ready | ready | None |
 | Text | ready | ready | None |
-| Image | partial | partial | Replace placeholder visuals with source decode, texture upload, sampling, fit, and cache management. |
-| Clip | partial | partial | Move beyond rectangular scissor support toward rounded clips and richer mask stacks. |
-| Transform | partial | partial | Preserve full affine behavior through renderer state instead of only folding transforms into planned vertices and scissor bounds. |
+| Image | partial | ready | Native still needs source decode and texture sampling; Web now loads sources into a WebGPU texture cache with contain/cover fit and deterministic fallback while loading or on failure. |
+| Clip | partial | partial | Rectangular transformed scissor behavior is aligned; rounded clips and richer mask stacks remain follow-up work. |
+| Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices; layer-level transform state remains follow-up work. |
 | Opacity | ready | ready | None |
 
 ## Current Native Notes
 
 Native wgpu currently renders rects, rounded geometry, gradients, soft shadows,
-and glyph-atlas text directly. Image commands are represented by placeholder
-visual items, which keeps command ordering and opacity behavior testable while
-the real texture path is still pending. Clip support uses rectangular scissor
-rectangles. Transform support is applied to planned vertices; clip scissors use
-transformed bounding boxes. Opacity is folded into visual and text vertex alpha.
+and glyph-atlas text directly. Image commands are now represented as distinct
+native image draw items that preserve source, opacity, fit, clip, and transform
+metadata; the actual source decode, upload, and texture sampling path is still
+pending and uses a deterministic visual fallback. Clip support uses transformed
+rectangular scissor rectangles. Transform support is applied to planned visual,
+image fallback, and text vertices. Opacity is folded into visual and text vertex
+alpha.
 
 ## Current Web Notes
 
 The wasm-gc renderer bridge preserves the full draw command stream and forwards
 payloads to the `webgpu` host import module. The browser runtime now renders
-rects, rounded geometry, gradients, soft shadows, opacity, and text through
-WebGPU pipelines. Text uses a DPR-aware canvas-rasterized glyph atlas before the
-glyphs are composited by WebGPU.
+rects, rounded geometry, gradients, soft shadows, opacity, text, and loaded
+images through WebGPU pipelines. Text uses a DPR-aware canvas-rasterized glyph
+atlas before the glyphs are composited by WebGPU. Images are cached as WebGPU
+textures, support contain/cover fit, and use a deterministic fallback color
+while the browser is still loading the source or if loading fails.
 
-Image commands currently render the same placeholder visual used by native
-wgpu. Clip support maps rectangular clip stacks to per-item scissor rectangles.
-Transform support is folded into generated visual and text vertices, with clip
-scissors derived from transformed bounding boxes.
+Clip support maps transformed rectangular clip stacks to per-item scissor
+rectangles. Transform support is folded into generated visual, image, and text
+vertices, with clip scissors derived from transformed bounding boxes.
 
 ## Update Rule
 

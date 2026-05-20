@@ -308,6 +308,37 @@ pub(all) struct CustomViewSpec {
   semantics_label : String
 }
 
+pub(all) enum DatePickerMode {
+  Date
+  DateAndTime
+  Time
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct DatePickerViewSpec {
+  key : Key?
+  selected : Binding[DateValue]
+  mode : DatePickerMode
+  placeholder : String
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  corner_radius : Double
+  min_date : DateValue?
+  max_date : DateValue?
+}
+
+pub(all) struct DateValue {
+  year : Int
+  month : Int
+  day : Int
+  hour : Int
+  minute : Int
+  second : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DateValue::format(Self, DatePickerMode) -> String
+pub fn DateValue::new(year~ : Int, month~ : Int, day~ : Int, hour? : Int, minute? : Int, second? : Int) -> Self
+pub fn DateValue::today() -> Self
+
 pub(all) struct DerivedState[T] {
   get_value : () -> T
   subscribe_value : (() -> Unit) -> Array[StateSubscription]
@@ -375,6 +406,9 @@ pub(all) struct ElementNode {
   mut children : Array[ElementNode]
   mut dirty : DirtyFlags
   mut button_state : ButtonState
+  mut picker_expanded : Bool
+  mut datepicker_expanded : Bool
+  mut datepicker_view : DateValue
   mut caret : Int
   mut selection : TextRange?
   mut composition : String?
@@ -501,6 +535,7 @@ pub(all) struct ImageRun {
   source : String
   frame : Rect
   opacity : Double
+  fit : ImageFit
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ImageViewSpec {
@@ -614,6 +649,23 @@ pub(all) struct PaddingViewSpec {
   key : Key?
   insets : Insets
   child : ViewSpec
+}
+
+pub(all) struct PickerItem {
+  id : String
+  label : String
+}
+
+pub(all) struct PickerViewSpec {
+  key : Key?
+  items : Array[PickerItem]
+  selected : Binding[String]
+  placeholder : String
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  cornerRadius : Double
+  maxHeight : Double
 }
 
 pub(all) struct PlacedNode {
@@ -787,6 +839,22 @@ pub(all) struct ScrollViewSpec {
   child : ViewSpec
 }
 
+pub(all) struct SearchBarViewSpec {
+  key : Key?
+  query : Binding[String]
+  placeholder : String
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Brush
+  border : BorderStyle?
+  focused_border : BorderStyle?
+  cursor_color : Color
+  corner_radius : Double
+  on_submit : (() -> Unit)?
+  on_clear : (() -> Unit)?
+}
+
 pub(all) enum SemanticsAction {
   Activate
   Focus
@@ -860,6 +928,21 @@ pub(all) struct ShadowStyle {
   spread : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ShadowStyle::new(color~ : Color, offset? : Point, blur_radius? : Double, spread? : Double) -> Self
+
+pub(all) enum SheetPresentationMode {
+  Modal
+  BottomSheet
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SheetViewSpec {
+  key : Key?
+  content : ViewSpec
+  presentation_mode : SheetPresentationMode
+  background : Brush
+  corner_radius : Double
+  shadow : ShadowStyle?
+  on_dismiss : (() -> Unit)?
+}
 
 pub(all) struct Size {
   width : Double
@@ -1150,6 +1233,10 @@ pub(all) enum ViewSpec {
   RichTextEditorSpec(RichTextEditorViewSpec)
   ImageSpec(ImageViewSpec)
   CheckboxSpec(CheckboxViewSpec)
+  PickerSpec(PickerViewSpec)
+  DatePickerSpec(DatePickerViewSpec)
+  SearchBarSpec(SearchBarViewSpec)
+  SheetSpec(SheetViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
   ContainerSpec(ContainerViewSpec)

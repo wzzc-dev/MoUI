@@ -5,6 +5,7 @@ import {
 
 const VISUAL_STRIDE_FLOATS = 22;
 const TEXT_STRIDE_FLOATS = 8;
+const IMAGE_STRIDE_FLOATS = 9;
 const ATLAS_SIZE = 2048;
 const WEB_FONT_STACK = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif';
 
@@ -111,6 +112,20 @@ export function createWebGpuImports(options = {}) {
     b: color.b,
     a: color.a * opacity,
   });
+
+  const fallbackImageColor = source => {
+    let hash = 2166136261;
+    for (const ch of `${source ?? ""}`) {
+      hash ^= ch.codePointAt(0) || 0;
+      hash = Math.imul(hash, 16777619) >>> 0;
+    }
+    return {
+      r: 0.25 + ((hash & 0xff) / 255) * 0.45,
+      g: 0.25 + (((hash >> 8) & 0xff) / 255) * 0.45,
+      b: 0.25 + (((hash >> 16) & 0xff) / 255) * 0.45,
+      a: 1,
+    };
+  };
 
   const pushRendererItem = (renderer, item) => {
     const state = rendererState(renderer);
@@ -289,6 +304,60 @@ export function createWebGpuImports(options = {}) {
     },
     fragment: {
       module: textModule,
+      entryPoint: "fs_main",
+      targets: [{ format, blend: alphaBlend() }],
+    },
+    primitive: { topology: "triangle-list" },
+  });
+
+  const imageModule = device.createShaderModule({
+    code: `
+      struct VSOut {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+        @location(1) opacity: f32,
+      };
+
+      @vertex
+      fn vs_main(
+        @location(0) position: vec2f,
+        @location(1) uv: vec2f,
+        @location(2) opacity: f32,
+      ) -> VSOut {
+        var out: VSOut;
+        out.position = vec4f(position, 0.0, 1.0);
+        out.uv = uv;
+        out.opacity = opacity;
+        return out;
+      }
+
+      @group(0) @binding(0) var imageSampler: sampler;
+      @group(0) @binding(1) var imageTexture: texture_2d<f32>;
+
+      @fragment
+      fn fs_main(in: VSOut) -> @location(0) vec4f {
+        let sample = textureSample(imageTexture, imageSampler, in.uv);
+        return vec4f(sample.rgb, sample.a * in.opacity);
+      }
+    `,
+  });
+
+  const imagePipeline = device.createRenderPipeline({
+    layout: "auto",
+    vertex: {
+      module: imageModule,
+      entryPoint: "vs_main",
+      buffers: [{
+        arrayStride: IMAGE_STRIDE_FLOATS * 4,
+        attributes: [
+          { shaderLocation: 0, offset: 0, format: "float32x2" },
+          { shaderLocation: 1, offset: 8, format: "float32x2" },
+          { shaderLocation: 2, offset: 16, format: "float32" },
+        ],
+      }],
+    },
+    fragment: {
+      module: imageModule,
       entryPoint: "fs_main",
       targets: [{ format, blend: alphaBlend() }],
     },
@@ -534,6 +603,135 @@ export function createWebGpuImports(options = {}) {
     if (count > 0) pushRendererItem(renderer, { type: "text", start: startIndex, count });
   };
 
+  const ensureImageResource = (renderer, source) => {
+    const key = `${source ?? ""}`;
+    if (!key) return undefined;
+    let entry = renderer.images.get(key);
+    if (!entry) {
+      const image = new Image();
+      if (!key.startsWith("data:") && !key.startsWith("blob:")) image.crossOrigin = "anonymous";
+      entry = { source: key, image, loaded: false, failed: false };
+      image.onload = () => {
+        entry.loaded = true;
+        entry.width = image.naturalWidth || image.width || 1;
+        entry.height = image.naturalHeight || image.height || 1;
+      };
+      image.onerror = () => {
+        entry.failed = true;
+      };
+      image.src = key;
+      if (image.complete && image.naturalWidth > 0 && image.naturalHeight > 0) {
+        entry.loaded = true;
+        entry.width = image.naturalWidth;
+        entry.height = image.naturalHeight;
+      }
+      renderer.images.set(key, entry);
+    }
+    if (entry.loaded && !entry.texture && !entry.failed) {
+      try {
+        const width = Math.max(1, entry.width || entry.image.naturalWidth || entry.image.width || 1);
+        const height = Math.max(1, entry.height || entry.image.naturalHeight || entry.image.height || 1);
+        const texture = device.createTexture({
+          size: [width, height],
+          format: "rgba8unorm",
+          usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        device.queue.copyExternalImageToTexture(
+          { source: entry.image },
+          { texture },
+          { width, height },
+        );
+        const sampler = device.createSampler({
+          magFilter: "linear",
+          minFilter: "linear",
+          addressModeU: "clamp-to-edge",
+          addressModeV: "clamp-to-edge",
+        });
+        const bindGroup = device.createBindGroup({
+          layout: imagePipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: sampler },
+            { binding: 1, resource: texture.createView() },
+          ],
+        });
+        entry.texture = texture;
+        entry.sampler = sampler;
+        entry.bindGroup = bindGroup;
+        entry.width = width;
+        entry.height = height;
+      } catch {
+        entry.failed = true;
+      }
+    }
+    return entry.texture && entry.bindGroup ? entry : undefined;
+  };
+
+  const imagePlacement = (rect, imageWidth, imageHeight, fit) => {
+    const frameRatio = rect.width / Math.max(rect.height, 0.0001);
+    const imageRatio = imageWidth / Math.max(imageHeight, 0.0001);
+    if (Number(fit) === 1) {
+      if (imageRatio > frameRatio) {
+        const visible = frameRatio / imageRatio;
+        const inset = (1 - visible) * 0.5;
+        return { rect, u0: inset, v0: 0, u1: 1 - inset, v1: 1 };
+      }
+      const visible = imageRatio / frameRatio;
+      const inset = (1 - visible) * 0.5;
+      return { rect, u0: 0, v0: inset, u1: 1, v1: 1 - inset };
+    }
+    if (imageRatio > frameRatio) {
+      const height = rect.width / imageRatio;
+      return {
+        rect: { x: rect.x, y: rect.y + (rect.height - height) * 0.5, width: rect.width, height },
+        u0: 0, v0: 0, u1: 1, v1: 1,
+      };
+    }
+    const width = rect.height * imageRatio;
+    return {
+      rect: { x: rect.x + (rect.width - width) * 0.5, y: rect.y, width, height: rect.height },
+      u0: 0, v0: 0, u1: 1, v1: 1,
+    };
+  };
+
+  const pushImageQuad = (renderer, rect, source, opacity, fit) => {
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    const resource = ensureImageResource(renderer, source);
+    if (!resource) return false;
+    const placed = imagePlacement(rect, resource.width, resource.height, fit);
+    const drawRect = placed.rect;
+    const w = Number(renderer.width || renderer.surface.width || 1);
+    const h = Number(renderer.height || renderer.surface.height || 1);
+    const state = rendererState(renderer);
+    const alpha = clampOpacity(opacity) * state.opacity;
+    const startIndex = renderer.imageVertices.length / IMAGE_STRIDE_FLOATS;
+    const push = (px, py, u, v) => {
+      const transformed = transformPoint(state.transform, px, py);
+      renderer.imageVertices.push(
+        transformed.x / w * 2 - 1,
+        1 - transformed.y / h * 2,
+        u, v,
+        alpha, 0, 0, 0, 0,
+      );
+    };
+    const x0 = drawRect.x;
+    const y0 = drawRect.y;
+    const x1 = drawRect.x + drawRect.width;
+    const y1 = drawRect.y + drawRect.height;
+    push(x0, y0, placed.u0, placed.v0);
+    push(x0, y1, placed.u0, placed.v1);
+    push(x1, y1, placed.u1, placed.v1);
+    push(x0, y0, placed.u0, placed.v0);
+    push(x1, y1, placed.u1, placed.v1);
+    push(x1, y0, placed.u1, placed.v0);
+    pushRendererItem(renderer, {
+      type: "image",
+      start: startIndex,
+      count: 6,
+      bindGroup: resource.bindGroup,
+    });
+    return true;
+  };
+
   return {
     begin_create_string() {
       return createStringHandle("");
@@ -612,10 +810,12 @@ export function createWebGpuImports(options = {}) {
         clearColor: { r: 1, g: 1, b: 1, a: 1 },
         visualVertices: [],
         textVertices: [],
+        imageVertices: [],
         items: [],
         glyphCanvas,
         glyphContext,
         glyphs: new Map(),
+        images: new Map(),
         atlasTexture,
         atlasSampler,
         atlasBindGroup,
@@ -646,6 +846,7 @@ export function createWebGpuImports(options = {}) {
       if (!renderer) return invalidResource();
       renderer.visualVertices = [];
       renderer.textVertices = [];
+      renderer.imageVertices = [];
       renderer.items = [];
       renderer.width = Number(width) || renderer.surface.width || 1;
       renderer.height = Number(height) || renderer.surface.height || 1;
@@ -714,26 +915,28 @@ export function createWebGpuImports(options = {}) {
       pushTextRun(renderer, stringValue(text), x, y, width, height, stringValue(family), size, weight, { r, g, b, a }, align);
       return ok();
     },
-    draw_image(rendererHandle, source, x, y, width, height, opacity) {
+    draw_image(rendererHandle, source, x, y, width, height, opacity, fit) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
-      void source;
       const rect = { x: Number(x), y: Number(y), width: Number(width), height: Number(height) };
-      const alpha = clampOpacity(opacity);
-      pushGradientRounded(
-        renderer,
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height,
-        0,
-        0,
-        { x: rect.x, y: rect.y },
-        { x: rect.x + rect.width, y: rect.y + rect.height },
-        { r: 0.72, g: 0.78, b: 0.86, a: alpha },
-        { r: 0.42, g: 0.50, b: 0.62, a: alpha },
-        0,
-      );
+      if (!pushImageQuad(renderer, rect, stringValue(source), opacity, fit)) {
+        const color = fallbackImageColor(stringValue(source));
+        const alpha = clampOpacity(opacity);
+        pushGradientRounded(
+          renderer,
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height,
+          0,
+          0,
+          { x: rect.x, y: rect.y },
+          { x: rect.x + rect.width, y: rect.y + rect.height },
+          { ...color, a: alpha },
+          { r: color.r * 0.65, g: color.g * 0.65, b: color.b * 0.65, a: alpha },
+          0,
+        );
+      }
       return ok();
     },
     push_clip(rendererHandle, x, y, width, height) {
@@ -808,6 +1011,7 @@ export function createWebGpuImports(options = {}) {
       });
       const visualBuffer = uploadVertexBuffer(renderer.visualVertices);
       const textBuffer = uploadVertexBuffer(renderer.textVertices);
+      const imageBuffer = uploadVertexBuffer(renderer.imageVertices);
       for (const item of renderer.items) {
         if (!setPassClip(pass, renderer, item.clip)) continue;
         if (item.type === "visual" && visualBuffer) {
@@ -819,6 +1023,11 @@ export function createWebGpuImports(options = {}) {
           pass.setBindGroup(0, renderer.atlasBindGroup);
           pass.setVertexBuffer(0, textBuffer);
           pass.draw(item.count, 1, item.start, 0);
+        } else if (item.type === "image" && imageBuffer && item.bindGroup) {
+          pass.setPipeline(imagePipeline);
+          pass.setBindGroup(0, item.bindGroup);
+          pass.setVertexBuffer(0, imageBuffer);
+          pass.draw(item.count, 1, item.start, 0);
         }
       }
       pass.end();
@@ -828,6 +1037,9 @@ export function createWebGpuImports(options = {}) {
     renderer_dispose(rendererHandle) {
       const renderer = renderers.get(rendererHandle);
       renderer?.atlasTexture?.destroy?.();
+      for (const image of renderer?.images?.values?.() ?? []) {
+        image.texture?.destroy?.();
+      }
       renderers.delete(rendererHandle);
     },
   };

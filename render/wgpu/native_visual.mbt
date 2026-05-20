@@ -2,6 +2,7 @@
 priv enum NativeDrawItem {
   NativeVisual(Int, Int, NativeScissor?)
   NativeText(Int, Int, NativeScissor?)
+  NativeImage(Int, Int, NativeScissor?, NativeImageRun)
 }
 
 ///|
@@ -25,6 +26,15 @@ priv struct NativePaintState {
   opacity : Double
   transform : @core.Transform2D
   clip : @core.Rect?
+  clip_empty : Bool
+}
+
+///|
+priv struct NativeImageRun {
+  source : String
+  frame : @core.Rect
+  opacity : Double
+  fit : @core.ImageFit
 }
 
 ///|
@@ -161,31 +171,33 @@ fn build_native_draw_plan(
             append_shadow_item(
               visual_vertices, items, shadow, state, size, scale_factor,
             )
-          @core.DrawCommand::DrawText(run) => {
-            let start = text_vertices.length()
-            let result = build_native_text_run(cache, atlas, run, state, size)
-            for vertex in result.vertices {
-              text_vertices.push(vertex)
+          @core.DrawCommand::DrawText(run) =>
+            if native_paint_state_visible(state) &&
+              native_scissor_visible(native_scissor_for_state(state, size, scale_factor)) {
+              let start = text_vertices.length()
+              let result = build_native_text_run(cache, atlas, run, state, size)
+              for vertex in result.vertices {
+                text_vertices.push(vertex)
+              }
+              let count = text_vertices.length() - start
+              if count > 0 {
+                items.push(
+                  NativeDrawItem::NativeText(
+                    start,
+                    count,
+                    native_scissor_for_state(state, size, scale_factor),
+                  ),
+                )
+              }
+              full = result.atlas_full
             }
-            let count = text_vertices.length() - start
-            if count > 0 {
-              items.push(
-                NativeDrawItem::NativeText(
-                  start,
-                  count,
-                  native_scissor_for_state(state, size, scale_factor),
-                ),
-              )
-            }
-            full = result.atlas_full
-          }
           @core.DrawCommand::DrawImage(run) =>
-            append_image_placeholder_item(
+            append_image_item(
               visual_vertices, items, run, state, size, scale_factor,
             )
           @core.DrawCommand::PushClip(rect) => {
             state_stack.push(state)
-            state = { ..state, clip: intersect_clip(state.clip, rect) }
+            state = push_clip_state(state, rect)
           }
           @core.DrawCommand::PopClip =>
             state = pop_native_paint_state(state_stack, state)
@@ -235,7 +247,12 @@ fn build_native_draw_plan(
 
 ///|
 fn native_paint_state_default() -> NativePaintState {
-  { opacity: 1.0, transform: @core.Transform2D::identity(), clip: None }
+  {
+    opacity: 1.0,
+    transform: @core.Transform2D::identity(),
+    clip: None,
+    clip_empty: false,
+  }
 }
 
 ///|
@@ -252,6 +269,26 @@ fn pop_native_paint_state(
 ///|
 fn clamp_opacity(value : Double) -> Double {
   value.max(0.0).min(1.0)
+}
+
+///|
+fn native_paint_state_visible(state : NativePaintState) -> Bool {
+  !state.clip_empty
+}
+
+///|
+fn push_clip_state(
+  state : NativePaintState,
+  rect : @core.Rect,
+) -> NativePaintState {
+  if state.clip_empty || rect.size.width <= 0.0 || rect.size.height <= 0.0 {
+    { ..state, clip: None, clip_empty: true }
+  } else {
+    match intersect_clip(state.clip, rect) {
+      Some(clip) => { ..state, clip: Some(clip), clip_empty: false }
+      None => { ..state, clip: None, clip_empty: true }
+    }
+  }
 }
 
 ///|
@@ -369,6 +406,14 @@ fn native_scissor_for_rect(
 }
 
 ///|
+fn native_scissor_visible(scissor : NativeScissor?) -> Bool {
+  match scissor {
+    Some(scissor) => scissor.width > 0 && scissor.height > 0
+    None => true
+  }
+}
+
+///|
 fn native_scissor_scale(scale_factor : Double) -> Double {
   if scale_factor > 0.0 {
     scale_factor
@@ -391,10 +436,17 @@ fn append_visual_item(
   size~ : @core.Size,
   scale_factor~ : Double,
 ) -> Unit {
+  if !native_paint_state_visible(state) {
+    return
+  }
   if rect.size.width <= 0.0 || rect.size.height <= 0.0 {
     return
   }
   if mode == visual_mode_stroke && stroke_width <= 0.0 {
+    return
+  }
+  let scissor = native_scissor_for_state(state, size, scale_factor)
+  if !native_scissor_visible(scissor) {
     return
   }
   let start = vertices.length()
@@ -413,7 +465,7 @@ fn append_visual_item(
     NativeDrawItem::NativeVisual(
       start,
       vertices.length() - start,
-      native_scissor_for_state(state, size, scale_factor),
+      scissor,
     ),
   )
 }
@@ -452,7 +504,7 @@ fn append_shadow_item(
 }
 
 ///|
-fn append_image_placeholder_item(
+fn append_image_item(
   vertices : Array[VisualVertex],
   items : Array[NativeDrawItem],
   run : @core.ImageRun,
@@ -460,9 +512,19 @@ fn append_image_placeholder_item(
   size : @core.Size,
   scale_factor : Double,
 ) -> Unit {
-  append_visual_item(
+  if !native_paint_state_visible(state) {
+    return
+  }
+  if run.frame.size.width <= 0.0 || run.frame.size.height <= 0.0 {
+    return
+  }
+  let scissor = native_scissor_for_state(state, size, scale_factor)
+  if !native_scissor_visible(scissor) {
+    return
+  }
+  let start = vertices.length()
+  append_visual_quad(
     vertices,
-    items,
     run.frame,
     radius=0.0,
     brush=image_placeholder_brush(run),
@@ -471,7 +533,19 @@ fn append_image_placeholder_item(
     blur_radius=0.0,
     state~,
     size~,
-    scale_factor~,
+  )
+  items.push(
+    NativeDrawItem::NativeImage(
+      start,
+      vertices.length() - start,
+      scissor,
+      {
+        source: run.source,
+        frame: run.frame,
+        opacity: clamp_opacity(run.opacity) * state.opacity,
+        fit: run.fit,
+      },
+    ),
   )
 }
 

@@ -66,11 +66,18 @@ pub fn ShowcaseApp::root(
   let content = @views.navigation_stack(self.navigation, [
     @views.navigation_destination(
       route="overview",
-      view=@views.row(
+      view=@views.column(
         [
-          self.visual_card(theme, active, offset, opacity),
-          self.gallery_card(theme, slider),
-          self.capability_card(theme),
+          @views.row(
+            [
+              self.visual_card(theme, active, offset, opacity),
+              self.gallery_card(theme, slider),
+              self.capability_card(theme),
+            ],
+            spacing=theme.spacing_scale.lg,
+            cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+          ),
+          self.visual_correctness_card(theme, active, opacity),
         ],
         spacing=theme.spacing_scale.lg,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
@@ -94,6 +101,70 @@ pub fn ShowcaseApp::root(
     dialog=Some(self.dialog(theme)),
     presented=dialog_visible,
   )
+}
+
+///|
+fn ShowcaseApp::visual_correctness_card(
+  self : ShowcaseApp,
+  theme : @core.Theme,
+  active : Bool,
+  opacity : Double,
+) -> @core.ViewSpec {
+  ignore(self)
+  let image = showcase_image_source()
+  let transform_offset = if active { 18.0 } else { 6.0 }
+  @views.surface(
+    @views.column(
+      [
+        @views.text("Visual correctness", width=260.0, height=28.0)
+        .font(theme.typography.control)
+        .foreground(theme.palette.foreground),
+        @views.row(
+          [
+            @views.image(
+              image,
+              width=120.0,
+              height=72.0,
+              opacity=1.0,
+              corner_radius=theme.radius_scale.md,
+              fit=@core.ImageFit::Contain,
+            ).clip(),
+            @views.image(
+              image,
+              width=120.0,
+              height=72.0,
+              opacity~,
+              corner_radius=theme.radius_scale.md,
+              fit=@core.ImageFit::Cover,
+            ).clip(),
+            @views.image(
+              image,
+              width=120.0,
+              height=72.0,
+              opacity=0.78,
+              corner_radius=theme.radius_scale.lg,
+              fit=@core.ImageFit::Cover,
+            )
+            .clip()
+            .scale(sx=0.92, sy=0.92)
+            .offset(dx=transform_offset, dy=0.0),
+          ],
+          spacing=theme.spacing_scale.md,
+          cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+        ),
+      ],
+      spacing=theme.spacing_scale.sm,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    ),
+    width=760.0,
+    height=142.0,
+    style=@core.SurfaceStyle::raised(theme~),
+  )
+}
+
+///|
+fn showcase_image_source() -> String {
+  "data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20160%2090%27%3E%3Crect%20width%3D%27160%27%20height%3D%2790%27%20fill%3D%27%232565eb%27/%3E%3Ccircle%20cx%3D%27118%27%20cy%3D%2734%27%20r%3D%2724%27%20fill%3D%27%23f8fafc%27%20fill-opacity%3D%270.85%27/%3E%3Cpath%20d%3D%27M0%2080%20L46%2045%20L82%2070%20L124%2038%20L160%2068%20L160%2090%20L0%2090Z%27%20fill%3D%27%2314b8a6%27/%3E%3C/svg%3E"
 }
 
 ///|

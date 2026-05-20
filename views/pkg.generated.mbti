@@ -22,6 +22,8 @@ pub fn custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ : (@co
 
 pub fn dark_theme() -> @core.Theme
 
+pub fn datepicker(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Brush, corner_radius? : Double, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.ViewSpec
+
 pub fn dialog_host(@core.ViewSpec, dialog? : @core.ViewSpec?, presented? : Bool) -> @core.ViewSpec
 
 pub fn environment(theme? : @core.Theme) -> @core.Environment
@@ -60,6 +62,10 @@ pub fn padding(@core.ViewSpec, Double) -> @core.ViewSpec
 
 pub fn padding_insets(@core.ViewSpec, @core.Insets) -> @core.ViewSpec
 
+pub fn picker(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Brush, corner_radius? : Double, max_height? : Double) -> @core.ViewSpec
+
+pub fn picker_item(String, String) -> @core.PickerItem
+
 pub fn progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.ViewSpec
 
 pub fn radio(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
@@ -69,6 +75,12 @@ pub fn rich_text_editor(@core.Binding[String], (String) -> @core.RichTextDocumen
 pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
 pub fn scroll_view(@core.ViewSpec, offset? : @core.Point, width? : Double, height? : Double) -> @core.ViewSpec
+
+pub fn searchbar(query~ : @core.Binding[String], placeholder? : String, font? : @core.FontSpec, foreground? : @core.Color, placeholder_color? : @core.Color, background? : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color? : @core.Color, corner_radius? : Double, on_submit? : (() -> Unit)?, on_clear? : (() -> Unit)?) -> @core.ViewSpec
+
+pub fn sheet(content~ : @core.ViewSpec, presentation_mode? : @core.SheetPresentationMode, background? : @core.Brush, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : (() -> Unit)?) -> @core.ViewSpec
+
+pub fn sheet_host(child~ : @core.ViewSpec, sheet? : @core.ViewSpec?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : (() -> Unit)?) -> @core.ViewSpec
 
 pub fn slider(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.ViewSpec
 
