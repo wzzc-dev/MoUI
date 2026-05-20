@@ -185,6 +185,8 @@ pub fn BuildContext::enabled(Self) -> Bool
 pub fn BuildContext::environment(Self) -> Environment
 pub fn BuildContext::layout_direction(Self) -> LayoutDirection
 pub fn BuildContext::locale(Self) -> String
+pub fn BuildContext::on_dispose(Self, key~ : String, () -> Unit) -> Unit
+pub fn BuildContext::on_mount(Self, key~ : String, () -> Unit) -> Unit
 pub fn BuildContext::reduced_motion(Self) -> Bool
 pub fn BuildContext::restore_bool(Self, key~ : String) -> Bool?
 pub fn BuildContext::restore_int(Self, key~ : String) -> Int?

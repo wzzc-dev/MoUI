@@ -309,6 +309,27 @@ pub fn BuildContext::run_effect(
 }
 
 ///|
+pub fn BuildContext::on_mount(
+  self : BuildContext,
+  key~ : String,
+  effect : () -> Unit,
+) -> Unit {
+  self.run_effect(key="mount:\{key}", () => {
+    effect()
+    None
+  })
+}
+
+///|
+pub fn BuildContext::on_dispose(
+  self : BuildContext,
+  key~ : String,
+  cleanup : () -> Unit,
+) -> Unit {
+  self.run_effect(key="dispose:\{key}", () => Some(cleanup))
+}
+
+///|
 pub fn BuildContext::save_string(
   self : BuildContext,
   key~ : String,
