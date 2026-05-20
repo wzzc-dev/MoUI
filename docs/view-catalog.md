@@ -89,11 +89,12 @@ let screen = @views.column([
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `expanded` / `flexible` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase indirectly | Flex child modifiers. |
+| `layout_priority` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Internal/advanced use | Supplies priority metadata to custom layout delegates. |
 | `align` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Dialog host, Tooltip | Alignment wrapper. |
 | `aspect_ratio` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Planned Showcase catalog coverage | Ratio constraint wrapper. |
 | `intrinsic_width` / `intrinsic_height` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Planned Showcase catalog coverage | Intrinsic measurement wrappers. |
 | `custom_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt` | Internal/advanced use | Builds `ViewSpec::custom`. |
-| `custom_children_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Internal/advanced use | Builds `ViewSpec::custom_layout` with child measurement and placement callbacks. |
+| `custom_children_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Internal/advanced use | Builds `ViewSpec::custom_layout` with child size, baseline, priority, and placement callbacks. |
 | `component` | `views/layout_helpers.mbt` | BuildContext-based | Built child semantics | `views/views_test.mbt` | Examples via app components | Wraps `@core.Component::new`. |
 
 ## Maintenance Checklist

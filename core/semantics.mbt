@@ -268,6 +268,7 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
     | ClipModifier
     | ScaleModifier(_, _)
     | FlexibleModifier(_)
+    | LayoutPriorityModifier(_)
     | AlignModifier(_)
     | AspectRatioModifier(_)
     | IntrinsicWidthModifier

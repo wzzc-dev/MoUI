@@ -677,6 +677,12 @@ test "layout helper constructors build modifier and custom specs" {
     ) else {
     fail("expected align modifier")
   }
+  guard @views.layout_priority(child, 3.0)
+    is @core.ViewSpec::ModifiedSpec(
+      { modifier: @core.ViewModifier::LayoutPriorityModifier(3.0), .. }
+    ) else {
+    fail("expected layout priority modifier")
+  }
   guard @views.aspect_ratio(child, 1.5)
     is @core.ViewSpec::ModifiedSpec(
       { modifier: @core.ViewModifier::AspectRatioModifier(1.5), .. }

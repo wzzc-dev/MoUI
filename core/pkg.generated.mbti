@@ -374,6 +374,8 @@ pub(all) enum CrossAxisAlignment {
 pub(all) struct CustomLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
+  child_baselines : Array[Double?]
+  child_priorities : Array[Double]
 }
 
 pub(all) struct CustomLayoutSpec {
@@ -390,6 +392,8 @@ pub(all) struct CustomPlacementContext {
   frame : Rect
   measured_size : Size
   child_sizes : Array[Size]
+  child_baselines : Array[Double?]
+  child_priorities : Array[Double]
 }
 
 pub(all) struct CustomViewSpec {
@@ -1438,6 +1442,7 @@ pub(all) enum ViewModifier {
   OnTapModifier(() -> Unit)
   KeyboardShortcutModifier(KeyboardShortcut)
   FlexibleModifier(Double)
+  LayoutPriorityModifier(Double)
   AlignModifier(Alignment)
   AspectRatioModifier(Double)
   IntrinsicWidthModifier
@@ -1495,6 +1500,7 @@ pub fn ViewSpec::intrinsic_width(Self) -> Self
 pub fn ViewSpec::key(Self, String) -> Self
 pub fn ViewSpec::keyboard_shortcut(Self, KeyboardShortcut) -> Self
 pub fn ViewSpec::kind(Self) -> Int
+pub fn ViewSpec::layout_priority(Self, Double) -> Self
 pub fn ViewSpec::main_axis_alignment(Self, MainAxisAlignment) -> Self
 pub fn ViewSpec::modified(Self, ViewModifier) -> Self
 pub fn ViewSpec::offset(Self, dx? : Double, dy? : Double) -> Self

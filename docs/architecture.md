@@ -166,8 +166,10 @@ participate in the measured/placed layout pass while preserving the existing
 
 Advanced layout authors can use `ViewSpec::custom_layout` to define a child
 layout delegate. The delegate receives measured child sizes, returns its own
-size, and places children with explicit frames; paint and semantics metadata are
-kept on the same spec.
+size, and places children with explicit frames. Its context also exposes child
+baselines and layout priorities so custom layouts can align text and make
+priority-aware placement decisions; paint and semantics metadata are kept on
+the same spec.
 
 ## Modifiers And Environment
 

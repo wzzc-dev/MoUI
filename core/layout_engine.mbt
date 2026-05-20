@@ -170,10 +170,77 @@ fn modified_intrinsic_size(
     | OnTapModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
+    | LayoutPriorityModifier(_)
     | AlignModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier => child_size
     AspectRatioModifier(ratio) => aspect_ratio_size(child_size, ratio)
+  }
+}
+
+///|
+fn ElementNode::first_baseline(self : ElementNode) -> Double? {
+  match self.spec {
+    TextSpec(data) =>
+      Some(
+        measure_text_layout(
+          TextLayoutInput::new(text=data.text, font=data.font),
+        ).baseline,
+      )
+    ButtonSpec(data) =>
+      Some(
+        measure_text_layout(
+          TextLayoutInput::new(text=data.text, font=data.font),
+        ).baseline,
+      )
+    TextFieldSpec(data) =>
+      Some(
+        measure_text_layout(
+          TextLayoutInput::new(text=data.value.get(), font=data.font),
+        ).baseline,
+      )
+    RichTextEditorSpec(data) =>
+      Some(
+        measure_text_layout(
+          TextLayoutInput::new(text=data.value.get(), font=data.font),
+        ).baseline,
+      )
+    CheckboxSpec(data) =>
+      Some(
+        measure_text_layout(
+          TextLayoutInput::new(text=data.label, font=data.font),
+        ).baseline,
+      )
+    ModifiedSpec(_) | ComponentSpec(_) =>
+      if self.children.length() > 0 {
+        self.children[0].first_baseline()
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn ElementNode::layout_priority(self : ElementNode) -> Double {
+  match self.spec {
+    ModifiedSpec(data) =>
+      match data.modifier {
+        LayoutPriorityModifier(priority) => priority
+        _ =>
+          if self.children.length() > 0 {
+            self.children[0].layout_priority()
+          } else {
+            0.0
+          }
+      }
+    ComponentSpec(_) =>
+      if self.children.length() > 0 {
+        self.children[0].layout_priority()
+      } else {
+        0.0
+      }
+    _ => 0.0
   }
 }
 

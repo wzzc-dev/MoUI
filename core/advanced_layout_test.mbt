@@ -226,6 +226,66 @@ test "custom layout delegate measures places paints and exposes child semantics"
 }
 
 ///|
+test "custom layout delegate receives child baselines and layout priorities" {
+  let first_baseline_ref : Ref[Double?] = Ref(None)
+  let first_priority_ref = Ref(0.0)
+  let second_priority_ref = Ref(0.0)
+  let spec = ViewSpec::custom_layout(
+    children=[
+      test_label("Title").layout_priority(2.0),
+      ViewSpec::TextSpec({
+        key: None,
+        text: "Caption",
+        size: Size::new(width=52.0, height=18.0),
+        font: FontSpec::new(size=10.0, weight=400),
+        color: Color::black(),
+      }),
+    ],
+    measure=ctx => {
+      first_baseline_ref.val = ctx.child_baselines[0]
+      first_priority_ref.val = ctx.child_priorities[0]
+      second_priority_ref.val = ctx.child_priorities[1]
+      Size::new(width=132.0, height=32.0)
+    },
+    place=ctx => {
+      let first_baseline = ctx.child_baselines[0].unwrap_or(0.0)
+      let second_baseline = ctx.child_baselines[1].unwrap_or(0.0)
+      let shared_baseline = if first_baseline > second_baseline {
+        first_baseline
+      } else {
+        second_baseline
+      }
+      [
+        Rect::new(
+          x=ctx.frame.origin.x,
+          y=ctx.frame.origin.y + shared_baseline - first_baseline,
+          width=ctx.child_sizes[0].width,
+          height=ctx.child_sizes[0].height,
+        ),
+        Rect::new(
+          x=ctx.frame.origin.x + 80.0,
+          y=ctx.frame.origin.y + shared_baseline - second_baseline,
+          width=ctx.child_sizes[1].width,
+          height=ctx.child_sizes[1].height,
+        ),
+      ]
+    },
+  )
+  let layout = layout_spec(
+    spec,
+    Rect::new(x=0.0, y=0.0, width=132.0, height=32.0),
+  )
+  match first_baseline_ref.val {
+    Some(baseline) => inspect(baseline, content="12.8")
+    None => fail("expected text baseline")
+  }
+  inspect(first_priority_ref.val, content="2")
+  inspect(second_priority_ref.val, content="0")
+  inspect(layout.children[0].frame.origin.y, content="0")
+  inspect((layout.children[1].frame.origin.y * 10.0).to_int(), content="48")
+}
+
+///|
 test "list lays out keyed rows and reconcile preserves keyed identity" {
   let first = ViewSpec::TextSpec({
     key: None,
