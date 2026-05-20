@@ -24,6 +24,7 @@ pub(all) struct BuildContext {
   component_id : ElementId
   subscriptions : Array[StateSubscription]
   effects : Array[ComponentEffect]
+  old_effects : Array[ComponentEffect]
   environment : Environment
 }
 
@@ -36,6 +37,7 @@ pub(all) struct Component {
 pub(all) struct ComponentEffect {
   key : String
   cleanup : (() -> Unit)?
+  mut reused : Bool
 }
 
 ///|
@@ -133,7 +135,7 @@ pub fn ComponentEffect::new(
   key~ : String,
   cleanup? : (() -> Unit)? = None,
 ) -> ComponentEffect {
-  { key, cleanup }
+  { key, cleanup, reused: false }
 }
 
 ///|
@@ -229,7 +231,13 @@ pub fn BuildContext::run_effect(
   key~ : String,
   effect : () -> (() -> Unit)?,
 ) -> Unit {
-  self.effects.push(ComponentEffect::new(key~, cleanup=effect()))
+  match self.take_old_effect(key) {
+    Some(existing) => {
+      existing.reused = true
+      self.effects.push(existing)
+    }
+    None => self.effects.push(ComponentEffect::new(key~, cleanup=effect()))
+  }
 }
 
 ///|
@@ -272,6 +280,19 @@ fn BuildContext::scoped_saveable_key(
   key : String,
 ) -> String {
   "\{self.component_id.value}:\{key}"
+}
+
+///|
+fn BuildContext::take_old_effect(
+  self : BuildContext,
+  key : String,
+) -> ComponentEffect? {
+  for effect in self.old_effects {
+    if !effect.reused && effect.key == key {
+      return Some(effect)
+    }
+  }
+  None
 }
 
 ///|
@@ -355,6 +376,21 @@ pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
   self.needs_redraw = true
   self.mark_dirty(mounted.node.id)
   self.layout_pass()
+}
+
+///|
+pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
+  self.element_tree.cancel_component_tree_subscriptions()
+  self.element_tree = mount_view_spec(ViewSpec::EmptySpec)
+  self.render_tree = RenderNode::empty()
+  self.root_spec = ViewSpec::EmptySpec
+  self.next_element_id = 1
+  self.dirty_elements.clear()
+  self.focused_element = None
+  self.needs_rebuild = false
+  self.needs_layout = false
+  self.needs_paint = false
+  self.needs_redraw = false
 }
 
 ///|
@@ -691,7 +727,6 @@ fn build_component_spec(
   for subscription in old_subscriptions {
     subscription.cancel()
   }
-  cancel_component_effects(old_effects)
   let subscriptions : Array[StateSubscription] = []
   let effects : Array[ComponentEffect] = []
   let context = BuildContext::{
@@ -699,9 +734,17 @@ fn build_component_spec(
     component_id,
     subscriptions,
     effects,
+    old_effects,
     environment: runtime.environment,
   }
-  { child_spec: (component.build)(context), subscriptions, effects }
+  let child_spec = (component.build)(context)
+  for effect in old_effects {
+    if !effect.reused {
+      effect.cancel()
+    }
+    effect.reused = false
+  }
+  { child_spec, subscriptions, effects }
 }
 
 ///|
