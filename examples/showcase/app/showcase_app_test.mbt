@@ -31,17 +31,17 @@ test "showcase app emits visual polish commands" {
   assert_true(
     commands.any(command => {
       command
-      is @core.DrawCommand::DrawText({ text: "Renderer capability", .. })
+      is @core.DrawCommand::DrawText({ text: "Components", .. })
     }),
   )
   assert_true(
     commands.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "image", .. })
+      command is @core.DrawCommand::DrawText({ text: "Overview", .. })
     }),
   )
   assert_true(
     commands.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "partial", .. })
+      command is @core.DrawCommand::DrawText({ text: "Controls", .. })
     }),
   )
 }
@@ -71,7 +71,7 @@ test "showcase navigation and dialog state are wired" {
   let app = @app.ShowcaseApp::new()
   let runtime = app.runtime(width=760.0, height=420.0)
   app.show_dialog()
-  app.navigation.replace("controls")
+  app.select_section("controls")
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
   let commands = runtime.draw_commands()
   assert_true(
@@ -81,4 +81,5 @@ test "showcase navigation and dialog state are wired" {
   )
   assert_true(app.dialog_visible.get())
   assert_true(app.navigation.current() == "controls")
+  assert_true(app.selected_section.get() == "controls")
 }

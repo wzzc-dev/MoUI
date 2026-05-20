@@ -17,6 +17,8 @@ pub struct ShowcaseApp {
   feature_enabled : @core.State[Bool]
   draft : @core.State[String]
   tab : @core.State[String]
+  selected_section : @core.State[String]
+  filter : @core.State[String]
   slider_value : @core.State[Double]
   navigation : @core.NavigationState
   list_scroll : @core.ScrollState
@@ -25,6 +27,7 @@ pub fn ShowcaseApp::hide_dialog(Self) -> Unit
 pub fn ShowcaseApp::new() -> Self
 pub fn ShowcaseApp::root(Self, @core.BuildContext) -> @core.ViewSpec
 pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn ShowcaseApp::select_section(Self, String) -> Unit
 pub fn ShowcaseApp::show_dialog(Self) -> Unit
 pub fn ShowcaseApp::toggle_active(Self) -> Unit
 pub fn ShowcaseApp::toggle_scheme(Self) -> Unit
