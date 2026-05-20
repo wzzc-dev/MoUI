@@ -102,6 +102,8 @@ ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand 
 - `HostRuntimeDriver` owns redraw scheduling at the host boundary, dispatches
   normalized events into `AppRuntime`, and exposes platform-neutral draw
   commands for renderers.
+- `AppRuntime::focus_next` and `AppRuntime::focus_previous` expose explicit
+  focus traversal entry points on top of the shared tab-order model.
 
 ## State And Binding
 

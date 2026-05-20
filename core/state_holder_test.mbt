@@ -96,3 +96,35 @@ test "focusable wrapper contributes focus order" {
   let semantics = runtime.semantics()
   assert_true(semantics.focus_order == Some(0))
 }
+
+///|
+test "app runtime exposes explicit focus traversal helpers" {
+  let first = State::new("")
+  let second = State::new("")
+  let runtime = AppRuntime::new_spec(
+    root=ViewSpec::FlexSpec({
+      key: None,
+      axis: Axis::Vertical,
+      spacing: 8.0,
+      main_axis_alignment: MainStart,
+      cross_axis_alignment: CrossStretch,
+      children: [
+        test_text_field(first.binding()),
+        test_text_field(second.binding()),
+      ],
+    }),
+    size=Size::new(width=160.0, height=120.0),
+  )
+  assert_true(runtime.focus_next())
+  runtime.dispatch_event(TextInput(TextInputEvent::InsertText("a")))
+  inspect(first.get(), content="a")
+  inspect(second.get(), content="")
+  assert_true(runtime.focus_next())
+  runtime.dispatch_event(TextInput(TextInputEvent::InsertText("b")))
+  inspect(first.get(), content="a")
+  inspect(second.get(), content="b")
+  assert_true(runtime.focus_previous())
+  runtime.dispatch_event(TextInput(TextInputEvent::InsertText("c")))
+  inspect(first.get(), content="ac")
+  inspect(second.get(), content="b")
+}

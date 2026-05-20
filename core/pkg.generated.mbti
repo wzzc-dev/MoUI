@@ -132,6 +132,8 @@ pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dispatch_event(Self, AppEvent) -> Unit
 pub fn AppRuntime::draw_commands(Self) -> Array[DrawCommand]
 pub fn AppRuntime::environment(Self) -> Environment
+pub fn AppRuntime::focus_next(Self) -> Bool
+pub fn AppRuntime::focus_previous(Self) -> Bool
 pub fn AppRuntime::focused_text_input(Self) -> TextInputState
 pub fn AppRuntime::layout_pass(Self) -> Unit
 pub fn AppRuntime::mount(Self, ViewSpec) -> Unit

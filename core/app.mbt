@@ -693,15 +693,7 @@ pub fn RuntimeState::dispatch_event(
         }
         self.rebuild_if_possible()
       } else if event.pressed && event.key == "Tab" {
-        self.ensure_render_tree()
-        let previous_focus = self.focused_element
-        self.focused_element = self.element_tree.next_focus(
-          current=previous_focus,
-          reverse=event.modifiers.shift,
-        )
-        if previous_focus != self.focused_element {
-          self.mark_dirty(self.element_tree.id)
-        }
+        ignore(self.move_focus(reverse=event.modifiers.shift))
       } else {
         match self.focused_element {
           Some(target) => {
@@ -739,6 +731,25 @@ pub fn RuntimeState::dispatch_event(
         None => ()
       }
     CloseRequested => ()
+  }
+}
+
+///|
+fn RuntimeState::move_focus(
+  self : RuntimeState,
+  reverse? : Bool = false,
+) -> Bool {
+  self.ensure_render_tree()
+  let previous_focus = self.focused_element
+  self.focused_element = self.element_tree.next_focus(
+    current=previous_focus,
+    reverse=reverse,
+  )
+  if previous_focus != self.focused_element {
+    self.mark_dirty(self.element_tree.id)
+    true
+  } else {
+    false
   }
 }
 
