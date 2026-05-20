@@ -177,10 +177,13 @@ pub(all) enum HostScrollPhase {
 pub(all) struct HostServiceBridge {
   capabilities : HostServiceCapabilities
   handle : (HostServiceRequest) -> HostServiceResponse
+  channels : PlatformChannelRegistry
 }
 pub fn HostServiceBridge::can_handle(Self, HostServiceRequest) -> Bool
 pub fn HostServiceBridge::dispatch(Self, HostServiceRequest) -> HostServiceResponse
+pub fn HostServiceBridge::dispatch_channel(Self, PlatformChannelRequest) -> PlatformChannelResponse
 pub fn HostServiceBridge::new(capabilities~ : HostServiceCapabilities, handle~ : (HostServiceRequest) -> HostServiceResponse) -> Self
+pub fn HostServiceBridge::register_channel(Self, PlatformChannelHandler) -> Unit
 pub fn HostServiceBridge::unavailable() -> Self
 
 pub(all) struct HostServiceCapabilities {
@@ -235,6 +238,33 @@ pub fn InputHostState::keyboard_event(Self, key~ : String, text? : String?, pres
 pub fn InputHostState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, contract? : HostInputContract) -> Self
 pub fn InputHostState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
 pub fn InputHostState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> HostEvent?
+
+pub(all) struct PlatformChannelHandler {
+  channel : String
+  handle : (PlatformChannelRequest) -> PlatformChannelResponse
+}
+pub fn PlatformChannelHandler::new(channel~ : String, handle~ : (PlatformChannelRequest) -> PlatformChannelResponse) -> Self
+
+pub(all) struct PlatformChannelRegistry {
+  mut handlers : Array[PlatformChannelHandler]
+}
+pub fn PlatformChannelRegistry::can_dispatch(Self, String) -> Bool
+pub fn PlatformChannelRegistry::dispatch(Self, PlatformChannelRequest) -> PlatformChannelResponse
+pub fn PlatformChannelRegistry::new() -> Self
+pub fn PlatformChannelRegistry::register(Self, PlatformChannelHandler) -> Unit
+
+pub(all) struct PlatformChannelRequest {
+  channel : String
+  operation : String
+  payload : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformChannelRequest::new(channel~ : String, operation~ : String, payload? : String) -> Self
+
+pub(all) enum PlatformChannelResponse {
+  Ok(String)
+  Unavailable(String)
+  Error(String)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RedrawScheduler {
   mut redraw_requested : Bool
