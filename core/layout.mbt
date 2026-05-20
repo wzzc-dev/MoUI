@@ -170,6 +170,11 @@ fn ElementNode::measured_size_from_children(
     ListSpec(data) => measure_list_measured(data.spacing, children)
     ModifiedSpec(data) => modified_measured_size(data.modifier, children)
     CustomSpec(data) => (data.measure)(Constraints::unbounded())
+    CustomLayoutSpec(data) =>
+      (data.measure)({
+        constraints: Constraints::unbounded(),
+        child_sizes: children.map(child => child.size),
+      })
     ComponentSpec(_) =>
       if children.length() > 0 {
         children[0].size
@@ -270,6 +275,12 @@ fn ElementNode::child_frames_for_place(
         frame,
       )
     ListSpec(data) => list_child_frames(data.spacing, self.children, frame)
+    CustomLayoutSpec(data) =>
+      (data.place)({
+        frame,
+        measured_size: frame.size,
+        child_sizes: self.children.map(child => child.intrinsic_size()),
+      })
     ModifiedSpec(data) => modified_child_frames(data.modifier, frame)
     ComponentSpec(_) => if self.children.length() > 0 { [frame] } else { [] }
     _ => []

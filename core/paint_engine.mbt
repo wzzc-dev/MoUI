@@ -354,6 +354,27 @@ fn ElementNode::render_with_environment(
       for command in (data.paint)(bounds) {
         commands.push(command)
       }
+    CustomLayoutSpec(data) => {
+      for command in (data.paint)(bounds) {
+        commands.push(command)
+      }
+      let child_frames = (data.place)({
+        frame: bounds,
+        measured_size: bounds.size,
+        child_sizes: self.children.map(child => child.intrinsic_size()),
+      })
+      for index, child in self.children {
+        if index < child_frames.length() {
+          children.push(
+            child.render_with_environment(
+              child_frames[index],
+              focused,
+              environment,
+            ),
+          )
+        }
+      }
+    }
     ComponentSpec(_) =>
       if self.children.length() > 0 {
         children.push(
@@ -714,6 +735,11 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     ListSpec(data) => measure_list_size(data.spacing, self.children)
     ModifiedSpec(data) => modified_intrinsic_size(data.modifier, self.children)
     CustomSpec(data) => (data.measure)(Constraints::unbounded())
+    CustomLayoutSpec(data) =>
+      (data.measure)({
+        constraints: Constraints::unbounded(),
+        child_sizes: self.children.map(child => child.intrinsic_size()),
+      })
     ComponentSpec(_) =>
       if self.children.length() > 0 {
         self.children[0].intrinsic_size()
@@ -743,7 +769,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
       data.modifier is ShadowModifier(_) ||
       data.modifier is OnTapModifier(_) ||
       data.modifier is FocusableModifier(true)
-    CustomSpec(_) => true
+    CustomSpec(_) | CustomLayoutSpec(_) => true
     ComponentSpec(_) => false
     _ => false
   }

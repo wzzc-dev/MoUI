@@ -318,6 +318,30 @@ pub(all) struct CustomViewSpec {
 }
 
 ///|
+pub(all) struct CustomLayoutContext {
+  constraints : Constraints
+  child_sizes : Array[Size]
+}
+
+///|
+pub(all) struct CustomPlacementContext {
+  frame : Rect
+  measured_size : Size
+  child_sizes : Array[Size]
+}
+
+///|
+pub(all) struct CustomLayoutSpec {
+  key : Key?
+  children : Array[ViewSpec]
+  measure : (CustomLayoutContext) -> Size
+  place : (CustomPlacementContext) -> Array[Rect]
+  paint : (Rect) -> Array[DrawCommand]
+  semantics_role : SemanticsRole
+  semantics_label : String
+}
+
+///|
 pub(all) struct ComponentViewSpec {
   key : Key?
   component : Component
@@ -431,6 +455,7 @@ pub(all) enum ViewSpec {
   ListSpec(ListViewSpec)
   ModifiedSpec(ModifiedViewSpec)
   CustomSpec(CustomViewSpec)
+  CustomLayoutSpec(CustomLayoutSpec)
   ComponentSpec(ComponentViewSpec)
 }
 
@@ -622,6 +647,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     ListSpec(data) => data.key
     ModifiedSpec(data) => data.key
     CustomSpec(data) => data.key
+    CustomLayoutSpec(data) => data.key
     ComponentSpec(data) => data.key
   }
 }
@@ -651,6 +677,7 @@ pub fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     ListSpec(data) => ListSpec({ ..data, key: Some(key) })
     ModifiedSpec(data) => ModifiedSpec({ ..data, key: Some(key) })
     CustomSpec(data) => CustomSpec({ ..data, key: Some(key) })
+    CustomLayoutSpec(data) => CustomLayoutSpec({ ..data, key: Some(key) })
     ComponentSpec(data) => ComponentSpec({ ..data, key: Some(key) })
   }
 }
@@ -681,6 +708,7 @@ pub fn ViewSpec::kind(self : ViewSpec) -> Int {
     CustomSpec(_) => 20
     ComponentSpec(_) => 21
     RichTextEditorSpec(_) => 22
+    CustomLayoutSpec(_) => 23
   }
 }
 
@@ -1011,6 +1039,26 @@ pub fn ViewSpec::custom(
   semantics_label? : String = "",
 ) -> ViewSpec {
   CustomSpec({ key: None, measure, paint, semantics_role, semantics_label })
+}
+
+///|
+pub fn ViewSpec::custom_layout(
+  children~ : Array[ViewSpec],
+  measure~ : (CustomLayoutContext) -> Size,
+  place~ : (CustomPlacementContext) -> Array[Rect],
+  paint? : (Rect) -> Array[DrawCommand] = _frame => [],
+  semantics_role? : SemanticsRole = SemanticsRole::Group,
+  semantics_label? : String = "",
+) -> ViewSpec {
+  CustomLayoutSpec({
+    key: None,
+    children,
+    measure,
+    place,
+    paint,
+    semantics_role,
+    semantics_label,
+  })
 }
 
 ///|

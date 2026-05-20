@@ -165,6 +165,67 @@ test "grid lays children into fixed columns" {
 }
 
 ///|
+test "custom layout delegate measures places paints and exposes child semantics" {
+  let spec = ViewSpec::custom_layout(
+    children=[
+      test_label("A").key("a"),
+      test_label("B").key("b"),
+    ],
+    measure=ctx => {
+      ctx.constraints.constrain(
+        Size::new(
+          width=ctx.child_sizes[0].width + ctx.child_sizes[1].width + 6.0,
+          height=20.0,
+        ),
+      )
+    },
+    place=ctx => {
+      [
+        Rect::new(
+          x=ctx.frame.origin.x,
+          y=ctx.frame.origin.y,
+          width=ctx.child_sizes[0].width,
+          height=ctx.frame.size.height,
+        ),
+        Rect::new(
+          x=ctx.frame.origin.x + ctx.child_sizes[0].width + 6.0,
+          y=ctx.frame.origin.y,
+          width=ctx.child_sizes[1].width,
+          height=ctx.frame.size.height,
+        ),
+      ]
+    },
+    paint=frame => {
+      [
+        DrawCommand::FillRoundedRectBrush(
+          RoundedRect::new(rect=frame, radius=2.0),
+          Brush::solid(Color::gray()),
+        ),
+      ]
+    },
+    semantics_role=SemanticsRole::Group,
+    semantics_label="Custom row",
+  ).key("custom-row")
+  let runtime = RuntimeState::new_spec(
+    root=spec,
+    size=Size::new(width=120.0, height=32.0),
+  )
+  let layout = runtime.layout()
+  inspect(layout.children.length(), content="2")
+  inspect(layout.children[1].frame.origin.x, content="86")
+  let commands = runtime.build_draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is DrawCommand::FillRoundedRectBrush(_, Brush::Solid(_))
+    }),
+  )
+  let semantics = runtime.semantics()
+  inspect(semantics.label, content="Custom row")
+  inspect(semantics.children.length(), content="2")
+  assert_true(runtime.element_tree.find_keyed("b") is Some(_))
+}
+
+///|
 test "list lays out keyed rows and reconcile preserves keyed identity" {
   let first = ViewSpec::TextSpec({
     key: None,

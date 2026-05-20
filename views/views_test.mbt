@@ -699,4 +699,13 @@ test "layout helper constructors build modifier and custom specs" {
     is @core.ViewSpec::CustomSpec(_) else {
     fail("expected custom layout spec")
   }
+  guard @views.custom_children_layout(
+      children=[child],
+      measure=ctx => ctx.constraints.constrain(ctx.child_sizes[0]),
+      place=ctx => [ctx.frame],
+      semantics_label="Custom children",
+    )
+    is @core.ViewSpec::CustomLayoutSpec(_) else {
+    fail("expected custom children layout spec")
+  }
 }
