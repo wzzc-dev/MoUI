@@ -181,13 +181,16 @@ pub(all) enum HostScrollPhase {
 pub(all) struct HostServiceBridge {
   capabilities : HostServiceCapabilities
   handle : (HostServiceRequest) -> HostServiceResponse
+  mut services : Array[HostServiceHandler]
   channels : PlatformChannelRegistry
 }
 pub fn HostServiceBridge::can_handle(Self, HostServiceRequest) -> Bool
 pub fn HostServiceBridge::dispatch(Self, HostServiceRequest) -> HostServiceResponse
 pub fn HostServiceBridge::dispatch_channel(Self, PlatformChannelRequest) -> PlatformChannelResponse
+pub fn HostServiceBridge::dispatch_registered_service(Self, HostServiceRequest) -> HostServiceResponse?
 pub fn HostServiceBridge::new(capabilities~ : HostServiceCapabilities, handle~ : (HostServiceRequest) -> HostServiceResponse) -> Self
 pub fn HostServiceBridge::register_channel(Self, PlatformChannelHandler) -> Unit
+pub fn HostServiceBridge::register_service(Self, HostServiceHandler) -> Unit
 pub fn HostServiceBridge::unavailable() -> Self
 
 pub(all) struct HostServiceCapabilities {
@@ -200,6 +203,20 @@ pub(all) struct HostServiceCapabilities {
 pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, open_url? : Bool, system_theme? : Bool) -> Self
 pub fn HostServiceCapabilities::none() -> Self
 
+pub(all) struct HostServiceHandler {
+  kind : HostServiceKind
+  handle : (HostServiceRequest) -> HostServiceResponse
+}
+pub fn HostServiceHandler::new(kind~ : HostServiceKind, handle~ : (HostServiceRequest) -> HostServiceResponse) -> Self
+
+pub(all) enum HostServiceKind {
+  ClipboardService
+  MenuService
+  FileDialogService
+  OpenUrlService
+  SystemThemeService
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum HostServiceRequest {
   Clipboard(HostClipboardRequest)
   ShowMenu(Array[@wzzc-dev/moui/core.ActionCommand])
@@ -207,6 +224,7 @@ pub(all) enum HostServiceRequest {
   OpenUrl(String)
   QuerySystemTheme
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceRequest::kind(Self) -> HostServiceKind
 pub fn HostServiceRequest::unavailable_message(Self) -> String
 
 pub(all) enum HostServiceResponse {

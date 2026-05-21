@@ -203,6 +203,79 @@ test "host service bridge routes typed platform channels" {
 }
 
 ///|
+test "host service bridge routes registered typed services before fallback" {
+  let fallback = Ref(0)
+  let clipboard_written = Ref("")
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(
+      clipboard=true,
+      open_url=true,
+      system_theme=true,
+    ),
+    handle=request => {
+      fallback.val = fallback.val + 1
+      HostServiceResponse::Unavailable(request.unavailable_message())
+    },
+  )
+  bridge.register_service(
+    HostServiceHandler::new(kind=HostServiceKind::ClipboardService, handle=request => {
+      match request {
+        Clipboard(WriteText(text)) => {
+          clipboard_written.val = text
+          HostServiceResponse::ClipboardWritten
+        }
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText("registered")
+        _ => HostServiceResponse::Unavailable("wrong service")
+      }
+    }),
+  )
+  bridge.register_service(
+    HostServiceHandler::new(kind=HostServiceKind::SystemThemeService, handle=_request => {
+      HostServiceResponse::SystemTheme(@core.ColorScheme::Dark)
+    }),
+  )
+  match
+    bridge.dispatch(
+      HostServiceRequest::Clipboard(HostClipboardRequest::WriteText("hello")),
+    ) {
+    HostServiceResponse::ClipboardWritten => ()
+    _ => fail("expected registered clipboard service")
+  }
+  inspect(clipboard_written.val, content="hello")
+  match bridge.dispatch(HostServiceRequest::QuerySystemTheme) {
+    HostServiceResponse::SystemTheme(@core.ColorScheme::Dark) => ()
+    _ => fail("expected registered theme service")
+  }
+  match bridge.dispatch(HostServiceRequest::OpenUrl("https://example.test")) {
+    HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="open URL service is unavailable")
+    _ => fail("expected fallback service")
+  }
+  inspect(fallback.val, content="1")
+}
+
+///|
+test "host service bridge gates registered services by capability" {
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::none(),
+    handle=_request => HostServiceResponse::ClipboardWritten,
+  )
+  bridge.register_service(
+    HostServiceHandler::new(kind=HostServiceKind::ClipboardService, handle=_request => {
+      HostServiceResponse::ClipboardWritten
+    }),
+  )
+  match
+    bridge.dispatch(
+      HostServiceRequest::Clipboard(HostClipboardRequest::WriteText("blocked")),
+    ) {
+    HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="clipboard service is unavailable")
+    _ => fail("expected capability gate before registered service")
+  }
+}
+
+///|
 test "native accessibility bridge snapshots semantics recursively" {
   let child = @core.SemanticsNode::{
     element_id: @core.ElementId::new(2),
