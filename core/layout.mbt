@@ -241,6 +241,10 @@ fn ElementNode::child_frames_for_place(
   self : ElementNode,
   frame : Rect,
 ) -> Array[Rect] {
+  match self.taffy_child_frames_for_place(frame) {
+    Some(frames) => return frames
+    None => ()
+  }
   match self.spec {
     FlexSpec(data) =>
       flex_child_frames(
