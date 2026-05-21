@@ -26,8 +26,8 @@ Status meanings:
 | Layer compositing | partial | partial | `PushLayer` / `PopLayer` now model opacity, blend mode, masks, and offscreen intent; native and WebGPU still need retained layer pass execution. |
 | Blend mode | partial | partial | `BlendMode` is carried by `LayerSpec`; GPU pipeline blend-state mapping remains follow-up work. |
 | Filter effect | partial | partial | `PushFilter` / `PopFilter` now model blur, color, and contrast-style effects; shader pass execution remains follow-up work. |
-| Path/vector | partial | partial | `DrawPath` now models move/line/quad/cubic/close verbs with fill and stroke brushes; tessellation remains follow-up work. |
-| Shader effect | partial | partial | `DrawShaderEffect` now models named effects, uniforms, frame, and fallback brush; shader registry and host ABI are still follow-up work. |
+| Path/vector | ready | ready | `DrawPath` models move/line/quad/cubic/close verbs and is lowered by the shared tessellator into fill and stroke triangle vertices before renderer execution. |
+| Shader effect | partial | partial | `DrawShaderEffect` resolves through a shared registry with built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`; GPU shader execution and host ABI remain follow-up work. |
 | Text shaping | partial | partial | Native has HarfBuzz shaping and fallback faces; full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
 | Async image | partial | partial | Images are cached after load/decode, but loading/error state and resource lifecycle APIs are not surfaced to app code yet. |
@@ -42,12 +42,14 @@ handling.
 Clip support uses transformed rectangular scissor rectangles and rounded clips
 with shader SDF masks. Transform support is applied to planned visual, image,
 and text vertices. Opacity is folded into visual and text vertex alpha.
-Layer compositing, blend modes, filters, vector paths, and shader effects now
-have renderer-neutral command intents. `render/capabilities.mbt` also exposes a
-command fallback planner that reports planned skips, unbalanced pops, and open
-advanced scopes for native and WebGPU adapters. Native wgpu still needs the
-actual offscreen passes, mask composition, path tessellation, filter shaders,
-and shader registry. Native color emoji remains an explicit gap. Text shaping is partial: HarfBuzz and
+Layer compositing, blend modes, filters, and shader effects now have
+renderer-neutral command intents. Vector paths additionally have a shared
+tessellation contract that lowers fills and strokes into triangle vertices,
+including flattened quadratic and cubic segments. `render/capabilities.mbt`
+also exposes a command fallback planner that reports planned skips, unbalanced
+pops, and open advanced scopes for native and WebGPU adapters. Native wgpu still
+needs actual offscreen passes, mask composition, filter shaders, and GPU shader
+registry execution. Native color emoji remains an explicit gap. Text shaping is partial: HarfBuzz and
 fallback faces exist, but full bidi, line breaking, and typography conformance
 are still follow-up work. Native image support is synchronous from the app
 model's point of view; async loading and resource lifecycle state are not
@@ -67,10 +69,11 @@ Clip support maps transformed rectangular clip stacks to per-item scissor
 rectangles. Transform support is folded into generated visual, image, and text
 vertices, with clip scissors derived from transformed bounding boxes.
 The Web runtime has browser image loading and canvas-rasterized text, but
-layer compositing, blend modes, filters, arbitrary paths, and user shader
-effects are represented by the MoonBit command model but not yet forwarded in
-the browser host ABI; skipped advanced commands are retained in the renderer's
-last fallback plan for diagnostics. Emoji and complex text shaping rely on
+layer compositing, blend modes, filters, and user shader effects are represented
+by the MoonBit command model but not yet forwarded in the browser host ABI.
+Arbitrary paths share the same MoonBit tessellation contract as native, so host
+upload can consume deterministic triangle meshes. Skipped advanced commands are
+retained in the renderer's last fallback plan for diagnostics. Emoji and complex text shaping rely on
 browser font behavior and need deterministic conformance tests.
 
 ## Update Rule

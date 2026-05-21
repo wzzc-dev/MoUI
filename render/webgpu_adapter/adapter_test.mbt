@@ -264,11 +264,10 @@ test "wgpu web renderer reports skipped advanced command fallbacks" {
     @core.DrawCommand::PopLayer,
   ])
   let plan = renderer.last_fallback_plan()
-  inspect(plan.fallback_count, content="2")
+  inspect(plan.fallback_count, content="1")
   assert_true(
     plan.fallbacks[0].feature == @render.RendererFeature::LayerCompositing,
   )
-  assert_true(plan.fallbacks[1].feature == @render.RendererFeature::PathVector)
 }
 
 ///|

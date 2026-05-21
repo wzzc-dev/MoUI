@@ -31,8 +31,9 @@ test "renderer capability report tracks draw command support" {
     is Some(path) else {
     fail("expected path capability")
   }
-  assert_true(path.native_status == @render.RendererFeatureStatus::Partial)
-  assert_true(path.native_note.contains("DrawPath"))
+  assert_true(path.native_status == @render.RendererFeatureStatus::Ready)
+  assert_true(path.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(path.native_note.contains("tessellator"))
   guard @render.renderer_feature_capability(@render.RendererFeature::TextShaping)
     is Some(text_shaping) else {
     fail("expected text shaping capability")
@@ -41,7 +42,7 @@ test "renderer capability report tracks draw command support" {
 }
 
 ///|
-test "renderer neutral advanced commands are modeled but skipped by legacy batching" {
+test "renderer neutral advanced commands are modeled with executable path mesh" {
   let rect = @core.Rect::new(x=0.0, y=0.0, width=24.0, height=24.0)
   let commands : Array[@core.DrawCommand] = [
     @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5, offscreen=true)),
@@ -51,6 +52,7 @@ test "renderer neutral advanced commands are modeled but skipped by legacy batch
         verbs=[
           @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
           @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=10.0)),
           @core.PathVerb::Close,
         ],
         fill=Some(@core.Brush::solid(@core.Color::blue())),
@@ -69,15 +71,18 @@ test "renderer neutral advanced commands are modeled but skipped by legacy batch
   inspect(@render.collect_rect_batches(commands).length(), content="0")
   let plan = @render.plan_renderer_command_fallbacks(commands)
   inspect(plan.total_commands, content="6")
-  inspect(plan.fallback_count, content="4")
+  inspect(plan.fallback_count, content="3")
   inspect(plan.final_layer_depth, content="0")
   inspect(plan.final_filter_depth, content="0")
   assert_true(
     plan.fallbacks[0].feature == @render.RendererFeature::LayerCompositing,
   )
   assert_true(plan.fallbacks[1].feature == @render.RendererFeature::FilterEffect)
-  assert_true(plan.fallbacks[2].feature == @render.RendererFeature::PathVector)
-  assert_true(plan.fallbacks[3].feature == @render.RendererFeature::ShaderEffect)
+  assert_true(plan.fallbacks[2].feature == @render.RendererFeature::ShaderEffect)
+  guard commands[2] is @core.DrawCommand::DrawPath(path) else {
+    fail("expected path command")
+  }
+  inspect(@render.tessellate_path(path).vertices.length(), content="3")
 }
 
 ///|
@@ -102,7 +107,7 @@ test "renderer command planner reports unbalanced advanced scopes" {
 ///|
 test "renderer capability follow ups stay focused on native gaps" {
   let follow_ups = @render.renderer_feature_follow_ups()
-  inspect(follow_ups.length(), content="10")
+  inspect(follow_ups.length(), content="9")
   let mut has_transform = false
   let mut has_clip = false
   let mut has_layer = false
@@ -125,4 +130,39 @@ test "renderer capability follow ups stay focused on native gaps" {
   assert_true(has_clip)
   assert_true(has_layer)
   assert_true(has_async_image)
+}
+
+///|
+test "path tessellator lowers fill stroke and curves into vertices" {
+  let path = @core.PathSpec::new(
+    verbs=[
+      @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+      @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
+      @core.PathVerb::QuadTo(
+        @core.Point::new(x=12.0, y=4.0),
+        @core.Point::new(x=10.0, y=8.0),
+      ),
+      @core.PathVerb::Close,
+    ],
+    fill=Some(@core.Brush::solid(@core.Color::blue())),
+    stroke=Some(@core.Brush::solid(@core.Color::black())),
+    stroke_width=2.0,
+  )
+  let mesh = @render.tessellate_path(path)
+  assert_true(mesh.vertices.length() > 3)
+  inspect(mesh.diagnostics.length(), content="0")
+}
+
+///|
+test "shader registry resolves builtins and reports fallback" {
+  let rect = @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0)
+  let ready = @render.resolve_shader_effect(
+    @core.ShaderEffectSpec::new(name="checker", frame=rect),
+  )
+  assert_true(ready.status == @render.ShaderRegistryStatus::ShaderReady)
+  let fallback = @render.resolve_shader_effect(
+    @core.ShaderEffectSpec::new(name="missing", frame=rect),
+  )
+  assert_true(fallback.status == @render.ShaderRegistryStatus::ShaderFallback)
+  assert_true(fallback.diagnostic.contains("missing"))
 }
