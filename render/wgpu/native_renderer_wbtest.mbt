@@ -244,3 +244,24 @@ test "native renderer plans image clip transform and opacity commands" {
     _ => fail("expected native image item")
   }
 }
+
+///|
+test "native renderer reports planned advanced command fallbacks" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5)),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="checker",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      ),
+    ),
+    @core.DrawCommand::PopLayer,
+  ])
+  inspect(renderer.unsupported_command_count, content="2")
+}

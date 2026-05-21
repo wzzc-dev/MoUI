@@ -37,6 +37,31 @@ pub(all) struct RendererFeatureCapability {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum RendererCommandFallbackKind {
+  PlannedFallback
+  UnbalancedPop
+  UnclosedScope
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RendererCommandFallback {
+  index : Int
+  feature : RendererFeature
+  command : String
+  kind : RendererCommandFallbackKind
+  reason : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RendererCommandPlan {
+  total_commands : Int
+  fallback_count : Int
+  final_layer_depth : Int
+  final_filter_depth : Int
+  fallbacks : Array[RendererCommandFallback]
+} derive(Eq, Debug, ToJson)
+
+///|
 pub fn RendererFeature::label(self : RendererFeature) -> String {
   match self {
     Rect => "rect"
@@ -226,4 +251,126 @@ pub fn renderer_feature_follow_ups() -> Array[RendererFeatureCapability] {
     }
   }
   follow_ups
+}
+
+///|
+pub fn plan_renderer_command_fallbacks(
+  commands : Array[@core.DrawCommand],
+) -> RendererCommandPlan {
+  let fallbacks : Array[RendererCommandFallback] = []
+  let mut layer_depth = 0
+  let mut filter_depth = 0
+  for index, command in commands {
+    match command {
+      @core.DrawCommand::PushLayer(_) => {
+        layer_depth = layer_depth + 1
+        fallbacks.push(
+          renderer_command_fallback(
+            index~,
+            feature=RendererFeature::LayerCompositing,
+            command="PushLayer",
+            reason="layer intent is modeled, but retained offscreen compositing is not executed by the renderer yet",
+          ),
+        )
+      }
+      @core.DrawCommand::PopLayer =>
+        if layer_depth <= 0 {
+          fallbacks.push(
+            renderer_command_fallback(
+              index~,
+              feature=RendererFeature::LayerCompositing,
+              command="PopLayer",
+              kind=RendererCommandFallbackKind::UnbalancedPop,
+              reason="PopLayer has no matching PushLayer",
+            ),
+          )
+        } else {
+          layer_depth = layer_depth - 1
+        }
+      @core.DrawCommand::PushFilter(_) => {
+        filter_depth = filter_depth + 1
+        fallbacks.push(
+          renderer_command_fallback(
+            index~,
+            feature=RendererFeature::FilterEffect,
+            command="PushFilter",
+            reason="filter intent is modeled, but GPU filter passes are not executed by the renderer yet",
+          ),
+        )
+      }
+      @core.DrawCommand::PopFilter =>
+        if filter_depth <= 0 {
+          fallbacks.push(
+            renderer_command_fallback(
+              index~,
+              feature=RendererFeature::FilterEffect,
+              command="PopFilter",
+              kind=RendererCommandFallbackKind::UnbalancedPop,
+              reason="PopFilter has no matching PushFilter",
+            ),
+          )
+        } else {
+          filter_depth = filter_depth - 1
+        }
+      @core.DrawCommand::DrawPath(_) =>
+        fallbacks.push(
+          renderer_command_fallback(
+            index~,
+            feature=RendererFeature::PathVector,
+            command="DrawPath",
+            reason="vector path intent is modeled, but tessellation or path rasterization is not executed yet",
+          ),
+        )
+      @core.DrawCommand::DrawShaderEffect(_) =>
+        fallbacks.push(
+          renderer_command_fallback(
+            index~,
+            feature=RendererFeature::ShaderEffect,
+            command="DrawShaderEffect",
+            reason="shader effect intent is modeled, but shader registry execution is not implemented yet",
+          ),
+        )
+      _ => ()
+    }
+  }
+  if layer_depth > 0 {
+    fallbacks.push(
+      renderer_command_fallback(
+        index=commands.length(),
+        feature=RendererFeature::LayerCompositing,
+        command="PushLayer",
+        kind=RendererCommandFallbackKind::UnclosedScope,
+        reason="command stream ended with an open layer scope",
+      ),
+    )
+  }
+  if filter_depth > 0 {
+    fallbacks.push(
+      renderer_command_fallback(
+        index=commands.length(),
+        feature=RendererFeature::FilterEffect,
+        command="PushFilter",
+        kind=RendererCommandFallbackKind::UnclosedScope,
+        reason="command stream ended with an open filter scope",
+      ),
+    )
+  }
+  {
+    total_commands: commands.length(),
+    fallback_count: fallbacks.length(),
+    final_layer_depth: layer_depth,
+    final_filter_depth: filter_depth,
+    fallbacks,
+  }
+}
+
+///|
+fn renderer_command_fallback(
+  index~ : Int,
+  feature~ : RendererFeature,
+  command~ : String,
+  reason~ : String,
+  kind? : RendererCommandFallbackKind = RendererCommandFallbackKind::PlannedFallback,
+) -> RendererCommandFallback {
+  { index, feature, command, kind, reason }
 }

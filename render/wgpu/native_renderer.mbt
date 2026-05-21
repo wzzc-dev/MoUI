@@ -356,8 +356,7 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
 fn count_native_unsupported_commands(
   commands : Array[@core.DrawCommand],
 ) -> Int {
-  let _ = commands
-  0
+  @render.plan_renderer_command_fallbacks(commands).fallback_count
 }
 
 ///|
