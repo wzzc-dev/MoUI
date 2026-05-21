@@ -45,7 +45,10 @@ and text vertices. Opacity is folded into visual and text vertex alpha.
 Layer compositing, blend modes, filters, and shader effects now have
 renderer-neutral command intents. Vector paths additionally have a shared
 tessellation contract that lowers fills and strokes into triangle vertices,
-including flattened quadratic and cubic segments. `render/capabilities.mbt`
+including flattened quadratic and cubic segments. A renderer-neutral SVG subset
+import path lowers inline `rect`, `circle`, `line`, `polyline`, and `polygon`
+elements into the same draw-command model while reporting unsupported SMIL
+animation and `foreignObject` usage. `render/capabilities.mbt`
 also exposes a command fallback planner that reports planned skips, unbalanced
 pops, and open advanced scopes for native and WebGPU adapters. Native wgpu still
 needs actual offscreen passes, mask composition, filter shaders, and GPU shader

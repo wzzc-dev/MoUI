@@ -199,3 +199,28 @@ test "image lifecycle records loading ready failure and eviction" {
     None => ()
   }
 }
+
+///|
+test "svg subset importer lowers shapes to draw commands" {
+  let svg = "<svg><rect x=\"1\" y=\"2\" width=\"10\" height=\"20\" fill=\"blue\"/><circle cx=\"8\" cy=\"8\" r=\"4\" fill=\"red\"/><line x1=\"0\" y1=\"0\" x2=\"10\" y2=\"0\" stroke=\"black\" stroke-width=\"2\"/><polygon points=\"0,0 10,0 10,10\" fill=\"green\"/></svg>"
+  let result = @render.import_svg_subset(svg)
+  inspect(result.diagnostics.length(), content="0")
+  inspect(result.commands.length(), content="4")
+  guard result.commands[0] is @core.DrawCommand::FillRect(rect, color) else {
+    fail("expected rect command")
+  }
+  inspect(rect.origin.x, content="1")
+  assert_true(color == @core.Color::blue())
+  guard result.commands[1] is @core.DrawCommand::DrawPath(circle) else {
+    fail("expected circle path")
+  }
+  assert_true(@render.tessellate_path(circle).vertices.length() > 0)
+}
+
+///|
+test "svg subset importer reports unsupported embedded features" {
+  let result = @render.import_svg_subset(
+    "<svg><foreignObject/><animate attributeName=\"x\"/></svg>",
+  )
+  inspect(result.diagnostics.length(), content="2")
+}
