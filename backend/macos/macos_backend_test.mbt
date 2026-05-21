@@ -21,23 +21,26 @@ test "macos accessibility bridge dispatches semantics actions" {
     frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=32.0),
     children: [],
   }
-  let bridge = macos_accessibility_bridge(
-    root=node,
-    dispatch=(element_id, action, _value) => {
-      if element_id == @core.ElementId::new(9) && action == @core.SemanticsAction::Activate {
-        invoked.val = invoked.val + 1
-        true
-      } else {
-        false
-      }
-    },
-  )
-  match bridge.perform_action(
-    @host.NativeAccessibilityActionRequest::new(
-      element_id=@core.ElementId::new(9),
-      action=@core.SemanticsAction::Activate,
-    ),
-  ) {
+  let bridge = macos_accessibility_bridge(root=node, dispatch=(
+    element_id,
+    action,
+    _value,
+  ) => {
+    if element_id == @core.ElementId::new(9) &&
+      action == @core.SemanticsAction::Activate {
+      invoked.val = invoked.val + 1
+      true
+    } else {
+      false
+    }
+  })
+  match
+    bridge.perform_action(
+      @host.NativeAccessibilityActionRequest::new(
+        element_id=@core.ElementId::new(9),
+        action=@core.SemanticsAction::Activate,
+      ),
+    ) {
     @host.NativeAccessibilityActionResult::Handled => ()
     _ => fail("expected handled AppKit accessibility action")
   }
@@ -45,9 +48,10 @@ test "macos accessibility bridge dispatches semantics actions" {
 }
 
 ///|
-test "macos service bridge exposes open url and system theme scaffold" {
+test "macos service bridge exposes platform clipboard, open url, and system theme" {
   let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Dark)
-  match bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
+  match
+    bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
     @host.HostServiceResponse::UrlOpened => ()
     _ => fail("expected URL opened scaffold response")
   }
@@ -55,12 +59,22 @@ test "macos service bridge exposes open url and system theme scaffold" {
     @host.HostServiceResponse::SystemTheme(@core.ColorScheme::Dark) => ()
     _ => fail("expected dark system theme")
   }
-  match bridge.dispatch(
-    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
-  ) {
-    @host.HostServiceResponse::Unavailable(message) =>
-      inspect(message, content="clipboard service is unavailable")
-    _ => fail("expected clipboard to remain unavailable")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(
+        @host.HostClipboardRequest::WriteText("MoUI macOS clipboard smoke"),
+      ),
+    ) {
+    @host.HostServiceResponse::ClipboardWritten => ()
+    _ => fail("expected native clipboard write")
+  }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
+    ) {
+    @host.HostServiceResponse::ClipboardText(text) =>
+      inspect(text, content="MoUI macOS clipboard smoke")
+    _ => fail("expected native clipboard read")
   }
 }
 

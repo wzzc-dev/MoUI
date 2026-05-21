@@ -53,6 +53,8 @@ The macOS host uses `Milky2018/window/macos` for AppKit windows and installs a
 Window events pass through the shared `backend/host` conversion helpers, and the
 native host owns only AppKit window lifetime, CAMetalLayer surface creation,
 text-input session synchronization, renderer resize, and redraw requests.
+The macOS service bridge also routes text clipboard requests through
+`NSPasteboard` while preserving the shared `HostServiceBridge` contract.
 
 Packages that use `backend/macos` must link the macOS frameworks required by
 the Objective-C stubs during the final native link step. Missing symbols such
@@ -80,7 +82,9 @@ Windows native examples are built with MSYS2 UCRT64 and the static Windows GNU
 The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
 macOS, with platform-specific ownership limited to Win32 window handles, WGPU
 surface creation, resize handling, text-input session synchronization, and redraw
-requests.
+requests. Text clipboard requests are implemented through the Win32
+`CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
+boundary.
 
 The expected archive extraction path is:
 

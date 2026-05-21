@@ -14,12 +14,13 @@ test "windows backend converts resize event" {
 }
 
 ///|
-test "windows service bridge exposes unavailable scaffold" {
+test "windows service bridge exposes clipboard contract" {
   let bridge = windows_service_bridge()
+  inspect(bridge.capabilities.clipboard, content="true")
   match bridge.dispatch(@host.HostServiceRequest::QuerySystemTheme) {
     @host.HostServiceResponse::Unavailable(message) =>
       inspect(message, content="system theme service is unavailable")
-    _ => fail("expected unavailable Windows platform service scaffold")
+    _ => fail("expected unavailable Windows system theme service")
   }
 }
 
@@ -262,23 +263,26 @@ test "windows accessibility bridge dispatches semantics actions" {
     frame: @core.Rect::new(x=0.0, y=0.0, width=120.0, height=32.0),
     children: [],
   }
-  let bridge = windows_accessibility_bridge(
-    root=node,
-    dispatch=(element_id, action, _value) => {
-      if element_id == @core.ElementId::new(11) && action == @core.SemanticsAction::Activate {
-        invoked.val = invoked.val + 1
-        true
-      } else {
-        false
-      }
-    },
-  )
-  match bridge.perform_action(
-    @host.NativeAccessibilityActionRequest::new(
-      element_id=@core.ElementId::new(11),
-      action=@core.SemanticsAction::Activate,
-    ),
-  ) {
+  let bridge = windows_accessibility_bridge(root=node, dispatch=(
+    element_id,
+    action,
+    _value,
+  ) => {
+    if element_id == @core.ElementId::new(11) &&
+      action == @core.SemanticsAction::Activate {
+      invoked.val = invoked.val + 1
+      true
+    } else {
+      false
+    }
+  })
+  match
+    bridge.perform_action(
+      @host.NativeAccessibilityActionRequest::new(
+        element_id=@core.ElementId::new(11),
+        action=@core.SemanticsAction::Activate,
+      ),
+    ) {
     @host.NativeAccessibilityActionResult::Handled => ()
     _ => fail("expected handled UIA accessibility action")
   }

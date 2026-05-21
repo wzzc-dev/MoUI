@@ -7,6 +7,16 @@ extern "C" fn win32_surface_host_hwnd_from_u64(
 ) -> @wgpu_c.OpaquePtr = "moui_windows_surface_host_hwnd_from_u64"
 
 ///|
+extern "C" fn windows_clipboard_has_text() -> Int = "moui_windows_clipboard_has_text"
+
+///|
+extern "C" fn windows_clipboard_read_text_bytes() -> Bytes = "moui_windows_clipboard_read_text"
+
+///|
+#borrow(text)
+extern "C" fn windows_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_windows_clipboard_write_text"
+
+///|
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
   contract_ready : Bool
@@ -69,7 +79,46 @@ pub fn windows_accessibility_bridge(
 
 ///|
 pub fn windows_service_bridge() -> @host.HostServiceBridge {
-  @host.HostServiceBridge::unavailable()
+  @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::Clipboard(clipboard_request) =>
+          dispatch_windows_clipboard(clipboard_request)
+        _ =>
+          @host.HostServiceResponse::Unavailable(request.unavailable_message())
+      }
+    },
+  )
+}
+
+///|
+fn dispatch_windows_clipboard(
+  request : @host.HostClipboardRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    @host.HostClipboardRequest::ReadText =>
+      if windows_clipboard_has_text() != 0 {
+        @host.HostServiceResponse::ClipboardText(
+          @utf8.decode_lossy(
+            windows_clipboard_read_text_bytes()[:],
+            ignore_bom=false,
+          ),
+        )
+      } else {
+        @host.HostServiceResponse::Unavailable(
+          "clipboard does not contain text",
+        )
+      }
+    @host.HostClipboardRequest::WriteText(text) => {
+      let bytes = @utf8.encode(text[:], bom=false)
+      if windows_clipboard_write_text_bytes(bytes) != 0 {
+        @host.HostServiceResponse::ClipboardWritten
+      } else {
+        @host.HostServiceResponse::Unavailable("clipboard write failed")
+      }
+    }
+  }
 }
 
 ///|
