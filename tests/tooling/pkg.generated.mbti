@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/tests/tooling"
+
+// Values
+pub fn tooling_dependencies_available() -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
