@@ -121,12 +121,9 @@ pub fn[T] lazy_grid(
         row_children.push(cell(item).key(key(item)))
       }
       rows.push(
-        grid(
-          row_children,
-          columns~,
-          row_spacing=0.0,
-          column_spacing~,
-        ).key("lazy-grid-row-\{row_index}"),
+        grid(row_children, columns~, row_spacing=0.0, column_spacing~).key(
+          "lazy-grid-row-\{row_index}",
+        ),
       )
     }
   }
@@ -178,5 +175,9 @@ fn lazy_grid_row_count(item_count : Int, columns : Int) -> Int {
 
 ///|
 fn min_int(a : Int, b : Int) -> Int {
-  if a < b { a } else { b }
+  if a < b {
+    a
+  } else {
+    b
+  }
 }

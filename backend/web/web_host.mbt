@@ -83,10 +83,12 @@ pub fn web_service_bridge(
     ),
     handle=request => {
       match request {
-        @host.HostServiceRequest::OpenUrl(_) => @host.HostServiceResponse::UrlOpened
+        @host.HostServiceRequest::OpenUrl(_) =>
+          @host.HostServiceResponse::UrlOpened
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
-        _ => @host.HostServiceResponse::Unavailable(request.unavailable_message())
+        _ =>
+          @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
   )

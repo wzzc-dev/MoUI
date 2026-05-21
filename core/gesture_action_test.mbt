@@ -65,7 +65,9 @@ test "action commands match enabled shortcuts" {
   let defaults = default_text_commands()
   inspect(defaults.length(), content="5")
   assert_true(defaults.any(command => command.intent == CommandIntent::Undo))
-  assert_true(defaults.any(command => command.intent == CommandIntent::SelectAll))
+  assert_true(
+    defaults.any(command => command.intent == CommandIntent::SelectAll),
+  )
 }
 
 ///|
@@ -78,10 +80,7 @@ test "action command map dispatches shortcuts and intents" {
         intent=CommandIntent::Copy,
         label="Copy",
         shortcut=Some(
-          KeyboardShortcut::new(
-            key="c",
-            modifiers=KeyModifiers::new(meta=true),
-          ),
+          KeyboardShortcut::new(key="c", modifiers=KeyModifiers::new(meta=true)),
         ),
       ),
       handle=() => copied.val = copied.val + 1,
@@ -95,15 +94,17 @@ test "action command map dispatches shortcuts and intents" {
       handle=() => pasted.val = pasted.val + 1,
     ),
   ])
-  match map.find_shortcut(
-    KeyboardEvent::new(key="c", modifiers=KeyModifiers::new(meta=true)),
-  ) {
+  match
+    map.find_shortcut(
+      KeyboardEvent::new(key="c", modifiers=KeyModifiers::new(meta=true)),
+    ) {
     Some({ intent: CommandIntent::Copy, .. }) => ()
     _ => fail("expected copy shortcut")
   }
-  match map.dispatch_shortcut(
-    KeyboardEvent::new(key="c", modifiers=KeyModifiers::new(meta=true)),
-  ) {
+  match
+    map.dispatch_shortcut(
+      KeyboardEvent::new(key="c", modifiers=KeyModifiers::new(meta=true)),
+    ) {
     Some(CommandIntent::Copy) => ()
     _ => fail("expected dispatched copy shortcut")
   }
@@ -153,7 +154,10 @@ test "runtime dispatches action command shortcuts before focused text input" {
   )
   runtime.dispatch_event(
     AppEvent::Pointer(
-      PointerEvent::new(position=Point::new(x=8.0, y=8.0), phase=PointerPhase::Down),
+      PointerEvent::new(
+        position=Point::new(x=8.0, y=8.0),
+        phase=PointerPhase::Down,
+      ),
     ),
   )
   runtime.dispatch_event(

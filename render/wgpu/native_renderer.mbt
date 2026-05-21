@@ -154,9 +154,13 @@ fn RendererHandle::resize(
   self : RendererHandle,
   metrics : @render.RendererSurfaceMetrics,
 ) -> Unit {
+  let scale_changed = self.scale_factor != metrics.scale_factor
   self.size = metrics.logical_size
   self.physical_size = metrics.physical_size
   self.scale_factor = metrics.scale_factor
+  if scale_changed {
+    self.glyph_atlas.clear()
+  }
   let physical_size = self.effective_physical_size()
   match (self.surface, self.adapter, self.device) {
     (Some(surface), Some(adapter), Some(device)) => {

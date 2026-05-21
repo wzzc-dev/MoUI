@@ -64,14 +64,12 @@ pub fn readiness() -> LinuxBackendReadiness {
   {
     ready: false,
     blocked_by: [
-      "window/linux package is not available in the local window dependency",
-      "native WGPU surface creation for Linux is not wired",
+      "window/linux package is not available in the local window dependency", "native WGPU surface creation for Linux is not wired",
       "Linux accessibility bridge is not mapped from core semantics",
     ],
     next_steps: [
       "add or consume a window/linux package that emits shared HostEvent values",
-      "create a native WGPU surface path and resize contract for Linux",
-      "map clipboard, menus, file dialogs, and accessibility through host service contracts",
+      "create a native WGPU surface path and resize contract for Linux", "map clipboard, menus, file dialogs, and accessibility through host service contracts",
     ],
   }
 }

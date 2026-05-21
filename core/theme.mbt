@@ -462,7 +462,7 @@ pub fn Environment::with_layout_direction(
   self : Environment,
   layout_direction : LayoutDirection,
 ) -> Environment {
-  { ..self, layout_direction }
+  { ..self, layout_direction, }
 }
 
 ///|
@@ -470,7 +470,7 @@ pub fn Environment::with_accessibility_contrast(
   self : Environment,
   accessibility_contrast : AccessibilityContrast,
 ) -> Environment {
-  { ..self, accessibility_contrast }
+  { ..self, accessibility_contrast, }
 }
 
 ///|
@@ -478,7 +478,7 @@ pub fn Environment::with_reduced_motion(
   self : Environment,
   reduced_motion : Bool,
 ) -> Environment {
-  { ..self, reduced_motion }
+  { ..self, reduced_motion, }
 }
 
 ///|

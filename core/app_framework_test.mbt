@@ -5,9 +5,11 @@ test "router state parses pushes replaces and pops route locations" {
   )
   inspect(router.current().path, content="/home")
   inspect(router.current().query_value("tab").unwrap_or(""), content="overview")
-  router.push(RouteLocation::new(path="/settings", query=[
-    { key: "section", value: "display" },
-  ]))
+  router.push(
+    RouteLocation::new(path="/settings", query=[
+      { key: "section", value: "display" },
+    ]),
+  )
   inspect(router.current().to_route(), content="/settings?section=display")
   router.replace(RouteLocation::new(path="/profile"))
   inspect(router.current().path, content="/profile")

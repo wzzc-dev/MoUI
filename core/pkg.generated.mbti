@@ -242,6 +242,7 @@ pub fn BuildContext::saveable_string(Self, key~ : String, String) -> State[Strin
 pub fn BuildContext::scale_factor(Self) -> Double
 pub fn BuildContext::text_scale(Self) -> Double
 pub fn BuildContext::theme(Self) -> Theme
+pub fn BuildContext::viewport_size(Self) -> Size
 pub fn[T] BuildContext::watch(Self, State[T]) -> T
 pub fn[T] BuildContext::watch_derived(Self, DerivedState[T]) -> T
 pub fn BuildContext::watch_focus(Self, FocusState) -> String?

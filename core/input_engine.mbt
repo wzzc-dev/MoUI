@@ -238,7 +238,8 @@ fn handle_picker_element_pointer(
   event : PointerEvent,
   frame : Rect,
 ) -> ElementEventResult {
-  let main_button_clicked = event.phase == PointerPhase::Up && frame.contains(event.position)
+  let main_button_clicked = event.phase == PointerPhase::Up &&
+    frame.contains(event.position)
   if element.picker_expanded {
     let item_height = 36.0
     let count = data.items.length().to_double()
@@ -284,7 +285,8 @@ fn handle_datepicker_element_pointer(
   event : PointerEvent,
   frame : Rect,
 ) -> ElementEventResult {
-  let main_button_clicked = event.phase == PointerPhase::Up && frame.contains(event.position)
+  let main_button_clicked = event.phase == PointerPhase::Up &&
+    frame.contains(event.position)
   if element.datepicker_expanded {
     let panel_width = max_double(frame.size.width, 280.0)
     let panel_height = 350.0
@@ -305,7 +307,7 @@ fn handle_datepicker_element_pointer(
       let day_header_height = 36.0
       let cell_height = 36.0
       let start_y = panel_frame.origin.y + header_height + day_header_height
-      
+
       let button_size = 32.0
       let left_button_frame = Rect::new(
         x=panel_frame.origin.x + 8.0,
@@ -319,7 +321,7 @@ fn handle_datepicker_element_pointer(
         width=button_size,
         height=button_size,
       )
-      
+
       if left_button_frame.contains(event.position) {
         // 左导航按钮：上一个月
         let view_date = element.datepicker_view
@@ -351,9 +353,9 @@ fn handle_datepicker_element_pointer(
         let y = if month < 3 { year - 1 } else { year }
         let k = y % 100
         let j = y / 100
-        let h = (q + (13 * (m + 1)) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
+        let h = (q + 13 * (m + 1) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
         let first_day_weekday = h
-        
+
         let day_cell_width = panel_frame.size.width / 7.0
         let clicked_x = event.position.x - panel_frame.origin.x
         let clicked_y = event.position.y - start_y
@@ -361,12 +363,12 @@ fn handle_datepicker_element_pointer(
         let row = (clicked_y / cell_height).to_int()
         let total_index = row * 7 + col
         let day = total_index - first_day_weekday + 1
-        
+
         let days_in_month_count = days_in_month(year, month)
         if day >= 1 && day <= days_in_month_count {
           // 有效日期，选中它
           let selected = data.selected.get()
-          let new_selected = { ..selected, year: year, month: month, day: day }
+          let new_selected = { ..selected, year, month, day }
           data.selected.set(new_selected)
           element.datepicker_expanded = false
           element.dirty.mark_paint()
@@ -417,7 +419,7 @@ fn handle_searchbar_element_pointer(
       return { changed: true, activated: true, focused: Some(element.id) }
     }
   }
-  
+
   // 否则，像 TextField 一样处理
   let focused = if event.phase == PointerPhase::Down &&
     frame.contains(event.position) {
@@ -439,7 +441,12 @@ pub fn ElementNode::find_focusable_at(
   render : RenderNode,
 ) -> ElementId? {
   match self.spec {
-    TextFieldSpec(_) | CheckboxSpec(_) | ButtonSpec(_) | PickerSpec(_) | DatePickerSpec(_) | SearchBarSpec(_) =>
+    TextFieldSpec(_)
+    | CheckboxSpec(_)
+    | ButtonSpec(_)
+    | PickerSpec(_)
+    | DatePickerSpec(_)
+    | SearchBarSpec(_) =>
       if render.frame.contains(point) {
         Some(self.id)
       } else {
@@ -873,7 +880,10 @@ fn is_redo_shortcut(event : KeyboardEvent) -> Bool {
 }
 
 ///|
-fn select_text_range(element : ElementNode, text : String) -> ElementEventResult {
+fn select_text_range(
+  element : ElementNode,
+  text : String,
+) -> ElementEventResult {
   let length = text_length(text)
   element.caret = length
   element.selection = Some(TextRange::new(start=0, end=length))
@@ -1075,11 +1085,21 @@ fn handle_rich_text_editor_keyboard(
     return select_text_range(element, data.value.get())
   }
   if is_undo_shortcut(event) {
-    let result = handle_rich_text_editor_command(element, data, Undo, paste_text=None)
+    let result = handle_rich_text_editor_command(
+      element,
+      data,
+      Undo,
+      paste_text=None,
+    )
     return { changed: result.changed, activated: false, focused: None }
   }
   if is_redo_shortcut(event) {
-    let result = handle_rich_text_editor_command(element, data, Redo, paste_text=None)
+    let result = handle_rich_text_editor_command(
+      element,
+      data,
+      Redo,
+      paste_text=None,
+    )
     return { changed: result.changed, activated: false, focused: None }
   }
   if event.key == "Backspace" {

@@ -114,7 +114,9 @@ fn ElementNode::measured_size_from_children(
     SearchBarSpec(_) => Size::new(width=240.0, height=40.0)
     SheetSpec(_) =>
       if children.length() > 0 {
-        children[0].size.inflate(Insets::symmetric(horizontal=16.0, vertical=16.0))
+        children[0].size.inflate(
+          Insets::symmetric(horizontal=16.0, vertical=16.0),
+        )
       } else {
         Size::new(width=240.0, height=200.0)
       }
@@ -181,7 +183,10 @@ fn ElementNode::measured_size_from_children(
           self.children.map(child => child.first_baseline()),
         ),
         cache: data.cache,
-        cache_key: custom_layout_cache_key(self.spec, children.map(child => child.size)),
+        cache_key: custom_layout_cache_key(
+          self.spec,
+          children.map(child => child.size),
+        ),
         layout_direction: LayoutDirection::LeftToRight,
         safe_area: Insets::symmetric(),
         viewport: None,
@@ -302,7 +307,10 @@ fn ElementNode::child_frames_for_place(
           self.children.map(child => child.first_baseline()),
         ),
         cache: data.cache,
-        cache_key: custom_layout_cache_key(self.spec, self.children.map(child => child.intrinsic_size())),
+        cache_key: custom_layout_cache_key(
+          self.spec,
+          self.children.map(child => child.intrinsic_size()),
+        ),
         layout_direction: LayoutDirection::LeftToRight,
         safe_area: Insets::symmetric(),
         viewport: Some(frame.size),

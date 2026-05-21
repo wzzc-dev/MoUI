@@ -61,6 +61,60 @@ test "app runtime component watches state through public API" {
 }
 
 ///|
+test "build context viewport size updates after resize" {
+  let runtime = AppRuntime::new_component(
+    root=Component::new(ctx => {
+      let size = ctx.viewport_size()
+      ViewSpec::TextSpec({
+        key: None,
+        text: "\{size.width}x\{size.height}",
+        size: Size::new(width=140.0, height=24.0),
+        font: FontSpec::new(size=16.0, weight=400),
+        color: Color::black(),
+      })
+    }),
+    size=Size::new(width=120.0, height=40.0),
+  )
+  guard runtime.draw_commands() is [_, DrawText({ text: "120x40", .. })] else {
+    fail("expected initial viewport text")
+  }
+  runtime.dispatch_event(AppEvent::Resize(Size::new(width=240.0, height=160.0)))
+  guard runtime.draw_commands() is [_, DrawText({ text: "240x160", .. })] else {
+    fail("expected resized viewport text")
+  }
+}
+
+///|
+test "searchbar paints vector icons instead of font fallback glyphs" {
+  let query = State::new("abc")
+  let runtime = AppRuntime::new_spec(
+    root=ViewSpec::SearchBarSpec({
+      key: None,
+      query: query.binding(),
+      placeholder: "Search",
+      font: FontSpec::new(size=14.0, weight=400),
+      foreground: Color::black(),
+      placeholder_color: Color::gray(),
+      background: Brush::solid(Color::white()),
+      border: None,
+      focused_border: None,
+      cursor_color: Color::blue(),
+      corner_radius: 8.0,
+      on_submit: None,
+      on_clear: None,
+    }),
+    size=Size::new(width=240.0, height=44.0),
+  )
+  let commands = runtime.draw_commands()
+  assert_false(has_draw_text(commands, "🔍"))
+  assert_false(has_draw_text(commands, "✕"))
+  assert_true(commands.any(command => command is DrawCommand::DrawPath(_)))
+  assert_true(
+    commands.any(command => command is DrawCommand::StrokeRoundedRect(_, _, _)),
+  )
+}
+
+///|
 test "app runtime updates root and environment through public API" {
   let runtime = AppRuntime::new_spec(
     root=ViewSpec::TextSpec({
@@ -91,4 +145,11 @@ test "app runtime updates root and environment through public API" {
   inspect(runtime.environment().text_scale, content="1.25")
   inspect(runtime.environment().locale, content="zh-CN")
   inspect(runtime.needs_redraw(), content="true")
+}
+
+///|
+fn has_draw_text(commands : Array[DrawCommand], text : String) -> Bool {
+  commands.any(command => {
+    command is DrawCommand::DrawText({ text: value, .. }) && value == text
+  })
 }

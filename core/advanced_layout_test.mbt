@@ -167,10 +167,7 @@ test "grid lays children into fixed columns" {
 ///|
 test "custom layout delegate measures places paints and exposes child semantics" {
   let spec = ViewSpec::custom_layout(
-    children=[
-      test_label("A").key("a"),
-      test_label("B").key("b"),
-    ],
+    children=[test_label("A").key("a"), test_label("B").key("b")],
     measure=ctx => {
       ctx.constraints.constrain(
         Size::new(

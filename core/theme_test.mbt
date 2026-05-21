@@ -88,12 +88,7 @@ test "theme environment propagates through build context and render scale" {
   let first = runtime.build_draw_commands()
   guard first[1]
     is DrawText(
-      {
-        text: "zh-CN",
-        font: { size: 13.0, .. },
-        color: color_first,
-        ..,
-      }
+      { text: "zh-CN", font: { size: 13.0, .. }, color: color_first, .. }
     ) else {
     fail("expected environment-driven text")
   }

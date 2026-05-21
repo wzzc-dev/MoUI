@@ -31,9 +31,10 @@ test "linux scaffold exposes host contracts without owning a surface" {
   inspect(input.capabilities().ime, content="false")
   inspect(input.capabilities().clipboard, content="false")
   let services = scaffold_service_bridge()
-  match services.dispatch(
-    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
-  ) {
+  match
+    services.dispatch(
+      @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
+    ) {
     @host.HostServiceResponse::Unavailable(message) =>
       inspect(message, content="clipboard service is unavailable")
     _ => fail("expected unavailable Linux scaffold service")
@@ -51,12 +52,13 @@ test "linux accessibility bridge is explicit unavailable scaffold" {
   let bridge = linux_accessibility_bridge()
   inspect(bridge.kind.label(), content="at-spi")
   inspect(bridge.available, content="false")
-  match bridge.perform_action(
-    @host.NativeAccessibilityActionRequest::new(
-      element_id=@core.ElementId::new(1),
-      action=@core.SemanticsAction::Focus,
-    ),
-  ) {
+  match
+    bridge.perform_action(
+      @host.NativeAccessibilityActionRequest::new(
+        element_id=@core.ElementId::new(1),
+        action=@core.SemanticsAction::Focus,
+      ),
+    ) {
     @host.NativeAccessibilityActionResult::BridgeUnavailable(message) =>
       inspect(
         message,

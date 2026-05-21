@@ -21,7 +21,9 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(opacity.native_status == @render.RendererFeatureStatus::Ready)
   assert_true(opacity.web_status == @render.RendererFeatureStatus::Ready)
-  guard @render.renderer_feature_capability(@render.RendererFeature::LayerCompositing)
+  guard @render.renderer_feature_capability(
+      @render.RendererFeature::LayerCompositing,
+    )
     is Some(layer) else {
     fail("expected layer compositing capability")
   }
@@ -34,18 +36,24 @@ test "renderer capability report tracks draw command support" {
   assert_true(path.native_status == @render.RendererFeatureStatus::Ready)
   assert_true(path.web_status == @render.RendererFeatureStatus::Ready)
   assert_true(path.native_note.contains("moon_zeno"))
-  guard @render.renderer_feature_capability(@render.RendererFeature::TextShaping)
+  guard @render.renderer_feature_capability(
+      @render.RendererFeature::TextShaping,
+    )
     is Some(text_shaping) else {
     fail("expected text shaping capability")
   }
-  assert_true(text_shaping.native_status == @render.RendererFeatureStatus::Partial)
+  assert_true(
+    text_shaping.native_status == @render.RendererFeatureStatus::Partial,
+  )
 }
 
 ///|
 test "renderer neutral advanced commands are modeled with executable path mesh" {
   let rect = @core.Rect::new(x=0.0, y=0.0, width=24.0, height=24.0)
   let commands : Array[@core.DrawCommand] = [
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5, offscreen=true)),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(opacity=0.5, offscreen=true),
+    ),
     @core.DrawCommand::PushFilter(@core.FilterEffect::blur(4.0)),
     @core.DrawCommand::DrawPath(
       @core.PathSpec::new(
@@ -59,11 +67,9 @@ test "renderer neutral advanced commands are modeled with executable path mesh" 
       ),
     ),
     @core.DrawCommand::DrawShaderEffect(
-      @core.ShaderEffectSpec::new(
-        name="checker",
-        frame=rect,
-        uniforms=[1.0, 2.0],
-      ),
+      @core.ShaderEffectSpec::new(name="checker", frame=rect, uniforms=[
+        1.0, 2.0,
+      ]),
     ),
     @core.DrawCommand::PopFilter,
     @core.DrawCommand::PopLayer,
@@ -77,8 +83,12 @@ test "renderer neutral advanced commands are modeled with executable path mesh" 
   assert_true(
     plan.fallbacks[0].feature == @render.RendererFeature::LayerCompositing,
   )
-  assert_true(plan.fallbacks[1].feature == @render.RendererFeature::FilterEffect)
-  assert_true(plan.fallbacks[2].feature == @render.RendererFeature::ShaderEffect)
+  assert_true(
+    plan.fallbacks[1].feature == @render.RendererFeature::FilterEffect,
+  )
+  assert_true(
+    plan.fallbacks[2].feature == @render.RendererFeature::ShaderEffect,
+  )
   guard commands[2] is @core.DrawCommand::DrawPath(path) else {
     fail("expected path command")
   }
@@ -96,7 +106,8 @@ test "renderer command planner reports unbalanced advanced scopes" {
     plan.fallbacks[0].kind == @render.RendererCommandFallbackKind::UnbalancedPop,
   )
   assert_true(
-    plan.fallbacks[1].kind == @render.RendererCommandFallbackKind::PlannedFallback,
+    plan.fallbacks[1].kind ==
+    @render.RendererCommandFallbackKind::PlannedFallback,
   )
   assert_true(
     plan.fallbacks[2].kind == @render.RendererCommandFallbackKind::UnclosedScope,
@@ -204,7 +215,8 @@ test "image lifecycle records loading ready failure and eviction" {
   let lifecycle = @render.ImageResourceLifecycle::new()
   ignore(lifecycle.mark_loading("a.png"))
   match lifecycle.lookup("a.png") {
-    Some(record) => assert_true(record.status == @render.ImageResourceStatus::ImageLoading)
+    Some(record) =>
+      assert_true(record.status == @render.ImageResourceStatus::ImageLoading)
     None => fail("expected loading record")
   }
   ignore(lifecycle.mark_ready("a.png", width=24, height=12))

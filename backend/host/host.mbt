@@ -666,7 +666,9 @@ pub fn accesskit_action_from_semantics(
 pub fn accesskit_node_from_semantics(
   node : @core.SemanticsNode,
 ) -> @accesskit.Node {
-  let access_node = @accesskit.Node::new(accesskit_role_from_semantics(node.role))
+  let access_node = @accesskit.Node::new(
+    accesskit_role_from_semantics(node.role),
+  )
   access_node.set_bounds(accesskit_rect_from_core(node.frame))
   if node.label != "" {
     access_node.set_label(node.label)
@@ -746,19 +748,17 @@ pub fn NativeAccessibilityNode::from_accesskit(
       }
     }
   }
-  NativeAccessibilityNode::from_semantics(
-    @core.SemanticsNode::{
-      element_id,
-      role,
-      label: "",
-      value: "",
-      state: @core.SemanticsState::default(),
-      actions: [],
-      focus_order: None,
-      frame: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
-      children: [],
-    },
-  )
+  NativeAccessibilityNode::from_semantics(@core.SemanticsNode::{
+    element_id,
+    role,
+    label: "",
+    value: "",
+    state: @core.SemanticsState::default(),
+    actions: [],
+    focus_order: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+    children: [],
+  })
 }
 
 ///|
@@ -1218,17 +1218,20 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
         Some(text) =>
           ignore(
             services.dispatch(
-              HostServiceRequest::Clipboard(HostClipboardRequest::WriteText(text)),
+              HostServiceRequest::Clipboard(
+                HostClipboardRequest::WriteText(text),
+              ),
             ),
           )
         None => ()
       }
       self.request_redraw_if_needed()
     }
-    @core.CommandIntent::Paste => {
-      match services.dispatch(
-        HostServiceRequest::Clipboard(HostClipboardRequest::ReadText),
-      ) {
+    @core.CommandIntent::Paste =>
+      match
+        services.dispatch(
+          HostServiceRequest::Clipboard(HostClipboardRequest::ReadText),
+        ) {
         HostServiceResponse::ClipboardText(text) => {
           ignore(
             self.runtime.dispatch_focused_text_command(
@@ -1240,16 +1243,13 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
         }
         _ => ()
       }
-    }
-    _ => {
+    _ =>
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()
       }
-    }
   }
   self.event_result()
 }
-
 
 ///|
 pub fn HostRuntimeDriver::request_redraw(self : HostRuntimeDriver) -> Unit {

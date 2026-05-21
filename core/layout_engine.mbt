@@ -245,7 +245,10 @@ fn ElementNode::layout_priority(self : ElementNode) -> Double {
 }
 
 ///|
-fn custom_layout_cache_key(_spec : ViewSpec, child_sizes : Array[Size]) -> String {
+fn custom_layout_cache_key(
+  _spec : ViewSpec,
+  child_sizes : Array[Size],
+) -> String {
   let prefix = "custom-layout"
   let parts : Array[String] = []
   for size in child_sizes {

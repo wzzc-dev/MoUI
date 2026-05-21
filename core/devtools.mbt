@@ -229,5 +229,9 @@ fn semantics_max_depth(node : SemanticsNode) -> Int {
 
 ///|
 fn devtools_max_int(a : Int, b : Int) -> Int {
-  if a > b { a } else { b }
+  if a > b {
+    a
+  } else {
+    b
+  }
 }

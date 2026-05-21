@@ -127,7 +127,7 @@ fn TextCommandResult::ignored() -> TextCommandResult {
 
 ///|
 fn TextCommandResult::handled(
-  changed~ : Bool = false,
+  changed? : Bool = false,
   clipboard_text? : String? = None,
 ) -> TextCommandResult {
   { handled: true, changed, clipboard_text }
@@ -165,7 +165,11 @@ fn restore_text_history(
   apply : (TextEditResult) -> ElementEventResult,
   undo~ : Bool,
 ) -> TextCommandResult {
-  let source = if undo { element.text_undo_stack } else { element.text_redo_stack }
+  let source = if undo {
+    element.text_undo_stack
+  } else {
+    element.text_redo_stack
+  }
   if source.length() == 0 {
     return TextCommandResult::handled()
   }
@@ -512,7 +516,7 @@ fn ElementNode::dispatch_text_command(
   self : ElementNode,
   target : ElementId,
   intent : CommandIntent,
-  paste_text~ : String? = None,
+  paste_text? : String? = None,
 ) -> TextCommandResult {
   if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) {
     return TextCommandResult::ignored()
@@ -558,8 +562,15 @@ fn handle_text_field_command(
       let copied = selected_text(text, element.selection)
       match active_text_selection(element.selection) {
         Some(selection) => {
-          let result = handle_text_field_input(element, data, DeleteRange(selection))
-          TextCommandResult::handled(changed=result.changed, clipboard_text=Some(copied))
+          let result = handle_text_field_input(
+            element,
+            data,
+            DeleteRange(selection),
+          )
+          TextCommandResult::handled(
+            changed=result.changed,
+            clipboard_text=Some(copied),
+          )
         }
         None => TextCommandResult::handled(clipboard_text=Some(""))
       }
@@ -611,8 +622,15 @@ fn handle_searchbar_command(
       let copied = selected_text(text, element.selection)
       match active_text_selection(element.selection) {
         Some(selection) => {
-          let result = handle_searchbar_input(element, data, DeleteRange(selection))
-          TextCommandResult::handled(changed=result.changed, clipboard_text=Some(copied))
+          let result = handle_searchbar_input(
+            element,
+            data,
+            DeleteRange(selection),
+          )
+          TextCommandResult::handled(
+            changed=result.changed,
+            clipboard_text=Some(copied),
+          )
         }
         None => TextCommandResult::handled(clipboard_text=Some(""))
       }
@@ -669,7 +687,10 @@ fn handle_rich_text_editor_command(
             data,
             DeleteRange(selection),
           )
-          TextCommandResult::handled(changed=result.changed, clipboard_text=Some(copied))
+          TextCommandResult::handled(
+            changed=result.changed,
+            clipboard_text=Some(copied),
+          )
         }
         None => TextCommandResult::handled(clipboard_text=Some(""))
       }
@@ -677,7 +698,11 @@ fn handle_rich_text_editor_command(
     Paste =>
       match paste_text {
         Some(value) => {
-          let result = handle_rich_text_editor_input(element, data, InsertText(value))
+          let result = handle_rich_text_editor_input(
+            element,
+            data,
+            InsertText(value),
+          )
           TextCommandResult::handled(changed=result.changed)
         }
         None => TextCommandResult::handled()

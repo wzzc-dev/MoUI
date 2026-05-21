@@ -88,7 +88,7 @@ pub fn dialog_host(
             dialog.semantics_role(@core.SemanticsRole::Dialog),
             width=360.0,
             height=220.0,
-            style=@core.SurfaceStyle::raised(),
+            style={ ..@core.SurfaceStyle::raised(), shadow: None },
           ).align(alignment=@core.Alignment::center()),
         ])
       None => child

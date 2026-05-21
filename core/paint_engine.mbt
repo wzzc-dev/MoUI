@@ -196,19 +196,28 @@ fn ElementNode::render_with_environment(
     DatePickerSpec(data) =>
       append_datepicker_commands(commands, self, data, bounds, environment)
     SearchBarSpec(data) =>
-      append_searchbar_commands(commands, self, data, bounds, environment, focused)
+      append_searchbar_commands(
+        commands, self, data, bounds, environment, focused,
+      )
     SheetSpec(data) => {
       // Sheet background and shadow
       let rounded = RoundedRect::new(rect=bounds, radius=data.corner_radius)
       match data.shadow {
-        Some(shadow) => commands.push(DrawShadow(shadow_style_to_spec(shadow, bounds, data.corner_radius)))
+        Some(shadow) =>
+          commands.push(
+            DrawShadow(shadow_style_to_spec(shadow, bounds, data.corner_radius)),
+          )
         None => ()
       }
       commands.push(FillRoundedRectBrush(rounded, data.background))
       // Render the content child
       if self.children.length() > 0 {
         children.push(
-          self.children[0].render_with_environment(bounds.inset(Insets::symmetric(horizontal=16.0, vertical=16.0)), focused, environment),
+          self.children[0].render_with_environment(
+            bounds.inset(Insets::symmetric(horizontal=16.0, vertical=16.0)),
+            focused,
+            environment,
+          ),
         )
       }
     }
@@ -381,7 +390,10 @@ fn ElementNode::render_with_environment(
           self.children.map(child => child.first_baseline()),
         ),
         cache: data.cache,
-        cache_key: custom_layout_cache_key(self.spec, self.children.map(child => child.intrinsic_size())),
+        cache_key: custom_layout_cache_key(
+          self.spec,
+          self.children.map(child => child.intrinsic_size()),
+        ),
         layout_direction: environment.layout_direction,
         safe_area: Insets::symmetric(),
         viewport: Some(bounds.size),
@@ -703,7 +715,9 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
     SheetSpec(_data) =>
       if self.children.length() > 0 {
         // Add padding to child size
-        self.children[0].intrinsic_size().inflate(Insets::symmetric(horizontal=16.0, vertical=16.0))
+        self.children[0]
+        .intrinsic_size()
+        .inflate(Insets::symmetric(horizontal=16.0, vertical=16.0))
       } else {
         Size::new(width=240.0, height=200.0)
       }
@@ -770,7 +784,10 @@ pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
           self.children.map(child => child.first_baseline()),
         ),
         cache: data.cache,
-        cache_key: custom_layout_cache_key(self.spec, self.children.map(child => child.intrinsic_size())),
+        cache_key: custom_layout_cache_key(
+          self.spec,
+          self.children.map(child => child.intrinsic_size()),
+        ),
         layout_direction: LayoutDirection::LeftToRight,
         safe_area: Insets::symmetric(),
         viewport: None,
@@ -1101,14 +1118,21 @@ fn append_picker_commands(
       width=frame.size.width,
       height=list_height,
     )
-    let list_rounded = RoundedRect::new(rect=list_frame, radius=data.cornerRadius)
-    commands.push(DrawShadow(ShadowSpec::new(
-      rect=list_rounded,
-      color=Color::black().with_alpha(0.15),
-      offset=Point::new(x=0.0, y=4.0),
-      blur_radius=12.0,
-      spread=0.0,
-    )))
+    let list_rounded = RoundedRect::new(
+      rect=list_frame,
+      radius=data.cornerRadius,
+    )
+    commands.push(
+      DrawShadow(
+        ShadowSpec::new(
+          rect=list_rounded,
+          color=Color::black().with_alpha(0.15),
+          offset=Point::new(x=0.0, y=4.0),
+          blur_radius=12.0,
+          spread=0.0,
+        ),
+      ),
+    )
     commands.push(FillRoundedRectBrush(list_rounded, data.background))
     for i, item in data.items {
       let index = i.to_double()
@@ -1120,25 +1144,34 @@ fn append_picker_commands(
       )
       let is_selected = item.id == data.selected.get()
       if is_selected {
-        commands.push(FillRoundedRectBrush(
-          RoundedRect::new(
-            rect=item_frame.inset(Insets::symmetric(horizontal=4.0, vertical=2.0)),
-            radius=4.0,
+        commands.push(
+          FillRoundedRectBrush(
+            RoundedRect::new(
+              rect=item_frame.inset(
+                Insets::symmetric(horizontal=4.0, vertical=2.0),
+              ),
+              radius=4.0,
+            ),
+            Brush::solid(Theme::default().palette.primary.with_alpha(0.1)),
           ),
-          Brush::solid(Theme::default().palette.primary.with_alpha(0.1)),
-        ))
+        )
       }
       commands.push(
         DrawText(
           TextRun::new(
             text=item.label,
-            frame=item_frame.inset(Insets::symmetric(horizontal=12.0, vertical=0.0)),
+            frame=item_frame.inset(
+              Insets::symmetric(horizontal=12.0, vertical=0.0),
+            ),
             font=environment_font(environment, data.font),
-            color=environment_color(environment, if is_selected {
-              Theme::default().palette.primary
-            } else {
-              data.foreground
-            }),
+            color=environment_color(
+              environment,
+              if is_selected {
+                Theme::default().palette.primary
+              } else {
+                data.foreground
+              },
+            ),
             align=TextAlign::TextStart,
           ),
         ),
@@ -1158,11 +1191,11 @@ fn append_datepicker_commands(
   let rounded = RoundedRect::new(rect=frame, radius=data.corner_radius)
   let theme = Theme::default()
   let border_color = Brush::solid(theme.palette.outline.with_alpha(0.5))
-  
+
   // 绘制选择器背景和边框
   commands.push(FillRoundedRectBrush(rounded, data.background))
   commands.push(StrokeRoundedRectBrush(rounded, border_color, 1.0))
-  
+
   // 显示选中的日期或占位符
   let selected = data.selected.get()
   let display_text = selected.format(data.mode)
@@ -1179,7 +1212,7 @@ fn append_datepicker_commands(
       ),
     ),
   )
-  
+
   // 绘制箭头指示器
   let arrow_size = 16.0
   let arrow_frame = Rect::new(
@@ -1198,7 +1231,7 @@ fn append_datepicker_commands(
       ),
     ),
   )
-  
+
   // 展开时显示日期选择面板
   if element.datepicker_expanded {
     let panel_width = max_double(frame.size.width, 280.0)
@@ -1210,15 +1243,19 @@ fn append_datepicker_commands(
       height=panel_height,
     )
     let panel_rounded = RoundedRect::new(rect=panel_frame, radius=8.0)
-    commands.push(DrawShadow(ShadowSpec::new(
-      rect=panel_rounded,
-      color=Color::black().with_alpha(0.15),
-      offset=Point::new(x=0.0, y=4.0),
-      blur_radius=12.0,
-      spread=0.0,
-    )))
+    commands.push(
+      DrawShadow(
+        ShadowSpec::new(
+          rect=panel_rounded,
+          color=Color::black().with_alpha(0.15),
+          offset=Point::new(x=0.0, y=4.0),
+          blur_radius=12.0,
+          spread=0.0,
+        ),
+      ),
+    )
     commands.push(FillRoundedRectBrush(panel_rounded, data.background))
-    
+
     // 绘制标题和导航
     let header_height = 50.0
     let header_frame = Rect::new(
@@ -1239,7 +1276,7 @@ fn append_datepicker_commands(
         ),
       ),
     )
-    
+
     // 绘制左右导航按钮
     let button_size = 32.0
     let left_button_frame = Rect::new(
@@ -1274,7 +1311,7 @@ fn append_datepicker_commands(
         ),
       ),
     )
-    
+
     // 绘制星期标题
     let day_header_height = 36.0
     let day_cell_width = panel_frame.size.width / 7.0
@@ -1300,11 +1337,11 @@ fn append_datepicker_commands(
       )
       day_index = day_index + 1
     }
-    
+
     // 绘制日期网格
     let cell_height = 36.0
     let start_y = panel_frame.origin.y + header_height + day_header_height
-    
+
     // 计算该月第一天是星期几 (0=周日, 1=周一...)
     // 使用 Zeller 公式的简化版本
     let year = view_date.year
@@ -1314,11 +1351,11 @@ fn append_datepicker_commands(
     let y = if month < 3 { year - 1 } else { year }
     let k = y % 100
     let j = y / 100
-    let h = (q + (13 * (m + 1)) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
+    let h = (q + 13 * (m + 1) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
     let first_day_weekday = h
-    
+
     let days_in_month_count = days_in_month(year, month)
-    
+
     // 绘制当前月的日期
     let mut day = 1
     while day <= days_in_month_count {
@@ -1331,23 +1368,21 @@ fn append_datepicker_commands(
         width=day_cell_width,
         height=cell_height,
       )
-      
-      let is_selected = selected.year == year && selected.month == month && selected.day == day
+
+      let is_selected = selected.year == year &&
+        selected.month == month &&
+        selected.day == day
       let cell_rounded = RoundedRect::new(
         rect=cell_frame.inset(Insets::all(4.0)),
         radius=18.0,
       )
-      
+
       if is_selected {
         commands.push(FillRoundedRect(cell_rounded, theme.palette.primary))
       }
-      
-      let day_color = if is_selected {
-        Color::white()
-      } else {
-        data.foreground
-      }
-      
+
+      let day_color = if is_selected { Color::white() } else { data.foreground }
+
       commands.push(
         DrawText(
           TextRun::new(
@@ -1375,36 +1410,29 @@ fn append_searchbar_commands(
   let rounded = RoundedRect::new(rect=frame, radius=data.corner_radius)
   let is_focused = focused_id == Some(element.id)
   let border = if is_focused { data.focused_border } else { data.border }
-  
-  // 绘制背景和边框
   commands.push(FillRoundedRectBrush(rounded, data.background))
   match border {
     Some(border) =>
       if border.width > 0.0 {
-        commands.push(StrokeRoundedRectBrush(rounded, border.brush, border.width))
+        commands.push(
+          StrokeRoundedRectBrush(rounded, border.brush, border.width),
+        )
       }
     None => ()
   }
-  
-  // 绘制搜索图标
+
   let icon_frame = Rect::new(
     x=frame.origin.x + 10.0,
     y=frame.origin.y + (frame.size.height - 16.0) / 2.0,
     width=16.0,
     height=16.0,
   )
-  commands.push(
-    DrawText(
-      TextRun::new(
-        text="🔍",
-        frame=icon_frame,
-        font=FontSpec::new(size=14.0),
-        color=data.foreground.with_alpha(0.6),
-      ),
-    ),
+  append_searchbar_search_icon(
+    commands,
+    icon_frame,
+    data.foreground.with_alpha(0.6),
   )
-  
-  // 绘制文本
+
   let text = data.query.get()
   let display_text = text_with_composition(text, element, is_focused)
   let display = if display_text == "" { data.placeholder } else { display_text }
@@ -1417,7 +1445,11 @@ fn append_searchbar_commands(
   let text_frame = Rect::new(
     x=frame.origin.x + 32.0,
     y=frame.origin.y,
-    width=if text != "" { frame.size.width - 64.0 } else { frame.size.width - 32.0 },
+    width=if text != "" {
+      frame.size.width - 64.0
+    } else {
+      frame.size.width - 32.0
+    },
     height=frame.size.height,
   ).inset(Insets::symmetric(vertical=0.0))
   if is_focused && element.composition is None {
@@ -1446,7 +1478,6 @@ fn append_searchbar_commands(
       ),
     ),
   )
-  // 绘制光标
   if is_focused {
     let layout = measure_text_layout(
       TextLayoutInput::new(
@@ -1469,8 +1500,7 @@ fn append_searchbar_commands(
     )
     commands.push(FillRect(cursor, data.cursor_color))
   }
-  
-  // 如果有查询文本，绘制清除按钮
+
   if text != "" {
     let clear_frame = Rect::new(
       x=frame.origin.x + frame.size.width - 26.0,
@@ -1478,17 +1508,99 @@ fn append_searchbar_commands(
       width=16.0,
       height=16.0,
     )
-    commands.push(
-      DrawText(
-        TextRun::new(
-          text="✕",
-          frame=clear_frame,
-          font=FontSpec::new(size=14.0),
-          color=data.foreground.with_alpha(0.6),
-        ),
-      ),
+    append_searchbar_clear_icon(
+      commands,
+      clear_frame,
+      data.foreground.with_alpha(0.6),
     )
   }
+}
+
+///|
+fn append_searchbar_search_icon(
+  commands : Array[DrawCommand],
+  frame : Rect,
+  color : Color,
+) -> Unit {
+  let center = Point::new(
+    x=frame.origin.x + frame.size.width * 0.42,
+    y=frame.origin.y + frame.size.height * 0.42,
+  )
+  let radius = frame.size.width * 0.26
+  commands.push(
+    StrokeRoundedRect(
+      RoundedRect::new(
+        rect=Rect::new(
+          x=center.x - radius,
+          y=center.y - radius,
+          width=radius * 2.0,
+          height=radius * 2.0,
+        ),
+        radius~,
+      ),
+      color,
+      1.6,
+    ),
+  )
+  commands.push(
+    DrawPath(
+      PathSpec::new(
+        verbs=[
+          PathVerb::MoveTo(
+            Point::new(x=center.x + radius * 0.7, y=center.y + radius * 0.7),
+          ),
+          PathVerb::LineTo(
+            Point::new(
+              x=frame.origin.x + frame.size.width * 0.86,
+              y=frame.origin.y + frame.size.height * 0.86,
+            ),
+          ),
+        ],
+        stroke=Some(Brush::solid(color)),
+        stroke_width=1.6,
+      ),
+    ),
+  )
+}
+
+///|
+fn append_searchbar_clear_icon(
+  commands : Array[DrawCommand],
+  frame : Rect,
+  color : Color,
+) -> Unit {
+  let inset = frame.size.width * 0.28
+  commands.push(
+    DrawPath(
+      PathSpec::new(
+        verbs=[
+          PathVerb::MoveTo(
+            Point::new(x=frame.origin.x + inset, y=frame.origin.y + inset),
+          ),
+          PathVerb::LineTo(
+            Point::new(
+              x=frame.origin.x + frame.size.width - inset,
+              y=frame.origin.y + frame.size.height - inset,
+            ),
+          ),
+          PathVerb::MoveTo(
+            Point::new(
+              x=frame.origin.x + frame.size.width - inset,
+              y=frame.origin.y + inset,
+            ),
+          ),
+          PathVerb::LineTo(
+            Point::new(
+              x=frame.origin.x + inset,
+              y=frame.origin.y + frame.size.height - inset,
+            ),
+          ),
+        ],
+        stroke=Some(Brush::solid(color)),
+        stroke_width=1.6,
+      ),
+    ),
+  )
 }
 
 ///|
