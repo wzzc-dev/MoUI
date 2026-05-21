@@ -77,6 +77,26 @@ pub fn macos_accessibility_bridge(
 }
 
 ///|
+pub fn macos_service_bridge(
+  system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
+) -> @host.HostServiceBridge {
+  @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(
+      open_url=true,
+      system_theme=true,
+    ),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::OpenUrl(_) => @host.HostServiceResponse::UrlOpened
+        @host.HostServiceRequest::QuerySystemTheme =>
+          @host.HostServiceResponse::SystemTheme(system_theme)
+        _ => @host.HostServiceResponse::Unavailable(request.unavailable_message())
+      }
+    },
+  )
+}
+
+///|
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
   let event_loop = @window_macos.EventLoop::EventLoop()
   let app = MacosApp::{

@@ -73,6 +73,26 @@ pub fn canvas_input_host() -> @host.InputHostState {
 }
 
 ///|
+pub fn web_service_bridge(
+  system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
+) -> @host.HostServiceBridge {
+  @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(
+      open_url=true,
+      system_theme=true,
+    ),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::OpenUrl(_) => @host.HostServiceResponse::UrlOpened
+        @host.HostServiceRequest::QuerySystemTheme =>
+          @host.HostServiceResponse::SystemTheme(system_theme)
+        _ => @host.HostServiceResponse::Unavailable(request.unavailable_message())
+      }
+    },
+  )
+}
+
+///|
 pub fn request_animation_frame_event() -> @host.HostEvent {
   @host.HostEvent::RedrawRequested
 }

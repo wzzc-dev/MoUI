@@ -68,6 +68,11 @@ pub fn windows_accessibility_bridge(
 }
 
 ///|
+pub fn windows_service_bridge() -> @host.HostServiceBridge {
+  @host.HostServiceBridge::unavailable()
+}
+
+///|
 pub fn window_event_to_core(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,

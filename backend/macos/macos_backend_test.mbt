@@ -45,6 +45,26 @@ test "macos accessibility bridge dispatches semantics actions" {
 }
 
 ///|
+test "macos service bridge exposes open url and system theme scaffold" {
+  let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Dark)
+  match bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
+    @host.HostServiceResponse::UrlOpened => ()
+    _ => fail("expected URL opened scaffold response")
+  }
+  match bridge.dispatch(@host.HostServiceRequest::QuerySystemTheme) {
+    @host.HostServiceResponse::SystemTheme(@core.ColorScheme::Dark) => ()
+    _ => fail("expected dark system theme")
+  }
+  match bridge.dispatch(
+    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
+  ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="clipboard service is unavailable")
+    _ => fail("expected clipboard to remain unavailable")
+  }
+}
+
+///|
 test "macos backend converts resize event to host metrics" {
   let event = window_event_to_host_with_modifiers(
     @window_core.WindowEvent::SurfaceResized(
