@@ -51,6 +51,23 @@ It runs stable package-level tests, native renderer contract tests, and Web
 wasm-gc example builds without invoking all-repository native or wasm-gc test
 targets.
 
+## Preview Loop
+
+Use the lightweight preview loop when iterating on Showcase or another Web
+wasm-gc example:
+
+```sh
+sh scripts/preview-loop.sh
+sh scripts/preview-loop.sh --watch
+sh scripts/preview-loop.sh --package examples/counter/web_wasm --watch
+```
+
+The loop rebuilds the selected package with `moon build` and watches MoonBit,
+docs, and browser asset inputs by modification time. It is intentionally a
+hot-reload-like developer loop rather than VM state preservation: app state is
+rebuilt with the package, while the command gives fast feedback and keeps the
+preview target explicit.
+
 Current-platform backend tests can be included without native example builds:
 
 ```sh
