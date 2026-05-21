@@ -166,3 +166,36 @@ test "shader registry resolves builtins and reports fallback" {
   assert_true(fallback.status == @render.ShaderRegistryStatus::ShaderFallback)
   assert_true(fallback.diagnostic.contains("missing"))
 }
+
+///|
+test "image lifecycle records loading ready failure and eviction" {
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  ignore(lifecycle.mark_loading("a.png"))
+  match lifecycle.lookup("a.png") {
+    Some(record) => assert_true(record.status == @render.ImageResourceStatus::ImageLoading)
+    None => fail("expected loading record")
+  }
+  ignore(lifecycle.mark_ready("a.png", width=24, height=12))
+  match lifecycle.lookup("a.png") {
+    Some(record) => {
+      assert_true(record.status == @render.ImageResourceStatus::ImageReady)
+      inspect(record.width, content="24")
+      inspect(record.height, content="12")
+    }
+    None => fail("expected ready record")
+  }
+  ignore(lifecycle.mark_failed("b.png", diagnostic="decode failed"))
+  match lifecycle.lookup("b.png") {
+    Some(record) => {
+      assert_true(record.status == @render.ImageResourceStatus::ImageFailed)
+      assert_true(record.diagnostic.contains("decode"))
+    }
+    None => fail("expected failed record")
+  }
+  ignore(lifecycle.dispose("a.png"))
+  inspect(lifecycle.evict_disposed(), content="1")
+  match lifecycle.lookup("a.png") {
+    Some(_) => fail("expected disposed record eviction")
+    None => ()
+  }
+}

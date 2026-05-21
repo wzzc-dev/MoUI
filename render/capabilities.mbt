@@ -223,8 +223,8 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::AsyncImage,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Images are cached after decode, but async loading state and resource lifecycle APIs remain follow-up work.",
-      web_note: "Images load asynchronously in the browser runtime, but loading/error state is not surfaced to app code yet.",
+      native_note: "Renderer-neutral image lifecycle state now models loading, ready, failed, disposed, and eviction; native decode still reports synchronously through the adapter.",
+      web_note: "Renderer-neutral image lifecycle state now matches the browser async loading cache contract; wiring runtime JS diagnostics into app-visible state remains follow-up work.",
     },
   ]
 }
