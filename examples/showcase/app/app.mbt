@@ -30,6 +30,20 @@ priv struct ShowcaseSection {
 }
 
 ///|
+priv struct ShowcaseMetrics {
+  viewport : @core.Size
+  shell_width : Double
+  sidebar_width : Double
+  detail_width : Double
+  panel_width : Double
+  panel_height : Double
+  body_width : Double
+  body_height : Double
+  action_width : Double
+  compact : Bool
+}
+
+///|
 pub fn ShowcaseApp::new() -> ShowcaseApp {
   let todo = @todo_app.TodoApp::new()
   todo.add("Reuse Todo app logic")
@@ -121,20 +135,23 @@ pub fn ShowcaseApp::root(
   ignore(ctx.watch_scroll(self.list_scroll))
   ignore(ctx.watch_scroll(self.grid_scroll))
   let theme = if dark { @views.dark_theme() } else { @views.light_theme() }
+  let metrics = showcase_metrics(ctx.viewport_size(), theme)
   let offset = if active { 18.0 } else { 0.0 }
   let opacity = if active { 1.0 } else { 0.68 }
   let shell = @views.surface(
     @views.column(
       [
-        self.header(theme, dark, active),
+        self.header(theme, metrics, dark, active),
         self.catalog_shell(
-          ctx, theme, selected_section, filter, draft, tab, slider, enabled, secondary,
-          picker, date, active, offset, opacity,
+          ctx, theme, metrics, selected_section, filter, draft, tab, slider, enabled,
+          secondary, picker, date, active, offset, opacity,
         ),
       ],
       spacing=theme.spacing_scale.lg,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStretch,
     ),
+    width=metrics.viewport.width,
+    height=metrics.viewport.height,
     style=@core.SurfaceStyle::default(theme~),
   )
   let sheeted = @views.sheet_host(
@@ -156,6 +173,7 @@ fn ShowcaseApp::catalog_shell(
   self : ShowcaseApp,
   ctx : @core.BuildContext,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   selected : String,
   filter : @core.Binding[String],
   draft : @core.Binding[String],
@@ -171,20 +189,21 @@ fn ShowcaseApp::catalog_shell(
 ) -> @core.ViewSpec {
   @views.row(
     [
-      self.sidebar(theme, selected, filter),
+      self.sidebar(theme, metrics, selected, filter),
       @views.navigation_stack(
         self.navigation,
         self.destinations(
-          ctx, theme, draft, tab, slider, enabled, secondary, picker, date, active,
-          offset, opacity,
+          ctx, theme, metrics, draft, tab, slider, enabled, secondary, picker, date,
+          active, offset, opacity,
         ),
         fallback=section_panel(
           theme,
           "Missing section",
           "The selected route is not in the Showcase catalog.",
           @views.text("Route: " + selected, width=280.0, height=28.0),
+          metrics~,
         ),
-      ).frame(width=560.0, height=332.0),
+      ).frame(width=metrics.detail_width, height=metrics.panel_height),
     ],
     spacing=theme.spacing_scale.lg,
     cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
@@ -196,6 +215,7 @@ fn ShowcaseApp::destinations(
   self : ShowcaseApp,
   ctx : @core.BuildContext,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   draft : @core.Binding[String],
   tab : @core.Binding[String],
   slider : @core.Binding[Double],
@@ -210,33 +230,35 @@ fn ShowcaseApp::destinations(
   [
     @views.navigation_destination(
       route="overview",
-      view=self.overview_section(theme, active, offset, opacity, slider),
+      view=self.overview_section(
+        theme, metrics, active, offset, opacity, slider,
+      ),
     ),
     @views.navigation_destination(
       route="text-media",
-      view=self.text_media_section(theme, draft, opacity),
+      view=self.text_media_section(theme, metrics, draft, opacity),
     ),
     @views.navigation_destination(
       route="controls",
       view=self.controls_section(
-        theme, draft, tab, slider, enabled, secondary, picker, date,
+        theme, metrics, draft, tab, slider, enabled, secondary, picker, date,
       ),
     ),
     @views.navigation_destination(
       route="layout",
-      view=self.layout_section(theme, slider),
+      view=self.layout_section(theme, metrics, slider),
     ),
     @views.navigation_destination(
       route="navigation",
-      view=self.navigation_section(theme, tab),
+      view=self.navigation_section(theme, metrics, tab),
     ),
     @views.navigation_destination(
       route="examples",
-      view=self.examples_section(ctx, theme),
+      view=self.examples_section(ctx, theme, metrics),
     ),
     @views.navigation_destination(
       route="theme-renderer",
-      view=self.theme_renderer_section(theme, enabled, active, opacity),
+      view=self.theme_renderer_section(theme, metrics, enabled, active, opacity),
     ),
   ]
 }
@@ -293,11 +315,17 @@ fn showcase_sections() -> Array[ShowcaseSection] {
 fn ShowcaseApp::sidebar(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   selected : String,
   filter : @core.Binding[String],
 ) -> @core.ViewSpec {
+  let inner_width = metrics.sidebar_width - theme.spacing_scale.lg * 2.0
+  let sidebar_body_height = max_showcase_double(
+    64.0,
+    metrics.panel_height - theme.spacing_scale.lg * 2.0,
+  )
   let rows : Array[@core.ViewSpec] = [
-    @views.text("View Catalog", width=220.0, height=30.0)
+    @views.text("View Catalog", width=inner_width, height=30.0)
     .font(theme.typography.control)
     .foreground(theme.palette.foreground),
     @views.searchbar(
@@ -307,25 +335,36 @@ fn ShowcaseApp::sidebar(
       background=@core.Brush::solid(theme.palette.surface_variant),
       corner_radius=theme.radius_scale.md,
       on_clear=Some(() => filter.set("")),
-    ).frame(width=220.0, height=38.0),
+    ).frame(width=inner_width, height=38.0),
   ]
   let query = filter.get()
   for section in showcase_sections() {
     if string_contains(section.title, query) ||
       string_contains(section.summary, query) ||
       string_contains(section.group, query) {
-      rows.push(self.sidebar_item(theme, section, selected == section.route))
+      rows.push(
+        self.sidebar_item(
+          theme,
+          section,
+          selected == section.route,
+          inner_width,
+        ),
+      )
     }
   }
   @views.surface(
-    @views.column(
-      rows,
-      spacing=theme.spacing_scale.sm,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    @views.scroll_view(
+      @views.column(
+        rows,
+        spacing=theme.spacing_scale.sm,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      ),
+      width=inner_width,
+      height=sidebar_body_height,
     ),
-    width=244.0,
-    height=332.0,
-    style=@core.SurfaceStyle::raised(theme~),
+    width=metrics.sidebar_width,
+    height=metrics.panel_height,
+    style=showcase_panel_style(theme),
   )
 }
 
@@ -335,6 +374,7 @@ fn ShowcaseApp::sidebar_item(
   theme : @core.Theme,
   section : ShowcaseSection,
   selected : Bool,
+  width : Double,
 ) -> @core.ViewSpec {
   let style = if selected {
     @core.ButtonStyle::filled(theme~)
@@ -345,7 +385,7 @@ fn ShowcaseApp::sidebar_item(
     section.title,
     on_click=() => self.select_section(section.route),
     style~,
-    width=216.0,
+    width~,
     height=34.0,
   ).key("showcase-section-" + section.route)
 }
@@ -354,85 +394,103 @@ fn ShowcaseApp::sidebar_item(
 fn ShowcaseApp::header(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   dark : Bool,
   active : Bool,
 ) -> @core.ViewSpec {
-  @views.row(
+  let overview_width = if metrics.compact { 86.0 } else { 100.0 }
+  let examples_width = if metrics.compact { 88.0 } else { 100.0 }
+  let scheme_width = if metrics.compact { 72.0 } else { 86.0 }
+  let dialog_width = if metrics.compact { 82.0 } else { 96.0 }
+  let title_width = if metrics.compact { 260.0 } else { 330.0 }
+  let subtitle_width = if metrics.compact {
+    280.0
+  } else {
+    min_showcase_double(metrics.shell_width, 520.0)
+  }
+  let title = @views.column(
     [
-      @views.column(
-        [
-          @views.text("MoUI View Showcase", width=300.0, height=34.0)
-          .font(theme.typography.title)
-          .foreground(theme.palette.foreground),
-          @views.text(
-            if active {
-              "State-driven visuals are active"
-            } else {
-              "A complete catalog built from reusable example code"
-            },
-            width=420.0,
-            height=28.0,
-          )
-          .font(theme.typography.caption)
-          .foreground(theme.palette.muted),
-        ],
-        spacing=theme.spacing_scale.xs,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-      ),
-      @views.spacer(min_length=12.0, weight=1.0),
-      @views.scroll_view(
-        @views.row(
-          [
-            @views.button(
-              "Overview",
-              on_click=() => self.select_section("overview"),
-              style=@core.ButtonStyle::tonal(theme~),
-              width=100.0,
-            ),
-            @views.button(
-              "Examples",
-              on_click=() => self.select_section("examples"),
-              style=@core.ButtonStyle::tonal(theme~),
-              width=100.0,
-            ),
-            @views.button(
-              if dark {
-                "Light"
-              } else {
-                "Dark"
-              },
-              on_click=() => self.toggle_scheme(),
-              style=@core.ButtonStyle::tonal(theme~),
-              width=86.0,
-            ),
-            @views.menu_button(
-              "Dialog",
-              on_click=() => self.show_dialog(),
-              style=@core.ButtonStyle::outline(theme~),
-              width=96.0,
-            ).keyboard_shortcut(
-              @core.KeyboardShortcut::new(
-                key="k",
-                modifiers=@core.KeyModifiers::new(meta=true),
-              ),
-            ),
-          ],
-          spacing=theme.spacing_scale.sm,
-          cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
-        ),
-        width=420.0,
-        height=46.0,
-      ),
+      @views.text("MoUI View Showcase", width=title_width, height=34.0)
+      .font(theme.typography.title)
+      .foreground(theme.palette.foreground),
+      @views.text(
+        if active {
+          "State-driven visuals are active"
+        } else {
+          "A complete catalog built from reusable example code"
+        },
+        width=subtitle_width,
+        height=28.0,
+      )
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
     ],
-    spacing=theme.spacing_scale.md,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    spacing=theme.spacing_scale.xs,
+    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
   )
+  let actions = @views.scroll_view(
+    @views.row(
+      [
+        @views.button(
+          "Overview",
+          on_click=() => self.select_section("overview"),
+          style=@core.ButtonStyle::tonal(theme~),
+          width=overview_width,
+        ),
+        @views.button(
+          "Examples",
+          on_click=() => self.select_section("examples"),
+          style=@core.ButtonStyle::tonal(theme~),
+          width=examples_width,
+        ),
+        @views.button(
+          if dark {
+            "Light"
+          } else {
+            "Dark"
+          },
+          on_click=() => self.toggle_scheme(),
+          style=@core.ButtonStyle::tonal(theme~),
+          width=scheme_width,
+        ),
+        @views.menu_button(
+          "Dialog",
+          on_click=() => self.show_dialog(),
+          style=@core.ButtonStyle::outline(theme~),
+          width=dialog_width,
+        ).keyboard_shortcut(
+          @core.KeyboardShortcut::new(
+            key="k",
+            modifiers=@core.KeyModifiers::new(meta=true),
+          ),
+        ),
+      ],
+      spacing=theme.spacing_scale.sm,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    ),
+    width=metrics.action_width,
+    height=46.0,
+  )
+  if metrics.shell_width < 560.0 {
+    @views.column(
+      [title, actions],
+      spacing=theme.spacing_scale.sm,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    )
+  } else {
+    @views.row(
+      [title, @views.spacer(min_length=12.0, weight=1.0), actions],
+      spacing=theme.spacing_scale.sm,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    )
+  }
 }
 
 ///|
 fn ShowcaseApp::overview_section(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   active : Bool,
   offset : Double,
   opacity : Double,
@@ -442,35 +500,53 @@ fn ShowcaseApp::overview_section(
     theme,
     "Overview",
     "Showcase is now a data-driven catalog of MoUI views.",
-    @views.row(
-      [
-        self.visual_card(theme, active, offset, opacity),
-        @views.column(
-          [
-            self.capability_card(theme),
-            @views.tooltip(
-              @views.menu_button(
-                "Shortcut",
-                on_click=() => self.show_dialog(),
-                style=@core.ButtonStyle::ghost(theme~),
-                width=140.0,
+    if metrics.compact && metrics.body_width < 448.0 {
+      @views.column(
+        [
+          self.visual_card(theme, metrics, active, offset, opacity),
+          self.capability_card(theme, metrics.body_width, 166.0),
+          self.shortcut_preview(theme),
+          @views.progress(
+            slider.get(),
+            width=min_showcase_double(metrics.body_width, 260.0),
+            foreground=theme.palette.primary,
+          ),
+        ],
+        spacing=theme.spacing_scale.md,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      )
+    } else {
+      let visual_width = if metrics.compact { 212.0 } else { 284.0 }
+      let capability_width = if metrics.compact {
+        max_showcase_double(
+          204.0,
+          metrics.body_width - visual_width - theme.spacing_scale.md,
+        )
+      } else {
+        244.0
+      }
+      @views.row(
+        [
+          self.visual_card(theme, metrics, active, offset, opacity),
+          @views.column(
+            [
+              self.capability_card(theme, capability_width, 166.0),
+              self.shortcut_preview(theme),
+              @views.progress(
+                slider.get(),
+                width=capability_width,
+                foreground=theme.palette.primary,
               ),
-              "Keyboard: Meta+K",
-              visible=true,
-            ),
-            @views.progress(
-              slider.get(),
-              width=220.0,
-              foreground=theme.palette.primary,
-            ),
-          ],
-          spacing=theme.spacing_scale.md,
-          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-        ),
-      ],
-      spacing=theme.spacing_scale.md,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-    ),
+            ],
+            spacing=theme.spacing_scale.sm,
+            cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+          ),
+        ],
+        spacing=theme.spacing_scale.md,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      )
+    },
+    metrics~,
   )
 }
 
@@ -478,6 +554,7 @@ fn ShowcaseApp::overview_section(
 fn ShowcaseApp::text_media_section(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   draft : @core.Binding[String],
   opacity : Double,
 ) -> @core.ViewSpec {
@@ -531,6 +608,7 @@ fn ShowcaseApp::text_media_section(
       spacing=theme.spacing_scale.sm,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     ),
+    metrics~,
   )
 }
 
@@ -538,6 +616,7 @@ fn ShowcaseApp::text_media_section(
 fn ShowcaseApp::controls_section(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   draft : @core.Binding[String],
   tab : @core.Binding[String],
   slider : @core.Binding[Double],
@@ -649,6 +728,7 @@ fn ShowcaseApp::controls_section(
         ),
       ),
     ]),
+    metrics~,
   )
 }
 
@@ -656,6 +736,7 @@ fn ShowcaseApp::controls_section(
 fn ShowcaseApp::layout_section(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   slider : @core.Binding[Double],
 ) -> @core.ViewSpec {
   section_panel(
@@ -769,6 +850,7 @@ fn ShowcaseApp::layout_section(
       spacing=theme.spacing_scale.sm,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     ),
+    metrics~,
   )
 }
 
@@ -776,6 +858,7 @@ fn ShowcaseApp::layout_section(
 fn ShowcaseApp::navigation_section(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   tab : @core.Binding[String],
 ) -> @core.ViewSpec {
   section_panel(
@@ -827,6 +910,7 @@ fn ShowcaseApp::navigation_section(
       spacing=theme.spacing_scale.md,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     ),
+    metrics~,
   )
 }
 
@@ -835,6 +919,7 @@ fn ShowcaseApp::examples_section(
   self : ShowcaseApp,
   ctx : @core.BuildContext,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
 ) -> @core.ViewSpec {
   section_panel(
     theme,
@@ -850,9 +935,10 @@ fn ShowcaseApp::examples_section(
         spacing=theme.spacing_scale.md,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
       ),
-      width=520.0,
-      height=240.0,
+      width=metrics.body_width,
+      height=metrics.body_height,
     ),
+    metrics~,
   )
 }
 
@@ -860,6 +946,7 @@ fn ShowcaseApp::examples_section(
 fn ShowcaseApp::theme_renderer_section(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   enabled : @core.Binding[Bool],
   active : Bool,
   opacity : Double,
@@ -876,35 +963,26 @@ fn ShowcaseApp::theme_renderer_section(
     theme,
     "Theme & Renderer",
     "Theme helpers and renderer capability report stay visible in the catalog.",
-    @views.row(
-      [
-        @views.column(
-          [
-            @views.text("Theme helpers", width=220.0, height=28.0)
-            .font(theme.typography.control)
-            .foreground(theme.palette.foreground),
-            @views.toggle_switch(
-              "Environment enabled",
-              enabled,
-              foreground=theme.palette.foreground,
-              check_color=theme.palette.primary,
-            ),
-            @views.button(
-              "Switch scheme",
-              on_click=() => self.toggle_scheme(),
-              style=@core.ButtonStyle::outline(theme~),
-              width=160.0,
-            ),
-            self.visual_correctness_card(theme, active, opacity),
-          ],
-          spacing=theme.spacing_scale.md,
-          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-        ),
-        self.capability_card(theme),
-      ],
-      spacing=theme.spacing_scale.md,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-    ),
+    if metrics.compact {
+      @views.column(
+        [
+          self.theme_helpers(theme, enabled, active, opacity),
+          self.capability_card(theme, metrics.body_width, 190.0),
+        ],
+        spacing=theme.spacing_scale.md,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      )
+    } else {
+      @views.row(
+        [
+          self.theme_helpers(theme, enabled, active, opacity),
+          self.capability_card(theme, 244.0, 190.0),
+        ],
+        spacing=theme.spacing_scale.md,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      )
+    },
+    metrics~,
   )
 }
 
@@ -914,30 +992,35 @@ fn section_panel(
   title : String,
   summary : String,
   body : @core.ViewSpec,
+  metrics~ : ShowcaseMetrics,
 ) -> @core.ViewSpec {
   @views.surface(
     @views.column(
       [
         @views.column(
           [
-            @views.text(title, width=480.0, height=30.0)
+            @views.text(title, width=metrics.body_width, height=30.0)
             .font(theme.typography.control)
             .foreground(theme.palette.foreground),
-            @views.text(summary, width=500.0, height=28.0)
+            @views.text(summary, width=metrics.body_width, height=28.0)
             .font(theme.typography.caption)
             .foreground(theme.palette.muted),
           ],
           spacing=theme.spacing_scale.xs,
           cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
         ),
-        body,
+        @views.scroll_view(
+          body,
+          width=metrics.body_width,
+          height=metrics.body_height,
+        ),
       ],
       spacing=theme.spacing_scale.md,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     ),
-    width=540.0,
-    height=332.0,
-    style=@core.SurfaceStyle::raised(theme~),
+    width=metrics.panel_width,
+    height=metrics.panel_height,
+    style=showcase_panel_style(theme),
   )
 }
 
@@ -985,10 +1068,19 @@ fn ShowcaseApp::layout_tile(
 fn ShowcaseApp::visual_card(
   self : ShowcaseApp,
   theme : @core.Theme,
+  metrics : ShowcaseMetrics,
   active : Bool,
   offset : Double,
   opacity : Double,
 ) -> @core.ViewSpec {
+  let card_width = if metrics.compact && metrics.body_width >= 448.0 {
+    212.0
+  } else if metrics.compact {
+    min_showcase_double(metrics.body_width, 320.0)
+  } else {
+    284.0
+  }
+  let media_width = max_showcase_double(120.0, card_width - 36.0)
   let gradient = @core.Brush::linear_gradient(
     start=@core.Point::new(x=0.0, y=0.0),
     end=@core.Point::new(x=260.0, y=160.0),
@@ -1000,7 +1092,7 @@ fn ShowcaseApp::visual_card(
       [
         @views.image(
           showcase_image_source(),
-          width=248.0,
+          width=media_width,
           height=96.0,
           opacity~,
           corner_radius=theme.radius_scale.lg,
@@ -1017,7 +1109,7 @@ fn ShowcaseApp::visual_card(
           } else {
             "Layered card with image"
           },
-          width=260.0,
+          width=media_width,
           height=28.0,
         )
         .font(theme.typography.control)
@@ -1036,9 +1128,9 @@ fn ShowcaseApp::visual_card(
       spacing=theme.spacing_scale.md,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     ),
-    width=284.0,
+    width=card_width,
     height=250.0,
-    style=@core.SurfaceStyle::raised(theme~),
+    style=showcase_panel_style(theme),
   )
 }
 
@@ -1046,30 +1138,46 @@ fn ShowcaseApp::visual_card(
 fn ShowcaseApp::capability_card(
   self : ShowcaseApp,
   theme : @core.Theme,
+  width : Double,
+  height : Double,
 ) -> @core.ViewSpec {
   ignore(self)
+  let inner_width = max_showcase_double(
+    120.0,
+    width - theme.spacing_scale.lg * 2.0,
+  )
+  let list_height = max_showcase_double(56.0, height - 78.0)
   let rows : Array[@core.ViewSpec] = []
+  let visible_limit = max_showcase_int(1, (list_height / 24.0).to_int())
+  let mut visible_count = 0
   for entry in @render.renderer_feature_capability_report() {
-    rows.push(capability_row(entry, theme))
+    if visible_count < visible_limit {
+      rows.push(capability_row(entry, theme))
+      visible_count = visible_count + 1
+    }
   }
   @views.surface(
     @views.column(
       [
-        @views.text("Renderer capability", width=220.0, height=28.0)
+        @views.text("Renderer capability", width=inner_width, height=28.0)
         .font(theme.typography.control)
         .foreground(theme.palette.foreground),
-        @views.column(
-          rows,
-          spacing=theme.spacing_scale.xs,
-          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+        @views.scroll_view(
+          @views.column(
+            rows,
+            spacing=theme.spacing_scale.xs,
+            cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+          ),
+          width=inner_width,
+          height=list_height,
         ),
       ],
       spacing=theme.spacing_scale.md,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     ),
-    width=244.0,
-    height=190.0,
-    style=@core.SurfaceStyle::raised(theme~),
+    width~,
+    height~,
+    style=showcase_panel_style(theme),
   )
 }
 
@@ -1117,7 +1225,55 @@ fn ShowcaseApp::visual_correctness_card(
     ),
     width=292.0,
     height=74.0,
-    style=@core.SurfaceStyle::default(theme~),
+    style=showcase_raised_demo_style(theme),
+  )
+}
+
+///|
+fn ShowcaseApp::shortcut_preview(
+  self : ShowcaseApp,
+  theme : @core.Theme,
+) -> @core.ViewSpec {
+  ignore(self)
+  @views.surface(
+    @views.text("Keyboard: Meta+K", width=190.0, height=28.0)
+    .font(theme.typography.caption)
+    .foreground(theme.palette.foreground),
+    width=220.0,
+    height=50.0,
+    style=showcase_panel_style(theme),
+  )
+}
+
+///|
+fn ShowcaseApp::theme_helpers(
+  self : ShowcaseApp,
+  theme : @core.Theme,
+  enabled : @core.Binding[Bool],
+  active : Bool,
+  opacity : Double,
+) -> @core.ViewSpec {
+  @views.column(
+    [
+      @views.text("Theme helpers", width=220.0, height=28.0)
+      .font(theme.typography.control)
+      .foreground(theme.palette.foreground),
+      @views.toggle_switch(
+        "Environment enabled",
+        enabled,
+        foreground=theme.palette.foreground,
+        check_color=theme.palette.primary,
+      ),
+      @views.button(
+        "Switch scheme",
+        on_click=() => self.toggle_scheme(),
+        style=@core.ButtonStyle::outline(theme~),
+        width=160.0,
+      ),
+      self.visual_correctness_card(theme, active, opacity),
+    ],
+    spacing=theme.spacing_scale.md,
+    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
   )
 }
 
@@ -1290,6 +1446,82 @@ fn clamp_double(value : Double, min : Double, max : Double) -> Double {
 }
 
 ///|
+fn min_showcase_double(a : Double, b : Double) -> Double {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn max_showcase_double(a : Double, b : Double) -> Double {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn max_showcase_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn showcase_metrics(
+  viewport : @core.Size,
+  theme : @core.Theme,
+) -> ShowcaseMetrics {
+  let viewport = @core.Size::new(
+    width=max_showcase_double(1.0, viewport.width),
+    height=max_showcase_double(1.0, viewport.height),
+  )
+  let outer_padding = theme.spacing_scale.md * 2.0
+  let shell_width = max_showcase_double(560.0, viewport.width - outer_padding)
+  let sidebar_width = if shell_width < 760.0 { 220.0 } else { 244.0 }
+  let detail_width = max_showcase_double(
+    420.0,
+    shell_width - sidebar_width - theme.spacing_scale.lg,
+  )
+  let panel_height = max_showcase_double(280.0, viewport.height - 108.0)
+  let panel_padding = theme.spacing_scale.md * 2.0
+  let body_width = max_showcase_double(220.0, detail_width - panel_padding)
+  let body_height = max_showcase_double(120.0, panel_height - 96.0)
+  let action_width = clamp_double(shell_width - 288.0, 240.0, 420.0)
+  {
+    viewport,
+    shell_width,
+    sidebar_width,
+    detail_width,
+    panel_width: detail_width,
+    panel_height,
+    body_width,
+    body_height,
+    action_width,
+    compact: body_width < 620.0,
+  }
+}
+
+///|
+fn showcase_panel_style(theme : @core.Theme) -> @core.SurfaceStyle {
+  {
+    ..@core.SurfaceStyle::raised(theme~),
+    shadow: None,
+    padding: @core.Insets::all(theme.spacing_scale.md),
+  }
+}
+
+///|
+fn showcase_raised_demo_style(theme : @core.Theme) -> @core.SurfaceStyle {
+  { ..@core.SurfaceStyle::raised(theme~), shadow: Some(theme.shadow_scale.sm) }
+}
+
+///|
 fn ShowcaseApp::gallery_items(self : ShowcaseApp) -> Array[String] {
   ignore(self)
   [
@@ -1306,8 +1538,8 @@ fn showcase_image_source() -> String {
 ///|
 pub fn ShowcaseApp::runtime(
   self : ShowcaseApp,
-  width? : Double = 760.0,
-  height? : Double = 420.0,
+  width? : Double = 960.0,
+  height? : Double = 560.0,
 ) -> @core.AppRuntime {
   @core.AppRuntime::new_component(
     root=@core.Component::new(ctx => self.root(ctx)),
