@@ -154,6 +154,38 @@ test "path tessellator lowers fill stroke and curves into vertices" {
 }
 
 ///|
+test "path tessellator uses zeno for cubic and degenerate paths" {
+  let cubic = @core.PathSpec::new(
+    verbs=[
+      @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+      @core.PathVerb::CubicTo(
+        @core.Point::new(x=4.0, y=0.0),
+        @core.Point::new(x=8.0, y=8.0),
+        @core.Point::new(x=12.0, y=0.0),
+      ),
+      @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=8.0)),
+      @core.PathVerb::Close,
+    ],
+    fill=Some(@core.Brush::solid(@core.Color::rgba(r=1.0, g=0.0, b=0.0))),
+    stroke=Some(@core.Brush::solid(@core.Color::black())),
+    stroke_width=1.0,
+  )
+  let cubic_mesh = @render.tessellate_path(cubic)
+  assert_true(cubic_mesh.vertices.length() > 0)
+  inspect(cubic_mesh.diagnostics.length(), content="0")
+  let degenerate = @core.PathSpec::new(
+    verbs=[
+      @core.PathVerb::LineTo(@core.Point::new(x=1.0, y=1.0)),
+      @core.PathVerb::Close,
+    ],
+    fill=Some(@core.Brush::solid(@core.Color::rgba(r=1.0, g=0.0, b=0.0))),
+  )
+  let degenerate_mesh = @render.tessellate_path(degenerate)
+  inspect(degenerate_mesh.vertices.length(), content="0")
+  inspect(degenerate_mesh.diagnostics.length(), content="2")
+}
+
+///|
 test "shader registry resolves builtins and reports fallback" {
   let rect = @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0)
   let ready = @render.resolve_shader_effect(
