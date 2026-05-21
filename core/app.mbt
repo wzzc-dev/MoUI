@@ -783,11 +783,34 @@ pub fn RuntimeState::dispatch_command(
   self : RuntimeState,
   intent : CommandIntent,
 ) -> Bool {
-  if self.action_commands.dispatch_intent(intent) {
+  let text_result = self.dispatch_focused_text_command(intent)
+  if text_result.handled {
+    text_result.changed
+  } else if self.action_commands.dispatch_intent(intent) {
     self.request_activation_rebuild()
     true
   } else {
     false
+  }
+}
+
+///|
+pub fn RuntimeState::dispatch_focused_text_command(
+  self : RuntimeState,
+  intent : CommandIntent,
+  paste_text? : String? = None,
+) -> TextCommandResult {
+  match self.focused_element {
+    Some(target) => {
+      let result = self.element_tree.dispatch_text_command(target, intent, paste_text~)
+      if result.changed {
+        self.needs_redraw = true
+        self.needs_paint = true
+        self.mark_dirty(self.element_tree.id)
+      }
+      result
+    }
+    None => TextCommandResult::ignored()
   }
 }
 
