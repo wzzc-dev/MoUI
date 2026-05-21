@@ -5,6 +5,13 @@ priv struct TextEditResult {
 }
 
 ///|
+pub(all) struct TextCommandResult {
+  handled : Bool
+  changed : Bool
+  clipboard_text : String?
+} derive(Eq, Debug, ToJson)
+
+///|
 priv enum TextCaretDirection {
   MoveLeft
   MoveRight
@@ -24,10 +31,12 @@ fn apply_text_edit(
   data : TextFieldViewSpec,
   edit : TextEditResult,
 ) -> ElementEventResult {
+  let previous = data.value.get()
   if edit.text != data.value.get() ||
     edit.caret != element.caret ||
     element.selection is Some(_) ||
     element.composition is Some(_) {
+    record_text_history(element, previous, edit.text)
     data.value.set(edit.text)
     element.caret = edit.caret
     element.selection = None
@@ -67,11 +76,13 @@ fn apply_multiline_text_edit(
   data : RichTextEditorViewSpec,
   edit : TextEditResult,
 ) -> ElementEventResult {
+  let previous = data.value.get()
   if edit.text != data.value.get() ||
     edit.caret != element.caret ||
     element.selection is Some(_) ||
     element.composition is Some(_) ||
     element.composition_cursor is Some(_) {
+    record_text_history(element, previous, edit.text)
     data.value.set(edit.text)
     element.caret = edit.caret
     element.selection = None
@@ -90,11 +101,13 @@ fn apply_searchbar_edit(
   data : SearchBarViewSpec,
   edit : TextEditResult,
 ) -> ElementEventResult {
+  let previous = data.query.get()
   if edit.text != data.query.get() ||
     edit.caret != element.caret ||
     element.selection is Some(_) ||
     element.composition is Some(_) ||
     element.composition_cursor is Some(_) {
+    record_text_history(element, previous, edit.text)
     data.query.set(edit.text)
     element.caret = edit.caret
     element.selection = None
@@ -105,6 +118,64 @@ fn apply_searchbar_edit(
   } else {
     { changed: false, activated: false, focused: None }
   }
+}
+
+///|
+fn TextCommandResult::ignored() -> TextCommandResult {
+  { handled: false, changed: false, clipboard_text: None }
+}
+
+///|
+fn TextCommandResult::handled(
+  changed~ : Bool = false,
+  clipboard_text? : String? = None,
+) -> TextCommandResult {
+  { handled: true, changed, clipboard_text }
+}
+
+///|
+fn record_text_history(
+  element : ElementNode,
+  previous : String,
+  next : String,
+) -> Unit {
+  if previous != next {
+    element.text_undo_stack.push(previous)
+    element.text_redo_stack.clear()
+  }
+}
+
+///|
+fn selected_text(text : String, selection : TextRange?) -> String {
+  match active_text_selection(selection) {
+    Some(selection) => {
+      let chars = text.to_array()
+      let start = clamp_int(selection.start, 0, chars.length())
+      let end = clamp_int(selection.end, start, chars.length())
+      String::from_array(chars[start:end])
+    }
+    None => ""
+  }
+}
+
+///|
+fn restore_text_history(
+  element : ElementNode,
+  current : String,
+  apply : (TextEditResult) -> ElementEventResult,
+  undo~ : Bool,
+) -> TextCommandResult {
+  let source = if undo { element.text_undo_stack } else { element.text_redo_stack }
+  if source.length() == 0 {
+    return TextCommandResult::handled()
+  }
+  let restored = source[source.length() - 1]
+  ignore(source.pop())
+  let result = apply({ text: restored, caret: text_length(restored) })
+  if undo && result.changed {
+    element.text_redo_stack.push(current)
+  }
+  TextCommandResult::handled(changed=result.changed)
 }
 
 ///|
@@ -433,5 +504,202 @@ fn handle_rich_text_editor_input(
       let edit = replace_text_range(text, range, "")
       apply_multiline_text_edit(element, data, edit)
     }
+  }
+}
+
+///|
+fn ElementNode::dispatch_text_command(
+  self : ElementNode,
+  target : ElementId,
+  intent : CommandIntent,
+  paste_text~ : String? = None,
+) -> TextCommandResult {
+  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) {
+    return TextCommandResult::ignored()
+  }
+  if self.id == target {
+    match self.spec {
+      TextFieldSpec(data) =>
+        handle_text_field_command(self, data, intent, paste_text~)
+      SearchBarSpec(data) =>
+        handle_searchbar_command(self, data, intent, paste_text~)
+      RichTextEditorSpec(data) =>
+        handle_rich_text_editor_command(self, data, intent, paste_text~)
+      _ => TextCommandResult::ignored()
+    }
+  } else {
+    for child in self.children {
+      let result = child.dispatch_text_command(target, intent, paste_text~)
+      if result.handled {
+        if result.changed {
+          self.dirty.mark_paint()
+        }
+        return result
+      }
+    }
+    TextCommandResult::ignored()
+  }
+}
+
+///|
+fn handle_text_field_command(
+  element : ElementNode,
+  data : TextFieldViewSpec,
+  intent : CommandIntent,
+  paste_text~ : String?,
+) -> TextCommandResult {
+  let text = data.value.get()
+  match intent {
+    Copy =>
+      TextCommandResult::handled(
+        clipboard_text=Some(selected_text(text, element.selection)),
+      )
+    Cut => {
+      let copied = selected_text(text, element.selection)
+      match active_text_selection(element.selection) {
+        Some(selection) => {
+          let result = handle_text_field_input(element, data, DeleteRange(selection))
+          TextCommandResult::handled(changed=result.changed, clipboard_text=Some(copied))
+        }
+        None => TextCommandResult::handled(clipboard_text=Some(""))
+      }
+    }
+    Paste =>
+      match paste_text {
+        Some(value) => {
+          let result = handle_text_field_input(element, data, InsertText(value))
+          TextCommandResult::handled(changed=result.changed)
+        }
+        None => TextCommandResult::handled()
+      }
+    Undo =>
+      restore_text_history(
+        element,
+        text,
+        edit => apply_text_edit(element, data, edit),
+        undo=true,
+      )
+    Redo =>
+      restore_text_history(
+        element,
+        text,
+        edit => apply_text_edit(element, data, edit),
+        undo=false,
+      )
+    SelectAll => {
+      let result = select_text_range(element, text)
+      TextCommandResult::handled(changed=result.changed)
+    }
+    _ => TextCommandResult::ignored()
+  }
+}
+
+///|
+fn handle_searchbar_command(
+  element : ElementNode,
+  data : SearchBarViewSpec,
+  intent : CommandIntent,
+  paste_text~ : String?,
+) -> TextCommandResult {
+  let text = data.query.get()
+  match intent {
+    Copy =>
+      TextCommandResult::handled(
+        clipboard_text=Some(selected_text(text, element.selection)),
+      )
+    Cut => {
+      let copied = selected_text(text, element.selection)
+      match active_text_selection(element.selection) {
+        Some(selection) => {
+          let result = handle_searchbar_input(element, data, DeleteRange(selection))
+          TextCommandResult::handled(changed=result.changed, clipboard_text=Some(copied))
+        }
+        None => TextCommandResult::handled(clipboard_text=Some(""))
+      }
+    }
+    Paste =>
+      match paste_text {
+        Some(value) => {
+          let result = handle_searchbar_input(element, data, InsertText(value))
+          TextCommandResult::handled(changed=result.changed)
+        }
+        None => TextCommandResult::handled()
+      }
+    Undo =>
+      restore_text_history(
+        element,
+        text,
+        edit => apply_searchbar_edit(element, data, edit),
+        undo=true,
+      )
+    Redo =>
+      restore_text_history(
+        element,
+        text,
+        edit => apply_searchbar_edit(element, data, edit),
+        undo=false,
+      )
+    SelectAll => {
+      let result = select_text_range(element, text)
+      TextCommandResult::handled(changed=result.changed)
+    }
+    _ => TextCommandResult::ignored()
+  }
+}
+
+///|
+fn handle_rich_text_editor_command(
+  element : ElementNode,
+  data : RichTextEditorViewSpec,
+  intent : CommandIntent,
+  paste_text~ : String?,
+) -> TextCommandResult {
+  let text = data.value.get()
+  match intent {
+    Copy =>
+      TextCommandResult::handled(
+        clipboard_text=Some(selected_text(text, element.selection)),
+      )
+    Cut => {
+      let copied = selected_text(text, element.selection)
+      match active_text_selection(element.selection) {
+        Some(selection) => {
+          let result = handle_rich_text_editor_input(
+            element,
+            data,
+            DeleteRange(selection),
+          )
+          TextCommandResult::handled(changed=result.changed, clipboard_text=Some(copied))
+        }
+        None => TextCommandResult::handled(clipboard_text=Some(""))
+      }
+    }
+    Paste =>
+      match paste_text {
+        Some(value) => {
+          let result = handle_rich_text_editor_input(element, data, InsertText(value))
+          TextCommandResult::handled(changed=result.changed)
+        }
+        None => TextCommandResult::handled()
+      }
+    Undo =>
+      restore_text_history(
+        element,
+        text,
+        edit => apply_multiline_text_edit(element, data, edit),
+        undo=true,
+      )
+    Redo =>
+      restore_text_history(
+        element,
+        text,
+        edit => apply_multiline_text_edit(element, data, edit),
+        undo=false,
+      )
+    SelectAll => {
+      let result = select_text_range(element, text)
+      TextCommandResult::handled(changed=result.changed)
+    }
+    _ => TextCommandResult::ignored()
   }
 }

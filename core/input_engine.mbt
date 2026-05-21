@@ -766,6 +766,14 @@ fn handle_text_field_keyboard(
   if is_select_all_shortcut(event) {
     return select_text_range(element, data.value.get())
   }
+  if is_undo_shortcut(event) {
+    let result = handle_text_field_command(element, data, Undo, paste_text=None)
+    return { changed: result.changed, activated: false, focused: None }
+  }
+  if is_redo_shortcut(event) {
+    let result = handle_text_field_command(element, data, Redo, paste_text=None)
+    return { changed: result.changed, activated: false, focused: None }
+  }
   if event.key == "Backspace" {
     match active_text_selection(element.selection) {
       Some(selection) =>
@@ -849,6 +857,22 @@ fn is_select_all_shortcut(event : KeyboardEvent) -> Bool {
 }
 
 ///|
+fn is_undo_shortcut(event : KeyboardEvent) -> Bool {
+  event.pressed &&
+  (event.key == "z" || event.key == "Z") &&
+  !event.modifiers.shift &&
+  (event.modifiers.meta || event.modifiers.control)
+}
+
+///|
+fn is_redo_shortcut(event : KeyboardEvent) -> Bool {
+  event.pressed &&
+  (event.key == "z" || event.key == "Z") &&
+  event.modifiers.shift &&
+  (event.modifiers.meta || event.modifiers.control)
+}
+
+///|
 fn select_text_range(element : ElementNode, text : String) -> ElementEventResult {
   let length = text_length(text)
   element.caret = length
@@ -878,6 +902,14 @@ fn handle_searchbar_keyboard(
   }
   if is_select_all_shortcut(event) {
     return select_text_range(element, data.query.get())
+  }
+  if is_undo_shortcut(event) {
+    let result = handle_searchbar_command(element, data, Undo, paste_text=None)
+    return { changed: result.changed, activated: false, focused: None }
+  }
+  if is_redo_shortcut(event) {
+    let result = handle_searchbar_command(element, data, Redo, paste_text=None)
+    return { changed: result.changed, activated: false, focused: None }
   }
   if event.key == "Backspace" {
     match active_text_selection(element.selection) {
@@ -1041,6 +1073,14 @@ fn handle_rich_text_editor_keyboard(
   }
   if is_select_all_shortcut(event) {
     return select_text_range(element, data.value.get())
+  }
+  if is_undo_shortcut(event) {
+    let result = handle_rich_text_editor_command(element, data, Undo, paste_text=None)
+    return { changed: result.changed, activated: false, focused: None }
+  }
+  if is_redo_shortcut(event) {
+    let result = handle_rich_text_editor_command(element, data, Redo, paste_text=None)
+    return { changed: result.changed, activated: false, focused: None }
   }
   if event.key == "Backspace" {
     match active_text_selection(element.selection) {

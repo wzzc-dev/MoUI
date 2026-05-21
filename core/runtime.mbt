@@ -175,3 +175,12 @@ pub fn AppRuntime::dispatch_command(
 ) -> Bool {
   self.state.dispatch_command(intent)
 }
+
+///|
+pub fn AppRuntime::dispatch_focused_text_command(
+  self : AppRuntime,
+  intent : CommandIntent,
+  paste_text? : String? = None,
+) -> TextCommandResult {
+  self.state.dispatch_focused_text_command(intent, paste_text~)
+}

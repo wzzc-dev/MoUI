@@ -785,6 +785,68 @@ test "text field select all shortcut replaces unicode text" {
 }
 
 ///|
+test "text field command undo and redo restore edit history" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("a")))
+  runtime.dispatch_event(TextInput(InsertText("b")))
+  inspect(state.get(), content="ab")
+  let undo = runtime.dispatch_focused_text_command(Undo)
+  assert_true(undo.handled)
+  assert_true(undo.changed)
+  inspect(state.get(), content="a")
+  let redo = runtime.dispatch_focused_text_command(Redo)
+  assert_true(redo.handled)
+  assert_true(redo.changed)
+  inspect(state.get(), content="ab")
+}
+
+///|
+test "text field keyboard undo and redo use edit history" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("ab")))
+  runtime.dispatch_event(TextInput(InsertText("c")))
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(key="z", modifiers=KeyModifiers::new(meta=true)),
+    ),
+  )
+  inspect(state.get(), content="ab")
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(
+        key="z",
+        modifiers=KeyModifiers::new(shift=true, meta=true),
+      ),
+    ),
+  )
+  inspect(state.get(), content="abc")
+}
+
+///|
 test "text field selection draws highlight before text" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(

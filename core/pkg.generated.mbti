@@ -140,6 +140,7 @@ pub fn AppRuntime::destroy(Self) -> Unit
 pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dispatch_command(Self, CommandIntent) -> Bool
 pub fn AppRuntime::dispatch_event(Self, AppEvent) -> Unit
+pub fn AppRuntime::dispatch_focused_text_command(Self, CommandIntent, paste_text? : String?) -> TextCommandResult
 pub fn AppRuntime::draw_commands(Self) -> Array[DrawCommand]
 pub fn AppRuntime::environment(Self) -> Environment
 pub fn AppRuntime::focus_next(Self) -> Bool
@@ -605,6 +606,8 @@ pub(all) struct ElementNode {
   mut selection : TextRange?
   mut composition : String?
   mut composition_cursor : TextRange?
+  mut text_undo_stack : Array[String]
+  mut text_redo_stack : Array[String]
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut component_effects : Array[ComponentEffect]
@@ -1168,6 +1171,7 @@ pub fn RuntimeState::destroy(Self) -> Unit
 pub fn RuntimeState::dirty_count(Self) -> Int
 pub fn RuntimeState::dispatch_command(Self, CommandIntent) -> Bool
 pub fn RuntimeState::dispatch_event(Self, AppEvent) -> Unit
+pub fn RuntimeState::dispatch_focused_text_command(Self, CommandIntent, paste_text? : String?) -> TextCommandResult
 pub fn RuntimeState::environment(Self) -> Environment
 pub fn RuntimeState::focused_text_input(Self) -> TextInputState
 pub fn RuntimeState::layout(Self) -> LayoutResult
@@ -1448,6 +1452,12 @@ pub(all) enum TextAlign {
   TextStart
   TextCenter
   TextEnd
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextCommandResult {
+  handled : Bool
+  changed : Bool
+  clipboard_text : String?
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TextFieldStyle {

@@ -455,6 +455,72 @@ test "host driver maps focused text input through core text input event" {
 }
 
 ///|
+test "host driver routes text clipboard commands through service bridge" {
+  let text = @core.State::new("")
+  let clipboard = Ref("")
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::TextFieldSpec({
+      key: None,
+      value: text.binding(),
+      placeholder: "Type",
+      size: @core.Size::new(width=240.0, height=40.0),
+      font: @core.FontSpec::new(size=16.0, weight=400),
+      foreground: @core.Color::black(),
+      placeholder_color: @core.Color::gray(),
+      background: @core.Brush::solid(@core.Color::white()),
+      border: None,
+      focused_border: None,
+      cursor_color: @core.Color::blue(),
+      corner_radius: 0.0,
+      on_submit: None,
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        Clipboard(WriteText(value)) => {
+          clipboard.val = value
+          HostServiceResponse::ClipboardWritten
+        }
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText(clipboard.val)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(driver.dispatch(HostEvent::TextInput(@core.TextInputEvent::InsertText("hello"))))
+  ignore(
+    driver.dispatch(
+      HostEvent::Keyboard(
+        @core.KeyboardEvent::new(
+          key="a",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+    ),
+  )
+  ignore(driver.dispatch_command_with_services(@core.CommandIntent::Copy, bridge))
+  inspect(clipboard.val, content="hello")
+  ignore(driver.dispatch_command_with_services(@core.CommandIntent::Cut, bridge))
+  inspect(text.get(), content="")
+  clipboard.val = "world"
+  ignore(driver.dispatch_command_with_services(@core.CommandIntent::Paste, bridge))
+  inspect(text.get(), content="world")
+}
+
+///|
 test "host driver dispatches ime composition text input events" {
   let text = @core.State::new("")
   let runtime = @core.AppRuntime::new_spec(

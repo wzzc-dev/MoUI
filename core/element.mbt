@@ -13,6 +13,8 @@ pub(all) struct ElementNode {
   mut selection : TextRange?
   mut composition : String?
   mut composition_cursor : TextRange?
+  mut text_undo_stack : Array[String]
+  mut text_redo_stack : Array[String]
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut component_effects : Array[ComponentEffect]
@@ -188,6 +190,8 @@ fn mount_view_spec_for_runtime(
       selection: None,
       composition: None,
       composition_cursor: None,
+      text_undo_stack: [],
+      text_redo_stack: [],
       component_child_spec,
       component_subscriptions,
       component_effects,
