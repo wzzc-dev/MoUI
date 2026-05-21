@@ -116,7 +116,9 @@ MoUI keeps production runtime boundaries explicit when using Mooncakes
 frontends and tooling:
 
 - `Milky2018/moon_cosmic` lives behind `text/cosmic/`; `core/` remains
-  platform-neutral and does not import the Cosmic Text engine directly.
+  platform-neutral and does not import the Cosmic Text engine directly. The
+  native WGPU renderer also uses Cosmic for shaping, font fallback, cache keys,
+  and glyph pixels while keeping MoUI's GPU atlas and backend ownership.
 - `mizchi/markdown` powers the Markdown Editor parser adapter while preserving
   `markdown_to_rich_text(String) -> @core.RichTextDocument`.
 - `mizchi/svg` powers `render.import_svg(String) -> SvgImportResult`, lowering
