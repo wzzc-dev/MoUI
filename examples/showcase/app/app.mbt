@@ -1245,7 +1245,7 @@ fn capability_status_label(entry : @render.RendererFeatureCapability) -> String 
   } else {
     "native " +
     entry.native_status.label() +
-    " · web " +
+    " / web " +
     entry.web_status.label()
   }
 }

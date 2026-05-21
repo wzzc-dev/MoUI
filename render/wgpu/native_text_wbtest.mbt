@@ -68,6 +68,26 @@ test "native text shaping produces glyphs when platform font is available" {
 }
 
 ///|
+test "native text shaping handles multibyte punctuation" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let cache = NativeFontCache::new()
+    let run = @core.TextRun::new(
+      text="native supported · web supported",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=112.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let runs = native_text_layout_runs(cache, run)
+    inspect(cache.has_loaded_fonts(), content="true")
+    inspect(runs.length() > 0, content="true")
+    inspect(runs.any(run => run.glyphs.length() > 0), content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
 test "native renderer builds text vertices and atlas entries" {
   if @fs.path_exists(native_regular_font_path()) {
     let renderer = new_test_renderer_handle()
