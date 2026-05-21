@@ -116,14 +116,14 @@ fn windows_bold_font_path() -> String {
 ///|
 fn macos_regular_font_path() -> String {
   first_existing_font_path([
-    "/System/Library/Fonts/SFNSMono.ttf", "/System/Library/Fonts/Helvetica.ttc", "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc", "/System/Library/Fonts/Supplemental/Arial.ttf",
   ])
 }
 
 ///|
 fn macos_bold_font_path() -> String {
   first_existing_font_path([
-    "/System/Library/Fonts/SFNSMono.ttf", "/System/Library/Fonts/Helvetica.ttc", "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc", "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
   ])
 }
 
