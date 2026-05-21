@@ -33,7 +33,7 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(path.native_status == @render.RendererFeatureStatus::Ready)
   assert_true(path.web_status == @render.RendererFeatureStatus::Ready)
-  assert_true(path.native_note.contains("tessellator"))
+  assert_true(path.native_note.contains("moon_zeno"))
   guard @render.renderer_feature_capability(@render.RendererFeature::TextShaping)
     is Some(text_shaping) else {
     fail("expected text shaping capability")

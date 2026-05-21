@@ -195,8 +195,8 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::PathVector,
       native_status: RendererFeatureStatus::Ready,
       web_status: RendererFeatureStatus::Ready,
-      native_note: "DrawPath models move/line/quad/cubic/close verbs and is lowered by the shared path tessellator into fill and stroke triangle vertices before renderer execution.",
-      web_note: "DrawPath uses the same renderer-neutral tessellation contract as native; WebGPU host upload remains aligned to the generated triangle mesh.",
+      native_note: "DrawPath models move/line/quad/cubic/close verbs and is lowered through moon_zeno into fill and stroke triangle vertices before renderer execution.",
+      web_note: "DrawPath uses the same moon_zeno-backed renderer-neutral tessellation contract as native; WebGPU host upload remains aligned to the generated triangle mesh.",
     },
     {
       feature: RendererFeature::ShaderEffect,
