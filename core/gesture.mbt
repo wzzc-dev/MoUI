@@ -283,5 +283,12 @@ pub fn default_text_commands() -> Array[ActionCommand] {
         ),
       ),
     ),
+    ActionCommand::new(
+      intent=CommandIntent::SelectAll,
+      label="Select All",
+      shortcut=Some(
+        KeyboardShortcut::new(key="a", modifiers=KeyModifiers::new(meta=true)),
+      ),
+    ),
   ]
 }

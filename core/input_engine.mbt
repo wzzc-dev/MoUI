@@ -763,6 +763,9 @@ fn handle_text_field_keyboard(
     element.dirty.mark_paint()
     return { changed: true, activated: true, focused: None }
   }
+  if is_select_all_shortcut(event) {
+    return select_text_range(element, data.value.get())
+  }
   if event.key == "Backspace" {
     match active_text_selection(element.selection) {
       Some(selection) =>
@@ -839,6 +842,24 @@ fn handle_text_field_keyboard(
 }
 
 ///|
+fn is_select_all_shortcut(event : KeyboardEvent) -> Bool {
+  event.pressed &&
+  (event.key == "a" || event.key == "A") &&
+  (event.modifiers.meta || event.modifiers.control)
+}
+
+///|
+fn select_text_range(element : ElementNode, text : String) -> ElementEventResult {
+  let length = text_length(text)
+  element.caret = length
+  element.selection = Some(TextRange::new(start=0, end=length))
+  element.composition = None
+  element.composition_cursor = None
+  element.dirty.mark_paint()
+  { changed: true, activated: false, focused: None }
+}
+
+///|
 fn handle_searchbar_keyboard(
   element : ElementNode,
   data : SearchBarViewSpec,
@@ -854,6 +875,9 @@ fn handle_searchbar_keyboard(
     }
     element.dirty.mark_paint()
     return { changed: true, activated: true, focused: None }
+  }
+  if is_select_all_shortcut(event) {
+    return select_text_range(element, data.query.get())
   }
   if event.key == "Backspace" {
     match active_text_selection(element.selection) {
@@ -1014,6 +1038,9 @@ fn handle_rich_text_editor_keyboard(
   }
   if event.key == "Enter" {
     return handle_rich_text_editor_input(element, data, InsertText("\n"))
+  }
+  if is_select_all_shortcut(event) {
+    return select_text_range(element, data.value.get())
   }
   if event.key == "Backspace" {
     match active_text_selection(element.selection) {
