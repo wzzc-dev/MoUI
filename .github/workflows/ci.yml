@@ -1,0 +1,29 @@
+name: MoUI CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  conformance:
+    name: Core conformance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up MoonBit
+        uses: moonbitlang/setup-moonbit@v1
+
+      - name: Restore local window dependency
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Check local dependency wiring
+        run: sh scripts/check-local-deps.sh
+
+      - name: Run conformance checks
+        run: sh scripts/conformance-check.sh
+
+      - name: Build golden preview target
+        run: sh scripts/conformance-check.sh --golden
