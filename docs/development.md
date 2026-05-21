@@ -68,6 +68,9 @@ hot-reload-like developer loop rather than VM state preservation: app state is
 rebuilt with the package, while the command gives fast feedback and keeps the
 preview target explicit.
 
+Implementation skeletons live in `docs/tutorials.md`, and reusable package,
+host-service, renderer, and Showcase checklists live in `docs/templates.md`.
+
 Current-platform backend tests can be included without native example builds:
 
 ```sh
