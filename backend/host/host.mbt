@@ -97,6 +97,21 @@ pub(all) enum HostServiceResponse {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum HostServiceKind {
+  ClipboardService
+  MenuService
+  FileDialogService
+  OpenUrlService
+  SystemThemeService
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostServiceHandler {
+  kind : HostServiceKind
+  handle : (HostServiceRequest) -> HostServiceResponse
+}
+
+///|
 pub(all) struct PlatformChannelRequest {
   channel : String
   operation : String
@@ -125,6 +140,7 @@ pub(all) struct PlatformChannelRegistry {
 pub(all) struct HostServiceBridge {
   capabilities : HostServiceCapabilities
   handle : (HostServiceRequest) -> HostServiceResponse
+  mut services : Array[HostServiceHandler]
   channels : PlatformChannelRegistry
 }
 
@@ -384,7 +400,12 @@ pub fn HostServiceBridge::new(
   capabilities~ : HostServiceCapabilities,
   handle~ : (HostServiceRequest) -> HostServiceResponse,
 ) -> HostServiceBridge {
-  { capabilities, handle, channels: PlatformChannelRegistry::new() }
+  {
+    capabilities,
+    handle,
+    services: [],
+    channels: PlatformChannelRegistry::new(),
+  }
 }
 
 ///|
@@ -400,7 +421,10 @@ pub fn HostServiceBridge::dispatch(
   request : HostServiceRequest,
 ) -> HostServiceResponse {
   if self.can_handle(request) {
-    (self.handle)(request)
+    match self.dispatch_registered_service(request) {
+      Some(response) => response
+      None => (self.handle)(request)
+    }
   } else {
     HostServiceResponse::Unavailable(request.unavailable_message())
   }
@@ -431,6 +455,48 @@ pub fn HostServiceRequest::unavailable_message(
     OpenUrl(_) => "open URL service is unavailable"
     QuerySystemTheme => "system theme service is unavailable"
   }
+}
+
+///|
+pub fn HostServiceRequest::kind(self : HostServiceRequest) -> HostServiceKind {
+  match self {
+    Clipboard(_) => ClipboardService
+    ShowMenu(_) => MenuService
+    FileDialog(_) => FileDialogService
+    OpenUrl(_) => OpenUrlService
+    QuerySystemTheme => SystemThemeService
+  }
+}
+
+///|
+pub fn HostServiceHandler::new(
+  kind~ : HostServiceKind,
+  handle~ : (HostServiceRequest) -> HostServiceResponse,
+) -> HostServiceHandler {
+  { kind, handle }
+}
+
+///|
+pub fn HostServiceBridge::register_service(
+  self : HostServiceBridge,
+  handler : HostServiceHandler,
+) -> Unit {
+  self.services = self.services.filter(existing => existing.kind != handler.kind)
+  self.services.push(handler)
+}
+
+///|
+pub fn HostServiceBridge::dispatch_registered_service(
+  self : HostServiceBridge,
+  request : HostServiceRequest,
+) -> HostServiceResponse? {
+  let kind = request.kind()
+  for handler in self.services {
+    if handler.kind == kind {
+      return Some((handler.handle)(request))
+    }
+  }
+  None
 }
 
 ///|
