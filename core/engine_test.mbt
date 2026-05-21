@@ -751,6 +751,40 @@ test "text field keyboard selection replaces and deletes ranges" {
 }
 
 ///|
+test "text field select all shortcut replaces unicode text" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("你好abc")))
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(key="a", modifiers=KeyModifiers::new(meta=true)),
+    ),
+  )
+  let input = runtime.focused_text_input()
+  inspect(input.caret, content="5")
+  match input.selection {
+    Some(selection) => {
+      inspect(selection.normalized().start, content="0")
+      inspect(selection.normalized().end, content="5")
+    }
+    None => fail("expected select all range")
+  }
+  runtime.dispatch_event(TextInput(InsertText("done")))
+  inspect(state.get(), content="done")
+}
+
+///|
 test "text field selection draws highlight before text" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(
