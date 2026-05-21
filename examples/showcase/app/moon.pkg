@@ -1,5 +1,8 @@
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/examples/counter/app" @counter_app,
+  "wzzc-dev/moui/examples/markdown_editor/app" @markdown_app,
+  "wzzc-dev/moui/examples/todo/app" @todo_app,
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/views",
 }
