@@ -3,6 +3,45 @@ test "macos backend is native renderer ready" {
   let info = backend_info()
   assert_true(info.host_info.backend == @host.HostBackendKind::Native)
   inspect(info.renderer_ready, content="true")
+  inspect(info.accessibility.kind.label(), content="appkit")
+  inspect(info.accessibility.contract_ready, content="true")
+}
+
+///|
+test "macos accessibility bridge dispatches semantics actions" {
+  let invoked = Ref(0)
+  let node = @core.SemanticsNode::{
+    element_id: @core.ElementId::new(9),
+    role: @core.SemanticsRole::Button,
+    label: "Run",
+    value: "",
+    state: @core.SemanticsState::default(),
+    actions: [@core.SemanticsAction::Activate],
+    focus_order: Some(0),
+    frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=32.0),
+    children: [],
+  }
+  let bridge = macos_accessibility_bridge(
+    root=node,
+    dispatch=(element_id, action, _value) => {
+      if element_id == @core.ElementId::new(9) && action == @core.SemanticsAction::Activate {
+        invoked.val = invoked.val + 1
+        true
+      } else {
+        false
+      }
+    },
+  )
+  match bridge.perform_action(
+    @host.NativeAccessibilityActionRequest::new(
+      element_id=@core.ElementId::new(9),
+      action=@core.SemanticsAction::Activate,
+    ),
+  ) {
+    @host.NativeAccessibilityActionResult::Handled => ()
+    _ => fail("expected handled AppKit accessibility action")
+  }
+  inspect(invoked.val, content="1")
 }
 
 ///|

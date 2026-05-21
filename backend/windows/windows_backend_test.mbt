@@ -229,3 +229,48 @@ test "windows backend exposes platform-owned surface host metadata" {
   inspect(info.platform, content="windows")
   inspect(info.owns_instance, content="true")
 }
+
+///|
+test "windows accessibility bridge reports UI Automation contract" {
+  let info = windows_accessibility_bridge_info()
+  inspect(info.kind.label(), content="uiautomation")
+  inspect(info.contract_ready, content="true")
+  inspect(info.native_binding_ready, content="false")
+}
+
+///|
+test "windows accessibility bridge dispatches semantics actions" {
+  let invoked = Ref(0)
+  let node = @core.SemanticsNode::{
+    element_id: @core.ElementId::new(11),
+    role: @core.SemanticsRole::Checkbox,
+    label: "Enable",
+    value: "false",
+    state: @core.SemanticsState::default(),
+    actions: [@core.SemanticsAction::Activate],
+    focus_order: Some(0),
+    frame: @core.Rect::new(x=0.0, y=0.0, width=120.0, height=32.0),
+    children: [],
+  }
+  let bridge = windows_accessibility_bridge(
+    root=node,
+    dispatch=(element_id, action, _value) => {
+      if element_id == @core.ElementId::new(11) && action == @core.SemanticsAction::Activate {
+        invoked.val = invoked.val + 1
+        true
+      } else {
+        false
+      }
+    },
+  )
+  match bridge.perform_action(
+    @host.NativeAccessibilityActionRequest::new(
+      element_id=@core.ElementId::new(11),
+      action=@core.SemanticsAction::Activate,
+    ),
+  ) {
+    @host.NativeAccessibilityActionResult::Handled => ()
+    _ => fail("expected handled UIA accessibility action")
+  }
+  inspect(invoked.val, content="1")
+}

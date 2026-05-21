@@ -15,6 +15,16 @@ pub(all) suberror MacosSurfaceHostError {
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
   renderer_ready : Bool
+  accessibility : MacosAccessibilityBridgeInfo
+  description : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct MacosAccessibilityBridgeInfo {
+  kind : @host.NativeAccessibilityBridgeKind
+  contract_ready : Bool
+  native_binding_ready : Bool
+  action_roundtrip_ready : Bool
   description : String
 } derive(Eq, Debug, ToJson)
 
@@ -38,8 +48,32 @@ pub fn backend_info() -> MacosBackendInfo {
       description="macOS AppKit window host with CAMetalLayer wgpu surface",
     ),
     renderer_ready: true,
+    accessibility: macos_accessibility_bridge_info(),
     description: "macOS backend uses Milky2018/window/macos for AppKit events and installs a CAMetalLayer on the window NSView for render/wgpu.",
   }
+}
+
+///|
+pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
+  {
+    kind: @host.NativeAccessibilityBridgeKind::AppKit,
+    contract_ready: true,
+    native_binding_ready: false,
+    action_roundtrip_ready: true,
+    description: "macOS exposes an AppKit accessibility bridge contract over the shared semantics tree; real NSAccessibility object binding is still a backend follow-up.",
+  }
+}
+
+///|
+pub fn macos_accessibility_bridge(
+  root~ : @core.SemanticsNode,
+  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+) -> @host.NativeAccessibilityBridge {
+  @host.NativeAccessibilityBridge::semantics_action_bridge(
+    kind=@host.NativeAccessibilityBridgeKind::AppKit,
+    root~,
+    dispatch~,
+  )
 }
 
 ///|

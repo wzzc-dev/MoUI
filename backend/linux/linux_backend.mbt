@@ -4,6 +4,7 @@ pub(all) struct LinuxBackendInfo {
   window_backend_available : Bool
   renderer_ready : Bool
   capabilities : LinuxBackendCapabilities
+  accessibility : LinuxAccessibilityBridgeInfo
   services : @host.HostServiceCapabilities
   readiness : LinuxBackendReadiness
   description : String
@@ -27,6 +28,15 @@ pub(all) struct LinuxBackendReadiness {
   ready : Bool
   blocked_by : Array[String]
   next_steps : Array[String]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct LinuxAccessibilityBridgeInfo {
+  kind : @host.NativeAccessibilityBridgeKind
+  contract_ready : Bool
+  native_binding_ready : Bool
+  action_roundtrip_ready : Bool
+  description : String
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -76,10 +86,30 @@ pub fn backend_info() -> LinuxBackendInfo {
     window_backend_available: false,
     renderer_ready: false,
     capabilities: capability_matrix(),
+    accessibility: linux_accessibility_bridge_info(),
     services: service_capabilities(),
     readiness: readiness(),
     description: "Linux backend is a scaffold. The local window dependency does not expose a window/linux package yet.",
   }
+}
+
+///|
+pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
+  {
+    kind: @host.NativeAccessibilityBridgeKind::ATSPI,
+    contract_ready: true,
+    native_binding_ready: false,
+    action_roundtrip_ready: false,
+    description: "Linux declares the AT-SPI accessibility bridge contract, but the backend remains unavailable until window/linux and native AT-SPI bindings exist.",
+  }
+}
+
+///|
+pub fn linux_accessibility_bridge() -> @host.NativeAccessibilityBridge {
+  @host.NativeAccessibilityBridge::unavailable(
+    kind=@host.NativeAccessibilityBridgeKind::ATSPI,
+    reason="Linux AT-SPI accessibility bridge is unavailable until the Linux backend is implemented",
+  )
 }
 
 ///|

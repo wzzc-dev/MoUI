@@ -12,6 +12,10 @@ pub fn backend_info() -> MacosBackendInfo
 
 pub fn create_macos_host_surface(UInt64, @wzzc-dev/moui/core.Size, scale_factor? : Double) -> @wgpu.HostWgpuSurface raise
 
+pub fn macos_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> @host.NativeAccessibilityBridge
+
+pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
+
 pub fn macos_surface_host_info() -> @wgpu.SurfaceHostInfo
 
 pub fn run_app(String, @wzzc-dev/moui/core.AppRuntime) -> Unit
@@ -30,12 +34,21 @@ pub(all) suberror MacosSurfaceHostError {
 }
 
 // Types and methods
+pub(all) struct MacosAccessibilityBridgeInfo {
+  kind : @host.NativeAccessibilityBridgeKind
+  contract_ready : Bool
+  native_binding_ready : Bool
+  action_roundtrip_ready : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
 type MacosApp
 pub impl @Milky2018/window/macos.ApplicationHandler for MacosApp
 
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
   renderer_ready : Bool
+  accessibility : MacosAccessibilityBridgeInfo
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
