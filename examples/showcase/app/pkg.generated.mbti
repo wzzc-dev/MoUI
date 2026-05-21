@@ -14,21 +14,31 @@ pub struct ShowcaseApp {
   dark : @core.State[Bool]
   active : @core.State[Bool]
   dialog_visible : @core.State[Bool]
+  sheet_visible : @core.State[Bool]
   feature_enabled : @core.State[Bool]
+  secondary_enabled : @core.State[Bool]
   draft : @core.State[String]
   tab : @core.State[String]
   selected_section : @core.State[String]
   filter : @core.State[String]
   slider_value : @core.State[Double]
+  picker_value : @core.State[String]
+  date_value : @core.State[@core.DateValue]
   navigation : @core.NavigationState
   list_scroll : @core.ScrollState
+  grid_scroll : @core.ScrollState
+  counter : @wzzc-dev/moui/examples/counter/app.CounterApp
+  todo : @wzzc-dev/moui/examples/todo/app.TodoApp
+  markdown : @wzzc-dev/moui/examples/markdown_editor/app.MarkdownEditorApp
 }
 pub fn ShowcaseApp::hide_dialog(Self) -> Unit
+pub fn ShowcaseApp::hide_sheet(Self) -> Unit
 pub fn ShowcaseApp::new() -> Self
 pub fn ShowcaseApp::root(Self, @core.BuildContext) -> @core.ViewSpec
 pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn ShowcaseApp::select_section(Self, String) -> Unit
 pub fn ShowcaseApp::show_dialog(Self) -> Unit
+pub fn ShowcaseApp::show_sheet(Self) -> Unit
 pub fn ShowcaseApp::toggle_active(Self) -> Unit
 pub fn ShowcaseApp::toggle_scheme(Self) -> Unit
 
