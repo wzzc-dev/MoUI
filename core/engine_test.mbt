@@ -947,7 +947,9 @@ test "ime composition replaces selected text and undo restores selection edit" {
   )
   runtime.dispatch_event(TextInput(CompositionStart))
   runtime.dispatch_event(
-    TextInput(CompositionUpdate(CompositionUpdate::new(text="你", cursor=None))),
+    TextInput(
+      CompositionUpdate(CompositionUpdate::new(text="你", cursor=None)),
+    ),
   )
   inspect(state.get(), content="abcd")
   runtime.dispatch_event(TextInput(CompositionEnd("你")))

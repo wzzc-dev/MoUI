@@ -1145,8 +1145,11 @@ pub fn CustomPlacementContext::mirror_x(
 ) -> Double {
   match self.layout_direction {
     LeftToRight => x
-    RightToLeft => self.frame.origin.x + self.frame.size.width -
-      (x - self.frame.origin.x) - width
+    RightToLeft =>
+      self.frame.origin.x +
+      self.frame.size.width -
+      (x - self.frame.origin.x) -
+      width
   }
 }
 

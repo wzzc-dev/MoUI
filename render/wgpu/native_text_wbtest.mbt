@@ -18,7 +18,8 @@ test "native text fallback font path covers cjk when available" {
       cache.font_system.resolve_for_codepoint(
         native_text_attrs_for_font(font),
         0x4F60U,
-      ) is Some(_),
+      )
+      is Some(_),
       content="true",
     )
   } else {
@@ -91,7 +92,9 @@ test "native text shaping handles multibyte punctuation" {
 test "native text shaping handles built-in control symbols" {
   if @fs.path_exists(native_regular_font_path()) {
     let cache = NativeFontCache::new()
-    let symbols = ["✓", "▲", "▼", "◀", "▶", "🔍", "✕", "• ", "☑ ", "☐ "]
+    let symbols = [
+      "✓", "▲", "▼", "◀", "▶", "🔍", "✕", "• ", "☑ ", "☐ ",
+    ]
     for symbol in symbols {
       let run = @core.TextRun::new(
         text=symbol,
@@ -110,7 +113,10 @@ test "native text shaping handles built-in control symbols" {
 
 ///|
 test "native text maps control symbols before cosmic layout" {
-  inspect(native_text_cosmic_safe_text("✓ ▲ ▼ ◀ ▶ 🔍 ✕ • ☑ ☐ ·"), content="v ^ v < > ? x * x o /")
+  inspect(
+    native_text_cosmic_safe_text("✓ ▲ ▼ ◀ ▶ 🔍 ✕ • ☑ ☐ ·"),
+    content="v ▲ ▼ ◀ ▶ ? x * x o /",
+  )
   inspect(native_text_cosmic_safe_text("你好abc"), content="你好abc")
 }
 
@@ -240,6 +246,114 @@ test "native renderer applies text alignment" {
     assert_true(left.text_vertices.length() > 0)
     assert_true(centered.text_vertices.length() > 0)
     assert_true(centered.text_vertices[0].x > left.text_vertices[0].x)
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "native renderer vertically centers text in taller frames" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let command = @core.DrawCommand::DrawText({
+      text: "Center",
+      frame: @core.Rect::new(x=0.0, y=20.0, width=160.0, height=44.0),
+      font: @core.FontSpec::new(size=16.0, weight=500),
+      color: @core.Color::black(),
+      align: @core.TextAlign::TextStart,
+    })
+    let renderer = new_test_renderer_handle()
+    renderer.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=120.0),
+      ),
+    )
+    renderer.render([command])
+    assert_true(renderer.text_vertices.length() > 0)
+    let top = text_vertex_min_y(renderer.text_vertices, 120.0)
+    assert_true(top > 20.0)
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "native renderer keeps text logical vertices stable across dpr" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let command = @core.DrawCommand::DrawText({
+      text: "DPR",
+      frame: @core.Rect::new(x=20.0, y=10.0, width=160.0, height=32.0),
+      font: @core.FontSpec::new(size=18.0, weight=500),
+      color: @core.Color::black(),
+      align: @core.TextAlign::TextStart,
+    })
+    let scale_one = new_test_renderer_handle()
+    scale_one.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=120.0),
+        scale_factor=1.0,
+      ),
+    )
+    scale_one.render([command])
+    let scale_two = new_test_renderer_handle()
+    scale_two.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=120.0),
+        scale_factor=2.0,
+      ),
+    )
+    scale_two.render([command])
+    assert_true(scale_one.text_vertices.length() > 0)
+    assert_true(scale_two.text_vertices.length() > 0)
+    let delta = ((scale_one.text_vertices[0].x - scale_two.text_vertices[0].x) *
+    10000.0).to_int()
+    assert_true(delta >= -1 && delta <= 1)
+    assert_true(
+      scale_two.glyph_atlas.shelf_height > scale_one.glyph_atlas.shelf_height,
+    )
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+fn text_vertex_min_y(vertices : Array[TextVertex], height : Double) -> Double {
+  let mut min_y = height
+  for vertex in vertices {
+    let y = (1.0 - vertex.y) * height / 2.0
+    if y < min_y {
+      min_y = y
+    }
+  }
+  min_y
+}
+
+///|
+test "native renderer clears glyph atlas when dpr changes" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let renderer = new_test_renderer_handle()
+    renderer.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=120.0),
+        scale_factor=1.0,
+      ),
+    )
+    renderer.render([
+      @core.DrawCommand::DrawText({
+        text: "Scale",
+        frame: @core.Rect::new(x=0.0, y=0.0, width=120.0, height=32.0),
+        font: @core.FontSpec::new(size=16.0, weight=500),
+        color: @core.Color::black(),
+        align: @core.TextAlign::TextStart,
+      }),
+    ])
+    assert_true(renderer.glyph_atlas.entries.length() > 0)
+    renderer.resize(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=320.0, height=120.0),
+        scale_factor=2.0,
+      ),
+    )
+    inspect(renderer.glyph_atlas.entries.length(), content="0")
   } else {
     inspect("skipped", content="skipped")
   }

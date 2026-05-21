@@ -1,7 +1,7 @@
 ///|
 fn main {
   let app = @showcase_app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
+  let runtime = app.runtime()
   @web.run_app("MoUI Showcase Wasm Host", runtime)
 }
 

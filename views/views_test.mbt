@@ -95,7 +95,6 @@ test "button paints background and text command" {
   guard runtime.draw_commands()
     is [
       @core.DrawCommand::Clear(_),
-      @core.DrawCommand::DrawShadow(_),
       @core.DrawCommand::FillRoundedRectBrush(_, _),
       @core.DrawCommand::DrawText({ text: "Tap", frame, .. }),
     ] else {
@@ -403,9 +402,7 @@ test "grid and list helpers build keyed collection specs" {
 ///|
 test "lazy grid virtualizes rows while preserving scroll extent" {
   let items = [0, 1, 2, 3, 4, 5, 6, 7]
-  let state = @core.ScrollState::new(
-    offset=@core.Point::new(x=0.0, y=61.0),
-  )
+  let state = @core.ScrollState::new(offset=@core.Point::new(x=0.0, y=61.0))
   let spec = @views.lazy_grid(
     items,
     item => "item-\{item}",
@@ -424,7 +421,7 @@ test "lazy grid virtualizes rows while preserving scroll extent" {
         offset: { y: 61.0, .. },
         viewport: Some({ width: 120.0, height: 24.0 }),
         child: @core.ViewSpec::ListSpec({ children, .. }),
-        ..
+        ..,
       }
     ) else {
     fail("expected lazy grid scroll spec")
@@ -440,10 +437,12 @@ test "lazy grid virtualizes rows while preserving scroll extent" {
     is @core.ViewSpec::GridSpec({ children: [first, second], columns: 2, .. }) else {
     fail("expected first visible grid row")
   }
-  guard first is @core.ViewSpec::TextSpec({ key: Some({ value: "item-4" }), .. }) else {
+  guard first
+    is @core.ViewSpec::TextSpec({ key: Some({ value: "item-4" }), .. }) else {
     fail("expected first visible item")
   }
-  guard second is @core.ViewSpec::TextSpec({ key: Some({ value: "item-5" }), .. }) else {
+  guard second
+    is @core.ViewSpec::TextSpec({ key: Some({ value: "item-5" }), .. }) else {
     fail("expected second visible item")
   }
   guard children[2]
@@ -577,7 +576,10 @@ test "lazy list windows visible rows" {
     viewport_height=40.0,
     spacing=4.0,
   )
-  guard spec is @core.ViewSpec::ScrollSpec({ viewport: Some({ height: 40.0, .. }), child, .. }) else {
+  guard spec
+    is @core.ViewSpec::ScrollSpec(
+      { viewport: Some({ height: 40.0, .. }), child, .. }
+    ) else {
     fail("expected lazy list scroll viewport")
   }
   guard child is @core.ViewSpec::ListSpec({ children, .. }) else {

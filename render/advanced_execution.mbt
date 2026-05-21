@@ -30,7 +30,7 @@ pub(all) struct PathMesh {
 
 ///|
 pub fn builtin_shader_names() -> Array[String] {
-  [ "solid", "checker", "linear-gradient-debug", "vignette" ]
+  ["solid", "checker", "linear-gradient-debug", "vignette"]
 }
 
 ///|
@@ -84,7 +84,11 @@ fn zeno_path_from_spec(
         }
       @core.PathVerb::QuadTo(control, point) =>
         if has_current {
-          @zeno.PathBuilder::quad_to(path, zeno_vector(control), zeno_vector(point))
+          @zeno.PathBuilder::quad_to(
+            path,
+            zeno_vector(control),
+            zeno_vector(point),
+          )
         } else {
           mesh.diagnostics.push("QuadTo ignored before MoveTo")
         }

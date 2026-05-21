@@ -115,12 +115,16 @@ fn windows_bold_font_path() -> String {
 
 ///|
 fn macos_regular_font_path() -> String {
-  "/System/Library/Fonts/Supplemental/Arial.ttf"
+  first_existing_font_path([
+    "/System/Library/Fonts/SFNSMono.ttf", "/System/Library/Fonts/Helvetica.ttc", "/System/Library/Fonts/Supplemental/Arial.ttf",
+  ])
 }
 
 ///|
 fn macos_bold_font_path() -> String {
-  "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+  first_existing_font_path([
+    "/System/Library/Fonts/SFNSMono.ttf", "/System/Library/Fonts/Helvetica.ttc", "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+  ])
 }
 
 ///|
@@ -321,10 +325,6 @@ fn native_text_cosmic_safe_text(text : String) -> String {
 fn native_text_cosmic_safe_char(ch : Char) -> Char {
   match ch {
     '✓' => 'v'
-    '▲' => '^'
-    '▼' => 'v'
-    '◀' => '<'
-    '▶' => '>'
     '🔍' => '?'
     '✕' => 'x'
     '•' => '*'
@@ -344,16 +344,30 @@ fn native_text_layout_runs(
 }
 
 ///|
+fn native_text_vertical_extra(
+  frame : @core.Rect,
+  layout_run : @moon_cosmic.LayoutRun,
+) -> Double {
+  let extra = frame.size.height - layout_run.line_height.to_double()
+  if extra > 0.0 {
+    extra / 2.0
+  } else {
+    0.0
+  }
+}
+
+///|
 fn build_native_text_run(
   cache : NativeFontCache,
   atlas : GlyphAtlas,
   run : @core.TextRun,
   state : NativePaintState,
   size : @core.Size,
+  scale_factor : Double,
 ) -> TextRunBuildResult {
   let vertices : Array[TextVertex] = []
   let atlas_full = append_text_run_vertices(
-    cache, atlas, run, state, size, vertices,
+    cache, atlas, run, state, size, scale_factor, vertices,
   )
   { vertices, atlas_full }
 }
@@ -365,45 +379,60 @@ fn append_text_run_vertices(
   run : @core.TextRun,
   state : NativePaintState,
   size : @core.Size,
+  scale_factor : Double,
   vertices : Array[TextVertex],
 ) -> Bool {
   let runs = native_text_layout_runs(cache, run)
   if runs.is_empty() || !cache.has_loaded_fonts() {
     return false
   }
+  let scale = native_text_scale(scale_factor)
   for layout_run in runs {
     let start_extra = text_align_extra(
       run.align,
       run.frame.size.width,
       layout_run.line_w.to_double(),
     )
+    let vertical_extra = native_text_vertical_extra(run.frame, layout_run)
     let offset = (
-      Float::from_double(run.frame.origin.x + start_extra),
-      Float::from_double(run.frame.origin.y + run.font.size),
+      Float::from_double((run.frame.origin.x + start_extra) * scale),
+      Float::from_double(
+        (run.frame.origin.y + vertical_extra + layout_run.line_y.to_double()) *
+        scale,
+      ),
     )
     for glyph in layout_run.glyphs {
-      let physical = glyph.physical(offset, 1.0F)
+      let physical = glyph.physical(offset, Float::from_double(scale))
       match atlas.ensure_glyph(cache, physical.cache_key) {
-        GlyphReady(entry) => {
+        GlyphReady(entry) =>
           if entry.width > 0 && entry.height > 0 {
             append_text_quad(
               vertices,
-              physical.x.to_double() + entry.bearing_x.to_double(),
-              physical.y.to_double() + entry.bearing_y.to_double(),
+              (physical.x.to_double() + entry.bearing_x.to_double()) / scale,
+              (physical.y.to_double() + entry.bearing_y.to_double()) / scale,
               entry,
               atlas,
               state,
               size,
+              scale,
               run.color.multiply_alpha(state.opacity),
             )
           }
-        }
         GlyphMissing => ()
         GlyphAtlasFull => return true
       }
     }
   }
   false
+}
+
+///|
+fn native_text_scale(scale_factor : Double) -> Double {
+  if scale_factor > 0.0 {
+    scale_factor
+  } else {
+    1.0
+  }
 }
 
 ///|
@@ -546,16 +575,15 @@ fn append_text_quad(
   atlas : GlyphAtlas,
   state : NativePaintState,
   size : @core.Size,
+  scale_factor : Double,
   color : @core.Color,
 ) -> Unit {
+  let width = entry.width.to_double() / native_text_scale(scale_factor)
+  let height = entry.height.to_double() / native_text_scale(scale_factor)
   let p0 = transform_point(state.transform, x, y)
-  let p1 = transform_point(state.transform, x, y + entry.height.to_double())
-  let p2 = transform_point(
-    state.transform,
-    x + entry.width.to_double(),
-    y + entry.height.to_double(),
-  )
-  let p3 = transform_point(state.transform, x + entry.width.to_double(), y)
+  let p1 = transform_point(state.transform, x, y + height)
+  let p2 = transform_point(state.transform, x + width, y + height)
+  let p3 = transform_point(state.transform, x + width, y)
   let u0 = entry.x.to_double() / atlas.width.to_double()
   let v0 = entry.y.to_double() / atlas.height.to_double()
   let u1 = (entry.x + entry.width).to_double() / atlas.width.to_double()

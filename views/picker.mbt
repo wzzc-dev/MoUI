@@ -10,7 +10,9 @@ pub fn picker(
   placeholder? : String = "Select...",
   font? : @core.FontSpec = @core.Theme::default().typography.control,
   foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  background? : @core.Brush = @core.Brush::solid(@core.Theme::default().palette.surface),
+  background? : @core.Brush = @core.Brush::solid(
+    @core.Theme::default().palette.surface,
+  ),
   corner_radius? : Double = 8.0,
   max_height? : Double = 200.0,
 ) -> @core.ViewSpec {

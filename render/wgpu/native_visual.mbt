@@ -181,7 +181,9 @@ fn build_native_draw_plan(
                 native_scissor_for_state(state, size, scale_factor),
               ) {
               let start = text_vertices.length()
-              let result = build_native_text_run(cache, atlas, run, state, size)
+              let result = build_native_text_run(
+                cache, atlas, run, state, size, scale_factor,
+              )
               for vertex in result.vertices {
                 text_vertices.push(vertex)
               }

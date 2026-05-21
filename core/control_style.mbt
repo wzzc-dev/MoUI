@@ -94,13 +94,11 @@ pub fn ButtonStyle::filled(theme? : Theme = Theme::default()) -> ButtonStyle {
     foreground=theme.palette.primary_foreground,
     background=Brush::solid(theme.palette.primary),
     radius=theme.radius_scale.md,
-    shadow=theme.shadow_scale.sm,
   )
   let hovered = control_state(
     foreground=theme.palette.primary_foreground,
     background=Brush::solid(Color::rgba(r=0.18, g=0.42, b=1.0)),
     radius=theme.radius_scale.md,
-    shadow=theme.shadow_scale.md,
   )
   let pressed = control_state(
     foreground=theme.palette.primary_foreground,

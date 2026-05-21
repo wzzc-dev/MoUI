@@ -108,12 +108,7 @@ pub fn GestureArenaMember::new(
   kind~ : GestureKind,
   priority? : Int = 0,
 ) -> GestureArenaMember {
-  {
-    element_id,
-    kind,
-    priority,
-    disposition: GestureArenaDisposition::Pending,
-  }
+  { element_id, kind, priority, disposition: GestureArenaDisposition::Pending }
 }
 
 ///|
@@ -148,7 +143,7 @@ pub fn resolve_gesture_arena(
     }
   }
   match winner {
-    Some(winner_member) => {
+    Some(winner_member) =>
       for candidate in members {
         if candidate.element_id == winner_member.element_id &&
           candidate.kind == winner_member.kind {
@@ -157,7 +152,6 @@ pub fn resolve_gesture_arena(
           candidate.reject()
         }
       }
-    }
     None => ()
   }
   { winner, members }
@@ -198,13 +192,15 @@ pub fn CommandBinding::new(
 
 ///|
 pub fn ActionCommandMap::new(
-  bindings~ : Array[CommandBinding] = [],
+  bindings? : Array[CommandBinding] = [],
 ) -> ActionCommandMap {
   { bindings, }
 }
 
 ///|
-pub fn ActionCommandMap::commands(self : ActionCommandMap) -> Array[ActionCommand] {
+pub fn ActionCommandMap::commands(
+  self : ActionCommandMap,
+) -> Array[ActionCommand] {
   self.bindings.map(binding => binding.command)
 }
 

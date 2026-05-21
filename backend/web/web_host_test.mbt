@@ -64,7 +64,8 @@ test "canvas host creates surface and input contracts" {
 ///|
 test "web service bridge exposes open url and system theme scaffold" {
   let bridge = web_service_bridge(system_theme=@core.ColorScheme::Dark)
-  match bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
+  match
+    bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
     @host.HostServiceResponse::UrlOpened => ()
     _ => fail("expected URL opened scaffold response")
   }
@@ -72,9 +73,10 @@ test "web service bridge exposes open url and system theme scaffold" {
     @host.HostServiceResponse::SystemTheme(@core.ColorScheme::Dark) => ()
     _ => fail("expected dark system theme")
   }
-  match bridge.dispatch(
-    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
-  ) {
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
+    ) {
     @host.HostServiceResponse::Unavailable(message) =>
       inspect(message, content="clipboard service is unavailable")
     _ => fail("expected clipboard to remain unavailable")

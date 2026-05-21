@@ -505,7 +505,11 @@ test "host driver routes text clipboard commands through service bridge" {
       ),
     ),
   )
-  ignore(driver.dispatch(HostEvent::TextInput(@core.TextInputEvent::InsertText("hello"))))
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("hello")),
+    ),
+  )
   ignore(
     driver.dispatch(
       HostEvent::Keyboard(
@@ -516,12 +520,18 @@ test "host driver routes text clipboard commands through service bridge" {
       ),
     ),
   )
-  ignore(driver.dispatch_command_with_services(@core.CommandIntent::Copy, bridge))
+  ignore(
+    driver.dispatch_command_with_services(@core.CommandIntent::Copy, bridge),
+  )
   inspect(clipboard.val, content="hello")
-  ignore(driver.dispatch_command_with_services(@core.CommandIntent::Cut, bridge))
+  ignore(
+    driver.dispatch_command_with_services(@core.CommandIntent::Cut, bridge),
+  )
   inspect(text.get(), content="")
   clipboard.val = "world"
-  ignore(driver.dispatch_command_with_services(@core.CommandIntent::Paste, bridge))
+  ignore(
+    driver.dispatch_command_with_services(@core.CommandIntent::Paste, bridge),
+  )
   inspect(text.get(), content="world")
 }
 

@@ -208,19 +208,21 @@ pub fn SaveableCodec::string() -> SaveableCodec[String] {
 
 ///|
 pub fn SaveableCodec::bool() -> SaveableCodec[Bool] {
-  SaveableCodec::new(
-    encode=value => if value { "true" } else { "false" },
-    decode=value => match value {
+  SaveableCodec::new(encode=value => if value { "true" } else { "false" }, decode=value => {
+    match value {
       "true" => Some(true)
       "false" => Some(false)
       _ => None
-    },
-  )
+    }
+  })
 }
 
 ///|
 pub fn SaveableCodec::int() -> SaveableCodec[Int] {
-  SaveableCodec::new(encode=value => value.to_string(), decode=parse_saveable_int)
+  SaveableCodec::new(
+    encode=value => value.to_string(),
+    decode=parse_saveable_int,
+  )
 }
 
 ///|
@@ -551,7 +553,9 @@ pub fn[T] BuildContext::saveable(
   codec : SaveableCodec[T],
 ) -> State[T] {
   let scoped = self.scoped_saveable_key(key)
-  let restored = self.runtime.saveable_state.get(scoped, codec).unwrap_or(initial)
+  let restored = self.runtime.saveable_state
+    .get(scoped, codec)
+    .unwrap_or(initial)
   let state = State::new(restored)
   let store = self.runtime.saveable_state
   let runtime = self.runtime
@@ -632,6 +636,11 @@ pub fn BuildContext::color_scheme(self : BuildContext) -> ColorScheme {
 ///|
 pub fn BuildContext::scale_factor(self : BuildContext) -> Double {
   self.environment.scale_factor
+}
+
+///|
+pub fn BuildContext::viewport_size(self : BuildContext) -> Size {
+  self.runtime.size
 }
 
 ///|
@@ -774,7 +783,9 @@ pub fn RuntimeState::set_action_commands(
 }
 
 ///|
-pub fn RuntimeState::action_commands(self : RuntimeState) -> Array[ActionCommand] {
+pub fn RuntimeState::action_commands(
+  self : RuntimeState,
+) -> Array[ActionCommand] {
   self.action_commands.commands()
 }
 
@@ -802,7 +813,11 @@ pub fn RuntimeState::dispatch_focused_text_command(
 ) -> TextCommandResult {
   match self.focused_element {
     Some(target) => {
-      let result = self.element_tree.dispatch_text_command(target, intent, paste_text~)
+      let result = self.element_tree.dispatch_text_command(
+        target,
+        intent,
+        paste_text~,
+      )
       if result.changed {
         self.needs_redraw = true
         self.needs_paint = true
@@ -849,6 +864,7 @@ pub fn RuntimeState::dispatch_event(
     FrameTick(frame) => self.tick_animations(frame)
     Resize(size) => {
       self.size = size
+      self.needs_rebuild = self.element_tree.mark_component_tree_build_dirty()
       self.needs_redraw = true
       self.needs_layout = true
       self.needs_paint = true
@@ -950,7 +966,7 @@ fn RuntimeState::move_focus(
   let previous_focus = self.focused_element
   self.focused_element = self.element_tree.next_focus(
     current=previous_focus,
-    reverse=reverse,
+    reverse~,
   )
   if previous_focus != self.focused_element {
     self.mark_dirty(self.element_tree.id)
@@ -1160,7 +1176,7 @@ fn build_component_spec(
 ///|
 fn cancel_component_effects(
   effects : Array[ComponentEffect],
-  reason~ : ComponentEffectCancelReason = ComponentEffectCancelReason::EffectUnmounted,
+  reason? : ComponentEffectCancelReason = ComponentEffectCancelReason::EffectUnmounted,
 ) -> Unit {
   for effect in effects {
     effect.cancel_with_reason(reason)

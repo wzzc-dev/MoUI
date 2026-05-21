@@ -5,7 +5,9 @@ pub fn searchbar(
   font? : @core.FontSpec = @core.Theme::default().typography.body,
   foreground? : @core.Color = @core.Theme::default().palette.foreground,
   placeholder_color? : @core.Color = @core.Theme::default().palette.muted,
-  background? : @core.Brush = @core.Brush::solid(@core.Theme::default().palette.surface),
+  background? : @core.Brush = @core.Brush::solid(
+    @core.Theme::default().palette.surface,
+  ),
   border? : @core.BorderStyle? = Some(
     @core.BorderStyle::new(
       brush=@core.Brush::solid(@core.Theme::default().palette.outline),

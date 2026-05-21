@@ -103,6 +103,30 @@ test "macos backend converts resize event to host metrics" {
 }
 
 ///|
+test "macos resize metrics update runtime driver logical size" {
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::EmptySpec,
+    size=@core.Size::new(width=10.0, height=10.0),
+  )
+  let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let event = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::SurfaceResized(
+      @dpi.PhysicalSize::PhysicalSize(1440, 900),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match event {
+    Some(host_event) => {
+      ignore(driver.dispatch(host_event))
+      assert_true(runtime.size() == @core.Size::new(width=720.0, height=450.0))
+    }
+    None => fail("expected host resize event")
+  }
+}
+
+///|
 test "macos backend converts pointer movement and left button" {
   let moved = window_event_to_core(
     @window_core.WindowEvent::PointerMoved(

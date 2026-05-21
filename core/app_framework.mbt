@@ -64,7 +64,10 @@ pub fn RouteLocation::parse(value : String) -> RouteLocation {
 }
 
 ///|
-pub fn RouteLocation::query_value(self : RouteLocation, key : String) -> String? {
+pub fn RouteLocation::query_value(
+  self : RouteLocation,
+  key : String,
+) -> String? {
   for param in self.query {
     if param.key == key {
       return Some(param.value)
@@ -88,7 +91,9 @@ pub fn RouteLocation::to_route(self : RouteLocation) -> String {
 }
 
 ///|
-pub fn RouterState::new(initial? : RouteLocation = RouteLocation::new(path="/")) -> RouterState {
+pub fn RouterState::new(
+  initial? : RouteLocation = RouteLocation::new(path="/"),
+) -> RouterState {
   { navigation: NavigationState::new(initial=initial.to_route()) }
 }
 
@@ -103,7 +108,10 @@ pub fn RouterState::push(self : RouterState, location : RouteLocation) -> Unit {
 }
 
 ///|
-pub fn RouterState::replace(self : RouterState, location : RouteLocation) -> Unit {
+pub fn RouterState::replace(
+  self : RouterState,
+  location : RouteLocation,
+) -> Unit {
   self.navigation.stack_slot.update(stack => {
     if stack.length() == 0 {
       [location.to_route()]

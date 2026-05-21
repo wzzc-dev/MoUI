@@ -145,9 +145,7 @@ test "runtime destroy reports effect cancellation reason" {
   let reason : Ref[ComponentEffectCancelReason?] = Ref(None)
   let runtime = AppRuntime::new_component(
     root=Component::new(ctx => {
-      ctx.run_effect(key="tracked", () => {
-        None
-      })
+      ctx.run_effect(key="tracked", () => None)
       ctx.run_effect_with_reason(key="tracked-reason", () => {
         Some(cancel_reason => reason.val = Some(cancel_reason))
       })
