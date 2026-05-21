@@ -673,6 +673,60 @@ test "text input session enables ime when surrounding text is too long" {
 }
 
 ///|
+test "text input session preserves selection anchor in ime surrounding text" {
+  let session = TextInputSession::new()
+  let state = @core.TextInputState::{
+    focused: true,
+    element_id: None,
+    text: "你ab好",
+    caret: 3,
+    selection: Some(@core.TextRange::new(start=1, end=3)),
+    composition: None,
+    composition_cursor: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
+  }
+  match session.sync(state) {
+    EnableIme(@window_core.ImeRequest::Enable(request)) =>
+      match request.request_data().surrounding_text() {
+        Some(surrounding) => {
+          inspect(surrounding.cursor(), content="5")
+          inspect(surrounding.anchor(), content="3")
+        }
+        None => fail("expected surrounding text")
+      }
+    _ => fail("focused text field should enable ime")
+  }
+}
+
+///|
+test "text input session preserves reverse selection anchor in ime surrounding text" {
+  let session = TextInputSession::new()
+  let state = @core.TextInputState::{
+    focused: true,
+    element_id: None,
+    text: "你ab好",
+    caret: 1,
+    selection: Some(@core.TextRange::new(start=3, end=1)),
+    composition: None,
+    composition_cursor: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
+  }
+  match session.sync(state) {
+    EnableIme(@window_core.ImeRequest::Enable(request)) =>
+      match request.request_data().surrounding_text() {
+        Some(surrounding) => {
+          inspect(surrounding.cursor(), content="3")
+          inspect(surrounding.anchor(), content="5")
+        }
+        None => fail("expected surrounding text")
+      }
+    _ => fail("focused text field should enable ime")
+  }
+}
+
+///|
 test "host event converts to current core event model" {
   let event = HostEvent::TextInput(@core.TextInputEvent::InsertText("x")).to_core()
   match event {

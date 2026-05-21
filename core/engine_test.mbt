@@ -914,6 +914,53 @@ test "ime composition updates paint preview and commit into text field" {
 }
 
 ///|
+test "ime composition replaces selected text and undo restores selection edit" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=180.0, height=60.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(InsertText("abcd")))
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(
+        key="ArrowLeft",
+        modifiers=KeyModifiers::new(shift=true),
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(
+        key="ArrowLeft",
+        modifiers=KeyModifiers::new(shift=true),
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(CompositionStart))
+  runtime.dispatch_event(
+    TextInput(CompositionUpdate(CompositionUpdate::new(text="你", cursor=None))),
+  )
+  inspect(state.get(), content="abcd")
+  runtime.dispatch_event(TextInput(CompositionEnd("你")))
+  inspect(state.get(), content="ab你")
+  let undo = runtime.dispatch_focused_text_command(Undo)
+  assert_true(undo.handled)
+  inspect(state.get(), content="abcd")
+  let redo = runtime.dispatch_focused_text_command(Redo)
+  assert_true(redo.handled)
+  inspect(state.get(), content="ab你")
+}
+
+///|
 test "text field aligns rendered text with caret origin" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(
