@@ -7,11 +7,16 @@ cd "$ROOT_DIR"
 RUN_GOLDEN=false
 RUN_BENCH=false
 RUN_PLATFORM=false
+RUN_DEFAULT=true
+RUN_INPUT=false
+RUN_LAYOUT=false
+RUN_RENDER=false
+RUN_PLATFORM_SERVICES=false
 
 usage() {
-  printf 'Usage: %s [--golden] [--bench] [--platform]\n' "$0"
+  printf 'Usage: %s [--input] [--layout] [--render] [--platform-services] [--golden] [--bench] [--platform]\n' "$0"
   printf '\n'
-  printf 'Runs MoUI conformance-oriented package checks. Optional modes add screenshot golden scaffolds, performance smoke builds, or current-platform backend checks.\n'
+  printf 'Runs MoUI conformance-oriented package checks. With no focused flags, runs the default core/host/render/web/showcase suite. Focused flags select smaller suites. Optional modes add screenshot golden scaffolds, performance smoke builds, or current-platform backend checks.\n'
 }
 
 while [ "$#" -gt 0 ]; do
@@ -24,6 +29,22 @@ while [ "$#" -gt 0 ]; do
       ;;
     --platform)
       RUN_PLATFORM=true
+      ;;
+    --input)
+      RUN_DEFAULT=false
+      RUN_INPUT=true
+      ;;
+    --layout)
+      RUN_DEFAULT=false
+      RUN_LAYOUT=true
+      ;;
+    --render)
+      RUN_DEFAULT=false
+      RUN_RENDER=true
+      ;;
+    --platform-services)
+      RUN_DEFAULT=false
+      RUN_PLATFORM_SERVICES=true
       ;;
     --help|-h)
       usage
@@ -43,12 +64,38 @@ run() {
   "$@"
 }
 
-run moon test core --target native
-run moon test backend/host --target native
-run moon test render --target native
-run moon test render/webgpu_adapter --target wasm-gc
-run moon test backend/web --target wasm-gc
-run moon test examples/showcase/app --target native
+if "$RUN_DEFAULT"; then
+  run moon test core --target native
+  run moon test backend/host --target native
+  run moon test render --target native
+  run moon test render/webgpu_adapter --target wasm-gc
+  run moon test backend/web --target wasm-gc
+  run moon test examples/showcase/app --target native
+fi
+
+if "$RUN_INPUT"; then
+  run moon test core --target native
+  run moon test backend/host --target native
+fi
+
+if "$RUN_LAYOUT"; then
+  run moon test core --target native
+fi
+
+if "$RUN_RENDER"; then
+  run moon test render --target native
+  run moon test render/wgpu --target native
+  run moon test render/webgpu_adapter --target wasm-gc
+fi
+
+if "$RUN_PLATFORM_SERVICES"; then
+  run moon test backend/host --target native
+  run moon test backend/web --target wasm-gc
+  run moon test backend/linux --target native
+  if [ "$(uname -s)" = "Darwin" ]; then
+    run moon test backend/macos --target native
+  fi
+fi
 
 if "$RUN_GOLDEN"; then
   run moon build examples/showcase/web_wasm --target wasm-gc
