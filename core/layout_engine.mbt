@@ -255,6 +255,23 @@ fn custom_layout_cache_key(_spec : ViewSpec, child_sizes : Array[Size]) -> Strin
 }
 
 ///|
+fn custom_alignment_guides(
+  child_sizes : Array[Size],
+  child_baselines : Array[Double?],
+) -> Array[AlignmentGuideSet] {
+  let guides : Array[AlignmentGuideSet] = []
+  for index, size in child_sizes {
+    let baseline = if index < child_baselines.length() {
+      child_baselines[index]
+    } else {
+      None
+    }
+    guides.push(AlignmentGuideSet::from_size(size, first_baseline=baseline))
+  }
+  guides
+}
+
+///|
 fn spacer_weight(child : ElementNode) -> Double {
   match child.spec {
     SpacerSpec(data) => data.weight
