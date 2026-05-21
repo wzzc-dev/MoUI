@@ -12,7 +12,9 @@
     "mizchi/image": "0.3.0",
     "Milky2018/moon_cosmic": "0.3.1",
     "mizchi/markdown": "0.5.0",
-    "mizchi/svg": "0.2.1"
+    "mizchi/svg": "0.2.1",
+    "moonbitlang/quickcheck": "0.13.0",
+    "mizchi/pixelmatch": "0.4.1"
   },
   "readme": "README.md",
   "repository": "",

@@ -1,0 +1,10 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "moonbitlang/quickcheck",
+  "mizchi/pixelmatch",
+}
+
+options(
+  targets: { },
+)
