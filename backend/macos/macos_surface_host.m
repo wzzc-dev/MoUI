@@ -2,6 +2,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <moonbit.h>
 #import <stdint.h>
+#import <string.h>
 
 static NSString *const MOUI_MACOS_SURFACE_LAYER_NAME = @"moui_macos_surface_layer";
 
@@ -55,4 +56,45 @@ void *moui_macos_surface_host_layer_from_view(uint64_t raw_content_view_handle, 
   metal_layer.opaque = YES;
 
   return (void *)metal_layer;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_clipboard_has_text(void) {
+  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  NSString *text = [pasteboard stringForType:NSPasteboardTypeString];
+  return text != nil ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_macos_clipboard_read_text(void) {
+  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  NSString *text = [pasteboard stringForType:NSPasteboardTypeString];
+  if (text == nil) {
+    return moonbit_make_bytes(0, 0);
+  }
+  const char *utf8 = [text UTF8String];
+  if (utf8 == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  size_t len = strlen(utf8);
+  moonbit_bytes_t bytes = moonbit_make_bytes((int32_t)len, 0);
+  if (len > 0) {
+    memcpy(bytes, utf8, len);
+  }
+  return bytes;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_clipboard_write_text(moonbit_bytes_t text) {
+  int32_t text_len = (int32_t)Moonbit_array_length(text);
+  NSString *string = [[NSString alloc] initWithBytes:(const void *)text
+                                             length:(NSUInteger)text_len
+                                           encoding:NSUTF8StringEncoding];
+  if (string == nil) {
+    return 0;
+  }
+  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  [pasteboard clearContents];
+  BOOL ok = [pasteboard setString:string forType:NSPasteboardTypeString];
+  return ok ? 1 : 0;
 }

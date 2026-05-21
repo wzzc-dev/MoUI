@@ -7,6 +7,16 @@ extern "C" fn macos_surface_host_layer_from_view(
 ) -> @wgpu_c.OpaquePtr = "moui_macos_surface_host_layer_from_view"
 
 ///|
+extern "C" fn macos_clipboard_has_text() -> Int = "moui_macos_clipboard_has_text"
+
+///|
+extern "C" fn macos_clipboard_read_text_bytes() -> Bytes = "moui_macos_clipboard_read_text"
+
+///|
+#borrow(text)
+extern "C" fn macos_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_macos_clipboard_write_text"
+
+///|
 pub(all) suberror MacosSurfaceHostError {
   MacosSurfaceHostLayerUnavailable(String)
 }
@@ -82,18 +92,52 @@ pub fn macos_service_bridge(
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
+      clipboard=true,
       open_url=true,
       system_theme=true,
     ),
     handle=request => {
       match request {
-        @host.HostServiceRequest::OpenUrl(_) => @host.HostServiceResponse::UrlOpened
+        @host.HostServiceRequest::Clipboard(clipboard_request) =>
+          dispatch_macos_clipboard(clipboard_request)
+        @host.HostServiceRequest::OpenUrl(_) =>
+          @host.HostServiceResponse::UrlOpened
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
-        _ => @host.HostServiceResponse::Unavailable(request.unavailable_message())
+        _ =>
+          @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
   )
+}
+
+///|
+fn dispatch_macos_clipboard(
+  request : @host.HostClipboardRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    @host.HostClipboardRequest::ReadText =>
+      if macos_clipboard_has_text() != 0 {
+        @host.HostServiceResponse::ClipboardText(
+          @utf8.decode_lossy(
+            macos_clipboard_read_text_bytes()[:],
+            ignore_bom=false,
+          ),
+        )
+      } else {
+        @host.HostServiceResponse::Unavailable(
+          "clipboard does not contain text",
+        )
+      }
+    @host.HostClipboardRequest::WriteText(text) => {
+      let bytes = @utf8.encode(text[:], bom=false)
+      if macos_clipboard_write_text_bytes(bytes) != 0 {
+        @host.HostServiceResponse::ClipboardWritten
+      } else {
+        @host.HostServiceResponse::Unavailable("clipboard write failed")
+      }
+    }
+  }
 }
 
 ///|
