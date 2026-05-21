@@ -30,7 +30,7 @@ Status meanings:
 | Shader effect | partial | partial | `DrawShaderEffect` resolves through a shared registry with built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`; GPU shader execution and host ABI remain follow-up work. |
 | Text shaping | partial | partial | Native has HarfBuzz shaping and fallback faces; full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
-| Async image | partial | partial | Images are cached after load/decode, but loading/error state and resource lifecycle APIs are not surfaced to app code yet. |
+| Async image | partial | partial | Renderer-neutral lifecycle records now model loading, ready, failed, disposed, and eviction; native/Web adapters still need to surface those diagnostics to app code. |
 
 ## Current Native Notes
 
@@ -52,8 +52,9 @@ needs actual offscreen passes, mask composition, filter shaders, and GPU shader
 registry execution. Native color emoji remains an explicit gap. Text shaping is partial: HarfBuzz and
 fallback faces exist, but full bidi, line breaking, and typography conformance
 are still follow-up work. Native image support is synchronous from the app
-model's point of view; async loading and resource lifecycle state are not
-surfaced yet.
+model's point of view; the shared image lifecycle record can represent loading,
+ready, failed, disposed, and evicted resources, but native adapter diagnostics
+are not surfaced to app code yet.
 
 ## Current Web Notes
 
@@ -64,6 +65,9 @@ images through WebGPU pipelines. Text uses a DPR-aware canvas-rasterized glyph
 atlas before the glyphs are composited by WebGPU. Images are cached as WebGPU
 textures, support contain/cover fit, and use a deterministic fallback color
 while the browser is still loading the source or if loading fails.
+The shared image lifecycle contract now matches those loading, ready, failed,
+and disposed states; the runtime still needs to publish browser cache
+diagnostics back into app-visible renderer state.
 
 Clip support maps transformed rectangular clip stacks to per-item scissor
 rectangles. Transform support is folded into generated visual, image, and text

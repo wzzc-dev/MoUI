@@ -38,6 +38,36 @@ pub fn tessellate_path(@core.PathSpec) -> PathMesh
 // Errors
 
 // Types and methods
+pub(all) struct ImageResourceLifecycle {
+  mut records : Map[String, ImageResourceRecord]
+} derive(Eq, @debug.Debug)
+pub fn ImageResourceLifecycle::dispose(Self, String) -> ImageResourceRecord
+pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int
+pub fn ImageResourceLifecycle::lookup(Self, String) -> ImageResourceRecord?
+pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -> ImageResourceRecord
+pub fn ImageResourceLifecycle::mark_loading(Self, String) -> ImageResourceRecord
+pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int, height~ : Int) -> ImageResourceRecord
+pub fn ImageResourceLifecycle::new() -> Self
+
+pub(all) struct ImageResourceRecord {
+  source : String
+  status : ImageResourceStatus
+  width : Int
+  height : Int
+  diagnostic : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ImageResourceRecord::disposed(String) -> Self
+pub fn ImageResourceRecord::failed(String, diagnostic~ : String) -> Self
+pub fn ImageResourceRecord::loading(String) -> Self
+pub fn ImageResourceRecord::ready(String, width~ : Int, height~ : Int) -> Self
+
+pub(all) enum ImageResourceStatus {
+  ImageLoading
+  ImageReady
+  ImageFailed
+  ImageDisposed
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct PathMesh {
   vertices : Array[PathVertex]
   diagnostics : Array[String]
