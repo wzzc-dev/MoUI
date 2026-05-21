@@ -2,11 +2,24 @@
 package "wzzc-dev/moui/backend/host"
 
 import {
+  "Milky2018/moon_accesskit",
   "Milky2018/window/dpi",
   "moonbitlang/core/debug",
 }
 
 // Values
+pub fn accesskit_action_from_semantics(@wzzc-dev/moui/core.SemanticsAction) -> @moon_accesskit.Action
+
+pub fn accesskit_node_from_semantics(@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.Node
+
+pub fn accesskit_node_id_for_element(@wzzc-dev/moui/core.ElementId) -> @moon_accesskit.NodeId
+
+pub fn accesskit_rect_from_core(@wzzc-dev/moui/core.Rect) -> @moon_accesskit.Rect
+
+pub fn accesskit_role_from_semantics(@wzzc-dev/moui/core.SemanticsRole) -> @moon_accesskit.Role
+
+pub fn accesskit_tree_update_from_semantics(@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.TreeUpdate
+
 pub fn element_state_pressed(@Milky2018/window/core.ElementState) -> Bool
 
 pub fn element_state_to_pointer_phase(@Milky2018/window/core.ElementState) -> @wzzc-dev/moui/core.PointerPhase
@@ -279,13 +292,14 @@ pub(all) enum NativeAccessibilityActionResult {
 pub(all) struct NativeAccessibilityBridge {
   kind : NativeAccessibilityBridgeKind
   available : Bool
-  snapshot : (@wzzc-dev/moui/core.SemanticsNode) -> NativeAccessibilityNode
+  snapshot : (@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.TreeUpdate
   perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
 }
-pub fn NativeAccessibilityBridge::new(kind~ : NativeAccessibilityBridgeKind, available? : Bool, snapshot? : (@wzzc-dev/moui/core.SemanticsNode) -> NativeAccessibilityNode, perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult) -> Self
+pub fn NativeAccessibilityBridge::new(kind~ : NativeAccessibilityBridgeKind, available? : Bool, snapshot? : (@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.TreeUpdate, perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult) -> Self
 pub fn NativeAccessibilityBridge::perform_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
 pub fn NativeAccessibilityBridge::semantics_action_bridge(kind~ : NativeAccessibilityBridgeKind, root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> Self
-pub fn NativeAccessibilityBridge::snapshot_semantics(Self, @wzzc-dev/moui/core.SemanticsNode) -> NativeAccessibilityNode?
+pub fn NativeAccessibilityBridge::snapshot_legacy_node(Self, @wzzc-dev/moui/core.SemanticsNode) -> NativeAccessibilityNode?
+pub fn NativeAccessibilityBridge::snapshot_semantics(Self, @wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.TreeUpdate?
 pub fn NativeAccessibilityBridge::unavailable(kind~ : NativeAccessibilityBridgeKind, reason? : String) -> Self
 
 pub(all) enum NativeAccessibilityBridgeKind {
@@ -310,6 +324,7 @@ pub(all) struct NativeAccessibilityNode {
   actions : Array[@wzzc-dev/moui/core.SemanticsAction]
   children : Array[NativeAccessibilityNode]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn NativeAccessibilityNode::from_accesskit(@moon_accesskit.TreeUpdate, @wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsRole) -> Self
 pub fn NativeAccessibilityNode::from_semantics(@wzzc-dev/moui/core.SemanticsNode, native_role? : String) -> Self
 
 pub(all) struct PlatformChannelHandler {

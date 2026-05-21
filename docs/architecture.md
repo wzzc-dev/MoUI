@@ -4,7 +4,8 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 
 ## Scope
 
-- Platform-neutral `core` runtime, view specs, layout, hit testing, and draw commands.
+- Platform-neutral `core` runtime, view specs, Taffy-backed layout placement,
+  hit testing, and draw commands.
 - Public root package aliases the most common core/style types for `@wzzc-dev/moui` consumers.
 - `style` is the MoonBit package boundary for visual tokens and style type aliases during the gradual split from `core`.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `surface`, row/column layout, and spacer primitives.
@@ -164,8 +165,11 @@ Constraints down -> Size up -> parent places children
 `Constraints::tight`, `Constraints::loose`, `Constraints::deflate`,
 `Constraints::tighten`, and `Constraints::unbounded` are available in `core`.
 `Padding` deflates child constraints and inflates its measured size. `Frame`
-tightens child constraints. `Flex`, `Grid`, `List`, `Stack`, and `Scroll` all
-participate in the measured/placed layout pass while preserving the existing
+tightens child constraints. `Flex`, `Grid`, `List`, and `Stack` use
+`Milky2018/moon_taffy` for their primary placement pass, with MoUI converting
+`ViewSpec` children into a short-lived Taffy tree and then writing the computed
+frames back into `PlacedNode`. `Scroll` and ordered layout modifiers preserve
+MoUI's existing placement semantics. All layout results still produce the same
 `RenderNode` output expected by renderers and hosts.
 
 Advanced layout authors can use `ViewSpec::custom_layout` to define a child
@@ -173,7 +177,8 @@ layout delegate. The delegate receives measured child sizes, returns its own
 size, and places children with explicit frames. Its context also exposes child
 baselines and layout priorities so custom layouts can align text and make
 priority-aware placement decisions; paint and semantics metadata are kept on
-the same spec.
+the same spec. Custom layout delegates remain MoUI-owned and do not go through
+Taffy.
 
 ## Modifiers And Environment
 
@@ -221,10 +226,11 @@ without calling `Brush::fallback_color`; fallback is centralized in renderer
 capability layers.
 
 The native wgpu renderer currently renders rounded fills, gradients, shadows,
-GPU text, opacity, and decoded PNG/JPEG/BMP images directly. Clip and transform
-commands have visible native support with remaining follow-up work tracked in
-the renderer capability report. The WebGPU host-import renderer forwards the
-full command set to the browser runtime. See
+GPU text, opacity, paths tessellated through `Milky2018/moon_zeno`, and decoded
+PNG/JPEG/BMP images directly. Clip and transform commands have visible native
+support with remaining follow-up work tracked in the renderer capability
+report. The WebGPU host-import renderer forwards the full command set to the
+browser runtime. See
 [Renderer capability report](renderer-capability-report.md).
 
 ## Built-In And Custom Views
@@ -295,5 +301,7 @@ and validation commands.
 `core/semantics.mbt` produces a platform-neutral semantics tree with roles,
 labels, hints, values, focus order, checked state, and live-region metadata.
 `backend/web` includes a semantics-to-ARIA adapter for the wasm-gc Web path.
-Native platform bridges are kept behind backend boundaries and should map from
-the same core tree.
+Native accessibility snapshots are exported from `backend/host` as
+`Milky2018/moon_accesskit` tree updates. Platform bridges stay behind backend
+boundaries and consume that AccessKit-shaped snapshot while `@core.SemanticsNode`
+remains the source of truth.

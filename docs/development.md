@@ -119,6 +119,16 @@ frontends and tooling:
   platform-neutral and does not import the Cosmic Text engine directly. The
   native WGPU renderer also uses Cosmic for shaping, font fallback, cache keys,
   and glyph pixels while keeping MoUI's GPU atlas and backend ownership.
+- `Milky2018/moon_accesskit` is the native accessibility tree representation
+  used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
+  Web continues to use its ARIA adapter.
+- `Milky2018/moon_taffy` is allowed in `core/` because layout is
+  platform-neutral. MoUI maps ordinary flex/grid/list/stack placement through
+  Taffy and keeps custom layout delegates, dirty marking, and render tree
+  ownership in MoUI.
+- `Milky2018/moon_zeno` powers renderer path tessellation from MoUI
+  `DrawPath` / `PathSpec` values into triangle meshes. SVG parsing remains the
+  importer frontend's job.
 - `mizchi/markdown` powers the Markdown Editor parser adapter while preserving
   `markdown_to_rich_text(String) -> @core.RichTextDocument`.
 - `mizchi/svg` powers `render.import_svg(String) -> SvgImportResult`, lowering

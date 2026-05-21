@@ -26,7 +26,7 @@ Status meanings:
 | Layer compositing | partial | partial | `PushLayer` / `PopLayer` now model opacity, blend mode, masks, and offscreen intent; native and WebGPU still need retained layer pass execution. |
 | Blend mode | partial | partial | `BlendMode` is carried by `LayerSpec`; GPU pipeline blend-state mapping remains follow-up work. |
 | Filter effect | partial | partial | `PushFilter` / `PopFilter` now model blur, color, and contrast-style effects; shader pass execution remains follow-up work. |
-| Path/vector | ready | ready | `DrawPath` models move/line/quad/cubic/close verbs and is lowered by the shared tessellator into fill and stroke triangle vertices before renderer execution. |
+| Path/vector | ready | ready | `DrawPath` models move/line/quad/cubic/close verbs and is lowered through `moon_zeno` into fill and stroke triangle vertices before renderer execution. |
 | Shader effect | partial | partial | `DrawShaderEffect` resolves through a shared registry with built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`; GPU shader execution and host ABI remain follow-up work. |
 | Text shaping | partial | partial | Native WGPU uses `moon_cosmic` for shaping, fallback, cache keys, and glyph pixels; full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
@@ -44,8 +44,8 @@ with shader SDF masks. Transform support is applied to planned visual, image,
 and text vertices. Opacity is folded into visual and text vertex alpha.
 Layer compositing, blend modes, filters, and shader effects now have
 renderer-neutral command intents. Vector paths additionally have a shared
-tessellation contract that lowers fills and strokes into triangle vertices,
-including flattened quadratic and cubic segments. The renderer-neutral SVG
+`moon_zeno` tessellation contract that lowers fills and strokes into triangle
+vertices, including flattened quadratic and cubic segments. The renderer-neutral SVG
 import path uses `mizchi/svg` as its parser frontend and lowers supported scene
 graph shapes into the same draw-command model while reporting unsupported SMIL
 animation and `foreignObject` usage. `render/capabilities.mbt`
