@@ -228,6 +228,12 @@ fn build_native_draw_plan(
           }
           @core.DrawCommand::PopOpacity =>
             state = pop_native_paint_state(state_stack, state)
+          @core.DrawCommand::PushLayer(_)
+          | @core.DrawCommand::PopLayer
+          | @core.DrawCommand::PushFilter(_)
+          | @core.DrawCommand::PopFilter
+          | @core.DrawCommand::DrawPath(_)
+          | @core.DrawCommand::DrawShaderEffect(_) => ()
         }
       }
     }

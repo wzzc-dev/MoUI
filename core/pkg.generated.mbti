@@ -168,6 +168,15 @@ pub fn[T] Binding::new(get~ : () -> T, set~ : (T) -> Unit) -> Self[T]
 pub fn[T] Binding::set(Self[T], T) -> Unit
 pub fn[T] Binding::update(Self[T], (T) -> T raise?) -> Unit raise?
 
+pub(all) enum BlendMode {
+  SourceOver
+  Multiply
+  Screen
+  Overlay
+  Darken
+  Lighten
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct BorderStyle {
   brush : Brush
   width : Double
@@ -507,6 +516,12 @@ pub(all) enum DrawCommand {
   PopTransform
   PushOpacity(Double)
   PopOpacity
+  PushLayer(LayerSpec)
+  PopLayer
+  PushFilter(FilterEffect)
+  PopFilter
+  DrawPath(PathSpec)
+  DrawShaderEffect(ShaderEffectSpec)
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum Easing {
@@ -594,6 +609,15 @@ pub fn Environment::with_reduced_motion(Self, Bool) -> Self
 pub fn Environment::with_scale_factor(Self, Double) -> Self
 pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
+
+pub(all) enum FilterEffect {
+  Blur(Double)
+  Saturate(Double)
+  Brightness(Double)
+  Contrast(Double)
+  ColorMatrix(Array[Double])
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FilterEffect::blur(Double) -> Self
 
 pub(all) struct FlexViewSpec {
   key : Key?
@@ -782,6 +806,20 @@ pub(all) struct KeyboardShortcut {
 pub fn KeyboardShortcut::matches(Self, KeyboardEvent) -> Bool
 pub fn KeyboardShortcut::new(key~ : String, modifiers? : KeyModifiers) -> Self
 
+pub(all) enum LayerMask {
+  NoMask
+  RectMask(Rect)
+  RoundedMask(RoundedRect)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct LayerSpec {
+  opacity : Double
+  blend_mode : BlendMode
+  mask : LayerMask
+  offscreen : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn LayerSpec::new(opacity? : Double, blend_mode? : BlendMode, mask? : LayerMask, offscreen? : Bool) -> Self
+
 pub(all) enum LayoutDirection {
   LeftToRight
   RightToLeft
@@ -851,6 +889,22 @@ pub(all) struct PaddingViewSpec {
   insets : Insets
   child : ViewSpec
 }
+
+pub(all) struct PathSpec {
+  verbs : Array[PathVerb]
+  fill : Brush?
+  stroke : Brush?
+  stroke_width : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PathSpec::new(verbs~ : Array[PathVerb], fill? : Brush?, stroke? : Brush?, stroke_width? : Double) -> Self
+
+pub(all) enum PathVerb {
+  MoveTo(Point)
+  LineTo(Point)
+  QuadTo(Point, Point)
+  CubicTo(Point, Point, Point)
+  Close
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct PickerItem {
   id : String
@@ -1173,6 +1227,14 @@ pub(all) struct SemanticsState {
   expanded : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsState::default() -> Self
+
+pub(all) struct ShaderEffectSpec {
+  name : String
+  frame : Rect
+  uniforms : Array[Double]
+  fallback : Brush
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShaderEffectSpec::new(name~ : String, frame~ : Rect, uniforms? : Array[Double], fallback? : Brush) -> Self
 
 pub(all) struct ShadowScale {
   sm : ShadowStyle

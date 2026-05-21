@@ -25,12 +25,48 @@ test "renderer capability report tracks draw command support" {
     is Some(layer) else {
     fail("expected layer compositing capability")
   }
-  assert_true(layer.native_status == @render.RendererFeatureStatus::Gap)
+  assert_true(layer.native_status == @render.RendererFeatureStatus::Partial)
+  assert_true(layer.native_note.contains("PushLayer"))
+  guard @render.renderer_feature_capability(@render.RendererFeature::PathVector)
+    is Some(path) else {
+    fail("expected path capability")
+  }
+  assert_true(path.native_status == @render.RendererFeatureStatus::Partial)
+  assert_true(path.native_note.contains("DrawPath"))
   guard @render.renderer_feature_capability(@render.RendererFeature::TextShaping)
     is Some(text_shaping) else {
     fail("expected text shaping capability")
   }
   assert_true(text_shaping.native_status == @render.RendererFeatureStatus::Partial)
+}
+
+///|
+test "renderer neutral advanced commands are modeled but skipped by legacy batching" {
+  let rect = @core.Rect::new(x=0.0, y=0.0, width=24.0, height=24.0)
+  let commands : Array[@core.DrawCommand] = [
+    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5, offscreen=true)),
+    @core.DrawCommand::PushFilter(@core.FilterEffect::blur(4.0)),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(@core.Color::blue())),
+      ),
+    ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="checker",
+        frame=rect,
+        uniforms=[1.0, 2.0],
+      ),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PopLayer,
+  ]
+  inspect(@render.collect_rect_batches(commands).length(), content="0")
 }
 
 ///|

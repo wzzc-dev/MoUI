@@ -358,6 +358,12 @@ pub fn draw_commands_to_host_calls(
       @core.DrawCommand::PushOpacity(opacity) =>
         calls.push(WebGpuHostCall::PushOpacity(opacity))
       @core.DrawCommand::PopOpacity => calls.push(WebGpuHostCall::PopOpacity)
+      @core.DrawCommand::PushLayer(_)
+      | @core.DrawCommand::PopLayer
+      | @core.DrawCommand::PushFilter(_)
+      | @core.DrawCommand::PopFilter
+      | @core.DrawCommand::DrawPath(_)
+      | @core.DrawCommand::DrawShaderEffect(_) => ()
     }
   }
   calls.push(WebGpuHostCall::Present)

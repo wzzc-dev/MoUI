@@ -137,7 +137,13 @@ pub fn collect_rect_batches(
       | @core.DrawCommand::PushTransform(_)
       | @core.DrawCommand::PopTransform
       | @core.DrawCommand::PushOpacity(_)
-      | @core.DrawCommand::PopOpacity => ()
+      | @core.DrawCommand::PopOpacity
+      | @core.DrawCommand::PushLayer(_)
+      | @core.DrawCommand::PopLayer
+      | @core.DrawCommand::PushFilter(_)
+      | @core.DrawCommand::PopFilter
+      | @core.DrawCommand::DrawPath(_)
+      | @core.DrawCommand::DrawShaderEffect(_) => ()
     }
   }
   batches
