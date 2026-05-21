@@ -176,6 +176,11 @@ fn ElementNode::measured_size_from_children(
         child_sizes: children.map(child => child.size),
         child_baselines: self.children.map(child => child.first_baseline()),
         child_priorities: self.children.map(child => child.layout_priority()),
+        child_alignment_guides: custom_alignment_guides(
+          children.map(child => child.size),
+          self.children.map(child => child.first_baseline()),
+        ),
+        cache: data.cache,
         cache_key: custom_layout_cache_key(self.spec, children.map(child => child.size)),
         layout_direction: LayoutDirection::LeftToRight,
         safe_area: Insets::symmetric(),
@@ -288,6 +293,11 @@ fn ElementNode::child_frames_for_place(
         child_sizes: self.children.map(child => child.intrinsic_size()),
         child_baselines: self.children.map(child => child.first_baseline()),
         child_priorities: self.children.map(child => child.layout_priority()),
+        child_alignment_guides: custom_alignment_guides(
+          self.children.map(child => child.intrinsic_size()),
+          self.children.map(child => child.first_baseline()),
+        ),
+        cache: data.cache,
         cache_key: custom_layout_cache_key(self.spec, self.children.map(child => child.intrinsic_size())),
         layout_direction: LayoutDirection::LeftToRight,
         safe_area: Insets::symmetric(),

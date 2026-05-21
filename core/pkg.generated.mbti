@@ -65,6 +65,14 @@ pub fn Alignment::new(x~ : Double, y~ : Double) -> Self
 pub fn Alignment::top_leading() -> Self
 pub fn Alignment::top_trailing() -> Self
 
+pub(all) struct AlignmentGuideSet {
+  leading : Double
+  center : Double
+  trailing : Double
+  first_baseline : Double?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AlignmentGuideSet::from_size(Size, first_baseline? : Double?) -> Self
+
 pub(all) struct AnimatedColor {
   from : Color
   to : Color
@@ -424,11 +432,26 @@ pub(all) enum CrossAxisAlignment {
   CrossStretch
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct CustomLayoutCache {
+  mut entries : Array[CustomLayoutCacheEntry]
+}
+pub fn CustomLayoutCache::clear(Self) -> Unit
+pub fn CustomLayoutCache::get(Self, String) -> String?
+pub fn CustomLayoutCache::new() -> Self
+pub fn CustomLayoutCache::set(Self, String, String) -> Unit
+
+pub(all) struct CustomLayoutCacheEntry {
+  key : String
+  mut value : String
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct CustomLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   child_baselines : Array[Double?]
   child_priorities : Array[Double]
+  child_alignment_guides : Array[AlignmentGuideSet]
+  cache : CustomLayoutCache
   cache_key : String
   layout_direction : LayoutDirection
   safe_area : Insets
@@ -438,6 +461,7 @@ pub(all) struct CustomLayoutContext {
 pub(all) struct CustomLayoutSpec {
   key : Key?
   children : Array[ViewSpec]
+  cache : CustomLayoutCache
   measure : (CustomLayoutContext) -> Size
   place : (CustomPlacementContext) -> Array[Rect]
   paint : (Rect) -> Array[DrawCommand]
@@ -451,11 +475,14 @@ pub(all) struct CustomPlacementContext {
   child_sizes : Array[Size]
   child_baselines : Array[Double?]
   child_priorities : Array[Double]
+  child_alignment_guides : Array[AlignmentGuideSet]
+  cache : CustomLayoutCache
   cache_key : String
   layout_direction : LayoutDirection
   safe_area : Insets
   viewport : Size?
 }
+pub fn CustomPlacementContext::mirror_x(Self, x~ : Double, width~ : Double) -> Double
 
 pub(all) struct CustomViewSpec {
   key : Key?

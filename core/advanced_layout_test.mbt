@@ -232,6 +232,10 @@ test "custom layout delegate receives child baselines and layout priorities" {
   let first_priority_ref = Ref(0.0)
   let second_priority_ref = Ref(0.0)
   let cache_key_ref = Ref("")
+  let cache_value_ref = Ref("")
+  let center_guide_ref = Ref(0.0)
+  let trailing_guide_ref = Ref(0.0)
+  let mirrored_x_ref = Ref(0.0)
   let rtl_ref = Ref(false)
   let viewport_ref : Ref[Size?] = Ref(None)
   let spec = ViewSpec::custom_layout(
@@ -250,11 +254,16 @@ test "custom layout delegate receives child baselines and layout priorities" {
       first_priority_ref.val = ctx.child_priorities[0]
       second_priority_ref.val = ctx.child_priorities[1]
       cache_key_ref.val = ctx.cache_key
+      ctx.cache.set("measure", "cached")
       Size::new(width=132.0, height=32.0)
     },
     place=ctx => {
       rtl_ref.val = ctx.layout_direction == LayoutDirection::RightToLeft
       viewport_ref.val = ctx.viewport
+      cache_value_ref.val = ctx.cache.get("measure").unwrap_or("missing")
+      center_guide_ref.val = ctx.child_alignment_guides[0].center
+      trailing_guide_ref.val = ctx.child_alignment_guides[1].trailing
+      mirrored_x_ref.val = ctx.mirror_x(x=ctx.frame.origin.x + 10.0, width=20.0)
       let first_baseline = ctx.child_baselines[0].unwrap_or(0.0)
       let second_baseline = ctx.child_baselines[1].unwrap_or(0.0)
       let shared_baseline = if first_baseline > second_baseline {
@@ -299,6 +308,10 @@ test "custom layout delegate receives child baselines and layout priorities" {
   assert_true(cache_key_ref.val.length() > 0)
   ignore(runtime.build_draw_commands())
   assert_true(rtl_ref.val)
+  inspect(cache_value_ref.val, content="cached")
+  inspect(center_guide_ref.val, content="40")
+  inspect(trailing_guide_ref.val, content="52")
+  inspect(mirrored_x_ref.val, content="102")
   match viewport_ref.val {
     Some(size) => inspect(size.width, content="132")
     None => fail("expected placement viewport metadata")
