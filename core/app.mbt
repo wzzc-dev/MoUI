@@ -38,8 +38,24 @@ pub(all) struct Component {
 pub(all) struct ComponentEffect {
   key : String
   cleanup : (() -> Unit)?
+  cleanup_with_reason : ((ComponentEffectCancelReason) -> Unit)?
+  mut status : ComponentEffectStatus
+  mut cancel_reason : ComponentEffectCancelReason?
   mut reused : Bool
 }
+
+///|
+pub(all) enum ComponentEffectStatus {
+  EffectActive
+  EffectCancelled
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum ComponentEffectCancelReason {
+  EffectKeyChanged
+  EffectUnmounted
+  EffectRuntimeDestroyed
+} derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct SaveableCodec[T] {
@@ -143,12 +159,34 @@ pub fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
 pub fn ComponentEffect::new(
   key~ : String,
   cleanup? : (() -> Unit)? = None,
+  cleanup_with_reason? : ((ComponentEffectCancelReason) -> Unit)? = None,
 ) -> ComponentEffect {
-  { key, cleanup, reused: false }
+  {
+    key,
+    cleanup,
+    cleanup_with_reason,
+    status: ComponentEffectStatus::EffectActive,
+    cancel_reason: None,
+    reused: false,
+  }
 }
 
 ///|
 pub fn ComponentEffect::cancel(self : ComponentEffect) -> Unit {
+  self.cancel_with_reason(ComponentEffectCancelReason::EffectUnmounted)
+}
+
+///|
+pub fn ComponentEffect::cancel_with_reason(
+  self : ComponentEffect,
+  reason : ComponentEffectCancelReason,
+) -> Unit {
+  self.status = ComponentEffectStatus::EffectCancelled
+  self.cancel_reason = Some(reason)
+  match self.cleanup_with_reason {
+    Some(cleanup) => cleanup(reason)
+    None => ()
+  }
   match self.cleanup {
     Some(cleanup) => cleanup()
     None => ()
@@ -363,6 +401,46 @@ pub fn BuildContext::run_effect(
 }
 
 ///|
+pub fn BuildContext::run_effect_with_reason(
+  self : BuildContext,
+  key~ : String,
+  effect : () -> ((ComponentEffectCancelReason) -> Unit)?,
+) -> Unit {
+  match self.take_old_effect(key) {
+    Some(existing) => {
+      existing.reused = true
+      self.effects.push(existing)
+    }
+    None =>
+      self.effects.push(
+        ComponentEffect::new(key~, cleanup_with_reason=effect()),
+      )
+  }
+}
+
+///|
+pub fn BuildContext::on_update(
+  self : BuildContext,
+  key~ : String,
+  deps~ : Array[String],
+  effect : () -> (() -> Unit)?,
+) -> Unit {
+  let deps_key = deps.join("|")
+  self.run_effect(key="update:\{key}:\{deps_key}", effect)
+}
+
+///|
+pub fn BuildContext::on_update_with_reason(
+  self : BuildContext,
+  key~ : String,
+  deps~ : Array[String],
+  effect : () -> ((ComponentEffectCancelReason) -> Unit)?,
+) -> Unit {
+  let deps_key = deps.join("|")
+  self.run_effect_with_reason(key="update:\{key}:\{deps_key}", effect)
+}
+
+///|
 pub fn BuildContext::on_mount(
   self : BuildContext,
   key~ : String,
@@ -372,6 +450,24 @@ pub fn BuildContext::on_mount(
     effect()
     None
   })
+}
+
+///|
+pub fn BuildContext::on_unmount_with_reason(
+  self : BuildContext,
+  key~ : String,
+  cleanup : (ComponentEffectCancelReason) -> Unit,
+) -> Unit {
+  self.run_effect_with_reason(key="dispose:\{key}", () => Some(cleanup))
+}
+
+///|
+pub fn BuildContext::on_unmount(
+  self : BuildContext,
+  key~ : String,
+  cleanup : () -> Unit,
+) -> Unit {
+  self.on_dispose(key~, cleanup)
 }
 
 ///|
@@ -611,7 +707,9 @@ pub fn RuntimeState::set_environment(
 
 ///|
 pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
-  self.element_tree.cancel_component_tree_subscriptions()
+  self.element_tree.cancel_component_tree_subscriptions(
+    reason=ComponentEffectCancelReason::EffectUnmounted,
+  )
   let mounted = mount_view_spec_for_runtime(root, Some(self), 1)
   self.root_spec = root
   self.element_tree = mounted.node
@@ -627,7 +725,9 @@ pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
 
 ///|
 pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
-  self.element_tree.cancel_component_tree_subscriptions()
+  self.element_tree.cancel_component_tree_subscriptions(
+    reason=ComponentEffectCancelReason::EffectRuntimeDestroyed,
+  )
   self.element_tree = mount_view_spec(ViewSpec::EmptySpec)
   self.render_tree = RenderNode::empty()
   self.root_spec = ViewSpec::EmptySpec
@@ -1027,7 +1127,7 @@ fn build_component_spec(
   let child_spec = (component.build)(context)
   for effect in old_effects {
     if !effect.reused {
-      effect.cancel()
+      effect.cancel_with_reason(ComponentEffectCancelReason::EffectKeyChanged)
     }
     effect.reused = false
   }
@@ -1035,8 +1135,11 @@ fn build_component_spec(
 }
 
 ///|
-fn cancel_component_effects(effects : Array[ComponentEffect]) -> Unit {
+fn cancel_component_effects(
+  effects : Array[ComponentEffect],
+  reason~ : ComponentEffectCancelReason = ComponentEffectCancelReason::EffectUnmounted,
+) -> Unit {
   for effect in effects {
-    effect.cancel()
+    effect.cancel_with_reason(reason)
   }
 }

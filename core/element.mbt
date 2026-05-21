@@ -529,11 +529,14 @@ fn ElementNode::mark_subtree_layout_dirty(self : ElementNode) -> Unit {
 }
 
 ///|
-fn ElementNode::cancel_component_tree_subscriptions(self : ElementNode) -> Unit {
+fn ElementNode::cancel_component_tree_subscriptions(
+  self : ElementNode,
+  reason? : ComponentEffectCancelReason = ComponentEffectCancelReason::EffectUnmounted,
+) -> Unit {
   self.cancel_component_subscriptions()
-  self.cancel_component_effects()
+  self.cancel_component_effects(reason~)
   for child in self.children {
-    child.cancel_component_tree_subscriptions()
+    child.cancel_component_tree_subscriptions(reason~)
   }
 }
 
@@ -546,8 +549,11 @@ fn ElementNode::cancel_component_subscriptions(self : ElementNode) -> Unit {
 }
 
 ///|
-fn ElementNode::cancel_component_effects(self : ElementNode) -> Unit {
-  cancel_component_effects(self.component_effects)
+fn ElementNode::cancel_component_effects(
+  self : ElementNode,
+  reason~ : ComponentEffectCancelReason,
+) -> Unit {
+  cancel_component_effects(self.component_effects, reason~)
   self.component_effects.clear()
 }
 

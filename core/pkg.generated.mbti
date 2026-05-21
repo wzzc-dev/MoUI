@@ -211,12 +211,17 @@ pub fn BuildContext::layout_direction(Self) -> LayoutDirection
 pub fn BuildContext::locale(Self) -> String
 pub fn BuildContext::on_dispose(Self, key~ : String, () -> Unit) -> Unit
 pub fn BuildContext::on_mount(Self, key~ : String, () -> Unit) -> Unit
+pub fn BuildContext::on_unmount(Self, key~ : String, () -> Unit) -> Unit
+pub fn BuildContext::on_unmount_with_reason(Self, key~ : String, (ComponentEffectCancelReason) -> Unit) -> Unit
+pub fn BuildContext::on_update(Self, key~ : String, deps~ : Array[String], () -> (() -> Unit)?) -> Unit
+pub fn BuildContext::on_update_with_reason(Self, key~ : String, deps~ : Array[String], () -> ((ComponentEffectCancelReason) -> Unit)?) -> Unit
 pub fn BuildContext::reduced_motion(Self) -> Bool
 pub fn[T] BuildContext::restore(Self, key~ : String, SaveableCodec[T]) -> T?
 pub fn BuildContext::restore_bool(Self, key~ : String) -> Bool?
 pub fn BuildContext::restore_int(Self, key~ : String) -> Int?
 pub fn BuildContext::restore_string(Self, key~ : String) -> String?
 pub fn BuildContext::run_effect(Self, key~ : String, () -> (() -> Unit)?) -> Unit
+pub fn BuildContext::run_effect_with_reason(Self, key~ : String, () -> ((ComponentEffectCancelReason) -> Unit)?) -> Unit
 pub fn[T] BuildContext::save(Self, key~ : String, T, SaveableCodec[T]) -> Unit
 pub fn BuildContext::save_bool(Self, key~ : String, Bool) -> Unit
 pub fn BuildContext::save_int(Self, key~ : String, Int) -> Unit
@@ -341,10 +346,25 @@ pub fn Component::new((BuildContext) -> ViewSpec) -> Self
 pub(all) struct ComponentEffect {
   key : String
   cleanup : (() -> Unit)?
+  cleanup_with_reason : ((ComponentEffectCancelReason) -> Unit)?
+  mut status : ComponentEffectStatus
+  mut cancel_reason : ComponentEffectCancelReason?
   mut reused : Bool
 }
 pub fn ComponentEffect::cancel(Self) -> Unit
-pub fn ComponentEffect::new(key~ : String, cleanup? : (() -> Unit)?) -> Self
+pub fn ComponentEffect::cancel_with_reason(Self, ComponentEffectCancelReason) -> Unit
+pub fn ComponentEffect::new(key~ : String, cleanup? : (() -> Unit)?, cleanup_with_reason? : ((ComponentEffectCancelReason) -> Unit)?) -> Self
+
+pub(all) enum ComponentEffectCancelReason {
+  EffectKeyChanged
+  EffectUnmounted
+  EffectRuntimeDestroyed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum ComponentEffectStatus {
+  EffectActive
+  EffectCancelled
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ComponentViewSpec {
   key : Key?
