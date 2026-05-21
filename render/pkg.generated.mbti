@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn builtin_shader_names() -> Array[String]
+
 pub fn collect_rect_batches(Array[@core.DrawCommand]) -> Array[RectBatch]
 
 pub fn first_clear_color(Array[@core.DrawCommand]) -> @core.Color
@@ -27,11 +29,29 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability]
 
 pub fn renderer_feature_follow_ups() -> Array[RendererFeatureCapability]
 
+pub fn resolve_shader_effect(@core.ShaderEffectSpec) -> ShaderRegistryResult
+
 pub fn size_dim_to_uint(Double) -> UInt
+
+pub fn tessellate_path(@core.PathSpec) -> PathMesh
 
 // Errors
 
 // Types and methods
+pub(all) struct PathMesh {
+  vertices : Array[PathVertex]
+  diagnostics : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct PathVertex {
+  x : Double
+  y : Double
+  r : Double
+  g : Double
+  b : Double
+  a : Double
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct RectBatch {
   rect : @core.Rect
   color : @core.Color
@@ -132,6 +152,18 @@ pub(all) struct RendererSurfaceMetrics {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererSurfaceMetrics::from_logical(size~ : @core.Size, scale_factor? : Double) -> Self
 pub fn RendererSurfaceMetrics::new(logical_size~ : @core.Size, physical_size~ : @core.Size, scale_factor? : Double) -> Self
+
+pub(all) struct ShaderRegistryResult {
+  name : String
+  status : ShaderRegistryStatus
+  fallback : @core.Brush
+  diagnostic : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum ShaderRegistryStatus {
+  ShaderReady
+  ShaderFallback
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct WgpuSurfaceContract {
   source : WgpuSurfaceSourceKind

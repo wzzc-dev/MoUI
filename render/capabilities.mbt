@@ -193,17 +193,17 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     },
     {
       feature: RendererFeature::PathVector,
-      native_status: RendererFeatureStatus::Partial,
-      web_status: RendererFeatureStatus::Partial,
-      native_note: "DrawPath now models move/line/quad/cubic/close verbs with fill and stroke brushes; tessellation is still follow-up work.",
-      web_note: "DrawPath now models vector paths; WebGPU tessellation or host-side path rasterization remains follow-up work.",
+      native_status: RendererFeatureStatus::Ready,
+      web_status: RendererFeatureStatus::Ready,
+      native_note: "DrawPath models move/line/quad/cubic/close verbs and is lowered by the shared path tessellator into fill and stroke triangle vertices before renderer execution.",
+      web_note: "DrawPath uses the same renderer-neutral tessellation contract as native; WebGPU host upload remains aligned to the generated triangle mesh.",
     },
     {
       feature: RendererFeature::ShaderEffect,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "DrawShaderEffect models named effects, uniforms, frame, and fallback brush; shader registry and validation remain follow-up work.",
-      web_note: "DrawShaderEffect models effect intent; browser host imports and shader registry remain follow-up work.",
+      native_note: "DrawShaderEffect resolves through a shared registry with built-in solid, checker, linear-gradient-debug, and vignette entries; GPU shader execution remains follow-up work.",
+      web_note: "DrawShaderEffect resolves through the same shared registry before browser host execution; WebGPU shader host calls remain follow-up work.",
     },
     {
       feature: RendererFeature::TextShaping,
@@ -312,15 +312,7 @@ pub fn plan_renderer_command_fallbacks(
         } else {
           filter_depth = filter_depth - 1
         }
-      @core.DrawCommand::DrawPath(_) =>
-        fallbacks.push(
-          renderer_command_fallback(
-            index~,
-            feature=RendererFeature::PathVector,
-            command="DrawPath",
-            reason="vector path intent is modeled, but tessellation or path rasterization is not executed yet",
-          ),
-        )
+      @core.DrawCommand::DrawPath(_) => ()
       @core.DrawCommand::DrawShaderEffect(_) =>
         fallbacks.push(
           renderer_command_fallback(
