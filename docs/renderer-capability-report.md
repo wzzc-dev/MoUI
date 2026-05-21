@@ -28,7 +28,7 @@ Status meanings:
 | Filter effect | partial | partial | `PushFilter` / `PopFilter` now model blur, color, and contrast-style effects; shader pass execution remains follow-up work. |
 | Path/vector | ready | ready | `DrawPath` models move/line/quad/cubic/close verbs and is lowered by the shared tessellator into fill and stroke triangle vertices before renderer execution. |
 | Shader effect | partial | partial | `DrawShaderEffect` resolves through a shared registry with built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`; GPU shader execution and host ABI remain follow-up work. |
-| Text shaping | partial | partial | Native has HarfBuzz shaping and fallback faces; full bidi, line breaking, and typography conformance remain follow-up work. |
+| Text shaping | partial | partial | Native WGPU uses `moon_cosmic` for shaping, fallback, cache keys, and glyph pixels; full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
 | Async image | partial | partial | Renderer-neutral lifecycle records now model loading, ready, failed, disposed, and eviction; native/Web adapters still need to surface those diagnostics to app code. |
 
@@ -53,12 +53,14 @@ also exposes a command fallback planner that reports planned skips, unbalanced
 pops, and open advanced scopes for native and WebGPU adapters. Native wgpu still
 needs actual offscreen passes, mask composition, filter shaders, and GPU shader
 registry execution. Native color emoji remains an explicit gap. Text shaping is
-partial: `text/cosmic/` now provides an optional Cosmic Text layout adapter,
-while the native wgpu glyph path still uses its existing atlas path; full bidi,
-line breaking, and typography conformance are still follow-up work. Native image
-support is synchronous from the app model's point of view; the shared image
-lifecycle record can represent loading, ready, failed, disposed, and evicted
-resources, but native adapter diagnostics are not surfaced to app code yet.
+partial: `text/cosmic/` provides the platform-neutral layout adapter, and native
+WGPU now uses `moon_cosmic` for shaping, font fallback, cache keys, and glyph
+pixels while MoUI keeps the GPU atlas, vertex generation, texture upload, and
+renderer backend. Full bidi, line breaking, and typography conformance are
+still follow-up work. Native image support is synchronous from the app model's
+point of view; the shared image lifecycle record can represent loading, ready,
+failed, disposed, and evicted resources, but native adapter diagnostics are not
+surfaced to app code yet.
 
 ## Current Web Notes
 
