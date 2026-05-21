@@ -89,19 +89,41 @@ fn text_input_ime_capabilities(
 fn text_input_surrounding_text(
   state : @core.TextInputState,
 ) -> @window_core.ImeSurroundingText? {
-  let caret = clamp_int(state.caret, 0, state.text.to_array().length())
-  let chars = state.text.to_array()
-  let before = String::from_array(chars[:caret])
-  let cursor = @utf8.encode(before[:], bom=false).length()
+  let length = state.text.to_array().length()
+  let caret = clamp_int(state.caret, 0, length)
+  let anchor = clamp_int(text_input_selection_anchor(state), 0, length)
+  let cursor = text_char_index_to_utf8_offset(state.text, caret)
+  let anchor = text_char_index_to_utf8_offset(state.text, anchor)
   Some(
     @window_core.ImeSurroundingText::ImeSurroundingText(
       state.text,
       cursor,
-      cursor,
+      anchor,
     ),
   ) catch {
     _ => None
   }
+}
+
+///|
+fn text_input_selection_anchor(state : @core.TextInputState) -> Int {
+  match state.selection {
+    Some(selection) =>
+      if state.caret == selection.start {
+        selection.end
+      } else {
+        selection.start
+      }
+    None => state.caret
+  }
+}
+
+///|
+fn text_char_index_to_utf8_offset(text : String, index : Int) -> Int {
+  let chars = text.to_array()
+  let index = clamp_int(index, 0, chars.length())
+  let before = String::from_array(chars[:index])
+  @utf8.encode(before[:], bom=false).length()
 }
 
 ///|
