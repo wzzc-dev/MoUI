@@ -286,16 +286,53 @@ fn build_native_text_buffer(
     Float::from_double(run.font.size * 1.25),
   )
   let attrs = native_text_attrs_for_font(run.font)
+  let text = native_text_cosmic_safe_text(run.text)
   @moon_cosmic.Buffer::new(metrics)
   .set_wrap(@moon_cosmic.Wrap::None)
   .set_size(Some(Float::from_double(run.frame.size.width)), None)
   .set_text(
-    run.text,
+    text,
     @moon_cosmic.AttrsList::new(attrs),
     @moon_cosmic.Shaping::Advanced,
   )
   .shape_all_with_font_system(cache.font_system)
   .layout_all_with_font_system(cache.font_system)
+}
+
+///|
+fn native_text_cosmic_safe_text(text : String) -> String {
+  let chars : Array[Char] = []
+  let mut changed = false
+  for ch in text {
+    let mapped = native_text_cosmic_safe_char(ch)
+    if mapped != ch {
+      changed = true
+    }
+    chars.push(mapped)
+  }
+  if changed {
+    String::from_array(chars)
+  } else {
+    text
+  }
+}
+
+///|
+fn native_text_cosmic_safe_char(ch : Char) -> Char {
+  match ch {
+    '✓' => 'v'
+    '▲' => '^'
+    '▼' => 'v'
+    '◀' => '<'
+    '▶' => '>'
+    '🔍' => '?'
+    '✕' => 'x'
+    '•' => '*'
+    '☑' => 'x'
+    '☐' => 'o'
+    '·' => '/'
+    _ => ch
+  }
 }
 
 ///|
