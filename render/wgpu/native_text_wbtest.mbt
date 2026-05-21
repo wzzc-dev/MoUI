@@ -88,6 +88,33 @@ test "native text shaping handles multibyte punctuation" {
 }
 
 ///|
+test "native text shaping handles built-in control symbols" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let cache = NativeFontCache::new()
+    let symbols = ["✓", "▲", "▼", "◀", "▶", "🔍", "✕", "• ", "☑ ", "☐ "]
+    for symbol in symbols {
+      let run = @core.TextRun::new(
+        text=symbol,
+        frame=@core.Rect::new(x=0.0, y=0.0, width=60.0, height=32.0),
+        font=@core.FontSpec::new(size=16.0, weight=500),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      )
+      ignore(native_text_layout_runs(cache, run))
+    }
+    inspect(cache.has_loaded_fonts(), content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "native text maps control symbols before cosmic layout" {
+  inspect(native_text_cosmic_safe_text("✓ ▲ ▼ ◀ ▶ 🔍 ✕ • ☑ ☐ ·"), content="v ^ v < > ? x * x o /")
+  inspect(native_text_cosmic_safe_text("你好abc"), content="你好abc")
+}
+
+///|
 test "native renderer builds text vertices and atlas entries" {
   if @fs.path_exists(native_regular_font_path()) {
     let renderer = new_test_renderer_handle()
