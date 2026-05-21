@@ -9,7 +9,7 @@ macOS native, and Windows native hosts.
 | Counter | Minimal app state and event handling | `examples/counter/app/` | `State`, text, button, click events |
 | Todo | Basic application structure | `examples/todo/app/` | Text field, list layout, app-owned data |
 | Showcase | Visual and control index | `examples/showcase/app/` | Theme, controls, layout, dialogs, renderer capability status |
-| Markdown Editor | Practical editing demo | `examples/markdown_editor/app/` | Rich text editor, Markdown parsing, source preview |
+| Markdown Editor | Practical editing demo | `examples/markdown_editor/app/` | Rich text editor, `mizchi/markdown` parsing, source preview |
 
 ## Web Wasm-GC
 

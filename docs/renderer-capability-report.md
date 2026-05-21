@@ -45,19 +45,20 @@ and text vertices. Opacity is folded into visual and text vertex alpha.
 Layer compositing, blend modes, filters, and shader effects now have
 renderer-neutral command intents. Vector paths additionally have a shared
 tessellation contract that lowers fills and strokes into triangle vertices,
-including flattened quadratic and cubic segments. A renderer-neutral SVG subset
-import path lowers inline `rect`, `circle`, `line`, `polyline`, and `polygon`
-elements into the same draw-command model while reporting unsupported SMIL
+including flattened quadratic and cubic segments. The renderer-neutral SVG
+import path uses `mizchi/svg` as its parser frontend and lowers supported scene
+graph shapes into the same draw-command model while reporting unsupported SMIL
 animation and `foreignObject` usage. `render/capabilities.mbt`
 also exposes a command fallback planner that reports planned skips, unbalanced
 pops, and open advanced scopes for native and WebGPU adapters. Native wgpu still
 needs actual offscreen passes, mask composition, filter shaders, and GPU shader
-registry execution. Native color emoji remains an explicit gap. Text shaping is partial: HarfBuzz and
-fallback faces exist, but full bidi, line breaking, and typography conformance
-are still follow-up work. Native image support is synchronous from the app
-model's point of view; the shared image lifecycle record can represent loading,
-ready, failed, disposed, and evicted resources, but native adapter diagnostics
-are not surfaced to app code yet.
+registry execution. Native color emoji remains an explicit gap. Text shaping is
+partial: `text/cosmic/` now provides an optional Cosmic Text layout adapter,
+while the native wgpu glyph path still uses its existing atlas path; full bidi,
+line breaking, and typography conformance are still follow-up work. Native image
+support is synchronous from the app model's point of view; the shared image
+lifecycle record can represent loading, ready, failed, disposed, and evicted
+resources, but native adapter diagnostics are not surfaced to app code yet.
 
 ## Current Web Notes
 

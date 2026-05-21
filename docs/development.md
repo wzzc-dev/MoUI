@@ -91,6 +91,8 @@ Useful focused commands:
 ```sh
 moon test render/wgpu --target native
 moon test render/webgpu_adapter --target wasm-gc
+moon test text/cosmic --target native
+moon test tests/tooling --target native
 moon test backend/web --target wasm-gc
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
@@ -107,3 +109,17 @@ moon build examples/todo/windows --target native
 moon build examples/counter/windows --target native
 moon build examples/markdown_editor/windows --target native
 ```
+
+## Mooncakes Integration Notes
+
+MoUI keeps production runtime boundaries explicit when using Mooncakes
+frontends and tooling:
+
+- `Milky2018/moon_cosmic` lives behind `text/cosmic/`; `core/` remains
+  platform-neutral and does not import the Cosmic Text engine directly.
+- `mizchi/markdown` powers the Markdown Editor parser adapter while preserving
+  `markdown_to_rich_text(String) -> @core.RichTextDocument`.
+- `mizchi/svg` powers `render.import_svg(String) -> SvgImportResult`, lowering
+  parsed SVG scene graph nodes into MoUI `DrawCommand` values.
+- `moonbitlang/quickcheck` and `mizchi/pixelmatch` are exercised from
+  `tests/tooling/` for property and pixel-diff coverage.
