@@ -47,6 +47,18 @@ test "runtime inspector and frame profile expose devtool counters" {
   let snapshot = RuntimeInspectorSnapshot::from_runtime(runtime)
   inspect(snapshot.draw_command_count, content="2")
   inspect(snapshot.dirty_count, content="0")
+  let layout = LayoutInspectorSnapshot::from_runtime(runtime)
+  inspect(layout.node_count, content="1")
+  inspect(layout.leaf_count, content="1")
+  inspect(layout.max_depth, content="1")
+  let render = RenderInspectorSnapshot::from_runtime(runtime)
+  inspect(render.command_count, content="2")
+  inspect(render.text_count, content="1")
+  inspect(render.clip_depth, content="0")
+  let semantics = SemanticsInspectorSnapshot::from_runtime(runtime)
+  assert_true(semantics.root_role == SemanticsRole::Text)
+  inspect(semantics.node_count, content="1")
+  inspect(semantics.action_count, content="0")
   let profile = FrameProfile::capture(
     runtime,
     Frame::new(time_ms=16.0, delta_ms=16.0),

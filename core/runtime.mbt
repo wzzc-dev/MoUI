@@ -78,6 +78,11 @@ pub fn AppRuntime::layout_pass(self : AppRuntime) -> Unit {
 }
 
 ///|
+pub fn AppRuntime::layout(self : AppRuntime) -> LayoutResult {
+  self.state.layout()
+}
+
+///|
 pub fn AppRuntime::paint_pass(self : AppRuntime) -> Array[DrawCommand] {
   self.state.paint_pass()
 }
