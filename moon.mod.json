@@ -10,7 +10,8 @@
     "moonbit-community/harfbuzz": "0.1.0",
     "moonbitlang/x": "0.4.43",
     "mizchi/image": "0.3.0",
-    "Milky2018/moon_cosmic": "0.3.1"
+    "Milky2018/moon_cosmic": "0.3.1",
+    "mizchi/markdown": "0.5.0"
   },
   "readme": "README.md",
   "repository": "",
