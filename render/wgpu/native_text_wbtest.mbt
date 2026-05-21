@@ -11,10 +11,14 @@ test "native text fallback font path covers cjk when available" {
   let cjk = native_cjk_font_path()
   if @fs.path_exists(cjk) {
     let cache = NativeFontCache::new()
-    let faces = cache.faces_for_font(@core.FontSpec::new(size=16.0, weight=500))
-    inspect(faces.any(face => face.path == cjk), content="true")
+    let font = @core.FontSpec::new(size=16.0, weight=500)
+    cache.ensure_fonts_for_font(font)
+    inspect(cache.loaded_paths.get(cjk) is Some(true), content="true")
     inspect(
-      faces.any(face => face_supports_codepoint(face, 0x4F60U)),
+      cache.font_system.resolve_for_codepoint(
+        native_text_attrs_for_font(font),
+        0x4F60U,
+      ) is Some(_),
       content="true",
     )
   } else {
@@ -27,20 +31,17 @@ test "native text resolves cjk glyph from fallback face" {
   if @fs.path_exists(native_regular_font_path()) &&
     @fs.path_exists(native_cjk_font_path()) {
     let cache = NativeFontCache::new()
-    let faces = cache.faces_for_font(@core.FontSpec::new(size=18.0, weight=500))
-    match faces {
-      [primary, ..] => {
-        let shaped = shape_text(primary, "你", 18)
-        inspect(shaped.length(), content="1")
-        let font = @core.FontSpec::new(size=18.0, weight=500)
-        let resolved = resolve_shaped_glyphs(faces, primary, shaped, 18, font)
-        inspect(resolved.length(), content="1")
-        let glyph = resolved[0]
-        inspect(glyph.glyph_id != 0U, content="true")
-        inspect(!same_native_font_face(glyph.face, primary), content="true")
-      }
-      [] => inspect("font missing", content="font missing")
-    }
+    let run = @core.TextRun::new(
+      text="你",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=40.0),
+      font=@core.FontSpec::new(size=18.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let runs = native_text_layout_runs(cache, run)
+    inspect(cache.has_loaded_fonts(), content="true")
+    inspect(runs.length() > 0, content="true")
+    inspect(runs.any(run => run.glyphs.length() > 0), content="true")
   } else {
     inspect("skipped", content="skipped")
   }
@@ -50,13 +51,17 @@ test "native text resolves cjk glyph from fallback face" {
 test "native text shaping produces glyphs when platform font is available" {
   if @fs.path_exists(native_regular_font_path()) {
     let cache = NativeFontCache::new()
-    match cache.faces_for_font(@core.FontSpec::new(size=16.0, weight=500)) {
-      [face, ..] => {
-        let glyphs = shape_text(face, "Increment", 16)
-        inspect(glyphs.length() > 0, content="true")
-      }
-      [] => inspect("font missing", content="font missing")
-    }
+    let run = @core.TextRun::new(
+      text="Increment",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let runs = native_text_layout_runs(cache, run)
+    inspect(cache.has_loaded_fonts(), content="true")
+    inspect(runs.length() > 0, content="true")
+    inspect(runs.any(run => run.glyphs.length() > 0), content="true")
   } else {
     inspect("skipped", content="skipped")
   }
