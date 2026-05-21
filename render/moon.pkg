@@ -1,4 +1,5 @@
 import {
+  "Milky2018/moon_zeno" @zeno,
   "wzzc-dev/moui/core",
   "mizchi/svg",
 }
