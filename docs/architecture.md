@@ -27,6 +27,8 @@ backend/web/                  canonical Web host on wasm-gc plus browser JS asse
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
 render/webgpu_adapter/        browser WebGPU host-import renderer for wasm-gc
+text/cosmic/                  optional Cosmic Text adapter over core text layout inputs
+tests/tooling/                quickcheck and pixelmatch integration tests
 examples/counter/app/         shared counter app
 examples/counter/windows/     Windows native counter
 examples/counter/macos/       macOS native counter
