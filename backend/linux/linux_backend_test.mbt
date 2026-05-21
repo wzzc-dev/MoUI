@@ -6,6 +6,9 @@ test "linux backend scaffold is explicit" {
   inspect(info.renderer_ready, content="false")
   inspect(info.capabilities.window, content="false")
   inspect(info.capabilities.accessibility, content="false")
+  inspect(info.accessibility.kind.label(), content="at-spi")
+  inspect(info.accessibility.contract_ready, content="true")
+  inspect(info.accessibility.native_binding_ready, content="false")
   inspect(info.services.clipboard, content="false")
   inspect(info.readiness.ready, content="false")
   assert_true(info.readiness.blocked_by.length() >= 1)
@@ -34,5 +37,25 @@ test "linux scaffold exposes host contracts without owning a surface" {
     @host.HostServiceResponse::Unavailable(message) =>
       inspect(message, content="clipboard service is unavailable")
     _ => fail("expected unavailable Linux scaffold service")
+  }
+}
+
+///|
+test "linux accessibility bridge is explicit unavailable scaffold" {
+  let bridge = linux_accessibility_bridge()
+  inspect(bridge.kind.label(), content="at-spi")
+  inspect(bridge.available, content="false")
+  match bridge.perform_action(
+    @host.NativeAccessibilityActionRequest::new(
+      element_id=@core.ElementId::new(1),
+      action=@core.SemanticsAction::Focus,
+    ),
+  ) {
+    @host.NativeAccessibilityActionResult::BridgeUnavailable(message) =>
+      inspect(
+        message,
+        content="native accessibility bridge is unavailable: at-spi",
+      )
+    _ => fail("expected unavailable Linux accessibility bridge")
   }
 }

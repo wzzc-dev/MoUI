@@ -7,6 +7,15 @@ extern "C" fn win32_surface_host_hwnd_from_u64(
 ) -> @wgpu_c.OpaquePtr = "moui_windows_surface_host_hwnd_from_u64"
 
 ///|
+pub(all) struct WindowsAccessibilityBridgeInfo {
+  kind : @host.NativeAccessibilityBridgeKind
+  contract_ready : Bool
+  native_binding_ready : Bool
+  action_roundtrip_ready : Bool
+  description : String
+} derive(Eq, Debug, ToJson)
+
+///|
 struct WindowsApp {
   title : String
   mut window : @win.Window?
@@ -33,6 +42,29 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   event_loop.run_app(app)
+}
+
+///|
+pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo {
+  {
+    kind: @host.NativeAccessibilityBridgeKind::UIAutomation,
+    contract_ready: true,
+    native_binding_ready: false,
+    action_roundtrip_ready: true,
+    description: "Windows exposes a UI Automation accessibility bridge contract over the shared semantics tree; real UIA provider binding is still a backend follow-up.",
+  }
+}
+
+///|
+pub fn windows_accessibility_bridge(
+  root~ : @core.SemanticsNode,
+  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+) -> @host.NativeAccessibilityBridge {
+  @host.NativeAccessibilityBridge::semantics_action_bridge(
+    kind=@host.NativeAccessibilityBridgeKind::UIAutomation,
+    root~,
+    dispatch~,
+  )
 }
 
 ///|

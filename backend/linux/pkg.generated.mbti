@@ -12,6 +12,10 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
+pub fn linux_accessibility_bridge() -> @host.NativeAccessibilityBridge
+
+pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
+
 pub fn readiness() -> LinuxBackendReadiness
 
 pub fn run_app(String, @core.AppRuntime) -> Unit
@@ -27,6 +31,14 @@ pub fn service_capabilities() -> @host.HostServiceCapabilities
 // Errors
 
 // Types and methods
+pub(all) struct LinuxAccessibilityBridgeInfo {
+  kind : @host.NativeAccessibilityBridgeKind
+  contract_ready : Bool
+  native_binding_ready : Bool
+  action_roundtrip_ready : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
   renderer : Bool
@@ -44,6 +56,7 @@ pub(all) struct LinuxBackendInfo {
   window_backend_available : Bool
   renderer_ready : Bool
   capabilities : LinuxBackendCapabilities
+  accessibility : LinuxAccessibilityBridgeInfo
   services : @host.HostServiceCapabilities
   readiness : LinuxBackendReadiness
   description : String
