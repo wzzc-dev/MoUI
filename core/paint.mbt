@@ -77,6 +77,65 @@ pub(all) struct Transform2D {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum BlendMode {
+  SourceOver
+  Multiply
+  Screen
+  Overlay
+  Darken
+  Lighten
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum LayerMask {
+  NoMask
+  RectMask(Rect)
+  RoundedMask(RoundedRect)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct LayerSpec {
+  opacity : Double
+  blend_mode : BlendMode
+  mask : LayerMask
+  offscreen : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum FilterEffect {
+  Blur(Double)
+  Saturate(Double)
+  Brightness(Double)
+  Contrast(Double)
+  ColorMatrix(Array[Double])
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum PathVerb {
+  MoveTo(Point)
+  LineTo(Point)
+  QuadTo(Point, Point)
+  CubicTo(Point, Point, Point)
+  Close
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct PathSpec {
+  verbs : Array[PathVerb]
+  fill : Brush?
+  stroke : Brush?
+  stroke_width : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ShaderEffectSpec {
+  name : String
+  frame : Rect
+  uniforms : Array[Double]
+  fallback : Brush
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum DrawCommand {
   Clear(Color)
   FillRect(Rect, Color)
@@ -96,6 +155,12 @@ pub(all) enum DrawCommand {
   PopTransform
   PushOpacity(Double)
   PopOpacity
+  PushLayer(LayerSpec)
+  PopLayer
+  PushFilter(FilterEffect)
+  PopFilter
+  DrawPath(PathSpec)
+  DrawShaderEffect(ShaderEffectSpec)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -235,4 +300,39 @@ pub fn Transform2D::translation(dx~ : Double, dy~ : Double) -> Transform2D {
 ///|
 pub fn Transform2D::scale(sx~ : Double, sy~ : Double) -> Transform2D {
   { a: sx, b: 0.0, c: 0.0, d: sy, tx: 0.0, ty: 0.0 }
+}
+
+///|
+pub fn LayerSpec::new(
+  opacity? : Double = 1.0,
+  blend_mode? : BlendMode = BlendMode::SourceOver,
+  mask? : LayerMask = LayerMask::NoMask,
+  offscreen? : Bool = false,
+) -> LayerSpec {
+  { opacity: clamp_double(opacity, 0.0, 1.0), blend_mode, mask, offscreen }
+}
+
+///|
+pub fn FilterEffect::blur(radius : Double) -> FilterEffect {
+  Blur(radius)
+}
+
+///|
+pub fn PathSpec::new(
+  verbs~ : Array[PathVerb],
+  fill? : Brush? = None,
+  stroke? : Brush? = None,
+  stroke_width? : Double = 1.0,
+) -> PathSpec {
+  { verbs, fill, stroke, stroke_width }
+}
+
+///|
+pub fn ShaderEffectSpec::new(
+  name~ : String,
+  frame~ : Rect,
+  uniforms? : Array[Double] = [],
+  fallback? : Brush = Brush::solid(Color::black()),
+) -> ShaderEffectSpec {
+  { name, frame, uniforms, fallback }
 }
