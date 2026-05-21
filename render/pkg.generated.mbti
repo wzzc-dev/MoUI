@@ -15,7 +15,7 @@ pub fn first_clear_color(Array[@core.DrawCommand]) -> @core.Color
 
 pub fn grow_capacity(UInt64) -> UInt64
 
-pub fn import_svg_subset(String) -> SvgImportResult
+pub fn import_svg(String) -> SvgImportResult
 
 pub fn plan_renderer_command_fallbacks(Array[@core.DrawCommand]) -> RendererCommandPlan
 
