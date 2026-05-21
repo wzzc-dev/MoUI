@@ -13,6 +13,8 @@ pub fn first_clear_color(Array[@core.DrawCommand]) -> @core.Color
 
 pub fn grow_capacity(UInt64) -> UInt64
 
+pub fn plan_renderer_command_fallbacks(Array[@core.DrawCommand]) -> RendererCommandPlan
+
 pub fn rect_batches_to_vertices(Array[RectBatch], @core.Size) -> Array[RectVertex]
 
 pub fn rect_shader_wgsl() -> String
@@ -61,6 +63,28 @@ pub(all) enum RendererBackendKind {
 
 pub(all) enum RendererCapabilityStatus {
   Ready
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RendererCommandFallback {
+  index : Int
+  feature : RendererFeature
+  command : String
+  kind : RendererCommandFallbackKind
+  reason : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum RendererCommandFallbackKind {
+  PlannedFallback
+  UnbalancedPop
+  UnclosedScope
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RendererCommandPlan {
+  total_commands : Int
+  fallback_count : Int
+  final_layer_depth : Int
+  final_filter_depth : Int
+  fallbacks : Array[RendererCommandFallback]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum RendererFeature {

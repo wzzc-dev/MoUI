@@ -247,6 +247,31 @@ test "wgpu web command bridge preserves gradient and shadow command payloads" {
 }
 
 ///|
+test "wgpu web renderer reports skipped advanced command fallbacks" {
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0)),
+  )
+  renderer.render([
+    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5)),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(verbs=[
+        @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
+      ]),
+    ),
+    @core.DrawCommand::PopLayer,
+  ])
+  let plan = renderer.last_fallback_plan()
+  inspect(plan.fallback_count, content="2")
+  assert_true(
+    plan.fallbacks[0].feature == @render.RendererFeature::LayerCompositing,
+  )
+  assert_true(plan.fallbacks[1].feature == @render.RendererFeature::PathVector)
+}
+
+///|
 fn test_port(
   created~ : Ref[Int],
   capabilities? : WebGpuHostCapabilities = required_capabilities(),

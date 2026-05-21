@@ -67,6 +67,36 @@ test "renderer neutral advanced commands are modeled but skipped by legacy batch
     @core.DrawCommand::PopLayer,
   ]
   inspect(@render.collect_rect_batches(commands).length(), content="0")
+  let plan = @render.plan_renderer_command_fallbacks(commands)
+  inspect(plan.total_commands, content="6")
+  inspect(plan.fallback_count, content="4")
+  inspect(plan.final_layer_depth, content="0")
+  inspect(plan.final_filter_depth, content="0")
+  assert_true(
+    plan.fallbacks[0].feature == @render.RendererFeature::LayerCompositing,
+  )
+  assert_true(plan.fallbacks[1].feature == @render.RendererFeature::FilterEffect)
+  assert_true(plan.fallbacks[2].feature == @render.RendererFeature::PathVector)
+  assert_true(plan.fallbacks[3].feature == @render.RendererFeature::ShaderEffect)
+}
+
+///|
+test "renderer command planner reports unbalanced advanced scopes" {
+  let plan = @render.plan_renderer_command_fallbacks([
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PushFilter(@core.FilterEffect::blur(2.0)),
+  ])
+  inspect(plan.fallback_count, content="3")
+  assert_true(
+    plan.fallbacks[0].kind == @render.RendererCommandFallbackKind::UnbalancedPop,
+  )
+  assert_true(
+    plan.fallbacks[1].kind == @render.RendererCommandFallbackKind::PlannedFallback,
+  )
+  assert_true(
+    plan.fallbacks[2].kind == @render.RendererCommandFallbackKind::UnclosedScope,
+  )
+  inspect(plan.final_filter_depth, content="1")
 }
 
 ///|

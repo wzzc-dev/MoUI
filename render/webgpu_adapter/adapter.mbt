@@ -90,6 +90,7 @@ pub(all) struct WebGpuWasmRenderer {
   mut size : @core.Size
   mut present_count : Int
   mut last_calls : Array[WebGpuHostCall]
+  mut last_fallback_plan : @render.RendererCommandPlan
 }
 
 ///|
@@ -259,7 +260,14 @@ pub fn create_renderer(
   ensure_required_capabilities(capabilities)
   let surface = create_surface(canvas_id~, logical_size~, scale_factor~, port~)
   (port.create_renderer)(surface)
-  { surface, port, size: logical_size, present_count: 0, last_calls: [] }
+  {
+    surface,
+    port,
+    size: logical_size,
+    present_count: 0,
+    last_calls: [],
+    last_fallback_plan: @render.plan_renderer_command_fallbacks([]),
+  }
 }
 
 ///|
@@ -293,6 +301,7 @@ pub fn WebGpuWasmRenderer::render(
   self : WebGpuWasmRenderer,
   commands : Array[@core.DrawCommand],
 ) -> Unit raise WebGpuHostError {
+  self.last_fallback_plan = @render.plan_renderer_command_fallbacks(commands)
   let calls = draw_commands_to_host_calls(commands, self.size)
   (self.port.submit)(calls)
   self.last_calls = calls
@@ -314,6 +323,13 @@ pub fn WebGpuWasmRenderer::last_calls(
   self : WebGpuWasmRenderer,
 ) -> Array[WebGpuHostCall] {
   self.last_calls
+}
+
+///|
+pub fn WebGpuWasmRenderer::last_fallback_plan(
+  self : WebGpuWasmRenderer,
+) -> @render.RendererCommandPlan {
+  self.last_fallback_plan
 }
 
 ///|
