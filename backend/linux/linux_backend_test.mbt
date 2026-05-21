@@ -38,6 +38,12 @@ test "linux scaffold exposes host contracts without owning a surface" {
       inspect(message, content="clipboard service is unavailable")
     _ => fail("expected unavailable Linux scaffold service")
   }
+  let platform_services = linux_service_bridge()
+  match platform_services.dispatch(@host.HostServiceRequest::QuerySystemTheme) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="system theme service is unavailable")
+    _ => fail("expected unavailable Linux platform service")
+  }
 }
 
 ///|

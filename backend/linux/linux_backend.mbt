@@ -118,6 +118,11 @@ pub fn scaffold_service_bridge() -> @host.HostServiceBridge {
 }
 
 ///|
+pub fn linux_service_bridge() -> @host.HostServiceBridge {
+  scaffold_service_bridge()
+}
+
+///|
 pub fn scaffold_surface_host(
   logical_width~ : Double,
   logical_height~ : Double,

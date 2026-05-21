@@ -16,6 +16,8 @@ pub fn linux_accessibility_bridge() -> @host.NativeAccessibilityBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
+pub fn linux_service_bridge() -> @host.HostServiceBridge
+
 pub fn readiness() -> LinuxBackendReadiness
 
 pub fn run_app(String, @core.AppRuntime) -> Unit

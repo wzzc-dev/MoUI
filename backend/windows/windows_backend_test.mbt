@@ -14,6 +14,16 @@ test "windows backend converts resize event" {
 }
 
 ///|
+test "windows service bridge exposes unavailable scaffold" {
+  let bridge = windows_service_bridge()
+  match bridge.dispatch(@host.HostServiceRequest::QuerySystemTheme) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="system theme service is unavailable")
+    _ => fail("expected unavailable Windows platform service scaffold")
+  }
+}
+
+///|
 test "windows backend converts resize event to host metrics" {
   let event = window_event_to_host(
     @window_core.WindowEvent::SurfaceResized(
