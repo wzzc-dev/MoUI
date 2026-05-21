@@ -105,6 +105,40 @@ before it grows broad platform claims:
   wasm-gc backend tests, devtool snapshots, frame-profile counters, and example
   builds.
 
+Use the conformance entrypoint for this suite:
+
+```sh
+sh scripts/conformance-check.sh
+sh scripts/conformance-check.sh --golden
+sh scripts/conformance-check.sh --bench
+sh scripts/conformance-check.sh --platform
+```
+
+The base command runs runtime, host, renderer, Web backend, and Showcase app
+contracts. `--golden` builds the Showcase Web wasm-gc target as the canonical
+screenshot source. `--bench` builds the heavier example targets and records the
+expected measurement set: startup, frame time, dirty-count, draw-command count,
+and memory. `--platform` layers in current-platform backend checks through
+`scripts/dev-check.sh --platform-examples-test`.
+
+CI runs the same conformance script from `.github/workflows/ci.yml`. Keep this
+workflow package-scoped: platform-native executable builds and real screenshot
+capture should be added as separate jobs once the runner images have the needed
+windowing and browser dependencies.
+
+## Golden Screenshots And Benchmarks
+
+Showcase is the golden source of truth for visible component coverage. Golden
+tests should capture the List-Detail catalog at stable desktop and mobile
+viewports, then compare screenshots against approved artifacts. Until a browser
+screenshot runner is checked in, `sh scripts/conformance-check.sh --golden`
+verifies that the golden target builds and prints the capture handoff point.
+
+Benchmarks should use the same examples and record comparable counters:
+frame-time, dirty-count, draw-command count, startup, and memory. Until native
+profiling hooks are wired into CI, `sh scripts/conformance-check.sh --bench`
+keeps the benchmark build targets healthy and documents the metrics to collect.
+
 ## Release-Oriented Checklist
 
 Before a broad handoff or release candidate:
