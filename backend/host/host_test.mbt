@@ -304,11 +304,16 @@ test "native accessibility bridge snapshots semantics recursively" {
   )
   match bridge.snapshot_semantics(root) {
     Some(snapshot) => {
-      inspect(snapshot.native_role, content="group")
-      inspect(snapshot.children.length(), content="1")
-      inspect(snapshot.children[0].native_role, content="button")
-      inspect(snapshot.children[0].label, content="Save")
-      inspect(snapshot.children[0].actions.length(), content="2")
+      inspect(snapshot.nodes().length(), content="2")
+      inspect(snapshot.tree() is Some(_), content="true")
+      inspect(snapshot.focus(), content="NodeId(1)")
+      let child_update = snapshot.nodes()[1]
+      inspect(child_update.node().role(), content="Button")
+      inspect(child_update.node().label(), content="Some(Save)")
+      inspect(
+        child_update.node().supports_action(@accesskit.Action::Click),
+        content="true",
+      )
     }
     None => fail("expected accessibility snapshot")
   }

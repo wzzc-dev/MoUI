@@ -187,7 +187,7 @@ pub(all) enum NativeAccessibilityActionResult {
 pub(all) struct NativeAccessibilityBridge {
   kind : NativeAccessibilityBridgeKind
   available : Bool
-  snapshot : (@core.SemanticsNode) -> NativeAccessibilityNode
+  snapshot : (@core.SemanticsNode) -> @accesskit.TreeUpdate
   perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
 }
 
@@ -607,6 +607,161 @@ pub fn NativeAccessibilityNode::from_semantics(
 }
 
 ///|
+pub fn accesskit_node_id_for_element(
+  element_id : @core.ElementId,
+) -> @accesskit.NodeId {
+  @accesskit.NodeId::from_u64(element_id.value.to_uint64())
+}
+
+///|
+pub fn accesskit_rect_from_core(rect : @core.Rect) -> @accesskit.Rect {
+  @accesskit.Rect::new(
+    rect.origin.x,
+    rect.origin.y,
+    rect.origin.x + rect.size.width,
+    rect.origin.y + rect.size.height,
+  )
+}
+
+///|
+pub fn accesskit_role_from_semantics(
+  role : @core.SemanticsRole,
+) -> @accesskit.Role {
+  match role {
+    @core.SemanticsRole::None => @accesskit.Role::GenericContainer
+    @core.SemanticsRole::Text => @accesskit.Role::TextRun
+    @core.SemanticsRole::Button => @accesskit.Role::Button
+    @core.SemanticsRole::Checkbox => @accesskit.Role::CheckBox
+    @core.SemanticsRole::TextField => @accesskit.Role::TextInput
+    @core.SemanticsRole::List => @accesskit.Role::List
+    @core.SemanticsRole::ListItem => @accesskit.Role::ListItem
+    @core.SemanticsRole::Grid => @accesskit.Role::Grid
+    @core.SemanticsRole::ScrollView => @accesskit.Role::ScrollView
+    @core.SemanticsRole::Switch => @accesskit.Role::Switch
+    @core.SemanticsRole::Radio => @accesskit.Role::RadioButton
+    @core.SemanticsRole::Slider => @accesskit.Role::Slider
+    @core.SemanticsRole::Progress => @accesskit.Role::ProgressIndicator
+    @core.SemanticsRole::Tab => @accesskit.Role::Tab
+    @core.SemanticsRole::Dialog => @accesskit.Role::Dialog
+    @core.SemanticsRole::Tooltip => @accesskit.Role::Tooltip
+    @core.SemanticsRole::Menu => @accesskit.Role::Menu
+    @core.SemanticsRole::Group => @accesskit.Role::Group
+  }
+}
+
+///|
+pub fn accesskit_action_from_semantics(
+  action : @core.SemanticsAction,
+) -> @accesskit.Action {
+  match action {
+    @core.SemanticsAction::Activate => @accesskit.Action::Click
+    @core.SemanticsAction::Focus => @accesskit.Action::Focus
+    @core.SemanticsAction::SetText => @accesskit.Action::SetValue
+    @core.SemanticsAction::Submit => @accesskit.Action::Click
+    @core.SemanticsAction::Scroll => @accesskit.Action::ScrollIntoView
+  }
+}
+
+///|
+pub fn accesskit_node_from_semantics(
+  node : @core.SemanticsNode,
+) -> @accesskit.Node {
+  let access_node = @accesskit.Node::new(accesskit_role_from_semantics(node.role))
+  access_node.set_bounds(accesskit_rect_from_core(node.frame))
+  if node.label != "" {
+    access_node.set_label(node.label)
+  }
+  if node.value != "" {
+    access_node.set_value(node.value)
+  }
+  if node.state.disabled {
+    access_node.set_disabled()
+  }
+  if node.state.selected {
+    access_node.set_selected(true)
+  }
+  if node.state.checked {
+    access_node.set_toggled(@accesskit.Toggled::True)
+  }
+  if node.state.expanded {
+    access_node.set_expanded(true)
+  }
+  for action in node.actions {
+    access_node.add_action(accesskit_action_from_semantics(action))
+  }
+  access_node.set_children(
+    node.children.map(child => accesskit_node_id_for_element(child.element_id)),
+  )
+  access_node
+}
+
+///|
+pub fn accesskit_tree_update_from_semantics(
+  node : @core.SemanticsNode,
+) -> @accesskit.TreeUpdate {
+  let root_id = accesskit_node_id_for_element(node.element_id)
+  let update = @accesskit.TreeUpdate::new(@accesskit.TreeId::root(), root_id)
+  update.set_tree(@accesskit.Tree::new(root_id))
+  push_accesskit_semantics_node(update, node)
+  update
+}
+
+///|
+fn push_accesskit_semantics_node(
+  update : @accesskit.TreeUpdate,
+  node : @core.SemanticsNode,
+) -> Unit {
+  update.push_node(
+    accesskit_node_id_for_element(node.element_id),
+    accesskit_node_from_semantics(node),
+  )
+  for child in node.children {
+    push_accesskit_semantics_node(update, child)
+  }
+}
+
+///|
+pub fn NativeAccessibilityNode::from_accesskit(
+  update : @accesskit.TreeUpdate,
+  element_id : @core.ElementId,
+  role : @core.SemanticsRole,
+) -> NativeAccessibilityNode {
+  let id = accesskit_node_id_for_element(element_id)
+  for node_update in update.nodes() {
+    if node_update.id() == id {
+      let node = node_update.node()
+      return {
+        element_id,
+        role,
+        native_role: node.role().to_string(),
+        label: node.label().unwrap_or(""),
+        value: node.value().unwrap_or(""),
+        frame: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+        focused: false,
+        disabled: node.is_disabled(),
+        selected: node.is_selected().unwrap_or(false),
+        checked: node.toggled() == Some(@accesskit.Toggled::True),
+        actions: [],
+        children: [],
+      }
+    }
+  }
+  NativeAccessibilityNode::from_semantics(
+    @core.SemanticsNode::{
+      element_id,
+      role,
+      label: "",
+      value: "",
+      state: @core.SemanticsState::default(),
+      actions: [],
+      focus_order: None,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+      children: [],
+    },
+  )
+}
+
+///|
 pub fn NativeAccessibilityActionRequest::new(
   element_id~ : @core.ElementId,
   action~ : @core.SemanticsAction,
@@ -619,8 +774,8 @@ pub fn NativeAccessibilityActionRequest::new(
 pub fn NativeAccessibilityBridge::new(
   kind~ : NativeAccessibilityBridgeKind,
   available? : Bool = true,
-  snapshot? : (@core.SemanticsNode) -> NativeAccessibilityNode = node => {
-    NativeAccessibilityNode::from_semantics(node)
+  snapshot? : (@core.SemanticsNode) -> @accesskit.TreeUpdate = node => {
+    accesskit_tree_update_from_semantics(node)
   },
   perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult = request => {
     NativeAccessibilityActionResult::Unsupported(
@@ -646,9 +801,21 @@ pub fn NativeAccessibilityBridge::unavailable(
 pub fn NativeAccessibilityBridge::snapshot_semantics(
   self : NativeAccessibilityBridge,
   node : @core.SemanticsNode,
-) -> NativeAccessibilityNode? {
+) -> @accesskit.TreeUpdate? {
   if self.available {
     Some((self.snapshot)(node))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn NativeAccessibilityBridge::snapshot_legacy_node(
+  self : NativeAccessibilityBridge,
+  node : @core.SemanticsNode,
+) -> NativeAccessibilityNode? {
+  if self.available {
+    Some(NativeAccessibilityNode::from_semantics(node))
   } else {
     None
   }
@@ -676,7 +843,7 @@ pub fn NativeAccessibilityBridge::semantics_action_bridge(
 ) -> NativeAccessibilityBridge {
   NativeAccessibilityBridge::new(
     kind~,
-    snapshot=node => NativeAccessibilityNode::from_semantics(node),
+    snapshot=node => accesskit_tree_update_from_semantics(node),
     perform=request => {
       match find_semantics_node(root, request.element_id) {
         Some(node) =>

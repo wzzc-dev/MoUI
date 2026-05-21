@@ -1,4 +1,5 @@
 import {
+  "Milky2018/moon_accesskit" @accesskit,
   "wzzc-dev/moui/core",
   "Milky2018/window/core" @window_core,
   "Milky2018/window/dpi" @dpi,
