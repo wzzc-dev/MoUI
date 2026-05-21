@@ -129,6 +129,53 @@ pub(all) struct HostServiceBridge {
 }
 
 ///|
+pub(all) enum NativeAccessibilityBridgeKind {
+  AppKit
+  UIAutomation
+  ATSPI
+  TestBridge
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct NativeAccessibilityNode {
+  element_id : @core.ElementId
+  role : @core.SemanticsRole
+  native_role : String
+  label : String
+  value : String
+  frame : @core.Rect
+  focused : Bool
+  disabled : Bool
+  selected : Bool
+  checked : Bool
+  actions : Array[@core.SemanticsAction]
+  children : Array[NativeAccessibilityNode]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct NativeAccessibilityActionRequest {
+  element_id : @core.ElementId
+  action : @core.SemanticsAction
+  value : String?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum NativeAccessibilityActionResult {
+  Handled
+  Unsupported(String)
+  ElementNotFound(@core.ElementId)
+  BridgeUnavailable(String)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct NativeAccessibilityBridge {
+  kind : NativeAccessibilityBridgeKind
+  available : Bool
+  snapshot : (@core.SemanticsNode) -> NativeAccessibilityNode
+  perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
+}
+
+///|
 pub(all) struct HostInputContract {
   capabilities : HostInputCapabilities
   coordinates : HostCoordinatePolicy
@@ -342,12 +389,9 @@ pub fn HostServiceBridge::new(
 
 ///|
 pub fn HostServiceBridge::unavailable() -> HostServiceBridge {
-  HostServiceBridge::new(
-    capabilities=HostServiceCapabilities::none(),
-    handle=request => HostServiceResponse::Unavailable(
-      request.unavailable_message(),
-    ),
-  )
+  HostServiceBridge::new(capabilities=HostServiceCapabilities::none(), handle=request => {
+    HostServiceResponse::Unavailable(request.unavailable_message())
+  })
 }
 
 ///|
@@ -416,7 +460,9 @@ pub fn PlatformChannelRegistry::register(
   self : PlatformChannelRegistry,
   handler : PlatformChannelHandler,
 ) -> Unit {
-  self.handlers = self.handlers.filter(existing => existing.channel != handler.channel)
+  self.handlers = self.handlers.filter(existing => {
+    existing.channel != handler.channel
+  })
   self.handlers.push(handler)
 }
 
@@ -457,6 +503,190 @@ pub fn HostServiceBridge::dispatch_channel(
   request : PlatformChannelRequest,
 ) -> PlatformChannelResponse {
   self.channels.dispatch(request)
+}
+
+///|
+pub fn NativeAccessibilityBridgeKind::label(
+  self : NativeAccessibilityBridgeKind,
+) -> String {
+  match self {
+    AppKit => "appkit"
+    UIAutomation => "uiautomation"
+    ATSPI => "at-spi"
+    TestBridge => "test"
+  }
+}
+
+///|
+pub fn NativeAccessibilityNode::from_semantics(
+  node : @core.SemanticsNode,
+  native_role? : String = native_accessibility_role(node.role),
+) -> NativeAccessibilityNode {
+  {
+    element_id: node.element_id,
+    role: node.role,
+    native_role,
+    label: node.label,
+    value: node.value,
+    frame: node.frame,
+    focused: node.state.focused,
+    disabled: node.state.disabled,
+    selected: node.state.selected,
+    checked: node.state.checked,
+    actions: node.actions,
+    children: node.children.map(child => {
+      NativeAccessibilityNode::from_semantics(child)
+    }),
+  }
+}
+
+///|
+pub fn NativeAccessibilityActionRequest::new(
+  element_id~ : @core.ElementId,
+  action~ : @core.SemanticsAction,
+  value? : String? = None,
+) -> NativeAccessibilityActionRequest {
+  { element_id, action, value }
+}
+
+///|
+pub fn NativeAccessibilityBridge::new(
+  kind~ : NativeAccessibilityBridgeKind,
+  available? : Bool = true,
+  snapshot? : (@core.SemanticsNode) -> NativeAccessibilityNode = node => {
+    NativeAccessibilityNode::from_semantics(node)
+  },
+  perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult = request => {
+    NativeAccessibilityActionResult::Unsupported(
+      "native accessibility action is not handled: " +
+      semantics_action_label(request.action),
+    )
+  },
+) -> NativeAccessibilityBridge {
+  { kind, available, snapshot, perform }
+}
+
+///|
+pub fn NativeAccessibilityBridge::unavailable(
+  kind~ : NativeAccessibilityBridgeKind,
+  reason? : String = "native accessibility bridge is unavailable",
+) -> NativeAccessibilityBridge {
+  NativeAccessibilityBridge::new(kind~, available=false, perform=_request => {
+    NativeAccessibilityActionResult::BridgeUnavailable(reason)
+  })
+}
+
+///|
+pub fn NativeAccessibilityBridge::snapshot_semantics(
+  self : NativeAccessibilityBridge,
+  node : @core.SemanticsNode,
+) -> NativeAccessibilityNode? {
+  if self.available {
+    Some((self.snapshot)(node))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn NativeAccessibilityBridge::perform_action(
+  self : NativeAccessibilityBridge,
+  request : NativeAccessibilityActionRequest,
+) -> NativeAccessibilityActionResult {
+  if self.available {
+    (self.perform)(request)
+  } else {
+    NativeAccessibilityActionResult::BridgeUnavailable(
+      "native accessibility bridge is unavailable: " + self.kind.label(),
+    )
+  }
+}
+
+///|
+pub fn NativeAccessibilityBridge::semantics_action_bridge(
+  kind~ : NativeAccessibilityBridgeKind,
+  root~ : @core.SemanticsNode,
+  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+) -> NativeAccessibilityBridge {
+  NativeAccessibilityBridge::new(
+    kind~,
+    snapshot=node => NativeAccessibilityNode::from_semantics(node),
+    perform=request => {
+      match find_semantics_node(root, request.element_id) {
+        Some(node) =>
+          if node.actions.any(action => action == request.action) {
+            if dispatch(request.element_id, request.action, request.value) {
+              NativeAccessibilityActionResult::Handled
+            } else {
+              NativeAccessibilityActionResult::Unsupported(
+                "native accessibility action dispatch returned false: " +
+                semantics_action_label(request.action),
+              )
+            }
+          } else {
+            NativeAccessibilityActionResult::Unsupported(
+              "semantics node does not expose action: " +
+              semantics_action_label(request.action),
+            )
+          }
+        None =>
+          NativeAccessibilityActionResult::ElementNotFound(request.element_id)
+      }
+    },
+  )
+}
+
+///|
+pub fn semantics_action_label(action : @core.SemanticsAction) -> String {
+  match action {
+    @core.SemanticsAction::Activate => "activate"
+    @core.SemanticsAction::Focus => "focus"
+    @core.SemanticsAction::SetText => "set-text"
+    @core.SemanticsAction::Submit => "submit"
+    @core.SemanticsAction::Scroll => "scroll"
+  }
+}
+
+///|
+pub fn find_semantics_node(
+  node : @core.SemanticsNode,
+  element_id : @core.ElementId,
+) -> @core.SemanticsNode? {
+  if node.element_id == element_id {
+    Some(node)
+  } else {
+    for child in node.children {
+      match find_semantics_node(child, element_id) {
+        Some(found) => return Some(found)
+        None => ()
+      }
+    }
+    None
+  }
+}
+
+///|
+fn native_accessibility_role(role : @core.SemanticsRole) -> String {
+  match role {
+    @core.SemanticsRole::None => "ignored"
+    @core.SemanticsRole::Text => "staticText"
+    @core.SemanticsRole::Button => "button"
+    @core.SemanticsRole::Checkbox => "checkbox"
+    @core.SemanticsRole::TextField => "textField"
+    @core.SemanticsRole::List => "list"
+    @core.SemanticsRole::ListItem => "listItem"
+    @core.SemanticsRole::Grid => "grid"
+    @core.SemanticsRole::ScrollView => "scrollArea"
+    @core.SemanticsRole::Switch => "switch"
+    @core.SemanticsRole::Radio => "radioButton"
+    @core.SemanticsRole::Slider => "slider"
+    @core.SemanticsRole::Progress => "progressIndicator"
+    @core.SemanticsRole::Tab => "tab"
+    @core.SemanticsRole::Dialog => "dialog"
+    @core.SemanticsRole::Tooltip => "tooltip"
+    @core.SemanticsRole::Menu => "menu"
+    @core.SemanticsRole::Group => "group"
+  }
 }
 
 ///|
@@ -726,11 +956,10 @@ pub fn HostRuntimeDriver::dispatch(
       self.runtime.dispatch_event(@core.AppEvent::TextInput(event))
       self.request_redraw_if_needed()
     }
-    Command(intent) => {
+    Command(intent) =>
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()
       }
-    }
     RedrawRequested => {
       self.begin_redraw()
       self.finish_redraw()
