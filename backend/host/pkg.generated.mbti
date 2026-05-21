@@ -11,6 +11,8 @@ pub fn element_state_pressed(@Milky2018/window/core.ElementState) -> Bool
 
 pub fn element_state_to_pointer_phase(@Milky2018/window/core.ElementState) -> @wzzc-dev/moui/core.PointerPhase
 
+pub fn find_semantics_node(@wzzc-dev/moui/core.SemanticsNode, @wzzc-dev/moui/core.ElementId) -> @wzzc-dev/moui/core.SemanticsNode?
+
 pub fn key_event_name(@Milky2018/window/core.KeyEvent) -> String
 
 pub fn key_event_text(@Milky2018/window/core.KeyEvent) -> String?
@@ -28,6 +30,8 @@ pub fn named_key_name(@Milky2018/window/core.NamedKey) -> String
 pub fn physical_position_to_core(@dpi.PhysicalPositionF64, scale_factor? : Double) -> @wzzc-dev/moui/core.Point
 
 pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
+
+pub fn semantics_action_label(@wzzc-dev/moui/core.SemanticsAction) -> String
 
 pub fn surface_metrics_from_physical(@dpi.PhysicalSize, scale_factor? : Double) -> HostSurfaceMetrics
 
@@ -238,6 +242,56 @@ pub fn InputHostState::keyboard_event(Self, key~ : String, text? : String?, pres
 pub fn InputHostState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, contract? : HostInputContract) -> Self
 pub fn InputHostState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
 pub fn InputHostState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> HostEvent?
+
+pub(all) struct NativeAccessibilityActionRequest {
+  element_id : @wzzc-dev/moui/core.ElementId
+  action : @wzzc-dev/moui/core.SemanticsAction
+  value : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeAccessibilityActionRequest::new(element_id~ : @wzzc-dev/moui/core.ElementId, action~ : @wzzc-dev/moui/core.SemanticsAction, value? : String?) -> Self
+
+pub(all) enum NativeAccessibilityActionResult {
+  Handled
+  Unsupported(String)
+  ElementNotFound(@wzzc-dev/moui/core.ElementId)
+  BridgeUnavailable(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct NativeAccessibilityBridge {
+  kind : NativeAccessibilityBridgeKind
+  available : Bool
+  snapshot : (@wzzc-dev/moui/core.SemanticsNode) -> NativeAccessibilityNode
+  perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
+}
+pub fn NativeAccessibilityBridge::new(kind~ : NativeAccessibilityBridgeKind, available? : Bool, snapshot? : (@wzzc-dev/moui/core.SemanticsNode) -> NativeAccessibilityNode, perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult) -> Self
+pub fn NativeAccessibilityBridge::perform_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
+pub fn NativeAccessibilityBridge::semantics_action_bridge(kind~ : NativeAccessibilityBridgeKind, root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> Self
+pub fn NativeAccessibilityBridge::snapshot_semantics(Self, @wzzc-dev/moui/core.SemanticsNode) -> NativeAccessibilityNode?
+pub fn NativeAccessibilityBridge::unavailable(kind~ : NativeAccessibilityBridgeKind, reason? : String) -> Self
+
+pub(all) enum NativeAccessibilityBridgeKind {
+  AppKit
+  UIAutomation
+  ATSPI
+  TestBridge
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeAccessibilityBridgeKind::label(Self) -> String
+
+pub(all) struct NativeAccessibilityNode {
+  element_id : @wzzc-dev/moui/core.ElementId
+  role : @wzzc-dev/moui/core.SemanticsRole
+  native_role : String
+  label : String
+  value : String
+  frame : @wzzc-dev/moui/core.Rect
+  focused : Bool
+  disabled : Bool
+  selected : Bool
+  checked : Bool
+  actions : Array[@wzzc-dev/moui/core.SemanticsAction]
+  children : Array[NativeAccessibilityNode]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeAccessibilityNode::from_semantics(@wzzc-dev/moui/core.SemanticsNode, native_role? : String) -> Self
 
 pub(all) struct PlatformChannelHandler {
   channel : String

@@ -100,7 +100,7 @@ test "host service bridge gates typed platform requests by capability" {
       menus=true,
       system_theme=true,
     ),
-    handle=request =>
+    handle=request => {
       match request {
         Clipboard(WriteText(_)) => HostServiceResponse::ClipboardWritten
         Clipboard(ReadText) => HostServiceResponse::ClipboardText("copied")
@@ -110,29 +110,34 @@ test "host service bridge gates typed platform requests by capability" {
           } else {
             HostServiceResponse::Unavailable("empty menu")
           }
-        QuerySystemTheme => HostServiceResponse::SystemTheme(@core.ColorScheme::Dark)
+        QuerySystemTheme =>
+          HostServiceResponse::SystemTheme(@core.ColorScheme::Dark)
         _ => HostServiceResponse::Unavailable("not implemented")
-      },
+      }
+    },
   )
-  match bridge.dispatch(
-    HostServiceRequest::Clipboard(HostClipboardRequest::ReadText),
-  ) {
+  match
+    bridge.dispatch(
+      HostServiceRequest::Clipboard(HostClipboardRequest::ReadText),
+    ) {
     HostServiceResponse::ClipboardText(text) => inspect(text, content="copied")
     _ => fail("expected clipboard text")
   }
-  match bridge.dispatch(
-    HostServiceRequest::ShowMenu([
-      @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
-    ]),
-  ) {
+  match
+    bridge.dispatch(
+      HostServiceRequest::ShowMenu([
+        @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+      ]),
+    ) {
     HostServiceResponse::MenuCommand(@core.CommandIntent::Copy) => ()
     _ => fail("expected selected menu command")
   }
-  match bridge.dispatch(
-    HostServiceRequest::FileDialog(
-      HostFileDialogOptions::new(kind=HostFileDialogKind::OpenFile),
-    ),
-  ) {
+  match
+    bridge.dispatch(
+      HostServiceRequest::FileDialog(
+        HostFileDialogOptions::new(kind=HostFileDialogKind::OpenFile),
+      ),
+    ) {
     HostServiceResponse::Unavailable(message) =>
       inspect(message, content="file dialog service is unavailable")
     _ => fail("expected unavailable file dialog")
@@ -176,22 +181,126 @@ test "host service bridge routes typed platform channels" {
       }
     }),
   )
-  match bridge.dispatch_channel(
-    PlatformChannelRequest::new(
-      channel="clipboard.extra",
-      operation="echo",
-      payload="hello",
-    ),
-  ) {
+  match
+    bridge.dispatch_channel(
+      PlatformChannelRequest::new(
+        channel="clipboard.extra",
+        operation="echo",
+        payload="hello",
+      ),
+    ) {
     PlatformChannelResponse::Ok(value) => inspect(value, content="hello")
     _ => fail("expected platform channel response")
   }
-  match bridge.dispatch_channel(
-    PlatformChannelRequest::new(channel="missing", operation="echo"),
-  ) {
+  match
+    bridge.dispatch_channel(
+      PlatformChannelRequest::new(channel="missing", operation="echo"),
+    ) {
     PlatformChannelResponse::Unavailable(message) =>
       inspect(message, content="platform channel is unavailable: missing")
     _ => fail("expected unavailable platform channel")
+  }
+}
+
+///|
+test "native accessibility bridge snapshots semantics recursively" {
+  let child = @core.SemanticsNode::{
+    element_id: @core.ElementId::new(2),
+    role: @core.SemanticsRole::Button,
+    label: "Save",
+    value: "",
+    state: @core.SemanticsState::default(),
+    actions: [@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+    focus_order: Some(0),
+    frame: @core.Rect::new(x=8.0, y=8.0, width=80.0, height=32.0),
+    children: [],
+  }
+  let root = @core.SemanticsNode::{
+    element_id: @core.ElementId::new(1),
+    role: @core.SemanticsRole::Group,
+    label: "Root",
+    value: "",
+    state: @core.SemanticsState::default(),
+    actions: [],
+    focus_order: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+    children: [child],
+  }
+  let bridge = NativeAccessibilityBridge::new(
+    kind=NativeAccessibilityBridgeKind::TestBridge,
+  )
+  match bridge.snapshot_semantics(root) {
+    Some(snapshot) => {
+      inspect(snapshot.native_role, content="group")
+      inspect(snapshot.children.length(), content="1")
+      inspect(snapshot.children[0].native_role, content="button")
+      inspect(snapshot.children[0].label, content="Save")
+      inspect(snapshot.children[0].actions.length(), content="2")
+    }
+    None => fail("expected accessibility snapshot")
+  }
+}
+
+///|
+test "native accessibility bridge validates action roundtrip" {
+  let invoked = Ref(0)
+  let node = @core.SemanticsNode::{
+    element_id: @core.ElementId::new(42),
+    role: @core.SemanticsRole::TextField,
+    label: "Name",
+    value: "MoUI",
+    state: @core.SemanticsState::default(),
+    actions: [@core.SemanticsAction::Focus, @core.SemanticsAction::SetText],
+    focus_order: Some(0),
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    children: [],
+  }
+  let bridge = NativeAccessibilityBridge::semantics_action_bridge(
+    kind=NativeAccessibilityBridgeKind::TestBridge,
+    root=node,
+    dispatch=(element_id, action, value) => {
+      if element_id == @core.ElementId::new(42) &&
+        action == @core.SemanticsAction::SetText &&
+        value == Some("Luna") {
+        invoked.val = invoked.val + 1
+        true
+      } else {
+        false
+      }
+    },
+  )
+  match
+    bridge.perform_action(
+      NativeAccessibilityActionRequest::new(
+        element_id=@core.ElementId::new(42),
+        action=@core.SemanticsAction::SetText,
+        value=Some("Luna"),
+      ),
+    ) {
+    NativeAccessibilityActionResult::Handled => ()
+    _ => fail("expected handled action")
+  }
+  inspect(invoked.val, content="1")
+  match
+    bridge.perform_action(
+      NativeAccessibilityActionRequest::new(
+        element_id=@core.ElementId::new(42),
+        action=@core.SemanticsAction::Submit,
+      ),
+    ) {
+    NativeAccessibilityActionResult::Unsupported(message) =>
+      inspect(message, content="semantics node does not expose action: submit")
+    _ => fail("expected unsupported action")
+  }
+  match
+    bridge.perform_action(
+      NativeAccessibilityActionRequest::new(
+        element_id=@core.ElementId::new(7),
+        action=@core.SemanticsAction::Focus,
+      ),
+    ) {
+    NativeAccessibilityActionResult::ElementNotFound({ value: 7 }) => ()
+    _ => fail("expected missing element result")
   }
 }
 
