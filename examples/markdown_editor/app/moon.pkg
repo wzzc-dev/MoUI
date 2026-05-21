@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views",
+  "mizchi/markdown",
 }
 
 options(

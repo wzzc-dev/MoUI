@@ -34,38 +34,36 @@ pub(all) struct MarkdownBlock {
 ///|
 pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
   let blocks : Array[MarkdownBlock] = []
-  let lines = markdown_split_lines(text)
-  let mut in_code = false
   let code_lines : Array[String] = []
-  for line in lines {
-    if markdown_has_prefix(line, "```") {
-      if in_code {
+  let mut in_code = false
+  for line in markdown_split_lines(text) {
+    if in_code {
+      if line == "```" {
         blocks.push(
           markdown_block(
             MarkdownBlockKind::CodeBlock,
-            markdown_join_lines(code_lines),
+            markdown_join_lines(code_lines).trim().to_owned(),
           ),
         )
         code_lines.clear()
         in_code = false
       } else {
-        in_code = true
+        code_lines.push(line)
       }
-    } else if in_code {
-      code_lines.push(line)
-    } else {
-      let parsed = parse_markdown_line(line)
-      match parsed {
-        Some(block) => blocks.push(block)
-        None => ()
+    } else if line == "```" {
+      in_code = true
+    } else if line.trim().to_owned() != "" {
+      let parsed = @markdown.parse(line)
+      for block in parsed.document.children {
+        append_markdown_ast_block(blocks, block)
       }
     }
   }
-  if in_code || !code_lines.is_empty() {
+  if in_code {
     blocks.push(
       markdown_block(
         MarkdownBlockKind::CodeBlock,
-        markdown_join_lines(code_lines),
+        markdown_join_lines(code_lines).trim().to_owned(),
       ),
     )
   }
@@ -73,105 +71,106 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
 }
 
 ///|
-fn parse_markdown_line(line : String) -> MarkdownBlock? {
-  let trimmed = markdown_trim(line)
-  if trimmed == "" {
-    None
-  } else if markdown_is_horizontal_rule(trimmed) {
-    Some(markdown_block(MarkdownBlockKind::HorizontalRule, ""))
-  } else if markdown_has_prefix(line, "### ") {
-    Some(
-      markdown_block(
-        MarkdownBlockKind::Heading(3),
-        markdown_substring(line, 4, text_length_for_example(line)),
-      ),
-    )
-  } else if markdown_has_prefix(line, "## ") {
-    Some(
-      markdown_block(
-        MarkdownBlockKind::Heading(2),
-        markdown_substring(line, 3, text_length_for_example(line)),
-      ),
-    )
-  } else if markdown_has_prefix(line, "# ") {
-    Some(
-      markdown_block(
-        MarkdownBlockKind::Heading(1),
-        markdown_substring(line, 2, text_length_for_example(line)),
-      ),
-    )
-  } else if markdown_has_prefix(line, "- [ ] ") ||
-    markdown_has_prefix(line, "* [ ] ") {
-    Some(
-      markdown_block(
-        MarkdownBlockKind::TaskListItem(false),
-        markdown_substring(line, 6, text_length_for_example(line)),
-      ),
-    )
-  } else if markdown_has_prefix(line, "- [x] ") ||
-    markdown_has_prefix(line, "* [x] ") ||
-    markdown_has_prefix(line, "- [X] ") ||
-    markdown_has_prefix(line, "* [X] ") {
-    Some(
-      markdown_block(
-        MarkdownBlockKind::TaskListItem(true),
-        markdown_substring(line, 6, text_length_for_example(line)),
-      ),
-    )
-  } else if markdown_has_prefix(line, "- ") || markdown_has_prefix(line, "* ") {
-    Some(
-      markdown_block(
-        MarkdownBlockKind::UnorderedListItem,
-        markdown_substring(line, 2, text_length_for_example(line)),
-      ),
-    )
-  } else if markdown_has_prefix(line, "> ") {
-    Some(
-      markdown_block(
-        MarkdownBlockKind::Blockquote,
-        markdown_substring(line, 2, text_length_for_example(line)),
-      ),
-    )
-  } else {
-    match markdown_ordered_prefix(line) {
-      Some(prefix) =>
-        Some(
-          markdown_block(
-            MarkdownBlockKind::OrderedListItem(prefix.number),
-            markdown_substring(
-              line,
-              prefix.width,
-              text_length_for_example(line),
-            ),
-          ),
-        )
-      None => Some(markdown_block(MarkdownBlockKind::Paragraph, line))
+fn append_markdown_ast_block(
+  blocks : Array[MarkdownBlock],
+  block : @markdown.Block,
+) -> Unit {
+  match block {
+    Heading(level~, children~, ..) => {
+      let text = markdown_inline_text(children)
+      if level >= 1 && level <= 3 {
+        blocks.push({
+          kind: MarkdownBlockKind::Heading(level),
+          text,
+          inlines: markdown_inlines_from_ast(children),
+        })
+      } else {
+        let text = markdown_heading_source(level, text)
+        blocks.push({
+          kind: MarkdownBlockKind::Paragraph,
+          text,
+          inlines: parse_markdown_inlines(text),
+        })
+      }
     }
-  }
-}
-
-///|
-priv struct MarkdownOrderedPrefix {
-  number : Int
-  width : Int
-}
-
-///|
-fn markdown_ordered_prefix(line : String) -> MarkdownOrderedPrefix? {
-  let chars = line.to_array()
-  let mut index = 0
-  let mut number = 0
-  while index < chars.length() && chars[index].is_ascii_digit() {
-    number = number * 10 + chars[index].to_int() - '0'.to_int()
-    index = index + 1
-  }
-  if index > 0 &&
-    index + 1 < chars.length() &&
-    chars[index] == '.' &&
-    chars[index + 1] == ' ' {
-    Some({ number, width: index + 2 })
-  } else {
-    None
+    Paragraph(children~, ..) => {
+      let text = markdown_inline_text(children)
+      blocks.push({
+        kind: MarkdownBlockKind::Paragraph,
+        text,
+        inlines: markdown_inlines_from_ast(children),
+      })
+    }
+    ThematicBreak(..) =>
+      blocks.push(markdown_block(MarkdownBlockKind::HorizontalRule, ""))
+    FencedCode(code~, ..) | IndentedCode(code~, ..) =>
+      blocks.push(
+        markdown_block(MarkdownBlockKind::CodeBlock, code.trim().to_owned()),
+      )
+    Blockquote(children~, ..) => {
+      let text = markdown_blocks_text(children)
+      blocks.push({
+        kind: MarkdownBlockKind::Blockquote,
+        text,
+        inlines: parse_markdown_inlines(text),
+      })
+    }
+    BulletList(marker~, items~, ..) =>
+      if marker is Plus {
+        for item in items {
+          let text = markdown_list_item_text(item)
+          let plus_text = "+ " + text
+          blocks.push({
+            kind: MarkdownBlockKind::Paragraph,
+            text: plus_text,
+            inlines: parse_markdown_inlines(plus_text),
+          })
+        }
+      } else {
+        for item in items {
+          let text = markdown_list_item_text(item)
+          match item.checked {
+            Some(checked) =>
+              blocks.push({
+                kind: MarkdownBlockKind::TaskListItem(checked),
+                text,
+                inlines: parse_markdown_inlines(text),
+              })
+            None =>
+              blocks.push({
+                kind: MarkdownBlockKind::UnorderedListItem,
+                text,
+                inlines: parse_markdown_inlines(text),
+              })
+          }
+        }
+      }
+    OrderedList(start~, items~, ..) => {
+      let mut number = start
+      for item in items {
+        let text = markdown_list_item_text(item)
+        blocks.push({
+          kind: MarkdownBlockKind::OrderedListItem(number),
+          text,
+          inlines: parse_markdown_inlines(text),
+        })
+        number = number + 1
+      }
+    }
+    BlankLines(..) => ()
+    HtmlBlock(html~, ..) =>
+      blocks.push(markdown_block(MarkdownBlockKind::Paragraph, html))
+    Table(..) | FootnoteDefinition(..) =>
+      blocks.push(
+        markdown_block(
+          MarkdownBlockKind::Paragraph,
+          @markdown.serialize({
+            frontmatter: None,
+            children: [block],
+            span: @markdown.Span::empty(),
+          }),
+        ),
+      )
   }
 }
 
@@ -186,146 +185,133 @@ fn markdown_block(kind : MarkdownBlockKind, text : String) -> MarkdownBlock {
 
 ///|
 pub fn parse_markdown_inlines(text : String) -> Array[MarkdownInline] {
+  markdown_inlines_from_ast(@markdown.parse_inlines(text))
+}
+
+///|
+fn markdown_inlines_from_ast(
+  ast : Array[@markdown.Inline],
+) -> Array[MarkdownInline] {
   let spans : Array[MarkdownInline] = []
-  let chars = text.to_array()
-  let buffer : Array[Char] = []
-  let mut index = 0
-  while index < chars.length() {
-    if index + 1 < chars.length() &&
-      chars[index] == '*' &&
-      chars[index + 1] == '*' {
-      match markdown_find_marker(chars, index + 2, "**") {
-        Some(end) => {
-          markdown_push_plain_inline(spans, buffer)
-          spans.push({
-            text: String::from_array(chars[index + 2:end]),
-            kind: MarkdownInlineKind::Bold,
-          })
-          index = end + 2
-        }
-        None => {
-          buffer.push(chars[index])
-          index = index + 1
-        }
-      }
-    } else if index + 1 < chars.length() &&
-      chars[index] == '_' &&
-      chars[index + 1] == '_' {
-      match markdown_find_marker(chars, index + 2, "__") {
-        Some(end) => {
-          markdown_push_plain_inline(spans, buffer)
-          spans.push({
-            text: String::from_array(chars[index + 2:end]),
-            kind: MarkdownInlineKind::Bold,
-          })
-          index = end + 2
-        }
-        None => {
-          buffer.push(chars[index])
-          index = index + 1
-        }
-      }
-    } else if chars[index] == '*' {
-      match markdown_find_char(chars, index + 1, '*') {
-        Some(end) => {
-          markdown_push_plain_inline(spans, buffer)
-          spans.push({
-            text: String::from_array(chars[index + 1:end]),
-            kind: MarkdownInlineKind::Italic,
-          })
-          index = end + 1
-        }
-        None => {
-          buffer.push(chars[index])
-          index = index + 1
-        }
-      }
-    } else if chars[index] == '_' {
-      match markdown_find_char(chars, index + 1, '_') {
-        Some(end) => {
-          markdown_push_plain_inline(spans, buffer)
-          spans.push({
-            text: String::from_array(chars[index + 1:end]),
-            kind: MarkdownInlineKind::Italic,
-          })
-          index = end + 1
-        }
-        None => {
-          buffer.push(chars[index])
-          index = index + 1
-        }
-      }
-    } else if chars[index] == '`' {
-      match markdown_find_char(chars, index + 1, '`') {
-        Some(end) => {
-          markdown_push_plain_inline(spans, buffer)
-          spans.push({
-            text: String::from_array(chars[index + 1:end]),
-            kind: MarkdownInlineKind::Code,
-          })
-          index = end + 1
-        }
-        None => {
-          buffer.push(chars[index])
-          index = index + 1
-        }
-      }
-    } else {
-      buffer.push(chars[index])
-      index = index + 1
-    }
+  for inline in ast {
+    append_markdown_inline_ast(spans, inline)
   }
-  markdown_push_plain_inline(spans, buffer)
   spans
 }
 
 ///|
-fn markdown_push_plain_inline(
+fn append_markdown_inline_ast(
   spans : Array[MarkdownInline],
-  buffer : Array[Char],
+  inline : @markdown.Inline,
 ) -> Unit {
-  if !buffer.is_empty() {
-    spans.push({
-      text: String::from_array(buffer),
-      kind: MarkdownInlineKind::Plain,
-    })
-    buffer.clear()
-  }
-}
-
-///|
-fn markdown_find_marker(
-  chars : Array[Char],
-  start : Int,
-  marker : String,
-) -> Int? {
-  let marker_chars = marker.to_array()
-  let mut index = start
-  while index + marker_chars.length() <= chars.length() {
-    let mut matched = true
-    for offset in 0..<marker_chars.length() {
-      if chars[index + offset] != marker_chars[offset] {
-        matched = false
+  match inline {
+    Text(content~, ..) =>
+      if content != "" {
+        spans.push({ text: content, kind: MarkdownInlineKind::Plain })
       }
-    }
-    if matched {
-      return Some(index)
-    }
-    index = index + 1
+    SoftBreak(..) | HardBreak(..) =>
+      spans.push({ text: "\n", kind: MarkdownInlineKind::Plain })
+    Emphasis(children~, ..) =>
+      spans.push({
+        text: markdown_inline_text(children),
+        kind: MarkdownInlineKind::Italic,
+      })
+    Strong(children~, ..) =>
+      spans.push({
+        text: markdown_inline_text(children),
+        kind: MarkdownInlineKind::Bold,
+      })
+    Code(content~, ..) =>
+      spans.push({ text: content, kind: MarkdownInlineKind::Code })
+    Strikethrough(children~, ..)
+    | Link(children~, ..)
+    | RefLink(children~, ..) =>
+      spans.push({
+        text: markdown_inline_text(children),
+        kind: MarkdownInlineKind::Plain,
+      })
+    WikiLink(label~, target~, ..) =>
+      spans.push({
+        text: if label == "" {
+          target
+        } else {
+          label
+        },
+        kind: MarkdownInlineKind::Plain,
+      })
+    Autolink(url~, ..) =>
+      spans.push({ text: url, kind: MarkdownInlineKind::Plain })
+    Image(alt~, ..) | RefImage(alt~, ..) =>
+      spans.push({ text: alt, kind: MarkdownInlineKind::Plain })
+    HtmlInline(html~, ..) =>
+      spans.push({ text: html, kind: MarkdownInlineKind::Plain })
+    FootnoteReference(label~, ..) =>
+      spans.push({ text: label, kind: MarkdownInlineKind::Plain })
   }
-  None
 }
 
 ///|
-fn markdown_find_char(chars : Array[Char], start : Int, target : Char) -> Int? {
-  let mut index = start
-  while index < chars.length() {
-    if chars[index] == target {
-      return Some(index)
-    }
-    index = index + 1
+fn markdown_inline_text(ast : Array[@markdown.Inline]) -> String {
+  let parts : Array[String] = []
+  for inline in ast {
+    parts.push(markdown_inline_plain_text(inline))
   }
-  None
+  markdown_join_lines(parts)
+}
+
+///|
+fn markdown_inline_plain_text(inline : @markdown.Inline) -> String {
+  match inline {
+    Text(content~, ..) => content
+    SoftBreak(..) | HardBreak(..) => "\n"
+    Emphasis(children~, ..)
+    | Strong(children~, ..)
+    | Strikethrough(children~, ..)
+    | Link(children~, ..)
+    | RefLink(children~, ..) => markdown_inline_text(children)
+    Code(content~, ..) => content
+    WikiLink(label~, target~, ..) => if label == "" { target } else { label }
+    Autolink(url~, ..) => url
+    Image(alt~, ..) | RefImage(alt~, ..) => alt
+    HtmlInline(html~, ..) => html
+    FootnoteReference(label~, ..) => label
+  }
+}
+
+///|
+fn markdown_blocks_text(blocks : Array[@markdown.Block]) -> String {
+  let lines : Array[String] = []
+  for block in blocks {
+    match block {
+      Paragraph(children~, ..) | Heading(children~, ..) =>
+        lines.push(markdown_inline_text(children))
+      FencedCode(code~, ..) | IndentedCode(code~, ..) => lines.push(code)
+      Blockquote(children~, ..) => lines.push(markdown_blocks_text(children))
+      BulletList(items~, ..) | OrderedList(items~, ..) =>
+        for item in items {
+          lines.push(markdown_list_item_text(item))
+        }
+      ThematicBreak(..) => lines.push("---")
+      HtmlBlock(html~, ..) => lines.push(html)
+      BlankLines(..) => ()
+      Table(..) | FootnoteDefinition(..) => ()
+    }
+  }
+  markdown_join_lines(lines)
+}
+
+///|
+fn markdown_list_item_text(item : @markdown.ListItem) -> String {
+  markdown_blocks_text(item.children)
+}
+
+///|
+fn markdown_heading_source(level : Int, text : String) -> String {
+  let marks : Array[Char] = []
+  for _ in 0..<level {
+    marks.push('#')
+  }
+  String::from_array(marks) + " " + text
 }
 
 ///|
@@ -354,32 +340,6 @@ fn markdown_join_lines(lines : Array[String]) -> String {
     chars.append(line.to_array())
   }
   String::from_array(chars)
-}
-
-///|
-fn markdown_has_prefix(text : String, prefix : String) -> Bool {
-  let chars = text.to_array()
-  let prefix_chars = prefix.to_array()
-  chars.length() >= prefix_chars.length() &&
-  chars[:prefix_chars.length()] == prefix_chars[:]
-}
-
-///|
-fn markdown_substring(text : String, start : Int, end : Int) -> String {
-  let chars = text.to_array()
-  let start = clamp_int_for_example(start, 0, chars.length())
-  let end = clamp_int_for_example(end, start, chars.length())
-  String::from_array(chars[start:end])
-}
-
-///|
-fn markdown_trim(text : String) -> String {
-  text.trim().to_owned()
-}
-
-///|
-fn markdown_is_horizontal_rule(text : String) -> Bool {
-  text == "---" || text == "***" || text == "___"
 }
 
 ///|
@@ -525,16 +485,5 @@ fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
   match kind {
     Code => Some(@core.Brush::solid(@core.Color::black().multiply_alpha(0.08)))
     Plain | Bold | Italic => None
-  }
-}
-
-///|
-fn clamp_int_for_example(value : Int, min_value : Int, max_value : Int) -> Int {
-  if value < min_value {
-    min_value
-  } else if value > max_value {
-    max_value
-  } else {
-    value
   }
 }
