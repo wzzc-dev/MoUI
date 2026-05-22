@@ -136,10 +136,10 @@ frontends and tooling:
   while future DirectWrite and fontconfig/HarfBuzz/FreeType providers can use
   the same hook for private font collections. Remote font loading is
   intentionally out of scope.
-  Native hosts can choose the text engine at startup: macOS and Windows expose
-  `run_app_with_text_engine(..., text_engine=NativeTextEngineSetting::MoonCosmic)`
-  for the shared Cosmic provider and `PlatformDefault` for the platform provider
-  path.
+  Native hosts can choose the text engine at startup through
+  `run_app_with_options(..., options=MacosAppOptions::new(text_engine=NativeTextEngineSetting::MoonCosmic))`
+  or the Windows equivalent. `MoonCosmic` selects the shared Cosmic provider;
+  `PlatformDefault` selects the platform provider path.
   Native text providers should use `NativePlatformTextProvider::new` plus the
   `NativeGlyphPlacement::new`, `NativeTextLayout::new`, and
   `NativeRasterGlyph::new` constructors from `render/wgpu`. Provider payloads

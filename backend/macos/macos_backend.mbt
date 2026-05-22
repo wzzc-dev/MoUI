@@ -39,6 +39,11 @@ pub(all) struct MacosAccessibilityBridgeInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct MacosAppOptions {
+  text_engine : @wgpu_renderer.NativeTextEngineSetting
+} derive(Eq, Debug, ToJson)
+
+///|
 struct MacosApp {
   title : String
   mut window : @window_macos.Window?
@@ -49,6 +54,13 @@ struct MacosApp {
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
+}
+
+///|
+pub fn MacosAppOptions::new(
+  text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+) -> MacosAppOptions {
+  { text_engine, }
 }
 
 ///|
@@ -143,18 +155,14 @@ fn dispatch_macos_clipboard(
 
 ///|
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
-  run_app_with_text_engine(
-    title,
-    runtime,
-    text_engine=@wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
-  )
+  run_app_with_options(title, runtime, options=MacosAppOptions::new())
 }
 
 ///|
-pub fn run_app_with_text_engine(
+pub fn run_app_with_options(
   title : String,
   runtime : @core.AppRuntime,
-  text_engine~ : @wgpu_renderer.NativeTextEngineSetting,
+  options~ : MacosAppOptions,
 ) -> Unit {
   let event_loop = @window_macos.EventLoop::EventLoop()
   let app = MacosApp::{
@@ -164,7 +172,7 @@ pub fn run_app_with_text_engine(
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
-    text_engine_setting: text_engine,
+    text_engine_setting: options.text_engine,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
