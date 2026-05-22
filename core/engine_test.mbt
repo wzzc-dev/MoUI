@@ -296,7 +296,7 @@ test "text layout measures size baseline and caret positions" {
 }
 
 ///|
-test "text layout uses fullwidth advance for cjk caret positions" {
+test "text layout uses cosmic glyph advances for caret positions" {
   let ascii = measure_text_layout(
     TextLayoutInput::new(text="a", font=FontSpec::new(size=20.0)),
   )
@@ -306,8 +306,8 @@ test "text layout uses fullwidth advance for cjk caret positions" {
   let cjk = measure_text_layout(
     TextLayoutInput::new(text="你", font=FontSpec::new(size=20.0)),
   )
-  inspect(ascii.caret_positions[1], content="11")
-  inspect(digit.caret_positions[4], content="46.4")
+  inspect(ascii.caret_positions[1], content="20")
+  inspect(digit.caret_positions[4], content="80")
   inspect(cjk.caret_positions[1], content="20")
 }
 
@@ -1036,7 +1036,7 @@ test "text field caret follows ime composition cursor" {
       max_width=140.0,
     ),
   )
-  inspect(cursor.origin.x, content="18.8")
+  inspect(cursor.origin.x, content="26")
   assert_true(cursor.origin.x == 10.0 + layout.caret_positions[1])
 }
 

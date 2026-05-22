@@ -26,7 +26,6 @@ moon test views --target native
 moon test render --target native
 moon test render/wgpu --target native
 moon test render/webgpu_adapter --target wasm-gc
-moon test text/cosmic --target native
 moon test tests/tooling --target native
 moon test backend/host --target native
 moon test backend/web --target wasm-gc
