@@ -9,6 +9,9 @@
 #import <CoreText/CoreText.h>
 #import <CoreGraphics/CoreGraphics.h>
 
+#define MOUI_CORETEXT_LAYOUT_VERSION 1
+#define MOUI_CORETEXT_RASTER_VERSION 1
+
 static uint32_t moui_read_u32_le(const uint8_t *p) {
   return ((uint32_t)p[0]) | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
@@ -106,7 +109,7 @@ moonbit_bytes_t moui_macos_coretext_measure_utf32(moonbit_bytes_t utf32, double 
   moonbit_bytes_t out = moonbit_make_bytes(out_len, 0);
   uint8_t *dst = (uint8_t *)out;
   moui_write_i32_le(dst, count);
-  moui_write_i32_le(dst + 4, 0);
+  moui_write_i32_le(dst + 4, MOUI_CORETEXT_LAYOUT_VERSION);
   CTFontRef font = moui_create_system_font(size, weight, style);
   if (font == NULL) {
     return out;
@@ -206,8 +209,9 @@ moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t codepoint, double size
   moui_write_i32_le(dst + 4, height);
   moui_write_i32_le(dst + 8, (int32_t)floor(bounds.origin.x - 2.0 * scale));
   moui_write_i32_le(dst + 12, (int32_t)floor(-ascent - 2.0 * scale));
-  moui_write_double_le(dst + 16, advance / scale);
-  moui_write_double_le(dst + 24, (ascent + descent + leading) / scale);
+  moui_write_i32_le(dst + 16, MOUI_CORETEXT_RASTER_VERSION);
+  moui_write_i32_le(dst + 20, 0);
+  moui_write_double_le(dst + 24, advance / scale);
 
   CGColorSpaceRef color_space = CGColorSpaceCreateDeviceGray();
   CGContextRef ctx = CGBitmapContextCreate(dst + header, width, height, 8, width, color_space, (CGBitmapInfo)kCGImageAlphaNone);

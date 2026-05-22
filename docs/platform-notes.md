@@ -70,7 +70,7 @@ framework/runtime flags such as:
 ```moonbit
 link: {
   "native": {
-    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework Foundation -framework CoreFoundation -lobjc"
+    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz"
   },
 },
 ```

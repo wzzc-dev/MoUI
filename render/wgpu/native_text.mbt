@@ -8,18 +8,31 @@ let atlas_height : Int = 1024
 let atlas_padding : Int = 1
 
 ///|
+let coretext_layout_protocol_version : Int = 1
+
+///|
+let coretext_raster_protocol_version : Int = 1
+
+///|
 priv struct NativeFontCache {
   mut font_system : @moon_cosmic.FontSystem
   swash_cache : @moon_cosmic.SwashCache
   catalog : NativeFontCatalog
-  platform_engine : PlatformTextEngine
+  text_engine : NativeTextEngine
   loaded_paths : Map[String, Bool]
   warned_paths : Map[String, Bool]
 }
 
 ///|
-priv enum PlatformTextEngine {
-  CoreText
+priv struct NativeTextEngine {
+  kind : NativeTextEngineKind
+  fallback : NativeTextEngineKind?
+}
+
+///|
+priv enum NativeTextEngineKind {
+  CoreTextSystem
+  CosmicFallback
 }
 
 ///|
@@ -49,21 +62,34 @@ priv struct CoreTextGlyphKey {
 }
 
 ///|
-priv struct CoreTextGlyphPlacement {
-  key : CoreTextGlyphKey
-  x : Double
+priv enum NativeGlyphSource {
+  CosmicGlyph(@moon_cosmic.CacheKey)
+  CoreTextGlyph(CoreTextGlyphKey)
 }
 
 ///|
-priv struct CoreTextLayout {
+priv struct NativeGlyphKey {
+  cache_key : String
+  source : NativeGlyphSource
+}
+
+///|
+priv struct NativeGlyphPlacement {
+  key : NativeGlyphKey
+  x : Double
+  y : Double
+}
+
+///|
+priv struct NativeTextLayout {
   size : @core.Size
   baseline : Double
   caret_positions : Array[Double]
-  glyphs : Array[CoreTextGlyphPlacement]
+  glyphs : Array[NativeGlyphPlacement]
 }
 
 ///|
-priv struct CoreTextRasterGlyph {
+priv struct NativeRasterGlyph {
   width : Int
   height : Int
   bearing_x : Int
@@ -86,10 +112,9 @@ priv struct GlyphAtlas {
   mut next_x : Int
   mut next_y : Int
   mut shelf_height : Int
-  mut entries : Map[@moon_cosmic.CacheKey, GlyphAtlasEntry]
+  mut entries : Map[String, GlyphAtlasEntry]
   mut pixels : Array[Byte]
   mut dirty : Bool
-  mut coretext_entries : Map[String, GlyphAtlasEntry]
 }
 
 ///|
@@ -112,15 +137,38 @@ priv struct TextRunBuildResult {
 
 ///|
 fn NativeFontCache::new() -> NativeFontCache {
+  NativeFontCache::new_with_engine(NativeTextEngine::coretext_system())
+}
+
+///|
+fn NativeFontCache::new_with_engine(
+  text_engine : NativeTextEngine,
+) -> NativeFontCache {
   {
     font_system: @moon_cosmic.FontSystem::new().set_fallback_profile(
       @moon_cosmic.FallbackProfile::MacOS,
     ),
     swash_cache: @moon_cosmic.SwashCache::new(),
     catalog: NativeFontCatalog::platform_default(),
-    platform_engine: PlatformTextEngine::CoreText,
+    text_engine,
     loaded_paths: {},
     warned_paths: {},
+  }
+}
+
+///|
+fn NativeTextEngine::coretext_system() -> NativeTextEngine {
+  {
+    kind: NativeTextEngineKind::CoreTextSystem,
+    fallback: Some(NativeTextEngineKind::CosmicFallback),
+  }
+}
+
+///|
+fn NativeTextEngine::id(self : NativeTextEngine) -> String {
+  match self.kind {
+    CoreTextSystem => "native-wgpu-coretext-system"
+    CosmicFallback => "native-wgpu-cosmic-fallback"
   }
 }
 
@@ -136,7 +184,6 @@ fn GlyphAtlas::new(width~ : Int, height~ : Int) -> GlyphAtlas {
     entries: {},
     pixels: Array::make(width * height * 4, b'\x00'),
     dirty: true,
-    coretext_entries: {},
   }
 }
 
@@ -146,7 +193,6 @@ fn GlyphAtlas::clear(self : GlyphAtlas) -> Unit {
   self.next_y = 0
   self.shelf_height = 0
   self.entries = {}
-  self.coretext_entries = {}
   self.pixels = Array::make(self.width * self.height * 4, b'\x00')
   self.dirty = true
 }
@@ -332,6 +378,104 @@ fn NativeFontCache::warn_font_once(
 }
 
 ///|
+fn NativeTextEngine::measure(
+  self : NativeTextEngine,
+  cache : NativeFontCache,
+  input : @core.TextLayoutInput,
+) -> @core.TextLayoutResult {
+  match self.kind {
+    CoreTextSystem =>
+      match coretext_measure_layout(input) {
+        Some(layout) => layout.to_text_layout_result()
+        None => self.measure_with_fallback(cache, input)
+      }
+    CosmicFallback => cache.cosmic_measure(input)
+  }
+}
+
+///|
+fn NativeTextEngine::measure_with_fallback(
+  self : NativeTextEngine,
+  cache : NativeFontCache,
+  input : @core.TextLayoutInput,
+) -> @core.TextLayoutResult {
+  match self.fallback {
+    Some(CosmicFallback) => cache.cosmic_measure(input)
+    _ => cache.cosmic_measure(input)
+  }
+}
+
+///|
+fn NativeTextEngine::layout_run(
+  self : NativeTextEngine,
+  cache : NativeFontCache,
+  run : @core.TextRun,
+  scale_factor : Double,
+) -> NativeTextLayout? {
+  match self.kind {
+    CoreTextSystem =>
+      match coretext_layout_for_run(run, scale_factor) {
+        Some(layout) => Some(layout)
+        None => self.layout_with_fallback(cache, run, scale_factor)
+      }
+    CosmicFallback => cache.cosmic_layout_for_run(run, scale_factor)
+  }
+}
+
+///|
+fn NativeTextEngine::layout_with_fallback(
+  self : NativeTextEngine,
+  cache : NativeFontCache,
+  run : @core.TextRun,
+  scale_factor : Double,
+) -> NativeTextLayout? {
+  match self.fallback {
+    Some(CosmicFallback) => cache.cosmic_layout_for_run(run, scale_factor)
+    _ => cache.cosmic_layout_for_run(run, scale_factor)
+  }
+}
+
+///|
+fn NativeTextEngine::raster_glyph(
+  self : NativeTextEngine,
+  cache : NativeFontCache,
+  key : NativeGlyphKey,
+) -> NativeRasterGlyph? {
+  match key.source {
+    CoreTextGlyph(coretext_key) =>
+      match self.kind {
+        CoreTextSystem => coretext_raster_glyph(coretext_key)
+        CosmicFallback => None
+      }
+    CosmicGlyph(cosmic_key) => raster_glyph(cache, cosmic_key)
+  }
+}
+
+///|
+fn NativeTextEngine::register_font_data(
+  self : NativeTextEngine,
+  cache : NativeFontCache,
+  family : @core.FontFamily,
+  data : Bytes,
+) -> Unit {
+  match self.kind {
+    CoreTextSystem => cache.load_font_data(family, data)
+    CosmicFallback => cache.load_font_data(family, data)
+  }
+}
+
+///|
+fn NativeTextLayout::to_text_layout_result(
+  self : NativeTextLayout,
+) -> @core.TextLayoutResult {
+  {
+    size: self.size,
+    baseline: self.baseline,
+    caret_positions: self.caret_positions,
+  }
+}
+
+///|
 fn text_align_extra(
   align : @core.TextAlign,
   frame_width : Double,
@@ -411,7 +555,22 @@ fn coretext_glyph_cache_key(key : CoreTextGlyphKey) -> String {
 }
 
 ///|
-fn coretext_measure_layout(input : @core.TextLayoutInput) -> CoreTextLayout? {
+fn cosmic_glyph_cache_key(key : @moon_cosmic.CacheKey) -> String {
+  "cosmic:" + key.to_string()
+}
+
+///|
+fn coretext_native_glyph_key(key : CoreTextGlyphKey) -> NativeGlyphKey {
+  { cache_key: coretext_glyph_cache_key(key), source: CoreTextGlyph(key) }
+}
+
+///|
+fn cosmic_native_glyph_key(key : @moon_cosmic.CacheKey) -> NativeGlyphKey {
+  { cache_key: cosmic_glyph_cache_key(key), source: CosmicGlyph(key) }
+}
+
+///|
+fn coretext_measure_layout(input : @core.TextLayoutInput) -> NativeTextLayout? {
   let bytes = macos_coretext_measure_utf32(
     native_utf32_bytes(input.text),
     input.font.size,
@@ -422,11 +581,15 @@ fn coretext_measure_layout(input : @core.TextLayoutInput) -> CoreTextLayout? {
     return None
   }
   let count = native_i32_le(bytes, 0)
-  let _flags = native_i32_le(bytes, 4)
+  let version = native_i32_le(bytes, 4)
   let height = native_double_le(bytes, 8)
   let baseline = native_double_le(bytes, 16)
   let caret_count = count + 1
-  if count < 0 || height <= 0.0 || baseline <= 0.0 || bytes.length() < 24 + caret_count * 8 {
+  if version != coretext_layout_protocol_version ||
+    count < 0 ||
+    height <= 0.0 ||
+    baseline <= 0.0 ||
+    bytes.length() < 24 + caret_count * 8 {
     return None
   }
   let carets : Array[Double] = []
@@ -454,7 +617,7 @@ fn coretext_measure_layout(input : @core.TextLayoutInput) -> CoreTextLayout? {
 }
 
 ///|
-fn coretext_raster_glyph(key : CoreTextGlyphKey) -> CoreTextRasterGlyph? {
+fn coretext_raster_glyph(key : CoreTextGlyphKey) -> NativeRasterGlyph? {
   let bytes = macos_coretext_raster_glyph(
     key.codepoint,
     key.size_key.to_double() / 64.0,
@@ -467,7 +630,11 @@ fn coretext_raster_glyph(key : CoreTextGlyphKey) -> CoreTextRasterGlyph? {
   }
   let width = native_i32_le(bytes, 0)
   let height = native_i32_le(bytes, 4)
-  if width <= 0 || height <= 0 || bytes.length() < 32 + width * height {
+  let version = native_i32_le(bytes, 16)
+  if version != coretext_raster_protocol_version ||
+    width <= 0 ||
+    height <= 0 ||
+    bytes.length() < 32 + width * height {
     return None
   }
   Some({
@@ -483,7 +650,7 @@ fn coretext_raster_glyph(key : CoreTextGlyphKey) -> CoreTextRasterGlyph? {
 fn coretext_layout_for_run(
   run : @core.TextRun,
   scale_factor : Double,
-) -> CoreTextLayout? {
+) -> NativeTextLayout? {
   match
     coretext_measure_layout(
       @core.TextLayoutInput::new(
@@ -493,7 +660,7 @@ fn coretext_layout_for_run(
       ),
     ) {
     Some(layout) => {
-      let glyphs : Array[CoreTextGlyphPlacement] = []
+      let glyphs : Array[NativeGlyphPlacement] = []
       let chars = run.text.to_array()
       let scale = native_text_scale(scale_factor)
       let size_key = native_coretext_size_key(run.font.size)
@@ -505,14 +672,15 @@ fn coretext_layout_for_run(
           0.0
         }
         glyphs.push({
-          key: {
+          key: coretext_native_glyph_key({
             codepoint: ch.to_int(),
             size_key,
             weight: run.font.weight,
             style: run.font.style,
             scale_key,
-          },
+          }),
           x,
+          y: 0.0,
         })
       }
       Some({ ..layout, glyphs, })
@@ -621,9 +789,11 @@ fn native_text_measurer_with_cache(
   cache : NativeFontCache,
 ) -> @core.TextMeasurer {
   @core.TextMeasurer::new(
-    id="native-wgpu-cosmic",
+    id=cache.text_engine.id(),
     measure=input => native_measure_text_layout(cache, input),
-    register_font_data=(family, data) => cache.load_font_data(family, data),
+    register_font_data=(family, data) => {
+      cache.text_engine.register_font_data(cache, family, data)
+    },
   )
 }
 
@@ -632,19 +802,16 @@ fn native_measure_text_layout(
   cache : NativeFontCache,
   input : @core.TextLayoutInput,
 ) -> @core.TextLayoutResult {
-  if cache.platform_engine is PlatformTextEngine::CoreText {
-    match coretext_measure_layout(input) {
-      Some(layout) =>
-        return {
-          size: layout.size,
-          baseline: layout.baseline,
-          caret_positions: layout.caret_positions,
-        }
-      None => ()
-    }
-  }
-  let buffer = build_native_text_input_buffer(cache, input)
-  if !cache.has_loaded_fonts() {
+  cache.text_engine.measure(cache, input)
+}
+
+///|
+fn NativeFontCache::cosmic_measure(
+  self : NativeFontCache,
+  input : @core.TextLayoutInput,
+) -> @core.TextLayoutResult {
+  let buffer = build_native_text_input_buffer(self, input)
+  if !self.has_loaded_fonts() {
     return @core.measure_text_layout(input)
   }
   let raw = native_text_layout_result_from_cosmic(input, buffer)
@@ -775,11 +942,51 @@ fn native_text_layout_runs(
 }
 
 ///|
+fn NativeFontCache::cosmic_layout_for_run(
+  self : NativeFontCache,
+  run : @core.TextRun,
+  scale_factor : Double,
+) -> NativeTextLayout? {
+  let runs = native_text_layout_runs(self, run)
+  if runs.is_empty() || !self.has_loaded_fonts() {
+    return None
+  }
+  let scale = native_text_scale(scale_factor)
+  let glyphs : Array[NativeGlyphPlacement] = []
+  let mut width = 0.0
+  let mut height = run.font.size * 1.25
+  for layout_run in runs {
+    width = width.max(layout_run.line_w.to_double())
+    height = height.max(
+      (layout_run.line_top + layout_run.line_height).to_double(),
+    )
+    let offset = (
+      0.0F,
+      Float::from_double(layout_run.line_y.to_double() * scale),
+    )
+    for glyph in layout_run.glyphs {
+      let physical = glyph.physical(offset, Float::from_double(scale))
+      glyphs.push({
+        key: cosmic_native_glyph_key(physical.cache_key),
+        x: physical.x.to_double() / scale,
+        y: physical.y.to_double() / scale,
+      })
+    }
+  }
+  Some({
+    size: @core.Size::new(width~, height~),
+    baseline: run.font.size * 0.8,
+    caret_positions: [],
+    glyphs,
+  })
+}
+
+///|
 fn native_text_vertical_extra(
   frame : @core.Rect,
-  layout_run : @moon_cosmic.LayoutRun,
+  layout : NativeTextLayout,
 ) -> Double {
-  let extra = frame.size.height - layout_run.line_height.to_double()
+  let extra = frame.size.height - layout.size.height
   if extra > 0.0 {
     extra / 2.0
   } else {
@@ -813,83 +1020,21 @@ fn append_text_run_vertices(
   scale_factor : Double,
   vertices : Array[TextVertex],
 ) -> Bool {
-  if cache.platform_engine is PlatformTextEngine::CoreText {
-    match
-      append_coretext_text_run_vertices(
-        atlas, run, state, size, scale_factor, vertices,
-      ) {
-      Some(atlas_full) => return atlas_full
-      None => ()
-    }
-  }
-  let runs = native_text_layout_runs(cache, run)
-  if runs.is_empty() || !cache.has_loaded_fonts() {
-    return false
-  }
-  let scale = native_text_scale(scale_factor)
-  for layout_run in runs {
-    let start_extra = text_align_extra(
-      run.align,
-      run.frame.size.width,
-      layout_run.line_w.to_double(),
-    )
-    let vertical_extra = native_text_vertical_extra(run.frame, layout_run)
-    let offset = (
-      Float::from_double((run.frame.origin.x + start_extra) * scale),
-      Float::from_double(
-        (run.frame.origin.y + vertical_extra + layout_run.line_y.to_double()) *
-        scale,
-      ),
-    )
-    for glyph in layout_run.glyphs {
-      let physical = glyph.physical(offset, Float::from_double(scale))
-      match atlas.ensure_glyph(cache, physical.cache_key) {
-        GlyphReady(entry) =>
-          if entry.width > 0 && entry.height > 0 {
-            append_text_quad(
-              vertices,
-              (physical.x.to_double() + entry.bearing_x.to_double()) / scale,
-              (physical.y.to_double() + entry.bearing_y.to_double()) / scale,
-              entry,
-              atlas,
-              state,
-              size,
-              scale,
-              run.color.multiply_alpha(state.opacity),
-            )
-          }
-        GlyphMissing => ()
-        GlyphAtlasFull => return true
-      }
-    }
-  }
-  false
-}
-
-///|
-fn append_coretext_text_run_vertices(
-  atlas : GlyphAtlas,
-  run : @core.TextRun,
-  state : NativePaintState,
-  size : @core.Size,
-  scale_factor : Double,
-  vertices : Array[TextVertex],
-) -> Bool? {
-  match coretext_layout_for_run(run, scale_factor) {
+  match cache.text_engine.layout_run(cache, run, scale_factor) {
     Some(layout) => {
       if layout.glyphs.is_empty() && !run.text.is_empty() {
-        return None
+        return false
       }
       let start_extra = text_align_extra(
         run.align,
         run.frame.size.width,
         layout.size.width,
       )
-      let vertical_extra = (run.frame.size.height - layout.size.height).max(0.0) /
-        2.0
+      let vertical_extra = native_text_vertical_extra(run.frame, layout)
+      let scale = native_text_scale(scale_factor)
       let mut ready_count = 0
       for glyph in layout.glyphs {
-        match atlas.ensure_coretext_glyph(glyph.key) {
+        match atlas.ensure_glyph(cache, glyph.key) {
           GlyphReady(entry) =>
             if entry.width > 0 && entry.height > 0 {
               ready_count = ready_count + 1
@@ -898,29 +1043,30 @@ fn append_coretext_text_run_vertices(
                 run.frame.origin.x +
                 start_extra +
                 glyph.x +
-                entry.bearing_x.to_double() / native_text_scale(scale_factor),
+                entry.bearing_x.to_double() / scale,
                 run.frame.origin.y +
                 vertical_extra +
                 layout.baseline +
-                entry.bearing_y.to_double() / native_text_scale(scale_factor),
+                glyph.y +
+                entry.bearing_y.to_double() / scale,
                 entry,
                 atlas,
                 state,
                 size,
-                native_text_scale(scale_factor),
+                scale,
                 run.color.multiply_alpha(state.opacity),
               )
             }
           GlyphMissing => ()
-          GlyphAtlasFull => return Some(true)
+          GlyphAtlasFull => return true
         }
       }
       if ready_count == 0 && !run.text.is_empty() {
-        return None
+        return false
       }
-      Some(false)
+      false
     }
-    None => None
+    None => false
   }
 }
 
@@ -937,12 +1083,12 @@ fn native_text_scale(scale_factor : Double) -> Double {
 fn GlyphAtlas::ensure_glyph(
   self : GlyphAtlas,
   cache : NativeFontCache,
-  cache_key : @moon_cosmic.CacheKey,
+  key : NativeGlyphKey,
 ) -> GlyphLookup {
-  match self.entries.get(cache_key) {
+  match self.entries.get(key.cache_key) {
     Some(entry) => GlyphReady(entry)
     None =>
-      match raster_glyph(cache, cache_key) {
+      match cache.text_engine.raster_glyph(cache, key) {
         None => GlyphMissing
         Some(raster) =>
           match self.place_glyph(raster.width, raster.height) {
@@ -957,55 +1103,13 @@ fn GlyphAtlas::ensure_glyph(
                 bearing_x: raster.bearing_x,
                 bearing_y: raster.bearing_y,
               }
-              self.entries[cache_key] = entry
+              self.entries[key.cache_key] = entry
               self.dirty = true
               GlyphReady(entry)
             }
           }
       }
   }
-}
-
-///|
-fn GlyphAtlas::ensure_coretext_glyph(
-  self : GlyphAtlas,
-  key : CoreTextGlyphKey,
-) -> GlyphLookup {
-  let cache_key = coretext_glyph_cache_key(key)
-  match self.coretext_entries.get(cache_key) {
-    Some(entry) => GlyphReady(entry)
-    None =>
-      match coretext_raster_glyph(key) {
-        None => GlyphMissing
-        Some(raster) =>
-          match self.place_glyph(raster.width, raster.height) {
-            None => GlyphAtlasFull
-            Some((x, y)) => {
-              self.blit_coretext_glyph(x, y, raster)
-              let entry = {
-                x,
-                y,
-                width: raster.width,
-                height: raster.height,
-                bearing_x: raster.bearing_x,
-                bearing_y: raster.bearing_y,
-              }
-              self.coretext_entries[cache_key] = entry
-              self.dirty = true
-              GlyphReady(entry)
-            }
-          }
-      }
-  }
-}
-
-///|
-priv struct RasterGlyph {
-  width : Int
-  height : Int
-  bearing_x : Int
-  bearing_y : Int
-  pixels : Array[RasterGlyphPixel]
 }
 
 ///|
@@ -1019,7 +1123,7 @@ priv struct RasterGlyphPixel {
 fn raster_glyph(
   cache : NativeFontCache,
   cache_key : @moon_cosmic.CacheKey,
-) -> RasterGlyph? {
+) -> NativeRasterGlyph? {
   let pixels : Array[RasterGlyphPixel] = []
   cache.swash_cache.with_pixels(
     cache.font_system,
@@ -1040,12 +1144,18 @@ fn raster_glyph(
       max_x = max_x.max(pixel.x)
       max_y = max_y.max(pixel.y)
     }
+    let bytes = Array::make((max_x - min_x + 1) * (max_y - min_y + 1), b'\x00')
+    for pixel in pixels {
+      let x = pixel.x - min_x
+      let y = pixel.y - min_y
+      bytes[y * (max_x - min_x + 1) + x] = pixel.color.a()
+    }
     Some({
       width: max_x - min_x + 1,
       height: max_y - min_y + 1,
       bearing_x: min_x,
       bearing_y: min_y,
-      pixels,
+      pixels: Bytes::from_array(bytes),
     })
   }
 }
@@ -1084,25 +1194,7 @@ fn GlyphAtlas::blit_glyph(
   self : GlyphAtlas,
   dst_x : Int,
   dst_y : Int,
-  raster : RasterGlyph,
-) -> Unit {
-  for pixel in raster.pixels {
-    let x = dst_x + pixel.x - raster.bearing_x
-    let y = dst_y + pixel.y - raster.bearing_y
-    let dst = (y * self.width + x) * 4
-    self.pixels[dst] = pixel.color.r()
-    self.pixels[dst + 1] = pixel.color.g()
-    self.pixels[dst + 2] = pixel.color.b()
-    self.pixels[dst + 3] = pixel.color.a()
-  }
-}
-
-///|
-fn GlyphAtlas::blit_coretext_glyph(
-  self : GlyphAtlas,
-  dst_x : Int,
-  dst_y : Int,
-  raster : CoreTextRasterGlyph,
+  raster : NativeRasterGlyph,
 ) -> Unit {
   for y in 0..<raster.height {
     for x in 0..<raster.width {

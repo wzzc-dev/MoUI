@@ -122,7 +122,7 @@ test "native text maps control symbols before cosmic layout" {
 
 ///|
 fn glyph_atlas_entry_count(atlas : GlyphAtlas) -> Int {
-  atlas.entries.length() + atlas.coretext_entries.length()
+  atlas.entries.length()
 }
 
 ///|
@@ -192,6 +192,26 @@ test "coretext text engine measures mixed system text" {
     }
     None => inspect("missing", content="available")
   }
+}
+
+///|
+test "native text measurer exposes coretext system engine id" {
+  inspect(native_text_measurer().id(), content="native-wgpu-coretext-system")
+}
+
+///|
+test "native text engine keeps cosmic fallback path available" {
+  let cache = NativeFontCache::new_with_engine({
+    kind: NativeTextEngineKind::CosmicFallback,
+    fallback: None,
+  })
+  let input = @core.TextLayoutInput::new(
+    text="fallback",
+    font=@core.FontSpec::new(size=14.0, weight=400),
+  )
+  let measured = native_measure_text_layout(cache, input)
+  inspect(measured.size.width > 0.0, content="true")
+  inspect(measured.caret_positions.length(), content="9")
 }
 
 ///|
