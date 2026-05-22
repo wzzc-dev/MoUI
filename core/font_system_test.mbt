@@ -8,6 +8,7 @@ test "font family stack defaults and css fallback order" {
   inspect(named.css(), content="\"Acme Mono\", ui-monospace, monospace")
   let spec = FontSpec::new()
   assert_true(spec.families == system)
+  inspect(spec.css_family(), content="system-ui")
   inspect(spec.size, content="16")
   inspect(spec.weight, content="400")
   assert_true(spec.style == FontStyle::Normal)

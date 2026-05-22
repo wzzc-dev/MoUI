@@ -27,6 +27,12 @@ pub struct NativeTextEngine {
 }
 
 ///|
+pub(all) enum NativeTextEngineSetting {
+  MoonCosmic
+  PlatformDefault
+} derive(Eq, Debug, ToJson)
+
+///|
 priv enum NativeTextEngineKind {
   PlatformText(NativePlatformTextProvider)
   CosmicFallback
@@ -177,6 +183,11 @@ fn NativeTextEngine::cosmic_fallback() -> NativeTextEngine {
 }
 
 ///|
+pub fn native_cosmic_text_engine() -> NativeTextEngine {
+  NativeTextEngine::cosmic_fallback()
+}
+
+///|
 fn NativeTextEngine::id(self : NativeTextEngine) -> String {
   match self.kind {
     PlatformText(provider) => provider.id
@@ -291,12 +302,18 @@ fn windows_bold_font_path() -> String {
 
 ///|
 fn macos_regular_font_path() -> String {
-  first_existing_font_path(["/System/Library/Fonts/SFNSRounded.ttf"])
+  first_existing_font_path([
+    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+  ])
 }
 
 ///|
 fn macos_bold_font_path() -> String {
-  first_existing_font_path(["/System/Library/Fonts/SFNSRounded.ttf"])
+  first_existing_font_path([
+    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+  ])
 }
 
 ///|
@@ -937,8 +954,14 @@ fn NativeFontCache::cosmic_layout_for_run(
     )
     for glyph in layout_run.glyphs {
       let physical = glyph.physical(offset, Float::from_double(scale))
+      let cache_key = native_text_cache_key_with_fallback(
+        self,
+        run,
+        glyph,
+        physical.cache_key,
+      )
       glyphs.push({
-        key: cosmic_native_glyph_key(physical.cache_key),
+        key: cosmic_native_glyph_key(cache_key),
         x: physical.x.to_double() / scale,
         y: physical.y.to_double() / scale,
       })
@@ -950,6 +973,63 @@ fn NativeFontCache::cosmic_layout_for_run(
     caret_positions: [],
     glyphs,
   })
+}
+
+///|
+fn native_text_cache_key_with_fallback(
+  cache : NativeFontCache,
+  run : @core.TextRun,
+  glyph : @moon_cosmic.LayoutGlyph,
+  cache_key : @moon_cosmic.CacheKey,
+) -> @moon_cosmic.CacheKey {
+  if glyph.glyph_id != 0 {
+    return cache_key
+  }
+  match native_text_codepoint_at(run.text, glyph.start) {
+    None => cache_key
+    Some(codepoint) =>
+      match
+        cache.font_system.resolve_for_codepoint(
+          native_text_attrs_for_font(run.font),
+          codepoint,
+        ) {
+        None => cache_key
+        Some(font_id) =>
+          match cache.font_system.get_font_entry(font_id) {
+            None => cache_key
+            Some(entry) => {
+              let charmap = entry.charmap_proxy.materialize(entry.font)
+              let glyph_id = charmap.map(codepoint).to_int()
+              if glyph_id == 0 {
+                cache_key
+              } else {
+                let (fallback_key, _, _) = @moon_cosmic.CacheKey::new(
+                  font_id,
+                  glyph_id,
+                  glyph.font_size,
+                  (0.0F, 0.0F),
+                  glyph.font_weight,
+                  glyph.cache_key_flags,
+                )
+                fallback_key
+              }
+            }
+          }
+      }
+  }
+}
+
+///|
+fn native_text_codepoint_at(text : String, index : Int) -> UInt? {
+  if index < 0 {
+    return None
+  }
+  let chars = text.to_array()
+  if index >= chars.length() {
+    None
+  } else {
+    Some(chars[index].to_uint())
+  }
 }
 
 ///|
