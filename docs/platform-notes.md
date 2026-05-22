@@ -104,7 +104,8 @@ README build-and-execute flow while debugging the toolchain/link configuration.
 ## Windows Native
 
 Windows native examples are built with MSYS2 UCRT64 and the static Windows GNU
-`wgpu-native` release expected by `scripts/windows/counter_windows_static.ps1`.
+`wgpu-native` release expected by
+`scripts/windows/markdown_editor_windows_static.ps1`.
 The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
 macOS, with platform-specific ownership limited to Win32 window handles, WGPU
 surface creation, resize handling, text-input session synchronization, and redraw

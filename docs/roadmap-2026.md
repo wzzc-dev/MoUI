@@ -100,9 +100,7 @@ The examples should demonstrate progressively larger slices of the framework:
 
 | Example | Purpose | Shared app package | Primary capabilities |
 | --- | --- | --- | --- |
-| Counter | Minimal state and events | `examples/counter/app/` | State, text, button, event handling |
-| Todo | Basic application structure | `examples/todo/app/` | Text input, list layout, updates |
-| Showcase | Visual system index | `examples/showcase/app/` | Controls, layout, theme, renderer features |
+| Showcase | Visual system index | `examples/showcase/app/` | Controls, layout, theme, renderer features, Counter/Todo patterns |
 | Markdown Editor | Practical editing demo | `examples/markdown_editor/app/` | Rich text editing, styled runs, app-level parsing |
 
 Example work should keep business logic in `examples/*/app/` and leave platform
@@ -111,12 +109,8 @@ packages as thin entrypoints.
 Validation:
 
 ```sh
-moon test examples/counter/app --target native
-moon test examples/todo/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
-moon build examples/counter/web_wasm --target wasm-gc
-moon build examples/todo/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
@@ -247,8 +241,9 @@ Use this snapshot as the final handoff checklist for the current project shape:
 - README explains the project value, package map, and Web/native example entrypoints.
 - Architecture, development, platform, examples, testing, renderer capability, AI
   collaboration, and view catalog docs are linked from the README.
-- Counter, Todo, Showcase, and Markdown Editor keep shared app logic under
-  `examples/*/app/` with platform packages as thin entrypoints.
+- Showcase and Markdown Editor keep shared app logic under `examples/*/app/`
+  with platform packages as thin entrypoints; Counter and Todo live inside
+  Showcase as built-in interaction patterns.
 - Showcase surfaces renderer capability status for visual review.
 - Daily validation is centralized in `sh scripts/dev-check.sh` and includes core,
   views, render, native wgpu, backend host/web, example app tests, and Web

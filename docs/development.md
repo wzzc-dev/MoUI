@@ -59,7 +59,7 @@ wasm-gc example:
 ```sh
 sh scripts/preview-loop.sh
 sh scripts/preview-loop.sh --watch
-sh scripts/preview-loop.sh --package examples/counter/web_wasm --watch
+sh scripts/preview-loop.sh --package examples/markdown_editor/web_wasm --watch
 ```
 
 The loop rebuilds the selected package with `moon build` and watches MoonBit,
@@ -78,7 +78,7 @@ sh scripts/dev-check.sh --platform-examples-test
 ```
 
 Native platform example builds such as
-`moon build examples/todo/macos --target native` link platform stubs and
+`moon build examples/showcase/macos --target native` link platform stubs and
 `wgpu-native`, so cold builds can be slow. Include them only when validating
 the current host platform's executable examples:
 
@@ -95,17 +95,11 @@ moon test tests/tooling --target native
 moon test backend/web --target wasm-gc
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
-moon build examples/todo/web_wasm --target wasm-gc
-moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon test --target native
-moon build examples/todo/macos --target native
-moon build examples/counter/macos --target native
 moon build examples/showcase/macos --target native
 moon build examples/markdown_editor/macos --target native
-moon build examples/todo/windows --target native
-moon build examples/counter/windows --target native
 moon build examples/markdown_editor/windows --target native
 ```
 

@@ -30,7 +30,7 @@ $wgpuStaticLib = Join-Path $WgpuNativeRoot "lib\libwgpu_native.a"
 $wgpuTagFile = Join-Path $WgpuNativeRoot "wgpu-native-meta\wgpu-native-git-tag"
 $vulkanDll = Join-Path $ucrtBin "vulkan-1.dll"
 $winpthreadDll = Join-Path $ucrtBin "libwinpthread-1.dll"
-$counterExe = Join-Path $repoRoot "_build\native\debug\build\examples\counter\windows\windows.exe"
+$exampleExe = Join-Path $repoRoot "_build\native\debug\build\examples\markdown_editor\windows\windows.exe"
 
 Require-Path $ucrtBin "MSYS2 UCRT64 toolchain not found: $ucrtBin"
 Require-Path $wgpuStaticLib "Missing wgpu static library: $wgpuStaticLib"
@@ -64,9 +64,9 @@ try {
   Write-Host "==> repo root: $repoRoot"
   Write-Host "==> MSYS2 UCRT64: $ucrtBin"
   Write-Host "==> WGPU native root: $WgpuNativeRoot"
-  Write-Host "==> Building examples/counter/windows for native target"
+  Write-Host "==> Building examples/markdown_editor/windows for native target"
 
-  & moon build examples/counter/windows --target native
+  & moon build examples/markdown_editor/windows --target native
   if ($LASTEXITCODE -ne 0) {
     throw "moon build failed with exit code $LASTEXITCODE"
   }
@@ -76,10 +76,10 @@ try {
     return
   }
 
-  Require-Path $counterExe "Built executable not found: $counterExe"
+  Require-Path $exampleExe "Built executable not found: $exampleExe"
 
-  Write-Host "==> Launching $counterExe"
-  & $counterExe
+  Write-Host "==> Launching $exampleExe"
+  & $exampleExe
   if ($LASTEXITCODE -ne 0) {
     throw "windows exited with code $LASTEXITCODE"
   }

@@ -54,13 +54,9 @@ run moon test backend/host --target native
 run moon test render/webgpu_adapter --target wasm-gc
 run moon test backend/web --target wasm-gc
 
-run moon test examples/counter/app --target native
-run moon test examples/todo/app --target native
 run moon test examples/showcase/app --target native
 run moon test examples/markdown_editor/app --target native
 
-run moon build examples/counter/web_wasm --target wasm-gc
-run moon build examples/todo/web_wasm --target wasm-gc
 run moon build examples/showcase/web_wasm --target wasm-gc
 run moon build examples/markdown_editor/web_wasm --target wasm-gc
 
@@ -72,8 +68,6 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
-        run moon build examples/counter/macos --target native
-        run moon build examples/todo/macos --target native
         run moon build examples/showcase/macos --target native
         run moon build examples/markdown_editor/macos --target native
       fi
@@ -84,8 +78,6 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
-        run moon build examples/counter/windows --target native
-        run moon build examples/todo/windows --target native
         run moon build examples/markdown_editor/windows --target native
       fi
       ;;

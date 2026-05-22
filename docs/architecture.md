@@ -34,15 +34,7 @@ render/wgpu/directwrite/      Windows DirectWrite provider scaffold
 render/wgpu/fontconfig/       Linux fontconfig/HarfBuzz/FreeType provider scaffold
 render/webgpu_adapter/        browser WebGPU host-import renderer for wasm-gc
 tests/tooling/                quickcheck and pixelmatch integration tests
-examples/counter/app/         shared counter app
-examples/counter/windows/     Windows native counter
-examples/counter/macos/       macOS native counter
-examples/counter/web_wasm/    Web counter on wasm-gc
-examples/todo/app/            shared todo app
-examples/todo/windows/        Windows native todo
-examples/todo/macos/          macOS native todo
-examples/todo/web_wasm/       Web todo on wasm-gc
-examples/showcase/app/        shared visual showcase app
+examples/showcase/app/        shared visual showcase app with Counter/Todo patterns
 examples/showcase/macos/      macOS native showcase
 examples/showcase/web_wasm/   Web showcase on wasm-gc
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app

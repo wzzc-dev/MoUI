@@ -2,6 +2,7 @@
 package "wzzc-dev/moui/examples/showcase/app"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
 }
 
@@ -27,10 +28,12 @@ pub struct ShowcaseApp {
   navigation : @core.NavigationState
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
-  counter : @wzzc-dev/moui/examples/counter/app.CounterApp
-  todo : @wzzc-dev/moui/examples/todo/app.TodoApp
-  markdown : @wzzc-dev/moui/examples/markdown_editor/app.MarkdownEditorApp
+  counter_count : @core.State[Int]
+  todo_items : @core.State[Array[ShowcaseTodoItem]]
+  todo_next_id : @core.State[Int]
+  todo_draft : @core.State[String]
 }
+pub fn ShowcaseApp::counter_increment(Self) -> Unit
 pub fn ShowcaseApp::hide_dialog(Self) -> Unit
 pub fn ShowcaseApp::hide_sheet(Self) -> Unit
 pub fn ShowcaseApp::new() -> Self
@@ -39,8 +42,23 @@ pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.Ap
 pub fn ShowcaseApp::select_section(Self, String) -> Unit
 pub fn ShowcaseApp::show_dialog(Self) -> Unit
 pub fn ShowcaseApp::show_sheet(Self) -> Unit
+pub fn ShowcaseApp::todo_add(Self, String) -> Unit
+pub fn ShowcaseApp::todo_completed_binding(Self, Int) -> @core.Binding[Bool]
+pub fn ShowcaseApp::todo_count(Self) -> Int
+pub fn ShowcaseApp::todo_items(Self) -> Array[ShowcaseTodoItem]
+pub fn ShowcaseApp::todo_remove(Self, Int) -> Unit
+pub fn ShowcaseApp::todo_set_draft(Self, String) -> Unit
+pub fn ShowcaseApp::todo_submit_draft(Self) -> Unit
+pub fn ShowcaseApp::todo_toggle(Self, Int) -> Unit
 pub fn ShowcaseApp::toggle_active(Self) -> Unit
 pub fn ShowcaseApp::toggle_scheme(Self) -> Unit
+
+pub(all) struct ShowcaseTodoItem {
+  id : Int
+  text : String
+  completed : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> Self
 
 // Type aliases
 

@@ -96,7 +96,7 @@ moon test core --target native
 moon test views --target native
 moon test render/webgpu_adapter --target wasm-gc
 moon test backend/web --target wasm-gc
-moon build examples/counter/web_wasm --target wasm-gc
+moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
 Run `moon info` after public API changes and review generated

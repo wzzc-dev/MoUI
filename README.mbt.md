@@ -30,13 +30,9 @@ Detailed notes live in:
 - [AI collaboration](docs/ai-collaboration.md)
 - [2026 roadmap](docs/roadmap-2026.md)
 
-The example suite demonstrates increasing slices of the framework:
-
-- Counter: minimal state and event handling.
-- Todo: text input, lists, and shared app state.
-- Showcase: controls, layout, theme, and renderer capability visibility.
-- WYSIWYG Markdown editor: practical rich text editing with app-owned Markdown
-  parsing and styled text runs.
+The example suite is intentionally small: Showcase is the visual catalog and now
+contains the Counter and Todo interaction patterns, while the WYSIWYG Markdown
+editor remains a separate practical editing demo.
 
 ## Project Shape
 
@@ -63,32 +59,6 @@ sh scripts/dev-check.sh
 ```
 
 ## Web Wasm-GC
-
-Build and serve the todo example:
-
-```sh
-moon build examples/todo/web_wasm --target wasm-gc
-python3 -m http.server 8080 --bind 127.0.0.1
-```
-
-Open:
-
-```text
-http://127.0.0.1:8080/examples/todo/web_wasm/index.html
-```
-
-Build and serve the counter example:
-
-```sh
-moon build examples/counter/web_wasm --target wasm-gc
-python3 -m http.server 8080 --bind 127.0.0.1
-```
-
-Open:
-
-```text
-http://127.0.0.1:8080/examples/counter/web_wasm/index.html
-```
 
 Build and serve the visual showcase:
 
@@ -121,32 +91,6 @@ http://127.0.0.1:8080/examples/markdown_editor/web_wasm/index.html
 Native example builds link the platform window backend and `wgpu-native`.
 Cold builds can be noticeably slower than package tests or Web wasm-gc example
 builds, so they are kept out of the default development check.
-
-Build and run the todo example:
-
-```sh
-moon build examples/todo/macos --target native
-./_build/native/debug/build/examples/todo/macos/macos.exe
-```
-
-Optional `moon run` shortcut:
-
-```sh
-moon run examples/todo/macos --target native
-```
-
-Build and run the counter example:
-
-```sh
-moon build examples/counter/macos --target native
-./_build/native/debug/build/examples/counter/macos/macos.exe
-```
-
-Optional `moon run` shortcut:
-
-```sh
-moon run examples/counter/macos --target native
-```
 
 For macOS `moon run` linker errors, see
 [Platform notes](docs/platform-notes.md#macos-native).
@@ -191,23 +135,16 @@ Download it manually from:
 https://github.com/gfx-rs/wgpu-native/releases/tag/v27.0.4.0
 ```
 
-Build the counter example:
+Build the WYSIWYG Markdown editor with the static helper:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\counter_windows_static.ps1 -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
 ```
 
-Build and run the counter example:
+Build and run the WYSIWYG Markdown editor with the static helper:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\counter_windows_static.ps1
-```
-
-Build and run the todo example:
-
-```powershell
-moon build examples/todo/windows --target native
-.\_build\native\debug\build\examples\todo\windows\windows.exe
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1
 ```
 
 Build and run the WYSIWYG Markdown editor:

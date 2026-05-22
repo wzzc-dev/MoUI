@@ -104,8 +104,13 @@ test "showcase embeds reusable example apps and renderer report" {
   assert_true(has_text(example_commands, "MoUI Counter"))
   assert_true(has_text(example_commands, "Todo Preview"))
   assert_true(has_text(example_commands, "MoUI Todo"))
-  assert_true(has_text(example_commands, "Markdown Preview"))
-  assert_true(has_text(example_commands, "MoUI Markdown"))
+  assert_false(has_text(example_commands, "Markdown Preview"))
+  app.select_section("text-media")
+  app.draft.set("# Local Markdown\n\nA **bold** word")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let markdown_commands = runtime.draw_commands()
+  assert_true(has_text(markdown_commands, "Text & Media"))
+  assert_true(has_text(markdown_commands, "Local Markdown"))
   app.select_section("theme-renderer")
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
   let renderer_commands = runtime.draw_commands()
@@ -152,6 +157,66 @@ test "showcase renderer section clips long capability content" {
 }
 
 ///|
+test "showcase counter preview increments through shared runtime" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=760.0, height=420.0)
+  app.select_section("examples")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  app.counter_increment()
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  inspect(app.counter_count.get(), content="1")
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Count: 1"))
+}
+
+///|
+test "showcase todo model updates add toggle and remove" {
+  let app = @app.ShowcaseApp::new()
+  app.todo_add("Write tests")
+  inspect(app.todo_count(), content="3")
+  app.todo_toggle(2)
+  guard app.todo_items() is [_, _, { id: 2, completed: true, .. }] else {
+    fail("expected added item toggled")
+  }
+  app.todo_remove(2)
+  inspect(app.todo_count(), content="2")
+}
+
+///|
+test "showcase todo preview keeps keyed rows after toggle" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=960.0, height=760.0)
+  app.select_section("examples")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let before = runtime.draw_commands()
+  assert_true(has_text(before, "Reuse Todo state"))
+  app.todo_toggle(0)
+  runtime.state.needs_rebuild = true
+  let after = runtime.draw_commands()
+  assert_true(has_text(after, "Reuse Todo state"))
+  guard app.todo_items() is [{ completed: true, .. }, ..] else {
+    fail("expected first built-in todo item toggled")
+  }
+}
+
+///|
+test "showcase todo preview accepts draft submission" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=760.0, height=420.0)
+  app.select_section("examples")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  assert_true(has_text(runtime.draw_commands(), "New todo"))
+  app.todo_set_draft("ab")
+  app.todo_submit_draft()
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  guard app.todo_items() is [_, _, { id: 2, text: "ab", completed: false }] else {
+    fail("expected draft text submitted as next todo item")
+  }
+  inspect(app.todo_draft.get(), content="")
+  assert_true(has_text(runtime.draw_commands(), "ab"))
+}
+
+///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
@@ -179,3 +244,5 @@ fn text_within(
   }
   false
 }
+
+///|
