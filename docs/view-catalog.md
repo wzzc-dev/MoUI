@@ -31,7 +31,7 @@ let screen = @views.column([
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `text` | `views/label.mbt` | Font/foreground modifiers | Text role through core | `views/views_test.mbt` | Counter, Todo, Showcase, Markdown Editor | Basic label primitive. |
+| `text` | `views/label.mbt` | Font/foreground modifiers | Text role through core | `views/views_test.mbt` | Showcase, Markdown Editor | Basic label primitive. |
 | `image` | `views/image.mbt` | Modifier-based | Image draw intent | `views/views_test.mbt` | Showcase | Renderer image support is tracked in the capability report. |
 | `rich_text_editor` | `views/markdown_editor.mbt` | TextFieldStyle | Text field semantics through core | `views/views_test.mbt`, `core/rich_text_editor_test.mbt` | Markdown Editor | Generic rich text editor wrapper. |
 | `markdown_editor` | `views/markdown_editor.mbt` | TextFieldStyle | Text field semantics through core | `views/views_test.mbt` | Markdown Editor | App supplies Markdown parsing and styled runs. |
@@ -42,11 +42,11 @@ let screen = @views.column([
 | --- | --- | --- | --- | --- | --- | --- |
 | `button` | `views/button.mbt` | ButtonStyle | Button | `views/views_test.mbt` | All examples | Main activation primitive. |
 | `menu_button` | `views/controls.mbt` | ButtonStyle | Menu | `views/views_test.mbt` | Showcase | Button wrapper with menu semantics. |
-| `checkbox` | `views/checkbox.mbt` | Color/font params | Checkbox | `views/views_test.mbt` | Todo | Binding-backed boolean control. |
+| `checkbox` | `views/checkbox.mbt` | Color/font params | Checkbox | `views/views_test.mbt` | Showcase Todo pattern | Binding-backed boolean control. |
 | `toggle` | `views/controls.mbt` | Color params | Switch | `views/views_test.mbt` | Showcase | Checkbox wrapper with switch semantics. |
 | `toggle_switch` | `views/controls.mbt` | Color params | Switch | `views/views_test.mbt` | Showcase | Alias-style switch entry point. |
 | `radio` | `views/controls.mbt` | Color params | Radio | `views/views_test.mbt` | Showcase | Binding-backed single-option primitive. |
-| `text_field` | `views/text_field.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`, core input tests | Todo, Showcase | Binding-backed text input. |
+| `text_field` | `views/text_field.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`, core input tests | Showcase, Markdown Editor | Binding-backed text input. |
 | `searchbar` | `views/searchbar.mbt` | Color/font params | Search field | `views/views_test.mbt` | Showcase | Text input specialized for filtering and clear actions. |
 | `picker` | `views/picker.mbt` | Color/font params | Picker | `views/views_test.mbt` | Showcase | Binding-backed option picker. |
 | `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `views/views_test.mbt` | Showcase | Binding-backed date/time picker. |
@@ -66,7 +66,7 @@ let screen = @views.column([
 | `stack` / `overlay` | `views/stack.mbt` | Child/modifier based | Children preserved | `views/views_test.mbt` | Showcase, Dialog host, Tooltip | Overlay layout primitives. |
 | `scroll_view` | `views/grid_list.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Emits clip/offset behavior through core. |
 | `grid` | `views/grid_list.mbt` | N/A | Children preserved | `views/views_test.mbt` | Showcase | Fixed-column layout. |
-| `list` | `views/grid_list.mbt` | N/A | List/list item roles through core | `views/views_test.mbt`, `core/semantics_test.mbt` | Todo | Eager list layout. |
+| `list` | `views/grid_list.mbt` | N/A | List/list item roles through core | `views/views_test.mbt`, `core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout. |
 | `lazy_list` | `views/grid_list.mbt` | N/A | List output | `views/views_test.mbt` | Showcase | Windows visible rows from data. |
 | `lazy_grid` | `views/grid_list.mbt` | N/A | List/grid output | `views/views_test.mbt` | Showcase | Windows visible grid rows from data. |
 
