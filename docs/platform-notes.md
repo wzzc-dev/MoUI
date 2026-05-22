@@ -62,10 +62,9 @@ provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
 measurement and glyph rasterization; the Objective-C CoreText stub lives in
 `render/wgpu/coretext`, while the selectable Cosmic provider lives in
 `render/wgpu/cosmic`. `backend/macos` chooses between them through
-`run_app_with_text_engine(..., text_engine=NativeTextEngineSetting::MoonCosmic |
-PlatformDefault)` when creating the generic native WGPU renderer. `core` still
-owns only the neutral `FontSpec` and fallback measurer; it does not name
-concrete macOS font files.
+`run_app_with_options(..., options=MacosAppOptions::new(text_engine=...))` when
+creating the generic native WGPU renderer. `core` still owns only the neutral
+`FontSpec` and fallback measurer; it does not name concrete macOS font files.
 
 Packages that use `backend/macos` must link the macOS frameworks required by
 the Objective-C stubs during the final native link step. Missing surface/window

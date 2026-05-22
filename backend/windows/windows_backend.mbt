@@ -26,6 +26,11 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct WindowsAppOptions {
+  text_engine : @wgpu_renderer.NativeTextEngineSetting
+} derive(Eq, Debug, ToJson)
+
+///|
 struct WindowsApp {
   title : String
   mut window : @win.Window?
@@ -39,19 +44,22 @@ struct WindowsApp {
 }
 
 ///|
-pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
-  run_app_with_text_engine(
-    title,
-    runtime,
-    text_engine=@wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
-  )
+pub fn WindowsAppOptions::new(
+  text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+) -> WindowsAppOptions {
+  { text_engine, }
 }
 
 ///|
-pub fn run_app_with_text_engine(
+pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
+  run_app_with_options(title, runtime, options=WindowsAppOptions::new())
+}
+
+///|
+pub fn run_app_with_options(
   title : String,
   runtime : @core.AppRuntime,
-  text_engine~ : @wgpu_renderer.NativeTextEngineSetting,
+  options~ : WindowsAppOptions,
 ) -> Unit {
   let event_loop = @win.EventLoop::new()
   let app = WindowsApp::{
@@ -61,7 +69,7 @@ pub fn run_app_with_text_engine(
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
-    text_engine_setting: text_engine,
+    text_engine_setting: options.text_engine,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
