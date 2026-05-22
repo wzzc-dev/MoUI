@@ -1,5 +1,12 @@
 ///|
 fn new_test_renderer_handle() -> RendererHandle {
+  new_test_renderer_handle_with_text_engine(NativeTextEngine::cosmic_fallback())
+}
+
+///|
+fn new_test_renderer_handle_with_text_engine(
+  text_engine : NativeTextEngine,
+) -> RendererHandle {
   {
     size: @core.Size::new(width=0.0, height=0.0),
     physical_size: @core.Size::new(width=0.0, height=0.0),
@@ -35,7 +42,7 @@ fn new_test_renderer_handle() -> RendererHandle {
     image_pipeline_layout: None,
     image_cache: {},
     failed_images: {},
-    font_cache: NativeFontCache::new(),
+    font_cache: NativeFontCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
     text_vertices: [],

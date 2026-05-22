@@ -1,0 +1,16 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc",
+    },
+  },
+  "native-stub": [ "macos_coretext_text.m" ],
+  targets: { },
+)

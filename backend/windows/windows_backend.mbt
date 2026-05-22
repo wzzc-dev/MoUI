@@ -206,9 +206,10 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
       )
       ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
       let renderer : @wgpu_renderer.WgpuRenderer? = Some(
-        @wgpu_renderer.create_with_host_surface(
+        @wgpu_renderer.create_with_host_surface_and_text_engine(
           renderer_metrics_from_host(metrics),
           create_windows_host_surface(window.window_handle()),
+          text_engine=@wgpu_directwrite.directwrite_text_engine(),
         ),
       ) catch {
         err => {

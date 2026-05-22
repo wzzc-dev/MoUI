@@ -13,6 +13,12 @@ pub fn backend_info() -> @render.RendererBackendInfo
 
 pub fn create_with_host_surface(@render.RendererSurfaceMetrics, HostWgpuSurface) -> WgpuRenderer raise @wgpu_mbt.WgpuError
 
+pub fn create_with_host_surface_and_text_engine(@render.RendererSurfaceMetrics, HostWgpuSurface, text_engine~ : NativeTextEngine) -> WgpuRenderer raise @wgpu_mbt.WgpuError
+
+pub fn native_platform_glyph_key(cache_key~ : String, payload~ : Bytes) -> NativeGlyphKey
+
+pub fn native_platform_text_engine(NativePlatformTextProvider) -> NativeTextEngine
+
 pub fn native_surface_contract() -> @render.WgpuSurfaceContract
 
 pub fn native_text_fallback_font_paths_for_spec(@core.FontSpec) -> Array[String]
@@ -20,6 +26,8 @@ pub fn native_text_fallback_font_paths_for_spec(@core.FontSpec) -> Array[String]
 pub fn native_text_font_path_for_spec(@core.FontSpec) -> String
 
 pub fn native_text_measurer() -> @core.TextMeasurer
+
+pub fn native_text_measurer_with_engine(NativeTextEngine) -> @core.TextMeasurer
 
 // Errors
 
@@ -29,6 +37,43 @@ pub(all) struct HostWgpuSurface {
   surface : @wgpu_mbt.Surface
 }
 pub fn HostWgpuSurface::new(instance~ : @wgpu_mbt.Instance, surface~ : @wgpu_mbt.Surface) -> Self
+
+pub struct NativeGlyphKey {
+  // private fields
+}
+
+pub(all) struct NativeGlyphPlacement {
+  key : NativeGlyphKey
+  x : Double
+  y : Double
+}
+pub fn NativeGlyphPlacement::new(key~ : NativeGlyphKey, x~ : Double, y? : Double) -> Self
+
+pub struct NativePlatformTextProvider {
+  // private fields
+}
+pub fn NativePlatformTextProvider::new(id~ : String, measure~ : (@core.TextLayoutInput) -> NativeTextLayout?, layout_run~ : (@core.TextRun, Double) -> NativeTextLayout?, raster_glyph~ : (Bytes) -> NativeRasterGlyph?, register_font_data? : (@core.FontFamily, Bytes) -> Unit) -> Self
+
+pub(all) struct NativeRasterGlyph {
+  width : Int
+  height : Int
+  bearing_x : Int
+  bearing_y : Int
+  pixels : Bytes
+}
+pub fn NativeRasterGlyph::new(width~ : Int, height~ : Int, bearing_x~ : Int, bearing_y~ : Int, pixels~ : Bytes) -> Self
+
+pub struct NativeTextEngine {
+  // private fields
+}
+
+pub(all) struct NativeTextLayout {
+  size : @core.Size
+  baseline : Double
+  caret_positions : Array[Double]
+  glyphs : Array[NativeGlyphPlacement]
+}
+pub fn NativeTextLayout::new(size~ : @core.Size, baseline~ : Double, caret_positions? : Array[Double], glyphs? : Array[NativeGlyphPlacement]) -> Self
 
 type RendererHandle
 

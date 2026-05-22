@@ -27,6 +27,9 @@ backend/linux/                Linux host scaffold
 backend/web/                  canonical Web host on wasm-gc plus browser JS assets
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
+render/wgpu/coretext/         macOS CoreText provider for native wgpu text
+render/wgpu/directwrite/      Windows DirectWrite provider scaffold
+render/wgpu/fontconfig/       Linux fontconfig/HarfBuzz/FreeType provider scaffold
 render/webgpu_adapter/        browser WebGPU host-import renderer for wasm-gc
 tests/tooling/                quickcheck and pixelmatch integration tests
 examples/counter/app/         shared counter app

@@ -58,19 +58,32 @@ text-input session synchronization, renderer resize, and redraw requests.
 The macOS service bridge also routes text clipboard requests through
 `NSPasteboard` while preserving the shared `HostServiceBridge` contract.
 Native WGPU text uses a CoreText/CoreGraphics platform text engine on macOS for
-runtime measurement and glyph rasterization. `core` still owns only the neutral
+runtime measurement and glyph rasterization. The Objective-C CoreText stub lives
+in `render/wgpu/coretext`, and `backend/macos` only injects that provider when
+creating the generic native WGPU renderer. `core` still owns only the neutral
 `FontSpec` and fallback measurer; it does not name concrete macOS font files.
 
 Packages that use `backend/macos` must link the macOS frameworks required by
-the Objective-C stubs during the final native link step. Missing symbols such
-as `_OBJC_CLASS_$_CAMetalLayer`, `_objc_msgSend`, or
-`___CFConstantStringClassReference` usually mean that link step is missing
-framework/runtime flags such as:
+the Objective-C stubs during the final native link step. Missing surface/window
+symbols such as `_OBJC_CLASS_$_CAMetalLayer`, `_objc_msgSend`, or
+`___CFConstantStringClassReference` usually mean that link step is missing the
+backend flags:
 
 ```moonbit
 link: {
   "native": {
-    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz"
+    "cc-link-flags": "-framework AppKit -framework QuartzCore -lz"
+  },
+},
+```
+
+Missing CoreText raster symbols mean the `render/wgpu/coretext` provider flags
+are absent from the final link:
+
+```moonbit
+link: {
+  "native": {
+    "cc-link-flags": "-framework AppKit -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc"
   },
 },
 ```
@@ -90,9 +103,11 @@ surface creation, resize handling, text-input session synchronization, and redra
 requests. Text clipboard requests are implemented through the Win32
 `CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
 boundary.
-Windows text currently uses the shared fallback path; the intended native text
-engine is DirectWrite behind the same renderer/runtime boundary used by macOS
-CoreText.
+Windows installs the sibling `render/wgpu/directwrite` provider through the same
+renderer/runtime boundary used by macOS CoreText. That provider is currently an
+explicit scaffold: it advertises the DirectWrite integration point while
+returning no platform layout/raster data, so `render/wgpu` falls back to Cosmic
+until the real DirectWrite engine lands.
 
 The expected archive extraction path is:
 
@@ -121,8 +136,9 @@ The Linux readiness blockers are:
 - Create a native WGPU surface path and resize contract for Linux.
 - Map clipboard, menus, file dialogs, and accessibility through host service
   contracts.
-- Add a platform text engine, expected to be fontconfig + HarfBuzz + FreeType or
-  an equivalent toolkit text stack, without changing `core` font defaults.
+- Implement the existing `render/wgpu/fontconfig` scaffold as a platform text
+  engine, expected to use fontconfig + HarfBuzz + FreeType or an equivalent
+  toolkit text stack, without changing `core` font defaults.
 
 Keep the scaffold honest until those pieces exist.
 

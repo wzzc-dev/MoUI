@@ -120,15 +120,30 @@ frontends and tooling:
   the app asks for them. Native and Web backends resolve that through their
   platform system defaults.
   Runtime text measurement is injectable: `core` keeps Cosmic as the fallback
-  measurer for headless tests and platforms without a real text engine, macOS
-  native WGPU installs a CoreText-backed platform text engine, and Web installs
-  a browser Canvas-backed measurer that uses the same `system-ui` stack as
-  WebGPU text drawing. Windows and Linux are expected to add DirectWrite and
-  fontconfig/HarfBuzz/FreeType engines behind the same renderer/runtime boundary
-  while falling back to Cosmic until those engines exist. Apps can register
-  embedded font bytes through
-  `AppRuntime::register_font_data`; remote font loading is intentionally out of
-  scope.
+  measurer for headless tests and platforms without a real text engine,
+  `render/wgpu` exposes the native provider hook, macOS installs the
+  `render/wgpu/coretext` provider, Windows installs the
+  `render/wgpu/directwrite` scaffold provider, Linux has the
+  `render/wgpu/fontconfig` scaffold provider ready for a future host, and Web
+  installs a browser Canvas-backed measurer that uses the same `system-ui` stack
+  as WebGPU text drawing. The Windows and Linux providers intentionally fall
+  back to Cosmic until their DirectWrite and fontconfig/HarfBuzz/FreeType
+  engines are implemented. Apps can register embedded font bytes through
+  `AppRuntime::register_font_data`; native WGPU forwards those bytes through the
+  active text provider's `register_font_data` hook before keeping the Cosmic
+  fallback cache warm. CoreText v1 records no system-font registration state,
+  while future DirectWrite and fontconfig/HarfBuzz/FreeType providers can use
+  the same hook for private font collections. Remote font loading is
+  intentionally out of scope.
+  Native text providers should use `NativePlatformTextProvider::new` plus the
+  `NativeGlyphPlacement::new`, `NativeTextLayout::new`, and
+  `NativeRasterGlyph::new` constructors from `render/wgpu`. Provider payloads
+  are opaque to the renderer, but glyph cache keys must include all
+  raster-affecting inputs such as glyph identity, font size, style, weight, and
+  scale. Measurement layouts must report valid metrics and monotonic caret
+  positions covering the input text; render layouts must report valid metrics
+  and glyph placements. Invalid layout or raster glyph data is rejected at the
+  renderer boundary and falls back to Cosmic.
 - `Milky2018/moon_accesskit` is the native accessibility tree representation
   used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
   Web continues to use its ARIA adapter.
