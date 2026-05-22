@@ -55,12 +55,25 @@ needs actual offscreen passes, mask composition, filter shaders, and GPU shader
 registry execution. Native color emoji remains an explicit gap. Text shaping is
 partial: `core/` keeps a Cosmic fallback measurer, macOS native WGPU injects a
 CoreText-backed platform text engine for measurement and glyph rasterization,
-Windows injects a DirectWrite scaffold provider, Linux has a
-fontconfig/HarfBuzz/FreeType scaffold provider ready for backend integration,
-and Web injects a Canvas-backed measurer that uses the same CSS `system-ui`
-family stack as text drawing. The Windows and Linux scaffolds intentionally
-return no platform layout/raster data today, so native WGPU validates the
-provider response and falls back to Cosmic until real engines are implemented.
+and native platform providers share `render/wgpu/text_protocol` for UTF-32 input
+encoding, versioned `FontSpec` payloads carrying size, weight, style, and the
+structured family stack, private versioned measurement payload parsing, a generic
+run-layout envelope for shaped glyph placements with platform-private raster
+payloads, a shared single-channel raster glyph parser, and a versioned
+registration payload encoder/decoder for embedded font bytes. CoreText then
+attempts installed named families from the structured family stack, maps generic
+families such as `ui-monospace`, `serif`, and `emoji` to suitable macOS fonts,
+falls back to system fonts for unavailable families, attempts process-local
+registration of app-provided font bytes under the requested family alias, uses
+CoreText glyph runs for glyph ids and positions before atlas upload, and its
+glyph payloads carry PostScript font identity so fallback-font glyph runs can be
+rasterized with the same font that shaped them. Windows injects a
+DirectWrite scaffold provider and Linux has a fontconfig/HarfBuzz/FreeType
+scaffold provider. Web injects a Canvas-backed measurer that uses the same CSS
+`system-ui` family stack as text drawing. The Windows and Linux native stubs
+intentionally return no platform layout/raster data today, so native WGPU
+validates the provider response and falls back to Cosmic until real engines are
+implemented.
 Full bidi, line breaking, and typography conformance are still follow-up work.
 Native image support is
 synchronous from the app model's

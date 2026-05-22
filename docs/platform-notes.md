@@ -61,7 +61,12 @@ Native WGPU text can use either the shared Moon Cosmic provider or a platform
 provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
 measurement and glyph rasterization; the Objective-C CoreText stub lives in
 `render/wgpu/coretext`, while the selectable Cosmic provider lives in
-`render/wgpu/cosmic`. `backend/macos` chooses between them through
+`render/wgpu/cosmic`. The CoreText provider consumes the shared native
+`FontSpec` payload, attempts named families from the structured family stack,
+maps generic CSS families such as `ui-monospace` and `serif` to suitable macOS
+fonts, registers app-provided font bytes under their requested family alias when
+CoreText accepts them, and falls back to the system font for unavailable names.
+`backend/macos` chooses between them through
 `run_app_with_options(..., options=MacosAppOptions::new(text_engine=...))` when
 creating the generic native WGPU renderer. `core` still owns only the neutral
 `FontSpec` and fallback measurer; it does not name concrete macOS font files.
@@ -86,7 +91,7 @@ are absent from the final link:
 ```moonbit
 link: {
   "native": {
-    "cc-link-flags": "-framework AppKit -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc"
+    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz"
   },
 },
 ```
@@ -108,9 +113,14 @@ requests. Text clipboard requests are implemented through the Win32
 boundary.
 Windows installs the sibling `render/wgpu/directwrite` provider through the same
 renderer/runtime boundary used by macOS CoreText. That provider is currently an
-explicit scaffold: it advertises the DirectWrite integration point while
-returning no platform layout/raster data, so `render/wgpu` falls back to Cosmic
-until the real DirectWrite engine lands.
+explicit scaffold using `render/wgpu/text_protocol` for UTF-32 input encoding,
+private versioned measurement payload parsing, a versioned registration payload,
+and a generic shaped-run envelope for glyph placements plus DirectWrite-private
+raster payloads. It also routes raster glyph bytes through the shared
+single-channel raster parser. Its native
+stub advertises the DirectWrite integration point while returning no platform
+layout/raster data, so `render/wgpu` falls back to Cosmic until the real
+DirectWrite engine lands.
 
 The expected archive extraction path is:
 
@@ -139,9 +149,11 @@ The Linux readiness blockers are:
 - Create a native WGPU surface path and resize contract for Linux.
 - Map clipboard, menus, file dialogs, and accessibility through host service
   contracts.
-- Implement the existing `render/wgpu/fontconfig` scaffold as a platform text
-  engine, expected to use fontconfig + HarfBuzz + FreeType or an equivalent
-  toolkit text stack, without changing `core` font defaults.
+- Replace the existing `render/wgpu/fontconfig` native stub with a real
+  fontconfig + HarfBuzz + FreeType implementation, or an equivalent toolkit text
+  stack, without changing `core` font defaults. The scaffold already uses the
+  same native-stub-backed `render/wgpu/text_protocol` measure/run/raster/register
+  payload boundary as DirectWrite.
 
 Keep the scaffold honest until those pieces exist.
 

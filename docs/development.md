@@ -127,14 +127,34 @@ frontends and tooling:
   `render/wgpu/directwrite` scaffold provider, Linux has the
   `render/wgpu/fontconfig` scaffold provider ready for a future host, and Web
   installs a browser Canvas-backed measurer that uses the same `system-ui` stack
-  as WebGPU text drawing. The Windows and Linux providers intentionally fall
-  back to Cosmic until their DirectWrite and fontconfig/HarfBuzz/FreeType
-  engines are implemented. Apps can register embedded font bytes through
+  as WebGPU text drawing. The CoreText provider uses shared
+  `render/wgpu/text_protocol` `FontSpec` payloads and measurement decoding,
+  attempts named families from the structured family stack before falling back to
+  system fonts, maps generic families such as `ui-monospace`, `serif`, and
+  `emoji` to suitable macOS fonts, then CoreText glyph runs for glyph ids and
+  positions before rasterizing into the shared atlas, while retaining a
+  renderer-private glyph payload boundary; glyph payloads include the CoreText
+  run's PostScript font identity so fallback font runs can be rasterized with
+  the same font that shaped them. The DirectWrite and
+  fontconfig/HarfBuzz/FreeType scaffolds use the same text protocol package for
+  native UTF-32 input encoding, versioned `FontSpec` payloads that carry size,
+  weight, style, and the structured family stack, private versioned measurement
+  payload parsing, and a generic run-layout envelope that converts shaped glyph
+  placements plus platform-private raster payloads into renderer glyph keys. The
+  same protocol package also parses single-channel raster glyph bitmaps for
+  providers that use the shared raster envelope, and it owns the versioned
+  embedded-font registration payload encoder/decoder so platform providers do
+  not need package-local ad hoc formats. Their native stubs return empty data
+  until the real platform implementations are wired. The Windows and Linux
+  providers intentionally fall back to Cosmic until their DirectWrite and
+  fontconfig/HarfBuzz/FreeType engines are implemented. Apps can register
+  embedded font bytes through
   `AppRuntime::register_font_data`; native WGPU forwards those bytes through the
   active text provider's `register_font_data` hook before keeping the Cosmic
-  fallback cache warm. CoreText v1 records no system-font registration state,
-  while future DirectWrite and fontconfig/HarfBuzz/FreeType providers can use
-  the same hook for private font collections. Remote font loading is
+  fallback cache warm. CoreText v1 consumes installed named families and attempts
+  process-local registration of app-provided font bytes under the requested
+  family alias; future DirectWrite and fontconfig/HarfBuzz/FreeType providers
+  can use the same hook for private font collections. Remote font loading is
   intentionally out of scope.
   Native hosts can choose the text engine at startup through
   `run_app_with_options(..., options=MacosAppOptions::new(text_engine=NativeTextEngineSetting::MoonCosmic))`

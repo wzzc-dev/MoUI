@@ -29,6 +29,7 @@ render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
 render/wgpu/cosmic/           Moon Cosmic provider for native wgpu text
 render/wgpu/coretext/         macOS CoreText provider for native wgpu text
+render/wgpu/text_protocol/    shared native measure/run/raster/register bytes protocol
 render/wgpu/directwrite/      Windows DirectWrite provider scaffold
 render/wgpu/fontconfig/       Linux fontconfig/HarfBuzz/FreeType provider scaffold
 render/webgpu_adapter/        browser WebGPU host-import renderer for wasm-gc
