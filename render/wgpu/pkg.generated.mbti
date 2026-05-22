@@ -15,6 +15,8 @@ pub fn create_with_host_surface(@render.RendererSurfaceMetrics, HostWgpuSurface)
 
 pub fn create_with_host_surface_and_text_engine(@render.RendererSurfaceMetrics, HostWgpuSurface, text_engine~ : NativeTextEngine) -> WgpuRenderer raise @wgpu_mbt.WgpuError
 
+pub fn native_cosmic_text_engine() -> NativeTextEngine
+
 pub fn native_platform_glyph_key(cache_key~ : String, payload~ : Bytes) -> NativeGlyphKey
 
 pub fn native_platform_text_engine(NativePlatformTextProvider) -> NativeTextEngine
@@ -66,6 +68,11 @@ pub fn NativeRasterGlyph::new(width~ : Int, height~ : Int, bearing_x~ : Int, bea
 pub struct NativeTextEngine {
   // private fields
 }
+
+pub(all) enum NativeTextEngineSetting {
+  MoonCosmic
+  PlatformDefault
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct NativeTextLayout {
   size : @core.Size

@@ -28,6 +28,58 @@ test "native text fallback font path covers cjk when available" {
 }
 
 ///|
+test "native text maps default font stack to ui fallback family" {
+  inspect(
+    native_text_family_for_font(@core.FontSpec::new()),
+    content="SystemUi",
+  )
+  inspect(
+    native_text_family_for_font(
+      @core.FontSpec::new(
+        families=@core.FontFamilyStack::new([
+          @core.FontFamily::UiSansSerif,
+          @core.FontFamily::SansSerif,
+        ]),
+      ),
+    ),
+    content="UiSansSerif",
+  )
+}
+
+///|
+test "native text replaces missing glyph cache key with cjk fallback" {
+  if @fs.path_exists(native_regular_font_path()) &&
+    @fs.path_exists(native_cjk_font_path()) {
+    let cache = NativeFontCache::new()
+    let run = @core.TextRun::new(
+      text="你",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=40.0),
+      font=@core.FontSpec::new(size=18.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    cache.ensure_fonts_for_font(run.font)
+    let (missing_key, _, _) = @moon_cosmic.CacheKey::new(
+      0,
+      0,
+      18.0F,
+      (0.0F, 0.0F),
+      500,
+      0U,
+    )
+    let glyph = @moon_cosmic.LayoutGlyph::new(
+      0, 1, 18.0F, 0, 500, 0, 0.0F, 0.0F, 18.0F, 0,
+    )
+    let fallback_key = native_text_cache_key_with_fallback(
+      cache, run, glyph, missing_key,
+    )
+    inspect(fallback_key.to_string() != missing_key.to_string(), content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
 test "native text resolves cjk glyph from fallback face" {
   if @fs.path_exists(native_regular_font_path()) &&
     @fs.path_exists(native_cjk_font_path()) {
@@ -782,9 +834,17 @@ test "native renderer keeps text logical vertices stable across dpr" {
   scale_two.render([command])
   assert_true(scale_one.text_vertices.length() > 0)
   assert_true(scale_two.text_vertices.length() > 0)
+  let delta = (text_vertex_x_to_pixel(scale_one.text_vertices[0], 320.0) -
+  text_vertex_x_to_pixel(scale_two.text_vertices[0], 320.0)).abs()
+  assert_true(delta <= 1.0)
   assert_true(
     scale_two.glyph_atlas.shelf_height > scale_one.glyph_atlas.shelf_height,
   )
+}
+
+///|
+fn text_vertex_x_to_pixel(vertex : TextVertex, width : Double) -> Double {
+  (vertex.x + 1.0) * width / 2.0
 }
 
 ///|

@@ -57,11 +57,15 @@ native host owns only AppKit window lifetime, CAMetalLayer surface creation,
 text-input session synchronization, renderer resize, and redraw requests.
 The macOS service bridge also routes text clipboard requests through
 `NSPasteboard` while preserving the shared `HostServiceBridge` contract.
-Native WGPU text uses a CoreText/CoreGraphics platform text engine on macOS for
-runtime measurement and glyph rasterization. The Objective-C CoreText stub lives
-in `render/wgpu/coretext`, and `backend/macos` only injects that provider when
-creating the generic native WGPU renderer. `core` still owns only the neutral
-`FontSpec` and fallback measurer; it does not name concrete macOS font files.
+Native WGPU text can use either the shared Moon Cosmic provider or a platform
+provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
+measurement and glyph rasterization; the Objective-C CoreText stub lives in
+`render/wgpu/coretext`, while the selectable Cosmic provider lives in
+`render/wgpu/cosmic`. `backend/macos` chooses between them through
+`run_app_with_text_engine(..., text_engine=NativeTextEngineSetting::MoonCosmic |
+PlatformDefault)` when creating the generic native WGPU renderer. `core` still
+owns only the neutral `FontSpec` and fallback measurer; it does not name
+concrete macOS font files.
 
 Packages that use `backend/macos` must link the macOS frameworks required by
 the Objective-C stubs during the final native link step. Missing surface/window

@@ -33,12 +33,26 @@ struct WindowsApp {
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
+  text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
 
 ///|
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
+  run_app_with_text_engine(
+    title,
+    runtime,
+    text_engine=@wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+  )
+}
+
+///|
+pub fn run_app_with_text_engine(
+  title : String,
+  runtime : @core.AppRuntime,
+  text_engine~ : @wgpu_renderer.NativeTextEngineSetting,
+) -> Unit {
   let event_loop = @win.EventLoop::new()
   let app = WindowsApp::{
     title,
@@ -47,11 +61,24 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
+    text_engine_setting: text_engine,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   event_loop.run_app(app)
+}
+
+///|
+fn windows_text_engine(
+  setting : @wgpu_renderer.NativeTextEngineSetting,
+) -> @wgpu_renderer.NativeTextEngine {
+  match setting {
+    @wgpu_renderer.NativeTextEngineSetting::MoonCosmic =>
+      @wgpu_cosmic.cosmic_text_engine()
+    @wgpu_renderer.NativeTextEngineSetting::PlatformDefault =>
+      @wgpu_directwrite.directwrite_text_engine()
+  }
 }
 
 ///|
@@ -209,7 +236,7 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
         @wgpu_renderer.create_with_host_surface_and_text_engine(
           renderer_metrics_from_host(metrics),
           create_windows_host_surface(window.window_handle()),
-          text_engine=@wgpu_directwrite.directwrite_text_engine(),
+          text_engine=windows_text_engine(self.text_engine_setting),
         ),
       ) catch {
         err => {
