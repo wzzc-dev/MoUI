@@ -134,6 +134,17 @@ Download it manually from:
 ```text
 https://github.com/gfx-rs/wgpu-native/releases/tag/v27.0.4.0
 ```
+### Showcase
+
+```powershell
+$env:PATH = "C:\msys64\ucrt64\bin;$env:PATH"
+$env:CC = "x86_64-w64-mingw32-gcc"
+$env:CXX = "x86_64-w64-mingw32-g++"
+$env:MBT_WGPU_NATIVE_ROOT = "$PWD\.local_deps\wgpu-native\v27.0.4.0\wgpu-windows-x86_64-gnu-release"
+moon run examples/showcase/windows --target native
+```
+
+### Markdown Editor
 
 Build the WYSIWYG Markdown editor with the static helper:
 

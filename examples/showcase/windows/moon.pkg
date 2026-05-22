@@ -1,0 +1,16 @@
+import {
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui/examples/showcase/app" @showcase_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-LC:/msys64/ucrt64/lib -Wl,--subsystem,windows -lz",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
