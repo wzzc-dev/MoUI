@@ -91,7 +91,6 @@ Useful focused commands:
 ```sh
 moon test render/wgpu --target native
 moon test render/webgpu_adapter --target wasm-gc
-moon test text/cosmic --target native
 moon test tests/tooling --target native
 moon test backend/web --target wasm-gc
 moon test examples/showcase/app --target native
@@ -115,10 +114,10 @@ moon build examples/markdown_editor/windows --target native
 MoUI keeps production runtime boundaries explicit when using Mooncakes
 frontends and tooling:
 
-- `Milky2018/moon_cosmic` lives behind `text/cosmic/`; `core/` remains
-  platform-neutral and does not import the Cosmic Text engine directly. The
-  native WGPU renderer also uses Cosmic for shaping, font fallback, cache keys,
-  and glyph pixels while keeping MoUI's GPU atlas and backend ownership.
+- `Milky2018/moon_cosmic` is the default `core` text measurement engine for
+  shared layout and caret positions. The native WGPU renderer also uses Cosmic
+  for shaping, font fallback, cache keys, and glyph pixels while keeping MoUI's
+  GPU atlas and backend ownership.
 - `Milky2018/moon_accesskit` is the native accessibility tree representation
   used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
   Web continues to use its ARIA adapter.

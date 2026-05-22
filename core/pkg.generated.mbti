@@ -24,8 +24,6 @@ pub fn required_field(message? : String) -> (String) -> String?
 
 pub fn resolve_gesture_arena(Array[GestureArenaMember]) -> GestureArenaResult
 
-pub fn text_layout_codepoint_advance(FontSpec, UInt) -> Double
-
 pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
 
 // Errors

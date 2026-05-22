@@ -236,11 +236,7 @@ fn rich_text_block_color(block : RichTextBlock, foreground : Color) -> Color {
 
 ///|
 fn rich_text_width(text : String, font : FontSpec) -> Double {
-  let mut width = 0.0
-  for ch in text {
-    width = width + text_layout_codepoint_advance(font, ch.to_uint())
-  }
-  width
+  measure_text_layout(TextLayoutInput::new(text~, font~)).size.width
 }
 
 ///|

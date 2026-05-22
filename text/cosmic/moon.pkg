@@ -1,8 +1,0 @@
-import {
-  "wzzc-dev/moui/core",
-  "Milky2018/moon_cosmic" @moon_cosmic,
-}
-
-options(
-  targets: { },
-)
