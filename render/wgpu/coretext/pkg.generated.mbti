@@ -2,19 +2,10 @@
 package "wzzc-dev/moui/render/wgpu/coretext"
 
 import {
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/render/wgpu",
 }
 
 // Values
-pub fn coretext_measure_layout(@core.TextLayoutInput) -> @wgpu.NativeTextLayout?
-
-pub fn coretext_raster_system_glyph(codepoint~ : Int, size~ : Double, weight~ : Int, style~ : @core.FontStyle, scale_factor~ : Double) -> @wgpu.NativeRasterGlyph?
-
-pub fn coretext_scale_key(Double) -> Int
-
-pub fn coretext_size_key(Double) -> Int
-
 pub fn coretext_text_engine() -> @wgpu.NativeTextEngine
 
 // Errors

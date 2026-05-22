@@ -1,0 +1,57 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/render/wgpu/text_protocol"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render/wgpu",
+}
+
+// Values
+pub fn native_font_registration_bytes(family_name~ : Bytes, data~ : Bytes) -> Bytes
+
+pub fn native_font_registration_from_bytes(Bytes) -> NativeFontRegistrationPayload?
+
+pub let native_font_registration_protocol_version : Int
+
+pub fn native_font_spec_bytes(@core.FontSpec) -> Bytes
+
+pub fn native_font_spec_from_bytes(Bytes) -> NativeFontSpecPayload?
+
+pub let native_font_spec_protocol_version : Int
+
+pub fn native_font_style_code(@core.FontStyle) -> Int
+
+pub fn native_measure_layout_from_bytes(@core.TextLayoutInput, Bytes) -> @wgpu.NativeTextLayout?
+
+pub let native_measure_layout_protocol_version : Int
+
+pub fn native_raster_glyph_from_bytes(Bytes) -> @wgpu.NativeRasterGlyph?
+
+pub let native_raster_glyph_protocol_version : Int
+
+pub fn native_run_layout_from_bytes(Bytes) -> @wgpu.NativeTextLayout?
+
+pub let native_run_layout_protocol_version : Int
+
+pub fn native_utf32_bytes(String) -> Bytes
+
+// Errors
+
+// Types and methods
+pub(all) struct NativeFontRegistrationPayload {
+  family_name : Bytes
+  data : Bytes
+}
+
+pub(all) struct NativeFontSpecPayload {
+  size : Double
+  size_key : Int
+  weight : Int
+  style : @core.FontStyle
+  family_names : Array[Bytes]
+}
+
+// Type aliases
+
+// Traits
+
