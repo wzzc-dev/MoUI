@@ -394,11 +394,15 @@ fn ElementNode::render_with_environment(
         frame: bounds,
         measured_size: bounds.size,
         child_sizes: self.children.map(child => child.intrinsic_size()),
-        child_baselines: self.children.map(child => child.first_baseline()),
+        child_baselines: self.children.map(child => {
+          child.first_baseline(text_measurer=environment.text_measurer)
+        }),
         child_priorities: self.children.map(child => child.layout_priority()),
         child_alignment_guides: custom_alignment_guides(
           self.children.map(child => child.intrinsic_size()),
-          self.children.map(child => child.first_baseline()),
+          self.children.map(child => {
+            child.first_baseline(text_measurer=environment.text_measurer)
+          }),
         ),
         cache: data.cache,
         cache_key: custom_layout_cache_key(

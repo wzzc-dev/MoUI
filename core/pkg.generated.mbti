@@ -12,6 +12,8 @@ pub fn hit_test(LayoutResult, Point) -> Bool
 
 pub fn layout_spec(ViewSpec, Rect) -> LayoutResult
 
+pub fn layout_spec_with_text_measurer(ViewSpec, Rect, text_measurer~ : TextMeasurer) -> LayoutResult
+
 pub fn measure_text_layout(TextLayoutInput) -> TextLayoutResult
 
 pub fn mount_view_spec(ViewSpec) -> ElementNode
@@ -633,8 +635,10 @@ pub fn ElementNode::focused_text_input(Self, ElementId, RenderNode, text_measure
 pub fn ElementNode::hit_test_path(Self, Point, RenderNode) -> HitTestResult
 pub fn ElementNode::intrinsic_size(Self) -> Size
 pub fn ElementNode::measure(Self, Constraints) -> MeasuredNode
+pub fn ElementNode::measure_with_text_measurer(Self, Constraints, text_measurer~ : TextMeasurer) -> MeasuredNode
 pub fn ElementNode::next_focus(Self, current~ : ElementId?, reverse~ : Bool) -> ElementId?
 pub fn ElementNode::place(Self, Rect) -> PlacedNode
+pub fn ElementNode::place_with_text_measurer(Self, Rect, text_measurer~ : TextMeasurer) -> PlacedNode
 pub fn ElementNode::render(Self, Rect) -> RenderNode
 pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?, environment? : Environment) -> RenderNode
 pub fn ElementNode::render_focused_with_text_measurer(Self, Rect, focused~ : ElementId?, environment? : Environment, text_measurer~ : TextMeasurer) -> RenderNode

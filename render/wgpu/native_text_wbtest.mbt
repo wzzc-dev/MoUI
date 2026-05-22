@@ -149,6 +149,48 @@ fn bytes_has_nonzero(bytes : Bytes) -> Bool {
 }
 
 ///|
+fn glyph_nonzero_row_bounds(glyph : NativeRasterGlyph) -> (Int, Int)? {
+  let mut min_y = glyph.height
+  let mut max_y = -1
+  for y in 0..<glyph.height {
+    for x in 0..<glyph.width {
+      if glyph.pixels[y * glyph.width + x] != b'\x00' {
+        min_y = min_y.min(y)
+        max_y = max_y.max(y)
+      }
+    }
+  }
+  if max_y >= 0 {
+    Some((min_y, max_y))
+  } else {
+    None
+  }
+}
+
+///|
+fn atlas_entry_nonzero_row_bounds(
+  atlas : GlyphAtlas,
+  entry : GlyphAtlasEntry,
+) -> (Int, Int)? {
+  let mut min_y = entry.height
+  let mut max_y = -1
+  for y in 0..<entry.height {
+    for x in 0..<entry.width {
+      let offset = ((entry.y + y) * atlas.width + entry.x + x) * 4 + 3
+      if atlas.pixels[offset] != b'\x00' {
+        min_y = min_y.min(y)
+        max_y = max_y.max(y)
+      }
+    }
+  }
+  if max_y >= 0 {
+    Some((min_y, max_y))
+  } else {
+    None
+  }
+}
+
+///|
 fn text_vertices_have_visible_position(vertices : Array[TextVertex]) -> Bool {
   for vertex in vertices {
     if vertex.x >= -1.0 &&
@@ -215,6 +257,57 @@ test "native text engine keeps cosmic fallback path available" {
 }
 
 ///|
+test "native text engine falls back when platform glyph raster fails" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let cache = NativeFontCache::new_with_engine(
+      NativeTextEngine::coretext_system(),
+    )
+    let atlas = GlyphAtlas::new(width=atlas_width, height=atlas_height)
+    let run = @core.TextRun::new(
+      text="fallback",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let vertices : Array[TextVertex] = []
+    let bad_platform_layout = {
+      size: @core.Size::new(width=64.0, height=20.0),
+      baseline: 14.0,
+      caret_positions: [],
+      glyphs: [
+        {
+          key: coretext_native_glyph_key({
+            codepoint: 0x110000,
+            size_key: native_coretext_size_key(16.0),
+            weight: 500,
+            style: @core.FontStyle::Normal,
+            scale_key: native_coretext_scale_key(1.0),
+          }),
+          x: 0.0,
+          y: 0.0,
+        },
+      ],
+    }
+    let atlas_full = append_text_layout_or_fallback(
+      cache,
+      atlas,
+      run,
+      native_paint_state_default(),
+      @core.Size::new(width=320.0, height=120.0),
+      1.0,
+      bad_platform_layout,
+      vertices,
+    )
+    inspect(atlas_full, content="false")
+    inspect(vertices.length() > 0, content="true")
+    inspect(glyph_atlas_entry_count(atlas) > 0, content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
 test "coretext text engine rasterizes system glyphs" {
   let key = {
     codepoint: 'a'.to_int(),
@@ -232,6 +325,31 @@ test "coretext text engine rasterizes system glyphs" {
       inspect(glyph.bearing_x > -128 && glyph.bearing_x < 128, content="true")
       inspect(glyph.bearing_y > -128 && glyph.bearing_y < 128, content="true")
     }
+    None => inspect("missing", content="available")
+  }
+}
+
+///|
+test "coretext raster glyph rows follow top-left baseline convention" {
+  let key = {
+    codepoint: 'H'.to_int(),
+    size_key: native_coretext_size_key(32.0),
+    weight: 700,
+    style: @core.FontStyle::Normal,
+    scale_key: native_coretext_scale_key(1.0),
+  }
+  match coretext_raster_glyph(key) {
+    Some(glyph) =>
+      match glyph_nonzero_row_bounds(glyph) {
+        Some((min_row, max_row)) => {
+          let baseline_row = -glyph.bearing_y
+          inspect(min_row > 0, content="true")
+          inspect(baseline_row > 0, content="true")
+          inspect(baseline_row < glyph.height, content="true")
+          inspect(max_row < baseline_row, content="true")
+        }
+        None => fail("expected non-empty coretext glyph alpha")
+      }
     None => inspect("missing", content="available")
   }
 }
@@ -259,6 +377,48 @@ test "native renderer builds text vertices and atlas entries" {
     content="true",
   )
   inspect(glyph_atlas_entry_count(renderer.glyph_atlas) > 0, content="true")
+}
+
+///|
+test "native renderer blits coretext glyph rows away from atlas top edge" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=200.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawText({
+      text: "H",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=48.0),
+      font: @core.FontSpec::new(size=32.0, weight=700),
+      color: @core.Color::black(),
+      align: @core.TextAlign::TextStart,
+    }),
+  ])
+  inspect(renderer.draw_items.length(), content="1")
+  assert_true(renderer.draw_items[0] is NativeDrawItem::NativeText(_, _, _))
+  let key = coretext_glyph_cache_key({
+    codepoint: 'H'.to_int(),
+    size_key: native_coretext_size_key(32.0),
+    weight: 700,
+    style: @core.FontStyle::Normal,
+    scale_key: native_coretext_scale_key(1.0),
+  })
+  match renderer.glyph_atlas.entries.get(key) {
+    Some(entry) =>
+      match atlas_entry_nonzero_row_bounds(renderer.glyph_atlas, entry) {
+        Some((min_row, max_row)) => {
+          let baseline_row = -entry.bearing_y
+          inspect(min_row > 0, content="true")
+          inspect(baseline_row > 0, content="true")
+          inspect(baseline_row < entry.height, content="true")
+          inspect(max_row < baseline_row, content="true")
+        }
+        None => fail("expected non-empty atlas glyph alpha")
+      }
+    None => fail("expected coretext H glyph atlas entry")
+  }
 }
 
 ///|

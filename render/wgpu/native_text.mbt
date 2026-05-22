@@ -136,6 +136,12 @@ priv struct TextRunBuildResult {
 }
 
 ///|
+priv enum TextRunAppendResult {
+  TextRunAppendComplete(Bool)
+  TextRunAppendNeedsFallback
+}
+
+///|
 fn NativeFontCache::new() -> NativeFontCache {
   NativeFontCache::new_with_engine(NativeTextEngine::coretext_system())
 }
@@ -429,9 +435,19 @@ fn NativeTextEngine::layout_with_fallback(
   run : @core.TextRun,
   scale_factor : Double,
 ) -> NativeTextLayout? {
+  self.fallback_layout_run(cache, run, scale_factor)
+}
+
+///|
+fn NativeTextEngine::fallback_layout_run(
+  self : NativeTextEngine,
+  cache : NativeFontCache,
+  run : @core.TextRun,
+  scale_factor : Double,
+) -> NativeTextLayout? {
   match self.fallback {
     Some(CosmicFallback) => cache.cosmic_layout_for_run(run, scale_factor)
-    _ => cache.cosmic_layout_for_run(run, scale_factor)
+    _ => None
   }
 }
 
@@ -1021,52 +1037,109 @@ fn append_text_run_vertices(
   vertices : Array[TextVertex],
 ) -> Bool {
   match cache.text_engine.layout_run(cache, run, scale_factor) {
-    Some(layout) => {
-      if layout.glyphs.is_empty() && !run.text.is_empty() {
-        return false
-      }
-      let start_extra = text_align_extra(
-        run.align,
-        run.frame.size.width,
-        layout.size.width,
+    Some(layout) =>
+      append_text_layout_or_fallback(
+        cache, atlas, run, state, size, scale_factor, layout, vertices,
       )
-      let vertical_extra = native_text_vertical_extra(run.frame, layout)
-      let scale = native_text_scale(scale_factor)
-      let mut ready_count = 0
-      for glyph in layout.glyphs {
-        match atlas.ensure_glyph(cache, glyph.key) {
-          GlyphReady(entry) =>
-            if entry.width > 0 && entry.height > 0 {
-              ready_count = ready_count + 1
-              append_text_quad(
-                vertices,
-                run.frame.origin.x +
-                start_extra +
-                glyph.x +
-                entry.bearing_x.to_double() / scale,
-                run.frame.origin.y +
-                vertical_extra +
-                layout.baseline +
-                glyph.y +
-                entry.bearing_y.to_double() / scale,
-                entry,
-                atlas,
-                state,
-                size,
-                scale,
-                run.color.multiply_alpha(state.opacity),
-              )
+    None => false
+  }
+}
+
+///|
+fn append_text_layout_or_fallback(
+  cache : NativeFontCache,
+  atlas : GlyphAtlas,
+  run : @core.TextRun,
+  state : NativePaintState,
+  size : @core.Size,
+  scale_factor : Double,
+  layout : NativeTextLayout,
+  vertices : Array[TextVertex],
+) -> Bool {
+  let attempt_vertices : Array[TextVertex] = []
+  match
+    append_text_layout_vertices(
+      cache, atlas, run, state, size, scale_factor, layout, attempt_vertices,
+    ) {
+    TextRunAppendComplete(atlas_full) => {
+      append_text_vertices(vertices, attempt_vertices)
+      atlas_full
+    }
+    TextRunAppendNeedsFallback =>
+      match cache.text_engine.fallback_layout_run(cache, run, scale_factor) {
+        None => false
+        Some(fallback_layout) => {
+          let fallback_vertices : Array[TextVertex] = []
+          match
+            append_text_layout_vertices(
+              cache, atlas, run, state, size, scale_factor, fallback_layout, fallback_vertices,
+            ) {
+            TextRunAppendComplete(atlas_full) => {
+              append_text_vertices(vertices, fallback_vertices)
+              atlas_full
             }
-          GlyphMissing => ()
-          GlyphAtlasFull => return true
+            TextRunAppendNeedsFallback => false
+          }
         }
       }
-      if ready_count == 0 && !run.text.is_empty() {
-        return false
-      }
-      false
+  }
+}
+
+///|
+fn append_text_layout_vertices(
+  cache : NativeFontCache,
+  atlas : GlyphAtlas,
+  run : @core.TextRun,
+  state : NativePaintState,
+  size : @core.Size,
+  scale_factor : Double,
+  layout : NativeTextLayout,
+  vertices : Array[TextVertex],
+) -> TextRunAppendResult {
+  let start_extra = text_align_extra(
+    run.align,
+    run.frame.size.width,
+    layout.size.width,
+  )
+  let vertical_extra = native_text_vertical_extra(run.frame, layout)
+  let scale = native_text_scale(scale_factor)
+  for glyph in layout.glyphs {
+    match atlas.ensure_glyph(cache, glyph.key) {
+      GlyphReady(entry) =>
+        if entry.width > 0 && entry.height > 0 {
+          append_text_quad(
+            vertices,
+            run.frame.origin.x +
+            start_extra +
+            glyph.x +
+            entry.bearing_x.to_double() / scale,
+            run.frame.origin.y +
+            vertical_extra +
+            layout.baseline +
+            glyph.y +
+            entry.bearing_y.to_double() / scale,
+            entry,
+            atlas,
+            state,
+            size,
+            scale,
+            run.color.multiply_alpha(state.opacity),
+          )
+        }
+      GlyphMissing => return TextRunAppendNeedsFallback
+      GlyphAtlasFull => return TextRunAppendComplete(true)
     }
-    None => false
+  }
+  TextRunAppendComplete(false)
+}
+
+///|
+fn append_text_vertices(
+  vertices : Array[TextVertex],
+  appended : Array[TextVertex],
+) -> Unit {
+  for vertex in appended {
+    vertices.push(vertex)
   }
 }
 

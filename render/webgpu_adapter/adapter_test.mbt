@@ -134,6 +134,7 @@ test "wgpu web renderer exposes host backed text measurer" {
     .measure_text(
       @core.TextLayoutInput::new(text="hi", font=@core.FontSpec::new(size=14.0)),
     )
+  inspect(renderer.text_measurer().id(), content="webgpu-wasm-host")
   inspect(measured.val, content="1")
   inspect(result.size.width, content="18")
   inspect(result.caret_positions.length(), content="3")

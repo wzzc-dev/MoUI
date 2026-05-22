@@ -57,3 +57,61 @@ test "runtime text measurer drives focused text input caret geometry" {
   inspect(input.caret_rect.origin.x, content="43")
   assert_true(calls.val > 0)
 }
+
+///|
+test "runtime text measurer drives custom layout baselines" {
+  let measured_baseline : Ref[Double?] = Ref(None)
+  let placed_baseline : Ref[Double?] = Ref(None)
+  let measurer = TextMeasurer::new(id="test-baseline", measure=input => {
+    let length = input.text.to_array().length()
+    let carets : Array[Double] = []
+    for index in 0..<(length + 1) {
+      carets.push(index.to_double() * 5.0)
+    }
+    {
+      size: Size::new(width=length.to_double() * 5.0, height=30.0),
+      baseline: 23.0,
+      caret_positions: carets,
+    }
+  })
+  let spec = ViewSpec::custom_layout(
+    children=[
+      ViewSpec::TextSpec({
+        key: None,
+        text: "Baseline",
+        size: Size::new(width=80.0, height=24.0),
+        font: FontSpec::new(size=16.0),
+        color: Color::black(),
+      }),
+    ],
+    measure=ctx => {
+      measured_baseline.val = ctx.child_baselines[0]
+      Size::new(width=80.0, height=30.0)
+    },
+    place=ctx => {
+      placed_baseline.val = ctx.child_baselines[0]
+      [Rect::new(x=0.0, y=0.0, width=80.0, height=24.0)]
+    },
+  )
+  let runtime = RuntimeState::new_spec(
+    root=spec,
+    size=Size::new(width=80.0, height=30.0),
+  )
+  ignore(
+    layout_spec_with_text_measurer(
+      spec,
+      Rect::new(x=0.0, y=0.0, width=80.0, height=30.0),
+      text_measurer=measurer,
+    ),
+  )
+  match measured_baseline.val {
+    Some(value) => inspect(value, content="23")
+    None => fail("expected injected baseline in custom measure")
+  }
+  runtime.set_text_measurer(measurer)
+  ignore(runtime.build_draw_commands())
+  match placed_baseline.val {
+    Some(value) => inspect(value, content="23")
+    None => fail("expected injected baseline in custom place")
+  }
+}
