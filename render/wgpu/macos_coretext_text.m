@@ -195,8 +195,9 @@ moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t codepoint, double size
   if (CGRectIsNull(bounds)) {
     bounds = CGRectMake(0.0, -descent, advance, ascent + descent);
   }
-  int32_t width = (int32_t)ceil(bounds.size.width + 4.0 * scale);
-  int32_t height = (int32_t)ceil(ascent + descent + leading + 4.0 * scale);
+  double padding = 2.0 * scale;
+  int32_t width = (int32_t)ceil(bounds.size.width + padding * 2.0);
+  int32_t height = (int32_t)ceil(ascent + descent + leading + padding * 2.0);
   if (width <= 0 || height <= 0 || width > 2048 || height > 2048) {
     CFRelease(line);
     CFRelease(font);
@@ -207,8 +208,8 @@ moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t codepoint, double size
   uint8_t *dst = (uint8_t *)out;
   moui_write_i32_le(dst, width);
   moui_write_i32_le(dst + 4, height);
-  moui_write_i32_le(dst + 8, (int32_t)floor(bounds.origin.x - 2.0 * scale));
-  moui_write_i32_le(dst + 12, (int32_t)floor(-ascent - 2.0 * scale));
+  moui_write_i32_le(dst + 8, (int32_t)floor(bounds.origin.x - padding));
+  moui_write_i32_le(dst + 12, (int32_t)floor(-(ascent + padding)));
   moui_write_i32_le(dst + 16, MOUI_CORETEXT_RASTER_VERSION);
   moui_write_i32_le(dst + 20, 0);
   moui_write_double_le(dst + 24, advance / scale);
@@ -224,7 +225,8 @@ moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t codepoint, double size
   CGContextSetAllowsAntialiasing(ctx, true);
   CGContextSetShouldAntialias(ctx, true);
   CGContextSetGrayFillColor(ctx, 1.0, 1.0);
-  CGContextTranslateCTM(ctx, 2.0 * scale - bounds.origin.x, 2.0 * scale + ascent);
+  CGContextSetTextMatrix(ctx, CGAffineTransformIdentity);
+  CGContextTranslateCTM(ctx, padding - bounds.origin.x, height - (padding + ascent));
   CTLineDraw(line, ctx);
   CGContextRelease(ctx);
   CFRelease(line);
