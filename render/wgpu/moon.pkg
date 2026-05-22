@@ -3,6 +3,7 @@ import {
   "wzzc-dev/moui/render" @render,
   "Milky2018/wgpu_mbt" @wgpu_mbt,
   "Milky2018/moon_cosmic" @moon_cosmic,
+  "Milky2018/moon_swash" @moon_swash,
   "moonbitlang/x/fs" @fs,
   "moonbitlang/core/encoding/base64" @base64,
   "mizchi/image" @image,
@@ -14,5 +15,6 @@ options(
   link: {
     "native": { "cc-link-flags": "-framework AppKit -framework QuartzCore -lz" },
   },
+  "native-stub": [ "macos_coretext_text.m" ],
   targets: { },
 )

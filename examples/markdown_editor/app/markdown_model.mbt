@@ -418,7 +418,7 @@ fn markdown_block_to_rich_text(
             text=block.text,
             font=Some({
               ..base,
-              family: "ui-monospace, monospace",
+              families: @core.FontFamilyStack::monospace(),
               size: base.size * 0.92,
             }),
           ),
@@ -473,7 +473,9 @@ fn markdown_inline_font(
     Code =>
       {
         ..font,
-        family: "SFMono-Regular, ui-monospace, Menlo, Consolas, monospace",
+        families: @core.FontFamilyStack::named("SFMono-Regular")
+        .with_fallback(@core.FontFamily::UiMonospace)
+        .with_fallback(@core.FontFamily::Monospace),
         size: font.size * 0.92,
       }
     Plain => font

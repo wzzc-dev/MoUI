@@ -192,8 +192,9 @@ predictably:
 ```
 
 The first paints the background outside the padding; the second paints it
-inside. `font`, `foreground`, and `corner_radius` flow through a render
-environment, while layout and paint modifiers stay as ordered wrappers.
+inside. `font`, `foreground`, `corner_radius`, and the runtime text measurer
+flow through the render environment, while layout and paint modifiers stay as
+ordered wrappers.
 MoUI currently supports background brushes, opacity, shadow, border, offset,
 clip, scale, disabled, accessibility labels, semantics roles, focusability,
 tap actions, keyboard shortcuts, and simple flexible/alignment wrappers in

@@ -28,7 +28,7 @@ Status meanings:
 | Filter effect | partial | partial | `PushFilter` / `PopFilter` now model blur, color, and contrast-style effects; shader pass execution remains follow-up work. |
 | Path/vector | ready | ready | `DrawPath` models move/line/quad/cubic/close verbs and is lowered through `moon_zeno` into fill and stroke triangle vertices before renderer execution. |
 | Shader effect | partial | partial | `DrawShaderEffect` resolves through a shared registry with built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`; GPU shader execution and host ABI remain follow-up work. |
-| Text shaping | partial | partial | Core text measurement and native WGPU rendering use `moon_cosmic`; native WGPU additionally uses Cosmic for fallback, cache keys, and glyph pixels. Full bidi, line breaking, and typography conformance remain follow-up work. |
+| Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime measurement is injectable: `core` keeps a Cosmic fallback, macOS native WGPU uses a CoreText-backed platform text engine, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. Windows DirectWrite and Linux fontconfig/HarfBuzz/FreeType engines remain planned behind the same boundary. Full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
 | Async image | partial | partial | Renderer-neutral lifecycle records now model loading, ready, failed, disposed, and eviction; native/Web adapters still need to surface those diagnostics to app code. |
 
@@ -53,11 +53,13 @@ also exposes a command fallback planner that reports planned skips, unbalanced
 pops, and open advanced scopes for native and WebGPU adapters. Native wgpu still
 needs actual offscreen passes, mask composition, filter shaders, and GPU shader
 registry execution. Native color emoji remains an explicit gap. Text shaping is
-partial: `core/` uses `moon_cosmic` for platform-neutral text measurement, and
-native WGPU uses `moon_cosmic` for shaping, font fallback, cache keys, and glyph
-pixels while MoUI keeps the GPU atlas, vertex generation, texture upload, and
-renderer backend. Full bidi, line breaking, and typography conformance are
-still follow-up work. Native image support is synchronous from the app model's
+partial: `core/` keeps a Cosmic fallback measurer, macOS native WGPU injects a
+CoreText-backed platform text engine for measurement and glyph rasterization,
+and Web injects a Canvas-backed measurer that uses the same CSS `system-ui`
+family stack as text drawing. Windows and Linux keep the fallback path until
+their platform text engines are implemented. Full bidi, line breaking, and
+typography conformance are still follow-up work. Native image support is
+synchronous from the app model's
 point of view; the shared image lifecycle record can represent loading, ready,
 failed, disposed, and evicted resources, but native adapter diagnostics are not
 surfaced to app code yet.

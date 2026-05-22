@@ -37,8 +37,10 @@ constructors and platform event conversion.
 The Web path is the canonical browser target: `wasm-gc + window/web + browser
 WebGPU host imports`. It requires browser WebGPU. Startup fails clearly if
 `navigator.gpu`, an adapter, or a device is unavailable. There is no JS-target
-fallback branch. Browser font APIs may be used to populate hidden glyph atlas
-bitmaps, but visible text composition is performed by WebGPU.
+fallback branch. Browser Canvas measurement and WebGPU glyph drawing share the
+same CSS `system-ui` font stack generated from `FontSpec`; app-registered embedded fonts
+can be surfaced through browser font APIs, but remote font loading is not part
+of the backend contract.
 
 The reusable browser runtime assets live under `backend/web/*.js`. Each
 `examples/*/web_wasm/` package is only the app-specific Web entrypoint and
@@ -55,6 +57,9 @@ native host owns only AppKit window lifetime, CAMetalLayer surface creation,
 text-input session synchronization, renderer resize, and redraw requests.
 The macOS service bridge also routes text clipboard requests through
 `NSPasteboard` while preserving the shared `HostServiceBridge` contract.
+Native WGPU text uses a CoreText/CoreGraphics platform text engine on macOS for
+runtime measurement and glyph rasterization. `core` still owns only the neutral
+`FontSpec` and fallback measurer; it does not name concrete macOS font files.
 
 Packages that use `backend/macos` must link the macOS frameworks required by
 the Objective-C stubs during the final native link step. Missing symbols such
@@ -85,6 +90,9 @@ surface creation, resize handling, text-input session synchronization, and redra
 requests. Text clipboard requests are implemented through the Win32
 `CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
 boundary.
+Windows text currently uses the shared fallback path; the intended native text
+engine is DirectWrite behind the same renderer/runtime boundary used by macOS
+CoreText.
 
 The expected archive extraction path is:
 
@@ -113,6 +121,8 @@ The Linux readiness blockers are:
 - Create a native WGPU surface path and resize contract for Linux.
 - Map clipboard, menus, file dialogs, and accessibility through host service
   contracts.
+- Add a platform text engine, expected to be fontconfig + HarfBuzz + FreeType or
+  an equivalent toolkit text stack, without changing `core` font defaults.
 
 Keep the scaffold honest until those pieces exist.
 

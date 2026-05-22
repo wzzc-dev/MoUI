@@ -106,6 +106,44 @@ test "wgpu web renderer fails startup when host lacks capabilities" {
 }
 
 ///|
+test "wgpu web renderer exposes host backed text measurer" {
+  let measured = Ref(0)
+  let registered = Ref(0)
+  let port = test_port(
+    created=Ref(0),
+    on_measure=input => {
+      measured.val = measured.val + 1
+      {
+        size: @core.Size::new(
+          width=input.text.to_array().length().to_double() * 9.0,
+          height=18.0,
+        ),
+        baseline: 12.0,
+        caret_positions: [0.0, 9.0, 18.0],
+      }
+    },
+    on_register=(_family, _data) => registered.val = registered.val + 1,
+  )
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port~,
+  )
+  let result = renderer
+    .text_measurer()
+    .measure_text(
+      @core.TextLayoutInput::new(text="hi", font=@core.FontSpec::new(size=14.0)),
+    )
+  inspect(measured.val, content="1")
+  inspect(result.size.width, content="18")
+  inspect(result.caret_positions.length(), content="3")
+  renderer
+  .text_measurer()
+  .register_font_data(@core.FontFamily::Name("Acme"), Bytes::make(4, b'\x00'))
+  inspect(registered.val, content="1")
+}
+
+///|
 test "wgpu web command bridge covers image command in host ABI" {
   let calls = draw_commands_to_host_calls(
     [
@@ -275,6 +313,10 @@ fn test_port(
   created~ : Ref[Int],
   capabilities? : WebGpuHostCapabilities = required_capabilities(),
   on_resize? : () -> Unit = () => (),
+  on_measure? : (@core.TextLayoutInput) -> @core.TextLayoutResult = input => {
+    @core.measure_text_layout(input)
+  },
+  on_register? : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => (),
   on_submit? : (Array[WebGpuHostCall]) -> Unit = _ => (),
   on_dispose? : () -> Unit = () => (),
 ) -> WebGpuHostRendererPort {
@@ -286,6 +328,8 @@ fn test_port(
     },
     create_renderer: _surface => (),
     resize: _metrics => on_resize(),
+    measure_text: on_measure,
+    register_font_data: on_register,
     submit: calls => on_submit(calls),
     dispose: on_dispose,
   }

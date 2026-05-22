@@ -7,10 +7,37 @@ pub(all) struct Color {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum FontFamily {
+  Name(String)
+  SystemUi
+  UiSansSerif
+  UiSerif
+  UiMonospace
+  SansSerif
+  Serif
+  Monospace
+  Emoji
+  Math
+  FangSong
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct FontFamilyStack {
+  families : Array[FontFamily]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum FontStyle {
+  Normal
+  Italic
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct FontSpec {
-  family : String
+  families : FontFamilyStack
   size : Double
   weight : Int
+  style : FontStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -204,12 +231,114 @@ pub fn Color::multiply_alpha(self : Color, opacity : Double) -> Color {
 }
 
 ///|
+pub fn FontFamily::css_name(self : FontFamily) -> String {
+  match self {
+    Name(name) => name
+    SystemUi => "system-ui"
+    UiSansSerif => "ui-sans-serif"
+    UiSerif => "ui-serif"
+    UiMonospace => "ui-monospace"
+    SansSerif => "sans-serif"
+    Serif => "serif"
+    Monospace => "monospace"
+    Emoji => "emoji"
+    Math => "math"
+    FangSong => "fangsong"
+  }
+}
+
+///|
+pub fn FontFamily::css_token(self : FontFamily) -> String {
+  match self {
+    Name(name) =>
+      if font_family_name_needs_quotes(name) {
+        "\"" + name.replace(old="\"", new="\\\"") + "\""
+      } else {
+        name
+      }
+    _ => self.css_name()
+  }
+}
+
+///|
+fn font_family_name_needs_quotes(name : String) -> Bool {
+  name.contains(" ") || name.contains(",") || name.contains("\"")
+}
+
+///|
+pub fn FontFamilyStack::new(families : Array[FontFamily]) -> FontFamilyStack {
+  if families.is_empty() {
+    FontFamilyStack::system_ui()
+  } else {
+    { families, }
+  }
+}
+
+///|
+pub fn FontFamilyStack::system_ui() -> FontFamilyStack {
+  { families: [SystemUi] }
+}
+
+///|
+pub fn FontFamilyStack::sans_serif() -> FontFamilyStack {
+  { families: [SansSerif] }
+}
+
+///|
+pub fn FontFamilyStack::serif() -> FontFamilyStack {
+  { families: [Serif] }
+}
+
+///|
+pub fn FontFamilyStack::monospace() -> FontFamilyStack {
+  { families: [UiMonospace, Monospace] }
+}
+
+///|
+pub fn FontFamilyStack::named(name : String) -> FontFamilyStack {
+  { families: [FontFamily::Name(name)] }
+}
+
+///|
+pub fn FontFamilyStack::with_fallback(
+  self : FontFamilyStack,
+  family : FontFamily,
+) -> FontFamilyStack {
+  let families = self.families.copy()
+  families.push(family)
+  { families, }
+}
+
+///|
+pub fn FontFamilyStack::css(self : FontFamilyStack) -> String {
+  let parts : Array[String] = []
+  for family in self.families {
+    parts.push(family.css_token())
+  }
+  parts.join(", ")
+}
+
+///|
 pub fn FontSpec::new(
-  family? : String = "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif",
+  families? : FontFamilyStack = FontFamilyStack::system_ui(),
   size? : Double = 16.0,
   weight? : Int = 400,
+  style? : FontStyle = FontStyle::Normal,
 ) -> FontSpec {
-  { family, size, weight }
+  { families, size, weight, style }
+}
+
+///|
+pub fn FontSpec::css_family(self : FontSpec) -> String {
+  self.families.css()
+}
+
+///|
+pub fn FontSpec::css_style(self : FontSpec) -> String {
+  match self.style {
+    Normal => "normal"
+    Italic => "italic"
+  }
 }
 
 ///|

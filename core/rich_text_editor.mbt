@@ -42,10 +42,18 @@ fn append_rich_text_editor_commands(
       content,
       environment.font.unwrap_or(data.font),
       environment.foreground.unwrap_or(data.foreground),
+      environment.text_measurer,
     )
   }
   if focused {
-    append_rich_text_editor_cursor(commands, element, data, text, content)
+    append_rich_text_editor_cursor(
+      commands,
+      element,
+      data,
+      text,
+      content,
+      environment.text_measurer,
+    )
   }
   commands.push(PopClip)
 }
@@ -57,6 +65,7 @@ fn append_rich_text_blocks(
   content : Rect,
   base_font : FontSpec,
   foreground : Color,
+  text_measurer : TextMeasurer,
 ) -> Unit {
   let mut y = content.origin.y
   for block in document.blocks {
@@ -131,6 +140,7 @@ fn append_rich_text_blocks(
         ),
         base_font,
         foreground,
+        text_measurer,
       )
     }
     y = y + block_height
@@ -144,12 +154,13 @@ fn append_rich_text_block_runs(
   frame : Rect,
   base_font : FontSpec,
   foreground : Color,
+  text_measurer : TextMeasurer,
 ) -> Unit {
   let font = rich_text_block_font(block, base_font)
   let color = rich_text_block_color(block, foreground)
   let mut x = frame.origin.x
   if block.prefix != "" {
-    let width = rich_text_width(block.prefix, font)
+    let width = rich_text_width(block.prefix, font, text_measurer)
     commands.push(
       DrawText(
         TextRun::new(
@@ -171,7 +182,7 @@ fn append_rich_text_block_runs(
   for run in block.runs {
     let run_font = run.font.unwrap_or(font)
     let run_color = run.color.unwrap_or(color)
-    let width = rich_text_width(run.text, run_font)
+    let width = rich_text_width(run.text, run_font, text_measurer)
     let run_frame = Rect::new(
       x~,
       y=frame.origin.y,
@@ -235,8 +246,12 @@ fn rich_text_block_color(block : RichTextBlock, foreground : Color) -> Color {
 }
 
 ///|
-fn rich_text_width(text : String, font : FontSpec) -> Double {
-  measure_text_layout(TextLayoutInput::new(text~, font~)).size.width
+fn rich_text_width(
+  text : String,
+  font : FontSpec,
+  text_measurer : TextMeasurer,
+) -> Double {
+  text_measurer.measure_text(TextLayoutInput::new(text~, font~)).size.width
 }
 
 ///|
@@ -246,6 +261,7 @@ fn append_rich_text_editor_cursor(
   data : RichTextEditorViewSpec,
   text : String,
   content : Rect,
+  text_measurer : TextMeasurer,
 ) -> Unit {
   let caret = clamp_int(
     text_field_visual_caret(text, element, true),
@@ -257,6 +273,7 @@ fn append_rich_text_editor_cursor(
     caret,
     content,
     data.font,
+    text_measurer,
   )
   commands.push(
     FillRoundedRectBrush(
@@ -272,6 +289,7 @@ fn rich_text_caret_rect(
   caret : Int,
   content : Rect,
   font : FontSpec,
+  text_measurer : TextMeasurer,
 ) -> Rect {
   let chars = text.to_array()
   let caret = clamp_int(caret, 0, chars.length())
@@ -284,7 +302,7 @@ fn rich_text_caret_rect(
     }
   }
   let prefix = String::from_array(chars[column_start:caret])
-  let x = content.origin.x + rich_text_width(prefix, font)
+  let x = content.origin.x + rich_text_width(prefix, font, text_measurer)
   let line_height = font.size * 1.55
   Rect::new(
     x~,

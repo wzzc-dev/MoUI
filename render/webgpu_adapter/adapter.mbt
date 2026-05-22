@@ -79,6 +79,8 @@ pub(all) struct WebGpuHostRendererPort {
   create_surface : (String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError
   create_renderer : (WebGpuHostSurface) -> Unit raise WebGpuHostError
   resize : (@render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
+  measure_text : (@core.TextLayoutInput) -> @core.TextLayoutResult
+  register_font_data : (@core.FontFamily, Bytes) -> Unit
   submit : (Array[WebGpuHostCall]) -> Unit raise WebGpuHostError
   dispose : () -> Unit
 }
@@ -214,6 +216,15 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
         _ => raise WebGpuHostError::InvalidResource
       }
     },
+    measure_text: input => host_measure_text_layout(input),
+    register_font_data: (family, data) => {
+      ignore(
+        host_register_font_data(
+          host_string(family.css_token()),
+          host_string(@base64.encode(data[:])),
+        ),
+      )
+    },
     submit: calls => {
       match renderer_ref.val {
         Some(renderer) => submit_host_calls(renderer, calls)
@@ -306,6 +317,19 @@ pub fn WebGpuWasmRenderer::render(
   (self.port.submit)(calls)
   self.last_calls = calls
   self.present_count = self.present_count + 1
+}
+
+///|
+pub fn WebGpuWasmRenderer::text_measurer(
+  self : WebGpuWasmRenderer,
+) -> @core.TextMeasurer {
+  @core.TextMeasurer::new(
+    id="webgpu-wasm-host",
+    measure=input => (self.port.measure_text)(input),
+    register_font_data=(family, data) => {
+      (self.port.register_font_data)(family, data)
+    },
+  )
 }
 
 ///|
@@ -508,7 +532,8 @@ fn submit_host_calls(
             run.frame.origin.y,
             run.frame.size.width,
             run.frame.size.height,
-            host_string(run.font.family),
+            host_string(run.font.css_family()),
+            host_string(run.font.css_style()),
             run.font.size,
             run.font.weight,
             run.color.r,
@@ -672,6 +697,56 @@ fn raise_for_host_status(code : Int) -> Unit raise WebGpuHostError {
 }
 
 ///|
+fn host_measure_text_layout(
+  input : @core.TextLayoutInput,
+) -> @core.TextLayoutResult {
+  let text_chars = input.text.to_array()
+  let carets : Array[Double] = [0.0]
+  let prefix_chars : Array[Char] = []
+  for ch in text_chars {
+    prefix_chars.push(ch)
+    let prefix = String::from_array(prefix_chars)
+    carets.push(host_measure_text_width_for_input(input, prefix))
+  }
+  let measured_width = host_measure_text_width_for_input(input, input.text)
+  let width = match input.max_width {
+    Some(max_width) => measured_width.min(max_width)
+    None => measured_width
+  }
+  match input.max_width {
+    Some(max_width) =>
+      for index in 0..<carets.length() {
+        carets[index] = carets[index].min(max_width)
+      }
+    None => ()
+  }
+  {
+    size: @core.Size::new(width~, height=input.font.size * 1.25),
+    baseline: input.font.size * 0.8,
+    caret_positions: carets,
+  }
+}
+
+///|
+fn host_measure_text_width_for_input(
+  input : @core.TextLayoutInput,
+  text : String,
+) -> Double {
+  let measured = host_measure_text_width(
+    host_string(text),
+    host_string(input.font.css_family()),
+    host_string(input.font.css_style()),
+    input.font.size,
+    input.font.weight,
+  )
+  if measured > 0.0 {
+    measured
+  } else {
+    @core.measure_text_layout({ ..input, text, }).size.width
+  }
+}
+
+///|
 fn host_status_to_error(code : Int) -> WebGpuHostError {
   match code {
     1 => WebGpuHostError::Unavailable
@@ -710,6 +785,21 @@ fn host_adapter_ready() -> Bool = "webgpu" "adapter_ready"
 
 ///|
 fn host_can_render() -> Bool = "webgpu" "can_render"
+
+///|
+fn host_measure_text_width(
+  text : HostWebGpuString,
+  family : HostWebGpuString,
+  style : HostWebGpuString,
+  size : Double,
+  weight : Int,
+) -> Double = "webgpu" "measure_text_width"
+
+///|
+fn host_register_font_data(
+  family : HostWebGpuString,
+  base64_data : HostWebGpuString,
+) -> Int = "webgpu" "register_font_data"
 
 ///|
 fn host_create_surface(
@@ -891,6 +981,7 @@ fn host_draw_text(
   width : Double,
   height : Double,
   family : HostWebGpuString,
+  style : HostWebGpuString,
   size : Double,
   weight : Int,
   r : Double,

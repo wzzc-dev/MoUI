@@ -201,7 +201,9 @@ fn editor_source_layout(
 ///|
 fn source_preview_lines(text : String, theme : @core.Theme) -> @core.ViewSpec {
   let font = @core.FontSpec::new(
-    family="SFMono-Regular, ui-monospace, Menlo, Consolas, monospace",
+    families=@core.FontFamilyStack::named("SFMono-Regular")
+      .with_fallback(@core.FontFamily::UiMonospace)
+      .with_fallback(@core.FontFamily::Monospace),
     size=12.0,
     weight=400,
   )
