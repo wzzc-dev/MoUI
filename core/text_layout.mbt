@@ -13,6 +13,13 @@ pub(all) struct TextLayoutResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub struct TextMeasurer {
+  id : String
+  measure : (TextLayoutInput) -> TextLayoutResult
+  register_font_data : (FontFamily, Bytes) -> Unit
+}
+
+///|
 pub fn TextLayoutInput::new(
   text~ : String,
   font~ : FontSpec,
@@ -22,13 +29,58 @@ pub fn TextLayoutInput::new(
 }
 
 ///|
+pub fn TextMeasurer::new(
+  id~ : String,
+  measure~ : (TextLayoutInput) -> TextLayoutResult,
+  register_font_data? : (FontFamily, Bytes) -> Unit = (_family, _data) => (),
+) -> TextMeasurer {
+  { id, measure, register_font_data }
+}
+
+///|
+pub fn TextMeasurer::default() -> TextMeasurer {
+  TextMeasurer::new(
+    id="core-cosmic-default",
+    measure=default_measure_text_layout,
+  )
+}
+
+///|
+pub fn TextMeasurer::id(self : TextMeasurer) -> String {
+  self.id
+}
+
+///|
+pub fn TextMeasurer::measure_text(
+  self : TextMeasurer,
+  input : TextLayoutInput,
+) -> TextLayoutResult {
+  (self.measure)(input)
+}
+
+///|
+pub fn TextMeasurer::register_font_data(
+  self : TextMeasurer,
+  family : FontFamily,
+  data : Bytes,
+) -> Unit {
+  (self.register_font_data)(family, data)
+}
+
+///|
 pub fn measure_text_layout(input : TextLayoutInput) -> TextLayoutResult {
+  TextMeasurer::default().measure_text(input)
+}
+
+///|
+fn default_measure_text_layout(input : TextLayoutInput) -> TextLayoutResult {
   let metrics = @moon_cosmic.Metrics::new(
     Float::from_double(input.font.size),
     Float::from_double(input.font.size * 1.25),
   )
   let attrs = @moon_cosmic.Attrs::new()
     .family(text_layout_cosmic_family(input.font))
+    .style(text_layout_cosmic_style(input.font.style))
     .weight(@moon_cosmic.Weight::new(input.font.weight))
   let attrs_list = @moon_cosmic.AttrsList::new(attrs)
   let max_width = match input.max_width {
@@ -49,15 +101,31 @@ pub fn measure_text_layout(input : TextLayoutInput) -> TextLayoutResult {
 
 ///|
 fn text_layout_cosmic_family(font : FontSpec) -> @moon_cosmic.Family {
-  if font.family.contains("monospace") ||
-    font.family.contains("Mono") ||
-    font.family.contains("Menlo") ||
-    font.family.contains("Consolas") {
-    @moon_cosmic.Family::UiMonospace
-  } else if font.family != "" {
-    @moon_cosmic.Family::Name(font.family)
+  let family = if font.families.families.is_empty() {
+    FontFamily::SystemUi
   } else {
-    @moon_cosmic.Family::UiSansSerif
+    font.families.families[0]
+  }
+  match family {
+    Name(name) => @moon_cosmic.Family::Name(name)
+    SystemUi => @moon_cosmic.Family::SystemUi
+    UiSansSerif => @moon_cosmic.Family::UiSansSerif
+    UiSerif => @moon_cosmic.Family::UiSerif
+    UiMonospace => @moon_cosmic.Family::UiMonospace
+    SansSerif => @moon_cosmic.Family::SansSerif
+    Serif => @moon_cosmic.Family::Serif
+    Monospace => @moon_cosmic.Family::Monospace
+    Emoji => @moon_cosmic.Family::Emoji
+    Math => @moon_cosmic.Family::Math
+    FangSong => @moon_cosmic.Family::FangSong
+  }
+}
+
+///|
+fn text_layout_cosmic_style(style : FontStyle) -> @moon_swash.Style {
+  match style {
+    Normal => @moon_swash.Style::Normal
+    Italic => @moon_swash.Style::Italic
   }
 }
 

@@ -217,6 +217,11 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
           None
         }
       }
+      match renderer {
+        Some(renderer) =>
+          self.runtime.set_text_measurer(renderer.text_measurer())
+        None => ()
+      }
       self.renderer = renderer
       self.window = Some(window)
       window.request_redraw()

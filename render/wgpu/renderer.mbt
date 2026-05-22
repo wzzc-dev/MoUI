@@ -50,6 +50,11 @@ pub fn WgpuRenderer::render(
 }
 
 ///|
+pub fn WgpuRenderer::text_measurer(self : WgpuRenderer) -> @core.TextMeasurer {
+  native_text_measurer_with_cache(self.backend.font_cache)
+}
+
+///|
 pub fn WgpuRenderer::dispose(self : WgpuRenderer) -> Unit {
   self.backend.dispose()
 }

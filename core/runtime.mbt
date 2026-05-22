@@ -37,6 +37,28 @@ pub fn AppRuntime::environment(self : AppRuntime) -> Environment {
 }
 
 ///|
+pub fn AppRuntime::text_measurer(self : AppRuntime) -> TextMeasurer {
+  self.state.text_measurer()
+}
+
+///|
+pub fn AppRuntime::set_text_measurer(
+  self : AppRuntime,
+  text_measurer : TextMeasurer,
+) -> Unit {
+  self.state.set_text_measurer(text_measurer)
+}
+
+///|
+pub fn AppRuntime::register_font_data(
+  self : AppRuntime,
+  family : FontFamily,
+  data : Bytes,
+) -> Unit {
+  self.state.register_font_data(family, data)
+}
+
+///|
 pub fn AppRuntime::set_environment(
   self : AppRuntime,
   environment : Environment,

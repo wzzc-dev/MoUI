@@ -53,6 +53,11 @@ pub fn WebRenderer::render(
 }
 
 ///|
+pub fn WebRenderer::text_measurer(self : WebRenderer) -> @core.TextMeasurer {
+  self.renderer.text_measurer()
+}
+
+///|
 pub fn WebRenderer::dispose(self : WebRenderer) -> Unit {
   self.renderer.dispose()
 }

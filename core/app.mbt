@@ -12,6 +12,7 @@ pub(all) struct RuntimeState {
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
   mut environment : Environment
+  mut text_measurer : TextMeasurer
   mut redraw_callback : (() -> Unit)?
   mut action_commands : ActionCommandMap
   clock : Clock
@@ -101,6 +102,7 @@ pub fn RuntimeState::new_spec(
     dirty_elements: [],
     focused_element: None,
     environment,
+    text_measurer: TextMeasurer::default(),
     redraw_callback: None,
     action_commands: ActionCommandMap::new(),
     clock: Clock::new(),
@@ -136,6 +138,7 @@ pub fn RuntimeState::new_component(
     dirty_elements: [],
     focused_element: None,
     environment,
+    text_measurer: TextMeasurer::default(),
     redraw_callback: None,
     action_commands: ActionCommandMap::new(),
     clock: Clock::new(),
@@ -699,6 +702,38 @@ pub fn RuntimeState::environment(self : RuntimeState) -> Environment {
 }
 
 ///|
+pub fn RuntimeState::text_measurer(self : RuntimeState) -> TextMeasurer {
+  self.text_measurer
+}
+
+///|
+pub fn RuntimeState::set_text_measurer(
+  self : RuntimeState,
+  text_measurer : TextMeasurer,
+) -> Unit {
+  self.text_measurer = text_measurer
+  self.needs_layout = true
+  self.needs_paint = true
+  self.needs_redraw = true
+  self.element_tree.mark_subtree_layout_dirty()
+  self.mark_dirty(self.element_tree.id)
+}
+
+///|
+pub fn RuntimeState::register_font_data(
+  self : RuntimeState,
+  family : FontFamily,
+  data : Bytes,
+) -> Unit {
+  self.text_measurer.register_font_data(family, data)
+  self.needs_layout = true
+  self.needs_paint = true
+  self.needs_redraw = true
+  self.element_tree.mark_subtree_layout_dirty()
+  self.mark_dirty(self.element_tree.id)
+}
+
+///|
 pub fn RuntimeState::set_environment(
   self : RuntimeState,
   environment : Environment,
@@ -1001,7 +1036,12 @@ pub fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
   self.ensure_render_tree()
   match self.focused_element {
     Some(target) =>
-      match self.element_tree.focused_text_input(target, self.render_tree) {
+      match
+        self.element_tree.focused_text_input(
+          target,
+          self.render_tree,
+          text_measurer=self.text_measurer,
+        ) {
         Some(state) => state
         None => TextInputState::none()
       }
@@ -1111,10 +1151,11 @@ fn RuntimeState::ensure_render_tree(self : RuntimeState) -> Unit {
 ///|
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   self.rebuild_if_possible()
-  self.render_tree = self.element_tree.render_focused(
+  self.render_tree = self.element_tree.render_focused_with_text_measurer(
     Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
     focused=self.focused_element,
     environment=self.environment,
+    text_measurer=self.text_measurer,
   )
   self.needs_rebuild = false
   self.needs_layout = false

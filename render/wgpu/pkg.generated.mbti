@@ -15,6 +15,12 @@ pub fn create_with_host_surface(@render.RendererSurfaceMetrics, HostWgpuSurface)
 
 pub fn native_surface_contract() -> @render.WgpuSurfaceContract
 
+pub fn native_text_fallback_font_paths_for_spec(@core.FontSpec) -> Array[String]
+
+pub fn native_text_font_path_for_spec(@core.FontSpec) -> String
+
+pub fn native_text_measurer() -> @core.TextMeasurer
+
 // Errors
 
 // Types and methods
@@ -42,6 +48,7 @@ pub fn WgpuRenderer::last_batch_count(Self) -> Int
 pub fn WgpuRenderer::present_count(Self) -> Int
 pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
 pub fn WgpuRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit
+pub fn WgpuRenderer::text_measurer(Self) -> @core.TextMeasurer
 pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
 
 // Type aliases

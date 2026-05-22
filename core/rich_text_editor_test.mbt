@@ -48,7 +48,7 @@ fn styled_rich_text_editor(value : Binding[String]) -> ViewSpec {
               text="code",
               font=Some(
                 FontSpec::new(
-                  family="ui-monospace, monospace",
+                  families=FontFamilyStack::monospace(),
                   size=14.0,
                   weight=400,
                 ),

@@ -7,7 +7,7 @@ const VISUAL_STRIDE_FLOATS = 22;
 const TEXT_STRIDE_FLOATS = 8;
 const IMAGE_STRIDE_FLOATS = 9;
 const ATLAS_SIZE = 2048;
-const WEB_FONT_STACK = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif';
+const WEB_FONT_STACK = 'system-ui';
 
 export function createWebGpuImports(options = {}) {
   if (!options.device || !options.format) {
@@ -22,6 +22,8 @@ export function createWebGpuImports(options = {}) {
   let nextStringHandle = 1;
   let nextSurfaceHandle = 1;
   let nextRendererHandle = 1;
+  const measureCanvas = document.createElement("canvas");
+  const measureContext = measureCanvas.getContext("2d");
 
   const createStringHandle = value => {
     const handle = nextStringHandle++;
@@ -32,6 +34,17 @@ export function createWebGpuImports(options = {}) {
   const stringValue = handle => strings.get(handle)?.value ?? "";
   const ok = () => 0;
   const invalidResource = () => 6;
+
+  const base64ToUint8Array = value => {
+    try {
+      const binary = atob(`${value ?? ""}`);
+      const out = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
+      return out;
+    } catch {
+      return undefined;
+    }
+  };
 
   const getCanvas = id => {
     const canvas = document.getElementById(id);
@@ -419,12 +432,12 @@ export function createWebGpuImports(options = {}) {
 
   const ensureGlyph = (renderer, char, font) => {
     const dpr = Number(renderer.surface.scaleFactor) || 1;
-    const key = `${dpr}|${font.weight}|${font.size}|${font.family}|${char}`;
+    const key = `${dpr}|${font.style}|${font.weight}|${font.size}|${font.family}|${char}`;
     const cached = renderer.glyphs.get(key);
     if (cached) return cached;
     const ctx = renderer.glyphContext;
     const physicalSize = font.size * dpr;
-    ctx.font = `${font.weight} ${physicalSize}px ${font.family}`;
+    ctx.font = `${font.style} ${font.weight} ${physicalSize}px ${font.family}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     const metrics = ctx.measureText(char);
@@ -439,7 +452,7 @@ export function createWebGpuImports(options = {}) {
     if (!placed) return undefined;
     ctx.clearRect(0, 0, renderer.glyphCanvas.width, renderer.glyphCanvas.height);
     ctx.fillStyle = "white";
-    ctx.font = `${font.weight} ${physicalSize}px ${font.family}`;
+    ctx.font = `${font.style} ${font.weight} ${physicalSize}px ${font.family}`;
     ctx.fillText(char, left + padding, ascent + padding);
     const image = ctx.getImageData(0, 0, width, height);
     device.queue.writeTexture(
@@ -575,9 +588,46 @@ export function createWebGpuImports(options = {}) {
     return fontSize * 0.6;
   };
 
-  const pushTextRun = (renderer, text, x, y, width, height, family, size, weight, color, align) => {
+  const measureTextWidth = (text, family, style, size, weight) => {
     const font = {
       family: family || WEB_FONT_STACK,
+      style: style || "normal",
+      size: Math.max(1, Number(size) || 14),
+      weight: Number(weight) || 400,
+    };
+    const value = `${text ?? ""}`;
+    if (measureContext) {
+      measureContext.font = `${font.style} ${font.weight} ${font.size}px ${font.family}`;
+      const metrics = measureContext.measureText(value);
+      if (metrics.width > 0 || value.length === 0) return metrics.width;
+    }
+    let width = 0;
+    for (const char of value) width += textLayoutAdvance(char, font.size);
+    return width;
+  };
+
+  const registerFontData = (family, base64Data) => {
+    if (typeof FontFace !== "function" || !document.fonts) return invalidResource();
+    const data = base64ToUint8Array(base64Data);
+    if (!data || data.length === 0) return invalidResource();
+    const cssFamily = `${family || ""}`.replace(/^"|"$/g, "");
+    if (!cssFamily) return invalidResource();
+    try {
+      const blob = new Blob([data], { type: "font/ttf" });
+      const url = URL.createObjectURL(blob);
+      const face = new FontFace(cssFamily, `url(${url})`);
+      document.fonts.add(face);
+      face.load().catch(() => URL.revokeObjectURL(url));
+      return ok();
+    } catch {
+      return invalidResource();
+    }
+  };
+
+  const pushTextRun = (renderer, text, x, y, width, height, family, style, size, weight, color, align) => {
+    const font = {
+      family: family || WEB_FONT_STACK,
+      style: style || "normal",
       size: Math.max(1, Number(size) || 14),
       weight: Number(weight) || 400,
     };
@@ -752,6 +802,12 @@ export function createWebGpuImports(options = {}) {
     can_render() {
       return true;
     },
+    measure_text_width(text, family, style, size, weight) {
+      return measureTextWidth(stringValue(text), stringValue(family), stringValue(style), size, weight);
+    },
+    register_font_data(family, base64Data) {
+      return registerFontData(stringValue(family), stringValue(base64Data));
+    },
     create_surface(canvasId, width, height, scaleFactor) {
       const canvas = getCanvas(stringValue(canvasId));
       if (!canvas) return 0;
@@ -909,10 +965,10 @@ export function createWebGpuImports(options = {}) {
       pushVisualQuad(renderer, rect, Number(radius) + grow, 2, 0, blur, { x: rect.x, y: rect.y }, { x: rect.x + 1, y: rect.y }, { r, g, b, a }, { r, g, b, a });
       return ok();
     },
-    draw_text(rendererHandle, text, x, y, width, height, family, size, weight, r, g, b, a, align) {
+    draw_text(rendererHandle, text, x, y, width, height, family, style, size, weight, r, g, b, a, align) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
-      pushTextRun(renderer, stringValue(text), x, y, width, height, stringValue(family), size, weight, { r, g, b, a }, align);
+      pushTextRun(renderer, stringValue(text), x, y, width, height, stringValue(family), stringValue(style), size, weight, { r, g, b, a }, align);
       return ok();
     },
     draw_image(rendererHandle, source, x, y, width, height, opacity, fit) {

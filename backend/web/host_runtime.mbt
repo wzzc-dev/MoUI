@@ -148,6 +148,7 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
       )
       match renderer_result {
         Ok(renderer) => {
+          self.runtime.set_text_measurer(renderer.text_measurer())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
           self.renderer = Some(renderer)
           self.window = Some(window)

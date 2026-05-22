@@ -11,8 +11,22 @@ let atlas_padding : Int = 1
 priv struct NativeFontCache {
   mut font_system : @moon_cosmic.FontSystem
   swash_cache : @moon_cosmic.SwashCache
+  catalog : NativeFontCatalog
+  platform_engine : PlatformTextEngine
   loaded_paths : Map[String, Bool]
   warned_paths : Map[String, Bool]
+}
+
+///|
+priv enum PlatformTextEngine {
+  CoreText
+}
+
+///|
+priv struct NativeFontCatalog {
+  regular_path : String
+  bold_path : String
+  cjk_path : String
 }
 
 ///|
@@ -23,6 +37,38 @@ priv struct GlyphAtlasEntry {
   height : Int
   bearing_x : Int
   bearing_y : Int
+}
+
+///|
+priv struct CoreTextGlyphKey {
+  codepoint : Int
+  size_key : Int
+  weight : Int
+  style : @core.FontStyle
+  scale_key : Int
+}
+
+///|
+priv struct CoreTextGlyphPlacement {
+  key : CoreTextGlyphKey
+  x : Double
+}
+
+///|
+priv struct CoreTextLayout {
+  size : @core.Size
+  baseline : Double
+  caret_positions : Array[Double]
+  glyphs : Array[CoreTextGlyphPlacement]
+}
+
+///|
+priv struct CoreTextRasterGlyph {
+  width : Int
+  height : Int
+  bearing_x : Int
+  bearing_y : Int
+  pixels : Bytes
 }
 
 ///|
@@ -43,6 +89,7 @@ priv struct GlyphAtlas {
   mut entries : Map[@moon_cosmic.CacheKey, GlyphAtlasEntry]
   mut pixels : Array[Byte]
   mut dirty : Bool
+  mut coretext_entries : Map[String, GlyphAtlasEntry]
 }
 
 ///|
@@ -66,8 +113,12 @@ priv struct TextRunBuildResult {
 ///|
 fn NativeFontCache::new() -> NativeFontCache {
   {
-    font_system: @moon_cosmic.FontSystem::new(),
+    font_system: @moon_cosmic.FontSystem::new().set_fallback_profile(
+      @moon_cosmic.FallbackProfile::MacOS,
+    ),
     swash_cache: @moon_cosmic.SwashCache::new(),
+    catalog: NativeFontCatalog::platform_default(),
+    platform_engine: PlatformTextEngine::CoreText,
     loaded_paths: {},
     warned_paths: {},
   }
@@ -85,6 +136,7 @@ fn GlyphAtlas::new(width~ : Int, height~ : Int) -> GlyphAtlas {
     entries: {},
     pixels: Array::make(width * height * 4, b'\x00'),
     dirty: true,
+    coretext_entries: {},
   }
 }
 
@@ -94,6 +146,7 @@ fn GlyphAtlas::clear(self : GlyphAtlas) -> Unit {
   self.next_y = 0
   self.shelf_height = 0
   self.entries = {}
+  self.coretext_entries = {}
   self.pixels = Array::make(self.width * self.height * 4, b'\x00')
   self.dirty = true
 }
@@ -115,16 +168,12 @@ fn windows_bold_font_path() -> String {
 
 ///|
 fn macos_regular_font_path() -> String {
-  first_existing_font_path([
-    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc", "/System/Library/Fonts/Supplemental/Arial.ttf",
-  ])
+  first_existing_font_path(["/System/Library/Fonts/SFNSRounded.ttf"])
 }
 
 ///|
 fn macos_bold_font_path() -> String {
-  first_existing_font_path([
-    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc", "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  ])
+  first_existing_font_path(["/System/Library/Fonts/SFNSRounded.ttf"])
 }
 
 ///|
@@ -136,11 +185,7 @@ fn windows_cjk_font_path() -> String {
 
 ///|
 fn macos_cjk_font_path() -> String {
-  first_existing_font_path([
-    "/System/Library/Fonts/STHeiti Medium.ttc", "/System/Library/Fonts/STHeiti Light.ttc",
-    "/System/Library/Fonts/PingFang.ttc", "/System/Library/Fonts/Hiragino Sans GB.ttc",
-    "/System/Library/Fonts/Supplemental/Songti.ttc",
-  ])
+  first_existing_font_path(["/System/Library/Fonts/Hiragino Sans GB.ttc"])
 }
 
 ///|
@@ -162,6 +207,35 @@ fn native_cjk_font_path() -> String {
 }
 
 ///|
+fn NativeFontCatalog::platform_default() -> NativeFontCatalog {
+  {
+    regular_path: native_regular_font_path(),
+    bold_path: native_bold_font_path(),
+    cjk_path: native_cjk_font_path(),
+  }
+}
+
+///|
+fn NativeFontCatalog::font_path_for_spec(
+  self : NativeFontCatalog,
+  font : @core.FontSpec,
+) -> String {
+  if font.weight >= 600 {
+    self.bold_path
+  } else {
+    self.regular_path
+  }
+}
+
+///|
+fn NativeFontCatalog::fallback_font_paths_for_spec(
+  self : NativeFontCatalog,
+  font : @core.FontSpec,
+) -> Array[String] {
+  [self.font_path_for_spec(font), self.cjk_path]
+}
+
+///|
 fn first_existing_font_path(paths : Array[String]) -> String {
   for path in paths {
     if @fs.path_exists(path) {
@@ -172,19 +246,15 @@ fn first_existing_font_path(paths : Array[String]) -> String {
 }
 
 ///|
-fn native_text_font_path_for_spec(font : @core.FontSpec) -> String {
-  if font.weight >= 600 {
-    native_bold_font_path()
-  } else {
-    native_regular_font_path()
-  }
+pub fn native_text_font_path_for_spec(font : @core.FontSpec) -> String {
+  NativeFontCatalog::platform_default().font_path_for_spec(font)
 }
 
 ///|
-fn native_text_fallback_font_paths_for_spec(
+pub fn native_text_fallback_font_paths_for_spec(
   font : @core.FontSpec,
 ) -> Array[String] {
-  [native_text_font_path_for_spec(font), native_cjk_font_path()]
+  NativeFontCatalog::platform_default().fallback_font_paths_for_spec(font)
 }
 
 ///|
@@ -192,7 +262,7 @@ fn NativeFontCache::ensure_fonts_for_font(
   self : NativeFontCache,
   font : @core.FontSpec,
 ) -> Unit {
-  for path in native_text_fallback_font_paths_for_spec(font) {
+  for path in self.catalog.fallback_font_paths_for_spec(font) {
     self.load_font_path(path)
   }
 }
@@ -222,6 +292,23 @@ fn NativeFontCache::load_font_path(
       }
       self.loaded_paths[path] = true
     }
+  }
+}
+
+///|
+fn NativeFontCache::load_font_data(
+  self : NativeFontCache,
+  family : @core.FontFamily,
+  data : Bytes,
+) -> Unit {
+  let key = "registered:" + family.css_name()
+  let before = self.font_system.fonts().length()
+  self.font_system = self.font_system.load_font_data(data)
+  let after = self.font_system.fonts().length()
+  if after == before {
+    self.warn_font_once(key)
+  } else {
+    self.loaded_paths[key] = true
   }
 }
 
@@ -259,23 +346,216 @@ fn text_align_extra(
 }
 
 ///|
+fn native_i32_le(bytes : Bytes, offset : Int) -> Int {
+  if offset + 3 >= bytes.length() {
+    return 0
+  }
+  let b0 = bytes[offset].to_int()
+  let b1 = bytes[offset + 1].to_int()
+  let b2 = bytes[offset + 2].to_int()
+  let b3 = bytes[offset + 3].to_int()
+  let value = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)
+  if b3 >= 128 {
+    value - 2147483647 - 2147483647 - 2
+  } else {
+    value
+  }
+}
+
+///|
+fn native_double_le(bytes : Bytes, offset : Int) -> Double {
+  if offset + 7 >= bytes.length() {
+    return 0.0
+  }
+  let mut bits : UInt64 = 0UL
+  for index in 0..<8 {
+    bits = bits | (bytes[offset + index].to_uint64() << (index * 8))
+  }
+  bits.reinterpret_as_double()
+}
+
+///|
+fn native_utf32_bytes(text : String) -> Bytes {
+  let out : Array[Byte] = []
+  for ch in text {
+    let code = ch.to_int()
+    out.push((code & 0xFF).to_byte())
+    out.push(((code >> 8) & 0xFF).to_byte())
+    out.push(((code >> 16) & 0xFF).to_byte())
+    out.push(((code >> 24) & 0xFF).to_byte())
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn native_coretext_style_code(style : @core.FontStyle) -> Int {
+  match style {
+    @core.FontStyle::Normal => 0
+    @core.FontStyle::Italic => 1
+  }
+}
+
+///|
+fn native_coretext_size_key(size : Double) -> Int {
+  (size * 64.0).to_int()
+}
+
+///|
+fn native_coretext_scale_key(scale : Double) -> Int {
+  (scale * 64.0).to_int()
+}
+
+///|
+fn coretext_glyph_cache_key(key : CoreTextGlyphKey) -> String {
+  "ct:\{key.codepoint}:\{key.size_key}:\{key.weight}:\{native_coretext_style_code(key.style)}:\{key.scale_key}"
+}
+
+///|
+fn coretext_measure_layout(input : @core.TextLayoutInput) -> CoreTextLayout? {
+  let bytes = macos_coretext_measure_utf32(
+    native_utf32_bytes(input.text),
+    input.font.size,
+    input.font.weight,
+    native_coretext_style_code(input.font.style),
+  )
+  if bytes.length() < 24 {
+    return None
+  }
+  let count = native_i32_le(bytes, 0)
+  let _flags = native_i32_le(bytes, 4)
+  let height = native_double_le(bytes, 8)
+  let baseline = native_double_le(bytes, 16)
+  let caret_count = count + 1
+  if count < 0 || height <= 0.0 || baseline <= 0.0 || bytes.length() < 24 + caret_count * 8 {
+    return None
+  }
+  let carets : Array[Double] = []
+  for index in 0..<caret_count {
+    carets.push(native_double_le(bytes, 24 + index * 8))
+  }
+  let width = if carets.is_empty() { 0.0 } else { carets[carets.length() - 1] }
+  let final_width = match input.max_width {
+    Some(max_width) => width.min(max_width)
+    None => width
+  }
+  match input.max_width {
+    Some(max_width) =>
+      for index in 0..<carets.length() {
+        carets[index] = carets[index].min(max_width)
+      }
+    None => ()
+  }
+  Some({
+    size: @core.Size::new(width=final_width, height~),
+    baseline,
+    caret_positions: carets,
+    glyphs: [],
+  })
+}
+
+///|
+fn coretext_raster_glyph(key : CoreTextGlyphKey) -> CoreTextRasterGlyph? {
+  let bytes = macos_coretext_raster_glyph(
+    key.codepoint,
+    key.size_key.to_double() / 64.0,
+    key.weight,
+    native_coretext_style_code(key.style),
+    key.scale_key.to_double() / 64.0,
+  )
+  if bytes.length() < 32 {
+    return None
+  }
+  let width = native_i32_le(bytes, 0)
+  let height = native_i32_le(bytes, 4)
+  if width <= 0 || height <= 0 || bytes.length() < 32 + width * height {
+    return None
+  }
+  Some({
+    width,
+    height,
+    bearing_x: native_i32_le(bytes, 8),
+    bearing_y: native_i32_le(bytes, 12),
+    pixels: Bytes::from_array(bytes[32:].to_array()),
+  })
+}
+
+///|
+fn coretext_layout_for_run(
+  run : @core.TextRun,
+  scale_factor : Double,
+) -> CoreTextLayout? {
+  match
+    coretext_measure_layout(
+      @core.TextLayoutInput::new(
+        text=run.text,
+        font=run.font,
+        max_width=run.frame.size.width,
+      ),
+    ) {
+    Some(layout) => {
+      let glyphs : Array[CoreTextGlyphPlacement] = []
+      let chars = run.text.to_array()
+      let scale = native_text_scale(scale_factor)
+      let size_key = native_coretext_size_key(run.font.size)
+      let scale_key = native_coretext_scale_key(scale)
+      for index, ch in chars {
+        let x = if index < layout.caret_positions.length() {
+          layout.caret_positions[index]
+        } else {
+          0.0
+        }
+        glyphs.push({
+          key: {
+            codepoint: ch.to_int(),
+            size_key,
+            weight: run.font.weight,
+            style: run.font.style,
+            scale_key,
+          },
+          x,
+        })
+      }
+      Some({ ..layout, glyphs, })
+    }
+    None => None
+  }
+}
+
+///|
 fn native_text_attrs_for_font(font : @core.FontSpec) -> @moon_cosmic.Attrs {
   @moon_cosmic.Attrs::new()
   .family(native_text_family_for_font(font))
+  .style(native_text_style_for_font(font.style))
   .weight(@moon_cosmic.Weight::new(font.weight))
 }
 
 ///|
+fn native_text_style_for_font(style : @core.FontStyle) -> @moon_swash.Style {
+  match style {
+    @core.FontStyle::Normal => @moon_swash.Style::Normal
+    @core.FontStyle::Italic => @moon_swash.Style::Italic
+  }
+}
+
+///|
 fn native_text_family_for_font(font : @core.FontSpec) -> @moon_cosmic.Family {
-  if font.family.contains("monospace") ||
-    font.family.contains("Mono") ||
-    font.family.contains("Menlo") ||
-    font.family.contains("Consolas") {
-    @moon_cosmic.Family::UiMonospace
-  } else if font.family != "" {
-    @moon_cosmic.Family::Name(font.family)
+  let family = if font.families.families.is_empty() {
+    @core.FontFamily::SystemUi
   } else {
-    @moon_cosmic.Family::UiSansSerif
+    font.families.families[0]
+  }
+  match family {
+    @core.FontFamily::Name(name) => @moon_cosmic.Family::Name(name)
+    @core.FontFamily::SystemUi => @moon_cosmic.Family::SystemUi
+    @core.FontFamily::UiSansSerif => @moon_cosmic.Family::UiSansSerif
+    @core.FontFamily::UiSerif => @moon_cosmic.Family::UiSerif
+    @core.FontFamily::UiMonospace => @moon_cosmic.Family::UiMonospace
+    @core.FontFamily::SansSerif => @moon_cosmic.Family::SansSerif
+    @core.FontFamily::Serif => @moon_cosmic.Family::Serif
+    @core.FontFamily::Monospace => @moon_cosmic.Family::Monospace
+    @core.FontFamily::Emoji => @moon_cosmic.Family::Emoji
+    @core.FontFamily::Math => @moon_cosmic.Family::Math
+    @core.FontFamily::FangSong => @moon_cosmic.Family::FangSong
   }
 }
 
@@ -301,6 +581,157 @@ fn build_native_text_buffer(
   )
   .shape_all_with_font_system(cache.font_system)
   .layout_all_with_font_system(cache.font_system)
+}
+
+///|
+fn build_native_text_input_buffer(
+  cache : NativeFontCache,
+  input : @core.TextLayoutInput,
+) -> @moon_cosmic.Buffer {
+  cache.ensure_fonts_for_font(input.font)
+  let metrics = @moon_cosmic.Metrics::new(
+    Float::from_double(input.font.size),
+    Float::from_double(input.font.size * 1.25),
+  )
+  let attrs = native_text_attrs_for_font(input.font)
+  let text = native_text_cosmic_safe_text(input.text)
+  let max_width = match input.max_width {
+    Some(width) => Some(Float::from_double(width))
+    None => None
+  }
+  @moon_cosmic.Buffer::new(metrics)
+  .set_wrap(@moon_cosmic.Wrap::None)
+  .set_size(max_width, None)
+  .set_text(
+    text,
+    @moon_cosmic.AttrsList::new(attrs),
+    @moon_cosmic.Shaping::Advanced,
+  )
+  .shape_all_with_font_system(cache.font_system)
+  .layout_all_with_font_system(cache.font_system)
+}
+
+///|
+pub fn native_text_measurer() -> @core.TextMeasurer {
+  native_text_measurer_with_cache(NativeFontCache::new())
+}
+
+///|
+fn native_text_measurer_with_cache(
+  cache : NativeFontCache,
+) -> @core.TextMeasurer {
+  @core.TextMeasurer::new(
+    id="native-wgpu-cosmic",
+    measure=input => native_measure_text_layout(cache, input),
+    register_font_data=(family, data) => cache.load_font_data(family, data),
+  )
+}
+
+///|
+fn native_measure_text_layout(
+  cache : NativeFontCache,
+  input : @core.TextLayoutInput,
+) -> @core.TextLayoutResult {
+  if cache.platform_engine is PlatformTextEngine::CoreText {
+    match coretext_measure_layout(input) {
+      Some(layout) =>
+        return {
+          size: layout.size,
+          baseline: layout.baseline,
+          caret_positions: layout.caret_positions,
+        }
+      None => ()
+    }
+  }
+  let buffer = build_native_text_input_buffer(cache, input)
+  if !cache.has_loaded_fonts() {
+    return @core.measure_text_layout(input)
+  }
+  let raw = native_text_layout_result_from_cosmic(input, buffer)
+  match input.max_width {
+    Some(max_width) => native_clamp_text_layout_result(raw, max_width)
+    None => raw
+  }
+}
+
+///|
+fn native_text_layout_result_from_cosmic(
+  input : @core.TextLayoutInput,
+  buffer : @moon_cosmic.Buffer,
+) -> @core.TextLayoutResult {
+  let char_count = input.text.to_array().length()
+  let carets = Array::make(char_count + 1, 0.0)
+  let mut width = 0.0
+  let mut height = input.font.size * 1.25
+  let mut saw_run = false
+  for run in buffer.layout_runs() {
+    saw_run = true
+    width = width.max(run.line_w.to_double())
+    height = height.max((run.line_top + run.line_height).to_double())
+    for glyph in run.glyphs {
+      let start = native_clamp_int(glyph.start, 0, char_count)
+      let end = native_clamp_int(glyph.end, start, char_count)
+      let left = glyph.x.to_double()
+      let right = (glyph.x + glyph.w).to_double()
+      if start < carets.length() {
+        carets[start] = carets[start].max(left)
+      }
+      if end < carets.length() {
+        carets[end] = carets[end].max(right)
+      }
+    }
+  }
+  if !saw_run || (char_count > 0 && carets[char_count] == 0.0) {
+    return @core.measure_text_layout(input)
+  }
+  native_fill_missing_caret_positions(carets)
+  {
+    size: @core.Size::new(width~, height~),
+    baseline: input.font.size * 0.8,
+    caret_positions: carets,
+  }
+}
+
+///|
+fn native_fill_missing_caret_positions(carets : Array[Double]) -> Unit {
+  let mut last = 0.0
+  for index in 0..<carets.length() {
+    if carets[index] < last {
+      carets[index] = last
+    } else {
+      last = carets[index]
+    }
+  }
+}
+
+///|
+fn native_clamp_text_layout_result(
+  result : @core.TextLayoutResult,
+  max_width : Double,
+) -> @core.TextLayoutResult {
+  let carets : Array[Double] = []
+  for caret in result.caret_positions {
+    carets.push(caret.min(max_width))
+  }
+  {
+    size: @core.Size::new(
+      width=result.size.width.min(max_width),
+      height=result.size.height,
+    ),
+    baseline: result.baseline,
+    caret_positions: carets,
+  }
+}
+
+///|
+fn native_clamp_int(value : Int, min_value : Int, max_value : Int) -> Int {
+  if value < min_value {
+    min_value
+  } else if value > max_value {
+    max_value
+  } else {
+    value
+  }
 }
 
 ///|
@@ -382,6 +813,15 @@ fn append_text_run_vertices(
   scale_factor : Double,
   vertices : Array[TextVertex],
 ) -> Bool {
+  if cache.platform_engine is PlatformTextEngine::CoreText {
+    match
+      append_coretext_text_run_vertices(
+        atlas, run, state, size, scale_factor, vertices,
+      ) {
+      Some(atlas_full) => return atlas_full
+      None => ()
+    }
+  }
   let runs = native_text_layout_runs(cache, run)
   if runs.is_empty() || !cache.has_loaded_fonts() {
     return false
@@ -427,6 +867,64 @@ fn append_text_run_vertices(
 }
 
 ///|
+fn append_coretext_text_run_vertices(
+  atlas : GlyphAtlas,
+  run : @core.TextRun,
+  state : NativePaintState,
+  size : @core.Size,
+  scale_factor : Double,
+  vertices : Array[TextVertex],
+) -> Bool? {
+  match coretext_layout_for_run(run, scale_factor) {
+    Some(layout) => {
+      if layout.glyphs.is_empty() && !run.text.is_empty() {
+        return None
+      }
+      let start_extra = text_align_extra(
+        run.align,
+        run.frame.size.width,
+        layout.size.width,
+      )
+      let vertical_extra = (run.frame.size.height - layout.size.height).max(0.0) /
+        2.0
+      let mut ready_count = 0
+      for glyph in layout.glyphs {
+        match atlas.ensure_coretext_glyph(glyph.key) {
+          GlyphReady(entry) =>
+            if entry.width > 0 && entry.height > 0 {
+              ready_count = ready_count + 1
+              append_text_quad(
+                vertices,
+                run.frame.origin.x +
+                start_extra +
+                glyph.x +
+                entry.bearing_x.to_double() / native_text_scale(scale_factor),
+                run.frame.origin.y +
+                vertical_extra +
+                layout.baseline +
+                entry.bearing_y.to_double() / native_text_scale(scale_factor),
+                entry,
+                atlas,
+                state,
+                size,
+                native_text_scale(scale_factor),
+                run.color.multiply_alpha(state.opacity),
+              )
+            }
+          GlyphMissing => ()
+          GlyphAtlasFull => return Some(true)
+        }
+      }
+      if ready_count == 0 && !run.text.is_empty() {
+        return None
+      }
+      Some(false)
+    }
+    None => None
+  }
+}
+
+///|
 fn native_text_scale(scale_factor : Double) -> Double {
   if scale_factor > 0.0 {
     scale_factor
@@ -460,6 +958,39 @@ fn GlyphAtlas::ensure_glyph(
                 bearing_y: raster.bearing_y,
               }
               self.entries[cache_key] = entry
+              self.dirty = true
+              GlyphReady(entry)
+            }
+          }
+      }
+  }
+}
+
+///|
+fn GlyphAtlas::ensure_coretext_glyph(
+  self : GlyphAtlas,
+  key : CoreTextGlyphKey,
+) -> GlyphLookup {
+  let cache_key = coretext_glyph_cache_key(key)
+  match self.coretext_entries.get(cache_key) {
+    Some(entry) => GlyphReady(entry)
+    None =>
+      match coretext_raster_glyph(key) {
+        None => GlyphMissing
+        Some(raster) =>
+          match self.place_glyph(raster.width, raster.height) {
+            None => GlyphAtlasFull
+            Some((x, y)) => {
+              self.blit_coretext_glyph(x, y, raster)
+              let entry = {
+                x,
+                y,
+                width: raster.width,
+                height: raster.height,
+                bearing_x: raster.bearing_x,
+                bearing_y: raster.bearing_y,
+              }
+              self.coretext_entries[cache_key] = entry
               self.dirty = true
               GlyphReady(entry)
             }
@@ -567,6 +1098,27 @@ fn GlyphAtlas::blit_glyph(
 }
 
 ///|
+fn GlyphAtlas::blit_coretext_glyph(
+  self : GlyphAtlas,
+  dst_x : Int,
+  dst_y : Int,
+  raster : CoreTextRasterGlyph,
+) -> Unit {
+  for y in 0..<raster.height {
+    for x in 0..<raster.width {
+      let alpha = raster.pixels[y * raster.width + x]
+      if alpha != b'\x00' {
+        let dst = ((dst_y + y) * self.width + dst_x + x) * 4
+        self.pixels[dst] = b'\xff'
+        self.pixels[dst + 1] = b'\xff'
+        self.pixels[dst + 2] = b'\xff'
+        self.pixels[dst + 3] = alpha
+      }
+    }
+  }
+}
+
+///|
 fn append_text_quad(
   vertices : Array[TextVertex],
   x : Double,
@@ -650,6 +1202,24 @@ fn text_vertices_to_bytes(vertices : Array[TextVertex]) -> Bytes {
   }
   Bytes::from_array(out)
 }
+
+///|
+#borrow(utf32)
+extern "C" fn macos_coretext_measure_utf32(
+  utf32 : Bytes,
+  size : Double,
+  weight : Int,
+  style : Int,
+) -> Bytes = "moui_macos_coretext_measure_utf32"
+
+///|
+extern "C" fn macos_coretext_raster_glyph(
+  codepoint : Int,
+  size : Double,
+  weight : Int,
+  style : Int,
+  scale_factor : Double,
+) -> Bytes = "moui_macos_coretext_raster_glyph"
 
 ///|
 fn push_text_f32le(out : Array[Byte], value : Double) -> Unit {

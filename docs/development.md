@@ -114,10 +114,21 @@ moon build examples/markdown_editor/windows --target native
 MoUI keeps production runtime boundaries explicit when using Mooncakes
 frontends and tooling:
 
-- `Milky2018/moon_cosmic` is the default `core` text measurement engine for
-  shared layout and caret positions. The native WGPU renderer also uses Cosmic
-  for shaping, font fallback, cache keys, and glyph pixels while keeping MoUI's
-  GPU atlas and backend ownership.
+- `Milky2018/moon_cosmic` is the default `core` text measurement fallback.
+  `FontSpec` carries a structured family stack rather than a raw family string.
+  The default stack is just `SystemUi`; MoUI does not name concrete fonts unless
+  the app asks for them. Native and Web backends resolve that through their
+  platform system defaults.
+  Runtime text measurement is injectable: `core` keeps Cosmic as the fallback
+  measurer for headless tests and platforms without a real text engine, macOS
+  native WGPU installs a CoreText-backed platform text engine, and Web installs
+  a browser Canvas-backed measurer that uses the same `system-ui` stack as
+  WebGPU text drawing. Windows and Linux are expected to add DirectWrite and
+  fontconfig/HarfBuzz/FreeType engines behind the same renderer/runtime boundary
+  while falling back to Cosmic until those engines exist. Apps can register
+  embedded font bytes through
+  `AppRuntime::register_font_data`; remote font loading is intentionally out of
+  scope.
 - `Milky2018/moon_accesskit` is the native accessibility tree representation
   used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
   Web continues to use its ARIA adapter.

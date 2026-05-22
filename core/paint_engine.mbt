@@ -3,6 +3,7 @@ priv struct RenderEnvironment {
   font : FontSpec?
   foreground : Color?
   corner_radius : Double?
+  text_measurer : TextMeasurer
   enabled : Bool
   scale_factor : Double
   text_scale : Double
@@ -11,23 +12,6 @@ priv struct RenderEnvironment {
   accessibility_contrast : AccessibilityContrast
   reduced_motion : Bool
   content_size_category : ContentSizeCategory
-} derive(Eq)
-
-///|
-fn RenderEnvironment::default() -> RenderEnvironment {
-  {
-    font: None,
-    foreground: None,
-    corner_radius: None,
-    enabled: true,
-    scale_factor: 1.0,
-    text_scale: 1.0,
-    locale: "en-US",
-    layout_direction: LayoutDirection::LeftToRight,
-    accessibility_contrast: AccessibilityContrast::Standard,
-    reduced_motion: false,
-    content_size_category: ContentSizeCategory::Medium,
-  }
 }
 
 ///|
@@ -38,6 +22,7 @@ fn RenderEnvironment::from_environment(
     font: None,
     foreground: None,
     corner_radius: None,
+    text_measurer: TextMeasurer::default(),
     enabled: environment.enabled,
     scale_factor: environment.scale_factor,
     text_scale: environment.text_scale,
@@ -69,13 +54,39 @@ fn ElementNode::render_with_focus(
 }
 
 ///|
+fn RenderEnvironment::with_text_measurer(
+  self : RenderEnvironment,
+  text_measurer : TextMeasurer,
+) -> RenderEnvironment {
+  { ..self, text_measurer, }
+}
+
+///|
+fn RenderEnvironment::matches_default_cache_key(
+  self : RenderEnvironment,
+) -> Bool {
+  self.font is None &&
+  self.foreground is None &&
+  self.corner_radius is None &&
+  self.text_measurer.id() == TextMeasurer::default().id() &&
+  self.enabled &&
+  self.scale_factor == 1.0 &&
+  self.text_scale == 1.0 &&
+  self.locale == "en-US" &&
+  self.layout_direction == LayoutDirection::LeftToRight &&
+  self.accessibility_contrast == AccessibilityContrast::Standard &&
+  !self.reduced_motion &&
+  self.content_size_category == ContentSizeCategory::Medium
+}
+
+///|
 fn ElementNode::render_with_environment(
   self : ElementNode,
   bounds : Rect,
   focused : ElementId?,
   environment : RenderEnvironment,
 ) -> RenderNode {
-  if environment == RenderEnvironment::default() &&
+  if environment.matches_default_cache_key() &&
     !self.dirty.needs_paint &&
     !self.dirty.needs_layout &&
     self.cached_render_frame == Some(bounds) &&
@@ -426,7 +437,7 @@ fn ElementNode::render_with_environment(
     paint_commands: commands,
     post_paint_commands: post_commands,
   }
-  if environment == RenderEnvironment::default() {
+  if environment.matches_default_cache_key() {
     self.cached_render_frame = Some(bounds)
     self.cached_render_focused = focused
     self.cached_render = Some(render)
@@ -458,6 +469,14 @@ fn environment_font(
   } else {
     { ..font, size: font.size * environment.text_scale }
   }
+}
+
+///|
+fn environment_measure_text(
+  environment : RenderEnvironment,
+  input : TextLayoutInput,
+) -> TextLayoutResult {
+  environment.text_measurer.measure_text(input)
 }
 
 ///|
@@ -838,6 +857,23 @@ pub fn ElementNode::render_focused(
 }
 
 ///|
+pub fn ElementNode::render_focused_with_text_measurer(
+  self : ElementNode,
+  bounds : Rect,
+  focused~ : ElementId?,
+  environment? : Environment = Environment::default(),
+  text_measurer~ : TextMeasurer,
+) -> RenderNode {
+  self.render_with_environment(
+    bounds,
+    focused,
+    RenderEnvironment::from_environment(environment).with_text_measurer(
+      text_measurer,
+    ),
+  )
+}
+
+///|
 fn checkbox_intrinsic_size(data : CheckboxViewSpec) -> Size {
   let spacing = 8.0
   let label_width = text_length(data.label).to_double() * data.font.size * 0.58
@@ -933,7 +969,8 @@ fn append_text_field_commands(
   }
   let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
   if focused && element.composition is None {
-    let layout = measure_text_layout(
+    let layout = environment_measure_text(
+      environment,
       TextLayoutInput::new(
         text=display_text,
         font~,
@@ -959,7 +996,8 @@ fn append_text_field_commands(
     ),
   )
   if focused {
-    let layout = measure_text_layout(
+    let layout = environment_measure_text(
+      environment,
       TextLayoutInput::new(
         text=display_text,
         font~,
@@ -1453,7 +1491,8 @@ fn append_searchbar_commands(
     height=frame.size.height,
   ).inset(Insets::symmetric(vertical=0.0))
   if is_focused && element.composition is None {
-    let layout = measure_text_layout(
+    let layout = environment_measure_text(
+      environment,
       TextLayoutInput::new(
         text=display_text,
         font~,
@@ -1479,7 +1518,8 @@ fn append_searchbar_commands(
     ),
   )
   if is_focused {
-    let layout = measure_text_layout(
+    let layout = environment_measure_text(
+      environment,
       TextLayoutInput::new(
         text=display_text,
         font~,

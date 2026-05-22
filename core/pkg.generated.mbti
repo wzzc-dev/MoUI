@@ -155,12 +155,15 @@ pub fn AppRuntime::new_component(root~ : Component, size~ : Size, environment? :
 pub fn AppRuntime::new_spec(root~ : ViewSpec, size~ : Size, environment? : Environment) -> Self
 pub fn AppRuntime::paint_pass(Self) -> Array[DrawCommand]
 pub fn AppRuntime::rebuild(Self) -> Unit
+pub fn AppRuntime::register_font_data(Self, FontFamily, Bytes) -> Unit
 pub fn AppRuntime::semantics(Self) -> SemanticsNode
 pub fn AppRuntime::set_action_commands(Self, ActionCommandMap) -> Unit
 pub fn AppRuntime::set_environment(Self, Environment) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_root_spec(Self, ViewSpec) -> Unit
+pub fn AppRuntime::set_text_measurer(Self, TextMeasurer) -> Unit
 pub fn AppRuntime::size(Self) -> Size
+pub fn AppRuntime::text_measurer(Self) -> TextMeasurer
 
 pub(all) enum Axis {
   Horizontal
@@ -626,7 +629,7 @@ pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> Elem
 pub fn ElementNode::find_focusable_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::find_keyed(Self, String) -> ElementId?
 pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
-pub fn ElementNode::focused_text_input(Self, ElementId, RenderNode) -> TextInputState?
+pub fn ElementNode::focused_text_input(Self, ElementId, RenderNode, text_measurer? : TextMeasurer) -> TextInputState?
 pub fn ElementNode::hit_test_path(Self, Point, RenderNode) -> HitTestResult
 pub fn ElementNode::intrinsic_size(Self) -> Size
 pub fn ElementNode::measure(Self, Constraints) -> MeasuredNode
@@ -634,6 +637,7 @@ pub fn ElementNode::next_focus(Self, current~ : ElementId?, reverse~ : Bool) -> 
 pub fn ElementNode::place(Self, Rect) -> PlacedNode
 pub fn ElementNode::render(Self, Rect) -> RenderNode
 pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?, environment? : Environment) -> RenderNode
+pub fn ElementNode::render_focused_with_text_measurer(Self, Rect, focused~ : ElementId?, environment? : Environment, text_measurer~ : TextMeasurer) -> RenderNode
 pub fn ElementNode::semantics(Self, RenderNode, focused? : ElementId?) -> SemanticsNode
 
 pub(all) struct Environment {
@@ -687,12 +691,48 @@ pub fn FocusState::focus(Self, String) -> Unit
 pub fn FocusState::focused_key(Self) -> String?
 pub fn FocusState::new(key? : String?) -> Self
 
+pub(all) enum FontFamily {
+  Name(String)
+  SystemUi
+  UiSansSerif
+  UiSerif
+  UiMonospace
+  SansSerif
+  Serif
+  Monospace
+  Emoji
+  Math
+  FangSong
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FontFamily::css_name(Self) -> String
+pub fn FontFamily::css_token(Self) -> String
+
+pub(all) struct FontFamilyStack {
+  families : Array[FontFamily]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FontFamilyStack::css(Self) -> String
+pub fn FontFamilyStack::monospace() -> Self
+pub fn FontFamilyStack::named(String) -> Self
+pub fn FontFamilyStack::new(Array[FontFamily]) -> Self
+pub fn FontFamilyStack::sans_serif() -> Self
+pub fn FontFamilyStack::serif() -> Self
+pub fn FontFamilyStack::system_ui() -> Self
+pub fn FontFamilyStack::with_fallback(Self, FontFamily) -> Self
+
 pub(all) struct FontSpec {
-  family : String
+  families : FontFamilyStack
   size : Double
   weight : Int
+  style : FontStyle
 } derive(Eq, ToJson, @debug.Debug)
-pub fn FontSpec::new(family? : String, size? : Double, weight? : Int) -> Self
+pub fn FontSpec::css_family(Self) -> String
+pub fn FontSpec::css_style(Self) -> String
+pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int, style? : FontStyle) -> Self
+
+pub(all) enum FontStyle {
+  Normal
+  Italic
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct FormFieldError {
   name : String
@@ -1154,6 +1194,7 @@ pub(all) struct RuntimeState {
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
   mut environment : Environment
+  mut text_measurer : TextMeasurer
   mut redraw_callback : (() -> Unit)?
   mut action_commands : ActionCommandMap
   clock : Clock
@@ -1182,12 +1223,15 @@ pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size, environment? : Env
 pub fn RuntimeState::paint_pass(Self) -> Array[DrawCommand]
 pub fn RuntimeState::rebuild(Self) -> Unit
 pub fn RuntimeState::rebuild_if_possible(Self) -> Unit
+pub fn RuntimeState::register_font_data(Self, FontFamily, Bytes) -> Unit
 pub fn RuntimeState::request_rebuild(Self) -> Unit
 pub fn RuntimeState::semantics(Self) -> SemanticsNode
 pub fn RuntimeState::set_action_commands(Self, ActionCommandMap) -> Unit
 pub fn RuntimeState::set_environment(Self, Environment) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
+pub fn RuntimeState::set_text_measurer(Self, TextMeasurer) -> Unit
+pub fn RuntimeState::text_measurer(Self) -> TextMeasurer
 
 pub(all) struct SaveableCodec[T] {
   encode : (T) -> String
@@ -1520,6 +1564,17 @@ pub(all) struct TextLayoutResult {
   baseline : Double
   caret_positions : Array[Double]
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct TextMeasurer {
+  id : String
+  measure : (TextLayoutInput) -> TextLayoutResult
+  register_font_data : (FontFamily, Bytes) -> Unit
+}
+pub fn TextMeasurer::default() -> Self
+pub fn TextMeasurer::id(Self) -> String
+pub fn TextMeasurer::measure_text(Self, TextLayoutInput) -> TextLayoutResult
+pub fn TextMeasurer::new(id~ : String, measure~ : (TextLayoutInput) -> TextLayoutResult, register_font_data? : (FontFamily, Bytes) -> Unit) -> Self
+pub fn TextMeasurer::register_font_data(Self, FontFamily, Bytes) -> Unit
 
 pub(all) struct TextRange {
   start : Int
