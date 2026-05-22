@@ -302,13 +302,14 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
         raw_content_view_handle {
         Some(raw_content_view_handle) =>
           Some(
-            @wgpu_renderer.create_with_host_surface(
+            @wgpu_renderer.create_with_host_surface_and_text_engine(
               renderer_metrics_from_host(metrics),
               create_macos_host_surface(
                 raw_content_view_handle,
                 metrics.physical_size,
                 scale_factor=metrics.scale_factor,
               ),
+              text_engine=@wgpu_coretext.coretext_text_engine(),
             ),
           ) catch {
             err => {

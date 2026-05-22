@@ -8,12 +8,6 @@ let atlas_height : Int = 1024
 let atlas_padding : Int = 1
 
 ///|
-let coretext_layout_protocol_version : Int = 1
-
-///|
-let coretext_raster_protocol_version : Int = 1
-
-///|
 priv struct NativeFontCache {
   mut font_system : @moon_cosmic.FontSystem
   swash_cache : @moon_cosmic.SwashCache
@@ -24,15 +18,29 @@ priv struct NativeFontCache {
 }
 
 ///|
-priv struct NativeTextEngine {
-  kind : NativeTextEngineKind
-  fallback : NativeTextEngineKind?
+// Opaque native text engine selected by platform hosts. Platform packages should
+// construct one with `native_platform_text_engine`; invalid provider output is
+// rejected here and falls back to the shared Cosmic path.
+pub struct NativeTextEngine {
+  priv kind : NativeTextEngineKind
+  priv fallback : Bool
 }
 
 ///|
 priv enum NativeTextEngineKind {
-  CoreTextSystem
+  PlatformText(NativePlatformTextProvider)
   CosmicFallback
+}
+
+///|
+// Callback bundle implemented by a platform text engine such as CoreText,
+// DirectWrite, or fontconfig/HarfBuzz/FreeType.
+pub struct NativePlatformTextProvider {
+  priv id : String
+  priv measure : (@core.TextLayoutInput) -> NativeTextLayout?
+  priv layout_run : (@core.TextRun, Double) -> NativeTextLayout?
+  priv raster_glyph : (Bytes) -> NativeRasterGlyph?
+  priv register_font_data : (@core.FontFamily, Bytes) -> Unit
 }
 
 ///|
@@ -53,35 +61,34 @@ priv struct GlyphAtlasEntry {
 }
 
 ///|
-priv struct CoreTextGlyphKey {
-  codepoint : Int
-  size_key : Int
-  weight : Int
-  style : @core.FontStyle
-  scale_key : Int
-}
-
-///|
 priv enum NativeGlyphSource {
   CosmicGlyph(@moon_cosmic.CacheKey)
-  CoreTextGlyph(CoreTextGlyphKey)
+  PlatformGlyph(Bytes)
 }
 
 ///|
-priv struct NativeGlyphKey {
-  cache_key : String
-  source : NativeGlyphSource
+// Renderer-private glyph key. Platform providers own the payload encoding;
+// `cache_key` must be stable across frames and include all raster-affecting
+// fields such as glyph identity, size, style, and scale.
+pub struct NativeGlyphKey {
+  priv cache_key : String
+  priv source : NativeGlyphSource
 }
 
 ///|
-priv struct NativeGlyphPlacement {
+// Positioned glyph produced by platform text layout. Coordinates are logical
+// pixels relative to the text run before frame alignment is applied.
+pub(all) struct NativeGlyphPlacement {
   key : NativeGlyphKey
   x : Double
   y : Double
 }
 
 ///|
-priv struct NativeTextLayout {
+// Text layout returned by platform providers. Measurement must provide a
+// monotonic caret array covering the input text; render layout may omit carets
+// but must provide valid metrics and glyph placements.
+pub(all) struct NativeTextLayout {
   size : @core.Size
   baseline : Double
   caret_positions : Array[Double]
@@ -89,7 +96,9 @@ priv struct NativeTextLayout {
 }
 
 ///|
-priv struct NativeRasterGlyph {
+// Single-channel alpha glyph bitmap. `bearing_x` and `bearing_y` are logical
+// pixel offsets from the glyph origin to the top-left bitmap corner.
+pub(all) struct NativeRasterGlyph {
   width : Int
   height : Int
   bearing_x : Int
@@ -143,7 +152,7 @@ priv enum TextRunAppendResult {
 
 ///|
 fn NativeFontCache::new() -> NativeFontCache {
-  NativeFontCache::new_with_engine(NativeTextEngine::coretext_system())
+  NativeFontCache::new_with_engine(NativeTextEngine::cosmic_fallback())
 }
 
 ///|
@@ -163,19 +172,81 @@ fn NativeFontCache::new_with_engine(
 }
 
 ///|
-fn NativeTextEngine::coretext_system() -> NativeTextEngine {
-  {
-    kind: NativeTextEngineKind::CoreTextSystem,
-    fallback: Some(NativeTextEngineKind::CosmicFallback),
-  }
+fn NativeTextEngine::cosmic_fallback() -> NativeTextEngine {
+  { kind: NativeTextEngineKind::CosmicFallback, fallback: false }
 }
 
 ///|
 fn NativeTextEngine::id(self : NativeTextEngine) -> String {
   match self.kind {
-    CoreTextSystem => "native-wgpu-coretext-system"
+    PlatformText(provider) => provider.id
     CosmicFallback => "native-wgpu-cosmic-fallback"
   }
+}
+
+///|
+pub fn NativePlatformTextProvider::new(
+  id~ : String,
+  measure~ : (@core.TextLayoutInput) -> NativeTextLayout?,
+  layout_run~ : (@core.TextRun, Double) -> NativeTextLayout?,
+  raster_glyph~ : (Bytes) -> NativeRasterGlyph?,
+  register_font_data? : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => {
+    ()
+  },
+) -> NativePlatformTextProvider {
+  { id, measure, layout_run, raster_glyph, register_font_data }
+}
+
+///|
+pub fn native_platform_text_engine(
+  provider : NativePlatformTextProvider,
+) -> NativeTextEngine {
+  { kind: NativeTextEngineKind::PlatformText(provider), fallback: true }
+}
+
+///|
+// Create a platform glyph key. The renderer treats payload as opaque data and
+// passes it back to the provider's raster callback.
+pub fn native_platform_glyph_key(
+  cache_key~ : String,
+  payload~ : Bytes,
+) -> NativeGlyphKey {
+  { cache_key, source: PlatformGlyph(payload) }
+}
+
+///|
+// Create a positioned platform glyph in logical run coordinates.
+pub fn NativeGlyphPlacement::new(
+  key~ : NativeGlyphKey,
+  x~ : Double,
+  y? : Double = 0.0,
+) -> NativeGlyphPlacement {
+  { key, x, y }
+}
+
+///|
+// Create a provider layout value. Invalid metrics or non-monotonic carets are
+// filtered by the renderer and trigger fallback.
+pub fn NativeTextLayout::new(
+  size~ : @core.Size,
+  baseline~ : Double,
+  caret_positions? : Array[Double] = [],
+  glyphs? : Array[NativeGlyphPlacement] = [],
+) -> NativeTextLayout {
+  { size, baseline, caret_positions, glyphs }
+}
+
+///|
+// Create a provider raster glyph. The renderer validates dimensions against the
+// pixel buffer before uploading it to the atlas.
+pub fn NativeRasterGlyph::new(
+  width~ : Int,
+  height~ : Int,
+  bearing_x~ : Int,
+  bearing_y~ : Int,
+  pixels~ : Bytes,
+) -> NativeRasterGlyph {
+  { width, height, bearing_x, bearing_y, pixels }
 }
 
 ///|
@@ -390,9 +461,14 @@ fn NativeTextEngine::measure(
   input : @core.TextLayoutInput,
 ) -> @core.TextLayoutResult {
   match self.kind {
-    CoreTextSystem =>
-      match coretext_measure_layout(input) {
-        Some(layout) => layout.to_text_layout_result()
+    PlatformText(provider) =>
+      match (provider.measure)(input) {
+        Some(layout) =>
+          if layout.is_valid_for_measure(input.text) {
+            layout.to_text_layout_result()
+          } else {
+            self.measure_with_fallback(cache, input)
+          }
         None => self.measure_with_fallback(cache, input)
       }
     CosmicFallback => cache.cosmic_measure(input)
@@ -405,10 +481,8 @@ fn NativeTextEngine::measure_with_fallback(
   cache : NativeFontCache,
   input : @core.TextLayoutInput,
 ) -> @core.TextLayoutResult {
-  match self.fallback {
-    Some(CosmicFallback) => cache.cosmic_measure(input)
-    _ => cache.cosmic_measure(input)
-  }
+  let _ = self
+  cache.cosmic_measure(input)
 }
 
 ///|
@@ -419,9 +493,14 @@ fn NativeTextEngine::layout_run(
   scale_factor : Double,
 ) -> NativeTextLayout? {
   match self.kind {
-    CoreTextSystem =>
-      match coretext_layout_for_run(run, scale_factor) {
-        Some(layout) => Some(layout)
+    PlatformText(provider) =>
+      match (provider.layout_run)(run, scale_factor) {
+        Some(layout) =>
+          if layout.is_valid_for_run() {
+            Some(layout)
+          } else {
+            self.layout_with_fallback(cache, run, scale_factor)
+          }
         None => self.layout_with_fallback(cache, run, scale_factor)
       }
     CosmicFallback => cache.cosmic_layout_for_run(run, scale_factor)
@@ -445,9 +524,10 @@ fn NativeTextEngine::fallback_layout_run(
   run : @core.TextRun,
   scale_factor : Double,
 ) -> NativeTextLayout? {
-  match self.fallback {
-    Some(CosmicFallback) => cache.cosmic_layout_for_run(run, scale_factor)
-    _ => None
+  if self.fallback {
+    cache.cosmic_layout_for_run(run, scale_factor)
+  } else {
+    None
   }
 }
 
@@ -457,13 +537,17 @@ fn NativeTextEngine::raster_glyph(
   cache : NativeFontCache,
   key : NativeGlyphKey,
 ) -> NativeRasterGlyph? {
-  match key.source {
-    CoreTextGlyph(coretext_key) =>
+  let raster = match key.source {
+    PlatformGlyph(payload) =>
       match self.kind {
-        CoreTextSystem => coretext_raster_glyph(coretext_key)
+        PlatformText(provider) => (provider.raster_glyph)(payload)
         CosmicFallback => None
       }
     CosmicGlyph(cosmic_key) => raster_glyph(cache, cosmic_key)
+  }
+  match raster {
+    Some(glyph) => if glyph.is_valid() { Some(glyph) } else { None }
+    None => None
   }
 }
 
@@ -475,9 +559,63 @@ fn NativeTextEngine::register_font_data(
   data : Bytes,
 ) -> Unit {
   match self.kind {
-    CoreTextSystem => cache.load_font_data(family, data)
+    PlatformText(provider) => {
+      (provider.register_font_data)(family, data)
+      cache.load_font_data(family, data)
+    }
     CosmicFallback => cache.load_font_data(family, data)
   }
+}
+
+///|
+fn NativeRasterGlyph::is_valid(self : NativeRasterGlyph) -> Bool {
+  if self.width <= 0 || self.height <= 0 {
+    return false
+  }
+  self.width <= self.pixels.length() / self.height
+}
+
+///|
+fn NativeTextLayout::is_valid_for_measure(
+  self : NativeTextLayout,
+  text : String,
+) -> Bool {
+  self.has_valid_metrics() &&
+  self.caret_positions.length() >= text.to_array().length() + 1 &&
+  self.has_monotonic_carets()
+}
+
+///|
+fn NativeTextLayout::is_valid_for_run(self : NativeTextLayout) -> Bool {
+  self.has_valid_metrics() &&
+  (self.caret_positions.is_empty() || self.has_monotonic_carets())
+}
+
+///|
+fn NativeTextLayout::has_valid_metrics(self : NativeTextLayout) -> Bool {
+  self.size.width >= 0.0 &&
+  self.size.height > 0.0 &&
+  self.baseline >= 0.0 &&
+  self.baseline <= self.size.height
+}
+
+///|
+fn NativeTextLayout::has_monotonic_carets(self : NativeTextLayout) -> Bool {
+  if self.caret_positions.is_empty() {
+    return false
+  }
+  let mut last = self.caret_positions[0]
+  if last < 0.0 {
+    return false
+  }
+  for index in 1..<self.caret_positions.length() {
+    let caret = self.caret_positions[index]
+    if caret < last {
+      return false
+    }
+    last = caret
+  }
+  true
 }
 
 ///|
@@ -506,203 +644,13 @@ fn text_align_extra(
 }
 
 ///|
-fn native_i32_le(bytes : Bytes, offset : Int) -> Int {
-  if offset + 3 >= bytes.length() {
-    return 0
-  }
-  let b0 = bytes[offset].to_int()
-  let b1 = bytes[offset + 1].to_int()
-  let b2 = bytes[offset + 2].to_int()
-  let b3 = bytes[offset + 3].to_int()
-  let value = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)
-  if b3 >= 128 {
-    value - 2147483647 - 2147483647 - 2
-  } else {
-    value
-  }
-}
-
-///|
-fn native_double_le(bytes : Bytes, offset : Int) -> Double {
-  if offset + 7 >= bytes.length() {
-    return 0.0
-  }
-  let mut bits : UInt64 = 0UL
-  for index in 0..<8 {
-    bits = bits | (bytes[offset + index].to_uint64() << (index * 8))
-  }
-  bits.reinterpret_as_double()
-}
-
-///|
-fn native_utf32_bytes(text : String) -> Bytes {
-  let out : Array[Byte] = []
-  for ch in text {
-    let code = ch.to_int()
-    out.push((code & 0xFF).to_byte())
-    out.push(((code >> 8) & 0xFF).to_byte())
-    out.push(((code >> 16) & 0xFF).to_byte())
-    out.push(((code >> 24) & 0xFF).to_byte())
-  }
-  Bytes::from_array(out)
-}
-
-///|
-fn native_coretext_style_code(style : @core.FontStyle) -> Int {
-  match style {
-    @core.FontStyle::Normal => 0
-    @core.FontStyle::Italic => 1
-  }
-}
-
-///|
-fn native_coretext_size_key(size : Double) -> Int {
-  (size * 64.0).to_int()
-}
-
-///|
-fn native_coretext_scale_key(scale : Double) -> Int {
-  (scale * 64.0).to_int()
-}
-
-///|
-fn coretext_glyph_cache_key(key : CoreTextGlyphKey) -> String {
-  "ct:\{key.codepoint}:\{key.size_key}:\{key.weight}:\{native_coretext_style_code(key.style)}:\{key.scale_key}"
-}
-
-///|
 fn cosmic_glyph_cache_key(key : @moon_cosmic.CacheKey) -> String {
   "cosmic:" + key.to_string()
 }
 
 ///|
-fn coretext_native_glyph_key(key : CoreTextGlyphKey) -> NativeGlyphKey {
-  { cache_key: coretext_glyph_cache_key(key), source: CoreTextGlyph(key) }
-}
-
-///|
 fn cosmic_native_glyph_key(key : @moon_cosmic.CacheKey) -> NativeGlyphKey {
   { cache_key: cosmic_glyph_cache_key(key), source: CosmicGlyph(key) }
-}
-
-///|
-fn coretext_measure_layout(input : @core.TextLayoutInput) -> NativeTextLayout? {
-  let bytes = macos_coretext_measure_utf32(
-    native_utf32_bytes(input.text),
-    input.font.size,
-    input.font.weight,
-    native_coretext_style_code(input.font.style),
-  )
-  if bytes.length() < 24 {
-    return None
-  }
-  let count = native_i32_le(bytes, 0)
-  let version = native_i32_le(bytes, 4)
-  let height = native_double_le(bytes, 8)
-  let baseline = native_double_le(bytes, 16)
-  let caret_count = count + 1
-  if version != coretext_layout_protocol_version ||
-    count < 0 ||
-    height <= 0.0 ||
-    baseline <= 0.0 ||
-    bytes.length() < 24 + caret_count * 8 {
-    return None
-  }
-  let carets : Array[Double] = []
-  for index in 0..<caret_count {
-    carets.push(native_double_le(bytes, 24 + index * 8))
-  }
-  let width = if carets.is_empty() { 0.0 } else { carets[carets.length() - 1] }
-  let final_width = match input.max_width {
-    Some(max_width) => width.min(max_width)
-    None => width
-  }
-  match input.max_width {
-    Some(max_width) =>
-      for index in 0..<carets.length() {
-        carets[index] = carets[index].min(max_width)
-      }
-    None => ()
-  }
-  Some({
-    size: @core.Size::new(width=final_width, height~),
-    baseline,
-    caret_positions: carets,
-    glyphs: [],
-  })
-}
-
-///|
-fn coretext_raster_glyph(key : CoreTextGlyphKey) -> NativeRasterGlyph? {
-  let bytes = macos_coretext_raster_glyph(
-    key.codepoint,
-    key.size_key.to_double() / 64.0,
-    key.weight,
-    native_coretext_style_code(key.style),
-    key.scale_key.to_double() / 64.0,
-  )
-  if bytes.length() < 32 {
-    return None
-  }
-  let width = native_i32_le(bytes, 0)
-  let height = native_i32_le(bytes, 4)
-  let version = native_i32_le(bytes, 16)
-  if version != coretext_raster_protocol_version ||
-    width <= 0 ||
-    height <= 0 ||
-    bytes.length() < 32 + width * height {
-    return None
-  }
-  Some({
-    width,
-    height,
-    bearing_x: native_i32_le(bytes, 8),
-    bearing_y: native_i32_le(bytes, 12),
-    pixels: Bytes::from_array(bytes[32:].to_array()),
-  })
-}
-
-///|
-fn coretext_layout_for_run(
-  run : @core.TextRun,
-  scale_factor : Double,
-) -> NativeTextLayout? {
-  match
-    coretext_measure_layout(
-      @core.TextLayoutInput::new(
-        text=run.text,
-        font=run.font,
-        max_width=run.frame.size.width,
-      ),
-    ) {
-    Some(layout) => {
-      let glyphs : Array[NativeGlyphPlacement] = []
-      let chars = run.text.to_array()
-      let scale = native_text_scale(scale_factor)
-      let size_key = native_coretext_size_key(run.font.size)
-      let scale_key = native_coretext_scale_key(scale)
-      for index, ch in chars {
-        let x = if index < layout.caret_positions.length() {
-          layout.caret_positions[index]
-        } else {
-          0.0
-        }
-        glyphs.push({
-          key: coretext_native_glyph_key({
-            codepoint: ch.to_int(),
-            size_key,
-            weight: run.font.weight,
-            style: run.font.style,
-            scale_key,
-          }),
-          x,
-          y: 0.0,
-        })
-      }
-      Some({ ..layout, glyphs, })
-    }
-    None => None
-  }
 }
 
 ///|
@@ -798,6 +746,13 @@ fn build_native_text_input_buffer(
 ///|
 pub fn native_text_measurer() -> @core.TextMeasurer {
   native_text_measurer_with_cache(NativeFontCache::new())
+}
+
+///|
+pub fn native_text_measurer_with_engine(
+  text_engine : NativeTextEngine,
+) -> @core.TextMeasurer {
+  native_text_measurer_with_cache(NativeFontCache::new_with_engine(text_engine))
 }
 
 ///|
@@ -1103,10 +1058,12 @@ fn append_text_layout_vertices(
   )
   let vertical_extra = native_text_vertical_extra(run.frame, layout)
   let scale = native_text_scale(scale_factor)
+  let mut appended_count = 0
   for glyph in layout.glyphs {
     match atlas.ensure_glyph(cache, glyph.key) {
       GlyphReady(entry) =>
         if entry.width > 0 && entry.height > 0 {
+          appended_count = appended_count + 1
           append_text_quad(
             vertices,
             run.frame.origin.x +
@@ -1129,6 +1086,9 @@ fn append_text_layout_vertices(
       GlyphMissing => return TextRunAppendNeedsFallback
       GlyphAtlasFull => return TextRunAppendComplete(true)
     }
+  }
+  if appended_count == 0 && !run.text.is_empty() {
+    return TextRunAppendNeedsFallback
   }
   TextRunAppendComplete(false)
 }
@@ -1367,24 +1327,6 @@ fn text_vertices_to_bytes(vertices : Array[TextVertex]) -> Bytes {
   }
   Bytes::from_array(out)
 }
-
-///|
-#borrow(utf32)
-extern "C" fn macos_coretext_measure_utf32(
-  utf32 : Bytes,
-  size : Double,
-  weight : Int,
-  style : Int,
-) -> Bytes = "moui_macos_coretext_measure_utf32"
-
-///|
-extern "C" fn macos_coretext_raster_glyph(
-  codepoint : Int,
-  size : Double,
-  weight : Int,
-  style : Int,
-  scale_factor : Double,
-) -> Bytes = "moui_macos_coretext_raster_glyph"
 
 ///|
 fn push_text_f32le(out : Array[Byte], value : Double) -> Unit {

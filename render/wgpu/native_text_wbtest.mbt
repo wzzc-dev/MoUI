@@ -126,48 +126,6 @@ fn glyph_atlas_entry_count(atlas : GlyphAtlas) -> Int {
 }
 
 ///|
-fn caret_positions_are_monotonic(carets : Array[Double]) -> Bool {
-  if carets.length() <= 1 {
-    return true
-  }
-  for index in 1..<carets.length() {
-    if carets[index] < carets[index - 1] {
-      return false
-    }
-  }
-  true
-}
-
-///|
-fn bytes_has_nonzero(bytes : Bytes) -> Bool {
-  for byte in bytes {
-    if byte != b'\x00' {
-      return true
-    }
-  }
-  false
-}
-
-///|
-fn glyph_nonzero_row_bounds(glyph : NativeRasterGlyph) -> (Int, Int)? {
-  let mut min_y = glyph.height
-  let mut max_y = -1
-  for y in 0..<glyph.height {
-    for x in 0..<glyph.width {
-      if glyph.pixels[y * glyph.width + x] != b'\x00' {
-        min_y = min_y.min(y)
-        max_y = max_y.max(y)
-      }
-    }
-  }
-  if max_y >= 0 {
-    Some((min_y, max_y))
-  } else {
-    None
-  }
-}
-
-///|
 fn atlas_entry_nonzero_row_bounds(
   atlas : GlyphAtlas,
   entry : GlyphAtlasEntry,
@@ -204,49 +162,79 @@ fn text_vertices_have_visible_position(vertices : Array[TextVertex]) -> Bool {
 }
 
 ///|
-test "native signed i32 decoding handles negative bearings" {
-  inspect(
-    native_i32_le(Bytes::from_array([b'\xff', b'\xff', b'\xff', b'\xff']), 0),
-    content="-1",
-  )
-  inspect(
-    native_i32_le(Bytes::from_array([b'\xfe', b'\xff', b'\xff', b'\xff']), 0),
-    content="-2",
-  )
+test "native text measurer exposes default fallback engine id" {
+  inspect(native_text_measurer().id(), content="native-wgpu-cosmic-fallback")
 }
 
 ///|
-test "coretext text engine measures mixed system text" {
-  let input = @core.TextLayoutInput::new(
-    text="aM你🙂",
-    font=@core.FontSpec::new(size=17.0, weight=600),
+test "native text provider values have stable constructors" {
+  let key = native_platform_glyph_key(
+    cache_key="test-platform:constructor",
+    payload=Bytes::from_array([b'\x01']),
   )
-  match coretext_measure_layout(input) {
-    Some(layout) => {
-      inspect(layout.size.width > 0.0, content="true")
-      inspect(layout.size.height > 0.0, content="true")
-      inspect(layout.baseline > 0.0, content="true")
-      inspect(layout.caret_positions.length(), content="5")
-      inspect(
-        caret_positions_are_monotonic(layout.caret_positions),
-        content="true",
-      )
-    }
-    None => inspect("missing", content="available")
+  let placement = NativeGlyphPlacement::new(key~, x=3.0, y=4.0)
+  inspect(placement.x, content="3")
+  inspect(placement.y, content="4")
+  let layout = NativeTextLayout::new(
+    size=@core.Size::new(width=12.0, height=18.0),
+    baseline=11.0,
+    caret_positions=[0.0, 12.0],
+    glyphs=[placement],
+  )
+  inspect(layout.size.width, content="12")
+  inspect(layout.baseline, content="11")
+  inspect(layout.caret_positions.length(), content="2")
+  inspect(layout.glyphs.length(), content="1")
+  let glyph = NativeRasterGlyph::new(
+    width=2,
+    height=2,
+    bearing_x=1,
+    bearing_y=-2,
+    pixels=Bytes::from_array([b'\x00', b'\xff', b'\xff', b'\x00']),
+  )
+  inspect(glyph.width, content="2")
+  inspect(glyph.height, content="2")
+  inspect(glyph.pixels.length(), content="4")
+}
+
+///|
+test "native platform provider receives registered font data before fallback cache" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let registered : Ref[Int] = Ref(0)
+    let family_name : Ref[String] = Ref("")
+    let data_len : Ref[Int] = Ref(0)
+    let measurer = native_text_measurer_with_engine(
+      native_platform_text_engine(
+        NativePlatformTextProvider::new(
+          id="test-platform-text",
+          measure=_input => None,
+          layout_run=(_run, _scale) => None,
+          raster_glyph=_payload => None,
+          register_font_data=(family, data) => {
+            registered.val = registered.val + 1
+            family_name.val = family.css_name()
+            data_len.val = data.length()
+          },
+        ),
+      ),
+    )
+    measurer.register_font_data(
+      @core.FontFamily::Name("Acme"),
+      @fs.read_file_to_bytes(native_regular_font_path()),
+    )
+    inspect(registered.val, content="1")
+    inspect(family_name.val, content="Acme")
+    inspect(data_len.val > 0, content="true")
+  } else {
+    inspect("skipped", content="skipped")
   }
 }
 
 ///|
-test "native text measurer exposes coretext system engine id" {
-  inspect(native_text_measurer().id(), content="native-wgpu-coretext-system")
-}
-
-///|
 test "native text engine keeps cosmic fallback path available" {
-  let cache = NativeFontCache::new_with_engine({
-    kind: NativeTextEngineKind::CosmicFallback,
-    fallback: None,
-  })
+  let cache = NativeFontCache::new_with_engine(
+    NativeTextEngine::cosmic_fallback(),
+  )
   let input = @core.TextLayoutInput::new(
     text="fallback",
     font=@core.FontSpec::new(size=14.0, weight=400),
@@ -257,10 +245,47 @@ test "native text engine keeps cosmic fallback path available" {
 }
 
 ///|
+test "native text engine falls back when platform measure is invalid" {
+  let measurer = native_text_measurer_with_engine(
+    native_platform_text_engine(
+      NativePlatformTextProvider::new(
+        id="test-platform-text",
+        measure=_input => {
+          Some({
+            size: @core.Size::new(width=-1.0, height=0.0),
+            baseline: 4.0,
+            caret_positions: [0.0, -2.0],
+            glyphs: [],
+          })
+        },
+        layout_run=(_run, _scale) => None,
+        raster_glyph=_payload => None,
+      ),
+    ),
+  )
+  let result = measurer.measure_text(
+    @core.TextLayoutInput::new(
+      text="fallback",
+      font=@core.FontSpec::new(size=14.0, weight=400),
+    ),
+  )
+  inspect(result.size.width > 0.0, content="true")
+  inspect(result.size.height > 0.0, content="true")
+  inspect(result.caret_positions.length(), content="9")
+}
+
+///|
 test "native text engine falls back when platform glyph raster fails" {
   if @fs.path_exists(native_regular_font_path()) {
     let cache = NativeFontCache::new_with_engine(
-      NativeTextEngine::coretext_system(),
+      native_platform_text_engine(
+        NativePlatformTextProvider::new(
+          id="test-platform-text",
+          measure=_input => None,
+          layout_run=(_run, _scale) => None,
+          raster_glyph=_payload => None,
+        ),
+      ),
     )
     let atlas = GlyphAtlas::new(width=atlas_width, height=atlas_height)
     let run = @core.TextRun::new(
@@ -277,13 +302,10 @@ test "native text engine falls back when platform glyph raster fails" {
       caret_positions: [],
       glyphs: [
         {
-          key: coretext_native_glyph_key({
-            codepoint: 0x110000,
-            size_key: native_coretext_size_key(16.0),
-            weight: 500,
-            style: @core.FontStyle::Normal,
-            scale_key: native_coretext_scale_key(1.0),
-          }),
+          key: native_platform_glyph_key(
+            cache_key="test-platform:missing",
+            payload=Bytes::from_array([b'\x00']),
+          ),
           x: 0.0,
           y: 0.0,
         },
@@ -308,55 +330,214 @@ test "native text engine falls back when platform glyph raster fails" {
 }
 
 ///|
-test "coretext text engine rasterizes system glyphs" {
-  let key = {
-    codepoint: 'a'.to_int(),
-    size_key: native_coretext_size_key(18.0),
-    weight: 400,
-    style: @core.FontStyle::Italic,
-    scale_key: native_coretext_scale_key(1.0),
-  }
-  match coretext_raster_glyph(key) {
-    Some(glyph) => {
-      inspect(glyph.width > 0, content="true")
-      inspect(glyph.height > 0, content="true")
-      inspect(glyph.pixels.length() > 0, content="true")
-      inspect(bytes_has_nonzero(glyph.pixels), content="true")
-      inspect(glyph.bearing_x > -128 && glyph.bearing_x < 128, content="true")
-      inspect(glyph.bearing_y > -128 && glyph.bearing_y < 128, content="true")
-    }
-    None => inspect("missing", content="available")
+test "native text engine falls back when platform run layout metrics are invalid" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let bad_key = native_platform_glyph_key(
+      cache_key="test-platform:bad-layout",
+      payload=Bytes::from_array([b'\x02']),
+    )
+    let cache = NativeFontCache::new_with_engine(
+      native_platform_text_engine(
+        NativePlatformTextProvider::new(
+          id="test-platform-text",
+          measure=_input => None,
+          layout_run=(_run, _scale) => {
+            Some({
+              size: @core.Size::new(width=-1.0, height=0.0),
+              baseline: 12.0,
+              caret_positions: [2.0, 1.0],
+              glyphs: [{ key: bad_key, x: 0.0, y: 0.0 }],
+            })
+          },
+          raster_glyph=_payload => {
+            Some({
+              width: 2,
+              height: 2,
+              bearing_x: 0,
+              bearing_y: -2,
+              pixels: Bytes::from_array([b'\xff', b'\xff', b'\xff', b'\xff']),
+            })
+          },
+        ),
+      ),
+    )
+    let atlas = GlyphAtlas::new(width=atlas_width, height=atlas_height)
+    let run = @core.TextRun::new(
+      text="fallback",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let vertices : Array[TextVertex] = []
+    let atlas_full = append_text_run_vertices(
+      cache,
+      atlas,
+      run,
+      native_paint_state_default(),
+      @core.Size::new(width=320.0, height=120.0),
+      1.0,
+      vertices,
+    )
+    inspect(atlas_full, content="false")
+    inspect(vertices.length() > 0, content="true")
+    inspect(
+      atlas.entries.get("test-platform:bad-layout") is None,
+      content="true",
+    )
+    inspect(glyph_atlas_entry_count(atlas) > 0, content="true")
+  } else {
+    inspect("skipped", content="skipped")
   }
 }
 
 ///|
-test "coretext raster glyph rows follow top-left baseline convention" {
-  let key = {
-    codepoint: 'H'.to_int(),
-    size_key: native_coretext_size_key(32.0),
-    weight: 700,
-    style: @core.FontStyle::Normal,
-    scale_key: native_coretext_scale_key(1.0),
+test "native text engine falls back when platform layout has no glyphs" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let cache = NativeFontCache::new_with_engine(
+      native_platform_text_engine(
+        NativePlatformTextProvider::new(
+          id="test-platform-text",
+          measure=_input => None,
+          layout_run=(_run, _scale) => None,
+          raster_glyph=_payload => None,
+        ),
+      ),
+    )
+    let atlas = GlyphAtlas::new(width=atlas_width, height=atlas_height)
+    let run = @core.TextRun::new(
+      text="fallback",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let vertices : Array[TextVertex] = []
+    let empty_platform_layout = {
+      size: @core.Size::new(width=64.0, height=20.0),
+      baseline: 14.0,
+      caret_positions: [],
+      glyphs: [],
+    }
+    let atlas_full = append_text_layout_or_fallback(
+      cache,
+      atlas,
+      run,
+      native_paint_state_default(),
+      @core.Size::new(width=320.0, height=120.0),
+      1.0,
+      empty_platform_layout,
+      vertices,
+    )
+    inspect(atlas_full, content="false")
+    inspect(vertices.length() > 0, content="true")
+    inspect(glyph_atlas_entry_count(atlas) > 0, content="true")
+  } else {
+    inspect("skipped", content="skipped")
   }
-  match coretext_raster_glyph(key) {
-    Some(glyph) =>
-      match glyph_nonzero_row_bounds(glyph) {
-        Some((min_row, max_row)) => {
-          let baseline_row = -glyph.bearing_y
-          inspect(min_row > 0, content="true")
-          inspect(baseline_row > 0, content="true")
-          inspect(baseline_row < glyph.height, content="true")
-          inspect(max_row < baseline_row, content="true")
-        }
-        None => fail("expected non-empty coretext glyph alpha")
-      }
-    None => inspect("missing", content="available")
+}
+
+///|
+test "native text engine rejects invalid platform raster glyphs" {
+  if @fs.path_exists(native_regular_font_path()) {
+    let cache = NativeFontCache::new_with_engine(
+      native_platform_text_engine(
+        NativePlatformTextProvider::new(
+          id="test-platform-text",
+          measure=_input => None,
+          layout_run=(_run, _scale) => None,
+          raster_glyph=_payload => {
+            Some({
+              width: 8,
+              height: 8,
+              bearing_x: 0,
+              bearing_y: -8,
+              pixels: Bytes::from_array([b'\xff']),
+            })
+          },
+        ),
+      ),
+    )
+    let atlas = GlyphAtlas::new(width=atlas_width, height=atlas_height)
+    let run = @core.TextRun::new(
+      text="fallback",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let vertices : Array[TextVertex] = []
+    let bad_raster_layout = {
+      size: @core.Size::new(width=64.0, height=20.0),
+      baseline: 14.0,
+      caret_positions: [],
+      glyphs: [
+        {
+          key: native_platform_glyph_key(
+            cache_key="test-platform:invalid-raster",
+            payload=Bytes::from_array([b'\x01']),
+          ),
+          x: 0.0,
+          y: 0.0,
+        },
+      ],
+    }
+    let atlas_full = append_text_layout_or_fallback(
+      cache,
+      atlas,
+      run,
+      native_paint_state_default(),
+      @core.Size::new(width=320.0, height=120.0),
+      1.0,
+      bad_raster_layout,
+      vertices,
+    )
+    inspect(atlas_full, content="false")
+    inspect(vertices.length() > 0, content="true")
+    inspect(
+      atlas.entries.get("test-platform:invalid-raster") is None,
+      content="true",
+    )
+    inspect(glyph_atlas_entry_count(atlas) > 0, content="true")
+  } else {
+    inspect("skipped", content="skipped")
   }
 }
 
 ///|
 test "native renderer builds text vertices and atlas entries" {
-  let renderer = new_test_renderer_handle()
+  let glyph_key = native_platform_glyph_key(
+    cache_key="test-platform:counter",
+    payload=Bytes::from_array([b'M']),
+  )
+  let renderer = new_test_renderer_handle_with_text_engine(
+    native_platform_text_engine(
+      NativePlatformTextProvider::new(
+        id="test-platform-text",
+        measure=_input => None,
+        layout_run=(_run, _scale) => {
+          Some({
+            size: @core.Size::new(width=64.0, height=20.0),
+            baseline: 14.0,
+            caret_positions: [],
+            glyphs: [{ key: glyph_key, x: 0.0, y: 0.0 }],
+          })
+        },
+        raster_glyph=_payload => {
+          Some({
+            width: 4,
+            height: 4,
+            bearing_x: 0,
+            bearing_y: -4,
+            pixels: Bytes::from_array([
+              b'\xff', b'\xff', b'\xff', b'\xff', b'\xff', b'\x00', b'\x00', b'\xff',
+              b'\xff', b'\x00', b'\x00', b'\xff', b'\xff', b'\xff', b'\xff', b'\xff',
+            ]),
+          })
+        },
+      ),
+    ),
+  )
   renderer.resize(
     @render.RendererSurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
@@ -380,8 +561,49 @@ test "native renderer builds text vertices and atlas entries" {
 }
 
 ///|
-test "native renderer blits coretext glyph rows away from atlas top edge" {
-  let renderer = new_test_renderer_handle()
+test "native renderer blits platform glyph rows away from atlas top edge" {
+  let glyph_key = native_platform_glyph_key(
+    cache_key="test-platform:H",
+    payload=Bytes::from_array([b'H']),
+  )
+  let renderer = new_test_renderer_handle_with_text_engine(
+    native_platform_text_engine(
+      NativePlatformTextProvider::new(
+        id="test-platform-text",
+        measure=_input => None,
+        layout_run=(_run, _scale) => {
+          Some({
+            size: @core.Size::new(width=24.0, height=36.0),
+            baseline: 28.0,
+            caret_positions: [],
+            glyphs: [{ key: glyph_key, x: 0.0, y: 0.0 }],
+          })
+        },
+        raster_glyph=_payload => {
+          Some({
+            width: 8,
+            height: 12,
+            bearing_x: 0,
+            bearing_y: -10,
+            pixels: Bytes::from_array([
+              b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00',
+              b'\xff', b'\xff', b'\xff', b'\xff', b'\xff', b'\xff', b'\xff', b'\xff',
+              b'\xff', b'\x00', b'\x00', b'\xff', b'\xff', b'\x00', b'\x00', b'\xff',
+              b'\xff', b'\x00', b'\x00', b'\xff', b'\xff', b'\x00', b'\x00', b'\xff',
+              b'\xff', b'\xff', b'\xff', b'\xff', b'\xff', b'\xff', b'\xff', b'\xff',
+              b'\xff', b'\x00', b'\x00', b'\xff', b'\xff', b'\x00', b'\x00', b'\xff',
+              b'\xff', b'\x00', b'\x00', b'\xff', b'\xff', b'\x00', b'\x00', b'\xff',
+              b'\xff', b'\x00', b'\x00', b'\xff', b'\xff', b'\x00', b'\x00', b'\xff',
+              b'\xff', b'\x00', b'\x00', b'\xff', b'\xff', b'\x00', b'\x00', b'\xff',
+              b'\xff', b'\x00', b'\x00', b'\xff', b'\xff', b'\x00', b'\x00', b'\xff',
+              b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00',
+              b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00',
+            ]),
+          })
+        },
+      ),
+    ),
+  )
   renderer.resize(
     @render.RendererSurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=200.0),
@@ -398,14 +620,7 @@ test "native renderer blits coretext glyph rows away from atlas top edge" {
   ])
   inspect(renderer.draw_items.length(), content="1")
   assert_true(renderer.draw_items[0] is NativeDrawItem::NativeText(_, _, _))
-  let key = coretext_glyph_cache_key({
-    codepoint: 'H'.to_int(),
-    size_key: native_coretext_size_key(32.0),
-    weight: 700,
-    style: @core.FontStyle::Normal,
-    scale_key: native_coretext_scale_key(1.0),
-  })
-  match renderer.glyph_atlas.entries.get(key) {
+  match renderer.glyph_atlas.entries.get("test-platform:H") {
     Some(entry) =>
       match atlas_entry_nonzero_row_bounds(renderer.glyph_atlas, entry) {
         Some((min_row, max_row)) => {
@@ -417,7 +632,7 @@ test "native renderer blits coretext glyph rows away from atlas top edge" {
         }
         None => fail("expected non-empty atlas glyph alpha")
       }
-    None => fail("expected coretext H glyph atlas entry")
+    None => fail("expected platform H glyph atlas entry")
   }
 }
 

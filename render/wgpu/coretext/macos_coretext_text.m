@@ -1,4 +1,5 @@
 #import <moonbit.h>
+#import <limits.h>
 #import <stdint.h>
 #import <stdlib.h>
 #import <string.h>
@@ -104,7 +105,13 @@ static CTFontRef moui_create_system_font(double size, int32_t weight, int32_t st
 MOONBIT_FFI_EXPORT
 moonbit_bytes_t moui_macos_coretext_measure_utf32(moonbit_bytes_t utf32, double size, int32_t weight, int32_t style) {
   int32_t len = (int32_t)Moonbit_array_length(utf32);
+  if (len < 0 || (len % 4) != 0) {
+    return moonbit_make_bytes(16, 0);
+  }
   int32_t count = len / 4;
+  if (count > ((INT32_MAX - 24) / 8) - 1) {
+    return moonbit_make_bytes(16, 0);
+  }
   int32_t out_len = 24 + (count + 1) * 8;
   moonbit_bytes_t out = moonbit_make_bytes(out_len, 0);
   uint8_t *dst = (uint8_t *)out;

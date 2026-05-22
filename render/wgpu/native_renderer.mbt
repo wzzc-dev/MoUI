@@ -49,7 +49,26 @@ fn RendererHandle::create_with_host_surface(
   metrics : @render.RendererSurfaceMetrics,
   host_surface : HostWgpuSurface,
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
-  create_with_surface(metrics, host_surface.instance, host_surface.surface)
+  create_with_surface(
+    metrics,
+    host_surface.instance,
+    host_surface.surface,
+    NativeTextEngine::cosmic_fallback(),
+  )
+}
+
+///|
+fn RendererHandle::create_with_host_surface_and_text_engine(
+  metrics : @render.RendererSurfaceMetrics,
+  host_surface : HostWgpuSurface,
+  text_engine : NativeTextEngine,
+) -> RendererHandle raise @wgpu_mbt.WgpuError {
+  create_with_surface(
+    metrics,
+    host_surface.instance,
+    host_surface.surface,
+    text_engine,
+  )
 }
 
 ///|
@@ -57,6 +76,7 @@ fn create_with_surface(
   metrics : @render.RendererSurfaceMetrics,
   instance : @wgpu_mbt.Instance,
   surface : @wgpu_mbt.Surface,
+  text_engine : NativeTextEngine,
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
   let adapter = instance.request_adapter_sync_options_surface_u32(surface)
   let device = adapter.request_device_sync(instance)
@@ -138,7 +158,7 @@ fn create_with_surface(
     image_pipeline_layout: Some(image_pipeline_layout),
     image_cache: {},
     failed_images: {},
-    font_cache: NativeFontCache::new(),
+    font_cache: NativeFontCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
     text_vertices: [],

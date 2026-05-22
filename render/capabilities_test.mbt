@@ -45,6 +45,10 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     text_shaping.native_status == @render.RendererFeatureStatus::Partial,
   )
+  assert_true(text_shaping.native_note.contains("CoreText"))
+  assert_true(text_shaping.native_note.contains("DirectWrite scaffold"))
+  assert_true(text_shaping.native_note.contains("fontconfig"))
+  assert_true(text_shaping.native_note.contains("Cosmic"))
 }
 
 ///|
