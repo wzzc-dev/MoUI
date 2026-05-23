@@ -121,6 +121,41 @@ test "cosmic text shaping produces glyphs when platform font is available" {
 }
 
 ///|
+test "cosmic text provider skips whitespace glyphs without dropping words" {
+  if @fs.path_exists(cosmic_regular_font_path()) {
+    let cache = CosmicTextCache::new()
+    let run = @core.TextRun::new(
+      text="Layered card with image",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=260.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let raw_runs = cosmic_text_layout_runs(cache, run)
+    let mut raw_glyph_count = 0
+    let mut whitespace_glyph_count = 0
+    for raw_run in raw_runs {
+      for glyph in raw_run.glyphs {
+        raw_glyph_count = raw_glyph_count + 1
+        if cosmic_text_glyph_is_whitespace(run, glyph) {
+          whitespace_glyph_count = whitespace_glyph_count + 1
+        }
+      }
+    }
+    match cache.layout_for_run(run, 1.0) {
+      Some(layout) => {
+        inspect(whitespace_glyph_count > 0, content="true")
+        inspect(layout.glyphs.length() > 0, content="true")
+        inspect(layout.glyphs.length() < raw_glyph_count, content="true")
+      }
+      None => fail("expected cosmic layout for text with spaces")
+    }
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
 test "cosmic text shaping handles multibyte punctuation" {
   if @fs.path_exists(cosmic_regular_font_path()) {
     let cache = CosmicTextCache::new()

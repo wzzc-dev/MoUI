@@ -85,7 +85,11 @@ fn windows_cjk_font_path() -> String {
 
 ///|
 fn macos_cjk_font_path() -> String {
-  first_existing_font_path(["/System/Library/Fonts/Hiragino Sans GB.ttc"])
+  first_existing_font_path([
+    "/System/Library/Fonts/STHeiti Medium.ttc", "/System/Library/Fonts/STHeiti Light.ttc",
+    "/System/Library/Fonts/PingFang.ttc", "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/System/Library/Fonts/Supplemental/Songti.ttc",
+  ])
 }
 
 ///|
@@ -476,6 +480,7 @@ fn CosmicTextCache::layout_for_run(
   }
   let scale = cosmic_text_scale(scale_factor)
   let glyphs : Array[@wgpu_renderer.NativeGlyphPlacement] = []
+  let baseline = run.font.size * 0.8
   let mut width = 0.0
   let mut height = run.font.size * 1.25
   for layout_run in runs {
@@ -488,29 +493,43 @@ fn CosmicTextCache::layout_for_run(
       Float::from_double(layout_run.line_y.to_double() * scale),
     )
     for glyph in layout_run.glyphs {
-      let physical = glyph.physical(offset, Float::from_double(scale))
-      let cache_key = cosmic_text_cache_key_with_fallback(
-        self,
-        run,
-        glyph,
-        physical.cache_key,
-      )
-      let key = self.native_glyph_key(cache_key)
-      glyphs.push(
-        @wgpu_renderer.NativeGlyphPlacement::new(
-          key~,
-          x=physical.x.to_double() / scale,
-          y=physical.y.to_double() / scale,
-        ),
-      )
+      if !cosmic_text_glyph_is_whitespace(run, glyph) {
+        let physical = glyph.physical(offset, Float::from_double(scale))
+        let cache_key = cosmic_text_cache_key_with_fallback(
+          self,
+          run,
+          glyph,
+          physical.cache_key,
+        )
+        let key = self.native_glyph_key(cache_key)
+        glyphs.push(
+          @wgpu_renderer.NativeGlyphPlacement::new(
+            key~,
+            x=physical.x.to_double() / scale,
+            y=physical.y.to_double() / scale - baseline,
+          ),
+        )
+      }
     }
   }
   Some(
     @wgpu_renderer.NativeTextLayout::new(
       size=@core.Size::new(width~, height~),
-      baseline=run.font.size * 0.8,
+      baseline~,
       glyphs~,
     ),
+  )
+}
+
+///|
+fn cosmic_text_glyph_is_whitespace(
+  run : @core.TextRun,
+  glyph : @moon_cosmic.LayoutGlyph,
+) -> Bool {
+  cosmic_text_source_range_is_whitespace(
+    cosmic_text_safe_text(run.text),
+    glyph.start,
+    glyph.end,
   )
 }
 
@@ -542,7 +561,7 @@ fn cosmic_text_cache_key_with_fallback(
   if glyph.glyph_id != 0 {
     return cache_key
   }
-  match cosmic_text_codepoint_at(run.text, glyph.start) {
+  match cosmic_text_codepoint_at(cosmic_text_safe_text(run.text), glyph.start) {
     None => cache_key
     Some(codepoint) =>
       match
@@ -578,15 +597,50 @@ fn cosmic_text_cache_key_with_fallback(
 
 ///|
 fn cosmic_text_codepoint_at(text : String, index : Int) -> UInt? {
+  match cosmic_text_char_at(text, index) {
+    Some(ch) => Some(ch.to_uint())
+    None => None
+  }
+}
+
+///|
+fn cosmic_text_char_at(text : String, index : Int) -> Char? {
   if index < 0 {
     return None
   }
-  let chars = text.to_array()
-  if index >= chars.length() {
-    None
-  } else {
-    Some(chars[index].to_uint())
+  for pair in text.iter2() {
+    if pair.0 == index {
+      return Some(pair.1)
+    }
+    if pair.0 > index {
+      return None
+    }
   }
+  None
+}
+
+///|
+fn cosmic_text_source_range_is_whitespace(
+  text : String,
+  start : Int,
+  end : Int,
+) -> Bool {
+  if end <= start {
+    return false
+  }
+  let from = start.max(0)
+  let to = end.max(from)
+  let mut saw_char = false
+  for pair in text.iter2() {
+    let index = pair.0
+    if index >= from && index < to {
+      saw_char = true
+      if !pair.1.is_whitespace() {
+        return false
+      }
+    }
+  }
+  saw_char
 }
 
 ///|

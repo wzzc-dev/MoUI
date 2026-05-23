@@ -435,6 +435,68 @@ test "native renderer builds text vertices and atlas entries" {
 }
 
 ///|
+test "native renderer accepts layouts that omit whitespace glyphs" {
+  let renderer = new_test_renderer_handle_with_text_engine(
+    native_platform_text_engine(
+      NativePlatformTextProvider::new(
+        id="test-platform-text",
+        measure=_input => None,
+        layout_run=(run, _scale) => {
+          let glyphs : Array[NativeGlyphPlacement] = []
+          let mut x = 0.0
+          for ch in run.text {
+            if ch.is_whitespace() {
+              x = x + run.font.size * 0.32
+            } else {
+              let key = native_platform_glyph_key(
+                cache_key="test-platform:\{ch.to_uint()}",
+                payload=Bytes::from_array([b'\x08']),
+              )
+              glyphs.push(NativeGlyphPlacement::new(key~, x~))
+              x = x + run.font.size * 0.5
+            }
+          }
+          Some(
+            NativeTextLayout::new(
+              size=@core.Size::new(width=x, height=run.font.size * 1.25),
+              baseline=run.font.size * 0.8,
+              glyphs~,
+            ),
+          )
+        },
+        raster_glyph=(_cache_key, _payload) => {
+          Some(
+            NativeRasterGlyph::new(
+              width=8,
+              height=10,
+              bearing_x=0,
+              bearing_y=-8,
+              pixels=Bytes::from_array(Array::make(80, b'\xff')),
+            ),
+          )
+        },
+      ),
+    ),
+  )
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=160.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawText({
+      text: "Layered card with image",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=240.0, height=36.0),
+      font: @core.FontSpec::new(size=16.0, weight=500),
+      color: @core.Color::black(),
+      align: @core.TextAlign::TextStart,
+    }),
+  ])
+  inspect(renderer.text_vertices.length() > 0, content="true")
+  inspect(glyph_atlas_entry_count(renderer.glyph_atlas) > 0, content="true")
+}
+
+///|
 test "native renderer blits platform glyph rows away from atlas top edge" {
   let glyph_key = native_platform_glyph_key(
     cache_key="test-platform:H",
