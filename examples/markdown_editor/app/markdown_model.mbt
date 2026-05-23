@@ -8,6 +8,8 @@ pub(all) enum MarkdownInlineKind {
   Link
   Autolink
   Image
+  FootnoteReference
+  HtmlInline
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -37,6 +39,8 @@ pub(all) enum MarkdownBlockKind {
   CodeBlock
   HorizontalRule
   Table
+  FootnoteDefinition(String)
+  HtmlBlock
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -113,7 +117,12 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
                   None => {
                     let parsed = @markdown.parse(line)
                     for block in parsed.document.children {
-                      append_markdown_ast_block(blocks, block, definitions)
+                      append_markdown_ast_block(
+                        blocks,
+                        block,
+                        definitions,
+                        source_text=Some(line),
+                      )
                     }
                   }
                 }
@@ -362,15 +371,19 @@ fn append_markdown_ast_block(
   blocks : Array[MarkdownBlock],
   block : @markdown.Block,
   definitions : Array[MarkdownReferenceDefinition],
+  source_text? : String? = None,
 ) -> Unit {
   match block {
     Heading(level~, children~, ..) => {
-      let text = markdown_inline_text(children)
+      let text = match source_text {
+        Some(source_text) => markdown_heading_visible_source_text(source_text)
+        None => markdown_inline_text(children)
+      }
       if level >= 1 && level <= 6 {
         blocks.push({
           kind: MarkdownBlockKind::Heading(level),
           text,
-          inlines: markdown_inlines_from_ast(children, definitions),
+          inlines: parse_markdown_inlines_with_definitions(text, definitions),
           table_alignments: [],
           code_language: None,
         })
@@ -386,11 +399,14 @@ fn append_markdown_ast_block(
       }
     }
     Paragraph(children~, ..) => {
-      let text = markdown_inline_text(children)
+      let text = match source_text {
+        Some(source_text) => source_text
+        None => markdown_inline_text(children)
+      }
       blocks.push({
         kind: MarkdownBlockKind::Paragraph,
         text,
-        inlines: markdown_inlines_from_ast(children, definitions),
+        inlines: parse_markdown_inlines_with_definitions(text, definitions),
         table_alignments: [],
         code_language: None,
       })
@@ -474,22 +490,21 @@ fn append_markdown_ast_block(
     }
     BlankLines(..) => ()
     HtmlBlock(html~, ..) =>
-      blocks.push(markdown_block(MarkdownBlockKind::Paragraph, html))
+      blocks.push(markdown_block(MarkdownBlockKind::HtmlBlock, html))
     Table(header~, rows~, ..) => {
       let text = markdown_table_text(header, rows)
       blocks.push(markdown_table_block(text, []))
     }
-    FootnoteDefinition(..) =>
-      blocks.push(
-        markdown_block(
-          MarkdownBlockKind::Paragraph,
-          @markdown.serialize({
-            frontmatter: None,
-            children: [block],
-            span: @markdown.Span::empty(),
-          }),
-        ),
-      )
+    FootnoteDefinition(label~, children~, ..) => {
+      let text = markdown_blocks_text(children)
+      blocks.push({
+        kind: MarkdownBlockKind::FootnoteDefinition(label),
+        text,
+        inlines: parse_markdown_inlines_with_definitions(text, definitions),
+        table_alignments: [],
+        code_language: None,
+      })
+    }
   }
 }
 
@@ -574,7 +589,76 @@ fn parse_markdown_inlines_with_definitions(
   text : String,
   definitions : Array[MarkdownReferenceDefinition],
 ) -> Array[MarkdownInline] {
-  markdown_inlines_from_ast(@markdown.parse_inlines(text), definitions)
+  markdown_parse_inlines_preserving_plain_html(text, definitions)
+}
+
+///|
+fn markdown_parse_inlines_preserving_plain_html(
+  text : String,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Array[MarkdownInline] {
+  let spans : Array[MarkdownInline] = []
+  let chars = text.to_array()
+  let mut start = 0
+  let mut index = 0
+  while index < chars.length() {
+    match markdown_protected_inline_end(chars, index) {
+      Some(end) => {
+        markdown_append_parsed_inline_segment(
+          spans,
+          String::from_array(chars[start:end]),
+          definitions,
+        )
+        index = end
+        start = end
+      }
+      None =>
+        if chars[index] == '<' {
+          match markdown_html_inline_tag_end(chars, index) {
+            Some(end) => {
+              markdown_append_parsed_inline_segment(
+                spans,
+                String::from_array(chars[start:index]),
+                definitions,
+              )
+              spans.push(
+                markdown_inline(
+                  String::from_array(chars[index:end]),
+                  HtmlInline,
+                ),
+              )
+              index = end
+              start = end
+            }
+            None => index = index + 1
+          }
+        } else {
+          index = index + 1
+        }
+    }
+  }
+  markdown_append_parsed_inline_segment(
+    spans,
+    String::from_array(chars[start:]),
+    definitions,
+  )
+  spans
+}
+
+///|
+fn markdown_append_parsed_inline_segment(
+  spans : Array[MarkdownInline],
+  text : String,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Unit {
+  if text == "" {
+    return
+  }
+  spans.append(
+    markdown_normalize_html_inlines(
+      markdown_inlines_from_ast(@markdown.parse_inlines(text), definitions),
+    ),
+  )
 }
 
 ///|
@@ -598,6 +682,138 @@ fn markdown_resolve_reference_inlines(
     }
   }
   resolved
+}
+
+///|
+fn markdown_normalize_html_inlines(
+  inlines : Array[MarkdownInline],
+) -> Array[MarkdownInline] {
+  let normalized : Array[MarkdownInline] = []
+  for inline in inlines {
+    match inline.kind {
+      MarkdownInlineKind::HtmlInline =>
+        normalized.push({
+          ..inline,
+          text: markdown_html_inline_source(inline.text),
+        })
+      _ => normalized.push(inline)
+    }
+  }
+  normalized
+}
+
+///|
+fn markdown_protected_inline_end(chars : Array[Char], start : Int) -> Int? {
+  if chars[start] == '`' {
+    let mut index = start + 1
+    while index < chars.length() && chars[index] != '`' && chars[index] != '\n' {
+      index = index + 1
+    }
+    if index < chars.length() && chars[index] == '`' {
+      return Some(index + 1)
+    }
+  }
+  if chars[start] == '!' &&
+    start + 1 < chars.length() &&
+    chars[start + 1] == '[' {
+    return markdown_bracketed_inline_end(chars, start + 1)
+  }
+  if chars[start] == '[' {
+    markdown_bracketed_inline_end(chars, start)
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_bracketed_inline_end(chars : Array[Char], open : Int) -> Int? {
+  let mut close = open + 1
+  while close < chars.length() && chars[close] != ']' && chars[close] != '\n' {
+    close = close + 1
+  }
+  if close >= chars.length() ||
+    chars[close] != ']' ||
+    close + 1 >= chars.length() {
+    return None
+  }
+  if chars[close + 1] == '(' {
+    let mut end = close + 2
+    while end < chars.length() && chars[end] != ')' && chars[end] != '\n' {
+      end = end + 1
+    }
+    if end < chars.length() && chars[end] == ')' {
+      Some(end + 1)
+    } else {
+      None
+    }
+  } else if chars[close + 1] == '[' {
+    let mut end = close + 2
+    while end < chars.length() && chars[end] != ']' && chars[end] != '\n' {
+      end = end + 1
+    }
+    if end < chars.length() && chars[end] == ']' {
+      Some(end + 1)
+    } else {
+      None
+    }
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_html_inline_source(html : String) -> String {
+  if html.has_prefix("<") {
+    html
+  } else {
+    "<" + html + ">"
+  }
+}
+
+///|
+fn markdown_html_inline_tag_end(chars : Array[Char], start : Int) -> Int? {
+  if start + 2 >= chars.length() || chars[start] != '<' {
+    return None
+  }
+  let mut name_start = start + 1
+  if chars[name_start] == '/' {
+    name_start = name_start + 1
+  }
+  if name_start >= chars.length() ||
+    !markdown_html_tag_name_start_char(chars[name_start]) {
+    return None
+  }
+  let mut index = name_start + 1
+  while index < chars.length() && markdown_html_tag_name_char(chars[index]) {
+    index = index + 1
+  }
+  if index >= chars.length() ||
+    (
+      chars[index] != '>' &&
+      chars[index] != '/' &&
+      chars[index] != ' ' &&
+      chars[index] != '\t'
+    ) {
+    return None
+  }
+  while index < chars.length() && chars[index] != '>' && chars[index] != '\n' {
+    index = index + 1
+  }
+  if index >= chars.length() || chars[index] != '>' {
+    None
+  } else {
+    Some(index + 1)
+  }
+}
+
+///|
+fn markdown_html_tag_name_start_char(ch : Char) -> Bool {
+  (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+}
+
+///|
+fn markdown_html_tag_name_char(ch : Char) -> Bool {
+  markdown_html_tag_name_start_char(ch) || (ch >= '0' && ch <= '9') || ch == '-'
 }
 
 ///|
@@ -667,8 +883,10 @@ fn append_markdown_inline_ast(
           target=Some(markdown_reference_target(definitions, label)),
         ),
       )
-    HtmlInline(html~, ..) => spans.push(markdown_inline(html, Plain))
-    FootnoteReference(label~, ..) => spans.push(markdown_inline(label, Plain))
+    HtmlInline(html~, ..) =>
+      spans.push(markdown_inline(markdown_html_inline_source(html), HtmlInline))
+    FootnoteReference(label~, ..) =>
+      spans.push(markdown_inline(label, FootnoteReference))
   }
 }
 
@@ -815,7 +1033,7 @@ fn markdown_inline_plain_text(inline : @markdown.Inline) -> String {
     WikiLink(label~, target~, ..) => if label == "" { target } else { label }
     Autolink(url~, ..) => url
     Image(alt~, ..) | RefImage(alt~, ..) => alt
-    HtmlInline(html~, ..) => html
+    HtmlInline(html~, ..) => markdown_html_inline_source(html)
     FootnoteReference(label~, ..) => label
   }
 }
@@ -836,7 +1054,9 @@ fn markdown_blocks_text(blocks : Array[@markdown.Block]) -> String {
       ThematicBreak(..) => lines.push("---")
       HtmlBlock(html~, ..) => lines.push(html)
       BlankLines(..) => ()
-      Table(..) | FootnoteDefinition(..) => ()
+      Table(..) => ()
+      FootnoteDefinition(label~, children~, ..) =>
+        lines.push("[^" + label + "]: " + markdown_blocks_text(children))
     }
   }
   markdown_join_lines(lines)
@@ -854,6 +1074,26 @@ fn markdown_heading_source(level : Int, text : String) -> String {
     marks.push('#')
   }
   String::from_array(marks) + " " + text
+}
+
+///|
+fn markdown_heading_visible_source_text(source : String) -> String {
+  let chars = source.trim().to_owned().to_array()
+  let mut start = 0
+  while start < chars.length() && chars[start] == '#' {
+    start = start + 1
+  }
+  if start < chars.length() && chars[start] == ' ' {
+    start = start + 1
+  }
+  let mut end = chars.length()
+  while end > start && chars[end - 1] == '#' {
+    end = end - 1
+  }
+  while end > start && chars[end - 1] == ' ' {
+    end = end - 1
+  }
+  String::from_array(chars[start:end])
 }
 
 ///|
@@ -977,6 +1217,53 @@ fn markdown_block_to_rich_text(
         ),
         inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0 },
         line_height=Some(base.size * 1.35),
+        corner_radius=6.0,
+      )
+    FootnoteDefinition(label) =>
+      @core.RichTextBlock::new(
+        runs=[
+          @core.RichTextRun::new(
+            text="[^" + label + "]: ",
+            visual_text=Some(label),
+            font=Some({ ..base, size: base.size * 0.78, weight: 700 }),
+            color=Some(@core.Color::black().multiply_alpha(0.58)),
+            background=Some(
+              @core.Brush::solid(
+                @core.Color::rgba(r=0.18, g=0.4, b=0.7, a=0.08),
+              ),
+            ),
+            background_radius=4.0,
+          ),
+          ..markdown_inlines_to_rich_text(block.inlines, base),
+        ],
+        color=Some(@core.Color::black().multiply_alpha(0.82)),
+        border_left=Some(
+          @core.BorderStyle::new(
+            brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.22)),
+            width=3.0,
+          ),
+        ),
+        inset={ top: 2.0, right: 0.0, bottom: 2.0, left: 12.0 },
+        line_height=Some(base.size * 1.45),
+      )
+    HtmlBlock =>
+      @core.RichTextBlock::new(
+        runs=[
+          @core.RichTextRun::new(
+            text=block.text,
+            font=Some({
+              ..base,
+              families: @core.FontFamilyStack::monospace(),
+              size: base.size * 0.9,
+            }),
+            color=Some(@core.Color::black().multiply_alpha(0.7)),
+          ),
+        ],
+        background=Some(
+          @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.12, b=0.12, a=0.06)),
+        ),
+        inset={ top: 4.0, right: 10.0, bottom: 4.0, left: 10.0 },
+        line_height=Some(base.size * 1.25),
         corner_radius=6.0,
       )
     Paragraph =>
@@ -1213,6 +1500,7 @@ fn markdown_inlines_to_rich_text(
 fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
   match inline.kind {
     Image => markdown_inline_source_text(inline)
+    FootnoteReference => inline.text
     _ => inline.text
   }
 }
@@ -1239,6 +1527,12 @@ fn markdown_inline_image_size(
 
 ///|
 fn markdown_inline_source_text(inline : MarkdownInline) -> String {
+  if inline.kind is HtmlInline {
+    return markdown_html_inline_source(inline.text)
+  }
+  if inline.kind is FootnoteReference {
+    return "[^" + inline.text + "]"
+  }
   if inline.text == "" {
     "image"
   } else {
@@ -1257,6 +1551,15 @@ fn markdown_inline_font(
     Strikethrough => { ..font, weight: 400 }
     Link | Autolink => { ..font, weight: 500 }
     Image => { ..font, weight: 600 }
+    FootnoteReference => { ..font, size: font.size * 0.76, weight: 700 }
+    HtmlInline =>
+      {
+        ..font,
+        families: @core.FontFamilyStack::named("SFMono-Regular")
+        .with_fallback(@core.FontFamily::UiMonospace)
+        .with_fallback(@core.FontFamily::Monospace),
+        size: font.size * 0.9,
+      }
     Code =>
       {
         ..font,
@@ -1275,6 +1578,10 @@ fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
     Code => Some(@core.Brush::solid(@core.Color::black().multiply_alpha(0.08)))
     Image =>
       Some(@core.Brush::solid(@core.Color::rgba(r=0.18, g=0.4, b=0.7, a=0.08)))
+    FootnoteReference =>
+      Some(@core.Brush::solid(@core.Color::rgba(r=0.18, g=0.4, b=0.7, a=0.08)))
+    HtmlInline =>
+      Some(@core.Brush::solid(@core.Color::black().multiply_alpha(0.06)))
     Plain | Bold | Italic | Strikethrough | Link | Autolink => None
   }
 }
@@ -1285,6 +1592,14 @@ fn markdown_inline_decoration(
 ) -> @core.RichTextDecoration? {
   match kind {
     Strikethrough => Some(@core.RichTextDecoration::Strikethrough)
-    Plain | Bold | Italic | Code | Link | Autolink | Image => None
+    Plain
+    | Bold
+    | Italic
+    | Code
+    | Link
+    | Autolink
+    | Image
+    | FootnoteReference
+    | HtmlInline => None
   }
 }

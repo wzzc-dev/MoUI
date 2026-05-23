@@ -31,9 +31,21 @@ editing, and plain-selection creation actions based on the current selection.
 Reference-style links and images resolve their document definitions into rich
 link/image targets, so long-form Markdown can keep shared definitions while the
 formatted editor shows the linked text and image preview. The same contextual
-target editor can update the referenced definition target from the selected
-linked text or image alt text, and creates the missing definition when a
-reference-style link or image does not have one yet.
+target editor now appears as a floating palette over the formatted editor when
+source preview is hidden and anchors to the live caret/selection geometry; it
+can update the referenced definition target from the selected linked text or
+image alt text, and creates the missing definition when a reference-style link
+or image does not have one yet, including shortcut reference links such as
+`[label]`.
+Footnote references and definitions keep their Markdown source structure while
+rendering as compact inline note markers and styled definition blocks. Selecting
+a footnote reference or definition opens contextual footnote text editing, and
+applying text updates the existing definition or creates the missing one.
+Inline HTML tags and HTML blocks are also retained as structured Markdown spans
+and blocks, with code-like styling in the formatted surface. When the caret is
+inside a rendered HTML block, the contextual bar exposes raw HTML block editing
+so future safe HTML rendering can build on the editor model instead of reparsing
+plain text.
 When the caret is inside a rendered table, the same contextual bar exposes row
 and column insertion/deletion plus column-alignment tools that update the
 canonical Markdown table.
@@ -71,8 +83,8 @@ current column separator as `:---`, `:---:`, `---:`, or `---` and the rich table
 preview reflects that alignment. Toolbar and contextual target-editing
 commands keep their own undo/redo history so structured Markdown transforms can
 be reverted separately from raw text input. The next Typora milestones are
-upgrading the contextual target editing bar into a true inline/floating
-affordance and more complete block-mode interactions.
+adding more complete block-mode interactions and richer selection-aware inline
+editing affordances.
 
 ## Web Wasm-GC
 

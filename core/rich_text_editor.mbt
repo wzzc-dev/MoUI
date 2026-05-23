@@ -21,7 +21,7 @@ fn append_rich_text_editor_commands(
   }
   let text = data.value.get()
   let display_text = text_with_composition(text, element, focused)
-  let content = frame.inset(Insets::symmetric(horizontal=14.0, vertical=12.0))
+  let content = rich_text_editor_content_rect(frame)
   commands.push(PushClip(content))
   if display_text == "" {
     commands.push(
@@ -718,6 +718,24 @@ fn rich_text_document_caret_rect(
 }
 
 ///|
+pub fn rich_text_editor_content_rect(frame : Rect) -> Rect {
+  frame.inset(Insets::symmetric(horizontal=14.0, vertical=12.0))
+}
+
+///|
+pub fn rich_text_document_caret_rect_at_source(
+  document : RichTextDocument,
+  source_caret : Int,
+  content : Rect,
+  base_font : FontSpec,
+  text_measurer? : TextMeasurer = TextMeasurer::default(),
+) -> Rect? {
+  rich_text_document_caret_rect(
+    document, source_caret, content, base_font, text_measurer,
+  )
+}
+
+///|
 fn rich_text_editor_caret_at_point(
   data : RichTextEditorViewSpec,
   point : Point,
@@ -726,7 +744,7 @@ fn rich_text_editor_caret_at_point(
 ) -> Int {
   let text = data.value.get()
   let document = (data.format)(text)
-  let content = frame.inset(Insets::symmetric(horizontal=14.0, vertical=12.0))
+  let content = rich_text_editor_content_rect(frame)
   rich_text_document_source_offset_at_point(
     document,
     point,
@@ -745,7 +763,7 @@ fn rich_text_editor_prefix_source_offset_at_point(
 ) -> Int? {
   let text = data.value.get()
   let document = (data.format)(text)
-  let content = frame.inset(Insets::symmetric(horizontal=14.0, vertical=12.0))
+  let content = rich_text_editor_content_rect(frame)
   rich_text_document_prefix_source_offset_at_point(
     document,
     point,

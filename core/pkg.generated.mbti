@@ -26,6 +26,10 @@ pub fn required_field(message? : String) -> (String) -> String?
 
 pub fn resolve_gesture_arena(Array[GestureArenaMember]) -> GestureArenaResult
 
+pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, Rect, FontSpec, text_measurer? : TextMeasurer) -> Rect?
+
+pub fn rich_text_editor_content_rect(Rect) -> Rect
+
 pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
 
 // Errors
