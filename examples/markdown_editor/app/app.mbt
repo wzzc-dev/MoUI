@@ -21,6 +21,7 @@ pub(all) enum MarkdownEditorTargetKind {
   PlainSelection
   LinkTarget
   ImageTarget
+  TableTools
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -241,9 +242,11 @@ fn MarkdownEditorApp::restore_history(
 ///|
 fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
   let selection = self.selection.get()
-  self.block_label.set(
-    markdown_editor_active_block_label(self.document.get(), selection),
+  let block_label = markdown_editor_active_block_label(
+    self.document.get(),
+    selection,
   )
+  self.block_label.set(block_label)
   match markdown_editor_selected_link_target(self.document.get(), selection) {
     Some(target) => {
       self.link_target.set(target)
@@ -257,7 +260,12 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
       self.image_target.set(target)
       self.target_kind.set(ImageTarget)
     }
-    None => self.target_kind.set(PlainSelection)
+    None =>
+      if block_label == "Table" {
+        self.target_kind.set(TableTools)
+      } else {
+        self.target_kind.set(PlainSelection)
+      }
   }
 }
 
@@ -437,6 +445,26 @@ fn MarkdownEditorApp::toolbar(
           style,
         ),
         toolbar_button(
+          "+Col",
+          () => self.apply_command_to_selection(InsertTableColumn),
+          style,
+        ).keyboard_shortcut(markdown_editor_shift_shortcut("=")),
+        toolbar_button(
+          "+Row",
+          () => self.apply_command_to_selection(InsertTableRow),
+          style,
+        ).keyboard_shortcut(markdown_editor_shift_shortcut("Enter")),
+        toolbar_button(
+          "-Row",
+          () => self.apply_command_to_selection(DeleteTableRow),
+          style,
+        ).keyboard_shortcut(markdown_editor_shift_shortcut("-")),
+        toolbar_button(
+          "-Col",
+          () => self.apply_command_to_selection(DeleteTableColumn),
+          style,
+        ).keyboard_shortcut(markdown_editor_shift_shortcut("_")),
+        toolbar_button(
           "Block",
           () => self.apply_command_to_selection(CodeBlock),
           style,
@@ -512,6 +540,37 @@ fn MarkdownEditorApp::target_bar(
             height=34.0,
           ).key("markdown-image-target"),
           toolbar_button("Apply", () => self.apply_image_target(), button_style),
+        ],
+        spacing=theme.spacing_scale.xs,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+      )
+    TableTools =>
+      @views.row(
+        [
+          block_badge,
+          @views.text("Table tools", width=92.0, height=34.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          toolbar_button(
+            "+Row",
+            () => self.apply_command_to_selection(InsertTableRow),
+            button_style,
+          ),
+          toolbar_button(
+            "+Col",
+            () => self.apply_command_to_selection(InsertTableColumn),
+            button_style,
+          ),
+          toolbar_button(
+            "-Col",
+            () => self.apply_command_to_selection(DeleteTableColumn),
+            button_style,
+          ),
+          toolbar_button(
+            "-Row",
+            () => self.apply_command_to_selection(DeleteTableRow),
+            button_style,
+          ),
         ],
         spacing=theme.spacing_scale.xs,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
@@ -744,6 +803,14 @@ fn markdown_command_from_action(action : String) -> MarkdownEditorCommand? {
     Some(HorizontalRule)
   } else if action == "table" {
     Some(Table)
+  } else if action == "table-row" {
+    Some(InsertTableRow)
+  } else if action == "table-column" {
+    Some(InsertTableColumn)
+  } else if action == "table-row-delete" {
+    Some(DeleteTableRow)
+  } else if action == "table-column-delete" {
+    Some(DeleteTableColumn)
   } else if action == "codeblock" {
     Some(CodeBlock)
   } else {

@@ -74,6 +74,54 @@ fn styled_rich_text_editor(value : Binding[String]) -> ViewSpec {
           line_height=Some(24.0),
           corner_radius=6.0,
         ),
+        RichTextBlock::new(
+          runs=[
+            RichTextRun::new(
+              text="logo",
+              image_source=Some("logo.png"),
+              image_size=Some(Size::new(width=64.0, height=36.0)),
+            ),
+          ],
+          line_height=Some(24.0),
+        ),
+        RichTextBlock::new(
+          runs=[RichTextRun::new(text="A  |  B\n1  |  2")],
+          table=Some({
+            rows: [
+              [
+                {
+                  text: "A",
+                  header: true,
+                  source_range: Some({ start: 2, end: 3 }),
+                },
+                {
+                  text: "B",
+                  header: true,
+                  source_range: Some({ start: 7, end: 8 }),
+                },
+              ],
+              [
+                {
+                  text: "1",
+                  header: false,
+                  source_range: Some({ start: 14, end: 15 }),
+                },
+                {
+                  text: "2",
+                  header: false,
+                  source_range: Some({ start: 19, end: 20 }),
+                },
+              ],
+            ],
+            row_height: 28.0,
+            cell_padding: Insets::symmetric(horizontal=6.0, vertical=4.0),
+            border: Color::black().multiply_alpha(0.2),
+            header_background: Some(
+              Brush::solid(Color::gray().multiply_alpha(0.16)),
+            ),
+          }),
+          line_height=Some(24.0),
+        ),
       ])
     },
     font: FontSpec::new(size=16.0, weight=400),
@@ -122,6 +170,71 @@ fn mapped_rich_text_editor(value : Binding[String]) -> ViewSpec {
           prefix="☐ ",
           source_range=Some({ start: 10, end: 22 }),
           content_range=Some({ start: 16, end: 22 }),
+        ),
+      ])
+    },
+    font: FontSpec::new(size=16.0, weight=400),
+    foreground: Color::black(),
+    placeholder_color: Color::gray(),
+    background: Brush::solid(Color::white()),
+    border: None,
+    focused_border: None,
+    cursor_color: Color::blue(),
+    corner_radius: 4.0,
+    on_selection_change: None,
+    on_prefix_click: None,
+    input_transform: None,
+    accepts_tab_input: false,
+  })
+}
+
+///|
+fn table_mapped_rich_text_editor(value : Binding[String]) -> ViewSpec {
+  ViewSpec::RichTextEditorSpec({
+    key: None,
+    value,
+    placeholder: "Write",
+    size: Size::new(width=320.0, height=220.0),
+    format: _text => {
+      RichTextDocument::new(blocks=[
+        RichTextBlock::new(
+          runs=[RichTextRun::new(text="A  |  B\n1  |  2")],
+          table=Some({
+            rows: [
+              [
+                {
+                  text: "A",
+                  header: true,
+                  source_range: Some({ start: 2, end: 3 }),
+                },
+                {
+                  text: "B",
+                  header: true,
+                  source_range: Some({ start: 7, end: 8 }),
+                },
+              ],
+              [
+                {
+                  text: "1",
+                  header: false,
+                  source_range: Some({ start: 14, end: 15 }),
+                },
+                {
+                  text: "2",
+                  header: false,
+                  source_range: Some({ start: 19, end: 20 }),
+                },
+              ],
+            ],
+            row_height: 28.0,
+            cell_padding: Insets::symmetric(horizontal=6.0, vertical=4.0),
+            border: Color::black().multiply_alpha(0.2),
+            header_background: Some(
+              Brush::solid(Color::gray().multiply_alpha(0.16)),
+            ),
+          }),
+          source_range=Some({ start: 0, end: 21 }),
+          content_range=Some({ start: 0, end: 21 }),
         ),
       ])
     },
@@ -335,6 +448,24 @@ test "rich text editor draw commands contain styled runs and block decorations" 
   assert_true(
     commands.any(command => command is DrawText({ text: "code", .. })),
   )
+  assert_true(
+    commands.any(command => {
+      command
+      is DrawImage(
+        {
+          source: "logo.png",
+          frame: { size: { width: 64.0, height: 36.0 }, .. },
+          ..,
+        }
+      )
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is DrawText({ text: "A", font: { weight: 700, .. }, .. })
+    }),
+  )
+  assert_true(commands.any(command => command is StrokeRect(_, _, 1.0)))
   assert_true(commands.any(command => command is FillRoundedRectBrush(_, _)))
   assert_true(commands.any(command => rich_text_editor_is_strike_rect(command)))
 }
@@ -718,6 +849,26 @@ test "rich text editor drag selects mapped source range" {
   inspect(selection.normalized().start, content="2")
   inspect(selection.normalized().end, content="7")
   inspect(changed.get(), content="true")
+}
+
+///|
+test "rich text editor click maps rich table cells to source ranges" {
+  let source = State::new("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  let runtime = RuntimeState::new_spec(
+    root=table_mapped_rich_text_editor(source.binding()),
+    size=Size::new(width=320.0, height=220.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=250.0, y=54.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  let input = runtime.focused_text_input()
+  assert_true(input.caret >= 19)
+  assert_true(input.caret <= 20)
 }
 
 ///|

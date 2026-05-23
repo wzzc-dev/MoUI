@@ -143,6 +143,9 @@ pub(all) enum RichTextDecoration {
 pub(all) struct RichTextRun {
   text : String
   visual_text : String?
+  image_source : String?
+  image_size : Size?
+  image_fit : ImageFit
   font : FontSpec?
   color : Color?
   background : Brush?
@@ -152,8 +155,25 @@ pub(all) struct RichTextRun {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct RichTextTableCell {
+  text : String
+  header : Bool
+  source_range : RichTextSourceRange?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RichTextTable {
+  rows : Array[Array[RichTextTableCell]]
+  row_height : Double
+  cell_padding : Insets
+  border : Color
+  header_background : Brush?
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
+  table : RichTextTable?
   prefix : String
   font : FontSpec?
   color : Color?
@@ -532,6 +552,9 @@ pub fn ViewStyle::empty() -> ViewStyle {
 pub fn RichTextRun::new(
   text~ : String,
   visual_text? : String? = None,
+  image_source? : String? = None,
+  image_size? : Size? = None,
+  image_fit? : ImageFit = ImageFit::Contain,
   font? : FontSpec? = None,
   color? : Color? = None,
   background? : Brush? = None,
@@ -542,6 +565,9 @@ pub fn RichTextRun::new(
   {
     text,
     visual_text,
+    image_source,
+    image_size,
+    image_fit,
     font,
     color,
     background,
@@ -563,6 +589,7 @@ pub fn RichTextInputTransform::new(
 ///|
 pub fn RichTextBlock::new(
   runs~ : Array[RichTextRun],
+  table? : RichTextTable? = None,
   prefix? : String = "",
   font? : FontSpec? = None,
   color? : Color? = None,
@@ -577,6 +604,7 @@ pub fn RichTextBlock::new(
 ) -> RichTextBlock {
   {
     runs,
+    table,
     prefix,
     font,
     color,

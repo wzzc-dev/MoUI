@@ -315,6 +315,22 @@ fn append_rich_text_blocks(
           rich_text_block_color(block, foreground).multiply_alpha(0.25),
         ),
       )
+    } else if block.table is Some(_) {
+      append_rich_text_block_table(
+        commands,
+        block,
+        Rect::new(
+          x=block_frame.origin.x + block.inset.left,
+          y=block_frame.origin.y + block.inset.top,
+          width=max_double(
+            0.0,
+            block_frame.size.width - block.inset.left - block.inset.right,
+          ),
+          height=line_height,
+        ),
+        base_font,
+        foreground,
+      )
     } else {
       append_rich_text_block_runs(
         commands,
@@ -335,6 +351,91 @@ fn append_rich_text_blocks(
     }
     y = y + block_height
   }
+}
+
+///|
+fn append_rich_text_block_table(
+  commands : Array[DrawCommand],
+  block : RichTextBlock,
+  frame : Rect,
+  base_font : FontSpec,
+  foreground : Color,
+) -> Unit {
+  match block.table {
+    Some(table) => {
+      let row_count = table.rows.length()
+      let column_count = rich_text_table_column_count(table)
+      if row_count == 0 || column_count == 0 {
+        return
+      }
+      let column_width = frame.size.width / column_count.to_double()
+      for row_index in 0..<row_count {
+        let row_y = frame.origin.y + table.row_height * row_index.to_double()
+        if row_index == 0 {
+          match table.header_background {
+            Some(background) =>
+              commands.push(
+                FillRoundedRectBrush(
+                  RoundedRect::new(
+                    rect=Rect::new(
+                      x=frame.origin.x,
+                      y=row_y,
+                      width=frame.size.width,
+                      height=table.row_height,
+                    ),
+                    radius=block.corner_radius,
+                  ),
+                  background,
+                ),
+              )
+            None => ()
+          }
+        }
+        let row = table.rows[row_index]
+        for column_index in 0..<column_count {
+          let cell_x = frame.origin.x + column_width * column_index.to_double()
+          let cell_frame = Rect::new(
+            x=cell_x,
+            y=row_y,
+            width=column_width,
+            height=table.row_height,
+          )
+          commands.push(StrokeRect(cell_frame, table.border, 1.0))
+          if column_index < row.length() {
+            let cell = row[column_index]
+            commands.push(
+              DrawText(
+                TextRun::new(
+                  text=cell.text,
+                  frame=cell_frame.inset(table.cell_padding),
+                  font={
+                    ..rich_text_block_font(block, base_font),
+                    weight: if cell.header {
+                      700
+                    } else {
+                      400
+                    },
+                  },
+                  color=rich_text_block_color(block, foreground),
+                  align=TextAlign::TextStart,
+                ),
+              ),
+            )
+          }
+        }
+      }
+    }
+    None => ()
+  }
+}
+
+///|
+fn rich_text_table_column_count(table : RichTextTable) -> Int {
+  let mut count = 0
+  for row in table.rows {
+    count = rich_text_max_int(count, row.length())
+  }
+  count
 }
 
 ///|
@@ -373,11 +474,14 @@ fn append_rich_text_block_runs(
     let run_font = run.font.unwrap_or(font)
     let run_color = run.color.unwrap_or(color)
     let text = rich_text_run_visual_text(run)
-    let width = rich_text_width(text, run_font, text_measurer)
+    let width = rich_text_run_width(run, run_font, text_measurer)
     let run_frame = Rect::new(
       x~,
       y=frame.origin.y,
-      width=max_double(0.0, frame.origin.x + frame.size.width - x),
+      width=max_double(
+        0.0,
+        min_double(width, frame.origin.x + frame.size.width - x),
+      ),
       height=frame.size.height,
     )
     match run.background {
@@ -398,17 +502,29 @@ fn append_rich_text_block_runs(
         )
       None => ()
     }
-    commands.push(
-      DrawText(
-        TextRun::new(
-          text~,
-          frame=run_frame,
-          font=run_font,
-          color=run_color,
-          align=TextAlign::TextStart,
-        ),
-      ),
-    )
+    match run.image_source {
+      Some(source) =>
+        commands.push(
+          DrawImage({
+            source,
+            frame: run_frame,
+            opacity: 1.0,
+            fit: run.image_fit,
+          }),
+        )
+      None =>
+        commands.push(
+          DrawText(
+            TextRun::new(
+              text~,
+              frame=run_frame,
+              font=run_font,
+              color=run_color,
+              align=TextAlign::TextStart,
+            ),
+          ),
+        )
+    }
     append_rich_text_run_decoration(
       commands, run, run_frame, width, run_font, run_color,
     )
@@ -449,9 +565,25 @@ fn rich_text_block_line_height(
   block : RichTextBlock,
   base_font : FontSpec,
 ) -> Double {
-  block.line_height.unwrap_or(
+  let text_height = block.line_height.unwrap_or(
     rich_text_block_font(block, base_font).size * 1.55,
   )
+  let mut height = text_height
+  match block.table {
+    Some(table) =>
+      height = max_double(
+        height,
+        table.row_height * table.rows.length().to_double(),
+      )
+    None => ()
+  }
+  for run in block.runs {
+    match run.image_size {
+      Some(size) => height = max_double(height, size.height)
+      None => ()
+    }
+  }
+  height
 }
 
 ///|
@@ -474,6 +606,26 @@ fn rich_text_width(
   text_measurer : TextMeasurer,
 ) -> Double {
   text_measurer.measure_text(TextLayoutInput::new(text~, font~)).size.width
+}
+
+///|
+fn rich_text_run_width(
+  run : RichTextRun,
+  font : FontSpec,
+  text_measurer : TextMeasurer,
+) -> Double {
+  match run.image_size {
+    Some(size) => size.width
+    None => rich_text_width(rich_text_run_visual_text(run), font, text_measurer)
+  }
+}
+
+///|
+fn rich_text_run_hit_width(run : RichTextRun, width : Double) -> Double? {
+  match run.image_source {
+    Some(_) => Some(width)
+    None => None
+  }
 }
 
 ///|
@@ -694,11 +846,74 @@ fn rich_text_document_source_offset_at_point(
     )
     last_offset = Some(offset)
     if point.y < y + block_height {
+      match rich_text_block_table_source_offset_at_point(block, point, frame) {
+        Some(offset) => return Some(offset)
+        None => ()
+      }
       return Some(offset)
     }
     y = y + block_height
   }
   last_offset
+}
+
+///|
+fn rich_text_block_table_source_offset_at_point(
+  block : RichTextBlock,
+  point : Point,
+  frame : Rect,
+) -> Int? {
+  match block.table {
+    Some(table) => {
+      let row_count = table.rows.length()
+      let column_count = rich_text_table_column_count(table)
+      if row_count == 0 || column_count == 0 || table.row_height <= 0.0 {
+        return None
+      }
+      let row_index = clamp_int(
+        ((point.y - frame.origin.y) / table.row_height).floor().to_int(),
+        0,
+        row_count - 1,
+      )
+      let column_width = frame.size.width / column_count.to_double()
+      let column_index = clamp_int(
+        ((point.x - frame.origin.x) / column_width).floor().to_int(),
+        0,
+        column_count - 1,
+      )
+      let row = table.rows[row_index]
+      if column_index >= row.length() {
+        return None
+      }
+      match row[column_index].source_range {
+        Some(range) => {
+          let x = clamp_double(
+            point.x,
+            frame.origin.x + column_width * column_index.to_double(),
+            frame.origin.x + column_width * (column_index + 1).to_double(),
+          )
+          let relative = if column_width <= 0.0 {
+            0.0
+          } else {
+            (x - (frame.origin.x + column_width * column_index.to_double())) /
+            column_width
+          }
+          Some(
+            clamp_int(
+              range.start +
+              (relative * (range.end - range.start).to_double())
+              .round()
+              .to_int(),
+              range.start,
+              range.end,
+            ),
+          )
+        }
+        None => None
+      }
+    }
+    None => None
+  }
 }
 
 ///|
@@ -746,11 +961,16 @@ fn rich_text_block_visual_offset_at_x(
     let run_font = run.font.unwrap_or(font)
     let text = rich_text_run_visual_text(run)
     let run_length = text_length(text)
-    let run_width = rich_text_width(text, run_font, text_measurer)
+    let run_width = rich_text_run_width(run, run_font, text_measurer)
     if x <= origin + run_width {
       return visual_offset +
         rich_text_run_visual_offset_at_x(
-          text, run_font, x, origin, text_measurer,
+          text,
+          run_font,
+          x,
+          origin,
+          text_measurer,
+          width=rich_text_run_hit_width(run, run_width),
         )
     }
     visual_offset = visual_offset + run_length
@@ -766,10 +986,25 @@ fn rich_text_run_visual_offset_at_x(
   x : Double,
   origin_x : Double,
   text_measurer : TextMeasurer,
+  width? : Double? = None,
 ) -> Int {
   let chars = text.to_array()
   if x <= origin_x {
     return 0
+  }
+  match width {
+    Some(width) =>
+      if chars.length() <= 1 {
+        if x < origin_x + width / 2.0 {
+          return 0
+        } else {
+          return chars.length()
+        }
+      } else {
+        let relative = clamp_double((x - origin_x) / width, 0.0, 1.0)
+        return (relative * chars.length().to_double()).round().to_int()
+      }
+    None => ()
   }
   for index in 0..<chars.length() {
     let before = rich_text_width(
@@ -941,14 +1176,43 @@ fn rich_text_block_caret_rect(
     let text = rich_text_run_visual_text(run)
     let run_length = text_length(text)
     if remaining <= run_length {
-      let prefix = rich_text_prefix(text, remaining)
-      x = x + rich_text_width(prefix, run_font, text_measurer)
+      x = x +
+        rich_text_run_prefix_width(run, remaining, run_font, text_measurer)
       return rich_text_cursor_rect_at(x, frame, run_font)
     }
     remaining = remaining - run_length
-    x = x + rich_text_width(text, run_font, text_measurer)
+    x = x + rich_text_run_width(run, run_font, text_measurer)
   }
   rich_text_cursor_rect_at(x, frame, font)
+}
+
+///|
+fn rich_text_run_prefix_width(
+  run : RichTextRun,
+  visual_offset : Int,
+  font : FontSpec,
+  text_measurer : TextMeasurer,
+) -> Double {
+  let text = rich_text_run_visual_text(run)
+  let length = text_length(text)
+  if length <= 0 || visual_offset <= 0 {
+    0.0
+  } else if visual_offset >= length {
+    rich_text_run_width(run, font, text_measurer)
+  } else {
+    match run.image_source {
+      Some(_) =>
+        rich_text_run_width(run, font, text_measurer) *
+        visual_offset.to_double() /
+        length.to_double()
+      None =>
+        rich_text_width(
+          rich_text_prefix(text, visual_offset),
+          font,
+          text_measurer,
+        )
+    }
+  }
 }
 
 ///|
@@ -1042,4 +1306,13 @@ fn rich_text_caret_rect(
     width=1.5,
     height=max_double(10.0, line_height - 8.0),
   )
+}
+
+///|
+fn rich_text_max_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
+  }
 }
