@@ -24,19 +24,22 @@ priv struct CoreTextGlyphRecord {
 
 ///|
 pub fn coretext_text_engine() -> @wgpu_renderer.NativeTextEngine {
-  @wgpu_renderer.native_platform_text_engine(
-    @wgpu_renderer.NativePlatformTextProvider::new(
-      id="native-wgpu-coretext-system",
-      measure=coretext_measure_layout,
-      layout_run=coretext_layout_for_run,
-      raster_glyph=payload => {
-        match coretext_glyph_key_from_payload(payload) {
-          Some(key) => coretext_raster_glyph(key)
-          None => None
-        }
-      },
-      register_font_data=coretext_register_font_data,
-    ),
+  @wgpu_renderer.native_platform_text_engine(coretext_text_provider())
+}
+
+///|
+pub fn coretext_text_provider() -> @wgpu_renderer.NativePlatformTextProvider {
+  @wgpu_renderer.NativePlatformTextProvider::new(
+    id="native-wgpu-coretext-system",
+    measure=coretext_measure_layout,
+    layout_run=coretext_layout_for_run,
+    raster_glyph=(_cache_key, payload) => {
+      match coretext_glyph_key_from_payload(payload) {
+        Some(key) => coretext_raster_glyph(key)
+        None => None
+      }
+    },
+    register_font_data=coretext_register_font_data,
   )
 }
 

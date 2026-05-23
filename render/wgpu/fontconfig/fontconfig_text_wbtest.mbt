@@ -64,7 +64,11 @@ test "fontconfig run layout delegates native stub to shared text protocol" {
 ///|
 test "fontconfig raster delegates native stub to shared text protocol" {
   inspect(
-    fontconfig_raster_glyph(Bytes::from_array([b'\x01'])) is None,
+    fontconfig_raster_glyph(
+      "test-fontconfig:invalid",
+      Bytes::from_array([b'\x01']),
+    )
+    is None,
     content="true",
   )
 }

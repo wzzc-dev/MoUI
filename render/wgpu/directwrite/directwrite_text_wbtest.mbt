@@ -66,7 +66,11 @@ test "directwrite run layout delegates native stub to shared text protocol" {
 ///|
 test "directwrite raster delegates native stub to shared text protocol" {
   inspect(
-    directwrite_raster_glyph(Bytes::from_array([b'\x01'])) is None,
+    directwrite_raster_glyph(
+      "test-directwrite:invalid",
+      Bytes::from_array([b'\x01']),
+    )
+    is None,
     content="true",
   )
 }

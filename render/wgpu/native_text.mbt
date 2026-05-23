@@ -9,21 +9,16 @@ let atlas_padding : Int = 1
 
 ///|
 priv struct NativeFontCache {
-  mut font_system : @moon_cosmic.FontSystem
-  swash_cache : @moon_cosmic.SwashCache
-  catalog : NativeFontCatalog
   text_engine : NativeTextEngine
-  loaded_paths : Map[String, Bool]
-  warned_paths : Map[String, Bool]
 }
 
 ///|
-// Opaque native text engine selected by platform hosts. Platform packages should
-// construct one with `native_platform_text_engine`; invalid provider output is
-// rejected here and falls back to the shared Cosmic path.
+// Opaque native text engine selected by platform hosts. Platform packages
+// construct one with `native_platform_text_engine`; optional fallback behavior
+// is explicit so renderer/wgpu stays independent from concrete text engines.
 pub struct NativeTextEngine {
-  priv kind : NativeTextEngineKind
-  priv fallback : Bool
+  priv provider : NativePlatformTextProvider
+  priv fallback : NativePlatformTextProvider?
 }
 
 ///|
@@ -33,27 +28,14 @@ pub(all) enum NativeTextEngineSetting {
 } derive(Eq, Debug, ToJson)
 
 ///|
-priv enum NativeTextEngineKind {
-  PlatformText(NativePlatformTextProvider)
-  CosmicFallback
-}
-
-///|
 // Callback bundle implemented by a platform text engine such as CoreText,
 // DirectWrite, or fontconfig/HarfBuzz/FreeType.
 pub struct NativePlatformTextProvider {
   priv id : String
   priv measure : (@core.TextLayoutInput) -> NativeTextLayout?
   priv layout_run : (@core.TextRun, Double) -> NativeTextLayout?
-  priv raster_glyph : (Bytes) -> NativeRasterGlyph?
+  priv raster_glyph : (String, Bytes) -> NativeRasterGlyph?
   priv register_font_data : (@core.FontFamily, Bytes) -> Unit
-}
-
-///|
-priv struct NativeFontCatalog {
-  regular_path : String
-  bold_path : String
-  cjk_path : String
 }
 
 ///|
@@ -67,18 +49,12 @@ priv struct GlyphAtlasEntry {
 }
 
 ///|
-priv enum NativeGlyphSource {
-  CosmicGlyph(@moon_cosmic.CacheKey)
-  PlatformGlyph(Bytes)
-}
-
-///|
 // Renderer-private glyph key. Platform providers own the payload encoding;
 // `cache_key` must be stable across frames and include all raster-affecting
 // fields such as glyph identity, size, style, and scale.
 pub struct NativeGlyphKey {
   priv cache_key : String
-  priv source : NativeGlyphSource
+  priv payload : Bytes
 }
 
 ///|
@@ -158,41 +134,19 @@ priv enum TextRunAppendResult {
 
 ///|
 fn NativeFontCache::new() -> NativeFontCache {
-  NativeFontCache::new_with_engine(NativeTextEngine::cosmic_fallback())
+  NativeFontCache::new_with_engine(native_noop_text_engine())
 }
 
 ///|
 fn NativeFontCache::new_with_engine(
   text_engine : NativeTextEngine,
 ) -> NativeFontCache {
-  {
-    font_system: @moon_cosmic.FontSystem::new().set_fallback_profile(
-      @moon_cosmic.FallbackProfile::MacOS,
-    ),
-    swash_cache: @moon_cosmic.SwashCache::new(),
-    catalog: NativeFontCatalog::platform_default(),
-    text_engine,
-    loaded_paths: {},
-    warned_paths: {},
-  }
-}
-
-///|
-fn NativeTextEngine::cosmic_fallback() -> NativeTextEngine {
-  { kind: NativeTextEngineKind::CosmicFallback, fallback: false }
-}
-
-///|
-pub fn native_cosmic_text_engine() -> NativeTextEngine {
-  NativeTextEngine::cosmic_fallback()
+  { text_engine, }
 }
 
 ///|
 fn NativeTextEngine::id(self : NativeTextEngine) -> String {
-  match self.kind {
-    PlatformText(provider) => provider.id
-    CosmicFallback => "native-wgpu-cosmic-fallback"
-  }
+  self.provider.id
 }
 
 ///|
@@ -200,7 +154,7 @@ pub fn NativePlatformTextProvider::new(
   id~ : String,
   measure~ : (@core.TextLayoutInput) -> NativeTextLayout?,
   layout_run~ : (@core.TextRun, Double) -> NativeTextLayout?,
-  raster_glyph~ : (Bytes) -> NativeRasterGlyph?,
+  raster_glyph~ : (String, Bytes) -> NativeRasterGlyph?,
   register_font_data? : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => {
     ()
   },
@@ -212,7 +166,27 @@ pub fn NativePlatformTextProvider::new(
 pub fn native_platform_text_engine(
   provider : NativePlatformTextProvider,
 ) -> NativeTextEngine {
-  { kind: NativeTextEngineKind::PlatformText(provider), fallback: true }
+  { provider, fallback: None }
+}
+
+///|
+pub fn native_platform_text_engine_with_fallback(
+  provider : NativePlatformTextProvider,
+  fallback~ : NativeTextEngine,
+) -> NativeTextEngine {
+  { provider, fallback: Some(fallback.provider) }
+}
+
+///|
+fn native_noop_text_engine() -> NativeTextEngine {
+  native_platform_text_engine(
+    NativePlatformTextProvider::new(
+      id="native-wgpu-noop-text",
+      measure=_input => None,
+      layout_run=(_run, _scale_factor) => None,
+      raster_glyph=(_cache_key, _payload) => None,
+    ),
+  )
 }
 
 ///|
@@ -222,7 +196,7 @@ pub fn native_platform_glyph_key(
   cache_key~ : String,
   payload~ : Bytes,
 ) -> NativeGlyphKey {
-  { cache_key, source: PlatformGlyph(payload) }
+  { cache_key, payload }
 }
 
 ///|
@@ -291,215 +265,41 @@ fn GlyphAtlas::to_bytes(self : GlyphAtlas) -> Bytes {
 }
 
 ///|
-fn windows_regular_font_path() -> String {
-  "C:\\Windows\\Fonts\\segoeui.ttf"
-}
-
-///|
-fn windows_bold_font_path() -> String {
-  "C:\\Windows\\Fonts\\segoeuib.ttf"
-}
-
-///|
-fn macos_regular_font_path() -> String {
-  first_existing_font_path([
-    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc",
-    "/System/Library/Fonts/Supplemental/Arial.ttf",
-  ])
-}
-
-///|
-fn macos_bold_font_path() -> String {
-  first_existing_font_path([
-    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc",
-    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  ])
-}
-
-///|
-fn windows_cjk_font_path() -> String {
-  first_existing_font_path([
-    "C:\\Windows\\Fonts\\msyh.ttc", "C:\\Windows\\Fonts\\simsun.ttc", "C:\\Windows\\Fonts\\simhei.ttf",
-  ])
-}
-
-///|
-fn macos_cjk_font_path() -> String {
-  first_existing_font_path(["/System/Library/Fonts/Hiragino Sans GB.ttc"])
-}
-
-///|
-fn native_regular_font_path() -> String {
-  first_existing_font_path([
-    windows_regular_font_path(),
-    macos_regular_font_path(),
-  ])
-}
-
-///|
-fn native_bold_font_path() -> String {
-  first_existing_font_path([windows_bold_font_path(), macos_bold_font_path()])
-}
-
-///|
-fn native_cjk_font_path() -> String {
-  first_existing_font_path([windows_cjk_font_path(), macos_cjk_font_path()])
-}
-
-///|
-fn NativeFontCatalog::platform_default() -> NativeFontCatalog {
-  {
-    regular_path: native_regular_font_path(),
-    bold_path: native_bold_font_path(),
-    cjk_path: native_cjk_font_path(),
-  }
-}
-
-///|
-fn NativeFontCatalog::font_path_for_spec(
-  self : NativeFontCatalog,
-  font : @core.FontSpec,
-) -> String {
-  if font.weight >= 600 {
-    self.bold_path
-  } else {
-    self.regular_path
-  }
-}
-
-///|
-fn NativeFontCatalog::fallback_font_paths_for_spec(
-  self : NativeFontCatalog,
-  font : @core.FontSpec,
-) -> Array[String] {
-  [self.font_path_for_spec(font), self.cjk_path]
-}
-
-///|
-fn first_existing_font_path(paths : Array[String]) -> String {
-  for path in paths {
-    if @fs.path_exists(path) {
-      return path
-    }
-  }
-  paths[0]
-}
-
-///|
-pub fn native_text_font_path_for_spec(font : @core.FontSpec) -> String {
-  NativeFontCatalog::platform_default().font_path_for_spec(font)
-}
-
-///|
-pub fn native_text_fallback_font_paths_for_spec(
-  font : @core.FontSpec,
-) -> Array[String] {
-  NativeFontCatalog::platform_default().fallback_font_paths_for_spec(font)
-}
-
-///|
-fn NativeFontCache::ensure_fonts_for_font(
-  self : NativeFontCache,
-  font : @core.FontSpec,
-) -> Unit {
-  for path in self.catalog.fallback_font_paths_for_spec(font) {
-    self.load_font_path(path)
-  }
-}
-
-///|
-fn NativeFontCache::load_font_path(
-  self : NativeFontCache,
-  path : String,
-) -> Unit {
-  match self.loaded_paths.get(path) {
-    Some(true) => ()
-    _ => {
-      if !@fs.path_exists(path) {
-        self.warn_font_once(path)
-      } else {
-        try {
-          let bytes = @fs.read_file_to_bytes(path)
-          let before = self.font_system.fonts().length()
-          self.font_system = self.font_system.load_font_data(bytes)
-          let after = self.font_system.fonts().length()
-          if after == before {
-            self.warn_font_once(path)
-          }
-        } catch {
-          _ => self.warn_font_once(path)
-        }
-      }
-      self.loaded_paths[path] = true
-    }
-  }
-}
-
-///|
-fn NativeFontCache::load_font_data(
-  self : NativeFontCache,
-  family : @core.FontFamily,
-  data : Bytes,
-) -> Unit {
-  let key = "registered:" + family.css_name()
-  let before = self.font_system.fonts().length()
-  self.font_system = self.font_system.load_font_data(data)
-  let after = self.font_system.fonts().length()
-  if after == before {
-    self.warn_font_once(key)
-  } else {
-    self.loaded_paths[key] = true
-  }
-}
-
-///|
-fn NativeFontCache::has_loaded_fonts(self : NativeFontCache) -> Bool {
-  self.font_system.fonts().length() > 0
-}
-
-///|
-fn NativeFontCache::warn_font_once(
-  self : NativeFontCache,
-  path : String,
-) -> Unit {
-  match self.warned_paths.get(path) {
-    Some(true) => ()
-    _ => {
-      println("MoUI native text: unable to load font: \{path}")
-      self.warned_paths[path] = true
-    }
-  }
-}
-
-///|
 fn NativeTextEngine::measure(
   self : NativeTextEngine,
   cache : NativeFontCache,
   input : @core.TextLayoutInput,
 ) -> @core.TextLayoutResult {
-  match self.kind {
-    PlatformText(provider) =>
-      match (provider.measure)(input) {
-        Some(layout) =>
-          if layout.is_valid_for_measure(input.text) {
-            layout.to_text_layout_result()
-          } else {
-            self.measure_with_fallback(cache, input)
-          }
-        None => self.measure_with_fallback(cache, input)
+  let _ = cache
+  match (self.provider.measure)(input) {
+    Some(layout) =>
+      if layout.is_valid_for_measure(input.text) {
+        layout.to_text_layout_result()
+      } else {
+        self.measure_with_fallback(input)
       }
-    CosmicFallback => cache.cosmic_measure(input)
+    None => self.measure_with_fallback(input)
   }
 }
 
 ///|
 fn NativeTextEngine::measure_with_fallback(
   self : NativeTextEngine,
-  cache : NativeFontCache,
   input : @core.TextLayoutInput,
 ) -> @core.TextLayoutResult {
-  let _ = self
-  cache.cosmic_measure(input)
+  match self.fallback {
+    Some(fallback) =>
+      match (fallback.measure)(input) {
+        Some(layout) =>
+          if layout.is_valid_for_measure(input.text) {
+            layout.to_text_layout_result()
+          } else {
+            @core.measure_text_layout(input)
+          }
+        None => @core.measure_text_layout(input)
+      }
+    None => @core.measure_text_layout(input)
+  }
 }
 
 ///|
@@ -509,42 +309,45 @@ fn NativeTextEngine::layout_run(
   run : @core.TextRun,
   scale_factor : Double,
 ) -> NativeTextLayout? {
-  match self.kind {
-    PlatformText(provider) =>
-      match (provider.layout_run)(run, scale_factor) {
-        Some(layout) =>
-          if layout.is_valid_for_run() {
-            Some(layout)
-          } else {
-            self.layout_with_fallback(cache, run, scale_factor)
-          }
-        None => self.layout_with_fallback(cache, run, scale_factor)
+  let _ = cache
+  match (self.provider.layout_run)(run, scale_factor) {
+    Some(layout) =>
+      if layout.is_valid_for_run() {
+        Some(layout)
+      } else {
+        self.layout_with_fallback(run, scale_factor)
       }
-    CosmicFallback => cache.cosmic_layout_for_run(run, scale_factor)
+    None => self.layout_with_fallback(run, scale_factor)
   }
 }
 
 ///|
 fn NativeTextEngine::layout_with_fallback(
   self : NativeTextEngine,
-  cache : NativeFontCache,
   run : @core.TextRun,
   scale_factor : Double,
 ) -> NativeTextLayout? {
-  self.fallback_layout_run(cache, run, scale_factor)
+  self.fallback_layout_run(run, scale_factor)
 }
 
 ///|
 fn NativeTextEngine::fallback_layout_run(
   self : NativeTextEngine,
-  cache : NativeFontCache,
   run : @core.TextRun,
   scale_factor : Double,
 ) -> NativeTextLayout? {
-  if self.fallback {
-    cache.cosmic_layout_for_run(run, scale_factor)
-  } else {
-    None
+  match self.fallback {
+    Some(fallback) =>
+      match (fallback.layout_run)(run, scale_factor) {
+        Some(layout) =>
+          if layout.is_valid_for_run() {
+            Some(layout)
+          } else {
+            None
+          }
+        None => None
+      }
+    None => None
   }
 }
 
@@ -554,16 +357,24 @@ fn NativeTextEngine::raster_glyph(
   cache : NativeFontCache,
   key : NativeGlyphKey,
 ) -> NativeRasterGlyph? {
-  let raster = match key.source {
-    PlatformGlyph(payload) =>
-      match self.kind {
-        PlatformText(provider) => (provider.raster_glyph)(payload)
-        CosmicFallback => None
-      }
-    CosmicGlyph(cosmic_key) => raster_glyph(cache, cosmic_key)
+  let _ = cache
+  match (self.provider.raster_glyph)(key.cache_key, key.payload) {
+    Some(glyph) if glyph.is_valid() => Some(glyph)
+    _ => self.fallback_raster_glyph(key)
   }
-  match raster {
-    Some(glyph) => if glyph.is_valid() { Some(glyph) } else { None }
+}
+
+///|
+fn NativeTextEngine::fallback_raster_glyph(
+  self : NativeTextEngine,
+  key : NativeGlyphKey,
+) -> NativeRasterGlyph? {
+  match self.fallback {
+    Some(fallback) =>
+      match (fallback.raster_glyph)(key.cache_key, key.payload) {
+        Some(glyph) => if glyph.is_valid() { Some(glyph) } else { None }
+        None => None
+      }
     None => None
   }
 }
@@ -575,12 +386,11 @@ fn NativeTextEngine::register_font_data(
   family : @core.FontFamily,
   data : Bytes,
 ) -> Unit {
-  match self.kind {
-    PlatformText(provider) => {
-      (provider.register_font_data)(family, data)
-      cache.load_font_data(family, data)
-    }
-    CosmicFallback => cache.load_font_data(family, data)
+  let _ = cache
+  (self.provider.register_font_data)(family, data)
+  match self.fallback {
+    Some(fallback) => (fallback.register_font_data)(family, data)
+    None => ()
   }
 }
 
@@ -661,106 +471,6 @@ fn text_align_extra(
 }
 
 ///|
-fn cosmic_glyph_cache_key(key : @moon_cosmic.CacheKey) -> String {
-  "cosmic:" + key.to_string()
-}
-
-///|
-fn cosmic_native_glyph_key(key : @moon_cosmic.CacheKey) -> NativeGlyphKey {
-  { cache_key: cosmic_glyph_cache_key(key), source: CosmicGlyph(key) }
-}
-
-///|
-fn native_text_attrs_for_font(font : @core.FontSpec) -> @moon_cosmic.Attrs {
-  @moon_cosmic.Attrs::new()
-  .family(native_text_family_for_font(font))
-  .style(native_text_style_for_font(font.style))
-  .weight(@moon_cosmic.Weight::new(font.weight))
-}
-
-///|
-fn native_text_style_for_font(style : @core.FontStyle) -> @moon_swash.Style {
-  match style {
-    @core.FontStyle::Normal => @moon_swash.Style::Normal
-    @core.FontStyle::Italic => @moon_swash.Style::Italic
-  }
-}
-
-///|
-fn native_text_family_for_font(font : @core.FontSpec) -> @moon_cosmic.Family {
-  let family = if font.families.families.is_empty() {
-    @core.FontFamily::SystemUi
-  } else {
-    font.families.families[0]
-  }
-  match family {
-    @core.FontFamily::Name(name) => @moon_cosmic.Family::Name(name)
-    @core.FontFamily::SystemUi => @moon_cosmic.Family::SystemUi
-    @core.FontFamily::UiSansSerif => @moon_cosmic.Family::UiSansSerif
-    @core.FontFamily::UiSerif => @moon_cosmic.Family::UiSerif
-    @core.FontFamily::UiMonospace => @moon_cosmic.Family::UiMonospace
-    @core.FontFamily::SansSerif => @moon_cosmic.Family::SansSerif
-    @core.FontFamily::Serif => @moon_cosmic.Family::Serif
-    @core.FontFamily::Monospace => @moon_cosmic.Family::Monospace
-    @core.FontFamily::Emoji => @moon_cosmic.Family::Emoji
-    @core.FontFamily::Math => @moon_cosmic.Family::Math
-    @core.FontFamily::FangSong => @moon_cosmic.Family::FangSong
-  }
-}
-
-///|
-fn build_native_text_buffer(
-  cache : NativeFontCache,
-  run : @core.TextRun,
-) -> @moon_cosmic.Buffer {
-  cache.ensure_fonts_for_font(run.font)
-  let metrics = @moon_cosmic.Metrics::new(
-    Float::from_double(run.font.size),
-    Float::from_double(run.font.size * 1.25),
-  )
-  let attrs = native_text_attrs_for_font(run.font)
-  let text = native_text_cosmic_safe_text(run.text)
-  @moon_cosmic.Buffer::new(metrics)
-  .set_wrap(@moon_cosmic.Wrap::None)
-  .set_size(Some(Float::from_double(run.frame.size.width)), None)
-  .set_text(
-    text,
-    @moon_cosmic.AttrsList::new(attrs),
-    @moon_cosmic.Shaping::Advanced,
-  )
-  .shape_all_with_font_system(cache.font_system)
-  .layout_all_with_font_system(cache.font_system)
-}
-
-///|
-fn build_native_text_input_buffer(
-  cache : NativeFontCache,
-  input : @core.TextLayoutInput,
-) -> @moon_cosmic.Buffer {
-  cache.ensure_fonts_for_font(input.font)
-  let metrics = @moon_cosmic.Metrics::new(
-    Float::from_double(input.font.size),
-    Float::from_double(input.font.size * 1.25),
-  )
-  let attrs = native_text_attrs_for_font(input.font)
-  let text = native_text_cosmic_safe_text(input.text)
-  let max_width = match input.max_width {
-    Some(width) => Some(Float::from_double(width))
-    None => None
-  }
-  @moon_cosmic.Buffer::new(metrics)
-  .set_wrap(@moon_cosmic.Wrap::None)
-  .set_size(max_width, None)
-  .set_text(
-    text,
-    @moon_cosmic.AttrsList::new(attrs),
-    @moon_cosmic.Shaping::Advanced,
-  )
-  .shape_all_with_font_system(cache.font_system)
-  .layout_all_with_font_system(cache.font_system)
-}
-
-///|
 pub fn native_text_measurer() -> @core.TextMeasurer {
   native_text_measurer_with_cache(NativeFontCache::new())
 }
@@ -791,245 +501,6 @@ fn native_measure_text_layout(
   input : @core.TextLayoutInput,
 ) -> @core.TextLayoutResult {
   cache.text_engine.measure(cache, input)
-}
-
-///|
-fn NativeFontCache::cosmic_measure(
-  self : NativeFontCache,
-  input : @core.TextLayoutInput,
-) -> @core.TextLayoutResult {
-  let buffer = build_native_text_input_buffer(self, input)
-  if !self.has_loaded_fonts() {
-    return @core.measure_text_layout(input)
-  }
-  let raw = native_text_layout_result_from_cosmic(input, buffer)
-  match input.max_width {
-    Some(max_width) => native_clamp_text_layout_result(raw, max_width)
-    None => raw
-  }
-}
-
-///|
-fn native_text_layout_result_from_cosmic(
-  input : @core.TextLayoutInput,
-  buffer : @moon_cosmic.Buffer,
-) -> @core.TextLayoutResult {
-  let char_count = input.text.to_array().length()
-  let carets = Array::make(char_count + 1, 0.0)
-  let mut width = 0.0
-  let mut height = input.font.size * 1.25
-  let mut saw_run = false
-  for run in buffer.layout_runs() {
-    saw_run = true
-    width = width.max(run.line_w.to_double())
-    height = height.max((run.line_top + run.line_height).to_double())
-    for glyph in run.glyphs {
-      let start = native_clamp_int(glyph.start, 0, char_count)
-      let end = native_clamp_int(glyph.end, start, char_count)
-      let left = glyph.x.to_double()
-      let right = (glyph.x + glyph.w).to_double()
-      if start < carets.length() {
-        carets[start] = carets[start].max(left)
-      }
-      if end < carets.length() {
-        carets[end] = carets[end].max(right)
-      }
-    }
-  }
-  if !saw_run || (char_count > 0 && carets[char_count] == 0.0) {
-    return @core.measure_text_layout(input)
-  }
-  native_fill_missing_caret_positions(carets)
-  {
-    size: @core.Size::new(width~, height~),
-    baseline: input.font.size * 0.8,
-    caret_positions: carets,
-  }
-}
-
-///|
-fn native_fill_missing_caret_positions(carets : Array[Double]) -> Unit {
-  let mut last = 0.0
-  for index in 0..<carets.length() {
-    if carets[index] < last {
-      carets[index] = last
-    } else {
-      last = carets[index]
-    }
-  }
-}
-
-///|
-fn native_clamp_text_layout_result(
-  result : @core.TextLayoutResult,
-  max_width : Double,
-) -> @core.TextLayoutResult {
-  let carets : Array[Double] = []
-  for caret in result.caret_positions {
-    carets.push(caret.min(max_width))
-  }
-  {
-    size: @core.Size::new(
-      width=result.size.width.min(max_width),
-      height=result.size.height,
-    ),
-    baseline: result.baseline,
-    caret_positions: carets,
-  }
-}
-
-///|
-fn native_clamp_int(value : Int, min_value : Int, max_value : Int) -> Int {
-  if value < min_value {
-    min_value
-  } else if value > max_value {
-    max_value
-  } else {
-    value
-  }
-}
-
-///|
-fn native_text_cosmic_safe_text(text : String) -> String {
-  let chars : Array[Char] = []
-  let mut changed = false
-  for ch in text {
-    let mapped = native_text_cosmic_safe_char(ch)
-    if mapped != ch {
-      changed = true
-    }
-    chars.push(mapped)
-  }
-  if changed {
-    String::from_array(chars)
-  } else {
-    text
-  }
-}
-
-///|
-fn native_text_cosmic_safe_char(ch : Char) -> Char {
-  match ch {
-    '✓' => 'v'
-    '🔍' => '?'
-    '✕' => 'x'
-    '•' => '*'
-    '☑' => 'x'
-    '☐' => 'o'
-    '·' => '/'
-    _ => ch
-  }
-}
-
-///|
-fn native_text_layout_runs(
-  cache : NativeFontCache,
-  run : @core.TextRun,
-) -> Array[@moon_cosmic.LayoutRun] {
-  build_native_text_buffer(cache, run).layout_runs().to_array()
-}
-
-///|
-fn NativeFontCache::cosmic_layout_for_run(
-  self : NativeFontCache,
-  run : @core.TextRun,
-  scale_factor : Double,
-) -> NativeTextLayout? {
-  let runs = native_text_layout_runs(self, run)
-  if runs.is_empty() || !self.has_loaded_fonts() {
-    return None
-  }
-  let scale = native_text_scale(scale_factor)
-  let glyphs : Array[NativeGlyphPlacement] = []
-  let mut width = 0.0
-  let mut height = run.font.size * 1.25
-  for layout_run in runs {
-    width = width.max(layout_run.line_w.to_double())
-    height = height.max(
-      (layout_run.line_top + layout_run.line_height).to_double(),
-    )
-    let offset = (
-      0.0F,
-      Float::from_double(layout_run.line_y.to_double() * scale),
-    )
-    for glyph in layout_run.glyphs {
-      let physical = glyph.physical(offset, Float::from_double(scale))
-      let cache_key = native_text_cache_key_with_fallback(
-        self,
-        run,
-        glyph,
-        physical.cache_key,
-      )
-      glyphs.push({
-        key: cosmic_native_glyph_key(cache_key),
-        x: physical.x.to_double() / scale,
-        y: physical.y.to_double() / scale,
-      })
-    }
-  }
-  Some({
-    size: @core.Size::new(width~, height~),
-    baseline: run.font.size * 0.8,
-    caret_positions: [],
-    glyphs,
-  })
-}
-
-///|
-fn native_text_cache_key_with_fallback(
-  cache : NativeFontCache,
-  run : @core.TextRun,
-  glyph : @moon_cosmic.LayoutGlyph,
-  cache_key : @moon_cosmic.CacheKey,
-) -> @moon_cosmic.CacheKey {
-  if glyph.glyph_id != 0 {
-    return cache_key
-  }
-  match native_text_codepoint_at(run.text, glyph.start) {
-    None => cache_key
-    Some(codepoint) =>
-      match
-        cache.font_system.resolve_for_codepoint(
-          native_text_attrs_for_font(run.font),
-          codepoint,
-        ) {
-        None => cache_key
-        Some(font_id) =>
-          match cache.font_system.get_font_entry(font_id) {
-            None => cache_key
-            Some(entry) => {
-              let charmap = entry.charmap_proxy.materialize(entry.font)
-              let glyph_id = charmap.map(codepoint).to_int()
-              if glyph_id == 0 {
-                cache_key
-              } else {
-                let (fallback_key, _, _) = @moon_cosmic.CacheKey::new(
-                  font_id,
-                  glyph_id,
-                  glyph.font_size,
-                  (0.0F, 0.0F),
-                  glyph.font_weight,
-                  glyph.cache_key_flags,
-                )
-                fallback_key
-              }
-            }
-          }
-      }
-  }
-}
-
-///|
-fn native_text_codepoint_at(text : String, index : Int) -> UInt? {
-  if index < 0 {
-    return None
-  }
-  let chars = text.to_array()
-  if index >= chars.length() {
-    None
-  } else {
-    Some(chars[index].to_uint())
-  }
 }
 
 ///|
@@ -1101,7 +572,7 @@ fn append_text_layout_or_fallback(
       atlas_full
     }
     TextRunAppendNeedsFallback =>
-      match cache.text_engine.fallback_layout_run(cache, run, scale_factor) {
+      match cache.text_engine.fallback_layout_run(run, scale_factor) {
         None => false
         Some(fallback_layout) => {
           let fallback_vertices : Array[TextVertex] = []
@@ -1222,54 +693,6 @@ fn GlyphAtlas::ensure_glyph(
             }
           }
       }
-  }
-}
-
-///|
-priv struct RasterGlyphPixel {
-  x : Int
-  y : Int
-  color : @moon_cosmic.Color
-}
-
-///|
-fn raster_glyph(
-  cache : NativeFontCache,
-  cache_key : @moon_cosmic.CacheKey,
-) -> NativeRasterGlyph? {
-  let pixels : Array[RasterGlyphPixel] = []
-  cache.swash_cache.with_pixels(
-    cache.font_system,
-    cache_key,
-    @moon_cosmic.Color::rgba(b'\xff', b'\xff', b'\xff', b'\xff'),
-    fn(x, y, color) { pixels.push({ x, y, color }) },
-  )
-  if pixels.is_empty() {
-    None
-  } else {
-    let mut min_x = pixels[0].x
-    let mut min_y = pixels[0].y
-    let mut max_x = pixels[0].x
-    let mut max_y = pixels[0].y
-    for pixel in pixels {
-      min_x = min_x.min(pixel.x)
-      min_y = min_y.min(pixel.y)
-      max_x = max_x.max(pixel.x)
-      max_y = max_y.max(pixel.y)
-    }
-    let bytes = Array::make((max_x - min_x + 1) * (max_y - min_y + 1), b'\x00')
-    for pixel in pixels {
-      let x = pixel.x - min_x
-      let y = pixel.y - min_y
-      bytes[y * (max_x - min_x + 1) + x] = pixel.color.a()
-    }
-    Some({
-      width: max_x - min_x + 1,
-      height: max_y - min_y + 1,
-      bearing_x: min_x,
-      bearing_y: min_y,
-      pixels: Bytes::from_array(bytes),
-    })
   }
 }
 

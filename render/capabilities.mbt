@@ -209,7 +209,7 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::TextShaping,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Native wgpu uses a private platform text provider boundary: macOS injects CoreText/CoreGraphics, Windows has a DirectWrite scaffold, Linux has a fontconfig/HarfBuzz/FreeType scaffold, and invalid or unavailable provider output falls back to Cosmic. Full bidi, line breaking, and typography conformance remain follow-up work.",
+      native_note: "Native wgpu uses a private platform text provider boundary: render/wgpu owns validation and atlas upload, render/wgpu/cosmic_text owns the Cosmic provider, macOS composes CoreText/CoreGraphics with Cosmic fallback, Windows composes a DirectWrite scaffold with Cosmic fallback, and Linux has a fontconfig/HarfBuzz/FreeType scaffold. Full bidi, line breaking, and typography conformance remain follow-up work.",
       web_note: "Web text uses canvas-rasterized glyph atlases, but full shaping, bidi, and line breaking conformance remain follow-up work.",
     },
     {

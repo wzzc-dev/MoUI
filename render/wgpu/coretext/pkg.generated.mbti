@@ -8,6 +8,8 @@ import {
 // Values
 pub fn coretext_text_engine() -> @wgpu.NativeTextEngine
 
+pub fn coretext_text_provider() -> @wgpu.NativePlatformTextProvider
+
 // Errors
 
 // Types and methods

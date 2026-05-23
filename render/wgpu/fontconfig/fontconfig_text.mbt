@@ -1,13 +1,16 @@
 ///|
 pub fn fontconfig_text_engine() -> @wgpu_renderer.NativeTextEngine {
-  @wgpu_renderer.native_platform_text_engine(
-    @wgpu_renderer.NativePlatformTextProvider::new(
-      id="native-wgpu-fontconfig-harfbuzz-freetype-planned",
-      measure=fontconfig_measure_layout,
-      layout_run=fontconfig_layout_run,
-      raster_glyph=fontconfig_raster_glyph,
-      register_font_data=fontconfig_register_font_data,
-    ),
+  @wgpu_renderer.native_platform_text_engine(fontconfig_text_provider())
+}
+
+///|
+pub fn fontconfig_text_provider() -> @wgpu_renderer.NativePlatformTextProvider {
+  @wgpu_renderer.NativePlatformTextProvider::new(
+    id="native-wgpu-fontconfig-harfbuzz-freetype-planned",
+    measure=fontconfig_measure_layout,
+    layout_run=fontconfig_layout_run,
+    raster_glyph=fontconfig_raster_glyph,
+    register_font_data=fontconfig_register_font_data,
   )
 }
 
@@ -29,6 +32,7 @@ fn fontconfig_register_font_data(
 ///|
 #borrow(payload)
 fn fontconfig_raster_glyph(
+  _cache_key : String,
   payload : Bytes,
 ) -> @wgpu_renderer.NativeRasterGlyph? {
   @text_protocol.native_raster_glyph_from_bytes(
