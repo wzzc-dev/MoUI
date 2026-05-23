@@ -2,16 +2,24 @@
 let coretext_run_protocol_version : Int = 1
 
 ///|
-let coretext_glyph_payload_protocol_version : Int = 1
+let coretext_glyph_payload_protocol_version : Int = 2
 
 ///|
 priv struct CoreTextGlyphKey {
   glyph_id : Int
+  codepoint : Int
   font_name : Bytes
   size_key : Int
   weight : Int
   style : @core.FontStyle
   scale_key : Int
+}
+
+///|
+priv struct CoreTextGlyphRecord {
+  key : CoreTextGlyphKey
+  x : Double
+  y : Double
 }
 
 ///|
@@ -79,7 +87,7 @@ fn coretext_text_scale(scale_factor : Double) -> Double {
 
 ///|
 fn coretext_glyph_cache_key(key : CoreTextGlyphKey) -> String {
-  "ctg:\{key.glyph_id}:\{coretext_font_cache_key(key.font_name)}:\{key.size_key}:\{key.weight}:\{coretext_style_code(key.style)}:\{key.scale_key}"
+  "ctg:\{key.glyph_id}:\{key.codepoint}:\{coretext_font_cache_key(key.font_name)}:\{key.size_key}:\{key.weight}:\{coretext_style_code(key.style)}:\{key.scale_key}"
 }
 
 ///|
@@ -91,6 +99,7 @@ fn coretext_glyph_payload(key : CoreTextGlyphKey) -> Bytes {
   push_i32_le(out, key.weight)
   push_i32_le(out, coretext_style_code(key.style))
   push_i32_le(out, key.scale_key)
+  push_i32_le(out, key.codepoint)
   push_i32_le(out, key.font_name.length())
   for byte in key.font_name {
     out.push(byte)
@@ -100,19 +109,20 @@ fn coretext_glyph_payload(key : CoreTextGlyphKey) -> Bytes {
 
 ///|
 fn coretext_glyph_key_from_payload(payload : Bytes) -> CoreTextGlyphKey? {
-  if payload.length() < 28 ||
+  if payload.length() < 32 ||
     i32_le(payload, 0) != coretext_glyph_payload_protocol_version {
     return None
   }
-  let font_name_len = i32_le(payload, 24)
-  if font_name_len <= 0 || payload.length() != 28 + font_name_len {
+  let font_name_len = i32_le(payload, 28)
+  if font_name_len <= 0 || payload.length() != 32 + font_name_len {
     return None
   }
   match coretext_style_from_code(i32_le(payload, 16)) {
     Some(style) =>
       Some({
         glyph_id: i32_le(payload, 4),
-        font_name: Bytes::from_array(payload[28:].to_array()),
+        codepoint: i32_le(payload, 24),
+        font_name: Bytes::from_array(payload[32:].to_array()),
         size_key: i32_le(payload, 8),
         weight: i32_le(payload, 12),
         style,
@@ -189,19 +199,47 @@ fn coretext_layout_glyphs_for_run(
   run : @core.TextRun,
   scale_factor : Double,
 ) -> Array[@wgpu_renderer.NativeGlyphPlacement]? {
+  match coretext_layout_glyph_records_for_run(run, scale_factor) {
+    Some(records) => Some(coretext_glyph_placements_from_records(records))
+    None => None
+  }
+}
+
+///|
+fn coretext_layout_glyph_records_for_run(
+  run : @core.TextRun,
+  scale_factor : Double,
+) -> Array[CoreTextGlyphRecord]? {
   let bytes = macos_coretext_layout_glyphs_utf32(
     @text_protocol.native_utf32_bytes(run.text),
     @text_protocol.native_font_spec_bytes(run.font),
   )
-  coretext_layout_glyphs_from_bytes(run, scale_factor, bytes)
+  coretext_layout_glyph_records_from_bytes(run, scale_factor, bytes)
 }
 
 ///|
-fn coretext_layout_glyphs_from_bytes(
+fn coretext_glyph_placements_from_records(
+  records : Array[CoreTextGlyphRecord],
+) -> Array[@wgpu_renderer.NativeGlyphPlacement] {
+  let glyphs : Array[@wgpu_renderer.NativeGlyphPlacement] = []
+  for record in records {
+    glyphs.push(
+      @wgpu_renderer.NativeGlyphPlacement::new(
+        key=coretext_native_glyph_key(record.key),
+        x=record.x,
+        y=record.y,
+      ),
+    )
+  }
+  glyphs
+}
+
+///|
+fn coretext_layout_glyph_records_from_bytes(
   run : @core.TextRun,
   scale_factor : Double,
   bytes : Bytes,
-) -> Array[@wgpu_renderer.NativeGlyphPlacement]? {
+) -> Array[CoreTextGlyphRecord]? {
   if bytes.length() < 32 {
     return None
   }
@@ -221,13 +259,13 @@ fn coretext_layout_glyphs_from_bytes(
     ) {
     return None
   }
-  let glyphs : Array[@wgpu_renderer.NativeGlyphPlacement] = []
+  let records : Array[CoreTextGlyphRecord] = []
   let scale = coretext_text_scale(scale_factor)
   let size_key = coretext_size_key(run.font.size)
   let scale_key = coretext_scale_key(scale)
+  let chars = run.text.to_array()
   let mut offset = 32
   for index in 0..<glyph_count {
-    let _ = index
     if offset + 28 > bytes.length() {
       return None
     }
@@ -246,20 +284,23 @@ fn coretext_layout_glyphs_from_bytes(
       bytes[offset + 28:offset + 28 + font_name_len].to_array(),
     )
     if glyph_id > 0 {
-      glyphs.push(
-        @wgpu_renderer.NativeGlyphPlacement::new(
-          key=coretext_native_glyph_key({
-            glyph_id,
-            font_name,
-            size_key,
-            weight: run.font.weight,
-            style: run.font.style,
-            scale_key,
-          }),
-          x=double_le(bytes, offset + 8),
-          y=double_le(bytes, offset + 16),
-        ),
-      )
+      records.push({
+        key: {
+          glyph_id,
+          codepoint: if index < chars.length() {
+            chars[index].to_int()
+          } else {
+            0
+          },
+          font_name,
+          size_key,
+          weight: run.font.weight,
+          style: run.font.style,
+          scale_key,
+        },
+        x: double_le(bytes, offset + 8),
+        y: double_le(bytes, offset + 16),
+      })
     } else {
       ()
     }
@@ -268,7 +309,7 @@ fn coretext_layout_glyphs_from_bytes(
   if offset != bytes.length() {
     return None
   }
-  Some(glyphs)
+  Some(records)
 }
 
 ///|
@@ -278,6 +319,7 @@ fn coretext_raster_glyph(
   @text_protocol.native_raster_glyph_from_bytes(
     macos_coretext_raster_glyph(
       key.glyph_id,
+      key.codepoint,
       key.font_name,
       key.size_key.to_double() / 64.0,
       key.weight,
@@ -355,6 +397,7 @@ extern "C" fn macos_coretext_layout_glyphs_utf32(
 #borrow(font_name)
 extern "C" fn macos_coretext_raster_glyph(
   glyph_id : Int,
+  codepoint : Int,
   font_name : Bytes,
   size : Double,
   weight : Int,
