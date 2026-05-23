@@ -4,7 +4,7 @@ import {
   "wzzc-dev/moui/backend/host" @host,
   "wzzc-dev/moui/render" @render,
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
-  "wzzc-dev/moui/render/wgpu/cosmic" @wgpu_cosmic,
+  "wzzc-dev/moui/render/wgpu/cosmic_text" @wgpu_cosmic_text,
   "wzzc-dev/moui/render/wgpu/directwrite" @wgpu_directwrite,
   "Milky2018/wgpu_mbt" @wgpu,
   "Milky2018/wgpu_mbt/c" @wgpu_c,

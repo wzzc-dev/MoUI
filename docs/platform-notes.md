@@ -59,13 +59,15 @@ The macOS service bridge also routes text clipboard requests through
 `NSPasteboard` while preserving the shared `HostServiceBridge` contract.
 Native WGPU text can use either the shared Moon Cosmic provider or a platform
 provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
-measurement and glyph rasterization; the Objective-C CoreText stub lives in
-`render/wgpu/coretext`, while the selectable Cosmic provider lives in
-`render/wgpu/cosmic`. The CoreText provider consumes the shared native
+measurement and glyph rasterization, explicitly composed with the Moon Cosmic
+provider as fallback; the Objective-C CoreText stub lives in
+`render/wgpu/coretext`, while the selectable/composed Cosmic provider lives in
+`render/wgpu/cosmic_text`. The CoreText provider consumes the shared native
 `FontSpec` payload, attempts named families from the structured family stack,
 maps generic CSS families such as `ui-monospace` and `serif` to suitable macOS
 fonts, registers app-provided font bytes under their requested family alias when
-CoreText accepts them, and falls back to the system font for unavailable names.
+CoreText accepts them, and falls back to the system font for unavailable names
+before the renderer tries the composed Cosmic fallback.
 `backend/macos` chooses between them through
 `run_app_with_options(..., options=MacosAppOptions::new(text_engine=...))` when
 creating the generic native WGPU renderer. `core` still owns only the neutral
@@ -113,15 +115,15 @@ requests. Text clipboard requests are implemented through the Win32
 `CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
 boundary.
 Windows installs the sibling `render/wgpu/directwrite` provider through the same
-renderer/runtime boundary used by macOS CoreText. That provider is currently an
-explicit scaffold using `render/wgpu/text_protocol` for UTF-32 input encoding,
-private versioned measurement payload parsing, a versioned registration payload,
-and a generic shaped-run envelope for glyph placements plus DirectWrite-private
-raster payloads. It also routes raster glyph bytes through the shared
-single-channel raster parser. Its native
-stub advertises the DirectWrite integration point while returning no platform
-layout/raster data, so `render/wgpu` falls back to Cosmic until the real
-DirectWrite engine lands.
+renderer/runtime boundary used by macOS CoreText and composes it with
+`render/wgpu/cosmic_text` as fallback. That provider is currently an explicit
+scaffold using `render/wgpu/text_protocol` for UTF-32 input encoding, private
+versioned measurement payload parsing, a versioned registration payload, and a
+generic shaped-run envelope for glyph placements plus DirectWrite-private raster
+payloads. It also routes raster glyph bytes through the shared single-channel
+raster parser. Its native stub advertises the DirectWrite integration point
+while returning no platform layout/raster data, so the composed Cosmic fallback
+handles native text until the real DirectWrite engine lands.
 
 The expected archive extraction path is:
 

@@ -186,9 +186,12 @@ fn macos_text_engine(
 ) -> @wgpu_renderer.NativeTextEngine {
   match setting {
     @wgpu_renderer.NativeTextEngineSetting::MoonCosmic =>
-      @wgpu_cosmic.cosmic_text_engine()
+      @wgpu_cosmic_text.cosmic_text_engine()
     @wgpu_renderer.NativeTextEngineSetting::PlatformDefault =>
-      @wgpu_coretext.coretext_text_engine()
+      @wgpu_renderer.native_platform_text_engine_with_fallback(
+        @wgpu_coretext.coretext_text_provider(),
+        fallback=@wgpu_cosmic_text.cosmic_text_engine(),
+      )
   }
 }
 

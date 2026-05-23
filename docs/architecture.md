@@ -27,7 +27,7 @@ backend/linux/                Linux host scaffold
 backend/web/                  canonical Web host on wasm-gc plus browser JS assets
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
-render/wgpu/cosmic/           Moon Cosmic provider for native wgpu text
+render/wgpu/cosmic_text/      Moon Cosmic provider for native wgpu text
 render/wgpu/coretext/         macOS CoreText provider for native wgpu text
 render/wgpu/text_protocol/    shared native measure/run/raster/register bytes protocol
 render/wgpu/directwrite/      Windows DirectWrite provider scaffold

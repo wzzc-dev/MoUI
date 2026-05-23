@@ -1,0 +1,173 @@
+///|
+test "cosmic text font path selects platform font weight" {
+  let regular = cosmic_text_font_path_for_spec(@core.FontSpec::new(weight=500))
+  let bold = cosmic_text_font_path_for_spec(@core.FontSpec::new(weight=600))
+  inspect(@fs.path_exists(regular), content="true")
+  inspect(@fs.path_exists(bold), content="true")
+}
+
+///|
+test "cosmic text fallback font path covers cjk when available" {
+  let cjk = cosmic_cjk_font_path()
+  if @fs.path_exists(cjk) {
+    let cache = CosmicTextCache::new()
+    let font = @core.FontSpec::new(size=16.0, weight=500)
+    cache.ensure_fonts_for_font(font)
+    inspect(cache.loaded_paths.get(cjk) is Some(true), content="true")
+    inspect(
+      cache.font_system.resolve_for_codepoint(
+        cosmic_text_attrs_for_font(font),
+        0x4F60U,
+      )
+      is Some(_),
+      content="true",
+    )
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "cosmic text maps default font stack to ui fallback family" {
+  inspect(
+    cosmic_text_family_for_font(@core.FontSpec::new()),
+    content="SystemUi",
+  )
+  inspect(
+    cosmic_text_family_for_font(
+      @core.FontSpec::new(
+        families=@core.FontFamilyStack::new([
+          @core.FontFamily::UiSansSerif,
+          @core.FontFamily::SansSerif,
+        ]),
+      ),
+    ),
+    content="UiSansSerif",
+  )
+}
+
+///|
+test "cosmic text replaces missing glyph cache key with cjk fallback" {
+  if @fs.path_exists(cosmic_regular_font_path()) &&
+    @fs.path_exists(cosmic_cjk_font_path()) {
+    let cache = CosmicTextCache::new()
+    let run = @core.TextRun::new(
+      text="你",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=40.0),
+      font=@core.FontSpec::new(size=18.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    cache.ensure_fonts_for_font(run.font)
+    let (missing_key, _, _) = @moon_cosmic.CacheKey::new(
+      0,
+      0,
+      18.0F,
+      (0.0F, 0.0F),
+      500,
+      0U,
+    )
+    let glyph = @moon_cosmic.LayoutGlyph::new(
+      0, 1, 18.0F, 0, 500, 0, 0.0F, 0.0F, 18.0F, 0,
+    )
+    let fallback_key = cosmic_text_cache_key_with_fallback(
+      cache, run, glyph, missing_key,
+    )
+    inspect(fallback_key.to_string() != missing_key.to_string(), content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "cosmic text resolves cjk glyph from fallback face" {
+  if @fs.path_exists(cosmic_regular_font_path()) &&
+    @fs.path_exists(cosmic_cjk_font_path()) {
+    let cache = CosmicTextCache::new()
+    let run = @core.TextRun::new(
+      text="你",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=40.0),
+      font=@core.FontSpec::new(size=18.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let runs = cosmic_text_layout_runs(cache, run)
+    inspect(cache.has_loaded_fonts(), content="true")
+    inspect(runs.length() > 0, content="true")
+    inspect(runs.any(run => run.glyphs.length() > 0), content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "cosmic text shaping produces glyphs when platform font is available" {
+  if @fs.path_exists(cosmic_regular_font_path()) {
+    let cache = CosmicTextCache::new()
+    let run = @core.TextRun::new(
+      text="Increment",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let runs = cosmic_text_layout_runs(cache, run)
+    inspect(cache.has_loaded_fonts(), content="true")
+    inspect(runs.length() > 0, content="true")
+    inspect(runs.any(run => run.glyphs.length() > 0), content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "cosmic text shaping handles multibyte punctuation" {
+  if @fs.path_exists(cosmic_regular_font_path()) {
+    let cache = CosmicTextCache::new()
+    let run = @core.TextRun::new(
+      text="native supported · web supported",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=112.0, height=32.0),
+      font=@core.FontSpec::new(size=16.0, weight=500),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let runs = cosmic_text_layout_runs(cache, run)
+    inspect(cache.has_loaded_fonts(), content="true")
+    inspect(runs.length() > 0, content="true")
+    inspect(runs.any(run => run.glyphs.length() > 0), content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "cosmic text shaping handles built-in control symbols" {
+  if @fs.path_exists(cosmic_regular_font_path()) {
+    let cache = CosmicTextCache::new()
+    let symbols = [
+      "✓", "▲", "▼", "◀", "▶", "🔍", "✕", "• ", "☑ ", "☐ ",
+    ]
+    for symbol in symbols {
+      let run = @core.TextRun::new(
+        text=symbol,
+        frame=@core.Rect::new(x=0.0, y=0.0, width=60.0, height=32.0),
+        font=@core.FontSpec::new(size=16.0, weight=500),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      )
+      ignore(cosmic_text_layout_runs(cache, run))
+    }
+    inspect(cache.has_loaded_fonts(), content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "cosmic text maps control symbols before layout" {
+  inspect(
+    cosmic_text_safe_text("✓ ▲ ▼ ◀ ▶ 🔍 ✕ • ☑ ☐ ·"),
+    content="v ▲ ▼ ◀ ▶ ? x * x o /",
+  )
+  inspect(cosmic_text_safe_text("你好abc"), content="你好abc")
+}

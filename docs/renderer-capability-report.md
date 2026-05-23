@@ -28,7 +28,7 @@ Status meanings:
 | Filter effect | partial | partial | `PushFilter` / `PopFilter` now model blur, color, and contrast-style effects; shader pass execution remains follow-up work. |
 | Path/vector | ready | ready | `DrawPath` models move/line/quad/cubic/close verbs and is lowered through `moon_zeno` into fill and stroke triangle vertices before renderer execution. |
 | Shader effect | partial | partial | `DrawShaderEffect` resolves through a shared registry with built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`; GPU shader execution and host ABI remain follow-up work. |
-| Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime measurement is injectable: `core` keeps a Cosmic fallback, native WGPU exposes Cosmic as a standalone provider alongside platform providers, macOS defaults to CoreText, Windows has a DirectWrite scaffold provider, Linux has a fontconfig/HarfBuzz/FreeType scaffold provider, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and fall back to Cosmic until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
+| Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime measurement is injectable: `core` keeps a Cosmic fallback, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux has a fontconfig/HarfBuzz/FreeType scaffold provider, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
 | Async image | partial | partial | Renderer-neutral lifecycle records now model loading, ready, failed, disposed, and eviction; native/Web adapters still need to surface those diagnostics to app code. |
 
@@ -53,28 +53,33 @@ also exposes a command fallback planner that reports planned skips, unbalanced
 pops, and open advanced scopes for native and WebGPU adapters. Native wgpu still
 needs actual offscreen passes, mask composition, filter shaders, and GPU shader
 registry execution. Native color emoji remains an explicit gap. Text shaping is
-partial: `core/` keeps a Cosmic fallback measurer, macOS native WGPU injects a
-CoreText-backed platform text engine for measurement and glyph rasterization,
-and native platform providers share `render/wgpu/text_protocol` for UTF-32 input
-encoding, versioned `FontSpec` payloads carrying size, weight, style, and the
-structured family stack, private versioned measurement payload parsing, a generic
-run-layout envelope for shaped glyph placements with platform-private raster
-payloads, a shared single-channel raster glyph parser, and a versioned
-registration payload encoder/decoder for embedded font bytes. CoreText then
+partial: `core/` keeps a Cosmic fallback measurer, `render/wgpu` owns provider
+validation and atlas upload, `render/wgpu/cosmic_text` owns the native Cosmic
+provider, macOS composes a CoreText-backed platform text engine with Cosmic
+fallback for measurement and glyph rasterization, and native platform providers
+share `render/wgpu/text_protocol` for UTF-32 input encoding, versioned
+`FontSpec` payloads carrying size, weight, style, and the structured family
+stack, private versioned measurement payload parsing, a generic run-layout
+envelope for shaped glyph placements with platform-private raster payloads, a
+shared single-channel raster glyph parser, and a versioned registration payload
+encoder/decoder for embedded font bytes. CoreText then
 attempts installed named families from the structured family stack, maps generic
 families such as `ui-monospace`, `serif`, and `emoji` to suitable macOS fonts,
 falls back to system fonts for unavailable families, attempts process-local
 registration of app-provided font bytes under the requested family alias, uses
 CoreText glyph runs for glyph ids and positions before atlas upload, and its
 glyph payloads carry PostScript font identity so fallback-font glyph runs can be
-rasterized with the same font that shaped them. Windows injects a
-DirectWrite scaffold provider and Linux has a fontconfig/HarfBuzz/FreeType
-scaffold provider. Web injects a Canvas-backed measurer that uses the same CSS
-`system-ui` family stack as text drawing. The Windows and Linux native stubs
-intentionally return no platform layout/raster data today, so native WGPU
-validates the provider response and falls back to Cosmic until real engines are
+rasterized with the same font that shaped them. Windows composes a DirectWrite
+scaffold provider with Cosmic fallback and Linux has a
+fontconfig/HarfBuzz/FreeType scaffold provider. Web injects a Canvas-backed
+measurer that uses the same CSS `system-ui` family stack as text drawing. The
+Windows and Linux native stubs intentionally return no platform layout/raster
+data today, so hosts rely on the composed Cosmic fallback until real engines are
 implemented.
-Full bidi, line breaking, and typography conformance are still follow-up work.
+Fallback composition is explicit at the backend/provider boundary; the
+`render/wgpu` package validates provider responses but does not depend on the
+Cosmic provider package. Full bidi, line breaking, and typography conformance
+are still follow-up work.
 Native image support is
 synchronous from the app model's
 point of view; the shared image lifecycle record can represent loading, ready,

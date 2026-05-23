@@ -1,13 +1,16 @@
 ///|
 pub fn directwrite_text_engine() -> @wgpu_renderer.NativeTextEngine {
-  @wgpu_renderer.native_platform_text_engine(
-    @wgpu_renderer.NativePlatformTextProvider::new(
-      id="native-wgpu-directwrite-planned",
-      measure=directwrite_measure_layout,
-      layout_run=directwrite_layout_run,
-      raster_glyph=directwrite_raster_glyph,
-      register_font_data=directwrite_register_font_data,
-    ),
+  @wgpu_renderer.native_platform_text_engine(directwrite_text_provider())
+}
+
+///|
+pub fn directwrite_text_provider() -> @wgpu_renderer.NativePlatformTextProvider {
+  @wgpu_renderer.NativePlatformTextProvider::new(
+    id="native-wgpu-directwrite-planned",
+    measure=directwrite_measure_layout,
+    layout_run=directwrite_layout_run,
+    raster_glyph=directwrite_raster_glyph,
+    register_font_data=directwrite_register_font_data,
   )
 }
 
@@ -29,6 +32,7 @@ fn directwrite_register_font_data(
 ///|
 #borrow(payload)
 fn directwrite_raster_glyph(
+  _cache_key : String,
   payload : Bytes,
 ) -> @wgpu_renderer.NativeRasterGlyph? {
   @text_protocol.native_raster_glyph_from_bytes(

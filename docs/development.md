@@ -115,13 +115,14 @@ frontends and tooling:
   platform system defaults.
   Runtime text measurement is injectable: `core` keeps Cosmic as the fallback
   measurer for headless tests and platforms without a real text engine,
-  `render/wgpu` exposes the native provider hook, `render/wgpu/cosmic` exposes
-  Moon Cosmic as a standalone native WGPU text provider, macOS installs the
-  `render/wgpu/coretext` provider by default, Windows installs the
-  `render/wgpu/directwrite` scaffold provider, Linux has the
-  `render/wgpu/fontconfig` scaffold provider ready for a future host, and Web
-  installs a browser Canvas-backed measurer that uses the same `system-ui` stack
-  as WebGPU text drawing. The CoreText provider uses shared
+  `render/wgpu` exposes only the native provider hook and renderer-side
+  validation, `render/wgpu/cosmic_text` exposes Moon Cosmic as a standalone
+  native WGPU text provider, macOS composes the `render/wgpu/coretext` provider
+  with the Cosmic fallback by default, Windows composes the
+  `render/wgpu/directwrite` scaffold provider with the Cosmic fallback, Linux
+  has the `render/wgpu/fontconfig` scaffold provider ready for a future host,
+  and Web installs a browser Canvas-backed measurer that uses the same
+  `system-ui` stack as WebGPU text drawing. The CoreText provider uses shared
   `render/wgpu/text_protocol` `FontSpec` payloads and measurement decoding,
   attempts named families from the structured family stack before falling back to
   system fonts, maps generic families such as `ui-monospace`, `serif`, and
@@ -139,13 +140,18 @@ frontends and tooling:
   providers that use the shared raster envelope, and it owns the versioned
   embedded-font registration payload encoder/decoder so platform providers do
   not need package-local ad hoc formats. Their native stubs return empty data
-  until the real platform implementations are wired. The Windows and Linux
-  providers intentionally fall back to Cosmic until their DirectWrite and
-  fontconfig/HarfBuzz/FreeType engines are implemented. Apps can register
+  until the real platform implementations are wired. Backend hosts opt into
+  fallback explicitly with
+  `native_platform_text_engine_with_fallback(..., fallback=cosmic_text_engine())`;
+  `render/wgpu` itself does not depend on the Cosmic package. The Windows and
+  Linux providers intentionally rely on that composed Cosmic fallback until
+  their DirectWrite and fontconfig/HarfBuzz/FreeType engines are implemented.
+  Apps can register
   embedded font bytes through
   `AppRuntime::register_font_data`; native WGPU forwards those bytes through the
-  active text provider's `register_font_data` hook before keeping the Cosmic
-  fallback cache warm. CoreText v1 consumes installed named families and attempts
+  active text provider's `register_font_data` hook and, when a fallback engine is
+  composed, forwards the same bytes to that fallback cache. CoreText v1 consumes
+  installed named families and attempts
   process-local registration of app-provided font bytes under the requested
   family alias; future DirectWrite and fontconfig/HarfBuzz/FreeType providers
   can use the same hook for private font collections. Remote font loading is
@@ -153,7 +159,8 @@ frontends and tooling:
   Native hosts can choose the text engine at startup through
   `run_app_with_options(..., options=MacosAppOptions::new(text_engine=NativeTextEngineSetting::MoonCosmic))`
   or the Windows equivalent. `MoonCosmic` selects the shared Cosmic provider;
-  `PlatformDefault` selects the platform provider path.
+  `PlatformDefault` selects the platform provider path composed with the Cosmic
+  fallback on macOS and Windows.
   Native text providers should use `NativePlatformTextProvider::new` plus the
   `NativeGlyphPlacement::new`, `NativeTextLayout::new`, and
   `NativeRasterGlyph::new` constructors from `render/wgpu`. Provider payloads
@@ -162,7 +169,8 @@ frontends and tooling:
   scale. Measurement layouts must report valid metrics and monotonic caret
   positions covering the input text; render layouts must report valid metrics
   and glyph placements. Invalid layout or raster glyph data is rejected at the
-  renderer boundary and falls back to Cosmic.
+  renderer boundary and falls back through the explicit fallback provider when
+  the host supplied one.
 - `Milky2018/moon_accesskit` is the native accessibility tree representation
   used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
   Web continues to use its ARIA adapter.

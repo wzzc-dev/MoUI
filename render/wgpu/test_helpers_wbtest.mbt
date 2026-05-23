@@ -1,6 +1,77 @@
 ///|
 fn new_test_renderer_handle() -> RendererHandle {
-  new_test_renderer_handle_with_text_engine(NativeTextEngine::cosmic_fallback())
+  new_test_renderer_handle_with_text_engine(test_text_engine())
+}
+
+///|
+fn test_text_engine() -> NativeTextEngine {
+  native_platform_text_engine(test_text_provider("test-platform-text"))
+}
+
+///|
+fn test_fallback_text_engine() -> NativeTextEngine {
+  native_platform_text_engine(test_text_provider("test-fallback-text"))
+}
+
+///|
+fn test_text_provider(id : String) -> NativePlatformTextProvider {
+  NativePlatformTextProvider::new(
+    id~,
+    measure=input => {
+      let char_count = input.text.to_array().length()
+      let width = char_count.to_double() * input.font.size * 0.5
+      let carets : Array[Double] = []
+      for index in 0..<=char_count {
+        carets.push(index.to_double() * input.font.size * 0.5)
+      }
+      Some(
+        NativeTextLayout::new(
+          size=@core.Size::new(width~, height=input.font.size * 1.25),
+          baseline=input.font.size * 0.8,
+          caret_positions=carets,
+        ),
+      )
+    },
+    layout_run=(run, scale_factor) => {
+      let scale = native_text_scale(scale_factor)
+      let width = run.text.to_array().length().max(1).to_double() *
+        run.font.size *
+        0.5
+      let height = run.font.size * 1.25
+      let glyph_size = (run.font.size * scale).max(1.0).to_int().max(1)
+      let key = native_platform_glyph_key(
+        cache_key="\{id}:\{run.text}:\{glyph_size}:\{run.font.weight}",
+        payload=Bytes::from_array([glyph_size.to_byte()]),
+      )
+      Some(
+        NativeTextLayout::new(
+          size=@core.Size::new(width~, height~),
+          baseline=run.font.size * 0.8,
+          glyphs=[NativeGlyphPlacement::new(key~, x=0.0, y=0.0)],
+        ),
+      )
+    },
+    raster_glyph=(_cache_key, payload) => {
+      if !_cache_key.has_prefix(id + ":") {
+        return None
+      }
+      let size = if payload.length() > 0 {
+        payload[0].to_int().max(1)
+      } else {
+        8
+      }
+      let pixels = Array::make(size * size, b'\xff')
+      Some(
+        NativeRasterGlyph::new(
+          width=size,
+          height=size,
+          bearing_x=0,
+          bearing_y=-size,
+          pixels=Bytes::from_array(pixels),
+        ),
+      )
+    },
+  )
 }
 
 ///|

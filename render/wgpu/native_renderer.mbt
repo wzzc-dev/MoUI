@@ -53,7 +53,7 @@ fn RendererHandle::create_with_host_surface(
     metrics,
     host_surface.instance,
     host_surface.surface,
-    NativeTextEngine::cosmic_fallback(),
+    native_noop_text_engine(),
   )
 }
 
