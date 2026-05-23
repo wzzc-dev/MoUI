@@ -45,6 +45,8 @@ pub(all) enum MarkdownEditorCommand {
   SetLinkTarget(String)
   SetImageTarget(String)
   SetCodeLanguage(String)
+  SetFootnoteText(String)
+  SetHtmlBlockText(String)
   Paragraph
   Heading(Int)
   BulletList
@@ -149,6 +151,18 @@ pub fn markdown_editor_apply_command_at(
           markdown_editor_set_code_language(source, selection, language)
         None => markdown_editor_append_snippet(source, command)
       }
+    SetFootnoteText(text) =>
+      match selection {
+        Some(selection) =>
+          markdown_editor_set_footnote_text(source, selection, text)
+        None => markdown_editor_append_snippet(source, command)
+      }
+    SetHtmlBlockText(text) =>
+      match selection {
+        Some(selection) =>
+          markdown_editor_set_html_block_text(source, selection, text)
+        None => markdown_editor_append_snippet(source, command)
+      }
     InsertTableRow =>
       match selection {
         Some(selection) => markdown_editor_insert_table_row(source, selection)
@@ -236,6 +250,28 @@ pub fn markdown_editor_selected_code_language(
 ) -> String? {
   match markdown_editor_code_block_at_selection(source, selection) {
     Some(block) => block.block.code_language
+    None => None
+  }
+}
+
+///|
+pub fn markdown_editor_selected_footnote_text(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> String? {
+  match markdown_editor_footnote_label_at_selection(source, selection) {
+    Some(label) => markdown_editor_footnote_definition_text(source, label)
+    None => None
+  }
+}
+
+///|
+pub fn markdown_editor_selected_html_block_text(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> String? {
+  match markdown_editor_html_block_at_selection(source, selection) {
+    Some(block) => Some(block.block.text)
     None => None
   }
 }
@@ -1187,6 +1223,29 @@ fn markdown_editor_code_block_at_selection(
   )
   for block in parse_markdown_editor_blocks(source) {
     if block.block.kind is MarkdownBlockKind::CodeBlock &&
+      caret >= block.source_range.start &&
+      caret <= block.source_range.end {
+      return Some(block)
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_html_block_at_selection(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> MarkdownEditorBlock? {
+  if markdown_editor_active_selection(selection.selection) is Some(_) {
+    return None
+  }
+  let caret = markdown_editor_clamp_int(
+    selection.caret,
+    0,
+    markdown_editor_text_length(source),
+  )
+  for block in parse_markdown_editor_blocks(source) {
+    if block.block.kind is MarkdownBlockKind::HtmlBlock &&
       caret >= block.source_range.start &&
       caret <= block.source_range.end {
       return Some(block)
@@ -2904,6 +2963,34 @@ fn markdown_editor_set_code_language(
 }
 
 ///|
+fn markdown_editor_set_html_block_text(
+  source : String,
+  selection : MarkdownEditorSelection,
+  text : String,
+) -> MarkdownEditorEditResult {
+  match markdown_editor_html_block_at_selection(source, selection) {
+    Some(block) =>
+      markdown_editor_replace_html_block_text(source, selection, block, text)
+    None => markdown_editor_append_snippet(source, SetHtmlBlockText(text))
+  }
+}
+
+///|
+fn markdown_editor_replace_html_block_text(
+  source : String,
+  selection : MarkdownEditorSelection,
+  block : MarkdownEditorBlock,
+  text : String,
+) -> MarkdownEditorEditResult {
+  let chars = source.to_array()
+  let next_source = String::from_array(chars[:block.source_range.start]) +
+    text +
+    String::from_array(chars[block.source_range.end:])
+  let caret = block.source_range.start + markdown_editor_text_length(text)
+  { source: next_source, caret, selection: selection.selection }
+}
+
+///|
 fn markdown_editor_replace_code_language(
   source : String,
   selection : MarkdownEditorSelection,
@@ -2978,7 +3065,9 @@ fn markdown_editor_range_link_bounds(
     )
   }
   if chars[range.end + 1] != '(' {
-    return None
+    return markdown_editor_shortcut_reference_link_bounds(
+      source, range, open_start,
+    )
   }
   let mut index = range.end + 2
   while index < chars.length() && chars[index] != ')' && chars[index] != '\n' {
@@ -2996,6 +3085,41 @@ fn markdown_editor_range_link_bounds(
     })
   } else {
     None
+  }
+}
+
+///|
+fn markdown_editor_shortcut_reference_link_bounds(
+  source : String,
+  range : @core.TextRange,
+  open_start : Int,
+) -> MarkdownLinkBounds? {
+  let chars = source.to_array()
+  let label = String::from_array(chars[range.start:range.end])
+  if label == "" {
+    return None
+  }
+  match markdown_editor_reference_definition_target_range(source, label) {
+    Some(target) =>
+      Some({
+        open_start,
+        close_start: range.end,
+        target_start: range.end,
+        target_end: range.end,
+        definition_target_start: target.start,
+        definition_target_end: target.end,
+        reference_label: label,
+      })
+    None =>
+      Some({
+        open_start,
+        close_start: range.end,
+        target_start: range.end,
+        target_end: range.end,
+        definition_target_start: -1,
+        definition_target_end: -1,
+        reference_label: label,
+      })
   }
 }
 
@@ -3279,6 +3403,190 @@ fn markdown_editor_reference_definition_append_prefix(
     "\n"
   } else {
     "\n\n"
+  }
+}
+
+///|
+fn markdown_editor_footnote_label_at_selection(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> String? {
+  let anchor = match markdown_editor_active_selection(selection.selection) {
+    Some(range) => range.start
+    None => selection.caret
+  }
+  let anchor = markdown_editor_clamp_int(
+    anchor,
+    0,
+    markdown_editor_text_length(source),
+  )
+  match markdown_editor_footnote_reference_label_at(source, anchor) {
+    Some(label) => Some(label)
+    None => markdown_editor_footnote_definition_label_at(source, anchor)
+  }
+}
+
+///|
+fn markdown_editor_footnote_reference_label_at(
+  source : String,
+  anchor : Int,
+) -> String? {
+  let chars = source.to_array()
+  if chars.length() == 0 {
+    return None
+  }
+  let mut open = markdown_editor_clamp_int(anchor, 0, chars.length() - 1)
+  while open > 0 && chars[open] != '[' {
+    open = open - 1
+  }
+  if open + 3 >= chars.length() || chars[open] != '[' || chars[open + 1] != '^' {
+    return None
+  }
+  let mut close = open + 2
+  while close < chars.length() && chars[close] != ']' && chars[close] != '\n' {
+    close = close + 1
+  }
+  if close >= chars.length() || chars[close] != ']' {
+    return None
+  }
+  if anchor < open + 2 || anchor > close {
+    return None
+  }
+  Some(String::from_array(chars[open + 2:close]))
+}
+
+///|
+fn markdown_editor_footnote_definition_label_at(
+  source : String,
+  anchor : Int,
+) -> String? {
+  for line in markdown_editor_lines(source) {
+    if anchor >= line.start && anchor <= line.end {
+      match markdown_editor_footnote_definition_line_text_range(line) {
+        Some((label, _)) => return Some(label)
+        None => return None
+      }
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_footnote_definition_text(
+  source : String,
+  label : String,
+) -> String? {
+  let key = markdown_reference_label_key(label)
+  let chars = source.to_array()
+  for line in markdown_editor_lines(source) {
+    match markdown_editor_footnote_definition_line_text_range(line) {
+      Some((definition_label, range)) =>
+        if markdown_reference_label_key(definition_label) == key {
+          return Some(String::from_array(chars[range.start:range.end]))
+        }
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_footnote_definition_line_text_range(
+  line : MarkdownLine,
+) -> (String, MarkdownSourceRange)? {
+  let chars = line.text.to_array()
+  let start = markdown_editor_leading_indent_length(chars)
+  if start + 4 >= chars.length() ||
+    chars[start] != '[' ||
+    chars[start + 1] != '^' {
+    return None
+  }
+  let mut close = start + 2
+  while close < chars.length() && chars[close] != ']' {
+    close = close + 1
+  }
+  if close <= start + 2 ||
+    close + 1 >= chars.length() ||
+    chars[close + 1] != ':' {
+    return None
+  }
+  let mut text_start = close + 2
+  while text_start < chars.length() &&
+        (chars[text_start] == ' ' || chars[text_start] == '\t') {
+    text_start = text_start + 1
+  }
+  Some(
+    (
+      String::from_array(chars[start + 2:close]),
+      { start: line.start + text_start, end: line.end },
+    ),
+  )
+}
+
+///|
+fn markdown_editor_set_footnote_text(
+  source : String,
+  selection : MarkdownEditorSelection,
+  text : String,
+) -> MarkdownEditorEditResult {
+  match markdown_editor_footnote_label_at_selection(source, selection) {
+    Some(label) =>
+      match
+        markdown_editor_replace_footnote_definition_text(source, label, text) {
+        Some(result) => result
+        None =>
+          markdown_editor_append_footnote_definition(
+            source, label, text, selection,
+          )
+      }
+    None => markdown_editor_append_snippet(source, SetFootnoteText(text))
+  }
+}
+
+///|
+fn markdown_editor_replace_footnote_definition_text(
+  source : String,
+  label : String,
+  text : String,
+) -> MarkdownEditorEditResult? {
+  let key = markdown_reference_label_key(label)
+  let chars = source.to_array()
+  for line in markdown_editor_lines(source) {
+    match markdown_editor_footnote_definition_line_text_range(line) {
+      Some((definition_label, range)) =>
+        if markdown_reference_label_key(definition_label) == key {
+          let next_source = String::from_array(chars[:range.start]) +
+            text +
+            String::from_array(chars[range.end:])
+          return Some({
+            source: next_source,
+            caret: range.start + markdown_editor_text_length(text),
+            selection: None,
+          })
+        }
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_append_footnote_definition(
+  source : String,
+  label : String,
+  text : String,
+  selection : MarkdownEditorSelection,
+) -> MarkdownEditorEditResult {
+  let next_source = source +
+    markdown_editor_reference_definition_append_prefix(source) +
+    "[^" +
+    label +
+    "]: " +
+    text
+  {
+    source: next_source,
+    caret: selection.caret,
+    selection: selection.selection,
   }
 }
 
@@ -4009,6 +4317,8 @@ pub fn markdown_editor_command_snippet(
     SetLinkTarget(target) => "[link text](" + target + ")"
     SetImageTarget(target) => "![image alt](" + target + ")"
     SetCodeLanguage(target) => "```" + target + "\ncode block\n```"
+    SetFootnoteText(text) => "[^note]: " + text
+    SetHtmlBlockText(text) => text
     Paragraph => "Paragraph"
     Heading(level) =>
       markdown_editor_heading_marker(level) +
@@ -4243,7 +4553,7 @@ fn markdown_editor_block_with_references(
   definitions : Array[MarkdownReferenceDefinition],
 ) -> MarkdownBlock {
   match block.kind {
-    CodeBlock | HorizontalRule | Table => block
+    CodeBlock | HorizontalRule | Table | HtmlBlock => block
     _ =>
       {
         ..block,
@@ -4540,23 +4850,35 @@ fn markdown_editor_runs_with_source_ranges(
 ) -> Array[@core.RichTextRun] {
   let mapped : Array[@core.RichTextRun] = []
   let mut search = 0
+  let mut index = 0
   let content = markdown_editor_block_source_content(editor_block)
   for run in runs {
-    let length = markdown_editor_text_length(run.text)
-    let start = markdown_editor_find_run_source_offset(
-      content,
-      run.text,
-      search,
-    )
-    let end = start + length
-    mapped.push({
-      ..run,
-      source_range: Some({
-        start: editor_block.content_range.start + start,
-        end: editor_block.content_range.start + end,
-      }),
-    })
-    search = end
+    if index == 0 && editor_block.block.kind is FootnoteDefinition(_) {
+      mapped.push({
+        ..run,
+        source_range: Some({
+          start: editor_block.source_range.start,
+          end: editor_block.content_range.start,
+        }),
+      })
+    } else {
+      let length = markdown_editor_text_length(run.text)
+      let start = markdown_editor_find_run_source_offset(
+        content,
+        run.text,
+        search,
+      )
+      let end = start + length
+      mapped.push({
+        ..run,
+        source_range: Some({
+          start: editor_block.content_range.start + start,
+          end: editor_block.content_range.start + end,
+        }),
+      })
+      search = end
+    }
+    index = index + 1
   }
   mapped
 }
@@ -4615,7 +4937,13 @@ fn markdown_editor_block_source_text(
       markdown_editor_inline_source(editor_block.block.inlines)
     Paragraph =>
       prefix_padding + markdown_editor_inline_source(editor_block.block.inlines)
-    CodeBlock | HorizontalRule | Table => editor_block.block.text
+    FootnoteDefinition(label) =>
+      prefix_padding +
+      "[^" +
+      label +
+      "]: " +
+      markdown_editor_inline_source(editor_block.block.inlines)
+    CodeBlock | HorizontalRule | Table | HtmlBlock => editor_block.block.text
   }
 }
 
@@ -4629,7 +4957,9 @@ fn markdown_editor_block_source_prefix_padding(
     TaskListItem(_) => 6
     OrderedListItem(number) => markdown_editor_digit_count(number) + 2
     Blockquote => 2
-    Paragraph | CodeBlock | HorizontalRule | Table => 0
+    FootnoteDefinition(label) =>
+      markdown_editor_text_length("[^" + label + "]: ")
+    Paragraph | CodeBlock | HorizontalRule | Table | HtmlBlock => 0
   }
   let padding_length = markdown_editor_max_int(
     0,
@@ -4668,6 +4998,8 @@ fn markdown_editor_inline_source(inlines : Array[MarkdownInline]) -> String {
           markdown_editor_inline_target(inline) +
           ")",
         )
+      FootnoteReference => parts.push("[^" + inline.text + "]")
+      HtmlInline => parts.push(inline.text)
     }
   }
   ignore(text)
@@ -4769,6 +5101,8 @@ fn markdown_editor_block_kind_label(kind : MarkdownBlockKind) -> String {
     CodeBlock => "Code block"
     HorizontalRule => "Rule"
     Table => "Table"
+    FootnoteDefinition(label) => "Footnote " + label
+    HtmlBlock => "HTML"
     Paragraph => "Paragraph"
   }
 }
@@ -4784,12 +5118,36 @@ fn markdown_editor_content_range(
     | TaskListItem(_)
     | OrderedListItem(_)
     | Blockquote => markdown_editor_marker_prefix_length(line.text)
-    Paragraph | CodeBlock | HorizontalRule | Table => 0
+    FootnoteDefinition(_) =>
+      markdown_editor_footnote_marker_prefix_length(line.text)
+    Paragraph | CodeBlock | HorizontalRule | Table | HtmlBlock => 0
   }
   {
     start: markdown_editor_min_int(line.start + offset, line.end),
     end: line.end,
   }
+}
+
+///|
+fn markdown_editor_footnote_marker_prefix_length(line : String) -> Int {
+  let chars = line.to_array()
+  let indent = markdown_editor_leading_indent_length(chars)
+  if chars.length() < indent + 5 ||
+    chars[indent] != '[' ||
+    chars[indent + 1] != '^' {
+    return 0
+  }
+  let mut close = indent + 2
+  while close < chars.length() && chars[close] != ']' {
+    close = close + 1
+  }
+  if close <= indent + 2 ||
+    close + 2 >= chars.length() ||
+    chars[close + 1] != ':' ||
+    chars[close + 2] != ' ' {
+    return 0
+  }
+  close + 3
 }
 
 ///|

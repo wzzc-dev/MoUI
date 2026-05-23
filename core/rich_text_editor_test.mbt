@@ -603,6 +603,33 @@ test "rich text editor caret uses source mapped visual text" {
 }
 
 ///|
+test "rich text caret geometry helper maps source offsets" {
+  let font = FontSpec::new(size=16.0, weight=400)
+  let content = rich_text_editor_content_rect(
+    Rect::new(x=0.0, y=0.0, width=320.0, height=220.0),
+  )
+  let document = RichTextDocument::new(blocks=[
+    RichTextBlock::new(
+      runs=[
+        RichTextRun::new(text="Title", source_range=Some({ start: 2, end: 7 })),
+      ],
+      source_range=Some({ start: 0, end: 7 }),
+      content_range=Some({ start: 2, end: 7 }),
+    ),
+  ])
+  guard rich_text_document_caret_rect_at_source(document, 2, content, font)
+    is Some(start_rect) else {
+    fail("expected start caret rect")
+  }
+  guard rich_text_document_caret_rect_at_source(document, 7, content, font)
+    is Some(end_rect) else {
+    fail("expected end caret rect")
+  }
+  inspect(start_rect.origin.x, content="14")
+  assert_true(end_rect.origin.x > start_rect.origin.x)
+}
+
+///|
 test "rich text editor pointer maps visual text to source offset" {
   let source = State::new("# Title")
   let runtime = RuntimeState::new_spec(

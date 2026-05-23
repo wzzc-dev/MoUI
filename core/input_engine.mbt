@@ -75,7 +75,9 @@ fn ElementNode::dispatch_pointer_to_children(
         Some(_) => focused = result.focused
         None => ()
       }
-      break
+      if result.changed || result.activated || result.focused is Some(_) {
+        break
+      }
     }
     index = index - 1
   }
@@ -533,6 +535,7 @@ pub fn ElementNode::find_focusable_at(
     | ScrollSpec(_)
     | GridSpec(_)
     | ListSpec(_)
+    | CustomLayoutSpec(_)
     | ComponentSpec(_) => {
       let mut index = self.children.length() - 1
       while index >= 0 {

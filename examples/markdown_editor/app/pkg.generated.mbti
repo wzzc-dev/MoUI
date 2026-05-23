@@ -25,6 +25,10 @@ pub fn markdown_editor_preview_text(String) -> String
 
 pub fn markdown_editor_selected_code_language(String, MarkdownEditorSelection) -> String?
 
+pub fn markdown_editor_selected_footnote_text(String, MarkdownEditorSelection) -> String?
+
+pub fn markdown_editor_selected_html_block_text(String, MarkdownEditorSelection) -> String?
+
 pub fn markdown_editor_selected_image_target(String, MarkdownEditorSelection) -> String?
 
 pub fn markdown_editor_selected_link_target(String, MarkdownEditorSelection) -> String?
@@ -62,6 +66,8 @@ pub(all) enum MarkdownBlockKind {
   CodeBlock
   HorizontalRule
   Table
+  FootnoteDefinition(String)
+  HtmlBlock
 } derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownCodeFenceInfo derive(Eq, @debug.Debug)
@@ -72,6 +78,8 @@ pub struct MarkdownEditorApp {
   link_target : @core.State[String]
   image_target : @core.State[String]
   code_language : @core.State[String]
+  footnote_text : @core.State[String]
+  html_block_text : @core.State[String]
   target_kind : @core.State[MarkdownEditorTargetKind]
   block_label : @core.State[String]
   source_preview_visible : @core.State[Bool]
@@ -82,6 +90,8 @@ pub fn MarkdownEditorApp::apply_action(Self, String) -> Unit
 pub fn MarkdownEditorApp::apply_code_language(Self) -> Unit
 pub fn MarkdownEditorApp::apply_command(Self, MarkdownEditorCommand) -> Unit
 pub fn MarkdownEditorApp::apply_command_to_selection(Self, MarkdownEditorCommand) -> Unit
+pub fn MarkdownEditorApp::apply_footnote_text(Self) -> Unit
+pub fn MarkdownEditorApp::apply_html_block_text(Self) -> Unit
 pub fn MarkdownEditorApp::apply_image_target(Self) -> Unit
 pub fn MarkdownEditorApp::apply_link_target(Self) -> Unit
 pub fn MarkdownEditorApp::block_label(Self) -> String
@@ -90,6 +100,8 @@ pub fn MarkdownEditorApp::can_undo(Self) -> Bool
 pub fn MarkdownEditorApp::clear(Self) -> Unit
 pub fn MarkdownEditorApp::code_language(Self) -> String
 pub fn MarkdownEditorApp::document(Self) -> String
+pub fn MarkdownEditorApp::footnote_text(Self) -> String
+pub fn MarkdownEditorApp::html_block_text(Self) -> String
 pub fn MarkdownEditorApp::image_target(Self) -> String
 pub fn MarkdownEditorApp::link_target(Self) -> String
 pub fn MarkdownEditorApp::new() -> Self
@@ -98,6 +110,8 @@ pub fn MarkdownEditorApp::root(Self, @core.BuildContext) -> @core.ViewSpec
 pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn MarkdownEditorApp::set_code_language(Self, String) -> Unit
 pub fn MarkdownEditorApp::set_document(Self, String) -> Unit
+pub fn MarkdownEditorApp::set_footnote_text(Self, String) -> Unit
+pub fn MarkdownEditorApp::set_html_block_text(Self, String) -> Unit
 pub fn MarkdownEditorApp::set_image_target(Self, String) -> Unit
 pub fn MarkdownEditorApp::set_link_target(Self, String) -> Unit
 pub fn MarkdownEditorApp::set_selection(Self, Int, @core.TextRange?) -> Unit
@@ -124,6 +138,8 @@ pub(all) enum MarkdownEditorCommand {
   SetLinkTarget(String)
   SetImageTarget(String)
   SetCodeLanguage(String)
+  SetFootnoteText(String)
+  SetHtmlBlockText(String)
   Paragraph
   Heading(Int)
   BulletList
@@ -184,6 +200,8 @@ pub(all) enum MarkdownEditorTargetKind {
   LinkTarget
   ImageTarget
   CodeLanguageTarget
+  FootnoteTarget
+  HtmlBlockTarget
   TableTools
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -202,6 +220,8 @@ pub(all) enum MarkdownInlineKind {
   Link
   Autolink
   Image
+  FootnoteReference
+  HtmlInline
 } derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownLine derive(Eq, @debug.Debug)

@@ -42,6 +42,44 @@ test "markdown editor toggles source preview from action" {
 }
 
 ///|
+test "markdown editor floats contextual palette over editor surface" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("Visit [MoUI](https://moui.dev)")
+  app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
+  let commands = app.runtime(width=980.0, height=700.0).draw_commands()
+  guard markdown_editor_text_frame(commands, "Visit ") is Some(editor_text) else {
+    fail("expected editor text frame")
+  }
+  guard markdown_editor_text_frame(commands, "Link target")
+    is Some(palette_text) else {
+    fail("expected floating palette text frame")
+  }
+  assert_true(palette_text.origin.y > editor_text.origin.y)
+  assert_true(palette_text.origin.y - editor_text.origin.y < 80.0)
+}
+
+///|
+test "markdown editor floating palette follows caret geometry" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("Visit [MoUI](https://moui.dev)\n\nTail")
+  app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
+  let top_commands = app.runtime(width=980.0, height=700.0).draw_commands()
+  guard markdown_editor_text_frame(top_commands, "Link target")
+    is Some(top_palette) else {
+    fail("expected top palette")
+  }
+  app.set_selection(35, None)
+  let lower_commands = app.runtime(width=980.0, height=700.0).draw_commands()
+  guard markdown_editor_text_frame(
+      lower_commands, "Select link or image text to edit its target",
+    )
+    is Some(lower_palette) else {
+    fail("expected lower palette")
+  }
+  assert_true(lower_palette.origin.y > top_palette.origin.y)
+}
+
+///|
 test "markdown editor snapshot tracks typora core document shape" {
   let snapshot = MarkdownEditorSnapshot::parse(
     "# Title\n\nParagraph with **bold**\n- [x] done\n```\nlet x = 1\n```",
@@ -102,6 +140,59 @@ test "markdown editor snapshot resolves reference links and images" {
   guard snapshot.rich_text.blocks[0].runs[3]
     is { image_source: Some("assets/logo.png"), .. } else {
     fail("expected rich image source")
+  }
+}
+
+///|
+test "markdown editor snapshot tracks footnotes" {
+  let snapshot = MarkdownEditorSnapshot::parse(
+    "Paragraph with note[^1].\n\n[^1]: Footnote body",
+  )
+  inspect(snapshot.blocks.length(), content="2")
+  guard snapshot.blocks[0].block.inlines[1]
+    is { kind: MarkdownInlineKind::FootnoteReference, text: "1", .. } else {
+    fail("expected footnote reference inline")
+  }
+  guard snapshot.blocks[1]
+    is {
+      block: {
+        kind: FootnoteDefinition("1"),
+        text: "Footnote body",
+        inlines: [{ text: "Footnote body", .. }],
+        ..,
+      },
+      source_range: { start: 26, end: 45 },
+      content_range: { start: 32, end: 45 },
+    } else {
+    fail("expected footnote definition mapping")
+  }
+  guard snapshot.rich_text.blocks[0].runs[1]
+    is {
+      text: "[^1]",
+      visual_text: Some("1"),
+      source_range: Some({ start: 19, end: 23 }),
+      ..,
+    } else {
+    fail("expected rich footnote reference marker")
+  }
+  guard snapshot.rich_text.blocks[1]
+    is {
+      border_left: Some(_),
+      runs: [
+        {
+          visual_text: Some("1"),
+          source_range: Some({ start: 26, end: 32 }),
+          ..,
+        },
+        {
+          text: "Footnote body",
+          source_range: Some({ start: 32, end: 45 }),
+          ..,
+        },
+      ],
+      ..,
+    } else {
+    fail("expected rich footnote definition")
   }
 }
 
@@ -830,6 +921,51 @@ test "markdown editor link target command creates missing reference definition" 
 }
 
 ///|
+test "markdown editor link target command updates shortcut reference definition" {
+  let source = "Visit [MoUI] today\n\n[MoUI]: https://example.com"
+  guard markdown_editor_selected_link_target(source, {
+      caret: 11,
+      selection: Some(@core.TextRange::new(start=7, end=11)),
+    })
+    is Some("https://example.com") else {
+    fail("expected selected shortcut reference target")
+  }
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetLinkTarget("https://moui.dev"),
+    Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
+  )
+  inspect(
+    updated.source,
+    content="Visit [MoUI] today\n\n[MoUI]: https://moui.dev",
+  )
+  guard updated.selection is Some(selection) else {
+    fail("expected shortcut reference link text selection")
+  }
+  inspect(selection.start, content="7")
+  inspect(selection.end, content="11")
+}
+
+///|
+test "markdown editor link target command creates shortcut reference definition" {
+  let source = "Visit [MoUI] today"
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetLinkTarget("https://moui.dev"),
+    Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
+  )
+  inspect(
+    updated.source,
+    content="Visit [MoUI] today\n\n[MoUI]: https://moui.dev",
+  )
+  guard updated.selection is Some(selection) else {
+    fail("expected shortcut reference link text selection")
+  }
+  inspect(selection.start, content="7")
+  inspect(selection.end, content="11")
+}
+
+///|
 test "markdown editor reads selected link and image targets" {
   let source = "Visit [MoUI](https://moui.dev) and ![logo](assets/logo.png)"
   guard markdown_editor_selected_link_target(source, {
@@ -880,6 +1016,53 @@ test "markdown editor code language command updates fenced block" {
   )
   inspect(cleared.source, content="Intro\n```\nlet x = 1\n```\nTail")
   inspect(cleared.caret, content="13")
+}
+
+///|
+test "markdown editor footnote text command updates definition" {
+  let source = "Note[^a]\n\n[^a]: Old text"
+  guard markdown_editor_selected_footnote_text(source, {
+      caret: 7,
+      selection: Some(@core.TextRange::new(start=6, end=7)),
+    })
+    is Some("Old text") else {
+    fail("expected selected footnote text")
+  }
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetFootnoteText("New text"),
+    Some({ caret: 7, selection: Some(@core.TextRange::new(start=6, end=7)) }),
+  )
+  inspect(updated.source, content="Note[^a]\n\n[^a]: New text")
+}
+
+///|
+test "markdown editor footnote text command creates missing definition" {
+  let source = "Note[^a]"
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetFootnoteText("New text"),
+    Some({ caret: 7, selection: Some(@core.TextRange::new(start=6, end=7)) }),
+  )
+  inspect(updated.source, content="Note[^a]\n\n[^a]: New text")
+}
+
+///|
+test "markdown editor html block command updates current block" {
+  let source = "Intro\n<div>Old</div>\nTail"
+  guard markdown_editor_selected_html_block_text(source, {
+      caret: 9,
+      selection: None,
+    })
+    is Some("<div>Old</div>") else {
+    fail("expected selected html block text")
+  }
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetHtmlBlockText("<section>New</section>"),
+    Some({ caret: 9, selection: None }),
+  )
+  inspect(updated.source, content="Intro\n<section>New</section>\nTail")
 }
 
 ///|
@@ -1069,6 +1252,24 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   app.set_code_language("rust")
   app.apply_code_language()
   inspect(app.document(), content="```rust\nlet x = 1\n```")
+  app.set_document("Note[^a]\n\n[^a]: Old text")
+  app.set_selection(7, Some(@core.TextRange::new(start=6, end=7)))
+  guard app.target_kind() is @app.MarkdownEditorTargetKind::FootnoteTarget else {
+    fail("expected footnote target mode")
+  }
+  inspect(app.footnote_text(), content="Old text")
+  app.set_footnote_text("New text")
+  app.apply_footnote_text()
+  inspect(app.document(), content="Note[^a]\n\n[^a]: New text")
+  app.set_document("Intro\n<div>Old</div>\nTail")
+  app.set_selection(9, None)
+  guard app.target_kind() is @app.MarkdownEditorTargetKind::HtmlBlockTarget else {
+    fail("expected html block target mode")
+  }
+  inspect(app.html_block_text(), content="<div>Old</div>")
+  app.set_html_block_text("<section>New</section>")
+  app.apply_html_block_text()
+  inspect(app.document(), content="Intro\n<section>New</section>\nTail")
 }
 
 ///|
@@ -1160,6 +1361,14 @@ test "markdown editor target bar renders contextual controls" {
   assert_true(
     code.any(command => {
       command is @core.DrawCommand::DrawText({ text: "Code lang", .. })
+    }),
+  )
+  app.set_document("Intro\n<div>Old</div>\nTail")
+  app.set_selection(9, None)
+  let html = app.runtime(width=980.0, height=700.0).draw_commands()
+  assert_true(
+    html.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "HTML block", .. })
     }),
   )
 }
@@ -3037,6 +3246,87 @@ test "markdown inline parser preserves link image and strike metadata" {
 }
 
 ///|
+test "markdown parser preserves footnote metadata" {
+  let blocks = parse_markdown("Text[^note]\n\n[^note]: Body text")
+  inspect(blocks.length(), content="2")
+  guard blocks[0].inlines[1]
+    is { kind: MarkdownInlineKind::FootnoteReference, text: "note", .. } else {
+    fail("expected footnote reference")
+  }
+  guard blocks[1]
+    is {
+      kind: FootnoteDefinition("note"),
+      text: "Body text",
+      inlines: [{ text: "Body text", .. }],
+      ..,
+    } else {
+    fail("expected footnote definition block")
+  }
+}
+
+///|
+test "markdown parser preserves html block metadata" {
+  let blocks = parse_markdown("<div>Block</div>")
+  inspect(blocks.length(), content="1")
+  guard blocks[0] is { kind: HtmlBlock, text: "<div>Block</div>", .. } else {
+    fail("expected html block")
+  }
+}
+
+///|
+test "markdown parser preserves inline html tag metadata" {
+  let spans = parse_markdown_inlines("Use <kbd>Esc</kbd> now")
+  inspect(spans.length(), content="5")
+  inspect(spans[0].text, content="Use ")
+  inspect(markdown_editor_test_inline_kind_name(spans[1].kind), content="html")
+  inspect(spans[1].text, content="<kbd>")
+  inspect(spans[2].text, content="Esc")
+  inspect(spans[3].text, content="</kbd>")
+  inspect(spans[4].text, content=" now")
+  guard spans[1].kind is MarkdownInlineKind::HtmlInline else {
+    fail("expected opening html tag span")
+  }
+  guard spans[3].kind is MarkdownInlineKind::HtmlInline else {
+    fail("expected closing html tag span")
+  }
+}
+
+///|
+test "markdown parser does not split inline html inside code or links" {
+  let code = parse_markdown_inlines("Use `<kbd>` code")
+  guard code[1] is { kind: MarkdownInlineKind::Code, text: "<kbd>", .. } else {
+    fail("expected code span to keep html-looking source")
+  }
+  let link = parse_markdown_inlines("[<kbd>](https://example.com)")
+  guard link[0]
+    is {
+      kind: MarkdownInlineKind::Link,
+      text: "kbd",
+      target: Some("https://example.com"),
+    } else {
+    fail("expected html-looking link text to stay a link")
+  }
+  let autolink = parse_markdown_inlines("Visit <https://example.com>")
+  guard autolink[1]
+    is {
+      kind: MarkdownInlineKind::Autolink,
+      text: "https://example.com",
+      target: Some("https://example.com"),
+    } else {
+    fail("expected autolink to stay autolink")
+  }
+}
+
+///|
+fn markdown_editor_test_inline_kind_name(kind : MarkdownInlineKind) -> String {
+  match kind {
+    HtmlInline => "html"
+    Plain => "plain"
+    _ => "other"
+  }
+}
+
+///|
 test "markdown formatter produces rich text blocks and styled runs" {
   let document = markdown_to_rich_text(
     "# Title\n- item\n- [x] done\n> quote\n```moonbit\ncode\n```\n---",
@@ -3051,6 +3341,60 @@ test "markdown formatter produces rich text blocks and styled runs" {
   inspect(document.blocks[4].runs[0].text, content="moonbit")
   inspect(document.blocks[4].runs[1].text, content="\ncode")
   assert_true(document.blocks[5].rule)
+}
+
+///|
+test "markdown formatter renders footnotes as structured rich text" {
+  let document = markdown_to_rich_text("Text[^a]\n\n[^a]: Footnote")
+  inspect(document.blocks.length(), content="2")
+  guard document.blocks[0].runs[1]
+    is { text: "[^a]", visual_text: Some("a"), background: Some(_), .. } else {
+    fail("expected styled footnote reference")
+  }
+  guard document.blocks[1]
+    is {
+      border_left: Some(_),
+      runs: [{ visual_text: Some("a"), .. }, { text: "Footnote", .. }],
+      ..,
+    } else {
+    fail("expected styled footnote definition")
+  }
+}
+
+///|
+test "markdown formatter renders html blocks as structured rich text" {
+  let document = markdown_to_rich_text("<div>Block</div>")
+  inspect(document.blocks.length(), content="1")
+  guard document.blocks[0]
+    is {
+      background: Some(_),
+      runs: [{ text: "<div>Block</div>", font: Some({ families, .. }), .. }],
+      ..,
+    } else {
+    fail("expected styled html block")
+  }
+  inspect(families.families.length() > 0, content="true")
+}
+
+///|
+test "markdown formatter renders inline html tags as styled runs" {
+  let blocks = parse_markdown("Use <kbd>Esc</kbd> now")
+  inspect(blocks[0].inlines[1].text, content="<kbd>")
+  let document = markdown_to_rich_text("Use <kbd>Esc</kbd> now")
+  inspect(document.blocks.length(), content="1")
+  inspect(document.blocks[0].runs.length(), content="5")
+  inspect(document.blocks[0].runs[1].text, content="<kbd>")
+  inspect(document.blocks[0].runs[1].background is Some(_), content="true")
+  inspect(document.blocks[0].runs[1].font is Some(_), content="true")
+  guard document.blocks[0].runs[1]
+    is { text: "<kbd>", background: Some(_), font: Some({ size, .. }), .. } else {
+    fail("expected styled opening html run")
+  }
+  guard document.blocks[0].runs[3]
+    is { text: "</kbd>", background: Some(_), .. } else {
+    fail("expected styled closing html run")
+  }
+  assert_true(size < @core.FontSpec::new().size)
 }
 
 ///|
@@ -3276,4 +3620,21 @@ test "markdown editor clear redraws placeholder and optional empty source previe
       command is @core.DrawCommand::DrawText({ text: "(empty)", .. })
     }),
   )
+}
+
+///|
+fn markdown_editor_text_frame(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.Rect? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+        if value == text {
+          return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
 }

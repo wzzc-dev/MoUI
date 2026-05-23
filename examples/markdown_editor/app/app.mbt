@@ -5,6 +5,8 @@ pub struct MarkdownEditorApp {
   link_target : @core.State[String]
   image_target : @core.State[String]
   code_language : @core.State[String]
+  footnote_text : @core.State[String]
+  html_block_text : @core.State[String]
   target_kind : @core.State[MarkdownEditorTargetKind]
   block_label : @core.State[String]
   source_preview_visible : @core.State[Bool]
@@ -24,6 +26,8 @@ pub(all) enum MarkdownEditorTargetKind {
   LinkTarget
   ImageTarget
   CodeLanguageTarget
+  FootnoteTarget
+  HtmlBlockTarget
   TableTools
 } derive(Eq, Debug, ToJson)
 
@@ -35,6 +39,8 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     link_target: @core.State::new("https://moui.dev"),
     image_target: @core.State::new("assets/image.png"),
     code_language: @core.State::new("moonbit"),
+    footnote_text: @core.State::new("Footnote text"),
+    html_block_text: @core.State::new("<div>HTML</div>"),
     target_kind: @core.State::new(PlainSelection),
     block_label: @core.State::new("Paragraph"),
     source_preview_visible: @core.State::new(false),
@@ -190,6 +196,22 @@ pub fn MarkdownEditorApp::set_code_language(
 }
 
 ///|
+pub fn MarkdownEditorApp::set_footnote_text(
+  self : MarkdownEditorApp,
+  text : String,
+) -> Unit {
+  self.footnote_text.set(text)
+}
+
+///|
+pub fn MarkdownEditorApp::set_html_block_text(
+  self : MarkdownEditorApp,
+  text : String,
+) -> Unit {
+  self.html_block_text.set(text)
+}
+
+///|
 pub fn MarkdownEditorApp::link_target(self : MarkdownEditorApp) -> String {
   self.link_target.get()
 }
@@ -202,6 +224,16 @@ pub fn MarkdownEditorApp::image_target(self : MarkdownEditorApp) -> String {
 ///|
 pub fn MarkdownEditorApp::code_language(self : MarkdownEditorApp) -> String {
   self.code_language.get()
+}
+
+///|
+pub fn MarkdownEditorApp::footnote_text(self : MarkdownEditorApp) -> String {
+  self.footnote_text.get()
+}
+
+///|
+pub fn MarkdownEditorApp::html_block_text(self : MarkdownEditorApp) -> String {
+  self.html_block_text.get()
 }
 
 ///|
@@ -229,6 +261,18 @@ pub fn MarkdownEditorApp::apply_image_target(self : MarkdownEditorApp) -> Unit {
 ///|
 pub fn MarkdownEditorApp::apply_code_language(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetCodeLanguage(self.code_language.get()))
+}
+
+///|
+pub fn MarkdownEditorApp::apply_footnote_text(self : MarkdownEditorApp) -> Unit {
+  self.apply_command_to_selection(SetFootnoteText(self.footnote_text.get()))
+}
+
+///|
+pub fn MarkdownEditorApp::apply_html_block_text(
+  self : MarkdownEditorApp,
+) -> Unit {
+  self.apply_command_to_selection(SetHtmlBlockText(self.html_block_text.get()))
 }
 
 ///|
@@ -311,18 +355,40 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
     }
     None =>
       match
-        markdown_editor_selected_code_language(self.document.get(), selection) {
-        Some(language) => {
-          self.code_language.set(language)
-          self.target_kind.set(CodeLanguageTarget)
+        markdown_editor_selected_footnote_text(self.document.get(), selection) {
+        Some(text) => {
+          self.footnote_text.set(text)
+          self.target_kind.set(FootnoteTarget)
         }
         None =>
-          if block_label == "Table" {
-            self.target_kind.set(TableTools)
-          } else if block_label == "Code block" {
-            self.target_kind.set(CodeLanguageTarget)
-          } else {
-            self.target_kind.set(PlainSelection)
+          match
+            markdown_editor_selected_code_language(
+              self.document.get(),
+              selection,
+            ) {
+            Some(language) => {
+              self.code_language.set(language)
+              self.target_kind.set(CodeLanguageTarget)
+            }
+            None =>
+              match
+                markdown_editor_selected_html_block_text(
+                  self.document.get(),
+                  selection,
+                ) {
+                Some(text) => {
+                  self.html_block_text.set(text)
+                  self.target_kind.set(HtmlBlockTarget)
+                }
+                None =>
+                  if block_label == "Table" {
+                    self.target_kind.set(TableTools)
+                  } else if block_label == "Code block" {
+                    self.target_kind.set(CodeLanguageTarget)
+                  } else {
+                    self.target_kind.set(PlainSelection)
+                  }
+              }
           }
       }
   }
@@ -354,6 +420,9 @@ pub fn MarkdownEditorApp::root(
   let editor_style = @core.TextFieldStyle::outline(theme~)
   let source_style = @core.SurfaceStyle::default(theme~)
   let show_source = ctx.watch(self.source_preview_visible)
+  let target_bar = self.target_bar(ctx, theme)
+  let selection = ctx.watch(self.selection)
+  let target_kind = ctx.watch(self.target_kind)
   @views.surface(
     @views.column(
       [
@@ -366,10 +435,12 @@ pub fn MarkdownEditorApp::root(
           source_style,
           theme,
           show_source,
+          target_bar,
+          selection,
+          target_kind,
           (caret, selection) => self.set_selection(caret, selection),
           offset => self.toggle_task_at(offset),
         ),
-        self.target_bar(ctx, theme),
         @views.text(
           "\{snapshot.word_count} words · \{snapshot.line_count} lines",
           width=320.0,
@@ -672,6 +743,54 @@ fn MarkdownEditorApp::target_bar(
         spacing=theme.spacing_scale.xs,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
       )
+    FootnoteTarget =>
+      @views.row(
+        [
+          block_badge,
+          @views.text("Footnote", width=88.0, height=34.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          @views.text_field(
+            ctx.binding(self.footnote_text),
+            on_submit=Some(() => self.apply_footnote_text()),
+            placeholder="Footnote text",
+            style=field_style,
+            width=360.0,
+            height=34.0,
+          ).key("markdown-footnote-text"),
+          toolbar_button(
+            "Apply",
+            () => self.apply_footnote_text(),
+            button_style,
+          ),
+        ],
+        spacing=theme.spacing_scale.xs,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+      )
+    HtmlBlockTarget =>
+      @views.row(
+        [
+          block_badge,
+          @views.text("HTML block", width=88.0, height=34.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          @views.text_field(
+            ctx.binding(self.html_block_text),
+            on_submit=Some(() => self.apply_html_block_text()),
+            placeholder="<div>HTML</div>",
+            style=field_style,
+            width=360.0,
+            height=34.0,
+          ).key("markdown-html-block-text"),
+          toolbar_button(
+            "Apply",
+            () => self.apply_html_block_text(),
+            button_style,
+          ),
+        ],
+        spacing=theme.spacing_scale.xs,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+      )
     TableTools =>
       @views.row(
         [
@@ -764,12 +883,168 @@ fn MarkdownEditorApp::target_bar(
 }
 
 ///|
+fn floating_target_palette(
+  editor : @core.ViewSpec,
+  target_bar : @core.ViewSpec,
+  snapshot : MarkdownEditorSnapshot,
+  selection : MarkdownEditorSelection,
+  target_kind : MarkdownEditorTargetKind,
+  editor_font : @core.FontSpec,
+  theme : @core.Theme,
+  width : Double,
+  height : Double,
+) -> @core.ViewSpec {
+  let palette_style = {
+    ..@core.SurfaceStyle::raised(theme~),
+    padding: @core.Insets::all(theme.spacing_scale.xs),
+    radius: theme.radius_scale.md,
+  }
+  let palette = @views.surface(target_bar, style=palette_style)
+  @views.custom_children_layout(
+    children=[editor, palette],
+    measure=_ => @core.Size::new(width~, height~),
+    place=ctx => {
+      let palette_size = if ctx.child_sizes.length() > 1 {
+        ctx.child_sizes[1]
+      } else {
+        @core.Size::new(width=0.0, height=0.0)
+      }
+      let editor_frame = @core.Rect::new(
+        x=ctx.frame.origin.x,
+        y=ctx.frame.origin.y,
+        width=ctx.frame.size.width,
+        height~,
+      )
+      let palette_width = markdown_editor_min_double(palette_size.width, width)
+      let anchor = markdown_editor_palette_anchor(
+        snapshot,
+        selection,
+        target_kind,
+        editor_frame,
+        editor_font,
+        palette_width,
+        palette_size.height,
+        theme,
+      )
+      let palette_x = ctx.frame.origin.x +
+        markdown_editor_max_double(
+          0.0,
+          markdown_editor_min_double(
+            ctx.frame.size.width - palette_width,
+            anchor.x - ctx.frame.origin.x,
+          ),
+        )
+      let palette_y = ctx.frame.origin.y +
+        markdown_editor_max_double(
+          0.0,
+          markdown_editor_min_double(
+            ctx.frame.size.height - palette_size.height,
+            anchor.y - ctx.frame.origin.y,
+          ),
+        )
+      [
+        editor_frame,
+        @core.Rect::new(
+          x=palette_x,
+          y=palette_y,
+          width=palette_width,
+          height=palette_size.height,
+        ),
+      ]
+    },
+    semantics_label="Markdown editor floating target palette",
+  )
+}
+
+///|
+fn markdown_editor_palette_anchor(
+  snapshot : MarkdownEditorSnapshot,
+  selection : MarkdownEditorSelection,
+  target_kind : MarkdownEditorTargetKind,
+  editor_frame : @core.Rect,
+  editor_font : @core.FontSpec,
+  palette_width : Double,
+  palette_height : Double,
+  theme : @core.Theme,
+) -> @core.Point {
+  if target_kind == PlainSelection {
+    return @core.Point::new(
+      x=editor_frame.origin.x + (editor_frame.size.width - palette_width) / 2.0,
+      y=editor_frame.origin.y +
+        markdown_editor_max_double(
+          0.0,
+          editor_frame.size.height - palette_height - theme.spacing_scale.sm,
+        ),
+    )
+  }
+  let caret = match selection.selection {
+    Some(range) => range.normalized().start
+    None => selection.caret
+  }
+  let content = @core.rich_text_editor_content_rect(editor_frame)
+  match
+    @core.rich_text_document_caret_rect_at_source(
+      snapshot.rich_text,
+      caret,
+      content,
+      editor_font,
+    ) {
+    Some(rect) => {
+      let x = rect.origin.x + rect.size.width / 2.0 - palette_width / 2.0
+      let preferred_above = rect.origin.y -
+        palette_height -
+        theme.spacing_scale.sm
+      let y = if preferred_above >= editor_frame.origin.y {
+        preferred_above
+      } else if target_kind == TableTools {
+        editor_frame.origin.y +
+        markdown_editor_max_double(
+          0.0,
+          editor_frame.size.height - palette_height - theme.spacing_scale.sm,
+        )
+      } else {
+        rect.origin.y + rect.size.height + theme.spacing_scale.sm
+      }
+      @core.Point::new(x~, y~)
+    }
+    None =>
+      @core.Point::new(
+        x=editor_frame.origin.x +
+          (editor_frame.size.width - palette_width) / 2.0,
+        y=editor_frame.origin.y +
+          markdown_editor_max_double(
+            0.0,
+            editor_frame.size.height - palette_height - theme.spacing_scale.sm,
+          ),
+      )
+  }
+}
+
+///|
 fn toolbar_button(
   label : String,
   action : () -> Unit,
   style : @core.ButtonStyle,
 ) -> @core.ViewSpec {
   @views.button(label, on_click=action, style~, width=64.0, height=34.0)
+}
+
+///|
+fn markdown_editor_min_double(a : Double, b : Double) -> Double {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn markdown_editor_max_double(a : Double, b : Double) -> Double {
+  if a > b {
+    a
+  } else {
+    b
+  }
 }
 
 ///|
@@ -816,6 +1091,9 @@ fn editor_source_layout(
   source_style : @core.SurfaceStyle,
   theme : @core.Theme,
   show_source : Bool,
+  target_bar : @core.ViewSpec,
+  selection : MarkdownEditorSelection,
+  target_kind : MarkdownEditorTargetKind,
   on_selection_change : (Int, @core.TextRange?) -> Unit,
   on_prefix_click : (Int) -> Unit,
 ) -> @core.ViewSpec {
@@ -832,9 +1110,19 @@ fn editor_source_layout(
     input_transform=Some(markdown_editor_transform_input),
   ).key("markdown-editor")
   if !show_source {
-    editor
+    floating_target_palette(
+      editor,
+      target_bar,
+      snapshot,
+      selection,
+      target_kind,
+      editor_style.font,
+      theme,
+      editor_width,
+      400.0,
+    )
   } else {
-    @views.row(
+    let editor_and_source = @views.row(
       [
         editor,
         @views.surface(
@@ -852,6 +1140,11 @@ fn editor_source_layout(
         ).frame(width=300.0, height=400.0),
       ],
       spacing=theme.spacing_scale.lg,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    )
+    @views.column(
+      [editor_and_source, target_bar],
+      spacing=theme.spacing_scale.md,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     )
   }
