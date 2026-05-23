@@ -122,12 +122,33 @@ pub(all) struct TextFieldViewSpec {
 pub type RichTextFormatter = (String) -> RichTextDocument
 
 ///|
+pub(all) struct RichTextInputTransform {
+  text : String
+  caret : Int
+  selection : TextRange?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RichTextSourceRange {
+  start : Int
+  end : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum RichTextDecoration {
+  Strikethrough
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct RichTextRun {
   text : String
+  visual_text : String?
   font : FontSpec?
   color : Color?
   background : Brush?
   background_radius : Double
+  decoration : RichTextDecoration?
+  source_range : RichTextSourceRange?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -142,6 +163,8 @@ pub(all) struct RichTextBlock {
   line_height : Double?
   corner_radius : Double
   rule : Bool
+  source_range : RichTextSourceRange?
+  content_range : RichTextSourceRange?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -164,6 +187,10 @@ pub(all) struct RichTextEditorViewSpec {
   focused_border : BorderStyle?
   cursor_color : Color
   corner_radius : Double
+  on_selection_change : ((Int, TextRange?) -> Unit)?
+  on_prefix_click : ((Int) -> Unit)?
+  input_transform : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?
+  accepts_tab_input : Bool
 }
 
 ///|
@@ -504,12 +531,33 @@ pub fn ViewStyle::empty() -> ViewStyle {
 ///|
 pub fn RichTextRun::new(
   text~ : String,
+  visual_text? : String? = None,
   font? : FontSpec? = None,
   color? : Color? = None,
   background? : Brush? = None,
   background_radius? : Double = 4.0,
+  decoration? : RichTextDecoration? = None,
+  source_range? : RichTextSourceRange? = None,
 ) -> RichTextRun {
-  { text, font, color, background, background_radius }
+  {
+    text,
+    visual_text,
+    font,
+    color,
+    background,
+    background_radius,
+    decoration,
+    source_range,
+  }
+}
+
+///|
+pub fn RichTextInputTransform::new(
+  text~ : String,
+  caret~ : Int,
+  selection? : TextRange? = None,
+) -> RichTextInputTransform {
+  { text, caret, selection }
 }
 
 ///|
@@ -524,6 +572,8 @@ pub fn RichTextBlock::new(
   line_height? : Double? = None,
   corner_radius? : Double = 0.0,
   rule? : Bool = false,
+  source_range? : RichTextSourceRange? = None,
+  content_range? : RichTextSourceRange? = None,
 ) -> RichTextBlock {
   {
     runs,
@@ -536,6 +586,8 @@ pub fn RichTextBlock::new(
     line_height,
     corner_radius,
     rule,
+    source_range,
+    content_range,
   }
 }
 

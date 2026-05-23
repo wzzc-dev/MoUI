@@ -608,10 +608,11 @@ pub(all) struct ElementNode {
   mut datepicker_view : DateValue
   mut caret : Int
   mut selection : TextRange?
+  mut text_selection_anchor : Int?
   mut composition : String?
   mut composition_cursor : TextRange?
-  mut text_undo_stack : Array[String]
-  mut text_redo_stack : Array[String]
+  mut text_undo_stack : Array[TextHistoryEntry]
+  mut text_redo_stack : Array[TextHistoryEntry]
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut component_effects : Array[ComponentEffect]
@@ -624,9 +625,10 @@ pub(all) struct ElementNode {
   mut cached_render_focused : ElementId?
   mut cached_render : RenderNode?
 }
+pub fn ElementNode::accepts_tab_input(Self, ElementId) -> Bool
 pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_keyboard_shortcut(Self, KeyboardEvent) -> ElementEventResult
-pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode) -> ElementEventResult
+pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode, text_measurer? : TextMeasurer) -> ElementEventResult
 pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> ElementEventResult
 pub fn ElementNode::find_focusable_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::find_keyed(Self, String) -> ElementId?
@@ -1111,8 +1113,14 @@ pub(all) struct RichTextBlock {
   line_height : Double?
   corner_radius : Double
   rule : Bool
+  source_range : RichTextSourceRange?
+  content_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextBlock::new(runs~ : Array[RichTextRun], prefix? : String, font? : FontSpec?, color? : Color?, background? : Brush?, border_left? : BorderStyle?, inset? : Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool) -> Self
+pub fn RichTextBlock::new(runs~ : Array[RichTextRun], prefix? : String, font? : FontSpec?, color? : Color?, background? : Brush?, border_left? : BorderStyle?, inset? : Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?) -> Self
+
+pub(all) enum RichTextDecoration {
+  Strikethrough
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RichTextDocument {
   blocks : Array[RichTextBlock]
@@ -1134,16 +1142,35 @@ pub(all) struct RichTextEditorViewSpec {
   focused_border : BorderStyle?
   cursor_color : Color
   corner_radius : Double
+  on_selection_change : ((Int, TextRange?) -> Unit)?
+  on_prefix_click : ((Int) -> Unit)?
+  input_transform : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?
+  accepts_tab_input : Bool
 }
+
+pub(all) struct RichTextInputTransform {
+  text : String
+  caret : Int
+  selection : TextRange?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RichTextInputTransform::new(text~ : String, caret~ : Int, selection? : TextRange?) -> Self
 
 pub(all) struct RichTextRun {
   text : String
+  visual_text : String?
   font : FontSpec?
   color : Color?
   background : Brush?
   background_radius : Double
+  decoration : RichTextDecoration?
+  source_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextRun::new(text~ : String, font? : FontSpec?, color? : Color?, background? : Brush?, background_radius? : Double) -> Self
+pub fn RichTextRun::new(text~ : String, visual_text? : String?, font? : FontSpec?, color? : Color?, background? : Brush?, background_radius? : Double, decoration? : RichTextDecoration?, source_range? : RichTextSourceRange?) -> Self
+
+pub(all) struct RichTextSourceRange {
+  start : Int
+  end : Int
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RoundedRect {
   rect : Rect
@@ -1533,6 +1560,12 @@ pub(all) struct TextFieldViewSpec {
   corner_radius : Double
   on_submit : (() -> Unit)?
 }
+
+pub(all) struct TextHistoryEntry {
+  text : String
+  caret : Int
+  selection : TextRange?
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum TextInputEvent {
   InsertText(String)

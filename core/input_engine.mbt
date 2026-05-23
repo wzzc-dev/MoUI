@@ -3,6 +3,7 @@ pub fn ElementNode::dispatch_pointer(
   self : ElementNode,
   event : PointerEvent,
   render : RenderNode,
+  text_measurer? : TextMeasurer = TextMeasurer::default(),
 ) -> ElementEventResult {
   match self.spec {
     ButtonSpec(data) =>
@@ -28,18 +29,8 @@ pub fn ElementNode::dispatch_pointer(
       }
       { changed: false, activated: false, focused }
     }
-    RichTextEditorSpec(_) => {
-      let focused = if event.phase == PointerPhase::Down &&
-        render.frame.contains(event.position) {
-        self.caret = rich_text_editor_text_length(self.spec)
-        self.selection = None
-        self.composition = None
-        Some(self.id)
-      } else {
-        None
-      }
-      { changed: false, activated: false, focused }
-    }
+    RichTextEditorSpec(data) =>
+      handle_rich_text_editor_pointer(self, data, event, render, text_measurer)
     FlexSpec(_)
     | PaddingSpec(_)
     | ContainerSpec(_)
@@ -50,8 +41,10 @@ pub fn ElementNode::dispatch_pointer(
     | ListSpec(_)
     | CustomLayoutSpec(_)
     | ComponentSpec(_)
-    | SheetSpec(_) => self.dispatch_pointer_to_children(event, render)
-    ModifiedSpec(data) => self.dispatch_modified_pointer(data, event, render)
+    | SheetSpec(_) =>
+      self.dispatch_pointer_to_children(event, render, text_measurer~)
+    ModifiedSpec(data) =>
+      self.dispatch_modified_pointer(data, event, render, text_measurer~)
     EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
       { changed: false, activated: false, focused: None }
   }
@@ -62,6 +55,7 @@ fn ElementNode::dispatch_pointer_to_children(
   self : ElementNode,
   event : PointerEvent,
   render : RenderNode,
+  text_measurer~ : TextMeasurer,
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
@@ -73,6 +67,7 @@ fn ElementNode::dispatch_pointer_to_children(
       let result = self.children[index].dispatch_pointer(
         event,
         render.children[index],
+        text_measurer~,
       )
       changed = result.changed
       activated = result.activated
@@ -96,12 +91,17 @@ fn ElementNode::dispatch_modified_pointer(
   data : ModifiedViewSpec,
   event : PointerEvent,
   render : RenderNode,
+  text_measurer~ : TextMeasurer,
 ) -> ElementEventResult {
   match data.modifier {
     DisabledModifier(true) =>
       { changed: false, activated: false, focused: None }
     OnTapModifier(handler) => {
-      let child_result = self.dispatch_pointer_to_children(event, render)
+      let child_result = self.dispatch_pointer_to_children(
+        event,
+        render,
+        text_measurer~,
+      )
       if child_result.activated {
         child_result
       } else {
@@ -124,7 +124,7 @@ fn ElementNode::dispatch_modified_pointer(
         }
       }
     }
-    _ => self.dispatch_pointer_to_children(event, render)
+    _ => self.dispatch_pointer_to_children(event, render, text_measurer~)
   }
 }
 
@@ -185,10 +185,77 @@ fn text_field_text_length(spec : ViewSpec) -> Int {
 }
 
 ///|
-fn rich_text_editor_text_length(spec : ViewSpec) -> Int {
-  match spec {
-    RichTextEditorSpec(data) => text_length(data.value.get())
-    _ => 0
+fn handle_rich_text_editor_pointer(
+  element : ElementNode,
+  data : RichTextEditorViewSpec,
+  event : PointerEvent,
+  render : RenderNode,
+  text_measurer : TextMeasurer,
+) -> ElementEventResult {
+  let inside = render.frame.contains(event.position)
+  match event.phase {
+    Down =>
+      if inside {
+        match data.on_prefix_click {
+          Some(handler) =>
+            match
+              rich_text_editor_prefix_source_offset_at_point(
+                data,
+                event.position,
+                render.frame,
+                text_measurer,
+              ) {
+              Some(offset) => handler(offset)
+              None => ()
+            }
+          None => ()
+        }
+        let caret = rich_text_editor_caret_at_point(
+          data,
+          event.position,
+          render.frame,
+          text_measurer,
+        )
+        element.caret = caret
+        element.selection = None
+        element.text_selection_anchor = Some(caret)
+        element.composition = None
+        element.composition_cursor = None
+        notify_rich_text_selection_change(data, element)
+        { changed: true, activated: false, focused: Some(element.id) }
+      } else {
+        { changed: false, activated: false, focused: None }
+      }
+    Move =>
+      match element.text_selection_anchor {
+        Some(anchor) => {
+          let caret = rich_text_editor_caret_at_point(
+            data,
+            event.position,
+            render.frame,
+            text_measurer,
+          )
+          let next_selection : TextRange? = if caret == anchor {
+            None
+          } else {
+            Some(TextRange::new(start=anchor, end=caret))
+          }
+          let changed = element.caret != caret ||
+            element.selection != next_selection
+          element.caret = caret
+          element.selection = next_selection
+          if changed {
+            notify_rich_text_selection_change(data, element)
+            element.dirty.mark_paint()
+          }
+          { changed, activated: false, focused: None }
+        }
+        None => { changed: false, activated: false, focused: None }
+      }
+    Up | Cancel => {
+      element.text_selection_anchor = None
+      { changed: false, activated: false, focused: None }
+    }
   }
 }
 
@@ -548,6 +615,26 @@ pub fn ElementNode::focusable_ids(
         child.focusable_ids(ids)
       }
     _ => ()
+  }
+}
+
+///|
+pub fn ElementNode::accepts_tab_input(
+  self : ElementNode,
+  target : ElementId,
+) -> Bool {
+  if self.id == target {
+    match self.spec {
+      RichTextEditorSpec(data) => data.accepts_tab_input
+      _ => false
+    }
+  } else {
+    for child in self.children {
+      if child.accepts_tab_input(target) {
+        return true
+      }
+    }
+    false
   }
 }
 
@@ -1081,6 +1168,10 @@ fn handle_rich_text_editor_keyboard(
   if event.key == "Enter" {
     return handle_rich_text_editor_input(element, data, InsertText("\n"))
   }
+  if event.key == "Tab" && data.accepts_tab_input {
+    let text = if event.modifiers.shift { "\u{000b}" } else { "\t" }
+    return handle_rich_text_editor_input(element, data, InsertText(text))
+  }
   if is_select_all_shortcut(event) {
     return select_text_range(element, data.value.get())
   }
@@ -1135,8 +1226,9 @@ fn handle_rich_text_editor_keyboard(
     }
   }
   if event.key == "ArrowLeft" {
-    return apply_text_caret_move(
+    return apply_rich_text_caret_move(
       element,
+      data,
       move_text_caret(
         data.value.get(),
         element.caret,
@@ -1147,8 +1239,9 @@ fn handle_rich_text_editor_keyboard(
     )
   }
   if event.key == "ArrowRight" {
-    return apply_text_caret_move(
+    return apply_rich_text_caret_move(
       element,
+      data,
       move_text_caret(
         data.value.get(),
         element.caret,
@@ -1167,12 +1260,14 @@ fn handle_rich_text_editor_keyboard(
   if event.key == "Home" {
     element.caret = multiline_line_start(data.value.get(), element.caret)
     element.selection = None
+    notify_rich_text_selection_change(data, element)
     element.dirty.mark_paint()
     return { changed: true, activated: false, focused: None }
   }
   if event.key == "End" {
     element.caret = multiline_line_end(data.value.get(), element.caret)
     element.selection = None
+    notify_rich_text_selection_change(data, element)
     element.dirty.mark_paint()
     return { changed: true, activated: false, focused: None }
   }
