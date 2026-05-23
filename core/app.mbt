@@ -924,7 +924,11 @@ pub fn RuntimeState::dispatch_event(
           self.mark_dirty(self.element_tree.id)
         }
       }
-      let result = self.element_tree.dispatch_pointer(event, self.render_tree)
+      let result = self.element_tree.dispatch_pointer(
+        event,
+        self.render_tree,
+        text_measurer=self.text_measurer,
+      )
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
       self.needs_paint = self.needs_paint || result.changed
@@ -951,7 +955,25 @@ pub fn RuntimeState::dispatch_event(
         self.request_activation_rebuild()
         self.rebuild_if_possible()
       } else if event.pressed && event.key == "Tab" {
-        ignore(self.move_focus(reverse=event.modifiers.shift))
+        match self.focused_element {
+          Some(target) =>
+            if self.element_tree.accepts_tab_input(target) {
+              let result = self.element_tree.dispatch_keyboard(target, event)
+              self.needs_redraw = self.needs_redraw || result.changed
+              self.needs_rebuild = self.needs_rebuild || result.activated
+              self.needs_paint = self.needs_paint || result.changed
+              if result.changed || result.activated {
+                self.mark_dirty(self.element_tree.id)
+              }
+              if result.activated {
+                self.request_activation_rebuild()
+              }
+              self.rebuild_if_possible()
+            } else {
+              ignore(self.move_focus(reverse=event.modifiers.shift))
+            }
+          None => ignore(self.move_focus(reverse=event.modifiers.shift))
+        }
       } else {
         match self.focused_element {
           Some(target) => {

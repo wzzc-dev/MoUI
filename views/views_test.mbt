@@ -498,18 +498,28 @@ test "text field accepts visual styles" {
 ///|
 test "rich text editor constructs binding backed spec" {
   let state = @core.State::new("# Draft")
+  let changed = @core.State::new(false)
+  let transformed = @core.State::new(false)
+  let prefix_clicked = @core.State::new(false)
   let spec = @views.rich_text_editor(
     state.binding(),
     text => @core.RichTextDocument::plain(text),
     placeholder="Write notes",
     width=420.0,
     height=280.0,
+    on_selection_change=Some((_caret, _selection) => changed.set(true)),
+    on_prefix_click=Some(_offset => prefix_clicked.set(true)),
+    input_transform=Some((_text, _caret, _selection, input) => {
+      transformed.set(input == "\n")
+      None
+    }),
   )
   guard spec
     is @core.ViewSpec::RichTextEditorSpec(
       {
         placeholder: "Write notes",
         size: { width: 420.0, height: 280.0 },
+        accepts_tab_input: false,
         value,
         ..,
       }
@@ -518,6 +528,24 @@ test "rich text editor constructs binding backed spec" {
   }
   value.set("Changed")
   inspect(state.get(), content="Changed")
+  match spec {
+    @core.ViewSpec::RichTextEditorSpec(
+      {
+        on_selection_change: Some(handler),
+        on_prefix_click: Some(prefix_handler),
+        input_transform: Some(transform),
+        ..,
+      }
+    ) => {
+      handler(1, None)
+      inspect(changed.get(), content="true")
+      prefix_handler(1)
+      inspect(prefix_clicked.get(), content="true")
+      ignore(transform("", 0, None, "\n"))
+      inspect(transformed.get(), content="true")
+    }
+    _ => fail("expected editor callbacks")
+  }
 }
 
 ///|
@@ -535,6 +563,7 @@ test "markdown editor wrapper composes rich text editor with visual styles" {
         focused_border: Some(focused_border),
         cursor_color,
         placeholder_color,
+        accepts_tab_input: true,
         ..,
       }
     ) else {

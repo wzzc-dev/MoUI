@@ -89,12 +89,21 @@ fn TextInputState::for_rich_text_editor(
     0,
     text_length(display_text),
   )
-  let caret_rect = rich_text_caret_rect(
-    display_text,
+  let document = (data.format)(display_text)
+  let caret_rect = rich_text_document_caret_rect(
+    document,
     visual_caret,
     content,
     data.font,
     text_measurer,
+  ).unwrap_or(
+    rich_text_caret_rect(
+      display_text,
+      visual_caret,
+      content,
+      data.font,
+      text_measurer,
+    ),
   )
   {
     focused: true,

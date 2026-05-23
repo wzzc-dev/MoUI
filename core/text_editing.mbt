@@ -2,6 +2,7 @@
 priv struct TextEditResult {
   text : String
   caret : Int
+  selection : TextRange?
 }
 
 ///|
@@ -31,15 +32,28 @@ fn apply_text_edit(
   data : TextFieldViewSpec,
   edit : TextEditResult,
 ) -> ElementEventResult {
+  apply_text_edit_with_history(element, data, edit, record_history=true)
+}
+
+///|
+fn apply_text_edit_with_history(
+  element : ElementNode,
+  data : TextFieldViewSpec,
+  edit : TextEditResult,
+  record_history~ : Bool,
+) -> ElementEventResult {
   let previous = data.value.get()
+  let previous_entry = TextHistoryEntry::from_element(previous, element)
   if edit.text != data.value.get() ||
     edit.caret != element.caret ||
-    element.selection is Some(_) ||
+    edit.selection != element.selection ||
     element.composition is Some(_) {
-    record_text_history(element, previous, edit.text)
+    if record_history {
+      record_text_history(element, previous_entry, edit.text)
+    }
     data.value.set(edit.text)
     element.caret = edit.caret
-    element.selection = None
+    element.selection = edit.selection
     element.composition = None
     element.composition_cursor = None
     element.dirty.mark_paint()
@@ -76,18 +90,37 @@ fn apply_multiline_text_edit(
   data : RichTextEditorViewSpec,
   edit : TextEditResult,
 ) -> ElementEventResult {
+  apply_multiline_text_edit_with_history(
+    element,
+    data,
+    edit,
+    record_history=true,
+  )
+}
+
+///|
+fn apply_multiline_text_edit_with_history(
+  element : ElementNode,
+  data : RichTextEditorViewSpec,
+  edit : TextEditResult,
+  record_history~ : Bool,
+) -> ElementEventResult {
   let previous = data.value.get()
+  let previous_entry = TextHistoryEntry::from_element(previous, element)
   if edit.text != data.value.get() ||
     edit.caret != element.caret ||
-    element.selection is Some(_) ||
+    edit.selection != element.selection ||
     element.composition is Some(_) ||
     element.composition_cursor is Some(_) {
-    record_text_history(element, previous, edit.text)
+    if record_history {
+      record_text_history(element, previous_entry, edit.text)
+    }
     data.value.set(edit.text)
     element.caret = edit.caret
-    element.selection = None
+    element.selection = edit.selection
     element.composition = None
     element.composition_cursor = None
+    notify_rich_text_selection_change(data, element)
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
   } else {
@@ -101,16 +134,29 @@ fn apply_searchbar_edit(
   data : SearchBarViewSpec,
   edit : TextEditResult,
 ) -> ElementEventResult {
+  apply_searchbar_edit_with_history(element, data, edit, record_history=true)
+}
+
+///|
+fn apply_searchbar_edit_with_history(
+  element : ElementNode,
+  data : SearchBarViewSpec,
+  edit : TextEditResult,
+  record_history~ : Bool,
+) -> ElementEventResult {
   let previous = data.query.get()
+  let previous_entry = TextHistoryEntry::from_element(previous, element)
   if edit.text != data.query.get() ||
     edit.caret != element.caret ||
-    element.selection is Some(_) ||
+    edit.selection != element.selection ||
     element.composition is Some(_) ||
     element.composition_cursor is Some(_) {
-    record_text_history(element, previous, edit.text)
+    if record_history {
+      record_text_history(element, previous_entry, edit.text)
+    }
     data.query.set(edit.text)
     element.caret = edit.caret
-    element.selection = None
+    element.selection = edit.selection
     element.composition = None
     element.composition_cursor = None
     element.dirty.mark_paint()
@@ -136,10 +182,10 @@ fn TextCommandResult::handled(
 ///|
 fn record_text_history(
   element : ElementNode,
-  previous : String,
+  previous : TextHistoryEntry,
   next : String,
 ) -> Unit {
-  if previous != next {
+  if previous.text != next {
     element.text_undo_stack.push(previous)
     element.text_redo_stack.clear()
   }
@@ -159,6 +205,106 @@ fn selected_text(text : String, selection : TextRange?) -> String {
 }
 
 ///|
+fn selected_rich_text(
+  text : String,
+  document : RichTextDocument,
+  selection : TextRange?,
+) -> String {
+  match active_text_selection(selection) {
+    Some(selection) =>
+      if rich_text_document_has_source_ranges(document) {
+        selected_rich_text_document_text(document, selection)
+      } else {
+        selected_text(text, Some(selection))
+      }
+    None => ""
+  }
+}
+
+///|
+fn selected_rich_text_document_text(
+  document : RichTextDocument,
+  selection : TextRange,
+) -> String {
+  let lines : Array[String] = []
+  for block in document.blocks {
+    match selected_rich_text_block_text(block, selection) {
+      Some(text) => lines.push(text)
+      None => ()
+    }
+  }
+  join_text_lines(lines)
+}
+
+///|
+fn selected_rich_text_block_text(
+  block : RichTextBlock,
+  selection : TextRange,
+) -> String? {
+  match block.content_range {
+    Some(content) =>
+      if selection.end <= content.start || selection.start >= content.end {
+        None
+      } else {
+        let start = clamp_int(selection.start, content.start, content.end)
+        let end = clamp_int(selection.end, content.start, content.end)
+        let text = selected_rich_text_runs_text(block, start, end)
+        if text == "" && start != end {
+          None
+        } else {
+          Some(text)
+        }
+      }
+    None => None
+  }
+}
+
+///|
+fn selected_rich_text_runs_text(
+  block : RichTextBlock,
+  start : Int,
+  end : Int,
+) -> String {
+  let parts : Array[String] = []
+  for run in block.runs {
+    match run.source_range {
+      Some(range) =>
+        if end > range.start && start < range.end {
+          parts.push(
+            rich_text_run_slice(
+              run.text,
+              clamp_int(start - range.start, 0, text_length(run.text)),
+              clamp_int(end - range.start, 0, text_length(run.text)),
+            ),
+          )
+        }
+      None => ()
+    }
+  }
+  join_text_lines(parts)
+}
+
+///|
+fn rich_text_run_slice(text : String, start : Int, end : Int) -> String {
+  let chars = text.to_array()
+  let start = clamp_int(start, 0, chars.length())
+  let end = clamp_int(end, start, chars.length())
+  String::from_array(chars[start:end])
+}
+
+///|
+fn join_text_lines(lines : Array[String]) -> String {
+  let chars : Array[Char] = []
+  for index in 0..<lines.length() {
+    if index > 0 {
+      chars.push('\n')
+    }
+    chars.append(lines[index].to_array())
+  }
+  String::from_array(chars)
+}
+
+///|
 fn restore_text_history(
   element : ElementNode,
   current : String,
@@ -175,9 +321,18 @@ fn restore_text_history(
   }
   let restored = source[source.length() - 1]
   ignore(source.pop())
-  let result = apply({ text: restored, caret: text_length(restored) })
-  if undo && result.changed {
-    element.text_redo_stack.push(current)
+  let current_entry = TextHistoryEntry::from_element(current, element)
+  let result = apply({
+    text: restored.text,
+    caret: restored.caret,
+    selection: restored.selection,
+  })
+  if result.changed {
+    if undo {
+      element.text_redo_stack.push(current_entry)
+    } else {
+      element.text_undo_stack.push(current_entry)
+    }
   }
   TextCommandResult::handled(changed=result.changed)
 }
@@ -210,6 +365,7 @@ fn replace_text_range(
   {
     text: String::from_array(chars[:start] + replacement_chars + chars[end:]),
     caret: start + replacement_chars.length(),
+    selection: None,
   }
 }
 
@@ -434,8 +590,33 @@ fn move_multiline_caret_vertical(
   element.selection = None
   element.composition = None
   element.composition_cursor = None
+  notify_rich_text_selection_change(data, element)
   element.dirty.mark_paint()
   { changed: true, activated: false, focused: None }
+}
+
+///|
+fn apply_rich_text_caret_move(
+  element : ElementNode,
+  data : RichTextEditorViewSpec,
+  caret_move : TextCaretMoveResult,
+) -> ElementEventResult {
+  let result = apply_text_caret_move(element, caret_move)
+  if result.changed {
+    notify_rich_text_selection_change(data, element)
+  }
+  result
+}
+
+///|
+fn notify_rich_text_selection_change(
+  data : RichTextEditorViewSpec,
+  element : ElementNode,
+) -> Unit {
+  match data.on_selection_change {
+    Some(handler) => handler(element.caret, element.selection)
+    None => ()
+  }
 }
 
 ///|
@@ -448,6 +629,11 @@ fn handle_rich_text_editor_input(
     InsertText(text) => {
       if text == "" {
         return { changed: false, activated: false, focused: None }
+      }
+      match rich_text_transform_insert(data, element, text) {
+        Some(edit) =>
+          return apply_rich_text_input_transform(element, data, edit)
+        None => ()
       }
       let edit = replace_current_selection(
         data.value.get(),
@@ -499,15 +685,75 @@ fn handle_rich_text_editor_input(
       }
     }
     DeleteRange(range) => {
+      match rich_text_transform_insert(data, element, "\u{000e}") {
+        Some(edit) =>
+          return apply_rich_text_input_transform(element, data, edit)
+        None => ()
+      }
       let edit = replace_text_range(data.value.get(), range, "")
       apply_multiline_text_edit(element, data, edit)
     }
     DeleteSurrounding(before, after) => {
       let text = data.value.get()
+      let signal = if before > 0 && after == 0 {
+        "\u{0008}"
+      } else if before == 0 && after > 0 {
+        "\u{007f}"
+      } else {
+        ""
+      }
+      if signal != "" {
+        match rich_text_transform_insert(data, element, signal) {
+          Some(edit) =>
+            return apply_rich_text_input_transform(element, data, edit)
+          None => ()
+        }
+      }
       let range = surrounding_delete_range(text, element.caret, before, after)
       let edit = replace_text_range(text, range, "")
       apply_multiline_text_edit(element, data, edit)
     }
+  }
+}
+
+///|
+fn rich_text_transform_insert(
+  data : RichTextEditorViewSpec,
+  element : ElementNode,
+  text : String,
+) -> RichTextInputTransform? {
+  match data.input_transform {
+    Some(transform) =>
+      transform(data.value.get(), element.caret, element.selection, text)
+    None => None
+  }
+}
+
+///|
+fn apply_rich_text_input_transform(
+  element : ElementNode,
+  data : RichTextEditorViewSpec,
+  edit : RichTextInputTransform,
+) -> ElementEventResult {
+  let previous = data.value.get()
+  let previous_entry = TextHistoryEntry::from_element(previous, element)
+  let changed = edit.text != data.value.get() ||
+    edit.caret != element.caret ||
+    edit.selection != element.selection ||
+    element.composition is Some(_) ||
+    element.composition_cursor is Some(_)
+  if changed {
+    record_text_history(element, previous_entry, edit.text)
+    data.value.set(edit.text)
+    element.caret = edit.caret
+    element.selection = edit.selection
+    element.composition = None
+    element.composition_cursor = None
+    notify_rich_text_selection_change(data, element)
+    element.dirty.mark_paint()
+    { changed: true, activated: false, focused: None }
+  } else {
+    { changed: false, activated: false, focused: None }
   }
 }
 
@@ -587,14 +833,28 @@ fn handle_text_field_command(
       restore_text_history(
         element,
         text,
-        edit => apply_text_edit(element, data, edit),
+        edit => {
+          apply_text_edit_with_history(
+            element,
+            data,
+            edit,
+            record_history=false,
+          )
+        },
         undo=true,
       )
     Redo =>
       restore_text_history(
         element,
         text,
-        edit => apply_text_edit(element, data, edit),
+        edit => {
+          apply_text_edit_with_history(
+            element,
+            data,
+            edit,
+            record_history=false,
+          )
+        },
         undo=false,
       )
     SelectAll => {
@@ -647,14 +907,28 @@ fn handle_searchbar_command(
       restore_text_history(
         element,
         text,
-        edit => apply_searchbar_edit(element, data, edit),
+        edit => {
+          apply_searchbar_edit_with_history(
+            element,
+            data,
+            edit,
+            record_history=false,
+          )
+        },
         undo=true,
       )
     Redo =>
       restore_text_history(
         element,
         text,
-        edit => apply_searchbar_edit(element, data, edit),
+        edit => {
+          apply_searchbar_edit_with_history(
+            element,
+            data,
+            edit,
+            record_history=false,
+          )
+        },
         undo=false,
       )
     SelectAll => {
@@ -673,13 +947,16 @@ fn handle_rich_text_editor_command(
   paste_text~ : String?,
 ) -> TextCommandResult {
   let text = data.value.get()
+  let document = (data.format)(text)
   match intent {
     Copy =>
       TextCommandResult::handled(
-        clipboard_text=Some(selected_text(text, element.selection)),
+        clipboard_text=Some(
+          selected_rich_text(text, document, element.selection),
+        ),
       )
     Cut => {
-      let copied = selected_text(text, element.selection)
+      let copied = selected_rich_text(text, document, element.selection)
       match active_text_selection(element.selection) {
         Some(selection) => {
           let result = handle_rich_text_editor_input(
@@ -711,14 +988,28 @@ fn handle_rich_text_editor_command(
       restore_text_history(
         element,
         text,
-        edit => apply_multiline_text_edit(element, data, edit),
+        edit => {
+          apply_multiline_text_edit_with_history(
+            element,
+            data,
+            edit,
+            record_history=false,
+          )
+        },
         undo=true,
       )
     Redo =>
       restore_text_history(
         element,
         text,
-        edit => apply_multiline_text_edit(element, data, edit),
+        edit => {
+          apply_multiline_text_edit_with_history(
+            element,
+            data,
+            edit,
+            record_history=false,
+          )
+        },
         undo=false,
       )
     SelectAll => {

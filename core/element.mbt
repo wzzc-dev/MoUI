@@ -11,10 +11,11 @@ pub(all) struct ElementNode {
   mut datepicker_view : DateValue
   mut caret : Int
   mut selection : TextRange?
+  mut text_selection_anchor : Int?
   mut composition : String?
   mut composition_cursor : TextRange?
-  mut text_undo_stack : Array[String]
-  mut text_redo_stack : Array[String]
+  mut text_undo_stack : Array[TextHistoryEntry]
+  mut text_redo_stack : Array[TextHistoryEntry]
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut component_effects : Array[ComponentEffect]
@@ -26,6 +27,21 @@ pub(all) struct ElementNode {
   mut cached_render_frame : Rect?
   mut cached_render_focused : ElementId?
   mut cached_render : RenderNode?
+}
+
+///|
+pub(all) struct TextHistoryEntry {
+  text : String
+  caret : Int
+  selection : TextRange?
+} derive(Eq, Debug, ToJson)
+
+///|
+fn TextHistoryEntry::from_element(
+  text : String,
+  element : ElementNode,
+) -> TextHistoryEntry {
+  { text, caret: element.caret, selection: element.selection }
 }
 
 ///|
@@ -188,6 +204,7 @@ fn mount_view_spec_for_runtime(
       datepicker_view: DateValue::today(),
       caret: 0,
       selection: None,
+      text_selection_anchor: None,
       composition: None,
       composition_cursor: None,
       text_undo_stack: [],

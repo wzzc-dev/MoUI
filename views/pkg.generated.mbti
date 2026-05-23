@@ -54,7 +54,7 @@ pub fn light_theme() -> @core.Theme
 
 pub fn list(Array[@core.ViewSpec], spacing? : Double) -> @core.ViewSpec
 
-pub fn markdown_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn markdown_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, style? : @core.TextFieldStyle, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Unit)?, on_prefix_click? : ((Int) -> Unit)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.ViewSpec
 
 pub fn menu_button(String, on_click? : () -> Unit, style? : @core.ButtonStyle, width? : Double, height? : Double) -> @core.ViewSpec
 
@@ -76,7 +76,7 @@ pub fn progress(Double, width? : Double, height? : Double, foreground? : @core.C
 
 pub fn radio(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
 
-pub fn rich_text_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn rich_text_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, style? : @core.TextFieldStyle, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Unit)?, on_prefix_click? : ((Int) -> Unit)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.ViewSpec
 
 pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 

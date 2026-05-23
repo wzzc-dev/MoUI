@@ -8,7 +8,49 @@ model and parser tests.
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | Public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status |
-| Markdown Editor | Practical editing demo | `examples/markdown_editor/app/` | Rich text editor, `mizchi/markdown` parsing, source preview |
+| Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, rich text editor, source preview |
+
+The Markdown editor keeps Markdown source as the saved value, but its shared app
+package now has an explicit editor core. `MarkdownEditorSnapshot` parses source
+into blocks with source/content ranges, rich text output, line and word counts,
+and the current document title. Core rich text blocks can carry source/content
+ranges so the focused editor and IME request use the formatted visual position
+for hidden Markdown block and inline markers, and pointer hit-testing maps
+formatted visual positions back into Markdown source offsets. Mapped selection
+painting now highlights formatted ranges while leaving hidden markers out of the
+visual selection, including pointer drag selections mapped back to Markdown source
+ranges. Toolbar inline commands and keyboard shortcuts toggle the tracked
+selection for bold, italic, code, strikethrough, link, and image marks, wrapping
+plain selections and unwrapping matching hidden marker pairs. Link and image
+commands can also update the saved URL/source target while preserving the
+selected visible text or alt text; the example app exposes those targets through
+a contextual editing bar that switches between link URL editing, image source
+editing, and plain-selection creation actions based on the current selection.
+The contextual bar also reports the active block kind, and a paragraph command
+strips heading/list/quote markers from the current or selected source lines.
+Heading, list, task, ordered-list, quote, and code-block commands also have
+keyboard shortcuts; heading commands transform the current source line, and
+paragraph, list, task, ordered-list, and quote commands transform either the
+current line or all selected source lines. The code block command wraps the
+current line or selected source lines in fences, and unwraps the containing
+fenced block when the caret is already inside one. Task-list visual checkbox
+prefixes are clickable and toggle
+the saved `- [ ]` / `- [x]` marker in the canonical source. The next line in
+bullet, task, ordered-list, and quote blocks automatically continues the current
+marker on Enter, while pressing Enter on an empty marker line exits that block.
+The Markdown editor accepts Tab as text-editor input so Tab indents the current
+or selected source lines and Shift-Tab outdents them instead of moving focus
+away. Backspace at the visual start of formatted heading, list, task,
+ordered-list, quote, bold, italic, or code content removes the hidden Markdown
+marker pair/prefix; Backspace at the start of a plain visual block merges it
+with the previous block and strips hidden block markers into paragraph text. Copy
+and cut export the formatted visual text without hidden Markdown delimiters,
+while multiline paste continues bullet, task, quote, ordered-list, and code-block
+context. Toolbar and contextual target-editing commands keep their own undo/redo
+history so structured Markdown transforms can be reverted separately from raw
+text input. The next Typora milestones are upgrading the contextual target
+editing bar into a true inline/floating affordance and more complete block-mode
+interactions.
 
 ## Web Wasm-GC
 

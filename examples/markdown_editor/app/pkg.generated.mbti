@@ -9,6 +9,30 @@ import {
 // Values
 pub fn markdown_apply_action(String, String) -> String
 
+pub fn markdown_editor_active_block_label(String, MarkdownEditorSelection) -> String
+
+pub fn markdown_editor_apply_command(String, MarkdownEditorCommand) -> String
+
+pub fn markdown_editor_apply_command_at(String, MarkdownEditorCommand, MarkdownEditorSelection?) -> MarkdownEditorEditResult
+
+pub fn markdown_editor_command_snippet(MarkdownEditorCommand) -> String
+
+pub fn markdown_editor_format(String) -> @core.RichTextDocument
+
+pub fn markdown_editor_line_count(String) -> Int
+
+pub fn markdown_editor_preview_text(String) -> String
+
+pub fn markdown_editor_selected_image_target(String, MarkdownEditorSelection) -> String?
+
+pub fn markdown_editor_selected_link_target(String, MarkdownEditorSelection) -> String?
+
+pub fn markdown_editor_toggle_task_at(String, Int) -> MarkdownEditorEditResult?
+
+pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?
+
+pub fn markdown_editor_word_count(String) -> Int
+
 pub fn markdown_to_rich_text(String) -> @core.RichTextDocument
 
 pub fn parse_markdown(String) -> Array[MarkdownBlock]
@@ -33,22 +57,118 @@ pub(all) enum MarkdownBlockKind {
   Blockquote
   CodeBlock
   HorizontalRule
+  Table
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct MarkdownEditorApp {
   document : @core.State[String]
+  selection : @core.State[MarkdownEditorSelection]
+  link_target : @core.State[String]
+  image_target : @core.State[String]
+  target_kind : @core.State[MarkdownEditorTargetKind]
+  block_label : @core.State[String]
+  undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
+  redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
 }
 pub fn MarkdownEditorApp::apply_action(Self, String) -> Unit
+pub fn MarkdownEditorApp::apply_command(Self, MarkdownEditorCommand) -> Unit
+pub fn MarkdownEditorApp::apply_command_to_selection(Self, MarkdownEditorCommand) -> Unit
+pub fn MarkdownEditorApp::apply_image_target(Self) -> Unit
+pub fn MarkdownEditorApp::apply_link_target(Self) -> Unit
+pub fn MarkdownEditorApp::block_label(Self) -> String
+pub fn MarkdownEditorApp::can_redo(Self) -> Bool
+pub fn MarkdownEditorApp::can_undo(Self) -> Bool
 pub fn MarkdownEditorApp::clear(Self) -> Unit
 pub fn MarkdownEditorApp::document(Self) -> String
+pub fn MarkdownEditorApp::image_target(Self) -> String
+pub fn MarkdownEditorApp::link_target(Self) -> String
 pub fn MarkdownEditorApp::new() -> Self
+pub fn MarkdownEditorApp::redo(Self) -> Bool
 pub fn MarkdownEditorApp::root(Self, @core.BuildContext) -> @core.ViewSpec
 pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn MarkdownEditorApp::set_document(Self, String) -> Unit
+pub fn MarkdownEditorApp::set_image_target(Self, String) -> Unit
+pub fn MarkdownEditorApp::set_link_target(Self, String) -> Unit
+pub fn MarkdownEditorApp::set_selection(Self, Int, @core.TextRange?) -> Unit
+pub fn MarkdownEditorApp::target_kind(Self) -> MarkdownEditorTargetKind
+pub fn MarkdownEditorApp::toggle_task_at(Self, Int) -> Unit
+pub fn MarkdownEditorApp::undo(Self) -> Bool
+
+pub(all) struct MarkdownEditorBlock {
+  block : MarkdownBlock
+  source_range : MarkdownSourceRange
+  content_range : MarkdownSourceRange
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum MarkdownEditorCommand {
+  Bold
+  Italic
+  Code
+  Strikethrough
+  Link
+  Image
+  SetLinkTarget(String)
+  SetImageTarget(String)
+  Paragraph
+  Heading(Int)
+  BulletList
+  TaskList
+  OrderedList
+  Quote
+  CodeBlock
+  HorizontalRule
+  Table
+  Clear
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownEditorEditResult {
+  source : String
+  caret : Int
+  selection : @core.TextRange?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownEditorHistoryEntry {
+  source : String
+  selection : MarkdownEditorSelection
+} derive(Eq, ToJson, @debug.Debug)
+
+type MarkdownEditorMergeBlockKind derive(Eq, @debug.Debug)
+
+type MarkdownEditorOffsetReplacement derive(Eq, @debug.Debug)
+
+type MarkdownEditorOrderedLineInfo derive(Eq, @debug.Debug)
+
+type MarkdownEditorRenumberResult derive(Eq, @debug.Debug)
+
+pub(all) struct MarkdownEditorSelection {
+  caret : Int
+  selection : @core.TextRange?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownEditorSnapshot {
+  source : String
+  blocks : Array[MarkdownEditorBlock]
+  rich_text : @core.RichTextDocument
+  line_count : Int
+  word_count : Int
+  active_heading : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownEditorSnapshot::parse(String) -> Self
+
+type MarkdownEditorTableCellRange derive(Eq, @debug.Debug)
+
+type MarkdownEditorTableParseResult derive(Eq, @debug.Debug)
+
+pub(all) enum MarkdownEditorTargetKind {
+  PlainSelection
+  LinkTarget
+  ImageTarget
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MarkdownInline {
   text : String
   kind : MarkdownInlineKind
+  target : String?
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum MarkdownInlineKind {
@@ -56,7 +176,22 @@ pub(all) enum MarkdownInlineKind {
   Bold
   Italic
   Code
+  Strikethrough
+  Link
+  Autolink
+  Image
 } derive(Eq, ToJson, @debug.Debug)
+
+type MarkdownLine derive(Eq, @debug.Debug)
+
+type MarkdownLinkBounds derive(Eq, @debug.Debug)
+
+pub(all) struct MarkdownSourceRange {
+  start : Int
+  end : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+type MarkdownTableParseResult derive(Eq, @debug.Debug)
 
 // Type aliases
 
