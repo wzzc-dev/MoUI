@@ -44,13 +44,24 @@ pub(all) struct MarkdownBlock {
   kind : MarkdownBlockKind
   text : String
   inlines : Array[MarkdownInline]
+  table_alignments : Array[@core.TextAlign?]
+  code_language : String?
 } derive(Eq, Debug, ToJson)
+
+///|
+struct MarkdownReferenceDefinition {
+  label : String
+  url : String
+  title : String
+} derive(Eq, Debug)
 
 ///|
 pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
   let blocks : Array[MarkdownBlock] = []
+  let definitions = markdown_reference_definitions(text)
   let lines = markdown_split_lines(text)
   let code_lines : Array[String] = []
+  let mut code_language : String? = None
   let mut code_fence = ""
   let mut in_code = false
   let mut index = 0
@@ -59,9 +70,9 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
     if in_code {
       if markdown_closing_code_fence(line, code_fence) {
         blocks.push(
-          markdown_block(
-            MarkdownBlockKind::CodeBlock,
+          markdown_code_block(
             markdown_join_lines(code_lines).trim().to_owned(),
+            code_language,
           ),
         )
         code_lines.clear()
@@ -74,7 +85,8 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
       match markdown_opening_code_fence(line) {
         Some(fence) => {
           in_code = true
-          code_fence = fence
+          code_fence = fence.marker
+          code_language = fence.info
         }
         None =>
           if line.trim().to_owned() != "" {
@@ -90,14 +102,18 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
                     blocks.push({
                       kind: MarkdownBlockKind::Heading(level),
                       text,
-                      inlines: parse_markdown_inlines(text),
+                      inlines: parse_markdown_inlines_with_definitions(
+                        text, definitions,
+                      ),
+                      table_alignments: [],
+                      code_language: None,
                     })
                     index = index + 1
                   }
                   None => {
                     let parsed = @markdown.parse(line)
                     for block in parsed.document.children {
-                      append_markdown_ast_block(blocks, block)
+                      append_markdown_ast_block(blocks, block, definitions)
                     }
                   }
                 }
@@ -109,9 +125,9 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
   }
   if in_code {
     blocks.push(
-      markdown_block(
-        MarkdownBlockKind::CodeBlock,
+      markdown_code_block(
         markdown_join_lines(code_lines).trim().to_owned(),
+        code_language,
       ),
     )
   }
@@ -146,9 +162,9 @@ fn markdown_table_block_at(
   match parsed.document.children[0] {
     Table(header~, rows~, ..) =>
       Some({
-        block: markdown_block(
-          MarkdownBlockKind::Table,
+        block: markdown_table_block(
           markdown_table_text(header, rows),
+          markdown_table_alignments_for_separator(lines[index + 1]),
         ),
         end_index: next - 1,
       })
@@ -264,7 +280,13 @@ fn markdown_setext_underline_level(line : String) -> Int? {
 }
 
 ///|
-fn markdown_opening_code_fence(line : String) -> String? {
+struct MarkdownCodeFenceInfo {
+  marker : String
+  info : String?
+} derive(Eq, Debug)
+
+///|
+fn markdown_opening_code_fence(line : String) -> MarkdownCodeFenceInfo? {
   let chars = line.to_array()
   let indent = markdown_leading_indent_length(chars)
   if chars.length() < indent + 3 {
@@ -284,7 +306,20 @@ fn markdown_opening_code_fence(line : String) -> String? {
       return None
     }
   }
-  Some(String::from_array(chars[indent:fence_end]))
+  Some({
+    marker: String::from_array(chars[indent:fence_end]),
+    info: markdown_code_fence_info(chars, fence_end),
+  })
+}
+
+///|
+fn markdown_code_fence_info(chars : Array[Char], start : Int) -> String? {
+  let info = String::from_array(chars[start:]).trim().to_owned()
+  if info == "" {
+    None
+  } else {
+    Some(info)
+  }
 }
 
 ///|
@@ -326,22 +361,27 @@ fn markdown_leading_indent_length(chars : Array[Char]) -> Int {
 fn append_markdown_ast_block(
   blocks : Array[MarkdownBlock],
   block : @markdown.Block,
+  definitions : Array[MarkdownReferenceDefinition],
 ) -> Unit {
   match block {
     Heading(level~, children~, ..) => {
       let text = markdown_inline_text(children)
-      if level >= 1 && level <= 3 {
+      if level >= 1 && level <= 6 {
         blocks.push({
           kind: MarkdownBlockKind::Heading(level),
           text,
-          inlines: markdown_inlines_from_ast(children),
+          inlines: markdown_inlines_from_ast(children, definitions),
+          table_alignments: [],
+          code_language: None,
         })
       } else {
         let text = markdown_heading_source(level, text)
         blocks.push({
           kind: MarkdownBlockKind::Paragraph,
           text,
-          inlines: parse_markdown_inlines(text),
+          inlines: parse_markdown_inlines_with_definitions(text, definitions),
+          table_alignments: [],
+          code_language: None,
         })
       }
     }
@@ -350,21 +390,30 @@ fn append_markdown_ast_block(
       blocks.push({
         kind: MarkdownBlockKind::Paragraph,
         text,
-        inlines: markdown_inlines_from_ast(children),
+        inlines: markdown_inlines_from_ast(children, definitions),
+        table_alignments: [],
+        code_language: None,
       })
     }
     ThematicBreak(..) =>
       blocks.push(markdown_block(MarkdownBlockKind::HorizontalRule, ""))
-    FencedCode(code~, ..) | IndentedCode(code~, ..) =>
+    FencedCode(code~, info~, ..) =>
       blocks.push(
-        markdown_block(MarkdownBlockKind::CodeBlock, code.trim().to_owned()),
+        markdown_code_block(
+          code.trim().to_owned(),
+          markdown_normalize_code_info(Some(info)),
+        ),
       )
+    IndentedCode(code~, ..) =>
+      blocks.push(markdown_code_block(code.trim().to_owned(), None))
     Blockquote(children~, ..) => {
       let text = markdown_blocks_text(children)
       blocks.push({
         kind: MarkdownBlockKind::Blockquote,
         text,
-        inlines: parse_markdown_inlines(text),
+        inlines: parse_markdown_inlines_with_definitions(text, definitions),
+        table_alignments: [],
+        code_language: None,
       })
     }
     BulletList(marker~, items~, ..) =>
@@ -375,7 +424,11 @@ fn append_markdown_ast_block(
           blocks.push({
             kind: MarkdownBlockKind::Paragraph,
             text: plus_text,
-            inlines: parse_markdown_inlines(plus_text),
+            inlines: parse_markdown_inlines_with_definitions(
+              plus_text, definitions,
+            ),
+            table_alignments: [],
+            code_language: None,
           })
         }
       } else {
@@ -386,13 +439,21 @@ fn append_markdown_ast_block(
               blocks.push({
                 kind: MarkdownBlockKind::TaskListItem(checked),
                 text,
-                inlines: parse_markdown_inlines(text),
+                inlines: parse_markdown_inlines_with_definitions(
+                  text, definitions,
+                ),
+                table_alignments: [],
+                code_language: None,
               })
             None =>
               blocks.push({
                 kind: MarkdownBlockKind::UnorderedListItem,
                 text,
-                inlines: parse_markdown_inlines(text),
+                inlines: parse_markdown_inlines_with_definitions(
+                  text, definitions,
+                ),
+                table_alignments: [],
+                code_language: None,
               })
           }
         }
@@ -404,7 +465,9 @@ fn append_markdown_ast_block(
         blocks.push({
           kind: MarkdownBlockKind::OrderedListItem(number),
           text,
-          inlines: parse_markdown_inlines(text),
+          inlines: parse_markdown_inlines_with_definitions(text, definitions),
+          table_alignments: [],
+          code_language: None,
         })
         number = number + 1
       }
@@ -414,7 +477,7 @@ fn append_markdown_ast_block(
       blocks.push(markdown_block(MarkdownBlockKind::Paragraph, html))
     Table(header~, rows~, ..) => {
       let text = markdown_table_text(header, rows)
-      blocks.push(markdown_block(MarkdownBlockKind::Table, text))
+      blocks.push(markdown_table_block(text, []))
     }
     FootnoteDefinition(..) =>
       blocks.push(
@@ -436,7 +499,47 @@ fn markdown_block(kind : MarkdownBlockKind, text : String) -> MarkdownBlock {
     CodeBlock | HorizontalRule | Table => []
     _ => parse_markdown_inlines(text)
   }
-  { kind, text, inlines }
+  { kind, text, inlines, table_alignments: [], code_language: None }
+}
+
+///|
+fn markdown_table_block(
+  text : String,
+  table_alignments : Array[@core.TextAlign?],
+) -> MarkdownBlock {
+  {
+    kind: MarkdownBlockKind::Table,
+    text,
+    inlines: [],
+    table_alignments,
+    code_language: None,
+  }
+}
+
+///|
+fn markdown_code_block(text : String, code_language : String?) -> MarkdownBlock {
+  {
+    kind: MarkdownBlockKind::CodeBlock,
+    text,
+    inlines: [],
+    table_alignments: [],
+    code_language,
+  }
+}
+
+///|
+fn markdown_normalize_code_info(info : String?) -> String? {
+  match info {
+    Some(value) => {
+      let trimmed = value.trim().to_owned()
+      if trimmed == "" {
+        None
+      } else {
+        Some(trimmed)
+      }
+    }
+    None => None
+  }
 }
 
 ///|
@@ -463,16 +566,48 @@ fn markdown_table_row_text(row : Array[@markdown.TableCell]) -> String {
 
 ///|
 pub fn parse_markdown_inlines(text : String) -> Array[MarkdownInline] {
-  markdown_inlines_from_ast(@markdown.parse_inlines(text))
+  parse_markdown_inlines_with_definitions(text, [])
+}
+
+///|
+fn parse_markdown_inlines_with_definitions(
+  text : String,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Array[MarkdownInline] {
+  markdown_inlines_from_ast(@markdown.parse_inlines(text), definitions)
+}
+
+///|
+fn markdown_resolve_reference_inlines(
+  inlines : Array[MarkdownInline],
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Array[MarkdownInline] {
+  let resolved : Array[MarkdownInline] = []
+  for inline in inlines {
+    match inline.target {
+      Some(target) =>
+        match inline.kind {
+          Link | Image =>
+            resolved.push({
+              ..inline,
+              target: Some(markdown_reference_target(definitions, target)),
+            })
+          _ => resolved.push(inline)
+        }
+      None => resolved.push(inline)
+    }
+  }
+  resolved
 }
 
 ///|
 fn markdown_inlines_from_ast(
   ast : Array[@markdown.Inline],
+  definitions : Array[MarkdownReferenceDefinition],
 ) -> Array[MarkdownInline] {
   let spans : Array[MarkdownInline] = []
   for inline in ast {
-    append_markdown_inline_ast(spans, inline)
+    append_markdown_inline_ast(spans, inline, definitions)
   }
   spans
 }
@@ -481,6 +616,7 @@ fn markdown_inlines_from_ast(
 fn append_markdown_inline_ast(
   spans : Array[MarkdownInline],
   inline : @markdown.Inline,
+  definitions : Array[MarkdownReferenceDefinition],
 ) -> Unit {
   match inline {
     Text(content~, ..) =>
@@ -504,7 +640,7 @@ fn append_markdown_inline_ast(
         markdown_inline(
           markdown_inline_text(children),
           Link,
-          target=Some(label),
+          target=Some(markdown_reference_target(definitions, label)),
         ),
       )
     WikiLink(label~, target~, ..) =>
@@ -524,10 +660,136 @@ fn append_markdown_inline_ast(
     Image(alt~, url~, ..) =>
       spans.push(markdown_inline(alt, Image, target=Some(url)))
     RefImage(alt~, label~, ..) =>
-      spans.push(markdown_inline(alt, Image, target=Some(label)))
+      spans.push(
+        markdown_inline(
+          alt,
+          Image,
+          target=Some(markdown_reference_target(definitions, label)),
+        ),
+      )
     HtmlInline(html~, ..) => spans.push(markdown_inline(html, Plain))
     FootnoteReference(label~, ..) => spans.push(markdown_inline(label, Plain))
   }
+}
+
+///|
+fn markdown_reference_definitions(
+  source : String,
+) -> Array[MarkdownReferenceDefinition] {
+  let definitions : Array[MarkdownReferenceDefinition] = []
+  for definition in @markdown.parse(source).definitions {
+    definitions.push({
+      label: markdown_reference_label_key(definition.label),
+      url: definition.url,
+      title: definition.title,
+    })
+  }
+  for definition in markdown_scan_reference_definitions(source) {
+    definitions.push(definition)
+  }
+  definitions
+}
+
+///|
+fn markdown_scan_reference_definitions(
+  source : String,
+) -> Array[MarkdownReferenceDefinition] {
+  let definitions : Array[MarkdownReferenceDefinition] = []
+  let lines = markdown_split_lines(source)
+  for line in lines {
+    match markdown_scan_reference_definition_line(line) {
+      Some(definition) => definitions.push(definition)
+      None => ()
+    }
+  }
+  definitions
+}
+
+///|
+fn markdown_scan_reference_definition_line(
+  line : String,
+) -> MarkdownReferenceDefinition? {
+  let trimmed = line.trim().to_owned()
+  let chars = trimmed.to_array()
+  if chars.length() < 4 || chars[0] != '[' {
+    return None
+  }
+  let mut close = 1
+  while close < chars.length() && chars[close] != ']' {
+    close = close + 1
+  }
+  if close <= 1 || close + 1 >= chars.length() || chars[close + 1] != ':' {
+    return None
+  }
+  let label = String::from_array(chars[1:close])
+  let rest = String::from_array(chars[close + 2:]).trim().to_owned()
+  if rest == "" {
+    return None
+  }
+  let rest_chars = rest.to_array()
+  let mut url = ""
+  let mut title = ""
+  if rest_chars[0] == '<' {
+    let mut end = 1
+    while end < rest_chars.length() && rest_chars[end] != '>' {
+      end = end + 1
+    }
+    if end >= rest_chars.length() {
+      return None
+    }
+    url = String::from_array(rest_chars[1:end])
+    title = String::from_array(rest_chars[end + 1:]).trim().to_owned()
+  } else {
+    let mut end = 0
+    while end < rest_chars.length() &&
+          rest_chars[end] != ' ' &&
+          rest_chars[end] != '\t' {
+      end = end + 1
+    }
+    url = String::from_array(rest_chars[:end])
+    title = String::from_array(rest_chars[end:]).trim().to_owned()
+  }
+  if url == "" {
+    return None
+  }
+  Some({
+    label: markdown_reference_label_key(label),
+    url,
+    title: markdown_trim_reference_title(title),
+  })
+}
+
+///|
+fn markdown_trim_reference_title(title : String) -> String {
+  let chars = title.to_array()
+  if chars.length() >= 2 &&
+    (
+      (chars[0] == '"' && chars[chars.length() - 1] == '"') ||
+      (chars[0] == '\'' && chars[chars.length() - 1] == '\'')
+    ) {
+    String::from_array(chars[1:chars.length() - 1])
+  } else {
+    title
+  }
+}
+
+///|
+fn markdown_reference_target(
+  definitions : Array[MarkdownReferenceDefinition],
+  label : String,
+) -> String {
+  let normalized = markdown_reference_label_key(label)
+  for definition in definitions {
+    if markdown_reference_label_key(definition.label) == normalized {
+      return definition.url
+    }
+  }
+  label
+}
+
+///|
+fn markdown_reference_label_key(label : String) -> String {
+  label.trim().to_owned().to_lower()
 }
 
 ///|
@@ -639,25 +901,15 @@ fn markdown_block_to_rich_text(
 ) -> @core.RichTextBlock {
   match block.kind {
     Heading(level) => {
-      let font = if level == 1 {
-        { ..base, size: base.size * 1.45, weight: 700 }
-      } else if level == 2 {
-        { ..base, size: base.size * 1.22, weight: 700 }
-      } else {
-        { ..base, size: base.size * 1.08, weight: 700 }
+      let font = {
+        ..base,
+        size: base.size * markdown_heading_size_scale(level),
+        weight: 700,
       }
       @core.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, font),
         font=Some(font),
-        line_height=Some(
-          if level == 1 {
-            base.size * 2.0
-          } else if level == 2 {
-            base.size * 1.65
-          } else {
-            base.size * 1.45
-          },
-        ),
+        line_height=Some(base.size * markdown_heading_line_height_scale(level)),
       )
     }
     UnorderedListItem =>
@@ -693,16 +945,7 @@ fn markdown_block_to_rich_text(
       )
     CodeBlock =>
       @core.RichTextBlock::new(
-        runs=[
-          @core.RichTextRun::new(
-            text=block.text,
-            font=Some({
-              ..base,
-              families: @core.FontFamilyStack::monospace(),
-              size: base.size * 0.92,
-            }),
-          ),
-        ],
+        runs=markdown_code_block_runs(block, base),
         background=Some(
           @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.08)),
         ),
@@ -745,6 +988,61 @@ fn markdown_block_to_rich_text(
 }
 
 ///|
+fn markdown_code_block_runs(
+  block : MarkdownBlock,
+  base : @core.FontSpec,
+) -> Array[@core.RichTextRun] {
+  let font = {
+    ..base,
+    families: @core.FontFamilyStack::monospace(),
+    size: base.size * 0.92,
+  }
+  match block.code_language {
+    Some(language) =>
+      [
+        @core.RichTextRun::new(
+          text=language,
+          font=Some({ ..font, size: base.size * 0.78, weight: 700 }),
+          visual_text=Some(language),
+          color=Some(@core.Color::black().multiply_alpha(0.56)),
+        ),
+        @core.RichTextRun::new(text="\n" + block.text, font=Some(font)),
+      ]
+    None => [@core.RichTextRun::new(text=block.text, font=Some(font))]
+  }
+}
+
+///|
+fn markdown_heading_size_scale(level : Int) -> Double {
+  if level <= 1 {
+    1.45
+  } else if level == 2 {
+    1.22
+  } else if level == 3 {
+    1.08
+  } else if level == 4 {
+    1.0
+  } else if level == 5 {
+    0.94
+  } else {
+    0.9
+  }
+}
+
+///|
+fn markdown_heading_line_height_scale(level : Int) -> Double {
+  if level <= 1 {
+    2.0
+  } else if level == 2 {
+    1.65
+  } else if level == 3 {
+    1.45
+  } else {
+    1.35
+  }
+}
+
+///|
 fn markdown_table_preview(
   block : MarkdownBlock,
   base : @core.FontSpec,
@@ -756,6 +1054,7 @@ fn markdown_table_preview(
         return None
       }
       let rows : Array[Array[@core.RichTextTableCell]] = []
+      let aligns = block.table_alignments
       let mut line_offset = 0
       for index in 0..<lines.length() {
         let cells : Array[@core.RichTextTableCell] = []
@@ -764,6 +1063,7 @@ fn markdown_table_preview(
           cells.push({
             text: cell.text,
             header: index == 0,
+            align: markdown_table_alignment_at(aligns, cells.length()),
             source_range: Some({
               start: line_offset + cell.start,
               end: line_offset + cell.end,
@@ -823,6 +1123,49 @@ fn markdown_table_cell_ranges_for_line(
     index = index + 1
   }
   cells
+}
+
+///|
+fn markdown_table_alignments_for_separator(
+  line : String,
+) -> Array[@core.TextAlign?] {
+  let aligns : Array[@core.TextAlign?] = []
+  for cell in markdown_split_table_cells(line) {
+    aligns.push(markdown_table_alignment_for_separator_cell(cell))
+  }
+  aligns
+}
+
+///|
+fn markdown_table_alignment_for_separator_cell(
+  cell : String,
+) -> @core.TextAlign? {
+  let trimmed = cell.trim().to_owned()
+  let chars = trimmed.to_array()
+  if chars.length() == 0 {
+    return None
+  }
+  let leading = chars[0] == ':'
+  let trailing = chars[chars.length() - 1] == ':'
+  if leading && trailing {
+    Some(@core.TextAlign::TextCenter)
+  } else if trailing {
+    Some(@core.TextAlign::TextEnd)
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_table_alignment_at(
+  aligns : Array[@core.TextAlign?],
+  index : Int,
+) -> @core.TextAlign? {
+  if index >= 0 && index < aligns.length() {
+    aligns[index]
+  } else {
+    None
+  }
 }
 
 ///|

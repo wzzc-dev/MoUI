@@ -92,11 +92,13 @@ fn styled_rich_text_editor(value : Binding[String]) -> ViewSpec {
                 {
                   text: "A",
                   header: true,
+                  align: None,
                   source_range: Some({ start: 2, end: 3 }),
                 },
                 {
                   text: "B",
                   header: true,
+                  align: Some(TextAlign::TextEnd),
                   source_range: Some({ start: 7, end: 8 }),
                 },
               ],
@@ -104,11 +106,13 @@ fn styled_rich_text_editor(value : Binding[String]) -> ViewSpec {
                 {
                   text: "1",
                   header: false,
+                  align: None,
                   source_range: Some({ start: 14, end: 15 }),
                 },
                 {
                   text: "2",
                   header: false,
+                  align: Some(TextAlign::TextEnd),
                   source_range: Some({ start: 19, end: 20 }),
                 },
               ],
@@ -205,11 +209,13 @@ fn table_mapped_rich_text_editor(value : Binding[String]) -> ViewSpec {
                 {
                   text: "A",
                   header: true,
+                  align: None,
                   source_range: Some({ start: 2, end: 3 }),
                 },
                 {
                   text: "B",
                   header: true,
+                  align: Some(TextAlign::TextEnd),
                   source_range: Some({ start: 7, end: 8 }),
                 },
               ],
@@ -217,11 +223,13 @@ fn table_mapped_rich_text_editor(value : Binding[String]) -> ViewSpec {
                 {
                   text: "1",
                   header: false,
+                  align: None,
                   source_range: Some({ start: 14, end: 15 }),
                 },
                 {
                   text: "2",
                   header: false,
+                  align: Some(TextAlign::TextEnd),
                   source_range: Some({ start: 19, end: 20 }),
                 },
               ],

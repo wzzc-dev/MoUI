@@ -1187,6 +1187,7 @@ pub(all) struct RichTextTable {
 pub(all) struct RichTextTableCell {
   text : String
   header : Bool
+  align : TextAlign?
   source_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
 
