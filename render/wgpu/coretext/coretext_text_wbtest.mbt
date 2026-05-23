@@ -66,6 +66,7 @@ fn test_raster_system_glyph(
     )
     coretext_raster_glyph({
       glyph_id,
+      codepoint,
       font_name,
       size_key: coretext_size_key(size),
       weight,
@@ -101,17 +102,19 @@ test "coretext private run payload length checks avoid unchecked products" {
 test "coretext glyph payload is private and versioned" {
   let payload = coretext_glyph_payload({
     glyph_id: 42,
+    codepoint: 'A'.to_int(),
     font_name: Bytes::from_array([b'T', b'e', b's', b't']),
     size_key: coretext_size_key(18.0),
     weight: 600,
     style: @core.FontStyle::Italic,
     scale_key: coretext_scale_key(2.0),
   })
-  inspect(payload.length(), content="32")
+  inspect(payload.length(), content="36")
   guard coretext_glyph_key_from_payload(payload) is Some(key) else {
     fail("expected versioned coretext glyph payload")
   }
   inspect(key.glyph_id, content="42")
+  inspect(key.codepoint, content="\{'A'.to_int()}")
   inspect(key.font_name.length(), content="4")
   inspect(key.size_key, content="1152")
   inspect(key.weight, content="600")
@@ -134,6 +137,7 @@ test "coretext glyph payload is private and versioned" {
   push_i32_le(missing_font_name, 600)
   push_i32_le(missing_font_name, 1)
   push_i32_le(missing_font_name, coretext_scale_key(2.0))
+  push_i32_le(missing_font_name, 'A'.to_int())
   push_i32_le(missing_font_name, 0)
   inspect(
     coretext_glyph_key_from_payload(Bytes::from_array(missing_font_name))
@@ -185,7 +189,7 @@ test "coretext run layout rejects glyph records without serialized font identity
   push_f64_bits_le(bytes, 0UL)
   push_i32_le(bytes, 0)
   inspect(
-    coretext_layout_glyphs_from_bytes(run, 1.0, Bytes::from_array(bytes))
+    coretext_layout_glyph_records_from_bytes(run, 1.0, Bytes::from_array(bytes))
     is None,
     content="true",
   )
@@ -215,8 +219,9 @@ test "coretext run layout parses serialized font identity" {
   for byte in font_name {
     bytes.push(byte)
   }
-  match coretext_layout_glyphs_from_bytes(run, 1.0, Bytes::from_array(bytes)) {
-    Some(glyphs) => inspect(glyphs.length(), content="1")
+  match
+    coretext_layout_glyph_records_from_bytes(run, 1.0, Bytes::from_array(bytes)) {
+    Some(records) => inspect(records.length(), content="1")
     None => fail("expected serialized font identity to parse")
   }
 }
@@ -247,7 +252,7 @@ test "coretext run layout rejects trailing bytes after glyph records" {
   }
   bytes.push(b'\xff')
   inspect(
-    coretext_layout_glyphs_from_bytes(run, 1.0, Bytes::from_array(bytes))
+    coretext_layout_glyph_records_from_bytes(run, 1.0, Bytes::from_array(bytes))
     is None,
     content="true",
   )
@@ -323,6 +328,36 @@ test "coretext text engine measures mixed system text" {
       )
     }
     None => inspect("missing", content="available")
+  }
+}
+
+///|
+test "coretext text engine rasterizes cjk glyphs with serialized run fonts" {
+  let run = @core.TextRun::new(
+    text="中文",
+    frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=40.0),
+    font=@core.FontSpec::new(size=20.0, weight=400),
+    color=@core.Color::black(),
+    align=@core.TextAlign::TextStart,
+  )
+  match coretext_layout_glyph_records_for_run(run, 2.0) {
+    Some(records) => {
+      inspect(records.length() >= 2, content="true")
+      for index, record in records {
+        let codepoint = run.text.to_array()[index].to_int()
+        inspect(record.key.codepoint, content="\{codepoint}")
+        inspect(record.key.font_name.length() > 0, content="true")
+        match coretext_raster_glyph(record.key) {
+          Some(glyph) => {
+            inspect(glyph.width > 0, content="true")
+            inspect(glyph.height > 0, content="true")
+            inspect(bytes_has_nonzero(glyph.pixels), content="true")
+          }
+          None => fail("expected cjk glyph to rasterize")
+        }
+      }
+    }
+    None => fail("expected cjk coretext glyph records")
   }
 }
 

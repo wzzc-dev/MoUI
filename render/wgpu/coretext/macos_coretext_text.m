@@ -226,6 +226,42 @@ static NSString *moui_string_from_utf32_bytes(moonbit_bytes_t utf32, int32_t cou
   return result;
 }
 
+static NSAttributedString *moui_coretext_create_attributed_string(NSString *text, CTFontRef font, const int32_t *boundaries, int32_t count) {
+  if (text == nil || font == NULL) {
+    return nil;
+  }
+  NSMutableAttributedString *attributed = [[NSMutableAttributedString alloc] initWithString:text];
+  NSUInteger text_len = text.length;
+  if (text_len > 0) {
+    [attributed addAttribute:(__bridge id)kCTFontAttributeName
+                       value:(__bridge id)font
+                       range:NSMakeRange(0, text_len)];
+  }
+  if (boundaries != NULL) {
+    for (int32_t i = 0; i < count; i++) {
+      int32_t start = boundaries[i];
+      int32_t end = boundaries[i + 1];
+      if (start < 0 || end <= start || (NSUInteger)start >= text_len) {
+        continue;
+      }
+      NSUInteger location = (NSUInteger)start;
+      NSUInteger length = (NSUInteger)(end - start);
+      if (location + length > text_len) {
+        length = text_len - location;
+      }
+      CFRange range = CFRangeMake((CFIndex)location, (CFIndex)length);
+      CTFontRef fallback_font = CTFontCreateForString(font, (__bridge CFStringRef)text, range);
+      if (fallback_font != NULL) {
+        [attributed addAttribute:(__bridge id)kCTFontAttributeName
+                           value:(__bridge id)fallback_font
+                           range:NSMakeRange(location, length)];
+        CFRelease(fallback_font);
+      }
+    }
+  }
+  return attributed;
+}
+
 static CTFontRef moui_create_system_font(double size, int32_t weight, int32_t style) {
   CGFloat font_size = size > 0.0 ? (CGFloat)size : 16.0;
   CTFontUIFontType ui_type = kCTFontUIFontSystem;
@@ -465,6 +501,47 @@ static CTFontRef moui_create_font_from_name_bytes(moonbit_bytes_t font_name, dou
   return moui_create_system_font(size, weight, style);
 }
 
+static int32_t moui_font_glyph_id_for_codepoint(CTFontRef font, uint32_t codepoint) {
+  if (font == NULL || codepoint == 0) {
+    return 0;
+  }
+  NSString *s = moui_string_from_utf32_codepoint(codepoint);
+  if (s.length == 0) {
+    return 0;
+  }
+  NSUInteger len = s.length;
+  unichar *chars = (unichar *)malloc(len * sizeof(unichar));
+  CGGlyph *glyphs = (CGGlyph *)malloc(len * sizeof(CGGlyph));
+  if (chars == NULL || glyphs == NULL) {
+    free(chars);
+    free(glyphs);
+    return 0;
+  }
+  [s getCharacters:chars range:NSMakeRange(0, len)];
+  bool ok = CTFontGetGlyphsForCharacters(font, chars, glyphs, len);
+  int32_t glyph_id = ok && len > 0 ? (int32_t)glyphs[0] : 0;
+  free(chars);
+  free(glyphs);
+  return glyph_id;
+}
+
+static CTFontRef moui_create_font_for_codepoint(uint32_t codepoint, double size, int32_t weight, int32_t style) {
+  CTFontRef base = moui_create_system_font(size, weight, style);
+  if (base == NULL) {
+    return NULL;
+  }
+  NSString *s = moui_string_from_utf32_codepoint(codepoint);
+  if (s.length == 0) {
+    return base;
+  }
+  CTFontRef fallback = CTFontCreateForString(base, (__bridge CFStringRef)s, CFRangeMake(0, (CFIndex)s.length));
+  if (fallback != NULL) {
+    CFRelease(base);
+    return fallback;
+  }
+  return base;
+}
+
 MOONBIT_FFI_EXPORT
 moonbit_bytes_t moui_macos_coretext_measure_utf32(moonbit_bytes_t utf32, moonbit_bytes_t font_spec) {
   int32_t len = (int32_t)Moonbit_array_length(utf32);
@@ -490,9 +567,9 @@ moonbit_bytes_t moui_macos_coretext_measure_utf32(moonbit_bytes_t utf32, moonbit
   }
   int32_t *boundaries = (int32_t *)calloc((size_t)count + 1u, sizeof(int32_t));
   NSString *text = moui_string_from_utf32_bytes(utf32, count, boundaries);
-  NSDictionary *attrs = @{ (__bridge id)kCTFontAttributeName: (__bridge id)font };
-  NSAttributedString *attributed = [[NSAttributedString alloc] initWithString:text attributes:attrs];
+  NSAttributedString *attributed = moui_coretext_create_attributed_string(text, font, boundaries, count);
   CTLineRef line = CTLineCreateWithAttributedString((__bridge CFAttributedStringRef)attributed);
+  [attributed release];
   CGFloat ascent = 0.0;
   CGFloat descent = 0.0;
   CGFloat leading = 0.0;
@@ -540,11 +617,13 @@ moonbit_bytes_t moui_macos_coretext_layout_glyphs_utf32(moonbit_bytes_t utf32, m
   if (font == NULL) {
     return moonbit_make_bytes(16, 0);
   }
-  NSString *text = moui_string_from_utf32_bytes(utf32, count, NULL);
-  NSDictionary *attrs = @{ (__bridge id)kCTFontAttributeName: (__bridge id)font };
-  NSAttributedString *attributed = [[NSAttributedString alloc] initWithString:text attributes:attrs];
+  int32_t *boundaries = (int32_t *)calloc((size_t)count + 1u, sizeof(int32_t));
+  NSString *text = moui_string_from_utf32_bytes(utf32, count, boundaries);
+  NSAttributedString *attributed = moui_coretext_create_attributed_string(text, font, boundaries, count);
   CTLineRef line = CTLineCreateWithAttributedString((__bridge CFAttributedStringRef)attributed);
+  [attributed release];
   if (line == NULL) {
+    free(boundaries);
     CFRelease(font);
     return moonbit_make_bytes(16, 0);
   }
@@ -557,6 +636,7 @@ moonbit_bytes_t moui_macos_coretext_layout_glyphs_utf32(moonbit_bytes_t utf32, m
     CFIndex count_in_run = CTRunGetGlyphCount(run);
     if (count_in_run > INT32_MAX - glyph_count) {
       CFRelease(line);
+      free(boundaries);
       CFRelease(font);
       return moonbit_make_bytes(16, 0);
     }
@@ -567,12 +647,14 @@ moonbit_bytes_t moui_macos_coretext_layout_glyphs_utf32(moonbit_bytes_t utf32, m
     int32_t font_name_len = (int32_t)Moonbit_array_length(font_name);
     if (font_name_len <= 0 || font_name_len > INT32_MAX - 28) {
       CFRelease(line);
+      free(boundaries);
       CFRelease(font);
       return moonbit_make_bytes(16, 0);
     }
     payload_len += count_in_run * (int64_t)(28 + font_name_len);
     if (payload_len > INT32_MAX) {
       CFRelease(line);
+      free(boundaries);
       CFRelease(font);
       return moonbit_make_bytes(16, 0);
     }
@@ -610,6 +692,7 @@ moonbit_bytes_t moui_macos_coretext_layout_glyphs_utf32(moonbit_bytes_t utf32, m
       free(glyphs);
       free(positions);
       CFRelease(line);
+      free(boundaries);
       CFRelease(font);
       return moonbit_make_bytes(16, 0);
     }
@@ -629,6 +712,7 @@ moonbit_bytes_t moui_macos_coretext_layout_glyphs_utf32(moonbit_bytes_t utf32, m
     free(positions);
   }
   CFRelease(line);
+  free(boundaries);
   CFRelease(font);
   return out;
 }
@@ -742,30 +826,24 @@ int32_t moui_macos_coretext_glyph_id_for_codepoint(uint32_t codepoint, double si
     CFRelease(font);
     return 0;
   }
-  NSUInteger len = s.length;
-  unichar *chars = (unichar *)malloc(len * sizeof(unichar));
-  CGGlyph *glyphs = (CGGlyph *)malloc(len * sizeof(CGGlyph));
-  if (chars == NULL || glyphs == NULL) {
-    free(chars);
-    free(glyphs);
-    CFRelease(font);
-    return 0;
-  }
-  [s getCharacters:chars range:NSMakeRange(0, len)];
-  bool ok = CTFontGetGlyphsForCharacters(font, chars, glyphs, len);
-  int32_t glyph_id = ok && len > 0 ? (int32_t)glyphs[0] : 0;
-  free(chars);
-  free(glyphs);
+  int32_t glyph_id = moui_font_glyph_id_for_codepoint(font, codepoint);
   CFRelease(font);
   return glyph_id;
 }
 
 MOONBIT_FFI_EXPORT
-moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t glyph_id, moonbit_bytes_t font_name, double size, int32_t weight, int32_t style, double scale_factor) {
+moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t glyph_id, uint32_t codepoint, moonbit_bytes_t font_name, double size, int32_t weight, int32_t style, double scale_factor) {
   moonbit_bytes_t empty = moonbit_make_bytes(16, 0);
   double scale = scale_factor > 0.0 ? scale_factor : 1.0;
   double font_size = size > 0.0 ? size : 16.0;
   CTFontRef font = moui_create_font_from_name_bytes(font_name, font_size * scale, weight, style);
+  if (font != NULL && codepoint > 0) {
+    int32_t mapped = moui_font_glyph_id_for_codepoint(font, codepoint);
+    if (mapped <= 0 || (uint32_t)mapped != glyph_id) {
+      CFRelease(font);
+      font = moui_create_font_for_codepoint(codepoint, font_size * scale, weight, style);
+    }
+  }
   if (font == NULL) {
     return empty;
   }
@@ -891,8 +969,9 @@ int32_t moui_macos_coretext_debug_generic_font_name_len(moonbit_bytes_t family_n
 }
 
 MOONBIT_FFI_EXPORT
-moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t glyph_id, moonbit_bytes_t font_name, double size, int32_t weight, int32_t style, double scale_factor) {
+moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t glyph_id, uint32_t codepoint, moonbit_bytes_t font_name, double size, int32_t weight, int32_t style, double scale_factor) {
   (void)glyph_id;
+  (void)codepoint;
   (void)font_name;
   (void)size;
   (void)weight;
