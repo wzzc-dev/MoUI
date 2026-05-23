@@ -436,8 +436,10 @@ test "native renderer builds text vertices and atlas entries" {
 
 ///|
 test "native renderer accepts layouts that omit whitespace glyphs" {
+  let fallback_layout_count : Ref[Int] = Ref(0)
+  let fallback_raster_count : Ref[Int] = Ref(0)
   let renderer = new_test_renderer_handle_with_text_engine(
-    native_platform_text_engine(
+    native_platform_text_engine_with_fallback(
       NativePlatformTextProvider::new(
         id="test-platform-text",
         measure=_input => None,
@@ -476,6 +478,20 @@ test "native renderer accepts layouts that omit whitespace glyphs" {
           )
         },
       ),
+      fallback=native_platform_text_engine(
+        NativePlatformTextProvider::new(
+          id="test-fallback-text",
+          measure=_input => None,
+          layout_run=(_run, _scale) => {
+            fallback_layout_count.val = fallback_layout_count.val + 1
+            None
+          },
+          raster_glyph=(_cache_key, _payload) => {
+            fallback_raster_count.val = fallback_raster_count.val + 1
+            None
+          },
+        ),
+      ),
     ),
   )
   renderer.resize(
@@ -494,6 +510,8 @@ test "native renderer accepts layouts that omit whitespace glyphs" {
   ])
   inspect(renderer.text_vertices.length() > 0, content="true")
   inspect(glyph_atlas_entry_count(renderer.glyph_atlas) > 0, content="true")
+  inspect(fallback_layout_count.val, content="0")
+  inspect(fallback_raster_count.val, content="0")
 }
 
 ///|

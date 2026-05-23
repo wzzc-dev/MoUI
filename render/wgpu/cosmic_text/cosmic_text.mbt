@@ -71,7 +71,7 @@ fn macos_regular_font_path() -> String {
 ///|
 fn macos_bold_font_path() -> String {
   first_existing_font_path([
-    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc",
+"/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc",
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
   ])
 }
@@ -582,10 +582,10 @@ fn cosmic_text_cache_key_with_fallback(
                 let (fallback_key, _, _) = @moon_cosmic.CacheKey::new(
                   font_id,
                   glyph_id,
-                  glyph.font_size,
-                  (0.0F, 0.0F),
-                  glyph.font_weight,
-                  glyph.cache_key_flags,
+                  Float::reinterpret_from_uint(cache_key.font_size_bits),
+                  (cache_key.x_bin.as_float(), cache_key.y_bin.as_float()),
+                  cache_key.font_weight,
+                  cache_key.flags,
                 )
                 fallback_key
               }
