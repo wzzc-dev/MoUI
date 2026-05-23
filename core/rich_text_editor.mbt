@@ -417,7 +417,7 @@ fn append_rich_text_block_table(
                     },
                   },
                   color=rich_text_block_color(block, foreground),
-                  align=TextAlign::TextStart,
+                  align=cell.align.unwrap_or(TextAlign::TextStart),
                 ),
               ),
             )

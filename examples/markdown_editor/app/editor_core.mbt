@@ -44,6 +44,7 @@ pub(all) enum MarkdownEditorCommand {
   Image
   SetLinkTarget(String)
   SetImageTarget(String)
+  SetCodeLanguage(String)
   Paragraph
   Heading(Int)
   BulletList
@@ -57,6 +58,7 @@ pub(all) enum MarkdownEditorCommand {
   InsertTableColumn
   DeleteTableRow
   DeleteTableColumn
+  SetTableColumnAlignment(@core.TextAlign?)
   Clear
 } derive(Eq, Debug, ToJson)
 
@@ -99,7 +101,7 @@ pub fn markdown_editor_apply_command_at(
   command : MarkdownEditorCommand,
   selection : MarkdownEditorSelection?,
 ) -> MarkdownEditorEditResult {
-  match command {
+  let result = match command {
     Clear => { source: "", caret: 0, selection: None }
     Bold | Italic | Code | Strikethrough =>
       match selection {
@@ -141,6 +143,12 @@ pub fn markdown_editor_apply_command_at(
           }
         None => markdown_editor_append_snippet(source, command)
       }
+    SetCodeLanguage(language) =>
+      match selection {
+        Some(selection) =>
+          markdown_editor_set_code_language(source, selection, language)
+        None => markdown_editor_append_snippet(source, command)
+      }
     InsertTableRow =>
       match selection {
         Some(selection) => markdown_editor_insert_table_row(source, selection)
@@ -163,6 +171,12 @@ pub fn markdown_editor_apply_command_at(
           markdown_editor_delete_table_column(source, selection)
         None => markdown_editor_append_snippet(source, command)
       }
+    SetTableColumnAlignment(align) =>
+      match selection {
+        Some(selection) =>
+          markdown_editor_set_table_column_alignment(source, selection, align)
+        None => markdown_editor_append_snippet(source, command)
+      }
     Paragraph
     | Heading(_)
     | BulletList
@@ -182,6 +196,7 @@ pub fn markdown_editor_apply_command_at(
         None => markdown_editor_append_snippet(source, command)
       }
   }
+  markdown_editor_normalize_ordered_edit_result(result)
 }
 
 ///|
@@ -210,6 +225,17 @@ pub fn markdown_editor_selected_image_target(
         Some(bounds) => markdown_editor_reference_target(source, bounds)
         None => None
       }
+    None => None
+  }
+}
+
+///|
+pub fn markdown_editor_selected_code_language(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> String? {
+  match markdown_editor_code_block_at_selection(source, selection) {
+    Some(block) => block.block.code_language
     None => None
   }
 }
@@ -538,7 +564,7 @@ fn markdown_editor_complete_code_fence_on_enter(
     return None
   }
   let fence = match markdown_editor_opening_code_fence_marker(line) {
-    Some(fence) => fence
+    Some(fence) => fence.marker
     None => return None
   }
   let indent = markdown_editor_line_indent_prefix(line)
@@ -555,7 +581,9 @@ fn markdown_editor_complete_code_fence_on_enter(
 }
 
 ///|
-fn markdown_editor_opening_code_fence_marker(line : String) -> String? {
+fn markdown_editor_opening_code_fence_marker(
+  line : String,
+) -> MarkdownCodeFenceInfo? {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() < indent + 3 {
@@ -575,7 +603,24 @@ fn markdown_editor_opening_code_fence_marker(line : String) -> String? {
       return None
     }
   }
-  Some(String::from_array(chars[indent:fence_end]))
+  Some({
+    marker: String::from_array(chars[indent:fence_end]),
+    info: markdown_code_fence_info(chars, fence_end),
+  })
+}
+
+///|
+fn markdown_editor_code_block(
+  text : String,
+  code_language : String?,
+) -> MarkdownBlock {
+  {
+    kind: MarkdownBlockKind::CodeBlock,
+    text,
+    inlines: [],
+    table_alignments: [],
+    code_language,
+  }
 }
 
 ///|
@@ -717,6 +762,40 @@ fn markdown_editor_normalize_ordered_transform(
 }
 
 ///|
+fn markdown_editor_normalize_ordered_edit_result(
+  edit : MarkdownEditorEditResult,
+) -> MarkdownEditorEditResult {
+  let normalized = markdown_editor_renumber_ordered_lists(edit.source)
+  if normalized.text == edit.source {
+    edit
+  } else {
+    {
+      source: normalized.text,
+      caret: markdown_editor_map_offset_after_replacements(
+        edit.caret,
+        normalized.replacements,
+      ),
+      selection: match edit.selection {
+        Some(selection) =>
+          Some(
+            @core.TextRange::new(
+              start=markdown_editor_map_offset_after_replacements(
+                selection.start,
+                normalized.replacements,
+              ),
+              end=markdown_editor_map_offset_after_replacements(
+                selection.end,
+                normalized.replacements,
+              ),
+            ),
+          )
+        None => None
+      },
+    }
+  }
+}
+
+///|
 struct MarkdownEditorOffsetReplacement {
   start : Int
   old_end : Int
@@ -764,12 +843,8 @@ fn markdown_editor_typed_block_marker(before : String) -> String {
   let indent = markdown_editor_leading_indent_length(chars)
   let prefix = String::from_array(chars[:indent])
   let token = String::from_array(chars[indent:])
-  if token == "#" {
-    prefix + "# "
-  } else if token == "##" {
-    prefix + "## "
-  } else if token == "###" {
-    prefix + "### "
+  if markdown_editor_typed_heading_marker(token) is Some(level) {
+    prefix + markdown_editor_heading_marker(level) + " "
   } else if token == "-" || token == "*" {
     prefix + "- "
   } else if token == "[]" || token == "[ ]" {
@@ -783,6 +858,20 @@ fn markdown_editor_typed_block_marker(before : String) -> String {
   } else {
     ""
   }
+}
+
+///|
+fn markdown_editor_typed_heading_marker(token : String) -> Int? {
+  let chars = token.to_array()
+  if chars.length() < 1 || chars.length() > 6 {
+    return None
+  }
+  for ch in chars {
+    if ch != '#' {
+      return None
+    }
+  }
+  Some(chars.length())
 }
 
 ///|
@@ -1077,6 +1166,29 @@ fn markdown_editor_code_block_at_content_offset(
     if block.block.kind is MarkdownBlockKind::CodeBlock &&
       caret >= block.content_range.start &&
       caret <= block.content_range.end {
+      return Some(block)
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_code_block_at_selection(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> MarkdownEditorBlock? {
+  if markdown_editor_active_selection(selection.selection) is Some(_) {
+    return None
+  }
+  let caret = markdown_editor_clamp_int(
+    selection.caret,
+    0,
+    markdown_editor_text_length(source),
+  )
+  for block in parse_markdown_editor_blocks(source) {
+    if block.block.kind is MarkdownBlockKind::CodeBlock &&
+      caret >= block.source_range.start &&
+      caret <= block.source_range.end {
       return Some(block)
     }
   }
@@ -1468,7 +1580,15 @@ fn markdown_editor_reference_open_before(
   } else {
     bracket_start
   }
-  Some({ open_start, close_start, target_end })
+  Some({
+    open_start,
+    close_start,
+    target_start: close_start + 2,
+    target_end,
+    definition_target_start: -1,
+    definition_target_end: -1,
+    reference_label: "",
+  })
 }
 
 ///|
@@ -1532,7 +1652,15 @@ fn markdown_editor_reference_close_after(
     target_end = target_end + 1
   }
   if target_end < chars.length() && chars[target_end] == ')' {
-    Some({ open_start: content_start - 1, close_start, target_end })
+    Some({
+      open_start: content_start - 1,
+      close_start,
+      target_start: close_start + 2,
+      target_end,
+      definition_target_start: -1,
+      definition_target_end: -1,
+      reference_label: "",
+    })
   } else {
     None
   }
@@ -2202,6 +2330,110 @@ fn markdown_editor_delete_table_column(
 }
 
 ///|
+fn markdown_editor_set_table_column_alignment(
+  source : String,
+  selection : MarkdownEditorSelection,
+  align : @core.TextAlign?,
+) -> MarkdownEditorEditResult {
+  if markdown_editor_active_selection(selection.selection) is Some(_) {
+    return markdown_editor_append_snippet(
+      source,
+      SetTableColumnAlignment(align),
+    )
+  }
+  let caret = markdown_editor_clamp_int(
+    selection.caret,
+    0,
+    markdown_editor_text_length(source),
+  )
+  for block in parse_markdown_editor_blocks(source) {
+    if !(block.block.kind is MarkdownBlockKind::Table) ||
+      caret < block.source_range.start ||
+      caret > block.source_range.end {
+      continue
+    }
+    let cells = markdown_editor_table_cells_for_block(source, block)
+    match markdown_editor_table_cell_index_at(cells, caret) {
+      Some(index) =>
+        return markdown_editor_rewrite_table_alignment(
+          source,
+          block,
+          cells[index],
+          align,
+        )
+      None => ()
+    }
+  }
+  markdown_editor_append_snippet(source, SetTableColumnAlignment(align))
+}
+
+///|
+fn markdown_editor_rewrite_table_alignment(
+  source : String,
+  block : MarkdownEditorBlock,
+  current : MarkdownEditorTableCellRange,
+  align : @core.TextAlign?,
+) -> MarkdownEditorEditResult {
+  let lines = markdown_editor_lines(source)
+  let mut text = ""
+  let mut table_line_index = 0
+  for index, line in lines {
+    if index > 0 {
+      text = text + "\n"
+    }
+    if line.start < block.source_range.start ||
+      line.end > block.source_range.end {
+      text = text + line.text
+      continue
+    }
+    if table_line_index == 1 {
+      text = text +
+        markdown_editor_rewrite_table_alignment_line(
+          line.text,
+          current.column,
+          align,
+        )
+    } else {
+      text = text + line.text
+    }
+    table_line_index = table_line_index + 1
+  }
+  { source: text, caret: current.content_start, selection: None }
+}
+
+///|
+fn markdown_editor_rewrite_table_alignment_line(
+  line : String,
+  column : Int,
+  align : @core.TextAlign?,
+) -> String {
+  let cells = markdown_editor_split_table_cells(line)
+  if cells.length() == 0 {
+    return line
+  }
+  let column = markdown_editor_clamp_int(column, 0, cells.length() - 1)
+  let parts : Array[String] = []
+  for index in 0..<cells.length() {
+    if index == column {
+      parts.push(markdown_editor_table_alignment_marker(align))
+    } else {
+      parts.push(cells[index].trim().to_owned())
+    }
+  }
+  "| " + parts.join(" | ") + " |"
+}
+
+///|
+fn markdown_editor_table_alignment_marker(align : @core.TextAlign?) -> String {
+  match align {
+    Some(@core.TextAlign::TextStart) => ":---"
+    Some(@core.TextAlign::TextCenter) => ":---:"
+    Some(@core.TextAlign::TextEnd) => "---:"
+    None => "---"
+  }
+}
+
+///|
 fn markdown_editor_delete_table_column_at_cell(
   source : String,
   block : MarkdownEditorBlock,
@@ -2262,7 +2494,7 @@ fn markdown_editor_rewrite_table_column(
       markdown_editor_rewrite_table_column_in_line(
         line.text,
         column,
-        "---",
+        "",
         delete~,
         clear=false,
       )
@@ -2659,10 +2891,66 @@ fn markdown_editor_set_reference_target(
 }
 
 ///|
+fn markdown_editor_set_code_language(
+  source : String,
+  selection : MarkdownEditorSelection,
+  language : String,
+) -> MarkdownEditorEditResult {
+  match markdown_editor_code_block_at_selection(source, selection) {
+    Some(block) =>
+      markdown_editor_replace_code_language(source, selection, block, language)
+    None => markdown_editor_append_snippet(source, SetCodeLanguage(language))
+  }
+}
+
+///|
+fn markdown_editor_replace_code_language(
+  source : String,
+  selection : MarkdownEditorSelection,
+  block : MarkdownEditorBlock,
+  language : String,
+) -> MarkdownEditorEditResult {
+  let chars = source.to_array()
+  let marker_end = markdown_editor_code_fence_marker_end(source, block)
+  let language = language.trim().to_owned()
+  let text = String::from_array(chars[:marker_end]) +
+    language +
+    String::from_array(chars[block.content_range.start - 1:])
+  let delta = markdown_editor_text_length(language) -
+    (block.content_range.start - 1 - marker_end)
+  let caret = if selection.caret >= block.content_range.start {
+    selection.caret + delta
+  } else {
+    selection.caret
+  }
+  { source: text, caret, selection: selection.selection }
+}
+
+///|
+fn markdown_editor_code_fence_marker_end(
+  source : String,
+  block : MarkdownEditorBlock,
+) -> Int {
+  let chars = source.to_array()
+  let mut index = block.source_range.start
+  while index < chars.length() && chars[index] != '`' {
+    index = index + 1
+  }
+  while index < chars.length() && chars[index] == '`' {
+    index = index + 1
+  }
+  index
+}
+
+///|
 struct MarkdownLinkBounds {
   open_start : Int
   close_start : Int
   target_end : Int
+  target_start : Int
+  definition_target_start : Int
+  definition_target_end : Int
+  reference_label : String
 } derive(Eq, Debug)
 
 ///|
@@ -2678,9 +2966,18 @@ fn markdown_editor_range_link_bounds(
   if open_start > 0 && chars[open_start - 1] == '!' {
     return None
   }
-  if chars[open_start] != '[' ||
-    chars[range.end] != ']' ||
-    chars[range.end + 1] != '(' {
+  if chars[open_start] != '[' || chars[range.end] != ']' {
+    return None
+  }
+  if chars[range.end + 1] == '[' {
+    return markdown_editor_reference_link_bounds(
+      source,
+      range,
+      open_start,
+      bang=false,
+    )
+  }
+  if chars[range.end + 1] != '(' {
     return None
   }
   let mut index = range.end + 2
@@ -2688,7 +2985,15 @@ fn markdown_editor_range_link_bounds(
     index = index + 1
   }
   if index < chars.length() && chars[index] == ')' {
-    Some({ open_start, close_start: range.end, target_end: index })
+    Some({
+      open_start,
+      close_start: range.end,
+      target_start: range.end + 2,
+      target_end: index,
+      definition_target_start: -1,
+      definition_target_end: -1,
+      reference_label: "",
+    })
   } else {
     None
   }
@@ -2707,8 +3012,18 @@ fn markdown_editor_range_image_bounds(
   let open_start = range.start - 1
   if chars[bang_start] != '!' ||
     chars[open_start] != '[' ||
-    chars[range.end] != ']' ||
-    chars[range.end + 1] != '(' {
+    chars[range.end] != ']' {
+    return None
+  }
+  if chars[range.end + 1] == '[' {
+    return markdown_editor_reference_link_bounds(
+      source,
+      range,
+      bang_start,
+      bang=true,
+    )
+  }
+  if chars[range.end + 1] != '(' {
     return None
   }
   let mut index = range.end + 2
@@ -2716,10 +3031,135 @@ fn markdown_editor_range_image_bounds(
     index = index + 1
   }
   if index < chars.length() && chars[index] == ')' {
-    Some({ open_start: bang_start, close_start: range.end, target_end: index })
+    Some({
+      open_start: bang_start,
+      close_start: range.end,
+      target_start: range.end + 2,
+      target_end: index,
+      definition_target_start: -1,
+      definition_target_end: -1,
+      reference_label: "",
+    })
   } else {
     None
   }
+}
+
+///|
+fn markdown_editor_reference_link_bounds(
+  source : String,
+  range : @core.TextRange,
+  open_start : Int,
+  bang~ : Bool,
+) -> MarkdownLinkBounds? {
+  let chars = source.to_array()
+  let label_start = range.end + 2
+  let mut label_end = label_start
+  while label_end < chars.length() &&
+        chars[label_end] != ']' &&
+        chars[label_end] != '\n' {
+    label_end = label_end + 1
+  }
+  if label_end >= chars.length() || chars[label_end] != ']' {
+    return None
+  }
+  let fallback_start = if bang { open_start + 2 } else { open_start + 1 }
+  let label = if label_end == label_start {
+    String::from_array(chars[fallback_start:range.end])
+  } else {
+    String::from_array(chars[label_start:label_end])
+  }
+  match markdown_editor_reference_definition_target_range(source, label) {
+    Some(target) =>
+      Some({
+        open_start,
+        close_start: range.end,
+        target_start: label_start,
+        target_end: label_end,
+        definition_target_start: target.start,
+        definition_target_end: target.end,
+        reference_label: label,
+      })
+    None =>
+      Some({
+        open_start,
+        close_start: range.end,
+        target_start: label_start,
+        target_end: label_end,
+        definition_target_start: -1,
+        definition_target_end: -1,
+        reference_label: label,
+      })
+  }
+}
+
+///|
+fn markdown_editor_reference_definition_target_range(
+  source : String,
+  label : String,
+) -> MarkdownSourceRange? {
+  let key = markdown_reference_label_key(label)
+  for line in markdown_editor_lines(source) {
+    match markdown_editor_reference_definition_line_target_range(line) {
+      Some((definition_label, target)) =>
+        if markdown_reference_label_key(definition_label) == key {
+          return Some(target)
+        }
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_reference_definition_line_target_range(
+  line : MarkdownLine,
+) -> (String, MarkdownSourceRange)? {
+  let chars = line.text.to_array()
+  let start = markdown_editor_leading_indent_length(chars)
+  if start >= chars.length() || chars[start] != '[' {
+    return None
+  }
+  let mut close = start + 1
+  while close < chars.length() && chars[close] != ']' {
+    close = close + 1
+  }
+  if close <= start + 1 ||
+    close + 1 >= chars.length() ||
+    chars[close + 1] != ':' {
+    return None
+  }
+  let mut target_start = close + 2
+  while target_start < chars.length() &&
+        (chars[target_start] == ' ' || chars[target_start] == '\t') {
+    target_start = target_start + 1
+  }
+  if target_start >= chars.length() {
+    return None
+  }
+  let mut target_end = target_start
+  if chars[target_start] == '<' {
+    target_start = target_start + 1
+    target_end = target_start
+    while target_end < chars.length() && chars[target_end] != '>' {
+      target_end = target_end + 1
+    }
+  } else {
+    while target_end < chars.length() &&
+          chars[target_end] != ' ' &&
+          chars[target_end] != '\t' {
+      target_end = target_end + 1
+    }
+  }
+  if target_end <= target_start {
+    return None
+  }
+  Some(
+    (
+      String::from_array(chars[start + 1:close]),
+      { start: line.start + target_start, end: line.start + target_end },
+    ),
+  )
 }
 
 ///|
@@ -2796,12 +3236,50 @@ fn markdown_editor_replace_reference_target(
   target : String,
 ) -> MarkdownEditorEditResult {
   let chars = source.to_array()
-  let target_start = bounds.close_start + 2
+  if bounds.definition_target_start < 0 && bounds.reference_label != "" {
+    let text = source +
+      markdown_editor_reference_definition_append_prefix(source) +
+      "[" +
+      bounds.reference_label +
+      "]: " +
+      target
+    let next_selection = @core.TextRange::new(start=range.start, end=range.end)
+    return {
+      source: text,
+      caret: next_selection.end,
+      selection: Some(next_selection),
+    }
+  }
+  let target_start = if bounds.definition_target_start >= 0 {
+    bounds.definition_target_start
+  } else {
+    bounds.target_start
+  }
+  let target_end = if bounds.definition_target_end >= 0 {
+    bounds.definition_target_end
+  } else {
+    bounds.target_end
+  }
   let text = String::from_array(chars[:target_start]) +
     target +
-    String::from_array(chars[bounds.target_end:])
+    String::from_array(chars[target_end:])
   let next_selection = @core.TextRange::new(start=range.start, end=range.end)
   { source: text, caret: next_selection.end, selection: Some(next_selection) }
+}
+
+///|
+fn markdown_editor_reference_definition_append_prefix(
+  source : String,
+) -> String {
+  if source == "" {
+    ""
+  } else if source.has_suffix("\n\n") {
+    ""
+  } else if source.has_suffix("\n") {
+    "\n"
+  } else {
+    "\n\n"
+  }
 }
 
 ///|
@@ -2810,11 +3288,20 @@ fn markdown_editor_reference_target(
   bounds : MarkdownLinkBounds,
 ) -> String? {
   let chars = source.to_array()
-  let start = bounds.close_start + 2
-  if start > bounds.target_end || bounds.target_end > chars.length() {
+  let start = if bounds.definition_target_start >= 0 {
+    bounds.definition_target_start
+  } else {
+    bounds.target_start
+  }
+  let end = if bounds.definition_target_end >= 0 {
+    bounds.definition_target_end
+  } else {
+    bounds.target_end
+  }
+  if start > end || end > chars.length() {
     None
   } else {
-    Some(String::from_array(chars[start:bounds.target_end]))
+    Some(String::from_array(chars[start:end]))
   }
 }
 
@@ -2880,6 +3367,24 @@ fn markdown_editor_transform_current_block(
       }
     None => ()
   }
+  match markdown_editor_setext_block_at_selection(source, selection) {
+    Some(block) =>
+      match command {
+        Paragraph
+        | Heading(_)
+        | BulletList
+        | TaskList
+        | OrderedList
+        | Quote
+        | HorizontalRule
+        | Table =>
+          return markdown_editor_transform_setext_block(
+            source, command, selection, block,
+          )
+        _ => ()
+      }
+    None => ()
+  }
   let range = markdown_editor_current_line_range(source, selection)
   let chars = source.to_array()
   let line = String::from_array(chars[range.start:range.end])
@@ -2929,6 +3434,69 @@ fn markdown_editor_transform_current_block(
       )
     { source: next_source, caret: next_caret, selection: None }
   }
+}
+
+///|
+fn markdown_editor_setext_block_at_selection(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> MarkdownEditorBlock? {
+  let anchor = markdown_editor_clamp_int(
+    selection.caret,
+    0,
+    markdown_editor_text_length(source),
+  )
+  for block in parse_markdown_editor_blocks(source) {
+    if !(block.block.kind is MarkdownBlockKind::Heading(_)) ||
+      anchor < block.source_range.start ||
+      anchor > block.content_range.end ||
+      block.source_range.end <= block.content_range.end {
+      continue
+    }
+    return Some(block)
+  }
+  None
+}
+
+///|
+fn markdown_editor_transform_setext_block(
+  source : String,
+  command : MarkdownEditorCommand,
+  selection : MarkdownEditorSelection,
+  block : MarkdownEditorBlock,
+) -> MarkdownEditorEditResult {
+  let chars = source.to_array()
+  let text = block.block.text
+  let replacement = match command {
+    Paragraph => text
+    Heading(level) => markdown_editor_heading_marker(level) + " " + text
+    BulletList => "- " + text
+    TaskList => "- [ ] " + text
+    OrderedList => "1. " + text
+    Quote => "> " + text
+    HorizontalRule => "---"
+    Table => markdown_editor_command_snippet(Table)
+    _ => text
+  }
+  let next_source = String::from_array(chars[:block.source_range.start]) +
+    replacement +
+    String::from_array(chars[block.source_range.end:])
+  let caret = if command == Table {
+    block.source_range.start + 2
+  } else if command == HorizontalRule {
+    block.source_range.start + 3
+  } else {
+    let offset = markdown_editor_clamp_int(
+      selection.caret - block.content_range.start,
+      0,
+      markdown_editor_text_length(text),
+    )
+    block.source_range.start +
+    markdown_editor_text_length(replacement) -
+    markdown_editor_text_length(text) +
+    offset
+  }
+  { source: next_source, caret, selection: None }
 }
 
 ///|
@@ -3120,7 +3688,7 @@ fn markdown_editor_unwrap_code_block(
 ) -> MarkdownEditorEditResult {
   let chars = source.to_array()
   let open_end = markdown_editor_min_int(
-    block.source_range.start + 4,
+    block.content_range.start,
     chars.length(),
   )
   let close_start = markdown_editor_max_int(
@@ -3297,14 +3865,7 @@ fn markdown_editor_current_line_range(
 fn markdown_editor_block_prefix(command : MarkdownEditorCommand) -> String {
   match command {
     Paragraph => ""
-    Heading(level) =>
-      if level <= 1 {
-        "# "
-      } else if level == 2 {
-        "## "
-      } else {
-        "### "
-      }
+    Heading(level) => markdown_editor_heading_marker(level) + " "
     BulletList => "- "
     TaskList => "- [ ] "
     OrderedList => "1. "
@@ -3447,15 +4008,12 @@ pub fn markdown_editor_command_snippet(
     Image => "![image alt](image.png)"
     SetLinkTarget(target) => "[link text](" + target + ")"
     SetImageTarget(target) => "![image alt](" + target + ")"
+    SetCodeLanguage(target) => "```" + target + "\ncode block\n```"
     Paragraph => "Paragraph"
     Heading(level) =>
-      if level <= 1 {
-        "# Heading"
-      } else if level == 2 {
-        "## Section"
-      } else {
-        "### Detail"
-      }
+      markdown_editor_heading_marker(level) +
+      " " +
+      markdown_editor_heading_snippet_text(level)
     BulletList => "- List item"
     TaskList => "- [ ] Task item"
     OrderedList => "1. List item"
@@ -3471,7 +4029,36 @@ pub fn markdown_editor_command_snippet(
       "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |"
     DeleteTableColumn =>
       "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |"
+    SetTableColumnAlignment(_) =>
+      "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |"
     Clear => ""
+  }
+}
+
+///|
+fn markdown_editor_heading_marker(level : Int) -> String {
+  let count = markdown_editor_clamp_int(level, 1, 6)
+  let chars : Array[Char] = []
+  for _ in 0..<count {
+    chars.push('#')
+  }
+  String::from_array(chars)
+}
+
+///|
+fn markdown_editor_heading_snippet_text(level : Int) -> String {
+  if level <= 1 {
+    "Heading"
+  } else if level == 2 {
+    "Section"
+  } else if level == 3 {
+    "Detail"
+  } else if level == 4 {
+    "Subdetail"
+  } else if level == 5 {
+    "Note"
+  } else {
+    "Caption"
   }
 }
 
@@ -3553,11 +4140,13 @@ pub fn markdown_editor_word_count(source : String) -> Int {
 ///|
 fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
   let blocks : Array[MarkdownEditorBlock] = []
+  let definitions = markdown_reference_definitions(source)
   let lines = markdown_editor_lines(source)
   let code_lines : Array[String] = []
   let mut code_start = 0
   let mut code_content_start = 0
   let mut code_fence = ""
+  let mut code_language : String? = None
   let mut in_code = false
   let mut index = 0
   while index < lines.length() {
@@ -3566,12 +4155,13 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
       if markdown_editor_closing_code_fence(line.text, code_fence) {
         let text = markdown_join_lines(code_lines).trim().to_owned()
         blocks.push({
-          block: markdown_block(MarkdownBlockKind::CodeBlock, text),
+          block: markdown_editor_code_block(text, code_language),
           source_range: { start: code_start, end: line.end },
           content_range: { start: code_content_start, end: line.start },
         })
         code_lines.clear()
         code_fence = ""
+        code_language = None
         in_code = false
       } else {
         code_lines.push(line.text)
@@ -3580,7 +4170,8 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
       match markdown_editor_opening_code_fence_marker(line.text) {
         Some(fence) => {
           in_code = true
-          code_fence = fence
+          code_fence = fence.marker
+          code_language = fence.info
           code_start = line.start
           code_content_start = line.end + 1
         }
@@ -3598,7 +4189,11 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
                     block: {
                       kind: MarkdownBlockKind::Heading(level),
                       text,
-                      inlines: parse_markdown_inlines(text),
+                      inlines: parse_markdown_inlines_with_definitions(
+                        text, definitions,
+                      ),
+                      table_alignments: [],
+                      code_language: None,
                     },
                     source_range: {
                       start: line.start,
@@ -3611,6 +4206,9 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
                 None => {
                   let parsed = parse_markdown(line.text)
                   for block in parsed {
+                    let block = markdown_editor_block_with_references(
+                      block, definitions,
+                    )
                     blocks.push({
                       block,
                       source_range: { start: line.start, end: line.end },
@@ -3631,12 +4229,27 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
     let text = markdown_join_lines(code_lines).trim().to_owned()
     let end = markdown_editor_text_length(source)
     blocks.push({
-      block: markdown_block(MarkdownBlockKind::CodeBlock, text),
+      block: markdown_editor_code_block(text, code_language),
       source_range: { start: code_start, end },
       content_range: { start: code_content_start, end },
     })
   }
   blocks
+}
+
+///|
+fn markdown_editor_block_with_references(
+  block : MarkdownBlock,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> MarkdownBlock {
+  match block.kind {
+    CodeBlock | HorizontalRule | Table => block
+    _ =>
+      {
+        ..block,
+        inlines: markdown_resolve_reference_inlines(block.inlines, definitions),
+      }
+  }
 }
 
 ///|

@@ -1,5 +1,5 @@
 ///|
-test "markdown editor app emits wysiwyg and source commands" {
+test "markdown editor app emits primary wysiwyg commands" {
   let app = @app.MarkdownEditorApp::new()
   let commands = app.runtime(width=980.0, height=640.0).draw_commands()
   assert_true(
@@ -20,6 +20,20 @@ test "markdown editor app emits wysiwyg and source commands" {
       command is @core.DrawCommand::DrawText({ text: "• ", .. })
     }),
   )
+  assert_false(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Markdown source", .. })
+    }),
+  )
+}
+
+///|
+test "markdown editor toggles source preview from action" {
+  let app = @app.MarkdownEditorApp::new()
+  inspect(app.source_preview_visible(), content="false")
+  app.apply_action("source-preview")
+  inspect(app.source_preview_visible(), content="true")
+  let commands = app.runtime(width=980.0, height=640.0).draw_commands()
   assert_true(
     commands.any(command => {
       command is @core.DrawCommand::DrawText({ text: "Markdown source", .. })
@@ -60,18 +74,59 @@ test "markdown editor snapshot tracks typora core document shape" {
 }
 
 ///|
+test "markdown editor snapshot resolves reference links and images" {
+  let snapshot = MarkdownEditorSnapshot::parse(
+    "See [MoUI][site] and ![Logo][logo]\n\n[site]: https://moui.dev\n[logo]: assets/logo.png",
+  )
+  inspect(snapshot.blocks.length(), content="1")
+  guard snapshot.blocks[0].block.inlines[1]
+    is {
+      kind: MarkdownInlineKind::Link,
+      text: "MoUI",
+      target: Some("https://moui.dev"),
+    } else {
+    fail("expected resolved reference link")
+  }
+  guard snapshot.blocks[0].block.inlines[3]
+    is {
+      kind: MarkdownInlineKind::Image,
+      text: "Logo",
+      target: Some("assets/logo.png"),
+    } else {
+    fail("expected resolved reference image")
+  }
+  guard snapshot.rich_text.blocks[0].runs[1]
+    is { text: "MoUI", font: Some({ weight: 500, .. }), .. } else {
+    fail("expected styled rich link")
+  }
+  guard snapshot.rich_text.blocks[0].runs[3]
+    is { image_source: Some("assets/logo.png"), .. } else {
+    fail("expected rich image source")
+  }
+}
+
+///|
 test "markdown editor snapshot tracks long fenced code blocks" {
   let snapshot = MarkdownEditorSnapshot::parse("````moonbit\n```\n````")
   inspect(snapshot.blocks.length(), content="1")
   guard snapshot.blocks[0]
     is {
-      block: { kind: CodeBlock, text: "```", .. },
+      block: {
+        kind: CodeBlock,
+        text: "```",
+        code_language: Some("moonbit"),
+        ..,
+      },
       source_range: { start: 0, end: 20 },
       content_range: { start: 12, end: 16 },
     } else {
     fail("expected long fenced code block")
   }
   inspect(snapshot.rich_text.blocks.length(), content="1")
+  guard snapshot.rich_text.blocks[0].runs
+    is [{ text: "moonbit", .. }, { text: "\n```", .. }] else {
+    fail("expected language label before code content")
+  }
 }
 
 ///|
@@ -100,7 +155,7 @@ test "markdown editor snapshot tracks setext headings" {
 
 ///|
 test "markdown editor snapshot tracks markdown tables" {
-  let source = "| Name | Done |\n| --- | --- |\n| Core | yes |"
+  let source = "| Name | Done |\n| :--- | ---: |\n| Core | yes |"
   let snapshot = MarkdownEditorSnapshot::parse(source)
   inspect(snapshot.blocks.length(), content="1")
   guard snapshot.blocks[0].block.kind is Table else {
@@ -108,9 +163,9 @@ test "markdown editor snapshot tracks markdown tables" {
   }
   inspect(snapshot.blocks[0].block.text, content="Name  |  Done\nCore  |  yes")
   inspect(snapshot.blocks[0].source_range.start, content="0")
-  inspect(snapshot.blocks[0].source_range.end, content="44")
+  inspect(snapshot.blocks[0].source_range.end, content="46")
   inspect(snapshot.blocks[0].content_range.start, content="0")
-  inspect(snapshot.blocks[0].content_range.end, content="44")
+  inspect(snapshot.blocks[0].content_range.end, content="46")
   inspect(snapshot.rich_text.blocks.length(), content="1")
   guard snapshot.rich_text.blocks[0].runs
     is [{ text: "Name  |  Done\nCore  |  yes", .. }] else {
@@ -124,6 +179,12 @@ test "markdown editor snapshot tracks markdown tables" {
   inspect(table.rows[1].length(), content="2")
   inspect(table.rows[0][0].text, content="Name")
   inspect(table.rows[0][0].header, content="true")
+  guard table.rows[0][0].align is None else {
+    fail("expected default start alignment")
+  }
+  guard table.rows[0][1].align is Some(@core.TextAlign::TextEnd) else {
+    fail("expected trailing alignment")
+  }
   guard table.rows[0][0].source_range is Some(first_range) else {
     fail("expected first table cell source range")
   }
@@ -134,8 +195,8 @@ test "markdown editor snapshot tracks markdown tables" {
   guard table.rows[1][0].source_range is Some(body_range) else {
     fail("expected body table cell source range")
   }
-  inspect(body_range.start, content="32")
-  inspect(body_range.end, content="36")
+  inspect(body_range.start, content="34")
+  inspect(body_range.end, content="38")
   inspect(
     markdown_editor_active_block_label(source, { caret: 18, selection: None }),
     content="Table",
@@ -145,7 +206,7 @@ test "markdown editor snapshot tracks markdown tables" {
 ///|
 test "markdown editor renders table grid preview" {
   let app = @app.MarkdownEditorApp::new()
-  app.set_document("| Name | Done |\n| --- | --- |\n| Core | yes |")
+  app.set_document("| Name | Done |\n| :---: | ---: |\n| Core | yes |")
   let runtime = app.runtime(width=980.0, height=640.0)
   let commands = runtime.draw_commands()
   assert_true(
@@ -159,6 +220,22 @@ test "markdown editor renders table grid preview" {
   assert_true(
     commands.any(command => {
       command is @core.DrawCommand::DrawText({ text: "Core", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command
+      is @core.DrawCommand::DrawText(
+        { text: "Name", align: @core.TextAlign::TextCenter, .. }
+      )
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command
+      is @core.DrawCommand::DrawText(
+        { text: "Done", align: @core.TextAlign::TextEnd, .. }
+      )
     }),
   )
   assert_true(
@@ -428,6 +505,10 @@ fn markdown_editor_is_selection_highlight(command : @core.DrawCommand) -> Bool {
 ///|
 test "markdown editor core applies typed commands" {
   inspect(markdown_editor_apply_command("", Heading(2)), content="## Section")
+  inspect(
+    markdown_editor_apply_command("", Heading(6)),
+    content="###### Caption",
+  )
   inspect(markdown_editor_apply_command("", HorizontalRule), content="---")
   inspect(
     markdown_editor_apply_command("Base", Bold),
@@ -704,6 +785,51 @@ test "markdown editor link target command updates and wraps selected text" {
 }
 
 ///|
+test "markdown editor link target command updates reference definition" {
+  let source = "Visit [MoUI][site] today\n\n[site]: https://example.com"
+  guard markdown_editor_selected_link_target(source, {
+      caret: 11,
+      selection: Some(@core.TextRange::new(start=7, end=11)),
+    })
+    is Some("https://example.com") else {
+    fail("expected selected reference link target")
+  }
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetLinkTarget("https://moui.dev"),
+    Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
+  )
+  inspect(
+    updated.source,
+    content="Visit [MoUI][site] today\n\n[site]: https://moui.dev",
+  )
+  guard updated.selection is Some(selection) else {
+    fail("expected reference link text selection")
+  }
+  inspect(selection.start, content="7")
+  inspect(selection.end, content="11")
+}
+
+///|
+test "markdown editor link target command creates missing reference definition" {
+  let source = "Visit [MoUI][site] today"
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetLinkTarget("https://moui.dev"),
+    Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
+  )
+  inspect(
+    updated.source,
+    content="Visit [MoUI][site] today\n\n[site]: https://moui.dev",
+  )
+  guard updated.selection is Some(selection) else {
+    fail("expected reference link text selection")
+  }
+  inspect(selection.start, content="7")
+  inspect(selection.end, content="11")
+}
+
+///|
 test "markdown editor reads selected link and image targets" {
   let source = "Visit [MoUI](https://moui.dev) and ![logo](assets/logo.png)"
   guard markdown_editor_selected_link_target(source, {
@@ -731,6 +857,32 @@ test "markdown editor reads selected link and image targets" {
 }
 
 ///|
+test "markdown editor code language command updates fenced block" {
+  let source = "Intro\n```moonbit\nlet x = 1\n```\nTail"
+  guard markdown_editor_selected_code_language(source, {
+      caret: 20,
+      selection: None,
+    })
+    is Some("moonbit") else {
+    fail("expected selected code language")
+  }
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetCodeLanguage("rust"),
+    Some({ caret: 20, selection: None }),
+  )
+  inspect(updated.source, content="Intro\n```rust\nlet x = 1\n```\nTail")
+  inspect(updated.caret, content="17")
+  let cleared = markdown_editor_apply_command_at(
+    updated.source,
+    SetCodeLanguage(""),
+    Some({ caret: 17, selection: None }),
+  )
+  inspect(cleared.source, content="Intro\n```\nlet x = 1\n```\nTail")
+  inspect(cleared.caret, content="13")
+}
+
+///|
 test "markdown editor image target command updates and wraps selected alt text" {
   let updated = markdown_editor_apply_command_at(
     "Insert ![logo](image.png) here",
@@ -749,6 +901,51 @@ test "markdown editor image target command updates and wraps selected alt text" 
     Some({ caret: 11, selection: Some(@core.TextRange::new(start=7, end=11)) }),
   )
   inspect(wrapped.source, content="Insert ![logo](assets/logo.png) here")
+}
+
+///|
+test "markdown editor image target command updates reference definition" {
+  let source = "Insert ![logo][mark] here\n\n[mark]: old.png"
+  guard markdown_editor_selected_image_target(source, {
+      caret: 13,
+      selection: Some(@core.TextRange::new(start=9, end=13)),
+    })
+    is Some("old.png") else {
+    fail("expected selected reference image target")
+  }
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetImageTarget("assets/logo.png"),
+    Some({ caret: 13, selection: Some(@core.TextRange::new(start=9, end=13)) }),
+  )
+  inspect(
+    updated.source,
+    content="Insert ![logo][mark] here\n\n[mark]: assets/logo.png",
+  )
+  guard updated.selection is Some(selection) else {
+    fail("expected reference image alt selection")
+  }
+  inspect(selection.start, content="9")
+  inspect(selection.end, content="13")
+}
+
+///|
+test "markdown editor image target command creates missing reference definition" {
+  let source = "Insert ![logo][mark] here"
+  let updated = markdown_editor_apply_command_at(
+    source,
+    SetImageTarget("assets/logo.png"),
+    Some({ caret: 13, selection: Some(@core.TextRange::new(start=9, end=13)) }),
+  )
+  inspect(
+    updated.source,
+    content="Insert ![logo][mark] here\n\n[mark]: assets/logo.png",
+  )
+  guard updated.selection is Some(selection) else {
+    fail("expected reference image alt selection")
+  }
+  inspect(selection.start, content="9")
+  inspect(selection.end, content="13")
 }
 
 ///|
@@ -863,6 +1060,15 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   guard app.target_kind() is @app.MarkdownEditorTargetKind::TableTools else {
     fail("expected table tools mode")
   }
+  app.set_document("```moonbit\nlet x = 1\n```")
+  app.set_selection(15, None)
+  guard app.target_kind() is @app.MarkdownEditorTargetKind::CodeLanguageTarget else {
+    fail("expected code language mode")
+  }
+  inspect(app.code_language(), content="moonbit")
+  app.set_code_language("rust")
+  app.apply_code_language()
+  inspect(app.document(), content="```rust\nlet x = 1\n```")
 }
 
 ///|
@@ -936,6 +1142,24 @@ test "markdown editor target bar renders contextual controls" {
   assert_true(
     table.any(command => {
       command is @core.DrawCommand::DrawText({ text: "-Row", .. })
+    }),
+  )
+  assert_true(
+    table.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Center", .. })
+    }),
+  )
+  assert_true(
+    table.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Auto", .. })
+    }),
+  )
+  app.set_document("```moonbit\nlet x = 1\n```")
+  app.set_selection(15, None)
+  let code = app.runtime(width=980.0, height=700.0).draw_commands()
+  assert_true(
+    code.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Code lang", .. })
     }),
   )
 }
@@ -1059,7 +1283,17 @@ test "markdown editor runtime block keyboard shortcuts transform caret and selec
     ),
   )
   inspect(app.document(), content="Intro\n## Title\nFirst\nSecond")
-  app.set_selection(24, Some(@core.TextRange::new(start=15, end=27)))
+  app.set_selection(9, None)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="6",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Intro\n###### Title\nFirst\nSecond")
+  app.set_selection(30, Some(@core.TextRange::new(start=19, end=31)))
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -1068,7 +1302,7 @@ test "markdown editor runtime block keyboard shortcuts transform caret and selec
       ),
     ),
   )
-  inspect(app.document(), content="Intro\n## Title\n- First\n- Second")
+  inspect(app.document(), content="Intro\n###### Title\n- First\n- Second")
 }
 
 ///|
@@ -1103,6 +1337,13 @@ test "markdown editor block command transforms current line" {
   )
   inspect(result.source, content="Intro\n## Title\nBody")
   inspect(result.caret, content="11")
+  let h6 = markdown_editor_apply_command_at(
+    "Intro\nFine print\nBody",
+    Heading(6),
+    Some({ caret: 8, selection: None }),
+  )
+  inspect(h6.source, content="Intro\n###### Fine print\nBody")
+  inspect(h6.caret, content="15")
   let rule = markdown_editor_apply_command_at(
     "Intro\n---\nBody",
     HorizontalRule,
@@ -1163,6 +1404,30 @@ test "markdown editor paragraph command strips block markers" {
     Some({ caret: 18, selection: Some(@core.TextRange::new(start=0, end=20)) }),
   )
   inspect(lines.source, content="one\ntwo\nthree")
+}
+
+///|
+test "markdown editor block command transforms setext heading blocks" {
+  let paragraph = markdown_editor_apply_command_at(
+    "Intro\nTitle\n---\nTail",
+    Paragraph,
+    Some({ caret: 8, selection: None }),
+  )
+  inspect(paragraph.source, content="Intro\nTitle\nTail")
+  inspect(paragraph.caret, content="8")
+  let heading = markdown_editor_apply_command_at(
+    "Intro\nTitle\n---\nTail",
+    Heading(3),
+    Some({ caret: 8, selection: None }),
+  )
+  inspect(heading.source, content="Intro\n### Title\nTail")
+  inspect(heading.caret, content="12")
+  let quote = markdown_editor_apply_command_at(
+    "Intro\nTitle\n=====\nTail",
+    Quote,
+    Some({ caret: 8, selection: None }),
+  )
+  inspect(quote.source, content="Intro\n> Title\nTail")
 }
 
 ///|
@@ -1244,12 +1509,42 @@ test "markdown editor block command transforms selected lines" {
 }
 
 ///|
+test "markdown editor block commands renumber ordered list context" {
+  let converted = markdown_editor_apply_command_at(
+    "1. first\nsecond\n9. third",
+    OrderedList,
+    Some({ caret: 15, selection: Some(@core.TextRange::new(start=9, end=15)) }),
+  )
+  inspect(converted.source, content="1. first\n2. second\n3. third")
+  guard converted.selection is Some(converted_selection) else {
+    fail("expected converted ordered line selection")
+  }
+  inspect(converted_selection.start, content="10")
+  inspect(converted_selection.end, content="18")
+  let unlisted = markdown_editor_apply_command_at(
+    "1. first\n2. second\n3. third",
+    Paragraph,
+    Some({ caret: 15, selection: Some(@core.TextRange::new(start=9, end=18)) }),
+  )
+  inspect(unlisted.source, content="1. first\nsecond\n3. third")
+}
+
+///|
 test "markdown editor app block command uses tracked multi-line selection" {
   let app = @app.MarkdownEditorApp::new()
   app.set_document("Intro\nFirst\nSecond")
   app.set_selection(18, Some(@core.TextRange::new(start=6, end=18)))
   app.apply_command_to_selection(TaskList)
   inspect(app.document(), content="Intro\n- [ ] First\n- [ ] Second")
+}
+
+///|
+test "markdown editor app command renumbers ordered list context" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("1. first\nsecond\n9. third")
+  app.set_selection(15, Some(@core.TextRange::new(start=9, end=15)))
+  app.apply_command_to_selection(OrderedList)
+  inspect(app.document(), content="1. first\n2. second\n3. third")
 }
 
 ///|
@@ -1286,6 +1581,13 @@ test "markdown editor code block unwraps containing fenced block" {
   )
   inspect(result.source, content="Intro\nlet x = 1\nTail")
   inspect(result.caret, content="8")
+  let tagged = markdown_editor_apply_command_at(
+    "Intro\n```moonbit\nlet x = 1\n```\nTail",
+    CodeBlock,
+    Some({ caret: 20, selection: None }),
+  )
+  inspect(tagged.source, content="Intro\nlet x = 1\nTail")
+  inspect(tagged.caret, content="9")
 }
 
 ///|
@@ -1363,6 +1665,13 @@ test "markdown editor typed space completes block markers" {
   let h3 = markdown_editor_transform_input("###", 3, None, " ").unwrap()
   inspect(h3.text, content="### ")
   inspect(h3.caret, content="4")
+  let h6 = markdown_editor_transform_input("######", 6, None, " ").unwrap()
+  inspect(h6.text, content="###### ")
+  inspect(h6.caret, content="7")
+  inspect(
+    markdown_editor_transform_input("#######", 7, None, " ") is None,
+    content="true",
+  )
   let bullet = markdown_editor_transform_input("-", 1, None, " ").unwrap()
   inspect(bullet.text, content="- ")
   inspect(bullet.caret, content="2")
@@ -1561,6 +1870,71 @@ test "markdown editor command inserts table column after current cell" {
     content="| A |  | B |\n| --- | --- | --- |\n| 1 |  | 2 |",
   )
   inspect(middle.caret, content="31")
+}
+
+///|
+test "markdown editor table column edits preserve alignment markers" {
+  let source = "| A | B | C |\n| :--- | :---: | ---: |\n| 1 | 2 | 3 |"
+  let inserted = markdown_editor_apply_command_at(
+    source,
+    InsertTableColumn,
+    Some({ caret: 44, selection: None }),
+  )
+  inspect(
+    inserted.source,
+    content="| A | B |  | C |\n| :--- | :---: | --- | ---: |\n| 1 | 2 |  | 3 |",
+  )
+  let deleted = markdown_editor_apply_command_at(
+    source,
+    DeleteTableColumn,
+    Some({ caret: 44, selection: None }),
+  )
+  inspect(deleted.source, content="| A | C |\n| :--- | ---: |\n| 1 | 3 |")
+}
+
+///|
+test "markdown editor command sets table column alignment" {
+  let source = "| A | B | C |\n| --- | :---: | ---: |\n| 1 | 2 | 3 |"
+  let centered = markdown_editor_apply_command_at(
+    source,
+    SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)),
+    Some({ caret: 48, selection: None }),
+  )
+  inspect(
+    centered.source,
+    content="| A | B | C |\n| --- | :---: | :---: |\n| 1 | 2 | 3 |",
+  )
+  inspect(centered.caret, content="47")
+  let auto = markdown_editor_apply_command_at(
+    centered.source,
+    SetTableColumnAlignment(None),
+    Some({ caret: 48, selection: None }),
+  )
+  inspect(
+    auto.source,
+    content="| A | B | C |\n| --- | :---: | --- |\n| 1 | 2 | 3 |",
+  )
+  let snapshot = MarkdownEditorSnapshot::parse(auto.source)
+  guard snapshot.rich_text.blocks[0].table is Some(table) else {
+    fail("expected table preview")
+  }
+  guard table.rows[0][1].align is Some(@core.TextAlign::TextCenter) else {
+    fail("expected center alignment to remain")
+  }
+  guard table.rows[0][2].align is None else {
+    fail("expected cleared alignment")
+  }
+}
+
+///|
+test "markdown editor app action sets table column alignment" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  app.set_selection(30, None)
+  app.apply_action("table-align-right")
+  inspect(app.document(), content="| A | B |\n| --- | ---: |\n| 1 | 2 |")
+  app.apply_action("table-align-auto")
+  inspect(app.document(), content="| A | B |\n| --- | --- |\n| 1 | 2 |")
 }
 
 ///|
@@ -2510,46 +2884,49 @@ test "markdown editor runtime paste and typing complete autolinks" {
 ///|
 test "markdown parser recognizes supported block and inline subset" {
   let blocks = parse_markdown(
-    "# Title\n## Section\n### Detail\nText with **bold** and *italic* and `code` and [link](https://moui.dev) and ![alt](image.png) and ~~old~~\n- bullet\n- [ ] todo\n- [x] done\n1. one\n> quote\n---\n```\ncode\n```",
+    "# Title\n## Section\n### Detail\n#### Fine\n##### Small\n###### Caption\nText with **bold** and *italic* and `code` and [link](https://moui.dev) and ![alt](image.png) and ~~old~~\n- bullet\n- [ ] todo\n- [x] done\n1. one\n> quote\n---\n```\ncode\n```",
   )
-  inspect(blocks.length(), content="11")
+  inspect(blocks.length(), content="14")
   guard blocks[0].kind is Heading(1) else { fail("expected h1") }
   guard blocks[1].kind is Heading(2) else { fail("expected h2") }
   guard blocks[2].kind is Heading(3) else { fail("expected h3") }
-  guard blocks[3].kind is Paragraph else { fail("expected paragraph") }
+  guard blocks[3].kind is Heading(4) else { fail("expected h4") }
+  guard blocks[4].kind is Heading(5) else { fail("expected h5") }
+  guard blocks[5].kind is Heading(6) else { fail("expected h6") }
+  guard blocks[6].kind is Paragraph else { fail("expected paragraph") }
   assert_true(
-    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Bold),
+    blocks[6].inlines.any(span => span.kind == MarkdownInlineKind::Bold),
   )
   assert_true(
-    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Italic),
+    blocks[6].inlines.any(span => span.kind == MarkdownInlineKind::Italic),
   )
   assert_true(
-    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Code),
+    blocks[6].inlines.any(span => span.kind == MarkdownInlineKind::Code),
   )
   assert_true(
-    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Link),
+    blocks[6].inlines.any(span => span.kind == MarkdownInlineKind::Link),
   )
   assert_true(
-    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Image),
+    blocks[6].inlines.any(span => span.kind == MarkdownInlineKind::Image),
   )
   assert_true(
-    blocks[3].inlines.any(span => span.kind == MarkdownInlineKind::Strikethrough),
+    blocks[6].inlines.any(span => span.kind == MarkdownInlineKind::Strikethrough),
   )
-  guard blocks[4].kind is UnorderedListItem else {
+  guard blocks[7].kind is UnorderedListItem else {
     fail("expected unordered list")
   }
-  guard blocks[5].kind is TaskListItem(false) else {
+  guard blocks[8].kind is TaskListItem(false) else {
     fail("expected open task")
   }
-  guard blocks[6].kind is TaskListItem(true) else {
+  guard blocks[9].kind is TaskListItem(true) else {
     fail("expected checked task")
   }
-  guard blocks[7].kind is OrderedListItem(1) else {
+  guard blocks[10].kind is OrderedListItem(1) else {
     fail("expected ordered list")
   }
-  guard blocks[8].kind is Blockquote else { fail("expected quote") }
-  guard blocks[9].kind is HorizontalRule else { fail("expected rule") }
-  guard blocks[10].kind is CodeBlock else { fail("expected code block") }
+  guard blocks[11].kind is Blockquote else { fail("expected quote") }
+  guard blocks[12].kind is HorizontalRule else { fail("expected rule") }
+  guard blocks[13].kind is CodeBlock else { fail("expected code block") }
 }
 
 ///|
@@ -2562,33 +2939,27 @@ test "markdown parser recognizes tables as table blocks" {
 }
 
 ///|
-test "markdown parser preserves unsupported and malformed inline syntax as plain text" {
-  let blocks = parse_markdown(
-    "#### Four\nText with **open and `dangling\n+ plus list",
-  )
-  inspect(blocks.length(), content="3")
+test "markdown parser preserves malformed inline syntax as plain text" {
+  let blocks = parse_markdown("Text with **open and `dangling\n+ plus list")
+  inspect(blocks.length(), content="2")
   guard blocks[0].kind is Paragraph else {
-    fail("expected unsupported h4 as paragraph")
-  }
-  inspect(blocks[0].text, content="#### Four")
-  guard blocks[1].kind is Paragraph else {
     fail("expected malformed inline paragraph")
   }
-  inspect(blocks[1].inlines.length(), content="1")
-  guard blocks[1].inlines[0] is { kind: MarkdownInlineKind::Plain, text, .. } else {
+  inspect(blocks[0].inlines.length(), content="1")
+  guard blocks[0].inlines[0] is { kind: MarkdownInlineKind::Plain, text, .. } else {
     fail("expected plain malformed inline text")
   }
   inspect(text, content="Text with **open and `dangling")
-  guard blocks[2].kind is Paragraph else {
+  guard blocks[1].kind is Paragraph else {
     fail("expected plus list to stay paragraph")
   }
 }
 
 ///|
 test "markdown parser handles blank lines and unterminated code blocks" {
-  let blocks = parse_markdown("\n\n```\nlet x = 1")
+  let blocks = parse_markdown("\n\n```moonbit\nlet x = 1")
   inspect(blocks.length(), content="1")
-  guard blocks[0].kind is CodeBlock else {
+  guard blocks[0] is { kind: CodeBlock, code_language: Some("moonbit"), .. } else {
     fail("expected trailing code block")
   }
   inspect(blocks[0].text, content="let x = 1")
@@ -2668,7 +3039,7 @@ test "markdown inline parser preserves link image and strike metadata" {
 ///|
 test "markdown formatter produces rich text blocks and styled runs" {
   let document = markdown_to_rich_text(
-    "# Title\n- item\n- [x] done\n> quote\n```\ncode\n```\n---",
+    "# Title\n- item\n- [x] done\n> quote\n```moonbit\ncode\n```\n---",
   )
   inspect(document.blocks.length(), content="6")
   inspect(document.blocks[0].runs[0].text, content="Title")
@@ -2677,6 +3048,8 @@ test "markdown formatter produces rich text blocks and styled runs" {
   inspect(document.blocks[2].prefix, content="☑ ")
   assert_true(document.blocks[3].border_left is Some(_))
   assert_true(document.blocks[4].background is Some(_))
+  inspect(document.blocks[4].runs[0].text, content="moonbit")
+  inspect(document.blocks[4].runs[1].text, content="\ncode")
   assert_true(document.blocks[5].rule)
 }
 
@@ -2686,6 +3059,10 @@ test "markdown editor toolbar actions update canonical markdown" {
   app.clear()
   app.apply_action("h1")
   inspect(app.document(), content="# Heading")
+  app.clear()
+  app.apply_action("h6")
+  inspect(app.document(), content="###### Caption")
+  app.clear()
   app.apply_action("bold")
   assert_true(app.document().contains("**bold text**"))
   app.apply_action("strike")
@@ -2698,6 +3075,8 @@ test "markdown editor toolbar actions update canonical markdown" {
   assert_true(app.document().contains("![image alt](image.png)"))
   app.apply_action("image-target")
   assert_true(app.document().contains("![image alt](assets/image.png)"))
+  app.apply_action("code-language")
+  assert_true(app.document().contains("```moonbit\ncode block\n```"))
   app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
   app.set_selection(30, None)
   app.apply_action("table-row")
@@ -2732,9 +3111,9 @@ test "markdown editor toolbar seeds every supported action from empty document" 
     expected in [
       "**bold text**", "*italic text*", "`code`", "~~old text~~", "[link text](https://example.com)",
       "[link text](https://moui.dev)", "![image alt](image.png)", "![image alt](assets/image.png)",
-      "Paragraph", "# Heading", "## Section", "### Detail", "- List item", "- [ ] Task item",
-      "1. List item", "> Quote", "---", "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |",
-      "```\ncode block\n```",
+      "Paragraph", "# Heading", "## Section", "### Detail", "#### Subdetail", "##### Note",
+      "###### Caption", "- List item", "- [ ] Task item", "1. List item", "> Quote",
+      "---", "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |", "```\ncode block\n```",
     ] {
     let app = @app.MarkdownEditorApp::new()
     app.clear()
@@ -2749,8 +3128,8 @@ test "markdown editor toolbar applies actions at current caret context" {
   app.set_document("Base")
   for
     action in [
-      "bold", "italic", "code", "strike", "link", "image", "h1", "h2", "h3", "ul",
-      "task", "ol", "quote", "codeblock",
+      "bold", "italic", "code", "strike", "link", "image", "h1", "h2", "h3", "h4",
+      "h5", "h6", "ul", "task", "ol", "quote", "codeblock",
     ] {
     app.apply_action(action)
   }
@@ -2789,6 +3168,12 @@ fn markdown_action_from_seed(expected : String) -> String {
     "h2"
   } else if expected == "### Detail" {
     "h3"
+  } else if expected == "#### Subdetail" {
+    "h4"
+  } else if expected == "##### Note" {
+    "h5"
+  } else if expected == "###### Caption" {
+    "h6"
   } else if expected == "- List item" {
     "ul"
   } else if expected == "- [ ] Task item" {
@@ -2866,7 +3251,7 @@ test "markdown editor runtime enter completes fenced code block" {
 }
 
 ///|
-test "markdown editor clear redraws placeholder and empty source preview" {
+test "markdown editor clear redraws placeholder and optional empty source preview" {
   let app = @app.MarkdownEditorApp::new()
   let runtime = app.runtime(width=980.0, height=640.0)
   app.clear()
@@ -2878,8 +3263,16 @@ test "markdown editor clear redraws placeholder and empty source preview" {
       is @core.DrawCommand::DrawText({ text: "Start writing Markdown", .. })
     }),
   )
-  assert_true(
+  assert_false(
     commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "(empty)", .. })
+    }),
+  )
+  app.set_source_preview_visible(true)
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let source_commands = runtime.draw_commands()
+  assert_true(
+    source_commands.any(command => {
       command is @core.DrawCommand::DrawText({ text: "(empty)", .. })
     }),
   )

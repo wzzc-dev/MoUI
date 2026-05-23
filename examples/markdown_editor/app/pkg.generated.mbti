@@ -23,6 +23,8 @@ pub fn markdown_editor_line_count(String) -> Int
 
 pub fn markdown_editor_preview_text(String) -> String
 
+pub fn markdown_editor_selected_code_language(String, MarkdownEditorSelection) -> String?
+
 pub fn markdown_editor_selected_image_target(String, MarkdownEditorSelection) -> String?
 
 pub fn markdown_editor_selected_link_target(String, MarkdownEditorSelection) -> String?
@@ -46,6 +48,8 @@ pub(all) struct MarkdownBlock {
   kind : MarkdownBlockKind
   text : String
   inlines : Array[MarkdownInline]
+  table_alignments : Array[@core.TextAlign?]
+  code_language : String?
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum MarkdownBlockKind {
@@ -60,17 +64,22 @@ pub(all) enum MarkdownBlockKind {
   Table
 } derive(Eq, ToJson, @debug.Debug)
 
+type MarkdownCodeFenceInfo derive(Eq, @debug.Debug)
+
 pub struct MarkdownEditorApp {
   document : @core.State[String]
   selection : @core.State[MarkdownEditorSelection]
   link_target : @core.State[String]
   image_target : @core.State[String]
+  code_language : @core.State[String]
   target_kind : @core.State[MarkdownEditorTargetKind]
   block_label : @core.State[String]
+  source_preview_visible : @core.State[Bool]
   undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
 }
 pub fn MarkdownEditorApp::apply_action(Self, String) -> Unit
+pub fn MarkdownEditorApp::apply_code_language(Self) -> Unit
 pub fn MarkdownEditorApp::apply_command(Self, MarkdownEditorCommand) -> Unit
 pub fn MarkdownEditorApp::apply_command_to_selection(Self, MarkdownEditorCommand) -> Unit
 pub fn MarkdownEditorApp::apply_image_target(Self) -> Unit
@@ -79,6 +88,7 @@ pub fn MarkdownEditorApp::block_label(Self) -> String
 pub fn MarkdownEditorApp::can_redo(Self) -> Bool
 pub fn MarkdownEditorApp::can_undo(Self) -> Bool
 pub fn MarkdownEditorApp::clear(Self) -> Unit
+pub fn MarkdownEditorApp::code_language(Self) -> String
 pub fn MarkdownEditorApp::document(Self) -> String
 pub fn MarkdownEditorApp::image_target(Self) -> String
 pub fn MarkdownEditorApp::link_target(Self) -> String
@@ -86,11 +96,15 @@ pub fn MarkdownEditorApp::new() -> Self
 pub fn MarkdownEditorApp::redo(Self) -> Bool
 pub fn MarkdownEditorApp::root(Self, @core.BuildContext) -> @core.ViewSpec
 pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn MarkdownEditorApp::set_code_language(Self, String) -> Unit
 pub fn MarkdownEditorApp::set_document(Self, String) -> Unit
 pub fn MarkdownEditorApp::set_image_target(Self, String) -> Unit
 pub fn MarkdownEditorApp::set_link_target(Self, String) -> Unit
 pub fn MarkdownEditorApp::set_selection(Self, Int, @core.TextRange?) -> Unit
+pub fn MarkdownEditorApp::set_source_preview_visible(Self, Bool) -> Unit
+pub fn MarkdownEditorApp::source_preview_visible(Self) -> Bool
 pub fn MarkdownEditorApp::target_kind(Self) -> MarkdownEditorTargetKind
+pub fn MarkdownEditorApp::toggle_source_preview(Self) -> Unit
 pub fn MarkdownEditorApp::toggle_task_at(Self, Int) -> Unit
 pub fn MarkdownEditorApp::undo(Self) -> Bool
 
@@ -109,6 +123,7 @@ pub(all) enum MarkdownEditorCommand {
   Image
   SetLinkTarget(String)
   SetImageTarget(String)
+  SetCodeLanguage(String)
   Paragraph
   Heading(Int)
   BulletList
@@ -122,6 +137,7 @@ pub(all) enum MarkdownEditorCommand {
   InsertTableColumn
   DeleteTableRow
   DeleteTableColumn
+  SetTableColumnAlignment(@core.TextAlign?)
   Clear
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -167,6 +183,7 @@ pub(all) enum MarkdownEditorTargetKind {
   PlainSelection
   LinkTarget
   ImageTarget
+  CodeLanguageTarget
   TableTools
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -190,6 +207,8 @@ pub(all) enum MarkdownInlineKind {
 type MarkdownLine derive(Eq, @debug.Debug)
 
 type MarkdownLinkBounds derive(Eq, @debug.Debug)
+
+type MarkdownReferenceDefinition derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownSourceRange {
   start : Int

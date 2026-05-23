@@ -4,8 +4,10 @@ pub struct MarkdownEditorApp {
   selection : @core.State[MarkdownEditorSelection]
   link_target : @core.State[String]
   image_target : @core.State[String]
+  code_language : @core.State[String]
   target_kind : @core.State[MarkdownEditorTargetKind]
   block_label : @core.State[String]
+  source_preview_visible : @core.State[Bool]
   undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
 }
@@ -21,6 +23,7 @@ pub(all) enum MarkdownEditorTargetKind {
   PlainSelection
   LinkTarget
   ImageTarget
+  CodeLanguageTarget
   TableTools
 } derive(Eq, Debug, ToJson)
 
@@ -31,8 +34,10 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     selection: @core.State::new({ caret: 0, selection: None }),
     link_target: @core.State::new("https://moui.dev"),
     image_target: @core.State::new("assets/image.png"),
+    code_language: @core.State::new("moonbit"),
     target_kind: @core.State::new(PlainSelection),
     block_label: @core.State::new("Paragraph"),
+    source_preview_visible: @core.State::new(false),
     undo_stack: @core.State::new([]),
     redo_stack: @core.State::new([]),
   }
@@ -67,10 +72,36 @@ pub fn MarkdownEditorApp::apply_action(
   self : MarkdownEditorApp,
   action : String,
 ) -> Unit {
-  match markdown_command_from_action(action) {
-    Some(command) => self.apply_command_to_selection(command)
-    None => ()
+  if action == "source-preview" {
+    self.toggle_source_preview()
+  } else {
+    match markdown_command_from_action(action) {
+      Some(command) => self.apply_command_to_selection(command)
+      None => ()
+    }
   }
+}
+
+///|
+pub fn MarkdownEditorApp::source_preview_visible(
+  self : MarkdownEditorApp,
+) -> Bool {
+  self.source_preview_visible.get()
+}
+
+///|
+pub fn MarkdownEditorApp::set_source_preview_visible(
+  self : MarkdownEditorApp,
+  visible : Bool,
+) -> Unit {
+  self.source_preview_visible.set(visible)
+}
+
+///|
+pub fn MarkdownEditorApp::toggle_source_preview(
+  self : MarkdownEditorApp,
+) -> Unit {
+  self.source_preview_visible.set(!self.source_preview_visible.get())
 }
 
 ///|
@@ -151,6 +182,14 @@ pub fn MarkdownEditorApp::set_image_target(
 }
 
 ///|
+pub fn MarkdownEditorApp::set_code_language(
+  self : MarkdownEditorApp,
+  language : String,
+) -> Unit {
+  self.code_language.set(language)
+}
+
+///|
 pub fn MarkdownEditorApp::link_target(self : MarkdownEditorApp) -> String {
   self.link_target.get()
 }
@@ -158,6 +197,11 @@ pub fn MarkdownEditorApp::link_target(self : MarkdownEditorApp) -> String {
 ///|
 pub fn MarkdownEditorApp::image_target(self : MarkdownEditorApp) -> String {
   self.image_target.get()
+}
+
+///|
+pub fn MarkdownEditorApp::code_language(self : MarkdownEditorApp) -> String {
+  self.code_language.get()
 }
 
 ///|
@@ -180,6 +224,11 @@ pub fn MarkdownEditorApp::apply_link_target(self : MarkdownEditorApp) -> Unit {
 ///|
 pub fn MarkdownEditorApp::apply_image_target(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetImageTarget(self.image_target.get()))
+}
+
+///|
+pub fn MarkdownEditorApp::apply_code_language(self : MarkdownEditorApp) -> Unit {
+  self.apply_command_to_selection(SetCodeLanguage(self.code_language.get()))
 }
 
 ///|
@@ -261,10 +310,20 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
       self.target_kind.set(ImageTarget)
     }
     None =>
-      if block_label == "Table" {
-        self.target_kind.set(TableTools)
-      } else {
-        self.target_kind.set(PlainSelection)
+      match
+        markdown_editor_selected_code_language(self.document.get(), selection) {
+        Some(language) => {
+          self.code_language.set(language)
+          self.target_kind.set(CodeLanguageTarget)
+        }
+        None =>
+          if block_label == "Table" {
+            self.target_kind.set(TableTools)
+          } else if block_label == "Code block" {
+            self.target_kind.set(CodeLanguageTarget)
+          } else {
+            self.target_kind.set(PlainSelection)
+          }
       }
   }
 }
@@ -294,6 +353,7 @@ pub fn MarkdownEditorApp::root(
   let binding = ctx.binding(self.document)
   let editor_style = @core.TextFieldStyle::outline(theme~)
   let source_style = @core.SurfaceStyle::default(theme~)
+  let show_source = ctx.watch(self.source_preview_visible)
   @views.surface(
     @views.column(
       [
@@ -305,6 +365,7 @@ pub fn MarkdownEditorApp::root(
           editor_style,
           source_style,
           theme,
+          show_source,
           (caret, selection) => self.set_selection(caret, selection),
           offset => self.toggle_task_at(offset),
         ),
@@ -343,7 +404,7 @@ fn MarkdownEditorApp::header(
       .font(theme.typography.caption)
       .foreground(theme.palette.muted),
       @views.text(
-        "Current milestone keeps source preview visible while the editor core tracks blocks, source ranges, and rich text output.",
+        "The formatted editor is the primary surface; source preview is available from the toolbar when needed.",
         width=760.0,
         height=24.0,
       )
@@ -393,7 +454,7 @@ fn MarkdownEditorApp::toolbar(
           () => self.apply_command_to_selection(Image),
           style,
         ).keyboard_shortcut(markdown_editor_shift_shortcut("i")),
-        toolbar_button("Src", () => self.apply_image_target(), style),
+        toolbar_button("ImgSrc", () => self.apply_image_target(), style),
         toolbar_button(
           "Para",
           () => self.apply_command_to_selection(Paragraph),
@@ -414,6 +475,21 @@ fn MarkdownEditorApp::toolbar(
           () => self.apply_command_to_selection(Heading(3)),
           style,
         ).keyboard_shortcut(markdown_editor_shortcut("3")),
+        toolbar_button(
+          "H4",
+          () => self.apply_command_to_selection(Heading(4)),
+          style,
+        ).keyboard_shortcut(markdown_editor_shortcut("4")),
+        toolbar_button(
+          "H5",
+          () => self.apply_command_to_selection(Heading(5)),
+          style,
+        ).keyboard_shortcut(markdown_editor_shortcut("5")),
+        toolbar_button(
+          "H6",
+          () => self.apply_command_to_selection(Heading(6)),
+          style,
+        ).keyboard_shortcut(markdown_editor_shortcut("6")),
         toolbar_button(
           "Bullet",
           () => self.apply_command_to_selection(BulletList),
@@ -465,12 +541,40 @@ fn MarkdownEditorApp::toolbar(
           style,
         ).keyboard_shortcut(markdown_editor_shift_shortcut("_")),
         toolbar_button(
+          "Left",
+          () => {
+            self.apply_command_to_selection(
+              SetTableColumnAlignment(Some(@core.TextAlign::TextStart)),
+            )
+          },
+          style,
+        ),
+        toolbar_button(
+          "Center",
+          () => {
+            self.apply_command_to_selection(
+              SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)),
+            )
+          },
+          style,
+        ),
+        toolbar_button(
+          "Right",
+          () => {
+            self.apply_command_to_selection(
+              SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)),
+            )
+          },
+          style,
+        ),
+        toolbar_button(
           "Block",
           () => self.apply_command_to_selection(CodeBlock),
           style,
         ).keyboard_shortcut(markdown_editor_shortcut("k")),
         toolbar_button("Undo", () => ignore(self.undo()), style),
         toolbar_button("Redo", () => ignore(self.redo()), style),
+        toolbar_button("Src", () => self.toggle_source_preview(), style),
         @views.button(
           "Clear",
           on_click=() => self.apply_command(Clear),
@@ -544,6 +648,30 @@ fn MarkdownEditorApp::target_bar(
         spacing=theme.spacing_scale.xs,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
       )
+    CodeLanguageTarget =>
+      @views.row(
+        [
+          block_badge,
+          @views.text("Code lang", width=88.0, height=34.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          @views.text_field(
+            ctx.binding(self.code_language),
+            on_submit=Some(() => self.apply_code_language()),
+            placeholder="moonbit",
+            style=field_style,
+            width=360.0,
+            height=34.0,
+          ).key("markdown-code-language"),
+          toolbar_button(
+            "Apply",
+            () => self.apply_code_language(),
+            button_style,
+          ),
+        ],
+        spacing=theme.spacing_scale.xs,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+      )
     TableTools =>
       @views.row(
         [
@@ -569,6 +697,38 @@ fn MarkdownEditorApp::target_bar(
           toolbar_button(
             "-Row",
             () => self.apply_command_to_selection(DeleteTableRow),
+            button_style,
+          ),
+          toolbar_button(
+            "Left",
+            () => {
+              self.apply_command_to_selection(
+                SetTableColumnAlignment(Some(@core.TextAlign::TextStart)),
+              )
+            },
+            button_style,
+          ),
+          toolbar_button(
+            "Center",
+            () => {
+              self.apply_command_to_selection(
+                SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)),
+              )
+            },
+            button_style,
+          ),
+          toolbar_button(
+            "Right",
+            () => {
+              self.apply_command_to_selection(
+                SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)),
+              )
+            },
+            button_style,
+          ),
+          toolbar_button(
+            "Auto",
+            () => self.apply_command_to_selection(SetTableColumnAlignment(None)),
             button_style,
           ),
         ],
@@ -655,39 +815,46 @@ fn editor_source_layout(
   editor_style : @core.TextFieldStyle,
   source_style : @core.SurfaceStyle,
   theme : @core.Theme,
+  show_source : Bool,
   on_selection_change : (Int, @core.TextRange?) -> Unit,
   on_prefix_click : (Int) -> Unit,
 ) -> @core.ViewSpec {
-  @views.row(
-    [
-      @views.markdown_editor(
-        binding,
-        markdown_editor_format,
-        placeholder="Start writing Markdown",
-        style=editor_style,
-        width=560.0,
-        height=400.0,
-        on_selection_change=Some(on_selection_change),
-        on_prefix_click=Some(on_prefix_click),
-        input_transform=Some(markdown_editor_transform_input),
-      ).key("markdown-editor"),
-      @views.surface(
-        @views.column(
-          [
-            @views.text("Markdown source", width=260.0, height=28.0)
-            .font(theme.typography.control)
-            .foreground(theme.palette.foreground),
-            source_preview(snapshot.source, theme),
-          ],
-          spacing=theme.spacing_scale.sm,
-          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-        ),
-        style=source_style,
-      ).frame(width=300.0, height=400.0),
-    ],
-    spacing=theme.spacing_scale.lg,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-  )
+  let editor_width = if show_source { 560.0 } else { 880.0 }
+  let editor = @views.markdown_editor(
+    binding,
+    markdown_editor_format,
+    placeholder="Start writing Markdown",
+    style=editor_style,
+    width=editor_width,
+    height=400.0,
+    on_selection_change=Some(on_selection_change),
+    on_prefix_click=Some(on_prefix_click),
+    input_transform=Some(markdown_editor_transform_input),
+  ).key("markdown-editor")
+  if !show_source {
+    editor
+  } else {
+    @views.row(
+      [
+        editor,
+        @views.surface(
+          @views.column(
+            [
+              @views.text("Markdown source", width=260.0, height=28.0)
+              .font(theme.typography.control)
+              .foreground(theme.palette.foreground),
+              source_preview(snapshot.source, theme),
+            ],
+            spacing=theme.spacing_scale.sm,
+            cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+          ),
+          style=source_style,
+        ).frame(width=300.0, height=400.0),
+      ],
+      spacing=theme.spacing_scale.lg,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    )
+  }
 }
 
 ///|
@@ -783,6 +950,8 @@ fn markdown_command_from_action(action : String) -> MarkdownEditorCommand? {
     Some(Image)
   } else if action == "image-target" {
     Some(SetImageTarget("assets/image.png"))
+  } else if action == "code-language" {
+    Some(SetCodeLanguage("moonbit"))
   } else if action == "paragraph" {
     Some(Paragraph)
   } else if action == "h1" {
@@ -791,6 +960,12 @@ fn markdown_command_from_action(action : String) -> MarkdownEditorCommand? {
     Some(Heading(2))
   } else if action == "h3" {
     Some(Heading(3))
+  } else if action == "h4" {
+    Some(Heading(4))
+  } else if action == "h5" {
+    Some(Heading(5))
+  } else if action == "h6" {
+    Some(Heading(6))
   } else if action == "ul" {
     Some(BulletList)
   } else if action == "task" {
@@ -811,6 +986,14 @@ fn markdown_command_from_action(action : String) -> MarkdownEditorCommand? {
     Some(DeleteTableRow)
   } else if action == "table-column-delete" {
     Some(DeleteTableColumn)
+  } else if action == "table-align-left" {
+    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextStart)))
+  } else if action == "table-align-center" {
+    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)))
+  } else if action == "table-align-right" {
+    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)))
+  } else if action == "table-align-auto" {
+    Some(SetTableColumnAlignment(None))
   } else if action == "codeblock" {
     Some(CodeBlock)
   } else {

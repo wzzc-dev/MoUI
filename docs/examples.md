@@ -8,10 +8,12 @@ model and parser tests.
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | Public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status |
-| Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, rich text editor, source preview |
+| Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 
-The Markdown editor keeps Markdown source as the saved value, but its shared app
-package now has an explicit editor core. `MarkdownEditorSnapshot` parses source
+The Markdown editor keeps Markdown source as the saved value, but its first
+screen is now the formatted editor surface; source preview is available from the
+toolbar for inspection. Its shared app package has an explicit editor core.
+`MarkdownEditorSnapshot` parses source
 into blocks with source/content ranges, rich text output, line and word counts,
 and the current document title. Core rich text blocks can carry source/content
 ranges so the focused editor and IME request use the formatted visual position
@@ -26,18 +28,34 @@ commands can also update the saved URL/source target while preserving the
 selected visible text or alt text; the example app exposes those targets through
 a contextual editing bar that switches between link URL editing, image source
 editing, and plain-selection creation actions based on the current selection.
+Reference-style links and images resolve their document definitions into rich
+link/image targets, so long-form Markdown can keep shared definitions while the
+formatted editor shows the linked text and image preview. The same contextual
+target editor can update the referenced definition target from the selected
+linked text or image alt text, and creates the missing definition when a
+reference-style link or image does not have one yet.
+When the caret is inside a rendered table, the same contextual bar exposes row
+and column insertion/deletion plus column-alignment tools that update the
+canonical Markdown table.
 The contextual bar also reports the active block kind, and a paragraph command
 strips heading/list/quote markers from the current or selected source lines.
-Heading, list, task, ordered-list, quote, and code-block commands also have
+Heading levels 1-6, list, task, ordered-list, quote, and code-block commands also have
 keyboard shortcuts; heading commands transform the current source line, and
 paragraph, list, task, ordered-list, and quote commands transform either the
 current line or all selected source lines. The code block command wraps the
 current line or selected source lines in fences, and unwraps the containing
 fenced block when the caret is already inside one. Task-list visual checkbox
 prefixes are clickable and toggle
-the saved `- [ ]` / `- [x]` marker in the canonical source. The next line in
+the saved `- [ ]` / `- [x]` marker in the canonical source.
+Setext headings render as H1/H2 blocks, and block commands applied from the
+visible heading text rewrite the whole setext source block so the hidden
+underline marker is not left behind.
+The next line in
 bullet, task, ordered-list, and quote blocks automatically continues the current
 marker on Enter, while pressing Enter on an empty marker line exits that block.
+Ordered-list numbering is normalized after both typed input transforms and
+toolbar/block commands, so converting or editing a list item keeps the contiguous
+list numbered like a visual editor.
 The Markdown editor accepts Tab as text-editor input so Tab indents the current
 or selected source lines and Shift-Tab outdents them instead of moving focus
 away. Backspace at the visual start of formatted heading, list, task,
@@ -46,11 +64,15 @@ marker pair/prefix; Backspace at the start of a plain visual block merges it
 with the previous block and strips hidden block markers into paragraph text. Copy
 and cut export the formatted visual text without hidden Markdown delimiters,
 while multiline paste continues bullet, task, quote, ordered-list, and code-block
-context. Toolbar and contextual target-editing commands keep their own undo/redo
-history so structured Markdown transforms can be reverted separately from raw
-text input. The next Typora milestones are upgrading the contextual target
-editing bar into a true inline/floating affordance and more complete block-mode
-interactions.
+context. Tables render as rich previews with source-mapped cells; Tab navigates
+between cells, Enter inserts a row below the current cell, and toolbar/contextual
+commands insert or delete rows and columns. Table alignment commands rewrite the
+current column separator as `:---`, `:---:`, `---:`, or `---` and the rich table
+preview reflects that alignment. Toolbar and contextual target-editing
+commands keep their own undo/redo history so structured Markdown transforms can
+be reverted separately from raw text input. The next Typora milestones are
+upgrading the contextual target editing bar into a true inline/floating
+affordance and more complete block-mode interactions.
 
 ## Web Wasm-GC
 
