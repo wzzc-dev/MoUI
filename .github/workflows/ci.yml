@@ -4,17 +4,25 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 jobs:
   conformance:
     name: Core conformance
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up MoonBit
-        uses: moonbitlang/setup-moonbit@v1
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
 
       - name: Restore local window dependency
         run: sh scripts/setup-local-deps.sh

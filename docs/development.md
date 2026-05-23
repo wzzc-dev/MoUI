@@ -39,6 +39,10 @@ focused on the Web, Windows, and Linux platform packages when possible. Avoid
 touching macOS or shared window logic unless a task explicitly requires that
 broader change.
 
+Local setup defaults to the SSH fork URL. CI defaults to the HTTPS fork URL so
+GitHub Actions can clone the dependency without a deploy key. Set
+`MOUI_WINDOW_REMOTE` when you need to force a specific fork URL.
+
 ## Validation
 
 For routine local development, prefer the bounded daily check:

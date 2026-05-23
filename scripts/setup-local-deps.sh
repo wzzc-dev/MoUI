@@ -3,9 +3,18 @@ set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 WINDOW_DIR="$ROOT_DIR/.local_repos/window"
-WINDOW_REMOTE="git@github.com:wzzc-dev/window.git"
+WINDOW_REMOTE_SSH="git@github.com:wzzc-dev/window.git"
+WINDOW_REMOTE_HTTPS="https://github.com/wzzc-dev/window.git"
 WINDOW_UPSTREAM="https://github.com/moonbit-community/window.git"
 WINDOW_BRANCH="moui-support"
+
+if [ -n "${MOUI_WINDOW_REMOTE:-}" ]; then
+  WINDOW_REMOTE="$MOUI_WINDOW_REMOTE"
+elif [ -n "${CI:-}" ]; then
+  WINDOW_REMOTE="$WINDOW_REMOTE_HTTPS"
+else
+  WINDOW_REMOTE="$WINDOW_REMOTE_SSH"
+fi
 
 run() {
   printf '==> %s\n' "$*"
@@ -32,7 +41,7 @@ case "$origin_url" in
     ;;
   *)
     printf 'Unexpected window origin remote: %s\n' "$origin_url" >&2
-    printf 'Expected the MoUI fork: %s\n' "$WINDOW_REMOTE" >&2
+    printf 'Expected the MoUI fork: %s or %s\n' "$WINDOW_REMOTE_SSH" "$WINDOW_REMOTE_HTTPS" >&2
     exit 1
     ;;
 esac
