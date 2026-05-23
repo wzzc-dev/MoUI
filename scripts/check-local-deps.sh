@@ -16,7 +16,7 @@ case "$(git -C "$WINDOW_DIR" remote get-url origin 2>/dev/null || true)" in
   *wzzc-dev/window.git|*wzzc-dev/window)
     ;;
   *)
-    fail ".local_repos/window origin must be the wzzc-dev/window fork"
+    fail ".local_repos/window origin must be the wzzc-dev/window fork over SSH or HTTPS"
     ;;
 esac
 
