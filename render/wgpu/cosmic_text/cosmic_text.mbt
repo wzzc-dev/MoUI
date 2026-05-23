@@ -71,7 +71,7 @@ fn macos_regular_font_path() -> String {
 ///|
 fn macos_bold_font_path() -> String {
   first_existing_font_path([
-"/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/Hiragino Sans GB.ttc",
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
   ])
 }
@@ -376,7 +376,7 @@ fn cosmic_text_layout_result_from_buffer(
     }
   }
   if !saw_run || (char_count > 0 && carets[char_count] == 0.0) {
-    return @core.measure_text_layout(input)
+    return @core.TextSystem::fallback().measure_text(input)
   }
   cosmic_fill_missing_caret_positions(carets)
   {

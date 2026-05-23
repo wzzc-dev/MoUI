@@ -320,10 +320,10 @@ pub fn WebGpuWasmRenderer::render(
 }
 
 ///|
-pub fn WebGpuWasmRenderer::text_measurer(
+pub fn WebGpuWasmRenderer::text_system(
   self : WebGpuWasmRenderer,
-) -> @core.TextMeasurer {
-  @core.TextMeasurer::new(
+) -> @core.TextSystem {
+  @core.TextSystem::new(
     id="webgpu-wasm-host",
     measure=input => (self.port.measure_text)(input),
     register_font_data=(family, data) => {
@@ -742,7 +742,7 @@ fn host_measure_text_width_for_input(
   if measured > 0.0 {
     measured
   } else {
-    @core.measure_text_layout({ ..input, text, }).size.width
+    @core.TextSystem::fallback().measure_text({ ..input, text, }).size.width
   }
 }
 

@@ -294,11 +294,11 @@ fn NativeTextEngine::measure_with_fallback(
           if layout.is_valid_for_measure(input.text) {
             layout.to_text_layout_result()
           } else {
-            @core.measure_text_layout(input)
+            @core.TextSystem::fallback().measure_text(input)
           }
-        None => @core.measure_text_layout(input)
+        None => @core.TextSystem::fallback().measure_text(input)
       }
-    None => @core.measure_text_layout(input)
+    None => @core.TextSystem::fallback().measure_text(input)
   }
 }
 
@@ -471,22 +471,20 @@ fn text_align_extra(
 }
 
 ///|
-pub fn native_text_measurer() -> @core.TextMeasurer {
-  native_text_measurer_with_cache(NativeFontCache::new())
+pub fn native_text_system() -> @core.TextSystem {
+  native_text_system_with_cache(NativeFontCache::new())
 }
 
 ///|
-pub fn native_text_measurer_with_engine(
+pub fn native_text_system_with_engine(
   text_engine : NativeTextEngine,
-) -> @core.TextMeasurer {
-  native_text_measurer_with_cache(NativeFontCache::new_with_engine(text_engine))
+) -> @core.TextSystem {
+  native_text_system_with_cache(NativeFontCache::new_with_engine(text_engine))
 }
 
 ///|
-fn native_text_measurer_with_cache(
-  cache : NativeFontCache,
-) -> @core.TextMeasurer {
-  @core.TextMeasurer::new(
+fn native_text_system_with_cache(cache : NativeFontCache) -> @core.TextSystem {
+  @core.TextSystem::new(
     id=cache.text_engine.id(),
     measure=input => native_measure_text_layout(cache, input),
     register_font_data=(family, data) => {

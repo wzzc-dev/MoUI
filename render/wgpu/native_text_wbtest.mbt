@@ -40,8 +40,8 @@ fn text_vertices_have_visible_position(vertices : Array[TextVertex]) -> Bool {
 }
 
 ///|
-test "native text measurer exposes default fallback engine id" {
-  inspect(native_text_measurer().id(), content="native-wgpu-noop-text")
+test "native text system exposes default fallback engine id" {
+  inspect(native_text_system().id(), content="native-wgpu-noop-text")
 }
 
 ///|
@@ -81,7 +81,7 @@ test "native platform provider receives registered font data before fallback cac
   let family_name : Ref[String] = Ref("")
   let data_len : Ref[Int] = Ref(0)
   let fallback_registered : Ref[Int] = Ref(0)
-  let measurer = native_text_measurer_with_engine(
+  let system = native_text_system_with_engine(
     native_platform_text_engine_with_fallback(
       NativePlatformTextProvider::new(
         id="test-platform-text",
@@ -107,7 +107,7 @@ test "native platform provider receives registered font data before fallback cac
       ),
     ),
   )
-  measurer.register_font_data(
+  system.register_font_data(
     @core.FontFamily::Name("Acme"),
     Bytes::from_array([b'A', b'c', b'm', b'e']),
   )
@@ -131,7 +131,7 @@ test "native text engine keeps explicit fallback path available" {
 
 ///|
 test "native text engine falls back when platform measure is invalid" {
-  let measurer = native_text_measurer_with_engine(
+  let system = native_text_system_with_engine(
     native_platform_text_engine_with_fallback(
       NativePlatformTextProvider::new(
         id="test-platform-text",
@@ -150,7 +150,7 @@ test "native text engine falls back when platform measure is invalid" {
       fallback=test_fallback_text_engine(),
     ),
   )
-  let result = measurer.measure_text(
+  let result = system.measure_text(
     @core.TextLayoutInput::new(
       text="fallback",
       font=@core.FontSpec::new(size=14.0, weight=400),

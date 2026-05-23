@@ -9,7 +9,7 @@ test "quickcheck keeps text layout caret positions monotonic" {
         chars.push('M')
       }
       let text = String::from_array(chars)
-      let layout = @core.measure_text_layout(
+      let layout = @core.TextSystem::fallback().measure_text(
         @core.TextLayoutInput::new(
           text~,
           font=@core.FontSpec::new(size=14.0),

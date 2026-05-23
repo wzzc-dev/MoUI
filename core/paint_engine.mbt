@@ -3,7 +3,7 @@ priv struct RenderEnvironment {
   font : FontSpec?
   foreground : Color?
   corner_radius : Double?
-  text_measurer : TextMeasurer
+  text_system : TextSystem
   enabled : Bool
   scale_factor : Double
   text_scale : Double
@@ -22,7 +22,7 @@ fn RenderEnvironment::from_environment(
     font: None,
     foreground: None,
     corner_radius: None,
-    text_measurer: TextMeasurer::default(),
+    text_system: TextSystem::fallback(),
     enabled: environment.enabled,
     scale_factor: environment.scale_factor,
     text_scale: environment.text_scale,
@@ -54,11 +54,11 @@ fn ElementNode::render_with_focus(
 }
 
 ///|
-fn RenderEnvironment::with_text_measurer(
+fn RenderEnvironment::with_text_system(
   self : RenderEnvironment,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> RenderEnvironment {
-  { ..self, text_measurer, }
+  { ..self, text_system, }
 }
 
 ///|
@@ -68,7 +68,7 @@ fn RenderEnvironment::matches_default_cache_key(
   self.font is None &&
   self.foreground is None &&
   self.corner_radius is None &&
-  self.text_measurer.id() == TextMeasurer::default().id() &&
+  self.text_system.id() == TextSystem::fallback().id() &&
   self.enabled &&
   self.scale_factor == 1.0 &&
   self.text_scale == 1.0 &&
@@ -395,13 +395,13 @@ fn ElementNode::render_with_environment(
         measured_size: bounds.size,
         child_sizes: self.children.map(child => child.intrinsic_size()),
         child_baselines: self.children.map(child => {
-          child.first_baseline(text_measurer=environment.text_measurer)
+          child.first_baseline(text_system=environment.text_system)
         }),
         child_priorities: self.children.map(child => child.layout_priority()),
         child_alignment_guides: custom_alignment_guides(
           self.children.map(child => child.intrinsic_size()),
           self.children.map(child => {
-            child.first_baseline(text_measurer=environment.text_measurer)
+            child.first_baseline(text_system=environment.text_system)
           }),
         ),
         cache: data.cache,
@@ -480,7 +480,7 @@ fn environment_measure_text(
   environment : RenderEnvironment,
   input : TextLayoutInput,
 ) -> TextLayoutResult {
-  environment.text_measurer.measure_text(input)
+  environment.text_system.measure_text(input)
 }
 
 ///|
@@ -861,18 +861,18 @@ pub fn ElementNode::render_focused(
 }
 
 ///|
-pub fn ElementNode::render_focused_with_text_measurer(
+pub fn ElementNode::render_focused_with_text_system(
   self : ElementNode,
   bounds : Rect,
   focused~ : ElementId?,
   environment? : Environment = Environment::default(),
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> RenderNode {
   self.render_with_environment(
     bounds,
     focused,
-    RenderEnvironment::from_environment(environment).with_text_measurer(
-      text_measurer,
+    RenderEnvironment::from_environment(environment).with_text_system(
+      text_system,
     ),
   )
 }

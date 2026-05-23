@@ -31,14 +31,14 @@ fn TextInputState::for_text_field(
   element : ElementNode,
   data : TextFieldViewSpec,
   render : RenderNode,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> TextInputState {
   let text = data.value.get()
   let display_text = text_with_composition(text, element, true)
   let text_frame = render.frame.inset(
     Insets::symmetric(horizontal=10.0, vertical=4.0),
   )
-  let layout = text_measurer.measure_text(
+  let layout = text_system.measure_text(
     TextLayoutInput::new(
       text=display_text,
       font=data.font,
@@ -76,7 +76,7 @@ fn TextInputState::for_rich_text_editor(
   element : ElementNode,
   data : RichTextEditorViewSpec,
   render : RenderNode,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> TextInputState {
   let text = data.value.get()
   let display_text = text_with_composition(text, element, true)
@@ -95,14 +95,14 @@ fn TextInputState::for_rich_text_editor(
     visual_caret,
     content,
     data.font,
-    text_measurer,
+    text_system,
   ).unwrap_or(
     rich_text_caret_rect(
       display_text,
       visual_caret,
       content,
       data.font,
-      text_measurer,
+      text_system,
     ),
   )
   {
@@ -123,17 +123,15 @@ pub fn ElementNode::focused_text_input(
   self : ElementNode,
   target : ElementId,
   render : RenderNode,
-  text_measurer? : TextMeasurer = TextMeasurer::default(),
+  text_system? : TextSystem = TextSystem::fallback(),
 ) -> TextInputState? {
   if self.id == target {
     match self.spec {
       TextFieldSpec(data) =>
-        Some(TextInputState::for_text_field(self, data, render, text_measurer))
+        Some(TextInputState::for_text_field(self, data, render, text_system))
       RichTextEditorSpec(data) =>
         Some(
-          TextInputState::for_rich_text_editor(
-            self, data, render, text_measurer,
-          ),
+          TextInputState::for_rich_text_editor(self, data, render, text_system),
         )
       _ => None
     }
@@ -141,11 +139,7 @@ pub fn ElementNode::focused_text_input(
     for index, child in self.children {
       if index < render.children.length() {
         match
-          child.focused_text_input(
-            target,
-            render.children[index],
-            text_measurer~,
-          ) {
+          child.focused_text_input(target, render.children[index], text_system~) {
           Some(state) => return Some(state)
           None => ()
         }

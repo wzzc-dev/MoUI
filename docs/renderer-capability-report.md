@@ -28,7 +28,7 @@ Status meanings:
 | Filter effect | partial | partial | `PushFilter` / `PopFilter` now model blur, color, and contrast-style effects; shader pass execution remains follow-up work. |
 | Path/vector | ready | ready | `DrawPath` models move/line/quad/cubic/close verbs and is lowered through `moon_zeno` into fill and stroke triangle vertices before renderer execution. |
 | Shader effect | partial | partial | `DrawShaderEffect` resolves through a shared registry with built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`; GPU shader execution and host ABI remain follow-up work. |
-| Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime measurement is injectable: `core` keeps a Cosmic fallback, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux has a fontconfig/HarfBuzz/FreeType scaffold provider, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
+| Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux has a fontconfig/HarfBuzz/FreeType scaffold provider, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
 | Async image | partial | partial | Renderer-neutral lifecycle records now model loading, ready, failed, disposed, and eviction; native/Web adapters still need to surface those diagnostics to app code. |
 
@@ -53,8 +53,9 @@ also exposes a command fallback planner that reports planned skips, unbalanced
 pops, and open advanced scopes for native and WebGPU adapters. Native wgpu still
 needs actual offscreen passes, mask composition, filter shaders, and GPU shader
 registry execution. Native color emoji remains an explicit gap. Text shaping is
-partial: `core/` keeps a Cosmic fallback measurer, `render/wgpu` owns provider
-validation and atlas upload, `render/wgpu/cosmic_text` owns the native Cosmic
+partial: `core/` keeps only a deterministic fallback `TextSystem`,
+`render/wgpu` owns provider validation and atlas upload,
+`render/wgpu/cosmic_text` owns the native Cosmic
 provider, macOS composes a CoreText-backed platform text engine with Cosmic
 fallback for measurement and glyph rasterization, and native platform providers
 share `render/wgpu/text_protocol` for UTF-32 input encoding, versioned
@@ -72,7 +73,7 @@ glyph payloads carry PostScript font identity so fallback-font glyph runs can be
 rasterized with the same font that shaped them. Windows composes a DirectWrite
 scaffold provider with Cosmic fallback and Linux has a
 fontconfig/HarfBuzz/FreeType scaffold provider. Web injects a Canvas-backed
-measurer that uses the same CSS `system-ui` family stack as text drawing. The
+text system that uses the same CSS `system-ui` family stack as text drawing. The
 Windows and Linux native stubs intentionally return no platform layout/raster
 data today, so hosts rely on the composed Cosmic fallback until real engines are
 implemented.

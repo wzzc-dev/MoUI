@@ -12,9 +12,7 @@ pub fn hit_test(LayoutResult, Point) -> Bool
 
 pub fn layout_spec(ViewSpec, Rect) -> LayoutResult
 
-pub fn layout_spec_with_text_measurer(ViewSpec, Rect, text_measurer~ : TextMeasurer) -> LayoutResult
-
-pub fn measure_text_layout(TextLayoutInput) -> TextLayoutResult
+pub fn layout_spec_with_text_system(ViewSpec, Rect, text_system~ : TextSystem) -> LayoutResult
 
 pub fn mount_view_spec(ViewSpec) -> ElementNode
 
@@ -26,7 +24,7 @@ pub fn required_field(message? : String) -> (String) -> String?
 
 pub fn resolve_gesture_arena(Array[GestureArenaMember]) -> GestureArenaResult
 
-pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, Rect, FontSpec, text_measurer? : TextMeasurer) -> Rect?
+pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, Rect, FontSpec, text_system? : TextSystem) -> Rect?
 
 pub fn rich_text_editor_content_rect(Rect) -> Rect
 
@@ -167,9 +165,9 @@ pub fn AppRuntime::set_action_commands(Self, ActionCommandMap) -> Unit
 pub fn AppRuntime::set_environment(Self, Environment) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_root_spec(Self, ViewSpec) -> Unit
-pub fn AppRuntime::set_text_measurer(Self, TextMeasurer) -> Unit
+pub fn AppRuntime::set_text_system(Self, TextSystem) -> Unit
 pub fn AppRuntime::size(Self) -> Size
-pub fn AppRuntime::text_measurer(Self) -> TextMeasurer
+pub fn AppRuntime::text_system(Self) -> TextSystem
 
 pub(all) enum Axis {
   Horizontal
@@ -632,22 +630,22 @@ pub(all) struct ElementNode {
 pub fn ElementNode::accepts_tab_input(Self, ElementId) -> Bool
 pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_keyboard_shortcut(Self, KeyboardEvent) -> ElementEventResult
-pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode, text_measurer? : TextMeasurer) -> ElementEventResult
+pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode, text_system? : TextSystem) -> ElementEventResult
 pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> ElementEventResult
 pub fn ElementNode::find_focusable_at(Self, Point, RenderNode) -> ElementId?
 pub fn ElementNode::find_keyed(Self, String) -> ElementId?
 pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
-pub fn ElementNode::focused_text_input(Self, ElementId, RenderNode, text_measurer? : TextMeasurer) -> TextInputState?
+pub fn ElementNode::focused_text_input(Self, ElementId, RenderNode, text_system? : TextSystem) -> TextInputState?
 pub fn ElementNode::hit_test_path(Self, Point, RenderNode) -> HitTestResult
 pub fn ElementNode::intrinsic_size(Self) -> Size
 pub fn ElementNode::measure(Self, Constraints) -> MeasuredNode
-pub fn ElementNode::measure_with_text_measurer(Self, Constraints, text_measurer~ : TextMeasurer) -> MeasuredNode
+pub fn ElementNode::measure_with_text_system(Self, Constraints, text_system~ : TextSystem) -> MeasuredNode
 pub fn ElementNode::next_focus(Self, current~ : ElementId?, reverse~ : Bool) -> ElementId?
 pub fn ElementNode::place(Self, Rect) -> PlacedNode
-pub fn ElementNode::place_with_text_measurer(Self, Rect, text_measurer~ : TextMeasurer) -> PlacedNode
+pub fn ElementNode::place_with_text_system(Self, Rect, text_system~ : TextSystem) -> PlacedNode
 pub fn ElementNode::render(Self, Rect) -> RenderNode
 pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?, environment? : Environment) -> RenderNode
-pub fn ElementNode::render_focused_with_text_measurer(Self, Rect, focused~ : ElementId?, environment? : Environment, text_measurer~ : TextMeasurer) -> RenderNode
+pub fn ElementNode::render_focused_with_text_system(Self, Rect, focused~ : ElementId?, environment? : Environment, text_system~ : TextSystem) -> RenderNode
 pub fn ElementNode::semantics(Self, RenderNode, focused? : ElementId?) -> SemanticsNode
 
 pub(all) struct Environment {
@@ -1248,7 +1246,7 @@ pub(all) struct RuntimeState {
   mut dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
   mut environment : Environment
-  mut text_measurer : TextMeasurer
+  mut text_system : TextSystem
   mut redraw_callback : (() -> Unit)?
   mut action_commands : ActionCommandMap
   clock : Clock
@@ -1284,8 +1282,8 @@ pub fn RuntimeState::set_action_commands(Self, ActionCommandMap) -> Unit
 pub fn RuntimeState::set_environment(Self, Environment) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
-pub fn RuntimeState::set_text_measurer(Self, TextMeasurer) -> Unit
-pub fn RuntimeState::text_measurer(Self) -> TextMeasurer
+pub fn RuntimeState::set_text_system(Self, TextSystem) -> Unit
+pub fn RuntimeState::text_system(Self) -> TextSystem
 
 pub(all) struct SaveableCodec[T] {
   encode : (T) -> String
@@ -1625,17 +1623,6 @@ pub(all) struct TextLayoutResult {
   caret_positions : Array[Double]
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct TextMeasurer {
-  id : String
-  measure : (TextLayoutInput) -> TextLayoutResult
-  register_font_data : (FontFamily, Bytes) -> Unit
-}
-pub fn TextMeasurer::default() -> Self
-pub fn TextMeasurer::id(Self) -> String
-pub fn TextMeasurer::measure_text(Self, TextLayoutInput) -> TextLayoutResult
-pub fn TextMeasurer::new(id~ : String, measure~ : (TextLayoutInput) -> TextLayoutResult, register_font_data? : (FontFamily, Bytes) -> Unit) -> Self
-pub fn TextMeasurer::register_font_data(Self, FontFamily, Bytes) -> Unit
-
 pub(all) struct TextRange {
   start : Int
   end : Int
@@ -1660,6 +1647,17 @@ pub(all) struct TextStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextStyle::body(theme? : Theme) -> Self
 pub fn TextStyle::title(theme? : Theme) -> Self
+
+pub struct TextSystem {
+  id : String
+  measure : (TextLayoutInput) -> TextLayoutResult
+  register_font_data : (FontFamily, Bytes) -> Unit
+}
+pub fn TextSystem::fallback() -> Self
+pub fn TextSystem::id(Self) -> String
+pub fn TextSystem::measure_text(Self, TextLayoutInput) -> TextLayoutResult
+pub fn TextSystem::new(id~ : String, measure~ : (TextLayoutInput) -> TextLayoutResult, register_font_data? : (FontFamily, Bytes) -> Unit) -> Self
+pub fn TextSystem::register_font_data(Self, FontFamily, Bytes) -> Unit
 
 pub(all) struct TextViewSpec {
   key : Key?

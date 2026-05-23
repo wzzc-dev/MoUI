@@ -257,8 +257,7 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
         }
       }
       match renderer {
-        Some(renderer) =>
-          self.runtime.set_text_measurer(renderer.text_measurer())
+        Some(renderer) => self.runtime.set_text_system(renderer.text_system())
         None => ()
       }
       self.renderer = renderer

@@ -359,8 +359,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
         None => None
       }
       match renderer {
-        Some(renderer) =>
-          self.runtime.set_text_measurer(renderer.text_measurer())
+        Some(renderer) => self.runtime.set_text_system(renderer.text_system())
         None => ()
       }
       self.renderer = renderer

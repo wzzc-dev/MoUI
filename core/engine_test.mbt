@@ -386,7 +386,7 @@ test "custom spec measures paints and exposes semantics" {
 
 ///|
 test "text layout measures size baseline and caret positions" {
-  let layout = measure_text_layout(
+  let layout = TextSystem::fallback().measure_text(
     TextLayoutInput::new(
       text="abcd",
       font=FontSpec::new(size=20.0),
@@ -401,19 +401,19 @@ test "text layout measures size baseline and caret positions" {
 }
 
 ///|
-test "text layout uses cosmic glyph advances for caret positions" {
-  let ascii = measure_text_layout(
+test "fallback text system uses deterministic fixed advances for caret positions" {
+  let ascii = TextSystem::fallback().measure_text(
     TextLayoutInput::new(text="a", font=FontSpec::new(size=20.0)),
   )
-  let digit = measure_text_layout(
+  let digit = TextSystem::fallback().measure_text(
     TextLayoutInput::new(text="1234", font=FontSpec::new(size=20.0)),
   )
-  let cjk = measure_text_layout(
+  let cjk = TextSystem::fallback().measure_text(
     TextLayoutInput::new(text="你", font=FontSpec::new(size=20.0)),
   )
-  inspect(ascii.caret_positions[1], content="20")
-  inspect(digit.caret_positions[4], content="80")
-  inspect(cjk.caret_positions[1], content="20")
+  inspect(ascii.caret_positions[1], content="10")
+  inspect(digit.caret_positions[4], content="40")
+  inspect(cjk.caret_positions[1], content="10")
 }
 
 ///|
@@ -1192,7 +1192,7 @@ test "text field aligns rendered text with caret origin" {
   guard commands[4] is FillRect(cursor, _) else {
     fail("expected focused text field cursor")
   }
-  let layout = measure_text_layout(
+  let layout = TextSystem::fallback().measure_text(
     TextLayoutInput::new(
       text="abc",
       font=FontSpec::new(size=16.0, weight=400),
@@ -1235,14 +1235,14 @@ test "text field caret follows ime composition cursor" {
   guard commands[4] is FillRect(cursor, _) else {
     fail("expected focused text field cursor")
   }
-  let layout = measure_text_layout(
+  let layout = TextSystem::fallback().measure_text(
     TextLayoutInput::new(
       text="ni",
       font=FontSpec::new(size=16.0, weight=400),
       max_width=140.0,
     ),
   )
-  inspect(cursor.origin.x, content="26")
+  inspect(cursor.origin.x, content="18")
   assert_true(cursor.origin.x == 10.0 + layout.caret_positions[1])
 }
 
@@ -1305,7 +1305,7 @@ test "focused text input caret rect follows ime composition cursor" {
     Some(cursor) => inspect(cursor.end, content="1")
     None => fail("expected composition cursor")
   }
-  inspect(input.caret_rect.origin.x, content="26")
+  inspect(input.caret_rect.origin.x, content="18")
 }
 
 ///|

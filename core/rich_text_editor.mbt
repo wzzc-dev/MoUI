@@ -43,7 +43,7 @@ fn append_rich_text_editor_commands(
         document,
         content,
         environment.font.unwrap_or(data.font),
-        environment.text_measurer,
+        environment.text_system,
         element.selection,
       )
     }
@@ -53,7 +53,7 @@ fn append_rich_text_editor_commands(
       content,
       environment.font.unwrap_or(data.font),
       environment.foreground.unwrap_or(data.foreground),
-      environment.text_measurer,
+      environment.text_system,
     )
   }
   if focused {
@@ -64,7 +64,7 @@ fn append_rich_text_editor_commands(
       text,
       display_text,
       content,
-      environment.text_measurer,
+      environment.text_system,
     )
   }
   commands.push(PopClip)
@@ -76,7 +76,7 @@ fn append_rich_text_selection_commands(
   document : RichTextDocument,
   content : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
   selection : TextRange?,
 ) -> Unit {
   match active_text_selection(selection) {
@@ -97,7 +97,7 @@ fn append_rich_text_selection_commands(
         match rich_text_block_selection_visual_range(block, selection) {
           Some(range) =>
             append_rich_text_block_selection_rect(
-              commands, block, range, frame, base_font, text_measurer,
+              commands, block, range, frame, base_font, text_system,
             )
           None => ()
         }
@@ -115,21 +115,21 @@ fn append_rich_text_block_selection_rect(
   range : TextRange,
   frame : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Unit {
   let start_rect = rich_text_block_caret_rect(
     block,
     range.start,
     frame,
     base_font,
-    text_measurer,
+    text_system,
   )
   let end_rect = rich_text_block_caret_rect(
     block,
     range.end,
     frame,
     base_font,
-    text_measurer,
+    text_system,
   )
   if end_rect.origin.x > start_rect.origin.x {
     commands.push(
@@ -255,7 +255,7 @@ fn append_rich_text_blocks(
   content : Rect,
   base_font : FontSpec,
   foreground : Color,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Unit {
   let mut y = content.origin.y
   for block in document.blocks {
@@ -346,7 +346,7 @@ fn append_rich_text_blocks(
         ),
         base_font,
         foreground,
-        text_measurer,
+        text_system,
       )
     }
     y = y + block_height
@@ -445,13 +445,13 @@ fn append_rich_text_block_runs(
   frame : Rect,
   base_font : FontSpec,
   foreground : Color,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Unit {
   let font = rich_text_block_font(block, base_font)
   let color = rich_text_block_color(block, foreground)
   let mut x = frame.origin.x
   if block.prefix != "" {
-    let width = rich_text_width(block.prefix, font, text_measurer)
+    let width = rich_text_width(block.prefix, font, text_system)
     commands.push(
       DrawText(
         TextRun::new(
@@ -474,7 +474,7 @@ fn append_rich_text_block_runs(
     let run_font = run.font.unwrap_or(font)
     let run_color = run.color.unwrap_or(color)
     let text = rich_text_run_visual_text(run)
-    let width = rich_text_run_width(run, run_font, text_measurer)
+    let width = rich_text_run_width(run, run_font, text_system)
     let run_frame = Rect::new(
       x~,
       y=frame.origin.y,
@@ -603,20 +603,20 @@ fn rich_text_block_color(block : RichTextBlock, foreground : Color) -> Color {
 fn rich_text_width(
   text : String,
   font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Double {
-  text_measurer.measure_text(TextLayoutInput::new(text~, font~)).size.width
+  text_system.measure_text(TextLayoutInput::new(text~, font~)).size.width
 }
 
 ///|
 fn rich_text_run_width(
   run : RichTextRun,
   font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Double {
   match run.image_size {
     Some(size) => size.width
-    None => rich_text_width(rich_text_run_visual_text(run), font, text_measurer)
+    None => rich_text_width(rich_text_run_visual_text(run), font, text_system)
   }
 }
 
@@ -636,7 +636,7 @@ fn append_rich_text_editor_cursor(
   text : String,
   display_text : String,
   content : Rect,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Unit {
   let document = (data.format)(display_text)
   let caret = clamp_int(
@@ -649,9 +649,9 @@ fn append_rich_text_editor_cursor(
     caret,
     content,
     data.font,
-    text_measurer,
+    text_system,
   ).unwrap_or(
-    rich_text_caret_rect(display_text, caret, content, data.font, text_measurer),
+    rich_text_caret_rect(display_text, caret, content, data.font, text_system),
   )
   commands.push(
     FillRoundedRectBrush(
@@ -667,7 +667,7 @@ fn rich_text_document_caret_rect(
   source_caret : Int,
   content : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Rect? {
   if !rich_text_document_has_source_ranges(document) {
     return None
@@ -693,14 +693,14 @@ fn rich_text_document_caret_rect(
     )
     if rich_text_caret_before_block(source_caret, block) {
       return Some(
-        rich_text_block_caret_rect(block, 0, frame, base_font, text_measurer),
+        rich_text_block_caret_rect(block, 0, frame, base_font, text_system),
       )
     }
     match rich_text_block_visual_offset(block, source_caret) {
       Some(visual_offset) =>
         return Some(
           rich_text_block_caret_rect(
-            block, visual_offset, frame, base_font, text_measurer,
+            block, visual_offset, frame, base_font, text_system,
           ),
         )
       None => ()
@@ -710,7 +710,7 @@ fn rich_text_document_caret_rect(
       rich_text_block_visual_length(block),
       frame,
       base_font,
-      text_measurer,
+      text_system,
     )
     y = y + block_height
   }
@@ -728,10 +728,10 @@ pub fn rich_text_document_caret_rect_at_source(
   source_caret : Int,
   content : Rect,
   base_font : FontSpec,
-  text_measurer? : TextMeasurer = TextMeasurer::default(),
+  text_system? : TextSystem = TextSystem::fallback(),
 ) -> Rect? {
   rich_text_document_caret_rect(
-    document, source_caret, content, base_font, text_measurer,
+    document, source_caret, content, base_font, text_system,
   )
 }
 
@@ -740,7 +740,7 @@ fn rich_text_editor_caret_at_point(
   data : RichTextEditorViewSpec,
   point : Point,
   frame : Rect,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Int {
   let text = data.value.get()
   let document = (data.format)(text)
@@ -750,7 +750,7 @@ fn rich_text_editor_caret_at_point(
     point,
     content,
     data.font,
-    text_measurer,
+    text_system,
   ).unwrap_or(text_length(text))
 }
 
@@ -759,7 +759,7 @@ fn rich_text_editor_prefix_source_offset_at_point(
   data : RichTextEditorViewSpec,
   point : Point,
   frame : Rect,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Int? {
   let text = data.value.get()
   let document = (data.format)(text)
@@ -769,7 +769,7 @@ fn rich_text_editor_prefix_source_offset_at_point(
     point,
     content,
     data.font,
-    text_measurer,
+    text_system,
   )
 }
 
@@ -779,7 +779,7 @@ fn rich_text_document_prefix_source_offset_at_point(
   point : Point,
   content : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Int? {
   if !rich_text_document_has_source_ranges(document) {
     return None
@@ -799,7 +799,7 @@ fn rich_text_document_prefix_source_offset_at_point(
     )
     if point.y < y + block_height {
       return rich_text_block_prefix_source_offset_at_point(
-        block, point, frame, base_font, text_measurer,
+        block, point, frame, base_font, text_system,
       )
     }
     y = y + block_height
@@ -813,13 +813,13 @@ fn rich_text_block_prefix_source_offset_at_point(
   point : Point,
   frame : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Int? {
   if block.prefix == "" {
     return None
   }
   let font = rich_text_block_font(block, base_font)
-  let width = rich_text_width(block.prefix, font, text_measurer)
+  let width = rich_text_width(block.prefix, font, text_system)
   if point.x >= frame.origin.x && point.x <= frame.origin.x + width {
     match block.content_range {
       Some(content) => Some(content.start)
@@ -836,7 +836,7 @@ fn rich_text_document_source_offset_at_point(
   point : Point,
   content : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Int? {
   if !rich_text_document_has_source_ranges(document) {
     return None
@@ -860,7 +860,7 @@ fn rich_text_document_source_offset_at_point(
       point.x,
       frame,
       base_font,
-      text_measurer,
+      text_system,
     )
     last_offset = Some(offset)
     if point.y < y + block_height {
@@ -940,10 +940,10 @@ fn rich_text_block_source_offset_at_x(
   x : Double,
   frame : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Int {
   let visual = rich_text_block_visual_offset_at_x(
-    block, x, frame, base_font, text_measurer,
+    block, x, frame, base_font, text_system,
   )
   rich_text_block_source_offset_from_visual(block, visual)
 }
@@ -954,7 +954,7 @@ fn rich_text_block_visual_offset_at_x(
   x : Double,
   frame : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Int {
   let font = rich_text_block_font(block, base_font)
   let mut origin = frame.origin.x
@@ -966,20 +966,20 @@ fn rich_text_block_visual_offset_at_x(
       font,
       x,
       origin,
-      text_measurer,
+      text_system,
     )
     if hit < prefix_length ||
-      x <= origin + rich_text_width(block.prefix, font, text_measurer) {
+      x <= origin + rich_text_width(block.prefix, font, text_system) {
       return hit
     }
     visual_offset = visual_offset + prefix_length
-    origin = origin + rich_text_width(block.prefix, font, text_measurer)
+    origin = origin + rich_text_width(block.prefix, font, text_system)
   }
   for run in block.runs {
     let run_font = run.font.unwrap_or(font)
     let text = rich_text_run_visual_text(run)
     let run_length = text_length(text)
-    let run_width = rich_text_run_width(run, run_font, text_measurer)
+    let run_width = rich_text_run_width(run, run_font, text_system)
     if x <= origin + run_width {
       return visual_offset +
         rich_text_run_visual_offset_at_x(
@@ -987,7 +987,7 @@ fn rich_text_block_visual_offset_at_x(
           run_font,
           x,
           origin,
-          text_measurer,
+          text_system,
           width=rich_text_run_hit_width(run, run_width),
         )
     }
@@ -1003,7 +1003,7 @@ fn rich_text_run_visual_offset_at_x(
   font : FontSpec,
   x : Double,
   origin_x : Double,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
   width? : Double? = None,
 ) -> Int {
   let chars = text.to_array()
@@ -1028,12 +1028,12 @@ fn rich_text_run_visual_offset_at_x(
     let before = rich_text_width(
       String::from_array(chars[0:index]),
       font,
-      text_measurer,
+      text_system,
     )
     let after = rich_text_width(
       String::from_array(chars[0:index + 1]),
       font,
-      text_measurer,
+      text_system,
     )
     if x < origin_x + (before + after) / 2.0 {
       return index
@@ -1170,7 +1170,7 @@ fn rich_text_block_caret_rect(
   visual_offset : Int,
   frame : Rect,
   base_font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Rect {
   let font = rich_text_block_font(block, base_font)
   let mut remaining = clamp_int(
@@ -1183,23 +1183,22 @@ fn rich_text_block_caret_rect(
     let prefix_length = text_length(block.prefix)
     if remaining <= prefix_length {
       let prefix = rich_text_prefix(block.prefix, remaining)
-      x = x + rich_text_width(prefix, font, text_measurer)
+      x = x + rich_text_width(prefix, font, text_system)
       return rich_text_cursor_rect_at(x, frame, font)
     }
     remaining = remaining - prefix_length
-    x = x + rich_text_width(block.prefix, font, text_measurer)
+    x = x + rich_text_width(block.prefix, font, text_system)
   }
   for run in block.runs {
     let run_font = run.font.unwrap_or(font)
     let text = rich_text_run_visual_text(run)
     let run_length = text_length(text)
     if remaining <= run_length {
-      x = x +
-        rich_text_run_prefix_width(run, remaining, run_font, text_measurer)
+      x = x + rich_text_run_prefix_width(run, remaining, run_font, text_system)
       return rich_text_cursor_rect_at(x, frame, run_font)
     }
     remaining = remaining - run_length
-    x = x + rich_text_run_width(run, run_font, text_measurer)
+    x = x + rich_text_run_width(run, run_font, text_system)
   }
   rich_text_cursor_rect_at(x, frame, font)
 }
@@ -1209,25 +1208,25 @@ fn rich_text_run_prefix_width(
   run : RichTextRun,
   visual_offset : Int,
   font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Double {
   let text = rich_text_run_visual_text(run)
   let length = text_length(text)
   if length <= 0 || visual_offset <= 0 {
     0.0
   } else if visual_offset >= length {
-    rich_text_run_width(run, font, text_measurer)
+    rich_text_run_width(run, font, text_system)
   } else {
     match run.image_source {
       Some(_) =>
-        rich_text_run_width(run, font, text_measurer) *
+        rich_text_run_width(run, font, text_system) *
         visual_offset.to_double() /
         length.to_double()
       None =>
         rich_text_width(
           rich_text_prefix(text, visual_offset),
           font,
-          text_measurer,
+          text_system,
         )
     }
   }
@@ -1303,7 +1302,7 @@ fn rich_text_caret_rect(
   caret : Int,
   content : Rect,
   font : FontSpec,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Rect {
   let chars = text.to_array()
   let caret = clamp_int(caret, 0, chars.length())
@@ -1316,7 +1315,7 @@ fn rich_text_caret_rect(
     }
   }
   let prefix = String::from_array(chars[column_start:caret])
-  let x = content.origin.x + rich_text_width(prefix, font, text_measurer)
+  let x = content.origin.x + rich_text_width(prefix, font, text_system)
   let line_height = font.size * 1.55
   Rect::new(
     x~,
