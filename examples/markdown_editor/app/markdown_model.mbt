@@ -728,6 +728,7 @@ fn markdown_block_to_rich_text(
             }),
           ),
         ],
+        table=markdown_table_preview(block, base),
         background=Some(
           @core.Brush::solid(@core.Color::rgba(r=0.08, g=0.12, b=0.16, a=0.05)),
         ),
@@ -744,6 +745,106 @@ fn markdown_block_to_rich_text(
 }
 
 ///|
+fn markdown_table_preview(
+  block : MarkdownBlock,
+  base : @core.FontSpec,
+) -> @core.RichTextTable? {
+  match block.kind {
+    Table => {
+      let lines = markdown_split_lines(block.text)
+      if lines.length() == 0 {
+        return None
+      }
+      let rows : Array[Array[@core.RichTextTableCell]] = []
+      let mut line_offset = 0
+      for index in 0..<lines.length() {
+        let cells : Array[@core.RichTextTableCell] = []
+        let source_line = lines[index]
+        for cell in markdown_table_cell_ranges_for_line(source_line) {
+          cells.push({
+            text: cell.text,
+            header: index == 0,
+            source_range: Some({
+              start: line_offset + cell.start,
+              end: line_offset + cell.end,
+            }),
+          })
+        }
+        rows.push(cells)
+        line_offset = line_offset + source_line.to_array().length() + 1
+      }
+      Some({
+        rows,
+        row_height: base.size * 1.9,
+        cell_padding: @core.Insets::symmetric(horizontal=8.0, vertical=5.0),
+        border: @core.Color::black().multiply_alpha(0.16),
+        header_background: Some(
+          @core.Brush::solid(@core.Color::rgba(r=0.08, g=0.12, b=0.16, a=0.06)),
+        ),
+      })
+    }
+    _ => None
+  }
+}
+
+///|
+priv struct MarkdownTableCellPreviewRange {
+  text : String
+  start : Int
+  end : Int
+}
+
+///|
+fn markdown_table_cell_ranges_for_line(
+  line : String,
+) -> Array[MarkdownTableCellPreviewRange] {
+  let cells : Array[MarkdownTableCellPreviewRange] = []
+  let chars = line.to_array()
+  let mut start = 0
+  let mut end = chars.length()
+  if start < end && chars[start] == '|' {
+    start = start + 1
+  }
+  if end > start && chars[end - 1] == '|' {
+    end = end - 1
+  }
+  let mut segment_start = start
+  let mut index = start
+  while index <= end {
+    if index == end || chars[index] == '|' {
+      let range = markdown_table_trimmed_range(chars, segment_start, index)
+      cells.push({
+        text: String::from_array(chars[range.start:range.end]),
+        start: range.start,
+        end: range.end,
+      })
+      segment_start = index + 1
+    }
+    index = index + 1
+  }
+  cells
+}
+
+///|
+fn markdown_table_trimmed_range(
+  chars : Array[Char],
+  start : Int,
+  end : Int,
+) -> @core.RichTextSourceRange {
+  let mut content_start = start
+  let mut content_end = end
+  while content_start < content_end &&
+        (chars[content_start] == ' ' || chars[content_start] == '\t') {
+    content_start = content_start + 1
+  }
+  while content_end > content_start &&
+        (chars[content_end - 1] == ' ' || chars[content_end - 1] == '\t') {
+    content_end = content_end - 1
+  }
+  { start: content_start, end: content_end }
+}
+
+///|
 fn markdown_inlines_to_rich_text(
   inlines : Array[MarkdownInline],
   base : @core.FontSpec,
@@ -754,6 +855,8 @@ fn markdown_inlines_to_rich_text(
       @core.RichTextRun::new(
         text=markdown_inline_source_text(span),
         visual_text=Some(markdown_inline_visual_text(span)),
+        image_source=markdown_inline_image_source(span),
+        image_size=markdown_inline_image_size(span, base),
         font=Some(markdown_inline_font(span.kind, base)),
         background=markdown_inline_background(span.kind),
         decoration=markdown_inline_decoration(span.kind),
@@ -766,8 +869,28 @@ fn markdown_inlines_to_rich_text(
 ///|
 fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
   match inline.kind {
-    Image => "[image: " + markdown_inline_source_text(inline) + "]"
+    Image => markdown_inline_source_text(inline)
     _ => inline.text
+  }
+}
+
+///|
+fn markdown_inline_image_source(inline : MarkdownInline) -> String? {
+  match inline.kind {
+    Image => inline.target
+    _ => None
+  }
+}
+
+///|
+fn markdown_inline_image_size(
+  inline : MarkdownInline,
+  base : @core.FontSpec,
+) -> @core.Size? {
+  match inline.kind {
+    Image =>
+      Some(@core.Size::new(width=base.size * 8.0, height=base.size * 4.5))
+    _ => None
   }
 }
 

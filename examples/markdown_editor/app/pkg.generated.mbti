@@ -118,6 +118,10 @@ pub(all) enum MarkdownEditorCommand {
   CodeBlock
   HorizontalRule
   Table
+  InsertTableRow
+  InsertTableColumn
+  DeleteTableRow
+  DeleteTableColumn
   Clear
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -163,6 +167,7 @@ pub(all) enum MarkdownEditorTargetKind {
   PlainSelection
   LinkTarget
   ImageTarget
+  TableTools
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MarkdownInline {

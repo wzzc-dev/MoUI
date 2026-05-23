@@ -1104,6 +1104,7 @@ pub fn RenderNode::to_layout_result(Self) -> LayoutResult
 
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
+  table : RichTextTable?
   prefix : String
   font : FontSpec?
   color : Color?
@@ -1116,7 +1117,7 @@ pub(all) struct RichTextBlock {
   source_range : RichTextSourceRange?
   content_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextBlock::new(runs~ : Array[RichTextRun], prefix? : String, font? : FontSpec?, color? : Color?, background? : Brush?, border_left? : BorderStyle?, inset? : Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?) -> Self
+pub fn RichTextBlock::new(runs~ : Array[RichTextRun], table? : RichTextTable?, prefix? : String, font? : FontSpec?, color? : Color?, background? : Brush?, border_left? : BorderStyle?, inset? : Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?) -> Self
 
 pub(all) enum RichTextDecoration {
   Strikethrough
@@ -1158,6 +1159,9 @@ pub fn RichTextInputTransform::new(text~ : String, caret~ : Int, selection? : Te
 pub(all) struct RichTextRun {
   text : String
   visual_text : String?
+  image_source : String?
+  image_size : Size?
+  image_fit : ImageFit
   font : FontSpec?
   color : Color?
   background : Brush?
@@ -1165,11 +1169,25 @@ pub(all) struct RichTextRun {
   decoration : RichTextDecoration?
   source_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextRun::new(text~ : String, visual_text? : String?, font? : FontSpec?, color? : Color?, background? : Brush?, background_radius? : Double, decoration? : RichTextDecoration?, source_range? : RichTextSourceRange?) -> Self
+pub fn RichTextRun::new(text~ : String, visual_text? : String?, image_source? : String?, image_size? : Size?, image_fit? : ImageFit, font? : FontSpec?, color? : Color?, background? : Brush?, background_radius? : Double, decoration? : RichTextDecoration?, source_range? : RichTextSourceRange?) -> Self
 
 pub(all) struct RichTextSourceRange {
   start : Int
   end : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RichTextTable {
+  rows : Array[Array[RichTextTableCell]]
+  row_height : Double
+  cell_padding : Insets
+  border : Color
+  header_background : Brush?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RichTextTableCell {
+  text : String
+  header : Bool
+  source_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RoundedRect {

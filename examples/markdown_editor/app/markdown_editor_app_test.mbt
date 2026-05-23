@@ -116,10 +116,84 @@ test "markdown editor snapshot tracks markdown tables" {
     is [{ text: "Name  |  Done\nCore  |  yes", .. }] else {
     fail("expected visual table text")
   }
+  guard snapshot.rich_text.blocks[0].table is Some(table) else {
+    fail("expected table preview")
+  }
+  inspect(table.rows.length(), content="2")
+  inspect(table.rows[0].length(), content="2")
+  inspect(table.rows[1].length(), content="2")
+  inspect(table.rows[0][0].text, content="Name")
+  inspect(table.rows[0][0].header, content="true")
+  guard table.rows[0][0].source_range is Some(first_range) else {
+    fail("expected first table cell source range")
+  }
+  inspect(first_range.start, content="2")
+  inspect(first_range.end, content="6")
+  inspect(table.rows[1][0].text, content="Core")
+  inspect(table.rows[1][0].header, content="false")
+  guard table.rows[1][0].source_range is Some(body_range) else {
+    fail("expected body table cell source range")
+  }
+  inspect(body_range.start, content="32")
+  inspect(body_range.end, content="36")
   inspect(
     markdown_editor_active_block_label(source, { caret: 18, selection: None }),
     content="Table",
   )
+}
+
+///|
+test "markdown editor renders table grid preview" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("| Name | Done |\n| --- | --- |\n| Core | yes |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  let commands = runtime.draw_commands()
+  assert_true(
+    commands.any(command => {
+      command
+      is @core.DrawCommand::DrawText(
+        { text: "Name", font: { weight: 700, .. }, .. }
+      )
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Core", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::StrokeRect(_, _, 1.0)),
+  )
+}
+
+///|
+test "markdown editor click maps table preview cells to markdown source" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("| Name | Done |\n| --- | --- |\n| Core | yes |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  let mut target : @core.Rect? = None
+  for command in runtime.draw_commands() {
+    match command {
+      @core.DrawCommand::DrawText({ text: "yes", frame, .. }) =>
+        target = Some(frame)
+      _ => ()
+    }
+  }
+  guard target is Some(frame) else { fail("expected rendered yes cell") }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=frame.origin.x + frame.size.width / 2.0,
+          y=frame.origin.y + frame.size.height / 2.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  let caret = runtime.focused_text_input().caret
+  assert_true(caret >= 38)
+  assert_true(caret <= 41)
 }
 
 ///|
@@ -183,7 +257,8 @@ test "markdown editor formatter maps link image and strike delimiters" {
       { text: ", ", source_range: Some({ start: 30, end: 32 }), .. },
       {
         text: "logo",
-        visual_text: Some("[image: logo]"),
+        visual_text: Some("logo"),
+        image_source: Some("logo.png"),
         source_range: Some({ start: 34, end: 38 }),
         ..,
       },
@@ -207,11 +282,18 @@ test "markdown editor formatter maps link image and strike delimiters" {
 }
 
 ///|
-test "markdown editor renders image as visual placeholder while mapping alt text" {
+test "markdown editor renders image preview while mapping alt text" {
   let app = @app.MarkdownEditorApp::new()
   app.set_document("![logo](image.png)")
   let runtime = app.runtime(width=980.0, height=640.0)
   assert_true(
+    runtime
+    .draw_commands()
+    .any(command => {
+      command is @core.DrawCommand::DrawImage({ source: "image.png", .. })
+    }),
+  )
+  assert_false(
     runtime
     .draw_commands()
     .any(command => {
@@ -776,6 +858,11 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   guard app.target_kind() is @app.MarkdownEditorTargetKind::PlainSelection else {
     fail("expected plain target mode after non-target selection")
   }
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  app.set_selection(26, None)
+  guard app.target_kind() is @app.MarkdownEditorTargetKind::TableTools else {
+    fail("expected table tools mode")
+  }
 }
 
 ///|
@@ -821,6 +908,34 @@ test "markdown editor target bar renders contextual controls" {
   assert_true(
     image.any(command => {
       command is @core.DrawCommand::DrawText({ text: "Image src", .. })
+    }),
+  )
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  app.set_selection(26, None)
+  let table = app.runtime(width=980.0, height=700.0).draw_commands()
+  assert_true(
+    table.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Table tools", .. })
+    }),
+  )
+  assert_true(
+    table.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "+Row", .. })
+    }),
+  )
+  assert_true(
+    table.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "+Col", .. })
+    }),
+  )
+  assert_true(
+    table.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "-Col", .. })
+    }),
+  )
+  assert_true(
+    table.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "-Row", .. })
     }),
   )
 }
@@ -1398,6 +1513,95 @@ test "markdown editor tab moves through table cells" {
 }
 
 ///|
+test "markdown editor enter inserts table row below current cell" {
+  let source = "| A | B |\n| --- | --- |\n| 1 | 2 |"
+  let inserted = markdown_editor_transform_input(source, 30, None, "\n").unwrap()
+  inspect(inserted.text, content="| A | B |\n| --- | --- |\n| 1 | 2 |\n|  |  |")
+  inspect(inserted.caret, content="39")
+  let middle = markdown_editor_transform_input(source, 26, None, "\n").unwrap()
+  inspect(middle.text, content="| A | B |\n| --- | --- |\n| 1 | 2 |\n|  |  |")
+  inspect(middle.caret, content="36")
+}
+
+///|
+test "markdown editor command inserts table row below current cell" {
+  let source = "| A | B |\n| --- | --- |\n| 1 | 2 |"
+  let inserted = markdown_editor_apply_command_at(
+    source,
+    InsertTableRow,
+    Some({ caret: 30, selection: None }),
+  )
+  inspect(
+    inserted.source,
+    content="| A | B |\n| --- | --- |\n| 1 | 2 |\n|  |  |",
+  )
+  inspect(inserted.caret, content="39")
+}
+
+///|
+test "markdown editor command inserts table column after current cell" {
+  let source = "| A | B |\n| --- | --- |\n| 1 | 2 |"
+  let inserted = markdown_editor_apply_command_at(
+    source,
+    InsertTableColumn,
+    Some({ caret: 30, selection: None }),
+  )
+  inspect(
+    inserted.source,
+    content="| A | B |  |\n| --- | --- | --- |\n| 1 | 2 |  |",
+  )
+  inspect(inserted.caret, content="35")
+  let middle = markdown_editor_apply_command_at(
+    source,
+    InsertTableColumn,
+    Some({ caret: 26, selection: None }),
+  )
+  inspect(
+    middle.source,
+    content="| A |  | B |\n| --- | --- | --- |\n| 1 |  | 2 |",
+  )
+  inspect(middle.caret, content="31")
+}
+
+///|
+test "markdown editor command deletes current table row" {
+  let source = "| A | B |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |"
+  let deleted = markdown_editor_apply_command_at(
+    source,
+    DeleteTableRow,
+    Some({ caret: 30, selection: None }),
+  )
+  inspect(deleted.source, content="| A | B |\n| --- | --- |\n| 3 | 4 |")
+  inspect(deleted.caret, content="23")
+  let cleared = markdown_editor_apply_command_at(
+    "| A | B |\n| --- | --- |\n| 1 | 2 |",
+    DeleteTableRow,
+    Some({ caret: 30, selection: None }),
+  )
+  inspect(cleared.source, content="| A | B |\n| --- | --- |\n|  |  |")
+  inspect(cleared.caret, content="26")
+}
+
+///|
+test "markdown editor command deletes current table column" {
+  let source = "| A | B | C |\n| --- | --- | --- |\n| 1 | 2 | 3 |"
+  let deleted = markdown_editor_apply_command_at(
+    source,
+    DeleteTableColumn,
+    Some({ caret: 40, selection: None }),
+  )
+  inspect(deleted.source, content="| A | C |\n| --- | --- |\n| 1 | 3 |")
+  inspect(deleted.caret, content="2")
+  let cleared = markdown_editor_apply_command_at(
+    "| A |\n| --- |\n| 1 |",
+    DeleteTableColumn,
+    Some({ caret: 16, selection: None }),
+  )
+  inspect(cleared.source, content="|  |\n| --- |\n|  |")
+  inspect(cleared.caret, content="3")
+}
+
+///|
 test "markdown editor multiline paste continues block context" {
   let bullet = markdown_editor_transform_input("- one", 5, None, " two\nthree").unwrap()
   inspect(bullet.text, content="- one two\n- three")
@@ -1718,6 +1922,115 @@ test "markdown editor runtime enter continues bullet list" {
     @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Enter")),
   )
   inspect(app.document(), content="- item\n- ")
+}
+
+///|
+test "markdown editor runtime enter inserts table row" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  let mut target : @core.Rect? = None
+  for command in runtime.draw_commands() {
+    match command {
+      @core.DrawCommand::DrawText({ text: "2", frame, .. }) =>
+        target = Some(frame)
+      _ => ()
+    }
+  }
+  guard target is Some(frame) else { fail("expected rendered table cell") }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=frame.origin.x + frame.size.width / 2.0,
+          y=frame.origin.y + frame.size.height / 2.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Enter")),
+  )
+  inspect(
+    app.document(),
+    content="| A | B |\n| --- | --- |\n| 1 | 2 |\n|  |  |",
+  )
+  inspect(runtime.focused_text_input().caret, content="39")
+}
+
+///|
+test "markdown editor runtime shortcut inserts table column" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  app.set_selection(30, None)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="=",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  inspect(
+    app.document(),
+    content="| A | B |  |\n| --- | --- | --- |\n| 1 | 2 |  |",
+  )
+}
+
+///|
+test "markdown editor runtime shortcut inserts table row" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  app.set_selection(30, None)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="Enter",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  inspect(
+    app.document(),
+    content="| A | B |\n| --- | --- |\n| 1 | 2 |\n|  |  |",
+  )
+}
+
+///|
+test "markdown editor runtime shortcut deletes table row" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  app.set_selection(30, None)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="-",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="| A | B |\n| --- | --- |\n| 3 | 4 |")
+}
+
+///|
+test "markdown editor runtime shortcut deletes table column" {
+  let app = @app.MarkdownEditorApp::new()
+  app.set_document("| A | B | C |\n| --- | --- | --- |\n| 1 | 2 | 3 |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  app.set_selection(40, None)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="_",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="| A | C |\n| --- | --- |\n| 1 | 3 |")
 }
 
 ///|
@@ -2385,6 +2698,28 @@ test "markdown editor toolbar actions update canonical markdown" {
   assert_true(app.document().contains("![image alt](image.png)"))
   app.apply_action("image-target")
   assert_true(app.document().contains("![image alt](assets/image.png)"))
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  app.set_selection(30, None)
+  app.apply_action("table-row")
+  inspect(
+    app.document(),
+    content="| A | B |\n| --- | --- |\n| 1 | 2 |\n|  |  |",
+  )
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |")
+  app.set_selection(30, None)
+  app.apply_action("table-column")
+  inspect(
+    app.document(),
+    content="| A | B |  |\n| --- | --- | --- |\n| 1 | 2 |  |",
+  )
+  app.set_document("| A | B |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |")
+  app.set_selection(30, None)
+  app.apply_action("table-row-delete")
+  inspect(app.document(), content="| A | B |\n| --- | --- |\n| 3 | 4 |")
+  app.set_document("| A | B | C |\n| --- | --- | --- |\n| 1 | 2 | 3 |")
+  app.set_selection(40, None)
+  app.apply_action("table-column-delete")
+  inspect(app.document(), content="| A | C |\n| --- | --- |\n| 1 | 3 |")
   app.set_document("# Heading")
   app.set_selection(4, None)
   app.apply_action("paragraph")
