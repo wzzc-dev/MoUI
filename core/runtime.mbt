@@ -37,16 +37,16 @@ pub fn AppRuntime::environment(self : AppRuntime) -> Environment {
 }
 
 ///|
-pub fn AppRuntime::text_measurer(self : AppRuntime) -> TextMeasurer {
-  self.state.text_measurer()
+pub fn AppRuntime::text_system(self : AppRuntime) -> TextSystem {
+  self.state.text_system()
 }
 
 ///|
-pub fn AppRuntime::set_text_measurer(
+pub fn AppRuntime::set_text_system(
   self : AppRuntime,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> Unit {
-  self.state.set_text_measurer(text_measurer)
+  self.state.set_text_system(text_system)
 }
 
 ///|

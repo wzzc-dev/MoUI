@@ -5,8 +5,6 @@ fn main {
   @windows_backend.run_app_with_options(
     "MoUI Showcase",
     runtime,
-    options=@windows_backend.WindowsAppOptions::new(
-      text_engine=MoonCosmic,
-    ),
+    options=@windows_backend.WindowsAppOptions::new(text_engine=MoonCosmic),
   )
 }

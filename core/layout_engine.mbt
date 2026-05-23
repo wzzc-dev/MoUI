@@ -181,42 +181,42 @@ fn modified_intrinsic_size(
 ///|
 fn ElementNode::first_baseline(
   self : ElementNode,
-  text_measurer? : TextMeasurer = TextMeasurer::default(),
+  text_system? : TextSystem = TextSystem::fallback(),
 ) -> Double? {
   match self.spec {
     TextSpec(data) =>
       Some(
-        text_measurer.measure_text(
+        text_system.measure_text(
           TextLayoutInput::new(text=data.text, font=data.font),
         ).baseline,
       )
     ButtonSpec(data) =>
       Some(
-        text_measurer.measure_text(
+        text_system.measure_text(
           TextLayoutInput::new(text=data.text, font=data.font),
         ).baseline,
       )
     TextFieldSpec(data) =>
       Some(
-        text_measurer.measure_text(
+        text_system.measure_text(
           TextLayoutInput::new(text=data.value.get(), font=data.font),
         ).baseline,
       )
     RichTextEditorSpec(data) =>
       Some(
-        text_measurer.measure_text(
+        text_system.measure_text(
           TextLayoutInput::new(text=data.value.get(), font=data.font),
         ).baseline,
       )
     CheckboxSpec(data) =>
       Some(
-        text_measurer.measure_text(
+        text_system.measure_text(
           TextLayoutInput::new(text=data.label, font=data.font),
         ).baseline,
       )
     ModifiedSpec(_) | ComponentSpec(_) =>
       if self.children.length() > 0 {
-        self.children[0].first_baseline(text_measurer~)
+        self.children[0].first_baseline(text_system~)
       } else {
         None
       }

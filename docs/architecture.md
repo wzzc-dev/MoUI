@@ -189,7 +189,7 @@ predictably:
 ```
 
 The first paints the background outside the padding; the second paints it
-inside. `font`, `foreground`, `corner_radius`, and the runtime text measurer
+inside. `font`, `foreground`, `corner_radius`, and the runtime text system
 flow through the render environment, while layout and paint modifiers stay as
 ordered wrappers.
 MoUI currently supports background brushes, opacity, shadow, border, offset,

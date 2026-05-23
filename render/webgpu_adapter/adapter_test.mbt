@@ -106,7 +106,7 @@ test "wgpu web renderer fails startup when host lacks capabilities" {
 }
 
 ///|
-test "wgpu web renderer exposes host backed text measurer" {
+test "wgpu web renderer exposes host backed text system" {
   let measured = Ref(0)
   let registered = Ref(0)
   let port = test_port(
@@ -130,16 +130,16 @@ test "wgpu web renderer exposes host backed text measurer" {
     port~,
   )
   let result = renderer
-    .text_measurer()
+    .text_system()
     .measure_text(
       @core.TextLayoutInput::new(text="hi", font=@core.FontSpec::new(size=14.0)),
     )
-  inspect(renderer.text_measurer().id(), content="webgpu-wasm-host")
+  inspect(renderer.text_system().id(), content="webgpu-wasm-host")
   inspect(measured.val, content="1")
   inspect(result.size.width, content="18")
   inspect(result.caret_positions.length(), content="3")
   renderer
-  .text_measurer()
+  .text_system()
   .register_font_data(@core.FontFamily::Name("Acme"), Bytes::make(4, b'\x00'))
   inspect(registered.val, content="1")
 }
@@ -315,7 +315,7 @@ fn test_port(
   capabilities? : WebGpuHostCapabilities = required_capabilities(),
   on_resize? : () -> Unit = () => (),
   on_measure? : (@core.TextLayoutInput) -> @core.TextLayoutResult = input => {
-    @core.measure_text_layout(input)
+    @core.TextSystem::fallback().measure_text(input)
   },
   on_register? : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => (),
   on_submit? : (Array[WebGpuHostCall]) -> Unit = _ => (),

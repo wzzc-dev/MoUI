@@ -53,8 +53,8 @@ pub fn WebRenderer::render(
 }
 
 ///|
-pub fn WebRenderer::text_measurer(self : WebRenderer) -> @core.TextMeasurer {
-  self.renderer.text_measurer()
+pub fn WebRenderer::text_system(self : WebRenderer) -> @core.TextSystem {
+  self.renderer.text_system()
 }
 
 ///|

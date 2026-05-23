@@ -444,10 +444,10 @@ test "coretext parses registered font payload shape" {
 
 ///|
 test "coretext text engine exposes platform engine id" {
-  let measurer = @wgpu_renderer.native_text_measurer_with_engine(
+  let system = @wgpu_renderer.native_text_system_with_engine(
     coretext_text_engine(),
   )
-  inspect(measurer.id(), content="native-wgpu-coretext-system")
+  inspect(system.id(), content="native-wgpu-coretext-system")
 }
 
 ///|

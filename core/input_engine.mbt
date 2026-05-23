@@ -3,7 +3,7 @@ pub fn ElementNode::dispatch_pointer(
   self : ElementNode,
   event : PointerEvent,
   render : RenderNode,
-  text_measurer? : TextMeasurer = TextMeasurer::default(),
+  text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   match self.spec {
     ButtonSpec(data) =>
@@ -30,7 +30,7 @@ pub fn ElementNode::dispatch_pointer(
       { changed: false, activated: false, focused }
     }
     RichTextEditorSpec(data) =>
-      handle_rich_text_editor_pointer(self, data, event, render, text_measurer)
+      handle_rich_text_editor_pointer(self, data, event, render, text_system)
     FlexSpec(_)
     | PaddingSpec(_)
     | ContainerSpec(_)
@@ -42,9 +42,9 @@ pub fn ElementNode::dispatch_pointer(
     | CustomLayoutSpec(_)
     | ComponentSpec(_)
     | SheetSpec(_) =>
-      self.dispatch_pointer_to_children(event, render, text_measurer~)
+      self.dispatch_pointer_to_children(event, render, text_system~)
     ModifiedSpec(data) =>
-      self.dispatch_modified_pointer(data, event, render, text_measurer~)
+      self.dispatch_modified_pointer(data, event, render, text_system~)
     EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
       { changed: false, activated: false, focused: None }
   }
@@ -55,7 +55,7 @@ fn ElementNode::dispatch_pointer_to_children(
   self : ElementNode,
   event : PointerEvent,
   render : RenderNode,
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
@@ -67,7 +67,7 @@ fn ElementNode::dispatch_pointer_to_children(
       let result = self.children[index].dispatch_pointer(
         event,
         render.children[index],
-        text_measurer~,
+        text_system~,
       )
       changed = result.changed
       activated = result.activated
@@ -93,7 +93,7 @@ fn ElementNode::dispatch_modified_pointer(
   data : ModifiedViewSpec,
   event : PointerEvent,
   render : RenderNode,
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> ElementEventResult {
   match data.modifier {
     DisabledModifier(true) =>
@@ -102,7 +102,7 @@ fn ElementNode::dispatch_modified_pointer(
       let child_result = self.dispatch_pointer_to_children(
         event,
         render,
-        text_measurer~,
+        text_system~,
       )
       if child_result.activated {
         child_result
@@ -126,7 +126,7 @@ fn ElementNode::dispatch_modified_pointer(
         }
       }
     }
-    _ => self.dispatch_pointer_to_children(event, render, text_measurer~)
+    _ => self.dispatch_pointer_to_children(event, render, text_system~)
   }
 }
 
@@ -192,7 +192,7 @@ fn handle_rich_text_editor_pointer(
   data : RichTextEditorViewSpec,
   event : PointerEvent,
   render : RenderNode,
-  text_measurer : TextMeasurer,
+  text_system : TextSystem,
 ) -> ElementEventResult {
   let inside = render.frame.contains(event.position)
   match event.phase {
@@ -205,7 +205,7 @@ fn handle_rich_text_editor_pointer(
                 data,
                 event.position,
                 render.frame,
-                text_measurer,
+                text_system,
               ) {
               Some(offset) => handler(offset)
               None => ()
@@ -216,7 +216,7 @@ fn handle_rich_text_editor_pointer(
           data,
           event.position,
           render.frame,
-          text_measurer,
+          text_system,
         )
         element.caret = caret
         element.selection = None
@@ -235,7 +235,7 @@ fn handle_rich_text_editor_pointer(
             data,
             event.position,
             render.frame,
-            text_measurer,
+            text_system,
           )
           let next_selection : TextRange? = if caret == anchor {
             None

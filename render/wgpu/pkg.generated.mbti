@@ -23,9 +23,9 @@ pub fn native_platform_text_engine_with_fallback(NativePlatformTextProvider, fal
 
 pub fn native_surface_contract() -> @render.WgpuSurfaceContract
 
-pub fn native_text_measurer() -> @core.TextMeasurer
+pub fn native_text_system() -> @core.TextSystem
 
-pub fn native_text_measurer_with_engine(NativeTextEngine) -> @core.TextMeasurer
+pub fn native_text_system_with_engine(NativeTextEngine) -> @core.TextSystem
 
 // Errors
 
@@ -96,7 +96,7 @@ pub fn WgpuRenderer::last_batch_count(Self) -> Int
 pub fn WgpuRenderer::present_count(Self) -> Int
 pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
 pub fn WgpuRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit
-pub fn WgpuRenderer::text_measurer(Self) -> @core.TextMeasurer
+pub fn WgpuRenderer::text_system(Self) -> @core.TextSystem
 pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
 
 // Type aliases

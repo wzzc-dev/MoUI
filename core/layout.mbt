@@ -24,13 +24,13 @@ pub fn layout_spec(spec : ViewSpec, bounds : Rect) -> LayoutResult {
 }
 
 ///|
-pub fn layout_spec_with_text_measurer(
+pub fn layout_spec_with_text_system(
   spec : ViewSpec,
   bounds : Rect,
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> LayoutResult {
   mount_view_spec(spec)
-  .place_with_text_measurer(bounds, text_measurer~)
+  .place_with_text_system(bounds, text_system~)
   .to_layout_result()
 }
 
@@ -50,17 +50,14 @@ pub fn ElementNode::measure(
   self : ElementNode,
   constraints : Constraints,
 ) -> MeasuredNode {
-  self.measure_with_text_measurer(
-    constraints,
-    text_measurer=TextMeasurer::default(),
-  )
+  self.measure_with_text_system(constraints, text_system=TextSystem::fallback())
 }
 
 ///|
-pub fn ElementNode::measure_with_text_measurer(
+pub fn ElementNode::measure_with_text_system(
   self : ElementNode,
   constraints : Constraints,
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> MeasuredNode {
   if !self.dirty.needs_layout &&
     self.cached_measure_constraints == Some(constraints) {
@@ -73,13 +70,13 @@ pub fn ElementNode::measure_with_text_measurer(
   let children : Array[MeasuredNode] = []
   for child in self.children {
     children.push(
-      child.measure_with_text_measurer(child_constraints, text_measurer~),
+      child.measure_with_text_system(child_constraints, text_system~),
     )
   }
   let measured = {
     element_id: self.id,
     size: constraints.constrain(
-      self.measured_size_from_children(children, text_measurer~),
+      self.measured_size_from_children(children, text_system~),
     ),
     children,
   }
@@ -91,14 +88,14 @@ pub fn ElementNode::measure_with_text_measurer(
 
 ///|
 pub fn ElementNode::place(self : ElementNode, bounds : Rect) -> PlacedNode {
-  self.place_with_text_measurer(bounds, text_measurer=TextMeasurer::default())
+  self.place_with_text_system(bounds, text_system=TextSystem::fallback())
 }
 
 ///|
-pub fn ElementNode::place_with_text_measurer(
+pub fn ElementNode::place_with_text_system(
   self : ElementNode,
   bounds : Rect,
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> PlacedNode {
   if !self.dirty.needs_layout && self.cached_place_frame == Some(bounds) {
     match self.cached_placed {
@@ -107,11 +104,11 @@ pub fn ElementNode::place_with_text_measurer(
     }
   }
   let constraints = Constraints::tight(bounds.size)
-  let measured = self.measure_with_text_measurer(constraints, text_measurer~)
-  let placed = self.place_measured_with_text_measurer(
+  let measured = self.measure_with_text_system(constraints, text_system~)
+  let placed = self.place_measured_with_text_system(
     measured,
     bounds,
-    text_measurer~,
+    text_system~,
   )
   self.cached_place_frame = Some(bounds)
   self.cached_placed = Some(placed)
@@ -119,21 +116,21 @@ pub fn ElementNode::place_with_text_measurer(
 }
 
 ///|
-fn ElementNode::place_measured_with_text_measurer(
+fn ElementNode::place_measured_with_text_system(
   self : ElementNode,
   measured : MeasuredNode,
   frame : Rect,
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> PlacedNode {
-  let child_frames = self.child_frames_for_place(frame, text_measurer~)
+  let child_frames = self.child_frames_for_place(frame, text_system~)
   let children : Array[PlacedNode] = []
   for index, child in self.children {
     if index < child_frames.length() && index < measured.children.length() {
       children.push(
-        child.place_measured_with_text_measurer(
+        child.place_measured_with_text_system(
           measured.children[index],
           child_frames[index],
-          text_measurer~,
+          text_system~,
         ),
       )
     }
@@ -145,7 +142,7 @@ fn ElementNode::place_measured_with_text_measurer(
 fn ElementNode::measured_size_from_children(
   self : ElementNode,
   children : Array[MeasuredNode],
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> Size {
   match self.spec {
     EmptySpec => Size::new(width=0.0, height=0.0)
@@ -223,12 +220,12 @@ fn ElementNode::measured_size_from_children(
         constraints: Constraints::unbounded(),
         child_sizes: children.map(child => child.size),
         child_baselines: self.children.map(child => {
-          child.first_baseline(text_measurer~)
+          child.first_baseline(text_system~)
         }),
         child_priorities: self.children.map(child => child.layout_priority()),
         child_alignment_guides: custom_alignment_guides(
           children.map(child => child.size),
-          self.children.map(child => child.first_baseline(text_measurer~)),
+          self.children.map(child => child.first_baseline(text_system~)),
         ),
         cache: data.cache,
         cache_key: custom_layout_cache_key(
@@ -293,7 +290,7 @@ fn frame_modifier_constraints_for_measure(
 fn ElementNode::child_frames_for_place(
   self : ElementNode,
   frame : Rect,
-  text_measurer~ : TextMeasurer,
+  text_system~ : TextSystem,
 ) -> Array[Rect] {
   match self.taffy_child_frames_for_place(frame) {
     Some(frames) => return frames
@@ -350,12 +347,12 @@ fn ElementNode::child_frames_for_place(
         measured_size: frame.size,
         child_sizes: self.children.map(child => child.intrinsic_size()),
         child_baselines: self.children.map(child => {
-          child.first_baseline(text_measurer~)
+          child.first_baseline(text_system~)
         }),
         child_priorities: self.children.map(child => child.layout_priority()),
         child_alignment_guides: custom_alignment_guides(
           self.children.map(child => child.intrinsic_size()),
-          self.children.map(child => child.first_baseline(text_measurer~)),
+          self.children.map(child => child.first_baseline(text_system~)),
         ),
         cache: data.cache,
         cache_key: custom_layout_cache_key(

@@ -71,7 +71,8 @@ before the renderer tries the composed Cosmic fallback.
 `backend/macos` chooses between them through
 `run_app_with_options(..., options=MacosAppOptions::new(text_engine=...))` when
 creating the generic native WGPU renderer. `core` still owns only the neutral
-`FontSpec` and fallback measurer; it does not name concrete macOS font files.
+`FontSpec`, `TextSystem` contract, and deterministic fallback text system; it
+does not name concrete macOS font files.
 
 Packages that use `backend/macos` must link the macOS frameworks required by
 the Objective-C stubs during the final native link step. Missing surface/window

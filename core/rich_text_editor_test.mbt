@@ -596,7 +596,7 @@ test "rich text editor caret uses source mapped visual text" {
   let font = FontSpec::new(size=16.0, weight=400)
   let source_end = input.frame.origin.x +
     14.0 +
-    TextMeasurer::default().measure_text(
+    TextSystem::fallback().measure_text(
       TextLayoutInput::new(text="# Title", font~),
     ).size.width
   assert_true(mapped_x < source_end)
@@ -804,7 +804,7 @@ test "rich text editor selection highlight uses mapped visual range" {
   match highlight {
     Some(rect) => {
       let font = FontSpec::new(size=16.0, weight=400)
-      let source_prefix_width = TextMeasurer::default().measure_text(
+      let source_prefix_width = TextSystem::fallback().measure_text(
           TextLayoutInput::new(text="# Ti", font~),
         ).size.width
       assert_true(rect.size.width < source_prefix_width)

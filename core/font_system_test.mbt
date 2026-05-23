@@ -23,9 +23,9 @@ test "font family stack defaults and css fallback order" {
 }
 
 ///|
-test "runtime text measurer drives focused text input caret geometry" {
+test "runtime text system drives focused text input caret geometry" {
   let calls = Ref(0)
-  let measurer = TextMeasurer::new(id="test-fixed-advance", measure=input => {
+  let system = TextSystem::new(id="test-fixed-advance", measure=input => {
     calls.val = calls.val + 1
     let length = input.text.to_array().length()
     let carets : Array[Double] = []
@@ -43,7 +43,7 @@ test "runtime text measurer drives focused text input caret geometry" {
     root=test_text_field(state.binding()),
     size=Size::new(width=160.0, height=60.0),
   )
-  runtime.set_text_measurer(measurer)
+  runtime.set_text_system(system)
   runtime.dispatch_event(
     Pointer(
       PointerEvent::new(
@@ -60,10 +60,10 @@ test "runtime text measurer drives focused text input caret geometry" {
 }
 
 ///|
-test "runtime text measurer drives custom layout baselines" {
+test "runtime text system drives custom layout baselines" {
   let measured_baseline : Ref[Double?] = Ref(None)
   let placed_baseline : Ref[Double?] = Ref(None)
-  let measurer = TextMeasurer::new(id="test-baseline", measure=input => {
+  let system = TextSystem::new(id="test-baseline", measure=input => {
     let length = input.text.to_array().length()
     let carets : Array[Double] = []
     for index in 0..<(length + 1) {
@@ -99,17 +99,17 @@ test "runtime text measurer drives custom layout baselines" {
     size=Size::new(width=80.0, height=30.0),
   )
   ignore(
-    layout_spec_with_text_measurer(
+    layout_spec_with_text_system(
       spec,
       Rect::new(x=0.0, y=0.0, width=80.0, height=30.0),
-      text_measurer=measurer,
+      text_system=system,
     ),
   )
   match measured_baseline.val {
     Some(value) => inspect(value, content="23")
     None => fail("expected injected baseline in custom measure")
   }
-  runtime.set_text_measurer(measurer)
+  runtime.set_text_system(system)
   ignore(runtime.build_draw_commands())
   match placed_baseline.val {
     Some(value) => inspect(value, content="23")
