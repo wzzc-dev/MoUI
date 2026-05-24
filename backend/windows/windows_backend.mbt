@@ -17,6 +17,13 @@ extern "C" fn windows_clipboard_read_text_bytes() -> Bytes = "moui_windows_clipb
 extern "C" fn windows_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_windows_clipboard_write_text"
 
 ///|
+#borrow(url)
+extern "C" fn windows_open_url_bytes(url : Bytes) -> Int = "moui_windows_open_url"
+
+///|
+extern "C" fn windows_system_theme_is_light() -> Int = "moui_windows_system_theme_is_light"
+
+///|
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
   contract_ready : Bool
@@ -116,18 +123,48 @@ pub fn windows_accessibility_bridge(
 }
 
 ///|
-pub fn windows_service_bridge() -> @host.HostServiceBridge {
+pub fn windows_system_theme() -> @core.ColorScheme {
+  if windows_system_theme_is_light() != 0 {
+    @core.ColorScheme::Light
+  } else {
+    @core.ColorScheme::Dark
+  }
+}
+
+///|
+pub fn windows_service_bridge(
+  system_theme? : @core.ColorScheme = windows_system_theme(),
+  open_url? : (String) -> Bool = dispatch_windows_open_url,
+) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
-    capabilities=@host.HostServiceCapabilities::new(clipboard=true),
+    capabilities=@host.HostServiceCapabilities::new(
+      clipboard=true,
+      open_url=true,
+      system_theme=true,
+    ),
     handle=request => {
       match request {
         @host.HostServiceRequest::Clipboard(clipboard_request) =>
           dispatch_windows_clipboard(clipboard_request)
+        @host.HostServiceRequest::OpenUrl(url) =>
+          if open_url(url) {
+            @host.HostServiceResponse::UrlOpened
+          } else {
+            @host.HostServiceResponse::Unavailable("open URL failed")
+          }
+        @host.HostServiceRequest::QuerySystemTheme =>
+          @host.HostServiceResponse::SystemTheme(system_theme)
         _ =>
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
   )
+}
+
+///|
+fn dispatch_windows_open_url(url : String) -> Bool {
+  let bytes = @utf8.encode(url[:], bom=false)
+  windows_open_url_bytes(bytes) != 0
 }
 
 ///|

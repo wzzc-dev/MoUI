@@ -16,6 +16,7 @@ import {
 supported_targets = "native"
 
 options(
+  link: { "native": { "cc-link-flags": "-lshell32 -ladvapi32" } },
   "native-stub": [ "win32_surface_host.c" ],
   targets: { },
 )

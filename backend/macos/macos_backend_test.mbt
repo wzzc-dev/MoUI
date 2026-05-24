@@ -49,12 +49,17 @@ test "macos accessibility bridge dispatches semantics actions" {
 
 ///|
 test "macos service bridge exposes platform clipboard, open url, and system theme" {
-  let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Dark)
+  let opened_url = Ref("")
+  let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Dark, open_url=url => {
+    opened_url.val = url
+    true
+  })
   match
     bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
     @host.HostServiceResponse::UrlOpened => ()
-    _ => fail("expected URL opened scaffold response")
+    _ => fail("expected URL opened response")
   }
+  inspect(opened_url.val, content="https://example.test")
   match bridge.dispatch(@host.HostServiceRequest::QuerySystemTheme) {
     @host.HostServiceResponse::SystemTheme(@core.ColorScheme::Dark) => ()
     _ => fail("expected dark system theme")
@@ -75,6 +80,18 @@ test "macos service bridge exposes platform clipboard, open url, and system them
     @host.HostServiceResponse::ClipboardText(text) =>
       inspect(text, content="MoUI macOS clipboard smoke")
     _ => fail("expected native clipboard read")
+  }
+}
+
+///|
+test "macos service bridge reports failed open url" {
+  let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Light, open_url=_url => {
+    false
+  })
+  match bridge.dispatch(@host.HostServiceRequest::OpenUrl("not-a-url")) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="open URL failed")
+    _ => fail("expected failed open URL response")
   }
 }
 

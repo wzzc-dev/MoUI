@@ -16,9 +16,11 @@ pub fn macos_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dis
 
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
 
-pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme) -> @host.HostServiceBridge
+pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool) -> @host.HostServiceBridge
 
 pub fn macos_surface_host_info() -> @wgpu.SurfaceHostInfo
+
+pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
 pub fn run_app(String, @wzzc-dev/moui/core.AppRuntime) -> Unit
 

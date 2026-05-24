@@ -14,13 +14,36 @@ test "windows backend converts resize event" {
 }
 
 ///|
-test "windows service bridge exposes clipboard contract" {
-  let bridge = windows_service_bridge()
+test "windows service bridge exposes clipboard open url and system theme contracts" {
+  let opened_url = Ref("")
+  let bridge = windows_service_bridge(system_theme=@core.ColorScheme::Dark, open_url=url => {
+    opened_url.val = url
+    true
+  })
   inspect(bridge.capabilities.clipboard, content="true")
+  inspect(bridge.capabilities.open_url, content="true")
+  inspect(bridge.capabilities.system_theme, content="true")
+  match
+    bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
+    @host.HostServiceResponse::UrlOpened => ()
+    _ => fail("expected URL opened response")
+  }
+  inspect(opened_url.val, content="https://example.test")
   match bridge.dispatch(@host.HostServiceRequest::QuerySystemTheme) {
+    @host.HostServiceResponse::SystemTheme(@core.ColorScheme::Dark) => ()
+    _ => fail("expected Windows system theme")
+  }
+}
+
+///|
+test "windows service bridge reports failed open url" {
+  let bridge = windows_service_bridge(system_theme=@core.ColorScheme::Light, open_url=_url => {
+    false
+  })
+  match bridge.dispatch(@host.HostServiceRequest::OpenUrl("not-a-url")) {
     @host.HostServiceResponse::Unavailable(message) =>
-      inspect(message, content="system theme service is unavailable")
-    _ => fail("expected unavailable Windows system theme service")
+      inspect(message, content="open URL failed")
+    _ => fail("expected failed open URL response")
   }
 }
 

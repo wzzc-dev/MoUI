@@ -98,3 +98,42 @@ int32_t moui_macos_clipboard_write_text(moonbit_bytes_t text) {
   BOOL ok = [pasteboard setString:string forType:NSPasteboardTypeString];
   return ok ? 1 : 0;
 }
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_open_url(moonbit_bytes_t url) {
+  int32_t url_len = (int32_t)Moonbit_array_length(url);
+  if (url_len <= 0) {
+    return 0;
+  }
+  NSString *string = [[NSString alloc] initWithBytes:(const void *)url
+                                             length:(NSUInteger)url_len
+                                           encoding:NSUTF8StringEncoding];
+  if (string == nil) {
+    return 0;
+  }
+  NSURL *ns_url = [NSURL URLWithString:string];
+  if (ns_url == nil) {
+    return 0;
+  }
+  BOOL ok = [[NSWorkspace sharedWorkspace] openURL:ns_url];
+  return ok ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_system_theme_is_dark(void) {
+  NSAppearance *appearance = nil;
+  if (NSApp != nil) {
+    appearance = [NSApp effectiveAppearance];
+  }
+  if (appearance == nil) {
+    appearance = [NSAppearance currentDrawingAppearance];
+  }
+  if (appearance == nil) {
+    appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+  }
+  NSString *match = [appearance bestMatchFromAppearancesWithNames:@[
+    NSAppearanceNameAqua,
+    NSAppearanceNameDarkAqua,
+  ]];
+  return [match isEqualToString:NSAppearanceNameDarkAqua] ? 1 : 0;
+}

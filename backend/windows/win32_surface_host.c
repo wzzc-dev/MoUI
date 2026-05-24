@@ -4,6 +4,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
 #include <moonbit.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -88,4 +89,54 @@ int32_t moui_windows_clipboard_write_text(moonbit_bytes_t text) {
   }
   CloseClipboard();
   return 1;
+}
+
+static wchar_t *moui_windows_utf8_to_wide(moonbit_bytes_t text) {
+  int32_t text_len = (int32_t)Moonbit_array_length(text);
+  if (text_len <= 0) {
+    return NULL;
+  }
+  int32_t wide_len = MultiByteToWideChar(CP_UTF8, 0, (LPCCH)text, text_len, NULL, 0);
+  if (wide_len <= 0) {
+    return NULL;
+  }
+  wchar_t *wide = (wchar_t *)calloc((size_t)wide_len + 1, sizeof(wchar_t));
+  if (wide == NULL) {
+    return NULL;
+  }
+  if (MultiByteToWideChar(CP_UTF8, 0, (LPCCH)text, text_len, wide, wide_len) <= 0) {
+    free(wide);
+    return NULL;
+  }
+  wide[wide_len] = L'\0';
+  return wide;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_open_url(moonbit_bytes_t url) {
+  wchar_t *wide = moui_windows_utf8_to_wide(url);
+  if (wide == NULL) {
+    return 0;
+  }
+  HINSTANCE result = ShellExecuteW(NULL, L"open", wide, NULL, NULL, SW_SHOWNORMAL);
+  free(wide);
+  return ((uintptr_t)result > 32) ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_system_theme_is_light(void) {
+  DWORD value = 1;
+  DWORD value_size = sizeof(value);
+  LSTATUS status = RegGetValueW(
+      HKEY_CURRENT_USER,
+      L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+      L"AppsUseLightTheme",
+      RRF_RT_REG_DWORD,
+      NULL,
+      &value,
+      &value_size);
+  if (status != ERROR_SUCCESS) {
+    return 1;
+  }
+  return value != 0 ? 1 : 0;
 }
