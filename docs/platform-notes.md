@@ -16,9 +16,11 @@ windows, focused windows, close requests, closed-window cleanup, and per-window
 surface metrics so future multi-window platform hosts do not duplicate lifecycle
 state machines. `HostWindowRequestQueue` is the matching platform-neutral
 request channel for opening, focusing, closing, resizing, minimizing, showing,
-and changing the primary window; active hosts do not yet consume the queue, but
-new multi-window backends should drain it at the platform edge and apply accepted
-requests through `HostWindowRegistry`.
+and changing the primary window. The active Web, macOS, and Windows hosts accept
+a shared queue through `run_app_with_window_requests` and drain current-window
+focus, close, resize, minimize, show, and set-primary requests at the platform
+edge. `OpenWindow` requests are still rejected until the hosts manage multiple
+platform windows and renderer instances.
 The current Web, macOS, and Windows entrypoints still create one primary window,
 but they allocate that window through the registry, apply `HostEvent::Resized`,
 focus, and close events to it, and close/remove the record during host disposal.

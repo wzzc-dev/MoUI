@@ -17,6 +17,7 @@ struct WebApp {
   text_input_session : @host.TextInputSession
   services : @host.HostServiceBridge
   async_services : @host.HostServiceAsyncQueue
+  window_requests : @host.HostWindowRequestQueue
   windows : @host.HostWindowRegistry
   mut window_id : @host.HostWindowId?
   mut renderer : WebRenderer?
@@ -56,6 +57,19 @@ pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
 
 ///|
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
+  run_app_with_window_requests(
+    title,
+    runtime,
+    @host.HostWindowRequestQueue::new(),
+  )
+}
+
+///|
+pub fn run_app_with_window_requests(
+  title : String,
+  runtime : @core.AppRuntime,
+  window_requests : @host.HostWindowRequestQueue,
+) -> Unit {
   let event_loop = @window_web.EventLoop::new()
   event_loop.set_control_flow(@window_core.ControlFlow::Poll)
   let async_services = @host.HostServiceAsyncQueue::new()
@@ -83,6 +97,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
     text_input_session: @host.TextInputSession::new(),
     services,
     async_services,
+    window_requests,
     windows: @host.HostWindowRegistry::new(),
     window_id: None,
     renderer: None,
@@ -199,9 +214,13 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
 ///|
 pub impl @window_web.ApplicationHandler for WebApp with new_events(
   self,
-  _event_loop,
+  event_loop,
   _cause,
 ) {
+  self.drain_window_requests(event_loop)
+  if event_loop.exiting() {
+    return ()
+  }
   self.drain_async_host_services()
   match self.renderer {
     Some(_) => if self.runtime.needs_redraw() { self.redraw() }
@@ -216,6 +235,10 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
   _window_id,
   event,
 ) {
+  self.drain_window_requests(event_loop)
+  if event_loop.exiting() {
+    return ()
+  }
   match event {
     @window_core.WindowEvent::CloseRequested => {
       self.dispatch_window_event(event)
@@ -339,6 +362,82 @@ fn WebApp::drain_async_host_services(self : WebApp) -> Unit {
   }
   for completion in self.async_services.drain_completed() {
     ignore(self.driver.dispatch_service_completion(completion, self.services))
+  }
+}
+
+///|
+fn WebApp::drain_window_requests(
+  self : WebApp,
+  event_loop : @window_web.ActiveEventLoop,
+) -> Unit {
+  for request in self.window_requests.drain() {
+    ignore(self.apply_window_request(event_loop, request))
+  }
+}
+
+///|
+fn WebApp::apply_window_request(
+  self : WebApp,
+  event_loop : @window_web.ActiveEventLoop,
+  request : @host.HostWindowRequest,
+) -> @host.HostWindowRequestResult {
+  match request {
+    @host.HostWindowRequest::OpenWindow(_) =>
+      @host.HostWindowRequestResult::WindowRejected(
+        "open window requests require multi-window Web host support",
+      )
+    @host.HostWindowRequest::FocusWindow(id) =>
+      self.apply_current_window_request(id, request, window => {
+        window.focus_window()
+      })
+    @host.HostWindowRequest::CloseWindow(id) =>
+      self.apply_current_window_request(id, request, _window => {
+        self.dispose()
+        event_loop.exit()
+      })
+    @host.HostWindowRequest::ResizeWindow(id, metrics) =>
+      self.apply_current_window_request(id, request, window => {
+        ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
+        self.resize_renderer(metrics)
+        window.request_redraw()
+      })
+    @host.HostWindowRequest::MinimizeWindow(id) =>
+      self.apply_current_window_request(id, request, window => {
+        window.set_minimized(true)
+      })
+    @host.HostWindowRequest::ShowWindow(id) =>
+      self.apply_current_window_request(id, request, window => {
+        window.set_minimized(false)
+        window.set_visible(true)
+      })
+    @host.HostWindowRequest::SetPrimaryWindow(id) =>
+      self.apply_current_window_request(id, request, _window => ())
+  }
+}
+
+///|
+fn WebApp::apply_current_window_request(
+  self : WebApp,
+  id : @host.HostWindowId,
+  request : @host.HostWindowRequest,
+  apply : (@window_web.Window) -> Unit,
+) -> @host.HostWindowRequestResult {
+  match (self.window_id, self.window) {
+    (Some(current), Some(window)) =>
+      if current == id {
+        let result = self.windows.apply_request(request)
+        match result {
+          @host.HostWindowRequestResult::WindowRejected(_) => ()
+          _ => apply(window)
+        }
+        result
+      } else {
+        self.windows.apply_request(request)
+      }
+    _ =>
+      @host.HostWindowRequestResult::WindowRejected(
+        "window request has no active Web window",
+      )
   }
 }
 
@@ -467,6 +566,14 @@ fn surface_metrics_from_physical(
   scale_factor : Double,
 ) -> @host.HostSurfaceMetrics {
   @host.surface_metrics_from_physical(size, scale_factor~)
+}
+
+///|
+fn host_metrics_to_dpi_size(metrics : @host.HostSurfaceMetrics) -> @dpi.Size {
+  @dpi.LogicalSize::LogicalSize(
+    metrics.logical_size.width,
+    metrics.logical_size.height,
+  ).into_size()
 }
 
 ///|

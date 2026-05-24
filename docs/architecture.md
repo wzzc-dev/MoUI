@@ -302,9 +302,11 @@ The active Web, macOS, and Windows hosts still expose single-window entrypoints,
 but each one now opens a primary `HostWindowRecord`, applies resize/focus/close
 `HostEvent` values through the registry, and removes the record when the host
 window is disposed. That makes multi-window lifecycle state a shared host
-concern instead of a future platform-specific rewrite. They do not yet consume
-`HostWindowRequestQueue`; it is the shared request channel for the future
-multi-window host API.
+concern instead of a future platform-specific rewrite. They also accept a shared
+`HostWindowRequestQueue` through `run_app_with_window_requests` and drain
+current-window focus, close, resize, minimize, show, and set-primary requests at
+the platform edge. `OpenWindow` requests are explicitly rejected until the hosts
+own multiple platform windows and renderer instances.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
