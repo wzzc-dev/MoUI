@@ -310,6 +310,13 @@ Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
 system-theme requests. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
+Services that cannot finish synchronously, especially browser clipboard reads
+and file dialogs that need a permission or picker callback, can return
+`HostServiceResponse::Pending` through `HostServiceAsyncQueue`. The host drains
+pending requests into an in-flight set at the platform edge, completes them with
+the original request attached, and hands the completion back to
+`HostRuntimeDriver` so runtime-owned effects such as async paste stay on the
+same command path as synchronous services.
 Web, macOS, and Windows entrypoints query that bridge at startup and install
 the reported light/dark scheme into `AppRuntime` before the first host driver
 layout/redraw pass, so initial view builds see the platform color scheme through

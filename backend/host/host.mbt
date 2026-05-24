@@ -89,6 +89,7 @@ pub(all) enum HostServiceRequest {
 ///|
 pub(all) enum HostServiceResponse {
   Unavailable(String)
+  Pending(HostServiceRequestId)
   ClipboardText(String)
   ClipboardWritten
   MenuCommand(@core.CommandIntent)

@@ -79,8 +79,8 @@ Use this skill when editing or reviewing:
 - `style/`: visual token and style compatibility aliases.
 - `views/`: public view constructors returning `@core.ViewSpec`.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
-  window lifecycle registry, text-input session, window-event conversion, and
-  redraw driver.
+  window lifecycle registry, text-input session, window-event conversion,
+  async host-service queue, and redraw driver.
 - `backend/web/`: wasm-gc Web host, canvas constraints, browser runtime bridge,
   and accessibility adapter.
 - `backend/macos/`: AppKit/window host and CAMetalLayer WGPU surface creation.
@@ -194,6 +194,8 @@ moon info
 - Keep platform-specific code inside the platform backend.
 - Normalize through `backend/host` and `HostEvent`.
 - Add or update `backend/host` tests when shared behavior changes.
+- Use `HostServiceAsyncQueue` for permission- or callback-driven services
+  instead of pretending browser/platform async work completed synchronously.
 - Run the affected backend package tests.
 - Update `docs/platform-notes.md` when constraints or setup change.
 

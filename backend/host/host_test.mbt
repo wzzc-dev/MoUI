@@ -731,6 +731,129 @@ test "host service bridge routes registered typed services before fallback" {
 }
 
 ///|
+test "host async service queue tracks pending and completed responses" {
+  let queue = HostServiceAsyncQueue::new()
+  let first = match
+    queue.submit(HostServiceRequest::OpenUrl("https://example.test")) {
+    HostServiceResponse::Pending(id) => id
+    _ => fail("expected pending open-url request")
+  }
+  inspect(first.value, content="1")
+  inspect(queue.pending_count(), content="1")
+  inspect(queue.in_flight_count(), content="0")
+  inspect(queue.outstanding_count(), content="1")
+  inspect(queue.completed_count(), content="0")
+  let pending = queue.drain_pending()
+  inspect(pending.length(), content="1")
+  inspect(queue.pending_count(), content="0")
+  inspect(queue.in_flight_count(), content="1")
+  assert_true(queue.complete(first, HostServiceResponse::UrlOpened))
+  inspect(queue.in_flight_count(), content="0")
+  inspect(queue.completed_count(), content="1")
+  match queue.take_completed(first) {
+    Some({ request: HostServiceRequest::OpenUrl(url), response, .. }) => {
+      inspect(url, content="https://example.test")
+      match response {
+        HostServiceResponse::UrlOpened => ()
+        _ => fail("expected completed open-url response")
+      }
+    }
+    _ => fail("expected completed open-url response")
+  }
+  match pending[0].request {
+    HostServiceRequest::OpenUrl(url) =>
+      inspect(url, content="https://example.test")
+    _ => fail("expected pending open-url request")
+  }
+
+  let second = match
+    queue.submit(
+      HostServiceRequest::FileDialog(
+        HostFileDialogOptions::new(kind=HostFileDialogKind::OpenFile),
+      ),
+    ) {
+    HostServiceResponse::Pending(id) => id
+    _ => fail("expected pending file-dialog request")
+  }
+  assert_true(
+    queue.complete(
+      second,
+      HostServiceResponse::FileDialogSelection(["/tmp/note.md"]),
+    ),
+  )
+  inspect(queue.pending_count(), content="0")
+  inspect(queue.completed_count(), content="1")
+  match queue.take_completed(second) {
+    Some({ request: HostServiceRequest::FileDialog(_), response, .. }) =>
+      match response {
+        HostServiceResponse::FileDialogSelection(paths) =>
+          inspect(paths[0], content="/tmp/note.md")
+        _ => fail("expected completed file selection")
+      }
+    _ => fail("expected completed file-dialog response")
+  }
+  inspect(queue.completed_count(), content="0")
+  inspect(
+    queue.reject(HostServiceRequestId::new(404), "missing request"),
+    content="false",
+  )
+}
+
+///|
+test "host driver applies async clipboard read completion to focused text" {
+  let text = @core.State::new("")
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::TextFieldSpec({
+      key: None,
+      value: text.binding(),
+      placeholder: "Type",
+      size: @core.Size::new(width=240.0, height=40.0),
+      font: @core.FontSpec::new(size=16.0, weight=400),
+      foreground: @core.Color::black(),
+      placeholder_color: @core.Color::gray(),
+      background: @core.Brush::solid(@core.Color::white()),
+      border: None,
+      focused_border: None,
+      cursor_color: @core.Color::blue(),
+      corner_radius: 0.0,
+      on_submit: None,
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  let queue = HostServiceAsyncQueue::new()
+  let pending = match
+    queue.submit(HostServiceRequest::Clipboard(HostClipboardRequest::ReadText)) {
+    HostServiceResponse::Pending(id) => id
+    _ => fail("expected pending clipboard read")
+  }
+  assert_true(
+    queue.complete(pending, HostServiceResponse::ClipboardText("later")),
+  )
+  match queue.take_completed(pending) {
+    Some(completion) =>
+      ignore(
+        driver.dispatch_service_completion(
+          completion,
+          HostServiceBridge::unavailable(),
+        ),
+      )
+    None => fail("expected completed clipboard read")
+  }
+  inspect(text.get(), content="later")
+}
+
+///|
 test "host service bridge gates registered services by capability" {
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::none(),

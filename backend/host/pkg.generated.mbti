@@ -87,6 +87,12 @@ pub(all) enum HostClipboardRequest {
   WriteText(String)
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct HostCompletedServiceResponse {
+  id : HostServiceRequestId
+  request : HostServiceRequest
+  response : HostServiceResponse
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct HostCoordinatePolicy {
   input_space : HostCoordinateSpace
   surface_space : HostCoordinateSpace
@@ -163,6 +169,11 @@ pub(all) struct HostInputContract {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostInputContract::new(capabilities? : HostInputCapabilities, coordinates? : HostCoordinatePolicy) -> Self
 
+pub(all) struct HostPendingServiceRequest {
+  id : HostServiceRequestId
+  request : HostServiceRequest
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct HostRuntimeDriver {
   runtime : @wzzc-dev/moui/core.AppRuntime
   scheduler : RedrawScheduler
@@ -172,6 +183,7 @@ pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/core.CommandIntent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
+pub fn HostRuntimeDriver::dispatch_service_completion(Self, HostCompletedServiceResponse, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
 pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
@@ -202,6 +214,24 @@ pub(all) enum HostScrollPhase {
   Ended
   Cancelled
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostServiceAsyncQueue {
+  mut next_value : Int
+  mut pending : Array[HostPendingServiceRequest]
+  mut in_flight : Array[HostPendingServiceRequest]
+  mut completed : Array[HostCompletedServiceResponse]
+}
+pub fn HostServiceAsyncQueue::complete(Self, HostServiceRequestId, HostServiceResponse) -> Bool
+pub fn HostServiceAsyncQueue::completed_count(Self) -> Int
+pub fn HostServiceAsyncQueue::drain_completed(Self) -> Array[HostCompletedServiceResponse]
+pub fn HostServiceAsyncQueue::drain_pending(Self) -> Array[HostPendingServiceRequest]
+pub fn HostServiceAsyncQueue::in_flight_count(Self) -> Int
+pub fn HostServiceAsyncQueue::new() -> Self
+pub fn HostServiceAsyncQueue::outstanding_count(Self) -> Int
+pub fn HostServiceAsyncQueue::pending_count(Self) -> Int
+pub fn HostServiceAsyncQueue::reject(Self, HostServiceRequestId, String) -> Bool
+pub fn HostServiceAsyncQueue::submit(Self, HostServiceRequest) -> HostServiceResponse
+pub fn HostServiceAsyncQueue::take_completed(Self, HostServiceRequestId) -> HostCompletedServiceResponse?
 
 pub(all) struct HostServiceBridge {
   capabilities : HostServiceCapabilities
@@ -254,8 +284,14 @@ pub(all) enum HostServiceRequest {
 pub fn HostServiceRequest::kind(Self) -> HostServiceKind
 pub fn HostServiceRequest::unavailable_message(Self) -> String
 
+pub(all) struct HostServiceRequestId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceRequestId::new(Int) -> Self
+
 pub(all) enum HostServiceResponse {
   Unavailable(String)
+  Pending(HostServiceRequestId)
   ClipboardText(String)
   ClipboardWritten
   MenuCommand(@wzzc-dev/moui/core.CommandIntent)
@@ -263,6 +299,7 @@ pub(all) enum HostServiceResponse {
   UrlOpened
   SystemTheme(@wzzc-dev/moui/core.ColorScheme)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceResponse::is_pending(Self) -> Bool
 
 pub(all) struct HostSurfaceMetrics {
   logical_size : @wzzc-dev/moui/core.Size
