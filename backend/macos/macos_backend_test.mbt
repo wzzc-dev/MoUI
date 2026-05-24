@@ -48,12 +48,26 @@ test "macos accessibility bridge dispatches semantics actions" {
 }
 
 ///|
-test "macos service bridge exposes platform clipboard, open url, and system theme" {
+test "macos service bridge exposes clipboard, open url, and system theme" {
   let opened_url = Ref("")
-  let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Dark, open_url=url => {
-    opened_url.val = url
-    true
-  })
+  let clipboard = Ref("")
+  let bridge = macos_service_bridge(
+    system_theme=@core.ColorScheme::Dark,
+    clipboard=request => {
+      match request {
+        @host.HostClipboardRequest::ReadText =>
+          @host.HostServiceResponse::ClipboardText(clipboard.val)
+        @host.HostClipboardRequest::WriteText(text) => {
+          clipboard.val = text
+          @host.HostServiceResponse::ClipboardWritten
+        }
+      }
+    },
+    open_url=url => {
+      opened_url.val = url
+      true
+    },
+  )
   match
     bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
     @host.HostServiceResponse::UrlOpened => ()

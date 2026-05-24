@@ -73,6 +73,7 @@ struct MacosApp {
   text_input_session : @host.TextInputSession
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
   services : @host.HostServiceBridge
+  window_requests : @host.HostWindowRequestQueue
   windows : @host.HostWindowRegistry
   mut window_id : @host.HostWindowId?
   mut last_pointer : @core.Point
@@ -134,6 +135,7 @@ pub fn macos_system_theme() -> @core.ColorScheme {
 ///|
 pub fn macos_service_bridge(
   system_theme? : @core.ColorScheme = macos_system_theme(),
+  clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_macos_clipboard,
   open_url? : (String) -> Bool = dispatch_macos_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_macos_file_dialog,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_macos_menu,
@@ -149,7 +151,7 @@ pub fn macos_service_bridge(
     handle=request => {
       match request {
         @host.HostServiceRequest::Clipboard(clipboard_request) =>
-          dispatch_macos_clipboard(clipboard_request)
+          clipboard(clipboard_request)
         @host.HostServiceRequest::OpenUrl(url) =>
           if open_url(url) {
             @host.HostServiceResponse::UrlOpened
@@ -223,7 +225,26 @@ fn dispatch_macos_clipboard(
 
 ///|
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
-  run_app_with_options(title, runtime, options=MacosAppOptions::new())
+  run_app_with_options(
+    title,
+    runtime,
+    options=MacosAppOptions::new(),
+    window_requests=@host.HostWindowRequestQueue::new(),
+  )
+}
+
+///|
+pub fn run_app_with_window_requests(
+  title : String,
+  runtime : @core.AppRuntime,
+  window_requests : @host.HostWindowRequestQueue,
+) -> Unit {
+  run_app_with_options(
+    title,
+    runtime,
+    options=MacosAppOptions::new(),
+    window_requests~,
+  )
 }
 
 ///|
@@ -231,6 +252,7 @@ pub fn run_app_with_options(
   title : String,
   runtime : @core.AppRuntime,
   options~ : MacosAppOptions,
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
   let event_loop = @window_macos.EventLoop::EventLoop()
   let services = macos_service_bridge()
@@ -246,6 +268,7 @@ pub fn run_app_with_options(
     text_input_session: @host.TextInputSession::new(),
     text_engine_setting: options.text_engine,
     services,
+    window_requests,
     windows: @host.HostWindowRegistry::new(),
     window_id: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
@@ -446,6 +469,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
       self.renderer = renderer
       self.window = Some(window)
       window.request_redraw()
+      self.drain_window_requests(event_loop)
     }
     None => ()
   }
@@ -458,6 +482,10 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
   _window_id,
   event,
 ) {
+  self.drain_window_requests(event_loop)
+  if event_loop.exiting() {
+    return ()
+  }
   match event {
     @window_core.WindowEvent::CloseRequested => {
       self.dispatch_window_event(event)
@@ -630,6 +658,86 @@ fn MacosApp::dispatch_window_event(
 }
 
 ///|
+fn MacosApp::drain_window_requests(
+  self : MacosApp,
+  event_loop : @window_macos.ActiveEventLoop,
+) -> Unit {
+  for request in self.window_requests.drain() {
+    ignore(self.apply_window_request(event_loop, request))
+  }
+}
+
+///|
+fn MacosApp::apply_window_request(
+  self : MacosApp,
+  event_loop : @window_macos.ActiveEventLoop,
+  request : @host.HostWindowRequest,
+) -> @host.HostWindowRequestResult {
+  match request {
+    @host.HostWindowRequest::OpenWindow(_) =>
+      @host.HostWindowRequestResult::WindowRejected(
+        "open window requests require multi-window macOS host support",
+      )
+    @host.HostWindowRequest::FocusWindow(id) =>
+      self.apply_current_window_request(id, request, window => {
+        window.focus_window()
+      })
+    @host.HostWindowRequest::CloseWindow(id) =>
+      self.apply_current_window_request(id, request, _window => {
+        self.dispose()
+        event_loop.exit()
+      })
+    @host.HostWindowRequest::ResizeWindow(id, metrics) =>
+      self.apply_current_window_request(id, request, window => {
+        ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
+        self.sync_macos_surface_layer(window, metrics)
+        match self.renderer {
+          Some(renderer) => renderer.resize(renderer_metrics_from_host(metrics))
+          None => ()
+        }
+        window.request_redraw()
+      })
+    @host.HostWindowRequest::MinimizeWindow(id) =>
+      self.apply_current_window_request(id, request, window => {
+        window.set_minimized(true)
+      })
+    @host.HostWindowRequest::ShowWindow(id) =>
+      self.apply_current_window_request(id, request, window => {
+        window.set_minimized(false)
+        window.set_visible(true)
+      })
+    @host.HostWindowRequest::SetPrimaryWindow(id) =>
+      self.apply_current_window_request(id, request, _window => ())
+  }
+}
+
+///|
+fn MacosApp::apply_current_window_request(
+  self : MacosApp,
+  id : @host.HostWindowId,
+  request : @host.HostWindowRequest,
+  apply : (@window_macos.Window) -> Unit,
+) -> @host.HostWindowRequestResult {
+  match (self.window_id, self.window) {
+    (Some(current), Some(window)) =>
+      if current == id {
+        let result = self.windows.apply_request(request)
+        match result {
+          @host.HostWindowRequestResult::WindowRejected(_) => ()
+          _ => apply(window)
+        }
+        result
+      } else {
+        self.windows.apply_request(request)
+      }
+    _ =>
+      @host.HostWindowRequestResult::WindowRejected(
+        "window request has no active macOS window",
+      )
+  }
+}
+
+///|
 fn MacosApp::apply_window_lifecycle(
   self : MacosApp,
   host_event : @host.HostEvent,
@@ -705,4 +813,12 @@ fn size_dim_to_int(value : Double) -> Int {
   } else {
     value.to_int()
   }
+}
+
+///|
+fn host_metrics_to_dpi_size(metrics : @host.HostSurfaceMetrics) -> @dpi.Size {
+  @dpi.LogicalSize::LogicalSize(
+    metrics.logical_size.width,
+    metrics.logical_size.height,
+  ).into_size()
 }
