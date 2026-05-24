@@ -65,14 +65,62 @@ fn ShowcaseApp::layout_tile(
   theme : @core.Theme,
   label : String,
 ) -> @core.ViewSpec {
+  self.layout_tile_sized(theme, label, 156.0, 40.0)
+}
+
+///|
+fn ShowcaseApp::layout_tile_sized(
+  self : ShowcaseApp,
+  theme : @core.Theme,
+  label : String,
+  width : Double,
+  height : Double,
+) -> @core.ViewSpec {
   ignore(self)
   @views.surface(
-    @views.text(label, width=120.0, height=24.0)
-    .font(theme.typography.caption)
-    .foreground(theme.palette.foreground),
-    width=132.0,
-    height=36.0,
-    style=@core.SurfaceStyle::default(theme~),
+    @views.row(
+      [
+        layout_tile_marker(theme),
+        @views.text(
+          label,
+          width=max_showcase_double(20.0, width - 34.0),
+          height=max_showcase_double(20.0, height - 12.0),
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+      ],
+      spacing=8.0,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    ),
+    width~,
+    height~,
+    style={
+      ..@core.SurfaceStyle::default(theme~),
+      brush: @core.Brush::solid(
+        theme.palette.surface_variant.multiply_alpha(0.48),
+      ),
+      border: None,
+      padding: @core.Insets::symmetric(horizontal=8.0, vertical=6.0),
+      radius: theme.radius_scale.sm,
+    },
+  )
+}
+
+///|
+fn layout_tile_marker(theme : @core.Theme) -> @core.ViewSpec {
+  @views.custom_layout(
+    measure=constraints => {
+      constraints.constrain(@core.Size::new(width=4.0, height=22.0))
+    },
+    paint=frame => {
+      [
+        @core.DrawCommand::FillRoundedRect(
+          @core.RoundedRect::new(rect=frame, radius=2.0),
+          theme.palette.primary.multiply_alpha(0.72),
+        ),
+      ]
+    },
+    semantics_label="",
   )
 }
 
