@@ -1,16 +1,16 @@
 ---
-name: moui-skill
-description: Use this skill when working on the MoUI MoonBit GUI framework, including architecture, ViewSpec/runtime/layout/state/rendering/backends, platform hosts, examples, renderer capability tracking, documentation, validation commands, or project-specific deliverables.
+name: moui-framework-development-skill
+description: Use this skill when developing or maintaining the MoUI MoonBit GUI framework itself, including core runtime, ViewSpec/layout/state/input, renderers, platform backends, examples used as framework validation, renderer capability tracking, documentation, and validation commands.
 version: 0.1.0
 ---
 
-# MoUI Skill
+# MoUI Framework Development Skill
 
 ## Purpose
 
-This skill is for MoUI-specific work. It complements general MoonBit guidance by
-pinning MoUI's package boundaries, runtime invariants, renderer capability rules,
-platform contract, and validation commands.
+This skill is for developing MoUI itself. It complements general MoonBit
+guidance by pinning MoUI's package boundaries, runtime invariants, renderer
+capability rules, platform contract, and validation commands.
 
 ## When To Use
 
@@ -21,9 +21,11 @@ Use this skill when editing or reviewing:
 - `backend/host`, `backend/web`, `backend/macos`, `backend/windows`, or
   `backend/linux`.
 - `render/`, `render/wgpu`, or `render/webgpu_adapter`.
-- `examples/*/app` shared app logic or platform example entrypoints.
+- `examples/*/app` shared app logic or platform example entrypoints when they
+  are being used as framework examples or validation coverage.
 - `docs/*`, README, roadmap, testing docs, or AI collaboration materials.
-- Renderer capability status, Showcase capability display, or validation scripts.
+- Renderer capability status, Showcase capability display, or validation
+  scripts.
 
 ## First Files To Read
 
@@ -55,14 +57,15 @@ Use this skill when editing or reviewing:
 - Web is `wasm-gc + window/web + browser WebGPU host imports`; there is no
   JS-target fallback.
 - Linux is a scaffold until a real window backend exists.
-- Public API changes require `moon info` and review of `pkg.generated.mbti` diffs.
+- Public API changes require `moon info` and review of `pkg.generated.mbti`
+  diffs.
 - Renderer capability changes require synchronized updates to code, tests, docs,
   and Showcase when visible.
 
 ## Package Map
 
-- `core/`: platform-neutral runtime, view specs, state, layout, input, semantics,
-  rich text editing, draw commands, styles, and theme tokens.
+- `core/`: platform-neutral runtime, view specs, state, layout, input,
+  semantics, rich text editing, draw commands, styles, and theme tokens.
 - `style/`: visual token and style compatibility aliases.
 - `views/`: public view constructors returning `@core.ViewSpec`.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
@@ -71,8 +74,8 @@ Use this skill when editing or reviewing:
   and accessibility adapter.
 - `backend/macos/`: AppKit/window host and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host and HWND WGPU surface creation.
-- `backend/linux/`: explicit scaffold with host contract shape but no real window
-  backend yet.
+- `backend/linux/`: explicit scaffold with host contract shape but no real
+  window backend yet.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/wgpu/`: native wgpu renderer.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
