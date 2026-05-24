@@ -426,6 +426,21 @@ pub(all) struct HostWindowRuntimeSlot {
 pub fn HostWindowRuntimeSlot::from_resolved_open(HostWindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
 pub fn HostWindowRuntimeSlot::new(record~ : HostWindowRecord, runtime~ : @wzzc-dev/moui/core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 
+pub struct HostWindowRuntimeSlots {
+  mut slots : Array[HostWindowRuntimeSlot]
+}
+pub fn HostWindowRuntimeSlots::count(Self) -> Int
+pub fn HostWindowRuntimeSlots::focused_slot(Self) -> HostWindowRuntimeSlot?
+pub fn HostWindowRuntimeSlots::insert(Self, HostWindowRuntimeSlot) -> Bool
+pub fn HostWindowRuntimeSlots::is_empty(Self) -> Bool
+pub fn HostWindowRuntimeSlots::lookup(Self, HostWindowId) -> HostWindowRuntimeSlot?
+pub fn HostWindowRuntimeSlots::new() -> Self
+pub fn HostWindowRuntimeSlots::open_slots(Self) -> Array[HostWindowRuntimeSlot]
+pub fn HostWindowRuntimeSlots::primary_slot(Self) -> HostWindowRuntimeSlot?
+pub fn HostWindowRuntimeSlots::remove(Self, HostWindowId) -> HostWindowRuntimeSlot?
+pub fn HostWindowRuntimeSlots::remove_closed(Self) -> Int
+pub fn HostWindowRuntimeSlots::sync_record(Self, HostWindowRecord) -> Bool
+
 pub(all) struct HostWindowScene {
   scene_id : String
   payload : String

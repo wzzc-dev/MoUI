@@ -605,6 +605,97 @@ test "host window registry resolves scenes before registering opened windows" {
 }
 
 ///|
+test "host window runtime slots manage multiple window drivers" {
+  let registry = HostWindowRegistry::new()
+  let slots = HostWindowRuntimeSlots::new()
+  inspect(slots.is_empty(), content="true")
+  let resolver = HostWindowSceneResolver::new(resolve=request => {
+    HostWindowSceneResolution::SceneResolved(
+      HostWindowSceneInstance::new(
+        request~,
+        runtime=@core.AppRuntime::new_spec(
+          root=@core.ViewSpec::EmptySpec,
+          size=request.metrics.logical_size,
+        ),
+      ),
+    )
+  })
+  let main_request = HostWindowOpenRequest::new(
+    title="Main",
+    scene=HostWindowScene::main(),
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=800.0, height=600.0),
+    ),
+    primary=true,
+  )
+  let main_redraws = Ref(0)
+  let main_slot = match registry.resolve_open_request(main_request, resolver) {
+    HostWindowOpenResolution::OpenResolved(resolved) =>
+      HostWindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
+        main_redraws.val = main_redraws.val + 1
+      })
+    _ => fail("expected main runtime slot")
+  }
+  assert_true(slots.insert(main_slot))
+  inspect(slots.insert(main_slot), content="false")
+
+  let inspector_request = HostWindowOpenRequest::new(
+    title="Inspector",
+    scene=HostWindowScene::new(scene_id="inspector", payload="outline"),
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=360.0, height=480.0),
+    ),
+  )
+  let inspector_redraws = Ref(0)
+  let inspector_slot = match
+    registry.resolve_open_request(inspector_request, resolver) {
+    HostWindowOpenResolution::OpenResolved(resolved) =>
+      HostWindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
+        inspector_redraws.val = inspector_redraws.val + 1
+      })
+    _ => fail("expected inspector runtime slot")
+  }
+  assert_true(slots.insert(inspector_slot))
+  inspect(slots.count(), content="2")
+  match slots.primary_slot() {
+    Some({ record: { title, .. }, .. }) => inspect(title, content="Main")
+    None => fail("expected primary slot")
+  }
+
+  assert_true(registry.focus(inspector_slot.id))
+  match registry.lookup(inspector_slot.id) {
+    Some(record) => assert_true(slots.sync_record(record))
+    None => fail("expected focused inspector record")
+  }
+  match slots.focused_slot() {
+    Some({ id, record, .. }) => {
+      assert_true(id == inspector_slot.id)
+      assert_true(record.phase == HostWindowLifecyclePhase::WindowFocused)
+    }
+    None => fail("expected focused inspector slot")
+  }
+  match slots.lookup(inspector_slot.id) {
+    Some(slot) => slot.driver.request_redraw()
+    None => fail("expected inspector slot")
+  }
+  inspect(inspector_redraws.val, content="1")
+
+  assert_true(registry.close(main_slot.id))
+  match registry.lookup(main_slot.id) {
+    Some(record) => assert_true(slots.sync_record(record))
+    None => fail("expected closed main record")
+  }
+  inspect(slots.remove_closed(), content="1")
+  inspect(slots.count(), content="1")
+  match slots.remove(inspector_slot.id) {
+    Some(slot) => inspect(slot.record.title, content="Inspector")
+    None => fail("expected removed inspector slot")
+  }
+  inspect(slots.count(), content="0")
+  inspect(main_redraws.val, content="0")
+}
+
+///|
 test "host window registry applies platform-neutral window requests" {
   let registry = HostWindowRegistry::new()
   let main = registry.open(
