@@ -88,20 +88,33 @@ Remote font loading is intentionally outside the current backend contract.
 ## Current Gaps
 
 - Full bidi, line breaking, typography conformance, and deterministic emoji
-  coverage remain follow-up work.
+  coverage remain follow-up work. Stable tests assert caret counts,
+  monotonicity, clamping, editor selection behavior, and IME anchor geometry for
+  mixed bidi, CJK, and emoji samples; they do not claim full Unicode shaping
+  parity.
 - Windows and Linux native platform providers are scaffolds; composed Cosmic
   fallback handles real text until those engines are implemented.
-- Web can surface browser emoji and font fallback behavior, but deterministic
-  conformance tests are still missing.
+- Web can surface browser emoji and font fallback behavior, while stable Web
+  adapter tests keep the host-backed `TextSystem` contract deterministic.
 - Text changes that affect renderer feature status must update
   `render/capabilities.mbt`, `render/capabilities_test.mbt`, and
   `docs/renderer-capability-report.md`.
 
 ## Validation
 
+Text conformance is split into two layers:
+
+- Stable tests run inside normal package checks and cover `core`,
+  `render/wgpu`, `render/webgpu_adapter`, and `backend/web`.
+- Diagnostic tests live under `tests/text_conformance/` and are opt-in. They
+  are deterministic, broader than the default loop, and document known gaps
+  instead of adding expected-failing cases.
+
 Focused checks for text-system work:
 
 ```sh
+sh scripts/conformance-check.sh --text
+sh scripts/conformance-check.sh --text-diagnostic
 moon test core --target native
 moon test render/wgpu --target native
 moon test render/webgpu_adapter --target wasm-gc

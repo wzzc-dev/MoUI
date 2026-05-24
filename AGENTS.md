@@ -104,6 +104,8 @@ moon test core --target native
 moon test views --target native
 moon test render/webgpu_adapter --target wasm-gc
 moon test backend/web --target wasm-gc
+sh scripts/conformance-check.sh --text
+sh scripts/conformance-check.sh --text-diagnostic
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 

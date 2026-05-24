@@ -132,6 +132,8 @@ moon test backend/web --target wasm-gc
 moon test render --target native
 moon test render/wgpu --target native
 moon test render/webgpu_adapter --target wasm-gc
+sh scripts/conformance-check.sh --text
+sh scripts/conformance-check.sh --text-diagnostic
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
@@ -183,7 +185,8 @@ moon info
   `render/webgpu_adapter`.
 - Update `docs/text-system.md` and renderer capability docs when shaping,
   provider behavior, embedded fonts, or text gaps change.
-- Run focused core, renderer, Web adapter, backend, or provider tests.
+- Run focused core, renderer, Web adapter, backend, provider, and text
+  conformance tests.
 
 ### Change Backend Event Handling
 

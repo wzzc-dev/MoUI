@@ -12,9 +12,11 @@ RUN_INPUT=false
 RUN_LAYOUT=false
 RUN_RENDER=false
 RUN_PLATFORM_SERVICES=false
+RUN_TEXT=false
+RUN_TEXT_DIAGNOSTIC=false
 
 usage() {
-  printf 'Usage: %s [--input] [--layout] [--render] [--platform-services] [--golden] [--bench] [--platform]\n' "$0"
+  printf 'Usage: %s [--input] [--layout] [--render] [--platform-services] [--text] [--text-diagnostic] [--golden] [--bench] [--platform]\n' "$0"
   printf '\n'
   printf 'Runs MoUI conformance-oriented package checks. With no focused flags, runs the default core/host/render/web/showcase suite. Focused flags select smaller suites. Optional modes add screenshot golden scaffolds, performance smoke builds, or current-platform backend checks.\n'
 }
@@ -45,6 +47,14 @@ while [ "$#" -gt 0 ]; do
     --platform-services)
       RUN_DEFAULT=false
       RUN_PLATFORM_SERVICES=true
+      ;;
+    --text)
+      RUN_DEFAULT=false
+      RUN_TEXT=true
+      ;;
+    --text-diagnostic)
+      RUN_DEFAULT=false
+      RUN_TEXT_DIAGNOSTIC=true
       ;;
     --help|-h)
       usage
@@ -95,6 +105,18 @@ if "$RUN_PLATFORM_SERVICES"; then
   if [ "$(uname -s)" = "Darwin" ]; then
     run moon test backend/macos --target native
   fi
+fi
+
+if "$RUN_TEXT"; then
+  run moon test core --target native
+  run moon test render/wgpu --target native
+  run moon test render/webgpu_adapter --target wasm-gc
+  run moon test backend/web --target wasm-gc
+fi
+
+if "$RUN_TEXT_DIAGNOSTIC"; then
+  run moon test tests/text_conformance/native --target native
+  run moon test tests/text_conformance/web --target wasm-gc
 fi
 
 if "$RUN_GOLDEN"; then

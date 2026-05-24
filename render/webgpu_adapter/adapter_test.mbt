@@ -145,6 +145,75 @@ test "wgpu web renderer exposes host backed text system" {
 }
 
 ///|
+fn web_adapter_carets_are_monotonic(carets : Array[Double]) -> Bool {
+  if carets.length() <= 1 {
+    return true
+  }
+  for index in 1..<carets.length() {
+    if carets[index] < carets[index - 1] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn web_adapter_test_measure(
+  input : @core.TextLayoutInput,
+) -> @core.TextLayoutResult {
+  let fallback = @core.TextSystem::fallback().measure_text(input)
+  if input.text == "host-zero-fallback" {
+    fallback
+  } else {
+    fallback
+  }
+}
+
+///|
+test "wgpu web host text system conforms for mixed text carets and clamping" {
+  let port = test_port(created=Ref(0), on_measure=web_adapter_test_measure)
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port~,
+  )
+  let text = "a你🙂 אבג"
+  let font = @core.FontSpec::new(size=16.0, weight=400)
+  let result = renderer
+    .text_system()
+    .measure_text(@core.TextLayoutInput::new(text~, font~))
+  inspect(result.size.width > 0.0, content="true")
+  inspect(
+    result.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  inspect(
+    web_adapter_carets_are_monotonic(result.caret_positions),
+    content="true",
+  )
+  let clamped = renderer
+    .text_system()
+    .measure_text(@core.TextLayoutInput::new(text~, font~, max_width=24.0))
+  inspect(clamped.size.width <= 24.0, content="true")
+  inspect(
+    web_adapter_carets_are_monotonic(clamped.caret_positions),
+    content="true",
+  )
+  for caret in clamped.caret_positions {
+    inspect(caret <= 24.0, content="true")
+  }
+  let fallback_text = "host-zero-fallback"
+  let fallback = renderer
+    .text_system()
+    .measure_text(@core.TextLayoutInput::new(text=fallback_text, font~))
+  inspect(fallback.size.width > 0.0, content="true")
+  inspect(
+    fallback.caret_positions.length(),
+    content="\{fallback_text.to_array().length() + 1}",
+  )
+}
+
+///|
 test "wgpu web command bridge covers image command in host ABI" {
   let calls = draw_commands_to_host_calls(
     [

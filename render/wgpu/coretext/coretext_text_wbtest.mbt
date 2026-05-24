@@ -332,6 +332,36 @@ test "coretext text engine measures mixed system text" {
 }
 
 ///|
+test "coretext text engine conforms for mixed cjk emoji and bidi text" {
+  let text = "a你🙂 אבג"
+  let input = @core.TextLayoutInput::new(
+    text~,
+    font=@core.FontSpec::new(size=17.0, weight=500),
+    max_width=64.0,
+  )
+  match coretext_measure_layout(input) {
+    Some(layout) => {
+      inspect(layout.size.width > 0.0, content="true")
+      inspect(layout.size.width <= 64.0, content="true")
+      inspect(layout.size.height > 0.0, content="true")
+      inspect(layout.baseline > 0.0, content="true")
+      inspect(
+        layout.caret_positions.length(),
+        content="\{text.to_array().length() + 1}",
+      )
+      inspect(
+        caret_positions_are_monotonic(layout.caret_positions),
+        content="true",
+      )
+      for caret in layout.caret_positions {
+        inspect(caret <= 64.0, content="true")
+      }
+    }
+    None => inspect("missing", content="available")
+  }
+}
+
+///|
 test "coretext text engine rasterizes cjk glyphs with serialized run fonts" {
   let run = @core.TextRun::new(
     text="中文",

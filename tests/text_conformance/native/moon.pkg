@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+  "wzzc-dev/moui/render/wgpu/cosmic_text" @cosmic_text,
+} for "test"
+
+supported_targets = "native"
+
+options(
+  link: { "native": { "cc-link-flags": "-lz" } },
+  targets: { },
+)
