@@ -612,7 +612,13 @@ fn MacosApp::dispatch_window_event(
     ) {
     Some(host_event) => {
       self.apply_window_lifecycle(host_event)
-      ignore(self.driver.dispatch(host_event))
+      match host_event {
+        @host.HostEvent::Keyboard(event) =>
+          ignore(
+            self.driver.dispatch_keyboard_with_services(event, self.services),
+          )
+        _ => ignore(self.driver.dispatch(host_event))
+      }
       self.sync_text_input_session()
     }
     None => ()

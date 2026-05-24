@@ -256,6 +256,13 @@ pub fn default_text_commands() -> Array[ActionCommand] {
       ),
     ),
     ActionCommand::new(
+      intent=CommandIntent::Cut,
+      label="Cut",
+      shortcut=Some(
+        KeyboardShortcut::new(key="x", modifiers=KeyModifiers::new(meta=true)),
+      ),
+    ),
+    ActionCommand::new(
       intent=CommandIntent::Paste,
       label="Paste",
       shortcut=Some(

@@ -41,6 +41,11 @@ constructors and platform event conversion.
   capability flags for clipboard, menus, file dialogs, URL opening, and system
   theme. Unsupported services should return `Unavailable` responses instead of
   leaking platform checks into `core` or `views`.
+- Web, macOS, and Windows route copy/cut/paste keyboard shortcuts through the
+  active service bridge. When that bridge exposes clipboard support
+  (macOS/Windows today), focused text controls read or write the platform
+  clipboard; app action commands still receive the intent when no text command
+  handles it.
 - Secondary mouse-button presses are treated as context-menu requests at the
   host edge. Web, macOS, and Windows skip normal pointer dispatch for those
   events so right-click does not activate regular controls; macOS and Windows

@@ -1222,41 +1222,63 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
   match intent {
     @core.CommandIntent::Copy | @core.CommandIntent::Cut => {
       let result = self.runtime.dispatch_focused_text_command(intent)
-      match result.clipboard_text {
-        Some(text) =>
-          ignore(
-            services.dispatch(
-              HostServiceRequest::Clipboard(
-                HostClipboardRequest::WriteText(text),
+      if result.handled {
+        match result.clipboard_text {
+          Some(text) =>
+            ignore(
+              services.dispatch(
+                HostServiceRequest::Clipboard(
+                  HostClipboardRequest::WriteText(text),
+                ),
               ),
-            ),
-          )
-        None => ()
+            )
+          None => ()
+        }
+        self.request_redraw_if_needed()
+      } else if self.runtime.dispatch_command(intent) {
+        self.request_redraw_if_needed()
       }
-      self.request_redraw_if_needed()
     }
-    @core.CommandIntent::Paste =>
+    @core.CommandIntent::Paste => {
+      let mut handled = false
       match
         services.dispatch(
           HostServiceRequest::Clipboard(HostClipboardRequest::ReadText),
         ) {
         HostServiceResponse::ClipboardText(text) => {
-          ignore(
-            self.runtime.dispatch_focused_text_command(
-              intent,
-              paste_text=Some(text),
-            ),
+          let result = self.runtime.dispatch_focused_text_command(
+            intent,
+            paste_text=Some(text),
           )
+          if result.handled {
+            handled = true
+          }
           self.request_redraw_if_needed()
         }
         _ => ()
       }
+      if !handled && self.runtime.dispatch_command(intent) {
+        self.request_redraw_if_needed()
+      }
+    }
     _ =>
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()
       }
   }
   self.event_result()
+}
+
+///|
+pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
+  self : HostRuntimeDriver,
+  event : @core.KeyboardEvent,
+  services : HostServiceBridge,
+) -> HostEventResult {
+  match keyboard_service_command_intent(event) {
+    Some(intent) => self.dispatch_command_with_services(intent, services)
+    None => self.dispatch(HostEvent::Keyboard(event))
+  }
 }
 
 ///|
@@ -1273,6 +1295,27 @@ pub fn HostRuntimeDriver::show_context_menu(
     _ => ()
   }
   self.event_result()
+}
+
+///|
+fn keyboard_service_command_intent(
+  event : @core.KeyboardEvent,
+) -> @core.CommandIntent? {
+  if !event.pressed ||
+    event.repeat ||
+    event.modifiers.alt ||
+    event.modifiers.shift ||
+    !(event.modifiers.meta || event.modifiers.control) {
+    None
+  } else if event.key == "c" || event.key == "C" {
+    Some(@core.CommandIntent::Copy)
+  } else if event.key == "x" || event.key == "X" {
+    Some(@core.CommandIntent::Cut)
+  } else if event.key == "v" || event.key == "V" {
+    Some(@core.CommandIntent::Paste)
+  } else {
+    None
+  }
 }
 
 ///|

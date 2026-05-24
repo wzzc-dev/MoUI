@@ -168,6 +168,7 @@ pub(all) struct HostRuntimeDriver {
 pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/core.CommandIntent, HostServiceBridge) -> HostEventResult
+pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
 pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
