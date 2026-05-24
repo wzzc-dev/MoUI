@@ -193,15 +193,17 @@ Planned documentation set:
 - `docs/ai-collaboration.md`: AI workflow, prompt templates, and review
   checklist.
 
-The project also includes a MoUI-specific Claude Code skill at:
+The project also includes MoUI-specific skills at:
 
 ```text
-.agents/skills/moui-skill/SKILL.md
+skills/moui-framework-development-skill/SKILL.md
+skills/moui-app-development-skill/SKILL.md
 ```
 
-The skill should guide agents to read `AGENTS.md`, respect package boundaries,
-preserve the runtime pipeline, use focused validation, and update renderer
-capability files together.
+The framework skill should guide agents to read `AGENTS.md`, respect package
+boundaries, preserve the runtime pipeline, use focused validation, and update
+renderer capability files together. The app skill should keep application work
+focused on shared app packages, public view APIs, and thin platform entrypoints.
 
 ## Quality Gates
 
