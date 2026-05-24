@@ -194,9 +194,11 @@ Focus areas:
   resolve the new window's runtime/content without inventing a platform-local
   convention. `HostWindowSceneResolver` is the shared scene-to-`AppRuntime`
   contract for that resolution step, and `HostWindowRegistry::resolve_open_request`
-  pairs successful resolutions with window records. Full `OpenWindow` support
-  remains a follow-up because it requires wiring that path into multiple
-  platform windows and renderer instances, not just extra registry records.
+  pairs successful resolutions with window records. `HostWindowRuntimeSlot`
+  wraps those records with per-window `HostRuntimeDriver` instances. Full
+  `OpenWindow` support remains a follow-up because it requires wiring that path
+  into multiple platform windows and renderer instances, not just extra registry
+  records.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.

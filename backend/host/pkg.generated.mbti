@@ -418,6 +418,14 @@ pub(all) struct HostWindowResolvedOpen {
 }
 pub fn HostWindowResolvedOpen::new(id~ : HostWindowId, record~ : HostWindowRecord, instance~ : HostWindowSceneInstance) -> Self
 
+pub(all) struct HostWindowRuntimeSlot {
+  id : HostWindowId
+  record : HostWindowRecord
+  driver : HostRuntimeDriver
+}
+pub fn HostWindowRuntimeSlot::from_resolved_open(HostWindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostWindowRuntimeSlot::new(record~ : HostWindowRecord, runtime~ : @wzzc-dev/moui/core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+
 pub(all) struct HostWindowScene {
   scene_id : String
   payload : String

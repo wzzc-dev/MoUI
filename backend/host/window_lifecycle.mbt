@@ -57,6 +57,13 @@ pub(all) struct HostWindowResolvedOpen {
 }
 
 ///|
+pub(all) struct HostWindowRuntimeSlot {
+  id : HostWindowId
+  record : HostWindowRecord
+  driver : HostRuntimeDriver
+}
+
+///|
 pub(all) enum HostWindowOpenResolution {
   OpenResolved(HostWindowResolvedOpen)
   OpenRejected(String)
@@ -182,6 +189,31 @@ pub fn HostWindowResolvedOpen::new(
   instance~ : HostWindowSceneInstance,
 ) -> HostWindowResolvedOpen {
   { id, record, instance }
+}
+
+///|
+pub fn HostWindowRuntimeSlot::new(
+  record~ : HostWindowRecord,
+  runtime~ : @core.AppRuntime,
+  schedule_redraw~ : () -> Unit,
+) -> HostWindowRuntimeSlot {
+  {
+    id: record.id,
+    record,
+    driver: HostRuntimeDriver::new(runtime~, schedule_redraw~),
+  }
+}
+
+///|
+pub fn HostWindowRuntimeSlot::from_resolved_open(
+  resolved : HostWindowResolvedOpen,
+  schedule_redraw~ : () -> Unit,
+) -> HostWindowRuntimeSlot {
+  HostWindowRuntimeSlot::new(
+    record=resolved.record,
+    runtime=resolved.instance.runtime,
+    schedule_redraw~,
+  )
 }
 
 ///|

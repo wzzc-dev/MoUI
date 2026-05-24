@@ -586,6 +586,18 @@ test "host window registry resolves scenes before registering opened windows" {
       assert_true(
         instance.runtime.size() == @core.Size::new(width=360.0, height=480.0),
       )
+      let redraws = Ref(0)
+      let slot = HostWindowRuntimeSlot::from_resolved_open(
+        { id, record, instance },
+        schedule_redraw=() => redraws.val = redraws.val + 1,
+      )
+      assert_true(slot.id == id)
+      inspect(slot.record.scene.payload, content="outline")
+      assert_true(
+        slot.driver.size() == @core.Size::new(width=360.0, height=480.0),
+      )
+      slot.driver.request_redraw()
+      inspect(redraws.val, content="1")
     }
     _ => fail("expected resolved open window")
   }
