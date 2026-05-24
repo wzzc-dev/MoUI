@@ -38,6 +38,23 @@ pub(all) struct HostWindowOpenRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostWindowSceneInstance {
+  request : HostWindowOpenRequest
+  runtime : @core.AppRuntime
+}
+
+///|
+pub(all) enum HostWindowSceneResolution {
+  SceneResolved(HostWindowSceneInstance)
+  SceneRejected(String)
+}
+
+///|
+pub(all) struct HostWindowSceneResolver {
+  resolve : (HostWindowOpenRequest) -> HostWindowSceneResolution
+}
+
+///|
 pub(all) enum HostWindowRequest {
   OpenWindow(HostWindowOpenRequest)
   FocusWindow(HostWindowId)
@@ -111,6 +128,38 @@ pub fn HostWindowOpenRequest::new(
   primary? : Bool = false,
 ) -> HostWindowOpenRequest {
   { title, scene, metrics, primary }
+}
+
+///|
+pub fn HostWindowSceneInstance::new(
+  request~ : HostWindowOpenRequest,
+  runtime~ : @core.AppRuntime,
+) -> HostWindowSceneInstance {
+  { request, runtime }
+}
+
+///|
+pub fn HostWindowSceneResolver::new(
+  resolve~ : (HostWindowOpenRequest) -> HostWindowSceneResolution,
+) -> HostWindowSceneResolver {
+  { resolve, }
+}
+
+///|
+pub fn HostWindowSceneResolver::unavailable(
+  reason? : String = "window scene resolver is unavailable",
+) -> HostWindowSceneResolver {
+  HostWindowSceneResolver::new(resolve=_request => {
+    HostWindowSceneResolution::SceneRejected(reason)
+  })
+}
+
+///|
+pub fn HostWindowSceneResolver::resolve(
+  self : HostWindowSceneResolver,
+  request : HostWindowOpenRequest,
+) -> HostWindowSceneResolution {
+  (self.resolve)(request)
 }
 
 ///|

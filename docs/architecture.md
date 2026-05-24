@@ -297,10 +297,13 @@ open, focus, close, resize, minimize, show, and primary-window requests without
 embedding those requests in a platform backend. `OpenWindow` requests carry a
 platform-neutral scene id and payload alongside title and metrics, so future
 multi-window hosts have enough app-level identity to choose the runtime/content
-for the new platform window. Web, macOS, and Windows should convert their native
-window events into `HostEvent` and then let `AppRuntime` update state, rebuild,
-and emit `DrawCommand` values. Linux currently keeps the same contract shape as
-a scaffold until a real window backend exists.
+for the new platform window. `HostWindowSceneResolver` is the matching shared
+contract for resolving those scene requests into new `AppRuntime` instances or
+explicit scene rejections before a platform backend allocates a native window.
+Web, macOS, and Windows should convert their native window events into
+`HostEvent` and then let `AppRuntime` update state, rebuild, and emit
+`DrawCommand` values. Linux currently keeps the same contract shape as a
+scaffold until a real window backend exists.
 The active Web, macOS, and Windows hosts still expose single-window entrypoints,
 but each one now opens a primary `HostWindowRecord`, applies resize/focus/close
 `HostEvent` values through the registry, and removes the record when the host
@@ -313,8 +316,8 @@ accepted current-window operations and explicit rejections observable without
 pretending that registry-only state is real multi-window support. Active
 backends use the shared queue drain helper so completion recording stays a host
 contract instead of a platform-local loop. `OpenWindow` requests are explicitly
-rejected until the hosts own multiple platform windows, runtime/content
-resolution, and renderer instances.
+rejected until the active hosts wire the scene resolver into multiple platform
+windows and renderer instances.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and

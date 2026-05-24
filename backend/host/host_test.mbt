@@ -321,6 +321,18 @@ test "host window registry applies shared lifecycle host events" {
 }
 
 ///|
+test "host window open requests default to main scene" {
+  let request = HostWindowOpenRequest::new(
+    title="Main",
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=640.0, height=480.0),
+    ),
+  )
+  inspect(request.scene.scene_id, content="main")
+  inspect(request.scene.payload, content="")
+}
+
+///|
 test "host window request queue drains platform-neutral window requests" {
   let queue = HostWindowRequestQueue::new()
   inspect(queue.is_empty(), content="true")
@@ -468,6 +480,59 @@ test "host window request queue drains with shared completion handler" {
     _ => fail("expected recorded close rejection")
   }
   inspect(queue.completed_count(), content="0")
+}
+
+///|
+test "host window scene resolver maps open requests to runtimes" {
+  let resolver = HostWindowSceneResolver::new(resolve=request => {
+    if request.scene.scene_id == "inspector" {
+      HostWindowSceneResolution::SceneResolved(
+        HostWindowSceneInstance::new(
+          request~,
+          runtime=@core.AppRuntime::new_spec(
+            root=@core.ViewSpec::EmptySpec,
+            size=request.metrics.logical_size,
+          ),
+        ),
+      )
+    } else {
+      HostWindowSceneResolution::SceneRejected(
+        "unknown window scene: " + request.scene.scene_id,
+      )
+    }
+  })
+  let request = HostWindowOpenRequest::new(
+    title="Inspector",
+    scene=HostWindowScene::new(scene_id="inspector", payload="outline"),
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=360.0, height=480.0),
+    ),
+  )
+  match resolver.resolve(request) {
+    HostWindowSceneResolution::SceneResolved({ request, runtime }) => {
+      inspect(request.title, content="Inspector")
+      inspect(request.scene.payload, content="outline")
+      assert_true(runtime.size() == @core.Size::new(width=360.0, height=480.0))
+    }
+    _ => fail("expected resolved inspector scene")
+  }
+  let unknown = HostWindowOpenRequest::new(
+    title="Unknown",
+    scene=HostWindowScene::new(scene_id="unknown"),
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=240.0),
+    ),
+  )
+  match resolver.resolve(unknown) {
+    HostWindowSceneResolution::SceneRejected(message) =>
+      inspect(message, content="unknown window scene: unknown")
+    _ => fail("expected unknown scene rejection")
+  }
+  match HostWindowSceneResolver::unavailable().resolve(request) {
+    HostWindowSceneResolution::SceneRejected(message) =>
+      inspect(message, content="window scene resolver is unavailable")
+    _ => fail("expected unavailable resolver rejection")
+  }
 }
 
 ///|

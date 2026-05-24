@@ -412,6 +412,24 @@ pub(all) struct HostWindowScene {
 pub fn HostWindowScene::main() -> Self
 pub fn HostWindowScene::new(scene_id~ : String, payload? : String) -> Self
 
+pub(all) struct HostWindowSceneInstance {
+  request : HostWindowOpenRequest
+  runtime : @wzzc-dev/moui/core.AppRuntime
+}
+pub fn HostWindowSceneInstance::new(request~ : HostWindowOpenRequest, runtime~ : @wzzc-dev/moui/core.AppRuntime) -> Self
+
+pub(all) enum HostWindowSceneResolution {
+  SceneResolved(HostWindowSceneInstance)
+  SceneRejected(String)
+}
+
+pub(all) struct HostWindowSceneResolver {
+  resolve : (HostWindowOpenRequest) -> HostWindowSceneResolution
+}
+pub fn HostWindowSceneResolver::new(resolve~ : (HostWindowOpenRequest) -> HostWindowSceneResolution) -> Self
+pub fn HostWindowSceneResolver::resolve(Self, HostWindowOpenRequest) -> HostWindowSceneResolution
+pub fn HostWindowSceneResolver::unavailable(reason? : String) -> Self
+
 pub(all) struct InputHostState {
   mut focused : Bool
   mut modifiers : @wzzc-dev/moui/core.KeyModifiers
