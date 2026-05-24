@@ -17,6 +17,13 @@ extern "C" fn macos_clipboard_read_text_bytes() -> Bytes = "moui_macos_clipboard
 extern "C" fn macos_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_macos_clipboard_write_text"
 
 ///|
+#borrow(url)
+extern "C" fn macos_open_url_bytes(url : Bytes) -> Int = "moui_macos_open_url"
+
+///|
+extern "C" fn macos_system_theme_is_dark() -> Int = "moui_macos_system_theme_is_dark"
+
+///|
 pub(all) suberror MacosSurfaceHostError {
   MacosSurfaceHostLayerUnavailable(String)
 }
@@ -100,8 +107,18 @@ pub fn macos_accessibility_bridge(
 }
 
 ///|
+pub fn macos_system_theme() -> @core.ColorScheme {
+  if macos_system_theme_is_dark() != 0 {
+    @core.ColorScheme::Dark
+  } else {
+    @core.ColorScheme::Light
+  }
+}
+
+///|
 pub fn macos_service_bridge(
-  system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
+  system_theme? : @core.ColorScheme = macos_system_theme(),
+  open_url? : (String) -> Bool = dispatch_macos_open_url,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -113,8 +130,12 @@ pub fn macos_service_bridge(
       match request {
         @host.HostServiceRequest::Clipboard(clipboard_request) =>
           dispatch_macos_clipboard(clipboard_request)
-        @host.HostServiceRequest::OpenUrl(_) =>
-          @host.HostServiceResponse::UrlOpened
+        @host.HostServiceRequest::OpenUrl(url) =>
+          if open_url(url) {
+            @host.HostServiceResponse::UrlOpened
+          } else {
+            @host.HostServiceResponse::Unavailable("open URL failed")
+          }
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
         _ =>
@@ -122,6 +143,12 @@ pub fn macos_service_bridge(
       }
     },
   )
+}
+
+///|
+fn dispatch_macos_open_url(url : String) -> Bool {
+  let bytes = @utf8.encode(url[:], bom=false)
+  macos_open_url_bytes(bytes) != 0
 }
 
 ///|

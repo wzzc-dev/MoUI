@@ -57,8 +57,10 @@ The macOS host uses `Milky2018/window/macos` for AppKit windows and installs a
 Window events pass through the shared `backend/host` conversion helpers, and the
 native host owns only AppKit window lifetime, CAMetalLayer surface creation,
 text-input session synchronization, renderer resize, and redraw requests.
-The macOS service bridge also routes text clipboard requests through
-`NSPasteboard` while preserving the shared `HostServiceBridge` contract.
+The macOS service bridge routes text clipboard requests through `NSPasteboard`,
+opens URLs through `NSWorkspace`, and reports the effective light/dark system
+appearance through the shared `HostServiceBridge` contract. Menu and file-dialog
+requests remain capability-gated until their native services are added.
 Native WGPU text can use either the shared Moon Cosmic provider or a platform
 provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
 measurement and glyph rasterization, explicitly composed with the Moon Cosmic
@@ -118,7 +120,10 @@ macOS, with platform-specific ownership limited to Win32 window handles, WGPU
 surface creation, resize handling, text-input session synchronization, and redraw
 requests. Text clipboard requests are implemented through the Win32
 `CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
-boundary.
+boundary. The Windows service bridge also opens URLs through `ShellExecuteW` and
+reports light/dark system theme from the current user's
+`AppsUseLightTheme` registry value, while menu and file-dialog requests remain
+capability-gated until their native services are added.
 Windows installs the sibling `render/wgpu/directwrite` provider through the same
 renderer/runtime boundary used by macOS CoreText and composes it with
 `render/wgpu/cosmic_text` as fallback. That provider is currently an explicit
