@@ -48,6 +48,12 @@ pub(all) enum HostWindowRequestResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostWindowRequestCompletion {
+  request : HostWindowRequest
+  result : HostWindowRequestResult
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostWindowRegistry {
   mut next_value : Int
   mut records : Array[HostWindowRecord]
@@ -56,6 +62,7 @@ pub struct HostWindowRegistry {
 ///|
 pub struct HostWindowRequestQueue {
   mut requests : Array[HostWindowRequest]
+  mut completed : Array[HostWindowRequestCompletion]
 }
 
 ///|
@@ -90,7 +97,7 @@ pub fn HostWindowRegistry::new() -> HostWindowRegistry {
 
 ///|
 pub fn HostWindowRequestQueue::new() -> HostWindowRequestQueue {
-  { requests: [] }
+  { requests: [], completed: [] }
 }
 
 ///|
@@ -98,6 +105,13 @@ pub fn HostWindowRequestQueue::pending_count(
   self : HostWindowRequestQueue,
 ) -> Int {
   self.requests.length()
+}
+
+///|
+pub fn HostWindowRequestQueue::completed_count(
+  self : HostWindowRequestQueue,
+) -> Int {
+  self.completed.length()
 }
 
 ///|
@@ -183,6 +197,24 @@ pub fn HostWindowRequestQueue::drain(
   let requests = self.requests
   self.requests = []
   requests
+}
+
+///|
+pub fn HostWindowRequestQueue::record_result(
+  self : HostWindowRequestQueue,
+  request : HostWindowRequest,
+  result : HostWindowRequestResult,
+) -> Unit {
+  self.completed.push({ request, result })
+}
+
+///|
+pub fn HostWindowRequestQueue::drain_completed(
+  self : HostWindowRequestQueue,
+) -> Array[HostWindowRequestCompletion] {
+  let completed = self.completed
+  self.completed = []
+  completed
 }
 
 ///|

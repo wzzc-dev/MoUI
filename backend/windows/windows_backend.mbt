@@ -515,7 +515,8 @@ fn WindowsApp::drain_window_requests(
   event_loop : @win.ActiveEventLoop,
 ) -> Unit {
   for request in self.window_requests.drain() {
-    ignore(self.apply_window_request(event_loop, request))
+    let result = self.apply_window_request(event_loop, request)
+    self.window_requests.record_result(request, result)
   }
 }
 

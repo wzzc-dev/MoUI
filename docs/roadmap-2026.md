@@ -187,9 +187,11 @@ Focus areas:
   and update primary window records on the shared lifecycle path. Their active
   loops now expose `run_app_with_window_requests` and drain
   `HostWindowRequestQueue` for current-window focus, close, resize, minimize,
-  show, and set-primary requests. Full `OpenWindow` support remains a follow-up
-  because it requires multiple platform windows and renderer instances, not just
-  extra registry records.
+  show, and set-primary requests. Drained request completions are recorded back
+  onto the queue so request outcomes stay observable while the active hosts
+  remain single-window. Full `OpenWindow` support remains a follow-up because it
+  requires multiple platform windows and renderer instances, not just extra
+  registry records.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.

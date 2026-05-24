@@ -385,6 +385,55 @@ test "host window request queue drains platform-neutral window requests" {
 }
 
 ///|
+test "host window request queue records ordered platform completions" {
+  let queue = HostWindowRequestQueue::new()
+  queue.open_window(
+    title="Inspector",
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=240.0),
+    ),
+  )
+  let window_id = HostWindowId::new(2)
+  queue.focus_window(window_id)
+  let drained = queue.drain()
+  queue.record_result(
+    drained[0],
+    HostWindowRequestResult::WindowRejected(
+      "open window requests require multi-window host support",
+    ),
+  )
+  queue.record_result(
+    drained[1],
+    HostWindowRequestResult::WindowUpdated(window_id),
+  )
+  inspect(queue.pending_count(), content="0")
+  inspect(queue.completed_count(), content="2")
+  let completed = queue.drain_completed()
+  inspect(queue.completed_count(), content="0")
+  match completed[0].request {
+    HostWindowRequest::OpenWindow({ title, .. }) =>
+      inspect(title, content="Inspector")
+    _ => fail("expected completed open-window request")
+  }
+  match completed[0].result {
+    HostWindowRequestResult::WindowRejected(message) =>
+      inspect(
+        message,
+        content="open window requests require multi-window host support",
+      )
+    _ => fail("expected completed open-window rejection")
+  }
+  match completed[1].request {
+    HostWindowRequest::FocusWindow(id) => assert_true(id == window_id)
+    _ => fail("expected completed focus-window request")
+  }
+  match completed[1].result {
+    HostWindowRequestResult::WindowUpdated(id) => assert_true(id == window_id)
+    _ => fail("expected completed focus-window update")
+  }
+}
+
+///|
 test "host window registry applies platform-neutral window requests" {
   let registry = HostWindowRegistry::new()
   let main = registry.open(
