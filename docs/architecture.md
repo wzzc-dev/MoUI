@@ -302,7 +302,10 @@ contract for resolving those scene requests into new `AppRuntime` instances or
 explicit scene rejections before a platform backend allocates a native window.
 `HostWindowRegistry::resolve_open_request` pairs a successful scene resolution
 with the created registry record so the host can keep window id, scene metadata,
-and runtime together.
+and runtime together. `HostWindowRuntimeSlot` then wraps that record with a
+`HostRuntimeDriver`, giving future multi-window hosts a shared per-window
+runtime/driver shape before platform-specific window and renderer handles are
+attached.
 Web, macOS, and Windows should convert their native window events into
 `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
 `DrawCommand` values. Linux currently keeps the same contract shape as a
@@ -319,8 +322,8 @@ accepted current-window operations and explicit rejections observable without
 pretending that registry-only state is real multi-window support. Active
 backends use the shared queue drain helper so completion recording stays a host
 contract instead of a platform-local loop. `OpenWindow` requests are explicitly
-rejected until the active hosts wire the scene resolver into multiple platform
-windows and renderer instances.
+rejected until the active hosts wire scene resolution and runtime slots into
+multiple platform windows and renderer instances.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
