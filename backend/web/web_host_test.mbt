@@ -63,13 +63,18 @@ test "canvas host creates surface and input contracts" {
 }
 
 ///|
-test "web service bridge exposes open url and system theme scaffold" {
-  let bridge = web_service_bridge(system_theme=@core.ColorScheme::Dark)
+test "web service bridge exposes open url and system theme contract" {
+  let opened_url = Ref("")
+  let bridge = web_service_bridge(system_theme=@core.ColorScheme::Dark, open_url=url => {
+    opened_url.val = url
+    true
+  })
   match
     bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
     @host.HostServiceResponse::UrlOpened => ()
-    _ => fail("expected URL opened scaffold response")
+    _ => fail("expected URL opened response")
   }
+  inspect(opened_url.val, content="https://example.test")
   match bridge.dispatch(@host.HostServiceRequest::QuerySystemTheme) {
     @host.HostServiceResponse::SystemTheme(@core.ColorScheme::Dark) => ()
     _ => fail("expected dark system theme")
@@ -81,6 +86,16 @@ test "web service bridge exposes open url and system theme scaffold" {
     @host.HostServiceResponse::Unavailable(message) =>
       inspect(message, content="clipboard service is unavailable")
     _ => fail("expected clipboard to remain unavailable")
+  }
+}
+
+///|
+test "web service bridge reports failed open url" {
+  let bridge = web_service_bridge(open_url=_url => false)
+  match bridge.dispatch(@host.HostServiceRequest::OpenUrl("not-a-url")) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="open URL failed")
+    _ => fail("expected failed open URL response")
   }
 }
 

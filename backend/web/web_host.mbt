@@ -8,6 +8,10 @@ pub(all) struct CanvasHostConstraints {
 } derive(Eq, Debug, ToJson)
 
 ///|
+#external
+priv type WebHostString
+
+///|
 pub fn canvas_host_constraints() -> CanvasHostConstraints {
   {
     requires_focusable_canvas: true,
@@ -75,6 +79,7 @@ pub fn canvas_input_host() -> @host.InputHostState {
 ///|
 pub fn web_service_bridge(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
+  open_url? : (String) -> Bool = _url => false,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -83,8 +88,12 @@ pub fn web_service_bridge(
     ),
     handle=request => {
       match request {
-        @host.HostServiceRequest::OpenUrl(_) =>
-          @host.HostServiceResponse::UrlOpened
+        @host.HostServiceRequest::OpenUrl(url) =>
+          if open_url(url) {
+            @host.HostServiceResponse::UrlOpened
+          } else {
+            @host.HostServiceResponse::Unavailable("open URL failed")
+          }
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
         _ =>
@@ -93,6 +102,32 @@ pub fn web_service_bridge(
     },
   )
 }
+
+///|
+fn dispatch_web_open_url(url : String) -> Bool {
+  web_open_url(web_host_string(url))
+}
+
+///|
+fn web_host_string(value : String) -> WebHostString {
+  let handle = web_begin_create_string()
+  for ch in value {
+    web_string_append_char(handle, ch.to_int())
+  }
+  web_finish_create_string(handle)
+}
+
+///|
+fn web_begin_create_string() -> Int = "window_web" "begin_create_string"
+
+///|
+fn web_string_append_char(handle : Int, code_point : Int) -> Unit = "window_web" "string_append_char"
+
+///|
+fn web_finish_create_string(handle : Int) -> WebHostString = "window_web" "finish_create_string"
+
+///|
+fn web_open_url(url : WebHostString) -> Bool = "window_web" "open_url"
 
 ///|
 pub fn request_animation_frame_event() -> @host.HostEvent {

@@ -62,6 +62,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
       Some(theme) => @host.window_theme_to_color_scheme(theme)
       None => @core.ColorScheme::Light
     },
+    open_url=dispatch_web_open_url,
   )
   runtime.set_environment(
     services.environment_with_system_theme(runtime.environment()),

@@ -298,6 +298,22 @@ export function createWindowWebImports(options = {}) {
     set_document_title(title) {
       document.title = stringValue(title);
     },
+    open_url(url) {
+      const href = stringValue(url);
+      if (!href || !globalThis.window?.open) {
+        return false;
+      }
+      const opened = globalThis.window.open(href, "_blank", "noopener,noreferrer");
+      if (opened) {
+        try {
+          opened.opener = null;
+        } catch {
+          // Some browsers expose a read-only opener for noopener windows.
+        }
+        return true;
+      }
+      return false;
+    },
     device_pixel_ratio() {
       return globalThis.window?.devicePixelRatio || 1.0;
     },
