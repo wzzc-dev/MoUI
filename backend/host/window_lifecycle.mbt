@@ -209,6 +209,21 @@ pub fn HostWindowRequestQueue::record_result(
 }
 
 ///|
+pub fn HostWindowRequestQueue::drain_with_handler(
+  self : HostWindowRequestQueue,
+  handle : (HostWindowRequest) -> HostWindowRequestResult,
+) -> Array[HostWindowRequestCompletion] {
+  let completions = []
+  for request in self.drain() {
+    let result = handle(request)
+    let completion = HostWindowRequestCompletion::{ request, result }
+    self.completed.push(completion)
+    completions.push(completion)
+  }
+  completions
+}
+
+///|
 pub fn HostWindowRequestQueue::drain_completed(
   self : HostWindowRequestQueue,
 ) -> Array[HostWindowRequestCompletion] {

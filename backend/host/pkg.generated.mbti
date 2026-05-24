@@ -384,6 +384,7 @@ pub fn HostWindowRequestQueue::close_window(Self, HostWindowId) -> Unit
 pub fn HostWindowRequestQueue::completed_count(Self) -> Int
 pub fn HostWindowRequestQueue::drain(Self) -> Array[HostWindowRequest]
 pub fn HostWindowRequestQueue::drain_completed(Self) -> Array[HostWindowRequestCompletion]
+pub fn HostWindowRequestQueue::drain_with_handler(Self, (HostWindowRequest) -> HostWindowRequestResult) -> Array[HostWindowRequestCompletion]
 pub fn HostWindowRequestQueue::focus_window(Self, HostWindowId) -> Unit
 pub fn HostWindowRequestQueue::is_empty(Self) -> Bool
 pub fn HostWindowRequestQueue::minimize_window(Self, HostWindowId) -> Unit

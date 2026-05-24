@@ -662,10 +662,11 @@ fn MacosApp::drain_window_requests(
   self : MacosApp,
   event_loop : @window_macos.ActiveEventLoop,
 ) -> Unit {
-  for request in self.window_requests.drain() {
-    let result = self.apply_window_request(event_loop, request)
-    self.window_requests.record_result(request, result)
-  }
+  ignore(
+    self.window_requests.drain_with_handler(request => {
+      self.apply_window_request(event_loop, request)
+    }),
+  )
 }
 
 ///|
