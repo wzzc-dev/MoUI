@@ -269,6 +269,20 @@ pub fn HostWindowRuntimeSlots::insert(
 }
 
 ///|
+pub fn HostWindowRuntimeSlots::insert_from_registry(
+  self : HostWindowRuntimeSlots,
+  registry : HostWindowRegistry,
+  id : HostWindowId,
+  driver~ : HostRuntimeDriver,
+) -> Bool {
+  match registry.lookup(id) {
+    Some(record) =>
+      self.insert(HostWindowRuntimeSlot::from_driver(record~, driver~))
+    None => false
+  }
+}
+
+///|
 pub fn HostWindowRuntimeSlots::lookup(
   self : HostWindowRuntimeSlots,
   id : HostWindowId,
@@ -327,6 +341,18 @@ pub fn HostWindowRuntimeSlots::sync_record(
     }
   })
   changed
+}
+
+///|
+pub fn HostWindowRuntimeSlots::sync_from_registry(
+  self : HostWindowRuntimeSlots,
+  registry : HostWindowRegistry,
+  id : HostWindowId,
+) -> Bool {
+  match registry.lookup(id) {
+    Some(record) => self.sync_record(record)
+    None => false
+  }
 }
 
 ///|

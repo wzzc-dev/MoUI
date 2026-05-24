@@ -307,7 +307,8 @@ and runtime together. `HostWindowRuntimeSlot` then wraps that record with a
 runtime/driver shape before platform-specific window and renderer handles are
 attached. `HostWindowRuntimeSlots` is the matching collection for lookup,
 primary/focused slot selection, record synchronization, and closed-window
-cleanup.
+cleanup, including shared helpers for inserting and syncing slots from
+`HostWindowRegistry`.
 Web, macOS, and Windows should convert their native window events into
 `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
 `DrawCommand` values. Linux currently keeps the same contract shape as a

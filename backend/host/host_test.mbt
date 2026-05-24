@@ -642,8 +642,13 @@ test "host window runtime slots manage multiple window drivers" {
       })
     _ => fail("expected main runtime slot")
   }
-  assert_true(slots.insert(main_slot))
-  inspect(slots.insert(main_slot), content="false")
+  assert_true(
+    slots.insert_from_registry(registry, main_slot.id, driver=main_slot.driver),
+  )
+  inspect(
+    slots.insert_from_registry(registry, main_slot.id, driver=main_slot.driver),
+    content="false",
+  )
 
   let inspector_request = HostWindowOpenRequest::new(
     title="Inspector",
@@ -669,10 +674,7 @@ test "host window runtime slots manage multiple window drivers" {
   }
 
   assert_true(registry.focus(inspector_slot.id))
-  match registry.lookup(inspector_slot.id) {
-    Some(record) => assert_true(slots.sync_record(record))
-    None => fail("expected focused inspector record")
-  }
+  assert_true(slots.sync_from_registry(registry, inspector_slot.id))
   match slots.focused_slot() {
     Some({ id, record, .. }) => {
       assert_true(id == inspector_slot.id)
@@ -687,10 +689,7 @@ test "host window runtime slots manage multiple window drivers" {
   inspect(inspector_redraws.val, content="1")
 
   assert_true(registry.close(main_slot.id))
-  match registry.lookup(main_slot.id) {
-    Some(record) => assert_true(slots.sync_record(record))
-    None => fail("expected closed main record")
-  }
+  assert_true(slots.sync_from_registry(registry, main_slot.id))
   inspect(slots.remove_closed(), content="1")
   inspect(slots.count(), content="1")
   match slots.remove(inspector_slot.id) {
@@ -698,6 +697,18 @@ test "host window runtime slots manage multiple window drivers" {
     None => fail("expected removed inspector slot")
   }
   inspect(slots.count(), content="0")
+  inspect(
+    slots.insert_from_registry(
+      registry,
+      HostWindowId::new(404),
+      driver=main_slot.driver,
+    ),
+    content="false",
+  )
+  inspect(
+    slots.sync_from_registry(registry, HostWindowId::new(404)),
+    content="false",
+  )
   inspect(main_redraws.val, content="0")
 }
 

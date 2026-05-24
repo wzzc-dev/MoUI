@@ -433,6 +433,7 @@ pub struct HostWindowRuntimeSlots {
 pub fn HostWindowRuntimeSlots::count(Self) -> Int
 pub fn HostWindowRuntimeSlots::focused_slot(Self) -> HostWindowRuntimeSlot?
 pub fn HostWindowRuntimeSlots::insert(Self, HostWindowRuntimeSlot) -> Bool
+pub fn HostWindowRuntimeSlots::insert_from_registry(Self, HostWindowRegistry, HostWindowId, driver~ : HostRuntimeDriver) -> Bool
 pub fn HostWindowRuntimeSlots::is_empty(Self) -> Bool
 pub fn HostWindowRuntimeSlots::lookup(Self, HostWindowId) -> HostWindowRuntimeSlot?
 pub fn HostWindowRuntimeSlots::new() -> Self
@@ -440,6 +441,7 @@ pub fn HostWindowRuntimeSlots::open_slots(Self) -> Array[HostWindowRuntimeSlot]
 pub fn HostWindowRuntimeSlots::primary_slot(Self) -> HostWindowRuntimeSlot?
 pub fn HostWindowRuntimeSlots::remove(Self, HostWindowId) -> HostWindowRuntimeSlot?
 pub fn HostWindowRuntimeSlots::remove_closed(Self) -> Int
+pub fn HostWindowRuntimeSlots::sync_from_registry(Self, HostWindowRegistry, HostWindowId) -> Bool
 pub fn HostWindowRuntimeSlots::sync_record(Self, HostWindowRecord) -> Bool
 
 pub(all) struct HostWindowScene {
