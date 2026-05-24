@@ -16,7 +16,7 @@ pub fn macos_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dis
 
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
 
-pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String]) -> @host.HostServiceBridge
+pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
 
 pub fn macos_surface_host_info() -> @wgpu.SurfaceHostInfo
 

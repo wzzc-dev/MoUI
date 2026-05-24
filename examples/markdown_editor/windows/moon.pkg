@@ -7,6 +7,10 @@ supported_targets = "native"
 
 options(
   "is-main": true,
-  link: { "native": { "cc-link-flags": "-Wl,--subsystem,windows" } },
+  link: {
+    "native": {
+      "cc-link-flags": "-Wl,--subsystem,windows -lcomdlg32 -lshell32 -ladvapi32 -lole32 -luser32",
+    },
+  },
   targets: { "main.mbt": [ "native" ] },
 )

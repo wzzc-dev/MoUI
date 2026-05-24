@@ -33,6 +33,10 @@ extern "C" fn windows_file_dialog_bytes(
 ) -> Bytes = "moui_windows_file_dialog"
 
 ///|
+#borrow(commands)
+extern "C" fn windows_show_menu_bytes(commands : Bytes) -> Int = "moui_windows_show_menu"
+
+///|
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
   contract_ready : Bool
@@ -145,11 +149,13 @@ pub fn windows_service_bridge(
   system_theme? : @core.ColorScheme = windows_system_theme(),
   open_url? : (String) -> Bool = dispatch_windows_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_windows_file_dialog,
+  menu? : (Array[@core.ActionCommand]) -> Int = dispatch_windows_menu,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=true,
       file_dialogs=true,
+      menus=true,
       open_url=true,
       system_theme=true,
     ),
@@ -165,13 +171,18 @@ pub fn windows_service_bridge(
           }
         @host.HostServiceRequest::FileDialog(options) =>
           @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
+        @host.HostServiceRequest::ShowMenu(commands) =>
+          menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
-        _ =>
-          @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
   )
+}
+
+///|
+fn dispatch_windows_menu(commands : Array[@core.ActionCommand]) -> Int {
+  windows_show_menu_bytes(encode_menu_commands(commands))
 }
 
 ///|
