@@ -103,20 +103,16 @@ fn macos_bold_font_path() -> String {
 ///|
 fn linux_regular_font_path() -> String {
   first_existing_font_path([
-    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
-    "/usr/share/fonts/noto/NotoSans-Regular.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf", "/usr/share/fonts/noto/NotoSans-Regular.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
   ])
 }
 
 ///|
 fn linux_bold_font_path() -> String {
   first_existing_font_path([
-    "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
-    "/usr/share/fonts/noto/NotoSans-Bold.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf", "/usr/share/fonts/noto/NotoSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",
   ])
 }
 
@@ -139,10 +135,8 @@ fn macos_cjk_font_path() -> String {
 ///|
 fn linux_cjk_font_path() -> String {
   first_existing_font_path([
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
-    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
-    "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
   ])
 }
 
@@ -621,39 +615,81 @@ fn cosmic_text_cache_key_with_fallback(
   glyph : @moon_cosmic.LayoutGlyph,
   cache_key : @moon_cosmic.CacheKey,
 ) -> @moon_cosmic.CacheKey {
-  if glyph.glyph_id != 0 {
-    return cache_key
-  }
   match cosmic_text_codepoint_at(cosmic_text_safe_text(run.text), glyph.start) {
     None => cache_key
     Some(codepoint) =>
-      match
-        cache.font_system.resolve_for_codepoint(
-          cosmic_text_attrs_for_font(run.font),
-          codepoint,
-        ) {
+      if cosmic_text_glyph_matches_codepoint(cache, glyph, codepoint) {
+        cache_key
+      } else {
+        cosmic_text_fallback_cache_key(cache, run, cache_key, codepoint)
+      }
+  }
+}
+
+///|
+fn cosmic_text_glyph_matches_codepoint(
+  cache : CosmicTextCache,
+  glyph : @moon_cosmic.LayoutGlyph,
+  codepoint : UInt,
+) -> Bool {
+  if glyph.glyph_id == 0 {
+    return false
+  }
+  if !cosmic_text_codepoint_needs_direct_cmap_check(codepoint) {
+    return true
+  }
+  match cache.font_system.get_font_entry(glyph.font_id) {
+    None => false
+    Some(entry) => {
+      let charmap = entry.charmap_proxy.materialize(entry.font)
+      charmap.map(codepoint).to_int() == glyph.glyph_id
+    }
+  }
+}
+
+///|
+fn cosmic_text_codepoint_needs_direct_cmap_check(codepoint : UInt) -> Bool {
+  (codepoint >= 0x2E80U && codepoint <= 0x9FFFU) ||
+  (codepoint >= 0xF900U && codepoint <= 0xFAFFU) ||
+  (codepoint >= 0x20000U && codepoint <= 0x2FA1FU) ||
+  (codepoint >= 0x3040U && codepoint <= 0x30FFU) ||
+  (codepoint >= 0x3100U && codepoint <= 0x312FU) ||
+  (codepoint >= 0xAC00U && codepoint <= 0xD7AFU)
+}
+
+///|
+fn cosmic_text_fallback_cache_key(
+  cache : CosmicTextCache,
+  run : @core.TextRun,
+  cache_key : @moon_cosmic.CacheKey,
+  codepoint : UInt,
+) -> @moon_cosmic.CacheKey {
+  match
+    cache.font_system.resolve_for_codepoint(
+      cosmic_text_attrs_for_font(run.font),
+      codepoint,
+    ) {
+    None => cache_key
+    Some(font_id) =>
+      match cache.font_system.get_font_entry(font_id) {
         None => cache_key
-        Some(font_id) =>
-          match cache.font_system.get_font_entry(font_id) {
-            None => cache_key
-            Some(entry) => {
-              let charmap = entry.charmap_proxy.materialize(entry.font)
-              let glyph_id = charmap.map(codepoint).to_int()
-              if glyph_id == 0 {
-                cache_key
-              } else {
-                let (fallback_key, _, _) = @moon_cosmic.CacheKey::new(
-                  font_id,
-                  glyph_id,
-                  Float::reinterpret_from_uint(cache_key.font_size_bits),
-                  (cache_key.x_bin.as_float(), cache_key.y_bin.as_float()),
-                  cache_key.font_weight,
-                  cache_key.flags,
-                )
-                fallback_key
-              }
-            }
+        Some(entry) => {
+          let charmap = entry.charmap_proxy.materialize(entry.font)
+          let glyph_id = charmap.map(codepoint).to_int()
+          if glyph_id == 0 {
+            cache_key
+          } else {
+            let (fallback_key, _, _) = @moon_cosmic.CacheKey::new(
+              font_id,
+              glyph_id,
+              Float::reinterpret_from_uint(cache_key.font_size_bits),
+              (cache_key.x_bin.as_float(), cache_key.y_bin.as_float()),
+              cache_key.font_weight,
+              cache_key.flags,
+            )
+            fallback_key
           }
+        }
       }
   }
 }
