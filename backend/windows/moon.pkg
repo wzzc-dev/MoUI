@@ -17,7 +17,9 @@ supported_targets = "native"
 
 options(
   link: {
-    "native": { "cc-link-flags": "-lcomdlg32 -lshell32 -ladvapi32 -lole32" },
+    "native": {
+      "cc-link-flags": "-lcomdlg32 -lshell32 -ladvapi32 -lole32 -luser32",
+    },
   },
   "native-stub": [ "win32_surface_host.c" ],
   targets: { },

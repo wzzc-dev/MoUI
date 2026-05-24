@@ -165,6 +165,63 @@ static wchar_t *moui_windows_filter_spec(moonbit_bytes_t filters) {
   return filter;
 }
 
+static int32_t moui_windows_parse_menu_command(const char *bytes, int32_t length, int32_t *offset,
+                                               int32_t *enabled, wchar_t **label) {
+  if (*offset >= length) {
+    return 0;
+  }
+  char enabled_char = bytes[*offset];
+  if (enabled_char != '0' && enabled_char != '1') {
+    return 0;
+  }
+  *enabled = enabled_char == '1' ? 1 : 0;
+  *offset += 1;
+  if (*offset >= length || bytes[*offset] != ':') {
+    return 0;
+  }
+  *offset += 1;
+  int32_t label_length = 0;
+  while (*offset < length && bytes[*offset] >= '0' && bytes[*offset] <= '9') {
+    int32_t digit = bytes[*offset] - '0';
+    if (label_length > (INT32_MAX - digit) / 10) {
+      return 0;
+    }
+    label_length = label_length * 10 + digit;
+    *offset += 1;
+  }
+  if (*offset >= length || bytes[*offset] != ':') {
+    return 0;
+  }
+  *offset += 1;
+  if (label_length < 0 || label_length > length - *offset) {
+    return 0;
+  }
+  int32_t wide_len =
+      MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, bytes + *offset, label_length, NULL, 0);
+  if (wide_len <= 0 && label_length > 0) {
+    return 0;
+  }
+  wchar_t *wide = (wchar_t *)calloc((size_t)wide_len + 1, sizeof(wchar_t));
+  if (wide == NULL) {
+    return 0;
+  }
+  if (wide_len > 0) {
+    int32_t written =
+        MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, bytes + *offset, label_length, wide, wide_len);
+    if (written != wide_len) {
+      free(wide);
+      return 0;
+    }
+  }
+  wide[wide_len] = L'\0';
+  *label = wide;
+  *offset += label_length;
+  if (*offset < length && bytes[*offset] == '\n') {
+    *offset += 1;
+  }
+  return 1;
+}
+
 MOONBIT_FFI_EXPORT
 int32_t moui_windows_open_url(moonbit_bytes_t url) {
   wchar_t *wide = moui_windows_utf8_to_wide(url);
@@ -252,4 +309,57 @@ moonbit_bytes_t moui_windows_file_dialog(int32_t kind, moonbit_bytes_t title, mo
   free(default_wide);
   free(filter_wide);
   return result;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_show_menu(moonbit_bytes_t commands) {
+  int32_t length = (int32_t)Moonbit_array_length(commands);
+  if (length <= 0) {
+    return -1;
+  }
+  const char *bytes = (const char *)commands;
+  int32_t offset = 0;
+  int32_t index = 0;
+  HMENU menu = CreatePopupMenu();
+  if (menu == NULL) {
+    return -1;
+  }
+
+  while (offset < length) {
+    int32_t enabled = 0;
+    wchar_t *label = NULL;
+    if (!moui_windows_parse_menu_command(bytes, length, &offset, &enabled, &label)) {
+      DestroyMenu(menu);
+      return -1;
+    }
+    UINT flags = MF_STRING;
+    if (!enabled) {
+      flags |= MF_GRAYED;
+    }
+    if (!AppendMenuW(menu, flags, (UINT_PTR)(index + 1), label)) {
+      free(label);
+      DestroyMenu(menu);
+      return -1;
+    }
+    free(label);
+    index += 1;
+  }
+
+  if (index == 0) {
+    DestroyMenu(menu);
+    return -1;
+  }
+
+  POINT point;
+  if (!GetCursorPos(&point)) {
+    point.x = 0;
+    point.y = 0;
+  }
+  HWND hwnd = GetForegroundWindow();
+  UINT command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, hwnd, NULL);
+  DestroyMenu(menu);
+  if (command == 0) {
+    return -1;
+  }
+  return (int32_t)command - 1;
 }

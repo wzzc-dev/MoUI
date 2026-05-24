@@ -123,6 +123,64 @@ test "macos service bridge exposes file dialog contract" {
 }
 
 ///|
+test "macos service bridge exposes menu contract" {
+  let seen_count = Ref(0)
+  let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Light, menu=commands => {
+    seen_count.val = commands.length()
+    1
+  })
+  inspect(bridge.capabilities.menus, content="true")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::ShowMenu([
+        @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+        @core.ActionCommand::new(
+          intent=@core.CommandIntent::Paste,
+          label="Paste",
+        ),
+      ]),
+    ) {
+    @host.HostServiceResponse::MenuCommand(@core.CommandIntent::Paste) => ()
+    _ => fail("expected selected menu command")
+  }
+  inspect(seen_count.val, content="2")
+}
+
+///|
+test "macos service bridge reports cancelled or disabled menu selections" {
+  let cancelled = macos_service_bridge(system_theme=@core.ColorScheme::Light, menu=_commands => {
+    -1
+  })
+  match
+    cancelled.dispatch(
+      @host.HostServiceRequest::ShowMenu([
+        @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+      ]),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="menu selection cancelled")
+    _ => fail("expected cancelled menu response")
+  }
+  let disabled = macos_service_bridge(system_theme=@core.ColorScheme::Light, menu=_commands => {
+    0
+  })
+  match
+    disabled.dispatch(
+      @host.HostServiceRequest::ShowMenu([
+        @core.ActionCommand::new(
+          intent=@core.CommandIntent::Paste,
+          label="Paste",
+          enabled=false,
+        ),
+      ]),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="menu command is disabled")
+    _ => fail("expected disabled menu response")
+  }
+}
+
+///|
 test "macos backend converts resize event to host metrics" {
   let event = window_event_to_host_with_modifiers(
     @window_core.WindowEvent::SurfaceResized(

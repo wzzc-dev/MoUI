@@ -7,6 +7,27 @@
 
 static NSString *const MOUI_MACOS_SURFACE_LAYER_NAME = @"moui_macos_surface_layer";
 
+@interface MouiMacosMenuTarget : NSObject
+@property(nonatomic) NSInteger selectedIndex;
+- (void)selectItem:(id)sender;
+@end
+
+@implementation MouiMacosMenuTarget
+- (instancetype)init {
+  self = [super init];
+  if (self != nil) {
+    _selectedIndex = -1;
+  }
+  return self;
+}
+
+- (void)selectItem:(id)sender {
+  if ([sender respondsToSelector:@selector(tag)]) {
+    self.selectedIndex = [sender tag];
+  }
+}
+@end
+
 static NSString *moui_macos_string_from_bytes(moonbit_bytes_t bytes) {
   int32_t len = (int32_t)Moonbit_array_length(bytes);
   if (len <= 0) {
@@ -82,6 +103,54 @@ static void moui_macos_apply_file_filters(NSSavePanel *panel, NSArray<NSString *
   if ([types count] > 0) {
     [panel setAllowedContentTypes:types];
   }
+}
+
+static BOOL moui_macos_parse_menu_command(const char *bytes, int32_t length, int32_t *offset,
+                                          BOOL *enabled, NSString **label) {
+  if (*offset >= length) {
+    return NO;
+  }
+  char enabled_char = bytes[*offset];
+  if (enabled_char != '0' && enabled_char != '1') {
+    return NO;
+  }
+  *enabled = enabled_char == '1';
+  *offset += 1;
+  if (*offset >= length || bytes[*offset] != ':') {
+    return NO;
+  }
+  *offset += 1;
+  int32_t label_length = 0;
+  while (*offset < length && bytes[*offset] >= '0' && bytes[*offset] <= '9') {
+    int32_t digit = bytes[*offset] - '0';
+    if (label_length > (INT32_MAX - digit) / 10) {
+      return NO;
+    }
+    label_length = label_length * 10 + digit;
+    *offset += 1;
+  }
+  if (*offset >= length || bytes[*offset] != ':') {
+    return NO;
+  }
+  *offset += 1;
+  if (label_length < 0 || label_length > length - *offset) {
+    return NO;
+  }
+  NSString *parsed_label = [[NSString alloc] initWithBytes:bytes + *offset
+                                                    length:(NSUInteger)label_length
+                                                  encoding:NSUTF8StringEncoding];
+  if (parsed_label == nil && label_length > 0) {
+    return NO;
+  }
+  if (parsed_label == nil) {
+    parsed_label = @"";
+  }
+  *label = parsed_label;
+  *offset += label_length;
+  if (*offset < length && bytes[*offset] == '\n') {
+    *offset += 1;
+  }
+  return YES;
 }
 
 MOONBIT_FFI_EXPORT
@@ -241,4 +310,38 @@ moonbit_bytes_t moui_macos_file_dialog(int32_t kind, moonbit_bytes_t title, moon
     return moui_macos_file_dialog_result([panel URLs]);
   }
   return moonbit_make_bytes(0, 0);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_show_menu(moonbit_bytes_t commands) {
+  int32_t length = (int32_t)Moonbit_array_length(commands);
+  if (length <= 0) {
+    return -1;
+  }
+  const char *bytes = (const char *)commands;
+  int32_t offset = 0;
+  int32_t index = 0;
+  NSMenu *menu = [[NSMenu alloc] initWithTitle:@""];
+  MouiMacosMenuTarget *target = [[MouiMacosMenuTarget alloc] init];
+
+  while (offset < length) {
+    BOOL enabled = NO;
+    NSString *label = nil;
+    if (!moui_macos_parse_menu_command(bytes, length, &offset, &enabled, &label)) {
+      return -1;
+    }
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:label action:@selector(selectItem:) keyEquivalent:@""];
+    [item setTarget:target];
+    [item setTag:index];
+    [item setEnabled:enabled];
+    [menu addItem:item];
+    index += 1;
+  }
+
+  if (index == 0) {
+    return -1;
+  }
+
+  [menu popUpMenuPositioningItem:nil atLocation:[NSEvent mouseLocation] inView:nil];
+  return (int32_t)[target selectedIndex];
 }

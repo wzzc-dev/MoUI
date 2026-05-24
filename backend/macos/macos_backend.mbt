@@ -33,6 +33,10 @@ extern "C" fn macos_file_dialog_bytes(
 ) -> Bytes = "moui_macos_file_dialog"
 
 ///|
+#borrow(commands)
+extern "C" fn macos_show_menu_bytes(commands : Bytes) -> Int = "moui_macos_show_menu"
+
+///|
 pub(all) suberror MacosSurfaceHostError {
   MacosSurfaceHostLayerUnavailable(String)
 }
@@ -129,11 +133,13 @@ pub fn macos_service_bridge(
   system_theme? : @core.ColorScheme = macos_system_theme(),
   open_url? : (String) -> Bool = dispatch_macos_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_macos_file_dialog,
+  menu? : (Array[@core.ActionCommand]) -> Int = dispatch_macos_menu,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=true,
       file_dialogs=true,
+      menus=true,
       open_url=true,
       system_theme=true,
     ),
@@ -149,13 +155,18 @@ pub fn macos_service_bridge(
           }
         @host.HostServiceRequest::FileDialog(options) =>
           @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
+        @host.HostServiceRequest::ShowMenu(commands) =>
+          menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
-        _ =>
-          @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
   )
+}
+
+///|
+fn dispatch_macos_menu(commands : Array[@core.ActionCommand]) -> Int {
+  macos_show_menu_bytes(encode_menu_commands(commands))
 }
 
 ///|
