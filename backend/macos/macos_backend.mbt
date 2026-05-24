@@ -72,6 +72,7 @@ struct MacosApp {
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
+  services : @host.HostServiceBridge
   windows : @host.HostWindowRegistry
   mut window_id : @host.HostWindowId?
   mut last_pointer : @core.Point
@@ -240,6 +241,7 @@ pub fn run_app_with_options(
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     text_engine_setting: options.text_engine,
+    services: macos_service_bridge(),
     windows: @host.HostWindowRegistry::new(),
     window_id: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
@@ -500,7 +502,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
         position,
         scale_factor=self.current_scale_factor(),
       )
-      self.dispatch_window_event(event)
+      self.dispatch_pointer_or_context_menu(event)
     }
     @window_core.WindowEvent::DragEntered(_, position)
     | @window_core.WindowEvent::DragMoved(position)
@@ -535,6 +537,21 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
         _ => ()
       }
     _ => self.dispatch_window_event(event)
+  }
+}
+
+///|
+fn MacosApp::dispatch_pointer_or_context_menu(
+  self : MacosApp,
+  event : @window_core.WindowEvent,
+) -> Unit {
+  if @host.window_event_is_context_menu_button(event) {
+    if @host.window_event_is_context_menu_trigger(event) {
+      ignore(self.driver.show_context_menu(self.services))
+      self.sync_text_input_session()
+    }
+  } else {
+    self.dispatch_window_event(event)
   }
 }
 
