@@ -64,8 +64,21 @@ pub(all) enum WebGpuHostCall {
   PopTransform
   PushOpacity(Double)
   PopOpacity
+  PushLayer(@core.LayerSpec)
+  PopLayer
+  PushFilter(@core.FilterEffect)
+  PopFilter
+  DrawShaderEffect(@core.ShaderEffectSpec)
   Present
 } derive(Eq, Debug, ToJson)
+
+///|
+priv struct HostBrushPayload {
+  start : @core.Point
+  end : @core.Point
+  start_color : @core.Color
+  end_color : @core.Color
+}
 
 ///|
 pub(all) struct WebGpuHostSurface {
@@ -398,12 +411,15 @@ pub fn draw_commands_to_host_calls(
       @core.DrawCommand::PushOpacity(opacity) =>
         calls.push(WebGpuHostCall::PushOpacity(opacity))
       @core.DrawCommand::PopOpacity => calls.push(WebGpuHostCall::PopOpacity)
-      @core.DrawCommand::PushLayer(_)
-      | @core.DrawCommand::PopLayer
-      | @core.DrawCommand::PushFilter(_)
-      | @core.DrawCommand::PopFilter
-      | @core.DrawCommand::DrawPath(_)
-      | @core.DrawCommand::DrawShaderEffect(_) => ()
+      @core.DrawCommand::PushLayer(layer) =>
+        calls.push(WebGpuHostCall::PushLayer(layer))
+      @core.DrawCommand::PopLayer => calls.push(WebGpuHostCall::PopLayer)
+      @core.DrawCommand::PushFilter(filter) =>
+        calls.push(WebGpuHostCall::PushFilter(filter))
+      @core.DrawCommand::PopFilter => calls.push(WebGpuHostCall::PopFilter)
+      @core.DrawCommand::DrawShaderEffect(spec) =>
+        calls.push(WebGpuHostCall::DrawShaderEffect(spec))
+      @core.DrawCommand::DrawPath(_) => ()
     }
   }
   calls.push(WebGpuHostCall::Present)
@@ -585,9 +601,169 @@ fn submit_host_calls(
       PushOpacity(opacity) =>
         raise_for_host_status(host_push_opacity(renderer, opacity))
       PopOpacity => raise_for_host_status(host_pop_opacity(renderer))
+      PushLayer(layer) => submit_push_layer(renderer, layer)
+      PopLayer => raise_for_host_status(host_pop_layer(renderer))
+      PushFilter(filter) => submit_push_filter(renderer, filter)
+      PopFilter => raise_for_host_status(host_pop_filter(renderer))
+      DrawShaderEffect(spec) => submit_draw_shader_effect(renderer, spec)
       Present => raise_for_host_status(host_present(renderer))
     }
   }
+}
+
+///|
+fn submit_push_layer(
+  renderer : HostWebGpuRenderer,
+  layer : @core.LayerSpec,
+) -> Unit raise WebGpuHostError {
+  let mask = layer_mask_payload(layer.mask)
+  raise_for_host_status(
+    host_push_layer(
+      renderer,
+      layer.opacity,
+      blend_mode_host_code(layer.blend_mode),
+      mask.kind,
+      mask.rect.origin.x,
+      mask.rect.origin.y,
+      mask.rect.size.width,
+      mask.rect.size.height,
+      mask.radius,
+      layer.offscreen,
+    ),
+  )
+}
+
+///|
+fn submit_push_filter(
+  renderer : HostWebGpuRenderer,
+  filter : @core.FilterEffect,
+) -> Unit raise WebGpuHostError {
+  let payload = filter_effect_payload(filter)
+  raise_for_host_status(
+    host_push_filter(
+      renderer,
+      payload.kind,
+      payload.amount,
+      host_string(payload.matrix_values),
+    ),
+  )
+}
+
+///|
+fn submit_draw_shader_effect(
+  renderer : HostWebGpuRenderer,
+  spec : @core.ShaderEffectSpec,
+) -> Unit raise WebGpuHostError {
+  let fallback = brush_payload(spec.fallback, spec.frame)
+  raise_for_host_status(
+    host_draw_shader_effect(
+      renderer,
+      host_string(spec.name),
+      spec.frame.origin.x,
+      spec.frame.origin.y,
+      spec.frame.size.width,
+      spec.frame.size.height,
+      host_string(double_array_string(spec.uniforms)),
+      fallback.start.x,
+      fallback.start.y,
+      fallback.end.x,
+      fallback.end.y,
+      fallback.start_color.r,
+      fallback.start_color.g,
+      fallback.start_color.b,
+      fallback.start_color.a,
+      fallback.end_color.r,
+      fallback.end_color.g,
+      fallback.end_color.b,
+      fallback.end_color.a,
+    ),
+  )
+}
+
+///|
+priv struct HostLayerMaskPayload {
+  kind : Int
+  rect : @core.Rect
+  radius : Double
+}
+
+///|
+fn layer_mask_payload(mask : @core.LayerMask) -> HostLayerMaskPayload {
+  match mask {
+    @core.LayerMask::NoMask =>
+      {
+        kind: 0,
+        rect: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+        radius: 0.0,
+      }
+    @core.LayerMask::RectMask(rect) => { kind: 1, rect, radius: 0.0 }
+    @core.LayerMask::RoundedMask(rounded) =>
+      { kind: 2, rect: rounded.rect, radius: rounded.radius }
+  }
+}
+
+///|
+priv struct HostFilterPayload {
+  kind : Int
+  amount : Double
+  matrix_values : String
+}
+
+///|
+fn filter_effect_payload(filter : @core.FilterEffect) -> HostFilterPayload {
+  match filter {
+    @core.FilterEffect::Blur(radius) =>
+      { kind: 0, amount: radius.max(0.0), matrix_values: "" }
+    @core.FilterEffect::Saturate(amount) =>
+      { kind: 1, amount, matrix_values: "" }
+    @core.FilterEffect::Brightness(amount) =>
+      { kind: 2, amount, matrix_values: "" }
+    @core.FilterEffect::Contrast(amount) =>
+      { kind: 3, amount, matrix_values: "" }
+    @core.FilterEffect::ColorMatrix(values) =>
+      { kind: 4, amount: 1.0, matrix_values: double_array_string(values) }
+  }
+}
+
+///|
+fn blend_mode_host_code(mode : @core.BlendMode) -> Int {
+  match mode {
+    @core.BlendMode::SourceOver => 0
+    @core.BlendMode::Multiply => 1
+    @core.BlendMode::Screen => 2
+    @core.BlendMode::Overlay => 3
+    @core.BlendMode::Darken => 4
+    @core.BlendMode::Lighten => 5
+  }
+}
+
+///|
+fn brush_payload(brush : @core.Brush, frame : @core.Rect) -> HostBrushPayload {
+  match brush {
+    @core.Brush::Solid(color) =>
+      {
+        start: frame.origin,
+        end: @core.Point::new(x=frame.origin.x + 1.0, y=frame.origin.y),
+        start_color: color,
+        end_color: color,
+      }
+    @core.Brush::LinearGradient(gradient) =>
+      {
+        start: gradient.start,
+        end: gradient.end,
+        start_color: gradient.start_color,
+        end_color: gradient.end_color,
+      }
+  }
+}
+
+///|
+fn double_array_string(values : Array[Double]) -> String {
+  let parts : Array[String] = []
+  for value in values {
+    parts.push(value.to_string())
+  }
+  parts.join(",")
 }
 
 ///|
@@ -1051,6 +1227,57 @@ fn host_push_opacity(renderer : HostWebGpuRenderer, opacity : Double) -> Int = "
 
 ///|
 fn host_pop_opacity(renderer : HostWebGpuRenderer) -> Int = "webgpu" "pop_opacity"
+
+///|
+fn host_push_layer(
+  renderer : HostWebGpuRenderer,
+  opacity : Double,
+  blend_mode : Int,
+  mask_kind : Int,
+  mask_x : Double,
+  mask_y : Double,
+  mask_width : Double,
+  mask_height : Double,
+  mask_radius : Double,
+  offscreen : Bool,
+) -> Int = "webgpu" "push_layer"
+
+///|
+fn host_pop_layer(renderer : HostWebGpuRenderer) -> Int = "webgpu" "pop_layer"
+
+///|
+fn host_push_filter(
+  renderer : HostWebGpuRenderer,
+  filter_kind : Int,
+  amount : Double,
+  matrix_values : HostWebGpuString,
+) -> Int = "webgpu" "push_filter"
+
+///|
+fn host_pop_filter(renderer : HostWebGpuRenderer) -> Int = "webgpu" "pop_filter"
+
+///|
+fn host_draw_shader_effect(
+  renderer : HostWebGpuRenderer,
+  name : HostWebGpuString,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  uniforms : HostWebGpuString,
+  start_x : Double,
+  start_y : Double,
+  end_x : Double,
+  end_y : Double,
+  r0 : Double,
+  g0 : Double,
+  b0 : Double,
+  a0 : Double,
+  r1 : Double,
+  g1 : Double,
+  b1 : Double,
+  a1 : Double,
+) -> Int = "webgpu" "draw_shader_effect"
 
 ///|
 fn host_present(renderer : HostWebGpuRenderer) -> Int = "webgpu" "present"

@@ -8,6 +8,7 @@ const TEXT_STRIDE_FLOATS = 8;
 const IMAGE_STRIDE_FLOATS = 9;
 const ATLAS_SIZE = 2048;
 const WEB_FONT_STACK = 'system-ui';
+const ADVANCED_STRIDE_FLOATS = 44;
 
 export function createWebGpuImports(options = {}) {
   if (!options.device || !options.format) {
@@ -16,6 +17,7 @@ export function createWebGpuImports(options = {}) {
 
   const device = options.device;
   const format = options.format;
+  const overlaySurfaceFormat = options.overlayFormat || "rgba8unorm";
   const strings = new Map();
   const surfaces = new Map();
   const renderers = new Map();
@@ -126,6 +128,61 @@ export function createWebGpuImports(options = {}) {
     a: color.a * opacity,
   });
 
+  const parseDoubleList = value => `${value ?? ""}`
+    .split(",")
+    .map(part => Number(part.trim()))
+    .filter(value => Number.isFinite(value));
+
+  const maskClip = mask => {
+    if (!mask || !mask.kind) return undefined;
+    return {
+      x: Number(mask.x) || 0,
+      y: Number(mask.y) || 0,
+      width: Math.max(0, Number(mask.width) || 0),
+      height: Math.max(0, Number(mask.height) || 0),
+    };
+  };
+
+  const maskRect = (mask, renderer) => {
+    if (!mask || !mask.kind) {
+      return { x: 0, y: 0, width: renderer.width, height: renderer.height, radius: 0, rounded: false };
+    }
+    return {
+      x: Number(mask.x) || 0,
+      y: Number(mask.y) || 0,
+      width: Math.max(0, Number(mask.width) || 0),
+      height: Math.max(0, Number(mask.height) || 0),
+      radius: Math.max(0, Number(mask.radius) || 0),
+      rounded: Number(mask.kind) === 2,
+    };
+  };
+
+  const emptyMatrix = () => [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1,
+    0, 0, 0, 0,
+  ];
+
+  const normalizeFilter = filter => {
+    if (!filter) return { kind: 0, amount: 0, matrix: emptyMatrix() };
+    const kind = Number(filter.kind) || 0;
+    const amount = Number(filter.amount);
+    const matrix = emptyMatrix();
+    if (kind === 4) {
+      const values = parseDoubleList(filter.matrixValues);
+      for (let i = 0; i < Math.min(values.length, matrix.length); i += 1) {
+        matrix[i] = values[i];
+      }
+    }
+    return {
+      kind: kind + 1,
+      amount: Number.isFinite(amount) ? amount : 1,
+      matrix,
+    };
+  };
+
   const fallbackImageColor = source => {
     let hash = 2166136261;
     for (const ch of `${source ?? ""}`) {
@@ -142,10 +199,115 @@ export function createWebGpuImports(options = {}) {
 
   const pushRendererItem = (renderer, item) => {
     const state = rendererState(renderer);
-    renderer.items.push({
+    const target = rendererScope(renderer);
+    target.items.push({
       ...item,
       clip: state.clip ? { ...state.clip } : undefined,
     });
+  };
+
+  const rendererScope = renderer => renderer.scopeStack[renderer.scopeStack.length - 1];
+
+  const newDrawScope = () => ({
+    visualVertices: [],
+    textVertices: [],
+    imageVertices: [],
+    advancedVertices: [],
+    items: [],
+  });
+
+  const shaderKindForName = name => {
+    switch (`${name ?? ""}`) {
+      case "checker": return 1;
+      case "solid": return 2;
+      case "linear-gradient-debug": return 3;
+      case "vignette": return 4;
+      default: return 0;
+    }
+  };
+
+  const pushAdvancedVertex = (scope, renderer, px, py, u, v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask) => {
+    const w = Number(renderer.width || renderer.surface.width || 1);
+    const h = Number(renderer.height || renderer.surface.height || 1);
+    const matrix = filter.matrix ?? emptyMatrix();
+    scope.advancedVertices.push(
+      px / w * 2 - 1,
+      1 - py / h * 2,
+      u, v,
+      opacity,
+      blendMode,
+      shaderKind,
+      effectAmount,
+      (px - rect.x) / Math.max(rect.width, 0.0001),
+      (py - rect.y) / Math.max(rect.height, 0.0001),
+      filter.kind,
+      filter.amount,
+      color0.r, color0.g, color0.b, color0.a,
+      color1.r, color1.g, color1.b, color1.a,
+      ...matrix,
+      Math.max(0, Number(mask?.width) || 0),
+      Math.max(0, Number(mask?.height) || 0),
+      Math.max(0, Number(mask?.radius) || 0),
+      mask?.rounded ? 1 : 0,
+    );
+  };
+
+  const pushAdvancedQuad = (renderer, rect, texture, view, sampler, filterInput, opacity, blendMode, shaderKind = 0, effectAmount = 0, color0 = { r: 1, g: 1, b: 1, a: 1 }, color1 = color0, clip, options = {}) => {
+    if (!texture || rect.width <= 0 || rect.height <= 0) return;
+    const scope = rendererScope(renderer);
+    const filter = normalizeFilter(filterInput);
+    const uvRect = options.uvRect;
+    const mask = options.mask ?? { width: rect.width, height: rect.height, radius: 0, rounded: false };
+    const start = scope.advancedVertices.length / ADVANCED_STRIDE_FLOATS;
+    const x0 = rect.x;
+    const y0 = rect.y;
+    const x1 = rect.x + rect.width;
+    const y1 = rect.y + rect.height;
+    const uvFor = (px, py, fallbackU, fallbackV) => uvRect
+      ? {
+          u: px / Math.max(renderer.width, 0.0001),
+          v: py / Math.max(renderer.height, 0.0001),
+        }
+      : { u: fallbackU, v: fallbackV };
+    const uv0 = uvFor(x0, y0, 0, 0);
+    const uv1 = uvFor(x0, y1, 0, 1);
+    const uv2 = uvFor(x1, y1, 1, 1);
+    const uv3 = uvFor(x1, y0, 1, 0);
+    pushAdvancedVertex(scope, renderer, x0, y0, uv0.u, uv0.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
+    pushAdvancedVertex(scope, renderer, x0, y1, uv1.u, uv1.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
+    pushAdvancedVertex(scope, renderer, x1, y1, uv2.u, uv2.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
+    pushAdvancedVertex(scope, renderer, x0, y0, uv0.u, uv0.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
+    pushAdvancedVertex(scope, renderer, x1, y1, uv2.u, uv2.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
+    pushAdvancedVertex(scope, renderer, x1, y0, uv3.u, uv3.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
+    scope.items.push({
+      type: "advanced",
+      start,
+      count: 6,
+      texture,
+      view,
+      sampler,
+      bindGroup: Number(blendMode) === 3 ? undefined : createAdvancedBindGroup(blendMode, sampler, view),
+      bindGroupOwned: Number(blendMode) !== 3,
+      blendMode,
+      clip,
+    });
+  };
+
+  const createSamplerTextureBindGroup = (layout, sampler, view, backdropView) => {
+    const entries = [
+      { binding: 0, resource: sampler },
+      { binding: 1, resource: view },
+      { binding: 2, resource: backdropView ?? view },
+    ];
+    return device.createBindGroup({ layout, entries });
+  };
+
+  const createAdvancedBindGroup = (blendMode, sampler, view, backdropView) => {
+    const overlay = Number(blendMode) === 3;
+    const layout = overlay
+      ? advancedOverlayPipeline.getBindGroupLayout(0)
+      : advancedPipelineForBlend(blendMode).getBindGroupLayout(0);
+    return createSamplerTextureBindGroup(layout, sampler, view, backdropView);
   };
 
   const setPassClip = (pass, renderer, clip) => {
@@ -377,11 +539,343 @@ export function createWebGpuImports(options = {}) {
     primitive: { topology: "triangle-list" },
   });
 
+  const advancedBlend = mode => {
+    switch (Number(mode) || 0) {
+      case 1:
+        return {
+          color: {
+            srcFactor: "dst",
+            dstFactor: "zero",
+            operation: "add",
+          },
+          alpha: {
+            srcFactor: "one",
+            dstFactor: "one-minus-src-alpha",
+            operation: "add",
+          },
+        };
+      case 2:
+        return {
+          color: {
+            srcFactor: "one",
+            dstFactor: "one-minus-src",
+            operation: "add",
+          },
+          alpha: {
+            srcFactor: "one",
+            dstFactor: "one-minus-src-alpha",
+            operation: "add",
+          },
+        };
+      case 4:
+        return {
+          color: {
+            srcFactor: "one",
+            dstFactor: "one",
+            operation: "min",
+          },
+          alpha: {
+            srcFactor: "one",
+            dstFactor: "one-minus-src-alpha",
+            operation: "add",
+          },
+        };
+      case 5:
+        return {
+          color: {
+            srcFactor: "one",
+            dstFactor: "one",
+            operation: "max",
+          },
+          alpha: {
+            srcFactor: "one",
+            dstFactor: "one-minus-src-alpha",
+            operation: "add",
+          },
+        };
+      default:
+        return alphaBlend();
+    }
+  };
+
+  const advancedModule = device.createShaderModule({
+    code: `
+      struct VSOut {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+        @location(1) meta0: vec4f,
+        @location(2) meta1: vec4f,
+        @location(3) color0: vec4f,
+        @location(4) color1: vec4f,
+        @location(5) matrix0: vec4f,
+        @location(6) matrix1: vec4f,
+        @location(7) matrix2: vec4f,
+        @location(8) matrix3: vec4f,
+        @location(9) matrix4: vec4f,
+        @location(10) rectMask: vec4f,
+      };
+
+      @vertex
+      fn vs_main(
+        @location(0) position: vec2f,
+        @location(1) uv: vec2f,
+        @location(2) meta0: vec4f,
+        @location(3) meta1: vec4f,
+        @location(4) color0: vec4f,
+        @location(5) color1: vec4f,
+        @location(6) matrix0: vec4f,
+        @location(7) matrix1: vec4f,
+        @location(8) matrix2: vec4f,
+        @location(9) matrix3: vec4f,
+        @location(10) matrix4: vec4f,
+        @location(11) rectMask: vec4f,
+      ) -> VSOut {
+        var out: VSOut;
+        out.position = vec4f(position, 0.0, 1.0);
+        out.uv = uv;
+        out.meta0 = meta0;
+        out.meta1 = meta1;
+        out.color0 = color0;
+        out.color1 = color1;
+        out.matrix0 = matrix0;
+        out.matrix1 = matrix1;
+        out.matrix2 = matrix2;
+        out.matrix3 = matrix3;
+        out.matrix4 = matrix4;
+        out.rectMask = rectMask;
+        return out;
+      }
+
+      @group(0) @binding(0) var layerSampler: sampler;
+      @group(0) @binding(1) var layerTexture: texture_2d<f32>;
+      @group(0) @binding(2) var backdropTexture: texture_2d<f32>;
+
+      fn checker(local: vec2f, amount: f32, c0: vec4f, c1: vec4f) -> vec4f {
+        let scale = max(amount, 8.0);
+        let cell = floor(local * scale);
+        let alt = (i32(cell.x) + i32(cell.y)) & 1;
+        if (alt == 0) {
+          return c0;
+        }
+        return c1;
+      }
+
+      fn vignette(local: vec2f, amount: f32, c0: vec4f) -> vec4f {
+        let centered = local * 2.0 - vec2f(1.0);
+        let fade = 1.0 - smoothstep(0.25, max(amount, 0.8), length(centered));
+        return vec4f(c0.rgb * fade, c0.a);
+      }
+
+      fn blur_sample(uv: vec2f, amount: f32) -> vec4f {
+        let dims = vec2f(textureDimensions(layerTexture));
+        let step = vec2f(1.0) / max(dims, vec2f(1.0));
+        let radius = max(amount, 1.0);
+        var color = vec4f(0.0);
+        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0, -1.0)) * 0.0625;
+        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 0.0, -1.0)) * 0.125;
+        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0, -1.0)) * 0.0625;
+        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0,  0.0)) * 0.125;
+        color += textureSample(layerTexture, layerSampler, uv) * 0.25;
+        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0,  0.0)) * 0.125;
+        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0,  1.0)) * 0.0625;
+        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 0.0,  1.0)) * 0.125;
+        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0,  1.0)) * 0.0625;
+        return color;
+      }
+
+      fn rounded_box_sdf_advanced(p: vec2f, halfSize: vec2f, radius: f32) -> f32 {
+        let r = min(radius, min(halfSize.x, halfSize.y));
+        let q = abs(p) - (halfSize - vec2f(r));
+        return length(max(q, vec2f(0.0))) + min(max(q.x, q.y), 0.0) - r;
+      }
+
+      fn apply_filter(color: vec4f, kind: i32, amount: f32, m0: vec4f, m1: vec4f, m2: vec4f, m3: vec4f, m4: vec4f) -> vec4f {
+        if (kind == 2) {
+          let luma = dot(color.rgb, vec3f(0.2126, 0.7152, 0.0722));
+          return vec4f(mix(vec3f(luma), color.rgb, amount), color.a);
+        }
+        if (kind == 3) {
+          return vec4f(color.rgb * amount, color.a);
+        }
+        if (kind == 4) {
+          return vec4f((color.rgb - vec3f(0.5)) * amount + vec3f(0.5), color.a);
+        }
+        if (kind == 5) {
+          let v = vec4f(color.rgb, color.a);
+          return vec4f(
+            dot(v, m0) + m4.x,
+            dot(v, m1) + m4.y,
+            dot(v, m2) + m4.z,
+            dot(v, m3) + m4.w,
+          );
+        }
+        return color;
+      }
+
+      fn overlayChannel(base: f32, source: f32) -> f32 {
+        if (base <= 0.5) {
+          return 2.0 * base * source;
+        }
+        return 1.0 - 2.0 * (1.0 - base) * (1.0 - source);
+      }
+
+      fn overlayRgb(base: vec3f, source: vec3f) -> vec3f {
+        return vec3f(
+          overlayChannel(base.r, source.r),
+          overlayChannel(base.g, source.g),
+          overlayChannel(base.b, source.b),
+        );
+      }
+
+      @fragment
+      fn fs_main(in: VSOut) -> @location(0) vec4f {
+        let opacity = in.meta0.x;
+        let shaderKind = i32(in.meta0.z + 0.5);
+        let effectAmount = in.meta0.w;
+        let filterKind = i32(in.meta1.z + 0.5);
+        let filterAmount = in.meta1.w;
+        var sample = textureSample(layerTexture, layerSampler, in.uv);
+        if (shaderKind == 1) {
+          sample = checker(in.meta1.xy, effectAmount, in.color0, in.color1);
+        } else if (shaderKind == 2) {
+          sample = vec4f(in.color0.rgb, in.color0.a);
+        } else if (shaderKind == 3) {
+          sample = vec4f(mix(in.color0.rgb, in.color1.rgb, clamp(in.meta1.x, 0.0, 1.0)), mix(in.color0.a, in.color1.a, clamp(in.meta1.x, 0.0, 1.0)));
+        } else if (shaderKind == 4) {
+          sample = vignette(in.meta1.xy, effectAmount, in.color0);
+        } else if (shaderKind == 5) {
+          sample = vec4f(in.color0.rgb, in.color0.a);
+        }
+        if (filterKind == 1) {
+          sample = blur_sample(in.uv, filterAmount);
+        }
+        sample = apply_filter(sample, filterKind, filterAmount, in.matrix0, in.matrix1, in.matrix2, in.matrix3, in.matrix4);
+        var maskAlpha = 1.0;
+        if (in.rectMask.w > 0.5) {
+          let maskSize = in.rectMask.xy;
+          let local = in.meta1.xy * maskSize;
+          let dist = rounded_box_sdf_advanced(local - maskSize * 0.5, maskSize * 0.5, in.rectMask.z);
+          maskAlpha = 1.0 - smoothstep(-0.5, 0.5, dist);
+        }
+        if (i32(in.meta0.y + 0.5) == 3) {
+          let backdrop = textureSample(backdropTexture, layerSampler, in.uv);
+          let sourceAlpha = clamp(sample.a * opacity * maskAlpha, 0.0, 1.0);
+          let blended = overlayRgb(backdrop.rgb, sample.rgb);
+          let outRgb = mix(backdrop.rgb, blended, sourceAlpha);
+          let outAlpha = sourceAlpha + backdrop.a * (1.0 - sourceAlpha);
+          return vec4f(outRgb, outAlpha);
+        }
+        return vec4f(sample.rgb, sample.a * opacity * maskAlpha);
+      }
+    `,
+  });
+
+  const createAdvancedPipeline = (blendMode, options = {}) => device.createRenderPipeline({
+    layout: "auto",
+    vertex: {
+      module: advancedModule,
+      entryPoint: "vs_main",
+      buffers: [{
+        arrayStride: ADVANCED_STRIDE_FLOATS * 4,
+        attributes: [
+          { shaderLocation: 0, offset: 0, format: "float32x2" },
+          { shaderLocation: 1, offset: 8, format: "float32x2" },
+          { shaderLocation: 2, offset: 16, format: "float32x4" },
+          { shaderLocation: 3, offset: 32, format: "float32x4" },
+          { shaderLocation: 4, offset: 48, format: "float32x4" },
+          { shaderLocation: 5, offset: 64, format: "float32x4" },
+          { shaderLocation: 6, offset: 80, format: "float32x4" },
+          { shaderLocation: 7, offset: 96, format: "float32x4" },
+          { shaderLocation: 8, offset: 112, format: "float32x4" },
+          { shaderLocation: 9, offset: 128, format: "float32x4" },
+          { shaderLocation: 10, offset: 144, format: "float32x4" },
+          { shaderLocation: 11, offset: 160, format: "float32x4" },
+        ],
+      }],
+    },
+    fragment: {
+      module: advancedModule,
+      entryPoint: "fs_main",
+      targets: [{ format, blend: options.disableBlend ? undefined : advancedBlend(blendMode) }],
+    },
+    primitive: { topology: "triangle-list" },
+  });
+
+  const advancedPipelines = new Map();
+  const advancedPipelineForBlend = blendMode => {
+    const key = Number(blendMode) || 0;
+    let pipeline = advancedPipelines.get(key);
+    if (!pipeline) {
+      pipeline = createAdvancedPipeline(key);
+      advancedPipelines.set(key, pipeline);
+    }
+    return pipeline;
+  };
+
+  const advancedOverlayPipeline = createAdvancedPipeline(3, { disableBlend: true });
+
+  const textureCopyModule = device.createShaderModule({
+    code: `
+      struct VSOut {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+      };
+
+      @vertex
+      fn vs_main(@builtin(vertex_index) vid: u32) -> VSOut {
+        var positions = array<vec2f, 3>(
+          vec2f(-1.0, -1.0),
+          vec2f( 3.0, -1.0),
+          vec2f(-1.0,  3.0),
+        );
+        var uvs = array<vec2f, 3>(
+          vec2f(0.0, 1.0),
+          vec2f(2.0, 1.0),
+          vec2f(0.0, -1.0),
+        );
+        var out: VSOut;
+        out.position = vec4f(positions[vid], 0.0, 1.0);
+        out.uv = uvs[vid];
+        return out;
+      }
+
+      @group(0) @binding(0) var sourceSampler: sampler;
+      @group(0) @binding(1) var sourceTexture: texture_2d<f32>;
+      @group(0) @binding(2) var unusedTexture: texture_2d<f32>;
+
+      @fragment
+      fn fs_main(in: VSOut) -> @location(0) vec4f {
+        return textureSample(sourceTexture, sourceSampler, in.uv);
+      }
+    `,
+  });
+
+  const textureCopyPipeline = device.createRenderPipeline({
+    layout: "auto",
+    vertex: {
+      module: textureCopyModule,
+      entryPoint: "vs_main",
+    },
+    fragment: {
+      module: textureCopyModule,
+      entryPoint: "fs_main",
+      targets: [{ format: overlaySurfaceFormat }],
+    },
+    primitive: { topology: "triangle-list" },
+  });
+
+  const surfaceSampler = device.createSampler({
+    magFilter: "linear",
+    minFilter: "linear",
+    addressModeU: "clamp-to-edge",
+    addressModeV: "clamp-to-edge",
+  });
+
   const pushVisualVertex = (renderer, rect, px, py, radius, mode, strokeWidth, blurRadius, start, end, c0, c1) => {
     const w = Number(renderer.width || renderer.surface.width || 1);
     const h = Number(renderer.height || renderer.surface.height || 1);
     const transformed = transformPoint(rendererState(renderer).transform, px, py);
-    renderer.visualVertices.push(
+    rendererScope(renderer).visualVertices.push(
       transformed.x / w * 2 - 1,
       1 - transformed.y / h * 2,
       px - rect.x,
@@ -403,7 +897,8 @@ export function createWebGpuImports(options = {}) {
 
   const pushVisualQuad = (renderer, rect, radius, mode, strokeWidth, blurRadius, start, end, c0, c1) => {
     if (rect.width <= 0 || rect.height <= 0) return;
-    const startIndex = renderer.visualVertices.length / VISUAL_STRIDE_FLOATS;
+    const scope = rendererScope(renderer);
+    const startIndex = scope.visualVertices.length / VISUAL_STRIDE_FLOATS;
     const state = rendererState(renderer);
     const color0 = multiplyColorAlpha(c0, state.opacity);
     const color1 = multiplyColorAlpha(c1, state.opacity);
@@ -511,7 +1006,7 @@ export function createWebGpuImports(options = {}) {
     const v1 = (glyph.y + glyph.textureHeight) / ATLAS_SIZE;
     const push = (px, py, u, v) => {
       const transformed = transformPoint(rendererState(renderer).transform, px, py);
-      renderer.textVertices.push(
+      rendererScope(renderer).textVertices.push(
       transformed.x / w * 2 - 1,
       1 - transformed.y / h * 2,
       u, v,
@@ -640,7 +1135,8 @@ export function createWebGpuImports(options = {}) {
       glyphs.push(glyph);
       total += glyph.advance;
     }
-    const startIndex = renderer.textVertices.length / TEXT_STRIDE_FLOATS;
+    const scope = rendererScope(renderer);
+    const startIndex = scope.textVertices.length / TEXT_STRIDE_FLOATS;
     let cursor = Number(x) + textAlignExtra(align, width, total);
     const baseline = Number(y) + Math.max(font.size, (Number(height) + font.size * 0.72) / 2);
     const state = rendererState(renderer);
@@ -649,7 +1145,7 @@ export function createWebGpuImports(options = {}) {
       pushTextQuad(renderer, cursor + glyph.offsetX, baseline + glyph.offsetY, glyph, drawColor);
       cursor += glyph.advance;
     }
-    const count = renderer.textVertices.length / TEXT_STRIDE_FLOATS - startIndex;
+    const count = scope.textVertices.length / TEXT_STRIDE_FLOATS - startIndex;
     if (count > 0) pushRendererItem(renderer, { type: "text", start: startIndex, count });
   };
 
@@ -753,10 +1249,11 @@ export function createWebGpuImports(options = {}) {
     const h = Number(renderer.height || renderer.surface.height || 1);
     const state = rendererState(renderer);
     const alpha = clampOpacity(opacity) * state.opacity;
-    const startIndex = renderer.imageVertices.length / IMAGE_STRIDE_FLOATS;
+    const scope = rendererScope(renderer);
+    const startIndex = scope.imageVertices.length / IMAGE_STRIDE_FLOATS;
     const push = (px, py, u, v) => {
       const transformed = transformPoint(state.transform, px, py);
-      renderer.imageVertices.push(
+      scope.imageVertices.push(
         transformed.x / w * 2 - 1,
         1 - transformed.y / h * 2,
         u, v,
@@ -780,6 +1277,230 @@ export function createWebGpuImports(options = {}) {
       bindGroup: resource.bindGroup,
     });
     return true;
+  };
+
+  const createFrameTexture = renderer => {
+    const dpr = Number(renderer.surface.scaleFactor) || 1;
+    const width = Math.max(1, Math.round(renderer.width * dpr));
+    const height = Math.max(1, Math.round(renderer.height * dpr));
+    const texture = device.createTexture({
+      size: [width, height],
+      format,
+      usage:
+        GPUTextureUsage.RENDER_ATTACHMENT |
+        GPUTextureUsage.TEXTURE_BINDING |
+        GPUTextureUsage.COPY_SRC |
+        GPUTextureUsage.COPY_DST,
+    });
+    const view = texture.createView();
+    const sampler = device.createSampler({
+      magFilter: "linear",
+      minFilter: "linear",
+      addressModeU: "clamp-to-edge",
+      addressModeV: "clamp-to-edge",
+    });
+    renderer.frameResources.push(texture);
+    return { texture, view, sampler, width, height };
+  };
+
+  const createBackdropTexture = renderer => {
+    const dpr = Number(renderer.surface.scaleFactor) || 1;
+    const width = Math.max(1, Math.round(renderer.width * dpr));
+    const height = Math.max(1, Math.round(renderer.height * dpr));
+    const texture = device.createTexture({
+      size: [width, height],
+      format: overlaySurfaceFormat,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC,
+    });
+    const sampler = device.createSampler({
+      magFilter: "linear",
+      minFilter: "linear",
+      addressModeU: "clamp-to-edge",
+      addressModeV: "clamp-to-edge",
+    });
+    renderer.frameResources.push(texture);
+    return { texture, view: texture.createView(), sampler, width, height };
+  };
+
+  const copyTargetSnapshot = (renderer, targetTexture, _view, _clearValue, encoder) => {
+    const backdrop = createFrameTexture(renderer);
+    if (targetTexture) {
+      encoder.copyTextureToTexture(
+        { texture: targetTexture },
+        { texture: backdrop.texture },
+        [backdrop.width, backdrop.height, 1],
+      );
+    }
+    return backdrop;
+  };
+
+  const renderTargetSnapshot = (renderer, _targetTexture, view, clearValue, encoder) => {
+    const snapshot = createBackdropTexture(renderer);
+    const pass = beginScopePass(snapshot.view, clearValue, "clear")(encoder);
+    pass.setPipeline(textureCopyPipeline);
+    pass.setBindGroup(0, createSamplerTextureBindGroup(textureCopyPipeline.getBindGroupLayout(0), surfaceSampler, view, snapshot.view));
+    pass.draw(3, 1, 0, 0);
+    pass.end();
+    return snapshot;
+  };
+
+  const ensureWhiteTexture = renderer => {
+    if (renderer.whiteTexture) return;
+    const texture = device.createTexture({
+      size: [1, 1],
+      format: "rgba8unorm",
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+    });
+    device.queue.writeTexture(
+      { texture },
+      new Uint8Array([255, 255, 255, 255]),
+      { bytesPerRow: 4, rowsPerImage: 1 },
+      { width: 1, height: 1 },
+    );
+    renderer.whiteTexture = texture;
+    renderer.whiteView = texture.createView();
+    renderer.whiteSampler = device.createSampler({
+      magFilter: "nearest",
+      minFilter: "nearest",
+      addressModeU: "clamp-to-edge",
+      addressModeV: "clamp-to-edge",
+    });
+  };
+
+  const beginScopePass = (view, clearValue, loadOp) => encoder => encoder.beginRenderPass({
+    colorAttachments: [{
+      view,
+      loadOp,
+      clearValue: clearValue ?? { r: 0, g: 0, b: 0, a: 0 },
+      storeOp: "store",
+    }],
+  });
+
+  const renderScopeSpan = (renderer, scope, pass, buffers, startIndex, endIndex) => {
+    for (let index = startIndex; index < endIndex; index += 1) {
+      const item = scope.items[index];
+      if (!setPassClip(pass, renderer, item.clip)) continue;
+      if (item.type === "visual" && buffers.visual) {
+        pass.setPipeline(visualPipeline);
+        pass.setVertexBuffer(0, buffers.visual);
+        pass.draw(item.count, 1, item.start, 0);
+      } else if (item.type === "text" && buffers.text) {
+        pass.setPipeline(textPipeline);
+        pass.setBindGroup(0, renderer.atlasBindGroup);
+        pass.setVertexBuffer(0, buffers.text);
+        pass.draw(item.count, 1, item.start, 0);
+      } else if (item.type === "image" && buffers.image && item.bindGroup) {
+        pass.setPipeline(imagePipeline);
+        pass.setBindGroup(0, item.bindGroup);
+        pass.setVertexBuffer(0, buffers.image);
+        pass.draw(item.count, 1, item.start, 0);
+      } else if (item.type === "advanced" && buffers.advanced && item.bindGroup) {
+        pass.setPipeline(advancedPipelineForBlend(item.blendMode));
+        pass.setBindGroup(0, item.bindGroup);
+        pass.setVertexBuffer(0, buffers.advanced);
+        pass.draw(item.count, 1, item.start, 0);
+      }
+    }
+  };
+
+  const drawOverlayItemToView = (renderer, item, advancedBuffer, targetTexture, view, clearValue, encoder, clearPass, targetSnapshot) => {
+    if (!advancedBuffer || !item.view || !item.sampler) return false;
+    if (clearPass) {
+      const clear = beginScopePass(view, clearValue, "clear")(encoder);
+      clear.end();
+    }
+    const backdrop = targetSnapshot(renderer, targetTexture, view, clearValue, encoder);
+    const bindGroup = createAdvancedBindGroup(item.blendMode, item.sampler, item.view, backdrop.view);
+    const pass = beginScopePass(view, clearValue, "load")(encoder);
+    if (setPassClip(pass, renderer, item.clip)) {
+      pass.setPipeline(advancedOverlayPipeline);
+      pass.setBindGroup(0, bindGroup);
+      pass.setVertexBuffer(0, advancedBuffer);
+      pass.draw(item.count, 1, item.start, 0);
+    }
+    pass.end();
+    return true;
+  };
+
+  const renderScopeToView = (renderer, scope, targetTexture, view, clearValue, encoder, loadOp = "clear", targetSnapshot = copyTargetSnapshot) => {
+    const buffers = {
+      visual: uploadVertexBuffer(scope.visualVertices),
+      text: uploadVertexBuffer(scope.textVertices),
+      image: uploadVertexBuffer(scope.imageVertices),
+      advanced: uploadVertexBuffer(scope.advancedVertices),
+    };
+    let clearPass = loadOp === "clear";
+    let spanStart = 0;
+    for (let index = 0; index < scope.items.length; index += 1) {
+      const item = scope.items[index];
+      if (item.type !== "advanced" || Number(item.blendMode) !== 3) continue;
+      if (spanStart < index) {
+        const pass = beginScopePass(view, clearValue, clearPass ? "clear" : "load")(encoder);
+        renderScopeSpan(renderer, scope, pass, buffers, spanStart, index);
+        pass.end();
+        clearPass = false;
+      }
+      if (drawOverlayItemToView(renderer, item, buffers.advanced, targetTexture, view, clearValue, encoder, clearPass, targetSnapshot)) {
+        clearPass = false;
+      }
+      spanStart = index + 1;
+    }
+    if (spanStart < scope.items.length) {
+      const pass = beginScopePass(view, clearValue, clearPass ? "clear" : "load")(encoder);
+      renderScopeSpan(renderer, scope, pass, buffers, spanStart, scope.items.length);
+      pass.end();
+      clearPass = false;
+    }
+    if (clearPass) {
+      const pass = beginScopePass(view, clearValue, "clear")(encoder);
+      pass.end();
+    }
+  };
+
+  const compositeScope = (renderer, layer) => {
+    const currentScope = renderer.scopeStack.pop();
+    if (!currentScope || renderer.scopeStack.length === 0) return;
+    const state = renderer.stateStack.pop() ?? { opacity: 1, transform: identityTransform(), clip: undefined };
+    const target = createFrameTexture(renderer);
+    const encoder = device.createCommandEncoder();
+    renderScopeToView(
+      renderer,
+      currentScope,
+      target.texture,
+      target.view,
+      { r: 0, g: 0, b: 0, a: 0 },
+      encoder,
+    );
+    device.queue.submit([encoder.finish()]);
+    const mask = maskRect(layer.mask, renderer);
+    const rect = mask.width > 0 && mask.height > 0
+      ? { x: mask.x, y: mask.y, width: mask.width, height: mask.height }
+      : { x: 0, y: 0, width: renderer.width, height: renderer.height };
+    const clip = intersectRects(layer.clip, maskClip(layer.mask));
+    pushAdvancedQuad(
+      renderer,
+      rect,
+      target.texture,
+      target.view,
+      target.sampler,
+      layer.filter,
+      clampOpacity(layer.opacity) * state.opacity,
+      Number(layer.blendMode) || 0,
+      0,
+      0,
+      { r: 1, g: 1, b: 1, a: 1 },
+      { r: 1, g: 1, b: 1, a: 1 },
+      clip,
+      { uvRect: rect, mask },
+    );
+  };
+
+  const pushScopedLayer = (renderer, layer) => {
+    const current = rendererState(renderer);
+    const next = cloneState(current);
+    renderer.stateStack.push(next);
+    renderer.scopeStack.push(newDrawScope());
+    renderer.layerStack.push(layer);
   };
 
   return {
@@ -814,7 +1535,12 @@ export function createWebGpuImports(options = {}) {
       resizeCanvas(canvas, width, height, scaleFactor);
       const context = contextFor(canvas);
       if (!context) return 0;
-      context.configure({ device, format, alphaMode: "premultiplied" });
+      context.configure({
+        device,
+        format,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+        alphaMode: "premultiplied",
+      });
       const handle = nextSurfaceHandle++;
       surfaces.set(handle, { canvas, context, scaleFactor, width, height });
       return handle;
@@ -826,7 +1552,12 @@ export function createWebGpuImports(options = {}) {
       const surface = surfaces.get(surfaceHandle);
       if (!surface) return invalidResource();
       resizeCanvas(surface.canvas, width, height, scaleFactor);
-      surface.context.configure({ device, format, alphaMode: "premultiplied" });
+      surface.context.configure({
+        device,
+        format,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+        alphaMode: "premultiplied",
+      });
       surface.width = width;
       surface.height = height;
       surface.scaleFactor = scaleFactor;
@@ -864,10 +1595,6 @@ export function createWebGpuImports(options = {}) {
       const renderer = {
         surface,
         clearColor: { r: 1, g: 1, b: 1, a: 1 },
-        visualVertices: [],
-        textVertices: [],
-        imageVertices: [],
-        items: [],
         glyphCanvas,
         glyphContext,
         glyphs: new Map(),
@@ -878,6 +1605,9 @@ export function createWebGpuImports(options = {}) {
         atlasX: 0,
         atlasY: 0,
         atlasShelf: 0,
+        scopeStack: [newDrawScope()],
+        layerStack: [],
+        frameResources: [],
         stateStack: [{ opacity: 1, transform: identityTransform(), clip: undefined }],
       };
       const handle = nextRendererHandle++;
@@ -891,7 +1621,12 @@ export function createWebGpuImports(options = {}) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
       resizeCanvas(renderer.surface.canvas, width, height, scaleFactor);
-      renderer.surface.context.configure({ device, format, alphaMode: "premultiplied" });
+      renderer.surface.context.configure({
+        device,
+        format,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+        alphaMode: "premultiplied",
+      });
       renderer.surface.width = width;
       renderer.surface.height = height;
       renderer.surface.scaleFactor = scaleFactor;
@@ -900,12 +1635,14 @@ export function createWebGpuImports(options = {}) {
     begin_frame(rendererHandle, width, height) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
-      renderer.visualVertices = [];
-      renderer.textVertices = [];
-      renderer.imageVertices = [];
-      renderer.items = [];
+      for (const texture of renderer.frameResources ?? []) {
+        texture?.destroy?.();
+      }
+      renderer.frameResources = [];
       renderer.width = Number(width) || renderer.surface.width || 1;
       renderer.height = Number(height) || renderer.surface.height || 1;
+      renderer.scopeStack = [newDrawScope()];
+      renderer.layerStack = [];
       renderer.stateStack = [{ opacity: 1, transform: identityTransform(), clip: undefined }];
       return ok();
     },
@@ -1053,46 +1790,121 @@ export function createWebGpuImports(options = {}) {
       if (renderer.stateStack.length > 1) renderer.stateStack.pop();
       return ok();
     },
+    push_layer(rendererHandle, opacity, blendMode, maskKind, maskX, maskY, maskWidth, maskHeight, maskRadius, offscreen) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const layer = {
+        opacity: clampOpacity(opacity),
+        blendMode: Number(blendMode) || 0,
+        mask: {
+          kind: Number(maskKind) || 0,
+          x: Number(maskX) || 0,
+          y: Number(maskY) || 0,
+          width: Number(maskWidth) || 0,
+          height: Number(maskHeight) || 0,
+          radius: Number(maskRadius) || 0,
+        },
+        clip: rendererState(renderer).clip ? { ...rendererState(renderer).clip } : undefined,
+        filter: undefined,
+        offscreen: !!offscreen,
+      };
+      pushScopedLayer(renderer, layer);
+      return ok();
+    },
+    pop_layer(rendererHandle) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const layer = renderer.layerStack.pop();
+      if (!layer || renderer.scopeStack.length <= 1) return ok();
+      compositeScope(renderer, layer);
+      return ok();
+    },
+    push_filter(rendererHandle, filterKind, amount, matrixValues) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const layer = {
+        opacity: 1,
+        blendMode: 0,
+        mask: { kind: 0, x: 0, y: 0, width: 0, height: 0, radius: 0 },
+        clip: rendererState(renderer).clip ? { ...rendererState(renderer).clip } : undefined,
+        filter: {
+          kind: Number(filterKind) || 0,
+          amount: Number(amount) || 0,
+          matrixValues: stringValue(matrixValues),
+        },
+        offscreen: true,
+      };
+      pushScopedLayer(renderer, layer);
+      return ok();
+    },
+    pop_filter(rendererHandle) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const layer = renderer.layerStack.pop();
+      if (!layer || renderer.scopeStack.length <= 1) return ok();
+      compositeScope(renderer, layer);
+      return ok();
+    },
+    draw_shader_effect(rendererHandle, name, x, y, width, height, uniforms, startX, startY, endX, endY, r0, g0, b0, a0, r1, g1, b1, a1) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      ensureWhiteTexture(renderer);
+      const rect = { x: Number(x), y: Number(y), width: Number(width), height: Number(height) };
+      const values = parseDoubleList(stringValue(uniforms));
+      pushAdvancedQuad(
+        renderer,
+        rect,
+        renderer.whiteTexture,
+        renderer.whiteView,
+        renderer.whiteSampler,
+        undefined,
+        rendererState(renderer).opacity,
+        0,
+        shaderKindForName(stringValue(name)),
+        values[0] ?? 8,
+        { r: Number(r0), g: Number(g0), b: Number(b0), a: Number(a0) },
+        { r: Number(r1), g: Number(g1), b: Number(b1), a: Number(a1) },
+        rendererState(renderer).clip ? { ...rendererState(renderer).clip } : undefined,
+      );
+      return ok();
+    },
     present(rendererHandle) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
       const encoder = device.createCommandEncoder();
-      const pass = encoder.beginRenderPass({
-        colorAttachments: [{
-          view: renderer.surface.context.getCurrentTexture().createView(),
-          loadOp: "clear",
-          clearValue: renderer.clearColor,
-          storeOp: "store",
-        }],
-      });
-      const visualBuffer = uploadVertexBuffer(renderer.visualVertices);
-      const textBuffer = uploadVertexBuffer(renderer.textVertices);
-      const imageBuffer = uploadVertexBuffer(renderer.imageVertices);
-      for (const item of renderer.items) {
-        if (!setPassClip(pass, renderer, item.clip)) continue;
-        if (item.type === "visual" && visualBuffer) {
-          pass.setPipeline(visualPipeline);
-          pass.setVertexBuffer(0, visualBuffer);
-          pass.draw(item.count, 1, item.start, 0);
-        } else if (item.type === "text" && textBuffer) {
-          pass.setPipeline(textPipeline);
-          pass.setBindGroup(0, renderer.atlasBindGroup);
-          pass.setVertexBuffer(0, textBuffer);
-          pass.draw(item.count, 1, item.start, 0);
-        } else if (item.type === "image" && imageBuffer && item.bindGroup) {
-          pass.setPipeline(imagePipeline);
-          pass.setBindGroup(0, item.bindGroup);
-          pass.setVertexBuffer(0, imageBuffer);
-          pass.draw(item.count, 1, item.start, 0);
-        }
+      while (renderer.scopeStack.length > 1) {
+        const layer = renderer.layerStack.pop() ?? {
+          opacity: 1,
+          blendMode: 0,
+          mask: { kind: 0, x: 0, y: 0, width: 0, height: 0, radius: 0 },
+          clip: undefined,
+          filter: undefined,
+          offscreen: true,
+        };
+        compositeScope(renderer, layer);
       }
-      pass.end();
+      const surfaceTexture = renderer.surface.context.getCurrentTexture();
+      const surfaceView = surfaceTexture.createView();
+      renderScopeToView(
+        renderer,
+        renderer.scopeStack[0] ?? newDrawScope(),
+        surfaceTexture,
+        surfaceView,
+        renderer.clearColor,
+        encoder,
+        "clear",
+        renderTargetSnapshot,
+      );
       device.queue.submit([encoder.finish()]);
       return ok();
     },
     renderer_dispose(rendererHandle) {
       const renderer = renderers.get(rendererHandle);
       renderer?.atlasTexture?.destroy?.();
+      renderer?.whiteTexture?.destroy?.();
+      for (const texture of renderer?.frameResources ?? []) {
+        texture?.destroy?.();
+      }
       for (const image of renderer?.images?.values?.() ?? []) {
         image.texture?.destroy?.();
       }

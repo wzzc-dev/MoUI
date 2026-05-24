@@ -14,11 +14,9 @@ struct RendererHandle {
   mut visual_shader : @wgpu_mbt.ShaderModule?
   mut visual_pipeline : @wgpu_mbt.RenderPipeline?
   mut visual_vertex_buffer : @wgpu_mbt.Buffer?
-  mut visual_vertex_buffer_capacity : UInt64
   mut text_shader : @wgpu_mbt.ShaderModule?
   mut text_pipeline : @wgpu_mbt.RenderPipeline?
   mut text_vertex_buffer : @wgpu_mbt.Buffer?
-  mut text_vertex_buffer_capacity : UInt64
   mut text_atlas_texture : @wgpu_mbt.Texture?
   mut text_atlas_view : @wgpu_mbt.TextureView?
   mut text_sampler : @wgpu_mbt.Sampler?
@@ -28,10 +26,25 @@ struct RendererHandle {
   mut image_shader : @wgpu_mbt.ShaderModule?
   mut image_pipeline : @wgpu_mbt.RenderPipeline?
   mut image_vertex_buffer : @wgpu_mbt.Buffer?
-  mut image_vertex_buffer_capacity : UInt64
   mut image_sampler : @wgpu_mbt.Sampler?
   mut image_bind_group_layout : @wgpu_mbt.BindGroupLayout?
   mut image_pipeline_layout : @wgpu_mbt.PipelineLayout?
+  mut advanced_shader : @wgpu_mbt.ShaderModule?
+  mut advanced_pipeline_source_over : @wgpu_mbt.RenderPipeline?
+  mut advanced_pipeline_multiply : @wgpu_mbt.RenderPipeline?
+  mut advanced_pipeline_screen : @wgpu_mbt.RenderPipeline?
+  mut advanced_pipeline_overlay : @wgpu_mbt.RenderPipeline?
+  mut advanced_pipeline_darken : @wgpu_mbt.RenderPipeline?
+  mut advanced_pipeline_lighten : @wgpu_mbt.RenderPipeline?
+  mut advanced_vertex_buffer : @wgpu_mbt.Buffer?
+  mut advanced_sampler : @wgpu_mbt.Sampler?
+  mut advanced_bind_group_layout : @wgpu_mbt.BindGroupLayout?
+  mut advanced_pipeline_layout : @wgpu_mbt.PipelineLayout?
+  mut advanced_overlay_bind_group_layout : @wgpu_mbt.BindGroupLayout?
+  mut advanced_overlay_pipeline_layout : @wgpu_mbt.PipelineLayout?
+  mut white_texture : @wgpu_mbt.Texture?
+  mut white_view : @wgpu_mbt.TextureView?
+  mut white_bind_group : @wgpu_mbt.BindGroup?
   image_cache : Map[String, NativeImageResource]
   failed_images : Map[String, Bool]
   font_cache : NativeFontCache
@@ -42,6 +55,30 @@ struct RendererHandle {
   mut draw_items : Array[NativeDrawItem]
   mut text_atlas_dirty : Bool
   mut unsupported_command_count : Int
+}
+
+///|
+priv struct NativeOffscreenTexture {
+  texture : @wgpu_mbt.Texture
+  view : @wgpu_mbt.TextureView
+  bind_group : @wgpu_mbt.BindGroup
+}
+
+///|
+priv struct NativeBackdropTexture {
+  texture : @wgpu_mbt.Texture
+  view : @wgpu_mbt.TextureView
+  bind_group : @wgpu_mbt.BindGroup
+}
+
+///|
+priv struct NativePlanGpuBuffers {
+  visual_buffer : @wgpu_mbt.Buffer?
+  text_buffer : @wgpu_mbt.Buffer?
+  image_buffer : @wgpu_mbt.Buffer?
+  visual_size : UInt64
+  text_size : UInt64
+  image_size : UInt64
 }
 
 ///|
@@ -123,6 +160,74 @@ fn create_with_surface(
     device, image_shader, format, image_pipeline_layout,
   )
   let image_sampler = device.create_sampler_linear_clamp()
+  let advanced_shader = device.create_shader_module_wgsl(advanced_shader_wgsl())
+  let advanced_bind_group_layout = create_advanced_overlay_bind_group_layout(
+    device,
+  )
+  let advanced_pipeline_layout = device.create_pipeline_layout_1(
+    advanced_bind_group_layout,
+  )
+  let advanced_overlay_bind_group_layout = create_advanced_overlay_bind_group_layout(
+    device,
+  )
+  let advanced_overlay_pipeline_layout = device.create_pipeline_layout_1(
+    advanced_overlay_bind_group_layout,
+  )
+  let advanced_pipeline_source_over = create_advanced_pipeline(
+    device,
+    advanced_shader,
+    format,
+    advanced_pipeline_layout,
+    @core.BlendMode::SourceOver,
+  )
+  let advanced_pipeline_multiply = create_advanced_pipeline(
+    device,
+    advanced_shader,
+    format,
+    advanced_pipeline_layout,
+    @core.BlendMode::Multiply,
+  )
+  let advanced_pipeline_screen = create_advanced_pipeline(
+    device,
+    advanced_shader,
+    format,
+    advanced_pipeline_layout,
+    @core.BlendMode::Screen,
+  )
+  let advanced_pipeline_overlay = create_advanced_overlay_pipeline(
+    device, advanced_shader, format, advanced_overlay_pipeline_layout,
+  )
+  let advanced_pipeline_darken = create_advanced_pipeline(
+    device,
+    advanced_shader,
+    format,
+    advanced_pipeline_layout,
+    @core.BlendMode::Darken,
+  )
+  let advanced_pipeline_lighten = create_advanced_pipeline(
+    device,
+    advanced_shader,
+    format,
+    advanced_pipeline_layout,
+    @core.BlendMode::Lighten,
+  )
+  let advanced_sampler = device.create_sampler_linear_clamp()
+  let white_usage = @wgpu_mbt.TextureUsage::from_u64(
+    @wgpu_mbt.TEXTURE_USAGE_TEXTURE_BINDING | @wgpu_mbt.TEXTURE_USAGE_COPY_DST,
+  )
+  let white_texture = device.create_texture_rgba8_2d_with_usage(
+    1U, 1U, white_usage,
+  )
+  queue.write_texture_rgba8_2d(
+    white_texture,
+    1U,
+    1U,
+    Bytes::from_array([b'\xff', b'\xff', b'\xff', b'\xff']),
+  )
+  let white_view = white_texture.create_view()
+  let white_bind_group = create_advanced_bind_group(
+    device, advanced_bind_group_layout, advanced_sampler, white_view, white_view,
+  )
   {
     size: metrics.logical_size,
     physical_size: metrics.physical_size,
@@ -138,11 +243,9 @@ fn create_with_surface(
     visual_shader: Some(visual_shader),
     visual_pipeline: Some(visual_pipeline),
     visual_vertex_buffer: None,
-    visual_vertex_buffer_capacity: 0UL,
     text_shader: Some(text_shader),
     text_pipeline: Some(text_pipeline),
     text_vertex_buffer: None,
-    text_vertex_buffer_capacity: 0UL,
     text_atlas_texture: Some(text_atlas_texture),
     text_atlas_view: Some(text_atlas_view),
     text_sampler: Some(text_sampler),
@@ -152,10 +255,25 @@ fn create_with_surface(
     image_shader: Some(image_shader),
     image_pipeline: Some(image_pipeline),
     image_vertex_buffer: None,
-    image_vertex_buffer_capacity: 0UL,
     image_sampler: Some(image_sampler),
     image_bind_group_layout: Some(image_bind_group_layout),
     image_pipeline_layout: Some(image_pipeline_layout),
+    advanced_shader: Some(advanced_shader),
+    advanced_pipeline_source_over: Some(advanced_pipeline_source_over),
+    advanced_pipeline_multiply: Some(advanced_pipeline_multiply),
+    advanced_pipeline_screen: Some(advanced_pipeline_screen),
+    advanced_pipeline_overlay: Some(advanced_pipeline_overlay),
+    advanced_pipeline_darken: Some(advanced_pipeline_darken),
+    advanced_pipeline_lighten: Some(advanced_pipeline_lighten),
+    advanced_vertex_buffer: None,
+    advanced_sampler: Some(advanced_sampler),
+    advanced_bind_group_layout: Some(advanced_bind_group_layout),
+    advanced_pipeline_layout: Some(advanced_pipeline_layout),
+    advanced_overlay_bind_group_layout: Some(advanced_overlay_bind_group_layout),
+    advanced_overlay_pipeline_layout: Some(advanced_overlay_pipeline_layout),
+    white_texture: Some(white_texture),
+    white_view: Some(white_view),
+    white_bind_group: Some(white_bind_group),
     image_cache: {},
     failed_images: {},
     font_cache: NativeFontCache::new_with_engine(text_engine),
@@ -276,6 +394,73 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
     Some(shader) => shader.release()
     None => ()
   }
+  match self.white_bind_group {
+    Some(bind_group) => bind_group.release()
+    None => ()
+  }
+  match self.white_view {
+    Some(view) => view.release()
+    None => ()
+  }
+  match self.white_texture {
+    Some(texture) => {
+      texture.destroy()
+      texture.release()
+    }
+    None => ()
+  }
+  match self.advanced_vertex_buffer {
+    Some(buffer) => buffer.release()
+    None => ()
+  }
+  match self.advanced_pipeline_source_over {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.advanced_pipeline_multiply {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.advanced_pipeline_screen {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.advanced_pipeline_overlay {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.advanced_pipeline_darken {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.advanced_pipeline_lighten {
+    Some(pipeline) => pipeline.release()
+    None => ()
+  }
+  match self.advanced_pipeline_layout {
+    Some(layout) => layout.release()
+    None => ()
+  }
+  match self.advanced_overlay_pipeline_layout {
+    Some(layout) => layout.release()
+    None => ()
+  }
+  match self.advanced_bind_group_layout {
+    Some(layout) => layout.release()
+    None => ()
+  }
+  match self.advanced_overlay_bind_group_layout {
+    Some(layout) => layout.release()
+    None => ()
+  }
+  match self.advanced_sampler {
+    Some(sampler) => sampler.release()
+    None => ()
+  }
+  match self.advanced_shader {
+    Some(shader) => shader.release()
+    None => ()
+  }
   match self.text_bind_group {
     Some(bind_group) => bind_group.release()
     None => ()
@@ -349,16 +534,29 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
   self.adapter = None
   self.instance = None
   self.visual_vertex_buffer = None
-  self.visual_vertex_buffer_capacity = 0UL
   self.text_vertex_buffer = None
-  self.text_vertex_buffer_capacity = 0UL
   self.image_vertex_buffer = None
-  self.image_vertex_buffer_capacity = 0UL
   self.image_pipeline = None
   self.image_pipeline_layout = None
   self.image_bind_group_layout = None
   self.image_sampler = None
   self.image_shader = None
+  self.advanced_shader = None
+  self.advanced_pipeline_source_over = None
+  self.advanced_pipeline_multiply = None
+  self.advanced_pipeline_screen = None
+  self.advanced_pipeline_overlay = None
+  self.advanced_pipeline_darken = None
+  self.advanced_pipeline_lighten = None
+  self.advanced_vertex_buffer = None
+  self.advanced_sampler = None
+  self.advanced_bind_group_layout = None
+  self.advanced_pipeline_layout = None
+  self.advanced_overlay_bind_group_layout = None
+  self.advanced_overlay_pipeline_layout = None
+  self.white_texture = None
+  self.white_view = None
+  self.white_bind_group = None
   self.text_bind_group = None
   self.text_pipeline = None
   self.text_pipeline_layout = None
@@ -412,67 +610,28 @@ fn RendererHandle::render_wgpu(
           }
         }
         self.prepare_native_image_items(device, queue)
+        let root_plan = {
+          visual_vertices: self.visual_vertices,
+          text_vertices: self.text_vertices,
+          image_vertices: self.image_vertices,
+          items: self.draw_items,
+          atlas_dirty: self.text_atlas_dirty,
+        }
         let encoder = device.create_command_encoder()
-        let pass = encoder.begin_render_pass_color_clear(
-          view,
-          Float::from_double(clear.r),
-          Float::from_double(clear.g),
-          Float::from_double(clear.b),
-          Float::from_double(clear.a),
+        let frame_offscreens : Array[NativeOffscreenTexture] = []
+        let frame_backdrops : Array[NativeBackdropTexture] = []
+        let frame_buffers : Array[@wgpu_mbt.Buffer] = []
+        self.encode_plan_to_view(
+          encoder, device, queue, texture, view, visual_pipeline, root_plan, clear,
+          frame_offscreens, frame_backdrops, frame_buffers,
         )
-        if self.visual_vertices.length() > 0 {
-          let vertex_bytes = visual_vertices_to_bytes(self.visual_vertices)
-          self.ensure_visual_vertex_buffer(
-            device,
-            vertex_bytes.length().to_uint64(),
-          )
-          match self.visual_vertex_buffer {
-            Some(buffer) => queue.write_buffer(buffer, 0UL, vertex_bytes)
-            None => ()
-          }
-        }
-        if self.text_vertices.length() > 0 {
-          match self.text_pipeline {
-            Some(_) => {
-              let vertex_bytes = text_vertices_to_bytes(self.text_vertices)
-              self.ensure_text_vertex_buffer(
-                device,
-                vertex_bytes.length().to_uint64(),
-              )
-              match self.text_vertex_buffer {
-                Some(buffer) => {
-                  queue.write_buffer(buffer, 0UL, vertex_bytes)
-                  ignore(buffer)
-                }
-                None => ()
-              }
-            }
-            _ => ()
-          }
-        }
-        if self.image_vertices.length() > 0 {
-          match self.image_pipeline {
-            Some(_) => {
-              let vertex_bytes = image_vertices_to_bytes(self.image_vertices)
-              self.ensure_image_vertex_buffer(
-                device,
-                vertex_bytes.length().to_uint64(),
-              )
-              match self.image_vertex_buffer {
-                Some(buffer) => queue.write_buffer(buffer, 0UL, vertex_bytes)
-                None => ()
-              }
-            }
-            _ => ()
-          }
-        }
-        self.draw_plan_items(pass, visual_pipeline, device, queue)
-        pass.end()
-        pass.release()
         let command_buffer = encoder.finish()
         queue.submit_one(command_buffer)
         ignore(surface.present())
         command_buffer.release()
+        release_frame_buffers(frame_buffers)
+        release_frame_backdrops(frame_backdrops)
+        release_frame_offscreens(frame_offscreens)
         encoder.release()
         view.release()
         texture.release()
@@ -486,27 +645,126 @@ fn RendererHandle::render_wgpu(
 }
 
 ///|
-fn RendererHandle::draw_plan_items(
+fn RendererHandle::encode_plan_to_view(
   self : RendererHandle,
-  pass : @wgpu_mbt.RenderPass,
+  encoder : @wgpu_mbt.CommandEncoder,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  target_texture : @wgpu_mbt.Texture,
+  view : @wgpu_mbt.TextureView,
   visual_pipeline : @wgpu_mbt.RenderPipeline,
-  _device : @wgpu_mbt.Device,
-  _queue : @wgpu_mbt.Queue,
+  plan : NativeDrawPlan,
+  clear : @core.Color,
+  frame_offscreens : Array[NativeOffscreenTexture],
+  frame_backdrops : Array[NativeBackdropTexture],
+  frame_buffers : Array[@wgpu_mbt.Buffer],
 ) -> Unit {
+  let buffers = upload_plan_gpu_buffers(device, queue, plan)
+  buffers.append_to_frame(frame_buffers)
+  let mut first_pass = true
+  let mut span_start = 0
+  let mut index = 0
+  while index < plan.items.length() {
+    match plan.items[index] {
+      NativeDrawItem::NativeLayer(layer) => {
+        if span_start < index {
+          self.draw_plan_item_span(
+            encoder,
+            view,
+            visual_pipeline,
+            device,
+            queue,
+            plan.items,
+            buffers,
+            start_index=span_start,
+            end_index=index,
+            clear~,
+            clear_pass=first_pass,
+            frame_buffers~,
+          )
+          first_pass = false
+        }
+        if self.draw_native_layer_to_view(
+            encoder,
+            target_texture,
+            view,
+            visual_pipeline,
+            device,
+            queue,
+            layer,
+            clear~,
+            clear_pass=first_pass,
+            frame_offscreens~,
+            frame_backdrops~,
+            frame_buffers~,
+          ) {
+          first_pass = false
+        }
+        index += 1
+        span_start = index
+      }
+      _ => index += 1
+    }
+  }
+  if span_start < plan.items.length() {
+    self.draw_plan_item_span(
+      encoder,
+      view,
+      visual_pipeline,
+      device,
+      queue,
+      plan.items,
+      buffers,
+      start_index=span_start,
+      end_index=plan.items.length(),
+      clear~,
+      clear_pass=first_pass,
+      frame_buffers~,
+    )
+    first_pass = false
+  }
+  if first_pass {
+    clear_render_target(encoder, view, clear)
+  }
+}
+
+///|
+fn RendererHandle::draw_plan_item_span(
+  self : RendererHandle,
+  encoder : @wgpu_mbt.CommandEncoder,
+  view : @wgpu_mbt.TextureView,
+  visual_pipeline : @wgpu_mbt.RenderPipeline,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  items : Array[NativeDrawItem],
+  buffers : NativePlanGpuBuffers,
+  start_index~ : Int,
+  end_index~ : Int,
+  clear~ : @core.Color,
+  clear_pass~ : Bool,
+  frame_buffers~ : Array[@wgpu_mbt.Buffer],
+) -> Unit {
+  let pass = if clear_pass {
+    encoder.begin_render_pass_color_clear(
+      view,
+      Float::from_double(clear.r),
+      Float::from_double(clear.g),
+      Float::from_double(clear.b),
+      Float::from_double(clear.a),
+    )
+  } else {
+    encoder.begin_render_pass_color_load(view)
+  }
   self.apply_scissor(pass, None)
-  for item in self.draw_items {
+  for index in start_index..<end_index {
+    let item = items[index]
     match item {
       NativeDrawItem::NativeVisual(start, count, scissor) =>
-        match self.visual_vertex_buffer {
+        match buffers.visual_buffer {
           Some(buffer) => {
             self.apply_scissor(pass, scissor)
             pass.set_pipeline(visual_pipeline)
-            pass.set_vertex_buffer(
-              0U,
-              buffer,
-              0UL,
-              self.visual_vertex_buffer_capacity,
-            )
+            pass.set_vertex_buffer(0U, buffer, 0UL, buffers.visual_size)
             pass.draw(
               count.reinterpret_as_uint(),
               1U,
@@ -517,18 +775,12 @@ fn RendererHandle::draw_plan_items(
           None => ()
         }
       NativeDrawItem::NativeText(start, count, scissor) =>
-        match
-          (self.text_pipeline, self.text_bind_group, self.text_vertex_buffer) {
+        match (self.text_pipeline, self.text_bind_group, buffers.text_buffer) {
           (Some(text_pipeline), Some(text_bind_group), Some(buffer)) => {
             self.apply_scissor(pass, scissor)
             pass.set_pipeline(text_pipeline)
             pass.set_bind_group0(text_bind_group)
-            pass.set_vertex_buffer(
-              0U,
-              buffer,
-              0UL,
-              self.text_vertex_buffer_capacity,
-            )
+            pass.set_vertex_buffer(0U, buffer, 0UL, buffers.text_size)
             pass.draw(
               count.reinterpret_as_uint(),
               1U,
@@ -542,19 +794,14 @@ fn RendererHandle::draw_plan_items(
         match
           (
             self.image_pipeline,
-            self.image_vertex_buffer,
+            buffers.image_buffer,
             self.image_cache.get(run.source),
           ) {
           (Some(image_pipeline), Some(buffer), Some(resource)) => {
             self.apply_scissor(pass, scissor)
             pass.set_pipeline(image_pipeline)
             pass.set_bind_group0(resource.bind_group)
-            pass.set_vertex_buffer(
-              0U,
-              buffer,
-              0UL,
-              self.image_vertex_buffer_capacity,
-            )
+            pass.set_vertex_buffer(0U, buffer, 0UL, buffers.image_size)
             pass.draw(
               count.reinterpret_as_uint(),
               1U,
@@ -564,9 +811,474 @@ fn RendererHandle::draw_plan_items(
           }
           _ => ()
         }
+      NativeDrawItem::NativeLayer(_) => ()
+      NativeDrawItem::NativeShaderEffect(effect) =>
+        self.draw_native_shader_effect(
+          pass, device, queue, effect, frame_buffers,
+        )
     }
   }
   self.apply_scissor(pass, None)
+  pass.end()
+  pass.release()
+}
+
+///|
+fn RendererHandle::draw_native_layer_to_view(
+  self : RendererHandle,
+  encoder : @wgpu_mbt.CommandEncoder,
+  target_texture : @wgpu_mbt.Texture,
+  view : @wgpu_mbt.TextureView,
+  visual_pipeline : @wgpu_mbt.RenderPipeline,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  layer : NativeLayerRun,
+  clear~ : @core.Color,
+  clear_pass~ : Bool,
+  frame_offscreens~ : Array[NativeOffscreenTexture],
+  frame_backdrops~ : Array[NativeBackdropTexture],
+  frame_buffers~ : Array[@wgpu_mbt.Buffer],
+) -> Bool {
+  guard self.create_offscreen_texture(device) is Some(offscreen) else {
+    return false
+  }
+  frame_offscreens.push(offscreen)
+  self.encode_plan_to_view(
+    encoder,
+    device,
+    queue,
+    offscreen.texture,
+    offscreen.view,
+    visual_pipeline,
+    layer.plan,
+    @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+    frame_offscreens,
+    frame_backdrops,
+    frame_buffers,
+  )
+  if layer.blend_mode == @core.BlendMode::Overlay {
+    return self.draw_overlay_layer_to_view(
+      encoder,
+      target_texture,
+      view,
+      device,
+      queue,
+      layer,
+      offscreen.view,
+      clear~,
+      clear_pass~,
+      frame_backdrops~,
+      frame_buffers~,
+    )
+  }
+  let pass = if clear_pass {
+    encoder.begin_render_pass_color_clear(
+      view,
+      Float::from_double(clear.r),
+      Float::from_double(clear.g),
+      Float::from_double(clear.b),
+      Float::from_double(clear.a),
+    )
+  } else {
+    encoder.begin_render_pass_color_load(view)
+  }
+  let vertices = advanced_layer_vertices(self.size, layer)
+  self.draw_advanced_vertices(
+    pass,
+    device,
+    queue,
+    vertices,
+    offscreen.bind_group,
+    layer.blend_mode,
+    layer.scissor,
+    frame_buffers,
+  )
+  pass.end()
+  pass.release()
+  true
+}
+
+///|
+fn RendererHandle::draw_native_shader_effect(
+  self : RendererHandle,
+  pass : @wgpu_mbt.RenderPass,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  effect : NativeShaderEffectRun,
+  frame_buffers : Array[@wgpu_mbt.Buffer],
+) -> Unit {
+  match self.white_bind_group {
+    Some(bind_group) => {
+      let colors = native_shader_effect_colors(effect)
+      let vertices = advanced_rect_vertices(
+        self.size,
+        effect.frame,
+        opacity=effect.opacity,
+        blend_mode=@core.BlendMode::SourceOver,
+        shader_kind=native_shader_kind(effect.name),
+        effect_amount=native_shader_effect_amount(effect),
+        filter=None,
+        color0=colors.0,
+        color1=colors.1,
+      )
+      self.draw_advanced_vertices(
+        pass,
+        device,
+        queue,
+        vertices,
+        bind_group,
+        @core.BlendMode::SourceOver,
+        effect.scissor,
+        frame_buffers,
+      )
+    }
+    None => ()
+  }
+}
+
+///|
+fn RendererHandle::draw_overlay_layer_to_view(
+  self : RendererHandle,
+  encoder : @wgpu_mbt.CommandEncoder,
+  target_texture : @wgpu_mbt.Texture,
+  view : @wgpu_mbt.TextureView,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  layer : NativeLayerRun,
+  layer_view : @wgpu_mbt.TextureView,
+  clear~ : @core.Color,
+  clear_pass~ : Bool,
+  frame_backdrops~ : Array[NativeBackdropTexture],
+  frame_buffers~ : Array[@wgpu_mbt.Buffer],
+) -> Bool {
+  if clear_pass {
+    clear_render_target(encoder, view, clear)
+  }
+  guard self.create_backdrop_texture(device, target_texture, layer_view)
+    is Some(backdrop) else {
+    return false
+  }
+  encoder.copy_texture_to_texture_rgba8(
+    target_texture,
+    backdrop.texture,
+    @render.size_dim_to_uint(self.effective_physical_size().width),
+    @render.size_dim_to_uint(self.effective_physical_size().height),
+  )
+  let vertices = advanced_layer_vertices(self.size, layer)
+  let pass = encoder.begin_render_pass_color_load(view)
+  self.draw_advanced_overlay_vertices(
+    pass,
+    device,
+    queue,
+    vertices,
+    backdrop.bind_group,
+    layer.scissor,
+    frame_buffers,
+  )
+  pass.end()
+  pass.release()
+  frame_backdrops.push(backdrop)
+  true
+}
+
+///|
+fn RendererHandle::draw_advanced_vertices(
+  self : RendererHandle,
+  pass : @wgpu_mbt.RenderPass,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  vertices : Array[AdvancedVertex],
+  bind_group : @wgpu_mbt.BindGroup,
+  blend_mode : @core.BlendMode,
+  scissor : NativeScissor?,
+  frame_buffers : Array[@wgpu_mbt.Buffer],
+) -> Unit {
+  if vertices.length() == 0 {
+    return
+  }
+  match self.advanced_pipeline_for_blend(blend_mode) {
+    Some(pipeline) => {
+      let bytes = advanced_vertices_to_bytes(vertices)
+      let required = bytes.length().to_uint64()
+      if required == 0UL {
+        return
+      }
+      let usage = @wgpu_mbt.BufferUsage::from_u64(
+        @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+      )
+      let buffer = device.create_buffer(
+        size=@render.grow_capacity(required),
+        usage~,
+      )
+      queue.write_buffer(buffer, 0UL, bytes)
+      frame_buffers.push(buffer)
+      self.apply_scissor(pass, scissor)
+      pass.set_pipeline(pipeline)
+      pass.set_bind_group0(bind_group)
+      pass.set_vertex_buffer(0U, buffer, 0UL, required)
+      pass.draw(vertices.length().reinterpret_as_uint(), 1U, 0U, 0U)
+    }
+    None => ()
+  }
+}
+
+///|
+fn RendererHandle::draw_advanced_overlay_vertices(
+  self : RendererHandle,
+  pass : @wgpu_mbt.RenderPass,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  vertices : Array[AdvancedVertex],
+  bind_group : @wgpu_mbt.BindGroup,
+  scissor : NativeScissor?,
+  frame_buffers : Array[@wgpu_mbt.Buffer],
+) -> Unit {
+  if vertices.length() == 0 {
+    return
+  }
+  match self.advanced_pipeline_overlay {
+    Some(pipeline) => {
+      let bytes = advanced_vertices_to_bytes(vertices)
+      let required = bytes.length().to_uint64()
+      if required == 0UL {
+        return
+      }
+      let usage = @wgpu_mbt.BufferUsage::from_u64(
+        @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+      )
+      let buffer = device.create_buffer(
+        size=@render.grow_capacity(required),
+        usage~,
+      )
+      queue.write_buffer(buffer, 0UL, bytes)
+      frame_buffers.push(buffer)
+      self.apply_scissor(pass, scissor)
+      pass.set_pipeline(pipeline)
+      pass.set_bind_group0(bind_group)
+      pass.set_vertex_buffer(0U, buffer, 0UL, required)
+      pass.draw(vertices.length().reinterpret_as_uint(), 1U, 0U, 0U)
+    }
+    None => ()
+  }
+}
+
+///|
+fn RendererHandle::advanced_pipeline_for_blend(
+  self : RendererHandle,
+  blend_mode : @core.BlendMode,
+) -> @wgpu_mbt.RenderPipeline? {
+  match blend_mode {
+    @core.BlendMode::SourceOver => self.advanced_pipeline_source_over
+    @core.BlendMode::Multiply => self.advanced_pipeline_multiply
+    @core.BlendMode::Screen => self.advanced_pipeline_screen
+    @core.BlendMode::Overlay => self.advanced_pipeline_source_over
+    @core.BlendMode::Darken => self.advanced_pipeline_darken
+    @core.BlendMode::Lighten => self.advanced_pipeline_lighten
+  }
+}
+
+///|
+fn RendererHandle::create_offscreen_texture(
+  self : RendererHandle,
+  device : @wgpu_mbt.Device,
+) -> NativeOffscreenTexture? {
+  match (self.advanced_bind_group_layout, self.advanced_sampler) {
+    (Some(layout), Some(sampler)) => {
+      let size = self.effective_physical_size()
+      let usage = @wgpu_mbt.TextureUsage::from_u64(
+        @wgpu_mbt.TEXTURE_USAGE_RENDER_ATTACHMENT |
+        @wgpu_mbt.TEXTURE_USAGE_TEXTURE_BINDING |
+        @wgpu_mbt.TEXTURE_USAGE_COPY_SRC,
+      )
+      let texture = device.create_texture_rgba8_2d_with_usage(
+        @render.size_dim_to_uint(size.width),
+        @render.size_dim_to_uint(size.height),
+        usage,
+      )
+      let view = texture.create_view()
+      let bind_group = create_advanced_bind_group(
+        device, layout, sampler, view, view,
+      )
+      Some({ texture, view, bind_group })
+    }
+    _ => None
+  }
+}
+
+///|
+fn RendererHandle::create_backdrop_texture(
+  self : RendererHandle,
+  device : @wgpu_mbt.Device,
+  target_texture : @wgpu_mbt.Texture,
+  layer_view : @wgpu_mbt.TextureView,
+) -> NativeBackdropTexture? {
+  match (self.advanced_overlay_bind_group_layout, self.advanced_sampler) {
+    (Some(layout), Some(sampler)) => {
+      let width = @render.size_dim_to_uint(self.effective_physical_size().width)
+      let height = @render.size_dim_to_uint(
+        self.effective_physical_size().height,
+      )
+      let usage = @wgpu_mbt.TextureUsage::from_u64(
+        @wgpu_mbt.TEXTURE_USAGE_TEXTURE_BINDING |
+        @wgpu_mbt.TEXTURE_USAGE_COPY_DST,
+      )
+      let texture = device.create_texture_u32(
+        width,
+        height,
+        1U,
+        usage,
+        @wgpu_mbt.TextureDimension::from_u32(@wgpu_mbt.TEXTURE_DIMENSION_2D),
+        target_texture.format_u32(),
+      )
+      let view = texture.create_view()
+      let bind_group = create_advanced_bind_group(
+        device, layout, sampler, layer_view, view,
+      )
+      Some({ texture, view, bind_group })
+    }
+    _ => None
+  }
+}
+
+///|
+fn NativeOffscreenTexture::release(self : NativeOffscreenTexture) -> Unit {
+  self.bind_group.release()
+  self.view.release()
+  self.texture.destroy()
+  self.texture.release()
+}
+
+///|
+fn NativeBackdropTexture::release(self : NativeBackdropTexture) -> Unit {
+  self.bind_group.release()
+  self.view.release()
+  self.texture.destroy()
+  self.texture.release()
+}
+
+///|
+fn upload_plan_gpu_buffers(
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+  plan : NativeDrawPlan,
+) -> NativePlanGpuBuffers {
+  let mut visual_buffer : @wgpu_mbt.Buffer? = None
+  let mut text_buffer : @wgpu_mbt.Buffer? = None
+  let mut image_buffer : @wgpu_mbt.Buffer? = None
+  let mut visual_size = 0UL
+  let mut text_size = 0UL
+  let mut image_size = 0UL
+  if plan.visual_vertices.length() > 0 {
+    let bytes = visual_vertices_to_bytes(plan.visual_vertices)
+    visual_size = bytes.length().to_uint64()
+    let usage = @wgpu_mbt.BufferUsage::from_u64(
+      @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+    )
+    let buffer = device.create_buffer(
+      size=@render.grow_capacity(visual_size),
+      usage~,
+    )
+    queue.write_buffer(buffer, 0UL, bytes)
+    visual_buffer = Some(buffer)
+  }
+  if plan.text_vertices.length() > 0 {
+    let bytes = text_vertices_to_bytes(plan.text_vertices)
+    text_size = bytes.length().to_uint64()
+    let usage = @wgpu_mbt.BufferUsage::from_u64(
+      @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+    )
+    let buffer = device.create_buffer(
+      size=@render.grow_capacity(text_size),
+      usage~,
+    )
+    queue.write_buffer(buffer, 0UL, bytes)
+    text_buffer = Some(buffer)
+  }
+  if plan.image_vertices.length() > 0 {
+    let bytes = image_vertices_to_bytes(plan.image_vertices)
+    image_size = bytes.length().to_uint64()
+    let usage = @wgpu_mbt.BufferUsage::from_u64(
+      @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
+    )
+    let buffer = device.create_buffer(
+      size=@render.grow_capacity(image_size),
+      usage~,
+    )
+    queue.write_buffer(buffer, 0UL, bytes)
+    image_buffer = Some(buffer)
+  }
+  {
+    visual_buffer,
+    text_buffer,
+    image_buffer,
+    visual_size,
+    text_size,
+    image_size,
+  }
+}
+
+///|
+fn NativePlanGpuBuffers::append_to_frame(
+  self : NativePlanGpuBuffers,
+  frame_buffers : Array[@wgpu_mbt.Buffer],
+) -> Unit {
+  match self.visual_buffer {
+    Some(buffer) => frame_buffers.push(buffer)
+    None => ()
+  }
+  match self.text_buffer {
+    Some(buffer) => frame_buffers.push(buffer)
+    None => ()
+  }
+  match self.image_buffer {
+    Some(buffer) => frame_buffers.push(buffer)
+    None => ()
+  }
+}
+
+///|
+fn release_frame_buffers(frame_buffers : Array[@wgpu_mbt.Buffer]) -> Unit {
+  for buffer in frame_buffers {
+    buffer.release()
+  }
+  frame_buffers.clear()
+}
+
+///|
+fn release_frame_backdrops(
+  frame_backdrops : Array[NativeBackdropTexture],
+) -> Unit {
+  for backdrop in frame_backdrops {
+    backdrop.release()
+  }
+  frame_backdrops.clear()
+}
+
+///|
+fn release_frame_offscreens(
+  frame_offscreens : Array[NativeOffscreenTexture],
+) -> Unit {
+  for offscreen in frame_offscreens {
+    offscreen.release()
+  }
+  frame_offscreens.clear()
+}
+
+///|
+fn clear_render_target(
+  encoder : @wgpu_mbt.CommandEncoder,
+  view : @wgpu_mbt.TextureView,
+  clear : @core.Color,
+) -> Unit {
+  let pass = encoder.begin_render_pass_color_clear(
+    view,
+    Float::from_double(clear.r),
+    Float::from_double(clear.g),
+    Float::from_double(clear.b),
+    Float::from_double(clear.a),
+  )
+  pass.end()
+  pass.release()
 }
 
 ///|
@@ -602,74 +1314,6 @@ fn max_native_int(a : Int, b : Int) -> Int {
     a
   } else {
     b
-  }
-}
-
-///|
-fn RendererHandle::ensure_visual_vertex_buffer(
-  self : RendererHandle,
-  device : @wgpu_mbt.Device,
-  required : UInt64,
-) -> Unit {
-  if required == 0UL || self.visual_vertex_buffer_capacity >= required {
-    ()
-  } else {
-    match self.visual_vertex_buffer {
-      Some(buffer) => buffer.release()
-      None => ()
-    }
-    let capacity = @render.grow_capacity(required)
-    let usage = @wgpu_mbt.BufferUsage::from_u64(
-      @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
-    )
-    self.visual_vertex_buffer = Some(
-      device.create_buffer(size=capacity, usage~),
-    )
-    self.visual_vertex_buffer_capacity = capacity
-  }
-}
-
-///|
-fn RendererHandle::ensure_text_vertex_buffer(
-  self : RendererHandle,
-  device : @wgpu_mbt.Device,
-  required : UInt64,
-) -> Unit {
-  if required == 0UL || self.text_vertex_buffer_capacity >= required {
-    ()
-  } else {
-    match self.text_vertex_buffer {
-      Some(buffer) => buffer.release()
-      None => ()
-    }
-    let capacity = @render.grow_capacity(required)
-    let usage = @wgpu_mbt.BufferUsage::from_u64(
-      @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
-    )
-    self.text_vertex_buffer = Some(device.create_buffer(size=capacity, usage~))
-    self.text_vertex_buffer_capacity = capacity
-  }
-}
-
-///|
-fn RendererHandle::ensure_image_vertex_buffer(
-  self : RendererHandle,
-  device : @wgpu_mbt.Device,
-  required : UInt64,
-) -> Unit {
-  if required == 0UL || self.image_vertex_buffer_capacity >= required {
-    ()
-  } else {
-    match self.image_vertex_buffer {
-      Some(buffer) => buffer.release()
-      None => ()
-    }
-    let capacity = @render.grow_capacity(required)
-    let usage = @wgpu_mbt.BufferUsage::from_u64(
-      @wgpu_mbt.BUFFER_USAGE_VERTEX | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
-    )
-    self.image_vertex_buffer = Some(device.create_buffer(size=capacity, usage~))
-    self.image_vertex_buffer_capacity = capacity
   }
 }
 
@@ -731,4 +1375,185 @@ fn create_text_pipeline(
   try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 8UL, 1U)
   try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 16UL, 2U)
   try! builder.create_pipeline(device)
+}
+
+///|
+fn create_advanced_pipeline(
+  device : @wgpu_mbt.Device,
+  shader : @wgpu_mbt.ShaderModule,
+  format : @wgpu_mbt.TextureFormat,
+  layout : @wgpu_mbt.PipelineLayout,
+  blend_mode : @core.BlendMode,
+) -> @wgpu_mbt.RenderPipeline {
+  let builder = try! @wgpu_mbt.RenderPipelineDescBuilder::new(shader, layout~)
+  try! builder.set_color_target_format(format)
+  set_advanced_blend(builder, blend_mode)
+  try! builder.set_vertex_buffer_layout(
+    advanced_vertex_stride,
+    @wgpu_mbt.VERTEX_STEP_MODE_VERTEX,
+  )
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 0UL, 0U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 8UL, 1U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 16UL, 2U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 32UL, 3U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 48UL, 4U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 64UL, 5U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 80UL, 6U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 96UL, 7U)
+  try! builder.add_vertex_attribute(
+    @wgpu_mbt.VERTEX_FORMAT_FLOAT32X4,
+    112UL,
+    8U,
+  )
+  try! builder.add_vertex_attribute(
+    @wgpu_mbt.VERTEX_FORMAT_FLOAT32X4,
+    128UL,
+    9U,
+  )
+  try! builder.add_vertex_attribute(
+    @wgpu_mbt.VERTEX_FORMAT_FLOAT32X4,
+    144UL,
+    10U,
+  )
+  try! builder.add_vertex_attribute(
+    @wgpu_mbt.VERTEX_FORMAT_FLOAT32X4,
+    160UL,
+    11U,
+  )
+  try! builder.create_pipeline(device)
+}
+
+///|
+fn create_advanced_overlay_bind_group_layout(
+  device : @wgpu_mbt.Device,
+) -> @wgpu_mbt.BindGroupLayout {
+  let builder = @wgpu_mbt.BindGroupLayoutBuilder::new(max_entries=3UL)
+  let stage = @wgpu_mbt.ShaderStage::from_u64(@wgpu_mbt.SHADER_STAGE_FRAGMENT)
+  ignore(
+    builder.add_sampler(0U, stage, @wgpu_mbt.SAMPLER_BINDING_TYPE_FILTERING),
+  )
+  ignore(
+    builder.add_texture(
+      1U,
+      stage,
+      @wgpu_mbt.TEXTURE_SAMPLE_TYPE_FLOAT,
+      @wgpu_mbt.TEXTURE_VIEW_DIMENSION_2D,
+    ),
+  )
+  ignore(
+    builder.add_texture(
+      2U,
+      stage,
+      @wgpu_mbt.TEXTURE_SAMPLE_TYPE_FLOAT,
+      @wgpu_mbt.TEXTURE_VIEW_DIMENSION_2D,
+    ),
+  )
+  builder.finish(device)
+}
+
+///|
+fn create_advanced_bind_group(
+  device : @wgpu_mbt.Device,
+  layout : @wgpu_mbt.BindGroupLayout,
+  sampler : @wgpu_mbt.Sampler,
+  layer_view : @wgpu_mbt.TextureView,
+  backdrop_view : @wgpu_mbt.TextureView,
+) -> @wgpu_mbt.BindGroup {
+  let builder = @wgpu_mbt.BindGroupBuilder::new(max_entries=3UL)
+  ignore(builder.add_sampler(0U, sampler))
+  ignore(builder.add_texture_view(1U, layer_view))
+  ignore(builder.add_texture_view(2U, backdrop_view))
+  builder.finish(device, layout)
+}
+
+///|
+fn create_advanced_overlay_pipeline(
+  device : @wgpu_mbt.Device,
+  shader : @wgpu_mbt.ShaderModule,
+  format : @wgpu_mbt.TextureFormat,
+  layout : @wgpu_mbt.PipelineLayout,
+) -> @wgpu_mbt.RenderPipeline {
+  let builder = try! @wgpu_mbt.RenderPipelineDescBuilder::new(shader, layout~)
+  try! builder.set_color_target_format(format)
+  try! builder.disable_blend()
+  try! builder.set_vertex_buffer_layout(
+    advanced_vertex_stride,
+    @wgpu_mbt.VERTEX_STEP_MODE_VERTEX,
+  )
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 0UL, 0U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 8UL, 1U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 16UL, 2U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 32UL, 3U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 48UL, 4U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 64UL, 5U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 80UL, 6U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 96UL, 7U)
+  try! builder.add_vertex_attribute(
+    @wgpu_mbt.VERTEX_FORMAT_FLOAT32X4,
+    112UL,
+    8U,
+  )
+  try! builder.add_vertex_attribute(
+    @wgpu_mbt.VERTEX_FORMAT_FLOAT32X4,
+    128UL,
+    9U,
+  )
+  try! builder.add_vertex_attribute(
+    @wgpu_mbt.VERTEX_FORMAT_FLOAT32X4,
+    144UL,
+    10U,
+  )
+  try! builder.add_vertex_attribute(
+    @wgpu_mbt.VERTEX_FORMAT_FLOAT32X4,
+    160UL,
+    11U,
+  )
+  try! builder.create_pipeline(device)
+}
+
+///|
+fn set_advanced_blend(
+  builder : @wgpu_mbt.RenderPipelineDescBuilder,
+  blend_mode : @core.BlendMode,
+) -> Unit {
+  match blend_mode {
+    @core.BlendMode::SourceOver | @core.BlendMode::Overlay =>
+      try! builder.enable_alpha_blend()
+    @core.BlendMode::Multiply =>
+      try! builder.set_blend_components(
+        @wgpu_mbt.BLEND_FACTOR_DST,
+        @wgpu_mbt.BLEND_FACTOR_ZERO,
+        @wgpu_mbt.BLEND_OPERATION_ADD,
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        @wgpu_mbt.BLEND_OPERATION_ADD,
+      )
+    @core.BlendMode::Screen =>
+      try! builder.set_blend_components(
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC,
+        @wgpu_mbt.BLEND_OPERATION_ADD,
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        @wgpu_mbt.BLEND_OPERATION_ADD,
+      )
+    @core.BlendMode::Darken =>
+      try! builder.set_blend_components(
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_OPERATION_MIN,
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        @wgpu_mbt.BLEND_OPERATION_ADD,
+      )
+    @core.BlendMode::Lighten =>
+      try! builder.set_blend_components(
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_OPERATION_MAX,
+        @wgpu_mbt.BLEND_FACTOR_ONE,
+        @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        @wgpu_mbt.BLEND_OPERATION_ADD,
+      )
+  }
 }

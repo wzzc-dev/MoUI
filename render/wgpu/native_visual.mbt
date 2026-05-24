@@ -3,6 +3,8 @@ priv enum NativeDrawItem {
   NativeVisual(Int, Int, NativeScissor?)
   NativeText(Int, Int, NativeScissor?)
   NativeImage(Int, Int, NativeScissor?, NativeImageRun)
+  NativeLayer(NativeLayerRun)
+  NativeShaderEffect(NativeShaderEffectRun)
 }
 
 ///|
@@ -41,6 +43,33 @@ priv struct NativeImageRun {
 }
 
 ///|
+priv struct NativeLayerRun {
+  plan : NativeDrawPlan
+  opacity : Double
+  blend_mode : @core.BlendMode
+  mask : NativeLayerMask?
+  filter : @core.FilterEffect?
+  scissor : NativeScissor?
+}
+
+///|
+priv struct NativeLayerMask {
+  rect : @core.Rect
+  radius : Double
+  rounded : Bool
+}
+
+///|
+priv struct NativeShaderEffectRun {
+  name : String
+  frame : @core.Rect
+  uniforms : Array[Double]
+  fallback : @core.Brush
+  opacity : Double
+  scissor : NativeScissor?
+}
+
+///|
 priv struct VisualVertex {
   x : Double
   y : Double
@@ -67,6 +96,35 @@ priv struct VisualVertex {
 }
 
 ///|
+priv struct AdvancedVertex {
+  x : Double
+  y : Double
+  u : Double
+  v : Double
+  opacity : Double
+  blend_mode : Double
+  shader_kind : Double
+  effect_amount : Double
+  local_x : Double
+  local_y : Double
+  filter_kind : Double
+  filter_amount : Double
+  r0 : Double
+  g0 : Double
+  b0 : Double
+  a0 : Double
+  r1 : Double
+  g1 : Double
+  b1 : Double
+  a1 : Double
+  matrix : Array[Double]
+  rect_width : Double
+  rect_height : Double
+  mask_radius : Double
+  mask_kind : Double
+}
+
+///|
 fn build_native_draw_plan(
   cache : NativeFontCache,
   atlas : GlyphAtlas,
@@ -74,6 +132,35 @@ fn build_native_draw_plan(
   size : @core.Size,
   scale_factor : Double,
 ) -> NativeDrawPlan {
+  build_native_draw_plan_range(
+    cache,
+    atlas,
+    commands,
+    start_index=0,
+    stop_at_layer=false,
+    stop_at_filter=false,
+    size,
+    scale_factor,
+  ).plan
+}
+
+///|
+priv struct NativeDrawPlanRangeResult {
+  plan : NativeDrawPlan
+  next_index : Int
+}
+
+///|
+fn build_native_draw_plan_range(
+  cache : NativeFontCache,
+  atlas : GlyphAtlas,
+  commands : Array[@core.DrawCommand],
+  start_index~ : Int,
+  stop_at_layer~ : Bool,
+  stop_at_filter~ : Bool,
+  size : @core.Size,
+  scale_factor : Double,
+) -> NativeDrawPlanRangeResult {
   let was_dirty = atlas.dirty
   for attempt in 0..<2 {
     let visual_vertices : Array[VisualVertex] = []
@@ -83,7 +170,9 @@ fn build_native_draw_plan(
     let mut state = native_paint_state_default()
     let state_stack : Array[NativePaintState] = []
     let mut full = false
-    for command in commands {
+    let mut index = start_index
+    while index < commands.length() {
+      let command = commands[index]
       if !full {
         match command {
           @core.DrawCommand::Clear(_) => ()
@@ -230,41 +319,130 @@ fn build_native_draw_plan(
           }
           @core.DrawCommand::PopOpacity =>
             state = pop_native_paint_state(state_stack, state)
-          @core.DrawCommand::PushLayer(_)
-          | @core.DrawCommand::PopLayer
-          | @core.DrawCommand::PushFilter(_)
-          | @core.DrawCommand::PopFilter
-          | @core.DrawCommand::DrawPath(_)
-          | @core.DrawCommand::DrawShaderEffect(_) => ()
+          @core.DrawCommand::PushLayer(layer) => {
+            let mask = native_layer_mask_for_state(state, layer.mask)
+            let child = build_native_draw_plan_range(
+              cache,
+              atlas,
+              commands,
+              start_index=index + 1,
+              stop_at_layer=true,
+              stop_at_filter=false,
+              size,
+              scale_factor,
+            )
+            items.push(
+              NativeDrawItem::NativeLayer({
+                plan: child.plan,
+                opacity: state.opacity * layer.opacity,
+                blend_mode: layer.blend_mode,
+                mask,
+                filter: None,
+                scissor: native_layer_scissor(state, size, scale_factor, mask),
+              }),
+            )
+            index = child.next_index
+          }
+          @core.DrawCommand::PopLayer =>
+            if stop_at_layer {
+              return {
+                plan: {
+                  visual_vertices,
+                  text_vertices,
+                  image_vertices,
+                  items,
+                  atlas_dirty: was_dirty || atlas.dirty,
+                },
+                next_index: index + 1,
+              }
+            }
+          @core.DrawCommand::PushFilter(filter) => {
+            let child = build_native_draw_plan_range(
+              cache,
+              atlas,
+              commands,
+              start_index=index + 1,
+              stop_at_layer=false,
+              stop_at_filter=true,
+              size,
+              scale_factor,
+            )
+            items.push(
+              NativeDrawItem::NativeLayer({
+                plan: child.plan,
+                opacity: state.opacity,
+                blend_mode: @core.BlendMode::SourceOver,
+                mask: None,
+                filter: Some(filter),
+                scissor: native_scissor_for_state(state, size, scale_factor),
+              }),
+            )
+            index = child.next_index
+          }
+          @core.DrawCommand::PopFilter =>
+            if stop_at_filter {
+              return {
+                plan: {
+                  visual_vertices,
+                  text_vertices,
+                  image_vertices,
+                  items,
+                  atlas_dirty: was_dirty || atlas.dirty,
+                },
+                next_index: index + 1,
+              }
+            }
+          @core.DrawCommand::DrawShaderEffect(spec) =>
+            items.push(
+              NativeDrawItem::NativeShaderEffect({
+                name: spec.name,
+                frame: spec.frame,
+                uniforms: spec.uniforms,
+                fallback: spec.fallback,
+                opacity: state.opacity,
+                scissor: native_scissor_for_state(state, size, scale_factor),
+              }),
+            )
+          @core.DrawCommand::DrawPath(_) => ()
         }
       }
+      index += 1
     }
     if !full {
       return {
-        visual_vertices,
-        text_vertices,
-        image_vertices,
-        items,
-        atlas_dirty: was_dirty || atlas.dirty,
+        plan: {
+          visual_vertices,
+          text_vertices,
+          image_vertices,
+          items,
+          atlas_dirty: was_dirty || atlas.dirty,
+        },
+        next_index: index,
       }
     }
     atlas.clear()
     if attempt == 1 {
       return {
-        visual_vertices: [],
-        text_vertices: [],
-        image_vertices: [],
-        items: [],
-        atlas_dirty: true,
+        plan: {
+          visual_vertices: [],
+          text_vertices: [],
+          image_vertices: [],
+          items: [],
+          atlas_dirty: true,
+        },
+        next_index: commands.length(),
       }
     }
   }
   {
-    visual_vertices: [],
-    text_vertices: [],
-    image_vertices: [],
-    items: [],
-    atlas_dirty: atlas.dirty,
+    plan: {
+      visual_vertices: [],
+      text_vertices: [],
+      image_vertices: [],
+      items: [],
+      atlas_dirty: atlas.dirty,
+    },
+    next_index: commands.length(),
   }
 }
 
@@ -430,6 +608,59 @@ fn native_scissor_for_state(
   match state.clip {
     Some(clip) => Some(native_scissor_for_rect(clip, size, scale_factor))
     None => None
+  }
+}
+
+///|
+fn native_layer_scissor(
+  state : NativePaintState,
+  size : @core.Size,
+  scale_factor : Double,
+  mask : NativeLayerMask?,
+) -> NativeScissor? {
+  let scissor = native_scissor_for_state(state, size, scale_factor)
+  match mask {
+    None => scissor
+    Some(mask) =>
+      native_scissor_for_optional_rect(
+        intersect_clip(state.clip, mask.rect),
+        size,
+        scale_factor,
+      )
+  }
+}
+
+///|
+fn native_layer_mask_for_state(
+  state : NativePaintState,
+  mask : @core.LayerMask,
+) -> NativeLayerMask? {
+  match mask {
+    @core.LayerMask::NoMask => None
+    @core.LayerMask::RectMask(rect) =>
+      Some({
+        rect: transform_rect(rect, state.transform),
+        radius: 0.0,
+        rounded: false,
+      })
+    @core.LayerMask::RoundedMask(rounded) =>
+      Some({
+        rect: transform_rect(rounded.rect, state.transform),
+        radius: rounded.radius.max(0.0),
+        rounded: true,
+      })
+  }
+}
+
+///|
+fn native_scissor_for_optional_rect(
+  rect : @core.Rect?,
+  size : @core.Size,
+  scale_factor : Double,
+) -> NativeScissor? {
+  match rect {
+    Some(rect) => Some(native_scissor_for_rect(rect, size, scale_factor))
+    None => Some({ x: 0, y: 0, width: 0, height: 0 })
   }
 }
 
@@ -760,6 +991,53 @@ fn visual_vertices_to_bytes(vertices : Array[VisualVertex]) -> Bytes {
 }
 
 ///|
+fn advanced_vertices_to_bytes(vertices : Array[AdvancedVertex]) -> Bytes {
+  let out : Array[Byte] = []
+  for vertex in vertices {
+    push_visual_f32le(out, vertex.x)
+    push_visual_f32le(out, vertex.y)
+    push_visual_f32le(out, vertex.u)
+    push_visual_f32le(out, vertex.v)
+    push_visual_f32le(out, vertex.opacity)
+    push_visual_f32le(out, vertex.blend_mode)
+    push_visual_f32le(out, vertex.shader_kind)
+    push_visual_f32le(out, vertex.effect_amount)
+    push_visual_f32le(out, vertex.local_x)
+    push_visual_f32le(out, vertex.local_y)
+    push_visual_f32le(out, vertex.filter_kind)
+    push_visual_f32le(out, vertex.filter_amount)
+    push_visual_f32le(out, vertex.r0)
+    push_visual_f32le(out, vertex.g0)
+    push_visual_f32le(out, vertex.b0)
+    push_visual_f32le(out, vertex.a0)
+    push_visual_f32le(out, vertex.r1)
+    push_visual_f32le(out, vertex.g1)
+    push_visual_f32le(out, vertex.b1)
+    push_visual_f32le(out, vertex.a1)
+    push_advanced_matrix_f32le(out, vertex.matrix)
+    push_visual_f32le(out, vertex.rect_width)
+    push_visual_f32le(out, vertex.rect_height)
+    push_visual_f32le(out, vertex.mask_radius)
+    push_visual_f32le(out, vertex.mask_kind)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn push_advanced_matrix_f32le(
+  out : Array[Byte],
+  values : Array[Double],
+) -> Unit {
+  let identity = native_identity_color_matrix()
+  for index in 0..<20 {
+    match values.get(index) {
+      Some(value) => push_visual_f32le(out, value)
+      None => push_visual_f32le(out, identity[index])
+    }
+  }
+}
+
+///|
 fn push_visual_f32le(out : Array[Byte], value : Double) -> Unit {
   let bits : UInt = Float::from_double(value)
     .reinterpret_as_int()
@@ -789,6 +1067,330 @@ fn visual_pixel_y_to_ndc(y : Double, height : Double) -> Double {
 }
 
 ///|
+fn advanced_layer_vertices(
+  size : @core.Size,
+  layer : NativeLayerRun,
+) -> Array[AdvancedVertex] {
+  let frame = match layer.mask {
+    Some(mask) => mask.rect
+    None => @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height)
+  }
+  let mask_radius = match layer.mask {
+    Some(mask) => if mask.rounded { mask.radius } else { 0.0 }
+    None => 0.0
+  }
+  let mask_kind = match layer.mask {
+    Some(mask) => if mask.rounded { 1.0 } else { 0.0 }
+    None => 0.0
+  }
+  advanced_rect_vertices(
+    size,
+    frame,
+    opacity=layer.opacity,
+    blend_mode=layer.blend_mode,
+    shader_kind=0.0,
+    effect_amount=0.0,
+    filter=layer.filter,
+    color0=@core.Color::white(),
+    color1=@core.Color::white(),
+    uv_rect=Some(frame),
+    mask_radius~,
+    mask_kind~,
+  )
+}
+
+///|
+fn advanced_rect_vertices(
+  size : @core.Size,
+  rect : @core.Rect,
+  opacity~ : Double,
+  blend_mode~ : @core.BlendMode,
+  shader_kind~ : Double,
+  effect_amount~ : Double,
+  filter~ : @core.FilterEffect?,
+  color0~ : @core.Color,
+  color1~ : @core.Color,
+  uv_rect? : @core.Rect? = None,
+  mask_radius? : Double = 0.0,
+  mask_kind? : Double = 0.0,
+) -> Array[AdvancedVertex] {
+  let vertices : Array[AdvancedVertex] = []
+  let x0 = rect.origin.x
+  let y0 = rect.origin.y
+  let x1 = rect.origin.x + rect.size.width
+  let y1 = rect.origin.y + rect.size.height
+  let uv0 = advanced_uv_for_point(size, uv_rect, x0, y0, 0.0, 0.0)
+  let uv1 = advanced_uv_for_point(size, uv_rect, x0, y1, 0.0, 1.0)
+  let uv2 = advanced_uv_for_point(size, uv_rect, x1, y1, 1.0, 1.0)
+  let uv3 = advanced_uv_for_point(size, uv_rect, x1, y0, 1.0, 0.0)
+  push_advanced_vertex(
+    vertices,
+    size,
+    rect,
+    x0,
+    y0,
+    uv0.x,
+    uv0.y,
+    opacity~,
+    blend_mode~,
+    shader_kind~,
+    effect_amount~,
+    filter~,
+    color0~,
+    color1~,
+    mask_radius~,
+    mask_kind~,
+  )
+  push_advanced_vertex(
+    vertices,
+    size,
+    rect,
+    x0,
+    y1,
+    uv1.x,
+    uv1.y,
+    opacity~,
+    blend_mode~,
+    shader_kind~,
+    effect_amount~,
+    filter~,
+    color0~,
+    color1~,
+    mask_radius~,
+    mask_kind~,
+  )
+  push_advanced_vertex(
+    vertices,
+    size,
+    rect,
+    x1,
+    y1,
+    uv2.x,
+    uv2.y,
+    opacity~,
+    blend_mode~,
+    shader_kind~,
+    effect_amount~,
+    filter~,
+    color0~,
+    color1~,
+    mask_radius~,
+    mask_kind~,
+  )
+  push_advanced_vertex(
+    vertices,
+    size,
+    rect,
+    x0,
+    y0,
+    uv0.x,
+    uv0.y,
+    opacity~,
+    blend_mode~,
+    shader_kind~,
+    effect_amount~,
+    filter~,
+    color0~,
+    color1~,
+    mask_radius~,
+    mask_kind~,
+  )
+  push_advanced_vertex(
+    vertices,
+    size,
+    rect,
+    x1,
+    y1,
+    uv2.x,
+    uv2.y,
+    opacity~,
+    blend_mode~,
+    shader_kind~,
+    effect_amount~,
+    filter~,
+    color0~,
+    color1~,
+    mask_radius~,
+    mask_kind~,
+  )
+  push_advanced_vertex(
+    vertices,
+    size,
+    rect,
+    x1,
+    y0,
+    uv3.x,
+    uv3.y,
+    opacity~,
+    blend_mode~,
+    shader_kind~,
+    effect_amount~,
+    filter~,
+    color0~,
+    color1~,
+    mask_radius~,
+    mask_kind~,
+  )
+  vertices
+}
+
+///|
+fn advanced_uv_for_point(
+  size : @core.Size,
+  uv_rect : @core.Rect?,
+  x : Double,
+  y : Double,
+  fallback_u : Double,
+  fallback_v : Double,
+) -> @core.Point {
+  match uv_rect {
+    Some(_) =>
+      @core.Point::new(
+        x=x / size.width.max(0.0001),
+        y=y / size.height.max(0.0001),
+      )
+    None => @core.Point::new(x=fallback_u, y=fallback_v)
+  }
+}
+
+///|
+fn push_advanced_vertex(
+  vertices : Array[AdvancedVertex],
+  size : @core.Size,
+  rect : @core.Rect,
+  x : Double,
+  y : Double,
+  u : Double,
+  v : Double,
+  opacity~ : Double,
+  blend_mode~ : @core.BlendMode,
+  shader_kind~ : Double,
+  effect_amount~ : Double,
+  filter~ : @core.FilterEffect?,
+  color0~ : @core.Color,
+  color1~ : @core.Color,
+  mask_radius~ : Double,
+  mask_kind~ : Double,
+) -> Unit {
+  let filter_payload = native_filter_payload(filter)
+  vertices.push({
+    x: visual_pixel_x_to_ndc(x, size.width),
+    y: visual_pixel_y_to_ndc(y, size.height),
+    u,
+    v,
+    opacity: clamp_opacity(opacity),
+    blend_mode: native_blend_mode_code(blend_mode),
+    shader_kind,
+    effect_amount,
+    local_x: (x - rect.origin.x) / rect.size.width.max(0.0001),
+    local_y: (y - rect.origin.y) / rect.size.height.max(0.0001),
+    filter_kind: filter_payload.kind,
+    filter_amount: filter_payload.amount,
+    r0: color0.r,
+    g0: color0.g,
+    b0: color0.b,
+    a0: color0.a,
+    r1: color1.r,
+    g1: color1.g,
+    b1: color1.b,
+    a1: color1.a,
+    matrix: filter_payload.matrix,
+    rect_width: rect.size.width.max(0.0),
+    rect_height: rect.size.height.max(0.0),
+    mask_radius: mask_radius.max(0.0),
+    mask_kind,
+  })
+}
+
+///|
+priv struct NativeFilterPayload {
+  kind : Double
+  amount : Double
+  matrix : Array[Double]
+}
+
+///|
+fn native_filter_payload(filter : @core.FilterEffect?) -> NativeFilterPayload {
+  match filter {
+    Some(@core.FilterEffect::Blur(radius)) =>
+      {
+        kind: 1.0,
+        amount: radius.max(0.0),
+        matrix: native_identity_color_matrix(),
+      }
+    Some(@core.FilterEffect::Saturate(amount)) =>
+      { kind: 2.0, amount, matrix: native_identity_color_matrix() }
+    Some(@core.FilterEffect::Brightness(amount)) =>
+      { kind: 3.0, amount, matrix: native_identity_color_matrix() }
+    Some(@core.FilterEffect::Contrast(amount)) =>
+      { kind: 4.0, amount, matrix: native_identity_color_matrix() }
+    Some(@core.FilterEffect::ColorMatrix(values)) =>
+      { kind: 5.0, amount: 1.0, matrix: native_color_matrix(values) }
+    None => { kind: 0.0, amount: 0.0, matrix: native_identity_color_matrix() }
+  }
+}
+
+///|
+fn native_identity_color_matrix() -> Array[Double] {
+  [
+    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    0.0, 0.0, 0.0, 0.0,
+  ]
+}
+
+///|
+fn native_color_matrix(values : Array[Double]) -> Array[Double] {
+  let matrix = native_identity_color_matrix()
+  let count = values.length().min(20)
+  for index in 0..<count {
+    matrix[index] = values[index]
+  }
+  matrix
+}
+
+///|
+fn native_blend_mode_code(mode : @core.BlendMode) -> Double {
+  match mode {
+    @core.BlendMode::SourceOver => 0.0
+    @core.BlendMode::Multiply => 1.0
+    @core.BlendMode::Screen => 2.0
+    @core.BlendMode::Overlay => 3.0
+    @core.BlendMode::Darken => 4.0
+    @core.BlendMode::Lighten => 5.0
+  }
+}
+
+///|
+fn native_shader_kind(name : String) -> Double {
+  match name {
+    "checker" => 1.0
+    "solid" => 2.0
+    "linear-gradient-debug" => 3.0
+    "vignette" => 4.0
+    _ => 5.0
+  }
+}
+
+///|
+fn native_shader_effect_amount(effect : NativeShaderEffectRun) -> Double {
+  match effect.uniforms.get(0) {
+    Some(value) => value
+    None => 8.0
+  }
+}
+
+///|
+fn native_shader_effect_colors(
+  effect : NativeShaderEffectRun,
+) -> (@core.Color, @core.Color) {
+  match effect.fallback {
+    @core.Brush::Solid(color) => (color, color)
+    @core.Brush::LinearGradient(gradient) =>
+      (gradient.start_color, gradient.end_color)
+  }
+}
+
+///|
 let visual_mode_fill : Double = 0.0
 
 ///|
@@ -799,6 +1401,9 @@ let visual_mode_shadow : Double = 2.0
 
 ///|
 let visual_vertex_stride : UInt64 = 88UL
+
+///|
+let advanced_vertex_stride : UInt64 = 176UL
 
 ///|
 fn visual_shader_wgsl() -> String {
@@ -876,6 +1481,180 @@ fn visual_shader_wgsl() -> String {
     #|  }
     #|  let color = gradient_color(in.local, start, end, in.color0, in.color1);
     #|  return vec4<f32>(color.rgb, color.a * alpha);
+    #|}
+    #|
+  shader
+}
+
+///|
+fn advanced_shader_wgsl() -> String {
+  let shader =
+    #|struct VSOut {
+    #|  @builtin(position) pos: vec4<f32>,
+    #|  @location(0) uv: vec2<f32>,
+    #|  @location(1) meta0: vec4<f32>,
+    #|  @location(2) meta1: vec4<f32>,
+    #|  @location(3) color0: vec4<f32>,
+    #|  @location(4) color1: vec4<f32>,
+    #|  @location(5) matrix0: vec4<f32>,
+    #|  @location(6) matrix1: vec4<f32>,
+    #|  @location(7) matrix2: vec4<f32>,
+    #|  @location(8) matrix3: vec4<f32>,
+    #|  @location(9) matrix4: vec4<f32>,
+    #|  @location(10) rect_mask: vec4<f32>,
+    #|};
+    #|
+    #|@vertex
+    #|fn vs_main(
+    #|  @location(0) pos: vec2<f32>,
+    #|  @location(1) uv: vec2<f32>,
+    #|  @location(2) meta0: vec4<f32>,
+    #|  @location(3) meta1: vec4<f32>,
+    #|  @location(4) color0: vec4<f32>,
+    #|  @location(5) color1: vec4<f32>,
+    #|  @location(6) matrix0: vec4<f32>,
+    #|  @location(7) matrix1: vec4<f32>,
+    #|  @location(8) matrix2: vec4<f32>,
+    #|  @location(9) matrix3: vec4<f32>,
+    #|  @location(10) matrix4: vec4<f32>,
+    #|  @location(11) rect_mask: vec4<f32>,
+    #|) -> VSOut {
+    #|  var out: VSOut;
+    #|  out.pos = vec4<f32>(pos, 0.0, 1.0);
+    #|  out.uv = uv;
+    #|  out.meta0 = meta0;
+    #|  out.meta1 = meta1;
+    #|  out.color0 = color0;
+    #|  out.color1 = color1;
+    #|  out.matrix0 = matrix0;
+    #|  out.matrix1 = matrix1;
+    #|  out.matrix2 = matrix2;
+    #|  out.matrix3 = matrix3;
+    #|  out.matrix4 = matrix4;
+    #|  out.rect_mask = rect_mask;
+    #|  return out;
+    #|}
+    #|
+    #|@group(0) @binding(0) var layer_sampler : sampler;
+    #|@group(0) @binding(1) var layer_texture : texture_2d<f32>;
+    #|@group(0) @binding(2) var backdrop_texture : texture_2d<f32>;
+    #|
+    #|fn checker(local: vec2<f32>, amount: f32, c0: vec4<f32>, c1: vec4<f32>) -> vec4<f32> {
+    #|  let scale = max(amount, 8.0);
+    #|  let cell = floor(local * scale);
+    #|  let alt = (i32(cell.x) + i32(cell.y)) & 1;
+    #|  if alt == 0 {
+    #|    return c0;
+    #|  }
+    #|  return c1;
+    #|}
+    #|
+    #|fn vignette(local: vec2<f32>, amount: f32, c0: vec4<f32>) -> vec4<f32> {
+    #|  let centered = local * 2.0 - vec2<f32>(1.0, 1.0);
+    #|  let fade = 1.0 - smoothstep(0.25, max(amount, 0.8), length(centered));
+    #|  return vec4<f32>(c0.rgb * fade, c0.a);
+    #|}
+    #|
+    #|fn blur_sample(uv: vec2<f32>, amount: f32) -> vec4<f32> {
+    #|  let dims = vec2<f32>(textureDimensions(layer_texture));
+    #|  let step = vec2<f32>(1.0, 1.0) / max(dims, vec2<f32>(1.0, 1.0));
+    #|  let radius = max(amount, 1.0);
+    #|  var color = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    #|  color += textureSample(layer_texture, layer_sampler, uv + step * radius * vec2<f32>(-1.0, -1.0)) * 0.0625;
+    #|  color += textureSample(layer_texture, layer_sampler, uv + step * radius * vec2<f32>( 0.0, -1.0)) * 0.125;
+    #|  color += textureSample(layer_texture, layer_sampler, uv + step * radius * vec2<f32>( 1.0, -1.0)) * 0.0625;
+    #|  color += textureSample(layer_texture, layer_sampler, uv + step * radius * vec2<f32>(-1.0,  0.0)) * 0.125;
+    #|  color += textureSample(layer_texture, layer_sampler, uv) * 0.25;
+    #|  color += textureSample(layer_texture, layer_sampler, uv + step * radius * vec2<f32>( 1.0,  0.0)) * 0.125;
+    #|  color += textureSample(layer_texture, layer_sampler, uv + step * radius * vec2<f32>(-1.0,  1.0)) * 0.0625;
+    #|  color += textureSample(layer_texture, layer_sampler, uv + step * radius * vec2<f32>( 0.0,  1.0)) * 0.125;
+    #|  color += textureSample(layer_texture, layer_sampler, uv + step * radius * vec2<f32>( 1.0,  1.0)) * 0.0625;
+    #|  return color;
+    #|}
+    #|
+    #|fn rounded_box_sdf_advanced(p: vec2<f32>, half_size: vec2<f32>, radius: f32) -> f32 {
+    #|  let r = min(radius, min(half_size.x, half_size.y));
+    #|  let q = abs(p) - (half_size - vec2<f32>(r, r));
+    #|  return length(max(q, vec2<f32>(0.0, 0.0))) + min(max(q.x, q.y), 0.0) - r;
+    #|}
+    #|
+    #|fn apply_filter(color: vec4<f32>, kind: i32, amount: f32, m0: vec4<f32>, m1: vec4<f32>, m2: vec4<f32>, m3: vec4<f32>, m4: vec4<f32>) -> vec4<f32> {
+    #|  if kind == 2 {
+    #|    let luma = dot(color.rgb, vec3<f32>(0.2126, 0.7152, 0.0722));
+    #|    return vec4<f32>(mix(vec3<f32>(luma, luma, luma), color.rgb, amount), color.a);
+    #|  }
+    #|  if kind == 3 {
+    #|    return vec4<f32>(color.rgb * amount, color.a);
+    #|  }
+    #|  if kind == 4 {
+    #|    return vec4<f32>((color.rgb - vec3<f32>(0.5, 0.5, 0.5)) * amount + vec3<f32>(0.5, 0.5, 0.5), color.a);
+    #|  }
+    #|  if kind == 5 {
+    #|    let v = vec4<f32>(color.rgb, color.a);
+    #|    return vec4<f32>(
+    #|      dot(v, m0) + m4.x,
+    #|      dot(v, m1) + m4.y,
+    #|      dot(v, m2) + m4.z,
+    #|      dot(v, m3) + m4.w,
+    #|    );
+    #|  }
+    #|  return color;
+    #|}
+    #|
+    #|fn overlay_channel(base: f32, source: f32) -> f32 {
+    #|  if base <= 0.5 {
+    #|    return 2.0 * base * source;
+    #|  }
+    #|  return 1.0 - 2.0 * (1.0 - base) * (1.0 - source);
+    #|}
+    #|
+    #|fn overlay_rgb(base: vec3<f32>, source: vec3<f32>) -> vec3<f32> {
+    #|  return vec3<f32>(
+    #|    overlay_channel(base.r, source.r),
+    #|    overlay_channel(base.g, source.g),
+    #|    overlay_channel(base.b, source.b),
+    #|  );
+    #|}
+    #|
+    #|@fragment
+    #|fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
+    #|  let opacity = in.meta0.x;
+    #|  let shader_kind = i32(in.meta0.z + 0.5);
+    #|  let effect_amount = in.meta0.w;
+    #|  let filter_kind = i32(in.meta1.z + 0.5);
+    #|  let filter_amount = in.meta1.w;
+    #|  var sample = textureSample(layer_texture, layer_sampler, in.uv);
+    #|  if shader_kind == 1 {
+    #|    sample = checker(in.meta1.xy, effect_amount, in.color0, in.color1);
+    #|  } else if shader_kind == 2 {
+    #|    sample = in.color0;
+    #|  } else if shader_kind == 3 {
+    #|    sample = mix(in.color0, in.color1, clamp(in.meta1.x, 0.0, 1.0));
+    #|  } else if shader_kind == 4 {
+    #|    sample = vignette(in.meta1.xy, effect_amount, in.color0);
+    #|  } else if shader_kind == 5 {
+    #|    sample = in.color0;
+    #|  }
+    #|  if filter_kind == 1 {
+    #|    sample = blur_sample(in.uv, filter_amount);
+    #|  }
+    #|  sample = apply_filter(sample, filter_kind, filter_amount, in.matrix0, in.matrix1, in.matrix2, in.matrix3, in.matrix4);
+    #|  var mask_alpha = 1.0;
+    #|  if in.rect_mask.w > 0.5 {
+    #|    let mask_size = in.rect_mask.xy;
+    #|    let local = in.meta1.xy * mask_size;
+    #|    let dist = rounded_box_sdf_advanced(local - mask_size * 0.5, mask_size * 0.5, in.rect_mask.z);
+    #|    mask_alpha = 1.0 - smoothstep(-0.5, 0.5, dist);
+    #|  }
+    #|  if i32(in.meta0.y + 0.5) == 3 {
+    #|    let backdrop = textureSample(backdrop_texture, layer_sampler, in.uv);
+    #|    let source_alpha = clamp(sample.a * opacity * mask_alpha, 0.0, 1.0);
+    #|    let blended = overlay_rgb(backdrop.rgb, sample.rgb);
+    #|    let out_rgb = mix(backdrop.rgb, blended, source_alpha);
+    #|    let out_alpha = source_alpha + backdrop.a * (1.0 - source_alpha);
+    #|    return vec4<f32>(out_rgb, out_alpha);
+    #|  }
+    #|  return vec4<f32>(sample.rgb, sample.a * opacity * mask_alpha);
     #|}
     #|
   shader
