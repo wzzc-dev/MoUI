@@ -207,7 +207,7 @@ pub fn Brush::linear_gradient(start~ : Point, end~ : Point, start_color~ : Color
 pub fn Brush::multiply_alpha(Self, Double) -> Self
 pub fn Brush::solid(Color) -> Self
 
-pub(all) struct BuildContext {
+pub struct BuildContext {
   runtime : RuntimeState
   component_id : ElementId
   subscriptions : Array[StateSubscription]
@@ -353,7 +353,7 @@ pub(all) enum CommandIntent {
   OpenContextMenu
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct Component {
+pub struct Component {
   build : (BuildContext) -> ViewSpec
 }
 pub fn Component::new((BuildContext) -> ViewSpec) -> Self
@@ -1285,7 +1285,7 @@ pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 pub fn RuntimeState::set_text_system(Self, TextSystem) -> Unit
 pub fn RuntimeState::text_system(Self) -> TextSystem
 
-pub(all) struct SaveableCodec[T] {
+pub struct SaveableCodec[T] {
   encode : (T) -> String
   decode : (String) -> T?
 }
@@ -1294,7 +1294,7 @@ pub fn SaveableCodec::int() -> Self[Int]
 pub fn[T] SaveableCodec::new(encode~ : (T) -> String, decode~ : (String) -> T?) -> Self[T]
 pub fn SaveableCodec::string() -> Self[String]
 
-pub(all) struct SaveableStateStore {
+pub struct SaveableStateStore {
   mut strings : Array[SaveableStringEntry]
 }
 pub fn[T] SaveableStateStore::get(Self, String, SaveableCodec[T]) -> T?

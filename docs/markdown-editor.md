@@ -15,7 +15,8 @@ commands, and editing workflows.
 - `examples/markdown_editor/windows/`: Windows native entrypoint.
 - `views/markdown_editor.mbt`: public rich text editor wrappers used by the
   example.
-- `core/rich_text_editor.mbt`: platform-neutral rich text editing model.
+- `core/rich_text_*.mbt` plus `core/text_editing*.mbt`: platform-neutral rich
+  text painting, geometry, selection, and editing model.
 
 Platform packages should stay thin. Shared editor behavior belongs in the app
 package or the framework package that owns the reusable capability.

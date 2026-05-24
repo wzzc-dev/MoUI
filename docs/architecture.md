@@ -17,7 +17,7 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 
 ```text
 ./                            root public facade package
-core/                         platform-neutral runtime and view model
+core/                         one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
 style/                        visual token and control style compatibility package
 views/                        public view constructors
 backend/host/                 shared HostEvent, metrics, input, redraw driver, window/core + dpi event conversion
@@ -88,6 +88,10 @@ ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand 
 - `ViewSpec` is the immutable description produced by app code.
 - `ElementNode` owns identity, keys, control state, focus, and text-editing
   runtime state.
+- App code should normally go through `AppRuntime`, `Component`, and
+  `BuildContext`; `RuntimeState`, `ElementNode`, and `RenderNode` are engine
+  implementation details even though some core tests still exercise them
+  directly.
 - `ScrollState`, `FocusState`, and `NavigationState` are the preferred state
   holders for reusable app structure instead of ad hoc view-local fields.
 - `BuildContext::run_effect` registers keyed component-scoped effects with
