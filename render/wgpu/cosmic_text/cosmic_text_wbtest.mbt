@@ -1,4 +1,25 @@
 ///|
+#cfg(platform="windows")
+test "cosmic text fallback profile follows windows" {
+  let profile = cosmic_text_platform_fallback_profile()
+  inspect(profile == @moon_cosmic.FallbackProfile::Windows, content="true")
+}
+
+///|
+#cfg(platform="macos")
+test "cosmic text fallback profile follows macos" {
+  let profile = cosmic_text_platform_fallback_profile()
+  inspect(profile == @moon_cosmic.FallbackProfile::MacOS, content="true")
+}
+
+///|
+#cfg(platform="linux")
+test "cosmic text fallback profile follows linux" {
+  let profile = cosmic_text_platform_fallback_profile()
+  inspect(profile == @moon_cosmic.FallbackProfile::Unix, content="true")
+}
+
+///|
 test "cosmic text font path selects platform font weight" {
   let regular = cosmic_text_font_path_for_spec(@core.FontSpec::new(weight=500))
   let bold = cosmic_text_font_path_for_spec(@core.FontSpec::new(weight=600))
