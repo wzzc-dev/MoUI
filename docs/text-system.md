@@ -52,10 +52,10 @@ Provider packages are intentionally separate:
   embedded-font registration payloads.
 
 macOS and Windows hosts choose the startup text engine through
-`run_app_with_options(..., text_engine=...)`. `PlatformDefault` composes the
-platform provider with Cosmic fallback; `MoonCosmic` selects the Cosmic provider
-directly. Showcase also has explicit `macos_cosmic` and `windows_cosmic`
-entrypoints for comparing those paths.
+`run_app_with_options(..., options=<Platform>AppOptions::new(text_engine=...))`.
+`PlatformDefault` composes the platform provider with Cosmic fallback;
+`MoonCosmic` selects the Cosmic provider directly. Showcase also has explicit
+`macos_cosmic` and `windows_cosmic` entrypoints for comparing those paths.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all

@@ -55,8 +55,9 @@ pub impl @Milky2018/window/macos.ApplicationHandler for MacosApp
 
 pub(all) struct MacosAppOptions {
   text_engine : @wgpu.NativeTextEngineSetting
-} derive(Eq, ToJson, @debug.Debug)
-pub fn MacosAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting) -> Self
+  scene_resolver : @host.HostWindowSceneResolver
+}
+pub fn MacosAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
 
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo

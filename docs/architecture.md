@@ -331,15 +331,15 @@ The same queue records ordered request completions, making accepted operations
 and explicit rejections observable. Active backends use the shared queue drain
 helper so completion recording stays a host contract instead of a platform-local
 loop.
-The Web host also exposes `run_app_with_options` and `WebAppOptions` so callers
-can provide a `HostWindowSceneResolver`. With a resolver, Web `OpenWindow`
-requests resolve a scene into a new `AppRuntime`, create another browser
-`Window`/canvas, attach a dedicated `WebRenderer`, register a per-window
-`HostRuntimeDriver`, bind the platform id, and then route redraw, events,
-context menus, async service completions, IME sync, and disposal through
-window-indexed slots. Without a resolver, Web keeps rejecting `OpenWindow`
-requests with the shared unavailable-resolver message. macOS and Windows still
-reject `OpenWindow` until their native hosts grow matching multi-window
+The Web and macOS hosts also expose `run_app_with_options` with app options
+that accept a `HostWindowSceneResolver`. With a resolver, `OpenWindow` requests
+resolve a scene into a new `AppRuntime`, create another platform window
+(browser canvas on Web, AppKit window with CAMetalLayer on macOS), attach a
+dedicated renderer, register a per-window `HostRuntimeDriver`, bind the
+platform id, and then route redraw, events, context menus, service completions,
+IME sync, and disposal through window-indexed slots. Without a resolver, those
+hosts reject `OpenWindow` with the shared unavailable-resolver message. Windows
+still rejects `OpenWindow` until its native host grows matching multi-window
 renderer/window handle sets.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes

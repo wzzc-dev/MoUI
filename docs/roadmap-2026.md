@@ -197,12 +197,13 @@ Focus areas:
   window records. `HostWindowRuntimeSlot` wraps those records with per-window
   `HostRuntimeDriver` instances, while `HostWindowRuntimeSlots` manages lookup,
   focused/primary slot selection, and registry-backed insert/sync/request/
-  lifecycle helpers plus closed-slot cleanup. Web now wires that path into
-  resolver-backed `OpenWindow`: it creates another browser canvas,
-  `WebRenderer`, platform-window binding, platform slot, and per-window driver,
-  then routes redraw/event/context-menu/IME/dispose paths through
-  `HostWindowId`. macOS and Windows still reject `OpenWindow` until their
-  native hosts attach multiple platform windows and renderer instances.
+  lifecycle helpers plus closed-slot cleanup. Web and macOS now wire that path
+  into resolver-backed `OpenWindow`: Web creates another browser canvas and
+  `WebRenderer`, while macOS creates another AppKit window and CAMetalLayer-
+  backed `WgpuRenderer`; both attach platform-window bindings, platform slots,
+  and per-window drivers, then route redraw/event/context-menu/IME/dispose
+  paths through `HostWindowId`. Windows still rejects `OpenWindow` until its
+  native host attaches multiple platform windows and renderer instances.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.

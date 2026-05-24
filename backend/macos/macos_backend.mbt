@@ -61,32 +61,46 @@ pub(all) struct MacosAccessibilityBridgeInfo {
 ///|
 pub(all) struct MacosAppOptions {
   text_engine : @wgpu_renderer.NativeTextEngineSetting
-} derive(Eq, Debug, ToJson)
+  scene_resolver : @host.HostWindowSceneResolver
+}
 
 ///|
 struct MacosApp {
   title : String
-  mut window : @window_macos.Window?
-  mut renderer : @wgpu_renderer.WgpuRenderer?
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
+  scene_resolver : @host.HostWindowSceneResolver
   windows : @host.HostWindowRegistry
   runtime_slots : @host.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
-  mut window_id : @host.HostWindowId?
+  platform_slots : MacosWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
 
 ///|
+priv struct MacosWindowPlatformSlot {
+  host_id : @host.HostWindowId
+  platform_id : @window_core.WindowId
+  window : @window_macos.Window
+  renderer : @wgpu_renderer.WgpuRenderer
+}
+
+///|
+priv struct MacosWindowPlatformSlots {
+  mut slots : Array[MacosWindowPlatformSlot]
+}
+
+///|
 pub fn MacosAppOptions::new(
   text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
 ) -> MacosAppOptions {
-  { text_engine, }
+  { text_engine, scene_resolver }
 }
 
 ///|
@@ -263,18 +277,17 @@ pub fn run_app_with_options(
   )
   let app = MacosApp::{
     title,
-    window: None,
-    renderer: None,
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     text_engine_setting: options.text_engine,
     services,
     window_requests,
+    scene_resolver: options.scene_resolver,
     windows: @host.HostWindowRegistry::new(),
     runtime_slots: @host.HostWindowRuntimeSlots::new(),
     platform_windows: @host.HostPlatformWindowMap::new(),
-    window_id: None,
+    platform_slots: MacosWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
@@ -408,6 +421,70 @@ fn runtime_size_to_window_surface_size(size : @core.Size) -> @dpi.Size {
 }
 
 ///|
+fn MacosWindowPlatformSlots::new() -> MacosWindowPlatformSlots {
+  { slots: [] }
+}
+
+///|
+fn MacosWindowPlatformSlots::insert(
+  self : MacosWindowPlatformSlots,
+  slot : MacosWindowPlatformSlot,
+) -> Bool {
+  match
+    (self.lookup_host(slot.host_id), self.lookup_platform(slot.platform_id)) {
+    (None, None) => {
+      self.slots.push(slot)
+      true
+    }
+    _ => false
+  }
+}
+
+///|
+fn MacosWindowPlatformSlots::lookup_host(
+  self : MacosWindowPlatformSlots,
+  host_id : @host.HostWindowId,
+) -> MacosWindowPlatformSlot? {
+  for slot in self.slots {
+    if slot.host_id == host_id {
+      return Some(slot)
+    }
+  }
+  None
+}
+
+///|
+fn MacosWindowPlatformSlots::lookup_platform(
+  self : MacosWindowPlatformSlots,
+  platform_id : @window_core.WindowId,
+) -> MacosWindowPlatformSlot? {
+  for slot in self.slots {
+    if slot.platform_id == platform_id {
+      return Some(slot)
+    }
+  }
+  None
+}
+
+///|
+fn MacosWindowPlatformSlots::remove_host(
+  self : MacosWindowPlatformSlots,
+  host_id : @host.HostWindowId,
+) -> MacosWindowPlatformSlot? {
+  let mut removed = None
+  let kept = []
+  for slot in self.slots {
+    if slot.host_id == host_id {
+      removed = Some(slot)
+    } else {
+      kept.push(slot)
+    }
+  }
+  self.slots = kept
+  removed
+}
+
+///|
 pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
   self,
   event_loop,
@@ -435,49 +512,34 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
         metrics~,
         primary=true,
       )
-      self.window_id = Some(window_id)
       ignore(
         self.platform_windows.bind(platform_id=window.id(), host_id=window_id),
       )
       self.register_primary_runtime_slot(window_id)
-      ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
-      let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
-        err => {
-          println("error resolving macOS content view handle: \{err}")
+      self.driver.set_redraw_scheduler(() => {
+        self.request_redraw_window_if_needed(window_id)
+      })
+      match self.create_renderer_for_window(window, metrics) {
+        Some(renderer) => {
+          self.driver.set_text_system(renderer.text_system())
+          ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
+          ignore(
+            self.platform_slots.insert({
+              host_id: window_id,
+              platform_id: window.id(),
+              window,
+              renderer,
+            }),
+          )
+          window.request_redraw()
+          self.drain_window_requests(event_loop)
+        }
+        None => {
+          self.rollback_window_record(window_id)
+          window.drop()
           event_loop.exit()
-          None
         }
       }
-      let renderer : @wgpu_renderer.WgpuRenderer? = match
-        raw_content_view_handle {
-        Some(raw_content_view_handle) =>
-          Some(
-            @wgpu_renderer.create_with_host_surface_and_text_engine(
-              renderer_metrics_from_host(metrics),
-              create_macos_host_surface(
-                raw_content_view_handle,
-                metrics.physical_size,
-                scale_factor=metrics.scale_factor,
-              ),
-              text_engine=macos_text_engine(self.text_engine_setting),
-            ),
-          ) catch {
-            err => {
-              println("error creating macOS WGPU renderer: \{err}")
-              event_loop.exit()
-              None
-            }
-          }
-        None => None
-      }
-      match renderer {
-        Some(renderer) => self.runtime.set_text_system(renderer.text_system())
-        None => ()
-      }
-      self.renderer = renderer
-      self.window = Some(window)
-      window.request_redraw()
-      self.drain_window_requests(event_loop)
     }
     None => ()
   }
@@ -501,50 +563,52 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
   match event {
     @window_core.WindowEvent::CloseRequested => {
       self.dispatch_window_event(window_id, event)
-      self.dispose()
-      event_loop.exit()
+      self.dispose_window(window_id)
+      if self.runtime_slots.is_empty() {
+        event_loop.exit()
+      }
     }
     @window_core.WindowEvent::SurfaceResized(_) => {
       self.dispatch_window_event(window_id, event)
-      match (self.window, self.renderer) {
-        (Some(window), Some(renderer)) => {
+      match self.platform_slots.lookup_host(window_id) {
+        Some(slot) => {
           let metrics = @host.surface_metrics_from_physical(
-            window.surface_size(),
-            scale_factor=window.scale_factor(),
+            slot.window.surface_size(),
+            scale_factor=slot.window.scale_factor(),
           )
-          self.sync_macos_surface_layer(window, metrics)
-          renderer.resize(renderer_metrics_from_host(metrics))
-          window.request_redraw()
+          self.sync_macos_surface_layer(slot.window, metrics)
+          slot.renderer.resize(renderer_metrics_from_host(metrics))
+          slot.window.request_redraw()
         }
-        _ => ()
+        None => ()
       }
     }
     @window_core.WindowEvent::ScaleFactorChanged(_, _) => {
       self.dispatch_window_event(window_id, event)
-      match (self.window, self.renderer) {
-        (Some(window), Some(renderer)) => {
+      match self.platform_slots.lookup_host(window_id) {
+        Some(slot) => {
           let metrics = @host.surface_metrics_from_physical(
-            window.surface_size(),
-            scale_factor=window.scale_factor(),
+            slot.window.surface_size(),
+            scale_factor=slot.window.scale_factor(),
           )
-          self.sync_macos_surface_layer(window, metrics)
-          renderer.resize(renderer_metrics_from_host(metrics))
-          window.request_redraw()
+          self.sync_macos_surface_layer(slot.window, metrics)
+          slot.renderer.resize(renderer_metrics_from_host(metrics))
+          slot.window.request_redraw()
         }
-        _ => ()
+        None => ()
       }
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
       self.last_pointer = @host.physical_position_to_core(
         position,
-        scale_factor=self.current_scale_factor(),
+        scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
       self.last_pointer = @host.physical_position_to_core(
         position,
-        scale_factor=self.current_scale_factor(),
+        scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_pointer_or_context_menu(window_id, event)
     }
@@ -553,14 +617,14 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
     | @window_core.WindowEvent::DragDropped(_, position) => {
       self.last_pointer = @host.physical_position_to_core(
         position,
-        scale_factor=self.current_scale_factor(),
+        scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::DragLeft(Some(position)) => {
       self.last_pointer = @host.physical_position_to_core(
         position,
-        scale_factor=self.current_scale_factor(),
+        scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
@@ -570,17 +634,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
       self.dispatch_window_event(window_id, event)
     @window_core.WindowEvent::ModifiersChanged(_) =>
       self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::RedrawRequested =>
-      match (self.window, self.renderer) {
-        (Some(window), Some(renderer)) => {
-          window.pre_present_notify()
-          self.driver.begin_redraw()
-          renderer.render(self.driver.draw_commands())
-          self.driver.finish_redraw()
-          self.sync_text_input_session()
-        }
-        _ => ()
-      }
+    @window_core.WindowEvent::RedrawRequested => self.redraw_window(window_id)
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -593,11 +647,69 @@ fn MacosApp::dispatch_pointer_or_context_menu(
 ) -> Unit {
   if @host.window_event_is_context_menu_button(event) {
     if @host.window_event_is_context_menu_trigger(event) {
-      ignore(self.driver.show_context_menu(self.services))
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) => ignore(slot.driver.show_context_menu(self.services))
+        None => ()
+      }
       self.sync_text_input_session()
     }
   } else {
     self.dispatch_window_event(window_id, event)
+  }
+}
+
+///|
+fn MacosApp::redraw_window(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match
+    (
+      self.platform_slots.lookup_host(window_id),
+      self.runtime_slots.lookup(window_id),
+    ) {
+    (Some(platform_slot), Some(runtime_slot)) => {
+      platform_slot.window.pre_present_notify()
+      runtime_slot.driver.begin_redraw()
+      platform_slot.renderer.render(runtime_slot.driver.draw_commands())
+      runtime_slot.driver.finish_redraw()
+      self.sync_text_input_session()
+    }
+    _ => ()
+  }
+}
+
+///|
+fn MacosApp::create_renderer_for_window(
+  self : MacosApp,
+  window : @window_macos.Window,
+  metrics : @host.HostSurfaceMetrics,
+) -> @wgpu_renderer.WgpuRenderer? {
+  let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
+    err => {
+      println("error resolving macOS content view handle: \{err}")
+      None
+    }
+  }
+  match raw_content_view_handle {
+    Some(raw_content_view_handle) =>
+      Some(
+        @wgpu_renderer.create_with_host_surface_and_text_engine(
+          renderer_metrics_from_host(metrics),
+          create_macos_host_surface(
+            raw_content_view_handle,
+            metrics.physical_size,
+            scale_factor=metrics.scale_factor,
+          ),
+          text_engine=macos_text_engine(self.text_engine_setting),
+        ),
+      ) catch {
+        err => {
+          println("error creating macOS WGPU renderer: \{err}")
+          None
+        }
+      }
+    None => None
   }
 }
 
@@ -649,7 +761,7 @@ fn MacosApp::dispatch_window_event(
       self.modifiers = @host.modifiers_to_core(modifiers)
     _ => ()
   }
-  let scale_factor = self.current_scale_factor()
+  let scale_factor = self.current_scale_factor(window_id)
   match
     window_event_to_host_with_modifiers(
       event,
@@ -659,12 +771,19 @@ fn MacosApp::dispatch_window_event(
     ) {
     Some(host_event) => {
       self.apply_window_lifecycle(window_id, host_event)
-      match host_event {
-        @host.HostEvent::Keyboard(event) =>
-          ignore(
-            self.driver.dispatch_keyboard_with_services(event, self.services),
-          )
-        _ => ignore(self.driver.dispatch(host_event))
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) =>
+          match host_event {
+            @host.HostEvent::Keyboard(event) =>
+              ignore(
+                slot.driver.dispatch_keyboard_with_services(
+                  event,
+                  self.services,
+                ),
+              )
+            _ => ignore(slot.driver.dispatch(host_event))
+          }
+        None => ()
       }
       self.sync_text_input_session()
     }
@@ -691,66 +810,165 @@ fn MacosApp::apply_window_request(
   request : @host.HostWindowRequest,
 ) -> @host.HostWindowRequestResult {
   match request {
-    @host.HostWindowRequest::OpenWindow(_) =>
-      @host.HostWindowRequestResult::WindowRejected(
-        "open window requests require multi-window macOS host support",
-      )
+    @host.HostWindowRequest::OpenWindow(open_request) =>
+      self.open_window(event_loop, open_request)
     @host.HostWindowRequest::FocusWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.focus_window()
       })
     @host.HostWindowRequest::CloseWindow(id) =>
-      self.apply_current_window_request(id, request, _window => {
-        self.dispose()
-        event_loop.exit()
+      self.apply_platform_window_request(id, request, _window => {
+        self.dispose_window(id)
+        if self.runtime_slots.is_empty() {
+          event_loop.exit()
+        }
       })
     @host.HostWindowRequest::ResizeWindow(id, metrics) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
         self.sync_macos_surface_layer(window, metrics)
-        match self.renderer {
-          Some(renderer) => renderer.resize(renderer_metrics_from_host(metrics))
+        match self.platform_slots.lookup_host(id) {
+          Some(slot) =>
+            slot.renderer.resize(renderer_metrics_from_host(metrics))
           None => ()
         }
         window.request_redraw()
       })
     @host.HostWindowRequest::MinimizeWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.set_minimized(true)
       })
     @host.HostWindowRequest::ShowWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.set_minimized(false)
         window.set_visible(true)
       })
     @host.HostWindowRequest::SetPrimaryWindow(id) =>
-      self.apply_current_window_request(id, request, _window => ())
+      self.apply_platform_window_request(id, request, _window => ())
   }
 }
 
 ///|
-fn MacosApp::apply_current_window_request(
+fn MacosApp::apply_platform_window_request(
   self : MacosApp,
   id : @host.HostWindowId,
   request : @host.HostWindowRequest,
   apply : (@window_macos.Window) -> Unit,
 ) -> @host.HostWindowRequestResult {
-  match (self.window_id, self.window) {
-    (Some(current), Some(window)) =>
-      if current == id {
-        let result = self.runtime_slots.apply_request(self.windows, request)
-        match result {
-          @host.HostWindowRequestResult::WindowRejected(_) => ()
-          _ => apply(window)
-        }
-        result
-      } else {
-        self.runtime_slots.apply_request(self.windows, request)
+  match self.platform_slots.lookup_host(id) {
+    Some(slot) => {
+      let result = self.runtime_slots.apply_request(self.windows, request)
+      match result {
+        @host.HostWindowRequestResult::WindowRejected(_) => ()
+        _ => apply(slot.window)
       }
-    _ =>
+      result
+    }
+    None =>
       @host.HostWindowRequestResult::WindowRejected(
         "window request has no active macOS window",
       )
+  }
+}
+
+///|
+fn MacosApp::open_window(
+  self : MacosApp,
+  event_loop : @window_macos.ActiveEventLoop,
+  request : @host.HostWindowOpenRequest,
+) -> @host.HostWindowRequestResult {
+  match self.windows.resolve_open_request(request, self.scene_resolver) {
+    @host.HostWindowOpenResolution::OpenRejected(message) =>
+      @host.HostWindowRequestResult::WindowRejected(message)
+    @host.HostWindowOpenResolution::OpenResolved(resolved) =>
+      self.create_resolved_window(event_loop, resolved)
+  }
+}
+
+///|
+fn MacosApp::create_resolved_window(
+  self : MacosApp,
+  event_loop : @window_macos.ActiveEventLoop,
+  resolved : @host.HostWindowResolvedOpen,
+) -> @host.HostWindowRequestResult {
+  let attributes = @window_core.WindowAttributes::default()
+    .with_title(resolved.record.title)
+    .with_surface_size(host_metrics_to_dpi_size(resolved.record.metrics))
+  let window : @window_macos.Window? = Some(
+    event_loop.try_create_window(attributes),
+  ) catch {
+    err => {
+      println("error creating macOS window: \{err}")
+      None
+    }
+  }
+  match window {
+    Some(window) => self.attach_resolved_window(window, resolved)
+    None => {
+      self.rollback_window_record(resolved.id)
+      @host.HostWindowRequestResult::WindowRejected(
+        "failed to create macOS window",
+      )
+    }
+  }
+}
+
+///|
+fn MacosApp::attach_resolved_window(
+  self : MacosApp,
+  window : @window_macos.Window,
+  resolved : @host.HostWindowResolvedOpen,
+) -> @host.HostWindowRequestResult {
+  let metrics = @host.surface_metrics_from_physical(
+    window.surface_size(),
+    scale_factor=window.scale_factor(),
+  )
+  match self.create_renderer_for_window(window, metrics) {
+    Some(renderer) => {
+      ignore(self.windows.resize(resolved.id, metrics))
+      ignore(self.runtime_slots.sync_open_from_registry(self.windows))
+      let record = match self.windows.lookup(resolved.id) {
+        Some(record) => record
+        None => resolved.record
+      }
+      let driver = @host.HostRuntimeDriver::new(
+        runtime=resolved.instance.runtime,
+        schedule_redraw=() => (),
+      )
+      driver.set_redraw_scheduler(() => {
+        self.request_redraw_window_if_needed(resolved.id)
+      })
+      driver.set_environment(
+        self.services.environment_with_system_theme(driver.environment()),
+      )
+      driver.set_text_system(renderer.text_system())
+      ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
+      ignore(
+        self.runtime_slots.insert(
+          @host.HostWindowRuntimeSlot::from_driver(record~, driver~),
+        ),
+      )
+      ignore(
+        self.platform_windows.bind(platform_id=window.id(), host_id=resolved.id),
+      )
+      ignore(
+        self.platform_slots.insert({
+          host_id: resolved.id,
+          platform_id: window.id(),
+          window,
+          renderer,
+        }),
+      )
+      self.request_platform_redraw(resolved.id)
+      @host.HostWindowRequestResult::WindowOpened(resolved.id)
+    }
+    None => {
+      window.drop()
+      self.rollback_window_record(resolved.id)
+      @host.HostWindowRequestResult::WindowRejected(
+        "failed to create macOS renderer",
+      )
+    }
   }
 }
 
@@ -777,6 +995,11 @@ fn MacosApp::sync_runtime_slot(
 }
 
 ///|
+fn MacosApp::sync_runtime_slots(self : MacosApp) -> Unit {
+  ignore(self.runtime_slots.sync_open_from_registry(self.windows))
+}
+
+///|
 fn MacosApp::apply_window_lifecycle(
   self : MacosApp,
   window_id : @host.HostWindowId,
@@ -788,63 +1011,117 @@ fn MacosApp::apply_window_lifecycle(
 }
 
 ///|
+fn MacosApp::active_runtime_slot(
+  self : MacosApp,
+) -> @host.HostWindowRuntimeSlot? {
+  match self.runtime_slots.focused_slot() {
+    Some(slot) => Some(slot)
+    None => self.runtime_slots.primary_slot()
+  }
+}
+
+///|
 fn MacosApp::sync_text_input_session(self : MacosApp) -> Unit {
-  match self.window {
-    Some(window) =>
-      match self.text_input_session.sync(self.runtime.focused_text_input()) {
-        @host.TextInputSessionAction::EnableIme(request)
-        | @host.TextInputSessionAction::UpdateIme(request)
-        | @host.TextInputSessionAction::DisableIme(request) =>
-          window.request_ime_update(request) catch {
-            _ => ()
+  match self.active_runtime_slot() {
+    Some(runtime_slot) =>
+      match self.platform_slots.lookup_host(runtime_slot.id) {
+        Some(platform_slot) =>
+          match
+            self.text_input_session.sync(
+              runtime_slot.driver.focused_text_input(),
+            ) {
+            @host.TextInputSessionAction::EnableIme(request)
+            | @host.TextInputSessionAction::UpdateIme(request)
+            | @host.TextInputSessionAction::DisableIme(request) =>
+              platform_slot.window.request_ime_update(request) catch {
+                _ => ()
+              }
+            @host.TextInputSessionAction::NoImeChange => ()
           }
-        @host.TextInputSessionAction::NoImeChange => ()
+        None => ()
       }
     None => ()
   }
 }
 
 ///|
-fn MacosApp::current_scale_factor(self : MacosApp) -> Double {
-  match self.window {
-    Some(window) => window.scale_factor()
+fn MacosApp::current_scale_factor(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Double {
+  match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => slot.window.scale_factor()
     None => 1.0
   }
 }
 
 ///|
+fn runtime_slot_needs_redraw(slot : @host.HostWindowRuntimeSlot) -> Bool {
+  let result = slot.driver.event_result()
+  result.needs_redraw || result.redraw_requested
+}
+
+///|
 fn MacosApp::request_redraw(self : MacosApp) -> Unit {
-  if self.runtime.needs_redraw() {
-    match self.window {
-      Some(window) => window.request_redraw()
-      None => ()
-    }
+  match self.active_runtime_slot() {
+    Some(slot) => self.request_redraw_window_if_needed(slot.id)
+    None => ()
   }
 }
 
 ///|
-fn MacosApp::dispose(self : MacosApp) -> Unit {
-  match self.window_id {
-    Some(window_id) => {
-      ignore(self.windows.close(window_id))
-      self.sync_runtime_slot(window_id)
-      ignore(self.runtime_slots.remove(window_id))
-      ignore(self.platform_windows.remove_host(window_id))
-      ignore(self.windows.remove_closed())
-      self.window_id = None
+fn MacosApp::request_redraw_window_if_needed(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.runtime_slots.lookup(window_id) {
+    Some(slot) =>
+      if runtime_slot_needs_redraw(slot) {
+        self.request_platform_redraw(window_id)
+      }
+    None => ()
+  }
+}
+
+///|
+fn MacosApp::request_platform_redraw(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => slot.window.request_redraw()
+    None => ()
+  }
+}
+
+///|
+fn MacosApp::dispose_window(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  ignore(self.windows.close(window_id))
+  self.sync_runtime_slot(window_id)
+  ignore(self.runtime_slots.remove(window_id))
+  ignore(self.platform_windows.remove_host(window_id))
+  match self.platform_slots.remove_host(window_id) {
+    Some(slot) => {
+      slot.renderer.dispose()
+      slot.window.drop()
     }
     None => ()
   }
-  match self.renderer {
-    Some(renderer) => renderer.dispose()
-    None => ()
-  }
-  match self.window {
-    Some(window) => window.drop()
-    None => ()
-  }
-  self.renderer = None
-  self.window = None
+  ignore(self.windows.remove_closed())
+  self.sync_runtime_slots()
+}
+
+///|
+fn MacosApp::rollback_window_record(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  ignore(self.windows.close(window_id))
+  ignore(self.windows.remove_closed())
+  self.sync_runtime_slots()
 }
 
 ///|
