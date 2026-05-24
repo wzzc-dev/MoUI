@@ -91,6 +91,12 @@ export function createWindowWebImports(options = {}) {
     };
   };
 
+  const draggedFileNames = event =>
+    Array.from(event.dataTransfer?.files ?? [])
+      .map(file => file.webkitRelativePath || file.name)
+      .filter(Boolean)
+      .join("\n");
+
   const logicalCanvasWidth = canvas =>
     Math.max(1, Math.round(canvas?.clientWidth || canvas?.width || 1));
 
@@ -419,6 +425,17 @@ export function createWindowWebImports(options = {}) {
       const shouldUseMouseFallback = () => Date.now() - lastPointerEventAt > 250;
       const shouldUseClickFallback = () => Date.now() - lastButtonEventAt > 250;
       const hostHasFocus = () => textInputHostHasFocus(textState);
+      const acceptFileDrag = event => {
+        preventDefaultIfCancelable(event);
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "copy";
+        }
+      };
+      const emitFileDrag = (kind, event, includeFiles = false) => {
+        acceptFileDrag(event);
+        const p = pointerPosition(canvas, event);
+        emit(kind, rawId, p.x, p.y, 0, includeFiles ? draggedFileNames(event) : "");
+      };
       const blurTargetIsHost = event =>
         event.relatedTarget === canvas || event.relatedTarget === textInput;
       const emitBlurIfOutsideHost = event => {
@@ -509,6 +526,10 @@ export function createWindowWebImports(options = {}) {
         event.preventDefault();
         emit(30, rawId, Math.round(event.deltaX), Math.round(event.deltaY));
       }, { passive: false });
+      add(canvas, "dragenter", event => emitFileDrag(60, event, true));
+      add(canvas, "dragover", event => emitFileDrag(61, event));
+      add(canvas, "drop", event => emitFileDrag(62, event, true));
+      add(canvas, "dragleave", event => emitFileDrag(63, event));
       add(canvas, "focus", () => emit(11, rawId));
       add(canvas, "blur", emitBlurIfOutsideHost);
       add(canvas, "keydown", event => {

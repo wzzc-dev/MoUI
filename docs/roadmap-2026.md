@@ -171,6 +171,9 @@ Focus areas:
 - Keep URL opening honest across active hosts: macOS uses `NSWorkspace`, Windows
   uses `ShellExecuteW`, and Web uses a browser host import that calls
   `window.open` and can report popup-blocked failures.
+- Keep file drag/drop on the shared host path: macOS and Windows forward native
+  file paths, while Web forwards browser-exposed file names from canvas drop
+  events.
 - Keep system theme propagation on the host-service path: native macOS and
   Windows startup now installs the queried light/dark scheme into runtime
   environment before the first layout/redraw pass. Web startup uses the browser

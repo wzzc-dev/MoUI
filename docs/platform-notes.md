@@ -81,6 +81,10 @@ unavailable until the host-service contract grows an async permission-aware path
 The browser host import reads `prefers-color-scheme` at startup and listens for
 media-query changes through `window/web`; MoUI maps those events into runtime
 environment color-scheme updates.
+Browser file drag/drop events on the canvas are normalized through
+`HostEvent::DragDrop` and dispatched to `ViewSpec::on_file_drop` targets. The
+Web platform receives browser-exposed file names or relative names rather than
+native filesystem paths.
 See [Text system](text-system.md) for the shared runtime and renderer text
 contract.
 

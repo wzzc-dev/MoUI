@@ -68,6 +68,7 @@ pub fn canvas_input_host() -> @host.InputHostState {
         text_input=true,
         ime=false,
         clipboard=true,
+        drag_drop=true,
       ),
       coordinates=@host.HostCoordinatePolicy::logical(
         description="Web canvas host reports logical event coordinates after DPR mapping.",

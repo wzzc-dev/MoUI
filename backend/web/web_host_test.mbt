@@ -59,7 +59,7 @@ test "canvas host creates surface and input contracts" {
   inspect(input.capabilities().scroll, content="true")
   inspect(input.capabilities().ime, content="false")
   inspect(input.capabilities().clipboard, content="true")
-  inspect(input.capabilities().drag_drop, content="false")
+  inspect(input.capabilities().drag_drop, content="true")
   inspect(input.coordinate_policy().scale_factor_applied, content="true")
 }
 
