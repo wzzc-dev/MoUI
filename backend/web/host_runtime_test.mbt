@@ -41,6 +41,18 @@ test "web maps close event to host event" {
 }
 
 ///|
+test "web maps browser theme change to host theme event" {
+  let event = window_event_to_host(
+    @window_core.WindowEvent::ThemeChanged(@window_core.Theme::Dark),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match event {
+    Some(@host.HostEvent::ThemeChanged(@core.ColorScheme::Dark)) => ()
+    _ => fail("expected host theme change")
+  }
+}
+
+///|
 test "web maps surface resize to host metrics" {
   let event = window_event_to_host(
     @window_core.WindowEvent::SurfaceResized(

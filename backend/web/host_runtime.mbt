@@ -57,13 +57,22 @@ pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
   let event_loop = @window_web.EventLoop::new()
   event_loop.set_control_flow(@window_core.ControlFlow::Poll)
+  let services = web_service_bridge(
+    system_theme=match event_loop.system_theme() {
+      Some(theme) => @host.window_theme_to_color_scheme(theme)
+      None => @core.ColorScheme::Light
+    },
+  )
+  runtime.set_environment(
+    services.environment_with_system_theme(runtime.environment()),
+  )
   let app = WebApp::{
     title,
     window: None,
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
-    services: web_service_bridge(),
+    services,
     windows: @host.HostWindowRegistry::new(),
     window_id: None,
     renderer: None,

@@ -248,6 +248,7 @@ pub(all) enum HostEvent {
   Keyboard(@core.KeyboardEvent)
   TextInput(@core.TextInputEvent)
   DragDrop(@core.DragDropEvent)
+  ThemeChanged(@core.ColorScheme)
   Command(@core.CommandIntent)
   RedrawRequested
   CloseRequested
@@ -431,6 +432,27 @@ pub fn HostServiceBridge::dispatch(
     }
   } else {
     HostServiceResponse::Unavailable(request.unavailable_message())
+  }
+}
+
+///|
+pub fn HostServiceBridge::query_system_theme(
+  self : HostServiceBridge,
+) -> @core.ColorScheme? {
+  match self.dispatch(HostServiceRequest::QuerySystemTheme) {
+    HostServiceResponse::SystemTheme(scheme) => Some(scheme)
+    _ => None
+  }
+}
+
+///|
+pub fn HostServiceBridge::environment_with_system_theme(
+  self : HostServiceBridge,
+  environment : @core.Environment,
+) -> @core.Environment {
+  match self.query_system_theme() {
+    Some(scheme) => environment.with_color_scheme(scheme)
+    None => environment
   }
 }
 
@@ -1197,6 +1219,12 @@ pub fn HostRuntimeDriver::dispatch(
       self.runtime.dispatch_event(@core.AppEvent::DragDrop(event))
       self.request_redraw_if_needed()
     }
+    ThemeChanged(scheme) => {
+      self.runtime.set_environment(
+        self.runtime.environment().with_color_scheme(scheme),
+      )
+      self.request_redraw_if_needed()
+    }
     Command(intent) =>
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()
@@ -1386,6 +1414,7 @@ pub fn HostEvent::to_core(self : HostEvent) -> @core.AppEvent? {
     Keyboard(event) => Some(@core.AppEvent::Keyboard(event))
     TextInput(event) => Some(@core.AppEvent::TextInput(event))
     DragDrop(event) => Some(@core.AppEvent::DragDrop(event))
+    ThemeChanged(_) => None
     Command(_) => None
     RedrawRequested =>
       Some(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))

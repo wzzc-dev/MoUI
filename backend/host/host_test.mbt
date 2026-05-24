@@ -171,6 +171,22 @@ test "surface host resizes through host event" {
 }
 
 ///|
+test "window theme change maps to host theme event" {
+  let event = window_event_to_host(
+    @window_core.WindowEvent::ThemeChanged(@window_core.Theme::Dark),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match event {
+    Some(HostEvent::ThemeChanged(@core.ColorScheme::Dark)) => ()
+    _ => fail("expected dark host theme event")
+  }
+  match event.unwrap().to_core() {
+    None => ()
+    Some(_) => fail("theme changes are handled by the host runtime driver")
+  }
+}
+
+///|
 test "host window registry tracks primary focus resize and close lifecycle" {
   let registry = HostWindowRegistry::new()
   let first = registry.open(
@@ -357,6 +373,36 @@ test "host service bridge gates typed platform requests by capability" {
 }
 
 ///|
+test "host service bridge applies system theme to runtime environment" {
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(system_theme=true),
+    handle=request => {
+      match request {
+        QuerySystemTheme =>
+          HostServiceResponse::SystemTheme(@core.ColorScheme::Dark)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  match bridge.query_system_theme() {
+    Some(@core.ColorScheme::Dark) => ()
+    _ => fail("expected dark system theme")
+  }
+  let environment = @core.Environment::default()
+    .with_locale("zh-CN")
+    .with_text_scale(1.25)
+  let updated = bridge.environment_with_system_theme(environment)
+  assert_true(updated.color_scheme == @core.ColorScheme::Dark)
+  assert_true(updated.theme.scheme == @core.ColorScheme::Dark)
+  inspect(updated.locale, content="zh-CN")
+  inspect(updated.text_scale, content="1.25")
+
+  let unavailable = HostServiceBridge::unavailable()
+  let unchanged = unavailable.environment_with_system_theme(environment)
+  assert_true(unchanged == environment)
+}
+
+///|
 test "host driver dispatches command intents through runtime action map" {
   let copied = Ref(0)
   let runtime = @core.AppRuntime::new_spec(
@@ -379,6 +425,19 @@ test "host driver dispatches command intents through runtime action map" {
     None => ()
     Some(_) => fail("host command should dispatch through runtime action map")
   }
+}
+
+///|
+test "host driver applies theme change to runtime environment" {
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::EmptySpec,
+    size=@core.Size::new(width=10.0, height=10.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let result = driver.dispatch(HostEvent::ThemeChanged(@core.ColorScheme::Dark))
+  assert_true(runtime.environment().color_scheme == @core.ColorScheme::Dark)
+  assert_true(runtime.environment().theme.scheme == @core.ColorScheme::Dark)
+  inspect(result.redraw_requested, content="true")
 }
 
 ///|

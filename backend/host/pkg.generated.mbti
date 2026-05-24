@@ -62,6 +62,8 @@ pub fn window_event_to_host(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/c
 
 pub fn window_event_to_host_with_modifiers(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers, scale_factor? : Double, blur_to_cancel? : Bool) -> HostEvent?
 
+pub fn window_theme_to_color_scheme(@Milky2018/window/core.Theme) -> @wzzc-dev/moui/core.ColorScheme
+
 // Errors
 
 // Types and methods
@@ -107,6 +109,7 @@ pub(all) enum HostEvent {
   Keyboard(@wzzc-dev/moui/core.KeyboardEvent)
   TextInput(@wzzc-dev/moui/core.TextInputEvent)
   DragDrop(@wzzc-dev/moui/core.DragDropEvent)
+  ThemeChanged(@wzzc-dev/moui/core.ColorScheme)
   Command(@wzzc-dev/moui/core.CommandIntent)
   RedrawRequested
   CloseRequested
@@ -210,7 +213,9 @@ pub fn HostServiceBridge::can_handle(Self, HostServiceRequest) -> Bool
 pub fn HostServiceBridge::dispatch(Self, HostServiceRequest) -> HostServiceResponse
 pub fn HostServiceBridge::dispatch_channel(Self, PlatformChannelRequest) -> PlatformChannelResponse
 pub fn HostServiceBridge::dispatch_registered_service(Self, HostServiceRequest) -> HostServiceResponse?
+pub fn HostServiceBridge::environment_with_system_theme(Self, @wzzc-dev/moui/core.Environment) -> @wzzc-dev/moui/core.Environment
 pub fn HostServiceBridge::new(capabilities~ : HostServiceCapabilities, handle~ : (HostServiceRequest) -> HostServiceResponse) -> Self
+pub fn HostServiceBridge::query_system_theme(Self) -> @wzzc-dev/moui/core.ColorScheme?
 pub fn HostServiceBridge::register_channel(Self, PlatformChannelHandler) -> Unit
 pub fn HostServiceBridge::register_service(Self, HostServiceHandler) -> Unit
 pub fn HostServiceBridge::unavailable() -> Self

@@ -306,6 +306,13 @@ Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
 system-theme requests. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
+Web, macOS, and Windows entrypoints query that bridge at startup and install
+the reported light/dark scheme into `AppRuntime` before the first host driver
+layout/redraw pass, so initial view builds see the platform color scheme through
+`BuildContext` environment reads.
+`ThemeChanged` window events are also normalized into `HostEvent::ThemeChanged`;
+`HostRuntimeDriver` applies them to runtime environment instead of leaking a
+platform-specific event into app code.
 
 Keyboard shortcuts, menus, and host command responses share the
 `ActionCommand`/`CommandIntent` model. `ActionCommandMap` is the platform-neutral

@@ -123,6 +123,16 @@ pub fn mouse_button_to_core(button : @window_core.MouseButton) -> Int? {
 }
 
 ///|
+pub fn window_theme_to_color_scheme(
+  theme : @window_core.Theme,
+) -> @core.ColorScheme {
+  match theme {
+    @window_core.Theme::Light => @core.ColorScheme::Light
+    @window_core.Theme::Dark => @core.ColorScheme::Dark
+  }
+}
+
+///|
 pub fn window_event_is_context_menu_trigger(
   event : @window_core.WindowEvent,
 ) -> Bool {
@@ -334,6 +344,8 @@ pub fn window_event_to_host_with_modifiers(
           ),
         ),
       )
+    @window_core.WindowEvent::ThemeChanged(theme) =>
+      Some(HostEvent::ThemeChanged(window_theme_to_color_scheme(theme)))
     _ => None
   }
 }
