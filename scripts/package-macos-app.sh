@@ -8,17 +8,23 @@ PACKAGE="examples/showcase/macos"
 APP_NAME=""
 BUNDLE_ID="dev.wzzc.moui.app"
 OUTPUT_DIR="dist/macos"
+VERSION="0.1.0"
+BUILD_VERSION="1"
 SKIP_BUILD=false
 
 usage() {
-  printf 'Usage: %s [--package <moon-package>] [--name <app-name>] [--bundle-id <id>] [--output <dir>] [--no-build]\n' "$0"
+  printf 'Usage: %s [--package <moon-package>] [--name <app-name>] [--bundle-id <id>] [--version <semver>] [--build-version <build>] [--output <dir>] [--no-build]\n' "$0"
   printf '\n'
   printf 'Builds a native macOS example package and wraps the executable in a .app bundle.\n'
-  printf 'Example: %s --package examples/showcase/macos --name "MoUI Showcase" --bundle-id dev.wzzc.moui.showcase\n' "$0"
+  printf 'Example: %s --package examples/showcase/macos --name "MoUI Showcase" --bundle-id dev.wzzc.moui.showcase --version 0.1.0\n' "$0"
 }
 
 xml_text() {
   printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'
+}
+
+json_text() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
 while [ "$#" -gt 0 ]; do
@@ -33,6 +39,14 @@ while [ "$#" -gt 0 ]; do
       ;;
     --bundle-id)
       BUNDLE_ID="${2:?missing value for --bundle-id}"
+      shift 2
+      ;;
+    --version)
+      VERSION="${2:?missing value for --version}"
+      shift 2
+      ;;
+    --build-version)
+      BUILD_VERSION="${2:?missing value for --build-version}"
       shift 2
       ;;
     --output)
@@ -86,6 +100,8 @@ chmod +x "$APP_EXE"
 PLIST_EXECUTABLE="$(xml_text "$PACKAGE_LEAF")"
 PLIST_BUNDLE_ID="$(xml_text "$BUNDLE_ID")"
 PLIST_APP_NAME="$(xml_text "$APP_NAME")"
+PLIST_VERSION="$(xml_text "$VERSION")"
+PLIST_BUILD_VERSION="$(xml_text "$BUILD_VERSION")"
 
 cat > "$CONTENTS_DIR/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -101,15 +117,35 @@ cat > "$CONTENTS_DIR/Info.plist" <<EOF
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.1.0</string>
+  <string>$PLIST_VERSION</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>$PLIST_BUILD_VERSION</string>
   <key>LSMinimumSystemVersion</key>
   <string>12.0</string>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>
 </plist>
+EOF
+
+JSON_APP_NAME="$(json_text "$APP_NAME")"
+JSON_PACKAGE="$(json_text "$PACKAGE")"
+JSON_BUNDLE_ID="$(json_text "$BUNDLE_ID")"
+JSON_VERSION="$(json_text "$VERSION")"
+JSON_BUILD_VERSION="$(json_text "$BUILD_VERSION")"
+JSON_EXECUTABLE="$(json_text "$PACKAGE_LEAF")"
+JSON_BUNDLE="$(json_text "$APP_NAME.app")"
+
+cat > "$RESOURCES_DIR/moui-package.json" <<EOF
+{
+  "appName": "$JSON_APP_NAME",
+  "package": "$JSON_PACKAGE",
+  "bundleIdentifier": "$JSON_BUNDLE_ID",
+  "version": "$JSON_VERSION",
+  "buildVersion": "$JSON_BUILD_VERSION",
+  "executable": "$JSON_EXECUTABLE",
+  "bundle": "$JSON_BUNDLE"
+}
 EOF
 
 printf '==> Wrote %s\n' "$APP_DIR"

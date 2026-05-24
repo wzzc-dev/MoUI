@@ -103,23 +103,30 @@ macOS `.app` bundle:
 sh scripts/package-macos-app.sh \
   --package examples/showcase/macos \
   --name "MoUI Showcase" \
-  --bundle-id dev.wzzc.moui.showcase
+  --bundle-id dev.wzzc.moui.showcase \
+  --version 0.1.0 \
+  --build-version 1
 ```
 
 The bundle is written under `dist/macos/<name>.app` by default. Pass
-`--no-build` to package an already-built executable from `_build/native`.
+`--no-build` to package an already-built executable from `_build/native`. The
+bundle includes `Contents/Resources/moui-package.json` with the app name, source
+package, bundle id, version, build version, executable, and bundle name.
 
 Windows distributable folder:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
   -Package examples/showcase/windows `
-  -AppName MoUIShowcase
+  -AppName MoUIShowcase `
+  -Version 0.1.0 `
+  -BuildNumber 1
 ```
 
 The folder is written under `dist\windows\<AppName>` by default and includes the
 built executable plus the MSYS2 Vulkan and pthread runtime DLLs expected by the
-current static `wgpu-native` setup.
+current static `wgpu-native` setup. It also writes `moui-package.json` with the
+same app/package/version metadata and copied runtime DLL list.
 
 Useful focused commands:
 

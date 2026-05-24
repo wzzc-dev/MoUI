@@ -108,8 +108,18 @@ moon build examples/markdown_editor/windows --target native
 Native packaging helpers:
 
 ```sh
-sh scripts/package-macos-app.sh --package examples/showcase/macos --name "MoUI Showcase"
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 -Package examples/showcase/windows -AppName MoUIShowcase
+sh scripts/package-macos-app.sh \
+  --package examples/showcase/macos \
+  --name "MoUI Showcase" \
+  --bundle-id dev.wzzc.moui.showcase \
+  --version 0.1.0
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+  -Package examples/showcase/windows `
+  -AppName MoUIShowcase `
+  -Version 0.1.0
 ```
 
 Routine repo check when the app change is broad:

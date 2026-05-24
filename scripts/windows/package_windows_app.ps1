@@ -5,7 +5,9 @@ param(
   [string]$DistDir = "dist\windows",
   [switch]$NoBuild,
   [string]$Msys2Root = "C:\msys64",
-  [string]$WgpuNativeRoot = ""
+  [string]$WgpuNativeRoot = "",
+  [string]$Version = "0.1.0",
+  [string]$BuildNumber = "1"
 )
 
 $ErrorActionPreference = "Stop"
@@ -102,6 +104,8 @@ try {
   $manifest = @{
     appName = $AppName
     package = $Package
+    version = $Version
+    buildNumber = $BuildNumber
     executable = (Split-Path -Leaf $appExe)
     runtimeDlls = @("vulkan-1.dll", "libwinpthread-1.dll")
   } | ConvertTo-Json -Depth 4
