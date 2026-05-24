@@ -178,7 +178,9 @@ Focus areas:
   flow through `HostEvent::ThemeChanged`.
 - Keep window lifecycle state flowing through `HostWindowRegistry`; current
   Web, macOS, and Windows entrypoints remain single-window but already allocate
-  and update primary window records on the shared lifecycle path.
+  and update primary window records on the shared lifecycle path. Use
+  `HostWindowRequestQueue` as the shared request channel for future
+  multi-window host APIs instead of inventing backend-local queues.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.
