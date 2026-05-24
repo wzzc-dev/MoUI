@@ -43,9 +43,12 @@ separate framework task using `moui-framework-development-skill`.
 3. `docs/development.md`
 4. `docs/view-catalog.md`
 5. `docs/examples.md`
-6. `docs/platform-notes.md` when platform setup matters
-7. The closest existing app under `examples/*/app`
-8. The app's `moon.pkg` and platform entrypoint `moon.pkg` files
+6. `docs/markdown-editor.md` when using or extending the Markdown Editor
+7. `docs/text-system.md` when app behavior depends on text metrics, fonts, or
+   native/Web text differences
+8. `docs/platform-notes.md` when platform setup matters
+9. The closest existing app under `examples/*/app`
+10. The app's `moon.pkg` and platform entrypoint `moon.pkg` files
 
 ## App Shape
 
@@ -56,6 +59,8 @@ separate framework task using `moui-framework-development-skill`.
 - Keep state, reducers, data models, and view composition in the shared app
   package when the behavior should work across platforms.
 - Keep platform-specific setup in `web_wasm`, `macos`, or `windows` entrypoints.
+- Showcase also has `macos_cosmic` and `windows_cosmic` entrypoints when an app
+  task needs explicit Moon Cosmic text-provider comparison.
 - Treat Linux as a scaffold until the framework has a real Linux backend.
 
 ## Development Workflow
@@ -69,7 +74,9 @@ separate framework task using `moui-framework-development-skill`.
 7. Build the affected Web wasm-gc entrypoint when browser output changes.
 8. Use platform builds only when the task requires that platform.
 9. Run `moon fmt`.
-10. Report app paths changed, validation commands, and any framework gaps.
+10. Update `docs/examples.md`, `docs/markdown-editor.md`, `AGENTS.md`, or
+    repo-local skills when app-facing guidance changes.
+11. Report app paths changed, validation commands, and any framework gaps.
 
 ## Useful Commands
 
@@ -85,6 +92,17 @@ Web app builds:
 ```sh
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+```
+
+Native example builds:
+
+```sh
+moon build examples/showcase/macos --target native
+moon build examples/showcase/macos_cosmic --target native
+moon build examples/showcase/windows --target native
+moon build examples/showcase/windows_cosmic --target native
+moon build examples/markdown_editor/macos --target native
+moon build examples/markdown_editor/windows --target native
 ```
 
 Routine repo check when the app change is broad:
@@ -108,6 +126,8 @@ sh scripts/dev-check.sh --platform-examples-build
 - Copy platform wiring patterns from the closest existing example.
 - Add app-level tests for pure behavior.
 - Update `docs/examples.md` when adding a new example, command, or purpose.
+  Update `docs/markdown-editor.md` when changing that editor's model,
+  commands, or platform behavior.
 - Build the Web wasm-gc entrypoint if the app has Web output.
 
 ### Build UI With Existing Views
@@ -139,3 +159,5 @@ sh scripts/dev-check.sh --platform-examples-build
 - Running slow native platform builds when app-package tests or Web builds are
   enough.
 - Forgetting to update `docs/examples.md` after adding or reshaping examples.
+- Forgetting that app-facing docs, `AGENTS.md`, and repo-local skills may need
+  updates after example, validation, platform, or text-behavior changes.

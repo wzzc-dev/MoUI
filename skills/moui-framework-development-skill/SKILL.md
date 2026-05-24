@@ -34,10 +34,13 @@ Use this skill when editing or reviewing:
 3. `docs/architecture.md`
 4. `docs/development.md`
 5. `docs/platform-notes.md`
-6. `docs/renderer-capability-report.md`
-7. `docs/testing.md` when validation scope matters
-8. `docs/view-catalog.md` when touching `views/`
-9. `docs/examples.md` when touching examples
+6. `docs/text-system.md` when touching text measurement, shaping, fonts, or
+   provider startup options
+7. `docs/renderer-capability-report.md`
+8. `docs/testing.md` when validation scope matters
+9. `docs/view-catalog.md` when touching `views/`
+10. `docs/examples.md` when touching examples
+11. `docs/markdown-editor.md` when touching the Markdown Editor
 
 ## Project Invariants
 
@@ -61,6 +64,10 @@ Use this skill when editing or reviewing:
   diffs.
 - Renderer capability changes require synchronized updates to code, tests, docs,
   and Showcase when visible.
+- Guidance changes are part of the maintenance surface: when architecture,
+  package layout, validation commands, docs placement, examples, renderer
+  capabilities, platform behavior, or text architecture changes, check
+  `AGENTS.md` and repo-local skills too.
 
 ## Package Map
 
@@ -78,9 +85,16 @@ Use this skill when editing or reviewing:
   window backend yet.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/wgpu/`: native wgpu renderer.
+- `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
+- `render/wgpu/coretext/`: macOS CoreText provider.
+- `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
+- `render/wgpu/fontconfig/`: Linux fontconfig/HarfBuzz/FreeType scaffold.
+- `render/wgpu/text_protocol/`: shared native text provider payload protocol.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
 - `examples/*/app`: shared application logic.
 - `examples/*/{web_wasm,macos,windows}`: platform entrypoints.
+- `examples/showcase/{macos_cosmic,windows_cosmic}`: explicit Moon Cosmic text
+  provider comparison entrypoints.
 
 ## Development Workflow
 
@@ -94,7 +108,8 @@ Use this skill when editing or reviewing:
 7. Run targeted validation first.
 8. Run `moon fmt`.
 9. Run `moon info` after public API changes.
-10. Report changed files, validation commands, and remaining risks.
+10. Update docs, `AGENTS.md`, and repo-local skills when guidance changes.
+11. Report changed files, validation commands, and remaining risks.
 
 ## Validation Commands
 
@@ -154,6 +169,19 @@ moon info
 - Update Showcase if the capability is visible.
 - Run renderer tests and a Showcase Web wasm-gc build.
 
+### Change Text System Or Provider
+
+- Keep `core/` limited to `TextSystem`, `FontSpec`, fallback measurement, and
+  platform-neutral text geometry.
+- Put native provider work in the relevant `render/wgpu/*` package.
+- Keep `render/wgpu` responsible for provider validation, fallback composition,
+  glyph atlas upload, and cache-key discipline.
+- Keep Web measurement and glyph drawing aligned through `backend/web` and
+  `render/webgpu_adapter`.
+- Update `docs/text-system.md` and renderer capability docs when shaping,
+  provider behavior, embedded fonts, or text gaps change.
+- Run focused core, renderer, Web adapter, backend, or provider tests.
+
 ### Change Backend Event Handling
 
 - Keep platform-specific code inside the platform backend.
@@ -177,8 +205,11 @@ moon info
 - Put setup and command loops in `docs/development.md`.
 - Put platform caveats in `docs/platform-notes.md`.
 - Put example scope in `docs/examples.md`.
+- Put text architecture in `docs/text-system.md`.
+- Put Markdown Editor behavior in `docs/markdown-editor.md`.
 - Put validation policy in `docs/testing.md`.
 - Put renderer status in `docs/renderer-capability-report.md`.
+- Check `AGENTS.md` and repo-local skills for stale guidance.
 
 ## Common Mistakes
 
@@ -189,3 +220,5 @@ moon info
 - Treating Linux as complete instead of scaffold.
 - Moving shared example logic into platform entrypoints.
 - Running broad native checks before focused package validation.
+- Letting `AGENTS.md` or repo-local skills drift after package, docs, example,
+  validation, renderer, platform, or text-system changes.

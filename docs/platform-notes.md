@@ -41,6 +41,8 @@ fallback branch. Browser Canvas measurement and WebGPU glyph drawing share the
 same CSS `system-ui` font stack generated from `FontSpec`; app-registered embedded fonts
 can be surfaced through browser font APIs, but remote font loading is not part
 of the backend contract.
+See [Text system](text-system.md) for the shared runtime and renderer text
+contract.
 
 The reusable browser runtime assets live under `backend/web/*.js`. Each
 `examples/*/web_wasm/` package is only the app-specific Web entrypoint and
@@ -73,6 +75,8 @@ before the renderer tries the composed Cosmic fallback.
 creating the generic native WGPU renderer. `core` still owns only the neutral
 `FontSpec`, `TextSystem` contract, and deterministic fallback text system; it
 does not name concrete macOS font files.
+The `examples/showcase/macos_cosmic` entrypoint selects `MoonCosmic`
+explicitly for comparison with the platform-default CoreText path.
 
 Packages that use `backend/macos` must link the macOS frameworks required by
 the Objective-C stubs during the final native link step. Missing surface/window
@@ -125,6 +129,9 @@ payloads. It also routes raster glyph bytes through the shared single-channel
 raster parser. Its native stub advertises the DirectWrite integration point
 while returning no platform layout/raster data, so the composed Cosmic fallback
 handles native text until the real DirectWrite engine lands.
+The `examples/showcase/windows_cosmic` entrypoint selects `MoonCosmic`
+explicitly for comparison with the platform-default DirectWrite scaffold plus
+Cosmic fallback path.
 
 The expected archive extraction path is:
 

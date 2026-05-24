@@ -12,6 +12,8 @@ workflow for agents and maintainers.
 - Keep public API changes visible through generated interface diffs.
 - Keep renderer capability status synchronized across code, tests, docs, and
   Showcase.
+- Keep `AGENTS.md` and repo-local skills synchronized with fast-moving docs,
+  validation commands, package layout, examples, and text/rendering boundaries.
 
 ## Project Invariants
 
@@ -50,6 +52,8 @@ workflow for agents and maintainers.
    `pkg.generated.mbti` diffs.
 10. Update docs when commands, platform behavior, public APIs, renderer
     capabilities, or examples change.
+11. Check `AGENTS.md` and `skills/` when guidance would otherwise become stale.
+    If no edits are needed, say they were checked and left unchanged.
 
 ## Prompt Templates
 
@@ -91,7 +95,9 @@ if browser behavior changes, and update docs/examples.md if commands or coverage
 ```text
 Update MoUI docs for <topic>. Keep README as the short entrypoint, put detailed commands
 in docs/development.md, platform caveats in docs/platform-notes.md, example behavior in
-docs/examples.md, and validation policy in docs/testing.md.
+docs/examples.md, text architecture in docs/text-system.md, Markdown Editor behavior in
+docs/markdown-editor.md, and validation policy in docs/testing.md. Also check AGENTS.md
+and skills/ when the guidance surface changes.
 ```
 
 ## Review Checklist
@@ -103,6 +109,9 @@ docs/examples.md, and validation policy in docs/testing.md.
 - Did `moon fmt` run?
 - Did `moon info` run for public API changes?
 - Are docs updated for user-facing behavior, commands, or platform constraints?
+- Were `AGENTS.md` and repo-local skills checked when docs placement,
+  validation, package layout, examples, renderer status, or text architecture
+  changed?
 - If renderer behavior changed, are capability code, tests, report, and Showcase
   synchronized?
 - If backend behavior changed, do events still flow through `HostEvent`?

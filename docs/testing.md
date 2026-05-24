@@ -71,6 +71,29 @@ moon info
 Review generated `pkg.generated.mbti` diffs. If no public API changed, generated
 interfaces should stay unchanged.
 
+## Documentation And Guidance Checks
+
+For docs-only changes, keep validation lightweight and focused on the edited
+surface:
+
+```sh
+sh scripts/dev-check.sh --help
+sh scripts/conformance-check.sh --help
+sh -n scripts/dev-check.sh
+sh -n scripts/conformance-check.sh
+sh -n scripts/setup-local-deps.sh
+sh -n scripts/check-local-deps.sh
+sh -n scripts/preview-loop.sh
+```
+
+Use `rg` to audit stale terms, missing links, old example paths, and outdated
+validation commands. If the change updates docs placement, package layout,
+platform behavior, examples, renderer capabilities, or the text system, also
+check `AGENTS.md` and `skills/`.
+
+Do not run `moon info` for a docs-only change unless MoonBit public APIs or
+package imports changed.
+
 ## Renderer Capability Rule
 
 When draw command support changes, keep the capability loop synchronized:
@@ -103,8 +126,8 @@ before it grows broad platform claims:
   dispatch, explicit focus traversal helpers, shortcut dispatch, IME/text
   selection, clipboard service routing, and semantics action roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
-  wasm-gc backend tests, devtool snapshots, frame-profile counters, and example
-  builds.
+  wasm-gc backend tests, devtool snapshots, frame-profile counters, guidance
+  freshness, and example builds.
 
 Use the conformance entrypoint for this suite:
 

@@ -33,8 +33,8 @@ let screen = @views.column([
 | --- | --- | --- | --- | --- | --- | --- |
 | `text` | `views/label.mbt` | Font/foreground modifiers | Text role through core | `views/views_test.mbt` | Showcase, Markdown Editor | Basic label primitive. |
 | `image` | `views/image.mbt` | Modifier-based | Image draw intent | `views/views_test.mbt` | Showcase | Renderer image support is tracked in the capability report. |
-| `rich_text_editor` | `views/markdown_editor.mbt` | TextFieldStyle | Text field semantics through core | `views/views_test.mbt`, `core/rich_text_editor_test.mbt` | Markdown Editor | Generic rich text editor wrapper. |
-| `markdown_editor` | `views/markdown_editor.mbt` | TextFieldStyle | Text field semantics through core | `views/views_test.mbt` | Markdown Editor | App supplies Markdown parsing and styled runs. |
+| `rich_text_editor` | `views/markdown_editor.mbt` | TextFieldStyle | Text field semantics through core | `views/views_test.mbt`, `core/rich_text_editor_test.mbt` | Markdown Editor | Generic rich text editor wrapper; see `docs/markdown-editor.md`. |
+| `markdown_editor` | `views/markdown_editor.mbt` | TextFieldStyle | Text field semantics through core | `views/views_test.mbt` | Markdown Editor | App supplies Markdown parsing and styled runs; see `docs/markdown-editor.md`. |
 
 ## Controls
 

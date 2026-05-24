@@ -53,6 +53,7 @@ Checklist:
 - Add fallback planner coverage for skipped advanced commands.
 - Update native/Web adapter tests.
 - Update `docs/renderer-capability-report.md`.
+- Update `docs/text-system.md` too when the renderer capability is text-related.
 
 ## Showcase Entry Template
 
@@ -64,3 +65,15 @@ Checklist:
 - Semantics note.
 - Test coverage note.
 - Renderer/platform note when relevant.
+
+## Documentation And Guidance Template
+
+Checklist:
+
+- Keep `README.mbt.md` as the short entrypoint.
+- Put setup and command loops in `docs/development.md`.
+- Put platform caveats in `docs/platform-notes.md`.
+- Put text architecture in `docs/text-system.md`.
+- Put Markdown Editor behavior in `docs/markdown-editor.md`.
+- Put validation policy in `docs/testing.md`.
+- Check `AGENTS.md` and `skills/` when guidance could become stale.

@@ -23,9 +23,11 @@ Detailed notes live in:
 - [Architecture](docs/architecture.md)
 - [Development](docs/development.md)
 - [Platform notes](docs/platform-notes.md)
+- [Text system](docs/text-system.md)
 - [Renderer capability report](docs/renderer-capability-report.md)
 - [View catalog](docs/view-catalog.md)
 - [Examples](docs/examples.md)
+- [Markdown Editor](docs/markdown-editor.md)
 - [Testing](docs/testing.md)
 - [AI collaboration](docs/ai-collaboration.md)
 - [2026 roadmap](docs/roadmap-2026.md)
@@ -52,9 +54,8 @@ Set up the local `Milky2018/window` checkout and run the bounded development
 check:
 
 ```sh
-mkdir -p .local_repos
-git clone git@github.com:wzzc-dev/window.git .local_repos/window
-git -C .local_repos/window checkout moui-support
+sh scripts/setup-local-deps.sh
+sh scripts/check-local-deps.sh
 sh scripts/dev-check.sh
 ```
 
@@ -101,6 +102,13 @@ Build the visual showcase:
 moon build examples/showcase/macos --target native
 ```
 
+Build the visual showcase with the shared Moon Cosmic text provider selected
+explicitly:
+
+```sh
+moon build examples/showcase/macos_cosmic --target native
+```
+
 Build and run the WYSIWYG Markdown editor:
 
 ```sh
@@ -142,6 +150,13 @@ $env:CC = "x86_64-w64-mingw32-gcc"
 $env:CXX = "x86_64-w64-mingw32-g++"
 $env:MBT_WGPU_NATIVE_ROOT = "$PWD\.local_deps\wgpu-native\v27.0.4.0\wgpu-windows-x86_64-gnu-release"
 moon run examples/showcase/windows --target native
+```
+
+The Showcase also has a Windows entrypoint that selects the shared Moon Cosmic
+text provider explicitly:
+
+```powershell
+moon run examples/showcase/windows_cosmic --target native
 ```
 
 ### Markdown Editor

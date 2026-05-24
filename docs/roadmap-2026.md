@@ -128,13 +128,15 @@ update all three files together.
 
 Current priorities:
 
-1. Keep the native image pipeline reliable across decoded PNG/JPEG/BMP sources,
-   texture upload, sampling, fit behavior, and cache management.
-2. Keep rectangular clip support reliable while planning richer rounded clips and
-   mask stacks.
-3. Make transform behavior explicit and consistent between native wgpu and Web
-   wasm-gc renderers.
-4. Surface capability status in Showcase so visual behavior is easy to verify.
+1. Keep transform behavior explicit and consistent between native wgpu and Web
+   wasm-gc renderers, especially the remaining layer-level transform state.
+2. Finish text shaping conformance across bidi, line breaking, fallback font
+   runs, and native provider behavior.
+3. Add deterministic emoji text coverage, with native color emoji still a known
+   gap.
+4. Surface async image cache and load diagnostics to app-visible renderer state.
+5. Keep Showcase capability status aligned with
+   `docs/renderer-capability-report.md` so visual behavior is easy to verify.
 
 Validation:
 
@@ -185,10 +187,13 @@ Planned documentation set:
 - `docs/architecture.md`: package model and runtime mental model.
 - `docs/development.md`: setup, focused checks, platform validation commands.
 - `docs/platform-notes.md`: platform-specific requirements and troubleshooting.
+- `docs/text-system.md`: text measurement, provider composition, embedded
+  fonts, and shaping gaps.
 - `docs/renderer-capability-report.md`: renderer status and update rule.
 - `docs/roadmap-2026.md`: project direction and quality gates.
 - `docs/view-catalog.md`: view APIs and support matrix.
 - `docs/examples.md`: example purposes, commands, and validation.
+- `docs/markdown-editor.md`: WYSIWYG Markdown Editor model and workflows.
 - `docs/testing.md`: testing layers and release checks.
 - `docs/ai-collaboration.md`: AI workflow, prompt templates, and review
   checklist.
@@ -204,6 +209,9 @@ The framework skill should guide agents to read `AGENTS.md`, respect package
 boundaries, preserve the runtime pipeline, use focused validation, and update
 renderer capability files together. The app skill should keep application work
 focused on shared app packages, public view APIs, and thin platform entrypoints.
+Both skills and `AGENTS.md` should be reviewed whenever docs placement,
+validation commands, platform behavior, example structure, renderer capability
+status, or text architecture changes.
 
 ## Quality Gates
 
@@ -242,7 +250,8 @@ Use this snapshot as the final handoff checklist for the current project shape:
 
 - README explains the project value, package map, and Web/native example entrypoints.
 - Architecture, development, platform, examples, testing, renderer capability, AI
-  collaboration, and view catalog docs are linked from the README.
+  collaboration, text-system, Markdown Editor, and view catalog docs are linked
+  from the README.
 - Showcase and Markdown Editor keep shared app logic under `examples/*/app/`
   with platform packages as thin entrypoints; Counter and Todo live inside
   Showcase as built-in interaction patterns.
@@ -254,3 +263,5 @@ Use this snapshot as the final handoff checklist for the current project shape:
   `--platform-examples-build` because native executable builds depend on the
   current host setup.
 - Linux remains an explicit scaffold until a real backend is implemented.
+- `AGENTS.md` and repo-local skills have been checked against the current docs,
+  examples, validation commands, and text/rendering architecture.

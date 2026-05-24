@@ -30,6 +30,19 @@ before expanding behavior.
 4. Keep unavailable platforms explicit with `HostServiceBridge::unavailable`.
 5. Add host tests plus at least one backend scaffold test.
 
+## Change Text Behavior
+
+1. Read `docs/text-system.md` before changing measurement, shaping, glyph
+   rasterization, embedded font registration, or startup text-engine options.
+2. Keep `core` limited to the neutral `TextSystem` contract and deterministic
+   fallback.
+3. Put native provider work under the relevant `render/wgpu/*` package and keep
+   Web text changes aligned with `backend/web`.
+4. Add focused core, renderer, backend, or provider tests for the boundary you
+   changed.
+5. Update `docs/text-system.md`, `docs/renderer-capability-report.md`, and
+   guidance files when the behavior or maintenance rules change.
+
 ## Update Renderer Capability
 
 1. Add or update the `@core.DrawCommand` intent.
@@ -46,3 +59,12 @@ before expanding behavior.
    renderer notes.
 3. Prefer list-detail entries that demonstrate real controls over static copy.
 4. Run `moon test examples/showcase/app --target native`.
+
+## Update Guidance
+
+1. Check `AGENTS.md` and `skills/` when docs placement, validation commands,
+   package layout, example structure, renderer status, platform behavior, or
+   text architecture changes.
+2. Keep skill instructions short and operational.
+3. If guidance files do not need edits, mention that they were checked in the
+   handoff.
