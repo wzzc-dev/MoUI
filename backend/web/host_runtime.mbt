@@ -487,15 +487,13 @@ fn WebApp::register_primary_runtime_slot(
   self : WebApp,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  match self.windows.lookup(window_id) {
-    Some(record) =>
-      ignore(
-        self.runtime_slots.insert(
-          @host.HostWindowRuntimeSlot::from_driver(record~, driver=self.driver),
-        ),
-      )
-    None => ()
-  }
+  ignore(
+    self.runtime_slots.insert_from_registry(
+      self.windows,
+      window_id,
+      driver=self.driver,
+    ),
+  )
 }
 
 ///|
@@ -503,10 +501,7 @@ fn WebApp::sync_runtime_slot(
   self : WebApp,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  match self.windows.lookup(window_id) {
-    Some(record) => ignore(self.runtime_slots.sync_record(record))
-    None => ()
-  }
+  ignore(self.runtime_slots.sync_from_registry(self.windows, window_id))
 }
 
 ///|

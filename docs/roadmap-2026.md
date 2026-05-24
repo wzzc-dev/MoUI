@@ -198,9 +198,10 @@ Focus areas:
   pairs successful resolutions with window records. `HostWindowRuntimeSlot`
   wraps those records with per-window `HostRuntimeDriver` instances, while
   `HostWindowRuntimeSlots` manages lookup, focused/primary slot selection, and
-  closed-slot cleanup. Full `OpenWindow` support remains a follow-up because it
-  requires wiring that path into multiple platform windows and renderer
-  instances, not just extra registry records.
+  registry-backed insert/sync helpers plus closed-slot cleanup. Full
+  `OpenWindow` support remains a follow-up because it requires wiring that path
+  into multiple platform windows and renderer instances, not just extra registry
+  records.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.
