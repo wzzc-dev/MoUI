@@ -1284,6 +1284,7 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
           }
           self.request_redraw_if_needed()
         }
+        HostServiceResponse::Pending(_) => handled = true
         _ => ()
       }
       if !handled && self.runtime.dispatch_command(intent) {

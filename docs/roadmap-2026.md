@@ -167,11 +167,10 @@ Focus areas:
 - Use `HostServiceAsyncQueue` for browser or platform services that require
   permission prompts, picker callbacks, or other async completion before the
   runtime can safely apply the result.
-- Keep Web clipboard behavior honest inside the current synchronous service
-  model: copy/cut write selected text through a browser host import, paste is
-  delivered by browser text input events, and async clipboard reads/file dialogs
-  flow through the pending host-service contract until the Web runtime drains
-  browser callbacks.
+- Keep Web clipboard behavior honest: copy/cut write selected text through a
+  browser host import, focused browser text input can still paste through input
+  events, and app-level clipboard reads/file dialogs flow through
+  `HostServiceAsyncQueue` into browser permission or picker callbacks.
 - Keep URL opening honest across active hosts: macOS uses `NSWorkspace`, Windows
   uses `ShellExecuteW`, and Web uses a browser host import that calls
   `window.open` and can report popup-blocked failures.

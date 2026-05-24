@@ -1263,6 +1263,47 @@ test "host driver falls back clipboard shortcuts to action commands" {
 }
 
 ///|
+test "host driver defers paste action command while clipboard read is pending" {
+  let pasted = Ref(0)
+  let queue = HostServiceAsyncQueue::new()
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::EmptySpec,
+    size=@core.Size::new(width=10.0, height=10.0),
+  )
+  runtime.set_action_commands(
+    @core.ActionCommandMap::new(bindings=[
+      @core.CommandBinding::new(
+        command=@core.ActionCommand::new(intent=@core.CommandIntent::Paste),
+        handle=() => pasted.val = pasted.val + 1,
+      ),
+    ]),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        Clipboard(ReadText) => queue.submit(request)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch_command_with_services(@core.CommandIntent::Paste, bridge),
+  )
+  inspect(pasted.val, content="0")
+  let pending = queue.drain_pending()
+  inspect(pending.length(), content="1")
+  assert_true(
+    queue.complete(pending[0].id, HostServiceResponse::ClipboardText("delayed")),
+  )
+  for completion in queue.drain_completed() {
+    ignore(driver.dispatch_service_completion(completion, bridge))
+  }
+  inspect(pasted.val, content="1")
+}
+
+///|
 test "host driver dispatches ime composition text input events" {
   let text = @core.State::new("")
   let runtime = @core.AppRuntime::new_spec(

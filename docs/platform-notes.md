@@ -57,10 +57,11 @@ constructors and platform event conversion.
   to `HostEvent::ThemeChanged` and update the environment through
   `HostRuntimeDriver`.
 - Web, macOS, and Windows route copy/cut/paste keyboard shortcuts through the
-  active service bridge. When that bridge exposes clipboard support
-  (macOS/Windows today), focused text controls read or write the platform
-  clipboard; app action commands still receive the intent when no text command
-  handles it.
+  active service bridge. When that bridge exposes clipboard support, focused
+  text controls read or write the platform clipboard; app action commands still
+  receive the intent when no text command handles it. Pending clipboard reads
+  are treated as handled until the async completion arrives, so paste commands
+  are not dispatched twice.
 - Secondary mouse-button presses are treated as context-menu requests at the
   host edge. Web, macOS, and Windows skip normal pointer dispatch for those
   events so right-click does not activate regular controls; macOS and Windows
@@ -80,13 +81,16 @@ host import, which calls `window.open(..., "_blank", "noopener,noreferrer")`
 and reports failure when the browser blocks the popup or the API is unavailable.
 Web copy/cut shortcuts are forwarded from the hidden text input to the runtime
 and write selected text through a browser host import using the user-gesture
-`document.execCommand("copy")` path. Paste still arrives through normal browser
-text-input events; synchronous clipboard reads are intentionally reported as
-unavailable in the default Web entrypoint. The reusable Web bridge can now be
-configured with `HostServiceAsyncQueue` so clipboard reads and file dialogs are
-represented as pending browser work instead of fake synchronous successes; the
-active browser runtime still needs the JavaScript picker/permission drain before
-those pending requests become app-visible features.
+`document.execCommand("copy")` path. Focused browser text input can still paste
+through normal input events; app-level async clipboard reads use
+`navigator.clipboard.readText()` and complete through `HostServiceAsyncQueue`
+when browser permissions allow it.
+The active Web runtime now drains pending async service requests into browser
+callbacks. Clipboard reads complete through exported wasm callback functions.
+Open-file and directory dialogs use a hidden browser file input and return
+browser-exposed file names or relative paths. Save dialogs use the File System
+Access API when `showSaveFilePicker` is available and otherwise complete as an
+unavailable service. Canceled file pickers return an empty selection.
 The browser host import reads `prefers-color-scheme` at startup and listens for
 media-query changes through `window/web`; MoUI maps those events into runtime
 environment color-scheme updates.

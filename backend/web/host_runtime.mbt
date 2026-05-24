@@ -16,6 +16,7 @@ struct WebApp {
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   services : @host.HostServiceBridge
+  async_services : @host.HostServiceAsyncQueue
   windows : @host.HostWindowRegistry
   mut window_id : @host.HostWindowId?
   mut renderer : WebRenderer?
@@ -57,6 +58,8 @@ pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
   let event_loop = @window_web.EventLoop::new()
   event_loop.set_control_flow(@window_core.ControlFlow::Poll)
+  let async_services = @host.HostServiceAsyncQueue::new()
+  set_web_async_host_service_queue(Some(async_services))
   let services = web_service_bridge(
     system_theme=match event_loop.system_theme() {
       Some(theme) => @host.window_theme_to_color_scheme(theme)
@@ -64,7 +67,10 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
     },
     open_url=dispatch_web_open_url,
     clipboard=true,
+    clipboard_read=true,
     clipboard_write=dispatch_web_clipboard_write_text,
+    file_dialog=true,
+    async_queue=Some(async_services),
   )
   runtime.set_environment(
     services.environment_with_system_theme(runtime.environment()),
@@ -76,6 +82,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     services,
+    async_services,
     windows: @host.HostWindowRegistry::new(),
     window_id: None,
     renderer: None,
@@ -195,6 +202,7 @@ pub impl @window_web.ApplicationHandler for WebApp with new_events(
   _event_loop,
   _cause,
 ) {
+  self.drain_async_host_services()
   match self.renderer {
     Some(_) => if self.runtime.needs_redraw() { self.redraw() }
     None => ()
@@ -267,6 +275,7 @@ fn WebApp::dispatch_pointer_or_context_menu(
   if @host.window_event_is_context_menu_button(event) {
     if @host.window_event_is_context_menu_trigger(event) {
       ignore(self.driver.show_context_menu(self.services))
+      self.drain_async_host_services()
       self.sync_text_input_session()
     }
   } else {
@@ -316,9 +325,20 @@ fn WebApp::dispatch_window_event(
           )
         _ => ignore(self.driver.dispatch(host_event))
       }
+      self.drain_async_host_services()
       self.sync_text_input_session()
     }
     None => ()
+  }
+}
+
+///|
+fn WebApp::drain_async_host_services(self : WebApp) -> Unit {
+  for request in drain_web_async_host_service_requests(self.async_services) {
+    dispatch_web_async_host_service_request(request)
+  }
+  for completion in self.async_services.drain_completed() {
+    ignore(self.driver.dispatch_service_completion(completion, self.services))
   }
 }
 
@@ -438,6 +458,7 @@ fn WebApp::dispose(self : WebApp) -> Unit {
     None => ()
   }
   self.window = None
+  set_web_async_host_service_queue(None)
 }
 
 ///|

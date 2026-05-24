@@ -7,6 +7,14 @@ supported_targets = "wasm-gc"
 
 options(
   "is-main": true,
-  link: { "wasm-gc": { "exports": [ "web_dispatch_event" ] } },
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "web_dispatch_event",
+        "web_complete_async_clipboard_read",
+        "web_complete_async_file_dialog",
+      ],
+    },
+  },
   targets: { "main.mbt": [ "wasm-gc" ] },
 )

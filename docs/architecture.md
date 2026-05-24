@@ -317,6 +317,8 @@ pending requests into an in-flight set at the platform edge, completes them with
 the original request attached, and hands the completion back to
 `HostRuntimeDriver` so runtime-owned effects such as async paste stay on the
 same command path as synchronous services.
+The Web backend wires that queue to browser host imports and exported wasm
+completion callbacks for clipboard reads and file pickers.
 Web, macOS, and Windows entrypoints query that bridge at startup and install
 the reported light/dark scheme into `AppRuntime` before the first host driver
 layout/redraw pass, so initial view builds see the platform color scheme through
