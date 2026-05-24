@@ -164,6 +164,9 @@ Focus areas:
 - Keep Linux clearly marked as scaffold until a minimal backend is implemented.
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,
   menus, file dialogs, URL opening, and system-theme queries.
+- Keep URL opening honest across active hosts: macOS uses `NSWorkspace`, Windows
+  uses `ShellExecuteW`, and Web uses a browser host import that calls
+  `window.open` and can report popup-blocked failures.
 - Keep system theme propagation on the host-service path: native macOS and
   Windows startup now installs the queried light/dark scheme into runtime
   environment before the first layout/redraw pass. Web startup uses the browser

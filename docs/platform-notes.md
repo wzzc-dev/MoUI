@@ -65,6 +65,9 @@ fallback branch. Browser Canvas measurement and WebGPU glyph drawing share the
 same CSS `system-ui` font stack generated from `FontSpec`; app-registered embedded fonts
 can be surfaced through browser font APIs, but remote font loading is not part
 of the backend contract.
+The active Web runtime service bridge opens external URLs through the browser
+host import, which calls `window.open(..., "_blank", "noopener,noreferrer")`
+and reports failure when the browser blocks the popup or the API is unavailable.
 The browser host import reads `prefers-color-scheme` at startup and listens for
 media-query changes through `window/web`; MoUI maps those events into runtime
 environment color-scheme updates.
