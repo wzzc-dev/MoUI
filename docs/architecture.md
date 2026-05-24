@@ -305,7 +305,9 @@ with the created registry record so the host can keep window id, scene metadata,
 and runtime together. `HostWindowRuntimeSlot` then wraps that record with a
 `HostRuntimeDriver`, giving future multi-window hosts a shared per-window
 runtime/driver shape before platform-specific window and renderer handles are
-attached.
+attached. `HostWindowRuntimeSlots` is the matching collection for lookup,
+primary/focused slot selection, record synchronization, and closed-window
+cleanup.
 Web, macOS, and Windows should convert their native window events into
 `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
 `DrawCommand` values. Linux currently keeps the same contract shape as a

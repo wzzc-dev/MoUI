@@ -111,6 +111,11 @@ pub struct HostWindowRequestQueue {
 }
 
 ///|
+pub struct HostWindowRuntimeSlots {
+  mut slots : Array[HostWindowRuntimeSlot]
+}
+
+///|
 pub fn HostWindowId::new(value : Int) -> HostWindowId {
   { value, }
 }
@@ -224,6 +229,123 @@ pub fn HostWindowRegistry::new() -> HostWindowRegistry {
 ///|
 pub fn HostWindowRequestQueue::new() -> HostWindowRequestQueue {
   { requests: [], completed: [] }
+}
+
+///|
+pub fn HostWindowRuntimeSlots::new() -> HostWindowRuntimeSlots {
+  { slots: [] }
+}
+
+///|
+pub fn HostWindowRuntimeSlots::count(self : HostWindowRuntimeSlots) -> Int {
+  self.slots.length()
+}
+
+///|
+pub fn HostWindowRuntimeSlots::is_empty(self : HostWindowRuntimeSlots) -> Bool {
+  self.slots.is_empty()
+}
+
+///|
+pub fn HostWindowRuntimeSlots::insert(
+  self : HostWindowRuntimeSlots,
+  slot : HostWindowRuntimeSlot,
+) -> Bool {
+  match self.lookup(slot.id) {
+    Some(_) => false
+    None => {
+      self.slots.push(slot)
+      true
+    }
+  }
+}
+
+///|
+pub fn HostWindowRuntimeSlots::lookup(
+  self : HostWindowRuntimeSlots,
+  id : HostWindowId,
+) -> HostWindowRuntimeSlot? {
+  for slot in self.slots {
+    if slot.id == id {
+      return Some(slot)
+    }
+  }
+  None
+}
+
+///|
+pub fn HostWindowRuntimeSlots::open_slots(
+  self : HostWindowRuntimeSlots,
+) -> Array[HostWindowRuntimeSlot] {
+  self.slots.filter(slot => slot.record.phase != WindowClosed)
+}
+
+///|
+pub fn HostWindowRuntimeSlots::primary_slot(
+  self : HostWindowRuntimeSlots,
+) -> HostWindowRuntimeSlot? {
+  for slot in self.open_slots() {
+    if slot.record.primary {
+      return Some(slot)
+    }
+  }
+  None
+}
+
+///|
+pub fn HostWindowRuntimeSlots::focused_slot(
+  self : HostWindowRuntimeSlots,
+) -> HostWindowRuntimeSlot? {
+  for slot in self.open_slots() {
+    if slot.record.phase == WindowFocused {
+      return Some(slot)
+    }
+  }
+  None
+}
+
+///|
+pub fn HostWindowRuntimeSlots::sync_record(
+  self : HostWindowRuntimeSlots,
+  record : HostWindowRecord,
+) -> Bool {
+  let mut changed = false
+  self.slots = self.slots.map(slot => {
+    if slot.id == record.id {
+      changed = true
+      { ..slot, record, }
+    } else {
+      slot
+    }
+  })
+  changed
+}
+
+///|
+pub fn HostWindowRuntimeSlots::remove(
+  self : HostWindowRuntimeSlots,
+  id : HostWindowId,
+) -> HostWindowRuntimeSlot? {
+  let mut removed = None
+  let kept = []
+  for slot in self.slots {
+    if slot.id == id {
+      removed = Some(slot)
+    } else {
+      kept.push(slot)
+    }
+  }
+  self.slots = kept
+  removed
+}
+
+///|
+pub fn HostWindowRuntimeSlots::remove_closed(
+  self : HostWindowRuntimeSlots,
+) -> Int {
+  let before = self.slots.length()
+  self.slots = self.slots.filter(slot => slot.record.phase != WindowClosed)
+  before - self.slots.length()
 }
 
 ///|

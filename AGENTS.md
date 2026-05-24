@@ -19,8 +19,8 @@ paths, or abstractions that only preserve old shapes.
 - `views/` exposes public view constructors that return `@core.ViewSpec`.
 - `backend/host/` defines shared host event, surface, input, async
   host-service, window lifecycle, window scene resolution,
-  per-window runtime slots, request/completion, and window event conversion
-  contracts.
+  per-window runtime slot collection, request/completion, and window event
+  conversion contracts.
 - `backend/macos/`, `backend/windows/`, and `backend/web/` normalize platform
   events into `HostEvent`. `backend/linux/` is an explicit scaffold.
 - `render/` is the renderer facade and shared reporting layer.

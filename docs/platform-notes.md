@@ -24,6 +24,9 @@ requests into new `AppRuntime` instances or explicit scene rejections without
 embedding platform policy in app code. `HostWindowRegistry::resolve_open_request`
 then binds a resolved runtime to the registry record that owns the new window
 id, and `HostWindowRuntimeSlot` wraps the record with its `HostRuntimeDriver`.
+`HostWindowRuntimeSlots` stores those per-window drivers, supports lookup and
+primary/focused slot selection, syncs updated lifecycle records from the
+registry, and removes closed slots.
 The active Web, macOS, and Windows hosts accept a shared queue through
 `run_app_with_window_requests` and drain current-window focus, close, resize,
 minimize, show, and set-primary requests at the platform edge. Each drained
