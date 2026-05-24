@@ -122,9 +122,9 @@ frontends and tooling:
 - `Milky2018/moon_zeno` powers renderer path tessellation from MoUI
   `DrawPath` / `PathSpec` values into triangle meshes. SVG parsing remains the
   importer frontend's job.
-- `mizchi/markdown` powers the Markdown Editor parser adapter while preserving
-  `markdown_to_rich_text(String) -> @core.RichTextDocument`. See
-  [Markdown Editor](markdown-editor.md) for the app-level editing model.
+- `mizchi/markdown` powers the Markdown Editor's package-local parser adapter
+  and rich text mapping. See [Markdown Editor](markdown-editor.md) for the
+  app-level editing model.
 - `mizchi/svg` powers `render.import_svg(String) -> SvgImportResult`, lowering
   parsed SVG scene graph nodes into MoUI `DrawCommand` values.
 - `moonbitlang/quickcheck` and `mizchi/pixelmatch` are exercised from

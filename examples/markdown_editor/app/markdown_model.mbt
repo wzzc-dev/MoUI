@@ -1,5 +1,5 @@
 ///|
-pub(all) enum MarkdownInlineKind {
+enum MarkdownInlineKind {
   Plain
   Bold
   Italic
@@ -13,7 +13,7 @@ pub(all) enum MarkdownInlineKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct MarkdownInline {
+struct MarkdownInline {
   text : String
   kind : MarkdownInlineKind
   target : String?
@@ -29,7 +29,7 @@ fn markdown_inline(
 }
 
 ///|
-pub(all) enum MarkdownBlockKind {
+enum MarkdownBlockKind {
   Heading(Int)
   Paragraph
   UnorderedListItem
@@ -44,7 +44,7 @@ pub(all) enum MarkdownBlockKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct MarkdownBlock {
+struct MarkdownBlock {
   kind : MarkdownBlockKind
   text : String
   inlines : Array[MarkdownInline]
@@ -60,7 +60,7 @@ struct MarkdownReferenceDefinition {
 } derive(Eq, Debug)
 
 ///|
-pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
+fn parse_markdown(text : String) -> Array[MarkdownBlock] {
   let blocks : Array[MarkdownBlock] = []
   let definitions = markdown_reference_definitions(text)
   let lines = markdown_split_lines(text)
@@ -580,7 +580,7 @@ fn markdown_table_row_text(row : Array[@markdown.TableCell]) -> String {
 }
 
 ///|
-pub fn parse_markdown_inlines(text : String) -> Array[MarkdownInline] {
+fn parse_markdown_inlines(text : String) -> Array[MarkdownInline] {
   parse_markdown_inlines_with_definitions(text, [])
 }
 
@@ -1122,16 +1122,6 @@ fn markdown_join_lines(lines : Array[String]) -> String {
     chars.append(line.to_array())
   }
   String::from_array(chars)
-}
-
-///|
-pub fn markdown_to_rich_text(text : String) -> @core.RichTextDocument {
-  let blocks : Array[@core.RichTextBlock] = []
-  let base = @core.FontSpec::new()
-  for block in parse_markdown(text) {
-    blocks.push(markdown_block_to_rich_text(block, base))
-  }
-  @core.RichTextDocument::new(blocks~)
 }
 
 ///|
