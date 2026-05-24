@@ -286,6 +286,13 @@ pub(all) enum HostWindowLifecyclePhase {
   WindowClosed
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct HostWindowOpenRequest {
+  title : String
+  metrics : HostSurfaceMetrics
+  primary : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWindowOpenRequest::new(title~ : String, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Self
+
 pub(all) struct HostWindowRecord {
   id : HostWindowId
   title : String
@@ -300,6 +307,7 @@ pub struct HostWindowRegistry {
   mut records : Array[HostWindowRecord]
 }
 pub fn HostWindowRegistry::apply_host_event(Self, HostWindowId, HostEvent) -> Bool
+pub fn HostWindowRegistry::apply_request(Self, HostWindowRequest) -> HostWindowRequestResult
 pub fn HostWindowRegistry::close(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::focus(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::focused_window(Self) -> HostWindowRecord?
@@ -315,6 +323,38 @@ pub fn HostWindowRegistry::request_close(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::resize(Self, HostWindowId, HostSurfaceMetrics) -> Bool
 pub fn HostWindowRegistry::set_primary(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::show(Self, HostWindowId) -> Bool
+
+pub(all) enum HostWindowRequest {
+  OpenWindow(HostWindowOpenRequest)
+  FocusWindow(HostWindowId)
+  CloseWindow(HostWindowId)
+  ResizeWindow(HostWindowId, HostSurfaceMetrics)
+  MinimizeWindow(HostWindowId)
+  ShowWindow(HostWindowId)
+  SetPrimaryWindow(HostWindowId)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostWindowRequestQueue {
+  mut requests : Array[HostWindowRequest]
+}
+pub fn HostWindowRequestQueue::close_window(Self, HostWindowId) -> Unit
+pub fn HostWindowRequestQueue::drain(Self) -> Array[HostWindowRequest]
+pub fn HostWindowRequestQueue::focus_window(Self, HostWindowId) -> Unit
+pub fn HostWindowRequestQueue::is_empty(Self) -> Bool
+pub fn HostWindowRequestQueue::minimize_window(Self, HostWindowId) -> Unit
+pub fn HostWindowRequestQueue::new() -> Self
+pub fn HostWindowRequestQueue::open_window(Self, title~ : String, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Unit
+pub fn HostWindowRequestQueue::pending_count(Self) -> Int
+pub fn HostWindowRequestQueue::push(Self, HostWindowRequest) -> Unit
+pub fn HostWindowRequestQueue::resize_window(Self, HostWindowId, HostSurfaceMetrics) -> Unit
+pub fn HostWindowRequestQueue::set_primary_window(Self, HostWindowId) -> Unit
+pub fn HostWindowRequestQueue::show_window(Self, HostWindowId) -> Unit
+
+pub(all) enum HostWindowRequestResult {
+  WindowOpened(HostWindowId)
+  WindowUpdated(HostWindowId)
+  WindowRejected(String)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct InputHostState {
   mut focused : Bool

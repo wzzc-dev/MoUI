@@ -291,16 +291,20 @@ let pair = @core.ViewSpec::custom_layout(
 platform-neutral runtime. It defines `HostSurfaceMetrics`, input capabilities,
 coordinate policies, `HostEvent`, text input session synchronization,
 `HostRuntimeDriver`, file drag/drop normalization, and `HostWindowRegistry` for
-platform-neutral window lifecycle and multi-window bookkeeping. Web, macOS, and
-Windows should convert their native window events into `HostEvent` and then let
-`AppRuntime` update state, rebuild, and emit `DrawCommand` values. Linux
-currently keeps the same contract shape as a scaffold until a real window
-backend exists.
+platform-neutral window lifecycle and multi-window bookkeeping. It also exposes
+`HostWindowRequestQueue` so app/runtime or higher-level host code can enqueue
+open, focus, close, resize, minimize, show, and primary-window requests without
+embedding those requests in a platform backend. Web, macOS, and Windows should
+convert their native window events into `HostEvent` and then let `AppRuntime`
+update state, rebuild, and emit `DrawCommand` values. Linux currently keeps the
+same contract shape as a scaffold until a real window backend exists.
 The active Web, macOS, and Windows hosts still expose single-window entrypoints,
 but each one now opens a primary `HostWindowRecord`, applies resize/focus/close
 `HostEvent` values through the registry, and removes the record when the host
 window is disposed. That makes multi-window lifecycle state a shared host
-concern instead of a future platform-specific rewrite.
+concern instead of a future platform-specific rewrite. They do not yet consume
+`HostWindowRequestQueue`; it is the shared request channel for the future
+multi-window host API.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and

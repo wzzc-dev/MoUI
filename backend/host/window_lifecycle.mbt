@@ -23,9 +23,39 @@ pub(all) struct HostWindowRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostWindowOpenRequest {
+  title : String
+  metrics : HostSurfaceMetrics
+  primary : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum HostWindowRequest {
+  OpenWindow(HostWindowOpenRequest)
+  FocusWindow(HostWindowId)
+  CloseWindow(HostWindowId)
+  ResizeWindow(HostWindowId, HostSurfaceMetrics)
+  MinimizeWindow(HostWindowId)
+  ShowWindow(HostWindowId)
+  SetPrimaryWindow(HostWindowId)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum HostWindowRequestResult {
+  WindowOpened(HostWindowId)
+  WindowUpdated(HostWindowId)
+  WindowRejected(String)
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostWindowRegistry {
   mut next_value : Int
   mut records : Array[HostWindowRecord]
+}
+
+///|
+pub struct HostWindowRequestQueue {
+  mut requests : Array[HostWindowRequest]
 }
 
 ///|
@@ -45,8 +75,114 @@ pub fn HostWindowRecord::new(
 }
 
 ///|
+pub fn HostWindowOpenRequest::new(
+  title~ : String,
+  metrics~ : HostSurfaceMetrics,
+  primary? : Bool = false,
+) -> HostWindowOpenRequest {
+  { title, metrics, primary }
+}
+
+///|
 pub fn HostWindowRegistry::new() -> HostWindowRegistry {
   { next_value: 1, records: [] }
+}
+
+///|
+pub fn HostWindowRequestQueue::new() -> HostWindowRequestQueue {
+  { requests: [] }
+}
+
+///|
+pub fn HostWindowRequestQueue::pending_count(
+  self : HostWindowRequestQueue,
+) -> Int {
+  self.requests.length()
+}
+
+///|
+pub fn HostWindowRequestQueue::is_empty(self : HostWindowRequestQueue) -> Bool {
+  self.requests.is_empty()
+}
+
+///|
+pub fn HostWindowRequestQueue::push(
+  self : HostWindowRequestQueue,
+  request : HostWindowRequest,
+) -> Unit {
+  self.requests.push(request)
+}
+
+///|
+pub fn HostWindowRequestQueue::open_window(
+  self : HostWindowRequestQueue,
+  title~ : String,
+  metrics~ : HostSurfaceMetrics,
+  primary? : Bool = false,
+) -> Unit {
+  self.push(
+    HostWindowRequest::OpenWindow(
+      HostWindowOpenRequest::new(title~, metrics~, primary~),
+    ),
+  )
+}
+
+///|
+pub fn HostWindowRequestQueue::focus_window(
+  self : HostWindowRequestQueue,
+  id : HostWindowId,
+) -> Unit {
+  self.push(HostWindowRequest::FocusWindow(id))
+}
+
+///|
+pub fn HostWindowRequestQueue::close_window(
+  self : HostWindowRequestQueue,
+  id : HostWindowId,
+) -> Unit {
+  self.push(HostWindowRequest::CloseWindow(id))
+}
+
+///|
+pub fn HostWindowRequestQueue::resize_window(
+  self : HostWindowRequestQueue,
+  id : HostWindowId,
+  metrics : HostSurfaceMetrics,
+) -> Unit {
+  self.push(HostWindowRequest::ResizeWindow(id, metrics))
+}
+
+///|
+pub fn HostWindowRequestQueue::minimize_window(
+  self : HostWindowRequestQueue,
+  id : HostWindowId,
+) -> Unit {
+  self.push(HostWindowRequest::MinimizeWindow(id))
+}
+
+///|
+pub fn HostWindowRequestQueue::show_window(
+  self : HostWindowRequestQueue,
+  id : HostWindowId,
+) -> Unit {
+  self.push(HostWindowRequest::ShowWindow(id))
+}
+
+///|
+pub fn HostWindowRequestQueue::set_primary_window(
+  self : HostWindowRequestQueue,
+  id : HostWindowId,
+) -> Unit {
+  self.push(HostWindowRequest::SetPrimaryWindow(id))
+}
+
+///|
+pub fn HostWindowRequestQueue::drain(
+  self : HostWindowRequestQueue,
+) -> Array[HostWindowRequest] {
+  let requests = self.requests
+  self.requests = []
+  requests
 }
 
 ///|
@@ -240,6 +376,43 @@ pub fn HostWindowRegistry::apply_host_event(
 }
 
 ///|
+pub fn HostWindowRegistry::apply_request(
+  self : HostWindowRegistry,
+  request : HostWindowRequest,
+) -> HostWindowRequestResult {
+  match request {
+    HostWindowRequest::OpenWindow(request) =>
+      HostWindowRequestResult::WindowOpened(
+        self.open(
+          title=request.title,
+          metrics=request.metrics,
+          primary=request.primary,
+        ),
+      )
+    HostWindowRequest::FocusWindow(id) =>
+      window_request_update_result(id, self.focus(id), action="focus")
+    HostWindowRequest::CloseWindow(id) =>
+      window_request_update_result(id, self.request_close(id), action="close")
+    HostWindowRequest::ResizeWindow(id, metrics) =>
+      window_request_update_result(
+        id,
+        self.resize(id, metrics),
+        action="resize",
+      )
+    HostWindowRequest::MinimizeWindow(id) =>
+      window_request_update_result(id, self.minimize(id), action="minimize")
+    HostWindowRequest::ShowWindow(id) =>
+      window_request_update_result(id, self.show(id), action="show")
+    HostWindowRequest::SetPrimaryWindow(id) =>
+      window_request_update_result(
+        id,
+        self.set_primary(id),
+        action="set primary",
+      )
+  }
+}
+
+///|
 fn HostWindowRegistry::has_open_window(
   self : HostWindowRegistry,
   id : HostWindowId,
@@ -289,4 +462,19 @@ fn HostWindowRegistry::update_open_window(
     }
   })
   changed
+}
+
+///|
+fn window_request_update_result(
+  id : HostWindowId,
+  changed : Bool,
+  action~ : String,
+) -> HostWindowRequestResult {
+  if changed {
+    HostWindowRequestResult::WindowUpdated(id)
+  } else {
+    HostWindowRequestResult::WindowRejected(
+      "cannot " + action + " window: \{id.value}",
+    )
+  }
 }
