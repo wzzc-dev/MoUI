@@ -164,6 +164,10 @@ Focus areas:
 - Keep Linux clearly marked as scaffold until a minimal backend is implemented.
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,
   menus, file dialogs, URL opening, and system-theme queries.
+- Keep Web clipboard behavior honest inside the current synchronous service
+  model: copy/cut write selected text through a browser host import, paste is
+  delivered by browser text input events, and async clipboard reads remain a
+  follow-up rather than a fake synchronous success path.
 - Keep URL opening honest across active hosts: macOS uses `NSWorkspace`, Windows
   uses `ShellExecuteW`, and Web uses a browser host import that calls
   `window.open` and can report popup-blocked failures.

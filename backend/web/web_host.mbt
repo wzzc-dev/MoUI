@@ -67,7 +67,7 @@ pub fn canvas_input_host() -> @host.InputHostState {
         focus=true,
         text_input=true,
         ime=false,
-        clipboard=false,
+        clipboard=true,
       ),
       coordinates=@host.HostCoordinatePolicy::logical(
         description="Web canvas host reports logical event coordinates after DPR mapping.",
@@ -80,9 +80,12 @@ pub fn canvas_input_host() -> @host.InputHostState {
 pub fn web_service_bridge(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
   open_url? : (String) -> Bool = _url => false,
+  clipboard? : Bool = false,
+  clipboard_write? : (String) -> Bool = _text => false,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
+      clipboard~,
       open_url=true,
       system_theme=true,
     ),
@@ -96,6 +99,20 @@ pub fn web_service_bridge(
           }
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
+        @host.HostServiceRequest::Clipboard(
+          @host.HostClipboardRequest::WriteText(text)
+        ) =>
+          if clipboard_write(text) {
+            @host.HostServiceResponse::ClipboardWritten
+          } else {
+            @host.HostServiceResponse::Unavailable("clipboard write failed")
+          }
+        @host.HostServiceRequest::Clipboard(
+          @host.HostClipboardRequest::ReadText
+        ) =>
+          @host.HostServiceResponse::Unavailable(
+            "clipboard read is unavailable on Web; paste is delivered by browser text input events",
+          )
         _ =>
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
@@ -106,6 +123,11 @@ pub fn web_service_bridge(
 ///|
 fn dispatch_web_open_url(url : String) -> Bool {
   web_open_url(web_host_string(url))
+}
+
+///|
+fn dispatch_web_clipboard_write_text(text : String) -> Bool {
+  web_clipboard_write_text(web_host_string(text))
 }
 
 ///|
@@ -128,6 +150,9 @@ fn web_finish_create_string(handle : Int) -> WebHostString = "window_web" "finis
 
 ///|
 fn web_open_url(url : WebHostString) -> Bool = "window_web" "open_url"
+
+///|
+fn web_clipboard_write_text(text : WebHostString) -> Bool = "window_web" "clipboard_write_text"
 
 ///|
 pub fn request_animation_frame_event() -> @host.HostEvent {

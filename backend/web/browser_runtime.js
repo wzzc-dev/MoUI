@@ -163,6 +163,27 @@ export function createWindowWebImports(options = {}) {
     event.key === "PageDown" ||
     event.key === "Escape";
 
+  const isModifierKey = event =>
+    event.key === "Shift" ||
+    event.key === "Control" ||
+    event.key === "Alt" ||
+    event.key === "Meta";
+
+  const isClipboardWriteShortcut = event => {
+    const key = `${event.key || ""}`.toLowerCase();
+    return (
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey &&
+      (key === "c" || key === "x")
+    );
+  };
+
+  const shouldForwardRuntimeKey = event =>
+    shouldForwardTextInputKey(event) ||
+    isModifierKey(event) ||
+    isClipboardWriteShortcut(event);
+
   const isPlainTextKey = event =>
     event.key &&
     event.key.length === 1 &&
@@ -297,6 +318,32 @@ export function createWindowWebImports(options = {}) {
     },
     set_document_title(title) {
       document.title = stringValue(title);
+    },
+    clipboard_write_text(text) {
+      const value = stringValue(text);
+      const previousActive = document.activeElement;
+      const input = document.createElement("textarea");
+      input.value = value;
+      input.setAttribute("readonly", "");
+      input.style.position = "fixed";
+      input.style.left = "-10000px";
+      input.style.top = "0";
+      input.style.width = "1px";
+      input.style.height = "1px";
+      input.style.opacity = "0";
+      input.style.pointerEvents = "none";
+      document.body.appendChild(input);
+      focusWithoutScroll(input);
+      input.select();
+      let copied = false;
+      try {
+        copied = document.execCommand?.("copy") === true;
+      } catch {
+        copied = false;
+      }
+      input.remove();
+      focusWithoutScroll(previousActive);
+      return copied;
     },
     open_url(url) {
       const href = stringValue(url);
@@ -474,7 +521,7 @@ export function createWindowWebImports(options = {}) {
               return;
             }
           }
-          if (event.isComposing || !shouldForwardTextInputKey(event)) {
+          if (event.isComposing || !shouldForwardRuntimeKey(event)) {
             return;
           }
           event.preventDefault();
@@ -484,21 +531,21 @@ export function createWindowWebImports(options = {}) {
       add(canvas, "keyup", event => {
         if (
           textState.imeAllowed &&
-          (event.isComposing || !shouldForwardTextInputKey(event))
+          (event.isComposing || !shouldForwardRuntimeKey(event))
         ) {
           return;
         }
         emit(41, rawId, 0, 0, 0, event.key || event.code || "");
       });
       add(textInput, "keydown", event => {
-        if (event.isComposing || !shouldForwardTextInputKey(event)) {
+        if (event.isComposing || !shouldForwardRuntimeKey(event)) {
           return;
         }
         event.preventDefault();
         emit(40, rawId, 0, 0, 0, event.key || event.code || "");
       });
       add(textInput, "keyup", event => {
-        if (event.isComposing || !shouldForwardTextInputKey(event)) {
+        if (event.isComposing || !shouldForwardRuntimeKey(event)) {
           return;
         }
         emit(41, rawId, 0, 0, 0, event.key || event.code || "");

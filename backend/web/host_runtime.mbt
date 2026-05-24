@@ -63,6 +63,8 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
       None => @core.ColorScheme::Light
     },
     open_url=dispatch_web_open_url,
+    clipboard=true,
+    clipboard_write=dispatch_web_clipboard_write_text,
   )
   runtime.set_environment(
     services.environment_with_system_theme(runtime.environment()),
@@ -293,6 +295,7 @@ fn WebApp::dispatch_window_event(
   self : WebApp,
   event : @window_core.WindowEvent,
 ) -> Unit {
+  self.modifiers = web_modifiers_after_window_event(self.modifiers, event)
   match
     window_event_to_host_with_scale(
       event,
@@ -316,6 +319,39 @@ fn WebApp::dispatch_window_event(
       self.sync_text_input_session()
     }
     None => ()
+  }
+}
+
+///|
+fn web_modifiers_after_window_event(
+  current : @core.KeyModifiers,
+  event : @window_core.WindowEvent,
+) -> @core.KeyModifiers {
+  match event {
+    @window_core.WindowEvent::ModifiersChanged(modifiers) =>
+      @host.modifiers_to_core(modifiers)
+    @window_core.WindowEvent::KeyboardInput(_, key_event, false) =>
+      web_modifiers_after_key_event(current, key_event)
+    _ => current
+  }
+}
+
+///|
+fn web_modifiers_after_key_event(
+  current : @core.KeyModifiers,
+  event : @window_core.KeyEvent,
+) -> @core.KeyModifiers {
+  let pressed = @host.element_state_pressed(event.state())
+  match event.logical_key() {
+    @window_core.Key::Named(@window_core.NamedKey::Shift) =>
+      { ..current, shift: pressed }
+    @window_core.Key::Named(@window_core.NamedKey::Control) =>
+      { ..current, control: pressed }
+    @window_core.Key::Named(@window_core.NamedKey::Alt) =>
+      { ..current, alt: pressed }
+    @window_core.Key::Named(@window_core.NamedKey::Meta) =>
+      { ..current, meta: pressed }
+    _ => current
   }
 }
 
