@@ -105,6 +105,13 @@ moon build examples/markdown_editor/macos --target native
 moon build examples/markdown_editor/windows --target native
 ```
 
+Native packaging helpers:
+
+```sh
+sh scripts/package-macos-app.sh --package examples/showcase/macos --name "MoUI Showcase"
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 -Package examples/showcase/windows -AppName MoUIShowcase
+```
+
 Routine repo check when the app change is broad:
 
 ```sh

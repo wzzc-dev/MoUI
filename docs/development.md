@@ -90,6 +90,37 @@ the current host platform's executable examples:
 sh scripts/dev-check.sh --platform-examples-build
 ```
 
+## Native Packaging Helpers
+
+The packaging helpers wrap already-supported native example packages into
+platform-shaped output directories. They are intentionally thin wrappers around
+`moon build` and do not replace release signing, notarization, installers, or
+store packaging.
+
+macOS `.app` bundle:
+
+```sh
+sh scripts/package-macos-app.sh \
+  --package examples/showcase/macos \
+  --name "MoUI Showcase" \
+  --bundle-id dev.wzzc.moui.showcase
+```
+
+The bundle is written under `dist/macos/<name>.app` by default. Pass
+`--no-build` to package an already-built executable from `_build/native`.
+
+Windows distributable folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+  -Package examples/showcase/windows `
+  -AppName MoUIShowcase
+```
+
+The folder is written under `dist\windows\<AppName>` by default and includes the
+built executable plus the MSYS2 Vulkan and pthread runtime DLLs expected by the
+current static `wgpu-native` setup.
+
 Useful focused commands:
 
 ```sh

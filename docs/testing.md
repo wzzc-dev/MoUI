@@ -84,6 +84,7 @@ sh -n scripts/conformance-check.sh
 sh -n scripts/setup-local-deps.sh
 sh -n scripts/check-local-deps.sh
 sh -n scripts/preview-loop.sh
+sh -n scripts/package-macos-app.sh
 ```
 
 Use `rg` to audit stale terms, missing links, old example paths, and outdated
