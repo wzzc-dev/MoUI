@@ -46,6 +46,12 @@ Run the generated executable under `_build/native/debug/build/...` for the
 example you built. If `moon run` exposes linker issues, use the build-and-execute
 flow described in `platform-notes.md`.
 
+To wrap an example as a local `.app` bundle:
+
+```sh
+sh scripts/package-macos-app.sh --package examples/showcase/macos --name "MoUI Showcase"
+```
+
 ## Windows Native
 
 Windows examples use MSYS2 UCRT64 and the static Windows GNU `wgpu-native`
@@ -62,6 +68,12 @@ dependency layout:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
+```
+
+For a reusable distributable folder with the built executable and runtime DLLs:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 -Package examples/showcase/windows -AppName MoUIShowcase
 ```
 
 ## Example Validation
