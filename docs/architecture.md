@@ -289,11 +289,12 @@ let pair = @core.ViewSpec::custom_layout(
 
 `backend/host` is the shared boundary between platform packages and the
 platform-neutral runtime. It defines `HostSurfaceMetrics`, input capabilities,
-coordinate policies, `HostEvent`, text input session synchronization, and
-`HostRuntimeDriver`. Web, macOS, and Windows should convert their native window
-events into `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
-`DrawCommand` values. Linux currently keeps the same contract shape as a
-scaffold until a real window backend exists.
+coordinate policies, `HostEvent`, text input session synchronization,
+`HostRuntimeDriver`, and `HostWindowRegistry` for platform-neutral window
+lifecycle and multi-window bookkeeping. Web, macOS, and Windows should convert
+their native window events into `HostEvent` and then let `AppRuntime` update
+state, rebuild, and emit `DrawCommand` values. Linux currently keeps the same
+contract shape as a scaffold until a real window backend exists.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and

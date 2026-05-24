@@ -126,8 +126,8 @@ before it grows broad platform claims:
   dispatch, explicit focus traversal helpers, shortcut dispatch, IME/text
   selection, clipboard service routing, and semantics action roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
-  wasm-gc backend tests, devtool snapshots, frame-profile counters, guidance
-  freshness, and example builds.
+  wasm-gc backend tests, window lifecycle registry behavior, devtool snapshots,
+  frame-profile counters, guidance freshness, and example builds.
 - Text system: stable fallback/provider/editor invariants for CJK, emoji,
   mixed bidi, caret positions, selection, and IME anchors, plus opt-in
   diagnostic packages under `tests/text_conformance/`.

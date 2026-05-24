@@ -79,7 +79,8 @@ Use this skill when editing or reviewing:
 - `style/`: visual token and style compatibility aliases.
 - `views/`: public view constructors returning `@core.ViewSpec`.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
-  text-input session, window-event conversion, and redraw driver.
+  window lifecycle registry, text-input session, window-event conversion, and
+  redraw driver.
 - `backend/web/`: wasm-gc Web host, canvas constraints, browser runtime bridge,
   and accessibility adapter.
 - `backend/macos/`: AppKit/window host and CAMetalLayer WGPU surface creation.

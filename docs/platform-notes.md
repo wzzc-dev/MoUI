@@ -11,6 +11,10 @@ support that the upstream package does not yet cover for MoUI.
 Platform backends normalize window, input, surface, focus, text input, redraw,
 and close events through `backend/host`. App code receives the same core event
 model regardless of whether the host is Web, macOS, or Windows.
+`HostWindowRegistry` also provides shared bookkeeping for window ids, primary
+windows, focused windows, close requests, closed-window cleanup, and per-window
+surface metrics so future multi-window platform hosts do not duplicate lifecycle
+state machines.
 
 The boundary is:
 
