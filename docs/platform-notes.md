@@ -21,8 +21,11 @@ a shared queue through `run_app_with_window_requests` and drain current-window
 focus, close, resize, minimize, show, and set-primary requests at the platform
 edge. Each drained request records an ordered completion on the same queue, so
 tests and higher-level host code can observe accepted current-window operations
-and explicit rejections. `OpenWindow` requests are still rejected until the hosts
-manage multiple platform windows and renderer instances.
+and explicit rejections. Active backends use the shared queue drain helper for
+that drain-and-record loop so future `OpenWindow` support does not need a
+separate completion path on each platform. `OpenWindow` requests are still
+rejected until the hosts manage multiple platform windows and renderer
+instances.
 The current Web, macOS, and Windows entrypoints still create one primary window,
 but they allocate that window through the registry, apply `HostEvent::Resized`,
 focus, and close events to it, and close/remove the record during host disposal.

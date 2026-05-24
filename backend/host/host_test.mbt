@@ -434,6 +434,40 @@ test "host window request queue records ordered platform completions" {
 }
 
 ///|
+test "host window request queue drains with shared completion handler" {
+  let queue = HostWindowRequestQueue::new()
+  let existing = HostWindowId::new(1)
+  queue.focus_window(existing)
+  queue.close_window(HostWindowId::new(404))
+  let completions = queue.drain_with_handler(request => {
+    match request {
+      HostWindowRequest::FocusWindow(id) =>
+        HostWindowRequestResult::WindowUpdated(id)
+      HostWindowRequest::CloseWindow(_) =>
+        HostWindowRequestResult::WindowRejected("missing window")
+      _ => HostWindowRequestResult::WindowRejected("unexpected request")
+    }
+  })
+  inspect(queue.pending_count(), content="0")
+  inspect(queue.completed_count(), content="2")
+  inspect(completions.length(), content="2")
+  match completions[0].result {
+    HostWindowRequestResult::WindowUpdated(id) => assert_true(id == existing)
+    _ => fail("expected focus completion")
+  }
+  match completions[1].request {
+    HostWindowRequest::CloseWindow(id) => inspect(id.value, content="404")
+    _ => fail("expected close request completion")
+  }
+  match queue.drain_completed()[1].result {
+    HostWindowRequestResult::WindowRejected(message) =>
+      inspect(message, content="missing window")
+    _ => fail("expected recorded close rejection")
+  }
+  inspect(queue.completed_count(), content="0")
+}
+
+///|
 test "host window registry applies platform-neutral window requests" {
   let registry = HostWindowRegistry::new()
   let main = registry.open(

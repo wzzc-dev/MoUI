@@ -307,9 +307,10 @@ concern instead of a future platform-specific rewrite. They also accept a shared
 current-window focus, close, resize, minimize, show, and set-primary requests at
 the platform edge. The same queue records ordered request completions, making
 accepted current-window operations and explicit rejections observable without
-pretending that registry-only state is real multi-window support. `OpenWindow`
-requests are explicitly rejected until the hosts own multiple platform windows
-and renderer instances.
+pretending that registry-only state is real multi-window support. Active
+backends use the shared queue drain helper so completion recording stays a host
+contract instead of a platform-local loop. `OpenWindow` requests are explicitly
+rejected until the hosts own multiple platform windows and renderer instances.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
