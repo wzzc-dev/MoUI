@@ -189,9 +189,12 @@ Focus areas:
   `HostWindowRequestQueue` for current-window focus, close, resize, minimize,
   show, and set-primary requests. Drained request completions are recorded back
   onto the queue through a shared host helper so request outcomes stay
-  observable while the active hosts remain single-window. Full `OpenWindow`
-  support remains a follow-up because it requires multiple platform windows and
-  renderer instances, not just extra registry records.
+  observable while the active hosts remain single-window. `OpenWindow` requests
+  already carry a platform-neutral scene id and payload so future hosts can
+  resolve the new window's runtime/content without inventing a platform-local
+  convention. Full `OpenWindow` support remains a follow-up because it requires
+  multiple platform windows, scene/runtime resolution, and renderer instances,
+  not just extra registry records.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.

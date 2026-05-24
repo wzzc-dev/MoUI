@@ -326,6 +326,7 @@ test "host window request queue drains platform-neutral window requests" {
   inspect(queue.is_empty(), content="true")
   queue.open_window(
     title="Inspector",
+    scene=HostWindowScene::new(scene_id="inspector", payload="right-pane"),
     metrics=HostSurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=240.0),
     ),
@@ -347,8 +348,10 @@ test "host window request queue drains platform-neutral window requests" {
   let requests = queue.drain()
   inspect(queue.pending_count(), content="0")
   match requests[0] {
-    HostWindowRequest::OpenWindow({ title, primary, .. }) => {
+    HostWindowRequest::OpenWindow({ title, scene, primary, .. }) => {
       inspect(title, content="Inspector")
+      inspect(scene.scene_id, content="inspector")
+      inspect(scene.payload, content="right-pane")
       inspect(primary, content="true")
     }
     _ => fail("expected open window request")
@@ -479,6 +482,7 @@ test "host window registry applies platform-neutral window requests" {
   let request = HostWindowRequest::OpenWindow(
     HostWindowOpenRequest::new(
       title="Inspector",
+      scene=HostWindowScene::new(scene_id="inspector", payload="outline"),
       metrics=HostSurfaceMetrics::from_logical(
         size=@core.Size::new(width=320.0, height=600.0),
       ),
@@ -490,9 +494,11 @@ test "host window registry applies platform-neutral window requests" {
     _ => fail("expected opened inspector window")
   }
   match registry.primary_window() {
-    Some({ id, title, .. }) => {
+    Some({ id, title, scene, .. }) => {
       assert_true(id == inspector)
       inspect(title, content="Inspector")
+      inspect(scene.scene_id, content="inspector")
+      inspect(scene.payload, content="outline")
     }
     None => fail("expected primary inspector window")
   }
