@@ -14,9 +14,16 @@ pub(all) enum HostWindowLifecyclePhase {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostWindowScene {
+  scene_id : String
+  payload : String
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct HostWindowRecord {
   id : HostWindowId
   title : String
+  scene : HostWindowScene
   metrics : HostSurfaceMetrics
   phase : HostWindowLifecyclePhase
   primary : Bool
@@ -25,6 +32,7 @@ pub(all) struct HostWindowRecord {
 ///|
 pub(all) struct HostWindowOpenRequest {
   title : String
+  scene : HostWindowScene
   metrics : HostSurfaceMetrics
   primary : Bool
 } derive(Eq, Debug, ToJson)
@@ -71,23 +79,38 @@ pub fn HostWindowId::new(value : Int) -> HostWindowId {
 }
 
 ///|
+pub fn HostWindowScene::new(
+  scene_id~ : String,
+  payload? : String = "",
+) -> HostWindowScene {
+  { scene_id, payload }
+}
+
+///|
+pub fn HostWindowScene::main() -> HostWindowScene {
+  HostWindowScene::new(scene_id="main")
+}
+
+///|
 pub fn HostWindowRecord::new(
   id~ : HostWindowId,
   title~ : String,
+  scene? : HostWindowScene = HostWindowScene::main(),
   metrics~ : HostSurfaceMetrics,
   phase? : HostWindowLifecyclePhase = WindowCreated,
   primary? : Bool = false,
 ) -> HostWindowRecord {
-  { id, title, metrics, phase, primary }
+  { id, title, scene, metrics, phase, primary }
 }
 
 ///|
 pub fn HostWindowOpenRequest::new(
   title~ : String,
+  scene? : HostWindowScene = HostWindowScene::main(),
   metrics~ : HostSurfaceMetrics,
   primary? : Bool = false,
 ) -> HostWindowOpenRequest {
-  { title, metrics, primary }
+  { title, scene, metrics, primary }
 }
 
 ///|
@@ -131,12 +154,13 @@ pub fn HostWindowRequestQueue::push(
 pub fn HostWindowRequestQueue::open_window(
   self : HostWindowRequestQueue,
   title~ : String,
+  scene? : HostWindowScene = HostWindowScene::main(),
   metrics~ : HostSurfaceMetrics,
   primary? : Bool = false,
 ) -> Unit {
   self.push(
     HostWindowRequest::OpenWindow(
-      HostWindowOpenRequest::new(title~, metrics~, primary~),
+      HostWindowOpenRequest::new(title~, scene~, metrics~, primary~),
     ),
   )
 }
@@ -236,6 +260,7 @@ pub fn HostWindowRequestQueue::drain_completed(
 pub fn HostWindowRegistry::open(
   self : HostWindowRegistry,
   title~ : String,
+  scene? : HostWindowScene = HostWindowScene::main(),
   metrics~ : HostSurfaceMetrics,
   primary? : Bool = false,
 ) -> HostWindowId {
@@ -249,6 +274,7 @@ pub fn HostWindowRegistry::open(
     HostWindowRecord::new(
       id~,
       title~,
+      scene~,
       metrics~,
       phase=WindowVisible,
       primary=is_primary,
@@ -432,6 +458,7 @@ pub fn HostWindowRegistry::apply_request(
       HostWindowRequestResult::WindowOpened(
         self.open(
           title=request.title,
+          scene=request.scene,
           metrics=request.metrics,
           primary=request.primary,
         ),

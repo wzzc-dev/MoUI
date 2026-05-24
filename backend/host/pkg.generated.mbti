@@ -325,19 +325,21 @@ pub(all) enum HostWindowLifecyclePhase {
 
 pub(all) struct HostWindowOpenRequest {
   title : String
+  scene : HostWindowScene
   metrics : HostSurfaceMetrics
   primary : Bool
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostWindowOpenRequest::new(title~ : String, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Self
+pub fn HostWindowOpenRequest::new(title~ : String, scene? : HostWindowScene, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Self
 
 pub(all) struct HostWindowRecord {
   id : HostWindowId
   title : String
+  scene : HostWindowScene
   metrics : HostSurfaceMetrics
   phase : HostWindowLifecyclePhase
   primary : Bool
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostWindowRecord::new(id~ : HostWindowId, title~ : String, metrics~ : HostSurfaceMetrics, phase? : HostWindowLifecyclePhase, primary? : Bool) -> Self
+pub fn HostWindowRecord::new(id~ : HostWindowId, title~ : String, scene? : HostWindowScene, metrics~ : HostSurfaceMetrics, phase? : HostWindowLifecyclePhase, primary? : Bool) -> Self
 
 pub struct HostWindowRegistry {
   mut next_value : Int
@@ -351,7 +353,7 @@ pub fn HostWindowRegistry::focused_window(Self) -> HostWindowRecord?
 pub fn HostWindowRegistry::lookup(Self, HostWindowId) -> HostWindowRecord?
 pub fn HostWindowRegistry::minimize(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::new() -> Self
-pub fn HostWindowRegistry::open(Self, title~ : String, metrics~ : HostSurfaceMetrics, primary? : Bool) -> HostWindowId
+pub fn HostWindowRegistry::open(Self, title~ : String, scene? : HostWindowScene, metrics~ : HostSurfaceMetrics, primary? : Bool) -> HostWindowId
 pub fn HostWindowRegistry::open_window_count(Self) -> Int
 pub fn HostWindowRegistry::open_windows(Self) -> Array[HostWindowRecord]
 pub fn HostWindowRegistry::primary_window(Self) -> HostWindowRecord?
@@ -389,7 +391,7 @@ pub fn HostWindowRequestQueue::focus_window(Self, HostWindowId) -> Unit
 pub fn HostWindowRequestQueue::is_empty(Self) -> Bool
 pub fn HostWindowRequestQueue::minimize_window(Self, HostWindowId) -> Unit
 pub fn HostWindowRequestQueue::new() -> Self
-pub fn HostWindowRequestQueue::open_window(Self, title~ : String, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Unit
+pub fn HostWindowRequestQueue::open_window(Self, title~ : String, scene? : HostWindowScene, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Unit
 pub fn HostWindowRequestQueue::pending_count(Self) -> Int
 pub fn HostWindowRequestQueue::push(Self, HostWindowRequest) -> Unit
 pub fn HostWindowRequestQueue::record_result(Self, HostWindowRequest, HostWindowRequestResult) -> Unit
@@ -402,6 +404,13 @@ pub(all) enum HostWindowRequestResult {
   WindowUpdated(HostWindowId)
   WindowRejected(String)
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostWindowScene {
+  scene_id : String
+  payload : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWindowScene::main() -> Self
+pub fn HostWindowScene::new(scene_id~ : String, payload? : String) -> Self
 
 pub(all) struct InputHostState {
   mut focused : Bool
