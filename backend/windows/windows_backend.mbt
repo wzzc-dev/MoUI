@@ -48,32 +48,46 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 ///|
 pub(all) struct WindowsAppOptions {
   text_engine : @wgpu_renderer.NativeTextEngineSetting
-} derive(Eq, Debug, ToJson)
+  scene_resolver : @host.HostWindowSceneResolver
+}
 
 ///|
 struct WindowsApp {
   title : String
-  mut window : @win.Window?
-  mut renderer : @wgpu_renderer.WgpuRenderer?
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
+  scene_resolver : @host.HostWindowSceneResolver
   windows : @host.HostWindowRegistry
   runtime_slots : @host.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
-  mut window_id : @host.HostWindowId?
+  platform_slots : WindowsWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
 
 ///|
+priv struct WindowsWindowPlatformSlot {
+  host_id : @host.HostWindowId
+  platform_id : @window_core.WindowId
+  window : @win.Window
+  renderer : @wgpu_renderer.WgpuRenderer
+}
+
+///|
+priv struct WindowsWindowPlatformSlots {
+  mut slots : Array[WindowsWindowPlatformSlot]
+}
+
+///|
 pub fn WindowsAppOptions::new(
   text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
 ) -> WindowsAppOptions {
-  { text_engine, }
+  { text_engine, scene_resolver }
 }
 
 ///|
@@ -114,18 +128,17 @@ pub fn run_app_with_options(
   )
   let app = WindowsApp::{
     title,
-    window: None,
-    renderer: None,
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     text_engine_setting: options.text_engine,
     services,
     window_requests,
+    scene_resolver: options.scene_resolver,
     windows: @host.HostWindowRegistry::new(),
     runtime_slots: @host.HostWindowRuntimeSlots::new(),
     platform_windows: @host.HostPlatformWindowMap::new(),
-    window_id: None,
+    platform_slots: WindowsWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
@@ -330,6 +343,70 @@ pub fn windows_surface_host_info() -> @wgpu_renderer.SurfaceHostInfo {
 }
 
 ///|
+fn WindowsWindowPlatformSlots::new() -> WindowsWindowPlatformSlots {
+  { slots: [] }
+}
+
+///|
+fn WindowsWindowPlatformSlots::insert(
+  self : WindowsWindowPlatformSlots,
+  slot : WindowsWindowPlatformSlot,
+) -> Bool {
+  match
+    (self.lookup_host(slot.host_id), self.lookup_platform(slot.platform_id)) {
+    (None, None) => {
+      self.slots.push(slot)
+      true
+    }
+    _ => false
+  }
+}
+
+///|
+fn WindowsWindowPlatformSlots::lookup_host(
+  self : WindowsWindowPlatformSlots,
+  host_id : @host.HostWindowId,
+) -> WindowsWindowPlatformSlot? {
+  for slot in self.slots {
+    if slot.host_id == host_id {
+      return Some(slot)
+    }
+  }
+  None
+}
+
+///|
+fn WindowsWindowPlatformSlots::lookup_platform(
+  self : WindowsWindowPlatformSlots,
+  platform_id : @window_core.WindowId,
+) -> WindowsWindowPlatformSlot? {
+  for slot in self.slots {
+    if slot.platform_id == platform_id {
+      return Some(slot)
+    }
+  }
+  None
+}
+
+///|
+fn WindowsWindowPlatformSlots::remove_host(
+  self : WindowsWindowPlatformSlots,
+  host_id : @host.HostWindowId,
+) -> WindowsWindowPlatformSlot? {
+  let mut removed = None
+  let kept = []
+  for slot in self.slots {
+    if slot.host_id == host_id {
+      removed = Some(slot)
+    } else {
+      kept.push(slot)
+    }
+  }
+  self.slots = kept
+  removed
+}
+
+///|
 pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
   self,
   event_loop,
@@ -359,33 +436,34 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
         metrics~,
         primary=true,
       )
-      self.window_id = Some(window_id)
       ignore(
         self.platform_windows.bind(platform_id=window.id(), host_id=window_id),
       )
       self.register_primary_runtime_slot(window_id)
-      ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
-      let renderer : @wgpu_renderer.WgpuRenderer? = Some(
-        @wgpu_renderer.create_with_host_surface_and_text_engine(
-          renderer_metrics_from_host(metrics),
-          create_windows_host_surface(window.window_handle()),
-          text_engine=windows_text_engine(self.text_engine_setting),
-        ),
-      ) catch {
-        err => {
-          println("error creating Windows WGPU renderer: \{err.message()}")
+      self.driver.set_redraw_scheduler(() => {
+        self.request_redraw_window_if_needed(window_id)
+      })
+      match self.create_renderer_for_window(window, metrics) {
+        Some(renderer) => {
+          self.driver.set_text_system(renderer.text_system())
+          ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
+          ignore(
+            self.platform_slots.insert({
+              host_id: window_id,
+              platform_id: window.id(),
+              window,
+              renderer,
+            }),
+          )
+          window.request_redraw()
+          self.drain_window_requests(event_loop)
+        }
+        None => {
+          self.rollback_window_record(window_id)
+          window.drop()
           event_loop.exit()
-          None
         }
       }
-      match renderer {
-        Some(renderer) => self.runtime.set_text_system(renderer.text_system())
-        None => ()
-      }
-      self.renderer = renderer
-      self.window = Some(window)
-      window.request_redraw()
-      self.drain_window_requests(event_loop)
     }
     None => ()
   }
@@ -409,21 +487,25 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
   match event {
     @window_core.WindowEvent::CloseRequested => {
       self.dispatch_window_event(window_id, event)
-      self.dispose()
-      event_loop.exit()
+      self.dispose_window(window_id)
+      if self.runtime_slots.is_empty() {
+        event_loop.exit()
+      }
     }
     @window_core.WindowEvent::SurfaceResized(_) => {
       self.dispatch_window_event(window_id, event)
-      match (self.window, self.renderer) {
-        (Some(window), Some(renderer)) => {
+      match self.platform_slots.lookup_host(window_id) {
+        Some(slot) => {
           let metrics = @host.HostSurfaceMetrics::new(
-            logical_size=@host.physical_size_to_core(window.surface_size()),
-            physical_size=@host.physical_size_to_core(window.surface_size()),
+            logical_size=@host.physical_size_to_core(slot.window.surface_size()),
+            physical_size=@host.physical_size_to_core(
+              slot.window.surface_size(),
+            ),
           )
-          renderer.resize(renderer_metrics_from_host(metrics))
-          window.request_redraw()
+          slot.renderer.resize(renderer_metrics_from_host(metrics))
+          slot.window.request_redraw()
         }
-        _ => ()
+        None => ()
       }
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
@@ -450,17 +532,7 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       self.dispatch_window_event(window_id, event)
     @window_core.WindowEvent::ModifiersChanged(_) =>
       self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::RedrawRequested =>
-      match (self.window, self.renderer) {
-        (Some(window), Some(renderer)) => {
-          window.pre_present_notify()
-          self.driver.begin_redraw()
-          renderer.render(self.driver.draw_commands())
-          self.driver.finish_redraw()
-          self.sync_text_input_session()
-        }
-        _ => ()
-      }
+    @window_core.WindowEvent::RedrawRequested => self.redraw_window(window_id)
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -473,11 +545,55 @@ fn WindowsApp::dispatch_pointer_or_context_menu(
 ) -> Unit {
   if @host.window_event_is_context_menu_button(event) {
     if @host.window_event_is_context_menu_trigger(event) {
-      ignore(self.driver.show_context_menu(self.services))
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) => ignore(slot.driver.show_context_menu(self.services))
+        None => ()
+      }
       self.sync_text_input_session()
     }
   } else {
     self.dispatch_window_event(window_id, event)
+  }
+}
+
+///|
+fn WindowsApp::redraw_window(
+  self : WindowsApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match
+    (
+      self.platform_slots.lookup_host(window_id),
+      self.runtime_slots.lookup(window_id),
+    ) {
+    (Some(platform_slot), Some(runtime_slot)) => {
+      platform_slot.window.pre_present_notify()
+      runtime_slot.driver.begin_redraw()
+      platform_slot.renderer.render(runtime_slot.driver.draw_commands())
+      runtime_slot.driver.finish_redraw()
+      self.sync_text_input_session()
+    }
+    _ => ()
+  }
+}
+
+///|
+fn WindowsApp::create_renderer_for_window(
+  self : WindowsApp,
+  window : @win.Window,
+  metrics : @host.HostSurfaceMetrics,
+) -> @wgpu_renderer.WgpuRenderer? {
+  Some(
+    @wgpu_renderer.create_with_host_surface_and_text_engine(
+      renderer_metrics_from_host(metrics),
+      create_windows_host_surface(window.window_handle()),
+      text_engine=windows_text_engine(self.text_engine_setting),
+    ),
+  ) catch {
+    err => {
+      println("error creating Windows WGPU renderer: \{err.message()}")
+      None
+    }
   }
 }
 
@@ -511,12 +627,19 @@ fn WindowsApp::dispatch_window_event(
     ) {
     Some(host_event) => {
       self.apply_window_lifecycle(window_id, host_event)
-      match host_event {
-        @host.HostEvent::Keyboard(event) =>
-          ignore(
-            self.driver.dispatch_keyboard_with_services(event, self.services),
-          )
-        _ => ignore(self.driver.dispatch(host_event))
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) =>
+          match host_event {
+            @host.HostEvent::Keyboard(event) =>
+              ignore(
+                slot.driver.dispatch_keyboard_with_services(
+                  event,
+                  self.services,
+                ),
+              )
+            _ => ignore(slot.driver.dispatch(host_event))
+          }
+        None => ()
       }
       self.sync_text_input_session()
     }
@@ -543,65 +666,162 @@ fn WindowsApp::apply_window_request(
   request : @host.HostWindowRequest,
 ) -> @host.HostWindowRequestResult {
   match request {
-    @host.HostWindowRequest::OpenWindow(_) =>
-      @host.HostWindowRequestResult::WindowRejected(
-        "open window requests require multi-window Windows host support",
-      )
+    @host.HostWindowRequest::OpenWindow(open_request) =>
+      self.open_window(event_loop, open_request)
     @host.HostWindowRequest::FocusWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.focus_window()
       })
     @host.HostWindowRequest::CloseWindow(id) =>
-      self.apply_current_window_request(id, request, _window => {
-        self.dispose()
-        event_loop.exit()
+      self.apply_platform_window_request(id, request, _window => {
+        self.dispose_window(id)
+        if self.runtime_slots.is_empty() {
+          event_loop.exit()
+        }
       })
     @host.HostWindowRequest::ResizeWindow(id, metrics) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
-        match self.renderer {
-          Some(renderer) => renderer.resize(renderer_metrics_from_host(metrics))
+        match self.platform_slots.lookup_host(id) {
+          Some(slot) =>
+            slot.renderer.resize(renderer_metrics_from_host(metrics))
           None => ()
         }
         window.request_redraw()
       })
     @host.HostWindowRequest::MinimizeWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.set_minimized(true)
       })
     @host.HostWindowRequest::ShowWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.set_minimized(false)
         window.set_visible(true)
       })
     @host.HostWindowRequest::SetPrimaryWindow(id) =>
-      self.apply_current_window_request(id, request, _window => ())
+      self.apply_platform_window_request(id, request, _window => ())
   }
 }
 
 ///|
-fn WindowsApp::apply_current_window_request(
+fn WindowsApp::apply_platform_window_request(
   self : WindowsApp,
   id : @host.HostWindowId,
   request : @host.HostWindowRequest,
   apply : (@win.Window) -> Unit,
 ) -> @host.HostWindowRequestResult {
-  match (self.window_id, self.window) {
-    (Some(current), Some(window)) =>
-      if current == id {
-        let result = self.runtime_slots.apply_request(self.windows, request)
-        match result {
-          @host.HostWindowRequestResult::WindowRejected(_) => ()
-          _ => apply(window)
-        }
-        result
-      } else {
-        self.runtime_slots.apply_request(self.windows, request)
+  match self.platform_slots.lookup_host(id) {
+    Some(slot) => {
+      let result = self.runtime_slots.apply_request(self.windows, request)
+      match result {
+        @host.HostWindowRequestResult::WindowRejected(_) => ()
+        _ => apply(slot.window)
       }
-    _ =>
+      result
+    }
+    None =>
       @host.HostWindowRequestResult::WindowRejected(
         "window request has no active Windows window",
       )
+  }
+}
+
+///|
+fn WindowsApp::open_window(
+  self : WindowsApp,
+  event_loop : @win.ActiveEventLoop,
+  request : @host.HostWindowOpenRequest,
+) -> @host.HostWindowRequestResult {
+  match self.windows.resolve_open_request(request, self.scene_resolver) {
+    @host.HostWindowOpenResolution::OpenRejected(message) =>
+      @host.HostWindowRequestResult::WindowRejected(message)
+    @host.HostWindowOpenResolution::OpenResolved(resolved) =>
+      self.create_resolved_window(event_loop, resolved)
+  }
+}
+
+///|
+fn WindowsApp::create_resolved_window(
+  self : WindowsApp,
+  event_loop : @win.ActiveEventLoop,
+  resolved : @host.HostWindowResolvedOpen,
+) -> @host.HostWindowRequestResult {
+  let attributes = @window_core.WindowAttributes::default()
+    .with_title(resolved.record.title)
+    .with_surface_size(host_metrics_to_dpi_size(resolved.record.metrics))
+  let window : @win.Window? = Some(event_loop.try_create_window(attributes)) catch {
+    err => {
+      println("error creating Windows window: \{err}")
+      None
+    }
+  }
+  match window {
+    Some(window) => self.attach_resolved_window(window, resolved)
+    None => {
+      self.rollback_window_record(resolved.id)
+      @host.HostWindowRequestResult::WindowRejected(
+        "failed to create Windows window",
+      )
+    }
+  }
+}
+
+///|
+fn WindowsApp::attach_resolved_window(
+  self : WindowsApp,
+  window : @win.Window,
+  resolved : @host.HostWindowResolvedOpen,
+) -> @host.HostWindowRequestResult {
+  let metrics = @host.HostSurfaceMetrics::new(
+    logical_size=@host.physical_size_to_core(window.surface_size()),
+    physical_size=@host.physical_size_to_core(window.surface_size()),
+  )
+  match self.create_renderer_for_window(window, metrics) {
+    Some(renderer) => {
+      ignore(self.windows.resize(resolved.id, metrics))
+      ignore(self.runtime_slots.sync_open_from_registry(self.windows))
+      let record = match self.windows.lookup(resolved.id) {
+        Some(record) => record
+        None => resolved.record
+      }
+      let driver = @host.HostRuntimeDriver::new(
+        runtime=resolved.instance.runtime,
+        schedule_redraw=() => (),
+      )
+      driver.set_redraw_scheduler(() => {
+        self.request_redraw_window_if_needed(resolved.id)
+      })
+      driver.set_environment(
+        self.services.environment_with_system_theme(driver.environment()),
+      )
+      driver.set_text_system(renderer.text_system())
+      ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
+      ignore(
+        self.runtime_slots.insert(
+          @host.HostWindowRuntimeSlot::from_driver(record~, driver~),
+        ),
+      )
+      ignore(
+        self.platform_windows.bind(platform_id=window.id(), host_id=resolved.id),
+      )
+      ignore(
+        self.platform_slots.insert({
+          host_id: resolved.id,
+          platform_id: window.id(),
+          window,
+          renderer,
+        }),
+      )
+      self.request_platform_redraw(resolved.id)
+      @host.HostWindowRequestResult::WindowOpened(resolved.id)
+    }
+    None => {
+      window.drop()
+      self.rollback_window_record(resolved.id)
+      @host.HostWindowRequestResult::WindowRejected(
+        "failed to create Windows renderer",
+      )
+    }
   }
 }
 
@@ -628,6 +848,11 @@ fn WindowsApp::sync_runtime_slot(
 }
 
 ///|
+fn WindowsApp::sync_runtime_slots(self : WindowsApp) -> Unit {
+  ignore(self.runtime_slots.sync_open_from_registry(self.windows))
+}
+
+///|
 fn WindowsApp::apply_window_lifecycle(
   self : WindowsApp,
   window_id : @host.HostWindowId,
@@ -639,55 +864,106 @@ fn WindowsApp::apply_window_lifecycle(
 }
 
 ///|
+fn WindowsApp::active_runtime_slot(
+  self : WindowsApp,
+) -> @host.HostWindowRuntimeSlot? {
+  match self.runtime_slots.focused_slot() {
+    Some(slot) => Some(slot)
+    None => self.runtime_slots.primary_slot()
+  }
+}
+
+///|
 fn WindowsApp::sync_text_input_session(self : WindowsApp) -> Unit {
-  match self.window {
-    Some(window) =>
-      match self.text_input_session.sync(self.runtime.focused_text_input()) {
-        @host.TextInputSessionAction::EnableIme(request)
-        | @host.TextInputSessionAction::UpdateIme(request)
-        | @host.TextInputSessionAction::DisableIme(request) =>
-          window.request_ime_update(request) catch {
-            _ => ()
+  match self.active_runtime_slot() {
+    Some(runtime_slot) =>
+      match self.platform_slots.lookup_host(runtime_slot.id) {
+        Some(platform_slot) =>
+          match
+            self.text_input_session.sync(
+              runtime_slot.driver.focused_text_input(),
+            ) {
+            @host.TextInputSessionAction::EnableIme(request)
+            | @host.TextInputSessionAction::UpdateIme(request)
+            | @host.TextInputSessionAction::DisableIme(request) =>
+              platform_slot.window.request_ime_update(request) catch {
+                _ => ()
+              }
+            @host.TextInputSessionAction::NoImeChange => ()
           }
-        @host.TextInputSessionAction::NoImeChange => ()
+        None => ()
       }
     None => ()
   }
 }
 
 ///|
+fn runtime_slot_needs_redraw(slot : @host.HostWindowRuntimeSlot) -> Bool {
+  let result = slot.driver.event_result()
+  result.needs_redraw || result.redraw_requested
+}
+
+///|
 fn WindowsApp::request_redraw(self : WindowsApp) -> Unit {
-  if self.runtime.needs_redraw() {
-    match self.window {
-      Some(window) => window.request_redraw()
-      None => ()
-    }
+  match self.active_runtime_slot() {
+    Some(slot) => self.request_redraw_window_if_needed(slot.id)
+    None => ()
   }
 }
 
 ///|
-fn WindowsApp::dispose(self : WindowsApp) -> Unit {
-  match self.window_id {
-    Some(window_id) => {
-      ignore(self.windows.close(window_id))
-      self.sync_runtime_slot(window_id)
-      ignore(self.runtime_slots.remove(window_id))
-      ignore(self.platform_windows.remove_host(window_id))
-      ignore(self.windows.remove_closed())
-      self.window_id = None
+fn WindowsApp::request_redraw_window_if_needed(
+  self : WindowsApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.runtime_slots.lookup(window_id) {
+    Some(slot) =>
+      if runtime_slot_needs_redraw(slot) {
+        self.request_platform_redraw(window_id)
+      }
+    None => ()
+  }
+}
+
+///|
+fn WindowsApp::request_platform_redraw(
+  self : WindowsApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => slot.window.request_redraw()
+    None => ()
+  }
+}
+
+///|
+fn WindowsApp::dispose_window(
+  self : WindowsApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  ignore(self.windows.close(window_id))
+  self.sync_runtime_slot(window_id)
+  ignore(self.runtime_slots.remove(window_id))
+  ignore(self.platform_windows.remove_host(window_id))
+  match self.platform_slots.remove_host(window_id) {
+    Some(slot) => {
+      slot.renderer.dispose()
+      slot.window.drop()
     }
     None => ()
   }
-  match self.renderer {
-    Some(renderer) => renderer.dispose()
-    None => ()
-  }
-  match self.window {
-    Some(window) => window.drop()
-    None => ()
-  }
-  self.renderer = None
-  self.window = None
+  ignore(self.windows.remove_closed())
+  self.sync_runtime_slots()
+}
+
+///|
+fn WindowsApp::rollback_window_record(
+  self : WindowsApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  ignore(self.windows.close(window_id))
+  ignore(self.windows.remove_closed())
+  self.sync_runtime_slots()
 }
 
 ///|

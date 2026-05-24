@@ -14,6 +14,45 @@ test "windows backend converts resize event" {
 }
 
 ///|
+test "windows app options carry text engine and optional scene resolver" {
+  let request = @host.HostWindowOpenRequest::new(
+    title="Inspector",
+    scene=@host.HostWindowScene::new(scene_id="inspector"),
+    metrics=@host.HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=240.0),
+    ),
+  )
+  match WindowsAppOptions::new().scene_resolver.resolve(request) {
+    @host.HostWindowSceneResolution::SceneRejected(message) =>
+      inspect(message, content="window scene resolver is unavailable")
+    _ => fail("expected default Windows scene resolver rejection")
+  }
+  let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
+    @host.HostWindowSceneResolution::SceneResolved(
+      @host.HostWindowSceneInstance::new(
+        request~,
+        runtime=@core.AppRuntime::new_spec(
+          root=@core.ViewSpec::EmptySpec,
+          size=request.metrics.logical_size,
+        ),
+      ),
+    )
+  })
+  let options = WindowsAppOptions::new(
+    text_engine=@wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
+    scene_resolver=resolver,
+  )
+  assert_true(
+    options.text_engine == @wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
+  )
+  match options.scene_resolver.resolve(request) {
+    @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+      assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
+    _ => fail("expected configured Windows scene resolver")
+  }
+}
+
+///|
 test "windows service bridge exposes clipboard open url and system theme contracts" {
   let opened_url = Ref("")
   let bridge = windows_service_bridge(system_theme=@core.ColorScheme::Dark, open_url=url => {
