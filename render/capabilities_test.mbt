@@ -27,8 +27,33 @@ test "renderer capability report tracks draw command support" {
     is Some(layer) else {
     fail("expected layer compositing capability")
   }
-  assert_true(layer.native_status == @render.RendererFeatureStatus::Partial)
-  assert_true(layer.native_note.contains("PushLayer"))
+  assert_true(layer.native_status == @render.RendererFeatureStatus::Ready)
+  assert_true(layer.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(layer.native_note.contains("offscreen"))
+  guard @render.renderer_feature_capability(@render.RendererFeature::BlendMode)
+    is Some(blend) else {
+    fail("expected blend capability")
+  }
+  assert_true(blend.native_status == @render.RendererFeatureStatus::Ready)
+  assert_true(blend.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(blend.native_note.contains("backdrop-sampling"))
+  guard @render.renderer_feature_capability(
+      @render.RendererFeature::FilterEffect,
+    )
+    is Some(filter) else {
+    fail("expected filter capability")
+  }
+  assert_true(filter.native_status == @render.RendererFeatureStatus::Ready)
+  assert_true(filter.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(filter.native_note.contains("color matrix"))
+  guard @render.renderer_feature_capability(
+      @render.RendererFeature::ShaderEffect,
+    )
+    is Some(shader) else {
+    fail("expected shader capability")
+  }
+  assert_true(shader.native_status == @render.RendererFeatureStatus::Ready)
+  assert_true(shader.web_status == @render.RendererFeatureStatus::Ready)
   guard @render.renderer_feature_capability(@render.RendererFeature::PathVector)
     is Some(path) else {
     fail("expected path capability")
@@ -81,18 +106,9 @@ test "renderer neutral advanced commands are modeled with executable path mesh" 
   inspect(@render.collect_rect_batches(commands).length(), content="0")
   let plan = @render.plan_renderer_command_fallbacks(commands)
   inspect(plan.total_commands, content="6")
-  inspect(plan.fallback_count, content="3")
+  inspect(plan.fallback_count, content="0")
   inspect(plan.final_layer_depth, content="0")
   inspect(plan.final_filter_depth, content="0")
-  assert_true(
-    plan.fallbacks[0].feature == @render.RendererFeature::LayerCompositing,
-  )
-  assert_true(
-    plan.fallbacks[1].feature == @render.RendererFeature::FilterEffect,
-  )
-  assert_true(
-    plan.fallbacks[2].feature == @render.RendererFeature::ShaderEffect,
-  )
   guard commands[2] is @core.DrawCommand::DrawPath(path) else {
     fail("expected path command")
   }
@@ -105,16 +121,12 @@ test "renderer command planner reports unbalanced advanced scopes" {
     @core.DrawCommand::PopLayer,
     @core.DrawCommand::PushFilter(@core.FilterEffect::blur(2.0)),
   ])
-  inspect(plan.fallback_count, content="3")
+  inspect(plan.fallback_count, content="2")
   assert_true(
     plan.fallbacks[0].kind == @render.RendererCommandFallbackKind::UnbalancedPop,
   )
   assert_true(
-    plan.fallbacks[1].kind ==
-    @render.RendererCommandFallbackKind::PlannedFallback,
-  )
-  assert_true(
-    plan.fallbacks[2].kind == @render.RendererCommandFallbackKind::UnclosedScope,
+    plan.fallbacks[1].kind == @render.RendererCommandFallbackKind::UnclosedScope,
   )
   inspect(plan.final_filter_depth, content="1")
 }
@@ -122,28 +134,18 @@ test "renderer command planner reports unbalanced advanced scopes" {
 ///|
 test "renderer capability follow ups stay focused on native gaps" {
   let follow_ups = @render.renderer_feature_follow_ups()
-  inspect(follow_ups.length(), content="9")
+  inspect(follow_ups.length(), content="4")
   let mut has_transform = false
-  let mut has_clip = false
-  let mut has_layer = false
   let mut has_async_image = false
   for entry in follow_ups {
     if entry.feature == @render.RendererFeature::Transform {
       has_transform = true
-    }
-    if entry.feature == @render.RendererFeature::Clip {
-      has_clip = true
-    }
-    if entry.feature == @render.RendererFeature::LayerCompositing {
-      has_layer = true
     }
     if entry.feature == @render.RendererFeature::AsyncImage {
       has_async_image = true
     }
   }
   assert_true(has_transform)
-  assert_true(has_clip)
-  assert_true(has_layer)
   assert_true(has_async_image)
 }
 

@@ -20,14 +20,14 @@ Status meanings:
 | Shadow | ready | ready | None |
 | Text | ready | ready | None |
 | Image | ready | ready | Native decodes PNG/JPEG/BMP from local file paths and base64 data URIs through `mizchi/image`; Web loads browser-supported sources into a WebGPU texture cache. |
-| Clip | ready | partial | Rectangular transformed scissor behavior is aligned; rounded clips supported in native with shader SDF masks. |
+| Clip | ready | ready | Rectangular transformed scissor behavior is aligned; rounded clips are handled through native shader SDF masks and Web layer-mask shader coverage. |
 | Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices; layer-level transform state remains follow-up work. |
 | Opacity | ready | ready | None |
-| Layer compositing | partial | partial | `PushLayer` / `PopLayer` now model opacity, blend mode, masks, and offscreen intent; native and WebGPU still need retained layer pass execution. |
-| Blend mode | partial | partial | `BlendMode` is carried by `LayerSpec`; GPU pipeline blend-state mapping remains follow-up work. |
-| Filter effect | partial | partial | `PushFilter` / `PopFilter` now model blur, color, and contrast-style effects; shader pass execution remains follow-up work. |
+| Layer compositing | ready | ready | Native and Web render layer scopes into offscreen GPU textures and composite them back through the advanced GPU pass with opacity and masks. |
+| Blend mode | ready | ready | Source-over, multiply, screen, darken, and lighten map to GPU blend states; overlay uses a backdrop-sampling GPU pass for exact channel math. |
+| Filter effect | ready | ready | `PushFilter` / `PopFilter` render scoped content to offscreen textures; the advanced shader applies blur, saturation, brightness, contrast, and color matrix filters. |
 | Path/vector | ready | ready | `DrawPath` models move/line/quad/cubic/close verbs and is lowered through `moon_zeno` into fill and stroke triangle vertices before renderer execution. |
-| Shader effect | partial | partial | `DrawShaderEffect` resolves through a shared registry with built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`; GPU shader execution and host ABI remain follow-up work. |
+| Shader effect | ready | ready | `DrawShaderEffect` executes through the advanced GPU shader path for built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`, with unknown effects using their fallback brush. |
 | Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux has a fontconfig/HarfBuzz/FreeType scaffold provider, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
 | Async image | partial | partial | Renderer-neutral lifecycle records now model loading, ready, failed, disposed, and eviction; native/Web adapters still need to surface those diagnostics to app code. |
@@ -42,17 +42,20 @@ handling.
 Clip support uses transformed rectangular scissor rectangles and rounded clips
 with shader SDF masks. Transform support is applied to planned visual, image,
 and text vertices. Opacity is folded into visual and text vertex alpha.
-Layer compositing, blend modes, filters, and shader effects now have
-renderer-neutral command intents. Vector paths additionally have a shared
-`moon_zeno` tessellation contract that lowers fills and strokes into triangle
-vertices, including flattened quadratic and cubic segments. The renderer-neutral SVG
-import path uses `mizchi/svg` as its parser frontend and lowers supported scene
-graph shapes into the same draw-command model while reporting unsupported SMIL
-animation and `foreignObject` usage. `render/capabilities.mbt`
-also exposes a command fallback planner that reports planned skips, unbalanced
-pops, and open advanced scopes for native and WebGPU adapters. Native wgpu still
-needs actual offscreen passes, mask composition, filter shaders, and GPU shader
-registry execution. Native color emoji remains an explicit gap. Text shaping is
+Layer compositing and filter scopes render into offscreen textures before the
+parent pass samples them through the advanced composite shader. That pass
+applies opacity, rectangular or rounded masks, built-in filter payloads, and
+shader-effect payloads. Source-over, multiply, screen, darken, and lighten use
+GPU blend-state mappings; overlay uses a separate backdrop-sampling pass so the
+shader can evaluate the per-channel overlay formula against the current target.
+Vector paths additionally have a shared `moon_zeno` tessellation contract that
+lowers fills and strokes into triangle vertices, including flattened quadratic
+and cubic segments. The renderer-neutral SVG import path uses `mizchi/svg` as
+its parser frontend and lowers supported scene graph shapes into the same
+draw-command model while reporting unsupported SMIL animation and
+`foreignObject` usage. `render/capabilities.mbt` also exposes a command
+fallback planner that reports unbalanced pops and open advanced scopes for
+native and WebGPU adapters. Native color emoji remains an explicit gap. Text shaping is
 partial: `core/` keeps only a deterministic fallback `TextSystem`,
 `render/wgpu` owns provider validation and atlas upload,
 `render/wgpu/cosmic_text` owns the native Cosmic
@@ -103,13 +106,17 @@ diagnostics back into app-visible renderer state.
 Clip support maps transformed rectangular clip stacks to per-item scissor
 rectangles. Transform support is folded into generated visual, image, and text
 vertices, with clip scissors derived from transformed bounding boxes.
-The Web runtime has browser image loading and canvas-rasterized text, but
-layer compositing, blend modes, filters, and user shader effects are represented
-by the MoonBit command model but not yet forwarded in the browser host ABI.
+The Web runtime forwards layer, filter, and shader-effect commands through the
+wasm-gc host ABI. The browser runtime uses draw scopes, offscreen WebGPU
+textures, and an advanced composite shader for layer opacity, masks, filters,
+and built-in shader effects. Blend-mode coverage matches native: source-over,
+multiply, screen, darken, and lighten use WebGPU blend states, while overlay
+uses a backdrop-sampling WebGPU pass for exact semantics.
 Arbitrary paths share the same MoonBit tessellation contract as native, so host
 upload can consume deterministic triangle meshes. Skipped advanced commands are
-retained in the renderer's last fallback plan for diagnostics. Emoji and complex text shaping rely on
-browser font behavior and need deterministic conformance tests.
+retained in the renderer's last fallback plan for diagnostics when scopes are
+unbalanced or left open. Emoji and complex text shaping rely on browser font
+behavior and need deterministic conformance tests.
 
 ## Update Rule
 

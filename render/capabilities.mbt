@@ -152,9 +152,9 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     {
       feature: RendererFeature::Clip,
       native_status: RendererFeatureStatus::Ready,
-      web_status: RendererFeatureStatus::Partial,
+      web_status: RendererFeatureStatus::Ready,
       native_note: "Native wgpu maps nested rectangular and rounded clips, using physical scissor rectangles with shader SDF masks for rounded corners.",
-      web_note: "The browser WebGPU host applies the same transformed rectangular clip intersection before setting DPR-aware scissor rectangles; rounded masks remain follow-up work.",
+      web_note: "The browser WebGPU host applies transformed rectangular scissors and rounded layer masks in the advanced composite shader.",
     },
     {
       feature: RendererFeature::Transform,
@@ -172,24 +172,24 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     },
     {
       feature: RendererFeature::LayerCompositing,
-      native_status: RendererFeatureStatus::Partial,
-      web_status: RendererFeatureStatus::Partial,
-      native_note: "Layer intent is modeled with PushLayer/PopLayer, opacity, blend, mask, and offscreen flags; native wgpu still needs retained offscreen pass execution.",
-      web_note: "Layer intent is modeled in DrawCommand; the browser WebGPU host ABI still needs layer pass calls and mask composition.",
+      native_status: RendererFeatureStatus::Ready,
+      web_status: RendererFeatureStatus::Ready,
+      native_note: "PushLayer/PopLayer render child commands into offscreen textures and composite them back through the advanced GPU pass with opacity, masks, filters, and blend selection.",
+      web_note: "The wasm-gc host ABI forwards PushLayer/PopLayer and the browser runtime renders layer scopes into offscreen WebGPU textures before compositing.",
     },
     {
       feature: RendererFeature::BlendMode,
-      native_status: RendererFeatureStatus::Partial,
-      web_status: RendererFeatureStatus::Partial,
-      native_note: "BlendMode is part of LayerSpec; pipeline blend-state mapping remains follow-up work.",
-      web_note: "BlendMode is part of LayerSpec; the wasm-gc WebGPU host still needs ABI and pipeline mapping.",
+      native_status: RendererFeatureStatus::Ready,
+      web_status: RendererFeatureStatus::Ready,
+      native_note: "Layer composite pipelines map source-over, multiply, screen, darken, and lighten to GPU blend states; overlay uses a backdrop-sampling GPU pass for exact channel math.",
+      web_note: "The browser runtime maps source-over, multiply, screen, darken, and lighten to WebGPU blend states; overlay uses a backdrop-sampling WebGPU pass for exact channel math.",
     },
     {
       feature: RendererFeature::FilterEffect,
-      native_status: RendererFeatureStatus::Partial,
-      web_status: RendererFeatureStatus::Partial,
-      native_note: "PushFilter/PopFilter now represent blur, color, and contrast-style effects; shader pass execution remains follow-up work.",
-      web_note: "FilterEffect is renderer-neutral; browser WebGPU host calls and shader passes remain follow-up work.",
+      native_status: RendererFeatureStatus::Ready,
+      web_status: RendererFeatureStatus::Ready,
+      native_note: "PushFilter/PopFilter render scoped content into offscreen textures, then the advanced shader applies blur, saturation, brightness, contrast, and color matrix filters.",
+      web_note: "The wasm-gc host forwards filter scopes and the browser advanced shader applies blur, saturation, brightness, contrast, and color matrix filters.",
     },
     {
       feature: RendererFeature::PathVector,
@@ -200,10 +200,10 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     },
     {
       feature: RendererFeature::ShaderEffect,
-      native_status: RendererFeatureStatus::Partial,
-      web_status: RendererFeatureStatus::Partial,
-      native_note: "DrawShaderEffect resolves through a shared registry with built-in solid, checker, linear-gradient-debug, and vignette entries; GPU shader execution remains follow-up work.",
-      web_note: "DrawShaderEffect resolves through the same shared registry before browser host execution; WebGPU shader host calls remain follow-up work.",
+      native_status: RendererFeatureStatus::Ready,
+      web_status: RendererFeatureStatus::Ready,
+      native_note: "DrawShaderEffect executes through the advanced GPU shader path for built-in solid, checker, linear-gradient-debug, vignette, and fallback-brush effects.",
+      web_note: "DrawShaderEffect is forwarded through the wasm-gc host ABI and executes in the browser advanced WebGPU shader path with the same built-ins and fallback brush.",
     },
     {
       feature: RendererFeature::TextShaping,
@@ -262,17 +262,7 @@ pub fn plan_renderer_command_fallbacks(
   let mut filter_depth = 0
   for index, command in commands {
     match command {
-      @core.DrawCommand::PushLayer(_) => {
-        layer_depth = layer_depth + 1
-        fallbacks.push(
-          renderer_command_fallback(
-            index~,
-            feature=RendererFeature::LayerCompositing,
-            command="PushLayer",
-            reason="layer intent is modeled, but retained offscreen compositing is not executed by the renderer yet",
-          ),
-        )
-      }
+      @core.DrawCommand::PushLayer(_) => layer_depth = layer_depth + 1
       @core.DrawCommand::PopLayer =>
         if layer_depth <= 0 {
           fallbacks.push(
@@ -287,17 +277,7 @@ pub fn plan_renderer_command_fallbacks(
         } else {
           layer_depth = layer_depth - 1
         }
-      @core.DrawCommand::PushFilter(_) => {
-        filter_depth = filter_depth + 1
-        fallbacks.push(
-          renderer_command_fallback(
-            index~,
-            feature=RendererFeature::FilterEffect,
-            command="PushFilter",
-            reason="filter intent is modeled, but GPU filter passes are not executed by the renderer yet",
-          ),
-        )
-      }
+      @core.DrawCommand::PushFilter(_) => filter_depth = filter_depth + 1
       @core.DrawCommand::PopFilter =>
         if filter_depth <= 0 {
           fallbacks.push(
@@ -312,16 +292,8 @@ pub fn plan_renderer_command_fallbacks(
         } else {
           filter_depth = filter_depth - 1
         }
-      @core.DrawCommand::DrawPath(_) => ()
-      @core.DrawCommand::DrawShaderEffect(_) =>
-        fallbacks.push(
-          renderer_command_fallback(
-            index~,
-            feature=RendererFeature::ShaderEffect,
-            command="DrawShaderEffect",
-            reason="shader effect intent is modeled, but shader registry execution is not implemented yet",
-          ),
-        )
+      @core.DrawCommand::DrawPath(_) | @core.DrawCommand::DrawShaderEffect(_) =>
+        ()
       _ => ()
     }
   }

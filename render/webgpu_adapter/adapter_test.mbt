@@ -286,27 +286,57 @@ test "wgpu web command bridge preserves gradient and shadow command payloads" {
 }
 
 ///|
-test "wgpu web renderer reports skipped advanced command fallbacks" {
+test "wgpu web renderer forwards advanced layer filter and shader commands" {
+  let last_calls : Array[WebGpuHostCall] = []
   let renderer = create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
-    port=test_port(created=Ref(0)),
+    port=test_port(created=Ref(0), on_submit=calls => {
+      last_calls.clear()
+      for call in calls {
+        last_calls.push(call)
+      }
+    }),
   )
   renderer.render([
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5)),
-    @core.DrawCommand::DrawPath(
-      @core.PathSpec::new(verbs=[
-        @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        opacity=0.5,
+        blend_mode=@core.BlendMode::Screen,
+        mask=@core.LayerMask::RoundedMask(
+          @core.RoundedRect::new(
+            rect=@core.Rect::new(x=1.0, y=2.0, width=30.0, height=20.0),
+            radius=4.0,
+          ),
+        ),
+        offscreen=true,
+      ),
+    ),
+    @core.DrawCommand::PushFilter(
+      @core.FilterEffect::ColorMatrix([
+        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 0.0,
       ]),
     ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="checker",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      ),
+    ),
+    @core.DrawCommand::PopFilter,
     @core.DrawCommand::PopLayer,
   ])
   let plan = renderer.last_fallback_plan()
-  inspect(plan.fallback_count, content="1")
-  assert_true(
-    plan.fallbacks[0].feature == @render.RendererFeature::LayerCompositing,
-  )
+  inspect(plan.fallback_count, content="0")
+  inspect(last_calls.length(), content="7")
+  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
+  assert_true(last_calls[1] is WebGpuHostCall::PushLayer(_))
+  assert_true(last_calls[2] is WebGpuHostCall::PushFilter(_))
+  assert_true(last_calls[3] is WebGpuHostCall::DrawShaderEffect(_))
+  assert_true(last_calls[4] is WebGpuHostCall::PopFilter)
+  assert_true(last_calls[5] is WebGpuHostCall::PopLayer)
+  assert_true(last_calls[6] is WebGpuHostCall::Present)
 }
 
 ///|

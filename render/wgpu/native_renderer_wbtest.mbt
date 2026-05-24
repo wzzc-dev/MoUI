@@ -246,7 +246,87 @@ test "native renderer plans image clip transform and opacity commands" {
 }
 
 ///|
-test "native renderer reports planned advanced command fallbacks" {
+test "native renderer plans advanced GPU layer filter and shader items" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  let mask = @core.RoundedRect::new(
+    rect=@core.Rect::new(x=10.0, y=12.0, width=40.0, height=24.0),
+    radius=6.0,
+  )
+  renderer.render([
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        opacity=0.5,
+        blend_mode=@core.BlendMode::Multiply,
+        mask=@core.LayerMask::RoundedMask(mask),
+        offscreen=true,
+      ),
+    ),
+    @core.DrawCommand::PushFilter(
+      @core.FilterEffect::ColorMatrix([
+        0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0,
+        1.0, 0.1, 0.2, 0.3, 0.0,
+      ]),
+    ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="missing-effect",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+        fallback=@core.Brush::solid(@core.Color::blue()),
+      ),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PopLayer,
+  ])
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.draw_items.length(), content="1")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeLayer(layer) => {
+      inspect(layer.opacity, content="0.5")
+      assert_true(layer.blend_mode == @core.BlendMode::Multiply)
+      match layer.mask {
+        Some(mask) => {
+          assert_true(mask.rounded)
+          inspect(mask.radius, content="6")
+        }
+        None => fail("expected rounded layer mask")
+      }
+      inspect(layer.plan.items.length(), content="1")
+      match layer.plan.items[0] {
+        NativeDrawItem::NativeLayer(filter_layer) => {
+          assert_true(
+            filter_layer.filter is Some(@core.FilterEffect::ColorMatrix(_)),
+          )
+          inspect(filter_layer.plan.items.length(), content="1")
+          match filter_layer.plan.items[0] {
+            NativeDrawItem::NativeShaderEffect(effect) => {
+              inspect(native_shader_kind(effect.name), content="5")
+              let colors = native_shader_effect_colors(effect)
+              assert_true(colors.0 == @core.Color::blue())
+            }
+            _ => fail("expected nested shader effect")
+          }
+        }
+        _ => fail("expected nested filter layer")
+      }
+      let vertices = advanced_layer_vertices(renderer.size, layer)
+      inspect(vertices.length(), content="6")
+      inspect(vertices[0].filter_kind, content="0")
+      inspect(vertices[0].mask_radius, content="6")
+      inspect(vertices[0].mask_kind, content="1")
+      inspect(vertices[0].u, content="0.1")
+      inspect(vertices[0].v, content="0.12")
+    }
+    _ => fail("expected native layer item")
+  }
+}
+
+///|
+test "native renderer plans overlay layer for backdrop sampling pass" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
     @render.RendererSurfaceMetrics::from_logical(
@@ -254,14 +334,28 @@ test "native renderer reports planned advanced command fallbacks" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5)),
-    @core.DrawCommand::DrawShaderEffect(
-      @core.ShaderEffectSpec::new(
-        name="checker",
-        frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        opacity=0.75,
+        blend_mode=@core.BlendMode::Overlay,
+        offscreen=true,
       ),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      @core.Color::blue(),
     ),
     @core.DrawCommand::PopLayer,
   ])
-  inspect(renderer.unsupported_command_count, content="2")
+  inspect(renderer.unsupported_command_count, content="0")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeLayer(layer) => {
+      assert_true(layer.blend_mode == @core.BlendMode::Overlay)
+      let vertices = advanced_layer_vertices(renderer.size, layer)
+      inspect(vertices.length(), content="6")
+      inspect(vertices[0].blend_mode, content="3")
+      inspect(vertices[0].opacity, content="0.75")
+    }
+    _ => fail("expected overlay native layer item")
+  }
 }

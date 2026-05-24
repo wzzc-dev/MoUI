@@ -338,10 +338,86 @@ fn RendererHandle::prepare_native_image_items(
             )
           }
         }
+      NativeDrawItem::NativeLayer(layer) => {
+        self.prepare_native_image_plan(layer.plan, device, queue)
+        items.push(NativeDrawItem::NativeLayer(layer))
+      }
+      NativeDrawItem::NativeShaderEffect(_) => items.push(item)
       _ => items.push(item)
     }
   }
   self.draw_items = items
+}
+
+///|
+fn RendererHandle::prepare_native_image_plan(
+  self : RendererHandle,
+  plan : NativeDrawPlan,
+  device : @wgpu_mbt.Device,
+  queue : @wgpu_mbt.Queue,
+) -> Unit {
+  let items : Array[NativeDrawItem] = []
+  plan.image_vertices.clear()
+  for item in plan.items {
+    match item {
+      NativeDrawItem::NativeImage(_, _, scissor, run) =>
+        match self.ensure_native_image_resource(run.source, device, queue) {
+          Some(resource) => {
+            let start = plan.image_vertices.length()
+            append_prepared_image_vertices(
+              plan.image_vertices,
+              run,
+              resource,
+              self.size,
+            )
+            items.push(
+              NativeDrawItem::NativeImage(
+                start,
+                plan.image_vertices.length() - start,
+                scissor,
+                run,
+              ),
+            )
+          }
+          None => {
+            let start = plan.visual_vertices.length()
+            append_visual_quad(
+              plan.visual_vertices,
+              run.frame,
+              radius=0.0,
+              brush=native_image_placeholder_brush(run),
+              mode=visual_mode_fill,
+              stroke_width=0.0,
+              blur_radius=0.0,
+              state={
+                opacity: 1.0,
+                transform: run.transform,
+                clip: None,
+                clip_radius: 0.0,
+                clip_empty: false,
+              },
+              size=self.size,
+            )
+            items.push(
+              NativeDrawItem::NativeVisual(
+                start,
+                plan.visual_vertices.length() - start,
+                scissor,
+              ),
+            )
+          }
+        }
+      NativeDrawItem::NativeLayer(layer) => {
+        self.prepare_native_image_plan(layer.plan, device, queue)
+        items.push(NativeDrawItem::NativeLayer(layer))
+      }
+      _ => items.push(item)
+    }
+  }
+  plan.items.clear()
+  for item in items {
+    plan.items.push(item)
+  }
 }
 
 ///|
