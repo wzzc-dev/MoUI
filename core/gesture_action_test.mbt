@@ -63,7 +63,8 @@ test "action commands match enabled shortcuts" {
     ),
   )
   let defaults = default_text_commands()
-  inspect(defaults.length(), content="5")
+  inspect(defaults.length(), content="6")
+  assert_true(defaults.any(command => command.intent == CommandIntent::Cut))
   assert_true(defaults.any(command => command.intent == CommandIntent::Undo))
   assert_true(
     defaults.any(command => command.intent == CommandIntent::SelectAll),

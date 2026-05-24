@@ -788,6 +788,131 @@ test "host driver routes text clipboard commands through service bridge" {
 }
 
 ///|
+test "host driver routes clipboard keyboard shortcuts through service bridge" {
+  let text = @core.State::new("")
+  let clipboard = Ref("")
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::TextFieldSpec({
+      key: None,
+      value: text.binding(),
+      placeholder: "Type",
+      size: @core.Size::new(width=240.0, height=40.0),
+      font: @core.FontSpec::new(size=16.0, weight=400),
+      foreground: @core.Color::black(),
+      placeholder_color: @core.Color::gray(),
+      background: @core.Brush::solid(@core.Color::white()),
+      border: None,
+      focused_border: None,
+      cursor_color: @core.Color::blue(),
+      corner_radius: 0.0,
+      on_submit: None,
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        Clipboard(WriteText(value)) => {
+          clipboard.val = value
+          HostServiceResponse::ClipboardWritten
+        }
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText(clipboard.val)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("hello")),
+    ),
+  )
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="a",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+      bridge,
+    ),
+  )
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="c",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(clipboard.val, content="hello")
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="x",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(text.get(), content="")
+  clipboard.val = "world"
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="v",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(text.get(), content="world")
+}
+
+///|
+test "host driver falls back clipboard shortcuts to action commands" {
+  let copied = Ref(0)
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::EmptySpec,
+    size=@core.Size::new(width=10.0, height=10.0),
+  )
+  runtime.set_action_commands(
+    @core.ActionCommandMap::new(bindings=[
+      @core.CommandBinding::new(
+        command=@core.ActionCommand::new(intent=@core.CommandIntent::Copy),
+        handle=() => copied.val = copied.val + 1,
+      ),
+    ]),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=_request => HostServiceResponse::ClipboardWritten,
+  )
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="c",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(copied.val, content="1")
+}
+
+///|
 test "host driver dispatches ime composition text input events" {
   let text = @core.State::new("")
   let runtime = @core.AppRuntime::new_spec(

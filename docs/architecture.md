@@ -310,6 +310,10 @@ pretending that app code can call platform APIs directly.
 Keyboard shortcuts, menus, and host command responses share the
 `ActionCommand`/`CommandIntent` model. `ActionCommandMap` is the platform-neutral
 dispatcher for matching shortcuts and invoking enabled command handlers.
+Copy, cut, and paste shortcuts are routed through `HostRuntimeDriver` with the
+active `HostServiceBridge` so focused text controls use the platform clipboard
+when that service is available, while app-level command handlers still run when
+no text command handles the intent.
 Secondary-button context-menu requests are recognized by the host event layer:
 platform backends skip ordinary pointer dispatch for those events, then native
 menu-capable hosts ask `HostServiceBridge::ShowMenu` to present the current
