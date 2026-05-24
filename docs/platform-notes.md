@@ -41,6 +41,11 @@ constructors and platform event conversion.
   capability flags for clipboard, menus, file dialogs, URL opening, and system
   theme. Unsupported services should return `Unavailable` responses instead of
   leaking platform checks into `core` or `views`.
+- Host service bridges can apply a reported light/dark system theme to a runtime
+  `Environment`. Web, macOS, and Windows do this once at startup before the
+  first layout/redraw pass. Runtime `ThemeChanged` window events are normalized
+  to `HostEvent::ThemeChanged` and update the environment through
+  `HostRuntimeDriver`.
 - Web, macOS, and Windows route copy/cut/paste keyboard shortcuts through the
   active service bridge. When that bridge exposes clipboard support
   (macOS/Windows today), focused text controls read or write the platform
@@ -60,6 +65,9 @@ fallback branch. Browser Canvas measurement and WebGPU glyph drawing share the
 same CSS `system-ui` font stack generated from `FontSpec`; app-registered embedded fonts
 can be surfaced through browser font APIs, but remote font loading is not part
 of the backend contract.
+The browser host import reads `prefers-color-scheme` at startup and listens for
+media-query changes through `window/web`; MoUI maps those events into runtime
+environment color-scheme updates.
 See [Text system](text-system.md) for the shared runtime and renderer text
 contract.
 
@@ -81,6 +89,10 @@ opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
 `NSOpenPanel` and `NSSavePanel`, presents command menus at the current pointer
 position through `NSMenu`, and reports the effective light/dark system
 appearance through the shared `HostServiceBridge` contract.
+The native app entrypoint applies that reported appearance to the runtime
+environment before creating the host driver, so components see the system color
+scheme on their initial build. AppKit theme-change events use the shared
+`HostEvent::ThemeChanged` runtime path when emitted by the local window backend.
 Right-click context-menu requests use the same `NSMenu` path and dispatch the
 selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/macos` backend are normalized
@@ -150,6 +162,10 @@ presents basic open/save/directory dialogs through the Win32 common dialog and
 shell APIs, presents command menus at the current cursor position through
 `TrackPopupMenu`, and reports light/dark system theme from the current user's
 `AppsUseLightTheme` registry value.
+The native app entrypoint applies that reported theme to the runtime environment
+before creating the host driver, matching the macOS startup path. Windows
+theme-change events use the shared `HostEvent::ThemeChanged` runtime path when
+emitted by the local window backend.
 Right-click context-menu requests use the same `TrackPopupMenu` path and dispatch
 the selected `ActionCommand` back through `HostRuntimeDriver`.
 The shared drag/drop event contract is available in `backend/host`, but native
