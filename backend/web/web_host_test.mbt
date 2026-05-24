@@ -58,6 +58,7 @@ test "canvas host creates surface and input contracts" {
   inspect(input.capabilities().text_input, content="true")
   inspect(input.capabilities().scroll, content="true")
   inspect(input.capabilities().ime, content="false")
+  inspect(input.capabilities().clipboard, content="true")
   inspect(input.capabilities().drag_drop, content="false")
   inspect(input.coordinate_policy().scale_factor_applied, content="true")
 }
@@ -86,6 +87,52 @@ test "web service bridge exposes open url and system theme contract" {
     @host.HostServiceResponse::Unavailable(message) =>
       inspect(message, content="clipboard service is unavailable")
     _ => fail("expected clipboard to remain unavailable")
+  }
+}
+
+///|
+test "web service bridge exposes clipboard write contract" {
+  let clipboard = Ref("")
+  let bridge = web_service_bridge(clipboard=true, clipboard_write=text => {
+    clipboard.val = text
+    true
+  })
+  inspect(bridge.capabilities.clipboard, content="true")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(
+        @host.HostClipboardRequest::WriteText("copied from web"),
+      ),
+    ) {
+    @host.HostServiceResponse::ClipboardWritten => ()
+    _ => fail("expected clipboard write")
+  }
+  inspect(clipboard.val, content="copied from web")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(
+        message,
+        content="clipboard read is unavailable on Web; paste is delivered by browser text input events",
+      )
+    _ => fail("expected Web clipboard read to remain unavailable")
+  }
+}
+
+///|
+test "web service bridge reports failed clipboard write" {
+  let bridge = web_service_bridge(clipboard=true, clipboard_write=_text => false)
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(
+        @host.HostClipboardRequest::WriteText("blocked"),
+      ),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="clipboard write failed")
+    _ => fail("expected failed clipboard write")
   }
 }
 

@@ -50,3 +50,69 @@ test "web derives window default canvas id without host string return" {
   inspect(window_web_default_canvas_id(1), content="moonbit-window-web-1")
   inspect(window_web_default_canvas_id(42), content="moonbit-window-web-42")
 }
+
+///|
+test "web tracks modifiers from keyboard input events" {
+  let control_down = @window_core.WindowEvent::KeyboardInput(
+    None,
+    @window_core.KeyEvent::KeyEvent(
+      @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::ControlLeft),
+      @window_core.Key::Named(@window_core.NamedKey::Control),
+      @window_core.Key::Named(@window_core.NamedKey::Control),
+      @window_core.KeyLocation::Left,
+      @window_core.ElementState::Pressed,
+      false,
+      None,
+      None,
+    ),
+    false,
+  )
+  let with_control = web_modifiers_after_window_event(
+    @core.KeyModifiers::none(),
+    control_down,
+  )
+  inspect(with_control.control, content="true")
+
+  let copy_event = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::KeyboardInput(
+      None,
+      @window_core.KeyEvent::KeyEvent(
+        @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::KeyC),
+        @window_core.Key::Character("c"),
+        @window_core.Key::Character("c"),
+        @window_core.KeyLocation::Standard,
+        @window_core.ElementState::Pressed,
+        false,
+        Some("c"),
+        Some("c"),
+      ),
+      false,
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    with_control,
+  )
+  match copy_event {
+    Some(@host.HostEvent::Keyboard(event)) =>
+      inspect(event.modifiers.control, content="true")
+    _ => fail("expected keyboard event with control modifier")
+  }
+
+  let control_up = @window_core.WindowEvent::KeyboardInput(
+    None,
+    @window_core.KeyEvent::KeyEvent(
+      @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::ControlLeft),
+      @window_core.Key::Named(@window_core.NamedKey::Control),
+      @window_core.Key::Named(@window_core.NamedKey::Control),
+      @window_core.KeyLocation::Left,
+      @window_core.ElementState::Released,
+      false,
+      None,
+      None,
+    ),
+    false,
+  )
+  let without_control = web_modifiers_after_window_event(
+    with_control, control_up,
+  )
+  inspect(without_control.control, content="false")
+}

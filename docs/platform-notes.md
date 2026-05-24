@@ -68,6 +68,11 @@ of the backend contract.
 The active Web runtime service bridge opens external URLs through the browser
 host import, which calls `window.open(..., "_blank", "noopener,noreferrer")`
 and reports failure when the browser blocks the popup or the API is unavailable.
+Web copy/cut shortcuts are forwarded from the hidden text input to the runtime
+and write selected text through a browser host import using the user-gesture
+`document.execCommand("copy")` path. Paste still arrives through normal browser
+text-input events; synchronous clipboard reads are intentionally reported as
+unavailable until the host-service contract grows an async permission-aware path.
 The browser host import reads `prefers-color-scheme` at startup and listens for
 media-query changes through `window/web`; MoUI maps those events into runtime
 environment color-scheme updates.
