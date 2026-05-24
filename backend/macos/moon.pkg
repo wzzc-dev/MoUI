@@ -17,7 +17,9 @@ supported_targets = "native"
 
 options(
   link: {
-    "native": { "cc-link-flags": "-framework AppKit -framework QuartzCore -lz" },
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz",
+    },
   },
   "native-stub": [ "macos_surface_host.m" ],
   targets: { },

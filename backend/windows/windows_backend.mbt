@@ -24,6 +24,15 @@ extern "C" fn windows_open_url_bytes(url : Bytes) -> Int = "moui_windows_open_ur
 extern "C" fn windows_system_theme_is_light() -> Int = "moui_windows_system_theme_is_light"
 
 ///|
+#borrow(title, filters, default_name)
+extern "C" fn windows_file_dialog_bytes(
+  kind : Int,
+  title : Bytes,
+  filters : Bytes,
+  default_name : Bytes,
+) -> Bytes = "moui_windows_file_dialog"
+
+///|
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
   contract_ready : Bool
@@ -135,10 +144,12 @@ pub fn windows_system_theme() -> @core.ColorScheme {
 pub fn windows_service_bridge(
   system_theme? : @core.ColorScheme = windows_system_theme(),
   open_url? : (String) -> Bool = dispatch_windows_open_url,
+  file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_windows_file_dialog,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=true,
+      file_dialogs=true,
       open_url=true,
       system_theme=true,
     ),
@@ -152,12 +163,28 @@ pub fn windows_service_bridge(
           } else {
             @host.HostServiceResponse::Unavailable("open URL failed")
           }
+        @host.HostServiceRequest::FileDialog(options) =>
+          @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
         _ =>
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
+  )
+}
+
+///|
+fn dispatch_windows_file_dialog(
+  options : @host.HostFileDialogOptions,
+) -> Array[String] {
+  decode_file_dialog_selection(
+    windows_file_dialog_bytes(
+      host_file_dialog_kind_code(options.kind),
+      encode_host_string(options.title),
+      encode_host_filter_list(options.filters),
+      encode_host_string(options.default_name.unwrap_or("")),
+    ),
   )
 }
 

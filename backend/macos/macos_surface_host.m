@@ -1,10 +1,88 @@
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <moonbit.h>
 #import <stdint.h>
 #import <string.h>
 
 static NSString *const MOUI_MACOS_SURFACE_LAYER_NAME = @"moui_macos_surface_layer";
+
+static NSString *moui_macos_string_from_bytes(moonbit_bytes_t bytes) {
+  int32_t len = (int32_t)Moonbit_array_length(bytes);
+  if (len <= 0) {
+    return @"";
+  }
+  NSString *string = [[NSString alloc] initWithBytes:(const void *)bytes
+                                             length:(NSUInteger)len
+                                           encoding:NSUTF8StringEncoding];
+  return string != nil ? string : @"";
+}
+
+static moonbit_bytes_t moui_macos_bytes_from_string(NSString *string) {
+  if (string == nil) {
+    return moonbit_make_bytes(0, 0);
+  }
+  const char *utf8 = [string UTF8String];
+  if (utf8 == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  size_t len = strlen(utf8);
+  moonbit_bytes_t bytes = moonbit_make_bytes((int32_t)len, 0);
+  if (len > 0) {
+    memcpy(bytes, utf8, len);
+  }
+  return bytes;
+}
+
+static NSArray<NSString *> *moui_macos_filter_extensions(moonbit_bytes_t filters) {
+  NSString *filter_string = moui_macos_string_from_bytes(filters);
+  if ([filter_string length] == 0) {
+    return @[];
+  }
+  NSMutableArray<NSString *> *extensions = [NSMutableArray array];
+  for (NSString *raw in [filter_string componentsSeparatedByString:@"\n"]) {
+    NSString *item = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if ([item length] == 0) {
+      continue;
+    }
+    if ([item hasPrefix:@"*."]) {
+      item = [item substringFromIndex:2];
+    } else if ([item hasPrefix:@"."]) {
+      item = [item substringFromIndex:1];
+    }
+    if ([item length] > 0) {
+      [extensions addObject:item];
+    }
+  }
+  return extensions;
+}
+
+static moonbit_bytes_t moui_macos_file_dialog_result(NSArray<NSURL *> *urls) {
+  NSMutableArray<NSString *> *paths = [NSMutableArray array];
+  for (NSURL *url in urls) {
+    NSString *path = [url path];
+    if (path != nil && [path length] > 0) {
+      [paths addObject:path];
+    }
+  }
+  return moui_macos_bytes_from_string([paths componentsJoinedByString:@"\n"]);
+}
+
+static void moui_macos_apply_file_filters(NSSavePanel *panel, NSArray<NSString *> *extensions) {
+  if ([extensions count] == 0) {
+    return;
+  }
+  NSMutableArray<UTType *> *types = [NSMutableArray array];
+  for (NSString *extension in extensions) {
+    UTType *type = [UTType typeWithFilenameExtension:extension];
+    if (type != nil) {
+      [types addObject:type];
+    }
+  }
+  if ([types count] > 0) {
+    [panel setAllowedContentTypes:types];
+  }
+}
 
 MOONBIT_FFI_EXPORT
 void *moui_macos_surface_host_layer_from_view(uint64_t raw_content_view_handle, int32_t width,
@@ -69,28 +147,13 @@ MOONBIT_FFI_EXPORT
 moonbit_bytes_t moui_macos_clipboard_read_text(void) {
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
   NSString *text = [pasteboard stringForType:NSPasteboardTypeString];
-  if (text == nil) {
-    return moonbit_make_bytes(0, 0);
-  }
-  const char *utf8 = [text UTF8String];
-  if (utf8 == NULL) {
-    return moonbit_make_bytes(0, 0);
-  }
-  size_t len = strlen(utf8);
-  moonbit_bytes_t bytes = moonbit_make_bytes((int32_t)len, 0);
-  if (len > 0) {
-    memcpy(bytes, utf8, len);
-  }
-  return bytes;
+  return moui_macos_bytes_from_string(text);
 }
 
 MOONBIT_FFI_EXPORT
 int32_t moui_macos_clipboard_write_text(moonbit_bytes_t text) {
-  int32_t text_len = (int32_t)Moonbit_array_length(text);
-  NSString *string = [[NSString alloc] initWithBytes:(const void *)text
-                                             length:(NSUInteger)text_len
-                                           encoding:NSUTF8StringEncoding];
-  if (string == nil) {
+  NSString *string = moui_macos_string_from_bytes(text);
+  if ([string length] == 0 && Moonbit_array_length(text) > 0) {
     return 0;
   }
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
@@ -136,4 +199,46 @@ int32_t moui_macos_system_theme_is_dark(void) {
     NSAppearanceNameDarkAqua,
   ]];
   return [match isEqualToString:NSAppearanceNameDarkAqua] ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_macos_file_dialog(int32_t kind, moonbit_bytes_t title, moonbit_bytes_t filters,
+                                       moonbit_bytes_t default_name) {
+  NSString *panel_title = moui_macos_string_from_bytes(title);
+  NSArray<NSString *> *extensions = moui_macos_filter_extensions(filters);
+
+  if (kind == 1) {
+    NSSavePanel *panel = [NSSavePanel savePanel];
+    if ([panel_title length] > 0) {
+      [panel setTitle:panel_title];
+    }
+    NSString *name = moui_macos_string_from_bytes(default_name);
+    if ([name length] > 0) {
+      [panel setNameFieldStringValue:name];
+    }
+    moui_macos_apply_file_filters(panel, extensions);
+    if ([panel runModal] == NSModalResponseOK && [panel URL] != nil) {
+      return moui_macos_file_dialog_result(@[[panel URL]]);
+    }
+    return moonbit_make_bytes(0, 0);
+  }
+
+  NSOpenPanel *panel = [NSOpenPanel openPanel];
+  if ([panel_title length] > 0) {
+    [panel setTitle:panel_title];
+  }
+  if (kind == 2) {
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+  } else {
+    [panel setCanChooseFiles:YES];
+    [panel setCanChooseDirectories:NO];
+    [panel setAllowsMultipleSelection:YES];
+    moui_macos_apply_file_filters(panel, extensions);
+  }
+  if ([panel runModal] == NSModalResponseOK) {
+    return moui_macos_file_dialog_result([panel URLs]);
+  }
+  return moonbit_make_bytes(0, 0);
 }

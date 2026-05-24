@@ -27,7 +27,7 @@ pub fn windows_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, d
 
 pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo
 
-pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool) -> @host.HostServiceBridge
+pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String]) -> @host.HostServiceBridge
 
 pub fn windows_surface_host_info() -> @wgpu.SurfaceHostInfo
 

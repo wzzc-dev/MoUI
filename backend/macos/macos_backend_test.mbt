@@ -96,6 +96,33 @@ test "macos service bridge reports failed open url" {
 }
 
 ///|
+test "macos service bridge exposes file dialog contract" {
+  let seen_title = Ref("")
+  let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Light, file_dialog=options => {
+    seen_title.val = options.title
+    ["/tmp/moui.md"]
+  })
+  inspect(bridge.capabilities.file_dialogs, content="true")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::FileDialog(
+        @host.HostFileDialogOptions::new(
+          kind=@host.HostFileDialogKind::OpenFile,
+          title="Open Markdown",
+          filters=["*.md"],
+        ),
+      ),
+    ) {
+    @host.HostServiceResponse::FileDialogSelection(paths) => {
+      inspect(paths.length(), content="1")
+      inspect(paths[0], content="/tmp/moui.md")
+    }
+    _ => fail("expected file dialog selection")
+  }
+  inspect(seen_title.val, content="Open Markdown")
+}
+
+///|
 test "macos backend converts resize event to host metrics" {
   let event = window_event_to_host_with_modifiers(
     @window_core.WindowEvent::SurfaceResized(
