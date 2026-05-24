@@ -15,13 +15,13 @@ pub struct MarkdownEditorApp {
 }
 
 ///|
-pub(all) struct MarkdownEditorHistoryEntry {
+struct MarkdownEditorHistoryEntry {
   source : String
   selection : MarkdownEditorSelection
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) enum MarkdownEditorTargetKind {
+enum MarkdownEditorTargetKind {
   PlainSelection
   LinkTarget
   ImageTarget
@@ -50,68 +50,12 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
 }
 
 ///|
-pub fn MarkdownEditorApp::document(self : MarkdownEditorApp) -> String {
-  self.document.get()
-}
-
-///|
-pub fn MarkdownEditorApp::set_document(
-  self : MarkdownEditorApp,
-  text : String,
-) -> Unit {
-  self.document.set(text)
-  self.selection.set({ caret: 0, selection: None })
-  self.clear_history()
-  self.sync_target_inputs()
-}
-
-///|
-pub fn MarkdownEditorApp::clear(self : MarkdownEditorApp) -> Unit {
-  self.document.set("")
-  self.selection.set({ caret: 0, selection: None })
-  self.clear_history()
-  self.sync_target_inputs()
-}
-
-///|
-pub fn MarkdownEditorApp::apply_action(
-  self : MarkdownEditorApp,
-  action : String,
-) -> Unit {
-  if action == "source-preview" {
-    self.toggle_source_preview()
-  } else {
-    match markdown_command_from_action(action) {
-      Some(command) => self.apply_command_to_selection(command)
-      None => ()
-    }
-  }
-}
-
-///|
-pub fn MarkdownEditorApp::source_preview_visible(
-  self : MarkdownEditorApp,
-) -> Bool {
-  self.source_preview_visible.get()
-}
-
-///|
-pub fn MarkdownEditorApp::set_source_preview_visible(
-  self : MarkdownEditorApp,
-  visible : Bool,
-) -> Unit {
-  self.source_preview_visible.set(visible)
-}
-
-///|
-pub fn MarkdownEditorApp::toggle_source_preview(
-  self : MarkdownEditorApp,
-) -> Unit {
+fn MarkdownEditorApp::toggle_source_preview(self : MarkdownEditorApp) -> Unit {
   self.source_preview_visible.set(!self.source_preview_visible.get())
 }
 
 ///|
-pub fn MarkdownEditorApp::apply_command(
+fn MarkdownEditorApp::apply_command(
   self : MarkdownEditorApp,
   command : MarkdownEditorCommand,
 ) -> Unit {
@@ -119,7 +63,7 @@ pub fn MarkdownEditorApp::apply_command(
 }
 
 ///|
-pub fn MarkdownEditorApp::apply_command_to_selection(
+fn MarkdownEditorApp::apply_command_to_selection(
   self : MarkdownEditorApp,
   command : MarkdownEditorCommand,
 ) -> Unit {
@@ -142,27 +86,17 @@ pub fn MarkdownEditorApp::apply_command_to_selection(
 }
 
 ///|
-pub fn MarkdownEditorApp::undo(self : MarkdownEditorApp) -> Bool {
+fn MarkdownEditorApp::undo(self : MarkdownEditorApp) -> Bool {
   self.restore_history(undo=true)
 }
 
 ///|
-pub fn MarkdownEditorApp::redo(self : MarkdownEditorApp) -> Bool {
+fn MarkdownEditorApp::redo(self : MarkdownEditorApp) -> Bool {
   self.restore_history(undo=false)
 }
 
 ///|
-pub fn MarkdownEditorApp::can_undo(self : MarkdownEditorApp) -> Bool {
-  self.undo_stack.get().length() > 0
-}
-
-///|
-pub fn MarkdownEditorApp::can_redo(self : MarkdownEditorApp) -> Bool {
-  self.redo_stack.get().length() > 0
-}
-
-///|
-pub fn MarkdownEditorApp::set_selection(
+fn MarkdownEditorApp::set_selection(
   self : MarkdownEditorApp,
   caret : Int,
   selection : @core.TextRange?,
@@ -172,106 +106,27 @@ pub fn MarkdownEditorApp::set_selection(
 }
 
 ///|
-pub fn MarkdownEditorApp::set_link_target(
-  self : MarkdownEditorApp,
-  target : String,
-) -> Unit {
-  self.link_target.set(target)
-}
-
-///|
-pub fn MarkdownEditorApp::set_image_target(
-  self : MarkdownEditorApp,
-  target : String,
-) -> Unit {
-  self.image_target.set(target)
-}
-
-///|
-pub fn MarkdownEditorApp::set_code_language(
-  self : MarkdownEditorApp,
-  language : String,
-) -> Unit {
-  self.code_language.set(language)
-}
-
-///|
-pub fn MarkdownEditorApp::set_footnote_text(
-  self : MarkdownEditorApp,
-  text : String,
-) -> Unit {
-  self.footnote_text.set(text)
-}
-
-///|
-pub fn MarkdownEditorApp::set_html_block_text(
-  self : MarkdownEditorApp,
-  text : String,
-) -> Unit {
-  self.html_block_text.set(text)
-}
-
-///|
-pub fn MarkdownEditorApp::link_target(self : MarkdownEditorApp) -> String {
-  self.link_target.get()
-}
-
-///|
-pub fn MarkdownEditorApp::image_target(self : MarkdownEditorApp) -> String {
-  self.image_target.get()
-}
-
-///|
-pub fn MarkdownEditorApp::code_language(self : MarkdownEditorApp) -> String {
-  self.code_language.get()
-}
-
-///|
-pub fn MarkdownEditorApp::footnote_text(self : MarkdownEditorApp) -> String {
-  self.footnote_text.get()
-}
-
-///|
-pub fn MarkdownEditorApp::html_block_text(self : MarkdownEditorApp) -> String {
-  self.html_block_text.get()
-}
-
-///|
-pub fn MarkdownEditorApp::target_kind(
-  self : MarkdownEditorApp,
-) -> MarkdownEditorTargetKind {
-  self.target_kind.get()
-}
-
-///|
-pub fn MarkdownEditorApp::block_label(self : MarkdownEditorApp) -> String {
-  self.block_label.get()
-}
-
-///|
-pub fn MarkdownEditorApp::apply_link_target(self : MarkdownEditorApp) -> Unit {
+fn MarkdownEditorApp::apply_link_target(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetLinkTarget(self.link_target.get()))
 }
 
 ///|
-pub fn MarkdownEditorApp::apply_image_target(self : MarkdownEditorApp) -> Unit {
+fn MarkdownEditorApp::apply_image_target(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetImageTarget(self.image_target.get()))
 }
 
 ///|
-pub fn MarkdownEditorApp::apply_code_language(self : MarkdownEditorApp) -> Unit {
+fn MarkdownEditorApp::apply_code_language(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetCodeLanguage(self.code_language.get()))
 }
 
 ///|
-pub fn MarkdownEditorApp::apply_footnote_text(self : MarkdownEditorApp) -> Unit {
+fn MarkdownEditorApp::apply_footnote_text(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetFootnoteText(self.footnote_text.get()))
 }
 
 ///|
-pub fn MarkdownEditorApp::apply_html_block_text(
-  self : MarkdownEditorApp,
-) -> Unit {
+fn MarkdownEditorApp::apply_html_block_text(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetHtmlBlockText(self.html_block_text.get()))
 }
 
@@ -300,12 +155,6 @@ fn MarkdownEditorApp::push_redo(
   let stack = self.redo_stack.get()
   stack.push(entry)
   self.redo_stack.set(stack)
-}
-
-///|
-fn MarkdownEditorApp::clear_history(self : MarkdownEditorApp) -> Unit {
-  self.undo_stack.set([])
-  self.redo_stack.set([])
 }
 
 ///|
@@ -395,7 +244,7 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
 }
 
 ///|
-pub fn MarkdownEditorApp::toggle_task_at(
+fn MarkdownEditorApp::toggle_task_at(
   self : MarkdownEditorApp,
   content_offset : Int,
 ) -> Unit {
@@ -409,7 +258,7 @@ pub fn MarkdownEditorApp::toggle_task_at(
 }
 
 ///|
-pub fn MarkdownEditorApp::root(
+fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
   ctx : @core.BuildContext,
 ) -> @core.ViewSpec {
@@ -1210,88 +1059,6 @@ pub fn MarkdownEditorApp::runtime(
 ///|
 fn sample_markdown() -> String {
   "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n- Use toolbar buttons to add markers\n- Verify source on the right\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n---"
-}
-
-///|
-pub fn markdown_apply_action(text : String, action : String) -> String {
-  match markdown_command_from_action(action) {
-    Some(command) =>
-      markdown_editor_apply_command_at(
-        text,
-        command,
-        Some({ caret: markdown_editor_text_length(text), selection: None }),
-      ).source
-    None => text
-  }
-}
-
-///|
-fn markdown_command_from_action(action : String) -> MarkdownEditorCommand? {
-  if action == "bold" {
-    Some(Bold)
-  } else if action == "italic" {
-    Some(Italic)
-  } else if action == "code" {
-    Some(Code)
-  } else if action == "strike" {
-    Some(Strikethrough)
-  } else if action == "link" {
-    Some(Link)
-  } else if action == "link-target" {
-    Some(SetLinkTarget("https://moui.dev"))
-  } else if action == "image" {
-    Some(Image)
-  } else if action == "image-target" {
-    Some(SetImageTarget("assets/image.png"))
-  } else if action == "code-language" {
-    Some(SetCodeLanguage("moonbit"))
-  } else if action == "paragraph" {
-    Some(Paragraph)
-  } else if action == "h1" {
-    Some(Heading(1))
-  } else if action == "h2" {
-    Some(Heading(2))
-  } else if action == "h3" {
-    Some(Heading(3))
-  } else if action == "h4" {
-    Some(Heading(4))
-  } else if action == "h5" {
-    Some(Heading(5))
-  } else if action == "h6" {
-    Some(Heading(6))
-  } else if action == "ul" {
-    Some(BulletList)
-  } else if action == "task" {
-    Some(TaskList)
-  } else if action == "ol" {
-    Some(OrderedList)
-  } else if action == "quote" {
-    Some(Quote)
-  } else if action == "rule" {
-    Some(HorizontalRule)
-  } else if action == "table" {
-    Some(Table)
-  } else if action == "table-row" {
-    Some(InsertTableRow)
-  } else if action == "table-column" {
-    Some(InsertTableColumn)
-  } else if action == "table-row-delete" {
-    Some(DeleteTableRow)
-  } else if action == "table-column-delete" {
-    Some(DeleteTableColumn)
-  } else if action == "table-align-left" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextStart)))
-  } else if action == "table-align-center" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)))
-  } else if action == "table-align-right" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)))
-  } else if action == "table-align-auto" {
-    Some(SetTableColumnAlignment(None))
-  } else if action == "codeblock" {
-    Some(CodeBlock)
-  } else {
-    None
-  }
 }
 
 ///|

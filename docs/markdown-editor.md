@@ -8,8 +8,9 @@ commands, and editing workflows.
 
 ## Package Shape
 
-- `examples/markdown_editor/app/`: shared editor model, Markdown parsing adapter,
-  rich text document mapping, command behavior, and app tests.
+- `examples/markdown_editor/app/`: shared app state plus package-local editor
+  model, source/visual mapping, command behavior, input transforms, Markdown
+  parsing adapter, rich text document mapping, and focused white-box tests.
 - `examples/markdown_editor/web_wasm/`: Web wasm-gc entrypoint.
 - `examples/markdown_editor/macos/`: macOS native entrypoint.
 - `examples/markdown_editor/windows/`: Windows native entrypoint.
