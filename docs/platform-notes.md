@@ -62,9 +62,10 @@ Window events pass through the shared `backend/host` conversion helpers, and the
 native host owns only AppKit window lifetime, CAMetalLayer surface creation,
 text-input session synchronization, renderer resize, and redraw requests.
 The macOS service bridge routes text clipboard requests through `NSPasteboard`,
-opens URLs through `NSWorkspace`, and reports the effective light/dark system
-appearance through the shared `HostServiceBridge` contract. Menu and file-dialog
-requests remain capability-gated until their native services are added.
+opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
+`NSOpenPanel` and `NSSavePanel`, and reports the effective light/dark system
+appearance through the shared `HostServiceBridge` contract. Menu requests remain
+capability-gated until the native service is added.
 Native WGPU text can use either the shared Moon Cosmic provider or a platform
 provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
 measurement and glyph rasterization, explicitly composed with the Moon Cosmic
@@ -93,7 +94,7 @@ backend flags:
 ```moonbit
 link: {
   "native": {
-    "cc-link-flags": "-framework AppKit -framework QuartzCore -lz"
+    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz"
   },
 },
 ```
@@ -104,7 +105,7 @@ are absent from the final link:
 ```moonbit
 link: {
   "native": {
-    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz"
+    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz"
   },
 },
 ```
@@ -124,10 +125,11 @@ macOS, with platform-specific ownership limited to Win32 window handles, WGPU
 surface creation, resize handling, text-input session synchronization, and redraw
 requests. Text clipboard requests are implemented through the Win32
 `CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
-boundary. The Windows service bridge also opens URLs through `ShellExecuteW` and
-reports light/dark system theme from the current user's
-`AppsUseLightTheme` registry value, while menu and file-dialog requests remain
-capability-gated until their native services are added.
+boundary. The Windows service bridge also opens URLs through `ShellExecuteW`,
+presents basic open/save/directory dialogs through the Win32 common dialog and
+shell APIs, and reports light/dark system theme from the current user's
+`AppsUseLightTheme` registry value. Menu requests remain capability-gated until
+the native service is added.
 Windows installs the sibling `render/wgpu/directwrite` provider through the same
 renderer/runtime boundary used by macOS CoreText and composes it with
 `render/wgpu/cosmic_text` as fallback. That provider is currently an explicit

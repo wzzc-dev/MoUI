@@ -48,6 +48,33 @@ test "windows service bridge reports failed open url" {
 }
 
 ///|
+test "windows service bridge exposes file dialog contract" {
+  let seen_kind = Ref(@host.HostFileDialogKind::OpenFile)
+  let bridge = windows_service_bridge(system_theme=@core.ColorScheme::Light, file_dialog=options => {
+    seen_kind.val = options.kind
+    ["C:\\Users\\moui\\note.md"]
+  })
+  inspect(bridge.capabilities.file_dialogs, content="true")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::FileDialog(
+        @host.HostFileDialogOptions::new(
+          kind=@host.HostFileDialogKind::SaveFile,
+          title="Save note",
+          default_name=Some("note.md"),
+        ),
+      ),
+    ) {
+    @host.HostServiceResponse::FileDialogSelection(paths) => {
+      inspect(paths.length(), content="1")
+      inspect(paths[0], content="C:\\Users\\moui\\note.md")
+    }
+    _ => fail("expected file dialog selection")
+  }
+  assert_true(seen_kind.val == @host.HostFileDialogKind::SaveFile)
+}
+
+///|
 test "windows backend converts resize event to host metrics" {
   let event = window_event_to_host(
     @window_core.WindowEvent::SurfaceResized(

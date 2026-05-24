@@ -24,6 +24,15 @@ extern "C" fn macos_open_url_bytes(url : Bytes) -> Int = "moui_macos_open_url"
 extern "C" fn macos_system_theme_is_dark() -> Int = "moui_macos_system_theme_is_dark"
 
 ///|
+#borrow(title, filters, default_name)
+extern "C" fn macos_file_dialog_bytes(
+  kind : Int,
+  title : Bytes,
+  filters : Bytes,
+  default_name : Bytes,
+) -> Bytes = "moui_macos_file_dialog"
+
+///|
 pub(all) suberror MacosSurfaceHostError {
   MacosSurfaceHostLayerUnavailable(String)
 }
@@ -119,10 +128,12 @@ pub fn macos_system_theme() -> @core.ColorScheme {
 pub fn macos_service_bridge(
   system_theme? : @core.ColorScheme = macos_system_theme(),
   open_url? : (String) -> Bool = dispatch_macos_open_url,
+  file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_macos_file_dialog,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=true,
+      file_dialogs=true,
       open_url=true,
       system_theme=true,
     ),
@@ -136,12 +147,28 @@ pub fn macos_service_bridge(
           } else {
             @host.HostServiceResponse::Unavailable("open URL failed")
           }
+        @host.HostServiceRequest::FileDialog(options) =>
+          @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
         _ =>
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
+  )
+}
+
+///|
+fn dispatch_macos_file_dialog(
+  options : @host.HostFileDialogOptions,
+) -> Array[String] {
+  decode_file_dialog_selection(
+    macos_file_dialog_bytes(
+      host_file_dialog_kind_code(options.kind),
+      encode_host_string(options.title),
+      encode_host_filter_list(options.filters),
+      encode_host_string(options.default_name.unwrap_or("")),
+    ),
   )
 }
 
