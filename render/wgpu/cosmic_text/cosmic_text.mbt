@@ -40,7 +40,7 @@ pub fn cosmic_text_engine() -> @wgpu_renderer.NativeTextEngine {
 fn CosmicTextCache::new() -> CosmicTextCache {
   {
     font_system: @moon_cosmic.FontSystem::new().set_fallback_profile(
-      @moon_cosmic.FallbackProfile::MacOS,
+      cosmic_text_platform_fallback_profile(),
     ),
     swash_cache: @moon_cosmic.SwashCache::new(),
     catalog: CosmicFontCatalog::platform_default(),
@@ -48,6 +48,30 @@ fn CosmicTextCache::new() -> CosmicTextCache {
     warned_paths: {},
     glyph_keys: {},
   }
+}
+
+///|
+#cfg(platform="windows")
+fn cosmic_text_platform_fallback_profile() -> @moon_cosmic.FallbackProfile {
+  @moon_cosmic.FallbackProfile::Windows
+}
+
+///|
+#cfg(platform="macos")
+fn cosmic_text_platform_fallback_profile() -> @moon_cosmic.FallbackProfile {
+  @moon_cosmic.FallbackProfile::MacOS
+}
+
+///|
+#cfg(platform="linux")
+fn cosmic_text_platform_fallback_profile() -> @moon_cosmic.FallbackProfile {
+  @moon_cosmic.FallbackProfile::Unix
+}
+
+///|
+#cfg(not(any(platform="windows", platform="macos", platform="linux")))
+fn cosmic_text_platform_fallback_profile() -> @moon_cosmic.FallbackProfile {
+  @moon_cosmic.FallbackProfile::Other
 }
 
 ///|
@@ -77,6 +101,26 @@ fn macos_bold_font_path() -> String {
 }
 
 ///|
+fn linux_regular_font_path() -> String {
+  first_existing_font_path([
+    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+    "/usr/share/fonts/noto/NotoSans-Regular.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
+  ])
+}
+
+///|
+fn linux_bold_font_path() -> String {
+  first_existing_font_path([
+    "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+    "/usr/share/fonts/noto/NotoSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",
+  ])
+}
+
+///|
 fn windows_cjk_font_path() -> String {
   first_existing_font_path([
     "C:\\Windows\\Fonts\\msyh.ttc", "C:\\Windows\\Fonts\\simsun.ttc", "C:\\Windows\\Fonts\\simhei.ttf",
@@ -93,21 +137,40 @@ fn macos_cjk_font_path() -> String {
 }
 
 ///|
+fn linux_cjk_font_path() -> String {
+  first_existing_font_path([
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+  ])
+}
+
+///|
 fn cosmic_regular_font_path() -> String {
   first_existing_font_path([
     windows_regular_font_path(),
     macos_regular_font_path(),
+    linux_regular_font_path(),
   ])
 }
 
 ///|
 fn cosmic_bold_font_path() -> String {
-  first_existing_font_path([windows_bold_font_path(), macos_bold_font_path()])
+  first_existing_font_path([
+    windows_bold_font_path(),
+    macos_bold_font_path(),
+    linux_bold_font_path(),
+  ])
 }
 
 ///|
 fn cosmic_cjk_font_path() -> String {
-  first_existing_font_path([windows_cjk_font_path(), macos_cjk_font_path()])
+  first_existing_font_path([
+    windows_cjk_font_path(),
+    macos_cjk_font_path(),
+    linux_cjk_font_path(),
+  ])
 }
 
 ///|
