@@ -72,6 +72,8 @@ struct MacosApp {
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
+  windows : @host.HostWindowRegistry
+  mut window_id : @host.HostWindowId?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
@@ -238,6 +240,8 @@ pub fn run_app_with_options(
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     text_engine_setting: options.text_engine,
+    windows: @host.HostWindowRegistry::new(),
+    window_id: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
@@ -393,6 +397,12 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
         window.surface_size(),
         scale_factor=window.scale_factor(),
       )
+      let window_id = self.windows.open(
+        title=self.title,
+        metrics~,
+        primary=true,
+      )
+      self.window_id = Some(window_id)
       ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
       let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
         err => {
@@ -584,9 +594,22 @@ fn MacosApp::dispatch_window_event(
       scale_factor~,
     ) {
     Some(host_event) => {
+      self.apply_window_lifecycle(host_event)
       ignore(self.driver.dispatch(host_event))
       self.sync_text_input_session()
     }
+    None => ()
+  }
+}
+
+///|
+fn MacosApp::apply_window_lifecycle(
+  self : MacosApp,
+  host_event : @host.HostEvent,
+) -> Unit {
+  match self.window_id {
+    Some(window_id) =>
+      ignore(self.windows.apply_host_event(window_id, host_event))
     None => ()
   }
 }
@@ -628,6 +651,14 @@ fn MacosApp::request_redraw(self : MacosApp) -> Unit {
 
 ///|
 fn MacosApp::dispose(self : MacosApp) -> Unit {
+  match self.window_id {
+    Some(window_id) => {
+      ignore(self.windows.close(window_id))
+      ignore(self.windows.remove_closed())
+      self.window_id = None
+    }
+    None => ()
+  }
   match self.renderer {
     Some(renderer) => renderer.dispose()
     None => ()

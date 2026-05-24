@@ -59,6 +59,8 @@ struct WindowsApp {
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
+  windows : @host.HostWindowRegistry
+  mut window_id : @host.HostWindowId?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
@@ -90,6 +92,8 @@ pub fn run_app_with_options(
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     text_engine_setting: options.text_engine,
+    windows: @host.HostWindowRegistry::new(),
+    window_id: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
@@ -317,6 +321,12 @@ pub impl @win.ApplicationHandler for WindowsApp with can_create_surfaces(
         logical_size=@host.physical_size_to_core(window.surface_size()),
         physical_size=@host.physical_size_to_core(window.surface_size()),
       )
+      let window_id = self.windows.open(
+        title=self.title,
+        metrics~,
+        primary=true,
+      )
+      self.window_id = Some(window_id)
       ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
       let renderer : @wgpu_renderer.WgpuRenderer? = Some(
         @wgpu_renderer.create_with_host_surface_and_text_engine(
@@ -436,9 +446,22 @@ fn WindowsApp::dispatch_window_event(
       self.modifiers,
     ) {
     Some(host_event) => {
+      self.apply_window_lifecycle(host_event)
       ignore(self.driver.dispatch(host_event))
       self.sync_text_input_session()
     }
+    None => ()
+  }
+}
+
+///|
+fn WindowsApp::apply_window_lifecycle(
+  self : WindowsApp,
+  host_event : @host.HostEvent,
+) -> Unit {
+  match self.window_id {
+    Some(window_id) =>
+      ignore(self.windows.apply_host_event(window_id, host_event))
     None => ()
   }
 }
@@ -472,6 +495,14 @@ fn WindowsApp::request_redraw(self : WindowsApp) -> Unit {
 
 ///|
 fn WindowsApp::dispose(self : WindowsApp) -> Unit {
+  match self.window_id {
+    Some(window_id) => {
+      ignore(self.windows.close(window_id))
+      ignore(self.windows.remove_closed())
+      self.window_id = None
+    }
+    None => ()
+  }
   match self.renderer {
     Some(renderer) => renderer.dispose()
     None => ()

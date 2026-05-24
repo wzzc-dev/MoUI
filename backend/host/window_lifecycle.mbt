@@ -218,6 +218,28 @@ pub fn HostWindowRegistry::set_primary(
 }
 
 ///|
+pub fn HostWindowRegistry::apply_host_event(
+  self : HostWindowRegistry,
+  id : HostWindowId,
+  event : HostEvent,
+) -> Bool {
+  match event {
+    HostEvent::Resized(metrics) => self.resize(id, metrics)
+    HostEvent::Focus({ focused: true, .. }) => self.focus(id)
+    HostEvent::Focus({ focused: false, .. }) =>
+      self.update_open_window(id, record => {
+        if record.phase == WindowFocused {
+          { ..record, phase: WindowVisible }
+        } else {
+          record
+        }
+      })
+    HostEvent::CloseRequested => self.request_close(id)
+    _ => false
+  }
+}
+
+///|
 fn HostWindowRegistry::has_open_window(
   self : HostWindowRegistry,
   id : HostWindowId,

@@ -296,6 +296,11 @@ Windows should convert their native window events into `HostEvent` and then let
 `AppRuntime` update state, rebuild, and emit `DrawCommand` values. Linux
 currently keeps the same contract shape as a scaffold until a real window
 backend exists.
+The active Web, macOS, and Windows hosts still expose single-window entrypoints,
+but each one now opens a primary `HostWindowRecord`, applies resize/focus/close
+`HostEvent` values through the registry, and removes the record when the host
+window is disposed. That makes multi-window lifecycle state a shared host
+concern instead of a future platform-specific rewrite.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and

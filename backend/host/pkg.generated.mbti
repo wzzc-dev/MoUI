@@ -288,6 +288,7 @@ pub struct HostWindowRegistry {
   mut next_value : Int
   mut records : Array[HostWindowRecord]
 }
+pub fn HostWindowRegistry::apply_host_event(Self, HostWindowId, HostEvent) -> Bool
 pub fn HostWindowRegistry::close(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::focus(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::focused_window(Self) -> HostWindowRecord?
