@@ -598,6 +598,12 @@ test "host window registry resolves scenes before registering opened windows" {
       )
       slot.driver.request_redraw()
       inspect(redraws.val, content="1")
+      let driver_backed = HostWindowRuntimeSlot::from_driver(
+        record~,
+        driver=slot.driver,
+      )
+      assert_true(driver_backed.id == id)
+      assert_true(driver_backed.driver.size() == slot.driver.size())
     }
     _ => fail("expected resolved open window")
   }

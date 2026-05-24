@@ -210,6 +210,14 @@ pub fn HostWindowRuntimeSlot::new(
 }
 
 ///|
+pub fn HostWindowRuntimeSlot::from_driver(
+  record~ : HostWindowRecord,
+  driver~ : HostRuntimeDriver,
+) -> HostWindowRuntimeSlot {
+  { id: record.id, record, driver }
+}
+
+///|
 pub fn HostWindowRuntimeSlot::from_resolved_open(
   resolved : HostWindowResolvedOpen,
   schedule_redraw~ : () -> Unit,
