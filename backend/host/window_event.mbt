@@ -148,6 +148,17 @@ pub fn mouse_scroll_delta_to_host(
 }
 
 ///|
+fn drag_drop_position_to_core(
+  position : @dpi.PhysicalPositionF64?,
+  scale_factor~ : Double,
+) -> @core.Point? {
+  match position {
+    Some(position) => Some(physical_position_to_core(position, scale_factor~))
+    None => None
+  }
+}
+
+///|
 pub fn window_event_to_host_with_modifiers(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
@@ -203,6 +214,44 @@ pub fn window_event_to_host_with_modifiers(
             position=last_pointer,
             delta=mouse_scroll_delta_to_host(delta, scale_factor~),
             phase=touch_phase_to_host(phase),
+          ),
+        ),
+      )
+    @window_core.WindowEvent::DragEntered(paths, position) =>
+      Some(
+        HostEvent::DragDrop(
+          @core.DragDropEvent::new(
+            phase=@core.DragDropPhase::Entered,
+            paths~,
+            position=Some(physical_position_to_core(position, scale_factor~)),
+          ),
+        ),
+      )
+    @window_core.WindowEvent::DragMoved(position) =>
+      Some(
+        HostEvent::DragDrop(
+          @core.DragDropEvent::new(
+            phase=@core.DragDropPhase::Moved,
+            position=Some(physical_position_to_core(position, scale_factor~)),
+          ),
+        ),
+      )
+    @window_core.WindowEvent::DragDropped(paths, position) =>
+      Some(
+        HostEvent::DragDrop(
+          @core.DragDropEvent::new(
+            phase=@core.DragDropPhase::Dropped,
+            paths~,
+            position=Some(physical_position_to_core(position, scale_factor~)),
+          ),
+        ),
+      )
+    @window_core.WindowEvent::DragLeft(position) =>
+      Some(
+        HostEvent::DragDrop(
+          @core.DragDropEvent::new(
+            phase=@core.DragDropPhase::Left,
+            position=drag_drop_position_to_core(position, scale_factor~),
           ),
         ),
       )

@@ -30,6 +30,7 @@ test "input host owns capabilities focus modifiers and text input gating" {
   inspect(capabilities.pointer, content="true")
   inspect(capabilities.scroll, content="true")
   inspect(capabilities.ime, content="false")
+  inspect(capabilities.drag_drop, content="false")
   inspect(input.coordinate_policy().scale_factor_applied, content="true")
   match input.insert_text("a") {
     None => ()
@@ -60,6 +61,53 @@ test "input host owns capabilities focus modifiers and text input gating" {
   match input.insert_text("b") {
     None => ()
     Some(_) => fail("blurred input host should not emit text")
+  }
+}
+
+///|
+test "host converts window drag drop events to logical core events" {
+  let event = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::DragDropped(
+      ["/tmp/note.md"],
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, 48.0),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match event {
+    Some(
+      HostEvent::DragDrop(
+        {
+          phase: @core.DragDropPhase::Dropped,
+          paths,
+          position: Some({ x: 12.0, y: 24.0 }),
+        }
+      )
+    ) => inspect(paths[0], content="/tmp/note.md")
+    _ => fail("expected logical file drop")
+  }
+  match event {
+    Some(host_event) =>
+      match host_event.to_core() {
+        Some(
+          @core.AppEvent::DragDrop({ phase: @core.DragDropPhase::Dropped, .. })
+        ) => ()
+        _ => fail("expected drag drop app event")
+      }
+    _ => fail("expected drag drop app event")
+  }
+  let left = window_event_to_host(
+    @window_core.WindowEvent::DragLeft(None),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match left {
+    Some(
+      HostEvent::DragDrop(
+        { phase: @core.DragDropPhase::Left, position: None, .. }
+      )
+    ) => ()
+    _ => fail("expected drag left without position")
   }
 }
 

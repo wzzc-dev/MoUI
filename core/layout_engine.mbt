@@ -168,6 +168,7 @@ fn modified_intrinsic_size(
     | SemanticsRoleModifier(_)
     | FocusableModifier(_)
     | OnTapModifier(_)
+    | OnFileDropModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)

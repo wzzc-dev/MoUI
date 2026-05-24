@@ -125,7 +125,8 @@ before it grows broad platform claims:
   and renderer capability report synchronization.
 - Input/accessibility: gesture arbitration, action-command matching and
   dispatch, explicit focus traversal helpers, shortcut dispatch, IME/text
-  selection, clipboard service routing, and semantics action roundtrips.
+  selection, clipboard service routing, file drop dispatch, and semantics action
+  roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, window lifecycle registry behavior, devtool snapshots,
   frame-profile counters, guidance freshness, and example builds.

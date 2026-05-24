@@ -102,6 +102,7 @@ pub(all) enum HostEvent {
   Focus(HostFocusEvent)
   Keyboard(@wzzc-dev/moui/core.KeyboardEvent)
   TextInput(@wzzc-dev/moui/core.TextInputEvent)
+  DragDrop(@wzzc-dev/moui/core.DragDropEvent)
   Command(@wzzc-dev/moui/core.CommandIntent)
   RedrawRequested
   CloseRequested
@@ -144,8 +145,9 @@ pub(all) struct HostInputCapabilities {
   text_input : Bool
   ime : Bool
   clipboard : Bool
+  drag_drop : Bool
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostInputCapabilities::new(pointer? : Bool, scroll? : Bool, keyboard? : Bool, focus? : Bool, text_input? : Bool, ime? : Bool, clipboard? : Bool) -> Self
+pub fn HostInputCapabilities::new(pointer? : Bool, scroll? : Bool, keyboard? : Bool, focus? : Bool, text_input? : Bool, ime? : Bool, clipboard? : Bool, drag_drop? : Bool) -> Self
 pub fn HostInputCapabilities::none() -> Self
 
 pub(all) struct HostInputContract {

@@ -308,6 +308,31 @@ test "macos backend converts scaled pointer coordinates to logical host points" 
 }
 
 ///|
+test "macos backend converts file drag drop to logical host event" {
+  let drop = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::DragDropped(
+      ["/tmp/moui.md"],
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(120.0, 80.0),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+    @core.KeyModifiers::none(),
+    scale_factor=2.0,
+  )
+  match drop {
+    Some(
+      @host.HostEvent::DragDrop(
+        {
+          phase: @core.DragDropPhase::Dropped,
+          paths,
+          position: Some({ x: 60.0, y: 40.0 }),
+        }
+      )
+    ) => inspect(paths[0], content="/tmp/moui.md")
+    _ => fail("expected scaled file drop")
+  }
+}
+
+///|
 test "macos backend converts wheel and focus into host input contract" {
   let wheel = window_event_to_host_with_modifiers(
     @window_core.WindowEvent::MouseWheel(
