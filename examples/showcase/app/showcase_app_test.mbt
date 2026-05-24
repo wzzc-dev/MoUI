@@ -93,6 +93,39 @@ test "showcase covers text media controls and layout sections" {
 }
 
 ///|
+test "showcase layout demos avoid overlapping labels" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=1400.0, height=760.0)
+  app.select_section("layout")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let commands = runtime.draw_commands()
+  guard text_frame(commands, "Base: Padding") is Some(padding) else {
+    fail("expected padding base demo label")
+  }
+  guard text_frame(commands, "Custom children layout") is Some(custom) else {
+    fail("expected custom children demo label")
+  }
+  guard text_frame(commands, "Keyboard shortcut") is Some(shortcut) else {
+    fail("expected lazy grid shortcut label")
+  }
+  guard text_frame(commands, "State holders") is Some(state_holders) else {
+    fail("expected lazy grid state holder label")
+  }
+  assert_false(rects_overlap(padding, custom))
+  assert_true(shortcut.size.width >= 128.0)
+  guard text_frame(commands, "Aspect ratio") is Some(aspect) else {
+    fail("expected aspect ratio label")
+  }
+  guard text_frame(commands, "Intrinsic height") is Some(intrinsic_height) else {
+    fail("expected intrinsic height label")
+  }
+  inspect((intrinsic_height.origin.y - aspect.origin.y).to_int(), content="48")
+  assert_true(state_holders.origin.y - intrinsic_height.origin.y < 120.0)
+  assert_true(padding.origin.y - shortcut.origin.y < 120.0)
+  assert_true(layout_tile_marker_count(commands) >= 8)
+}
+
+///|
 test "showcase embeds reusable example apps and renderer report" {
   let app = @app.ShowcaseApp::new()
   let runtime = app.runtime(width=760.0, height=420.0)
@@ -243,6 +276,50 @@ fn text_within(
     }
   }
   false
+}
+
+///|
+fn text_frame(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.Rect? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+        if value == text {
+          return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn rects_overlap(a : @core.Rect, b : @core.Rect) -> Bool {
+  let a_right = a.origin.x + a.size.width
+  let b_right = b.origin.x + b.size.width
+  let a_bottom = a.origin.y + a.size.height
+  let b_bottom = b.origin.y + b.size.height
+  a.origin.x < b_right &&
+  a_right > b.origin.x &&
+  a.origin.y < b_bottom &&
+  a_bottom > b.origin.y
+}
+
+///|
+fn layout_tile_marker_count(commands : Array[@core.DrawCommand]) -> Int {
+  let mut count = 0
+  for command in commands {
+    match command {
+      @core.DrawCommand::FillRoundedRect({ rect, radius }, _) =>
+        if rect.size.width == 4.0 && rect.size.height == 22.0 && radius == 2.0 {
+          count = count + 1
+        }
+      _ => ()
+    }
+  }
+  count
 }
 
 ///|

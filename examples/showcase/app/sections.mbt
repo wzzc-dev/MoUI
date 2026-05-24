@@ -251,6 +251,108 @@ fn ShowcaseApp::layout_section(
   metrics : ShowcaseMetrics,
   slider : @core.Binding[Double],
 ) -> @core.ViewSpec {
+  let gallery_grid_columns = if metrics.compact { 1 } else { 2 }
+  let gallery_grid_width = if metrics.compact { 252.0 } else { 324.0 }
+  let gallery_grid_height = if metrics.compact { 128.0 } else { 100.0 }
+  let gallery_list = @views.scroll_view(
+    @views.lazy_list(
+      self.gallery_items(),
+      item => item,
+      item => {
+        @views.text(item, width=180.0, height=24.0).foreground(
+          theme.palette.foreground,
+        )
+      },
+      state=self.list_scroll,
+      item_height=26.0,
+      viewport_height=84.0,
+      spacing=2.0,
+    ),
+    width=200.0,
+    height=88.0,
+  )
+  let gallery_grid = @views.lazy_grid(
+    self.gallery_items(),
+    item => item,
+    item => self.layout_tile(theme, item),
+    state=self.grid_scroll,
+    columns=gallery_grid_columns,
+    item_height=44.0,
+    viewport_width=gallery_grid_width,
+    viewport_height=gallery_grid_height,
+    row_spacing=4.0,
+    column_spacing=4.0,
+  )
+  let gallery_browser = if metrics.compact {
+    @views.column(
+      [gallery_list, gallery_grid],
+      spacing=theme.spacing_scale.sm,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    )
+  } else {
+    @views.row(
+      [gallery_list, gallery_grid],
+      spacing=theme.spacing_scale.md,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    )
+  }
+  let overlay_demo = @views.overlay(
+    @views.padding(self.layout_tile(theme, "Base: Padding"), 8.0),
+    @views.align(
+      @views.surface(
+        @views.text("Overlay", width=62.0, height=18.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.primary_foreground),
+        width=82.0,
+        height=26.0,
+        style={
+          ..@core.SurfaceStyle::default(theme~),
+          brush: @core.Brush::solid(theme.palette.primary.multiply_alpha(0.88)),
+          border: None,
+          padding: @core.Insets::symmetric(horizontal=10.0, vertical=4.0),
+          radius: theme.radius_scale.sm,
+        },
+      ),
+      alignment=@core.Alignment::top_trailing(),
+    ),
+  )
+  let custom_children_demo = @views.padding_insets(
+    @views.custom_children_layout(
+      children=[
+        @views.text("Custom children layout", width=180.0, height=24.0).foreground(
+          theme.palette.foreground,
+        ),
+      ],
+      measure=ctx => {
+        ctx.constraints.constrain(@core.Size::new(width=220.0, height=34.0))
+      },
+      place=ctx => [ctx.frame],
+      paint=frame => {
+        [
+          @core.DrawCommand::StrokeRoundedRect(
+            @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
+            theme.palette.primary,
+            1.0,
+          ),
+        ]
+      },
+      semantics_label="Custom children layout",
+    ),
+    @core.Insets::all(4.0),
+  )
+  let advanced_layout_demos = if metrics.compact {
+    @views.column(
+      [overlay_demo, custom_children_demo],
+      spacing=theme.spacing_scale.sm,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    )
+  } else {
+    @views.row(
+      [overlay_demo, custom_children_demo],
+      spacing=theme.spacing_scale.md,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    )
+  }
   section_panel(
     theme,
     "Layout",
@@ -263,7 +365,7 @@ fn ShowcaseApp::layout_section(
             @views.flexible(self.layout_tile(theme, "Flexible"), weight=1.0),
             @views.spacer(min_length=12.0, weight=0.0),
             @views.frame(
-              self.layout_tile(theme, "Frame"),
+              self.layout_tile_sized(theme, "Frame", 76.0, 32.0),
               width=92.0,
               height=48.0,
             ),
@@ -273,90 +375,35 @@ fn ShowcaseApp::layout_section(
         ),
         @views.grid(
           [
-            @views.aspect_ratio(self.layout_tile(theme, "Aspect ratio"), 1.7),
-            @views.intrinsic_width(self.layout_tile(theme, "Intrinsic width")),
-            @views.intrinsic_height(self.layout_tile(theme, "Intrinsic height")),
-            @views.layout_priority(self.layout_tile(theme, "Priority"), 2.0),
+            @views.frame(
+              @views.aspect_ratio(self.layout_tile(theme, "Aspect ratio"), 1.7),
+              width=156.0,
+              height=40.0,
+            ),
+            @views.frame(
+              @views.intrinsic_width(self.layout_tile(theme, "Intrinsic width")),
+              width=156.0,
+              height=40.0,
+            ),
+            @views.frame(
+              @views.intrinsic_height(
+                self.layout_tile(theme, "Intrinsic height"),
+              ),
+              width=156.0,
+              height=40.0,
+            ),
+            @views.frame(
+              @views.layout_priority(self.layout_tile(theme, "Priority"), 2.0),
+              width=156.0,
+              height=40.0,
+            ),
           ],
           columns=2,
           row_spacing=theme.spacing_scale.sm,
           column_spacing=theme.spacing_scale.sm,
         ),
-        @views.row(
-          [
-            @views.scroll_view(
-              @views.lazy_list(
-                self.gallery_items(),
-                item => item,
-                item => {
-                  @views.text(item, width=180.0, height=24.0).foreground(
-                    theme.palette.foreground,
-                  )
-                },
-                state=self.list_scroll,
-                item_height=26.0,
-                viewport_height=84.0,
-                spacing=2.0,
-              ),
-              width=200.0,
-              height=88.0,
-            ),
-            @views.lazy_grid(
-              self.gallery_items(),
-              item => item,
-              item => self.layout_tile(theme, item),
-              state=self.grid_scroll,
-              columns=2,
-              item_height=40.0,
-              viewport_width=220.0,
-              viewport_height=88.0,
-              row_spacing=4.0,
-              column_spacing=4.0,
-            ),
-          ],
-          spacing=theme.spacing_scale.md,
-          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-        ),
-        @views.stack([
-          @views.overlay(
-            @views.padding(self.layout_tile(theme, "Padding"), 8.0),
-            @views.align(
-              @views.text("Overlay", width=82.0, height=22.0).foreground(
-                theme.palette.primary,
-              ),
-              alignment=@core.Alignment::top_trailing(),
-            ),
-          ),
-          @views.padding_insets(
-            @views.custom_children_layout(
-              children=[
-                @views.text("Custom children layout", width=180.0, height=24.0).foreground(
-                  theme.palette.foreground,
-                ),
-              ],
-              measure=ctx => {
-                ctx.constraints.constrain(
-                  @core.Size::new(width=220.0, height=34.0),
-                )
-              },
-              place=ctx => [ctx.frame],
-              paint=frame => {
-                [
-                  @core.DrawCommand::StrokeRoundedRect(
-                    @core.RoundedRect::new(
-                      rect=frame,
-                      radius=theme.radius_scale.sm,
-                    ),
-                    theme.palette.primary,
-                    1.0,
-                  ),
-                ]
-              },
-              semantics_label="Custom children layout",
-            ),
-            @core.Insets::all(4.0),
-          ),
-        ]),
+        gallery_browser,
+        advanced_layout_demos,
         self.sparkline(theme, slider.get()),
       ],
       spacing=theme.spacing_scale.sm,
