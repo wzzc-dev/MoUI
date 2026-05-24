@@ -331,6 +331,11 @@ pub(all) struct HostWindowOpenRequest {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostWindowOpenRequest::new(title~ : String, scene? : HostWindowScene, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Self
 
+pub(all) enum HostWindowOpenResolution {
+  OpenResolved(HostWindowResolvedOpen)
+  OpenRejected(String)
+}
+
 pub(all) struct HostWindowRecord {
   id : HostWindowId
   title : String
@@ -360,6 +365,7 @@ pub fn HostWindowRegistry::primary_window(Self) -> HostWindowRecord?
 pub fn HostWindowRegistry::remove_closed(Self) -> Int
 pub fn HostWindowRegistry::request_close(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::resize(Self, HostWindowId, HostSurfaceMetrics) -> Bool
+pub fn HostWindowRegistry::resolve_open_request(Self, HostWindowOpenRequest, HostWindowSceneResolver) -> HostWindowOpenResolution
 pub fn HostWindowRegistry::set_primary(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::show(Self, HostWindowId) -> Bool
 
@@ -404,6 +410,13 @@ pub(all) enum HostWindowRequestResult {
   WindowUpdated(HostWindowId)
   WindowRejected(String)
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostWindowResolvedOpen {
+  id : HostWindowId
+  record : HostWindowRecord
+  instance : HostWindowSceneInstance
+}
+pub fn HostWindowResolvedOpen::new(id~ : HostWindowId, record~ : HostWindowRecord, instance~ : HostWindowSceneInstance) -> Self
 
 pub(all) struct HostWindowScene {
   scene_id : String
