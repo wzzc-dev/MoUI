@@ -49,8 +49,15 @@ flow described in `platform-notes.md`.
 To wrap an example as a local `.app` bundle:
 
 ```sh
-sh scripts/package-macos-app.sh --package examples/showcase/macos --name "MoUI Showcase"
+sh scripts/package-macos-app.sh \
+  --package examples/showcase/macos \
+  --name "MoUI Showcase" \
+  --bundle-id dev.wzzc.moui.showcase \
+  --version 0.1.0
 ```
+
+The bundle includes a `Contents/Resources/moui-package.json` manifest so local
+packaging output can be inspected without parsing `Info.plist`.
 
 ## Windows Native
 
@@ -73,8 +80,14 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windo
 For a reusable distributable folder with the built executable and runtime DLLs:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 -Package examples/showcase/windows -AppName MoUIShowcase
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+  -Package examples/showcase/windows `
+  -AppName MoUIShowcase `
+  -Version 0.1.0
 ```
+
+The folder includes `moui-package.json` with app, package, version, executable,
+and copied runtime DLL metadata.
 
 ## Example Validation
 

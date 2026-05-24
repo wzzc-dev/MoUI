@@ -87,6 +87,9 @@ sh -n scripts/preview-loop.sh
 sh -n scripts/package-macos-app.sh
 ```
 
+When packaging helpers change, also run at least one `--no-build` smoke against
+an already-built executable and inspect the generated manifest/plist output.
+
 Use `rg` to audit stale terms, missing links, old example paths, and outdated
 validation commands. If the change updates docs placement, package layout,
 platform behavior, examples, renderer capabilities, or the text system, also

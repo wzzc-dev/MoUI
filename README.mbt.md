@@ -116,6 +116,16 @@ moon build examples/markdown_editor/macos --target native
 ./_build/native/debug/build/examples/markdown_editor/macos/macos.exe
 ```
 
+Wrap a native example as a local `.app` bundle:
+
+```sh
+sh scripts/package-macos-app.sh \
+  --package examples/showcase/macos \
+  --name "MoUI Showcase" \
+  --bundle-id dev.wzzc.moui.showcase \
+  --version 0.1.0
+```
+
 ## Windows Native
 
 Windows native examples use the static GNU `wgpu-native` release below. These
@@ -165,6 +175,15 @@ Build the WYSIWYG Markdown editor with the static helper:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
+```
+
+Package a native example as a reusable local folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+  -Package examples/showcase/windows `
+  -AppName MoUIShowcase `
+  -Version 0.1.0
 ```
 
 Build and run the WYSIWYG Markdown editor with the static helper:
