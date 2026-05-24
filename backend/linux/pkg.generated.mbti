@@ -49,6 +49,7 @@ pub(all) struct LinuxBackendCapabilities {
   text_input : Bool
   ime : Bool
   clipboard : Bool
+  drag_drop : Bool
   accessibility : Bool
   scale_factor : Bool
 } derive(Eq, ToJson, @debug.Debug)

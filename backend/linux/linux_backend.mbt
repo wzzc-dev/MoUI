@@ -19,6 +19,7 @@ pub(all) struct LinuxBackendCapabilities {
   text_input : Bool
   ime : Bool
   clipboard : Bool
+  drag_drop : Bool
   accessibility : Bool
   scale_factor : Bool
 } derive(Eq, Debug, ToJson)
@@ -49,6 +50,7 @@ pub fn capability_matrix() -> LinuxBackendCapabilities {
     text_input: false,
     ime: false,
     clipboard: false,
+    drag_drop: false,
     accessibility: false,
     scale_factor: false,
   }
@@ -69,7 +71,7 @@ pub fn readiness() -> LinuxBackendReadiness {
     ],
     next_steps: [
       "add or consume a window/linux package that emits shared HostEvent values",
-      "create a native WGPU surface path and resize contract for Linux", "map clipboard, menus, file dialogs, and accessibility through host service contracts",
+      "create a native WGPU surface path and resize contract for Linux", "map clipboard, menus, file dialogs, drag/drop, and accessibility through host service contracts",
     ],
   }
 }
