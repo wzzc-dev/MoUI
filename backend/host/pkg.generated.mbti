@@ -423,6 +423,7 @@ pub(all) struct HostWindowRuntimeSlot {
   record : HostWindowRecord
   driver : HostRuntimeDriver
 }
+pub fn HostWindowRuntimeSlot::from_driver(record~ : HostWindowRecord, driver~ : HostRuntimeDriver) -> Self
 pub fn HostWindowRuntimeSlot::from_resolved_open(HostWindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
 pub fn HostWindowRuntimeSlot::new(record~ : HostWindowRecord, runtime~ : @wzzc-dev/moui/core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 

@@ -19,6 +19,7 @@ struct WebApp {
   async_services : @host.HostServiceAsyncQueue
   window_requests : @host.HostWindowRequestQueue
   windows : @host.HostWindowRegistry
+  runtime_slots : @host.HostWindowRuntimeSlots
   mut window_id : @host.HostWindowId?
   mut renderer : WebRenderer?
   mut last_pointer : @core.Point
@@ -99,6 +100,7 @@ pub fn run_app_with_window_requests(
     async_services,
     window_requests,
     windows: @host.HostWindowRegistry::new(),
+    runtime_slots: @host.HostWindowRuntimeSlots::new(),
     window_id: None,
     renderer: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
@@ -188,6 +190,7 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
         primary=true,
       )
       self.window_id = Some(window_id)
+      self.register_primary_runtime_slot(window_id)
       let renderer_result = try? WebRenderer::create(
         canvas_id=window_web_default_canvas_id(window.id().into_raw()),
         metrics~,
@@ -430,7 +433,10 @@ fn WebApp::apply_current_window_request(
         let result = self.windows.apply_request(request)
         match result {
           @host.HostWindowRequestResult::WindowRejected(_) => ()
-          _ => apply(window)
+          _ => {
+            self.sync_runtime_slot(id)
+            apply(window)
+          }
         }
         result
       } else {
@@ -477,13 +483,42 @@ fn web_modifiers_after_key_event(
 }
 
 ///|
+fn WebApp::register_primary_runtime_slot(
+  self : WebApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.windows.lookup(window_id) {
+    Some(record) =>
+      ignore(
+        self.runtime_slots.insert(
+          @host.HostWindowRuntimeSlot::from_driver(record~, driver=self.driver),
+        ),
+      )
+    None => ()
+  }
+}
+
+///|
+fn WebApp::sync_runtime_slot(
+  self : WebApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.windows.lookup(window_id) {
+    Some(record) => ignore(self.runtime_slots.sync_record(record))
+    None => ()
+  }
+}
+
+///|
 fn WebApp::apply_window_lifecycle(
   self : WebApp,
   host_event : @host.HostEvent,
 ) -> Unit {
   match self.window_id {
     Some(window_id) =>
-      ignore(self.windows.apply_host_event(window_id, host_event))
+      if self.windows.apply_host_event(window_id, host_event) {
+        self.sync_runtime_slot(window_id)
+      }
     None => ()
   }
 }
@@ -544,6 +579,8 @@ fn WebApp::dispose(self : WebApp) -> Unit {
   match self.window_id {
     Some(window_id) => {
       ignore(self.windows.close(window_id))
+      self.sync_runtime_slot(window_id)
+      ignore(self.runtime_slots.remove(window_id))
       ignore(self.windows.remove_closed())
       self.window_id = None
     }

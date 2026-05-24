@@ -313,19 +313,21 @@ Web, macOS, and Windows should convert their native window events into
 `DrawCommand` values. Linux currently keeps the same contract shape as a
 scaffold until a real window backend exists.
 The active Web, macOS, and Windows hosts still expose single-window entrypoints,
-but each one now opens a primary `HostWindowRecord`, applies resize/focus/close
-`HostEvent` values through the registry, and removes the record when the host
-window is disposed. That makes multi-window lifecycle state a shared host
-concern instead of a future platform-specific rewrite. They also accept a shared
-`HostWindowRequestQueue` through `run_app_with_window_requests` and drain
-current-window focus, close, resize, minimize, show, and set-primary requests at
-the platform edge. The same queue records ordered request completions, making
-accepted current-window operations and explicit rejections observable without
-pretending that registry-only state is real multi-window support. Active
-backends use the shared queue drain helper so completion recording stays a host
-contract instead of a platform-local loop. `OpenWindow` requests are explicitly
-rejected until the active hosts wire scene resolution and runtime slots into
-multiple platform windows and renderer instances.
+but each one now opens a primary `HostWindowRecord`, registers the existing
+runtime/driver as a primary `HostWindowRuntimeSlot`, applies resize/focus/close
+`HostEvent` values through the registry, syncs the slot record after lifecycle
+changes, and removes both slot and record when the host window is disposed. That
+makes multi-window lifecycle state a shared host concern instead of a future
+platform-specific rewrite. They also accept a shared `HostWindowRequestQueue`
+through `run_app_with_window_requests` and drain current-window focus, close,
+resize, minimize, show, and set-primary requests at the platform edge. The same
+queue records ordered request completions, making accepted current-window
+operations and explicit rejections observable without pretending that
+registry-only state is real multi-window support. Active backends use the shared
+queue drain helper so completion recording stays a host contract instead of a
+platform-local loop. `OpenWindow` requests are explicitly rejected until the
+active hosts wire scene resolution and runtime slots into multiple platform
+windows and renderer instances.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and

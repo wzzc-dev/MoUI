@@ -38,8 +38,10 @@ completion path on each platform. `OpenWindow` requests are still rejected until
 the hosts wire scene resolution and runtime slots into multiple platform windows
 and renderer instances.
 The current Web, macOS, and Windows entrypoints still create one primary window,
-but they allocate that window through the registry, apply `HostEvent::Resized`,
-focus, and close events to it, and close/remove the record during host disposal.
+but they allocate that window through the registry, register the existing
+runtime/driver as the primary `HostWindowRuntimeSlot`, apply
+`HostEvent::Resized`, focus, and close events to it, sync the slot record after
+lifecycle changes, and close/remove the slot and record during host disposal.
 That keeps today's single-window apps on the same state path future multi-window
 hosts will use.
 

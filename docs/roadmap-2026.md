@@ -184,8 +184,9 @@ Focus areas:
   flow through `HostEvent::ThemeChanged`.
 - Keep window lifecycle state flowing through `HostWindowRegistry`; current
   Web, macOS, and Windows entrypoints remain single-window but already allocate
-  and update primary window records on the shared lifecycle path. Their active
-  loops now expose `run_app_with_window_requests` and drain
+  primary window records, register the current runtime/driver as primary
+  runtime slots, and sync those slots from the shared lifecycle path. Their
+  active loops now expose `run_app_with_window_requests` and drain
   `HostWindowRequestQueue` for current-window focus, close, resize, minimize,
   show, and set-primary requests. Drained request completions are recorded back
   onto the queue through a shared host helper so request outcomes stay

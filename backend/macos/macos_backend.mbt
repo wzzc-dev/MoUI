@@ -75,6 +75,7 @@ struct MacosApp {
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
   windows : @host.HostWindowRegistry
+  runtime_slots : @host.HostWindowRuntimeSlots
   mut window_id : @host.HostWindowId?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
@@ -270,6 +271,7 @@ pub fn run_app_with_options(
     services,
     window_requests,
     windows: @host.HostWindowRegistry::new(),
+    runtime_slots: @host.HostWindowRuntimeSlots::new(),
     window_id: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
@@ -432,6 +434,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
         primary=true,
       )
       self.window_id = Some(window_id)
+      self.register_primary_runtime_slot(window_id)
       ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
       let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
         err => {
@@ -726,7 +729,10 @@ fn MacosApp::apply_current_window_request(
         let result = self.windows.apply_request(request)
         match result {
           @host.HostWindowRequestResult::WindowRejected(_) => ()
-          _ => apply(window)
+          _ => {
+            self.sync_runtime_slot(id)
+            apply(window)
+          }
         }
         result
       } else {
@@ -740,13 +746,42 @@ fn MacosApp::apply_current_window_request(
 }
 
 ///|
+fn MacosApp::register_primary_runtime_slot(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.windows.lookup(window_id) {
+    Some(record) =>
+      ignore(
+        self.runtime_slots.insert(
+          @host.HostWindowRuntimeSlot::from_driver(record~, driver=self.driver),
+        ),
+      )
+    None => ()
+  }
+}
+
+///|
+fn MacosApp::sync_runtime_slot(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.windows.lookup(window_id) {
+    Some(record) => ignore(self.runtime_slots.sync_record(record))
+    None => ()
+  }
+}
+
+///|
 fn MacosApp::apply_window_lifecycle(
   self : MacosApp,
   host_event : @host.HostEvent,
 ) -> Unit {
   match self.window_id {
     Some(window_id) =>
-      ignore(self.windows.apply_host_event(window_id, host_event))
+      if self.windows.apply_host_event(window_id, host_event) {
+        self.sync_runtime_slot(window_id)
+      }
     None => ()
   }
 }
@@ -791,6 +826,8 @@ fn MacosApp::dispose(self : MacosApp) -> Unit {
   match self.window_id {
     Some(window_id) => {
       ignore(self.windows.close(window_id))
+      self.sync_runtime_slot(window_id)
+      ignore(self.runtime_slots.remove(window_id))
       ignore(self.windows.remove_closed())
       self.window_id = None
     }
