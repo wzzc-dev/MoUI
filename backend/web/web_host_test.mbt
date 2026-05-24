@@ -122,6 +122,49 @@ test "web service bridge exposes clipboard write contract" {
 }
 
 ///|
+test "web service bridge can defer async clipboard read and file dialogs" {
+  let queue = @host.HostServiceAsyncQueue::new()
+  let bridge = web_service_bridge(
+    clipboard_read=true,
+    file_dialog=true,
+    async_queue=Some(queue),
+  )
+  inspect(bridge.capabilities.clipboard, content="true")
+  inspect(bridge.capabilities.file_dialogs, content="true")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
+    ) {
+    @host.HostServiceResponse::Pending(id) => inspect(id.value, content="1")
+    _ => fail("expected pending clipboard read")
+  }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::FileDialog(
+        @host.HostFileDialogOptions::new(
+          kind=@host.HostFileDialogKind::OpenFile,
+          title="Open note",
+        ),
+      ),
+    ) {
+    @host.HostServiceResponse::Pending(id) => inspect(id.value, content="2")
+    _ => fail("expected pending file dialog")
+  }
+  inspect(queue.pending_count(), content="2")
+  let pending = queue.drain_pending()
+  match pending[0].request {
+    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText) =>
+      ()
+    _ => fail("expected clipboard read pending request")
+  }
+  match pending[1].request {
+    @host.HostServiceRequest::FileDialog({ title, .. }) =>
+      inspect(title, content="Open note")
+    _ => fail("expected file dialog pending request")
+  }
+}
+
+///|
 test "web service bridge reports failed clipboard write" {
   let bridge = web_service_bridge(clipboard=true, clipboard_write=_text => false)
   match

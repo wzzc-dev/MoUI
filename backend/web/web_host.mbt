@@ -82,11 +82,15 @@ pub fn web_service_bridge(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
   open_url? : (String) -> Bool = _url => false,
   clipboard? : Bool = false,
+  clipboard_read? : Bool = false,
   clipboard_write? : (String) -> Bool = _text => false,
+  file_dialog? : Bool = false,
+  async_queue? : @host.HostServiceAsyncQueue? = None,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
-      clipboard~,
+      clipboard=clipboard || clipboard_read,
+      file_dialogs=file_dialog,
       open_url=true,
       system_theme=true,
     ),
@@ -111,9 +115,27 @@ pub fn web_service_bridge(
         @host.HostServiceRequest::Clipboard(
           @host.HostClipboardRequest::ReadText
         ) =>
-          @host.HostServiceResponse::Unavailable(
-            "clipboard read is unavailable on Web; paste is delivered by browser text input events",
-          )
+          match async_queue {
+            Some(queue) =>
+              queue.submit(
+                @host.HostServiceRequest::Clipboard(
+                  @host.HostClipboardRequest::ReadText,
+                ),
+              )
+            None =>
+              @host.HostServiceResponse::Unavailable(
+                "clipboard read is unavailable on Web; paste is delivered by browser text input events",
+              )
+          }
+        @host.HostServiceRequest::FileDialog(options) =>
+          match async_queue {
+            Some(queue) =>
+              queue.submit(@host.HostServiceRequest::FileDialog(options))
+            None =>
+              @host.HostServiceResponse::Unavailable(
+                "file dialog service is asynchronous on Web",
+              )
+          }
         _ =>
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }

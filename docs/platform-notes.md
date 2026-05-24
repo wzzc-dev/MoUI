@@ -46,6 +46,11 @@ constructors and platform event conversion.
   capability flags for clipboard, menus, file dialogs, URL opening, and system
   theme. Unsupported services should return `Unavailable` responses instead of
   leaking platform checks into `core` or `views`.
+- Permission- or callback-driven host services can use `HostServiceAsyncQueue`
+  and return `HostServiceResponse::Pending` instead of blocking the runtime.
+  Hosts drain pending requests into in-flight platform work, complete them with
+  the original request, and dispatch completions through `HostRuntimeDriver`
+  when the response affects runtime state such as clipboard paste.
 - Host service bridges can apply a reported light/dark system theme to a runtime
   `Environment`. Web, macOS, and Windows do this once at startup before the
   first layout/redraw pass. Runtime `ThemeChanged` window events are normalized
@@ -77,7 +82,11 @@ Web copy/cut shortcuts are forwarded from the hidden text input to the runtime
 and write selected text through a browser host import using the user-gesture
 `document.execCommand("copy")` path. Paste still arrives through normal browser
 text-input events; synchronous clipboard reads are intentionally reported as
-unavailable until the host-service contract grows an async permission-aware path.
+unavailable in the default Web entrypoint. The reusable Web bridge can now be
+configured with `HostServiceAsyncQueue` so clipboard reads and file dialogs are
+represented as pending browser work instead of fake synchronous successes; the
+active browser runtime still needs the JavaScript picker/permission drain before
+those pending requests become app-visible features.
 The browser host import reads `prefers-color-scheme` at startup and listens for
 media-query changes through `window/web`; MoUI maps those events into runtime
 environment color-scheme updates.

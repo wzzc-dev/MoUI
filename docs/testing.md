@@ -131,8 +131,9 @@ before it grows broad platform claims:
   selection, clipboard service routing, file drop dispatch, and semantics action
   roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
-  wasm-gc backend tests, window lifecycle registry behavior, devtool snapshots,
-  frame-profile counters, guidance freshness, and example builds.
+  wasm-gc backend tests, async host-service completion, window lifecycle
+  registry behavior, devtool snapshots, frame-profile counters, guidance
+  freshness, and example builds.
 - Text system: stable fallback/provider/editor invariants for CJK, emoji,
   mixed bidi, caret positions, selection, and IME anchors, plus opt-in
   diagnostic packages under `tests/text_conformance/`.
