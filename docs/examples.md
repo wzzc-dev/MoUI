@@ -56,8 +56,9 @@ sh scripts/package-macos-app.sh \
   --version 0.1.0
 ```
 
-The bundle includes a `Contents/Resources/moui-package.json` manifest so local
-packaging output can be inspected without parsing `Info.plist`.
+The bundle includes a schema version 1
+`Contents/Resources/moui-package.json` manifest so local packaging output can be
+inspected without parsing `Info.plist`.
 
 ## Windows Native
 
@@ -86,8 +87,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.p
   -Version 0.1.0
 ```
 
-The folder includes `moui-package.json` with app, package, version, executable,
-and copied runtime DLL metadata.
+The folder includes a schema version 1 `moui-package.json` with app, source
+MoonBit package, version, executable, and copied runtime DLL metadata.
 
 ## Example Validation
 

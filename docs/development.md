@@ -110,8 +110,9 @@ sh scripts/package-macos-app.sh \
 
 The bundle is written under `dist/macos/<name>.app` by default. Pass
 `--no-build` to package an already-built executable from `_build/native`. The
-bundle includes `Contents/Resources/moui-package.json` with the app name, source
-package, bundle id, version, build version, executable, and bundle name.
+bundle includes `Contents/Resources/moui-package.json` using schema version 1
+with platform, output kind, app name, source MoonBit package, bundle id,
+version, build number, executable, bundle name, and runtime file metadata.
 
 Windows distributable folder:
 
@@ -125,8 +126,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.p
 
 The folder is written under `dist\windows\<AppName>` by default and includes the
 built executable plus the MSYS2 Vulkan and pthread runtime DLLs expected by the
-current static `wgpu-native` setup. It also writes `moui-package.json` with the
-same app/package/version metadata and copied runtime DLL list.
+current static `wgpu-native` setup. It also writes the same schema version 1
+`moui-package.json` manifest with Windows platform metadata and copied runtime
+file names.
+
+Manifest validation:
+
+```sh
+node scripts/validate-package-manifest.mjs \
+  "dist/macos/MoUI Showcase.app/Contents/Resources/moui-package.json" \
+  --platform macos
+```
 
 Useful focused commands:
 

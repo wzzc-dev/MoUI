@@ -126,6 +126,9 @@ sh scripts/package-macos-app.sh \
   --version 0.1.0
 ```
 
+The bundle includes a schema version 1 `moui-package.json` manifest under
+`Contents/Resources`.
+
 ## Windows Native
 
 Windows native examples use the static GNU `wgpu-native` release below. These
@@ -185,6 +188,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.p
   -AppName MoUIShowcase `
   -Version 0.1.0
 ```
+
+The output folder includes the same schema version 1 `moui-package.json`
+manifest plus copied runtime DLL metadata.
 
 Build and run the WYSIWYG Markdown editor with the static helper:
 

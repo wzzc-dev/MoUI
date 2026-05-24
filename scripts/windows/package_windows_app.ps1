@@ -102,12 +102,16 @@ try {
   Copy-Item -LiteralPath $winpthreadDll -Destination (Join-Path $appDir "libwinpthread-1.dll")
 
   $manifest = @{
+    schemaVersion = 1
+    platform = "windows"
+    outputKind = "portable-folder"
     appName = $AppName
-    package = $Package
+    moonPackage = $Package
     version = $Version
     buildNumber = $BuildNumber
     executable = (Split-Path -Leaf $appExe)
-    runtimeDlls = @("vulkan-1.dll", "libwinpthread-1.dll")
+    bundleName = $AppName
+    runtimeFiles = @("vulkan-1.dll", "libwinpthread-1.dll")
   } | ConvertTo-Json -Depth 4
   Set-Content -LiteralPath (Join-Path $appDir "moui-package.json") -Value $manifest -Encoding UTF8
 
