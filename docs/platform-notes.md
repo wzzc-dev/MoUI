@@ -181,9 +181,9 @@ theme-change events use the shared `HostEvent::ThemeChanged` runtime path when
 emitted by the local window backend.
 Right-click context-menu requests use the same `TrackPopupMenu` path and dispatch
 the selected `ActionCommand` back through `HostRuntimeDriver`.
-The shared drag/drop event contract is available in `backend/host`, but native
-Windows file-drop emission remains a follow-up until the local `window/windows`
-backend emits drag/drop window events.
+File drag/drop events emitted by the local `window/windows` backend are
+normalized through `HostEvent::DragDrop` and dispatched to
+`ViewSpec::on_file_drop` targets, matching the macOS host path.
 Windows installs the sibling `render/wgpu/directwrite` provider through the same
 renderer/runtime boundary used by macOS CoreText and composes it with
 `render/wgpu/cosmic_text` as fallback. That provider is currently an explicit

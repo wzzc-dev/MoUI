@@ -5,6 +5,7 @@ test "linux backend scaffold is explicit" {
   inspect(info.window_backend_available, content="false")
   inspect(info.renderer_ready, content="false")
   inspect(info.capabilities.window, content="false")
+  inspect(info.capabilities.drag_drop, content="false")
   inspect(info.capabilities.accessibility, content="false")
   inspect(info.accessibility.kind.label(), content="at-spi")
   inspect(info.accessibility.contract_ready, content="true")
