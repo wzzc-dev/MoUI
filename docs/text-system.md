@@ -9,9 +9,10 @@ shapes are no longer part of the framework contract.
 
 - `core/text_layout.mbt` defines `TextSystem`, `TextSystem::fallback()`, and
   font data registration.
-- `AppRuntime` and `RuntimeState` expose `text_system()` and
-  `set_text_system()` so hosts can install a platform text system before layout,
-  painting, hit testing, selection, and IME anchor geometry are produced.
+- `AppRuntime` exposes `text_system()` and `set_text_system()` so hosts can
+  install a platform text system before layout, painting, hit testing,
+  selection, and IME anchor geometry are produced. The underlying
+  `RuntimeState` stores the active system as an engine detail.
 - `FontSpec` carries a structured family stack. The default stack is
   `SystemUi`; concrete font names are resolved by the active native or Web
   provider unless app code requests a named family.

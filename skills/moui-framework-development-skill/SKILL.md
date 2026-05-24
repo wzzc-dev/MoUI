@@ -71,8 +71,11 @@ Use this skill when editing or reviewing:
 
 ## Package Map
 
-- `core/`: platform-neutral runtime, view specs, state, layout, input,
-  semantics, rich text editing, draw commands, styles, and theme tokens.
+- `core/`: one MoonBit package for platform-neutral runtime, view specs, state,
+  layout, input, semantics, rich text editing, draw commands, styles, and theme
+  tokens. Keep files grouped by responsibility (`runtime_state`,
+  `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
+  subpackages.
 - `style/`: visual token and style compatibility aliases.
 - `views/`: public view constructors returning `@core.ViewSpec`.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,

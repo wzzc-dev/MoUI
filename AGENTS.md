@@ -13,6 +13,9 @@ paths, or abstractions that only preserve old shapes.
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
   and draw command model.
+  It remains one MoonBit package; internal files are grouped by responsibility
+  (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
+  etc.) rather than by additional package boundaries.
 - `views/` exposes public view constructors that return `@core.ViewSpec`.
 - `backend/host/` defines shared host event, surface, input, and window event
   conversion contracts.
