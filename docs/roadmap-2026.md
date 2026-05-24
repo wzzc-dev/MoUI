@@ -192,9 +192,10 @@ Focus areas:
   observable while the active hosts remain single-window. `OpenWindow` requests
   already carry a platform-neutral scene id and payload so future hosts can
   resolve the new window's runtime/content without inventing a platform-local
-  convention. Full `OpenWindow` support remains a follow-up because it requires
-  multiple platform windows, scene/runtime resolution, and renderer instances,
-  not just extra registry records.
+  convention. `HostWindowSceneResolver` is the shared scene-to-`AppRuntime`
+  contract for that resolution step. Full `OpenWindow` support remains a
+  follow-up because it requires wiring the resolver into multiple platform
+  windows and renderer instances, not just extra registry records.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.
