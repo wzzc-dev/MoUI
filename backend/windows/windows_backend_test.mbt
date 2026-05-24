@@ -226,6 +226,29 @@ test "windows backend converts wheel and focus into host input events" {
 }
 
 ///|
+test "windows backend converts file drag drop to host event contract" {
+  let drop = window_event_to_host(
+    @window_core.WindowEvent::DragDropped(
+      ["C:\\Users\\moui\\note.md"],
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, 48.0),
+    ),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match drop {
+    Some(
+      @host.HostEvent::DragDrop(
+        {
+          phase: @core.DragDropPhase::Dropped,
+          paths,
+          position: Some({ x: 24.0, y: 48.0 }),
+        }
+      )
+    ) => inspect(paths[0], content="C:\\Users\\moui\\note.md")
+    _ => fail("expected file drop contract")
+  }
+}
+
+///|
 test "windows backend converts close event" {
   let event = window_event_to_core(
     @window_core.WindowEvent::CloseRequested,

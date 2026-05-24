@@ -26,6 +26,9 @@ pub(all) struct Alignment {
 pub type ClickHandler = () -> Unit
 
 ///|
+pub type FileDropHandler = (Array[String], Point) -> Unit
+
+///|
 pub(all) struct KeyboardShortcut {
   key : String
   modifiers : KeyModifiers
@@ -341,6 +344,7 @@ pub(all) enum ViewModifier {
   SemanticsRoleModifier(SemanticsRole)
   FocusableModifier(Bool)
   OnTapModifier(ClickHandler)
+  OnFileDropModifier(FileDropHandler)
   KeyboardShortcutModifier(KeyboardShortcut)
   FlexibleModifier(Double)
   LayoutPriorityModifier(Double)
@@ -935,6 +939,14 @@ pub fn ViewSpec::focusable(
 ///|
 pub fn ViewSpec::on_tap(self : ViewSpec, handler : ClickHandler) -> ViewSpec {
   self.modified(OnTapModifier(handler))
+}
+
+///|
+pub fn ViewSpec::on_file_drop(
+  self : ViewSpec,
+  handler : FileDropHandler,
+) -> ViewSpec {
+  self.modified(OnFileDropModifier(handler))
 }
 
 ///|

@@ -44,6 +44,7 @@ pub(all) struct HostInputCapabilities {
   text_input : Bool
   ime : Bool
   clipboard : Bool
+  drag_drop : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -246,6 +247,7 @@ pub(all) enum HostEvent {
   Focus(HostFocusEvent)
   Keyboard(@core.KeyboardEvent)
   TextInput(@core.TextInputEvent)
+  DragDrop(@core.DragDropEvent)
   Command(@core.CommandIntent)
   RedrawRequested
   CloseRequested
@@ -346,8 +348,9 @@ pub fn HostInputCapabilities::new(
   text_input? : Bool = true,
   ime? : Bool = false,
   clipboard? : Bool = false,
+  drag_drop? : Bool = false,
 ) -> HostInputCapabilities {
-  { pointer, scroll, keyboard, focus, text_input, ime, clipboard }
+  { pointer, scroll, keyboard, focus, text_input, ime, clipboard, drag_drop }
 }
 
 ///|
@@ -360,6 +363,7 @@ pub fn HostInputCapabilities::none() -> HostInputCapabilities {
     text_input: false,
     ime: false,
     clipboard: false,
+    drag_drop: false,
   }
 }
 
@@ -1189,6 +1193,10 @@ pub fn HostRuntimeDriver::dispatch(
       self.runtime.dispatch_event(@core.AppEvent::TextInput(event))
       self.request_redraw_if_needed()
     }
+    DragDrop(event) => {
+      self.runtime.dispatch_event(@core.AppEvent::DragDrop(event))
+      self.request_redraw_if_needed()
+    }
     Command(intent) =>
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()
@@ -1318,6 +1326,7 @@ pub fn HostEvent::to_core(self : HostEvent) -> @core.AppEvent? {
     Focus(event) => event.to_core()
     Keyboard(event) => Some(@core.AppEvent::Keyboard(event))
     TextInput(event) => Some(@core.AppEvent::TextInput(event))
+    DragDrop(event) => Some(@core.AppEvent::DragDrop(event))
     Command(_) => None
     RedrawRequested =>
       Some(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))

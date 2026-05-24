@@ -27,8 +27,8 @@ workflow for agents and maintainers.
 - `core/` owns runtime, state, layout, input, semantics, and draw commands.
 - `views/` owns public constructor helpers and should reuse existing core specs,
   bindings, styles, and modifiers.
-- `backend/host/` owns `HostEvent`, surface metrics, input contracts, text-input
-  session state, and redraw driver behavior.
+- `backend/host/` owns `HostEvent`, surface metrics, input contracts, file
+  drag/drop normalization, text-input session state, and redraw driver behavior.
 - Platform packages convert native events into `HostEvent`; they do not mutate
   element trees directly.
 - Renderers consume `DrawCommand` values and do not depend on view constructors.
@@ -110,8 +110,8 @@ and skills/ when the guidance surface changes.
 - Did `moon info` run for public API changes?
 - Are docs updated for user-facing behavior, commands, or platform constraints?
 - Were `AGENTS.md` and repo-local skills checked when docs placement,
-  validation, package layout, examples, renderer status, or text architecture
-  changed?
+  validation, package layout, examples, platform behavior, renderer status, or
+  text architecture changed?
 - If renderer behavior changed, are capability code, tests, report, and Showcase
   synchronized?
 - If backend behavior changed, do events still flow through `HostEvent`?

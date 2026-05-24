@@ -26,6 +26,8 @@ Backends should keep platform details at the edge:
 
 - Surface metrics carry logical size, physical size, and scale factor.
 - Pointer coordinates are normalized before they reach `core`.
+- File drag/drop events carry normalized logical positions and platform file
+  paths before they reach `core` drop targets.
 - Keyboard modifiers and IME events are converted into shared core input types.
 - Redraw scheduling is owned by `HostRuntimeDriver`; hosts request redraws, but
 do not mutate the element tree directly.
@@ -66,6 +68,9 @@ opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
 `NSOpenPanel` and `NSSavePanel`, presents command menus at the current pointer
 position through `NSMenu`, and reports the effective light/dark system
 appearance through the shared `HostServiceBridge` contract.
+File drag/drop events emitted by the local `window/macos` backend are normalized
+through `HostEvent::DragDrop` and dispatched to `ViewSpec::on_file_drop`
+targets.
 Native WGPU text can use either the shared Moon Cosmic provider or a platform
 provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
 measurement and glyph rasterization, explicitly composed with the Moon Cosmic
@@ -130,6 +135,9 @@ presents basic open/save/directory dialogs through the Win32 common dialog and
 shell APIs, presents command menus at the current cursor position through
 `TrackPopupMenu`, and reports light/dark system theme from the current user's
 `AppsUseLightTheme` registry value.
+The shared drag/drop event contract is available in `backend/host`, but native
+Windows file-drop emission remains a follow-up until the local `window/windows`
+backend emits drag/drop window events.
 Windows installs the sibling `render/wgpu/directwrite` provider through the same
 renderer/runtime boundary used by macOS CoreText and composes it with
 `render/wgpu/cosmic_text` as fallback. That provider is currently an explicit
@@ -161,7 +169,7 @@ https://github.com/gfx-rs/wgpu-native/releases/tag/v27.0.4.0
 `backend/linux` intentionally preserves the host contract shape while reporting
 that no Linux window backend is available yet. Its capability matrix currently
 marks window, renderer, pointer, keyboard, text input, IME, clipboard,
-accessibility, and scale-factor support as unavailable. It also exposes a
+drag/drop, accessibility, and scale-factor support as unavailable. It also exposes a
 readiness report and an unavailable `HostServiceBridge`, so callers can inspect
 blocked work without treating the scaffold as a runtime backend.
 
@@ -169,7 +177,7 @@ The Linux readiness blockers are:
 
 - Add or consume a `window/linux` package that emits shared `HostEvent` values.
 - Create a native WGPU surface path and resize contract for Linux.
-- Map clipboard, menus, file dialogs, and accessibility through host service
+- Map clipboard, menus, file dialogs, drag/drop, and accessibility through host
   contracts.
 - Replace the existing `render/wgpu/fontconfig` native stub with a real
   fontconfig + HarfBuzz + FreeType implementation, or an equivalent toolkit text

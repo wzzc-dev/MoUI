@@ -32,6 +32,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
       data.modifier is BorderModifier(_) ||
       data.modifier is ShadowModifier(_) ||
       data.modifier is OnTapModifier(_) ||
+      data.modifier is OnFileDropModifier(_) ||
       data.modifier is FocusableModifier(true)
     CustomSpec(_) | CustomLayoutSpec(_) => true
     ComponentSpec(_) => false

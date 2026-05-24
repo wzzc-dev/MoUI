@@ -54,6 +54,21 @@ pub(all) enum TextInputEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum DragDropPhase {
+  Entered
+  Moved
+  Dropped
+  Left
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct DragDropEvent {
+  phase : DragDropPhase
+  paths : Array[String]
+  position : Point?
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum RedrawReason {
   Initial
   Input
@@ -67,6 +82,7 @@ pub(all) enum AppEvent {
   Pointer(PointerEvent)
   Keyboard(KeyboardEvent)
   TextInput(TextInputEvent)
+  DragDrop(DragDropEvent)
   Resize(Size)
   Redraw(RedrawReason)
   CloseRequested
@@ -138,4 +154,13 @@ pub fn CompositionUpdate::new(
   cursor? : TextRange? = None,
 ) -> CompositionUpdate {
   { text, cursor }
+}
+
+///|
+pub fn DragDropEvent::new(
+  phase~ : DragDropPhase,
+  paths? : Array[String] = [],
+  position? : Point? = None,
+) -> DragDropEvent {
+  { phase, paths, position }
 }

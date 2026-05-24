@@ -176,6 +176,7 @@ fn render_modified_node(
     | SemanticsRoleModifier(_)
     | FocusableModifier(_)
     | OnTapModifier(_)
+    | OnFileDropModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)

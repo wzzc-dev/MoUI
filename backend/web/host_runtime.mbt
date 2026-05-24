@@ -221,6 +221,22 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
       )
       self.dispatch_window_event(event)
     }
+    @window_core.WindowEvent::DragEntered(_, position)
+    | @window_core.WindowEvent::DragMoved(position)
+    | @window_core.WindowEvent::DragDropped(_, position) => {
+      self.last_pointer = @host.physical_position_to_core(
+        position,
+        scale_factor=self.current_scale_factor(),
+      )
+      self.dispatch_window_event(event)
+    }
+    @window_core.WindowEvent::DragLeft(Some(position)) => {
+      self.last_pointer = @host.physical_position_to_core(
+        position,
+        scale_factor=self.current_scale_factor(),
+      )
+      self.dispatch_window_event(event)
+    }
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
       self.modifiers = @host.modifiers_to_core(modifiers)
     @window_core.WindowEvent::RedrawRequested => self.redraw()

@@ -15,6 +15,8 @@ remain in `views/*.mbt` and the generated public API summary in
   `BuildContext::binding`.
 - Visual customization usually flows through `@core.Theme`, style types, or
   ordered modifiers such as `.padding`, `.background`, `.clip`, and `.opacity`.
+- File drop targets use the `ViewSpec::on_file_drop` modifier so apps can accept
+  normalized platform file paths without depending on backend-specific events.
 - Platform-specific behavior should not be added in `views`; views preserve UI
   intent as `@core.ViewSpec` and `@core.DrawCommand` data.
 

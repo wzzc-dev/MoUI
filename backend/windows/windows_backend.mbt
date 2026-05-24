@@ -378,6 +378,16 @@ pub impl @win.ApplicationHandler for WindowsApp with window_event(
       self.last_pointer = @host.physical_position_to_core(position)
       self.dispatch_window_event(event)
     }
+    @window_core.WindowEvent::DragEntered(_, position)
+    | @window_core.WindowEvent::DragMoved(position)
+    | @window_core.WindowEvent::DragDropped(_, position) => {
+      self.last_pointer = @host.physical_position_to_core(position)
+      self.dispatch_window_event(event)
+    }
+    @window_core.WindowEvent::DragLeft(Some(position)) => {
+      self.last_pointer = @host.physical_position_to_core(position)
+      self.dispatch_window_event(event)
+    }
     @window_core.WindowEvent::KeyboardInput(_, _, _) =>
       self.dispatch_window_event(event)
     @window_core.WindowEvent::Ime(_) => self.dispatch_window_event(event)

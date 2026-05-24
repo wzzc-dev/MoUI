@@ -126,6 +126,7 @@ pub(all) enum AppEvent {
   Pointer(PointerEvent)
   Keyboard(KeyboardEvent)
   TextInput(TextInputEvent)
+  DragDrop(DragDropEvent)
   Resize(Size)
   Redraw(RedrawReason)
   CloseRequested
@@ -552,6 +553,20 @@ pub fn DirtyFlags::mark_build(Self) -> Unit
 pub fn DirtyFlags::mark_layout(Self) -> Unit
 pub fn DirtyFlags::mark_paint(Self) -> Unit
 
+pub(all) struct DragDropEvent {
+  phase : DragDropPhase
+  paths : Array[String]
+  position : Point?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DragDropEvent::new(phase~ : DragDropPhase, paths? : Array[String], position? : Point?) -> Self
+
+pub(all) enum DragDropPhase {
+  Entered
+  Moved
+  Dropped
+  Left
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum DrawCommand {
   Clear(Color)
   FillRect(Rect, Color)
@@ -628,6 +643,7 @@ pub(all) struct ElementNode {
   mut cached_render : RenderNode?
 }
 pub fn ElementNode::accepts_tab_input(Self, ElementId) -> Bool
+pub fn ElementNode::dispatch_drag_drop(Self, DragDropEvent, RenderNode) -> ElementEventResult
 pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_keyboard_shortcut(Self, KeyboardEvent) -> ElementEventResult
 pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode, text_system? : TextSystem) -> ElementEventResult
@@ -1747,6 +1763,7 @@ pub(all) enum ViewModifier {
   SemanticsRoleModifier(SemanticsRole)
   FocusableModifier(Bool)
   OnTapModifier(() -> Unit)
+  OnFileDropModifier((Array[String], Point) -> Unit)
   KeyboardShortcutModifier(KeyboardShortcut)
   FlexibleModifier(Double)
   LayoutPriorityModifier(Double)
@@ -1811,6 +1828,7 @@ pub fn ViewSpec::layout_priority(Self, Double) -> Self
 pub fn ViewSpec::main_axis_alignment(Self, MainAxisAlignment) -> Self
 pub fn ViewSpec::modified(Self, ViewModifier) -> Self
 pub fn ViewSpec::offset(Self, dx? : Double, dy? : Double) -> Self
+pub fn ViewSpec::on_file_drop(Self, (Array[String], Point) -> Unit) -> Self
 pub fn ViewSpec::on_tap(Self, () -> Unit) -> Self
 pub fn ViewSpec::opacity(Self, Double) -> Self
 pub fn ViewSpec::padding(Self, Double) -> Self
@@ -1844,6 +1862,8 @@ pub fn VisualStyle::empty() -> Self
 
 // Type aliases
 pub type ClickHandler = () -> Unit
+
+pub type FileDropHandler = (Array[String], Point) -> Unit
 
 pub type RichTextFormatter = (String) -> RichTextDocument
 

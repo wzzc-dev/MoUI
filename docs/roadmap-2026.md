@@ -154,7 +154,7 @@ MoUI treats platform backends as adapters around a shared host contract.
 Focus areas:
 
 - Keep `backend/host/` as the source of truth for `HostEvent`, surface, input,
-  text input, window event, metrics, and redraw contracts.
+  text input, file drag/drop, window event, metrics, and redraw contracts.
 - Keep Web on the single `wasm-gc + window/web + browser WebGPU host imports`
   path.
 - Keep macOS native host documentation aligned with AppKit, CAMetalLayer, and

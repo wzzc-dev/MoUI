@@ -30,6 +30,7 @@ test "linux scaffold exposes host contracts without owning a surface" {
   inspect(input.capabilities().text_input, content="false")
   inspect(input.capabilities().ime, content="false")
   inspect(input.capabilities().clipboard, content="false")
+  inspect(input.capabilities().drag_drop, content="false")
   let services = scaffold_service_bridge()
   match
     services.dispatch(
