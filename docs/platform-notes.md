@@ -32,27 +32,22 @@ platform `WindowId` values to `HostWindowId` values, giving multi-window
 dispatch a shared routing primitive before backends attach multiple
 renderer/window handle sets.
 The active Web, macOS, and Windows hosts accept a shared queue through
-`run_app_with_window_requests` and drain current-window focus, close, resize,
-minimize, show, and set-primary requests at the platform edge. Each drained
-request records an ordered completion on the same queue, so tests and
-higher-level host code can observe accepted current-window operations and
-explicit rejections. Active backends use the shared queue drain helper for that
-drain-and-record loop so future `OpenWindow` support does not need a separate
-completion path on each platform. `OpenWindow` requests are still rejected until
-the hosts wire scene resolution and runtime slots into multiple platform windows
-and renderer instances.
-The current Web, macOS, and Windows entrypoints still create one primary window,
-but they allocate that window through the registry, register the existing
-runtime/driver as the primary `HostWindowRuntimeSlot`, bind the platform window
-id to the host id, route platform window events through that mapping, apply
-`HostEvent::Resized`, focus, and close events to it, sync the slot record after
-lifecycle changes, and close/remove the slot, platform binding, and record
-during host disposal. That keeps today's single-window apps on the same state
-path future multi-window hosts will use.
-Web also stores the active browser `Window` and `WebRenderer` in a local
-per-window platform slot collection. `OpenWindow` is still rejected, but the Web
-host no longer has to rewrite one global window/renderer/driver path before it
-can own multiple canvases.
+`run_app_with_window_requests` and drain focus, close, resize, minimize, show,
+and set-primary requests at the platform edge. Each drained request records an
+ordered completion on the same queue, so tests and higher-level host code can
+observe accepted operations and explicit rejections. Active backends use the
+shared queue drain helper for that drain-and-record loop so request completion
+tracking remains host-owned.
+The current macOS and Windows entrypoints still create one primary window and
+reject `OpenWindow` until their native hosts wire scene resolution and runtime
+slots into multiple platform windows and renderer instances. Web creates the
+primary window through the same registry/slot path, and now also supports
+resolver-backed `OpenWindow` requests through `run_app_with_options` and
+`WebAppOptions`. A resolved Web window creates another browser canvas,
+`WebRenderer`, `HostRuntimeDriver`, platform binding, and platform slot, then
+routes redraw, events, context menus, async service completions, IME sync, and
+disposal by `HostWindowId`. Without a scene resolver, Web rejects `OpenWindow`
+with the shared unavailable-resolver response.
 
 The boundary is:
 

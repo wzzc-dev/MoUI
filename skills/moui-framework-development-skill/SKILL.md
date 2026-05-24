@@ -83,8 +83,8 @@ Use this skill when editing or reviewing:
   collection, platform-window id map, window request/completion queue,
   text-input session, window-event conversion, async host-service queue, and
   redraw driver.
-- `backend/web/`: wasm-gc Web host, canvas constraints, browser runtime bridge,
-  and accessibility adapter.
+- `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
+  multi-canvas window slots, browser runtime bridge, and accessibility adapter.
 - `backend/macos/`: AppKit/window host and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host and HWND WGPU surface creation.
 - `backend/linux/`: explicit scaffold with host contract shape but no real

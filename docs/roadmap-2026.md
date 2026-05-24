@@ -182,31 +182,27 @@ Focus areas:
   environment before the first layout/redraw pass. Web startup uses the browser
   `prefers-color-scheme` query, and Web/macOS/Windows theme-change window events
   flow through `HostEvent::ThemeChanged`.
-- Keep window lifecycle state flowing through `HostWindowRegistry`; current
-  Web, macOS, and Windows entrypoints remain single-window but already allocate
-  primary window records, register the current runtime/driver as primary
-  runtime slots, bind platform window ids to host ids, route incoming platform
-  window events through that map, and sync those slots from the shared
-  lifecycle path. Web also stores its active browser `Window` and `WebRenderer`
-  in a per-window platform slot collection and routes redraw/event/context-menu
-  paths through the matching runtime driver slot, preparing the platform side
-  for multiple canvases. Their active loops now expose
-  `run_app_with_window_requests` and drain `HostWindowRequestQueue` for
-  current-window focus, close, resize, minimize, show, and set-primary requests.
-  Drained request completions are recorded back onto the queue through a shared
-  host helper so request outcomes stay observable while the active hosts remain
-  single-window. `OpenWindow` requests already carry a platform-neutral scene id
-  and payload so future hosts can
-  resolve the new window's runtime/content without inventing a platform-local
-  convention. `HostWindowSceneResolver` is the shared scene-to-`AppRuntime`
-  contract for that resolution step, and `HostWindowRegistry::resolve_open_request`
-  pairs successful resolutions with window records. `HostWindowRuntimeSlot`
-  wraps those records with per-window `HostRuntimeDriver` instances, while
-  `HostWindowRuntimeSlots` manages lookup, focused/primary slot selection, and
-  registry-backed insert/sync/request/lifecycle helpers plus closed-slot
-  cleanup. Full `OpenWindow` support remains a follow-up because it requires
-  wiring that path into multiple platform windows, renderer instances, and
-  platform-window bindings, not just extra registry records.
+- Keep window lifecycle state flowing through `HostWindowRegistry`; current Web,
+  macOS, and Windows entrypoints allocate primary window records, register the
+  current runtime/driver as primary runtime slots, bind platform window ids to
+  host ids, route incoming platform window events through that map, and sync
+  those slots from the shared lifecycle path. Their active loops expose
+  `run_app_with_window_requests` and drain `HostWindowRequestQueue` for focus,
+  close, resize, minimize, show, and set-primary requests. Drained request
+  completions are recorded back onto the queue through a shared host helper so
+  request outcomes stay observable. `OpenWindow` requests carry a
+  platform-neutral scene id and payload. `HostWindowSceneResolver` is the shared
+  scene-to-`AppRuntime` contract for that resolution step, and
+  `HostWindowRegistry::resolve_open_request` pairs successful resolutions with
+  window records. `HostWindowRuntimeSlot` wraps those records with per-window
+  `HostRuntimeDriver` instances, while `HostWindowRuntimeSlots` manages lookup,
+  focused/primary slot selection, and registry-backed insert/sync/request/
+  lifecycle helpers plus closed-slot cleanup. Web now wires that path into
+  resolver-backed `OpenWindow`: it creates another browser canvas,
+  `WebRenderer`, platform-window binding, platform slot, and per-window driver,
+  then routes redraw/event/context-menu/IME/dispose paths through
+  `HostWindowId`. macOS and Windows still reject `OpenWindow` until their
+  native hosts attach multiple platform windows and renderer instances.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.
