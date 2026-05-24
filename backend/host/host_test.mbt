@@ -211,6 +211,70 @@ test "host window registry tracks primary focus resize and close lifecycle" {
 }
 
 ///|
+test "host window registry applies shared lifecycle host events" {
+  let registry = HostWindowRegistry::new()
+  let window_id = registry.open(
+    title="Main",
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=240.0),
+    ),
+  )
+  assert_true(
+    registry.apply_host_event(
+      window_id,
+      HostEvent::Resized(
+        HostSurfaceMetrics::from_logical(
+          size=@core.Size::new(width=640.0, height=480.0),
+          scale_factor=2.0,
+        ),
+      ),
+    ),
+  )
+  match registry.lookup(window_id) {
+    Some({ metrics, .. }) => {
+      assert_true(
+        metrics.logical_size == @core.Size::new(width=640.0, height=480.0),
+      )
+      assert_true(
+        metrics.physical_size == @core.Size::new(width=1280.0, height=960.0),
+      )
+    }
+    None => fail("expected lifecycle window")
+  }
+  assert_true(
+    registry.apply_host_event(
+      window_id,
+      HostEvent::Focus(HostFocusEvent::new(focused=true)),
+    ),
+  )
+  match registry.focused_window() {
+    Some({ id, .. }) => assert_true(id == window_id)
+    None => fail("expected focused window")
+  }
+  assert_true(
+    registry.apply_host_event(
+      window_id,
+      HostEvent::Focus(HostFocusEvent::new(focused=false)),
+    ),
+  )
+  match registry.lookup(window_id) {
+    Some({ phase, .. }) =>
+      assert_true(phase == HostWindowLifecyclePhase::WindowVisible)
+    None => fail("expected blurred window")
+  }
+  assert_true(registry.apply_host_event(window_id, HostEvent::CloseRequested))
+  match registry.lookup(window_id) {
+    Some({ phase, .. }) =>
+      assert_true(phase == HostWindowLifecyclePhase::WindowCloseRequested)
+    None => fail("expected close-requested window")
+  }
+  inspect(
+    registry.apply_host_event(window_id, HostEvent::RedrawRequested),
+    content="false",
+  )
+}
+
+///|
 test "host service bridge gates typed platform requests by capability" {
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(

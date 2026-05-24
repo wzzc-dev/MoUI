@@ -14,7 +14,11 @@ model regardless of whether the host is Web, macOS, or Windows.
 `HostWindowRegistry` also provides shared bookkeeping for window ids, primary
 windows, focused windows, close requests, closed-window cleanup, and per-window
 surface metrics so future multi-window platform hosts do not duplicate lifecycle
-state machines.
+state machines. The current Web, macOS, and Windows entrypoints still create one
+primary window, but they allocate that window through the registry, apply
+`HostEvent::Resized`, focus, and close events to it, and close/remove the record
+during host disposal. That keeps today's single-window apps on the same state
+path future multi-window hosts will use.
 
 The boundary is:
 

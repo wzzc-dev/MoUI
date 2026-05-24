@@ -164,6 +164,9 @@ Focus areas:
 - Keep Linux clearly marked as scaffold until a minimal backend is implemented.
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,
   menus, file dialogs, URL opening, and system-theme queries.
+- Keep window lifecycle state flowing through `HostWindowRegistry`; current
+  Web, macOS, and Windows entrypoints remain single-window but already allocate
+  and update primary window records on the shared lifecycle path.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.

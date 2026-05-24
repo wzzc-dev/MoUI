@@ -15,6 +15,8 @@ struct WebApp {
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
+  windows : @host.HostWindowRegistry
+  mut window_id : @host.HostWindowId?
   mut renderer : WebRenderer?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
@@ -60,6 +62,8 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
+    windows: @host.HostWindowRegistry::new(),
+    window_id: None,
     renderer: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
@@ -142,6 +146,12 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
         window.surface_size(),
         window.scale_factor(),
       )
+      let window_id = self.windows.open(
+        title=self.title,
+        metrics~,
+        primary=true,
+      )
+      self.window_id = Some(window_id)
       let renderer_result = try? WebRenderer::create(
         canvas_id=window_web_default_canvas_id(window.id().into_raw()),
         metrics~,
@@ -187,16 +197,7 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
   match event {
     @window_core.WindowEvent::CloseRequested => {
       self.dispatch_window_event(event)
-      match self.renderer {
-        Some(renderer) => renderer.dispose()
-        None => ()
-      }
-      self.renderer = None
-      match self.window {
-        Some(window) => window.drop()
-        None => ()
-      }
-      self.window = None
+      self.dispose()
       event_loop.exit()
     }
     @window_core.WindowEvent::SurfaceResized(_) => {
@@ -273,6 +274,7 @@ fn WebApp::dispatch_window_event(
       scale_factor=self.current_scale_factor(),
     ) {
     Some(host_event) => {
+      self.apply_window_lifecycle(host_event)
       match host_event {
         @host.HostEvent::Resized(metrics) => self.resize_renderer(metrics)
         _ => ()
@@ -280,6 +282,18 @@ fn WebApp::dispatch_window_event(
       ignore(self.driver.dispatch(host_event))
       self.sync_text_input_session()
     }
+    None => ()
+  }
+}
+
+///|
+fn WebApp::apply_window_lifecycle(
+  self : WebApp,
+  host_event : @host.HostEvent,
+) -> Unit {
+  match self.window_id {
+    Some(window_id) =>
+      ignore(self.windows.apply_host_event(window_id, host_event))
     None => ()
   }
 }
@@ -333,6 +347,28 @@ fn WebApp::request_redraw(self : WebApp) -> Unit {
       None => ()
     }
   }
+}
+
+///|
+fn WebApp::dispose(self : WebApp) -> Unit {
+  match self.window_id {
+    Some(window_id) => {
+      ignore(self.windows.close(window_id))
+      ignore(self.windows.remove_closed())
+      self.window_id = None
+    }
+    None => ()
+  }
+  match self.renderer {
+    Some(renderer) => renderer.dispose()
+    None => ()
+  }
+  self.renderer = None
+  match self.window {
+    Some(window) => window.drop()
+    None => ()
+  }
+  self.window = None
 }
 
 ///|
