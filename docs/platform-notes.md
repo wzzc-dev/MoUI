@@ -19,8 +19,10 @@ request channel for opening, focusing, closing, resizing, minimizing, showing,
 and changing the primary window. The active Web, macOS, and Windows hosts accept
 a shared queue through `run_app_with_window_requests` and drain current-window
 focus, close, resize, minimize, show, and set-primary requests at the platform
-edge. `OpenWindow` requests are still rejected until the hosts manage multiple
-platform windows and renderer instances.
+edge. Each drained request records an ordered completion on the same queue, so
+tests and higher-level host code can observe accepted current-window operations
+and explicit rejections. `OpenWindow` requests are still rejected until the hosts
+manage multiple platform windows and renderer instances.
 The current Web, macOS, and Windows entrypoints still create one primary window,
 but they allocate that window through the registry, apply `HostEvent::Resized`,
 focus, and close events to it, and close/remove the record during host disposal.
