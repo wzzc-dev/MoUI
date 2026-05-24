@@ -11,3 +11,4 @@ _build/
 .local_deps/
 .tools/
 .claude/
+.idea/
