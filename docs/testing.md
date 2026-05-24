@@ -85,10 +85,17 @@ sh -n scripts/setup-local-deps.sh
 sh -n scripts/check-local-deps.sh
 sh -n scripts/preview-loop.sh
 sh -n scripts/package-macos-app.sh
+node --check scripts/validate-package-manifest.mjs
 ```
 
 When packaging helpers change, also run at least one `--no-build` smoke against
-an already-built executable and inspect the generated manifest/plist output.
+an already-built executable and validate the generated manifest:
+
+```sh
+node scripts/validate-package-manifest.mjs \
+  "dist/macos/MoUI Showcase.app/Contents/Resources/moui-package.json" \
+  --platform macos
+```
 
 Use `rg` to audit stale terms, missing links, old example paths, and outdated
 validation commands. If the change updates docs placement, package layout,

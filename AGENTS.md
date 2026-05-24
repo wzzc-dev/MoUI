@@ -108,6 +108,7 @@ moon test backend/web --target wasm-gc
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
 moon build examples/showcase/web_wasm --target wasm-gc
+node --check scripts/validate-package-manifest.mjs
 ```
 
 Run `moon info` after public API changes and review generated

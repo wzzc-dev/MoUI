@@ -138,13 +138,17 @@ JSON_BUNDLE="$(json_text "$APP_NAME.app")"
 
 cat > "$RESOURCES_DIR/moui-package.json" <<EOF
 {
+  "schemaVersion": 1,
+  "platform": "macos",
+  "outputKind": "app-bundle",
   "appName": "$JSON_APP_NAME",
-  "package": "$JSON_PACKAGE",
+  "moonPackage": "$JSON_PACKAGE",
   "bundleIdentifier": "$JSON_BUNDLE_ID",
   "version": "$JSON_VERSION",
-  "buildVersion": "$JSON_BUILD_VERSION",
+  "buildNumber": "$JSON_BUILD_VERSION",
   "executable": "$JSON_EXECUTABLE",
-  "bundle": "$JSON_BUNDLE"
+  "bundleName": "$JSON_BUNDLE",
+  "runtimeFiles": []
 }
 EOF
 

@@ -139,6 +139,7 @@ moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+node --check scripts/validate-package-manifest.mjs
 ```
 
 Platform validation:
