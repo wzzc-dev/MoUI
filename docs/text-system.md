@@ -92,6 +92,10 @@ Remote font loading is intentionally outside the current backend contract.
   monotonicity, clamping, editor selection behavior, and IME anchor geometry for
   mixed bidi, CJK, and emoji samples; they do not claim full Unicode shaping
   parity.
+- Focused text inputs expose MoUI's default copy, cut, paste, undo, redo, and
+  select-all commands through host context menus, so keyboard shortcuts and
+  native menu selections share the same selection, clipboard, and Unicode paste
+  dispatch path.
 - Windows and Linux native platform providers are scaffolds; composed Cosmic
   fallback handles real text until those engines are implemented.
 - Web can surface browser emoji and font fallback behavior, while stable Web

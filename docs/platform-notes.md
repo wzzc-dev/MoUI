@@ -90,6 +90,10 @@ constructors and platform event conversion.
   host edge. Web, macOS, and Windows skip normal pointer dispatch for those
   events so right-click does not activate regular controls; macOS and Windows
   then route the runtime action command menu through their native menu service.
+  When a text input is focused, the host driver prepends MoUI's default text
+  commands to that menu so native context menus can copy, cut, paste, undo,
+  redo, and select text through the same clipboard and command path as keyboard
+  shortcuts.
 
 ## Web Wasm-GC
 
