@@ -93,6 +93,76 @@ test "surface host resizes through host event" {
 }
 
 ///|
+test "host window registry tracks primary focus resize and close lifecycle" {
+  let registry = HostWindowRegistry::new()
+  let first = registry.open(
+    title="Main",
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=640.0, height=480.0),
+    ),
+  )
+  let second = registry.open(
+    title="Inspector",
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=480.0),
+    ),
+  )
+  inspect(registry.open_window_count(), content="2")
+  match registry.primary_window() {
+    Some({ id, title, .. }) => {
+      assert_true(id == first)
+      inspect(title, content="Main")
+    }
+    None => fail("expected first window to become primary")
+  }
+  assert_true(registry.focus(second))
+  match registry.focused_window() {
+    Some({ id, phase, .. }) => {
+      assert_true(id == second)
+      assert_true(phase == HostWindowLifecyclePhase::WindowFocused)
+    }
+    None => fail("expected focused window")
+  }
+  assert_true(
+    registry.resize(
+      second,
+      HostSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=400.0, height=500.0),
+        scale_factor=2.0,
+      ),
+    ),
+  )
+  match registry.lookup(second) {
+    Some({ metrics, .. }) => {
+      assert_true(
+        metrics.logical_size == @core.Size::new(width=400.0, height=500.0),
+      )
+      assert_true(
+        metrics.physical_size == @core.Size::new(width=800.0, height=1000.0),
+      )
+    }
+    None => fail("expected resized window")
+  }
+  assert_true(registry.close(first))
+  match registry.primary_window() {
+    Some({ id, .. }) => assert_true(id == second)
+    None => fail("expected primary reassigned after close")
+  }
+  inspect(registry.remove_closed(), content="1")
+  inspect(registry.open_window_count(), content="1")
+  inspect(
+    registry.resize(
+      first,
+      HostSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=1.0, height=1.0),
+      ),
+    ),
+    content="false",
+  )
+  inspect(registry.close(first), content="false")
+}
+
+///|
 test "host service bridge gates typed platform requests by capability" {
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(
@@ -309,7 +379,10 @@ test "native accessibility bridge snapshots semantics recursively" {
       inspect(snapshot.focus(), content="NodeId(1)")
       let child_update = snapshot.nodes()[1]
       inspect(child_update.node().role(), content="Button")
-      inspect(child_update.node().label(), content="Some(Save)")
+      match child_update.node().label() {
+        Some(label) => inspect(label, content="Save")
+        None => fail("expected child accessibility label")
+      }
       inspect(
         child_update.node().supports_action(@accesskit.Action::Click),
         content="true",

@@ -259,6 +259,49 @@ pub(all) struct HostSurfaceMetrics {
 pub fn HostSurfaceMetrics::from_logical(size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
 pub fn HostSurfaceMetrics::new(logical_size~ : @wzzc-dev/moui/core.Size, physical_size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
 
+pub(all) struct HostWindowId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWindowId::new(Int) -> Self
+
+pub(all) enum HostWindowLifecyclePhase {
+  WindowCreated
+  WindowVisible
+  WindowFocused
+  WindowMinimized
+  WindowCloseRequested
+  WindowClosed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostWindowRecord {
+  id : HostWindowId
+  title : String
+  metrics : HostSurfaceMetrics
+  phase : HostWindowLifecyclePhase
+  primary : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWindowRecord::new(id~ : HostWindowId, title~ : String, metrics~ : HostSurfaceMetrics, phase? : HostWindowLifecyclePhase, primary? : Bool) -> Self
+
+pub struct HostWindowRegistry {
+  mut next_value : Int
+  mut records : Array[HostWindowRecord]
+}
+pub fn HostWindowRegistry::close(Self, HostWindowId) -> Bool
+pub fn HostWindowRegistry::focus(Self, HostWindowId) -> Bool
+pub fn HostWindowRegistry::focused_window(Self) -> HostWindowRecord?
+pub fn HostWindowRegistry::lookup(Self, HostWindowId) -> HostWindowRecord?
+pub fn HostWindowRegistry::minimize(Self, HostWindowId) -> Bool
+pub fn HostWindowRegistry::new() -> Self
+pub fn HostWindowRegistry::open(Self, title~ : String, metrics~ : HostSurfaceMetrics, primary? : Bool) -> HostWindowId
+pub fn HostWindowRegistry::open_window_count(Self) -> Int
+pub fn HostWindowRegistry::open_windows(Self) -> Array[HostWindowRecord]
+pub fn HostWindowRegistry::primary_window(Self) -> HostWindowRecord?
+pub fn HostWindowRegistry::remove_closed(Self) -> Int
+pub fn HostWindowRegistry::request_close(Self, HostWindowId) -> Bool
+pub fn HostWindowRegistry::resize(Self, HostWindowId, HostSurfaceMetrics) -> Bool
+pub fn HostWindowRegistry::set_primary(Self, HostWindowId) -> Bool
+pub fn HostWindowRegistry::show(Self, HostWindowId) -> Bool
+
 pub(all) struct InputHostState {
   mut focused : Bool
   mut modifiers : @wzzc-dev/moui/core.KeyModifiers
