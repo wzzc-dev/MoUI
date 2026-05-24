@@ -84,6 +84,7 @@ Fallback composition is explicit at the backend/provider boundary; the
 `render/wgpu` package validates provider responses but does not depend on the
 Cosmic provider package. Full bidi, line breaking, and typography conformance
 are still follow-up work.
+The cross-package text boundary is documented in [Text system](text-system.md).
 Native image support is
 synchronous from the app model's
 point of view; the shared image lifecycle record can represent loading, ready,
@@ -126,3 +127,5 @@ support, update:
 1. `render/capabilities.mbt`
 2. `render/capabilities_test.mbt`
 3. this report page
+
+For text-related renderer changes, also update `docs/text-system.md`.

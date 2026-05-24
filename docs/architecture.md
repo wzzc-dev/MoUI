@@ -36,7 +36,10 @@ render/webgpu_adapter/        browser WebGPU host-import renderer for wasm-gc
 tests/tooling/                quickcheck and pixelmatch integration tests
 examples/showcase/app/        shared visual showcase app with Counter/Todo patterns
 examples/showcase/macos/      macOS native showcase
+examples/showcase/macos_cosmic/ macOS showcase selecting Moon Cosmic text
 examples/showcase/web_wasm/   Web showcase on wasm-gc
+examples/showcase/windows/    Windows native showcase
+examples/showcase/windows_cosmic/ Windows showcase selecting Moon Cosmic text
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos/ macOS native Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
@@ -230,6 +233,11 @@ report. The WebGPU host-import renderer forwards the full command set to the
 browser runtime. See
 [Renderer capability report](renderer-capability-report.md).
 
+Text measurement flows through the runtime `TextSystem` contract. `core/` owns
+the neutral contract and deterministic fallback; native providers live under
+`render/wgpu/*`, and Web installs a browser Canvas-backed system that matches
+its WebGPU glyph path. See [Text system](text-system.md).
+
 ## Built-In And Custom Views
 
 The public `views` package includes text, button, text field, checkbox, image,
@@ -239,6 +247,8 @@ slider, progress, menu button, tooltip, and layout helper functions.
 
 See [View catalog](view-catalog.md) for the current public constructor matrix,
 test coverage, and example coverage.
+The larger WYSIWYG editing workflow is documented in
+[Markdown Editor](markdown-editor.md).
 
 Advanced users can use `ViewSpec::custom` to provide measurement, paint, and
 semantics callbacks without adding a new core enum variant:

@@ -21,8 +21,13 @@ paths, or abstractions that only preserve old shapes.
 - `render/` is the renderer facade and shared reporting layer.
 - `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
   wasm-gc browser WebGPU host-import bridge.
+- Native text providers live in `render/wgpu/cosmic_text/`,
+  `render/wgpu/coretext/`, `render/wgpu/directwrite/`,
+  `render/wgpu/fontconfig/`, and the shared `render/wgpu/text_protocol/`
+  package. `core/` owns only the neutral `TextSystem` contract.
 - `examples/*/app/` packages are shared app logic. Platform subpackages are
-  entrypoints only.
+  entrypoints only. Showcase also has `macos_cosmic` and `windows_cosmic`
+  entrypoints for explicit Moon Cosmic text-provider comparison.
 
 ## Local Dependencies
 
@@ -129,6 +134,20 @@ commands, platform setup, renderer capabilities, or user-facing behavior, update
 the relevant files under `docs/` in the same change. Keep `README.mbt.md` as a
 short entry point and move detailed development guidance into
 `docs/development.md`.
+
+The project moves quickly, so guidance files are part of the maintenance
+surface. When changes affect architecture, package boundaries, docs placement,
+validation commands, platform behavior, examples, renderer capabilities, or the
+text system, also check whether `AGENTS.md` and the repo-local skills under
+`skills/` need updates. If they do not need edits, say they were checked and
+left unchanged in the handoff.
+
+Current focused docs:
+
+- `docs/text-system.md` covers `TextSystem`, native provider composition,
+  Web text measurement/drawing, embedded fonts, and shaping gaps.
+- `docs/markdown-editor.md` covers the WYSIWYG Markdown Editor model,
+  source/visual mapping, commands, platform entrypoints, and validation.
 
 ## Editing Notes
 

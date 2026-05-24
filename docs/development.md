@@ -112,83 +112,33 @@ moon build examples/markdown_editor/windows --target native
 MoUI keeps production runtime boundaries explicit when using Mooncakes
 frontends and tooling:
 
-- `core` owns the neutral `TextSystem` contract and a deterministic fallback
-  text system for tests and last-resort layout. It does not depend on
-  `Milky2018/moon_cosmic` or any native font stack. `FontSpec` carries a
-  structured family stack rather than a raw family string.
-  The default stack is just `SystemUi`; MoUI does not name concrete fonts unless
-  the app asks for them. Native and Web backends resolve that through their
-  platform system defaults.
-  Runtime text is injectable through `AppRuntime::set_text_system`:
-  `render/wgpu` exposes only the native provider hook and renderer-side
-  validation, `render/wgpu/cosmic_text` exposes Moon Cosmic as a standalone
-  native WGPU text provider, macOS composes the `render/wgpu/coretext` provider
-  with the Cosmic fallback by default, Windows composes the
-  `render/wgpu/directwrite` scaffold provider with the Cosmic fallback, Linux
-  has the `render/wgpu/fontconfig` scaffold provider ready for a future host,
-  and Web installs a browser Canvas-backed text system that uses the same
-  `system-ui` stack as WebGPU text drawing. The CoreText provider uses shared
-  `render/wgpu/text_protocol` `FontSpec` payloads and measurement decoding,
-  attempts named families from the structured family stack before falling back to
-  system fonts, maps generic families such as `ui-monospace`, `serif`, and
-  `emoji` to suitable macOS fonts, then CoreText glyph runs for glyph ids and
-  positions before rasterizing into the shared atlas, while retaining a
-  renderer-private glyph payload boundary; glyph payloads include the CoreText
-  run's PostScript font identity so fallback font runs can be rasterized with
-  the same font that shaped them. The DirectWrite and
-  fontconfig/HarfBuzz/FreeType scaffolds use the same text protocol package for
-  native UTF-32 input encoding, versioned `FontSpec` payloads that carry size,
-  weight, style, and the structured family stack, private versioned measurement
-  payload parsing, and a generic run-layout envelope that converts shaped glyph
-  placements plus platform-private raster payloads into renderer glyph keys. The
-  same protocol package also parses single-channel raster glyph bitmaps for
-  providers that use the shared raster envelope, and it owns the versioned
-  embedded-font registration payload encoder/decoder so platform providers do
-  not need package-local ad hoc formats. Their native stubs return empty data
-  until the real platform implementations are wired. Backend hosts opt into
-  fallback explicitly with
-  `native_platform_text_engine_with_fallback(..., fallback=cosmic_text_engine())`;
-  `render/wgpu` itself does not depend on the Cosmic package. The Windows and
-  Linux providers intentionally rely on that composed Cosmic fallback until
-  their DirectWrite and fontconfig/HarfBuzz/FreeType engines are implemented.
-  Apps can register
-  embedded font bytes through
-  `AppRuntime::register_font_data`; native WGPU forwards those bytes through the
-  active text provider's `register_font_data` hook and, when a fallback engine is
-  composed, forwards the same bytes to that fallback cache. CoreText v1 consumes
-  installed named families and attempts
-  process-local registration of app-provided font bytes under the requested
-  family alias; future DirectWrite and fontconfig/HarfBuzz/FreeType providers
-  can use the same hook for private font collections. Remote font loading is
-  intentionally out of scope.
-  Native hosts can choose the text engine at startup through
-  `run_app_with_options(..., options=MacosAppOptions::new(text_engine=NativeTextEngineSetting::MoonCosmic))`
-  or the Windows equivalent. `MoonCosmic` selects the shared Cosmic provider;
-  `PlatformDefault` selects the platform provider path composed with the Cosmic
-  fallback on macOS and Windows.
-  Native text providers should use `NativePlatformTextProvider::new` plus the
-  `NativeGlyphPlacement::new`, `NativeTextLayout::new`, and
-  `NativeRasterGlyph::new` constructors from `render/wgpu`. Provider payloads
-  are opaque to the renderer, but glyph cache keys must include all
-  raster-affecting inputs such as glyph identity, font size, style, weight, and
-  scale. Measurement layouts must report valid metrics and monotonic caret
-  positions covering the input text; render layouts must report valid metrics
-  and glyph placements. Invalid layout or raster glyph data is rejected at the
-  renderer boundary and falls back through the explicit fallback provider when
-  the host supplied one.
-- `Milky2018/moon_accesskit` is the native accessibility tree representation
-  used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
-  Web continues to use its ARIA adapter.
 - `Milky2018/moon_taffy` is allowed in `core/` because layout is
   platform-neutral. MoUI maps ordinary flex/grid/list/stack placement through
   Taffy and keeps custom layout delegates, dirty marking, and render tree
   ownership in MoUI.
+- `Milky2018/moon_accesskit` is the native accessibility tree representation
+  used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
+  Web continues to use its ARIA adapter.
 - `Milky2018/moon_zeno` powers renderer path tessellation from MoUI
   `DrawPath` / `PathSpec` values into triangle meshes. SVG parsing remains the
   importer frontend's job.
 - `mizchi/markdown` powers the Markdown Editor parser adapter while preserving
-  `markdown_to_rich_text(String) -> @core.RichTextDocument`.
+  `markdown_to_rich_text(String) -> @core.RichTextDocument`. See
+  [Markdown Editor](markdown-editor.md) for the app-level editing model.
 - `mizchi/svg` powers `render.import_svg(String) -> SvgImportResult`, lowering
   parsed SVG scene graph nodes into MoUI `DrawCommand` values.
 - `moonbitlang/quickcheck` and `mizchi/pixelmatch` are exercised from
   `tests/tooling/` for property and pixel-diff coverage.
+
+The text stack has its own maintenance page because it spans `core`,
+`render/wgpu`, backend startup options, and browser host assets. See
+[Text system](text-system.md) before changing `TextSystem`, native text
+providers, embedded font registration, or Web text measurement.
+
+## Guidance Maintenance
+
+When a development change affects package layout, docs placement, validation
+commands, platform setup, renderer capability status, example structure, or the
+text system, also check `AGENTS.md` and the repo-local skills under `skills/`.
+Update them in the same change when their instructions would otherwise become
+stale.

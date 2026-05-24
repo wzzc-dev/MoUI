@@ -10,81 +10,11 @@ model and parser tests.
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | Public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 
-The Markdown editor keeps Markdown source as the saved value, but its first
-screen is now the formatted editor surface; source preview is available from the
-toolbar for inspection. Its shared app package has an explicit editor core.
-`MarkdownEditorSnapshot` parses source
-into blocks with source/content ranges, rich text output, line and word counts,
-and the current document title. Core rich text blocks can carry source/content
-ranges so the focused editor and IME request use the formatted visual position
-for hidden Markdown block and inline markers, and pointer hit-testing maps
-formatted visual positions back into Markdown source offsets. Mapped selection
-painting now highlights formatted ranges while leaving hidden markers out of the
-visual selection, including pointer drag selections mapped back to Markdown source
-ranges. Toolbar inline commands and keyboard shortcuts toggle the tracked
-selection for bold, italic, code, strikethrough, link, and image marks, wrapping
-plain selections and unwrapping matching hidden marker pairs. Link and image
-commands can also update the saved URL/source target while preserving the
-selected visible text or alt text; the example app exposes those targets through
-a contextual editing bar that switches between link URL editing, image source
-editing, and plain-selection creation actions based on the current selection.
-Reference-style links and images resolve their document definitions into rich
-link/image targets, so long-form Markdown can keep shared definitions while the
-formatted editor shows the linked text and image preview. The same contextual
-target editor now appears as a floating palette over the formatted editor when
-source preview is hidden and anchors to the live caret/selection geometry; it
-can update the referenced definition target from the selected linked text or
-image alt text, and creates the missing definition when a reference-style link
-or image does not have one yet, including shortcut reference links such as
-`[label]`.
-Footnote references and definitions keep their Markdown source structure while
-rendering as compact inline note markers and styled definition blocks. Selecting
-a footnote reference or definition opens contextual footnote text editing, and
-applying text updates the existing definition or creates the missing one.
-Inline HTML tags and HTML blocks are also retained as structured Markdown spans
-and blocks, with code-like styling in the formatted surface. When the caret is
-inside a rendered HTML block, the contextual bar exposes raw HTML block editing
-so future safe HTML rendering can build on the editor model instead of reparsing
-plain text.
-When the caret is inside a rendered table, the same contextual bar exposes row
-and column insertion/deletion plus column-alignment tools that update the
-canonical Markdown table.
-The contextual bar also reports the active block kind, and a paragraph command
-strips heading/list/quote markers from the current or selected source lines.
-Heading levels 1-6, list, task, ordered-list, quote, and code-block commands also have
-keyboard shortcuts; heading commands transform the current source line, and
-paragraph, list, task, ordered-list, and quote commands transform either the
-current line or all selected source lines. The code block command wraps the
-current line or selected source lines in fences, and unwraps the containing
-fenced block when the caret is already inside one. Task-list visual checkbox
-prefixes are clickable and toggle
-the saved `- [ ]` / `- [x]` marker in the canonical source.
-Setext headings render as H1/H2 blocks, and block commands applied from the
-visible heading text rewrite the whole setext source block so the hidden
-underline marker is not left behind.
-The next line in
-bullet, task, ordered-list, and quote blocks automatically continues the current
-marker on Enter, while pressing Enter on an empty marker line exits that block.
-Ordered-list numbering is normalized after both typed input transforms and
-toolbar/block commands, so converting or editing a list item keeps the contiguous
-list numbered like a visual editor.
-The Markdown editor accepts Tab as text-editor input so Tab indents the current
-or selected source lines and Shift-Tab outdents them instead of moving focus
-away. Backspace at the visual start of formatted heading, list, task,
-ordered-list, quote, bold, italic, or code content removes the hidden Markdown
-marker pair/prefix; Backspace at the start of a plain visual block merges it
-with the previous block and strips hidden block markers into paragraph text. Copy
-and cut export the formatted visual text without hidden Markdown delimiters,
-while multiline paste continues bullet, task, quote, ordered-list, and code-block
-context. Tables render as rich previews with source-mapped cells; Tab navigates
-between cells, Enter inserts a row below the current cell, and toolbar/contextual
-commands insert or delete rows and columns. Table alignment commands rewrite the
-current column separator as `:---`, `:---:`, `---:`, or `---` and the rich table
-preview reflects that alignment. Toolbar and contextual target-editing
-commands keep their own undo/redo history so structured Markdown transforms can
-be reverted separately from raw text input. The next Typora milestones are
-adding more complete block-mode interactions and richer selection-aware inline
-editing affordances.
+The Markdown editor keeps Markdown source as the saved value while presenting a
+formatted editor surface as the primary workflow. Source preview remains
+available from the toolbar. See [Markdown Editor](markdown-editor.md) for the
+editing model, source/visual mapping, contextual commands, and validation
+guidance.
 
 ## Web Wasm-GC
 
@@ -108,6 +38,7 @@ macOS examples use the shared app package plus `backend/macos` and native
 
 ```sh
 moon build examples/showcase/macos --target native
+moon build examples/showcase/macos_cosmic --target native
 moon build examples/markdown_editor/macos --target native
 ```
 
@@ -121,6 +52,8 @@ Windows examples use MSYS2 UCRT64 and the static Windows GNU `wgpu-native`
 release documented in `platform-notes.md`:
 
 ```sh
+moon build examples/showcase/windows --target native
+moon build examples/showcase/windows_cosmic --target native
 moon build examples/markdown_editor/windows --target native
 ```
 
