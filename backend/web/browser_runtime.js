@@ -15,6 +15,7 @@ export function createWindowWebImports(options = {}) {
   let nextStringHandle = 1;
   let nextEventTextId = 1;
   let dispatchEvent = null;
+  let wasmExports = null;
 
   const resolveCanvasHost = () => {
     const host = options.canvasHost;
@@ -37,6 +38,21 @@ export function createWindowWebImports(options = {}) {
         eventTexts.delete(textId);
       }
     }
+  };
+
+  const completeAsyncText = (exportName, requestId, ok, text = "") => {
+    const complete = wasmExports?.[exportName];
+    if (typeof complete !== "function") {
+      return;
+    }
+    const textId = nextEventTextId++;
+    eventTexts.set(textId, `${text ?? ""}`);
+    try {
+      complete(requestId | 0, !!ok, textId);
+    } finally {
+      eventTexts.delete(textId);
+    }
+    emit(3);
   };
 
   const createStringHandle = value => {
@@ -96,6 +112,27 @@ export function createWindowWebImports(options = {}) {
       .map(file => file.webkitRelativePath || file.name)
       .filter(Boolean)
       .join("\n");
+
+  const fileListNames = files =>
+    Array.from(files ?? [])
+      .map(file => file.webkitRelativePath || file.name)
+      .filter(Boolean)
+      .join("\n");
+
+  const filterListToAccept = filters =>
+    `${filters ?? ""}`
+      .split(/[\n,]+/)
+      .map(part => part.trim())
+      .filter(Boolean)
+      .filter(part => part.startsWith(".") || part.includes("/"))
+      .join(",");
+
+  const asyncFailureMessage = (error, fallback) => {
+    if (error?.name === "AbortError") {
+      return "";
+    }
+    return `${error?.message || error || fallback}`;
+  };
 
   const logicalCanvasWidth = canvas =>
     Math.max(1, Math.round(canvas?.clientWidth || canvas?.width || 1));
@@ -351,6 +388,105 @@ export function createWindowWebImports(options = {}) {
       focusWithoutScroll(previousActive);
       return copied;
     },
+    clipboard_read_text_async(requestId) {
+      if (!navigator.clipboard?.readText) {
+        completeAsyncText(
+          "web_complete_async_clipboard_read",
+          requestId,
+          false,
+          "clipboard read requires navigator.clipboard.readText",
+        );
+        return;
+      }
+      navigator.clipboard
+        .readText()
+        .then(text => {
+          completeAsyncText(
+            "web_complete_async_clipboard_read",
+            requestId,
+            true,
+            text,
+          );
+        })
+        .catch(error => {
+          completeAsyncText(
+            "web_complete_async_clipboard_read",
+            requestId,
+            false,
+            asyncFailureMessage(error, "clipboard read failed"),
+          );
+        });
+    },
+    file_dialog_open_async(requestId, kind, title, filters, defaultName) {
+      const complete = (ok, value) =>
+        completeAsyncText(
+          "web_complete_async_file_dialog",
+          requestId,
+          ok,
+          value,
+        );
+      const dialogKind = kind | 0;
+      const accept = filterListToAccept(stringValue(filters));
+      const suggestedName = stringValue(defaultName);
+      if (dialogKind === 1 && globalThis.showSaveFilePicker) {
+        globalThis
+          .showSaveFilePicker({
+            suggestedName: suggestedName || undefined,
+          })
+          .then(handle => complete(true, handle?.name || suggestedName || ""))
+          .catch(error => {
+            if (error?.name === "AbortError") {
+              complete(true, "");
+            } else {
+              complete(false, asyncFailureMessage(error, "file dialog failed"));
+            }
+          });
+        return;
+      }
+      if (dialogKind === 1) {
+        complete(false, "save file dialog is unavailable on this browser");
+        return;
+      }
+      const input = document.createElement("input");
+      input.type = "file";
+      input.style.position = "fixed";
+      input.style.left = "-10000px";
+      input.style.top = "0";
+      input.style.width = "1px";
+      input.style.height = "1px";
+      input.style.opacity = "0";
+      input.style.pointerEvents = "none";
+      if (accept) {
+        input.accept = accept;
+      }
+      if (dialogKind === 2) {
+        input.webkitdirectory = true;
+        input.directory = true;
+      }
+      document.body.appendChild(input);
+      let completed = false;
+      const finish = (ok, value) => {
+        if (completed) return;
+        completed = true;
+        input.remove();
+        complete(ok, value);
+      };
+      input.addEventListener("change", () => {
+        finish(true, fileListNames(input.files));
+      }, { once: true });
+      globalThis.window?.addEventListener?.("focus", () => {
+        setTimeout(() => {
+          if (!completed && (!input.files || input.files.length === 0)) {
+            finish(true, "");
+          }
+        }, 0);
+      }, { once: true });
+      try {
+        input.click();
+      } catch (error) {
+        finish(false, asyncFailureMessage(error, "file dialog failed"));
+      }
+    },
     open_url(url) {
       const href = stringValue(url);
       if (!href || !globalThis.window?.open) {
@@ -391,6 +527,9 @@ export function createWindowWebImports(options = {}) {
     },
     set_dispatch_event(fn) {
       dispatchEvent = fn;
+    },
+    set_wasm_exports(exports) {
+      wasmExports = exports;
     },
     install_canvas_events(rawId, handle) {
       const canvas = canvasValue(handle);
@@ -714,5 +853,6 @@ export function connectWindowWeb(instance, imports) {
     throw new Error("MoonBit wasm module must export web_dispatch_event");
   }
   imports.set_dispatch_event(dispatch);
+  imports.set_wasm_exports?.(instance.exports);
   return instance;
 }
