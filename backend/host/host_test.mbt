@@ -112,6 +112,36 @@ test "host converts window drag drop events to logical core events" {
 }
 
 ///|
+test "host recognizes secondary pointer context menu requests" {
+  let right_down = @window_core.WindowEvent::PointerButton(
+    None,
+    @window_core.ElementState::Pressed,
+    @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
+    true,
+    @window_core.ButtonSource::Mouse(@window_core.MouseButton::Right),
+  )
+  inspect(window_event_is_context_menu_trigger(right_down), content="true")
+  inspect(window_event_is_context_menu_button(right_down), content="true")
+  let right_up = @window_core.WindowEvent::PointerButton(
+    None,
+    @window_core.ElementState::Released,
+    @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
+    true,
+    @window_core.ButtonSource::Mouse(@window_core.MouseButton::Right),
+  )
+  inspect(window_event_is_context_menu_trigger(right_up), content="false")
+  inspect(window_event_is_context_menu_button(right_up), content="true")
+  let left_down = @window_core.WindowEvent::PointerButton(
+    None,
+    @window_core.ElementState::Pressed,
+    @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
+    true,
+    @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
+  )
+  inspect(window_event_is_context_menu_button(left_down), content="false")
+}
+
+///|
 test "surface host resizes through host event" {
   let surface = SurfaceHostState::new(
     metrics=HostSurfaceMetrics::from_logical(
@@ -349,6 +379,43 @@ test "host driver dispatches command intents through runtime action map" {
     None => ()
     Some(_) => fail("host command should dispatch through runtime action map")
   }
+}
+
+///|
+test "host driver shows context menu from action commands" {
+  let submitted = Ref(0)
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::EmptySpec,
+    size=@core.Size::new(width=10.0, height=10.0),
+  )
+  runtime.set_action_commands(
+    @core.ActionCommandMap::new(bindings=[
+      @core.CommandBinding::new(
+        command=@core.ActionCommand::new(
+          intent=@core.CommandIntent::Submit,
+          label="Submit",
+        ),
+        handle=() => submitted.val = submitted.val + 1,
+      ),
+    ]),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let seen_count = Ref(0)
+  let services = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(menus=true),
+    handle=request => {
+      match request {
+        ShowMenu(commands) => {
+          seen_count.val = commands.length()
+          HostServiceResponse::MenuCommand(commands[0].intent)
+        }
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(driver.show_context_menu(services))
+  inspect(seen_count.val, content="1")
+  inspect(submitted.val, content="1")
 }
 
 ///|

@@ -41,6 +41,10 @@ constructors and platform event conversion.
   capability flags for clipboard, menus, file dialogs, URL opening, and system
   theme. Unsupported services should return `Unavailable` responses instead of
   leaking platform checks into `core` or `views`.
+- Secondary mouse-button presses are treated as context-menu requests at the
+  host edge. Web, macOS, and Windows skip normal pointer dispatch for those
+  events so right-click does not activate regular controls; macOS and Windows
+  then route the runtime action command menu through their native menu service.
 
 ## Web Wasm-GC
 
@@ -72,6 +76,8 @@ opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
 `NSOpenPanel` and `NSSavePanel`, presents command menus at the current pointer
 position through `NSMenu`, and reports the effective light/dark system
 appearance through the shared `HostServiceBridge` contract.
+Right-click context-menu requests use the same `NSMenu` path and dispatch the
+selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/macos` backend are normalized
 through `HostEvent::DragDrop` and dispatched to `ViewSpec::on_file_drop`
 targets.
@@ -139,6 +145,8 @@ presents basic open/save/directory dialogs through the Win32 common dialog and
 shell APIs, presents command menus at the current cursor position through
 `TrackPopupMenu`, and reports light/dark system theme from the current user's
 `AppsUseLightTheme` registry value.
+Right-click context-menu requests use the same `TrackPopupMenu` path and dispatch
+the selected `ActionCommand` back through `HostRuntimeDriver`.
 The shared drag/drop event contract is available in `backend/host`, but native
 Windows file-drop emission remains a follow-up until the local `window/windows`
 backend emits drag/drop window events.

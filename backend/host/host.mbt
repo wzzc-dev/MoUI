@@ -1260,6 +1260,22 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
 }
 
 ///|
+pub fn HostRuntimeDriver::show_context_menu(
+  self : HostRuntimeDriver,
+  services : HostServiceBridge,
+) -> HostEventResult {
+  match
+    services.dispatch(
+      HostServiceRequest::ShowMenu(self.runtime.action_commands()),
+    ) {
+    HostServiceResponse::MenuCommand(intent) =>
+      ignore(self.dispatch_command_with_services(intent, services))
+    _ => ()
+  }
+  self.event_result()
+}
+
+///|
 pub fn HostRuntimeDriver::request_redraw(self : HostRuntimeDriver) -> Unit {
   self.scheduler.request()
 }

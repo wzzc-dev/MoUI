@@ -15,6 +15,7 @@ struct WebApp {
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
+  services : @host.HostServiceBridge
   windows : @host.HostWindowRegistry
   mut window_id : @host.HostWindowId?
   mut renderer : WebRenderer?
@@ -62,6 +63,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
+    services: web_service_bridge(),
     windows: @host.HostWindowRegistry::new(),
     window_id: None,
     renderer: None,
@@ -220,7 +222,7 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
         position,
         scale_factor=self.current_scale_factor(),
       )
-      self.dispatch_window_event(event)
+      self.dispatch_pointer_or_context_menu(event)
     }
     @window_core.WindowEvent::DragEntered(_, position)
     | @window_core.WindowEvent::DragMoved(position)
@@ -242,6 +244,21 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
       self.modifiers = @host.modifiers_to_core(modifiers)
     @window_core.WindowEvent::RedrawRequested => self.redraw()
     _ => self.dispatch_window_event(event)
+  }
+}
+
+///|
+fn WebApp::dispatch_pointer_or_context_menu(
+  self : WebApp,
+  event : @window_core.WindowEvent,
+) -> Unit {
+  if @host.window_event_is_context_menu_button(event) {
+    if @host.window_event_is_context_menu_trigger(event) {
+      ignore(self.driver.show_context_menu(self.services))
+      self.sync_text_input_session()
+    }
+  } else {
+    self.dispatch_window_event(event)
   }
 }
 

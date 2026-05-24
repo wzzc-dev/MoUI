@@ -310,6 +310,11 @@ pretending that app code can call platform APIs directly.
 Keyboard shortcuts, menus, and host command responses share the
 `ActionCommand`/`CommandIntent` model. `ActionCommandMap` is the platform-neutral
 dispatcher for matching shortcuts and invoking enabled command handlers.
+Secondary-button context-menu requests are recognized by the host event layer:
+platform backends skip ordinary pointer dispatch for those events, then native
+menu-capable hosts ask `HostServiceBridge::ShowMenu` to present the current
+runtime action commands and dispatch the selected intent back through
+`HostRuntimeDriver`.
 File drop targets use the `ViewSpec::on_file_drop` modifier; hosts normalize
 native file drag/drop positions and paths before the runtime dispatches them to
 the hit view.

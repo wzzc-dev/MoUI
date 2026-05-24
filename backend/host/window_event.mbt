@@ -123,6 +123,38 @@ pub fn mouse_button_to_core(button : @window_core.MouseButton) -> Int? {
 }
 
 ///|
+pub fn window_event_is_context_menu_trigger(
+  event : @window_core.WindowEvent,
+) -> Bool {
+  match event {
+    @window_core.WindowEvent::PointerButton(
+      _,
+      @window_core.ElementState::Pressed,
+      _,
+      true,
+      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Right)
+    ) => true
+    _ => false
+  }
+}
+
+///|
+pub fn window_event_is_context_menu_button(
+  event : @window_core.WindowEvent,
+) -> Bool {
+  match event {
+    @window_core.WindowEvent::PointerButton(
+      _,
+      _,
+      _,
+      _,
+      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Right)
+    ) => true
+    _ => false
+  }
+}
+
+///|
 pub fn touch_phase_to_host(phase : @window_core.TouchPhase) -> HostScrollPhase {
   match phase {
     @window_core.TouchPhase::Started => HostScrollPhase::Started
