@@ -536,6 +536,63 @@ test "host window scene resolver maps open requests to runtimes" {
 }
 
 ///|
+test "host window registry resolves scenes before registering opened windows" {
+  let registry = HostWindowRegistry::new()
+  let resolver = HostWindowSceneResolver::new(resolve=request => {
+    if request.scene.scene_id == "inspector" {
+      HostWindowSceneResolution::SceneResolved(
+        HostWindowSceneInstance::new(
+          request~,
+          runtime=@core.AppRuntime::new_spec(
+            root=@core.ViewSpec::EmptySpec,
+            size=request.metrics.logical_size,
+          ),
+        ),
+      )
+    } else {
+      HostWindowSceneResolution::SceneRejected(
+        "unknown window scene: " + request.scene.scene_id,
+      )
+    }
+  })
+  let rejected = HostWindowOpenRequest::new(
+    title="Unknown",
+    scene=HostWindowScene::new(scene_id="unknown"),
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=240.0),
+    ),
+  )
+  match registry.resolve_open_request(rejected, resolver) {
+    HostWindowOpenResolution::OpenRejected(message) =>
+      inspect(message, content="unknown window scene: unknown")
+    _ => fail("expected rejected window scene")
+  }
+  inspect(registry.open_window_count(), content="0")
+
+  let request = HostWindowOpenRequest::new(
+    title="Inspector",
+    scene=HostWindowScene::new(scene_id="inspector", payload="outline"),
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=360.0, height=480.0),
+    ),
+    primary=true,
+  )
+  match registry.resolve_open_request(request, resolver) {
+    HostWindowOpenResolution::OpenResolved({ id, record, instance }) => {
+      assert_true(id == record.id)
+      inspect(record.title, content="Inspector")
+      inspect(record.scene.scene_id, content="inspector")
+      inspect(record.primary, content="true")
+      assert_true(
+        instance.runtime.size() == @core.Size::new(width=360.0, height=480.0),
+      )
+    }
+    _ => fail("expected resolved open window")
+  }
+  inspect(registry.open_window_count(), content="1")
+}
+
+///|
 test "host window registry applies platform-neutral window requests" {
   let registry = HostWindowRegistry::new()
   let main = registry.open(

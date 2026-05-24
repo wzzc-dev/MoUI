@@ -50,6 +50,19 @@ pub(all) enum HostWindowSceneResolution {
 }
 
 ///|
+pub(all) struct HostWindowResolvedOpen {
+  id : HostWindowId
+  record : HostWindowRecord
+  instance : HostWindowSceneInstance
+}
+
+///|
+pub(all) enum HostWindowOpenResolution {
+  OpenResolved(HostWindowResolvedOpen)
+  OpenRejected(String)
+}
+
+///|
 pub(all) struct HostWindowSceneResolver {
   resolve : (HostWindowOpenRequest) -> HostWindowSceneResolution
 }
@@ -160,6 +173,15 @@ pub fn HostWindowSceneResolver::resolve(
   request : HostWindowOpenRequest,
 ) -> HostWindowSceneResolution {
   (self.resolve)(request)
+}
+
+///|
+pub fn HostWindowResolvedOpen::new(
+  id~ : HostWindowId,
+  record~ : HostWindowRecord,
+  instance~ : HostWindowSceneInstance,
+) -> HostWindowResolvedOpen {
+  { id, record, instance }
 }
 
 ///|
@@ -532,6 +554,36 @@ pub fn HostWindowRegistry::apply_request(
         self.set_primary(id),
         action="set primary",
       )
+  }
+}
+
+///|
+pub fn HostWindowRegistry::resolve_open_request(
+  self : HostWindowRegistry,
+  request : HostWindowOpenRequest,
+  resolver : HostWindowSceneResolver,
+) -> HostWindowOpenResolution {
+  match resolver.resolve(request) {
+    HostWindowSceneResolution::SceneResolved(instance) => {
+      let id = self.open(
+        title=request.title,
+        scene=request.scene,
+        metrics=request.metrics,
+        primary=request.primary,
+      )
+      match self.lookup(id) {
+        Some(record) =>
+          HostWindowOpenResolution::OpenResolved(
+            HostWindowResolvedOpen::new(id~, record~, instance~),
+          )
+        None =>
+          HostWindowOpenResolution::OpenRejected(
+            "resolved window was not registered: \{id.value}",
+          )
+      }
+    }
+    HostWindowSceneResolution::SceneRejected(message) =>
+      HostWindowOpenResolution::OpenRejected(message)
   }
 }
 

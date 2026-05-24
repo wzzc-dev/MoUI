@@ -300,6 +300,9 @@ multi-window hosts have enough app-level identity to choose the runtime/content
 for the new platform window. `HostWindowSceneResolver` is the matching shared
 contract for resolving those scene requests into new `AppRuntime` instances or
 explicit scene rejections before a platform backend allocates a native window.
+`HostWindowRegistry::resolve_open_request` pairs a successful scene resolution
+with the created registry record so the host can keep window id, scene metadata,
+and runtime together.
 Web, macOS, and Windows should convert their native window events into
 `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
 `DrawCommand` values. Linux currently keeps the same contract shape as a
