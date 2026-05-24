@@ -81,6 +81,7 @@ CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 APP_EXE="$MACOS_DIR/$PACKAGE_LEAF"
+MANIFEST_PATH="$RESOURCES_DIR/moui-package.json"
 
 if [ "$SKIP_BUILD" = false ]; then
   printf '==> Building %s\n' "$PACKAGE"
@@ -136,7 +137,7 @@ JSON_BUILD_VERSION="$(json_text "$BUILD_VERSION")"
 JSON_EXECUTABLE="$(json_text "$PACKAGE_LEAF")"
 JSON_BUNDLE="$(json_text "$APP_NAME.app")"
 
-cat > "$RESOURCES_DIR/moui-package.json" <<EOF
+cat > "$MANIFEST_PATH" <<EOF
 {
   "schemaVersion": 1,
   "platform": "macos",
@@ -152,4 +153,10 @@ cat > "$RESOURCES_DIR/moui-package.json" <<EOF
 }
 EOF
 
+if ! command -v node >/dev/null 2>&1; then
+  printf 'node is required to validate the package manifest\n' >&2
+  exit 1
+fi
+
+node scripts/validate-package-manifest.mjs "$MANIFEST_PATH" --platform macos
 printf '==> Wrote %s\n' "$APP_DIR"

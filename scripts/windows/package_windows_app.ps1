@@ -49,6 +49,7 @@ $packageBuildDir = Join-Path $repoRoot ("_build\native\debug\build\" + (Convert-
 $builtExe = Join-Path $packageBuildDir "$packageLeaf.exe"
 $appDir = Join-Path $repoRoot (Join-Path $DistDir $AppName)
 $appExe = Join-Path $appDir "$AppName.exe"
+$manifestPath = Join-Path $appDir "moui-package.json"
 
 Require-Path $ucrtBin "MSYS2 UCRT64 toolchain not found: $ucrtBin"
 Require-Path $wgpuStaticLib "Missing wgpu static library: $wgpuStaticLib"
@@ -57,6 +58,10 @@ Require-Path $winpthreadDll "Missing libwinpthread runtime from MSYS2: $winpthre
 
 if (-not (Get-Command moon -ErrorAction SilentlyContinue)) {
   throw "MoonBit toolchain is not available in PATH. Install moon and try again."
+}
+
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+  throw "Node.js is required to validate the package manifest."
 }
 
 $env:PATH = "$ucrtBin;$env:PATH"
@@ -113,7 +118,12 @@ try {
     bundleName = $AppName
     runtimeFiles = @("vulkan-1.dll", "libwinpthread-1.dll")
   } | ConvertTo-Json -Depth 4
-  Set-Content -LiteralPath (Join-Path $appDir "moui-package.json") -Value $manifest -Encoding UTF8
+  Set-Content -LiteralPath $manifestPath -Value $manifest -Encoding UTF8
+
+  & node (Join-Path $repoRoot "scripts\validate-package-manifest.mjs") $manifestPath --platform windows
+  if ($LASTEXITCODE -ne 0) {
+    throw "manifest validation failed with exit code $LASTEXITCODE"
+  }
 
   Write-Host "==> Wrote $appDir"
 }
