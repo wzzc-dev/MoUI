@@ -30,7 +30,7 @@ Status meanings:
 | Shader effect | ready | ready | `DrawShaderEffect` executes through the advanced GPU shader path for built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`, with unknown effects using their fallback brush. |
 | Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux has a fontconfig/HarfBuzz/FreeType scaffold provider, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
-| Async image | partial | partial | Renderer-neutral lifecycle records now model loading, ready, failed, disposed, and eviction; native/Web adapters still need to surface those diagnostics to app code. |
+| Async image | partial | partial | Renderer-neutral lifecycle records model loading, ready, failed, disposed, and eviction. Native and Web renderers now expose image resource snapshots; Web still needs browser ready/failed callbacks to update MoonBit state after asynchronous loads. |
 
 ## Current Native Notes
 
@@ -87,11 +87,11 @@ Fallback composition is explicit at the backend/provider boundary; the
 Cosmic provider package. Full bidi, line breaking, and typography conformance
 are still follow-up work.
 The cross-package text boundary is documented in [Text system](text-system.md).
-Native image support is
-synchronous from the app model's
-point of view; the shared image lifecycle record can represent loading, ready,
-failed, disposed, and evicted resources, but native adapter diagnostics are not
-surfaced to app code yet.
+Native image support is synchronous from the app model's point of view.
+`WgpuRenderer::image_resources()` exposes renderer-local image resource
+snapshots. Planned image commands are marked loading until the native cache can
+resolve them; successful synchronous decode/cache upload marks records ready
+with dimensions, and failed decodes mark records failed with a diagnostic.
 
 ## Current Web Notes
 
@@ -102,9 +102,10 @@ images through WebGPU pipelines. Text uses a DPR-aware canvas-rasterized glyph
 atlas before the glyphs are composited by WebGPU. Images are cached as WebGPU
 textures, support contain/cover fit, and use a deterministic fallback color
 while the browser is still loading the source or if loading fails.
-The shared image lifecycle contract now matches those loading, ready, failed,
-and disposed states; the runtime still needs to publish browser cache
-diagnostics back into app-visible renderer state.
+`WebGpuWasmRenderer::image_resources()` exposes submitted image sources as
+loading records, matching the browser cache's asynchronous load contract. The
+browser runtime still needs callback plumbing to update MoonBit-side records to
+ready or failed after `Image.onload` / `Image.onerror`.
 
 Clip support maps transformed rectangular clip stacks to per-item scissor
 rectangles. Rounded clip scopes are submitted as offscreen layer scopes with a

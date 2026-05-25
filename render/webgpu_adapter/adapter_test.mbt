@@ -233,6 +233,27 @@ test "wgpu web command bridge covers image command in host ABI" {
 }
 
 ///|
+test "wgpu web renderer exposes submitted image lifecycle diagnostics" {
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0)),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "logo.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      opacity: 0.75,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  let resources = renderer.image_resources()
+  inspect(resources.length(), content="1")
+  inspect(resources[0].source, content="logo.png")
+  assert_true(resources[0].status == @render.ImageResourceStatus::ImageLoading)
+}
+
+///|
 test "wgpu web command bridge preserves full draw command parity order" {
   let rect = @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0)
   let rounded = @core.RoundedRect::new(rect~, radius=6.0)

@@ -50,6 +50,7 @@ pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -
 pub fn ImageResourceLifecycle::mark_loading(Self, String) -> ImageResourceRecord
 pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int, height~ : Int) -> ImageResourceRecord
 pub fn ImageResourceLifecycle::new() -> Self
+pub fn ImageResourceLifecycle::snapshot(Self) -> Array[ImageResourceRecord]
 
 pub(all) struct ImageResourceRecord {
   source : String

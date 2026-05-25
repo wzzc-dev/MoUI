@@ -246,6 +246,45 @@ test "native renderer plans image clip transform and opacity commands" {
 }
 
 ///|
+test "native renderer records image lifecycle diagnostics while planning" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=200.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "logo.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  match renderer.image_lifecycle.lookup("logo.png") {
+    Some(record) =>
+      assert_true(record.status == @render.ImageResourceStatus::ImageLoading)
+    None => fail("expected native image loading record")
+  }
+  renderer.failed_images["missing.png"] = true
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "missing.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  match renderer.image_lifecycle.lookup("missing.png") {
+    Some(record) => {
+      assert_true(record.status == @render.ImageResourceStatus::ImageFailed)
+      assert_true(record.diagnostic.contains("decode"))
+    }
+    None => fail("expected native image failure record")
+  }
+}
+
+///|
 test "native renderer plans advanced GPU layer filter and shader items" {
   let renderer = new_test_renderer_handle()
   renderer.resize(

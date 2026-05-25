@@ -102,3 +102,10 @@ pub fn WgpuRenderer::present_count(self : WgpuRenderer) -> Int {
 pub fn WgpuRenderer::unsupported_command_count(self : WgpuRenderer) -> Int {
   self.backend.unsupported_command_count
 }
+
+///|
+pub fn WgpuRenderer::image_resources(
+  self : WgpuRenderer,
+) -> Array[@render.ImageResourceRecord] {
+  self.backend.image_lifecycle.snapshot()
+}

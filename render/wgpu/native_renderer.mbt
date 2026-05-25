@@ -47,6 +47,7 @@ struct RendererHandle {
   mut white_bind_group : @wgpu_mbt.BindGroup?
   image_cache : Map[String, NativeImageResource]
   failed_images : Map[String, Bool]
+  image_lifecycle : @render.ImageResourceLifecycle
   font_cache : NativeFontCache
   glyph_atlas : GlyphAtlas
   mut visual_vertices : Array[VisualVertex]
@@ -276,6 +277,7 @@ fn create_with_surface(
     white_bind_group: Some(white_bind_group),
     image_cache: {},
     failed_images: {},
+    image_lifecycle: @render.ImageResourceLifecycle::new(),
     font_cache: NativeFontCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
@@ -339,6 +341,7 @@ fn RendererHandle::render(
   commands : Array[@core.DrawCommand],
 ) -> Unit {
   self.last_batches = @render.collect_rect_batches(commands)
+  self.record_native_image_commands(commands)
   let plan = build_native_draw_plan(
     self.font_cache,
     self.glyph_atlas,

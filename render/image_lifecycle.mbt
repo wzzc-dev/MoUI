@@ -128,6 +128,17 @@ pub fn ImageResourceLifecycle::lookup(
 }
 
 ///|
+pub fn ImageResourceLifecycle::snapshot(
+  self : ImageResourceLifecycle,
+) -> Array[ImageResourceRecord] {
+  let records : Array[ImageResourceRecord] = []
+  for _, record in self.records {
+    records.push(record)
+  }
+  records
+}
+
+///|
 pub fn ImageResourceLifecycle::evict_disposed(
   self : ImageResourceLifecycle,
 ) -> Int {

@@ -236,14 +236,35 @@ fn RendererHandle::ensure_native_image_resource(
   queue : @wgpu_mbt.Queue,
 ) -> NativeImageResource? {
   match self.image_cache.get(source) {
-    Some(resource) => return Some(resource)
+    Some(resource) => {
+      ignore(
+        self.image_lifecycle.mark_ready(
+          source,
+          width=resource.width,
+          height=resource.height,
+        ),
+      )
+      return Some(resource)
+    }
     None => ()
   }
   if self.failed_images.get(source).unwrap_or(false) {
+    ignore(
+      self.image_lifecycle.mark_failed(
+        source,
+        diagnostic="native image decode failed",
+      ),
+    )
     return None
   }
   guard load_native_image_data(source) is Some(image) else {
     self.failed_images[source] = true
+    ignore(
+      self.image_lifecycle.mark_failed(
+        source,
+        diagnostic="native image decode failed",
+      ),
+    )
     return None
   }
   match (self.image_bind_group_layout, self.image_sampler) {
@@ -275,9 +296,58 @@ fn RendererHandle::ensure_native_image_resource(
         bind_group,
       }
       self.image_cache[source] = resource
+      ignore(
+        self.image_lifecycle.mark_ready(
+          source,
+          width=resource.width,
+          height=resource.height,
+        ),
+      )
       Some(resource)
     }
-    _ => None
+    _ => {
+      ignore(
+        self.image_lifecycle.mark_failed(
+          source,
+          diagnostic="native image pipeline is not configured",
+        ),
+      )
+      None
+    }
+  }
+}
+
+///|
+fn RendererHandle::record_native_image_commands(
+  self : RendererHandle,
+  commands : Array[@core.DrawCommand],
+) -> Unit {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawImage(run) =>
+        match self.image_cache.get(run.source) {
+          Some(resource) =>
+            ignore(
+              self.image_lifecycle.mark_ready(
+                run.source,
+                width=resource.width,
+                height=resource.height,
+              ),
+            )
+          None =>
+            if self.failed_images.get(run.source).unwrap_or(false) {
+              ignore(
+                self.image_lifecycle.mark_failed(
+                  run.source,
+                  diagnostic="native image decode failed",
+                ),
+              )
+            } else {
+              ignore(self.image_lifecycle.mark_loading(run.source))
+            }
+        }
+      _ => ()
+    }
   }
 }
 
