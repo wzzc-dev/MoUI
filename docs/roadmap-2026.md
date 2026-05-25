@@ -188,13 +188,15 @@ Focus areas:
   runtime slots, bind platform window ids to host ids, route incoming platform
   window events through that map, and sync those slots from the shared
   lifecycle path. Web also stores its active browser `Window` and `WebRenderer`
-  in a per-window platform slot collection, preparing the platform side for
-  multiple canvases. Their active loops now expose `run_app_with_window_requests`
-  and drain `HostWindowRequestQueue` for current-window focus, close, resize,
-  minimize, show, and set-primary requests. Drained request completions are
-  recorded back onto the queue through a shared host helper so request outcomes
-  stay observable while the active hosts remain single-window. `OpenWindow` requests
-  already carry a platform-neutral scene id and payload so future hosts can
+  in a per-window platform slot collection and routes redraw/event/context-menu
+  paths through the matching runtime driver slot, preparing the platform side
+  for multiple canvases. Their active loops now expose
+  `run_app_with_window_requests` and drain `HostWindowRequestQueue` for
+  current-window focus, close, resize, minimize, show, and set-primary requests.
+  Drained request completions are recorded back onto the queue through a shared
+  host helper so request outcomes stay observable while the active hosts remain
+  single-window. `OpenWindow` requests already carry a platform-neutral scene id
+  and payload so future hosts can
   resolve the new window's runtime/content without inventing a platform-local
   convention. `HostWindowSceneResolver` is the shared scene-to-`AppRuntime`
   contract for that resolution step, and `HostWindowRegistry::resolve_open_request`

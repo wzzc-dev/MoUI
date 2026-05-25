@@ -278,7 +278,11 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
       match renderer_result {
         Ok(renderer) => {
           self.runtime.set_text_system(renderer.text_system())
-          ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
+          match self.runtime_slots.lookup(window_id) {
+            Some(slot) =>
+              ignore(slot.driver.dispatch(@host.HostEvent::Resized(metrics)))
+            None => ()
+          }
           ignore(
             self.platform_slots.insert({
               host_id: window_id,
@@ -311,9 +315,8 @@ pub impl @window_web.ApplicationHandler for WebApp with new_events(
     return ()
   }
   self.drain_async_host_services()
-  match self.window_id {
-    Some(_) => if self.runtime.needs_redraw() { self.redraw() }
-    None => ()
+  if self.primary_runtime_needs_redraw() {
+    self.redraw()
   }
 }
 
@@ -391,7 +394,10 @@ fn WebApp::dispatch_pointer_or_context_menu(
 ) -> Unit {
   if @host.window_event_is_context_menu_button(event) {
     if @host.window_event_is_context_menu_trigger(event) {
-      ignore(self.driver.show_context_menu(self.services))
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) => ignore(slot.driver.show_context_menu(self.services))
+        None => ()
+      }
       self.drain_async_host_services()
       self.sync_text_input_session()
     }
@@ -410,17 +416,22 @@ fn WebApp::redraw(self : WebApp) -> Unit {
 
 ///|
 fn WebApp::redraw_window(self : WebApp, window_id : @host.HostWindowId) -> Unit {
-  self.driver.begin_redraw()
-  match self.platform_slots.lookup_host(window_id) {
-    Some(slot) =>
-      slot.renderer.render(self.driver.draw_commands()) catch {
+  match
+    (
+      self.platform_slots.lookup_host(window_id),
+      self.runtime_slots.lookup(window_id),
+    ) {
+    (Some(platform_slot), Some(runtime_slot)) => {
+      runtime_slot.driver.begin_redraw()
+      platform_slot.renderer.render(runtime_slot.driver.draw_commands()) catch {
         err => {
           let _ = err
         }
       }
-    None => ()
+      runtime_slot.driver.finish_redraw()
+    }
+    _ => ()
   }
-  self.driver.finish_redraw()
   self.sync_text_input_session()
 }
 
@@ -440,16 +451,23 @@ fn WebApp::dispatch_window_event(
     ) {
     Some(host_event) => {
       self.apply_window_lifecycle(window_id, host_event)
-      match host_event {
-        @host.HostEvent::Resized(metrics) => {
-          self.resize_renderer(window_id, metrics)
-          ignore(self.driver.dispatch(host_event))
-        }
-        @host.HostEvent::Keyboard(event) =>
-          ignore(
-            self.driver.dispatch_keyboard_with_services(event, self.services),
-          )
-        _ => ignore(self.driver.dispatch(host_event))
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) =>
+          match host_event {
+            @host.HostEvent::Resized(metrics) => {
+              self.resize_renderer(window_id, metrics)
+              ignore(slot.driver.dispatch(host_event))
+            }
+            @host.HostEvent::Keyboard(event) =>
+              ignore(
+                slot.driver.dispatch_keyboard_with_services(
+                  event,
+                  self.services,
+                ),
+              )
+            _ => ignore(slot.driver.dispatch(host_event))
+          }
+        None => ()
       }
       self.drain_async_host_services()
       self.sync_text_input_session()
@@ -464,7 +482,13 @@ fn WebApp::drain_async_host_services(self : WebApp) -> Unit {
     dispatch_web_async_host_service_request(request)
   }
   for completion in self.async_services.drain_completed() {
-    ignore(self.driver.dispatch_service_completion(completion, self.services))
+    match self.active_runtime_slot() {
+      Some(slot) =>
+        ignore(
+          slot.driver.dispatch_service_completion(completion, self.services),
+        )
+      None => ()
+    }
   }
 }
 
@@ -610,6 +634,22 @@ fn WebApp::sync_runtime_slot(
 }
 
 ///|
+fn WebApp::active_runtime_slot(self : WebApp) -> @host.HostWindowRuntimeSlot? {
+  match self.runtime_slots.focused_slot() {
+    Some(slot) => Some(slot)
+    None => self.runtime_slots.primary_slot()
+  }
+}
+
+///|
+fn WebApp::primary_runtime_needs_redraw(self : WebApp) -> Bool {
+  match self.runtime_slots.primary_slot() {
+    Some(slot) => slot.driver.event_result().needs_redraw
+    None => false
+  }
+}
+
+///|
 fn WebApp::apply_window_lifecycle(
   self : WebApp,
   window_id : @host.HostWindowId,
@@ -672,7 +712,7 @@ fn WebApp::resize_renderer(
 
 ///|
 fn WebApp::request_redraw(self : WebApp) -> Unit {
-  if self.runtime.needs_redraw() {
+  if self.primary_runtime_needs_redraw() {
     match self.window_id {
       Some(window_id) =>
         match self.platform_slots.lookup_host(window_id) {
