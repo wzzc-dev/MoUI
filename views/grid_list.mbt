@@ -80,6 +80,12 @@ pub fn[T] lazy_list(
     key: None,
     offset: state.offset(),
     viewport: Some(@core.Size::new(width=0.0, height=viewport_height)),
+    on_scroll: Some(delta => {
+      state.scroll_to(
+        x=0.0,
+        y=max_lazy_scroll_offset(0.0, state.offset().y - delta.y),
+      )
+    }),
     child: list(virtual_children, spacing~),
   })
 }
@@ -160,8 +166,23 @@ pub fn[T] lazy_grid(
     viewport: Some(
       @core.Size::new(width=viewport_width, height=viewport_height),
     ),
+    on_scroll: Some(delta => {
+      state.scroll_to(
+        x=0.0,
+        y=max_lazy_scroll_offset(0.0, state.offset().y - delta.y),
+      )
+    }),
     child: list(virtual_rows, spacing=row_spacing),
   })
+}
+
+///|
+fn max_lazy_scroll_offset(min : Double, value : Double) -> Double {
+  if value < min {
+    min
+  } else {
+    value
+  }
 }
 
 ///|

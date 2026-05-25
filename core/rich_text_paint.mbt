@@ -400,6 +400,21 @@ fn rich_text_block_line_height(
 }
 
 ///|
+pub fn rich_text_document_height(
+  document : RichTextDocument,
+  base_font : FontSpec,
+) -> Double {
+  let mut height = 0.0
+  for block in document.blocks {
+    height = height +
+      rich_text_block_line_height(block, base_font) +
+      block.inset.top +
+      block.inset.bottom
+  }
+  height
+}
+
+///|
 fn rich_text_block_font(
   block : RichTextBlock,
   base_font : FontSpec,

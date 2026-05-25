@@ -17,10 +17,11 @@ pub fn scroll_view(
   offset? : @core.Point = @core.Point::new(x=0.0, y=0.0),
   width? : Double,
   height? : Double,
+  on_scroll? : ((@core.Point) -> Unit)? = None,
 ) -> @core.ViewSpec {
   let viewport = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  @core.ViewSpec::ScrollSpec({ key: None, offset, viewport, child })
+  @core.ViewSpec::ScrollSpec({ key: None, offset, viewport, on_scroll, child })
 }
