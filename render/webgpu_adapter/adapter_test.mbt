@@ -277,15 +277,17 @@ test "wgpu web command bridge preserves full draw command parity order" {
         fit: @core.ImageFit::Contain,
       }),
       @core.DrawCommand::PushClip(rect),
+      @core.DrawCommand::PushRoundedClip(rounded),
       @core.DrawCommand::PushTransform(@core.Transform2D::identity()),
       @core.DrawCommand::PushOpacity(0.5),
       @core.DrawCommand::PopOpacity,
       @core.DrawCommand::PopTransform,
+      @core.DrawCommand::PopRoundedClip,
       @core.DrawCommand::PopClip,
     ],
     @core.Size::new(width=100.0, height=50.0),
   )
-  inspect(calls.length(), content="18")
+  inspect(calls.length(), content="20")
   assert_true(calls[0] is WebGpuHostCall::BeginFrame(_))
   assert_true(calls[1] is WebGpuHostCall::Clear(_))
   assert_true(calls[2] is WebGpuHostCall::FillRect(_, _))
@@ -301,12 +303,14 @@ test "wgpu web command bridge preserves full draw command parity order" {
   assert_true(align == @core.TextAlign::TextStart)
   assert_true(calls[10] is WebGpuHostCall::DrawImage(_))
   assert_true(calls[11] is WebGpuHostCall::PushClip(_))
-  assert_true(calls[12] is WebGpuHostCall::PushTransform(_))
-  assert_true(calls[13] is WebGpuHostCall::PushOpacity(_))
-  assert_true(calls[14] is WebGpuHostCall::PopOpacity)
-  assert_true(calls[15] is WebGpuHostCall::PopTransform)
-  assert_true(calls[16] is WebGpuHostCall::PopClip)
-  assert_true(calls[17] is WebGpuHostCall::Present)
+  assert_true(calls[12] is WebGpuHostCall::PushRoundedClip(_))
+  assert_true(calls[13] is WebGpuHostCall::PushTransform(_))
+  assert_true(calls[14] is WebGpuHostCall::PushOpacity(_))
+  assert_true(calls[15] is WebGpuHostCall::PopOpacity)
+  assert_true(calls[16] is WebGpuHostCall::PopTransform)
+  assert_true(calls[17] is WebGpuHostCall::PopRoundedClip)
+  assert_true(calls[18] is WebGpuHostCall::PopClip)
+  assert_true(calls[19] is WebGpuHostCall::Present)
 }
 
 ///|

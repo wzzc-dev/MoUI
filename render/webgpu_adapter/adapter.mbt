@@ -583,8 +583,8 @@ fn submit_host_calls(
           ),
         )
       PopClip => raise_for_host_status(host_pop_clip(renderer))
-      PushRoundedClip(_) => () // Temporarily no-op
-      PopRoundedClip => () // Temporarily no-op
+      PushRoundedClip(rounded) => submit_push_rounded_clip(renderer, rounded)
+      PopRoundedClip => raise_for_host_status(host_pop_layer(renderer))
       PushTransform(transform) =>
         raise_for_host_status(
           host_push_transform(
@@ -629,6 +629,28 @@ fn submit_push_layer(
       mask.rect.size.height,
       mask.radius,
       layer.offscreen,
+    ),
+  )
+}
+
+///|
+fn submit_push_rounded_clip(
+  renderer : HostWebGpuRenderer,
+  rounded : @core.RoundedRect,
+) -> Unit raise WebGpuHostError {
+  let mask = layer_mask_payload(@core.LayerMask::RoundedMask(rounded))
+  raise_for_host_status(
+    host_push_layer(
+      renderer,
+      1.0,
+      blend_mode_host_code(@core.BlendMode::SourceOver),
+      mask.kind,
+      mask.rect.origin.x,
+      mask.rect.origin.y,
+      mask.rect.size.width,
+      mask.rect.size.height,
+      mask.radius,
+      true,
     ),
   )
 }
