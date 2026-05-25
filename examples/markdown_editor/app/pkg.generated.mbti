@@ -30,6 +30,7 @@ pub struct MarkdownEditorApp {
   source_preview_visible : @core.State[Bool]
   undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
+  editor_scroll : @core.ScrollState
 }
 pub fn MarkdownEditorApp::new() -> Self
 pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
@@ -47,6 +48,8 @@ type MarkdownEditorMergeBlockKind derive(Eq, @debug.Debug)
 type MarkdownEditorOffsetReplacement derive(Eq, @debug.Debug)
 
 type MarkdownEditorOrderedLineInfo derive(Eq, @debug.Debug)
+
+type MarkdownEditorOutlineItem derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorRenumberResult derive(Eq, @debug.Debug)
 

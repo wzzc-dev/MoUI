@@ -19,6 +19,29 @@ test "markdown editor enter continues list task quote and ordered markers" {
 }
 
 ///|
+test "markdown editor pairs delimiters while typing" {
+  let parens = markdown_editor_transform_input("Call ", 5, None, "(").unwrap()
+  inspect(parens.text, content="Call ()")
+  inspect(parens.caret, content="6")
+  let brackets = markdown_editor_transform_input(
+    "Link text",
+    9,
+    Some(@core.TextRange::new(start=5, end=9)),
+    "[",
+  ).unwrap()
+  inspect(brackets.text, content="Link [text]")
+  inspect(brackets.caret, content="10")
+  guard brackets.selection is Some(selection) else {
+    fail("expected bracketed selection")
+  }
+  inspect(selection.start, content="6")
+  inspect(selection.end, content="10")
+  let quote = markdown_editor_transform_input("say", 0, None, "\"").unwrap()
+  inspect(quote.text, content="\"\"say")
+  inspect(quote.caret, content="1")
+}
+
+///|
 test "markdown editor enter exits empty continuation markers" {
   let bullet = markdown_editor_transform_input("- ", 2, None, "\n").unwrap()
   inspect(bullet.text, content="")

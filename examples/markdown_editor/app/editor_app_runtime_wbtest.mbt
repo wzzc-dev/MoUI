@@ -28,6 +28,29 @@ test "markdown editor app emits primary wysiwyg commands" {
 }
 
 ///|
+test "markdown editor page decoration keeps editor interactive" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  let commands = runtime.draw_commands()
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::DrawShadow(_)),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=84.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("Hi")),
+  )
+  inspect(app.document(), content="Hi")
+}
+
+///|
 test "markdown editor toggles source preview from action" {
   let app = MarkdownEditorApp::new()
   inspect(app.source_preview_visible(), content="false")
@@ -59,7 +82,7 @@ test "markdown editor floats contextual palette over editor surface" {
 }
 
 ///|
-test "markdown editor floating palette follows caret geometry" {
+test "markdown editor hides contextual palette in plain writing mode" {
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://moui.dev)\n\nTail")
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
@@ -70,13 +93,13 @@ test "markdown editor floating palette follows caret geometry" {
   }
   app.set_selection(35, None)
   let lower_commands = app.runtime(width=980.0, height=700.0).draw_commands()
-  guard markdown_editor_text_frame(
-      lower_commands, "Select link or image text to edit its target",
-    )
-    is Some(lower_palette) else {
-    fail("expected lower palette")
-  }
-  assert_true(lower_palette.origin.y > top_palette.origin.y)
+  assert_false(
+    markdown_editor_text_frame(lower_commands, "Link target") is Some(_),
+  )
+  assert_false(
+    markdown_editor_text_frame(lower_commands, "Image src") is Some(_),
+  )
+  assert_true(top_palette.origin.y > 0.0)
 }
 
 ///|
@@ -230,12 +253,19 @@ test "markdown editor target bar renders contextual controls" {
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://old.example) and ![logo](old.png)")
   let plain = app.runtime(width=980.0, height=700.0).draw_commands()
-  assert_true(
+  assert_false(
     plain.any(command => {
-      command
-      is @core.DrawCommand::DrawText(
-        { text: "Select link or image text to edit its target", .. }
-      )
+      command is @core.DrawCommand::DrawText({ text: "Link target", .. })
+    }),
+  )
+  assert_false(
+    plain.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Image src", .. })
+    }),
+  )
+  assert_false(
+    plain.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Table tools", .. })
     }),
   )
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
@@ -348,7 +378,7 @@ test "markdown editor runtime typed marker wraps tracked selection" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -462,7 +492,7 @@ test "markdown editor runtime enter continues bullet list" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -593,7 +623,7 @@ test "markdown editor runtime enter outdents nested empty list marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=212.0),
+        position=@core.Point::new(x=28.0, y=112.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -616,7 +646,7 @@ test "markdown editor runtime tab indents focused line" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -644,7 +674,7 @@ test "markdown editor runtime backspace removes hidden heading marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -665,7 +695,7 @@ test "markdown editor runtime backspace removes hidden inline marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -693,7 +723,7 @@ test "markdown editor runtime backspace removes hidden link marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -722,7 +752,7 @@ test "markdown editor runtime delete removes hidden link marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -751,7 +781,7 @@ test "markdown editor runtime backspace merges visual blocks" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -779,7 +809,7 @@ test "markdown editor runtime delete merges visual blocks" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -806,7 +836,7 @@ test "markdown editor runtime delete preserves same-list merge" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -833,7 +863,7 @@ test "markdown editor runtime undo restores input transform caret" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -866,7 +896,7 @@ test "markdown editor runtime prefix click toggles task checkbox" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -875,7 +905,7 @@ test "markdown editor runtime prefix click toggles task checkbox" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -891,7 +921,7 @@ test "markdown editor copy exports visual text without hidden markdown markers" 
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -920,7 +950,7 @@ test "markdown editor paste command continues list context" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -945,7 +975,7 @@ test "markdown editor paste command links selected text with url" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -989,7 +1019,7 @@ test "markdown editor paste command inserts image from selected alt text" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -1033,7 +1063,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -1060,7 +1090,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
 }
 
 ///|
-test "markdown editor toolbar actions update canonical markdown" {
+test "markdown editor actions update canonical markdown" {
   let app = MarkdownEditorApp::new()
   app.clear()
   app.apply_action("h1")
@@ -1112,7 +1142,7 @@ test "markdown editor toolbar actions update canonical markdown" {
 }
 
 ///|
-test "markdown editor toolbar seeds every supported action from empty document" {
+test "markdown editor actions seed every supported action from empty document" {
   for
     expected in [
       "**bold text**", "*italic text*", "`code`", "~~old text~~", "[link text](https://example.com)",
@@ -1129,7 +1159,7 @@ test "markdown editor toolbar seeds every supported action from empty document" 
 }
 
 ///|
-test "markdown editor toolbar applies actions at current caret context" {
+test "markdown editor actions apply actions at current caret context" {
   let app = MarkdownEditorApp::new()
   app.set_document("Base")
   for
@@ -1206,7 +1236,7 @@ test "markdown editor runtime typing updates document" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=32.0, y=184.0),
+        position=@core.Point::new(x=32.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -1237,7 +1267,7 @@ test "markdown editor runtime enter completes fenced code block" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=32.0, y=184.0),
+        position=@core.Point::new(x=32.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),

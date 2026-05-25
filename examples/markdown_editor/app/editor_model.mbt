@@ -18,7 +18,16 @@ struct MarkdownEditorSnapshot {
   rich_text : @core.RichTextDocument
   line_count : Int
   word_count : Int
+  reading_minutes : Int
   active_heading : String
+  outline : Array[MarkdownEditorOutlineItem]
+} derive(Eq, Debug, ToJson)
+
+///|
+struct MarkdownEditorOutlineItem {
+  level : Int
+  title : String
+  source_start : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -61,7 +70,6 @@ enum MarkdownEditorCommand {
   DeleteTableRow
   DeleteTableColumn
   SetTableColumnAlignment(@core.TextAlign?)
-  Clear
 } derive(Eq, Debug, ToJson)
 
 ///|

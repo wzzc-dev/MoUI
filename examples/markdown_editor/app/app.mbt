@@ -12,6 +12,7 @@ pub struct MarkdownEditorApp {
   source_preview_visible : @core.State[Bool]
   undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
+  editor_scroll : @core.ScrollState
 }
 
 ///|
@@ -46,20 +47,13 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     source_preview_visible: @core.State::new(false),
     undo_stack: @core.State::new([]),
     redo_stack: @core.State::new([]),
+    editor_scroll: @core.ScrollState::new(),
   }
 }
 
 ///|
 fn MarkdownEditorApp::toggle_source_preview(self : MarkdownEditorApp) -> Unit {
   self.source_preview_visible.set(!self.source_preview_visible.get())
-}
-
-///|
-fn MarkdownEditorApp::apply_command(
-  self : MarkdownEditorApp,
-  command : MarkdownEditorCommand,
-) -> Unit {
-  self.apply_command_to_selection(command)
 }
 
 ///|
@@ -266,247 +260,82 @@ fn MarkdownEditorApp::root(
   let document = ctx.watch(self.document)
   let snapshot = MarkdownEditorSnapshot::parse(document)
   let binding = ctx.binding(self.document)
-  let editor_style = @core.TextFieldStyle::outline(theme~)
+  let editor_style = markdown_editor_page_text_style(theme)
   let source_style = @core.SurfaceStyle::default(theme~)
   let show_source = ctx.watch(self.source_preview_visible)
   let target_bar = self.target_bar(ctx, theme)
   let selection = ctx.watch(self.selection)
   let target_kind = ctx.watch(self.target_kind)
-  @views.surface(
-    @views.column(
-      [
-        self.header(theme, snapshot.active_heading),
-        self.toolbar(theme),
-        editor_source_layout(
-          binding,
-          snapshot,
-          editor_style,
-          source_style,
-          theme,
-          show_source,
-          target_bar,
-          selection,
-          target_kind,
-          (caret, selection) => self.set_selection(caret, selection),
-          offset => self.toggle_task_at(offset),
-        ),
-        @views.text(
-          "\{snapshot.word_count} words · \{snapshot.line_count} lines",
-          width=320.0,
-          height=28.0,
-        )
-        .font(theme.typography.caption)
-        .foreground(theme.palette.muted),
-      ],
-      spacing=theme.spacing_scale.md,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-    ),
-    style=@core.SurfaceStyle::default(theme~),
+  let block_label = ctx.watch(self.block_label)
+  let scroll_offset = ctx.watch_scroll(self.editor_scroll)
+  let workspace = @views.column(
+    [
+      self.chrome(theme, snapshot, block_label),
+      @views.row(
+        [
+          editor_source_layout(
+            self,
+            binding,
+            snapshot,
+            editor_style,
+            source_style,
+            theme,
+            show_source,
+            target_bar,
+            selection,
+            target_kind,
+            scroll_offset,
+            (caret, selection) => self.set_selection(caret, selection),
+            offset => self.toggle_task_at(offset),
+          ),
+        ],
+        spacing=theme.spacing_scale.lg,
+        cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      ),
+    ],
+    spacing=theme.spacing_scale.md,
+    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
   )
+  @views.surface(workspace, style=markdown_editor_workspace_style(theme))
 }
 
 ///|
-fn MarkdownEditorApp::header(
-  _self : MarkdownEditorApp,
+fn MarkdownEditorApp::chrome(
+  self : MarkdownEditorApp,
   theme : @core.Theme,
-  title : String,
+  snapshot : MarkdownEditorSnapshot,
+  block_label : String,
 ) -> @core.ViewSpec {
-  @views.column(
+  @views.row(
     [
-      @views.text(title, width=560.0, height=36.0)
+      @views.text(snapshot.active_heading, width=520.0, height=32.0)
       .font(theme.typography.title)
       .foreground(theme.palette.foreground),
       @views.text(
-        "Typora-style editing core: Markdown source remains canonical while the page renders as formatted content.",
-        width=560.0,
-        height=26.0,
+        block_label + " / " + markdown_editor_reading_label(snapshot),
+        width=300.0,
+        height=28.0,
       )
       .font(theme.typography.caption)
       .foreground(theme.palette.muted),
-      @views.text(
-        "The formatted editor is the primary surface; source preview is available from the toolbar when needed.",
-        width=760.0,
-        height=24.0,
-      )
-      .font(theme.typography.caption)
-      .foreground(theme.palette.muted),
+      editor_button(
+        "Undo",
+        () => ignore(self.undo()),
+        flat_editor_button_style(theme),
+      ),
+      editor_button(
+        "Redo",
+        () => ignore(self.redo()),
+        flat_editor_button_style(theme),
+      ),
+      editor_button(
+        "Src",
+        () => self.toggle_source_preview(),
+        flat_editor_button_style(theme),
+      ),
     ],
-    spacing=theme.spacing_scale.xs,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-  )
-}
-
-///|
-fn MarkdownEditorApp::toolbar(
-  self : MarkdownEditorApp,
-  theme : @core.Theme,
-) -> @core.ViewSpec {
-  let style = flat_toolbar_button_style(theme)
-  @views.scroll_view(
-    @views.row(
-      [
-        toolbar_button("B", () => self.apply_command_to_selection(Bold), style).keyboard_shortcut(
-          markdown_editor_shortcut("b"),
-        ),
-        toolbar_button(
-          "I",
-          () => self.apply_command_to_selection(Italic),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("i")),
-        toolbar_button(
-          "Code",
-          () => self.apply_command_to_selection(Code),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("e")),
-        toolbar_button(
-          "S",
-          () => self.apply_command_to_selection(Strikethrough),
-          style,
-        ).keyboard_shortcut(markdown_editor_shift_shortcut("x")),
-        toolbar_button(
-          "Link",
-          () => self.apply_command_to_selection(Link),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("l")),
-        toolbar_button("URL", () => self.apply_link_target(), style),
-        toolbar_button(
-          "Img",
-          () => self.apply_command_to_selection(Image),
-          style,
-        ).keyboard_shortcut(markdown_editor_shift_shortcut("i")),
-        toolbar_button("ImgSrc", () => self.apply_image_target(), style),
-        toolbar_button(
-          "Para",
-          () => self.apply_command_to_selection(Paragraph),
-          style,
-        ),
-        toolbar_button(
-          "H1",
-          () => self.apply_command_to_selection(Heading(1)),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("1")),
-        toolbar_button(
-          "H2",
-          () => self.apply_command_to_selection(Heading(2)),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("2")),
-        toolbar_button(
-          "H3",
-          () => self.apply_command_to_selection(Heading(3)),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("3")),
-        toolbar_button(
-          "H4",
-          () => self.apply_command_to_selection(Heading(4)),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("4")),
-        toolbar_button(
-          "H5",
-          () => self.apply_command_to_selection(Heading(5)),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("5")),
-        toolbar_button(
-          "H6",
-          () => self.apply_command_to_selection(Heading(6)),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("6")),
-        toolbar_button(
-          "Bullet",
-          () => self.apply_command_to_selection(BulletList),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("u")),
-        toolbar_button(
-          "Task",
-          () => self.apply_command_to_selection(TaskList),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("t")),
-        toolbar_button(
-          "1.",
-          () => self.apply_command_to_selection(OrderedList),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("o")),
-        toolbar_button(
-          "Quote",
-          () => self.apply_command_to_selection(Quote),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("q")),
-        toolbar_button(
-          "Rule",
-          () => self.apply_command_to_selection(HorizontalRule),
-          style,
-        ),
-        toolbar_button(
-          "Table",
-          () => self.apply_command_to_selection(Table),
-          style,
-        ),
-        toolbar_button(
-          "+Col",
-          () => self.apply_command_to_selection(InsertTableColumn),
-          style,
-        ).keyboard_shortcut(markdown_editor_shift_shortcut("=")),
-        toolbar_button(
-          "+Row",
-          () => self.apply_command_to_selection(InsertTableRow),
-          style,
-        ).keyboard_shortcut(markdown_editor_shift_shortcut("Enter")),
-        toolbar_button(
-          "-Row",
-          () => self.apply_command_to_selection(DeleteTableRow),
-          style,
-        ).keyboard_shortcut(markdown_editor_shift_shortcut("-")),
-        toolbar_button(
-          "-Col",
-          () => self.apply_command_to_selection(DeleteTableColumn),
-          style,
-        ).keyboard_shortcut(markdown_editor_shift_shortcut("_")),
-        toolbar_button(
-          "Left",
-          () => {
-            self.apply_command_to_selection(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextStart)),
-            )
-          },
-          style,
-        ),
-        toolbar_button(
-          "Center",
-          () => {
-            self.apply_command_to_selection(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)),
-            )
-          },
-          style,
-        ),
-        toolbar_button(
-          "Right",
-          () => {
-            self.apply_command_to_selection(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)),
-            )
-          },
-          style,
-        ),
-        toolbar_button(
-          "Block",
-          () => self.apply_command_to_selection(CodeBlock),
-          style,
-        ).keyboard_shortcut(markdown_editor_shortcut("k")),
-        toolbar_button("Undo", () => ignore(self.undo()), style),
-        toolbar_button("Redo", () => ignore(self.redo()), style),
-        toolbar_button("Src", () => self.toggle_source_preview(), style),
-        @views.button(
-          "Clear",
-          on_click=() => self.apply_command(Clear),
-          style=@core.ButtonStyle::outline(theme~),
-          width=72.0,
-        ),
-      ],
-      spacing=theme.spacing_scale.xs,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
-    ),
-    width=720.0,
-    height=38.0,
+    spacing=theme.spacing_scale.sm,
+    cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
   )
 }
 
@@ -519,7 +348,7 @@ fn MarkdownEditorApp::target_bar(
   let kind = ctx.watch(self.target_kind)
   let block_label = ctx.watch(self.block_label)
   let field_style = @core.TextFieldStyle::outline(theme~)
-  let button_style = flat_toolbar_button_style(theme)
+  let button_style = flat_editor_button_style(theme)
   let block_badge = @views.text(
       "Block: " + block_label,
       width=132.0,
@@ -543,7 +372,7 @@ fn MarkdownEditorApp::target_bar(
             width=360.0,
             height=34.0,
           ).key("markdown-link-target"),
-          toolbar_button("Apply", () => self.apply_link_target(), button_style),
+          editor_button("Apply", () => self.apply_link_target(), button_style),
         ],
         spacing=theme.spacing_scale.xs,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
@@ -563,7 +392,7 @@ fn MarkdownEditorApp::target_bar(
             width=360.0,
             height=34.0,
           ).key("markdown-image-target"),
-          toolbar_button("Apply", () => self.apply_image_target(), button_style),
+          editor_button("Apply", () => self.apply_image_target(), button_style),
         ],
         spacing=theme.spacing_scale.xs,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
@@ -583,7 +412,7 @@ fn MarkdownEditorApp::target_bar(
             width=360.0,
             height=34.0,
           ).key("markdown-code-language"),
-          toolbar_button(
+          editor_button(
             "Apply",
             () => self.apply_code_language(),
             button_style,
@@ -607,7 +436,7 @@ fn MarkdownEditorApp::target_bar(
             width=360.0,
             height=34.0,
           ).key("markdown-footnote-text"),
-          toolbar_button(
+          editor_button(
             "Apply",
             () => self.apply_footnote_text(),
             button_style,
@@ -631,7 +460,7 @@ fn MarkdownEditorApp::target_bar(
             width=360.0,
             height=34.0,
           ).key("markdown-html-block-text"),
-          toolbar_button(
+          editor_button(
             "Apply",
             () => self.apply_html_block_text(),
             button_style,
@@ -647,27 +476,27 @@ fn MarkdownEditorApp::target_bar(
           @views.text("Table tools", width=92.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          toolbar_button(
+          editor_button(
             "+Row",
             () => self.apply_command_to_selection(InsertTableRow),
             button_style,
           ),
-          toolbar_button(
+          editor_button(
             "+Col",
             () => self.apply_command_to_selection(InsertTableColumn),
             button_style,
           ),
-          toolbar_button(
+          editor_button(
             "-Col",
             () => self.apply_command_to_selection(DeleteTableColumn),
             button_style,
           ),
-          toolbar_button(
+          editor_button(
             "-Row",
             () => self.apply_command_to_selection(DeleteTableRow),
             button_style,
           ),
-          toolbar_button(
+          editor_button(
             "Left",
             () => {
               self.apply_command_to_selection(
@@ -676,7 +505,7 @@ fn MarkdownEditorApp::target_bar(
             },
             button_style,
           ),
-          toolbar_button(
+          editor_button(
             "Center",
             () => {
               self.apply_command_to_selection(
@@ -685,7 +514,7 @@ fn MarkdownEditorApp::target_bar(
             },
             button_style,
           ),
-          toolbar_button(
+          editor_button(
             "Right",
             () => {
               self.apply_command_to_selection(
@@ -694,7 +523,7 @@ fn MarkdownEditorApp::target_bar(
             },
             button_style,
           ),
-          toolbar_button(
+          editor_button(
             "Auto",
             () => self.apply_command_to_selection(SetTableColumnAlignment(None)),
             button_style,
@@ -703,31 +532,7 @@ fn MarkdownEditorApp::target_bar(
         spacing=theme.spacing_scale.xs,
         cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
       )
-    PlainSelection =>
-      @views.row(
-        [
-          block_badge,
-          @views.text(
-            "Select link or image text to edit its target",
-            width=360.0,
-            height=34.0,
-          )
-          .font(theme.typography.caption)
-          .foreground(theme.palette.muted),
-          toolbar_button(
-            "Link",
-            () => self.apply_command_to_selection(Link),
-            button_style,
-          ),
-          toolbar_button(
-            "Image",
-            () => self.apply_command_to_selection(Image),
-            button_style,
-          ),
-        ],
-        spacing=theme.spacing_scale.xs,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
-      )
+    PlainSelection => @core.ViewSpec::EmptySpec
   }
 }
 
@@ -740,6 +545,7 @@ fn floating_target_palette(
   target_kind : MarkdownEditorTargetKind,
   editor_font : @core.FontSpec,
   theme : @core.Theme,
+  scroll_offset : @core.Point,
   width : Double,
   height : Double,
 ) -> @core.ViewSpec {
@@ -748,7 +554,11 @@ fn floating_target_palette(
     padding: @core.Insets::all(theme.spacing_scale.xs),
     radius: theme.radius_scale.md,
   }
-  let palette = @views.surface(target_bar, style=palette_style)
+  let palette = if target_kind == PlainSelection {
+    @core.ViewSpec::EmptySpec
+  } else {
+    @views.surface(target_bar, style=palette_style)
+  }
   @views.custom_children_layout(
     children=[editor, palette],
     measure=_ => @core.Size::new(width~, height~),
@@ -773,6 +583,7 @@ fn floating_target_palette(
         editor_font,
         palette_width,
         palette_size.height,
+        scroll_offset,
         theme,
       )
       let palette_x = ctx.frame.origin.x +
@@ -814,6 +625,7 @@ fn markdown_editor_palette_anchor(
   editor_font : @core.FontSpec,
   palette_width : Double,
   palette_height : Double,
+  scroll_offset : @core.Point,
   theme : @core.Theme,
 ) -> @core.Point {
   if target_kind == PlainSelection {
@@ -830,7 +642,10 @@ fn markdown_editor_palette_anchor(
     Some(range) => range.normalized().start
     None => selection.caret
   }
-  let content = @core.rich_text_editor_content_rect(editor_frame)
+  let content = @core.rich_text_editor_content_rect(editor_frame).offset(
+    dx=0.0,
+    dy=-scroll_offset.y,
+  )
   match
     @core.rich_text_document_caret_rect_at_source(
       snapshot.rich_text,
@@ -870,7 +685,7 @@ fn markdown_editor_palette_anchor(
 }
 
 ///|
-fn toolbar_button(
+fn editor_button(
   label : String,
   action : () -> Unit,
   style : @core.ButtonStyle,
@@ -897,6 +712,21 @@ fn markdown_editor_max_double(a : Double, b : Double) -> Double {
 }
 
 ///|
+fn markdown_editor_clamp_double(
+  value : Double,
+  min : Double,
+  max : Double,
+) -> Double {
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
+  }
+}
+
+///|
 fn markdown_editor_shortcut(key : String) -> @core.KeyboardShortcut {
   @core.KeyboardShortcut::new(
     key~,
@@ -913,7 +743,128 @@ fn markdown_editor_shift_shortcut(key : String) -> @core.KeyboardShortcut {
 }
 
 ///|
-fn flat_toolbar_button_style(theme : @core.Theme) -> @core.ButtonStyle {
+fn markdown_editor_command_binding(
+  label : String,
+  shortcut : @core.KeyboardShortcut,
+  action : () -> Unit,
+) -> @core.CommandBinding {
+  @core.CommandBinding::new(
+    command=@core.ActionCommand::new(
+      intent=@core.CommandIntent::Activate,
+      label~,
+      shortcut=Some(shortcut),
+    ),
+    handle=action,
+  )
+}
+
+///|
+fn MarkdownEditorApp::action_commands(
+  self : MarkdownEditorApp,
+) -> @core.ActionCommandMap {
+  @core.ActionCommandMap::new(bindings=[
+    markdown_editor_command_binding("Bold", markdown_editor_shortcut("b"), () => {
+      self.apply_command_to_selection(Bold)
+    }),
+    markdown_editor_command_binding("Italic", markdown_editor_shortcut("i"), () => {
+      self.apply_command_to_selection(Italic)
+    }),
+    markdown_editor_command_binding(
+      "Inline Code",
+      markdown_editor_shortcut("e"),
+      () => self.apply_command_to_selection(Code),
+    ),
+    markdown_editor_command_binding(
+      "Strikethrough",
+      markdown_editor_shift_shortcut("x"),
+      () => self.apply_command_to_selection(Strikethrough),
+    ),
+    markdown_editor_command_binding("Link", markdown_editor_shortcut("l"), () => {
+      self.apply_command_to_selection(Link)
+    }),
+    markdown_editor_command_binding(
+      "Image",
+      markdown_editor_shift_shortcut("i"),
+      () => self.apply_command_to_selection(Image),
+    ),
+    markdown_editor_command_binding(
+      "Heading 1",
+      markdown_editor_shortcut("1"),
+      () => self.apply_command_to_selection(Heading(1)),
+    ),
+    markdown_editor_command_binding(
+      "Heading 2",
+      markdown_editor_shortcut("2"),
+      () => self.apply_command_to_selection(Heading(2)),
+    ),
+    markdown_editor_command_binding(
+      "Heading 3",
+      markdown_editor_shortcut("3"),
+      () => self.apply_command_to_selection(Heading(3)),
+    ),
+    markdown_editor_command_binding(
+      "Heading 4",
+      markdown_editor_shortcut("4"),
+      () => self.apply_command_to_selection(Heading(4)),
+    ),
+    markdown_editor_command_binding(
+      "Heading 5",
+      markdown_editor_shortcut("5"),
+      () => self.apply_command_to_selection(Heading(5)),
+    ),
+    markdown_editor_command_binding(
+      "Heading 6",
+      markdown_editor_shortcut("6"),
+      () => self.apply_command_to_selection(Heading(6)),
+    ),
+    markdown_editor_command_binding(
+      "Bullet List",
+      markdown_editor_shortcut("u"),
+      () => self.apply_command_to_selection(BulletList),
+    ),
+    markdown_editor_command_binding(
+      "Task List",
+      markdown_editor_shortcut("t"),
+      () => self.apply_command_to_selection(TaskList),
+    ),
+    markdown_editor_command_binding(
+      "Ordered List",
+      markdown_editor_shortcut("o"),
+      () => self.apply_command_to_selection(OrderedList),
+    ),
+    markdown_editor_command_binding("Quote", markdown_editor_shortcut("q"), () => {
+      self.apply_command_to_selection(Quote)
+    }),
+    markdown_editor_command_binding(
+      "Code Block",
+      markdown_editor_shortcut("k"),
+      () => self.apply_command_to_selection(CodeBlock),
+    ),
+    markdown_editor_command_binding(
+      "Insert Table Column",
+      markdown_editor_shift_shortcut("="),
+      () => self.apply_command_to_selection(InsertTableColumn),
+    ),
+    markdown_editor_command_binding(
+      "Insert Table Row",
+      markdown_editor_shift_shortcut("Enter"),
+      () => self.apply_command_to_selection(InsertTableRow),
+    ),
+    markdown_editor_command_binding(
+      "Delete Table Row",
+      markdown_editor_shift_shortcut("-"),
+      () => self.apply_command_to_selection(DeleteTableRow),
+    ),
+    markdown_editor_command_binding(
+      "Delete Table Column",
+      markdown_editor_shift_shortcut("_"),
+      () => self.apply_command_to_selection(DeleteTableColumn),
+    ),
+  ])
+}
+
+///|
+fn flat_editor_button_style(theme : @core.Theme) -> @core.ButtonStyle {
   let style = @core.ButtonStyle::tonal(theme~)
   {
     normal: { ..style.normal, shadow: None },
@@ -921,6 +872,72 @@ fn flat_toolbar_button_style(theme : @core.Theme) -> @core.ButtonStyle {
     pressed: { ..style.pressed, shadow: None },
     disabled: { ..style.disabled, shadow: None },
   }
+}
+
+///|
+fn markdown_editor_workspace_style(theme : @core.Theme) -> @core.SurfaceStyle {
+  {
+    ..@core.SurfaceStyle::default(theme~),
+    brush: @core.Brush::solid(@core.Color::rgba(r=0.985, g=0.985, b=0.98)),
+    padding: {
+      top: theme.spacing_scale.lg,
+      right: theme.spacing_scale.lg,
+      bottom: theme.spacing_scale.lg,
+      left: theme.spacing_scale.md,
+    },
+    radius: theme.radius_scale.sm,
+  }
+}
+
+///|
+fn markdown_editor_page_text_style(theme : @core.Theme) -> @core.TextFieldStyle {
+  let base = @core.TextFieldStyle::outline(theme~)
+  let background = @core.Brush::solid(
+    @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+  )
+  let border = @core.BorderStyle::new(
+    brush=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+    width=0.0,
+  )
+  let normal = {
+    ..base.normal,
+    background,
+    border: Some(border),
+    radius: theme.radius_scale.sm,
+    shadow: None,
+  }
+  { ..base, normal, focused: normal, font: @core.FontSpec::new(size=17.0) }
+}
+
+///|
+fn markdown_editor_page_surface_style(
+  theme : @core.Theme,
+) -> @core.SurfaceStyle {
+  {
+    ..@core.SurfaceStyle::raised(theme~),
+    brush: @core.Brush::solid(@core.Color::white()),
+    border: Some(
+      @core.BorderStyle::new(
+        brush=@core.Brush::solid(@core.Color::rgba(r=0.84, g=0.84, b=0.82)),
+        width=1.0,
+      ),
+    ),
+    radius: theme.radius_scale.sm,
+    shadow: Some(theme.shadow_scale.sm),
+    padding: @core.Insets::all(0.0),
+  }
+}
+
+///|
+fn markdown_editor_reading_label(snapshot : MarkdownEditorSnapshot) -> String {
+  let minutes = if snapshot.reading_minutes == 0 {
+    "less than 1 min"
+  } else if snapshot.reading_minutes == 1 {
+    "1 min"
+  } else {
+    snapshot.reading_minutes.to_string() + " min"
+  }
+  "\{snapshot.word_count} words / \{snapshot.line_count} lines / " + minutes
 }
 
 ///|
@@ -934,6 +951,7 @@ fn source_preview(text : String, theme : @core.Theme) -> @core.ViewSpec {
 
 ///|
 fn editor_source_layout(
+  app : MarkdownEditorApp,
   binding : @core.Binding[String],
   snapshot : MarkdownEditorSnapshot,
   editor_style : @core.TextFieldStyle,
@@ -943,21 +961,56 @@ fn editor_source_layout(
   target_bar : @core.ViewSpec,
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
+  scroll_offset : @core.Point,
   on_selection_change : (Int, @core.TextRange?) -> Unit,
   on_prefix_click : (Int) -> Unit,
 ) -> @core.ViewSpec {
-  let editor_width = if show_source { 560.0 } else { 880.0 }
-  let editor = @views.markdown_editor(
-    binding,
-    markdown_editor_format,
-    placeholder="Start writing Markdown",
-    style=editor_style,
+  let editor_width = if show_source { 560.0 } else { 760.0 }
+  let viewport_height = 500.0
+  let content_height = markdown_editor_max_double(
+    viewport_height,
+    @core.rich_text_document_height(snapshot.rich_text, editor_style.font) +
+    40.0,
+  )
+  let max_scroll = markdown_editor_max_double(
+    0.0,
+    content_height - viewport_height,
+  )
+  let normalized_offset = @core.Point::new(
+    x=0.0,
+    y=markdown_editor_clamp_double(scroll_offset.y, 0.0, max_scroll),
+  )
+  let editor = @views.scroll_view(
+    editor_page(
+      @views.markdown_editor(
+        binding,
+        markdown_editor_format,
+        placeholder="Start writing Markdown",
+        style=editor_style,
+        width=editor_width,
+        height=content_height,
+        on_selection_change=Some(on_selection_change),
+        on_prefix_click=Some(on_prefix_click),
+        input_transform=Some(markdown_editor_transform_input),
+      ).key("markdown-editor"),
+      theme,
+      width=editor_width,
+      height=content_height,
+    ),
+    offset=normalized_offset,
     width=editor_width,
-    height=400.0,
-    on_selection_change=Some(on_selection_change),
-    on_prefix_click=Some(on_prefix_click),
-    input_transform=Some(markdown_editor_transform_input),
-  ).key("markdown-editor")
+    height=viewport_height,
+    on_scroll=Some(delta => {
+      app.editor_scroll.scroll_to(
+        x=0.0,
+        y=markdown_editor_clamp_double(
+          normalized_offset.y - delta.y,
+          0.0,
+          max_scroll,
+        ),
+      )
+    }),
+  )
   if !show_source {
     floating_target_palette(
       editor,
@@ -967,8 +1020,9 @@ fn editor_source_layout(
       target_kind,
       editor_style.font,
       theme,
+      normalized_offset,
       editor_width,
-      400.0,
+      viewport_height,
     )
   } else {
     let editor_and_source = @views.row(
@@ -986,17 +1040,39 @@ fn editor_source_layout(
             cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
           ),
           style=source_style,
-        ).frame(width=300.0, height=400.0),
+        ).frame(width=300.0, height=viewport_height),
       ],
       spacing=theme.spacing_scale.lg,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     )
     @views.column(
-      [editor_and_source, target_bar],
+      if target_kind == PlainSelection {
+        [editor_and_source]
+      } else {
+        [editor_and_source, target_bar]
+      },
       spacing=theme.spacing_scale.md,
       cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
     )
   }
+}
+
+///|
+fn editor_page(
+  editor : @core.ViewSpec,
+  theme : @core.Theme,
+  width~ : Double,
+  height~ : Double,
+) -> @core.ViewSpec {
+  @views.stack([
+    @views.surface(
+      @views.spacer(min_length=0.0, weight=0.0),
+      width~,
+      height~,
+      style=markdown_editor_page_surface_style(theme),
+    ),
+    editor,
+  ])
 }
 
 ///|
@@ -1050,15 +1126,17 @@ pub fn MarkdownEditorApp::runtime(
   width? : Double = 980.0,
   height? : Double = 640.0,
 ) -> @core.AppRuntime {
-  @core.AppRuntime::new_component(
+  let runtime = @core.AppRuntime::new_component(
     root=@core.Component::new(ctx => self.root(ctx)),
     size=@core.Size::new(width~, height~),
   )
+  runtime.set_action_commands(self.action_commands())
+  runtime
 }
 
 ///|
 fn sample_markdown() -> String {
-  "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n- Use toolbar buttons to add markers\n- Verify source on the right\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n---"
+  "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n- Use shortcuts or contextual controls\n- Verify source on the right\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n---"
 }
 
 ///|

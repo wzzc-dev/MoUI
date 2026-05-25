@@ -3,8 +3,8 @@
 The Markdown Editor is MoUI's practical editing demo. It keeps Markdown source
 as the saved value while presenting a formatted editor surface as the primary
 screen. The example is intentionally separate from Showcase because it exercises
-larger document state, rich text input, source-to-visual mapping, toolbar
-commands, and editing workflows.
+larger document state, rich text input, source-to-visual mapping, keyboard and
+contextual commands, and editing workflows.
 
 ## Package Shape
 
@@ -47,15 +47,28 @@ The editor supports formatted editing for common block and inline structures:
   footnotes, raw HTML blocks, and tables.
 - Heading, paragraph, list, task-list, ordered-list, quote, and code-block
   commands with keyboard shortcuts.
+- A quiet writing shell with document title, active-block status, word/line
+  counts, estimated reading time, and a minimal source toggle while keeping the
+  formatted page as the primary surface.
 - Setext heading handling, list continuation on Enter, ordered-list
   renumbering, Tab and Shift-Tab indentation, and marker-aware Backspace.
+- Typora-like paired delimiter input for brackets, parentheses, braces, quotes,
+  and backticks, including selection wrapping.
 - Table previews with source-mapped cells, row/column insertion and deletion,
   alignment changes, Tab cell navigation, and Enter row insertion.
-- Structured toolbar/contextual command history so Markdown transforms can be
+- Structured shortcut/contextual command history so Markdown transforms can be
   undone separately from raw text input.
 
-Source preview remains available from the toolbar for inspection, but the
+Source preview remains available from the top chrome for inspection, but the
 formatted surface is the primary user flow.
+
+The editor page uses a separate decorative paper layer behind the rich-text
+editor. The editable node remains the direct pointer target while the visual
+surface provides the white page, border, and shadow.
+
+On macOS, the editor page sizes itself from the formatted rich-text document and
+uses ScrollSpec wheel handling so longer documents scroll inside the clean
+writing viewport instead of clipping at a fixed editor height.
 
 ## Platform Commands
 

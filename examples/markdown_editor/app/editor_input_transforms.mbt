@@ -14,6 +14,10 @@ fn markdown_editor_transform_input(
     Some(transform) => return Some(transform)
     None => ()
   }
+  match markdown_editor_pair_delimiter_input(source, caret, selection, input) {
+    Some(transform) => return Some(transform)
+    None => ()
+  }
   match markdown_editor_wrap_selection_input(source, selection, input) {
     Some(transform) => return Some(transform)
     None => ()
@@ -286,6 +290,59 @@ fn markdown_editor_wrap_selection_input(
       )
     }
     None => None
+  }
+}
+
+///|
+fn markdown_editor_pair_delimiter_input(
+  source : String,
+  caret : Int,
+  selection : @core.TextRange?,
+  input : String,
+) -> @core.RichTextInputTransform? {
+  let close = match input {
+    "(" => ")"
+    "[" => "]"
+    "{" => "}"
+    "\"" => "\""
+    "'" => "'"
+    "`" => "`"
+    _ => return None
+  }
+  let chars = source.to_array()
+  match markdown_editor_active_selection(selection) {
+    Some(range) => {
+      let normalized = range.normalized()
+      let text = String::from_array(chars[:normalized.start]) +
+        input +
+        String::from_array(chars[normalized.start:normalized.end]) +
+        close +
+        String::from_array(chars[normalized.end:])
+      Some(
+        markdown_editor_transform_result(
+          text~,
+          caret=normalized.end + markdown_editor_text_length(input),
+          selection=Some(
+            @core.TextRange::new(
+              start=normalized.start + markdown_editor_text_length(input),
+              end=normalized.end + markdown_editor_text_length(input),
+            ),
+          ),
+        ),
+      )
+    }
+    None => {
+      let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+      let insert = input + close
+      Some(
+        markdown_editor_transform_result(
+          text=String::from_array(chars[:caret]) +
+            insert +
+            String::from_array(chars[caret:]),
+          caret=caret + markdown_editor_text_length(input),
+        ),
+      )
+    }
   }
 }
 

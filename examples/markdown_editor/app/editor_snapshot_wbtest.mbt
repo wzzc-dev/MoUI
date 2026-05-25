@@ -160,7 +160,28 @@ test "markdown editor snapshot tracks setext headings" {
     fail("expected setext h2 mapping")
   }
   inspect(snapshot.active_heading, content="Title")
+  inspect(snapshot.outline.length(), content="2")
+  inspect(snapshot.outline[0].level, content="1")
+  inspect(snapshot.outline[0].title, content="Title")
+  inspect(snapshot.outline[0].source_start, content="0")
+  inspect(snapshot.outline[1].level, content="2")
+  inspect(snapshot.outline[1].title, content="Section")
+  inspect(snapshot.outline[1].source_start, content="12")
   inspect(snapshot.rich_text.blocks.length(), content="2")
+}
+
+///|
+test "markdown editor snapshot estimates reading time" {
+  inspect(MarkdownEditorSnapshot::parse("").reading_minutes, content="0")
+  inspect(MarkdownEditorSnapshot::parse("one two").reading_minutes, content="1")
+  let words : Array[String] = []
+  for index in 0..<221 {
+    words.push("w" + index.to_string())
+  }
+  inspect(
+    MarkdownEditorSnapshot::parse(words.join(" ")).reading_minutes,
+    content="2",
+  )
 }
 
 ///|
@@ -390,7 +411,7 @@ test "markdown editor renders image preview while mapping alt text" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -418,7 +439,7 @@ test "markdown editor click places caret after hidden heading marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -438,7 +459,7 @@ test "markdown editor click maps inline formatted text to source offset" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=126.0, y=184.0),
+        position=@core.Point::new(x=126.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -454,7 +475,7 @@ test "markdown editor selection highlight uses formatted heading range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -481,7 +502,7 @@ test "markdown editor drag selection tracks markdown source range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=184.0),
+        position=@core.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -489,7 +510,7 @@ test "markdown editor drag selection tracks markdown source range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=460.0, y=184.0),
+        position=@core.Point::new(x=460.0, y=84.0),
         phase=@core.PointerPhase::Move,
       ),
     ),

@@ -1,13 +1,16 @@
 ///|
 fn MarkdownEditorSnapshot::parse(source : String) -> MarkdownEditorSnapshot {
   let blocks = parse_markdown_editor_blocks(source)
+  let word_count = markdown_editor_word_count(source)
   {
     source,
     blocks,
     rich_text: markdown_editor_blocks_to_rich_text(source, blocks),
     line_count: markdown_editor_line_count(source),
-    word_count: markdown_editor_word_count(source),
+    word_count,
+    reading_minutes: markdown_editor_reading_minutes(word_count),
     active_heading: markdown_editor_active_heading(blocks),
+    outline: markdown_editor_outline(blocks),
   }
 }
 
@@ -657,6 +660,34 @@ fn markdown_editor_active_heading(
     }
   }
   "Untitled"
+}
+
+///|
+fn markdown_editor_reading_minutes(word_count : Int) -> Int {
+  if word_count <= 0 {
+    0
+  } else {
+    (word_count + 219) / 220
+  }
+}
+
+///|
+fn markdown_editor_outline(
+  blocks : Array[MarkdownEditorBlock],
+) -> Array[MarkdownEditorOutlineItem] {
+  let items : Array[MarkdownEditorOutlineItem] = []
+  for block in blocks {
+    match block.block.kind {
+      Heading(level) =>
+        items.push({
+          level,
+          title: block.block.text,
+          source_start: block.content_range.start,
+        })
+      _ => ()
+    }
+  }
+  items
 }
 
 ///|
