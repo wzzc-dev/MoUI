@@ -256,28 +256,56 @@ Download the archive from:
 https://github.com/gfx-rs/wgpu-native/releases/tag/v27.0.4.0
 ```
 
-## Linux Scaffold
+## Linux Native
 
-`backend/linux` intentionally preserves the host contract shape while reporting
-that no Linux window backend is available yet. Its capability matrix currently
-marks window, renderer, pointer, keyboard, text input, IME, clipboard,
-drag/drop, accessibility, and scale-factor support as unavailable. It also exposes a
-readiness report and an unavailable `HostServiceBridge`, so callers can inspect
-blocked work without treating the scaffold as a runtime backend.
+`backend/linux` is a minimal native Wayland host. It uses the fork-owned
+`.local_repos/window/linux` package for Wayland event-loop and window handles,
+creates native WGPU surfaces from `wl_display` and `wl_surface`, normalizes
+window/input events through the shared `HostEvent` contract, and runs the
+Showcase entrypoints through the same renderer/runtime boundary as macOS and
+Windows.
 
-The Linux readiness blockers are:
+Linux runtime requirements are intentionally native:
 
-- Add or consume a `window/linux` package that emits shared `HostEvent` values.
-- Create a native WGPU surface path and resize contract for Linux.
-- Map clipboard, menus, file dialogs, drag/drop, and accessibility through host
-  contracts.
-- Replace the existing `render/wgpu/fontconfig` native stub with a real
-  fontconfig + HarfBuzz + FreeType implementation, or an equivalent toolkit text
-  stack, without changing `core` font defaults. The scaffold already uses the
-  same native-stub-backed `render/wgpu/text_protocol` measure/run/raster/register
-  payload boundary as DirectWrite.
+- A Wayland compositor. For repeatable headless checks, run Weston with the
+  headless backend and point `WAYLAND_DISPLAY` at its socket.
+- A usable Vulkan stack for `wgpu-native`. Headless software validation can use
+  Mesa llvmpipe through `vulkan-swrast`/Lavapipe when hardware Vulkan is not
+  available.
+- Wayland development headers and generated xdg-shell protocol sources for the
+  local `window/linux` native stub.
+- zlib in the final native link; Linux entrypoints and `backend/linux` include
+  `-lz`.
 
-Keep the scaffold honest until those pieces exist.
+Useful focused commands on a configured Linux host:
+
+```sh
+moon test backend/linux --target native
+moon build examples/showcase/linux --target native
+moon build examples/showcase/linux_cosmic --target native
+moon run examples/showcase/linux --target native
+moon run examples/showcase/linux_cosmic --target native
+```
+
+When validating from a Linux VM mounted over the same checkout as a macOS or
+Windows host, keep native build output isolated. Either run `moon clean` before
+switching hosts or copy the checkout to a Linux-local temporary directory
+without `_build`; the native archive and MoonDB files are host-specific and can
+be corrupted by cross-host reuse.
+
+The platform-default text path composes the Linux
+`render/wgpu/fontconfig` scaffold provider with the shared Moon Cosmic fallback.
+`examples/showcase/linux_cosmic` selects the Moon Cosmic provider explicitly for
+comparison.
+
+Remaining Linux gaps stay visible in `backend/linux.readiness()`:
+
+- Clipboard, menus, file dialogs, drag/drop, and AT-SPI native bindings are not
+  implemented yet.
+- Text input and IME requests are still reported as unsupported until the
+  Wayland window package exposes that protocol surface.
+- The fontconfig/HarfBuzz/FreeType native provider remains a scaffold and relies
+  on the composed Moon Cosmic fallback for actual glyph data.
 
 ## Platform Validation
 

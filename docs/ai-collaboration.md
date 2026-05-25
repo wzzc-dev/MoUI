@@ -34,7 +34,8 @@ workflow for agents and maintainers.
 - Renderers consume `DrawCommand` values and do not depend on view constructors.
 - `examples/*/app/` packages contain shared app logic; platform subpackages stay
   thin.
-- Linux remains a scaffold until a real window backend exists.
+- Linux has a minimal Wayland/WGPU backend; keep its remaining platform service,
+  IME, AT-SPI, and native font-provider gaps explicit.
 
 ## Recommended Agent Workflow
 

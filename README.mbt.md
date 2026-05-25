@@ -211,3 +211,19 @@ Optional `moon run` shortcut:
 ```sh
 moon run examples/markdown_editor/windows --target native
 ```
+
+## Linux Native
+
+Linux native examples use the local fork-owned `window/linux` Wayland backend
+and native `wgpu-native` surfaces. Run them on a Linux host with a Wayland
+compositor and Vulkan stack:
+
+```sh
+moon run examples/showcase/linux --target native
+moon run examples/showcase/linux_cosmic --target native
+```
+
+For headless validation, use a compositor such as Weston headless and set
+`WAYLAND_DISPLAY` to its socket before running the examples. The default Linux
+text path composes the fontconfig provider scaffold with Moon Cosmic fallback;
+`linux_cosmic` selects Moon Cosmic directly.

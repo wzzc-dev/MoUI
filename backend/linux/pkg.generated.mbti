@@ -2,9 +2,10 @@
 package "wzzc-dev/moui/backend/linux"
 
 import {
+  "Milky2018/wgpu_mbt",
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render/wgpu",
 }
 
 // Values
@@ -12,15 +13,23 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
-pub fn linux_accessibility_bridge() -> @host.NativeAccessibilityBridge
+pub fn create_linux_host_surface(UInt64, UInt64) -> @wgpu.HostWgpuSurface raise @wgpu_mbt.WgpuError
+
+pub fn linux_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> @host.NativeAccessibilityBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
-pub fn linux_service_bridge() -> @host.HostServiceBridge
+pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme) -> @host.HostServiceBridge
+
+pub fn linux_surface_host_info() -> @wgpu.SurfaceHostInfo
 
 pub fn readiness() -> LinuxBackendReadiness
 
-pub fn run_app(String, @core.AppRuntime) -> Unit
+pub fn run_app(String, @wzzc-dev/moui/core.AppRuntime) -> Unit
+
+pub fn run_app_with_options(String, @wzzc-dev/moui/core.AppRuntime, options~ : LinuxAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+pub fn run_app_with_window_requests(String, @wzzc-dev/moui/core.AppRuntime, @host.HostWindowRequestQueue) -> Unit
 
 pub fn scaffold_input_host() -> @host.InputHostState
 
@@ -29,6 +38,14 @@ pub fn scaffold_service_bridge() -> @host.HostServiceBridge
 pub fn scaffold_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.SurfaceHostState
 
 pub fn service_capabilities() -> @host.HostServiceCapabilities
+
+pub fn window_event_to_core(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
+
+pub fn window_event_to_core_with_modifiers(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers) -> @wzzc-dev/moui/core.AppEvent?
+
+pub fn window_event_to_host(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @host.HostEvent?
+
+pub fn window_event_to_host_with_modifiers(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers) -> @host.HostEvent?
 
 // Errors
 
@@ -40,6 +57,15 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
   action_roundtrip_ready : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+
+type LinuxApp
+pub impl @Milky2018/window/linux.ApplicationHandler for LinuxApp
+
+pub(all) struct LinuxAppOptions {
+  text_engine : @wgpu.NativeTextEngineSetting
+  scene_resolver : @host.HostWindowSceneResolver
+}
+pub fn LinuxAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
 
 pub(all) struct LinuxBackendCapabilities {
   window : Bool

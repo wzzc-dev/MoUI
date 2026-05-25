@@ -23,7 +23,7 @@ views/                        public view constructors
 backend/host/                 shared HostEvent, metrics, input, redraw driver, window/core + dpi event conversion
 backend/windows/              Windows native host
 backend/macos/                macOS native host
-backend/linux/                Linux host scaffold
+backend/linux/                Linux Wayland native host
 backend/web/                  canonical Web host on wasm-gc plus browser JS assets
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
@@ -40,6 +40,8 @@ examples/showcase/macos_cosmic/ macOS showcase selecting Moon Cosmic text
 examples/showcase/web_wasm/   Web showcase on wasm-gc
 examples/showcase/windows/    Windows native showcase
 examples/showcase/windows_cosmic/ Windows showcase selecting Moon Cosmic text
+examples/showcase/linux/      Linux Wayland native showcase
+examples/showcase/linux_cosmic/ Linux showcase selecting Moon Cosmic text
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos/ macOS native Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
@@ -313,11 +315,10 @@ host lifecycle events while keeping the slot record aligned.
 `HostPlatformWindowMap` binds platform window ids from `Milky2018/window` to
 MoUI `HostWindowId` values so event dispatch can route through the host registry
 instead of assuming one global window.
-Web, macOS, and Windows should convert their native window events into
+Web, macOS, Windows, and Linux should convert their native window events into
 `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
-`DrawCommand` values. Linux currently keeps the same contract shape as a
-scaffold until a real window backend exists.
-The active Web, macOS, and Windows hosts all open a primary
+`DrawCommand` values.
+The active Web, macOS, Windows, and Linux hosts all open a primary
 `HostWindowRecord`, register the existing runtime/driver as a primary
 `HostWindowRuntimeSlot`, bind the platform window id to the host id, route
 incoming platform window events through that mapping, apply resize/focus/close

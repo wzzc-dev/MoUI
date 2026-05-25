@@ -91,6 +91,28 @@ The folder includes and validates a schema version 1 `moui-package.json` with
 app, source MoonBit package, version, executable, and copied runtime DLL
 metadata.
 
+## Linux Native
+
+Linux examples use the local fork-owned `window/linux` Wayland backend plus
+native `render/wgpu` surface setup. Run them on a configured Linux host with a
+Wayland compositor and Vulkan stack:
+
+```sh
+moon run examples/showcase/linux --target native
+moon run examples/showcase/linux_cosmic --target native
+```
+
+For build-only validation, use:
+
+```sh
+moon build examples/showcase/linux --target native
+moon build examples/showcase/linux_cosmic --target native
+```
+
+The `linux_cosmic` entrypoint selects the shared Moon Cosmic text provider
+explicitly. The platform-default Linux entrypoint composes the fontconfig
+provider scaffold with the same Cosmic fallback.
+
 ## Example Validation
 
 Use package-level tests for shared app logic and Web builds for browser entry

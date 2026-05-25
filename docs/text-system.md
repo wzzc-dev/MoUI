@@ -44,18 +44,19 @@ Provider packages are intentionally separate:
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold. Windows defaults to
   this scaffold composed with Cosmic fallback until the real DirectWrite engine
   returns platform layout and raster data.
-- `render/wgpu/fontconfig/`: Linux fontconfig/HarfBuzz/FreeType scaffold. It is
-  ready for a future Linux host path but currently returns no platform glyph
-  data.
+- `render/wgpu/fontconfig/`: Linux fontconfig/HarfBuzz/FreeType scaffold. Linux
+  defaults to this scaffold composed with Cosmic fallback until the real
+  fontconfig provider returns platform layout and raster data.
 - `render/wgpu/text_protocol/`: shared native-stub payload protocol for UTF-32
   input, versioned `FontSpec` encoding, measure/run/raster envelopes, and
   embedded-font registration payloads.
 
-macOS and Windows hosts choose the startup text engine through
+macOS, Windows, and Linux hosts choose the startup text engine through
 `run_app_with_options(..., options=<Platform>AppOptions::new(text_engine=...))`.
 `PlatformDefault` composes the platform provider with Cosmic fallback;
 `MoonCosmic` selects the Cosmic provider directly. Showcase also has explicit
-`macos_cosmic` and `windows_cosmic` entrypoints for comparing those paths.
+`macos_cosmic`, `windows_cosmic`, and `linux_cosmic` entrypoints for comparing
+those paths.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all

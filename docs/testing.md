@@ -59,6 +59,21 @@ sh scripts/dev-check.sh --platform-examples-build
 Native builds link platform stubs and `wgpu-native`, so they are intentionally
 not part of every inner-loop check.
 
+On Linux, the platform example build step covers both Showcase native
+entrypoints:
+
+```sh
+moon build examples/showcase/linux --target native
+moon build examples/showcase/linux_cosmic --target native
+```
+
+Runtime validation requires a Wayland compositor and Vulkan stack:
+
+```sh
+moon run examples/showcase/linux --target native
+moon run examples/showcase/linux_cosmic --target native
+```
+
 ## Public API Review
 
 After changing exported types, constructors, functions, package imports, or
