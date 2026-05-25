@@ -10,6 +10,15 @@ test "renderer capability report tracks draw command support" {
   assert_true(image.web_status == @render.RendererFeatureStatus::Ready)
   assert_true(image.native_note.contains("mizchi/image"))
   assert_true(image.native_note.contains("PNG"))
+  guard @render.renderer_feature_capability(@render.RendererFeature::Transform)
+    is Some(transform) else {
+    fail("expected transform capability")
+  }
+  assert_true(transform.native_status == @render.RendererFeatureStatus::Partial)
+  assert_true(transform.web_status == @render.RendererFeatureStatus::Partial)
+  assert_true(transform.native_note.contains("scoped layer"))
+  assert_true(transform.native_note.contains("transform and clip"))
+  assert_true(transform.web_note.contains("clone"))
   guard @render.renderer_feature_capability(@render.RendererFeature::Clip)
     is Some(clip) else {
     fail("expected clip capability")

@@ -365,6 +365,73 @@ test "native renderer plans advanced GPU layer filter and shader items" {
 }
 
 ///|
+test "native renderer scopes inherit transform and clip but composite opacity once" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushOpacity(0.5),
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=10.0, dy=20.0),
+    ),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=40.0, height=30.0),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        opacity=0.75,
+        mask=@core.LayerMask::RectMask(
+          @core.Rect::new(x=0.0, y=0.0, width=30.0, height=20.0),
+        ),
+        offscreen=true,
+      ),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PopOpacity,
+  ])
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.draw_items.length(), content="1")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeLayer(layer) => {
+      inspect(layer.opacity, content="0.375")
+      match layer.mask {
+        Some(mask) => {
+          inspect(mask.rect.origin.x, content="10")
+          inspect(mask.rect.origin.y, content="20")
+          inspect(mask.rect.size.width, content="30")
+          inspect(mask.rect.size.height, content="20")
+        }
+        None => fail("expected transformed layer mask")
+      }
+      match layer.scissor {
+        Some(scissor) => {
+          inspect(scissor.x, content="10")
+          inspect(scissor.y, content="20")
+          inspect(scissor.width, content="30")
+          inspect(scissor.height, content="20")
+        }
+        None => fail("expected transformed layer scissor")
+      }
+      inspect(layer.plan.visual_vertices.length(), content="6")
+      let vertex = layer.plan.visual_vertices[0]
+      inspect(vertex.x, content="-0.8")
+      inspect(vertex.y, content="0.6")
+      inspect(vertex.a0, content="1")
+    }
+    _ => fail("expected native layer item")
+  }
+}
+
+///|
 test "native renderer plans overlay layer for backdrop sampling pass" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
