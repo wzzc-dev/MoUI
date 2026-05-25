@@ -85,6 +85,10 @@ Focus areas:
   tests, and example coverage.
 - Use Showcase as the visual index for controls, layout, theme, and renderer
   capability status.
+- Prefer Showcase coverage for new user-facing framework features. When a new
+  view, renderer capability, host-service interaction, or inspectable platform
+  behavior lands, add a visible Showcase example and app-level assertion unless
+  the feature is better validated only by focused tests or platform docs.
 
 Validation:
 
@@ -105,6 +109,11 @@ The examples should demonstrate progressively larger slices of the framework:
 
 Example work should keep business logic in `examples/*/app/` and leave platform
 packages as thin entrypoints.
+
+Showcase is the default visible verification surface for framework additions.
+New functionality that affects what an app author can see or exercise should be
+represented there where practical, so release handoffs can pair focused tests
+with an inspectable example.
 
 Validation:
 
@@ -137,6 +146,9 @@ Current priorities:
 4. Surface async image cache and load diagnostics to app-visible renderer state.
 5. Keep Showcase capability status aligned with
    `docs/renderer-capability-report.md` so visual behavior is easy to verify.
+   Add Showcase coverage for renderer improvements when the behavior is
+   inspectable, and document why renderer tests/report are the primary evidence
+   when it is not.
 
 Validation:
 
@@ -237,6 +249,8 @@ Planned documentation set:
 - `docs/testing.md`: testing layers and release checks.
 - `docs/ai-collaboration.md`: AI workflow, prompt templates, and review
   checklist.
+- `docs/release-readiness.md`: preview-release gates, current evidence, known
+  gaps, and next implementation slices.
 
 The project also includes MoUI-specific skills at:
 
@@ -290,8 +304,8 @@ Use this snapshot as the final handoff checklist for the current project shape:
 
 - README explains the project value, package map, and Web/native example entrypoints.
 - Architecture, development, platform, examples, testing, renderer capability, AI
-  collaboration, text-system, Markdown Editor, and view catalog docs are linked
-  from the README.
+  collaboration, release-readiness, text-system, Markdown Editor, and view
+  catalog docs are linked from the README.
 - Showcase and Markdown Editor keep shared app logic under `examples/*/app/`
   with platform packages as thin entrypoints; Counter and Todo live inside
   Showcase as built-in interaction patterns.

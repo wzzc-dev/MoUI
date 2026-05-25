@@ -31,6 +31,7 @@ Detailed notes live in:
 - [Testing](docs/testing.md)
 - [AI collaboration](docs/ai-collaboration.md)
 - [2026 roadmap](docs/roadmap-2026.md)
+- [Release readiness](docs/release-readiness.md)
 
 The example suite is intentionally small: Showcase is the visual catalog and now
 contains the Counter and Todo interaction patterns, while the WYSIWYG Markdown

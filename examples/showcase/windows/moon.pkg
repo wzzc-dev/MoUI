@@ -1,7 +1,6 @@
 import {
   "wzzc-dev/moui/backend/windows" @windows_backend,
   "wzzc-dev/moui/examples/showcase/app" @showcase_app,
-  "wzzc-dev/moui/render/wgpu",
 }
 
 supported_targets = "native"

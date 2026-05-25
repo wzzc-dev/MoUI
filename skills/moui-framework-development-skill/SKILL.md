@@ -38,9 +38,11 @@ Use this skill when editing or reviewing:
    provider startup options
 7. `docs/renderer-capability-report.md`
 8. `docs/testing.md` when validation scope matters
-9. `docs/view-catalog.md` when touching `views/`
-10. `docs/examples.md` when touching examples
-11. `docs/markdown-editor.md` when touching the Markdown Editor
+9. `docs/release-readiness.md` when planning preview-release gates or gap
+   closure
+10. `docs/view-catalog.md` when touching `views/`
+11. `docs/examples.md` when touching examples
+12. `docs/markdown-editor.md` when touching the Markdown Editor
 
 ## Project Invariants
 
@@ -223,6 +225,8 @@ moon info
 - Put Markdown Editor behavior in `docs/markdown-editor.md`.
 - Put validation policy in `docs/testing.md`.
 - Put renderer status in `docs/renderer-capability-report.md`.
+- Put preview-release gates and gap-closure slices in
+  `docs/release-readiness.md`.
 - Check `AGENTS.md` and repo-local skills for stale guidance.
 
 ## Common Mistakes
