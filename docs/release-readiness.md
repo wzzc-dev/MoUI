@@ -67,7 +67,7 @@ This snapshot records the current preview-readiness evidence gathered on
 | --- | --- | --- |
 | Daily baseline | `sh scripts/dev-check.sh` passed after the Windows Showcase unused import cleanup. | current |
 | Public API audit | No public API change has been made in the latest release-readiness documentation slices. Earlier public API slices recorded `moon info` evidence in the task ledger. | not required for latest docs-only slices |
-| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is now explicitly marked `gap` until native/Web adapters visibly execute `DrawPath`. | current with tracked renderer gaps |
+| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is explicitly marked `gap`; Web rounded clip submit now maps to the browser layer-mask path instead of no-op. | current with tracked renderer gaps |
 | Text conformance | `sh scripts/conformance-check.sh --text` and `sh scripts/conformance-check.sh --text-diagnostic` both passed. | current with shaping/emoji gaps documented |
 | Platform contracts | `sh scripts/dev-check.sh --platform-examples-test` passed on macOS/Darwin and included `backend/macos` native backend tests. | current for macOS host; Windows/Linux runtime evidence remains host-limited |
 | Examples | `moon test examples/showcase/app --target native` and `moon build examples/showcase/web_wasm --target wasm-gc` passed for Showcase capability alignment; daily checks also cover Markdown Editor app and Web build. | current |
@@ -121,7 +121,7 @@ Current alignment:
 | Shadow | Theme/renderer cards and panels. | Showcase app tests assert `DrawShadow`. | Covered by visible demo plus command-level app test. |
 | Text | Most catalog sections. | Showcase app tests assert many section labels and renderer report text. | Covered broadly as view output, while shaping conformance remains tracked in text tests. |
 | Image | Text/media and visual correctness cards. | Showcase app tests assert `DrawImage`. | Covered for visible image commands; async diagnostics remain a renderer gap. |
-| Clip | Scroll/capability card and clipped image demos. | Showcase app tests assert `PushClip` and clipped long renderer content. | Covered for visible clipping; transformed/rounded behavior remains renderer-specific evidence. |
+| Clip | Scroll/capability card and clipped image demos. | Showcase app tests assert `PushClip` and clipped long renderer content; Web adapter tests preserve rounded clip host calls. | Covered for visible clipping; Web rounded clip submit uses the browser layer-mask path. |
 | Transform | Visual correctness image uses scale/offset. | No dedicated Showcase test for transform semantics beyond generated commands. | Keep capability status `partial` until renderer tests cover layer-level transform state. |
 | Opacity | Visual correctness image and state-driven visuals. | Showcase app tests assert `PushOpacity`. | Covered for view-level opacity emission; renderer-specific blending remains renderer evidence. |
 | Layer compositing | Used indirectly by advanced renderer scopes where applicable. | Capability report card lists status; no dedicated Showcase assertion. | Keep primary evidence in renderer tests/report unless a visible layer demo is added. |

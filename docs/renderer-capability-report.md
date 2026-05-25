@@ -20,7 +20,7 @@ Status meanings:
 | Shadow | ready | ready | None |
 | Text | ready | ready | None |
 | Image | ready | ready | Native decodes PNG/JPEG/BMP from local file paths and base64 data URIs through `mizchi/image`; Web loads browser-supported sources into a WebGPU texture cache. |
-| Clip | ready | ready | Rectangular transformed scissor behavior is aligned; rounded clips are handled through native shader SDF masks and Web layer-mask shader coverage. |
+| Clip | ready | ready | Rectangular transformed scissor behavior is aligned; rounded clips are handled through native shader SDF masks and Web offscreen layer-mask scopes. |
 | Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices; layer-level transform state remains follow-up work. |
 | Opacity | ready | ready | None |
 | Layer compositing | ready | ready | Native and Web render layer scopes into offscreen GPU textures and composite them back through the advanced GPU pass with opacity and masks. |
@@ -107,8 +107,10 @@ and disposed states; the runtime still needs to publish browser cache
 diagnostics back into app-visible renderer state.
 
 Clip support maps transformed rectangular clip stacks to per-item scissor
-rectangles. Transform support is folded into generated visual, image, and text
-vertices, with clip scissors derived from transformed bounding boxes.
+rectangles. Rounded clip scopes are submitted as offscreen layer scopes with a
+rounded mask, reusing the browser runtime's layer-mask composite path.
+Transform support is folded into generated visual, image, and text vertices,
+with clip scissors derived from transformed bounding boxes.
 The Web runtime forwards layer, filter, and shader-effect commands through the
 wasm-gc host ABI. The browser runtime uses draw scopes, offscreen WebGPU
 textures, and an advanced composite shader for layer opacity, masks, filters,

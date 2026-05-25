@@ -15,6 +15,8 @@ test "renderer capability report tracks draw command support" {
     fail("expected clip capability")
   }
   assert_true(clip.native_status == @render.RendererFeatureStatus::Ready)
+  assert_true(clip.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(clip.web_note.contains("offscreen layer masks"))
   guard @render.renderer_feature_capability(@render.RendererFeature::Opacity)
     is Some(opacity) else {
     fail("expected opacity capability")

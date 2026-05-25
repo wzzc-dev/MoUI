@@ -154,7 +154,7 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       native_status: RendererFeatureStatus::Ready,
       web_status: RendererFeatureStatus::Ready,
       native_note: "Native wgpu maps nested rectangular and rounded clips, using physical scissor rectangles with shader SDF masks for rounded corners.",
-      web_note: "The browser WebGPU host applies transformed rectangular scissors and rounded layer masks in the advanced composite shader.",
+      web_note: "The browser WebGPU host applies transformed rectangular scissors; the wasm-gc adapter submits rounded clip scopes as offscreen layer masks in the advanced composite shader.",
     },
     {
       feature: RendererFeature::Transform,
