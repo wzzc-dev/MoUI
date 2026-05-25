@@ -216,8 +216,8 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::EmojiText,
       native_status: RendererFeatureStatus::Gap,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Color emoji font fallback and atlas upload are not implemented in native wgpu yet.",
-      web_note: "Browser canvas glyph rasterization can surface emoji where fonts support it, but deterministic coverage is not tested.",
+      native_note: "Color emoji font fallback and atlas upload are not implemented in native wgpu yet. Diagnostic text conformance covers deterministic emoji measurement and caret invariants only.",
+      web_note: "Browser canvas glyph rasterization can surface emoji where fonts support it. Diagnostic text conformance covers deterministic measurement and caret invariants, but not browser rasterization or full grapheme shaping parity.",
     },
     {
       feature: RendererFeature::AsyncImage,

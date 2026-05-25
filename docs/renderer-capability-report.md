@@ -29,7 +29,7 @@ Status meanings:
 | Path/vector | gap | gap | `DrawPath` has a platform-neutral `PathSpec` model and `moon_zeno` tessellation tests, but native and Web adapters still skip the command before visible renderer execution. |
 | Shader effect | ready | ready | `DrawShaderEffect` executes through the advanced GPU shader path for built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`, with unknown effects using their fallback brush. |
 | Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux has a fontconfig/HarfBuzz/FreeType scaffold provider, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
-| Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
+| Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization. Diagnostic text conformance now covers deterministic emoji measurement/caret invariants for single-codepoint, variation-selector, and ZWJ samples, but it does not claim full grapheme shaping or native color glyph support. |
 | Async image | partial | partial | Renderer-neutral lifecycle records model loading, ready, failed, disposed, and eviction. Native and Web renderers expose image resource snapshots; Web refreshes ready/failed records from the browser cache after host submission. App-level async repaint/notification policy remains follow-up work. |
 
 ## Current Native Notes
@@ -86,8 +86,10 @@ data today, so hosts rely on the composed Cosmic fallback until real engines are
 implemented.
 Fallback composition is explicit at the backend/provider boundary; the
 `render/wgpu` package validates provider responses but does not depend on the
-Cosmic provider package. Full bidi, line breaking, and typography conformance
-are still follow-up work.
+Cosmic provider package. Diagnostic text conformance covers deterministic emoji
+measurement and caret invariants for single-codepoint, variation-selector, and
+ZWJ samples, but full bidi, line breaking, typography conformance, native color
+emoji, and full grapheme shaping are still follow-up work.
 The cross-package text boundary is documented in [Text system](text-system.md).
 Native image support is synchronous from the app model's point of view.
 `WgpuRenderer::image_resources()` exposes renderer-local image resource
@@ -128,7 +130,9 @@ wasm-gc adapter still drops `DrawPath` instead of forwarding a host-call mesh.
 Skipped advanced commands are retained in the renderer's last fallback plan for
 diagnostics when scopes are unbalanced, left open, or known modeled commands
 are not visibly executed yet. Emoji and complex text shaping rely on browser
-font behavior and need deterministic conformance tests.
+font behavior; diagnostic conformance covers measurement and caret invariants
+for representative emoji samples but does not make browser rasterization or
+full grapheme shaping deterministic.
 
 ## Update Rule
 

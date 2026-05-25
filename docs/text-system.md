@@ -87,11 +87,12 @@ Remote font loading is intentionally outside the current backend contract.
 
 ## Current Gaps
 
-- Full bidi, line breaking, typography conformance, and deterministic emoji
-  coverage remain follow-up work. Stable tests assert caret counts,
-  monotonicity, clamping, editor selection behavior, and IME anchor geometry for
-  mixed bidi, CJK, and emoji samples; they do not claim full Unicode shaping
-  parity.
+- Full bidi, line breaking, typography conformance, native color emoji, and
+  full grapheme-cluster parity remain follow-up work. Stable and diagnostic
+  tests assert caret counts, monotonicity, clamping, editor selection behavior,
+  IME anchor geometry, and provider fallback safety across mixed bidi, CJK,
+  single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples; they
+  do not claim full Unicode shaping parity.
 - Focused text inputs expose MoUI's default copy, cut, paste, undo, redo, and
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste

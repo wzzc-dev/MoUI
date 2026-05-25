@@ -20,6 +20,7 @@ fn diagnostic_web_port() -> @webgpu_adapter.WebGpuHostRendererPort {
     resize: (_metrics : @render.RendererSurfaceMetrics) => (),
     measure_text: input => @core.TextSystem::fallback().measure_text(input),
     register_font_data: (_family, _data) => (),
+    image_resource: _source => None,
     submit: _calls => (),
     dispose: () => (),
   }
@@ -68,4 +69,18 @@ test "diagnostic web host text system conforms across unicode samples" {
   assert_diagnostic_web_text_layout(system, "🙂")
   assert_diagnostic_web_text_layout(system, "a你🙂b")
   assert_diagnostic_web_text_layout(system, "abc אבג def")
+}
+
+///|
+test "diagnostic web emoji samples keep deterministic caret coverage" {
+  let renderer = @webgpu_adapter.create_renderer(
+    canvas_id="text-emoji-conformance",
+    logical_size=@core.Size::new(width=120.0, height=60.0),
+    port=diagnostic_web_port(),
+  )
+  let system = renderer.text_system()
+  assert_diagnostic_web_text_layout(system, "☕")
+  assert_diagnostic_web_text_layout(system, "☕️")
+  assert_diagnostic_web_text_layout(system, "👩‍💻")
+  assert_diagnostic_web_text_layout(system, "text 👩‍💻 🙂")
 }

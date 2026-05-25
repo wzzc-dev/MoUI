@@ -59,6 +59,17 @@ test "diagnostic native cosmic provider conforms across unicode samples" {
 }
 
 ///|
+test "diagnostic native emoji samples keep deterministic caret coverage" {
+  let system = @wgpu_renderer.native_text_system_with_engine(
+    @cosmic_text.cosmic_text_engine(),
+  )
+  assert_diagnostic_native_text_layout(system, "☕")
+  assert_diagnostic_native_text_layout(system, "☕️")
+  assert_diagnostic_native_text_layout(system, "👩‍💻")
+  assert_diagnostic_native_text_layout(system, "text 👩‍💻 🙂")
+}
+
+///|
 test "diagnostic native composed fallback keeps malformed providers safe" {
   let system = @wgpu_renderer.native_text_system_with_engine(
     @wgpu_renderer.native_platform_text_engine_with_fallback(
