@@ -141,8 +141,8 @@ before it grows broad platform claims:
   roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, async host-service completion, window lifecycle
-  registry behavior, devtool snapshots, frame-profile counters, guidance
-  freshness, and example builds.
+  registry behavior, devtool snapshots, render inspector scope diagnostics,
+  frame-profile counters, guidance freshness, and example builds.
 - Text system: stable fallback/provider/editor invariants for CJK, emoji,
   mixed bidi, caret positions, selection, and IME anchors, plus opt-in
   diagnostic packages under `tests/text_conformance/`.
@@ -182,9 +182,10 @@ screenshot runner is checked in, `sh scripts/conformance-check.sh --golden`
 verifies that the golden target builds and prints the capture handoff point.
 
 Benchmarks should use the same examples and record comparable counters:
-frame-time, dirty-count, draw-command count, startup, and memory. Until native
-profiling hooks are wired into CI, `sh scripts/conformance-check.sh --bench`
-keeps the benchmark build targets healthy and documents the metrics to collect.
+frame-time, dirty-count, draw-command count, render inspector scope diagnostics,
+startup, and memory. Until native profiling hooks are wired into CI,
+`sh scripts/conformance-check.sh --bench` keeps the benchmark build targets
+healthy and documents the metrics to collect.
 
 ## Release-Oriented Checklist
 
