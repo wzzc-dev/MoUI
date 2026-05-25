@@ -459,6 +459,21 @@ pub fn HostWindowRuntimeSlots::sync_from_registry(
 }
 
 ///|
+pub fn HostWindowRuntimeSlots::apply_host_event(
+  self : HostWindowRuntimeSlots,
+  registry : HostWindowRegistry,
+  id : HostWindowId,
+  event : HostEvent,
+) -> Bool {
+  if registry.apply_host_event(id, event) {
+    ignore(self.sync_from_registry(registry, id))
+    true
+  } else {
+    false
+  }
+}
+
+///|
 pub fn HostWindowRuntimeSlots::remove(
   self : HostWindowRuntimeSlots,
   id : HostWindowId,

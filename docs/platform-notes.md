@@ -26,8 +26,9 @@ then binds a resolved runtime to the registry record that owns the new window
 id, and `HostWindowRuntimeSlot` wraps the record with its `HostRuntimeDriver`.
 `HostWindowRuntimeSlots` stores those per-window drivers, supports lookup and
 primary/focused slot selection, syncs updated lifecycle records from the
-registry, provides shared insert/sync helpers for active backends, and removes
-closed slots. `HostPlatformWindowMap` binds platform `WindowId` values to
+registry, provides shared insert/sync/lifecycle-event helpers for active
+backends, and removes closed slots. `HostPlatformWindowMap` binds platform
+`WindowId` values to
 `HostWindowId` values, giving multi-window dispatch a shared routing primitive
 before backends attach multiple renderer/window handle sets.
 The active Web, macOS, and Windows hosts accept a shared queue through

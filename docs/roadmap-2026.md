@@ -200,7 +200,7 @@ Focus areas:
   pairs successful resolutions with window records. `HostWindowRuntimeSlot`
   wraps those records with per-window `HostRuntimeDriver` instances, while
   `HostWindowRuntimeSlots` manages lookup, focused/primary slot selection, and
-  registry-backed insert/sync helpers plus closed-slot cleanup. Full
+  registry-backed insert/sync/lifecycle helpers plus closed-slot cleanup. Full
   `OpenWindow` support remains a follow-up because it requires wiring that path
   into multiple platform windows, renderer instances, and platform-window
   bindings, not just extra registry records.
