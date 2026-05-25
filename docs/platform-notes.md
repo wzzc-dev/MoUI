@@ -27,7 +27,9 @@ id, and `HostWindowRuntimeSlot` wraps the record with its `HostRuntimeDriver`.
 `HostWindowRuntimeSlots` stores those per-window drivers, supports lookup and
 primary/focused slot selection, syncs updated lifecycle records from the
 registry, provides shared insert/sync helpers for active backends, and removes
-closed slots.
+closed slots. `HostPlatformWindowMap` binds platform `WindowId` values to
+`HostWindowId` values, giving multi-window dispatch a shared routing primitive
+before backends attach multiple renderer/window handle sets.
 The active Web, macOS, and Windows hosts accept a shared queue through
 `run_app_with_window_requests` and drain current-window focus, close, resize,
 minimize, show, and set-primary requests at the platform edge. Each drained
@@ -40,11 +42,12 @@ the hosts wire scene resolution and runtime slots into multiple platform windows
 and renderer instances.
 The current Web, macOS, and Windows entrypoints still create one primary window,
 but they allocate that window through the registry, register the existing
-runtime/driver as the primary `HostWindowRuntimeSlot`, apply
+runtime/driver as the primary `HostWindowRuntimeSlot`, bind the platform window
+id to the host id, route platform window events through that mapping, apply
 `HostEvent::Resized`, focus, and close events to it, sync the slot record after
-lifecycle changes, and close/remove the slot and record during host disposal.
-That keeps today's single-window apps on the same state path future multi-window
-hosts will use.
+lifecycle changes, and close/remove the slot, platform binding, and record
+during host disposal. That keeps today's single-window apps on the same state
+path future multi-window hosts will use.
 
 The boundary is:
 

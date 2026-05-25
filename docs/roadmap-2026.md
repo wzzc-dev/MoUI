@@ -185,8 +185,10 @@ Focus areas:
 - Keep window lifecycle state flowing through `HostWindowRegistry`; current
   Web, macOS, and Windows entrypoints remain single-window but already allocate
   primary window records, register the current runtime/driver as primary
-  runtime slots, and sync those slots from the shared lifecycle path. Their
-  active loops now expose `run_app_with_window_requests` and drain
+  runtime slots, bind platform window ids to host ids, route incoming platform
+  window events through that map, and sync those slots from the shared
+  lifecycle path. Their active loops now expose `run_app_with_window_requests`
+  and drain
   `HostWindowRequestQueue` for current-window focus, close, resize, minimize,
   show, and set-primary requests. Drained request completions are recorded back
   onto the queue through a shared host helper so request outcomes stay
@@ -200,8 +202,8 @@ Focus areas:
   `HostWindowRuntimeSlots` manages lookup, focused/primary slot selection, and
   registry-backed insert/sync helpers plus closed-slot cleanup. Full
   `OpenWindow` support remains a follow-up because it requires wiring that path
-  into multiple platform windows and renderer instances, not just extra registry
-  records.
+  into multiple platform windows, renderer instances, and platform-window
+  bindings, not just extra registry records.
 - Keep Linux readiness explicit through its backend readiness report until a
   real `window/linux` package, native surface path, and accessibility bridge are
   available.

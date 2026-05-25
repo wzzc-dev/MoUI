@@ -308,27 +308,30 @@ runtime/driver shape before platform-specific window and renderer handles are
 attached. `HostWindowRuntimeSlots` is the matching collection for lookup,
 primary/focused slot selection, record synchronization, and closed-window
 cleanup, including shared helpers for inserting and syncing slots from
-`HostWindowRegistry`.
+`HostWindowRegistry`. `HostPlatformWindowMap` binds platform window ids from
+`Milky2018/window` to MoUI `HostWindowId` values so event dispatch can route
+through the host registry instead of assuming one global window.
 Web, macOS, and Windows should convert their native window events into
 `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
 `DrawCommand` values. Linux currently keeps the same contract shape as a
 scaffold until a real window backend exists.
 The active Web, macOS, and Windows hosts still expose single-window entrypoints,
 but each one now opens a primary `HostWindowRecord`, registers the existing
-runtime/driver as a primary `HostWindowRuntimeSlot`, applies resize/focus/close
-`HostEvent` values through the registry, syncs the slot record after lifecycle
-changes, and removes both slot and record when the host window is disposed. That
-makes multi-window lifecycle state a shared host concern instead of a future
-platform-specific rewrite. They also accept a shared `HostWindowRequestQueue`
-through `run_app_with_window_requests` and drain current-window focus, close,
-resize, minimize, show, and set-primary requests at the platform edge. The same
-queue records ordered request completions, making accepted current-window
-operations and explicit rejections observable without pretending that
-registry-only state is real multi-window support. Active backends use the shared
-queue drain helper so completion recording stays a host contract instead of a
-platform-local loop. `OpenWindow` requests are explicitly rejected until the
-active hosts wire scene resolution and runtime slots into multiple platform
-windows and renderer instances.
+runtime/driver as a primary `HostWindowRuntimeSlot`, binds the platform window
+id to the host id, routes incoming platform window events through that mapping,
+applies resize/focus/close `HostEvent` values through the registry, syncs the
+slot record after lifecycle changes, and removes slot, platform binding, and
+record when the host window is disposed. That makes multi-window lifecycle state
+a shared host concern instead of a future platform-specific rewrite. They also
+accept a shared `HostWindowRequestQueue` through `run_app_with_window_requests`
+and drain current-window focus, close, resize, minimize, show, and set-primary
+requests at the platform edge. The same queue records ordered request
+completions, making accepted current-window operations and explicit rejections
+observable without pretending that registry-only state is real multi-window
+support. Active backends use the shared queue drain helper so completion
+recording stays a host contract instead of a platform-local loop. `OpenWindow`
+requests are explicitly rejected until the active hosts wire scene resolution
+and runtime slots into multiple platform windows and renderer instances.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
