@@ -334,6 +334,10 @@ support. Active backends use the shared queue drain helper so completion
 recording stays a host contract instead of a platform-local loop. `OpenWindow`
 requests are explicitly rejected until the active hosts wire scene resolution
 and runtime slots into multiple platform windows and renderer instances.
+The Web host has started that platform-side split by storing its primary
+`Window` and `WebRenderer` in a local per-window platform slot collection, so
+Web event, resize, redraw, and dispose paths no longer depend on one global
+window/renderer field.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and

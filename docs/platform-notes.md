@@ -49,6 +49,10 @@ id to the host id, route platform window events through that mapping, apply
 lifecycle changes, and close/remove the slot, platform binding, and record
 during host disposal. That keeps today's single-window apps on the same state
 path future multi-window hosts will use.
+Web also stores the active browser `Window` and `WebRenderer` in a local
+per-window platform slot collection. `OpenWindow` is still rejected, but the Web
+host no longer has to rewrite one global window/renderer pair before it can own
+multiple canvases.
 
 The boundary is:
 
