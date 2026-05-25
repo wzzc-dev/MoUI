@@ -743,6 +743,37 @@ test "host window runtime slots manage multiple window drivers" {
   }
   inspect(inspector_redraws.val, content="1")
 
+  match
+    slots.apply_request(
+      registry,
+      HostWindowRequest::ResizeWindow(
+        inspector_slot.id,
+        HostSurfaceMetrics::from_logical(
+          size=@core.Size::new(width=420.0, height=500.0),
+        ),
+      ),
+    ) {
+    HostWindowRequestResult::WindowUpdated(id) =>
+      assert_true(id == inspector_slot.id)
+    _ => fail("expected resize request to update inspector slot")
+  }
+  match slots.lookup(inspector_slot.id) {
+    Some({ record: { metrics, .. }, .. }) =>
+      assert_true(
+        metrics.logical_size == @core.Size::new(width=420.0, height=500.0),
+      )
+    None => fail("expected resized inspector slot")
+  }
+  match
+    slots.apply_request(
+      registry,
+      HostWindowRequest::FocusWindow(HostWindowId::new(404)),
+    ) {
+    HostWindowRequestResult::WindowRejected(message) =>
+      inspect(message, content="cannot focus window: 404")
+    _ => fail("expected missing request rejection")
+  }
+
   assert_true(registry.close(main_slot.id))
   assert_true(slots.sync_from_registry(registry, main_slot.id))
   inspect(slots.remove_closed(), content="1")

@@ -448,6 +448,7 @@ pub struct HostWindowRuntimeSlots {
   mut slots : Array[HostWindowRuntimeSlot]
 }
 pub fn HostWindowRuntimeSlots::apply_host_event(Self, HostWindowRegistry, HostWindowId, HostEvent) -> Bool
+pub fn HostWindowRuntimeSlots::apply_request(Self, HostWindowRegistry, HostWindowRequest) -> HostWindowRequestResult
 pub fn HostWindowRuntimeSlots::count(Self) -> Int
 pub fn HostWindowRuntimeSlots::focused_slot(Self) -> HostWindowRuntimeSlot?
 pub fn HostWindowRuntimeSlots::insert(Self, HostWindowRuntimeSlot) -> Bool
