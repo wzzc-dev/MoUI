@@ -66,8 +66,8 @@ This snapshot records the current preview-readiness evidence gathered on
 | Gate | Current evidence | Status |
 | --- | --- | --- |
 | Daily baseline | `sh scripts/dev-check.sh` passed after the Windows Showcase unused import cleanup. | current |
-| Public API audit | The async image diagnostics slice added `ImageResourceLifecycle::snapshot` and `WgpuRenderer::image_resources`; `moon info` passed and generated interface diffs were reviewed. | current |
-| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is explicitly marked `gap`; Web rounded clip submit maps to the browser layer-mask path; native/Web image resource snapshots now expose partial async image diagnostics. | current with tracked renderer gaps |
+| Public API audit | The async image diagnostics slice added `ImageResourceLifecycle::snapshot` and `WgpuRenderer::image_resources`; the Web ready/failed diagnostics refresh also ran `moon info` and produced no generated interface diff. | current |
+| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is explicitly marked `gap`; Web rounded clip submit maps to the browser layer-mask path; native/Web image resource snapshots now expose partial async image diagnostics, including Web ready/failed refresh from the browser image cache after host submission. | current with tracked renderer gaps |
 | Text conformance | `sh scripts/conformance-check.sh --text` and `sh scripts/conformance-check.sh --text-diagnostic` both passed. | current with shaping/emoji gaps documented |
 | Platform contracts | `sh scripts/dev-check.sh --platform-examples-test` passed on macOS/Darwin and included `backend/macos` native backend tests. | current for macOS host; Windows/Linux runtime evidence remains host-limited |
 | Examples | `moon test examples/showcase/app --target native` and `moon build examples/showcase/web_wasm --target wasm-gc` passed for Showcase capability alignment; daily checks also cover Markdown Editor app and Web build. | current |
@@ -120,7 +120,7 @@ Current alignment:
 | Gradient | Visual styling and sparkline/card brushes. | Showcase app tests assert `FillRoundedRectBrush` with `LinearGradient`. | Covered by visible demo plus command-level app test. |
 | Shadow | Theme/renderer cards and panels. | Showcase app tests assert `DrawShadow`. | Covered by visible demo plus command-level app test. |
 | Text | Most catalog sections. | Showcase app tests assert many section labels and renderer report text. | Covered broadly as view output, while shaping conformance remains tracked in text tests. |
-| Image | Text/media and visual correctness cards. | Showcase app tests assert `DrawImage`; renderer/Web adapter tests cover image lifecycle snapshots. | Covered for visible image commands; async diagnostics are partial until Web ready/failed callbacks update MoonBit state. |
+| Image | Text/media and visual correctness cards. | Showcase app tests assert `DrawImage`; renderer/Web adapter tests cover image lifecycle snapshots. | Covered for visible image commands; async diagnostics are partial but Web snapshots now refresh ready/failed records from the browser image cache after host submission. |
 | Clip | Scroll/capability card and clipped image demos. | Showcase app tests assert `PushClip` and clipped long renderer content; Web adapter tests preserve rounded clip host calls. | Covered for visible clipping; Web rounded clip submit uses the browser layer-mask path. |
 | Transform | Visual correctness image uses scale/offset. | No dedicated Showcase test for transform semantics beyond generated commands. | Keep capability status `partial` until renderer tests cover layer-level transform state. |
 | Opacity | Visual correctness image and state-driven visuals. | Showcase app tests assert `PushOpacity`. | Covered for view-level opacity emission; renderer-specific blending remains renderer evidence. |
@@ -131,7 +131,7 @@ Current alignment:
 | Shader effect | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only for user-inspectable built-ins. |
 | Text shaping | Capability card lists status; text/media section exercises text views. | Text conformance tests are primary evidence. | Do not use Showcase labels as proof of bidi/line-breaking/typography parity. |
 | Emoji text | Capability card lists status. | No deterministic Showcase assertion. | Keep native `gap` and Web `partial` until deterministic emoji coverage exists. |
-| Async image | Capability card lists status; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; Web records submitted sources as loading. | Still partial until browser ready/failed callbacks update MoonBit-side diagnostics. |
+| Async image | Capability card lists status; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; Web records submitted sources as loading and refreshes ready/failed records from the browser image cache. | Still partial because the app model does not receive renderer-specific async image notifications; diagnostics are renderer-local snapshots. |
 
 If renderer support changes, update this alignment only when Showcase coverage
 or its evidence level changes. Otherwise keep the authoritative support status
@@ -158,9 +158,11 @@ documentation evidence.
 2. Async image diagnostics
    - Current status: renderer-neutral lifecycle records model loading, ready,
      failed, disposed, and eviction. Native/Web renderer facades expose image
-     resource snapshots; Web currently records submitted sources as loading.
-   - Done when: browser ready/failed callbacks also update MoonBit-side
-     diagnostics without changing the app model into a renderer-specific API.
+     resource snapshots; Web refreshes submitted sources from the browser
+     image cache that is updated by `Image.onload` / `Image.onerror`.
+   - Done when: preview handoff has fresh focused renderer/Web adapter
+     evidence and any remaining app-level notification or repaint policy is
+     recorded as out of scope for renderer-local diagnostics.
    - Evidence: focused renderer/Web adapter tests, docs, and capability report.
 
 3. Emoji and text shaping evidence

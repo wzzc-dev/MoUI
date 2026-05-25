@@ -94,6 +94,7 @@ pub(all) struct WebGpuHostRendererPort {
   resize : (@render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
   measure_text : (@core.TextLayoutInput) -> @core.TextLayoutResult
   register_font_data : (@core.FontFamily, Bytes) -> Unit
+  image_resource : (String) -> @render.ImageResourceRecord?
   submit : (Array[WebGpuHostCall]) -> Unit raise WebGpuHostError
   dispose : () -> Unit
 }
@@ -239,6 +240,12 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
         ),
       )
     },
+    image_resource: source => {
+      match renderer_ref.val {
+        Some(renderer) => host_image_resource_record(renderer, source)
+        None => None
+      }
+    },
     submit: calls => {
       match renderer_ref.val {
         Some(renderer) => submit_host_calls(renderer, calls)
@@ -331,6 +338,7 @@ pub fn WebGpuWasmRenderer::render(
   self.record_web_image_commands(commands)
   let calls = draw_commands_to_host_calls(commands, self.size)
   (self.port.submit)(calls)
+  self.refresh_web_image_commands(commands)
   self.last_calls = calls
   self.present_count = self.present_count + 1
 }
@@ -390,6 +398,38 @@ fn WebGpuWasmRenderer::record_web_image_commands(
         ignore(self.image_lifecycle.mark_loading(run.source))
       _ => ()
     }
+  }
+}
+
+///|
+fn WebGpuWasmRenderer::refresh_web_image_commands(
+  self : WebGpuWasmRenderer,
+  commands : Array[@core.DrawCommand],
+) -> Unit {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawImage(run) =>
+        self.sync_web_image_resource(run.source)
+      _ => ()
+    }
+  }
+}
+
+///|
+fn WebGpuWasmRenderer::sync_web_image_resource(
+  self : WebGpuWasmRenderer,
+  source : String,
+) -> Unit {
+  match (self.port.image_resource)(source) {
+    Some({ status: @render.ImageResourceStatus::ImageReady, width, height, .. }) =>
+      ignore(self.image_lifecycle.mark_ready(source, width~, height~))
+    Some({ status: @render.ImageResourceStatus::ImageFailed, diagnostic, .. }) =>
+      ignore(self.image_lifecycle.mark_failed(source, diagnostic~))
+    Some({ status: @render.ImageResourceStatus::ImageDisposed, .. }) =>
+      ignore(self.image_lifecycle.dispose(source))
+    Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) =>
+      ignore(self.image_lifecycle.mark_loading(source))
+    None => ()
   }
 }
 
@@ -969,6 +1009,33 @@ fn host_measure_text_width_for_input(
 }
 
 ///|
+fn host_image_resource_record(
+  renderer : HostWebGpuRenderer,
+  source : String,
+) -> @render.ImageResourceRecord? {
+  let source_handle = host_string(source)
+  match host_image_resource_status(renderer, source_handle) {
+    1 => Some(@render.ImageResourceRecord::loading(source))
+    2 =>
+      Some(
+        @render.ImageResourceRecord::ready(
+          source,
+          width=host_image_resource_width(renderer, source_handle),
+          height=host_image_resource_height(renderer, source_handle),
+        ),
+      )
+    3 =>
+      Some(
+        @render.ImageResourceRecord::failed(
+          source,
+          diagnostic="browser image load failed",
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
 fn host_status_to_error(code : Int) -> WebGpuHostError {
   match code {
     1 => WebGpuHostError::Unavailable
@@ -1233,6 +1300,24 @@ fn host_draw_image(
   opacity : Double,
   fit : Int,
 ) -> Int = "webgpu" "draw_image"
+
+///|
+fn host_image_resource_status(
+  renderer : HostWebGpuRenderer,
+  source : HostWebGpuString,
+) -> Int = "webgpu" "image_resource_status"
+
+///|
+fn host_image_resource_width(
+  renderer : HostWebGpuRenderer,
+  source : HostWebGpuString,
+) -> Int = "webgpu" "image_resource_width"
+
+///|
+fn host_image_resource_height(
+  renderer : HostWebGpuRenderer,
+  source : HostWebGpuString,
+) -> Int = "webgpu" "image_resource_height"
 
 ///|
 fn image_fit_host_code(fit : @core.ImageFit) -> Int {

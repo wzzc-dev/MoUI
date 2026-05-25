@@ -254,6 +254,60 @@ test "wgpu web renderer exposes submitted image lifecycle diagnostics" {
 }
 
 ///|
+test "wgpu web renderer refreshes ready image lifecycle from host" {
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0), on_image_resource=source => {
+      Some(@render.ImageResourceRecord::ready(source, width=64, height=32))
+    }),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "ready.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  let resources = renderer.image_resources()
+  inspect(resources.length(), content="1")
+  inspect(resources[0].source, content="ready.png")
+  assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
+  inspect(resources[0].width, content="64")
+  inspect(resources[0].height, content="32")
+}
+
+///|
+test "wgpu web renderer refreshes failed image lifecycle from host" {
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0), on_image_resource=source => {
+      Some(
+        @render.ImageResourceRecord::failed(
+          source,
+          diagnostic="browser image load failed",
+        ),
+      )
+    }),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "missing.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  let resources = renderer.image_resources()
+  inspect(resources.length(), content="1")
+  inspect(resources[0].source, content="missing.png")
+  assert_true(resources[0].status == @render.ImageResourceStatus::ImageFailed)
+  inspect(resources[0].diagnostic, content="browser image load failed")
+}
+
+///|
 test "wgpu web command bridge preserves full draw command parity order" {
   let rect = @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0)
   let rounded = @core.RoundedRect::new(rect~, radius=6.0)
@@ -442,6 +496,7 @@ fn test_port(
     @core.TextSystem::fallback().measure_text(input)
   },
   on_register? : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => (),
+  on_image_resource? : (String) -> @render.ImageResourceRecord? = _ => None,
   on_submit? : (Array[WebGpuHostCall]) -> Unit = _ => (),
   on_dispose? : () -> Unit = () => (),
 ) -> WebGpuHostRendererPort {
@@ -455,6 +510,7 @@ fn test_port(
     resize: _metrics => on_resize(),
     measure_text: on_measure,
     register_font_data: on_register,
+    image_resource: on_image_resource,
     submit: calls => on_submit(calls),
     dispose: on_dispose,
   }
