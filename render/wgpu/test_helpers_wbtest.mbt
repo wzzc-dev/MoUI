@@ -126,6 +126,7 @@ fn new_test_renderer_handle_with_text_engine(
     white_bind_group: None,
     image_cache: {},
     failed_images: {},
+    image_lifecycle: @render.ImageResourceLifecycle::new(),
     font_cache: NativeFontCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],

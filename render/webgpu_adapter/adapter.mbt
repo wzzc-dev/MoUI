@@ -106,6 +106,7 @@ pub(all) struct WebGpuWasmRenderer {
   mut present_count : Int
   mut last_calls : Array[WebGpuHostCall]
   mut last_fallback_plan : @render.RendererCommandPlan
+  image_lifecycle : @render.ImageResourceLifecycle
 }
 
 ///|
@@ -291,6 +292,7 @@ pub fn create_renderer(
     present_count: 0,
     last_calls: [],
     last_fallback_plan: @render.plan_renderer_command_fallbacks([]),
+    image_lifecycle: @render.ImageResourceLifecycle::new(),
   }
 }
 
@@ -326,6 +328,7 @@ pub fn WebGpuWasmRenderer::render(
   commands : Array[@core.DrawCommand],
 ) -> Unit raise WebGpuHostError {
   self.last_fallback_plan = @render.plan_renderer_command_fallbacks(commands)
+  self.record_web_image_commands(commands)
   let calls = draw_commands_to_host_calls(commands, self.size)
   (self.port.submit)(calls)
   self.last_calls = calls
@@ -367,6 +370,27 @@ pub fn WebGpuWasmRenderer::last_fallback_plan(
   self : WebGpuWasmRenderer,
 ) -> @render.RendererCommandPlan {
   self.last_fallback_plan
+}
+
+///|
+pub fn WebGpuWasmRenderer::image_resources(
+  self : WebGpuWasmRenderer,
+) -> Array[@render.ImageResourceRecord] {
+  self.image_lifecycle.snapshot()
+}
+
+///|
+fn WebGpuWasmRenderer::record_web_image_commands(
+  self : WebGpuWasmRenderer,
+  commands : Array[@core.DrawCommand],
+) -> Unit {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawImage(run) =>
+        ignore(self.image_lifecycle.mark_loading(run.source))
+      _ => ()
+    }
+  }
 }
 
 ///|

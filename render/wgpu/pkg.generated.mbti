@@ -92,6 +92,7 @@ pub struct WgpuRenderer {
 pub fn WgpuRenderer::backend_info(Self) -> @render.RendererBackendInfo
 pub fn WgpuRenderer::backend_kind(Self) -> @render.RendererBackendKind
 pub fn WgpuRenderer::dispose(Self) -> Unit
+pub fn WgpuRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
 pub fn WgpuRenderer::last_batch_count(Self) -> Int
 pub fn WgpuRenderer::present_count(Self) -> Int
 pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit

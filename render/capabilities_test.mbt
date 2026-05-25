@@ -263,6 +263,23 @@ test "image lifecycle records loading ready failure and eviction" {
 }
 
 ///|
+test "image lifecycle exposes app visible snapshot records" {
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  ignore(lifecycle.mark_loading("a.png"))
+  ignore(lifecycle.mark_failed("b.png", diagnostic="decode failed"))
+  let snapshot = lifecycle.snapshot()
+  inspect(snapshot.length(), content="2")
+  assert_true(snapshot.any(record => record.source == "a.png"))
+  assert_true(
+    snapshot.any(record => {
+      record.source == "b.png" &&
+      record.status == @render.ImageResourceStatus::ImageFailed &&
+      record.diagnostic.contains("decode")
+    }),
+  )
+}
+
+///|
 test "svg importer lowers shapes to draw commands" {
   let svg = "<svg><rect x=\"1\" y=\"2\" width=\"10\" height=\"20\" fill=\"blue\"/><circle cx=\"8\" cy=\"8\" r=\"4\" fill=\"red\"/><line x1=\"0\" y1=\"0\" x2=\"10\" y2=\"0\" stroke=\"black\" stroke-width=\"2\"/><polygon points=\"0,0 10,0 10,10\" fill=\"green\"/></svg>"
   let result = @render.import_svg(svg)

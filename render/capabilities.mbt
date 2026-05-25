@@ -223,8 +223,8 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::AsyncImage,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Renderer-neutral image lifecycle state now models loading, ready, failed, disposed, and eviction; native decode still reports synchronously through the adapter.",
-      web_note: "Renderer-neutral image lifecycle state now matches the browser async loading cache contract; wiring runtime JS diagnostics into app-visible state remains follow-up work.",
+      native_note: "Renderer-neutral image lifecycle state models loading, ready, failed, disposed, and eviction; native WgpuRenderer now exposes renderer-local image resource snapshots, with synchronous decode paths marking ready or failed.",
+      web_note: "Renderer-neutral image lifecycle state matches the browser async loading cache contract; WebGpuWasmRenderer now exposes submitted image sources as loading, while browser ready/failed callbacks still need to flow back into MoonBit state.",
     },
   ]
 }
