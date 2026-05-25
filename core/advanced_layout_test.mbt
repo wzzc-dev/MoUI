@@ -34,6 +34,7 @@ test "scroll view emits clip and offsets child frame" {
     key: None,
     offset: Point::new(x=0.0, y=12.0),
     viewport: Some(Size::new(width=80.0, height=40.0)),
+    on_scroll: None,
     child: ViewSpec::TextSpec({
       key: None,
       text: "Scrolled",
@@ -55,11 +56,46 @@ test "scroll view emits clip and offsets child frame" {
 }
 
 ///|
+test "scroll view handles wheel delta through callback" {
+  let offset = State::new(Point::new(x=0.0, y=0.0))
+  let root = ViewSpec::ScrollSpec({
+    key: None,
+    offset: offset.get(),
+    viewport: Some(Size::new(width=80.0, height=40.0)),
+    on_scroll: Some(delta => {
+      offset.set(Point::new(x=0.0, y=offset.get().y - delta.y))
+    }),
+    child: ViewSpec::TextSpec({
+      key: None,
+      text: "Scrolled",
+      size: Size::new(width=120.0, height=80.0),
+      font: FontSpec::new(),
+      color: Color::black(),
+    }),
+  })
+  let runtime = RuntimeState::new_spec(
+    root~,
+    size=Size::new(width=80.0, height=40.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Move,
+        wheel_delta=Point::new(x=0.0, y=-12.0),
+      ),
+    ),
+  )
+  inspect(offset.get().y, content="12")
+}
+
+///|
 test "scroll clip wraps child draw commands in collected paint order" {
   let scroll = ViewSpec::ScrollSpec({
     key: None,
     offset: Point::new(x=0.0, y=0.0),
     viewport: Some(Size::new(width=80.0, height=40.0)),
+    on_scroll: None,
     child: ViewSpec::ModifiedSpec({
       key: None,
       modifier: ClipModifier,
@@ -431,6 +467,7 @@ test "scroll measure allows child to exceed viewport constraints" {
     key: None,
     offset: Point::new(x=0.0, y=0.0),
     viewport: Some(Size::new(width=40.0, height=30.0)),
+    on_scroll: None,
     child: ViewSpec::TextSpec({
       key: None,
       text: "Large",

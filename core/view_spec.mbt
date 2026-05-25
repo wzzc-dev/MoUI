@@ -296,6 +296,7 @@ pub(all) struct ScrollViewSpec {
   key : Key?
   offset : Point
   viewport : Size?
+  on_scroll : ((Point) -> Unit)?
   child : ViewSpec
 }
 

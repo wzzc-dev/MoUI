@@ -80,7 +80,7 @@ pub fn rich_text_editor(@core.Binding[String], (String) -> @core.RichTextDocumen
 
 pub fn row(Array[@core.ViewSpec], spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment) -> @core.ViewSpec
 
-pub fn scroll_view(@core.ViewSpec, offset? : @core.Point, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn scroll_view(@core.ViewSpec, offset? : @core.Point, width? : Double, height? : Double, on_scroll? : ((@core.Point) -> Unit)?) -> @core.ViewSpec
 
 pub fn searchbar(query~ : @core.Binding[String], placeholder? : String, font? : @core.FontSpec, foreground? : @core.Color, placeholder_color? : @core.Color, background? : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color? : @core.Color, corner_radius? : Double, on_submit? : (() -> Unit)?, on_clear? : (() -> Unit)?) -> @core.ViewSpec
 

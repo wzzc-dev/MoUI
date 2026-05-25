@@ -26,6 +26,8 @@ pub fn resolve_gesture_arena(Array[GestureArenaMember]) -> GestureArenaResult
 
 pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, Rect, FontSpec, text_system? : TextSystem) -> Rect?
 
+pub fn rich_text_document_height(RichTextDocument, FontSpec) -> Double
+
 pub fn rich_text_editor_content_rect(Rect) -> Rect
 
 pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
@@ -1347,6 +1349,7 @@ pub(all) struct ScrollViewSpec {
   key : Key?
   offset : Point
   viewport : Size?
+  on_scroll : ((Point) -> Unit)?
   child : ViewSpec
 }
 

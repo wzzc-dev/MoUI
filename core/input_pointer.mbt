@@ -36,17 +36,40 @@ pub fn ElementNode::dispatch_pointer(
     | ContainerSpec(_)
     | FrameSpec(_)
     | StackSpec(_)
-    | ScrollSpec(_)
     | GridSpec(_)
     | ListSpec(_)
     | CustomLayoutSpec(_)
     | ComponentSpec(_)
     | SheetSpec(_) =>
       self.dispatch_pointer_to_children(event, render, text_system~)
+    ScrollSpec(data) =>
+      self.dispatch_scroll_pointer(data, event, render, text_system~)
     ModifiedSpec(data) =>
       self.dispatch_modified_pointer(data, event, render, text_system~)
     EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
       { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn ElementNode::dispatch_scroll_pointer(
+  self : ElementNode,
+  data : ScrollViewSpec,
+  event : PointerEvent,
+  render : RenderNode,
+  text_system~ : TextSystem,
+) -> ElementEventResult {
+  if render.frame.contains(event.position) &&
+    (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
+    match data.on_scroll {
+      Some(handler) => {
+        handler(event.wheel_delta)
+        { changed: true, activated: true, focused: None }
+      }
+      None => self.dispatch_pointer_to_children(event, render, text_system~)
+    }
+  } else {
+    self.dispatch_pointer_to_children(event, render, text_system~)
   }
 }
 

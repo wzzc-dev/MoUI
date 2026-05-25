@@ -66,7 +66,7 @@ let screen = @views.column([
 | `frame` | `views/frame.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Constraint wrapper. |
 | `padding` / `padding_insets` | `views/padding.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | All examples | Ordered layout modifier wrappers. |
 | `stack` / `overlay` | `views/stack.mbt` | Child/modifier based | Children preserved | `views/views_test.mbt` | Showcase, Dialog host, Tooltip | Overlay layout primitives. |
-| `scroll_view` | `views/grid_list.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Emits clip/offset behavior through core. |
+| `scroll_view` | `views/stack.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Showcase, Markdown Editor | Emits clip/offset behavior through core and can report wheel deltas through `on_scroll`. |
 | `grid` | `views/grid_list.mbt` | N/A | Children preserved | `views/views_test.mbt` | Showcase | Fixed-column layout. |
 | `list` | `views/grid_list.mbt` | N/A | List/list item roles through core | `views/views_test.mbt`, `core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout. |
 | `lazy_list` | `views/grid_list.mbt` | N/A | List output | `views/views_test.mbt` | Showcase | Windows visible rows from data. |
