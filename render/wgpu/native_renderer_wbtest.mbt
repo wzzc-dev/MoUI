@@ -201,6 +201,47 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
 }
 
 ///|
+test "native renderer plans DrawPath mesh as visible visual triangles" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushOpacity(0.5),
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=10.0, dy=20.0),
+    ),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=0.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=20.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(@core.Color::blue())),
+      ),
+    ),
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PopOpacity,
+  ])
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.draw_items.length(), content="1")
+  inspect(renderer.visual_vertices.length(), content="3")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeVisual(_, count, None) => inspect(count, content="3")
+    _ => fail("expected native visual path item")
+  }
+  let vertex = renderer.visual_vertices[0]
+  inspect(vertex.mode, content="3")
+  inspect(vertex.x, content="-0.8")
+  inspect(vertex.y, content="0.6")
+  inspect(vertex.a0, content="0.5")
+}
+
+///|
 test "native renderer plans image clip transform and opacity commands" {
   let renderer = new_test_renderer_handle()
   renderer.resize(

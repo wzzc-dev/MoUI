@@ -56,6 +56,7 @@ pub(all) enum WebGpuHostCall {
   DrawShadow(@core.ShadowSpec)
   DrawText(@core.TextRun)
   DrawImage(@core.ImageRun)
+  DrawPath(@core.PathSpec)
   PushClip(@core.Rect)
   PopClip
   PushRoundedClip(@core.RoundedRect)
@@ -461,6 +462,8 @@ pub fn draw_commands_to_host_calls(
         calls.push(WebGpuHostCall::DrawText(run))
       @core.DrawCommand::DrawImage(run) =>
         calls.push(WebGpuHostCall::DrawImage(run))
+      @core.DrawCommand::DrawPath(path) =>
+        calls.push(WebGpuHostCall::DrawPath(path))
       @core.DrawCommand::PushClip(rect) =>
         calls.push(WebGpuHostCall::PushClip(rect))
       @core.DrawCommand::PopClip => calls.push(WebGpuHostCall::PopClip)
@@ -483,7 +486,6 @@ pub fn draw_commands_to_host_calls(
       @core.DrawCommand::PopFilter => calls.push(WebGpuHostCall::PopFilter)
       @core.DrawCommand::DrawShaderEffect(spec) =>
         calls.push(WebGpuHostCall::DrawShaderEffect(spec))
-      @core.DrawCommand::DrawPath(_) => ()
     }
   }
   calls.push(WebGpuHostCall::Present)
@@ -636,6 +638,7 @@ fn submit_host_calls(
             image_fit_host_code(run.fit),
           ),
         )
+      DrawPath(path) => submit_draw_path(renderer, path)
       PushClip(rect) =>
         raise_for_host_status(
           host_push_clip(
@@ -764,6 +767,31 @@ fn submit_draw_shader_effect(
       fallback.end_color.a,
     ),
   )
+}
+
+///|
+fn submit_draw_path(
+  renderer : HostWebGpuRenderer,
+  path : @core.PathSpec,
+) -> Unit raise WebGpuHostError {
+  let mesh = @render.tessellate_path(path)
+  raise_for_host_status(
+    host_draw_path_mesh(renderer, host_string(path_mesh_payload(mesh))),
+  )
+}
+
+///|
+fn path_mesh_payload(mesh : @render.PathMesh) -> String {
+  let values : Array[String] = []
+  for vertex in mesh.vertices {
+    values.push(vertex.x.to_string())
+    values.push(vertex.y.to_string())
+    values.push(vertex.r.to_string())
+    values.push(vertex.g.to_string())
+    values.push(vertex.b.to_string())
+    values.push(vertex.a.to_string())
+  }
+  values.join(",")
 }
 
 ///|
@@ -1300,6 +1328,12 @@ fn host_draw_image(
   opacity : Double,
   fit : Int,
 ) -> Int = "webgpu" "draw_image"
+
+///|
+fn host_draw_path_mesh(
+  renderer : HostWebGpuRenderer,
+  mesh_payload : HostWebGpuString,
+) -> Int = "webgpu" "draw_path_mesh"
 
 ///|
 fn host_image_resource_status(

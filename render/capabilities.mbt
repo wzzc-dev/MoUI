@@ -193,10 +193,10 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     },
     {
       feature: RendererFeature::PathVector,
-      native_status: RendererFeatureStatus::Gap,
-      web_status: RendererFeatureStatus::Gap,
-      native_note: "DrawPath has a renderer-neutral PathSpec model and moon_zeno tessellation tests, but the native wgpu draw-plan path still skips DrawPath commands before visible GPU execution.",
-      web_note: "DrawPath has the same renderer-neutral tessellation contract as native, but the wasm-gc WebGPU adapter still drops DrawPath instead of forwarding a host-call mesh.",
+      native_status: RendererFeatureStatus::Ready,
+      web_status: RendererFeatureStatus::Ready,
+      native_note: "Native wgpu tessellates DrawPath through moon_zeno and renders the resulting fill/stroke triangle mesh through the visual GPU pipeline.",
+      web_note: "The wasm-gc adapter tessellates DrawPath through the same moon_zeno contract and forwards a mesh payload to the browser WebGPU visual pipeline.",
     },
     {
       feature: RendererFeature::ShaderEffect,
@@ -292,16 +292,7 @@ pub fn plan_renderer_command_fallbacks(
         } else {
           filter_depth = filter_depth - 1
         }
-      @core.DrawCommand::DrawPath(_) =>
-        fallbacks.push(
-          renderer_command_fallback(
-            index~,
-            feature=RendererFeature::PathVector,
-            command="DrawPath",
-            kind=RendererCommandFallbackKind::PlannedFallback,
-            reason="DrawPath is modeled and tessellated, but native/Web renderer adapters do not visibly execute the path mesh yet",
-          ),
-        )
+      @core.DrawCommand::DrawPath(_) => ()
       @core.DrawCommand::DrawShaderEffect(_) => ()
       _ => ()
     }

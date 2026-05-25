@@ -407,7 +407,10 @@ fn build_native_draw_plan_range(
                 scissor: native_scissor_for_state(state, size, scale_factor),
               }),
             )
-          @core.DrawCommand::DrawPath(_) => ()
+          @core.DrawCommand::DrawPath(path) =>
+            append_path_item(
+              visual_vertices, items, path, state, size, scale_factor,
+            )
         }
       }
       index += 1
@@ -820,6 +823,33 @@ fn append_image_item(
 }
 
 ///|
+fn append_path_item(
+  vertices : Array[VisualVertex],
+  items : Array[NativeDrawItem],
+  path : @core.PathSpec,
+  state : NativePaintState,
+  size : @core.Size,
+  scale_factor : Double,
+) -> Unit {
+  if !native_paint_state_visible(state) {
+    return
+  }
+  let scissor = native_scissor_for_state(state, size, scale_factor)
+  if !native_scissor_visible(scissor) {
+    return
+  }
+  let mesh = @render.tessellate_path(path)
+  let start = vertices.length()
+  for vertex in mesh.vertices {
+    push_path_visual_vertex(vertices, vertex, state, size)
+  }
+  let count = vertices.length() - start
+  if count > 0 {
+    items.push(NativeDrawItem::NativeVisual(start, count, scissor))
+  }
+}
+
+///|
 fn append_visual_quad(
   vertices : Array[VisualVertex],
   rect : @core.Rect,
@@ -954,6 +984,40 @@ fn push_visual_vertex(
     g1: gradient.end_color.g,
     b1: gradient.end_color.b,
     a1: gradient.end_color.a * state.opacity,
+  })
+}
+
+///|
+fn push_path_visual_vertex(
+  vertices : Array[VisualVertex],
+  vertex : @render.PathVertex,
+  state : NativePaintState,
+  size : @core.Size,
+) -> Unit {
+  let transformed = transform_point(state.transform, vertex.x, vertex.y)
+  vertices.push({
+    x: visual_pixel_x_to_ndc(transformed.x, size.width),
+    y: visual_pixel_y_to_ndc(transformed.y, size.height),
+    local_x: 0.0,
+    local_y: 0.0,
+    width: 0.0,
+    height: 0.0,
+    radius: 0.0,
+    mode: visual_mode_path,
+    stroke_width: 0.0,
+    blur_radius: 0.0,
+    start_x: 0.0,
+    start_y: 0.0,
+    end_x: 0.0,
+    end_y: 0.0,
+    r0: vertex.r,
+    g0: vertex.g,
+    b0: vertex.b,
+    a0: vertex.a * state.opacity,
+    r1: vertex.r,
+    g1: vertex.g,
+    b1: vertex.b,
+    a1: vertex.a * state.opacity,
   })
 }
 
@@ -1411,6 +1475,9 @@ let visual_mode_stroke : Double = 1.0
 let visual_mode_shadow : Double = 2.0
 
 ///|
+let visual_mode_path : Double = 3.0
+
+///|
 let visual_vertex_stride : UInt64 = 88UL
 
 ///|
@@ -1473,6 +1540,9 @@ fn visual_shader_wgsl() -> String {
     #|  let blur_radius = in.blur_start.y;
     #|  let start = in.blur_start.zw;
     #|  let end = in.end;
+    #|  if mode > 2.5 {
+    #|    return in.color0;
+    #|  }
     #|  let center = vec2<f32>(width * 0.5, height * 0.5);
     #|  let half_size = center;
     #|  let dist = rounded_box_sdf(in.local - center, half_size, radius);

@@ -384,6 +384,9 @@ export function createWebGpuImports(options = {}) {
         let strokeWidth = in.blurStart.x;
         let blurRadius = in.blurStart.y;
         let center = vec2f(width * 0.5, height * 0.5);
+        if (mode > 2.5) {
+          return in.color0;
+        }
         let dist = rounded_box_sdf(in.local - center, center, radius);
         var alpha = 1.0 - smoothstep(-0.5, 0.5, dist);
         if (mode > 1.5) {
@@ -913,6 +916,38 @@ export function createWebGpuImports(options = {}) {
     pushVisualVertex(renderer, rect, x1, y1, radius, mode, strokeWidth, blurRadius, start, end, color0, color1);
     pushVisualVertex(renderer, rect, x1, y0, radius, mode, strokeWidth, blurRadius, start, end, color0, color1);
     pushRendererItem(renderer, { type: "visual", start: startIndex, count: 6 });
+  };
+
+  const pushPathMesh = (renderer, payload) => {
+    const values = parseDoubleList(payload);
+    if (values.length < 18) return;
+    const scope = rendererScope(renderer);
+    const startIndex = scope.visualVertices.length / VISUAL_STRIDE_FLOATS;
+    const state = rendererState(renderer);
+    const w = Number(renderer.width || renderer.surface.width || 1);
+    const h = Number(renderer.height || renderer.surface.height || 1);
+    for (let index = 0; index + 5 < values.length; index += 6) {
+      const transformed = transformPoint(state.transform, values[index], values[index + 1]);
+      const alpha = values[index + 5] * state.opacity;
+      scope.visualVertices.push(
+        transformed.x / w * 2 - 1,
+        1 - transformed.y / h * 2,
+        0, 0,
+        0, 0,
+        0,
+        3,
+        0,
+        0,
+        0, 0,
+        0, 0,
+        values[index + 2], values[index + 3], values[index + 4], alpha,
+        values[index + 2], values[index + 3], values[index + 4], alpha,
+      );
+    }
+    const count = scope.visualVertices.length / VISUAL_STRIDE_FLOATS - startIndex;
+    if (count > 0) {
+      pushRendererItem(renderer, { type: "visual", start: startIndex, count });
+    }
   };
 
   const pushSolidRounded = (renderer, x, y, width, height, radius, color, mode = 0, strokeWidth = 0) => {
@@ -1730,6 +1765,12 @@ export function createWebGpuImports(options = {}) {
           0,
         );
       }
+      return ok();
+    },
+    draw_path_mesh(rendererHandle, meshPayload) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      pushPathMesh(renderer, stringValue(meshPayload));
       return ok();
     },
     image_resource_status(rendererHandle, source) {

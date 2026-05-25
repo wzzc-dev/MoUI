@@ -233,6 +233,61 @@ test "wgpu web command bridge covers image command in host ABI" {
 }
 
 ///|
+test "wgpu web command bridge forwards DrawPath to host ABI" {
+  let path = @core.PathSpec::new(
+    verbs=[
+      @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+      @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
+      @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=10.0)),
+      @core.PathVerb::Close,
+    ],
+    fill=Some(@core.Brush::solid(@core.Color::blue())),
+  )
+  let calls = draw_commands_to_host_calls(
+    [@core.DrawCommand::DrawPath(path)],
+    @core.Size::new(width=100.0, height=50.0),
+  )
+  inspect(calls.length(), content="3")
+  assert_true(calls[0] is WebGpuHostCall::BeginFrame(_))
+  guard calls[1] is WebGpuHostCall::DrawPath(forwarded) else {
+    fail("expected DrawPath host call")
+  }
+  inspect(@render.tessellate_path(forwarded).vertices.length(), content="3")
+  assert_true(calls[2] is WebGpuHostCall::Present)
+}
+
+///|
+test "wgpu web renderer submits DrawPath without fallback diagnostics" {
+  let last_calls : Array[WebGpuHostCall] = []
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0), on_submit=calls => {
+      last_calls.clear()
+      for call in calls {
+        last_calls.push(call)
+      }
+    }),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=10.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(@core.Color::blue())),
+      ),
+    ),
+  ])
+  inspect(renderer.last_fallback_plan().fallback_count, content="0")
+  inspect(last_calls.length(), content="3")
+  assert_true(last_calls[1] is WebGpuHostCall::DrawPath(_))
+}
+
+///|
 test "wgpu web renderer exposes submitted image lifecycle diagnostics" {
   let renderer = create_renderer(
     canvas_id="moui-web-wasm",
