@@ -308,7 +308,8 @@ runtime/driver shape before platform-specific window and renderer handles are
 attached. `HostWindowRuntimeSlots` is the matching collection for lookup,
 primary/focused slot selection, record synchronization, and closed-window
 cleanup, including shared helpers for inserting and syncing slots from
-`HostWindowRegistry`. `HostPlatformWindowMap` binds platform window ids from
+`HostWindowRegistry` and for applying host lifecycle events while keeping the
+slot record aligned. `HostPlatformWindowMap` binds platform window ids from
 `Milky2018/window` to MoUI `HostWindowId` values so event dispatch can route
 through the host registry instead of assuming one global window.
 Web, macOS, and Windows should convert their native window events into

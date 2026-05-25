@@ -715,8 +715,13 @@ test "host window runtime slots manage multiple window drivers" {
     None => fail("expected primary slot")
   }
 
-  assert_true(registry.focus(inspector_slot.id))
-  assert_true(slots.sync_from_registry(registry, inspector_slot.id))
+  assert_true(
+    slots.apply_host_event(
+      registry,
+      inspector_slot.id,
+      HostEvent::Focus(HostFocusEvent::new(focused=true)),
+    ),
+  )
   match slots.focused_slot() {
     Some({ id, record, .. }) => {
       assert_true(id == inspector_slot.id)
@@ -724,6 +729,14 @@ test "host window runtime slots manage multiple window drivers" {
     }
     None => fail("expected focused inspector slot")
   }
+  inspect(
+    slots.apply_host_event(
+      registry,
+      inspector_slot.id,
+      HostEvent::RedrawRequested,
+    ),
+    content="false",
+  )
   match slots.lookup(inspector_slot.id) {
     Some(slot) => slot.driver.request_redraw()
     None => fail("expected inspector slot")

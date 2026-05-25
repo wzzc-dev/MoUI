@@ -521,9 +521,9 @@ fn WebApp::apply_window_lifecycle(
   window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
-  if self.windows.apply_host_event(window_id, host_event) {
-    self.sync_runtime_slot(window_id)
-  }
+  ignore(
+    self.runtime_slots.apply_host_event(self.windows, window_id, host_event),
+  )
 }
 
 ///|
