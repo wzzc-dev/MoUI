@@ -1318,13 +1318,42 @@ pub fn HostRuntimeDriver::show_context_menu(
 ) -> HostEventResult {
   match
     services.dispatch(
-      HostServiceRequest::ShowMenu(self.runtime.action_commands()),
+      HostServiceRequest::ShowMenu(self.context_menu_commands()),
     ) {
     HostServiceResponse::MenuCommand(intent) =>
       ignore(self.dispatch_command_with_services(intent, services))
     _ => ()
   }
   self.event_result()
+}
+
+///|
+fn HostRuntimeDriver::context_menu_commands(
+  self : HostRuntimeDriver,
+) -> Array[@core.ActionCommand] {
+  let commands = self.runtime.action_commands()
+  if self.runtime.focused_text_input().focused {
+    merge_context_menu_commands(@core.default_text_commands(), commands)
+  } else {
+    commands
+  }
+}
+
+///|
+fn merge_context_menu_commands(
+  primary : Array[@core.ActionCommand],
+  secondary : Array[@core.ActionCommand],
+) -> Array[@core.ActionCommand] {
+  let commands : Array[@core.ActionCommand] = []
+  for command in primary {
+    commands.push(command)
+  }
+  for command in secondary {
+    if !commands.any(existing => existing.intent == command.intent) {
+      commands.push(command)
+    }
+  }
+  commands
 }
 
 ///|
