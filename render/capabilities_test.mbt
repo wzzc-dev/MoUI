@@ -76,6 +76,17 @@ test "renderer capability report tracks draw command support" {
   assert_true(text_shaping.native_note.contains("DirectWrite scaffold"))
   assert_true(text_shaping.native_note.contains("fontconfig"))
   assert_true(text_shaping.native_note.contains("Cosmic"))
+  guard @render.renderer_feature_capability(@render.RendererFeature::AsyncImage)
+    is Some(async_image) else {
+    fail("expected async image capability")
+  }
+  assert_true(
+    async_image.native_status == @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(async_image.web_status == @render.RendererFeatureStatus::Partial)
+  assert_true(async_image.web_note.contains("browser cache"))
+  assert_true(async_image.web_note.contains("ready"))
+  assert_true(async_image.web_note.contains("failed"))
 }
 
 ///|

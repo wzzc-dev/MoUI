@@ -30,7 +30,7 @@ Status meanings:
 | Shader effect | ready | ready | `DrawShaderEffect` executes through the advanced GPU shader path for built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`, with unknown effects using their fallback brush. |
 | Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux has a fontconfig/HarfBuzz/FreeType scaffold provider, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization and lacks deterministic tests. |
-| Async image | partial | partial | Renderer-neutral lifecycle records model loading, ready, failed, disposed, and eviction. Native and Web renderers now expose image resource snapshots; Web still needs browser ready/failed callbacks to update MoonBit state after asynchronous loads. |
+| Async image | partial | partial | Renderer-neutral lifecycle records model loading, ready, failed, disposed, and eviction. Native and Web renderers expose image resource snapshots; Web refreshes ready/failed records from the browser cache after host submission. App-level async repaint/notification policy remains follow-up work. |
 
 ## Current Native Notes
 
@@ -102,10 +102,11 @@ images through WebGPU pipelines. Text uses a DPR-aware canvas-rasterized glyph
 atlas before the glyphs are composited by WebGPU. Images are cached as WebGPU
 textures, support contain/cover fit, and use a deterministic fallback color
 while the browser is still loading the source or if loading fails.
-`WebGpuWasmRenderer::image_resources()` exposes submitted image sources as
-loading records, matching the browser cache's asynchronous load contract. The
-browser runtime still needs callback plumbing to update MoonBit-side records to
-ready or failed after `Image.onload` / `Image.onerror`.
+`WebGpuWasmRenderer::image_resources()` exposes renderer-local image resource
+snapshots. Submitted sources start as loading, and after host submission the
+adapter refreshes records from the browser cache that is updated by
+`Image.onload` / `Image.onerror`, so subsequent renders can report ready
+dimensions or failed diagnostics without changing the app model.
 
 Clip support maps transformed rectangular clip stacks to per-item scissor
 rectangles. Rounded clip scopes are submitted as offscreen layer scopes with a

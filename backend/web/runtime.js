@@ -1732,6 +1732,27 @@ export function createWebGpuImports(options = {}) {
       }
       return ok();
     },
+    image_resource_status(rendererHandle, source) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return 0;
+      const entry = renderer.images.get(stringValue(source));
+      if (!entry) return 0;
+      if (entry.failed) return 3;
+      if (entry.loaded && entry.texture && entry.bindGroup) return 2;
+      return 1;
+    },
+    image_resource_width(rendererHandle, source) {
+      const renderer = renderers.get(rendererHandle);
+      const entry = renderer?.images?.get(stringValue(source));
+      if (!entry) return 0;
+      return Math.max(0, Math.round(entry.width || entry.image?.naturalWidth || entry.image?.width || 0));
+    },
+    image_resource_height(rendererHandle, source) {
+      const renderer = renderers.get(rendererHandle);
+      const entry = renderer?.images?.get(stringValue(source));
+      if (!entry) return 0;
+      return Math.max(0, Math.round(entry.height || entry.image?.naturalHeight || entry.image?.height || 0));
+    },
     push_clip(rendererHandle, x, y, width, height) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
