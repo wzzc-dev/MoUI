@@ -336,8 +336,9 @@ requests are explicitly rejected until the active hosts wire scene resolution
 and runtime slots into multiple platform windows and renderer instances.
 The Web host has started that platform-side split by storing its primary
 `Window` and `WebRenderer` in a local per-window platform slot collection, so
-Web event, resize, redraw, and dispose paths no longer depend on one global
-window/renderer field.
+Web event, resize, redraw, context-menu, async completion, and dispose paths now
+resolve their `HostRuntimeDriver`, browser `Window`, and `WebRenderer` through
+window-indexed slots instead of one global window/renderer/driver path.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
