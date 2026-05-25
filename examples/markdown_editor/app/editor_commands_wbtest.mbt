@@ -10,7 +10,6 @@ test "markdown editor core applies typed commands" {
     markdown_editor_apply_command("Base", Bold),
     content="Base\n\n**bold text**",
   )
-  inspect(markdown_editor_apply_command("Base", Clear), content="")
 }
 
 ///|

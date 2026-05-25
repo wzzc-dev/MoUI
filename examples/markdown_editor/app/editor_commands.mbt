@@ -5,7 +5,6 @@ fn markdown_editor_apply_command_at(
   selection : MarkdownEditorSelection?,
 ) -> MarkdownEditorEditResult {
   let result = match command {
-    Clear => { source: "", caret: 0, selection: None }
     Bold | Italic | Code | Strikethrough =>
       match selection {
         Some(selection) =>
@@ -1746,7 +1745,6 @@ fn markdown_editor_command_snippet(command : MarkdownEditorCommand) -> String {
       "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |"
     SetTableColumnAlignment(_) =>
       "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |"
-    Clear => ""
   }
 }
 
