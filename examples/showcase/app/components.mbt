@@ -331,9 +331,79 @@ fn ShowcaseApp::theme_helpers(
         width=160.0,
       ),
       self.visual_correctness_card(theme, active, opacity),
+      self.vector_path_card(theme),
     ],
     spacing=theme.spacing_scale.md,
     cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+  )
+}
+
+///|
+fn ShowcaseApp::vector_path_card(
+  self : ShowcaseApp,
+  theme : @core.Theme,
+) -> @core.ViewSpec {
+  ignore(self)
+  @views.custom_layout(
+    measure=constraints => {
+      constraints.constrain(@core.Size::new(width=292.0, height=74.0))
+    },
+    paint=frame => {
+      let inset = 12.0
+      let left = frame.origin.x + inset
+      let top = frame.origin.y + inset
+      let bottom = frame.origin.y + frame.size.height - inset
+      let mid_y = frame.origin.y + frame.size.height * 0.5
+      let fill = @core.Brush::linear_gradient(
+        start=@core.Point::new(x=left, y=top),
+        end=@core.Point::new(x=left + 72.0, y=bottom),
+        start_color=theme.palette.primary.multiply_alpha(0.88),
+        end_color=theme.accent.multiply_alpha(0.82),
+      )
+      let stroke = @core.Brush::solid(
+        theme.palette.foreground.multiply_alpha(0.72),
+      )
+      [
+        @core.DrawCommand::FillRoundedRectBrush(
+          @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.md),
+          @core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.42)),
+        ),
+        @core.DrawCommand::DrawPath(
+          @core.PathSpec::new(
+            verbs=[
+              @core.PathVerb::MoveTo(@core.Point::new(x=left, y=bottom)),
+              @core.PathVerb::CubicTo(
+                @core.Point::new(x=left + 24.0, y=top - 4.0),
+                @core.Point::new(x=left + 58.0, y=top + 4.0),
+                @core.Point::new(x=left + 82.0, y=bottom),
+              ),
+              @core.PathVerb::LineTo(@core.Point::new(x=left + 42.0, y=mid_y)),
+              @core.PathVerb::Close,
+            ],
+            fill=Some(fill),
+          ),
+        ),
+        @core.DrawCommand::DrawPath(
+          @core.PathSpec::new(
+            verbs=[
+              @core.PathVerb::MoveTo(@core.Point::new(x=left + 116.0, y=bottom)),
+              @core.PathVerb::QuadTo(
+                @core.Point::new(x=left + 148.0, y=top),
+                @core.Point::new(x=left + 180.0, y=bottom),
+              ),
+              @core.PathVerb::CubicTo(
+                @core.Point::new(x=left + 196.0, y=mid_y),
+                @core.Point::new(x=left + 216.0, y=mid_y),
+                @core.Point::new(x=left + 236.0, y=top + 8.0),
+              ),
+            ],
+            stroke=Some(stroke),
+            stroke_width=3.0,
+          ),
+        ),
+      ]
+    },
+    semantics_label="Vector path renderer demo",
   )
 }
 

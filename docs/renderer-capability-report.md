@@ -26,7 +26,7 @@ Status meanings:
 | Layer compositing | ready | ready | Native and Web render layer scopes into offscreen GPU textures and composite them back through the advanced GPU pass with opacity and masks. |
 | Blend mode | ready | ready | Source-over, multiply, screen, darken, and lighten map to GPU blend states; overlay uses a backdrop-sampling GPU pass for exact channel math. |
 | Filter effect | ready | ready | `PushFilter` / `PopFilter` render scoped content to offscreen textures; the advanced shader applies blur, saturation, brightness, contrast, and color matrix filters. |
-| Path/vector | gap | gap | `DrawPath` has a platform-neutral `PathSpec` model and `moon_zeno` tessellation tests, but native and Web adapters still skip the command before visible renderer execution. |
+| Path/vector | ready | ready | `DrawPath` lowers `PathSpec` fills and strokes through the shared `moon_zeno` tessellator. Native wgpu renders the triangle mesh through the visual GPU pipeline, and the wasm-gc Web adapter forwards the same mesh payload to the browser WebGPU visual pipeline. |
 | Shader effect | ready | ready | `DrawShaderEffect` executes through the advanced GPU shader path for built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`, with unknown effects using their fallback brush. |
 | Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux composes its fontconfig/HarfBuzz/FreeType scaffold with Cosmic fallback, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows/Linux startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization. Diagnostic text conformance now covers deterministic emoji measurement/caret invariants for single-codepoint, variation-selector, and ZWJ samples, but it does not claim full grapheme shaping or native color glyph support. |
@@ -50,16 +50,17 @@ applies opacity, rectangular or rounded masks, built-in filter payloads, and
 shader-effect payloads. Source-over, multiply, screen, darken, and lighten use
 GPU blend-state mappings; overlay uses a separate backdrop-sampling pass so the
 shader can evaluate the per-channel overlay formula against the current target.
-Vector paths currently stop at the shared `moon_zeno` tessellation contract:
-fills and strokes can be lowered into triangle vertices, including flattened
-quadratic and cubic segments, but the native draw plan still drops
-`DrawPath` before visible GPU execution. The renderer-neutral SVG import path
-uses `mizchi/svg` as its parser frontend and lowers supported scene graph
-shapes into the same draw-command model while reporting unsupported SMIL
-animation and `foreignObject` usage. `render/capabilities.mbt` also exposes a
-command fallback planner that reports unbalanced pops, open advanced scopes,
-and planned `DrawPath` fallbacks for native and WebGPU adapters. Native color
-emoji remains an explicit gap. Text shaping is
+Vector paths use the shared `moon_zeno` tessellation contract: fills and
+strokes lower into triangle vertices, including flattened quadratic and cubic
+segments. The native draw plan now submits those vertices through the visual
+GPU pipeline as path-colored triangles, so `DrawPath` is no longer a
+fallback-only command. The renderer-neutral SVG import path uses `mizchi/svg`
+as its parser frontend and lowers supported scene graph shapes into the same
+draw-command model while reporting unsupported SMIL animation and
+`foreignObject` usage. `render/capabilities.mbt` also exposes a command
+fallback planner that reports unbalanced pops and open advanced scopes while
+keeping visible `DrawPath` commands out of the fallback list. Native color emoji
+remains an explicit gap. Text shaping is
 partial: `core/` keeps only a deterministic fallback `TextSystem`,
 `render/wgpu` owns provider validation and atlas upload,
 `render/wgpu/cosmic_text` owns the native Cosmic
@@ -125,9 +126,11 @@ textures, and an advanced composite shader for layer opacity, masks, filters,
 and built-in shader effects. Blend-mode coverage matches native: source-over,
 multiply, screen, darken, and lighten use WebGPU blend states, while overlay
 uses a backdrop-sampling WebGPU pass for exact semantics.
-Arbitrary paths share the same MoonBit tessellation contract as native, but the
-wasm-gc adapter still drops `DrawPath` instead of forwarding a host-call mesh.
-Skipped advanced commands are retained in the renderer's last fallback plan for
+Arbitrary paths share the same MoonBit tessellation contract as native. The
+wasm-gc adapter serializes the tessellated `DrawPath` mesh into a compact host
+payload, and the browser runtime submits those vertices through the WebGPU
+visual pipeline with the active transform, opacity, and clip state. Skipped
+advanced commands are retained in the renderer's last fallback plan for
 diagnostics when scopes are unbalanced, left open, or known modeled commands
 are not visibly executed yet. Emoji and complex text shaping rely on browser
 font behavior; diagnostic conformance covers measurement and caret invariants

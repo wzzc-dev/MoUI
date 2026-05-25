@@ -14,6 +14,9 @@ test "showcase app emits visual polish commands" {
     renderer_commands.any(command => command is @core.DrawCommand::DrawShadow(_)),
   )
   assert_true(
+    renderer_commands.any(command => command is @core.DrawCommand::DrawPath(_)),
+  )
+  assert_true(
     commands.any(command => command is @core.DrawCommand::DrawImage(_)),
   )
   assert_true(
