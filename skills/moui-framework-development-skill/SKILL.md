@@ -87,7 +87,8 @@ Use this skill when editing or reviewing:
   multi-canvas window slots, browser runtime bridge, and accessibility adapter.
 - `backend/macos/`: AppKit/window host, resolver-backed multi-window slots,
   and CAMetalLayer WGPU surface creation.
-- `backend/windows/`: Win32/window host and HWND WGPU surface creation.
+- `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
+  and HWND WGPU surface creation.
 - `backend/linux/`: explicit scaffold with host contract shape but no real
   window backend yet.
 - `render/`: renderer facade, shared draw helpers, and capability report API.

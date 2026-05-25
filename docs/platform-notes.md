@@ -38,18 +38,16 @@ ordered completion on the same queue, so tests and higher-level host code can
 observe accepted operations and explicit rejections. Active backends use the
 shared queue drain helper for that drain-and-record loop so request completion
 tracking remains host-owned.
-The current Windows entrypoint still creates one primary window and rejects
-`OpenWindow` until its native host wires scene resolution and runtime slots into
-multiple platform windows and renderer instances. Web and macOS create the
-primary window through the same registry/slot path, and now also support
-resolver-backed `OpenWindow` requests through `run_app_with_options` and their
-app options. A resolved Web window creates another browser canvas and
-`WebRenderer`; a resolved macOS window creates another AppKit window with a
-CAMetalLayer-backed `WgpuRenderer`. Both register a `HostRuntimeDriver`,
-platform binding, and platform slot, then route redraw, events, context menus,
-host service completions, IME sync, and disposal by `HostWindowId`. Without a
-scene resolver, they reject `OpenWindow` with the shared unavailable-resolver
-response.
+Web, macOS, and Windows create the primary window through the same
+registry/slot path, and now also support resolver-backed `OpenWindow` requests
+through `run_app_with_options` and their app options. A resolved Web window
+creates another browser canvas and `WebRenderer`; a resolved macOS window
+creates another AppKit window with a CAMetalLayer-backed `WgpuRenderer`; a
+resolved Windows window creates another Win32 window with an HWND-backed
+`WgpuRenderer`. Each registers a `HostRuntimeDriver`, platform binding, and
+platform slot, then routes redraw, events, context menus, host service
+completions, IME sync, and disposal by `HostWindowId`. Without a scene resolver,
+they reject `OpenWindow` with the shared unavailable-resolver response.
 
 The boundary is:
 

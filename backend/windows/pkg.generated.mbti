@@ -51,8 +51,9 @@ pub impl @Milky2018/window/windows.ApplicationHandler for WindowsApp
 
 pub(all) struct WindowsAppOptions {
   text_engine : @wgpu.NativeTextEngineSetting
-} derive(Eq, ToJson, @debug.Debug)
-pub fn WindowsAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting) -> Self
+  scene_resolver : @host.HostWindowSceneResolver
+}
+pub fn WindowsAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
 
 // Type aliases
 
