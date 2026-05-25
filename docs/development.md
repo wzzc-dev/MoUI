@@ -112,7 +112,8 @@ The bundle is written under `dist/macos/<name>.app` by default. Pass
 `--no-build` to package an already-built executable from `_build/native`. The
 bundle includes `Contents/Resources/moui-package.json` using schema version 1
 with platform, output kind, app name, source MoonBit package, bundle id,
-version, build number, executable, bundle name, and runtime file metadata.
+version, build number, executable, bundle name, and runtime file metadata. The
+helper validates that manifest before reporting success.
 
 Windows distributable folder:
 
@@ -128,9 +129,9 @@ The folder is written under `dist\windows\<AppName>` by default and includes the
 built executable plus the MSYS2 Vulkan and pthread runtime DLLs expected by the
 current static `wgpu-native` setup. It also writes the same schema version 1
 `moui-package.json` manifest with Windows platform metadata and copied runtime
-file names.
+file names, then validates that manifest before reporting success.
 
-Manifest validation:
+Manual manifest validation:
 
 ```sh
 node scripts/validate-package-manifest.mjs \

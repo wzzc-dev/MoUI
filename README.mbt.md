@@ -126,8 +126,8 @@ sh scripts/package-macos-app.sh \
   --version 0.1.0
 ```
 
-The bundle includes a schema version 1 `moui-package.json` manifest under
-`Contents/Resources`.
+The bundle includes and validates a schema version 1 `moui-package.json`
+manifest under `Contents/Resources`.
 
 ## Windows Native
 
@@ -189,8 +189,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.p
   -Version 0.1.0
 ```
 
-The output folder includes the same schema version 1 `moui-package.json`
-manifest plus copied runtime DLL metadata.
+The output folder includes and validates the same schema version 1
+`moui-package.json` manifest plus copied runtime DLL metadata.
 
 Build and run the WYSIWYG Markdown editor with the static helper:
 

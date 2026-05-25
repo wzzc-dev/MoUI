@@ -89,7 +89,9 @@ node --check scripts/validate-package-manifest.mjs
 ```
 
 When packaging helpers change, also run at least one `--no-build` smoke against
-an already-built executable and validate the generated manifest:
+an already-built executable. The helpers validate their generated manifests
+before reporting success; you can also run the validator directly when checking
+an existing package output:
 
 ```sh
 node scripts/validate-package-manifest.mjs \

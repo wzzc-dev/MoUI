@@ -7,6 +7,7 @@
 .DS_Store
 .mooncakes/
 _build/
+dist/
 .local_repos/
 .local_deps/
 .tools/
