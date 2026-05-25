@@ -38,16 +38,18 @@ ordered completion on the same queue, so tests and higher-level host code can
 observe accepted operations and explicit rejections. Active backends use the
 shared queue drain helper for that drain-and-record loop so request completion
 tracking remains host-owned.
-The current macOS and Windows entrypoints still create one primary window and
-reject `OpenWindow` until their native hosts wire scene resolution and runtime
-slots into multiple platform windows and renderer instances. Web creates the
-primary window through the same registry/slot path, and now also supports
-resolver-backed `OpenWindow` requests through `run_app_with_options` and
-`WebAppOptions`. A resolved Web window creates another browser canvas,
-`WebRenderer`, `HostRuntimeDriver`, platform binding, and platform slot, then
-routes redraw, events, context menus, async service completions, IME sync, and
-disposal by `HostWindowId`. Without a scene resolver, Web rejects `OpenWindow`
-with the shared unavailable-resolver response.
+The current Windows entrypoint still creates one primary window and rejects
+`OpenWindow` until its native host wires scene resolution and runtime slots into
+multiple platform windows and renderer instances. Web and macOS create the
+primary window through the same registry/slot path, and now also support
+resolver-backed `OpenWindow` requests through `run_app_with_options` and their
+app options. A resolved Web window creates another browser canvas and
+`WebRenderer`; a resolved macOS window creates another AppKit window with a
+CAMetalLayer-backed `WgpuRenderer`. Both register a `HostRuntimeDriver`,
+platform binding, and platform slot, then route redraw, events, context menus,
+host service completions, IME sync, and disposal by `HostWindowId`. Without a
+scene resolver, they reject `OpenWindow` with the shared unavailable-resolver
+response.
 
 The boundary is:
 
@@ -165,9 +167,10 @@ CoreText accepts them, and falls back to the system font for unavailable names
 before the renderer tries the composed Cosmic fallback.
 `backend/macos` chooses between them through
 `run_app_with_options(..., options=MacosAppOptions::new(text_engine=...))` when
-creating the generic native WGPU renderer. `core` still owns only the neutral
-`FontSpec`, `TextSystem` contract, and deterministic fallback text system; it
-does not name concrete macOS font files.
+creating native WGPU renderers. The same options value can carry a
+`HostWindowSceneResolver` for resolver-backed secondary windows. `core` still
+owns only the neutral `FontSpec`, `TextSystem` contract, and deterministic
+fallback text system; it does not name concrete macOS font files.
 The `examples/showcase/macos_cosmic` entrypoint selects `MoonCosmic`
 explicitly for comparison with the platform-default CoreText path.
 
