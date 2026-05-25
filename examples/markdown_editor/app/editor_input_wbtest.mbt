@@ -42,6 +42,37 @@ test "markdown editor pairs delimiters while typing" {
 }
 
 ///|
+test "markdown editor skips existing closing delimiters" {
+  let parens = markdown_editor_transform_input("Call ()", 6, None, ")").unwrap()
+  inspect(parens.text, content="Call ()")
+  inspect(parens.caret, content="7")
+  let brackets = markdown_editor_transform_input("[link]", 5, None, "]").unwrap()
+  inspect(brackets.text, content="[link]")
+  inspect(brackets.caret, content="6")
+  let quote = markdown_editor_transform_input("\"word\"", 5, None, "\"").unwrap()
+  inspect(quote.text, content="\"word\"")
+  inspect(quote.caret, content="6")
+  let tick = markdown_editor_transform_input("`code`", 5, None, "`").unwrap()
+  inspect(tick.text, content="`code`")
+  inspect(tick.caret, content="6")
+  inspect(
+    markdown_editor_transform_input("Call (x", 7, None, ")") is None,
+    content="true",
+  )
+}
+
+///|
+test "markdown editor treats apostrophes inside words as text" {
+  inspect(
+    markdown_editor_transform_input("dont", 3, None, "'") is None,
+    content="true",
+  )
+  let quoted = markdown_editor_transform_input("say ", 4, None, "'").unwrap()
+  inspect(quoted.text, content="say ''")
+  inspect(quoted.caret, content="5")
+}
+
+///|
 test "markdown editor enter exits empty continuation markers" {
   let bullet = markdown_editor_transform_input("- ", 2, None, "\n").unwrap()
   inspect(bullet.text, content="")

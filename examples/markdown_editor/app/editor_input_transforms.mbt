@@ -14,6 +14,11 @@ fn markdown_editor_transform_input(
     Some(transform) => return Some(transform)
     None => ()
   }
+  match
+    markdown_editor_skip_closing_delimiter(source, caret, selection, input) {
+    Some(transform) => return Some(transform)
+    None => ()
+  }
   match markdown_editor_pair_delimiter_input(source, caret, selection, input) {
     Some(transform) => return Some(transform)
     None => ()
@@ -305,7 +310,12 @@ fn markdown_editor_pair_delimiter_input(
     "[" => "]"
     "{" => "}"
     "\"" => "\""
-    "'" => "'"
+    "'" =>
+      if markdown_editor_apostrophe_in_word(source, caret, selection) {
+        return None
+      } else {
+        "'"
+      }
     "`" => "`"
     _ => return None
   }
@@ -344,6 +354,59 @@ fn markdown_editor_pair_delimiter_input(
       )
     }
   }
+}
+
+///|
+fn markdown_editor_skip_closing_delimiter(
+  source : String,
+  caret : Int,
+  selection : @core.TextRange?,
+  input : String,
+) -> @core.RichTextInputTransform? {
+  if markdown_editor_active_selection(selection) is Some(_) {
+    return None
+  }
+  let close = match input {
+    ")" => ")"
+    "]" => "]"
+    "}" => "}"
+    "\"" => "\""
+    "'" => "'"
+    "`" => "`"
+    _ => return None
+  }
+  let chars = source.to_array()
+  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  if markdown_editor_source_has_marker(chars, caret, close) {
+    Some(markdown_editor_transform_result(text=source, caret=caret + 1))
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_editor_apostrophe_in_word(
+  source : String,
+  caret : Int,
+  selection : @core.TextRange?,
+) -> Bool {
+  if markdown_editor_active_selection(selection) is Some(_) {
+    return false
+  }
+  let chars = source.to_array()
+  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  caret > 0 &&
+  caret < chars.length() &&
+  markdown_editor_ascii_word_char(chars[caret - 1]) &&
+  markdown_editor_ascii_word_char(chars[caret])
+}
+
+///|
+fn markdown_editor_ascii_word_char(ch : Char) -> Bool {
+  (ch >= 'a' && ch <= 'z') ||
+  (ch >= 'A' && ch <= 'Z') ||
+  (ch >= '0' && ch <= '9') ||
+  ch == '_'
 }
 
 ///|
