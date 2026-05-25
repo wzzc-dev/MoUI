@@ -85,6 +85,14 @@ test "renderer capability report tracks draw command support" {
   assert_true(text_shaping.native_note.contains("DirectWrite scaffold"))
   assert_true(text_shaping.native_note.contains("fontconfig"))
   assert_true(text_shaping.native_note.contains("Cosmic"))
+  guard @render.renderer_feature_capability(@render.RendererFeature::EmojiText)
+    is Some(emoji) else {
+    fail("expected emoji capability")
+  }
+  assert_true(emoji.native_status == @render.RendererFeatureStatus::Gap)
+  assert_true(emoji.web_status == @render.RendererFeatureStatus::Partial)
+  assert_true(emoji.native_note.contains("Diagnostic text conformance"))
+  assert_true(emoji.web_note.contains("grapheme"))
   guard @render.renderer_feature_capability(@render.RendererFeature::AsyncImage)
     is Some(async_image) else {
     fail("expected async image capability")

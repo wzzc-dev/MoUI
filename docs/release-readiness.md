@@ -68,7 +68,7 @@ This snapshot records the current preview-readiness evidence gathered on
 | Daily baseline | `sh scripts/dev-check.sh` passed after the Windows Showcase unused import cleanup. | current |
 | Public API audit | The async image diagnostics slice added `ImageResourceLifecycle::snapshot` and `WgpuRenderer::image_resources`; the Web ready/failed diagnostics refresh also ran `moon info` and produced no generated interface diff. | current |
 | Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is explicitly marked `gap`; Web rounded clip submit maps to the browser layer-mask path; native/Web image resource snapshots now expose partial async image diagnostics, including Web ready/failed refresh from the browser image cache after host submission; scoped layer/filter transform/clip inheritance now has renderer tests. | current with tracked renderer gaps |
-| Text conformance | `sh scripts/conformance-check.sh --text` and `sh scripts/conformance-check.sh --text-diagnostic` both passed. | current with shaping/emoji gaps documented |
+| Text conformance | `sh scripts/conformance-check.sh --text` and `sh scripts/conformance-check.sh --text-diagnostic` both passed. Diagnostic emoji samples now cover single-codepoint, variation-selector, and ZWJ measurement/caret invariants. | current with shaping/color-emoji gaps documented |
 | Platform contracts | `sh scripts/dev-check.sh --platform-examples-test` passed on macOS/Darwin and included `backend/macos` native backend tests. | current for macOS host; Windows/Linux runtime evidence remains host-limited |
 | Examples | `moon test examples/showcase/app --target native` and `moon build examples/showcase/web_wasm --target wasm-gc` passed for Showcase capability alignment; daily checks also cover Markdown Editor app and Web build. | current |
 | Guidance freshness | `AGENTS.md`, framework skill, and app skill were checked after release-readiness, platform validation, Showcase alignment, and text evidence updates. | current |
@@ -130,7 +130,7 @@ Current alignment:
 | Path/vector | Layout demos can emit custom draw commands, but there is no visible path gallery. | Renderer tests prove `PathSpec` tessellation only; renderer fallback planning now records `DrawPath` as a planned visible-renderer fallback. | Capability status remains `gap` until native/Web adapters execute path meshes visibly. |
 | Shader effect | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only for user-inspectable built-ins. |
 | Text shaping | Capability card lists status; text/media section exercises text views. | Text conformance tests are primary evidence. | Do not use Showcase labels as proof of bidi/line-breaking/typography parity. |
-| Emoji text | Capability card lists status. | No deterministic Showcase assertion. | Keep native `gap` and Web `partial` until deterministic emoji coverage exists. |
+| Emoji text | Capability card lists status. | Diagnostic text conformance covers single-codepoint, variation-selector, and ZWJ emoji measurement/caret invariants. | Keep native `gap` and Web `partial`: the new evidence does not prove color emoji rendering, browser rasterization determinism, or full grapheme shaping parity. |
 | Async image | Capability card lists status; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; Web records submitted sources as loading and refreshes ready/failed records from the browser image cache. | Still partial because the app model does not receive renderer-specific async image notifications; diagnostics are renderer-local snapshots. |
 
 If renderer support changes, update this alignment only when Showcase coverage
@@ -170,11 +170,12 @@ documentation evidence.
 3. Emoji and text shaping evidence
    - Current status: Web can rely on browser font rasterization, native color
      emoji is a gap, and full bidi/line breaking/typography conformance remains
-     follow-up work. Stable and diagnostic conformance checks currently pass,
-     but they document invariants and known gaps rather than claiming full
-     Unicode shaping parity.
-   - Done when: deterministic coverage improves without claiming full Unicode
-     shaping parity before it exists.
+     follow-up work. Diagnostic checks cover representative emoji measurement
+     and caret invariants, including single-codepoint, variation-selector, and
+     ZWJ samples, but they document invariants and known gaps rather than
+     claiming full Unicode shaping parity.
+   - Done when: deterministic coverage keeps improving without claiming full
+     Unicode shaping parity before it exists.
    - Evidence: text conformance commands, renderer tests, and text-system docs.
 
 ### Text Providers
