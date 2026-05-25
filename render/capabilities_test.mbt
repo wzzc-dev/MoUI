@@ -58,8 +58,8 @@ test "renderer capability report tracks draw command support" {
     is Some(path) else {
     fail("expected path capability")
   }
-  assert_true(path.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(path.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(path.native_status == @render.RendererFeatureStatus::Gap)
+  assert_true(path.web_status == @render.RendererFeatureStatus::Gap)
   assert_true(path.native_note.contains("moon_zeno"))
   guard @render.renderer_feature_capability(
       @render.RendererFeature::TextShaping,
@@ -77,7 +77,7 @@ test "renderer capability report tracks draw command support" {
 }
 
 ///|
-test "renderer neutral advanced commands are modeled with executable path mesh" {
+test "renderer neutral advanced commands report visible path fallback" {
   let rect = @core.Rect::new(x=0.0, y=0.0, width=24.0, height=24.0)
   let commands : Array[@core.DrawCommand] = [
     @core.DrawCommand::PushLayer(
@@ -106,9 +106,14 @@ test "renderer neutral advanced commands are modeled with executable path mesh" 
   inspect(@render.collect_rect_batches(commands).length(), content="0")
   let plan = @render.plan_renderer_command_fallbacks(commands)
   inspect(plan.total_commands, content="6")
-  inspect(plan.fallback_count, content="0")
+  inspect(plan.fallback_count, content="1")
   inspect(plan.final_layer_depth, content="0")
   inspect(plan.final_filter_depth, content="0")
+  assert_true(plan.fallbacks[0].feature == @render.RendererFeature::PathVector)
+  assert_true(
+    plan.fallbacks[0].kind ==
+    @render.RendererCommandFallbackKind::PlannedFallback,
+  )
   guard commands[2] is @core.DrawCommand::DrawPath(path) else {
     fail("expected path command")
   }
@@ -134,18 +139,23 @@ test "renderer command planner reports unbalanced advanced scopes" {
 ///|
 test "renderer capability follow ups stay focused on native gaps" {
   let follow_ups = @render.renderer_feature_follow_ups()
-  inspect(follow_ups.length(), content="4")
+  inspect(follow_ups.length(), content="5")
   let mut has_transform = false
+  let mut has_path = false
   let mut has_async_image = false
   for entry in follow_ups {
     if entry.feature == @render.RendererFeature::Transform {
       has_transform = true
+    }
+    if entry.feature == @render.RendererFeature::PathVector {
+      has_path = true
     }
     if entry.feature == @render.RendererFeature::AsyncImage {
       has_async_image = true
     }
   }
   assert_true(has_transform)
+  assert_true(has_path)
   assert_true(has_async_image)
 }
 

@@ -67,7 +67,7 @@ This snapshot records the current preview-readiness evidence gathered on
 | --- | --- | --- |
 | Daily baseline | `sh scripts/dev-check.sh` passed after the Windows Showcase unused import cleanup. | current |
 | Public API audit | No public API change has been made in the latest release-readiness documentation slices. Earlier public API slices recorded `moon info` evidence in the task ledger. | not required for latest docs-only slices |
-| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Showcase alignment now documents which features have visual/app-level evidence. | current with tracked renderer gaps |
+| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is now explicitly marked `gap` until native/Web adapters visibly execute `DrawPath`. | current with tracked renderer gaps |
 | Text conformance | `sh scripts/conformance-check.sh --text` and `sh scripts/conformance-check.sh --text-diagnostic` both passed. | current with shaping/emoji gaps documented |
 | Platform contracts | `sh scripts/dev-check.sh --platform-examples-test` passed on macOS/Darwin and included `backend/macos` native backend tests. | current for macOS host; Windows/Linux runtime evidence remains host-limited |
 | Examples | `moon test examples/showcase/app --target native` and `moon build examples/showcase/web_wasm --target wasm-gc` passed for Showcase capability alignment; daily checks also cover Markdown Editor app and Web build. | current |
@@ -127,7 +127,7 @@ Current alignment:
 | Layer compositing | Used indirectly by advanced renderer scopes where applicable. | Capability report card lists status; no dedicated Showcase assertion. | Keep primary evidence in renderer tests/report unless a visible layer demo is added. |
 | Blend mode | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only if a visible comparison demo is useful. |
 | Filter effect | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only if a visible comparison demo is useful. |
-| Path/vector | Layout demos emit custom draw commands, but not a dedicated path gallery. | No dedicated Showcase path assertion. | Renderer/tooling tests remain primary evidence until a path demo is added. |
+| Path/vector | Layout demos can emit custom draw commands, but there is no visible path gallery. | Renderer tests prove `PathSpec` tessellation only; renderer fallback planning now records `DrawPath` as a planned visible-renderer fallback. | Capability status remains `gap` until native/Web adapters execute path meshes visibly. |
 | Shader effect | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only for user-inspectable built-ins. |
 | Text shaping | Capability card lists status; text/media section exercises text views. | Text conformance tests are primary evidence. | Do not use Showcase labels as proof of bidi/line-breaking/typography parity. |
 | Emoji text | Capability card lists status. | No deterministic Showcase assertion. | Keep native `gap` and Web `partial` until deterministic emoji coverage exists. |
