@@ -40,7 +40,7 @@ with current files and validation output:
 | Public view model | `views/` constructors are documented as returning `@core.ViewSpec`; public API edits require `moon info`. | ready |
 | Example shape | Showcase and Markdown Editor keep shared app logic under `examples/*/app/` with platform entrypoints as wiring. | ready |
 | Renderer capability tracking | Capability status is recorded in code, tests, and `docs/renderer-capability-report.md`. | ready with tracked gaps |
-| Platform contracts | `backend/host` owns shared events, services, windows, redraw, and request/completion contracts. | ready with Linux scaffold |
+| Platform contracts | `backend/host` owns shared events, services, windows, redraw, and request/completion contracts. | ready with tracked Linux service gaps |
 | Text system | `docs/text-system.md` documents `TextSystem`, provider composition, embedded fonts, and shaping gaps; stable and diagnostic text conformance checks pass. | ready with tracked gaps |
 | Devtool counters | Core inspector snapshots expose runtime, layout, semantics, frame, and render command counters; render snapshots also report open clip/layer/filter scopes and unbalanced pops. | ready for command-level diagnostics |
 | Guidance surface | `docs/ai-collaboration.md`, `AGENTS.md`, and `skills/` define focused agent workflows. | ready |
@@ -84,7 +84,7 @@ runtime evidence for Windows or Linux native behavior.
 | --- | --- | --- | --- |
 | macOS / Darwin | `sh scripts/dev-check.sh --platform-examples-test` | Daily package checks plus `backend/macos` native backend tests on the current macOS host. | Windows native backend/runtime behavior, Windows packaging helper runtime behavior, Linux runtime backend behavior, and slow native example builds unless `--platform-examples-build` is also run. |
 | Windows / MSYS/UCRT64 | `sh scripts/dev-check.sh --platform-examples-test` | Daily package checks plus `backend/windows` native backend tests on a Windows toolchain with Windows headers and runtime dependencies. | macOS AppKit behavior, Linux backend behavior, and slow Windows example builds unless `--platform-examples-build` is also run. |
-| Linux | `sh scripts/dev-check.sh --platform-examples-test` | Daily package checks plus `backend/linux` scaffold tests. | Real Linux window runtime support; Linux remains an explicit scaffold until a `window/linux` package, native surface path, input normalization, and accessibility bridge exist. |
+| Linux | `sh scripts/dev-check.sh --platform-examples-test` | Daily package checks plus `backend/linux` native backend tests on a Linux host with Wayland headers. | Real Wayland compositor/runtime behavior unless the Showcase `moon run` commands are also run under Wayland with a usable Vulkan stack; clipboard, menu, dialog, drag/drop, IME, AT-SPI, and native font provider work remain tracked gaps. |
 
 For release candidates on a configured host, add:
 
@@ -198,11 +198,13 @@ documentation evidence.
 ### Platform
 
 1. Linux backend
-   - Current status: explicit scaffold.
-   - Done when: a real `window/linux` package, native surface path, input
-     normalization, and accessibility bridge exist, or release notes clearly
-     exclude Linux runtime support.
-   - Evidence: backend tests, platform notes, and readiness report wording.
+   - Current status: minimal Wayland/WGPU backend with tracked service,
+     accessibility, IME, and native font-provider gaps.
+   - Done when: Showcase `linux` and `linux_cosmic` run under a real Wayland
+     compositor with a usable Vulkan stack, and readiness wording continues to
+     describe the remaining unsupported platform services honestly.
+   - Evidence: backend tests, platform notes, readiness report wording, and the
+     two Linux Showcase `moon run` commands.
 
 2. Platform validation handoff
    - Current status: daily checks skip slow native platform examples.
@@ -248,8 +250,9 @@ documentation evidence.
 
 - Do not make compatibility shims for removed APIs unless explicitly requested.
 - Do not move platform or renderer implementation details into `core/`.
-- Do not describe Linux, DirectWrite, or fontconfig support as complete while
-  their packages are scaffolds.
+- Do not describe Linux platform support as complete while service, IME,
+  AT-SPI, and native font-provider gaps remain; do not describe DirectWrite or
+  fontconfig providers as complete while their packages are scaffolds.
 - Do not make broad all-target tests the default inner loop.
 - Do not treat a green narrow test as evidence for a broader release claim.
 

@@ -21,8 +21,9 @@ paths, or abstractions that only preserve old shapes.
   host-service, window lifecycle, window scene resolution,
   per-window runtime slot collection, platform-window id mapping,
   request/completion, and window event conversion contracts.
-- `backend/macos/`, `backend/windows/`, and `backend/web/` normalize platform
-  events into `HostEvent`. `backend/linux/` is an explicit scaffold.
+- `backend/macos/`, `backend/windows/`, `backend/linux/`, and `backend/web/`
+  normalize platform events into `HostEvent`. The Linux backend is a minimal
+  Wayland/WGPU host with explicit remaining service and text-provider gaps.
 - `render/` is the renderer facade and shared reporting layer.
 - `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
   wasm-gc browser WebGPU host-import bridge.

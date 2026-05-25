@@ -61,7 +61,8 @@ Use this skill when editing or reviewing:
 - Platform example packages should stay thin entrypoints.
 - Web is `wasm-gc + window/web + browser WebGPU host imports`; there is no
   JS-target fallback.
-- Linux is a scaffold until a real window backend exists.
+- Linux has a minimal Wayland/WGPU backend; keep its remaining clipboard,
+  menu, dialog, drag/drop, IME, AT-SPI, and native font provider gaps explicit.
 - Public API changes require `moon info` and review of `pkg.generated.mbti`
   diffs.
 - Renderer capability changes require synchronized updates to code, tests, docs,
@@ -91,8 +92,9 @@ Use this skill when editing or reviewing:
   and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
   and HWND WGPU surface creation.
-- `backend/linux/`: explicit scaffold with host contract shape but no real
-  window backend yet.
+- `backend/linux/`: minimal Wayland host over `.local_repos/window/linux`, a
+  native WGPU Wayland surface path, shared host event conversion, and explicit
+  unsupported-service reporting.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/wgpu/`: native wgpu renderer.
 - `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
@@ -103,8 +105,8 @@ Use this skill when editing or reviewing:
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
 - `examples/*/app`: shared application logic.
 - `examples/*/{web_wasm,macos,windows}`: platform entrypoints.
-- `examples/showcase/{macos_cosmic,windows_cosmic}`: explicit Moon Cosmic text
-  provider comparison entrypoints.
+- `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
+  Cosmic text provider comparison entrypoints.
 
 ## Development Workflow
 
@@ -235,7 +237,9 @@ moon info
 - Returning anything other than `@core.ViewSpec` from public view constructors.
 - Skipping `moon info` after public API changes.
 - Updating renderer support without updating capability docs and tests.
-- Treating Linux as complete instead of scaffold.
+- Treating the minimal Linux Wayland backend as complete platform support while
+  clipboard, menu, dialog, drag/drop, IME, AT-SPI, and native font provider
+  work remains.
 - Moving shared example logic into platform entrypoints.
 - Running broad native checks before focused package validation.
 - Letting `AGENTS.md` or repo-local skills drift after package, docs, example,

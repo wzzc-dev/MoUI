@@ -32,9 +32,10 @@ The package boundaries follow that pipeline:
   draw command model.
 - `views/` exposes public view constructors that return `@core.ViewSpec`.
 - `backend/host/` defines shared host contracts.
-- `backend/web/`, `backend/macos/`, and `backend/windows/` normalize platform
-  events into `HostEvent`.
-- `backend/linux/` remains an explicit scaffold until the platform path is ready.
+- `backend/web/`, `backend/macos/`, `backend/windows/`, and `backend/linux/`
+  normalize platform events into `HostEvent`.
+- `backend/linux/` is a minimal Wayland/WGPU backend with explicit remaining
+  service, IME, AT-SPI, and native font-provider gaps.
 - `render/` owns renderer facades and capability reporting.
 - `render/wgpu/` implements the native wgpu renderer.
 - `render/webgpu_adapter/` bridges wasm-gc apps to browser WebGPU host imports.
@@ -173,7 +174,8 @@ Focus areas:
   wgpu-native requirements.
 - Keep Windows native setup reproducible with MSYS2 UCRT64 and the expected
   static GNU `wgpu-native` release.
-- Keep Linux clearly marked as scaffold until a minimal backend is implemented.
+- Keep Linux clearly marked as minimal until the remaining platform service,
+  IME, AT-SPI, and native font-provider gaps are implemented.
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,
   menus, file dialogs, URL opening, and system-theme queries.
 - Use `HostServiceAsyncQueue` for browser or platform services that require
@@ -216,9 +218,9 @@ Focus areas:
   and HWND-backed `WgpuRenderer`; each attaches platform-window bindings,
   platform slots, and per-window drivers, then routes redraw/event/context-menu/
   IME/dispose paths through `HostWindowId`.
-- Keep Linux readiness explicit through its backend readiness report until a
-  real `window/linux` package, native surface path, and accessibility bridge are
-  available.
+- Keep Linux readiness explicit through its backend readiness report until
+  clipboard, menus, dialogs, drag/drop, IME, AT-SPI, and native font provider
+  support are available.
 
 Validation:
 
@@ -316,6 +318,7 @@ Use this snapshot as the final handoff checklist for the current project shape:
 - Platform validation remains opt-in through `--platform-examples-test` and
   `--platform-examples-build` because native executable builds depend on the
   current host setup.
-- Linux remains an explicit scaffold until a real backend is implemented.
+- Linux remains a minimal backend with tracked platform gaps until the remaining
+  native services and text-provider work land.
 - `AGENTS.md` and repo-local skills have been checked against the current docs,
   examples, validation commands, and text/rendering architecture.
