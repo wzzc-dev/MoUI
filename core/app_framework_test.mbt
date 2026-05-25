@@ -57,6 +57,8 @@ test "runtime inspector and frame profile expose devtool counters" {
   inspect(render.command_count, content="2")
   inspect(render.text_count, content="1")
   inspect(render.clip_depth, content="0")
+  inspect(render.open_clip_depth, content="0")
+  inspect(render.unbalanced_pop_count, content="0")
   let semantics = SemanticsInspectorSnapshot::from_runtime(runtime)
   assert_true(semantics.root_role == SemanticsRole::Text)
   inspect(semantics.node_count, content="1")
@@ -67,4 +69,30 @@ test "runtime inspector and frame profile expose devtool counters" {
   )
   inspect(profile.draw_command_count, content="2")
   inspect(profile.active_animations, content="0")
+}
+
+///|
+test "render inspector reports open scopes and unbalanced pops" {
+  let inspected = RenderInspectorSnapshot::from_commands([
+    DrawCommand::PopClip,
+    DrawCommand::PushClip(Rect::new(x=0.0, y=0.0, width=20.0, height=20.0)),
+    DrawCommand::PushLayer(LayerSpec::new(opacity=0.5, offscreen=true)),
+    DrawCommand::PopFilter,
+    DrawCommand::DrawText(
+      TextRun::new(
+        text="One",
+        frame=Rect::new(x=0.0, y=0.0, width=60.0, height=20.0),
+        font=FontSpec::new(size=12.0, weight=400),
+        color=Color::black(),
+        align=TextAlign::TextStart,
+      ),
+    ),
+  ])
+  inspect(inspected.clip_depth, content="1")
+  inspect(inspected.open_clip_depth, content="1")
+  inspect(inspected.layer_depth, content="1")
+  inspect(inspected.open_layer_depth, content="1")
+  inspect(inspected.filter_depth, content="0")
+  inspect(inspected.open_filter_depth, content="0")
+  inspect(inspected.unbalanced_pop_count, content="2")
 }

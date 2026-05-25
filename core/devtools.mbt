@@ -23,10 +23,14 @@ pub(all) struct RenderInspectorSnapshot {
   text_count : Int
   image_count : Int
   clip_depth : Int
+  open_clip_depth : Int
   layer_depth : Int
+  open_layer_depth : Int
   filter_depth : Int
+  open_filter_depth : Int
   path_count : Int
   shader_count : Int
+  unbalanced_pop_count : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -78,7 +82,14 @@ pub fn LayoutInspectorSnapshot::from_runtime(
 pub fn RenderInspectorSnapshot::from_runtime(
   runtime : AppRuntime,
 ) -> RenderInspectorSnapshot {
-  render_inspector_from_commands(runtime.draw_commands())
+  RenderInspectorSnapshot::from_commands(runtime.draw_commands())
+}
+
+///|
+pub fn RenderInspectorSnapshot::from_commands(
+  commands : Array[DrawCommand],
+) -> RenderInspectorSnapshot {
+  render_inspector_from_commands(commands)
 }
 
 ///|
@@ -154,6 +165,7 @@ fn render_inspector_from_commands(
   let mut max_filter_depth = 0
   let mut path_count = 0
   let mut shader_count = 0
+  let mut unbalanced_pop_count = 0
   for command in commands {
     match command {
       DrawText(_) => text_count = text_count + 1
@@ -163,17 +175,31 @@ fn render_inspector_from_commands(
         max_clip_depth = devtools_max_int(max_clip_depth, clip_depth)
       }
       PopClip | PopRoundedClip =>
-        clip_depth = devtools_max_int(0, clip_depth - 1)
+        if clip_depth == 0 {
+          unbalanced_pop_count = unbalanced_pop_count + 1
+        } else {
+          clip_depth = clip_depth - 1
+        }
       PushLayer(_) => {
         layer_depth = layer_depth + 1
         max_layer_depth = devtools_max_int(max_layer_depth, layer_depth)
       }
-      PopLayer => layer_depth = devtools_max_int(0, layer_depth - 1)
+      PopLayer =>
+        if layer_depth == 0 {
+          unbalanced_pop_count = unbalanced_pop_count + 1
+        } else {
+          layer_depth = layer_depth - 1
+        }
       PushFilter(_) => {
         filter_depth = filter_depth + 1
         max_filter_depth = devtools_max_int(max_filter_depth, filter_depth)
       }
-      PopFilter => filter_depth = devtools_max_int(0, filter_depth - 1)
+      PopFilter =>
+        if filter_depth == 0 {
+          unbalanced_pop_count = unbalanced_pop_count + 1
+        } else {
+          filter_depth = filter_depth - 1
+        }
       DrawPath(_) => path_count = path_count + 1
       DrawShaderEffect(_) => shader_count = shader_count + 1
       _ => ()
@@ -184,10 +210,14 @@ fn render_inspector_from_commands(
     text_count,
     image_count,
     clip_depth: max_clip_depth,
+    open_clip_depth: clip_depth,
     layer_depth: max_layer_depth,
+    open_layer_depth: layer_depth,
     filter_depth: max_filter_depth,
+    open_filter_depth: filter_depth,
     path_count,
     shader_count,
+    unbalanced_pop_count,
   }
 }
 

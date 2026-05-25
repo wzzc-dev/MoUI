@@ -42,6 +42,7 @@ with current files and validation output:
 | Renderer capability tracking | Capability status is recorded in code, tests, and `docs/renderer-capability-report.md`. | ready with tracked gaps |
 | Platform contracts | `backend/host` owns shared events, services, windows, redraw, and request/completion contracts. | ready with Linux scaffold |
 | Text system | `docs/text-system.md` documents `TextSystem`, provider composition, embedded fonts, and shaping gaps; stable and diagnostic text conformance checks pass. | ready with tracked gaps |
+| Devtool counters | Core inspector snapshots expose runtime, layout, semantics, frame, and render command counters; render snapshots also report open clip/layer/filter scopes and unbalanced pops. | ready for command-level diagnostics |
 | Guidance surface | `docs/ai-collaboration.md`, `AGENTS.md`, and `skills/` define focused agent workflows. | ready |
 
 ## Required Gates
@@ -230,6 +231,18 @@ documentation evidence.
      `.idea/codex-goals/evidence.md` map every requirement to a current
      artifact and command result.
    - Evidence: task ledger plus final verification summary.
+
+### Dev Tools
+
+1. Render inspector diagnostics
+   - Current status: `RenderInspectorSnapshot` can be built from an
+     `AppRuntime` or an explicit draw-command stream and reports draw command
+     counts, max clip/layer/filter depths, open scope depths, unbalanced pop
+     count, path count, and shader count.
+   - Done when: inspector data is surfaced through a developer UI or capture
+     artifact and connected to golden/benchmark handoffs.
+   - Evidence: `moon test core --target native`, generated public API review
+     after inspector changes, and testing docs.
 
 ## Known Non-Goals
 

@@ -1102,11 +1102,16 @@ pub(all) struct RenderInspectorSnapshot {
   text_count : Int
   image_count : Int
   clip_depth : Int
+  open_clip_depth : Int
   layer_depth : Int
+  open_layer_depth : Int
   filter_depth : Int
+  open_filter_depth : Int
   path_count : Int
   shader_count : Int
+  unbalanced_pop_count : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RenderInspectorSnapshot::from_commands(Array[DrawCommand]) -> Self
 pub fn RenderInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
 pub(all) struct RenderNode {
