@@ -156,6 +156,8 @@ Current focused docs:
   Web text measurement/drawing, embedded fonts, and shaping gaps.
 - `docs/markdown-editor.md` covers the WYSIWYG Markdown Editor model,
   source/visual mapping, commands, platform entrypoints, and validation.
+- `docs/release-readiness.md` tracks preview-release gates, current evidence,
+  known gaps, and next implementation slices.
 
 ## Editing Notes
 
