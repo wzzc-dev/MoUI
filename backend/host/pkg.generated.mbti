@@ -202,12 +202,16 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/co
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_service_completion(Self, HostCompletedServiceResponse, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
+pub fn HostRuntimeDriver::environment(Self) -> @wzzc-dev/moui/core.Environment
 pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
+pub fn HostRuntimeDriver::focused_text_input(Self) -> @wzzc-dev/moui/core.TextInputState
 pub fn HostRuntimeDriver::new(runtime~ : @wzzc-dev/moui/core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
+pub fn HostRuntimeDriver::set_environment(Self, @wzzc-dev/moui/core.Environment) -> Unit
 pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit
+pub fn HostRuntimeDriver::set_text_system(Self, @wzzc-dev/moui/core.TextSystem) -> Unit
 pub fn HostRuntimeDriver::show_context_menu(Self, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::size(Self) -> @wzzc-dev/moui/core.Size
 
@@ -461,6 +465,7 @@ pub fn HostWindowRuntimeSlots::primary_slot(Self) -> HostWindowRuntimeSlot?
 pub fn HostWindowRuntimeSlots::remove(Self, HostWindowId) -> HostWindowRuntimeSlot?
 pub fn HostWindowRuntimeSlots::remove_closed(Self) -> Int
 pub fn HostWindowRuntimeSlots::sync_from_registry(Self, HostWindowRegistry, HostWindowId) -> Bool
+pub fn HostWindowRuntimeSlots::sync_open_from_registry(Self, HostWindowRegistry) -> Int
 pub fn HostWindowRuntimeSlots::sync_record(Self, HostWindowRecord) -> Bool
 
 pub(all) struct HostWindowScene {

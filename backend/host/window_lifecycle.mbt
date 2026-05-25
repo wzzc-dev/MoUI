@@ -459,6 +459,20 @@ pub fn HostWindowRuntimeSlots::sync_from_registry(
 }
 
 ///|
+pub fn HostWindowRuntimeSlots::sync_open_from_registry(
+  self : HostWindowRuntimeSlots,
+  registry : HostWindowRegistry,
+) -> Int {
+  let mut synced = 0
+  for record in registry.open_windows() {
+    if self.sync_record(record) {
+      synced = synced + 1
+    }
+  }
+  synced
+}
+
+///|
 pub fn HostWindowRuntimeSlots::apply_host_event(
   self : HostWindowRuntimeSlots,
   registry : HostWindowRegistry,
@@ -466,7 +480,7 @@ pub fn HostWindowRuntimeSlots::apply_host_event(
   event : HostEvent,
 ) -> Bool {
   if registry.apply_host_event(id, event) {
-    ignore(self.sync_from_registry(registry, id))
+    ignore(self.sync_open_from_registry(registry))
     true
   } else {
     false
@@ -481,9 +495,9 @@ pub fn HostWindowRuntimeSlots::apply_request(
 ) -> HostWindowRequestResult {
   let result = registry.apply_request(request)
   match result {
-    HostWindowRequestResult::WindowOpened(id)
-    | HostWindowRequestResult::WindowUpdated(id) =>
-      ignore(self.sync_from_registry(registry, id))
+    HostWindowRequestResult::WindowOpened(_)
+    | HostWindowRequestResult::WindowUpdated(_) =>
+      ignore(self.sync_open_from_registry(registry))
     HostWindowRequestResult::WindowRejected(_) => ()
   }
   result

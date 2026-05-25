@@ -1390,6 +1390,36 @@ pub fn HostRuntimeDriver::draw_commands(
 }
 
 ///|
+pub fn HostRuntimeDriver::environment(
+  self : HostRuntimeDriver,
+) -> @core.Environment {
+  self.runtime.environment()
+}
+
+///|
+pub fn HostRuntimeDriver::set_environment(
+  self : HostRuntimeDriver,
+  environment : @core.Environment,
+) -> Unit {
+  self.runtime.set_environment(environment)
+}
+
+///|
+pub fn HostRuntimeDriver::set_text_system(
+  self : HostRuntimeDriver,
+  text_system : @core.TextSystem,
+) -> Unit {
+  self.runtime.set_text_system(text_system)
+}
+
+///|
+pub fn HostRuntimeDriver::focused_text_input(
+  self : HostRuntimeDriver,
+) -> @core.TextInputState {
+  self.runtime.focused_text_input()
+}
+
+///|
 pub fn HostRuntimeDriver::size(self : HostRuntimeDriver) -> @core.Size {
   self.runtime.size()
 }

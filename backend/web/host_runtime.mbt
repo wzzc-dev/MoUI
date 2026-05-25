@@ -17,11 +17,11 @@ struct WebApp {
   services : @host.HostServiceBridge
   async_services : @host.HostServiceAsyncQueue
   window_requests : @host.HostWindowRequestQueue
+  scene_resolver : @host.HostWindowSceneResolver
   windows : @host.HostWindowRegistry
   runtime_slots : @host.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : WebWindowPlatformSlots
-  mut window_id : @host.HostWindowId?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
@@ -32,6 +32,11 @@ priv struct WebWindowPlatformSlot {
   platform_id : @window_core.WindowId
   window : @window_web.Window
   renderer : WebRenderer
+}
+
+///|
+pub(all) struct WebAppOptions {
+  scene_resolver : @host.HostWindowSceneResolver
 }
 
 ///|
@@ -71,10 +76,11 @@ pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
 
 ///|
 pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
-  run_app_with_window_requests(
+  run_app_with_options(
     title,
     runtime,
-    @host.HostWindowRequestQueue::new(),
+    options=WebAppOptions::new(),
+    window_requests=@host.HostWindowRequestQueue::new(),
   )
 }
 
@@ -83,6 +89,21 @@ pub fn run_app_with_window_requests(
   title : String,
   runtime : @core.AppRuntime,
   window_requests : @host.HostWindowRequestQueue,
+) -> Unit {
+  run_app_with_options(
+    title,
+    runtime,
+    options=WebAppOptions::new(),
+    window_requests~,
+  )
+}
+
+///|
+pub fn run_app_with_options(
+  title : String,
+  runtime : @core.AppRuntime,
+  options~ : WebAppOptions,
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
   let event_loop = @window_web.EventLoop::new()
   event_loop.set_control_flow(@window_core.ControlFlow::Poll)
@@ -111,16 +132,23 @@ pub fn run_app_with_window_requests(
     services,
     async_services,
     window_requests,
+    scene_resolver: options.scene_resolver,
     windows: @host.HostWindowRegistry::new(),
     runtime_slots: @host.HostWindowRuntimeSlots::new(),
     platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: WebWindowPlatformSlots::new(),
-    window_id: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   event_loop.spawn_app(app)
+}
+
+///|
+pub fn WebAppOptions::new(
+  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+) -> WebAppOptions {
+  { scene_resolver, }
 }
 
 ///|
@@ -266,18 +294,20 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
         metrics~,
         primary=true,
       )
-      self.window_id = Some(window_id)
       ignore(
         self.platform_windows.bind(platform_id=window.id(), host_id=window_id),
       )
       self.register_primary_runtime_slot(window_id)
+      self.driver.set_redraw_scheduler(() => {
+        self.request_redraw_window_if_needed(window_id)
+      })
       let renderer_result = try? WebRenderer::create(
         canvas_id=window_web_default_canvas_id(window.id().into_raw()),
         metrics~,
       )
       match renderer_result {
         Ok(renderer) => {
-          self.runtime.set_text_system(renderer.text_system())
+          self.driver.set_text_system(renderer.text_system())
           match self.runtime_slots.lookup(window_id) {
             Some(slot) =>
               ignore(slot.driver.dispatch(@host.HostEvent::Resized(metrics)))
@@ -315,9 +345,7 @@ pub impl @window_web.ApplicationHandler for WebApp with new_events(
     return ()
   }
   self.drain_async_host_services()
-  if self.primary_runtime_needs_redraw() {
-    self.redraw()
-  }
+  self.redraw_dirty_windows()
 }
 
 ///|
@@ -338,16 +366,18 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
   match event {
     @window_core.WindowEvent::CloseRequested => {
       self.dispatch_window_event(window_id, event)
-      self.dispose()
-      event_loop.exit()
+      self.dispose_window(window_id)
+      if self.runtime_slots.is_empty() {
+        event_loop.exit()
+      }
     }
     @window_core.WindowEvent::SurfaceResized(_) => {
       self.dispatch_window_event(window_id, event)
-      self.request_redraw()
+      self.request_platform_redraw(window_id)
     }
     @window_core.WindowEvent::ScaleFactorChanged(_, _) => {
       self.dispatch_window_event(window_id, event)
-      self.request_redraw()
+      self.request_platform_redraw(window_id)
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
       self.last_pointer = @host.physical_position_to_core(
@@ -403,14 +433,6 @@ fn WebApp::dispatch_pointer_or_context_menu(
     }
   } else {
     self.dispatch_window_event(window_id, event)
-  }
-}
-
-///|
-fn WebApp::redraw(self : WebApp) -> Unit {
-  match self.window_id {
-    Some(window_id) => self.redraw_window(window_id)
-    None => ()
   }
 }
 
@@ -511,71 +533,172 @@ fn WebApp::apply_window_request(
   request : @host.HostWindowRequest,
 ) -> @host.HostWindowRequestResult {
   match request {
-    @host.HostWindowRequest::OpenWindow(_) =>
-      @host.HostWindowRequestResult::WindowRejected(
-        "open window requests require multi-window Web host support",
-      )
+    @host.HostWindowRequest::OpenWindow(open_request) =>
+      self.open_window(event_loop, open_request)
     @host.HostWindowRequest::FocusWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.focus_window()
       })
     @host.HostWindowRequest::CloseWindow(id) =>
-      self.apply_current_window_request(id, request, _window => {
-        self.dispose()
-        event_loop.exit()
+      self.apply_platform_window_request(id, request, _window => {
+        self.dispose_window(id)
+        if self.runtime_slots.is_empty() {
+          event_loop.exit()
+        }
       })
     @host.HostWindowRequest::ResizeWindow(id, metrics) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
         self.resize_renderer(id, metrics)
         window.request_redraw()
       })
     @host.HostWindowRequest::MinimizeWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.set_minimized(true)
       })
     @host.HostWindowRequest::ShowWindow(id) =>
-      self.apply_current_window_request(id, request, window => {
+      self.apply_platform_window_request(id, request, window => {
         window.set_minimized(false)
         window.set_visible(true)
       })
     @host.HostWindowRequest::SetPrimaryWindow(id) =>
-      self.apply_current_window_request(id, request, _window => ())
+      self.apply_platform_window_request(id, request, _window => ())
   }
 }
 
 ///|
-fn WebApp::apply_current_window_request(
+fn WebApp::apply_platform_window_request(
   self : WebApp,
   id : @host.HostWindowId,
   request : @host.HostWindowRequest,
   apply : (@window_web.Window) -> Unit,
 ) -> @host.HostWindowRequestResult {
-  match self.window_id {
-    Some(current) =>
-      if current == id {
-        match self.platform_slots.lookup_host(id) {
-          Some(slot) => {
-            let result = self.runtime_slots.apply_request(self.windows, request)
-            match result {
-              @host.HostWindowRequestResult::WindowRejected(_) => ()
-              _ => apply(slot.window)
-            }
-            result
-          }
-          None =>
-            @host.HostWindowRequestResult::WindowRejected(
-              "window request has no active Web window",
-            )
-        }
-      } else {
-        self.runtime_slots.apply_request(self.windows, request)
+  match self.platform_slots.lookup_host(id) {
+    Some(slot) => {
+      let result = self.runtime_slots.apply_request(self.windows, request)
+      match result {
+        @host.HostWindowRequestResult::WindowRejected(_) => ()
+        _ => apply(slot.window)
       }
-    _ =>
+      result
+    }
+    None =>
       @host.HostWindowRequestResult::WindowRejected(
         "window request has no active Web window",
       )
   }
+}
+
+///|
+fn WebApp::open_window(
+  self : WebApp,
+  event_loop : @window_web.ActiveEventLoop,
+  request : @host.HostWindowOpenRequest,
+) -> @host.HostWindowRequestResult {
+  match self.windows.resolve_open_request(request, self.scene_resolver) {
+    @host.HostWindowOpenResolution::OpenRejected(message) =>
+      @host.HostWindowRequestResult::WindowRejected(message)
+    @host.HostWindowOpenResolution::OpenResolved(resolved) =>
+      self.create_resolved_window(event_loop, resolved)
+  }
+}
+
+///|
+fn WebApp::create_resolved_window(
+  self : WebApp,
+  event_loop : @window_web.ActiveEventLoop,
+  resolved : @host.HostWindowResolvedOpen,
+) -> @host.HostWindowRequestResult {
+  let attributes = @window_core.WindowAttributes::default()
+    .with_title(resolved.record.title)
+    .with_surface_size(host_metrics_to_dpi_size(resolved.record.metrics))
+  let window : @window_web.Window? = Some(
+    event_loop.try_create_window(attributes),
+  ) catch {
+    _ => None
+  }
+  match window {
+    Some(window) => self.attach_resolved_window(window, resolved)
+    None => {
+      self.rollback_resolved_window(resolved.id)
+      @host.HostWindowRequestResult::WindowRejected(
+        "failed to create Web window",
+      )
+    }
+  }
+}
+
+///|
+fn WebApp::attach_resolved_window(
+  self : WebApp,
+  window : @window_web.Window,
+  resolved : @host.HostWindowResolvedOpen,
+) -> @host.HostWindowRequestResult {
+  let metrics = surface_metrics_from_physical(
+    window.surface_size(),
+    window.scale_factor(),
+  )
+  let renderer_result = try? WebRenderer::create(
+    canvas_id=window_web_default_canvas_id(window.id().into_raw()),
+    metrics~,
+  )
+  match renderer_result {
+    Ok(renderer) => {
+      ignore(self.windows.resize(resolved.id, metrics))
+      ignore(self.runtime_slots.sync_open_from_registry(self.windows))
+      let record = match self.windows.lookup(resolved.id) {
+        Some(record) => record
+        None => resolved.record
+      }
+      let driver = @host.HostRuntimeDriver::new(
+        runtime=resolved.instance.runtime,
+        schedule_redraw=() => (),
+      )
+      driver.set_redraw_scheduler(() => {
+        self.request_redraw_window_if_needed(resolved.id)
+      })
+      driver.set_environment(
+        self.services.environment_with_system_theme(driver.environment()),
+      )
+      driver.set_text_system(renderer.text_system())
+      ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
+      ignore(
+        self.runtime_slots.insert(
+          @host.HostWindowRuntimeSlot::from_driver(record~, driver~),
+        ),
+      )
+      ignore(
+        self.platform_windows.bind(platform_id=window.id(), host_id=resolved.id),
+      )
+      ignore(
+        self.platform_slots.insert({
+          host_id: resolved.id,
+          platform_id: window.id(),
+          window,
+          renderer,
+        }),
+      )
+      self.request_platform_redraw(resolved.id)
+      @host.HostWindowRequestResult::WindowOpened(resolved.id)
+    }
+    Err(_) => {
+      window.drop()
+      self.rollback_resolved_window(resolved.id)
+      @host.HostWindowRequestResult::WindowRejected(
+        "failed to create Web renderer",
+      )
+    }
+  }
+}
+
+///|
+fn WebApp::rollback_resolved_window(
+  self : WebApp,
+  id : @host.HostWindowId,
+) -> Unit {
+  ignore(self.windows.close(id))
+  ignore(self.windows.remove_closed())
+  ignore(self.runtime_slots.sync_open_from_registry(self.windows))
 }
 
 ///|
@@ -634,6 +757,11 @@ fn WebApp::sync_runtime_slot(
 }
 
 ///|
+fn WebApp::sync_runtime_slots(self : WebApp) -> Unit {
+  ignore(self.runtime_slots.sync_open_from_registry(self.windows))
+}
+
+///|
 fn WebApp::active_runtime_slot(self : WebApp) -> @host.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
@@ -642,10 +770,17 @@ fn WebApp::active_runtime_slot(self : WebApp) -> @host.HostWindowRuntimeSlot? {
 }
 
 ///|
-fn WebApp::primary_runtime_needs_redraw(self : WebApp) -> Bool {
-  match self.runtime_slots.primary_slot() {
-    Some(slot) => slot.driver.event_result().needs_redraw
-    None => false
+fn runtime_slot_needs_redraw(slot : @host.HostWindowRuntimeSlot) -> Bool {
+  let result = slot.driver.event_result()
+  result.needs_redraw || result.redraw_requested
+}
+
+///|
+fn WebApp::redraw_dirty_windows(self : WebApp) -> Unit {
+  for slot in self.runtime_slots.open_slots() {
+    if runtime_slot_needs_redraw(slot) {
+      self.redraw_window(slot.id)
+    }
   }
 }
 
@@ -662,16 +797,18 @@ fn WebApp::apply_window_lifecycle(
 
 ///|
 fn WebApp::sync_text_input_session(self : WebApp) -> Unit {
-  match self.window_id {
-    Some(window_id) =>
-      match self.platform_slots.lookup_host(window_id) {
-        Some(slot) =>
+  match self.active_runtime_slot() {
+    Some(runtime_slot) =>
+      match self.platform_slots.lookup_host(runtime_slot.id) {
+        Some(platform_slot) =>
           match
-            self.text_input_session.sync(self.runtime.focused_text_input()) {
+            self.text_input_session.sync(
+              runtime_slot.driver.focused_text_input(),
+            ) {
             @host.TextInputSessionAction::EnableIme(request)
             | @host.TextInputSessionAction::UpdateIme(request)
             | @host.TextInputSessionAction::DisableIme(request) =>
-              slot.window.request_ime_update(request) catch {
+              platform_slot.window.request_ime_update(request) catch {
                 _ => ()
               }
             @host.TextInputSessionAction::NoImeChange => ()
@@ -712,39 +849,58 @@ fn WebApp::resize_renderer(
 
 ///|
 fn WebApp::request_redraw(self : WebApp) -> Unit {
-  if self.primary_runtime_needs_redraw() {
-    match self.window_id {
-      Some(window_id) =>
-        match self.platform_slots.lookup_host(window_id) {
-          Some(slot) => slot.window.request_redraw()
-          None => ()
-        }
-      None => ()
-    }
+  match self.active_runtime_slot() {
+    Some(slot) => self.request_redraw_window_if_needed(slot.id)
+    None => ()
   }
 }
 
 ///|
-fn WebApp::dispose(self : WebApp) -> Unit {
-  match self.window_id {
-    Some(window_id) => {
-      ignore(self.windows.close(window_id))
-      self.sync_runtime_slot(window_id)
-      ignore(self.runtime_slots.remove(window_id))
-      ignore(self.platform_windows.remove_host(window_id))
-      match self.platform_slots.remove_host(window_id) {
-        Some(slot) => {
-          slot.renderer.dispose()
-          slot.window.drop()
-        }
-        None => ()
+fn WebApp::request_redraw_window_if_needed(
+  self : WebApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.runtime_slots.lookup(window_id) {
+    Some(slot) =>
+      if runtime_slot_needs_redraw(slot) {
+        self.request_platform_redraw(window_id)
       }
-      ignore(self.windows.remove_closed())
-      self.window_id = None
+    None => ()
+  }
+}
+
+///|
+fn WebApp::request_platform_redraw(
+  self : WebApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => slot.window.request_redraw()
+    None => ()
+  }
+}
+
+///|
+fn WebApp::dispose_window(
+  self : WebApp,
+  window_id : @host.HostWindowId,
+) -> Unit {
+  ignore(self.windows.close(window_id))
+  self.sync_runtime_slot(window_id)
+  ignore(self.runtime_slots.remove(window_id))
+  ignore(self.platform_windows.remove_host(window_id))
+  match self.platform_slots.remove_host(window_id) {
+    Some(slot) => {
+      slot.renderer.dispose()
+      slot.window.drop()
     }
     None => ()
   }
-  set_web_async_host_service_queue(None)
+  ignore(self.windows.remove_closed())
+  self.sync_runtime_slots()
+  if self.runtime_slots.is_empty() {
+    set_web_async_host_service_queue(None)
+  }
 }
 
 ///|

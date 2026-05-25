@@ -729,6 +729,11 @@ test "host window runtime slots manage multiple window drivers" {
     }
     None => fail("expected focused inspector slot")
   }
+  match slots.lookup(main_slot.id) {
+    Some({ record: { phase, .. }, .. }) =>
+      assert_true(phase == HostWindowLifecyclePhase::WindowVisible)
+    None => fail("expected main slot")
+  }
   inspect(
     slots.apply_host_event(
       registry,
@@ -767,6 +772,26 @@ test "host window runtime slots manage multiple window drivers" {
   match
     slots.apply_request(
       registry,
+      HostWindowRequest::SetPrimaryWindow(inspector_slot.id),
+    ) {
+    HostWindowRequestResult::WindowUpdated(id) =>
+      assert_true(id == inspector_slot.id)
+    _ => fail("expected set-primary request to update inspector slot")
+  }
+  match slots.lookup(main_slot.id) {
+    Some({ record: { primary, .. }, .. }) => inspect(primary, content="false")
+    None => fail("expected main slot")
+  }
+  match slots.primary_slot() {
+    Some({ id, record: { primary, .. }, .. }) => {
+      assert_true(id == inspector_slot.id)
+      inspect(primary, content="true")
+    }
+    None => fail("expected primary inspector slot")
+  }
+  match
+    slots.apply_request(
+      registry,
       HostWindowRequest::FocusWindow(HostWindowId::new(404)),
     ) {
     HostWindowRequestResult::WindowRejected(message) =>
@@ -796,6 +821,21 @@ test "host window runtime slots manage multiple window drivers" {
     content="false",
   )
   inspect(main_redraws.val, content="0")
+}
+
+///|
+test "host runtime driver exposes runtime state for platform slots" {
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::EmptySpec,
+    size=@core.Size::new(width=320.0, height=240.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let dark = runtime.environment().with_color_scheme(@core.ColorScheme::Dark)
+  driver.set_environment(dark)
+  assert_true(driver.environment().color_scheme == @core.ColorScheme::Dark)
+  assert_true(runtime.environment().color_scheme == @core.ColorScheme::Dark)
+  driver.set_text_system(@core.TextSystem::fallback())
+  assert_true(driver.focused_text_input() == runtime.focused_text_input())
 }
 
 ///|
