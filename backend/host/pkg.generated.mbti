@@ -174,6 +174,23 @@ pub(all) struct HostPendingServiceRequest {
   request : HostServiceRequest
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct HostPlatformWindowBinding {
+  platform_id : @Milky2018/window/core.WindowId
+  host_id : HostWindowId
+} derive(Eq, @debug.Debug)
+
+pub struct HostPlatformWindowMap {
+  mut bindings : Array[HostPlatformWindowBinding]
+}
+pub fn HostPlatformWindowMap::bind(Self, platform_id~ : @Milky2018/window/core.WindowId, host_id~ : HostWindowId) -> Bool
+pub fn HostPlatformWindowMap::count(Self) -> Int
+pub fn HostPlatformWindowMap::is_empty(Self) -> Bool
+pub fn HostPlatformWindowMap::lookup_host(Self, @Milky2018/window/core.WindowId) -> HostWindowId?
+pub fn HostPlatformWindowMap::lookup_platform(Self, HostWindowId) -> @Milky2018/window/core.WindowId?
+pub fn HostPlatformWindowMap::new() -> Self
+pub fn HostPlatformWindowMap::remove_host(Self, HostWindowId) -> @Milky2018/window/core.WindowId?
+pub fn HostPlatformWindowMap::remove_platform(Self, @Milky2018/window/core.WindowId) -> HostWindowId?
+
 pub(all) struct HostRuntimeDriver {
   runtime : @wzzc-dev/moui/core.AppRuntime
   scheduler : RedrawScheduler

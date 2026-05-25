@@ -20,6 +20,7 @@ struct WebApp {
   window_requests : @host.HostWindowRequestQueue
   windows : @host.HostWindowRegistry
   runtime_slots : @host.HostWindowRuntimeSlots
+  platform_windows : @host.HostPlatformWindowMap
   mut window_id : @host.HostWindowId?
   mut renderer : WebRenderer?
   mut last_pointer : @core.Point
@@ -101,6 +102,7 @@ pub fn run_app_with_window_requests(
     window_requests,
     windows: @host.HostWindowRegistry::new(),
     runtime_slots: @host.HostWindowRuntimeSlots::new(),
+    platform_windows: @host.HostPlatformWindowMap::new(),
     window_id: None,
     renderer: None,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
@@ -190,6 +192,9 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
         primary=true,
       )
       self.window_id = Some(window_id)
+      ignore(
+        self.platform_windows.bind(platform_id=window.id(), host_id=window_id),
+      )
       self.register_primary_runtime_slot(window_id)
       let renderer_result = try? WebRenderer::create(
         canvas_id=window_web_default_canvas_id(window.id().into_raw()),
@@ -235,25 +240,29 @@ pub impl @window_web.ApplicationHandler for WebApp with new_events(
 pub impl @window_web.ApplicationHandler for WebApp with window_event(
   self,
   event_loop,
-  _window_id,
+  platform_window_id,
   event,
 ) {
   self.drain_window_requests(event_loop)
   if event_loop.exiting() {
     return ()
   }
+  let window_id = match self.platform_windows.lookup_host(platform_window_id) {
+    Some(window_id) => window_id
+    None => return ()
+  }
   match event {
     @window_core.WindowEvent::CloseRequested => {
-      self.dispatch_window_event(event)
+      self.dispatch_window_event(window_id, event)
       self.dispose()
       event_loop.exit()
     }
     @window_core.WindowEvent::SurfaceResized(_) => {
-      self.dispatch_window_event(event)
+      self.dispatch_window_event(window_id, event)
       self.request_redraw()
     }
     @window_core.WindowEvent::ScaleFactorChanged(_, _) => {
-      self.dispatch_window_event(event)
+      self.dispatch_window_event(window_id, event)
       self.request_redraw()
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
@@ -261,14 +270,14 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
         position,
         scale_factor=self.current_scale_factor(),
       )
-      self.dispatch_window_event(event)
+      self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
       self.last_pointer = @host.physical_position_to_core(
         position,
         scale_factor=self.current_scale_factor(),
       )
-      self.dispatch_pointer_or_context_menu(event)
+      self.dispatch_pointer_or_context_menu(window_id, event)
     }
     @window_core.WindowEvent::DragEntered(_, position)
     | @window_core.WindowEvent::DragMoved(position)
@@ -277,25 +286,26 @@ pub impl @window_web.ApplicationHandler for WebApp with window_event(
         position,
         scale_factor=self.current_scale_factor(),
       )
-      self.dispatch_window_event(event)
+      self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::DragLeft(Some(position)) => {
       self.last_pointer = @host.physical_position_to_core(
         position,
         scale_factor=self.current_scale_factor(),
       )
-      self.dispatch_window_event(event)
+      self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
       self.modifiers = @host.modifiers_to_core(modifiers)
     @window_core.WindowEvent::RedrawRequested => self.redraw()
-    _ => self.dispatch_window_event(event)
+    _ => self.dispatch_window_event(window_id, event)
   }
 }
 
 ///|
 fn WebApp::dispatch_pointer_or_context_menu(
   self : WebApp,
+  window_id : @host.HostWindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
   if @host.window_event_is_context_menu_button(event) {
@@ -305,7 +315,7 @@ fn WebApp::dispatch_pointer_or_context_menu(
       self.sync_text_input_session()
     }
   } else {
-    self.dispatch_window_event(event)
+    self.dispatch_window_event(window_id, event)
   }
 }
 
@@ -328,6 +338,7 @@ fn WebApp::redraw(self : WebApp) -> Unit {
 ///|
 fn WebApp::dispatch_window_event(
   self : WebApp,
+  window_id : @host.HostWindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
   self.modifiers = web_modifiers_after_window_event(self.modifiers, event)
@@ -339,7 +350,7 @@ fn WebApp::dispatch_window_event(
       scale_factor=self.current_scale_factor(),
     ) {
     Some(host_event) => {
-      self.apply_window_lifecycle(host_event)
+      self.apply_window_lifecycle(window_id, host_event)
       match host_event {
         @host.HostEvent::Resized(metrics) => {
           self.resize_renderer(metrics)
@@ -507,14 +518,11 @@ fn WebApp::sync_runtime_slot(
 ///|
 fn WebApp::apply_window_lifecycle(
   self : WebApp,
+  window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
-  match self.window_id {
-    Some(window_id) =>
-      if self.windows.apply_host_event(window_id, host_event) {
-        self.sync_runtime_slot(window_id)
-      }
-    None => ()
+  if self.windows.apply_host_event(window_id, host_event) {
+    self.sync_runtime_slot(window_id)
   }
 }
 
@@ -576,6 +584,7 @@ fn WebApp::dispose(self : WebApp) -> Unit {
       ignore(self.windows.close(window_id))
       self.sync_runtime_slot(window_id)
       ignore(self.runtime_slots.remove(window_id))
+      ignore(self.platform_windows.remove_host(window_id))
       ignore(self.windows.remove_closed())
       self.window_id = None
     }

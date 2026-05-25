@@ -483,6 +483,48 @@ test "host window request queue drains with shared completion handler" {
 }
 
 ///|
+test "host platform window map routes platform window ids" {
+  let map = HostPlatformWindowMap::new()
+  inspect(map.is_empty(), content="true")
+  let platform_main = @window_core.WindowId::from_raw(11)
+  let platform_inspector = @window_core.WindowId::from_raw(12)
+  let main = HostWindowId::new(1)
+  let inspector = HostWindowId::new(2)
+  assert_true(map.bind(platform_id=platform_main, host_id=main))
+  inspect(
+    map.bind(platform_id=platform_main, host_id=inspector),
+    content="false",
+  )
+  inspect(
+    map.bind(platform_id=platform_inspector, host_id=main),
+    content="false",
+  )
+  assert_true(map.bind(platform_id=platform_inspector, host_id=inspector))
+  inspect(map.count(), content="2")
+  match map.lookup_host(platform_main) {
+    Some(id) => assert_true(id == main)
+    None => fail("expected main host id")
+  }
+  match map.lookup_platform(inspector) {
+    Some(id) => assert_true(id == platform_inspector)
+    None => fail("expected inspector platform id")
+  }
+  match map.remove_host(main) {
+    Some(id) => assert_true(id == platform_main)
+    None => fail("expected removed main platform id")
+  }
+  match map.lookup_host(platform_main) {
+    Some(_) => fail("expected removed main host lookup")
+    None => ()
+  }
+  match map.remove_platform(platform_inspector) {
+    Some(id) => assert_true(id == inspector)
+    None => fail("expected removed inspector host id")
+  }
+  inspect(map.is_empty(), content="true")
+}
+
+///|
 test "host window scene resolver maps open requests to runtimes" {
   let resolver = HostWindowSceneResolver::new(resolve=request => {
     if request.scene.scene_id == "inspector" {
