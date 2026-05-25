@@ -139,6 +139,7 @@ fn build_native_draw_plan(
     start_index=0,
     stop_at_layer=false,
     stop_at_filter=false,
+    initial_state=native_paint_state_default(),
     size,
     scale_factor,
   ).plan
@@ -158,6 +159,7 @@ fn build_native_draw_plan_range(
   start_index~ : Int,
   stop_at_layer~ : Bool,
   stop_at_filter~ : Bool,
+  initial_state~ : NativePaintState,
   size : @core.Size,
   scale_factor : Double,
 ) -> NativeDrawPlanRangeResult {
@@ -167,7 +169,7 @@ fn build_native_draw_plan_range(
     let text_vertices : Array[TextVertex] = []
     let image_vertices : Array[ImageVertex] = []
     let items : Array[NativeDrawItem] = []
-    let mut state = native_paint_state_default()
+    let mut state = initial_state
     let state_stack : Array[NativePaintState] = []
     let mut full = false
     let mut index = start_index
@@ -328,6 +330,7 @@ fn build_native_draw_plan_range(
               start_index=index + 1,
               stop_at_layer=true,
               stop_at_filter=false,
+              initial_state=native_scoped_child_paint_state(state),
               size,
               scale_factor,
             )
@@ -364,6 +367,7 @@ fn build_native_draw_plan_range(
               start_index=index + 1,
               stop_at_layer=false,
               stop_at_filter=true,
+              initial_state=native_scoped_child_paint_state(state),
               size,
               scale_factor,
             )
@@ -455,6 +459,13 @@ fn native_paint_state_default() -> NativePaintState {
     clip_radius: 0.0,
     clip_empty: false,
   }
+}
+
+///|
+fn native_scoped_child_paint_state(
+  state : NativePaintState,
+) -> NativePaintState {
+  { ..state, opacity: 1.0 }
 }
 
 ///|

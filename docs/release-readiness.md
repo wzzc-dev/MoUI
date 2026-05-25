@@ -67,7 +67,7 @@ This snapshot records the current preview-readiness evidence gathered on
 | --- | --- | --- |
 | Daily baseline | `sh scripts/dev-check.sh` passed after the Windows Showcase unused import cleanup. | current |
 | Public API audit | The async image diagnostics slice added `ImageResourceLifecycle::snapshot` and `WgpuRenderer::image_resources`; the Web ready/failed diagnostics refresh also ran `moon info` and produced no generated interface diff. | current |
-| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is explicitly marked `gap`; Web rounded clip submit maps to the browser layer-mask path; native/Web image resource snapshots now expose partial async image diagnostics, including Web ready/failed refresh from the browser image cache after host submission. | current with tracked renderer gaps |
+| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is explicitly marked `gap`; Web rounded clip submit maps to the browser layer-mask path; native/Web image resource snapshots now expose partial async image diagnostics, including Web ready/failed refresh from the browser image cache after host submission; scoped layer/filter transform/clip inheritance now has renderer tests. | current with tracked renderer gaps |
 | Text conformance | `sh scripts/conformance-check.sh --text` and `sh scripts/conformance-check.sh --text-diagnostic` both passed. | current with shaping/emoji gaps documented |
 | Platform contracts | `sh scripts/dev-check.sh --platform-examples-test` passed on macOS/Darwin and included `backend/macos` native backend tests. | current for macOS host; Windows/Linux runtime evidence remains host-limited |
 | Examples | `moon test examples/showcase/app --target native` and `moon build examples/showcase/web_wasm --target wasm-gc` passed for Showcase capability alignment; daily checks also cover Markdown Editor app and Web build. | current |
@@ -122,7 +122,7 @@ Current alignment:
 | Text | Most catalog sections. | Showcase app tests assert many section labels and renderer report text. | Covered broadly as view output, while shaping conformance remains tracked in text tests. |
 | Image | Text/media and visual correctness cards. | Showcase app tests assert `DrawImage`; renderer/Web adapter tests cover image lifecycle snapshots. | Covered for visible image commands; async diagnostics are partial but Web snapshots now refresh ready/failed records from the browser image cache after host submission. |
 | Clip | Scroll/capability card and clipped image demos. | Showcase app tests assert `PushClip` and clipped long renderer content; Web adapter tests preserve rounded clip host calls. | Covered for visible clipping; Web rounded clip submit uses the browser layer-mask path. |
-| Transform | Visual correctness image uses scale/offset. | No dedicated Showcase test for transform semantics beyond generated commands. | Keep capability status `partial` until renderer tests cover layer-level transform state. |
+| Transform | Visual correctness image uses scale/offset. | Native renderer tests cover scoped layer transform/clip inheritance; Web adapter tests preserve transform scope around layer commands. | Keep capability status `partial` until richer render-pass transform state and browser pixel evidence exist. |
 | Opacity | Visual correctness image and state-driven visuals. | Showcase app tests assert `PushOpacity`. | Covered for view-level opacity emission; renderer-specific blending remains renderer evidence. |
 | Layer compositing | Used indirectly by advanced renderer scopes where applicable. | Capability report card lists status; no dedicated Showcase assertion. | Keep primary evidence in renderer tests/report unless a visible layer demo is added. |
 | Blend mode | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only if a visible comparison demo is useful. |
@@ -147,10 +147,12 @@ documentation evidence.
 
 1. Layer-level transform state
    - Current status: affine transforms are folded into visual, image, and text
-     vertices; layer-level transform state remains follow-up work.
-   - Done when: native and Web behavior are explicit, tests cover the chosen
-     semantics, and the capability report no longer overstates or understates
-     support.
+     vertices. Native scoped layer/filter child plans inherit transform and
+     clip while outer opacity is applied at composite time; Web scoped layers
+     clone current transform/clip state through the browser runtime.
+   - Done when: richer render-pass transform state and visible/pixel evidence
+     are in place, or the remaining limits are explicitly documented for the
+     preview handoff.
    - Evidence: renderer tests, `render/capabilities.mbt`,
      `render/capabilities_test.mbt`, `docs/renderer-capability-report.md`, and
      Showcase if visible.

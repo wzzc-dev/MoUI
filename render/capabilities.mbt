@@ -160,8 +160,8 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::Transform,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Native wgpu folds affine transforms into planned visual, image, and text vertices; scissor uses transformed bounding boxes and layer-level transform state remains follow-up work.",
-      web_note: "The browser WebGPU host folds affine transforms into visual, image, and text vertices; richer render-pass transform state remains follow-up work.",
+      native_note: "Native wgpu folds affine transforms into planned visual, image, and text vertices; scissor uses transformed bounding boxes; scoped layer/filter child plans inherit transform and clip while outer opacity is applied at composite time. Richer render-pass transform state remains follow-up work.",
+      web_note: "The browser WebGPU host folds affine transforms into visual, image, and text vertices, and scoped layer/filter commands clone the current transform and clip state. Richer render-pass transform state remains follow-up work.",
     },
     {
       feature: RendererFeature::Opacity,

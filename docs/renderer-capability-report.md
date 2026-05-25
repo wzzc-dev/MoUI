@@ -21,7 +21,7 @@ Status meanings:
 | Text | ready | ready | None |
 | Image | ready | ready | Native decodes PNG/JPEG/BMP from local file paths and base64 data URIs through `mizchi/image`; Web loads browser-supported sources into a WebGPU texture cache. |
 | Clip | ready | ready | Rectangular transformed scissor behavior is aligned; rounded clips are handled through native shader SDF masks and Web offscreen layer-mask scopes. |
-| Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices; layer-level transform state remains follow-up work. |
+| Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices. Scoped native layer/filter child plans now inherit transform and clip, and Web scoped layers clone the current transform/clip state; richer render-pass transform state and pixel evidence remain follow-up work. |
 | Opacity | ready | ready | None |
 | Layer compositing | ready | ready | Native and Web render layer scopes into offscreen GPU textures and composite them back through the advanced GPU pass with opacity and masks. |
 | Blend mode | ready | ready | Source-over, multiply, screen, darken, and lighten map to GPU blend states; overlay uses a backdrop-sampling GPU pass for exact channel math. |
@@ -41,7 +41,9 @@ sources, texture caching, GPU sampling, contain/cover fit modes, and fallback
 handling.
 Clip support uses transformed rectangular scissor rectangles and rounded clips
 with shader SDF masks. Transform support is applied to planned visual, image,
-and text vertices. Opacity is folded into visual and text vertex alpha.
+and text vertices. Scoped layer/filter child plans inherit transform and clip
+state while outer opacity is applied once at composite time. Opacity is folded
+into visual and text vertex alpha.
 Layer compositing and filter scopes render into offscreen textures before the
 parent pass samples them through the advanced composite shader. That pass
 applies opacity, rectangular or rounded masks, built-in filter payloads, and
@@ -112,7 +114,9 @@ Clip support maps transformed rectangular clip stacks to per-item scissor
 rectangles. Rounded clip scopes are submitted as offscreen layer scopes with a
 rounded mask, reusing the browser runtime's layer-mask composite path.
 Transform support is folded into generated visual, image, and text vertices,
-with clip scissors derived from transformed bounding boxes.
+with clip scissors derived from transformed bounding boxes. Scoped layer/filter
+commands clone the current transform and clip state before rendering into their
+offscreen scope.
 The Web runtime forwards layer, filter, and shader-effect commands through the
 wasm-gc host ABI. The browser runtime uses draw scopes, offscreen WebGPU
 textures, and an advanced composite shader for layer opacity, masks, filters,
