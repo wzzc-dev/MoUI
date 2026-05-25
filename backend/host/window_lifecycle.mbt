@@ -474,6 +474,22 @@ pub fn HostWindowRuntimeSlots::apply_host_event(
 }
 
 ///|
+pub fn HostWindowRuntimeSlots::apply_request(
+  self : HostWindowRuntimeSlots,
+  registry : HostWindowRegistry,
+  request : HostWindowRequest,
+) -> HostWindowRequestResult {
+  let result = registry.apply_request(request)
+  match result {
+    HostWindowRequestResult::WindowOpened(id)
+    | HostWindowRequestResult::WindowUpdated(id) =>
+      ignore(self.sync_from_registry(registry, id))
+    HostWindowRequestResult::WindowRejected(_) => ()
+  }
+  result
+}
+
+///|
 pub fn HostWindowRuntimeSlots::remove(
   self : HostWindowRuntimeSlots,
   id : HostWindowId,

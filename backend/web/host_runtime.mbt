@@ -441,17 +441,14 @@ fn WebApp::apply_current_window_request(
   match (self.window_id, self.window) {
     (Some(current), Some(window)) =>
       if current == id {
-        let result = self.windows.apply_request(request)
+        let result = self.runtime_slots.apply_request(self.windows, request)
         match result {
           @host.HostWindowRequestResult::WindowRejected(_) => ()
-          _ => {
-            self.sync_runtime_slot(id)
-            apply(window)
-          }
+          _ => apply(window)
         }
         result
       } else {
-        self.windows.apply_request(request)
+        self.runtime_slots.apply_request(self.windows, request)
       }
     _ =>
       @host.HostWindowRequestResult::WindowRejected(
