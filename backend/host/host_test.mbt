@@ -1820,6 +1820,76 @@ test "host driver context menu pastes unicode into focused text input" {
 }
 
 ///|
+test "host driver keyboard paste replaces selection with extended emoji" {
+  let text = @core.State::new("")
+  let clipboard = Ref("☕️👩‍💻")
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::TextFieldSpec({
+      key: None,
+      value: text.binding(),
+      placeholder: "Type",
+      size: @core.Size::new(width=240.0, height=40.0),
+      font: @core.FontSpec::new(size=16.0, weight=400),
+      foreground: @core.Color::black(),
+      placeholder_color: @core.Color::gray(),
+      background: @core.Brush::solid(@core.Color::white()),
+      border: None,
+      focused_border: None,
+      cursor_color: @core.Color::blue(),
+      corner_radius: 0.0,
+      on_submit: None,
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText(clipboard.val)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("replace")),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Keyboard(
+        @core.KeyboardEvent::new(
+          key="a",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="v",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(text.get(), content="☕️👩‍💻")
+  inspect(driver.focused_text_input().caret, content="5")
+}
+
+///|
 test "host driver falls back clipboard shortcuts to action commands" {
   let copied = Ref(0)
   let runtime = @core.AppRuntime::new_spec(
@@ -1945,6 +2015,79 @@ test "host driver dispatches ime composition text input events" {
     ),
   )
   inspect(text.get(), content="你")
+}
+
+///|
+test "host driver keeps unicode composition update in focused text state" {
+  let text = @core.State::new("")
+  let runtime = @core.AppRuntime::new_spec(
+    root=@core.ViewSpec::TextFieldSpec({
+      key: None,
+      value: text.binding(),
+      placeholder: "Type",
+      size: @core.Size::new(width=240.0, height=40.0),
+      font: @core.FontSpec::new(size=16.0, weight=400),
+      foreground: @core.Color::black(),
+      placeholder_color: @core.Color::gray(),
+      background: @core.Brush::solid(@core.Color::white()),
+      border: None,
+      focused_border: None,
+      cursor_color: @core.Color::blue(),
+      corner_radius: 0.0,
+      on_submit: None,
+    }),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("ab")),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::CompositionStart),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(
+        @core.TextInputEvent::CompositionUpdate(
+          @core.CompositionUpdate::new(
+            text="你☕️",
+            cursor=Some(@core.TextRange::new(start=3, end=3)),
+          ),
+        ),
+      ),
+    ),
+  )
+  let composing = driver.focused_text_input()
+  guard composing.composition is Some(composition) else {
+    fail("expected host-routed composition text")
+  }
+  inspect(composition, content="你☕️")
+  guard composing.composition_cursor is Some(cursor) else {
+    fail("expected host-routed composition cursor")
+  }
+  inspect(cursor.start, content="3")
+  inspect(cursor.end, content="3")
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::CompositionEnd("你☕️")),
+    ),
+  )
+  inspect(text.get(), content="ab你☕️")
+  inspect(driver.focused_text_input().caret, content="5")
 }
 
 ///|
