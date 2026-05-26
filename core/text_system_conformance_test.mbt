@@ -134,7 +134,11 @@ test "fallback text system conforms for unicode samples" {
   assert_text_layout_invariants(system, "abc", font)
   assert_text_layout_invariants(system, "你好", font)
   assert_text_layout_invariants(system, "🙂", font)
+  assert_text_layout_invariants(system, "☕", font)
+  assert_text_layout_invariants(system, "☕️", font)
+  assert_text_layout_invariants(system, "👩‍💻", font)
   assert_text_layout_invariants(system, "a你🙂b", font)
+  assert_text_layout_invariants(system, "text 👩‍💻 🙂", font)
   assert_text_layout_invariants(system, "abc אבג def", font)
 }
 
@@ -160,6 +164,31 @@ test "text field conformance covers cjk emoji replacement and deletion" {
   runtime.dispatch_event(TextInput(InsertText("你好🙂")))
   inspect(state.get(), content="你好🙂")
   inspect(runtime.focused_text_input().caret, content="3")
+}
+
+///|
+test "text field conformance covers unicode undo redo history" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=220.0, height=60.0),
+  )
+  focus_text_conformance_field(runtime)
+  runtime.dispatch_event(TextInput(InsertText("你")))
+  runtime.dispatch_event(TextInput(InsertText("☕️")))
+  runtime.dispatch_event(TextInput(InsertText("👩‍💻")))
+  inspect(state.get(), content="你☕️👩‍💻")
+  inspect(runtime.focused_text_input().caret, content="6")
+  let undo = runtime.dispatch_focused_text_command(Undo)
+  assert_true(undo.handled)
+  assert_true(undo.changed)
+  inspect(state.get(), content="你☕️")
+  inspect(runtime.focused_text_input().caret, content="3")
+  let redo = runtime.dispatch_focused_text_command(Redo)
+  assert_true(redo.handled)
+  assert_true(redo.changed)
+  inspect(state.get(), content="你☕️👩‍💻")
+  inspect(runtime.focused_text_input().caret, content="6")
 }
 
 ///|
@@ -200,6 +229,58 @@ test "text field conformance keeps mixed bidi caret movement logical" {
   inspect(selection.normalized().end, content="9")
   runtime.dispatch_event(TextInput(InsertText("ZZ")))
   inspect(state.get(), content="abc אבגZZef")
+}
+
+///|
+test "text field conformance commits unicode composition over selection" {
+  let state = State::new("")
+  let runtime = RuntimeState::new_spec(
+    root=test_text_field(state.binding()),
+    size=Size::new(width=220.0, height=60.0),
+  )
+  focus_text_conformance_field(runtime)
+  runtime.dispatch_event(TextInput(InsertText("abc🙂def")))
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Home")))
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="ArrowRight")))
+  runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="ArrowRight")))
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(
+        key="ArrowRight",
+        modifiers=KeyModifiers::new(shift=true),
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Keyboard(
+      KeyboardEvent::new(
+        key="ArrowRight",
+        modifiers=KeyModifiers::new(shift=true),
+      ),
+    ),
+  )
+  runtime.dispatch_event(TextInput(CompositionStart))
+  runtime.dispatch_event(
+    TextInput(
+      CompositionUpdate(
+        CompositionUpdate::new(
+          text="你☕️",
+          cursor=Some(TextRange::new(start=3, end=3)),
+        ),
+      ),
+    ),
+  )
+  let composing = runtime.focused_text_input()
+  guard composing.composition is Some(composition) else {
+    fail("expected unicode composition preview")
+  }
+  inspect(composition, content="你☕️")
+  runtime.dispatch_event(TextInput(CompositionEnd("你☕️")))
+  inspect(state.get(), content="ab你☕️def")
+  inspect(runtime.focused_text_input().caret, content="5")
+  let undo = runtime.dispatch_focused_text_command(Undo)
+  assert_true(undo.handled)
+  inspect(state.get(), content="abc🙂def")
 }
 
 ///|
