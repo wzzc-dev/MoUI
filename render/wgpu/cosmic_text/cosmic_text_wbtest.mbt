@@ -318,3 +318,63 @@ test "cosmic text maps control symbols before layout" {
   )
   inspect(cosmic_text_safe_text("你好abc"), content="你好abc")
 }
+
+///|
+fn cosmic_test_carets_are_monotonic(carets : Array[Double]) -> Bool {
+  if carets.length() <= 1 {
+    return true
+  }
+  for index in 1..<carets.length() {
+    if carets[index] < carets[index - 1] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn assert_cosmic_text_contract_sample(text : String) -> Unit raise {
+  let system = @wgpu_renderer.native_text_system_with_engine(
+    cosmic_text_engine(),
+  )
+  let font = @core.FontSpec::new(size=16.0, weight=500)
+  let measured = system.measure_text(@core.TextLayoutInput::new(text~, font~))
+  inspect(measured.size.width > 0.0, content="true")
+  inspect(measured.size.height > 0.0, content="true")
+  inspect(measured.baseline > 0.0, content="true")
+  inspect(measured.baseline <= measured.size.height, content="true")
+  inspect(
+    measured.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  inspect(
+    cosmic_test_carets_are_monotonic(measured.caret_positions),
+    content="true",
+  )
+  let clamped = system.measure_text(
+    @core.TextLayoutInput::new(text~, font~, max_width=32.0),
+  )
+  inspect(clamped.size.width <= 32.0, content="true")
+  inspect(
+    clamped.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  inspect(
+    cosmic_test_carets_are_monotonic(clamped.caret_positions),
+    content="true",
+  )
+  for caret in clamped.caret_positions {
+    inspect(caret <= 32.0, content="true")
+  }
+}
+
+///|
+test "cosmic text system satisfies core unicode measure contract" {
+  assert_cosmic_text_contract_sample("abc")
+  assert_cosmic_text_contract_sample("你好")
+  assert_cosmic_text_contract_sample("🙂")
+  assert_cosmic_text_contract_sample("☕️")
+  assert_cosmic_text_contract_sample("👩‍💻")
+  assert_cosmic_text_contract_sample("a你🙂b")
+  assert_cosmic_text_contract_sample("abc אבג def")
+}

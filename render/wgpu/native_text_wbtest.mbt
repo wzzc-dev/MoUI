@@ -233,6 +233,43 @@ test "native text engine rejects undersized platform measure carets" {
 }
 
 ///|
+test "native text engine rejects invalid platform measure baseline" {
+  let system = native_text_system_with_engine(
+    native_platform_text_engine_with_fallback(
+      NativePlatformTextProvider::new(
+        id="test-platform-text",
+        measure=_input => {
+          Some(
+            NativeTextLayout::new(
+              size=@core.Size::new(width=42.0, height=18.0),
+              baseline=24.0,
+              caret_positions=[0.0, 14.0, 28.0, 42.0],
+            ),
+          )
+        },
+        layout_run=(_run, _scale) => None,
+        raster_glyph=(_cache_key, _payload) => None,
+      ),
+      fallback=test_fallback_text_engine(),
+    ),
+  )
+  let text = "abc"
+  let result = system.measure_text(
+    @core.TextLayoutInput::new(
+      text~,
+      font=@core.FontSpec::new(size=14.0, weight=400),
+    ),
+  )
+  inspect(result.size.width > 0.0, content="true")
+  inspect(result.size.height > 0.0, content="true")
+  inspect(result.baseline <= result.size.height, content="true")
+  inspect(
+    result.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+}
+
+///|
 test "native text engine falls back when platform glyph raster fails" {
   let cache = NativeFontCache::new_with_engine(
     native_platform_text_engine_with_fallback(
