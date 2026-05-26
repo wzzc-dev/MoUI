@@ -47,26 +47,54 @@ fn assert_diagnostic_native_text_layout(
 }
 
 ///|
-test "diagnostic native cosmic provider conforms across unicode samples" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
-    @cosmic_text.cosmic_text_engine(),
-  )
+fn assert_diagnostic_native_text_matrix(system : @core.TextSystem) -> Unit raise {
   assert_diagnostic_native_text_layout(system, "abc")
   assert_diagnostic_native_text_layout(system, "你好")
   assert_diagnostic_native_text_layout(system, "🙂")
+  assert_diagnostic_native_text_layout(system, "☕")
+  assert_diagnostic_native_text_layout(system, "☕️")
+  assert_diagnostic_native_text_layout(system, "👩‍💻")
   assert_diagnostic_native_text_layout(system, "a你🙂b")
+  assert_diagnostic_native_text_layout(system, "text 👩‍💻 🙂")
   assert_diagnostic_native_text_layout(system, "abc אבג def")
 }
 
 ///|
-test "diagnostic native emoji samples keep deterministic caret coverage" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
-    @cosmic_text.cosmic_text_engine(),
+test "diagnostic native core fallback engine matrix conforms" {
+  assert_diagnostic_native_text_matrix(@core.TextSystem::fallback())
+}
+
+///|
+test "diagnostic native cosmic engine matrix conforms" {
+  assert_diagnostic_native_text_matrix(
+    @wgpu_renderer.native_text_system_with_engine(
+      @cosmic_text.cosmic_text_engine(),
+    ),
   )
-  assert_diagnostic_native_text_layout(system, "☕")
-  assert_diagnostic_native_text_layout(system, "☕️")
-  assert_diagnostic_native_text_layout(system, "👩‍💻")
-  assert_diagnostic_native_text_layout(system, "text 👩‍💻 🙂")
+}
+
+///|
+test "diagnostic native directwrite scaffold matrix uses cosmic fallback" {
+  assert_diagnostic_native_text_matrix(
+    @wgpu_renderer.native_text_system_with_engine(
+      @wgpu_renderer.native_platform_text_engine_with_fallback(
+        @directwrite.directwrite_text_provider(),
+        fallback=@cosmic_text.cosmic_text_engine(),
+      ),
+    ),
+  )
+}
+
+///|
+test "diagnostic native fontconfig scaffold matrix uses cosmic fallback" {
+  assert_diagnostic_native_text_matrix(
+    @wgpu_renderer.native_text_system_with_engine(
+      @wgpu_renderer.native_platform_text_engine_with_fallback(
+        @fontconfig.fontconfig_text_provider(),
+        fallback=@cosmic_text.cosmic_text_engine(),
+      ),
+    ),
+  )
 }
 
 ///|
@@ -90,5 +118,5 @@ test "diagnostic native composed fallback keeps malformed providers safe" {
       fallback=@cosmic_text.cosmic_text_engine(),
     ),
   )
-  assert_diagnostic_native_text_layout(system, "a你🙂b")
+  assert_diagnostic_native_text_matrix(system)
 }

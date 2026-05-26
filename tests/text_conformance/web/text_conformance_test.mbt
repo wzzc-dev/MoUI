@@ -57,30 +57,29 @@ fn assert_diagnostic_web_text_layout(
 }
 
 ///|
-test "diagnostic web host text system conforms across unicode samples" {
+fn assert_diagnostic_web_text_matrix(system : @core.TextSystem) -> Unit raise {
+  assert_diagnostic_web_text_layout(system, "abc")
+  assert_diagnostic_web_text_layout(system, "你好")
+  assert_diagnostic_web_text_layout(system, "🙂")
+  assert_diagnostic_web_text_layout(system, "☕")
+  assert_diagnostic_web_text_layout(system, "☕️")
+  assert_diagnostic_web_text_layout(system, "👩‍💻")
+  assert_diagnostic_web_text_layout(system, "a你🙂b")
+  assert_diagnostic_web_text_layout(system, "text 👩‍💻 🙂")
+  assert_diagnostic_web_text_layout(system, "abc אבג def")
+}
+
+///|
+test "diagnostic web core fallback engine matrix conforms" {
+  assert_diagnostic_web_text_matrix(@core.TextSystem::fallback())
+}
+
+///|
+test "diagnostic web host text system matrix conforms" {
   let renderer = @webgpu_adapter.create_renderer(
     canvas_id="text-conformance",
     logical_size=@core.Size::new(width=120.0, height=60.0),
     port=diagnostic_web_port(),
   )
-  let system = renderer.text_system()
-  assert_diagnostic_web_text_layout(system, "abc")
-  assert_diagnostic_web_text_layout(system, "你好")
-  assert_diagnostic_web_text_layout(system, "🙂")
-  assert_diagnostic_web_text_layout(system, "a你🙂b")
-  assert_diagnostic_web_text_layout(system, "abc אבג def")
-}
-
-///|
-test "diagnostic web emoji samples keep deterministic caret coverage" {
-  let renderer = @webgpu_adapter.create_renderer(
-    canvas_id="text-emoji-conformance",
-    logical_size=@core.Size::new(width=120.0, height=60.0),
-    port=diagnostic_web_port(),
-  )
-  let system = renderer.text_system()
-  assert_diagnostic_web_text_layout(system, "☕")
-  assert_diagnostic_web_text_layout(system, "☕️")
-  assert_diagnostic_web_text_layout(system, "👩‍💻")
-  assert_diagnostic_web_text_layout(system, "text 👩‍💻 🙂")
+  assert_diagnostic_web_text_matrix(renderer.text_system())
 }
