@@ -15,13 +15,20 @@ sh scripts/setup-local-deps.sh
 sh scripts/check-local-deps.sh
 ```
 
-This keeps `Milky2018/window` resolved through the local path override in
-`moon.mod.json`:
+This keeps `Milky2018/window` declared in `moon.mod` and resolved through the
+local workspace member in `moon.work`:
 
-```json
-"Milky2018/window": {
-  "path": ".local_repos/window"
+```moonbit
+import {
+  "Milky2018/window@0.5.1",
 }
+```
+
+```toml
+members = [
+  ".",
+  ".local_repos/window",
+]
 ```
 
 The checkout is intentionally a normal editable Git repository, not a submodule.
