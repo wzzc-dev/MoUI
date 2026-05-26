@@ -328,7 +328,7 @@ fn ElementNode::child_frames_for_place(
     StackSpec(_) => self.children.map(_child => frame)
     ScrollSpec(data) =>
       if self.children.length() > 0 {
-        [frame.offset(dx=-data.offset.x, dy=-data.offset.y)]
+        [scroll_child_frame(frame, data, self.children[0])]
       } else {
         []
       }
@@ -367,6 +367,22 @@ fn ElementNode::child_frames_for_place(
     ComponentSpec(_) => if self.children.length() > 0 { [frame] } else { [] }
     _ => []
   }
+}
+
+///|
+fn scroll_child_frame(
+  frame : Rect,
+  data : ScrollViewSpec,
+  child : ElementNode,
+) -> Rect {
+  let viewport = data.viewport.unwrap_or(frame.size)
+  let child_size = child.intrinsic_size()
+  Rect::new(
+    x=frame.origin.x - data.offset.x,
+    y=frame.origin.y - data.offset.y,
+    width=max_double(viewport.width, child_size.width),
+    height=max_double(viewport.height, child_size.height),
+  )
 }
 
 ///|

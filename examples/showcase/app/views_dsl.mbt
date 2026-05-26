@@ -28,9 +28,11 @@ using @views {
   searchbar,
   sheet,
   spacer,
+  stack,
   surface,
   text,
   text_field,
+  tooltip,
   toggle,
   toggle_switch,
 }

@@ -28,10 +28,36 @@ fn section_panel(
     ),
     width=metrics.panel_width,
     height=metrics.panel_height,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.SurfaceVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
+  ).border(showcase_panel_border(theme))
+}
+
+///|
+fn showcase_panel_border(theme : @core.Theme) -> @core.BorderStyle {
+  @core.BorderStyle::new(
+    brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.82)),
+    width=1.0,
   )
+}
+
+///|
+fn showcase_soft_card(
+  theme : @core.Theme,
+  child : @core.ViewSpec,
+  width~ : Double,
+  height~ : Double,
+  padding? : Double = 0.0,
+) -> @core.ViewSpec {
+  surface(
+    child,
+    width~,
+    height~,
+    variant=@views.SurfaceVariant::Base,
+    theme~,
+    padding~,
+  ).border(showcase_panel_border(theme))
 }
 
 ///|
@@ -122,31 +148,28 @@ fn ShowcaseApp::visual_card(
   self : ShowcaseApp,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
+  card_width : Double,
   active : Bool,
   offset : Double,
   opacity : Double,
 ) -> @core.ViewSpec {
-  let card_width = if metrics.compact && metrics.body_width >= 448.0 {
-    212.0
-  } else if metrics.compact {
-    min_showcase_double(metrics.body_width, 320.0)
-  } else {
-    284.0
-  }
   let media_width = max_showcase_double(120.0, card_width - 36.0)
+  let media_height = if metrics.compact { 96.0 } else { 136.0 }
+  let card_height = if metrics.compact { 250.0 } else { 300.0 }
   let gradient = @core.Brush::linear_gradient(
     start=@core.Point::new(x=0.0, y=0.0),
     end=@core.Point::new(x=260.0, y=160.0),
     start_color=theme.palette.primary.multiply_alpha(0.92),
     end_color=theme.palette.surface_variant,
   )
-  surface(
+  showcase_soft_card(
+    theme,
     column(
       [
         image(
           showcase_image_source(),
           width=media_width,
-          height=96.0,
+          height=media_height,
           opacity~,
           corner_radius=theme.radius_scale.lg,
           fit=@core.ImageFit::Cover,
@@ -183,9 +206,7 @@ fn ShowcaseApp::visual_card(
       align=@views.CrossAlign::Start,
     ),
     width=card_width,
-    height=250.0,
-    variant=@views.SurfaceVariant::Raised,
-    theme~,
+    height=card_height,
     padding=theme.spacing_scale.md,
   )
 }
@@ -202,9 +223,9 @@ fn ShowcaseApp::capability_card(
     120.0,
     width - theme.spacing_scale.lg * 2.0,
   )
-  let list_height = max_showcase_double(56.0, height - 78.0)
+  let list_height = max_showcase_double(56.0, height - 72.0)
   let rows : Array[@core.ViewSpec] = []
-  let visible_limit = max_showcase_int(1, (list_height / 24.0).to_int())
+  let visible_limit = max_showcase_int(1, (list_height / 42.0).to_int())
   let entries = @render.renderer_feature_follow_ups()
   for entry in @render.renderer_feature_capability_report() {
     if !entries.any(existing => existing.feature == entry.feature) {
@@ -214,11 +235,12 @@ fn ShowcaseApp::capability_card(
   let mut visible_count = 0
   for entry in entries {
     if visible_count < visible_limit {
-      rows.push(capability_row(entry, theme))
+      rows.push(capability_row(entry, theme, inner_width))
       visible_count = visible_count + 1
     }
   }
-  surface(
+  showcase_soft_card(
+    theme,
     column(
       [
         text("Renderer capability", width=inner_width, height=28.0)
@@ -239,8 +261,6 @@ fn ShowcaseApp::capability_card(
     ),
     width~,
     height~,
-    variant=@views.SurfaceVariant::Raised,
-    theme~,
     padding=theme.spacing_scale.md,
   )
 }
@@ -253,7 +273,8 @@ fn ShowcaseApp::visual_correctness_card(
   opacity : Double,
 ) -> @core.ViewSpec {
   ignore(self)
-  surface(
+  showcase_soft_card(
+    theme,
     row(
       [
         image(
@@ -289,8 +310,6 @@ fn ShowcaseApp::visual_correctness_card(
     ),
     width=292.0,
     height=74.0,
-    variant=@views.SurfaceVariant::Raised,
-    theme~,
   )
 }
 
@@ -306,10 +325,32 @@ fn ShowcaseApp::shortcut_preview(
     .foreground(theme.palette.foreground),
     width=220.0,
     height=50.0,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.SurfaceVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
-  )
+  ).border(showcase_panel_border(theme))
+}
+
+///|
+fn ShowcaseApp::progress_preview(
+  self : ShowcaseApp,
+  theme : @core.Theme,
+  value : Double,
+  width~ : Double,
+) -> @core.ViewSpec {
+  ignore(self)
+  surface(
+    progress(
+      value,
+      width=max_showcase_double(80.0, width - 24.0),
+      foreground=theme.palette.primary,
+    ),
+    width~,
+    height=42.0,
+    variant=@views.SurfaceVariant::Base,
+    theme~,
+    padding=12.0,
+  ).border(showcase_panel_border(theme))
 }
 
 ///|
@@ -518,16 +559,19 @@ fn ShowcaseApp::sheet(
 fn capability_row(
   entry : @render.RendererFeatureCapability,
   theme : @core.Theme,
+  width : Double,
 ) -> @core.ViewSpec {
-  let status = capability_status_label(entry)
+  let status_width = clamp_double(width * 0.42, 112.0, 176.0)
+  let feature_width = max_showcase_double(
+    70.0,
+    width - status_width - theme.spacing_scale.xs,
+  )
   row(
     [
-      text(entry.feature.label(), width=92.0, height=22.0)
+      text(entry.feature.label(), width=feature_width, height=38.0)
       .font(theme.typography.caption)
       .foreground(theme.palette.foreground),
-      text(status, width=112.0, height=22.0)
-      .font(theme.typography.caption)
-      .foreground(capability_status_color(entry, theme)),
+      capability_status_view(entry, theme, status_width),
     ],
     spacing=theme.spacing_scale.xs,
     align=@views.CrossAlign::Center,
@@ -535,14 +579,28 @@ fn capability_row(
 }
 
 ///|
-fn capability_status_label(entry : @render.RendererFeatureCapability) -> String {
+fn capability_status_view(
+  entry : @render.RendererFeatureCapability,
+  theme : @core.Theme,
+  width : Double,
+) -> @core.ViewSpec {
   if entry.native_status == entry.web_status {
-    entry.native_status.label()
+    text(entry.native_status.label(), width~, height=38.0)
+    .font(theme.typography.caption)
+    .foreground(capability_status_color(entry, theme))
   } else {
-    "native " +
-    entry.native_status.label() +
-    " / web " +
-    entry.web_status.label()
+    column(
+      [
+        text("native " + entry.native_status.label(), width~, height=18.0)
+        .font(theme.typography.caption)
+        .foreground(capability_status_color(entry, theme)),
+        text("web " + entry.web_status.label(), width~, height=18.0)
+        .font(theme.typography.caption)
+        .foreground(capability_status_color(entry, theme)),
+      ],
+      spacing=2.0,
+      align=@views.CrossAlign::Start,
+    )
   }
 }
 

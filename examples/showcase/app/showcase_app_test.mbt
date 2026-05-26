@@ -11,7 +11,9 @@ test "showcase app emits visual polish commands" {
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
   let renderer_commands = runtime.draw_commands()
   assert_true(
-    renderer_commands.any(command => command is @core.DrawCommand::DrawShadow(_)),
+    renderer_commands.any(command => {
+      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, _)
+    }),
   )
   assert_true(
     renderer_commands.any(command => command is @core.DrawCommand::DrawPath(_)),
@@ -64,6 +66,52 @@ test "showcase navigation dialog and sheet state are wired" {
   assert_true(app.sheet_visible.get())
   assert_true(app.navigation.current() == "navigation")
   assert_true(app.selected_section.get() == "navigation")
+}
+
+///|
+test "showcase sidebar catalog scrolls to lower sections" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=760.0, height=420.0)
+  let size = @core.Size::new(width=760.0, height=420.0)
+  assert_false(text_within(runtime.draw_commands(), "Interaction Lab", size))
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=80.0, y=330.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-260.0),
+      ),
+    ),
+  )
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  assert_true(app.sidebar_scroll.offset().y > 0.0)
+  let scrolled_commands = runtime.draw_commands()
+  assert_true(text_within(scrolled_commands, "Interaction Lab", size))
+  assert_true(has_sidebar_scrollbar(scrolled_commands))
+  guard text_frame(scrolled_commands, "Interaction Lab") is Some(target) else {
+    fail("expected scrolled sidebar item text")
+  }
+  let click_point = @core.Point::new(
+    x=target.origin.x + target.size.width / 2.0,
+    y=target.origin.y + target.size.height / 2.0,
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=click_point,
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=click_point,
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  assert_true(app.selected_section.get() == "interaction-lab")
 }
 
 ///|
@@ -155,6 +203,113 @@ test "showcase embeds reusable example apps and renderer report" {
 }
 
 ///|
+test "showcase navigates to system gallery sections" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=960.0, height=620.0)
+  app.select_section("advanced-rendering")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let advanced_commands = runtime.draw_commands()
+  assert_true(has_text(advanced_commands, "Advanced Rendering"))
+  assert_true(has_text(advanced_commands, "Layer + Blend"))
+  assert_true(has_text(advanced_commands, "Filter"))
+  assert_true(has_text(advanced_commands, "Shader"))
+  assert_true(has_text(advanced_commands, "Path + Transform"))
+  app.select_section("text-diagnostics")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let text_commands = runtime.draw_commands()
+  assert_true(has_text(text_commands, "Text Diagnostics"))
+  assert_true(has_text(text_commands, "CJK"))
+  assert_true(has_text(text_commands, "RTL / Bidi"))
+  assert_true(has_text(text_commands, "Emoji"))
+  assert_true(has_text(text_commands, "Wrapping"))
+  app.select_section("interaction-lab")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let interaction_commands = runtime.draw_commands()
+  assert_true(has_text(interaction_commands, "Interaction Lab"))
+  assert_true(has_text(interaction_commands, "Tooltip"))
+  assert_true(has_text(interaction_commands, "File Drop"))
+  assert_true(has_text(interaction_commands, "Focus + Shortcut"))
+  assert_true(has_text(interaction_commands, "Variants"))
+  assert_true(has_text(interaction_commands, "Image Lifecycle"))
+}
+
+///|
+test "showcase advanced rendering emits low level draw commands" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=960.0, height=620.0)
+  app.select_section("advanced-rendering")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let commands = runtime.draw_commands()
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::PushLayer(_)),
+  )
+  assert_true(commands.any(command => command is @core.DrawCommand::PopLayer))
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::PushFilter(_)),
+  )
+  assert_true(commands.any(command => command is @core.DrawCommand::PopFilter))
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::DrawShaderEffect(_)),
+  )
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::DrawPath(_)),
+  )
+}
+
+///|
+test "showcase text diagnostics keeps key labels bounded" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=760.0, height=420.0)
+  app.select_section("text-diagnostics")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let commands = runtime.draw_commands()
+  let size = @core.Size::new(width=760.0, height=420.0)
+  assert_true(text_within(commands, "Text Diagnostics", size))
+  assert_true(text_within(commands, "CJK", size))
+  assert_true(text_within(commands, "RTL / Bidi", size))
+  assert_true(has_text(commands, "Emoji"))
+  assert_true(has_text_containing(commands, "native gap"))
+  assert_true(has_text_containing(commands, "web partial"))
+  assert_true(has_text(commands, "Wrapping"))
+}
+
+///|
+test "showcase interaction lab exposes tooltip variants and file drop wiring" {
+  let app = @app.ShowcaseApp::new()
+  let runtime = app.runtime(width=960.0, height=620.0)
+  app.select_section("interaction-lab")
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Tooltip: Meta+K"))
+  assert_true(has_text(commands, "No files dropped"))
+  assert_true(has_text(commands, "Primary"))
+  assert_true(has_text(commands, "Tonal"))
+  assert_true(has_text(commands, "Outline"))
+  assert_true(has_text(commands, "Ready"))
+  assert_true(has_text(commands, "Loading"))
+  assert_true(has_text(commands, "Failed"))
+  guard text_frame(commands, "Drop files here") is Some(drop_frame) else {
+    fail("expected file drop zone text")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::DragDrop(
+      @core.DragDropEvent::new(
+        phase=@core.DragDropPhase::Dropped,
+        paths=["/tmp/showcase.txt"],
+        position=Some(
+          @core.Point::new(
+            x=drop_frame.origin.x + 4.0,
+            y=drop_frame.origin.y + 4.0,
+          ),
+        ),
+      ),
+    ),
+  )
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  assert_true(has_text(runtime.draw_commands(), "Dropped 1 file(s)"))
+}
+
+///|
 test "showcase keeps header and overview content bounded across viewport sizes" {
   for
     size in [
@@ -168,8 +323,23 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
     assert_true(text_within(commands, "Dialog", size))
     assert_true(text_within(commands, "Renderer capability", size))
     assert_true(text_within(commands, "Keyboard: Meta+K", size))
+    assert_true(text_within(commands, "Layered card with image", size))
     assert_false(has_text(commands, "🔍"))
     assert_false(has_text(commands, "?"))
+    for route in ["advanced-rendering", "text-diagnostics", "interaction-lab"] {
+      app.select_section(route)
+      runtime.dispatch_event(
+        @core.AppEvent::Redraw(@core.RedrawReason::Explicit),
+      )
+      let section_commands = runtime.draw_commands()
+      match route {
+        "advanced-rendering" =>
+          assert_true(text_within(section_commands, "Advanced Rendering", size))
+        "text-diagnostics" =>
+          assert_true(text_within(section_commands, "Text Diagnostics", size))
+        _ => assert_true(text_within(section_commands, "Interaction Lab", size))
+      }
+    }
   }
 }
 
@@ -195,7 +365,20 @@ test "showcase renderer section clips long capability content" {
   assert_true(has_text(commands, "emoji-text"))
   assert_true(has_text(commands, "async-image"))
   assert_true(has_text(commands, "partial"))
-  assert_true(has_text(commands, "native gap / web partial"))
+  assert_true(
+    text_within(
+      commands,
+      "native gap",
+      @core.Size::new(width=760.0, height=420.0),
+    ),
+  )
+  assert_true(
+    text_within(
+      commands,
+      "web partial",
+      @core.Size::new(width=760.0, height=420.0),
+    ),
+  )
 }
 
 ///|
@@ -266,6 +449,17 @@ fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
 }
 
 ///|
+fn has_text_containing(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> Bool {
+  commands.any(command => {
+    command is @core.DrawCommand::DrawText({ text: value, .. }) &&
+    value.contains(text)
+  })
+}
+
+///|
 fn text_within(
   commands : Array[@core.DrawCommand],
   text : String,
@@ -329,6 +523,17 @@ fn layout_tile_marker_count(commands : Array[@core.DrawCommand]) -> Int {
     }
   }
   count
+}
+
+///|
+fn has_sidebar_scrollbar(commands : Array[@core.DrawCommand]) -> Bool {
+  commands.any(command => {
+    match command {
+      @core.DrawCommand::FillRoundedRectBrush({ rect, .. }, _) =>
+        rect.size.width == 4.0 && rect.size.height >= 32.0
+      _ => false
+    }
+  })
 }
 
 ///|

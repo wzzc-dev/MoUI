@@ -309,7 +309,7 @@ fn ElementNode::render_with_environment(
       if self.children.length() > 0 {
         children.push(
           self.children[0].render_with_environment(
-            bounds.offset(dx=-data.offset.x, dy=-data.offset.y),
+            scroll_child_frame(bounds, data, self.children[0]),
             focused,
             environment,
           ),

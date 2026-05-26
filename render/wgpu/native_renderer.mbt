@@ -6,6 +6,7 @@ struct RendererHandle {
   mut last_batches : Array[@render.RectBatch]
   mut configured : Bool
   mut present_count : Int
+  mut surface_format : @wgpu_mbt.TextureFormat
   mut instance : @wgpu_mbt.Instance?
   mut adapter : @wgpu_mbt.Adapter?
   mut device : @wgpu_mbt.Device?
@@ -236,6 +237,7 @@ fn create_with_surface(
     last_batches: [],
     configured: true,
     present_count: 0,
+    surface_format: format,
     instance: Some(instance),
     adapter: Some(adapter),
     device: Some(device),
@@ -308,14 +310,12 @@ fn RendererHandle::resize(
         @wgpu_mbt.TEXTURE_USAGE_RENDER_ATTACHMENT |
         @wgpu_mbt.TEXTURE_USAGE_COPY_SRC,
       )
-      ignore(
-        surface.configure_default(
-          adapter,
-          device,
-          @render.size_dim_to_uint(physical_size.width),
-          @render.size_dim_to_uint(physical_size.height),
-          usage,
-        ),
+      self.surface_format = surface.configure_default(
+        adapter,
+        device,
+        @render.size_dim_to_uint(physical_size.width),
+        @render.size_dim_to_uint(physical_size.height),
+        usage,
       )
       self.configured = true
     }
@@ -1093,10 +1093,13 @@ fn RendererHandle::create_offscreen_texture(
         @wgpu_mbt.TEXTURE_USAGE_TEXTURE_BINDING |
         @wgpu_mbt.TEXTURE_USAGE_COPY_SRC,
       )
-      let texture = device.create_texture_rgba8_2d_with_usage(
+      let texture = device.create_texture_u32(
         @render.size_dim_to_uint(size.width),
         @render.size_dim_to_uint(size.height),
+        1U,
         usage,
+        @wgpu_mbt.TextureDimension::from_u32(@wgpu_mbt.TEXTURE_DIMENSION_2D),
+        self.surface_format,
       )
       let view = texture.create_view()
       let bind_group = create_advanced_bind_group(

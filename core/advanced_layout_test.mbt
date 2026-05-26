@@ -121,6 +121,69 @@ test "scroll clip wraps child draw commands in collected paint order" {
 }
 
 ///|
+test "scroll hit testing reaches offset children" {
+  let clicks = Ref("")
+  let button = ViewSpec::ButtonSpec({
+    key: None,
+    text: "Second",
+    size: Size::new(width=80.0, height=30.0),
+    font: FontSpec::new(size=16.0, weight=600),
+    foreground: Color::black(),
+    background: Brush::solid(Color::gray()),
+    hovered_background: Brush::solid(Color::gray()),
+    pressed_background: Brush::solid(Color::blue()),
+    border: None,
+    shadow: None,
+    corner_radius: 0.0,
+    on_click: Some(() => clicks.val = "second"),
+  })
+  let root = ViewSpec::ScrollSpec({
+    key: None,
+    offset: Point::new(x=0.0, y=34.0),
+    viewport: Some(Size::new(width=80.0, height=40.0)),
+    on_scroll: None,
+    child: ViewSpec::FlexSpec({
+      key: None,
+      axis: Axis::Vertical,
+      spacing: 4.0,
+      main_axis_alignment: MainAxisAlignment::MainStart,
+      cross_axis_alignment: CrossAxisAlignment::CrossStart,
+      children: [
+        ViewSpec::TextSpec({
+          key: None,
+          text: "First",
+          size: Size::new(width=80.0, height=30.0),
+          font: FontSpec::new(),
+          color: Color::black(),
+        }),
+        button,
+      ],
+    }),
+  })
+  let runtime = RuntimeState::new_spec(
+    root~,
+    size=Size::new(width=80.0, height=40.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=12.0, y=12.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=12.0, y=12.0),
+        phase=PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(clicks.val, content="second")
+}
+
+///|
 test "modifier order changes background frame around padding" {
   let inner_background = test_label("A").background(Color::blue()).padding(8.0)
   let outer_background = test_label("A").padding(8.0).background(Color::blue())
