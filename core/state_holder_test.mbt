@@ -128,3 +128,34 @@ test "app runtime exposes explicit focus traversal helpers" {
   inspect(first.get(), content="ac")
   inspect(second.get(), content="b")
 }
+
+///|
+test "app runtime focus traversal skips disabled controls" {
+  let first = State::new("")
+  let disabled = State::new("")
+  let third = State::new("")
+  let runtime = AppRuntime::new_spec(
+    root=ViewSpec::FlexSpec({
+      key: None,
+      axis: Axis::Vertical,
+      spacing: 8.0,
+      main_axis_alignment: MainStart,
+      cross_axis_alignment: CrossStretch,
+      children: [
+        test_text_field(first.binding()),
+        test_text_field(disabled.binding()).disabled(),
+        test_text_field(third.binding()),
+      ],
+    }),
+    size=Size::new(width=160.0, height=180.0),
+  )
+  assert_true(runtime.focus_next())
+  runtime.dispatch_event(TextInput(TextInputEvent::InsertText("a")))
+  assert_true(runtime.focus_next())
+  runtime.dispatch_event(TextInput(TextInputEvent::InsertText("b")))
+  assert_true(runtime.focus_previous())
+  runtime.dispatch_event(TextInput(TextInputEvent::InsertText("c")))
+  inspect(first.get(), content="ac")
+  inspect(disabled.get(), content="")
+  inspect(third.get(), content="b")
+}
