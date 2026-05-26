@@ -946,6 +946,65 @@ test "host window registry applies platform-neutral window requests" {
 }
 
 ///|
+test "host window lifecycle rejects queued commands after platform close" {
+  let registry = HostWindowRegistry::new()
+  let closed = registry.open(
+    title="Inspector",
+    metrics=HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=240.0),
+    ),
+  )
+  assert_true(registry.close(closed))
+  match registry.lookup(closed) {
+    Some({ phase, primary, .. }) => {
+      assert_true(phase == HostWindowLifecyclePhase::WindowClosed)
+      inspect(primary, content="false")
+    }
+    None => fail("expected closed window record before cleanup")
+  }
+
+  let queue = HostWindowRequestQueue::new()
+  queue.focus_window(closed)
+  queue.resize_window(
+    closed,
+    HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=1.0, height=1.0),
+    ),
+  )
+  queue.minimize_window(closed)
+  queue.show_window(closed)
+  queue.set_primary_window(closed)
+  queue.close_window(closed)
+
+  let completions = queue.drain_with_handler(request =>
+    registry.apply_request(request)
+  )
+  inspect(queue.pending_count(), content="0")
+  inspect(completions.length(), content="6")
+  inspect(queue.completed_count(), content="6")
+  match completions[0].result {
+    HostWindowRequestResult::WindowRejected(message) =>
+      inspect(message, content="cannot focus window: 1")
+    _ => fail("expected focus rejection for closed window")
+  }
+  match completions[1].result {
+    HostWindowRequestResult::WindowRejected(message) =>
+      inspect(message, content="cannot resize window: 1")
+    _ => fail("expected resize rejection for closed window")
+  }
+  match completions[5].result {
+    HostWindowRequestResult::WindowRejected(message) =>
+      inspect(message, content="cannot close window: 1")
+    _ => fail("expected close rejection for closed window")
+  }
+  inspect(registry.remove_closed(), content="1")
+  match registry.lookup(closed) {
+    Some(_) => fail("expected closed window cleanup")
+    None => ()
+  }
+}
+
+///|
 test "host service bridge gates typed platform requests by capability" {
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(
