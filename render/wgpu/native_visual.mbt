@@ -1727,15 +1727,32 @@ fn advanced_shader_wgsl() -> String {
     #|    let dist = rounded_box_sdf_advanced(local - mask_size * 0.5, mask_size * 0.5, in.rect_mask.z);
     #|    mask_alpha = 1.0 - smoothstep(-0.5, 0.5, dist);
     #|  }
-    #|  if i32(in.meta0.y + 0.5) == 3 {
+    #|  let blend_mode = i32(in.meta0.y + 0.5);
+    #|  let source_alpha = clamp(sample.a * opacity * mask_alpha, 0.0, 1.0);
+    #|  var source_rgb = sample.rgb;
+    #|  if shader_kind == 0 && sample.a > 0.0001 {
+    #|    source_rgb = clamp(sample.rgb / sample.a, vec3<f32>(0.0, 0.0, 0.0), vec3<f32>(1.0, 1.0, 1.0));
+    #|  }
+    #|  if blend_mode == 1 {
+    #|    return vec4<f32>(source_rgb * source_alpha + vec3<f32>(1.0 - source_alpha), source_alpha);
+    #|  }
+    #|  if blend_mode == 2 {
+    #|    return vec4<f32>(source_rgb * source_alpha, source_alpha);
+    #|  }
+    #|  if blend_mode == 3 {
     #|    let backdrop = textureSample(backdrop_texture, layer_sampler, in.uv);
-    #|    let source_alpha = clamp(sample.a * opacity * mask_alpha, 0.0, 1.0);
-    #|    let blended = overlay_rgb(backdrop.rgb, sample.rgb);
+    #|    let blended = overlay_rgb(backdrop.rgb, source_rgb);
     #|    let out_rgb = mix(backdrop.rgb, blended, source_alpha);
     #|    let out_alpha = source_alpha + backdrop.a * (1.0 - source_alpha);
     #|    return vec4<f32>(out_rgb, out_alpha);
     #|  }
-    #|  return vec4<f32>(sample.rgb, sample.a * opacity * mask_alpha);
+    #|  if blend_mode == 4 {
+    #|    return vec4<f32>(source_rgb * source_alpha + vec3<f32>(1.0 - source_alpha), source_alpha);
+    #|  }
+    #|  if blend_mode == 5 {
+    #|    return vec4<f32>(source_rgb * source_alpha, source_alpha);
+    #|  }
+    #|  return vec4<f32>(source_rgb, source_alpha);
     #|}
     #|
   shader

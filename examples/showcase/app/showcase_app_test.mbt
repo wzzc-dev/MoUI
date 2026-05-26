@@ -254,6 +254,15 @@ test "showcase advanced rendering emits low level draw commands" {
   assert_true(
     commands.any(command => command is @core.DrawCommand::DrawPath(_)),
   )
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::PushClip(_)),
+  )
+  assert_false(
+    commands.any(command => {
+      command
+      is @core.DrawCommand::PushLayer({ mask: @core.LayerMask::NoMask, .. })
+    }),
+  )
 }
 
 ///|
