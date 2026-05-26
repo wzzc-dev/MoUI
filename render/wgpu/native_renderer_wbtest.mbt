@@ -506,3 +506,13 @@ test "native renderer plans overlay layer for backdrop sampling pass" {
     _ => fail("expected overlay native layer item")
   }
 }
+
+///|
+test "advanced layer shader keeps transparent blend samples neutral" {
+  let shader = advanced_shader_wgsl()
+  assert_true(shader.contains("source_rgb = clamp(sample.rgb / sample.a"))
+  assert_true(
+    shader.contains("source_rgb * source_alpha + vec3<f32>(1.0 - source_alpha)"),
+  )
+  assert_true(shader.contains("return vec4<f32>(source_rgb * source_alpha"))
+}

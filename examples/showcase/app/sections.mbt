@@ -718,7 +718,9 @@ fn advanced_rendering_canvas(
         width=96.0,
         height=58.0,
       )
+      let layer_mask = @core.LayerMask::RoundedMask(bg)
       let commands : Array[@core.DrawCommand] = [
+        @core.DrawCommand::PushClip(frame),
         @core.DrawCommand::FillRoundedRectBrush(
           bg,
           @core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.36)),
@@ -737,6 +739,7 @@ fn advanced_rendering_canvas(
               @core.LayerSpec::new(
                 opacity=0.86,
                 blend_mode=@core.BlendMode::Multiply,
+                mask=layer_mask,
                 offscreen=true,
               ),
             ),
@@ -753,6 +756,7 @@ fn advanced_rendering_canvas(
               @core.LayerSpec::new(
                 opacity=0.72,
                 blend_mode=@core.BlendMode::Screen,
+                mask=layer_mask,
                 offscreen=true,
               ),
             ),
@@ -777,6 +781,7 @@ fn advanced_rendering_canvas(
               @core.LayerSpec::new(
                 opacity=0.68,
                 blend_mode=@core.BlendMode::Overlay,
+                mask=layer_mask,
                 offscreen=true,
               ),
             ),
@@ -879,6 +884,7 @@ fn advanced_rendering_canvas(
           commands.push(@core.DrawCommand::PopOpacity)
         }
       }
+      commands.push(@core.DrawCommand::PopClip)
       commands
     },
     semantics_label=mode,
