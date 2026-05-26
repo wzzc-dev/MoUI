@@ -116,3 +116,49 @@ test "runtime text system drives custom layout baselines" {
     None => fail("expected injected baseline in custom place")
   }
 }
+
+///|
+test "runtime text system baseline flows through nested layout modifiers" {
+  let seen_baseline : Ref[Double?] = Ref(None)
+  let system = TextSystem::new(id="test-nested-baseline", measure=input => {
+    let length = input.text.to_array().length()
+    let carets : Array[Double] = []
+    for index in 0..<(length + 1) {
+      carets.push(index.to_double() * 6.0)
+    }
+    {
+      size: Size::new(width=length.to_double() * 6.0, height=28.0),
+      baseline: 19.0,
+      caret_positions: carets,
+    }
+  })
+  let spec = ViewSpec::custom_layout(
+    children=[
+      ViewSpec::TextSpec({
+        key: None,
+        text: "Nested",
+        size: Size::new(width=80.0, height=24.0),
+        font: FontSpec::new(size=16.0),
+        color: Color::black(),
+      })
+      .padding(4.0)
+      .frame(width=96.0, height=40.0),
+    ],
+    measure=ctx => {
+      seen_baseline.val = ctx.child_baselines[0]
+      Size::new(width=96.0, height=40.0)
+    },
+    place=ctx => [ctx.frame],
+  )
+  ignore(
+    layout_spec_with_text_system(
+      spec,
+      Rect::new(x=0.0, y=0.0, width=96.0, height=40.0),
+      text_system=system,
+    ),
+  )
+  match seen_baseline.val {
+    Some(value) => inspect(value, content="19")
+    None => fail("expected nested modifier baseline from injected text system")
+  }
+}
