@@ -3,7 +3,8 @@
 MoUI examples are runnable documentation. Showcase is the visual catalog and
 contains the Counter and Todo interaction patterns. The WYSIWYG Markdown editor
 stays separate because it demonstrates a larger editing workflow with its own
-model and parser tests.
+model and parser tests. Showcase surfaces renderer capability follow-ups first
+so visible docs do not hide partial or gap status behind ready features.
 
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |

@@ -3,6 +3,9 @@
 This page tracks draw command coverage for the native wgpu renderer and the
 wasm-gc WebGPU host bridge. The same status data is codified in
 `render/capabilities.mbt` and checked by `render/capabilities_test.mbt`.
+Showcase consumes the same report and prioritizes follow-up rows in its visible
+capability card, but renderer support claims still come from this report plus
+renderer/provider tests.
 
 Status meanings:
 

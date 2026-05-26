@@ -112,9 +112,12 @@ Text conformance is split into two layers:
 
 - Stable tests run inside normal package checks and cover `core`,
   `render/wgpu`, `render/webgpu_adapter`, and `backend/web`.
-- Diagnostic tests live under `tests/text_conformance/` and are opt-in. They
-  are deterministic, broader than the default loop, and document known gaps
-  instead of adding expected-failing cases.
+- Diagnostic matrix tests live under `tests/text_conformance/` and are opt-in.
+  They compare core fallback, Cosmic, platform-default composed fallback,
+  malformed-provider fallback, and Web text systems where the current host can
+  actually exercise them. Strict failures stay limited to contract invariants;
+  width/baseline differences across engines are diagnostic unless the contract
+  says otherwise.
 
 Focused checks for text-system work:
 

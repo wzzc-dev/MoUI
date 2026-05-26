@@ -22,7 +22,8 @@ Use this skill when the user asks to:
   or navigation behavior.
 - Add or adjust shared app logic under `examples/<name>/app`.
 - Add or adjust platform entrypoints under `examples/<name>/web_wasm`,
-  `examples/<name>/macos`, or `examples/<name>/windows`.
+  `examples/<name>/macos`, `examples/<name>/windows`, or
+  `examples/<name>/linux`.
 - Validate an application build or app-level tests.
 
 ## Non-Goals
@@ -58,9 +59,11 @@ separate framework task using `moui-framework-development-skill`.
   `@core.ViewSpec`.
 - Keep state, reducers, data models, and view composition in the shared app
   package when the behavior should work across platforms.
-- Keep platform-specific setup in `web_wasm`, `macos`, or `windows` entrypoints.
-- Showcase also has `macos_cosmic` and `windows_cosmic` entrypoints when an app
-  task needs explicit Moon Cosmic text-provider comparison.
+- Keep platform-specific setup in `web_wasm`, `macos`, `windows`, or `linux`
+  entrypoints.
+- Showcase also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic`
+  entrypoints when an app task needs explicit Moon Cosmic text-provider
+  comparison.
 - Treat Linux as a scaffold until the framework has a real Linux backend.
 
 ## Development Workflow
@@ -101,6 +104,8 @@ moon build examples/showcase/macos --target native
 moon build examples/showcase/macos_cosmic --target native
 moon build examples/showcase/windows --target native
 moon build examples/showcase/windows_cosmic --target native
+moon build examples/showcase/linux --target native
+moon build examples/showcase/linux_cosmic --target native
 moon build examples/markdown_editor/macos --target native
 moon build examples/markdown_editor/windows --target native
 ```

@@ -18,6 +18,9 @@ with current files and validation output:
 - Renderer capability status is synchronized between
   `render/capabilities.mbt`, `render/capabilities_test.mbt`, and
   `docs/renderer-capability-report.md`.
+- High-risk behavior uses the same four-layer conformance model: `core`
+  contract tests, host routing tests, implementation/provider tests, and
+  matrix/diagnostic conformance entrypoints.
 - Showcase and Markdown Editor serve as runnable documentation rather than
   hidden smoke tests.
 - Showcase remains the preferred visible validation surface for framework
@@ -54,6 +57,7 @@ Before calling a preview-release handoff complete, collect fresh evidence for:
 | Daily baseline | Bounded package checks and Web wasm-gc example builds pass. | `sh scripts/dev-check.sh` |
 | Public API audit | Generated interfaces reviewed after public API changes. | `moon info` plus `pkg.generated.mbti` diff review |
 | Renderer sync | Capability code, tests, docs, and visible Showcase coverage agree. | `moon test render --target native`, `moon test render/wgpu --target native`, `moon test render/webgpu_adapter --target wasm-gc`, Showcase Web build |
+| Focused conformance | Input/focus, layout, render, platform service, and text slices pass at their owning layer. | `sh scripts/conformance-check.sh --input`, `--layout`, `--render`, `--platform-services`, `--text`, `--text-diagnostic` |
 | Text conformance | Stable text contracts and diagnostic gaps are current. | `sh scripts/conformance-check.sh --text`, `sh scripts/conformance-check.sh --text-diagnostic` |
 | Platform contracts | Shared host and active backend behavior stay covered. | `moon test backend/host --target native`, `moon test backend/web --target wasm-gc`, `sh scripts/dev-check.sh --platform-examples-test` when platform behavior changes |
 | Examples | Showcase and Markdown Editor remain runnable docs; new user-facing features have visible Showcase coverage or a recorded reason to skip it. | App package tests plus Web wasm-gc builds |
@@ -62,17 +66,18 @@ Before calling a preview-release handoff complete, collect fresh evidence for:
 ## Current Evidence Snapshot
 
 This snapshot records the current preview-readiness evidence gathered on
-2026-05-25. Refresh it before a release candidate handoff.
+2026-05-26. Refresh it before a release candidate handoff.
 
 | Gate | Current evidence | Status |
 | --- | --- | --- |
-| Daily baseline | `sh scripts/dev-check.sh` passed after the Windows Showcase unused import cleanup. | current |
+| Daily baseline | `sh scripts/dev-check.sh` passed on 2026-05-26 after conformance layering and example evidence updates. | current |
 | Public API audit | The async image diagnostics slice added `ImageResourceLifecycle::snapshot` and `WgpuRenderer::image_resources`; the Web ready/failed diagnostics refresh also ran `moon info` and produced no generated interface diff. | current |
-| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. Path/vector is now marked `ready` for native and Web after `DrawPath` mesh submission landed on both visual GPU pipelines; Web rounded clip submit maps to the browser layer-mask path; native/Web image resource snapshots now expose partial async image diagnostics, including Web ready/failed refresh from the browser image cache after host submission; scoped layer/filter transform/clip inheritance now has renderer tests. | current with tracked renderer gaps |
-| Text conformance | `sh scripts/conformance-check.sh --text` and `sh scripts/conformance-check.sh --text-diagnostic` both passed. Diagnostic emoji samples now cover single-codepoint, variation-selector, and ZWJ measurement/caret invariants. | current with shaping/color-emoji gaps documented |
-| Platform contracts | `sh scripts/dev-check.sh --platform-examples-test` passed on macOS/Darwin and included `backend/macos` native backend tests. | current for macOS host; Windows/Linux runtime evidence remains host-limited |
-| Examples | `moon test examples/showcase/app --target native` and `moon build examples/showcase/web_wasm --target wasm-gc` passed for Showcase capability alignment; daily checks also cover Markdown Editor app and Web build. | current |
-| Guidance freshness | `AGENTS.md`, framework skill, and app skill were checked after release-readiness, platform validation, Showcase alignment, and text evidence updates. | current |
+| Renderer sync | `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md` remain the source of truth. `sh scripts/conformance-check.sh --render` passed after follow-up evidence was tightened for transform, text shaping, emoji text, and async image. | current with tracked renderer gaps |
+| Focused conformance | `sh scripts/conformance-check.sh --input`, `--layout`, `--platform-services`, `--text`, and `--text-diagnostic` passed. Platform-services skipped Linux only because the local window checkout lacks generated Wayland protocol sources. | current with host/setup-scoped Linux service evidence |
+| Text conformance | Stable text conformance covers core, native renderer/provider validation, Web adapter, and Web backend. Diagnostic matrix tests cover core fallback, Cosmic, platform-default composed fallback/scaffolds, malformed-provider fallback, and Web text systems where available. | current with shaping/color-emoji gaps documented |
+| Platform contracts | `backend/host` now covers post-close queued window command rejection and completion recording. `--platform-services` passed on the current host with host/Web/macOS service evidence and explicit Linux skip wording. | current for macOS host; Windows/Linux runtime evidence remains host-limited |
+| Examples | `moon test examples/showcase/app --target native`, `moon test examples/markdown_editor/app --target native`, and both Web wasm-gc builds passed. Showcase capability cards now surface follow-up rows first; Markdown Editor app tests cover Unicode paste through runtime undo/redo. | current |
+| Guidance freshness | `AGENTS.md`, framework skill, and app skill were updated/checked after conformance layering, platform validation, Showcase alignment, and text evidence updates. | current |
 
 ## Platform Validation Matrix
 
@@ -109,7 +114,8 @@ Showcase is still not automatically proof that every renderer feature has an
 end-to-end visual demo. Treat the Showcase renderer section as two surfaces:
 
 - The capability card lists `render.renderer_feature_capability_report()` so
-  users can inspect the current status data.
+  users can inspect the current status data. It shows follow-up rows before
+  ready rows so visible docs keep partial and gap items in view.
 - The visual cards and app tests provide stronger evidence only for the draw
   commands they actually emit.
 
@@ -123,16 +129,16 @@ Current alignment:
 | Text | Most catalog sections. | Showcase app tests assert many section labels and renderer report text. | Covered broadly as view output, while shaping conformance remains tracked in text tests. |
 | Image | Text/media and visual correctness cards. | Showcase app tests assert `DrawImage`; renderer/Web adapter tests cover image lifecycle snapshots. | Covered for visible image commands; async diagnostics are partial but Web snapshots now refresh ready/failed records from the browser image cache after host submission. |
 | Clip | Scroll/capability card and clipped image demos. | Showcase app tests assert `PushClip` and clipped long renderer content; Web adapter tests preserve rounded clip host calls. | Covered for visible clipping; Web rounded clip submit uses the browser layer-mask path. |
-| Transform | Visual correctness image uses scale/offset. | Native renderer tests cover scoped layer transform/clip inheritance; Web adapter tests preserve transform scope around layer commands. | Keep capability status `partial` until richer render-pass transform state and browser pixel evidence exist. |
+| Transform | Capability card lists follow-up status first; visual correctness image uses scale/offset. | Native renderer tests cover scoped layer transform/clip inheritance; Web adapter tests preserve transform scope around layer commands; Showcase app tests assert the follow-up row is visible. | Keep capability status `partial` until richer render-pass transform state and browser pixel evidence exist. |
 | Opacity | Visual correctness image and state-driven visuals. | Showcase app tests assert `PushOpacity`. | Covered for view-level opacity emission; renderer-specific blending remains renderer evidence. |
 | Layer compositing | Used indirectly by advanced renderer scopes where applicable. | Capability report card lists status; no dedicated Showcase assertion. | Keep primary evidence in renderer tests/report unless a visible layer demo is added. |
 | Blend mode | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only if a visible comparison demo is useful. |
 | Filter effect | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only if a visible comparison demo is useful. |
 | Path/vector | Theme/renderer section includes a vector path card that emits filled and stroked `DrawPath` commands. | Renderer tests cover `PathSpec` tessellation, native draw-plan path items, Web host-call forwarding, and fallback planning that keeps visible `DrawPath` out of fallback diagnostics; Showcase app tests assert `DrawPath` emission. | Covered by visible Showcase demo plus renderer/Web adapter command-level evidence. |
 | Shader effect | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only for user-inspectable built-ins. |
-| Text shaping | Capability card lists status; text/media section exercises text views. | Text conformance tests are primary evidence. | Do not use Showcase labels as proof of bidi/line-breaking/typography parity. |
-| Emoji text | Capability card lists status. | Diagnostic text conformance covers single-codepoint, variation-selector, and ZWJ emoji measurement/caret invariants. | Keep native `gap` and Web `partial`: the new evidence does not prove color emoji rendering, browser rasterization determinism, or full grapheme shaping parity. |
-| Async image | Capability card lists status; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; Web records submitted sources as loading and refreshes ready/failed records from the browser image cache. | Still partial because the app model does not receive renderer-specific async image notifications; diagnostics are renderer-local snapshots. |
+| Text shaping | Capability card lists follow-up status first; text/media section exercises text views. | Text conformance tests are primary evidence; Showcase app tests assert the follow-up row is visible. | Do not use Showcase labels as proof of bidi/line-breaking/typography parity. |
+| Emoji text | Capability card lists follow-up status first. | Diagnostic text conformance covers single-codepoint, variation-selector, and ZWJ emoji measurement/caret invariants; Showcase app tests assert the native gap/Web partial row is visible. | Keep native `gap` and Web `partial`: the new evidence does not prove color emoji rendering, browser rasterization determinism, or full grapheme shaping parity. |
+| Async image | Capability card lists follow-up status first; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; Web records submitted sources as loading and refreshes ready/failed records from the browser image cache; Showcase app tests assert the follow-up row is visible. | Still partial because the app model does not receive renderer-specific async image notifications; diagnostics are renderer-local snapshots. |
 
 If renderer support changes, update this alignment only when Showcase coverage
 or its evidence level changes. Otherwise keep the authoritative support status
