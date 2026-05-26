@@ -32,8 +32,8 @@ paths, or abstractions that only preserve old shapes.
   `render/wgpu/fontconfig/`, and the shared `render/wgpu/text_protocol/`
   package. `core/` owns only the neutral `TextSystem` contract.
 - `examples/*/app/` packages are shared app logic. Platform subpackages are
-  entrypoints only. Showcase also has `macos_cosmic` and `windows_cosmic`
-  entrypoints for explicit Moon Cosmic text-provider comparison.
+  entrypoints only. Showcase also has `macos_cosmic`, `windows_cosmic`, and
+  `linux_cosmic` entrypoints for explicit Moon Cosmic text-provider comparison.
 
 ## Local Dependencies
 
@@ -107,11 +107,22 @@ moon test core --target native
 moon test views --target native
 moon test render/webgpu_adapter --target wasm-gc
 moon test backend/web --target wasm-gc
+sh scripts/conformance-check.sh --input
+sh scripts/conformance-check.sh --layout
+sh scripts/conformance-check.sh --render
+sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
 moon build examples/showcase/web_wasm --target wasm-gc
 node --check scripts/validate-package-manifest.mjs
 ```
+
+Conformance work should stay layered: `core` owns platform-neutral contracts,
+`backend/host` owns event/service/window routing, renderer/provider packages own
+implementation validation, and `tests/*_conformance` plus
+`scripts/conformance-check.sh` own cross-engine or cross-platform matrix
+evidence. Examples demonstrate workflows but should not be the only proof for a
+shared contract.
 
 Run `moon info` after public API changes and review generated
 `pkg.generated.mbti` diffs.

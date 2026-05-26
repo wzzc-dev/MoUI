@@ -140,6 +140,31 @@ moon test render/webgpu_adapter --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
+## Conformance Ownership Layers
+
+High-risk framework behavior should be validated through four ownership layers
+instead of one large end-to-end assertion:
+
+1. Contract layer: `core/` defines platform-neutral semantics and invariants.
+   Text, input/focus, layout, selection, undo/redo, draw intent, and runtime
+   state transitions belong here.
+2. Host layer: `backend/host` and active platform backends prove that native or
+   browser events, services, window lifecycle requests, paste/composition, and
+   focused commands drive the runtime through shared contracts.
+3. Implementation layer: renderer and provider packages prove concrete
+   implementations honor the contract. This includes WGPU renderer capability
+   evidence, native text-provider metrics/raster validation, and Web adapter
+   host payload checks.
+4. Matrix layer: `tests/*_conformance` and `scripts/conformance-check.sh`
+   compare supported engines or platforms. Strict failures are reserved for
+   contract invariants; engine-specific metric differences should be reported
+   with documented tolerances or diagnostic wording.
+
+Examples are evidence consumers, not the only proof. Showcase and Markdown
+Editor should demonstrate visible workflows and carry app-level assertions, but
+shared contract claims still need package or conformance tests at the owning
+layer.
+
 ## Conformance-Oriented Coverage
 
 The SwiftUI/Flutter/Compose parity work should grow focused conformance tests
@@ -166,18 +191,24 @@ Use the conformance entrypoint for this suite:
 
 ```sh
 sh scripts/conformance-check.sh
+sh scripts/conformance-check.sh --input
+sh scripts/conformance-check.sh --layout
+sh scripts/conformance-check.sh --render
+sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
-sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --golden
 sh scripts/conformance-check.sh --bench
 sh scripts/conformance-check.sh --platform
 ```
 
 The base command runs runtime, host, renderer, Web backend, and Showcase app
-contracts. `--text` runs the stable text conformance surface across core,
-native renderer/provider, Web adapter, and Web backend packages.
-`--text-diagnostic` runs the opt-in diagnostic text packages.
+contracts. `--input` runs core input/focus semantics and shared host input
+routing. `--layout` runs core layout, baseline, and TextSystem-dependent
+geometry contracts. `--render` runs renderer facade, native WGPU, and Web
+adapter capability evidence. `--text` runs the stable text conformance surface
+across core, native renderer/provider, Web adapter, and Web backend packages.
+`--text-diagnostic` runs the opt-in cross-engine text matrix packages.
 `--platform-services` runs host and Web service contracts, runs current-host
 macOS service tests on Darwin, and runs Linux service tests only when the local
 window checkout has generated Wayland protocol sources available. `--golden`

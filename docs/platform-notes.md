@@ -37,7 +37,10 @@ and set-primary requests at the platform edge. Each drained request records an
 ordered completion on the same queue, so tests and higher-level host code can
 observe accepted operations and explicit rejections. Active backends use the
 shared queue drain helper for that drain-and-record loop so request completion
-tracking remains host-owned.
+tracking remains host-owned. Once the platform reports a window as closed,
+queued commands for that window are rejected rather than being replayed against
+stale runtime slots, and those rejections are recorded as normal request
+completions.
 Web, macOS, and Windows create the primary window through the same
 registry/slot path, and now also support resolver-backed `OpenWindow` requests
 through `run_app_with_options` and their app options. A resolved Web window
@@ -314,6 +317,7 @@ Use focused platform validation instead of broad all-repository native checks:
 ```sh
 moon test backend/host --target native
 moon test backend/web --target wasm-gc
+sh scripts/conformance-check.sh --platform-services
 sh scripts/dev-check.sh --platform-examples-test
 ```
 

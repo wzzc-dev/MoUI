@@ -67,6 +67,10 @@ Use this skill when editing or reviewing:
   diffs.
 - Renderer capability changes require synchronized updates to code, tests, docs,
   and Showcase when visible.
+- Conformance work uses four layers: `core` contract tests, `backend/host` and
+  platform routing tests, renderer/provider implementation tests, and matrix or
+  diagnostic tests under `tests/*_conformance` plus
+  `scripts/conformance-check.sh`.
 - Guidance changes are part of the maintenance surface: when architecture,
   package layout, validation commands, docs placement, examples, renderer
   capabilities, platform behavior, or text architecture changes, check
@@ -141,6 +145,10 @@ moon test backend/web --target wasm-gc
 moon test render --target native
 moon test render/wgpu --target native
 moon test render/webgpu_adapter --target wasm-gc
+sh scripts/conformance-check.sh --input
+sh scripts/conformance-check.sh --layout
+sh scripts/conformance-check.sh --render
+sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
 moon test examples/showcase/app --target native
