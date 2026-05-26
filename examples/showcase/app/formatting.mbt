@@ -179,17 +179,6 @@ fn showcase_markdown_lines(value : String) -> Array[String] {
 }
 
 ///|
-fn showcase_flat_filled_button_style(theme : @core.Theme) -> @core.ButtonStyle {
-  let style = @core.ButtonStyle::filled(theme~)
-  {
-    normal: { ..style.normal, shadow: None },
-    hovered: { ..style.hovered, shadow: None },
-    pressed: { ..style.pressed, shadow: None },
-    disabled: { ..style.disabled, shadow: None },
-  }
-}
-
-///|
 fn string_contains(value : String, needle : String) -> Bool {
   if needle == "" {
     true
@@ -269,20 +258,6 @@ fn showcase_metrics(
     action_width,
     compact: body_width < 620.0,
   }
-}
-
-///|
-fn showcase_panel_style(theme : @core.Theme) -> @core.SurfaceStyle {
-  {
-    ..@core.SurfaceStyle::raised(theme~),
-    shadow: None,
-    padding: @core.Insets::all(theme.spacing_scale.md),
-  }
-}
-
-///|
-fn showcase_raised_demo_style(theme : @core.Theme) -> @core.SurfaceStyle {
-  { ..@core.SurfaceStyle::raised(theme~), shadow: Some(theme.shadow_scale.sm) }
 }
 
 ///|

@@ -5,39 +5,47 @@ pub fn surface(
   height? : Double,
   background? : @core.Color,
   corner_radius? : Double = 0.0,
-  style? : @core.SurfaceStyle,
+  variant? : SurfaceVariant = SurfaceVariant::Base,
+  theme? : @core.Theme = @core.Theme::default(),
+  padding? : Double,
 ) -> @core.ViewSpec {
   let size = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  let (background, corner_radius, child) = match style {
-    Some(surface_style) =>
+  let style = variant.style(theme)
+  let child_padding = match padding {
+    Some(value) => @core.Insets::all(value)
+    None => style.padding
+  }
+  let (background, corner_radius, child) = match background {
+    Some(color) =>
       (
-        Some(surface_style.brush),
-        surface_style.radius,
-        @core.ViewSpec::PaddingSpec({
-          key: None,
-          insets: surface_style.padding,
-          child,
-        }),
+        Some(@core.Brush::solid(color)),
+        corner_radius,
+        @core.ViewSpec::PaddingSpec({ key: None, insets: child_padding, child }),
       )
     None =>
-      (background.map(color => @core.Brush::solid(color)), corner_radius, child)
-  }
-  let (border, shadow) = match style {
-    Some(surface_style) => (surface_style.border, surface_style.shadow)
-    None => (None, None)
+      (
+        Some(style.brush),
+        style.radius,
+        @core.ViewSpec::PaddingSpec({ key: None, insets: child_padding, child }),
+      )
   }
   @core.ViewSpec::ContainerSpec({
     key: None,
     size,
     background,
-    border,
+    border: style.border,
     corner_radius,
-    shadow,
+    shadow: style.shadow,
     child: Some(child),
   })
+}
+
+///|
+pub fn empty() -> @core.ViewSpec {
+  @core.ViewSpec::EmptySpec
 }
 
 ///|

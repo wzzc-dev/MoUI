@@ -138,13 +138,15 @@ pub fn slider(
 pub fn menu_button(
   label : String,
   on_click? : @core.ClickHandler,
-  style? : @core.ButtonStyle = @core.ButtonStyle::tonal(),
+  variant? : ButtonVariant = ButtonVariant::Tonal,
+  theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 160.0,
   height? : Double = 40.0,
 ) -> @core.ViewSpec {
   let spec = match on_click {
-    Some(handler) => button(label, on_click=handler, style~, width~, height~)
-    None => button(label, style~, width~, height~)
+    Some(handler) =>
+      button(label, on_click=handler, variant~, theme~, width~, height~)
+    None => button(label, variant~, theme~, width~, height~)
   }
   spec.semantics_role(@core.SemanticsRole::Menu)
 }
@@ -162,7 +164,7 @@ pub fn tooltip(
         text(message, width=180.0, height=24.0).semantics_role(
           @core.SemanticsRole::Tooltip,
         ),
-        style=@core.SurfaceStyle::raised(),
+        variant=SurfaceVariant::Raised,
       ).align(alignment=@core.Alignment::top_trailing()),
     ])
   } else {

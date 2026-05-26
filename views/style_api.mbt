@@ -1,0 +1,144 @@
+///|
+pub(all) enum ButtonVariant {
+  Primary
+  Tonal
+  Outline
+  Ghost
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum TextFieldVariant {
+  Filled
+  Outline
+  Plain
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum SurfaceVariant {
+  Base
+  Raised
+  Overlay
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum TextRole {
+  Body
+  Title
+  Caption
+  Control
+  Mono
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum MainAlign {
+  Start
+  Center
+  End
+  Between
+  Around
+  Evenly
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum CrossAlign {
+  Start
+  Center
+  End
+  Stretch
+} derive(Eq, Debug, ToJson)
+
+///|
+fn ButtonVariant::style(
+  self : ButtonVariant,
+  theme : @core.Theme,
+) -> @core.ButtonStyle {
+  match self {
+    Primary => @core.ButtonStyle::filled(theme~)
+    Tonal => @core.ButtonStyle::tonal(theme~)
+    Outline => @core.ButtonStyle::outline(theme~)
+    Ghost => @core.ButtonStyle::ghost(theme~)
+  }
+}
+
+///|
+fn TextFieldVariant::style(
+  self : TextFieldVariant,
+  theme : @core.Theme,
+) -> @core.TextFieldStyle {
+  match self {
+    Filled => @core.TextFieldStyle::filled(theme~)
+    Outline => @core.TextFieldStyle::outline(theme~)
+    Plain => {
+      let base = @core.TextFieldStyle::filled(theme~)
+      let clear = @core.Brush::solid(
+        @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+      )
+      let normal = {
+        ..base.normal,
+        background: clear,
+        border: None,
+        radius: 0.0,
+      }
+      { ..base, normal, focused: normal }
+    }
+  }
+}
+
+///|
+fn SurfaceVariant::style(
+  self : SurfaceVariant,
+  theme : @core.Theme,
+) -> @core.SurfaceStyle {
+  match self {
+    Base => @core.SurfaceStyle::default(theme~)
+    Raised => @core.SurfaceStyle::raised(theme~)
+    Overlay =>
+      {
+        ..@core.SurfaceStyle::default(theme~),
+        brush: theme.surface_brush(@core.SurfaceLevel::Overlay),
+        level: @core.SurfaceLevel::Overlay,
+      }
+  }
+}
+
+///|
+fn TextRole::font(self : TextRole, theme : @core.Theme) -> @core.FontSpec {
+  match self {
+    Body => theme.typography.body
+    Title => theme.typography.title
+    Caption => theme.typography.caption
+    Control => theme.typography.control
+    Mono =>
+      { ..theme.typography.body, families: @core.FontFamilyStack::monospace() }
+  }
+}
+
+///|
+fn TextRole::color(self : TextRole, theme : @core.Theme) -> @core.Color {
+  match self {
+    Caption => theme.palette.muted
+    Body | Title | Control | Mono => theme.foreground
+  }
+}
+
+///|
+fn MainAlign::core(self : MainAlign) -> @core.MainAxisAlignment {
+  match self {
+    Start => @core.MainAxisAlignment::MainStart
+    Center => @core.MainAxisAlignment::MainCenter
+    End => @core.MainAxisAlignment::MainEnd
+    Between => @core.MainAxisAlignment::SpaceBetween
+    Around => @core.MainAxisAlignment::SpaceAround
+    Evenly => @core.MainAxisAlignment::SpaceEvenly
+  }
+}
+
+///|
+fn CrossAlign::core(self : CrossAlign) -> @core.CrossAxisAlignment {
+  match self {
+    Start => @core.CrossAxisAlignment::CrossStart
+    Center => @core.CrossAxisAlignment::CrossCenter
+    End => @core.CrossAxisAlignment::CrossEnd
+    Stretch => @core.CrossAxisAlignment::CrossStretch
+  }
+}

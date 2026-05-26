@@ -2,10 +2,12 @@
 pub fn button(
   text : String,
   on_click? : @core.ClickHandler,
-  style? : @core.ButtonStyle = @core.ButtonStyle::filled(),
+  variant? : ButtonVariant = ButtonVariant::Primary,
+  theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 180.0,
   height? : Double = 44.0,
 ) -> @core.ViewSpec {
+  let style = variant.style(theme)
   let normal = style.normal
   let hovered = style.hovered
   let pressed = style.pressed
@@ -13,7 +15,7 @@ pub fn button(
     key: None,
     text,
     size: @core.Size::new(width~, height~),
-    font: @core.Theme::default().typography.control,
+    font: theme.typography.control,
     foreground: normal.foreground,
     background: normal.background,
     hovered_background: hovered.background,

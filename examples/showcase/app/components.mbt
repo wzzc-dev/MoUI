@@ -6,33 +6,31 @@ fn section_panel(
   body : @core.ViewSpec,
   metrics~ : ShowcaseMetrics,
 ) -> @core.ViewSpec {
-  @views.surface(
-    @views.column(
+  surface(
+    column(
       [
-        @views.column(
+        column(
           [
-            @views.text(title, width=metrics.body_width, height=30.0)
+            text(title, width=metrics.body_width, height=30.0)
             .font(theme.typography.control)
             .foreground(theme.palette.foreground),
-            @views.text(summary, width=metrics.body_width, height=28.0)
+            text(summary, width=metrics.body_width, height=28.0)
             .font(theme.typography.caption)
             .foreground(theme.palette.muted),
           ],
           spacing=theme.spacing_scale.xs,
-          cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+          align=@views.CrossAlign::Start,
         ),
-        @views.scroll_view(
-          body,
-          width=metrics.body_width,
-          height=metrics.body_height,
-        ),
+        scroll_view(body, width=metrics.body_width, height=metrics.body_height),
       ],
       spacing=theme.spacing_scale.md,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      align=@views.CrossAlign::Start,
     ),
     width=metrics.panel_width,
     height=metrics.panel_height,
-    style=showcase_panel_style(theme),
+    variant=@views.SurfaceVariant::Raised,
+    theme~,
+    padding=theme.spacing_scale.md,
   )
 }
 
@@ -42,20 +40,21 @@ fn example_preview(
   title : String,
   child : @core.ViewSpec,
 ) -> @core.ViewSpec {
-  @views.surface(
-    @views.column(
+  surface(
+    column(
       [
-        @views.text(title, width=220.0, height=26.0)
+        text(title, width=220.0, height=26.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         child.frame(width=470.0, height=150.0),
       ],
       spacing=theme.spacing_scale.xs,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      align=@views.CrossAlign::Start,
     ),
     width=500.0,
     height=190.0,
-    style=@core.SurfaceStyle::default(theme~),
+    variant=@views.SurfaceVariant::Base,
+    theme~,
   )
 }
 
@@ -77,11 +76,11 @@ fn ShowcaseApp::layout_tile_sized(
   height : Double,
 ) -> @core.ViewSpec {
   ignore(self)
-  @views.surface(
-    @views.row(
+  surface(
+    row(
       [
         layout_tile_marker(theme),
-        @views.text(
+        text(
           label,
           width=max_showcase_double(20.0, width - 34.0),
           height=max_showcase_double(20.0, height - 12.0),
@@ -90,19 +89,13 @@ fn ShowcaseApp::layout_tile_sized(
         .foreground(theme.palette.foreground),
       ],
       spacing=8.0,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+      align=@views.CrossAlign::Center,
     ),
     width~,
     height~,
-    style={
-      ..@core.SurfaceStyle::default(theme~),
-      brush: @core.Brush::solid(
-        theme.palette.surface_variant.multiply_alpha(0.48),
-      ),
-      border: None,
-      padding: @core.Insets::symmetric(horizontal=8.0, vertical=6.0),
-      radius: theme.radius_scale.sm,
-    },
+    background=theme.palette.surface_variant.multiply_alpha(0.48),
+    corner_radius=theme.radius_scale.sm,
+    padding=6.0,
   )
 }
 
@@ -147,10 +140,10 @@ fn ShowcaseApp::visual_card(
     start_color=theme.palette.primary.multiply_alpha(0.92),
     end_color=theme.palette.surface_variant,
   )
-  @views.surface(
-    @views.column(
+  surface(
+    column(
       [
-        @views.image(
+        image(
           showcase_image_source(),
           width=media_width,
           height=96.0,
@@ -163,7 +156,7 @@ fn ShowcaseApp::visual_card(
         .clip()
         .opacity(opacity)
         .offset(dx=offset, dy=0.0),
-        @views.text(
+        text(
           if active {
             "Raised card with motion"
           } else {
@@ -174,23 +167,26 @@ fn ShowcaseApp::visual_card(
         )
         .font(theme.typography.control)
         .foreground(theme.palette.foreground),
-        @views.button(
+        button(
           if active {
             "Settle"
           } else {
             "Animate"
           },
           on_click=() => self.toggle_active(),
-          style=@core.ButtonStyle::filled(theme~),
+          variant=@views.ButtonVariant::Primary,
+          theme~,
           width=140.0,
         ),
       ],
       spacing=theme.spacing_scale.md,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      align=@views.CrossAlign::Start,
     ),
     width=card_width,
     height=250.0,
-    style=showcase_panel_style(theme),
+    variant=@views.SurfaceVariant::Raised,
+    theme~,
+    padding=theme.spacing_scale.md,
   )
 }
 
@@ -216,28 +212,30 @@ fn ShowcaseApp::capability_card(
       visible_count = visible_count + 1
     }
   }
-  @views.surface(
-    @views.column(
+  surface(
+    column(
       [
-        @views.text("Renderer capability", width=inner_width, height=28.0)
+        text("Renderer capability", width=inner_width, height=28.0)
         .font(theme.typography.control)
         .foreground(theme.palette.foreground),
-        @views.scroll_view(
-          @views.column(
+        scroll_view(
+          column(
             rows,
             spacing=theme.spacing_scale.xs,
-            cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+            align=@views.CrossAlign::Start,
           ),
           width=inner_width,
           height=list_height,
         ),
       ],
       spacing=theme.spacing_scale.md,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      align=@views.CrossAlign::Start,
     ),
     width~,
     height~,
-    style=showcase_panel_style(theme),
+    variant=@views.SurfaceVariant::Raised,
+    theme~,
+    padding=theme.spacing_scale.md,
   )
 }
 
@@ -249,10 +247,10 @@ fn ShowcaseApp::visual_correctness_card(
   opacity : Double,
 ) -> @core.ViewSpec {
   ignore(self)
-  @views.surface(
-    @views.row(
+  surface(
+    row(
       [
-        @views.image(
+        image(
           showcase_image_source(),
           width=82.0,
           height=50.0,
@@ -260,7 +258,7 @@ fn ShowcaseApp::visual_correctness_card(
           corner_radius=theme.radius_scale.sm,
           fit=@core.ImageFit::Contain,
         ).clip(),
-        @views.image(
+        image(
           showcase_image_source(),
           width=82.0,
           height=50.0,
@@ -268,7 +266,7 @@ fn ShowcaseApp::visual_correctness_card(
           corner_radius=theme.radius_scale.sm,
           fit=@core.ImageFit::Cover,
         ).clip(),
-        @views.image(
+        image(
           showcase_image_source(),
           width=82.0,
           height=50.0,
@@ -281,11 +279,12 @@ fn ShowcaseApp::visual_correctness_card(
         .offset(dx=if active { 10.0 } else { 0.0 }, dy=0.0),
       ],
       spacing=theme.spacing_scale.sm,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+      align=@views.CrossAlign::Center,
     ),
     width=292.0,
     height=74.0,
-    style=showcase_raised_demo_style(theme),
+    variant=@views.SurfaceVariant::Raised,
+    theme~,
   )
 }
 
@@ -295,13 +294,15 @@ fn ShowcaseApp::shortcut_preview(
   theme : @core.Theme,
 ) -> @core.ViewSpec {
   ignore(self)
-  @views.surface(
-    @views.text("Keyboard: Meta+K", width=190.0, height=28.0)
+  surface(
+    text("Keyboard: Meta+K", width=190.0, height=28.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.foreground),
     width=220.0,
     height=50.0,
-    style=showcase_panel_style(theme),
+    variant=@views.SurfaceVariant::Raised,
+    theme~,
+    padding=theme.spacing_scale.md,
   )
 }
 
@@ -313,28 +314,29 @@ fn ShowcaseApp::theme_helpers(
   active : Bool,
   opacity : Double,
 ) -> @core.ViewSpec {
-  @views.column(
+  column(
     [
-      @views.text("Theme helpers", width=220.0, height=28.0)
+      text("Theme helpers", width=220.0, height=28.0)
       .font(theme.typography.control)
       .foreground(theme.palette.foreground),
-      @views.toggle_switch(
+      toggle_switch(
         "Environment enabled",
         enabled,
         foreground=theme.palette.foreground,
         check_color=theme.palette.primary,
       ),
-      @views.button(
+      button(
         "Switch scheme",
         on_click=() => self.toggle_scheme(),
-        style=@core.ButtonStyle::outline(theme~),
+        variant=@views.ButtonVariant::Outline,
+        theme~,
         width=160.0,
       ),
       self.visual_correctness_card(theme, active, opacity),
       self.vector_path_card(theme),
     ],
     spacing=theme.spacing_scale.md,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    align=@views.CrossAlign::Start,
   )
 }
 
@@ -445,27 +447,28 @@ fn ShowcaseApp::dialog(
   self : ShowcaseApp,
   theme : @core.Theme,
 ) -> @core.ViewSpec {
-  @views.column(
+  column(
     [
-      @views.text("Showcase dialog", width=240.0, height=30.0)
+      text("Showcase dialog", width=240.0, height=30.0)
       .font(theme.typography.control)
       .foreground(theme.palette.foreground),
-      @views.text(
+      text(
         "Dialogs, shortcuts, and semantics share the same ViewSpec tree.",
         width=280.0,
         height=52.0,
       )
       .font(theme.typography.caption)
       .foreground(theme.palette.muted),
-      @views.button(
+      button(
         "Close",
         on_click=() => self.hide_dialog(),
-        style=@core.ButtonStyle::filled(theme~),
+        variant=@views.ButtonVariant::Primary,
+        theme~,
         width=120.0,
       ),
     ],
     spacing=theme.spacing_scale.md,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    align=@views.CrossAlign::Start,
   )
 }
 
@@ -474,31 +477,32 @@ fn ShowcaseApp::sheet(
   self : ShowcaseApp,
   theme : @core.Theme,
 ) -> @core.ViewSpec {
-  @views.sheet(
-    content=@views.column(
+  sheet(
+    content=column(
       [
-        @views.text("Showcase sheet", width=240.0, height=30.0)
+        text("Showcase sheet", width=240.0, height=30.0)
         .font(theme.typography.control)
         .foreground(theme.palette.foreground),
-        @views.text(
+        text(
           "Sheet content is built with the same presentation primitives.",
           width=300.0,
           height=48.0,
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
-        @views.button(
+        button(
           "Done",
           on_click=() => self.hide_sheet(),
-          style=@core.ButtonStyle::filled(theme~),
+          variant=@views.ButtonVariant::Primary,
+          theme~,
           width=120.0,
         ),
       ],
       spacing=theme.spacing_scale.md,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      align=@views.CrossAlign::Start,
     ),
     presentation_mode=@core.SheetPresentationMode::BottomSheet,
-    background=@core.Brush::solid(theme.palette.surface),
+    background=theme.palette.surface,
     corner_radius=theme.radius_scale.lg,
     shadow=Some(theme.shadow_scale.md),
   )
@@ -510,17 +514,17 @@ fn capability_row(
   theme : @core.Theme,
 ) -> @core.ViewSpec {
   let status = capability_status_label(entry)
-  @views.row(
+  row(
     [
-      @views.text(entry.feature.label(), width=92.0, height=22.0)
+      text(entry.feature.label(), width=92.0, height=22.0)
       .font(theme.typography.caption)
       .foreground(theme.palette.foreground),
-      @views.text(status, width=112.0, height=22.0)
+      text(status, width=112.0, height=22.0)
       .font(theme.typography.caption)
       .foreground(capability_status_color(entry, theme)),
     ],
     spacing=theme.spacing_scale.xs,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    align=@views.CrossAlign::Center,
   )
 }
 

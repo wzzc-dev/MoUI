@@ -3,12 +3,7 @@ pub fn datepicker(
   selected~ : @core.Binding[@core.DateValue],
   mode? : @core.DatePickerMode = @core.DatePickerMode::Date,
   placeholder? : String = "Select date",
-  font? : @core.FontSpec = @core.Theme::default().typography.control,
-  foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  background? : @core.Brush = @core.Brush::solid(
-    @core.Theme::default().palette.surface,
-  ),
-  corner_radius? : Double = 8.0,
+  theme? : @core.Theme = @core.Theme::default(),
   min_date? : @core.DateValue? = None,
   max_date? : @core.DateValue? = None,
 ) -> @core.ViewSpec {
@@ -17,10 +12,10 @@ pub fn datepicker(
     selected,
     mode,
     placeholder,
-    font,
-    foreground,
-    background,
-    corner_radius,
+    font: theme.typography.control,
+    foreground: theme.foreground,
+    background: @core.Brush::solid(theme.palette.surface),
+    corner_radius: theme.radius_scale.md,
     min_date,
     max_date,
   })

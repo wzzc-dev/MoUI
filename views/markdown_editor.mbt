@@ -3,7 +3,9 @@ pub fn rich_text_editor(
   value : @core.Binding[String],
   format : @core.RichTextFormatter,
   placeholder? : String = "Write",
-  style? : @core.TextFieldStyle = @core.TextFieldStyle::filled(),
+  variant? : TextFieldVariant = TextFieldVariant::Filled,
+  theme? : @core.Theme = @core.Theme::default(),
+  font? : @core.FontSpec? = None,
   width? : Double = 520.0,
   height? : Double = 360.0,
   on_selection_change? : ((Int, @core.TextRange?) -> Unit)? = None,
@@ -11,6 +13,7 @@ pub fn rich_text_editor(
   input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
 ) -> @core.ViewSpec {
+  let style = variant.style(theme)
   let normal = style.normal
   let focused = style.focused
   @core.ViewSpec::RichTextEditorSpec({
@@ -19,7 +22,7 @@ pub fn rich_text_editor(
     placeholder,
     size: @core.Size::new(width~, height~),
     format,
-    font: style.font,
+    font: font.unwrap_or(style.font),
     foreground: normal.foreground,
     placeholder_color: style.placeholder_color,
     background: normal.background,
@@ -39,7 +42,9 @@ pub fn markdown_editor(
   value : @core.Binding[String],
   format : @core.RichTextFormatter,
   placeholder? : String = "Write markdown",
-  style? : @core.TextFieldStyle = @core.TextFieldStyle::filled(),
+  variant? : TextFieldVariant = TextFieldVariant::Filled,
+  theme? : @core.Theme = @core.Theme::default(),
+  font? : @core.FontSpec? = None,
   width? : Double = 520.0,
   height? : Double = 360.0,
   on_selection_change? : ((Int, @core.TextRange?) -> Unit)? = None,
@@ -51,7 +56,9 @@ pub fn markdown_editor(
     value,
     format,
     placeholder~,
-    style~,
+    variant~,
+    theme~,
+    font~,
     width~,
     height~,
     on_selection_change~,

@@ -60,10 +60,10 @@ pub fn tab_view(
       button(
         tab.label,
         on_click=() => selection.set(tab.route),
-        style=if tab.route == selected {
-          @core.ButtonStyle::filled()
+        variant=if tab.route == selected {
+          ButtonVariant::Primary
         } else {
-          @core.ButtonStyle::tonal()
+          ButtonVariant::Tonal
         },
         width=112.0,
         height=36.0,
@@ -88,7 +88,7 @@ pub fn dialog_host(
             dialog.semantics_role(@core.SemanticsRole::Dialog),
             width=360.0,
             height=220.0,
-            style={ ..@core.SurfaceStyle::raised(), shadow: None },
+            variant=SurfaceVariant::Raised,
           ).align(alignment=@core.Alignment::center()),
         ])
       None => child
