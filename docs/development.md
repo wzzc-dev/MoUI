@@ -46,6 +46,20 @@ focused on the Web, Windows, and Linux platform packages when possible. Avoid
 touching macOS or shared window logic unless a task explicitly requires that
 broader change.
 
+When updating this repository, update all Git checkouts that participate in the
+workspace, not just the root checkout. That includes the main MoUI repository,
+Git submodules such as `.agents/skills/moonbit-skills`, and every editable
+repository under `.local_repos/` such as `.local_repos/window`.
+
+On Windows, use the repository update helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1
+```
+
+That helper also creates or updates `.local_repos/window` on the `moui-support`
+branch.
+
 Local setup defaults to the SSH fork URL. CI defaults to the HTTPS fork URL so
 GitHub Actions can clone the dependency without a deploy key. Set
 `MOUI_WINDOW_REMOTE` when you need to force a specific fork URL.

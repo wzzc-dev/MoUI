@@ -48,6 +48,15 @@ Use `sh scripts/setup-local-deps.sh` to create or repair the local checkout and
 `https://github.com/moonbit-community/window.git`; the MoUI fork remote is
 `git@github.com:wzzc-dev/window.git`.
 
+When asked to update the repository, treat it as a multi-checkout update:
+update the main MoUI checkout, initialize/update any Git submodules such as
+`.agents/skills/moonbit-skills`, and update every editable checkout under
+`.local_repos/`. Do not assume updating the root repository also updates these
+nested repositories. On Windows, use
+`powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1`
+from the repository root for this routine; it also creates or updates
+`.local_repos/window` on `moui-support`.
+
 `.local_repos/window` is an editable local dependency, not a vendored snapshot
 or submodule. It exists because upstream `moonbit-community/window` currently
 only covers macOS, while MoUI needs Web, Windows, and Linux support. Changes in

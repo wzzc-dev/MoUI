@@ -11,7 +11,6 @@ import {
   "Milky2018/wgpu_mbt@0.12.6",
   "Milky2018/window@0.5.1",
   "mizchi/image@0.3.0",
-  "mizchi/markdown@0.5.0",
   "mizchi/pixelmatch@0.4.1",
   "mizchi/svg@0.2.1",
   "moonbitlang/quickcheck@0.13.0",
