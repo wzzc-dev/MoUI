@@ -98,11 +98,7 @@ fn ElementNode::render_with_environment(
           }
         None => ()
       }
-      let foreground = match self.button_state {
-        ButtonState::Pressed => Color::white()
-        ButtonState::Normal | ButtonState::Hovered =>
-          environment.foreground.unwrap_or(data.foreground)
-      }
+      let foreground = environment.foreground.unwrap_or(data.foreground)
       commands.push(
         DrawText(
           TextRun::new(

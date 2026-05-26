@@ -525,6 +525,40 @@ test "runtime dynamic button activates after press-preserving move inside" {
 }
 
 ///|
+test "button pressed paint keeps configured foreground" {
+  let runtime = RuntimeState::new_spec(
+    root=ViewSpec::ButtonSpec({
+      key: None,
+      text: "Ghost",
+      size: Size::new(width=100.0, height=40.0),
+      font: FontSpec::new(size=16.0, weight=600),
+      foreground: Color::black(),
+      background: Brush::solid(Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+      hovered_background: Brush::solid(Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+      pressed_background: Brush::solid(Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+      border: None,
+      shadow: None,
+      corner_radius: 0.0,
+      on_click: None,
+    }),
+    size=Size::new(width=100.0, height=40.0),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  guard runtime.build_draw_commands()
+    is [_, _, DrawText({ text: "Ghost", color, .. })] else {
+    fail("expected pressed button text")
+  }
+  assert_true(color == Color::black())
+}
+
+///|
 test "runtime dynamic builder rebuilds after activated pointer" {
   let clicks = Ref(0)
   let runtime = RuntimeState::new_component(
