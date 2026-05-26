@@ -1,379 +1,51 @@
 # Project Agents.md Guide
 
-This repository is a MoonBit multi-platform GUI framework prototype. Keep
-changes small, package-local, and consistent with the public `View[Msg]` /
-internal runtime tree split.
+This is a [MoonBit](https://docs.moonbitlang.com) project.
 
-The project is still in an early prototype stage. Backward compatibility is not
-a requirement unless a task explicitly asks for it. Prefer clear, simple
-architecture and direct API cleanup over compatibility shims, duplicate legacy
-paths, or abstractions that only preserve old shapes.
+You can browse and install extra skills here:
+<https://github.com/moonbitlang/skills>
 
-## Project Shape
+## Project Structure
 
-- `core/` owns the platform-neutral runtime, state, layout, input, semantics,
-  draw command model, opaque public `View[Msg]`, typed events, app-owned
-  route/history helpers, `Program`, `Effect`, `Subscription`, and TEA runtime
-  diagnostics. Standard `Effect`/`Subscription` helpers may name common
-  descriptor kinds, subscription reuse is keyed by the stable key plus source
-  kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
-  kind changes from ordinary same-kind task replacement, program diagnostics
-  may count late dispatches ignored after runtime destruction, and runtime dirty
-  diagnostics may expose structured
-  rebuild/layout/paint/redraw summaries, but concrete timer, host, window,
-  route, or service adapters remain outside `core`.
-  It remains one MoonBit package; internal files are grouped by responsibility
-  (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
-  etc.) rather than by additional package boundaries.
-- `views/` is a facade over core primitive builders. Public constructors return
-  opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
-- `backend/host/` defines shared host event, surface, input, async
-  host-service, app-owned service completion subscription adapters, window
-  lifecycle, window scene resolution,
-  per-window runtime slot collection, platform-window id mapping,
-  request/completion, window event conversion, and renderer-neutral
-  `HostWindowRenderer` diagnostics and image-resource change callback bridge,
-  image-resource repaint routing contracts,
-  tracked-window image-resource repaint diagnostics with revision and lifecycle
-  status counts, and repaint-result previous/current lifecycle status counts.
-- `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
-  cores: platform windows, event conversion, services, lifecycle, runtime slots,
-  and renderer-neutral provider hooks. They must not import `render/wgpu`,
-  `render/skia`, `wgpu_mbt`, or `skia_mbt`. `backend/web/` is the browser
-  wasm-gc host.
-- `backend/macos/wgpu`, `backend/windows/wgpu`, and `backend/linux/wgpu`
-  provide native WGPU renderer providers. `backend/macos/skia`,
-  `backend/windows/skia`, and `backend/linux/skia` provide native Skia renderer
-  providers.
-- `render/` is the renderer facade and shared reporting layer.
-- `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
-  wasm-gc browser WebGPU host-import bridge. `render/skia/` is the native Skia
-  raster renderer facade over the local `wzzc-dev/skia_mbt` binding, including
-  renderer-local image-resource lifecycle change callbacks; native provider or
-  host redraw scheduling from async image load/error notifications remains
-  outside `render/skia`.
-- Native text providers live in `render/wgpu/cosmic_text/`,
-  `render/wgpu/coretext/`, `render/wgpu/directwrite/`,
-  `render/wgpu/fontconfig/`, and the shared `render/wgpu/text_protocol/`
-  package. `core/` owns only the neutral `TextSystem` contract.
-- `examples/*/app/` packages are shared app logic. Platform subpackages are
-  entrypoints only. Showcase also has `macos_cosmic`, `windows_cosmic`, and
-  `linux_cosmic` entrypoints for explicit Moon Cosmic text-provider comparison.
-  Showcase has `macos_skia`, `windows_skia`, and `linux_skia` entrypoints for
-  explicitly selecting the native Skia renderer. Markdown Editor has
-  `macos_skia`, `windows_skia`, and `linux_skia` for explicit native Skia
-  renderer entrypoints.
+- MoonBit packages are organized per directory; each directory contains a
+  `moon.pkg` file listing its dependencies. Each package has its files and
+  blackbox test files (ending in `_test.mbt`) and whitebox test files (ending in
+  `_wbtest.mbt`).
 
-## Local Dependencies
+- In the toplevel directory, there is a `moon.mod.json` file listing module
+  metadata.
 
-The project expects the modified local `wzzc-dev/window` checkout at
-`.local_repos/window` and the editable `wzzc-dev/skia_mbt` checkout at
-`.local_repos/skia_mbt`, as described in `docs/development.md`. Local
-`moon.mod`, `moon.work`, and `moon.pkg` files are the source of truth for
-imports, workspace members, and supported targets.
+## Coding convention
 
-Use `sh scripts/setup-local-deps.sh` to create or repair the local checkouts and
-`sh scripts/check-local-deps.sh` to verify that `window` points at the
-`wzzc-dev/window` fork on the `moui-support` branch and `skia_mbt` points at the
-`wzzc-dev/skia_mbt` repo on `master`. The upstream window remote is
-`https://github.com/moonbit-community/window.git`; the MoUI window fork remote
-is `git@github.com:wzzc-dev/window.git`.
-`scripts/setup-local-deps.sh` also fast-forwards existing clean local dependency
-checkouts to their expected origin branches; it stops before overwriting local
-changes in `.local_repos/`.
-The local-dependency check also verifies the window fork's MoUI-oriented smoke
-and evidence files such as `docs/moui-integration-smoke.md`,
-`scripts/check_moui_*_smoke.sh`, and `scripts/record_moui_evidence.sh` are
-present and still wired to the expected smoke contract: macOS through
-`moon run examples/moui_macos_smoke --target native`, Web wasm-gc artifacts
-under module-qualified `wzzc-dev/window/examples/...` paths, and MoUI Web smoke
-consumer sentinel lines. Treat those as dependency-level matching-host evidence
-entrypoints; they do not replace MoUI Showcase or Markdown Editor platform
-validation.
-It also verifies the Skia binding acceptance surface, including
-`skia-platform-status.json`, `skia-provider-lock.json`,
-`SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
-`.local_repos/skia_mbt/scripts/verify-platform-status.sh`, and
-`.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`. That
-status and native capability contract prove the editable binding checkout has a
-pinned platform-status contract, CI evidence wiring, fallback parity, FFI
-ownership/borrow checks, and native smoke marker coverage; they do not replace
-MoUI real-Skia smoke or platform runtime evidence.
+- MoonBit code is organized in block style, each block is separated by `///|`,
+  the order of each block is irrelevant. In some refactorings, you can process
+  block by block independently.
 
-When asked to update the repository, treat it as a multi-checkout update:
-update the main MoUI checkout, initialize/update any Git submodules such as
-`.agents/skills/moonbit-skills`, and update every editable checkout under
-`.local_repos/`. Do not assume updating the root repository also updates these
-nested repositories. On Windows, use
-`powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1`
-from the repository root for this routine; it also creates or updates
-`.local_repos/window` on `moui-support` and `.local_repos/skia_mbt` on
-`master`.
+- Try to keep deprecated blocks in file called `deprecated.mbt` in each
+  directory.
 
-`.local_repos/window` is an editable local dependency, not a vendored snapshot
-or submodule. It exists because upstream `moonbit-community/window` currently
-only covers macOS, while MoUI needs Web, Windows, and Linux support. Changes in
-that checkout should stay limited to the `web/`, `windows/`, and `linux/`
-platform packages and their package-local tests/docs when possible. Avoid
-changing `macos/`, shared packages such as `core/` and `dpi/`, or common
-behavior unless the task explicitly requires it; keeping the fork narrow makes
-future upstreaming safer. The local checkout must declare
-`name = wzzc-dev/window` in `moon.mod` or `moon.mod.json` so workspace imports
-bind to the editable fork.
+## Tooling
 
-`.local_repos/skia_mbt` is also an editable local dependency, not a submodule.
-It carries native Skia binding work needed by `render/skia`, including
-fallback-safe APIs that compile when real Skia link flags are absent. Keep
-missing Skia FFI surface area in `skia_mbt` instead of adding large private Skia
-stubs inside MoUI. Renderer-local fallbacks should expose structured
-diagnostics such as command/reason payloads instead of only aggregate counts.
-A fallback compile is not renderer readiness:
-`skia_available() == false` must keep Skia renderer creation unavailable.
-The checkout owns its binding-level platform acceptance status in
-`skia-platform-status.json` and `SKIA_PLATFORM_STATUS.md`, plus its native
-capability contract in `native/capabilities.json` and `native/ownership.json`,
-validated by `scripts/verify-platform-status.sh`/`.ps1` and
-`scripts/verify-native-capability-contract.sh`/`.ps1`. Treat those files as
-dependency evidence for the Skia binding, provider artifact lock, and FFI
-surface coverage, not as MoUI Showcase/Markdown Editor runtime evidence.
+- `moon fmt` is used to format your code properly.
 
-When asked to merge upstream `window` changes, work inside `.local_repos/window`
-on `moui-support`, fetch `upstream`, and merge the upstream branch into the fork
-branch. Preserve upstream macOS and shared behavior where possible; resolve
-conflicts by keeping MoUI-specific additions scoped to Web, Windows, and Linux
-unless the user explicitly approves broader fork changes.
+- `moon ide` provides project navigation helpers like `peek-def`, `outline`, and
+  `find-references`. See $moonbit-agent-guide for details.
 
-## MoonBit Package Rules
+- `moon info` is used to update the generated interface of the package, each
+  package has a generated interface file `.mbti`, it is a brief formal
+  description of the package. If nothing in `.mbti` changes, this means your
+  change does not bring the visible changes to the external package users, it is
+  typically a safe refactoring.
 
-MoonBit package boundaries are directories with `moon.pkg` files. File names do
-not create modules or namespaces, and declarations in the same package can
-refer to each other regardless of file. Imports use module/package paths such
-as `wzzc-dev/moui/core`, never source file names.
+- In the last step, run `moon info && moon fmt` to update the interface and
+  format the code. Check the diffs of `.mbti` file to see if the changes are
+  expected.
 
-Before adding new APIs or refactoring existing ones, discover local symbols with
-the MoonBit IDE tools where practical:
+- Run `moon test` to check tests pass. MoonBit supports snapshot testing; when
+  changes affect outputs, run `moon test --update` to refresh snapshots.
 
-```sh
-moon ide doc <query>
-moon ide outline <file>
-moon ide peek-def <file>:<line>:<col>
-moon ide find-references <file>:<line>:<col>
-```
-
-## Development Checks
-
-Use the daily validation script for routine work:
-
-```sh
-sh scripts/dev-check.sh
-```
-
-This intentionally avoids all-repository `moon test --target native`,
-`moon test --target wasm-gc`, and native platform example builds by default.
-Those commands can pull in incompatible platform stubs, browser-only wasm-gc
-host imports, or slow native links. Prefer package-level tests and Web wasm-gc
-example builds for daily work. Use
-`sh scripts/dev-check.sh --platform-examples-test` when you need
-current-platform backend tests too. Use
-`sh scripts/dev-check.sh --platform-examples-build` only when you explicitly
-need slow current-platform native example builds.
-
-Useful focused checks:
-
-```sh
-moon check
-moon check --warn-list +unnecessary_annotation
-moon test moui/core --target native
-moon test moui/views --target native
-moon test moui/render/webgpu_adapter --target wasm-gc
-moon test moui/backend/web --target wasm-gc
-moon test moui/render/skia --target native
-moon test .local_repos/skia_mbt --target native
-moon test moui/render/wgpu/cosmic_text --target native
-node scripts/validate-renderer-provider-manifests.mjs
-sh scripts/conformance-check.sh --input
-sh scripts/conformance-check.sh --layout
-sh scripts/conformance-check.sh --render
-sh scripts/conformance-check.sh --platform-services
-sh scripts/conformance-check.sh --text
-sh scripts/conformance-check.sh --text-diagnostic
-moon build examples/showcase/web_wasm --target wasm-gc
-node --check scripts/validate-conformance-capture-manifest.mjs
-node scripts/test-validate-conformance-capture-manifest.mjs
-node --check scripts/validate-platform-evidence-manifest.mjs
-node scripts/test-validate-platform-evidence-manifest.mjs
-node --check scripts/record-platform-evidence-manifest.mjs
-node scripts/test-record-platform-evidence-manifest.mjs
-node --check scripts/validate-web-runtime-handoff.mjs
-node scripts/test-validate-web-runtime-handoff.mjs
-node --check scripts/test-browser-runtime-events.mjs
-node scripts/test-browser-runtime-events.mjs
-node --check scripts/validate-web-runtime-handoff-manifest.mjs
-node scripts/test-validate-web-runtime-handoff-manifest.mjs
-node --check scripts/record-web-runtime-presentation.mjs
-node scripts/test-record-web-runtime-presentation.mjs
-node --check scripts/validate-web-runtime-presentation-manifest.mjs
-node scripts/test-validate-web-runtime-presentation-manifest.mjs
-node --check scripts/validate-package-manifest.mjs
-```
-
-Conformance work should stay layered: `core` owns platform-neutral contracts,
-`backend/host` owns event/service/window routing, renderer/provider packages own
-implementation validation, and `moui/tests/*_conformance` plus
-`scripts/conformance-check.sh` own cross-engine or cross-platform matrix
-evidence. Platform runtime claims should use the validated
-`artifacts/conformance/platform-runtime-evidence.json` contract generated by
-`scripts/conformance-check.sh --platform-services` and updated through
-`scripts/record-platform-evidence-manifest.mjs`; pending entries are not runtime
-proof until a matching host records passed observations and artifacts. The
-manifest is schema v2 and mirrors the local window recorder's monitor/cursor
-field as `monitorCursor`; native passed evidence must set it to `yes`, while
-Web browser evidence may leave it pending because CDP does not prove native
-monitor/current-monitor or cursor behavior. Native platform entries also carry
-`skiaEvidence`, which separately records Skia provider/preflight commands,
-fallback-unavailable checks, real-renderer smoke, and Showcase/Markdown
-first-frame status. A native platform entry cannot be marked `passed` unless
-that native Skia evidence is also `passed`; a passed `skiaEvidence` block is
-still Skia-route evidence, not full platform service/runtime proof by itself.
-Native Skia provider preflight summaries also audit the renderer-neutral
-`HostWindowRenderer` bridge used to forward Skia text-system, image-resource,
-image-resource change callback, present-count, and disposal diagnostics. Treat those bridge fields as
-provider/package evidence, not as proof that a matching platform window
-presented a frame.
-The Web runtime handoff validator
-checks static HTML/runtime/wasm delivery for Showcase and Markdown Editor, not
-browser WebGPU presentation. Use
-`scripts/record-web-runtime-presentation.mjs` and
-`scripts/validate-web-runtime-presentation-manifest.mjs` to collect passed
-browser-session WebGPU, wasm startup, canvas, resize/input event-bridge,
-Markdown Editor text input, clean target close, console, and screenshot
-evidence; fold that artifact into
-`artifacts/conformance/platform-runtime-evidence.json` with
-`scripts/record-platform-evidence-manifest.mjs ... web
---web-presentation-manifest ...`. Failed or missing presentation manifests must
-stay out of passed Web runtime claims. Examples demonstrate workflows but should
-not be the only proof for a
-shared contract.
-If CDP is unavailable during Web presentation startup, the recorder writes a
-validated failed manifest before exiting nonzero; use that artifact to document
-the environment limit without broadening it into passed Web runtime evidence.
-
-Run `moon info` after public API changes and review generated
-`pkg.generated.mbti` diffs.
-
-For narrow validation, prefer package or file scoped tests:
-
-```sh
-moon test <dir-or-file> --target native
-moon test <dir-or-file> --filter '<glob>'
-```
-
-If a change touches `render/wgpu/`, also run:
-
-```sh
-moon test moui/render/wgpu --target native
-```
-
-If a change touches `render/skia/` or `.local_repos/skia_mbt`, also run the
-fallback-safe Skia checks. Use `sh scripts/dev-check.sh --skia-real-smoke` only
-after configuring real native Skia link flags; that opt-in path also runs
-`moui/tests/skia_renderer_smoke/native` to verify MoUI `DrawCommand` rendering
-against captured Skia presenter pixels.
-On macOS, `scripts/macos-skia-renderer-smoke.sh` can resolve Skia from an
-existing build, the pinned JetBrains binary provider, or a source build; it then
-temporarily wires the resolved link flags into the local `skia_mbt` and MoUI
-packages, runs the renderer pixel smoke, builds `examples/showcase/macos_skia`,
-and restores the package files. Pass `--run-showcase-smoke` to also launch the
-Showcase entrypoint, verify that the macOS Skia renderer presents its first
-frame, and exit automatically. Pass `--run-markdown-smoke` to add the same
-first-frame check for `examples/markdown_editor/macos_skia`. With explicit
-`--smoke-log`, `--showcase-log`, and `--markdown-log` paths under
-`artifacts/platform-evidence/macos/`, pass `--record-platform-evidence
-artifacts/conformance/platform-runtime-evidence.json` to update the macOS
-`skiaEvidence` block after a successful full smoke; that still records Skia
-route evidence only. Pass `--write-local-config` only when you want to persist
-local absolute Skia paths so direct commands such as
-`moon run examples/showcase/macos_skia --target native` or
-`moon run examples/markdown_editor/macos_skia --target native` or
-`moon run examples/mo_workbench/macos_skia --target native` use real Skia;
-keep those machine-local `moon.pkg` edits out of commits. In `auto` link mode,
-the helper writes dynamic `libskia.dylib` flags for persistent direct-run
-configuration and static `libskia.a` flags for temporary smoke/build
-configuration when those libraries exist; use
-`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or `--link-mode dynamic|static` to
-override the default. Normal macOS Skia
-entrypoints default to the system `FontMgr` text path; first-frame smoke
-entrypoints explicitly select `EmptyTypeface` only while their
-exit-after-first-present flag is set.
-Windows/Linux Skia entrypoints expose matching-host first-frame flags
-(`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
-`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
-`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`, and
-`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`) and follow the same
-smoke-only `EmptyTypeface` switch; passed artifacts still belong to the
-matching host that produced them. After a matching host writes provider,
-fallback-unavailable, renderer-smoke, Showcase first-frame, and Markdown Editor
-first-frame logs under `artifacts/platform-evidence/<platform>/`, use
-`node scripts/record-native-skia-evidence.mjs` to validate those markers and
-update only the platform's `skiaEvidence` block. Provider preflight logs must
-name the matching Skia provider package or preflight summary and include a
-passing preflight/test/build marker; generic passing test output is not enough.
-Full platform runtime status still requires the broader platform observations.
-
-Windows native uses the MSVC WGPU toolchain path: Visual Studio C++ build
-tools, vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode with the official
-MSVC `wgpu_native.dll`. Use `scripts/windows/setup_msvc_deps.ps1`,
-`scripts/windows/build_windows_msvc.ps1`, and
-`scripts/windows/package_windows_app_msvc.ps1` for setup, build, and packaging.
-When changing Windows native setup, keep docs, CI, and repo-local skills aligned
-with this MSVC-only route.
-
-## Renderer Capability Tracking
-
-Renderer feature status is tracked per backend in `render/capabilities.mbt` and
-summarized in `docs/renderer-capability-report.md`. Update both the structured
-report and tests when changing image, clip, opacity, transform, or other draw
-command support. `RendererDescriptor` and `RendererSelection` are reporting and
-matching concepts, not native host runtime assembly. Native runtime assembly
-belongs to `backend/<platform>/wgpu` or `backend/<platform>/skia` renderer
-provider packages; `core`, `ViewSpec`, `Program`, and host cores must not depend
-on concrete renderer choices.
-
-Use `pkg.generated.mbti` as the public API contract baseline and focused
-contract/conformance tests as behavior evidence. Do not add long-lived
-`*_spec.mbt` files for ordinary implementation structure; prefer responsibility
-names such as `*_tree.mbt`, `*_descriptor.mbt`, `*_input.mbt`, `*_protocol.mbt`,
-or `*_capabilities.mbt` when organizing package-local source.
-
-## Documentation Updates
-
-When development changes affect package layout, build commands, validation
-commands, platform setup, renderer capabilities, or user-facing behavior, update
-the relevant files under `docs/` in the same change. Keep the root `README.md`
-as a short entry point; its source is `moui/README.mbt.md`. Move detailed
-development guidance into `docs/development.md`.
-
-The project moves quickly, so guidance files are part of the maintenance
-surface. When changes affect architecture, package boundaries, docs placement,
-validation commands, platform behavior, examples, renderer capabilities, or the
-text system, also check whether `AGENTS.md` and the repo-local skills under
-`skills/` need updates. If they do not need edits, say they were checked and
-left unchanged in the handoff.
-
-Current focused docs:
-
-- `docs/text-system.md` covers `TextSystem`, native provider composition,
-  Web text measurement/drawing, embedded fonts, and shaping gaps.
-- `docs/markdown-editor.md` covers the WYSIWYG Markdown Editor model,
-  source/visual mapping, commands, platform entrypoints, and validation.
-- `docs/release-readiness.md` tracks preview-release gates, current evidence,
-  known gaps, and next implementation slices.
-
-## Editing Notes
-
-- Preserve the `///|` delimiter style in MoonBit files.
-- Keep public API additions intentional and covered by tests.
-- Put new tests in focused `*_test.mbt` files inside the package being changed.
-- Do not remove generated `pkg.generated.mbti` files.
-- Do not run platform entrypoint tests through the generic wasm-gc runner when
-  they require browser host imports.
+- Prefer `assert_eq` or `assert_true(pattern is Pattern(...))` for results that
+  are stable or very unlikely to change. Use snapshot tests to record current
+  behavior. For solid, well-defined results (e.g. scientific computations),
+  prefer assertion tests. You can use `moon coverage analyze > uncovered.log` to
+  see which parts of your code are not covered by tests.

@@ -1,0 +1,154 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/skia_mbt/native"
+
+import {
+  "wzzc-dev/skia_mbt",
+}
+
+// Values
+pub fn skia_available() -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) struct Bitmap {
+  // private fields
+}
+pub fn Bitmap::alloc_n32_premul(@skia_mbt.ISize) -> Self?
+pub fn Bitmap::byte_size(Self) -> Int
+pub fn Bitmap::dimensions(Self) -> @skia_mbt.ISize
+pub fn Bitmap::erase_color(Self, @skia_mbt.Color) -> Unit
+pub fn Bitmap::height(Self) -> Int
+pub fn Bitmap::image_info(Self) -> @skia_mbt.ImageInfo
+pub fn Bitmap::is_available(Self) -> Bool
+pub fn Bitmap::row_bytes(Self) -> Int
+pub fn Bitmap::to_bytes(Self) -> Bytes
+pub fn Bitmap::to_pixmap(Self) -> @skia_mbt.Pixmap?
+pub fn Bitmap::width(Self) -> Int
+
+pub(all) struct Canvas {
+  // private fields
+}
+pub fn Canvas::clear(Self, @skia_mbt.Color) -> Unit
+pub fn Canvas::clip_path(Self, Path, op? : @skia_mbt.ClipOp, anti_alias? : Bool) -> Unit
+pub fn Canvas::clip_rect(Self, @skia_mbt.Rect, op? : @skia_mbt.ClipOp, anti_alias? : Bool) -> Unit
+pub fn Canvas::concat(Self, @skia_mbt.Matrix) -> Unit
+pub fn Canvas::discard(Self) -> Unit
+pub fn Canvas::draw_arc(Self, @skia_mbt.Rect, Float, Float, Bool, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_circle(Self, @skia_mbt.Point, Float, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_color(Self, @skia_mbt.Color, blend_mode? : @skia_mbt.BlendMode) -> Unit
+pub fn Canvas::draw_image(Self, Image, @skia_mbt.Point) -> Unit
+pub fn Canvas::draw_image_rect(Self, Image, @skia_mbt.Rect, @skia_mbt.Rect, @skia_mbt.Paint, sampling? : @skia_mbt.SamplingOptions) -> Unit
+pub fn Canvas::draw_line(Self, @skia_mbt.Point, @skia_mbt.Point, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_oval(Self, @skia_mbt.Rect, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_paint(Self, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_paint_shader(Self, Shader, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_path(Self, Path, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_point(Self, @skia_mbt.Point, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_rect(Self, @skia_mbt.Rect, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_rect_shader(Self, @skia_mbt.Rect, Shader, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_round_rect(Self, @skia_mbt.Rect, Float, Float, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_text_utf8(Self, Bytes, @skia_mbt.Point, Font, @skia_mbt.Paint) -> Unit
+pub fn Canvas::is_available(Self) -> Bool
+pub fn Canvas::reset_matrix(Self) -> Unit
+pub fn Canvas::restore(Self) -> Unit
+pub fn Canvas::restore_to_count(Self, Int) -> Unit
+pub fn Canvas::rotate(Self, Float) -> Unit
+pub fn Canvas::save(Self) -> Int
+pub fn Canvas::save_count(Self) -> Int
+pub fn Canvas::scale(Self, @skia_mbt.Size) -> Unit
+pub fn Canvas::skew(Self, @skia_mbt.Point) -> Unit
+pub fn Canvas::translate(Self, @skia_mbt.Point) -> Unit
+
+pub(all) struct Codec {
+  // private fields
+}
+pub fn Codec::decode_n32_premul(Self) -> Bitmap?
+pub fn Codec::dimensions(Self) -> @skia_mbt.ISize
+pub fn Codec::encoded_format(Self) -> @skia_mbt.EncodedImageFormat?
+pub fn Codec::from_bytes(Bytes) -> Self?
+pub fn Codec::from_data(Data) -> Self?
+pub fn Codec::height(Self) -> Int
+pub fn Codec::image_info(Self) -> @skia_mbt.ImageInfo
+pub fn Codec::is_available(Self) -> Bool
+pub fn Codec::width(Self) -> Int
+
+pub(all) struct Data {
+  // private fields
+}
+pub fn Data::from_bytes(Bytes) -> Self?
+pub fn Data::is_available(Self) -> Bool
+pub fn Data::is_empty(Self) -> Bool
+pub fn Data::size(Self) -> Int
+pub fn Data::to_bytes(Self) -> Bytes
+
+pub(all) struct Font {
+  // private fields
+}
+pub fn Font::default(size? : Float) -> Self?
+pub fn Font::from_typeface(Typeface, size? : Float) -> Self?
+pub fn Font::is_available(Self) -> Bool
+pub fn Font::set_size(Self, Float) -> Unit
+pub fn Font::size(Self) -> Float
+
+pub(all) struct Image {
+  // private fields
+}
+pub fn Image::dimensions(Self) -> @skia_mbt.ISize
+pub fn Image::encode_to_data(Self, format? : @skia_mbt.EncodedImageFormat, quality? : Int) -> Data?
+pub fn Image::from_bitmap(Bitmap) -> Self?
+pub fn Image::from_encoded_bytes(Bytes) -> Self?
+pub fn Image::from_encoded_data(Data) -> Self?
+pub fn Image::height(Self) -> Int
+pub fn Image::image_info(Self) -> @skia_mbt.ImageInfo
+pub fn Image::is_available(Self) -> Bool
+pub fn Image::width(Self) -> Int
+
+pub(all) struct Path {
+  // private fields
+}
+pub fn Path::close(Self) -> Unit
+pub fn Path::cubic_to(Self, @skia_mbt.Point, @skia_mbt.Point, @skia_mbt.Point) -> Unit
+pub fn Path::is_available(Self) -> Bool
+pub fn Path::is_empty(Self) -> Bool
+pub fn Path::line_to(Self, @skia_mbt.Point) -> Unit
+pub fn Path::move_to(Self, @skia_mbt.Point) -> Unit
+pub fn Path::new() -> Self?
+pub fn Path::quad_to(Self, @skia_mbt.Point, @skia_mbt.Point) -> Unit
+pub fn Path::reset(Self) -> Unit
+
+pub(all) struct Shader {
+  // private fields
+}
+pub fn Shader::color(@skia_mbt.Color) -> Self?
+pub fn Shader::is_available(Self) -> Bool
+pub fn Shader::linear_gradient(@skia_mbt.Point, @skia_mbt.Point, @skia_mbt.Color, @skia_mbt.Color, tile_mode? : @skia_mbt.TileMode) -> Self?
+pub fn Shader::radial_gradient(@skia_mbt.Point, Float, @skia_mbt.Color, @skia_mbt.Color, tile_mode? : @skia_mbt.TileMode) -> Self?
+
+pub(all) struct Surface {
+  // private fields
+}
+pub fn Surface::canvas(Self) -> Canvas?
+pub fn Surface::dimensions(Self) -> @skia_mbt.ISize
+pub fn Surface::height(Self) -> Int
+pub fn Surface::image_info(Self) -> @skia_mbt.ImageInfo
+pub fn Surface::image_snapshot(Self) -> Image?
+pub fn Surface::image_snapshot_with_bounds(Self, @skia_mbt.IRect) -> Image?
+pub fn Surface::raster_n32_premul(@skia_mbt.ISize) -> Self?
+pub fn Surface::read_pixels(Self, bounds? : @skia_mbt.IRect) -> @skia_mbt.Pixmap?
+pub fn Surface::width(Self) -> Int
+
+pub(all) struct Typeface {
+  // private fields
+}
+pub fn Typeface::default() -> Self?
+pub fn Typeface::from_name(Bytes) -> Self?
+pub fn Typeface::is_available(Self) -> Bool
+pub fn Typeface::is_bold(Self) -> Bool
+pub fn Typeface::is_fixed_pitch(Self) -> Bool
+pub fn Typeface::is_italic(Self) -> Bool
+
+// Type aliases
+
+// Traits
+

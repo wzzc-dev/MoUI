@@ -1,0 +1,444 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/skia_mbt"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn binding_status() -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum AlphaType {
+  Unknown
+  Opaque
+  Premul
+  Unpremul
+} derive(Eq, @debug.Debug)
+pub fn AlphaType::is_opaque(Self) -> Bool
+pub impl Default for AlphaType
+
+pub(all) enum BlendMode {
+  Clear
+  Src
+  Dst
+  SrcOver
+  DstOver
+  SrcIn
+  DstIn
+  SrcOut
+  DstOut
+  SrcATop
+  DstATop
+  Xor
+  Plus
+  Modulate
+  Screen
+  Overlay
+  Darken
+  Lighten
+  ColorDodge
+  ColorBurn
+  HardLight
+  SoftLight
+  Difference
+  Exclusion
+  Multiply
+  Hue
+  Saturation
+  Color
+  Luminosity
+} derive(Eq, @debug.Debug)
+pub fn BlendMode::to_skia_ordinal(Self) -> Int
+pub impl Default for BlendMode
+
+pub(all) enum ClipOp {
+  Difference
+  Intersect
+} derive(Eq, @debug.Debug)
+pub fn ClipOp::to_skia_ordinal(Self) -> Int
+pub impl Default for ClipOp
+
+pub(all) struct Color(UInt) derive(Eq, @debug.Debug)
+pub fn Color::a(Self) -> Byte
+pub fn Color::argb(Self) -> UInt
+pub fn Color::b(Self) -> Byte
+pub fn Color::black() -> Self
+pub fn Color::blue() -> Self
+pub fn Color::cyan() -> Self
+pub fn Color::dark_gray() -> Self
+pub fn Color::from_argb(Byte, Byte, Byte, Byte) -> Self
+pub fn Color::from_rgb(Byte, Byte, Byte) -> Self
+pub fn Color::g(Self) -> Byte
+pub fn Color::gray() -> Self
+pub fn Color::green() -> Self
+pub fn Color::light_gray() -> Self
+pub fn Color::magenta() -> Self
+pub fn Color::new(UInt) -> Self
+pub fn Color::r(Self) -> Byte
+pub fn Color::red() -> Self
+pub fn Color::to_color4f(Self) -> Color4f
+pub fn Color::transparent() -> Self
+pub fn Color::white() -> Self
+pub fn Color::with_alpha(Self, Byte) -> Self
+pub fn Color::yellow() -> Self
+pub impl Default for Color
+
+pub(all) struct Color4f {
+  r : Float
+  g : Float
+  b : Float
+  a : Float
+} derive(Eq, @debug.Debug)
+pub fn Color4f::from_color(Color) -> Self
+pub fn Color4f::from_opaque(Float, Float, Float) -> Self
+pub fn Color4f::new(Float, Float, Float, Float) -> Self
+pub fn Color4f::scale(Self, Float) -> Self
+pub fn Color4f::transparent() -> Self
+pub fn Color4f::with_alpha(Self, Float) -> Self
+pub impl Default for Color4f
+
+pub(all) struct ColorInfo {
+  color_type : ColorType
+  alpha_type : AlphaType
+} derive(Eq, @debug.Debug)
+pub fn ColorInfo::bytes_per_pixel(Self) -> Int
+pub fn ColorInfo::is_opaque(Self) -> Bool
+pub fn ColorInfo::new(color_type? : ColorType, alpha_type? : AlphaType) -> Self
+pub fn ColorInfo::with_alpha_type(Self, AlphaType) -> Self
+pub fn ColorInfo::with_color_type(Self, ColorType) -> Self
+pub impl Default for ColorInfo
+
+pub(all) enum ColorType {
+  Unknown
+  Alpha8
+  RGB565
+  ARGB4444
+  RGBA8888
+  RGB888x
+  BGRA8888
+  RGBA1010102
+  RGB101010x
+  Gray8
+  RGBAF16
+  RGBAF32
+} derive(Eq, @debug.Debug)
+pub fn ColorType::bytes_per_pixel(Self) -> Int
+pub fn ColorType::is_always_opaque(Self) -> Bool
+pub impl Default for ColorType
+
+pub(all) struct CubicResampler {
+  b : Float
+  c : Float
+} derive(Eq, @debug.Debug)
+pub fn CubicResampler::catmull_rom() -> Self
+pub fn CubicResampler::mitchell() -> Self
+pub fn CubicResampler::new(Float, Float) -> Self
+
+pub(all) enum EncodedImageFormat {
+  BMP
+  GIF
+  ICO
+  JPEG
+  PNG
+  WBMP
+  WEBP
+  PKM
+  KTX
+  ASTC
+  DNG
+  HEIF
+  AVIF
+  JPEGXL
+} derive(Eq, @debug.Debug)
+pub fn EncodedImageFormat::from_skia_ordinal(Int) -> Self?
+pub fn EncodedImageFormat::to_skia_ordinal(Self) -> Int
+pub impl Default for EncodedImageFormat
+
+pub(all) enum FilterMode {
+  Nearest
+  Linear
+} derive(Eq, @debug.Debug)
+pub fn FilterMode::to_skia_ordinal(Self) -> Int
+pub impl Default for FilterMode
+
+pub(all) struct IPoint {
+  x : Int
+  y : Int
+} derive(Eq, @debug.Debug)
+pub fn IPoint::equals(Self, Int, Int) -> Bool
+pub fn IPoint::is_zero(Self) -> Bool
+pub fn IPoint::new(Int, Int) -> Self
+pub fn IPoint::offset(Self, Int, Int) -> Self
+pub fn IPoint::to_point(Self) -> Point
+pub fn IPoint::zero() -> Self
+pub impl Default for IPoint
+
+pub(all) struct IRect {
+  left : Int
+  top : Int
+  right : Int
+  bottom : Int
+} derive(Eq, @debug.Debug)
+pub fn IRect::contains_point(Self, IPoint) -> Bool
+pub fn IRect::contains_rect(Self, Self) -> Bool
+pub fn IRect::empty() -> Self
+pub fn IRect::from_size(ISize) -> Self
+pub fn IRect::from_xywh(Int, Int, Int, Int) -> Self
+pub fn IRect::height(Self) -> Int
+pub fn IRect::inset(Self, Int, Int) -> Self
+pub fn IRect::intersect(Self, Self) -> Self?
+pub fn IRect::is_empty(Self) -> Bool
+pub fn IRect::join(Self, Self) -> Self
+pub fn IRect::new(Int, Int, Int, Int) -> Self
+pub fn IRect::offset(Self, Int, Int) -> Self
+pub fn IRect::outset(Self, Int, Int) -> Self
+pub fn IRect::size(Self) -> ISize
+pub fn IRect::sorted(Self) -> Self
+pub fn IRect::to_rect(Self) -> Rect
+pub fn IRect::width(Self) -> Int
+pub impl Default for IRect
+
+pub(all) struct ISize {
+  width : Int
+  height : Int
+} derive(Eq, @debug.Debug)
+pub fn ISize::area(Self) -> Int64
+pub fn ISize::empty() -> Self
+pub fn ISize::is_empty(Self) -> Bool
+pub fn ISize::is_zero(Self) -> Bool
+pub fn ISize::new(Int, Int) -> Self
+pub fn ISize::to_size(Self) -> Size
+pub impl Default for ISize
+
+pub(all) struct ImageInfo {
+  dimensions : ISize
+  color_info : ColorInfo
+} derive(Eq, @debug.Debug)
+pub fn ImageInfo::a8(ISize) -> Self
+pub fn ImageInfo::alpha_type(Self) -> AlphaType
+pub fn ImageInfo::bounds(Self) -> IRect
+pub fn ImageInfo::bytes_per_pixel(Self) -> Int
+pub fn ImageInfo::color_type(Self) -> ColorType
+pub fn ImageInfo::compute_byte_size(Self, Int) -> Int
+pub fn ImageInfo::compute_min_byte_size(Self) -> Int
+pub fn ImageInfo::compute_offset(Self, IPoint, Int) -> Int
+pub fn ImageInfo::from_color_info(ISize, ColorInfo) -> Self
+pub fn ImageInfo::height(Self) -> Int
+pub fn ImageInfo::is_empty(Self) -> Bool
+pub fn ImageInfo::is_opaque(Self) -> Bool
+pub fn ImageInfo::min_row_bytes(Self) -> Int
+pub fn ImageInfo::n32_premul(ISize) -> Self
+pub fn ImageInfo::new(ISize, color_type? : ColorType, alpha_type? : AlphaType) -> Self
+pub fn ImageInfo::unknown(dimensions? : ISize) -> Self
+pub fn ImageInfo::valid_row_bytes(Self, Int) -> Bool
+pub fn ImageInfo::width(Self) -> Int
+pub fn ImageInfo::with_alpha_type(Self, AlphaType) -> Self
+pub fn ImageInfo::with_color_type(Self, ColorType) -> Self
+pub fn ImageInfo::with_dimensions(Self, ISize) -> Self
+pub impl Default for ImageInfo
+
+pub(all) struct Matrix {
+  scale_x : Float
+  skew_x : Float
+  trans_x : Float
+  skew_y : Float
+  scale_y : Float
+  trans_y : Float
+  persp_0 : Float
+  persp_1 : Float
+  persp_2 : Float
+} derive(Eq, @debug.Debug)
+pub fn Matrix::get(Self, MatrixMember) -> Float
+pub fn Matrix::has_perspective(Self) -> Bool
+pub fn Matrix::identity() -> Self
+pub fn Matrix::is_identity(Self) -> Bool
+pub fn Matrix::is_scale_translate(Self) -> Bool
+pub fn Matrix::is_translate(Self) -> Bool
+pub fn Matrix::map_point(Self, Point) -> Point
+pub fn Matrix::new_all(Float, Float, Float, Float, Float, Float, Float, Float, Float) -> Self
+pub fn Matrix::scale(Float, Float) -> Self
+pub fn Matrix::scale_translate(Float, Float, Float, Float) -> Self
+pub fn Matrix::skew(Float, Float) -> Self
+pub fn Matrix::translate(Float, Float) -> Self
+pub impl Default for Matrix
+
+pub(all) enum MatrixMember {
+  ScaleX
+  SkewX
+  TransX
+  SkewY
+  ScaleY
+  TransY
+  Persp0
+  Persp1
+  Persp2
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MipmapMode {
+  None
+  Nearest
+  Linear
+} derive(Eq, @debug.Debug)
+pub fn MipmapMode::to_skia_ordinal(Self) -> Int
+pub impl Default for MipmapMode
+
+pub(all) struct Paint {
+  color : Color
+  anti_alias : Bool
+  dither : Bool
+  style : PaintStyle
+  stroke_width : Float
+  stroke_miter : Float
+  stroke_cap : StrokeCap
+  stroke_join : StrokeJoin
+  blend_mode : BlendMode
+} derive(Eq, @debug.Debug)
+pub fn Paint::alpha(Self) -> Byte
+pub fn Paint::blend_mode_ordinal(Self) -> Int
+pub fn Paint::color_argb(Self) -> UInt
+pub fn Paint::new(color? : Color, anti_alias? : Bool, dither? : Bool, style? : PaintStyle, stroke_width? : Float, stroke_miter? : Float, stroke_cap? : StrokeCap, stroke_join? : StrokeJoin, blend_mode? : BlendMode) -> Self
+pub fn Paint::reset(Self) -> Self
+pub fn Paint::set_alpha(Self, Byte) -> Self
+pub fn Paint::set_anti_alias(Self, Bool) -> Self
+pub fn Paint::set_argb(Self, Byte, Byte, Byte, Byte) -> Self
+pub fn Paint::set_blend_mode(Self, BlendMode) -> Self
+pub fn Paint::set_color(Self, Color) -> Self
+pub fn Paint::set_dither(Self, Bool) -> Self
+pub fn Paint::set_stroke(Self, Bool) -> Self
+pub fn Paint::set_stroke_cap(Self, StrokeCap) -> Self
+pub fn Paint::set_stroke_join(Self, StrokeJoin) -> Self
+pub fn Paint::set_stroke_miter(Self, Float) -> Self
+pub fn Paint::set_stroke_width(Self, Float) -> Self
+pub fn Paint::set_style(Self, PaintStyle) -> Self
+pub fn Paint::stroke_cap_ordinal(Self) -> Int
+pub fn Paint::stroke_join_ordinal(Self) -> Int
+pub fn Paint::style_ordinal(Self) -> Int
+pub impl Default for Paint
+
+pub(all) enum PaintStyle {
+  Fill
+  Stroke
+  StrokeAndFill
+} derive(Eq, @debug.Debug)
+pub fn PaintStyle::to_skia_ordinal(Self) -> Int
+pub impl Default for PaintStyle
+
+pub(all) struct Pixmap {
+  image_info : ImageInfo
+  row_bytes : Int
+  pixels : Bytes
+} derive(Eq, @debug.Debug)
+pub fn Pixmap::bounds(Self) -> IRect
+pub fn Pixmap::byte_size(Self) -> Int
+pub fn Pixmap::bytes_per_pixel(Self) -> Int
+pub fn Pixmap::contains(Self, IPoint) -> Bool
+pub fn Pixmap::dimensions(Self) -> ISize
+pub fn Pixmap::height(Self) -> Int
+pub fn Pixmap::is_empty(Self) -> Bool
+pub fn Pixmap::new(ImageInfo, Int, Bytes) -> Self?
+pub fn Pixmap::offset(Self, IPoint) -> Int?
+pub fn Pixmap::width(Self) -> Int
+
+pub(all) struct Point {
+  x : Float
+  y : Float
+} derive(Eq, @debug.Debug)
+pub fn Point::distance_to_origin(Self) -> Float
+pub fn Point::equals(Self, Float, Float) -> Bool
+pub fn Point::is_zero(Self) -> Bool
+pub fn Point::length(Self) -> Float
+pub fn Point::new(Float, Float) -> Self
+pub fn Point::offset(Self, Float, Float) -> Self
+pub fn Point::scale(Self, Float) -> Self
+pub fn Point::to_ipoint_round(Self) -> IPoint
+pub fn Point::zero() -> Self
+pub impl Default for Point
+
+pub(all) struct Rect {
+  left : Float
+  top : Float
+  right : Float
+  bottom : Float
+} derive(Eq, @debug.Debug)
+pub fn Rect::contains_point(Self, Point) -> Bool
+pub fn Rect::contains_rect(Self, Self) -> Bool
+pub fn Rect::empty() -> Self
+pub fn Rect::from_size(Size) -> Self
+pub fn Rect::from_xywh(Float, Float, Float, Float) -> Self
+pub fn Rect::height(Self) -> Float
+pub fn Rect::inset(Self, Float, Float) -> Self
+pub fn Rect::intersect(Self, Self) -> Self?
+pub fn Rect::is_empty(Self) -> Bool
+pub fn Rect::join(Self, Self) -> Self
+pub fn Rect::new(Float, Float, Float, Float) -> Self
+pub fn Rect::offset(Self, Float, Float) -> Self
+pub fn Rect::outset(Self, Float, Float) -> Self
+pub fn Rect::size(Self) -> Size
+pub fn Rect::sorted(Self) -> Self
+pub fn Rect::to_irect_round(Self) -> IRect
+pub fn Rect::width(Self) -> Float
+pub impl Default for Rect
+
+pub(all) struct SamplingOptions {
+  filter : FilterMode
+  mipmap : MipmapMode
+  cubic : CubicResampler?
+} derive(Eq, @debug.Debug)
+pub fn SamplingOptions::catmull_rom() -> Self
+pub fn SamplingOptions::cubic_b(Self) -> Float
+pub fn SamplingOptions::cubic_c(Self) -> Float
+pub fn SamplingOptions::filter_ordinal(Self) -> Int
+pub fn SamplingOptions::from_cubic(CubicResampler) -> Self
+pub fn SamplingOptions::linear() -> Self
+pub fn SamplingOptions::mipmap_ordinal(Self) -> Int
+pub fn SamplingOptions::mitchell() -> Self
+pub fn SamplingOptions::new(filter? : FilterMode, mipmap? : MipmapMode) -> Self
+pub fn SamplingOptions::uses_cubic(Self) -> Bool
+pub impl Default for SamplingOptions
+
+pub(all) struct Size {
+  width : Float
+  height : Float
+} derive(Eq, @debug.Debug)
+pub fn Size::empty() -> Self
+pub fn Size::from_isize(ISize) -> Self
+pub fn Size::is_empty(Self) -> Bool
+pub fn Size::is_zero(Self) -> Bool
+pub fn Size::new(Float, Float) -> Self
+pub fn Size::scale(Self, Float) -> Self
+pub fn Size::to_isize_round(Self) -> ISize
+pub impl Default for Size
+
+pub(all) enum StrokeCap {
+  Butt
+  Round
+  Square
+} derive(Eq, @debug.Debug)
+pub fn StrokeCap::to_skia_ordinal(Self) -> Int
+pub impl Default for StrokeCap
+
+pub(all) enum StrokeJoin {
+  Miter
+  Round
+  Bevel
+} derive(Eq, @debug.Debug)
+pub fn StrokeJoin::to_skia_ordinal(Self) -> Int
+pub impl Default for StrokeJoin
+
+pub(all) enum TileMode {
+  Clamp
+  Repeat
+  Mirror
+  Decal
+} derive(Eq, @debug.Debug)
+pub fn TileMode::to_skia_ordinal(Self) -> Int
+pub impl Default for TileMode
+
+// Type aliases
+pub type Scalar = Float
+
+// Traits
+
