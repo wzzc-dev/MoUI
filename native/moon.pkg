@@ -1,0 +1,11 @@
+import {
+  "wzzc-dev/skia_mbt" @skia,
+}
+
+options(
+  "native-stub": [ "skia_stub.cpp" ],
+  targets: {
+    "skia_native.mbt": [ "native", "llvm" ],
+    "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+  },
+)
