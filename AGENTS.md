@@ -38,9 +38,9 @@ paths, or abstractions that only preserve old shapes.
 ## Local Dependencies
 
 The project expects the modified local `Milky2018/window` checkout at
-`.local_repos/window`, as described in `docs/development.md`. Local
-`moon.mod.json` and `moon.pkg` files are the source of truth for imports and
-supported targets.
+`.local_repos/window`, as described in `docs/development.md`. Local `moon.mod`,
+`moon.work`, and `moon.pkg` files are the source of truth for imports,
+workspace members, and supported targets.
 
 Use `sh scripts/setup-local-deps.sh` to create or repair the local checkout and
 `sh scripts/check-local-deps.sh` to verify that it points at the
