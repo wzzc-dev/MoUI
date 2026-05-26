@@ -167,17 +167,34 @@ test "renderer capability follow ups stay focused on native gaps" {
   let follow_ups = @render.renderer_feature_follow_ups()
   inspect(follow_ups.length(), content="4")
   let mut has_transform = false
+  let mut has_text_shaping = false
+  let mut has_emoji_text = false
   let mut has_async_image = false
+  let mut has_path_vector = false
   for entry in follow_ups {
     if entry.feature == @render.RendererFeature::Transform {
       has_transform = true
     }
+    if entry.feature == @render.RendererFeature::TextShaping {
+      has_text_shaping = true
+      assert_true(entry.native_note.contains("follow-up"))
+    }
+    if entry.feature == @render.RendererFeature::EmojiText {
+      has_emoji_text = true
+      assert_true(entry.native_status == @render.RendererFeatureStatus::Gap)
+    }
     if entry.feature == @render.RendererFeature::AsyncImage {
       has_async_image = true
     }
+    if entry.feature == @render.RendererFeature::PathVector {
+      has_path_vector = true
+    }
   }
   assert_true(has_transform)
+  assert_true(has_text_shaping)
+  assert_true(has_emoji_text)
   assert_true(has_async_image)
+  assert_false(has_path_vector)
 }
 
 ///|
