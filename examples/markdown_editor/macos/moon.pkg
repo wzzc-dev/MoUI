@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui/examples/markdown_editor/app",
+  "examples/markdown_editor/app",
 }
 
 supported_targets = "native"

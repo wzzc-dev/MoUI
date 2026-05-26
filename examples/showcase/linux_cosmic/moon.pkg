@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/backend/linux" @linux_backend,
-  "wzzc-dev/moui/examples/showcase/app" @showcase_app,
+  "examples/showcase/app" @showcase_app,
   "wzzc-dev/moui/render/wgpu",
 }
 

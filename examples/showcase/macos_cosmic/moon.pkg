@@ -1,7 +1,7 @@
 import {
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/render/wgpu",
-  "wzzc-dev/moui/examples/showcase/app",
+  "examples/showcase/app",
 }
 
 supported_targets = "native"
