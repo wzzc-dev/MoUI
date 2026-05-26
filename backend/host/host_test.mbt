@@ -1257,6 +1257,35 @@ test "host async service queue tracks pending and completed responses" {
 }
 
 ///|
+test "host async service queue rejects in-flight service requests" {
+  let queue = HostServiceAsyncQueue::new()
+  let request_id = match
+    queue.submit(
+      HostServiceRequest::FileDialog(
+        HostFileDialogOptions::new(kind=HostFileDialogKind::OpenFile),
+      ),
+    ) {
+    HostServiceResponse::Pending(id) => id
+    _ => fail("expected pending file-dialog request")
+  }
+  let pending = queue.drain_pending()
+  inspect(pending.length(), content="1")
+  inspect(queue.in_flight_count(), content="1")
+  assert_true(queue.reject(request_id, "file dialog canceled"))
+  inspect(queue.in_flight_count(), content="0")
+  inspect(queue.completed_count(), content="1")
+  match queue.take_completed(request_id) {
+    Some({ request: HostServiceRequest::FileDialog(_), response, .. }) =>
+      match response {
+        HostServiceResponse::Unavailable(message) =>
+          inspect(message, content="file dialog canceled")
+        _ => fail("expected rejected file-dialog response")
+      }
+    _ => fail("expected rejected file-dialog completion")
+  }
+}
+
+///|
 test "host driver applies async clipboard read completion to focused text" {
   let text = @core.State::new("")
   let runtime = @core.AppRuntime::new_spec(

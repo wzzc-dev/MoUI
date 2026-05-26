@@ -168,6 +168,7 @@ Use the conformance entrypoint for this suite:
 sh scripts/conformance-check.sh
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
+sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --golden
 sh scripts/conformance-check.sh --bench
 sh scripts/conformance-check.sh --platform
@@ -176,11 +177,14 @@ sh scripts/conformance-check.sh --platform
 The base command runs runtime, host, renderer, Web backend, and Showcase app
 contracts. `--text` runs the stable text conformance surface across core,
 native renderer/provider, Web adapter, and Web backend packages.
-`--text-diagnostic` runs the opt-in diagnostic text packages. `--golden` builds
-the Showcase Web wasm-gc target as the canonical screenshot source. `--bench`
-builds the heavier example targets and records the expected measurement set:
-startup, frame time, dirty-count, draw-command count, and memory. `--platform`
-layers in current-platform backend checks through
+`--text-diagnostic` runs the opt-in diagnostic text packages.
+`--platform-services` runs host and Web service contracts, runs current-host
+macOS service tests on Darwin, and runs Linux service tests only when the local
+window checkout has generated Wayland protocol sources available. `--golden`
+builds the Showcase Web wasm-gc target as the canonical screenshot source.
+`--bench` builds the heavier example targets and records the expected
+measurement set: startup, frame time, dirty-count, draw-command count, and
+memory. `--platform` layers in current-platform backend checks through
 `scripts/dev-check.sh --platform-examples-test`.
 
 CI runs the same conformance script from `.github/workflows/ci.yml`. Keep this

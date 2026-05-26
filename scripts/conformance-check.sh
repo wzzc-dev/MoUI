@@ -101,7 +101,11 @@ fi
 if "$RUN_PLATFORM_SERVICES"; then
   run moon test backend/host --target native
   run moon test backend/web --target wasm-gc
-  run moon test backend/linux --target native
+  if [ -f ".local_repos/window/linux/generated/xdg-decoration-protocol.c" ]; then
+    run moon test backend/linux --target native
+  else
+    printf '\nSkipping backend/linux platform-service tests because .local_repos/window/linux/generated/xdg-decoration-protocol.c is missing.\n'
+  fi
   if [ "$(uname -s)" = "Darwin" ]; then
     run moon test backend/macos --target native
   fi
