@@ -2,6 +2,8 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
   "wzzc-dev/moui/render/wgpu/cosmic_text" @cosmic_text,
+  "wzzc-dev/moui/render/wgpu/directwrite" @directwrite,
+  "wzzc-dev/moui/render/wgpu/fontconfig" @fontconfig,
 } for "test"
 
 supported_targets = "native"
