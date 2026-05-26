@@ -14,12 +14,14 @@ pub struct ShowcaseApp {
   picker_value : @core.State[String]
   date_value : @core.State[@core.DateValue]
   navigation : @core.NavigationState
+  sidebar_scroll : @core.ScrollState
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
   counter_count : @core.State[Int]
   todo_items : @core.State[Array[ShowcaseTodoItem]]
   todo_next_id : @core.State[Int]
   todo_draft : @core.State[String]
+  last_drop_label : @core.State[String]
 }
 
 ///|
@@ -70,6 +72,7 @@ pub fn ShowcaseApp::new() -> ShowcaseApp {
       @core.DateValue::new(year=2026, month=5, day=21),
     ),
     navigation: @core.NavigationState::new(initial="overview"),
+    sidebar_scroll: @core.ScrollState::new(),
     list_scroll: @core.ScrollState::new(),
     grid_scroll: @core.ScrollState::new(),
     counter_count: @core.State::new(0),
@@ -79,6 +82,7 @@ pub fn ShowcaseApp::new() -> ShowcaseApp {
     ]),
     todo_next_id: @core.State::new(2),
     todo_draft: @core.State::new(""),
+    last_drop_label: @core.State::new("No files dropped"),
   }
 }
 
@@ -141,6 +145,14 @@ pub fn ShowcaseApp::todo_toggle(self : ShowcaseApp, id : Int) -> Unit {
 ///|
 pub fn ShowcaseApp::todo_remove(self : ShowcaseApp, id : Int) -> Unit {
   self.todo_items.update(items => items.filter(item => item.id != id))
+}
+
+///|
+pub fn ShowcaseApp::record_file_drop(
+  self : ShowcaseApp,
+  paths : Array[String],
+) -> Unit {
+  self.last_drop_label.set("Dropped \{paths.length()} file(s)")
 }
 
 ///|
@@ -235,7 +247,7 @@ pub fn ShowcaseApp::root(
   let shell = surface(
     column(
       [
-        self.header(theme, metrics, dark, active),
+        self.header(theme, metrics, dark, active, selected_section),
         self.catalog_shell(
           ctx, theme, metrics, selected_section, filter, draft, tab, slider, enabled,
           secondary, picker, date, active, offset, opacity,

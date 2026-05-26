@@ -47,7 +47,9 @@ fn assert_diagnostic_native_text_layout(
 }
 
 ///|
-fn assert_diagnostic_native_text_matrix(system : @core.TextSystem) -> Unit raise {
+fn assert_diagnostic_native_text_matrix(
+  system : @core.TextSystem,
+) -> Unit raise {
   assert_diagnostic_native_text_layout(system, "abc")
   assert_diagnostic_native_text_layout(system, "你好")
   assert_diagnostic_native_text_layout(system, "🙂")

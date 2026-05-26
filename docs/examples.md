@@ -8,8 +8,19 @@ so visible docs do not hide partial or gap status behind ready features.
 
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
-| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | Public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status |
+| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | Public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
+
+Showcase is organized as a system gallery. In addition to the standard control,
+layout, navigation, text/media, and example sections, it now includes:
+
+- `Advanced Rendering`: app-local `custom_layout` demos for layer/blend,
+  filter, shader effect, path, transform, and opacity draw commands.
+- `Text Diagnostics`: CJK mixed text, RTL/bidi samples, emoji status labels,
+  fixed-width wrapping, and a compact Markdown/rich text diagnostic.
+- `Interaction Lab`: tooltip, file-drop modifier wiring, focus/shortcut
+  affordances, button/text-field variants, and deterministic image lifecycle
+  states.
 
 The Markdown editor keeps Markdown source as the saved value while presenting a
 formatted editor surface as the primary workflow. Source preview remains

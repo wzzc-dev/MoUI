@@ -219,6 +219,25 @@ test "path tessellator lowers fill stroke and curves into vertices" {
 }
 
 ///|
+test "path tessellator lowers open line stroke into local quad" {
+  let path = @core.PathSpec::new(
+    verbs=[
+      @core.PathVerb::MoveTo(@core.Point::new(x=10.0, y=20.0)),
+      @core.PathVerb::LineTo(@core.Point::new(x=14.0, y=24.0)),
+    ],
+    stroke=Some(@core.Brush::solid(@core.Color::black())),
+    stroke_width=2.0,
+  )
+  let mesh = @render.tessellate_path(path)
+  inspect(mesh.vertices.length(), content="6")
+  inspect(mesh.diagnostics.length(), content="0")
+  for vertex in mesh.vertices {
+    assert_true(vertex.x >= 9.0 && vertex.x <= 15.0)
+    assert_true(vertex.y >= 19.0 && vertex.y <= 25.0)
+  }
+}
+
+///|
 test "path tessellator uses zeno for cubic and degenerate paths" {
   let cubic = @core.PathSpec::new(
     verbs=[

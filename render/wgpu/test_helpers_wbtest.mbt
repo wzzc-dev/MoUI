@@ -85,6 +85,9 @@ fn new_test_renderer_handle_with_text_engine(
     last_batches: [],
     configured: false,
     present_count: 0,
+    surface_format: @wgpu_mbt.TextureFormat::from_u32(
+      @wgpu_mbt.TEXTURE_FORMAT_RGBA8_UNORM,
+    ),
     instance: None,
     adapter: None,
     device: None,

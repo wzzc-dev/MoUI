@@ -976,9 +976,9 @@ test "host window lifecycle rejects queued commands after platform close" {
   queue.set_primary_window(closed)
   queue.close_window(closed)
 
-  let completions = queue.drain_with_handler(request =>
+  let completions = queue.drain_with_handler(request => {
     registry.apply_request(request)
-  )
+  })
   inspect(queue.pending_count(), content="0")
   inspect(completions.length(), content="6")
   inspect(queue.completed_count(), content="6")

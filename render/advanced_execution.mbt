@@ -59,7 +59,9 @@ pub fn tessellate_path(spec : @core.PathSpec) -> PathMesh {
   let mesh = PathMesh::{ vertices: [], diagnostics: [] }
   let path = zeno_path_from_spec(spec, mesh)
   append_zeno_fill_mesh(mesh, path, spec.fill)
-  append_zeno_stroke_mesh(mesh, path, spec.stroke, spec.stroke_width)
+  if !append_line_only_stroke_mesh(mesh, spec) {
+    append_zeno_stroke_mesh(mesh, path, spec.stroke, spec.stroke_width)
+  }
   mesh
 }
 
@@ -152,6 +154,78 @@ fn append_zeno_stroke_mesh(
       }
     None => ()
   }
+}
+
+///|
+fn append_line_only_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool {
+  match spec.stroke {
+    Some(brush) =>
+      if spec.stroke_width > 0.0 {
+        let color = brush_to_path_color(brush)
+        let vertices : Array[PathVertex] = []
+        let mut current : @core.Point? = None
+        let mut emitted = false
+        for verb in spec.verbs {
+          match verb {
+            @core.PathVerb::MoveTo(point) => current = Some(point)
+            @core.PathVerb::LineTo(point) => {
+              match current {
+                Some(start) =>
+                  if append_line_stroke_vertices(
+                      vertices,
+                      start,
+                      point,
+                      spec.stroke_width,
+                      color,
+                    ) {
+                    emitted = true
+                  }
+                None => return false
+              }
+              current = Some(point)
+            }
+            @core.PathVerb::QuadTo(_, _)
+            | @core.PathVerb::CubicTo(_, _, _)
+            | @core.PathVerb::Close => return false
+          }
+        }
+        if emitted {
+          for vertex in vertices {
+            mesh.vertices.push(vertex)
+          }
+        }
+        emitted
+      } else {
+        false
+      }
+    None => false
+  }
+}
+
+///|
+fn append_line_stroke_vertices(
+  vertices : Array[PathVertex],
+  start : @core.Point,
+  end : @core.Point,
+  stroke_width : Double,
+  color : @core.Color,
+) -> Bool {
+  let dx = end.x - start.x
+  let dy = end.y - start.y
+  let length = (dx * dx + dy * dy).sqrt()
+  if length <= 0.000001 {
+    return false
+  }
+  let half_width = stroke_width / 2.0
+  let nx = -dy / length * half_width
+  let ny = dx / length * half_width
+  push_path_vertex(vertices, @zeno.Vector(start.x + nx, start.y + ny), color)
+  push_path_vertex(vertices, @zeno.Vector(start.x - nx, start.y - ny), color)
+  push_path_vertex(vertices, @zeno.Vector(end.x - nx, end.y - ny), color)
+  push_path_vertex(vertices, @zeno.Vector(start.x + nx, start.y + ny), color)
+  push_path_vertex(vertices, @zeno.Vector(end.x - nx, end.y - ny), color)
+  push_path_vertex(vertices, @zeno.Vector(end.x + nx, end.y + ny), color)
+  true
 }
 
 ///|
