@@ -8,12 +8,7 @@ pub fn picker(
   items : Array[@core.PickerItem],
   selected~ : @core.Binding[String],
   placeholder? : String = "Select...",
-  font? : @core.FontSpec = @core.Theme::default().typography.control,
-  foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  background? : @core.Brush = @core.Brush::solid(
-    @core.Theme::default().palette.surface,
-  ),
-  corner_radius? : Double = 8.0,
+  theme? : @core.Theme = @core.Theme::default(),
   max_height? : Double = 200.0,
 ) -> @core.ViewSpec {
   @core.ViewSpec::PickerSpec({
@@ -21,10 +16,10 @@ pub fn picker(
     items,
     selected,
     placeholder,
-    font,
-    foreground,
-    background,
-    cornerRadius: corner_radius,
+    font: theme.typography.control,
+    foreground: theme.foreground,
+    background: @core.Brush::solid(theme.palette.surface),
+    cornerRadius: theme.radius_scale.md,
     maxHeight: max_height,
   })
 }

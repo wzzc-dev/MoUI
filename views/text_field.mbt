@@ -3,10 +3,12 @@ pub fn text_field(
   value : @core.Binding[String],
   on_submit? : (() -> Unit)? = None,
   placeholder? : String = "",
-  style? : @core.TextFieldStyle = @core.TextFieldStyle::filled(),
+  variant? : TextFieldVariant = TextFieldVariant::Filled,
+  theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 240.0,
   height? : Double = 40.0,
 ) -> @core.ViewSpec {
+  let style = variant.style(theme)
   let normal = style.normal
   let focused = style.focused
   @core.ViewSpec::TextFieldSpec({

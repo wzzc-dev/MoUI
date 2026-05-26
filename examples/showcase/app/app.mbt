@@ -232,8 +232,8 @@ pub fn ShowcaseApp::root(
   let metrics = showcase_metrics(ctx.viewport_size(), theme)
   let offset = if active { 18.0 } else { 0.0 }
   let opacity = if active { 1.0 } else { 0.68 }
-  let shell = @views.surface(
-    @views.column(
+  let shell = surface(
+    column(
       [
         self.header(theme, metrics, dark, active),
         self.catalog_shell(
@@ -242,11 +242,12 @@ pub fn ShowcaseApp::root(
         ),
       ],
       spacing=theme.spacing_scale.lg,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStretch,
+      align=@views.CrossAlign::Stretch,
     ),
     width=metrics.viewport.width,
     height=metrics.viewport.height,
-    style=@core.SurfaceStyle::default(theme~),
+    variant=@views.SurfaceVariant::Base,
+    theme~,
   )
   let sheeted = @views.sheet_host(
     child=shell,

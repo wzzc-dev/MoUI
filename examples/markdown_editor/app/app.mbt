@@ -1,4 +1,20 @@
 ///|
+using @views {
+  button,
+  column,
+  empty,
+  markdown_editor,
+  padding_edges,
+  row,
+  scroll_view,
+  spacer,
+  stack,
+  surface,
+  text,
+  text_field,
+}
+
+///|
 pub struct MarkdownEditorApp {
   document : @core.State[String]
   selection : @core.State[MarkdownEditorSelection]
@@ -260,25 +276,23 @@ fn MarkdownEditorApp::root(
   let document = ctx.watch(self.document)
   let snapshot = MarkdownEditorSnapshot::parse(document)
   let binding = ctx.binding(self.document)
-  let editor_style = markdown_editor_page_text_style(theme)
-  let source_style = @core.SurfaceStyle::default(theme~)
+  let editor_font = @core.FontSpec::new(size=17.0)
   let show_source = ctx.watch(self.source_preview_visible)
   let target_bar = self.target_bar(ctx, theme)
   let selection = ctx.watch(self.selection)
   let target_kind = ctx.watch(self.target_kind)
   let block_label = ctx.watch(self.block_label)
   let scroll_offset = ctx.watch_scroll(self.editor_scroll)
-  let workspace = @views.column(
+  let workspace = column(
     [
       self.chrome(theme, snapshot, block_label),
-      @views.row(
+      row(
         [
           editor_source_layout(
             self,
             binding,
             snapshot,
-            editor_style,
-            source_style,
+            editor_font,
             theme,
             show_source,
             target_bar,
@@ -290,13 +304,26 @@ fn MarkdownEditorApp::root(
           ),
         ],
         spacing=theme.spacing_scale.lg,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+        align=@views.CrossAlign::Start,
       ),
     ],
     spacing=theme.spacing_scale.md,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    align=@views.CrossAlign::Start,
   )
-  @views.surface(workspace, style=markdown_editor_workspace_style(theme))
+  surface(
+    padding_edges(
+      workspace,
+      top=theme.spacing_scale.lg,
+      right=theme.spacing_scale.lg,
+      bottom=theme.spacing_scale.lg,
+      left=theme.spacing_scale.md,
+    ),
+    variant=@views.SurfaceVariant::Base,
+    theme~,
+    background=@core.Color::rgba(r=0.985, g=0.985, b=0.98),
+    corner_radius=theme.radius_scale.sm,
+    padding=0.0,
+  )
 }
 
 ///|
@@ -306,12 +333,12 @@ fn MarkdownEditorApp::chrome(
   snapshot : MarkdownEditorSnapshot,
   block_label : String,
 ) -> @core.ViewSpec {
-  @views.row(
+  row(
     [
-      @views.text(snapshot.active_heading, width=520.0, height=32.0)
+      text(snapshot.active_heading, width=520.0, height=32.0)
       .font(theme.typography.title)
       .foreground(theme.palette.foreground),
-      @views.text(
+      text(
         block_label + " / " + markdown_editor_reading_label(snapshot),
         width=300.0,
         height=28.0,
@@ -321,21 +348,24 @@ fn MarkdownEditorApp::chrome(
       editor_button(
         "Undo",
         () => ignore(self.undo()),
-        flat_editor_button_style(theme),
+        @views.ButtonVariant::Tonal,
+        theme,
       ),
       editor_button(
         "Redo",
         () => ignore(self.redo()),
-        flat_editor_button_style(theme),
+        @views.ButtonVariant::Tonal,
+        theme,
       ),
       editor_button(
         "Src",
         () => self.toggle_source_preview(),
-        flat_editor_button_style(theme),
+        @views.ButtonVariant::Tonal,
+        theme,
       ),
     ],
     spacing=theme.spacing_scale.sm,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+    align=@views.CrossAlign::Center,
   )
 }
 
@@ -347,154 +377,170 @@ fn MarkdownEditorApp::target_bar(
 ) -> @core.ViewSpec {
   let kind = ctx.watch(self.target_kind)
   let block_label = ctx.watch(self.block_label)
-  let field_style = @core.TextFieldStyle::outline(theme~)
-  let button_style = flat_editor_button_style(theme)
-  let block_badge = @views.text(
-      "Block: " + block_label,
-      width=132.0,
-      height=34.0,
-    )
+  let block_badge = text("Block: " + block_label, width=132.0, height=34.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.muted)
   match kind {
     LinkTarget =>
-      @views.row(
+      row(
         [
           block_badge,
-          @views.text("Link target", width=88.0, height=34.0)
+          text("Link target", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          @views.text_field(
+          text_field(
             ctx.binding(self.link_target),
             on_submit=Some(() => self.apply_link_target()),
             placeholder="https://example.com",
-            style=field_style,
+            variant=@views.TextFieldVariant::Outline,
+            theme~,
             width=360.0,
             height=34.0,
           ).key("markdown-link-target"),
-          editor_button("Apply", () => self.apply_link_target(), button_style),
+          editor_button(
+            "Apply",
+            () => self.apply_link_target(),
+            @views.ButtonVariant::Tonal,
+            theme,
+          ),
         ],
         spacing=theme.spacing_scale.xs,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+        align=@views.CrossAlign::Center,
       )
     ImageTarget =>
-      @views.row(
+      row(
         [
           block_badge,
-          @views.text("Image src", width=88.0, height=34.0)
+          text("Image src", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          @views.text_field(
+          text_field(
             ctx.binding(self.image_target),
             on_submit=Some(() => self.apply_image_target()),
             placeholder="assets/image.png",
-            style=field_style,
+            variant=@views.TextFieldVariant::Outline,
+            theme~,
             width=360.0,
             height=34.0,
           ).key("markdown-image-target"),
-          editor_button("Apply", () => self.apply_image_target(), button_style),
+          editor_button(
+            "Apply",
+            () => self.apply_image_target(),
+            @views.ButtonVariant::Tonal,
+            theme,
+          ),
         ],
         spacing=theme.spacing_scale.xs,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+        align=@views.CrossAlign::Center,
       )
     CodeLanguageTarget =>
-      @views.row(
+      row(
         [
           block_badge,
-          @views.text("Code lang", width=88.0, height=34.0)
+          text("Code lang", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          @views.text_field(
+          text_field(
             ctx.binding(self.code_language),
             on_submit=Some(() => self.apply_code_language()),
             placeholder="moonbit",
-            style=field_style,
+            variant=@views.TextFieldVariant::Outline,
+            theme~,
             width=360.0,
             height=34.0,
           ).key("markdown-code-language"),
           editor_button(
             "Apply",
             () => self.apply_code_language(),
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
         ],
         spacing=theme.spacing_scale.xs,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+        align=@views.CrossAlign::Center,
       )
     FootnoteTarget =>
-      @views.row(
+      row(
         [
           block_badge,
-          @views.text("Footnote", width=88.0, height=34.0)
+          text("Footnote", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          @views.text_field(
+          text_field(
             ctx.binding(self.footnote_text),
             on_submit=Some(() => self.apply_footnote_text()),
             placeholder="Footnote text",
-            style=field_style,
+            variant=@views.TextFieldVariant::Outline,
+            theme~,
             width=360.0,
             height=34.0,
           ).key("markdown-footnote-text"),
           editor_button(
             "Apply",
             () => self.apply_footnote_text(),
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
         ],
         spacing=theme.spacing_scale.xs,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+        align=@views.CrossAlign::Center,
       )
     HtmlBlockTarget =>
-      @views.row(
+      row(
         [
           block_badge,
-          @views.text("HTML block", width=88.0, height=34.0)
+          text("HTML block", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          @views.text_field(
+          text_field(
             ctx.binding(self.html_block_text),
             on_submit=Some(() => self.apply_html_block_text()),
             placeholder="<div>HTML</div>",
-            style=field_style,
+            variant=@views.TextFieldVariant::Outline,
+            theme~,
             width=360.0,
             height=34.0,
           ).key("markdown-html-block-text"),
           editor_button(
             "Apply",
             () => self.apply_html_block_text(),
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
         ],
         spacing=theme.spacing_scale.xs,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+        align=@views.CrossAlign::Center,
       )
     TableTools =>
-      @views.row(
+      row(
         [
           block_badge,
-          @views.text("Table tools", width=92.0, height=34.0)
+          text("Table tools", width=92.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
           editor_button(
             "+Row",
             () => self.apply_command_to_selection(InsertTableRow),
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
           editor_button(
             "+Col",
             () => self.apply_command_to_selection(InsertTableColumn),
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
           editor_button(
             "-Col",
             () => self.apply_command_to_selection(DeleteTableColumn),
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
           editor_button(
             "-Row",
             () => self.apply_command_to_selection(DeleteTableRow),
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
           editor_button(
             "Left",
@@ -503,7 +549,8 @@ fn MarkdownEditorApp::target_bar(
                 SetTableColumnAlignment(Some(@core.TextAlign::TextStart)),
               )
             },
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
           editor_button(
             "Center",
@@ -512,7 +559,8 @@ fn MarkdownEditorApp::target_bar(
                 SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)),
               )
             },
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
           editor_button(
             "Right",
@@ -521,18 +569,20 @@ fn MarkdownEditorApp::target_bar(
                 SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)),
               )
             },
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
           editor_button(
             "Auto",
             () => self.apply_command_to_selection(SetTableColumnAlignment(None)),
-            button_style,
+            @views.ButtonVariant::Tonal,
+            theme,
           ),
         ],
         spacing=theme.spacing_scale.xs,
-        cross_axis_alignment=@core.CrossAxisAlignment::CrossCenter,
+        align=@views.CrossAlign::Center,
       )
-    PlainSelection => @core.ViewSpec::EmptySpec
+    PlainSelection => empty()
   }
 }
 
@@ -549,15 +599,15 @@ fn floating_target_palette(
   width : Double,
   height : Double,
 ) -> @core.ViewSpec {
-  let palette_style = {
-    ..@core.SurfaceStyle::raised(theme~),
-    padding: @core.Insets::all(theme.spacing_scale.xs),
-    radius: theme.radius_scale.md,
-  }
   let palette = if target_kind == PlainSelection {
-    @core.ViewSpec::EmptySpec
+    empty()
   } else {
-    @views.surface(target_bar, style=palette_style)
+    surface(
+      target_bar,
+      variant=@views.SurfaceVariant::Raised,
+      theme~,
+      padding=theme.spacing_scale.xs,
+    )
   }
   @views.custom_children_layout(
     children=[editor, palette],
@@ -688,9 +738,10 @@ fn markdown_editor_palette_anchor(
 fn editor_button(
   label : String,
   action : () -> Unit,
-  style : @core.ButtonStyle,
+  variant : @views.ButtonVariant,
+  theme : @core.Theme,
 ) -> @core.ViewSpec {
-  @views.button(label, on_click=action, style~, width=64.0, height=34.0)
+  button(label, on_click=action, variant~, theme~, width=64.0, height=34.0)
 }
 
 ///|
@@ -864,71 +915,6 @@ fn MarkdownEditorApp::action_commands(
 }
 
 ///|
-fn flat_editor_button_style(theme : @core.Theme) -> @core.ButtonStyle {
-  let style = @core.ButtonStyle::tonal(theme~)
-  {
-    normal: { ..style.normal, shadow: None },
-    hovered: { ..style.hovered, shadow: None },
-    pressed: { ..style.pressed, shadow: None },
-    disabled: { ..style.disabled, shadow: None },
-  }
-}
-
-///|
-fn markdown_editor_workspace_style(theme : @core.Theme) -> @core.SurfaceStyle {
-  {
-    ..@core.SurfaceStyle::default(theme~),
-    brush: @core.Brush::solid(@core.Color::rgba(r=0.985, g=0.985, b=0.98)),
-    padding: {
-      top: theme.spacing_scale.lg,
-      right: theme.spacing_scale.lg,
-      bottom: theme.spacing_scale.lg,
-      left: theme.spacing_scale.md,
-    },
-    radius: theme.radius_scale.sm,
-  }
-}
-
-///|
-fn markdown_editor_page_text_style(theme : @core.Theme) -> @core.TextFieldStyle {
-  let base = @core.TextFieldStyle::outline(theme~)
-  let background = @core.Brush::solid(
-    @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
-  )
-  let border = @core.BorderStyle::new(
-    brush=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
-    width=0.0,
-  )
-  let normal = {
-    ..base.normal,
-    background,
-    border: Some(border),
-    radius: theme.radius_scale.sm,
-    shadow: None,
-  }
-  { ..base, normal, focused: normal, font: @core.FontSpec::new(size=17.0) }
-}
-
-///|
-fn markdown_editor_page_surface_style(
-  theme : @core.Theme,
-) -> @core.SurfaceStyle {
-  {
-    ..@core.SurfaceStyle::raised(theme~),
-    brush: @core.Brush::solid(@core.Color::white()),
-    border: Some(
-      @core.BorderStyle::new(
-        brush=@core.Brush::solid(@core.Color::rgba(r=0.84, g=0.84, b=0.82)),
-        width=1.0,
-      ),
-    ),
-    radius: theme.radius_scale.sm,
-    shadow: Some(theme.shadow_scale.sm),
-    padding: @core.Insets::all(0.0),
-  }
-}
-
-///|
 fn markdown_editor_reading_label(snapshot : MarkdownEditorSnapshot) -> String {
   let minutes = if snapshot.reading_minutes == 0 {
     "less than 1 min"
@@ -942,11 +928,7 @@ fn markdown_editor_reading_label(snapshot : MarkdownEditorSnapshot) -> String {
 
 ///|
 fn source_preview(text : String, theme : @core.Theme) -> @core.ViewSpec {
-  @views.scroll_view(
-    source_preview_lines(text, theme),
-    width=260.0,
-    height=340.0,
-  )
+  scroll_view(source_preview_lines(text, theme), width=260.0, height=340.0)
 }
 
 ///|
@@ -954,8 +936,7 @@ fn editor_source_layout(
   app : MarkdownEditorApp,
   binding : @core.Binding[String],
   snapshot : MarkdownEditorSnapshot,
-  editor_style : @core.TextFieldStyle,
-  source_style : @core.SurfaceStyle,
+  editor_font : @core.FontSpec,
   theme : @core.Theme,
   show_source : Bool,
   target_bar : @core.ViewSpec,
@@ -969,8 +950,7 @@ fn editor_source_layout(
   let viewport_height = 500.0
   let content_height = markdown_editor_max_double(
     viewport_height,
-    @core.rich_text_document_height(snapshot.rich_text, editor_style.font) +
-    40.0,
+    @core.rich_text_document_height(snapshot.rich_text, editor_font) + 40.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,
@@ -980,13 +960,15 @@ fn editor_source_layout(
     x=0.0,
     y=markdown_editor_clamp_double(scroll_offset.y, 0.0, max_scroll),
   )
-  let editor = @views.scroll_view(
+  let editor = scroll_view(
     editor_page(
-      @views.markdown_editor(
+      markdown_editor(
         binding,
         markdown_editor_format,
         placeholder="Start writing Markdown",
-        style=editor_style,
+        variant=@views.TextFieldVariant::Plain,
+        theme~,
+        font=Some(editor_font),
         width=editor_width,
         height=content_height,
         on_selection_change=Some(on_selection_change),
@@ -1013,46 +995,39 @@ fn editor_source_layout(
   )
   if !show_source {
     floating_target_palette(
-      editor,
-      target_bar,
-      snapshot,
-      selection,
-      target_kind,
-      editor_style.font,
-      theme,
-      normalized_offset,
-      editor_width,
-      viewport_height,
+      editor, target_bar, snapshot, selection, target_kind, editor_font, theme, normalized_offset,
+      editor_width, viewport_height,
     )
   } else {
-    let editor_and_source = @views.row(
+    let editor_and_source = row(
       [
         editor,
-        @views.surface(
-          @views.column(
+        surface(
+          column(
             [
-              @views.text("Markdown source", width=260.0, height=28.0)
+              text("Markdown source", width=260.0, height=28.0)
               .font(theme.typography.control)
               .foreground(theme.palette.foreground),
               source_preview(snapshot.source, theme),
             ],
             spacing=theme.spacing_scale.sm,
-            cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+            align=@views.CrossAlign::Start,
           ),
-          style=source_style,
+          variant=@views.SurfaceVariant::Base,
+          theme~,
         ).frame(width=300.0, height=viewport_height),
       ],
       spacing=theme.spacing_scale.lg,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      align=@views.CrossAlign::Start,
     )
-    @views.column(
+    column(
       if target_kind == PlainSelection {
         [editor_and_source]
       } else {
         [editor_and_source, target_bar]
       },
       spacing=theme.spacing_scale.md,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      align=@views.CrossAlign::Start,
     )
   }
 }
@@ -1064,12 +1039,16 @@ fn editor_page(
   width~ : Double,
   height~ : Double,
 ) -> @core.ViewSpec {
-  @views.stack([
-    @views.surface(
-      @views.spacer(min_length=0.0, weight=0.0),
+  stack([
+    surface(
+      spacer(min_length=0.0, weight=0.0),
       width~,
       height~,
-      style=markdown_editor_page_surface_style(theme),
+      variant=@views.SurfaceVariant::Raised,
+      theme~,
+      background=@core.Color::white(),
+      corner_radius=theme.radius_scale.sm,
+      padding=0.0,
     ),
     editor,
   ])
@@ -1088,11 +1067,7 @@ fn source_preview_lines(text : String, theme : @core.Theme) -> @core.ViewSpec {
   for line in markdown_split_lines(markdown_editor_preview_text(text)) {
     children.push(source_preview_line(line, font, theme.palette.foreground))
   }
-  @views.column(
-    children,
-    spacing=0.0,
-    cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
-  )
+  column(children, spacing=0.0, align=@views.CrossAlign::Start)
 }
 
 ///|

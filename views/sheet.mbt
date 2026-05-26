@@ -2,7 +2,7 @@
 pub fn sheet(
   content~ : @core.ViewSpec,
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
-  background? : @core.Brush = @core.Brush::solid(@core.Color::white()),
+  background? : @core.Color = @core.Color::white(),
   corner_radius? : Double = @core.Theme::default().radius_scale.lg,
   shadow? : @core.ShadowStyle? = None,
   on_dismiss? : (() -> Unit)? = None,
@@ -11,7 +11,7 @@ pub fn sheet(
     key: None,
     content,
     presentation_mode,
-    background,
+    background: @core.Brush::solid(background),
     corner_radius,
     shadow,
     on_dismiss,
@@ -29,10 +29,7 @@ pub fn sheet_host(
   if presented && sheet is Some(sheet_spec) {
     let theme = @core.Theme::default()
     // Semi-transparent scrim background
-    let scrim = surface(
-      @core.ViewSpec::EmptySpec,
-      style=@core.SurfaceStyle::default(),
-    ).background_brush(
+    let scrim = surface(empty(), variant=SurfaceVariant::Base).background_brush(
       @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.5)),
     )
     let scrim_with_tap = match on_dismiss {

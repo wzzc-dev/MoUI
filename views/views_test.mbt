@@ -104,9 +104,8 @@ test "button paints background and text command" {
 }
 
 ///|
-test "button accepts visual styles" {
-  let style = @core.ButtonStyle::outline(theme=@core.Theme::light())
-  let spec = @views.button("Outline", style~)
+test "button variant maps to visual style" {
+  let spec = @views.button("Outline", variant=@views.ButtonVariant::Outline)
   guard spec is @core.ViewSpec::ButtonSpec({ corner_radius: 8.0, .. }) else {
     fail("expected styled button spec")
   }
@@ -321,6 +320,47 @@ test "theme helper selects dark token scheme" {
 }
 
 ///|
+test "empty and padding helpers build view specs" {
+  guard @views.empty() is @core.ViewSpec::EmptySpec else {
+    fail("expected empty view")
+  }
+  guard @views.padding_xy(@views.text("Inset"), horizontal=8.0, vertical=4.0)
+    is @core.ViewSpec::PaddingSpec(
+      { insets: { top: 4.0, right: 8.0, bottom: 4.0, left: 8.0 }, .. }
+    ) else {
+    fail("expected symmetric padding")
+  }
+  guard @views.padding_edges(
+      @views.text("Edges"),
+      top=1.0,
+      right=2.0,
+      bottom=3.0,
+      left=4.0,
+    )
+    is @core.ViewSpec::PaddingSpec(
+      { insets: { top: 1.0, right: 2.0, bottom: 3.0, left: 4.0 }, .. }
+    ) else {
+    fail("expected edge padding")
+  }
+}
+
+///|
+test "surface variant maps to raised style" {
+  let theme = @core.Theme::light()
+  let spec = @views.surface(
+    @views.text("Panel"),
+    variant=@views.SurfaceVariant::Raised,
+    theme~,
+  )
+  guard spec
+    is @core.ViewSpec::ContainerSpec(
+      { border: Some(_), shadow: Some(_), corner_radius: 12.0, .. }
+    ) else {
+    fail("expected raised surface")
+  }
+}
+
+///|
 test "container and spacer participate in layout" {
   let root = @views.column([
     @views.surface(
@@ -481,10 +521,13 @@ test "text field constructs binding backed spec" {
 }
 
 ///|
-test "text field accepts visual styles" {
+test "text field variant maps to visual style" {
   let state = @core.State::new("")
-  let style = @core.TextFieldStyle::outline(theme=@core.Theme::dark())
-  let spec = @views.text_field(state.binding(), style~)
+  let spec = @views.text_field(
+    state.binding(),
+    variant=@views.TextFieldVariant::Outline,
+    theme=@core.Theme::dark(),
+  )
   guard spec
     is @core.ViewSpec::TextFieldSpec(
       { focused_border: Some(focused_border), cursor_color, .. }
@@ -549,13 +592,13 @@ test "rich text editor constructs binding backed spec" {
 }
 
 ///|
-test "markdown editor wrapper composes rich text editor with visual styles" {
+test "markdown editor wrapper composes rich text editor with variants" {
   let state = @core.State::new("")
-  let style = @core.TextFieldStyle::outline(theme=@core.Theme::dark())
   let spec = @views.markdown_editor(
     state.binding(),
     text => @core.RichTextDocument::plain(text),
-    style~,
+    variant=@views.TextFieldVariant::Outline,
+    theme=@core.Theme::dark(),
   )
   guard spec
     is @core.ViewSpec::RichTextEditorSpec(
