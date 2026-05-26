@@ -968,6 +968,39 @@ test "markdown editor paste command continues list context" {
 }
 
 ///|
+test "markdown editor runtime unicode paste participates in undo redo" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Note ")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=84.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
+  )
+  let pasted = runtime.dispatch_focused_text_command(
+    @core.CommandIntent::Paste,
+    paste_text=Some("你好 👩‍💻"),
+  )
+  assert_true(pasted.handled)
+  assert_true(pasted.changed)
+  inspect(app.document(), content="Note 你好 👩‍💻")
+  let undo = runtime.dispatch_focused_text_command(@core.CommandIntent::Undo)
+  assert_true(undo.handled)
+  assert_true(undo.changed)
+  inspect(app.document(), content="Note ")
+  let redo = runtime.dispatch_focused_text_command(@core.CommandIntent::Redo)
+  assert_true(redo.handled)
+  assert_true(redo.changed)
+  inspect(app.document(), content="Note 你好 👩‍💻")
+}
+
+///|
 test "markdown editor paste command links selected text with url" {
   let app = MarkdownEditorApp::new()
   app.set_document("Visit MoUI")

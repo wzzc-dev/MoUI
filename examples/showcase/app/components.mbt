@@ -205,8 +205,14 @@ fn ShowcaseApp::capability_card(
   let list_height = max_showcase_double(56.0, height - 78.0)
   let rows : Array[@core.ViewSpec] = []
   let visible_limit = max_showcase_int(1, (list_height / 24.0).to_int())
-  let mut visible_count = 0
+  let entries = @render.renderer_feature_follow_ups()
   for entry in @render.renderer_feature_capability_report() {
+    if !entries.any(existing => existing.feature == entry.feature) {
+      entries.push(entry)
+    }
+  }
+  let mut visible_count = 0
+  for entry in entries {
     if visible_count < visible_limit {
       rows.push(capability_row(entry, theme))
       visible_count = visible_count + 1

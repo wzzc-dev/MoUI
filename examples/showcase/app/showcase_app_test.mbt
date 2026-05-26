@@ -190,6 +190,12 @@ test "showcase renderer section clips long capability content" {
   assert_true(
     commands.any(command => command is @core.DrawCommand::PushClip(_)),
   )
+  assert_true(has_text(commands, "transform"))
+  assert_true(has_text(commands, "text-shaping"))
+  assert_true(has_text(commands, "emoji-text"))
+  assert_true(has_text(commands, "async-image"))
+  assert_true(has_text(commands, "partial"))
+  assert_true(has_text(commands, "native gap / web partial"))
 }
 
 ///|
