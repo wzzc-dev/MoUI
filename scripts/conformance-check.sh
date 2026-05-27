@@ -75,52 +75,52 @@ run() {
 }
 
 if "$RUN_DEFAULT"; then
-  run moon test core --target native
-  run moon test backend/host --target native
-  run moon test render --target native
-  run moon test render/webgpu_adapter --target wasm-gc
-  run moon test backend/web --target wasm-gc
+  run moon test moui/core --target native
+  run moon test moui/backend/host --target native
+  run moon test moui/render --target native
+  run moon test moui/render/webgpu_adapter --target wasm-gc
+  run moon test moui/backend/web --target wasm-gc
   run moon test examples/showcase/app --target native
 fi
 
 if "$RUN_INPUT"; then
-  run moon test core --target native
-  run moon test backend/host --target native
+  run moon test moui/core --target native
+  run moon test moui/backend/host --target native
 fi
 
 if "$RUN_LAYOUT"; then
-  run moon test core --target native
+  run moon test moui/core --target native
 fi
 
 if "$RUN_RENDER"; then
-  run moon test render --target native
-  run moon test render/wgpu --target native
-  run moon test render/webgpu_adapter --target wasm-gc
+  run moon test moui/render --target native
+  run moon test moui/render/wgpu --target native
+  run moon test moui/render/webgpu_adapter --target wasm-gc
 fi
 
 if "$RUN_PLATFORM_SERVICES"; then
-  run moon test backend/host --target native
-  run moon test backend/web --target wasm-gc
+  run moon test moui/backend/host --target native
+  run moon test moui/backend/web --target wasm-gc
   if [ -f ".local_repos/window/linux/generated/xdg-decoration-protocol.c" ]; then
-    run moon test backend/linux --target native
+    run moon test moui/backend/linux --target native
   else
     printf '\nSkipping backend/linux platform-service tests because .local_repos/window/linux/generated/xdg-decoration-protocol.c is missing.\n'
   fi
   if [ "$(uname -s)" = "Darwin" ]; then
-    run moon test backend/macos --target native
+    run moon test moui/backend/macos --target native
   fi
 fi
 
 if "$RUN_TEXT"; then
-  run moon test core --target native
-  run moon test render/wgpu --target native
-  run moon test render/webgpu_adapter --target wasm-gc
-  run moon test backend/web --target wasm-gc
+  run moon test moui/core --target native
+  run moon test moui/render/wgpu --target native
+  run moon test moui/render/webgpu_adapter --target wasm-gc
+  run moon test moui/backend/web --target wasm-gc
 fi
 
 if "$RUN_TEXT_DIAGNOSTIC"; then
-  run moon test tests/text_conformance/native --target native
-  run moon test tests/text_conformance/web --target wasm-gc
+  run moon test moui/tests/text_conformance/native --target native
+  run moon test moui/tests/text_conformance/web --target wasm-gc
 fi
 
 if "$RUN_GOLDEN"; then

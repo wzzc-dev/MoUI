@@ -333,7 +333,7 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
     assert_true(text_within(commands, "Renderer capability", size))
     assert_true(text_within(commands, "Keyboard: Meta+K", size))
     assert_true(text_within(commands, "Layered card with image", size))
-    assert_false(has_text(commands, "🔍"))
+    assert_false(has_text(commands, "馃攳"))
     assert_false(has_text(commands, "?"))
     for route in ["advanced-rendering", "text-diagnostics", "interaction-lab"] {
       app.select_section(route)
@@ -425,7 +425,7 @@ test "showcase todo preview keeps keyed rows after toggle" {
   let before = runtime.draw_commands()
   assert_true(has_text(before, "Reuse Todo state"))
   app.todo_toggle(0)
-  runtime.state.needs_rebuild = true
+  runtime.rebuild()
   let after = runtime.draw_commands()
   assert_true(has_text(after, "Reuse Todo state"))
   guard app.todo_items() is [{ completed: true, .. }, ..] else {

@@ -1,5 +1,5 @@
 ///|
-pub fn rich_text_editor(
+pub fn[Msg] rich_text_editor(
   value : @core.Binding[String],
   format : @core.RichTextFormatter,
   placeholder? : String = "Write",
@@ -8,37 +8,36 @@ pub fn rich_text_editor(
   font? : @core.FontSpec? = None,
   width? : Double = 520.0,
   height? : Double = 360.0,
-  on_selection_change? : ((Int, @core.TextRange?) -> Unit)? = None,
-  on_prefix_click? : ((Int) -> Unit)? = None,
+  on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
+  on_prefix_click? : ((Int) -> Msg)? = None,
   input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   let style = variant.style(theme)
   let normal = style.normal
   let focused = style.focused
-  @core.ViewSpec::RichTextEditorSpec({
-    key: None,
-    value,
-    placeholder,
-    size: @core.Size::new(width~, height~),
-    format,
-    font: font.unwrap_or(style.font),
-    foreground: normal.foreground,
-    placeholder_color: style.placeholder_color,
-    background: normal.background,
-    border: normal.border,
-    focused_border: focused.border,
-    cursor_color: style.cursor_color,
-    corner_radius: normal.radius,
-    on_selection_change,
-    on_prefix_click,
-    input_transform,
-    accepts_tab_input,
-  })
+  @core.View::rich_text_editor(
+    value~,
+    placeholder~,
+    size=@core.Size::new(width~, height~),
+    format~,
+    font=font.unwrap_or(style.font),
+    foreground=normal.foreground,
+    placeholder_color=style.placeholder_color,
+    background=normal.background,
+    border=normal.border,
+    focused_border=focused.border,
+    cursor_color=style.cursor_color,
+    corner_radius=normal.radius,
+    on_selection_change~,
+    on_prefix_click~,
+    input_transform~,
+    accepts_tab_input~,
+  )
 }
 
 ///|
-pub fn markdown_editor(
+pub fn[Msg] markdown_editor(
   value : @core.Binding[String],
   format : @core.RichTextFormatter,
   placeholder? : String = "Write markdown",
@@ -47,11 +46,11 @@ pub fn markdown_editor(
   font? : @core.FontSpec? = None,
   width? : Double = 520.0,
   height? : Double = 360.0,
-  on_selection_change? : ((Int, @core.TextRange?) -> Unit)? = None,
-  on_prefix_click? : ((Int) -> Unit)? = None,
+  on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
+  on_prefix_click? : ((Int) -> Msg)? = None,
   input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = true,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   rich_text_editor(
     value,
     format,

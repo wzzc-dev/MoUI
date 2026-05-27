@@ -1,5 +1,5 @@
 ///|
-pub(all) struct RuntimeState {
+struct RuntimeState {
   mut root_spec : ViewSpec
   mut element_tree : ElementNode
   mut render_tree : RenderNode
@@ -9,19 +9,19 @@ pub(all) struct RuntimeState {
   mut needs_layout : Bool
   mut needs_paint : Bool
   mut next_element_id : Int
-  mut dirty_elements : Array[ElementId]
+  dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
   mut environment : Environment
   mut text_system : TextSystem
   mut redraw_callback : (() -> Unit)?
   mut action_commands : ActionCommandMap
   clock : Clock
-  mut animations : Array[AnimationController]
-  mut saveable_state : SaveableStateStore
+  animations : Array[AnimationController]
+  saveable_state : SaveableStateStore
 }
 
 ///|
-pub fn RuntimeState::new_spec(
+fn RuntimeState::new_spec(
   root~ : ViewSpec,
   size~ : Size,
   environment? : Environment = Environment::default(),
@@ -56,7 +56,7 @@ pub fn RuntimeState::new_spec(
 }
 
 ///|
-pub fn RuntimeState::new_component(
+fn RuntimeState::new_component(
   root~ : Component,
   size~ : Size,
   environment? : Environment = Environment::default(),
@@ -92,10 +92,7 @@ pub fn RuntimeState::new_component(
 }
 
 ///|
-pub fn RuntimeState::set_root_spec(
-  self : RuntimeState,
-  root : ViewSpec,
-) -> Unit {
+fn RuntimeState::set_root_spec(self : RuntimeState, root : ViewSpec) -> Unit {
   self.element_tree.cancel_component_tree_subscriptions()
   self.root_spec = root
   self.rebuild()
@@ -156,7 +153,7 @@ pub fn RuntimeState::set_environment(
 }
 
 ///|
-pub fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
+fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
   self.element_tree.cancel_component_tree_subscriptions(
     reason=ComponentEffectCancelReason::EffectUnmounted,
   )

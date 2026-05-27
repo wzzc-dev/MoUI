@@ -1,39 +1,39 @@
 ///|
-pub(all) struct NavigationDestination {
+pub(all) struct NavigationDestination[Msg] {
   route : String
-  view : @core.ViewSpec
+  view : @core.View[Msg]
 }
 
 ///|
-pub(all) struct TabItem {
+pub(all) struct TabItem[Msg] {
   route : String
   label : String
-  view : @core.ViewSpec
+  view : @core.View[Msg]
 }
 
 ///|
-pub fn navigation_destination(
+pub fn[Msg] navigation_destination(
   route~ : String,
-  view~ : @core.ViewSpec,
-) -> NavigationDestination {
+  view~ : @core.View[Msg],
+) -> NavigationDestination[Msg] {
   { route, view }
 }
 
 ///|
-pub fn tab_item(
+pub fn[Msg] tab_item(
   route~ : String,
   label~ : String,
-  view~ : @core.ViewSpec,
-) -> TabItem {
+  view~ : @core.View[Msg],
+) -> TabItem[Msg] {
   { route, label, view }
 }
 
 ///|
-pub fn navigation_stack(
+pub fn[Msg] navigation_stack(
   state : @core.NavigationState,
-  destinations : Array[NavigationDestination],
-  fallback? : @core.ViewSpec = @core.ViewSpec::EmptySpec,
-) -> @core.ViewSpec {
+  destinations : Array[NavigationDestination[Msg]],
+  fallback? : @core.View[Msg] = empty(),
+) -> @core.View[Msg] {
   let route = state.current()
   for destination in destinations {
     if destination.route == route {
@@ -44,41 +44,41 @@ pub fn navigation_stack(
 }
 
 ///|
-pub fn tab_view(
+pub fn[Msg] tab_view(
   selection : @core.Binding[String],
-  tabs : Array[TabItem],
+  tabs : Array[TabItem[Msg]],
   spacing? : Double = 8.0,
-) -> @core.ViewSpec {
+  on_select~ : (String) -> Msg,
+) -> @core.View[Msg] {
   let selected = selection.get()
-  let buttons : Array[@core.ViewSpec] = []
-  let mut content = @core.ViewSpec::EmptySpec
+  let buttons : Array[@core.View[Msg]] = []
+  let mut content = empty()
   for tab in tabs {
     if tab.route == selected {
       content = tab.view
     }
-    buttons.push(
-      button(
-        tab.label,
-        on_click=() => selection.set(tab.route),
-        variant=if tab.route == selected {
-          ButtonVariant::Primary
-        } else {
-          ButtonVariant::Tonal
-        },
-        width=112.0,
-        height=36.0,
-      ).semantics_role(@core.SemanticsRole::Tab),
-    )
+    let tab_button = button(
+      tab.label,
+      on_click=on_select(tab.route),
+      variant=if tab.route == selected {
+        ButtonVariant::Primary
+      } else {
+        ButtonVariant::Tonal
+      },
+      width=112.0,
+      height=36.0,
+    ).semantics_role(@core.SemanticsRole::Tab)
+    buttons.push(tab_button)
   }
   column([row(buttons, spacing~), content], spacing~)
 }
 
 ///|
-pub fn dialog_host(
-  child : @core.ViewSpec,
-  dialog? : @core.ViewSpec? = None,
+pub fn[Msg] dialog_host(
+  child : @core.View[Msg],
+  dialog? : @core.View[Msg]? = None,
   presented? : Bool = false,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   if presented {
     match dialog {
       Some(dialog) =>

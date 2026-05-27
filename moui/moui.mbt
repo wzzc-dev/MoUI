@@ -23,9 +23,6 @@ pub type BuildContext = @core.BuildContext
 pub type Color = @core.Color
 
 ///|
-pub type Component = @core.Component
-
-///|
 pub type DrawCommand = @core.DrawCommand
 
 ///|
@@ -50,7 +47,13 @@ pub type Size = @core.Size
 pub type State[T] = @core.State[T]
 
 ///|
-pub type ViewSpec = @core.ViewSpec
+pub type View[Msg] = @core.View[Msg]
+
+///|
+pub type Program[Model, Msg] = @core.Program[Model, Msg]
+
+///|
+pub type Effect[Msg] = @core.Effect[Msg]
 
 ///|
 pub type ButtonStyle = @style.ButtonStyle

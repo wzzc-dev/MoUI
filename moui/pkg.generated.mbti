@@ -32,9 +32,9 @@ pub using @core {type Color}
 
 pub using @core {type ColorScheme}
 
-pub using @core {type Component}
-
 pub using @core {type DrawCommand}
+
+pub using @core {type Effect}
 
 pub using @core {type Environment}
 
@@ -43,6 +43,8 @@ pub using @core {type FontSpec}
 pub using @core {type Insets}
 
 pub using @core {type Point}
+
+pub using @core {type Program}
 
 pub using @core {type Rect}
 
@@ -56,7 +58,7 @@ pub using @core {type TextFieldStyle}
 
 pub using @core {type Theme}
 
-pub using @core {type ViewSpec}
+pub using @core {type View}
 
 // Traits
 

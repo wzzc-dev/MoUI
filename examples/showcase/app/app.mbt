@@ -32,6 +32,24 @@ pub(all) struct ShowcaseTodoItem {
 } derive(Eq, Debug, ToJson)
 
 ///|
+enum ShowcaseMsg {
+  ToggleScheme
+  ToggleActive
+  ShowDialog
+  HideDialog
+  ShowSheet
+  HideSheet
+  SelectSection(String)
+  SelectTab(String)
+  ClearFilter
+  CounterIncrement
+  TodoSubmitDraft
+  TodoRemove(Int)
+  RecordFileDrop(Array[String])
+  SidebarScrollTo(Double)
+}
+
+///|
 priv struct ShowcaseSection {
   route : String
   title : String
@@ -220,10 +238,30 @@ pub fn ShowcaseApp::select_section(self : ShowcaseApp, route : String) -> Unit {
 }
 
 ///|
+fn ShowcaseApp::update(self : ShowcaseApp, message : ShowcaseMsg) -> Unit {
+  match message {
+    ToggleScheme => self.toggle_scheme()
+    ToggleActive => self.toggle_active()
+    ShowDialog => self.show_dialog()
+    HideDialog => self.hide_dialog()
+    ShowSheet => self.show_sheet()
+    HideSheet => self.hide_sheet()
+    SelectSection(route) => self.select_section(route)
+    SelectTab(route) => self.tab.set(route)
+    ClearFilter => self.filter.set("")
+    CounterIncrement => self.counter_increment()
+    TodoSubmitDraft => self.todo_submit_draft()
+    TodoRemove(id) => self.todo_remove(id)
+    RecordFileDrop(paths) => self.record_file_drop(paths)
+    SidebarScrollTo(y) => self.sidebar_scroll.scroll_to(x=0.0, y~)
+  }
+}
+
+///|
 pub fn ShowcaseApp::root(
   self : ShowcaseApp,
   ctx : @core.BuildContext,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let dark = ctx.watch(self.dark)
   let active = ctx.watch(self.active)
   let dialog_visible = ctx.watch(self.dialog_visible)
@@ -266,7 +304,7 @@ pub fn ShowcaseApp::root(
     sheet=Some(self.sheet(theme)),
     presented=sheet_visible,
     presentation_mode=@core.SheetPresentationMode::BottomSheet,
-    on_dismiss=Some(() => self.hide_sheet()),
+    on_dismiss=Some(HideSheet),
   )
   @views.dialog_host(
     sheeted,
@@ -281,8 +319,9 @@ pub fn ShowcaseApp::runtime(
   width? : Double = 960.0,
   height? : Double = 560.0,
 ) -> @core.AppRuntime {
-  @core.AppRuntime::new_component(
-    root=@core.Component::new(ctx => self.root(ctx)),
+  @core.AppRuntime::new_component_view(
+    root=ctx => self.root(ctx),
     size=@core.Size::new(width~, height~),
+    on_message=Some(message => self.update(message)),
   )
 }

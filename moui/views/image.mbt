@@ -1,22 +1,15 @@
 ///|
-pub fn image(
+pub fn[Msg] image(
   source : String,
   width? : Double,
   height? : Double,
   opacity? : Double = 1.0,
   corner_radius? : Double = 0.0,
   fit? : @core.ImageFit = @core.ImageFit::Contain,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   let size = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  @core.ViewSpec::ImageSpec({
-    key: None,
-    source,
-    size,
-    opacity,
-    corner_radius,
-    fit,
-  })
+  @core.View::image(source~, size~, opacity~, corner_radius~, fit~)
 }

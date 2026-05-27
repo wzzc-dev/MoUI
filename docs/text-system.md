@@ -23,7 +23,7 @@ shapes are no longer part of the framework contract.
 The live text path is:
 
 ```text
-ViewSpec -> DrawCommand::DrawText(TextRun) -> active TextSystem measurement -> renderer glyph path
+View[Msg] -> internal ViewSpec -> DrawCommand::DrawText(TextRun) -> active TextSystem measurement -> renderer glyph path
 ```
 
 Caret positions, selection geometry, wrapping, clipping, and IME request

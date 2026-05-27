@@ -25,8 +25,8 @@ test "macos app options carry text engine and optional scene resolver" {
     @host.HostWindowSceneResolution::SceneResolved(
       @host.HostWindowSceneInstance::new(
         request~,
-        runtime=@core.AppRuntime::new_spec(
-          root=@core.ViewSpec::EmptySpec,
+        runtime=@core.AppRuntime::new_view(
+          root=(@core.View::empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
       ),
@@ -259,8 +259,8 @@ test "macos backend converts resize event to host metrics" {
 
 ///|
 test "macos resize metrics update runtime driver logical size" {
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::EmptySpec,
+  let runtime = @core.AppRuntime::new_view(
+    root=(@core.View::empty() : @core.View[Unit]),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())

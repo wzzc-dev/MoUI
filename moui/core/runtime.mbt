@@ -4,7 +4,7 @@ pub struct AppRuntime {
 }
 
 ///|
-pub fn AppRuntime::new_spec(
+fn AppRuntime::new_spec(
   root~ : ViewSpec,
   size~ : Size,
   environment? : Environment = Environment::default(),
@@ -13,7 +13,27 @@ pub fn AppRuntime::new_spec(
 }
 
 ///|
-pub fn AppRuntime::new_component(
+pub fn[Msg] AppRuntime::new_view(
+  root~ : View[Msg],
+  size~ : Size,
+  environment? : Environment = Environment::default(),
+  on_message? : ((Msg) -> Unit)? = None,
+) -> AppRuntime {
+  let emit = match on_message {
+    Some(handler) => handler
+    None => _message => ()
+  }
+  {
+    state: RuntimeState::new_spec(
+      root=realize_view(root, emit),
+      size~,
+      environment~,
+    ),
+  }
+}
+
+///|
+fn AppRuntime::new_component(
   root~ : Component,
   size~ : Size,
   environment? : Environment = Environment::default(),
@@ -22,12 +42,60 @@ pub fn AppRuntime::new_component(
 }
 
 ///|
+pub fn[Msg] AppRuntime::new_component_view(
+  root~ : (BuildContext) -> View[Msg],
+  size~ : Size,
+  environment? : Environment = Environment::default(),
+  on_message? : ((Msg) -> Unit)? = None,
+) -> AppRuntime {
+  let emit = match on_message {
+    Some(handler) => handler
+    None => _message => ()
+  }
+  AppRuntime::new_component(
+    root=Component::new(ctx => realize_view(root(ctx), emit)),
+    size~,
+    environment~,
+  )
+}
+
+///|
+pub fn[Model, Msg] AppRuntime::new_program(
+  program~ : Program[Model, Msg],
+  size~ : Size,
+  environment? : Environment = Environment::default(),
+) -> AppRuntime {
+  let (initial_model, initial_effect) = (program.init)()
+  let model = Ref(initial_model)
+  let dispatch_ref : Ref[((Msg) -> Unit)?] = Ref(None)
+  let dispatch = message => {
+    let (next_model, effect) = (program.update)(message, model.val)
+    model.val = next_model
+    run_effect(effect, message => {
+      match dispatch_ref.val {
+        Some(dispatch) => dispatch(message)
+        None => ()
+      }
+    })
+  }
+  dispatch_ref.val = Some(dispatch)
+  run_effect(initial_effect, dispatch)
+  AppRuntime::new_component(
+    root=Component::new(_ctx => {
+      realize_view((program.view)(model.val), dispatch)
+    }),
+    size~,
+    environment~,
+  )
+}
+
+///|
 pub fn AppRuntime::dispatch_event(self : AppRuntime, event : AppEvent) -> Unit {
   self.state.dispatch_event(event)
 }
 
 ///|
-pub fn AppRuntime::set_root_spec(self : AppRuntime, root : ViewSpec) -> Unit {
+fn AppRuntime::set_root_spec(self : AppRuntime, root : ViewSpec) -> Unit {
   self.state.set_root_spec(root)
 }
 
@@ -80,7 +148,7 @@ pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
 }
 
 ///|
-pub fn AppRuntime::mount(self : AppRuntime, root : ViewSpec) -> Unit {
+fn AppRuntime::mount(self : AppRuntime, root : ViewSpec) -> Unit {
   self.state.mount(root)
 }
 

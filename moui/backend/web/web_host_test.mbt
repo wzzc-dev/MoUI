@@ -209,16 +209,16 @@ test "animation frame maps to redraw requested host event" {
 ///|
 test "web accessibility maps semantics to aria nodes" {
   let checked = @core.State::new(true)
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::CheckboxSpec({
-      key: None,
-      label: "Done",
-      checked: checked.binding(),
-      font: @core.FontSpec::new(),
-      foreground: @core.Color::black(),
-      check_color: @core.Color::blue(),
-      size: @core.Size::new(width=20.0, height=32.0),
-    }),
+  let runtime = @core.AppRuntime::new_view(
+    root=(
+      @core.View::checkbox(
+        label="Done",
+        checked=checked.binding(),
+        font=@core.FontSpec::new(),
+        foreground=@core.Color::black(),
+        check_color=@core.Color::blue(),
+        size=@core.Size::new(width=20.0, height=32.0),
+      ) : @core.View[Unit]),
     size=@core.Size::new(width=120.0, height=40.0),
   )
   let aria = semantics_to_aria(runtime.semantics())

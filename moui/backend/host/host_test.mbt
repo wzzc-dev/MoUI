@@ -1,4 +1,54 @@
 ///|
+fn host_test_runtime(
+  root~ : @core.View[Unit],
+  size~ : @core.Size,
+) -> @core.AppRuntime {
+  @core.AppRuntime::new_view(root~, size~)
+}
+
+///|
+fn host_test_text_field(
+  value : @core.Binding[String],
+  width? : Double = 240.0,
+  height? : Double = 40.0,
+  outlined? : Bool = false,
+) -> @core.View[Unit] {
+  let normal_border = if outlined {
+    Some(
+      @core.BorderStyle::new(
+        brush=@core.Brush::solid(@core.Color::gray()),
+        width=1.0,
+      ),
+    )
+  } else {
+    None
+  }
+  let focused_border = if outlined {
+    Some(
+      @core.BorderStyle::new(
+        brush=@core.Brush::solid(@core.Color::blue()),
+        width=2.0,
+      ),
+    )
+  } else {
+    None
+  }
+  @core.View::text_field(
+    value~,
+    placeholder="Type",
+    size=@core.Size::new(width~, height~),
+    font=@core.FontSpec::new(size=16.0, weight=400),
+    foreground=@core.Color::black(),
+    placeholder_color=@core.Color::gray(),
+    background=@core.Brush::solid(@core.Color::white()),
+    border=normal_border,
+    focused_border~,
+    cursor_color=@core.Color::blue(),
+    corner_radius=0.0,
+  )
+}
+
+///|
 test "host surface metrics tracks logical physical and dpr" {
   let metrics = HostSurfaceMetrics::from_logical(
     size=@core.Size::new(width=120.0, height=80.0),
@@ -531,8 +581,8 @@ test "host window scene resolver maps open requests to runtimes" {
       HostWindowSceneResolution::SceneResolved(
         HostWindowSceneInstance::new(
           request~,
-          runtime=@core.AppRuntime::new_spec(
-            root=@core.ViewSpec::EmptySpec,
+          runtime=host_test_runtime(
+            root=@core.View::empty(),
             size=request.metrics.logical_size,
           ),
         ),
@@ -585,8 +635,8 @@ test "host window registry resolves scenes before registering opened windows" {
       HostWindowSceneResolution::SceneResolved(
         HostWindowSceneInstance::new(
           request~,
-          runtime=@core.AppRuntime::new_spec(
-            root=@core.ViewSpec::EmptySpec,
+          runtime=host_test_runtime(
+            root=@core.View::empty(),
             size=request.metrics.logical_size,
           ),
         ),
@@ -661,8 +711,8 @@ test "host window runtime slots manage multiple window drivers" {
     HostWindowSceneResolution::SceneResolved(
       HostWindowSceneInstance::new(
         request~,
-        runtime=@core.AppRuntime::new_spec(
-          root=@core.ViewSpec::EmptySpec,
+        runtime=host_test_runtime(
+          root=@core.View::empty(),
           size=request.metrics.logical_size,
         ),
       ),
@@ -825,8 +875,8 @@ test "host window runtime slots manage multiple window drivers" {
 
 ///|
 test "host runtime driver exposes runtime state for platform slots" {
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::EmptySpec,
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
     size=@core.Size::new(width=320.0, height=240.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1089,8 +1139,8 @@ test "host service bridge applies system theme to runtime environment" {
 ///|
 test "host driver dispatches command intents through runtime action map" {
   let copied = Ref(0)
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::EmptySpec,
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(
@@ -1113,8 +1163,8 @@ test "host driver dispatches command intents through runtime action map" {
 
 ///|
 test "host driver applies theme change to runtime environment" {
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::EmptySpec,
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1127,8 +1177,8 @@ test "host driver applies theme change to runtime environment" {
 ///|
 test "host driver shows context menu from action commands" {
   let submitted = Ref(0)
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::EmptySpec,
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(
@@ -1347,22 +1397,8 @@ test "host async service queue rejects in-flight service requests" {
 ///|
 test "host driver applies async clipboard read completion to focused text" {
   let text = @core.State::new("")
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      focused_border: None,
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1532,8 +1568,8 @@ test "native accessibility bridge validates action roundtrip" {
 ///|
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::EmptySpec,
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
@@ -1556,32 +1592,13 @@ test "host driver dispatches resize and deduplicates redraw requests" {
 ///|
 test "host driver maps focused text input through core text input event" {
   let text = @core.State::new("")
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: Some(
-        @core.BorderStyle::new(
-          brush=@core.Brush::solid(@core.Color::gray()),
-          width=1.0,
-        ),
-      ),
-      focused_border: Some(
-        @core.BorderStyle::new(
-          brush=@core.Brush::solid(@core.Color::blue()),
-          width=2.0,
-        ),
-      ),
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(
+      text.binding(),
+      width=240.0,
+      height=40.0,
+      outlined=true,
+    ),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1610,22 +1627,8 @@ test "host driver maps focused text input through core text input event" {
 test "host driver routes text clipboard commands through service bridge" {
   let text = @core.State::new("")
   let clipboard = Ref("")
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      focused_border: None,
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1686,22 +1689,8 @@ test "host driver routes text clipboard commands through service bridge" {
 test "host driver routes clipboard keyboard shortcuts through service bridge" {
   let text = @core.State::new("")
   let clipboard = Ref("")
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      focused_border: None,
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1780,22 +1769,8 @@ test "host driver includes focused text commands in context menu" {
   let text = @core.State::new("")
   let clipboard = Ref("")
   let saw_copy_command = Ref(false)
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      focused_border: None,
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1853,22 +1828,8 @@ test "host driver context menu pastes unicode into focused text input" {
   let text = @core.State::new("")
   let clipboard = Ref("你🙂")
   let saw_paste_command = Ref(false)
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      focused_border: None,
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1911,22 +1872,8 @@ test "host driver context menu pastes unicode into focused text input" {
 test "host driver keyboard paste replaces selection with extended emoji" {
   let text = @core.State::new("")
   let clipboard = Ref("☕️👩‍💻")
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      focused_border: None,
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -1980,8 +1927,8 @@ test "host driver keyboard paste replaces selection with extended emoji" {
 ///|
 test "host driver falls back clipboard shortcuts to action commands" {
   let copied = Ref(0)
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::EmptySpec,
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(
@@ -2013,8 +1960,8 @@ test "host driver falls back clipboard shortcuts to action commands" {
 test "host driver defers paste action command while clipboard read is pending" {
   let pasted = Ref(0)
   let queue = HostServiceAsyncQueue::new()
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::EmptySpec,
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(
@@ -2053,32 +2000,13 @@ test "host driver defers paste action command while clipboard read is pending" {
 ///|
 test "host driver dispatches ime composition text input events" {
   let text = @core.State::new("")
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: Some(
-        @core.BorderStyle::new(
-          brush=@core.Brush::solid(@core.Color::gray()),
-          width=1.0,
-        ),
-      ),
-      focused_border: Some(
-        @core.BorderStyle::new(
-          brush=@core.Brush::solid(@core.Color::blue()),
-          width=2.0,
-        ),
-      ),
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(
+      text.binding(),
+      width=240.0,
+      height=40.0,
+      outlined=true,
+    ),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -2108,22 +2036,8 @@ test "host driver dispatches ime composition text input events" {
 ///|
 test "host driver keeps unicode composition update in focused text state" {
   let text = @core.State::new("")
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::TextFieldSpec({
-      key: None,
-      value: text.binding(),
-      placeholder: "Type",
-      size: @core.Size::new(width=240.0, height=40.0),
-      font: @core.FontSpec::new(size=16.0, weight=400),
-      foreground: @core.Color::black(),
-      placeholder_color: @core.Color::gray(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      focused_border: None,
-      cursor_color: @core.Color::blue(),
-      corner_radius: 0.0,
-      on_submit: None,
-    }),
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -2181,31 +2095,14 @@ test "host driver keeps unicode composition update in focused text state" {
 ///|
 test "text input session enables updates and disables ime requests" {
   let text = @core.State::new("ab")
-  let runtime = @core.AppRuntime::new_spec(
-    root=@core.ViewSpec::FlexSpec({
-      key: None,
-      axis: @core.Axis::Vertical,
-      spacing: 4.0,
-      main_axis_alignment: @core.MainAxisAlignment::MainStart,
-      cross_axis_alignment: @core.CrossAxisAlignment::CrossStart,
-      children: [
-        @core.ViewSpec::TextFieldSpec({
-          key: None,
-          value: text.binding(),
-          placeholder: "Type",
-          size: @core.Size::new(width=120.0, height=40.0),
-          font: @core.FontSpec::new(size=16.0, weight=400),
-          foreground: @core.Color::black(),
-          placeholder_color: @core.Color::gray(),
-          background: @core.Brush::solid(@core.Color::white()),
-          border: None,
-          focused_border: None,
-          cursor_color: @core.Color::blue(),
-          corner_radius: 0.0,
-          on_submit: None,
-        }),
-      ],
-    }),
+  let runtime = host_test_runtime(
+    root=@core.View::flex(
+      children=[host_test_text_field(text.binding(), width=120.0, height=40.0)],
+      axis=@core.Axis::Vertical,
+      spacing=4.0,
+      main_axis_alignment=@core.MainAxisAlignment::MainStart,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    ),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let session = TextInputSession::new()

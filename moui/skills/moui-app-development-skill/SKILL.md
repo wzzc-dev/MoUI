@@ -56,7 +56,7 @@ separate framework task using `moui-framework-development-skill`.
 - Shared app logic lives in `examples/<name>/app`.
 - Platform packages stay thin and only wire the shared app to the host.
 - App UI should be built from public view constructors returning
-  `@core.ViewSpec`.
+  opaque `@core.View[Msg]`.
 - Keep state, reducers, data models, and view composition in the shared app
   package when the behavior should work across platforms.
 - Keep platform-specific setup in `web_wasm`, `macos`, `windows`, or `linux`

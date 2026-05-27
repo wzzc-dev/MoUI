@@ -1,6 +1,6 @@
 ///|
-pub fn surface(
-  child : @core.ViewSpec,
+pub fn[Msg] surface(
+  child : @core.View[Msg],
   width? : Double,
   height? : Double,
   background? : @core.Color,
@@ -8,7 +8,7 @@ pub fn surface(
   variant? : SurfaceVariant = SurfaceVariant::Base,
   theme? : @core.Theme = @core.Theme::default(),
   padding? : Double,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   let size = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
@@ -18,40 +18,29 @@ pub fn surface(
     Some(value) => @core.Insets::all(value)
     None => style.padding
   }
-  let (background, corner_radius, child) = match background {
-    Some(color) =>
-      (
-        Some(@core.Brush::solid(color)),
-        corner_radius,
-        @core.ViewSpec::PaddingSpec({ key: None, insets: child_padding, child }),
-      )
-    None =>
-      (
-        Some(style.brush),
-        style.radius,
-        @core.ViewSpec::PaddingSpec({ key: None, insets: child_padding, child }),
-      )
+  let (background, corner_radius) = match background {
+    Some(color) => (Some(@core.Brush::solid(color)), corner_radius)
+    None => (Some(style.brush), style.radius)
   }
-  @core.ViewSpec::ContainerSpec({
-    key: None,
-    size,
-    background,
-    border: style.border,
-    corner_radius,
-    shadow: style.shadow,
-    child: Some(child),
-  })
+  @core.View::container(
+    child=Some(@core.View::padding_insets(child~, insets=child_padding)),
+    size~,
+    background~,
+    border=style.border,
+    corner_radius~,
+    shadow=style.shadow,
+  )
 }
 
 ///|
-pub fn empty() -> @core.ViewSpec {
-  @core.ViewSpec::EmptySpec
+pub fn[Msg] empty() -> @core.View[Msg] {
+  @core.View::empty()
 }
 
 ///|
-pub fn spacer(
+pub fn[Msg] spacer(
   min_length? : Double = 0.0,
   weight? : Double = 1.0,
-) -> @core.ViewSpec {
-  @core.ViewSpec::SpacerSpec({ key: None, min_length, weight })
+) -> @core.View[Msg] {
+  @core.View::spacer(min_length~, weight~)
 }

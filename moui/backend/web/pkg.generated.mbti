@@ -1,0 +1,111 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/web"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/webgpu_adapter",
+}
+
+// Values
+pub fn backend_info() -> WebBackendInfo
+
+pub fn canvas_host_constraints() -> CanvasHostConstraints
+
+pub fn canvas_input_host() -> @host.InputHostState
+
+pub fn canvas_metrics(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.HostSurfaceMetrics
+
+pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract
+
+pub fn canvas_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.SurfaceHostState
+
+pub fn renderer_backend_info() -> @render.RendererBackendInfo
+
+pub fn request_animation_frame_event() -> @host.HostEvent
+
+pub fn run_app(String, @wzzc-dev/moui/core.AppRuntime) -> Unit
+
+pub fn run_app_with_options(String, @wzzc-dev/moui/core.AppRuntime, options~ : WebAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+pub fn run_app_with_window_requests(String, @wzzc-dev/moui/core.AppRuntime, @host.HostWindowRequestQueue) -> Unit
+
+pub fn semantics_to_aria(@wzzc-dev/moui/core.SemanticsNode) -> AriaNode
+
+pub fn wasm_renderer_ready() -> Bool
+
+pub fn web_complete_async_clipboard_read(Int, Bool, Int) -> Unit
+
+pub fn web_complete_async_file_dialog(Int, Bool, Int) -> Unit
+
+pub fn web_dispatch_event(Int, Int, Int, Int, Double, Int) -> Unit
+
+pub fn web_host_info() -> @host.HostAppInfo
+
+pub fn web_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, clipboard? : Bool, clipboard_read? : Bool, clipboard_write? : (String) -> Bool, file_dialog? : Bool, async_queue? : @host.HostServiceAsyncQueue?) -> @host.HostServiceBridge
+
+pub fn webgpu_canvas_surface_contract() -> @render.WgpuSurfaceContract
+
+pub fn webgpu_renderer_backend_info() -> @render.RendererBackendInfo
+
+pub fn window_event_to_host(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @host.HostEvent?
+
+pub fn window_event_to_host_with_modifiers(@Milky2018/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers) -> @host.HostEvent?
+
+// Errors
+
+// Types and methods
+pub(all) struct AriaNode {
+  role : String
+  label : String
+  value : String
+  checked : Bool?
+  focused : Bool
+  frame : @wzzc-dev/moui/core.Rect
+  children : Array[AriaNode]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct CanvasHostConstraints {
+  requires_focusable_canvas : Bool
+  disallow_css_transform : Bool
+  disallow_canvas_border_padding : Bool
+  coordinates_are_logical_pixels : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+type WebApp
+pub impl @Milky2018/window/web.ApplicationHandler for WebApp
+
+pub(all) struct WebAppOptions {
+  scene_resolver : @host.HostWindowSceneResolver
+}
+pub fn WebAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver) -> Self
+
+type WebAsyncHostServiceKind derive(Eq, ToJson, @debug.Debug)
+
+type WebAsyncHostServiceRequest derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebBackendInfo {
+  host_info : @host.HostAppInfo
+  uses_window_web_backend : Bool
+  requires_browser_webgpu_renderer : Bool
+  renderer_info : @render.RendererBackendInfo
+  surface_contract : @render.WgpuSurfaceContract
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebRenderer {
+  renderer : @webgpu_adapter.WebGpuWasmRenderer
+}
+pub fn WebRenderer::create(canvas_id~ : String, metrics~ : @host.HostSurfaceMetrics) -> Self raise @webgpu_adapter.WebGpuHostError
+pub fn WebRenderer::dispose(Self) -> Unit
+pub fn WebRenderer::render(Self, Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit raise @webgpu_adapter.WebGpuHostError
+pub fn WebRenderer::resize(Self, @host.HostSurfaceMetrics) -> Unit raise @webgpu_adapter.WebGpuHostError
+pub fn WebRenderer::text_system(Self) -> @wzzc-dev/moui/core.TextSystem
+
+// Type aliases
+pub using @webgpu_adapter {type WebGpuHostError as WebRendererError}
+
+// Traits
+

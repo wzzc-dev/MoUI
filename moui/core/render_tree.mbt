@@ -1,10 +1,10 @@
 ///|
-pub fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
+fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
   self.render_with_focus(bounds, None)
 }
 
 ///|
-pub fn ElementNode::render_focused(
+fn ElementNode::render_focused(
   self : ElementNode,
   bounds : Rect,
   focused~ : ElementId?,
@@ -14,7 +14,7 @@ pub fn ElementNode::render_focused(
 }
 
 ///|
-pub fn RenderNode::collect_draw_commands(
+fn RenderNode::collect_draw_commands(
   self : RenderNode,
   commands : Array[DrawCommand],
 ) -> Unit {
@@ -30,7 +30,7 @@ pub fn RenderNode::collect_draw_commands(
 }
 
 ///|
-pub fn RenderNode::to_layout_result(self : RenderNode) -> LayoutResult {
+fn RenderNode::to_layout_result(self : RenderNode) -> LayoutResult {
   {
     frame: self.frame,
     children: self.children.map(child => child.to_layout_result()),
@@ -52,7 +52,7 @@ fn ElementNode::render_with_focus(
 }
 
 ///|
-pub fn ElementNode::render_focused_with_text_system(
+fn ElementNode::render_focused_with_text_system(
   self : ElementNode,
   bounds : Rect,
   focused~ : ElementId?,

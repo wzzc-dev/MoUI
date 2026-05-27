@@ -1,8 +1,8 @@
 # Project Agents.md Guide
 
 This repository is a MoonBit multi-platform GUI framework prototype. Keep
-changes small, package-local, and consistent with the existing spec-first
-runtime.
+changes small, package-local, and consistent with the public `View[Msg]` /
+internal runtime tree split.
 
 The project is still in an early prototype stage. Backward compatibility is not
 a requirement unless a task explicitly asks for it. Prefer clear, simple
@@ -12,11 +12,13 @@ paths, or abstractions that only preserve old shapes.
 ## Project Shape
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
-  and draw command model.
+  draw command model, opaque public `View[Msg]`, typed events, `Program`, and
+  `Effect`.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
-- `views/` exposes public view constructors that return `@core.ViewSpec`.
+- `views/` is a facade over core primitive builders. Public constructors return
+  opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
 - `backend/host/` defines shared host event, surface, input, async
   host-service, window lifecycle, window scene resolution,
   per-window runtime slot collection, platform-window id mapping,

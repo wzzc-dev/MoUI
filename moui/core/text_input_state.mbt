@@ -119,7 +119,7 @@ fn TextInputState::for_rich_text_editor(
 }
 
 ///|
-pub fn ElementNode::focused_text_input(
+fn ElementNode::focused_text_input(
   self : ElementNode,
   target : ElementId,
   render : RenderNode,

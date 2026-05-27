@@ -1,8 +1,9 @@
 # View Catalog
 
 The `views` package exposes user-facing constructors for building MoUI apps.
-Public constructors return `@core.ViewSpec`, so app code can stay declarative
-while the core runtime owns identity, layout, paint, input, and semantics.
+Public constructors return opaque `@core.View[Msg]`, so app code can stay
+declarative while the core runtime owns identity, layout, paint, input, and
+semantics. `ViewSpec` is an internal core representation, not an app-facing API.
 
 Use this catalog as a support matrix for current view APIs. Source-level details
 remain in `views/*.mbt` and the generated public API summary in
@@ -15,17 +16,18 @@ remain in `views/*.mbt` and the generated public API summary in
   `BuildContext::binding`.
 - Visual customization usually flows through `@core.Theme`, style types, or
   ordered modifiers such as `.padding`, `.background`, `.clip`, and `.opacity`.
-- File drop targets use the `ViewSpec::on_file_drop` modifier so apps can accept
-  normalized platform file paths without depending on backend-specific events.
+- File drop targets use the `View::on_file_drop` modifier so apps can accept
+  normalized platform file paths as typed messages without depending on
+  backend-specific events.
 - Platform-specific behavior should not be added in `views`; views preserve UI
-  intent as `@core.ViewSpec` and `@core.DrawCommand` data.
+  intent as `@core.View[Msg]` and eventual `@core.DrawCommand` data.
 
 ```mbt nocheck
 let draft = @core.State::new("")
 let screen = @views.column([
   @views.text("Todo"),
   @views.text_field(draft.binding(), placeholder="New item"),
-  @views.button("Add", on_click=() => println(draft.get())),
+  @views.button("Add", on_click=SubmitDraft),
 ], spacing=8.0)
 ```
 
@@ -100,16 +102,16 @@ let screen = @views.column([
 | `align` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase, Dialog host, Tooltip | Alignment wrapper. |
 | `aspect_ratio` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Ratio constraint wrapper. |
 | `intrinsic_width` / `intrinsic_height` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Intrinsic measurement wrappers. |
-| `custom_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt` | Showcase Advanced Rendering | Builds `ViewSpec::custom`; Showcase uses it to emit layer/blend, filter, shader, path, transform, and opacity draw commands. |
-| `custom_children_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Showcase | Builds `ViewSpec::custom_layout` with child size, baseline, priority, and placement callbacks. |
+| `custom_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt` | Showcase Advanced Rendering | Builds a custom `View[Msg]`; Showcase uses it to emit layer/blend, filter, shader, path, transform, and opacity draw commands. |
+| `custom_children_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`, `core/advanced_layout_wbtest.mbt` | Showcase | Builds a custom child-layout `View[Msg]` with child size, baseline, priority, and placement callbacks. |
 | `component` | `views/layout_helpers.mbt` | BuildContext-based | Built child semantics | `views/views_test.mbt` | Examples via app components | Wraps `@core.Component::new`. |
 
 ## Maintenance Checklist
 
 When adding or changing a public view constructor:
 
-1. Keep the constructor in `views/` and return `@core.ViewSpec`.
-2. Reuse existing core specs, styles, bindings, and modifiers where possible.
+1. Keep the constructor in `views/` and return `@core.View[Msg]`.
+2. Reuse existing core primitive builders, styles, bindings, and modifiers where possible.
 3. Add or update focused tests in `views/views_test.mbt`.
 4. Add Showcase coverage when the view is user-facing and visually meaningful.
 5. Update this catalog if API, theme support, semantics, or example coverage

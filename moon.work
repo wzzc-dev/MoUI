@@ -2,5 +2,5 @@ members = [
   "./moui",
   "./.local_repos/window",
   "./examples/showcase",
-  "./examples/markdown_editor"
+  "./examples/markdown_editor",
 ]

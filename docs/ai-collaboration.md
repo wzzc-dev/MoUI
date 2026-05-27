@@ -6,7 +6,7 @@ workflow for agents and maintainers.
 
 ## Goals
 
-- Preserve the spec-first runtime pipeline.
+- Preserve the public `View[Msg]` / internal runtime tree pipeline.
 - Keep package boundaries clear and platform-neutral code out of platform hosts.
 - Prefer focused edits, focused tests, and explicit validation over broad churn.
 - Keep public API changes visible through generated interface diffs.
@@ -17,16 +17,17 @@ workflow for agents and maintainers.
 
 ## Project Invariants
 
-- Public view constructors return `@core.ViewSpec`.
+- Public view constructors return opaque `@core.View[Msg]`; `ViewSpec` stays an
+  internal core representation.
 - The runtime pipeline stays:
 
   ```text
-  ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+  View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
   ```
 
 - `core/` owns runtime, state, layout, input, semantics, and draw commands.
-- `views/` owns public constructor helpers and should reuse existing core specs,
-  bindings, styles, and modifiers.
+- `views/` owns public constructor helpers and should reuse core primitive
+  builders, bindings, styles, and modifiers without exposing lowering details.
 - `backend/host/` owns `HostEvent`, surface metrics, input contracts, file
   drag/drop normalization, text-input session state, and redraw driver behavior.
 - Platform packages convert native events into `HostEvent`; they do not mutate
@@ -61,8 +62,8 @@ workflow for agents and maintainers.
 ### Add A View Constructor
 
 ```text
-Add a MoUI view constructor for <control>. Keep it in views/, return @core.ViewSpec,
-reuse existing core specs/styles/modifiers where possible, add focused tests in
+Add a MoUI view constructor for <control>. Keep it in views/, return @core.View[Msg],
+reuse existing core primitive builders/styles/modifiers where possible, add focused tests in
 views/views_test.mbt, update docs/view-catalog.md if public coverage changes, and
 run moon test views --target native plus moon info if the public API changes.
 ```

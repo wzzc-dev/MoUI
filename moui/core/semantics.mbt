@@ -63,7 +63,7 @@ pub fn SemanticsState::default() -> SemanticsState {
 }
 
 ///|
-pub fn ElementNode::semantics(
+fn ElementNode::semantics(
   self : ElementNode,
   render : RenderNode,
   focused? : ElementId? = None,

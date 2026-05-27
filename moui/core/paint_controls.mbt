@@ -216,7 +216,7 @@ fn render_modified_node(
 }
 
 ///|
-pub fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
+fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
   if !self.dirty.needs_layout {
     match self.cached_intrinsic_size {
       Some(size) => return size

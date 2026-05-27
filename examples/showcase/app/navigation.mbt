@@ -16,7 +16,7 @@ fn ShowcaseApp::catalog_shell(
   active : Bool,
   offset : Double,
   opacity : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   row(
     [
       self.sidebar(theme, metrics, selected, filter),
@@ -56,7 +56,7 @@ fn ShowcaseApp::destinations(
   active : Bool,
   offset : Double,
   opacity : Double,
-) -> Array[@views.NavigationDestination] {
+) -> Array[@views.NavigationDestination[ShowcaseMsg]] {
   [
     @views.navigation_destination(
       route="overview",
@@ -178,7 +178,7 @@ fn ShowcaseApp::sidebar(
   metrics : ShowcaseMetrics,
   selected : String,
   filter : @core.Binding[String],
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let inner_width = metrics.sidebar_width - theme.spacing_scale.lg * 2.0
   let sidebar_body_height = max_showcase_double(
     64.0,
@@ -191,11 +191,11 @@ fn ShowcaseApp::sidebar(
     query=filter,
     placeholder="Filter sections",
     theme~,
-    on_clear=Some(() => filter.set("")),
+    on_clear=Some(ClearFilter),
   ).frame(width=inner_width, height=38.0)
   let scrollbar_gutter = 24.0
   let list_width = max_showcase_double(120.0, inner_width - scrollbar_gutter)
-  let list_rows : Array[@core.ViewSpec] = []
+  let list_rows : Array[@core.View[ShowcaseMsg]] = []
   let query = filter.get()
   for section in showcase_sections() {
     if string_contains(section.title, query) ||
@@ -240,9 +240,8 @@ fn ShowcaseApp::sidebar(
             width=list_width,
             height=list_viewport_height,
             on_scroll=Some(delta => {
-              self.sidebar_scroll.scroll_to(
-                x=0.0,
-                y=clamp_double(normalized_offset.y - delta.y, 0.0, max_scroll),
+              SidebarScrollTo(
+                clamp_double(normalized_offset.y - delta.y, 0.0, max_scroll),
               )
             }),
           ),
@@ -274,7 +273,7 @@ fn sidebar_scrollbar(
   viewport_height~ : Double,
   content_height~ : Double,
   offset_y~ : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let width = 8.0
   @views.custom_layout(
     measure=_constraints => @core.Size::new(width~, height=viewport_height),
@@ -330,7 +329,7 @@ fn ShowcaseApp::sidebar_item(
   section : ShowcaseSection,
   selected : Bool,
   width : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let variant = if selected {
     @views.ButtonVariant::Primary
   } else {
@@ -338,7 +337,7 @@ fn ShowcaseApp::sidebar_item(
   }
   button(
     section.title,
-    on_click=() => self.select_section(section.route),
+    on_click=SelectSection(section.route),
     variant~,
     theme~,
     width~,
@@ -354,7 +353,7 @@ fn ShowcaseApp::header(
   dark : Bool,
   active : Bool,
   selected : String,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let overview_width = if metrics.compact { 86.0 } else { 100.0 }
   let examples_width = if metrics.compact { 88.0 } else { 100.0 }
   let scheme_width = if metrics.compact { 72.0 } else { 86.0 }
@@ -390,7 +389,7 @@ fn ShowcaseApp::header(
       [
         button(
           "Overview",
-          on_click=() => self.select_section("overview"),
+          on_click=SelectSection("overview"),
           variant=if selected == "overview" {
             @views.ButtonVariant::Primary
           } else {
@@ -402,7 +401,7 @@ fn ShowcaseApp::header(
         ),
         button(
           "Examples",
-          on_click=() => self.select_section("examples"),
+          on_click=SelectSection("examples"),
           variant=if selected == "examples" {
             @views.ButtonVariant::Primary
           } else {
@@ -418,7 +417,7 @@ fn ShowcaseApp::header(
           } else {
             "Dark"
           },
-          on_click=() => self.toggle_scheme(),
+          on_click=ToggleScheme,
           variant=@views.ButtonVariant::Ghost,
           theme~,
           width=scheme_width,
@@ -426,7 +425,7 @@ fn ShowcaseApp::header(
         ),
         menu_button(
           "Dialog",
-          on_click=() => self.show_dialog(),
+          on_click=ShowDialog,
           variant=@views.ButtonVariant::Outline,
           theme~,
           width=dialog_width,

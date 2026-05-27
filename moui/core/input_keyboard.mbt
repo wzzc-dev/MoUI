@@ -1,5 +1,5 @@
 ///|
-pub fn ElementNode::dispatch_keyboard(
+fn ElementNode::dispatch_keyboard(
   self : ElementNode,
   target : ElementId,
   event : KeyboardEvent,
@@ -34,7 +34,7 @@ pub fn ElementNode::dispatch_keyboard(
 }
 
 ///|
-pub fn ElementNode::dispatch_keyboard_shortcut(
+fn ElementNode::dispatch_keyboard_shortcut(
   self : ElementNode,
   event : KeyboardEvent,
 ) -> ElementEventResult {

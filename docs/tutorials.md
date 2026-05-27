@@ -6,21 +6,23 @@ before expanding behavior.
 
 ## Create A View
 
-1. Add the public constructor under `views/` and return `@core.ViewSpec`.
-2. Reuse existing `@core` state, style, binding, semantics, and layout types.
+1. Add the public constructor under `views/` and return `@core.View[Msg]`.
+2. Reuse existing `@core` primitive builders, state, style, binding,
+   semantics, and layout types.
 3. Add focused tests in `views/views_test.mbt`.
 4. Add a Showcase entry when the view is user-facing.
 5. Run `moon test views --target native` and `moon info`.
 
 ## Create A Custom Layout
 
-1. Use `ViewSpec::custom_layout` for the first version.
+1. Use `@views.custom_children_layout` for the first version.
 2. Read `CustomLayoutContext.child_sizes`, `child_baselines`,
    `child_alignment_guides`, `child_priorities`, `safe_area`, `viewport`, and
    `layout_direction`.
 3. Store reusable measurements in `CustomLayoutContext.cache`.
 4. Use `CustomPlacementContext::mirror_x` for RTL-aware x placement.
-5. Add tests in `core/advanced_layout_test.mbt`.
+5. Add tests in `views/views_test.mbt` or core white-box tests when the runtime
+   contract changes.
 
 ## Create A Platform Service
 

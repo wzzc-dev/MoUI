@@ -3,9 +3,9 @@ fn section_panel(
   theme : @core.Theme,
   title : String,
   summary : String,
-  body : @core.ViewSpec,
+  body : @core.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   surface(
     column(
       [
@@ -45,11 +45,11 @@ fn showcase_panel_border(theme : @core.Theme) -> @core.BorderStyle {
 ///|
 fn showcase_soft_card(
   theme : @core.Theme,
-  child : @core.ViewSpec,
+  child : @core.View[ShowcaseMsg],
   width~ : Double,
   height~ : Double,
   padding? : Double = 0.0,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   surface(
     child,
     width~,
@@ -64,8 +64,8 @@ fn showcase_soft_card(
 fn example_preview(
   theme : @core.Theme,
   title : String,
-  child : @core.ViewSpec,
-) -> @core.ViewSpec {
+  child : @core.View[ShowcaseMsg],
+) -> @core.View[ShowcaseMsg] {
   surface(
     column(
       [
@@ -89,7 +89,7 @@ fn ShowcaseApp::layout_tile(
   self : ShowcaseApp,
   theme : @core.Theme,
   label : String,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   self.layout_tile_sized(theme, label, 156.0, 40.0)
 }
 
@@ -100,7 +100,7 @@ fn ShowcaseApp::layout_tile_sized(
   label : String,
   width : Double,
   height : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   surface(
     row(
@@ -126,7 +126,7 @@ fn ShowcaseApp::layout_tile_sized(
 }
 
 ///|
-fn layout_tile_marker(theme : @core.Theme) -> @core.ViewSpec {
+fn layout_tile_marker(theme : @core.Theme) -> @core.View[ShowcaseMsg] {
   @views.custom_layout(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width=4.0, height=22.0))
@@ -152,7 +152,7 @@ fn ShowcaseApp::visual_card(
   active : Bool,
   offset : Double,
   opacity : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let media_width = max_showcase_double(120.0, card_width - 36.0)
   let media_height = if metrics.compact { 96.0 } else { 136.0 }
   let card_height = if metrics.compact { 250.0 } else { 300.0 }
@@ -196,7 +196,7 @@ fn ShowcaseApp::visual_card(
           } else {
             "Animate"
           },
-          on_click=() => self.toggle_active(),
+          on_click=ToggleActive,
           variant=@views.ButtonVariant::Primary,
           theme~,
           width=140.0,
@@ -217,14 +217,14 @@ fn ShowcaseApp::capability_card(
   theme : @core.Theme,
   width : Double,
   height : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   let inner_width = max_showcase_double(
     120.0,
     width - theme.spacing_scale.lg * 2.0,
   )
   let list_height = max_showcase_double(56.0, height - 72.0)
-  let rows : Array[@core.ViewSpec] = []
+  let rows : Array[@core.View[ShowcaseMsg]] = []
   let visible_limit = max_showcase_int(1, (list_height / 42.0).to_int())
   let entries = @render.renderer_feature_follow_ups()
   for entry in @render.renderer_feature_capability_report() {
@@ -271,7 +271,7 @@ fn ShowcaseApp::visual_correctness_card(
   theme : @core.Theme,
   active : Bool,
   opacity : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -317,7 +317,7 @@ fn ShowcaseApp::visual_correctness_card(
 fn ShowcaseApp::shortcut_preview(
   self : ShowcaseApp,
   theme : @core.Theme,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   surface(
     text("Keyboard: Meta+K", width=190.0, height=28.0)
@@ -337,7 +337,7 @@ fn ShowcaseApp::progress_preview(
   theme : @core.Theme,
   value : Double,
   width~ : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   surface(
     progress(
@@ -360,7 +360,7 @@ fn ShowcaseApp::theme_helpers(
   enabled : @core.Binding[Bool],
   active : Bool,
   opacity : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   column(
     [
       text("Theme helpers", width=220.0, height=28.0)
@@ -374,7 +374,7 @@ fn ShowcaseApp::theme_helpers(
       ),
       button(
         "Switch scheme",
-        on_click=() => self.toggle_scheme(),
+        on_click=ToggleScheme,
         variant=@views.ButtonVariant::Outline,
         theme~,
         width=160.0,
@@ -391,7 +391,7 @@ fn ShowcaseApp::theme_helpers(
 fn ShowcaseApp::vector_path_card(
   self : ShowcaseApp,
   theme : @core.Theme,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   @views.custom_layout(
     measure=constraints => {
@@ -461,7 +461,7 @@ fn ShowcaseApp::sparkline(
   self : ShowcaseApp,
   theme : @core.Theme,
   value : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   @views.custom_layout(
     measure=constraints => {
@@ -493,14 +493,14 @@ fn ShowcaseApp::sparkline(
 fn ShowcaseApp::dialog(
   self : ShowcaseApp,
   theme : @core.Theme,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   column(
     [
       text("Showcase dialog", width=240.0, height=30.0)
       .font(theme.typography.control)
       .foreground(theme.palette.foreground),
       text(
-        "Dialogs, shortcuts, and semantics share the same ViewSpec tree.",
+        "Dialogs, shortcuts, and semantics share the same view tree.",
         width=280.0,
         height=52.0,
       )
@@ -508,7 +508,7 @@ fn ShowcaseApp::dialog(
       .foreground(theme.palette.muted),
       button(
         "Close",
-        on_click=() => self.hide_dialog(),
+        on_click=HideDialog,
         variant=@views.ButtonVariant::Primary,
         theme~,
         width=120.0,
@@ -523,7 +523,7 @@ fn ShowcaseApp::dialog(
 fn ShowcaseApp::sheet(
   self : ShowcaseApp,
   theme : @core.Theme,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   sheet(
     content=column(
       [
@@ -539,7 +539,7 @@ fn ShowcaseApp::sheet(
         .foreground(theme.palette.muted),
         button(
           "Done",
-          on_click=() => self.hide_sheet(),
+          on_click=HideSheet,
           variant=@views.ButtonVariant::Primary,
           theme~,
           width=120.0,
@@ -560,7 +560,7 @@ fn capability_row(
   entry : @render.RendererFeatureCapability,
   theme : @core.Theme,
   width : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let status_width = clamp_double(width * 0.42, 112.0, 176.0)
   let feature_width = max_showcase_double(
     70.0,
@@ -583,7 +583,7 @@ fn capability_status_view(
   entry : @render.RendererFeatureCapability,
   theme : @core.Theme,
   width : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   if entry.native_status == entry.web_status {
     text(entry.native_status.label(), width~, height=38.0)
     .font(theme.typography.caption)
