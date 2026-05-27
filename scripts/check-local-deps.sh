@@ -31,8 +31,8 @@ esac
 [ "$(git -C "$WINDOW_DIR" branch --show-current)" = "$WINDOW_BRANCH" ] ||
   fail ".local_repos/window must be on branch $WINDOW_BRANCH"
 
-grep -q '"Milky2018/window@0.5.1"' "$ROOT_DIR/moon.mod" ||
-  fail "moon.mod must import Milky2018/window@0.5.1"
+grep -q '"Milky2018/window@0.5.1"' "$ROOT_DIR/moui/moon.mod" ||
+  fail "moui/moon.mod must import Milky2018/window@0.5.1"
 
 grep -q '".local_repos/window"' "$ROOT_DIR/moon.work" ||
   fail "moon.work must include .local_repos/window"

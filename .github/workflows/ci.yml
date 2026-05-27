@@ -30,8 +30,8 @@ jobs:
       - name: Check local dependency wiring
         run: sh scripts/check-local-deps.sh
 
-      - name: Run conformance checks
-        run: sh scripts/conformance-check.sh
+      - name: Run daily development checks
+        run: sh scripts/dev-check.sh
 
-      - name: Build golden preview target
+      - name: Build showcase preview target
         run: sh scripts/conformance-check.sh --golden
