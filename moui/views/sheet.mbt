@@ -1,31 +1,30 @@
 ///|
-pub fn sheet(
-  content~ : @core.ViewSpec,
+pub fn[Msg] sheet(
+  content~ : @core.View[Msg],
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
   background? : @core.Color = @core.Color::white(),
   corner_radius? : Double = @core.Theme::default().radius_scale.lg,
   shadow? : @core.ShadowStyle? = None,
-  on_dismiss? : (() -> Unit)? = None,
-) -> @core.ViewSpec {
-  @core.ViewSpec::SheetSpec({
-    key: None,
-    content,
-    presentation_mode,
-    background: @core.Brush::solid(background),
-    corner_radius,
-    shadow,
-    on_dismiss,
-  })
+  on_dismiss? : Msg? = None,
+) -> @core.View[Msg] {
+  @core.View::sheet(
+    content~,
+    presentation_mode~,
+    background=@core.Brush::solid(background),
+    corner_radius~,
+    shadow~,
+    on_dismiss~,
+  )
 }
 
 ///|
-pub fn sheet_host(
-  child~ : @core.ViewSpec,
-  sheet? : @core.ViewSpec? = None,
+pub fn[Msg] sheet_host(
+  child~ : @core.View[Msg],
+  sheet? : @core.View[Msg]? = None,
   presented? : Bool = false,
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
-  on_dismiss? : (() -> Unit)? = None,
-) -> @core.ViewSpec {
+  on_dismiss? : Msg? = None,
+) -> @core.View[Msg] {
   if presented && sheet is Some(sheet_spec) {
     let theme = @core.Theme::default()
     // Semi-transparent scrim background
@@ -33,7 +32,7 @@ pub fn sheet_host(
       @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.5)),
     )
     let scrim_with_tap = match on_dismiss {
-      Some(handler) => scrim.on_tap(handler)
+      Some(message) => scrim.on_tap(message)
       None => scrim
     }
     // The sheet content

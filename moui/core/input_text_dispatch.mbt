@@ -1,5 +1,5 @@
 ///|
-pub fn ElementNode::dispatch_text_input(
+fn ElementNode::dispatch_text_input(
   self : ElementNode,
   target : ElementId,
   event : TextInputEvent,

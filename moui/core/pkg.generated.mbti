@@ -10,15 +10,7 @@ pub fn default_text_commands() -> Array[ActionCommand]
 
 pub fn hit_test(LayoutResult, Point) -> Bool
 
-pub fn layout_spec(ViewSpec, Rect) -> LayoutResult
-
-pub fn layout_spec_with_text_system(ViewSpec, Rect, text_system~ : TextSystem) -> LayoutResult
-
-pub fn mount_view_spec(ViewSpec) -> ElementNode
-
 pub fn recognize_button_tap(ButtonState, Bool, PointerPhase) -> TapGestureResult
-
-pub fn reconcile_element(ElementNode, ViewSpec) -> ElementNode
 
 pub fn required_field(message? : String) -> (String) -> String?
 
@@ -153,13 +145,13 @@ pub fn AppRuntime::focus_previous(Self) -> Bool
 pub fn AppRuntime::focused_text_input(Self) -> TextInputState
 pub fn AppRuntime::layout(Self) -> LayoutResult
 pub fn AppRuntime::layout_pass(Self) -> Unit
-pub fn AppRuntime::mount(Self, ViewSpec) -> Unit
 pub fn AppRuntime::needs_layout(Self) -> Bool
 pub fn AppRuntime::needs_paint(Self) -> Bool
 pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
-pub fn AppRuntime::new_component(root~ : Component, size~ : Size, environment? : Environment) -> Self
-pub fn AppRuntime::new_spec(root~ : ViewSpec, size~ : Size, environment? : Environment) -> Self
+pub fn[Msg] AppRuntime::new_component_view(root~ : (BuildContext) -> View[Msg], size~ : Size, environment? : Environment, on_message? : ((Msg) -> Unit)?) -> Self
+pub fn[Model, Msg] AppRuntime::new_program(program~ : Program[Model, Msg], size~ : Size, environment? : Environment) -> Self
+pub fn[Msg] AppRuntime::new_view(root~ : View[Msg], size~ : Size, environment? : Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::paint_pass(Self) -> Array[DrawCommand]
 pub fn AppRuntime::rebuild(Self) -> Unit
 pub fn AppRuntime::register_font_data(Self, FontFamily, Bytes) -> Unit
@@ -167,7 +159,6 @@ pub fn AppRuntime::semantics(Self) -> SemanticsNode
 pub fn AppRuntime::set_action_commands(Self, ActionCommandMap) -> Unit
 pub fn AppRuntime::set_environment(Self, Environment) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
-pub fn AppRuntime::set_root_spec(Self, ViewSpec) -> Unit
 pub fn AppRuntime::set_text_system(Self, TextSystem) -> Unit
 pub fn AppRuntime::size(Self) -> Size
 pub fn AppRuntime::text_system(Self) -> TextSystem
@@ -274,31 +265,6 @@ pub fn ButtonStyle::ghost(theme? : Theme) -> Self
 pub fn ButtonStyle::outline(theme? : Theme) -> Self
 pub fn ButtonStyle::tonal(theme? : Theme) -> Self
 
-pub(all) struct ButtonViewSpec {
-  key : Key?
-  text : String
-  size : Size
-  font : FontSpec
-  foreground : Color
-  background : Brush
-  hovered_background : Brush
-  pressed_background : Brush
-  border : BorderStyle?
-  shadow : ShadowStyle?
-  corner_radius : Double
-  on_click : (() -> Unit)?
-}
-
-pub(all) struct CheckboxViewSpec {
-  key : Key?
-  label : String
-  checked : Binding[Bool]
-  font : FontSpec
-  foreground : Color
-  check_color : Color
-  size : Size
-}
-
 pub(all) struct Clock {
   mut last_time_ms : Double?
 } derive(Eq, ToJson, @debug.Debug)
@@ -356,11 +322,6 @@ pub(all) enum CommandIntent {
   OpenContextMenu
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct Component {
-  build : (BuildContext) -> ViewSpec
-}
-pub fn Component::new((BuildContext) -> ViewSpec) -> Self
-
 pub(all) struct ComponentEffect {
   key : String
   cleanup : (() -> Unit)?
@@ -384,11 +345,6 @@ pub(all) enum ComponentEffectStatus {
   EffectCancelled
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct ComponentViewSpec {
-  key : Key?
-  component : Component
-}
-
 pub(all) struct CompositionUpdate {
   text : String
   cursor : TextRange?
@@ -407,16 +363,6 @@ pub fn Constraints::loosen(Self) -> Self
 pub fn Constraints::tight(Size) -> Self
 pub fn Constraints::tighten(Self, width? : Double, height? : Double) -> Self
 pub fn Constraints::unbounded() -> Self
-
-pub(all) struct ContainerViewSpec {
-  key : Key?
-  size : Size?
-  background : Brush?
-  border : BorderStyle?
-  corner_radius : Double
-  shadow : ShadowStyle?
-  child : ViewSpec?
-}
 
 pub(all) enum ContentSizeCategory {
   Small
@@ -468,17 +414,6 @@ pub(all) struct CustomLayoutContext {
   viewport : Size?
 }
 
-pub(all) struct CustomLayoutSpec {
-  key : Key?
-  children : Array[ViewSpec]
-  cache : CustomLayoutCache
-  measure : (CustomLayoutContext) -> Size
-  place : (CustomPlacementContext) -> Array[Rect]
-  paint : (Rect) -> Array[DrawCommand]
-  semantics_role : SemanticsRole
-  semantics_label : String
-}
-
 pub(all) struct CustomPlacementContext {
   frame : Rect
   measured_size : Size
@@ -494,32 +429,11 @@ pub(all) struct CustomPlacementContext {
 }
 pub fn CustomPlacementContext::mirror_x(Self, x~ : Double, width~ : Double) -> Double
 
-pub(all) struct CustomViewSpec {
-  key : Key?
-  measure : (Constraints) -> Size
-  paint : (Rect) -> Array[DrawCommand]
-  semantics_role : SemanticsRole
-  semantics_label : String
-}
-
 pub(all) enum DatePickerMode {
   Date
   DateAndTime
   Time
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DatePickerViewSpec {
-  key : Key?
-  selected : Binding[DateValue]
-  mode : DatePickerMode
-  placeholder : String
-  font : FontSpec
-  foreground : Color
-  background : Brush
-  corner_radius : Double
-  min_date : DateValue?
-  max_date : DateValue?
-}
 
 pub(all) struct DateValue {
   year : Int
@@ -604,67 +518,21 @@ pub(all) enum Easing {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Easing::sample(Self, Double) -> Double
 
-pub(all) struct ElementEventResult {
-  changed : Bool
-  activated : Bool
-  focused : ElementId?
-} derive(Eq, ToJson, @debug.Debug)
+pub(all) enum Effect[Msg] {
+  NoEffect
+  Batch(Array[Effect[Msg]])
+  Send(Msg)
+}
+pub fn[Msg] Effect::batch(Array[Self[Msg]]) -> Self[Msg]
+pub fn[Msg] Effect::none() -> Self[Msg]
+pub fn[Msg] Effect::send(Msg) -> Self[Msg]
+
+type ElementEventResult derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ElementId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ElementId::new(Int) -> Self
-
-pub(all) struct ElementNode {
-  id : ElementId
-  mut key : Key?
-  mut spec : ViewSpec
-  mut children : Array[ElementNode]
-  mut dirty : DirtyFlags
-  mut button_state : ButtonState
-  mut picker_expanded : Bool
-  mut datepicker_expanded : Bool
-  mut datepicker_view : DateValue
-  mut caret : Int
-  mut selection : TextRange?
-  mut text_selection_anchor : Int?
-  mut composition : String?
-  mut composition_cursor : TextRange?
-  mut text_undo_stack : Array[TextHistoryEntry]
-  mut text_redo_stack : Array[TextHistoryEntry]
-  mut component_child_spec : ViewSpec?
-  mut component_subscriptions : Array[StateSubscription]
-  mut component_effects : Array[ComponentEffect]
-  mut cached_intrinsic_size : Size?
-  mut cached_measure_constraints : Constraints?
-  mut cached_measured : MeasuredNode?
-  mut cached_place_frame : Rect?
-  mut cached_placed : PlacedNode?
-  mut cached_render_frame : Rect?
-  mut cached_render_focused : ElementId?
-  mut cached_render : RenderNode?
-}
-pub fn ElementNode::accepts_tab_input(Self, ElementId) -> Bool
-pub fn ElementNode::dispatch_drag_drop(Self, DragDropEvent, RenderNode) -> ElementEventResult
-pub fn ElementNode::dispatch_keyboard(Self, ElementId, KeyboardEvent) -> ElementEventResult
-pub fn ElementNode::dispatch_keyboard_shortcut(Self, KeyboardEvent) -> ElementEventResult
-pub fn ElementNode::dispatch_pointer(Self, PointerEvent, RenderNode, text_system? : TextSystem) -> ElementEventResult
-pub fn ElementNode::dispatch_text_input(Self, ElementId, TextInputEvent) -> ElementEventResult
-pub fn ElementNode::find_focusable_at(Self, Point, RenderNode) -> ElementId?
-pub fn ElementNode::find_keyed(Self, String) -> ElementId?
-pub fn ElementNode::focusable_ids(Self, Array[ElementId]) -> Unit
-pub fn ElementNode::focused_text_input(Self, ElementId, RenderNode, text_system? : TextSystem) -> TextInputState?
-pub fn ElementNode::hit_test_path(Self, Point, RenderNode) -> HitTestResult
-pub fn ElementNode::intrinsic_size(Self) -> Size
-pub fn ElementNode::measure(Self, Constraints) -> MeasuredNode
-pub fn ElementNode::measure_with_text_system(Self, Constraints, text_system~ : TextSystem) -> MeasuredNode
-pub fn ElementNode::next_focus(Self, current~ : ElementId?, reverse~ : Bool) -> ElementId?
-pub fn ElementNode::place(Self, Rect) -> PlacedNode
-pub fn ElementNode::place_with_text_system(Self, Rect, text_system~ : TextSystem) -> PlacedNode
-pub fn ElementNode::render(Self, Rect) -> RenderNode
-pub fn ElementNode::render_focused(Self, Rect, focused~ : ElementId?, environment? : Environment) -> RenderNode
-pub fn ElementNode::render_focused_with_text_system(Self, Rect, focused~ : ElementId?, environment? : Environment, text_system~ : TextSystem) -> RenderNode
-pub fn ElementNode::semantics(Self, RenderNode, focused? : ElementId?) -> SemanticsNode
 
 pub(all) struct Environment {
   theme : Theme
@@ -698,15 +566,6 @@ pub(all) enum FilterEffect {
   ColorMatrix(Array[Double])
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FilterEffect::blur(Double) -> Self
-
-pub(all) struct FlexViewSpec {
-  key : Key?
-  axis : Axis
-  spacing : Double
-  main_axis_alignment : MainAxisAlignment
-  cross_axis_alignment : CrossAxisAlignment
-  children : Array[ViewSpec]
-}
 
 pub struct FocusState {
   key_slot : State[String?]
@@ -785,15 +644,6 @@ pub(all) struct Frame {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Self
 
-pub(all) struct FrameModifierSpec {
-  width : Double?
-  height : Double?
-  min_width : Double?
-  min_height : Double?
-  max_width : Double?
-  max_height : Double?
-}
-
 pub(all) struct FrameProfile {
   frame : Frame
   dirty_count : Int
@@ -801,17 +651,6 @@ pub(all) struct FrameProfile {
   active_animations : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FrameProfile::capture(AppRuntime, Frame) -> Self
-
-pub(all) struct FrameViewSpec {
-  key : Key?
-  width : Double?
-  height : Double?
-  min_width : Double?
-  min_height : Double?
-  max_width : Double?
-  max_height : Double?
-  child : ViewSpec
-}
 
 pub(all) enum GestureArenaDisposition {
   Pending
@@ -844,14 +683,6 @@ pub(all) enum GestureKind {
   Hover
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct GridViewSpec {
-  key : Key?
-  columns : Int
-  row_spacing : Double
-  column_spacing : Double
-  children : Array[ViewSpec]
-}
-
 pub(all) struct HitTestEntry {
   element_id : ElementId
   local_position : Point
@@ -873,15 +704,6 @@ pub(all) struct ImageRun {
   opacity : Double
   fit : ImageFit
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct ImageViewSpec {
-  key : Key?
-  source : String
-  size : Size?
-  opacity : Double
-  corner_radius : Double
-  fit : ImageFit
-}
 
 pub(all) struct Insets {
   top : Double
@@ -962,12 +784,6 @@ pub(all) struct LinearGradientSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LinearGradientSpec::new(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
 
-pub(all) struct ListViewSpec {
-  key : Key?
-  spacing : Double
-  children : Array[ViewSpec]
-}
-
 pub(all) enum MainAxisAlignment {
   MainStart
   MainCenter
@@ -982,12 +798,6 @@ pub(all) struct MeasuredNode {
   size : Size
   children : Array[MeasuredNode]
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct ModifiedViewSpec {
-  key : Key?
-  modifier : ViewModifier
-  child : ViewSpec
-}
 
 pub(all) struct MotionScale {
   fast_ms : Double
@@ -1008,12 +818,6 @@ pub fn NavigationState::push(Self, String) -> Unit
 pub fn NavigationState::replace(Self, String) -> Unit
 pub fn NavigationState::stack(Self) -> Array[String]
 
-pub(all) struct PaddingViewSpec {
-  key : Key?
-  insets : Insets
-  child : ViewSpec
-}
-
 pub(all) struct PathSpec {
   verbs : Array[PathVerb]
   fill : Brush?
@@ -1033,18 +837,6 @@ pub(all) enum PathVerb {
 pub(all) struct PickerItem {
   id : String
   label : String
-}
-
-pub(all) struct PickerViewSpec {
-  key : Key?
-  items : Array[PickerItem]
-  selected : Binding[String]
-  placeholder : String
-  font : FontSpec
-  foreground : Color
-  background : Brush
-  cornerRadius : Double
-  maxHeight : Double
 }
 
 pub(all) struct PlacedNode {
@@ -1074,6 +866,13 @@ pub(all) enum PointerPhase {
   Up
   Cancel
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct Program[Model, Msg] {
+  init : () -> (Model, Effect[Msg])
+  update : (Msg, Model) -> (Model, Effect[Msg])
+  view : (Model) -> View[Msg]
+}
+pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Msg, Model) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg]) -> Self[Model, Msg]
 
 pub(all) struct RadiusScale {
   sm : Double
@@ -1116,16 +915,7 @@ pub(all) struct RenderInspectorSnapshot {
 pub fn RenderInspectorSnapshot::from_commands(Array[DrawCommand]) -> Self
 pub fn RenderInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
-pub(all) struct RenderNode {
-  element_id : ElementId
-  frame : Rect
-  children : Array[RenderNode]
-  hit_testable : Bool
-  paint_commands : Array[DrawCommand]
-  post_paint_commands : Array[DrawCommand]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RenderNode::collect_draw_commands(Self, Array[DrawCommand]) -> Unit
-pub fn RenderNode::to_layout_result(Self) -> LayoutResult
+type RenderNode derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
@@ -1153,26 +943,6 @@ pub(all) struct RichTextDocument {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RichTextDocument::new(blocks~ : Array[RichTextBlock]) -> Self
 pub fn RichTextDocument::plain(String) -> Self
-
-pub(all) struct RichTextEditorViewSpec {
-  key : Key?
-  value : Binding[String]
-  placeholder : String
-  size : Size
-  format : (String) -> RichTextDocument
-  font : FontSpec
-  foreground : Color
-  placeholder_color : Color
-  background : Brush
-  border : BorderStyle?
-  focused_border : BorderStyle?
-  cursor_color : Color
-  corner_radius : Double
-  on_selection_change : ((Int, TextRange?) -> Unit)?
-  on_prefix_click : ((Int) -> Unit)?
-  input_transform : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?
-  accepts_tab_input : Bool
-}
 
 pub(all) struct RichTextInputTransform {
   text : String
@@ -1256,26 +1026,7 @@ pub(all) struct RuntimeInspectorSnapshot {
 }
 pub fn RuntimeInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
-pub(all) struct RuntimeState {
-  mut root_spec : ViewSpec
-  mut element_tree : ElementNode
-  mut render_tree : RenderNode
-  mut size : Size
-  mut needs_redraw : Bool
-  mut needs_rebuild : Bool
-  mut needs_layout : Bool
-  mut needs_paint : Bool
-  mut next_element_id : Int
-  mut dirty_elements : Array[ElementId]
-  mut focused_element : ElementId?
-  mut environment : Environment
-  mut text_system : TextSystem
-  mut redraw_callback : (() -> Unit)?
-  mut action_commands : ActionCommandMap
-  clock : Clock
-  mut animations : Array[AnimationController]
-  mut saveable_state : SaveableStateStore
-}
+type RuntimeState
 pub fn RuntimeState::action_commands(Self) -> Array[ActionCommand]
 pub fn RuntimeState::add_animation(Self, AnimationController) -> Unit
 pub fn RuntimeState::advance_time(Self, Double) -> Unit
@@ -1292,9 +1043,6 @@ pub fn RuntimeState::focused_text_input(Self) -> TextInputState
 pub fn RuntimeState::layout(Self) -> LayoutResult
 pub fn RuntimeState::layout_pass(Self) -> Unit
 pub fn RuntimeState::mark_dirty(Self, ElementId) -> Unit
-pub fn RuntimeState::mount(Self, ViewSpec) -> Unit
-pub fn RuntimeState::new_component(root~ : Component, size~ : Size, environment? : Environment) -> Self
-pub fn RuntimeState::new_spec(root~ : ViewSpec, size~ : Size, environment? : Environment) -> Self
 pub fn RuntimeState::paint_pass(Self) -> Array[DrawCommand]
 pub fn RuntimeState::rebuild(Self) -> Unit
 pub fn RuntimeState::rebuild_if_possible(Self) -> Unit
@@ -1304,7 +1052,6 @@ pub fn RuntimeState::semantics(Self) -> SemanticsNode
 pub fn RuntimeState::set_action_commands(Self, ActionCommandMap) -> Unit
 pub fn RuntimeState::set_environment(Self, Environment) -> Unit
 pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
-pub fn RuntimeState::set_root_spec(Self, ViewSpec) -> Unit
 pub fn RuntimeState::set_text_system(Self, TextSystem) -> Unit
 pub fn RuntimeState::text_system(Self) -> TextSystem
 
@@ -1344,30 +1091,6 @@ pub fn ScrollState::new(offset? : Point) -> Self
 pub fn ScrollState::offset(Self) -> Point
 pub fn ScrollState::scroll_to(Self, x~ : Double, y~ : Double) -> Unit
 pub fn ScrollState::set_offset(Self, Point) -> Unit
-
-pub(all) struct ScrollViewSpec {
-  key : Key?
-  offset : Point
-  viewport : Size?
-  on_scroll : ((Point) -> Unit)?
-  child : ViewSpec
-}
-
-pub(all) struct SearchBarViewSpec {
-  key : Key?
-  query : Binding[String]
-  placeholder : String
-  font : FontSpec
-  foreground : Color
-  placeholder_color : Color
-  background : Brush
-  border : BorderStyle?
-  focused_border : BorderStyle?
-  cursor_color : Color
-  corner_radius : Double
-  on_submit : (() -> Unit)?
-  on_clear : (() -> Unit)?
-}
 
 pub(all) enum SemanticsAction {
   Activate
@@ -1465,16 +1188,6 @@ pub(all) enum SheetPresentationMode {
   BottomSheet
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct SheetViewSpec {
-  key : Key?
-  content : ViewSpec
-  presentation_mode : SheetPresentationMode
-  background : Brush
-  corner_radius : Double
-  shadow : ShadowStyle?
-  on_dismiss : (() -> Unit)?
-}
-
 pub(all) struct Size {
   width : Double
   height : Double
@@ -1482,12 +1195,6 @@ pub(all) struct Size {
 pub fn Size::clamp(Self, Constraints) -> Self
 pub fn Size::inflate(Self, Insets) -> Self
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
-
-pub(all) struct SpacerViewSpec {
-  key : Key?
-  min_length : Double
-  weight : Double
-}
 
 pub(all) struct SpacingScale {
   xs : Double
@@ -1497,11 +1204,6 @@ pub(all) struct SpacingScale {
   xl : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SpacingScale::default() -> Self
-
-pub(all) struct StackViewSpec {
-  key : Key?
-  children : Array[ViewSpec]
-}
 
 pub(all) struct State[T] {
   slot : StateSlot[T]
@@ -1590,27 +1292,7 @@ pub(all) struct TextFieldStyle {
 pub fn TextFieldStyle::filled(theme? : Theme) -> Self
 pub fn TextFieldStyle::outline(theme? : Theme) -> Self
 
-pub(all) struct TextFieldViewSpec {
-  key : Key?
-  value : Binding[String]
-  placeholder : String
-  size : Size
-  font : FontSpec
-  foreground : Color
-  placeholder_color : Color
-  background : Brush
-  border : BorderStyle?
-  focused_border : BorderStyle?
-  cursor_color : Color
-  corner_radius : Double
-  on_submit : (() -> Unit)?
-}
-
-pub(all) struct TextHistoryEntry {
-  text : String
-  caret : Int
-  selection : TextRange?
-} derive(Eq, ToJson, @debug.Debug)
+type TextHistoryEntry derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum TextInputEvent {
   InsertText(String)
@@ -1683,14 +1365,6 @@ pub fn TextSystem::measure_text(Self, TextLayoutInput) -> TextLayoutResult
 pub fn TextSystem::new(id~ : String, measure~ : (TextLayoutInput) -> TextLayoutResult, register_font_data? : (FontFamily, Bytes) -> Unit) -> Self
 pub fn TextSystem::register_font_data(Self, FontFamily, Bytes) -> Unit
 
-pub(all) struct TextViewSpec {
-  key : Key?
-  text : String
-  size : Size
-  font : FontSpec
-  color : Color
-}
-
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
@@ -1753,100 +1427,68 @@ pub(all) struct TypographyScale {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TypographyScale::default() -> Self
 
-pub(all) enum ViewModifier {
-  PaddingModifier(Insets)
-  FrameModifier(FrameModifierSpec)
-  BackgroundModifier(Brush)
-  ForegroundModifier(Color)
-  FontModifier(FontSpec)
-  CornerRadiusModifier(Double)
-  OpacityModifier(Double)
-  ShadowModifier(ShadowStyle)
-  BorderModifier(BorderStyle)
-  OffsetModifier(Double, Double)
-  ClipModifier
-  ScaleModifier(Double, Double)
-  DisabledModifier(Bool)
-  AccessibilityLabelModifier(String)
-  SemanticsRoleModifier(SemanticsRole)
-  FocusableModifier(Bool)
-  OnTapModifier(() -> Unit)
-  OnFileDropModifier((Array[String], Point) -> Unit)
-  KeyboardShortcutModifier(KeyboardShortcut)
-  FlexibleModifier(Double)
-  LayoutPriorityModifier(Double)
-  AlignModifier(Alignment)
-  AspectRatioModifier(Double)
-  IntrinsicWidthModifier
-  IntrinsicHeightModifier
+pub struct View[Msg] {
+  // private fields
 }
+pub fn[Msg] View::accessibility_label(Self[Msg], String) -> Self[Msg]
+pub fn[Msg] View::align(Self[Msg], alignment? : Alignment) -> Self[Msg]
+pub fn[Msg] View::aspect_ratio(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::background(Self[Msg], Color) -> Self[Msg]
+pub fn[Msg] View::background_brush(Self[Msg], Brush) -> Self[Msg]
+pub fn[Msg] View::border(Self[Msg], BorderStyle) -> Self[Msg]
+pub fn[Msg] View::button(text~ : String, size~ : Size, font~ : FontSpec, foreground~ : Color, background~ : Brush, hovered_background~ : Brush, pressed_background~ : Brush, border? : BorderStyle?, shadow? : ShadowStyle?, corner_radius? : Double, on_click? : Msg?) -> Self[Msg]
+pub fn[Msg] View::checkbox(label~ : String, checked~ : Binding[Bool], font~ : FontSpec, foreground~ : Color, check_color~ : Color, size~ : Size) -> Self[Msg]
+pub fn[Msg] View::clip(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::component((BuildContext) -> Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::container(child? : Self[Msg]?, size? : Size?, background? : Brush?, border? : BorderStyle?, corner_radius? : Double, shadow? : ShadowStyle?) -> Self[Msg]
+pub fn[Msg] View::corner_radius(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::cross_axis_alignment(Self[Msg], CrossAxisAlignment) -> Self[Msg]
+pub fn[Msg] View::custom_children_layout(children~ : Array[Self[Msg]], measure~ : (CustomLayoutContext) -> Size, place~ : (CustomPlacementContext) -> Array[Rect], paint? : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self[Msg]
+pub fn[Msg] View::custom_view(measure~ : (Constraints) -> Size, paint~ : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self[Msg]
+pub fn[Msg] View::datepicker(selected~ : Binding[DateValue], mode~ : DatePickerMode, placeholder~ : String, font~ : FontSpec, foreground~ : Color, background~ : Brush, corner_radius~ : Double, min_date? : DateValue?, max_date? : DateValue?) -> Self[Msg]
+pub fn[Msg] View::disabled(Self[Msg], disabled? : Bool) -> Self[Msg]
+pub fn[Msg] View::empty() -> Self[Msg]
+pub fn[Msg] View::environment(Self[Msg], Environment) -> Self[Msg]
+pub fn[Msg] View::expanded(Self[Msg], weight? : Double) -> Self[Msg]
+pub fn[Msg] View::flex(children~ : Array[Self[Msg]], axis~ : Axis, spacing? : Double, main_axis_alignment? : MainAxisAlignment, cross_axis_alignment? : CrossAxisAlignment) -> Self[Msg]
+pub fn[Msg] View::flexible(Self[Msg], weight? : Double) -> Self[Msg]
+pub fn[Msg] View::focusable(Self[Msg], focusable? : Bool) -> Self[Msg]
+pub fn[Msg] View::font(Self[Msg], FontSpec) -> Self[Msg]
+pub fn[Msg] View::foreground(Self[Msg], Color) -> Self[Msg]
+pub fn[Msg] View::frame(Self[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self[Msg]
+pub fn[Msg] View::frame_spec(child~ : Self[Msg], width~ : Double?, height~ : Double?, min_width~ : Double?, min_height~ : Double?, max_width~ : Double?, max_height~ : Double?) -> Self[Msg]
+pub fn[Msg] View::grid(children~ : Array[Self[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> Self[Msg]
+pub fn[Msg] View::image(source~ : String, size? : Size?, opacity? : Double, corner_radius? : Double, fit? : ImageFit) -> Self[Msg]
+pub fn[Msg] View::intrinsic_height(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::intrinsic_width(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::key(Self[Msg], String) -> Self[Msg]
+pub fn[Msg] View::keyboard_shortcut(Self[Msg], KeyboardShortcut) -> Self[Msg]
+pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::list(children~ : Array[Self[Msg]], spacing? : Double) -> Self[Msg]
+pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
+pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
+pub fn[Msg] View::offset(Self[Msg], dx? : Double, dy? : Double) -> Self[Msg]
+pub fn[Msg] View::on_file_drop(Self[Msg], (Array[String], Point) -> Msg) -> Self[Msg]
+pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
+pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::padding_insets(child~ : Self[Msg], insets~ : Insets) -> Self[Msg]
+pub fn[Msg] View::picker(items~ : Array[PickerItem], selected~ : Binding[String], placeholder~ : String, font~ : FontSpec, foreground~ : Color, background~ : Brush, corner_radius~ : Double, max_height~ : Double) -> Self[Msg]
+pub fn[Msg] View::rich_text_editor(value~ : Binding[String], placeholder~ : String, size~ : Size, format~ : (String) -> RichTextDocument, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_selection_change? : ((Int, TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool) -> Self[Msg]
+pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
+pub fn[Msg] View::scroll(child~ : Self[Msg], offset? : Point, viewport? : Size?, state? : ScrollState?, on_scroll? : ((Point) -> Msg)?) -> Self[Msg]
+pub fn[Msg] View::search_bar(query~ : Binding[String], placeholder~ : String, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius~ : Double, on_submit? : Msg?, on_clear? : Msg?) -> Self[Msg]
+pub fn[Msg] View::semantics_role(Self[Msg], SemanticsRole) -> Self[Msg]
+pub fn[Msg] View::shadow(Self[Msg], ShadowStyle) -> Self[Msg]
+pub fn[Msg] View::sheet(content~ : Self[Msg], presentation_mode~ : SheetPresentationMode, background~ : Brush, corner_radius~ : Double, shadow? : ShadowStyle?, on_dismiss? : Msg?) -> Self[Msg]
+pub fn[Msg] View::spacer(min_length? : Double, weight? : Double) -> Self[Msg]
+pub fn[Msg] View::spacing(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::stack(children~ : Array[Self[Msg]]) -> Self[Msg]
+pub fn[Msg] View::text(text~ : String, size~ : Size, font~ : FontSpec, color~ : Color) -> Self[Msg]
+pub fn[Msg] View::text_field(value~ : Binding[String], placeholder~ : String, size~ : Size, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_submit? : Msg?) -> Self[Msg]
+pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 
-pub(all) enum ViewSpec {
-  EmptySpec
-  TextSpec(TextViewSpec)
-  ButtonSpec(ButtonViewSpec)
-  TextFieldSpec(TextFieldViewSpec)
-  RichTextEditorSpec(RichTextEditorViewSpec)
-  ImageSpec(ImageViewSpec)
-  CheckboxSpec(CheckboxViewSpec)
-  PickerSpec(PickerViewSpec)
-  DatePickerSpec(DatePickerViewSpec)
-  SearchBarSpec(SearchBarViewSpec)
-  SheetSpec(SheetViewSpec)
-  FlexSpec(FlexViewSpec)
-  PaddingSpec(PaddingViewSpec)
-  ContainerSpec(ContainerViewSpec)
-  SpacerSpec(SpacerViewSpec)
-  FrameSpec(FrameViewSpec)
-  StackSpec(StackViewSpec)
-  ScrollSpec(ScrollViewSpec)
-  GridSpec(GridViewSpec)
-  ListSpec(ListViewSpec)
-  ModifiedSpec(ModifiedViewSpec)
-  CustomSpec(CustomViewSpec)
-  CustomLayoutSpec(CustomLayoutSpec)
-  ComponentSpec(ComponentViewSpec)
-}
-pub fn ViewSpec::accessibility_label(Self, String) -> Self
-pub fn ViewSpec::align(Self, alignment? : Alignment) -> Self
-pub fn ViewSpec::aspect_ratio(Self, Double) -> Self
-pub fn ViewSpec::background(Self, Color) -> Self
-pub fn ViewSpec::background_brush(Self, Brush) -> Self
-pub fn ViewSpec::border(Self, BorderStyle) -> Self
-pub fn ViewSpec::clip(Self) -> Self
-pub fn ViewSpec::component(Component) -> Self
-pub fn ViewSpec::corner_radius(Self, Double) -> Self
-pub fn ViewSpec::cross_axis_alignment(Self, CrossAxisAlignment) -> Self
-pub fn ViewSpec::custom(measure~ : (Constraints) -> Size, paint~ : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self
-pub fn ViewSpec::custom_layout(children~ : Array[Self], measure~ : (CustomLayoutContext) -> Size, place~ : (CustomPlacementContext) -> Array[Rect], paint? : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self
-pub fn ViewSpec::disabled(Self, disabled? : Bool) -> Self
-pub fn ViewSpec::environment(Self, Environment) -> Self
-pub fn ViewSpec::expanded(Self, weight? : Double) -> Self
-pub fn ViewSpec::flexible(Self, weight? : Double) -> Self
-pub fn ViewSpec::focusable(Self, focusable? : Bool) -> Self
-pub fn ViewSpec::font(Self, FontSpec) -> Self
-pub fn ViewSpec::foreground(Self, Color) -> Self
-pub fn ViewSpec::frame(Self, width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self
-pub fn ViewSpec::intrinsic_height(Self) -> Self
-pub fn ViewSpec::intrinsic_width(Self) -> Self
-pub fn ViewSpec::key(Self, String) -> Self
-pub fn ViewSpec::keyboard_shortcut(Self, KeyboardShortcut) -> Self
-pub fn ViewSpec::kind(Self) -> Int
-pub fn ViewSpec::layout_priority(Self, Double) -> Self
-pub fn ViewSpec::main_axis_alignment(Self, MainAxisAlignment) -> Self
-pub fn ViewSpec::modified(Self, ViewModifier) -> Self
-pub fn ViewSpec::offset(Self, dx? : Double, dy? : Double) -> Self
-pub fn ViewSpec::on_file_drop(Self, (Array[String], Point) -> Unit) -> Self
-pub fn ViewSpec::on_tap(Self, () -> Unit) -> Self
-pub fn ViewSpec::opacity(Self, Double) -> Self
-pub fn ViewSpec::padding(Self, Double) -> Self
-pub fn ViewSpec::same_identity(Self, Self) -> Bool
-pub fn ViewSpec::scale(Self, sx? : Double, sy? : Double) -> Self
-pub fn ViewSpec::semantics_role(Self, SemanticsRole) -> Self
-pub fn ViewSpec::shadow(Self, ShadowStyle) -> Self
-pub fn ViewSpec::spacing(Self, Double) -> Self
-pub fn ViewSpec::theme(Self, Theme) -> Self
-pub fn ViewSpec::with_key(Self, Key) -> Self
+type ViewNode[Msg]
 
 pub(all) struct ViewStyle {
   font : FontSpec?
@@ -1869,10 +1511,6 @@ pub(all) struct VisualStyle {
 pub fn VisualStyle::empty() -> Self
 
 // Type aliases
-pub type ClickHandler = () -> Unit
-
-pub type FileDropHandler = (Array[String], Point) -> Unit
-
 pub type RichTextFormatter = (String) -> RichTextDocument
 
 // Traits

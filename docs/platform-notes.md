@@ -126,7 +126,7 @@ The browser host import reads `prefers-color-scheme` at startup and listens for
 media-query changes through `window/web`; MoUI maps those events into runtime
 environment color-scheme updates.
 Browser file drag/drop events on the canvas are normalized through
-`HostEvent::DragDrop` and dispatched to `ViewSpec::on_file_drop` targets. The
+`HostEvent::DragDrop` and dispatched to `View::on_file_drop` targets. The
 Web platform receives browser-exposed file names or relative names rather than
 native filesystem paths.
 See [Text system](text-system.md) for the shared runtime and renderer text
@@ -157,7 +157,7 @@ scheme on their initial build. AppKit theme-change events use the shared
 Right-click context-menu requests use the same `NSMenu` path and dispatch the
 selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/macos` backend are normalized
-through `HostEvent::DragDrop` and dispatched to `ViewSpec::on_file_drop`
+through `HostEvent::DragDrop` and dispatched to `View::on_file_drop`
 targets.
 Native WGPU text can use either the shared Moon Cosmic provider or a platform
 provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
@@ -232,7 +232,7 @@ Right-click context-menu requests use the same `TrackPopupMenu` path and dispatc
 the selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/windows` backend are
 normalized through `HostEvent::DragDrop` and dispatched to
-`ViewSpec::on_file_drop` targets, matching the macOS host path.
+`View::on_file_drop` targets, matching the macOS host path.
 Windows installs the sibling `render/wgpu/directwrite` provider through the same
 renderer/runtime boundary used by macOS CoreText and composes it with
 `render/wgpu/cosmic_text` as fallback. That provider is currently an explicit

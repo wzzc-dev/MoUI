@@ -1,5 +1,5 @@
 ///|
-pub fn ElementNode::find_focusable_at(
+fn ElementNode::find_focusable_at(
   self : ElementNode,
   point : Point,
   render : RenderNode,
@@ -82,7 +82,7 @@ pub fn ElementNode::find_focusable_at(
 }
 
 ///|
-pub fn ElementNode::focusable_ids(
+fn ElementNode::focusable_ids(
   self : ElementNode,
   ids : Array[ElementId],
 ) -> Unit {
@@ -117,7 +117,7 @@ pub fn ElementNode::focusable_ids(
 }
 
 ///|
-pub fn ElementNode::accepts_tab_input(
+fn ElementNode::accepts_tab_input(
   self : ElementNode,
   target : ElementId,
 ) -> Bool {
@@ -137,7 +137,7 @@ pub fn ElementNode::accepts_tab_input(
 }
 
 ///|
-pub fn ElementNode::next_focus(
+fn ElementNode::next_focus(
   self : ElementNode,
   current~ : ElementId?,
   reverse~ : Bool,
@@ -172,7 +172,7 @@ pub fn ElementNode::next_focus(
 }
 
 ///|
-pub fn ElementNode::find_keyed(self : ElementNode, key : String) -> ElementId? {
+fn ElementNode::find_keyed(self : ElementNode, key : String) -> ElementId? {
   if self.key == Some(Key::new(key)) {
     Some(self.id)
   } else {

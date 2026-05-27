@@ -31,8 +31,8 @@ test "windows app options carry text engine and optional scene resolver" {
     @host.HostWindowSceneResolution::SceneResolved(
       @host.HostWindowSceneInstance::new(
         request~,
-        runtime=@core.AppRuntime::new_spec(
-          root=@core.ViewSpec::EmptySpec,
+        runtime=@core.AppRuntime::new_view(
+          root=(@core.View::empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
       ),

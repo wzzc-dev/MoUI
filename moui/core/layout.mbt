@@ -19,12 +19,12 @@ pub(all) struct PlacedNode {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn layout_spec(spec : ViewSpec, bounds : Rect) -> LayoutResult {
+fn layout_spec(spec : ViewSpec, bounds : Rect) -> LayoutResult {
   mount_view_spec(spec).place(bounds).to_layout_result()
 }
 
 ///|
-pub fn layout_spec_with_text_system(
+fn layout_spec_with_text_system(
   spec : ViewSpec,
   bounds : Rect,
   text_system~ : TextSystem,
@@ -46,7 +46,7 @@ pub fn hit_test(layout : LayoutResult, point : Point) -> Bool {
 }
 
 ///|
-pub fn ElementNode::measure(
+fn ElementNode::measure(
   self : ElementNode,
   constraints : Constraints,
 ) -> MeasuredNode {
@@ -54,7 +54,7 @@ pub fn ElementNode::measure(
 }
 
 ///|
-pub fn ElementNode::measure_with_text_system(
+fn ElementNode::measure_with_text_system(
   self : ElementNode,
   constraints : Constraints,
   text_system~ : TextSystem,
@@ -87,12 +87,12 @@ pub fn ElementNode::measure_with_text_system(
 }
 
 ///|
-pub fn ElementNode::place(self : ElementNode, bounds : Rect) -> PlacedNode {
+fn ElementNode::place(self : ElementNode, bounds : Rect) -> PlacedNode {
   self.place_with_text_system(bounds, text_system=TextSystem::fallback())
 }
 
 ///|
-pub fn ElementNode::place_with_text_system(
+fn ElementNode::place_with_text_system(
   self : ElementNode,
   bounds : Rect,
   text_system~ : TextSystem,

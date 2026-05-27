@@ -48,46 +48,51 @@ examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
 examples/markdown_editor/windows/ Windows native Markdown editor
 ```
 
-## Spec API
+## Public View API
 
-MoUI uses a breaking, spec-only runtime. Public view constructors return
-`@core.ViewSpec` directly; the old `ViewNode` compatibility API has been
-removed.
+MoUI app code builds UI with opaque `@core.View[Msg]` values. The standard
+shape is a typed TEA loop: `view : Model -> View[Msg]`, events carry typed
+messages, `update` handles those messages, and explicit `Effect[Msg]` values
+model follow-up work. User code does not call `lower`, `to_spec`, or
+`ViewSpec`; those names belong to the core runtime implementation.
+
+`views/` is a facade over core primitive builders:
 
 ```moonbit
-let theme = @core.Theme::light()
-let app = @views.surface(
-  @views.column([
-    @views.text("MoUI Counter").font(theme.typography.title),
-    @views.button(
-      "Increment",
-      on_click=() => println("clicked"),
-      style=@core.ButtonStyle::filled(theme~),
-    ),
-  ], spacing=theme.spacing_scale.md),
-  style=@core.SurfaceStyle::default(theme~),
-)
+enum CounterMsg { Inc; Dec }
 
-let runtime = @core.AppRuntime::new_spec(
-  root=app,
-  size=@core.Size::new(width=320.0, height=240.0),
-)
+fn view(count : Int) -> @core.View[CounterMsg] {
+  @views.column([
+    @views.text("Count: \{count}"),
+    @views.row([
+      @views.button("-", on_click=Dec),
+      @views.button("+", on_click=Inc),
+    ], spacing=8.0),
+  ], spacing=12.0)
+}
 ```
 
-Stateful apps should use `AppRuntime::new_component` with a `Component` that
-returns `ViewSpec`. The long-term direction is tracked in
-[2026 roadmap](roadmap-2026.md), while renderer-specific gaps are tracked in
-[Renderer capability report](renderer-capability-report.md).
+Function components are ordinary functions returning `View[Msg]`. Child
+messages are lifted with `View::map`, for example
+`todo_row(todo).map(TodoRowMsg)`. Controls that require complex local state,
+such as rich text editing or virtualized resources, keep that state explicit
+through bindings, cells, or dedicated integration callbacks rather than making
+ordinary constructors callback-first.
+
+Stateful examples can still use `AppRuntime::new_component_view` with
+`BuildContext`, while pure model examples can use `Program::new` and
+`AppRuntime::new_program`. In both cases event dispatch flows through typed
+messages instead of exposing the internal view tree.
 
 ## Runtime Mental Model
 
 MoUI keeps the runtime pipeline explicit:
 
 ```text
-ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
 ```
 
-- `ViewSpec` is the immutable description produced by app code.
+- `View[Msg]` is the immutable, opaque public description produced by app code; `ViewSpec` is the private core tree realized by the runtime.
 - `ElementNode` owns identity, keys, control state, focus, and text-editing
   runtime state.
 - App code should normally go through `AppRuntime`, `Component`, and
@@ -172,13 +177,14 @@ Constraints down -> Size up -> parent places children
 `Padding` deflates child constraints and inflates its measured size. `Frame`
 tightens child constraints. `Flex`, `Grid`, `List`, and `Stack` use
 `Milky2018/moon_taffy` for their primary placement pass, with MoUI converting
-`ViewSpec` children into a short-lived Taffy tree and then writing the computed
+internal view children into a short-lived Taffy tree and then writing the computed
 frames back into `PlacedNode`. `Scroll` and ordered layout modifiers preserve
 MoUI's existing placement semantics. All layout results still produce the same
 `RenderNode` output expected by renderers and hosts.
 
-Advanced layout authors can use `ViewSpec::custom_layout` to define a child
-layout delegate. The delegate receives measured child sizes, returns its own
+Advanced layout authors can use `@views.custom_children_layout` to define a
+child layout delegate while still returning `View[Msg]`. The delegate receives
+measured child sizes, returns its own
 size, and places children with explicit frames. Its context also exposes child
 baselines and layout priorities so custom layouts can align text and make
 priority-aware placement decisions; paint and semantics metadata are kept on
@@ -256,11 +262,11 @@ test coverage, and example coverage.
 The larger WYSIWYG editing workflow is documented in
 [Markdown Editor](markdown-editor.md).
 
-Advanced users can use `ViewSpec::custom` to provide measurement, paint, and
-semantics callbacks without adding a new core enum variant:
+Advanced users can use `@views.custom_layout` to provide measurement, paint, and
+semantics callbacks without exposing the internal core tree:
 
 ```moonbit
-let swatch = @core.ViewSpec::custom(
+let swatch = @views.custom_layout(
   measure=constraints => constraints.constrain(@core.Size::new(width=32.0, height=20.0)),
   paint=frame => [
     @core.DrawCommand::FillRoundedRectBrush(
@@ -272,11 +278,10 @@ let swatch = @core.ViewSpec::custom(
 )
 ```
 
-For custom layouts with children, use `ViewSpec::custom_layout` or the
-`@views.custom_children_layout` helper:
+For custom layouts with children, use the `@views.custom_children_layout` helper:
 
 ```moonbit
-let pair = @core.ViewSpec::custom_layout(
+let pair = @views.custom_children_layout(
   children=[@views.text("A"), @views.text("B")],
   measure=ctx => ctx.constraints.constrain(@core.Size::new(width=160.0, height=24.0)),
   place=ctx => [
@@ -375,9 +380,9 @@ platform backends skip ordinary pointer dispatch for those events, then native
 menu-capable hosts ask `HostServiceBridge::ShowMenu` to present the current
 runtime action commands and dispatch the selected intent back through
 `HostRuntimeDriver`.
-File drop targets use the `ViewSpec::on_file_drop` modifier; hosts normalize
-native file drag/drop positions and paths before the runtime dispatches them to
-the hit view.
+File drop targets use the `View::on_file_drop` modifier; hosts normalize native
+file drag/drop positions and paths before the runtime dispatches typed messages
+to the hit view.
 
 See [Platform notes](platform-notes.md) for setup, backend-specific constraints,
 and validation commands.

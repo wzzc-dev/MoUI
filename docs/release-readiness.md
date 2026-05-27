@@ -11,10 +11,10 @@ MoUI is preview-ready when the repository can demonstrate all of these claims
 with current files and validation output:
 
 - The platform-neutral runtime pipeline remains explicit:
-  `ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer`.
-- Public view constructors return `@core.ViewSpec` and app code can use shared
-  logic through Web wasm-gc, macOS native, and Windows native entrypoints where
-  those platforms are supported.
+  `View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer`.
+- Public view constructors return opaque `@core.View[Msg]`; app code uses typed
+  messages and shared logic through Web wasm-gc, macOS native, and Windows
+  native entrypoints where those platforms are supported.
 - Renderer capability status is synchronized between
   `render/capabilities.mbt`, `render/capabilities_test.mbt`, and
   `docs/renderer-capability-report.md`.
@@ -40,7 +40,7 @@ with current files and validation output:
 | --- | --- | --- |
 | Daily validation | `sh scripts/dev-check.sh` passes after the Windows Showcase unused import cleanup. | ready |
 | Package boundaries | `docs/architecture.md`, `AGENTS.md`, and repo-local skills describe the same `core` / `views` / `backend` / `render` / `examples` split. | ready |
-| Public view model | `views/` constructors are documented as returning `@core.ViewSpec`; public API edits require `moon info`. | ready |
+| Public view model | `views/` constructors are documented as returning opaque `@core.View[Msg]`; public API edits require `moon info`. | ready |
 | Example shape | Showcase and Markdown Editor keep shared app logic under `examples/*/app/` with platform entrypoints as wiring. | ready |
 | Renderer capability tracking | Capability status is recorded in code, tests, and `docs/renderer-capability-report.md`. | ready with tracked gaps |
 | Platform contracts | `backend/host` owns shared events, services, windows, redraw, and request/completion contracts. | ready with tracked Linux service gaps |

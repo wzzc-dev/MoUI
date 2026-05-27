@@ -9,7 +9,7 @@ pub struct BuildContext {
 }
 
 ///|
-pub struct Component {
+priv struct Component {
   build : (BuildContext) -> ViewSpec
 }
 
@@ -21,7 +21,7 @@ priv struct ComponentBuildResult {
 }
 
 ///|
-pub fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
+fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
   { build, }
 }
 

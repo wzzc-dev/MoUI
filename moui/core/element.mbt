@@ -1,10 +1,10 @@
 ///|
-pub(all) struct ElementNode {
+priv struct ElementNode {
   id : ElementId
   mut key : Key?
   mut spec : ViewSpec
   mut children : Array[ElementNode]
-  mut dirty : DirtyFlags
+  dirty : DirtyFlags
   mut button_state : ButtonState
   mut picker_expanded : Bool
   mut datepicker_expanded : Bool
@@ -14,8 +14,8 @@ pub(all) struct ElementNode {
   mut text_selection_anchor : Int?
   mut composition : String?
   mut composition_cursor : TextRange?
-  mut text_undo_stack : Array[TextHistoryEntry]
-  mut text_redo_stack : Array[TextHistoryEntry]
+  text_undo_stack : Array[TextHistoryEntry]
+  text_redo_stack : Array[TextHistoryEntry]
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut component_effects : Array[ComponentEffect]
@@ -30,7 +30,7 @@ pub(all) struct ElementNode {
 }
 
 ///|
-pub(all) struct TextHistoryEntry {
+struct TextHistoryEntry {
   text : String
   caret : Int
   selection : TextRange?
@@ -45,7 +45,7 @@ fn TextHistoryEntry::from_element(
 }
 
 ///|
-pub(all) struct RenderNode {
+struct RenderNode {
   element_id : ElementId
   frame : Rect
   children : Array[RenderNode]
@@ -67,7 +67,7 @@ fn RenderNode::empty() -> RenderNode {
 }
 
 ///|
-pub(all) struct ElementEventResult {
+struct ElementEventResult {
   changed : Bool
   activated : Bool
   focused : ElementId?
@@ -86,7 +86,7 @@ priv struct ReconcileResult {
 }
 
 ///|
-pub fn mount_view_spec(spec : ViewSpec) -> ElementNode {
+fn mount_view_spec(spec : ViewSpec) -> ElementNode {
   mount_view_spec_with_next(spec, 1).node
 }
 
@@ -226,10 +226,7 @@ fn mount_view_spec_for_runtime(
 }
 
 ///|
-pub fn reconcile_element(
-  old : ElementNode,
-  next_spec : ViewSpec,
-) -> ElementNode {
+fn reconcile_element(old : ElementNode, next_spec : ViewSpec) -> ElementNode {
   reconcile_element_with_next(old, next_spec, 1).node
 }
 

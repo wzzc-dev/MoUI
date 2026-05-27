@@ -1,6 +1,6 @@
 ---
 name: moui-framework-development-skill
-description: Use this skill when developing or maintaining the MoUI MoonBit GUI framework itself, including core runtime, ViewSpec/layout/state/input, renderers, platform backends, examples used as framework validation, renderer capability tracking, documentation, and validation commands.
+description: Use this skill when developing or maintaining the MoUI MoonBit GUI framework itself, including core runtime, opaque View/layout/state/input, renderers, platform backends, examples used as framework validation, renderer capability tracking, documentation, and validation commands.
 version: 0.1.0
 ---
 
@@ -46,11 +46,11 @@ Use this skill when editing or reviewing:
 
 ## Project Invariants
 
-- Public view constructors return `@core.ViewSpec`.
+- Public view constructors return opaque `@core.View[Msg]`.
 - Runtime pipeline:
 
   ```text
-  ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+  View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
   ```
 
 - `core/` stays platform-neutral.
@@ -84,7 +84,7 @@ Use this skill when editing or reviewing:
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
 - `style/`: visual token and style compatibility aliases.
-- `views/`: public view constructors returning `@core.ViewSpec`.
+- `views/`: public view constructors returning opaque `@core.View[Msg]`.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
   collection, platform-window id map, window request/completion queue,
@@ -175,7 +175,7 @@ moon info
 
 ### Add A View
 
-- Implement in `views/` using existing `@core.ViewSpec` variants, modifiers,
+- Implement in `views/` using public `@core.View[Msg]` constructors and modifiers,
   styles, and bindings.
 - Add focused tests in `views/views_test.mbt`.
 - Add Showcase coverage if the view is user-facing and visual.
@@ -242,7 +242,7 @@ moon info
 ## Common Mistakes
 
 - Adding platform logic to `core/`.
-- Returning anything other than `@core.ViewSpec` from public view constructors.
+- Returning anything other than `@core.View[Msg]` from public view constructors.
 - Skipping `moon info` after public API changes.
 - Updating renderer support without updating capability docs and tests.
 - Treating the minimal Linux Wayland backend as complete platform support while

@@ -1,5 +1,5 @@
 ///|
-pub fn ElementNode::dispatch_drag_drop(
+fn ElementNode::dispatch_drag_drop(
   self : ElementNode,
   event : DragDropEvent,
   render : RenderNode,

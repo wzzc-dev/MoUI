@@ -7,7 +7,7 @@ fn ShowcaseApp::overview_section(
   offset : Double,
   opacity : Double,
   slider : @core.Binding[Double],
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   section_panel(
     theme,
     "Overview",
@@ -80,7 +80,7 @@ fn ShowcaseApp::text_media_section(
   metrics : ShowcaseMetrics,
   draft : @core.Binding[String],
   opacity : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   section_panel(
     theme,
@@ -149,91 +149,103 @@ fn ShowcaseApp::controls_section(
   secondary : @core.Binding[Bool],
   picker : @core.Binding[String],
   date : @core.Binding[@core.DateValue],
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   section_panel(
     theme,
     "Controls",
     "All binding-backed controls are visible in one tabbed form.",
-    @views.tab_view(tab, [
-      @views.tab_item(
-        route="form",
-        label="Form",
-        view=grid(
-          [
-            text_field(
-              draft,
-              on_submit=Some(() => self.toggle_active()),
-              placeholder="Type a label",
-              variant=@views.TextFieldVariant::Outline,
-              theme~,
-              width=220.0,
-            ),
-            searchbar(query=draft, placeholder="Search catalog", theme~),
-            button(
-              "Primary",
-              on_click=() => self.toggle_active(),
-              variant=@views.ButtonVariant::Primary,
-              theme~,
-              width=104.0,
-            ),
-            menu_button(
-              "Menu",
-              on_click=() => self.show_dialog(),
-              variant=@views.ButtonVariant::Tonal,
-              theme~,
-              width=104.0,
-            ),
-            checkbox(
-              "Checkbox",
-              checked=enabled,
-              check_color=theme.palette.primary,
-            ),
-            toggle("Toggle", enabled, check_color=theme.palette.primary),
-            toggle_switch(
-              "Toggle switch",
-              secondary,
-              check_color=theme.palette.primary,
-            ),
-            radio("Radio option", secondary, check_color=theme.palette.primary),
-          ],
-          columns=2,
-          row_spacing=theme.spacing_scale.sm,
-          column_spacing=theme.spacing_scale.md,
+    @views.tab_view(
+      tab,
+      [
+        @views.tab_item(
+          route="form",
+          label="Form",
+          view=grid(
+            [
+              text_field(
+                draft,
+                on_submit=Some(ToggleActive),
+                placeholder="Type a label",
+                variant=@views.TextFieldVariant::Outline,
+                theme~,
+                width=220.0,
+              ),
+              searchbar(query=draft, placeholder="Search catalog", theme~),
+              button(
+                "Primary",
+                on_click=ToggleActive,
+                variant=@views.ButtonVariant::Primary,
+                theme~,
+                width=104.0,
+              ),
+              menu_button(
+                "Menu",
+                on_click=ShowDialog,
+                variant=@views.ButtonVariant::Tonal,
+                theme~,
+                width=104.0,
+              ),
+              checkbox(
+                "Checkbox",
+                checked=enabled,
+                check_color=theme.palette.primary,
+              ),
+              toggle("Toggle", enabled, check_color=theme.palette.primary),
+              toggle_switch(
+                "Toggle switch",
+                secondary,
+                check_color=theme.palette.primary,
+              ),
+              radio(
+                "Radio option",
+                secondary,
+                check_color=theme.palette.primary,
+              ),
+            ],
+            columns=2,
+            row_spacing=theme.spacing_scale.sm,
+            column_spacing=theme.spacing_scale.md,
+          ),
         ),
-      ),
-      @views.tab_item(
-        route="values",
-        label="Values",
-        view=column(
-          [
-            @views.slider(slider, width=300.0, foreground=theme.palette.primary),
-            progress(
-              slider.get(),
-              width=300.0,
-              foreground=theme.palette.primary,
-            ),
-            @views.picker(
-              [
-                @views.picker_item("native", "Native WGPU"),
-                @views.picker_item("web", "WebGPU"),
-                @views.picker_item("test", "Test renderer"),
-              ],
-              selected=picker,
-              placeholder="Renderer target",
-              theme~,
-            ).frame(width=260.0, height=38.0),
-            datepicker(
-              selected=date,
-              mode=@core.DatePickerMode::Date,
-              placeholder="Release date",
-              theme~,
-            ).frame(width=260.0, height=38.0),
-          ],
-          spacing=theme.spacing_scale.md,
-          align=@views.CrossAlign::Start,
+        @views.tab_item(
+          route="values",
+          label="Values",
+          view=column(
+            [
+              @views.slider(
+                slider,
+                width=300.0,
+                foreground=theme.palette.primary,
+              ),
+              progress(
+                slider.get(),
+                width=300.0,
+                foreground=theme.palette.primary,
+              ),
+              @views.picker(
+                [
+                  @views.picker_item("native", "Native WGPU"),
+                  @views.picker_item("web", "WebGPU"),
+                  @views.picker_item("test", "Test renderer"),
+                ],
+                selected=picker,
+                placeholder="Renderer target",
+                theme~,
+              ).frame(width=260.0, height=38.0),
+              datepicker(
+                selected=date,
+                mode=@core.DatePickerMode::Date,
+                placeholder="Release date",
+                theme~,
+              ).frame(width=260.0, height=38.0),
+            ],
+            spacing=theme.spacing_scale.md,
+            align=@views.CrossAlign::Start,
+          ),
         ),
-      ),
-    ]),
+      ],
+      on_select=route => SelectTab(route),
+    ),
     metrics~,
   )
 }
@@ -244,7 +256,7 @@ fn ShowcaseApp::layout_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
   slider : @core.Binding[Double],
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let gallery_grid_columns = if metrics.compact { 1 } else { 2 }
   let gallery_grid_width = if metrics.compact { 252.0 } else { 324.0 }
   let gallery_grid_height = if metrics.compact { 128.0 } else { 100.0 }
@@ -407,47 +419,51 @@ fn ShowcaseApp::navigation_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
   tab : @core.Binding[String],
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   section_panel(
     theme,
     "Navigation",
     "Navigation stack, tab view, dialog host, and sheet host are wired together.",
     column(
       [
-        @views.tab_view(tab, [
-          @views.tab_item(
-            route="form",
-            label="Routes",
-            view=text(
-              "Current route: " + self.navigation.current(),
-              width=300.0,
-              height=28.0,
-            ).foreground(theme.palette.foreground),
-          ),
-          @views.tab_item(
-            route="values",
-            label="Presentation",
-            view=row(
-              [
-                button(
-                  "Open dialog",
-                  on_click=() => self.show_dialog(),
-                  variant=@views.ButtonVariant::Primary,
-                  theme~,
-                  width=128.0,
-                ),
-                button(
-                  "Open sheet",
-                  on_click=() => self.show_sheet(),
-                  variant=@views.ButtonVariant::Outline,
-                  theme~,
-                  width=128.0,
-                ),
-              ],
-              spacing=theme.spacing_scale.sm,
+        @views.tab_view(
+          tab,
+          [
+            @views.tab_item(
+              route="form",
+              label="Routes",
+              view=text(
+                "Current route: " + self.navigation.current(),
+                width=300.0,
+                height=28.0,
+              ).foreground(theme.palette.foreground),
             ),
-          ),
-        ]),
+            @views.tab_item(
+              route="values",
+              label="Presentation",
+              view=row(
+                [
+                  button(
+                    "Open dialog",
+                    on_click=ShowDialog,
+                    variant=@views.ButtonVariant::Primary,
+                    theme~,
+                    width=128.0,
+                  ),
+                  button(
+                    "Open sheet",
+                    on_click=ShowSheet,
+                    variant=@views.ButtonVariant::Outline,
+                    theme~,
+                    width=128.0,
+                  ),
+                ],
+                spacing=theme.spacing_scale.sm,
+              ),
+            ),
+          ],
+          on_select=route => SelectTab(route),
+        ),
         text(
           "Dialog host and sheet host wrap the whole Showcase shell.",
           width=360.0,
@@ -469,7 +485,7 @@ fn ShowcaseApp::examples_section(
   ctx : @core.BuildContext,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   section_panel(
     theme,
     "Examples",
@@ -499,7 +515,7 @@ fn ShowcaseApp::counter_preview(
   self : ShowcaseApp,
   ctx : @core.BuildContext,
   theme : @core.Theme,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let count = ctx.watch(self.counter_count)
   surface(
     column(
@@ -512,7 +528,7 @@ fn ShowcaseApp::counter_preview(
         .foreground(theme.palette.muted),
         button(
           "Increment",
-          on_click=() => self.counter_increment(),
+          on_click=CounterIncrement,
           variant=@views.ButtonVariant::Primary,
           theme~,
         ),
@@ -530,10 +546,10 @@ fn ShowcaseApp::todo_preview(
   self : ShowcaseApp,
   ctx : @core.BuildContext,
   theme : @core.Theme,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let items = ctx.watch(self.todo_items)
   let draft = ctx.binding(self.todo_draft)
-  let children : Array[@core.ViewSpec] = [
+  let children : Array[@core.View[ShowcaseMsg]] = [
     text("MoUI Todo")
     .font(theme.typography.title)
     .foreground(theme.palette.foreground),
@@ -541,7 +557,7 @@ fn ShowcaseApp::todo_preview(
       [
         text_field(
           draft,
-          on_submit=Some(() => self.todo_submit_draft()),
+          on_submit=Some(TodoSubmitDraft),
           placeholder="New todo",
           variant=@views.TextFieldVariant::Filled,
           theme~,
@@ -549,7 +565,7 @@ fn ShowcaseApp::todo_preview(
         ),
         button(
           "Add",
-          on_click=() => self.todo_submit_draft(),
+          on_click=TodoSubmitDraft,
           variant=@views.ButtonVariant::Primary,
           theme~,
           width=120.0,
@@ -578,7 +594,7 @@ fn ShowcaseApp::todo_row(
   self : ShowcaseApp,
   item : ShowcaseTodoItem,
   theme : @core.Theme,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   row(
     [
       checkbox(
@@ -588,7 +604,7 @@ fn ShowcaseApp::todo_row(
       ).frame(width=220.0, height=36.0),
       button(
         "Remove",
-        on_click=() => self.todo_remove(item.id),
+        on_click=TodoRemove(item.id),
         variant=@views.ButtonVariant::Outline,
         theme~,
         width=120.0,
@@ -607,7 +623,7 @@ fn ShowcaseApp::theme_renderer_section(
   enabled : @core.Binding[Bool],
   active : Bool,
   opacity : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let custom_theme = @views.theme(
     background=theme.palette.background,
     accent=theme.palette.primary,
@@ -647,7 +663,7 @@ fn ShowcaseApp::advanced_rendering_section(
   self : ShowcaseApp,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   let card_width = if metrics.compact { 260.0 } else { 300.0 }
   let cards = [
@@ -676,7 +692,7 @@ fn advanced_rendering_card(
   title : String,
   width : Double,
   mode : String,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   showcase_soft_card(
     theme,
     column(
@@ -701,7 +717,7 @@ fn advanced_rendering_canvas(
   mode : String,
   width : Double,
   height : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   @views.custom_layout(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width~, height~))
@@ -897,7 +913,7 @@ fn ShowcaseApp::text_diagnostics_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
   draft : @core.Binding[String],
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
   section_panel(
@@ -907,13 +923,13 @@ fn ShowcaseApp::text_diagnostics_section(
     grid(
       [
         text_diagnostic_card(
-          theme, "CJK", "MoUI 文本 mixed with English 123", card_width,
+          theme, "CJK", "MoUI 鏂囨湰 mixed with English 123", card_width,
         ),
         text_diagnostic_card(
-          theme, "RTL / Bidi", "مرحبا MoUI 123 שלום", card_width,
+          theme, "RTL / Bidi", "賲乇丨亘丕 MoUI 123 砖诇讜诐", card_width,
         ),
         text_diagnostic_card(
-          theme, "Emoji", "Text 😀🚀✨  native gap\nweb partial", card_width,
+          theme, "Emoji", "Text 馃榾馃殌鉁? native gap\nweb partial", card_width,
         ),
         text_diagnostic_card(
           theme, "Wrapping", "A deliberately long diagnostic sentence is clipped inside a fixed card so layout bounds stay visible.",
@@ -958,7 +974,7 @@ fn text_diagnostic_card(
   title : String,
   sample : String,
   width : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   showcase_soft_card(
     theme,
     column(
@@ -990,7 +1006,7 @@ fn ShowcaseApp::interaction_lab_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
   draft : @core.Binding[String],
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   let drop_label = ctx.watch(self.last_drop_label)
   let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
   section_panel(
@@ -1018,7 +1034,7 @@ fn ShowcaseApp::tooltip_demo_card(
   self : ShowcaseApp,
   theme : @core.Theme,
   width : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -1053,7 +1069,7 @@ fn ShowcaseApp::file_drop_card(
   theme : @core.Theme,
   width : Double,
   drop_label : String,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   showcase_soft_card(
     theme,
     column(
@@ -1070,7 +1086,7 @@ fn ShowcaseApp::file_drop_card(
           background=theme.palette.surface_variant.multiply_alpha(0.44),
           corner_radius=theme.radius_scale.sm,
           padding=8.0,
-        ).on_file_drop((paths, _point) => self.record_file_drop(paths)),
+        ).on_file_drop((paths, _point) => RecordFileDrop(paths)),
         text(drop_label, width=width - 32.0, height=24.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
@@ -1089,7 +1105,7 @@ fn ShowcaseApp::focus_shortcut_card(
   self : ShowcaseApp,
   theme : @core.Theme,
   width : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -1130,7 +1146,7 @@ fn ShowcaseApp::variant_gallery_card(
   theme : @core.Theme,
   width : Double,
   draft : @core.Binding[String],
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -1215,7 +1231,7 @@ fn surface_variant_tile(
   theme : @core.Theme,
   label : String,
   variant : @views.SurfaceVariant,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   surface(
     text(label, width=80.0, height=22.0)
     .font(theme.typography.caption)
@@ -1233,7 +1249,7 @@ fn ShowcaseApp::image_lifecycle_card(
   self : ShowcaseApp,
   theme : @core.Theme,
   width : Double,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -1266,7 +1282,7 @@ fn image_lifecycle_tile(
   theme : @core.Theme,
   label : String,
   source : String,
-) -> @core.ViewSpec {
+) -> @core.View[ShowcaseMsg] {
   column(
     [
       image(

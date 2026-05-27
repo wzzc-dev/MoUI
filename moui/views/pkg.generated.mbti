@@ -7,117 +7,117 @@ import {
 }
 
 // Values
-pub fn align(@core.ViewSpec, alignment? : @core.Alignment) -> @core.ViewSpec
+pub fn[Msg] align(@core.View[Msg], alignment? : @core.Alignment) -> @core.View[Msg]
 
-pub fn aspect_ratio(@core.ViewSpec, Double) -> @core.ViewSpec
+pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
 
-pub fn button(String, on_click? : () -> Unit, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn checkbox(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.ViewSpec
+pub fn[Msg] checkbox(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn column(Array[@core.ViewSpec], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.ViewSpec
+pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
-pub fn component((@core.BuildContext) -> @core.ViewSpec) -> @core.ViewSpec
+pub fn component((@core.BuildContext) -> @core.View[Unit]) -> @core.View[Unit]
 
-pub fn custom_children_layout(children~ : Array[@core.ViewSpec], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.ViewSpec
+pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
 
-pub fn custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.ViewSpec
+pub fn[Msg] custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
 
 pub fn dark_theme() -> @core.Theme
 
-pub fn datepicker(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.ViewSpec
+pub fn[Msg] datepicker(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
-pub fn dialog_host(@core.ViewSpec, dialog? : @core.ViewSpec?, presented? : Bool) -> @core.ViewSpec
+pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool) -> @core.View[Msg]
 
-pub fn empty() -> @core.ViewSpec
+pub fn[Msg] empty() -> @core.View[Msg]
 
 pub fn environment(theme? : @core.Theme) -> @core.Environment
 
-pub fn expanded(@core.ViewSpec, weight? : Double) -> @core.ViewSpec
+pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
-pub fn flexible(@core.ViewSpec, weight? : Double) -> @core.ViewSpec
+pub fn[Msg] flexible(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
-pub fn frame(@core.ViewSpec, width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.ViewSpec
+pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
 
-pub fn grid(Array[@core.ViewSpec], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.ViewSpec
+pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
-pub fn image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.ViewSpec
+pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.View[Msg]
 
-pub fn intrinsic_height(@core.ViewSpec) -> @core.ViewSpec
+pub fn[Msg] intrinsic_height(@core.View[Msg]) -> @core.View[Msg]
 
-pub fn intrinsic_width(@core.ViewSpec) -> @core.ViewSpec
+pub fn[Msg] intrinsic_width(@core.View[Msg]) -> @core.View[Msg]
 
-pub fn layout_priority(@core.ViewSpec, Double) -> @core.ViewSpec
+pub fn[Msg] layout_priority(@core.View[Msg], Double) -> @core.View[Msg]
 
-pub fn[T] lazy_grid(Array[T], (T) -> String, (T) -> @core.ViewSpec, state? : @core.ScrollState, columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.ViewSpec
+pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
-pub fn[T] lazy_list(Array[T], (T) -> String, (T) -> @core.ViewSpec, state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double) -> @core.ViewSpec
+pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double) -> @core.View[Msg]
 
 pub fn light_theme() -> @core.Theme
 
-pub fn list(Array[@core.ViewSpec], spacing? : Double) -> @core.ViewSpec
+pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
 
-pub fn markdown_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Unit)?, on_prefix_click? : ((Int) -> Unit)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.ViewSpec
+pub fn[Msg] markdown_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
-pub fn menu_button(String, on_click? : () -> Unit, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn[Msg] menu_button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn navigation_destination(route~ : String, view~ : @core.ViewSpec) -> NavigationDestination
+pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> NavigationDestination[Msg]
 
-pub fn navigation_stack(@core.NavigationState, Array[NavigationDestination], fallback? : @core.ViewSpec) -> @core.ViewSpec
+pub fn[Msg] navigation_stack(@core.NavigationState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
-pub fn overlay(@core.ViewSpec, @core.ViewSpec) -> @core.ViewSpec
+pub fn[Msg] overlay(@core.View[Msg], @core.View[Msg]) -> @core.View[Msg]
 
-pub fn padding(@core.ViewSpec, Double) -> @core.ViewSpec
+pub fn[Msg] padding(@core.View[Msg], Double) -> @core.View[Msg]
 
-pub fn padding_edges(@core.ViewSpec, top? : Double, right? : Double, bottom? : Double, left? : Double) -> @core.ViewSpec
+pub fn[Msg] padding_edges(@core.View[Msg], top? : Double, right? : Double, bottom? : Double, left? : Double) -> @core.View[Msg]
 
-pub fn padding_insets(@core.ViewSpec, @core.Insets) -> @core.ViewSpec
+pub fn[Msg] padding_insets(@core.View[Msg], @core.Insets) -> @core.View[Msg]
 
-pub fn padding_xy(@core.ViewSpec, horizontal? : Double, vertical? : Double) -> @core.ViewSpec
+pub fn[Msg] padding_xy(@core.View[Msg], horizontal? : Double, vertical? : Double) -> @core.View[Msg]
 
-pub fn picker(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.ViewSpec
+pub fn[Msg] picker(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
 
 pub fn picker_item(String, String) -> @core.PickerItem
 
-pub fn progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.ViewSpec
+pub fn[Msg] progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
-pub fn radio(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
+pub fn[Msg] radio(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn rich_text_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Unit)?, on_prefix_click? : ((Int) -> Unit)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.ViewSpec
+pub fn[Msg] rich_text_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
-pub fn row(Array[@core.ViewSpec], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.ViewSpec
+pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
-pub fn scroll_view(@core.ViewSpec, offset? : @core.Point, width? : Double, height? : Double, on_scroll? : ((@core.Point) -> Unit)?) -> @core.ViewSpec
+pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?) -> @core.View[Msg]
 
-pub fn searchbar(query~ : @core.Binding[String], placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : (() -> Unit)?, on_clear? : (() -> Unit)?) -> @core.ViewSpec
+pub fn[Msg] searchbar(query~ : @core.Binding[String], placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
 
-pub fn sheet(content~ : @core.ViewSpec, presentation_mode? : @core.SheetPresentationMode, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : (() -> Unit)?) -> @core.ViewSpec
+pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
-pub fn sheet_host(child~ : @core.ViewSpec, sheet? : @core.ViewSpec?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : (() -> Unit)?) -> @core.ViewSpec
+pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : Msg?) -> @core.View[Msg]
 
-pub fn slider(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.ViewSpec
+pub fn[Msg] slider(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
-pub fn spacer(min_length? : Double, weight? : Double) -> @core.ViewSpec
+pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]
 
-pub fn stack(Array[@core.ViewSpec]) -> @core.ViewSpec
+pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
 
-pub fn surface(@core.ViewSpec, width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, variant? : SurfaceVariant, theme? : @core.Theme, padding? : Double) -> @core.ViewSpec
+pub fn[Msg] surface(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, variant? : SurfaceVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
 
-pub fn tab_item(route~ : String, label~ : String, view~ : @core.ViewSpec) -> TabItem
+pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg]) -> TabItem[Msg]
 
-pub fn tab_view(@core.Binding[String], Array[TabItem], spacing? : Double) -> @core.ViewSpec
+pub fn[Msg] tab_view(@core.Binding[String], Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
 
-pub fn text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn[Msg] text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn text_field(@core.Binding[String], on_submit? : (() -> Unit)?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.ViewSpec
+pub fn[Msg] text_field(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale) -> @core.Theme
 
-pub fn toggle(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
+pub fn[Msg] toggle(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn toggle_switch(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.ViewSpec
+pub fn[Msg] toggle_switch(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn tooltip(@core.ViewSpec, String, visible? : Bool) -> @core.ViewSpec
+pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
 
 // Errors
 
@@ -145,9 +145,9 @@ pub(all) enum MainAlign {
   Evenly
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct NavigationDestination {
+pub(all) struct NavigationDestination[Msg] {
   route : String
-  view : @core.ViewSpec
+  view : @core.View[Msg]
 }
 
 pub(all) enum SurfaceVariant {
@@ -156,10 +156,10 @@ pub(all) enum SurfaceVariant {
   Overlay
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct TabItem {
+pub(all) struct TabItem[Msg] {
   route : String
   label : String
-  view : @core.ViewSpec
+  view : @core.View[Msg]
 }
 
 pub(all) enum TextFieldVariant {

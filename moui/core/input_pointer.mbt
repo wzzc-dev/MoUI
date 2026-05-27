@@ -1,5 +1,5 @@
 ///|
-pub fn ElementNode::dispatch_pointer(
+fn ElementNode::dispatch_pointer(
   self : ElementNode,
   event : PointerEvent,
   render : RenderNode,
@@ -154,7 +154,7 @@ fn ElementNode::dispatch_modified_pointer(
 }
 
 ///|
-pub fn ElementNode::hit_test_path(
+fn ElementNode::hit_test_path(
   self : ElementNode,
   point : Point,
   render : RenderNode,

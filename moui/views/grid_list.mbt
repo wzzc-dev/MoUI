@@ -1,41 +1,35 @@
 ///|
-pub fn grid(
-  children : Array[@core.ViewSpec],
+pub fn[Msg] grid(
+  children : Array[@core.View[Msg]],
   columns? : Int = 1,
   row_spacing? : Double = 0.0,
   column_spacing? : Double = 0.0,
-) -> @core.ViewSpec {
-  @core.ViewSpec::GridSpec({
-    key: None,
-    columns,
-    row_spacing,
-    column_spacing,
-    children,
-  })
+) -> @core.View[Msg] {
+  @core.View::grid(children~, columns~, row_spacing~, column_spacing~)
 }
 
 ///|
-pub fn list(
-  children : Array[@core.ViewSpec],
+pub fn[Msg] list(
+  children : Array[@core.View[Msg]],
   spacing? : Double = 0.0,
-) -> @core.ViewSpec {
-  @core.ViewSpec::ListSpec({ key: None, spacing, children })
+) -> @core.View[Msg] {
+  @core.View::list(children~, spacing~)
 }
 
 ///|
-pub fn[T] lazy_list(
+pub fn[T, Msg] lazy_list(
   items : Array[T],
   key : (T) -> String,
-  row : (T) -> @core.ViewSpec,
+  row : (T) -> @core.View[Msg],
   state? : @core.ScrollState = @core.ScrollState::new(),
   item_height? : Double = 44.0,
   viewport_height? : Double = 240.0,
   spacing? : Double = 0.0,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   let offset = state.offset().y
   let limit = offset + viewport_height
   let stride = item_height + spacing
-  let children : Array[@core.ViewSpec] = []
+  let children : Array[@core.View[Msg]] = []
   let mut first_visible = -1
   let mut last_visible = -1
   for index, item in items {
@@ -49,14 +43,13 @@ pub fn[T] lazy_list(
       children.push(row(item).key(key(item)))
     }
   }
-  let virtual_children : Array[@core.ViewSpec] = []
+  let virtual_children : Array[@core.View[Msg]] = []
   if first_visible > 0 {
     virtual_children.push(
-      @core.ViewSpec::SpacerSpec({
-        key: Some(@core.Key::new("lazy-list-before")),
-        min_length: first_visible.to_double() * stride,
-        weight: 0.0,
-      }),
+      @core.View::spacer(
+        min_length=first_visible.to_double() * stride,
+        weight=0.0,
+      ).key("lazy-list-before"),
     )
   }
   for child in children {
@@ -69,32 +62,25 @@ pub fn[T] lazy_list(
   }
   if hidden_after > 0 {
     virtual_children.push(
-      @core.ViewSpec::SpacerSpec({
-        key: Some(@core.Key::new("lazy-list-after")),
-        min_length: hidden_after.to_double() * stride,
-        weight: 0.0,
-      }),
+      @core.View::spacer(
+        min_length=hidden_after.to_double() * stride,
+        weight=0.0,
+      ).key("lazy-list-after"),
     )
   }
-  @core.ViewSpec::ScrollSpec({
-    key: None,
-    offset: state.offset(),
-    viewport: Some(@core.Size::new(width=0.0, height=viewport_height)),
-    on_scroll: Some(delta => {
-      state.scroll_to(
-        x=0.0,
-        y=max_lazy_scroll_offset(0.0, state.offset().y - delta.y),
-      )
-    }),
-    child: list(virtual_children, spacing~),
-  })
+  @core.View::scroll(
+    child=list(virtual_children, spacing~),
+    offset=state.offset(),
+    viewport=Some(@core.Size::new(width=0.0, height=viewport_height)),
+    state=Some(state),
+  )
 }
 
 ///|
-pub fn[T] lazy_grid(
+pub fn[T, Msg] lazy_grid(
   items : Array[T],
   key : (T) -> String,
-  cell : (T) -> @core.ViewSpec,
+  cell : (T) -> @core.View[Msg],
   state? : @core.ScrollState = @core.ScrollState::new(),
   columns? : Int = 2,
   item_height? : Double = 96.0,
@@ -102,13 +88,13 @@ pub fn[T] lazy_grid(
   viewport_height? : Double = 240.0,
   row_spacing? : Double = 0.0,
   column_spacing? : Double = 0.0,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   let columns = if columns > 0 { columns } else { 1 }
   let offset = state.offset().y
   let limit = offset + viewport_height
   let row_stride = item_height + row_spacing
   let row_count = lazy_grid_row_count(items.length(), columns)
-  let rows : Array[@core.ViewSpec] = []
+  let rows : Array[@core.View[Msg]] = []
   let mut first_visible_row = -1
   let mut last_visible_row = -1
   for row_index in 0..<row_count {
@@ -119,7 +105,7 @@ pub fn[T] lazy_grid(
         first_visible_row = row_index
       }
       last_visible_row = row_index
-      let row_children : Array[@core.ViewSpec] = []
+      let row_children : Array[@core.View[Msg]] = []
       let start = row_index * columns
       let end = min_int(items.length(), start + columns)
       for item_index in start..<end {
@@ -133,14 +119,13 @@ pub fn[T] lazy_grid(
       )
     }
   }
-  let virtual_rows : Array[@core.ViewSpec] = []
+  let virtual_rows : Array[@core.View[Msg]] = []
   if first_visible_row > 0 {
     virtual_rows.push(
-      @core.ViewSpec::SpacerSpec({
-        key: Some(@core.Key::new("lazy-grid-before")),
-        min_length: first_visible_row.to_double() * row_stride,
-        weight: 0.0,
-      }),
+      @core.View::spacer(
+        min_length=first_visible_row.to_double() * row_stride,
+        weight=0.0,
+      ).key("lazy-grid-before"),
     )
   }
   for row in rows {
@@ -153,36 +138,18 @@ pub fn[T] lazy_grid(
   }
   if hidden_after > 0 {
     virtual_rows.push(
-      @core.ViewSpec::SpacerSpec({
-        key: Some(@core.Key::new("lazy-grid-after")),
-        min_length: hidden_after.to_double() * row_stride,
-        weight: 0.0,
-      }),
+      @core.View::spacer(
+        min_length=hidden_after.to_double() * row_stride,
+        weight=0.0,
+      ).key("lazy-grid-after"),
     )
   }
-  @core.ViewSpec::ScrollSpec({
-    key: None,
-    offset: state.offset(),
-    viewport: Some(
-      @core.Size::new(width=viewport_width, height=viewport_height),
-    ),
-    on_scroll: Some(delta => {
-      state.scroll_to(
-        x=0.0,
-        y=max_lazy_scroll_offset(0.0, state.offset().y - delta.y),
-      )
-    }),
-    child: list(virtual_rows, spacing=row_spacing),
-  })
-}
-
-///|
-fn max_lazy_scroll_offset(min : Double, value : Double) -> Double {
-  if value < min {
-    min
-  } else {
-    value
-  }
+  @core.View::scroll(
+    child=list(virtual_rows, spacing=row_spacing),
+    offset=state.offset(),
+    viewport=Some(@core.Size::new(width=viewport_width, height=viewport_height)),
+    state=Some(state),
+  )
 }
 
 ///|

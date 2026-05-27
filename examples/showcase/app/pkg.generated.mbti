@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui/examples/showcase/app"
+package "examples/showcase/app"
 
 import {
   "moonbitlang/core/debug",
@@ -26,18 +26,21 @@ pub struct ShowcaseApp {
   picker_value : @core.State[String]
   date_value : @core.State[@core.DateValue]
   navigation : @core.NavigationState
+  sidebar_scroll : @core.ScrollState
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
   counter_count : @core.State[Int]
   todo_items : @core.State[Array[ShowcaseTodoItem]]
   todo_next_id : @core.State[Int]
   todo_draft : @core.State[String]
+  last_drop_label : @core.State[String]
 }
 pub fn ShowcaseApp::counter_increment(Self) -> Unit
 pub fn ShowcaseApp::hide_dialog(Self) -> Unit
 pub fn ShowcaseApp::hide_sheet(Self) -> Unit
 pub fn ShowcaseApp::new() -> Self
-pub fn ShowcaseApp::root(Self, @core.BuildContext) -> @core.ViewSpec
+pub fn ShowcaseApp::record_file_drop(Self, Array[String]) -> Unit
+pub fn ShowcaseApp::root(Self, @core.BuildContext) -> @core.View[ShowcaseMsg]
 pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn ShowcaseApp::select_section(Self, String) -> Unit
 pub fn ShowcaseApp::show_dialog(Self) -> Unit
@@ -52,6 +55,8 @@ pub fn ShowcaseApp::todo_submit_draft(Self) -> Unit
 pub fn ShowcaseApp::todo_toggle(Self, Int) -> Unit
 pub fn ShowcaseApp::toggle_active(Self) -> Unit
 pub fn ShowcaseApp::toggle_scheme(Self) -> Unit
+
+type ShowcaseMsg
 
 pub(all) struct ShowcaseTodoItem {
   id : Int

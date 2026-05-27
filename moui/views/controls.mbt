@@ -1,47 +1,47 @@
 ///|
-pub fn toggle(
+pub fn[Msg] toggle(
   label : String,
   checked : @core.Binding[Bool],
   foreground? : @core.Color = @core.Theme::default().palette.foreground,
   check_color? : @core.Color = @core.Theme::default().palette.primary,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   checkbox(label, checked~, foreground~, check_color~).semantics_role(
     @core.SemanticsRole::Switch,
   )
 }
 
 ///|
-pub fn toggle_switch(
+pub fn[Msg] toggle_switch(
   label : String,
   checked : @core.Binding[Bool],
   foreground? : @core.Color = @core.Theme::default().palette.foreground,
   check_color? : @core.Color = @core.Theme::default().palette.primary,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   toggle(label, checked, foreground~, check_color~)
 }
 
 ///|
-pub fn radio(
+pub fn[Msg] radio(
   label : String,
   selected : @core.Binding[Bool],
   foreground? : @core.Color = @core.Theme::default().palette.foreground,
   check_color? : @core.Color = @core.Theme::default().palette.primary,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   checkbox(label, checked=selected, foreground~, check_color~).semantics_role(
     @core.SemanticsRole::Radio,
   )
 }
 
 ///|
-pub fn progress(
+pub fn[Msg] progress(
   value : Double,
   width? : Double = 180.0,
   height? : Double = 8.0,
   foreground? : @core.Color = @core.Theme::default().palette.primary,
   background? : @core.Color = @core.Theme::default().palette.surface_variant,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   let value = clamp_view_double(value, 0.0, 1.0)
-  @core.ViewSpec::custom(
+  @core.View::custom_view(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width~, height~))
     },
@@ -72,7 +72,7 @@ pub fn progress(
 }
 
 ///|
-pub fn slider(
+pub fn[Msg] slider(
   value : @core.Binding[Double],
   min? : Double = 0.0,
   max? : Double = 1.0,
@@ -80,11 +80,11 @@ pub fn slider(
   height? : Double = 28.0,
   foreground? : @core.Color = @core.Theme::default().palette.primary,
   background? : @core.Color = @core.Theme::default().palette.surface_variant,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   let range = if max <= min { 1.0 } else { max - min }
   let normalized = clamp_view_double((value.get() - min) / range, 0.0, 1.0)
   let knob = height * 0.72
-  @core.ViewSpec::custom(
+  @core.View::custom_view(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width~, height~))
     },
@@ -135,28 +135,28 @@ pub fn slider(
 }
 
 ///|
-pub fn menu_button(
+pub fn[Msg] menu_button(
   label : String,
-  on_click? : @core.ClickHandler,
+  on_click? : Msg,
   variant? : ButtonVariant = ButtonVariant::Tonal,
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 160.0,
   height? : Double = 40.0,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   let spec = match on_click {
-    Some(handler) =>
-      button(label, on_click=handler, variant~, theme~, width~, height~)
+    Some(message) =>
+      button(label, on_click=message, variant~, theme~, width~, height~)
     None => button(label, variant~, theme~, width~, height~)
   }
   spec.semantics_role(@core.SemanticsRole::Menu)
 }
 
 ///|
-pub fn tooltip(
-  child : @core.ViewSpec,
+pub fn[Msg] tooltip(
+  child : @core.View[Msg],
   message : String,
   visible? : Bool = false,
-) -> @core.ViewSpec {
+) -> @core.View[Msg] {
   if visible {
     stack([
       child,

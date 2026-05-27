@@ -8,8 +8,8 @@ and clear engineering quality gates.
 ## 2026 Goals
 
 - Provide a stable platform-neutral app/runtime/view model for MoonBit UI apps.
-- Keep public view constructors simple and spec-first by returning
-  `@core.ViewSpec`.
+- Keep public view constructors simple and typed by returning opaque
+  `@core.View[Msg]`.
 - Run the same shared app logic through Web wasm-gc, macOS native, and Windows
   native entrypoints.
 - Make examples useful as runnable documentation, not only smoke tests.
@@ -23,14 +23,14 @@ and clear engineering quality gates.
 MoUI keeps the runtime pipeline explicit:
 
 ```text
-ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
 ```
 
 The package boundaries follow that pipeline:
 
-- `core/` owns platform-neutral runtime, state, layout, input, semantics, and the
-  draw command model.
-- `views/` exposes public view constructors that return `@core.ViewSpec`.
+- `core/` owns platform-neutral runtime, state, layout, input, semantics,
+  opaque `View[Msg]`, typed events, effects, and the draw command model.
+- `views/` exposes public facade constructors that return `@core.View[Msg]`.
 - `backend/host/` defines shared host contracts.
 - `backend/web/`, `backend/macos/`, `backend/windows/`, and `backend/linux/`
   normalize platform events into `HostEvent`.
@@ -46,14 +46,15 @@ The package boundaries follow that pipeline:
 
 Focus areas:
 
-- Stabilize `AppRuntime::new_spec` and `AppRuntime::new_component` usage.
+- Stabilize `AppRuntime::new_view`, `AppRuntime::new_component_view`, and
+  `AppRuntime::new_program` usage.
 - Keep `BuildContext::watch` and `ctx.binding` as the preferred state access
   patterns during component builds.
 - Use `BuildContext::run_effect` for component-scoped effects with cleanup, and
   the scoped save/restore helpers for small saveable string state.
-- Preserve ordered modifier semantics through `ModifiedSpec` wrappers.
-- Keep `ViewSpec::custom_layout` as the advanced child layout delegate for
-  package-local custom controls and layout experiments.
+- Preserve ordered modifier semantics through public `View[Msg]` modifiers.
+- Keep `@views.custom_children_layout` as the advanced child layout delegate
+  for package-local custom controls and layout experiments.
 - Keep input, focus, text editing, layout, paint, and semantics behavior in
   platform-neutral packages.
 - Review public API changes with `moon info` and generated `pkg.generated.mbti`
