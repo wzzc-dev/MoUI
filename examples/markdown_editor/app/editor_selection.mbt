@@ -3,12 +3,8 @@ fn markdown_editor_selected_link_target(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> String? {
-  match markdown_editor_active_selection(selection.selection) {
-    Some(range) =>
-      match markdown_editor_range_link_bounds(source, range.normalized()) {
-        Some(bounds) => markdown_editor_reference_target(source, bounds)
-        None => None
-      }
+  match markdown_editor_link_context(source, selection) {
+    Some(context) => markdown_editor_reference_target(source, context.bounds)
     None => None
   }
 }
@@ -18,14 +14,150 @@ fn markdown_editor_selected_image_target(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> String? {
+  match markdown_editor_image_context(source, selection) {
+    Some(context) => markdown_editor_reference_target(source, context.bounds)
+    None => None
+  }
+}
+
+///|
+struct MarkdownReferenceContext {
+  range : @core.TextRange
+  bounds : MarkdownLinkBounds
+} derive(Eq, Debug)
+
+///|
+fn markdown_editor_link_context(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> MarkdownReferenceContext? {
   match markdown_editor_active_selection(selection.selection) {
+    Some(range) => {
+      let range = range.normalized()
+      match markdown_editor_range_link_bounds(source, range) {
+        Some(bounds) => Some({ range, bounds })
+        None => None
+      }
+    }
+    None => markdown_editor_link_context_at_caret(source, selection.caret)
+  }
+}
+
+///|
+fn markdown_editor_image_context(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> MarkdownReferenceContext? {
+  match markdown_editor_active_selection(selection.selection) {
+    Some(range) => {
+      let range = range.normalized()
+      match markdown_editor_range_image_bounds(source, range) {
+        Some(bounds) => Some({ range, bounds })
+        None => None
+      }
+    }
+    None => markdown_editor_image_context_at_caret(source, selection.caret)
+  }
+}
+
+///|
+fn markdown_editor_link_context_at_caret(
+  source : String,
+  caret : Int,
+) -> MarkdownReferenceContext? {
+  let chars = source.to_array()
+  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  match markdown_editor_autolink_context_at_caret(source, chars, caret) {
+    Some(context) => return Some(context)
+    None => ()
+  }
+  match markdown_editor_bracketed_reference_range_at_caret(
+    chars, caret, image=false,
+  ) {
     Some(range) =>
-      match markdown_editor_range_image_bounds(source, range.normalized()) {
-        Some(bounds) => markdown_editor_reference_target(source, bounds)
+      match markdown_editor_range_link_bounds(source, range) {
+        Some(bounds) => Some({ range, bounds })
         None => None
       }
     None => None
   }
+}
+
+///|
+fn markdown_editor_image_context_at_caret(
+  source : String,
+  caret : Int,
+) -> MarkdownReferenceContext? {
+  let chars = source.to_array()
+  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  match markdown_editor_bracketed_reference_range_at_caret(
+    chars, caret, image=true,
+  ) {
+    Some(range) =>
+      match markdown_editor_range_image_bounds(source, range) {
+        Some(bounds) => Some({ range, bounds })
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
+fn markdown_editor_autolink_context_at_caret(
+  source : String,
+  chars : Array[Char],
+  caret : Int,
+) -> MarkdownReferenceContext? {
+  let mut open = caret
+  while open > 0 && chars[open - 1] != '<' && chars[open - 1] != '\n' {
+    open = open - 1
+  }
+  if open <= 0 || chars[open - 1] != '<' {
+    return None
+  }
+  let mut close = caret
+  while close < chars.length() && chars[close] != '>' && chars[close] != '\n' {
+    close = close + 1
+  }
+  if close >= chars.length() || chars[close] != '>' {
+    return None
+  }
+  let range = @core.TextRange::new(start=open, end=close)
+  match markdown_editor_range_link_bounds(source, range) {
+    Some(bounds) => Some({ range, bounds })
+    None => None
+  }
+}
+
+///|
+fn markdown_editor_bracketed_reference_range_at_caret(
+  chars : Array[Char],
+  caret : Int,
+  image~ : Bool,
+) -> @core.TextRange? {
+  let mut open = caret
+  while open > 0 && chars[open - 1] != '[' && chars[open - 1] != '\n' {
+    open = open - 1
+  }
+  if open <= 0 || chars[open - 1] != '[' {
+    return None
+  }
+  let open_start = open - 1
+  if image {
+    if open_start <= 0 || chars[open_start - 1] != '!' {
+      return None
+    }
+  } else if open_start > 0 && chars[open_start - 1] == '!' {
+    return None
+  }
+  let mut close = open
+  while close < chars.length() && chars[close] != ']' && chars[close] != '\n' {
+    close = close + 1
+  }
+  if close >= chars.length() || chars[close] != ']' || caret > close {
+    return None
+  }
+  Some(@core.TextRange::new(start=open, end=close))
 }
 
 ///|
@@ -188,6 +320,10 @@ fn markdown_editor_range_link_bounds(
   range : @core.TextRange,
 ) -> MarkdownLinkBounds? {
   let chars = source.to_array()
+  match markdown_editor_range_autolink_bounds(chars, range) {
+    Some(bounds) => return Some(bounds)
+    None => ()
+  }
   if range.start < 1 || range.end + 2 > chars.length() {
     return None
   }
@@ -228,6 +364,32 @@ fn markdown_editor_range_link_bounds(
   } else {
     None
   }
+}
+
+///|
+fn markdown_editor_range_autolink_bounds(
+  chars : Array[Char],
+  range : @core.TextRange,
+) -> MarkdownLinkBounds? {
+  if range.start < 1 || range.end >= chars.length() {
+    return None
+  }
+  if chars[range.start - 1] != '<' || chars[range.end] != '>' {
+    return None
+  }
+  let target = String::from_array(chars[range.start:range.end])
+  if !markdown_editor_is_autolink_target(target) {
+    return None
+  }
+  Some({
+    open_start: range.start - 1,
+    close_start: range.end,
+    target_start: range.start,
+    target_end: range.end,
+    definition_target_start: -1,
+    definition_target_end: -1,
+    reference_label: "",
+  })
 }
 
 ///|

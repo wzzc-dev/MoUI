@@ -157,6 +157,22 @@ test "markdown editor paste and typed space complete autolinks" {
   ).unwrap()
   inspect(pasted.text, content="Visit <https://moui.dev>")
   inspect(pasted.caret, content="24")
+  let punctuated_paste = markdown_editor_transform_input(
+    "Visit ",
+    6,
+    None,
+    "https://moui.dev,",
+  ).unwrap()
+  inspect(punctuated_paste.text, content="Visit <https://moui.dev>,")
+  inspect(punctuated_paste.caret, content="25")
+  let wrapped_paste = markdown_editor_transform_input(
+    "Visit ",
+    6,
+    None,
+    "(https://moui.dev),",
+  ).unwrap()
+  inspect(wrapped_paste.text, content="Visit (<https://moui.dev>),")
+  inspect(wrapped_paste.caret, content="27")
   let typed = markdown_editor_transform_input(
     "Visit https://moui.dev",
     22,
@@ -165,6 +181,22 @@ test "markdown editor paste and typed space complete autolinks" {
   ).unwrap()
   inspect(typed.text, content="Visit <https://moui.dev> ")
   inspect(typed.caret, content="25")
+  let punctuated_typed = markdown_editor_transform_input(
+    "Visit https://moui.dev,",
+    23,
+    None,
+    " ",
+  ).unwrap()
+  inspect(punctuated_typed.text, content="Visit <https://moui.dev>, ")
+  inspect(punctuated_typed.caret, content="26")
+  let wrapped_typed = markdown_editor_transform_input(
+    "Visit (https://moui.dev),",
+    25,
+    None,
+    " ",
+  ).unwrap()
+  inspect(wrapped_typed.text, content="Visit (<https://moui.dev>), ")
+  inspect(wrapped_typed.caret, content="28")
   inspect(
     markdown_editor_transform_input("Visit <https://moui.dev>", 23, None, " ")
     is None,
@@ -172,6 +204,73 @@ test "markdown editor paste and typed space complete autolinks" {
   )
   inspect(
     markdown_editor_transform_input("```\nhttps://moui.dev\n```", 20, None, " ")
+    is None,
+    content="true",
+  )
+}
+
+///|
+test "markdown editor paste and typed space complete email autolinks" {
+  let pasted = markdown_editor_transform_input(
+    "Mail ",
+    5,
+    None,
+    "hello+moui@example.dev",
+  ).unwrap()
+  inspect(pasted.text, content="Mail <hello+moui@example.dev>")
+  inspect(pasted.caret, content="29")
+  let punctuated_paste = markdown_editor_transform_input(
+    "Mail ",
+    5,
+    None,
+    "hello@example.dev.",
+  ).unwrap()
+  inspect(punctuated_paste.text, content="Mail <hello@example.dev>.")
+  inspect(punctuated_paste.caret, content="25")
+  let wrapped_paste = markdown_editor_transform_input(
+    "Mail ",
+    5,
+    None,
+    "[hello@example.dev];",
+  ).unwrap()
+  inspect(wrapped_paste.text, content="Mail [<hello@example.dev>];")
+  inspect(wrapped_paste.caret, content="27")
+  let typed = markdown_editor_transform_input(
+    "Mail hello@example.dev",
+    22,
+    None,
+    " ",
+  ).unwrap()
+  inspect(typed.text, content="Mail <hello@example.dev> ")
+  inspect(typed.caret, content="25")
+  let punctuated_typed = markdown_editor_transform_input(
+    "Mail hello@example.dev!",
+    23,
+    None,
+    " ",
+  ).unwrap()
+  inspect(punctuated_typed.text, content="Mail <hello@example.dev>! ")
+  inspect(punctuated_typed.caret, content="26")
+  let wrapped_typed = markdown_editor_transform_input(
+    "Mail [hello@example.dev];",
+    25,
+    None,
+    " ",
+  ).unwrap()
+  inspect(wrapped_typed.text, content="Mail [<hello@example.dev>]; ")
+  inspect(wrapped_typed.caret, content="28")
+  inspect(
+    markdown_editor_transform_input("Mail <hello@example.dev>", 23, None, " ")
+    is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("Mail hello@example", 18, None, " ")
+    is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("```\nhello@example.dev\n```", 21, None, " ")
     is None,
     content="true",
   )
@@ -207,6 +306,48 @@ test "markdown editor inline command unwraps matching marker pair" {
 }
 
 ///|
+test "markdown editor inline command unwraps current formatted span" {
+  let bold = markdown_editor_apply_command_at(
+    "Text **bold** tail",
+    Bold,
+    Some({ caret: 9, selection: None }),
+  )
+  inspect(bold.source, content="Text bold tail")
+  inspect(bold.caret, content="9")
+  guard bold.selection is Some(bold_selection) else {
+    fail("expected unwrapped bold selection")
+  }
+  inspect(bold_selection.start, content="5")
+  inspect(bold_selection.end, content="9")
+
+  let italic = markdown_editor_apply_command_at(
+    "Use *em* now",
+    Italic,
+    Some({ caret: 6, selection: None }),
+  )
+  inspect(italic.source, content="Use em now")
+  guard italic.selection is Some(italic_selection) else {
+    fail("expected unwrapped italic selection")
+  }
+  inspect(italic_selection.start, content="4")
+  inspect(italic_selection.end, content="6")
+
+  let code = markdown_editor_apply_command_at(
+    "Use `code` now",
+    Code,
+    Some({ caret: 7, selection: None }),
+  )
+  inspect(code.source, content="Use code now")
+
+  let strike = markdown_editor_apply_command_at(
+    "Keep ~~old~~ text",
+    Strikethrough,
+    Some({ caret: 9, selection: None }),
+  )
+  inspect(strike.source, content="Keep old text")
+}
+
+///|
 test "markdown editor link command wraps and unwraps selected text" {
   let linked = markdown_editor_apply_command_at(
     "Visit MoUI today",
@@ -230,6 +371,38 @@ test "markdown editor link command wraps and unwraps selected text" {
   }
   inspect(unlinked_selection.start, content="6")
   inspect(unlinked_selection.end, content="10")
+}
+
+///|
+test "markdown editor link command unwraps link at caret" {
+  let inline = markdown_editor_apply_command_at(
+    "Visit [MoUI](https://example.com) today",
+    Link,
+    Some({ caret: 9, selection: None }),
+  )
+  inspect(inline.source, content="Visit MoUI today")
+  guard inline.selection is Some(inline_selection) else {
+    fail("expected unlinked inline selection")
+  }
+  inspect(inline_selection.start, content="6")
+  inspect(inline_selection.end, content="10")
+
+  let reference = markdown_editor_apply_command_at(
+    "Visit [MoUI][site] today\n\n[site]: https://example.com",
+    Link,
+    Some({ caret: 9, selection: None }),
+  )
+  inspect(
+    reference.source,
+    content="Visit MoUI today\n\n[site]: https://example.com",
+  )
+
+  let autolink = markdown_editor_apply_command_at(
+    "Mail <hello@example.dev>",
+    Link,
+    Some({ caret: 12, selection: None }),
+  )
+  inspect(autolink.source, content="Mail hello@example.dev")
 }
 
 ///|
@@ -259,6 +432,31 @@ test "markdown editor image command wraps and unwraps selected alt text" {
 }
 
 ///|
+test "markdown editor image command unwraps image at caret" {
+  let inline = markdown_editor_apply_command_at(
+    "Insert ![logo](image.png) here",
+    Image,
+    Some({ caret: 10, selection: None }),
+  )
+  inspect(inline.source, content="Insert logo here")
+  guard inline.selection is Some(inline_selection) else {
+    fail("expected unwrapped image selection")
+  }
+  inspect(inline_selection.start, content="7")
+  inspect(inline_selection.end, content="11")
+
+  let reference = markdown_editor_apply_command_at(
+    "Insert ![logo][img] here\n\n[img]: image.png",
+    Image,
+    Some({ caret: 10, selection: None }),
+  )
+  inspect(
+    reference.source,
+    content="Insert logo here\n\n[img]: image.png",
+  )
+}
+
+///|
 test "markdown editor link target command updates and wraps selected text" {
   let updated = markdown_editor_apply_command_at(
     "Visit [MoUI](https://example.com) today",
@@ -277,6 +475,106 @@ test "markdown editor link target command updates and wraps selected text" {
     Some({ caret: 10, selection: Some(@core.TextRange::new(start=6, end=10)) }),
   )
   inspect(wrapped.source, content="Visit [MoUI](https://moui.dev) today")
+}
+
+///|
+test "markdown editor link target command updates target at caret" {
+  let inline = markdown_editor_apply_command_at(
+    "Visit [MoUI](https://old.example) today",
+    SetLinkTarget("https://moui.dev"),
+    Some({ caret: 9, selection: None }),
+  )
+  inspect(inline.source, content="Visit [MoUI](https://moui.dev) today")
+  guard inline.selection is Some(inline_selection) else {
+    fail("expected inline link text selection")
+  }
+  inspect(inline_selection.start, content="7")
+  inspect(inline_selection.end, content="11")
+
+  let reference = markdown_editor_apply_command_at(
+    "Visit [MoUI][site] today\n\n[site]: https://old.example",
+    SetLinkTarget("https://moui.dev"),
+    Some({ caret: 9, selection: None }),
+  )
+  inspect(
+    reference.source,
+    content="Visit [MoUI][site] today\n\n[site]: https://moui.dev",
+  )
+
+  let autolink = markdown_editor_apply_command_at(
+    "Mail <hello@example.dev>",
+    SetLinkTarget("team@example.dev"),
+    Some({ caret: 12, selection: None }),
+  )
+  inspect(autolink.source, content="Mail <team@example.dev>")
+}
+
+///|
+test "markdown editor image target command updates target at caret" {
+  let inline = markdown_editor_apply_command_at(
+    "Insert ![logo](old.png) here",
+    SetImageTarget("assets/logo.png"),
+    Some({ caret: 10, selection: None }),
+  )
+  inspect(inline.source, content="Insert ![logo](assets/logo.png) here")
+  guard inline.selection is Some(inline_selection) else {
+    fail("expected image alt selection")
+  }
+  inspect(inline_selection.start, content="9")
+  inspect(inline_selection.end, content="13")
+
+  let reference = markdown_editor_apply_command_at(
+    "Insert ![logo][img] here\n\n[img]: old.png",
+    SetImageTarget("assets/logo.png"),
+    Some({ caret: 10, selection: None }),
+  )
+  inspect(
+    reference.source,
+    content="Insert ![logo][img] here\n\n[img]: assets/logo.png",
+  )
+}
+
+///|
+test "markdown editor link target command updates selected autolink" {
+  let source = "Mail <hello@example.dev> or visit <https://old.example>"
+  guard markdown_editor_selected_link_target(source, {
+      caret: 24,
+      selection: Some(@core.TextRange::new(start=6, end=23)),
+    })
+    is Some("hello@example.dev") else {
+    fail("expected selected email autolink target")
+  }
+  let updated_email = markdown_editor_apply_command_at(
+    source,
+    SetLinkTarget("team@example.dev"),
+    Some({ caret: 23, selection: Some(@core.TextRange::new(start=6, end=23)) }),
+  )
+  inspect(
+    updated_email.source,
+    content="Mail <team@example.dev> or visit <https://old.example>",
+  )
+  guard updated_email.selection is Some(email_selection) else {
+    fail("expected updated email autolink selection")
+  }
+  inspect(email_selection.start, content="6")
+  inspect(email_selection.end, content="23")
+
+  guard markdown_editor_selected_link_target(source, {
+      caret: 54,
+      selection: Some(@core.TextRange::new(start=35, end=54)),
+    })
+    is Some("https://old.example") else {
+    fail("expected selected URL autolink target")
+  }
+  let updated_url = markdown_editor_apply_command_at(
+    source,
+    SetLinkTarget("https://moui.dev"),
+    Some({ caret: 54, selection: Some(@core.TextRange::new(start=35, end=54)) }),
+  )
+  inspect(
+    updated_url.source,
+    content="Mail <hello@example.dev> or visit <https://moui.dev>",
+  )
 }
 
 ///|

@@ -15,7 +15,12 @@ fn markdown_editor_apply_command_at(
                 range,
                 markdown_editor_inline_marker(command),
               )
-            None => markdown_editor_append_snippet(source, command)
+            None =>
+              markdown_editor_toggle_inline_at_caret(
+                source,
+                selection.caret,
+                command,
+              )
           }
         None => markdown_editor_append_snippet(source, command)
       }
@@ -29,20 +34,16 @@ fn markdown_editor_apply_command_at(
               } else {
                 markdown_editor_toggle_link_range(source, range)
               }
-            None => markdown_editor_append_snippet(source, command)
+            None => markdown_editor_toggle_reference_at_caret(
+              source, selection, command,
+            )
           }
         None => markdown_editor_append_snippet(source, command)
       }
     SetLinkTarget(target) | SetImageTarget(target) =>
       match selection {
         Some(selection) =>
-          match markdown_editor_active_selection(selection.selection) {
-            Some(_) =>
-              markdown_editor_set_reference_target(
-                source, selection, command, target,
-              )
-            None => markdown_editor_append_snippet(source, command)
-          }
+          markdown_editor_set_reference_target(source, selection, command, target)
         None => markdown_editor_append_snippet(source, command)
       }
     SetCodeLanguage(language) =>
@@ -970,6 +971,58 @@ fn markdown_editor_toggle_inline_range(
 }
 
 ///|
+fn markdown_editor_toggle_inline_at_caret(
+  source : String,
+  caret : Int,
+  command : MarkdownEditorCommand,
+) -> MarkdownEditorEditResult {
+  let marker = markdown_editor_inline_marker(command)
+  match markdown_editor_inline_marker_pair_at_caret(source, caret, marker) {
+    Some(range) => markdown_editor_unwrap_range(source, range, marker)
+    None => markdown_editor_append_snippet(source, command)
+  }
+}
+
+///|
+fn markdown_editor_inline_marker_pair_at_caret(
+  source : String,
+  caret : Int,
+  marker : String,
+) -> @core.TextRange? {
+  let marker_length = markdown_editor_text_length(marker)
+  if marker_length == 0 {
+    return None
+  }
+  let chars = source.to_array()
+  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  match markdown_editor_find_inline_opening_marker(chars, caret, marker) {
+    Some(open_start) =>
+      match markdown_editor_find_inline_closing_marker(
+        chars,
+        open_start + marker_length,
+        marker,
+      ) {
+        Some(close_start) =>
+          if caret >= open_start + marker_length && caret <= close_start &&
+            markdown_editor_inline_marker_pair_supported(
+              chars, open_start, marker_length, close_start, marker,
+            ) {
+            Some(
+              @core.TextRange::new(
+                start=open_start + marker_length,
+                end=close_start,
+              ),
+            )
+          } else {
+            None
+          }
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
 fn markdown_editor_range_has_inline_marker(
   source : String,
   range : @core.TextRange,
@@ -1029,31 +1082,63 @@ fn markdown_editor_toggle_image_range(
 }
 
 ///|
+fn markdown_editor_toggle_reference_at_caret(
+  source : String,
+  selection : MarkdownEditorSelection,
+  command : MarkdownEditorCommand,
+) -> MarkdownEditorEditResult {
+  if command == Image {
+    match markdown_editor_image_context(source, selection) {
+      Some(context) =>
+        markdown_editor_unwrap_image_range(source, context.range, context.bounds)
+      None => markdown_editor_append_snippet(source, command)
+    }
+  } else {
+    match markdown_editor_link_context(source, selection) {
+      Some(context) =>
+        markdown_editor_unwrap_link_range(source, context.range, context.bounds)
+      None => markdown_editor_append_snippet(source, command)
+    }
+  }
+}
+
+///|
 fn markdown_editor_set_reference_target(
   source : String,
   selection : MarkdownEditorSelection,
   command : MarkdownEditorCommand,
   target : String,
 ) -> MarkdownEditorEditResult {
-  let range = markdown_editor_active_selection(selection.selection)
+  let active = markdown_editor_active_selection(selection.selection)
+  let range = active
     .unwrap_or(@core.TextRange::new(start=selection.caret, end=selection.caret))
     .normalized()
   if command == SetImageTarget(target) {
-    match markdown_editor_range_image_bounds(source, range) {
-      Some(bounds) =>
+    match markdown_editor_image_context(source, selection) {
+      Some(context) =>
         return markdown_editor_replace_reference_target(
-          source, range, bounds, target,
+          source, context.range, context.bounds, target,
         )
       None =>
-        return markdown_editor_wrap_image_range_with_target(
-          source, range, target,
-        )
+        match active {
+          Some(_) =>
+            return markdown_editor_wrap_image_range_with_target(
+              source, range, target,
+            )
+          None => return markdown_editor_append_snippet(source, command)
+        }
     }
   }
-  match markdown_editor_range_link_bounds(source, range) {
-    Some(bounds) =>
-      markdown_editor_replace_reference_target(source, range, bounds, target)
-    None => markdown_editor_wrap_link_range_with_target(source, range, target)
+  match markdown_editor_link_context(source, selection) {
+    Some(context) =>
+      markdown_editor_replace_reference_target(
+        source, context.range, context.bounds, target,
+      )
+    None =>
+      match active {
+        Some(_) => markdown_editor_wrap_link_range_with_target(source, range, target)
+        None => markdown_editor_append_snippet(source, command)
+      }
   }
 }
 

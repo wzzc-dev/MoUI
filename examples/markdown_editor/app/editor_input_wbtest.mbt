@@ -16,6 +16,28 @@ test "markdown editor enter continues list task quote and ordered markers" {
     "\n",
   ).unwrap()
   inspect(nested.text, content="- parent\n  - child\n  - ")
+  let quoted_bullet = markdown_editor_transform_input(
+    "> - item",
+    8,
+    None,
+    "\n",
+  ).unwrap()
+  inspect(quoted_bullet.text, content="> - item\n> - ")
+  inspect(quoted_bullet.caret, content="13")
+  let quoted_task = markdown_editor_transform_input(
+    "> - [x] done",
+    12,
+    None,
+    "\n",
+  ).unwrap()
+  inspect(quoted_task.text, content="> - [x] done\n> - [ ] ")
+  let quoted_ordered = markdown_editor_transform_input(
+    "> 3. item",
+    9,
+    None,
+    "\n",
+  ).unwrap()
+  inspect(quoted_ordered.text, content="> 3. item\n> 4. ")
 }
 
 ///|
@@ -42,6 +64,51 @@ test "markdown editor pairs delimiters while typing" {
 }
 
 ///|
+test "markdown editor pairs inline markdown markers while typing" {
+  let bold = markdown_editor_transform_input("Say ", 4, None, "**").unwrap()
+  inspect(bold.text, content="Say ****")
+  inspect(bold.caret, content="6")
+  let underscore_bold = markdown_editor_transform_input("Say ", 4, None, "__").unwrap()
+  inspect(underscore_bold.text, content="Say ____")
+  inspect(underscore_bold.caret, content="6")
+  let code = markdown_editor_transform_input("Use  now", 4, None, "`").unwrap()
+  inspect(code.text, content="Use `` now")
+  inspect(code.caret, content="5")
+  let strike = markdown_editor_transform_input("old", 0, None, "~~").unwrap()
+  inspect(strike.text, content="~~~~old")
+  inspect(strike.caret, content="2")
+  inspect(
+    markdown_editor_transform_input("*", 1, None, "*") is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("word", 4, None, "_") is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("```\ncode\n```", 4, None, "**") is None,
+    content="true",
+  )
+}
+
+///|
+test "markdown editor wraps selected text with inline markdown markers" {
+  let italic = markdown_editor_transform_input(
+    "Say old",
+    7,
+    Some(@core.TextRange::new(start=4, end=7)),
+    "_",
+  ).unwrap()
+  inspect(italic.text, content="Say _old_")
+  inspect(italic.caret, content="8")
+  guard italic.selection is Some(selection) else {
+    fail("expected italic selection")
+  }
+  inspect(selection.start, content="5")
+  inspect(selection.end, content="8")
+}
+
+///|
 test "markdown editor skips existing closing delimiters" {
   let parens = markdown_editor_transform_input("Call ()", 6, None, ")").unwrap()
   inspect(parens.text, content="Call ()")
@@ -55,6 +122,23 @@ test "markdown editor skips existing closing delimiters" {
   let tick = markdown_editor_transform_input("`code`", 5, None, "`").unwrap()
   inspect(tick.text, content="`code`")
   inspect(tick.caret, content="6")
+  let bold = markdown_editor_transform_input("**bold**", 6, None, "**").unwrap()
+  inspect(bold.text, content="**bold**")
+  inspect(bold.caret, content="8")
+  let underscore_bold = markdown_editor_transform_input(
+    "__bold__",
+    6,
+    None,
+    "__",
+  ).unwrap()
+  inspect(underscore_bold.text, content="__bold__")
+  inspect(underscore_bold.caret, content="8")
+  let strike = markdown_editor_transform_input("~~old~~", 5, None, "~~").unwrap()
+  inspect(strike.text, content="~~old~~")
+  inspect(strike.caret, content="7")
+  let italic = markdown_editor_transform_input("_old_", 4, None, "_").unwrap()
+  inspect(italic.text, content="_old_")
+  inspect(italic.caret, content="5")
   inspect(
     markdown_editor_transform_input("Call (x", 7, None, ")") is None,
     content="true",
@@ -97,6 +181,22 @@ test "markdown editor enter exits empty continuation markers" {
   ).unwrap()
   inspect(nested_task.text, content="- parent\n- [ ] ")
   inspect(nested_task.caret, content="15")
+  let quoted_bullet = markdown_editor_transform_input(
+    "> - ",
+    4,
+    None,
+    "\n",
+  ).unwrap()
+  inspect(quoted_bullet.text, content="> ")
+  inspect(quoted_bullet.caret, content="2")
+  let quoted_ordered = markdown_editor_transform_input(
+    "> 4. ",
+    5,
+    None,
+    "\n",
+  ).unwrap()
+  inspect(quoted_ordered.text, content="> ")
+  inspect(quoted_ordered.caret, content="2")
   let middle = markdown_editor_transform_input("Intro\n- \nTail", 8, None, "\n").unwrap()
   inspect(middle.text, content="Intro\n\nTail")
   inspect(middle.caret, content="6")
@@ -134,24 +234,78 @@ test "markdown editor typed space completes block markers" {
   let star = markdown_editor_transform_input("*", 1, None, " ").unwrap()
   inspect(star.text, content="- ")
   inspect(star.caret, content="2")
+  let plus = markdown_editor_transform_input("+", 1, None, " ").unwrap()
+  inspect(plus.text, content="- ")
+  inspect(plus.caret, content="2")
   let ordered = markdown_editor_transform_input("1.", 2, None, " ").unwrap()
   inspect(ordered.text, content="1. ")
   inspect(ordered.caret, content="3")
+  let paren_ordered = markdown_editor_transform_input("1)", 2, None, " ").unwrap()
+  inspect(paren_ordered.text, content="1. ")
+  inspect(paren_ordered.caret, content="3")
+  let nested_paren_ordered = markdown_editor_transform_input(
+    "  3)",
+    5,
+    None,
+    " ",
+  ).unwrap()
+  inspect(nested_paren_ordered.text, content="  3. ")
+  inspect(nested_paren_ordered.caret, content="5")
   let quote = markdown_editor_transform_input(">", 1, None, " ").unwrap()
   inspect(quote.text, content="> ")
   inspect(quote.caret, content="2")
+  let nested_quote = markdown_editor_transform_input(">>", 2, None, " ").unwrap()
+  inspect(nested_quote.text, content="> > ")
+  inspect(nested_quote.caret, content="4")
+  let deep_quote = markdown_editor_transform_input(
+    "  >>>",
+    5,
+    None,
+    " ",
+  ).unwrap()
+  inspect(deep_quote.text, content="  > > > ")
+  inspect(deep_quote.caret, content="8")
   let task = markdown_editor_transform_input("[ ]", 3, None, " ").unwrap()
   inspect(task.text, content="- [ ] ")
   inspect(task.caret, content="6")
   let checked = markdown_editor_transform_input("[x]", 3, None, " ").unwrap()
   inspect(checked.text, content="- [x] ")
   inspect(checked.caret, content="6")
+  let natural_task = markdown_editor_transform_input("- [ ]", 5, None, " ").unwrap()
+  inspect(natural_task.text, content="- [ ] ")
+  inspect(natural_task.caret, content="6")
+  let star_checked = markdown_editor_transform_input("* [X]", 5, None, " ").unwrap()
+  inspect(star_checked.text, content="- [x] ")
+  inspect(star_checked.caret, content="6")
+  let plus_task = markdown_editor_transform_input("+ [ ]", 5, None, " ").unwrap()
+  inspect(plus_task.text, content="- [ ] ")
+  inspect(plus_task.caret, content="6")
+  let nested_task = markdown_editor_transform_input(
+    "  + [x]",
+    7,
+    None,
+    " ",
+  ).unwrap()
+  inspect(nested_task.text, content="  - [x] ")
+  inspect(nested_task.caret, content="8")
 }
 
 ///|
 test "markdown editor typed space only completes marker tokens" {
   inspect(
     markdown_editor_transform_input("text #", 6, None, " ") is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("text +", 6, None, " ") is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("text >>", 7, None, " ") is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("text - [ ]", 10, None, " ") is None,
     content="true",
   )
   inspect(
@@ -185,6 +339,40 @@ test "markdown editor enter completes horizontal rule lines" {
 }
 
 ///|
+test "markdown editor typed space completes horizontal rule lines" {
+  let dash = markdown_editor_transform_input("---", 3, None, " ").unwrap()
+  inspect(dash.text, content="---\n")
+  inspect(dash.caret, content="4")
+  let star = markdown_editor_transform_input("***", 3, None, " ").unwrap()
+  inspect(star.text, content="***\n")
+  inspect(star.caret, content="4")
+  let underscore = markdown_editor_transform_input("___", 3, None, " ").unwrap()
+  inspect(underscore.text, content="___\n")
+  inspect(underscore.caret, content="4")
+  let nested = markdown_editor_transform_input("  ---", 5, None, " ").unwrap()
+  inspect(nested.text, content="  ---\n")
+  inspect(nested.caret, content="6")
+  inspect(
+    markdown_editor_transform_input("--- title", 9, None, " ") is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input(
+      "---",
+      3,
+      Some(@core.TextRange::new(start=0, end=3)),
+      " ",
+    )
+    is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("```\n---\n```", 7, None, " ") is None,
+    content="true",
+  )
+}
+
+///|
 test "markdown editor enter completes table header" {
   let table = markdown_editor_transform_input("| A | B |", 9, None, "\n").unwrap()
   inspect(table.text, content="| A | B |\n| --- | --- |\n|  |  |")
@@ -212,6 +400,32 @@ test "markdown editor enter completes fenced code opener" {
   let long = markdown_editor_transform_input("````", 4, None, "\n").unwrap()
   inspect(long.text, content="````\n\n````")
   inspect(long.caret, content="5")
+  let tilde = markdown_editor_transform_input("~~~", 3, None, "\n").unwrap()
+  inspect(tilde.text, content="~~~\n\n~~~")
+  inspect(tilde.caret, content="4")
+  let tilde_lang = markdown_editor_transform_input(
+    "~~~moonbit",
+    10,
+    None,
+    "\n",
+  ).unwrap()
+  inspect(tilde_lang.text, content="~~~moonbit\n\n~~~")
+  inspect(tilde_lang.caret, content="11")
+  let nested_tilde = markdown_editor_transform_input(
+    "  ~~~~",
+    6,
+    None,
+    "\n",
+  ).unwrap()
+  inspect(nested_tilde.text, content="  ~~~~\n  \n  ~~~~")
+  inspect(nested_tilde.caret, content="9")
+  let tilde_info = markdown_editor_transform_input(
+    "~~~bad~info",
+    11,
+    None,
+    "\n",
+  ).unwrap()
+  inspect(tilde_info.text, content="~~~bad~info\n\n~~~")
 }
 
 ///|
@@ -373,6 +587,22 @@ test "markdown editor backspace removes inline marker pair at content start" {
   ).unwrap()
   inspect(strike.text, content="old text")
   inspect(strike.caret, content="0")
+  let italic = markdown_editor_transform_input(
+    "_old_ text",
+    1,
+    None,
+    "\u{0008}",
+  ).unwrap()
+  inspect(italic.text, content="old text")
+  inspect(italic.caret, content="0")
+  let underscore_bold = markdown_editor_transform_input(
+    "__bold__ text",
+    2,
+    None,
+    "\u{0008}",
+  ).unwrap()
+  inspect(underscore_bold.text, content="bold text")
+  inspect(underscore_bold.caret, content="0")
   let link = markdown_editor_transform_input(
     "Visit [MoUI](https://moui.dev) today",
     7,
@@ -391,6 +621,11 @@ test "markdown editor backspace removes inline marker pair at content start" {
   inspect(image.caret, content="7")
   inspect(
     markdown_editor_transform_input("Text **bold** tail", 8, None, "\u{0008}")
+    is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("snake_case_more", 6, None, "\u{0008}")
     is None,
     content="true",
   )
@@ -422,6 +657,22 @@ test "markdown editor delete removes inline marker pair at content end" {
   ).unwrap()
   inspect(strike.text, content="old text")
   inspect(strike.caret, content="0")
+  let italic = markdown_editor_transform_input(
+    "_old_ text",
+    4,
+    None,
+    "\u{007f}",
+  ).unwrap()
+  inspect(italic.text, content="old text")
+  inspect(italic.caret, content="0")
+  let underscore_bold = markdown_editor_transform_input(
+    "__bold__ text",
+    6,
+    None,
+    "\u{007f}",
+  ).unwrap()
+  inspect(underscore_bold.text, content="bold text")
+  inspect(underscore_bold.caret, content="0")
   let link = markdown_editor_transform_input(
     "Visit [MoUI](https://moui.dev) today",
     11,
@@ -440,6 +691,11 @@ test "markdown editor delete removes inline marker pair at content end" {
   inspect(image.caret, content="7")
   inspect(
     markdown_editor_transform_input("Text **bold** tail", 10, None, "\u{007f}")
+    is None,
+    content="true",
+  )
+  inspect(
+    markdown_editor_transform_input("snake_case_more", 5, None, "\u{007f}")
     is None,
     content="true",
   )

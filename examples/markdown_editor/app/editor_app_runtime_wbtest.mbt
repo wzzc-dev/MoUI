@@ -65,6 +65,81 @@ test "markdown editor toggles source preview from action" {
 }
 
 ///|
+test "markdown editor status reports active inline format" {
+  inspect(
+    markdown_editor_active_format_suffix(
+      "Text **bold** and [MoUI](https://moui.dev)",
+      { caret: 9, selection: None },
+    ),
+    content=" / Active: Bold",
+  )
+  inspect(
+    markdown_editor_active_format_suffix(
+      "Text **bold** and [MoUI](https://moui.dev)",
+      { caret: 21, selection: None },
+    ),
+    content=" / Active: Link",
+  )
+  inspect(
+    markdown_editor_active_format_suffix("Plain", { caret: 2, selection: None }),
+    content="",
+  )
+}
+
+///|
+test "markdown editor toolbar active state follows caret context" {
+  let source = "# Title\n\nText **bold** and [MoUI](https://moui.dev)\n- item\n> quote"
+  inspect(
+    markdown_editor_command_active(
+      source,
+      { caret: 17, selection: None },
+      Bold,
+    ),
+    content="true",
+  )
+  inspect(
+    markdown_editor_command_active(
+      source,
+      { caret: 30, selection: None },
+      Link,
+    ),
+    content="true",
+  )
+  inspect(
+    markdown_editor_command_active(
+      source,
+      { caret: 3, selection: None },
+      Heading(1),
+    ),
+    content="true",
+  )
+  inspect(
+    markdown_editor_command_active(
+      source,
+      { caret: 55, selection: None },
+      BulletList,
+    ),
+    content="true",
+  )
+  inspect(
+    markdown_editor_command_active(
+      source,
+      { caret: 63, selection: None },
+      Quote,
+    ),
+    content="true",
+  )
+  inspect(
+    markdown_editor_command_active(
+      source,
+      { caret: 17, selection: None },
+      Italic,
+    ),
+    content="false",
+  )
+}
+
+///|
 test "markdown editor floats contextual palette over editor surface" {
   let app = MarkdownEditorApp::new()
   app.set_document("Visit [MoUI](https://moui.dev)")
@@ -118,6 +193,18 @@ test "markdown editor app inline command toggles tracked formatted selection" {
   app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
   app.apply_command_to_selection(Bold)
   inspect(app.document(), content="Text bold")
+}
+
+///|
+test "markdown editor app reference commands toggle caret context" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Visit [MoUI](https://example.com) and ![logo](image.png)")
+  app.set_selection(9, None)
+  app.apply_command_to_selection(Link)
+  inspect(app.document(), content="Visit MoUI and ![logo](image.png)")
+  app.set_selection(20, None)
+  app.apply_command_to_selection(Image)
+  inspect(app.document(), content="Visit MoUI and logo")
 }
 
 ///|
@@ -186,6 +273,16 @@ test "markdown editor app target inputs sync from selection and apply edits" {
     app.document(),
     content="Visit [MoUI](https://moui.dev) and ![logo](old.png)",
   )
+  app.set_document("Mail <hello@example.dev>")
+  app.set_selection(23, Some(@core.TextRange::new(start=6, end=23)))
+  guard app.target_kind() is LinkTarget else {
+    fail("expected email autolink target mode")
+  }
+  inspect(app.link_target(), content="hello@example.dev")
+  app.set_link_target("team@example.dev")
+  app.apply_link_target()
+  inspect(app.document(), content="Mail <team@example.dev>")
+  app.set_document("Visit [MoUI](https://moui.dev) and ![logo](old.png)")
   app.set_selection(41, Some(@core.TextRange::new(start=37, end=41)))
   guard app.target_kind() is ImageTarget else {
     fail("expected image target mode")
@@ -233,6 +330,42 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   app.set_html_block_text("<section>New</section>")
   app.apply_html_block_text()
   inspect(app.document(), content="Intro\n<section>New</section>\nTail")
+}
+
+///|
+test "markdown editor app target inputs sync from caret context" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Visit [MoUI](https://old.example) and ![logo](old.png)")
+  app.set_selection(9, None)
+  guard app.target_kind() is LinkTarget else {
+    fail("expected link target mode at caret")
+  }
+  inspect(app.link_target(), content="https://old.example")
+  app.set_link_target("https://moui.dev")
+  app.apply_link_target()
+  inspect(
+    app.document(),
+    content="Visit [MoUI](https://moui.dev) and ![logo](old.png)",
+  )
+
+  app.set_selection(39, None)
+  guard app.target_kind() is ImageTarget else {
+    fail("expected image target mode at caret")
+  }
+  inspect(app.image_target(), content="old.png")
+  app.set_image_target("assets/logo.png")
+  app.apply_image_target()
+  inspect(
+    app.document(),
+    content="Visit [MoUI](https://moui.dev) and ![logo](assets/logo.png)",
+  )
+
+  app.set_document("Mail <hello@example.dev>")
+  app.set_selection(12, None)
+  guard app.target_kind() is LinkTarget else {
+    fail("expected autolink target mode at caret")
+  }
+  inspect(app.link_target(), content="hello@example.dev")
 }
 
 ///|
@@ -371,6 +504,80 @@ test "markdown editor runtime inline keyboard shortcut toggles selection" {
 }
 
 ///|
+test "markdown editor runtime ctrl inline shortcuts toggle selection" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Text bold word")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  app.set_selection(9, Some(@core.TextRange::new(start=5, end=9)))
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="b",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Text **bold** word")
+  app.set_selection(11, Some(@core.TextRange::new(start=7, end=11)))
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="b",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Text bold word")
+  app.set_selection(14, Some(@core.TextRange::new(start=10, end=14)))
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="i",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Text bold *word*")
+}
+
+///|
+test "markdown editor runtime ctrl code and strike shortcuts toggle selection" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Text code old")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  app.set_selection(9, Some(@core.TextRange::new(start=5, end=9)))
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="e",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Text `code` old")
+  app.set_selection(11, Some(@core.TextRange::new(start=6, end=10)))
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="e",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Text code old")
+  app.set_selection(13, Some(@core.TextRange::new(start=10, end=13)))
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="x",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Text code ~~old~~")
+}
+
+///|
 test "markdown editor runtime typed marker wraps tracked selection" {
   let app = MarkdownEditorApp::new()
   app.set_document("bold")
@@ -402,6 +609,74 @@ test "markdown editor runtime typed marker wraps tracked selection" {
   }
   inspect(selection.start, content="2")
   inspect(selection.end, content="6")
+}
+
+///|
+test "markdown editor runtime underscore marker wraps tracked selection" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("bold")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=84.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="a",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("__")),
+  )
+  inspect(app.document(), content="__bold__")
+  let input = runtime.focused_text_input()
+  inspect(input.caret, content="6")
+  guard input.selection is Some(selection) else {
+    fail("expected wrapped selection")
+  }
+  inspect(selection.start, content="2")
+  inspect(selection.end, content="6")
+}
+
+///|
+test "markdown editor runtime underline italic marker wraps tracked selection" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("old")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=84.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="a",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("_")),
+  )
+  inspect(app.document(), content="_old_")
+  let input = runtime.focused_text_input()
+  inspect(input.caret, content="4")
+  guard input.selection is Some(selection) else {
+    fail("expected wrapped selection")
+  }
+  inspect(selection.start, content="1")
+  inspect(selection.end, content="4")
 }
 
 ///|
@@ -448,6 +723,30 @@ test "markdown editor runtime link strike and image shortcuts use tracked select
 }
 
 ///|
+test "markdown editor runtime ctrl k wraps tracked selection as link" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Visit docs today")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  app.set_selection(10, Some(@core.TextRange::new(start=6, end=10)))
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="k",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Visit [docs](https://example.com) today")
+  let editor_selection = app.selection.get()
+  inspect(editor_selection.caret, content="11")
+  guard editor_selection.selection is Some(selection) else {
+    fail("expected linked selection")
+  }
+  inspect(selection.start, content="7")
+  inspect(selection.end, content="11")
+}
+
+///|
 test "markdown editor runtime block keyboard shortcuts transform caret and selection" {
   let app = MarkdownEditorApp::new()
   app.set_document("Intro\nTitle\nFirst\nSecond")
@@ -482,6 +781,33 @@ test "markdown editor runtime block keyboard shortcuts transform caret and selec
     ),
   )
   inspect(app.document(), content="Intro\n###### Title\n- First\n- Second")
+}
+
+///|
+test "markdown editor runtime ctrl heading shortcuts transform caret" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Intro\nTitle")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  app.set_selection(8, None)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="1",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Intro\n# Title")
+  app.set_selection(8, None)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="3",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(app.document(), content="Intro\n### Title")
 }
 
 ///|
@@ -1045,6 +1371,50 @@ test "markdown editor paste command links selected text with url" {
 }
 
 ///|
+test "markdown editor paste command links selected text with email" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Email team")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=84.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  for _ in 0..<6 {
+    runtime.dispatch_event(
+      @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="ArrowRight")),
+    )
+  }
+  for _ in 0..<4 {
+    runtime.dispatch_event(
+      @core.AppEvent::Keyboard(
+        @core.KeyboardEvent::new(
+          key="ArrowRight",
+          modifiers=@core.KeyModifiers::new(shift=true),
+        ),
+      ),
+    )
+  }
+  let pasted = runtime.dispatch_focused_text_command(
+    @core.CommandIntent::Paste,
+    paste_text=Some("team@example.dev"),
+  )
+  assert_true(pasted.handled)
+  assert_true(pasted.changed)
+  inspect(app.document(), content="Email [team](team@example.dev)")
+  let input = runtime.focused_text_input()
+  inspect(input.caret, content="11")
+  guard input.selection is Some(selection) else {
+    fail("expected email linked selection")
+  }
+  inspect(selection.start, content="7")
+  inspect(selection.end, content="11")
+}
+
+///|
 test "markdown editor paste command inserts image from selected alt text" {
   let app = MarkdownEditorApp::new()
   app.set_document("Insert logo")
@@ -1120,6 +1490,27 @@ test "markdown editor runtime paste and typing complete autolinks" {
     @core.AppEvent::TextInput(@core.TextInputEvent::InsertText(" ")),
   )
   inspect(app.document(), content="Visit <https://moui.dev> ")
+
+  app.set_document("Mail ")
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
+  )
+  let pasted_email = runtime.dispatch_focused_text_command(
+    @core.CommandIntent::Paste,
+    paste_text=Some("hello@example.dev"),
+  )
+  assert_true(pasted_email.handled)
+  assert_true(pasted_email.changed)
+  inspect(app.document(), content="Mail <hello@example.dev>")
+
+  app.set_document("Mail hello@example.dev")
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText(" ")),
+  )
+  inspect(app.document(), content="Mail <hello@example.dev> ")
 }
 
 ///|
