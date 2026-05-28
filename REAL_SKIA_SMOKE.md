@@ -53,7 +53,9 @@ bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs --requ
 
 The native smoke log verifier checks both the final pass marker and intermediate
 stage markers for readback, bounded readback, snapshot/image drawing, PNG
-encode/decode, codec creation, and decoded bitmap readback.
+encode/decode, codec creation, decoded bitmap readback, UTF-8 text measurement,
+glyph count, glyph ID mapping, glyph advances, glyph positions, glyph bounds,
+text bounds measurement, font metrics, and font manager family enumeration.
 
 The `--require-commit` checks are mandatory for the first source-built Linux
 acceptance because that run establishes the revision to pin. Existing-build
@@ -257,10 +259,10 @@ bash scripts/verify-skia-revision-pin.sh logs/macos-real-skia-acceptance.log
 
 ## Windows Acceptance
 
-Windows currently accepts an existing MinGW-compatible Skia build. It does not
-yet build Skia from source in CI. The workflow's `dry_run_config=true` preflight
-can be triggered without `skia_include` / `skia_lib_dir`; real runs require both
-paths.
+Windows currently has acceptance helpers for existing prepared Skia builds. It
+does not yet build Skia from source in CI. The MinGW-compatible path is still
+available for GCC native-stub builds, and the MSVC path covers prepared release
+zips or checkouts that provide `skia.lib`.
 
 Run locally on Windows or trigger the `Windows Real Skia Smoke` workflow with
 `skia_include` and `skia_lib_dir` pointing at a prepared Skia build:
@@ -269,7 +271,15 @@ Run locally on Windows or trigger the `Windows Real Skia Smoke` workflow with
 .\scripts\windows-accept-real-skia-smoke.ps1 -LogDir logs `
   -SkiaInclude C:\path\to\skia `
   -SkiaLibDir C:\path\to\skia\out\moonbit-smoke
+
+.\scripts\windows-msvc-accept-real-skia-smoke.ps1 -LogDir logs
 ```
+
+The MSVC helper defaults to `C:\Users\<you>\Downloads\Skia-Windows-Release-x64.zip`,
+extracts into `.skia-cache/windows-msvc/aseprite`, calls `vcvarsall.bat`, and
+uses `cl` with the generated MSVC `native/moon.pkg` link config. Pass
+`-SkiaRoot`, `-SkiaZip`, `-SkiaLibDir`, `-VcVarsAll`, or `-VcArch` when a runner
+uses a different layout.
 
 Expected artifact/log files:
 
@@ -286,18 +296,19 @@ Required checks:
 .\scripts\verify-real-skia-artifact.ps1 -Platform windows -LogDir logs
 ```
 
-Windows acceptance requires `lib<name>.a` or `<name>.lib` that is compatible
-with the GCC/MinGW toolchain used by MoonBit native stubs. MSVC-only import
-libraries are not enough for this path.
+Windows MinGW acceptance requires `lib<name>.a` or `<name>.lib` that is
+compatible with the GCC/MinGW toolchain used by that native-stub path.
+Windows MSVC acceptance requires `skia.lib` and a Visual Studio developer
+environment selected through `vcvarsall.bat`.
 For self-hosted or manually prepared runners, the Windows helpers also accept
 `SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_LIB_DIR`, `SKIA_MBT_SKIA_LIB`,
-`SKIA_MBT_EXTRA_CC_FLAGS`, and `SKIA_MBT_EXTRA_LINK_FLAGS` as environment
-defaults. Workflow inputs and explicit PowerShell parameters override those
-environment values.
+`SKIA_MBT_SKIA_ROOT`, `SKIA_MBT_SKIA_ZIP`, `SKIA_MBT_EXTRA_CC_FLAGS`, and
+`SKIA_MBT_EXTRA_LINK_FLAGS` as environment defaults. Workflow inputs and
+explicit PowerShell parameters override those environment values.
 When you want a persistent Windows link configuration instead of a temporary
-smoke rewrite, use `scripts/configure-windows-native-pkg.ps1` to preview, write,
-or check the generated `native/moon.pkg` contents for an existing
-MinGW-compatible Skia build.
+smoke rewrite, use `scripts/configure-windows-native-pkg.ps1` for an existing
+MinGW-compatible Skia build, or `scripts/configure-windows-msvc-native-pkg.ps1`
+for an existing MSVC `skia.lib` build.
 
 ## What Still Does Not Count
 

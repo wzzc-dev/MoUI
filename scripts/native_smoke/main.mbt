@@ -46,12 +46,17 @@ fn assert_pixel(
       "unexpected pixel at " + point.x.to_string() + "," + point.y.to_string(),
     )
     println("expected")
-    println(b0.to_hex() + " " + b1.to_hex() + " " + b2.to_hex() + " " + b3.to_hex())
+    println(
+      b0.to_hex() + " " + b1.to_hex() + " " + b2.to_hex() + " " + b3.to_hex(),
+    )
     println("actual")
     println(
-      pixmap.pixels[offset].to_hex() + " " +
-      pixmap.pixels[offset + 1].to_hex() + " " +
-      pixmap.pixels[offset + 2].to_hex() + " " +
+      pixmap.pixels[offset].to_hex() +
+      " " +
+      pixmap.pixels[offset + 1].to_hex() +
+      " " +
+      pixmap.pixels[offset + 2].to_hex() +
+      " " +
       pixmap.pixels[offset + 3].to_hex(),
     )
     fail_smoke("unexpected pixel value in native smoke test")
@@ -137,11 +142,7 @@ fn main {
     mode=@skia.Lines,
   )
   canvas.draw_points(
-    [
-      @skia.Point::new(28, 7),
-      @skia.Point::new(31, 7),
-      @skia.Point::new(31, 10),
-    ],
+    [@skia.Point::new(28, 7), @skia.Point::new(31, 7), @skia.Point::new(31, 10)],
     @skia.Paint::new(color=@skia.Color::black(), stroke_width=1),
     mode=@skia.Polygon,
   )
@@ -184,11 +185,12 @@ fn main {
     @skia.Paint::new(),
   )
   guard @native.Shader::linear_gradient(
-    @skia.Point::new(22, 18),
-    @skia.Point::new(26, 18),
-    @skia.Color::yellow(),
-    @skia.Color::magenta(),
-  ) is Some(linear_shader) else {
+      @skia.Point::new(22, 18),
+      @skia.Point::new(26, 18),
+      @skia.Color::yellow(),
+      @skia.Color::magenta(),
+    )
+    is Some(linear_shader) else {
     fail_smoke("failed to create native linear gradient shader")
   }
   canvas.draw_rect_shader(
@@ -197,11 +199,12 @@ fn main {
     @skia.Paint::new(),
   )
   guard @native.Shader::radial_gradient(
-    @skia.Point::new(26, 24),
-    2.0,
-    @skia.Color::white(),
-    @skia.Color::black(),
-  ) is Some(radial_shader) else {
+      @skia.Point::new(26, 24),
+      2.0,
+      @skia.Color::white(),
+      @skia.Color::black(),
+    )
+    is Some(radial_shader) else {
     fail_smoke("failed to create native radial gradient shader")
   }
   canvas.draw_rect_shader(
@@ -225,7 +228,9 @@ fn main {
   }
   canvas.draw_path(native_path, @skia.Paint::new(color=@skia.Color::magenta()))
 
-  let portable_path = @skia.Path::new().add_rect(@skia.Rect::from_xywh(22, 26, 4, 4))
+  let portable_path = @skia.Path::new().add_rect(
+    @skia.Rect::from_xywh(22, 26, 4, 4),
+  )
   guard @native.Path::from_value(portable_path) is Some(replayed_path) else {
     fail_smoke("failed to replay portable path into native path")
   }
@@ -256,7 +261,8 @@ fn main {
   if pixmap.bytes_per_pixel() != 4 {
     fail_smoke("readback pixmap is not N32")
   }
-  if pixmap.color_type() != @skia.RGBA8888 || pixmap.alpha_type() != @skia.Premul {
+  if pixmap.color_type() != @skia.RGBA8888 ||
+    pixmap.alpha_type() != @skia.Premul {
     fail_smoke("readback pixmap color info is not N32 premul")
   }
   if pixmap.row_bytes() < size.width * 4 {
@@ -311,11 +317,26 @@ fn main {
     @skia.Paint::new(),
     sampling=@skia.SamplingOptions::new(),
   )
-  guard surface.read_pixels(bounds=@skia.IRect::from_xywh(12, 28, 8, 4)) is Some(image_draw_pixmap) else {
+  guard surface.read_pixels(bounds=@skia.IRect::from_xywh(12, 28, 8, 4))
+    is Some(image_draw_pixmap) else {
     fail_smoke("failed to read image drawback pixels")
   }
-  assert_pixel(image_draw_pixmap, @skia.IPoint::new(0, 0), 0xff, 0x00, 0x00, 0xff)
-  assert_pixel(image_draw_pixmap, @skia.IPoint::new(4, 0), 0xff, 0x00, 0x00, 0xff)
+  assert_pixel(
+    image_draw_pixmap,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0x00,
+    0x00,
+    0xff,
+  )
+  assert_pixel(
+    image_draw_pixmap,
+    @skia.IPoint::new(4, 0),
+    0xff,
+    0x00,
+    0x00,
+    0xff,
+  )
   println("native smoke bounded snapshot width")
   println(red_image.width())
   println("native smoke bounded snapshot height")
@@ -366,7 +387,8 @@ fn main {
   if bitmap.image_info() != @skia.ImageInfo::n32_premul(size) {
     fail_smoke("decoded bitmap metadata does not match N32 premul size")
   }
-  if bitmap.row_bytes() < size.width * 4 || bitmap.byte_size() < size.width * size.height * 4 {
+  if bitmap.row_bytes() < size.width * 4 ||
+    bitmap.byte_size() < size.width * size.height * 4 {
     fail_smoke("decoded bitmap storage is too small for N32 pixels")
   }
   guard bitmap.to_pixmap() is Some(decoded_pixmap) else {
@@ -387,6 +409,78 @@ fn main {
   if font.size() != 11.0 {
     fail_smoke("native font size did not update")
   }
+  let font_metrics = font.metrics()
+  if font_metrics.ascent > 0.0 || font_metrics.descent < 0.0 {
+    fail_smoke("native font metrics have unexpected ascent/descent signs")
+  }
+  let font_spacing = font.spacing()
+  if font_spacing <= 0.0 {
+    fail_smoke("native font spacing is not positive")
+  }
+  println("native smoke font spacing")
+  println(font_spacing)
+  let measured_text_width = font.measure_text_utf8(smoke_text_bytes())
+  if measured_text_width <= 0.0 {
+    fail_smoke("native font did not report a positive text width")
+  }
+  println("native smoke measured text width")
+  println(measured_text_width)
+  let measured_text_glyphs = font.count_text_utf8(smoke_text_bytes())
+  if measured_text_glyphs != 4 {
+    fail_smoke("native font did not report the expected text glyph count")
+  }
+  println("native smoke text glyph count")
+  println(measured_text_glyphs)
+  let glyphs = font.text_to_glyphs_utf8(smoke_text_bytes())
+  if glyphs.length() != measured_text_glyphs || glyphs[0].to_int() <= 0 {
+    fail_smoke("native font did not map text to expected glyph ids")
+  }
+  println("native smoke first glyph id")
+  println(glyphs[0].to_int())
+  let glyph_widths = font.glyph_widths(glyphs)
+  if glyph_widths.length() != glyphs.length() || glyph_widths[0] <= 0.0 {
+    fail_smoke("native font did not report expected glyph widths")
+  }
+  println("native smoke first glyph width")
+  println(glyph_widths[0])
+  let glyph_positions = font.text_glyph_positions_utf8(
+    smoke_text_bytes(),
+    origin=@skia.Point::new(2.0, 3.0),
+  )
+  if glyph_positions.length() != glyphs.length() ||
+    glyph_positions[0] != @skia.Point::new(2.0, 3.0) ||
+    glyph_positions[1].x <= glyph_positions[0].x {
+    fail_smoke("native font did not report expected glyph positions")
+  }
+  println("native smoke second glyph position x")
+  println(glyph_positions[1].x)
+  let glyph_x_positions = font.text_glyph_x_positions_utf8(
+    smoke_text_bytes(),
+    origin=2.0,
+  )
+  if glyph_x_positions.length() != glyphs.length() ||
+    glyph_x_positions[0] != 2.0 ||
+    glyph_x_positions[1] <= glyph_x_positions[0] {
+    fail_smoke("native font did not report expected glyph x positions")
+  }
+  println("native smoke second glyph x position")
+  println(glyph_x_positions[1])
+  let glyph_bounds = font.glyph_bounds_many(glyphs)
+  if glyph_bounds.length() != glyphs.length() ||
+    glyph_bounds[0].width() <= 0.0 ||
+    glyph_bounds[0].height() <= 0.0 {
+    fail_smoke("native font did not report expected glyph bounds")
+  }
+  println("native smoke first glyph bounds width")
+  println(glyph_bounds[0].width())
+  guard font.measure_text_bounds_utf8(smoke_text_bytes()) is Some(text_bounds) else {
+    fail_smoke("native font did not report text bounds")
+  }
+  if text_bounds.width() <= 0.0 || text_bounds.height() < 0.0 {
+    fail_smoke("native font text bounds are invalid")
+  }
+  println("native smoke measured text bounds width")
+  println(text_bounds.width())
   canvas.draw_text_utf8(
     smoke_text_bytes(),
     @skia.Point::new(0, 31),
@@ -398,10 +492,60 @@ fn main {
     None => println("native smoke default typeface unavailable")
     Some(typeface) => {
       smoke_mark(b"typeface default")
-      guard @native.Font::from_typeface(typeface, size=9.0) is Some(typeface_font) else {
+      guard @native.Font::from_typeface(typeface, size=9.0)
+        is Some(typeface_font) else {
         fail_smoke("failed to create native font from default typeface")
       }
       smoke_mark(b"font from typeface")
+      if typeface_font.spacing() <= 0.0 {
+        fail_smoke("native typeface font spacing is not positive")
+      }
+      if typeface_font.measure_text_utf8(smoke_text_bytes()) <= 0.0 {
+        fail_smoke("native typeface font did not report a positive text width")
+      }
+      if typeface_font.count_text_utf8(smoke_text_bytes()) != 4 {
+        fail_smoke(
+          "native typeface font did not report the expected glyph count",
+        )
+      }
+      let typeface_glyphs = typeface_font.text_to_glyphs_utf8(
+        smoke_text_bytes(),
+      )
+      if typeface_glyphs.length() != 4 || typeface_glyphs[0].to_int() <= 0 {
+        fail_smoke(
+          "native typeface font did not map text to expected glyph ids",
+        )
+      }
+      let typeface_glyph_widths = typeface_font.glyph_widths(typeface_glyphs)
+      if typeface_glyph_widths.length() != 4 || typeface_glyph_widths[0] <= 0.0 {
+        fail_smoke("native typeface font did not report expected glyph widths")
+      }
+      let typeface_glyph_positions = typeface_font.text_glyph_positions_utf8(
+        smoke_text_bytes(),
+        origin=@skia.Point::new(2.0, 3.0),
+      )
+      if typeface_glyph_positions.length() != 4 ||
+        typeface_glyph_positions[0] != @skia.Point::new(2.0, 3.0) ||
+        typeface_glyph_positions[1].x <= typeface_glyph_positions[0].x {
+        fail_smoke(
+          "native typeface font did not report expected glyph positions",
+        )
+      }
+      let typeface_glyph_bounds = typeface_font.glyph_bounds_many(
+        typeface_glyphs,
+      )
+      if typeface_glyph_bounds.length() != 4 ||
+        typeface_glyph_bounds[0].width() <= 0.0 ||
+        typeface_glyph_bounds[0].height() <= 0.0 {
+        fail_smoke("native typeface font did not report expected glyph bounds")
+      }
+      match typeface_font.measure_text_bounds_utf8(smoke_text_bytes()) {
+        None => fail_smoke("native typeface font did not report text bounds")
+        Some(bounds) =>
+          if bounds.width() <= 0.0 || bounds.height() < 0.0 {
+            fail_smoke("native typeface font text bounds are invalid")
+          }
+      }
       canvas.draw_text_utf8(
         smoke_text_bytes(),
         @skia.Point::new(16, 31),
@@ -411,6 +555,38 @@ fn main {
       smoke_mark(b"drew typeface text")
     }
   }
+
+  guard @native.FontMgr::default() is Some(font_mgr) else {
+    fail_smoke("failed to create native font manager")
+  }
+  smoke_mark(b"font manager default")
+  if !font_mgr.is_available() {
+    fail_smoke("native font manager is not available")
+  }
+  let family_count = font_mgr.count_families()
+  if family_count <= 0 {
+    fail_smoke("native font manager did not report font families")
+  }
+  println("native smoke font family count")
+  println(family_count)
+  guard font_mgr.family_name(0) is Some(first_family) else {
+    fail_smoke("native font manager did not report first family name")
+  }
+  if first_family.is_empty() {
+    fail_smoke("native font manager reported an empty first family name")
+  }
+  println("native smoke first font family bytes")
+  println(first_family.length())
+  guard font_mgr.match_family_style(first_family) is Some(family_typeface) else {
+    fail_smoke("native font manager did not match first family typeface")
+  }
+  guard @native.Font::from_typeface(family_typeface, size=8.0) is Some(family_font) else {
+    fail_smoke("failed to create native font from font manager family")
+  }
+  if family_font.measure_text_utf8(smoke_text_bytes()) <= 0.0 {
+    fail_smoke("native font manager family font did not measure text")
+  }
+  smoke_mark(b"font manager family")
 
   smoke_mark(b"done")
   println("skia_mbt native smoke test passed")

@@ -79,6 +79,7 @@ if [[ ! -d "$resolved_log_dir" ]]; then
 fi
 
 wrapper_log="$resolved_log_dir/$platform-real-skia-smoke.log"
+preflight_log="$resolved_log_dir/$platform-real-skia-smoke-preflight.log"
 native_log="$resolved_log_dir/$platform-native-smoke-output.log"
 acceptance_log="$resolved_log_dir/$platform-real-skia-acceptance.log"
 build_log="$resolved_log_dir/$platform-skia-build.log"
@@ -89,6 +90,13 @@ for log_path in "$wrapper_log" "$native_log" "$acceptance_log"; do
     exit 1
   fi
 done
+
+if [[ "$platform" == "macos" || "$platform" == "windows" ]]; then
+  if [[ ! -f "$preflight_log" ]]; then
+    echo "real Skia artifact is missing expected preflight log: $preflight_log" >&2
+    exit 1
+  fi
+fi
 
 if [[ "$platform" == "linux" && $require_commit -eq 1 ]]; then
   if [[ ! -f "$build_log" ]]; then
@@ -120,10 +128,16 @@ if ! grep -Eq 'library=.*\b(lib)?skia\.(a|so|dylib|lib)\b' "$wrapper_log"; then
   exit 1
 fi
 
-for log_name in \
-  "$(basename "$wrapper_log")" \
-  "$(basename "$native_log")" \
-  "$(basename "$acceptance_log")"; do
+artifact_log_names=(
+  "$(basename "$wrapper_log")"
+  "$(basename "$native_log")"
+  "$(basename "$acceptance_log")"
+)
+if [[ "$platform" == "macos" || "$platform" == "windows" ]]; then
+  artifact_log_names+=("$(basename "$preflight_log")")
+fi
+
+for log_name in "${artifact_log_names[@]}"; do
   if ! grep -Fq "$log_name" "$acceptance_log"; then
     echo "acceptance log does not reference expected artifact log: $log_name" >&2
     exit 1

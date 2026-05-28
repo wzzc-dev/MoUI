@@ -29,6 +29,9 @@ priv type FontHandle
 priv type TypefaceHandle
 
 ///|
+priv type FontMgrHandle
+
+///|
 priv type ShaderHandle
 
 ///|
@@ -77,10 +80,58 @@ pub(all) struct Font {
 }
 
 ///|
+/// Placeholder glyph identifier for non-native targets.
+pub(all) struct GlyphId(UInt16) derive(Debug, Eq)
+
+///|
+pub fn GlyphId::new(value : UInt16) -> GlyphId {
+  GlyphId(value)
+}
+
+///|
+pub fn GlyphId::to_uint16(self : GlyphId) -> UInt16 {
+  let GlyphId(value) = self
+  value
+}
+
+///|
+pub fn GlyphId::to_int(self : GlyphId) -> Int {
+  self.to_uint16().to_int()
+}
+
+///|
+/// Placeholder font metrics for non-native targets.
+pub(all) struct FontMetrics {
+  top : Float
+  ascent : Float
+  descent : Float
+  bottom : Float
+  leading : Float
+  average_char_width : Float
+  max_char_width : Float
+  x_min : Float
+  x_max : Float
+  x_height : Float
+  cap_height : Float
+  underline_thickness : Float?
+  underline_position : Float?
+  strikeout_thickness : Float?
+  strikeout_position : Float?
+  has_bounds : Bool
+} derive(Debug, Eq)
+
+///|
 /// Placeholder typeface type for non-native targets.
 #warnings("-struct_never_constructed-unused_field")
 pub(all) struct Typeface {
   priv handle : TypefaceHandle
+}
+
+///|
+/// Placeholder font manager type for non-native targets.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct FontMgr {
+  priv handle : FontMgrHandle
 }
 
 ///|
@@ -535,12 +586,192 @@ pub fn Font::set_size(self : Font, size : Float) -> Unit {
 }
 
 ///|
+pub fn Font::measure_text_utf8(self : Font, text : Bytes) -> Float {
+  ignore(self)
+  ignore(text)
+  0.0
+}
+
+///|
+pub fn Font::count_text_utf8(self : Font, text : Bytes) -> Int {
+  ignore(self)
+  ignore(text)
+  0
+}
+
+///|
+pub fn Font::text_to_glyphs_utf8(self : Font, text : Bytes) -> Array[GlyphId] {
+  ignore(self)
+  ignore(text)
+  []
+}
+
+///|
+pub fn Font::glyph_width(self : Font, glyph : GlyphId) -> Float {
+  ignore(self)
+  ignore(glyph)
+  0.0
+}
+
+///|
+pub fn Font::glyph_widths(self : Font, glyphs : Array[GlyphId]) -> Array[Float] {
+  ignore(self)
+  ignore(glyphs)
+  []
+}
+
+///|
+pub fn Font::glyph_x_positions(
+  self : Font,
+  glyphs : Array[GlyphId],
+  origin? : Float = 0.0,
+) -> Array[Float] {
+  ignore(self)
+  ignore(glyphs)
+  ignore(origin)
+  []
+}
+
+///|
+pub fn Font::glyph_positions(
+  self : Font,
+  glyphs : Array[GlyphId],
+  origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
+) -> Array[@skia.Point] {
+  ignore(self)
+  ignore(glyphs)
+  ignore(origin)
+  []
+}
+
+///|
+pub fn Font::text_glyph_x_positions_utf8(
+  self : Font,
+  text : Bytes,
+  origin? : Float = 0.0,
+) -> Array[Float] {
+  ignore(self)
+  ignore(text)
+  ignore(origin)
+  []
+}
+
+///|
+pub fn Font::text_glyph_positions_utf8(
+  self : Font,
+  text : Bytes,
+  origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
+) -> Array[@skia.Point] {
+  ignore(self)
+  ignore(text)
+  ignore(origin)
+  []
+}
+
+///|
+pub fn Font::glyph_bounds(self : Font, glyph : GlyphId) -> @skia.Rect {
+  ignore(self)
+  ignore(glyph)
+  @skia.Rect::empty()
+}
+
+///|
+pub fn Font::glyph_bounds_many(
+  self : Font,
+  glyphs : Array[GlyphId],
+) -> Array[@skia.Rect] {
+  ignore(self)
+  ignore(glyphs)
+  []
+}
+
+///|
+pub fn Font::measure_text_bounds_utf8(self : Font, text : Bytes) -> @skia.Rect? {
+  ignore(self)
+  ignore(text)
+  None
+}
+
+///|
+pub fn Font::metrics(self : Font) -> FontMetrics {
+  ignore(self)
+  {
+    top: 0.0,
+    ascent: 0.0,
+    descent: 0.0,
+    bottom: 0.0,
+    leading: 0.0,
+    average_char_width: 0.0,
+    max_char_width: 0.0,
+    x_min: 0.0,
+    x_max: 0.0,
+    x_height: 0.0,
+    cap_height: 0.0,
+    underline_thickness: None,
+    underline_position: None,
+    strikeout_thickness: None,
+    strikeout_position: None,
+    has_bounds: false,
+  }
+}
+
+///|
+pub fn Font::spacing(self : Font) -> Float {
+  ignore(self)
+  0.0
+}
+
+///|
 pub fn Typeface::default() -> Typeface? {
   None
 }
 
 ///|
 pub fn Typeface::from_name(family_name : Bytes) -> Typeface? {
+  ignore(family_name)
+  None
+}
+
+///|
+pub fn FontMgr::default() -> FontMgr? {
+  None
+}
+
+///|
+pub fn FontMgr::is_available(self : FontMgr) -> Bool {
+  ignore(self)
+  false
+}
+
+///|
+pub fn FontMgr::count_families(self : FontMgr) -> Int {
+  ignore(self)
+  0
+}
+
+///|
+pub fn FontMgr::family_name(self : FontMgr, index : Int) -> Bytes? {
+  ignore(self)
+  ignore(index)
+  None
+}
+
+///|
+pub fn FontMgr::match_family_style(
+  self : FontMgr,
+  family_name : Bytes,
+) -> Typeface? {
+  ignore(self)
+  ignore(family_name)
+  None
+}
+
+///|
+pub fn Typeface::from_font_mgr_family(
+  font_mgr : FontMgr,
+  family_name : Bytes,
+) -> Typeface? {
+  ignore(font_mgr)
   ignore(family_name)
   None
 }

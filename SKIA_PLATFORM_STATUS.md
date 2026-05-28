@@ -45,7 +45,7 @@ accepted commit to match `skia-revision.txt`.
 | --- | --- | --- | --- |
 | Linux | Ready for first source-built acceptance, not accepted yet | Source-build helper, existing-build smoke helper, acceptance wrapper, dependency checker, artifact verifier, guarded revision pin wrapper, workflow | A real source-built Ubuntu/Linux artifact with `--require-commit`, then `skia-revision.txt` pinned to the accepted 40-character Skia commit |
 | macOS | Smoke path ready, not accepted yet | Source-build helper, existing-build smoke helper, acceptance wrapper, artifact verifier, workflow | A real macOS artifact using the pinned Skia revision once Linux establishes it, or a documented temporary revision while evaluating |
-| Windows | Existing-build smoke path only, not accepted yet | Existing MinGW-compatible Skia smoke helper, acceptance wrapper, artifact verifier, workflow, persistent link-config generator | A repeatable MinGW-compatible Skia build/acquisition path, plus a real Windows artifact proving link and smoke execution |
+| Windows | Existing-build smoke paths ready, not accepted yet | Existing MinGW-compatible Skia smoke/acceptance helper, MSVC release-zip smoke/acceptance helper, artifact verifier, workflow, persistent link-config generators | A real Windows artifact proving link and smoke execution, plus a documented repeatable Skia acquisition path for the accepted Windows toolchain |
 
 ## Acceptance Evidence
 
@@ -57,7 +57,9 @@ these facts recorded in logs:
 - The native smoke executable printed `skia_mbt native smoke test passed`.
 - The native smoke log passed `scripts/verify-native-smoke-log.*`, including
   all required stage markers for readback, snapshots, PNG encode/decode, codec,
-  and decoded bitmap readback.
+  decoded bitmap readback, UTF-8 text measurement, glyph count, glyph ID
+  mapping, glyph advances, glyph positions, glyph bounds, text bounds
+  measurement, and font metrics.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.

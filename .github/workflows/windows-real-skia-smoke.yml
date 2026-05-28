@@ -3,14 +3,38 @@ name: Windows Real Skia Smoke
 on:
   workflow_dispatch:
     inputs:
+      toolchain:
+        description: Windows Skia toolchain path to validate
+        type: choice
+        required: false
+        default: mingw
+        options:
+          - mingw
+          - msvc
       skia_include:
-        description: Existing Skia checkout/include root; falls back to SKIA_MBT_SKIA_INCLUDE on the runner
+        description: Existing MinGW-compatible Skia checkout/include root; falls back to SKIA_MBT_SKIA_INCLUDE on the runner
         required: false
         default: ""
       skia_lib_dir:
-        description: Existing directory containing MinGW-compatible libskia.a or skia.lib; falls back to SKIA_MBT_SKIA_LIB_DIR on the runner
+        description: Existing directory containing Skia libraries; falls back to SKIA_MBT_SKIA_LIB_DIR on the runner
         required: false
         default: ""
+      skia_root:
+        description: Existing MSVC Skia release root; falls back to SKIA_MBT_SKIA_ROOT on the runner
+        required: false
+        default: ""
+      skia_zip:
+        description: Existing MSVC Skia release zip; falls back to SKIA_MBT_SKIA_ZIP or Downloads/Skia-Windows-Release-x64.zip
+        required: false
+        default: ""
+      vcvarsall:
+        description: Visual Studio vcvarsall.bat path for MSVC; falls back to VCVARSALL or the BuildTools default
+        required: false
+        default: ""
+      vc_arch:
+        description: Visual Studio architecture argument for vcvarsall.bat
+        required: false
+        default: x64
       skia_lib:
         description: Library name without prefix/suffix
         required: false
@@ -41,17 +65,40 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
-          New-Item -ItemType Directory -Force -Path .skia-dry-run/skia/include/core | Out-Null
-          New-Item -ItemType Directory -Force -Path .skia-dry-run/lib | Out-Null
-          New-Item -ItemType File -Force -Path .skia-dry-run/skia/include/core/SkSurface.h | Out-Null
-          New-Item -ItemType File -Force -Path ".skia-dry-run/lib/lib${{ inputs.skia_lib }}.a" | Out-Null
-          .\scripts\windows-skia-smoke.ps1 `
-            -SkiaInclude .skia-dry-run/skia `
-            -SkiaLibDir .skia-dry-run/lib `
-            -SkiaLib "${{ inputs.skia_lib }}" `
-            -ExtraCcFlags "${{ inputs.extra_cc_flags }}" `
-            -ExtraLinkFlags "${{ inputs.extra_link_flags }}" `
-            -DryRunConfig 2>&1 | Tee-Object -FilePath logs/windows-real-skia-smoke-preflight.log
+          if ("${{ inputs.toolchain }}" -eq "msvc") {
+            New-Item -ItemType Directory -Force -Path .skia-dry-run/msvc/include/core | Out-Null
+            New-Item -ItemType Directory -Force -Path .skia-dry-run/msvc/out/Release-x64 | Out-Null
+            New-Item -ItemType File -Force -Path .skia-dry-run/msvc/include/core/SkSurface.h | Out-Null
+            New-Item -ItemType File -Force -Path .skia-dry-run/msvc/out/Release-x64/skia.lib | Out-Null
+            $args = @(
+              "-SkiaRoot", ".skia-dry-run/msvc",
+              "-SkiaLibDir", ".skia-dry-run/msvc/out/Release-x64",
+              "-VcArch", "${{ inputs.vc_arch }}",
+              "-DryRunConfig"
+            )
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.vcvarsall }}")) {
+              $args += @("-VcVarsAll", "${{ inputs.vcvarsall }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
+              $args += @("-ExtraCcFlags", "${{ inputs.extra_cc_flags }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
+              $args += @("-ExtraLinkFlags", "${{ inputs.extra_link_flags }}")
+            }
+            .\scripts\windows-msvc-skia-smoke.ps1 @args 2>&1 | Tee-Object -FilePath logs/windows-real-skia-smoke-preflight.log
+          } else {
+            New-Item -ItemType Directory -Force -Path .skia-dry-run/skia/include/core | Out-Null
+            New-Item -ItemType Directory -Force -Path .skia-dry-run/lib | Out-Null
+            New-Item -ItemType File -Force -Path .skia-dry-run/skia/include/core/SkSurface.h | Out-Null
+            New-Item -ItemType File -Force -Path ".skia-dry-run/lib/lib${{ inputs.skia_lib }}.a" | Out-Null
+            .\scripts\windows-skia-smoke.ps1 `
+              -SkiaInclude .skia-dry-run/skia `
+              -SkiaLibDir .skia-dry-run/lib `
+              -SkiaLib "${{ inputs.skia_lib }}" `
+              -ExtraCcFlags "${{ inputs.extra_cc_flags }}" `
+              -ExtraLinkFlags "${{ inputs.extra_link_flags }}" `
+              -DryRunConfig 2>&1 | Tee-Object -FilePath logs/windows-real-skia-smoke-preflight.log
+          }
 
       - name: Set up MoonBit
         if: ${{ !inputs.dry_run_config }}
@@ -69,22 +116,47 @@ jobs:
             exit 0
           }
           $args = @("-LogDir", "logs")
-          if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_include }}")) {
-            $args += @("-SkiaInclude", "${{ inputs.skia_include }}")
+          if ("${{ inputs.toolchain }}" -eq "msvc") {
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_root }}")) {
+              $args += @("-SkiaRoot", "${{ inputs.skia_root }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_zip }}")) {
+              $args += @("-SkiaZip", "${{ inputs.skia_zip }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib_dir }}")) {
+              $args += @("-SkiaLibDir", "${{ inputs.skia_lib_dir }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.vcvarsall }}")) {
+              $args += @("-VcVarsAll", "${{ inputs.vcvarsall }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.vc_arch }}")) {
+              $args += @("-VcArch", "${{ inputs.vc_arch }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
+              $args += @("-ExtraCcFlags", "${{ inputs.extra_cc_flags }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
+              $args += @("-ExtraLinkFlags", "${{ inputs.extra_link_flags }}")
+            }
+            .\scripts\windows-msvc-accept-real-skia-smoke.ps1 @args
+          } else {
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_include }}")) {
+              $args += @("-SkiaInclude", "${{ inputs.skia_include }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib_dir }}")) {
+              $args += @("-SkiaLibDir", "${{ inputs.skia_lib_dir }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib }}")) {
+              $args += @("-SkiaLib", "${{ inputs.skia_lib }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
+              $args += @("-ExtraCcFlags", "${{ inputs.extra_cc_flags }}")
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
+              $args += @("-ExtraLinkFlags", "${{ inputs.extra_link_flags }}")
+            }
+            .\scripts\windows-accept-real-skia-smoke.ps1 @args
           }
-          if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib_dir }}")) {
-            $args += @("-SkiaLibDir", "${{ inputs.skia_lib_dir }}")
-          }
-          if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib }}")) {
-            $args += @("-SkiaLib", "${{ inputs.skia_lib }}")
-          }
-          if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
-            $args += @("-ExtraCcFlags", "${{ inputs.extra_cc_flags }}")
-          }
-          if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
-            $args += @("-ExtraLinkFlags", "${{ inputs.extra_link_flags }}")
-          }
-          .\scripts\windows-accept-real-skia-smoke.ps1 @args
 
       - name: Verify native smoke success marker
         if: ${{ always() && !inputs.dry_run_config }}
@@ -149,8 +221,13 @@ jobs:
             "## Windows Real Skia Smoke"
             ""
             "- Dry run only: ${{ inputs.dry_run_config }}"
+            "- Toolchain: ${{ inputs.toolchain }}"
             "- Existing Skia include: ${{ inputs.skia_include }}"
             "- Existing Skia lib dir: ${{ inputs.skia_lib_dir }}"
+            "- MSVC Skia root: ${{ inputs.skia_root }}"
+            "- MSVC Skia zip: ${{ inputs.skia_zip }}"
+            "- MSVC vcvarsall: ${{ inputs.vcvarsall }}"
+            "- MSVC vc_arch: ${{ inputs.vc_arch }}"
             "- Skia library: ${{ inputs.skia_lib }}"
             "- Resolved Skia commit: $resolvedCommit"
             "- Extra C/C++ flags: ${{ inputs.extra_cc_flags }}"

@@ -41,7 +41,7 @@
     },
     "windows": {
       "accepted": false,
-      "state": "existing_build_smoke_only",
+      "state": "existing_build_smoke_paths_ready",
       "first_acceptance_platform": false,
       "source_build": false,
       "existing_build": true,
@@ -55,7 +55,7 @@
         "windows-real-skia-acceptance.log"
       ],
       "required_verifier": "scripts/verify-real-skia-artifact.ps1 -Platform windows -LogDir logs",
-      "next_step": "Add a repeatable MinGW-compatible Skia build or acquisition path, then run the Windows real smoke workflow."
+      "next_step": "Run a real Windows smoke artifact through either the MinGW-compatible path or the MSVC release-zip path, then document the repeatable Windows Skia acquisition path used for the accepted toolchain."
     }
   }
 }

@@ -61,6 +61,28 @@ function Set-FakeNativeSmokeLog {
     "native smoke codec encoded format PNG"
     "native smoke decoded bitmap width"
     "32"
+    "native smoke font spacing"
+    "16"
+    "native smoke measured text width"
+    "12"
+    "native smoke text glyph count"
+    "4"
+    "native smoke first glyph id"
+    "54"
+    "native smoke first glyph width"
+    "7"
+    "native smoke second glyph position x"
+    "8"
+    "native smoke second glyph x position"
+    "8"
+    "native smoke first glyph bounds width"
+    "6"
+    "native smoke measured text bounds width"
+    "11"
+    "native smoke font family count"
+    "3"
+    "native smoke first font family bytes"
+    "5"
     "skia_mbt native smoke test passed"
   ) | Set-Content -LiteralPath $Path
 }
@@ -301,9 +323,11 @@ try {
 
     $fakeArtifactDir = Join-Path $dryRunRoot "fake-artifact"
     New-Item -ItemType Directory -Force -Path $fakeArtifactDir | Out-Null
+    $fakeArtifactPreflightLog = Join-Path $fakeArtifactDir "windows-real-skia-smoke-preflight.log"
     $fakeArtifactWrapperLog = Join-Path $fakeArtifactDir "windows-real-skia-smoke.log"
     $fakeArtifactNativeLog = Join-Path $fakeArtifactDir "windows-native-smoke-output.log"
     $fakeArtifactAcceptanceLog = Join-Path $fakeArtifactDir "windows-real-skia-acceptance.log"
+    Set-Content -LiteralPath $fakeArtifactPreflightLog -Value "Windows Skia dry-run preflight"
     @(
       "Windows Skia smoke environment:"
       "  skia_include=C:/fake/skia"
@@ -321,6 +345,7 @@ try {
       "  native_smoke_marker=passed"
       "  native_pkg_restore=passed"
       "  skia_commit=0123456789abcdef0123456789abcdef01234567"
+      "  preflight_log=$fakeArtifactPreflightLog"
       "  wrapper_log=$fakeArtifactWrapperLog"
       "  native_log=$fakeArtifactNativeLog"
       "  acceptance_log=$fakeArtifactAcceptanceLog"
@@ -330,8 +355,52 @@ try {
       -LogDir $fakeArtifactDir `
       -RequireCommit
 
+
+    $fakeMacosArtifactDir = Join-Path $dryRunRoot "fake-macos-artifact"
+    New-Item -ItemType Directory -Force -Path $fakeMacosArtifactDir | Out-Null
+    $fakeMacosPreflightLog = Join-Path $fakeMacosArtifactDir "macos-real-skia-smoke-preflight.log"
+    $fakeMacosWrapperLog = Join-Path $fakeMacosArtifactDir "macos-real-skia-smoke.log"
+    $fakeMacosNativeLog = Join-Path $fakeMacosArtifactDir "macos-native-smoke-output.log"
+    $fakeMacosAcceptanceLog = Join-Path $fakeMacosArtifactDir "macos-real-skia-acceptance.log"
+    Set-Content -LiteralPath $fakeMacosPreflightLog -Value "macOS Skia dry-run preflight"
+    @(
+      "macOS Skia smoke environment:"
+      "  skia_include=/fake/skia"
+      "  skia_lib_dir=/fake/skia/out/moonbit-smoke"
+      "  skia_lib=skia"
+      "  skia_commit=0123456789abcdef0123456789abcdef01234567"
+      "  library=libskia.a 123 bytes"
+      "  stub_cc_flags=-DSKIA_MBT_HAS_SKIA -I/fake/skia"
+      "  cc_link_flags=-L/fake/skia/out/moonbit-smoke -lskia"
+    ) | Set-Content -LiteralPath $fakeMacosWrapperLog
+    Set-FakeNativeSmokeLog -Path $fakeMacosNativeLog
+    @(
+      "macOS real Skia acceptance result:"
+      "  smoke_status=0"
+      "  native_smoke_marker=passed"
+      "  native_pkg_restore=passed"
+      "  skia_commit=0123456789abcdef0123456789abcdef01234567"
+      "  preflight_log=$fakeMacosPreflightLog"
+      "  wrapper_log=$fakeMacosWrapperLog"
+      "  native_log=$fakeMacosNativeLog"
+      "  acceptance_log=$fakeMacosAcceptanceLog"
+    ) | Set-Content -LiteralPath $fakeMacosAcceptanceLog
+    & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") `
+      -Platform macos `
+      -LogDir $fakeMacosArtifactDir `
+      -RequireCommit
+
+    $fakeMacosMissingPreflightDir = Join-Path $dryRunRoot "fake-macos-artifact-missing-preflight"
+    New-Item -ItemType Directory -Force -Path $fakeMacosMissingPreflightDir | Out-Null
+    Copy-Item -LiteralPath $fakeMacosWrapperLog -Destination (Join-Path $fakeMacosMissingPreflightDir "macos-real-skia-smoke.log")
+    Copy-Item -LiteralPath $fakeMacosNativeLog -Destination (Join-Path $fakeMacosMissingPreflightDir "macos-native-smoke-output.log")
+    Copy-Item -LiteralPath $fakeMacosAcceptanceLog -Destination (Join-Path $fakeMacosMissingPreflightDir "macos-real-skia-acceptance.log")
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform macos -LogDir $fakeMacosMissingPreflightDir -RequireCommit } `
+      -ExpectedMessage "missing expected preflight log"
     $fakeBadArtifactDir = Join-Path $dryRunRoot "fake-artifact-missing-wrapper-field"
     New-Item -ItemType Directory -Force -Path $fakeBadArtifactDir | Out-Null
+    Copy-Item -LiteralPath $fakeArtifactPreflightLog -Destination (Join-Path $fakeBadArtifactDir "windows-real-skia-smoke-preflight.log")
     Copy-Item -LiteralPath $fakeArtifactNativeLog -Destination (Join-Path $fakeBadArtifactDir "windows-native-smoke-output.log")
     Copy-Item -LiteralPath $fakeArtifactAcceptanceLog -Destination (Join-Path $fakeBadArtifactDir "windows-real-skia-acceptance.log")
     Set-Content -LiteralPath (Join-Path $fakeBadArtifactDir "windows-real-skia-smoke.log") -Value "library=libskia.a 123 bytes"

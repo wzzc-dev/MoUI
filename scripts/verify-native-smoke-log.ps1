@@ -23,7 +23,18 @@ $stageMarkers = @(
   "native smoke encoded PNG bytes",
   "native smoke decoded image width",
   "native smoke codec encoded format PNG",
-  "native smoke decoded bitmap width"
+  "native smoke decoded bitmap width",
+  "native smoke font spacing",
+  "native smoke measured text width",
+  "native smoke text glyph count",
+  "native smoke first glyph id",
+  "native smoke first glyph width",
+  "native smoke second glyph position x",
+  "native smoke second glyph x position",
+  "native smoke first glyph bounds width",
+  "native smoke measured text bounds width",
+  "native smoke font family count",
+  "native smoke first font family bytes"
 )
 foreach ($stageMarker in $stageMarkers) {
   if (!$content.Contains($stageMarker)) {
