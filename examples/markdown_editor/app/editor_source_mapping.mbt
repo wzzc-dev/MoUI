@@ -20,6 +20,173 @@ fn markdown_editor_format(source : String) -> @core.RichTextDocument {
 }
 
 ///|
+fn markdown_editor_format_for_selection(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> @core.RichTextDocument {
+  let document = markdown_editor_format(source)
+  let blocks : Array[@core.RichTextBlock] = []
+  for block in document.blocks {
+    let runs : Array[@core.RichTextRun] = []
+    for run in block.runs {
+      runs.push(markdown_editor_reveal_active_inline_run(source, selection, run))
+    }
+    blocks.push(
+      markdown_editor_reveal_active_block_marker(
+        source, selection, { ..block, runs },
+      ),
+    )
+  }
+  @core.RichTextDocument::new(blocks~)
+}
+
+///|
+fn markdown_editor_reveal_active_block_marker(
+  source : String,
+  selection : MarkdownEditorSelection,
+  block : @core.RichTextBlock,
+) -> @core.RichTextBlock {
+  match (block.source_range, block.content_range) {
+    (Some(source_range), Some(content_range)) => {
+      if source_range.start >= content_range.start ||
+        !markdown_editor_selection_touches_range(selection, content_range) ||
+        block.runs.length() == 0 {
+        return block
+      }
+      let prefix = markdown_editor_substring(
+        source, source_range.start, content_range.start,
+      )
+      if block.prefix != "" {
+        return { ..block, prefix }
+      }
+      let runs = block.runs.copy()
+      let first = runs[0]
+      runs[0] = {
+        ..first,
+        text: prefix + first.text,
+        visual_text: None,
+        source_range: match first.source_range {
+          Some(run_range) => Some({ start: source_range.start, end: run_range.end })
+          None => Some({ start: source_range.start, end: content_range.start })
+        },
+      }
+      { ..block, prefix: "", runs }
+    }
+    _ => block
+  }
+}
+
+///|
+fn markdown_editor_reveal_active_inline_run(
+  source : String,
+  selection : MarkdownEditorSelection,
+  run : @core.RichTextRun,
+) -> @core.RichTextRun {
+  match run.source_range {
+    Some(range) =>
+      if markdown_editor_selection_touches_range(selection, range) {
+        match markdown_editor_inline_marker_source_range(source, range) {
+          Some(full_range) =>
+            {
+              ..run,
+              text: markdown_editor_substring(source, full_range.start, full_range.end),
+              visual_text: None,
+              source_range: Some(full_range),
+            }
+          None => run
+        }
+      } else {
+        run
+      }
+    None => run
+  }
+}
+
+///|
+fn markdown_editor_selection_touches_range(
+  selection : MarkdownEditorSelection,
+  range : @core.RichTextSourceRange,
+) -> Bool {
+  match markdown_editor_active_selection(selection.selection) {
+    Some(active) => {
+      let active = active.normalized()
+      active.start < range.end && active.end > range.start
+    }
+    None => selection.caret >= range.start && selection.caret <= range.end
+  }
+}
+
+///|
+fn markdown_editor_inline_marker_source_range(
+  source : String,
+  range : @core.RichTextSourceRange,
+) -> @core.RichTextSourceRange? {
+  let chars = source.to_array()
+  if range.start < 0 || range.end < range.start || range.end > chars.length() {
+    return None
+  }
+  if markdown_editor_source_has_marker(chars, range.start - 2, "**") &&
+    markdown_editor_source_has_marker(chars, range.end, "**") {
+    return Some({ start: range.start - 2, end: range.end + 2 })
+  }
+  if markdown_editor_source_has_marker(chars, range.start - 2, "__") &&
+    markdown_editor_source_has_marker(chars, range.end, "__") {
+    return Some({ start: range.start - 2, end: range.end + 2 })
+  }
+  if markdown_editor_source_has_marker(chars, range.start - 2, "~~") &&
+    markdown_editor_source_has_marker(chars, range.end, "~~") {
+    return Some({ start: range.start - 2, end: range.end + 2 })
+  }
+  if markdown_editor_source_has_marker(chars, range.start - 1, "`") &&
+    markdown_editor_source_has_marker(chars, range.end, "`") {
+    return Some({ start: range.start - 1, end: range.end + 1 })
+  }
+  if markdown_editor_single_inline_marker_at(chars, range.start - 1, '*') &&
+    markdown_editor_single_inline_marker_at(chars, range.end, '*') {
+    return Some({ start: range.start - 1, end: range.end + 1 })
+  }
+  if markdown_editor_single_inline_marker_at(chars, range.start - 1, '_') &&
+    markdown_editor_single_inline_marker_at(chars, range.end, '_') {
+    return Some({ start: range.start - 1, end: range.end + 1 })
+  }
+  match markdown_editor_reference_source_range(source, range) {
+    Some(reference_range) => return Some(reference_range)
+    None => ()
+  }
+  None
+}
+
+///|
+fn markdown_editor_reference_source_range(
+  source : String,
+  range : @core.RichTextSourceRange,
+) -> @core.RichTextSourceRange? {
+  let text_range = @core.TextRange::new(start=range.start, end=range.end)
+  match markdown_editor_range_link_bounds(source, text_range) {
+    Some(bounds) =>
+      return Some({ start: bounds.open_start, end: bounds.target_end + 1 })
+    None => ()
+  }
+  match markdown_editor_range_image_bounds(source, text_range) {
+    Some(bounds) => Some({ start: bounds.open_start, end: bounds.target_end + 1 })
+    None => None
+  }
+}
+
+///|
+fn markdown_editor_single_inline_marker_at(
+  chars : Array[Char],
+  index : Int,
+  marker : Char,
+) -> Bool {
+  index >= 0 &&
+  index < chars.length() &&
+  chars[index] == marker &&
+  (index == 0 || chars[index - 1] != marker) &&
+  (index + 1 >= chars.length() || chars[index + 1] != marker)
+}
+
+///|
 fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
   let blocks : Array[MarkdownEditorBlock] = []
   let definitions = markdown_reference_definitions(source)
@@ -301,7 +468,8 @@ fn markdown_editor_closing_code_fence(line : String, fence : String) -> Bool {
     }
   }
   let mut index = indent + fence_chars.length()
-  while index < chars.length() && chars[index] == '`' {
+  let fence_char = fence_chars[0]
+  while index < chars.length() && chars[index] == fence_char {
     index = index + 1
   }
   while index < chars.length() {

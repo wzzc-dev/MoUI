@@ -23,7 +23,7 @@ fn markdown_editor_transform_input(
     Some(transform) => return Some(transform)
     None => ()
   }
-  match markdown_editor_wrap_selection_input(source, selection, input) {
+  match markdown_editor_wrap_selection_input(source, caret, selection, input) {
     Some(transform) => return Some(transform)
     None => ()
   }
@@ -78,6 +78,10 @@ fn markdown_editor_transform_input(
     return markdown_editor_delete_merge_block(source, caret, selection)
   }
   if input == " " {
+    match markdown_editor_complete_rule_on_space(source, caret, selection) {
+      Some(transform) => return Some(transform)
+      None => ()
+    }
     match markdown_editor_autocomplete_block_marker(source, caret, selection) {
       Some(transform) => return Some(transform)
       None => ()
@@ -129,6 +133,23 @@ fn markdown_editor_transform_input(
 }
 
 ///|
+fn markdown_editor_complete_rule_on_space(
+  source : String,
+  caret : Int,
+  selection : @core.TextRange?,
+) -> @core.RichTextInputTransform? {
+  if markdown_editor_active_selection(selection) is Some(_) {
+    return None
+  }
+  let chars = source.to_array()
+  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  let current = { caret, selection }
+  let range = markdown_editor_current_line_range(source, current)
+  let line = String::from_array(chars[range.start:range.end])
+  markdown_editor_complete_rule_on_enter(chars, range, line, caret)
+}
+
+///|
 fn markdown_editor_paste_autolink(
   source : String,
   caret : Int,
@@ -140,14 +161,17 @@ fn markdown_editor_paste_autolink(
     is Some(_) {
     return None
   }
-  let target = input.trim().to_owned()
-  if !markdown_editor_is_plain_url(target) ||
-    markdown_editor_text_length(target) != markdown_editor_text_length(input) {
+  if markdown_editor_text_length(input.trim().to_owned()) !=
+    markdown_editor_text_length(input) {
+    return None
+  }
+  let target = markdown_editor_autolink_target_with_trailing_punctuation(input)
+  if target.target == "" {
     return None
   }
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  let insert = "<" + target + ">"
+  let insert = target.leading + "<" + target.target + ">" + target.trailing
   Some(
     markdown_editor_transform_result(
       text=String::from_array(chars[:caret]) +
@@ -176,10 +200,16 @@ fn markdown_editor_complete_autolink_on_space(
     return None
   }
   let token = String::from_array(chars[start:caret])
-  if !markdown_editor_is_plain_url(token) {
+  let target = markdown_editor_autolink_target_with_trailing_punctuation(token)
+  if target.target == "" {
     return None
   }
-  let replacement = "<" + token + "> "
+  let replacement = target.leading +
+    "<" +
+    target.target +
+    ">" +
+    target.trailing +
+    " "
   Some(
     markdown_editor_transform_result(
       text=String::from_array(chars[:start]) +
@@ -206,6 +236,97 @@ fn markdown_editor_previous_token_start(
 }
 
 ///|
+struct MarkdownEditorAutolinkTarget {
+  leading : String
+  target : String
+  trailing : String
+} derive(Eq, Debug)
+
+///|
+fn markdown_editor_autolink_target_with_trailing_punctuation(
+  token : String,
+) -> MarkdownEditorAutolinkTarget {
+  let chars = token.to_array()
+  let empty = { leading: "", target: "", trailing: "" }
+  if chars.length() > 0 &&
+    !markdown_editor_autolink_trailing_punctuation(chars[chars.length() - 1]) &&
+    markdown_editor_is_autolink_target(token) {
+    return { leading: "", target: token, trailing: "" }
+  }
+  let mut start = 0
+  while start < chars.length() && markdown_editor_autolink_leading_wrapper(chars[start]) {
+    start = start + 1
+  }
+  let mut end = chars.length()
+  while end > start && markdown_editor_autolink_trailing_punctuation(chars[end - 1]) {
+    end = end - 1
+  }
+  let wrapper_end = end
+  if start > 0 {
+    while end > start && markdown_editor_autolink_trailing_wrapper(chars[end - 1]) {
+      end = end - 1
+    }
+  }
+  if start == 0 && end == chars.length() {
+    return empty
+  }
+  if !markdown_editor_autolink_wrappers_balanced(chars, start, end, wrapper_end) {
+    return empty
+  }
+  let target = String::from_array(chars[start:end])
+  if !markdown_editor_is_autolink_target(target) {
+    return empty
+  }
+  {
+    leading: String::from_array(chars[:start]),
+    target,
+    trailing: String::from_array(chars[end:]),
+  }
+}
+
+///|
+fn markdown_editor_autolink_leading_wrapper(ch : Char) -> Bool {
+  ch == '(' || ch == '[' || ch == '{'
+}
+
+///|
+fn markdown_editor_autolink_trailing_wrapper(ch : Char) -> Bool {
+  ch == ')' || ch == ']' || ch == '}'
+}
+
+///|
+fn markdown_editor_autolink_wrappers_balanced(
+  chars : Array[Char],
+  start : Int,
+  end : Int,
+  wrapper_end : Int,
+) -> Bool {
+  let trailing = wrapper_end - end
+  if start > trailing {
+    return false
+  }
+  for index in 0..<start {
+    let close_index = wrapper_end - 1 - index
+    if !markdown_editor_autolink_wrapper_pair(chars[index], chars[close_index]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn markdown_editor_autolink_wrapper_pair(open : Char, close : Char) -> Bool {
+  (open == '(' && close == ')') ||
+  (open == '[' && close == ']') ||
+  (open == '{' && close == '}')
+}
+
+///|
+fn markdown_editor_autolink_trailing_punctuation(ch : Char) -> Bool {
+  ch == '.' || ch == ',' || ch == ';' || ch == ':' || ch == '!' || ch == '?'
+}
+
+///|
 fn markdown_editor_paste_reference_over_selection(
   source : String,
   selection : @core.TextRange?,
@@ -220,7 +341,7 @@ fn markdown_editor_paste_reference_over_selection(
       }
       let command = if markdown_editor_is_image_source(target) {
         SetImageTarget(target)
-      } else if markdown_editor_is_plain_url(target) {
+      } else if markdown_editor_is_autolink_target(target) {
         SetLinkTarget(target)
       } else {
         return None
@@ -271,16 +392,103 @@ fn markdown_editor_is_plain_url(text : String) -> Bool {
 }
 
 ///|
+fn markdown_editor_is_autolink_target(text : String) -> Bool {
+  markdown_editor_is_plain_url(text) || markdown_editor_is_plain_email(text)
+}
+
+///|
+fn markdown_editor_is_plain_email(text : String) -> Bool {
+  if text == "" ||
+    text.contains("\n") ||
+    text.contains(" ") ||
+    text.contains("<") ||
+    text.contains(">") {
+    return false
+  }
+  let chars = text.to_array()
+  let mut at_index = -1
+  for index in 0..<chars.length() {
+    if chars[index] == '@' {
+      if at_index >= 0 {
+        return false
+      }
+      at_index = index
+    }
+  }
+  if at_index <= 0 || at_index + 1 >= chars.length() {
+    return false
+  }
+  let local_name = String::from_array(chars[:at_index])
+  let domain = String::from_array(chars[at_index + 1:])
+  markdown_editor_email_part_supported(local_name, local_part=true) &&
+  markdown_editor_email_part_supported(domain, local_part=false) &&
+  markdown_editor_email_domain_has_dot(domain)
+}
+
+///|
+fn markdown_editor_email_part_supported(
+  text : String,
+  local_part~ : Bool,
+) -> Bool {
+  if text == "" || text.has_prefix(".") || text.has_suffix(".") {
+    return false
+  }
+  let chars = text.to_array()
+  let mut previous_dot = false
+  for ch in chars {
+    if ch == '.' {
+      if previous_dot {
+        return false
+      }
+      previous_dot = true
+    } else if markdown_editor_email_char_supported(ch, local_part~) {
+      previous_dot = false
+    } else {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn markdown_editor_email_char_supported(
+  ch : Char,
+  local_part~ : Bool,
+) -> Bool {
+  markdown_editor_ascii_word_char(ch) ||
+  ch == '-' ||
+  (local_part && (ch == '+' || ch == '%'))
+}
+
+///|
+fn markdown_editor_email_domain_has_dot(domain : String) -> Bool {
+  let chars = domain.to_array()
+  for index in 1..<(chars.length() - 1) {
+    if chars[index] == '.' {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn markdown_editor_wrap_selection_input(
   source : String,
+  caret : Int,
   selection : @core.TextRange?,
   input : String,
 ) -> @core.RichTextInputTransform? {
+  if markdown_editor_code_block_at_content_offset(source, caret, selection)
+    is Some(_) {
+    return None
+  }
   let marker = match input {
     "**" => "**"
+    "__" => "__"
     "~~" => "~~"
     "`" => "`"
     "*" => "*"
+    "_" => "_"
     _ => return None
   }
   match markdown_editor_active_selection(selection) {
@@ -294,8 +502,30 @@ fn markdown_editor_wrap_selection_input(
         ),
       )
     }
-    None => None
+    None => markdown_editor_pair_inline_marker_input(source, marker, caret)
   }
+}
+
+///|
+fn markdown_editor_pair_inline_marker_input(
+  source : String,
+  marker : String,
+  caret : Int,
+) -> @core.RichTextInputTransform? {
+  if marker == "" || marker == "*" || marker == "_" {
+    return None
+  }
+  let chars = source.to_array()
+  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  Some(
+    markdown_editor_transform_result(
+      text=String::from_array(chars[:caret]) +
+        marker +
+        marker +
+        String::from_array(chars[caret:]),
+      caret=caret + markdown_editor_text_length(marker),
+    ),
+  )
 }
 
 ///|
@@ -367,6 +597,10 @@ fn markdown_editor_skip_closing_delimiter(
     return None
   }
   let close = match input {
+    "**" => "**"
+    "__" => "__"
+    "~~" => "~~"
+    "_" => "_"
     ")" => ")"
     "]" => "]"
     "}" => "}"
@@ -377,8 +611,24 @@ fn markdown_editor_skip_closing_delimiter(
   }
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  if close == "_" {
+    match markdown_editor_find_inline_opening_marker(chars, caret, close) {
+      Some(open_start) =>
+        if !markdown_editor_inline_marker_pair_supported(
+          chars, open_start, markdown_editor_text_length(close), caret, close,
+        ) {
+          return None
+        }
+      None => return None
+    }
+  }
   if markdown_editor_source_has_marker(chars, caret, close) {
-    Some(markdown_editor_transform_result(text=source, caret=caret + 1))
+    Some(
+      markdown_editor_transform_result(
+        text=source,
+        caret=caret + markdown_editor_text_length(close),
+      ),
+    )
   } else {
     None
   }
@@ -445,17 +695,18 @@ fn markdown_editor_opening_code_fence_marker(
   if chars.length() < indent + 3 {
     return None
   }
-  if chars[indent] != '`' ||
-    chars[indent + 1] != '`' ||
-    chars[indent + 2] != '`' {
+  let fence_char = chars[indent]
+  if (fence_char != '`' && fence_char != '~') ||
+    chars[indent + 1] != fence_char ||
+    chars[indent + 2] != fence_char {
     return None
   }
   let mut fence_end = indent + 3
-  while fence_end < chars.length() && chars[fence_end] == '`' {
+  while fence_end < chars.length() && chars[fence_end] == fence_char {
     fence_end = fence_end + 1
   }
   for index in fence_end..<chars.length() {
-    if chars[index] == '`' {
+    if fence_char == '`' && chars[index] == fence_char {
       return None
     }
   }
@@ -701,19 +952,59 @@ fn markdown_editor_typed_block_marker(before : String) -> String {
   let token = String::from_array(chars[indent:])
   if markdown_editor_typed_heading_marker(token) is Some(level) {
     prefix + markdown_editor_heading_marker(level) + " "
-  } else if token == "-" || token == "*" {
+  } else if token == "-" || token == "*" || token == "+" {
     prefix + "- "
-  } else if token == "[]" || token == "[ ]" {
+  } else if markdown_editor_typed_task_marker(token, checked=false) {
     prefix + "- [ ] "
-  } else if token == "[x]" || token == "[X]" {
+  } else if markdown_editor_typed_task_marker(token, checked=true) {
     prefix + "- [x] "
-  } else if token == ">" {
-    prefix + "> "
+  } else if markdown_editor_typed_quote_marker(token) is Some(depth) {
+    prefix + markdown_editor_quote_marker(depth)
   } else if markdown_editor_typed_ordered_marker(token) is Some(number) {
     prefix + number.to_string() + ". "
   } else {
     ""
   }
+}
+
+///|
+fn markdown_editor_typed_quote_marker(token : String) -> Int? {
+  let chars = token.to_array()
+  if chars.length() < 1 {
+    return None
+  }
+  for ch in chars {
+    if ch != '>' {
+      return None
+    }
+  }
+  Some(chars.length())
+}
+
+///|
+fn markdown_editor_quote_marker(depth : Int) -> String {
+  let parts : Array[String] = []
+  for _ in 0..<depth {
+    parts.push(">")
+  }
+  parts.join(" ") + " "
+}
+
+///|
+fn markdown_editor_typed_task_marker(
+  token : String,
+  checked~ : Bool,
+) -> Bool {
+  let checkbox = if checked { ["[x]", "[X]"] } else { ["[]", "[ ]"] }
+  for item in checkbox {
+    if token == item {
+      return true
+    }
+    if token == "- " + item || token == "* " + item || token == "+ " + item {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -733,7 +1024,8 @@ fn markdown_editor_typed_heading_marker(token : String) -> Int? {
 ///|
 fn markdown_editor_typed_ordered_marker(token : String) -> Int? {
   let chars = token.to_array()
-  if chars.length() < 2 || chars[chars.length() - 1] != '.' {
+  if chars.length() < 2 ||
+    (chars[chars.length() - 1] != '.' && chars[chars.length() - 1] != ')') {
     return None
   }
   for index in 0..<(chars.length() - 1) {
@@ -1264,20 +1556,24 @@ fn markdown_editor_backspace_inline_marker(
     Some(transform) => return Some(transform)
     None => ()
   }
-  for marker in ["**", "~~", "`", "*"] {
+  for marker in ["**", "__", "~~", "`", "*", "_"] {
     let marker_length = markdown_editor_text_length(marker)
     if caret >= marker_length &&
       markdown_editor_source_has_marker(chars, caret - marker_length, marker) {
       match markdown_editor_find_inline_closing_marker(chars, caret, marker) {
         Some(close_start) =>
-          return Some(
-            markdown_editor_remove_inline_marker_pair(
-              chars,
-              caret - marker_length,
-              marker_length,
-              close_start,
-            ),
-          )
+          if markdown_editor_inline_marker_pair_supported(
+            chars, caret - marker_length, marker_length, close_start, marker,
+          ) {
+            return Some(
+              markdown_editor_remove_inline_marker_pair(
+                chars,
+                caret - marker_length,
+                marker_length,
+                close_start,
+              ),
+            )
+          }
         None => ()
       }
     }
@@ -1294,16 +1590,20 @@ fn markdown_editor_delete_inline_marker(
     Some(transform) => return Some(transform)
     None => ()
   }
-  for marker in ["**", "~~", "`", "*"] {
+  for marker in ["**", "__", "~~", "`", "*", "_"] {
     let marker_length = markdown_editor_text_length(marker)
     if markdown_editor_source_has_marker(chars, caret, marker) {
       match markdown_editor_find_inline_opening_marker(chars, caret, marker) {
         Some(open_start) =>
-          return Some(
-            markdown_editor_remove_inline_marker_pair(
-              chars, open_start, marker_length, caret,
-            ),
-          )
+          if markdown_editor_inline_marker_pair_supported(
+            chars, open_start, marker_length, caret, marker,
+          ) {
+            return Some(
+              markdown_editor_remove_inline_marker_pair(
+                chars, open_start, marker_length, caret,
+              ),
+            )
+          }
         None => ()
       }
     }
@@ -1540,6 +1840,25 @@ fn markdown_editor_remove_inline_marker_pair(
 }
 
 ///|
+fn markdown_editor_inline_marker_pair_supported(
+  chars : Array[Char],
+  open_start : Int,
+  marker_length : Int,
+  close_start : Int,
+  marker : String,
+) -> Bool {
+  if marker != "_" {
+    return true
+  }
+  let before_open_is_word = open_start > 0 &&
+    markdown_editor_ascii_word_char(chars[open_start - 1])
+  let after_close = close_start + marker_length
+  let after_close_is_word = after_close < chars.length() &&
+    markdown_editor_ascii_word_char(chars[after_close])
+  !before_open_is_word && !after_close_is_word
+}
+
+///|
 fn markdown_editor_indent_lines(
   source : String,
   caret : Int,
@@ -1646,12 +1965,24 @@ fn markdown_editor_exit_empty_continuation(
   range : MarkdownSourceRange,
   line : String,
 ) -> @core.RichTextInputTransform? {
-  if markdown_editor_continuation_marker(line) == "" {
+  let marker = markdown_editor_continuation_marker(line)
+  if marker == "" {
     return None
   }
-  let prefix_length = markdown_editor_marker_prefix_length(line)
-  if prefix_length == 0 || markdown_editor_text_length(line) != prefix_length {
+  if markdown_editor_text_length(line) != markdown_editor_text_length(marker) {
     return None
+  }
+  match markdown_editor_quoted_continuation_parent(line) {
+    Some(parent) =>
+      return Some(
+        markdown_editor_transform_result(
+          text=String::from_array(chars[:range.start]) +
+            parent +
+            String::from_array(chars[range.end:]),
+          caret=range.start + markdown_editor_text_length(parent),
+        ),
+      )
+    None => ()
   }
   if markdown_editor_line_indent_prefix_length(line) > 0 {
     let outdented = markdown_editor_outdent_line(line)
@@ -1674,11 +2005,41 @@ fn markdown_editor_exit_empty_continuation(
 }
 
 ///|
+fn markdown_editor_quoted_continuation_parent(line : String) -> String? {
+  let chars = line.to_array()
+  let indent = markdown_editor_leading_indent_length(chars)
+  if chars.length() < indent + 3 ||
+    chars[indent] != '>' ||
+    chars[indent + 1] != ' ' {
+    return None
+  }
+  let nested = String::from_array(chars[indent + 2:])
+  let nested_marker = markdown_editor_continuation_marker(nested)
+  if nested_marker == "" ||
+    markdown_editor_text_length(nested_marker) !=
+    markdown_editor_text_length(nested) {
+    None
+  } else {
+    Some(String::from_array(chars[:indent + 2]))
+  }
+}
+
+///|
 fn markdown_editor_continuation_marker(line : String) -> String {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   let indent_text = String::from_array(chars[:indent])
-  if chars.length() >= indent + 6 &&
+  if chars.length() >= indent + 2 &&
+    chars[indent] == '>' &&
+    chars[indent + 1] == ' ' {
+    let nested = String::from_array(chars[indent + 2:])
+    let nested_marker = markdown_editor_continuation_marker(nested)
+    if nested_marker == "" {
+      indent_text + "> "
+    } else {
+      indent_text + "> " + nested_marker
+    }
+  } else if chars.length() >= indent + 6 &&
     chars[indent] == '-' &&
     chars[indent + 1] == ' ' &&
     chars[indent + 2] == '[' &&
@@ -1694,10 +2055,6 @@ fn markdown_editor_continuation_marker(line : String) -> String {
     (chars[indent] == '-' || chars[indent] == '*' || chars[indent] == '+') &&
     chars[indent + 1] == ' ' {
     indent_text + String::from_array(chars[indent:indent + 2])
-  } else if chars.length() >= indent + 2 &&
-    chars[indent] == '>' &&
-    chars[indent + 1] == ' ' {
-    indent_text + "> "
   } else {
     markdown_editor_ordered_continuation_marker(chars, indent)
   }

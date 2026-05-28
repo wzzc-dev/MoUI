@@ -43,15 +43,48 @@ Core rich text blocks can carry source and content ranges. This lets the editor:
 The editor supports formatted editing for common block and inline structures:
 
 - Inline commands for bold, italic, code, strikethrough, links, and images.
-- Contextual editing for link URLs, image sources, reference definitions,
-  footnotes, raw HTML blocks, and tables.
+  Typed bold markers support both `**` and `__` input forms; selected text can
+  be wrapped with `*` or `_` italic markers. Reapplying an inline formatting
+  command inside the current formatted span removes that span's Markdown
+  markers, matching the expected visual-editing toggle behavior.
+- Contextual editing for link URLs, autolink targets, image sources, reference
+  definitions, footnotes, raw HTML blocks, and tables. Link and image target
+  controls activate from either selected visible text or the caret inside the
+  formatted span, and reapplying the link/image command at that caret unwraps
+  the current Markdown reference.
 - Heading, paragraph, list, task-list, ordered-list, quote, and code-block
   commands with keyboard shortcuts.
-- A quiet writing shell with document title, active-block status, word/line
-  counts, estimated reading time, and a minimal source toggle while keeping the
-  formatted page as the primary surface.
-- Setext heading handling, list continuation on Enter, ordered-list
-  renumbering, Tab and Shift-Tab indentation, and marker-aware Backspace.
+- Inline, link, and heading commands support the existing app shortcuts plus
+  common Windows writing shortcuts such as `Ctrl+B`, `Ctrl+I`, `Ctrl+E`,
+  `Ctrl+K`, `Ctrl+Shift+X`, and `Ctrl+1` through `Ctrl+6`.
+- A quiet writing shell with a lightweight active-block/status strip, word/line
+  counts, estimated reading time, current inline format/reference feedback, and
+  a minimal source toggle while keeping the formatted page as the primary
+  surface.
+- The formatted surface keeps Markdown markers hidden in inactive spans, then
+  temporarily reveals the active inline span's markers while the caret or
+  selection is inside bold, italic, code, strikethrough, link, image, or
+  autolink text.
+- The active block also temporarily reveals its Markdown prefix, including
+  heading markers, list and task markers, ordered-list numbers, and blockquote
+  markers, while inactive blocks keep their cleaner visual presentation.
+- Setext heading handling, list and quote-list continuation on Enter,
+  ordered-list renumbering, Tab and Shift-Tab indentation, inline marker
+  pairing/skip, and marker-aware Backspace.
+- Fenced code editing supports both backtick and tilde fences, including Enter
+  completion for `~~~`/`~~~~` openers with optional language info.
+- Typed-space block shortcuts recognize common Markdown marker variants,
+  including `+ ` bullets and `1) ` ordered-list markers, and normalize them to
+  the editor's canonical Markdown source. Natural task-list marker forms such
+  as `- [ ] `, `* [x] `, and `+ [ ] ` are accepted as well. Consecutive quote
+  markers such as `>> ` are expanded into nested blockquote prefixes.
+  Horizontal rule markers such as `--- `, `*** `, and `___ ` complete
+  immediately on Space or Enter.
+- Typing or pasting bare HTTP(S) URLs and email addresses autocompletes them
+  into Markdown autolinks outside code blocks, while common trailing sentence
+  punctuation and surrounding `()`, `[]`, or `{}` wrappers stay outside the
+  generated autolink. Pasting a URL, email address, or image source over
+  selected text turns that selection into a link or image.
 - Typora-like paired delimiter input for brackets, parentheses, braces, quotes,
   and backticks, including selection wrapping.
 - Table previews with source-mapped cells, row/column insertion and deletion,
@@ -62,9 +95,11 @@ The editor supports formatted editing for common block and inline structures:
 Source preview remains available from the top chrome for inspection, but the
 formatted surface is the primary user flow.
 
-The editor page uses a separate decorative paper layer behind the rich-text
-editor. The editable node remains the direct pointer target while the visual
-surface provides the white page, border, and shadow.
+The editor shell centers a white writing page in a quiet workspace, keeping the
+rich-text editor as the direct pointer target while the visual surface provides
+the paper, border, and shadow. The source preview remains opt-in and opens as a
+full-height side inspector so the default screen stays focused on formatted
+writing.
 
 On macOS, the editor page sizes itself from the formatted rich-text document and
 uses ScrollSpec wheel handling so longer documents scroll inside the clean

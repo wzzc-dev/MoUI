@@ -322,7 +322,7 @@ fn MarkdownEditorApp::root(
   let scroll_offset = ctx.watch_scroll(self.editor_scroll)
   let workspace = column(
     [
-      self.chrome(theme, snapshot, block_label),
+      self.chrome(theme, snapshot, block_label, document, selection),
       row(
         [
           editor_source_layout(
@@ -345,9 +345,9 @@ fn MarkdownEditorApp::root(
       ),
     ],
     spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Start,
+    align=@views.CrossAlign::Center,
   )
-  surface(
+  markdown_editor_centered_workspace(
     padding_edges(
       workspace,
       top=theme.spacing_scale.lg,
@@ -355,11 +355,46 @@ fn MarkdownEditorApp::root(
       bottom=theme.spacing_scale.lg,
       left=theme.spacing_scale.md,
     ),
-    variant=@views.SurfaceVariant::Base,
-    theme~,
-    background=@core.Color::rgba(r=0.985, g=0.985, b=0.98),
-    corner_radius=theme.radius_scale.sm,
-    padding=0.0,
+  )
+}
+
+///|
+fn markdown_editor_centered_workspace(
+  child : @core.View[MarkdownEditorMsg],
+) -> @core.View[MarkdownEditorMsg] {
+  @views.custom_children_layout(
+    children=[child],
+    measure=ctx => ctx.constraints.max,
+    place=ctx => {
+      let child_size = ctx.child_sizes[0]
+      let x = if ctx.frame.size.width >= 1100.0 {
+        ctx.frame.origin.x +
+        markdown_editor_max_double(
+          0.0,
+          (ctx.frame.size.width - child_size.width) / 2.0,
+        )
+      } else {
+        ctx.frame.origin.x
+      }
+      let y = ctx.frame.origin.y
+      [
+        @core.Rect::new(
+          x~,
+          y~,
+          width=child_size.width,
+          height=child_size.height,
+        ),
+      ]
+    },
+    paint=bounds => {
+      [
+        @core.DrawCommand::FillRect(
+          bounds,
+          @core.Color::rgba(r=0.985, g=0.985, b=0.98),
+        ),
+      ]
+    },
+    semantics_label="Markdown editor workspace",
   )
 }
 
@@ -369,16 +404,16 @@ fn MarkdownEditorApp::chrome(
   theme : @core.Theme,
   snapshot : MarkdownEditorSnapshot,
   block_label : String,
+  source : String,
+  selection : MarkdownEditorSelection,
 ) -> @core.View[MarkdownEditorMsg] {
   ignore(self)
   row(
     [
-      text(snapshot.active_heading, width=520.0, height=32.0)
-      .font(theme.typography.title)
-      .foreground(theme.palette.foreground),
       text(
-        block_label + " / " + markdown_editor_reading_label(snapshot),
-        width=300.0,
+        markdown_editor_status_label(block_label, snapshot) +
+        markdown_editor_active_format_suffix(source, selection),
+        width=560.0,
         height=28.0,
       )
       .font(theme.typography.caption)
@@ -395,6 +430,14 @@ fn MarkdownEditorApp::chrome(
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Center,
   )
+}
+
+///|
+fn markdown_editor_status_label(
+  block_label : String,
+  snapshot : MarkdownEditorSnapshot,
+) -> String {
+  block_label + " / " + markdown_editor_reading_label(snapshot)
 }
 
 ///|
@@ -615,6 +658,104 @@ fn MarkdownEditorApp::target_bar(
 }
 
 ///|
+fn markdown_editor_command_active(
+  source : String,
+  selection : MarkdownEditorSelection,
+  command : MarkdownEditorCommand,
+) -> Bool {
+  match command {
+    Bold | Italic | Code | Strikethrough =>
+      markdown_editor_inline_command_active(source, selection, command)
+    Link => markdown_editor_link_context(source, selection) is Some(_)
+    Image => markdown_editor_image_context(source, selection) is Some(_)
+    Heading(level) =>
+      markdown_editor_active_block_label(source, selection) ==
+      "Heading " + level.to_string()
+    BulletList =>
+      markdown_editor_active_block_label(source, selection) == "Bullet list"
+    TaskList =>
+      markdown_editor_active_block_label(source, selection) == "Task list"
+    OrderedList =>
+      markdown_editor_active_block_label(source, selection) == "Ordered list"
+    Quote => markdown_editor_active_block_label(source, selection) == "Quote"
+    CodeBlock =>
+      markdown_editor_active_block_label(source, selection) == "Code block"
+    HorizontalRule =>
+      markdown_editor_active_block_label(source, selection) == "Rule"
+    Table => markdown_editor_active_block_label(source, selection) == "Table"
+    _ => false
+  }
+}
+
+///|
+fn markdown_editor_active_format_suffix(
+  source : String,
+  selection : MarkdownEditorSelection,
+) -> String {
+  let labels : Array[String] = []
+  if markdown_editor_command_active(source, selection, Bold) {
+    labels.push("Bold")
+  }
+  if markdown_editor_command_active(source, selection, Italic) {
+    labels.push("Italic")
+  }
+  if markdown_editor_command_active(source, selection, Code) {
+    labels.push("Code")
+  }
+  if markdown_editor_command_active(source, selection, Strikethrough) {
+    labels.push("Strike")
+  }
+  if markdown_editor_command_active(source, selection, Link) {
+    labels.push("Link")
+  }
+  if markdown_editor_command_active(source, selection, Image) {
+    labels.push("Image")
+  }
+  if labels.length() == 0 {
+    ""
+  } else {
+    " / Active: " + labels.join(", ")
+  }
+}
+
+///|
+fn markdown_editor_inline_command_active(
+  source : String,
+  selection : MarkdownEditorSelection,
+  command : MarkdownEditorCommand,
+) -> Bool {
+  let marker = markdown_editor_inline_marker(command)
+  match markdown_editor_active_selection(selection.selection) {
+    Some(range) =>
+      markdown_editor_range_has_inline_marker(source, range.normalized(), marker) &&
+      markdown_editor_inline_active_marker_supported(
+        source, range.normalized(), marker,
+      )
+    None => markdown_editor_inline_marker_pair_at_caret(
+      source, selection.caret, marker,
+    ) is Some(range) &&
+      markdown_editor_inline_active_marker_supported(source, range, marker)
+  }
+}
+
+///|
+fn markdown_editor_inline_active_marker_supported(
+  source : String,
+  range : @core.TextRange,
+  marker : String,
+) -> Bool {
+  if marker != "*" {
+    return true
+  }
+  let chars = source.to_array()
+  let open = range.start - 1
+  let close = range.end
+  let doubled_open = open > 0 && chars[open - 1] == '*'
+  let doubled_close = close + 1 < chars.length() && chars[close + 1] == '*'
+  !doubled_open && !doubled_close
+}
+
+///|
 fn floating_target_palette(
   editor : @core.View[MarkdownEditorMsg],
   target_bar : @core.View[MarkdownEditorMsg],
@@ -822,6 +963,24 @@ fn markdown_editor_shift_shortcut(key : String) -> @core.KeyboardShortcut {
 }
 
 ///|
+fn markdown_editor_control_shortcut(key : String) -> @core.KeyboardShortcut {
+  @core.KeyboardShortcut::new(
+    key~,
+    modifiers=@core.KeyModifiers::new(control=true),
+  )
+}
+
+///|
+fn markdown_editor_control_shift_shortcut(
+  key : String
+) -> @core.KeyboardShortcut {
+  @core.KeyboardShortcut::new(
+    key~,
+    modifiers=@core.KeyModifiers::new(control=true, shift=true),
+  )
+}
+
+///|
 fn markdown_editor_command_binding(
   label : String,
   shortcut : @core.KeyboardShortcut,
@@ -845,12 +1004,27 @@ fn MarkdownEditorApp::action_commands(
     markdown_editor_command_binding("Bold", markdown_editor_shortcut("b"), () => {
       self.update(ApplyCommand(Bold))
     }),
+    markdown_editor_command_binding(
+      "Bold",
+      markdown_editor_control_shortcut("b"),
+      () => self.update(ApplyCommand(Bold)),
+    ),
     markdown_editor_command_binding("Italic", markdown_editor_shortcut("i"), () => {
       self.update(ApplyCommand(Italic))
     }),
     markdown_editor_command_binding(
+      "Italic",
+      markdown_editor_control_shortcut("i"),
+      () => self.update(ApplyCommand(Italic)),
+    ),
+    markdown_editor_command_binding(
       "Inline Code",
       markdown_editor_shortcut("e"),
+      () => self.update(ApplyCommand(Code)),
+    ),
+    markdown_editor_command_binding(
+      "Inline Code",
+      markdown_editor_control_shortcut("e"),
       () => self.update(ApplyCommand(Code)),
     ),
     markdown_editor_command_binding(
@@ -858,9 +1032,19 @@ fn MarkdownEditorApp::action_commands(
       markdown_editor_shift_shortcut("x"),
       () => self.update(ApplyCommand(Strikethrough)),
     ),
+    markdown_editor_command_binding(
+      "Strikethrough",
+      markdown_editor_control_shift_shortcut("x"),
+      () => self.update(ApplyCommand(Strikethrough)),
+    ),
     markdown_editor_command_binding("Link", markdown_editor_shortcut("l"), () => {
       self.update(ApplyCommand(Link))
     }),
+    markdown_editor_command_binding(
+      "Link",
+      markdown_editor_control_shortcut("k"),
+      () => self.update(ApplyCommand(Link)),
+    ),
     markdown_editor_command_binding(
       "Image",
       markdown_editor_shift_shortcut("i"),
@@ -872,8 +1056,18 @@ fn MarkdownEditorApp::action_commands(
       () => self.update(ApplyCommand(Heading(1))),
     ),
     markdown_editor_command_binding(
+      "Heading 1",
+      markdown_editor_control_shortcut("1"),
+      () => self.update(ApplyCommand(Heading(1))),
+    ),
+    markdown_editor_command_binding(
       "Heading 2",
       markdown_editor_shortcut("2"),
+      () => self.update(ApplyCommand(Heading(2))),
+    ),
+    markdown_editor_command_binding(
+      "Heading 2",
+      markdown_editor_control_shortcut("2"),
       () => self.update(ApplyCommand(Heading(2))),
     ),
     markdown_editor_command_binding(
@@ -882,8 +1076,18 @@ fn MarkdownEditorApp::action_commands(
       () => self.update(ApplyCommand(Heading(3))),
     ),
     markdown_editor_command_binding(
+      "Heading 3",
+      markdown_editor_control_shortcut("3"),
+      () => self.update(ApplyCommand(Heading(3))),
+    ),
+    markdown_editor_command_binding(
       "Heading 4",
       markdown_editor_shortcut("4"),
+      () => self.update(ApplyCommand(Heading(4))),
+    ),
+    markdown_editor_command_binding(
+      "Heading 4",
+      markdown_editor_control_shortcut("4"),
       () => self.update(ApplyCommand(Heading(4))),
     ),
     markdown_editor_command_binding(
@@ -892,8 +1096,18 @@ fn MarkdownEditorApp::action_commands(
       () => self.update(ApplyCommand(Heading(5))),
     ),
     markdown_editor_command_binding(
+      "Heading 5",
+      markdown_editor_control_shortcut("5"),
+      () => self.update(ApplyCommand(Heading(5))),
+    ),
+    markdown_editor_command_binding(
       "Heading 6",
       markdown_editor_shortcut("6"),
+      () => self.update(ApplyCommand(Heading(6))),
+    ),
+    markdown_editor_command_binding(
+      "Heading 6",
+      markdown_editor_control_shortcut("6"),
       () => self.update(ApplyCommand(Heading(6))),
     ),
     markdown_editor_command_binding(
@@ -958,8 +1172,46 @@ fn markdown_editor_reading_label(snapshot : MarkdownEditorSnapshot) -> String {
 fn source_preview(
   text : String,
   theme : @core.Theme,
+  height~ : Double,
 ) -> @core.View[MarkdownEditorMsg] {
-  scroll_view(source_preview_lines(text, theme), width=260.0, height=340.0)
+  scroll_view(source_preview_lines(text, theme), width=260.0, height~)
+}
+
+///|
+fn source_inspector(
+  source : String,
+  theme : @core.Theme,
+  height~ : Double,
+) -> @core.View[MarkdownEditorMsg] {
+  surface(
+    padding_edges(
+      column(
+        [
+          text("Markdown source", width=260.0, height=24.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          source_preview(
+            source,
+            theme,
+            height=markdown_editor_max_double(0.0, height - 52.0),
+          ),
+        ],
+        spacing=theme.spacing_scale.sm,
+        align=@views.CrossAlign::Start,
+      ),
+      top=theme.spacing_scale.md,
+      right=theme.spacing_scale.sm,
+      bottom=theme.spacing_scale.md,
+      left=theme.spacing_scale.sm,
+    ),
+    width=292.0,
+    height~,
+    variant=@views.SurfaceVariant::Base,
+    theme~,
+    background=@core.Color::rgba(r=0.972, g=0.972, b=0.966),
+    corner_radius=theme.radius_scale.sm,
+    padding=0.0,
+  )
 }
 
 ///|
@@ -977,11 +1229,11 @@ fn editor_source_layout(
   on_selection_change : (Int, @core.TextRange?) -> MarkdownEditorMsg,
   on_prefix_click : (Int) -> MarkdownEditorMsg,
 ) -> @core.View[MarkdownEditorMsg] {
-  let editor_width = if show_source { 560.0 } else { 760.0 }
-  let viewport_height = 500.0
+  let editor_width = if show_source { 640.0 } else { 780.0 }
+  let viewport_height = 520.0
   let content_height = markdown_editor_max_double(
     viewport_height,
-    @core.rich_text_document_height(snapshot.rich_text, editor_font) + 40.0,
+    @core.rich_text_document_height(snapshot.rich_text, editor_font) + 72.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,
@@ -995,7 +1247,7 @@ fn editor_source_layout(
     editor_page(
       markdown_editor(
         binding,
-        markdown_editor_format,
+        source => markdown_editor_format_for_selection(source, selection),
         placeholder="Start writing Markdown",
         variant=@views.TextFieldVariant::Plain,
         theme~,
@@ -1032,20 +1284,7 @@ fn editor_source_layout(
     let editor_and_source = row(
       [
         editor,
-        surface(
-          column(
-            [
-              text("Markdown source", width=260.0, height=28.0)
-              .font(theme.typography.control)
-              .foreground(theme.palette.foreground),
-              source_preview(snapshot.source, theme),
-            ],
-            spacing=theme.spacing_scale.sm,
-            align=@views.CrossAlign::Start,
-          ),
-          variant=@views.SurfaceVariant::Base,
-          theme~,
-        ).frame(width=300.0, height=viewport_height),
+        source_inspector(snapshot.source, theme, height=viewport_height),
       ],
       spacing=theme.spacing_scale.lg,
       align=@views.CrossAlign::Start,
@@ -1131,8 +1370,8 @@ fn source_preview_line(
 ///|
 pub fn MarkdownEditorApp::runtime(
   self : MarkdownEditorApp,
-  width? : Double = 980.0,
-  height? : Double = 640.0,
+  width? : Double = 1120.0,
+  height? : Double = 720.0,
 ) -> @core.AppRuntime {
   let runtime = @core.AppRuntime::new_component_view(
     root=ctx => self.root(ctx),
@@ -1145,7 +1384,7 @@ pub fn MarkdownEditorApp::runtime(
 
 ///|
 fn sample_markdown() -> String {
-  "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n- Use shortcuts or contextual controls\n- Verify source on the right\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n---"
+  "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n- Use shortcuts or contextual controls\n- Open source only when needed\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n---"
 }
 
 ///|
