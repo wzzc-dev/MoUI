@@ -1,0 +1,9 @@
+{
+  "name": "wzzc-dev/skia_mbt_native_smoke",
+  "version": "0.1.0",
+  "deps": {
+    "wzzc-dev/skia_mbt": {
+      "path": "../.."
+    }
+  }
+}

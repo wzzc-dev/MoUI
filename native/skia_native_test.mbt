@@ -121,21 +121,131 @@ test "image api typechecks" {
 
 ///|
 test "path api typechecks" {
+  let value_path = @skia.Path::new()
+    .move_to(@skia.Point::new(0, 0))
+    .line_to(@skia.Point::new(10, 0))
+    .quad_to(@skia.Point::new(12, 4), @skia.Point::new(10, 10))
+    .conic_to(@skia.Point::new(12, 12), @skia.Point::new(10, 14), 0.5)
+    .cubic_to(
+      @skia.Point::new(7, 12),
+      @skia.Point::new(3, 12),
+      @skia.Point::new(0, 10),
+    )
+    .close()
+  match @native.Path::from_value(value_path) {
+    None => ()
+    Some(path) => {
+      assert_true(path.is_available())
+      assert_true(!path.is_empty())
+      assert_true(path.is_finite())
+      assert_true(path.fill_type() == value_path.fill_type)
+      assert_true(path.bounds() == value_path.bounds())
+      assert_eq(path.count_verbs(), value_path.count_verbs())
+      assert_eq(path.count_points(), value_path.count_points())
+      assert_true(path.segment_masks() == value_path.segment_masks())
+      assert_true(path.is_last_contour_closed())
+    }
+  }
   match @native.Path::new() {
     None => ()
     Some(path) => {
       assert_true(path.is_available())
       assert_true(path.is_empty())
+      assert_true(path.is_finite())
+      assert_true(path.last_point() is None)
+      assert_true(path.is_line() is None)
+      assert_eq(path.count_verbs(), 0)
+      assert_eq(path.count_points(), 0)
+      assert_true(!path.is_last_contour_closed())
+      assert_true(path.bounds() is None)
+      path.set_fill_type(@skia.EvenOdd)
+      assert_true(path.fill_type() == @skia.EvenOdd)
+      assert_true(!path.is_inverse_fill_type())
+      path.set_fill_type(@skia.InverseEvenOdd)
+      assert_true(path.is_inverse_fill_type())
+      path.set_fill_type(@skia.EvenOdd)
+      path.move_to(@skia.Point::new(1, 2))
+      path.line_to(@skia.Point::new(3, 4))
+      assert_true(path.last_point() == Some(@skia.Point::new(3, 4)))
+      assert_true(
+        path.is_line() ==
+        Some(
+          @skia.PathLine::new(@skia.Point::new(1, 2), @skia.Point::new(3, 4)),
+        ),
+      )
+      path.rewind()
+      path.add_rect(@skia.Rect::from_xywh(1, 2, 3, 4))
+      assert_true(path.bounds() == Some(@skia.Rect::from_xywh(1, 2, 3, 4)))
+      assert_true(
+        path.is_rect() ==
+        Some(
+          @skia.PathRect::new(@skia.Rect::from_xywh(1, 2, 3, 4), true, @skia.CW),
+        ),
+      )
+      assert_true(path.contains(@skia.Point::new(2, 3)))
+      assert_true(!path.contains(@skia.Point::new(9, 9)))
+      assert_true(path.segment_masks().contains(@skia.PathSegmentMask::line()))
+      assert_eq(path.count_verbs(), 5)
+      assert_eq(path.count_points(), 4)
+      assert_true(path.is_last_contour_closed())
+      path.rewind()
+      path.add_oval(@skia.Rect::from_xywh(0, 0, 10, 20), direction=@skia.CCW)
+      assert_true(path.bounds() == Some(@skia.Rect::from_xywh(0, 0, 10, 20)))
+      assert_true(path.is_oval() == Some(@skia.Rect::from_xywh(0, 0, 10, 20)))
+      assert_true(path.compute_tight_bounds() == path.bounds())
+      assert_true(path.count_verbs() >= 5)
+      assert_true(path.is_last_contour_closed())
+      path.rewind()
+      path.add_circle(@skia.Point::new(5, 5), 3)
+      assert_true(path.bounds() == Some(@skia.Rect::from_xywh(2, 2, 6, 6)))
+      assert_true(path.is_oval() == Some(@skia.Rect::from_xywh(2, 2, 6, 6)))
+      assert_true(path.is_last_contour_closed())
+      path.rewind()
+      path.add_round_rect(@skia.Rect::from_xywh(0, 0, 10, 8), 2, 3)
+      assert_true(path.bounds() == Some(@skia.Rect::from_xywh(0, 0, 10, 8)))
+      assert_true(path.compute_tight_bounds() == path.bounds())
+      assert_true(path.is_last_contour_closed())
+      path.rewind()
+      path.add_rrect(
+        @skia.RRect::from_rect_xy(@skia.Rect::from_xywh(0, 0, 10, 8), 2, 3),
+      )
+      assert_true(path.bounds() == Some(@skia.Rect::from_xywh(0, 0, 10, 8)))
+      assert_true(path.is_last_contour_closed())
+      path.rewind()
+      path.add_rect(@skia.Rect::from_xywh(1, 2, 3, 4))
+      path.offset(10, 20)
+      assert_true(path.bounds() == Some(@skia.Rect::from_xywh(11, 22, 3, 4)))
+      path.transform(@skia.Matrix::scale_translate(2, 3, 1, 2))
+      assert_true(path.bounds() == Some(@skia.Rect::new(23, 68, 29, 80)))
+      path.rewind()
       path.move_to(@skia.Point::new(0, 0))
       path.line_to(@skia.Point::new(10, 0))
       path.quad_to(@skia.Point::new(12, 4), @skia.Point::new(10, 10))
+      path.conic_to(@skia.Point::new(12, 12), @skia.Point::new(10, 14), 0.5)
       path.cubic_to(
         @skia.Point::new(7, 12),
         @skia.Point::new(3, 12),
         @skia.Point::new(0, 10),
       )
       path.close()
+      assert_true(path.bounds() == value_path.bounds())
+      assert_true(
+        path.compute_tight_bounds() == value_path.compute_tight_bounds(),
+      )
+      assert_eq(path.count_verbs(), value_path.count_verbs())
+      assert_eq(path.count_points(), value_path.count_points())
+      assert_true(path.is_last_contour_closed())
+      path.set_fill_type(@skia.EvenOdd)
+      path.rewind()
+      assert_true(path.is_empty())
+      assert_eq(path.count_verbs(), 0)
+      assert_eq(path.count_points(), 0)
+      assert_true(path.segment_masks() == @skia.PathSegmentMask::empty())
+      assert_true(!path.is_last_contour_closed())
+      assert_true(path.bounds() is None)
+      assert_true(path.fill_type() == @skia.Winding)
       path.reset()
+      assert_true(path.bounds() is None)
     }
   }
 }
@@ -268,6 +378,14 @@ test "canvas draw api typechecks" {
     let save_count = canvas.save()
     assert_true(save_count >= 0)
     assert_true(canvas.save_count() >= 0)
+    let layer_count = canvas.save_layer()
+    assert_true(layer_count >= 0)
+    canvas.restore_to_count(save_count)
+    let bounded_layer_count = canvas.save_layer(
+      bounds=Some(@skia.Rect::from_xywh(0, 0, 12, 12)),
+      paint~,
+    )
+    assert_true(bounded_layer_count >= 0)
     canvas.translate(@skia.Point::new(1, 2))
     canvas.scale(@skia.Size::new(2, 2))
     canvas.rotate(45)
@@ -282,6 +400,16 @@ test "canvas draw api typechecks" {
       op=@skia.Difference,
       anti_alias=true,
     )
+    let clip_rrect = @skia.RRect::from_rect_xy(
+      @skia.Rect::from_xywh(1, 1, 14, 14),
+      2,
+      3,
+    )
+    canvas.clip_rrect(clip_rrect)
+    canvas.clip_rrect(clip_rrect, op=@skia.Difference, anti_alias=true)
+    ignore(canvas.local_clip_bounds())
+    ignore(canvas.device_clip_bounds())
+    assert_true(!canvas.quick_reject_rect(@skia.Rect::from_xywh(1, 1, 2, 2)))
     match @native.Path::new() {
       None => ()
       Some(path) => {
@@ -290,6 +418,7 @@ test "canvas draw api typechecks" {
         path.line_to(@skia.Point::new(8, 8))
         path.close()
         canvas.clip_path(path, anti_alias=true)
+        ignore(canvas.quick_reject_path(path))
       }
     }
     canvas.restore()
@@ -305,6 +434,36 @@ test "canvas draw api typechecks" {
     canvas.draw_circle(@skia.Point::new(5, 6), 7, paint)
     canvas.draw_arc(@skia.Rect::from_xywh(2, 2, 8, 8), 0, 180, false, paint)
     canvas.draw_round_rect(@skia.Rect::from_xywh(2, 2, 8, 6), 2, 2, paint)
+    canvas.draw_rrect(
+      @skia.RRect::new(
+        @skia.Rect::from_xywh(2, 2, 10, 8),
+        @skia.Size::new(2, 2),
+        @skia.Size::new(3, 1),
+        @skia.Size::new(1, 2),
+        @skia.Size::empty(),
+      ),
+      paint,
+    )
+    canvas.draw_drrect(
+      @skia.RRect::from_rect_xy(@skia.Rect::from_xywh(1, 1, 14, 14), 4, 4),
+      @skia.RRect::from_rect_xy(@skia.Rect::from_xywh(4, 4, 8, 8), 2, 2),
+      paint,
+    )
+    canvas.draw_path_value(
+      @skia.Path::new().add_rect(
+        @skia.Rect::from_xywh(1, 1, 7, 7),
+        direction=@skia.CCW,
+      ),
+      paint,
+    )
+    canvas.draw_path_value(
+      @skia.Path::new().add_circle(@skia.Point::new(8, 8), 4),
+      paint,
+    )
+    canvas.draw_path_value(
+      @skia.Path::new().add_round_rect(@skia.Rect::from_xywh(2, 2, 10, 8), 2, 2),
+      paint,
+    )
     match @native.Shader::color(@skia.Color::blue()) {
       None => ()
       Some(shader) => {

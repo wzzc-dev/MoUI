@@ -235,6 +235,25 @@ extern "C" fn native_path_reset(path : PathHandle) -> Unit = "moonbit_skia_path_
 
 ///|
 #borrow(path)
+extern "C" fn native_path_rewind(path : PathHandle) -> Unit = "moonbit_skia_path_rewind"
+
+///|
+#borrow(path)
+extern "C" fn native_path_set_fill_type(
+  path : PathHandle,
+  fill_type : Int,
+) -> Unit = "moonbit_skia_path_set_fill_type"
+
+///|
+#borrow(path)
+extern "C" fn native_path_fill_type(path : PathHandle) -> Int = "moonbit_skia_path_fill_type"
+
+///|
+#borrow(path)
+extern "C" fn native_path_is_inverse_fill_type(path : PathHandle) -> Bool = "moonbit_skia_path_is_inverse_fill_type"
+
+///|
+#borrow(path)
 extern "C" fn native_path_move_to(
   path : PathHandle,
   x : Float,
@@ -261,6 +280,17 @@ extern "C" fn native_path_quad_to(
 
 ///|
 #borrow(path)
+extern "C" fn native_path_conic_to(
+  path : PathHandle,
+  x1 : Float,
+  y1 : Float,
+  x2 : Float,
+  y2 : Float,
+  weight : Float,
+) -> Unit = "moonbit_skia_path_conic_to"
+
+///|
+#borrow(path)
 extern "C" fn native_path_cubic_to(
   path : PathHandle,
   x1 : Float,
@@ -277,7 +307,234 @@ extern "C" fn native_path_close(path : PathHandle) -> Unit = "moonbit_skia_path_
 
 ///|
 #borrow(path)
+extern "C" fn native_path_add_rect(
+  path : PathHandle,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+  direction : Int,
+) -> Unit = "moonbit_skia_path_add_rect"
+
+///|
+#borrow(path)
+extern "C" fn native_path_add_oval(
+  path : PathHandle,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+  direction : Int,
+) -> Unit = "moonbit_skia_path_add_oval"
+
+///|
+#borrow(path)
+extern "C" fn native_path_add_circle(
+  path : PathHandle,
+  x : Float,
+  y : Float,
+  radius : Float,
+  direction : Int,
+) -> Unit = "moonbit_skia_path_add_circle"
+
+///|
+#borrow(path)
+extern "C" fn native_path_add_round_rect(
+  path : PathHandle,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+  rx : Float,
+  ry : Float,
+  direction : Int,
+) -> Unit = "moonbit_skia_path_add_round_rect"
+
+///|
+#borrow(path)
+extern "C" fn native_path_add_rrect(
+  path : PathHandle,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+  upper_left_width : Float,
+  upper_left_height : Float,
+  upper_right_width : Float,
+  upper_right_height : Float,
+  lower_right_width : Float,
+  lower_right_height : Float,
+  lower_left_width : Float,
+  lower_left_height : Float,
+  direction : Int,
+) -> Unit = "moonbit_skia_path_add_rrect"
+
+///|
+#borrow(path)
+extern "C" fn native_path_transform(
+  path : PathHandle,
+  scale_x : Float,
+  skew_x : Float,
+  trans_x : Float,
+  skew_y : Float,
+  scale_y : Float,
+  trans_y : Float,
+  persp_0 : Float,
+  persp_1 : Float,
+  persp_2 : Float,
+) -> Unit = "moonbit_skia_path_transform"
+
+///|
+#borrow(path)
+extern "C" fn native_path_offset(
+  path : PathHandle,
+  dx : Float,
+  dy : Float,
+) -> Unit = "moonbit_skia_path_offset"
+
+///|
+#borrow(path)
+extern "C" fn native_path_contains(
+  path : PathHandle,
+  x : Float,
+  y : Float,
+) -> Bool = "moonbit_skia_path_contains"
+
+///|
+#borrow(path)
 extern "C" fn native_path_is_empty(path : PathHandle) -> Bool = "moonbit_skia_path_is_empty"
+
+///|
+#borrow(path)
+extern "C" fn native_path_is_finite(path : PathHandle) -> Bool = "moonbit_skia_path_is_finite"
+
+///|
+#borrow(path)
+extern "C" fn native_path_count_points(path : PathHandle) -> Int = "moonbit_skia_path_count_points"
+
+///|
+#borrow(path)
+extern "C" fn native_path_count_verbs(path : PathHandle) -> Int = "moonbit_skia_path_count_verbs"
+
+///|
+#borrow(path)
+extern "C" fn native_path_segment_masks(path : PathHandle) -> Int = "moonbit_skia_path_segment_masks"
+
+///|
+#borrow(path)
+extern "C" fn native_path_is_last_contour_closed(path : PathHandle) -> Bool = "moonbit_skia_path_is_last_contour_closed"
+
+///|
+#borrow(path)
+extern "C" fn native_path_has_last_point(path : PathHandle) -> Bool = "moonbit_skia_path_has_last_point"
+
+///|
+#borrow(path)
+extern "C" fn native_path_last_point_x(path : PathHandle) -> Float = "moonbit_skia_path_last_point_x"
+
+///|
+#borrow(path)
+extern "C" fn native_path_last_point_y(path : PathHandle) -> Float = "moonbit_skia_path_last_point_y"
+
+///|
+#borrow(path)
+extern "C" fn native_path_is_line(path : PathHandle) -> Bool = "moonbit_skia_path_is_line"
+
+///|
+#borrow(path)
+extern "C" fn native_path_line_start_x(path : PathHandle) -> Float = "moonbit_skia_path_line_start_x"
+
+///|
+#borrow(path)
+extern "C" fn native_path_line_start_y(path : PathHandle) -> Float = "moonbit_skia_path_line_start_y"
+
+///|
+#borrow(path)
+extern "C" fn native_path_line_end_x(path : PathHandle) -> Float = "moonbit_skia_path_line_end_x"
+
+///|
+#borrow(path)
+extern "C" fn native_path_line_end_y(path : PathHandle) -> Float = "moonbit_skia_path_line_end_y"
+
+///|
+#borrow(path)
+extern "C" fn native_path_is_rect(path : PathHandle) -> Bool = "moonbit_skia_path_is_rect"
+
+///|
+#borrow(path)
+extern "C" fn native_path_rect_left(path : PathHandle) -> Float = "moonbit_skia_path_rect_left"
+
+///|
+#borrow(path)
+extern "C" fn native_path_rect_top(path : PathHandle) -> Float = "moonbit_skia_path_rect_top"
+
+///|
+#borrow(path)
+extern "C" fn native_path_rect_right(path : PathHandle) -> Float = "moonbit_skia_path_rect_right"
+
+///|
+#borrow(path)
+extern "C" fn native_path_rect_bottom(path : PathHandle) -> Float = "moonbit_skia_path_rect_bottom"
+
+///|
+#borrow(path)
+extern "C" fn native_path_rect_is_closed(path : PathHandle) -> Bool = "moonbit_skia_path_rect_is_closed"
+
+///|
+#borrow(path)
+extern "C" fn native_path_rect_direction(path : PathHandle) -> Int = "moonbit_skia_path_rect_direction"
+
+///|
+#borrow(path)
+extern "C" fn native_path_is_oval(path : PathHandle) -> Bool = "moonbit_skia_path_is_oval"
+
+///|
+#borrow(path)
+extern "C" fn native_path_oval_left(path : PathHandle) -> Float = "moonbit_skia_path_oval_left"
+
+///|
+#borrow(path)
+extern "C" fn native_path_oval_top(path : PathHandle) -> Float = "moonbit_skia_path_oval_top"
+
+///|
+#borrow(path)
+extern "C" fn native_path_oval_right(path : PathHandle) -> Float = "moonbit_skia_path_oval_right"
+
+///|
+#borrow(path)
+extern "C" fn native_path_oval_bottom(path : PathHandle) -> Float = "moonbit_skia_path_oval_bottom"
+
+///|
+#borrow(path)
+extern "C" fn native_path_bounds_left(path : PathHandle) -> Float = "moonbit_skia_path_bounds_left"
+
+///|
+#borrow(path)
+extern "C" fn native_path_bounds_top(path : PathHandle) -> Float = "moonbit_skia_path_bounds_top"
+
+///|
+#borrow(path)
+extern "C" fn native_path_bounds_right(path : PathHandle) -> Float = "moonbit_skia_path_bounds_right"
+
+///|
+#borrow(path)
+extern "C" fn native_path_bounds_bottom(path : PathHandle) -> Float = "moonbit_skia_path_bounds_bottom"
+
+///|
+#borrow(path)
+extern "C" fn native_path_tight_bounds_left(path : PathHandle) -> Float = "moonbit_skia_path_tight_bounds_left"
+
+///|
+#borrow(path)
+extern "C" fn native_path_tight_bounds_top(path : PathHandle) -> Float = "moonbit_skia_path_tight_bounds_top"
+
+///|
+#borrow(path)
+extern "C" fn native_path_tight_bounds_right(path : PathHandle) -> Float = "moonbit_skia_path_tight_bounds_right"
+
+///|
+#borrow(path)
+extern "C" fn native_path_tight_bounds_bottom(path : PathHandle) -> Float = "moonbit_skia_path_tight_bounds_bottom"
 
 ///|
 extern "C" fn native_surface_raster_n32_premul(
@@ -334,6 +591,26 @@ extern "C" fn native_canvas_is_null(canvas : CanvasHandle) -> Bool = "moonbit_sk
 ///|
 #borrow(canvas)
 extern "C" fn native_canvas_save(canvas : CanvasHandle) -> Int = "moonbit_skia_canvas_save"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_save_layer(
+  canvas : CanvasHandle,
+  has_bounds : Bool,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+  color_argb : UInt,
+  anti_alias : Bool,
+  dither : Bool,
+  style : Int,
+  stroke_width : Float,
+  stroke_miter : Float,
+  stroke_cap : Int,
+  stroke_join : Int,
+  blend_mode : Int,
+) -> Int = "moonbit_skia_canvas_save_layer"
 
 ///|
 #borrow(canvas)
@@ -417,6 +694,26 @@ extern "C" fn native_canvas_clip_rect(
 ) -> Unit = "moonbit_skia_canvas_clip_rect"
 
 ///|
+#borrow(canvas)
+extern "C" fn native_canvas_clip_rrect(
+  canvas : CanvasHandle,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+  upper_left_width : Float,
+  upper_left_height : Float,
+  upper_right_width : Float,
+  upper_right_height : Float,
+  lower_right_width : Float,
+  lower_right_height : Float,
+  lower_left_width : Float,
+  lower_left_height : Float,
+  op : Int,
+  anti_alias : Bool,
+) -> Unit = "moonbit_skia_canvas_clip_rrect"
+
+///|
 #borrow(canvas, path)
 extern "C" fn native_canvas_clip_path(
   canvas : CanvasHandle,
@@ -424,6 +721,79 @@ extern "C" fn native_canvas_clip_path(
   op : Int,
   anti_alias : Bool,
 ) -> Unit = "moonbit_skia_canvas_clip_path"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_local_clip_bounds(canvas : CanvasHandle) -> Bool = "moonbit_skia_canvas_local_clip_bounds"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_local_clip_bounds_left(
+  canvas : CanvasHandle,
+) -> Float = "moonbit_skia_canvas_local_clip_bounds_left"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_local_clip_bounds_top(
+  canvas : CanvasHandle,
+) -> Float = "moonbit_skia_canvas_local_clip_bounds_top"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_local_clip_bounds_right(
+  canvas : CanvasHandle,
+) -> Float = "moonbit_skia_canvas_local_clip_bounds_right"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_local_clip_bounds_bottom(
+  canvas : CanvasHandle,
+) -> Float = "moonbit_skia_canvas_local_clip_bounds_bottom"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_device_clip_bounds(canvas : CanvasHandle) -> Bool = "moonbit_skia_canvas_device_clip_bounds"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_device_clip_bounds_left(
+  canvas : CanvasHandle,
+) -> Int = "moonbit_skia_canvas_device_clip_bounds_left"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_device_clip_bounds_top(
+  canvas : CanvasHandle,
+) -> Int = "moonbit_skia_canvas_device_clip_bounds_top"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_device_clip_bounds_right(
+  canvas : CanvasHandle,
+) -> Int = "moonbit_skia_canvas_device_clip_bounds_right"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_device_clip_bounds_bottom(
+  canvas : CanvasHandle,
+) -> Int = "moonbit_skia_canvas_device_clip_bounds_bottom"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_quick_reject_rect(
+  canvas : CanvasHandle,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+) -> Bool = "moonbit_skia_canvas_quick_reject_rect"
+
+///|
+#borrow(canvas, path)
+extern "C" fn native_canvas_quick_reject_path(
+  canvas : CanvasHandle,
+  path : PathHandle,
+) -> Bool = "moonbit_skia_canvas_quick_reject_path"
 
 ///|
 #borrow(canvas)
@@ -582,6 +952,72 @@ extern "C" fn native_canvas_draw_round_rect(
   stroke_join : Int,
   blend_mode : Int,
 ) -> Unit = "moonbit_skia_canvas_draw_round_rect"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_draw_rrect(
+  canvas : CanvasHandle,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+  upper_left_width : Float,
+  upper_left_height : Float,
+  upper_right_width : Float,
+  upper_right_height : Float,
+  lower_right_width : Float,
+  lower_right_height : Float,
+  lower_left_width : Float,
+  lower_left_height : Float,
+  color_argb : UInt,
+  anti_alias : Bool,
+  dither : Bool,
+  style : Int,
+  stroke_width : Float,
+  stroke_miter : Float,
+  stroke_cap : Int,
+  stroke_join : Int,
+  blend_mode : Int,
+) -> Unit = "moonbit_skia_canvas_draw_rrect"
+
+///|
+#borrow(canvas)
+extern "C" fn native_canvas_draw_drrect(
+  canvas : CanvasHandle,
+  outer_left : Float,
+  outer_top : Float,
+  outer_right : Float,
+  outer_bottom : Float,
+  outer_upper_left_width : Float,
+  outer_upper_left_height : Float,
+  outer_upper_right_width : Float,
+  outer_upper_right_height : Float,
+  outer_lower_right_width : Float,
+  outer_lower_right_height : Float,
+  outer_lower_left_width : Float,
+  outer_lower_left_height : Float,
+  inner_left : Float,
+  inner_top : Float,
+  inner_right : Float,
+  inner_bottom : Float,
+  inner_upper_left_width : Float,
+  inner_upper_left_height : Float,
+  inner_upper_right_width : Float,
+  inner_upper_right_height : Float,
+  inner_lower_right_width : Float,
+  inner_lower_right_height : Float,
+  inner_lower_left_width : Float,
+  inner_lower_left_height : Float,
+  color_argb : UInt,
+  anti_alias : Bool,
+  dither : Bool,
+  style : Int,
+  stroke_width : Float,
+  stroke_miter : Float,
+  stroke_cap : Int,
+  stroke_join : Int,
+  blend_mode : Int,
+) -> Unit = "moonbit_skia_canvas_draw_drrect"
 
 ///|
 #borrow(canvas, path)
@@ -924,13 +1360,61 @@ pub fn Path::new() -> Path? {
 }
 
 ///|
+pub fn Path::from_value(path : @skia.Path) -> Path? {
+  match Path::new() {
+    None => None
+    Some(native_path) => {
+      native_path.set_fill_type(path.fill_type)
+      for verb in path.verbs {
+        match verb {
+          @skia.MoveTo(point) => native_path.move_to(point)
+          @skia.LineTo(point) => native_path.line_to(point)
+          @skia.QuadTo(control, end) => native_path.quad_to(control, end)
+          @skia.ConicTo(control, end, weight) =>
+            native_path.conic_to(control, end, weight)
+          @skia.CubicTo(control0, control1, end) =>
+            native_path.cubic_to(control0, control1, end)
+          @skia.Close => native_path.close()
+        }
+      }
+      Some(native_path)
+    }
+  }
+}
+
+///|
 pub fn Path::is_available(self : Path) -> Bool {
   !native_path_is_null(self.handle)
 }
 
 ///|
+pub fn Path::set_fill_type(self : Path, fill_type : @skia.PathFillType) -> Unit {
+  native_path_set_fill_type(self.handle, fill_type.to_skia_ordinal())
+}
+
+///|
+pub fn Path::fill_type(self : Path) -> @skia.PathFillType {
+  match native_path_fill_type(self.handle) {
+    1 => @skia.EvenOdd
+    2 => @skia.InverseWinding
+    3 => @skia.InverseEvenOdd
+    _ => @skia.Winding
+  }
+}
+
+///|
+pub fn Path::is_inverse_fill_type(self : Path) -> Bool {
+  native_path_is_inverse_fill_type(self.handle)
+}
+
+///|
 pub fn Path::reset(self : Path) -> Unit {
   native_path_reset(self.handle)
+}
+
+///|
+pub fn Path::rewind(self : Path) -> Unit {
+  native_path_rewind(self.handle)
 }
 
 ///|
@@ -950,6 +1434,16 @@ pub fn Path::quad_to(
   end : @skia.Point,
 ) -> Unit {
   native_path_quad_to(self.handle, control.x, control.y, end.x, end.y)
+}
+
+///|
+pub fn Path::conic_to(
+  self : Path,
+  control : @skia.Point,
+  end : @skia.Point,
+  weight : Float,
+) -> Unit {
+  native_path_conic_to(self.handle, control.x, control.y, end.x, end.y, weight)
 }
 
 ///|
@@ -976,8 +1470,257 @@ pub fn Path::close(self : Path) -> Unit {
 }
 
 ///|
+pub fn Path::add_rect(
+  self : Path,
+  rect : @skia.Rect,
+  direction? : @skia.PathDirection = @skia.CW,
+) -> Unit {
+  native_path_add_rect(
+    self.handle,
+    rect.left,
+    rect.top,
+    rect.right,
+    rect.bottom,
+    direction.to_skia_ordinal(),
+  )
+}
+
+///|
+pub fn Path::add_oval(
+  self : Path,
+  oval : @skia.Rect,
+  direction? : @skia.PathDirection = @skia.CW,
+) -> Unit {
+  native_path_add_oval(
+    self.handle,
+    oval.left,
+    oval.top,
+    oval.right,
+    oval.bottom,
+    direction.to_skia_ordinal(),
+  )
+}
+
+///|
+pub fn Path::add_circle(
+  self : Path,
+  center : @skia.Point,
+  radius : Float,
+  direction? : @skia.PathDirection = @skia.CW,
+) -> Unit {
+  native_path_add_circle(
+    self.handle,
+    center.x,
+    center.y,
+    radius,
+    direction.to_skia_ordinal(),
+  )
+}
+
+///|
+pub fn Path::add_round_rect(
+  self : Path,
+  rect : @skia.Rect,
+  rx : Float,
+  ry : Float,
+  direction? : @skia.PathDirection = @skia.CW,
+) -> Unit {
+  native_path_add_round_rect(
+    self.handle,
+    rect.left,
+    rect.top,
+    rect.right,
+    rect.bottom,
+    rx,
+    ry,
+    direction.to_skia_ordinal(),
+  )
+}
+
+///|
+pub fn Path::add_rrect(
+  self : Path,
+  rrect : @skia.RRect,
+  direction? : @skia.PathDirection = @skia.CW,
+) -> Unit {
+  native_path_add_rrect(
+    self.handle,
+    rrect.rect.left,
+    rrect.rect.top,
+    rrect.rect.right,
+    rrect.rect.bottom,
+    rrect.upper_left.width,
+    rrect.upper_left.height,
+    rrect.upper_right.width,
+    rrect.upper_right.height,
+    rrect.lower_right.width,
+    rrect.lower_right.height,
+    rrect.lower_left.width,
+    rrect.lower_left.height,
+    direction.to_skia_ordinal(),
+  )
+}
+
+///|
+pub fn Path::transform(self : Path, matrix : @skia.Matrix) -> Unit {
+  native_path_transform(
+    self.handle,
+    matrix.scale_x,
+    matrix.skew_x,
+    matrix.trans_x,
+    matrix.skew_y,
+    matrix.scale_y,
+    matrix.trans_y,
+    matrix.persp_0,
+    matrix.persp_1,
+    matrix.persp_2,
+  )
+}
+
+///|
+pub fn Path::offset(self : Path, dx : Float, dy : Float) -> Unit {
+  native_path_offset(self.handle, dx, dy)
+}
+
+///|
+pub fn Path::contains(self : Path, point : @skia.Point) -> Bool {
+  native_path_contains(self.handle, point.x, point.y)
+}
+
+///|
 pub fn Path::is_empty(self : Path) -> Bool {
   native_path_is_empty(self.handle)
+}
+
+///|
+pub fn Path::is_finite(self : Path) -> Bool {
+  native_path_is_finite(self.handle)
+}
+
+///|
+pub fn Path::count_points(self : Path) -> Int {
+  native_path_count_points(self.handle)
+}
+
+///|
+pub fn Path::count_verbs(self : Path) -> Int {
+  native_path_count_verbs(self.handle)
+}
+
+///|
+pub fn Path::segment_masks(self : Path) -> @skia.PathSegmentMask {
+  @skia.PathSegmentMask::new(native_path_segment_masks(self.handle))
+}
+
+///|
+pub fn Path::is_last_contour_closed(self : Path) -> Bool {
+  native_path_is_last_contour_closed(self.handle)
+}
+
+///|
+pub fn Path::last_point(self : Path) -> @skia.Point? {
+  if native_path_has_last_point(self.handle) {
+    Some(
+      @skia.Point::new(
+        native_path_last_point_x(self.handle),
+        native_path_last_point_y(self.handle),
+      ),
+    )
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Path::is_line(self : Path) -> @skia.PathLine? {
+  if native_path_is_line(self.handle) {
+    Some(
+      @skia.PathLine::new(
+        @skia.Point::new(
+          native_path_line_start_x(self.handle),
+          native_path_line_start_y(self.handle),
+        ),
+        @skia.Point::new(
+          native_path_line_end_x(self.handle),
+          native_path_line_end_y(self.handle),
+        ),
+      ),
+    )
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Path::is_rect(self : Path) -> @skia.PathRect? {
+  if native_path_is_rect(self.handle) {
+    let direction = match native_path_rect_direction(self.handle) {
+      1 => @skia.CCW
+      _ => @skia.CW
+    }
+    Some(
+      @skia.PathRect::new(
+        @skia.Rect::new(
+          native_path_rect_left(self.handle),
+          native_path_rect_top(self.handle),
+          native_path_rect_right(self.handle),
+          native_path_rect_bottom(self.handle),
+        ),
+        native_path_rect_is_closed(self.handle),
+        direction,
+      ),
+    )
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Path::is_oval(self : Path) -> @skia.Rect? {
+  if native_path_is_oval(self.handle) {
+    Some(
+      @skia.Rect::new(
+        native_path_oval_left(self.handle),
+        native_path_oval_top(self.handle),
+        native_path_oval_right(self.handle),
+        native_path_oval_bottom(self.handle),
+      ),
+    )
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Path::bounds(self : Path) -> @skia.Rect? {
+  if self.is_empty() {
+    None
+  } else {
+    Some(
+      @skia.Rect::new(
+        native_path_bounds_left(self.handle),
+        native_path_bounds_top(self.handle),
+        native_path_bounds_right(self.handle),
+        native_path_bounds_bottom(self.handle),
+      ),
+    )
+  }
+}
+
+///|
+pub fn Path::compute_tight_bounds(self : Path) -> @skia.Rect? {
+  if self.is_empty() {
+    None
+  } else {
+    Some(
+      @skia.Rect::new(
+        native_path_tight_bounds_left(self.handle),
+        native_path_tight_bounds_top(self.handle),
+        native_path_tight_bounds_right(self.handle),
+        native_path_tight_bounds_bottom(self.handle),
+      ),
+    )
+  }
 }
 
 ///|
@@ -1211,6 +1954,52 @@ pub fn Canvas::save(self : Canvas) -> Int {
 }
 
 ///|
+pub fn Canvas::save_layer(
+  self : Canvas,
+  bounds? : @skia.Rect? = None,
+  paint? : @skia.Paint = @skia.Paint::new(),
+) -> Int {
+  match bounds {
+    None =>
+      native_canvas_save_layer(
+        self.handle,
+        false,
+        0,
+        0,
+        0,
+        0,
+        paint.color_argb(),
+        paint.anti_alias,
+        paint.dither,
+        paint.style_ordinal(),
+        paint.stroke_width,
+        paint.stroke_miter,
+        paint.stroke_cap_ordinal(),
+        paint.stroke_join_ordinal(),
+        paint.blend_mode_ordinal(),
+      )
+    Some(rect) =>
+      native_canvas_save_layer(
+        self.handle,
+        true,
+        rect.left,
+        rect.top,
+        rect.right,
+        rect.bottom,
+        paint.color_argb(),
+        paint.anti_alias,
+        paint.dither,
+        paint.style_ordinal(),
+        paint.stroke_width,
+        paint.stroke_miter,
+        paint.stroke_cap_ordinal(),
+        paint.stroke_join_ordinal(),
+        paint.blend_mode_ordinal(),
+      )
+  }
+}
+
+///|
 pub fn Canvas::restore(self : Canvas) -> Unit {
   native_canvas_restore(self.handle)
 }
@@ -1290,6 +2079,32 @@ pub fn Canvas::clip_rect(
 }
 
 ///|
+pub fn Canvas::clip_rrect(
+  self : Canvas,
+  rrect : @skia.RRect,
+  op? : @skia.ClipOp = @skia.Intersect,
+  anti_alias? : Bool = false,
+) -> Unit {
+  native_canvas_clip_rrect(
+    self.handle,
+    rrect.rect.left,
+    rrect.rect.top,
+    rrect.rect.right,
+    rrect.rect.bottom,
+    rrect.upper_left.width,
+    rrect.upper_left.height,
+    rrect.upper_right.width,
+    rrect.upper_right.height,
+    rrect.lower_right.width,
+    rrect.lower_right.height,
+    rrect.lower_left.width,
+    rrect.lower_left.height,
+    op.to_skia_ordinal(),
+    anti_alias,
+  )
+}
+
+///|
 pub fn Canvas::clip_path(
   self : Canvas,
   path : Path,
@@ -1302,6 +2117,54 @@ pub fn Canvas::clip_path(
     op.to_skia_ordinal(),
     anti_alias,
   )
+}
+
+///|
+pub fn Canvas::local_clip_bounds(self : Canvas) -> @skia.Rect? {
+  if native_canvas_local_clip_bounds(self.handle) {
+    Some(
+      @skia.Rect::new(
+        native_canvas_local_clip_bounds_left(self.handle),
+        native_canvas_local_clip_bounds_top(self.handle),
+        native_canvas_local_clip_bounds_right(self.handle),
+        native_canvas_local_clip_bounds_bottom(self.handle),
+      ),
+    )
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Canvas::device_clip_bounds(self : Canvas) -> @skia.IRect? {
+  if native_canvas_device_clip_bounds(self.handle) {
+    Some(
+      @skia.IRect::new(
+        native_canvas_device_clip_bounds_left(self.handle),
+        native_canvas_device_clip_bounds_top(self.handle),
+        native_canvas_device_clip_bounds_right(self.handle),
+        native_canvas_device_clip_bounds_bottom(self.handle),
+      ),
+    )
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Canvas::quick_reject_rect(self : Canvas, rect : @skia.Rect) -> Bool {
+  native_canvas_quick_reject_rect(
+    self.handle,
+    rect.left,
+    rect.top,
+    rect.right,
+    rect.bottom,
+  )
+}
+
+///|
+pub fn Canvas::quick_reject_path(self : Canvas, path : Path) -> Bool {
+  native_canvas_quick_reject_path(self.handle, path.handle)
 }
 
 ///|
@@ -1383,6 +2246,29 @@ pub fn Canvas::draw_line(
     paint.stroke_join_ordinal(),
     paint.blend_mode_ordinal(),
   )
+}
+
+///|
+pub fn Canvas::draw_points(
+  self : Canvas,
+  points : Array[@skia.Point],
+  paint : @skia.Paint,
+  mode? : @skia.PointMode = @skia.Points,
+) -> Unit {
+  match mode {
+    @skia.Points =>
+      for point in points {
+        self.draw_point(point, paint)
+      }
+    @skia.Lines =>
+      for i = 0; i + 1 < points.length(); i = i + 2 {
+        self.draw_line(points[i], points[i + 1], paint)
+      }
+    @skia.Polygon =>
+      for i = 0; i + 1 < points.length(); i = i + 1 {
+        self.draw_line(points[i], points[i + 1], paint)
+      }
+  }
 }
 
 ///|
@@ -1516,6 +2402,83 @@ pub fn Canvas::draw_round_rect(
 }
 
 ///|
+pub fn Canvas::draw_rrect(
+  self : Canvas,
+  rrect : @skia.RRect,
+  paint : @skia.Paint,
+) -> Unit {
+  native_canvas_draw_rrect(
+    self.handle,
+    rrect.rect.left,
+    rrect.rect.top,
+    rrect.rect.right,
+    rrect.rect.bottom,
+    rrect.upper_left.width,
+    rrect.upper_left.height,
+    rrect.upper_right.width,
+    rrect.upper_right.height,
+    rrect.lower_right.width,
+    rrect.lower_right.height,
+    rrect.lower_left.width,
+    rrect.lower_left.height,
+    paint.color_argb(),
+    paint.anti_alias,
+    paint.dither,
+    paint.style_ordinal(),
+    paint.stroke_width,
+    paint.stroke_miter,
+    paint.stroke_cap_ordinal(),
+    paint.stroke_join_ordinal(),
+    paint.blend_mode_ordinal(),
+  )
+}
+
+///|
+pub fn Canvas::draw_drrect(
+  self : Canvas,
+  outer : @skia.RRect,
+  inner : @skia.RRect,
+  paint : @skia.Paint,
+) -> Unit {
+  native_canvas_draw_drrect(
+    self.handle,
+    outer.rect.left,
+    outer.rect.top,
+    outer.rect.right,
+    outer.rect.bottom,
+    outer.upper_left.width,
+    outer.upper_left.height,
+    outer.upper_right.width,
+    outer.upper_right.height,
+    outer.lower_right.width,
+    outer.lower_right.height,
+    outer.lower_left.width,
+    outer.lower_left.height,
+    inner.rect.left,
+    inner.rect.top,
+    inner.rect.right,
+    inner.rect.bottom,
+    inner.upper_left.width,
+    inner.upper_left.height,
+    inner.upper_right.width,
+    inner.upper_right.height,
+    inner.lower_right.width,
+    inner.lower_right.height,
+    inner.lower_left.width,
+    inner.lower_left.height,
+    paint.color_argb(),
+    paint.anti_alias,
+    paint.dither,
+    paint.style_ordinal(),
+    paint.stroke_width,
+    paint.stroke_miter,
+    paint.stroke_cap_ordinal(),
+    paint.stroke_join_ordinal(),
+    paint.blend_mode_ordinal(),
+  )
+}
+
+///|
 pub fn Canvas::draw_path(
   self : Canvas,
   path : Path,
@@ -1534,6 +2497,18 @@ pub fn Canvas::draw_path(
     paint.stroke_join_ordinal(),
     paint.blend_mode_ordinal(),
   )
+}
+
+///|
+pub fn Canvas::draw_path_value(
+  self : Canvas,
+  path : @skia.Path,
+  paint : @skia.Paint,
+) -> Unit {
+  match Path::from_value(path) {
+    None => ()
+    Some(native_path) => self.draw_path(native_path, paint)
+  }
 }
 
 ///|

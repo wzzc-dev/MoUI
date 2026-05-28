@@ -473,3 +473,173 @@ pub fn Rect::to_irect_round(self : Rect) -> IRect {
     self.bottom.round().to_int(),
   )
 }
+
+///|
+/// Rounded rectangle bounds plus per-corner x/y radii.
+///
+/// Corners are stored in Skia order: upper-left, upper-right, lower-right,
+/// lower-left.
+pub(all) struct RRect {
+  rect : Rect
+  upper_left : Size
+  upper_right : Size
+  lower_right : Size
+  lower_left : Size
+} derive(Debug, Eq)
+
+///|
+fn normalize_rrect_radius(radius : Size) -> Size {
+  if radius.width <= 0.0 || radius.height <= 0.0 {
+    Size::empty()
+  } else {
+    radius
+  }
+}
+
+///|
+fn scale_rrect_radius(radius : Size, scale : Scalar) -> Size {
+  Size::new(radius.width * scale, radius.height * scale)
+}
+
+///|
+pub fn RRect::new(
+  rect : Rect,
+  upper_left : Size,
+  upper_right : Size,
+  lower_right : Size,
+  lower_left : Size,
+) -> RRect {
+  let rect = rect.sorted()
+  if rect.is_empty() {
+    RRect::empty()
+  } else {
+    let upper_left = normalize_rrect_radius(upper_left)
+    let upper_right = normalize_rrect_radius(upper_right)
+    let lower_right = normalize_rrect_radius(lower_right)
+    let lower_left = normalize_rrect_radius(lower_left)
+    let width = rect.width()
+    let height = rect.height()
+    let top_width = upper_left.width + upper_right.width
+    let bottom_width = lower_left.width + lower_right.width
+    let left_height = upper_left.height + lower_left.height
+    let right_height = upper_right.height + lower_right.height
+    let scale : Scalar = 1.0
+    let scale = if top_width > width && top_width > 0.0 {
+      Float::min(scale, width / top_width)
+    } else {
+      scale
+    }
+    let scale = if bottom_width > width && bottom_width > 0.0 {
+      Float::min(scale, width / bottom_width)
+    } else {
+      scale
+    }
+    let scale = if left_height > height && left_height > 0.0 {
+      Float::min(scale, height / left_height)
+    } else {
+      scale
+    }
+    let scale = if right_height > height && right_height > 0.0 {
+      Float::min(scale, height / right_height)
+    } else {
+      scale
+    }
+    {
+      rect,
+      upper_left: scale_rrect_radius(upper_left, scale),
+      upper_right: scale_rrect_radius(upper_right, scale),
+      lower_right: scale_rrect_radius(lower_right, scale),
+      lower_left: scale_rrect_radius(lower_left, scale),
+    }
+  }
+}
+
+///|
+pub fn RRect::empty() -> RRect {
+  {
+    rect: Rect::empty(),
+    upper_left: Size::empty(),
+    upper_right: Size::empty(),
+    lower_right: Size::empty(),
+    lower_left: Size::empty(),
+  }
+}
+
+///|
+pub fn RRect::from_rect(rect : Rect) -> RRect {
+  RRect::new(rect, Size::empty(), Size::empty(), Size::empty(), Size::empty())
+}
+
+///|
+pub fn RRect::from_rect_xy(rect : Rect, rx : Scalar, ry : Scalar) -> RRect {
+  let radius = Size::new(rx, ry)
+  RRect::new(rect, radius, radius, radius, radius)
+}
+
+///|
+pub fn RRect::from_oval(oval : Rect) -> RRect {
+  let oval = oval.sorted()
+  if oval.is_empty() {
+    RRect::empty()
+  } else {
+    RRect::from_rect_xy(oval, oval.width() / 2.0, oval.height() / 2.0)
+  }
+}
+
+///|
+pub impl Default for RRect with default() {
+  RRect::empty()
+}
+
+///|
+pub fn RRect::bounds(self : RRect) -> Rect {
+  self.rect
+}
+
+///|
+pub fn RRect::width(self : RRect) -> Scalar {
+  self.rect.width()
+}
+
+///|
+pub fn RRect::height(self : RRect) -> Scalar {
+  self.rect.height()
+}
+
+///|
+pub fn RRect::is_empty(self : RRect) -> Bool {
+  self.rect.is_empty()
+}
+
+///|
+pub fn RRect::is_rect(self : RRect) -> Bool {
+  !self.is_empty() &&
+  self.upper_left.is_zero() &&
+  self.upper_right.is_zero() &&
+  self.lower_right.is_zero() &&
+  self.lower_left.is_zero()
+}
+
+///|
+pub fn RRect::is_simple(self : RRect) -> Bool {
+  !self.is_empty() &&
+  !self.is_rect() &&
+  !self.is_oval() &&
+  self.upper_left == self.upper_right &&
+  self.upper_left == self.lower_right &&
+  self.upper_left == self.lower_left
+}
+
+///|
+pub fn RRect::is_oval(self : RRect) -> Bool {
+  !self.is_empty() &&
+  self.upper_left == Size::new(self.width() / 2.0, self.height() / 2.0) &&
+  self.upper_left == self.upper_right &&
+  self.upper_left == self.lower_right &&
+  self.upper_left == self.lower_left
+}
+
+///|
+pub fn RRect::offset(self : RRect, dx : Scalar, dy : Scalar) -> RRect {
+  { ..self, rect: self.rect.offset(dx, dy) }
+}

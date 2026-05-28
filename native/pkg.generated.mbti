@@ -32,11 +32,14 @@ pub(all) struct Canvas {
 pub fn Canvas::clear(Self, @skia_mbt.Color) -> Unit
 pub fn Canvas::clip_path(Self, Path, op? : @skia_mbt.ClipOp, anti_alias? : Bool) -> Unit
 pub fn Canvas::clip_rect(Self, @skia_mbt.Rect, op? : @skia_mbt.ClipOp, anti_alias? : Bool) -> Unit
+pub fn Canvas::clip_rrect(Self, @skia_mbt.RRect, op? : @skia_mbt.ClipOp, anti_alias? : Bool) -> Unit
 pub fn Canvas::concat(Self, @skia_mbt.Matrix) -> Unit
+pub fn Canvas::device_clip_bounds(Self) -> @skia_mbt.IRect?
 pub fn Canvas::discard(Self) -> Unit
 pub fn Canvas::draw_arc(Self, @skia_mbt.Rect, Float, Float, Bool, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_circle(Self, @skia_mbt.Point, Float, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_color(Self, @skia_mbt.Color, blend_mode? : @skia_mbt.BlendMode) -> Unit
+pub fn Canvas::draw_drrect(Self, @skia_mbt.RRect, @skia_mbt.RRect, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_image(Self, Image, @skia_mbt.Point) -> Unit
 pub fn Canvas::draw_image_rect(Self, Image, @skia_mbt.Rect, @skia_mbt.Rect, @skia_mbt.Paint, sampling? : @skia_mbt.SamplingOptions) -> Unit
 pub fn Canvas::draw_line(Self, @skia_mbt.Point, @skia_mbt.Point, @skia_mbt.Paint) -> Unit
@@ -44,18 +47,25 @@ pub fn Canvas::draw_oval(Self, @skia_mbt.Rect, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_paint(Self, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_paint_shader(Self, Shader, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_path(Self, Path, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_path_value(Self, @skia_mbt.Path, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_point(Self, @skia_mbt.Point, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_points(Self, Array[@skia_mbt.Point], @skia_mbt.Paint, mode? : @skia_mbt.PointMode) -> Unit
 pub fn Canvas::draw_rect(Self, @skia_mbt.Rect, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_rect_shader(Self, @skia_mbt.Rect, Shader, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_round_rect(Self, @skia_mbt.Rect, Float, Float, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_rrect(Self, @skia_mbt.RRect, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_text_utf8(Self, Bytes, @skia_mbt.Point, Font, @skia_mbt.Paint) -> Unit
 pub fn Canvas::is_available(Self) -> Bool
+pub fn Canvas::local_clip_bounds(Self) -> @skia_mbt.Rect?
+pub fn Canvas::quick_reject_path(Self, Path) -> Bool
+pub fn Canvas::quick_reject_rect(Self, @skia_mbt.Rect) -> Bool
 pub fn Canvas::reset_matrix(Self) -> Unit
 pub fn Canvas::restore(Self) -> Unit
 pub fn Canvas::restore_to_count(Self, Int) -> Unit
 pub fn Canvas::rotate(Self, Float) -> Unit
 pub fn Canvas::save(Self) -> Int
 pub fn Canvas::save_count(Self) -> Int
+pub fn Canvas::save_layer(Self, bounds? : @skia_mbt.Rect?, paint? : @skia_mbt.Paint) -> Int
 pub fn Canvas::scale(Self, @skia_mbt.Size) -> Unit
 pub fn Canvas::skew(Self, @skia_mbt.Point) -> Unit
 pub fn Canvas::translate(Self, @skia_mbt.Point) -> Unit
@@ -107,15 +117,40 @@ pub fn Image::width(Self) -> Int
 pub(all) struct Path {
   // private fields
 }
+pub fn Path::add_circle(Self, @skia_mbt.Point, Float, direction? : @skia_mbt.PathDirection) -> Unit
+pub fn Path::add_oval(Self, @skia_mbt.Rect, direction? : @skia_mbt.PathDirection) -> Unit
+pub fn Path::add_rect(Self, @skia_mbt.Rect, direction? : @skia_mbt.PathDirection) -> Unit
+pub fn Path::add_round_rect(Self, @skia_mbt.Rect, Float, Float, direction? : @skia_mbt.PathDirection) -> Unit
+pub fn Path::add_rrect(Self, @skia_mbt.RRect, direction? : @skia_mbt.PathDirection) -> Unit
+pub fn Path::bounds(Self) -> @skia_mbt.Rect?
 pub fn Path::close(Self) -> Unit
+pub fn Path::compute_tight_bounds(Self) -> @skia_mbt.Rect?
+pub fn Path::conic_to(Self, @skia_mbt.Point, @skia_mbt.Point, Float) -> Unit
+pub fn Path::contains(Self, @skia_mbt.Point) -> Bool
+pub fn Path::count_points(Self) -> Int
+pub fn Path::count_verbs(Self) -> Int
 pub fn Path::cubic_to(Self, @skia_mbt.Point, @skia_mbt.Point, @skia_mbt.Point) -> Unit
+pub fn Path::fill_type(Self) -> @skia_mbt.PathFillType
+pub fn Path::from_value(@skia_mbt.Path) -> Self?
 pub fn Path::is_available(Self) -> Bool
 pub fn Path::is_empty(Self) -> Bool
+pub fn Path::is_finite(Self) -> Bool
+pub fn Path::is_inverse_fill_type(Self) -> Bool
+pub fn Path::is_last_contour_closed(Self) -> Bool
+pub fn Path::is_line(Self) -> @skia_mbt.PathLine?
+pub fn Path::is_oval(Self) -> @skia_mbt.Rect?
+pub fn Path::is_rect(Self) -> @skia_mbt.PathRect?
+pub fn Path::last_point(Self) -> @skia_mbt.Point?
 pub fn Path::line_to(Self, @skia_mbt.Point) -> Unit
 pub fn Path::move_to(Self, @skia_mbt.Point) -> Unit
 pub fn Path::new() -> Self?
+pub fn Path::offset(Self, Float, Float) -> Unit
 pub fn Path::quad_to(Self, @skia_mbt.Point, @skia_mbt.Point) -> Unit
 pub fn Path::reset(Self) -> Unit
+pub fn Path::rewind(Self) -> Unit
+pub fn Path::segment_masks(Self) -> @skia_mbt.PathSegmentMask
+pub fn Path::set_fill_type(Self, @skia_mbt.PathFillType) -> Unit
+pub fn Path::transform(Self, @skia_mbt.Matrix) -> Unit
 
 pub(all) struct Shader {
   // private fields
