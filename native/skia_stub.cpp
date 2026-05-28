@@ -5,6 +5,9 @@
 #include <memory>
 
 #if defined(SKIA_MBT_HAS_SKIA)
+#if defined(_WIN32) && !defined(SK_BUILD_FOR_WIN)
+#define SK_BUILD_FOR_WIN
+#endif
 #include "include/core/SkCanvas.h"
 #include "include/core/SkBitmap.h"
 #include "include/core/SkClipOp.h"
@@ -366,9 +369,57 @@ static MoonbitSkiaData* moonbit_skia_make_data_wrapper(
 }
 
 #if defined(SKIA_MBT_HAS_SKIA)
+#if defined(_WIN32)
+static SkFontMgr* moonbit_skia_windows_font_mgr(void) {
+  static sk_sp<SkFontMgr> font_mgr = SkFontMgr_New_DirectWrite();
+  if (!font_mgr) {
+    font_mgr = SkFontMgr_New_GDI();
+  }
+  return font_mgr.get();
+}
+
+static sk_sp<SkTypeface> moonbit_skia_windows_typeface_from_family(
+  const char* family_name
+) {
+  SkFontMgr* font_mgr = moonbit_skia_windows_font_mgr();
+  if (font_mgr == nullptr) {
+    return nullptr;
+  }
+
+  const bool has_family_name = family_name != nullptr && family_name[0] != '\0';
+  if (has_family_name) {
+    sk_sp<SkTypeface> typeface = font_mgr->matchFamilyStyle(
+      family_name,
+      SkFontStyle::Normal()
+    );
+    if (typeface) {
+      return typeface;
+    }
+  }
+
+  const char* zh_bcp47[] = {"zh-Hans", "zh"};
+  return font_mgr->matchFamilyStyleCharacter(
+    has_family_name ? family_name : nullptr,
+    SkFontStyle::Normal(),
+    zh_bcp47,
+    2,
+    0x4F60
+  );
+}
+#endif
+
 static sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
 #if defined(_WIN32)
-  return nullptr;
+  sk_sp<SkTypeface> typeface =
+    moonbit_skia_windows_typeface_from_family("Microsoft YaHei");
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_windows_typeface_from_family("SimSun");
+  if (typeface) {
+    return typeface;
+  }
+  return moonbit_skia_windows_typeface_from_family(nullptr);
 #endif
   return SkTypeface::MakeEmpty();
 }
@@ -377,8 +428,7 @@ static sk_sp<SkTypeface> moonbit_skia_typeface_from_family(
   const char* family_name
 ) {
 #if defined(_WIN32)
-  (void)family_name;
-  return nullptr;
+  return moonbit_skia_windows_typeface_from_family(family_name);
 #else
   (void)family_name;
 #endif
@@ -574,8 +624,11 @@ moonbit_skia_font_default(float size) {
     return moonbit_skia_make_font_wrapper(nullptr);
   }
 #if defined(SKIA_MBT_HAS_SKIA)
-  SkFont* font = new SkFont();
-  font->setSize(size);
+  sk_sp<SkTypeface> typeface = moonbit_skia_default_typeface();
+  SkFont* font = typeface ? new SkFont(typeface, size) : new SkFont();
+  if (!typeface) {
+    font->setSize(size);
+  }
   return moonbit_skia_make_font_wrapper(font);
 #else
   (void)size;
