@@ -85,8 +85,8 @@ fn example_preview(
 }
 
 ///|
-fn ShowcaseApp::layout_tile(
-  self : ShowcaseApp,
+fn ShowcaseModel::layout_tile(
+  self : ShowcaseModel,
   theme : @core.Theme,
   label : String,
 ) -> @core.View[ShowcaseMsg] {
@@ -94,8 +94,8 @@ fn ShowcaseApp::layout_tile(
 }
 
 ///|
-fn ShowcaseApp::layout_tile_sized(
-  self : ShowcaseApp,
+fn ShowcaseModel::layout_tile_sized(
+  self : ShowcaseModel,
   theme : @core.Theme,
   label : String,
   width : Double,
@@ -144,8 +144,8 @@ fn layout_tile_marker(theme : @core.Theme) -> @core.View[ShowcaseMsg] {
 }
 
 ///|
-fn ShowcaseApp::visual_card(
-  self : ShowcaseApp,
+fn ShowcaseModel::visual_card(
+  self : ShowcaseModel,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
   card_width : Double,
@@ -153,6 +153,7 @@ fn ShowcaseApp::visual_card(
   offset : Double,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
+  ignore(self)
   let media_width = max_showcase_double(120.0, card_width - 36.0)
   let media_height = if metrics.compact { 96.0 } else { 136.0 }
   let card_height = if metrics.compact { 250.0 } else { 300.0 }
@@ -212,8 +213,8 @@ fn ShowcaseApp::visual_card(
 }
 
 ///|
-fn ShowcaseApp::capability_card(
-  self : ShowcaseApp,
+fn ShowcaseModel::capability_card(
+  self : ShowcaseModel,
   theme : @core.Theme,
   width : Double,
   height : Double,
@@ -266,8 +267,8 @@ fn ShowcaseApp::capability_card(
 }
 
 ///|
-fn ShowcaseApp::visual_correctness_card(
-  self : ShowcaseApp,
+fn ShowcaseModel::visual_correctness_card(
+  self : ShowcaseModel,
   theme : @core.Theme,
   active : Bool,
   opacity : Double,
@@ -314,8 +315,8 @@ fn ShowcaseApp::visual_correctness_card(
 }
 
 ///|
-fn ShowcaseApp::shortcut_preview(
-  self : ShowcaseApp,
+fn ShowcaseModel::shortcut_preview(
+  self : ShowcaseModel,
   theme : @core.Theme,
 ) -> @core.View[ShowcaseMsg] {
   ignore(self)
@@ -332,8 +333,8 @@ fn ShowcaseApp::shortcut_preview(
 }
 
 ///|
-fn ShowcaseApp::progress_preview(
-  self : ShowcaseApp,
+fn ShowcaseModel::progress_preview(
+  self : ShowcaseModel,
   theme : @core.Theme,
   value : Double,
   width~ : Double,
@@ -354,10 +355,9 @@ fn ShowcaseApp::progress_preview(
 }
 
 ///|
-fn ShowcaseApp::theme_helpers(
-  self : ShowcaseApp,
+fn ShowcaseModel::theme_helpers(
+  self : ShowcaseModel,
   theme : @core.Theme,
-  enabled : @core.Binding[Bool],
   active : Bool,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
@@ -368,7 +368,8 @@ fn ShowcaseApp::theme_helpers(
       .foreground(theme.palette.foreground),
       toggle_switch(
         "Environment enabled",
-        enabled,
+        self.feature_enabled,
+        on_change=value => FeatureEnabledChanged(value),
         foreground=theme.palette.foreground,
         check_color=theme.palette.primary,
       ),
@@ -388,8 +389,8 @@ fn ShowcaseApp::theme_helpers(
 }
 
 ///|
-fn ShowcaseApp::vector_path_card(
-  self : ShowcaseApp,
+fn ShowcaseModel::vector_path_card(
+  self : ShowcaseModel,
   theme : @core.Theme,
 ) -> @core.View[ShowcaseMsg] {
   ignore(self)
@@ -457,8 +458,8 @@ fn ShowcaseApp::vector_path_card(
 }
 
 ///|
-fn ShowcaseApp::sparkline(
-  self : ShowcaseApp,
+fn ShowcaseModel::sparkline(
+  self : ShowcaseModel,
   theme : @core.Theme,
   value : Double,
 ) -> @core.View[ShowcaseMsg] {
@@ -490,10 +491,11 @@ fn ShowcaseApp::sparkline(
 }
 
 ///|
-fn ShowcaseApp::dialog(
-  self : ShowcaseApp,
+fn ShowcaseModel::dialog(
+  self : ShowcaseModel,
   theme : @core.Theme,
 ) -> @core.View[ShowcaseMsg] {
+  ignore(self)
   column(
     [
       text("Showcase dialog", width=240.0, height=30.0)
@@ -520,10 +522,11 @@ fn ShowcaseApp::dialog(
 }
 
 ///|
-fn ShowcaseApp::sheet(
-  self : ShowcaseApp,
+fn ShowcaseModel::sheet(
+  self : ShowcaseModel,
   theme : @core.Theme,
 ) -> @core.View[ShowcaseMsg] {
+  ignore(self)
   sheet(
     content=column(
       [

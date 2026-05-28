@@ -1,36 +1,22 @@
 ///|
-fn ShowcaseApp::catalog_shell(
-  self : ShowcaseApp,
-  ctx : @core.BuildContext,
+fn ShowcaseModel::catalog_shell(
+  self : ShowcaseModel,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
-  selected : String,
-  filter : @core.Binding[String],
-  draft : @core.Binding[String],
-  tab : @core.Binding[String],
-  slider : @core.Binding[Double],
-  enabled : @core.Binding[Bool],
-  secondary : @core.Binding[Bool],
-  picker : @core.Binding[String],
-  date : @core.Binding[@core.DateValue],
-  active : Bool,
   offset : Double,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
   row(
     [
-      self.sidebar(theme, metrics, selected, filter),
-      @views.navigation_stack(
-        self.navigation,
-        self.destinations(
-          ctx, theme, metrics, draft, tab, slider, enabled, secondary, picker, date,
-          active, offset, opacity,
-        ),
+      self.sidebar(theme, metrics),
+      @views.navigation_stack_selected(
+        self.selected_section,
+        self.destinations(theme, metrics, offset, opacity),
         fallback=section_panel(
           theme,
           "Missing section",
           "The selected route is not in the Showcase catalog.",
-          text("Route: " + selected, width=280.0, height=28.0),
+          text("Route: " + self.selected_section, width=280.0, height=28.0),
           metrics~,
         ),
       ).frame(width=metrics.detail_width, height=metrics.panel_height),
@@ -41,54 +27,41 @@ fn ShowcaseApp::catalog_shell(
 }
 
 ///|
-fn ShowcaseApp::destinations(
-  self : ShowcaseApp,
-  ctx : @core.BuildContext,
+fn ShowcaseModel::destinations(
+  self : ShowcaseModel,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
-  draft : @core.Binding[String],
-  tab : @core.Binding[String],
-  slider : @core.Binding[Double],
-  enabled : @core.Binding[Bool],
-  secondary : @core.Binding[Bool],
-  picker : @core.Binding[String],
-  date : @core.Binding[@core.DateValue],
-  active : Bool,
   offset : Double,
   opacity : Double,
 ) -> Array[@views.NavigationDestination[ShowcaseMsg]] {
   [
     @views.navigation_destination(
       route="overview",
-      view=self.overview_section(
-        theme, metrics, active, offset, opacity, slider,
-      ),
+      view=self.overview_section(theme, metrics, offset, opacity),
     ),
     @views.navigation_destination(
       route="text-media",
-      view=self.text_media_section(theme, metrics, draft, opacity),
+      view=self.text_media_section(theme, metrics, opacity),
     ),
     @views.navigation_destination(
       route="controls",
-      view=self.controls_section(
-        theme, metrics, draft, tab, slider, enabled, secondary, picker, date,
-      ),
+      view=self.controls_section(theme, metrics),
     ),
     @views.navigation_destination(
       route="layout",
-      view=self.layout_section(theme, metrics, slider),
+      view=self.layout_section(theme, metrics),
     ),
     @views.navigation_destination(
       route="navigation",
-      view=self.navigation_section(theme, metrics, tab),
+      view=self.navigation_section(theme, metrics),
     ),
     @views.navigation_destination(
       route="examples",
-      view=self.examples_section(ctx, theme, metrics),
+      view=self.examples_section(theme, metrics),
     ),
     @views.navigation_destination(
       route="theme-renderer",
-      view=self.theme_renderer_section(theme, metrics, enabled, active, opacity),
+      view=self.theme_renderer_section(theme, metrics, opacity),
     ),
     @views.navigation_destination(
       route="advanced-rendering",
@@ -96,11 +69,11 @@ fn ShowcaseApp::destinations(
     ),
     @views.navigation_destination(
       route="text-diagnostics",
-      view=self.text_diagnostics_section(theme, metrics, draft),
+      view=self.text_diagnostics_section(theme, metrics),
     ),
     @views.navigation_destination(
       route="interaction-lab",
-      view=self.interaction_lab_section(ctx, theme, metrics, draft),
+      view=self.interaction_lab_section(theme, metrics),
     ),
   ]
 }
@@ -172,12 +145,10 @@ fn showcase_sections() -> Array[ShowcaseSection] {
 }
 
 ///|
-fn ShowcaseApp::sidebar(
-  self : ShowcaseApp,
+fn ShowcaseModel::sidebar(
+  self : ShowcaseModel,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
-  selected : String,
-  filter : @core.Binding[String],
 ) -> @core.View[ShowcaseMsg] {
   let inner_width = metrics.sidebar_width - theme.spacing_scale.lg * 2.0
   let sidebar_body_height = max_showcase_double(
@@ -188,7 +159,8 @@ fn ShowcaseApp::sidebar(
     .font(theme.typography.control)
     .foreground(theme.palette.foreground)
   let search = searchbar(
-    query=filter,
+    query=self.filter,
+    on_input=value => FilterChanged(value),
     placeholder="Filter sections",
     theme~,
     on_clear=Some(ClearFilter),
@@ -196,13 +168,18 @@ fn ShowcaseApp::sidebar(
   let scrollbar_gutter = 24.0
   let list_width = max_showcase_double(120.0, inner_width - scrollbar_gutter)
   let list_rows : Array[@core.View[ShowcaseMsg]] = []
-  let query = filter.get()
+  let query = self.filter
   for section in showcase_sections() {
     if string_contains(section.title, query) ||
       string_contains(section.summary, query) ||
       string_contains(section.group, query) {
       list_rows.push(
-        self.sidebar_item(theme, section, selected == section.route, list_width),
+        self.sidebar_item(
+          theme,
+          section,
+          self.selected_section == section.route,
+          list_width,
+        ),
       )
     }
   }
@@ -222,39 +199,41 @@ fn ShowcaseApp::sidebar(
   )
   let normalized_offset = @core.Point::new(
     x=0.0,
-    y=clamp_double(self.sidebar_scroll.offset().y, 0.0, max_scroll),
+    y=clamp_double(self.sidebar_scroll_offset.y, 0.0, max_scroll),
   )
   surface(
     column(
       [
         title,
         search,
-        stack([
-          scroll_view(
-            column(
-              list_rows,
-              spacing=theme.spacing_scale.sm,
-              align=@views.CrossAlign::Start,
+        row(
+          [
+            scroll_view(
+              column(
+                list_rows,
+                spacing=theme.spacing_scale.sm,
+                align=@views.CrossAlign::Start,
+              ),
+              offset=normalized_offset,
+              width=list_width,
+              height=list_viewport_height,
+              on_scroll=Some(delta => {
+                SidebarScrollTo(
+                  clamp_double(normalized_offset.y - delta.y, 0.0, max_scroll),
+                )
+              }),
             ),
-            offset=normalized_offset,
-            width=list_width,
-            height=list_viewport_height,
-            on_scroll=Some(delta => {
-              SidebarScrollTo(
-                clamp_double(normalized_offset.y - delta.y, 0.0, max_scroll),
-              )
-            }),
-          ),
-          align(
+            spacer(min_length=scrollbar_gutter - 8.0, weight=0.0),
             sidebar_scrollbar(
               theme,
               viewport_height=list_viewport_height,
               content_height~,
               offset_y=normalized_offset.y,
-            ),
-            alignment=@core.Alignment::top_trailing(),
-          ),
-        ]).frame(width=inner_width, height=list_viewport_height),
+            ).frame(width=8.0, height=list_viewport_height),
+          ],
+          spacing=0.0,
+          align=@views.CrossAlign::Start,
+        ).frame(width=inner_width, height=list_viewport_height),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,
@@ -323,13 +302,14 @@ fn sidebar_scrollbar(
 }
 
 ///|
-fn ShowcaseApp::sidebar_item(
-  self : ShowcaseApp,
+fn ShowcaseModel::sidebar_item(
+  self : ShowcaseModel,
   theme : @core.Theme,
   section : ShowcaseSection,
   selected : Bool,
   width : Double,
 ) -> @core.View[ShowcaseMsg] {
+  ignore(self)
   let variant = if selected {
     @views.ButtonVariant::Primary
   } else {
@@ -346,13 +326,10 @@ fn ShowcaseApp::sidebar_item(
 }
 
 ///|
-fn ShowcaseApp::header(
-  self : ShowcaseApp,
+fn ShowcaseModel::header(
+  self : ShowcaseModel,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
-  dark : Bool,
-  active : Bool,
-  selected : String,
 ) -> @core.View[ShowcaseMsg] {
   let overview_width = if metrics.compact { 86.0 } else { 100.0 }
   let examples_width = if metrics.compact { 88.0 } else { 100.0 }
@@ -370,7 +347,7 @@ fn ShowcaseApp::header(
       .font(theme.typography.title)
       .foreground(theme.palette.foreground),
       text(
-        if active {
+        if self.active {
           "State-driven visuals are active"
         } else {
           "A complete catalog built from reusable example code"
@@ -390,7 +367,7 @@ fn ShowcaseApp::header(
         button(
           "Overview",
           on_click=SelectSection("overview"),
-          variant=if selected == "overview" {
+          variant=if self.selected_section == "overview" {
             @views.ButtonVariant::Primary
           } else {
             @views.ButtonVariant::Ghost
@@ -402,7 +379,7 @@ fn ShowcaseApp::header(
         button(
           "Examples",
           on_click=SelectSection("examples"),
-          variant=if selected == "examples" {
+          variant=if self.selected_section == "examples" {
             @views.ButtonVariant::Primary
           } else {
             @views.ButtonVariant::Ghost
@@ -412,7 +389,7 @@ fn ShowcaseApp::header(
           height=38.0,
         ),
         button(
-          if dark {
+          if self.dark {
             "Light"
           } else {
             "Dark"

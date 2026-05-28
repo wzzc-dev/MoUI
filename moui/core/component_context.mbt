@@ -64,6 +64,14 @@ pub fn[T] BuildContext::binding(
 }
 
 ///|
+pub fn BuildContext::view_environment(self : BuildContext) -> ViewEnvironment {
+  ViewEnvironment::new(
+    viewport_size=self.viewport_size(),
+    environment=self.environment,
+  )
+}
+
+///|
 pub fn BuildContext::on_update(
   self : BuildContext,
   key~ : String,

@@ -12,8 +12,9 @@ remain in `views/*.mbt` and the generated public API summary in
 ## API Style
 
 - Constructors use MoonBit labeled and optional parameters for common options.
-- Stateful controls receive `@core.Binding[T]` values from `State::binding()` or
-  `BuildContext::binding`.
+- TEA-first controls receive plain values plus `on_input`, `on_change`, or
+  `on_select` callbacks. Binding-backed companions keep the `*_binding` suffix
+  for component-local or advanced state.
 - Visual customization usually flows through `@core.Theme`, style types, or
   ordered modifiers such as `.padding`, `.background`, `.title`, `.clip`, and `.opacity`.
 - File drop targets use the `View::on_file_drop` modifier so apps can accept
@@ -23,12 +24,15 @@ remain in `views/*.mbt` and the generated public API summary in
   intent as `@core.View[Msg]` and eventual `@core.DrawCommand` data.
 
 ```mbt nocheck
-let draft = @core.State::new("")
-let screen = @views.column([
-  @views.text("Todo"),
-  @views.text_field(draft.binding(), placeholder="New item"),
-  @views.button("Add", on_click=SubmitDraft),
-], spacing=8.0)
+enum Msg { DraftChanged(String); SubmitDraft }
+
+fn view(draft : String) -> @core.View[Msg] {
+  @views.column([
+    @views.text("Todo"),
+    @views.text_field(draft, on_input=DraftChanged, placeholder="New item"),
+    @views.button("Add", on_click=SubmitDraft),
+  ], spacing=8.0)
+}
 ```
 
 ## Text And Media
@@ -46,14 +50,14 @@ let screen = @views.column([
 | --- | --- | --- | --- | --- | --- | --- |
 | `button` | `views/button.mbt` | ButtonStyle | Button | `views/views_test.mbt` | All examples | Main activation primitive. |
 | `menu_button` | `views/controls.mbt` | ButtonStyle | Menu | `views/views_test.mbt` | Showcase | Button wrapper with menu semantics. |
-| `checkbox` | `views/checkbox.mbt` | Color/font params | Checkbox | `views/views_test.mbt` | Showcase Todo pattern | Binding-backed boolean control. |
-| `toggle` | `views/controls.mbt` | Color params | Switch | `views/views_test.mbt` | Showcase | Checkbox wrapper with switch semantics. |
+| `checkbox` | `views/checkbox.mbt` | Color/font params | Checkbox | `views/views_test.mbt` | Showcase Todo pattern | TEA-first boolean control; use `checkbox_binding` for component-local state. |
+| `toggle` | `views/controls.mbt` | Color params | Switch | `views/views_test.mbt` | Showcase | TEA-first switch control; binding alias available. |
 | `toggle_switch` | `views/controls.mbt` | Color params | Switch | `views/views_test.mbt` | Showcase | Alias-style switch entry point. |
-| `radio` | `views/controls.mbt` | Color params | Radio | `views/views_test.mbt` | Showcase | Binding-backed single-option primitive. |
-| `text_field` | `views/text_field.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`, core input tests | Showcase, Markdown Editor | Binding-backed text input. |
-| `searchbar` | `views/searchbar.mbt` | Color/font params | Search field | `views/views_test.mbt` | Showcase | Text input specialized for filtering and clear actions. |
-| `picker` | `views/picker.mbt` | Color/font params | Picker | `views/views_test.mbt` | Showcase | Binding-backed option picker. |
-| `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `views/views_test.mbt` | Showcase | Binding-backed date/time picker. |
+| `radio` | `views/controls.mbt` | Color params | Radio | `views/views_test.mbt` | Showcase | TEA-first single-option primitive; use `radio_binding` for component-local state. |
+| `text_field` | `views/text_field.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`, core input tests | Showcase, Markdown Editor | TEA-first text input; use `text_field_binding` for component-local state. |
+| `searchbar` | `views/searchbar.mbt` | Color/font params | Search field | `views/views_test.mbt` | Showcase | TEA-first text input specialized for filtering and clear actions; `searchbar_binding` remains for advanced state. |
+| `picker` | `views/picker.mbt` | Color/font params | Picker | `views/views_test.mbt` | Showcase | TEA-first option picker; `picker_binding` remains for advanced state. |
+| `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `views/views_test.mbt` | Showcase | TEA-first date picker; `datepicker_binding` remains for advanced state. |
 | `slider` | `views/controls.mbt` | Color params | Slider | `views/views_test.mbt` | Showcase | Custom painted scalar control. |
 | `progress` | `views/controls.mbt` | Color params | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `tooltip` | `views/controls.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |
@@ -80,9 +84,9 @@ let screen = @views.column([
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `navigation_destination` | `views/navigation.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase | Route/view pair for navigation stack. |
-| `navigation_stack` | `views/navigation.mbt` | Child-based | Selected child semantics | `views/views_test.mbt`, Showcase tests | Showcase | Selects view from `NavigationState`. |
+| `navigation_stack` / `navigation_stack_selected` | `views/navigation.mbt` | Child-based | Selected child semantics | `views/views_test.mbt`, Showcase tests | Showcase | Selects a view from `NavigationState` or a TEA-owned route string. |
 | `tab_item` | `views/navigation.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase | Tab descriptor. |
-| `tab_view` | `views/navigation.mbt` | ButtonStyle defaults | Tab buttons | `views/views_test.mbt` | Showcase | Binding-backed tab selection. |
+| `tab_view` | `views/navigation.mbt` | ButtonStyle defaults | Tab buttons | `views/views_test.mbt` | Showcase | TEA-first tab selection; use `tab_view_binding` for component-local state. |
 | `dialog_host` | `views/navigation.mbt` | SurfaceStyle | Dialog when presented | `views/views_test.mbt`, Showcase tests | Showcase | Stack wrapper for modal content. |
 | `sheet` / `sheet_host` | `views/sheet.mbt` | Brush, radius, shadow | Sheet presentation | `views/views_test.mbt` | Showcase | Modal or bottom-sheet presentation wrapper. |
 

@@ -34,9 +34,17 @@ pub fn[Msg] navigation_stack(
   destinations : Array[NavigationDestination[Msg]],
   fallback? : @core.View[Msg] = empty(),
 ) -> @core.View[Msg] {
-  let route = state.current()
+  navigation_stack_selected(state.current(), destinations, fallback~)
+}
+
+///|
+pub fn[Msg] navigation_stack_selected(
+  selected : String,
+  destinations : Array[NavigationDestination[Msg]],
+  fallback? : @core.View[Msg] = empty(),
+) -> @core.View[Msg] {
   for destination in destinations {
-    if destination.route == route {
+    if destination.route == selected {
       return destination.view
     }
   }
@@ -45,12 +53,11 @@ pub fn[Msg] navigation_stack(
 
 ///|
 pub fn[Msg] tab_view(
-  selection : @core.Binding[String],
+  selected : String,
   tabs : Array[TabItem[Msg]],
   spacing? : Double = 8.0,
   on_select~ : (String) -> Msg,
 ) -> @core.View[Msg] {
-  let selected = selection.get()
   let buttons : Array[@core.View[Msg]] = []
   let mut content = empty()
   for tab in tabs {
@@ -71,6 +78,16 @@ pub fn[Msg] tab_view(
     buttons.push(tab_button)
   }
   column([row(buttons, spacing~), content], spacing~)
+}
+
+///|
+pub fn[Msg] tab_view_binding(
+  selection : @core.Binding[String],
+  tabs : Array[TabItem[Msg]],
+  spacing? : Double = 8.0,
+  on_select~ : (String) -> Msg,
+) -> @core.View[Msg] {
+  tab_view(selection.get(), tabs, spacing~, on_select~)
 }
 
 ///|

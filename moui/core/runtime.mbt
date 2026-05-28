@@ -81,7 +81,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
   dispatch_ref.val = Some(dispatch)
   run_effect(initial_effect, dispatch)
   AppRuntime::new_component_view(
-    root=ctx => (program.view)(ctx.watch(model)),
+    root=ctx => (program.view)(ctx.watch(model), ctx.view_environment()),
     size~,
     environment~,
     on_message=Some(dispatch),

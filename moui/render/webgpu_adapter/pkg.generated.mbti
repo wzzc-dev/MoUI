@@ -1,0 +1,134 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/render/webgpu_adapter"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+}
+
+// Values
+pub fn adapter_info() -> WebGpuHostAdapterInfo
+
+pub fn backend_info() -> @render.RendererBackendInfo
+
+pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract
+
+pub fn create_renderer(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double, port~ : WebGpuHostRendererPort) -> WebGpuWasmRenderer raise WebGpuHostError
+
+pub fn create_surface(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double, port~ : WebGpuHostRendererPort) -> WebGpuHostSurface raise WebGpuHostError
+
+pub fn create_webgpu_renderer(canvas_id~ : String, logical_size~ : @core.Size, scale_factor? : Double) -> WebGpuWasmRenderer raise WebGpuHostError
+
+pub fn draw_commands_to_host_calls(Array[@core.DrawCommand], @core.Size) -> Array[WebGpuHostCall]
+
+pub fn host_import_info() -> WebGpuHostImportInfo
+
+pub fn required_capabilities() -> WebGpuHostCapabilities
+
+pub fn wasm_gc_host_port() -> WebGpuHostRendererPort
+
+// Errors
+pub(all) suberror WebGpuHostError {
+  Unavailable
+  AdapterUnavailable
+  DeviceUnavailable
+  SurfaceUnavailable
+  PipelineUnavailable
+  InvalidResource
+  HostError(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+// Types and methods
+pub(all) struct WebGpuHostAdapterInfo {
+  renderer : @render.RendererBackendInfo
+  surface_contract : @render.WgpuSurfaceContract
+  imports : WebGpuHostImportInfo
+  capabilities : WebGpuHostCapabilities
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum WebGpuHostCall {
+  BeginFrame(@core.Size)
+  Clear(@core.Color)
+  FillRect(@core.Rect, @core.Color)
+  StrokeRect(@core.Rect, @core.Color, Double)
+  FillRoundedRect(@core.RoundedRect, @core.Color)
+  StrokeRoundedRect(@core.RoundedRect, @core.Color, Double)
+  FillRoundedRectBrush(@core.RoundedRect, @core.Brush)
+  StrokeRoundedRectBrush(@core.RoundedRect, @core.Brush, Double)
+  DrawShadow(@core.ShadowSpec)
+  DrawText(@core.TextRun)
+  DrawImage(@core.ImageRun)
+  DrawPath(@core.PathSpec)
+  PushClip(@core.Rect)
+  PopClip
+  PushRoundedClip(@core.RoundedRect)
+  PopRoundedClip
+  PushTransform(@core.Transform2D)
+  PopTransform
+  PushOpacity(Double)
+  PopOpacity
+  PushLayer(@core.LayerSpec)
+  PopLayer
+  PushFilter(@core.FilterEffect)
+  PopFilter
+  DrawShaderEffect(@core.ShaderEffectSpec)
+  Present
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebGpuHostCapabilities {
+  webgpu_available : Bool
+  adapter_ready : Bool
+  can_render : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebGpuHostImportInfo {
+  import_module : String
+  target : String
+  surface_resource : String
+  renderer_resource : String
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebGpuHostRendererPort {
+  capabilities : () -> WebGpuHostCapabilities raise WebGpuHostError
+  create_surface : (String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError
+  create_renderer : (WebGpuHostSurface) -> Unit raise WebGpuHostError
+  resize : (@render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
+  measure_text : (@core.TextLayoutInput) -> @core.TextLayoutResult
+  register_font_data : (@core.FontFamily, Bytes) -> Unit
+  image_resource : (String) -> @render.ImageResourceRecord?
+  submit : (Array[WebGpuHostCall]) -> Unit raise WebGpuHostError
+  dispose : () -> Unit
+}
+
+pub(all) struct WebGpuHostSurface {
+  canvas_id : String
+  mut metrics : @render.RendererSurfaceMetrics
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebGpuWasmRenderer {
+  surface : WebGpuHostSurface
+  port : WebGpuHostRendererPort
+  mut size : @core.Size
+  mut present_count : Int
+  mut last_calls : Array[WebGpuHostCall]
+  mut last_fallback_plan : @render.RendererCommandPlan
+  image_lifecycle : @render.ImageResourceLifecycle
+}
+pub fn WebGpuWasmRenderer::backend_info(Self) -> @render.RendererBackendInfo
+pub fn WebGpuWasmRenderer::backend_kind(Self) -> @render.RendererBackendKind
+pub fn WebGpuWasmRenderer::dispose(Self) -> Unit
+pub fn WebGpuWasmRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
+pub fn WebGpuWasmRenderer::last_calls(Self) -> Array[WebGpuHostCall]
+pub fn WebGpuWasmRenderer::last_fallback_plan(Self) -> @render.RendererCommandPlan
+pub fn WebGpuWasmRenderer::present_count(Self) -> Int
+pub fn WebGpuWasmRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise WebGpuHostError
+pub fn WebGpuWasmRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
+pub fn WebGpuWasmRenderer::text_system(Self) -> @core.TextSystem
+
+// Type aliases
+
+// Traits
+

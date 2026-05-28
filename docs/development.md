@@ -6,7 +6,7 @@ for MoUI development.
 ## Local Dependencies
 
 The upstream `Milky2018/window` package does not currently cover the targets
-MoUI needs, so use the modified local checkout instead.
+MoUI needs, so use the `wzzc-dev/window` fork checkout instead.
 
 From the repository root:
 
@@ -15,12 +15,12 @@ sh scripts/setup-local-deps.sh
 sh scripts/check-local-deps.sh
 ```
 
-This keeps `Milky2018/window` declared in `moon.mod` and resolved through the
+This keeps `wzzc-dev/window` declared in `moon.mod` and resolved through the
 local workspace member in `moon.work`:
 
 ```moonbit
 import {
-  "Milky2018/window@0.5.1",
+  "wzzc-dev/window@0.5.1",
 }
 ```
 

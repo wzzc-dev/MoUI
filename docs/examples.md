@@ -1,15 +1,17 @@
 # Examples
 
 MoUI examples are runnable documentation. Showcase is the visual catalog and
-contains the Counter and Todo interaction patterns. The WYSIWYG Markdown editor
-stays separate because it demonstrates a larger editing workflow with its own
-model and parser tests. Showcase surfaces renderer capability follow-ups first
-so visible docs do not hide partial or gap status behind ready features.
+now follows the same TEA shape as ordinary apps: `Model / Msg / update / view`
+driven by `Program::simple_with_environment`. It still contains the Counter and
+Todo interaction patterns. The WYSIWYG Markdown editor stays separate because
+it demonstrates a larger editing workflow with its own model and parser tests.
+Showcase surfaces renderer capability follow-ups first so visible docs do not
+hide partial or gap status behind ready features.
 
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
-| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | Public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
+| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 
 ## Counter
@@ -56,8 +58,9 @@ pub fn view(model : Model) -> @core.View[Msg] {
 }
 ```
 
-Showcase is organized as a system gallery. In addition to the standard control,
-layout, navigation, text/media, and example sections, it now includes:
+Showcase is organized as a system gallery split across ten section files. In
+addition to the standard control, layout, navigation, text/media, and example
+sections, it now includes:
 
 - `Advanced Rendering`: app-local `custom_layout` demos for layer/blend,
   filter, shader effect, path, transform, and opacity draw commands.

@@ -51,7 +51,7 @@ editor remains a separate practical editing demo.
 
 ## Quick Start
 
-Set up the local `Milky2018/window` checkout and run the bounded development
+Set up the local `wzzc-dev/window` checkout and run the bounded development
 check:
 
 ```sh

@@ -141,7 +141,7 @@ pub fn backend_info() -> LinuxBackendInfo {
     accessibility: linux_accessibility_bridge_info(),
     services: service_capabilities(),
     readiness: readiness(),
-    description: "Linux backend uses Milky2018/window/linux for Wayland events and render/wgpu for a native Wayland WGPU surface.",
+    description: "Linux backend uses wzzc-dev/window/linux for Wayland events and render/wgpu for a native Wayland WGPU surface.",
   }
 }
 

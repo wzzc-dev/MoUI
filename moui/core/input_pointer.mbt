@@ -85,21 +85,21 @@ fn ElementNode::dispatch_pointer_to_children(
   let mut focused : ElementId? = None
   let mut index = self.children.length() - 1
   while index >= 0 {
-    if index < render.children.length() &&
-      render.children[index].frame.contains(event.position) {
-      let result = self.children[index].dispatch_pointer(
-        event,
-        render.children[index],
-        text_system~,
-      )
-      changed = result.changed
-      activated = result.activated
-      match result.focused {
-        Some(_) => focused = result.focused
-        None => ()
-      }
-      if result.changed || result.activated || result.focused is Some(_) {
-        break
+    if index < render.children.length() {
+      let child = self.children[index]
+      let child_render = render.children[index]
+      if child_render.frame.contains(event.position) ||
+        child.expanded_popup_contains(event.position, child_render.frame) {
+        let result = child.dispatch_pointer(event, child_render, text_system~)
+        changed = result.changed
+        activated = result.activated
+        match result.focused {
+          Some(_) => focused = result.focused
+          None => ()
+        }
+        if result.changed || result.activated || result.focused is Some(_) {
+          break
+        }
       }
     }
     index = index - 1
@@ -108,6 +108,45 @@ fn ElementNode::dispatch_pointer_to_children(
     self.dirty.mark_paint()
   }
   { changed, activated, focused }
+}
+
+///|
+fn ElementNode::expanded_popup_contains(
+  self : ElementNode,
+  position : Point,
+  frame : Rect,
+) -> Bool {
+  match self.spec {
+    PickerSpec(data) =>
+      self.control.picker_expanded &&
+      picker_popup_frame(data, frame).contains(position)
+    DatePickerSpec(_) =>
+      self.control.datepicker_expanded &&
+      datepicker_popup_frame(frame).contains(position)
+    _ => false
+  }
+}
+
+///|
+fn picker_popup_frame(data : PickerViewSpec, frame : Rect) -> Rect {
+  let item_height = 36.0
+  let count = data.items.length().to_double()
+  Rect::new(
+    x=frame.origin.x,
+    y=frame.origin.y + frame.size.height + 4.0,
+    width=frame.size.width,
+    height=min_double(data.maxHeight, count * item_height),
+  )
+}
+
+///|
+fn datepicker_popup_frame(frame : Rect) -> Rect {
+  Rect::new(
+    x=frame.origin.x,
+    y=frame.origin.y + frame.size.height + 4.0,
+    width=max_double(frame.size.width, 280.0),
+    height=350.0,
+  )
 }
 
 ///|
@@ -354,7 +393,8 @@ fn handle_picker_element_pointer(
       element.control.picker_expanded = false
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
-    } else if main_button_clicked && list_frame.contains(event.position) {
+    } else if event.phase == PointerPhase::Up &&
+      list_frame.contains(event.position) {
       let clicked_y = event.position.y - list_frame.origin.y
       let clicked_index = (clicked_y / item_height).to_int()
       if clicked_index >= 0 && clicked_index < data.items.length() {
@@ -401,7 +441,8 @@ fn handle_datepicker_element_pointer(
       element.control.datepicker_expanded = false
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
-    } else if main_button_clicked && panel_frame.contains(event.position) {
+    } else if event.phase == PointerPhase::Up &&
+      panel_frame.contains(event.position) {
       // 点击了面板内容，处理各种情况
       let header_height = 50.0
       let day_header_height = 36.0

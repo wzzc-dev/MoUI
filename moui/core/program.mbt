@@ -9,7 +9,7 @@ pub(all) enum Effect[Msg] {
 pub(all) struct Program[Model, Msg] {
   init : () -> (Model, Effect[Msg])
   update : (Model, Msg) -> (Model, Effect[Msg])
-  view : (Model) -> View[Msg]
+  view : (Model, ViewEnvironment) -> View[Msg]
 }
 
 ///|
@@ -33,6 +33,15 @@ pub fn[Model, Msg] Program::new(
   update~ : (Model, Msg) -> (Model, Effect[Msg]),
   view~ : (Model) -> View[Msg],
 ) -> Program[Model, Msg] {
+  { init, update, view: (model, _env) => view(model) }
+}
+
+///|
+pub fn[Model, Msg] Program::new_with_environment(
+  init~ : () -> (Model, Effect[Msg]),
+  update~ : (Model, Msg) -> (Model, Effect[Msg]),
+  view~ : (Model, ViewEnvironment) -> View[Msg],
+) -> Program[Model, Msg] {
   { init, update, view }
 }
 
@@ -43,6 +52,19 @@ pub fn[Model, Msg] Program::simple(
   view~ : (Model) -> View[Msg],
 ) -> Program[Model, Msg] {
   Program::new(
+    init=() => (init, Effect::none()),
+    update=(model, message) => (update(model, message), Effect::none()),
+    view~,
+  )
+}
+
+///|
+pub fn[Model, Msg] Program::simple_with_environment(
+  init~ : Model,
+  update~ : (Model, Msg) -> Model,
+  view~ : (Model, ViewEnvironment) -> View[Msg],
+) -> Program[Model, Msg] {
+  Program::new_with_environment(
     init=() => (init, Effect::none()),
     update=(model, message) => (update(model, message), Effect::none()),
     view~,

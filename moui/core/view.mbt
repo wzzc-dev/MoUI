@@ -9,16 +9,22 @@ enum ViewNode[Msg] {
   TextNode(TextViewSpec)
   ButtonNode(ButtonViewSpec, Msg?)
   TextFieldNode(TextFieldViewSpec, Msg?)
+  ControlledTextFieldNode(ControlledTextFieldViewData[Msg])
   RichTextEditorNode(
     RichTextEditorViewSpec,
     ((Int, TextRange?) -> Msg)?,
     ((Int) -> Msg)?
   )
+  ControlledRichTextEditorNode(ControlledRichTextEditorViewData[Msg])
   ImageNode(ImageViewSpec)
   CheckboxNode(CheckboxViewSpec)
+  ControlledCheckboxNode(ControlledCheckboxViewData[Msg])
   PickerNode(PickerViewSpec)
+  ControlledPickerNode(ControlledPickerViewData[Msg])
   DatePickerNode(DatePickerViewSpec)
+  ControlledDatePickerNode(ControlledDatePickerViewData[Msg])
   SearchBarNode(SearchBarViewSpec, Msg?, Msg?)
+  ControlledSearchBarNode(ControlledSearchBarViewData[Msg])
   SheetNode(SheetViewSpec, ViewNode[Msg], Msg?)
   FlexNode(FlexViewSpec, Array[ViewNode[Msg]])
   PaddingNode(PaddingViewSpec, ViewNode[Msg])
@@ -33,6 +39,105 @@ enum ViewNode[Msg] {
   CustomNode(CustomViewSpec)
   CustomLayoutNode(CustomLayoutSpec, Array[ViewNode[Msg]])
   ComponentNode((BuildContext) -> View[Msg])
+}
+
+///|
+priv struct ControlledTextFieldViewData[Msg] {
+  key : Key?
+  value : String
+  placeholder : String
+  size : Size
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Brush
+  border : BorderStyle?
+  focused_border : BorderStyle?
+  cursor_color : Color
+  corner_radius : Double
+  on_input : (String) -> Msg
+  on_submit : Msg?
+}
+
+///|
+priv struct ControlledRichTextEditorViewData[Msg] {
+  key : Key?
+  value : String
+  placeholder : String
+  size : Size
+  format : RichTextFormatter
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Brush
+  border : BorderStyle?
+  focused_border : BorderStyle?
+  cursor_color : Color
+  corner_radius : Double
+  on_input : (String) -> Msg
+  on_selection_change : ((Int, TextRange?) -> Msg)?
+  on_prefix_click : ((Int) -> Msg)?
+  input_transform : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?
+  accepts_tab_input : Bool
+}
+
+///|
+priv struct ControlledCheckboxViewData[Msg] {
+  key : Key?
+  label : String
+  checked : Bool
+  font : FontSpec
+  foreground : Color
+  check_color : Color
+  size : Size
+  on_change : (Bool) -> Msg
+}
+
+///|
+priv struct ControlledPickerViewData[Msg] {
+  key : Key?
+  items : Array[PickerItem]
+  selected : String
+  placeholder : String
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  cornerRadius : Double
+  maxHeight : Double
+  on_select : (String) -> Msg
+}
+
+///|
+priv struct ControlledDatePickerViewData[Msg] {
+  key : Key?
+  selected : DateValue
+  mode : DatePickerMode
+  placeholder : String
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  corner_radius : Double
+  min_date : DateValue?
+  max_date : DateValue?
+  on_select : (DateValue) -> Msg
+}
+
+///|
+priv struct ControlledSearchBarViewData[Msg] {
+  key : Key?
+  query : String
+  placeholder : String
+  font : FontSpec
+  foreground : Color
+  placeholder_color : Color
+  background : Brush
+  border : BorderStyle?
+  focused_border : BorderStyle?
+  cursor_color : Color
+  corner_radius : Double
+  on_input : (String) -> Msg
+  on_submit : Msg?
+  on_clear : Msg?
 }
 
 ///|
@@ -151,6 +256,30 @@ pub fn[Msg] View::checkbox(
 }
 
 ///|
+pub fn[Msg] View::controlled_checkbox(
+  label~ : String,
+  checked~ : Bool,
+  on_change~ : (Bool) -> Msg,
+  font~ : FontSpec,
+  foreground~ : Color,
+  check_color~ : Color,
+  size~ : Size,
+) -> View[Msg] {
+  view_from_node(
+    ControlledCheckboxNode({
+      key: None,
+      label,
+      checked,
+      font,
+      foreground,
+      check_color,
+      size,
+      on_change,
+    }),
+  )
+}
+
+///|
 pub fn[Msg] View::text_field(
   value~ : Binding[String],
   placeholder~ : String,
@@ -184,6 +313,42 @@ pub fn[Msg] View::text_field(
       },
       on_submit,
     ),
+  )
+}
+
+///|
+pub fn[Msg] View::controlled_text_field(
+  value~ : String,
+  on_input~ : (String) -> Msg,
+  placeholder~ : String,
+  size~ : Size,
+  font~ : FontSpec,
+  foreground~ : Color,
+  placeholder_color~ : Color,
+  background~ : Brush,
+  border? : BorderStyle? = None,
+  focused_border? : BorderStyle? = None,
+  cursor_color~ : Color,
+  corner_radius? : Double = 0.0,
+  on_submit? : Msg? = None,
+) -> View[Msg] {
+  view_from_node(
+    ControlledTextFieldNode({
+      key: None,
+      value,
+      placeholder,
+      size,
+      font,
+      foreground,
+      placeholder_color,
+      background,
+      border,
+      focused_border,
+      cursor_color,
+      corner_radius,
+      on_input,
+      on_submit,
+    }),
   )
 }
 
@@ -234,6 +399,50 @@ pub fn[Msg] View::rich_text_editor(
 }
 
 ///|
+pub fn[Msg] View::controlled_rich_text_editor(
+  value~ : String,
+  on_input~ : (String) -> Msg,
+  placeholder~ : String,
+  size~ : Size,
+  format~ : RichTextFormatter,
+  font~ : FontSpec,
+  foreground~ : Color,
+  placeholder_color~ : Color,
+  background~ : Brush,
+  border? : BorderStyle? = None,
+  focused_border? : BorderStyle? = None,
+  cursor_color~ : Color,
+  corner_radius? : Double = 0.0,
+  on_selection_change? : ((Int, TextRange?) -> Msg)? = None,
+  on_prefix_click? : ((Int) -> Msg)? = None,
+  input_transform? : ((String, Int, TextRange?, String) -> RichTextInputTransform?)? = None,
+  accepts_tab_input? : Bool = false,
+) -> View[Msg] {
+  view_from_node(
+    ControlledRichTextEditorNode({
+      key: None,
+      value,
+      placeholder,
+      size,
+      format,
+      font,
+      foreground,
+      placeholder_color,
+      background,
+      border,
+      focused_border,
+      cursor_color,
+      corner_radius,
+      on_input,
+      on_selection_change,
+      on_prefix_click,
+      input_transform,
+      accepts_tab_input,
+    }),
+  )
+}
+
+///|
 pub fn[Msg] View::picker(
   items~ : Array[PickerItem],
   selected~ : Binding[String],
@@ -255,6 +464,34 @@ pub fn[Msg] View::picker(
       background,
       cornerRadius: corner_radius,
       maxHeight: max_height,
+    }),
+  )
+}
+
+///|
+pub fn[Msg] View::controlled_picker(
+  items~ : Array[PickerItem],
+  selected~ : String,
+  on_select~ : (String) -> Msg,
+  placeholder~ : String,
+  font~ : FontSpec,
+  foreground~ : Color,
+  background~ : Brush,
+  corner_radius~ : Double,
+  max_height~ : Double,
+) -> View[Msg] {
+  view_from_node(
+    ControlledPickerNode({
+      key: None,
+      items,
+      selected,
+      placeholder,
+      font,
+      foreground,
+      background,
+      cornerRadius: corner_radius,
+      maxHeight: max_height,
+      on_select,
     }),
   )
 }
@@ -283,6 +520,36 @@ pub fn[Msg] View::datepicker(
       corner_radius,
       min_date,
       max_date,
+    }),
+  )
+}
+
+///|
+pub fn[Msg] View::controlled_datepicker(
+  selected~ : DateValue,
+  on_select~ : (DateValue) -> Msg,
+  mode~ : DatePickerMode,
+  placeholder~ : String,
+  font~ : FontSpec,
+  foreground~ : Color,
+  background~ : Brush,
+  corner_radius~ : Double,
+  min_date? : DateValue? = None,
+  max_date? : DateValue? = None,
+) -> View[Msg] {
+  view_from_node(
+    ControlledDatePickerNode({
+      key: None,
+      selected,
+      mode,
+      placeholder,
+      font,
+      foreground,
+      background,
+      corner_radius,
+      min_date,
+      max_date,
+      on_select,
     }),
   )
 }
@@ -322,6 +589,42 @@ pub fn[Msg] View::search_bar(
       on_submit,
       on_clear,
     ),
+  )
+}
+
+///|
+pub fn[Msg] View::controlled_search_bar(
+  query~ : String,
+  on_input~ : (String) -> Msg,
+  placeholder~ : String,
+  font~ : FontSpec,
+  foreground~ : Color,
+  placeholder_color~ : Color,
+  background~ : Brush,
+  border? : BorderStyle? = None,
+  focused_border? : BorderStyle? = None,
+  cursor_color~ : Color,
+  corner_radius~ : Double,
+  on_submit? : Msg? = None,
+  on_clear? : Msg? = None,
+) -> View[Msg] {
+  view_from_node(
+    ControlledSearchBarNode({
+      key: None,
+      query,
+      placeholder,
+      font,
+      foreground,
+      placeholder_color,
+      background,
+      border,
+      focused_border,
+      cursor_color,
+      corner_radius,
+      on_input,
+      on_submit,
+      on_clear,
+    }),
   )
 }
 
@@ -835,6 +1138,27 @@ fn[Msg] realize_view_node(
           None => None
         },
       })
+    ControlledTextFieldNode(data) =>
+      TextFieldSpec({
+        key: data.key,
+        value: Binding::new(get=() => data.value, set=value => {
+          emit((data.on_input)(value))
+        }),
+        placeholder: data.placeholder,
+        size: data.size,
+        font: data.font,
+        foreground: data.foreground,
+        placeholder_color: data.placeholder_color,
+        background: data.background,
+        border: data.border,
+        focused_border: data.focused_border,
+        cursor_color: data.cursor_color,
+        corner_radius: data.corner_radius,
+        on_submit: match data.on_submit {
+          Some(message) => Some(() => emit(message))
+          None => None
+        },
+      })
     RichTextEditorNode(data, selection, prefix) =>
       RichTextEditorSpec({
         ..data,
@@ -847,10 +1171,79 @@ fn[Msg] realize_view_node(
           None => None
         },
       })
+    ControlledRichTextEditorNode(data) =>
+      RichTextEditorSpec({
+        key: data.key,
+        value: Binding::new(get=() => data.value, set=value => {
+          emit((data.on_input)(value))
+        }),
+        placeholder: data.placeholder,
+        size: data.size,
+        format: data.format,
+        font: data.font,
+        foreground: data.foreground,
+        placeholder_color: data.placeholder_color,
+        background: data.background,
+        border: data.border,
+        focused_border: data.focused_border,
+        cursor_color: data.cursor_color,
+        corner_radius: data.corner_radius,
+        on_selection_change: match data.on_selection_change {
+          Some(handler) => Some((caret, range) => emit(handler(caret, range)))
+          None => None
+        },
+        on_prefix_click: match data.on_prefix_click {
+          Some(handler) => Some(offset => emit(handler(offset)))
+          None => None
+        },
+        input_transform: data.input_transform,
+        accepts_tab_input: data.accepts_tab_input,
+      })
     ImageNode(data) => ImageSpec(data)
     CheckboxNode(data) => CheckboxSpec(data)
+    ControlledCheckboxNode(data) =>
+      CheckboxSpec({
+        key: data.key,
+        label: data.label,
+        checked: Binding::new(get=() => data.checked, set=checked => {
+          emit((data.on_change)(checked))
+        }),
+        font: data.font,
+        foreground: data.foreground,
+        check_color: data.check_color,
+        size: data.size,
+      })
     PickerNode(data) => PickerSpec(data)
+    ControlledPickerNode(data) =>
+      PickerSpec({
+        key: data.key,
+        items: data.items,
+        selected: Binding::new(get=() => data.selected, set=selected => {
+          emit((data.on_select)(selected))
+        }),
+        placeholder: data.placeholder,
+        font: data.font,
+        foreground: data.foreground,
+        background: data.background,
+        cornerRadius: data.cornerRadius,
+        maxHeight: data.maxHeight,
+      })
     DatePickerNode(data) => DatePickerSpec(data)
+    ControlledDatePickerNode(data) =>
+      DatePickerSpec({
+        key: data.key,
+        selected: Binding::new(get=() => data.selected, set=selected => {
+          emit((data.on_select)(selected))
+        }),
+        mode: data.mode,
+        placeholder: data.placeholder,
+        font: data.font,
+        foreground: data.foreground,
+        background: data.background,
+        corner_radius: data.corner_radius,
+        min_date: data.min_date,
+        max_date: data.max_date,
+      })
     SearchBarNode(data, submit, clear) =>
       SearchBarSpec({
         ..data,
@@ -859,6 +1252,30 @@ fn[Msg] realize_view_node(
           None => None
         },
         on_clear: match clear {
+          Some(message) => Some(() => emit(message))
+          None => None
+        },
+      })
+    ControlledSearchBarNode(data) =>
+      SearchBarSpec({
+        key: data.key,
+        query: Binding::new(get=() => data.query, set=query => {
+          emit((data.on_input)(query))
+        }),
+        placeholder: data.placeholder,
+        font: data.font,
+        foreground: data.foreground,
+        placeholder_color: data.placeholder_color,
+        background: data.background,
+        border: data.border,
+        focused_border: data.focused_border,
+        cursor_color: data.cursor_color,
+        corner_radius: data.corner_radius,
+        on_submit: match data.on_submit {
+          Some(message) => Some(() => emit(message))
+          None => None
+        },
+        on_clear: match data.on_clear {
           Some(message) => Some(() => emit(message))
           None => None
         },
@@ -963,22 +1380,118 @@ fn[Msg, NextMsg] map_view_node(
       ButtonNode(data, option_map_message(message, map))
     TextFieldNode(data, message) =>
       TextFieldNode(data, option_map_message(message, map))
+    ControlledTextFieldNode(data) =>
+      ControlledTextFieldNode({
+        key: data.key,
+        value: data.value,
+        placeholder: data.placeholder,
+        size: data.size,
+        font: data.font,
+        foreground: data.foreground,
+        placeholder_color: data.placeholder_color,
+        background: data.background,
+        border: data.border,
+        focused_border: data.focused_border,
+        cursor_color: data.cursor_color,
+        corner_radius: data.corner_radius,
+        on_input: value => map((data.on_input)(value)),
+        on_submit: option_map_message(data.on_submit, map),
+      })
     RichTextEditorNode(data, selection, prefix) =>
       RichTextEditorNode(
         data,
         option_map_selection_handler(selection, map),
         option_map_prefix_handler(prefix, map),
       )
+    ControlledRichTextEditorNode(data) =>
+      ControlledRichTextEditorNode({
+        key: data.key,
+        value: data.value,
+        placeholder: data.placeholder,
+        size: data.size,
+        format: data.format,
+        font: data.font,
+        foreground: data.foreground,
+        placeholder_color: data.placeholder_color,
+        background: data.background,
+        border: data.border,
+        focused_border: data.focused_border,
+        cursor_color: data.cursor_color,
+        corner_radius: data.corner_radius,
+        on_input: value => map((data.on_input)(value)),
+        on_selection_change: option_map_selection_handler(
+          data.on_selection_change,
+          map,
+        ),
+        on_prefix_click: option_map_prefix_handler(data.on_prefix_click, map),
+        input_transform: data.input_transform,
+        accepts_tab_input: data.accepts_tab_input,
+      })
     ImageNode(data) => ImageNode(data)
     CheckboxNode(data) => CheckboxNode(data)
+    ControlledCheckboxNode(data) =>
+      ControlledCheckboxNode({
+        key: data.key,
+        label: data.label,
+        checked: data.checked,
+        font: data.font,
+        foreground: data.foreground,
+        check_color: data.check_color,
+        size: data.size,
+        on_change: value => map((data.on_change)(value)),
+      })
     PickerNode(data) => PickerNode(data)
+    ControlledPickerNode(data) =>
+      ControlledPickerNode({
+        key: data.key,
+        items: data.items,
+        selected: data.selected,
+        placeholder: data.placeholder,
+        font: data.font,
+        foreground: data.foreground,
+        background: data.background,
+        cornerRadius: data.cornerRadius,
+        maxHeight: data.maxHeight,
+        on_select: value => map((data.on_select)(value)),
+      })
     DatePickerNode(data) => DatePickerNode(data)
+    ControlledDatePickerNode(data) =>
+      ControlledDatePickerNode({
+        key: data.key,
+        selected: data.selected,
+        mode: data.mode,
+        placeholder: data.placeholder,
+        font: data.font,
+        foreground: data.foreground,
+        background: data.background,
+        corner_radius: data.corner_radius,
+        min_date: data.min_date,
+        max_date: data.max_date,
+        on_select: value => map((data.on_select)(value)),
+      })
     SearchBarNode(data, submit, clear) =>
       SearchBarNode(
         data,
         option_map_message(submit, map),
         option_map_message(clear, map),
       )
+    ControlledSearchBarNode(data) =>
+      ControlledSearchBarNode({
+        key: data.key,
+        query: data.query,
+        placeholder: data.placeholder,
+        font: data.font,
+        foreground: data.foreground,
+        placeholder_color: data.placeholder_color,
+        background: data.background,
+        border: data.border,
+        focused_border: data.focused_border,
+        cursor_color: data.cursor_color,
+        corner_radius: data.corner_radius,
+        on_input: value => map((data.on_input)(value)),
+        on_submit: option_map_message(data.on_submit, map),
+        on_clear: option_map_message(data.on_clear, map),
+      })
     SheetNode(data, content, dismiss) =>
       SheetNode(
         data,

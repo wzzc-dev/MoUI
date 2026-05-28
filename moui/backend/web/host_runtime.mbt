@@ -49,7 +49,7 @@ pub fn backend_info() -> WebBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Web,
-      description="canonical Milky2018/window web host for wasm-gc WebGPU",
+      description="canonical wzzc-dev/window web host for wasm-gc WebGPU",
     ),
     uses_window_web_backend: true,
     requires_browser_webgpu_renderer: true,
