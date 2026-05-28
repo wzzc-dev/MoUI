@@ -1,7 +1,6 @@
 import {
   "wzzc-dev/moui/backend/windows" @windows_backend,
-  "examples/markdown_editor/app" @markdown_app,
-  "wzzc-dev/moui/render/wgpu",
+  "examples/counter/app" @counter_app,
 }
 
 supported_targets = "native"
@@ -10,7 +9,7 @@ options(
   "is-main": true,
   link: {
     "native": {
-      "cc-link-flags": "-Wl,--subsystem,windows -lz -lcomdlg32 -lshell32 -ladvapi32 -lole32 -luser32",
+      "cc-link-flags": "-LC:/msys64/ucrt64/lib -Wl,--subsystem,windows -lz -lcomdlg32 -lshell32 -ladvapi32 -lole32 -luser32",
     },
   },
   targets: { "main.mbt": [ "native" ] },
