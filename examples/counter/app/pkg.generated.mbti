@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/counter/app"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct CounterApp {
+  count : @core.State[Int]
+}
+pub fn CounterApp::decrement(Self) -> Unit
+pub fn CounterApp::increment(Self) -> Unit
+pub fn CounterApp::new() -> Self
+pub fn CounterApp::reset(Self) -> Unit
+pub fn CounterApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+
+// Type aliases
+
+// Traits
+
