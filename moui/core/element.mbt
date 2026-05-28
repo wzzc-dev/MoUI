@@ -5,6 +5,24 @@ priv struct ElementNode {
   mut spec : ViewSpec
   mut children : Array[ElementNode]
   dirty : DirtyFlags
+  control : ElementControlState
+  component : ElementComponentState
+  layout_cache : ElementLayoutCache
+  render_cache : ElementRenderCache
+}
+
+///|
+priv struct ElementTree {
+  root : ElementNode
+}
+
+///|
+priv struct LayoutTree {
+  root : PlacedNode
+}
+
+///|
+priv struct ElementControlState {
   mut button_state : ButtonState
   mut picker_expanded : Bool
   mut datepicker_expanded : Bool
@@ -16,14 +34,26 @@ priv struct ElementNode {
   mut composition_cursor : TextRange?
   text_undo_stack : Array[TextHistoryEntry]
   text_redo_stack : Array[TextHistoryEntry]
+}
+
+///|
+priv struct ElementComponentState {
   mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut component_effects : Array[ComponentEffect]
+}
+
+///|
+priv struct ElementLayoutCache {
   mut cached_intrinsic_size : Size?
   mut cached_measure_constraints : Constraints?
   mut cached_measured : MeasuredNode?
   mut cached_place_frame : Rect?
   mut cached_placed : PlacedNode?
+}
+
+///|
+priv struct ElementRenderCache {
   mut cached_render_frame : Rect?
   mut cached_render_focused : ElementId?
   mut cached_render : RenderNode?
@@ -41,7 +71,7 @@ fn TextHistoryEntry::from_element(
   text : String,
   element : ElementNode,
 ) -> TextHistoryEntry {
-  { text, caret: element.caret, selection: element.selection }
+  { text, caret: element.control.caret, selection: element.control.selection }
 }
 
 ///|
@@ -55,6 +85,11 @@ struct RenderNode {
 } derive(Eq, Debug, ToJson)
 
 ///|
+priv struct RenderTree {
+  root : RenderNode
+}
+
+///|
 fn RenderNode::empty() -> RenderNode {
   {
     element_id: ElementId::new(0),
@@ -64,6 +99,116 @@ fn RenderNode::empty() -> RenderNode {
     paint_commands: [],
     post_paint_commands: [],
   }
+}
+
+///|
+fn ElementTree::new(root : ElementNode) -> ElementTree {
+  { root, }
+}
+
+///|
+fn ElementTree::empty() -> ElementTree {
+  { root: mount_view_spec(ViewSpec::EmptySpec) }
+}
+
+///|
+fn ElementTree::id(self : ElementTree) -> ElementId {
+  self.root.id
+}
+
+///|
+fn ElementTree::measure(
+  self : ElementTree,
+  constraints : Constraints,
+) -> MeasuredNode {
+  self.root.measure(constraints)
+}
+
+///|
+fn ElementTree::find_keyed(self : ElementTree, key : String) -> ElementId? {
+  self.root.find_keyed(key)
+}
+
+///|
+fn RenderTree::empty() -> RenderTree {
+  { root: RenderNode::empty() }
+}
+
+///|
+fn LayoutTree::empty() -> LayoutTree {
+  {
+    root: {
+      element_id: ElementId::new(0),
+      frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+      children: [],
+    },
+  }
+}
+
+///|
+fn ElementControlState::new() -> ElementControlState {
+  {
+    button_state: ButtonState::Normal,
+    picker_expanded: false,
+    datepicker_expanded: false,
+    datepicker_view: DateValue::today(),
+    caret: 0,
+    selection: None,
+    text_selection_anchor: None,
+    composition: None,
+    composition_cursor: None,
+    text_undo_stack: [],
+    text_redo_stack: [],
+  }
+}
+
+///|
+fn ElementComponentState::new(
+  child_spec~ : ViewSpec?,
+  subscriptions~ : Array[StateSubscription],
+  effects~ : Array[ComponentEffect],
+) -> ElementComponentState {
+  {
+    component_child_spec: child_spec,
+    component_subscriptions: subscriptions,
+    component_effects: effects,
+  }
+}
+
+///|
+fn ElementLayoutCache::empty() -> ElementLayoutCache {
+  {
+    cached_intrinsic_size: None,
+    cached_measure_constraints: None,
+    cached_measured: None,
+    cached_place_frame: None,
+    cached_placed: None,
+  }
+}
+
+///|
+fn ElementLayoutCache::clear(self : ElementLayoutCache) -> Unit {
+  self.cached_intrinsic_size = None
+  self.cached_measure_constraints = None
+  self.cached_measured = None
+  self.cached_place_frame = None
+  self.cached_placed = None
+}
+
+///|
+fn ElementRenderCache::empty() -> ElementRenderCache {
+  {
+    cached_render_frame: None,
+    cached_render_focused: None,
+    cached_render: None,
+  }
+}
+
+///|
+fn ElementRenderCache::clear(self : ElementRenderCache) -> Unit {
+  self.cached_render_frame = None
+  self.cached_render_focused = None
+  self.cached_render = None
 }
 
 ///|
@@ -198,28 +343,14 @@ fn mount_view_spec_for_runtime(
       spec,
       children,
       dirty: DirtyFlags::all(),
-      button_state: ButtonState::Normal,
-      picker_expanded: false,
-      datepicker_expanded: false,
-      datepicker_view: DateValue::today(),
-      caret: 0,
-      selection: None,
-      text_selection_anchor: None,
-      composition: None,
-      composition_cursor: None,
-      text_undo_stack: [],
-      text_redo_stack: [],
-      component_child_spec,
-      component_subscriptions,
-      component_effects,
-      cached_intrinsic_size: None,
-      cached_measure_constraints: None,
-      cached_measured: None,
-      cached_place_frame: None,
-      cached_placed: None,
-      cached_render_frame: None,
-      cached_render_focused: None,
-      cached_render: None,
+      control: ElementControlState::new(),
+      component: ElementComponentState::new(
+        child_spec=component_child_spec,
+        subscriptions=component_subscriptions,
+        effects=component_effects,
+      ),
+      layout_cache: ElementLayoutCache::empty(),
+      render_cache: ElementRenderCache::empty(),
     },
     next_id: next,
   }
@@ -389,12 +520,12 @@ fn ElementNode::rebuild_dirty_components(
           data.component,
           runtime,
           self.id,
-          self.component_subscriptions,
-          self.component_effects,
+          self.component.component_subscriptions,
+          self.component.component_effects,
         )
-        self.component_subscriptions = built.subscriptions
-        self.component_effects = built.effects
-        self.component_child_spec = Some(built.child_spec)
+        self.component.component_subscriptions = built.subscriptions
+        self.component.component_effects = built.effects
+        self.component.component_child_spec = Some(built.child_spec)
         let result = if self.children.length() > 0 {
           reconcile_element_for_runtime(
             self.children[0],
@@ -485,9 +616,7 @@ fn ElementNode::mark_paint_dirty_by_id(
 ) -> Bool {
   if self.id == id {
     self.dirty.mark_paint()
-    self.cached_render_frame = None
-    self.cached_render_focused = None
-    self.cached_render = None
+    self.render_cache.clear()
     true
   } else {
     let mut found = false
@@ -496,9 +625,7 @@ fn ElementNode::mark_paint_dirty_by_id(
     }
     if found {
       self.dirty.mark_paint()
-      self.cached_render_frame = None
-      self.cached_render_focused = None
-      self.cached_render = None
+      self.render_cache.clear()
     }
     found
   }
@@ -560,10 +687,10 @@ fn ElementNode::cancel_component_tree_subscriptions(
 
 ///|
 fn ElementNode::cancel_component_subscriptions(self : ElementNode) -> Unit {
-  for subscription in self.component_subscriptions {
+  for subscription in self.component.component_subscriptions {
     subscription.cancel()
   }
-  self.component_subscriptions.clear()
+  self.component.component_subscriptions.clear()
 }
 
 ///|
@@ -571,18 +698,12 @@ fn ElementNode::cancel_component_effects(
   self : ElementNode,
   reason~ : ComponentEffectCancelReason,
 ) -> Unit {
-  cancel_component_effects(self.component_effects, reason~)
-  self.component_effects.clear()
+  cancel_component_effects(self.component.component_effects, reason~)
+  self.component.component_effects.clear()
 }
 
 ///|
 fn ElementNode::clear_cached_layout_and_paint(self : ElementNode) -> Unit {
-  self.cached_intrinsic_size = None
-  self.cached_measure_constraints = None
-  self.cached_measured = None
-  self.cached_place_frame = None
-  self.cached_placed = None
-  self.cached_render_frame = None
-  self.cached_render_focused = None
-  self.cached_render = None
+  self.layout_cache.clear()
+  self.render_cache.clear()
 }

@@ -45,7 +45,7 @@ fn TextInputState::for_text_field(
       max_width=text_frame.size.width,
     ),
   )
-  let caret = clamp_int(element.caret, 0, text_length(text))
+  let caret = clamp_int(element.control.caret, 0, text_length(text))
   let visual_caret = clamp_int(
     text_field_visual_caret(text, element, true),
     0,
@@ -63,9 +63,9 @@ fn TextInputState::for_text_field(
     element_id: Some(element.id),
     text,
     caret,
-    selection: element.selection,
-    composition: element.composition,
-    composition_cursor: element.composition_cursor,
+    selection: element.control.selection,
+    composition: element.control.composition,
+    composition_cursor: element.control.composition_cursor,
     frame: render.frame,
     caret_rect,
   }
@@ -83,7 +83,7 @@ fn TextInputState::for_rich_text_editor(
   let content = render.frame.inset(
     Insets::symmetric(horizontal=14.0, vertical=12.0),
   )
-  let caret = clamp_int(element.caret, 0, text_length(text))
+  let caret = clamp_int(element.control.caret, 0, text_length(text))
   let visual_caret = clamp_int(
     text_field_visual_caret(text, element, true),
     0,
@@ -110,9 +110,9 @@ fn TextInputState::for_rich_text_editor(
     element_id: Some(element.id),
     text,
     caret,
-    selection: element.selection,
-    composition: element.composition,
-    composition_cursor: element.composition_cursor,
+    selection: element.control.selection,
+    composition: element.control.composition,
+    composition_cursor: element.control.composition_cursor,
     frame: render.frame,
     caret_rect,
   }

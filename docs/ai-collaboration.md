@@ -22,7 +22,7 @@ workflow for agents and maintainers.
 - The runtime pipeline stays:
 
   ```text
-  View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+  View[Msg] -> internal ViewSpec -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   ```
 
 - `core/` owns runtime, state, layout, input, semantics, and draw commands.

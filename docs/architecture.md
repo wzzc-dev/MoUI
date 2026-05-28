@@ -89,16 +89,21 @@ messages instead of exposing the internal view tree.
 MoUI keeps the runtime pipeline explicit:
 
 ```text
-View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+View[Msg] -> internal ViewSpec -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ```
 
 - `View[Msg]` is the immutable, opaque public description produced by app code; `ViewSpec` is the private core tree realized by the runtime.
-- `ElementNode` owns identity, keys, control state, focus, and text-editing
-  runtime state.
+- `ElementTree` is the mounted runtime tree. Its `ElementNode` entries own
+  identity, keys, child specs, dirty flags, control state, component state,
+  layout cache, and render cache.
+- `LayoutTree` is the latest placement result. Its `PlacedNode` entries carry
+  the final frames produced by measurement and parent placement.
+- `RenderTree` is the paint-stage tree. Its `RenderNode` entries attach hit
+  testing and draw command payloads to frames that came from `LayoutTree`.
 - App code should normally go through `AppRuntime`, `Component`, and
-  `BuildContext`; `RuntimeState`, `ElementNode`, and `RenderNode` are engine
-  implementation details even though some core tests still exercise them
-  directly.
+  `BuildContext`; `RuntimeState`, `ElementTree`, `LayoutTree`, `RenderTree`,
+  and their node types are engine implementation details even though some core
+  tests still exercise them directly.
 - `ScrollState`, `FocusState`, and `NavigationState` are the preferred state
   holders for reusable app structure instead of ad hoc view-local fields.
 - `BuildContext::run_effect` registers keyed component-scoped effects with
@@ -106,8 +111,10 @@ View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> Rend
   cleanups run when keys disappear or the component leaves the tree.
   `BuildContext` also exposes scoped save/restore helpers for small saveable
   string, bool, and int state.
-- Layout uses constraints down, measured size up, then parent placement.
-- Paint emits platform-neutral `DrawCommand` values. Renderers may degrade
+- Layout uses constraints down, measured size up, then parent placement, and
+  writes the result into `LayoutTree`.
+- Paint consumes `LayoutTree` frames to build `RenderTree` and emits
+  platform-neutral `DrawCommand` values. Renderers may degrade
   based on capability, but view constructors preserve brush, border, shadow,
   clip, image, and text intent.
 - Backends normalize platform events into `HostEvent`; they do not own UI
@@ -179,8 +186,8 @@ tightens child constraints. `Flex`, `Grid`, `List`, and `Stack` use
 `Milky2018/moon_taffy` for their primary placement pass, with MoUI converting
 internal view children into a short-lived Taffy tree and then writing the computed
 frames back into `PlacedNode`. `Scroll` and ordered layout modifiers preserve
-MoUI's existing placement semantics. All layout results still produce the same
-`RenderNode` output expected by renderers and hosts.
+MoUI's existing placement semantics. Paint reuses those placed child frames
+rather than running flex/grid/list/scroll/custom placement a second time.
 
 Advanced layout authors can use `@views.custom_children_layout` to define a
 child layout delegate while still returning `View[Msg]`. The delegate receives

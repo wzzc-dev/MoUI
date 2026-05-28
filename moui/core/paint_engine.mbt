@@ -43,16 +43,17 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
 ///|
 fn ElementNode::render_with_environment(
   self : ElementNode,
-  bounds : Rect,
+  placed : PlacedNode,
   focused : ElementId?,
   environment : RenderEnvironment,
 ) -> RenderNode {
+  let bounds = placed.frame
   if environment.matches_default_cache_key() &&
     !self.dirty.needs_paint &&
     !self.dirty.needs_layout &&
-    self.cached_render_frame == Some(bounds) &&
-    self.cached_render_focused == focused {
-    match self.cached_render {
+    self.render_cache.cached_render_frame == Some(bounds) &&
+    self.render_cache.cached_render_focused == focused {
+    match self.render_cache.cached_render {
       Some(render) => return render
       None => ()
     }
@@ -75,7 +76,7 @@ fn ElementNode::render_with_environment(
         ),
       )
     ButtonSpec(data) => {
-      let background = match self.button_state {
+      let background = match self.control.button_state {
         ButtonState::Normal => data.background
         ButtonState::Hovered => data.hovered_background
         ButtonState::Pressed => data.pressed_background
@@ -179,41 +180,38 @@ fn ElementNode::render_with_environment(
       }
       commands.push(FillRoundedRectBrush(rounded, data.background))
       // Render the content child
-      if self.children.length() > 0 {
+      if self.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           self.children[0].render_with_environment(
-            bounds.inset(Insets::symmetric(horizontal=16.0, vertical=16.0)),
+            placed.children[0],
             focused,
             environment,
           ),
         )
       }
     }
-    FlexSpec(data) => {
-      let frames = flex_child_frames(
-        data.axis,
-        data.spacing,
-        data.main_axis_alignment,
-        data.cross_axis_alignment,
-        self.children,
-        bounds,
-      )
+    FlexSpec(_) =>
       for index, child in self.children {
-        children.push(
-          child.render_with_environment(frames[index], focused, environment),
-        )
+        if index < placed.children.length() {
+          children.push(
+            child.render_with_environment(
+              placed.children[index],
+              focused,
+              environment,
+            ),
+          )
+        }
       }
-    }
-    PaddingSpec(data) => {
-      let child_frame = bounds.inset(data.insets)
-      if self.children.length() > 0 {
+    PaddingSpec(_) =>
+      if self.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           self.children[0].render_with_environment(
-            child_frame, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
-    }
     ContainerSpec(data) => {
       let frame = match data.size {
         Some(size) =>
@@ -273,25 +271,38 @@ fn ElementNode::render_with_environment(
           }
         None => ()
       }
-      if self.children.length() > 0 {
+      if self.children.length() > 0 && placed.children.length() > 0 {
         children.push(
-          self.children[0].render_with_environment(frame, focused, environment),
+          self.children[0].render_with_environment(
+            placed.children[0],
+            focused,
+            environment,
+          ),
         )
       }
     }
-    FrameSpec(data) => {
-      let frame = frame_rect_for_spec(data, bounds)
-      if self.children.length() > 0 {
+    FrameSpec(_) =>
+      if self.children.length() > 0 && placed.children.length() > 0 {
         children.push(
-          self.children[0].render_with_environment(frame, focused, environment),
+          self.children[0].render_with_environment(
+            placed.children[0],
+            focused,
+            environment,
+          ),
         )
       }
-    }
     StackSpec(_) =>
       for child in self.children {
-        children.push(
-          child.render_with_environment(bounds, focused, environment),
-        )
+        let index = children.length()
+        if index < placed.children.length() {
+          children.push(
+            child.render_with_environment(
+              placed.children[index],
+              focused,
+              environment,
+            ),
+          )
+        }
       }
     ScrollSpec(data) => {
       let viewport = data.viewport.unwrap_or(bounds.size)
@@ -302,10 +313,10 @@ fn ElementNode::render_with_environment(
         height=viewport.height,
       )
       commands.push(PushClip(clip))
-      if self.children.length() > 0 {
+      if self.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           self.children[0].render_with_environment(
-            scroll_child_frame(bounds, data, self.children[0]),
+            placed.children[0],
             focused,
             environment,
           ),
@@ -313,31 +324,33 @@ fn ElementNode::render_with_environment(
       }
       post_commands.push(PopClip)
     }
-    GridSpec(data) => {
-      let frames = grid_child_frames(
-        data.columns,
-        data.row_spacing,
-        data.column_spacing,
-        self.children,
-        bounds,
-      )
+    GridSpec(_) =>
       for index, child in self.children {
-        children.push(
-          child.render_with_environment(frames[index], focused, environment),
-        )
+        if index < placed.children.length() {
+          children.push(
+            child.render_with_environment(
+              placed.children[index],
+              focused,
+              environment,
+            ),
+          )
+        }
       }
-    }
-    ListSpec(data) => {
-      let frames = list_child_frames(data.spacing, self.children, bounds)
+    ListSpec(_) =>
       for index, child in self.children {
-        children.push(
-          child.render_with_environment(frames[index], focused, environment),
-        )
+        if index < placed.children.length() {
+          children.push(
+            child.render_with_environment(
+              placed.children[index],
+              focused,
+              environment,
+            ),
+          )
+        }
       }
-    }
     ModifiedSpec(data) =>
       render_modified_node(
-        self, data, bounds, focused, environment, children, commands, post_commands,
+        self, data, placed, focused, environment, children, commands, post_commands,
       )
     CustomSpec(data) =>
       for command in (data.paint)(bounds) {
@@ -347,34 +360,11 @@ fn ElementNode::render_with_environment(
       for command in (data.paint)(bounds) {
         commands.push(command)
       }
-      let child_frames = (data.place)({
-        frame: bounds,
-        measured_size: bounds.size,
-        child_sizes: self.children.map(child => child.intrinsic_size()),
-        child_baselines: self.children.map(child => {
-          child.first_baseline(text_system=environment.text_system)
-        }),
-        child_priorities: self.children.map(child => child.layout_priority()),
-        child_alignment_guides: custom_alignment_guides(
-          self.children.map(child => child.intrinsic_size()),
-          self.children.map(child => {
-            child.first_baseline(text_system=environment.text_system)
-          }),
-        ),
-        cache: data.cache,
-        cache_key: custom_layout_cache_key(
-          self.spec,
-          self.children.map(child => child.intrinsic_size()),
-        ),
-        layout_direction: environment.layout_direction,
-        safe_area: Insets::symmetric(),
-        viewport: Some(bounds.size),
-      })
       for index, child in self.children {
-        if index < child_frames.length() {
+        if index < placed.children.length() {
           children.push(
             child.render_with_environment(
-              child_frames[index],
+              placed.children[index],
               focused,
               environment,
             ),
@@ -383,9 +373,13 @@ fn ElementNode::render_with_environment(
       }
     }
     ComponentSpec(_) =>
-      if self.children.length() > 0 {
+      if self.children.length() > 0 && placed.children.length() > 0 {
         children.push(
-          self.children[0].render_with_environment(bounds, focused, environment),
+          self.children[0].render_with_environment(
+            placed.children[0],
+            focused,
+            environment,
+          ),
         )
       }
   }
@@ -399,9 +393,9 @@ fn ElementNode::render_with_environment(
     post_paint_commands: post_commands,
   }
   if environment.matches_default_cache_key() {
-    self.cached_render_frame = Some(bounds)
-    self.cached_render_focused = focused
-    self.cached_render = Some(render)
+    self.render_cache.cached_render_frame = Some(bounds)
+    self.render_cache.cached_render_focused = focused
+    self.render_cache.cached_render = Some(render)
   }
   render
 }

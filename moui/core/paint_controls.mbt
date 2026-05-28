@@ -2,29 +2,30 @@
 fn render_modified_node(
   element : ElementNode,
   data : ModifiedViewSpec,
-  bounds : Rect,
+  placed : PlacedNode,
   focused : ElementId?,
   environment : RenderEnvironment,
   children : Array[RenderNode],
   commands : Array[DrawCommand],
   post_commands : Array[DrawCommand],
 ) -> Unit {
+  let bounds = placed.frame
   match data.modifier {
-    PaddingModifier(insets) =>
-      if element.children.length() > 0 {
+    PaddingModifier(_) =>
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds.inset(insets),
+            placed.children[0],
             focused,
             environment,
           ),
         )
       }
-    FrameModifier(frame) =>
-      if element.children.length() > 0 {
+    FrameModifier(_) =>
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            frame_rect_for_modifier(frame, bounds),
+            placed.children[0],
             focused,
             environment,
           ),
@@ -41,47 +42,54 @@ fn render_modified_node(
           FillRoundedRectBrush(RoundedRect::new(rect=bounds), color),
         )
       }
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
     }
     ForegroundModifier(color) =>
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
-          element.children[0].render_with_environment(bounds, focused, {
-            ..environment,
-            foreground: Some(color),
-          }),
+          element.children[0].render_with_environment(
+            placed.children[0],
+            focused,
+            { ..environment, foreground: Some(color) },
+          ),
         )
       }
     FontModifier(font) =>
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
-          element.children[0].render_with_environment(bounds, focused, {
-            ..environment,
-            font: Some(font),
-          }),
+          element.children[0].render_with_environment(
+            placed.children[0],
+            focused,
+            { ..environment, font: Some(font) },
+          ),
         )
       }
     CornerRadiusModifier(radius) =>
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
-          element.children[0].render_with_environment(bounds, focused, {
-            ..environment,
-            corner_radius: Some(radius),
-          }),
+          element.children[0].render_with_environment(
+            placed.children[0],
+            focused,
+            { ..environment, corner_radius: Some(radius) },
+          ),
         )
       }
     OpacityModifier(opacity) => {
       commands.push(PushOpacity(opacity))
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
@@ -97,10 +105,12 @@ fn render_modified_node(
           ),
         ),
       )
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
@@ -116,30 +126,34 @@ fn render_modified_node(
           ),
         )
       }
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
     }
-    OffsetModifier(dx, dy) => {
-      let child_bounds = bounds.offset(dx~, dy~)
-      if element.children.length() > 0 {
+    OffsetModifier(_, _) =>
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            child_bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
-    }
     ClipModifier => {
       commands.push(PushClip(bounds))
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
@@ -147,10 +161,12 @@ fn render_modified_node(
     }
     ScaleModifier(sx, sy) => {
       commands.push(PushTransform(Transform2D::scale(sx~, sy~)))
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
@@ -161,10 +177,12 @@ fn render_modified_node(
       if disabled {
         commands.push(PushOpacity(0.42))
       }
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds, focused, child_environment,
+            placed.children[0],
+            focused,
+            child_environment,
           ),
         )
       }
@@ -182,31 +200,30 @@ fn render_modified_node(
     | LayoutPriorityModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier =>
-      if element.children.length() > 0 {
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
-    AlignModifier(alignment) =>
-      if element.children.length() > 0 {
-        let child_bounds = aligned_rect(
-          bounds,
-          element.children[0].intrinsic_size(),
-          alignment,
-        )
+    AlignModifier(_) =>
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            child_bounds, focused, environment,
+            placed.children[0],
+            focused,
+            environment,
           ),
         )
       }
-    AspectRatioModifier(ratio) =>
-      if element.children.length() > 0 {
+    AspectRatioModifier(_) =>
+      if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(
-            aspect_ratio_rect(bounds, ratio),
+            placed.children[0],
             focused,
             environment,
           ),
@@ -218,8 +235,12 @@ fn render_modified_node(
 ///|
 fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
   if !self.dirty.needs_layout {
-    match self.cached_intrinsic_size {
+    match self.layout_cache.cached_intrinsic_size {
       Some(size) => return size
+      None => ()
+    }
+    match self.layout_cache.cached_measured {
+      Some(measured) => return measured.size
       None => ()
     }
   }
@@ -321,7 +342,7 @@ fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
         Size::new(width=0.0, height=0.0)
       }
   }
-  self.cached_intrinsic_size = Some(size)
+  self.layout_cache.cached_intrinsic_size = Some(size)
   size
 }
 
