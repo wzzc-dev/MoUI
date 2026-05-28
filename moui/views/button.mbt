@@ -4,7 +4,7 @@ pub fn[Msg] button(
   on_click? : Msg,
   variant? : ButtonVariant = ButtonVariant::Primary,
   theme? : @core.Theme = @core.Theme::default(),
-  width? : Double = 180.0,
+  width? : Double = 100.0,
   height? : Double = 44.0,
 ) -> @core.View[Msg] {
   let style = variant.style(theme)

@@ -66,11 +66,11 @@ pub fn[Model, Msg] AppRuntime::new_program(
   environment? : Environment = Environment::default(),
 ) -> AppRuntime {
   let (initial_model, initial_effect) = (program.init)()
-  let model = Ref(initial_model)
+  let model = State::new(initial_model)
   let dispatch_ref : Ref[((Msg) -> Unit)?] = Ref(None)
   let dispatch = message => {
-    let (next_model, effect) = (program.update)(message, model.val)
-    model.val = next_model
+    let (next_model, effect) = (program.update)(model.get(), message)
+    model.set(next_model)
     run_effect(effect, message => {
       match dispatch_ref.val {
         Some(dispatch) => dispatch(message)
@@ -80,12 +80,11 @@ pub fn[Model, Msg] AppRuntime::new_program(
   }
   dispatch_ref.val = Some(dispatch)
   run_effect(initial_effect, dispatch)
-  AppRuntime::new_component(
-    root=Component::new(_ctx => {
-      realize_view((program.view)(model.val), dispatch)
-    }),
+  AppRuntime::new_component_view(
+    root=ctx => (program.view)(ctx.watch(model)),
     size~,
     environment~,
+    on_message=Some(dispatch),
   )
 }
 

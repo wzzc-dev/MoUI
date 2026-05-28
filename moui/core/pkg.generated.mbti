@@ -869,10 +869,11 @@ pub(all) enum PointerPhase {
 
 pub(all) struct Program[Model, Msg] {
   init : () -> (Model, Effect[Msg])
-  update : (Msg, Model) -> (Model, Effect[Msg])
+  update : (Model, Msg) -> (Model, Effect[Msg])
   view : (Model) -> View[Msg]
 }
-pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Msg, Model) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg]) -> Self[Model, Msg]
 
 pub(all) struct RadiusScale {
   sm : Double
@@ -1437,6 +1438,7 @@ pub fn[Msg] View::background(Self[Msg], Color) -> Self[Msg]
 pub fn[Msg] View::background_brush(Self[Msg], Brush) -> Self[Msg]
 pub fn[Msg] View::border(Self[Msg], BorderStyle) -> Self[Msg]
 pub fn[Msg] View::button(text~ : String, size~ : Size, font~ : FontSpec, foreground~ : Color, background~ : Brush, hovered_background~ : Brush, pressed_background~ : Brush, border? : BorderStyle?, shadow? : ShadowStyle?, corner_radius? : Double, on_click? : Msg?) -> Self[Msg]
+pub fn[Msg] View::caption(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::checkbox(label~ : String, checked~ : Binding[Bool], font~ : FontSpec, foreground~ : Color, check_color~ : Color, size~ : Size) -> Self[Msg]
 pub fn[Msg] View::clip(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::component((BuildContext) -> Self[Msg]) -> Self[Msg]
@@ -1467,6 +1469,7 @@ pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::list(children~ : Array[Self[Msg]], spacing? : Double) -> Self[Msg]
 pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
 pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
+pub fn[Msg] View::mono(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::offset(Self[Msg], dx? : Double, dy? : Double) -> Self[Msg]
 pub fn[Msg] View::on_file_drop(Self[Msg], (Array[String], Point) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
@@ -1487,6 +1490,7 @@ pub fn[Msg] View::stack(children~ : Array[Self[Msg]]) -> Self[Msg]
 pub fn[Msg] View::text(text~ : String, size~ : Size, font~ : FontSpec, color~ : Color) -> Self[Msg]
 pub fn[Msg] View::text_field(value~ : Binding[String], placeholder~ : String, size~ : Size, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_submit? : Msg?) -> Self[Msg]
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
+pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 
 type ViewNode[Msg]
 

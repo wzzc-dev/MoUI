@@ -16,12 +16,7 @@ test "markdown editor enter continues list task quote and ordered markers" {
     "\n",
   ).unwrap()
   inspect(nested.text, content="- parent\n  - child\n  - ")
-  let quoted_bullet = markdown_editor_transform_input(
-    "> - item",
-    8,
-    None,
-    "\n",
-  ).unwrap()
+  let quoted_bullet = markdown_editor_transform_input("> - item", 8, None, "\n").unwrap()
   inspect(quoted_bullet.text, content="> - item\n> - ")
   inspect(quoted_bullet.caret, content="13")
   let quoted_task = markdown_editor_transform_input(
@@ -181,20 +176,10 @@ test "markdown editor enter exits empty continuation markers" {
   ).unwrap()
   inspect(nested_task.text, content="- parent\n- [ ] ")
   inspect(nested_task.caret, content="15")
-  let quoted_bullet = markdown_editor_transform_input(
-    "> - ",
-    4,
-    None,
-    "\n",
-  ).unwrap()
+  let quoted_bullet = markdown_editor_transform_input("> - ", 4, None, "\n").unwrap()
   inspect(quoted_bullet.text, content="> ")
   inspect(quoted_bullet.caret, content="2")
-  let quoted_ordered = markdown_editor_transform_input(
-    "> 4. ",
-    5,
-    None,
-    "\n",
-  ).unwrap()
+  let quoted_ordered = markdown_editor_transform_input("> 4. ", 5, None, "\n").unwrap()
   inspect(quoted_ordered.text, content="> ")
   inspect(quoted_ordered.caret, content="2")
   let middle = markdown_editor_transform_input("Intro\n- \nTail", 8, None, "\n").unwrap()
@@ -257,12 +242,7 @@ test "markdown editor typed space completes block markers" {
   let nested_quote = markdown_editor_transform_input(">>", 2, None, " ").unwrap()
   inspect(nested_quote.text, content="> > ")
   inspect(nested_quote.caret, content="4")
-  let deep_quote = markdown_editor_transform_input(
-    "  >>>",
-    5,
-    None,
-    " ",
-  ).unwrap()
+  let deep_quote = markdown_editor_transform_input("  >>>", 5, None, " ").unwrap()
   inspect(deep_quote.text, content="  > > > ")
   inspect(deep_quote.caret, content="8")
   let task = markdown_editor_transform_input("[ ]", 3, None, " ").unwrap()
@@ -280,12 +260,7 @@ test "markdown editor typed space completes block markers" {
   let plus_task = markdown_editor_transform_input("+ [ ]", 5, None, " ").unwrap()
   inspect(plus_task.text, content="- [ ] ")
   inspect(plus_task.caret, content="6")
-  let nested_task = markdown_editor_transform_input(
-    "  + [x]",
-    7,
-    None,
-    " ",
-  ).unwrap()
+  let nested_task = markdown_editor_transform_input("  + [x]", 7, None, " ").unwrap()
   inspect(nested_task.text, content="  - [x] ")
   inspect(nested_task.caret, content="8")
 }
@@ -403,20 +378,10 @@ test "markdown editor enter completes fenced code opener" {
   let tilde = markdown_editor_transform_input("~~~", 3, None, "\n").unwrap()
   inspect(tilde.text, content="~~~\n\n~~~")
   inspect(tilde.caret, content="4")
-  let tilde_lang = markdown_editor_transform_input(
-    "~~~moonbit",
-    10,
-    None,
-    "\n",
-  ).unwrap()
+  let tilde_lang = markdown_editor_transform_input("~~~moonbit", 10, None, "\n").unwrap()
   inspect(tilde_lang.text, content="~~~moonbit\n\n~~~")
   inspect(tilde_lang.caret, content="11")
-  let nested_tilde = markdown_editor_transform_input(
-    "  ~~~~",
-    6,
-    None,
-    "\n",
-  ).unwrap()
+  let nested_tilde = markdown_editor_transform_input("  ~~~~", 6, None, "\n").unwrap()
   inspect(nested_tilde.text, content="  ~~~~\n  \n  ~~~~")
   inspect(nested_tilde.caret, content="9")
   let tilde_info = markdown_editor_transform_input(

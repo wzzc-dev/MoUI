@@ -1,0 +1,17 @@
+import {
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "examples/counter/app" @counter_app,
+  "wzzc-dev/moui/render/wgpu",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-Wl,--subsystem,windows -lz -lcomdlg32 -lshell32 -ladvapi32 -lole32 -luser32",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)

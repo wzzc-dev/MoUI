@@ -13,6 +13,10 @@ pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
 
 pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : Double, theme? : @core.Theme) -> @core.View[Msg]
+
+pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, theme? : @core.Theme) -> @core.View[Msg]
+
 pub fn[Msg] checkbox(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]

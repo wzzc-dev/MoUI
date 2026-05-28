@@ -265,12 +265,16 @@ test "markdown editor paste and typed space complete email autolinks" {
     content="true",
   )
   inspect(
-    markdown_editor_transform_input("Mail hello@example", 18, None, " ")
-    is None,
+    markdown_editor_transform_input("Mail hello@example", 18, None, " ") is None,
     content="true",
   )
   inspect(
-    markdown_editor_transform_input("```\nhello@example.dev\n```", 21, None, " ")
+    markdown_editor_transform_input(
+      "```\nhello@example.dev\n```",
+      21,
+      None,
+      " ",
+    )
     is None,
     content="true",
   )
@@ -450,10 +454,7 @@ test "markdown editor image command unwraps image at caret" {
     Image,
     Some({ caret: 10, selection: None }),
   )
-  inspect(
-    reference.source,
-    content="Insert logo here\n\n[img]: image.png",
-  )
+  inspect(reference.source, content="Insert logo here\n\n[img]: image.png")
 }
 
 ///|

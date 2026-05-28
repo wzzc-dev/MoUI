@@ -29,12 +29,15 @@ fn markdown_editor_format_for_selection(
   for block in document.blocks {
     let runs : Array[@core.RichTextRun] = []
     for run in block.runs {
-      runs.push(markdown_editor_reveal_active_inline_run(source, selection, run))
+      runs.push(
+        markdown_editor_reveal_active_inline_run(source, selection, run),
+      )
     }
     blocks.push(
-      markdown_editor_reveal_active_block_marker(
-        source, selection, { ..block, runs },
-      ),
+      markdown_editor_reveal_active_block_marker(source, selection, {
+        ..block,
+        runs,
+      }),
     )
   }
   @core.RichTextDocument::new(blocks~)
@@ -54,10 +57,12 @@ fn markdown_editor_reveal_active_block_marker(
         return block
       }
       let prefix = markdown_editor_substring(
-        source, source_range.start, content_range.start,
+        source,
+        source_range.start,
+        content_range.start,
       )
       if block.prefix != "" {
-        return { ..block, prefix }
+        return { ..block, prefix, }
       }
       let runs = block.runs.copy()
       let first = runs[0]
@@ -66,7 +71,8 @@ fn markdown_editor_reveal_active_block_marker(
         text: prefix + first.text,
         visual_text: None,
         source_range: match first.source_range {
-          Some(run_range) => Some({ start: source_range.start, end: run_range.end })
+          Some(run_range) =>
+            Some({ start: source_range.start, end: run_range.end })
           None => Some({ start: source_range.start, end: content_range.start })
         },
       }
@@ -89,7 +95,11 @@ fn markdown_editor_reveal_active_inline_run(
           Some(full_range) =>
             {
               ..run,
-              text: markdown_editor_substring(source, full_range.start, full_range.end),
+              text: markdown_editor_substring(
+                source,
+                full_range.start,
+                full_range.end,
+              ),
               visual_text: None,
               source_range: Some(full_range),
             }
@@ -168,7 +178,8 @@ fn markdown_editor_reference_source_range(
     None => ()
   }
   match markdown_editor_range_image_bounds(source, text_range) {
-    Some(bounds) => Some({ start: bounds.open_start, end: bounds.target_end + 1 })
+    Some(bounds) =>
+      Some({ start: bounds.open_start, end: bounds.target_end + 1 })
     None => None
   }
 }

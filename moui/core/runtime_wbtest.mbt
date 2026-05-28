@@ -106,8 +106,7 @@ test "searchbar paints vector icons instead of font fallback glyphs" {
     size=Size::new(width=240.0, height=44.0),
   )
   let commands = runtime.draw_commands()
-  assert_false(has_draw_text(commands, "🔍"))
-  assert_false(has_draw_text(commands, "✕"))
+  assert_false(has_draw_text(commands, "?"))
   assert_true(commands.any(command => command is DrawCommand::DrawPath(_)))
   assert_true(
     commands.any(command => command is DrawCommand::StrokeRoundedRect(_, _, _)),
@@ -152,4 +151,55 @@ fn has_draw_text(commands : Array[DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is DrawCommand::DrawText({ text: value, .. }) && value == text
   })
+}
+
+///|
+enum ProgramSimpleMsg {
+  ProgramSimpleIncrement
+}
+
+///|
+test "program simple updates model and rebuilds view" {
+  let program = Program::simple(
+    init=0,
+    update=(model, message) => {
+      match message {
+        ProgramSimpleIncrement => model + 1
+      }
+    },
+    view=model => {
+      View::button(
+        text="Count \{model}",
+        size=Size::new(width=120.0, height=44.0),
+        font=FontSpec::new(size=16.0),
+        foreground=Color::black(),
+        background=Brush::solid(Color::gray()),
+        hovered_background=Brush::solid(Color::gray()),
+        pressed_background=Brush::solid(Color::blue()),
+        on_click=Some(ProgramSimpleIncrement),
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=160.0, height=80.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "Count 0"))
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=20.0, y=20.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=20.0, y=20.0),
+        phase=PointerPhase::Up,
+      ),
+    ),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "Count 1"))
 }

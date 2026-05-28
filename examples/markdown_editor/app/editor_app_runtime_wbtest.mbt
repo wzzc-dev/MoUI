@@ -90,19 +90,11 @@ test "markdown editor status reports active inline format" {
 test "markdown editor toolbar active state follows caret context" {
   let source = "# Title\n\nText **bold** and [MoUI](https://moui.dev)\n- item\n> quote"
   inspect(
-    markdown_editor_command_active(
-      source,
-      { caret: 17, selection: None },
-      Bold,
-    ),
+    markdown_editor_command_active(source, { caret: 17, selection: None }, Bold),
     content="true",
   )
   inspect(
-    markdown_editor_command_active(
-      source,
-      { caret: 30, selection: None },
-      Link,
-    ),
+    markdown_editor_command_active(source, { caret: 30, selection: None }, Link),
     content="true",
   )
   inspect(
