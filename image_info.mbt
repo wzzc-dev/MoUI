@@ -39,6 +39,18 @@ pub fn ColorType::bytes_per_pixel(self : ColorType) -> Int {
 }
 
 ///|
+pub fn ColorType::shift_per_pixel(self : ColorType) -> Int {
+  match self.bytes_per_pixel() {
+    1 => 0
+    2 => 1
+    4 => 2
+    8 => 3
+    16 => 4
+    _ => 0
+  }
+}
+
+///|
 pub fn ColorType::is_always_opaque(self : ColorType) -> Bool {
   self is (RGB565 | RGB888x | RGB101010x | Gray8)
 }
@@ -51,6 +63,11 @@ pub fn ColorInfo::is_opaque(self : ColorInfo) -> Bool {
 ///|
 pub fn ColorInfo::bytes_per_pixel(self : ColorInfo) -> Int {
   self.color_type.bytes_per_pixel()
+}
+
+///|
+pub fn ColorInfo::shift_per_pixel(self : ColorInfo) -> Int {
+  self.color_type.shift_per_pixel()
 }
 
 ///|
@@ -154,13 +171,31 @@ pub fn ImageInfo::bytes_per_pixel(self : ImageInfo) -> Int {
 }
 
 ///|
+pub fn ImageInfo::shift_per_pixel(self : ImageInfo) -> Int {
+  self.color_info.shift_per_pixel()
+}
+
+///|
 pub fn ImageInfo::min_row_bytes(self : ImageInfo) -> Int {
   Int::max(0, self.width()) * self.bytes_per_pixel()
 }
 
 ///|
+pub fn ImageInfo::min_row_bytes64(self : ImageInfo) -> Int64 {
+  Int::max(0, self.width()).to_int64() * self.bytes_per_pixel().to_int64()
+}
+
+///|
 pub fn ImageInfo::valid_row_bytes(self : ImageInfo, row_bytes : Int) -> Bool {
   row_bytes >= self.min_row_bytes()
+}
+
+///|
+pub fn ImageInfo::valid_pixels(self : ImageInfo, row_bytes : Int) -> Bool {
+  !self.is_empty() &&
+  self.color_type() != Unknown &&
+  self.alpha_type() != Unknown &&
+  self.valid_row_bytes(row_bytes)
 }
 
 ///|
@@ -182,11 +217,32 @@ pub fn ImageInfo::compute_min_byte_size(self : ImageInfo) -> Int {
 }
 
 ///|
+pub fn ImageInfo::compute_min_byte_size64(self : ImageInfo) -> Int64 {
+  if self.height() <= 0 {
+    0L
+  } else {
+    self.min_row_bytes64() * self.height().to_int64()
+  }
+}
+
+///|
 pub fn ImageInfo::compute_byte_size(self : ImageInfo, row_bytes : Int) -> Int {
   if self.height() <= 0 || !self.valid_row_bytes(row_bytes) {
     0
   } else {
     row_bytes * self.height()
+  }
+}
+
+///|
+pub fn ImageInfo::compute_byte_size64(
+  self : ImageInfo,
+  row_bytes : Int,
+) -> Int64 {
+  if self.height() <= 0 || !self.valid_row_bytes(row_bytes) {
+    0L
+  } else {
+    row_bytes.to_int64() * self.height().to_int64()
   }
 }
 

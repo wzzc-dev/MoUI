@@ -133,6 +133,83 @@ pub fn Matrix::get(self : Matrix, field : MatrixMember) -> Scalar {
 }
 
 ///|
+pub fn Matrix::concat(self : Matrix, other : Matrix) -> Matrix {
+  Matrix::new_all(
+    self.scale_x * other.scale_x +
+    self.skew_x * other.skew_y +
+    self.trans_x * other.persp_0,
+    self.scale_x * other.skew_x +
+    self.skew_x * other.scale_y +
+    self.trans_x * other.persp_1,
+    self.scale_x * other.trans_x +
+    self.skew_x * other.trans_y +
+    self.trans_x * other.persp_2,
+    self.skew_y * other.scale_x +
+    self.scale_y * other.skew_y +
+    self.trans_y * other.persp_0,
+    self.skew_y * other.skew_x +
+    self.scale_y * other.scale_y +
+    self.trans_y * other.persp_1,
+    self.skew_y * other.trans_x +
+    self.scale_y * other.trans_y +
+    self.trans_y * other.persp_2,
+    self.persp_0 * other.scale_x +
+    self.persp_1 * other.skew_y +
+    self.persp_2 * other.persp_0,
+    self.persp_0 * other.skew_x +
+    self.persp_1 * other.scale_y +
+    self.persp_2 * other.persp_1,
+    self.persp_0 * other.trans_x +
+    self.persp_1 * other.trans_y +
+    self.persp_2 * other.persp_2,
+  )
+}
+
+///|
+pub fn Matrix::pre_concat(self : Matrix, other : Matrix) -> Matrix {
+  other.concat(self)
+}
+
+///|
+pub fn Matrix::post_concat(self : Matrix, other : Matrix) -> Matrix {
+  self.concat(other)
+}
+
+///|
+pub fn Matrix::determinant(self : Matrix) -> Scalar {
+  self.scale_x * (self.scale_y * self.persp_2 - self.trans_y * self.persp_1) -
+  self.skew_x * (self.skew_y * self.persp_2 - self.trans_y * self.persp_0) +
+  self.trans_x * (self.skew_y * self.persp_1 - self.scale_y * self.persp_0)
+}
+
+///|
+pub fn Matrix::is_invertible(self : Matrix) -> Bool {
+  self.determinant() != 0.0
+}
+
+///|
+pub fn Matrix::invert(self : Matrix) -> Matrix? {
+  let det = self.determinant()
+  if det == 0.0 {
+    None
+  } else {
+    Some(
+      Matrix::new_all(
+        (self.scale_y * self.persp_2 - self.trans_y * self.persp_1) / det,
+        (self.trans_x * self.persp_1 - self.skew_x * self.persp_2) / det,
+        (self.skew_x * self.trans_y - self.trans_x * self.scale_y) / det,
+        (self.trans_y * self.persp_0 - self.skew_y * self.persp_2) / det,
+        (self.scale_x * self.persp_2 - self.trans_x * self.persp_0) / det,
+        (self.trans_x * self.skew_y - self.scale_x * self.trans_y) / det,
+        (self.skew_y * self.persp_1 - self.scale_y * self.persp_0) / det,
+        (self.skew_x * self.persp_0 - self.scale_x * self.persp_1) / det,
+        (self.scale_x * self.scale_y - self.skew_x * self.skew_y) / det,
+      ),
+    )
+  }
+}
+
+///|
 pub fn Matrix::map_point(self : Matrix, point : Point) -> Point {
   let x = self.scale_x * point.x + self.skew_x * point.y + self.trans_x
   let y = self.skew_y * point.x + self.scale_y * point.y + self.trans_y
@@ -141,5 +218,24 @@ pub fn Matrix::map_point(self : Matrix, point : Point) -> Point {
     Point::new(x, y)
   } else {
     Point::new(x / z, y / z)
+  }
+}
+
+///|
+pub fn Matrix::map_rect(self : Matrix, rect : Rect) -> Rect {
+  let rect = rect.sorted()
+  if rect.is_empty() {
+    Rect::empty()
+  } else {
+    let p0 = self.map_point(Point::new(rect.left, rect.top))
+    let p1 = self.map_point(Point::new(rect.right, rect.top))
+    let p2 = self.map_point(Point::new(rect.right, rect.bottom))
+    let p3 = self.map_point(Point::new(rect.left, rect.bottom))
+    Rect::new(
+      Float::min(Float::min(p0.x, p1.x), Float::min(p2.x, p3.x)),
+      Float::min(Float::min(p0.y, p1.y), Float::min(p2.y, p3.y)),
+      Float::max(Float::max(p0.x, p1.x), Float::max(p2.x, p3.x)),
+      Float::max(Float::max(p0.y, p1.y), Float::max(p2.y, p3.y)),
+    )
   }
 }
