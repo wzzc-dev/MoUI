@@ -1,0 +1,314 @@
+# Real Skia Smoke Acceptance
+
+This project keeps the default MoonBit build independent from Skia. Real Skia
+validation is opt-in and must prove all of these facts before a platform can be
+called accepted:
+
+See `SKIA_PLATFORM_STATUS.md` for the current Linux/macOS/Windows acceptance
+matrix and the exact evidence still missing per platform.
+
+- `scripts/native_smoke` was built for the native target with `SKIA_MBT_HAS_SKIA`.
+- The produced executable ran to completion and printed
+  `skia_mbt native smoke test passed`.
+- `native/moon.pkg` was restored to its original contents after the temporary
+  link rewrite.
+- The wrapper log records the Skia include path, library path, native flags,
+  library file, and resolved `skia_commit` when the Skia checkout is available.
+- The acceptance log records `smoke_status=0`, `native_smoke_marker=passed`,
+  and `native_pkg_restore=passed`.
+
+## Linux First Acceptance
+
+Linux is the first source-build path and should be used to establish the initial
+known-good Skia revision.
+
+Run locally on Ubuntu or trigger the `Linux Real Skia Smoke` workflow without
+`dry_run_config`:
+
+```bash
+bash scripts/install-linux-smoke-deps.sh
+bash scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
+```
+
+On a pre-provisioned Ubuntu runner, use
+`bash scripts/install-linux-smoke-deps.sh --check` to verify the required apt
+packages before spending time on Skia checkout and compilation. The source-build
+path installs `clang` and sets Skia GN `cc="clang"` / `cxx="clang++"` by
+default for reproducible Linux smoke builds.
+
+Expected artifact/log files:
+
+- `logs/linux-real-skia-smoke.log`
+- `logs/linux-skia-build.log` for source-built runs
+- `logs/linux-native-smoke-output.log`
+- `logs/linux-real-skia-acceptance.log`
+
+Required checks:
+
+```bash
+bash scripts/verify-native-smoke-log.sh logs/linux-native-smoke-output.log
+bash scripts/verify-acceptance-log.sh logs/linux-real-skia-acceptance.log --require-commit
+bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs --require-commit
+```
+
+The native smoke log verifier checks both the final pass marker and intermediate
+stage markers for readback, bounded readback, snapshot/image drawing, PNG
+encode/decode, codec creation, and decoded bitmap readback.
+
+The `--require-commit` checks are mandatory for the first source-built Linux
+acceptance because that run establishes the revision to pin. Existing-build
+Linux smoke runs are still useful, but if their Skia include path is not a Git
+checkout the acceptance log may record `skia_commit=unknown`; such runs must not
+be used for `skia-revision.txt` pinning.
+For source-built Linux artifacts, `verify-real-skia-artifact.sh --require-commit`
+also requires `logs/linux-skia-build.log` and checks that it records the Skia
+build environment, checkout path, resolved commit, and GN arguments. It also
+requires the `skia_commit` in the build log, wrapper log, and acceptance log to
+match before the artifact can be used for revision pinning. The wrapper log and
+acceptance log must also reference the build log so the downloaded artifact
+bundle can be audited as one connected run.
+
+To reuse an existing Linux Skia build without long command lines, the Linux
+helpers accept `SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_LIB_DIR`,
+`SKIA_MBT_SKIA_LIB`, `SKIA_MBT_EXTRA_CC_FLAGS`, and
+`SKIA_MBT_EXTRA_LINK_FLAGS` as environment defaults. Command-line options still
+win when both are supplied.
+For source-built Linux runs, revision selection is `--skia-rev`, then
+`SKIA_MBT_SKIA_REV`, then `skia-revision.txt`, then `main`.
+When you want a persistent Linux link configuration instead of a temporary smoke
+rewrite, use `scripts/configure-linux-native-pkg.sh` to preview, write, or check
+the generated `native/moon.pkg` contents for an existing Skia build.
+
+If you downloaded the workflow artifact as a log directory on Windows, audit the
+same bundle from PowerShell:
+
+```powershell
+.\scripts\verify-real-skia-artifact.ps1 -Platform linux -LogDir logs -RequireCommit
+```
+
+On Linux or macOS, the equivalent artifact-level audit is:
+
+```bash
+bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs --require-commit
+```
+
+After the first successful source-built run, pin the resolved commit:
+
+```bash
+bash scripts/pin-skia-revision.sh logs/linux-real-skia-acceptance.log
+```
+
+The guarded one-step variant runs the source-built acceptance, verifies the log
+bundle with `--require-commit`, pins `skia-revision.txt`, and checks the pin:
+
+```bash
+bash scripts/linux-accept-and-pin-skia.sh --work-dir .skia-cache/linux
+```
+
+To also mark Linux accepted in `skia-platform-status.json` after the pin
+verifies, add `--accept-platform-status`:
+
+```bash
+bash scripts/linux-accept-and-pin-skia.sh --work-dir .skia-cache/linux --accept-platform-status
+```
+
+It intentionally rejects existing-build Skia paths and dry-run mode, because the
+first repository pin must come from a real source-built Linux acceptance. The
+wrapper checks Ubuntu smoke dependencies before starting the expensive build;
+add `--install-deps` to install them first, or `--skip-deps-check` on a managed
+runner.
+
+The pin helper first verifies the acceptance fields and the full commit hash.
+Do not replace `skia-revision.txt` with a guessed commit. It should move away
+from `main` only after a real acceptance run proves that exact Skia commit.
+After pinning, keep follow-up platform runs honest by checking that their
+acceptance log matches the pinned revision:
+
+```bash
+bash scripts/verify-skia-revision-pin.sh logs/linux-real-skia-acceptance.log
+```
+
+The real-smoke workflows run the same check with `--skip-if-unpinned`: the first
+Linux run is allowed while `skia-revision.txt` is still `main`, and later runs
+fail if their accepted `skia_commit` diverges from the pinned commit.
+
+PowerShell equivalent:
+
+```powershell
+.\scripts\linux-accept-artifact-and-pin.ps1 -LogDir logs
+
+.\scripts\linux-accept-artifact-and-pin.ps1 -LogDir logs -AcceptPlatformStatus
+
+.\scripts\pin-skia-revision.ps1 -AcceptanceLog logs\linux-real-skia-acceptance.log
+.\scripts\verify-skia-revision-pin.ps1 -AcceptanceLog logs\linux-real-skia-acceptance.log
+```
+
+Prefer `linux-accept-artifact-and-pin.ps1` for downloaded Linux artifacts: it
+verifies the full source-built artifact bundle with `-RequireCommit`, pins the
+accepted commit, and verifies the pin in one step. Add `-AcceptPlatformStatus`
+when the downloaded artifact should also mark Linux accepted in
+`skia-platform-status.json` after the pin verifies.
+On Linux or macOS, use the shell equivalent for downloaded artifacts:
+
+```bash
+bash scripts/linux-accept-artifact-and-pin.sh --log-dir logs
+
+bash scripts/linux-accept-artifact-and-pin.sh --log-dir logs --accept-platform-status
+```
+
+It performs the same artifact verification, writes the accepted commit to
+`skia-revision.txt`, and verifies the pin. Add `--accept-platform-status` when
+the downloaded artifact should also mark Linux accepted in
+`skia-platform-status.json` after the pin verifies.
+After the pin is in place, update the machine-readable platform matrix through
+the guarded status helper rather than editing `skia-platform-status.json` by
+hand:
+
+```powershell
+.\scripts\accept-platform-status.ps1 -Platform linux -LogDir logs -ArtifactLabel linux-real-skia-smoke-log
+```
+
+Shell equivalent:
+
+```bash
+bash scripts/accept-platform-status.sh --platform linux --log-dir logs --artifact-label linux-real-skia-smoke-log
+```
+
+The helper reruns artifact verification, checks that `skia-revision.txt` matches
+the accepted commit, writes the accepted platform state, and then reruns the
+platform-status verifier. The accepted platform state records both the artifact
+label and the accepted commit, and the verifier requires that commit to match
+`skia-revision.txt`.
+
+The `Linux Real Skia Smoke` workflow also writes
+`logs/linux-acceptance-state.patch` for source-built real runs. Review and apply
+that patch after the artifact bundle passes; it contains the corresponding
+`skia-revision.txt` and `skia-platform-status.json` updates without requiring a
+second local edit. Before applying a downloaded patch, verify it locally:
+
+```powershell
+.\scripts\verify-acceptance-state-patch.ps1 -PatchFile logs\linux-acceptance-state.patch
+```
+
+The verifier checks that the patch only touches `skia-revision.txt` and
+`skia-platform-status.json`, applies it in a temporary directory, and reruns the
+platform-status checks.
+
+## macOS Acceptance
+
+macOS has a source-build helper, an existing-build workflow mode, and an
+acceptance wrapper. Run locally on macOS or trigger the `macOS Real Skia Smoke`
+workflow without `dry_run_config`:
+
+```bash
+bash scripts/macos-build-skia.sh --work-dir .skia-cache/macos
+bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
+  --skia-include .skia-cache/macos/skia \
+  --skia-lib-dir .skia-cache/macos/skia/out/moonbit-smoke
+```
+
+To reuse an existing macOS Skia build, pass `skia_include` and `skia_lib_dir` to
+the workflow, or run:
+
+```bash
+bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
+  --skia-include /path/to/skia \
+  --skia-lib-dir /path/to/skia/out/Static
+```
+
+Expected artifact/log files:
+
+- `logs/macos-real-skia-smoke-preflight.log`
+- `logs/macos-skia-build.log`
+- `logs/macos-real-skia-smoke.log`
+- `logs/macos-native-smoke-output.log`
+- `logs/macos-real-skia-acceptance.log`
+
+Required checks:
+
+```bash
+bash scripts/verify-native-smoke-log.sh logs/macos-native-smoke-output.log
+bash scripts/verify-acceptance-log.sh logs/macos-real-skia-acceptance.log
+bash scripts/verify-real-skia-artifact.sh --platform macos --log-dir logs
+```
+
+PowerShell artifact-level check:
+
+```powershell
+.\scripts\verify-real-skia-artifact.ps1 -Platform macos -LogDir logs
+```
+
+If the macOS build uses the pinned Linux Skia revision, its `skia_commit` should
+match `skia-revision.txt`. If it is intentionally testing another revision,
+record that in the workflow input or local command line.
+macOS helpers also accept `SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_LIB_DIR`,
+`SKIA_MBT_SKIA_LIB`, `SKIA_MBT_SKIA_REV`, `SKIA_MBT_EXTRA_GN_ARGS`,
+`SKIA_MBT_EXTRA_CC_FLAGS`, and `SKIA_MBT_EXTRA_LINK_FLAGS` as environment
+defaults. Workflow inputs and command-line options override those environment
+values.
+When you want a persistent macOS link configuration instead of a temporary
+smoke rewrite, use `scripts/configure-macos-native-pkg.sh` to preview, write, or
+check the generated `native/moon.pkg` contents for an existing Skia build.
+For pinned-revision macOS acceptance, verify the match explicitly:
+
+```bash
+bash scripts/verify-skia-revision-pin.sh logs/macos-real-skia-acceptance.log
+```
+
+## Windows Acceptance
+
+Windows currently accepts an existing MinGW-compatible Skia build. It does not
+yet build Skia from source in CI. The workflow's `dry_run_config=true` preflight
+can be triggered without `skia_include` / `skia_lib_dir`; real runs require both
+paths.
+
+Run locally on Windows or trigger the `Windows Real Skia Smoke` workflow with
+`skia_include` and `skia_lib_dir` pointing at a prepared Skia build:
+
+```powershell
+.\scripts\windows-accept-real-skia-smoke.ps1 -LogDir logs `
+  -SkiaInclude C:\path\to\skia `
+  -SkiaLibDir C:\path\to\skia\out\moonbit-smoke
+```
+
+Expected artifact/log files:
+
+- `logs/windows-real-skia-smoke-preflight.log`
+- `logs/windows-real-skia-smoke.log`
+- `logs/windows-native-smoke-output.log`
+- `logs/windows-real-skia-acceptance.log`
+
+Required checks:
+
+```powershell
+.\scripts\verify-native-smoke-log.ps1 -LogPath logs\windows-native-smoke-output.log
+.\scripts\verify-acceptance-log.ps1 -LogPath logs\windows-real-skia-acceptance.log
+.\scripts\verify-real-skia-artifact.ps1 -Platform windows -LogDir logs
+```
+
+Windows acceptance requires `lib<name>.a` or `<name>.lib` that is compatible
+with the GCC/MinGW toolchain used by MoonBit native stubs. MSVC-only import
+libraries are not enough for this path.
+For self-hosted or manually prepared runners, the Windows helpers also accept
+`SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_LIB_DIR`, `SKIA_MBT_SKIA_LIB`,
+`SKIA_MBT_EXTRA_CC_FLAGS`, and `SKIA_MBT_EXTRA_LINK_FLAGS` as environment
+defaults. Workflow inputs and explicit PowerShell parameters override those
+environment values.
+When you want a persistent Windows link configuration instead of a temporary
+smoke rewrite, use `scripts/configure-windows-native-pkg.ps1` to preview, write,
+or check the generated `native/moon.pkg` contents for an existing
+MinGW-compatible Skia build.
+
+## What Still Does Not Count
+
+These checks are useful but do not prove real Skia acceptance by themselves:
+
+- `moon test` passing under the fallback build.
+- `moon -C scripts/native_smoke build --target native` without Skia link flags.
+- Any `--dry-run-config` command.
+- `bash -n` or PowerShell parameter parsing.
+- A workflow summary without downloadable logs showing the acceptance fields.
+
+The final project goal remains broader than smoke acceptance: full platform
+support also needs repeatable Skia acquisition/builds, stable linker discovery,
+expanded API coverage, and real runner evidence for every supported platform.

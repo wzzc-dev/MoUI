@@ -2,3 +2,5 @@
 _build/
 .mooncakes/
 .moonagent/
+.skia-cache/
+logs/

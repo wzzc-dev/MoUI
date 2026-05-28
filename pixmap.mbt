@@ -45,13 +45,38 @@ pub fn Pixmap::bounds(self : Pixmap) -> IRect {
 }
 
 ///|
+pub fn Pixmap::color_type(self : Pixmap) -> ColorType {
+  self.image_info.color_type()
+}
+
+///|
+pub fn Pixmap::alpha_type(self : Pixmap) -> AlphaType {
+  self.image_info.alpha_type()
+}
+
+///|
 pub fn Pixmap::bytes_per_pixel(self : Pixmap) -> Int {
   self.image_info.bytes_per_pixel()
 }
 
 ///|
+pub fn Pixmap::shift_per_pixel(self : Pixmap) -> Int {
+  self.image_info.shift_per_pixel()
+}
+
+///|
+pub fn Pixmap::row_bytes(self : Pixmap) -> Int {
+  self.row_bytes
+}
+
+///|
 pub fn Pixmap::byte_size(self : Pixmap) -> Int {
   self.image_info.compute_byte_size(self.row_bytes)
+}
+
+///|
+pub fn Pixmap::byte_size64(self : Pixmap) -> Int64 {
+  self.image_info.compute_byte_size64(self.row_bytes)
 }
 
 ///|

@@ -143,6 +143,29 @@ pub fn StrokeJoin::to_skia_ordinal(self : StrokeJoin) -> Int {
 }
 
 ///|
+/// How `Canvas::draw_points` interprets a point array.
+#warnings("-deprecated_syntax")
+pub(all) enum PointMode {
+  Points
+  Lines
+  Polygon
+} derive(Debug, Eq)
+
+///|
+pub impl Default for PointMode with default() {
+  Points
+}
+
+///|
+pub fn PointMode::to_skia_ordinal(self : PointMode) -> Int {
+  match self {
+    Points => 0
+    Lines => 1
+    Polygon => 2
+  }
+}
+
+///|
 /// Interpretation of alpha in pixel data.
 #warnings("-deprecated_syntax")
 pub(all) enum AlphaType {

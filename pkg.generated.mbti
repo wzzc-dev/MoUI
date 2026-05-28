@@ -107,6 +107,7 @@ pub(all) struct ColorInfo {
 pub fn ColorInfo::bytes_per_pixel(Self) -> Int
 pub fn ColorInfo::is_opaque(Self) -> Bool
 pub fn ColorInfo::new(color_type? : ColorType, alpha_type? : AlphaType) -> Self
+pub fn ColorInfo::shift_per_pixel(Self) -> Int
 pub fn ColorInfo::with_alpha_type(Self, AlphaType) -> Self
 pub fn ColorInfo::with_color_type(Self, ColorType) -> Self
 pub impl Default for ColorInfo
@@ -127,6 +128,7 @@ pub(all) enum ColorType {
 } derive(Eq, @debug.Debug)
 pub fn ColorType::bytes_per_pixel(Self) -> Int
 pub fn ColorType::is_always_opaque(Self) -> Bool
+pub fn ColorType::shift_per_pixel(Self) -> Int
 pub impl Default for ColorType
 
 pub(all) struct CubicResampler {
@@ -223,16 +225,21 @@ pub fn ImageInfo::bounds(Self) -> IRect
 pub fn ImageInfo::bytes_per_pixel(Self) -> Int
 pub fn ImageInfo::color_type(Self) -> ColorType
 pub fn ImageInfo::compute_byte_size(Self, Int) -> Int
+pub fn ImageInfo::compute_byte_size64(Self, Int) -> Int64
 pub fn ImageInfo::compute_min_byte_size(Self) -> Int
+pub fn ImageInfo::compute_min_byte_size64(Self) -> Int64
 pub fn ImageInfo::compute_offset(Self, IPoint, Int) -> Int
 pub fn ImageInfo::from_color_info(ISize, ColorInfo) -> Self
 pub fn ImageInfo::height(Self) -> Int
 pub fn ImageInfo::is_empty(Self) -> Bool
 pub fn ImageInfo::is_opaque(Self) -> Bool
 pub fn ImageInfo::min_row_bytes(Self) -> Int
+pub fn ImageInfo::min_row_bytes64(Self) -> Int64
 pub fn ImageInfo::n32_premul(ISize) -> Self
 pub fn ImageInfo::new(ISize, color_type? : ColorType, alpha_type? : AlphaType) -> Self
+pub fn ImageInfo::shift_per_pixel(Self) -> Int
 pub fn ImageInfo::unknown(dimensions? : ISize) -> Self
+pub fn ImageInfo::valid_pixels(Self, Int) -> Bool
 pub fn ImageInfo::valid_row_bytes(Self, Int) -> Bool
 pub fn ImageInfo::width(Self) -> Int
 pub fn ImageInfo::with_alpha_type(Self, AlphaType) -> Self
@@ -251,14 +258,21 @@ pub(all) struct Matrix {
   persp_1 : Float
   persp_2 : Float
 } derive(Eq, @debug.Debug)
+pub fn Matrix::concat(Self, Self) -> Self
+pub fn Matrix::determinant(Self) -> Float
 pub fn Matrix::get(Self, MatrixMember) -> Float
 pub fn Matrix::has_perspective(Self) -> Bool
 pub fn Matrix::identity() -> Self
+pub fn Matrix::invert(Self) -> Self?
 pub fn Matrix::is_identity(Self) -> Bool
+pub fn Matrix::is_invertible(Self) -> Bool
 pub fn Matrix::is_scale_translate(Self) -> Bool
 pub fn Matrix::is_translate(Self) -> Bool
 pub fn Matrix::map_point(Self, Point) -> Point
+pub fn Matrix::map_rect(Self, Rect) -> Rect
 pub fn Matrix::new_all(Float, Float, Float, Float, Float, Float, Float, Float, Float) -> Self
+pub fn Matrix::post_concat(Self, Self) -> Self
+pub fn Matrix::pre_concat(Self, Self) -> Self
 pub fn Matrix::scale(Float, Float) -> Self
 pub fn Matrix::scale_translate(Float, Float, Float, Float) -> Self
 pub fn Matrix::skew(Float, Float) -> Self
@@ -326,20 +340,114 @@ pub(all) enum PaintStyle {
 pub fn PaintStyle::to_skia_ordinal(Self) -> Int
 pub impl Default for PaintStyle
 
+pub(all) struct Path {
+  fill_type : PathFillType
+  verbs : Array[PathVerb]
+  current_point : Point?
+} derive(Eq, @debug.Debug)
+pub fn Path::add_circle(Self, Point, Float, direction? : PathDirection) -> Self
+pub fn Path::add_oval(Self, Rect, direction? : PathDirection) -> Self
+pub fn Path::add_rect(Self, Rect, direction? : PathDirection) -> Self
+pub fn Path::add_round_rect(Self, Rect, Float, Float, direction? : PathDirection) -> Self
+pub fn Path::add_rrect(Self, RRect, direction? : PathDirection) -> Self
+pub fn Path::bounds(Self) -> Rect?
+pub fn Path::close(Self) -> Self
+pub fn Path::compute_tight_bounds(Self) -> Rect?
+pub fn Path::conic_to(Self, Point, Point, Float) -> Self
+pub fn Path::contains(Self, Point) -> Bool
+pub fn Path::count_points(Self) -> Int
+pub fn Path::count_verbs(Self) -> Int
+pub fn Path::cubic_to(Self, Point, Point, Point) -> Self
+pub fn Path::is_empty(Self) -> Bool
+pub fn Path::is_finite(Self) -> Bool
+pub fn Path::is_inverse_fill_type(Self) -> Bool
+pub fn Path::is_last_contour_closed(Self) -> Bool
+pub fn Path::is_line(Self) -> PathLine?
+pub fn Path::is_oval(Self) -> Rect?
+pub fn Path::is_rect(Self) -> PathRect?
+pub fn Path::last_point(Self) -> Point?
+pub fn Path::line_to(Self, Point) -> Self
+pub fn Path::move_to(Self, Point) -> Self
+pub fn Path::new(fill_type? : PathFillType) -> Self
+pub fn Path::offset(Self, Float, Float) -> Self
+pub fn Path::quad_to(Self, Point, Point) -> Self
+pub fn Path::reset(Self) -> Self
+pub fn Path::rewind(Self) -> Self
+pub fn Path::segment_masks(Self) -> PathSegmentMask
+pub fn Path::stroke_bounds(Self, Paint) -> Rect?
+pub fn Path::transform(Self, Matrix) -> Self
+pub fn Path::verb_count(Self) -> Int
+pub fn Path::with_fill_type(Self, PathFillType) -> Self
+pub impl Default for Path
+
+pub(all) enum PathDirection {
+  CW
+  CCW
+} derive(Eq, @debug.Debug)
+pub fn PathDirection::to_skia_ordinal(Self) -> Int
+pub impl Default for PathDirection
+
+pub(all) enum PathFillType {
+  Winding
+  EvenOdd
+  InverseWinding
+  InverseEvenOdd
+} derive(Eq, @debug.Debug)
+pub fn PathFillType::is_inverse(Self) -> Bool
+pub fn PathFillType::to_skia_ordinal(Self) -> Int
+pub impl Default for PathFillType
+
+pub(all) struct PathLine {
+  start : Point
+  end : Point
+} derive(Eq, @debug.Debug)
+pub fn PathLine::new(Point, Point) -> Self
+
+pub(all) struct PathRect {
+  rect : Rect
+  is_closed : Bool
+  direction : PathDirection
+} derive(Eq, @debug.Debug)
+pub fn PathRect::new(Rect, Bool, PathDirection) -> Self
+
+pub(all) struct PathSegmentMask(Int) derive(Eq, @debug.Debug)
+pub fn PathSegmentMask::bits(Self) -> Int
+pub fn PathSegmentMask::conic() -> Self
+pub fn PathSegmentMask::contains(Self, Self) -> Bool
+pub fn PathSegmentMask::cubic() -> Self
+pub fn PathSegmentMask::empty() -> Self
+pub fn PathSegmentMask::line() -> Self
+pub fn PathSegmentMask::new(Int) -> Self
+pub fn PathSegmentMask::quad() -> Self
+
+pub(all) enum PathVerb {
+  MoveTo(Point)
+  LineTo(Point)
+  QuadTo(Point, Point)
+  ConicTo(Point, Point, Float)
+  CubicTo(Point, Point, Point)
+  Close
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Pixmap {
   image_info : ImageInfo
   row_bytes : Int
   pixels : Bytes
 } derive(Eq, @debug.Debug)
+pub fn Pixmap::alpha_type(Self) -> AlphaType
 pub fn Pixmap::bounds(Self) -> IRect
 pub fn Pixmap::byte_size(Self) -> Int
+pub fn Pixmap::byte_size64(Self) -> Int64
 pub fn Pixmap::bytes_per_pixel(Self) -> Int
+pub fn Pixmap::color_type(Self) -> ColorType
 pub fn Pixmap::contains(Self, IPoint) -> Bool
 pub fn Pixmap::dimensions(Self) -> ISize
 pub fn Pixmap::height(Self) -> Int
 pub fn Pixmap::is_empty(Self) -> Bool
 pub fn Pixmap::new(ImageInfo, Int, Bytes) -> Self?
 pub fn Pixmap::offset(Self, IPoint) -> Int?
+pub fn Pixmap::row_bytes(Self) -> Int
+pub fn Pixmap::shift_per_pixel(Self) -> Int
 pub fn Pixmap::width(Self) -> Int
 
 pub(all) struct Point {
@@ -356,6 +464,36 @@ pub fn Point::scale(Self, Float) -> Self
 pub fn Point::to_ipoint_round(Self) -> IPoint
 pub fn Point::zero() -> Self
 pub impl Default for Point
+
+pub(all) enum PointMode {
+  Points
+  Lines
+  Polygon
+} derive(Eq, @debug.Debug)
+pub fn PointMode::to_skia_ordinal(Self) -> Int
+pub impl Default for PointMode
+
+pub(all) struct RRect {
+  rect : Rect
+  upper_left : Size
+  upper_right : Size
+  lower_right : Size
+  lower_left : Size
+} derive(Eq, @debug.Debug)
+pub fn RRect::bounds(Self) -> Rect
+pub fn RRect::empty() -> Self
+pub fn RRect::from_oval(Rect) -> Self
+pub fn RRect::from_rect(Rect) -> Self
+pub fn RRect::from_rect_xy(Rect, Float, Float) -> Self
+pub fn RRect::height(Self) -> Float
+pub fn RRect::is_empty(Self) -> Bool
+pub fn RRect::is_oval(Self) -> Bool
+pub fn RRect::is_rect(Self) -> Bool
+pub fn RRect::is_simple(Self) -> Bool
+pub fn RRect::new(Rect, Size, Size, Size, Size) -> Self
+pub fn RRect::offset(Self, Float, Float) -> Self
+pub fn RRect::width(Self) -> Float
+pub impl Default for RRect
 
 pub(all) struct Rect {
   left : Float
