@@ -261,7 +261,7 @@ fn showcase_metrics(
 }
 
 ///|
-fn ShowcaseApp::gallery_items(self : ShowcaseApp) -> Array[String] {
+fn ShowcaseModel::gallery_items(self : ShowcaseModel) -> Array[String] {
   ignore(self)
   [
     "State holders", "Modifier order", "Lazy list rows", "Keyboard shortcut", "Dialog host",

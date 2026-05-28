@@ -53,8 +53,11 @@ examples/markdown_editor/windows/ Windows native Markdown editor
 MoUI app code builds UI with opaque `@core.View[Msg]` values. The standard
 shape is a typed TEA loop: `view : Model -> View[Msg]`, events carry typed
 messages, `update` handles those messages, and explicit `Effect[Msg]` values
-model follow-up work. User code does not call `lower`, `to_spec`, or
-`ViewSpec`; those names belong to the core runtime implementation.
+model follow-up work. Views that need viewport or platform inputs use
+`view : (Model, ViewEnvironment) -> View[Msg]` through
+`Program::simple_with_environment` or `Program::new_with_environment`. User code
+does not call `lower`, `to_spec`, or `ViewSpec`; those names belong to the core
+runtime implementation.
 
 `views/` is a facade over core primitive builders:
 
@@ -74,16 +77,20 @@ fn view(count : Int) -> @core.View[CounterMsg] {
 
 Function components are ordinary functions returning `View[Msg]`. Child
 messages are lifted with `View::map`, for example
-`todo_row(todo).map(TodoRowMsg)`. Controls that require complex local state,
-such as rich text editing or virtualized resources, keep that state explicit
-through bindings, cells, or dedicated integration callbacks rather than making
-ordinary constructors callback-first.
+`todo_row(todo).map(TodoRowMsg)`. Ordinary controls are TEA-first controlled
+views: app code passes the current value plus `on_input`, `on_change`, or
+`on_select`, then updates the model from the emitted message. Controls that
+require complex local state, such as rich text editing or virtualized resources,
+keep that state explicit through bindings, cells, or dedicated integration
+callbacks.
 
 Stateful examples can still use `AppRuntime::new_component_view` with
 `BuildContext`, while pure model examples should default to `Program::simple`
 and `AppRuntime::new_program`. Effect-capable apps can use `Program::new` when
-they need explicit `Effect[Msg]` output. In both cases event dispatch flows
-through typed messages instead of exposing the internal view tree.
+they need explicit `Effect[Msg]` output. Environment-aware TEA apps should use
+the `*_with_environment` constructors instead of taking `BuildContext` in their
+view layer. In both cases event dispatch flows through typed messages instead
+of exposing the internal view tree.
 
 ## Runtime Mental Model
 
@@ -105,6 +112,9 @@ View[Msg] -> internal ViewSpec -> ElementTree -> LayoutTree -> RenderTree -> Dra
   `BuildContext`; `RuntimeState`, `ElementTree`, `LayoutTree`, `RenderTree`,
   and their node types are engine implementation details even though some core
   tests still exercise them directly.
+- `ViewEnvironment` is the read-only TEA-facing environment snapshot. It exposes
+  the current viewport size and `Environment` without giving app-level views
+  access to `BuildContext` subscriptions, bindings, or component effects.
 - `ScrollState`, `FocusState`, and `NavigationState` are the preferred state
   holders for reusable app structure instead of ad hoc view-local fields.
 - `BuildContext::run_effect` registers keyed component-scoped effects with
@@ -137,11 +147,14 @@ Inside component builds, display state should be read through `BuildContext`:
 })
 ```
 
-Use `ctx.binding(state)` when a control needs two-way access during the build,
-for example `@views.text_field(ctx.binding(self.draft))`. Event handlers and
-model methods can still use `state.get()`, `state.set()`, and `state.update()`.
-The runtime cancels and replaces build subscriptions on rebuild, so repeated
-builds do not accumulate listeners.
+Use TEA-first controlled constructors for ordinary app state, for example
+`@views.text_field(model.draft, on_input=DraftChanged)`. Use
+`ctx.binding(state)` and the `*_binding` view variants when a component or
+advanced control needs two-way access during the build, for example
+`@views.text_field_binding(ctx.binding(self.draft))`. Event handlers and model
+methods can still use `state.get()`, `state.set()`, and `state.update()`. The
+runtime cancels and replaces build subscriptions on rebuild, so repeated builds
+do not accumulate listeners.
 
 Component-scoped side effects should be registered with `ctx.run_effect`. The
 returned cleanup callback is invoked when the effect key is no longer registered
@@ -170,7 +183,9 @@ saveable value support remains a follow-up.
 Environment values flow through `BuildContext` so components can react to
 platform and accessibility signals such as color scheme, locale, layout
 direction, accessibility contrast, reduced motion, content size category, text
-scale, and scale factor.
+scale, and scale factor. TEA apps that only need to read those values should use
+`ViewEnvironment`, keeping `BuildContext` scoped to components and advanced
+state holders.
 
 ## Layout
 
@@ -325,7 +340,7 @@ primary/focused slot selection, record synchronization, and closed-window
 cleanup, including shared helpers for inserting and syncing slots from
 `HostWindowRegistry`, applying platform-neutral window requests, and applying
 host lifecycle events while keeping the slot record aligned.
-`HostPlatformWindowMap` binds platform window ids from `Milky2018/window` to
+`HostPlatformWindowMap` binds platform window ids from `wzzc-dev/window` to
 MoUI `HostWindowId` values so event dispatch can route through the host registry
 instead of assuming one global window.
 Web, macOS, Windows, and Linux should convert their native window events into

@@ -2,7 +2,7 @@
 
 ## Local Window Dependency
 
-MoUI expects the modified `Milky2018/window` checkout under `.local_repos/window`.
+MoUI expects the modified `wzzc-dev/window` checkout under `.local_repos/window`.
 The README shows the setup commands. The local branch currently supplies target
 support that the upstream package does not yet cover for MoUI.
 
@@ -140,7 +140,7 @@ resize and input coordinates stay stable.
 
 ## macOS Native
 
-The macOS host uses `Milky2018/window/macos` for AppKit windows and installs a
+The macOS host uses `wzzc-dev/window/macos` for AppKit windows and installs a
 `CAMetalLayer` on the window `NSView` for the native `render/wgpu` renderer.
 Window events pass through the shared `backend/host` conversion helpers, and the
 native host owns only AppKit window lifetime, CAMetalLayer surface creation,

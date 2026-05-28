@@ -112,7 +112,7 @@ pub fn backend_info() -> MacosBackendInfo {
     ),
     renderer_ready: true,
     accessibility: macos_accessibility_bridge_info(),
-    description: "macOS backend uses Milky2018/window/macos for AppKit events and installs a CAMetalLayer on the window NSView for render/wgpu.",
+    description: "macOS backend uses wzzc-dev/window/macos for AppKit events and installs a CAMetalLayer on the window NSView for render/wgpu.",
   }
 }
 

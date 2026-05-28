@@ -28,7 +28,6 @@ using @views {
   searchbar,
   sheet,
   spacer,
-  stack,
   surface,
   text,
   text_field,

@@ -2,7 +2,7 @@
 //
 // This file is the stable browser asset boundary for `backend/web`.
 // It provides the `window_web` import object expected by the MoonBit
-// `Milky2018/window/web` package without exposing the dependency checkout path
+// `wzzc-dev/window/web` package without exposing the dependency checkout path
 // such as `.local_repos/window/web/runtime.js` to the browser.
 
 export function createWindowWebImports(options = {}) {

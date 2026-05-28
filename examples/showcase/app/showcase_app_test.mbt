@@ -7,9 +7,10 @@ test "showcase app emits visual polish commands" {
   assert_true(has_text(commands, "View Catalog"))
   assert_true(has_text(commands, "Overview"))
   assert_true(has_text(commands, "Controls"))
-  app.select_section("theme-renderer")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  let renderer_commands = runtime.draw_commands()
+  let renderer_runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("theme-renderer"))
+    .runtime(width=760.0, height=420.0)
+  let renderer_commands = renderer_runtime.draw_commands()
   assert_true(
     renderer_commands.any(command => {
       command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, _)
@@ -40,32 +41,29 @@ test "showcase app emits visual polish commands" {
 
 ///|
 test "showcase state toggles theme and active copy" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
-  app.toggle_scheme()
-  app.toggle_active()
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let model = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::ToggleScheme)
+    .update(@app.ShowcaseMsg::ToggleActive)
+  let runtime = model.runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "State-driven visuals are active"))
-  assert_true(app.dark.get())
-  assert_true(app.active.get())
+  assert_true(model.dark)
+  assert_true(model.active)
 }
 
 ///|
 test "showcase navigation dialog and sheet state are wired" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
-  app.show_dialog()
-  app.show_sheet()
-  app.select_section("navigation")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let model = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::ShowDialog)
+    .update(@app.ShowcaseMsg::ShowSheet)
+    .update(@app.ShowcaseMsg::SelectSection("navigation"))
+  let runtime = model.runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Showcase dialog"))
   assert_true(has_text(commands, "Showcase sheet"))
-  assert_true(app.dialog_visible.get())
-  assert_true(app.sheet_visible.get())
-  assert_true(app.navigation.current() == "navigation")
-  assert_true(app.selected_section.get() == "navigation")
+  assert_true(model.dialog_visible)
+  assert_true(model.sheet_visible)
+  assert_true(model.selected_section == "navigation")
 }
 
 ///|
@@ -84,13 +82,17 @@ test "showcase sidebar catalog scrolls to lower sections" {
     ),
   )
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  assert_true(app.sidebar_scroll.offset().y > 0.0)
   let scrolled_commands = runtime.draw_commands()
   assert_true(text_within(scrolled_commands, "Interaction Lab", size))
   assert_true(has_sidebar_scrollbar(scrolled_commands))
+  guard sidebar_scrollbar_frame(scrolled_commands) is Some(scrollbar_frame) else {
+    fail("expected sidebar scrollbar frame")
+  }
   guard text_frame(scrolled_commands, "Interaction Lab") is Some(target) else {
     fail("expected scrolled sidebar item text")
   }
+  assert_true(scrollbar_frame.origin.x > target.origin.x + target.size.width)
+  assert_true(scrollbar_frame.origin.x < 236.0)
   let click_point = @core.Point::new(
     x=target.origin.x + target.size.width / 2.0,
     y=target.origin.y + target.size.height / 2.0,
@@ -111,32 +113,35 @@ test "showcase sidebar catalog scrolls to lower sections" {
       ),
     ),
   )
-  assert_true(app.selected_section.get() == "interaction-lab")
+  assert_true(has_text(runtime.draw_commands(), "Interaction Lab"))
 }
 
 ///|
 test "showcase covers text media controls and layout sections" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
-  app.select_section("text-media")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("text-media"))
+    .runtime(width=760.0, height=420.0)
   let text_commands = runtime.draw_commands()
   assert_true(has_text(text_commands, "Text & Media"))
   assert_true(has_text(text_commands, "Label text"))
-  app.select_section("controls")
-  app.tab.set("values")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  let control_commands = runtime.draw_commands()
+  let control_runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("controls"))
+    .update(@app.ShowcaseMsg::TabSelected("values"))
+    .runtime(width=760.0, height=420.0)
+  let control_commands = control_runtime.draw_commands()
   assert_true(has_text(control_commands, "Controls"))
   assert_true(has_text(control_commands, "Native WGPU"))
   assert_true(has_text(control_commands, "2026-5-21"))
-  app.tab.set("form")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  let form_commands = runtime.draw_commands()
+  let form_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("controls"))
+    .update(@app.ShowcaseMsg::TabSelected("form"))
+    .runtime(width=760.0, height=420.0)
+    .draw_commands()
   assert_true(has_text(form_commands, "Toggle switch"))
-  app.select_section("layout")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  let layout_commands = runtime.draw_commands()
+  let layout_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("layout"))
+    .runtime(width=760.0, height=420.0)
+    .draw_commands()
   assert_true(has_text(layout_commands, "Layout"))
   assert_true(has_text(layout_commands, "Aspect ratio"))
   assert_true(has_text(layout_commands, "Intrinsic width"))
@@ -145,10 +150,9 @@ test "showcase covers text media controls and layout sections" {
 
 ///|
 test "showcase layout demos avoid overlapping labels" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=1400.0, height=760.0)
-  app.select_section("layout")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("layout"))
+    .runtime(width=1400.0, height=760.0)
   let commands = runtime.draw_commands()
   guard text_frame(commands, "Base: Padding") is Some(padding) else {
     fail("expected padding base demo label")
@@ -178,10 +182,9 @@ test "showcase layout demos avoid overlapping labels" {
 
 ///|
 test "showcase embeds reusable example apps and renderer report" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
-  app.select_section("examples")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("examples"))
+    .runtime(width=760.0, height=420.0)
   let example_commands = runtime.draw_commands()
   assert_true(has_text(example_commands, "Examples"))
   assert_true(has_text(example_commands, "Counter Preview"))
@@ -189,42 +192,47 @@ test "showcase embeds reusable example apps and renderer report" {
   assert_true(has_text(example_commands, "Todo Preview"))
   assert_true(has_text(example_commands, "MoUI Todo"))
   assert_false(has_text(example_commands, "Markdown Preview"))
-  app.select_section("text-media")
-  app.draft.set("# Local Markdown\n\nA **bold** word")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  let markdown_commands = runtime.draw_commands()
+  let markdown_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("text-media"))
+    .update(
+      @app.ShowcaseMsg::DraftChanged("# Local Markdown\n\nA **bold** word"),
+    )
+    .runtime(width=760.0, height=420.0)
+    .draw_commands()
   assert_true(has_text(markdown_commands, "Text & Media"))
   assert_true(has_text(markdown_commands, "Local Markdown"))
-  app.select_section("theme-renderer")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  let renderer_commands = runtime.draw_commands()
+  let renderer_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("theme-renderer"))
+    .runtime(width=760.0, height=420.0)
+    .draw_commands()
   assert_true(has_text(renderer_commands, "Theme & Renderer"))
   assert_true(has_text(renderer_commands, "Renderer capability"))
 }
 
 ///|
 test "showcase navigates to system gallery sections" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=960.0, height=620.0)
-  app.select_section("advanced-rendering")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("advanced-rendering"))
+    .runtime(width=960.0, height=620.0)
   let advanced_commands = runtime.draw_commands()
   assert_true(has_text(advanced_commands, "Advanced Rendering"))
   assert_true(has_text(advanced_commands, "Layer + Blend"))
   assert_true(has_text(advanced_commands, "Filter"))
   assert_true(has_text(advanced_commands, "Shader"))
   assert_true(has_text(advanced_commands, "Path + Transform"))
-  app.select_section("text-diagnostics")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  let text_commands = runtime.draw_commands()
+  let text_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("text-diagnostics"))
+    .runtime(width=960.0, height=620.0)
+    .draw_commands()
   assert_true(has_text(text_commands, "Text Diagnostics"))
   assert_true(has_text(text_commands, "CJK"))
   assert_true(has_text(text_commands, "RTL / Bidi"))
   assert_true(has_text(text_commands, "Emoji"))
   assert_true(has_text(text_commands, "Wrapping"))
-  app.select_section("interaction-lab")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  let interaction_commands = runtime.draw_commands()
+  let interaction_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("interaction-lab"))
+    .runtime(width=960.0, height=620.0)
+    .draw_commands()
   assert_true(has_text(interaction_commands, "Interaction Lab"))
   assert_true(has_text(interaction_commands, "Tooltip"))
   assert_true(has_text(interaction_commands, "File Drop"))
@@ -235,10 +243,9 @@ test "showcase navigates to system gallery sections" {
 
 ///|
 test "showcase advanced rendering emits low level draw commands" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=960.0, height=620.0)
-  app.select_section("advanced-rendering")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("advanced-rendering"))
+    .runtime(width=960.0, height=620.0)
   let commands = runtime.draw_commands()
   assert_true(
     commands.any(command => command is @core.DrawCommand::PushLayer(_)),
@@ -267,10 +274,9 @@ test "showcase advanced rendering emits low level draw commands" {
 
 ///|
 test "showcase text diagnostics keeps key labels bounded" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
-  app.select_section("text-diagnostics")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("text-diagnostics"))
+    .runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   let size = @core.Size::new(width=760.0, height=420.0)
   assert_true(text_within(commands, "Text Diagnostics", size))
@@ -284,10 +290,9 @@ test "showcase text diagnostics keeps key labels bounded" {
 
 ///|
 test "showcase interaction lab exposes tooltip variants and file drop wiring" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=960.0, height=620.0)
-  app.select_section("interaction-lab")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("interaction-lab"))
+    .runtime(width=960.0, height=620.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Tooltip: Meta+K"))
   assert_true(has_text(commands, "No files dropped"))
@@ -326,8 +331,10 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
       @core.Size::new(width=960.0, height=560.0),
       @core.Size::new(width=1400.0, height=760.0),
     ] {
-    let app = @app.ShowcaseApp::new()
-    let runtime = app.runtime(width=size.width, height=size.height)
+    let runtime = @app.ShowcaseModel::new().runtime(
+      width=size.width,
+      height=size.height,
+    )
     let commands = runtime.draw_commands()
     assert_true(text_within(commands, "Dialog", size))
     assert_true(text_within(commands, "Renderer capability", size))
@@ -336,11 +343,10 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
     assert_false(has_text(commands, "馃攳"))
     assert_false(has_text(commands, "?"))
     for route in ["advanced-rendering", "text-diagnostics", "interaction-lab"] {
-      app.select_section(route)
-      runtime.dispatch_event(
-        @core.AppEvent::Redraw(@core.RedrawReason::Explicit),
-      )
-      let section_commands = runtime.draw_commands()
+      let section_commands = @app.ShowcaseModel::new()
+        .update(@app.ShowcaseMsg::SelectSection(route))
+        .runtime(width=size.width, height=size.height)
+        .draw_commands()
       match route {
         "advanced-rendering" =>
           assert_true(text_within(section_commands, "Advanced Rendering", size))
@@ -354,10 +360,9 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
 
 ///|
 test "showcase renderer section clips long capability content" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
-  app.select_section("theme-renderer")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("theme-renderer"))
+    .runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(
     text_within(
@@ -392,62 +397,64 @@ test "showcase renderer section clips long capability content" {
 
 ///|
 test "showcase counter preview increments through shared runtime" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
-  app.select_section("examples")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  app.counter_increment()
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  inspect(app.counter_count.get(), content="1")
+  let model = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("examples"))
+    .update(@app.ShowcaseMsg::CounterIncrement)
+  let runtime = model.runtime(width=760.0, height=420.0)
+  inspect(model.counter_count, content="1")
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Count: 1"))
 }
 
 ///|
 test "showcase todo model updates add toggle and remove" {
-  let app = @app.ShowcaseApp::new()
-  app.todo_add("Write tests")
-  inspect(app.todo_count(), content="3")
-  app.todo_toggle(2)
-  guard app.todo_items() is [_, _, { id: 2, completed: true, .. }] else {
+  let model = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::TodoDraftChanged("Write tests"))
+    .update(@app.ShowcaseMsg::TodoSubmitDraft)
+  inspect(model.todo_count(), content="3")
+  let toggled = model.update(@app.ShowcaseMsg::TodoToggled(2, true))
+  guard toggled.todo_items is [_, _, { id: 2, completed: true, .. }] else {
     fail("expected added item toggled")
   }
-  app.todo_remove(2)
-  inspect(app.todo_count(), content="2")
+  inspect(
+    toggled.update(@app.ShowcaseMsg::TodoRemove(2)).todo_count(),
+    content="2",
+  )
 }
 
 ///|
 test "showcase todo preview keeps keyed rows after toggle" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=960.0, height=760.0)
-  app.select_section("examples")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("examples"))
+    .runtime(width=960.0, height=760.0)
   let before = runtime.draw_commands()
   assert_true(has_text(before, "Reuse Todo state"))
-  app.todo_toggle(0)
-  runtime.rebuild()
-  let after = runtime.draw_commands()
+  let model = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("examples"))
+    .update(@app.ShowcaseMsg::TodoToggled(0, true))
+  let after = model.runtime(width=960.0, height=760.0).draw_commands()
   assert_true(has_text(after, "Reuse Todo state"))
-  guard app.todo_items() is [{ completed: true, .. }, ..] else {
+  guard model.todo_items is [{ completed: true, .. }, ..] else {
     fail("expected first built-in todo item toggled")
   }
 }
 
 ///|
 test "showcase todo preview accepts draft submission" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
-  app.select_section("examples")
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("examples"))
+    .runtime(width=760.0, height=420.0)
   assert_true(has_text(runtime.draw_commands(), "New todo"))
-  app.todo_set_draft("ab")
-  app.todo_submit_draft()
-  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-  guard app.todo_items() is [_, _, { id: 2, text: "ab", completed: false }] else {
+  let model = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("examples"))
+    .update(@app.ShowcaseMsg::TodoDraftChanged("ab"))
+    .update(@app.ShowcaseMsg::TodoSubmitDraft)
+  let submitted_runtime = model.runtime(width=760.0, height=420.0)
+  guard model.todo_items is [_, _, { id: 2, text: "ab", completed: false }] else {
     fail("expected draft text submitted as next todo item")
   }
-  inspect(app.todo_draft.get(), content="")
-  assert_true(has_text(runtime.draw_commands(), "ab"))
+  inspect(model.todo_draft, content="")
+  assert_true(has_text(submitted_runtime.draw_commands(), "ab"))
 }
 
 ///|
@@ -536,13 +543,21 @@ fn layout_tile_marker_count(commands : Array[@core.DrawCommand]) -> Int {
 
 ///|
 fn has_sidebar_scrollbar(commands : Array[@core.DrawCommand]) -> Bool {
-  commands.any(command => {
+  sidebar_scrollbar_frame(commands) is Some(_)
+}
+
+///|
+fn sidebar_scrollbar_frame(commands : Array[@core.DrawCommand]) -> @core.Rect? {
+  for command in commands {
     match command {
       @core.DrawCommand::FillRoundedRectBrush({ rect, .. }, _) =>
-        rect.size.width == 4.0 && rect.size.height >= 32.0
-      _ => false
+        if rect.size.width == 4.0 && rect.size.height >= 32.0 {
+          return Some(rect)
+        }
+      _ => ()
     }
-  })
+  }
+  None
 }
 
 ///|

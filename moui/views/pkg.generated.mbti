@@ -17,7 +17,9 @@ pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : 
 
 pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, theme? : @core.Theme) -> @core.View[Msg]
 
-pub fn[Msg] checkbox(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] checkbox_binding(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
@@ -29,7 +31,9 @@ pub fn[Msg] custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ :
 
 pub fn dark_theme() -> @core.Theme
 
-pub fn[Msg] datepicker(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+
+pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool) -> @core.View[Msg]
 
@@ -61,13 +65,17 @@ pub fn light_theme() -> @core.Theme
 
 pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] markdown_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+pub fn[Msg] markdown_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] markdown_editor_binding(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> NavigationDestination[Msg]
 
 pub fn[Msg] navigation_stack(@core.NavigationState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+
+pub fn[Msg] navigation_stack_selected(String, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] overlay(@core.View[Msg], @core.View[Msg]) -> @core.View[Msg]
 
@@ -79,27 +87,37 @@ pub fn[Msg] padding_insets(@core.View[Msg], @core.Insets) -> @core.View[Msg]
 
 pub fn[Msg] padding_xy(@core.View[Msg], horizontal? : Double, vertical? : Double) -> @core.View[Msg]
 
-pub fn[Msg] picker(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] picker(Array[@core.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] picker_binding(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
 
 pub fn picker_item(String, String) -> @core.PickerItem
 
 pub fn[Msg] progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] radio(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] rich_text_editor(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+pub fn[Msg] radio_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+
+pub fn[Msg] rich_text_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] rich_text_editor_binding(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
 pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?) -> @core.View[Msg]
 
-pub fn[Msg] searchbar(query~ : @core.Binding[String], placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
+pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
+
+pub fn[Msg] searchbar_binding(query~ : @core.Binding[String], placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
 
 pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
 pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : Msg?) -> @core.View[Msg]
 
-pub fn[Msg] slider(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+
+pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]
 
@@ -109,17 +127,25 @@ pub fn[Msg] surface(@core.View[Msg], width? : Double, height? : Double, backgrou
 
 pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg]) -> TabItem[Msg]
 
-pub fn[Msg] tab_view(@core.Binding[String], Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
+pub fn[Msg] tab_view(String, Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
+
+pub fn[Msg] tab_view_binding(@core.Binding[String], Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
 
 pub fn[Msg] text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] text_field(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale) -> @core.Theme
 
-pub fn[Msg] toggle(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] toggle(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] toggle_switch(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] toggle_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+
+pub fn[Msg] toggle_switch(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+
+pub fn[Msg] toggle_switch_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
 

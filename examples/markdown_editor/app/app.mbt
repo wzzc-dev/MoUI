@@ -3,7 +3,7 @@ using @views {
   button,
   column,
   empty,
-  markdown_editor,
+  markdown_editor_binding,
   padding_edges,
   row,
   scroll_view,
@@ -11,7 +11,7 @@ using @views {
   stack,
   surface,
   text,
-  text_field,
+  text_field_binding,
 }
 
 ///|
@@ -459,7 +459,7 @@ fn MarkdownEditorApp::target_bar(
           text("Link target", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field(
+          text_field_binding(
             ctx.binding(self.link_target),
             on_submit=Some(ApplyLinkTarget),
             placeholder="https://example.com",
@@ -485,7 +485,7 @@ fn MarkdownEditorApp::target_bar(
           text("Image src", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field(
+          text_field_binding(
             ctx.binding(self.image_target),
             on_submit=Some(ApplyImageTarget),
             placeholder="assets/image.png",
@@ -511,7 +511,7 @@ fn MarkdownEditorApp::target_bar(
           text("Code lang", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field(
+          text_field_binding(
             ctx.binding(self.code_language),
             on_submit=Some(ApplyCodeLanguage),
             placeholder="moonbit",
@@ -537,7 +537,7 @@ fn MarkdownEditorApp::target_bar(
           text("Footnote", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field(
+          text_field_binding(
             ctx.binding(self.footnote_text),
             on_submit=Some(ApplyFootnoteText),
             placeholder="Footnote text",
@@ -563,7 +563,7 @@ fn MarkdownEditorApp::target_bar(
           text("HTML block", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field(
+          text_field_binding(
             ctx.binding(self.html_block_text),
             on_submit=Some(ApplyHtmlBlockText),
             placeholder="<div>HTML</div>",
@@ -1255,7 +1255,7 @@ fn editor_source_layout(
   )
   let editor = scroll_view(
     editor_page(
-      markdown_editor(
+      markdown_editor_binding(
         binding,
         source => markdown_editor_format_for_selection(source, selection),
         placeholder="Start writing Markdown",

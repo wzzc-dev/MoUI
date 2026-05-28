@@ -12,51 +12,65 @@ import {
 
 // Types and methods
 pub struct ShowcaseApp {
-  dark : @core.State[Bool]
-  active : @core.State[Bool]
-  dialog_visible : @core.State[Bool]
-  sheet_visible : @core.State[Bool]
-  feature_enabled : @core.State[Bool]
-  secondary_enabled : @core.State[Bool]
-  draft : @core.State[String]
-  tab : @core.State[String]
-  selected_section : @core.State[String]
-  filter : @core.State[String]
-  slider_value : @core.State[Double]
-  picker_value : @core.State[String]
-  date_value : @core.State[@core.DateValue]
-  navigation : @core.NavigationState
-  sidebar_scroll : @core.ScrollState
+  unit : Unit
+}
+pub fn ShowcaseApp::new() -> Self
+pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub(all) struct ShowcaseModel {
+  dark : Bool
+  active : Bool
+  dialog_visible : Bool
+  sheet_visible : Bool
+  feature_enabled : Bool
+  secondary_enabled : Bool
+  draft : String
+  tab : String
+  selected_section : String
+  filter : String
+  slider_value : Double
+  picker_value : String
+  date_value : @core.DateValue
+  sidebar_scroll_offset : @core.Point
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
-  counter_count : @core.State[Int]
-  todo_items : @core.State[Array[ShowcaseTodoItem]]
-  todo_next_id : @core.State[Int]
-  todo_draft : @core.State[String]
-  last_drop_label : @core.State[String]
+  counter_count : Int
+  todo_items : Array[ShowcaseTodoItem]
+  todo_next_id : Int
+  todo_draft : String
+  last_drop_label : String
 }
-pub fn ShowcaseApp::counter_increment(Self) -> Unit
-pub fn ShowcaseApp::hide_dialog(Self) -> Unit
-pub fn ShowcaseApp::hide_sheet(Self) -> Unit
-pub fn ShowcaseApp::new() -> Self
-pub fn ShowcaseApp::record_file_drop(Self, Array[String]) -> Unit
-pub fn ShowcaseApp::root(Self, @core.BuildContext) -> @core.View[ShowcaseMsg]
-pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn ShowcaseApp::select_section(Self, String) -> Unit
-pub fn ShowcaseApp::show_dialog(Self) -> Unit
-pub fn ShowcaseApp::show_sheet(Self) -> Unit
-pub fn ShowcaseApp::todo_add(Self, String) -> Unit
-pub fn ShowcaseApp::todo_completed_binding(Self, Int) -> @core.Binding[Bool]
-pub fn ShowcaseApp::todo_count(Self) -> Int
-pub fn ShowcaseApp::todo_items(Self) -> Array[ShowcaseTodoItem]
-pub fn ShowcaseApp::todo_remove(Self, Int) -> Unit
-pub fn ShowcaseApp::todo_set_draft(Self, String) -> Unit
-pub fn ShowcaseApp::todo_submit_draft(Self) -> Unit
-pub fn ShowcaseApp::todo_toggle(Self, Int) -> Unit
-pub fn ShowcaseApp::toggle_active(Self) -> Unit
-pub fn ShowcaseApp::toggle_scheme(Self) -> Unit
+pub fn ShowcaseModel::new() -> Self
+pub fn ShowcaseModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn ShowcaseModel::todo_count(Self) -> Int
+pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
+pub fn ShowcaseModel::view(Self, @core.ViewEnvironment) -> @core.View[ShowcaseMsg]
 
-type ShowcaseMsg
+pub(all) enum ShowcaseMsg {
+  ToggleScheme
+  ToggleActive
+  ShowDialog
+  HideDialog
+  ShowSheet
+  HideSheet
+  SelectSection(String)
+  TabSelected(String)
+  ClearFilter
+  FilterChanged(String)
+  DraftChanged(String)
+  SliderChanged(Double)
+  PickerSelected(String)
+  DateSelected(@core.DateValue)
+  FeatureEnabledChanged(Bool)
+  SecondaryEnabledChanged(Bool)
+  CounterIncrement
+  TodoDraftChanged(String)
+  TodoSubmitDraft
+  TodoToggled(Int, Bool)
+  TodoRemove(Int)
+  RecordFileDrop(Array[String])
+  SidebarScrollTo(Double)
+}
 
 pub(all) struct ShowcaseTodoItem {
   id : Int

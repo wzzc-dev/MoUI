@@ -28,7 +28,6 @@ type ClickHandler = () -> Unit
 ///|
 type FileDropHandler = (Array[String], Point) -> Unit
 
-
 ///|
 pub(all) struct KeyboardShortcut {
   key : String

@@ -1,11 +1,12 @@
 ///|
 pub fn[Msg] toggle(
   label : String,
-  checked : @core.Binding[Bool],
+  checked : Bool,
+  on_change~ : (Bool) -> Msg,
   foreground? : @core.Color = @core.Theme::default().palette.foreground,
   check_color? : @core.Color = @core.Theme::default().palette.primary,
 ) -> @core.View[Msg] {
-  checkbox(label, checked~, foreground~, check_color~).semantics_role(
+  checkbox(label, checked~, on_change~, foreground~, check_color~).semantics_role(
     @core.SemanticsRole::Switch,
   )
 }
@@ -13,21 +14,57 @@ pub fn[Msg] toggle(
 ///|
 pub fn[Msg] toggle_switch(
   label : String,
-  checked : @core.Binding[Bool],
+  checked : Bool,
+  on_change~ : (Bool) -> Msg,
   foreground? : @core.Color = @core.Theme::default().palette.foreground,
   check_color? : @core.Color = @core.Theme::default().palette.primary,
 ) -> @core.View[Msg] {
-  toggle(label, checked, foreground~, check_color~)
+  toggle(label, checked, on_change~, foreground~, check_color~)
 }
 
 ///|
 pub fn[Msg] radio(
   label : String,
+  selected : Bool,
+  on_change~ : (Bool) -> Msg,
+  foreground? : @core.Color = @core.Theme::default().palette.foreground,
+  check_color? : @core.Color = @core.Theme::default().palette.primary,
+) -> @core.View[Msg] {
+  checkbox(label, checked=selected, on_change~, foreground~, check_color~).semantics_role(
+    @core.SemanticsRole::Radio,
+  )
+}
+
+///|
+pub fn[Msg] toggle_binding(
+  label : String,
+  checked : @core.Binding[Bool],
+  foreground? : @core.Color = @core.Theme::default().palette.foreground,
+  check_color? : @core.Color = @core.Theme::default().palette.primary,
+) -> @core.View[Msg] {
+  checkbox_binding(label, checked~, foreground~, check_color~).semantics_role(
+    @core.SemanticsRole::Switch,
+  )
+}
+
+///|
+pub fn[Msg] toggle_switch_binding(
+  label : String,
+  checked : @core.Binding[Bool],
+  foreground? : @core.Color = @core.Theme::default().palette.foreground,
+  check_color? : @core.Color = @core.Theme::default().palette.primary,
+) -> @core.View[Msg] {
+  toggle_binding(label, checked, foreground~, check_color~)
+}
+
+///|
+pub fn[Msg] radio_binding(
+  label : String,
   selected : @core.Binding[Bool],
   foreground? : @core.Color = @core.Theme::default().palette.foreground,
   check_color? : @core.Color = @core.Theme::default().palette.primary,
 ) -> @core.View[Msg] {
-  checkbox(label, checked=selected, foreground~, check_color~).semantics_role(
+  checkbox_binding(label, checked=selected, foreground~, check_color~).semantics_role(
     @core.SemanticsRole::Radio,
   )
 }
@@ -73,7 +110,7 @@ pub fn[Msg] progress(
 
 ///|
 pub fn[Msg] slider(
-  value : @core.Binding[Double],
+  value : Double,
   min? : Double = 0.0,
   max? : Double = 1.0,
   width? : Double = 180.0,
@@ -82,7 +119,7 @@ pub fn[Msg] slider(
   background? : @core.Color = @core.Theme::default().palette.surface_variant,
 ) -> @core.View[Msg] {
   let range = if max <= min { 1.0 } else { max - min }
-  let normalized = clamp_view_double((value.get() - min) / range, 0.0, 1.0)
+  let normalized = clamp_view_double((value - min) / range, 0.0, 1.0)
   let knob = height * 0.72
   @core.View::custom_view(
     measure=constraints => {
@@ -132,6 +169,19 @@ pub fn[Msg] slider(
     semantics_role=@core.SemanticsRole::Slider,
     semantics_label="Slider",
   )
+}
+
+///|
+pub fn[Msg] slider_binding(
+  value : @core.Binding[Double],
+  min? : Double = 0.0,
+  max? : Double = 1.0,
+  width? : Double = 180.0,
+  height? : Double = 28.0,
+  foreground? : @core.Color = @core.Theme::default().palette.primary,
+  background? : @core.Color = @core.Theme::default().palette.surface_variant,
+) -> @core.View[Msg] {
+  slider(value.get(), min~, max~, width~, height~, foreground~, background~)
 }
 
 ///|

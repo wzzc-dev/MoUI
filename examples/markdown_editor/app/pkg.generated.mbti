@@ -35,6 +35,8 @@ pub struct MarkdownEditorApp {
 pub fn MarkdownEditorApp::new() -> Self
 pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 
+type MarkdownEditorAutolinkTarget derive(Eq, @debug.Debug)
+
 type MarkdownEditorBlock derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorCommand derive(Eq, ToJson, @debug.Debug)
@@ -70,6 +72,8 @@ type MarkdownInlineKind derive(Eq, ToJson, @debug.Debug)
 type MarkdownLine derive(Eq, @debug.Debug)
 
 type MarkdownLinkBounds derive(Eq, @debug.Debug)
+
+type MarkdownReferenceContext derive(Eq, @debug.Debug)
 
 type MarkdownReferenceDefinition derive(Eq, @debug.Debug)
 

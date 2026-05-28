@@ -1,27 +1,31 @@
 ///|
 pub struct ShowcaseApp {
-  dark : @core.State[Bool]
-  active : @core.State[Bool]
-  dialog_visible : @core.State[Bool]
-  sheet_visible : @core.State[Bool]
-  feature_enabled : @core.State[Bool]
-  secondary_enabled : @core.State[Bool]
-  draft : @core.State[String]
-  tab : @core.State[String]
-  selected_section : @core.State[String]
-  filter : @core.State[String]
-  slider_value : @core.State[Double]
-  picker_value : @core.State[String]
-  date_value : @core.State[@core.DateValue]
-  navigation : @core.NavigationState
-  sidebar_scroll : @core.ScrollState
+  unit : Unit
+}
+
+///|
+pub(all) struct ShowcaseModel {
+  dark : Bool
+  active : Bool
+  dialog_visible : Bool
+  sheet_visible : Bool
+  feature_enabled : Bool
+  secondary_enabled : Bool
+  draft : String
+  tab : String
+  selected_section : String
+  filter : String
+  slider_value : Double
+  picker_value : String
+  date_value : @core.DateValue
+  sidebar_scroll_offset : @core.Point
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
-  counter_count : @core.State[Int]
-  todo_items : @core.State[Array[ShowcaseTodoItem]]
-  todo_next_id : @core.State[Int]
-  todo_draft : @core.State[String]
-  last_drop_label : @core.State[String]
+  counter_count : Int
+  todo_items : Array[ShowcaseTodoItem]
+  todo_next_id : Int
+  todo_draft : String
+  last_drop_label : String
 }
 
 ///|
@@ -32,7 +36,7 @@ pub(all) struct ShowcaseTodoItem {
 } derive(Eq, Debug, ToJson)
 
 ///|
-enum ShowcaseMsg {
+pub(all) enum ShowcaseMsg {
   ToggleScheme
   ToggleActive
   ShowDialog
@@ -40,10 +44,19 @@ enum ShowcaseMsg {
   ShowSheet
   HideSheet
   SelectSection(String)
-  SelectTab(String)
+  TabSelected(String)
   ClearFilter
+  FilterChanged(String)
+  DraftChanged(String)
+  SliderChanged(Double)
+  PickerSelected(String)
+  DateSelected(@core.DateValue)
+  FeatureEnabledChanged(Bool)
+  SecondaryEnabledChanged(Bool)
   CounterIncrement
+  TodoDraftChanged(String)
   TodoSubmitDraft
+  TodoToggled(Int, Bool)
   TodoRemove(Int)
   RecordFileDrop(Array[String])
   SidebarScrollTo(Double)
@@ -73,34 +86,36 @@ priv struct ShowcaseMetrics {
 
 ///|
 pub fn ShowcaseApp::new() -> ShowcaseApp {
+  { unit: () }
+}
+
+///|
+pub fn ShowcaseModel::new() -> ShowcaseModel {
   {
-    dark: @core.State::new(false),
-    active: @core.State::new(false),
-    dialog_visible: @core.State::new(false),
-    sheet_visible: @core.State::new(false),
-    feature_enabled: @core.State::new(true),
-    secondary_enabled: @core.State::new(false),
-    draft: @core.State::new("Visual polish"),
-    tab: @core.State::new("form"),
-    selected_section: @core.State::new("overview"),
-    filter: @core.State::new(""),
-    slider_value: @core.State::new(0.64),
-    picker_value: @core.State::new("native"),
-    date_value: @core.State::new(
-      @core.DateValue::new(year=2026, month=5, day=21),
-    ),
-    navigation: @core.NavigationState::new(initial="overview"),
-    sidebar_scroll: @core.ScrollState::new(),
+    dark: false,
+    active: false,
+    dialog_visible: false,
+    sheet_visible: false,
+    feature_enabled: true,
+    secondary_enabled: false,
+    draft: "Visual polish",
+    tab: "form",
+    selected_section: "overview",
+    filter: "",
+    slider_value: 0.64,
+    picker_value: "native",
+    date_value: @core.DateValue::new(year=2026, month=5, day=21),
+    sidebar_scroll_offset: @core.Point::new(x=0.0, y=0.0),
     list_scroll: @core.ScrollState::new(),
     grid_scroll: @core.ScrollState::new(),
-    counter_count: @core.State::new(0),
-    todo_items: @core.State::new([
+    counter_count: 0,
+    todo_items: [
       ShowcaseTodoItem::new(id=0, text="Reuse Todo state"),
       ShowcaseTodoItem::new(id=1, text="Render inside Showcase"),
-    ]),
-    todo_next_id: @core.State::new(2),
-    todo_draft: @core.State::new(""),
-    last_drop_label: @core.State::new("No files dropped"),
+    ],
+    todo_next_id: 2,
+    todo_draft: "",
+    last_drop_label: "No files dropped",
   }
 }
 
@@ -110,186 +125,83 @@ pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> ShowcaseTodoItem {
 }
 
 ///|
-pub fn ShowcaseApp::counter_increment(self : ShowcaseApp) -> Unit {
-  self.counter_count.update(value => value + 1)
+pub fn ShowcaseModel::todo_count(self : ShowcaseModel) -> Int {
+  self.todo_items.length()
 }
 
 ///|
-pub fn ShowcaseApp::todo_items(self : ShowcaseApp) -> Array[ShowcaseTodoItem] {
-  self.todo_items.get()
+fn ShowcaseModel::with_todo_added(
+  self : ShowcaseModel,
+  text : String,
+) -> ShowcaseModel {
+  let items = self.todo_items.copy()
+  items.push(ShowcaseTodoItem::new(id=self.todo_next_id, text~))
+  { ..self, todo_items: items, todo_next_id: self.todo_next_id + 1 }
 }
 
 ///|
-pub fn ShowcaseApp::todo_count(self : ShowcaseApp) -> Int {
-  self.todo_items.get().length()
-}
-
-///|
-pub fn ShowcaseApp::todo_add(self : ShowcaseApp, text : String) -> Unit {
-  let id = self.todo_next_id.get()
-  self.todo_next_id.set(id + 1)
-  let items = self.todo_items.get().copy()
-  items.push(ShowcaseTodoItem::new(id~, text~))
-  self.todo_items.set(items)
-}
-
-///|
-pub fn ShowcaseApp::todo_set_draft(self : ShowcaseApp, text : String) -> Unit {
-  self.todo_draft.set(text)
-}
-
-///|
-pub fn ShowcaseApp::todo_submit_draft(self : ShowcaseApp) -> Unit {
-  let text = self.todo_draft.get()
-  if text != "" {
-    self.todo_add(text)
-    self.todo_draft.set("")
-  }
-}
-
-///|
-pub fn ShowcaseApp::todo_toggle(self : ShowcaseApp, id : Int) -> Unit {
-  self.todo_items.update(items => {
-    items.map(item => {
-      if item.id == id {
-        { ..item, completed: !item.completed }
-      } else {
-        item
-      }
-    })
-  })
-}
-
-///|
-pub fn ShowcaseApp::todo_remove(self : ShowcaseApp, id : Int) -> Unit {
-  self.todo_items.update(items => items.filter(item => item.id != id))
-}
-
-///|
-pub fn ShowcaseApp::record_file_drop(
-  self : ShowcaseApp,
-  paths : Array[String],
-) -> Unit {
-  self.last_drop_label.set("Dropped \{paths.length()} file(s)")
-}
-
-///|
-pub fn ShowcaseApp::todo_completed_binding(
-  self : ShowcaseApp,
-  id : Int,
-) -> @core.Binding[Bool] {
-  @core.Binding::new(
-    get=() => {
-      for item in self.todo_items.get() {
-        if item.id == id {
-          return item.completed
-        }
-      }
-      false
-    },
-    set=completed => {
-      self.todo_items.update(items => {
-        items.map(item => {
-          if item.id == id {
-            { ..item, completed, }
-          } else {
-            item
-          }
-        })
-      })
-    },
-  )
-}
-
-///|
-pub fn ShowcaseApp::toggle_scheme(self : ShowcaseApp) -> Unit {
-  self.dark.update(value => !value)
-}
-
-///|
-pub fn ShowcaseApp::toggle_active(self : ShowcaseApp) -> Unit {
-  self.active.update(value => !value)
-}
-
-///|
-pub fn ShowcaseApp::show_dialog(self : ShowcaseApp) -> Unit {
-  self.dialog_visible.set(true)
-}
-
-///|
-pub fn ShowcaseApp::hide_dialog(self : ShowcaseApp) -> Unit {
-  self.dialog_visible.set(false)
-}
-
-///|
-pub fn ShowcaseApp::show_sheet(self : ShowcaseApp) -> Unit {
-  self.sheet_visible.set(true)
-}
-
-///|
-pub fn ShowcaseApp::hide_sheet(self : ShowcaseApp) -> Unit {
-  self.sheet_visible.set(false)
-}
-
-///|
-pub fn ShowcaseApp::select_section(self : ShowcaseApp, route : String) -> Unit {
-  self.selected_section.set(route)
-  self.navigation.replace(route)
-}
-
-///|
-fn ShowcaseApp::update(self : ShowcaseApp, message : ShowcaseMsg) -> Unit {
+pub fn ShowcaseModel::update(
+  self : ShowcaseModel,
+  message : ShowcaseMsg,
+) -> ShowcaseModel {
   match message {
-    ToggleScheme => self.toggle_scheme()
-    ToggleActive => self.toggle_active()
-    ShowDialog => self.show_dialog()
-    HideDialog => self.hide_dialog()
-    ShowSheet => self.show_sheet()
-    HideSheet => self.hide_sheet()
-    SelectSection(route) => self.select_section(route)
-    SelectTab(route) => self.tab.set(route)
-    ClearFilter => self.filter.set("")
-    CounterIncrement => self.counter_increment()
-    TodoSubmitDraft => self.todo_submit_draft()
-    TodoRemove(id) => self.todo_remove(id)
-    RecordFileDrop(paths) => self.record_file_drop(paths)
-    SidebarScrollTo(y) => self.sidebar_scroll.scroll_to(x=0.0, y~)
+    ToggleScheme => { ..self, dark: !self.dark }
+    ToggleActive => { ..self, active: !self.active }
+    ShowDialog => { ..self, dialog_visible: true }
+    HideDialog => { ..self, dialog_visible: false }
+    ShowSheet => { ..self, sheet_visible: true }
+    HideSheet => { ..self, sheet_visible: false }
+    SelectSection(route) => { ..self, selected_section: route }
+    TabSelected(route) => { ..self, tab: route }
+    ClearFilter => { ..self, filter: "" }
+    FilterChanged(value) => { ..self, filter: value }
+    DraftChanged(value) => { ..self, draft: value }
+    SliderChanged(value) => { ..self, slider_value: value }
+    PickerSelected(value) => { ..self, picker_value: value }
+    DateSelected(value) => { ..self, date_value: value }
+    FeatureEnabledChanged(value) => { ..self, feature_enabled: value }
+    SecondaryEnabledChanged(value) => { ..self, secondary_enabled: value }
+    CounterIncrement => { ..self, counter_count: self.counter_count + 1 }
+    TodoDraftChanged(value) => { ..self, todo_draft: value }
+    TodoSubmitDraft =>
+      if self.todo_draft == "" {
+        self
+      } else {
+        { ..self.with_todo_added(self.todo_draft), todo_draft: "" }
+      }
+    TodoToggled(id, completed) => {
+      let items = self.todo_items.map(item => {
+        if item.id == id {
+          { ..item, completed, }
+        } else {
+          item
+        }
+      })
+      { ..self, todo_items: items }
+    }
+    TodoRemove(id) =>
+      { ..self, todo_items: self.todo_items.filter(item => item.id != id) }
+    RecordFileDrop(paths) =>
+      { ..self, last_drop_label: "Dropped \{paths.length()} file(s)" }
+    SidebarScrollTo(y) =>
+      { ..self, sidebar_scroll_offset: @core.Point::new(x=0.0, y~) }
   }
 }
 
 ///|
-pub fn ShowcaseApp::root(
-  self : ShowcaseApp,
-  ctx : @core.BuildContext,
+pub fn ShowcaseModel::view(
+  self : ShowcaseModel,
+  env : @core.ViewEnvironment,
 ) -> @core.View[ShowcaseMsg] {
-  let dark = ctx.watch(self.dark)
-  let active = ctx.watch(self.active)
-  let dialog_visible = ctx.watch(self.dialog_visible)
-  let sheet_visible = ctx.watch(self.sheet_visible)
-  let selected_section = ctx.watch(self.selected_section)
-  let filter = ctx.binding(self.filter)
-  let draft = ctx.binding(self.draft)
-  let tab = ctx.binding(self.tab)
-  let slider = ctx.binding(self.slider_value)
-  let enabled = ctx.binding(self.feature_enabled)
-  let secondary = ctx.binding(self.secondary_enabled)
-  let picker = ctx.binding(self.picker_value)
-  let date = ctx.binding(self.date_value)
-  ignore(ctx.watch_navigation(self.navigation))
-  ignore(ctx.watch_scroll(self.list_scroll))
-  ignore(ctx.watch_scroll(self.grid_scroll))
-  let theme = if dark { @views.dark_theme() } else { @views.light_theme() }
-  let metrics = showcase_metrics(ctx.viewport_size(), theme)
-  let offset = if active { 18.0 } else { 0.0 }
-  let opacity = if active { 1.0 } else { 0.68 }
+  let theme = if self.dark { @views.dark_theme() } else { @views.light_theme() }
+  let metrics = showcase_metrics(env.viewport_size(), theme)
+  let offset = if self.active { 18.0 } else { 0.0 }
+  let opacity = if self.active { 1.0 } else { 0.68 }
   let shell = surface(
     column(
       [
-        self.header(theme, metrics, dark, active, selected_section),
-        self.catalog_shell(
-          ctx, theme, metrics, selected_section, filter, draft, tab, slider, enabled,
-          secondary, picker, date, active, offset, opacity,
-        ),
+        self.header(theme, metrics),
+        self.catalog_shell(theme, metrics, offset, opacity),
       ],
       spacing=theme.spacing_scale.lg,
       align=@views.CrossAlign::Stretch,
@@ -302,14 +214,14 @@ pub fn ShowcaseApp::root(
   let sheeted = @views.sheet_host(
     child=shell,
     sheet=Some(self.sheet(theme)),
-    presented=sheet_visible,
+    presented=self.sheet_visible,
     presentation_mode=@core.SheetPresentationMode::BottomSheet,
     on_dismiss=Some(HideSheet),
   )
   @views.dialog_host(
     sheeted,
     dialog=Some(self.dialog(theme)),
-    presented=dialog_visible,
+    presented=self.dialog_visible,
   )
 }
 
@@ -319,9 +231,22 @@ pub fn ShowcaseApp::runtime(
   width? : Double = 960.0,
   height? : Double = 560.0,
 ) -> @core.AppRuntime {
-  @core.AppRuntime::new_component_view(
-    root=ctx => self.root(ctx),
+  ignore(self)
+  ShowcaseModel::new().runtime(width~, height~)
+}
+
+///|
+pub fn ShowcaseModel::runtime(
+  self : ShowcaseModel,
+  width? : Double = 960.0,
+  height? : Double = 560.0,
+) -> @core.AppRuntime {
+  @core.AppRuntime::new_program(
+    program=@core.Program::simple_with_environment(
+      init=self,
+      update=(model, message) => model.update(message),
+      view=(model, env) => model.view(env),
+    ),
     size=@core.Size::new(width~, height~),
-    on_message=Some(message => self.update(message)),
   )
 }
