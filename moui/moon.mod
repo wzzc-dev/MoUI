@@ -16,3 +16,11 @@ import {
   "moonbitlang/quickcheck@0.13.0",
   "moonbitlang/x@0.4.43",
 }
+
+options(
+  readme: "README.mbt.md",
+  repository: "https://github.com/wzzc-dev/MoUI.git",
+  license: "Apache-2.0",
+  keywords: [ "moui", "gui", "framework" ],
+  description: "A MoonBit UI framework",
+)

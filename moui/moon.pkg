@@ -4,8 +4,5 @@ import {
 }
 
 options(
-  license: "Apache-2.0",
-  keywords: [ "gui", "cross-platform" ],
-  description: "moui - A multi-platform GUI library for building modern applications based on WebGPU or WGPU",
   targets: { },
 )
