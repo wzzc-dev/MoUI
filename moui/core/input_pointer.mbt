@@ -19,10 +19,10 @@ fn ElementNode::dispatch_pointer(
     TextFieldSpec(_) => {
       let focused = if event.phase == PointerPhase::Down &&
         render.frame.contains(event.position) {
-        self.caret = text_field_text_length(self.spec)
-        self.selection = None
-        self.composition = None
-        self.composition_cursor = None
+        self.control.caret = text_field_text_length(self.spec)
+        self.control.selection = None
+        self.control.composition = None
+        self.control.composition_cursor = None
         Some(self.id)
       } else {
         None
@@ -131,14 +131,18 @@ fn ElementNode::dispatch_modified_pointer(
         child_result
       } else {
         let inside = render.frame.contains(event.position)
-        let tap = recognize_button_tap(self.button_state, inside, event.phase)
+        let tap = recognize_button_tap(
+          self.control.button_state,
+          inside,
+          event.phase,
+        )
         if tap.activated {
           handler()
         }
         let changed = child_result.changed ||
-          tap.next_state != self.button_state ||
+          tap.next_state != self.control.button_state ||
           tap.activated
-        self.button_state = tap.next_state
+        self.control.button_state = tap.next_state
         if changed {
           self.dirty.mark_paint()
         }
@@ -241,18 +245,18 @@ fn handle_rich_text_editor_pointer(
           render.frame,
           text_system,
         )
-        element.caret = caret
-        element.selection = None
-        element.text_selection_anchor = Some(caret)
-        element.composition = None
-        element.composition_cursor = None
+        element.control.caret = caret
+        element.control.selection = None
+        element.control.text_selection_anchor = Some(caret)
+        element.control.composition = None
+        element.control.composition_cursor = None
         notify_rich_text_selection_change(data, element)
         { changed: true, activated: false, focused: Some(element.id) }
       } else {
         { changed: false, activated: false, focused: None }
       }
     Move =>
-      match element.text_selection_anchor {
+      match element.control.text_selection_anchor {
         Some(anchor) => {
           let caret = rich_text_editor_caret_at_point(
             data,
@@ -265,10 +269,10 @@ fn handle_rich_text_editor_pointer(
           } else {
             Some(TextRange::new(start=anchor, end=caret))
           }
-          let changed = element.caret != caret ||
-            element.selection != next_selection
-          element.caret = caret
-          element.selection = next_selection
+          let changed = element.control.caret != caret ||
+            element.control.selection != next_selection
+          element.control.caret = caret
+          element.control.selection = next_selection
           if changed {
             notify_rich_text_selection_change(data, element)
             element.dirty.mark_paint()
@@ -278,7 +282,7 @@ fn handle_rich_text_editor_pointer(
         None => { changed: false, activated: false, focused: None }
       }
     Up | Cancel => {
-      element.text_selection_anchor = None
+      element.control.text_selection_anchor = None
       { changed: false, activated: false, focused: None }
     }
   }
@@ -292,15 +296,19 @@ fn handle_button_element_pointer(
   frame : Rect,
 ) -> ElementEventResult {
   let inside = frame.contains(event.position)
-  let tap = recognize_button_tap(element.button_state, inside, event.phase)
+  let tap = recognize_button_tap(
+    element.control.button_state,
+    inside,
+    event.phase,
+  )
   if tap.activated {
     match data.on_click {
       Some(handler) => handler()
       None => ()
     }
   }
-  let changed = tap.next_state != element.button_state || tap.activated
-  element.button_state = tap.next_state
+  let changed = tap.next_state != element.control.button_state || tap.activated
+  element.control.button_state = tap.next_state
   if changed {
     element.dirty.mark_paint()
   }
@@ -332,7 +340,7 @@ fn handle_picker_element_pointer(
 ) -> ElementEventResult {
   let main_button_clicked = event.phase == PointerPhase::Up &&
     frame.contains(event.position)
-  if element.picker_expanded {
+  if element.control.picker_expanded {
     let item_height = 36.0
     let count = data.items.length().to_double()
     let list_height = min_double(data.maxHeight, count * item_height)
@@ -343,7 +351,7 @@ fn handle_picker_element_pointer(
       height=list_height,
     )
     if main_button_clicked && !list_frame.contains(event.position) {
-      element.picker_expanded = false
+      element.control.picker_expanded = false
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     } else if main_button_clicked && list_frame.contains(event.position) {
@@ -352,7 +360,7 @@ fn handle_picker_element_pointer(
       if clicked_index >= 0 && clicked_index < data.items.length() {
         let clicked_item = data.items[clicked_index]
         data.selected.set(clicked_item.id)
-        element.picker_expanded = false
+        element.control.picker_expanded = false
         element.dirty.mark_paint()
         { changed: true, activated: true, focused: None }
       } else {
@@ -362,7 +370,7 @@ fn handle_picker_element_pointer(
       { changed: false, activated: false, focused: None }
     }
   } else if main_button_clicked {
-    element.picker_expanded = true
+    element.control.picker_expanded = true
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
   } else {
@@ -379,7 +387,7 @@ fn handle_datepicker_element_pointer(
 ) -> ElementEventResult {
   let main_button_clicked = event.phase == PointerPhase::Up &&
     frame.contains(event.position)
-  if element.datepicker_expanded {
+  if element.control.datepicker_expanded {
     let panel_width = max_double(frame.size.width, 280.0)
     let panel_height = 350.0
     let panel_frame = Rect::new(
@@ -390,7 +398,7 @@ fn handle_datepicker_element_pointer(
     )
     if main_button_clicked && !panel_frame.contains(event.position) {
       // 点击了外部区域，收起面板
-      element.datepicker_expanded = false
+      element.control.datepicker_expanded = false
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     } else if main_button_clicked && panel_frame.contains(event.position) {
@@ -416,30 +424,30 @@ fn handle_datepicker_element_pointer(
 
       if left_button_frame.contains(event.position) {
         // 左导航按钮：上一个月
-        let view_date = element.datepicker_view
+        let view_date = element.control.datepicker_view
         let new_view_date = if view_date.month == 1 {
           { ..view_date, year: view_date.year - 1, month: 12 }
         } else {
           { ..view_date, month: view_date.month - 1 }
         }
-        element.datepicker_view = new_view_date
+        element.control.datepicker_view = new_view_date
         element.dirty.mark_paint()
         { changed: true, activated: false, focused: None }
       } else if right_button_frame.contains(event.position) {
         // 右导航按钮：下一个月
-        let view_date = element.datepicker_view
+        let view_date = element.control.datepicker_view
         let new_view_date = if view_date.month == 12 {
           { ..view_date, year: view_date.year + 1, month: 1 }
         } else {
           { ..view_date, month: view_date.month + 1 }
         }
-        element.datepicker_view = new_view_date
+        element.control.datepicker_view = new_view_date
         element.dirty.mark_paint()
         { changed: true, activated: false, focused: None }
       } else if event.position.y >= start_y {
         // 点击了日期单元格
-        let year = element.datepicker_view.year
-        let month = element.datepicker_view.month
+        let year = element.control.datepicker_view.year
+        let month = element.control.datepicker_view.month
         let q = 1
         let m = if month < 3 { month + 12 } else { month }
         let y = if month < 3 { year - 1 } else { year }
@@ -462,7 +470,7 @@ fn handle_datepicker_element_pointer(
           let selected = data.selected.get()
           let new_selected = { ..selected, year, month, day }
           data.selected.set(new_selected)
-          element.datepicker_expanded = false
+          element.control.datepicker_expanded = false
           element.dirty.mark_paint()
           { changed: true, activated: true, focused: None }
         } else {
@@ -476,8 +484,8 @@ fn handle_datepicker_element_pointer(
     }
   } else if main_button_clicked {
     // 打开日期选择器
-    element.datepicker_expanded = true
-    element.datepicker_view = data.selected.get()
+    element.control.datepicker_expanded = true
+    element.control.datepicker_view = data.selected.get()
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
   } else {
@@ -515,10 +523,10 @@ fn handle_searchbar_element_pointer(
   // 否则，像 TextField 一样处理
   let focused = if event.phase == PointerPhase::Down &&
     frame.contains(event.position) {
-    element.caret = text_length(text)
-    element.selection = None
-    element.composition = None
-    element.composition_cursor = None
+    element.control.caret = text_length(text)
+    element.control.selection = None
+    element.control.composition = None
+    element.control.composition_cursor = None
     Some(element.id)
   } else {
     None

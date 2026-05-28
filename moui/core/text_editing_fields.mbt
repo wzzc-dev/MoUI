@@ -11,20 +11,20 @@ fn handle_searchbar_input(
       }
       let edit = replace_current_selection(
         data.query.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         text,
       )
       apply_searchbar_edit(element, data, edit)
     }
     CompositionStart => {
-      element.composition = Some("")
-      element.composition_cursor = None
+      element.control.composition = Some("")
+      element.control.composition_cursor = None
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
     CompositionUpdate(update) => {
-      element.composition = if update.text == "" {
+      element.control.composition = if update.text == "" {
         None
       } else {
         Some(update.text)
@@ -34,25 +34,27 @@ fn handle_searchbar_input(
           let normalized = cursor.normalized()
           let start = clamp_int(normalized.start, 0, text_length(update.text))
           let end = clamp_int(normalized.end, 0, text_length(update.text))
-          element.composition_cursor = Some(TextRange::new(start~, end~))
+          element.control.composition_cursor = Some(
+            TextRange::new(start~, end~),
+          )
         }
-        None => element.composition_cursor = None
+        None => element.control.composition_cursor = None
       }
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
     CompositionEnd(text) => {
-      element.composition = None
-      element.composition_cursor = None
+      element.control.composition = None
+      element.control.composition_cursor = None
       if text == "" {
-        element.selection = None
+        element.control.selection = None
         element.dirty.mark_paint()
         { changed: true, activated: false, focused: None }
       } else {
         let edit = replace_current_selection(
           data.query.get(),
-          element.caret,
-          element.selection,
+          element.control.caret,
+          element.control.selection,
           text,
         )
         apply_searchbar_edit(element, data, edit)
@@ -64,7 +66,12 @@ fn handle_searchbar_input(
     }
     DeleteSurrounding(before, after) => {
       let text = data.query.get()
-      let range = surrounding_delete_range(text, element.caret, before, after)
+      let range = surrounding_delete_range(
+        text,
+        element.control.caret,
+        before,
+        after,
+      )
       let edit = replace_text_range(text, range, "")
       apply_searchbar_edit(element, data, edit)
     }
@@ -84,20 +91,20 @@ fn handle_text_field_input(
       }
       let edit = replace_current_selection(
         data.value.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         text,
       )
       apply_text_edit(element, data, edit)
     }
     CompositionStart => {
-      element.composition = Some("")
-      element.composition_cursor = None
+      element.control.composition = Some("")
+      element.control.composition_cursor = None
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
     CompositionUpdate(update) => {
-      element.composition = if update.text == "" {
+      element.control.composition = if update.text == "" {
         None
       } else {
         Some(update.text)
@@ -107,25 +114,27 @@ fn handle_text_field_input(
           let normalized = cursor.normalized()
           let start = clamp_int(normalized.start, 0, text_length(update.text))
           let end = clamp_int(normalized.end, 0, text_length(update.text))
-          element.composition_cursor = Some(TextRange::new(start~, end~))
+          element.control.composition_cursor = Some(
+            TextRange::new(start~, end~),
+          )
         }
-        None => element.composition_cursor = None
+        None => element.control.composition_cursor = None
       }
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
     CompositionEnd(text) => {
-      element.composition = None
-      element.composition_cursor = None
+      element.control.composition = None
+      element.control.composition_cursor = None
       if text == "" {
-        element.selection = None
+        element.control.selection = None
         element.dirty.mark_paint()
         { changed: true, activated: false, focused: None }
       } else {
         let edit = replace_current_selection(
           data.value.get(),
-          element.caret,
-          element.selection,
+          element.control.caret,
+          element.control.selection,
           text,
         )
         apply_text_edit(element, data, edit)
@@ -137,7 +146,12 @@ fn handle_text_field_input(
     }
     DeleteSurrounding(before, after) => {
       let text = data.value.get()
-      let range = surrounding_delete_range(text, element.caret, before, after)
+      let range = surrounding_delete_range(
+        text,
+        element.control.caret,
+        before,
+        after,
+      )
       let edit = replace_text_range(text, range, "")
       apply_text_edit(element, data, edit)
     }

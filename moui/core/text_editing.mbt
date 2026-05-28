@@ -45,17 +45,17 @@ fn apply_text_edit_with_history(
   let previous = data.value.get()
   let previous_entry = TextHistoryEntry::from_element(previous, element)
   if edit.text != data.value.get() ||
-    edit.caret != element.caret ||
-    edit.selection != element.selection ||
-    element.composition is Some(_) {
+    edit.caret != element.control.caret ||
+    edit.selection != element.control.selection ||
+    element.control.composition is Some(_) {
     if record_history {
       record_text_history(element, previous_entry, edit.text)
     }
     data.value.set(edit.text)
-    element.caret = edit.caret
-    element.selection = edit.selection
-    element.composition = None
-    element.composition_cursor = None
+    element.control.caret = edit.caret
+    element.control.selection = edit.selection
+    element.control.composition = None
+    element.control.composition_cursor = None
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
   } else {
@@ -68,15 +68,15 @@ fn apply_text_caret_move(
   element : ElementNode,
   caret_move : TextCaretMoveResult,
 ) -> ElementEventResult {
-  let changed = element.caret != caret_move.caret ||
-    element.selection != caret_move.selection ||
-    element.composition is Some(_) ||
-    element.composition_cursor is Some(_)
+  let changed = element.control.caret != caret_move.caret ||
+    element.control.selection != caret_move.selection ||
+    element.control.composition is Some(_) ||
+    element.control.composition_cursor is Some(_)
   if changed {
-    element.caret = caret_move.caret
-    element.selection = caret_move.selection
-    element.composition = None
-    element.composition_cursor = None
+    element.control.caret = caret_move.caret
+    element.control.selection = caret_move.selection
+    element.control.composition = None
+    element.control.composition_cursor = None
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
   } else {
@@ -108,18 +108,18 @@ fn apply_multiline_text_edit_with_history(
   let previous = data.value.get()
   let previous_entry = TextHistoryEntry::from_element(previous, element)
   if edit.text != data.value.get() ||
-    edit.caret != element.caret ||
-    edit.selection != element.selection ||
-    element.composition is Some(_) ||
-    element.composition_cursor is Some(_) {
+    edit.caret != element.control.caret ||
+    edit.selection != element.control.selection ||
+    element.control.composition is Some(_) ||
+    element.control.composition_cursor is Some(_) {
     if record_history {
       record_text_history(element, previous_entry, edit.text)
     }
     data.value.set(edit.text)
-    element.caret = edit.caret
-    element.selection = edit.selection
-    element.composition = None
-    element.composition_cursor = None
+    element.control.caret = edit.caret
+    element.control.selection = edit.selection
+    element.control.composition = None
+    element.control.composition_cursor = None
     notify_rich_text_selection_change(data, element)
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
@@ -147,18 +147,18 @@ fn apply_searchbar_edit_with_history(
   let previous = data.query.get()
   let previous_entry = TextHistoryEntry::from_element(previous, element)
   if edit.text != data.query.get() ||
-    edit.caret != element.caret ||
-    edit.selection != element.selection ||
-    element.composition is Some(_) ||
-    element.composition_cursor is Some(_) {
+    edit.caret != element.control.caret ||
+    edit.selection != element.control.selection ||
+    element.control.composition is Some(_) ||
+    element.control.composition_cursor is Some(_) {
     if record_history {
       record_text_history(element, previous_entry, edit.text)
     }
     data.query.set(edit.text)
-    element.caret = edit.caret
-    element.selection = edit.selection
-    element.composition = None
-    element.composition_cursor = None
+    element.control.caret = edit.caret
+    element.control.selection = edit.selection
+    element.control.composition = None
+    element.control.composition_cursor = None
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
   } else {
@@ -186,8 +186,8 @@ fn record_text_history(
   next : String,
 ) -> Unit {
   if previous.text != next {
-    element.text_undo_stack.push(previous)
-    element.text_redo_stack.clear()
+    element.control.text_undo_stack.push(previous)
+    element.control.text_redo_stack.clear()
   }
 }
 
@@ -312,9 +312,9 @@ fn restore_text_history(
   undo~ : Bool,
 ) -> TextCommandResult {
   let source = if undo {
-    element.text_undo_stack
+    element.control.text_undo_stack
   } else {
-    element.text_redo_stack
+    element.control.text_redo_stack
   }
   if source.length() == 0 {
     return TextCommandResult::handled()
@@ -329,9 +329,9 @@ fn restore_text_history(
   })
   if result.changed {
     if undo {
-      element.text_redo_stack.push(current_entry)
+      element.control.text_redo_stack.push(current_entry)
     } else {
-      element.text_undo_stack.push(current_entry)
+      element.control.text_undo_stack.push(current_entry)
     }
   }
   TextCommandResult::handled(changed=result.changed)
@@ -476,12 +476,12 @@ fn text_with_composition(
   if !focused {
     text
   } else {
-    match element.composition {
+    match element.control.composition {
       Some(composition) =>
         replace_current_selection(
           text,
-          element.caret,
-          element.selection,
+          element.control.caret,
+          element.control.selection,
           composition,
         ).text
       None => text
@@ -495,13 +495,17 @@ fn text_field_visual_caret(
   element : ElementNode,
   focused : Bool,
 ) -> Int {
-  let caret = clamp_int(element.caret, 0, text_length(text))
+  let caret = clamp_int(element.control.caret, 0, text_length(text))
   if !focused {
     caret
   } else {
-    match element.composition {
+    match element.control.composition {
       Some(composition) =>
-        composition_start_index(text, element.caret, element.selection) +
+        composition_start_index(
+          text,
+          element.control.caret,
+          element.control.selection,
+        ) +
         composition_cursor_offset(element, composition)
       None => caret
     }
@@ -526,7 +530,7 @@ fn composition_cursor_offset(
   composition : String,
 ) -> Int {
   let length = text_length(composition)
-  match element.composition_cursor {
+  match element.control.composition_cursor {
     Some(cursor) => {
       let normalized = cursor.normalized()
       clamp_int(normalized.end, 0, length)
@@ -568,9 +572,9 @@ fn move_multiline_caret_vertical(
 ) -> ElementEventResult {
   let text = data.value.get()
   let chars = text.to_array()
-  let current_start = multiline_line_start(text, element.caret)
-  let current_end = multiline_line_end(text, element.caret)
-  let column = element.caret - current_start
+  let current_start = multiline_line_start(text, element.control.caret)
+  let current_end = multiline_line_end(text, element.control.caret)
+  let column = element.control.caret - current_start
   let mut next_start = current_start
   let mut next_end = current_end
   if direction < 0 {
@@ -586,10 +590,10 @@ fn move_multiline_caret_vertical(
     next_start = current_end + 1
     next_end = multiline_line_end(text, next_start)
   }
-  element.caret = min_int(next_start + column, next_end)
-  element.selection = None
-  element.composition = None
-  element.composition_cursor = None
+  element.control.caret = min_int(next_start + column, next_end)
+  element.control.selection = None
+  element.control.composition = None
+  element.control.composition_cursor = None
   notify_rich_text_selection_change(data, element)
   element.dirty.mark_paint()
   { changed: true, activated: false, focused: None }
@@ -614,7 +618,7 @@ fn notify_rich_text_selection_change(
   element : ElementNode,
 ) -> Unit {
   match data.on_selection_change {
-    Some(handler) => handler(element.caret, element.selection)
+    Some(handler) => handler(element.control.caret, element.control.selection)
     None => ()
   }
 }
@@ -637,20 +641,20 @@ fn handle_rich_text_editor_input(
       }
       let edit = replace_current_selection(
         data.value.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         text,
       )
       apply_multiline_text_edit(element, data, edit)
     }
     CompositionStart => {
-      element.composition = Some("")
-      element.composition_cursor = None
+      element.control.composition = Some("")
+      element.control.composition_cursor = None
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
     CompositionUpdate(update) => {
-      element.composition = if update.text == "" {
+      element.control.composition = if update.text == "" {
         None
       } else {
         Some(update.text)
@@ -660,25 +664,27 @@ fn handle_rich_text_editor_input(
           let normalized = cursor.normalized()
           let start = clamp_int(normalized.start, 0, text_length(update.text))
           let end = clamp_int(normalized.end, 0, text_length(update.text))
-          element.composition_cursor = Some(TextRange::new(start~, end~))
+          element.control.composition_cursor = Some(
+            TextRange::new(start~, end~),
+          )
         }
-        None => element.composition_cursor = None
+        None => element.control.composition_cursor = None
       }
       element.dirty.mark_paint()
       { changed: true, activated: false, focused: None }
     }
     CompositionEnd(text) => {
-      element.composition = None
-      element.composition_cursor = None
+      element.control.composition = None
+      element.control.composition_cursor = None
       if text == "" {
-        element.selection = None
+        element.control.selection = None
         element.dirty.mark_paint()
         { changed: true, activated: false, focused: None }
       } else {
         let edit = replace_current_selection(
           data.value.get(),
-          element.caret,
-          element.selection,
+          element.control.caret,
+          element.control.selection,
           text,
         )
         apply_multiline_text_edit(element, data, edit)
@@ -709,7 +715,12 @@ fn handle_rich_text_editor_input(
           None => ()
         }
       }
-      let range = surrounding_delete_range(text, element.caret, before, after)
+      let range = surrounding_delete_range(
+        text,
+        element.control.caret,
+        before,
+        after,
+      )
       let edit = replace_text_range(text, range, "")
       apply_multiline_text_edit(element, data, edit)
     }
@@ -724,7 +735,12 @@ fn rich_text_transform_insert(
 ) -> RichTextInputTransform? {
   match data.input_transform {
     Some(transform) =>
-      transform(data.value.get(), element.caret, element.selection, text)
+      transform(
+        data.value.get(),
+        element.control.caret,
+        element.control.selection,
+        text,
+      )
     None => None
   }
 }
@@ -738,17 +754,17 @@ fn apply_rich_text_input_transform(
   let previous = data.value.get()
   let previous_entry = TextHistoryEntry::from_element(previous, element)
   let changed = edit.text != data.value.get() ||
-    edit.caret != element.caret ||
-    edit.selection != element.selection ||
-    element.composition is Some(_) ||
-    element.composition_cursor is Some(_)
+    edit.caret != element.control.caret ||
+    edit.selection != element.control.selection ||
+    element.control.composition is Some(_) ||
+    element.control.composition_cursor is Some(_)
   if changed {
     record_text_history(element, previous_entry, edit.text)
     data.value.set(edit.text)
-    element.caret = edit.caret
-    element.selection = edit.selection
-    element.composition = None
-    element.composition_cursor = None
+    element.control.caret = edit.caret
+    element.control.selection = edit.selection
+    element.control.composition = None
+    element.control.composition_cursor = None
     notify_rich_text_selection_change(data, element)
     element.dirty.mark_paint()
     { changed: true, activated: false, focused: None }
@@ -802,11 +818,11 @@ fn handle_text_field_command(
   match intent {
     Copy =>
       TextCommandResult::handled(
-        clipboard_text=Some(selected_text(text, element.selection)),
+        clipboard_text=Some(selected_text(text, element.control.selection)),
       )
     Cut => {
-      let copied = selected_text(text, element.selection)
-      match active_text_selection(element.selection) {
+      let copied = selected_text(text, element.control.selection)
+      match active_text_selection(element.control.selection) {
         Some(selection) => {
           let result = handle_text_field_input(
             element,
@@ -876,11 +892,11 @@ fn handle_searchbar_command(
   match intent {
     Copy =>
       TextCommandResult::handled(
-        clipboard_text=Some(selected_text(text, element.selection)),
+        clipboard_text=Some(selected_text(text, element.control.selection)),
       )
     Cut => {
-      let copied = selected_text(text, element.selection)
-      match active_text_selection(element.selection) {
+      let copied = selected_text(text, element.control.selection)
+      match active_text_selection(element.control.selection) {
         Some(selection) => {
           let result = handle_searchbar_input(
             element,
@@ -952,12 +968,12 @@ fn handle_rich_text_editor_command(
     Copy =>
       TextCommandResult::handled(
         clipboard_text=Some(
-          selected_rich_text(text, document, element.selection),
+          selected_rich_text(text, document, element.control.selection),
         ),
       )
     Cut => {
-      let copied = selected_rich_text(text, document, element.selection)
-      match active_text_selection(element.selection) {
+      let copied = selected_rich_text(text, document, element.control.selection)
+      match active_text_selection(element.control.selection) {
         Some(selection) => {
           let result = handle_rich_text_editor_input(
             element,

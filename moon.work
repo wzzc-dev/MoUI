@@ -1,6 +1,7 @@
 members = [
   "./moui",
   "./.local_repos/window",
+  "./examples/counter",
   "./examples/showcase",
   "./examples/markdown_editor",
 ]

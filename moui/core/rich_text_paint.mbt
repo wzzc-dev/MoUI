@@ -37,14 +37,14 @@ fn append_rich_text_editor_commands(
     )
   } else {
     let document = (data.format)(display_text)
-    if focused && element.composition is None {
+    if focused && element.control.composition is None {
       append_rich_text_selection_commands(
         commands,
         document,
         content,
         environment.font.unwrap_or(data.font),
         environment.text_system,
-        element.selection,
+        element.control.selection,
       )
     }
     append_rich_text_blocks(

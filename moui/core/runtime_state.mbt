@@ -1,8 +1,9 @@
 ///|
 struct RuntimeState {
   mut root_spec : ViewSpec
-  mut element_tree : ElementNode
-  mut render_tree : RenderNode
+  mut element_tree : ElementTree
+  mut layout_tree : LayoutTree
+  mut render_tree : RenderTree
   mut size : Size
   mut needs_redraw : Bool
   mut needs_rebuild : Bool
@@ -29,8 +30,9 @@ fn RuntimeState::new_spec(
   let initial = mount_view_spec_with_next(root, 1)
   let state = {
     root_spec: root,
-    element_tree: initial.node,
-    render_tree: RenderNode::empty(),
+    element_tree: ElementTree::new(initial.node),
+    layout_tree: LayoutTree::empty(),
+    render_tree: RenderTree::empty(),
     size,
     needs_redraw: true,
     needs_rebuild: false,
@@ -48,9 +50,9 @@ fn RuntimeState::new_spec(
     saveable_state: SaveableStateStore::new(),
   }
   let mounted = mount_view_spec_for_runtime(root, Some(state), 1)
-  state.element_tree = mounted.node
+  state.element_tree = ElementTree::new(mounted.node)
   state.next_element_id = mounted.next_id
-  state.mark_dirty(state.element_tree.id)
+  state.mark_dirty(state.element_tree.id())
   state.render_current_tree()
   state
 }
@@ -65,8 +67,9 @@ fn RuntimeState::new_component(
   let mounted = mount_view_spec_for_runtime(root_spec, None, 1)
   let state = {
     root_spec,
-    element_tree: mounted.node,
-    render_tree: RenderNode::empty(),
+    element_tree: ElementTree::new(mounted.node),
+    layout_tree: LayoutTree::empty(),
+    render_tree: RenderTree::empty(),
     size,
     needs_redraw: true,
     needs_rebuild: false,
@@ -84,16 +87,16 @@ fn RuntimeState::new_component(
     saveable_state: SaveableStateStore::new(),
   }
   let mounted = mount_view_spec_for_runtime(root_spec, Some(state), 1)
-  state.element_tree = mounted.node
+  state.element_tree = ElementTree::new(mounted.node)
   state.next_element_id = mounted.next_id
-  state.mark_dirty(state.element_tree.id)
+  state.mark_dirty(state.element_tree.id())
   state.render_current_tree()
   state
 }
 
 ///|
 fn RuntimeState::set_root_spec(self : RuntimeState, root : ViewSpec) -> Unit {
-  self.element_tree.cancel_component_tree_subscriptions()
+  self.element_tree.root.cancel_component_tree_subscriptions()
   self.root_spec = root
   self.rebuild()
   self.needs_redraw = true
@@ -118,8 +121,8 @@ pub fn RuntimeState::set_text_system(
   self.needs_layout = true
   self.needs_paint = true
   self.needs_redraw = true
-  self.element_tree.mark_subtree_layout_dirty()
-  self.mark_dirty(self.element_tree.id)
+  self.element_tree.root.mark_subtree_layout_dirty()
+  self.mark_dirty(self.element_tree.id())
 }
 
 ///|
@@ -132,8 +135,8 @@ pub fn RuntimeState::register_font_data(
   self.needs_layout = true
   self.needs_paint = true
   self.needs_redraw = true
-  self.element_tree.mark_subtree_layout_dirty()
-  self.mark_dirty(self.element_tree.id)
+  self.element_tree.root.mark_subtree_layout_dirty()
+  self.mark_dirty(self.element_tree.id())
 }
 
 ///|
@@ -143,40 +146,41 @@ pub fn RuntimeState::set_environment(
 ) -> Unit {
   if self.environment != environment {
     self.environment = environment
-    self.needs_rebuild = self.element_tree.mark_component_tree_build_dirty()
+    self.needs_rebuild = self.element_tree.root.mark_component_tree_build_dirty()
     self.needs_layout = true
     self.needs_paint = true
     self.needs_redraw = true
-    self.element_tree.mark_subtree_layout_dirty()
-    self.mark_dirty(self.element_tree.id)
+    self.element_tree.root.mark_subtree_layout_dirty()
+    self.mark_dirty(self.element_tree.id())
   }
 }
 
 ///|
 fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
-  self.element_tree.cancel_component_tree_subscriptions(
+  self.element_tree.root.cancel_component_tree_subscriptions(
     reason=ComponentEffectCancelReason::EffectUnmounted,
   )
   let mounted = mount_view_spec_for_runtime(root, Some(self), 1)
   self.root_spec = root
-  self.element_tree = mounted.node
+  self.element_tree = ElementTree::new(mounted.node)
   self.next_element_id = mounted.next_id
   self.focused_element = None
   self.needs_rebuild = false
   self.needs_layout = true
   self.needs_paint = true
   self.needs_redraw = true
-  self.mark_dirty(mounted.node.id)
+  self.mark_dirty(self.element_tree.id())
   self.layout_pass()
 }
 
 ///|
 pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
-  self.element_tree.cancel_component_tree_subscriptions(
+  self.element_tree.root.cancel_component_tree_subscriptions(
     reason=ComponentEffectCancelReason::EffectRuntimeDestroyed,
   )
-  self.element_tree = mount_view_spec(ViewSpec::EmptySpec)
-  self.render_tree = RenderNode::empty()
+  self.element_tree = ElementTree::empty()
+  self.layout_tree = LayoutTree::empty()
+  self.render_tree = RenderTree::empty()
   self.root_spec = ViewSpec::EmptySpec
   self.next_element_id = 1
   self.dirty_elements.clear()
@@ -190,17 +194,17 @@ pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
 ///|
 pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
   let result = reconcile_element_for_runtime(
-    self.element_tree,
+    self.element_tree.root,
     self.root_spec,
     Some(self),
     self.next_element_id,
   )
-  self.element_tree = result.node
+  self.element_tree = ElementTree::new(result.node)
   self.next_element_id = result.next_id
   self.needs_rebuild = false
   self.needs_layout = true
   self.needs_paint = true
-  self.mark_dirty(self.element_tree.id)
+  self.mark_dirty(self.element_tree.id())
   self.layout_pass()
 }
 
@@ -251,7 +255,7 @@ pub fn RuntimeState::dispatch_focused_text_command(
 ) -> TextCommandResult {
   match self.focused_element {
     Some(target) => {
-      let result = self.element_tree.dispatch_text_command(
+      let result = self.element_tree.root.dispatch_text_command(
         target,
         intent,
         paste_text~,
@@ -259,7 +263,7 @@ pub fn RuntimeState::dispatch_focused_text_command(
       if result.changed {
         self.needs_redraw = true
         self.needs_paint = true
-        self.mark_dirty(self.element_tree.id)
+        self.mark_dirty(self.element_tree.id())
       }
       result
     }
@@ -285,7 +289,7 @@ pub fn RuntimeState::animation_count(self : RuntimeState) -> Int {
 
 ///|
 pub fn RuntimeState::layout_pass(self : RuntimeState) -> Unit {
-  self.render_current_tree()
+  self.ensure_layout_tree()
 }
 
 ///|
@@ -302,12 +306,12 @@ pub fn RuntimeState::dispatch_event(
     FrameTick(frame) => self.tick_animations(frame)
     Resize(size) => {
       self.size = size
-      self.needs_rebuild = self.element_tree.mark_component_tree_build_dirty()
+      self.needs_rebuild = self.element_tree.root.mark_component_tree_build_dirty()
       self.needs_redraw = true
       self.needs_layout = true
       self.needs_paint = true
-      self.element_tree.mark_subtree_layout_dirty()
-      self.mark_dirty(self.element_tree.id)
+      self.element_tree.root.mark_subtree_layout_dirty()
+      self.mark_dirty(self.element_tree.id())
     }
     Redraw(_) => {
       self.needs_redraw = false
@@ -319,24 +323,24 @@ pub fn RuntimeState::dispatch_event(
       self.ensure_render_tree()
       if event.phase == PointerPhase::Down {
         let previous_focus = self.focused_element
-        self.focused_element = self.element_tree.find_focusable_at(
+        self.focused_element = self.element_tree.root.find_focusable_at(
           event.position,
-          self.render_tree,
+          self.render_tree.root,
         )
         if previous_focus != self.focused_element {
-          self.mark_dirty(self.element_tree.id)
+          self.mark_dirty(self.element_tree.id())
         }
       }
-      let result = self.element_tree.dispatch_pointer(
+      let result = self.element_tree.root.dispatch_pointer(
         event,
-        self.render_tree,
+        self.render_tree.root,
         text_system=self.text_system,
       )
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
       self.needs_paint = self.needs_paint || result.changed
       if result.changed || result.activated {
-        self.mark_dirty(self.element_tree.id)
+        self.mark_dirty(self.element_tree.id())
       }
       if result.activated {
         self.request_activation_rebuild()
@@ -344,12 +348,12 @@ pub fn RuntimeState::dispatch_event(
       self.rebuild_if_possible()
     }
     Keyboard(event) => {
-      let shortcut = self.element_tree.dispatch_keyboard_shortcut(event)
+      let shortcut = self.element_tree.root.dispatch_keyboard_shortcut(event)
       if shortcut.changed || shortcut.activated {
         self.needs_redraw = self.needs_redraw || shortcut.changed
         self.needs_rebuild = self.needs_rebuild || shortcut.activated
         self.needs_paint = self.needs_paint || shortcut.changed
-        self.mark_dirty(self.element_tree.id)
+        self.mark_dirty(self.element_tree.id())
         if shortcut.activated {
           self.request_activation_rebuild()
         }
@@ -360,13 +364,15 @@ pub fn RuntimeState::dispatch_event(
       } else if event.pressed && event.key == "Tab" {
         match self.focused_element {
           Some(target) =>
-            if self.element_tree.accepts_tab_input(target) {
-              let result = self.element_tree.dispatch_keyboard(target, event)
+            if self.element_tree.root.accepts_tab_input(target) {
+              let result = self.element_tree.root.dispatch_keyboard(
+                target, event,
+              )
               self.needs_redraw = self.needs_redraw || result.changed
               self.needs_rebuild = self.needs_rebuild || result.activated
               self.needs_paint = self.needs_paint || result.changed
               if result.changed || result.activated {
-                self.mark_dirty(self.element_tree.id)
+                self.mark_dirty(self.element_tree.id())
               }
               if result.activated {
                 self.request_activation_rebuild()
@@ -380,12 +386,12 @@ pub fn RuntimeState::dispatch_event(
       } else {
         match self.focused_element {
           Some(target) => {
-            let result = self.element_tree.dispatch_keyboard(target, event)
+            let result = self.element_tree.root.dispatch_keyboard(target, event)
             self.needs_redraw = self.needs_redraw || result.changed
             self.needs_rebuild = self.needs_rebuild || result.activated
             self.needs_paint = self.needs_paint || result.changed
             if result.changed || result.activated {
-              self.mark_dirty(self.element_tree.id)
+              self.mark_dirty(self.element_tree.id())
             }
             if result.activated {
               self.request_activation_rebuild()
@@ -399,12 +405,12 @@ pub fn RuntimeState::dispatch_event(
     TextInput(event) =>
       match self.focused_element {
         Some(target) => {
-          let result = self.element_tree.dispatch_text_input(target, event)
+          let result = self.element_tree.root.dispatch_text_input(target, event)
           self.needs_redraw = self.needs_redraw || result.changed
           self.needs_rebuild = self.needs_rebuild || result.activated
           self.needs_paint = self.needs_paint || result.changed
           if result.changed || result.activated {
-            self.mark_dirty(self.element_tree.id)
+            self.mark_dirty(self.element_tree.id())
           }
           if result.activated {
             self.request_activation_rebuild()
@@ -415,12 +421,15 @@ pub fn RuntimeState::dispatch_event(
       }
     DragDrop(event) => {
       self.ensure_render_tree()
-      let result = self.element_tree.dispatch_drag_drop(event, self.render_tree)
+      let result = self.element_tree.root.dispatch_drag_drop(
+        event,
+        self.render_tree.root,
+      )
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
       self.needs_paint = self.needs_paint || result.changed
       if result.changed || result.activated {
-        self.mark_dirty(self.element_tree.id)
+        self.mark_dirty(self.element_tree.id())
       }
       if result.activated {
         self.request_activation_rebuild()
@@ -438,12 +447,12 @@ fn RuntimeState::move_focus(
 ) -> Bool {
   self.ensure_render_tree()
   let previous_focus = self.focused_element
-  self.focused_element = self.element_tree.next_focus(
+  self.focused_element = self.element_tree.root.next_focus(
     current=previous_focus,
     reverse~,
   )
   if previous_focus != self.focused_element {
-    self.mark_dirty(self.element_tree.id)
+    self.mark_dirty(self.element_tree.id())
     true
   } else {
     false
@@ -460,14 +469,17 @@ pub fn RuntimeState::advance_time(
 
 ///|
 pub fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
-  self.ensure_render_tree()
-  self.render_tree.to_layout_result()
+  self.ensure_layout_tree()
+  self.layout_tree.root.to_layout_result()
 }
 
 ///|
 pub fn RuntimeState::semantics(self : RuntimeState) -> SemanticsNode {
   self.ensure_render_tree()
-  self.element_tree.semantics(self.render_tree, focused=self.focused_element)
+  self.element_tree.root.semantics(
+    self.render_tree.root,
+    focused=self.focused_element,
+  )
 }
 
 ///|
@@ -476,9 +488,9 @@ pub fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
   match self.focused_element {
     Some(target) =>
       match
-        self.element_tree.focused_text_input(
+        self.element_tree.root.focused_text_input(
           target,
-          self.render_tree,
+          self.render_tree.root,
           text_system=self.text_system,
         ) {
         Some(state) => state
@@ -495,24 +507,25 @@ pub fn RuntimeState::build_draw_commands(
   let commands : Array[DrawCommand] = [Clear(Color::white())]
   self.rebuild_if_possible()
   self.ensure_render_tree()
-  self.render_tree.collect_draw_commands(commands)
+  self.render_tree.root.collect_draw_commands(commands)
   commands
 }
 
 ///|
 pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
   if self.needs_rebuild {
-    if self.element_tree.has_dirty_build() {
-      let result = self.element_tree.rebuild_dirty_components(
+    if self.element_tree.root.has_dirty_build() {
+      let result = self.element_tree.root.rebuild_dirty_components(
         self,
         self.next_element_id,
       )
-      self.element_tree = result.node
+      self.element_tree = ElementTree::new(result.node)
       self.next_element_id = result.next_id
-      self.needs_rebuild = self.element_tree.has_dirty_build()
+      self.needs_rebuild = self.element_tree.root.has_dirty_build()
       self.needs_layout = self.needs_layout ||
-        self.element_tree.has_dirty_layout()
-      self.needs_paint = self.needs_paint || self.element_tree.has_dirty_paint()
+        self.element_tree.root.has_dirty_layout()
+      self.needs_paint = self.needs_paint ||
+        self.element_tree.root.has_dirty_paint()
       self.needs_redraw = true
     }
   }
@@ -520,7 +533,7 @@ pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
 
 ///|
 pub fn RuntimeState::request_rebuild(self : RuntimeState) -> Unit {
-  self.request_component_rebuild(self.element_tree.id)
+  self.request_component_rebuild(self.element_tree.id())
   self.request_redraw()
 }
 
@@ -529,7 +542,7 @@ fn RuntimeState::request_component_rebuild(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  ignore(self.element_tree.mark_build_dirty_by_id(id))
+  ignore(self.element_tree.root.mark_build_dirty_by_id(id))
   self.needs_rebuild = true
   self.needs_layout = true
   self.needs_paint = true
@@ -540,11 +553,11 @@ fn RuntimeState::request_component_rebuild(
 ///|
 fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
   self.needs_rebuild = true
-  if !self.element_tree.has_dirty_build() &&
-    self.element_tree.mark_root_component_build_dirty() {
+  if !self.element_tree.root.has_dirty_build() &&
+    self.element_tree.root.mark_root_component_build_dirty() {
     self.needs_layout = true
     self.needs_paint = true
-    self.mark_dirty(self.element_tree.id)
+    self.mark_dirty(self.element_tree.id())
   }
   self.request_redraw()
 }
@@ -559,7 +572,7 @@ fn RuntimeState::tick_animations(self : RuntimeState, frame : Frame) -> Unit {
   }
   if changed {
     self.needs_paint = true
-    self.mark_dirty(self.element_tree.id)
+    self.mark_dirty(self.element_tree.id())
   }
   if active {
     self.request_redraw()
@@ -588,14 +601,37 @@ fn RuntimeState::ensure_render_tree(self : RuntimeState) -> Unit {
 }
 
 ///|
-fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
+fn RuntimeState::ensure_layout_tree(self : RuntimeState) -> Unit {
+  if self.needs_rebuild || self.needs_layout {
+    self.layout_current_tree()
+  }
+}
+
+///|
+fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   self.rebuild_if_possible()
-  self.render_tree = self.element_tree.render_focused_with_text_system(
-    Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
-    focused=self.focused_element,
-    environment=self.environment,
-    text_system=self.text_system,
-  )
+  self.layout_tree = {
+    root: self.element_tree.root.place_with_text_system(
+      Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
+      text_system=self.text_system,
+      layout_direction=self.environment.layout_direction,
+    ),
+  }
+  self.needs_rebuild = false
+  self.needs_layout = false
+}
+
+///|
+fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
+  self.ensure_layout_tree()
+  self.render_tree = {
+    root: self.element_tree.root.render_focused_with_text_system(
+      self.layout_tree.root,
+      focused=self.focused_element,
+      environment=self.environment,
+      text_system=self.text_system,
+    ),
+  }
   self.needs_rebuild = false
   self.needs_layout = false
   self.needs_paint = false
@@ -607,7 +643,7 @@ pub fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
   if !self.dirty_elements.any(existing => existing == id) {
     self.dirty_elements.push(id)
   }
-  ignore(self.element_tree.mark_paint_dirty_by_id(id))
+  ignore(self.element_tree.root.mark_paint_dirty_by_id(id))
   self.needs_paint = true
   self.needs_redraw = true
 }

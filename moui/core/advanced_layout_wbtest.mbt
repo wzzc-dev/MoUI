@@ -444,7 +444,7 @@ test "list lays out keyed rows and reconcile preserves keyed identity" {
   assert_true(next.children[0].id == second_id)
   assert_true(next.children[1].id == first_id)
   let layout = next
-    .render(Rect::new(x=0.0, y=0.0, width=120.0, height=80.0))
+    .place(Rect::new(x=0.0, y=0.0, width=120.0, height=80.0))
     .to_layout_result()
   inspect(layout.children[1].frame.origin.y, content="36")
 }

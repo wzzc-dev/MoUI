@@ -159,7 +159,7 @@ fn append_text_field_commands(
     environment_color(environment, data.foreground)
   }
   let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
-  if focused && element.composition is None {
+  if focused && element.control.composition is None {
     let layout = environment_measure_text(
       environment,
       TextLayoutInput::new(
@@ -172,7 +172,7 @@ fn append_text_field_commands(
       commands,
       text_frame,
       layout,
-      element.selection,
+      element.control.selection,
     )
   }
   commands.push(
@@ -265,7 +265,7 @@ fn append_searchbar_commands(
     },
     height=frame.size.height,
   ).inset(Insets::symmetric(vertical=0.0))
-  if is_focused && element.composition is None {
+  if is_focused && element.control.composition is None {
     let layout = environment_measure_text(
       environment,
       TextLayoutInput::new(
@@ -278,7 +278,7 @@ fn append_searchbar_commands(
       commands,
       text_frame,
       layout,
-      element.selection,
+      element.control.selection,
     )
   }
   commands.push(

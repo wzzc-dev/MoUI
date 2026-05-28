@@ -60,8 +60,8 @@ fn ElementNode::measure_with_text_system(
   text_system~ : TextSystem,
 ) -> MeasuredNode {
   if !self.dirty.needs_layout &&
-    self.cached_measure_constraints == Some(constraints) {
-    match self.cached_measured {
+    self.layout_cache.cached_measure_constraints == Some(constraints) {
+    match self.layout_cache.cached_measured {
       Some(measured) => return measured
       None => ()
     }
@@ -80,8 +80,8 @@ fn ElementNode::measure_with_text_system(
     ),
     children,
   }
-  self.cached_measure_constraints = Some(constraints)
-  self.cached_measured = Some(measured)
+  self.layout_cache.cached_measure_constraints = Some(constraints)
+  self.layout_cache.cached_measured = Some(measured)
   self.dirty.needs_layout = false
   measured
 }
@@ -96,9 +96,11 @@ fn ElementNode::place_with_text_system(
   self : ElementNode,
   bounds : Rect,
   text_system~ : TextSystem,
+  layout_direction? : LayoutDirection = LayoutDirection::LeftToRight,
 ) -> PlacedNode {
-  if !self.dirty.needs_layout && self.cached_place_frame == Some(bounds) {
-    match self.cached_placed {
+  if !self.dirty.needs_layout &&
+    self.layout_cache.cached_place_frame == Some(bounds) {
+    match self.layout_cache.cached_placed {
       Some(placed) => return placed
       None => ()
     }
@@ -109,9 +111,10 @@ fn ElementNode::place_with_text_system(
     measured,
     bounds,
     text_system~,
+    layout_direction~,
   )
-  self.cached_place_frame = Some(bounds)
-  self.cached_placed = Some(placed)
+  self.layout_cache.cached_place_frame = Some(bounds)
+  self.layout_cache.cached_placed = Some(placed)
   placed
 }
 
@@ -121,8 +124,13 @@ fn ElementNode::place_measured_with_text_system(
   measured : MeasuredNode,
   frame : Rect,
   text_system~ : TextSystem,
+  layout_direction~ : LayoutDirection,
 ) -> PlacedNode {
-  let child_frames = self.child_frames_for_place(frame, text_system~)
+  let child_frames = self.child_frames_for_place(
+    frame,
+    text_system~,
+    layout_direction~,
+  )
   let children : Array[PlacedNode] = []
   for index, child in self.children {
     if index < child_frames.length() && index < measured.children.length() {
@@ -131,6 +139,7 @@ fn ElementNode::place_measured_with_text_system(
           measured.children[index],
           child_frames[index],
           text_system~,
+          layout_direction~,
         ),
       )
     }
@@ -252,6 +261,8 @@ fn child_constraints_for_measure(
 ) -> Constraints {
   match spec {
     PaddingSpec(data) => constraints.deflate(data.insets)
+    SheetSpec(_) =>
+      constraints.deflate(Insets::symmetric(horizontal=16.0, vertical=16.0))
     FrameSpec(data) => frame_constraints_for_measure(data, constraints)
     ModifiedSpec(data) => modified_child_constraints(data.modifier, constraints)
     ScrollSpec(_) => Constraints::unbounded()
@@ -291,6 +302,7 @@ fn ElementNode::child_frames_for_place(
   self : ElementNode,
   frame : Rect,
   text_system~ : TextSystem,
+  layout_direction~ : LayoutDirection,
 ) -> Array[Rect] {
   match self.taffy_child_frames_for_place(frame) {
     Some(frames) => return frames
@@ -332,6 +344,12 @@ fn ElementNode::child_frames_for_place(
       } else {
         []
       }
+    SheetSpec(_) =>
+      if self.children.length() > 0 {
+        [frame.inset(Insets::symmetric(horizontal=16.0, vertical=16.0))]
+      } else {
+        []
+      }
     GridSpec(data) =>
       grid_child_frames(
         data.columns,
@@ -359,7 +377,7 @@ fn ElementNode::child_frames_for_place(
           self.spec,
           self.children.map(child => child.intrinsic_size()),
         ),
-        layout_direction: LayoutDirection::LeftToRight,
+        layout_direction,
         safe_area: Insets::symmetric(),
         viewport: Some(frame.size),
       })

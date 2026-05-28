@@ -224,7 +224,7 @@ fn handle_rich_text_editor_keyboard(
     return { changed: result.changed, activated: false, focused: None }
   }
   if event.key == "Backspace" {
-    match active_text_selection(element.selection) {
+    match active_text_selection(element.control.selection) {
       Some(selection) =>
         return handle_rich_text_editor_input(
           element,
@@ -240,7 +240,7 @@ fn handle_rich_text_editor_keyboard(
     }
   }
   if event.key == "Delete" {
-    match active_text_selection(element.selection) {
+    match active_text_selection(element.control.selection) {
       Some(selection) =>
         return handle_rich_text_editor_input(
           element,
@@ -261,8 +261,8 @@ fn handle_rich_text_editor_keyboard(
       data,
       move_text_caret(
         data.value.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveLeft,
         extend=event.modifiers.shift,
       ),
@@ -274,8 +274,8 @@ fn handle_rich_text_editor_keyboard(
       data,
       move_text_caret(
         data.value.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveRight,
         extend=event.modifiers.shift,
       ),
@@ -288,15 +288,21 @@ fn handle_rich_text_editor_keyboard(
     return move_multiline_caret_vertical(element, data, 1)
   }
   if event.key == "Home" {
-    element.caret = multiline_line_start(data.value.get(), element.caret)
-    element.selection = None
+    element.control.caret = multiline_line_start(
+      data.value.get(),
+      element.control.caret,
+    )
+    element.control.selection = None
     notify_rich_text_selection_change(data, element)
     element.dirty.mark_paint()
     return { changed: true, activated: false, focused: None }
   }
   if event.key == "End" {
-    element.caret = multiline_line_end(data.value.get(), element.caret)
-    element.selection = None
+    element.control.caret = multiline_line_end(
+      data.value.get(),
+      element.control.caret,
+    )
+    element.control.selection = None
     notify_rich_text_selection_change(data, element)
     element.dirty.mark_paint()
     return { changed: true, activated: false, focused: None }

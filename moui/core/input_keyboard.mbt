@@ -147,7 +147,7 @@ fn handle_text_field_keyboard(
     return { changed: result.changed, activated: false, focused: None }
   }
   if event.key == "Backspace" {
-    match active_text_selection(element.selection) {
+    match active_text_selection(element.control.selection) {
       Some(selection) =>
         return handle_text_field_input(element, data, DeleteRange(selection))
       None =>
@@ -155,7 +155,7 @@ fn handle_text_field_keyboard(
     }
   }
   if event.key == "Delete" {
-    match active_text_selection(element.selection) {
+    match active_text_selection(element.control.selection) {
       Some(selection) =>
         return handle_text_field_input(element, data, DeleteRange(selection))
       None =>
@@ -167,8 +167,8 @@ fn handle_text_field_keyboard(
       element,
       move_text_caret(
         data.value.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveLeft,
         extend=event.modifiers.shift,
       ),
@@ -179,8 +179,8 @@ fn handle_text_field_keyboard(
       element,
       move_text_caret(
         data.value.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveRight,
         extend=event.modifiers.shift,
       ),
@@ -191,8 +191,8 @@ fn handle_text_field_keyboard(
       element,
       move_text_caret(
         data.value.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveStart,
         extend=event.modifiers.shift,
       ),
@@ -203,8 +203,8 @@ fn handle_text_field_keyboard(
       element,
       move_text_caret(
         data.value.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveEnd,
         extend=event.modifiers.shift,
       ),
@@ -250,10 +250,10 @@ fn select_text_range(
   text : String,
 ) -> ElementEventResult {
   let length = text_length(text)
-  element.caret = length
-  element.selection = Some(TextRange::new(start=0, end=length))
-  element.composition = None
-  element.composition_cursor = None
+  element.control.caret = length
+  element.control.selection = Some(TextRange::new(start=0, end=length))
+  element.control.composition = None
+  element.control.composition_cursor = None
   element.dirty.mark_paint()
   { changed: true, activated: false, focused: None }
 }
@@ -287,7 +287,7 @@ fn handle_searchbar_keyboard(
     return { changed: result.changed, activated: false, focused: None }
   }
   if event.key == "Backspace" {
-    match active_text_selection(element.selection) {
+    match active_text_selection(element.control.selection) {
       Some(selection) =>
         return handle_searchbar_input(element, data, DeleteRange(selection))
       None =>
@@ -295,7 +295,7 @@ fn handle_searchbar_keyboard(
     }
   }
   if event.key == "Delete" {
-    match active_text_selection(element.selection) {
+    match active_text_selection(element.control.selection) {
       Some(selection) =>
         return handle_searchbar_input(element, data, DeleteRange(selection))
       None =>
@@ -307,8 +307,8 @@ fn handle_searchbar_keyboard(
       element,
       move_text_caret(
         data.query.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveLeft,
         extend=event.modifiers.shift,
       ),
@@ -319,8 +319,8 @@ fn handle_searchbar_keyboard(
       element,
       move_text_caret(
         data.query.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveRight,
         extend=event.modifiers.shift,
       ),
@@ -331,8 +331,8 @@ fn handle_searchbar_keyboard(
       element,
       move_text_caret(
         data.query.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveStart,
         extend=event.modifiers.shift,
       ),
@@ -343,8 +343,8 @@ fn handle_searchbar_keyboard(
       element,
       move_text_caret(
         data.query.get(),
-        element.caret,
-        element.selection,
+        element.control.caret,
+        element.control.selection,
         MoveEnd,
         extend=event.modifiers.shift,
       ),

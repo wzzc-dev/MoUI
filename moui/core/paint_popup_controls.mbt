@@ -37,7 +37,7 @@ fn append_picker_commands(
   let arrow_size = 12.0
   let arrow_x = frame.origin.x + frame.size.width - arrow_size - 12.0
   let arrow_y = frame.origin.y + (frame.size.height - arrow_size) / 2.0
-  let arrow_text = if element.picker_expanded { "▲" } else { "▼" }
+  let arrow_text = if element.control.picker_expanded { "▲" } else { "▼" }
   commands.push(
     DrawText(
       TextRun::new(
@@ -54,7 +54,7 @@ fn append_picker_commands(
       ),
     ),
   )
-  if element.picker_expanded {
+  if element.control.picker_expanded {
     let item_height = 36.0
     let count = data.items.length().to_double()
     let list_height = min_double(data.maxHeight, count * item_height)
@@ -179,7 +179,7 @@ fn append_datepicker_commands(
   )
 
   // 展开时显示日期选择面板
-  if element.datepicker_expanded {
+  if element.control.datepicker_expanded {
     let panel_width = max_double(frame.size.width, 280.0)
     let panel_height = 350.0
     let panel_frame = Rect::new(
@@ -210,7 +210,7 @@ fn append_datepicker_commands(
       width=panel_frame.size.width,
       height=header_height,
     )
-    let view_date = element.datepicker_view
+    let view_date = element.control.datepicker_view
     let header_text = "{view_date.year}年{view_date.month}月"
     commands.push(
       DrawText(
