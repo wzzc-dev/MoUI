@@ -1,24 +1,20 @@
 param(
-  [string] $LogDir = "logs/windows-real-skia-smoke",
-
-  [string] $SkiaInclude = $env:SKIA_MBT_SKIA_INCLUDE,
-
+  [string] $LogDir = "logs/windows-msvc-real-skia-smoke",
+  [string] $SkiaRoot = $env:SKIA_MBT_SKIA_ROOT,
+  [string] $SkiaZip = $env:SKIA_MBT_SKIA_ZIP,
   [string] $SkiaLibDir = $env:SKIA_MBT_SKIA_LIB_DIR,
-
-  [string] $SkiaLib = $(if ($env:SKIA_MBT_SKIA_LIB) { $env:SKIA_MBT_SKIA_LIB } else { "skia" }),
+  [string] $VcVarsAll = $(if ($env:VCVARSALL) { $env:VCVARSALL } else { "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" }),
+  [string] $VcArch = "x64",
   [string] $ExtraCcFlags = $env:SKIA_MBT_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:SKIA_MBT_EXTRA_LINK_FLAGS,
-  [switch] $DryRunConfig
+  [switch] $DryRunConfig,
+  [switch] $ForceExtract
 )
 
 $ErrorActionPreference = "Stop"
 
 if ($DryRunConfig) {
-  throw "acceptance requires a real smoke run; use scripts/windows-skia-smoke.ps1 -DryRunConfig for preflight"
-}
-
-if ([string]::IsNullOrWhiteSpace($SkiaInclude) -or [string]::IsNullOrWhiteSpace($SkiaLibDir)) {
-  throw "SkiaInclude and SkiaLibDir are required; pass -SkiaInclude/-SkiaLibDir or set SKIA_MBT_SKIA_INCLUDE/SKIA_MBT_SKIA_LIB_DIR"
+  throw "acceptance requires a real smoke run; use scripts/windows-msvc-skia-smoke.ps1 -DryRunConfig for preflight"
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -33,7 +29,9 @@ $wrapperLog = Join-Path $resolvedLogDir "windows-real-skia-smoke.log"
 $nativeLog = Join-Path $resolvedLogDir "windows-native-smoke-output.log"
 $acceptanceLog = Join-Path $resolvedLogDir "windows-real-skia-acceptance.log"
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
+$smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
 $backupPkg = "$nativePkg.smoke.bak"
+$smokeBackupPkg = "$smokePkg.smoke.bak"
 
 function Convert-LogToUtf8NoBom {
   param(
@@ -54,35 +52,46 @@ function Convert-LogToUtf8NoBom {
 if (Test-Path -LiteralPath $backupPkg) {
   throw "native/moon.pkg smoke backup already exists: $backupPkg. Resolve the stale backup before running acceptance."
 }
+if (Test-Path -LiteralPath $smokeBackupPkg) {
+  throw "scripts/native_smoke/moon.pkg smoke backup already exists: $smokeBackupPkg. Resolve the stale backup before running acceptance."
+}
 
 New-Item -ItemType Directory -Force -Path $resolvedLogDir | Out-Null
 
 $beforePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
+$beforeSmokePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $smokePkg).Hash
 
-Write-Host "Windows real Skia acceptance logs:"
+Write-Host "Windows MSVC real Skia acceptance logs:"
 Write-Host "  preflight_log=$preflightLog"
 Write-Host "  wrapper_log=$wrapperLog"
 Write-Host "  native_log=$nativeLog"
 Write-Host "  acceptance_log=$acceptanceLog"
 
-& (Join-Path $repoRoot "scripts/windows-skia-smoke.ps1") `
-  -SkiaInclude $SkiaInclude `
+& (Join-Path $repoRoot "scripts/windows-msvc-skia-smoke.ps1") `
+  -SkiaRoot $SkiaRoot `
+  -SkiaZip $SkiaZip `
   -SkiaLibDir $SkiaLibDir `
-  -SkiaLib $SkiaLib `
+  -VcVarsAll $VcVarsAll `
+  -VcArch $VcArch `
   -ExtraCcFlags $ExtraCcFlags `
   -ExtraLinkFlags $ExtraLinkFlags `
   -SmokeLog $nativeLog `
+  -ForceExtract:$ForceExtract `
   -DryRunConfig 2>&1 | Tee-Object -FilePath $preflightLog
 Convert-LogToUtf8NoBom -Path $preflightLog
+
 $smokeStatus = 0
 try {
-  & (Join-Path $repoRoot "scripts/windows-skia-smoke.ps1") `
-    -SkiaInclude $SkiaInclude `
+  & (Join-Path $repoRoot "scripts/windows-msvc-skia-smoke.ps1") `
+    -SkiaRoot $SkiaRoot `
+    -SkiaZip $SkiaZip `
     -SkiaLibDir $SkiaLibDir `
-    -SkiaLib $SkiaLib `
+    -VcVarsAll $VcVarsAll `
+    -VcArch $VcArch `
     -ExtraCcFlags $ExtraCcFlags `
     -ExtraLinkFlags $ExtraLinkFlags `
-    -SmokeLog $nativeLog 2>&1 | Tee-Object -FilePath $wrapperLog
+    -SmokeLog $nativeLog `
+    -ForceExtract:$ForceExtract 2>&1 | Tee-Object -FilePath $wrapperLog
   if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {
     $smokeStatus = $LASTEXITCODE
   }
@@ -92,15 +101,34 @@ try {
 }
 Convert-LogToUtf8NoBom -Path $wrapperLog
 
-$afterPkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
 $restoreStatus = "passed"
 if (Test-Path -LiteralPath $backupPkg) {
   Write-Error "native/moon.pkg smoke backup remains after acceptance run" -ErrorAction Continue
   $restoreStatus = "failed"
 }
-if ($beforePkgHash -ne $afterPkgHash) {
-  Write-Error "native/moon.pkg hash changed after acceptance run" -ErrorAction Continue
+if (Test-Path -LiteralPath $smokeBackupPkg) {
+  Write-Error "scripts/native_smoke/moon.pkg smoke backup remains after acceptance run" -ErrorAction Continue
   $restoreStatus = "failed"
+}
+if (!(Test-Path -LiteralPath $nativePkg -PathType Leaf)) {
+  Write-Error "native/moon.pkg is missing after acceptance run" -ErrorAction Continue
+  $restoreStatus = "failed"
+} else {
+  $afterPkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
+  if ($beforePkgHash -ne $afterPkgHash) {
+    Write-Error "native/moon.pkg hash changed after acceptance run" -ErrorAction Continue
+    $restoreStatus = "failed"
+  }
+}
+if (!(Test-Path -LiteralPath $smokePkg -PathType Leaf)) {
+  Write-Error "scripts/native_smoke/moon.pkg is missing after acceptance run" -ErrorAction Continue
+  $restoreStatus = "failed"
+} else {
+  $afterSmokePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $smokePkg).Hash
+  if ($beforeSmokePkgHash -ne $afterSmokePkgHash) {
+    Write-Error "scripts/native_smoke/moon.pkg hash changed after acceptance run" -ErrorAction Continue
+    $restoreStatus = "failed"
+  }
 }
 
 $markerStatus = "not run"
@@ -124,7 +152,7 @@ if ($skiaCommit.Trim().Length -eq 0) {
 }
 
 @(
-  "Windows real Skia acceptance result:"
+  "Windows MSVC real Skia acceptance result:"
   "  smoke_status=$smokeStatus"
   "  native_smoke_marker=$markerStatus"
   "  native_pkg_restore=$restoreStatus"
@@ -140,7 +168,7 @@ if ($env:GITHUB_ENV) {
   @(
     "native_smoke_marker_status=$markerStatus"
     "restore_status=$restoreStatus"
-    "windows_acceptance_log=$acceptanceLog"
+    "windows_msvc_acceptance_log=$acceptanceLog"
     "windows_skia_commit=$skiaCommit"
   ) | Add-Content -LiteralPath $env:GITHUB_ENV
 }

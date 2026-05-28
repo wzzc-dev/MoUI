@@ -36,7 +36,18 @@ for stage_marker in \
   "native smoke encoded PNG bytes" \
   "native smoke decoded image width" \
   "native smoke codec encoded format PNG" \
-  "native smoke decoded bitmap width"; do
+  "native smoke decoded bitmap width" \
+  "native smoke font spacing" \
+  "native smoke measured text width" \
+  "native smoke text glyph count" \
+  "native smoke first glyph id" \
+  "native smoke first glyph width" \
+  "native smoke second glyph position x" \
+  "native smoke second glyph x position" \
+  "native smoke first glyph bounds width" \
+  "native smoke measured text bounds width" \
+  "native smoke font family count" \
+  "native smoke first font family bytes"; do
   if ! grep -Fq "$stage_marker" "$log_path"; then
     echo "native smoke executable log is missing required stage marker: $stage_marker" >&2
     exit 1

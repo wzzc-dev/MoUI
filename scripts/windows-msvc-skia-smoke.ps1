@@ -116,26 +116,34 @@ if (![string]::IsNullOrWhiteSpace($ExtraLinkFlags)) {
   $linkFlags = "$linkFlags $ExtraLinkFlags"
 }
 
-Write-Host "Windows MSVC Skia smoke environment:"
+Write-Output "Windows MSVC Skia smoke environment:"
 $moonVersion = ""
 if (Get-Command moon -ErrorAction SilentlyContinue) {
   $moonVersion = (& moon version 2>$null | Select-Object -First 1) -join ""
 }
-Write-Host "  moon=$moonVersion"
-Write-Host "  vcvarsall=$VcVarsAll"
-Write-Host "  vc_arch=$VcArch"
-Write-Host "  skia_root=$resolvedRoot"
-Write-Host "  skia_lib_dir=$resolvedLibDir"
+Write-Output "  moon=$moonVersion"
+Write-Output "  vcvarsall=$VcVarsAll"
+Write-Output "  vc_arch=$VcArch"
+Write-Output "  skia_root=$resolvedRoot"
+Write-Output "  skia_include=$includePath"
+Write-Output "  skia_lib_dir=$libPath"
+Write-Output "  skia_lib=skia"
+if ((Get-Command git -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath (Join-Path $resolvedRoot ".git"))) {
+  $skiaCommit = (& git -C $resolvedRoot rev-parse HEAD 2>$null | Select-Object -First 1) -join ""
+  if ($skiaCommit.Trim().Length -gt 0) {
+    Write-Output "  skia_commit=$skiaCommit"
+  }
+}
 $item = Get-Item -LiteralPath $skiaLib
-Write-Host "  library=$($item.Name) $($item.Length) bytes"
-Write-Host "  stub_cc_flags=$ccFlags"
-Write-Host "  cc_link_flags=$linkFlags"
+Write-Output "  library=$($item.Name) $($item.Length) bytes"
+Write-Output "  stub_cc_flags=$ccFlags"
+Write-Output "  cc_link_flags=$linkFlags"
 if ($resolvedSmokeLog.Length -gt 0) {
-  Write-Host "  smoke_log=$resolvedSmokeLog"
+  Write-Output "  smoke_log=$resolvedSmokeLog"
 }
 
 if ($DryRunConfig) {
-  Write-Host "Dry run complete; native/moon.pkg was not modified and no build was run."
+  Write-Output "Dry run complete; native/moon.pkg was not modified and no build was run."
   exit 0
 }
 
@@ -214,9 +222,15 @@ type "$logPath"
 exit /b %SMOKE_STATUS%
 "@
     Set-Content -LiteralPath $cmdFile -Value $cmdContent -NoNewline -Encoding ASCII
-    & cmd.exe /d /c $cmdFile
-    $status = $LASTEXITCODE
-    Remove-Item -LiteralPath $cmdFile -ErrorAction SilentlyContinue
+    $oldErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+      & cmd.exe /d /c $cmdFile 2>&1 | ForEach-Object { Write-Host $_ }
+      $status = $LASTEXITCODE
+    } finally {
+      $ErrorActionPreference = $oldErrorActionPreference
+      Remove-Item -LiteralPath $cmdFile -ErrorAction SilentlyContinue
+    }
     if ($status -ne 0) {
       throw "Windows MSVC native smoke failed with exit code $status"
     }

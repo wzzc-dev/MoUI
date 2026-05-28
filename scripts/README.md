@@ -128,10 +128,14 @@ verifies that `native/moon.pkg` did not change. The smoke executable covers
 raster drawing, readback, snapshots, PNG encode/decode, bitmap decode, and
 canvas save/restore with clipping behavior. It also exercises shader-backed
 draws, native and portable path drawing, image drawing, transforms, default font
-text drawing, and default-typeface text drawing when the selected Skia build
-provides a default typeface. Pixel assertions are reserved for deterministic
+text drawing/measurement/metrics, default-typeface text drawing/measurement/metrics when the selected Skia build
+provides a default typeface, and font manager family enumeration/matching when
+the platform font manager is available. Pixel assertions are reserved for deterministic
 geometry and color operations so minimal CPU-only Skia builds do not fail only
-because their font manager differs.
+because their font manager differs. Font coverage still verifies positive text
+advance, glyph count, glyph ID mapping, glyph advances, glyph positions, glyph
+bounds, text bounds, metrics, and font-family typeface matching whenever the
+native smoke can create the relevant font objects.
 
 To reuse an existing Skia checkout/build instead of building from source:
 
@@ -267,7 +271,7 @@ bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
 When `--skia-rev` is omitted, `scripts/macos-build-skia.sh` reads
 `SKIA_MBT_SKIA_REV`, then `skia-revision.txt`, matching Linux's revision
 priority. The build and lower-level smoke scripts support `--dry-run-config` for CI preflight. The acceptance wrapper captures the
-wrapper log, the native executable log, and `macos-real-skia-acceptance.log`;
+dry-run preflight log, wrapper log, native executable log, and `macos-real-skia-acceptance.log`;
 checks the final `skia_mbt native smoke test passed` marker; and verifies that
 `native/moon.pkg` was restored. The lower-level smoke helper temporarily
 rewrites `native/moon.pkg`, runs `scripts/native_smoke`, restores the package
@@ -309,9 +313,8 @@ package restoration after real runs.
 
 ## Windows real Skia smoke
 
-The Windows helper currently covers an existing-build smoke path only. It
-expects a MinGW-compatible Skia library because MoonBit's native stub path uses
-the GCC/MinGW toolchain today:
+The Windows helpers currently cover existing-build smoke paths only. Use the
+MinGW-compatible path when MoonBit is building native stubs through GCC/MinGW:
 
 ```powershell
 .\scripts\windows-accept-real-skia-smoke.ps1 -LogDir logs `
@@ -319,9 +322,25 @@ the GCC/MinGW toolchain today:
   -SkiaLibDir C:\path\to\skia\out\moonbit-smoke
 ```
 
+Use the MSVC path for a prepared release zip or checkout that provides
+`skia.lib`. It defaults to `C:\Users\<you>\Downloads\Skia-Windows-Release-x64.zip`,
+extracts into `.skia-cache/windows-msvc/aseprite`, calls `vcvarsall.bat`, builds
+with `cl`, captures the same artifact log names, and restores both temporary
+package rewrites:
+
+```powershell
+.\scripts\windows-msvc-accept-real-skia-smoke.ps1 -LogDir logs
+```
+
+Pass `-SkiaRoot`, `-SkiaZip`, `-SkiaLibDir`, `-VcVarsAll`, or `-VcArch` when a
+self-hosted runner uses a different Visual Studio install or Skia layout. The
+MSVC helper also accepts `SKIA_MBT_SKIA_ROOT`, `SKIA_MBT_SKIA_ZIP`,
+`SKIA_MBT_SKIA_LIB_DIR`, `VCVARSALL`, `SKIA_MBT_EXTRA_CC_FLAGS`, and
+`SKIA_MBT_EXTRA_LINK_FLAGS` as environment defaults.
+
 Use `-SkiaLib`, `-ExtraCcFlags`, and `-ExtraLinkFlags` when the build uses a
 non-default library name or needs additional dependent libraries. The acceptance
-wrapper captures the wrapper log, the native executable log, and
+wrapper captures the dry-run preflight log, wrapper log, native executable log, and
 `windows-real-skia-acceptance.log`; checks the final
 `skia_mbt native smoke test passed` marker; and verifies that `native/moon.pkg`
 was restored. The lower-level smoke helper checks for `include/core/SkSurface.h`,
@@ -362,6 +381,8 @@ For preflight without rewriting `native/moon.pkg` or building the smoke binary:
   -SkiaInclude C:\path\to\skia `
   -SkiaLibDir C:\path\to\skia\out\moonbit-smoke `
   -DryRunConfig
+
+.\scripts\windows-msvc-skia-smoke.ps1 -DryRunConfig
 ```
 
 The `Windows Real Skia Smoke` workflow exposes the same existing-build inputs,

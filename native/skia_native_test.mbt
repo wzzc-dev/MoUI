@@ -300,6 +300,66 @@ test "font api typechecks" {
       assert_eq(font.size(), 14.0)
       font.set_size(18.0)
       assert_eq(font.size(), 18.0)
+      assert_eq(font.measure_text_utf8(b""), 0.0)
+      assert_eq(font.count_text_utf8(b""), 0)
+      assert_eq(font.text_to_glyphs_utf8(b"").length(), 0)
+      assert_true(font.measure_text_bounds_utf8(b"") is None)
+      assert_true(font.measure_text_utf8(b"Skia") > 0.0)
+      assert_eq(font.count_text_utf8(b"Skia"), 4)
+      let glyphs = font.text_to_glyphs_utf8(b"Skia")
+      assert_eq(glyphs.length(), 4)
+      assert_true(glyphs[0].to_int() > 0)
+      assert_true(font.glyph_width(glyphs[0]) > 0.0)
+      let glyph_widths = font.glyph_widths(glyphs)
+      assert_eq(glyph_widths.length(), glyphs.length())
+      assert_true(glyph_widths[0] > 0.0)
+      let glyph_x_positions = font.glyph_x_positions(glyphs, origin=3.0)
+      assert_eq(glyph_x_positions.length(), glyphs.length())
+      assert_eq(glyph_x_positions[0], 3.0)
+      assert_true(glyph_x_positions[1] > glyph_x_positions[0])
+      let glyph_positions = font.glyph_positions(
+        glyphs,
+        origin=@skia.Point::new(3.0, 5.0),
+      )
+      assert_eq(glyph_positions.length(), glyphs.length())
+      assert_true(glyph_positions[0] == @skia.Point::new(3.0, 5.0))
+      assert_true(glyph_positions[1].x > glyph_positions[0].x)
+      let text_glyph_x_positions = font.text_glyph_x_positions_utf8(
+        b"Skia",
+        origin=3.0,
+      )
+      assert_eq(text_glyph_x_positions.length(), glyphs.length())
+      assert_eq(text_glyph_x_positions[0], 3.0)
+      assert_true(text_glyph_x_positions[1] > text_glyph_x_positions[0])
+      let text_glyph_positions = font.text_glyph_positions_utf8(
+        b"Skia",
+        origin=@skia.Point::new(3.0, 5.0),
+      )
+      assert_eq(text_glyph_positions.length(), glyphs.length())
+      assert_true(text_glyph_positions[0] == @skia.Point::new(3.0, 5.0))
+      assert_true(text_glyph_positions[1].x > text_glyph_positions[0].x)
+      let glyph_bounds = font.glyph_bounds(glyphs[0])
+      assert_true(glyph_bounds.width() > 0.0)
+      assert_true(glyph_bounds.height() > 0.0)
+      let glyph_bounds_many = font.glyph_bounds_many(glyphs)
+      assert_eq(glyph_bounds_many.length(), glyphs.length())
+      assert_true(glyph_bounds_many[0].width() > 0.0)
+      match font.measure_text_bounds_utf8(b"Skia") {
+        None => ()
+        Some(bounds) => {
+          assert_true(bounds.width() > 0.0)
+          assert_true(bounds.height() >= 0.0)
+        }
+      }
+      let metrics = font.metrics()
+      assert_true(metrics.ascent <= 0.0)
+      assert_true(metrics.descent >= 0.0)
+      assert_true(font.spacing() >= metrics.descent - metrics.ascent)
+      ignore(metrics.underline_thickness)
+      ignore(metrics.underline_position)
+      ignore(metrics.strikeout_thickness)
+      ignore(metrics.strikeout_position)
+      ignore(metrics.has_bounds)
     }
   }
   match @native.Typeface::default() {
@@ -314,6 +374,48 @@ test "font api typechecks" {
         Some(font) => {
           assert_true(font.is_available())
           assert_eq(font.size(), 16.0)
+          assert_true(font.measure_text_utf8(b"MoonBit") > 0.0)
+          assert_eq(font.count_text_utf8(b"MoonBit"), 7)
+          let glyphs = font.text_to_glyphs_utf8(b"MoonBit")
+          assert_eq(glyphs.length(), 7)
+          assert_eq(font.glyph_widths(glyphs).length(), 7)
+          assert_eq(font.glyph_positions(glyphs).length(), 7)
+          assert_eq(font.text_glyph_positions_utf8(b"MoonBit").length(), 7)
+          assert_eq(font.glyph_bounds_many(glyphs).length(), 7)
+          match font.measure_text_bounds_utf8(b"MoonBit") {
+            None => ()
+            Some(bounds) => assert_true(bounds.width() > 0.0)
+          }
+          assert_true(font.spacing() > 0.0)
+        }
+      }
+    }
+  }
+  match @native.FontMgr::default() {
+    None => ()
+    Some(font_mgr) => {
+      assert_true(font_mgr.is_available())
+      assert_true(@native.Typeface::from_font_mgr_family(font_mgr, b"") is None)
+      let family_count = font_mgr.count_families()
+      assert_true(family_count >= 0)
+      assert_true(font_mgr.family_name(-1) is None)
+      assert_true(font_mgr.family_name(family_count) is None)
+      if family_count > 0 {
+        match font_mgr.family_name(0) {
+          None => ()
+          Some(family_name) => {
+            assert_true(!family_name.is_empty())
+            match font_mgr.match_family_style(family_name) {
+              None => ()
+              Some(typeface) => {
+                assert_true(typeface.is_available())
+                assert_true(
+                  @native.Typeface::from_font_mgr_family(font_mgr, family_name)
+                  is Some(_),
+                )
+              }
+            }
+          }
         }
       }
     }
@@ -507,13 +609,26 @@ test "canvas draw api typechecks" {
     }
     match @native.Font::default(size=12.0) {
       None => ()
-      Some(font) =>
+      Some(font) => {
+        assert_true(font.measure_text_utf8(b"MoonBit Skia") > 0.0)
+        assert_eq(font.count_text_utf8(b"MoonBit Skia"), 12)
+        let glyphs = font.text_to_glyphs_utf8(b"MoonBit Skia")
+        assert_eq(glyphs.length(), 12)
+        assert_eq(font.glyph_widths(glyphs).length(), 12)
+        assert_eq(font.glyph_positions(glyphs).length(), 12)
+        assert_eq(font.text_glyph_positions_utf8(b"MoonBit Skia").length(), 12)
+        assert_eq(font.glyph_bounds_many(glyphs).length(), 12)
+        match font.measure_text_bounds_utf8(b"MoonBit Skia") {
+          None => ()
+          Some(bounds) => assert_true(bounds.width() > 0.0)
+        }
         canvas.draw_text_utf8(
           b"MoonBit Skia",
           @skia.Point::new(2, 12),
           font,
           paint,
         )
+      }
     }
     match @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4)) {
       None => ()
