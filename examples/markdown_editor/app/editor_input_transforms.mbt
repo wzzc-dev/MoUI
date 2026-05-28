@@ -254,16 +254,19 @@ fn markdown_editor_autolink_target_with_trailing_punctuation(
     return { leading: "", target: token, trailing: "" }
   }
   let mut start = 0
-  while start < chars.length() && markdown_editor_autolink_leading_wrapper(chars[start]) {
+  while start < chars.length() &&
+        markdown_editor_autolink_leading_wrapper(chars[start]) {
     start = start + 1
   }
   let mut end = chars.length()
-  while end > start && markdown_editor_autolink_trailing_punctuation(chars[end - 1]) {
+  while end > start &&
+        markdown_editor_autolink_trailing_punctuation(chars[end - 1]) {
     end = end - 1
   }
   let wrapper_end = end
   if start > 0 {
-    while end > start && markdown_editor_autolink_trailing_wrapper(chars[end - 1]) {
+    while end > start &&
+          markdown_editor_autolink_trailing_wrapper(chars[end - 1]) {
       end = end - 1
     }
   }
@@ -451,10 +454,7 @@ fn markdown_editor_email_part_supported(
 }
 
 ///|
-fn markdown_editor_email_char_supported(
-  ch : Char,
-  local_part~ : Bool,
-) -> Bool {
+fn markdown_editor_email_char_supported(ch : Char, local_part~ : Bool) -> Bool {
   markdown_editor_ascii_word_char(ch) ||
   ch == '-' ||
   (local_part && (ch == '+' || ch == '%'))
@@ -615,8 +615,12 @@ fn markdown_editor_skip_closing_delimiter(
     match markdown_editor_find_inline_opening_marker(chars, caret, close) {
       Some(open_start) =>
         if !markdown_editor_inline_marker_pair_supported(
-          chars, open_start, markdown_editor_text_length(close), caret, close,
-        ) {
+            chars,
+            open_start,
+            markdown_editor_text_length(close),
+            caret,
+            close,
+          ) {
           return None
         }
       None => return None
@@ -991,10 +995,7 @@ fn markdown_editor_quote_marker(depth : Int) -> String {
 }
 
 ///|
-fn markdown_editor_typed_task_marker(
-  token : String,
-  checked~ : Bool,
-) -> Bool {
+fn markdown_editor_typed_task_marker(token : String, checked~ : Bool) -> Bool {
   let checkbox = if checked { ["[x]", "[X]"] } else { ["[]", "[ ]"] }
   for item in checkbox {
     if token == item {
@@ -1563,8 +1564,12 @@ fn markdown_editor_backspace_inline_marker(
       match markdown_editor_find_inline_closing_marker(chars, caret, marker) {
         Some(close_start) =>
           if markdown_editor_inline_marker_pair_supported(
-            chars, caret - marker_length, marker_length, close_start, marker,
-          ) {
+              chars,
+              caret - marker_length,
+              marker_length,
+              close_start,
+              marker,
+            ) {
             return Some(
               markdown_editor_remove_inline_marker_pair(
                 chars,
@@ -1596,8 +1601,8 @@ fn markdown_editor_delete_inline_marker(
       match markdown_editor_find_inline_opening_marker(chars, caret, marker) {
         Some(open_start) =>
           if markdown_editor_inline_marker_pair_supported(
-            chars, open_start, marker_length, caret, marker,
-          ) {
+              chars, open_start, marker_length, caret, marker,
+            ) {
             return Some(
               markdown_editor_remove_inline_marker_pair(
                 chars, open_start, marker_length, caret,

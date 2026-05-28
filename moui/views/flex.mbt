@@ -1,7 +1,7 @@
 ///|
 pub fn[Msg] row(
   children : Array[@core.View[Msg]],
-  spacing? : Double = 0.0,
+  spacing? : Double = 10.0,
   justify? : MainAlign = MainAlign::Start,
   align? : CrossAlign = CrossAlign::Stretch,
 ) -> @core.View[Msg] {
@@ -17,7 +17,7 @@ pub fn[Msg] row(
 ///|
 pub fn[Msg] column(
   children : Array[@core.View[Msg]],
-  spacing? : Double = 0.0,
+  spacing? : Double = 10.0,
   justify? : MainAlign = MainAlign::Start,
   align? : CrossAlign = CrossAlign::Stretch,
 ) -> @core.View[Msg] {

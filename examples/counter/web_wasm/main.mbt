@@ -1,8 +1,6 @@
 ///|
 fn main {
-  let app = @counter_app.CounterApp::new()
-  let runtime = app.runtime()
-  @web.run_app("MoUI Counter", runtime)
+  @web.run_app("MoUI Counter", @counter_app.runtime())
 }
 
 ///|

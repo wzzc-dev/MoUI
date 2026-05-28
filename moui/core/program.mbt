@@ -8,7 +8,7 @@ pub(all) enum Effect[Msg] {
 ///|
 pub(all) struct Program[Model, Msg] {
   init : () -> (Model, Effect[Msg])
-  update : (Msg, Model) -> (Model, Effect[Msg])
+  update : (Model, Msg) -> (Model, Effect[Msg])
   view : (Model) -> View[Msg]
 }
 
@@ -30,10 +30,23 @@ pub fn[Msg] Effect::send(message : Msg) -> Effect[Msg] {
 ///|
 pub fn[Model, Msg] Program::new(
   init~ : () -> (Model, Effect[Msg]),
-  update~ : (Msg, Model) -> (Model, Effect[Msg]),
+  update~ : (Model, Msg) -> (Model, Effect[Msg]),
   view~ : (Model) -> View[Msg],
 ) -> Program[Model, Msg] {
   { init, update, view }
+}
+
+///|
+pub fn[Model, Msg] Program::simple(
+  init~ : Model,
+  update~ : (Model, Msg) -> Model,
+  view~ : (Model) -> View[Msg],
+) -> Program[Model, Msg] {
+  Program::new(
+    init=() => (init, Effect::none()),
+    update=(model, message) => (update(model, message), Effect::none()),
+    view~,
+  )
 }
 
 ///|

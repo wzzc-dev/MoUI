@@ -34,16 +34,19 @@ fn markdown_editor_apply_command_at(
               } else {
                 markdown_editor_toggle_link_range(source, range)
               }
-            None => markdown_editor_toggle_reference_at_caret(
-              source, selection, command,
-            )
+            None =>
+              markdown_editor_toggle_reference_at_caret(
+                source, selection, command,
+              )
           }
         None => markdown_editor_append_snippet(source, command)
       }
     SetLinkTarget(target) | SetImageTarget(target) =>
       match selection {
         Some(selection) =>
-          markdown_editor_set_reference_target(source, selection, command, target)
+          markdown_editor_set_reference_target(
+            source, selection, command, target,
+          )
         None => markdown_editor_append_snippet(source, command)
       }
     SetCodeLanguage(language) =>
@@ -997,13 +1000,15 @@ fn markdown_editor_inline_marker_pair_at_caret(
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   match markdown_editor_find_inline_opening_marker(chars, caret, marker) {
     Some(open_start) =>
-      match markdown_editor_find_inline_closing_marker(
-        chars,
-        open_start + marker_length,
-        marker,
-      ) {
+      match
+        markdown_editor_find_inline_closing_marker(
+          chars,
+          open_start + marker_length,
+          marker,
+        ) {
         Some(close_start) =>
-          if caret >= open_start + marker_length && caret <= close_start &&
+          if caret >= open_start + marker_length &&
+            caret <= close_start &&
             markdown_editor_inline_marker_pair_supported(
               chars, open_start, marker_length, close_start, marker,
             ) {
@@ -1090,7 +1095,11 @@ fn markdown_editor_toggle_reference_at_caret(
   if command == Image {
     match markdown_editor_image_context(source, selection) {
       Some(context) =>
-        markdown_editor_unwrap_image_range(source, context.range, context.bounds)
+        markdown_editor_unwrap_image_range(
+          source,
+          context.range,
+          context.bounds,
+        )
       None => markdown_editor_append_snippet(source, command)
     }
   } else {
@@ -1117,7 +1126,10 @@ fn markdown_editor_set_reference_target(
     match markdown_editor_image_context(source, selection) {
       Some(context) =>
         return markdown_editor_replace_reference_target(
-          source, context.range, context.bounds, target,
+          source,
+          context.range,
+          context.bounds,
+          target,
         )
       None =>
         match active {
@@ -1132,11 +1144,15 @@ fn markdown_editor_set_reference_target(
   match markdown_editor_link_context(source, selection) {
     Some(context) =>
       markdown_editor_replace_reference_target(
-        source, context.range, context.bounds, target,
+        source,
+        context.range,
+        context.bounds,
+        target,
       )
     None =>
       match active {
-        Some(_) => markdown_editor_wrap_link_range_with_target(source, range, target)
+        Some(_) =>
+          markdown_editor_wrap_link_range_with_target(source, range, target)
         None => markdown_editor_append_snippet(source, command)
       }
   }

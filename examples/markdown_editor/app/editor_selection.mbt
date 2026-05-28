@@ -71,9 +71,12 @@ fn markdown_editor_link_context_at_caret(
     Some(context) => return Some(context)
     None => ()
   }
-  match markdown_editor_bracketed_reference_range_at_caret(
-    chars, caret, image=false,
-  ) {
+  match
+    markdown_editor_bracketed_reference_range_at_caret(
+      chars,
+      caret,
+      image=false,
+    ) {
     Some(range) =>
       match markdown_editor_range_link_bounds(source, range) {
         Some(bounds) => Some({ range, bounds })
@@ -90,9 +93,8 @@ fn markdown_editor_image_context_at_caret(
 ) -> MarkdownReferenceContext? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  match markdown_editor_bracketed_reference_range_at_caret(
-    chars, caret, image=true,
-  ) {
+  match
+    markdown_editor_bracketed_reference_range_at_caret(chars, caret, image=true) {
     Some(range) =>
       match markdown_editor_range_image_bounds(source, range) {
         Some(bounds) => Some({ range, bounds })

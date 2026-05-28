@@ -727,13 +727,23 @@ fn markdown_editor_inline_command_active(
   let marker = markdown_editor_inline_marker(command)
   match markdown_editor_active_selection(selection.selection) {
     Some(range) =>
-      markdown_editor_range_has_inline_marker(source, range.normalized(), marker) &&
+      markdown_editor_range_has_inline_marker(
+        source,
+        range.normalized(),
+        marker,
+      ) &&
       markdown_editor_inline_active_marker_supported(
-        source, range.normalized(), marker,
+        source,
+        range.normalized(),
+        marker,
       )
-    None => markdown_editor_inline_marker_pair_at_caret(
-      source, selection.caret, marker,
-    ) is Some(range) &&
+    None =>
+      markdown_editor_inline_marker_pair_at_caret(
+        source,
+        selection.caret,
+        marker,
+      )
+      is Some(range) &&
       markdown_editor_inline_active_marker_supported(source, range, marker)
   }
 }
@@ -972,7 +982,7 @@ fn markdown_editor_control_shortcut(key : String) -> @core.KeyboardShortcut {
 
 ///|
 fn markdown_editor_control_shift_shortcut(
-  key : String
+  key : String,
 ) -> @core.KeyboardShortcut {
   @core.KeyboardShortcut::new(
     key~,
@@ -1282,10 +1292,7 @@ fn editor_source_layout(
     )
   } else {
     let editor_and_source = row(
-      [
-        editor,
-        source_inspector(snapshot.source, theme, height=viewport_height),
-      ],
+      [editor, source_inspector(snapshot.source, theme, height=viewport_height)],
       spacing=theme.spacing_scale.lg,
       align=@views.CrossAlign::Start,
     )

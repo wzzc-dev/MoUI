@@ -80,9 +80,10 @@ through bindings, cells, or dedicated integration callbacks rather than making
 ordinary constructors callback-first.
 
 Stateful examples can still use `AppRuntime::new_component_view` with
-`BuildContext`, while pure model examples can use `Program::new` and
-`AppRuntime::new_program`. In both cases event dispatch flows through typed
-messages instead of exposing the internal view tree.
+`BuildContext`, while pure model examples should default to `Program::simple`
+and `AppRuntime::new_program`. Effect-capable apps can use `Program::new` when
+they need explicit `Effect[Msg]` output. In both cases event dispatch flows
+through typed messages instead of exposing the internal view tree.
 
 ## Runtime Mental Model
 

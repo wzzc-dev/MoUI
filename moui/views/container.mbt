@@ -9,10 +9,6 @@ pub fn[Msg] surface(
   theme? : @core.Theme = @core.Theme::default(),
   padding? : Double,
 ) -> @core.View[Msg] {
-  let size = match (width, height) {
-    (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
-    _ => None
-  }
   let style = variant.style(theme)
   let child_padding = match padding {
     Some(value) => @core.Insets::all(value)
@@ -22,14 +18,103 @@ pub fn[Msg] surface(
     Some(color) => (Some(@core.Brush::solid(color)), corner_radius)
     None => (Some(style.brush), style.radius)
   }
-  @core.View::container(
+  let container = @core.View::container(
     child=Some(@core.View::padding_insets(child~, insets=child_padding)),
-    size~,
+    size=None,
     background~,
     border=style.border,
     corner_radius~,
     shadow=style.shadow,
   )
+  match (width, height) {
+    (None, None) => container
+    _ => container.frame(width?, height?)
+  }
+}
+
+///|
+pub fn[Msg] card(
+  child : @core.View[Msg],
+  width? : Double,
+  height? : Double,
+  padding? : Double = 32.0,
+  theme? : @core.Theme = @core.Theme::default(),
+) -> @core.View[Msg] {
+  surface(
+    child,
+    width?,
+    height?,
+    variant=SurfaceVariant::Raised,
+    theme~,
+    padding~,
+  )
+}
+
+///|
+pub fn[Msg] center(
+  child : @core.View[Msg],
+  width? : Double,
+  height? : Double,
+  background? : @core.Color,
+  theme? : @core.Theme = @core.Theme::default(),
+) -> @core.View[Msg] {
+  let centered = custom_children_layout(
+    children=[child],
+    measure=ctx => {
+      let child_size = ctx.child_sizes[0]
+      let measured_width = match width {
+        Some(width) => width
+        None =>
+          if ctx.constraints.max.width >= 1.0e9 {
+            child_size.width
+          } else {
+            ctx.constraints.max.width
+          }
+      }
+      let measured_height = match height {
+        Some(height) => height
+        None =>
+          if ctx.constraints.max.height >= 1.0e9 {
+            child_size.height
+          } else {
+            ctx.constraints.max.height
+          }
+      }
+      ctx.constraints.constrain(
+        @core.Size::new(width=measured_width, height=measured_height),
+      )
+    },
+    place=ctx => {
+      let child_size = ctx.child_sizes[0]
+      let x = ctx.frame.origin.x +
+        views_max_double(0.0, (ctx.frame.size.width - child_size.width) / 2.0)
+      let y = ctx.frame.origin.y +
+        views_max_double(0.0, (ctx.frame.size.height - child_size.height) / 2.0)
+      [
+        @core.Rect::new(
+          x~,
+          y~,
+          width=child_size.width,
+          height=child_size.height,
+        ),
+      ]
+    },
+    semantics_label="Centered content",
+  )
+  match background {
+    Some(color) =>
+      surface(centered, width?, height?, background=color, theme~, padding=0.0)
+    None => centered
+  }
+}
+
+///|
+fn views_max_double(a : Double, b : Double) -> Double {
+  if a > b {
+    a
+  } else {
+    b
+  }
 }
 
 ///|

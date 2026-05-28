@@ -172,3 +172,35 @@ test "custom layout facade participates in layout" {
   )
   inspect(runtime.layout().frame.size.width, content="640")
 }
+
+///|
+test "center card and title render simple content" {
+  let root : @core.View[Unit] = @views.center(
+    @views.card(@views.text("Centered").title()),
+    width=400.0,
+    height=300.0,
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=400.0, height=300.0),
+  )
+  assert_true(has_text(runtime.draw_commands(), "Centered"))
+}
+
+///|
+test "card supports independent optional dimensions" {
+  let root : @core.View[Unit] = @views.card(@views.text("Wide"), width=240.0)
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=400.0, height=120.0),
+  )
+  let layout = runtime.layout()
+  inspect(layout.children[0].frame.size.width, content="240")
+}
+
+///|
+fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
+  commands.any(command => {
+    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+  })
+}

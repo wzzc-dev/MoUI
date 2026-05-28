@@ -15,7 +15,7 @@ remain in `views/*.mbt` and the generated public API summary in
 - Stateful controls receive `@core.Binding[T]` values from `State::binding()` or
   `BuildContext::binding`.
 - Visual customization usually flows through `@core.Theme`, style types, or
-  ordered modifiers such as `.padding`, `.background`, `.clip`, and `.opacity`.
+  ordered modifiers such as `.padding`, `.background`, `.title`, `.clip`, and `.opacity`.
 - File drop targets use the `View::on_file_drop` modifier so apps can accept
   normalized platform file paths as typed messages without depending on
   backend-specific events.
@@ -62,8 +62,9 @@ let screen = @views.column([
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `surface` | `views/container.mbt` | SurfaceStyle | Group through child | `views/views_test.mbt` | Showcase, Markdown Editor | Styled container and surface primitive; Showcase Interaction Lab covers `on_file_drop` modifier wiring on a surface drop zone. |
+| `surface` / `card` | `views/container.mbt` | SurfaceStyle | Group through child | `views/views_test.mbt` | Counter, Showcase, Markdown Editor | Styled container primitives; `card` is the raised, padded entry point for simple apps. |
 | `row` / `column` | `views/flex.mbt` | Child/modifier based | Group/list via children | `views/views_test.mbt` | All examples | Flex layout primitives. |
+| `center` | `views/container.mbt` | Optional background | Child semantics | `views/views_test.mbt` | Counter | Single-child layout helper that centers content inside its available space. |
 | `spacer` | `views/flex.mbt` | N/A | None | `views/views_test.mbt` | Showcase | Flexible space primitive. |
 | `frame` | `views/frame.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Constraint wrapper. |
 | `padding` / `padding_insets` | `views/padding.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | All examples | Ordered layout modifier wrappers. |

@@ -8,8 +8,53 @@ so visible docs do not hide partial or gap status behind ready features.
 
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
+| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | Public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
+
+## Counter
+
+Counter is the smallest recommended app shape. It keeps user code in
+`Model / Msg / update / view`, then lets `Program::simple` connect that pure
+model loop to the runtime:
+
+```moonbit
+using @views {button, card, center, column, row, text}
+
+pub struct Model {
+  count : Int
+}
+
+pub(all) enum Msg {
+  Increment
+  Decrement
+  Reset
+}
+
+pub fn update(model : Model, msg : Msg) -> Model {
+  match msg {
+    Increment => { count: model.count + 1 }
+    Decrement => { count: model.count - 1 }
+    Reset => { count: 0 }
+  }
+}
+
+pub fn view(model : Model) -> @core.View[Msg] {
+  center(
+    card(
+      column([
+        text("MoUI Counter").title(),
+        text("Count: \{model.count}").title(),
+        row([
+          button("-", on_click=Decrement),
+          button("Reset", on_click=Reset),
+          button("+", on_click=Increment),
+        ]),
+      ]),
+    ),
+  )
+}
+```
 
 Showcase is organized as a system gallery. In addition to the standard control,
 layout, navigation, text/media, and example sections, it now includes:
@@ -34,6 +79,7 @@ Build any Web example from the repository root, then serve the repository with a
 local static server:
 
 ```sh
+moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 python3 -m http.server 8080 --bind 127.0.0.1
@@ -133,6 +179,7 @@ points:
 ```sh
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
+moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```

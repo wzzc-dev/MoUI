@@ -40,7 +40,7 @@ test "markdown editor snapshot tracks tilde fenced code blocks" {
         kind: CodeBlock,
         text: "let x = 1",
         code_language: Some("moonbit"),
-        ..
+        ..,
       },
       source_range: { start: 0, end: 25 },
       content_range: { start: 11, end: 21 },
@@ -358,10 +358,10 @@ test "markdown editor formatter emits source ranges for visual mapping" {
 
 ///|
 test "markdown editor formatter reveals active block markers" {
-  let heading = markdown_editor_format_for_selection(
-    "# Title\n- [ ] task",
-    { caret: 4, selection: None },
-  )
+  let heading = markdown_editor_format_for_selection("# Title\n- [ ] task", {
+    caret: 4,
+    selection: None,
+  })
   guard heading.blocks[0]
     is {
       prefix: "",
@@ -370,10 +370,10 @@ test "markdown editor formatter reveals active block markers" {
           text: "# Title",
           visual_text: None,
           source_range: Some({ start: 0, end: 7 }),
-          ..
+          ..,
         },
       ],
-      ..
+      ..,
     } else {
     fail("expected active heading marker to reveal")
   }
@@ -381,26 +381,20 @@ test "markdown editor formatter reveals active block markers" {
     is {
       prefix: _,
       runs: [{ text: "task", source_range: Some({ start: 14, end: 18 }), .. }],
-      ..
+      ..,
     } else {
     fail("expected inactive task marker to stay hidden")
   }
-  let task = markdown_editor_format_for_selection(
-    "# Title\n- [ ] task",
-    { caret: 16, selection: None },
-  )
+  let task = markdown_editor_format_for_selection("# Title\n- [ ] task", {
+    caret: 16,
+    selection: None,
+  })
   guard task.blocks[1]
     is {
       prefix: "- [ ] ",
-      runs: [
-        {
-          text: "task",
-          source_range: Some({ start: 14, end: 18 }),
-          ..
-        },
-      ],
-      ..
-  } else {
+      runs: [{ text: "task", source_range: Some({ start: 14, end: 18 }), .. }],
+      ..,
+    } else {
     fail("expected active task marker to reveal")
   }
   let marker_caret = markdown_editor_format_for_selection(
@@ -410,7 +404,7 @@ test "markdown editor formatter reveals active block markers" {
   guard marker_caret.blocks[1]
     is {
       runs: [{ text: "task", source_range: Some({ start: 14, end: 18 }), .. }],
-      ..
+      ..,
     } else {
     fail("expected marker-only caret to keep task prefix clickable")
   }
@@ -418,10 +412,10 @@ test "markdown editor formatter reveals active block markers" {
 
 ///|
 test "markdown editor formatter reveals active quote and ordered markers" {
-  let document = markdown_editor_format_for_selection(
-    "> quote\n12. item",
-    { caret: 3, selection: None },
-  )
+  let document = markdown_editor_format_for_selection("> quote\n12. item", {
+    caret: 3,
+    selection: None,
+  })
   guard document.blocks[0]
     is {
       prefix: "",
@@ -430,28 +424,22 @@ test "markdown editor formatter reveals active quote and ordered markers" {
           text: "> quote",
           visual_text: None,
           source_range: Some({ start: 0, end: 7 }),
-          ..
+          ..,
         },
       ],
-      ..
+      ..,
     } else {
     fail("expected active quote marker to reveal")
   }
-  let ordered = markdown_editor_format_for_selection(
-    "> quote\n12. item",
-    { caret: 12, selection: None },
-  )
+  let ordered = markdown_editor_format_for_selection("> quote\n12. item", {
+    caret: 12,
+    selection: None,
+  })
   guard ordered.blocks[1]
     is {
       prefix: "12. ",
-      runs: [
-        {
-          text: "item",
-          source_range: Some({ start: 12, end: 16 }),
-          ..
-        },
-      ],
-      ..
+      runs: [{ text: "item", source_range: Some({ start: 12, end: 16 }), .. }],
+      ..,
     } else {
     fail("expected active ordered marker to reveal")
   }
@@ -523,7 +511,7 @@ test "markdown editor formatter reveals active inline marker variants" {
       text: "*one*",
       visual_text: None,
       source_range: Some({ start: 4, end: 9 }),
-      ..
+      ..,
     } else {
     fail("expected active italic marker to reveal")
   }
@@ -536,7 +524,7 @@ test "markdown editor formatter reveals active inline marker variants" {
       text: "__two__",
       visual_text: None,
       source_range: Some({ start: 14, end: 21 }),
-      ..
+      ..,
     } else {
     fail("expected active underscore bold marker to reveal")
   }
@@ -549,20 +537,20 @@ test "markdown editor formatter reveals active inline marker variants" {
       text: "~~old~~",
       visual_text: None,
       source_range: Some({ start: 26, end: 33 }),
-      ..
+      ..,
     } else {
     fail("expected active strike marker to reveal")
   }
-  let code = markdown_editor_format_for_selection(
-    "Use `code` here",
-    { caret: 6, selection: None },
-  )
+  let code = markdown_editor_format_for_selection("Use `code` here", {
+    caret: 6,
+    selection: None,
+  })
   guard code.blocks[0].runs[1]
     is {
       text: "`code`",
       visual_text: None,
       source_range: Some({ start: 4, end: 10 }),
-      ..
+      ..,
     } else {
     fail("expected active code marker to reveal")
   }
@@ -581,19 +569,27 @@ test "markdown editor formatter reveals active reference markers" {
         text: "[MoUI](https://moui.dev)",
         visual_text: None,
         source_range: Some({ start: 6, end: 30 }),
-        ..
+        ..,
       },
       { text: ", ", source_range: Some({ start: 30, end: 32 }), .. },
       {
         text: "logo",
         visual_text: Some("logo"),
         source_range: Some({ start: 34, end: 38 }),
-        ..
+        ..,
       },
       { text: ", ", source_range: Some({ start: 49, end: 51 }), .. },
-      { text: "https://moui.dev", source_range: Some({ start: 52, end: 68 }), .. },
+      {
+        text: "https://moui.dev",
+        source_range: Some({ start: 52, end: 68 }),
+        ..,
+      },
       { text: " and ", source_range: Some({ start: 69, end: 74 }), .. },
-      { text: "hello@example.dev", source_range: Some({ start: 75, end: 92 }), .. },
+      {
+        text: "hello@example.dev",
+        source_range: Some({ start: 75, end: 92 }),
+        ..,
+      },
     ] else {
     fail("expected active link to reveal markdown reference markers")
   }
@@ -606,7 +602,7 @@ test "markdown editor formatter reveals active reference markers" {
       text: "![logo](logo.png)",
       visual_text: None,
       source_range: Some({ start: 32, end: 49 }),
-      ..
+      ..,
     } else {
     fail("expected active image to reveal markdown reference markers")
   }
@@ -619,7 +615,7 @@ test "markdown editor formatter reveals active reference markers" {
       text: "<https://moui.dev>",
       visual_text: None,
       source_range: Some({ start: 51, end: 69 }),
-      ..
+      ..,
     } else {
     fail("expected active autolink to reveal angle brackets")
   }
@@ -632,7 +628,7 @@ test "markdown editor formatter reveals active reference markers" {
       text: "<hello@example.dev>",
       visual_text: None,
       source_range: Some({ start: 74, end: 93 }),
-      ..
+      ..,
     } else {
     fail("expected active email autolink to reveal angle brackets")
   }

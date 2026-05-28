@@ -6,18 +6,25 @@ import {
 }
 
 // Values
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
 
 // Errors
 
 // Types and methods
-pub struct CounterApp {
-  count : @core.State[Int]
+pub struct Model {
+  count : Int
 }
-pub fn CounterApp::decrement(Self) -> Unit
-pub fn CounterApp::increment(Self) -> Unit
-pub fn CounterApp::new() -> Self
-pub fn CounterApp::reset(Self) -> Unit
-pub fn CounterApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn Model::new() -> Self
+
+pub(all) enum Msg {
+  Increment
+  Decrement
+  Reset
+}
 
 // Type aliases
 
