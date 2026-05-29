@@ -12,14 +12,14 @@ fn ShowcaseModel::text_diagnostics_section(
     grid(
       [
         text_diagnostic_card(
-          theme, "CJK", "MoUI 閺傚洦婀?mixed with English 123", card_width,
+          theme, "CJK", "MoUI 中文混排 mixed with English 123", card_width,
         ),
         text_diagnostic_card(
-          theme, "RTL / Bidi", "璩蹭箛涓ㄤ簶涓?MoUI 123 鐮栬瘒璁滆瘣",
+          theme, "RTL / Bidi", "שלום עולם MoUI 123 اتجاه النص",
           card_width,
         ),
         text_diagnostic_card(
-          theme, "Emoji", "Text 棣冩棣冩畬閴? native gap\nweb partial",
+          theme, "Emoji", "Text 🙂 👩‍💻 ☕️ native partial\nweb partial",
           card_width,
         ),
         text_diagnostic_card(

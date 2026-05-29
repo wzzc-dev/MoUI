@@ -283,8 +283,10 @@ test "showcase text diagnostics keeps key labels bounded" {
   assert_true(text_within(commands, "CJK", size))
   assert_true(text_within(commands, "RTL / Bidi", size))
   assert_true(has_text(commands, "Emoji"))
-  assert_true(has_text_containing(commands, "native gap"))
+  assert_true(has_text_containing(commands, "native partial"))
   assert_true(has_text_containing(commands, "web partial"))
+  assert_true(has_text_containing(commands, "中文混排"))
+  assert_true(has_text_containing(commands, "שלום עולם"))
   assert_true(has_text(commands, "Wrapping"))
 }
 
@@ -379,20 +381,8 @@ test "showcase renderer section clips long capability content" {
   assert_true(has_text(commands, "emoji-text"))
   assert_true(has_text(commands, "async-image"))
   assert_true(has_text(commands, "partial"))
-  assert_true(
-    text_within(
-      commands,
-      "native gap",
-      @core.Size::new(width=760.0, height=420.0),
-    ),
-  )
-  assert_true(
-    text_within(
-      commands,
-      "web partial",
-      @core.Size::new(width=760.0, height=420.0),
-    ),
-  )
+  assert_false(has_text(commands, "native gap"))
+  assert_false(has_text(commands, "web partial"))
 }
 
 ///|
