@@ -9,6 +9,13 @@ Use this catalog as a support matrix for current view APIs. Source-level details
 remain in `views/*.mbt` and the generated public API summary in
 `views/pkg.generated.mbti`.
 
+Showcase exposes the current user-facing catalog in this order:
+`Overview -> Text & Media -> Controls -> Forms -> Data -> Layout -> Navigation
+Shell -> Feedback -> Runtime/Renderer -> Diagnostics`. Deeper routes for
+advanced rendering, text diagnostics, interaction diagnostics, and reusable
+examples are kept as focused diagnostic destinations rather than top-level
+catalog rows.
+
 ## API Style
 
 - Constructors use MoonBit labeled and optional parameters for common options.

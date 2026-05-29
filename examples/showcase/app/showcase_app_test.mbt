@@ -8,7 +8,7 @@ test "showcase app emits visual polish commands" {
   assert_true(has_text(commands, "Overview"))
   assert_true(has_text(commands, "Controls"))
   let renderer_runtime = @app.ShowcaseModel::new()
-    .update(@app.ShowcaseMsg::SelectSection("theme-renderer"))
+    .update(@app.ShowcaseMsg::SelectSection("runtime-renderer"))
     .runtime(width=760.0, height=420.0)
   let renderer_commands = renderer_runtime.draw_commands()
   assert_true(
@@ -140,12 +140,12 @@ fn sidebar_visible_lower_label(
   commands : Array[@core.DrawCommand],
   size : @core.Size,
 ) -> String {
-  for label in ["Interaction Lab", "Text Diagnostics", "Advanced Rendering"] {
+  for label in ["Runtime/Renderer", "Diagnostics", "Feedback"] {
     if text_within(commands, label, size) {
       return label
     }
   }
-  "Interaction Lab"
+  "Diagnostics"
 }
 
 ///|
@@ -281,6 +281,15 @@ test "showcase embeds reusable example apps and renderer report" {
 
 ///|
 test "showcase navigates to system gallery sections" {
+  let diagnostics_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("diagnostics"))
+    .runtime(width=960.0, height=620.0)
+    .draw_commands()
+  assert_true(has_text(diagnostics_commands, "Diagnostics"))
+  assert_true(has_text(diagnostics_commands, "Interaction Lab"))
+  assert_true(has_text(diagnostics_commands, "Text Diagnostics"))
+  assert_true(has_text(diagnostics_commands, "Advanced Rendering"))
+  assert_true(has_text(diagnostics_commands, "Examples"))
   let runtime = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("advanced-rendering"))
     .runtime(width=960.0, height=620.0)
@@ -442,7 +451,7 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
     assert_true(text_within(commands, "Layered card with image", size))
     assert_false(has_text(commands, "馃攳"))
     assert_false(has_text(commands, "?"))
-    for route in ["advanced-rendering", "text-diagnostics", "interaction-lab"] {
+    for route in ["advanced-rendering", "text-diagnostics", "diagnostics"] {
       let section_commands = @app.ShowcaseModel::new()
         .update(@app.ShowcaseMsg::SelectSection(route))
         .runtime(width=size.width, height=size.height)
@@ -452,10 +461,37 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
           assert_true(text_within(section_commands, "Advanced Rendering", size))
         "text-diagnostics" =>
           assert_true(text_within(section_commands, "Text Diagnostics", size))
-        _ => assert_true(text_within(section_commands, "Interaction Lab", size))
+        _ => assert_true(text_within(section_commands, "Diagnostics", size))
       }
     }
   }
+}
+
+///|
+test "showcase sidebar follows recommended catalog order" {
+  let commands = @app.ShowcaseModel::new().runtime(width=1400.0, height=760.0).draw_commands()
+  let labels = [
+    "Overview",
+    "Text & Media",
+    "Controls",
+    "Forms",
+    "Data",
+    "Layout",
+    "Navigation Shell",
+    "Feedback",
+    "Runtime/Renderer",
+    "Diagnostics",
+  ]
+  let mut previous_y = -1.0
+  for label in labels {
+    guard text_frame(commands, label) is Some(frame) else {
+      fail("expected sidebar label " + label)
+    }
+    assert_true(frame.origin.y > previous_y)
+    previous_y = frame.origin.y
+  }
+  assert_false(has_text(commands, "Interaction Lab"))
+  assert_false(has_text(commands, "Advanced Rendering"))
 }
 
 ///|

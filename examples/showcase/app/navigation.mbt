@@ -71,16 +71,20 @@ fn ShowcaseModel::destinations(
       view=self.feedback_section(theme, metrics),
     ),
     @views.navigation_destination(
-      route="examples",
-      view=self.examples_section(theme, metrics),
-    ),
-    @views.navigation_destination(
       route="theme-renderer",
       view=self.theme_renderer_section(theme, metrics, opacity),
     ),
     @views.navigation_destination(
       route="runtime-renderer",
       view=self.theme_renderer_section(theme, metrics, opacity),
+    ),
+    @views.navigation_destination(
+      route="diagnostics",
+      view=self.diagnostics_section(theme, metrics),
+    ),
+    @views.navigation_destination(
+      route="examples",
+      view=self.examples_section(theme, metrics),
     ),
     @views.navigation_destination(
       route="advanced-rendering",
@@ -149,34 +153,16 @@ fn showcase_sections() -> Array[ShowcaseSection] {
       group: "Patterns",
     },
     {
-      route: "examples",
-      title: "Examples",
-      summary: "Counter, Todo, Markdown reuse",
-      group: "Reuse",
-    },
-    {
       route: "runtime-renderer",
-      title: "Runtime & Renderer",
+      title: "Runtime/Renderer",
       summary: "Host and renderer capability reports",
       group: "Runtime",
     },
     {
-      route: "advanced-rendering",
-      title: "Advanced Rendering",
-      summary: "Layers, filters, blend modes, shaders",
-      group: "Renderer",
-    },
-    {
-      route: "text-diagnostics",
-      title: "Text Diagnostics",
-      summary: "CJK, bidi, emoji, wrapping",
-      group: "Text",
-    },
-    {
-      route: "interaction-lab",
-      title: "Interaction Lab",
-      summary: "Tooltip, drop, focus, variants",
-      group: "Input",
+      route: "diagnostics",
+      title: "Diagnostics",
+      summary: "Input, text, rendering diagnostics",
+      group: "Runtime",
     },
   ]
 }

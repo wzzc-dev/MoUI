@@ -15,7 +15,7 @@ fn ShowcaseModel::theme_renderer_section(
   section_panel(
     theme,
     "Runtime & Renderer",
-    "Host capability and renderer reports stay visible in the catalog.",
+    "Host capability, theme helpers, and renderer reports stay visible in the catalog.",
     if metrics.compact {
       column(
         [
