@@ -286,8 +286,25 @@ pub fn[Msg] resizable_panel(
   height? : Double = 160.0,
   min_size? : Double = 120.0,
   max_size? : Double = 520.0,
+  on_drag? : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let panel_width = toolbar_clamp_double(size, min_size, max_size)
+  let handle = surface(
+    empty(),
+    width=8.0,
+    height~,
+    background=theme.palette.primary.multiply_alpha(0.38),
+    corner_radius=4.0,
+    theme~,
+    padding=0.0,
+  ).accessibility_label("Resize handle")
+  let handle = match on_drag {
+    Some(handler) =>
+      handle.on_drag(event =>
+        handler(toolbar_clamp_double(size + event.translation.x, min_size, max_size))
+      )
+    None => handle
+  }
   row(
     [
       surface(
@@ -298,15 +315,7 @@ pub fn[Msg] resizable_panel(
         theme~,
         padding=theme.spacing_scale.md,
       ),
-      surface(
-        empty(),
-        width=8.0,
-        height~,
-        background=theme.palette.primary.multiply_alpha(0.38),
-        corner_radius=4.0,
-        theme~,
-        padding=0.0,
-      ).accessibility_label("Resize handle"),
+      handle,
     ],
     spacing=theme.spacing_scale.xs,
     align=CrossAlign::Start,

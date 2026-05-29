@@ -90,7 +90,8 @@ fn ElementNode::dispatch_pointer_to_children(
       let child = self.children[index]
       let child_render = render.children[index]
       if child_render.frame.contains(event.position) ||
-        child.expanded_popup_contains(event.position, child_render.frame) {
+        child.expanded_popup_contains(event.position, child_render.frame) ||
+        child.has_active_pointer_capture(event.phase) {
         let result = child.dispatch_pointer(event, child_render, text_system~)
         changed = result.changed
         activated = result.activated
@@ -109,6 +110,24 @@ fn ElementNode::dispatch_pointer_to_children(
     self.dirty.mark_paint()
   }
   { changed, activated, focused }
+}
+
+///|
+fn ElementNode::has_active_pointer_capture(
+  self : ElementNode,
+  phase : PointerPhase,
+) -> Bool {
+  if phase == PointerPhase::Down {
+    false
+  } else if self.control.button_state == ButtonState::Pressed ||
+    self.control.long_press_gesture.phase == LongPressGesturePhase::Pressing ||
+    self.control.drag_gesture.phase == DragGesturePhase::Pending ||
+    self.control.drag_gesture.phase == DragGesturePhase::Started ||
+    self.control.drag_gesture.phase == DragGesturePhase::Changed {
+    true
+  } else {
+    self.children.any(child => child.has_active_pointer_capture(phase))
+  }
 }
 
 ///|
@@ -223,6 +242,85 @@ fn ElementNode::dispatch_modified_pointer(
         {
           changed,
           activated: child_result.activated || tap.activated,
+          focused: child_result.focused,
+        }
+      }
+    }
+    OnLongPressModifier(handler) => {
+      let child_result = self.dispatch_pointer_to_children(
+        event,
+        render,
+        text_system~,
+      )
+      if child_result.activated {
+        child_result
+      } else {
+        let result = self.control.long_press_gesture.update(
+          event,
+          inside=render.frame.contains(event.position),
+        )
+        self.control.long_press_gesture = result.state
+        if result.recognized {
+          handler()
+          self.dirty.mark_paint()
+        }
+        {
+          changed: child_result.changed || result.recognized || result.cancelled,
+          activated: result.recognized,
+          focused: child_result.focused,
+        }
+      }
+    }
+    OnDoubleTapModifier(handler) => {
+      let child_result = self.dispatch_pointer_to_children(
+        event,
+        render,
+        text_system~,
+      )
+      if child_result.activated {
+        child_result
+      } else {
+        let result = self.control.double_tap_gesture.update(
+          event,
+          inside=render.frame.contains(event.position),
+        )
+        self.control.double_tap_gesture = result.state
+        if result.recognized {
+          handler()
+          self.dirty.mark_paint()
+        }
+        {
+          changed: child_result.changed || event.phase == PointerPhase::Up || result.recognized,
+          activated: result.recognized,
+          focused: child_result.focused,
+        }
+      }
+    }
+    OnDragModifier(handler) => {
+      let child_result = self.dispatch_pointer_to_children(
+        event,
+        render,
+        text_system~,
+      )
+      if child_result.activated {
+        child_result
+      } else {
+        let result = self.control.drag_gesture.update(
+          event,
+          inside=render.frame.contains(event.position),
+        )
+        self.control.drag_gesture = result.state
+        match result.event {
+          Some(drag_event) => handler(drag_event)
+          None => ()
+        }
+        let activated = result.event is Some(_)
+        if activated {
+          self.dirty.mark_paint()
+        }
+        {
+          changed: child_result.changed || event.phase != PointerPhase::Move || activated,
+          activated,
           focused: child_result.focused,
         }
       }

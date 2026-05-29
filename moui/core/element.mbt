@@ -32,6 +32,9 @@ priv struct ElementControlState {
   mut text_selection_anchor : Int?
   mut composition : String?
   mut composition_cursor : TextRange?
+  mut long_press_gesture : LongPressGestureState
+  mut double_tap_gesture : DoubleTapGestureState
+  mut drag_gesture : DragGestureState
   text_undo_stack : Array[TextHistoryEntry]
   text_redo_stack : Array[TextHistoryEntry]
 }
@@ -143,6 +146,9 @@ fn ElementControlState::new() -> ElementControlState {
     text_selection_anchor: None,
     composition: None,
     composition_cursor: None,
+    long_press_gesture: LongPressGestureState::new(),
+    double_tap_gesture: DoubleTapGestureState::new(),
+    drag_gesture: DragGestureState::new(),
     text_undo_stack: [],
     text_redo_stack: [],
   }

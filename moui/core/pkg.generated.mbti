@@ -479,6 +479,21 @@ pub fn DirtyFlags::mark_build(Self) -> Unit
 pub fn DirtyFlags::mark_layout(Self) -> Unit
 pub fn DirtyFlags::mark_paint(Self) -> Unit
 
+pub(all) struct DoubleTapGestureResult {
+  state : DoubleTapGestureState
+  recognized : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct DoubleTapGestureState {
+  first_position : Point?
+  first_time_ms : Double
+  timeout_ms : Double
+  max_distance : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DoubleTapGestureState::new(timeout_ms? : Double, max_distance? : Double) -> Self
+pub fn DoubleTapGestureState::tap(Self, Point, Double) -> DoubleTapGestureResult
+pub fn DoubleTapGestureState::update(Self, PointerEvent, inside? : Bool) -> DoubleTapGestureResult
+
 pub(all) struct DragDropEvent {
   phase : DragDropPhase
   paths : Array[String]
@@ -492,6 +507,39 @@ pub(all) enum DragDropPhase {
   Dropped
   Left
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct DragGestureEvent {
+  phase : DragGesturePhase
+  start : Point
+  position : Point
+  delta : Point
+  translation : Point
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DragGestureEvent::new(phase~ : DragGesturePhase, start~ : Point, position~ : Point, delta~ : Point, translation~ : Point) -> Self
+
+pub(all) enum DragGesturePhase {
+  Idle
+  Pending
+  Started
+  Changed
+  Ended
+  Cancelled
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DragGesturePhase::label(Self) -> String
+
+pub(all) struct DragGestureResult {
+  state : DragGestureState
+  event : DragGestureEvent?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct DragGestureState {
+  phase : DragGesturePhase
+  origin : Point?
+  last_position : Point?
+  min_distance : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DragGestureState::new(min_distance? : Double) -> Self
+pub fn DragGestureState::update(Self, PointerEvent, inside? : Bool) -> DragGestureResult
 
 pub(all) enum DrawCommand {
   Clear(Color)
@@ -848,6 +896,30 @@ pub(all) struct LinearGradientSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LinearGradientSpec::new(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
 
+pub(all) enum LongPressGesturePhase {
+  Idle
+  Pressing
+  Recognized
+  Cancelled
+} derive(Eq, ToJson, @debug.Debug)
+pub fn LongPressGesturePhase::label(Self) -> String
+
+pub(all) struct LongPressGestureResult {
+  state : LongPressGestureState
+  recognized : Bool
+  cancelled : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct LongPressGestureState {
+  phase : LongPressGesturePhase
+  origin : Point?
+  start_time_ms : Double
+  duration_ms : Double
+  max_movement : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn LongPressGestureState::new(duration_ms? : Double, max_movement? : Double) -> Self
+pub fn LongPressGestureState::update(Self, PointerEvent, inside? : Bool) -> LongPressGestureResult
+
 pub(all) enum MainAxisAlignment {
   MainStart
   MainCenter
@@ -921,8 +993,9 @@ pub(all) struct PointerEvent {
   phase : PointerPhase
   button : Int
   wheel_delta : Point
+  time_ms : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int, wheel_delta? : Point) -> Self
+pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int, wheel_delta? : Point, time_ms? : Double) -> Self
 
 pub(all) enum PointerPhase {
   Move
@@ -1578,7 +1651,10 @@ pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
 pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] View::mono(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::offset(Self[Msg], dx? : Double, dy? : Double) -> Self[Msg]
+pub fn[Msg] View::on_double_tap(Self[Msg], Msg) -> Self[Msg]
+pub fn[Msg] View::on_drag(Self[Msg], (DragGestureEvent) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_file_drop(Self[Msg], (Array[String], Point) -> Msg) -> Self[Msg]
+pub fn[Msg] View::on_long_press(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]

@@ -146,6 +146,9 @@ priv enum ViewModifierNode[Msg] {
   PlainModifier(ViewModifier)
   RealizedModifier((ViewSpec) -> ViewSpec)
   TapModifier(Msg)
+  LongPressModifier(Msg)
+  DoubleTapModifier(Msg)
+  DragModifier((DragGestureEvent) -> Msg)
   FileDropModifier((Array[String], Point) -> Msg)
 }
 
@@ -988,6 +991,30 @@ pub fn[Msg] View::on_tap(self : View[Msg], message : Msg) -> View[Msg] {
 }
 
 ///|
+pub fn[Msg] View::on_long_press(
+  self : View[Msg],
+  message : Msg,
+) -> View[Msg] {
+  modify_view(self, LongPressModifier(message))
+}
+
+///|
+pub fn[Msg] View::on_double_tap(
+  self : View[Msg],
+  message : Msg,
+) -> View[Msg] {
+  modify_view(self, DoubleTapModifier(message))
+}
+
+///|
+pub fn[Msg] View::on_drag(
+  self : View[Msg],
+  handler : (DragGestureEvent) -> Msg,
+) -> View[Msg] {
+  modify_view(self, DragModifier(handler))
+}
+
+///|
 pub fn[Msg] View::on_file_drop(
   self : View[Msg],
   handler : (Array[String], Point) -> Msg,
@@ -1353,6 +1380,10 @@ fn[Msg] realize_view_node(
         PlainModifier(modifier) => spec.modified(modifier)
         RealizedModifier(modifier) => modifier(spec)
         TapModifier(message) => spec.on_tap(() => emit(message))
+        LongPressModifier(message) => spec.on_long_press(() => emit(message))
+        DoubleTapModifier(message) => spec.on_double_tap(() => emit(message))
+        DragModifier(handler) =>
+          spec.on_drag(drag_event => emit(handler(drag_event)))
         FileDropModifier(handler) =>
           spec.on_file_drop((paths, point) => emit(handler(paths, point)))
       }
@@ -1537,6 +1568,10 @@ fn[Msg, NextMsg] map_modifier_node(
     PlainModifier(modifier) => PlainModifier(modifier)
     RealizedModifier(modifier) => RealizedModifier(modifier)
     TapModifier(message) => TapModifier(map(message))
+    LongPressModifier(message) => LongPressModifier(map(message))
+    DoubleTapModifier(message) => DoubleTapModifier(map(message))
+    DragModifier(handler) =>
+      DragModifier(drag_event => map(handler(drag_event)))
     FileDropModifier(handler) =>
       FileDropModifier((paths, point) => map(handler(paths, point)))
   }

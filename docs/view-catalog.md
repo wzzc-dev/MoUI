@@ -68,6 +68,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `slider` | `views/controls.mbt` | Color params | Slider | `views/views_test.mbt` | Showcase | Custom painted scalar control. |
 | `progress` | `views/controls.mbt` | Color params | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `tooltip` | `views/controls.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |
+| `View::on_long_press` / `View::on_double_tap` / `View::on_drag` | `core/view.mbt` | N/A | Button-like activation metadata | `core/gesture_action_wbtest.mbt`, `core/state_holder_wbtest.mbt`, `views/views_test.mbt` | Showcase Interaction Lab | High-level gesture wrappers over pointer events; recognizer state stays in core/runtime and disabled ancestors suppress activation. |
 
 ## Feedback And States
 
@@ -121,7 +122,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `lazy_grid` | `views/grid_list.mbt` | N/A | List/grid output | `views/views_test.mbt` | Showcase | Windows visible grid rows from data. |
 | `virtual_list` / `sectioned_list` / `scroll_to_index` | `views/grid_list.mbt` | N/A | List output | `views/views_test.mbt`, Showcase tests | Showcase Layout | Overscanned windowed lists, grouped section headers, empty states, and controlled offset intents built on existing scroll/list primitives. |
 | `accordion` / `disclosure` / `collapsible_panel` | `views/toolbar_disclosure.mbt` | ButtonStyle/surface/text | Group | `views/views_test.mbt`, Showcase tests | Showcase Feedback | Controlled disclosure containers; expanded state and toggle behavior stay in the app model. |
-| `resizable_panel` | `views/toolbar_disclosure.mbt` | SurfaceStyle | Group | `views/views_test.mbt`, Showcase tests | Showcase Layout | Controlled-size panel with a visual handle; drag resizing is left for gesture support. |
+| `resizable_panel` | `views/toolbar_disclosure.mbt` | SurfaceStyle | Group | `views/views_test.mbt`, Showcase tests | Showcase Layout | Controlled-size panel with a visual handle and optional drag callback; the app still owns the size value. |
 
 ## Navigation And Presentation
 

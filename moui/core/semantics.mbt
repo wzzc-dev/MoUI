@@ -246,7 +246,11 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
           []
         },
       }
-    OnTapModifier(_) | KeyboardShortcutModifier(_) =>
+    OnTapModifier(_)
+    | OnLongPressModifier(_)
+    | OnDoubleTapModifier(_)
+    | OnDragModifier(_)
+    | KeyboardShortcutModifier(_) =>
       { role: Button, label: "", value: "", actions: [Focus, Activate] }
     OnFileDropModifier(_) => { role: Group, label: "", value: "", actions: [] }
     DisabledModifier(_)
