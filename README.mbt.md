@@ -49,7 +49,8 @@ The `native` subpackage contains the first opt-in native boundary:
 - `@native.Bitmap::alloc_n32_premul(size)` owns raster pixel storage and can
   export a copied `@skia_mbt.Pixmap`;
 - `@native.FontMgr::default()` enumerates native font families and matches a
-  family to a typeface; `@native.Typeface::default()` / `from_name(family)` and
+  family plus Skia-style weight/width/slant values to a typeface;
+  `@native.Typeface::default()` / `from_name(family, weight, width, slant)` and
   `@native.Font::default(size)` / `from_typeface(typeface, size)` create the
   first native text handles for drawing and measurement;
 - `@native.Shader::color(color)`, `linear_gradient(start, end, colors...)`,
