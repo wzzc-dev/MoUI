@@ -359,6 +359,29 @@ pub(all) struct HostSurfaceMetrics {
 pub fn HostSurfaceMetrics::from_logical(size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
 pub fn HostSurfaceMetrics::new(logical_size~ : @wzzc-dev/moui/core.Size, physical_size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
 
+pub struct HostWindowCommands {
+  queue : HostWindowRequestQueue
+}
+pub fn HostWindowCommands::close(Self, HostWindowId) -> Unit
+pub fn HostWindowCommands::completed_count(Self) -> Int
+pub fn HostWindowCommands::drain(Self) -> Array[HostWindowRequest]
+pub fn HostWindowCommands::drain_completed(Self) -> Array[HostWindowRequestCompletion]
+pub fn HostWindowCommands::drain_to_registry(Self, HostWindowRegistry) -> Array[HostWindowRequestCompletion]
+pub fn HostWindowCommands::drain_to_runtime_slots(Self, HostWindowRegistry, HostWindowRuntimeSlots) -> Array[HostWindowRequestCompletion]
+pub fn HostWindowCommands::drain_with_handler(Self, (HostWindowRequest) -> HostWindowRequestResult) -> Array[HostWindowRequestCompletion]
+pub fn HostWindowCommands::focus(Self, HostWindowId) -> Unit
+pub fn HostWindowCommands::is_empty(Self) -> Bool
+pub fn HostWindowCommands::minimize(Self, HostWindowId) -> Unit
+pub fn HostWindowCommands::new(queue? : HostWindowRequestQueue) -> Self
+pub fn HostWindowCommands::open(Self, title~ : String, scene? : HostWindowScene, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Unit
+pub fn HostWindowCommands::open_window(Self, HostWindowOpenRequest) -> Unit
+pub fn HostWindowCommands::pending_count(Self) -> Int
+pub fn HostWindowCommands::queue(Self) -> HostWindowRequestQueue
+pub fn HostWindowCommands::record_result(Self, HostWindowRequest, HostWindowRequestResult) -> Unit
+pub fn HostWindowCommands::resize(Self, HostWindowId, HostSurfaceMetrics) -> Unit
+pub fn HostWindowCommands::set_primary(Self, HostWindowId) -> Unit
+pub fn HostWindowCommands::show(Self, HostWindowId) -> Unit
+
 pub(all) struct HostWindowId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
