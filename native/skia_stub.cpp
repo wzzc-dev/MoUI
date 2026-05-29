@@ -3737,6 +3737,57 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_path(
 #endif
 }
 
+extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_path_shader(
+  MoonbitSkiaCanvas* wrapper,
+  MoonbitSkiaPath* path,
+  MoonbitSkiaShader* shader,
+  uint32_t color_argb,
+  int32_t anti_alias,
+  int32_t dither,
+  int32_t style,
+  float stroke_width,
+  float stroke_miter,
+  int32_t stroke_cap,
+  int32_t stroke_join,
+  int32_t blend_mode
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->canvas == nullptr ||
+    path == nullptr ||
+    path->path == nullptr ||
+    shader == nullptr ||
+    shader->shader == nullptr
+  ) {
+    return;
+  }
+#if defined(SKIA_MBT_HAS_SKIA)
+  SkPaint paint = moonbit_skia_make_paint_with_shader(
+    shader,
+    color_argb,
+    anti_alias,
+    dither,
+    style,
+    stroke_width,
+    stroke_miter,
+    stroke_cap,
+    stroke_join,
+    blend_mode
+  );
+  wrapper->canvas->drawPath(*path->path, paint);
+#else
+  (void)color_argb;
+  (void)anti_alias;
+  (void)dither;
+  (void)style;
+  (void)stroke_width;
+  (void)stroke_miter;
+  (void)stroke_cap;
+  (void)stroke_join;
+  (void)blend_mode;
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_image(
   MoonbitSkiaCanvas* wrapper,
   MoonbitSkiaImage* image,
@@ -4003,6 +4054,71 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_rect_shader(
   (void)top;
   (void)right;
   (void)bottom;
+  (void)color_argb;
+  (void)anti_alias;
+  (void)dither;
+  (void)style;
+  (void)stroke_width;
+  (void)stroke_miter;
+  (void)stroke_cap;
+  (void)stroke_join;
+  (void)blend_mode;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_round_rect_shader(
+  MoonbitSkiaCanvas* wrapper,
+  MoonbitSkiaShader* shader,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  float rx,
+  float ry,
+  uint32_t color_argb,
+  int32_t anti_alias,
+  int32_t dither,
+  int32_t style,
+  float stroke_width,
+  float stroke_miter,
+  int32_t stroke_cap,
+  int32_t stroke_join,
+  int32_t blend_mode
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->canvas == nullptr ||
+    shader == nullptr ||
+    shader->shader == nullptr
+  ) {
+    return;
+  }
+#if defined(SKIA_MBT_HAS_SKIA)
+  SkPaint paint = moonbit_skia_make_paint_with_shader(
+    shader,
+    color_argb,
+    anti_alias,
+    dither,
+    style,
+    stroke_width,
+    stroke_miter,
+    stroke_cap,
+    stroke_join,
+    blend_mode
+  );
+  wrapper->canvas->drawRoundRect(
+    SkRect::MakeLTRB(left, top, right, bottom),
+    rx,
+    ry,
+    paint
+  );
+#else
+  (void)left;
+  (void)top;
+  (void)right;
+  (void)bottom;
+  (void)rx;
+  (void)ry;
   (void)color_argb;
   (void)anti_alias;
   (void)dither;
