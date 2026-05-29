@@ -1,10 +1,16 @@
 param(
   [string] $LogDir = "logs/windows-msvc-real-skia-smoke",
   [string] $SkiaRoot = $env:SKIA_MBT_SKIA_ROOT,
+  [string] $SkiaInclude = $env:SKIA_MBT_SKIA_INCLUDE,
   [string] $SkiaZip = $env:SKIA_MBT_SKIA_ZIP,
   [string] $SkiaLibDir = $env:SKIA_MBT_SKIA_LIB_DIR,
   [string] $VcVarsAll = $(if ($env:VCVARSALL) { $env:VCVARSALL } else { "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" }),
   [string] $VcArch = "x64",
+  [string] $SkiaProvider = $env:SKIA_MBT_SKIA_PROVIDER,
+  [string] $JetBrainsTag = $env:SKIA_MBT_JETBRAINS_TAG,
+  [string] $SkiaCommit = $env:SKIA_MBT_SKIA_COMMIT,
+  [string] $SkiaPackage = $env:SKIA_MBT_SKIA_PACKAGE,
+  [string] $SkiaPackageSha256 = $env:SKIA_MBT_SKIA_PACKAGE_SHA256,
   [string] $ExtraCcFlags = $env:SKIA_MBT_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:SKIA_MBT_EXTRA_LINK_FLAGS,
   [switch] $DryRunConfig,
@@ -69,10 +75,16 @@ Write-Host "  acceptance_log=$acceptanceLog"
 
 & (Join-Path $repoRoot "scripts/windows-msvc-skia-smoke.ps1") `
   -SkiaRoot $SkiaRoot `
+  -SkiaInclude $SkiaInclude `
   -SkiaZip $SkiaZip `
   -SkiaLibDir $SkiaLibDir `
   -VcVarsAll $VcVarsAll `
   -VcArch $VcArch `
+  -SkiaProvider $SkiaProvider `
+  -JetBrainsTag $JetBrainsTag `
+  -SkiaCommit $SkiaCommit `
+  -SkiaPackage $SkiaPackage `
+  -SkiaPackageSha256 $SkiaPackageSha256 `
   -ExtraCcFlags $ExtraCcFlags `
   -ExtraLinkFlags $ExtraLinkFlags `
   -SmokeLog $nativeLog `
@@ -84,10 +96,16 @@ $smokeStatus = 0
 try {
   & (Join-Path $repoRoot "scripts/windows-msvc-skia-smoke.ps1") `
     -SkiaRoot $SkiaRoot `
+    -SkiaInclude $SkiaInclude `
     -SkiaZip $SkiaZip `
     -SkiaLibDir $SkiaLibDir `
     -VcVarsAll $VcVarsAll `
     -VcArch $VcArch `
+    -SkiaProvider $SkiaProvider `
+    -JetBrainsTag $JetBrainsTag `
+    -SkiaCommit $SkiaCommit `
+    -SkiaPackage $SkiaPackage `
+    -SkiaPackageSha256 $SkiaPackageSha256 `
     -ExtraCcFlags $ExtraCcFlags `
     -ExtraLinkFlags $ExtraLinkFlags `
     -SmokeLog $nativeLog `
@@ -141,14 +159,46 @@ if ($smokeStatus -eq 0) {
 }
 
 $skiaCommit = ""
+$skiaProvider = ""
+$jetbrainsTag = ""
+$skiaPackage = ""
+$skiaPackageSha256 = ""
 if (Test-Path -LiteralPath $wrapperLog) {
   $commitLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*skia_commit=' | Select-Object -Last 1
   if ($commitLine) {
     $skiaCommit = $commitLine.Line -replace '^\s*skia_commit=', ''
   }
+  $providerLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*skia_provider=' | Select-Object -Last 1
+  if ($providerLine) {
+    $skiaProvider = $providerLine.Line -replace '^\s*skia_provider=', ''
+  }
+  $tagLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*jetbrains_tag=' | Select-Object -Last 1
+  if ($tagLine) {
+    $jetbrainsTag = $tagLine.Line -replace '^\s*jetbrains_tag=', ''
+  }
+  $packageLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*skia_package=' | Select-Object -Last 1
+  if ($packageLine) {
+    $skiaPackage = $packageLine.Line -replace '^\s*skia_package=', ''
+  }
+  $shaLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*skia_package_sha256=' | Select-Object -Last 1
+  if ($shaLine) {
+    $skiaPackageSha256 = $shaLine.Line -replace '^\s*skia_package_sha256=', ''
+  }
 }
 if ($skiaCommit.Trim().Length -eq 0) {
   $skiaCommit = "unknown"
+}
+if ($skiaProvider.Trim().Length -eq 0) {
+  $skiaProvider = "unknown"
+}
+if ($jetbrainsTag.Trim().Length -eq 0) {
+  $jetbrainsTag = "unknown"
+}
+if ($skiaPackage.Trim().Length -eq 0) {
+  $skiaPackage = "unknown"
+}
+if ($skiaPackageSha256.Trim().Length -eq 0) {
+  $skiaPackageSha256 = "unknown"
 }
 
 @(
@@ -156,7 +206,11 @@ if ($skiaCommit.Trim().Length -eq 0) {
   "  smoke_status=$smokeStatus"
   "  native_smoke_marker=$markerStatus"
   "  native_pkg_restore=$restoreStatus"
+  "  skia_provider=$skiaProvider"
+  "  jetbrains_tag=$jetbrainsTag"
   "  skia_commit=$skiaCommit"
+  "  skia_package=$skiaPackage"
+  "  skia_package_sha256=$skiaPackageSha256"
   "  preflight_log=$preflightLog"
   "  wrapper_log=$wrapperLog"
   "  native_log=$nativeLog"
@@ -169,6 +223,7 @@ if ($env:GITHUB_ENV) {
     "native_smoke_marker_status=$markerStatus"
     "restore_status=$restoreStatus"
     "windows_msvc_acceptance_log=$acceptanceLog"
+    "windows_skia_provider=$skiaProvider"
     "windows_skia_commit=$skiaCommit"
   ) | Add-Content -LiteralPath $env:GITHUB_ENV
 }

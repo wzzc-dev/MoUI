@@ -1,53 +1,63 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "revision_file": "skia-revision.txt",
+  "default_provider": "jetbrains",
+  "provider_lock_file": "skia-provider-lock.json",
   "platforms": {
     "linux": {
       "accepted": false,
-      "state": "ready_for_source_built_acceptance",
+      "state": "ready_for_jetbrains_binary_acceptance",
       "first_acceptance_platform": true,
       "source_build": true,
       "existing_build": true,
+      "jetbrains_provider": true,
       "requires_pinned_revision": false,
       "accepted_artifact": null,
       "accepted_commit": null,
+      "accepted_provider": null,
+      "accepted_version": null,
       "required_artifact_logs": [
+        "linux-real-skia-smoke-preflight.log",
         "linux-real-skia-smoke.log",
-        "linux-skia-build.log",
         "linux-native-smoke-output.log",
         "linux-real-skia-acceptance.log"
       ],
-      "required_verifier": "scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs --require-commit",
-      "next_step": "Run scripts/linux-accept-and-pin-skia.sh on Ubuntu and keep skia-revision.txt as main until a verified full commit is produced."
+      "required_verifier": "scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs",
+      "next_step": "Run the Linux real smoke workflow with the default JetBrains provider. Use scripts/linux-accept-and-pin-skia.sh only when establishing or refreshing the source-built fallback pin."
     },
     "macos": {
       "accepted": false,
-      "state": "smoke_path_ready",
+      "state": "ready_for_jetbrains_binary_acceptance",
       "first_acceptance_platform": false,
       "source_build": true,
       "existing_build": true,
+      "jetbrains_provider": true,
       "requires_pinned_revision": true,
       "accepted_artifact": null,
       "accepted_commit": null,
+      "accepted_provider": null,
+      "accepted_version": null,
       "required_artifact_logs": [
         "macos-real-skia-smoke-preflight.log",
-        "macos-skia-build.log",
         "macos-real-skia-smoke.log",
         "macos-native-smoke-output.log",
         "macos-real-skia-acceptance.log"
       ],
       "required_verifier": "scripts/verify-real-skia-artifact.sh --platform macos --log-dir logs",
-      "next_step": "After Linux pins the first known-good Skia revision, run the macOS real smoke workflow against that revision."
+      "next_step": "Run the macOS real smoke workflow with the default JetBrains provider. Source-built smoke remains available with skia_provider=source."
     },
     "windows": {
       "accepted": false,
-      "state": "existing_build_smoke_paths_ready",
+      "state": "ready_for_jetbrains_msvc_binary_acceptance",
       "first_acceptance_platform": false,
       "source_build": false,
       "existing_build": true,
+      "jetbrains_provider": true,
       "requires_pinned_revision": true,
       "accepted_artifact": null,
       "accepted_commit": null,
+      "accepted_provider": null,
+      "accepted_version": null,
       "required_artifact_logs": [
         "windows-real-skia-smoke-preflight.log",
         "windows-real-skia-smoke.log",
@@ -55,7 +65,7 @@
         "windows-real-skia-acceptance.log"
       ],
       "required_verifier": "scripts/verify-real-skia-artifact.ps1 -Platform windows -LogDir logs",
-      "next_step": "Run a real Windows smoke artifact through either the MinGW-compatible path or the MSVC release-zip path, then document the repeatable Windows Skia acquisition path used for the accepted toolchain."
+      "next_step": "Run the Windows real smoke workflow with skia_provider=jetbrains and the MSVC helper. Existing MinGW-compatible smoke remains a diagnostic path."
     }
   }
 }

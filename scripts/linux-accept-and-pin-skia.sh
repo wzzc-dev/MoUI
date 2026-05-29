@@ -119,6 +119,7 @@ fi
 
 bash "$repo_root/scripts/linux-accept-real-skia-smoke.sh" \
   --log-dir "$resolved_log_dir" \
+  --skia-provider source \
   "${acceptance_args[@]}"
 
 bash "$repo_root/scripts/verify-real-skia-artifact.sh" \

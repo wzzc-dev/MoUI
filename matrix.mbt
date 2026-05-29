@@ -58,7 +58,7 @@ pub fn Matrix::identity() -> Matrix {
 }
 
 ///|
-pub impl Default for Matrix with default() {
+pub impl Default for Matrix with fn default() {
   Matrix::identity()
 }
 

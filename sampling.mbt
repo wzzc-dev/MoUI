@@ -59,7 +59,7 @@ pub fn SamplingOptions::catmull_rom() -> SamplingOptions {
 }
 
 ///|
-pub impl Default for SamplingOptions with default() {
+pub impl Default for SamplingOptions with fn default() {
   SamplingOptions::new()
 }
 

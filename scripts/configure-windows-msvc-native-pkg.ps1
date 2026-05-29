@@ -1,5 +1,6 @@
 param(
   [string] $SkiaRoot = $env:SKIA_MBT_SKIA_ROOT,
+  [string] $SkiaInclude = $env:SKIA_MBT_SKIA_INCLUDE,
   [string] $SkiaZip = $env:SKIA_MBT_SKIA_ZIP,
   [string] $SkiaLibDir = $env:SKIA_MBT_SKIA_LIB_DIR,
   [string] $ExtraCcFlags = $env:SKIA_MBT_EXTRA_CC_FLAGS,
@@ -47,9 +48,13 @@ if (!(Test-Path -LiteralPath $SkiaRoot -PathType Container)) {
 }
 
 $resolvedRoot = (Resolve-Path -LiteralPath $SkiaRoot).Path
-$headerPath = Join-Path $resolvedRoot "include/core/SkSurface.h"
+$resolvedIncludeRoot = $resolvedRoot
+if (![string]::IsNullOrWhiteSpace($SkiaInclude)) {
+  $resolvedIncludeRoot = (Resolve-Path -LiteralPath $SkiaInclude).Path
+}
+$headerPath = Join-Path $resolvedIncludeRoot "include/core/SkSurface.h"
 if (!(Test-Path -LiteralPath $headerPath -PathType Leaf)) {
-  throw "SkiaRoot does not look like a Skia release root: $resolvedRoot"
+  throw "Skia include root does not look like a Skia checkout/root: $resolvedIncludeRoot"
 }
 
 if ([string]::IsNullOrWhiteSpace($SkiaLibDir)) {
@@ -67,7 +72,7 @@ if ([System.IO.Path]::IsPathRooted($Output)) {
   $resolvedOutput = Join-Path $repoRoot $Output
 }
 
-$includePath = $resolvedRoot -replace "\\", "/"
+$includePath = $resolvedIncludeRoot -replace "\\", "/"
 $libPath = $resolvedLibDir -replace "\\", "/"
 
 $ccFlags = "/DSKIA_MBT_HAS_SKIA /std:c++17 /EHsc /I$includePath"

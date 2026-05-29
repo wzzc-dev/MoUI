@@ -8,6 +8,30 @@ machine-readable platform status; validate it with
 `./scripts/verify-platform-status.ps1` from PowerShell or
 `bash scripts/verify-platform-status.sh` on Linux/macOS.
 
+## JetBrains/skia provider
+
+JetBrains/skia is the default binary provider for desktop real-smoke runs. The
+locked release lives in `../skia-provider-lock.json` and currently points at
+tag `m148-8967a2e80c`, commit
+`8967a2e80c71be363146da2395f503cab5f5fb9c`, config `Release`.
+
+Fetch or inspect the selected package with:
+
+```bash
+bash scripts/fetch-jetbrains-skia.sh --platform auto --arch auto --print-env
+```
+
+```powershell
+.\scripts\fetch-jetbrains-skia.ps1 -Platform auto -Arch auto -PrintEnv
+```
+
+The fetch helpers cache packages under
+`.skia-cache/jetbrains/<tag>/<platform>-<config>-<arch>/`, verify locked
+SHA256 values, scan for `include/core/SkSurface.h` and platform Skia libraries,
+and use the same-tag JetBrains source archive as a header fallback. They only
+print include/lib/flag environment values; `configure-*-native-pkg.*` remains
+the only layer that generates `native/moon.pkg` contents.
+
 ## Fallback gate
 
 Run this on Windows when you want to verify the no-Skia build stays healthy:
@@ -22,11 +46,18 @@ expected to fail fast when the real backend is unavailable.
 
 ## Linux real Skia smoke
 
-Use one entry point for Linux real-backend validation:
+Use one entry point for Linux real-backend validation. With no provider option,
+it uses the locked JetBrains binary package:
+
+```bash
+bash scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
+```
+
+For the source-built fallback path, pass `--skia-provider source`:
 
 ```bash
 bash scripts/install-linux-smoke-deps.sh
-bash scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
+bash scripts/linux-accept-real-skia-smoke.sh --skia-provider source --work-dir .skia-cache/linux
 ```
 
 On Ubuntu, `scripts/install-linux-smoke-deps.sh` installs the apt packages used
@@ -137,10 +168,12 @@ advance, glyph count, glyph ID mapping, glyph advances, glyph positions, glyph
 bounds, text bounds, metrics, and font-family typeface matching whenever the
 native smoke can create the relevant font objects.
 
-To reuse an existing Skia checkout/build instead of building from source:
+To reuse an existing Skia checkout/build instead of the default JetBrains
+provider:
 
 ```bash
 bash scripts/linux-real-skia-smoke.sh \
+  --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
 ```
@@ -258,20 +291,28 @@ you need to debug one stage in isolation.
 
 ## macOS real Skia smoke
 
-Use one entry point for macOS real-backend acceptance after building CPU-only
-Skia:
+Use one entry point for macOS real-backend acceptance. With no provider option,
+it uses the locked JetBrains binary package:
 
 ```bash
-bash scripts/macos-build-skia.sh --work-dir .skia-cache/macos
-bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
-  --skia-include .skia-cache/macos/skia \
-  --skia-lib-dir .skia-cache/macos/skia/out/moonbit-smoke
+bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs
 ```
 
-When `--skia-rev` is omitted, `scripts/macos-build-skia.sh` reads
+For the source-built fallback path:
+
+```bash
+bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
+  --skia-provider source \
+  --work-dir .skia-cache/macos
+```
+
+When `--skia-rev` is omitted in source mode, `scripts/macos-real-skia-smoke.sh`
+and `scripts/macos-build-skia.sh` read
 `SKIA_MBT_SKIA_REV`, then `skia-revision.txt`, matching Linux's revision
-priority. The build and lower-level smoke scripts support `--dry-run-config` for CI preflight. The acceptance wrapper captures the
-dry-run preflight log, wrapper log, native executable log, and `macos-real-skia-acceptance.log`;
+priority. The real wrapper and lower-level smoke scripts support
+`--dry-run-config` for CI preflight. The acceptance wrapper captures the
+dry-run preflight log, optional source-build log, wrapper log, native executable
+log, and `macos-real-skia-acceptance.log`;
 checks the final `skia_mbt native smoke test passed` marker; and verifies that
 `native/moon.pkg` was restored. The lower-level smoke helper temporarily
 rewrites `native/moon.pkg`, runs `scripts/native_smoke`, restores the package
@@ -322,21 +363,22 @@ MinGW-compatible path when MoonBit is building native stubs through GCC/MinGW:
   -SkiaLibDir C:\path\to\skia\out\moonbit-smoke
 ```
 
-Use the MSVC path for a prepared release zip or checkout that provides
-`skia.lib`. It defaults to `C:\Users\<you>\Downloads\Skia-Windows-Release-x64.zip`,
-extracts into `.skia-cache/windows-msvc/aseprite`, calls `vcvarsall.bat`, builds
-with `cl`, captures the same artifact log names, and restores both temporary
-package rewrites:
+Use the MSVC path for the default JetBrains provider or a prepared release zip
+or checkout that provides `skia.lib`. The workflow fetches JetBrains packages
+into `.skia-cache/jetbrains`; the helper calls `vcvarsall.bat`, builds with
+`cl`, prepends the Skia library directory to `PATH`, captures the same artifact
+log names, and restores both temporary package rewrites:
 
 ```powershell
 .\scripts\windows-msvc-accept-real-skia-smoke.ps1 -LogDir logs
 ```
 
-Pass `-SkiaRoot`, `-SkiaZip`, `-SkiaLibDir`, `-VcVarsAll`, or `-VcArch` when a
-self-hosted runner uses a different Visual Studio install or Skia layout. The
-MSVC helper also accepts `SKIA_MBT_SKIA_ROOT`, `SKIA_MBT_SKIA_ZIP`,
-`SKIA_MBT_SKIA_LIB_DIR`, `VCVARSALL`, `SKIA_MBT_EXTRA_CC_FLAGS`, and
-`SKIA_MBT_EXTRA_LINK_FLAGS` as environment defaults.
+Pass `-SkiaRoot`, `-SkiaInclude`, `-SkiaZip`, `-SkiaLibDir`, `-VcVarsAll`, or
+`-VcArch` when a self-hosted runner uses a different Visual Studio install or
+Skia layout. The MSVC helper also accepts `SKIA_MBT_SKIA_ROOT`,
+`SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_ZIP`, `SKIA_MBT_SKIA_LIB_DIR`,
+`VCVARSALL`, `SKIA_MBT_EXTRA_CC_FLAGS`, and `SKIA_MBT_EXTRA_LINK_FLAGS` as
+environment defaults.
 
 Use `-SkiaLib`, `-ExtraCcFlags`, and `-ExtraLinkFlags` when the build uses a
 non-default library name or needs additional dependent libraries. The acceptance

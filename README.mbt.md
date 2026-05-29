@@ -112,6 +112,20 @@ The GitHub Actions fallback workflow mirrors this gate on Windows and Linux.
 Real Skia smoke tests are intentionally separate until the repository owns a
 repeatable Skia binary/build source for CI.
 
+The default real-Skia binary provider is now JetBrains/skia, locked by
+`skia-provider-lock.json` to tag `m148-8967a2e80c` and commit
+`8967a2e80c71be363146da2395f503cab5f5fb9c`. The fetch helpers cache packages
+under `.skia-cache/jetbrains` and print the include/lib/flag values consumed by
+the existing native package configurators:
+
+```bash
+bash scripts/fetch-jetbrains-skia.sh --platform auto --arch auto --print-env
+```
+
+```powershell
+.\scripts\fetch-jetbrains-skia.ps1 -Platform auto -Arch auto -PrintEnv
+```
+
 Use [REAL_SKIA_SMOKE.md](REAL_SKIA_SMOKE.md) as the acceptance checklist for
 real-backend artifacts. A passing fallback build, dry-run, or syntax check is
 not enough to claim real Skia acceptance.
@@ -147,6 +161,7 @@ system compiler, pass its include and library paths:
 
 ```bash
 bash scripts/linux-accept-real-skia-smoke.sh --log-dir logs \
+  --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
 ```
@@ -166,6 +181,7 @@ On macOS with an existing Skia build, use the acceptance wrapper:
 
 ```bash
 bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
+  --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
 ```
@@ -177,10 +193,9 @@ dependencies.
 To build a small CPU-only Skia from source for the macOS smoke test, run:
 
 ```bash
-bash scripts/macos-build-skia.sh --work-dir .skia-cache/macos
 bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
-  --skia-include .skia-cache/macos/skia \
-  --skia-lib-dir .skia-cache/macos/skia/out/moonbit-smoke
+  --skia-provider source \
+  --work-dir .skia-cache/macos
 ```
 
 The `macOS Real Skia Smoke` workflow exposes the same path as a manual GitHub
@@ -205,7 +220,9 @@ When `--skia-rev` is omitted, the Linux source-build helpers read
 `skia-revision.txt`. Keep that file on a known-good Skia commit after the first
 successful real runner, or override it with `--skia-rev` while testing a new
 Skia revision. The acceptance summary log records the resolved `skia_commit`;
-copy that value into `skia-revision.txt` after a passing run.
+use the guarded pin helpers below to write that value after a passing
+source-built run. Do not write JetBrains fork commits into `skia-revision.txt`;
+they are tracked in `skia-provider-lock.json`.
 
 For the first source-built Linux acceptance, the guarded pinning wrapper runs
 the smoke, verifies the artifact bundle with a required full commit hash, pins

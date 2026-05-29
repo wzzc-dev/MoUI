@@ -111,12 +111,12 @@ if [[ ! -f "$lib_path/lib$skia_lib.a" && ! -f "$lib_path/lib$skia_lib.so" ]]; th
   exit 1
 fi
 
-cc_flags="-DSKIA_MBT_HAS_SKIA -I$include_path"
+cc_flags="-DSKIA_MBT_HAS_SKIA -std=c++17 -I$include_path"
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-link_flags="-L$lib_path -l$skia_lib"
+link_flags="-L$lib_path -l$skia_lib -lstdc++"
 if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"
 fi

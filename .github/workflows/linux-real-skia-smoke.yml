@@ -9,6 +9,15 @@ on:
         description: Skia revision, branch, or tag to build; empty uses skia-revision.txt
         required: false
         default: ""
+      skia_provider:
+        description: Skia provider to use
+        type: choice
+        required: false
+        default: jetbrains
+        options:
+          - jetbrains
+          - source
+          - existing
       skia_include:
         description: Existing Skia checkout/include root; skips source build when paired with skia_lib_dir
         required: false
@@ -55,6 +64,7 @@ jobs:
         shell: bash
         env:
           SKIA_REV: ${{ inputs.skia_rev }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
           SKIA_LIB: ${{ inputs.skia_lib }}
@@ -63,6 +73,9 @@ jobs:
           EXTRA_LINK_FLAGS: ${{ inputs.extra_link_flags }}
         run: |
           args=(--dry-run-config)
+          if [[ -n "$SKIA_PROVIDER" ]]; then
+            args+=(--skia-provider "$SKIA_PROVIDER")
+          fi
           if [[ -n "$SKIA_REV" ]]; then
             args+=(--skia-rev "$SKIA_REV")
           fi
@@ -94,17 +107,17 @@ jobs:
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
       - name: Install build dependencies
-        if: ${{ !inputs.dry_run_config }}
+        if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' }}
         shell: bash
         run: bash scripts/install-linux-smoke-deps.sh
 
       - name: Verify build dependencies
-        if: ${{ !inputs.dry_run_config }}
+        if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' }}
         shell: bash
         run: bash scripts/install-linux-smoke-deps.sh --check
 
       - name: Cache Skia checkout and build
-        if: ${{ !inputs.dry_run_config && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
+        if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         uses: actions/cache@v4
         with:
           path: .skia-cache/linux
@@ -117,6 +130,7 @@ jobs:
         shell: bash
         env:
           SKIA_REV: ${{ inputs.skia_rev }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
           SKIA_LIB: ${{ inputs.skia_lib }}
@@ -126,6 +140,9 @@ jobs:
           DRY_RUN_CONFIG: ${{ inputs.dry_run_config }}
         run: |
           args=()
+          if [[ -n "$SKIA_PROVIDER" ]]; then
+            args+=(--skia-provider "$SKIA_PROVIDER")
+          fi
           if [[ -n "$SKIA_REV" ]]; then
             args+=(--skia-rev "$SKIA_REV")
           fi
@@ -169,9 +186,10 @@ jobs:
         env:
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
         run: |
           args=(logs/linux-real-skia-acceptance.log)
-          if [[ -z "$SKIA_INCLUDE" && -z "$SKIA_LIB_DIR" ]]; then
+          if [[ "$SKIA_PROVIDER" == "source" && -z "$SKIA_INCLUDE" && -z "$SKIA_LIB_DIR" ]]; then
             args+=(--require-commit)
           fi
           bash scripts/verify-acceptance-log.sh "${args[@]}"
@@ -182,20 +200,21 @@ jobs:
         env:
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
         run: |
           args=(--platform linux --log-dir logs)
-          if [[ -z "$SKIA_INCLUDE" && -z "$SKIA_LIB_DIR" ]]; then
+          if [[ "$SKIA_PROVIDER" == "source" && -z "$SKIA_INCLUDE" && -z "$SKIA_LIB_DIR" ]]; then
             args+=(--require-commit)
           fi
           bash scripts/verify-real-skia-artifact.sh "${args[@]}"
 
       - name: Verify pinned Skia revision match
-        if: ${{ always() && !inputs.dry_run_config }}
+        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider != 'jetbrains' }}
         shell: bash
         run: bash scripts/verify-skia-revision-pin.sh logs/linux-real-skia-acceptance.log --skip-if-unpinned
 
       - name: Generate source-built acceptance state patch
-        if: ${{ always() && !inputs.dry_run_config && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
+        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider == 'source' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         shell: bash
         run: |
           rm -f logs/linux-acceptance-state.patch
@@ -258,6 +277,7 @@ jobs:
         shell: bash
         env:
           SKIA_REV: ${{ inputs.skia_rev }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
           SKIA_LIB: ${{ inputs.skia_lib }}
@@ -268,6 +288,8 @@ jobs:
         run: |
           if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
             smoke_mode="existing Skia build"
+          elif [[ "$SKIA_PROVIDER" == "jetbrains" ]]; then
+            smoke_mode="JetBrains Skia binary"
           else
             smoke_mode="source-built Skia"
           fi
@@ -275,6 +297,7 @@ jobs:
             echo "## Linux Real Skia Smoke"
             echo ""
             echo "- Mode: $smoke_mode"
+            echo "- Skia provider: ${SKIA_PROVIDER:-jetbrains}"
             echo "- Dry run only: ${DRY_RUN_CONFIG:-false}"
             echo "- Skia revision: ${SKIA_REV:-<skia-revision.txt>}"
             echo "- Resolved Skia commit: ${linux_skia_commit:-not run}"

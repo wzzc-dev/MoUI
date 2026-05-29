@@ -12,12 +12,14 @@ recorded artifact evidence.
 Options:
   --status-file PATH    Platform status JSON file. Defaults to skia-platform-status.json.
   --revision-file PATH  Skia revision file. Defaults to skia-revision.txt.
+  --provider-lock PATH   Skia provider lock JSON. Defaults to skia-provider-lock.json.
   -h, --help            Show this help.
 EOF
 }
 
 status_file="skia-platform-status.json"
 revision_file="skia-revision.txt"
+provider_lock="skia-provider-lock.json"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,6 +39,15 @@ while [[ $# -gt 0 ]]; do
         exit 2
       fi
       revision_file="$2"
+      shift 2
+      ;;
+    --provider-lock)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --provider-lock" >&2
+        usage >&2
+        exit 2
+      fi
+      provider_lock="$2"
       shift 2
       ;;
     -h|--help)
@@ -63,8 +74,9 @@ resolve_repo_path() {
 
 resolved_status_file="$(resolve_repo_path "$status_file")"
 resolved_revision_file="$(resolve_repo_path "$revision_file")"
+resolved_provider_lock="$(resolve_repo_path "$provider_lock")"
 
-python3 - "$resolved_status_file" "$resolved_revision_file" <<'PY'
+python3 - "$resolved_status_file" "$resolved_revision_file" "$resolved_provider_lock" <<'PY'
 import json
 import pathlib
 import re
@@ -72,6 +84,7 @@ import sys
 
 status_path = pathlib.Path(sys.argv[1])
 revision_path = pathlib.Path(sys.argv[2])
+provider_lock_path = pathlib.Path(sys.argv[3])
 
 def fail(message: str) -> None:
     print(message, file=sys.stderr)
@@ -88,6 +101,17 @@ try:
 except json.JSONDecodeError as error:
     fail(f"Skia platform status JSON is invalid: {error}")
 
+try:
+    provider_lock = json.loads(provider_lock_path.read_text(encoding="utf-8"))
+except FileNotFoundError:
+    provider_lock = {}
+except json.JSONDecodeError as error:
+    fail(f"Skia provider lock JSON is invalid: {error}")
+
+jetbrains = provider_lock.get("providers", {}).get("jetbrains", {})
+jetbrains_commit = str(jetbrains.get("commit", "")).lower()
+jetbrains_tag = str(jetbrains.get("tag", ""))
+
 revision = ""
 for line in revision_path.read_text(encoding="utf-8").splitlines():
     stripped = line.strip()
@@ -95,7 +119,8 @@ for line in revision_path.read_text(encoding="utf-8").splitlines():
         revision = stripped
         break
 
-if status.get("schema_version") != 1:
+schema_version = status.get("schema_version")
+if schema_version not in (1, 2):
     fail(f"unsupported Skia platform status schema_version: {status.get('schema_version')}")
 
 if status.get("revision_file") != revision_path.name:
@@ -140,15 +165,28 @@ for platform in platforms:
             fail(f"accepted platform is missing accepted_artifact: {platform}")
         if not re.fullmatch(r"[0-9a-fA-F]{40}", str(entry.get("accepted_commit") or "")):
             fail(f"accepted platform is missing accepted_commit: {platform}")
+        accepted_provider = entry.get("accepted_provider") if schema_version >= 2 else "source"
+        accepted_version = entry.get("accepted_version") if schema_version >= 2 else revision
+        if accepted_provider not in ("source", "jetbrains"):
+            fail(f"accepted platform has unsupported accepted_provider: {platform}")
+        if not accepted_version:
+            fail(f"accepted platform is missing accepted_version: {platform}")
+        entry["__accepted_provider"] = accepted_provider
+        entry["__accepted_version"] = accepted_version
     elif entry.get("accepted_artifact") is not None:
         fail(f"unaccepted platform must not record accepted_artifact: {platform}")
     elif entry.get("accepted_commit") is not None:
         fail(f"unaccepted platform must not record accepted_commit: {platform}")
+    if not entry["accepted"] and schema_version >= 2 and entry.get("accepted_provider") is not None:
+        fail(f"unaccepted platform must not record accepted_provider: {platform}")
+    if not entry["accepted"] and schema_version >= 2 and entry.get("accepted_version") is not None:
+        fail(f"unaccepted platform must not record accepted_version: {platform}")
 
-if revision == "main" and accepted_platforms:
+source_accepted = [p for p in accepted_platforms if platform_entries[p].get("__accepted_provider") == "source"]
+if revision == "main" and source_accepted:
     fail(
-        "platforms cannot be accepted while skia-revision.txt is still main: "
-        + ", ".join(accepted_platforms)
+        "source platforms cannot be accepted while skia-revision.txt is still main: "
+        + ", ".join(source_accepted)
     )
 
 if revision != "main" and not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
@@ -156,11 +194,31 @@ if revision != "main" and not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
 
 for platform in accepted_platforms:
     accepted_commit = platform_entries[platform]["accepted_commit"].lower()
-    if accepted_commit != revision.lower():
+    accepted_provider = platform_entries[platform]["__accepted_provider"]
+    accepted_version = str(platform_entries[platform]["__accepted_version"])
+    if accepted_provider == "source" and accepted_commit != revision.lower():
         fail(
             "accepted platform commit does not match pinned revision: "
             f"platform={platform} accepted_commit={accepted_commit} revision={revision}"
         )
+    if accepted_provider == "source" and accepted_version != revision:
+        fail(
+            "accepted source platform version does not match pinned revision: "
+            f"platform={platform} accepted_version={accepted_version} revision={revision}"
+        )
+    if accepted_provider == "jetbrains":
+        if not jetbrains_commit or not jetbrains_tag:
+            fail("JetBrains provider lock is missing tag or commit")
+        if accepted_commit != jetbrains_commit:
+            fail(
+                "accepted JetBrains platform commit does not match provider lock: "
+                f"platform={platform} accepted_commit={accepted_commit} jetbrains_commit={jetbrains_commit}"
+            )
+        if accepted_version != jetbrains_tag:
+            fail(
+                "accepted JetBrains platform version does not match provider lock tag: "
+                f"platform={platform} accepted_version={accepted_version} jetbrains_tag={jetbrains_tag}"
+            )
 
 linux = platform_entries["linux"]
 windows = platform_entries["windows"]

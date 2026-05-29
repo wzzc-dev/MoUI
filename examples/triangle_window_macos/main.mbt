@@ -1,6 +1,6 @@
 ///|
 struct App {
-  mut window : @windows.Window?
+  mut window : @macos.Window?
 }
 
 ///|
@@ -37,10 +37,11 @@ fn draw_triangle_with_skia(width : Int, height : Int) -> @skia.Pixmap? {
 }
 
 ///|
-fn redraw_window(window : @windows.Window) -> Unit {
+fn redraw_window(window : @macos.Window) -> Unit {
   let size = window.surface_size()
   match draw_triangle_with_skia(size.width(), size.height()) {
     Some(pixmap) => {
+      window.pre_present_notify()
       let status = present_rgba_to_window(
         window.window_handle(),
         pixmap.width(),
@@ -57,14 +58,14 @@ fn redraw_window(window : @windows.Window) -> Unit {
 }
 
 ///|
-pub impl @windows.ApplicationHandler for App with can_create_surfaces(
+pub impl @macos.ApplicationHandler for App with fn can_create_surfaces(
   self,
   event_loop,
 ) {
   let window_attributes = @core.WindowAttributes::default()
     .with_title("MoonBit Skia Triangle")
     .with_surface_size(@dpi.PhysicalSize::PhysicalSize(640, 420).into_size())
-  let window : @windows.Window? = Some(
+  let window : @macos.Window? = Some(
     event_loop.try_create_window(window_attributes),
   ) catch {
     err => {
@@ -81,7 +82,7 @@ pub impl @windows.ApplicationHandler for App with can_create_surfaces(
 }
 
 ///|
-pub impl @windows.ApplicationHandler for App with window_event(
+pub impl @macos.ApplicationHandler for App with fn window_event(
   self,
   event_loop,
   _window_id,
@@ -105,6 +106,6 @@ pub impl @windows.ApplicationHandler for App with window_event(
 
 ///|
 fn main {
-  let event_loop = @windows.EventLoop::new()
+  let event_loop = @macos.EventLoop::EventLoop()
   event_loop.run_app({ window: None })
 }
