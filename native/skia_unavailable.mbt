@@ -807,8 +807,16 @@ pub fn Typeface::default() -> Typeface? {
 }
 
 ///|
-pub fn Typeface::from_name(family_name : Bytes) -> Typeface? {
+pub fn Typeface::from_name(
+  family_name : Bytes,
+  weight? : Int = 400,
+  width? : Int = 5,
+  slant? : Int = 0,
+) -> Typeface? {
   ignore(family_name)
+  ignore(weight)
+  ignore(width)
+  ignore(slant)
   None
 }
 
@@ -840,9 +848,15 @@ pub fn FontMgr::family_name(self : FontMgr, index : Int) -> Bytes? {
 pub fn FontMgr::match_family_style(
   self : FontMgr,
   family_name : Bytes,
+  weight? : Int = 400,
+  width? : Int = 5,
+  slant? : Int = 0,
 ) -> Typeface? {
   ignore(self)
   ignore(family_name)
+  ignore(weight)
+  ignore(width)
+  ignore(slant)
   None
 }
 
@@ -850,9 +864,15 @@ pub fn FontMgr::match_family_style(
 pub fn Typeface::from_font_mgr_family(
   font_mgr : FontMgr,
   family_name : Bytes,
+  weight? : Int = 400,
+  width? : Int = 5,
+  slant? : Int = 0,
 ) -> Typeface? {
   ignore(font_mgr)
   ignore(family_name)
+  ignore(weight)
+  ignore(width)
+  ignore(slant)
   None
 }
 

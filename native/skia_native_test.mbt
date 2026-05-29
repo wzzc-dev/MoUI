@@ -374,6 +374,9 @@ test "bitmap api typechecks" {
 test "font api typechecks" {
   assert_true(@native.Font::default(size=0.0) is None)
   assert_true(@native.Typeface::from_name(b"") is None)
+  assert_true(
+    @native.Typeface::from_name(b"", weight=700, width=5, slant=1) is None,
+  )
   match @native.Font::default(size=14.0) {
     None => ()
     Some(font) => {
@@ -477,6 +480,16 @@ test "font api typechecks" {
     Some(font_mgr) => {
       assert_true(font_mgr.is_available())
       assert_true(@native.Typeface::from_font_mgr_family(font_mgr, b"") is None)
+      assert_true(
+        @native.Typeface::from_font_mgr_family(
+          font_mgr,
+          b"",
+          weight=700,
+          width=5,
+          slant=1,
+        )
+        is None,
+      )
       let family_count = font_mgr.count_families()
       assert_true(family_count >= 0)
       assert_true(font_mgr.family_name(-1) is None)
@@ -494,6 +507,17 @@ test "font api typechecks" {
                   @native.Typeface::from_font_mgr_family(font_mgr, family_name)
                   is Some(_),
                 )
+                match
+                  font_mgr.match_family_style(
+                    family_name,
+                    weight=700,
+                    width=5,
+                    slant=1,
+                  ) {
+                  None => ()
+                  Some(styled_typeface) =>
+                    assert_true(styled_typeface.is_available())
+                }
               }
             }
           }
@@ -508,6 +532,16 @@ test "font api typechecks" {
       match @native.Font::from_typeface(typeface, size=13.0) {
         None => ()
         Some(font) => assert_eq(font.size(), 13.0)
+      }
+    }
+  }
+  match @native.Typeface::from_name(b"Arial", weight=700, width=5, slant=1) {
+    None => ()
+    Some(typeface) => {
+      assert_true(typeface.is_available())
+      match @native.Font::from_typeface(typeface, size=13.0) {
+        None => ()
+        Some(font) => assert_true(font.measure_text_utf8(b"Styled") > 0.0)
       }
     }
   }

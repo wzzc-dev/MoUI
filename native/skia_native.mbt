@@ -239,11 +239,19 @@ extern "C" fn native_font_mgr_family_name(
 extern "C" fn native_font_mgr_match_family_style(
   font_mgr : FontMgrHandle,
   family_name : Bytes,
+  weight : Int,
+  width : Int,
+  slant : Int,
 ) -> TypefaceHandle = "moonbit_skia_font_mgr_match_family_style"
 
 ///|
 #borrow(family_name)
-extern "C" fn native_typeface_from_name(family_name : Bytes) -> TypefaceHandle = "moonbit_skia_typeface_from_name"
+extern "C" fn native_typeface_from_name(
+  family_name : Bytes,
+  weight : Int,
+  width : Int,
+  slant : Int,
+) -> TypefaceHandle = "moonbit_skia_typeface_from_name"
 
 ///|
 #borrow(typeface)
@@ -2474,11 +2482,38 @@ pub fn Typeface::default() -> Typeface? {
 }
 
 ///|
-pub fn Typeface::from_name(family_name : Bytes) -> Typeface? {
+fn skia_font_style_weight(weight : Int) -> Int {
+  weight.clamp(min=1, max=1000)
+}
+
+///|
+fn skia_font_style_width(width : Int) -> Int {
+  width.clamp(min=1, max=9)
+}
+
+///|
+fn skia_font_style_slant(slant : Int) -> Int {
+  slant.clamp(min=0, max=2)
+}
+
+///|
+pub fn Typeface::from_name(
+  family_name : Bytes,
+  weight? : Int = 400,
+  width? : Int = 5,
+  slant? : Int = 0,
+) -> Typeface? {
   if family_name.is_empty() {
     None
   } else {
-    Typeface::from_handle(native_typeface_from_name(family_name))
+    Typeface::from_handle(
+      native_typeface_from_name(
+        family_name,
+        skia_font_style_weight(weight),
+        skia_font_style_width(width),
+        skia_font_style_slant(slant),
+      ),
+    )
   }
 }
 
@@ -2524,12 +2559,21 @@ pub fn FontMgr::family_name(self : FontMgr, index : Int) -> Bytes? {
 pub fn FontMgr::match_family_style(
   self : FontMgr,
   family_name : Bytes,
+  weight? : Int = 400,
+  width? : Int = 5,
+  slant? : Int = 0,
 ) -> Typeface? {
   if family_name.is_empty() {
     None
   } else {
     Typeface::from_handle(
-      native_font_mgr_match_family_style(self.handle, family_name),
+      native_font_mgr_match_family_style(
+        self.handle,
+        family_name,
+        skia_font_style_weight(weight),
+        skia_font_style_width(width),
+        skia_font_style_slant(slant),
+      ),
     )
   }
 }
@@ -2538,8 +2582,11 @@ pub fn FontMgr::match_family_style(
 pub fn Typeface::from_font_mgr_family(
   font_mgr : FontMgr,
   family_name : Bytes,
+  weight? : Int = 400,
+  width? : Int = 5,
+  slant? : Int = 0,
 ) -> Typeface? {
-  font_mgr.match_family_style(family_name)
+  font_mgr.match_family_style(family_name, weight~, width~, slant~)
 }
 
 ///|
