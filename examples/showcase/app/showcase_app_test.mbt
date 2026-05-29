@@ -98,11 +98,7 @@ test "showcase sidebar catalog scrolls to lower sections" {
   )
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
   let scrolled_commands = runtime.draw_commands()
-  let target_label = if text_within(scrolled_commands, "Interaction Lab", size) {
-    "Interaction Lab"
-  } else {
-    "Text Diagnostics"
-  }
+  let target_label = sidebar_visible_lower_label(scrolled_commands, size)
   assert_true(text_within(scrolled_commands, target_label, size))
   assert_true(has_sidebar_scrollbar(scrolled_commands))
   guard sidebar_scrollbar_frame(scrolled_commands) is Some(scrollbar_frame) else {
@@ -134,6 +130,19 @@ test "showcase sidebar catalog scrolls to lower sections" {
     ),
   )
   assert_true(has_text(runtime.draw_commands(), target_label))
+}
+
+///|
+fn sidebar_visible_lower_label(
+  commands : Array[@core.DrawCommand],
+  size : @core.Size,
+) -> String {
+  for label in ["Interaction Lab", "Text Diagnostics", "Advanced Rendering"] {
+    if text_within(commands, label, size) {
+      return label
+    }
+  }
+  "Interaction Lab"
 }
 
 ///|
@@ -178,6 +187,17 @@ test "showcase covers text media controls and layout sections" {
   assert_true(has_text(forms_commands, "Show"))
   assert_true(has_text(forms_commands, "Stepper"))
   assert_true(has_text(forms_commands, "First line of notes"))
+  let data_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("data"))
+    .runtime(width=960.0, height=620.0)
+    .draw_commands()
+  assert_true(has_text(data_commands, "Data"))
+  assert_true(has_text(data_commands, "Data Table"))
+  assert_true(has_text(data_commands, "Project Atlas"))
+  assert_true(has_text(data_commands, "Tree View"))
+  assert_true(has_text(data_commands, "Workspace"))
+  assert_true(has_text(data_commands, "Mira Chen"))
+  assert_true(has_text(data_commands, "+1"))
   let layout_commands = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("layout"))
     .runtime(width=760.0, height=420.0)

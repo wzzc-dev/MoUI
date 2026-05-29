@@ -521,6 +521,52 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
 }
 
 ///|
+test "data display components compose tables trees descriptions and avatars" {
+  let columns = [
+    @views.table_column(id="name", label="Name", width=120.0),
+    @views.table_column(id="state", label="State", width=96.0),
+  ]
+  let tree = [
+    @views.tree_item(
+      id="root",
+      label="Root",
+      children=[@views.tree_item(id="leaf", label="Leaf")],
+    ),
+  ]
+  let root : @core.View[Unit] = @views.column(
+    [
+      @views.description_list([
+        @views.description_item("Owner", "Mira"),
+        @views.description_item("Status", "Active"),
+      ]),
+      @views.table(
+        columns,
+        [["Atlas", "Active"], ["Billing", "Review"]],
+        selected_row=Some(1),
+      ),
+      @views.table(columns, [], empty=Some(@views.text("No data"))),
+      @views.tree_view(tree, expanded=["root"], selected="leaf"),
+      @views.avatar("Mira", size=32.0),
+      @views.avatar_group(["Mira", "Noah", "Iris", "Ava", "Kai"], size=28.0),
+    ],
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=720.0, height=680.0),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Owner"))
+  assert_true(has_text(commands, "Mira"))
+  assert_true(has_text(commands, "Name"))
+  assert_true(has_text(commands, "Atlas"))
+  assert_true(has_text(commands, "Billing"))
+  assert_true(has_text(commands, "No data"))
+  assert_true(has_text(commands, "Root"))
+  assert_true(has_text(commands, "Leaf"))
+  assert_true(has_text(commands, "+1"))
+}
+
+///|
 test "card supports independent optional dimensions" {
   let root : @core.View[Unit] = @views.card(@views.text("Wide"), width=240.0)
   let runtime = @core.AppRuntime::new_view(

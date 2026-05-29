@@ -13,6 +13,10 @@ pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
 
 pub fn[Msg] autocomplete(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], expanded~ : Bool, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] avatar(String, image? : String?, theme? : @core.Theme, size? : Double) -> @core.View[Msg]
+
+pub fn[Msg] avatar_group(Array[String], theme? : @core.Theme, size? : Double, max_visible? : Int) -> @core.View[Msg]
+
 pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
@@ -56,6 +60,10 @@ pub fn dark_theme() -> @core.Theme
 pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+
+pub fn description_item(String, String) -> DescriptionItem
+
+pub fn[Msg] description_list(Array[DescriptionItem], theme? : @core.Theme, width? : Double, term_width? : Double, row_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool) -> @core.View[Msg]
 
@@ -199,6 +207,10 @@ pub fn[Msg] tab_view(String, Array[TabItem[Msg]], spacing? : Double, on_select~ 
 
 pub fn[Msg] tab_view_binding(@core.Binding[String], Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
 
+pub fn[Msg] table(Array[TableColumn], Array[Array[String]], selected_row? : Int?, cell? : ((Int, TableColumn, String) -> @core.View[Msg])?, empty? : @core.View[Msg]?, theme? : @core.Theme, row_height? : Double) -> @core.View[Msg]
+
+pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColumn
+
 pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
@@ -220,6 +232,10 @@ pub fn[Msg] toggle_switch(String, Bool, on_change~ : (Bool) -> Msg, foreground? 
 pub fn[Msg] toggle_switch_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
+
+pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem]) -> TreeItem
+
+pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] wizard(Array[WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -267,6 +283,11 @@ pub(all) enum CrossAlign {
   End
   Stretch
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct DescriptionItem {
+  term : String
+  detail : String
+}
 
 pub(all) struct DropdownState {
   expanded : Bool
@@ -361,6 +382,12 @@ pub(all) struct TabItem[Msg] {
   view : @core.View[Msg]
 }
 
+pub(all) struct TableColumn {
+  id : String
+  label : String
+  width : Double
+}
+
 pub(all) enum TextFieldVariant {
   Filled
   Outline
@@ -374,6 +401,12 @@ pub(all) enum TextRole {
   Control
   Mono
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TreeItem {
+  id : String
+  label : String
+  children : Array[TreeItem]
+}
 
 pub(all) struct WizardStep[Msg] {
   id : String

@@ -52,6 +52,10 @@ fn ShowcaseModel::destinations(
       view=self.forms_section(theme, metrics),
     ),
     @views.navigation_destination(
+      route="data",
+      view=self.data_section(theme, metrics),
+    ),
+    @views.navigation_destination(
       route="layout",
       view=self.layout_section(theme, metrics),
     ),
@@ -111,6 +115,12 @@ fn showcase_sections() -> Array[ShowcaseSection] {
       route: "forms",
       title: "Forms",
       summary: "Labels, helper text, validation",
+      group: "Views",
+    },
+    {
+      route: "data",
+      title: "Data",
+      summary: "Tables, trees, avatars, metadata",
       group: "Views",
     },
     {

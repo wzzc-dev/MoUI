@@ -212,6 +212,49 @@ pub fn[Msg] WizardStep::new(
 }
 
 ///|
+pub(all) struct DescriptionItem {
+  term : String
+  detail : String
+}
+
+///|
+pub(all) struct TableColumn {
+  id : String
+  label : String
+  width : Double
+}
+
+///|
+pub(all) struct TreeItem {
+  id : String
+  label : String
+  children : Array[TreeItem]
+}
+
+///|
+pub fn description_item(term : String, detail : String) -> DescriptionItem {
+  { term, detail }
+}
+
+///|
+pub fn table_column(
+  id~ : String,
+  label~ : String,
+  width? : Double = 120.0,
+) -> TableColumn {
+  { id, label, width }
+}
+
+///|
+pub fn tree_item(
+  id~ : String,
+  label~ : String,
+  children? : Array[TreeItem] = [],
+) -> TreeItem {
+  { id, label, children }
+}
+
+///|
 fn ButtonVariant::style(
   self : ButtonVariant,
   theme : @core.Theme,
