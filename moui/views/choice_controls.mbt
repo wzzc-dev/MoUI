@@ -20,7 +20,8 @@ pub fn[Msg] radio_group(
         on_change=_value => on_select(item.id),
         foreground=theme.palette.foreground,
         check_color=theme.palette.primary,
-      ),
+      )
+      .semantics_selected(selected=item.id == selected),
     )
   }
   column(rows, spacing~, align=CrossAlign::Start).semantics_role(@core.SemanticsRole::Group)
@@ -44,7 +45,8 @@ pub fn[Msg] checkbox_group(
         on_change=value => on_change(item.id, value),
         foreground=theme.palette.foreground,
         check_color=theme.palette.primary,
-      ),
+      )
+      .semantics_checked(checked~),
     )
   }
   column(rows, spacing~, align=CrossAlign::Start).semantics_role(@core.SemanticsRole::Group)
@@ -79,7 +81,9 @@ pub fn[Msg] segmented_control(
         theme~,
         width=item_width,
         height~,
-      ).semantics_role(@core.SemanticsRole::Tab),
+      )
+      .semantics_role(@core.SemanticsRole::Tab)
+      .semantics_selected(selected=active),
     )
   }
   surface(
@@ -117,6 +121,7 @@ pub fn[Msg] chip(
     None => surfaced
   }
   let base = bordered.semantics_role(@core.SemanticsRole::Button)
+  .semantics_selected(selected~)
   match on_click {
     Some(message) => base.on_tap(message)
     None => base

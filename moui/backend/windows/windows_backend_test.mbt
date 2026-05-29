@@ -440,6 +440,7 @@ test "windows accessibility bridge dispatches semantics actions" {
     role: @core.SemanticsRole::Checkbox,
     label: "Enable",
     value: "false",
+    description: "",
     state: @core.SemanticsState::default(),
     actions: [@core.SemanticsAction::Activate],
     focus_order: Some(0),

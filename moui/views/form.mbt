@@ -7,7 +7,7 @@ pub fn[Msg] form(
 ) -> @core.View[Msg] {
   column(children, spacing~, align=CrossAlign::Stretch)
   .frame(width?)
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(@core.SemanticsRole::Form)
   .accessibility_label("Form")
   .theme(theme)
 }
@@ -118,7 +118,10 @@ pub fn[Msg] form_field(
   }
   field
   .frame(width~)
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(@core.SemanticsRole::FormField)
+  .semantics_required(required=required || resolved_status == FormFieldStatus::Required)
+  .semantics_invalid(invalid=resolved_status == FormFieldStatus::Invalid)
+  .semantics_description(error)
   .accessibility_label(form_field_accessibility_label(label, resolved_status, error))
 }
 

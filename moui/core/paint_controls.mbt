@@ -192,6 +192,13 @@ fn render_modified_node(
     }
     AccessibilityLabelModifier(_)
     | SemanticsRoleModifier(_)
+    | SemanticsSelectedModifier(_)
+    | SemanticsCheckedModifier(_)
+    | SemanticsExpandedModifier(_)
+    | SemanticsInvalidModifier(_)
+    | SemanticsRequiredModifier(_)
+    | SemanticsDescriptionModifier(_)
+    | SemanticsActionModifier(_)
     | FocusableModifier(_)
     | OnTapModifier(_)
     | OnLongPressModifier(_)

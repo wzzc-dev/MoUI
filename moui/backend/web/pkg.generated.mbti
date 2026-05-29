@@ -60,7 +60,12 @@ pub(all) struct AriaNode {
   role : String
   label : String
   value : String
+  description : String
   checked : Bool?
+  selected : Bool
+  expanded : Bool
+  invalid : Bool
+  required : Bool
   focused : Bool
   frame : @wzzc-dev/moui/core.Rect
   children : Array[AriaNode]

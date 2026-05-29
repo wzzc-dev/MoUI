@@ -1462,6 +1462,7 @@ test "native accessibility bridge snapshots semantics recursively" {
     role: @core.SemanticsRole::Button,
     label: "Save",
     value: "",
+    description: "Save current document",
     state: @core.SemanticsState::default(),
     actions: [@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
     focus_order: Some(0),
@@ -1473,6 +1474,7 @@ test "native accessibility bridge snapshots semantics recursively" {
     role: @core.SemanticsRole::Group,
     label: "Root",
     value: "",
+    description: "",
     state: @core.SemanticsState::default(),
     actions: [],
     focus_order: None,
@@ -1493,6 +1495,10 @@ test "native accessibility bridge snapshots semantics recursively" {
         Some(label) => inspect(label, content="Save")
         None => fail("expected child accessibility label")
       }
+      match child_update.node().description() {
+        Some(description) => inspect(description, content="Save current document")
+        None => fail("expected child accessibility description")
+      }
       inspect(
         child_update.node().supports_action(@accesskit.Action::Click),
         content="true",
@@ -1510,6 +1516,7 @@ test "native accessibility bridge validates action roundtrip" {
     role: @core.SemanticsRole::TextField,
     label: "Name",
     value: "MoUI",
+    description: "Required profile name",
     state: @core.SemanticsState::default(),
     actions: [@core.SemanticsAction::Focus, @core.SemanticsAction::SetText],
     focus_order: Some(0),
