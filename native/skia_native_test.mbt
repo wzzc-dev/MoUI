@@ -767,6 +767,14 @@ test "canvas draw api typechecks" {
           font,
           paint,
         )
+        canvas.draw_glyphs(
+          glyphs,
+          font.glyph_positions(glyphs),
+          font,
+          paint,
+          origin=@skia.Point::new(2, 12),
+        )
+        canvas.draw_glyphs(glyphs, [], font, paint)
       }
     }
     match @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4)) {
