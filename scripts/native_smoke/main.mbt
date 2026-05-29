@@ -136,6 +136,27 @@ fn main {
     mode=@skia.Polygon,
   )
 
+  guard @native.Font::default(size=9.0) is Some(glyph_font) else {
+    fail_smoke("failed to create native font for glyph drawing")
+  }
+  let glyph_text = smoke_text_bytes()
+  let glyphs = glyph_font.text_to_glyphs_utf8(glyph_text)
+  if glyphs.length() != glyph_font.count_text_utf8(glyph_text) ||
+    glyphs.length() != 4 {
+    fail_smoke("native font did not produce the expected glyph run")
+  }
+  let glyph_positions = glyph_font.glyph_positions(glyphs)
+  if glyph_positions.length() != glyphs.length() {
+    fail_smoke("native font did not produce positions for every glyph")
+  }
+  canvas.draw_glyphs(
+    glyphs,
+    glyph_positions,
+    glyph_font,
+    @skia.Paint::new(color=@skia.Color::black(), anti_alias=false),
+    origin=@skia.Point::new(1, 31),
+  )
+
   let save_count_before_clip = canvas.save_count()
   ignore(canvas.save())
   if canvas.save_count() != save_count_before_clip + 1 {
