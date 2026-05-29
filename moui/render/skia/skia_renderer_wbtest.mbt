@@ -93,6 +93,22 @@ test "skia text system exposes measured caret positions" {
 }
 
 ///|
+test "skia text drawing builds positioned glyph runs" {
+  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+    Some(font) => {
+      let run = skia_basic_glyph_run(font, "Slim")
+      inspect(run.glyphs.length(), content="4")
+      inspect(run.positions.length(), content="4")
+      assert_true(run.width == skia_measure_text_width(font, "Slim"))
+      assert_true(run.positions[0] == @skia_mbt.Point::zero())
+      assert_true(run.positions[1].x > run.positions[0].x)
+      assert_true(run.positions[2].x > run.positions[1].x)
+    }
+    None => assert_true(!skia_available())
+  }
+}
+
+///|
 test "skia text metrics derive baseline and height from font metrics" {
   match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {

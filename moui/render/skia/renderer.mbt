@@ -52,6 +52,13 @@ priv struct SkiaTextMetrics {
 }
 
 ///|
+priv struct SkiaGlyphRun {
+  glyphs : Array[@skia_native.GlyphId]
+  positions : Array[@skia_mbt.Point]
+  width : Double
+}
+
+///|
 pub fn skia_available() -> Bool {
   @skia_native.skia_available()
 }
@@ -660,14 +667,13 @@ fn SkiaRasterRenderer::draw_text(
 ) -> Unit {
   match skia_font(run.font) {
     Some(font) => {
-      let bytes = @utf8.encode(run.text[:], bom=false)
-      let width = skia_measure_text_width(font, run.text)
+      let glyph_run = skia_basic_glyph_run(font, run.text)
       let x = match run.align {
         @core.TextAlign::TextStart => run.frame.origin.x
         @core.TextAlign::TextCenter =>
-          run.frame.origin.x + (run.frame.size.width - width) / 2.0
+          run.frame.origin.x + (run.frame.size.width - glyph_run.width) / 2.0
         @core.TextAlign::TextEnd =>
-          run.frame.origin.x + run.frame.size.width - width
+          run.frame.origin.x + run.frame.size.width - glyph_run.width
       }
       let metrics = skia_text_metrics(
         font,
@@ -675,11 +681,15 @@ fn SkiaRasterRenderer::draw_text(
         fallback_height=run.font.size * 1.25,
       )
       let y = run.frame.origin.y + metrics.baseline
-      canvas.draw_text_utf8(
-        bytes,
-        @skia_mbt.Point::new(Float::from_double(x), Float::from_double(y)),
+      canvas.draw_glyphs(
+        glyph_run.glyphs,
+        glyph_run.positions,
         font,
         skia_paint(run.color),
+        origin=@skia_mbt.Point::new(
+          Float::from_double(x),
+          Float::from_double(y),
+        ),
       )
     }
     None => self.unsupported_command_count = self.unsupported_command_count + 1
@@ -1086,6 +1096,20 @@ fn skia_caret_positions(
 ///|
 fn skia_measure_text_width(font : @skia_native.Font, text : String) -> Double {
   font.measure_text_utf8(@utf8.encode(text[:], bom=false)).to_double()
+}
+
+///|
+fn skia_basic_glyph_run(
+  font : @skia_native.Font,
+  text : String,
+) -> SkiaGlyphRun {
+  let bytes = @utf8.encode(text[:], bom=false)
+  let glyphs = font.text_to_glyphs_utf8(bytes)
+  {
+    glyphs,
+    positions: font.glyph_positions(glyphs),
+    width: font.measure_text_utf8(bytes).to_double(),
+  }
 }
 
 ///|
