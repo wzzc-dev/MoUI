@@ -250,7 +250,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     filter.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Ready,
   )
   assert_true(
     filter
@@ -260,7 +260,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     filter
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
-    .contains("brightness"),
+    .contains("color matrix"),
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::ShaderEffect,

@@ -77,9 +77,9 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
         filter.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
       assert_true(image.status == @render.RendererFeatureStatus::Partial)
-      assert_true(filter.status == @render.RendererFeatureStatus::Partial)
+      assert_true(filter.status == @render.RendererFeatureStatus::Ready)
       assert_true(image.note.contains("data URI"))
-      assert_true(filter.note.contains("brightness"))
+      assert_true(filter.note.contains("color matrix"))
     }
     _ => fail("expected Skia image and filter capability records")
   }
