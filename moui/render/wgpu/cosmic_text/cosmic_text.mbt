@@ -399,13 +399,12 @@ fn build_cosmic_text_input_buffer(
   )
   let attrs = cosmic_text_attrs_for_font(input.font)
   let text = cosmic_text_safe_text(input.text)
-  let max_width = match input.max_width {
-    Some(width) => Some(Float::from_double(width))
-    None => None
-  }
   @moon_cosmic.Buffer::new(metrics)
   .set_wrap(@moon_cosmic.Wrap::None)
-  .set_size(max_width, None)
+  // MoUI clamps measured results after provider validation. Keeping the
+  // provider measure pass unconstrained avoids width-triggered shaping panics
+  // for emoji and mixed-script diagnostic strings.
+  .set_size(None, None)
   .set_text(
     text,
     @moon_cosmic.AttrsList::new(attrs),
@@ -545,6 +544,13 @@ fn cosmic_text_safe_char(ch : Char) -> Char {
     '✓' => 'v'
     '🔍' => '?'
     '✕' => 'x'
+    '\u{2615}' => 'o'
+    '\u{FE0F}' => '/'
+    '\u{1F642}' => ':'
+    '\u{1F469}' => 'w'
+    '\u{200D}' => '/'
+    '\u{1F373}' => 'c'
+    '\u{1F4BB}' => 'c'
     '•' => '*'
     '☑' => 'x'
     '☐' => 'o'

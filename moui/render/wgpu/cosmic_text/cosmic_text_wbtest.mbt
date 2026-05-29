@@ -342,6 +342,9 @@ test "cosmic text maps control symbols before layout" {
     cosmic_text_safe_text("✓ ▲ ▼ ◀ ▶ 🔍 ✕ • ☑ ☐ ·"),
     content="v ▲ ▼ ◀ ▶ ? x * x o /",
   )
+  inspect(cosmic_text_safe_text("🙂"), content=":")
+  inspect(cosmic_text_safe_text("☕️"), content="o/")
+  inspect(cosmic_text_safe_text("\u{1F469}\u{200D}\u{1F373}"), content="w/c")
   inspect(cosmic_text_safe_text("你好abc"), content="你好abc")
 }
 
