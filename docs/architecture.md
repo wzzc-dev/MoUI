@@ -366,6 +366,9 @@ The same queue records ordered request completions, making accepted operations
 and explicit rejections observable. Active backends use the shared queue drain
 helper so completion recording stays a host contract instead of a platform-local
 loop.
+`HostWindowCommands` is the higher-level command facade over the same queue for
+app-facing open/focus/resize/minimize/show/close helpers and shared draining
+into a registry or window runtime slots.
 The Web, macOS, and Windows hosts also expose `run_app_with_options` with app
 options that accept a `HostWindowSceneResolver`. With a resolver, `OpenWindow`
 requests resolve a scene into a new `AppRuntime`, create another platform
