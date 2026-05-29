@@ -175,11 +175,13 @@ For simple lifecycle work, `ctx.on_mount(key=..., ...)` and
 `ctx.on_dispose(key=..., ...)` are named wrappers around the same keyed effect
 model.
 
-Small string, bool, and int state that needs to survive rebuilds, resize, and
-same-root remount can use the scoped `save_*`, `restore_*`, or `saveable_*`
-helpers. `saveable_*` helpers return `State` values that write back to the
-runtime store and request component rebuilds when changed. More general
-saveable value support remains a follow-up.
+State that needs to survive rebuilds, resize, and same-root remount can use the
+scoped `save`, `restore`, or `saveable` helpers with a `SaveableCodec[T]`.
+The string, bool, and int helpers remain as convenience wrappers over the same
+codec path. `saveable_*` helpers return `State` values that write back to the
+runtime store and request component rebuilds when changed, and the store can be
+snapshotted/restored through `SaveableStateSnapshot` for higher-level state
+restoration flows.
 
 Environment values flow through `BuildContext` so components can react to
 platform and accessibility signals such as color scheme, locale, layout

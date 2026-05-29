@@ -222,6 +222,44 @@ test "saveable store preserves bools and ints through string storage" {
 }
 
 ///|
+test "saveable codecs expose encode decode and store snapshots" {
+  let codec = SaveableCodec::new(
+    encode=(value : Int) => "score:" + value.to_string(),
+    decode=value => {
+      if value.length() > 6 && value[:6].to_owned() == "score:" {
+        parse_saveable_score(value[6:].to_owned())
+      } else {
+        None
+      }
+    },
+  )
+  inspect(codec.encode_value(12), content="score:12")
+  match codec.decode_value("score:34") {
+    Some(34) => ()
+    _ => fail("expected custom decode")
+  }
+  match codec.decode_value("bad") {
+    None => ()
+    _ => fail("expected invalid custom decode to return none")
+  }
+  let store = SaveableStateStore::new()
+  store.set("score", 8, codec)
+  store.set_bool("enabled", true)
+  let snapshot = store.snapshot()
+  store.set("score", 9, codec)
+  store.remove("enabled")
+  store.restore(snapshot)
+  match store.get("score", codec) {
+    Some(8) => ()
+    _ => fail("expected restored score")
+  }
+  match store.get_bool("enabled") {
+    Some(true) => ()
+    _ => fail("expected restored bool")
+  }
+}
+
+///|
 test "saveable codec stores custom values through scoped component state" {
   let codec = SaveableCodec::new(
     encode=(value : Int) => "score:" + value.to_string(),
@@ -258,6 +296,43 @@ test "saveable codec stores custom values through scoped component state" {
   runtime.mount(runtime.root_spec)
   guard runtime.build_draw_commands()[1] is DrawText({ text: "Score 17", .. }) else {
     fail("expected custom saveable state after same-root remount")
+  }
+}
+
+///|
+test "build context saves and restores custom codec values" {
+  let source = State::new(11)
+  let codec = SaveableCodec::new(
+    encode=(value : Int) => "score:" + value.to_string(),
+    decode=value => {
+      if value.length() > 6 && value[:6].to_owned() == "score:" {
+        parse_saveable_score(value[6:].to_owned())
+      } else {
+        None
+      }
+    },
+  )
+  let runtime = RuntimeState::new_component(
+    root=Component::new(ctx => {
+      let value = ctx.watch(source)
+      ctx.save(key="score", value, codec)
+      let restored = ctx.restore(key="score", codec).unwrap_or(0)
+      ViewSpec::TextSpec({
+        key: None,
+        text: "Score \{restored}",
+        size: Size::new(width=120.0, height=20.0),
+        font: FontSpec::new(size=12.0, weight=400),
+        color: Color::black(),
+      })
+    }),
+    size=Size::new(width=120.0, height=20.0),
+  )
+  guard runtime.build_draw_commands()[1] is DrawText({ text: "Score 11", .. }) else {
+    fail("expected initial custom save restore")
+  }
+  source.set(19)
+  guard runtime.build_draw_commands()[1] is DrawText({ text: "Score 19", .. }) else {
+    fail("expected updated custom save restore")
   }
 }
 
