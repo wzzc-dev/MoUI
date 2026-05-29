@@ -11,6 +11,8 @@ pub fn[Msg] align(@core.View[Msg], alignment? : @core.Alignment) -> @core.View[M
 
 pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
 
+pub fn[Msg] autocomplete(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], expanded~ : Bool, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
@@ -39,6 +41,8 @@ pub fn[Msg] clearable_text_field(String, on_input~ : (String) -> Msg, on_clear~ 
 
 pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
+pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], expanded~ : Bool, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
 pub fn component((@core.BuildContext) -> @core.View[Unit]) -> @core.View[Unit]
 
 pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
@@ -52,6 +56,8 @@ pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValu
 pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] dropdown(String, Array[MenuItem[Msg]], state~ : DropdownState, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] empty() -> @core.View[Msg]
 
@@ -134,6 +140,8 @@ pub fn[Msg] picker(Array[@core.PickerItem], selected~ : String, on_select~ : (St
 pub fn[Msg] picker_binding(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
 
 pub fn picker_item(String, String) -> @core.PickerItem
+
+pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
@@ -241,6 +249,12 @@ pub(all) enum CrossAlign {
   Stretch
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct DropdownState {
+  expanded : Bool
+  selected : String
+}
+pub fn DropdownState::new(expanded? : Bool, selected? : String) -> Self
+
 pub(all) enum FeedbackTone {
   Neutral
   Success
@@ -277,9 +291,24 @@ pub(all) enum MainAlign {
   Evenly
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct MenuItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] MenuItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
+
 pub(all) struct NavigationDestination[Msg] {
   route : String
   view : @core.View[Msg]
+}
+
+pub(all) enum PopoverPlacement {
+  BottomStart
+  BottomEnd
+  TopStart
+  TopEnd
 }
 
 pub(all) enum SegmentedControlSize {
