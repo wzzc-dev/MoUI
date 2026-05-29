@@ -388,7 +388,8 @@ fn ElementNode::child_frames_for_place(
         safe_area: Insets::symmetric(),
         viewport: Some(frame.size),
       })
-    ModifiedSpec(data) => modified_child_frames(data.modifier, frame)
+    ModifiedSpec(data) =>
+      modified_child_frames(data.modifier, frame, self.children)
     ComponentSpec(_) => if self.children.length() > 0 { [frame] } else { [] }
     _ => []
   }
@@ -507,7 +508,11 @@ fn modified_child_constraints(
 }
 
 ///|
-fn modified_child_frames(modifier : ViewModifier, frame : Rect) -> Array[Rect] {
+fn modified_child_frames(
+  modifier : ViewModifier,
+  frame : Rect,
+  children : Array[ElementNode],
+) -> Array[Rect] {
   match modifier {
     PaddingModifier(insets) => [frame.inset(insets)]
     FrameModifier(data) => [frame_rect_for_modifier(data, frame)]
@@ -529,9 +534,14 @@ fn modified_child_frames(modifier : ViewModifier, frame : Rect) -> Array[Rect] {
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
-    | AlignModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier => [frame]
+    AlignModifier(alignment) =>
+      if children.length() > 0 {
+        [aligned_rect(frame, children[0].intrinsic_size(), alignment)]
+      } else {
+        [frame]
+      }
     OffsetModifier(dx, dy) => [frame.offset(dx~, dy~)]
     AspectRatioModifier(ratio) => [aspect_ratio_rect(frame, ratio)]
   }
