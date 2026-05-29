@@ -72,7 +72,7 @@ The `native` subpackage contains the first opt-in native boundary:
   `draw_arc`, `draw_round_rect`, `draw_rrect`, `draw_drrect`, `draw_path`,
   `draw_image`, and `draw_image_rect` with explicit `SamplingOptions`, plus
   portable path drawing through `draw_path_value`, UTF-8 text through
-  `draw_text_utf8`, font measurement through `Font::measure_text_utf8`, glyph IDs through
+  `draw_text_utf8`, positioned glyph runs through `draw_glyphs`, font measurement through `Font::measure_text_utf8`, glyph IDs through
   `Font::count_text_utf8` / `Font::text_to_glyphs_utf8`, glyph advances through
   `Font::glyph_width` / `Font::glyph_widths`, glyph positions through
   `Font::glyph_positions` / `Font::glyph_x_positions` and
@@ -138,6 +138,7 @@ not enough to claim real Skia acceptance.
 The smoke test requires `@native.skia_available()` to be true. It creates a
 32x32 raster N32 premul surface, clears it to white, draws red, green,
 and blue rectangles, exercises `draw_points` in point, line, and polygon modes,
+draws a positioned glyph run,
 checks canvas save/restore state, clip bounds, quick rejection, and clipped
 drawing, reads pixels back, checks representative BGRA N32 pixels,
 snapshots the
