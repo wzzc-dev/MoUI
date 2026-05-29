@@ -10,8 +10,8 @@ matrix and the exact evidence still missing per platform.
 - `scripts/native_smoke` was built for the native target with `SKIA_MBT_HAS_SKIA`.
 - The produced executable ran to completion and printed
   `skia_mbt native smoke test passed`.
-- `native/moon.pkg` was restored to its original contents after the temporary
-  link rewrite.
+- `native/moon.pkg` and `scripts/native_smoke/moon.pkg` were restored to their
+  original contents after the temporary link rewrite.
 - The wrapper log records the Skia include path, library path, native flags,
   library file, and resolved `skia_commit` when the Skia checkout is available.
 - The acceptance log records `smoke_status=0`, `native_smoke_marker=passed`,

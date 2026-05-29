@@ -402,6 +402,56 @@ pub fn Path::close(self : Path) -> Unit {
 }
 
 ///|
+pub fn Path::add_path_value(
+  self : Path,
+  path : @skia.Path,
+  matrix? : @skia.Matrix = @skia.Matrix::identity(),
+  mode? : @skia.AddPathMode = @skia.Append,
+) -> Unit {
+  ignore(self)
+  ignore(path)
+  ignore(matrix)
+  ignore(mode)
+}
+
+///|
+pub fn Path::add_path_value_matrix(
+  self : Path,
+  path : @skia.Path,
+  matrix : @skia.Matrix,
+  mode? : @skia.AddPathMode = @skia.Append,
+) -> Unit {
+  ignore(self)
+  ignore(path)
+  ignore(matrix)
+  ignore(mode)
+}
+
+///|
+pub fn Path::add_path_value_offset(
+  self : Path,
+  path : @skia.Path,
+  offset : @skia.Point,
+  mode? : @skia.AddPathMode = @skia.Append,
+) -> Unit {
+  ignore(self)
+  ignore(path)
+  ignore(offset)
+  ignore(mode)
+}
+
+///|
+pub fn Path::add_poly(
+  self : Path,
+  points : Array[@skia.Point],
+  close? : Bool = false,
+) -> Unit {
+  ignore(self)
+  ignore(points)
+  ignore(close)
+}
+
+///|
 pub fn Path::add_rect(
   self : Path,
   rect : @skia.Rect,
