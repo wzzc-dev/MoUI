@@ -223,6 +223,21 @@ test "opacity and clip modifiers preserve nested push pop order" {
 }
 
 ///|
+test "align modifier positions child within parent frame" {
+  let spec = test_label("A")
+    .frame(width=40.0, height=20.0)
+    .align(alignment=Alignment::bottom_trailing())
+  let layout = layout_spec(
+    spec,
+    Rect::new(x=0.0, y=0.0, width=100.0, height=60.0),
+  )
+  inspect(layout.children[0].frame.origin.x, content="60")
+  inspect(layout.children[0].frame.origin.y, content="40")
+  inspect(layout.children[0].frame.size.width, content="40")
+  inspect(layout.children[0].frame.size.height, content="20")
+}
+
+///|
 test "grid lays children into fixed columns" {
   let grid = ViewSpec::GridSpec({
     key: None,
