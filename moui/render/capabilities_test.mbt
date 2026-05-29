@@ -195,9 +195,18 @@ test "renderer capability report tracks draw command support" {
     @render.RendererFeatureStatus::Ready,
   )
   assert_true(
+    layer.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
     layer
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
     .contains("offscreen"),
+  )
+  assert_true(
+    layer
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("rectangular masks"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::BlendMode)
     is Some(blend) else {
@@ -212,9 +221,18 @@ test "renderer capability report tracks draw command support" {
     @render.RendererFeatureStatus::Ready,
   )
   assert_true(
+    blend.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
     blend
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
     .contains("backdrop-sampling"),
+  )
+  assert_true(
+    blend
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("multiply"),
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::FilterEffect,
@@ -231,9 +249,18 @@ test "renderer capability report tracks draw command support" {
     @render.RendererFeatureStatus::Ready,
   )
   assert_true(
+    filter.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
     filter
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
     .contains("color matrix"),
+  )
+  assert_true(
+    filter
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("brightness"),
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::ShaderEffect,
