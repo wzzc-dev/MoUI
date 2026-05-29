@@ -1273,6 +1273,10 @@ pub(all) enum SemanticsAction {
   SetText
   Submit
   Scroll
+  Select
+  Expand
+  Collapse
+  Dismiss
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SemanticsInspectorSnapshot {
@@ -1289,6 +1293,7 @@ pub(all) struct SemanticsNode {
   role : SemanticsRole
   label : String
   value : String
+  description : String
   state : SemanticsState
   actions : Array[SemanticsAction]
   focus_order : Int?
@@ -1314,6 +1319,11 @@ pub(all) enum SemanticsRole {
   Dialog
   Tooltip
   Menu
+  ButtonGroup
+  Form
+  FormField
+  Tree
+  TreeItem
   Group
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -1323,6 +1333,8 @@ pub(all) struct SemanticsState {
   selected : Bool
   checked : Bool
   expanded : Bool
+  invalid : Bool
+  required : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsState::default() -> Self
 
@@ -1664,7 +1676,15 @@ pub fn[Msg] View::rich_text_editor(value~ : Binding[String], placeholder~ : Stri
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
 pub fn[Msg] View::scroll(child~ : Self[Msg], offset? : Point, viewport? : Size?, state? : ScrollState?, on_scroll? : ((Point) -> Msg)?) -> Self[Msg]
 pub fn[Msg] View::search_bar(query~ : Binding[String], placeholder~ : String, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius~ : Double, on_submit? : Msg?, on_clear? : Msg?) -> Self[Msg]
+pub fn[Msg] View::semantics_action(Self[Msg], SemanticsAction) -> Self[Msg]
+pub fn[Msg] View::semantics_checked(Self[Msg], checked? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_description(Self[Msg], String) -> Self[Msg]
+pub fn[Msg] View::semantics_dismiss_action(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::semantics_expanded(Self[Msg], expanded? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_invalid(Self[Msg], invalid? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_required(Self[Msg], required? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_role(Self[Msg], SemanticsRole) -> Self[Msg]
+pub fn[Msg] View::semantics_selected(Self[Msg], selected? : Bool) -> Self[Msg]
 pub fn[Msg] View::shadow(Self[Msg], ShadowStyle) -> Self[Msg]
 pub fn[Msg] View::sheet(content~ : Self[Msg], presentation_mode~ : SheetPresentationMode, background~ : Brush, corner_radius~ : Double, shadow? : ShadowStyle?, on_dismiss? : Msg?) -> Self[Msg]
 pub fn[Msg] View::spacer(min_length? : Double, weight? : Double) -> Self[Msg]

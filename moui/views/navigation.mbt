@@ -90,6 +90,7 @@ pub fn[Msg] tab_view(
       width=112.0,
       height=36.0,
     ).semantics_role(@core.SemanticsRole::Tab)
+    .semantics_selected(selected=tab.route == selected)
     buttons.push(tab_button)
   }
   column([row(buttons, spacing~), content], spacing~)
@@ -134,6 +135,7 @@ pub fn[Msg] sidebar(
         height=34.0,
       )
       .disabled(disabled=!item.enabled)
+      .semantics_selected(selected=item.id == selected)
       .key("sidebar-item-" + item.id),
     )
   }
@@ -262,7 +264,8 @@ pub fn[Msg] wizard(
         height=36.0,
       )
       .disabled(disabled=!step.enabled)
-      .semantics_role(@core.SemanticsRole::Tab),
+      .semantics_role(@core.SemanticsRole::Tab)
+      .semantics_selected(selected=step.id == current),
     )
   }
   surface(

@@ -3,7 +3,12 @@ pub(all) struct AriaNode {
   role : String
   label : String
   value : String
+  description : String
   checked : Bool?
+  selected : Bool
+  expanded : Bool
+  invalid : Bool
+  required : Bool
   focused : Bool
   frame : @core.Rect
   children : Array[AriaNode]
@@ -15,7 +20,12 @@ pub fn semantics_to_aria(node : @core.SemanticsNode) -> AriaNode {
     role: aria_role(node.role),
     label: node.label,
     value: node.value,
+    description: node.description,
     checked: aria_checked(node),
+    selected: node.state.selected,
+    expanded: node.state.expanded,
+    invalid: node.state.invalid,
+    required: node.state.required,
     focused: node.state.focused,
     frame: node.frame,
     children: node.children.map(child => semantics_to_aria(child)),
@@ -42,6 +52,11 @@ fn aria_role(role : @core.SemanticsRole) -> String {
     @core.SemanticsRole::Dialog => "dialog"
     @core.SemanticsRole::Tooltip => "tooltip"
     @core.SemanticsRole::Menu => "menu"
+    @core.SemanticsRole::ButtonGroup => "group"
+    @core.SemanticsRole::Form => "form"
+    @core.SemanticsRole::FormField => "group"
+    @core.SemanticsRole::Tree => "tree"
+    @core.SemanticsRole::TreeItem => "treeitem"
     @core.SemanticsRole::Group => "group"
   }
 }

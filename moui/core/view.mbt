@@ -978,6 +978,67 @@ pub fn[Msg] View::semantics_role(
 }
 
 ///|
+pub fn[Msg] View::semantics_selected(
+  self : View[Msg],
+  selected? : Bool = true,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(SemanticsSelectedModifier(selected)))
+}
+
+///|
+pub fn[Msg] View::semantics_checked(
+  self : View[Msg],
+  checked? : Bool = true,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(SemanticsCheckedModifier(checked)))
+}
+
+///|
+pub fn[Msg] View::semantics_expanded(
+  self : View[Msg],
+  expanded? : Bool = true,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(SemanticsExpandedModifier(expanded)))
+}
+
+///|
+pub fn[Msg] View::semantics_invalid(
+  self : View[Msg],
+  invalid? : Bool = true,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(SemanticsInvalidModifier(invalid)))
+}
+
+///|
+pub fn[Msg] View::semantics_required(
+  self : View[Msg],
+  required? : Bool = true,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(SemanticsRequiredModifier(required)))
+}
+
+///|
+pub fn[Msg] View::semantics_description(
+  self : View[Msg],
+  description : String,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(SemanticsDescriptionModifier(description)))
+}
+
+///|
+pub fn[Msg] View::semantics_action(
+  self : View[Msg],
+  action : SemanticsAction,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(SemanticsActionModifier(action)))
+}
+
+///|
+pub fn[Msg] View::semantics_dismiss_action(self : View[Msg]) -> View[Msg] {
+  self.semantics_action(SemanticsAction::Dismiss)
+}
+
+///|
 pub fn[Msg] View::focusable(
   self : View[Msg],
   focusable? : Bool = true,

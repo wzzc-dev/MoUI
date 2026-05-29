@@ -672,6 +672,11 @@ pub fn accesskit_role_from_semantics(
     @core.SemanticsRole::Dialog => @accesskit.Role::Dialog
     @core.SemanticsRole::Tooltip => @accesskit.Role::Tooltip
     @core.SemanticsRole::Menu => @accesskit.Role::Menu
+    @core.SemanticsRole::ButtonGroup => @accesskit.Role::Group
+    @core.SemanticsRole::Form => @accesskit.Role::Form
+    @core.SemanticsRole::FormField => @accesskit.Role::GenericContainer
+    @core.SemanticsRole::Tree => @accesskit.Role::Tree
+    @core.SemanticsRole::TreeItem => @accesskit.Role::TreeItem
     @core.SemanticsRole::Group => @accesskit.Role::Group
   }
 }
@@ -686,6 +691,10 @@ pub fn accesskit_action_from_semantics(
     @core.SemanticsAction::SetText => @accesskit.Action::SetValue
     @core.SemanticsAction::Submit => @accesskit.Action::Click
     @core.SemanticsAction::Scroll => @accesskit.Action::ScrollIntoView
+    @core.SemanticsAction::Select => @accesskit.Action::Click
+    @core.SemanticsAction::Expand => @accesskit.Action::Expand
+    @core.SemanticsAction::Collapse => @accesskit.Action::Collapse
+    @core.SemanticsAction::Dismiss => @accesskit.Action::HideTooltip
   }
 }
 
@@ -703,6 +712,9 @@ pub fn accesskit_node_from_semantics(
   if node.value != "" {
     access_node.set_value(node.value)
   }
+  if node.description != "" {
+    access_node.set_description(node.description)
+  }
   if node.state.disabled {
     access_node.set_disabled()
   }
@@ -714,6 +726,12 @@ pub fn accesskit_node_from_semantics(
   }
   if node.state.expanded {
     access_node.set_expanded(true)
+  }
+  if node.state.invalid {
+    access_node.set_invalid(@accesskit.Invalid::True)
+  }
+  if node.state.required {
+    access_node.set_required()
   }
   for action in node.actions {
     access_node.add_action(accesskit_action_from_semantics(action))
@@ -780,6 +798,7 @@ pub fn NativeAccessibilityNode::from_accesskit(
     role,
     label: "",
     value: "",
+    description: "",
     state: @core.SemanticsState::default(),
     actions: [],
     focus_order: None,
@@ -904,6 +923,10 @@ pub fn semantics_action_label(action : @core.SemanticsAction) -> String {
     @core.SemanticsAction::SetText => "set-text"
     @core.SemanticsAction::Submit => "submit"
     @core.SemanticsAction::Scroll => "scroll"
+    @core.SemanticsAction::Select => "select"
+    @core.SemanticsAction::Expand => "expand"
+    @core.SemanticsAction::Collapse => "collapse"
+    @core.SemanticsAction::Dismiss => "dismiss"
   }
 }
 
@@ -945,6 +968,11 @@ fn native_accessibility_role(role : @core.SemanticsRole) -> String {
     @core.SemanticsRole::Dialog => "dialog"
     @core.SemanticsRole::Tooltip => "tooltip"
     @core.SemanticsRole::Menu => "menu"
+    @core.SemanticsRole::ButtonGroup => "buttonGroup"
+    @core.SemanticsRole::Form => "form"
+    @core.SemanticsRole::FormField => "formField"
+    @core.SemanticsRole::Tree => "tree"
+    @core.SemanticsRole::TreeItem => "treeItem"
     @core.SemanticsRole::Group => "group"
   }
 }

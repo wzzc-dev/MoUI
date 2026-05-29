@@ -79,6 +79,7 @@ test "linux accessibility bridge dispatches semantics actions" {
     role: @core.SemanticsRole::Button,
     label: "Run",
     value: "",
+    description: "",
     state: @core.SemanticsState::default(),
     actions: [@core.SemanticsAction::Activate],
     focus_order: Some(0),

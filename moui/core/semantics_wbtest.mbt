@@ -117,3 +117,30 @@ test "semantics marks list and list item roles" {
   inspect(tree.children[0].label, content="One")
   inspect(tree.children[1].frame.origin.y, content="22")
 }
+
+///|
+test "semantics metadata modifiers merge role state actions and description" {
+  let runtime = RuntimeState::new_spec(
+    root=ViewSpec::TextSpec({
+      key: None,
+      text: "Email",
+      size: Size::new(width=120.0, height=24.0),
+      font: FontSpec::new(),
+      color: Color::black(),
+    })
+    .modified(SemanticsRoleModifier(SemanticsRole::FormField))
+    .modified(SemanticsRequiredModifier(true))
+    .modified(SemanticsInvalidModifier(true))
+    .modified(SemanticsDescriptionModifier("Email required"))
+    .modified(SemanticsExpandedModifier(false)),
+    size=Size::new(width=160.0, height=80.0),
+  )
+  let tree = runtime.semantics()
+  assert_true(tree.role == SemanticsRole::FormField)
+  inspect(tree.label, content="Email")
+  inspect(tree.description, content="Email required")
+  assert_true(tree.state.required)
+  assert_true(tree.state.invalid)
+  assert_false(tree.state.expanded)
+  assert_true(tree.actions.any(action => action == SemanticsAction::Expand))
+}

@@ -514,6 +514,67 @@ test "grouped choice controls compose selections and chips" {
 }
 
 ///|
+test "component semantics expose selection validation and expanded states" {
+  let choices = [
+    @views.choice_item("native", "Native"),
+    @views.choice_item("web", "Web"),
+  ]
+  let tree_items = [
+    @views.tree_item(
+      id="root",
+      label="Root",
+      children=[@views.tree_item(id="leaf", label="Leaf")],
+    ),
+  ]
+  let commands = [
+    @views.MenuItem::new(id="save", label="Save", message=()),
+    @views.MenuItem::new(id="open", label="Open", message=()),
+  ]
+  let root : @core.View[Unit] = @views.column(
+    [
+      @views.form_field(
+        label="Email",
+        child=@views.text_field("", on_input=_value => ()),
+        error="Email required",
+        required=true,
+      ),
+      @views.segmented_control(choices, selected="web", on_select=_id => ()),
+      @views.tree_view(tree_items, expanded=["root"], selected="leaf"),
+      @views.button_group(commands, selected="save"),
+    ],
+  )
+  let semantics = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=760.0, height=520.0),
+  ).semantics()
+  guard find_semantics_label(semantics, "Email, invalid, Email required") is Some(email) else {
+    fail("expected email form field semantics")
+  }
+  assert_true(email.role == @core.SemanticsRole::FormField)
+  assert_true(email.state.invalid)
+  assert_true(email.state.required)
+  inspect(email.description, content="Email required")
+  guard find_semantics_label(semantics, "Web") is Some(web) else {
+    fail("expected selected segment semantics")
+  }
+  assert_true(web.role == @core.SemanticsRole::Tab)
+  assert_true(web.state.selected)
+  guard find_semantics_label(semantics, "Root") is Some(root_item) else {
+    fail("expected root tree item semantics")
+  }
+  assert_true(root_item.role == @core.SemanticsRole::TreeItem)
+  assert_true(root_item.state.expanded)
+  guard find_semantics_label(semantics, "Leaf") is Some(leaf_item) else {
+    fail("expected leaf tree item semantics")
+  }
+  assert_true(leaf_item.state.selected)
+  guard find_semantics_label(semantics, "Save") is Some(save) else {
+    fail("expected button group selected item")
+  }
+  assert_true(save.state.selected)
+}
+
+///|
 test "feedback and state components compose visible status surfaces" {
   let action = @views.StateViewAction::new(label="Retry", message=())
   let root : @core.View[Unit] = @views.column(
@@ -950,4 +1011,22 @@ fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
   })
+}
+
+///|
+fn find_semantics_label(
+  node : @core.SemanticsNode,
+  label : String,
+) -> @core.SemanticsNode? {
+  if node.label == label {
+    Some(node)
+  } else {
+    for child in node.children {
+      match find_semantics_label(child, label) {
+        Some(found) => return Some(found)
+        None => ()
+      }
+    }
+    None
+  }
 }

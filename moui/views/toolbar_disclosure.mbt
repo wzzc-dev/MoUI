@@ -32,11 +32,12 @@ pub fn[Msg] button_group(
     }
     buttons.push(
       button(item.label, on_click=item.message, variant~, theme~, width=button_width, height~)
-      .disabled(disabled=!item.enabled),
+      .disabled(disabled=!item.enabled)
+      .semantics_selected(selected=item.id == selected),
     )
   }
   row(buttons, spacing=0.0, align=CrossAlign::Center).semantics_role(
-    @core.SemanticsRole::Group,
+    @core.SemanticsRole::ButtonGroup,
   )
 }
 
@@ -226,6 +227,8 @@ pub fn[Msg] disclosure(
   }
   column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start)
   .semantics_role(@core.SemanticsRole::Group)
+  .semantics_expanded(expanded~)
+  .semantics_description(subtitle)
 }
 
 ///|

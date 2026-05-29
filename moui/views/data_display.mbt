@@ -88,7 +88,7 @@ pub fn[Msg] tree_view(
     append_tree_rows(rows, item, depth=0, expanded~, selected~, on_select~, on_toggle~, theme~, width~)
   }
   column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start)
-  .semantics_role(@core.SemanticsRole::List)
+  .semantics_role(@core.SemanticsRole::Tree)
 }
 
 ///|
@@ -214,6 +214,7 @@ fn[Msg] table_row(
   }
   row(cells, spacing=0.0, align=CrossAlign::Start)
   .semantics_role(@core.SemanticsRole::ListItem)
+  .semantics_selected(selected~)
 }
 
 ///|
@@ -271,7 +272,11 @@ fn[Msg] tree_row(
     [spacer(min_length=indent, weight=0.0), toggle, label_view],
     spacing=3.0,
     align=CrossAlign::Center,
-  ).semantics_role(@core.SemanticsRole::ListItem)
+  )
+  .semantics_role(@core.SemanticsRole::TreeItem)
+  .semantics_expanded(expanded~)
+  .semantics_selected(selected~)
+  .accessibility_label(item.label)
 }
 
 ///|
