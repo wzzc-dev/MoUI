@@ -98,8 +98,13 @@ pub fn Point::cross(self : Point, other : Point) -> Scalar {
 }
 
 ///|
+pub fn Point::length_squared(self : Point) -> Scalar {
+  self.dot(self)
+}
+
+///|
 pub fn Point::length(self : Point) -> Scalar {
-  (self.x * self.x + self.y * self.y).sqrt()
+  self.length_squared().sqrt()
 }
 
 ///|
@@ -110,6 +115,45 @@ pub fn Point::distance_to_origin(self : Point) -> Scalar {
 ///|
 pub fn Point::distance_to(self : Point, other : Point) -> Scalar {
   Point::new(self.x - other.x, self.y - other.y).length()
+}
+
+///|
+pub fn Point::distance_to_squared(self : Point, other : Point) -> Scalar {
+  Point::new(self.x - other.x, self.y - other.y).length_squared()
+}
+
+///|
+pub fn Point::distance_to_origin_squared(self : Point) -> Scalar {
+  self.length_squared()
+}
+
+///|
+pub fn Point::with_length(self : Point, length : Scalar) -> Point? {
+  if !self.is_finite() || !geometry_scalar_is_finite(length) || length < 0.0 {
+    None
+  } else {
+    let current_length = self.length()
+    if current_length == 0.0 || !geometry_scalar_is_finite(current_length) {
+      None
+    } else {
+      Some(self.scale(length / current_length))
+    }
+  }
+}
+
+///|
+pub fn Point::normalized(self : Point) -> Point? {
+  self.with_length(1.0)
+}
+
+///|
+pub fn Point::rotate_cw(self : Point) -> Point {
+  Point::new(self.y, -self.x)
+}
+
+///|
+pub fn Point::rotate_ccw(self : Point) -> Point {
+  Point::new(-self.y, self.x)
 }
 
 ///|

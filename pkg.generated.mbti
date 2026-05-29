@@ -505,15 +505,22 @@ pub(all) struct Point {
 pub fn Point::cross(Self, Self) -> Float
 pub fn Point::distance_to(Self, Self) -> Float
 pub fn Point::distance_to_origin(Self) -> Float
+pub fn Point::distance_to_origin_squared(Self) -> Float
+pub fn Point::distance_to_squared(Self, Self) -> Float
 pub fn Point::dot(Self, Self) -> Float
 pub fn Point::equals(Self, Float, Float) -> Bool
 pub fn Point::is_finite(Self) -> Bool
 pub fn Point::is_zero(Self) -> Bool
 pub fn Point::length(Self) -> Float
+pub fn Point::length_squared(Self) -> Float
 pub fn Point::new(Float, Float) -> Self
+pub fn Point::normalized(Self) -> Self?
 pub fn Point::offset(Self, Float, Float) -> Self
+pub fn Point::rotate_ccw(Self) -> Self
+pub fn Point::rotate_cw(Self) -> Self
 pub fn Point::scale(Self, Float) -> Self
 pub fn Point::to_ipoint_round(Self) -> IPoint
+pub fn Point::with_length(Self, Float) -> Self?
 pub fn Point::zero() -> Self
 pub impl Default for Point
 
