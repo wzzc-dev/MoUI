@@ -21,6 +21,9 @@ test "macos app options carry text engine and optional scene resolver" {
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default macOS scene resolver rejection")
   }
+  assert_true(
+    MacosAppOptions::new().renderer == @render.RendererSelection::Default,
+  )
   let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
     @host.HostWindowSceneResolution::SceneResolved(
       @host.HostWindowSceneInstance::new(
@@ -34,10 +37,15 @@ test "macos app options carry text engine and optional scene resolver" {
   })
   let options = MacosAppOptions::new(
     text_engine=@wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
+    renderer=@render.RendererSelection::Family(@render.RendererFamily::Skia),
     scene_resolver=resolver,
   )
   assert_true(
     options.text_engine == @wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
+  )
+  assert_true(
+    options.renderer ==
+    @render.RendererSelection::Family(@render.RendererFamily::Skia),
   )
   match options.scene_resolver.resolve(request) {
     @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>

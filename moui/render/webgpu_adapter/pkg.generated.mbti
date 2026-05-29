@@ -24,6 +24,8 @@ pub fn draw_commands_to_host_calls(Array[@core.DrawCommand], @core.Size) -> Arra
 
 pub fn host_import_info() -> WebGpuHostImportInfo
 
+pub fn renderer_spec() -> @render.RendererSpec
+
 pub fn required_capabilities() -> WebGpuHostCapabilities
 
 pub fn wasm_gc_host_port() -> WebGpuHostRendererPort

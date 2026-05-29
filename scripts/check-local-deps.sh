@@ -4,6 +4,8 @@ set -eu
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 WINDOW_DIR="$ROOT_DIR/.local_repos/window"
 WINDOW_BRANCH="moui-support"
+SKIA_MBT_DIR="$ROOT_DIR/.local_repos/skia_mbt"
+SKIA_MBT_BRANCH="master"
 
 fail() {
   printf 'local dependency check failed: %s\n' "$1" >&2
@@ -34,11 +36,44 @@ esac
 grep -q '"wzzc-dev/window@0.5.1"' "$ROOT_DIR/moui/moon.mod" ||
   fail "moui/moon.mod must import wzzc-dev/window@0.5.1"
 
+if [ -f "$WINDOW_DIR/moon.mod" ]; then
+  grep -q 'name = "wzzc-dev/window"' "$WINDOW_DIR/moon.mod" ||
+    fail ".local_repos/window/moon.mod must declare name wzzc-dev/window"
+elif [ -f "$WINDOW_DIR/moon.mod.json" ]; then
+  grep -q '"name": "wzzc-dev/window"' "$WINDOW_DIR/moon.mod.json" ||
+    fail ".local_repos/window/moon.mod.json must declare name wzzc-dev/window"
+else
+  fail ".local_repos/window must contain moon.mod or moon.mod.json"
+fi
+
+grep -q '"wzzc-dev/skia_mbt@0.1.1"' "$ROOT_DIR/moui/moon.mod" ||
+  fail "moui/moon.mod must import wzzc-dev/skia_mbt@0.1.1"
+
 grep -Eq '"(\./)?\.local_repos/window"' "$ROOT_DIR/moon.work" ||
   fail "moon.work must include .local_repos/window"
 
+grep -Eq '"(\./)?\.local_repos/skia_mbt"' "$ROOT_DIR/moon.work" ||
+  fail "moon.work must include .local_repos/skia_mbt"
+
 for pkg in core dpi web windows linux macos; do
   [ -f "$WINDOW_DIR/$pkg/moon.pkg" ] || fail "missing .local_repos/window/$pkg/moon.pkg"
+done
+
+[ -d "$SKIA_MBT_DIR/.git" ] || fail "missing .local_repos/skia_mbt checkout; run sh scripts/setup-local-deps.sh"
+
+case "$(git -C "$SKIA_MBT_DIR" remote get-url origin 2>/dev/null || true)" in
+  *wzzc-dev/skia_mbt.git|*wzzc-dev/skia_mbt)
+    ;;
+  *)
+    fail ".local_repos/skia_mbt origin must be the wzzc-dev/skia_mbt repo over SSH or HTTPS"
+    ;;
+esac
+
+[ "$(git -C "$SKIA_MBT_DIR" branch --show-current)" = "$SKIA_MBT_BRANCH" ] ||
+  fail ".local_repos/skia_mbt must be on branch $SKIA_MBT_BRANCH"
+
+for pkg_file in moon.pkg pkg.generated.mbti native/moon.pkg native/pkg.generated.mbti; do
+  [ -f "$SKIA_MBT_DIR/$pkg_file" ] || fail "missing .local_repos/skia_mbt/$pkg_file"
 done
 
 printf 'Local dependency check passed.\n'

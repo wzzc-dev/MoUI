@@ -2,11 +2,44 @@
 pub(all) enum RendererBackendKind {
   NativeWgpu
   WebGpuWasm
+  SkiaRasterNative
+  SkiaRasterWeb
+  SkiaGpuNative
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) enum RendererCapabilityStatus {
   Ready
+  Unavailable
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum RendererFamily {
+  Wgpu
+  WebGpu
+  Skia
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum RendererPresentationModel {
+  HostGpuSurface
+  WebCanvas
+  CpuPixelFrame
+  ExternalSurface
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum RendererTarget {
+  Native
+  WasmGc
+  Web
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum RendererSelection {
+  Default
+  Backend(RendererBackendKind)
+  Family(RendererFamily)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -24,6 +57,23 @@ pub(all) struct RendererBackendInfo {
   can_resize : Bool
   owns_surface : Bool
   description : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RendererSpec {
+  backend : RendererBackendKind
+  family : RendererFamily
+  presentation : RendererPresentationModel
+  supported_targets : Array[RendererTarget]
+  capabilities : Array[RendererBackendFeatureCapability]
+  description : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RenderFrameSpec {
+  metrics : RendererSurfaceMetrics
+  commands : Array[@core.DrawCommand]
+  clear_color : @core.Color?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -74,6 +124,110 @@ pub fn RendererBackendInfo::new(
   description? : String = "",
 ) -> RendererBackendInfo {
   { backend, status, can_render, can_resize, owns_surface, description }
+}
+
+///|
+pub fn RendererBackendKind::label(self : RendererBackendKind) -> String {
+  match self {
+    NativeWgpu => "native-wgpu"
+    WebGpuWasm => "webgpu-wasm"
+    SkiaRasterNative => "skia-raster-native"
+    SkiaRasterWeb => "skia-raster-web"
+    SkiaGpuNative => "skia-gpu-native"
+  }
+}
+
+///|
+pub fn RendererBackendKind::short_label(self : RendererBackendKind) -> String {
+  match self {
+    NativeWgpu => "wgpu"
+    WebGpuWasm => "webgpu"
+    SkiaRasterNative => "skia"
+    SkiaRasterWeb => "skia-web"
+    SkiaGpuNative => "skia-gpu"
+  }
+}
+
+///|
+pub fn RendererFamily::label(self : RendererFamily) -> String {
+  match self {
+    Wgpu => "wgpu"
+    WebGpu => "webgpu"
+    Skia => "skia"
+  }
+}
+
+///|
+pub fn RendererPresentationModel::label(
+  self : RendererPresentationModel,
+) -> String {
+  match self {
+    HostGpuSurface => "host-gpu-surface"
+    WebCanvas => "web-canvas"
+    CpuPixelFrame => "cpu-pixel-frame"
+    ExternalSurface => "external-surface"
+  }
+}
+
+///|
+pub fn RendererSelection::native_default() -> RendererSelection {
+  RendererSelection::Backend(RendererBackendKind::NativeWgpu)
+}
+
+///|
+pub fn RendererSelection::web_default() -> RendererSelection {
+  RendererSelection::Backend(RendererBackendKind::WebGpuWasm)
+}
+
+///|
+pub fn RendererSelection::matches_backend(
+  self : RendererSelection,
+  backend : RendererBackendKind,
+) -> Bool {
+  match self {
+    Default => false
+    Backend(selected) => selected == backend
+    Family(family) => backend.family() == family
+  }
+}
+
+///|
+pub fn RendererBackendKind::family(
+  self : RendererBackendKind,
+) -> RendererFamily {
+  match self {
+    NativeWgpu => RendererFamily::Wgpu
+    WebGpuWasm => RendererFamily::WebGpu
+    SkiaRasterNative | SkiaRasterWeb | SkiaGpuNative => RendererFamily::Skia
+  }
+}
+
+///|
+pub fn RendererSpec::new(
+  backend~ : RendererBackendKind,
+  family~ : RendererFamily,
+  presentation~ : RendererPresentationModel,
+  supported_targets~ : Array[RendererTarget],
+  capabilities~ : Array[RendererBackendFeatureCapability],
+  description? : String = "",
+) -> RendererSpec {
+  {
+    backend,
+    family,
+    presentation,
+    supported_targets,
+    capabilities,
+    description,
+  }
+}
+
+///|
+pub fn RenderFrameSpec::new(
+  metrics~ : RendererSurfaceMetrics,
+  commands~ : Array[@core.DrawCommand],
+  clear_color? : @core.Color? = None,
+) -> RenderFrameSpec {
+  { metrics, commands, clear_color }
 }
 
 ///|

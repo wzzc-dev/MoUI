@@ -6,6 +6,7 @@ cd "$ROOT_DIR"
 
 RUN_PLATFORM_EXAMPLES_TEST=false
 RUN_PLATFORM_EXAMPLES_BUILD=false
+RUN_SKIA_REAL_SMOKE=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -18,19 +19,23 @@ for arg in "$@"; do
     --platform-examples)
       RUN_PLATFORM_EXAMPLES_TEST=true
       ;;
+    --skia-real-smoke)
+      RUN_SKIA_REAL_SMOKE=true
+      ;;
     --help|-h)
-      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build]\n' "$0"
+      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke]\n' "$0"
       printf '\n'
       printf 'Runs bounded package-level checks and Web wasm-gc example builds.\n'
       printf 'Pass --platform-examples-test to also run current-platform backend tests.\n'
       printf 'Pass --platform-examples-build to also build current-platform native examples.\n'
+      printf 'Pass --skia-real-smoke to run the opt-in real Skia smoke when local Skia link flags are configured.\n'
       printf 'Native example builds link platform stubs and wgpu-native, so cold builds can be slow.\n'
       printf 'Deprecated alias: --platform-examples behaves like --platform-examples-test.\n'
       exit 0
       ;;
     *)
       printf 'Unknown argument: %s\n' "$arg" >&2
-      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build]\n' "$0" >&2
+      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke]\n' "$0" >&2
       exit 2
       ;;
   esac
@@ -49,7 +54,10 @@ run moon test moui/core --target native
 run moon test moui/views --target native
 run moon test moui/render --target native
 run moon test moui/render/wgpu --target native
+run moon test moui/render/skia --target native
 run moon test moui/backend/host --target native
+
+run moon test .local_repos/skia_mbt --target native
 
 run moon test moui/render/webgpu_adapter --target wasm-gc
 run moon test moui/backend/web --target wasm-gc
@@ -97,6 +105,12 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
   esac
 else
   printf '\nSkipping native platform checks. Pass --platform-examples-test for backend tests or --platform-examples-build for slow example builds.\n'
+fi
+
+if "$RUN_SKIA_REAL_SMOKE"; then
+  run moon run .local_repos/skia_mbt/scripts/native_smoke --target native
+else
+  printf '\nSkipping real Skia smoke. Pass --skia-real-smoke when local Skia link flags are configured.\n'
 fi
 
 printf '\nDaily development checks passed.\n'

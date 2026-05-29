@@ -5,6 +5,7 @@ import {
   "Milky2018/wgpu_mbt",
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/wgpu",
 }
 
@@ -63,9 +64,10 @@ pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxApp
 
 pub(all) struct LinuxAppOptions {
   text_engine : @wgpu.NativeTextEngineSetting
+  renderer : @render.RendererSelection
   scene_resolver : @host.HostWindowSceneResolver
 }
-pub fn LinuxAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
+pub fn LinuxAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting, renderer? : @render.RendererSelection, scene_resolver? : @host.HostWindowSceneResolver) -> Self
 
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
@@ -100,4 +102,3 @@ pub(all) struct LinuxBackendReadiness {
 // Type aliases
 
 // Traits
-

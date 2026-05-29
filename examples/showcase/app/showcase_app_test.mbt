@@ -380,7 +380,8 @@ test "showcase renderer section clips long capability content" {
   assert_true(has_text(commands, "text-shaping"))
   assert_true(has_text(commands, "emoji-text"))
   assert_true(has_text(commands, "async-image"))
-  assert_true(has_text(commands, "partial"))
+  assert_true(has_text(commands, "wgpu partial"))
+  assert_true(has_text(commands, "skia partial"))
   assert_false(has_text(commands, "native gap"))
   assert_false(has_text(commands, "web partial"))
 }
