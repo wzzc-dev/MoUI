@@ -67,6 +67,37 @@ fn assert_pixel_near(
 }
 
 ///|
+fn assert_pixel_luma_between(
+  frame : @skia_renderer.SkiaPixelFrame,
+  x : Int,
+  y : Int,
+  min_luma : Int,
+  max_luma : Int,
+  a : Int,
+) -> Unit {
+  if x < 0 || y < 0 || x >= frame.width || y >= frame.height {
+    fail_smoke("pixel sample is outside the Skia frame")
+  }
+  let offset = y * frame.row_bytes + x * 4
+  if offset + 3 >= frame.pixels.length() {
+    fail_smoke("pixel sample exceeds the Skia frame payload")
+  }
+  let actual_r = frame.pixels[offset].to_int()
+  let actual_g = frame.pixels[offset + 1].to_int()
+  let actual_b = frame.pixels[offset + 2].to_int()
+  let actual_a = frame.pixels[offset + 3].to_int()
+  let actual_luma = (actual_r + actual_g + actual_b) / 3
+  if actual_luma < min_luma || actual_luma > max_luma || actual_a != a {
+    println("unexpected Skia renderer luma at \{x},\{y}")
+    println("expected luma between \{min_luma} and \{max_luma} alpha=\{a}")
+    println(
+      "actual rgba=\{actual_r},\{actual_g},\{actual_b},\{actual_a} luma=\{actual_luma}",
+    )
+    fail_smoke("MoUI Skia renderer smoke pixel mismatch")
+  }
+}
+
+///|
 fn component_near(actual : Int, expected : Int, tolerance : Int) -> Bool {
   (actual - expected).abs() <= tolerance
 }
@@ -311,6 +342,35 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
       red(),
     ),
     @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(0.0)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=98.0, y=104.0, width=10.0, height=10.0),
+      red(),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Contrast(0.0)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=114.0, y=104.0, width=10.0, height=10.0),
+      red(),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PushFilter(
+      @core.FilterEffect::ColorMatrix([
+        0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 1.0, 0.0,
+      ]),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=130.0, y=104.0, width=10.0, height=10.0),
+      red(),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(3.0)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=150.0, y=104.0, width=10.0, height=10.0),
+      @core.Color::black(),
+    ),
+    @core.DrawCommand::PopFilter,
   ]
 }
 
@@ -332,7 +392,7 @@ fn main {
   )
   guard (try? @skia_renderer.create_with_present_target(
       @render.RendererSurfaceMetrics::from_logical(
-        size=@core.Size::new(width=128.0, height=128.0),
+        size=@core.Size::new(width=176.0, height=128.0),
         scale_factor=1.0,
       ),
       target,
@@ -355,7 +415,7 @@ fn main {
 
   match captured.val {
     Some(frame) => {
-      if frame.width != 128 || frame.height != 128 || frame.row_bytes < 512 {
+      if frame.width != 176 || frame.height != 128 || frame.row_bytes < 704 {
         fail_smoke("MoUI Skia smoke frame dimensions are unexpected")
       }
       assert_pixel(frame, 0, 0, 255, 255, 255, 255)
@@ -388,6 +448,12 @@ fn main {
       assert_pixel(frame, 38, 108, 255, 255, 255, 255)
       assert_pixel_near(frame, 66, 110, 0, 0, 0, 255, 8)
       assert_pixel_near(frame, 86, 108, 128, 0, 0, 255, 8)
+      assert_pixel_near(frame, 102, 108, 54, 54, 54, 255, 8)
+      assert_pixel_near(frame, 118, 108, 128, 128, 128, 255, 8)
+      assert_pixel_near(frame, 134, 108, 0, 255, 0, 255, 8)
+      assert_pixel_luma_between(frame, 155, 109, 0, 160, 255)
+      assert_pixel_luma_between(frame, 148, 109, 20, 245, 255)
+      assert_pixel_near(frame, 142, 109, 255, 255, 255, 255, 2)
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")
