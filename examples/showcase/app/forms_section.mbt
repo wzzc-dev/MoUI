@@ -8,7 +8,7 @@ fn ShowcaseModel::forms_section(
   section_panel(
     theme,
     "Forms",
-    "Form primitives compose labels, validation, helper text, and field states.",
+    "Form primitives compose validation, helper text, field states, and input wrappers.",
     form(
       [
         form_section(
@@ -72,6 +72,82 @@ fn ShowcaseModel::forms_section(
           ],
           spacing=theme.spacing_scale.md,
           align=@views.CrossAlign::Start,
+        ),
+        form_section(
+          [
+            form_field(
+              label="Search",
+              child=clearable_text_field(
+                self.draft,
+                on_input=value => DraftChanged(value),
+                on_clear=ClearFilter,
+                placeholder="Clearable input",
+                theme~,
+                width=field_width,
+              ),
+              helper="Clearable inputs expose an app-owned clear message.",
+              theme~,
+              width=field_width,
+            ),
+            form_field(
+              label="Amount",
+              child=input_group(
+                child=number_field(
+                  "42",
+                  on_input=value => DraftChanged(value),
+                  on_step=Some(_delta => ToggleActive),
+                  theme~,
+                  width=240.0,
+                ),
+                prefix=Some(text("$", width=20.0, height=24.0)),
+                suffix=Some(text("USD", width=44.0, height=24.0)),
+                theme~,
+                width=field_width,
+              ),
+              helper="Number fields keep parsing in the app model.",
+              theme~,
+              width=field_width,
+            ),
+            form_field(
+              label="Secret",
+              child=password_field(
+                "secret",
+                on_input=value => DraftChanged(value),
+                revealed=self.active,
+                on_toggle_reveal=ToggleActive,
+                theme~,
+                width=field_width,
+              ),
+              helper="Reveal state is controlled by the app.",
+              theme~,
+              width=field_width,
+            ),
+            form_field(
+              label="Notes",
+              child=multiline_text_area_shell(
+                "First line of notes",
+                on_input=value => DraftChanged(value),
+                placeholder="Add notes",
+                lines=3,
+                theme~,
+                width=field_width,
+              ),
+              helper="The shell preserves sizing without adding a new editor engine.",
+              theme~,
+              width=field_width,
+            ),
+            stepper(
+              on_decrement=SliderChanged(self.slider_value - 0.1),
+              on_increment=SliderChanged(self.slider_value + 0.1),
+              label="Stepper",
+              theme~,
+              width=180.0,
+            ),
+          ],
+          title="Enhanced Inputs",
+          summary="Prefix/suffix, clearable, password, number, stepper, and text area shells",
+          width=field_width,
+          theme~,
         ),
       ],
       spacing=theme.spacing_scale.lg,

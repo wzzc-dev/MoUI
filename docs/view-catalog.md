@@ -69,6 +69,10 @@ fn view(draft : String) -> @core.View[Msg] {
 | `form` / `form_section` | `views/form.mbt` | Theme spacing/surface | Group | `views/views_test.mbt` | Showcase Forms | Layout shells for grouped TEA-controlled fields. |
 | `form_field` | `views/form.mbt` | Theme typography/colors | Group with accessibility label | `views/views_test.mbt` | Showcase Forms | Composes label, required marker, helper text, validation message, disabled, and read-only states without renderer changes. |
 | `form_error` / `form_helper_text` | `views/form.mbt` | Theme typography/colors | Text | `views/views_test.mbt` | Showcase Forms | Reusable support text helpers for app-local form layouts. |
+| `input_group` | `views/input_group.mbt` | Theme surface/border | Child semantics | `views/views_test.mbt` | Showcase Forms | Prefix/suffix shell for app-owned inputs. |
+| `clearable_text_field` / `password_field` | `views/input_group.mbt` | TextFieldStyle/ButtonStyle | Text field plus button semantics | `views/views_test.mbt` | Showcase Forms | Controlled wrappers; password reveal state remains app-owned. |
+| `number_field` / `stepper` | `views/input_group.mbt` | TextFieldStyle/ButtonStyle | Text field and button semantics | `views/views_test.mbt` | Showcase Forms | Keeps parsing and numeric state in the app model. |
+| `multiline_text_area_shell` | `views/input_group.mbt` | TextFieldStyle | Text field semantics | `views/views_test.mbt` | Showcase Forms | Fixed-height text field shell for multi-line layouts without adding an editor engine. |
 
 ## Layout And Containers
 

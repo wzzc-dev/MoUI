@@ -21,6 +21,8 @@ pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, font? 
 
 pub fn[Msg] checkbox_binding(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] clearable_text_field(String, on_input~ : (String) -> Msg, on_clear~ : Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
 pub fn component((@core.BuildContext) -> @core.View[Unit]) -> @core.View[Unit]
@@ -61,6 +63,8 @@ pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, 
 
 pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.View[Msg]
 
+pub fn[Msg] input_group(child~ : @core.View[Msg], prefix? : @core.View[Msg]?, suffix? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double) -> @core.View[Msg]
+
 pub fn[Msg] intrinsic_height(@core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] intrinsic_width(@core.View[Msg]) -> @core.View[Msg]
@@ -81,11 +85,15 @@ pub fn[Msg] markdown_editor_binding(@core.Binding[String], (String) -> @core.Ric
 
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] multiline_text_area_shell(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> NavigationDestination[Msg]
 
 pub fn[Msg] navigation_stack(@core.NavigationState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] navigation_stack_selected(String, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+
+pub fn[Msg] number_field(String, on_input~ : (String) -> Msg, on_step? : ((Double) -> Msg)?, step? : Double, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] overlay(@core.View[Msg], @core.View[Msg]) -> @core.View[Msg]
 
@@ -96,6 +104,8 @@ pub fn[Msg] padding_edges(@core.View[Msg], top? : Double, right? : Double, botto
 pub fn[Msg] padding_insets(@core.View[Msg], @core.Insets) -> @core.View[Msg]
 
 pub fn[Msg] padding_xy(@core.View[Msg], horizontal? : Double, vertical? : Double) -> @core.View[Msg]
+
+pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool, on_toggle_reveal~ : Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] picker(Array[@core.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
 
@@ -132,6 +142,8 @@ pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, 
 pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]
 
 pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
+
+pub fn[Msg] stepper(on_decrement~ : Msg, on_increment~ : Msg, label? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] surface(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, variant? : SurfaceVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
 
