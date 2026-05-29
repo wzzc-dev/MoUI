@@ -117,19 +117,6 @@ fn ElementTree::id(self : ElementTree) -> ElementId {
 }
 
 ///|
-fn ElementTree::measure(
-  self : ElementTree,
-  constraints : Constraints,
-) -> MeasuredNode {
-  self.root.measure(constraints)
-}
-
-///|
-fn ElementTree::find_keyed(self : ElementTree, key : String) -> ElementId? {
-  self.root.find_keyed(key)
-}
-
-///|
 fn RenderTree::empty() -> RenderTree {
   { root: RenderNode::empty() }
 }
@@ -354,20 +341,6 @@ fn mount_view_spec_for_runtime(
     },
     next_id: next,
   }
-}
-
-///|
-fn reconcile_element(old : ElementNode, next_spec : ViewSpec) -> ElementNode {
-  reconcile_element_with_next(old, next_spec, 1).node
-}
-
-///|
-fn reconcile_element_with_next(
-  old : ElementNode,
-  next_spec : ViewSpec,
-  next_id : Int,
-) -> ReconcileResult {
-  reconcile_element_for_runtime(old, next_spec, None, next_id)
 }
 
 ///|

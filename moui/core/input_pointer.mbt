@@ -232,54 +232,6 @@ fn ElementNode::dispatch_modified_pointer(
 }
 
 ///|
-fn ElementNode::hit_test_path(
-  self : ElementNode,
-  point : Point,
-  render : RenderNode,
-) -> HitTestResult {
-  let path : Array[HitTestEntry] = []
-  if self.append_hit_test_path(point, render, path) {
-    { path, }
-  } else {
-    { path: [] }
-  }
-}
-
-///|
-fn ElementNode::append_hit_test_path(
-  self : ElementNode,
-  point : Point,
-  render : RenderNode,
-  path : Array[HitTestEntry],
-) -> Bool {
-  if !render.frame.contains(point) {
-    false
-  } else {
-    path.push({
-      element_id: self.id,
-      local_position: Point::new(
-        x=point.x - render.frame.origin.x,
-        y=point.y - render.frame.origin.y,
-      ),
-      frame: render.frame,
-    })
-    let mut index = self.children.length() - 1
-    while index >= 0 {
-      if index < render.children.length() &&
-        self.children[index].append_hit_test_path(
-          point,
-          render.children[index],
-          path,
-        ) {
-        return true
-      }
-      index = index - 1
-    }
-    true
-  }
-}
-
-///|
 fn text_field_text_length(spec : ViewSpec) -> Int {
   match spec {
     TextFieldSpec(data) => text_length(data.value.get())

@@ -95,14 +95,6 @@ fn RuntimeState::new_component(
 }
 
 ///|
-fn RuntimeState::set_root_spec(self : RuntimeState, root : ViewSpec) -> Unit {
-  self.element_tree.root.cancel_component_tree_subscriptions()
-  self.root_spec = root
-  self.rebuild()
-  self.needs_redraw = true
-}
-
-///|
 pub fn RuntimeState::environment(self : RuntimeState) -> Environment {
   self.environment
 }
@@ -153,24 +145,6 @@ pub fn RuntimeState::set_environment(
     self.element_tree.root.mark_subtree_layout_dirty()
     self.mark_dirty(self.element_tree.id())
   }
-}
-
-///|
-fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
-  self.element_tree.root.cancel_component_tree_subscriptions(
-    reason=ComponentEffectCancelReason::EffectUnmounted,
-  )
-  let mounted = mount_view_spec_for_runtime(root, Some(self), 1)
-  self.root_spec = root
-  self.element_tree = ElementTree::new(mounted.node)
-  self.next_element_id = mounted.next_id
-  self.focused_element = None
-  self.needs_rebuild = false
-  self.needs_layout = true
-  self.needs_paint = true
-  self.needs_redraw = true
-  self.mark_dirty(self.element_tree.id())
-  self.layout_pass()
 }
 
 ///|

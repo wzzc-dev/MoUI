@@ -843,11 +843,6 @@ fn ViewSpec::same_identity(self : ViewSpec, next : ViewSpec) -> Bool {
 }
 
 ///|
-fn ViewSpec::key(self : ViewSpec, value : String) -> ViewSpec {
-  self.with_key(Key::new(value))
-}
-
-///|
 fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
   self.modified(FontModifier(font))
 }
@@ -855,11 +850,6 @@ fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {
 ///|
 fn ViewSpec::foreground(self : ViewSpec, color : Color) -> ViewSpec {
   self.modified(ForegroundModifier(color))
-}
-
-///|
-fn ViewSpec::background(self : ViewSpec, color : Color) -> ViewSpec {
-  self.background_brush(Brush::solid(color))
 }
 
 ///|
@@ -873,61 +863,8 @@ fn ViewSpec::corner_radius(self : ViewSpec, radius : Double) -> ViewSpec {
 }
 
 ///|
-fn ViewSpec::opacity(self : ViewSpec, opacity : Double) -> ViewSpec {
-  self.modified(OpacityModifier(opacity))
-}
-
-///|
-fn ViewSpec::shadow(self : ViewSpec, style : ShadowStyle) -> ViewSpec {
-  self.modified(ShadowModifier(style))
-}
-
-///|
-fn ViewSpec::border(self : ViewSpec, style : BorderStyle) -> ViewSpec {
-  self.modified(BorderModifier(style))
-}
-
-///|
-fn ViewSpec::offset(
-  self : ViewSpec,
-  dx? : Double = 0.0,
-  dy? : Double = 0.0,
-) -> ViewSpec {
-  self.modified(OffsetModifier(dx, dy))
-}
-
-///|
-fn ViewSpec::clip(self : ViewSpec) -> ViewSpec {
-  self.modified(ClipModifier)
-}
-
-///|
-fn ViewSpec::scale(
-  self : ViewSpec,
-  sx? : Double = 1.0,
-  sy? : Double = 1.0,
-) -> ViewSpec {
-  self.modified(ScaleModifier(sx, sy))
-}
-
-///|
 fn ViewSpec::disabled(self : ViewSpec, disabled? : Bool = true) -> ViewSpec {
   self.modified(DisabledModifier(disabled))
-}
-
-///|
-fn ViewSpec::accessibility_label(self : ViewSpec, label : String) -> ViewSpec {
-  self.modified(AccessibilityLabelModifier(label))
-}
-
-///|
-fn ViewSpec::semantics_role(self : ViewSpec, role : SemanticsRole) -> ViewSpec {
-  self.modified(SemanticsRoleModifier(role))
-}
-
-///|
-fn ViewSpec::focusable(self : ViewSpec, focusable? : Bool = true) -> ViewSpec {
-  self.modified(FocusableModifier(focusable))
 }
 
 ///|
@@ -941,57 +878,6 @@ fn ViewSpec::on_file_drop(
   handler : FileDropHandler,
 ) -> ViewSpec {
   self.modified(OnFileDropModifier(handler))
-}
-
-///|
-fn ViewSpec::keyboard_shortcut(
-  self : ViewSpec,
-  shortcut : KeyboardShortcut,
-) -> ViewSpec {
-  self.modified(KeyboardShortcutModifier(shortcut))
-}
-
-///|
-fn ViewSpec::flexible(self : ViewSpec, weight? : Double = 1.0) -> ViewSpec {
-  self.modified(FlexibleModifier(max_double(0.0, weight)))
-}
-
-///|
-fn ViewSpec::layout_priority(self : ViewSpec, priority : Double) -> ViewSpec {
-  self.modified(LayoutPriorityModifier(priority))
-}
-
-///|
-fn ViewSpec::expanded(self : ViewSpec, weight? : Double = 1.0) -> ViewSpec {
-  self.flexible(weight~)
-}
-
-///|
-fn ViewSpec::align(
-  self : ViewSpec,
-  alignment? : Alignment = Alignment::center(),
-) -> ViewSpec {
-  self.modified(AlignModifier(alignment))
-}
-
-///|
-fn ViewSpec::aspect_ratio(self : ViewSpec, ratio : Double) -> ViewSpec {
-  self.modified(AspectRatioModifier(max_double(0.01, ratio)))
-}
-
-///|
-fn ViewSpec::intrinsic_width(self : ViewSpec) -> ViewSpec {
-  self.modified(IntrinsicWidthModifier)
-}
-
-///|
-fn ViewSpec::intrinsic_height(self : ViewSpec) -> ViewSpec {
-  self.modified(IntrinsicHeightModifier)
-}
-
-///|
-fn ViewSpec::padding(self : ViewSpec, value : Double) -> ViewSpec {
-  self.modified(PaddingModifier(Insets::all(value)))
 }
 
 ///|
@@ -1134,40 +1020,8 @@ fn ViewSpec::environment(
 }
 
 ///|
-fn ViewSpec::frame(
-  self : ViewSpec,
-  width? : Double,
-  height? : Double,
-  min_width? : Double,
-  min_height? : Double,
-  max_width? : Double,
-  max_height? : Double,
-) -> ViewSpec {
-  self.modified(
-    FrameModifier({
-      width,
-      height,
-      min_width,
-      min_height,
-      max_width,
-      max_height,
-    }),
-  )
-}
-
-///|
 fn ViewSpec::modified(self : ViewSpec, modifier : ViewModifier) -> ViewSpec {
   ModifiedSpec({ key: None, modifier, child: self })
-}
-
-///|
-fn ViewSpec::custom(
-  measure~ : (Constraints) -> Size,
-  paint~ : (Rect) -> Array[DrawCommand],
-  semantics_role? : SemanticsRole = SemanticsRole::Group,
-  semantics_label? : String = "",
-) -> ViewSpec {
-  CustomSpec({ key: None, measure, paint, semantics_role, semantics_label })
 }
 
 ///|
@@ -1235,27 +1089,6 @@ pub fn CustomPlacementContext::mirror_x(
       (x - self.frame.origin.x) -
       width
   }
-}
-
-///|
-fn ViewSpec::custom_layout(
-  children~ : Array[ViewSpec],
-  measure~ : (CustomLayoutContext) -> Size,
-  place~ : (CustomPlacementContext) -> Array[Rect],
-  paint? : (Rect) -> Array[DrawCommand] = _frame => [],
-  semantics_role? : SemanticsRole = SemanticsRole::Group,
-  semantics_label? : String = "",
-) -> ViewSpec {
-  CustomLayoutSpec({
-    key: None,
-    children,
-    cache: CustomLayoutCache::new(),
-    measure,
-    place,
-    paint,
-    semantics_role,
-    semantics_label,
-  })
 }
 
 ///|

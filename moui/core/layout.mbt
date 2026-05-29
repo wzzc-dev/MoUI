@@ -19,22 +19,6 @@ pub(all) struct PlacedNode {
 } derive(Eq, Debug, ToJson)
 
 ///|
-fn layout_spec(spec : ViewSpec, bounds : Rect) -> LayoutResult {
-  mount_view_spec(spec).place(bounds).to_layout_result()
-}
-
-///|
-fn layout_spec_with_text_system(
-  spec : ViewSpec,
-  bounds : Rect,
-  text_system~ : TextSystem,
-) -> LayoutResult {
-  mount_view_spec(spec)
-  .place_with_text_system(bounds, text_system~)
-  .to_layout_result()
-}
-
-///|
 pub fn hit_test(layout : LayoutResult, point : Point) -> Bool {
   if !layout.frame.contains(point) {
     false
@@ -43,14 +27,6 @@ pub fn hit_test(layout : LayoutResult, point : Point) -> Bool {
   } else {
     layout.children.any(child => hit_test(child, point))
   }
-}
-
-///|
-fn ElementNode::measure(
-  self : ElementNode,
-  constraints : Constraints,
-) -> MeasuredNode {
-  self.measure_with_text_system(constraints, text_system=TextSystem::fallback())
 }
 
 ///|
@@ -84,11 +60,6 @@ fn ElementNode::measure_with_text_system(
   self.layout_cache.cached_measured = Some(measured)
   self.dirty.needs_layout = false
   measured
-}
-
-///|
-fn ElementNode::place(self : ElementNode, bounds : Rect) -> PlacedNode {
-  self.place_with_text_system(bounds, text_system=TextSystem::fallback())
 }
 
 ///|

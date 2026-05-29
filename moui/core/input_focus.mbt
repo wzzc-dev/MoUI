@@ -172,21 +172,6 @@ fn ElementNode::next_focus(
 }
 
 ///|
-fn ElementNode::find_keyed(self : ElementNode, key : String) -> ElementId? {
-  if self.key == Some(Key::new(key)) {
-    Some(self.id)
-  } else {
-    for child in self.children {
-      match child.find_keyed(key) {
-        Some(id) => return Some(id)
-        None => ()
-      }
-    }
-    None
-  }
-}
-
-///|
 fn handle_rich_text_editor_keyboard(
   element : ElementNode,
   data : RichTextEditorViewSpec,
