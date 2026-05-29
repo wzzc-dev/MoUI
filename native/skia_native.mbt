@@ -1252,6 +1252,23 @@ extern "C" fn native_canvas_draw_path(
 ) -> Unit = "moonbit_skia_canvas_draw_path"
 
 ///|
+#borrow(canvas, path, shader)
+extern "C" fn native_canvas_draw_path_shader(
+  canvas : CanvasHandle,
+  path : PathHandle,
+  shader : ShaderHandle,
+  color_argb : UInt,
+  anti_alias : Bool,
+  dither : Bool,
+  style : Int,
+  stroke_width : Float,
+  stroke_miter : Float,
+  stroke_cap : Int,
+  stroke_join : Int,
+  blend_mode : Int,
+) -> Unit = "moonbit_skia_canvas_draw_path_shader"
+
+///|
 #borrow(canvas, image)
 extern "C" fn native_canvas_draw_image(
   canvas : CanvasHandle,
@@ -1324,6 +1341,28 @@ extern "C" fn native_canvas_draw_rect_shader(
   stroke_join : Int,
   blend_mode : Int,
 ) -> Unit = "moonbit_skia_canvas_draw_rect_shader"
+
+///|
+#borrow(canvas, shader)
+extern "C" fn native_canvas_draw_round_rect_shader(
+  canvas : CanvasHandle,
+  shader : ShaderHandle,
+  left : Float,
+  top : Float,
+  right : Float,
+  bottom : Float,
+  rx : Float,
+  ry : Float,
+  color_argb : UInt,
+  anti_alias : Bool,
+  dither : Bool,
+  style : Int,
+  stroke_width : Float,
+  stroke_miter : Float,
+  stroke_cap : Int,
+  stroke_join : Int,
+  blend_mode : Int,
+) -> Unit = "moonbit_skia_canvas_draw_round_rect_shader"
 
 ///|
 #borrow(canvas, text, font)
@@ -3234,6 +3273,29 @@ pub fn Canvas::draw_path(
 }
 
 ///|
+pub fn Canvas::draw_path_shader(
+  self : Canvas,
+  path : Path,
+  shader : Shader,
+  paint : @skia.Paint,
+) -> Unit {
+  native_canvas_draw_path_shader(
+    self.handle,
+    path.handle,
+    shader.handle,
+    paint.color_argb(),
+    paint.anti_alias,
+    paint.dither,
+    paint.style_ordinal(),
+    paint.stroke_width,
+    paint.stroke_miter,
+    paint.stroke_cap_ordinal(),
+    paint.stroke_join_ordinal(),
+    paint.blend_mode_ordinal(),
+  )
+}
+
+///|
 pub fn Canvas::draw_path_value(
   self : Canvas,
   path : @skia.Path,
@@ -3326,6 +3388,36 @@ pub fn Canvas::draw_rect_shader(
     rect.top,
     rect.right,
     rect.bottom,
+    paint.color_argb(),
+    paint.anti_alias,
+    paint.dither,
+    paint.style_ordinal(),
+    paint.stroke_width,
+    paint.stroke_miter,
+    paint.stroke_cap_ordinal(),
+    paint.stroke_join_ordinal(),
+    paint.blend_mode_ordinal(),
+  )
+}
+
+///|
+pub fn Canvas::draw_round_rect_shader(
+  self : Canvas,
+  rect : @skia.Rect,
+  rx : Float,
+  ry : Float,
+  shader : Shader,
+  paint : @skia.Paint,
+) -> Unit {
+  native_canvas_draw_round_rect_shader(
+    self.handle,
+    shader.handle,
+    rect.left,
+    rect.top,
+    rect.right,
+    rect.bottom,
+    rx,
+    ry,
     paint.color_argb(),
     paint.anti_alias,
     paint.dither,

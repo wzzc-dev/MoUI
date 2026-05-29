@@ -661,8 +661,22 @@ test "canvas draw api typechecks" {
       None => ()
       Some(shader) => {
         canvas.draw_paint_shader(shader, paint)
+        match @native.Path::new() {
+          None => ()
+          Some(path) => {
+            path.add_rect(@skia.Rect::from_xywh(0, 0, 8, 8))
+            canvas.draw_path_shader(path, shader, paint)
+          }
+        }
         canvas.draw_rect_shader(
           @skia.Rect::from_xywh(1, 1, 6, 6),
+          shader,
+          paint,
+        )
+        canvas.draw_round_rect_shader(
+          @skia.Rect::from_xywh(1, 1, 6, 6),
+          2,
+          2,
           shader,
           paint,
         )
