@@ -196,7 +196,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     layer.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Ready,
   )
   assert_true(
     layer
@@ -206,7 +206,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     layer
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
-    .contains("rectangular masks"),
+    .contains("nested layer/filter"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::BlendMode)
     is Some(blend) else {
