@@ -143,8 +143,11 @@ Current priorities:
    wasm-gc renderers, especially the remaining layer-level transform state.
 2. Finish text shaping conformance across bidi, line breaking, fallback font
    runs, and native provider behavior.
-3. Add deterministic emoji text coverage, with native color emoji still a known
-   gap.
+3. Keep improving deterministic emoji text coverage; Cosmic now loads platform
+   emoji fallback font candidates when available and carries caret coverage
+   through native run layout for representative emoji clusters, while full
+   native emoji font fallback across all providers and ZWJ/color emoji
+   conformance remain known gaps.
 4. Surface async image cache and load diagnostics to app-visible renderer state.
 5. Keep Showcase capability status aligned with
    `docs/renderer-capability-report.md` so visual behavior is easy to verify.

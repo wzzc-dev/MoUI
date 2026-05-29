@@ -76,6 +76,60 @@ test "native text provider values have stable constructors" {
 }
 
 ///|
+test "native glyph atlas preserves color raster glyph pixels" {
+  let key = native_platform_glyph_key(
+    cache_key="test-platform:color-glyph",
+    payload=Bytes::from_array([b'C']),
+  )
+  let cache = NativeFontCache::new_with_engine(
+    native_platform_text_engine(
+      NativePlatformTextProvider::new(
+        id="test-color-platform-text",
+        measure=_input => None,
+        layout_run=(_run, _scale) => None,
+        raster_glyph=(_cache_key, _payload) => {
+          Some(
+            NativeRasterGlyph::new(
+              width=2,
+              height=1,
+              bearing_x=0,
+              bearing_y=-1,
+              format=NativeRasterGlyphFormat::ColorRgba,
+              pixels=Bytes::from_array([
+                b'\x10', b'\x20', b'\x30', b'\xff', b'\x40', b'\x50', b'\x60', b'\x80',
+              ]),
+            ),
+          )
+        },
+      ),
+    ),
+  )
+  let atlas = GlyphAtlas::new(width=8, height=8)
+  match atlas.ensure_glyph(cache, key) {
+    GlyphReady(entry) => {
+      inspect(
+        entry.format == NativeRasterGlyphFormat::ColorRgba,
+        content="true",
+      )
+      inspect(entry.width, content="2")
+      inspect(entry.height, content="1")
+      let first = (entry.y * atlas.width + entry.x) * 4
+      inspect(atlas.pixels[first].to_int(), content="16")
+      inspect(atlas.pixels[first + 1].to_int(), content="32")
+      inspect(atlas.pixels[first + 2].to_int(), content="48")
+      inspect(atlas.pixels[first + 3].to_int(), content="255")
+      let second = first + 4
+      inspect(atlas.pixels[second].to_int(), content="64")
+      inspect(atlas.pixels[second + 1].to_int(), content="80")
+      inspect(atlas.pixels[second + 2].to_int(), content="96")
+      inspect(atlas.pixels[second + 3].to_int(), content="128")
+    }
+    GlyphMissing => fail("expected color glyph to rasterize")
+    GlyphAtlasFull => fail("expected room for color glyph")
+  }
+}
+
+///|
 test "native platform provider receives registered font data before fallback cache" {
   let registered : Ref[Int] = Ref(0)
   let family_name : Ref[String] = Ref("")
@@ -380,6 +434,69 @@ test "native text engine falls back when platform run layout metrics are invalid
 }
 
 ///|
+test "native text engine rejects undersized platform run layout carets" {
+  let bad_key = native_platform_glyph_key(
+    cache_key="test-platform:short-carets",
+    payload=Bytes::from_array([b'c']),
+  )
+  let cache = NativeFontCache::new_with_engine(
+    native_platform_text_engine_with_fallback(
+      NativePlatformTextProvider::new(
+        id="test-platform-text",
+        measure=_input => None,
+        layout_run=(_run, _scale) => {
+          Some(
+            NativeTextLayout::new(
+              size=@core.Size::new(width=42.0, height=20.0),
+              baseline=14.0,
+              caret_positions=[0.0, 42.0],
+              glyphs=[NativeGlyphPlacement::new(key=bad_key, x=0.0)],
+            ),
+          )
+        },
+        raster_glyph=(_cache_key, _payload) => {
+          Some(
+            NativeRasterGlyph::new(
+              width=2,
+              height=2,
+              bearing_x=0,
+              bearing_y=-2,
+              pixels=Bytes::from_array([b'\xff', b'\xff', b'\xff', b'\xff']),
+            ),
+          )
+        },
+      ),
+      fallback=test_fallback_text_engine(),
+    ),
+  )
+  let atlas = GlyphAtlas::new(width=atlas_width, height=atlas_height)
+  let run = @core.TextRun::new(
+    text="abc",
+    frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
+    font=@core.FontSpec::new(size=16.0, weight=500),
+    color=@core.Color::black(),
+    align=@core.TextAlign::TextStart,
+  )
+  let vertices : Array[TextVertex] = []
+  let atlas_full = append_text_run_vertices(
+    cache,
+    atlas,
+    run,
+    native_paint_state_default(),
+    @core.Size::new(width=320.0, height=120.0),
+    1.0,
+    vertices,
+  )
+  inspect(atlas_full, content="false")
+  inspect(vertices.length() > 0, content="true")
+  inspect(
+    atlas.entries.get("test-platform:short-carets") is None,
+    content="true",
+  )
+  inspect(glyph_atlas_entry_count(atlas) > 0, content="true")
+}
+
+///|
 test "native text engine falls back when platform layout has no glyphs" {
   let cache = NativeFontCache::new_with_engine(
     native_platform_text_engine_with_fallback(
@@ -539,7 +656,90 @@ test "native renderer builds text vertices and atlas entries" {
     text_vertices_have_visible_position(renderer.text_vertices),
     content="true",
   )
+  for vertex in renderer.text_vertices {
+    inspect(vertex.r, content="0")
+    inspect(vertex.g, content="0")
+    inspect(vertex.b, content="0")
+    inspect(vertex.a, content="1")
+    inspect(vertex.color_glyph, content="0")
+  }
+  inspect(
+    text_vertices_to_bytes(renderer.text_vertices).length(),
+    content="\{renderer.text_vertices.length() * 36}",
+  )
+  assert_true(text_vertex_stride == 36UL)
   inspect(glyph_atlas_entry_count(renderer.glyph_atlas) > 0, content="true")
+}
+
+///|
+test "native renderer marks color glyph text vertices" {
+  let glyph_key = native_platform_glyph_key(
+    cache_key="test-platform:emoji-color",
+    payload=Bytes::from_array([b'E']),
+  )
+  let renderer = new_test_renderer_handle_with_text_engine(
+    native_platform_text_engine(
+      NativePlatformTextProvider::new(
+        id="test-color-platform-text",
+        measure=_input => None,
+        layout_run=(_run, _scale) => {
+          Some(
+            NativeTextLayout::new(
+              size=@core.Size::new(width=24.0, height=24.0),
+              baseline=18.0,
+              glyphs=[NativeGlyphPlacement::new(key=glyph_key, x=0.0)],
+            ),
+          )
+        },
+        raster_glyph=(_cache_key, _payload) => {
+          Some(
+            NativeRasterGlyph::new(
+              width=2,
+              height=2,
+              bearing_x=0,
+              bearing_y=-2,
+              format=NativeRasterGlyphFormat::ColorRgba,
+              pixels=Bytes::from_array([
+                b'\xff', b'\x00', b'\x00', b'\xff', b'\x00', b'\xff', b'\x00', b'\xff',
+                b'\x00', b'\x00', b'\xff', b'\xff', b'\xff', b'\xff', b'\x00', b'\xff',
+              ]),
+            ),
+          )
+        },
+      ),
+    ),
+  )
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=120.0, height=80.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawText({
+      text: "煓?",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=64.0, height=32.0),
+      font: @core.FontSpec::new(size=24.0),
+      color: @core.Color::black(),
+      align: @core.TextAlign::TextStart,
+    }),
+  ])
+  inspect(renderer.text_vertices.length(), content="6")
+  for vertex in renderer.text_vertices {
+    inspect(vertex.color_glyph, content="1")
+  }
+  match renderer.glyph_atlas.entries.get("test-platform:emoji-color") {
+    Some(entry) =>
+      inspect(
+        entry.format == NativeRasterGlyphFormat::ColorRgba,
+        content="true",
+      )
+    None => fail("expected color glyph atlas entry")
+  }
+  let shader = text_shader_wgsl()
+  assert_true(
+    shader.contains("select(in.color.rgb, sample.rgb, in.color_glyph > 0.5)"),
+  )
+  assert_false(shader.contains("mix(tinted, sample.rgb, in.color_glyph)"))
 }
 
 ///|

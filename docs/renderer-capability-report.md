@@ -24,16 +24,16 @@ Status meanings:
 | Text | ready | ready | None |
 | Image | ready | ready | Native decodes PNG/JPEG/BMP from local file paths and base64 data URIs through `mizchi/image`; Web loads browser-supported sources into a WebGPU texture cache. |
 | Clip | ready | ready | Rectangular transformed scissor behavior is aligned; rounded clips are handled through native shader SDF masks and Web offscreen layer-mask scopes. |
-| Transform | partial | partial | Affine transforms are folded into visual, image, and text vertices. Scoped native layer/filter child plans now inherit transform and clip, and Web scoped layers clone the current transform/clip state; richer render-pass transform state and pixel evidence remain follow-up work. |
+| Transform | partial | partial | Affine transforms are folded into visual, image, text, shader-effect advanced vertices, and masked native layer composite vertices. Scoped native layer/filter child plans inherit transform and clip; native filter scopes preserve transformed child vertices and transformed clip scissors. Web scoped layer/filter commands clone the current transform/clip state, and Web adapter tests preserve transform scope around layers, filters, and shader effects. Broader render-pass transform pixel evidence remains follow-up work. |
 | Opacity | ready | ready | None |
 | Layer compositing | ready | ready | Native and Web render layer scopes into offscreen GPU textures and composite them back through the advanced GPU pass with opacity and masks. |
 | Blend mode | ready | ready | Source-over, multiply, screen, darken, and lighten map to GPU blend states; overlay uses a backdrop-sampling GPU pass for exact channel math. |
 | Filter effect | ready | ready | `PushFilter` / `PopFilter` render scoped content to offscreen textures; the advanced shader applies blur, saturation, brightness, contrast, and color matrix filters. |
 | Path/vector | ready | ready | `DrawPath` lowers `PathSpec` fills and strokes through the shared `moon_zeno` tessellator. Native wgpu renders the triangle mesh through the visual GPU pipeline, and the wasm-gc Web adapter forwards the same mesh payload to the browser WebGPU visual pipeline. |
 | Shader effect | ready | ready | `DrawShaderEffect` executes through the advanced GPU shader path for built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`, with unknown effects using their fallback brush. |
-| Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux composes its fontconfig/HarfBuzz/FreeType scaffold with Cosmic fallback, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. macOS/Windows/Linux startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
-| Emoji text | gap | partial | Native color emoji support is not implemented; Web coverage depends on browser font rasterization. Diagnostic text conformance now covers deterministic emoji measurement/caret invariants for single-codepoint, variation-selector, and ZWJ samples, but it does not claim full grapheme shaping or native color glyph support. |
-| Async image | partial | partial | Renderer-neutral lifecycle records model loading, ready, failed, disposed, and eviction. Native and Web renderers expose image resource snapshots; Web refreshes ready/failed records from the browser cache after host submission. App-level async repaint/notification policy remains follow-up work. |
+| Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol with validation for metrics and non-empty run-layout caret coverage, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux composes its fontconfig/HarfBuzz/FreeType scaffold with Cosmic fallback, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. Cosmic measurement and native run layout paths carry monotonic caret coverage for representative emoji clusters. macOS/Windows/Linux startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
+| Emoji text | partial | partial | Native WGPU can preserve RGBA color glyph payloads through the provider protocol, atlas upload path, and text vertex shader marker; Cosmic loads platform emoji fallback font candidates when available, keeps color swash pixels, and returns native run layout caret coverage for single-codepoint, variation-selector, and ZWJ emoji samples; CoreText marks AppleColorEmoji raster payloads as RGBA on macOS. Web coverage depends on browser font rasterization. Full native emoji font fallback across all providers, ZWJ/color emoji conformance, browser rasterization determinism, and full grapheme shaping remain follow-up work. |
+| Async image | partial | partial | Renderer-neutral lifecycle records model loading, ready, failed, disposed, and eviction. Native and Web renderers expose image resource snapshots; the Web backend `WebRenderer` facade also exposes those snapshots to app/host integration code. Web refreshes ready/failed records from the browser cache after host submission, and the canonical Web boot path schedules a redraw when browser image load/error events report a resource change. Broader native/general repaint policy and release evidence remain follow-up work. |
 
 ## Current Native Notes
 
@@ -44,9 +44,11 @@ sources, texture caching, GPU sampling, contain/cover fit modes, and fallback
 handling.
 Clip support uses transformed rectangular scissor rectangles and rounded clips
 with shader SDF masks. Transform support is applied to planned visual, image,
-and text vertices. Scoped layer/filter child plans inherit transform and clip
-state while outer opacity is applied once at composite time. Opacity is folded
-into visual and text vertex alpha.
+text, shader-effect advanced vertices, and masked layer composite vertices.
+Scoped layer/filter child plans inherit transform and clip state while outer
+opacity is applied once at composite time; filter scopes preserve transformed
+child vertices and transformed clip scissors before compositing. Opacity is folded into visual and
+text vertex alpha.
 Layer compositing and filter scopes render into offscreen textures before the
 parent pass samples them through the advanced composite shader. That pass
 applies opacity, rectangular or rounded masks, built-in filter payloads, and
@@ -62,10 +64,14 @@ as its parser frontend and lowers supported scene graph shapes into the same
 draw-command model while reporting unsupported SMIL animation and
 `foreignObject` usage. `render/capabilities.mbt` also exposes a command
 fallback planner that reports unbalanced pops and open advanced scopes while
-keeping visible `DrawPath` commands out of the fallback list. Native color emoji
-remains an explicit gap. Text shaping is
+keeping visible `DrawPath` commands out of the fallback list. Native color glyph
+payloads can now flow through the provider protocol, glyph atlas, and text
+vertex shader marker as RGBA data; Cosmic loads platform emoji fallback font
+candidates when available and preserves color swash pixels, and CoreText marks
+AppleColorEmoji raster payloads as RGBA on macOS. Text shaping is
 partial: `core/` keeps only a deterministic fallback `TextSystem`,
-`render/wgpu` owns provider validation and atlas upload,
+`render/wgpu` owns provider validation and atlas upload, including rejection of
+non-empty run-layout caret arrays that do not cover the input text,
 `render/wgpu/cosmic_text` owns the native Cosmic
 provider, macOS composes a CoreText-backed platform text engine with Cosmic
 fallback for measurement and glyph rasterization, and native platform providers
@@ -73,7 +79,7 @@ share `render/wgpu/text_protocol` for UTF-32 input encoding, versioned
 `FontSpec` payloads carrying size, weight, style, and the structured family
 stack, private versioned measurement payload parsing, a generic run-layout
 envelope for shaped glyph placements with platform-private raster payloads, a
-shared single-channel raster glyph parser, and a versioned registration payload
+shared alpha-mask/RGBA raster glyph parser, and a versioned registration payload
 encoder/decoder for embedded font bytes. CoreText then
 attempts installed named families from the structured family stack, maps generic
 families such as `ui-monospace`, `serif`, and `emoji` to suitable macOS fonts,
@@ -92,8 +98,12 @@ Fallback composition is explicit at the backend/provider boundary; the
 `render/wgpu` package validates provider responses but does not depend on the
 Cosmic provider package. Diagnostic text conformance covers deterministic emoji
 measurement and caret invariants for single-codepoint, variation-selector, and
-ZWJ samples, but full bidi, line breaking, typography conformance, native color
-emoji, and full grapheme shaping are still follow-up work.
+ZWJ samples; Cosmic run-layout tests also assert glyph output plus monotonic
+caret coverage for those representative emoji clusters, and focused Cosmic
+tests cover platform emoji fallback font loading and emoji codepoint resolution
+when such a font is available. Full bidi, line breaking, typography
+conformance, native emoji font fallback across all providers, color emoji
+conformance, and full grapheme shaping are still follow-up work.
 The cross-package text boundary is documented in [Text system](text-system.md).
 Native image support is synchronous from the app model's point of view.
 `WgpuRenderer::image_resources()` exposes renderer-local image resource
@@ -111,18 +121,24 @@ atlas before the glyphs are composited by WebGPU. Images are cached as WebGPU
 textures, support contain/cover fit, and use a deterministic fallback color
 while the browser is still loading the source or if loading fails.
 `WebGpuWasmRenderer::image_resources()` exposes renderer-local image resource
-snapshots. Submitted sources start as loading, and after host submission the
-adapter refreshes records from the browser cache that is updated by
-`Image.onload` / `Image.onerror`, so subsequent renders can report ready
-dimensions or failed diagnostics without changing the app model.
+snapshots, and `backend/web.WebRenderer::image_resources()` forwards the same
+records to app/host integration code. Submitted sources start as loading, and
+after host submission the adapter refreshes records from the browser cache that
+is updated by `Image.onload` / `Image.onerror`, so subsequent renders can report
+ready dimensions or failed diagnostics. The browser runtime also exposes an
+`onImageResourceChange` callback for WebGPU imports, and `bootMouiWasmGcApp`
+wires that callback to `window_web.schedule_animation_frame` so image load/error
+completion reaches the normal Web redraw path even if user notification code
+throws.
 
 Clip support maps transformed rectangular clip stacks to per-item scissor
 rectangles. Rounded clip scopes are submitted as offscreen layer scopes with a
 rounded mask, reusing the browser runtime's layer-mask composite path.
-Transform support is folded into generated visual, image, and text vertices,
-with clip scissors derived from transformed bounding boxes. Scoped layer/filter
-commands clone the current transform and clip state before rendering into their
-offscreen scope.
+Transform support is folded into generated visual, image, text, and shader-effect
+advanced vertices, with clip scissors derived from transformed bounding boxes.
+Scoped layer/filter commands clone the current transform and clip state before
+rendering into their offscreen scope, and Web adapter tests preserve transform
+scope around layer, filter, and shader-effect host calls.
 The Web runtime forwards layer, filter, and shader-effect commands through the
 wasm-gc host ABI. The browser runtime uses draw scopes, offscreen WebGPU
 textures, and an advanced composite shader for layer opacity, masks, filters,

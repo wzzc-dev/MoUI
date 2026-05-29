@@ -18,6 +18,13 @@ test "renderer capability report tracks draw command support" {
   assert_true(transform.web_status == @render.RendererFeatureStatus::Partial)
   assert_true(transform.native_note.contains("scoped layer"))
   assert_true(transform.native_note.contains("transform and clip"))
+  assert_true(transform.native_note.contains("shader-effect advanced vertices"))
+  assert_true(transform.native_note.contains("layer composite vertices"))
+  assert_true(transform.native_note.contains("Filter scopes"))
+  assert_true(transform.native_note.contains("transformed clip scissors"))
+  assert_true(transform.web_note.contains("shader-effect advanced vertices"))
+  assert_true(transform.web_note.contains("shader effects"))
+  assert_true(transform.web_note.contains("filters"))
   assert_true(transform.web_note.contains("clone"))
   guard @render.renderer_feature_capability(@render.RendererFeature::Clip)
     is Some(clip) else {
@@ -86,13 +93,23 @@ test "renderer capability report tracks draw command support" {
   assert_true(text_shaping.native_note.contains("DirectWrite scaffold"))
   assert_true(text_shaping.native_note.contains("fontconfig"))
   assert_true(text_shaping.native_note.contains("Cosmic"))
+  assert_true(text_shaping.native_note.contains("run layout"))
+  assert_true(text_shaping.native_note.contains("caret coverage"))
+  assert_true(text_shaping.native_note.contains("coverage checks"))
   guard @render.renderer_feature_capability(@render.RendererFeature::EmojiText)
     is Some(emoji) else {
     fail("expected emoji capability")
   }
-  assert_true(emoji.native_status == @render.RendererFeatureStatus::Gap)
+  assert_true(emoji.native_status == @render.RendererFeatureStatus::Partial)
   assert_true(emoji.web_status == @render.RendererFeatureStatus::Partial)
-  assert_true(emoji.native_note.contains("Diagnostic text conformance"))
+  assert_true(emoji.native_note.contains("RGBA"))
+  assert_true(emoji.native_note.contains("text vertices"))
+  assert_true(emoji.native_note.contains("Cosmic"))
+  assert_true(emoji.native_note.contains("platform emoji fallback"))
+  assert_true(emoji.native_note.contains("variation-selector"))
+  assert_true(emoji.native_note.contains("ZWJ"))
+  assert_true(emoji.native_note.contains("AppleColorEmoji"))
+  assert_true(emoji.native_note.contains("grapheme"))
   assert_true(emoji.web_note.contains("grapheme"))
   guard @render.renderer_feature_capability(@render.RendererFeature::AsyncImage)
     is Some(async_image) else {
@@ -103,8 +120,13 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(async_image.web_status == @render.RendererFeatureStatus::Partial)
   assert_true(async_image.web_note.contains("browser cache"))
+  assert_true(async_image.web_note.contains("backend WebRenderer facade"))
+  assert_true(async_image.web_note.contains("app-visible"))
   assert_true(async_image.web_note.contains("ready"))
   assert_true(async_image.web_note.contains("failed"))
+  assert_true(async_image.web_note.contains("redraw"))
+  assert_true(async_image.web_note.contains("Image.onload"))
+  assert_true(async_image.web_note.contains("Image.onerror"))
 }
 
 ///|
@@ -163,7 +185,7 @@ test "renderer command planner reports unbalanced advanced scopes" {
 }
 
 ///|
-test "renderer capability follow ups stay focused on native gaps" {
+test "renderer capability follow ups stay focused on incomplete features" {
   let follow_ups = @render.renderer_feature_follow_ups()
   inspect(follow_ups.length(), content="4")
   let mut has_transform = false
@@ -181,7 +203,7 @@ test "renderer capability follow ups stay focused on native gaps" {
     }
     if entry.feature == @render.RendererFeature::EmojiText {
       has_emoji_text = true
-      assert_true(entry.native_status == @render.RendererFeatureStatus::Gap)
+      assert_true(entry.native_status == @render.RendererFeatureStatus::Partial)
     }
     if entry.feature == @render.RendererFeature::AsyncImage {
       has_async_image = true

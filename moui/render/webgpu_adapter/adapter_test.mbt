@@ -580,6 +580,82 @@ test "wgpu web renderer keeps transform scope around layer commands" {
 }
 
 ///|
+test "wgpu web renderer keeps transform scope around filter commands" {
+  let last_calls : Array[WebGpuHostCall] = []
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0), on_submit=calls => {
+      last_calls.clear()
+      for call in calls {
+        last_calls.push(call)
+      }
+    }),
+  )
+  renderer.render([
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=10.0, dy=20.0),
+    ),
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(2.0)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PopTransform,
+  ])
+  inspect(last_calls.length(), content="7")
+  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
+  guard last_calls[1] is WebGpuHostCall::PushTransform(transform) else {
+    fail("expected push transform")
+  }
+  inspect(transform.tx, content="10")
+  inspect(transform.ty, content="20")
+  assert_true(last_calls[2] is WebGpuHostCall::PushFilter(_))
+  assert_true(last_calls[3] is WebGpuHostCall::FillRect(_, _))
+  assert_true(last_calls[4] is WebGpuHostCall::PopFilter)
+  assert_true(last_calls[5] is WebGpuHostCall::PopTransform)
+  assert_true(last_calls[6] is WebGpuHostCall::Present)
+}
+
+///|
+test "wgpu web renderer keeps transform scope around shader effects" {
+  let last_calls : Array[WebGpuHostCall] = []
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0), on_submit=calls => {
+      last_calls.clear()
+      for call in calls {
+        last_calls.push(call)
+      }
+    }),
+  )
+  renderer.render([
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=10.0, dy=20.0),
+    ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="checker",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      ),
+    ),
+    @core.DrawCommand::PopTransform,
+  ])
+  inspect(last_calls.length(), content="5")
+  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
+  guard last_calls[1] is WebGpuHostCall::PushTransform(transform) else {
+    fail("expected push transform")
+  }
+  inspect(transform.tx, content="10")
+  inspect(transform.ty, content="20")
+  assert_true(last_calls[2] is WebGpuHostCall::DrawShaderEffect(_))
+  assert_true(last_calls[3] is WebGpuHostCall::PopTransform)
+  assert_true(last_calls[4] is WebGpuHostCall::Present)
+}
+
+///|
 fn test_port(
   created~ : Ref[Int],
   capabilities? : WebGpuHostCapabilities = required_capabilities(),

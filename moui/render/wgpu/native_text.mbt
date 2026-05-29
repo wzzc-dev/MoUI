@@ -46,6 +46,7 @@ priv struct GlyphAtlasEntry {
   height : Int
   bearing_x : Int
   bearing_y : Int
+  format : NativeRasterGlyphFormat
 }
 
 ///|
@@ -56,6 +57,12 @@ pub struct NativeGlyphKey {
   priv cache_key : String
   priv payload : Bytes
 }
+
+///|
+pub(all) enum NativeRasterGlyphFormat {
+  AlphaMask
+  ColorRgba
+} derive(Eq, Debug, ToJson)
 
 ///|
 // Positioned glyph produced by platform text layout. Coordinates are logical
@@ -78,13 +85,15 @@ pub(all) struct NativeTextLayout {
 }
 
 ///|
-// Single-channel alpha glyph bitmap. `bearing_x` and `bearing_y` are logical
-// pixel offsets from the glyph origin to the top-left bitmap corner.
+// Glyph bitmap returned by a native text provider. Alpha glyphs are tinted by
+// the text run color; color glyphs carry RGBA pixel payloads and preserve
+// native emoji/color-font raster output while still applying run opacity.
 pub(all) struct NativeRasterGlyph {
   width : Int
   height : Int
   bearing_x : Int
   bearing_y : Int
+  format : NativeRasterGlyphFormat
   pixels : Bytes
 }
 
@@ -118,7 +127,11 @@ priv struct TextVertex {
   g : Double
   b : Double
   a : Double
+  color_glyph : Double
 }
+
+///|
+let text_vertex_stride : UInt64 = 36UL
 
 ///|
 priv struct TextRunBuildResult {
@@ -229,9 +242,10 @@ pub fn NativeRasterGlyph::new(
   height~ : Int,
   bearing_x~ : Int,
   bearing_y~ : Int,
+  format? : NativeRasterGlyphFormat = NativeRasterGlyphFormat::AlphaMask,
   pixels~ : Bytes,
 ) -> NativeRasterGlyph {
-  { width, height, bearing_x, bearing_y, pixels }
+  { width, height, bearing_x, bearing_y, format, pixels }
 }
 
 ///|
@@ -312,7 +326,7 @@ fn NativeTextEngine::layout_run(
   let _ = cache
   match (self.provider.layout_run)(run, scale_factor) {
     Some(layout) =>
-      if layout.is_valid_for_run() {
+      if layout.is_valid_for_run(run.text) {
         Some(layout)
       } else {
         self.layout_with_fallback(run, scale_factor)
@@ -340,7 +354,7 @@ fn NativeTextEngine::fallback_layout_run(
     Some(fallback) =>
       match (fallback.layout_run)(run, scale_factor) {
         Some(layout) =>
-          if layout.is_valid_for_run() {
+          if layout.is_valid_for_run(run.text) {
             Some(layout)
           } else {
             None
@@ -399,7 +413,12 @@ fn NativeRasterGlyph::is_valid(self : NativeRasterGlyph) -> Bool {
   if self.width <= 0 || self.height <= 0 {
     return false
   }
-  self.width <= self.pixels.length() / self.height
+  match self.format {
+    NativeRasterGlyphFormat::AlphaMask =>
+      self.width <= self.pixels.length() / self.height
+    NativeRasterGlyphFormat::ColorRgba =>
+      self.width <= self.pixels.length() / self.height / 4
+  }
 }
 
 ///|
@@ -413,9 +432,18 @@ fn NativeTextLayout::is_valid_for_measure(
 }
 
 ///|
-fn NativeTextLayout::is_valid_for_run(self : NativeTextLayout) -> Bool {
+fn NativeTextLayout::is_valid_for_run(
+  self : NativeTextLayout,
+  text : String,
+) -> Bool {
   self.has_valid_metrics() &&
-  (self.caret_positions.is_empty() || self.has_monotonic_carets())
+  (
+    self.caret_positions.is_empty() ||
+    (
+      self.caret_positions.length() >= text.to_array().length() + 1 &&
+      self.has_monotonic_carets()
+    )
+  )
 }
 
 ///|
@@ -684,6 +712,7 @@ fn GlyphAtlas::ensure_glyph(
                 height: raster.height,
                 bearing_x: raster.bearing_x,
                 bearing_y: raster.bearing_y,
+                format: raster.format,
               }
               self.entries[key.cache_key] = entry
               self.dirty = true
@@ -730,17 +759,34 @@ fn GlyphAtlas::blit_glyph(
   dst_y : Int,
   raster : NativeRasterGlyph,
 ) -> Unit {
-  for y in 0..<raster.height {
-    for x in 0..<raster.width {
-      let alpha = raster.pixels[y * raster.width + x]
-      if alpha != b'\x00' {
-        let dst = ((dst_y + y) * self.width + dst_x + x) * 4
-        self.pixels[dst] = b'\xff'
-        self.pixels[dst + 1] = b'\xff'
-        self.pixels[dst + 2] = b'\xff'
-        self.pixels[dst + 3] = alpha
+  match raster.format {
+    NativeRasterGlyphFormat::AlphaMask =>
+      for y in 0..<raster.height {
+        for x in 0..<raster.width {
+          let alpha = raster.pixels[y * raster.width + x]
+          if alpha != b'\x00' {
+            let dst = ((dst_y + y) * self.width + dst_x + x) * 4
+            self.pixels[dst] = b'\xff'
+            self.pixels[dst + 1] = b'\xff'
+            self.pixels[dst + 2] = b'\xff'
+            self.pixels[dst + 3] = alpha
+          }
+        }
       }
-    }
+    NativeRasterGlyphFormat::ColorRgba =>
+      for y in 0..<raster.height {
+        for x in 0..<raster.width {
+          let src = (y * raster.width + x) * 4
+          let alpha = raster.pixels[src + 3]
+          if alpha != b'\x00' {
+            let dst = ((dst_y + y) * self.width + dst_x + x) * 4
+            self.pixels[dst] = raster.pixels[src]
+            self.pixels[dst + 1] = raster.pixels[src + 1]
+            self.pixels[dst + 2] = raster.pixels[src + 2]
+            self.pixels[dst + 3] = alpha
+          }
+        }
+      }
   }
 }
 
@@ -766,12 +812,16 @@ fn append_text_quad(
   let v0 = entry.y.to_double() / atlas.height.to_double()
   let u1 = (entry.x + entry.width).to_double() / atlas.width.to_double()
   let v1 = (entry.y + entry.height).to_double() / atlas.height.to_double()
-  push_text_vertex(vertices, p0, size, u0, v0, color)
-  push_text_vertex(vertices, p1, size, u0, v1, color)
-  push_text_vertex(vertices, p2, size, u1, v1, color)
-  push_text_vertex(vertices, p0, size, u0, v0, color)
-  push_text_vertex(vertices, p2, size, u1, v1, color)
-  push_text_vertex(vertices, p3, size, u1, v0, color)
+  let color_glyph = match entry.format {
+    NativeRasterGlyphFormat::AlphaMask => 0.0
+    NativeRasterGlyphFormat::ColorRgba => 1.0
+  }
+  push_text_vertex(vertices, p0, size, u0, v0, color, color_glyph)
+  push_text_vertex(vertices, p1, size, u0, v1, color, color_glyph)
+  push_text_vertex(vertices, p2, size, u1, v1, color, color_glyph)
+  push_text_vertex(vertices, p0, size, u0, v0, color, color_glyph)
+  push_text_vertex(vertices, p2, size, u1, v1, color, color_glyph)
+  push_text_vertex(vertices, p3, size, u1, v0, color, color_glyph)
 }
 
 ///|
@@ -782,6 +832,7 @@ fn push_text_vertex(
   u : Double,
   v : Double,
   color : @core.Color,
+  color_glyph : Double,
 ) -> Unit {
   vertices.push({
     x: pixel_x_to_ndc(point.x, size.width),
@@ -792,6 +843,7 @@ fn push_text_vertex(
     g: color.g,
     b: color.b,
     a: color.a,
+    color_glyph,
   })
 }
 
@@ -825,6 +877,7 @@ fn text_vertices_to_bytes(vertices : Array[TextVertex]) -> Bytes {
     push_text_f32le(out, vertex.g)
     push_text_f32le(out, vertex.b)
     push_text_f32le(out, vertex.a)
+    push_text_f32le(out, vertex.color_glyph)
   }
   Bytes::from_array(out)
 }
@@ -847,6 +900,7 @@ fn text_shader_wgsl() -> String {
     #|  @builtin(position) pos: vec4<f32>,
     #|  @location(0) uv: vec2<f32>,
     #|  @location(1) color: vec4<f32>,
+    #|  @location(2) color_glyph: f32,
     #|};
     #|
     #|@vertex
@@ -854,11 +908,13 @@ fn text_shader_wgsl() -> String {
     #|  @location(0) pos: vec2<f32>,
     #|  @location(1) uv: vec2<f32>,
     #|  @location(2) color: vec4<f32>,
+    #|  @location(3) color_glyph: f32,
     #|) -> VSOut {
     #|  var out: VSOut;
     #|  out.pos = vec4<f32>(pos, 0.0, 1.0);
     #|  out.uv = uv;
     #|  out.color = color;
+    #|  out.color_glyph = color_glyph;
     #|  return out;
     #|}
     #|
@@ -868,7 +924,8 @@ fn text_shader_wgsl() -> String {
     #|@fragment
     #|fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
     #|  let sample = textureSample(glyph_atlas, glyph_sampler, in.uv);
-    #|  return vec4<f32>(in.color.rgb, in.color.a * sample.a);
+    #|  let rgb = select(in.color.rgb, sample.rgb, in.color_glyph > 0.5);
+    #|  return vec4<f32>(rgb, in.color.a * sample.a);
     #|}
     #|
   shader

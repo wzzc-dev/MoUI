@@ -57,9 +57,15 @@ pub(all) struct NativeRasterGlyph {
   height : Int
   bearing_x : Int
   bearing_y : Int
+  format : NativeRasterGlyphFormat
   pixels : Bytes
 }
-pub fn NativeRasterGlyph::new(width~ : Int, height~ : Int, bearing_x~ : Int, bearing_y~ : Int, pixels~ : Bytes) -> Self
+pub fn NativeRasterGlyph::new(width~ : Int, height~ : Int, bearing_x~ : Int, bearing_y~ : Int, format? : NativeRasterGlyphFormat, pixels~ : Bytes) -> Self
+
+pub(all) enum NativeRasterGlyphFormat {
+  AlphaMask
+  ColorRgba
+} derive(Eq, ToJson, @debug.Debug)
 
 pub struct NativeTextEngine {
   // private fields

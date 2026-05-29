@@ -29,6 +29,83 @@ test "web exposes WebGPU renderer contract" {
 }
 
 ///|
+test "web renderer exposes app-visible ready image resource snapshots" {
+  let port : @webgpu.WebGpuHostRendererPort = {
+    capabilities: () => @webgpu.required_capabilities(),
+    create_surface: (canvas_id, metrics) => { canvas_id, metrics },
+    create_renderer: _surface => (),
+    resize: _metrics => (),
+    measure_text: input => @core.TextSystem::fallback().measure_text(input),
+    register_font_data: (_family, _data) => (),
+    image_resource: source => {
+      Some(@render.ImageResourceRecord::ready(source, width=80, height=40))
+    },
+    submit: _calls => (),
+    dispose: () => (),
+  }
+  let renderer : WebRenderer = {
+    renderer: @webgpu.create_renderer(
+      canvas_id="moui-test-canvas",
+      logical_size=@core.Size::new(width=100.0, height=50.0),
+      port~,
+    ),
+  }
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "ready.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=10.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  let resources = renderer.image_resources()
+  inspect(resources.length(), content="1")
+  inspect(resources[0].source, content="ready.png")
+  assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
+  inspect(resources[0].width, content="80")
+  inspect(resources[0].height, content="40")
+}
+
+///|
+test "web renderer exposes app-visible failed image resource snapshots" {
+  let port : @webgpu.WebGpuHostRendererPort = {
+    capabilities: () => @webgpu.required_capabilities(),
+    create_surface: (canvas_id, metrics) => { canvas_id, metrics },
+    create_renderer: _surface => (),
+    resize: _metrics => (),
+    measure_text: input => @core.TextSystem::fallback().measure_text(input),
+    register_font_data: (_family, _data) => (),
+    image_resource: source => {
+      Some(
+        @render.ImageResourceRecord::failed(source, diagnostic="load failed"),
+      )
+    },
+    submit: _calls => (),
+    dispose: () => (),
+  }
+  let renderer : WebRenderer = {
+    renderer: @webgpu.create_renderer(
+      canvas_id="moui-test-canvas",
+      logical_size=@core.Size::new(width=100.0, height=50.0),
+      port~,
+    ),
+  }
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "missing.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=10.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  let resources = renderer.image_resources()
+  inspect(resources.length(), content="1")
+  inspect(resources[0].source, content="missing.png")
+  assert_true(resources[0].status == @render.ImageResourceStatus::ImageFailed)
+  inspect(resources[0].diagnostic, content="load failed")
+}
+
+///|
 test "web maps close event to host event" {
   let event = window_event_to_host(
     @window_core.WindowEvent::CloseRequested,

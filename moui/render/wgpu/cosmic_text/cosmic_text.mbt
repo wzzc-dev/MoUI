@@ -3,6 +3,7 @@ priv struct CosmicFontCatalog {
   regular_path : String
   bold_path : String
   cjk_path : String
+  emoji_path : String
 }
 
 ///|
@@ -124,6 +125,13 @@ fn windows_cjk_font_path() -> String {
 }
 
 ///|
+fn windows_emoji_font_path() -> String {
+  first_existing_font_path([
+    "C:\\Windows\\Fonts\\seguiemj.ttf", "C:\\Windows\\Fonts\\seguisym.ttf",
+  ])
+}
+
+///|
 fn macos_cjk_font_path() -> String {
   first_existing_font_path([
     "/System/Library/Fonts/STHeiti Medium.ttc", "/System/Library/Fonts/STHeiti Light.ttc",
@@ -133,10 +141,25 @@ fn macos_cjk_font_path() -> String {
 }
 
 ///|
+fn macos_emoji_font_path() -> String {
+  first_existing_font_path([
+    "/System/Library/Fonts/Apple Color Emoji.ttc", "/System/Library/Fonts/AppleColorEmoji.ttc",
+  ])
+}
+
+///|
 fn linux_cjk_font_path() -> String {
   first_existing_font_path([
     "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
     "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+  ])
+}
+
+///|
+fn linux_emoji_font_path() -> String {
+  first_existing_font_path([
+    "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", "/usr/share/fonts/noto/NotoColorEmoji.ttf",
+    "/usr/share/fonts/google-noto-emoji/NotoColorEmoji.ttf", "/usr/share/fonts/truetype/ancient-scripts/Symbola_hint.ttf",
   ])
 }
 
@@ -168,11 +191,21 @@ fn cosmic_cjk_font_path() -> String {
 }
 
 ///|
+fn cosmic_emoji_font_path() -> String {
+  first_existing_font_path([
+    windows_emoji_font_path(),
+    macos_emoji_font_path(),
+    linux_emoji_font_path(),
+  ])
+}
+
+///|
 fn CosmicFontCatalog::platform_default() -> CosmicFontCatalog {
   {
     regular_path: cosmic_regular_font_path(),
     bold_path: cosmic_bold_font_path(),
     cjk_path: cosmic_cjk_font_path(),
+    emoji_path: cosmic_emoji_font_path(),
   }
 }
 
@@ -193,7 +226,7 @@ fn CosmicFontCatalog::fallback_font_paths_for_spec(
   self : CosmicFontCatalog,
   font : @core.FontSpec,
 ) -> Array[String] {
-  [self.font_path_for_spec(font), self.cjk_path]
+  [self.font_path_for_spec(font), self.cjk_path, self.emoji_path]
 }
 
 ///|
@@ -391,7 +424,10 @@ fn CosmicTextCache::measure(
   if !self.has_loaded_fonts() {
     return None
   }
-  let raw = cosmic_text_layout_result_from_buffer(input, buffer)
+  let raw = cosmic_text_layout_result_from_runs(
+    input,
+    buffer.layout_runs().to_array(),
+  )
   let result = match input.max_width {
     Some(max_width) => cosmic_clamp_text_layout_result(raw, max_width)
     None => raw
@@ -406,16 +442,16 @@ fn CosmicTextCache::measure(
 }
 
 ///|
-fn cosmic_text_layout_result_from_buffer(
+fn cosmic_text_layout_result_from_runs(
   input : @core.TextLayoutInput,
-  buffer : @moon_cosmic.Buffer,
+  runs : Array[@moon_cosmic.LayoutRun],
 ) -> @core.TextLayoutResult {
   let char_count = input.text.to_array().length()
   let carets = Array::make(char_count + 1, 0.0)
   let mut width = 0.0
   let mut height = input.font.size * 1.25
   let mut saw_run = false
-  for run in buffer.layout_runs() {
+  for run in runs {
     saw_run = true
     width = width.max(run.line_w.to_double())
     height = height.max((run.line_top + run.line_height).to_double())
@@ -535,16 +571,14 @@ fn CosmicTextCache::layout_for_run(
   if runs.is_empty() || !self.has_loaded_fonts() {
     return None
   }
+  let result = cosmic_text_layout_result_from_runs(
+    @core.TextLayoutInput::new(text=run.text, font=run.font),
+    runs,
+  )
   let scale = cosmic_text_scale(scale_factor)
   let glyphs : Array[@wgpu_renderer.NativeGlyphPlacement] = []
-  let baseline = run.font.size * 0.8
-  let mut width = 0.0
-  let mut height = run.font.size * 1.25
+  let baseline = result.baseline
   for layout_run in runs {
-    width = width.max(layout_run.line_w.to_double())
-    height = height.max(
-      (layout_run.line_top + layout_run.line_height).to_double(),
-    )
     let offset = (
       0.0F,
       Float::from_double(layout_run.line_y.to_double() * scale),
@@ -571,8 +605,9 @@ fn CosmicTextCache::layout_for_run(
   }
   Some(
     @wgpu_renderer.NativeTextLayout::new(
-      size=@core.Size::new(width~, height~),
+      size=result.size,
       baseline~,
+      caret_positions=result.caret_positions,
       glyphs~,
     ),
   )
@@ -768,6 +803,7 @@ fn CosmicTextCache::raster_cosmic_glyph(
   cache_key : @moon_cosmic.CacheKey,
 ) -> @wgpu_renderer.NativeRasterGlyph? {
   let pixels : Array[RasterGlyphPixel] = []
+  let color_glyph = self.cosmic_glyph_uses_color_bitmap(cache_key)
   self.swash_cache.with_pixels(
     self.font_system,
     cache_key,
@@ -787,20 +823,48 @@ fn CosmicTextCache::raster_cosmic_glyph(
       max_x = max_x.max(pixel.x)
       max_y = max_y.max(pixel.y)
     }
-    let bytes = Array::make((max_x - min_x + 1) * (max_y - min_y + 1), b'\x00')
+    let width = max_x - min_x + 1
+    let height = max_y - min_y + 1
+    let format = if color_glyph {
+      @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba
+    } else {
+      @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask
+    }
+    let bytes_per_pixel = if color_glyph { 4 } else { 1 }
+    let bytes = Array::make(width * height * bytes_per_pixel, b'\x00')
     for pixel in pixels {
       let x = pixel.x - min_x
       let y = pixel.y - min_y
-      bytes[y * (max_x - min_x + 1) + x] = pixel.color.a()
+      if color_glyph {
+        let offset = (y * width + x) * 4
+        bytes[offset] = pixel.color.r()
+        bytes[offset + 1] = pixel.color.g()
+        bytes[offset + 2] = pixel.color.b()
+        bytes[offset + 3] = pixel.color.a()
+      } else {
+        bytes[y * width + x] = pixel.color.a()
+      }
     }
     Some(
       @wgpu_renderer.NativeRasterGlyph::new(
-        width=max_x - min_x + 1,
-        height=max_y - min_y + 1,
+        width~,
+        height~,
         bearing_x=min_x,
         bearing_y=min_y,
+        format~,
         pixels=Bytes::from_array(bytes),
       ),
     )
+  }
+}
+
+///|
+fn CosmicTextCache::cosmic_glyph_uses_color_bitmap(
+  self : CosmicTextCache,
+  cache_key : @moon_cosmic.CacheKey,
+) -> Bool {
+  match self.swash_cache.get_image(self.font_system, cache_key) {
+    Some(image) => image.content() is @moon_swash_scale.Content::Color
+    None => false
   }
 }

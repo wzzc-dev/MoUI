@@ -299,6 +299,15 @@ extern "C" fn macos_coretext_debug_generic_font_name_len(
 ) -> Int = "moui_macos_coretext_debug_generic_font_name_len"
 
 ///|
+#borrow(font_name)
+extern "C" fn macos_coretext_debug_raster_format_for_font_name(
+  font_name : Bytes,
+  size : Double,
+  weight : Int,
+  style : Int,
+) -> Int = "moui_macos_coretext_debug_raster_format_for_font_name"
+
+///|
 test "coretext native protocol versions match shared text protocol" {
   inspect(
     macos_coretext_debug_font_spec_protocol_version(),
@@ -443,10 +452,32 @@ test "coretext maps generic font families to macOS fonts" {
   )
   inspect(
     macos_coretext_debug_generic_font_name_len(
+      @utf8.encode(@core.FontFamily::Emoji.css_name()[:], bom=false),
+    ) >
+    0,
+    content="true",
+  )
+  inspect(
+    macos_coretext_debug_generic_font_name_len(
       @utf8.encode("not-a-generic-family", bom=false),
     ),
     content="-1",
   )
+}
+
+///|
+test "coretext marks AppleColorEmoji raster payloads as color glyphs" {
+  let format = macos_coretext_debug_raster_format_for_font_name(
+    @utf8.encode("AppleColorEmoji", bom=false),
+    18.0,
+    400,
+    coretext_style_code(@core.FontStyle::Normal),
+  )
+  if format < 0 {
+    inspect("missing", content="available")
+  } else {
+    inspect(format, content="1")
+  }
 }
 
 ///|

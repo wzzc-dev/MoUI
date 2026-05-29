@@ -58,6 +58,13 @@ pub fn WebRenderer::text_system(self : WebRenderer) -> @core.TextSystem {
 }
 
 ///|
+pub fn WebRenderer::image_resources(
+  self : WebRenderer,
+) -> Array[@render.ImageResourceRecord] {
+  self.renderer.image_resources()
+}
+
+///|
 pub fn WebRenderer::dispose(self : WebRenderer) -> Unit {
   self.renderer.dispose()
 }

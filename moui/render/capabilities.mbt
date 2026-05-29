@@ -160,8 +160,8 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::Transform,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Native wgpu folds affine transforms into planned visual, image, and text vertices; scissor uses transformed bounding boxes; scoped layer/filter child plans inherit transform and clip while outer opacity is applied at composite time. Richer render-pass transform state remains follow-up work.",
-      web_note: "The browser WebGPU host folds affine transforms into visual, image, and text vertices, and scoped layer/filter commands clone the current transform and clip state. Richer render-pass transform state remains follow-up work.",
+      native_note: "Native wgpu folds affine transforms into planned visual, image, text, shader-effect advanced vertices, and masked layer composite vertices; scissor uses transformed bounding boxes; scoped layer/filter child plans inherit transform and clip while outer opacity is applied at composite time. Filter scopes preserve transformed child vertices and transformed clip scissors. Broader render-pass transform pixel evidence remains follow-up work.",
+      web_note: "The browser WebGPU host folds affine transforms into visual, image, text, and shader-effect advanced vertices, and scoped layer/filter commands clone the current transform and clip state. Web adapter tests preserve transform scope around layers, filters, and shader effects; broader render-pass transform pixel evidence remains follow-up work.",
     },
     {
       feature: RendererFeature::Opacity,
@@ -209,22 +209,22 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       feature: RendererFeature::TextShaping,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Native wgpu uses a private platform text provider boundary: render/wgpu owns validation and atlas upload, render/wgpu/cosmic_text owns the Cosmic provider, macOS composes CoreText/CoreGraphics with Cosmic fallback, Windows composes a DirectWrite scaffold with Cosmic fallback, and Linux has a fontconfig/HarfBuzz/FreeType scaffold. Full bidi, line breaking, and typography conformance remain follow-up work.",
+      native_note: "Native wgpu uses a private platform text provider boundary: render/wgpu owns validation and atlas upload, including non-empty run-layout caret coverage checks, render/wgpu/cosmic_text owns the Cosmic provider, macOS composes CoreText/CoreGraphics with Cosmic fallback, Windows composes a DirectWrite scaffold with Cosmic fallback, and Linux has a fontconfig/HarfBuzz/FreeType scaffold. Cosmic measurement and native run layout paths carry monotonic caret coverage for representative emoji clusters. Full bidi, line breaking, and typography conformance remain follow-up work.",
       web_note: "Web text uses canvas-rasterized glyph atlases, but full shaping, bidi, and line breaking conformance remain follow-up work.",
     },
     {
       feature: RendererFeature::EmojiText,
-      native_status: RendererFeatureStatus::Gap,
+      native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
-      native_note: "Color emoji font fallback and atlas upload are not implemented in native wgpu yet. Diagnostic text conformance covers deterministic emoji measurement and caret invariants only.",
-      web_note: "Browser canvas glyph rasterization can surface emoji where fonts support it. Diagnostic text conformance covers deterministic measurement and caret invariants, but not browser rasterization or full grapheme shaping parity.",
+      native_note: "Native wgpu atlas upload, text vertices, and provider protocol can preserve RGBA color glyph payloads; Cosmic loads platform emoji fallback font candidates when available, keeps color swash pixels, and returns native run layout caret coverage for single-codepoint, variation-selector, and ZWJ emoji samples; CoreText marks AppleColorEmoji raster payloads as RGBA on macOS. Full emoji font fallback across native providers, ZWJ/color emoji conformance, and full grapheme shaping remain follow-up work.",
+      web_note: "Browser canvas glyph rasterization can surface emoji where fonts support it. Diagnostic text conformance covers deterministic measurement and caret invariants, but not browser rasterization determinism or full grapheme shaping parity.",
     },
     {
       feature: RendererFeature::AsyncImage,
       native_status: RendererFeatureStatus::Partial,
       web_status: RendererFeatureStatus::Partial,
       native_note: "Renderer-neutral image lifecycle state models loading, ready, failed, disposed, and eviction; native WgpuRenderer now exposes renderer-local image resource snapshots, with synchronous decode paths marking ready or failed.",
-      web_note: "Renderer-neutral image lifecycle state matches the browser async loading cache contract; WebGpuWasmRenderer exposes renderer-local image resource snapshots and refreshes loading, ready, or failed records from the browser cache after host submission.",
+      web_note: "Renderer-neutral image lifecycle state matches the browser async loading cache contract; WebGpuWasmRenderer and the backend WebRenderer facade expose app-visible image resource snapshots, refresh loading, ready, or failed records from the browser cache after host submission, and the canonical Web boot path schedules a redraw when Image.onload or Image.onerror reports a resource change.",
     },
   ]
 }

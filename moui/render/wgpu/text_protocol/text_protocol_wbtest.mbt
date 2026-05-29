@@ -330,6 +330,9 @@ test "native text protocol parses versioned raster glyph" {
       inspect(glyph.height, content="2")
       inspect(glyph.bearing_x, content="1")
       inspect(glyph.bearing_y, content="-3")
+      assert_true(
+        glyph.format == @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
+      )
       inspect(glyph.pixels.length(), content="4")
     }
     None => fail("expected native raster glyph payload to parse")
@@ -373,5 +376,36 @@ test "native text protocol rejects malformed raster glyph" {
 fn push_f64_bits_le(out : Array[Byte], bits : UInt64) -> Unit {
   for index in 0..<8 {
     out.push(((bits >> (index * 8)) & 0xFFUL).to_byte())
+  }
+}
+
+///|
+test "native text protocol parses color raster glyph" {
+  let bytes : Array[Byte] = []
+  push_i32_le(bytes, 1)
+  push_i32_le(bytes, 2)
+  push_i32_le(bytes, 0)
+  push_i32_le(bytes, -2)
+  push_i32_le(bytes, native_raster_glyph_protocol_version)
+  push_i32_le(bytes, 1)
+  push_f64_bits_le(bytes, 0UL)
+  bytes.push(b'\x10')
+  bytes.push(b'\x20')
+  bytes.push(b'\x30')
+  bytes.push(b'\xff')
+  bytes.push(b'\x40')
+  bytes.push(b'\x50')
+  bytes.push(b'\x60')
+  bytes.push(b'\x80')
+  match native_raster_glyph_from_bytes(Bytes::from_array(bytes)) {
+    Some(glyph) => {
+      inspect(glyph.width, content="1")
+      inspect(glyph.height, content="2")
+      assert_true(
+        glyph.format == @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba,
+      )
+      inspect(glyph.pixels.length(), content="8")
+    }
+    None => fail("expected color native raster glyph payload to parse")
   }
 }
