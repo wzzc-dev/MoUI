@@ -110,6 +110,29 @@ pub(all) enum HostBackendKind {
   Web
   Test
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostBackendKind::label(Self) -> String
+
+pub(all) struct HostCapabilitySummary {
+  backend : HostBackendKind
+  label : String
+  services : HostServiceCapabilities
+  input : HostInputCapabilities
+  window_lifecycle : Bool
+  multi_window : Bool
+  text_input_ready : Bool
+  ime_ready : Bool
+  drag_drop_ready : Bool
+  async_services : Bool
+  native_accessibility_ready : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_ready? : Bool, ime_ready? : Bool, drag_drop_ready? : Bool, async_services? : Bool, native_accessibility_ready? : Bool, description? : String) -> Self
+pub fn HostCapabilitySummary::has_required_app_basics(Self) -> Bool
+pub fn HostCapabilitySummary::input_count(Self) -> Int
+pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_ready? : Bool, ime_ready? : Bool, drag_drop_ready? : Bool, async_services? : Bool, native_accessibility_ready? : Bool, description? : String) -> Self
+pub fn HostCapabilitySummary::service_count(Self) -> Int
+pub fn HostCapabilitySummary::test_host(label? : String) -> Self
+pub fn HostCapabilitySummary::unavailable(label? : String, description? : String) -> Self
 
 pub(all) enum HostClipboardRequest {
   ReadText
@@ -189,6 +212,7 @@ pub(all) struct HostInputCapabilities {
   clipboard : Bool
   drag_drop : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostInputCapabilities::enabled_labels(Self) -> Array[String]
 pub fn HostInputCapabilities::new(pointer? : Bool, scroll? : Bool, keyboard? : Bool, focus? : Bool, text_input? : Bool, ime? : Bool, clipboard? : Bool, drag_drop? : Bool) -> Self
 pub fn HostInputCapabilities::none() -> Self
 
@@ -307,6 +331,7 @@ pub(all) struct HostServiceCapabilities {
   open_url : Bool
   system_theme : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceCapabilities::enabled_labels(Self) -> Array[String]
 pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, open_url? : Bool, system_theme? : Bool) -> Self
 pub fn HostServiceCapabilities::none() -> Self
 

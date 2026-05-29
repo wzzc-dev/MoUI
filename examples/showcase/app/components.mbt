@@ -270,6 +270,136 @@ fn ShowcaseModel::capability_card(
 }
 
 ///|
+fn ShowcaseModel::host_capability_card(
+  self : ShowcaseModel,
+  theme : @core.Theme,
+  width : Double,
+  height : Double,
+) -> @core.View[ShowcaseMsg] {
+  let inner_width = max_showcase_double(
+    120.0,
+    width - theme.spacing_scale.lg * 2.0,
+  )
+  let summary = self.host_summary
+  let rows = [
+    host_capability_row(
+      "Services",
+      "\{summary.service_count()}/5",
+      host_service_summary(summary.services),
+      theme,
+      inner_width,
+    ),
+    host_capability_row(
+      "Input",
+      "\{summary.input_count()}/7",
+      host_input_summary(summary),
+      theme,
+      inner_width,
+    ),
+    host_capability_row(
+      "Windows",
+      if summary.multi_window { "multi" } else { "single" },
+      if summary.window_lifecycle {
+        "lifecycle queue ready"
+      } else {
+        "runtime-only test surface"
+      },
+      theme,
+      inner_width,
+    ),
+  ]
+  showcase_soft_card(
+    theme,
+    column(
+      [
+        text("Host capability", width=inner_width, height=28.0)
+        .font(theme.typography.control)
+        .foreground(theme.palette.foreground),
+        text(
+          summary.label + " / " + summary.backend.label(),
+          width=inner_width,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height~,
+    padding=theme.spacing_scale.md,
+  )
+}
+
+///|
+fn host_capability_row(
+  label : String,
+  value : String,
+  detail : String,
+  theme : @core.Theme,
+  width : Double,
+) -> @core.View[ShowcaseMsg] {
+  let value_width = 78.0
+  let label_width = max_showcase_double(70.0, width - value_width - 8.0)
+  column(
+    [
+      row(
+        [
+          text(label, width=label_width, height=20.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.foreground),
+          text(value, width=value_width, height=20.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.primary),
+        ],
+        spacing=8.0,
+        align=@views.CrossAlign::Center,
+      ),
+      text(detail, width=width, height=18.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+    ],
+    spacing=0.0,
+    align=@views.CrossAlign::Start,
+  )
+}
+
+///|
+fn host_service_summary(capabilities : @host.HostServiceCapabilities) -> String {
+  host_label_summary(capabilities.enabled_labels(), empty="no services")
+}
+
+///|
+fn host_input_summary(summary : @host.HostCapabilitySummary) -> String {
+  let labels = summary.input.enabled_labels()
+  host_label_summary(labels, empty="no input")
+}
+
+///|
+fn host_label_summary(labels : Array[String], empty~ : String) -> String {
+  if labels.is_empty() {
+    empty
+  } else {
+    let mut output = ""
+    let limit = if labels.length() < 3 { labels.length() } else { 3 }
+    for index in 0..<limit {
+      if output == "" {
+        output = labels[index]
+      } else {
+        output = output + ", " + labels[index]
+      }
+    }
+    if labels.length() > limit {
+      output + " +" + (labels.length() - limit).to_string()
+    } else {
+      output
+    }
+  }
+}
+
+///|
 fn capability_card_entries() -> Array[@render.RendererFeatureCapability] {
   let primary : Array[@render.RendererFeatureCapability] = []
   let secondary : Array[@render.RendererFeatureCapability] = []

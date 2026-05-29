@@ -98,6 +98,32 @@ pub fn canvas_input_host() -> @host.InputHostState {
 }
 
 ///|
+pub fn web_capability_summary(
+  services? : @host.HostServiceCapabilities = @host.HostServiceCapabilities::new(
+    clipboard=true,
+    file_dialogs=true,
+    open_url=true,
+    system_theme=true,
+  ),
+  async_services? : Bool = true,
+) -> @host.HostCapabilitySummary {
+  @host.HostCapabilitySummary::from_contracts(
+    info=web_host_info(),
+    services~,
+    input=canvas_input_host().capabilities(),
+    label="Web host",
+    window_lifecycle=true,
+    multi_window=true,
+    text_input_ready=true,
+    ime_ready=false,
+    drag_drop_ready=true,
+    async_services~,
+    native_accessibility_ready=false,
+    description="Browser canvas host with WebGPU imports, async clipboard/file dialogs, logical pointer coordinates, and app-level file drops.",
+  )
+}
+
+///|
 pub fn web_service_bridge(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
   open_url? : (String) -> Bool = _url => false,

@@ -81,6 +81,10 @@ constructors and platform event conversion.
   capability flags for clipboard, menus, file dialogs, URL opening, and system
   theme. Unsupported services should return `Unavailable` responses instead of
   leaking platform checks into `core` or `views`.
+- `HostCapabilitySummary` is the app-facing diagnostics rollup over service,
+  input, window, text-input, IME, drag/drop, async-service, and accessibility
+  readiness. Web, macOS, Windows, and Linux expose package-local summary
+  helpers, and Showcase displays the injected summary in its Runtime section.
 - Permission- or callback-driven host services can use `HostServiceAsyncQueue`
   and return `HostServiceResponse::Pending` instead of blocking the runtime.
   Hosts drain pending requests into in-flight platform work, complete them with

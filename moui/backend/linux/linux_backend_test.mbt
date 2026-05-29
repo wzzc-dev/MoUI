@@ -18,6 +18,19 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
 }
 
 ///|
+test "linux capability summary exposes known service gaps" {
+  let summary = linux_capability_summary()
+  inspect(summary.label, content="Linux host")
+  inspect(summary.services.system_theme, content="true")
+  inspect(summary.services.clipboard, content="false")
+  inspect(summary.service_count(), content="1")
+  inspect(summary.input_count(), content="4")
+  inspect(summary.text_input_ready, content="false")
+  inspect(summary.drag_drop_ready, content="false")
+  inspect(summary.has_required_app_basics(), content="true")
+}
+
+///|
 test "linux scaffold exposes host contracts without owning a surface" {
   let surface = scaffold_surface_host(
     logical_width=320.0,

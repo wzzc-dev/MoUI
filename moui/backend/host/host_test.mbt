@@ -74,6 +74,52 @@ test "host app info records shared model boundaries" {
 }
 
 ///|
+test "host capability summary combines service input and window readiness" {
+  let summary = HostCapabilitySummary::from_contracts(
+    info=HostAppInfo::new(
+      backend=HostBackendKind::Web,
+      description="browser host",
+    ),
+    services=HostServiceCapabilities::new(
+      clipboard=true,
+      file_dialogs=true,
+      open_url=true,
+      system_theme=true,
+    ),
+    input=HostInputCapabilities::new(
+      pointer=true,
+      keyboard=true,
+      focus=true,
+      text_input=true,
+      drag_drop=true,
+    ),
+    label="Web host",
+    window_lifecycle=true,
+    multi_window=true,
+    async_services=true,
+  )
+  inspect(summary.backend.label(), content="Web")
+  inspect(summary.label, content="Web host")
+  inspect(summary.service_count(), content="4")
+  inspect(summary.input_count(), content="6")
+  inspect(summary.has_required_app_basics(), content="true")
+  inspect(summary.multi_window, content="true")
+  inspect(summary.async_services, content="true")
+  inspect(summary.services.enabled_labels().length(), content="4")
+  assert_true(summary.input.enabled_labels().any(label => label == "drag/drop"))
+}
+
+///|
+test "host capability summary reports unavailable host" {
+  let summary = HostCapabilitySummary::unavailable()
+  inspect(summary.backend.label(), content="Test")
+  inspect(summary.service_count(), content="0")
+  inspect(summary.input_count(), content="0")
+  inspect(summary.has_required_app_basics(), content="false")
+  inspect(summary.services.enabled_labels().length(), content="0")
+}
+
+///|
 test "input host owns capabilities focus modifiers and text input gating" {
   let input = InputHostState::new()
   let capabilities = input.capabilities()

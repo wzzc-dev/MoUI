@@ -150,7 +150,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `theme` | `views/theme.mbt` | Creates Theme | N/A | `views/views_test.mbt` | Showcase | Convenience constructor for theme tokens. |
-| `environment` | `views/theme.mbt` | Creates Environment | N/A | `views/views_test.mbt` | Showcase | Runtime environment helper. |
+| `environment` | `views/theme.mbt` | Creates Environment | N/A | `views/views_test.mbt` | Showcase | Runtime environment helper. Showcase Runtime also displays the injected `@host.HostCapabilitySummary` so apps can compare service, input, window, text-input, IME, drag/drop, async-service, and accessibility readiness without depending on renderer packages. |
 | `light_theme` / `dark_theme` | `views/theme.mbt` | Creates Theme | N/A | `views/views_test.mbt` | Showcase | Convenience theme presets. |
 
 ## Advanced Helpers

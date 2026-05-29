@@ -383,6 +383,11 @@ Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
 system-theme requests. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
+`HostCapabilitySummary` folds those service flags together with input,
+window-lifecycle, text-input, IME, drag/drop, async-service, and native
+accessibility readiness. It is a high-level reporting API for apps, diagnostics,
+and Showcase; `HostServiceBridge`, `HostInputContract`, and platform backend
+setup remain the source of truth for actual behavior.
 `HostAppServices` is the app-facing facade over that same bridge, with helper
 methods for clipboard, file dialogs, URL opening, system theme, context menus,
 and optional async queue completion handling; the bridge remains the source of

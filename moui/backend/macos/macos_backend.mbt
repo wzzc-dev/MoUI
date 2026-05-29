@@ -166,6 +166,40 @@ pub fn macos_accessibility_bridge(
 }
 
 ///|
+pub fn macos_input_capabilities() -> @host.HostInputCapabilities {
+  @host.HostInputCapabilities::new(
+    pointer=true,
+    scroll=true,
+    keyboard=true,
+    focus=true,
+    text_input=true,
+    ime=true,
+    clipboard=true,
+    drag_drop=true,
+  )
+}
+
+///|
+pub fn macos_capability_summary(
+  services? : @host.HostServiceCapabilities = macos_service_bridge().capabilities,
+) -> @host.HostCapabilitySummary {
+  @host.HostCapabilitySummary::from_contracts(
+    info=backend_info().host_info,
+    services~,
+    input=macos_input_capabilities(),
+    label="macOS host",
+    window_lifecycle=true,
+    multi_window=true,
+    text_input_ready=true,
+    ime_ready=true,
+    drag_drop_ready=true,
+    async_services=false,
+    native_accessibility_ready=backend_info().accessibility.native_binding_ready,
+    description="AppKit host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
+  )
+}
+
+///|
 pub fn macos_system_theme() -> @core.ColorScheme {
   if macos_system_theme_is_dark() != 0 {
     @core.ColorScheme::Dark
