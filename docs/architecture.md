@@ -380,6 +380,10 @@ Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
 system-theme requests. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
+`HostAppServices` is the app-facing facade over that same bridge, with helper
+methods for clipboard, file dialogs, URL opening, system theme, context menus,
+and optional async queue completion handling; the bridge remains the source of
+truth for capability routing and platform dispatch.
 Services that cannot finish synchronously, especially browser clipboard reads
 and file dialogs that need a permission or picker callback, can return
 `HostServiceResponse::Pending` through `HostServiceAsyncQueue`. The host drains

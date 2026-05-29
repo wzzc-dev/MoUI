@@ -76,6 +76,35 @@ pub(all) struct HostAppInfo {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostAppInfo::new(backend~ : HostBackendKind, description? : String, uses_shared_event_model? : Bool, uses_shared_surface_model? : Bool, uses_shared_input_model? : Bool) -> Self
 
+pub struct HostAppServices {
+  bridge : HostServiceBridge
+  async_queue : HostServiceAsyncQueue?
+}
+pub fn HostAppServices::capabilities(Self) -> HostServiceCapabilities
+pub fn HostAppServices::complete(Self, HostServiceRequestId, HostServiceResponse) -> Bool
+pub fn HostAppServices::completed_count(Self) -> Int
+pub fn HostAppServices::dispatch(Self, HostServiceRequest) -> HostServiceResponse
+pub fn HostAppServices::drain_completed(Self) -> Array[HostCompletedServiceResponse]
+pub fn HostAppServices::drain_pending(Self) -> Array[HostPendingServiceRequest]
+pub fn HostAppServices::file_dialog(Self, HostFileDialogOptions) -> HostServiceResponse
+pub fn HostAppServices::has_async_queue(Self) -> Bool
+pub fn HostAppServices::in_flight_count(Self) -> Int
+pub fn HostAppServices::new(bridge~ : HostServiceBridge, async_queue? : HostServiceAsyncQueue?) -> Self
+pub fn HostAppServices::open_file(Self, title? : String, filters? : Array[String]) -> HostServiceResponse
+pub fn HostAppServices::open_url(Self, String) -> HostServiceResponse
+pub fn HostAppServices::outstanding_count(Self) -> Int
+pub fn HostAppServices::pending_count(Self) -> Int
+pub fn HostAppServices::pick_directory(Self, title? : String) -> HostServiceResponse
+pub fn HostAppServices::read_clipboard_text(Self) -> HostServiceResponse
+pub fn HostAppServices::reject(Self, HostServiceRequestId, String) -> Bool
+pub fn HostAppServices::request_system_theme(Self) -> HostServiceResponse
+pub fn HostAppServices::save_file(Self, title? : String, default_name? : String?, filters? : Array[String]) -> HostServiceResponse
+pub fn HostAppServices::show_context_menu(Self, Array[@wzzc-dev/moui/core.ActionCommand]) -> HostServiceResponse
+pub fn HostAppServices::system_theme(Self) -> @wzzc-dev/moui/core.ColorScheme?
+pub fn HostAppServices::take_completed(Self, HostServiceRequestId) -> HostCompletedServiceResponse?
+pub fn HostAppServices::unavailable() -> Self
+pub fn HostAppServices::write_clipboard_text(Self, String) -> HostServiceResponse
+
 pub(all) enum HostBackendKind {
   Native
   Web
