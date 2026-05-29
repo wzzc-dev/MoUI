@@ -118,6 +118,36 @@ pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> StateViewAc
 }
 
 ///|
+pub(all) struct SectionListSection[T] {
+  id : String
+  title : String
+  items : Array[T]
+}
+
+///|
+pub(all) struct ScrollToIndexIntent {
+  index : Int
+  offset : @core.Point
+}
+
+///|
+pub fn[T] SectionListSection::new(
+  id~ : String,
+  title~ : String,
+  items~ : Array[T],
+) -> SectionListSection[T] {
+  { id, title, items }
+}
+
+///|
+pub fn ScrollToIndexIntent::new(
+  index~ : Int,
+  offset~ : @core.Point,
+) -> ScrollToIndexIntent {
+  { index, offset }
+}
+
+///|
 pub(all) struct MenuItem[Msg] {
   id : String
   label : String

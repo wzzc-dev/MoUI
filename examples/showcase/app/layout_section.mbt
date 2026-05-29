@@ -8,7 +8,7 @@ fn ShowcaseModel::layout_section(
   let gallery_grid_width = if metrics.compact { 252.0 } else { 324.0 }
   let gallery_grid_height = if metrics.compact { 128.0 } else { 100.0 }
   let gallery_list = scroll_view(
-    lazy_list(
+    virtual_list(
       self.gallery_items(),
       item => item,
       item => {
@@ -20,9 +20,32 @@ fn ShowcaseModel::layout_section(
       item_height=26.0,
       viewport_height=84.0,
       spacing=2.0,
+      overscan=1,
     ),
     width=200.0,
     height=88.0,
+  )
+  let sectioned_gallery = sectioned_list(
+    [
+      @views.SectionListSection::new(
+        id="layout",
+        title="Layout helpers",
+        items=["Expanded", "Frame", "Priority"],
+      ),
+      @views.SectionListSection::new(
+        id="lists",
+        title="Virtual lists",
+        items=["Windowed", "Overscan", "Empty state"],
+      ),
+    ],
+    item => "layout-section-" + item,
+    item => text(item, width=180.0, height=22.0).foreground(theme.palette.foreground),
+    header=section => text(section.title, role=@views.TextRole::Caption, theme~, width=180.0, height=22.0),
+    item_height=24.0,
+    header_height=24.0,
+    viewport_height=108.0,
+    spacing=2.0,
+    overscan=0,
   )
   let gallery_grid = lazy_grid(
     self.gallery_items(),
@@ -38,13 +61,13 @@ fn ShowcaseModel::layout_section(
   )
   let gallery_browser = if metrics.compact {
     column(
-      [gallery_list, gallery_grid],
+      [gallery_list, sectioned_gallery, gallery_grid],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,
     )
   } else {
     row(
-      [gallery_list, gallery_grid],
+      [gallery_list, sectioned_gallery, gallery_grid],
       spacing=theme.spacing_scale.md,
       align=@views.CrossAlign::Start,
     )
