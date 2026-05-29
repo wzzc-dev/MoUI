@@ -26,8 +26,11 @@ import {
 
 ```toml
 members = [
-  ".",
-  ".local_repos/window",
+  "./moui",
+  "./.local_repos/window",
+  "./examples/counter",
+  "./examples/showcase",
+  "./examples/markdown_editor",
 ]
 ```
 
@@ -164,10 +167,10 @@ node scripts/validate-package-manifest.mjs \
 Useful focused commands:
 
 ```sh
-moon test render/wgpu --target native
-moon test render/webgpu_adapter --target wasm-gc
-moon test tests/tooling --target native
-moon test backend/web --target wasm-gc
+moon test moui/render/wgpu --target native
+moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui/tests/tooling --target native
+moon test moui/backend/web --target wasm-gc
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc

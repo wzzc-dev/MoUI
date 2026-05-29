@@ -11,7 +11,7 @@ before expanding behavior.
    semantics, and layout types.
 3. Add focused tests in `views/views_test.mbt`.
 4. Add a Showcase entry when the view is user-facing.
-5. Run `moon test views --target native` and `moon info`.
+5. Run `moon test moui/views --target native` and `moon info`.
 
 ## Create A Custom Layout
 
@@ -51,8 +51,9 @@ before expanding behavior.
 2. Update renderer fallback planning in `render/capabilities.mbt`.
 3. Update native/Web renderer behavior or report the planned fallback.
 4. Update `docs/renderer-capability-report.md`.
-5. Run `moon test render --target native`, `moon test render/wgpu --target native`,
-   and `moon test render/webgpu_adapter --target wasm-gc`.
+5. Run `moon test moui/render --target native`,
+   `moon test moui/render/wgpu --target native`, and
+   `moon test moui/render/webgpu_adapter --target wasm-gc`.
 
 ## Add A Showcase Entry
 

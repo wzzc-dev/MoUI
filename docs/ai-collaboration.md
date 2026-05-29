@@ -65,7 +65,7 @@ workflow for agents and maintainers.
 Add a MoUI view constructor for <control>. Keep it in views/, return @core.View[Msg],
 reuse existing core primitive builders/styles/modifiers where possible, add focused tests in
 views/views_test.mbt, update docs/view-catalog.md if public coverage changes, and
-run moon test views --target native plus moon info if the public API changes.
+run moon test moui/views --target native plus moon info if the public API changes.
 ```
 
 ### Change Renderer Capability
@@ -81,7 +81,7 @@ and Showcase if visible. Validate with renderer package tests and a Showcase Web
 ```text
 Change backend handling for <event>. Keep platform-specific code in backend/<platform>,
 normalize through backend/host HostEvent, add focused backend tests, and validate with
-moon test backend/host --target native plus the affected backend package test.
+moon test moui/backend/host --target native plus the affected backend package test.
 ```
 
 ### Update An Example

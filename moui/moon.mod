@@ -17,10 +17,12 @@ import {
   "moonbitlang/x@0.4.43",
 }
 
-options(
-  readme: "README.mbt.md",
-  repository: "https://github.com/wzzc-dev/MoUI.git",
-  license: "Apache-2.0",
-  keywords: [ "moui", "gui", "framework" ],
-  description: "A MoonBit UI framework",
-)
+readme = "README.mbt.md"
+
+repository = "https://github.com/wzzc-dev/MoUI.git"
+
+license = "Apache-2.0"
+
+keywords = [ "moui", "gui", "framework" ]
+
+description = "A MoonBit UI framework"

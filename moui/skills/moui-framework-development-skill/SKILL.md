@@ -138,13 +138,14 @@ sh scripts/dev-check.sh
 Focused checks:
 
 ```sh
-moon test core --target native
-moon test views --target native
-moon test backend/host --target native
-moon test backend/web --target wasm-gc
-moon test render --target native
-moon test render/wgpu --target native
-moon test render/webgpu_adapter --target wasm-gc
+moon test moui/core --target native
+moon test moui/views --target native
+moon test moui/backend/host --target native
+moon test moui/backend/web --target wasm-gc
+moon test moui/render --target native
+moon test moui/render/wgpu --target native
+moon test moui/render/wgpu/cosmic_text --target native
+moon test moui/render/webgpu_adapter --target wasm-gc
 sh scripts/conformance-check.sh --input
 sh scripts/conformance-check.sh --layout
 sh scripts/conformance-check.sh --render
@@ -180,7 +181,7 @@ moon info
 - Add focused tests in `views/views_test.mbt`.
 - Add Showcase coverage if the view is user-facing and visual.
 - Update `docs/view-catalog.md`.
-- Run `moon test views --target native`, `moon fmt`, and `moon info` if public.
+- Run `moon test moui/views --target native`, `moon fmt`, and `moon info` if public.
 
 ### Change Renderer Capability
 

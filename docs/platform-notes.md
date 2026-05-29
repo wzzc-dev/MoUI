@@ -283,7 +283,7 @@ Linux runtime requirements are intentionally native:
 Useful focused commands on a configured Linux host:
 
 ```sh
-moon test backend/linux --target native
+moon test moui/backend/linux --target native
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
 moon run examples/showcase/linux --target native
@@ -315,8 +315,8 @@ Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 Use focused platform validation instead of broad all-repository native checks:
 
 ```sh
-moon test backend/host --target native
-moon test backend/web --target wasm-gc
+moon test moui/backend/host --target native
+moon test moui/backend/web --target wasm-gc
 sh scripts/conformance-check.sh --platform-services
 sh scripts/dev-check.sh --platform-examples-test
 ```

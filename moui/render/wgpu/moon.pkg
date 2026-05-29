@@ -1,10 +1,10 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render" @render,
-  "Milky2018/wgpu_mbt" @wgpu_mbt,
-  "moonbitlang/x/fs" @fs,
-  "moonbitlang/core/encoding/base64" @base64,
-  "mizchi/image" @image,
+  "wzzc-dev/moui/render",
+  "Milky2018/wgpu_mbt",
+  "moonbitlang/x/fs",
+  "moonbitlang/core/encoding/base64",
+  "mizchi/image",
 }
 
 supported_targets = "native"
