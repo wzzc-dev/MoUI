@@ -131,6 +131,12 @@ pub(all) struct ScrollToIndexIntent {
 }
 
 ///|
+pub(all) struct BaselineFormRow[Msg] {
+  label : @core.View[Msg]
+  control : @core.View[Msg]
+}
+
+///|
 pub fn[T] SectionListSection::new(
   id~ : String,
   title~ : String,
@@ -145,6 +151,14 @@ pub fn ScrollToIndexIntent::new(
   offset~ : @core.Point,
 ) -> ScrollToIndexIntent {
   { index, offset }
+}
+
+///|
+pub fn[Msg] BaselineFormRow::new(
+  label~ : @core.View[Msg],
+  control~ : @core.View[Msg],
+) -> BaselineFormRow[Msg] {
+  { label, control }
 }
 
 ///|

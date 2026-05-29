@@ -23,6 +23,8 @@ pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, width? : Doub
 
 pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] baseline_form_rows(Array[BaselineFormRow[Msg]], width? : Double, label_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
+
 pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
@@ -94,6 +96,8 @@ pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 pub fn[Msg] filter_chip(String, selected~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] flexible(@core.View[Msg], weight? : Double) -> @core.View[Msg]
+
+pub fn[Msg] flow(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] form(Array[@core.View[Msg]], spacing? : Double, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -178,6 +182,8 @@ pub fn[Msg] radio_binding(String, @core.Binding[Bool], foreground? : @core.Color
 pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double) -> @core.View[Msg]
+
+pub fn[Msg] responsive_grid(Array[@core.View[Msg]], width? : Double, min_column_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] rich_text_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
@@ -269,6 +275,8 @@ pub fn[Msg] wizard(Array[WizardStep[Msg]], current~ : String, on_select~ : (Stri
 
 pub fn[Msg] wizard_step(WizardStep[Msg]) -> @core.View[Msg]
 
+pub fn[Msg] wrap(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
+
 // Errors
 
 // Types and methods
@@ -279,6 +287,12 @@ pub(all) enum BadgeTone {
   Warning
   Danger
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct BaselineFormRow[Msg] {
+  label : @core.View[Msg]
+  control : @core.View[Msg]
+}
+pub fn[Msg] BaselineFormRow::new(label~ : @core.View[Msg], control~ : @core.View[Msg]) -> Self[Msg]
 
 pub(all) struct BreadcrumbItem[Msg] {
   id : String

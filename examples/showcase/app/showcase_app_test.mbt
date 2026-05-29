@@ -209,6 +209,8 @@ test "showcase covers text media controls and layout sections" {
   assert_true(has_text(layout_commands, "Aspect ratio"))
   assert_true(has_text(layout_commands, "Layout helpers"))
   assert_true(has_text(layout_commands, "Virtual lists"))
+  assert_true(has_text(layout_commands, "Responsive"))
+  assert_true(has_text(layout_commands, "Baseline label"))
   assert_true(has_text(layout_commands, "Intrinsic width"))
   assert_true(has_text(layout_commands, "Custom children layout"))
   assert_true(has_text(layout_commands, "Resizable Panel"))
