@@ -8,6 +8,8 @@ import {
 // Values
 pub fn default_text_commands() -> Array[ActionCommand]
 
+pub fn focus_scope_command_intent(KeyboardEvent) -> CommandIntent?
+
 pub fn hit_test(LayoutResult, Point) -> Bool
 
 pub fn recognize_button_tap(ButtonState, Bool, PointerPhase) -> TapGestureResult
@@ -568,6 +570,29 @@ pub(all) enum FilterEffect {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FilterEffect::blur(Double) -> Self
 
+pub(all) struct FocusScope {
+  items : Array[FocusScopeItem]
+  current : String?
+  wrap : Bool
+  default_action : String
+  dismiss_action : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FocusScope::command_target(Self, CommandIntent) -> String?
+pub fn FocusScope::first_focusable(Self) -> String?
+pub fn FocusScope::focus_first_invalid(Self, FormValidationSummary) -> String?
+pub fn FocusScope::last_focusable(Self) -> String?
+pub fn FocusScope::new(items~ : Array[FocusScopeItem], current? : String?, wrap? : Bool, default_action? : String, dismiss_action? : String) -> Self
+pub fn FocusScope::next(Self) -> String?
+pub fn FocusScope::previous(Self) -> String?
+pub fn FocusScope::traverse(Self, FocusTraversalDirection) -> String?
+
+pub(all) struct FocusScopeItem {
+  id : String
+  enabled : Bool
+  focusable : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FocusScopeItem::new(id~ : String, enabled? : Bool, focusable? : Bool) -> Self
+
 pub struct FocusState {
   key_slot : State[String?]
 }
@@ -576,6 +601,11 @@ pub fn FocusState::clear(Self) -> Unit
 pub fn FocusState::focus(Self, String) -> Unit
 pub fn FocusState::focused_key(Self) -> String?
 pub fn FocusState::new(key? : String?) -> Self
+
+pub(all) enum FocusTraversalDirection {
+  Next
+  Previous
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum FontFamily {
   Name(String)
