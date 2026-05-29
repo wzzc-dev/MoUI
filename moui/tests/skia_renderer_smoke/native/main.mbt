@@ -98,6 +98,46 @@ fn assert_pixel_luma_between(
 }
 
 ///|
+fn assert_region_has_pixel_near(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+  r : Int,
+  g : Int,
+  b : Int,
+  a : Int,
+  tolerance : Int,
+) -> Unit {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      let offset = y * frame.row_bytes + x * 4
+      if offset + 3 < frame.pixels.length() {
+        let actual_r = frame.pixels[offset].to_int()
+        let actual_g = frame.pixels[offset + 1].to_int()
+        let actual_b = frame.pixels[offset + 2].to_int()
+        let actual_a = frame.pixels[offset + 3].to_int()
+        if component_near(actual_r, r, tolerance) &&
+          component_near(actual_g, g, tolerance) &&
+          component_near(actual_b, b, tolerance) &&
+          component_near(actual_a, a, tolerance) {
+          return ()
+        }
+      }
+    }
+  }
+  println(
+    "no Skia renderer pixel near rgba=\{r},\{g},\{b},\{a} tolerance=\{tolerance} in region",
+  )
+  fail_smoke("MoUI Skia renderer smoke missing expected region color")
+}
+
+///|
 fn component_near(actual : Int, expected : Int, tolerance : Int) -> Bool {
   (actual - expected).abs() <= tolerance
 }
@@ -295,6 +335,36 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
       opacity: 1.0,
       fit: @core.ImageFit::Contain,
     }),
+    @core.DrawCommand::StrokeRoundedRectBrush(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=96.0, y=42.0, width=24.0, height=14.0),
+        radius=3.0,
+      ),
+      @core.Brush::linear_gradient(
+        start=@core.Point::new(x=96.0, y=42.0),
+        end=@core.Point::new(x=120.0, y=42.0),
+        start_color=red(),
+        end_color=blue(),
+      ),
+      4.0,
+    ),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=130.0, y=48.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=164.0, y=48.0)),
+        ],
+        stroke=Some(
+          @core.Brush::linear_gradient(
+            start=@core.Point::new(x=130.0, y=48.0),
+            end=@core.Point::new(x=164.0, y=48.0),
+            start_color=red(),
+            end_color=blue(),
+          ),
+        ),
+        stroke_width=4.0,
+      ),
+    ),
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
         text="Skia",
@@ -521,6 +591,43 @@ fn main {
       assert_pixel(frame, 56, 44, 0, 0, 255, 255)
       assert_pixel(frame, 60, 44, 255, 255, 0, 255)
       assert_pixel(frame, 82, 48, 255, 0, 0, 255)
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=94.0, y=44.0, width=7.0, height=10.0),
+        235,
+        0,
+        20,
+        255,
+        55,
+      )
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=117.0, y=44.0, width=6.0, height=10.0),
+        20,
+        0,
+        235,
+        255,
+        55,
+      )
+      assert_pixel(frame, 108, 48, 255, 255, 255, 255)
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=130.0, y=46.0, width=6.0, height=5.0),
+        235,
+        0,
+        20,
+        255,
+        55,
+      )
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=159.0, y=46.0, width=6.0, height=5.0),
+        20,
+        0,
+        235,
+        255,
+        55,
+      )
       assert_region_has_dark_pixel(
         frame,
         @core.Rect::new(x=4.0, y=68.0, width=48.0, height=20.0),

@@ -64,6 +64,10 @@ test "skia pixel frame carries presenter payload" {
 test "skia renderer spec exposes evidence-gated backend capabilities" {
   let spec = skia_raster_native_spec()
   let image = find_skia_spec_capability(spec, @render.RendererFeature::Image)
+  let gradient = find_skia_spec_capability(
+    spec,
+    @render.RendererFeature::Gradient,
+  )
   let layer = find_skia_spec_capability(
     spec,
     @render.RendererFeature::LayerCompositing,
@@ -76,10 +80,13 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
     spec,
     @render.RendererFeature::FilterEffect,
   )
-  match (image, layer, blend, filter) {
-    (Some(image), Some(layer), Some(blend), Some(filter)) => {
+  match (image, gradient, layer, blend, filter) {
+    (Some(image), Some(gradient), Some(layer), Some(blend), Some(filter)) => {
       assert_true(
         image.backend == @render.RendererBackendKind::SkiaRasterNative,
+      )
+      assert_true(
+        gradient.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
       assert_true(
         layer.backend == @render.RendererBackendKind::SkiaRasterNative,
@@ -91,16 +98,20 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
         filter.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
       assert_true(image.status == @render.RendererFeatureStatus::Partial)
+      assert_true(gradient.status == @render.RendererFeatureStatus::Ready)
       assert_true(layer.status == @render.RendererFeatureStatus::Ready)
       assert_true(blend.status == @render.RendererFeatureStatus::Ready)
       assert_true(filter.status == @render.RendererFeatureStatus::Ready)
       assert_true(image.note.contains("data URI"))
+      assert_true(gradient.note.contains("fills and strokes"))
       assert_true(layer.note.contains("nested layer/filter"))
       assert_true(blend.note.contains("overlay"))
       assert_true(filter.note.contains("color matrix"))
     }
     _ =>
-      fail("expected Skia image, layer, blend, and filter capability records")
+      fail(
+        "expected Skia image, gradient, layer, blend, and filter capability records",
+      )
   }
 }
 

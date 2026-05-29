@@ -385,16 +385,14 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
         ) {
         Some(shader) =>
           match stroke_width {
-            Some(width) => {
-              canvas.draw_round_rect(
+            Some(width) =>
+              canvas.draw_round_rect_shader(
                 skia_rect(rounded.rect),
                 Float::from_double(rounded.radius),
                 Float::from_double(rounded.radius),
+                shader,
                 skia_stroke_paint(gradient.start_color, width),
               )
-              self.unsupported_command_count = self.unsupported_command_count +
-                1
-            }
             None => {
               ignore(canvas.save())
               canvas.clip_rrect(skia_rrect(rounded), anti_alias=true)
@@ -673,13 +671,13 @@ fn SkiaRasterRenderer::draw_path(
       match spec.stroke {
         Some(@core.Brush::Solid(color)) =>
           canvas.draw_path(path, skia_stroke_paint(color, spec.stroke_width))
-        Some(@core.Brush::LinearGradient(gradient)) => {
-          canvas.draw_path(
+        Some(@core.Brush::LinearGradient(gradient)) =>
+          self.draw_path_gradient(
+            canvas,
             path,
-            skia_stroke_paint(gradient.start_color, spec.stroke_width),
+            gradient,
+            stroke_width=Some(spec.stroke_width),
           )
-          self.unsupported_command_count = self.unsupported_command_count + 1
-        }
         None => ()
       }
     }
@@ -695,14 +693,6 @@ fn SkiaRasterRenderer::draw_path_gradient(
   gradient : @core.LinearGradientSpec,
   stroke_width~ : Double?,
 ) -> Unit {
-  match stroke_width {
-    Some(width) => {
-      canvas.draw_path(path, skia_stroke_paint(gradient.start_color, width))
-      self.unsupported_command_count = self.unsupported_command_count + 1
-      return ()
-    }
-    None => ()
-  }
   match
     @skia_native.Shader::linear_gradient(
       skia_point(gradient.start),
@@ -710,21 +700,29 @@ fn SkiaRasterRenderer::draw_path_gradient(
       skia_color(gradient.start_color),
       skia_color(gradient.end_color),
     ) {
-    Some(shader) => {
-      let paint = match stroke_width {
-        Some(width) => skia_stroke_paint(@core.Color::white(), width)
-        None => @skia_mbt.Paint::new(anti_alias=true)
+    Some(shader) =>
+      match stroke_width {
+        Some(width) =>
+          canvas.draw_path_shader(
+            path,
+            shader,
+            skia_stroke_paint(gradient.start_color, width),
+          )
+        None =>
+          match path.bounds() {
+            Some(bounds) => {
+              ignore(canvas.save())
+              canvas.clip_path(path, anti_alias=true)
+              canvas.draw_rect_shader(
+                bounds,
+                shader,
+                @skia_mbt.Paint::new(anti_alias=true),
+              )
+              canvas.restore()
+            }
+            None => ()
+          }
       }
-      match path.bounds() {
-        Some(bounds) => {
-          ignore(canvas.save())
-          canvas.clip_path(path, anti_alias=true)
-          canvas.draw_rect_shader(bounds, shader, paint)
-          canvas.restore()
-        }
-        None => ()
-      }
-    }
     None => {
       let paint = match stroke_width {
         Some(width) => skia_stroke_paint(gradient.start_color, width)
