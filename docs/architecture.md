@@ -37,6 +37,7 @@ tests/tooling/                quickcheck and pixelmatch integration tests
 examples/showcase/app/        shared visual showcase app with Counter/Todo patterns
 examples/showcase/macos/      macOS native showcase
 examples/showcase/macos_cosmic/ macOS showcase selecting Moon Cosmic text
+examples/showcase/macos_skia/ macOS showcase selecting native Skia raster
 examples/showcase/web_wasm/   Web showcase on wasm-gc
 examples/showcase/windows/    Windows native showcase
 examples/showcase/windows_cosmic/ Windows showcase selecting Moon Cosmic text
