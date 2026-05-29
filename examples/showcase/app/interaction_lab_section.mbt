@@ -71,31 +71,19 @@ fn ShowcaseModel::file_drop_card(
   ignore(self)
   showcase_soft_card(
     theme,
-    column(
-      [
-        text("File Drop", width=width - 32.0, height=24.0)
-        .font(theme.typography.caption)
-        .foreground(theme.palette.foreground),
-        surface(
-          text("Drop files here", width=width - 64.0, height=24.0)
-          .font(theme.typography.body)
-          .foreground(theme.palette.foreground),
-          width=width - 32.0,
-          height=46.0,
-          background=theme.palette.surface_variant.multiply_alpha(0.44),
-          corner_radius=theme.radius_scale.sm,
-          padding=8.0,
-        ).on_file_drop((paths, _point) => RecordFileDrop(paths)),
-        text(drop_label, width=width - 32.0, height=24.0)
-        .font(theme.typography.caption)
-        .foreground(theme.palette.muted),
-      ],
-      spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+    file_import_panel(
+      selection=@views.FileSelection::empty(),
+      on_drop=paths => RecordFileDrop(paths),
+      on_browse=Some(RecordFileDrop([])),
+      title="File Drop",
+      drop_title="Drop files here",
+      empty_message=drop_label,
+      theme~,
+      width=width - 32.0,
     ),
     width~,
-    height=146.0,
-    padding=theme.spacing_scale.md,
+    height=288.0,
+    padding=theme.spacing_scale.sm,
   )
 }
 

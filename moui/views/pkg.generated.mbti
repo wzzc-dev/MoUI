@@ -81,6 +81,8 @@ pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? 
 
 pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] drop_zone(title? : String, message? : String, on_drop~ : (Array[String]) -> Msg, theme? : @core.Theme, width? : Double, height? : Double, enabled? : Bool) -> @core.View[Msg]
+
 pub fn[Msg] dropdown(String, Array[MenuItem[Msg]], state~ : DropdownState, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] empty() -> @core.View[Msg]
@@ -92,6 +94,8 @@ pub fn environment(theme? : @core.Theme) -> @core.Environment
 pub fn[Msg] error_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
+
+pub fn[Msg] file_import_panel(selection~ : FileSelection, on_drop~ : (Array[String]) -> Msg, on_browse? : Msg?, availability? : FileImportAvailability, title? : String, drop_title? : String, empty_message? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] filter_chip(String, selected~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -344,6 +348,21 @@ pub(all) enum FeedbackTone {
   Danger
   Info
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum FileImportAvailability {
+  Available
+  Unavailable(String)
+  Pending
+}
+
+pub(all) struct FileSelection {
+  paths : Array[String]
+}
+pub fn FileSelection::count(Self) -> Int
+pub fn FileSelection::empty() -> Self
+pub fn FileSelection::is_empty(Self) -> Bool
+pub fn FileSelection::new(paths~ : Array[String]) -> Self
+pub fn FileSelection::summary(Self, empty? : String) -> String
 
 pub(all) enum FormFieldLayout {
   Vertical

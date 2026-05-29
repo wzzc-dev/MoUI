@@ -1007,6 +1007,66 @@ test "card supports independent optional dimensions" {
 }
 
 ///|
+test "drop zone maps dropped files to app message" {
+  let seen = Ref("")
+  let root : @core.View[Array[String]] = @views.drop_zone(
+    title="Drop files here",
+    on_drop=paths => paths,
+    width=240.0,
+    height=80.0,
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=320.0, height=160.0),
+    on_message=Some(paths => {
+      if paths.length() > 0 {
+        seen.val = paths[0]
+      }
+    }),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::DragDrop(
+      @core.DragDropEvent::new(
+        phase=@core.DragDropPhase::Dropped,
+        paths=["/tmp/import.csv"],
+        position=Some(@core.Point::new(x=12.0, y=12.0)),
+      ),
+    ),
+  )
+  inspect(seen.val, content="/tmp/import.csv")
+}
+
+///|
+test "file import panel renders empty and unavailable states" {
+  let empty = @core.AppRuntime::new_view(
+    root=@views.file_import_panel(
+      selection=@views.FileSelection::empty(),
+      on_drop=_paths => (),
+      on_browse=Some(()),
+      empty_message="No file chosen",
+      width=320.0,
+    ),
+    size=@core.Size::new(width=360.0, height=280.0),
+  ).draw_commands()
+  assert_true(has_text(empty, "No file chosen"))
+  assert_true(has_text(empty, "Browse"))
+
+  let unavailable = @core.AppRuntime::new_view(
+    root=@views.file_import_panel(
+      selection=@views.FileSelection::new(paths=["/tmp/a.txt"]),
+      on_drop=_paths => (),
+      availability=@views.FileImportAvailability::Unavailable(
+        "File dialog unavailable",
+      ),
+      width=320.0,
+    ),
+    size=@core.Size::new(width=360.0, height=280.0),
+  ).draw_commands()
+  assert_true(has_text(unavailable, "File dialog unavailable"))
+  assert_true(has_text(unavailable, "/tmp/a.txt"))
+}
+
+///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text

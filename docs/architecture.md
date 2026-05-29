@@ -418,7 +418,12 @@ runtime action commands and dispatch the selected intent back through
 `HostRuntimeDriver`.
 File drop targets use the `View::on_file_drop` modifier; hosts normalize native
 file drag/drop positions and paths before the runtime dispatches typed messages
-to the hit view.
+to the hit view. `views.drop_zone` and `views.file_import_panel` are view-level
+workflow shells over that modifier; their browse action remains an app message,
+so app code can call `HostAppServices::open_file` and handle unavailable or
+pending file dialog responses. Web file import may expose browser-selected file
+names or handles rather than native filesystem paths, while native hosts can
+return platform paths through the same selection array.
 
 See [Platform notes](platform-notes.md) for setup, backend-specific constraints,
 and validation commands.
