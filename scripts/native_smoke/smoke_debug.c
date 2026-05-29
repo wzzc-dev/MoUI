@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
 MOONBIT_FFI_EXPORT
 void skia_mbt_native_smoke_mark(moonbit_bytes_t message) {
   const char* enabled = getenv("SKIA_MBT_NATIVE_SMOKE_TRACE");
