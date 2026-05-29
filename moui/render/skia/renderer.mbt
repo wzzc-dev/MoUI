@@ -667,7 +667,7 @@ fn SkiaRasterRenderer::draw_text(
 ) -> Unit {
   match skia_font(run.font) {
     Some(font) => {
-      let glyph_run = skia_basic_glyph_run(font, run.text)
+      let glyph_run = skia_glyph_run(font, run.text)
       let x = match run.align {
         @core.TextAlign::TextStart => run.frame.origin.x
         @core.TextAlign::TextCenter =>
@@ -1099,11 +1099,20 @@ fn skia_measure_text_width(font : @skia_native.Font, text : String) -> Double {
 }
 
 ///|
-fn skia_basic_glyph_run(
-  font : @skia_native.Font,
-  text : String,
-) -> SkiaGlyphRun {
+fn skia_glyph_run(font : @skia_native.Font, text : String) -> SkiaGlyphRun {
   let bytes = @utf8.encode(text[:], bom=false)
+  if @skia_native.skia_shaper_available() {
+    match font.shape_text_utf8(bytes) {
+      Some(run) => {
+        let glyphs = run.glyphs()
+        let positions = run.positions()
+        if !glyphs.is_empty() && glyphs.length() == positions.length() {
+          return { glyphs, positions, width: run.advance().x.to_double() }
+        }
+      }
+      None => ()
+    }
+  }
   let glyphs = font.text_to_glyphs_utf8(bytes)
   {
     glyphs,

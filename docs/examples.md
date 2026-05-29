@@ -124,6 +124,10 @@ the Showcase entrypoint:
 scripts/macos-skia-renderer-smoke.sh
 ```
 
+Pass `--enable-skshaper` when the selected Skia binary also provides the
+SkShaper module libraries; the helper then verifies the MoUI renderer smoke ran
+with the optional shaped-run path available.
+
 For a fuller local smoke, pass `--run-showcase-smoke`. The helper then launches
 the built `macos_skia` executable with a first-frame exit flag and verifies that
 the Skia renderer presents a frame before the app exits:

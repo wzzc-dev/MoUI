@@ -654,6 +654,9 @@ fn main {
       "real Skia backend is unavailable; configure skia_mbt/native with SKIA_MBT_HAS_SKIA, Skia headers, and linker flags before running this MoUI smoke",
     )
   }
+  if @skia_native.skia_shaper_available() {
+    println("MoUI Skia renderer smoke shaper available")
+  }
 
   let local_png_path = "/private/tmp/moui-skia-renderer-smoke-local-image.png"
   remove_local_smoke_file(local_png_path)
