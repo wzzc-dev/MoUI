@@ -8,4 +8,5 @@ members = [
   "./examples/settings",
   "./examples/data_table",
   "./examples/file_importer",
+  "./examples/command_palette",
 ]
