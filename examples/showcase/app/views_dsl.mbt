@@ -19,6 +19,7 @@ using @views {
   collapsible_panel,
   column,
   command_bar,
+  command_palette,
   combobox,
   datepicker,
   description_item,

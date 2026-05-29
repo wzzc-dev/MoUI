@@ -106,6 +106,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | --- | --- | --- | --- | --- | --- | --- |
 | `surface` / `card` | `views/container.mbt` | SurfaceStyle | Group through child | `views/views_test.mbt` | Counter, Showcase, Markdown Editor | Styled container primitives; `card` is the raised, padded entry point for simple apps. |
 | `toolbar` / `command_bar` / `button_group` / `status_bar` | `views/toolbar_disclosure.mbt` | ButtonStyle/text/surface | Group | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | App-owned command and status surfaces built from buttons, text, and surfaces. |
+| `command_palette` | `views/toolbar_disclosure.mbt` | ButtonStyle/text/surface | Menu | `views/views_test.mbt`, `core/gesture_action_wbtest.mbt`, Showcase tests | Showcase Navigation Shell | Renders `@core.ActionCommand` metadata (`group`, `description`, shortcut label, enabled state) as a TEA-controlled palette without native menu or renderer changes. |
 | `row` / `column` | `views/flex.mbt` | Child/modifier based | Group/list via children | `views/views_test.mbt` | All examples | Flex layout primitives. |
 | `center` | `views/container.mbt` | Optional background | Child semantics | `views/views_test.mbt` | Counter | Single-child layout helper that centers content inside its available space. |
 | `spacer` | `views/flex.mbt` | N/A | None | `views/views_test.mbt` | Showcase | Flexible space primitive. |

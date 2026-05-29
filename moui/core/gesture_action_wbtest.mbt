@@ -36,10 +36,16 @@ test "action commands match enabled shortcuts" {
   let copy = ActionCommand::new(
     intent=CommandIntent::Copy,
     label="Copy",
+    group="Edit",
+    description="Copy the current selection.",
     shortcut=Some(
       KeyboardShortcut::new(key="c", modifiers=KeyModifiers::new(meta=true)),
     ),
   )
+  inspect(copy.display_label(), content="Copy")
+  inspect(copy.shortcut_label(), content="Meta+c")
+  inspect(copy.group, content="Edit")
+  inspect(copy.description, content="Copy the current selection.")
   assert_true(
     copy.matches(
       KeyboardEvent::new(key="c", modifiers=KeyModifiers::new(meta=true)),
@@ -68,6 +74,24 @@ test "action commands match enabled shortcuts" {
   assert_true(defaults.any(command => command.intent == CommandIntent::Undo))
   assert_true(
     defaults.any(command => command.intent == CommandIntent::SelectAll),
+  )
+  assert_true(defaults.all(command => command.group == "Edit"))
+  assert_true(defaults.all(command => command.description != ""))
+}
+
+///|
+test "action command metadata has stable display fallbacks" {
+  let submit = ActionCommand::new(intent=CommandIntent::Submit)
+  inspect(submit.display_label(), content="Submit")
+  inspect(submit.shortcut_label(), content="")
+  let shortcut = KeyboardShortcut::new(
+    key="Escape",
+    modifiers=KeyModifiers::new(control=true, shift=true),
+  )
+  inspect(shortcut.display_label(), content="Ctrl+Shift+Esc")
+  inspect(
+    CommandIntent::OpenContextMenu.display_label(),
+    content="Open Context Menu",
   )
 }
 

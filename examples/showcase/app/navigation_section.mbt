@@ -67,6 +67,7 @@ fn ShowcaseModel::navigation_section(
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         self.navigation_command_card(theme, metrics),
+        self.navigation_palette_card(theme, metrics),
         self.navigation_shell_card(theme, metrics),
         self.navigation_wizard_card(theme, metrics),
       ],
@@ -114,6 +115,57 @@ fn ShowcaseModel::navigation_command_card(
     variant=@views.SurfaceVariant::Base,
     theme~,
     padding=0.0,
+  )
+}
+
+///|
+fn ShowcaseModel::navigation_palette_card(
+  self : ShowcaseModel,
+  theme : @core.Theme,
+  metrics : ShowcaseMetrics,
+) -> @core.View[ShowcaseMsg] {
+  ignore(self)
+  ignore(metrics)
+  let commands = [
+    @core.ActionCommand::new(
+      intent=@core.CommandIntent::Submit,
+      label="Save Showcase",
+      shortcut=Some(
+        @core.KeyboardShortcut::new(
+          key="s",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+      group="File",
+      description="Persist local showcase state.",
+    ),
+    @core.ActionCommand::new(
+      intent=@core.CommandIntent::OpenContextMenu,
+      label="Open Context Menu",
+      shortcut=Some(
+        @core.KeyboardShortcut::new(
+          key="k",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+      group="View",
+      description="Show command choices near the current region.",
+    ),
+    @core.ActionCommand::new(
+      intent=@core.CommandIntent::Cancel,
+      label="Close Overlay",
+      enabled=false,
+      group="Window",
+      description="Disabled rows stay visible but inert.",
+    ),
+  ]
+  command_palette(
+    commands,
+    query="",
+    on_select=_intent => ToggleActive,
+    theme~,
+    width=520.0,
+    max_height=190.0,
   )
 }
 

@@ -321,6 +321,16 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(feedback_commands, "Disclosure Details"))
   assert_true(has_text(feedback_commands, "Inline Disclosure"))
   assert_true(has_text(feedback_commands, "Collapsible Panel"))
+  let navigation_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("navigation"))
+    .runtime(width=980.0, height=720.0)
+    .draw_commands()
+  assert_true(has_text(navigation_commands, "Save Showcase"))
+  assert_true(has_text(navigation_commands, "Meta+s"))
+  assert_true(
+    has_text(navigation_commands, "File - Persist local showcase state."),
+  )
+  assert_true(has_text(navigation_commands, "Close Overlay"))
 }
 
 ///|
