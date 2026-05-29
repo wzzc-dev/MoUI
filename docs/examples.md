@@ -58,9 +58,16 @@ pub fn view(model : Model) -> @core.View[Msg] {
 }
 ```
 
-Showcase is organized as a system gallery split across ten section files. In
-addition to the standard control, layout, navigation, text/media, and example
-sections, it now includes:
+Showcase is organized around the main catalog order:
+`Overview -> Text & Media -> Controls -> Forms -> Data -> Layout -> Navigation
+Shell -> Feedback -> Runtime/Renderer -> Diagnostics`. The first eight sections
+cover user-facing components and layout patterns. `Runtime/Renderer` displays
+host capability and renderer status cards. `Diagnostics` links to the deeper
+diagnostic routes for interaction wiring, text diagnostics, advanced rendering,
+and reusable examples without crowding the main sidebar.
+
+The hidden diagnostic routes remain directly addressable for focused tests and
+development workflows:
 
 - `Advanced Rendering`: app-local `custom_layout` demos for layer/blend,
   filter, shader effect, path, transform, and opacity draw commands.
@@ -69,6 +76,8 @@ sections, it now includes:
 - `Interaction Lab`: tooltip, file-drop modifier wiring, focus/shortcut
   affordances, button/text-field variants, and deterministic image lifecycle
   states.
+- `Examples`: Counter and Todo reusable app patterns until the dedicated
+  example apps cover those workflows.
 
 The Markdown editor keeps Markdown source as the saved value while presenting a
 formatted editor surface as the primary workflow. Source preview remains
