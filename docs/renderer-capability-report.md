@@ -24,7 +24,7 @@ Status meanings:
 | Gradient | ready | ready | ready | Skia linear-gradient fills and strokes for rounded rects and paths have real native renderer pixel smoke coverage. |
 | Shadow | ready | ready | ready | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
 | Text | ready | ready | ready | Skia basic `Font` measurement and `draw_text_utf8` rendering have real native renderer smoke evidence; shaping is tracked separately. |
-| Image | ready | partial | ready | Native wgpu decodes PNG/JPEG/BMP via `mizchi/image`; Web loads browser image sources. Skia validates PNG data URI decode and `draw_image_rect` output; local-file/failure/repaint coverage remains follow-up. |
+| Image | ready | ready | ready | Skia validates PNG data URI and local PNG decode, `draw_image_rect` output, ready/failed lifecycle records, and failed-image placeholders in the real native renderer smoke. |
 | Clip | ready | ready | ready | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. |
 | Transform | partial | partial | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated draw pixel proof; broader scoped combinations remain follow-up. |
 | Opacity | ready | ready | ready | Skia save-layer opacity has blended pixel smoke coverage. |
@@ -35,7 +35,7 @@ Status meanings:
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have real native renderer pixel smoke coverage; unknown names still use fallback paths. |
 | Text shaping | partial | partial | partial | Skia can provide basic `Font` measurement/drawing after linking, but SkShaper/SkParagraph-style shaping, bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia emoji behavior depends on platform font fallback and future shaping coverage; native WGPU/Web also retain grapheme/color-emoji gaps. |
-| Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Skia image lifecycle has data URI decode evidence; late async repaint and broader failure coverage remain follow-up work. |
+| Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Skia image lifecycle has data URI, local-file, and failed-image placeholder evidence; late async repaint remains follow-up work. |
 
 ## Renderer Specs
 
@@ -156,10 +156,10 @@ opacity with rectangular and rounded masks, nested layer/filter composition,
 multiply/screen/overlay/darken/lighten blending,
 blur/saturation/brightness/contrast/color-matrix filters, solid and gradient
 paths including quadratic and cubic curve verbs, the checker shader effect,
-vignette shader effect, PNG data URI image drawing, and basic text
+vignette shader effect, PNG data URI and local PNG image drawing, failed-image
+placeholders, and basic text
 pixels while requiring `unsupported_command_count == 0`. Remaining Skia
-renderer gaps are now narrower: broader affine scoped combinations, broader
-image source/failure coverage, and complex text shaping. Basic text
+renderer gaps are now narrower: broader affine scoped combinations and complex text shaping. Basic text
 measurement/drawing uses Skia `Font`, while complex shaping, bidi, line
 breaking, and deterministic emoji behavior remain partial and separate from the
 WGPU Moon Cosmic provider stack.

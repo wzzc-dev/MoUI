@@ -213,7 +213,36 @@ fn one_pixel_red_png_data_uri() -> String {
 }
 
 ///|
-fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
+fn one_pixel_red_png_bytes() -> Bytes {
+  @base64.decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
+    ignore_whitespace=true,
+  ) catch {
+    _ => abort("failed to decode embedded Skia smoke PNG")
+  }
+}
+
+///|
+fn write_local_smoke_png(path : String) -> Unit {
+  @fs.write_bytes_to_file(path, one_pixel_red_png_bytes()) catch {
+    _ => fail_smoke("failed to write local Skia smoke PNG")
+  }
+}
+
+///|
+fn remove_local_smoke_file(path : String) -> Unit {
+  @fs.remove_file(path) catch {
+    _ => ()
+  }
+}
+
+///|
+fn missing_image_source() -> String {
+  "/private/tmp/moui-skia-renderer-smoke-missing-image.png"
+}
+
+///|
+fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] {
   [
     @core.DrawCommand::Clear(@core.Color::white()),
     @core.DrawCommand::FillRect(
@@ -332,6 +361,12 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
     @core.DrawCommand::DrawImage(@core.ImageRun::{
       source: one_pixel_red_png_data_uri(),
       frame: @core.Rect::new(x=76.0, y=42.0, width=12.0, height=12.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: local_png_path,
+      frame: @core.Rect::new(x=90.0, y=42.0, width=5.0, height=5.0),
       opacity: 1.0,
       fit: @core.ImageFit::Contain,
     }),
@@ -536,6 +571,12 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
       @core.Color::black(),
     ),
     @core.DrawCommand::PopFilter,
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: missing_image_source(),
+      frame: @core.Rect::new(x=164.0, y=88.0, width=14.0, height=8.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
     @core.DrawCommand::DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="vignette",
@@ -570,6 +611,10 @@ fn main {
     )
   }
 
+  let local_png_path = "/private/tmp/moui-skia-renderer-smoke-local-image.png"
+  remove_local_smoke_file(local_png_path)
+  write_local_smoke_png(local_png_path)
+
   let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
   let target = @skia_renderer.SkiaPresentTarget::new(
     description="MoUI Skia renderer smoke presenter",
@@ -589,10 +634,13 @@ fn main {
     fail_smoke("failed to create MoUI Skia renderer")
   }
 
-  renderer.render(renderer_smoke_commands()) catch {
-    err =>
+  renderer.render(renderer_smoke_commands(local_png_path)) catch {
+    err => {
+      remove_local_smoke_file(local_png_path)
       fail_smoke("failed to render MoUI Skia smoke frame: \{err.message()}")
+    }
   }
+  remove_local_smoke_file(local_png_path)
 
   if renderer.present_count() != 1 {
     fail_smoke("MoUI Skia renderer did not present exactly one frame")
@@ -600,6 +648,7 @@ fn main {
   if renderer.unsupported_command_count() != 0 {
     fail_smoke("MoUI Skia smoke hit unsupported renderer commands")
   }
+  assert_image_resources(renderer, local_png_path)
 
   match captured.val {
     Some(frame) => {
@@ -626,6 +675,7 @@ fn main {
       assert_pixel(frame, 56, 44, 0, 0, 255, 255)
       assert_pixel(frame, 60, 44, 255, 255, 0, 255)
       assert_pixel(frame, 82, 48, 255, 0, 0, 255)
+      assert_pixel(frame, 92, 44, 255, 0, 0, 255)
       assert_region_has_pixel_near(
         frame,
         @core.Rect::new(x=94.0, y=44.0, width=7.0, height=10.0),
@@ -703,6 +753,7 @@ fn main {
       assert_pixel_luma_between(frame, 155, 109, 0, 160, 255)
       assert_pixel_luma_between(frame, 148, 109, 20, 245, 255)
       assert_pixel_near(frame, 142, 109, 255, 255, 255, 255, 2)
+      assert_pixel_near(frame, 171, 92, 145, 163, 189, 255, 55)
       assert_pixel_near(frame, 173, 109, 0, 255, 0, 255, 45)
       assert_pixel_luma_between(frame, 181, 101, 0, 95, 255)
       assert_pixel_near(frame, 198, 108, 192, 128, 128, 255, 8)
@@ -710,5 +761,44 @@ fn main {
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")
+  }
+}
+
+///|
+fn assert_image_resources(
+  renderer : @skia_renderer.SkiaRasterRenderer,
+  local_png_path : String,
+) -> Unit {
+  let resources = renderer.image_resources()
+  let mut saw_data_uri_ready = false
+  let mut saw_local_ready = false
+  let mut saw_missing_failed = false
+  for record in resources {
+    if record.source == one_pixel_red_png_data_uri() &&
+      record.status == @render.ImageResourceStatus::ImageReady &&
+      record.width == 1 &&
+      record.height == 1 {
+      saw_data_uri_ready = true
+    }
+    if record.source == local_png_path &&
+      record.status == @render.ImageResourceStatus::ImageReady &&
+      record.width == 1 &&
+      record.height == 1 {
+      saw_local_ready = true
+    }
+    if record.source == missing_image_source() &&
+      record.status == @render.ImageResourceStatus::ImageFailed &&
+      record.diagnostic.contains("unavailable") {
+      saw_missing_failed = true
+    }
+  }
+  if !saw_data_uri_ready {
+    fail_smoke("Skia smoke did not record ready data URI image")
+  }
+  if !saw_local_ready {
+    fail_smoke("Skia smoke did not record ready local file image")
+  }
+  if !saw_missing_failed {
+    fail_smoke("Skia smoke did not record failed missing image")
   }
 }
