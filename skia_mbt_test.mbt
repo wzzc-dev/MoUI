@@ -84,6 +84,9 @@ test "rect constructors and immutable offsets mirror skia helpers" {
   assert_true(@skia_mbt.Rect::from_irect(irect) == rect)
   assert_eq(irect.x(), 2)
   assert_eq(irect.y(), 3)
+  assert_eq(irect.width_64(), 4L)
+  assert_eq(irect.height_64(), 5L)
+  assert_true(!irect.is_empty_64())
 
   assert_true(
     rect.with_offset(@skia_mbt.Point::new(10, -1)) ==
@@ -117,6 +120,14 @@ test "rect constructors and immutable offsets mirror skia helpers" {
     irect.with_outset(@skia_mbt.ISize::new(1, 2)) ==
     @skia_mbt.IRect::new(1, 1, 7, 10),
   )
+  assert_true(
+    irect.with_adjustment(1, -2, 3, 4) == @skia_mbt.IRect::new(3, 1, 9, 12),
+  )
+
+  let wide = @skia_mbt.IRect::new(-2000000000, 0, 2000000000, 1)
+  assert_eq(wide.width_64(), 4000000000L)
+  assert_true(!wide.is_empty_64())
+  assert_true(@skia_mbt.IRect::new(0, 2000000000, 1, -2000000000).is_empty_64())
 }
 
 ///|
