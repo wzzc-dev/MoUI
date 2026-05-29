@@ -68,3 +68,63 @@ test "skia font resolver preserves fallback availability" {
     None => assert_true(!skia_available())
   }
 }
+
+///|
+test "skia text system exposes measured caret positions" {
+  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+    Some(font) => {
+      let input = @core.TextLayoutInput::new(
+        text="Slim",
+        font=@core.FontSpec::new(size=18.0, weight=400),
+      )
+      let fallback = @core.TextSystem::fallback().measure_text(input)
+      let layout = skia_text_layout_result(font, input, fallback)
+      inspect(layout.caret_positions.length(), content="5")
+      inspect(layout.caret_positions[0], content="0")
+      assert_true(layout.size.width == skia_measure_text_width(font, "Slim"))
+      assert_true(layout.caret_positions[4] == layout.size.width)
+      assert_true(layout.caret_positions[1] > 0.0)
+      assert_true(layout.caret_positions[2] > layout.caret_positions[1])
+    }
+    None => assert_true(!skia_available())
+  }
+}
+
+///|
+test "skia text system clamps measured carets to max width" {
+  match skia_font(@core.FontSpec::new(size=20.0, weight=400)) {
+    Some(font) => {
+      let input = @core.TextLayoutInput::new(
+        text="MoUI",
+        font=@core.FontSpec::new(size=20.0, weight=400),
+        max_width=12.0,
+      )
+      let fallback = @core.TextSystem::fallback().measure_text(input)
+      let layout = skia_text_layout_result(font, input, fallback)
+      inspect(layout.caret_positions.length(), content="5")
+      inspect(layout.size.width, content="12")
+      for caret in layout.caret_positions {
+        assert_true(caret <= 12.0)
+      }
+      assert_true(layout.caret_positions[4] == 12.0)
+    }
+    None => assert_true(!skia_available())
+  }
+}
+
+///|
+test "skia text system keeps unicode caret coverage" {
+  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+    Some(font) => {
+      let text = "A你🙂"
+      let carets = skia_caret_positions(font, text)
+      inspect(carets.length(), content="4")
+      assert_true(carets[0] == 0.0)
+      assert_true(carets[1] > 0.0)
+      assert_true(carets[2] >= carets[1])
+      assert_true(carets[3] >= carets[2])
+      assert_true(carets[3] == skia_measure_text_width(font, text))
+    }
+    None => assert_true(!skia_available())
+  }
+}
