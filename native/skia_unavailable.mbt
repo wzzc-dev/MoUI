@@ -35,6 +35,15 @@ priv type FontMgrHandle
 priv type ShaderHandle
 
 ///|
+priv type ColorFilterHandle
+
+///|
+priv type ImageFilterHandle
+
+///|
+priv type MaskFilterHandle
+
+///|
 priv type BitmapHandle
 
 ///|
@@ -139,6 +148,27 @@ pub(all) struct FontMgr {
 #warnings("-struct_never_constructed-unused_field")
 pub(all) struct Shader {
   priv handle : ShaderHandle
+}
+
+///|
+/// Placeholder color-filter type for non-native targets.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct ColorFilter {
+  priv handle : ColorFilterHandle
+}
+
+///|
+/// Placeholder image-filter type for non-native targets.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct ImageFilter {
+  priv handle : ImageFilterHandle
+}
+
+///|
+/// Placeholder mask-filter type for non-native targets.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct MaskFilter {
+  priv handle : MaskFilterHandle
 }
 
 ///|
@@ -895,6 +925,61 @@ pub fn Shader::is_available(self : Shader) -> Bool {
 }
 
 ///|
+pub fn ColorFilter::matrix(values : Array[Float]) -> ColorFilter? {
+  ignore(values)
+  None
+}
+
+///|
+pub fn ColorFilter::saturation(amount : Float) -> ColorFilter? {
+  ignore(amount)
+  None
+}
+
+///|
+pub fn ColorFilter::brightness(amount : Float) -> ColorFilter? {
+  ignore(amount)
+  None
+}
+
+///|
+pub fn ColorFilter::contrast(amount : Float) -> ColorFilter? {
+  ignore(amount)
+  None
+}
+
+///|
+pub fn ColorFilter::is_available(self : ColorFilter) -> Bool {
+  ignore(self)
+  false
+}
+
+///|
+pub fn ImageFilter::blur(sigma_x : Float, sigma_y : Float) -> ImageFilter? {
+  ignore(sigma_x)
+  ignore(sigma_y)
+  None
+}
+
+///|
+pub fn ImageFilter::is_available(self : ImageFilter) -> Bool {
+  ignore(self)
+  false
+}
+
+///|
+pub fn MaskFilter::blur(sigma : Float) -> MaskFilter? {
+  ignore(sigma)
+  None
+}
+
+///|
+pub fn MaskFilter::is_available(self : MaskFilter) -> Bool {
+  ignore(self)
+  false
+}
+
+///|
 pub fn Bitmap::alloc_n32_premul(size : @skia.ISize) -> Bitmap? {
   ignore(size)
   None
@@ -969,10 +1054,16 @@ pub fn Canvas::save_layer(
   self : Canvas,
   bounds? : @skia.Rect? = None,
   paint? : @skia.Paint = @skia.Paint::new(),
+  color_filter? : ColorFilter? = None,
+  image_filter? : ImageFilter? = None,
+  mask_filter? : MaskFilter? = None,
 ) -> Int {
   ignore(self)
   ignore(bounds)
   ignore(paint)
+  ignore(color_filter)
+  ignore(image_filter)
+  ignore(mask_filter)
   0
 }
 

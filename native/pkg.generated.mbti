@@ -66,7 +66,7 @@ pub fn Canvas::restore_to_count(Self, Int) -> Unit
 pub fn Canvas::rotate(Self, Float) -> Unit
 pub fn Canvas::save(Self) -> Int
 pub fn Canvas::save_count(Self) -> Int
-pub fn Canvas::save_layer(Self, bounds? : @skia_mbt.Rect?, paint? : @skia_mbt.Paint) -> Int
+pub fn Canvas::save_layer(Self, bounds? : @skia_mbt.Rect?, paint? : @skia_mbt.Paint, color_filter? : ColorFilter?, image_filter? : ImageFilter?, mask_filter? : MaskFilter?) -> Int
 pub fn Canvas::scale(Self, @skia_mbt.Size) -> Unit
 pub fn Canvas::skew(Self, @skia_mbt.Point) -> Unit
 pub fn Canvas::translate(Self, @skia_mbt.Point) -> Unit
@@ -83,6 +83,15 @@ pub fn Codec::height(Self) -> Int
 pub fn Codec::image_info(Self) -> @skia_mbt.ImageInfo
 pub fn Codec::is_available(Self) -> Bool
 pub fn Codec::width(Self) -> Int
+
+pub(all) struct ColorFilter {
+  // private fields
+}
+pub fn ColorFilter::brightness(Float) -> Self?
+pub fn ColorFilter::contrast(Float) -> Self?
+pub fn ColorFilter::is_available(Self) -> Bool
+pub fn ColorFilter::matrix(Array[Float]) -> Self?
+pub fn ColorFilter::saturation(Float) -> Self?
 
 pub(all) struct Data {
   // private fields
@@ -161,6 +170,18 @@ pub fn Image::height(Self) -> Int
 pub fn Image::image_info(Self) -> @skia_mbt.ImageInfo
 pub fn Image::is_available(Self) -> Bool
 pub fn Image::width(Self) -> Int
+
+pub(all) struct ImageFilter {
+  // private fields
+}
+pub fn ImageFilter::blur(Float, Float) -> Self?
+pub fn ImageFilter::is_available(Self) -> Bool
+
+pub(all) struct MaskFilter {
+  // private fields
+}
+pub fn MaskFilter::blur(Float) -> Self?
+pub fn MaskFilter::is_available(Self) -> Bool
 
 pub(all) struct Path {
   // private fields

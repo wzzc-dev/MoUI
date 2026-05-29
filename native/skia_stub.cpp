@@ -46,6 +46,25 @@
 #include "include/encode/SkJpegEncoder.h"
 #include "include/encode/SkPngEncoder.h"
 #include "include/encode/SkWebpEncoder.h"
+#if __has_include("include/effects/SkColorFilter.h")
+#include "include/effects/SkColorFilter.h"
+#define SKIA_MBT_HAS_LEGACY_COLOR_FILTER 1
+#elif __has_include("include/core/SkColorFilter.h")
+#include "include/core/SkColorFilter.h"
+#define SKIA_MBT_HAS_CORE_COLOR_FILTER 1
+#endif
+#if __has_include("include/effects/SkImageFilters.h")
+#include "include/effects/SkImageFilters.h"
+#define SKIA_MBT_HAS_IMAGE_FILTERS 1
+#endif
+#if __has_include("include/core/SkMaskFilter.h")
+#include "include/core/SkMaskFilter.h"
+#define SKIA_MBT_HAS_MASK_FILTER 1
+#endif
+#if __has_include("include/core/SkBlurTypes.h")
+#include "include/core/SkBlurTypes.h"
+#define SKIA_MBT_HAS_BLUR_TYPES 1
+#endif
 #if __has_include("include/effects/SkGradientShader.h")
 #include "include/effects/SkGradientShader.h"
 #define SKIA_MBT_HAS_LEGACY_GRADIENT_SHADER 1
@@ -141,6 +160,31 @@ struct MoonbitSkiaShader {
   SkShader* shader;
 #else
   void* shader;
+#endif
+};
+
+struct MoonbitSkiaColorFilter {
+#if defined(SKIA_MBT_HAS_SKIA) && \
+  (defined(SKIA_MBT_HAS_LEGACY_COLOR_FILTER) || defined(SKIA_MBT_HAS_CORE_COLOR_FILTER))
+  SkColorFilter* color_filter;
+#else
+  void* color_filter;
+#endif
+};
+
+struct MoonbitSkiaImageFilter {
+#if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_IMAGE_FILTERS)
+  SkImageFilter* image_filter;
+#else
+  void* image_filter;
+#endif
+};
+
+struct MoonbitSkiaMaskFilter {
+#if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_MASK_FILTER)
+  SkMaskFilter* mask_filter;
+#else
+  void* mask_filter;
 #endif
 };
 
@@ -373,6 +417,43 @@ static void moonbit_skia_shader_finalize(void* ptr) {
 #endif
 }
 
+static void moonbit_skia_color_filter_finalize(void* ptr) {
+  MoonbitSkiaColorFilter* wrapper = static_cast<MoonbitSkiaColorFilter*>(ptr);
+#if defined(SKIA_MBT_HAS_SKIA) && \
+  (defined(SKIA_MBT_HAS_LEGACY_COLOR_FILTER) || defined(SKIA_MBT_HAS_CORE_COLOR_FILTER))
+  if (wrapper->color_filter != nullptr) {
+    wrapper->color_filter->unref();
+    wrapper->color_filter = nullptr;
+  }
+#else
+  wrapper->color_filter = nullptr;
+#endif
+}
+
+static void moonbit_skia_image_filter_finalize(void* ptr) {
+  MoonbitSkiaImageFilter* wrapper = static_cast<MoonbitSkiaImageFilter*>(ptr);
+#if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_IMAGE_FILTERS)
+  if (wrapper->image_filter != nullptr) {
+    wrapper->image_filter->unref();
+    wrapper->image_filter = nullptr;
+  }
+#else
+  wrapper->image_filter = nullptr;
+#endif
+}
+
+static void moonbit_skia_mask_filter_finalize(void* ptr) {
+  MoonbitSkiaMaskFilter* wrapper = static_cast<MoonbitSkiaMaskFilter*>(ptr);
+#if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_MASK_FILTER)
+  if (wrapper->mask_filter != nullptr) {
+    wrapper->mask_filter->unref();
+    wrapper->mask_filter = nullptr;
+  }
+#else
+  wrapper->mask_filter = nullptr;
+#endif
+}
+
 static void moonbit_skia_bitmap_finalize(void* ptr) {
   MoonbitSkiaBitmap* wrapper = static_cast<MoonbitSkiaBitmap*>(ptr);
 #if defined(SKIA_MBT_HAS_SKIA)
@@ -507,6 +588,58 @@ static MoonbitSkiaShader* moonbit_skia_make_shader_wrapper(
     )
   );
   wrapper->shader = shader;
+  return wrapper;
+}
+
+static MoonbitSkiaColorFilter* moonbit_skia_make_color_filter_wrapper(
+#if defined(SKIA_MBT_HAS_SKIA) && \
+  (defined(SKIA_MBT_HAS_LEGACY_COLOR_FILTER) || defined(SKIA_MBT_HAS_CORE_COLOR_FILTER))
+  SkColorFilter* color_filter
+#else
+  void* color_filter
+#endif
+) {
+  MoonbitSkiaColorFilter* wrapper = static_cast<MoonbitSkiaColorFilter*>(
+    moonbit_make_external_object(
+      moonbit_skia_color_filter_finalize,
+      sizeof(MoonbitSkiaColorFilter)
+    )
+  );
+  wrapper->color_filter = color_filter;
+  return wrapper;
+}
+
+static MoonbitSkiaImageFilter* moonbit_skia_make_image_filter_wrapper(
+#if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_IMAGE_FILTERS)
+  SkImageFilter* image_filter
+#else
+  void* image_filter
+#endif
+) {
+  MoonbitSkiaImageFilter* wrapper = static_cast<MoonbitSkiaImageFilter*>(
+    moonbit_make_external_object(
+      moonbit_skia_image_filter_finalize,
+      sizeof(MoonbitSkiaImageFilter)
+    )
+  );
+  wrapper->image_filter = image_filter;
+  return wrapper;
+}
+
+static MoonbitSkiaMaskFilter* moonbit_skia_make_mask_filter_wrapper(
+#if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_MASK_FILTER)
+  SkMaskFilter* mask_filter
+#else
+  void* mask_filter
+#endif
+) {
+  MoonbitSkiaMaskFilter* wrapper = static_cast<MoonbitSkiaMaskFilter*>(
+    moonbit_make_external_object(
+      moonbit_skia_mask_filter_finalize,
+      sizeof(MoonbitSkiaMaskFilter)
+    )
+  );
+  wrapper->mask_filter = mask_filter;
   return wrapper;
 }
 
@@ -800,7 +933,10 @@ static SkPaint moonbit_skia_make_paint(
   float stroke_miter,
   int32_t stroke_cap,
   int32_t stroke_join,
-  int32_t blend_mode
+  int32_t blend_mode,
+  MoonbitSkiaColorFilter* color_filter,
+  MoonbitSkiaImageFilter* image_filter,
+  MoonbitSkiaMaskFilter* mask_filter
 ) {
   SkPaint paint;
   paint.setColor(static_cast<SkColor>(color_argb));
@@ -812,7 +948,55 @@ static SkPaint moonbit_skia_make_paint(
   paint.setStrokeCap(static_cast<SkPaint::Cap>(stroke_cap));
   paint.setStrokeJoin(static_cast<SkPaint::Join>(stroke_join));
   paint.setBlendMode(static_cast<SkBlendMode>(blend_mode));
+#if defined(SKIA_MBT_HAS_LEGACY_COLOR_FILTER) || defined(SKIA_MBT_HAS_CORE_COLOR_FILTER)
+  if (color_filter != nullptr && color_filter->color_filter != nullptr) {
+    paint.setColorFilter(sk_ref_sp(color_filter->color_filter));
+  }
+#else
+  (void)color_filter;
+#endif
+#if defined(SKIA_MBT_HAS_IMAGE_FILTERS)
+  if (image_filter != nullptr && image_filter->image_filter != nullptr) {
+    paint.setImageFilter(sk_ref_sp(image_filter->image_filter));
+  }
+#else
+  (void)image_filter;
+#endif
+#if defined(SKIA_MBT_HAS_MASK_FILTER)
+  if (mask_filter != nullptr && mask_filter->mask_filter != nullptr) {
+    paint.setMaskFilter(sk_ref_sp(mask_filter->mask_filter));
+  }
+#else
+  (void)mask_filter;
+#endif
   return paint;
+}
+
+static SkPaint moonbit_skia_make_paint(
+  uint32_t color_argb,
+  int32_t anti_alias,
+  int32_t dither,
+  int32_t style,
+  float stroke_width,
+  float stroke_miter,
+  int32_t stroke_cap,
+  int32_t stroke_join,
+  int32_t blend_mode
+) {
+  return moonbit_skia_make_paint(
+    color_argb,
+    anti_alias,
+    dither,
+    style,
+    stroke_width,
+    stroke_miter,
+    stroke_cap,
+    stroke_join,
+    blend_mode,
+    nullptr,
+    nullptr,
+    nullptr
+  );
 }
 
 static SkPaint moonbit_skia_make_paint_with_shader(
@@ -1856,6 +2040,89 @@ moonbit_skia_typeface_is_fixed_pitch(MoonbitSkiaTypeface* wrapper) {
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_shader_is_null(MoonbitSkiaShader* wrapper) {
   return wrapper == nullptr || wrapper->shader == nullptr;
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaColorFilter*
+moonbit_skia_color_filter_null(void) {
+  return moonbit_skia_make_color_filter_wrapper(nullptr);
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_color_filter_is_null(MoonbitSkiaColorFilter* wrapper) {
+  return wrapper == nullptr || wrapper->color_filter == nullptr;
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaColorFilter*
+moonbit_skia_color_filter_matrix(MoonbitSkiaFloatArray* values) {
+  if (values == nullptr || values->buffer == nullptr || values->length != 20) {
+    return moonbit_skia_make_color_filter_wrapper(nullptr);
+  }
+#if defined(SKIA_MBT_HAS_SKIA) && \
+  (defined(SKIA_MBT_HAS_LEGACY_COLOR_FILTER) || defined(SKIA_MBT_HAS_CORE_COLOR_FILTER))
+  sk_sp<SkColorFilter> filter = SkColorFilters::Matrix(values->buffer);
+  if (!filter) {
+    return moonbit_skia_make_color_filter_wrapper(nullptr);
+  }
+  return moonbit_skia_make_color_filter_wrapper(filter.release());
+#else
+  return moonbit_skia_make_color_filter_wrapper(nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaImageFilter*
+moonbit_skia_image_filter_null(void) {
+  return moonbit_skia_make_image_filter_wrapper(nullptr);
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_image_filter_is_null(MoonbitSkiaImageFilter* wrapper) {
+  return wrapper == nullptr || wrapper->image_filter == nullptr;
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaImageFilter*
+moonbit_skia_image_filter_blur(float sigma_x, float sigma_y) {
+  if (!(sigma_x > 0.0f) || !(sigma_y > 0.0f)) {
+    return moonbit_skia_make_image_filter_wrapper(nullptr);
+  }
+#if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_IMAGE_FILTERS)
+  sk_sp<SkImageFilter> filter = SkImageFilters::Blur(sigma_x, sigma_y, nullptr);
+  if (!filter) {
+    return moonbit_skia_make_image_filter_wrapper(nullptr);
+  }
+  return moonbit_skia_make_image_filter_wrapper(filter.release());
+#else
+  (void)sigma_x;
+  (void)sigma_y;
+  return moonbit_skia_make_image_filter_wrapper(nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaMaskFilter*
+moonbit_skia_mask_filter_null(void) {
+  return moonbit_skia_make_mask_filter_wrapper(nullptr);
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_mask_filter_is_null(MoonbitSkiaMaskFilter* wrapper) {
+  return wrapper == nullptr || wrapper->mask_filter == nullptr;
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaMaskFilter*
+moonbit_skia_mask_filter_blur(float sigma) {
+  if (!(sigma > 0.0f)) {
+    return moonbit_skia_make_mask_filter_wrapper(nullptr);
+  }
+#if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_MASK_FILTER) && \
+  defined(SKIA_MBT_HAS_BLUR_TYPES)
+  sk_sp<SkMaskFilter> filter = SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, sigma);
+  if (!filter) {
+    return moonbit_skia_make_mask_filter_wrapper(nullptr);
+  }
+  return moonbit_skia_make_mask_filter_wrapper(filter.release());
+#else
+  (void)sigma;
+  return moonbit_skia_make_mask_filter_wrapper(nullptr);
+#endif
 }
 
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaShader*
@@ -3824,7 +4091,10 @@ extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_canvas_save_layer(
   float stroke_miter,
   int32_t stroke_cap,
   int32_t stroke_join,
-  int32_t blend_mode
+  int32_t blend_mode,
+  MoonbitSkiaColorFilter* color_filter,
+  MoonbitSkiaImageFilter* image_filter,
+  MoonbitSkiaMaskFilter* mask_filter
 ) {
   if (wrapper == nullptr || wrapper->canvas == nullptr) {
     return 0;
@@ -3839,7 +4109,10 @@ extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_canvas_save_layer(
     stroke_miter,
     stroke_cap,
     stroke_join,
-    blend_mode
+    blend_mode,
+    color_filter,
+    image_filter,
+    mask_filter
   );
   if (has_bounds != 0) {
     SkRect bounds = SkRect::MakeLTRB(left, top, right, bottom);
@@ -3861,6 +4134,9 @@ extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_canvas_save_layer(
   (void)stroke_cap;
   (void)stroke_join;
   (void)blend_mode;
+  (void)color_filter;
+  (void)image_filter;
+  (void)mask_filter;
   return 0;
 #endif
 }
