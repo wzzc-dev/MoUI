@@ -48,6 +48,7 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
 ///|
 pub(all) struct LinuxAppOptions {
   text_engine : @wgpu_renderer.NativeTextEngineSetting
+  renderer : @render.RendererSelection
   scene_resolver : @host.HostWindowSceneResolver
 }
 
@@ -58,6 +59,7 @@ struct LinuxApp {
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
+  renderer_selection : @render.RendererSelection
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
   scene_resolver : @host.HostWindowSceneResolver
@@ -74,7 +76,13 @@ priv struct LinuxWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @window_linux.Window
-  renderer : @wgpu_renderer.WgpuRenderer
+  renderer : LinuxWindowRenderer
+}
+
+///|
+priv enum LinuxWindowRenderer {
+  Wgpu(@wgpu_renderer.WgpuRenderer)
+  Skia(@skia_renderer.SkiaRasterRenderer)
 }
 
 ///|
@@ -85,9 +93,10 @@ priv struct LinuxWindowPlatformSlots {
 ///|
 pub fn LinuxAppOptions::new(
   text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+  renderer? : @render.RendererSelection = @render.RendererSelection::Default,
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
 ) -> LinuxAppOptions {
-  { text_engine, scene_resolver }
+  { text_engine, renderer, scene_resolver }
 }
 
 ///|
@@ -272,6 +281,7 @@ pub fn run_app_with_options(
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     text_engine_setting: options.text_engine,
+    renderer_selection: options.renderer,
     services,
     window_requests,
     scene_resolver: options.scene_resolver,
@@ -435,7 +445,53 @@ fn LinuxWindowPlatformSlots::remove_host(
 }
 
 ///|
-pub impl @window_linux.ApplicationHandler for LinuxApp with can_create_surfaces(
+fn LinuxWindowRenderer::resize(
+  self : LinuxWindowRenderer,
+  metrics : @render.RendererSurfaceMetrics,
+) -> Unit {
+  match self {
+    Wgpu(renderer) => renderer.resize(metrics)
+    Skia(renderer) =>
+      renderer.resize(metrics) catch {
+        err => println("error resizing Linux Skia renderer: \{err.message()}")
+      }
+  }
+}
+
+///|
+fn LinuxWindowRenderer::render(
+  self : LinuxWindowRenderer,
+  commands : Array[@core.DrawCommand],
+) -> Unit {
+  match self {
+    Wgpu(renderer) => renderer.render(commands)
+    Skia(renderer) =>
+      renderer.render(commands) catch {
+        err => println("error rendering Linux Skia frame: \{err.message()}")
+      }
+  }
+}
+
+///|
+fn LinuxWindowRenderer::text_system(
+  self : LinuxWindowRenderer,
+) -> @core.TextSystem {
+  match self {
+    Wgpu(renderer) => renderer.text_system()
+    Skia(renderer) => renderer.text_system()
+  }
+}
+
+///|
+fn LinuxWindowRenderer::dispose(self : LinuxWindowRenderer) -> Unit {
+  match self {
+    Wgpu(renderer) => renderer.dispose()
+    Skia(renderer) => renderer.dispose()
+  }
+}
+
+///|
+pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -501,7 +557,7 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with can_create_surfaces(
 }
 
 ///|
-pub impl @window_linux.ApplicationHandler for LinuxApp with window_event(
+pub impl @window_linux.ApplicationHandler for LinuxApp with fn window_event(
   self,
   event_loop,
   platform_window_id,
@@ -637,12 +693,51 @@ fn LinuxApp::create_renderer_for_window(
   self : LinuxApp,
   window : @window_linux.Window,
   metrics : @host.HostSurfaceMetrics,
-) -> @wgpu_renderer.WgpuRenderer? {
+) -> LinuxWindowRenderer? {
+  match self.resolve_renderer_selection() {
+    @render.RendererBackendKind::NativeWgpu =>
+      self.create_wgpu_renderer_for_window(window, metrics)
+    @render.RendererBackendKind::SkiaRasterNative =>
+      self.create_skia_renderer_for_window(window, metrics)
+    backend => {
+      println(
+        "Linux renderer selection \{backend.label()} is not supported by this platform backend",
+      )
+      None
+    }
+  }
+}
+
+///|
+fn LinuxApp::resolve_renderer_selection(
+  self : LinuxApp,
+) -> @render.RendererBackendKind {
+  match self.renderer_selection {
+    @render.RendererSelection::Default =>
+      @render.RendererBackendKind::NativeWgpu
+    @render.RendererSelection::Backend(backend) => backend
+    @render.RendererSelection::Family(@render.RendererFamily::Skia) =>
+      @render.RendererBackendKind::SkiaRasterNative
+    @render.RendererSelection::Family(@render.RendererFamily::Wgpu) =>
+      @render.RendererBackendKind::NativeWgpu
+    @render.RendererSelection::Family(@render.RendererFamily::WebGpu) =>
+      @render.RendererBackendKind::WebGpuWasm
+  }
+}
+
+///|
+fn LinuxApp::create_wgpu_renderer_for_window(
+  self : LinuxApp,
+  window : @window_linux.Window,
+  metrics : @host.HostSurfaceMetrics,
+) -> LinuxWindowRenderer? {
   Some(
-    @wgpu_renderer.create_with_host_surface_and_text_engine(
-      renderer_metrics_from_host(metrics),
-      create_linux_host_surface(window.wl_display(), window.wl_surface()),
-      text_engine=linux_text_engine(self.text_engine_setting),
+    LinuxWindowRenderer::Wgpu(
+      @wgpu_renderer.create_with_host_surface_and_text_engine(
+        renderer_metrics_from_host(metrics),
+        create_linux_host_surface(window.wl_display(), window.wl_surface()),
+        text_engine=linux_text_engine(self.text_engine_setting),
+      ),
     ),
   ) catch {
     err => {
@@ -650,6 +745,52 @@ fn LinuxApp::create_renderer_for_window(
       None
     }
   }
+}
+
+///|
+fn LinuxApp::create_skia_renderer_for_window(
+  self : LinuxApp,
+  window : @window_linux.Window,
+  metrics : @host.HostSurfaceMetrics,
+) -> LinuxWindowRenderer? {
+  let _ = self
+  if !@skia_renderer.skia_available() {
+    println(
+      "Linux Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative",
+    )
+    return None
+  }
+  Some(
+    LinuxWindowRenderer::Skia(
+      @skia_renderer.create_with_present_target(
+        renderer_metrics_from_host(metrics),
+        linux_skia_present_target(window),
+      ),
+    ),
+  ) catch {
+    err => {
+      println("error creating Linux Skia renderer: \{err.message()}")
+      None
+    }
+  }
+}
+
+///|
+fn linux_skia_present_target(
+  window : @window_linux.Window,
+) -> @skia_renderer.SkiaPresentTarget {
+  @skia_renderer.SkiaPresentTarget::new(
+    description="Linux Wayland wl_shm Skia pixel presenter",
+    present=frame => {
+      window.present_rgba_pixels(
+        frame.width,
+        frame.height,
+        frame.row_bytes,
+        frame.pixels,
+      ) ==
+      0
+    },
+  )
 }
 
 ///|

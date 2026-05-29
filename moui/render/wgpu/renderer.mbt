@@ -26,6 +26,20 @@ pub fn native_surface_contract() -> @render.WgpuSurfaceContract {
 }
 
 ///|
+pub fn renderer_spec() -> @render.RendererSpec {
+  @render.RendererSpec::new(
+    backend=@render.RendererBackendKind::NativeWgpu,
+    family=@render.RendererFamily::Wgpu,
+    presentation=@render.RendererPresentationModel::HostGpuSurface,
+    supported_targets=[@render.RendererTarget::Native],
+    capabilities=@render.renderer_backend_capabilities(
+      @render.RendererBackendKind::NativeWgpu,
+    ),
+    description="Native wgpu renderer over host-provided GPU surfaces.",
+  )
+}
+
+///|
 pub fn create_with_host_surface(
   metrics : @render.RendererSurfaceMetrics,
   surface : HostWgpuSurface,

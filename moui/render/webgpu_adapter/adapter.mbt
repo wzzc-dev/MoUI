@@ -150,6 +150,23 @@ pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
 }
 
 ///|
+pub fn renderer_spec() -> @render.RendererSpec {
+  @render.RendererSpec::new(
+    backend=@render.RendererBackendKind::WebGpuWasm,
+    family=@render.RendererFamily::WebGpu,
+    presentation=@render.RendererPresentationModel::WebCanvas,
+    supported_targets=[
+      @render.RendererTarget::WasmGc,
+      @render.RendererTarget::Web,
+    ],
+    capabilities=@render.renderer_backend_capabilities(
+      @render.RendererBackendKind::WebGpuWasm,
+    ),
+    description="Browser WebGPU renderer reached through wasm-gc host imports.",
+  )
+}
+
+///|
 pub fn adapter_info() -> WebGpuHostAdapterInfo {
   {
     renderer: backend_info(),

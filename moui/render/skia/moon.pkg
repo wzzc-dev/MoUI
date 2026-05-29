@@ -1,0 +1,15 @@
+import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/x/fs",
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/skia_mbt",
+  "wzzc-dev/skia_mbt/native" @skia_native,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

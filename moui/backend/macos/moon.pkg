@@ -3,6 +3,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
   "wzzc-dev/moui/render/wgpu/cosmic_text" @wgpu_cosmic_text,
   "wzzc-dev/moui/render/wgpu/coretext" @wgpu_coretext,

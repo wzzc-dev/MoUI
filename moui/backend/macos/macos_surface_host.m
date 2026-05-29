@@ -6,6 +6,15 @@
 #import <string.h>
 
 static NSString *const MOUI_MACOS_SURFACE_LAYER_NAME = @"moui_macos_surface_layer";
+static NSString *const MOUI_MACOS_SKIA_LAYER_NAME = @"moui_macos_skia_pixel_layer";
+
+enum {
+  MOUI_MACOS_SKIA_PRESENT_OK = 0,
+  MOUI_MACOS_SKIA_PRESENT_BAD_VIEW = 1,
+  MOUI_MACOS_SKIA_PRESENT_BAD_DIMENSIONS = 2,
+  MOUI_MACOS_SKIA_PRESENT_BAD_PIXELS = 3,
+  MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED = 4,
+};
 
 @interface MouiMacosMenuTarget : NSObject
 @property(nonatomic) NSInteger selectedIndex;
@@ -53,6 +62,17 @@ static moonbit_bytes_t moui_macos_bytes_from_string(NSString *string) {
     memcpy(bytes, utf8, len);
   }
   return bytes;
+}
+
+static int64_t moui_macos_skia_expected_pixel_bytes(int32_t width, int32_t height) {
+  if (width <= 0 || height <= 0 || width > INT32_MAX / 4) {
+    return -1;
+  }
+  int64_t packed_row_bytes = (int64_t)width * 4;
+  if (height > INT32_MAX / packed_row_bytes) {
+    return -1;
+  }
+  return packed_row_bytes * height;
 }
 
 static NSArray<NSString *> *moui_macos_filter_extensions(moonbit_bytes_t filters) {
@@ -203,6 +223,88 @@ void *moui_macos_surface_host_layer_from_view(uint64_t raw_content_view_handle, 
   metal_layer.opaque = YES;
 
   return (void *)metal_layer;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_present_skia_pixels_to_view(uint64_t raw_content_view_handle,
+                                               int32_t width, int32_t height,
+                                               int32_t row_bytes,
+                                               const uint8_t *pixels,
+                                               int32_t pixels_len) {
+  if (raw_content_view_handle == 0) {
+    return MOUI_MACOS_SKIA_PRESENT_BAD_VIEW;
+  }
+  NSView *view = (__bridge NSView *)(void *)raw_content_view_handle;
+  if (view == nil) {
+    return MOUI_MACOS_SKIA_PRESENT_BAD_VIEW;
+  }
+
+  int64_t expected_len = moui_macos_skia_expected_pixel_bytes(width, height);
+  int64_t packed_row_bytes = expected_len > 0 ? (int64_t)width * 4 : 0;
+  if (expected_len <= 0 || row_bytes < packed_row_bytes) {
+    return MOUI_MACOS_SKIA_PRESENT_BAD_DIMENSIONS;
+  }
+  int64_t required_len = (int64_t)row_bytes * height;
+  if (required_len <= 0 || required_len > INT32_MAX || pixels == NULL || pixels_len < required_len) {
+    return MOUI_MACOS_SKIA_PRESENT_BAD_PIXELS;
+  }
+
+  NSMutableData *data = [NSMutableData dataWithLength:(NSUInteger)expected_len];
+  if (data == nil || data.mutableBytes == NULL) {
+    return MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED;
+  }
+  uint8_t *dst = (uint8_t *)data.mutableBytes;
+  for (int32_t y = 0; y < height; y++) {
+    memcpy(dst + (size_t)y * (size_t)packed_row_bytes,
+           pixels + (size_t)y * (size_t)row_bytes,
+           (size_t)packed_row_bytes);
+  }
+
+  CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
+  if (color_space == NULL) {
+    return MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED;
+  }
+  CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
+  if (provider == NULL) {
+    CGColorSpaceRelease(color_space);
+    return MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED;
+  }
+  CGBitmapInfo bitmap_info = kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
+  CGImageRef image = CGImageCreate((size_t)width, (size_t)height, 8, 32,
+                                   (size_t)packed_row_bytes, color_space,
+                                   bitmap_info, provider, NULL, false,
+                                   kCGRenderingIntentDefault);
+  CGDataProviderRelease(provider);
+  CGColorSpaceRelease(color_space);
+  if (image == NULL) {
+    return MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED;
+  }
+
+  view.wantsLayer = YES;
+  CALayer *layer = nil;
+  for (CALayer *sublayer in view.layer.sublayers) {
+    if ([sublayer.name isEqualToString:MOUI_MACOS_SKIA_LAYER_NAME]) {
+      layer = sublayer;
+      break;
+    }
+  }
+  if (layer == nil) {
+    layer = [CALayer layer];
+    layer.name = MOUI_MACOS_SKIA_LAYER_NAME;
+    layer.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
+    layer.contentsGravity = kCAGravityResize;
+    [view.layer addSublayer:layer];
+  }
+
+  CGFloat scale = view.window.backingScaleFactor > 0.0 ? view.window.backingScaleFactor : 1.0;
+  layer.frame = view.bounds;
+  layer.bounds = CGRectMake(0.0, 0.0, view.bounds.size.width, view.bounds.size.height);
+  layer.contentsScale = scale;
+  layer.contents = (__bridge id)image;
+  [layer setNeedsDisplay];
+
+  CGImageRelease(image);
+  return MOUI_MACOS_SKIA_PRESENT_OK;
 }
 
 MOONBIT_FFI_EXPORT

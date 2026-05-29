@@ -6,80 +6,210 @@ test "renderer capability report tracks draw command support" {
     is Some(image) else {
     fail("expected image capability")
   }
-  assert_true(image.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(image.web_status == @render.RendererFeatureStatus::Ready)
-  assert_true(image.native_note.contains("mizchi/image"))
-  assert_true(image.native_note.contains("PNG"))
+  assert_true(
+    image.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    image.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    image.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Unavailable,
+  )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("mizchi/image"),
+  )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("PNG"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::Transform)
     is Some(transform) else {
     fail("expected transform capability")
   }
-  assert_true(transform.native_status == @render.RendererFeatureStatus::Partial)
-  assert_true(transform.web_status == @render.RendererFeatureStatus::Partial)
-  assert_true(transform.native_note.contains("scoped layer"))
-  assert_true(transform.native_note.contains("transform and clip"))
-  assert_true(transform.native_note.contains("shader-effect advanced vertices"))
-  assert_true(transform.native_note.contains("layer composite vertices"))
-  assert_true(transform.native_note.contains("Filter scopes"))
-  assert_true(transform.native_note.contains("transformed clip scissors"))
-  assert_true(transform.web_note.contains("shader-effect advanced vertices"))
-  assert_true(transform.web_note.contains("shader effects"))
-  assert_true(transform.web_note.contains("filters"))
-  assert_true(transform.web_note.contains("clone"))
+  assert_true(
+    transform.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    transform.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("scoped layer"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("transform and clip"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("shader-effect advanced vertices"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("layer composite vertices"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("Filter scopes"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("transformed clip scissors"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("shader-effect advanced vertices"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("shader effects"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("filters"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("clone"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::Clip)
     is Some(clip) else {
     fail("expected clip capability")
   }
-  assert_true(clip.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(clip.web_status == @render.RendererFeatureStatus::Ready)
-  assert_true(clip.web_note.contains("offscreen layer masks"))
+  assert_true(
+    clip.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    clip.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    clip
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("offscreen layer masks"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::Opacity)
     is Some(opacity) else {
     fail("expected opacity capability")
   }
-  assert_true(opacity.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(opacity.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(
+    opacity.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    opacity.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::LayerCompositing,
     )
     is Some(layer) else {
     fail("expected layer compositing capability")
   }
-  assert_true(layer.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(layer.web_status == @render.RendererFeatureStatus::Ready)
-  assert_true(layer.native_note.contains("offscreen"))
+  assert_true(
+    layer.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    layer.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    layer
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("offscreen"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::BlendMode)
     is Some(blend) else {
     fail("expected blend capability")
   }
-  assert_true(blend.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(blend.web_status == @render.RendererFeatureStatus::Ready)
-  assert_true(blend.native_note.contains("backdrop-sampling"))
+  assert_true(
+    blend.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    blend.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    blend
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("backdrop-sampling"),
+  )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::FilterEffect,
     )
     is Some(filter) else {
     fail("expected filter capability")
   }
-  assert_true(filter.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(filter.web_status == @render.RendererFeatureStatus::Ready)
-  assert_true(filter.native_note.contains("color matrix"))
+  assert_true(
+    filter.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    filter.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    filter
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("color matrix"),
+  )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::ShaderEffect,
     )
     is Some(shader) else {
     fail("expected shader capability")
   }
-  assert_true(shader.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(shader.web_status == @render.RendererFeatureStatus::Ready)
+  assert_true(
+    shader.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    shader.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::PathVector)
     is Some(path) else {
     fail("expected path capability")
   }
-  assert_true(path.native_status == @render.RendererFeatureStatus::Ready)
-  assert_true(path.web_status == @render.RendererFeatureStatus::Ready)
-  assert_true(path.native_note.contains("moon_zeno"))
-  assert_true(path.web_note.contains("mesh payload"))
+  assert_true(
+    path.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    path.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    path
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("moon_zeno"),
+  )
+  assert_true(
+    path
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("mesh payload"),
+  )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::TextShaping,
     )
@@ -87,46 +217,70 @@ test "renderer capability report tracks draw command support" {
     fail("expected text shaping capability")
   }
   assert_true(
-    text_shaping.native_status == @render.RendererFeatureStatus::Partial,
+    text_shaping.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Partial,
   )
-  assert_true(text_shaping.native_note.contains("CoreText"))
-  assert_true(text_shaping.native_note.contains("DirectWrite scaffold"))
-  assert_true(text_shaping.native_note.contains("fontconfig"))
-  assert_true(text_shaping.native_note.contains("Cosmic"))
-  assert_true(text_shaping.native_note.contains("run layout"))
-  assert_true(text_shaping.native_note.contains("caret coverage"))
-  assert_true(text_shaping.native_note.contains("coverage checks"))
+  let native_text_note = text_shaping.note_for_backend(
+    @render.RendererBackendKind::NativeWgpu,
+  )
+  assert_true(native_text_note.contains("CoreText"))
+  assert_true(native_text_note.contains("DirectWrite scaffold"))
+  assert_true(native_text_note.contains("fontconfig"))
+  assert_true(native_text_note.contains("Cosmic"))
+  assert_true(native_text_note.contains("run layout"))
+  assert_true(native_text_note.contains("caret coverage"))
+  assert_true(native_text_note.contains("coverage checks"))
   guard @render.renderer_feature_capability(@render.RendererFeature::EmojiText)
     is Some(emoji) else {
     fail("expected emoji capability")
   }
-  assert_true(emoji.native_status == @render.RendererFeatureStatus::Partial)
-  assert_true(emoji.web_status == @render.RendererFeatureStatus::Partial)
-  assert_true(emoji.native_note.contains("RGBA"))
-  assert_true(emoji.native_note.contains("text vertices"))
-  assert_true(emoji.native_note.contains("Cosmic"))
-  assert_true(emoji.native_note.contains("platform emoji fallback"))
-  assert_true(emoji.native_note.contains("variation-selector"))
-  assert_true(emoji.native_note.contains("ZWJ"))
-  assert_true(emoji.native_note.contains("AppleColorEmoji"))
-  assert_true(emoji.native_note.contains("grapheme"))
-  assert_true(emoji.web_note.contains("grapheme"))
+  assert_true(
+    emoji.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    emoji.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  let native_emoji_note = emoji.note_for_backend(
+    @render.RendererBackendKind::NativeWgpu,
+  )
+  assert_true(native_emoji_note.contains("RGBA"))
+  assert_true(native_emoji_note.contains("text vertices"))
+  assert_true(native_emoji_note.contains("Cosmic"))
+  assert_true(native_emoji_note.contains("platform emoji fallback"))
+  assert_true(native_emoji_note.contains("variation-selector"))
+  assert_true(native_emoji_note.contains("ZWJ"))
+  assert_true(native_emoji_note.contains("AppleColorEmoji"))
+  assert_true(native_emoji_note.contains("grapheme"))
+  assert_true(
+    emoji
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("grapheme"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::AsyncImage)
     is Some(async_image) else {
     fail("expected async image capability")
   }
   assert_true(
-    async_image.native_status == @render.RendererFeatureStatus::Partial,
+    async_image.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Partial,
   )
-  assert_true(async_image.web_status == @render.RendererFeatureStatus::Partial)
-  assert_true(async_image.web_note.contains("browser cache"))
-  assert_true(async_image.web_note.contains("backend WebRenderer facade"))
-  assert_true(async_image.web_note.contains("app-visible"))
-  assert_true(async_image.web_note.contains("ready"))
-  assert_true(async_image.web_note.contains("failed"))
-  assert_true(async_image.web_note.contains("redraw"))
-  assert_true(async_image.web_note.contains("Image.onload"))
-  assert_true(async_image.web_note.contains("Image.onerror"))
+  assert_true(
+    async_image.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  let web_image_note = async_image.note_for_backend(
+    @render.RendererBackendKind::WebGpuWasm,
+  )
+  assert_true(web_image_note.contains("browser cache"))
+  assert_true(web_image_note.contains("backend WebRenderer facade"))
+  assert_true(web_image_note.contains("app-visible"))
+  assert_true(web_image_note.contains("ready"))
+  assert_true(web_image_note.contains("failed"))
+  assert_true(web_image_note.contains("redraw"))
+  assert_true(web_image_note.contains("Image.onload"))
+  assert_true(web_image_note.contains("Image.onerror"))
 }
 
 ///|
@@ -187,36 +341,63 @@ test "renderer command planner reports unbalanced advanced scopes" {
 ///|
 test "renderer capability follow ups stay focused on incomplete features" {
   let follow_ups = @render.renderer_feature_follow_ups()
-  inspect(follow_ups.length(), content="4")
+  assert_true(follow_ups.length() >= 4)
   let mut has_transform = false
   let mut has_text_shaping = false
   let mut has_emoji_text = false
   let mut has_async_image = false
-  let mut has_path_vector = false
+  let mut has_skia_path_vector = false
   for entry in follow_ups {
     if entry.feature == @render.RendererFeature::Transform {
       has_transform = true
     }
     if entry.feature == @render.RendererFeature::TextShaping {
       has_text_shaping = true
-      assert_true(entry.native_note.contains("follow-up"))
+      assert_true(
+        entry
+        .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+        .contains("follow-up"),
+      )
     }
     if entry.feature == @render.RendererFeature::EmojiText {
       has_emoji_text = true
-      assert_true(entry.native_status == @render.RendererFeatureStatus::Partial)
+      assert_true(
+        entry.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+        @render.RendererFeatureStatus::Partial,
+      )
     }
     if entry.feature == @render.RendererFeature::AsyncImage {
       has_async_image = true
     }
     if entry.feature == @render.RendererFeature::PathVector {
-      has_path_vector = true
+      has_skia_path_vector = entry
+        .status_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+        .needs_follow_up()
     }
   }
   assert_true(has_transform)
   assert_true(has_text_shaping)
   assert_true(has_emoji_text)
   assert_true(has_async_image)
-  assert_false(has_path_vector)
+  assert_true(has_skia_path_vector)
+}
+
+///|
+test "renderer capability report exposes backend-driven entries" {
+  let backends = @render.renderer_capability_backends()
+  inspect(backends.length(), content="3")
+  assert_true(backends[0] == @render.RendererBackendKind::NativeWgpu)
+  assert_true(backends[1] == @render.RendererBackendKind::SkiaRasterNative)
+  assert_true(backends[2] == @render.RendererBackendKind::WebGpuWasm)
+  let wgpu = @render.renderer_backend_capabilities(
+    @render.RendererBackendKind::NativeWgpu,
+  )
+  let skia = @render.renderer_backend_capabilities(
+    @render.RendererBackendKind::SkiaRasterNative,
+  )
+  inspect(wgpu.length(), content="17")
+  inspect(skia.length(), content="17")
+  assert_true(skia.any(capability => capability.note.contains("skia_mbt")))
 }
 
 ///|

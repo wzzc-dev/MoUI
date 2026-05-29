@@ -263,7 +263,7 @@ fn WebWindowPlatformSlots::remove_host(
 }
 
 ///|
-pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
+pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -335,7 +335,7 @@ pub impl @window_web.ApplicationHandler for WebApp with can_create_surfaces(
 }
 
 ///|
-pub impl @window_web.ApplicationHandler for WebApp with new_events(
+pub impl @window_web.ApplicationHandler for WebApp with fn new_events(
   self,
   event_loop,
   _cause,
@@ -349,7 +349,7 @@ pub impl @window_web.ApplicationHandler for WebApp with new_events(
 }
 
 ///|
-pub impl @window_web.ApplicationHandler for WebApp with window_event(
+pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
   self,
   event_loop,
   platform_window_id,

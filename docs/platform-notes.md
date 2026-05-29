@@ -5,6 +5,8 @@
 MoUI expects the modified `wzzc-dev/window` checkout under `.local_repos/window`.
 The README shows the setup commands. The local branch currently supplies target
 support that the upstream package does not yet cover for MoUI.
+The same local setup now creates `.local_repos/skia_mbt`, which provides the
+editable Skia binding used by the opt-in native Skia raster renderer.
 
 ## Shared Host Contract
 
@@ -51,6 +53,12 @@ resolved Windows window creates another Win32 window with an HWND-backed
 platform slot, then routes redraw, events, context menus, host service
 completions, IME sync, and disposal by `HostWindowId`. Without a scene resolver,
 they reject `OpenWindow` with the shared unavailable-resolver response.
+
+Native platform app options carry `renderer : @render.RendererSelection`.
+`Default` continues to resolve to `NativeWgpu` on macOS, Windows, and Linux;
+`Backend(SkiaRasterNative)` and `Family(Skia)` resolve to the Skia raster path.
+Web remains a browser WebGPU backend for now. The Skia selection is explicit and
+fails before opening a blank window when `skia_mbt/native` reports unavailable.
 
 The boundary is:
 
@@ -179,6 +187,16 @@ fallback text system; it does not name concrete macOS font files.
 The `examples/showcase/macos_cosmic` entrypoint selects `MoonCosmic`
 explicitly for comparison with the platform-default CoreText path.
 
+When `MacosAppOptions::new(renderer=...)` selects `SkiaRasterNative` or the
+Skia family, the host creates `render/skia.SkiaRasterRenderer` instead of the
+native WGPU renderer. The renderer draws into a CPU raster surface in physical
+pixels, scales the canvas by the host scale factor, reads premultiplied pixels
+back after each frame, and sends them to a macOS presenter. The Objective-C
+presenter builds a `CGImage` from the pixel bytes and installs it on a dedicated
+`CALayer.contents` attached to the content view, updating layer bounds and scale
+with window metrics. This path is intentionally separate from
+`render/wgpu`; Skia is a renderer family, not a `NativeRenderer` variant.
+
 Packages that use `backend/macos` must link the macOS frameworks required by
 the Objective-C stubs during the final native link step. Missing surface/window
 symbols such as `_OBJC_CLASS_$_CAMetalLayer`, `_objc_msgSend`, or
@@ -247,6 +265,14 @@ The `examples/showcase/windows_cosmic` entrypoint selects `MoonCosmic`
 explicitly for comparison with the platform-default DirectWrite scaffold plus
 Cosmic fallback path.
 
+When `WindowsAppOptions::new(renderer=...)` selects `SkiaRasterNative` or the
+Skia family, the host creates `render/skia.SkiaRasterRenderer` and presents the
+CPU pixel frame through the Win32 presenter. The C presenter copies the RGBA
+premultiplied readback into a top-down 32-bit BGRA DIB buffer and blits it to
+the client DC with `StretchDIBits`. If `skia_mbt/native` is only in fallback
+mode, renderer creation is rejected with a diagnostic instead of opening an
+empty HWND.
+
 The expected archive extraction path is:
 
 ```text
@@ -300,6 +326,15 @@ The platform-default text path composes the Linux
 `render/wgpu/fontconfig` scaffold provider with the shared Moon Cosmic fallback.
 `examples/showcase/linux_cosmic` selects the Moon Cosmic provider explicitly for
 comparison.
+
+When `LinuxAppOptions::new(renderer=...)` selects `SkiaRasterNative` or the
+Skia family, the host creates `render/skia.SkiaRasterRenderer` and presents the
+CPU pixel frame through a narrow API exposed by `.local_repos/window/linux`.
+That window fork owns the Wayland objects and provides
+`Window::present_rgba_pixels`, implemented with reusable `wl_shm` buffers,
+buffer-release tracking, `wl_surface_attach`, damage, commit, and display
+flush. Keeping the `wl_shm` presenter in the window backend avoids duplicating
+Wayland registry and buffer ownership in MoUI.
 
 Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 

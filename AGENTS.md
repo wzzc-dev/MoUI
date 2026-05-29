@@ -28,7 +28,8 @@ paths, or abstractions that only preserve old shapes.
   Wayland/WGPU host with explicit remaining service and text-provider gaps.
 - `render/` is the renderer facade and shared reporting layer.
 - `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
-  wasm-gc browser WebGPU host-import bridge.
+  wasm-gc browser WebGPU host-import bridge. `render/skia/` is the native Skia
+  raster renderer facade over the local `wzzc-dev/skia_mbt` binding.
 - Native text providers live in `render/wgpu/cosmic_text/`,
   `render/wgpu/coretext/`, `render/wgpu/directwrite/`,
   `render/wgpu/fontconfig/`, and the shared `render/wgpu/text_protocol/`
@@ -40,15 +41,17 @@ paths, or abstractions that only preserve old shapes.
 ## Local Dependencies
 
 The project expects the modified local `wzzc-dev/window` checkout at
-`.local_repos/window`, as described in `docs/development.md`. Local `moon.mod`,
-`moon.work`, and `moon.pkg` files are the source of truth for imports,
-workspace members, and supported targets.
+`.local_repos/window` and the editable `wzzc-dev/skia_mbt` checkout at
+`.local_repos/skia_mbt`, as described in `docs/development.md`. Local
+`moon.mod`, `moon.work`, and `moon.pkg` files are the source of truth for
+imports, workspace members, and supported targets.
 
-Use `sh scripts/setup-local-deps.sh` to create or repair the local checkout and
-`sh scripts/check-local-deps.sh` to verify that it points at the
-`wzzc-dev/window` fork on the `moui-support` branch. The upstream remote is
-`https://github.com/moonbit-community/window.git`; the MoUI fork remote is
-`git@github.com:wzzc-dev/window.git`.
+Use `sh scripts/setup-local-deps.sh` to create or repair the local checkouts and
+`sh scripts/check-local-deps.sh` to verify that `window` points at the
+`wzzc-dev/window` fork on the `moui-support` branch and `skia_mbt` points at the
+`wzzc-dev/skia_mbt` repo on `master`. The upstream window remote is
+`https://github.com/moonbit-community/window.git`; the MoUI window fork remote
+is `git@github.com:wzzc-dev/window.git`.
 
 When asked to update the repository, treat it as a multi-checkout update:
 update the main MoUI checkout, initialize/update any Git submodules such as
@@ -57,7 +60,8 @@ update the main MoUI checkout, initialize/update any Git submodules such as
 nested repositories. On Windows, use
 `powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1`
 from the repository root for this routine; it also creates or updates
-`.local_repos/window` on `moui-support`.
+`.local_repos/window` on `moui-support` and `.local_repos/skia_mbt` on
+`master`.
 
 `.local_repos/window` is an editable local dependency, not a vendored snapshot
 or submodule. It exists because upstream `moonbit-community/window` currently
@@ -66,7 +70,16 @@ that checkout should stay limited to the `web/`, `windows/`, and `linux/`
 platform packages and their package-local tests/docs when possible. Avoid
 changing `macos/`, shared packages such as `core/` and `dpi/`, or common
 behavior unless the task explicitly requires it; keeping the fork narrow makes
-future upstreaming safer.
+future upstreaming safer. The local checkout must declare
+`name = wzzc-dev/window` in `moon.mod` or `moon.mod.json` so workspace imports
+bind to the editable fork.
+
+`.local_repos/skia_mbt` is also an editable local dependency, not a submodule.
+It carries native Skia binding work needed by `render/skia`, including
+fallback-safe APIs that compile when real Skia link flags are absent. Keep
+missing Skia FFI surface area in `skia_mbt` instead of adding large private Skia
+stubs inside MoUI. A fallback compile is not renderer readiness:
+`skia_available() == false` must keep Skia renderer creation unavailable.
 
 When asked to merge upstream `window` changes, work inside `.local_repos/window`
 on `moui-support`, fetch `upstream`, and merge the upstream branch into the fork
@@ -118,6 +131,8 @@ moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/web --target wasm-gc
+moon test moui/render/skia --target native
+moon test .local_repos/skia_mbt --target native
 moon test moui/render/wgpu/cosmic_text --target native
 sh scripts/conformance-check.sh --input
 sh scripts/conformance-check.sh --layout
@@ -152,12 +167,18 @@ If a change touches `render/wgpu/`, also run:
 moon test moui/render/wgpu --target native
 ```
 
+If a change touches `render/skia/` or `.local_repos/skia_mbt`, also run the
+fallback-safe Skia checks. Use `sh scripts/dev-check.sh --skia-real-smoke` only
+after configuring real native Skia link flags.
+
 ## Renderer Capability Tracking
 
-Renderer feature status is tracked in `render/capabilities.mbt` and summarized
-in `docs/renderer-capability-report.md`. Update both the structured report and
-tests when changing image, clip, opacity, transform, or other draw command
-support.
+Renderer feature status is tracked per backend in `render/capabilities.mbt` and
+summarized in `docs/renderer-capability-report.md`. Update both the structured
+report and tests when changing image, clip, opacity, transform, or other draw
+command support. Renderer families and backend selection live at the renderer
+facade layer; `core`, `ViewSpec`, and `Program` must not depend on concrete
+renderer choices.
 
 ## Documentation Updates
 

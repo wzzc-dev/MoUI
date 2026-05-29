@@ -7,6 +7,17 @@ extern "C" fn macos_surface_host_layer_from_view(
 ) -> @wgpu_c.OpaquePtr = "moui_macos_surface_host_layer_from_view"
 
 ///|
+#borrow(pixels)
+extern "C" fn macos_present_skia_pixels_to_view(
+  raw_content_view_handle : UInt64,
+  width : Int,
+  height : Int,
+  row_bytes : Int,
+  pixels : Bytes,
+  pixels_len : Int,
+) -> Int = "moui_macos_present_skia_pixels_to_view"
+
+///|
 extern "C" fn macos_clipboard_has_text() -> Int = "moui_macos_clipboard_has_text"
 
 ///|
@@ -61,6 +72,7 @@ pub(all) struct MacosAccessibilityBridgeInfo {
 ///|
 pub(all) struct MacosAppOptions {
   text_engine : @wgpu_renderer.NativeTextEngineSetting
+  renderer : @render.RendererSelection
   scene_resolver : @host.HostWindowSceneResolver
 }
 
@@ -71,6 +83,7 @@ struct MacosApp {
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
+  renderer_selection : @render.RendererSelection
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
   scene_resolver : @host.HostWindowSceneResolver
@@ -87,7 +100,13 @@ priv struct MacosWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @window_macos.Window
-  renderer : @wgpu_renderer.WgpuRenderer
+  renderer : MacosWindowRenderer
+}
+
+///|
+priv enum MacosWindowRenderer {
+  Wgpu(@wgpu_renderer.WgpuRenderer)
+  Skia(@skia_renderer.SkiaRasterRenderer)
 }
 
 ///|
@@ -98,9 +117,10 @@ priv struct MacosWindowPlatformSlots {
 ///|
 pub fn MacosAppOptions::new(
   text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+  renderer? : @render.RendererSelection = @render.RendererSelection::Default,
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
 ) -> MacosAppOptions {
-  { text_engine, scene_resolver }
+  { text_engine, renderer, scene_resolver }
 }
 
 ///|
@@ -281,6 +301,7 @@ pub fn run_app_with_options(
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     text_engine_setting: options.text_engine,
+    renderer_selection: options.renderer,
     services,
     window_requests,
     scene_resolver: options.scene_resolver,
@@ -485,7 +506,53 @@ fn MacosWindowPlatformSlots::remove_host(
 }
 
 ///|
-pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
+fn MacosWindowRenderer::resize(
+  self : MacosWindowRenderer,
+  metrics : @render.RendererSurfaceMetrics,
+) -> Unit {
+  match self {
+    Wgpu(renderer) => renderer.resize(metrics)
+    Skia(renderer) =>
+      renderer.resize(metrics) catch {
+        err => println("error resizing macOS Skia renderer: \{err.message()}")
+      }
+  }
+}
+
+///|
+fn MacosWindowRenderer::render(
+  self : MacosWindowRenderer,
+  commands : Array[@core.DrawCommand],
+) -> Unit {
+  match self {
+    Wgpu(renderer) => renderer.render(commands)
+    Skia(renderer) =>
+      renderer.render(commands) catch {
+        err => println("error rendering macOS Skia frame: \{err.message()}")
+      }
+  }
+}
+
+///|
+fn MacosWindowRenderer::text_system(
+  self : MacosWindowRenderer,
+) -> @core.TextSystem {
+  match self {
+    Wgpu(renderer) => renderer.text_system()
+    Skia(renderer) => renderer.text_system()
+  }
+}
+
+///|
+fn MacosWindowRenderer::dispose(self : MacosWindowRenderer) -> Unit {
+  match self {
+    Wgpu(renderer) => renderer.dispose()
+    Skia(renderer) => renderer.dispose()
+  }
+}
+
+///|
+pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -546,7 +613,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with can_create_surfaces(
 }
 
 ///|
-pub impl @window_macos.ApplicationHandler for MacosApp with window_event(
+pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
   self,
   event_loop,
   platform_window_id,
@@ -684,7 +751,44 @@ fn MacosApp::create_renderer_for_window(
   self : MacosApp,
   window : @window_macos.Window,
   metrics : @host.HostSurfaceMetrics,
-) -> @wgpu_renderer.WgpuRenderer? {
+) -> MacosWindowRenderer? {
+  match self.resolve_renderer_selection() {
+    @render.RendererBackendKind::NativeWgpu =>
+      self.create_wgpu_renderer_for_window(window, metrics)
+    @render.RendererBackendKind::SkiaRasterNative =>
+      self.create_skia_renderer_for_window(window, metrics)
+    backend => {
+      println(
+        "macOS renderer selection \{backend.label()} is not supported by this platform backend",
+      )
+      None
+    }
+  }
+}
+
+///|
+fn MacosApp::resolve_renderer_selection(
+  self : MacosApp,
+) -> @render.RendererBackendKind {
+  match self.renderer_selection {
+    @render.RendererSelection::Default =>
+      @render.RendererBackendKind::NativeWgpu
+    @render.RendererSelection::Backend(backend) => backend
+    @render.RendererSelection::Family(@render.RendererFamily::Skia) =>
+      @render.RendererBackendKind::SkiaRasterNative
+    @render.RendererSelection::Family(@render.RendererFamily::Wgpu) =>
+      @render.RendererBackendKind::NativeWgpu
+    @render.RendererSelection::Family(@render.RendererFamily::WebGpu) =>
+      @render.RendererBackendKind::WebGpuWasm
+  }
+}
+
+///|
+fn MacosApp::create_wgpu_renderer_for_window(
+  self : MacosApp,
+  window : @window_macos.Window,
+  metrics : @host.HostSurfaceMetrics,
+) -> MacosWindowRenderer? {
   let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
     err => {
       println("error resolving macOS content view handle: \{err}")
@@ -694,14 +798,16 @@ fn MacosApp::create_renderer_for_window(
   match raw_content_view_handle {
     Some(raw_content_view_handle) =>
       Some(
-        @wgpu_renderer.create_with_host_surface_and_text_engine(
-          renderer_metrics_from_host(metrics),
-          create_macos_host_surface(
-            raw_content_view_handle,
-            metrics.physical_size,
-            scale_factor=metrics.scale_factor,
+        MacosWindowRenderer::Wgpu(
+          @wgpu_renderer.create_with_host_surface_and_text_engine(
+            renderer_metrics_from_host(metrics),
+            create_macos_host_surface(
+              raw_content_view_handle,
+              metrics.physical_size,
+              scale_factor=metrics.scale_factor,
+            ),
+            text_engine=macos_text_engine(self.text_engine_setting),
           ),
-          text_engine=macos_text_engine(self.text_engine_setting),
         ),
       ) catch {
         err => {
@@ -711,6 +817,64 @@ fn MacosApp::create_renderer_for_window(
       }
     None => None
   }
+}
+
+///|
+fn MacosApp::create_skia_renderer_for_window(
+  self : MacosApp,
+  window : @window_macos.Window,
+  metrics : @host.HostSurfaceMetrics,
+) -> MacosWindowRenderer? {
+  let _ = self
+  if !@skia_renderer.skia_available() {
+    println(
+      "macOS Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative",
+    )
+    return None
+  }
+  let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
+    err => {
+      println("error resolving macOS content view handle for Skia: \{err}")
+      None
+    }
+  }
+  match raw_content_view_handle {
+    Some(raw_content_view_handle) =>
+      Some(
+        MacosWindowRenderer::Skia(
+          @skia_renderer.create_with_present_target(
+            renderer_metrics_from_host(metrics),
+            macos_skia_present_target(raw_content_view_handle),
+          ),
+        ),
+      ) catch {
+        err => {
+          println("error creating macOS Skia renderer: \{err.message()}")
+          None
+        }
+      }
+    None => None
+  }
+}
+
+///|
+fn macos_skia_present_target(
+  raw_content_view_handle : UInt64,
+) -> @skia_renderer.SkiaPresentTarget {
+  @skia_renderer.SkiaPresentTarget::new(
+    description="macOS CALayer Skia pixel presenter",
+    present=frame => {
+      macos_present_skia_pixels_to_view(
+        raw_content_view_handle,
+        frame.width,
+        frame.height,
+        frame.row_bytes,
+        frame.pixels,
+        frame.pixels.length(),
+      ) ==
+      0
+    },
+  )
 }
 
 ///|

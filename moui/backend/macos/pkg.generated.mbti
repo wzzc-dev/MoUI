@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/macos"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/wgpu",
 }
 
@@ -55,9 +56,10 @@ pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosApp
 
 pub(all) struct MacosAppOptions {
   text_engine : @wgpu.NativeTextEngineSetting
+  renderer : @render.RendererSelection
   scene_resolver : @host.HostWindowSceneResolver
 }
-pub fn MacosAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
+pub fn MacosAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting, renderer? : @render.RendererSelection, scene_resolver? : @host.HostWindowSceneResolver) -> Self
 
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
@@ -69,4 +71,3 @@ pub(all) struct MacosBackendInfo {
 // Type aliases
 
 // Traits
-

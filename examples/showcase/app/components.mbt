@@ -227,12 +227,7 @@ fn ShowcaseModel::capability_card(
   let list_height = max_showcase_double(56.0, height - 72.0)
   let rows : Array[@core.View[ShowcaseMsg]] = []
   let visible_limit = max_showcase_int(1, (list_height / 42.0).to_int())
-  let entries = @render.renderer_feature_follow_ups()
-  for entry in @render.renderer_feature_capability_report() {
-    if !entries.any(existing => existing.feature == entry.feature) {
-      entries.push(entry)
-    }
-  }
+  let entries = capability_card_entries()
   let mut visible_count = 0
   for entry in entries {
     if visible_count < visible_limit {
@@ -264,6 +259,36 @@ fn ShowcaseModel::capability_card(
     height~,
     padding=theme.spacing_scale.md,
   )
+}
+
+///|
+fn capability_card_entries() -> Array[@render.RendererFeatureCapability] {
+  let primary : Array[@render.RendererFeatureCapability] = []
+  let secondary : Array[@render.RendererFeatureCapability] = []
+  let complete : Array[@render.RendererFeatureCapability] = []
+  for entry in @render.renderer_feature_capability_report() {
+    if capability_has_partial_or_gap(entry) {
+      primary.push(entry)
+    } else if entry.needs_follow_up() {
+      secondary.push(entry)
+    } else {
+      complete.push(entry)
+    }
+  }
+  primary + secondary + complete
+}
+
+///|
+fn capability_has_partial_or_gap(
+  entry : @render.RendererFeatureCapability,
+) -> Bool {
+  entry.backends.any(capability => {
+    match capability.status {
+      @render.RendererFeatureStatus::Partial
+      | @render.RendererFeatureStatus::Gap => true
+      _ => false
+    }
+  })
 }
 
 ///|
@@ -564,7 +589,7 @@ fn capability_row(
   theme : @core.Theme,
   width : Double,
 ) -> @core.View[ShowcaseMsg] {
-  let status_width = clamp_double(width * 0.42, 112.0, 176.0)
+  let status_width = clamp_double(width * 0.52, 156.0, 240.0)
   let feature_width = max_showcase_double(
     70.0,
     width - status_width - theme.spacing_scale.xs,
@@ -587,32 +612,30 @@ fn capability_status_view(
   theme : @core.Theme,
   width : Double,
 ) -> @core.View[ShowcaseMsg] {
-  if entry.native_status == entry.web_status {
-    text(entry.native_status.label(), width~, height=38.0)
-    .font(theme.typography.caption)
-    .foreground(capability_status_color(entry, theme))
-  } else {
-    column(
-      [
-        text("native " + entry.native_status.label(), width~, height=18.0)
-        .font(theme.typography.caption)
-        .foreground(capability_status_color(entry, theme)),
-        text("web " + entry.web_status.label(), width~, height=18.0)
-        .font(theme.typography.caption)
-        .foreground(capability_status_color(entry, theme)),
-      ],
-      spacing=2.0,
-      align=@views.CrossAlign::Start,
+  let backends = @render.renderer_capability_backends()
+  let row_height = if backends.length() <= 2 { 18.0 } else { 13.0 }
+  let rows : Array[@core.View[ShowcaseMsg]] = []
+  for backend in backends {
+    let status = entry.status_for_backend(backend)
+    rows.push(
+      text(
+        backend.short_label() + " " + status.label(),
+        width~,
+        height=row_height,
+      )
+      .font(theme.typography.caption)
+      .foreground(capability_status_color(status, theme)),
     )
   }
+  column(rows, spacing=1.0, align=@views.CrossAlign::Start)
 }
 
 ///|
 fn capability_status_color(
-  entry : @render.RendererFeatureCapability,
+  status : @render.RendererFeatureStatus,
   theme : @core.Theme,
 ) -> @core.Color {
-  if entry.native_status.needs_follow_up() || entry.web_status.needs_follow_up() {
+  if status.needs_follow_up() {
     theme.palette.primary
   } else {
     theme.palette.muted

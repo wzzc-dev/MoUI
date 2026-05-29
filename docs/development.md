@@ -7,6 +7,8 @@ for MoUI development.
 
 The upstream `Milky2018/window` package does not currently cover the targets
 MoUI needs, so use the `wzzc-dev/window` fork checkout instead.
+MoUI also uses `wzzc-dev/skia_mbt` as an editable local checkout while the Skia
+renderer backend and binding surface evolve together.
 
 From the repository root:
 
@@ -21,6 +23,7 @@ local workspace member in `moon.work`:
 ```moonbit
 import {
   "wzzc-dev/window@0.5.1",
+  "wzzc-dev/skia_mbt@0.1.1",
 }
 ```
 
@@ -28,6 +31,7 @@ import {
 members = [
   "./moui",
   "./.local_repos/window",
+  "./.local_repos/skia_mbt",
   "./examples/counter",
   "./examples/showcase",
   "./examples/markdown_editor",
@@ -41,6 +45,21 @@ current upstream package is macOS-only.
 - Upstream: `https://github.com/moonbit-community/window.git`
 - MoUI fork: `git@github.com:wzzc-dev/window.git`
 - Fork branch: `moui-support`
+
+The local `window` checkout must declare `name = wzzc-dev/window` in `moon.mod`
+or `moon.mod.json`; otherwise MoUI imports resolve to the published package
+rather than the editable fork. `scripts/check-local-deps.sh` verifies this
+because the Linux Skia presenter lives behind the local `window/linux` API.
+
+The Skia binding checkout is also editable:
+
+- MoUI Skia binding repo: `git@github.com:wzzc-dev/skia_mbt.git`
+- HTTPS fallback: `https://github.com/wzzc-dev/skia_mbt.git`
+- Branch: `master`
+
+Set `MOUI_SKIA_MBT_REMOTE` to override the clone URL. The default daily check
+only validates fallback-safe Skia package tests. Use `--skia-real-smoke` after
+configuring real Skia native link flags.
 
 `scripts/setup-local-deps.sh` configures the fork as `origin` and upstream as
 `upstream`. When merging new upstream commits into the fork, fetch `upstream`
@@ -61,7 +80,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.p
 ```
 
 That helper also creates or updates `.local_repos/window` on the `moui-support`
-branch.
+branch and `.local_repos/skia_mbt` on `master`.
 
 Local setup defaults to the SSH fork URL. CI defaults to the HTTPS fork URL so
 GitHub Actions can clone the dependency without a deploy key. Set
@@ -75,9 +94,16 @@ For routine local development, prefer the bounded daily check:
 sh scripts/dev-check.sh
 ```
 
-It runs stable package-level tests, native renderer contract tests, and Web
-wasm-gc example builds without invoking all-repository native or wasm-gc test
-targets.
+It runs stable package-level tests, native renderer contract tests, fallback-safe
+Skia checks, and Web wasm-gc example builds without invoking all-repository
+native or wasm-gc test targets. Fallback-safe Skia checks prove API shape and
+unavailable diagnostics; they do not mean a real Skia renderer is ready.
+
+Run the real Skia native smoke only after configuring local Skia link flags:
+
+```sh
+sh scripts/dev-check.sh --skia-real-smoke
+```
 
 ## Preview Loop
 
@@ -168,6 +194,8 @@ Useful focused commands:
 
 ```sh
 moon test moui/render/wgpu --target native
+moon test moui/render/skia --target native
+moon test .local_repos/skia_mbt --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
 moon test moui/backend/web --target wasm-gc

@@ -1,10 +1,10 @@
 # Renderer Capability Report
 
-This page tracks draw command coverage for the native wgpu renderer and the
-wasm-gc WebGPU host bridge. The same status data is codified in
-`render/capabilities.mbt` and checked by `render/capabilities_test.mbt`.
-Showcase consumes the same report and prioritizes follow-up rows in its visible
-capability card, but renderer support claims still come from this report plus
+This page tracks draw command coverage by renderer backend. The same status
+data is codified in `render/capabilities.mbt` and checked by
+`render/capabilities_test.mbt`. Showcase consumes the same backend list, so new
+renderer columns come from structured data instead of hard-coded native/web
+fields. Renderer support claims still come from this report plus
 renderer/provider tests.
 
 Status meanings:
@@ -14,26 +14,44 @@ Status meanings:
 - `gap`: no visible implementation yet.
 - `host-forwarded`: MoonBit forwards the command to the browser WebGPU host
   without local runtime coverage.
+- `unavailable`: the backend has a contract or planned mapping, but cannot be
+  claimed ready in the current fallback-safe build.
 
-| Feature | Native wgpu | Web wasm-gc | Follow-up |
-| --- | --- | --- | --- |
-| Rect | ready | ready | None |
-| Rounded rect | ready | ready | None |
-| Gradient | ready | ready | None |
-| Shadow | ready | ready | None |
-| Text | ready | ready | None |
-| Image | ready | ready | Native decodes PNG/JPEG/BMP from local file paths and base64 data URIs through `mizchi/image`; Web loads browser-supported sources into a WebGPU texture cache. |
-| Clip | ready | ready | Rectangular transformed scissor behavior is aligned; rounded clips are handled through native shader SDF masks and Web offscreen layer-mask scopes. |
-| Transform | partial | partial | Affine transforms are folded into visual, image, text, shader-effect advanced vertices, and masked native layer composite vertices. Scoped native layer/filter child plans inherit transform and clip; native filter scopes preserve transformed child vertices and transformed clip scissors. Web scoped layer/filter commands clone the current transform/clip state, and Web adapter tests preserve transform scope around layers, filters, and shader effects. Broader render-pass transform pixel evidence remains follow-up work. |
-| Opacity | ready | ready | None |
-| Layer compositing | ready | ready | Native and Web render layer scopes into offscreen GPU textures and composite them back through the advanced GPU pass with opacity and masks. |
-| Blend mode | ready | ready | Source-over, multiply, screen, darken, and lighten map to GPU blend states; overlay uses a backdrop-sampling GPU pass for exact channel math. |
-| Filter effect | ready | ready | `PushFilter` / `PopFilter` render scoped content to offscreen textures; the advanced shader applies blur, saturation, brightness, contrast, and color matrix filters. |
-| Path/vector | ready | ready | `DrawPath` lowers `PathSpec` fills and strokes through the shared `moon_zeno` tessellator. Native wgpu renders the triangle mesh through the visual GPU pipeline, and the wasm-gc Web adapter forwards the same mesh payload to the browser WebGPU visual pipeline. |
-| Shader effect | ready | ready | `DrawShaderEffect` executes through the advanced GPU shader path for built-in `solid`, `checker`, `linear-gradient-debug`, and `vignette`, with unknown effects using their fallback brush. |
-| Text shaping | partial | partial | `FontSpec` now uses structured family stacks. Runtime text is injectable through `TextSystem`: `core` keeps only a deterministic fallback system, native WGPU exposes a provider protocol with validation for metrics and non-empty run-layout caret coverage, `render/wgpu/cosmic_text` owns the Cosmic provider, macOS composes CoreText with Cosmic fallback by default, Windows composes its DirectWrite scaffold with Cosmic fallback, Linux composes its fontconfig/HarfBuzz/FreeType scaffold with Cosmic fallback, and Web uses the same Canvas CSS `system-ui` stack for measurement and WebGPU text drawing. Cosmic measurement and native run layout paths safe-map provider-fragile emoji samples before shaping while preserving monotonic caret coverage. macOS/Windows/Linux startup can select `MoonCosmic` or `PlatformDefault`; the Windows/Linux scaffolds currently return no platform glyph data and rely on the composed Cosmic fallback until real engines land. Full bidi, line breaking, and typography conformance remain follow-up work. |
-| Emoji text | partial | partial | Native WGPU can preserve RGBA color glyph payloads through the provider protocol, atlas upload path, and text vertex shader marker; Cosmic loads platform emoji fallback font candidates when available, keeps color swash pixels, and safe-maps provider-fragile single-codepoint, variation-selector, and ZWJ emoji samples before native layout so caret coverage remains stable; CoreText marks AppleColorEmoji raster payloads as RGBA on macOS. Web coverage depends on browser font rasterization. Full native emoji font fallback across all providers, ZWJ/color emoji conformance, browser rasterization determinism, and full grapheme shaping remain follow-up work. |
-| Async image | partial | partial | Renderer-neutral lifecycle records model loading, ready, failed, disposed, and eviction. Native and Web renderers expose image resource snapshots; the Web backend `WebRenderer` facade also exposes those snapshots to app/host integration code. Web refreshes ready/failed records from the browser cache after host submission, and the canonical Web boot path schedules a redraw when browser image load/error events report a resource change. Broader native/general repaint policy and release evidence remain follow-up work. |
+| Feature | Native wgpu | Skia raster native | Web wasm-gc | Follow-up |
+| --- | --- | --- | --- | --- |
+| Rect | ready | unavailable | ready | Skia needs real native link flags and pixel evidence before this can move to ready. |
+| Rounded rect | ready | unavailable | ready | Skia maps to SkCanvas rounded rect draws, but fallback builds cannot claim visible support. |
+| Gradient | ready | unavailable | ready | Skia shader bindings exist, but MoUI still needs renderer pixel evidence for gradient brushes. |
+| Shadow | ready | unavailable | ready | Skia blur/mask-filter shadow coverage is still pending in the renderer path. |
+| Text | ready | unavailable | ready | Skia has basic font measurement/drawing API, but visible renderer text proof requires real Skia. |
+| Image | ready | unavailable | ready | Native wgpu decodes PNG/JPEG/BMP via `mizchi/image`; Web loads browser image sources. Skia image decode/readback is present in the binding and still needs MoUI renderer validation. |
+| Clip | ready | unavailable | ready | Skia maps to canvas clip scopes; pixel evidence for nested rectangular/rounded clips remains pending. |
+| Transform | partial | unavailable | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps to canvas concat/scale, pending proof. |
+| Opacity | ready | unavailable | ready | Skia maps to paint alpha and save-layer opacity, pending real-backend validation. |
+| Layer compositing | ready | unavailable | ready | WGPU/Web render layer scopes through offscreen textures. Skia maps to `save_layer`, pending blend/filter/opacity validation. |
+| Blend mode | ready | unavailable | ready | WGPU/Web support source-over, multiply, screen, darken, lighten, and overlay. Skia paint blend mapping exists in the binding, pending MoUI validation. |
+| Filter effect | ready | unavailable | ready | WGPU/Web implement blur, saturation, brightness, contrast, and color matrix filters. Skia filter/color-filter renderer support is still pending. |
+| Path/vector | ready | unavailable | ready | WGPU/Web use `moon_zeno` tessellation. Skia can replay `PathSpec` into Skia paths, pending pixel evidence. |
+| Shader effect | ready | unavailable | ready | WGPU/Web handle built-in shader effects. Skia currently uses fallback/procedural brush paths until real renderer evidence lands. |
+| Text shaping | partial | partial | partial | Skia can provide basic `Font` measurement/drawing after linking, but SkShaper/SkParagraph-style shaping, bidi, line breaking, and typography conformance remain follow-up work. |
+| Emoji text | partial | partial | partial | Skia emoji behavior depends on platform font fallback and future shaping coverage; native WGPU/Web also retain grapheme/color-emoji gaps. |
+| Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Skia image lifecycle exists at the MoUI facade, but real decode/repaint evidence remains follow-up work. |
+
+## Renderer Specs
+
+Renderer identity is declared through `RendererSpec`, not by adding fixed fields
+to app code or `ViewSpec`. Current specs are:
+
+- `NativeWgpu`: family `Wgpu`, presentation `HostGpuSurface`, target `Native`.
+- `WebGpuWasm`: family `WebGpu`, presentation `WebCanvas`, targets `WasmGc`
+  and `Web`.
+- `SkiaRasterNative`: family `Skia`, presentation `CpuPixelFrame`, target
+  `Native`.
+
+Native platform backends resolve `RendererSelection::Default` to `NativeWgpu`.
+`Backend(SkiaRasterNative)` and `Family(Skia)` opt into Skia raster. Web keeps
+using the WebGPU wasm backend; future Skia Web or Skia GPU variants can add new
+`RendererBackendKind` values without changing the capability record shape.
 
 ## Current Native Notes
 
@@ -111,6 +129,31 @@ Native image support is synchronous from the app model's point of view.
 snapshots. Planned image commands are marked loading until the native cache can
 resolve them; successful synchronous decode/cache upload marks records ready
 with dimensions, and failed decodes mark records failed with a diagnostic.
+
+## Current Skia Raster Notes
+
+`render/skia` is a native-only renderer package over the editable
+`wzzc-dev/skia_mbt` checkout. It exposes `SkiaRasterRenderer`,
+`SkiaPixelFrame`, `SkiaPresentTarget`, `renderer_spec()`, backend info,
+fallback-safe availability checks, a basic Skia-backed text system, image
+resource snapshots, and diagnostics for unsupported commands. In fallback builds
+`skia_available()` returns `false`, renderer creation raises `SkiaUnavailable`,
+and platform backends reject explicit Skia selection before opening a blank
+window.
+
+When real Skia is linked, the renderer creates a CPU `raster_n32_premul` surface
+using physical pixels, scales the canvas by the host scale factor so MoUI
+commands remain in logical coordinates, draws the command stream, reads pixels
+back into `SkiaPixelFrame`, and calls the platform presenter. macOS presents the
+frame through a `CGImage` on a `CALayer`, Windows through a top-down BGRA DIB and
+`StretchDIBits`, and Linux through the local `window/linux` `wl_shm` presenter.
+
+The first implementation path covers the renderer contract and basic command
+mapping, but the capability table keeps most Skia draw-command entries
+`unavailable` until real native Skia link flags and representative pixel tests
+prove the behavior. Basic text measurement/drawing uses Skia `Font`, while
+complex shaping, bidi, line breaking, and deterministic emoji behavior remain
+partial and separate from the WGPU Moon Cosmic provider stack.
 
 ## Current Web Notes
 

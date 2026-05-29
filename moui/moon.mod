@@ -15,6 +15,7 @@ import {
   "mizchi/svg@0.2.1",
   "moonbitlang/quickcheck@0.13.0",
   "moonbitlang/x@0.4.43",
+  "wzzc-dev/skia_mbt@0.1.1",
 }
 
 readme = "README.mbt.md"
@@ -25,4 +26,4 @@ license = "Apache-2.0"
 
 keywords = [ "moui", "gui", "framework" ]
 
-description = "A MoonBit UI framework"
+description = "MoUI is a multi-platform MoonBit GUI framework"

@@ -25,6 +25,10 @@ pub fn rect_shader_wgsl() -> String
 
 pub fn rect_vertices_to_bytes(Array[RectVertex]) -> Bytes
 
+pub fn renderer_backend_capabilities(RendererBackendKind) -> Array[RendererBackendFeatureCapability]
+
+pub fn renderer_capability_backends() -> Array[RendererBackendKind]
+
 pub fn renderer_feature_capability(RendererFeature) -> RendererFeatureCapability?
 
 pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability]
@@ -99,6 +103,21 @@ pub(all) struct RectVertex {
   a : Double
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct RenderFrameSpec {
+  metrics : RendererSurfaceMetrics
+  commands : Array[@core.DrawCommand]
+  clear_color : @core.Color?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RenderFrameSpec::new(metrics~ : RendererSurfaceMetrics, commands~ : Array[@core.DrawCommand], clear_color? : @core.Color?) -> Self
+
+pub(all) struct RendererBackendFeatureCapability {
+  feature : RendererFeature
+  backend : RendererBackendKind
+  status : RendererFeatureStatus
+  note : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererBackendFeatureCapability::new(feature~ : RendererFeature, backend~ : RendererBackendKind, status~ : RendererFeatureStatus, note? : String) -> Self
+
 pub(all) struct RendererBackendInfo {
   backend : RendererBackendKind
   status : RendererCapabilityStatus
@@ -112,10 +131,17 @@ pub fn RendererBackendInfo::new(backend~ : RendererBackendKind, status~ : Render
 pub(all) enum RendererBackendKind {
   NativeWgpu
   WebGpuWasm
+  SkiaRasterNative
+  SkiaRasterWeb
+  SkiaGpuNative
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererBackendKind::family(Self) -> RendererFamily
+pub fn RendererBackendKind::label(Self) -> String
+pub fn RendererBackendKind::short_label(Self) -> String
 
 pub(all) enum RendererCapabilityStatus {
   Ready
+  Unavailable
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RendererCommandFallback {
@@ -140,6 +166,13 @@ pub(all) struct RendererCommandPlan {
   fallbacks : Array[RendererCommandFallback]
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum RendererFamily {
+  Wgpu
+  WebGpu
+  Skia
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererFamily::label(Self) -> String
+
 pub(all) enum RendererFeature {
   Rect
   RoundedRect
@@ -163,20 +196,50 @@ pub fn RendererFeature::label(Self) -> String
 
 pub(all) struct RendererFeatureCapability {
   feature : RendererFeature
-  native_status : RendererFeatureStatus
-  web_status : RendererFeatureStatus
-  native_note : String
-  web_note : String
+  backends : Array[RendererBackendFeatureCapability]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererFeatureCapability::backend_capability(Self, RendererBackendKind) -> RendererBackendFeatureCapability?
+pub fn RendererFeatureCapability::needs_follow_up(Self) -> Bool
+pub fn RendererFeatureCapability::new(feature~ : RendererFeature, backends~ : Array[RendererBackendFeatureCapability]) -> Self
+pub fn RendererFeatureCapability::note_for_backend(Self, RendererBackendKind) -> String
+pub fn RendererFeatureCapability::status_for_backend(Self, RendererBackendKind) -> RendererFeatureStatus
 
 pub(all) enum RendererFeatureStatus {
   Ready
   Partial
   Gap
   HostForwarded
+  Unavailable
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererFeatureStatus::label(Self) -> String
 pub fn RendererFeatureStatus::needs_follow_up(Self) -> Bool
+
+pub(all) enum RendererPresentationModel {
+  HostGpuSurface
+  WebCanvas
+  CpuPixelFrame
+  ExternalSurface
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererPresentationModel::label(Self) -> String
+
+pub(all) enum RendererSelection {
+  Default
+  Backend(RendererBackendKind)
+  Family(RendererFamily)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererSelection::matches_backend(Self, RendererBackendKind) -> Bool
+pub fn RendererSelection::native_default() -> Self
+pub fn RendererSelection::web_default() -> Self
+
+pub(all) struct RendererSpec {
+  backend : RendererBackendKind
+  family : RendererFamily
+  presentation : RendererPresentationModel
+  supported_targets : Array[RendererTarget]
+  capabilities : Array[RendererBackendFeatureCapability]
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererSpec::new(backend~ : RendererBackendKind, family~ : RendererFamily, presentation~ : RendererPresentationModel, supported_targets~ : Array[RendererTarget], capabilities~ : Array[RendererBackendFeatureCapability], description? : String) -> Self
 
 pub(all) struct RendererSurfaceMetrics {
   logical_size : @core.Size
@@ -185,6 +248,12 @@ pub(all) struct RendererSurfaceMetrics {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererSurfaceMetrics::from_logical(size~ : @core.Size, scale_factor? : Double) -> Self
 pub fn RendererSurfaceMetrics::new(logical_size~ : @core.Size, physical_size~ : @core.Size, scale_factor? : Double) -> Self
+
+pub(all) enum RendererTarget {
+  Native
+  WasmGc
+  Web
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ShaderRegistryResult {
   name : String

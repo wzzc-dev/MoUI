@@ -15,6 +15,40 @@ test "renderer backend info records unified renderer capability" {
 }
 
 ///|
+test "renderer spec models backend family selection and presentation" {
+  let spec = @render.RendererSpec::new(
+    backend=@render.RendererBackendKind::SkiaRasterNative,
+    family=@render.RendererFamily::Skia,
+    presentation=@render.RendererPresentationModel::CpuPixelFrame,
+    supported_targets=[@render.RendererTarget::Native],
+    capabilities=@render.renderer_backend_capabilities(
+      @render.RendererBackendKind::SkiaRasterNative,
+    ),
+    description="test skia raster spec",
+  )
+  assert_true(spec.backend.family() == @render.RendererFamily::Skia)
+  assert_true(
+    spec.presentation == @render.RendererPresentationModel::CpuPixelFrame,
+  )
+  assert_true(
+    @render.RendererSelection::Backend(
+      @render.RendererBackendKind::SkiaRasterNative,
+    ).matches_backend(@render.RendererBackendKind::SkiaRasterNative),
+  )
+  assert_true(
+    @render.RendererSelection::Family(@render.RendererFamily::Skia).matches_backend(
+      @render.RendererBackendKind::SkiaRasterNative,
+    ),
+  )
+  assert_false(
+    @render.RendererSelection::Default.matches_backend(
+      @render.RendererBackendKind::SkiaRasterNative,
+    ),
+  )
+  inspect(spec.capabilities.length(), content="17")
+}
+
+///|
 test "wgpu surface contract distinguishes native and web canvas sources" {
   let contract = @render.WgpuSurfaceContract::new(
     source=@render.WgpuSurfaceSourceKind::WebCanvasSurface,
