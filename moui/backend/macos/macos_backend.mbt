@@ -53,6 +53,9 @@ pub(all) suberror MacosSurfaceHostError {
 }
 
 ///|
+let macos_first_present_pump_limit = 16
+
+///|
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
   renderer_ready : Bool
@@ -74,6 +77,7 @@ pub(all) struct MacosAppOptions {
   text_engine : @wgpu_renderer.NativeTextEngineSetting
   renderer : @render.RendererSelection
   scene_resolver : @host.HostWindowSceneResolver
+  exit_after_first_present : Bool
 }
 
 ///|
@@ -93,6 +97,7 @@ struct MacosApp {
   platform_slots : MacosWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
+  mut exit_after_first_present : Bool
 }
 
 ///|
@@ -119,8 +124,9 @@ pub fn MacosAppOptions::new(
   text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
   renderer? : @render.RendererSelection = @render.RendererSelection::Default,
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  exit_after_first_present? : Bool = false,
 ) -> MacosAppOptions {
-  { text_engine, renderer, scene_resolver }
+  { text_engine, renderer, scene_resolver, exit_after_first_present }
 }
 
 ///|
@@ -311,9 +317,35 @@ pub fn run_app_with_options(
     platform_slots: MacosWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
+    exit_after_first_present: options.exit_after_first_present,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  event_loop.run_app(app)
+  if options.exit_after_first_present {
+    run_app_until_first_present(event_loop, app)
+  } else {
+    event_loop.run_app(app)
+  }
+}
+
+///|
+fn run_app_until_first_present(
+  event_loop : @window_macos.EventLoop,
+  app : MacosApp,
+) -> Unit {
+  let mut remaining = macos_first_present_pump_limit
+  while remaining > 0 && !event_loop.exiting() {
+    match event_loop.pump_app_events(Some(0), app) {
+      @window_core.PumpStatus::Exit(_) => return ()
+      @window_core.PumpStatus::Continue => ()
+    }
+    remaining = remaining - 1
+  }
+  if app.exit_after_first_present {
+    println(
+      "macOS renderer first-frame smoke did not present before pump limit",
+    )
+    event_loop.exit()
+  }
 }
 
 ///|
@@ -534,6 +566,14 @@ fn MacosWindowRenderer::render(
 }
 
 ///|
+fn MacosWindowRenderer::present_count(self : MacosWindowRenderer) -> Int {
+  match self {
+    Wgpu(renderer) => renderer.present_count()
+    Skia(renderer) => renderer.present_count()
+  }
+}
+
+///|
 fn MacosWindowRenderer::text_system(
   self : MacosWindowRenderer,
 ) -> @core.TextSystem {
@@ -598,8 +638,17 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
               renderer,
             }),
           )
-          window.request_redraw()
-          self.drain_window_requests(event_loop)
+          if self.exit_after_first_present {
+            if self.redraw_window(window_id) {
+              event_loop.exit()
+            } else {
+              window.request_redraw()
+              self.drain_window_requests(event_loop)
+            }
+          } else {
+            window.request_redraw()
+            self.drain_window_requests(event_loop)
+          }
         }
         None => {
           self.rollback_window_record(window_id)
@@ -701,7 +750,10 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
       self.dispatch_window_event(window_id, event)
     @window_core.WindowEvent::ModifiersChanged(_) =>
       self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::RedrawRequested => self.redraw_window(window_id)
+    @window_core.WindowEvent::RedrawRequested =>
+      if self.redraw_window(window_id) {
+        event_loop.exit()
+      }
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -729,7 +781,7 @@ fn MacosApp::dispatch_pointer_or_context_menu(
 fn MacosApp::redraw_window(
   self : MacosApp,
   window_id : @host.HostWindowId,
-) -> Unit {
+) -> Bool {
   match
     (
       self.platform_slots.lookup_host(window_id),
@@ -741,8 +793,17 @@ fn MacosApp::redraw_window(
       platform_slot.renderer.render(runtime_slot.driver.draw_commands())
       runtime_slot.driver.finish_redraw()
       self.sync_text_input_session()
+      if self.exit_after_first_present &&
+        platform_slot.renderer.present_count() > 0 {
+        println("macOS renderer presented first frame; exiting by request")
+        self.exit_after_first_present = false
+        self.dispose_window(window_id)
+        true
+      } else {
+        false
+      }
     }
-    _ => ()
+    _ => false
   }
 }
 

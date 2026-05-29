@@ -177,7 +177,9 @@ On macOS, `scripts/macos-skia-renderer-smoke.sh` can resolve Skia from an
 existing build, the pinned JetBrains binary provider, or a source build; it then
 temporarily wires the resolved link flags into the local `skia_mbt` and MoUI
 packages, runs the renderer pixel smoke, builds `examples/showcase/macos_skia`,
-and restores the package files.
+and restores the package files. Pass `--run-showcase-smoke` to also launch the
+Showcase entrypoint, verify that the macOS Skia renderer presents its first
+frame, and exit automatically.
 
 ## Renderer Capability Tracking
 

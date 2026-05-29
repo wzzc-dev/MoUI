@@ -119,6 +119,14 @@ JetBrains Skia binary provider from `.local_repos/skia_mbt`:
 scripts/macos-skia-renderer-smoke.sh
 ```
 
+Add `--run-showcase-smoke` when you want the helper to launch the built
+`examples/showcase/macos_skia` executable, wait for the first Skia-presented
+frame, and then exit automatically:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
+```
+
 Use `--skia-provider existing` when you already have a Skia checkout or binary
 package:
 

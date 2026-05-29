@@ -124,6 +124,14 @@ the Showcase entrypoint:
 scripts/macos-skia-renderer-smoke.sh
 ```
 
+For a fuller local smoke, pass `--run-showcase-smoke`. The helper then launches
+the built `macos_skia` executable with a first-frame exit flag and verifies that
+the Skia renderer presents a frame before the app exits:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
+```
+
 Use `--skia-provider existing` when you already have a local Skia build:
 
 ```sh

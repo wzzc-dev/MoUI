@@ -39,6 +39,7 @@ test "macos app options carry text engine and optional scene resolver" {
     text_engine=@wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
     renderer=@render.RendererSelection::Family(@render.RendererFamily::Skia),
     scene_resolver=resolver,
+    exit_after_first_present=true,
   )
   assert_true(
     options.text_engine == @wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
@@ -47,6 +48,7 @@ test "macos app options carry text engine and optional scene resolver" {
     options.renderer ==
     @render.RendererSelection::Family(@render.RendererFamily::Skia),
   )
+  assert_true(options.exit_after_first_present)
   match options.scene_resolver.resolve(request) {
     @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
