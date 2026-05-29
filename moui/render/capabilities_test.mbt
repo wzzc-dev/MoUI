@@ -101,7 +101,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     transform.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Ready,
   )
   assert_true(
     transform
@@ -132,6 +132,21 @@ test "renderer capability report tracks draw command support" {
     transform
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
     .contains("transformed clip scissors"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("scaled-and-clipped"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("layer-masked opacity"),
+  )
+  assert_true(
+    transform
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("filter-scoped"),
   )
   assert_true(
     transform

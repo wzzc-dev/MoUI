@@ -600,6 +600,50 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
     ),
     @core.DrawCommand::PopFilter,
     @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PushTransform(@core.Transform2D::{
+      a: 2.0,
+      b: 0.0,
+      c: 0.0,
+      d: 1.5,
+      tx: 4.0,
+      ty: 130.0,
+    }),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=2.0, y=2.0, width=10.0, height=6.0),
+      red(),
+    ),
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=34.0, dy=132.0),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        opacity=0.5,
+        mask=@core.LayerMask::RectMask(
+          @core.Rect::new(x=0.0, y=0.0, width=12.0, height=10.0),
+        ),
+      ),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=-4.0, y=-4.0, width=20.0, height=18.0),
+      blue(),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=58.0, dy=132.0),
+    ),
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.5)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+      red(),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PopTransform,
   ]
 }
 
@@ -625,7 +669,7 @@ fn main {
   )
   guard (try? @skia_renderer.create_with_present_target(
       @render.RendererSurfaceMetrics::from_logical(
-        size=@core.Size::new(width=216.0, height=128.0),
+        size=@core.Size::new(width=216.0, height=152.0),
         scale_factor=1.0,
       ),
       target,
@@ -652,7 +696,7 @@ fn main {
 
   match captured.val {
     Some(frame) => {
-      if frame.width != 216 || frame.height != 128 || frame.row_bytes < 864 {
+      if frame.width != 216 || frame.height != 152 || frame.row_bytes < 864 {
         fail_smoke("MoUI Skia smoke frame dimensions are unexpected")
       }
       assert_pixel(frame, 0, 0, 255, 255, 255, 255)
@@ -758,6 +802,12 @@ fn main {
       assert_pixel_luma_between(frame, 181, 101, 0, 95, 255)
       assert_pixel_near(frame, 198, 108, 192, 128, 128, 255, 8)
       assert_pixel(frame, 192, 108, 255, 255, 255, 255)
+      assert_pixel(frame, 12, 137, 255, 0, 0, 255)
+      assert_pixel(frame, 26, 137, 255, 255, 255, 255)
+      assert_pixel_near(frame, 40, 137, 128, 128, 255, 255, 8)
+      assert_pixel(frame, 48, 137, 255, 255, 255, 255)
+      assert_pixel_near(frame, 63, 137, 128, 0, 0, 255, 8)
+      assert_pixel(frame, 70, 137, 255, 255, 255, 255)
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")
