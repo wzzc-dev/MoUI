@@ -57,12 +57,12 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     gradient.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Ready,
   )
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
-    .contains("gradient strokes"),
+    .contains("fills and strokes"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Shadow)
     is Some(shadow) else {
