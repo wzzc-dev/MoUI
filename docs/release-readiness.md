@@ -129,7 +129,7 @@ Current alignment:
 | Text | Most catalog sections. | Showcase app tests assert many section labels and renderer report text. | Covered broadly as view output, while shaping conformance remains tracked in text tests. |
 | Image | Text/media and visual correctness cards. | Showcase app tests assert `DrawImage`; renderer/Web adapter tests cover image lifecycle snapshots. | Covered for visible image commands; async diagnostics are partial but Web snapshots now refresh ready/failed records from the browser image cache after host submission. |
 | Clip | Scroll/capability card and clipped image demos. | Showcase app tests assert `PushClip` and clipped long renderer content; Web adapter tests preserve rounded clip host calls. | Covered for visible clipping; Web rounded clip submit uses the browser layer-mask path. |
-| Transform | Capability card lists follow-up status first; visual correctness image uses scale/offset. | Native renderer tests cover scoped layer/filter transform/clip inheritance, transformed filter child vertices/scissors, shader-effect advanced-vertex transform state, and masked layer composite vertices; Web adapter tests preserve transform scope around layer, filter, and shader-effect commands, and the browser runtime now applies transform to shader-effect advanced vertices; Showcase app tests assert the follow-up row is visible. | Keep capability status `partial` until broader render-pass transform pixel evidence exists. |
+| Transform | Capability card lists follow-up status first while WGPU/Web remain partial; visual correctness image uses scale/offset. | Native renderer tests cover scoped layer/filter transform/clip inheritance, transformed filter child vertices/scissors, shader-effect advanced-vertex transform state, and masked layer composite vertices; Skia real smoke covers translated, scaled-and-clipped, layer-masked opacity, and filter-scoped transform pixels; Web adapter tests preserve transform scope around layer, filter, and shader-effect commands, and the browser runtime now applies transform to shader-effect advanced vertices; Showcase app tests assert the follow-up row is visible. | Skia is ready; keep overall follow-up visible until WGPU/Web broader render-pass transform pixel evidence exists. |
 | Opacity | Visual correctness image and state-driven visuals. | Showcase app tests assert `PushOpacity`. | Covered for view-level opacity emission; renderer-specific blending remains renderer evidence. |
 | Layer compositing | Used indirectly by advanced renderer scopes where applicable. | Capability report card lists status; no dedicated Showcase assertion. | Keep primary evidence in renderer tests/report unless a visible layer demo is added. |
 | Blend mode | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only if a visible comparison demo is useful. |
@@ -160,9 +160,10 @@ documentation evidence.
      transformed filter child vertices/scissors; Web scoped layer/filter
      commands clone current transform/clip state through the browser runtime,
      and Web adapter tests preserve transform scope around shader-effect
-     commands.
-   - Done when: broader render-pass transform visible/pixel evidence
-     are in place, or the remaining limits are explicitly documented for the
+     commands. Skia real smoke now covers translated, scaled-and-clipped,
+     layer-masked opacity, and filter-scoped transform output.
+   - Done when: WGPU/Web broader render-pass transform visible/pixel evidence
+     is in place, or their remaining limits are explicitly documented for the
      preview handoff.
    - Evidence: renderer tests, `render/capabilities.mbt`,
      `render/capabilities_test.mbt`, `docs/renderer-capability-report.md`, and

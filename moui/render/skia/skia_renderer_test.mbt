@@ -84,11 +84,15 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
     spec,
     @render.RendererFeature::FilterEffect,
   )
+  let transform = find_skia_spec_capability(
+    spec,
+    @render.RendererFeature::Transform,
+  )
   let shader = find_skia_spec_capability(
     spec,
     @render.RendererFeature::ShaderEffect,
   )
-  match (image, gradient, path, layer, blend, filter, shader) {
+  match (image, gradient, path, layer, blend, filter, transform, shader) {
     (
       Some(image),
       Some(gradient),
@@ -96,6 +100,7 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
       Some(layer),
       Some(blend),
       Some(filter),
+      Some(transform),
       Some(shader),
     ) => {
       assert_true(
@@ -115,6 +120,9 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
         filter.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
       assert_true(
+        transform.backend == @render.RendererBackendKind::SkiaRasterNative,
+      )
+      assert_true(
         shader.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
       assert_true(image.status == @render.RendererFeatureStatus::Ready)
@@ -123,6 +131,7 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
       assert_true(layer.status == @render.RendererFeatureStatus::Ready)
       assert_true(blend.status == @render.RendererFeatureStatus::Ready)
       assert_true(filter.status == @render.RendererFeatureStatus::Ready)
+      assert_true(transform.status == @render.RendererFeatureStatus::Ready)
       assert_true(shader.status == @render.RendererFeatureStatus::Ready)
       assert_true(image.note.contains("data URI"))
       assert_true(image.note.contains("local PNG"))
@@ -132,11 +141,13 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
       assert_true(layer.note.contains("nested layer/filter"))
       assert_true(blend.note.contains("overlay"))
       assert_true(filter.note.contains("color matrix"))
+      assert_true(transform.note.contains("scaled-and-clipped"))
+      assert_true(transform.note.contains("filter-scoped"))
       assert_true(shader.note.contains("vignette"))
     }
     _ =>
       fail(
-        "expected Skia image, gradient, path, layer, blend, filter, and shader capability records",
+        "expected Skia image, gradient, path, layer, blend, filter, transform, and shader capability records",
       )
   }
 }

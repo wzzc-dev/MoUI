@@ -26,7 +26,7 @@ Status meanings:
 | Text | ready | ready | ready | Skia basic `Font` measurement and `draw_text_utf8` rendering have real native renderer smoke evidence; shaping is tracked separately. |
 | Image | ready | ready | ready | Skia validates PNG data URI and local PNG decode, `draw_image_rect` output, ready/failed lifecycle records, and failed-image placeholders in the real native renderer smoke. |
 | Clip | ready | ready | ready | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. |
-| Transform | partial | partial | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated draw pixel proof; broader scoped combinations remain follow-up. |
+| Transform | partial | ready | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel proof. |
 | Opacity | ready | ready | ready | Skia save-layer opacity has blended pixel smoke coverage. |
 | Layer compositing | ready | ready | ready | Skia validates `save_layer` opacity, rectangular masks, rounded masks, blend-mode layers, and nested layer/filter composition in the real native renderer smoke. |
 | Blend mode | ready | ready | ready | Skia maps all MoUI blend modes to Skia paint blend modes and validates multiply, screen, overlay, darken, and lighten output pixels in the real native renderer smoke. |
@@ -151,7 +151,8 @@ frame through a `CGImage` on a `CALayer`, Windows through a top-down BGRA DIB an
 The current real Skia smoke uses JetBrains Skia link flags to render and read
 back a representative frame through `SkiaRasterRenderer`. It validates clear,
 rect fill/stroke, rounded fill/stroke, linear-gradient fills and strokes, soft rounded
-shadows, rectangular and rounded clips, affine translation, opacity, layer
+shadows, rectangular and rounded clips, affine translation and scaled scoped
+clip, transformed layer opacity masks, transformed filter scopes, opacity, layer
 opacity with rectangular and rounded masks, nested layer/filter composition,
 multiply/screen/overlay/darken/lighten blending,
 blur/saturation/brightness/contrast/color-matrix filters, solid and gradient
@@ -159,7 +160,7 @@ paths including quadratic and cubic curve verbs, the checker shader effect,
 vignette shader effect, PNG data URI and local PNG image drawing, failed-image
 placeholders, and basic text
 pixels while requiring `unsupported_command_count == 0`. Remaining Skia
-renderer gaps are now narrower: broader affine scoped combinations and complex text shaping. Basic text
+renderer gaps are now narrower: complex text shaping. Basic text
 measurement/drawing uses Skia `Font`, while complex shaping, bidi, line
 breaking, and deterministic emoji behavior remain partial and separate from the
 WGPU Moon Cosmic provider stack.
