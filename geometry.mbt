@@ -520,6 +520,35 @@ pub fn Rect::from_point_and_size(point : Point, size : Size) -> Rect {
 }
 
 ///|
+pub fn Rect::from_points(points : Array[Point]) -> Rect? {
+  if points.is_empty() {
+    None
+  } else {
+    let first = points[0]
+    let mut left = first.x
+    let mut top = first.y
+    let mut right = first.x
+    let mut bottom = first.y
+    for i in 1..<points.length() {
+      let point = points[i]
+      left = Float::min(left, point.x)
+      top = Float::min(top, point.y)
+      right = Float::max(right, point.x)
+      bottom = Float::max(bottom, point.y)
+    }
+    Some(Rect::new(left, top, right, bottom))
+  }
+}
+
+///|
+pub fn Rect::from_points_or_empty(points : Array[Point]) -> Rect {
+  match Rect::from_points(points) {
+    Some(rect) => rect
+    None => Rect::empty()
+  }
+}
+
+///|
 pub fn Rect::from_irect(rect : IRect) -> Rect {
   rect.to_rect()
 }
@@ -567,6 +596,38 @@ pub fn Rect::center_y(self : Rect) -> Scalar {
 ///|
 pub fn Rect::center(self : Rect) -> Point {
   Point::new(self.center_x(), self.center_y())
+}
+
+///|
+pub fn Rect::top_left(self : Rect) -> Point {
+  Point::new(self.left, self.top)
+}
+
+///|
+pub fn Rect::top_right(self : Rect) -> Point {
+  Point::new(self.right, self.top)
+}
+
+///|
+pub fn Rect::bottom_right(self : Rect) -> Point {
+  Point::new(self.right, self.bottom)
+}
+
+///|
+pub fn Rect::bottom_left(self : Rect) -> Point {
+  Point::new(self.left, self.bottom)
+}
+
+///|
+pub fn Rect::to_quad(
+  self : Rect,
+  direction? : PathDirection = CW,
+) -> Array[Point] {
+  if direction is CW {
+    [self.top_left(), self.top_right(), self.bottom_right(), self.bottom_left()]
+  } else {
+    [self.top_left(), self.bottom_left(), self.bottom_right(), self.top_right()]
+  }
 }
 
 ///|
