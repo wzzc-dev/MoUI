@@ -5,6 +5,12 @@ pub fn skia_available() -> Bool {
 }
 
 ///|
+/// Runtime availability of the optional linked Skia shaper backend.
+pub fn skia_shaper_available() -> Bool {
+  false
+}
+
+///|
 priv type SurfaceHandle
 
 ///|
@@ -24,6 +30,9 @@ priv type PathHandle
 
 ///|
 priv type FontHandle
+
+///|
+priv type ShapedTextRunHandle
 
 ///|
 priv type TypefaceHandle
@@ -86,6 +95,13 @@ pub(all) struct Path {
 #warnings("-struct_never_constructed-unused_field")
 pub(all) struct Font {
   priv handle : FontHandle
+}
+
+///|
+/// Placeholder shaped text run for non-native targets.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct ShapedTextRun {
+  priv handle : ShapedTextRunHandle
 }
 
 ///|
@@ -793,6 +809,56 @@ pub fn Font::metrics(self : Font) -> FontMetrics {
     strikeout_position: None,
     has_bounds: false,
   }
+}
+
+///|
+pub fn Font::shape_text_utf8(
+  self : Font,
+  text : Bytes,
+  width? : Float = 1000000000.0,
+  left_to_right? : Bool = true,
+) -> ShapedTextRun? {
+  ignore(self)
+  ignore(text)
+  ignore(width)
+  ignore(left_to_right)
+  None
+}
+
+///|
+pub fn ShapedTextRun::is_available(self : ShapedTextRun) -> Bool {
+  ignore(self)
+  false
+}
+
+///|
+pub fn ShapedTextRun::glyph_count(self : ShapedTextRun) -> Int {
+  ignore(self)
+  0
+}
+
+///|
+pub fn ShapedTextRun::advance(self : ShapedTextRun) -> @skia.Point {
+  ignore(self)
+  @skia.Point::zero()
+}
+
+///|
+pub fn ShapedTextRun::glyphs(self : ShapedTextRun) -> Array[GlyphId] {
+  ignore(self)
+  []
+}
+
+///|
+pub fn ShapedTextRun::positions(self : ShapedTextRun) -> Array[@skia.Point] {
+  ignore(self)
+  []
+}
+
+///|
+pub fn ShapedTextRun::clusters(self : ShapedTextRun) -> Array[Int] {
+  ignore(self)
+  []
 }
 
 ///|

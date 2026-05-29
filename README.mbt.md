@@ -31,6 +31,8 @@ The `native` subpackage contains the first opt-in native boundary:
 
 - `@native.skia_available()` reports whether the stub was compiled with real
   Skia headers and libraries;
+- `@native.skia_shaper_available()` reports whether the optional SkShaper
+  boundary was compiled and linked;
 - `@native.Surface::raster_n32_premul(size)` is the first raster surface entry;
 - `@native.Surface::image_snapshot()` returns an immutable `@native.Image`
   handle when a surface is available;
@@ -72,7 +74,9 @@ The `native` subpackage contains the first opt-in native boundary:
   `draw_arc`, `draw_round_rect`, `draw_rrect`, `draw_drrect`, `draw_path`,
   `draw_image`, and `draw_image_rect` with explicit `SamplingOptions`, plus
   portable path drawing through `draw_path_value`, UTF-8 text through
-  `draw_text_utf8`, positioned glyph runs through `draw_glyphs`, font measurement through `Font::measure_text_utf8`, glyph IDs through
+  `draw_text_utf8`, positioned glyph runs through `draw_glyphs`, optional
+  shaped glyph runs through `Font::shape_text_utf8` when SkShaper is linked,
+  font measurement through `Font::measure_text_utf8`, glyph IDs through
   `Font::count_text_utf8` / `Font::text_to_glyphs_utf8`, glyph advances through
   `Font::glyph_width` / `Font::glyph_widths`, glyph positions through
   `Font::glyph_positions` / `Font::glyph_x_positions` and
@@ -116,6 +120,13 @@ smoke entry stays compileable while remaining opt-in at runtime.
 The GitHub Actions fallback workflow mirrors this gate on Windows and Linux.
 Real Skia smoke tests are intentionally separate until the repository owns a
 repeatable Skia binary/build source for CI.
+
+The optional shaped-text boundary is off by default so small Skia builds remain
+usable. On macOS, pass `--enable-skshaper` to `scripts/macos-skia-smoke.sh`
+when the Skia library directory also contains `libskshaper`, `libskunicode_core`,
+`libskunicode_icu`, `libharfbuzz`, and `libicu`. The wrapper adds
+`-DSKIA_MBT_HAS_SKSHAPER`, links those module libraries, and verifies the native
+smoke log contains the shaped-run marker.
 
 The default real-Skia binary provider is now JetBrains/skia, locked by
 `skia-provider-lock.json` to tag `m148-8967a2e80c` and commit

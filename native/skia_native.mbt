@@ -27,6 +27,10 @@ priv type PathHandle
 priv type FontHandle
 
 ///|
+/// Opaque native shaped text run handle.
+priv type ShapedTextRunHandle
+
+///|
 /// Opaque native Skia typeface handle.
 priv type TypefaceHandle
 
@@ -57,6 +61,10 @@ priv type BitmapHandle
 ///|
 /// Runtime availability of the linked Skia native backend.
 pub extern "C" fn skia_available() -> Bool = "moonbit_skia_available"
+
+///|
+/// Runtime availability of the optional linked Skia shaper backend.
+pub extern "C" fn skia_shaper_available() -> Bool = "moonbit_skia_shaper_available"
 
 ///|
 extern "C" fn native_path_new() -> PathHandle = "moonbit_skia_path_new"
@@ -212,6 +220,55 @@ extern "C" fn native_font_metrics_value(
 ///|
 #borrow(font)
 extern "C" fn native_font_metrics_has(font : FontHandle, metric : Int) -> Bool = "moonbit_skia_font_metrics_has"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_shape_text_utf8(
+  font : FontHandle,
+  text : Bytes,
+  width : Float,
+  left_to_right : Bool,
+) -> ShapedTextRunHandle = "moonbit_skia_font_shape_text_utf8"
+
+///|
+#borrow(run)
+extern "C" fn native_shaped_text_run_is_null(run : ShapedTextRunHandle) -> Bool = "moonbit_skia_shaped_text_run_is_null"
+
+///|
+#borrow(run)
+extern "C" fn native_shaped_text_run_glyph_count(
+  run : ShapedTextRunHandle,
+) -> Int = "moonbit_skia_shaped_text_run_glyph_count"
+
+///|
+#borrow(run)
+extern "C" fn native_shaped_text_run_advance_x(
+  run : ShapedTextRunHandle,
+) -> Float = "moonbit_skia_shaped_text_run_advance_x"
+
+///|
+#borrow(run)
+extern "C" fn native_shaped_text_run_advance_y(
+  run : ShapedTextRunHandle,
+) -> Float = "moonbit_skia_shaped_text_run_advance_y"
+
+///|
+#borrow(run)
+extern "C" fn native_shaped_text_run_glyphs(
+  run : ShapedTextRunHandle,
+) -> Array[GlyphId] = "moonbit_skia_shaped_text_run_glyphs"
+
+///|
+#borrow(run)
+extern "C" fn native_shaped_text_run_positions(
+  run : ShapedTextRunHandle,
+) -> Array[@skia.Point] = "moonbit_skia_shaped_text_run_positions"
+
+///|
+#borrow(run)
+extern "C" fn native_shaped_text_run_clusters(
+  run : ShapedTextRunHandle,
+) -> Array[Int] = "moonbit_skia_shaped_text_run_clusters"
 
 ///|
 extern "C" fn native_typeface_default() -> TypefaceHandle = "moonbit_skia_typeface_default"
@@ -1442,6 +1499,12 @@ pub(all) struct Font {
 }
 
 ///|
+/// Native Skia shaped text run.
+pub(all) struct ShapedTextRun {
+  priv handle : ShapedTextRunHandle
+}
+
+///|
 /// Native Skia glyph identifier.
 pub(all) struct GlyphId(UInt16) derive(Debug, Eq)
 
@@ -2479,6 +2542,64 @@ pub fn Font::metrics(self : Font) -> FontMetrics {
     strikeout_position: font_metric_optional(font, 14),
     has_bounds: native_font_metrics_has(font, 15),
   }
+}
+
+///|
+fn ShapedTextRun::from_handle(handle : ShapedTextRunHandle) -> ShapedTextRun? {
+  if native_shaped_text_run_is_null(handle) {
+    None
+  } else {
+    Some({ handle, })
+  }
+}
+
+///|
+pub fn Font::shape_text_utf8(
+  self : Font,
+  text : Bytes,
+  width? : Float = 1000000000.0,
+  left_to_right? : Bool = true,
+) -> ShapedTextRun? {
+  if text.is_empty() || width <= 0.0 {
+    None
+  } else {
+    ShapedTextRun::from_handle(
+      native_font_shape_text_utf8(self.handle, text, width, left_to_right),
+    )
+  }
+}
+
+///|
+pub fn ShapedTextRun::is_available(self : ShapedTextRun) -> Bool {
+  !native_shaped_text_run_is_null(self.handle)
+}
+
+///|
+pub fn ShapedTextRun::glyph_count(self : ShapedTextRun) -> Int {
+  native_shaped_text_run_glyph_count(self.handle)
+}
+
+///|
+pub fn ShapedTextRun::advance(self : ShapedTextRun) -> @skia.Point {
+  @skia.Point::new(
+    native_shaped_text_run_advance_x(self.handle),
+    native_shaped_text_run_advance_y(self.handle),
+  )
+}
+
+///|
+pub fn ShapedTextRun::glyphs(self : ShapedTextRun) -> Array[GlyphId] {
+  native_shaped_text_run_glyphs(self.handle)
+}
+
+///|
+pub fn ShapedTextRun::positions(self : ShapedTextRun) -> Array[@skia.Point] {
+  native_shaped_text_run_positions(self.handle)
+}
+
+///|
+pub fn ShapedTextRun::clusters(self : ShapedTextRun) -> Array[Int] {
+  native_shaped_text_run_clusters(self.handle)
 }
 
 ///|
