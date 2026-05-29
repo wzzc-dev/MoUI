@@ -70,6 +70,12 @@ test "rect constructors and immutable offsets mirror skia helpers" {
   )
   assert_eq(rect.x(), 2.0)
   assert_eq(rect.y(), 3.0)
+  assert_eq(rect.left(), 2.0)
+  assert_eq(rect.top(), 3.0)
+  assert_eq(rect.right(), 6.0)
+  assert_eq(rect.bottom(), 8.0)
+  assert_true(rect.intersects(@skia_mbt.Rect::from_xywh(5, 7, 3, 3)))
+  assert_true(!rect.intersects(@skia_mbt.Rect::from_xywh(6, 8, 2, 2)))
 
   let irect = @skia_mbt.IRect::from_point_and_size(
     @skia_mbt.IPoint::new(2, 3),
@@ -84,9 +90,15 @@ test "rect constructors and immutable offsets mirror skia helpers" {
   assert_true(@skia_mbt.Rect::from_irect(irect) == rect)
   assert_eq(irect.x(), 2)
   assert_eq(irect.y(), 3)
+  assert_eq(irect.left(), 2)
+  assert_eq(irect.top(), 3)
+  assert_eq(irect.right(), 6)
+  assert_eq(irect.bottom(), 8)
   assert_eq(irect.width_64(), 4L)
   assert_eq(irect.height_64(), 5L)
   assert_true(!irect.is_empty_64())
+  assert_true(irect.intersects(@skia_mbt.IRect::from_xywh(5, 7, 3, 3)))
+  assert_true(!irect.intersects(@skia_mbt.IRect::from_xywh(6, 8, 2, 2)))
 
   assert_true(
     rect.with_offset(@skia_mbt.Point::new(10, -1)) ==
@@ -156,9 +168,13 @@ test "rect exposes skia-style sorted center finite and rounding helpers" {
 test "rect exposes corner points and quads" {
   let rect = @skia_mbt.Rect::from_xywh(1, 2, 3, 4)
   assert_true(rect.top_left() == @skia_mbt.Point::new(1, 2))
+  assert_true(rect.tl() == rect.top_left())
   assert_true(rect.top_right() == @skia_mbt.Point::new(4, 2))
+  assert_true(rect.tr() == rect.top_right())
   assert_true(rect.bottom_right() == @skia_mbt.Point::new(4, 6))
+  assert_true(rect.br() == rect.bottom_right())
   assert_true(rect.bottom_left() == @skia_mbt.Point::new(1, 6))
+  assert_true(rect.bl() == rect.bottom_left())
   assert_true(
     rect.to_quad() ==
     [

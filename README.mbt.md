@@ -287,6 +287,10 @@ test {
   assert_true(point.with_length(10) == Some(@skia_mbt.Point::new(6, 8)))
   assert_true(point.rotate_cw() == @skia_mbt.Point::new(4, -3))
   assert_true(rect == @skia_mbt.Rect::from_ltrb(2, 3, 6, 8))
+  assert_eq(rect.left(), 2.0)
+  assert_eq(rect.bottom(), 8.0)
+  assert_true(rect.tl() == @skia_mbt.Point::new(2, 3))
+  assert_true(rect.intersects(@skia_mbt.Rect::from_xywh(5, 7, 3, 3)))
   assert_true(
     @skia_mbt.Rect::from_points([point, @skia_mbt.Point::new(8, -1)]) ==
     Some(@skia_mbt.Rect::new(3, -1, 8, 4)),
