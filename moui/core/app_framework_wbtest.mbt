@@ -18,6 +18,40 @@ test "router state parses pushes replaces and pops route locations" {
 }
 
 ///|
+test "router helpers resolve params snapshots and fallback routes" {
+  let router = RouterState::new(initial=RouteLocation::new(path="/home"))
+  router.push(
+    RouteLocation::new(path="/detail", query=[
+      RouteQueryParam::new(key="id", value="42"),
+      RouteQueryParam::new(key="tab", value="activity"),
+    ]),
+  )
+  let current = router.current()
+  inspect(current.param_value("id").unwrap_or(""), content="42")
+  inspect(current.params().length(), content="2")
+  let snapshot = router.snapshot()
+  inspect(snapshot.routes.length(), content="2")
+  router.replace(RouteLocation::new(path="/other"))
+  inspect(router.current().path, content="/other")
+  router.restore(snapshot)
+  inspect(router.current().to_route(), content="/detail?id=42&tab=activity")
+  let routes = [
+    RouteDescriptor::new(id="home", path="/home", title="Home"),
+    RouteDescriptor::new(id="detail", path="/detail", title="Detail"),
+    RouteDescriptor::new(id="missing", path="/missing", fallback=true),
+  ]
+  match router.resolve(routes) {
+    Some({ id: "detail", title: "Detail", .. }) => ()
+    _ => fail("expected detail route")
+  }
+  router.replace(RouteLocation::new(path="/unknown"))
+  match router.resolve(routes) {
+    Some({ id: "missing", fallback: true, .. }) => ()
+    _ => fail("expected fallback route")
+  }
+}
+
+///|
 test "form fields validate required values" {
   let name = FormFieldState::new(
     name="name",

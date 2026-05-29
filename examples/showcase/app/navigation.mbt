@@ -6,10 +6,13 @@ fn ShowcaseModel::catalog_shell(
   offset : Double,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
+  let router = @core.RouterState::new(
+    initial=@core.RouteLocation::new(path=self.selected_section),
+  )
   split_view(
     primary=self.sidebar(theme, metrics),
-    detail=@views.navigation_stack_selected(
-      self.selected_section,
+    detail=@views.router_stack(
+      router,
       self.destinations(theme, metrics, offset, opacity),
       fallback=section_panel(
         theme,

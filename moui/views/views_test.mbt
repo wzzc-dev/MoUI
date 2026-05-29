@@ -542,6 +542,33 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
 }
 
 ///|
+test "router stack selects route location path and preserves query params" {
+  let router = @core.RouterState::new(
+    initial=@core.RouteLocation::parse("/detail?id=42"),
+  )
+  let root : @core.View[Unit] = @views.router_stack(
+    router,
+    [
+      @views.navigation_destination(
+        route="/home",
+        view=@views.text("Home route", width=120.0),
+      ),
+      @views.navigation_destination(
+        route="/detail",
+        view=@views.text("Detail route", width=120.0),
+      ),
+    ],
+    fallback=@views.text("Missing route", width=120.0),
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=320.0, height=120.0),
+  )
+  assert_true(has_text(runtime.draw_commands(), "Detail route"))
+  inspect(router.current().param_value("id").unwrap_or(""), content="42")
+}
+
+///|
 test "data display components compose tables trees descriptions and avatars" {
   let columns = [
     @views.table_column(id="name", label="Name", width=120.0),
