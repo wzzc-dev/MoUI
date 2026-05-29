@@ -46,6 +46,12 @@ pub(all) struct SkiaRasterRenderer {
 }
 
 ///|
+priv struct SkiaTextMetrics {
+  baseline : Double
+  height : Double
+}
+
+///|
 pub fn skia_available() -> Bool {
   @skia_native.skia_available()
 }
@@ -663,7 +669,12 @@ fn SkiaRasterRenderer::draw_text(
         @core.TextAlign::TextEnd =>
           run.frame.origin.x + run.frame.size.width - width
       }
-      let y = run.frame.origin.y + run.font.size
+      let metrics = skia_text_metrics(
+        font,
+        fallback_baseline=run.font.size,
+        fallback_height=run.font.size * 1.25,
+      )
+      let y = run.frame.origin.y + metrics.baseline
       canvas.draw_text_utf8(
         bytes,
         @skia_mbt.Point::new(Float::from_double(x), Float::from_double(y)),
@@ -1002,6 +1013,11 @@ fn skia_text_layout_result(
 ) -> @core.TextLayoutResult {
   let measured = skia_measure_text_width(font, input.text)
   let carets = skia_caret_positions(font, input.text)
+  let metrics = skia_text_metrics(
+    font,
+    fallback_baseline=fallback.baseline,
+    fallback_height=fallback.size.height,
+  )
   match input.max_width {
     Some(max_width) => {
       let clamped : Array[Double] = []
@@ -1009,21 +1025,48 @@ fn skia_text_layout_result(
         clamped.push(caret.min(max_width))
       }
       {
-        ..fallback,
         size: @core.Size::new(
           width=measured.min(max_width),
-          height=fallback.size.height,
+          height=metrics.height,
         ),
+        baseline: metrics.baseline,
         caret_positions: clamped,
       }
     }
     None =>
       {
-        ..fallback,
-        size: @core.Size::new(width=measured, height=fallback.size.height),
+        size: @core.Size::new(width=measured, height=metrics.height),
+        baseline: metrics.baseline,
         caret_positions: carets,
       }
   }
+}
+
+///|
+fn skia_text_metrics(
+  font : @skia_native.Font,
+  fallback_baseline~ : Double,
+  fallback_height~ : Double,
+) -> SkiaTextMetrics {
+  let metrics = font.metrics()
+  let ascent = metrics.ascent.to_double()
+  let descent = metrics.descent.to_double()
+  let leading = metrics.leading.to_double()
+  let measured_baseline = (0.0 - ascent).max(0.0)
+  let measured_height = (descent - ascent + leading)
+    .max(descent - ascent)
+    .max(0.0)
+  let baseline = if measured_baseline > 0.0 {
+    measured_baseline
+  } else {
+    fallback_baseline
+  }
+  let height = if measured_height > 0.0 {
+    measured_height
+  } else {
+    fallback_height
+  }
+  { baseline, height: height.max(baseline) }
 }
 
 ///|

@@ -83,8 +83,28 @@ test "skia text system exposes measured caret positions" {
       inspect(layout.caret_positions[0], content="0")
       assert_true(layout.size.width == skia_measure_text_width(font, "Slim"))
       assert_true(layout.caret_positions[4] == layout.size.width)
+      assert_true(layout.baseline > 0.0)
+      assert_true(layout.size.height >= layout.baseline)
       assert_true(layout.caret_positions[1] > 0.0)
       assert_true(layout.caret_positions[2] > layout.caret_positions[1])
+    }
+    None => assert_true(!skia_available())
+  }
+}
+
+///|
+test "skia text metrics derive baseline and height from font metrics" {
+  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+    Some(font) => {
+      let metrics = skia_text_metrics(
+        font,
+        fallback_baseline=99.0,
+        fallback_height=120.0,
+      )
+      assert_true(metrics.baseline > 0.0)
+      assert_true(metrics.height >= metrics.baseline)
+      assert_true(metrics.baseline != 99.0)
+      assert_true(metrics.height != 120.0)
     }
     None => assert_true(!skia_available())
   }
