@@ -1480,6 +1480,23 @@ pub fn Canvas::draw_text_utf8(
 }
 
 ///|
+pub fn Canvas::draw_glyphs(
+  self : Canvas,
+  glyphs : Array[GlyphId],
+  positions : Array[@skia.Point],
+  font : Font,
+  paint : @skia.Paint,
+  origin? : @skia.Point = @skia.Point::zero(),
+) -> Unit {
+  ignore(self)
+  ignore(glyphs)
+  ignore(positions)
+  ignore(origin)
+  ignore(font)
+  ignore(paint)
+}
+
+///|
 /// Allocate a raster N32 premultiplied surface.
 ///
 /// Non-native targets do not link Skia, so this always returns `None`.

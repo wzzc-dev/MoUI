@@ -4042,6 +4042,81 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_text_utf8(
 #endif
 }
 
+extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_glyphs(
+  MoonbitSkiaCanvas* wrapper,
+  MoonbitSkiaGlyphIdArray* glyphs,
+  MoonbitSkiaPointArray* positions,
+  float origin_x,
+  float origin_y,
+  MoonbitSkiaFont* font,
+  uint32_t color_argb,
+  int32_t anti_alias,
+  int32_t dither,
+  int32_t style,
+  float stroke_width,
+  float stroke_miter,
+  int32_t stroke_cap,
+  int32_t stroke_join,
+  int32_t blend_mode
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->canvas == nullptr ||
+    glyphs == nullptr ||
+    glyphs->length <= 0 ||
+    glyphs->buffer == nullptr ||
+    positions == nullptr ||
+    positions->buffer == nullptr ||
+    glyphs->length != positions->length ||
+    font == nullptr ||
+    font->font == nullptr
+  ) {
+    return;
+  }
+#if defined(SKIA_MBT_HAS_SKIA)
+  std::vector<SkGlyphID> sk_glyphs(static_cast<size_t>(glyphs->length));
+  std::vector<SkPoint> sk_positions(static_cast<size_t>(positions->length));
+  for (int32_t i = 0; i < glyphs->length; ++i) {
+    MoonbitSkiaPoint* point = positions->buffer[i];
+    if (point == nullptr) {
+      return;
+    }
+    sk_glyphs[static_cast<size_t>(i)] = static_cast<SkGlyphID>(glyphs->buffer[i]);
+    sk_positions[static_cast<size_t>(i)] = SkPoint::Make(point->x, point->y);
+  }
+  SkPaint paint = moonbit_skia_make_paint(
+    color_argb,
+    anti_alias,
+    dither,
+    style,
+    stroke_width,
+    stroke_miter,
+    stroke_cap,
+    stroke_join,
+    blend_mode
+  );
+  wrapper->canvas->drawGlyphs(
+    SkSpan<const SkGlyphID>(sk_glyphs.data(), sk_glyphs.size()),
+    SkSpan<const SkPoint>(sk_positions.data(), sk_positions.size()),
+    SkPoint::Make(origin_x, origin_y),
+    *font->font,
+    paint
+  );
+#else
+  (void)origin_x;
+  (void)origin_y;
+  (void)color_argb;
+  (void)anti_alias;
+  (void)dither;
+  (void)style;
+  (void)stroke_width;
+  (void)stroke_miter;
+  (void)stroke_cap;
+  (void)stroke_join;
+  (void)blend_mode;
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_paint_shader(
   MoonbitSkiaCanvas* wrapper,
   MoonbitSkiaShader* shader,

@@ -41,6 +41,7 @@ pub fn Canvas::draw_arc(Self, @skia_mbt.Rect, Float, Float, Bool, @skia_mbt.Pain
 pub fn Canvas::draw_circle(Self, @skia_mbt.Point, Float, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_color(Self, @skia_mbt.Color, blend_mode? : @skia_mbt.BlendMode) -> Unit
 pub fn Canvas::draw_drrect(Self, @skia_mbt.RRect, @skia_mbt.RRect, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_glyphs(Self, Array[GlyphId], Array[@skia_mbt.Point], Font, @skia_mbt.Paint, origin? : @skia_mbt.Point) -> Unit
 pub fn Canvas::draw_image(Self, Image, @skia_mbt.Point) -> Unit
 pub fn Canvas::draw_image_rect(Self, Image, @skia_mbt.Rect, @skia_mbt.Rect, @skia_mbt.Paint, sampling? : @skia_mbt.SamplingOptions) -> Unit
 pub fn Canvas::draw_line(Self, @skia_mbt.Point, @skia_mbt.Point, @skia_mbt.Paint) -> Unit

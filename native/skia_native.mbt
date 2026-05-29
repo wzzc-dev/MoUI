@@ -1392,6 +1392,26 @@ extern "C" fn native_canvas_draw_text_utf8(
 ) -> Unit = "moonbit_skia_canvas_draw_text_utf8"
 
 ///|
+#borrow(canvas, glyphs, positions, font)
+extern "C" fn native_canvas_draw_glyphs(
+  canvas : CanvasHandle,
+  glyphs : Array[GlyphId],
+  positions : Array[@skia.Point],
+  origin_x : Float,
+  origin_y : Float,
+  font : FontHandle,
+  color_argb : UInt,
+  anti_alias : Bool,
+  dither : Bool,
+  style : Int,
+  stroke_width : Float,
+  stroke_miter : Float,
+  stroke_cap : Int,
+  stroke_join : Int,
+  blend_mode : Int,
+) -> Unit = "moonbit_skia_canvas_draw_glyphs"
+
+///|
 /// Native Skia image.
 pub(all) struct Image {
   priv handle : ImageHandle
@@ -3489,6 +3509,36 @@ pub fn Canvas::draw_text_utf8(
     native_canvas_draw_text_utf8(
       self.handle,
       text,
+      origin.x,
+      origin.y,
+      font.handle,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
+}
+
+///|
+pub fn Canvas::draw_glyphs(
+  self : Canvas,
+  glyphs : Array[GlyphId],
+  positions : Array[@skia.Point],
+  font : Font,
+  paint : @skia.Paint,
+  origin? : @skia.Point = @skia.Point::zero(),
+) -> Unit {
+  if !glyphs.is_empty() && glyphs.length() == positions.length() {
+    native_canvas_draw_glyphs(
+      self.handle,
+      glyphs,
+      positions,
       origin.x,
       origin.y,
       font.handle,
