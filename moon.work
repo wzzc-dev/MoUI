@@ -7,4 +7,5 @@ members = [
   "./examples/markdown_editor",
   "./examples/settings",
   "./examples/data_table",
+  "./examples/file_importer",
 ]

@@ -1,0 +1,111 @@
+///|
+test "file importer maps dropped files into selection" {
+  let model = FileImporterModel::new().update(FilesDropped(["/tmp/a.csv", "/tmp/b.json"]))
+  inspect(model.files.length(), content="2")
+  inspect(model.files[0].source, content="Drop")
+  inspect(model.selection().summary(), content="2 files selected")
+  inspect(model.last_event, content="Imported 2 file(s) from Drop")
+}
+
+///|
+test "file importer handles empty selection" {
+  let model = FileImporterModel::new().update(FilesDropped([]))
+  inspect(model.files.length(), content="0")
+  inspect(model.last_event, content="No files selected")
+  assert_true(model.status is FileImporterStatus::Ready)
+}
+
+///|
+test "file importer uses unavailable host service state" {
+  let model = FileImporterModel::new()
+    .update_with_services(BrowseRequested, @host.HostAppServices::unavailable())
+  assert_true(model.status is FileImporterStatus::Unavailable(_))
+  inspect(model.last_event, content="File dialog unavailable")
+  inspect(model.availability_reason, content="file dialog service is unavailable")
+}
+
+///|
+test "file importer handles immediate host file selection" {
+  let services = host_services_for_file_dialog(["/tmp/report.csv"])
+  let model = FileImporterModel::new().update_with_services(BrowseRequested, services)
+  inspect(model.files.length(), content="1")
+  inspect(model.files[0].path, content="/tmp/report.csv")
+  inspect(model.files[0].source, content="Dialog")
+  inspect(model.last_event, content="Imported 1 file(s) from Dialog")
+}
+
+///|
+test "file importer handles mocked pending completion" {
+  let queue = @host.HostServiceAsyncQueue::new()
+  let services = async_file_dialog_services(queue)
+  let pending_model = FileImporterModel::new()
+    .update_with_services(BrowseRequested, services)
+  guard pending_model.status is FileImporterStatus::Pending(id) else {
+    fail("expected pending file dialog")
+  }
+  inspect(services.pending_count(), content="1")
+  let pending = services.drain_pending()
+  inspect(pending.length(), content="1")
+  assert_true(
+    services.complete(
+      id,
+      @host.HostServiceResponse::FileDialogSelection(["/tmp/later.txt"]),
+    ),
+  )
+  guard services.take_completed(id) is Some(completion) else {
+    fail("expected completion")
+  }
+  let completed = pending_model.update(HostCompleted(completion))
+  inspect(completed.files.length(), content="1")
+  inspect(completed.files[0].path, content="/tmp/later.txt")
+  inspect(completed.last_event, content="Imported 1 file(s) from Dialog")
+}
+
+///|
+test "file importer runtime draws panel labels" {
+  let commands = @app.runtime(width=860.0, height=620.0).draw_commands()
+  assert_true(has_text(commands, "File Importer"))
+  assert_true(has_text(commands, "Import Files"))
+  assert_true(has_text(commands, "Drop files here"))
+  assert_true(has_text(commands, "No files selected"))
+  assert_true(has_text(commands, "Selected files"))
+  assert_true(has_text(commands, "Platform paths"))
+}
+
+///|
+fn host_services_for_file_dialog(paths : Array[String]) -> @host.HostAppServices {
+  let bridge = @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(file_dialogs=true),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::FileDialog(_) =>
+          @host.HostServiceResponse::FileDialogSelection(paths)
+        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  @host.HostAppServices::new(bridge~)
+}
+
+///|
+fn async_file_dialog_services(
+  queue : @host.HostServiceAsyncQueue,
+) -> @host.HostAppServices {
+  let bridge = @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(file_dialogs=true),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::FileDialog(_) => queue.submit(request)
+        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  @host.HostAppServices::new(bridge~, async_queue=Some(queue))
+}
+
+///|
+fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
+  commands.any(command => {
+    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+  })
+}

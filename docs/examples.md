@@ -14,6 +14,7 @@ hide partial or gap status behind ready features.
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Table, tree filters, search, loading/error/empty states, selected row summary, model-level sort and pagination |
+| File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 
 ## Counter
@@ -102,6 +103,16 @@ The Data Table example is also shared-app only. It models the data workflow that
 operational tools usually need before renderer-specific polish: controlled tree
 filters, text search, stable model-level sorting, page navigation, selected-row
 summary, plus empty/loading/error panels built from public `views` constructors.
+
+## File Importer
+
+The File Importer example demonstrates the non-render file workflow surface. The
+view uses `drop_zone` and `file_import_panel`; the model accepts dropped paths,
+requests an app-level host file dialog through `HostAppServices`, and handles
+both immediate and pending mocked completions. Browser hosts commonly expose
+file names while native hosts can expose filesystem paths, so production apps
+should treat these strings as host-provided display or import handles rather
+than assuming one platform shape.
 
 ## Web Wasm-GC
 
@@ -252,6 +263,7 @@ points:
 moon test examples/showcase/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
+moon test examples/file_importer/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
