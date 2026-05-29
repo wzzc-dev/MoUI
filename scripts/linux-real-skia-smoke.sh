@@ -34,7 +34,7 @@ Options:
   --no-sync-deps        Skip python3 tools/git-sync-deps.
   --no-fetch            Reuse an existing Skia checkout instead of cloning/fetching.
   --dry-run-config      Print the selected mode and effective smoke arguments,
-                        then exit without fetching/building Skia or rewriting native/moon.pkg.
+                        then exit without fetching/building Skia or rewriting package files.
   -h, --help            Show this help.
 
 Downloads JetBrains/skia by default, builds a small CPU-only Skia from source
@@ -381,7 +381,7 @@ if [[ $dry_run_config -eq 1 ]]; then
   if [[ "$smoke_mode" == "existing Skia build" ]]; then
     bash "$repo_root/scripts/linux-skia-smoke.sh" --dry-run-config "${smoke_args[@]}"
   fi
-  echo "Dry run complete; native/moon.pkg was not modified and no build was run."
+  echo "Dry run complete; package files were not modified and no build was run."
   printf "  smoke_arg: %q\n" "${smoke_args[@]}"
   exit 0
 fi

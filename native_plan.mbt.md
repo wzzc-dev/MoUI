@@ -1,8 +1,10 @@
 # Native Skia Binding Plan
 
 This package currently provides the value-layer API that mirrors the most common
-`skia_safe` types from rust-skia: geometry, colors, matrices, paint flags, and
-paint state.
+`skia_safe` types from rust-skia: geometry with point vector helpers, rectangle
+constructors, sorting, centers, offsets, and rounding helpers, colors, matrices
+with member access, affine helpers, pre/post concat helpers, and point/vector/
+radius/rect mapping, paint flags, and paint state.
 
 The native layer is staged in the `native` subpackage. It currently exposes a
 safe fallback build that compiles without Skia and reports unavailable. Real Skia
@@ -59,12 +61,16 @@ Current implemented milestone:
   verb data, rectangle/oval/circle/round-rectangle contour construction,
   verb/point counts, segment masks, finite-coordinate checks, contour closed
   queries, per-corner `RRect` geometry, and `reset`/`rewind`, control-point
-  bounds, curve-aware tight bounds, paint-aware stroke bounds, transform, and
-  offset, plus native replay/querying through `Path::from_value`, native `Path`
-  shape builders including round-rectangle contours, native `Path::transform` /
+  bounds, curve-aware tight bounds, paint-aware stroke bounds, transform,
+  offset, `add_poly`, `add_path`, add-path append/extend modes, and
+  offset/matrix add-path helpers, plus native replay/querying through
+  `Path::from_value`, native `Path` shape builders including round-rectangle
+  contours, native `Path::transform` /
   `Path::offset`, `Path::contains`, `Path::segment_masks`, `Path::is_finite`,
   `Path::is_inverse_fill_type`, `Path::last_point`, `Path::is_line`,
-  `Path::is_rect`, `Path::is_oval`, `Path::bounds`, `Path::compute_tight_bounds`, and
+  `Path::is_rect`, `Path::is_oval`, `Path::bounds`,
+  `Path::compute_tight_bounds`, native `Path::add_poly`, native
+  `Path::add_path_value`, native value-path offset/matrix append helpers, and
   `Canvas::draw_path_value`;
 - canvas state and transform calls: `save`, `save_layer`, `restore`,
   `restore_to_count`, `save_count`, `translate`, `scale`, `rotate`, `skew`,
@@ -304,10 +310,10 @@ GitHub Actions:
   `scripts/verify-native-smoke-log.sh`, which can also be used to manually
   recheck downloaded artifacts. Its workflow summary records the selected mode,
   dry-run setting, artifact name, key Skia inputs, expected log paths, the marker
-  check, plus whether `native/moon.pkg` was restored after the run.
+  check, plus whether the temporary package rewrites were restored after the run.
   Its `dry_run_config` input forwards `--dry-run-config` for parameter preflight
   without installing MoonBit/build dependencies, restoring the Skia cache,
-  building Skia, or rewriting `native/moon.pkg`. The Skia cache step only runs
+  building Skia, or rewriting package files. The Skia cache step only runs
   for source-built Skia, and `extra_gn_args` is ignored for existing-build mode.
 - `.github/workflows/macos-real-skia-smoke.yml` is a manual macOS job that
   builds Skia from source, runs `scripts/macos-accept-real-skia-smoke.sh`, and

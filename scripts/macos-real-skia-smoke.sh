@@ -33,7 +33,7 @@ Options:
   --no-sync-deps        Skip python3 tools/git-sync-deps for source provider.
   --no-fetch            Reuse an existing Skia checkout for source provider.
   --dry-run-config      Print selected mode and effective smoke arguments,
-                        then exit without fetching/building Skia or rewriting native/moon.pkg.
+                        then exit without fetching/building Skia or rewriting package files.
   -h, --help            Show this help.
 
 This wrapper mirrors scripts/linux-real-skia-smoke.sh for macOS. It consumes
@@ -357,7 +357,7 @@ if [[ $dry_run_config -eq 1 ]]; then
   if [[ "$skia_provider" == "existing" ]]; then
     bash "$repo_root/scripts/macos-skia-smoke.sh" --dry-run-config "${smoke_args[@]}"
   fi
-  echo "Dry run complete; native/moon.pkg was not modified and no build was run."
+  echo "Dry run complete; package files were not modified and no build was run."
   printf "  smoke_arg: %q\n" "${smoke_args[@]}"
   exit 0
 fi

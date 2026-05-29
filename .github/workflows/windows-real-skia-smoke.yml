@@ -56,7 +56,7 @@ on:
         required: false
         default: ""
       dry_run_config:
-        description: Print resolved config without building the smoke binary or rewriting native/moon.pkg
+        description: Print resolved config without building the smoke binary or rewriting package files
         type: boolean
         required: false
         default: false
@@ -238,16 +238,19 @@ jobs:
             logs/windows-real-skia-acceptance.log
           if-no-files-found: warn
 
-      - name: Verify native package restored
+      - name: Verify package files restored
         if: ${{ always() }}
         shell: pwsh
         run: |
           if (Test-Path -LiteralPath native/moon.pkg.smoke.bak) {
             throw "native/moon.pkg smoke backup is still present"
           }
-          git diff --exit-code -- native/moon.pkg
+          if (Test-Path -LiteralPath scripts/native_smoke/moon.pkg.smoke.bak) {
+            throw "scripts/native_smoke/moon.pkg smoke backup is still present"
+          }
+          git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg
           if ($LASTEXITCODE -ne 0) {
-            throw "native/moon.pkg differs after Windows Skia smoke"
+            throw "package files differ after Windows Skia smoke"
           }
 
       - name: Write workflow summary

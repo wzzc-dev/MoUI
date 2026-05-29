@@ -9,6 +9,22 @@ test "color packs argb channels" {
 }
 
 ///|
+test "point and size expose finite and vector helpers" {
+  let a = @skia_mbt.Point::new(3, 4)
+  let b = @skia_mbt.Point::new(-2, 5)
+  assert_true(a.is_finite())
+  assert_true(!@skia_mbt.Point::new(1.0 / 0.0, 0).is_finite())
+  assert_eq(a.length(), 5.0)
+  assert_eq(a.dot(b), 14.0)
+  assert_eq(a.cross(b), 23.0)
+  assert_eq(a.distance_to(b), @skia_mbt.Point::new(5, -1).length())
+
+  let size = @skia_mbt.Size::new(8, 13)
+  assert_true(size.is_finite())
+  assert_true(!@skia_mbt.Size::new(0.0 / 0.0, 1).is_finite())
+}
+
+///|
 test "rect intersection and containment" {
   let outer = @skia_mbt.Rect::from_xywh(0, 0, 10, 10)
   let inner = @skia_mbt.Rect::from_xywh(2, 3, 4, 5)
@@ -20,11 +36,122 @@ test "rect intersection and containment" {
 }
 
 ///|
+test "rect constructors and immutable offsets mirror skia helpers" {
+  let point = @skia_mbt.Point::new(2, 3)
+  let size = @skia_mbt.Size::new(4, 5)
+  let rect = @skia_mbt.Rect::from_point_and_size(point, size)
+  assert_true(rect == @skia_mbt.Rect::from_xywh(2, 3, 4, 5))
+  assert_true(rect == @skia_mbt.Rect::from_ltrb(2, 3, 6, 8))
+  assert_true(@skia_mbt.Rect::from_wh(4, 5) == @skia_mbt.Rect::from_size(size))
+  assert_true(@skia_mbt.Rect::from_iwh(4, 5) == @skia_mbt.Rect::from_wh(4, 5))
+  assert_true(
+    @skia_mbt.Rect::from_isize(@skia_mbt.ISize::new(4, 5)) ==
+    @skia_mbt.Rect::from_wh(4, 5),
+  )
+  assert_eq(rect.x(), 2.0)
+  assert_eq(rect.y(), 3.0)
+
+  let irect = @skia_mbt.IRect::from_point_and_size(
+    @skia_mbt.IPoint::new(2, 3),
+    @skia_mbt.ISize::new(4, 5),
+  )
+  assert_true(irect == @skia_mbt.IRect::from_xywh(2, 3, 4, 5))
+  assert_true(irect == @skia_mbt.IRect::from_ltrb(2, 3, 6, 8))
+  assert_true(
+    @skia_mbt.IRect::from_wh(4, 5) ==
+    @skia_mbt.IRect::from_size(@skia_mbt.ISize::new(4, 5)),
+  )
+  assert_true(@skia_mbt.Rect::from_irect(irect) == rect)
+  assert_eq(irect.x(), 2)
+  assert_eq(irect.y(), 3)
+
+  assert_true(
+    rect.with_offset(@skia_mbt.Point::new(10, -1)) ==
+    @skia_mbt.Rect::from_xywh(12, 2, 4, 5),
+  )
+  assert_true(
+    rect.with_offset_to(@skia_mbt.Point::new(10, -1)) ==
+    @skia_mbt.Rect::from_xywh(10, -1, 4, 5),
+  )
+  assert_true(
+    rect.with_inset(@skia_mbt.Size::new(1, 2)) ==
+    @skia_mbt.Rect::new(3, 5, 5, 6),
+  )
+  assert_true(
+    rect.with_outset(@skia_mbt.Size::new(1, 2)) ==
+    @skia_mbt.Rect::new(1, 1, 7, 10),
+  )
+  assert_true(
+    irect.with_offset(@skia_mbt.IPoint::new(10, -1)) ==
+    @skia_mbt.IRect::from_xywh(12, 2, 4, 5),
+  )
+  assert_true(
+    irect.with_offset_to(@skia_mbt.IPoint::new(10, -1)) ==
+    @skia_mbt.IRect::from_xywh(10, -1, 4, 5),
+  )
+  assert_true(
+    irect.with_inset(@skia_mbt.ISize::new(1, 2)) ==
+    @skia_mbt.IRect::new(3, 5, 5, 6),
+  )
+  assert_true(
+    irect.with_outset(@skia_mbt.ISize::new(1, 2)) ==
+    @skia_mbt.IRect::new(1, 1, 7, 10),
+  )
+}
+
+///|
+test "rect exposes skia-style sorted center finite and rounding helpers" {
+  let unsorted = @skia_mbt.Rect::new(5, 4, 1, 2)
+  assert_true(!unsorted.is_sorted())
+  assert_true(unsorted.sorted().is_sorted())
+  assert_true(unsorted.center() == @skia_mbt.Point::new(3, 3))
+  assert_eq(unsorted.center_x(), 3.0)
+  assert_eq(unsorted.center_y(), 3.0)
+  assert_true(unsorted.is_finite())
+  assert_true(!@skia_mbt.Rect::new(0, 0, 1.0 / 0.0, 1).is_finite())
+
+  let fractional = @skia_mbt.Rect::new(1.2, -2.8, 5.7, 3.1)
+  assert_true(fractional.round() == @skia_mbt.IRect::new(1, -3, 6, 3))
+  assert_true(fractional.to_irect_round() == fractional.round())
+  assert_true(fractional.round_in() == @skia_mbt.IRect::new(2, -2, 5, 3))
+  assert_true(fractional.round_out() == @skia_mbt.IRect::new(1, -3, 6, 4))
+
+  let unsorted_i = @skia_mbt.IRect::new(4, 5, 1, 2)
+  assert_true(!unsorted_i.is_sorted())
+  assert_true(unsorted_i.sorted().is_sorted())
+}
+
+///|
 test "matrix maps point" {
   let point = @skia_mbt.Point::new(2, 3)
   let matrix = @skia_mbt.Matrix::scale_translate(2, 4, 10, 20)
   assert_true(matrix.map_point(point) == @skia_mbt.Point::new(14, 32))
   assert_true(matrix.is_scale_translate())
+}
+
+///|
+test "matrix exposes skia-style members and affine conversion" {
+  let matrix = @skia_mbt.Matrix::new_all(2, 1, 10, 3, 4, 20, 0, 0, 1)
+  assert_eq(matrix.scale_x(), 2.0)
+  assert_eq(matrix.skew_x(), 1.0)
+  assert_eq(matrix.translate_x(), 10.0)
+  assert_eq(matrix.skew_y(), 3.0)
+  assert_eq(matrix.scale_y(), 4.0)
+  assert_eq(matrix.translate_y(), 20.0)
+  assert_eq(matrix.persp_x(), 0.0)
+  assert_eq(matrix.persp_y(), 0.0)
+  assert_true(matrix.is_finite())
+  assert_true(
+    matrix.values() == [2.0, 1.0, 10.0, 3.0, 4.0, 20.0, 0.0, 0.0, 1.0],
+  )
+  assert_true(matrix.to_affine() == Some([2.0, 1.0, 10.0, 3.0, 4.0, 20.0]))
+  assert_true(
+    @skia_mbt.Matrix::from_affine([2, 1, 10, 3, 4, 20]) == Some(matrix),
+  )
+  assert_true(@skia_mbt.Matrix::from_affine([1, 2, 3]) is None)
+
+  let perspective = @skia_mbt.Matrix::new_all(1, 0, 0, 0, 1, 0, 0.5, 0, 1)
+  assert_true(perspective.to_affine() is None)
 }
 
 ///|
@@ -53,10 +180,86 @@ test "matrix composes, inverts, and maps rect bounds" {
     @skia_mbt.Rect::new(0, 0, 5, 3),
   )
 
+  let base = @skia_mbt.Matrix::scale(2, 3)
+  assert_true(
+    base.pre_translate(10, 20).map_point(@skia_mbt.Point::new(1, 1)) ==
+    @skia_mbt.Point::new(12, 23),
+  )
+  assert_true(
+    base.post_translate(10, 20).map_point(@skia_mbt.Point::new(1, 1)) ==
+    @skia_mbt.Point::new(22, 63),
+  )
+  assert_true(
+    @skia_mbt.Matrix::identity()
+    .pre_scale(2, 3)
+    .post_skew(1, 0)
+    .map_point(@skia_mbt.Point::new(1, 1)) ==
+    @skia_mbt.Point::new(4, 3),
+  )
+  assert_true(
+    @skia_mbt.Matrix::identity()
+    .pre_skew(1, 0)
+    .post_scale(2, 3)
+    .map_point(@skia_mbt.Point::new(1, 1)) ==
+    @skia_mbt.Point::new(5, 3),
+  )
+  assert_true(
+    @skia_mbt.Matrix::translate(1, 2).map_points([
+      @skia_mbt.Point::new(0, 0),
+      @skia_mbt.Point::new(3, 4),
+    ]) ==
+    [@skia_mbt.Point::new(1, 2), @skia_mbt.Point::new(4, 6)],
+  )
+
   let collapsed = @skia_mbt.Matrix::scale(0, 1)
   assert_eq(collapsed.determinant(), 0.0)
   assert_true(!collapsed.is_invertible())
   assert_true(collapsed.invert() is None)
+}
+
+///|
+test "matrix maps origins vectors radii and rectangle quads" {
+  let matrix = @skia_mbt.Matrix::scale_translate(2, 3, 10, 20)
+  let point = @skia_mbt.Point::new(4, 5)
+  let rect = @skia_mbt.Rect::from_xywh(1, 2, 3, 4)
+
+  assert_true(matrix.map_xy(4, 5) == @skia_mbt.Point::new(18, 35))
+  assert_true(matrix.map_origin() == @skia_mbt.Point::new(10, 20))
+  assert_true(
+    matrix.map_point_affine(point) == Some(@skia_mbt.Point::new(18, 35)),
+  )
+  assert_true(matrix.map_vector(point) == @skia_mbt.Point::new(8, 15))
+  assert_true(
+    matrix.map_vectors([@skia_mbt.Point::new(1, 1), @skia_mbt.Point::new(2, 3)]) ==
+    [@skia_mbt.Point::new(2, 3), @skia_mbt.Point::new(4, 9)],
+  )
+  assert_true(@skia_mbt.Matrix::scale(2, 8).map_radius(3) == Some(12.0))
+  assert_true(
+    @skia_mbt.Matrix::new_all(1, 0, 0, 0, 1, 0, 0.5, 0, 1).map_point_affine(
+      point,
+    )
+    is None,
+  )
+  assert_true(
+    @skia_mbt.Matrix::new_all(1, 0, 0, 0, 1, 0, 0.5, 0, 1).map_radius(3) is None,
+  )
+
+  assert_true(
+    matrix.map_rect_to_quad(rect) ==
+    [
+      @skia_mbt.Point::new(12, 26),
+      @skia_mbt.Point::new(18, 26),
+      @skia_mbt.Point::new(18, 38),
+      @skia_mbt.Point::new(12, 38),
+    ],
+  )
+  assert_true(
+    matrix.map_rect_scale_translate(rect) ==
+    Some(@skia_mbt.Rect::from_xywh(12, 26, 6, 12)),
+  )
+  assert_true(
+    @skia_mbt.Matrix::skew(1, 0).map_rect_scale_translate(rect) is None,
+  )
 }
 
 ///|
@@ -226,6 +429,92 @@ test "path recognizes a single line segment" {
     .add_rect(@skia_mbt.Rect::from_xywh(0, 0, 2, 2))
     .is_line()
     is None,
+  )
+}
+
+///|
+test "path add poly builds open and closed contours" {
+  let points = [
+    @skia_mbt.Point::new(0, 0),
+    @skia_mbt.Point::new(10, 0),
+    @skia_mbt.Point::new(10, 10),
+  ]
+  let open = @skia_mbt.Path::new().add_poly(points)
+  assert_eq(open.count_verbs(), 3)
+  assert_eq(open.count_points(), 3)
+  assert_true(!open.is_last_contour_closed())
+  assert_true(open.last_point() == Some(@skia_mbt.Point::new(10, 10)))
+  assert_true(open.bounds() == Some(@skia_mbt.Rect::from_xywh(0, 0, 10, 10)))
+  assert_true(open.segment_masks().contains(@skia_mbt.PathSegmentMask::line()))
+
+  let closed = @skia_mbt.Path::new(fill_type=@skia_mbt.EvenOdd).add_poly(
+    points,
+    close=true,
+  )
+  assert_eq(closed.count_verbs(), 4)
+  assert_eq(closed.count_points(), 3)
+  assert_true(closed.is_last_contour_closed())
+  assert_true(closed.fill_type == @skia_mbt.EvenOdd)
+  assert_true(closed.contains(@skia_mbt.Point::new(8, 2)))
+  assert_true(!closed.contains(@skia_mbt.Point::new(2, 8)))
+
+  let empty : Array[@skia_mbt.Point] = []
+  assert_true(@skia_mbt.Path::new().add_poly(empty).is_empty())
+}
+
+///|
+test "path add path appends transformed verbs" {
+  let base = @skia_mbt.Path::new(fill_type=@skia_mbt.EvenOdd).add_rect(
+    @skia_mbt.Rect::from_xywh(0, 0, 2, 2),
+  )
+  let triangle = @skia_mbt.Path::new().add_poly(
+    [
+      @skia_mbt.Point::new(0, 0),
+      @skia_mbt.Point::new(10, 0),
+      @skia_mbt.Point::new(10, 10),
+    ],
+    close=true,
+  )
+  let combined = base.add_path(
+    triangle,
+    matrix=@skia_mbt.Matrix::translate(10, 0),
+  )
+  assert_true(combined.fill_type == @skia_mbt.EvenOdd)
+  assert_eq(combined.count_verbs(), base.count_verbs() + triangle.count_verbs())
+  assert_eq(
+    combined.count_points(),
+    base.count_points() + triangle.count_points(),
+  )
+  assert_true(combined.bounds() == Some(@skia_mbt.Rect::new(0, 0, 20, 10)))
+  assert_true(combined.last_point() == Some(@skia_mbt.Point::new(20, 10)))
+  assert_true(combined.contains(@skia_mbt.Point::new(18, 2)))
+  assert_true(!combined.contains(@skia_mbt.Point::new(4, 8)))
+  assert_true(
+    base.add_path_matrix(triangle, @skia_mbt.Matrix::translate(10, 0)) ==
+    combined,
+  )
+  assert_true(
+    base.add_path_offset(triangle, @skia_mbt.Point::new(10, 0)) == combined,
+  )
+  assert_true(base.add_path(@skia_mbt.Path::new()) == base)
+
+  let open = @skia_mbt.Path::new()
+    .move_to(@skia_mbt.Point::new(0, 0))
+    .line_to(@skia_mbt.Point::new(2, 0))
+  let segment = @skia_mbt.Path::new()
+    .move_to(@skia_mbt.Point::new(10, 0))
+    .line_to(@skia_mbt.Point::new(12, 0))
+  let extended = open.add_path(segment, mode=@skia_mbt.Extend)
+  assert_true(
+    extended.verbs[2] == @skia_mbt.LineTo(@skia_mbt.Point::new(10, 0)),
+  )
+  assert_true(
+    extended.verbs[3] == @skia_mbt.LineTo(@skia_mbt.Point::new(12, 0)),
+  )
+  assert_eq(extended.count_verbs(), 4)
+  assert_true(extended.bounds() == Some(@skia_mbt.Rect::from_xywh(0, 0, 12, 0)))
+  assert_true(
+    @skia_mbt.Path::new().add_path(segment, mode=@skia_mbt.Extend) == segment,
   )
 }
 

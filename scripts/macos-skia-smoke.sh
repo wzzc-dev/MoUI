@@ -20,12 +20,12 @@ Options:
   --smoke-log PATH       Write the native smoke executable output to PATH.
                          Relative paths are resolved from the repository root.
   --dry-run-config       Print resolved paths and flags, then exit without
-                         rewriting native/moon.pkg or building the smoke binary.
+                         rewriting package files or building the smoke binary.
   -h, --help             Show this help.
 
-The script temporarily rewrites native/moon.pkg, builds scripts/native_smoke
-with --target native, runs the produced executable directly, then restores the
-original package file.
+The script temporarily rewrites native/moon.pkg and scripts/native_smoke/moon.pkg,
+builds scripts/native_smoke with --target native, runs the produced executable
+directly, then restores both package files.
 The executable output must include the final smoke-test success marker so CI
 proves the real backend path reached the end of the test.
 
@@ -121,6 +121,8 @@ fi
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 native_pkg="$repo_root/native/moon.pkg"
 backup_pkg="$native_pkg.smoke.bak"
+smoke_pkg="$repo_root/scripts/native_smoke/moon.pkg"
+smoke_backup_pkg="$smoke_pkg.smoke.bak"
 smoke_log=""
 smoke_log_is_temporary=0
 include_path="$(cd "$skia_include" && pwd)"
@@ -139,6 +141,17 @@ fi
 
 if [[ ! -f "$lib_path/lib$skia_lib.a" && ! -f "$lib_path/lib$skia_lib.dylib" ]]; then
   echo "Skia library lib$skia_lib.a or lib$skia_lib.dylib was not found in $lib_path" >&2
+  exit 1
+fi
+
+if [[ -f "$backup_pkg" ]]; then
+  echo "native/moon.pkg smoke backup already exists: $backup_pkg" >&2
+  echo "Resolve the stale backup before running smoke." >&2
+  exit 1
+fi
+if [[ -f "$smoke_backup_pkg" ]]; then
+  echo "scripts/native_smoke/moon.pkg smoke backup already exists: $smoke_backup_pkg" >&2
+  echo "Resolve the stale backup before running smoke." >&2
   exit 1
 fi
 
@@ -188,7 +201,7 @@ if [[ -n "$smoke_log" ]]; then
 fi
 
 if [[ $dry_run_config -eq 1 ]]; then
-  echo "Dry run complete; native/moon.pkg was not modified and no build was run."
+  echo "Dry run complete; package files were not modified and no build was run."
   exit 0
 fi
 
@@ -203,11 +216,20 @@ restore_native_pkg() {
   else
     echo "No native/moon.pkg smoke backup found; nothing to restore."
   fi
+  if [[ -f "$smoke_backup_pkg" ]]; then
+    cp "$smoke_backup_pkg" "$smoke_pkg"
+    rm -f "$smoke_backup_pkg"
+    echo "Restored scripts/native_smoke/moon.pkg after macOS Skia smoke."
+  else
+    echo "No scripts/native_smoke/moon.pkg smoke backup found; nothing to restore."
+  fi
 }
 trap restore_native_pkg EXIT
 
 cp "$native_pkg" "$backup_pkg"
 echo "Backed up native/moon.pkg to $backup_pkg."
+cp "$smoke_pkg" "$smoke_backup_pkg"
+echo "Backed up scripts/native_smoke/moon.pkg to $smoke_backup_pkg."
 
 bash "$repo_root/scripts/configure-macos-native-pkg.sh" \
   --skia-include "$include_path" \
@@ -219,9 +241,30 @@ bash "$repo_root/scripts/configure-macos-native-pkg.sh" \
   --write >/dev/null
 echo "Wrote temporary native/moon.pkg with macOS Skia link flags."
 
+cat > "$smoke_pkg" <<EOF
+import {
+  "wzzc-dev/skia_mbt" @skia,
+  "wzzc-dev/skia_mbt/native" @native,
+}
+
+options(
+  "is-main": true,
+  "native-stub": [ "smoke_debug.c" ],
+  link: {
+    "native": {
+      "cc-link-flags": "$link_flags",
+    },
+  },
+)
+EOF
+echo "Wrote temporary scripts/native_smoke/moon.pkg with macOS Skia executable link flags."
+
 cd "$repo_root/scripts/native_smoke"
 moon build --target native
 smoke_exe="$PWD/_build/native/debug/build/skia_mbt_native_smoke"
+if [[ ! -x "$smoke_exe" && -x "$smoke_exe.exe" ]]; then
+  smoke_exe="$smoke_exe.exe"
+fi
 if [[ ! -x "$smoke_exe" ]]; then
   echo "native smoke executable was not produced at $smoke_exe" >&2
   exit 1

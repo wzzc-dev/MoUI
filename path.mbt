@@ -50,6 +50,19 @@ pub fn PathDirection::to_skia_ordinal(self : PathDirection) -> Int {
 }
 
 ///|
+/// How path appends connect the source path to the destination path.
+#warnings("-deprecated_syntax")
+pub(all) enum AddPathMode {
+  Append
+  Extend
+} derive(Debug, Eq)
+
+///|
+pub impl Default for AddPathMode with fn default() {
+  Append
+}
+
+///|
 /// Cross-platform path verb data modeled after Skia path commands.
 pub(all) enum PathVerb {
   MoveTo(Point)
@@ -981,6 +994,99 @@ pub fn Path::cubic_to(
 ///|
 pub fn Path::close(self : Path) -> Path {
   self.append_verb(Close, self.current_point)
+}
+
+///|
+pub fn Path::add_poly(
+  self : Path,
+  points : Array[Point],
+  close? : Bool = false,
+) -> Path {
+  if points.is_empty() {
+    self
+  } else {
+    let path = for path = self.move_to(points[0]), i = 1
+                   i < points.length()
+                   i = i + 1 {
+      continue path.line_to(points[i]), i + 1
+    } nobreak {
+      path
+    }
+    if close {
+      path.close()
+    } else {
+      path
+    }
+  }
+}
+
+///|
+fn Path::append_path_verbs(
+  self : Path,
+  path : Path,
+  mode : AddPathMode,
+) -> Path {
+  if path.is_empty() {
+    self
+  } else {
+    let (result, start_index) = if mode is Extend {
+      match (self.current_point, path.verbs[0]) {
+        (Some(_), MoveTo(point)) => (self.line_to(point), 1)
+        _ => (self, 0)
+      }
+    } else {
+      (self, 0)
+    }
+    for result = result, i = start_index; i < path.verbs.length(); i = i + 1 {
+      let result = match path.verbs[i] {
+        MoveTo(point) => result.move_to(point)
+        LineTo(point) => result.line_to(point)
+        QuadTo(control, end) => result.quad_to(control, end)
+        ConicTo(control, end, weight) => result.conic_to(control, end, weight)
+        CubicTo(control0, control1, end) =>
+          result.cubic_to(control0, control1, end)
+        Close => result.close()
+      }
+      continue result, i + 1
+    } nobreak {
+      result
+    }
+  }
+}
+
+///|
+pub fn Path::add_path(
+  self : Path,
+  path : Path,
+  matrix? : Matrix = Matrix::identity(),
+  mode? : AddPathMode = Append,
+) -> Path {
+  self.append_path_verbs(path.transform(matrix), mode)
+}
+
+///|
+pub fn Path::add_path_matrix(
+  self : Path,
+  path : Path,
+  matrix : Matrix,
+  mode? : AddPathMode = Append,
+) -> Path {
+  self.add_path(path, matrix~, mode~)
+}
+
+///|
+pub fn Path::add_path_offset(
+  self : Path,
+  path : Path,
+  offset : Point,
+  mode? : AddPathMode = Append,
+) -> Path {
+  self.add_path(path, matrix=Matrix::translate(offset.x, offset.y), mode~)
+}
+
+///|
+pub fn Path::with_offset(self : Path, offset : Point) -> Path {
+  self.offset(offset.x, offset.y)
 }
 
 ///|

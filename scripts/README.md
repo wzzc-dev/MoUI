@@ -350,7 +350,7 @@ The `macOS Real Skia Smoke` workflow exposes source-build inputs (`skia_rev`,
 paths skips the source build and cache. The workflow saves
 preflight/build/smoke/native logs as the `macos-real-skia-smoke-log` artifact,
 records the acceptance log, and verifies the same native smoke marker and
-package restoration after real runs.
+temporary package restoration after real runs.
 
 ## Windows real Skia smoke
 

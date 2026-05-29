@@ -7,7 +7,7 @@ Usage: scripts/linux-accept-real-skia-smoke.sh [--log-dir PATH] [linux-real-skia
 
 Runs the Linux real Skia smoke helper, captures both wrapper and native smoke
 executable logs, verifies the native success marker, and checks that
-native/moon.pkg was restored after the run.
+native/moon.pkg and scripts/native_smoke/moon.pkg were restored after the run.
 
 Options handled by this wrapper:
   --log-dir PATH       Directory for acceptance logs. Default: logs/linux-real-skia-smoke.
@@ -60,9 +60,16 @@ native_log="$resolved_log_dir/linux-native-smoke-output.log"
 acceptance_log="$resolved_log_dir/linux-real-skia-acceptance.log"
 native_pkg="$repo_root/native/moon.pkg"
 backup_pkg="$native_pkg.smoke.bak"
+smoke_pkg="$repo_root/scripts/native_smoke/moon.pkg"
+smoke_backup_pkg="$smoke_pkg.smoke.bak"
 
 if [[ -f "$backup_pkg" ]]; then
   echo "native/moon.pkg smoke backup already exists: $backup_pkg" >&2
+  echo "Resolve the stale backup before running acceptance." >&2
+  exit 1
+fi
+if [[ -f "$smoke_backup_pkg" ]]; then
+  echo "scripts/native_smoke/moon.pkg smoke backup already exists: $smoke_backup_pkg" >&2
   echo "Resolve the stale backup before running acceptance." >&2
   exit 1
 fi
@@ -70,6 +77,7 @@ fi
 mkdir -p "$resolved_log_dir"
 
 before_pkg_hash="$(sha256sum "$native_pkg" | cut -d ' ' -f 1)"
+before_smoke_pkg_hash="$(sha256sum "$smoke_pkg" | cut -d ' ' -f 1)"
 
 echo "Linux real Skia acceptance logs:"
 echo "  wrapper_log=$wrapper_log"
@@ -88,13 +96,22 @@ set +o pipefail
 set -e
 
 after_pkg_hash="$(sha256sum "$native_pkg" | cut -d ' ' -f 1)"
+after_smoke_pkg_hash="$(sha256sum "$smoke_pkg" | cut -d ' ' -f 1)"
 restore_status="passed"
 if [[ -f "$backup_pkg" ]]; then
   echo "native/moon.pkg smoke backup remains after acceptance run" >&2
   restore_status="failed"
 fi
+if [[ -f "$smoke_backup_pkg" ]]; then
+  echo "scripts/native_smoke/moon.pkg smoke backup remains after acceptance run" >&2
+  restore_status="failed"
+fi
 if [[ "$before_pkg_hash" != "$after_pkg_hash" ]]; then
   echo "native/moon.pkg hash changed after acceptance run" >&2
+  restore_status="failed"
+fi
+if [[ "$before_smoke_pkg_hash" != "$after_smoke_pkg_hash" ]]; then
+  echo "scripts/native_smoke/moon.pkg hash changed after acceptance run" >&2
   restore_status="failed"
 fi
 

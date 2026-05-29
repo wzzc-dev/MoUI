@@ -11,6 +11,12 @@ pub fn binding_status() -> String
 // Errors
 
 // Types and methods
+pub(all) enum AddPathMode {
+  Append
+  Extend
+} derive(Eq, @debug.Debug)
+pub impl Default for AddPathMode
+
 pub(all) enum AlphaType {
   Unknown
   Opaque
@@ -187,12 +193,16 @@ pub(all) struct IRect {
 pub fn IRect::contains_point(Self, IPoint) -> Bool
 pub fn IRect::contains_rect(Self, Self) -> Bool
 pub fn IRect::empty() -> Self
+pub fn IRect::from_ltrb(Int, Int, Int, Int) -> Self
+pub fn IRect::from_point_and_size(IPoint, ISize) -> Self
 pub fn IRect::from_size(ISize) -> Self
+pub fn IRect::from_wh(Int, Int) -> Self
 pub fn IRect::from_xywh(Int, Int, Int, Int) -> Self
 pub fn IRect::height(Self) -> Int
 pub fn IRect::inset(Self, Int, Int) -> Self
 pub fn IRect::intersect(Self, Self) -> Self?
 pub fn IRect::is_empty(Self) -> Bool
+pub fn IRect::is_sorted(Self) -> Bool
 pub fn IRect::join(Self, Self) -> Self
 pub fn IRect::new(Int, Int, Int, Int) -> Self
 pub fn IRect::offset(Self, Int, Int) -> Self
@@ -201,6 +211,12 @@ pub fn IRect::size(Self) -> ISize
 pub fn IRect::sorted(Self) -> Self
 pub fn IRect::to_rect(Self) -> Rect
 pub fn IRect::width(Self) -> Int
+pub fn IRect::with_inset(Self, ISize) -> Self
+pub fn IRect::with_offset(Self, IPoint) -> Self
+pub fn IRect::with_offset_to(Self, IPoint) -> Self
+pub fn IRect::with_outset(Self, ISize) -> Self
+pub fn IRect::x(Self) -> Int
+pub fn IRect::y(Self) -> Int
 pub impl Default for IRect
 
 pub(all) struct ISize {
@@ -260,23 +276,50 @@ pub(all) struct Matrix {
 } derive(Eq, @debug.Debug)
 pub fn Matrix::concat(Self, Self) -> Self
 pub fn Matrix::determinant(Self) -> Float
+pub fn Matrix::from_affine(Array[Float]) -> Self?
 pub fn Matrix::get(Self, MatrixMember) -> Float
 pub fn Matrix::has_perspective(Self) -> Bool
 pub fn Matrix::identity() -> Self
 pub fn Matrix::invert(Self) -> Self?
+pub fn Matrix::is_finite(Self) -> Bool
 pub fn Matrix::is_identity(Self) -> Bool
 pub fn Matrix::is_invertible(Self) -> Bool
 pub fn Matrix::is_scale_translate(Self) -> Bool
 pub fn Matrix::is_translate(Self) -> Bool
+pub fn Matrix::map_origin(Self) -> Point
 pub fn Matrix::map_point(Self, Point) -> Point
+pub fn Matrix::map_point_affine(Self, Point) -> Point?
+pub fn Matrix::map_points(Self, Array[Point]) -> Array[Point]
+pub fn Matrix::map_radius(Self, Float) -> Float?
 pub fn Matrix::map_rect(Self, Rect) -> Rect
+pub fn Matrix::map_rect_scale_translate(Self, Rect) -> Rect?
+pub fn Matrix::map_rect_to_quad(Self, Rect) -> Array[Point]
+pub fn Matrix::map_vector(Self, Point) -> Point
+pub fn Matrix::map_vectors(Self, Array[Point]) -> Array[Point]
+pub fn Matrix::map_xy(Self, Float, Float) -> Point
 pub fn Matrix::new_all(Float, Float, Float, Float, Float, Float, Float, Float, Float) -> Self
+pub fn Matrix::persp_x(Self) -> Float
+pub fn Matrix::persp_y(Self) -> Float
 pub fn Matrix::post_concat(Self, Self) -> Self
+pub fn Matrix::post_scale(Self, Float, Float) -> Self
+pub fn Matrix::post_skew(Self, Float, Float) -> Self
+pub fn Matrix::post_translate(Self, Float, Float) -> Self
 pub fn Matrix::pre_concat(Self, Self) -> Self
+pub fn Matrix::pre_scale(Self, Float, Float) -> Self
+pub fn Matrix::pre_skew(Self, Float, Float) -> Self
+pub fn Matrix::pre_translate(Self, Float, Float) -> Self
 pub fn Matrix::scale(Float, Float) -> Self
 pub fn Matrix::scale_translate(Float, Float, Float, Float) -> Self
+pub fn Matrix::scale_x(Self) -> Float
+pub fn Matrix::scale_y(Self) -> Float
 pub fn Matrix::skew(Float, Float) -> Self
+pub fn Matrix::skew_x(Self) -> Float
+pub fn Matrix::skew_y(Self) -> Float
+pub fn Matrix::to_affine(Self) -> Array[Float]?
 pub fn Matrix::translate(Float, Float) -> Self
+pub fn Matrix::translate_x(Self) -> Float
+pub fn Matrix::translate_y(Self) -> Float
+pub fn Matrix::values(Self) -> Array[Float]
 pub impl Default for Matrix
 
 pub(all) enum MatrixMember {
@@ -347,6 +390,10 @@ pub(all) struct Path {
 } derive(Eq, @debug.Debug)
 pub fn Path::add_circle(Self, Point, Float, direction? : PathDirection) -> Self
 pub fn Path::add_oval(Self, Rect, direction? : PathDirection) -> Self
+pub fn Path::add_path(Self, Self, matrix? : Matrix, mode? : AddPathMode) -> Self
+pub fn Path::add_path_matrix(Self, Self, Matrix, mode? : AddPathMode) -> Self
+pub fn Path::add_path_offset(Self, Self, Point, mode? : AddPathMode) -> Self
+pub fn Path::add_poly(Self, Array[Point], close? : Bool) -> Self
 pub fn Path::add_rect(Self, Rect, direction? : PathDirection) -> Self
 pub fn Path::add_round_rect(Self, Rect, Float, Float, direction? : PathDirection) -> Self
 pub fn Path::add_rrect(Self, RRect, direction? : PathDirection) -> Self
@@ -378,6 +425,7 @@ pub fn Path::stroke_bounds(Self, Paint) -> Rect?
 pub fn Path::transform(Self, Matrix) -> Self
 pub fn Path::verb_count(Self) -> Int
 pub fn Path::with_fill_type(Self, PathFillType) -> Self
+pub fn Path::with_offset(Self, Point) -> Self
 pub impl Default for Path
 
 pub(all) enum PathDirection {
@@ -454,8 +502,12 @@ pub(all) struct Point {
   x : Float
   y : Float
 } derive(Eq, @debug.Debug)
+pub fn Point::cross(Self, Self) -> Float
+pub fn Point::distance_to(Self, Self) -> Float
 pub fn Point::distance_to_origin(Self) -> Float
+pub fn Point::dot(Self, Self) -> Float
 pub fn Point::equals(Self, Float, Float) -> Bool
+pub fn Point::is_finite(Self) -> Bool
 pub fn Point::is_zero(Self) -> Bool
 pub fn Point::length(Self) -> Float
 pub fn Point::new(Float, Float) -> Self
@@ -501,23 +553,43 @@ pub(all) struct Rect {
   right : Float
   bottom : Float
 } derive(Eq, @debug.Debug)
+pub fn Rect::center(Self) -> Point
+pub fn Rect::center_x(Self) -> Float
+pub fn Rect::center_y(Self) -> Float
 pub fn Rect::contains_point(Self, Point) -> Bool
 pub fn Rect::contains_rect(Self, Self) -> Bool
 pub fn Rect::empty() -> Self
+pub fn Rect::from_irect(IRect) -> Self
+pub fn Rect::from_isize(ISize) -> Self
+pub fn Rect::from_iwh(Int, Int) -> Self
+pub fn Rect::from_ltrb(Float, Float, Float, Float) -> Self
+pub fn Rect::from_point_and_size(Point, Size) -> Self
 pub fn Rect::from_size(Size) -> Self
+pub fn Rect::from_wh(Float, Float) -> Self
 pub fn Rect::from_xywh(Float, Float, Float, Float) -> Self
 pub fn Rect::height(Self) -> Float
 pub fn Rect::inset(Self, Float, Float) -> Self
 pub fn Rect::intersect(Self, Self) -> Self?
 pub fn Rect::is_empty(Self) -> Bool
+pub fn Rect::is_finite(Self) -> Bool
+pub fn Rect::is_sorted(Self) -> Bool
 pub fn Rect::join(Self, Self) -> Self
 pub fn Rect::new(Float, Float, Float, Float) -> Self
 pub fn Rect::offset(Self, Float, Float) -> Self
 pub fn Rect::outset(Self, Float, Float) -> Self
+pub fn Rect::round(Self) -> IRect
+pub fn Rect::round_in(Self) -> IRect
+pub fn Rect::round_out(Self) -> IRect
 pub fn Rect::size(Self) -> Size
 pub fn Rect::sorted(Self) -> Self
 pub fn Rect::to_irect_round(Self) -> IRect
 pub fn Rect::width(Self) -> Float
+pub fn Rect::with_inset(Self, Size) -> Self
+pub fn Rect::with_offset(Self, Point) -> Self
+pub fn Rect::with_offset_to(Self, Point) -> Self
+pub fn Rect::with_outset(Self, Size) -> Self
+pub fn Rect::x(Self) -> Float
+pub fn Rect::y(Self) -> Float
 pub impl Default for Rect
 
 pub(all) struct SamplingOptions {
@@ -544,6 +616,7 @@ pub(all) struct Size {
 pub fn Size::empty() -> Self
 pub fn Size::from_isize(ISize) -> Self
 pub fn Size::is_empty(Self) -> Bool
+pub fn Size::is_finite(Self) -> Bool
 pub fn Size::is_zero(Self) -> Bool
 pub fn Size::new(Float, Float) -> Self
 pub fn Size::scale(Self, Float) -> Self

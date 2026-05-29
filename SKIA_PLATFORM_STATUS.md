@@ -66,7 +66,8 @@ these facts recorded in logs:
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.
 - The platform artifact passed `scripts/verify-real-skia-artifact.*`.
-- `native/moon.pkg` was restored after the temporary link rewrite.
+- `native/moon.pkg` and `scripts/native_smoke/moon.pkg` were restored after the
+  temporary link rewrite.
 
 Linux source-built acceptance also needs stronger revision evidence:
 

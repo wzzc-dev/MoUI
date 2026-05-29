@@ -6,20 +6,31 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
+$smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
 
 function Assert-NativePkgUnchanged {
   param(
     [Parameter(Mandatory = $true)]
-    [string] $ExpectedHash
+    [string] $ExpectedHash,
+    [Parameter(Mandatory = $true)]
+    [string] $ExpectedSmokeHash
   )
 
   $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
   if ($actualHash -ne $ExpectedHash) {
     throw "native/moon.pkg changed during fallback validation"
   }
+  $actualSmokeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $smokePkg).Hash
+  if ($actualSmokeHash -ne $ExpectedSmokeHash) {
+    throw "scripts/native_smoke/moon.pkg changed during fallback validation"
+  }
   $backupPkg = "$nativePkg.smoke.bak"
   if (Test-Path -LiteralPath $backupPkg) {
     throw "native/moon.pkg smoke backup was left behind: $backupPkg"
+  }
+  $smokeBackupPkg = "$smokePkg.smoke.bak"
+  if (Test-Path -LiteralPath $smokeBackupPkg) {
+    throw "scripts/native_smoke/moon.pkg smoke backup was left behind: $smokeBackupPkg"
   }
 }
 
@@ -220,6 +231,7 @@ try {
   }
 
   $beforeNativePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
+  $beforeSmokePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $smokePkg).Hash
   $dryRunRoot = Join-Path $repoRoot ".skia-dry-run/windows-fallback"
   try {
     $fakeSkiaInclude = Join-Path $dryRunRoot "skia"
@@ -266,7 +278,7 @@ try {
       Remove-Item Env:SKIA_MBT_EXTRA_LINK_FLAGS -ErrorAction SilentlyContinue
     }
 
-    Assert-NativePkgUnchanged -ExpectedHash $beforeNativePkgHash
+    Assert-NativePkgUnchanged -ExpectedHash $beforeNativePkgHash -ExpectedSmokeHash $beforeSmokePkgHash
 
     $fetchDryRunEnv = & (Join-Path $repoRoot "scripts/fetch-jetbrains-skia.ps1") `
       -Platform windows `
@@ -330,7 +342,7 @@ try {
       }
     }
 
-    Assert-NativePkgUnchanged -ExpectedHash $beforeNativePkgHash
+    Assert-NativePkgUnchanged -ExpectedHash $beforeNativePkgHash -ExpectedSmokeHash $beforeSmokePkgHash
 
     $fakeNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke.log"
     Set-FakeNativeSmokeLog -Path $fakeNativeSmokeLog

@@ -68,6 +68,11 @@ pub fn Point::is_zero(self : Point) -> Bool {
 }
 
 ///|
+pub fn Point::is_finite(self : Point) -> Bool {
+  geometry_scalar_is_finite(self.x) && geometry_scalar_is_finite(self.y)
+}
+
+///|
 pub fn Point::equals(self : Point, x : Scalar, y : Scalar) -> Bool {
   self == Point::new(x, y)
 }
@@ -83,6 +88,16 @@ pub fn Point::scale(self : Point, scale : Scalar) -> Point {
 }
 
 ///|
+pub fn Point::dot(self : Point, other : Point) -> Scalar {
+  self.x * other.x + self.y * other.y
+}
+
+///|
+pub fn Point::cross(self : Point, other : Point) -> Scalar {
+  self.x * other.y - self.y * other.x
+}
+
+///|
 pub fn Point::length(self : Point) -> Scalar {
   (self.x * self.x + self.y * self.y).sqrt()
 }
@@ -90,6 +105,11 @@ pub fn Point::length(self : Point) -> Scalar {
 ///|
 pub fn Point::distance_to_origin(self : Point) -> Scalar {
   self.length()
+}
+
+///|
+pub fn Point::distance_to(self : Point, other : Point) -> Scalar {
+  Point::new(self.x - other.x, self.y - other.y).length()
 }
 
 ///|
@@ -177,6 +197,12 @@ pub fn Size::is_empty(self : Size) -> Bool {
 }
 
 ///|
+pub fn Size::is_finite(self : Size) -> Bool {
+  geometry_scalar_is_finite(self.width) &&
+  geometry_scalar_is_finite(self.height)
+}
+
+///|
 pub fn Size::scale(self : Size, scale : Scalar) -> Size {
   Size::new(self.width * scale, self.height * scale)
 }
@@ -201,8 +227,23 @@ pub fn IRect::new(left : Int, top : Int, right : Int, bottom : Int) -> IRect {
 }
 
 ///|
+pub fn IRect::from_ltrb(
+  left : Int,
+  top : Int,
+  right : Int,
+  bottom : Int,
+) -> IRect {
+  IRect::new(left, top, right, bottom)
+}
+
+///|
 pub fn IRect::empty() -> IRect {
   IRect::new(0, 0, 0, 0)
+}
+
+///|
+pub fn IRect::from_wh(width : Int, height : Int) -> IRect {
+  IRect::from_xywh(0, 0, width, height)
 }
 
 ///|
@@ -216,8 +257,23 @@ pub fn IRect::from_size(size : ISize) -> IRect {
 }
 
 ///|
+pub fn IRect::from_point_and_size(point : IPoint, size : ISize) -> IRect {
+  IRect::from_xywh(point.x, point.y, size.width, size.height)
+}
+
+///|
 pub impl Default for IRect with fn default() {
   IRect::empty()
+}
+
+///|
+pub fn IRect::x(self : IRect) -> Int {
+  self.left
+}
+
+///|
+pub fn IRect::y(self : IRect) -> Int {
+  self.top
 }
 
 ///|
@@ -238,6 +294,11 @@ pub fn IRect::size(self : IRect) -> ISize {
 ///|
 pub fn IRect::is_empty(self : IRect) -> Bool {
   self.right <= self.left || self.bottom <= self.top
+}
+
+///|
+pub fn IRect::is_sorted(self : IRect) -> Bool {
+  self.left <= self.right && self.top <= self.bottom
 }
 
 ///|
@@ -265,13 +326,33 @@ pub fn IRect::offset(self : IRect, dx : Int, dy : Int) -> IRect {
 }
 
 ///|
+pub fn IRect::with_offset(self : IRect, offset : IPoint) -> IRect {
+  self.offset(offset.x, offset.y)
+}
+
+///|
+pub fn IRect::with_offset_to(self : IRect, point : IPoint) -> IRect {
+  IRect::from_xywh(point.x, point.y, self.width(), self.height())
+}
+
+///|
 pub fn IRect::inset(self : IRect, dx : Int, dy : Int) -> IRect {
   IRect::new(self.left + dx, self.top + dy, self.right - dx, self.bottom - dy)
 }
 
 ///|
+pub fn IRect::with_inset(self : IRect, inset : ISize) -> IRect {
+  self.inset(inset.width, inset.height)
+}
+
+///|
 pub fn IRect::outset(self : IRect, dx : Int, dy : Int) -> IRect {
   self.inset(-dx, -dy)
+}
+
+///|
+pub fn IRect::with_outset(self : IRect, outset : ISize) -> IRect {
+  self.outset(outset.width, outset.height)
 }
 
 ///|
@@ -345,8 +426,28 @@ pub fn Rect::new(
 }
 
 ///|
+pub fn Rect::from_ltrb(
+  left : Scalar,
+  top : Scalar,
+  right : Scalar,
+  bottom : Scalar,
+) -> Rect {
+  Rect::new(left, top, right, bottom)
+}
+
+///|
 pub fn Rect::empty() -> Rect {
   Rect::new(0, 0, 0, 0)
+}
+
+///|
+pub fn Rect::from_wh(width : Scalar, height : Scalar) -> Rect {
+  Rect::from_xywh(0, 0, width, height)
+}
+
+///|
+pub fn Rect::from_iwh(width : Int, height : Int) -> Rect {
+  Rect::from_wh(Float::from_int(width), Float::from_int(height))
 }
 
 ///|
@@ -365,8 +466,33 @@ pub fn Rect::from_size(size : Size) -> Rect {
 }
 
 ///|
+pub fn Rect::from_isize(size : ISize) -> Rect {
+  Rect::from_size(size.to_size())
+}
+
+///|
+pub fn Rect::from_point_and_size(point : Point, size : Size) -> Rect {
+  Rect::from_xywh(point.x, point.y, size.width, size.height)
+}
+
+///|
+pub fn Rect::from_irect(rect : IRect) -> Rect {
+  rect.to_rect()
+}
+
+///|
 pub impl Default for Rect with fn default() {
   Rect::empty()
+}
+
+///|
+pub fn Rect::x(self : Rect) -> Scalar {
+  self.left
+}
+
+///|
+pub fn Rect::y(self : Rect) -> Scalar {
+  self.top
 }
 
 ///|
@@ -385,8 +511,41 @@ pub fn Rect::size(self : Rect) -> Size {
 }
 
 ///|
+pub fn Rect::center_x(self : Rect) -> Scalar {
+  self.left * 0.5 + self.right * 0.5
+}
+
+///|
+pub fn Rect::center_y(self : Rect) -> Scalar {
+  self.top * 0.5 + self.bottom * 0.5
+}
+
+///|
+pub fn Rect::center(self : Rect) -> Point {
+  Point::new(self.center_x(), self.center_y())
+}
+
+///|
 pub fn Rect::is_empty(self : Rect) -> Bool {
   self.right <= self.left || self.bottom <= self.top
+}
+
+///|
+pub fn Rect::is_sorted(self : Rect) -> Bool {
+  self.left <= self.right && self.top <= self.bottom
+}
+
+///|
+fn geometry_scalar_is_finite(value : Scalar) -> Bool {
+  value == value && value - value == 0.0
+}
+
+///|
+pub fn Rect::is_finite(self : Rect) -> Bool {
+  geometry_scalar_is_finite(self.left) &&
+  geometry_scalar_is_finite(self.top) &&
+  geometry_scalar_is_finite(self.right) &&
+  geometry_scalar_is_finite(self.bottom)
 }
 
 ///|
@@ -414,13 +573,33 @@ pub fn Rect::offset(self : Rect, dx : Scalar, dy : Scalar) -> Rect {
 }
 
 ///|
+pub fn Rect::with_offset(self : Rect, offset : Point) -> Rect {
+  self.offset(offset.x, offset.y)
+}
+
+///|
+pub fn Rect::with_offset_to(self : Rect, point : Point) -> Rect {
+  Rect::from_xywh(point.x, point.y, self.width(), self.height())
+}
+
+///|
 pub fn Rect::inset(self : Rect, dx : Scalar, dy : Scalar) -> Rect {
   Rect::new(self.left + dx, self.top + dy, self.right - dx, self.bottom - dy)
 }
 
 ///|
+pub fn Rect::with_inset(self : Rect, inset : Size) -> Rect {
+  self.inset(inset.width, inset.height)
+}
+
+///|
 pub fn Rect::outset(self : Rect, dx : Scalar, dy : Scalar) -> Rect {
   self.inset(-dx, -dy)
+}
+
+///|
+pub fn Rect::with_outset(self : Rect, outset : Size) -> Rect {
+  self.outset(outset.width, outset.height)
 }
 
 ///|
@@ -465,13 +644,38 @@ pub fn Rect::join(self : Rect, other : Rect) -> Rect {
 }
 
 ///|
-pub fn Rect::to_irect_round(self : Rect) -> IRect {
+pub fn Rect::round(self : Rect) -> IRect {
   IRect::new(
     self.left.round().to_int(),
     self.top.round().to_int(),
     self.right.round().to_int(),
     self.bottom.round().to_int(),
   )
+}
+
+///|
+pub fn Rect::round_in(self : Rect) -> IRect {
+  IRect::new(
+    self.left.ceil().to_int(),
+    self.top.ceil().to_int(),
+    self.right.floor().to_int(),
+    self.bottom.floor().to_int(),
+  )
+}
+
+///|
+pub fn Rect::round_out(self : Rect) -> IRect {
+  IRect::new(
+    self.left.floor().to_int(),
+    self.top.floor().to_int(),
+    self.right.ceil().to_int(),
+    self.bottom.ceil().to_int(),
+  )
+}
+
+///|
+pub fn Rect::to_irect_round(self : Rect) -> IRect {
+  self.round()
 }
 
 ///|

@@ -167,6 +167,10 @@ pub(all) struct Path {
 }
 pub fn Path::add_circle(Self, @skia_mbt.Point, Float, direction? : @skia_mbt.PathDirection) -> Unit
 pub fn Path::add_oval(Self, @skia_mbt.Rect, direction? : @skia_mbt.PathDirection) -> Unit
+pub fn Path::add_path_value(Self, @skia_mbt.Path, matrix? : @skia_mbt.Matrix, mode? : @skia_mbt.AddPathMode) -> Unit
+pub fn Path::add_path_value_matrix(Self, @skia_mbt.Path, @skia_mbt.Matrix, mode? : @skia_mbt.AddPathMode) -> Unit
+pub fn Path::add_path_value_offset(Self, @skia_mbt.Path, @skia_mbt.Point, mode? : @skia_mbt.AddPathMode) -> Unit
+pub fn Path::add_poly(Self, Array[@skia_mbt.Point], close? : Bool) -> Unit
 pub fn Path::add_rect(Self, @skia_mbt.Rect, direction? : @skia_mbt.PathDirection) -> Unit
 pub fn Path::add_round_rect(Self, @skia_mbt.Rect, Float, Float, direction? : @skia_mbt.PathDirection) -> Unit
 pub fn Path::add_rrect(Self, @skia_mbt.RRect, direction? : @skia_mbt.PathDirection) -> Unit
