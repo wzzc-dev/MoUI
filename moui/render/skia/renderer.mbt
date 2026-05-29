@@ -655,7 +655,7 @@ fn SkiaRasterRenderer::draw_text(
   match skia_font(run.font) {
     Some(font) => {
       let bytes = @utf8.encode(run.text[:], bom=false)
-      let width = font.measure_text_utf8(bytes).to_double()
+      let width = skia_measure_text_width(font, run.text)
       let x = match run.align {
         @core.TextAlign::TextStart => run.frame.origin.x
         @core.TextAlign::TextCenter =>
@@ -986,21 +986,63 @@ fn skia_text_system() -> @core.TextSystem {
   @core.TextSystem::new(id="skia-raster-text-system", measure=input => {
     match skia_font(input.font) {
       Some(font) => {
-        let bytes = @utf8.encode(input.text[:], bom=false)
-        let measured = font.measure_text_utf8(bytes).to_double()
         let fallback = @core.TextSystem::fallback().measure_text(input)
-        let width = match input.max_width {
-          Some(max_width) => measured.min(max_width)
-          None => measured
-        }
-        {
-          ..fallback,
-          size: @core.Size::new(width~, height=fallback.size.height),
-        }
+        skia_text_layout_result(font, input, fallback)
       }
       None => @core.TextSystem::fallback().measure_text(input)
     }
   })
+}
+
+///|
+fn skia_text_layout_result(
+  font : @skia_native.Font,
+  input : @core.TextLayoutInput,
+  fallback : @core.TextLayoutResult,
+) -> @core.TextLayoutResult {
+  let measured = skia_measure_text_width(font, input.text)
+  let carets = skia_caret_positions(font, input.text)
+  match input.max_width {
+    Some(max_width) => {
+      let clamped : Array[Double] = []
+      for caret in carets {
+        clamped.push(caret.min(max_width))
+      }
+      {
+        ..fallback,
+        size: @core.Size::new(
+          width=measured.min(max_width),
+          height=fallback.size.height,
+        ),
+        caret_positions: clamped,
+      }
+    }
+    None =>
+      {
+        ..fallback,
+        size: @core.Size::new(width=measured, height=fallback.size.height),
+        caret_positions: carets,
+      }
+  }
+}
+
+///|
+fn skia_caret_positions(
+  font : @skia_native.Font,
+  text : String,
+) -> Array[Double] {
+  let chars = text.to_array()
+  let carets : Array[Double] = [0.0]
+  for index in 1..<(chars.length() + 1) {
+    let prefix = String::from_array(chars[:index])
+    carets.push(skia_measure_text_width(font, prefix))
+  }
+  carets
+}
+
+///|
+fn skia_measure_text_width(font : @skia_native.Font, text : String) -> Double {
+  font.measure_text_utf8(@utf8.encode(text[:], bom=false)).to_double()
 }
 
 ///|

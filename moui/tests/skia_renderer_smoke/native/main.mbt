@@ -693,6 +693,7 @@ fn main {
     fail_smoke("MoUI Skia smoke hit unsupported renderer commands")
   }
   assert_image_resources(renderer, local_png_path)
+  assert_skia_text_system_carets(renderer)
 
   match captured.val {
     Some(frame) => {
@@ -850,5 +851,43 @@ fn assert_image_resources(
   }
   if !saw_missing_failed {
     fail_smoke("Skia smoke did not record failed missing image")
+  }
+}
+
+///|
+fn assert_skia_text_system_carets(
+  renderer : @skia_renderer.SkiaRasterRenderer,
+) -> Unit {
+  let font = @core.FontSpec::new(size=18.0, weight=400)
+  let layout = renderer
+    .text_system()
+    .measure_text(@core.TextLayoutInput::new(text="Slim", font~))
+  if layout.caret_positions.length() != 5 {
+    fail_smoke("Skia smoke text system did not cover every caret")
+  }
+  if layout.caret_positions[0] != 0.0 {
+    fail_smoke("Skia smoke text system first caret is not zero")
+  }
+  if layout.caret_positions[4] != layout.size.width {
+    fail_smoke(
+      "Skia smoke text system final caret does not match measured width",
+    )
+  }
+  if layout.caret_positions[1] <= 0.0 ||
+    layout.caret_positions[2] <= layout.caret_positions[1] {
+    fail_smoke("Skia smoke text system did not return measured prefix carets")
+  }
+  let clamped = renderer
+    .text_system()
+    .measure_text(
+      @core.TextLayoutInput::new(text="MoUI", font~, max_width=12.0),
+    )
+  if clamped.size.width != 12.0 {
+    fail_smoke("Skia smoke text system did not clamp measured width")
+  }
+  for caret in clamped.caret_positions {
+    if caret > 12.0 {
+      fail_smoke("Skia smoke text system did not clamp measured carets")
+    }
   }
 }
