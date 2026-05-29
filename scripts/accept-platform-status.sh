@@ -101,14 +101,25 @@ resolved_log_dir="$(resolve_repo_path "$log_dir")"
 resolved_status_file="$(resolve_repo_path "$status_file")"
 resolved_revision_file="$(resolve_repo_path "$revision_file")"
 acceptance_log="$resolved_log_dir/$platform-real-skia-acceptance.log"
+wrapper_log="$resolved_log_dir/$platform-real-skia-smoke.log"
 
 if [[ ! -f "$resolved_status_file" ]]; then
   echo "Skia platform status file is missing: $resolved_status_file" >&2
   exit 1
 fi
 
+detected_provider="source"
+if [[ -f "$acceptance_log" ]]; then
+  detected_provider="$(grep -E '^[[:space:]]*skia_provider=' "$acceptance_log" | tail -n 1 | sed 's/^[[:space:]]*skia_provider=//' || true)"
+elif [[ -f "$wrapper_log" ]]; then
+  detected_provider="$(grep -E '^[[:space:]]*skia_provider=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_provider=//' || true)"
+fi
+if [[ -z "$detected_provider" || "$detected_provider" == "unknown" ]]; then
+  detected_provider="source"
+fi
+
 artifact_args=(--platform "$platform" --log-dir "$resolved_log_dir")
-if [[ "$platform" == "linux" || $require_commit -eq 1 ]]; then
+if [[ "$detected_provider" == "source" && ( "$platform" == "linux" || $require_commit -eq 1 ) ]]; then
   artifact_args+=(--require-commit)
 fi
 bash "$repo_root/scripts/verify-real-skia-artifact.sh" "${artifact_args[@]}"
@@ -118,9 +129,11 @@ if [[ ! -f "$acceptance_log" ]]; then
   exit 1
 fi
 
-bash "$repo_root/scripts/verify-skia-revision-pin.sh" \
-  "$acceptance_log" \
-  --revision-file "$resolved_revision_file"
+if [[ "$detected_provider" == "source" ]]; then
+  bash "$repo_root/scripts/verify-skia-revision-pin.sh" \
+    "$acceptance_log" \
+    --revision-file "$resolved_revision_file"
+fi
 
 if [[ -z "$artifact_label" ]]; then
   artifact_label="$log_dir"
@@ -130,7 +143,9 @@ python3 - \
   "$resolved_status_file" \
   "$platform" \
   "$acceptance_log" \
-  "$artifact_label" <<'PY'
+  "$artifact_label" \
+  "$repo_root/skia-provider-lock.json" \
+  "$resolved_revision_file" <<'PY'
 import json
 import pathlib
 import re
@@ -140,6 +155,8 @@ status_path = pathlib.Path(sys.argv[1])
 platform = sys.argv[2]
 acceptance_log = pathlib.Path(sys.argv[3])
 artifact_label = sys.argv[4]
+provider_lock_path = pathlib.Path(sys.argv[5])
+revision_path = pathlib.Path(sys.argv[6])
 
 def fail(message: str) -> None:
     print(message, file=sys.stderr)
@@ -151,29 +168,57 @@ except json.JSONDecodeError as error:
     fail(f"Skia platform status JSON is invalid: {error}")
 
 if status.get("schema_version") != 1:
-    fail(f"unsupported Skia platform status schema_version: {status.get('schema_version')}")
+    if status.get("schema_version") != 2:
+        fail(f"unsupported Skia platform status schema_version: {status.get('schema_version')}")
 
 platforms = status.get("platforms")
 if not isinstance(platforms, dict) or platform not in platforms:
     fail(f"platform status is missing required platform: {platform}")
 
 accepted_commit = ""
+accepted_provider = "source"
+accepted_version = ""
 for line in acceptance_log.read_text(encoding="utf-8").splitlines():
     match = re.fullmatch(r"\s*skia_commit=([0-9a-fA-F]{40})\s*", line)
     if match:
         accepted_commit = match.group(1).lower()
+    provider_match = re.fullmatch(r"\s*skia_provider=([^\s]+)\s*", line)
+    if provider_match and provider_match.group(1) != "unknown":
+        accepted_provider = provider_match.group(1)
+    version_match = re.fullmatch(r"\s*jetbrains_tag=([^\s]+)\s*", line)
+    if version_match and version_match.group(1) != "unknown":
+        accepted_version = version_match.group(1)
 
 if not accepted_commit:
     fail(f"platform acceptance log is missing a full 40-character skia_commit hash: {acceptance_log}")
+if accepted_provider not in ("source", "jetbrains"):
+    fail(f"unsupported accepted provider in acceptance log: {accepted_provider}")
+if accepted_provider == "source":
+    for line in revision_path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            accepted_version = stripped
+            break
+if accepted_provider == "jetbrains":
+    provider_lock = json.loads(provider_lock_path.read_text(encoding="utf-8"))
+    jetbrains = provider_lock.get("providers", {}).get("jetbrains", {})
+    if accepted_commit != str(jetbrains.get("commit", "")).lower():
+        fail("accepted JetBrains commit does not match provider lock")
+    if accepted_version != str(jetbrains.get("tag", "")):
+        fail("accepted JetBrains tag does not match provider lock")
+if not accepted_version:
+    fail(f"accepted platform is missing accepted_version: {platform}")
 
 entry = platforms[platform]
 entry["accepted"] = True
 entry["state"] = "accepted"
 entry["accepted_artifact"] = artifact_label
 entry["accepted_commit"] = accepted_commit
+entry["accepted_provider"] = accepted_provider
+entry["accepted_version"] = accepted_version
 entry["next_step"] = (
     "Keep running real Skia smoke for this platform and verify each run "
-    f"against the pinned Skia revision {accepted_commit}."
+    f"against the accepted {accepted_provider} Skia version {accepted_version}."
 )
 
 status_path.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")

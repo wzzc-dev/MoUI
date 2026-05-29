@@ -1,0 +1,21 @@
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/skia_mbt" @skia,
+  "wzzc-dev/skia_mbt/native",
+  "wzzc-dev/window/core",
+  "wzzc-dev/window/dpi",
+  "wzzc-dev/window/macos",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  "native-stub": [ "macos_present.m" ],
+  link: {
+    "native": {
+      "cc-link-flags": "-L./.skia-cache/jetbrains/m148-8967a2e80c/macos-Release-arm64/package/out/Release-macos-arm64 -lskia -lc++ -framework CoreFoundation -framework CoreGraphics -framework QuartzCore -framework AppKit",
+    },
+  },
+  targets: { "main.mbt": [ "native" ], "macos_present.mbt": [ "native" ] },
+)

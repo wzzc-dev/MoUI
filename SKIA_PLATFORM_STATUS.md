@@ -34,18 +34,20 @@ On Linux or macOS runners, use:
 bash scripts/accept-platform-status.sh --platform linux --log-dir logs --artifact-label linux-real-skia-smoke-log
 ```
 
-The helper reruns artifact verification and the revision-pin check before it
-updates `skia-platform-status.json`. Accepted entries record both
-`accepted_artifact` and `accepted_commit`; the status verifier requires the
-accepted commit to match `skia-revision.txt`.
+The helper reruns artifact verification before it updates
+`skia-platform-status.json`. For `source` artifacts it also checks the
+revision pin. Accepted entries record `accepted_artifact`, `accepted_provider`,
+`accepted_version`, and `accepted_commit`; the status verifier requires source
+commits to match `skia-revision.txt` and JetBrains commits/versions to match
+`skia-provider-lock.json`.
 
 ## Current Matrix
 
 | Platform | Current state | What exists | Missing before accepted |
 | --- | --- | --- | --- |
-| Linux | Ready for first source-built acceptance, not accepted yet | Source-build helper, existing-build smoke helper, acceptance wrapper, dependency checker, artifact verifier, guarded revision pin wrapper, workflow | A real source-built Ubuntu/Linux artifact with `--require-commit`, then `skia-revision.txt` pinned to the accepted 40-character Skia commit |
-| macOS | Smoke path ready, not accepted yet | Source-build helper, existing-build smoke helper, acceptance wrapper, artifact verifier, workflow | A real macOS artifact using the pinned Skia revision once Linux establishes it, or a documented temporary revision while evaluating |
-| Windows | Existing-build smoke paths ready, not accepted yet | Existing MinGW-compatible Skia smoke/acceptance helper, MSVC release-zip smoke/acceptance helper, artifact verifier, workflow, persistent link-config generators | A real Windows artifact proving link and smoke execution, plus a documented repeatable Skia acquisition path for the accepted Windows toolchain |
+| Linux | Ready for JetBrains binary acceptance, not accepted yet | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, dependency checker, artifact verifier, guarded revision pin wrapper, workflow | A real Linux artifact using the default JetBrains provider, or a source-built artifact when refreshing `skia-revision.txt` |
+| macOS | Ready for JetBrains binary acceptance, not accepted yet | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, artifact verifier, workflow | A real macOS artifact using the default JetBrains provider |
+| Windows | Ready for JetBrains MSVC binary acceptance, not accepted yet | JetBrains fetch/cache provider, existing MinGW-compatible helper, MSVC smoke/acceptance helper, artifact verifier, workflow, persistent link-config generators | A real Windows MSVC artifact using the default JetBrains provider |
 
 ## Acceptance Evidence
 
@@ -77,11 +79,24 @@ Linux source-built acceptance also needs stronger revision evidence:
 - `skia-revision.txt` is updated only through a guarded pin helper after that
   source-built artifact is verified.
 - `skia-platform-status.json` records the same commit in Linux
-  `accepted_commit` before Linux is considered accepted.
+  `accepted_commit`, `accepted_provider=source`, and matching
+  `accepted_version` before that source path is considered accepted.
+
+JetBrains acceptance needs provider evidence:
+
+- The wrapper and acceptance logs record `skia_provider=jetbrains`,
+  `jetbrains_tag`, full `skia_commit`, `skia_package`, and
+  `skia_package_sha256`.
+- The artifact verifier checks those fields against `skia-provider-lock.json`.
+- `skia-platform-status.json` records `accepted_provider=jetbrains`,
+  `accepted_version` equal to the locked tag, and `accepted_commit` equal to the
+  locked JetBrains commit.
 
 ## Next Acceptance Step
 
-The next concrete milestone is the first Linux source-built acceptance:
+The next concrete milestone is a desktop JetBrains-provider acceptance run on
+Linux, macOS, and Windows through the real-smoke workflows. The source-built
+Linux path remains the canonical fallback pin path:
 
 ```bash
 bash scripts/linux-accept-and-pin-skia.sh --install-deps --work-dir .skia-cache/linux --accept-platform-status

@@ -9,6 +9,12 @@ Options:
   --skia-include PATH    Skia checkout or include root containing Skia headers.
   --skia-lib-dir PATH    Directory containing libskia.a or libskia.dylib.
   --skia-lib NAME        Library name without lib prefix, default: skia.
+  --skia-provider NAME   Provider label to record in logs, e.g. jetbrains.
+  --jetbrains-tag TAG    JetBrains/skia tag to record when provider is jetbrains.
+  --skia-commit HASH     Full Skia commit to record in logs.
+  --skia-package NAME    Skia binary package name to record in logs.
+  --skia-package-sha256 SHA256
+                         Skia binary package SHA256 to record in logs.
   --extra-cc-flags STR   Extra C/C++ flags appended to stub-cc-flags.
   --extra-link-flags STR Extra linker flags appended to cc-link-flags.
   --smoke-log PATH       Write the native smoke executable output to PATH.
@@ -25,6 +31,8 @@ proves the real backend path reached the end of the test.
 
 Environment defaults:
   SKIA_MBT_SKIA_INCLUDE, SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB,
+  SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_SKIA_COMMIT,
+  SKIA_MBT_SKIA_PACKAGE, SKIA_MBT_SKIA_PACKAGE_SHA256,
   SKIA_MBT_EXTRA_CC_FLAGS, and SKIA_MBT_EXTRA_LINK_FLAGS are used when the
   matching command-line option is omitted.
 EOF
@@ -33,6 +41,11 @@ EOF
 skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
 skia_lib_dir="${SKIA_MBT_SKIA_LIB_DIR:-}"
 skia_lib="${SKIA_MBT_SKIA_LIB:-skia}"
+skia_provider="${SKIA_MBT_SKIA_PROVIDER:-}"
+jetbrains_tag="${SKIA_MBT_JETBRAINS_TAG:-}"
+skia_commit="${SKIA_MBT_SKIA_COMMIT:-}"
+skia_package="${SKIA_MBT_SKIA_PACKAGE:-}"
+skia_package_sha256="${SKIA_MBT_SKIA_PACKAGE_SHA256:-}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
 requested_smoke_log=""
@@ -50,6 +63,26 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skia-lib)
       skia_lib="${2:-}"
+      shift 2
+      ;;
+    --skia-provider)
+      skia_provider="${2:-}"
+      shift 2
+      ;;
+    --jetbrains-tag)
+      jetbrains_tag="${2:-}"
+      shift 2
+      ;;
+    --skia-commit)
+      skia_commit="${2:-}"
+      shift 2
+      ;;
+    --skia-package)
+      skia_package="${2:-}"
+      shift 2
+      ;;
+    --skia-package-sha256)
+      skia_package_sha256="${2:-}"
       shift 2
       ;;
     --extra-cc-flags)
@@ -115,8 +148,22 @@ echo "  cxx=$(${CXX:-c++} --version 2>/dev/null | head -n 1 || true)"
 echo "  skia_include=$include_path"
 echo "  skia_lib_dir=$lib_path"
 echo "  skia_lib=$skia_lib"
-if [[ -d "$include_path/.git" ]]; then
+if [[ -n "$skia_provider" ]]; then
+  echo "  skia_provider=$skia_provider"
+fi
+if [[ -n "$jetbrains_tag" ]]; then
+  echo "  jetbrains_tag=$jetbrains_tag"
+fi
+if [[ -n "$skia_commit" ]]; then
+  echo "  skia_commit=$skia_commit"
+elif [[ -d "$include_path/.git" ]]; then
   echo "  skia_commit=$(git -C "$include_path" rev-parse HEAD)"
+fi
+if [[ -n "$skia_package" ]]; then
+  echo "  skia_package=$skia_package"
+fi
+if [[ -n "$skia_package_sha256" ]]; then
+  echo "  skia_package_sha256=$skia_package_sha256"
 fi
 find "$lib_path" -maxdepth 1 \( -name "lib$skia_lib.a" -o -name "lib$skia_lib.dylib" \) \
   -print | while IFS= read -r lib_file; do
@@ -124,12 +171,12 @@ find "$lib_path" -maxdepth 1 \( -name "lib$skia_lib.a" -o -name "lib$skia_lib.dy
     echo "  library=$(basename "$lib_file") ${size} bytes"
   done
 
-cc_flags="-DSKIA_MBT_HAS_SKIA -I$include_path"
+cc_flags="-DSKIA_MBT_HAS_SKIA -std=c++17 -I$include_path"
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-link_flags="-L$lib_path -l$skia_lib -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework MobileCoreServices -framework ApplicationServices"
+link_flags="-L$lib_path -l$skia_lib -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
 if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"
 fi

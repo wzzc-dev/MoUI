@@ -17,17 +17,53 @@ matrix and the exact evidence still missing per platform.
 - The acceptance log records `smoke_status=0`, `native_smoke_marker=passed`,
   and `native_pkg_restore=passed`.
 
-## Linux First Acceptance
+## JetBrains/skia Provider
 
-Linux is the first source-build path and should be used to establish the initial
-known-good Skia revision.
+The default desktop provider is JetBrains/skia, locked in
+`skia-provider-lock.json`:
+
+- provider: `jetbrains`
+- tag: `m148-8967a2e80c`
+- commit: `8967a2e80c71be363146da2395f503cab5f5fb9c`
+- config: `Release`
+
+The fetch helpers select the host package, cache it under
+`.skia-cache/jetbrains/<tag>/<platform>-<config>-<arch>/`, verify the package
+SHA256, scan for headers and libraries, and fall back to the same-tag source
+archive for headers when a binary zip does not include them:
+
+```bash
+bash scripts/fetch-jetbrains-skia.sh --platform auto --arch auto --print-env
+```
+
+```powershell
+.\scripts\fetch-jetbrains-skia.ps1 -Platform auto -Arch auto -PrintEnv
+```
+
+The real-smoke wrappers consume the fetch output and still delegate final
+`native/moon.pkg` generation to the existing configure scripts. JetBrains logs
+must record `skia_provider=jetbrains`, `jetbrains_tag`, full `skia_commit`,
+`skia_package`, `skia_package_sha256`, include/lib paths, and final compile/link
+flags. `scripts/verify-real-skia-artifact.*` rejects logs whose tag, commit,
+package, or SHA256 does not match the lock file.
+
+Use `--skia-provider source` for source-built fallback and diagnostic runs, or
+`--skia-provider existing` with explicit include/lib paths for a prepared Skia
+build.
+
+## Linux Source Acceptance
+
+Linux remains the first source-build path and should be used when establishing
+or refreshing the canonical `skia-revision.txt` fallback pin. The default Linux
+real smoke now uses JetBrains/skia; pass `--skia-provider source` for this
+source-built path.
 
 Run locally on Ubuntu or trigger the `Linux Real Skia Smoke` workflow without
 `dry_run_config`:
 
 ```bash
 bash scripts/install-linux-smoke-deps.sh
-bash scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
+bash scripts/linux-accept-real-skia-smoke.sh --skia-provider source --work-dir .skia-cache/linux
 ```
 
 On a pre-provisioned Ubuntu runner, use
@@ -36,7 +72,14 @@ packages before spending time on Skia checkout and compilation. The source-build
 path installs `clang` and sets Skia GN `cc="clang"` / `cxx="clang++"` by
 default for reproducible Linux smoke builds.
 
-Expected artifact/log files:
+Default JetBrains expected artifact/log files:
+
+- `logs/linux-real-skia-smoke-preflight.log`
+- `logs/linux-real-skia-smoke.log`
+- `logs/linux-native-smoke-output.log`
+- `logs/linux-real-skia-acceptance.log`
+
+Source-built expected artifact/log files:
 
 - `logs/linux-real-skia-smoke.log`
 - `logs/linux-skia-build.log` for source-built runs
@@ -47,9 +90,12 @@ Required checks:
 
 ```bash
 bash scripts/verify-native-smoke-log.sh logs/linux-native-smoke-output.log
-bash scripts/verify-acceptance-log.sh logs/linux-real-skia-acceptance.log --require-commit
-bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs --require-commit
+bash scripts/verify-acceptance-log.sh logs/linux-real-skia-acceptance.log
+bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs
 ```
+
+Add `--require-commit` to the acceptance and artifact checks only for
+source-built runs that will be used to pin `skia-revision.txt`.
 
 The native smoke log verifier checks both the final pass marker and intermediate
 stage markers for readback, bounded readback, snapshot/image drawing, PNG
@@ -130,9 +176,11 @@ acceptance log matches the pinned revision:
 bash scripts/verify-skia-revision-pin.sh logs/linux-real-skia-acceptance.log
 ```
 
-The real-smoke workflows run the same check with `--skip-if-unpinned`: the first
-Linux run is allowed while `skia-revision.txt` is still `main`, and later runs
-fail if their accepted `skia_commit` diverges from the pinned commit.
+Source-provider real-smoke workflows run the same check with
+`--skip-if-unpinned`: the first source-built Linux run is allowed while
+`skia-revision.txt` is still `main`, and later source runs fail if their
+accepted `skia_commit` diverges from the pinned commit. JetBrains-provider runs
+are checked against `skia-provider-lock.json` instead.
 
 PowerShell equivalent:
 
@@ -198,15 +246,20 @@ platform-status checks.
 
 ## macOS Acceptance
 
-macOS has a source-build helper, an existing-build workflow mode, and an
-acceptance wrapper. Run locally on macOS or trigger the `macOS Real Skia Smoke`
+macOS defaults to the locked JetBrains provider and also has source-build and
+existing-build modes. Run locally on macOS or trigger the `macOS Real Skia Smoke`
 workflow without `dry_run_config`:
 
 ```bash
-bash scripts/macos-build-skia.sh --work-dir .skia-cache/macos
+bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs
+```
+
+For the source-built fallback path:
+
+```bash
 bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
-  --skia-include .skia-cache/macos/skia \
-  --skia-lib-dir .skia-cache/macos/skia/out/moonbit-smoke
+  --skia-provider source \
+  --work-dir .skia-cache/macos
 ```
 
 To reuse an existing macOS Skia build, pass `skia_include` and `skia_lib_dir` to
@@ -214,6 +267,7 @@ the workflow, or run:
 
 ```bash
 bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
+  --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
 ```
@@ -259,27 +313,31 @@ bash scripts/verify-skia-revision-pin.sh logs/macos-real-skia-acceptance.log
 
 ## Windows Acceptance
 
-Windows currently has acceptance helpers for existing prepared Skia builds. It
-does not yet build Skia from source in CI. The MinGW-compatible path is still
-available for GCC native-stub builds, and the MSVC path covers prepared release
-zips or checkouts that provide `skia.lib`.
+Windows defaults to the locked JetBrains/skia package through the MSVC helper.
+It does not build Skia from source in CI. The MinGW-compatible path is still
+available for GCC native-stub builds, and the MSVC path covers JetBrains or
+prepared release zips/checkouts that provide `skia.lib`.
 
 Run locally on Windows or trigger the `Windows Real Skia Smoke` workflow with
-`skia_include` and `skia_lib_dir` pointing at a prepared Skia build:
+the default `skia_provider=jetbrains`:
+
+```powershell
+.\scripts\windows-msvc-accept-real-skia-smoke.ps1 -LogDir logs
+```
+
+For a prepared MinGW-compatible Skia build:
 
 ```powershell
 .\scripts\windows-accept-real-skia-smoke.ps1 -LogDir logs `
   -SkiaInclude C:\path\to\skia `
   -SkiaLibDir C:\path\to\skia\out\moonbit-smoke
-
-.\scripts\windows-msvc-accept-real-skia-smoke.ps1 -LogDir logs
 ```
 
-The MSVC helper defaults to `C:\Users\<you>\Downloads\Skia-Windows-Release-x64.zip`,
-extracts into `.skia-cache/windows-msvc/aseprite`, calls `vcvarsall.bat`, and
-uses `cl` with the generated MSVC `native/moon.pkg` link config. Pass
-`-SkiaRoot`, `-SkiaZip`, `-SkiaLibDir`, `-VcVarsAll`, or `-VcArch` when a runner
-uses a different layout.
+The JetBrains workflow fetches the locked Windows package into
+`.skia-cache/jetbrains`. The MSVC helper calls `vcvarsall.bat`, prepends the
+Skia library directory to `PATH`, and uses `cl` with the generated MSVC
+`native/moon.pkg` link config. Pass `-SkiaRoot`, `-SkiaInclude`, `-SkiaZip`,
+`-SkiaLibDir`, `-VcVarsAll`, or `-VcArch` when a runner uses a different layout.
 
 Expected artifact/log files:
 

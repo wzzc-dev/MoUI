@@ -41,7 +41,7 @@ pub fn Paint::new(
 }
 
 ///|
-pub impl Default for Paint with default() {
+pub impl Default for Paint with fn default() {
   Paint::new()
 }
 

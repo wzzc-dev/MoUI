@@ -108,8 +108,16 @@ if [[ $smoke_status -eq 0 ]]; then
 fi
 
 skia_commit=""
+skia_provider=""
+jetbrains_tag=""
+skia_package=""
+skia_package_sha256=""
 if [[ -f "$wrapper_log" ]]; then
   skia_commit="$(grep -E '^[[:space:]]*skia_commit=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_commit=//' || true)"
+  skia_provider="$(grep -E '^[[:space:]]*skia_provider=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_provider=//' || true)"
+  jetbrains_tag="$(grep -E '^[[:space:]]*jetbrains_tag=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*jetbrains_tag=//' || true)"
+  skia_package="$(grep -E '^[[:space:]]*skia_package=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_package=//' || true)"
+  skia_package_sha256="$(grep -E '^[[:space:]]*skia_package_sha256=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_package_sha256=//' || true)"
 fi
 
 cat <<EOF | tee "$acceptance_log"
@@ -117,7 +125,11 @@ Linux real Skia acceptance result:
   smoke_status=$smoke_status
   native_smoke_marker=$marker_status
   native_pkg_restore=$restore_status
+  skia_provider=${skia_provider:-unknown}
+  jetbrains_tag=${jetbrains_tag:-unknown}
   skia_commit=${skia_commit:-unknown}
+  skia_package=${skia_package:-unknown}
+  skia_package_sha256=${skia_package_sha256:-unknown}
   wrapper_log=$wrapper_log
   build_log=$build_log
   native_log=$native_log
@@ -129,6 +141,7 @@ if [[ -n "${GITHUB_ENV:-}" ]]; then
     echo "native_smoke_marker_status=$marker_status"
     echo "restore_status=$restore_status"
     echo "linux_acceptance_log=$acceptance_log"
+    echo "linux_skia_provider=${skia_provider:-unknown}"
     echo "linux_skia_commit=${skia_commit:-unknown}"
   } >> "$GITHUB_ENV"
 fi

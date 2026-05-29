@@ -3,14 +3,14 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/linux-real-skia-smoke.sh [options]
+Usage: scripts/macos-real-skia-smoke.sh [options]
 
 Options:
   --work-dir PATH       Directory for depot_tools, Skia checkout, and build output.
-                        Default: .skia-cache/linux.
+                        Default: .skia-cache/macos.
   --skia-include PATH   Existing Skia checkout/include root. When supplied with
-                        --skia-lib-dir, skips building Skia from source.
-  --skia-lib-dir PATH   Existing directory containing libskia.a or libskia.so.
+                        --skia-lib-dir, selects existing provider.
+  --skia-lib-dir PATH   Existing directory containing libskia.a or libskia.dylib.
   --skia-lib NAME       Library name without lib prefix, default: skia.
   --skia-provider source|existing|jetbrains
                         Skia acquisition mode. Default: jetbrains unless
@@ -22,38 +22,27 @@ Options:
                         JetBrains/skia package configuration. Default: Release.
   --jetbrains-cache-dir PATH
                         JetBrains/skia cache root. Default: .skia-cache/jetbrains.
-  --extra-gn-args STR   Extra GN args appended to the smoke-test Skia build.
+  --extra-gn-args STR   Extra GN args appended to the source-built Skia build.
   --extra-cc-flags STR  Extra C/C++ flags appended when linking the MoonBit stub.
   --extra-link-flags STR
                         Extra linker flags appended when linking the smoke binary.
-                        Default: -lpthread -ldl -lm.
   --build-log PATH      Write source-built Skia build output to PATH.
                         Relative paths are resolved from the repository root.
   --smoke-log PATH      Write the native smoke executable output to PATH.
                         Relative paths are resolved from the repository root.
-  --no-sync-deps        Skip python3 tools/git-sync-deps.
-  --no-fetch            Reuse an existing Skia checkout instead of cloning/fetching.
-  --dry-run-config      Print the selected mode and effective smoke arguments,
+  --no-sync-deps        Skip python3 tools/git-sync-deps for source provider.
+  --no-fetch            Reuse an existing Skia checkout for source provider.
+  --dry-run-config      Print selected mode and effective smoke arguments,
                         then exit without fetching/building Skia or rewriting native/moon.pkg.
   -h, --help            Show this help.
 
-Downloads JetBrains/skia by default, builds a small CPU-only Skia from source
-when --skia-provider source is selected, or uses an existing build when
---skia-provider existing or --skia-include/--skia-lib-dir are provided. It
-temporarily links native/moon.pkg against the selected Skia and runs
-scripts/native_smoke as a real Skia backend check.
-
-Environment defaults:
-  SKIA_MBT_SKIA_INCLUDE, SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB,
-  SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_PROVIDER, SKIA_MBT_SKIA_REV,
-  SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_JETBRAINS_CONFIG,
-  SKIA_MBT_JETBRAINS_CACHE_DIR, SKIA_MBT_EXTRA_GN_ARGS,
-  SKIA_MBT_EXTRA_CC_FLAGS, and SKIA_MBT_EXTRA_LINK_FLAGS are used when the
-  matching command-line option is omitted.
+This wrapper mirrors scripts/linux-real-skia-smoke.sh for macOS. It consumes
+JetBrains provider output and delegates final native/moon.pkg generation to
+scripts/macos-skia-smoke.sh.
 EOF
 }
 
-work_dir=".skia-cache/linux"
+work_dir=".skia-cache/macos"
 skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
 skia_lib_dir="${SKIA_MBT_SKIA_LIB_DIR:-}"
 skia_lib="${SKIA_MBT_SKIA_LIB:-skia}"
@@ -194,17 +183,11 @@ if [[ $skia_provider_explicit -eq 0 ]]; then
 fi
 case "$skia_provider" in
   source|existing|jetbrains) ;;
-  *)
-    echo "unsupported --skia-provider: $skia_provider" >&2
-    exit 2
-    ;;
+  *) echo "unsupported --skia-provider: $skia_provider" >&2; exit 2 ;;
 esac
 case "$jetbrains_config" in
   Release|Debug) ;;
-  *)
-    echo "unsupported --jetbrains-config: $jetbrains_config" >&2
-    exit 2
-    ;;
+  *) echo "unsupported --jetbrains-config: $jetbrains_config" >&2; exit 2 ;;
 esac
 
 jetbrains_package=""
@@ -219,9 +202,6 @@ if [[ "$skia_provider" == "existing" ]]; then
   smoke_mode="existing Skia build"
   smoke_include="$skia_include"
   smoke_lib_dir="$skia_lib_dir"
-  if [[ -z "$extra_link_flags" && $extra_link_flags_explicit -eq 0 ]]; then
-    extra_link_flags="-lpthread -ldl -lm"
-  fi
 elif [[ "$skia_provider" == "source" ]]; then
   if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then
     echo "--skia-provider source cannot be combined with --skia-include/--skia-lib-dir" >&2
@@ -230,16 +210,13 @@ elif [[ "$skia_provider" == "source" ]]; then
   smoke_mode="source-built Skia"
   smoke_include="$resolved_work_dir/skia"
   smoke_lib_dir="$resolved_work_dir/skia/out/moonbit-smoke"
-  if [[ -z "$extra_link_flags" && $extra_link_flags_explicit -eq 0 ]]; then
-    extra_link_flags="-lpthread -ldl -lm"
-  fi
 else
   if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then
     echo "--skia-provider jetbrains cannot be combined with --skia-include/--skia-lib-dir" >&2
     exit 2
   fi
   fetch_args=(
-    --platform linux
+    --platform macos
     --arch auto
     --config "$jetbrains_config"
     --tag "$jetbrains_tag"
@@ -270,7 +247,7 @@ else
   fi
 fi
 
-echo "Linux real Skia smoke mode: $smoke_mode"
+echo "macOS real Skia smoke mode: $smoke_mode"
 echo "  skia_provider=$skia_provider"
 if [[ "$skia_provider" == "jetbrains" ]]; then
   echo "  jetbrains_tag=$jetbrains_tag"
@@ -280,7 +257,7 @@ if [[ "$skia_provider" == "jetbrains" ]]; then
 fi
 if [[ "$skia_provider" == "existing" || "$skia_provider" == "jetbrains" ]]; then
   if [[ -n "$extra_gn_args" ]]; then
-    echo "  note: extra_gn_args is ignored when using an existing Skia build"
+    echo "  note: extra_gn_args is ignored unless --skia-provider source is selected"
   fi
 else
   echo "  work_dir=$resolved_work_dir"
@@ -295,7 +272,7 @@ if [[ -n "$build_log" ]]; then
   esac
 fi
 
-if [[ "$smoke_mode" == "source-built Skia" ]]; then
+if [[ "$skia_provider" == "source" ]]; then
   build_args=(--work-dir "$resolved_work_dir" --skia-rev "$skia_rev")
   if [[ -n "$extra_gn_args" ]]; then
     build_args+=(--extra-gn-args "$extra_gn_args")
@@ -306,14 +283,13 @@ if [[ "$smoke_mode" == "source-built Skia" ]]; then
   if [[ $fetch_repo -eq 0 ]]; then
     build_args+=(--no-fetch)
   fi
-
   if [[ $dry_run_config -eq 0 ]]; then
     if [[ -n "$resolved_build_log" ]]; then
       mkdir -p "$(dirname "$resolved_build_log")"
       : > "$resolved_build_log"
       set +e
       set -o pipefail
-      bash "$repo_root/scripts/linux-build-skia.sh" "${build_args[@]}" 2>&1 | tee "$resolved_build_log"
+      bash "$repo_root/scripts/macos-build-skia.sh" "${build_args[@]}" 2>&1 | tee "$resolved_build_log"
       build_status=${PIPESTATUS[0]}
       set +o pipefail
       set -e
@@ -321,7 +297,7 @@ if [[ "$smoke_mode" == "source-built Skia" ]]; then
         exit "$build_status"
       fi
     else
-      bash "$repo_root/scripts/linux-build-skia.sh" "${build_args[@]}"
+      bash "$repo_root/scripts/macos-build-skia.sh" "${build_args[@]}"
     fi
   fi
 else
@@ -375,15 +351,15 @@ if [[ $dry_run_config -eq 1 ]]; then
   if [[ ${#build_args[@]} -gt 0 ]]; then
     printf "  build_arg: %q\n" "${build_args[@]}"
   fi
-  if [[ "$smoke_mode" == "source-built Skia" ]]; then
-    bash "$repo_root/scripts/linux-build-skia.sh" --dry-run-config "${build_args[@]}"
+  if [[ "$skia_provider" == "source" ]]; then
+    bash "$repo_root/scripts/macos-build-skia.sh" --dry-run-config "${build_args[@]}"
   fi
-  if [[ "$smoke_mode" == "existing Skia build" ]]; then
-    bash "$repo_root/scripts/linux-skia-smoke.sh" --dry-run-config "${smoke_args[@]}"
+  if [[ "$skia_provider" == "existing" ]]; then
+    bash "$repo_root/scripts/macos-skia-smoke.sh" --dry-run-config "${smoke_args[@]}"
   fi
   echo "Dry run complete; native/moon.pkg was not modified and no build was run."
   printf "  smoke_arg: %q\n" "${smoke_args[@]}"
   exit 0
 fi
 
-bash "$repo_root/scripts/linux-skia-smoke.sh" "${smoke_args[@]}"
+bash "$repo_root/scripts/macos-skia-smoke.sh" "${smoke_args[@]}"

@@ -9,7 +9,7 @@ pub(all) enum PathFillType {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for PathFillType with default() {
+pub impl Default for PathFillType with fn default() {
   Winding
 }
 
@@ -37,7 +37,7 @@ pub(all) enum PathDirection {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for PathDirection with default() {
+pub impl Default for PathDirection with fn default() {
   CW
 }
 
@@ -163,7 +163,7 @@ pub fn Path::new(fill_type? : PathFillType = Winding) -> Path {
 }
 
 ///|
-pub impl Default for Path with default() {
+pub impl Default for Path with fn default() {
   Path::new()
 }
 

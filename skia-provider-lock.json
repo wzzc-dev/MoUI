@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "default_provider": "jetbrains",
+  "default_config": "Release",
+  "providers": {
+    "jetbrains": {
+      "tag": "m148-8967a2e80c",
+      "commit": "8967a2e80c71be363146da2395f503cab5f5fb9c",
+      "release_url": "https://github.com/JetBrains/skia/releases/tag/m148-8967a2e80c",
+      "source_archive": {
+        "name": "JetBrains-skia-m148-8967a2e80c-source.zip",
+        "url": "https://github.com/JetBrains/skia/archive/refs/tags/m148-8967a2e80c.zip"
+      },
+      "default_extra_cc_flags": {
+        "linux": "",
+        "macos": "",
+        "windows": "",
+        "android": "",
+        "ios": "",
+        "iosSim": "",
+        "tvos": "",
+        "tvosSim": "",
+        "wasm": ""
+      },
+      "default_extra_link_flags": {
+        "linux": "-lpthread -ldl -lm",
+        "macos": "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+        "windows": "",
+        "android": "",
+        "ios": "",
+        "iosSim": "",
+        "tvos": "",
+        "tvosSim": "",
+        "wasm": ""
+      },
+      "assets": {
+        "android": {
+          "Debug": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-android-Debug-arm64.zip",
+              "sha256": "e6f96373621e3fad8d3e8d52f5b2a31ab3e8de11ce4c763260edeb76de6e0683",
+              "size": 140480888
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-android-Debug-x64.zip",
+              "sha256": "bd70ee8fe635d49162f63560a356c19255975e69e745a3445157fd957be897f2",
+              "size": 135391553
+            }
+          },
+          "Release": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-android-Release-arm64.zip",
+              "sha256": "48750439a8842fd7976abd9aab38633e284c3e81bee9b3ca928b784aa5ae031b",
+              "size": 46674116
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-android-Release-x64.zip",
+              "sha256": "5830034fd9c099bb755681ebe0dd3f3783b4698c053c6952a5238ca9ca11fadd",
+              "size": 46465022
+            }
+          }
+        },
+        "ios": {
+          "Debug": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-ios-Debug-arm64.zip",
+              "sha256": "723baf73e5a6fc6e7824d3af4e97ab885224b2db991ddd685741db8924dab8ef",
+              "size": 939753879
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-ios-Debug-x64.zip",
+              "sha256": "dac6b1e86e2d8a174499b60e8da690c6349b17e3982d6a41767f5c533b583afb",
+              "size": 475730048
+            }
+          },
+          "Release": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-ios-Release-arm64.zip",
+              "sha256": "ecd8d8a2b097cb2c1b69c05ccdddc1a8a55ba2e1bcb4b9f0985f6469159c3997",
+              "size": 65022224
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-ios-Release-x64.zip",
+              "sha256": "c207c890cdcf56ad114428f94ffb1b813920b2f6cf451a6098b489643b5d01c0",
+              "size": 36900549
+            }
+          }
+        },
+        "iosSim": {
+          "Debug": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-iosSim-Debug-arm64.zip",
+              "sha256": "f752c0b50565641f680c5d34e53f1bbd04bab7473f405960caf131586e104599",
+              "size": 939850967
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-iosSim-Debug-x64.zip",
+              "sha256": "24c8bc1d72817320ee980e022f4990bb2364745a4789af4150420a2e99222319",
+              "size": 475731188
+            }
+          },
+          "Release": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-iosSim-Release-arm64.zip",
+              "sha256": "6652cddab56b2bc03acd36770abd87248e05cf700c7a139a30dd6b4905764e78",
+              "size": 65154325
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-iosSim-Release-x64.zip",
+              "sha256": "8f783d003514d71e40b4d711226df4a099d1f844cf7409ebe3684dd08c4bf60e",
+              "size": 36901124
+            }
+          }
+        },
+        "linux": {
+          "Debug": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-linux-Debug-arm64.zip",
+              "sha256": "f91072e12f4b5056c023e4f34f72bb0498590ce44a24af4f1a6a1cfde06f4337",
+              "size": 722139661
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-linux-Debug-x64.zip",
+              "sha256": "2427edd0859d22f7081fe83d7fb122fc428027220ea3de6e742f17cd03ed7f09",
+              "size": 722912789
+            }
+          },
+          "Release": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-linux-Release-arm64.zip",
+              "sha256": "a2c5ce593220cbd4939a7e03faafca5005ee3ab6d151449e4452441ed60e9a9c",
+              "size": 54539974
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-linux-Release-x64.zip",
+              "sha256": "37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2",
+              "size": 54713645
+            }
+          }
+        },
+        "macos": {
+          "Debug": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-macos-Debug-arm64.zip",
+              "sha256": "d0542c953676607602a0b2874c5ce64e2634d573831e5186fdae9ae50959b757",
+              "size": 598456388
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-macos-Debug-x64.zip",
+              "sha256": "ce8d6806af829e893e0c794a1300e9b8864a6e9eda137559cea843831caca8cd",
+              "size": 606657993
+            }
+          },
+          "Release": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-macos-Release-arm64.zip",
+              "sha256": "7e6bcc8a2e52520c690fbc531fd143e65095597c74db5312dc7758b5a1fa4e16",
+              "size": 46252993
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-macos-Release-x64.zip",
+              "sha256": "e425d06e9e2668b31bac59dea5b693e47acd79f203ce75982dea457804dea693",
+              "size": 48585503
+            }
+          }
+        },
+        "tvos": {
+          "Debug": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-tvos-Debug-arm64.zip",
+              "sha256": "e7338af5ba441fa0fdc6271ac2ecea37f649aaa12c831d2a46422aed73914cb6",
+              "size": 939787229
+            }
+          },
+          "Release": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-tvos-Release-arm64.zip",
+              "sha256": "f0baa2020c2e7b61764ed09af88978eee11f4fa38216d35fb6ce6574b1c22b73",
+              "size": 65043506
+            }
+          }
+        },
+        "tvosSim": {
+          "Debug": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-tvosSim-Debug-arm64.zip",
+              "sha256": "27ecee68d2dd51a7a7170550afd92ff6f0d38bd6f0533c6de29ddbd092e0e124",
+              "size": 939830895
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-tvosSim-Debug-x64.zip",
+              "sha256": "b3ba4feba694447876ec42df1c20b0281bfdd0916ef3d33010baa7948f614fc6",
+              "size": 475712488
+            }
+          },
+          "Release": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-tvosSim-Release-arm64.zip",
+              "sha256": "d4c8da8be3acce7c45f09178caef3b001b82f6f2d6f3aba2292a4c409ca78276",
+              "size": 65154177
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-tvosSim-Release-x64.zip",
+              "sha256": "51732b4916a1025d9bd97e55c45f86704285c938ff530a4dc328ab1fcf3eb583",
+              "size": 36898614
+            }
+          }
+        },
+        "wasm": {
+          "Debug": {
+            "wasm": {
+              "name": "Skia-m148-8967a2e80c-wasm-Debug-wasm.zip",
+              "sha256": "5b80e183f74a8bed3718b6c2613442fc01480f423181df8f35c2a91e368d4fcd",
+              "size": 320118889
+            }
+          },
+          "Release": {
+            "wasm": {
+              "name": "Skia-m148-8967a2e80c-wasm-Release-wasm.zip",
+              "sha256": "77c3fc79d079b2451b169b1b48c2884e011ad3a486099276fd54996b421e486d",
+              "size": 29707971
+            }
+          }
+        },
+        "windows": {
+          "Debug": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-windows-Debug-arm64.zip",
+              "sha256": "220264ecdd0fed3438f1040b29da95f156ba8d758b9bbea919717dfe34c4c18e",
+              "size": 337101154
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-windows-Debug-x64.zip",
+              "sha256": "b87771c73d4b3473ab86da0b3c6aafeddc65c74b4052780f14d0d3fb5be46ac9",
+              "size": 346795091
+            }
+          },
+          "Release": {
+            "arm64": {
+              "name": "Skia-m148-8967a2e80c-windows-Release-arm64.zip",
+              "sha256": "69a4d56832a51e17751ccafa3718ab7904a929e7eea2439eef09769ad98b6928",
+              "size": 60666124
+            },
+            "x64": {
+              "name": "Skia-m148-8967a2e80c-windows-Release-x64.zip",
+              "sha256": "1927edce6567785870558bfc5e84fac99af45cbe91eb62f260025bc1cf7aa5df",
+              "size": 64055294
+            }
+          }
+        }
+      }
+    }
+  }
+}
