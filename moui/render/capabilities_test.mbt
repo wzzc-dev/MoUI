@@ -64,6 +64,19 @@ test "renderer capability report tracks draw command support" {
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("gradient strokes"),
   )
+  guard @render.renderer_feature_capability(@render.RendererFeature::Shadow)
+    is Some(shadow) else {
+    fail("expected shadow capability")
+  }
+  assert_true(
+    shadow.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    shadow
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("MaskFilter"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::Transform)
     is Some(transform) else {
     fail("expected transform capability")

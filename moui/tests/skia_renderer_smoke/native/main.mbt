@@ -268,6 +268,18 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
         align=@core.TextAlign::TextStart,
       ),
     ),
+    @core.DrawCommand::DrawShadow(
+      @core.ShadowSpec::new(
+        rect=@core.RoundedRect::new(
+          rect=@core.Rect::new(x=62.0, y=70.0, width=14.0, height=10.0),
+          radius=3.0,
+        ),
+        color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.55),
+        offset=@core.Point::new(x=0.0, y=0.0),
+        blur_radius=3.0,
+        spread=0.0,
+      ),
+    ),
   ]
 }
 
@@ -339,6 +351,8 @@ fn main {
         frame,
         @core.Rect::new(x=4.0, y=68.0, width=48.0, height=20.0),
       )
+      assert_pixel_near(frame, 69, 75, 115, 115, 115, 255, 50)
+      assert_pixel_near(frame, 58, 75, 230, 230, 230, 255, 35)
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")

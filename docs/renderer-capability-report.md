@@ -22,7 +22,7 @@ Status meanings:
 | Rect | ready | ready | ready | Skia rect fill/stroke has real native renderer pixel smoke coverage. |
 | Rounded rect | ready | ready | ready | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
 | Gradient | ready | partial | ready | Skia linear-gradient fills for rounded rects and paths have real smoke coverage; gradient strokes still fall back to solid paint. |
-| Shadow | ready | unavailable | ready | Skia blur/mask-filter shadow coverage is still pending in the renderer path. |
+| Shadow | ready | ready | ready | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
 | Text | ready | ready | ready | Skia basic `Font` measurement and `draw_text_utf8` rendering have real native renderer smoke evidence; shaping is tracked separately. |
 | Image | ready | partial | ready | Native wgpu decodes PNG/JPEG/BMP via `mizchi/image`; Web loads browser image sources. Skia validates PNG data URI decode and `draw_image_rect` output; local-file/failure/repaint coverage remains follow-up. |
 | Clip | ready | ready | ready | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. |
@@ -150,13 +150,14 @@ frame through a `CGImage` on a `CALayer`, Windows through a top-down BGRA DIB an
 
 The current real Skia smoke uses JetBrains Skia link flags to render and read
 back a representative frame through `SkiaRasterRenderer`. It validates clear,
-rect fill/stroke, rounded fill/stroke, linear-gradient fills, rectangular and
-rounded clips, affine translation, opacity, solid and gradient paths, the
-checker shader effect, PNG data URI image drawing, and basic text pixels while
-requiring `unsupported_command_count == 0`. Remaining Skia renderer gaps are
-now narrower: blurred shadows, gradient strokes, richer affine/layer/filter
-combinations, blend-mode evidence, broader image source/failure coverage,
-vignette shader semantics, and complex text shaping. Basic text
+rect fill/stroke, rounded fill/stroke, linear-gradient fills, soft rounded
+shadows, rectangular and rounded clips, affine translation, opacity, solid and
+gradient paths, the checker shader effect, PNG data URI image drawing, and
+basic text pixels while requiring `unsupported_command_count == 0`. Remaining
+Skia renderer gaps are now narrower: gradient strokes, richer
+affine/layer/filter combinations, blend-mode evidence, broader image
+source/failure coverage, vignette shader semantics, and complex text shaping.
+Basic text
 measurement/drawing uses Skia `Font`, while complex shaping, bidi, line
 breaking, and deterministic emoji behavior remain partial and separate from the
 WGPU Moon Cosmic provider stack.
