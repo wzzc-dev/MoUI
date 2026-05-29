@@ -56,10 +56,10 @@ Before calling a preview-release handoff complete, collect fresh evidence for:
 | --- | --- | --- |
 | Daily baseline | Bounded package checks and Web wasm-gc example builds pass. | `sh scripts/dev-check.sh` |
 | Public API audit | Generated interfaces reviewed after public API changes. | `moon info` plus `pkg.generated.mbti` diff review |
-| Renderer sync | Capability code, tests, docs, and visible Showcase coverage agree. | `moon test render --target native`, `moon test render/wgpu --target native`, `moon test render/webgpu_adapter --target wasm-gc`, Showcase Web build |
+| Renderer sync | Capability code, tests, docs, and visible Showcase coverage agree. | `moon test moui/render --target native`, `moon test moui/render/wgpu --target native`, `moon test moui/render/webgpu_adapter --target wasm-gc`, Showcase Web build |
 | Focused conformance | Input/focus, layout, render, platform service, and text slices pass at their owning layer. | `sh scripts/conformance-check.sh --input`, `--layout`, `--render`, `--platform-services`, `--text`, `--text-diagnostic` |
 | Text conformance | Stable text contracts and diagnostic gaps are current. | `sh scripts/conformance-check.sh --text`, `sh scripts/conformance-check.sh --text-diagnostic` |
-| Platform contracts | Shared host and active backend behavior stay covered. | `moon test backend/host --target native`, `moon test backend/web --target wasm-gc`, `sh scripts/dev-check.sh --platform-examples-test` when platform behavior changes |
+| Platform contracts | Shared host and active backend behavior stay covered. | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `sh scripts/dev-check.sh --platform-examples-test` when platform behavior changes |
 | Examples | Showcase and Markdown Editor remain runnable docs; new user-facing features have visible Showcase coverage or a recorded reason to skip it. | App package tests plus Web wasm-gc builds |
 | Guidance freshness | Docs, `AGENTS.md`, and repo-local skills agree after guidance-affecting changes. | Manual audit recorded in the handoff |
 
@@ -262,7 +262,7 @@ documentation evidence.
      count, path count, and shader count.
    - Done when: inspector data is surfaced through a developer UI or capture
      artifact and connected to golden/benchmark handoffs.
-   - Evidence: `moon test core --target native`, generated public API review
+   - Evidence: `moon test moui/core --target native`, generated public API review
      after inspector changes, and testing docs.
 
 ## Known Non-Goals

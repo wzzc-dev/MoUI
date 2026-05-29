@@ -114,6 +114,7 @@ fi
 if "$RUN_TEXT"; then
   run moon test moui/core --target native
   run moon test moui/render/wgpu --target native
+  run moon test moui/render/wgpu/cosmic_text --target native
   run moon test moui/render/webgpu_adapter --target wasm-gc
   run moon test moui/backend/web --target wasm-gc
 fi

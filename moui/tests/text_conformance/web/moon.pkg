@@ -1,7 +1,7 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render" @render,
-  "wzzc-dev/moui/render/webgpu_adapter" @webgpu_adapter,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/webgpu_adapter",
 } for "test"
 
 supported_targets = "wasm-gc"

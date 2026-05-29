@@ -21,14 +21,14 @@ wasm-gc target.
 Use package-level commands while editing implementation code:
 
 ```sh
-moon test core --target native
-moon test views --target native
-moon test render --target native
-moon test render/wgpu --target native
-moon test render/webgpu_adapter --target wasm-gc
-moon test tests/tooling --target native
-moon test backend/host --target native
-moon test backend/web --target wasm-gc
+moon test moui/core --target native
+moon test moui/views --target native
+moon test moui/render --target native
+moon test moui/render/wgpu --target native
+moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui/tests/tooling --target native
+moon test moui/backend/host --target native
+moon test moui/backend/web --target wasm-gc
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 ```
@@ -134,9 +134,9 @@ When draw command support changes, keep the capability loop synchronized:
 Suggested validation:
 
 ```sh
-moon test render --target native
-moon test render/wgpu --target native
-moon test render/webgpu_adapter --target wasm-gc
+moon test moui/render --target native
+moon test moui/render/wgpu --target native
+moon test moui/render/webgpu_adapter --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
@@ -207,8 +207,9 @@ contracts. `--input` runs core input/focus semantics and shared host input
 routing. `--layout` runs core layout, baseline, and TextSystem-dependent
 geometry contracts. `--render` runs renderer facade, native WGPU, and Web
 adapter capability evidence. `--text` runs the stable text conformance surface
-across core, native renderer/provider, Web adapter, and Web backend packages.
-`--text-diagnostic` runs the opt-in cross-engine text matrix packages.
+across core, native renderer, the standalone Cosmic provider, Web adapter, and
+Web backend packages. `--text-diagnostic` runs the opt-in cross-engine text
+matrix packages.
 `--platform-services` runs host and Web service contracts, runs current-host
 macOS service tests on Darwin, and runs Linux service tests only when the local
 window checkout has generated Wayland protocol sources available. `--golden`
@@ -218,7 +219,8 @@ measurement set: startup, frame time, dirty-count, draw-command count, and
 memory. `--platform` layers in current-platform backend checks through
 `scripts/dev-check.sh --platform-examples-test`.
 
-CI runs the same conformance script from `.github/workflows/ci.yml`. Keep this
+CI runs the daily check, text conformance plus text diagnostic matrix, and the
+Showcase golden build scaffold from `.github/workflows/ci.yml`. Keep this
 workflow package-scoped: platform-native executable builds and real screenshot
 capture should be added as separate jobs once the runner images have the needed
 windowing and browser dependencies.

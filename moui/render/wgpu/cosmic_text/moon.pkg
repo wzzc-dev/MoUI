@@ -1,10 +1,10 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
-  "Milky2018/moon_cosmic" @moon_cosmic,
-  "Milky2018/moon_swash" @moon_swash,
+  "Milky2018/moon_cosmic",
+  "Milky2018/moon_swash",
   "Milky2018/moon_swash/scale" @moon_swash_scale,
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/x/fs",
 }
 
 supported_targets = "native"

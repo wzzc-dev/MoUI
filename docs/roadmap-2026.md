@@ -70,7 +70,7 @@ already receive child baseline and layout priority signals.
 Validation:
 
 ```sh
-moon test core --target native
+moon test moui/core --target native
 moon check --warn-list +unnecessary_annotation
 moon info
 ```
@@ -95,7 +95,7 @@ Focus areas:
 Validation:
 
 ```sh
-moon test views --target native
+moon test moui/views --target native
 moon test examples/showcase/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
@@ -158,9 +158,9 @@ Current priorities:
 Validation:
 
 ```sh
-moon test render --target native
-moon test render/wgpu --target native
-moon test render/webgpu_adapter --target wasm-gc
+moon test moui/render --target native
+moon test moui/render/wgpu --target native
+moon test moui/render/webgpu_adapter --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
@@ -229,8 +229,8 @@ Focus areas:
 Validation:
 
 ```sh
-moon test backend/host --target native
-moon test backend/web --target wasm-gc
+moon test moui/backend/host --target native
+moon test moui/backend/web --target wasm-gc
 sh scripts/dev-check.sh --platform-examples-test
 ```
 

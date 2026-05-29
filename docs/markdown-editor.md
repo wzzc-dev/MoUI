@@ -152,7 +152,7 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 When editor work changes public view wrappers, also run:
 
 ```sh
-moon test views --target native
+moon test moui/views --target native
 moon info
 ```
 

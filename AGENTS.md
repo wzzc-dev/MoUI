@@ -114,10 +114,11 @@ Useful focused checks:
 ```sh
 moon check
 moon check --warn-list +unnecessary_annotation
-moon test core --target native
-moon test views --target native
-moon test render/webgpu_adapter --target wasm-gc
-moon test backend/web --target wasm-gc
+moon test moui/core --target native
+moon test moui/views --target native
+moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui/backend/web --target wasm-gc
+moon test moui/render/wgpu/cosmic_text --target native
 sh scripts/conformance-check.sh --input
 sh scripts/conformance-check.sh --layout
 sh scripts/conformance-check.sh --render
@@ -148,7 +149,7 @@ moon test <dir-or-file> --filter '<glob>'
 If a change touches `render/wgpu/`, also run:
 
 ```sh
-moon test render/wgpu --target native
+moon test moui/render/wgpu --target native
 ```
 
 ## Renderer Capability Tracking

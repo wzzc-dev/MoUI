@@ -124,7 +124,8 @@ Remote font loading is intentionally outside the current backend contract.
 Text conformance is split into two layers:
 
 - Stable tests run inside normal package checks and cover `core`,
-  `render/wgpu`, `render/webgpu_adapter`, and `backend/web`.
+  `render/wgpu`, `render/wgpu/cosmic_text`, `render/webgpu_adapter`, and
+  `backend/web`.
 - Diagnostic matrix tests live under `tests/text_conformance/` and are opt-in.
   They compare core fallback, Cosmic, platform-default composed fallback,
   malformed-provider fallback, and Web text systems where the current host can
@@ -137,10 +138,11 @@ Focused checks for text-system work:
 ```sh
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
-moon test core --target native
-moon test render/wgpu --target native
-moon test render/webgpu_adapter --target wasm-gc
-moon test backend/web --target wasm-gc
+moon test moui/core --target native
+moon test moui/render/wgpu --target native
+moon test moui/render/wgpu/cosmic_text --target native
+moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui/backend/web --target wasm-gc
 ```
 
 Platform text provider changes should also run the affected backend/provider

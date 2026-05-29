@@ -45,14 +45,14 @@ run sh scripts/check-local-deps.sh
 
 run moon check
 
-run moon test core --target native
-run moon test views --target native
-run moon test render --target native
-run moon test render/wgpu --target native
-run moon test backend/host --target native
+run moon test moui/core --target native
+run moon test moui/views --target native
+run moon test moui/render --target native
+run moon test moui/render/wgpu --target native
+run moon test moui/backend/host --target native
 
-run moon test render/webgpu_adapter --target wasm-gc
-run moon test backend/web --target wasm-gc
+run moon test moui/render/webgpu_adapter --target wasm-gc
+run moon test moui/backend/web --target wasm-gc
 
 run moon test examples/showcase/app --target native
 run moon test examples/markdown_editor/app --target native
@@ -64,7 +64,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
   case "$(uname -s)" in
     Darwin)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
-        run moon test backend/macos --target native
+        run moon test moui/backend/macos --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
@@ -74,7 +74,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
       ;;
     MINGW*|MSYS*|CYGWIN*)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
-        run moon test backend/windows --target native
+        run moon test moui/backend/windows --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
@@ -83,7 +83,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
       ;;
     Linux)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
-        run moon test backend/linux --target native
+        run moon test moui/backend/linux --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'

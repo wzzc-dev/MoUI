@@ -1,7 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
-  "moonbitlang/core/encoding/base64" @base64,
+  "moonbitlang/core/encoding/base64",
 }
 
 supported_targets = "wasm-gc"

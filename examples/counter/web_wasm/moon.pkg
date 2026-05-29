@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/backend/web" @web,
+  "wzzc-dev/moui/backend/web",
   "examples/counter/app" @counter_app,
 }
 
