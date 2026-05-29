@@ -620,6 +620,13 @@ pub(all) enum FontStyle {
   Italic
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct FormController {
+  fields : Array[FormFieldState]
+}
+pub fn FormController::field_error(Self, String) -> String
+pub fn FormController::new(fields~ : Array[FormFieldState]) -> Self
+pub fn FormController::validate(Self) -> FormValidationSummary
+
 pub(all) struct FormFieldError {
   name : String
   message : String
@@ -627,17 +634,35 @@ pub(all) struct FormFieldError {
 
 pub(all) struct FormFieldState {
   name : String
+  label : String
   value : State[String]
-  validator : (String) -> String?
+  rules : Array[FormValidationRule]
 }
 pub fn FormFieldState::binding(Self) -> Binding[String]
-pub fn FormFieldState::new(name~ : String, initial? : String, validator? : (String) -> String?) -> Self
+pub fn FormFieldState::new(name~ : String, initial? : String, label? : String, validator? : (String) -> String?, rules? : Array[FormValidationRule]) -> Self
 pub fn FormFieldState::validate(Self) -> FormFieldError?
 
 pub(all) struct FormValidationResult {
   valid : Bool
   errors : Array[FormFieldError]
+  summary : FormValidationSummary
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct FormValidationRule {
+  message : String
+  validate : (String) -> String?
+}
+pub fn FormValidationRule::from_validator((String) -> String?) -> Self
+pub fn FormValidationRule::new(message~ : String, validate~ : (String) -> Bool) -> Self
+pub fn FormValidationRule::required(message? : String) -> Self
+
+pub(all) struct FormValidationSummary {
+  valid : Bool
+  errors : Array[FormFieldError]
+  first_invalid_id : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationSummary::from_errors(Array[FormFieldError]) -> Self
+pub fn FormValidationSummary::from_fields(Array[FormFieldState]) -> Self
 
 pub(all) struct Frame {
   time_ms : Double
