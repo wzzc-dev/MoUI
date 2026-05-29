@@ -12,6 +12,7 @@ hide partial or gap status behind ready features.
 | --- | --- | --- | --- |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
+| Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 
 ## Counter
@@ -84,6 +85,15 @@ formatted editor surface as the primary workflow. Source preview remains
 available from the toolbar. See [Markdown Editor](markdown-editor.md) for the
 editing model, source/visual mapping, contextual commands, and validation
 guidance.
+
+## Settings
+
+The Settings example is a shared app package without platform entrypoints. It
+shows the recommended non-render shell for account preferences: a public sidebar
+constructor drives controlled section selection, form fields own validation
+messages in the app model, segmented controls choose light/dark/system theme
+mode, and `SaveableStateStore` snapshots restore the current settings without a
+host service.
 
 ## Web Wasm-GC
 
@@ -232,6 +242,7 @@ points:
 
 ```sh
 moon test examples/showcase/app --target native
+moon test examples/settings/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc

@@ -1,0 +1,58 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/settings/app"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn update(SettingsModel, SettingsMsg) -> SettingsModel
+
+pub fn view(SettingsModel) -> @core.View[SettingsMsg]
+
+// Errors
+
+// Types and methods
+pub struct SettingsApp {
+  unit : Unit
+}
+pub fn SettingsApp::new() -> Self
+pub fn SettingsApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub(all) struct SettingsModel {
+  selected_section : String
+  display_name : String
+  email : String
+  workspace : String
+  theme_mode : String
+  notifications : Bool
+  telemetry : Bool
+  saved_label : String
+}
+pub fn SettingsModel::from_store(@core.SaveableStateStore) -> Self
+pub fn SettingsModel::new() -> Self
+pub fn SettingsModel::restore_from_snapshot(@core.SaveableStateSnapshot) -> Self
+pub fn SettingsModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn SettingsModel::save_snapshot(Self) -> @core.SaveableStateSnapshot
+pub fn SettingsModel::update(Self, SettingsMsg) -> Self
+pub fn SettingsModel::view(Self) -> @core.View[SettingsMsg]
+pub fn SettingsModel::write_to_store(Self, @core.SaveableStateStore) -> Unit
+
+pub(all) enum SettingsMsg {
+  SelectSettingsSection(String)
+  DisplayNameChanged(String)
+  EmailChanged(String)
+  WorkspaceChanged(String)
+  ThemeModeSelected(String)
+  NotificationsChanged(Bool)
+  TelemetryChanged(Bool)
+  SaveSettings
+  ResetSettings
+}
+
+// Type aliases
+
+// Traits
+
