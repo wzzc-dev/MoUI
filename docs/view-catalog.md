@@ -62,6 +62,14 @@ fn view(draft : String) -> @core.View[Msg] {
 | `progress` | `views/controls.mbt` | Color params | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `tooltip` | `views/controls.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |
 
+## Forms
+
+| Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `form` / `form_section` | `views/form.mbt` | Theme spacing/surface | Group | `views/views_test.mbt` | Showcase Forms | Layout shells for grouped TEA-controlled fields. |
+| `form_field` | `views/form.mbt` | Theme typography/colors | Group with accessibility label | `views/views_test.mbt` | Showcase Forms | Composes label, required marker, helper text, validation message, disabled, and read-only states without renderer changes. |
+| `form_error` / `form_helper_text` | `views/form.mbt` | Theme typography/colors | Text | `views/views_test.mbt` | Showcase Forms | Reusable support text helpers for app-local form layouts. |
+
 ## Layout And Containers
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
