@@ -67,6 +67,21 @@ test "showcase navigation dialog and sheet state are wired" {
 }
 
 ///|
+test "showcase navigation shell demos use public constructors" {
+  let commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("navigation"))
+    .runtime(width=960.0, height=620.0)
+    .draw_commands()
+  assert_true(has_text(commands, "Navigation"))
+  assert_true(has_text(commands, "Catalog"))
+  assert_true(has_text(commands, "Navigation Shell"))
+  assert_true(has_text(commands, "Master Detail"))
+  assert_true(has_text(commands, "Wizard Step: Profile"))
+  assert_true(has_text(commands, "Permissions"))
+  assert_true(has_text(commands, "Review"))
+}
+
+///|
 test "showcase sidebar catalog scrolls to lower sections" {
   let app = @app.ShowcaseApp::new()
   let runtime = app.runtime(width=760.0, height=420.0)

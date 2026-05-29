@@ -17,6 +17,8 @@ pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, width? : Doub
 
 pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
+
 pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
@@ -111,6 +113,8 @@ pub fn[Msg] markdown_editor(String, (String) -> @core.RichTextDocument, on_input
 
 pub fn[Msg] markdown_editor_binding(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
+pub fn[Msg] master_detail(master~ : @core.View[Msg], detail~ : @core.View[Msg], master_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
+
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] multiline_text_area_shell(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double) -> @core.View[Msg]
@@ -169,6 +173,8 @@ pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPr
 
 pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : Msg?) -> @core.View[Msg]
 
+pub fn[Msg] sidebar(String, Array[SidebarItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
@@ -176,6 +182,8 @@ pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, 
 pub fn[Msg] snackbar(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]
+
+pub fn[Msg] split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], primary_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
 
@@ -213,6 +221,10 @@ pub fn[Msg] toggle_switch_binding(String, @core.Binding[Bool], foreground? : @co
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
 
+pub fn[Msg] wizard(Array[WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] wizard_step(WizardStep[Msg]) -> @core.View[Msg]
+
 // Errors
 
 // Types and methods
@@ -223,6 +235,13 @@ pub(all) enum BadgeTone {
   Warning
   Danger
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct BreadcrumbItem[Msg] {
+  id : String
+  label : String
+  message : Msg?
+}
+pub fn[Msg] BreadcrumbItem::new(id~ : String, label~ : String, message? : Msg?) -> Self[Msg]
 
 pub(all) enum ButtonVariant {
   Primary
@@ -316,6 +335,14 @@ pub(all) enum SegmentedControlSize {
   Regular
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct SidebarItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] SidebarItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
+
 pub(all) struct StateViewAction[Msg] {
   label : String
   message : Msg
@@ -347,6 +374,15 @@ pub(all) enum TextRole {
   Control
   Mono
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WizardStep[Msg] {
+  id : String
+  title : String
+  subtitle : String
+  content : @core.View[Msg]
+  enabled : Bool
+}
+pub fn[Msg] WizardStep::new(id~ : String, title~ : String, subtitle? : String, content~ : @core.View[Msg], enabled? : Bool) -> Self[Msg]
 
 // Type aliases
 

@@ -6,23 +6,23 @@ fn ShowcaseModel::catalog_shell(
   offset : Double,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
-  row(
-    [
-      self.sidebar(theme, metrics),
-      @views.navigation_stack_selected(
-        self.selected_section,
-        self.destinations(theme, metrics, offset, opacity),
-        fallback=section_panel(
-          theme,
-          "Missing section",
-          "The selected route is not in the Showcase catalog.",
-          text("Route: " + self.selected_section, width=280.0, height=28.0),
-          metrics~,
-        ),
-      ).frame(width=metrics.detail_width, height=metrics.panel_height),
-    ],
+  split_view(
+    primary=self.sidebar(theme, metrics),
+    detail=@views.navigation_stack_selected(
+      self.selected_section,
+      self.destinations(theme, metrics, offset, opacity),
+      fallback=section_panel(
+        theme,
+        "Missing section",
+        "The selected route is not in the Showcase catalog.",
+        text("Route: " + self.selected_section, width=280.0, height=28.0),
+        metrics~,
+      ),
+    ),
+    primary_width=metrics.sidebar_width,
+    detail_width=metrics.detail_width,
+    height=metrics.panel_height,
     spacing=theme.spacing_scale.lg,
-    align=@views.CrossAlign::Start,
   )
 }
 
@@ -121,8 +121,8 @@ fn showcase_sections() -> Array[ShowcaseSection] {
     },
     {
       route: "navigation",
-      title: "Navigation",
-      summary: "Stack, tabs, dialog, sheet",
+      title: "Navigation Shell",
+      summary: "Sidebar, split view, wizard, presentation",
       group: "Patterns",
     },
     {

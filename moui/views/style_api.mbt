@@ -158,6 +158,60 @@ pub fn DropdownState::new(
 }
 
 ///|
+pub(all) struct SidebarItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+
+///|
+pub(all) struct BreadcrumbItem[Msg] {
+  id : String
+  label : String
+  message : Msg?
+}
+
+///|
+pub(all) struct WizardStep[Msg] {
+  id : String
+  title : String
+  subtitle : String
+  content : @core.View[Msg]
+  enabled : Bool
+}
+
+///|
+pub fn[Msg] SidebarItem::new(
+  id~ : String,
+  label~ : String,
+  message~ : Msg,
+  enabled? : Bool = true,
+) -> SidebarItem[Msg] {
+  { id, label, message, enabled }
+}
+
+///|
+pub fn[Msg] BreadcrumbItem::new(
+  id~ : String,
+  label~ : String,
+  message? : Msg? = None,
+) -> BreadcrumbItem[Msg] {
+  { id, label, message }
+}
+
+///|
+pub fn[Msg] WizardStep::new(
+  id~ : String,
+  title~ : String,
+  subtitle? : String = "",
+  content~ : @core.View[Msg],
+  enabled? : Bool = true,
+) -> WizardStep[Msg] {
+  { id, title, subtitle, content, enabled }
+}
+
+///|
 fn ButtonVariant::style(
   self : ButtonVariant,
   theme : @core.Theme,

@@ -462,6 +462,65 @@ test "popover dropdown combobox and autocomplete compose menu surfaces" {
 }
 
 ///|
+test "navigation shell components compose sidebar breadcrumb split and wizard" {
+  let nav_items = [
+    @views.SidebarItem::new(id="home", label="Home", message=()),
+    @views.SidebarItem::new(id="settings", label="Settings", message=()),
+  ]
+  let crumbs = [
+    @views.BreadcrumbItem::new(id="root", label="Root", message=Some(())),
+    @views.BreadcrumbItem::new(id="current", label="Current"),
+  ]
+  let steps = [
+    @views.WizardStep::new(
+      id="first",
+      title="First",
+      content=@views.text("First content", width=180.0),
+    ),
+    @views.WizardStep::new(
+      id="second",
+      title="Second",
+      content=@views.text("Second content", width=180.0),
+      enabled=false,
+    ),
+  ]
+  let root : @core.View[Unit] = @views.column(
+    [
+      @views.breadcrumb(crumbs),
+      @views.split_view(
+        primary=@views.sidebar("Sections", nav_items, selected="settings"),
+        detail=@views.master_detail(
+          master=@views.text("Master", width=120.0),
+          detail=@views.text("Detail", width=160.0),
+          master_width=120.0,
+          detail_width=160.0,
+          height=80.0,
+        ),
+        primary_width=220.0,
+        detail_width=300.0,
+        height=180.0,
+      ),
+      @views.wizard(steps, current="first", on_select=_route => ()),
+    ],
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=760.0, height=620.0),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Root"))
+  assert_true(has_text(commands, "Current"))
+  assert_true(has_text(commands, "Sections"))
+  assert_true(has_text(commands, "Home"))
+  assert_true(has_text(commands, "Settings"))
+  assert_true(has_text(commands, "Master"))
+  assert_true(has_text(commands, "Detail"))
+  assert_true(has_text(commands, "First"))
+  assert_true(has_text(commands, "Second"))
+  assert_true(has_text(commands, "First content"))
+}
+
+///|
 test "card supports independent optional dimensions" {
   let root : @core.View[Unit] = @views.card(@views.text("Wide"), width=240.0)
   let runtime = @core.AppRuntime::new_view(
