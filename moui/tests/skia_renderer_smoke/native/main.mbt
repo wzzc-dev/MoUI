@@ -365,6 +365,33 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
         stroke_width=4.0,
       ),
     ),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=172.0, y=56.0)),
+          @core.PathVerb::QuadTo(
+            @core.Point::new(x=184.0, y=32.0),
+            @core.Point::new(x=196.0, y=56.0),
+          ),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(cyan())),
+      ),
+    ),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=200.0, y=56.0)),
+          @core.PathVerb::CubicTo(
+            @core.Point::new(x=202.0, y=32.0),
+            @core.Point::new(x=214.0, y=32.0),
+            @core.Point::new(x=214.0, y=56.0),
+          ),
+        ],
+        stroke=Some(@core.Brush::solid(@core.Color::black())),
+        stroke_width=3.0,
+      ),
+    ),
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
         text="Skia",
@@ -627,6 +654,24 @@ fn main {
         235,
         255,
         55,
+      )
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=181.0, y=44.0, width=7.0, height=6.0),
+        0,
+        255,
+        255,
+        255,
+        20,
+      )
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=202.0, y=36.0, width=12.0, height=18.0),
+        0,
+        0,
+        0,
+        255,
+        20,
       )
       assert_region_has_dark_pixel(
         frame,

@@ -294,7 +294,12 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     path.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    path
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("quadratic and cubic"),
   )
   assert_true(
     path
@@ -437,12 +442,11 @@ test "renderer command planner reports unbalanced advanced scopes" {
 ///|
 test "renderer capability follow ups stay focused on incomplete features" {
   let follow_ups = @render.renderer_feature_follow_ups()
-  assert_true(follow_ups.length() >= 4)
+  assert_true(follow_ups.length() >= 3)
   let mut has_transform = false
   let mut has_text_shaping = false
   let mut has_emoji_text = false
   let mut has_async_image = false
-  let mut has_skia_path_vector = false
   for entry in follow_ups {
     if entry.feature == @render.RendererFeature::Transform {
       has_transform = true
@@ -465,17 +469,11 @@ test "renderer capability follow ups stay focused on incomplete features" {
     if entry.feature == @render.RendererFeature::AsyncImage {
       has_async_image = true
     }
-    if entry.feature == @render.RendererFeature::PathVector {
-      has_skia_path_vector = entry
-        .status_for_backend(@render.RendererBackendKind::SkiaRasterNative)
-        .needs_follow_up()
-    }
   }
   assert_true(has_transform)
   assert_true(has_text_shaping)
   assert_true(has_emoji_text)
   assert_true(has_async_image)
-  assert_true(has_skia_path_vector)
 }
 
 ///|
