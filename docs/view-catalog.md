@@ -58,6 +58,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `searchbar` | `views/searchbar.mbt` | Color/font params | Search field | `views/views_test.mbt` | Showcase | TEA-first text input specialized for filtering and clear actions; `searchbar_binding` remains for advanced state. |
 | `picker` | `views/picker.mbt` | Color/font params | Picker | `views/views_test.mbt` | Showcase | TEA-first option picker; `picker_binding` remains for advanced state. |
 | `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `views/views_test.mbt` | Showcase | TEA-first date picker with min/max range enforcement; `datepicker_binding` remains for advanced state. |
+| `dropdown` / `combobox` / `autocomplete` | `views/popover.mbt` | ButtonStyle/TextFieldStyle/SurfaceStyle | Button/text field rows | `views/views_test.mbt` | Showcase Interaction Lab | Controlled floating menus built from overlays, scroll views, buttons, and text fields; expansion stays in the app model. |
 | `radio_group` / `checkbox_group` | `views/choice_controls.mbt` | Color/font params | Group with radio/checkbox children | `views/views_test.mbt` | Showcase Controls | TEA-first grouped selection built from `ChoiceItem` descriptors. |
 | `segmented_control` | `views/choice_controls.mbt` | ButtonStyle/SurfaceStyle | Tab-like group | `views/views_test.mbt` | Showcase Controls | Controlled single-selection segmented buttons. |
 | `chip` / `tag` / `filter_chip` / `choice_chip` | `views/choice_controls.mbt` | SurfaceStyle/ButtonStyle | Button or text roles | `views/views_test.mbt` | Showcase Controls | Compact selection and labeling controls. |
@@ -97,6 +98,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `frame` | `views/frame.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Constraint wrapper. |
 | `padding` / `padding_insets` | `views/padding.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | All examples | Ordered layout modifier wrappers. |
 | `stack` / `overlay` | `views/stack.mbt` | Child/modifier based | Children preserved | `views/views_test.mbt` | Showcase, Dialog host, Tooltip | Overlay layout primitives. |
+| `popover` | `views/popover.mbt` | SurfaceStyle | Anchor plus optional overlay content | `views/views_test.mbt` | Showcase Interaction Lab | View-level floating surface using existing stack, align, and surface primitives; no native menu service. |
 | `scroll_view` | `views/stack.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Showcase, Markdown Editor | Emits clip/offset behavior through core and can report wheel deltas through `on_scroll`. |
 | `grid` | `views/grid_list.mbt` | N/A | Children preserved | `views/views_test.mbt` | Showcase | Fixed-column layout. |
 | `list` | `views/grid_list.mbt` | N/A | List/list item roles through core | `views/views_test.mbt`, `core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout. |

@@ -118,6 +118,46 @@ pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> StateViewAc
 }
 
 ///|
+pub(all) struct MenuItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+
+///|
+pub(all) enum PopoverPlacement {
+  BottomStart
+  BottomEnd
+  TopStart
+  TopEnd
+}
+
+///|
+pub(all) struct DropdownState {
+  expanded : Bool
+  selected : String
+}
+
+///|
+pub fn[Msg] MenuItem::new(
+  id~ : String,
+  label~ : String,
+  message~ : Msg,
+  enabled? : Bool = true,
+) -> MenuItem[Msg] {
+  { id, label, message, enabled }
+}
+
+///|
+pub fn DropdownState::new(
+  expanded? : Bool = false,
+  selected? : String = "",
+) -> DropdownState {
+  { expanded, selected }
+}
+
+///|
 fn ButtonVariant::style(
   self : ButtonVariant,
   theme : @core.Theme,

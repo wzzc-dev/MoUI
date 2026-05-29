@@ -14,6 +14,7 @@ fn ShowcaseModel::interaction_lab_section(
         self.tooltip_demo_card(theme, card_width),
         self.file_drop_card(theme, card_width, self.last_drop_label),
         self.focus_shortcut_card(theme, card_width),
+        self.popover_dropdown_card(theme, card_width),
         self.variant_gallery_card(theme, card_width),
         self.image_lifecycle_card(theme, card_width),
       ],
@@ -133,6 +134,78 @@ fn ShowcaseModel::focus_shortcut_card(
     ),
     width~,
     height=136.0,
+    padding=theme.spacing_scale.md,
+  )
+}
+
+///|
+fn ShowcaseModel::popover_dropdown_card(
+  self : ShowcaseModel,
+  theme : @core.Theme,
+  width : Double,
+) -> @core.View[ShowcaseMsg] {
+  let items = [
+    @views.MenuItem::new(id="native", label="Native", message=PickerSelected("native")),
+    @views.MenuItem::new(id="web", label="Web", message=PickerSelected("web")),
+    @views.MenuItem::new(id="test", label="Test", message=PickerSelected("test"), enabled=false),
+  ]
+  showcase_soft_card(
+    theme,
+    column(
+      [
+        text("Popover + Dropdown", width=width - 32.0, height=24.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+        dropdown(
+          "Renderer",
+          items,
+          state=@views.DropdownState::new(expanded=true, selected=self.picker_value),
+          on_toggle=ToggleActive,
+          theme~,
+          width=width - 32.0,
+          max_height=92.0,
+        ),
+        combobox(
+          self.draft,
+          on_input=value => DraftChanged(value),
+          items,
+          expanded=self.active,
+          on_toggle=ToggleActive,
+          placeholder="Combobox",
+          theme~,
+          width=width - 32.0,
+          max_height=82.0,
+        ),
+        autocomplete(
+          self.filter,
+          on_input=value => FilterChanged(value),
+          items,
+          expanded=true,
+          placeholder="Autocomplete",
+          theme~,
+          width=width - 32.0,
+          max_height=82.0,
+        ),
+        popover(
+          anchor=button(
+            "Inline popover",
+            on_click=ToggleActive,
+            variant=@views.ButtonVariant::Tonal,
+            theme~,
+            width=160.0,
+          ),
+          content=text("Popover content", width=160.0, height=24.0),
+          expanded=true,
+          theme~,
+          width=190.0,
+          height=54.0,
+        ),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height=310.0,
     padding=theme.spacing_scale.md,
   )
 }
