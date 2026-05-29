@@ -11,7 +11,13 @@ pub fn[Msg] align(@core.View[Msg], alignment? : @core.Alignment) -> @core.View[M
 
 pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
 
+pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : Double, theme? : @core.Theme) -> @core.View[Msg]
 
@@ -49,7 +55,11 @@ pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? 
 
 pub fn[Msg] empty() -> @core.View[Msg]
 
+pub fn[Msg] empty_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn environment(theme? : @core.Theme) -> @core.Environment
+
+pub fn[Msg] error_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
@@ -88,6 +98,8 @@ pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state?
 pub fn light_theme() -> @core.Theme
 
 pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] markdown_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
@@ -153,9 +165,13 @@ pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height
 
 pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
+pub fn[Msg] snackbar(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]
 
 pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
+
+pub fn[Msg] stat_card(String, String, caption? : String, tone? : FeedbackTone, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] stepper(on_decrement~ : Msg, on_increment~ : Msg, label? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -177,6 +193,8 @@ pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeho
 
 pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale) -> @core.Theme
 
+pub fn[Msg] toast(String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] toggle(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] toggle_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
@@ -190,6 +208,14 @@ pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
 // Errors
 
 // Types and methods
+pub(all) enum BadgeTone {
+  Neutral
+  Accent
+  Success
+  Warning
+  Danger
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum ButtonVariant {
   Primary
   Tonal
@@ -213,6 +239,14 @@ pub(all) enum CrossAlign {
   Center
   End
   Stretch
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum FeedbackTone {
+  Neutral
+  Success
+  Warning
+  Danger
+  Info
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum FormFieldLayout {
@@ -252,6 +286,12 @@ pub(all) enum SegmentedControlSize {
   Compact
   Regular
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct StateViewAction[Msg] {
+  label : String
+  message : Msg
+}
+pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> Self[Msg]
 
 pub(all) enum SurfaceVariant {
   Base

@@ -394,6 +394,42 @@ test "grouped choice controls compose selections and chips" {
 }
 
 ///|
+test "feedback and state components compose visible status surfaces" {
+  let action = @views.StateViewAction::new(label="Retry", message=())
+  let root : @core.View[Unit] = @views.column(
+    [
+      @views.toast("Saved", tone=@views.FeedbackTone::Success),
+      @views.snackbar("Offline", action=Some(action)),
+      @views.banner("Heads up", "Sync is delayed", tone=@views.FeedbackTone::Warning),
+      @views.callout("Tip", "Use filters to narrow results"),
+      @views.empty_state("No items", "Create a first item", action=Some(action)),
+      @views.loading_state(),
+      @views.error_state("Failed", "Try again", action=Some(action)),
+      @views.row(
+        [
+          @views.badge("Beta", tone=@views.BadgeTone::Accent),
+          @views.stat_card("Views", "128", caption="Today"),
+        ],
+      ),
+    ],
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=680.0, height=760.0),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Saved"))
+  assert_true(has_text(commands, "Offline"))
+  assert_true(has_text(commands, "Retry"))
+  assert_true(has_text(commands, "Heads up"))
+  assert_true(has_text(commands, "No items"))
+  assert_true(has_text(commands, "Loading"))
+  assert_true(has_text(commands, "Failed"))
+  assert_true(has_text(commands, "Beta"))
+  assert_true(has_text(commands, "128"))
+}
+
+///|
 test "card supports independent optional dimensions" {
   let root : @core.View[Unit] = @views.card(@views.text("Wide"), width=240.0)
   let runtime = @core.AppRuntime::new_view(

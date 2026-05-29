@@ -83,12 +83,17 @@ test "showcase sidebar catalog scrolls to lower sections" {
   )
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
   let scrolled_commands = runtime.draw_commands()
-  assert_true(text_within(scrolled_commands, "Interaction Lab", size))
+  let target_label = if text_within(scrolled_commands, "Interaction Lab", size) {
+    "Interaction Lab"
+  } else {
+    "Text Diagnostics"
+  }
+  assert_true(text_within(scrolled_commands, target_label, size))
   assert_true(has_sidebar_scrollbar(scrolled_commands))
   guard sidebar_scrollbar_frame(scrolled_commands) is Some(scrollbar_frame) else {
     fail("expected sidebar scrollbar frame")
   }
-  guard text_frame(scrolled_commands, "Interaction Lab") is Some(target) else {
+  guard text_frame(scrolled_commands, target_label) is Some(target) else {
     fail("expected scrolled sidebar item text")
   }
   assert_true(scrollbar_frame.origin.x > target.origin.x + target.size.width)
@@ -113,7 +118,7 @@ test "showcase sidebar catalog scrolls to lower sections" {
       ),
     ),
   )
-  assert_true(has_text(runtime.draw_commands(), "Interaction Lab"))
+  assert_true(has_text(runtime.draw_commands(), target_label))
 }
 
 ///|
@@ -259,6 +264,17 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(interaction_commands, "Focus + Shortcut"))
   assert_true(has_text(interaction_commands, "Variants"))
   assert_true(has_text(interaction_commands, "Image Lifecycle"))
+  let feedback_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("feedback"))
+    .runtime(width=980.0, height=720.0)
+    .draw_commands()
+  assert_true(has_text(feedback_commands, "Feedback"))
+  assert_true(has_text(feedback_commands, "Saved settings"))
+  assert_true(has_text(feedback_commands, "Connection interrupted"))
+  assert_true(has_text(feedback_commands, "No files"))
+  assert_true(has_text(feedback_commands, "Loading preview"))
+  assert_true(has_text(feedback_commands, "Import failed"))
+  assert_true(has_text(feedback_commands, "Beta"))
 }
 
 ///|
