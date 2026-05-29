@@ -75,6 +75,15 @@ fn view(draft : String) -> @core.View[Msg] {
 | `empty_state` / `loading_state` / `error_state` | `views/feedback.mbt` | Tone colors/surface | Group | `views/views_test.mbt` | Showcase Feedback | Reusable workflow state panels using optional `StateViewAction`. |
 | `badge` / `stat_card` | `views/feedback.mbt` | Tone colors/surface | Text/group | `views/views_test.mbt` | Showcase Feedback | Compact metadata and metric cards. |
 
+## Data Display
+
+| Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `description_list` | `views/data_display.mbt` | Text/theme spacing | Group | `views/views_test.mbt` | Showcase Data | Term/detail metadata rows from `DescriptionItem` descriptors. |
+| `table` / `table_column` | `views/data_display.mbt` | Surface/text/border | Grid with row items | `views/views_test.mbt` | Showcase Data | Controlled text table with optional custom cell view, selected row, header, and empty state; sorting/resizing stay app-owned. |
+| `tree_view` / `tree_item` | `views/data_display.mbt` | Button/text | List/list item | `views/views_test.mbt` | Showcase Data | Controlled tree rendering from expanded ids and selected id; toggle/select messages are supplied by the app. |
+| `avatar` / `avatar_group` | `views/data_display.mbt` | Theme colors/image | Labeled image/text group | `views/views_test.mbt` | Showcase Data | Initials or image avatars plus compact overflow group. |
+
 ## Forms
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
