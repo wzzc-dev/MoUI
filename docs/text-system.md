@@ -67,9 +67,10 @@ carets, but any non-empty caret array must be monotonic and cover the input
 text before glyphs are accepted for atlas upload.
 
 The Cosmic provider loads platform emoji fallback font candidates when they are
-available, and uses the same caret derivation for measurement and native
-run-layout responses, so representative single-codepoint, variation-selector,
-and ZWJ emoji samples carry monotonic caret coverage before glyph atlas upload.
+available. For provider-fragile emoji diagnostics, it safe-maps representative
+single-codepoint, variation-selector, and ZWJ samples to equal-length layout
+text before shaping, so measurement and native run-layout responses keep
+monotonic caret coverage without claiming full emoji shaping parity.
 
 ## Web Wasm-GC
 
@@ -99,13 +100,13 @@ Remote font loading is intentionally outside the current backend contract.
   ZWJ/color emoji conformance, and full grapheme-cluster parity remain follow-up
   work. Native WGPU can preserve RGBA color glyph payloads through the provider
   protocol and glyph atlas path, with Cosmic platform emoji fallback candidate
-  loading, Cosmic color swash preservation, and a CoreText AppleColorEmoji RGBA
-  path covered by focused tests. Stable and diagnostic tests assert caret
-  counts, monotonicity, clamping, editor selection behavior, IME anchor
-  geometry, and provider fallback safety across mixed bidi, CJK,
+  loading, Cosmic color swash preservation, provider-safe emoji layout mapping,
+  and a CoreText AppleColorEmoji RGBA path covered by focused tests. Stable and
+  diagnostic tests assert caret counts, monotonicity, clamping, editor selection
+  behavior, IME anchor geometry, and provider fallback safety across mixed bidi, CJK,
   single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples;
   Cosmic run-layout tests additionally assert glyph output plus caret coverage
-  for those emoji samples. They do not claim full Unicode shaping parity.
+  through the safe-mapped layout path. They do not claim full Unicode shaping parity.
 - Focused text inputs expose MoUI's default copy, cut, paste, undo, redo, and
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste
