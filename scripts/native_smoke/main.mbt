@@ -537,6 +537,34 @@ fn main {
   }
   println("native smoke measured text bounds width")
   println(text_bounds.width())
+  if @native.skia_shaper_available() {
+    smoke_mark(b"skshaper available")
+    guard font.shape_text_utf8(smoke_text_bytes()) is Some(shaped_run) else {
+      fail_smoke("native SkShaper was available but did not shape text")
+    }
+    let shaped_glyph_count = shaped_run.glyph_count()
+    let shaped_glyphs = shaped_run.glyphs()
+    let shaped_positions = shaped_run.positions()
+    let shaped_clusters = shaped_run.clusters()
+    if shaped_glyph_count <= 0 ||
+      shaped_glyphs.length() != shaped_glyph_count ||
+      shaped_positions.length() != shaped_glyph_count ||
+      shaped_clusters.length() != shaped_glyph_count ||
+      shaped_glyphs[0].to_int() <= 0 ||
+      shaped_run.advance().x <= 0.0 {
+      fail_smoke("native SkShaper did not produce a valid shaped glyph run")
+    }
+    println("native smoke shaped glyph count")
+    println(shaped_glyph_count)
+    canvas.draw_glyphs(
+      shaped_glyphs,
+      shaped_positions,
+      font,
+      @skia.Paint::new(color=@skia.Color::black()),
+      origin=@skia.Point::new(0, 23),
+    )
+    smoke_mark(b"drew shaped text")
+  }
   canvas.draw_text_utf8(
     smoke_text_bytes(),
     @skia.Point::new(0, 31),

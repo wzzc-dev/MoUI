@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -41,6 +43,17 @@
 #include "include/core/SkSurface.h"
 #include "include/core/SkTypeface.h"
 #include "include/core/SkTypes.h"
+#if defined(SKIA_MBT_HAS_SKSHAPER) && __has_include("modules/skshaper/include/SkShaper.h")
+#include "modules/skshaper/include/SkShaper.h"
+#define SKIA_MBT_HAS_SKSHAPER_HEADERS 1
+#if !defined(SK_DISABLE_LEGACY_SKSHAPER_FUNCTIONS)
+#define SKIA_MBT_HAS_SKSHAPER_LEGACY 1
+#endif
+#if defined(__APPLE__) && __has_include("modules/skshaper/include/SkShaper_coretext.h")
+#include "modules/skshaper/include/SkShaper_coretext.h"
+#define SKIA_MBT_HAS_SKSHAPER_CORETEXT 1
+#endif
+#endif
 #include "include/codec/SkCodec.h"
 #include "include/codec/SkEncodedImageFormat.h"
 #include "include/encode/SkJpegEncoder.h"
@@ -228,6 +241,20 @@ struct MoonbitSkiaRectArray {
   MoonbitSkiaRect** buffer;
 };
 
+struct MoonbitSkiaInt32Array {
+  int32_t length;
+  int32_t* buffer;
+};
+
+struct MoonbitSkiaShapedTextRun {
+  int32_t glyph_count;
+  float advance_x;
+  float advance_y;
+  MoonbitSkiaGlyphIdArray* glyphs;
+  MoonbitSkiaPointArray* positions;
+  MoonbitSkiaInt32Array* clusters;
+};
+
 static uint32_t moonbit_skia_regular_object_header(
   uint32_t pointer_field_offset_words,
   uint32_t pointer_field_count,
@@ -342,6 +369,62 @@ static MoonbitSkiaRectArray* moonbit_skia_make_rect_array(
   array->length = length;
   array->buffer = buffer;
   return array;
+}
+
+static MoonbitSkiaInt32Array* moonbit_skia_make_int32_array(
+  int32_t length,
+  int32_t* buffer
+) {
+  MoonbitSkiaInt32Array* array = static_cast<MoonbitSkiaInt32Array*>(
+    moonbit_malloc(sizeof(MoonbitSkiaInt32Array))
+  );
+  Moonbit_object_header(array)->meta = moonbit_skia_regular_object_header(
+    static_cast<uint32_t>(offsetof(MoonbitSkiaInt32Array, buffer) >> 2),
+    1,
+    0
+  );
+  array->length = length;
+  array->buffer = buffer;
+  return array;
+}
+
+static MoonbitSkiaShapedTextRun* moonbit_skia_make_shaped_text_run(
+  int32_t glyph_count,
+  float advance_x,
+  float advance_y,
+  MoonbitSkiaGlyphIdArray* glyphs,
+  MoonbitSkiaPointArray* positions,
+  MoonbitSkiaInt32Array* clusters
+) {
+  MoonbitSkiaShapedTextRun* run = static_cast<MoonbitSkiaShapedTextRun*>(
+    moonbit_malloc(sizeof(MoonbitSkiaShapedTextRun))
+  );
+  Moonbit_object_header(run)->meta = moonbit_skia_regular_object_header(
+    static_cast<uint32_t>(offsetof(MoonbitSkiaShapedTextRun, glyphs) >> 2),
+    3,
+    0
+  );
+  run->glyph_count = glyph_count;
+  run->advance_x = advance_x;
+  run->advance_y = advance_y;
+  run->glyphs = glyphs;
+  run->positions = positions;
+  run->clusters = clusters;
+  return run;
+}
+
+static MoonbitSkiaShapedTextRun* moonbit_skia_make_empty_shaped_text_run() {
+  return moonbit_skia_make_shaped_text_run(
+    0,
+    0.0f,
+    0.0f,
+    moonbit_skia_make_glyph_id_array(0, moonbit_empty_int16_array),
+    moonbit_skia_make_point_array(
+      0,
+      reinterpret_cast<MoonbitSkiaPoint**>(moonbit_empty_ref_array)
+    ),
+    moonbit_skia_make_int32_array(0, moonbit_empty_int32_array)
+  );
 }
 
 #if defined(SKIA_MBT_HAS_SKIA)
@@ -1155,6 +1238,16 @@ extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_available(void) {
 #endif
 }
 
+extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_shaper_available(void) {
+#if defined(SKIA_MBT_HAS_SKIA) && \
+  defined(SKIA_MBT_HAS_SKSHAPER_HEADERS) && \
+  defined(SKIA_MBT_HAS_SKSHAPER_LEGACY)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
 #if defined(SKIA_MBT_HAS_SKIA)
 static SkFontMetrics moonbit_skia_get_font_metrics(MoonbitSkiaFont* wrapper) {
   SkFontMetrics metrics = {};
@@ -1162,6 +1255,160 @@ static SkFontMetrics moonbit_skia_get_font_metrics(MoonbitSkiaFont* wrapper) {
     wrapper->font->getMetrics(&metrics);
   }
   return metrics;
+}
+#endif
+
+#if defined(SKIA_MBT_HAS_SKIA) && \
+  defined(SKIA_MBT_HAS_SKSHAPER_HEADERS) && \
+  defined(SKIA_MBT_HAS_SKSHAPER_LEGACY)
+class MoonbitSkiaShaperRunHandler final : public SkShaper::RunHandler {
+public:
+  void beginLine() override {
+    max_run_ascent_ = 0.0f;
+    max_run_descent_ = 0.0f;
+    max_run_leading_ = 0.0f;
+  }
+
+  void runInfo(const RunInfo& info) override {
+    if (
+      info.glyphCount >
+      static_cast<size_t>(std::numeric_limits<int32_t>::max()) - total_glyph_count_
+    ) {
+      overflow_ = true;
+      return;
+    }
+    total_glyph_count_ += info.glyphCount;
+
+    SkFontMetrics metrics = {};
+    info.fFont.getMetrics(&metrics);
+    max_run_ascent_ = std::min(max_run_ascent_, metrics.fAscent);
+    max_run_descent_ = std::max(max_run_descent_, metrics.fDescent);
+    max_run_leading_ = std::max(max_run_leading_, metrics.fLeading);
+  }
+
+  void commitRunInfo() override {
+    if (overflow_) {
+      glyphs_.clear();
+      positions_.clear();
+      clusters_.clear();
+      return;
+    }
+    glyphs_.resize(total_glyph_count_);
+    positions_.resize(total_glyph_count_);
+    clusters_.resize(total_glyph_count_);
+  }
+
+  Buffer runBuffer(const RunInfo& info) override {
+    active_glyph_offset_ = next_glyph_offset_;
+    active_glyph_count_ = info.glyphCount;
+    active_point_ = current_position_;
+    active_advance_ = info.fAdvance;
+
+    if (
+      overflow_ ||
+      active_glyph_count_ == 0 ||
+      active_glyph_offset_ + active_glyph_count_ > glyphs_.size()
+    ) {
+      scratch_glyphs_.resize(std::max<size_t>(1, active_glyph_count_));
+      scratch_positions_.resize(std::max<size_t>(1, active_glyph_count_));
+      scratch_clusters_.resize(std::max<size_t>(1, active_glyph_count_));
+      return {
+        scratch_glyphs_.data(),
+        scratch_positions_.data(),
+        nullptr,
+        scratch_clusters_.data(),
+        active_point_
+      };
+    }
+
+    return {
+      glyphs_.data() + active_glyph_offset_,
+      positions_.data() + active_glyph_offset_,
+      nullptr,
+      clusters_.data() + active_glyph_offset_,
+      active_point_
+    };
+  }
+
+  void commitRunBuffer(const RunInfo&) override {
+    if (
+      overflow_ ||
+      active_glyph_count_ == 0 ||
+      active_glyph_offset_ + active_glyph_count_ > positions_.size()
+    ) {
+      return;
+    }
+
+    for (size_t i = 0; i < active_glyph_count_; ++i) {
+      size_t index = active_glyph_offset_ + i;
+      positions_[index] = SkPoint::Make(
+        positions_[index].x() + active_point_.x(),
+        positions_[index].y() + active_point_.y()
+      );
+    }
+    next_glyph_offset_ += active_glyph_count_;
+    current_position_ = SkPoint::Make(
+      current_position_.x() + active_advance_.x(),
+      current_position_.y() + active_advance_.y()
+    );
+  }
+
+  void commitLine() override {
+    advance_x_ = std::max(advance_x_, current_position_.x());
+    advance_y_ = current_position_.y();
+
+    float line_height = max_run_descent_ - max_run_ascent_ + max_run_leading_;
+    if (line_height > 0.0f) {
+      current_position_ = SkPoint::Make(0.0f, current_position_.y() + line_height);
+    }
+  }
+
+  bool ok() const {
+    return !overflow_ && !glyphs_.empty() && glyphs_.size() == next_glyph_offset_;
+  }
+
+  int32_t glyph_count() const {
+    if (glyphs_.size() > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
+      return std::numeric_limits<int32_t>::max();
+    }
+    return static_cast<int32_t>(glyphs_.size());
+  }
+
+  float advance_x() const { return advance_x_; }
+  float advance_y() const { return advance_y_; }
+
+  const std::vector<SkGlyphID>& glyphs() const { return glyphs_; }
+  const std::vector<SkPoint>& positions() const { return positions_; }
+  const std::vector<uint32_t>& clusters() const { return clusters_; }
+
+private:
+  std::vector<SkGlyphID> glyphs_;
+  std::vector<SkPoint> positions_;
+  std::vector<uint32_t> clusters_;
+  std::vector<SkGlyphID> scratch_glyphs_;
+  std::vector<SkPoint> scratch_positions_;
+  std::vector<uint32_t> scratch_clusters_;
+  size_t total_glyph_count_ = 0;
+  size_t next_glyph_offset_ = 0;
+  size_t active_glyph_offset_ = 0;
+  size_t active_glyph_count_ = 0;
+  SkPoint active_point_ = SkPoint::Make(0.0f, 0.0f);
+  SkVector active_advance_ = SkVector::Make(0.0f, 0.0f);
+  SkPoint current_position_ = SkPoint::Make(0.0f, 0.0f);
+  float max_run_ascent_ = 0.0f;
+  float max_run_descent_ = 0.0f;
+  float max_run_leading_ = 0.0f;
+  float advance_x_ = 0.0f;
+  float advance_y_ = 0.0f;
+  bool overflow_ = false;
+};
+
+static std::unique_ptr<SkShaper> moonbit_skia_make_shaper() {
+#if defined(SKIA_MBT_HAS_SKSHAPER_CORETEXT)
+  return SkShapers::CT::CoreText();
+#else
+  return SkShaper::MakePrimitive();
+#endif
 }
 #endif
 
@@ -1668,6 +1915,143 @@ moonbit_skia_font_text_glyph_x_positions_utf8(
   (void)origin;
   return moonbit_skia_make_float_array(0, moonbit_empty_float_array);
 #endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaShapedTextRun*
+moonbit_skia_font_shape_text_utf8(
+  MoonbitSkiaFont* wrapper,
+  moonbit_bytes_t text,
+  float width,
+  int32_t left_to_right
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->font == nullptr ||
+    text == nullptr ||
+    Moonbit_array_length(text) <= 0 ||
+    width <= 0.0f
+  ) {
+    return moonbit_skia_make_empty_shaped_text_run();
+  }
+#if defined(SKIA_MBT_HAS_SKIA) && \
+  defined(SKIA_MBT_HAS_SKSHAPER_HEADERS) && \
+  defined(SKIA_MBT_HAS_SKSHAPER_LEGACY)
+  std::unique_ptr<SkShaper> shaper = moonbit_skia_make_shaper();
+  if (shaper == nullptr) {
+    return moonbit_skia_make_empty_shaped_text_run();
+  }
+
+  MoonbitSkiaShaperRunHandler handler;
+  shaper->shape(
+    reinterpret_cast<const char*>(text),
+    static_cast<size_t>(Moonbit_array_length(text)),
+    *wrapper->font,
+    left_to_right != 0,
+    width,
+    &handler
+  );
+  if (!handler.ok()) {
+    return moonbit_skia_make_empty_shaped_text_run();
+  }
+
+  int32_t glyph_count = handler.glyph_count();
+  uint16_t* glyph_buffer = moonbit_make_string_raw(glyph_count);
+  MoonbitSkiaPoint** position_buffer = reinterpret_cast<MoonbitSkiaPoint**>(
+    moonbit_make_ref_array_raw(glyph_count)
+  );
+  int32_t* cluster_buffer = moonbit_make_int32_array_raw(glyph_count);
+  const std::vector<SkGlyphID>& glyphs = handler.glyphs();
+  const std::vector<SkPoint>& positions = handler.positions();
+  const std::vector<uint32_t>& clusters = handler.clusters();
+  for (int32_t i = 0; i < glyph_count; ++i) {
+    size_t index = static_cast<size_t>(i);
+    glyph_buffer[index] = static_cast<uint16_t>(glyphs[index]);
+    position_buffer[index] = moonbit_skia_make_point(
+      positions[index].x(),
+      positions[index].y()
+    );
+    cluster_buffer[index] = clusters[index] >
+      static_cast<uint32_t>(std::numeric_limits<int32_t>::max())
+        ? std::numeric_limits<int32_t>::max()
+        : static_cast<int32_t>(clusters[index]);
+  }
+  return moonbit_skia_make_shaped_text_run(
+    glyph_count,
+    handler.advance_x(),
+    handler.advance_y(),
+    moonbit_skia_make_glyph_id_array(glyph_count, glyph_buffer),
+    moonbit_skia_make_point_array(glyph_count, position_buffer),
+    moonbit_skia_make_int32_array(glyph_count, cluster_buffer)
+  );
+#else
+  (void)left_to_right;
+  return moonbit_skia_make_empty_shaped_text_run();
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_shaped_text_run_is_null(MoonbitSkiaShapedTextRun* run) {
+  return (
+    run == nullptr ||
+    run->glyph_count <= 0 ||
+    run->glyphs == nullptr ||
+    run->positions == nullptr ||
+    run->clusters == nullptr ||
+    run->glyphs->length != run->glyph_count ||
+    run->positions->length != run->glyph_count ||
+    run->clusters->length != run->glyph_count
+  );
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_shaped_text_run_glyph_count(MoonbitSkiaShapedTextRun* run) {
+  if (moonbit_skia_shaped_text_run_is_null(run)) {
+    return 0;
+  }
+  return run->glyph_count;
+}
+
+extern "C" MOONBIT_FFI_EXPORT float
+moonbit_skia_shaped_text_run_advance_x(MoonbitSkiaShapedTextRun* run) {
+  if (moonbit_skia_shaped_text_run_is_null(run)) {
+    return 0.0f;
+  }
+  return run->advance_x;
+}
+
+extern "C" MOONBIT_FFI_EXPORT float
+moonbit_skia_shaped_text_run_advance_y(MoonbitSkiaShapedTextRun* run) {
+  if (moonbit_skia_shaped_text_run_is_null(run)) {
+    return 0.0f;
+  }
+  return run->advance_y;
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaGlyphIdArray*
+moonbit_skia_shaped_text_run_glyphs(MoonbitSkiaShapedTextRun* run) {
+  if (moonbit_skia_shaped_text_run_is_null(run)) {
+    return moonbit_skia_make_glyph_id_array(0, moonbit_empty_int16_array);
+  }
+  return run->glyphs;
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaPointArray*
+moonbit_skia_shaped_text_run_positions(MoonbitSkiaShapedTextRun* run) {
+  if (moonbit_skia_shaped_text_run_is_null(run)) {
+    return moonbit_skia_make_point_array(
+      0,
+      reinterpret_cast<MoonbitSkiaPoint**>(moonbit_empty_ref_array)
+    );
+  }
+  return run->positions;
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaInt32Array*
+moonbit_skia_shaped_text_run_clusters(MoonbitSkiaShapedTextRun* run) {
+  if (moonbit_skia_shaped_text_run_is_null(run)) {
+    return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
+  }
+  return run->clusters;
 }
 
 #if defined(SKIA_MBT_HAS_SKIA)
