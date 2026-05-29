@@ -318,6 +318,12 @@ fn append_datepicker_commands(
       let is_selected = selected.year == year &&
         selected.month == month &&
         selected.day == day
+      let candidate = { ..selected, year, month, day }
+      let is_selectable = date_value_in_range(
+        candidate,
+        data.min_date,
+        data.max_date,
+      )
       let cell_rounded = RoundedRect::new(
         rect=cell_frame.inset(Insets::all(4.0)),
         radius=18.0,
@@ -327,7 +333,13 @@ fn append_datepicker_commands(
         commands.push(FillRoundedRect(cell_rounded, theme.palette.primary))
       }
 
-      let day_color = if is_selected { Color::white() } else { data.foreground }
+      let day_color = if is_selected {
+        Color::white()
+      } else if !is_selectable {
+        data.foreground.with_alpha(0.28)
+      } else {
+        data.foreground
+      }
 
       commands.push(
         DrawText(

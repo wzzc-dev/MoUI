@@ -542,13 +542,16 @@ fn handle_datepicker_element_pointer(
 
         let days_in_month_count = days_in_month(year, month)
         if day >= 1 && day <= days_in_month_count {
-          // 有效日期，选中它
           let selected = data.selected.get()
           let new_selected = { ..selected, year, month, day }
-          data.selected.set(new_selected)
-          element.control.datepicker_expanded = false
-          element.dirty.mark_paint()
-          { changed: true, activated: true, focused: None }
+          if date_value_in_range(new_selected, data.min_date, data.max_date) {
+            data.selected.set(new_selected)
+            element.control.datepicker_expanded = false
+            element.dirty.mark_paint()
+            { changed: true, activated: true, focused: None }
+          } else {
+            { changed: false, activated: false, focused: None }
+          }
         } else {
           { changed: false, activated: false, focused: None }
         }

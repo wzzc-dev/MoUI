@@ -57,7 +57,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `text_field` | `views/text_field.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`, core input tests | Showcase, Markdown Editor | TEA-first text input; use `text_field_binding` for component-local state. |
 | `searchbar` | `views/searchbar.mbt` | Color/font params | Search field | `views/views_test.mbt` | Showcase | TEA-first text input specialized for filtering and clear actions; `searchbar_binding` remains for advanced state. |
 | `picker` | `views/picker.mbt` | Color/font params | Picker | `views/views_test.mbt` | Showcase | TEA-first option picker; `picker_binding` remains for advanced state. |
-| `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `views/views_test.mbt` | Showcase | TEA-first date picker; `datepicker_binding` remains for advanced state. |
+| `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `views/views_test.mbt` | Showcase | TEA-first date picker with min/max range enforcement; `datepicker_binding` remains for advanced state. |
 | `slider` | `views/controls.mbt` | Color params | Slider | `views/views_test.mbt` | Showcase | Custom painted scalar control. |
 | `progress` | `views/controls.mbt` | Color params | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `tooltip` | `views/controls.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |

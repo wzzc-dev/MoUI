@@ -439,6 +439,47 @@ test "controlled checkbox picker and datepicker emit new value messages" {
 }
 
 ///|
+test "controlled datepicker ignores dates outside min max range" {
+  let date_program = Program::simple(
+    init=DateValue::new(year=2026, month=5, day=21),
+    update=(model, message) => {
+      match message {
+        ControlledDated(value) => value
+        _ => model
+      }
+    },
+    view=selected => {
+      View::flex(
+        children=[
+          View::controlled_datepicker(
+            selected~,
+            on_select=value => ControlledDated(value),
+            mode=DatePickerMode::Date,
+            placeholder="Date",
+            font=FontSpec::new(size=14.0),
+            foreground=Color::black(),
+            background=Brush::solid(Color::white()),
+            corner_radius=6.0,
+            min_date=Some(DateValue::new(year=2026, month=5, day=10)),
+            max_date=Some(DateValue::new(year=2026, month=5, day=31)),
+          ),
+        ],
+        axis=Axis::Vertical,
+      )
+    },
+  )
+  let date_runtime = AppRuntime::new_program(
+    program=date_program,
+    size=Size::new(width=320.0, height=240.0),
+  )
+  runtime_wbtest_click(date_runtime, x=10.0, y=10.0)
+  runtime_wbtest_click(date_runtime, x=300.0, y=148.0)
+  assert_true(has_draw_text(date_runtime.draw_commands(), "2026-5-21"))
+  runtime_wbtest_click(date_runtime, x=70.0, y=220.0)
+  assert_true(has_draw_text(date_runtime.draw_commands(), "2026-5-10"))
+}
+
+///|
 fn[Msg] runtime_test_label(text : String) -> View[Msg] {
   View::text(
     text~,
