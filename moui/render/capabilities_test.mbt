@@ -16,7 +16,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     image.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Ready,
   )
   assert_true(
     image
@@ -32,6 +32,16 @@ test "renderer capability report tracks draw command support" {
     image
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("data URI"),
+  )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("local PNG"),
+  )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("failed-image placeholders"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Rect)
     is Some(rect) else {

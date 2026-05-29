@@ -450,8 +450,17 @@ fn SkiaRasterRenderer::draw_image(
         sampling=@skia_mbt.SamplingOptions::linear(),
       )
     }
-    None => self.unsupported_command_count = self.unsupported_command_count + 1
+    None => self.draw_image_placeholder(canvas, run)
   }
+}
+
+///|
+fn SkiaRasterRenderer::draw_image_placeholder(
+  self : SkiaRasterRenderer,
+  canvas : @skia_native.Canvas,
+  run : @core.ImageRun,
+) -> Unit {
+  self.draw_brush_rect(canvas, run.frame, skia_image_placeholder_brush(run))
 }
 
 ///|
@@ -527,6 +536,19 @@ fn skia_image_data_uri_bytes(source : String) -> Bytes? {
   Some(@base64.decode(parts[1], ignore_whitespace=true)) catch {
     _ => None
   }
+}
+
+///|
+fn skia_image_placeholder_brush(run : @core.ImageRun) -> @core.Brush {
+  @core.Brush::linear_gradient(
+    start=run.frame.origin,
+    end=@core.Point::new(
+      x=run.frame.origin.x + run.frame.size.width,
+      y=run.frame.origin.y + run.frame.size.height,
+    ),
+    start_color=@core.Color::rgba(r=0.72, g=0.78, b=0.86, a=run.opacity),
+    end_color=@core.Color::rgba(r=0.42, g=0.50, b=0.62, a=run.opacity),
+  )
 }
 
 ///|

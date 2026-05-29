@@ -117,7 +117,7 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
       assert_true(
         shader.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
-      assert_true(image.status == @render.RendererFeatureStatus::Partial)
+      assert_true(image.status == @render.RendererFeatureStatus::Ready)
       assert_true(gradient.status == @render.RendererFeatureStatus::Ready)
       assert_true(path.status == @render.RendererFeatureStatus::Ready)
       assert_true(layer.status == @render.RendererFeatureStatus::Ready)
@@ -125,6 +125,8 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
       assert_true(filter.status == @render.RendererFeatureStatus::Ready)
       assert_true(shader.status == @render.RendererFeatureStatus::Ready)
       assert_true(image.note.contains("data URI"))
+      assert_true(image.note.contains("local PNG"))
+      assert_true(image.note.contains("failed-image placeholders"))
       assert_true(gradient.note.contains("fills and strokes"))
       assert_true(path.note.contains("quadratic and cubic"))
       assert_true(layer.note.contains("nested layer/filter"))

@@ -503,6 +503,8 @@ echo "Wrote temporary skia_mbt/native/moon.pkg with macOS Skia link flags."
 
 cat > "$renderer_pkg" <<EOF
 import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
