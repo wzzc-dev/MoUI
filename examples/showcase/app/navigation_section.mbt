@@ -94,16 +94,38 @@ fn ShowcaseModel::navigation_command_card(
     @views.MenuItem::new(id="overview", label="Overview", message=SelectSection("overview")),
     @views.MenuItem::new(id="data", label="Data", message=SelectSection("data")),
   ]
+  let command_sections = [
+    @views.CommandMenuSection::new(
+      title="File",
+      commands=[
+        @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
+        @core.ActionCommand::new(intent=@core.CommandIntent::Cancel, label="Archive", enabled=false),
+      ],
+    ),
+  ]
   surface(
     column(
       [
         toolbar(
           [
-            button_group(mode_items, selected=self.selected_section, theme~, button_width=96.0),
+            menu_bar(mode_items, active=self.selected_section, theme~, width=220.0),
             command_bar(commands, theme~, width=260.0),
           ],
           theme~,
           width=520.0,
+        ),
+        context_menu_region(
+          child=text("Context menu fallback", width=240.0, height=28.0)
+            .foreground(theme.palette.foreground),
+          menu=command_menu(
+            command_sections,
+            on_select=_intent => ToggleActive,
+            theme~,
+            width=260.0,
+            max_height=120.0,
+          ),
+          visible=self.active,
+          theme~,
         ),
         status_bar(["Ready", "3 commands", "Renderer neutral"], theme~, width=520.0),
       ],
@@ -111,7 +133,7 @@ fn ShowcaseModel::navigation_command_card(
       align=@views.CrossAlign::Start,
     ),
     width=520.0,
-    height=96.0,
+    height=156.0,
     variant=@views.SurfaceVariant::Base,
     theme~,
     padding=0.0,

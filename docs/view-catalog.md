@@ -25,6 +25,9 @@ remain in `views/*.mbt` and the generated public API summary in
   backend-specific events.
 - Platform-specific behavior should not be added in `views`; views preserve UI
   intent as `@core.View[Msg]` and eventual `@core.DrawCommand` data.
+- View-level menus (`menu_bar`, `command_menu`, `context_menu_region`) are
+  overlay and button compositions. Native context menus remain a host-service
+  concern through `HostServiceBridge::ShowMenu`.
 
 ```mbt nocheck
 enum Msg { DraftChanged(String); SubmitDraft }
@@ -62,6 +65,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `picker` | `views/picker.mbt` | Color/font params | Picker | `views/views_test.mbt` | Showcase | TEA-first option picker; `picker_binding` remains for advanced state. |
 | `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `views/views_test.mbt` | Showcase | TEA-first date picker with min/max range enforcement; `datepicker_binding` remains for advanced state. |
 | `dropdown` / `combobox` / `autocomplete` | `views/popover.mbt` | ButtonStyle/TextFieldStyle/SurfaceStyle | Button/text field rows | `views/views_test.mbt` | Showcase Interaction Lab | Controlled floating menus built from overlays, scroll views, buttons, and text fields; expansion stays in the app model. |
+| `menu_bar` / `command_menu` / `context_menu_region` | `views/menu_commands.mbt` | ButtonStyle/text/surface | Menu/group with actions | `views/views_test.mbt` | Showcase Navigation Shell | TEA-first menu surfaces over `MenuItem` and `@core.ActionCommand` metadata. Disabled commands render but do not dispatch, and fallback view menus use overlays while native context menus stay in host services. |
 | `radio_group` / `checkbox_group` | `views/choice_controls.mbt` | Color/font params | Group with radio/checkbox children | `views/views_test.mbt` | Showcase Controls | TEA-first grouped selection built from `ChoiceItem` descriptors. |
 | `segmented_control` | `views/choice_controls.mbt` | ButtonStyle/SurfaceStyle | Tab-like group | `views/views_test.mbt` | Showcase Controls | Controlled single-selection segmented buttons. |
 | `chip` / `tag` / `filter_chip` / `choice_chip` | `views/choice_controls.mbt` | SurfaceStyle/ButtonStyle | Button or text roles | `views/views_test.mbt` | Showcase Controls | Compact selection and labeling controls. |
