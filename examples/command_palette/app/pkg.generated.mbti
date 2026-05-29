@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/command_palette/app"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+}
+
+// Values
+pub fn action_command_map() -> @core.ActionCommandMap
+
+pub fn command_palette_commands() -> Array[@core.ActionCommand]
+
+pub fn command_sections() -> Array[@views.CommandMenuSection]
+
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn update(CommandPaletteModel, CommandPaletteMsg) -> CommandPaletteModel
+
+pub fn view(CommandPaletteModel) -> @core.View[CommandPaletteMsg]
+
+// Errors
+
+// Types and methods
+pub struct CommandPaletteApp {
+  unit : Unit
+}
+pub fn CommandPaletteApp::new() -> Self
+pub fn CommandPaletteApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub(all) struct CommandPaletteModel {
+  query : String
+  context_visible : Bool
+  dispatched : Array[String]
+  last_result : String
+}
+pub fn CommandPaletteModel::commands(Self) -> Array[@core.ActionCommand]
+pub fn CommandPaletteModel::dispatch_intent(Self, @core.CommandIntent) -> Self
+pub fn CommandPaletteModel::filtered_commands(Self) -> Array[@core.ActionCommand]
+pub fn CommandPaletteModel::new() -> Self
+pub fn CommandPaletteModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn CommandPaletteModel::update(Self, CommandPaletteMsg) -> Self
+pub fn CommandPaletteModel::view(Self) -> @core.View[CommandPaletteMsg]
+
+pub(all) enum CommandPaletteMsg {
+  QueryChanged(String)
+  CommandSelected(@core.CommandIntent)
+  ToggleContextMenu
+  HideContextMenu
+  ClearLog
+}
+
+// Type aliases
+
+// Traits
+

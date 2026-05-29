@@ -15,6 +15,7 @@ hide partial or gap status behind ready features.
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Table, tree filters, search, loading/error/empty states, selected row summary, model-level sort and pagination |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
+| Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 
 ## Counter
@@ -113,6 +114,14 @@ both immediate and pending mocked completions. Browser hosts commonly expose
 file names while native hosts can expose filesystem paths, so production apps
 should treat these strings as host-provided display or import handles rather
 than assuming one platform shape.
+
+## Command Palette
+
+The Command Palette example keeps command definitions in `ActionCommand`
+metadata, renders them through the public palette and command menu views, and
+uses `ActionCommandMap` for shortcut dispatch. Disabled commands stay visible
+for discoverability but do not dispatch through model actions or runtime command
+bindings.
 
 ## Web Wasm-GC
 
@@ -264,6 +273,7 @@ moon test examples/showcase/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
 moon test examples/file_importer/app --target native
+moon test examples/command_palette/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
