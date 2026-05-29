@@ -38,7 +38,6 @@ priv struct ElementControlState {
 
 ///|
 priv struct ElementComponentState {
-  mut component_child_spec : ViewSpec?
   mut component_subscriptions : Array[StateSubscription]
   mut component_effects : Array[ComponentEffect]
 }
@@ -151,15 +150,10 @@ fn ElementControlState::new() -> ElementControlState {
 
 ///|
 fn ElementComponentState::new(
-  child_spec~ : ViewSpec?,
   subscriptions~ : Array[StateSubscription],
   effects~ : Array[ComponentEffect],
 ) -> ElementComponentState {
-  {
-    component_child_spec: child_spec,
-    component_subscriptions: subscriptions,
-    component_effects: effects,
-  }
+  { component_subscriptions: subscriptions, component_effects: effects }
 }
 
 ///|
@@ -236,7 +230,6 @@ fn mount_view_spec_for_runtime(
   let id = ElementId::new(next_id)
   let mut next = next_id + 1
   let children : Array[ElementNode] = []
-  let mut component_child_spec : ViewSpec? = None
   let mut component_subscriptions : Array[StateSubscription] = []
   let mut component_effects : Array[ComponentEffect] = []
   match spec {
@@ -244,7 +237,6 @@ fn mount_view_spec_for_runtime(
       match runtime {
         Some(runtime) => {
           let built = build_component_spec(data.component, runtime, id, [], [])
-          component_child_spec = Some(built.child_spec)
           component_subscriptions = built.subscriptions
           component_effects = built.effects
           let mounted = mount_view_spec_for_runtime(
@@ -332,7 +324,6 @@ fn mount_view_spec_for_runtime(
       dirty: DirtyFlags::all(),
       control: ElementControlState::new(),
       component: ElementComponentState::new(
-        child_spec=component_child_spec,
         subscriptions=component_subscriptions,
         effects=component_effects,
       ),
@@ -498,7 +489,6 @@ fn ElementNode::rebuild_dirty_components(
         )
         self.component.component_subscriptions = built.subscriptions
         self.component.component_effects = built.effects
-        self.component.component_child_spec = Some(built.child_spec)
         let result = if self.children.length() > 0 {
           reconcile_element_for_runtime(
             self.children[0],
