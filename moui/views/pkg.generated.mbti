@@ -59,9 +59,13 @@ pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], 
 
 pub fn[Msg] command_bar(Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] command_menu(Array[CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
 pub fn component((@core.BuildContext) -> @core.View[Unit]) -> @core.View[Unit]
+
+pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
 
@@ -144,6 +148,8 @@ pub fn[Msg] markdown_editor(String, (String) -> @core.RichTextDocument, on_input
 pub fn[Msg] markdown_editor_binding(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] master_detail(master~ : @core.View[Msg], detail~ : @core.View[Msg], master_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] menu_bar(Array[MenuItem[Msg]], active? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -322,6 +328,12 @@ pub(all) struct ChoiceItem {
   id : String
   label : String
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct CommandMenuSection {
+  title : String
+  commands : Array[@core.ActionCommand]
+}
+pub fn CommandMenuSection::new(title~ : String, commands~ : Array[@core.ActionCommand]) -> Self
 
 pub(all) enum CrossAlign {
   Start

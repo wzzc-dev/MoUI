@@ -407,6 +407,10 @@ platform-specific event into app code.
 Keyboard shortcuts, menus, and host command responses share the
 `ActionCommand`/`CommandIntent` model. `ActionCommandMap` is the platform-neutral
 dispatcher for matching shortcuts and invoking enabled command handlers.
+The `views` package also provides view-level menu helpers over the same
+metadata: `menu_bar`, `command_menu`, and `context_menu_region` render buttons,
+rows, surfaces, and overlays as ordinary `View[Msg]` values. They are fallback
+or app-authored menu UI, not platform menu services.
 Copy, cut, and paste shortcuts are routed through `HostRuntimeDriver` with the
 active `HostServiceBridge` so focused text controls use the platform clipboard
 when that service is available, while app-level command handlers still run when

@@ -216,6 +216,12 @@ pub(all) struct MenuItem[Msg] {
 }
 
 ///|
+pub(all) struct CommandMenuSection {
+  title : String
+  commands : Array[@core.ActionCommand]
+}
+
+///|
 pub(all) enum PopoverPlacement {
   BottomStart
   BottomEnd
@@ -237,6 +243,14 @@ pub fn[Msg] MenuItem::new(
   enabled? : Bool = true,
 ) -> MenuItem[Msg] {
   { id, label, message, enabled }
+}
+
+///|
+pub fn CommandMenuSection::new(
+  title~ : String,
+  commands~ : Array[@core.ActionCommand],
+) -> CommandMenuSection {
+  { title, commands }
 }
 
 ///|

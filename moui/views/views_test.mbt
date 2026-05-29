@@ -1067,10 +1067,164 @@ test "file import panel renders empty and unavailable states" {
 }
 
 ///|
+test "menu bar and command menu render enabled disabled items" {
+  let sections = [
+    @views.CommandMenuSection::new(
+      title="File",
+      commands=[
+        @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
+        @core.ActionCommand::new(
+          intent=@core.CommandIntent::Cancel,
+          label="Close",
+          enabled=false,
+        ),
+      ],
+    ),
+  ]
+  let runtime = test_runtime(
+    @views.column([
+      @views.menu_bar([
+        @views.MenuItem::new(id="file", label="File", message=()),
+        @views.MenuItem::new(id="edit", label="Edit", message=(), enabled=false),
+      ], active="file"),
+      @views.command_menu(sections, on_select=_intent => (), width=280.0),
+    ]),
+  )
+  let draw = runtime.draw_commands()
+  assert_true(has_text(draw, "File"))
+  assert_true(has_text(draw, "Edit"))
+  assert_true(has_text(draw, "Save"))
+  assert_true(has_text(draw, "Close"))
+}
+
+///|
+test "command menu dispatches enabled command and ignores disabled command" {
+  let selected = Ref("")
+  let sections = [
+    @views.CommandMenuSection::new(
+      title="",
+      commands=[
+        @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
+        @core.ActionCommand::new(
+          intent=@core.CommandIntent::Cancel,
+          label="Cancel",
+          enabled=false,
+        ),
+      ],
+    ),
+  ]
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.command_menu(sections, on_select=intent => intent, width=280.0),
+    size=@core.Size::new(width=320.0, height=220.0),
+    on_message=Some(intent => selected.val = intent.display_label()),
+  )
+  guard text_frame(runtime.draw_commands(), "Save") is Some(save_frame) else {
+    fail("expected enabled command row")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=save_frame.origin.x + 4.0,
+          y=save_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=save_frame.origin.x + 4.0,
+          y=save_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.val, content="Submit")
+  selected.val = ""
+  guard text_frame(runtime.draw_commands(), "Cancel") is Some(cancel_frame) else {
+    fail("expected disabled command row")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=cancel_frame.origin.x + 4.0,
+          y=cancel_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=cancel_frame.origin.x + 4.0,
+          y=cancel_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.val, content="")
+}
+
+///|
+test "context menu region can render fallback view menu" {
+  let runtime = test_runtime(
+    @views.context_menu_region(
+      child=@views.text("Region"),
+      menu=@views.command_menu(
+        [
+          @views.CommandMenuSection::new(
+            title="Actions",
+            commands=[
+              @core.ActionCommand::new(
+                intent=@core.CommandIntent::Copy,
+                label="Copy Item",
+              ),
+            ],
+          ),
+        ],
+        on_select=_intent => (),
+        width=240.0,
+      ),
+      visible=true,
+    ),
+  )
+  let draw = runtime.draw_commands()
+  assert_true(has_text(draw, "Region"))
+  assert_true(has_text(draw, "Copy Item"))
+  let semantics = runtime.semantics()
+  guard find_semantics_label(semantics, "Context menu region") is Some(node) else {
+    fail("expected context menu region semantics")
+  }
+  assert_true(node.actions.any(action => action == @core.SemanticsAction::Expand))
+}
+
+///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
   })
+}
+
+///|
+fn text_frame(commands : Array[@core.DrawCommand], text : String) -> @core.Rect? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+        if value == text {
+          return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|
