@@ -321,6 +321,26 @@ pub fn IRect::y(self : IRect) -> Int {
 }
 
 ///|
+pub fn IRect::left(self : IRect) -> Int {
+  self.left
+}
+
+///|
+pub fn IRect::top(self : IRect) -> Int {
+  self.top
+}
+
+///|
+pub fn IRect::right(self : IRect) -> Int {
+  self.right
+}
+
+///|
+pub fn IRect::bottom(self : IRect) -> Int {
+  self.bottom
+}
+
+///|
 pub fn IRect::width(self : IRect) -> Int {
   self.right - self.left
 }
@@ -377,6 +397,16 @@ pub fn IRect::contains_rect(self : IRect, other : IRect) -> Bool {
   self.top <= other.top &&
   self.right >= other.right &&
   self.bottom >= other.bottom
+}
+
+///|
+pub fn IRect::intersects(self : IRect, other : IRect) -> Bool {
+  !self.is_empty() &&
+  !other.is_empty() &&
+  self.left < other.right &&
+  other.left < self.right &&
+  self.top < other.bottom &&
+  other.top < self.bottom
 }
 
 ///|
@@ -600,6 +630,26 @@ pub fn Rect::y(self : Rect) -> Scalar {
 }
 
 ///|
+pub fn Rect::left(self : Rect) -> Scalar {
+  self.left
+}
+
+///|
+pub fn Rect::top(self : Rect) -> Scalar {
+  self.top
+}
+
+///|
+pub fn Rect::right(self : Rect) -> Scalar {
+  self.right
+}
+
+///|
+pub fn Rect::bottom(self : Rect) -> Scalar {
+  self.bottom
+}
+
+///|
 pub fn Rect::width(self : Rect) -> Scalar {
   self.right - self.left
 }
@@ -635,8 +685,18 @@ pub fn Rect::top_left(self : Rect) -> Point {
 }
 
 ///|
+pub fn Rect::tl(self : Rect) -> Point {
+  self.top_left()
+}
+
+///|
 pub fn Rect::top_right(self : Rect) -> Point {
   Point::new(self.right, self.top)
+}
+
+///|
+pub fn Rect::tr(self : Rect) -> Point {
+  self.top_right()
 }
 
 ///|
@@ -645,8 +705,18 @@ pub fn Rect::bottom_right(self : Rect) -> Point {
 }
 
 ///|
+pub fn Rect::br(self : Rect) -> Point {
+  self.bottom_right()
+}
+
+///|
 pub fn Rect::bottom_left(self : Rect) -> Point {
   Point::new(self.left, self.bottom)
+}
+
+///|
+pub fn Rect::bl(self : Rect) -> Point {
+  self.bottom_left()
 }
 
 ///|
@@ -701,6 +771,16 @@ pub fn Rect::contains_rect(self : Rect, other : Rect) -> Bool {
   self.top <= other.top &&
   self.right >= other.right &&
   self.bottom >= other.bottom
+}
+
+///|
+pub fn Rect::intersects(self : Rect, other : Rect) -> Bool {
+  !self.is_empty() &&
+  !other.is_empty() &&
+  self.left < other.right &&
+  other.left < self.right &&
+  self.top < other.bottom &&
+  other.top < self.bottom
 }
 
 ///|
