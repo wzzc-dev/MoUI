@@ -173,6 +173,10 @@ fallback-safe Skia checks. Use `sh scripts/dev-check.sh --skia-real-smoke` only
 after configuring real native Skia link flags; that opt-in path also runs
 `moui/tests/skia_renderer_smoke/native` to verify MoUI `DrawCommand` rendering
 against captured Skia presenter pixels.
+On macOS, `scripts/macos-skia-renderer-smoke.sh` can temporarily wire Skia
+include/library paths into the local `skia_mbt` and MoUI packages, run the
+renderer pixel smoke, build `examples/showcase/macos_skia`, and restore the
+package files.
 
 ## Renderer Capability Tracking
 

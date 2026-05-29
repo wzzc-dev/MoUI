@@ -111,6 +111,20 @@ small `DrawCommand` frame through `render/skia` and verifies presenter pixels.
 The script builds those smoke packages and runs the produced native executables
 directly so failures propagate through the process exit status.
 
+On macOS, use the dedicated helper when you have a Skia checkout or binary
+package and want the helper to wire the temporary package link flags for you:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh \
+  --skia-include /path/to/skia \
+  --skia-lib-dir /path/to/skia/out/Static
+```
+
+It temporarily configures `.local_repos/skia_mbt/native`,
+`moui/tests/skia_renderer_smoke/native`, and `examples/showcase/macos_skia`,
+runs the MoUI renderer pixel smoke, builds the macOS Skia Showcase entrypoint,
+and restores all touched `moon.pkg` files before exiting.
+
 ## Preview Loop
 
 Use the lightweight preview loop when iterating on Showcase or another Web
