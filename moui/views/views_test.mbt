@@ -291,6 +291,50 @@ test "custom layout facade participates in layout" {
 }
 
 ///|
+test "flow responsive grid and baseline rows place children" {
+  let runtime = test_runtime(
+    @views.column([
+      @views.wrap(
+        [
+          @views.text("Chip A", width=72.0, height=20.0),
+          @views.text("Chip B", width=72.0, height=20.0),
+          @views.text("Chip C", width=72.0, height=20.0),
+        ],
+        width=160.0,
+        spacing=4.0,
+        row_spacing=6.0,
+      ),
+      @views.responsive_grid(
+        [
+          @views.text("Grid A", width=72.0, height=20.0),
+          @views.text("Grid B", width=72.0, height=20.0),
+          @views.text("Grid C", width=72.0, height=20.0),
+        ],
+        width=260.0,
+        min_column_width=100.0,
+        column_spacing=8.0,
+      ),
+      @views.baseline_form_rows(
+        [
+          @views.BaselineFormRow::new(
+            label=@views.text("Label", width=80.0, height=24.0),
+            control=@views.text_field("Value", on_input=_value => (), width=140.0),
+          ),
+        ],
+        width=260.0,
+        label_width=90.0,
+      ),
+    ]),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Chip A"))
+  assert_true(has_text(commands, "Chip C"))
+  assert_true(has_text(commands, "Grid B"))
+  assert_true(has_text(commands, "Label"))
+  assert_true(has_text(commands, "Value"))
+}
+
+///|
 test "center card and title render simple content" {
   let root : @core.View[Unit] = @views.center(
     @views.card(@views.text("Centered").title()),

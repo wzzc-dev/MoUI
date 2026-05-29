@@ -125,6 +125,46 @@ fn ShowcaseModel::layout_section(
       align=@views.CrossAlign::Center,
     )
   }
+  let responsive_demo = column(
+    [
+      flow(
+        [
+          tag("Wrap", theme~),
+          tag("Flow", theme~),
+          tag("Responsive", theme~),
+          tag("Baseline", theme~),
+        ],
+        width=260.0,
+        spacing=theme.spacing_scale.xs,
+        row_spacing=theme.spacing_scale.xs,
+      ),
+      responsive_grid(
+        [
+          self.layout_tile_sized(theme, "Grid One", 84.0, 32.0),
+          self.layout_tile_sized(theme, "Grid Two", 84.0, 32.0),
+          self.layout_tile_sized(theme, "Grid Three", 84.0, 32.0),
+        ],
+        width=300.0,
+        min_column_width=92.0,
+        row_spacing=theme.spacing_scale.xs,
+        column_spacing=theme.spacing_scale.xs,
+      ),
+      baseline_form_rows(
+        [
+          @views.BaselineFormRow::new(
+            label=text("Baseline label", role=@views.TextRole::Caption, theme~, width=100.0, height=24.0),
+            control=text_field("Aligned", on_input=value => DraftChanged(value), theme~, width=150.0),
+          ),
+        ],
+        width=300.0,
+        label_width=112.0,
+        row_spacing=theme.spacing_scale.xs,
+        column_spacing=theme.spacing_scale.sm,
+      ),
+    ],
+    spacing=theme.spacing_scale.sm,
+    align=@views.CrossAlign::Start,
+  )
   section_panel(
     theme,
     "Layout",
@@ -174,6 +214,7 @@ fn ShowcaseModel::layout_section(
         ),
         gallery_browser,
         advanced_layout_demos,
+        responsive_demo,
         resizable_panel(
           content=column(
             [
