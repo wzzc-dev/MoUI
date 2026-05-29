@@ -99,6 +99,8 @@ pub fn[Msg] form_error(String, theme? : @core.Theme, width? : Double) -> @core.V
 
 pub fn[Msg] form_field(label~ : String, child~ : @core.View[Msg], helper? : String, error? : String, status? : FormFieldStatus, layout? : FormFieldLayout, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] form_field_state(field~ : @core.FormFieldState, child~ : @core.View[Msg], helper? : String, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] form_helper_text(String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] form_section(title? : String, Array[@core.View[Msg]], summary? : String, spacing? : Double, theme? : @core.Theme, width? : Double, padding? : Double) -> @core.View[Msg]

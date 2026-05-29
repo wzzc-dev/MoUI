@@ -309,6 +309,27 @@ test "form validation display can hide support text" {
 }
 
 ///|
+test "form field state uses core validation errors" {
+  let field = @core.FormFieldState::new(
+    name="email",
+    label="Email",
+    rules=[@core.FormValidationRule::required(message="Email required")],
+  )
+  let root : @core.View[Unit] = @views.form_field_state(
+    field~,
+    child=@views.text_field(field.value.get(), on_input=_value => ()),
+    required=true,
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=420.0, height=140.0),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Email *"))
+  assert_true(has_text(commands, "Email required"))
+}
+
+///|
 test "enhanced input wrappers compose public controls" {
   let root : @core.View[Unit] = @views.form(
     [

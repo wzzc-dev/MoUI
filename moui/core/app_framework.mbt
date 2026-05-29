@@ -18,14 +18,16 @@ pub(all) struct RouterState {
 ///|
 pub(all) struct FormFieldState {
   name : String
+  label : String
   value : State[String]
-  validator : (String) -> String?
+  rules : Array[FormValidationRule]
 }
 
 ///|
 pub(all) struct FormValidationResult {
   valid : Bool
   errors : Array[FormFieldError]
+  summary : FormValidationSummary
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -33,6 +35,24 @@ pub(all) struct FormFieldError {
   name : String
   message : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct FormValidationRule {
+  message : String
+  validate : (String) -> String?
+}
+
+///|
+pub(all) struct FormValidationSummary {
+  valid : Bool
+  errors : Array[FormFieldError]
+  first_invalid_id : String?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct FormController {
+  fields : Array[FormFieldState]
+}
 
 ///|
 pub fn RouteLocation::new(
@@ -137,9 +157,13 @@ pub fn RouterState::pop(self : RouterState) -> Bool {
 pub fn FormFieldState::new(
   name~ : String,
   initial? : String = "",
+  label? : String = "",
   validator? : (String) -> String? = _value => None,
+  rules? : Array[FormValidationRule] = [],
 ) -> FormFieldState {
-  { name, value: State::new(initial), validator }
+  let collected = rules.copy()
+  collected.push(FormValidationRule::from_validator(validator))
+  { name, label, value: State::new(initial), rules: collected }
 }
 
 ///|
@@ -149,14 +173,49 @@ pub fn FormFieldState::binding(self : FormFieldState) -> Binding[String] {
 
 ///|
 pub fn FormFieldState::validate(self : FormFieldState) -> FormFieldError? {
-  match (self.validator)(self.value.get()) {
-    Some(message) => Some({ name: self.name, message })
-    None => None
+  let value = self.value.get()
+  for rule in self.rules {
+    match (rule.validate)(value) {
+      Some(message) => return Some({ name: self.name, message })
+      None => ()
+    }
   }
+  None
 }
 
 ///|
 pub fn validate_form(fields : Array[FormFieldState]) -> FormValidationResult {
+  let summary = FormValidationSummary::from_fields(fields)
+  { valid: summary.valid, errors: summary.errors, summary }
+}
+
+///|
+pub fn FormValidationRule::new(
+  message~ : String,
+  validate~ : (String) -> Bool,
+) -> FormValidationRule {
+  {
+    message,
+    validate: value => if validate(value) { None } else { Some(message) },
+  }
+}
+
+///|
+pub fn FormValidationRule::required(message? : String = "Required") -> FormValidationRule {
+  FormValidationRule::new(message~, validate=value => value != "")
+}
+
+///|
+pub fn FormValidationRule::from_validator(
+  validator : (String) -> String?,
+) -> FormValidationRule {
+  { message: "Invalid", validate: validator }
+}
+
+///|
+pub fn FormValidationSummary::from_fields(
+  fields : Array[FormFieldState],
+) -> FormValidationSummary {
   let errors : Array[FormFieldError] = []
   for field in fields {
     match field.validate() {
@@ -164,7 +223,42 @@ pub fn validate_form(fields : Array[FormFieldState]) -> FormValidationResult {
       None => ()
     }
   }
-  { valid: errors.length() == 0, errors }
+  FormValidationSummary::from_errors(errors)
+}
+
+///|
+pub fn FormValidationSummary::from_errors(
+  errors : Array[FormFieldError],
+) -> FormValidationSummary {
+  {
+    valid: errors.length() == 0,
+    errors,
+    first_invalid_id: if errors.length() == 0 { None } else { Some(errors[0].name) },
+  }
+}
+
+///|
+pub fn FormController::new(fields~ : Array[FormFieldState]) -> FormController {
+  { fields, }
+}
+
+///|
+pub fn FormController::validate(self : FormController) -> FormValidationSummary {
+  FormValidationSummary::from_fields(self.fields)
+}
+
+///|
+pub fn FormController::field_error(
+  self : FormController,
+  name : String,
+) -> String {
+  let summary = self.validate()
+  for error in summary.errors {
+    if error.name == name {
+      return error.message
+    }
+  }
+  ""
 }
 
 ///|
