@@ -162,6 +162,11 @@ fn yellow() -> @core.Color {
 }
 
 ///|
+fn gray(value : Double) -> @core.Color {
+  @core.Color::rgba(r=value, g=value, b=value)
+}
+
+///|
 fn one_pixel_red_png_data_uri() -> String {
   "data:image/png;base64," +
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
@@ -311,6 +316,54 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
         spread=0.0,
       ),
     ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=90.0, y=72.0, width=12.0, height=12.0),
+      gray(0.25),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(blend_mode=@core.BlendMode::Screen),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=90.0, y=72.0, width=12.0, height=12.0),
+      gray(0.5),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=108.0, y=72.0, width=12.0, height=12.0),
+      gray(0.75),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(blend_mode=@core.BlendMode::Overlay),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=108.0, y=72.0, width=12.0, height=12.0),
+      gray(0.25),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=126.0, y=72.0, width=12.0, height=12.0),
+      gray(0.25),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(blend_mode=@core.BlendMode::Darken),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=126.0, y=72.0, width=12.0, height=12.0),
+      gray(0.75),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=144.0, y=72.0, width=12.0, height=12.0),
+      gray(0.75),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(blend_mode=@core.BlendMode::Lighten),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=144.0, y=72.0, width=12.0, height=12.0),
+      gray(0.25),
+    ),
+    @core.DrawCommand::PopLayer,
     @core.DrawCommand::PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
@@ -444,6 +497,10 @@ fn main {
       )
       assert_pixel_near(frame, 69, 75, 115, 115, 115, 255, 50)
       assert_pixel_near(frame, 58, 75, 230, 230, 230, 255, 35)
+      assert_pixel_near(frame, 96, 78, 159, 159, 159, 255, 8)
+      assert_pixel_near(frame, 114, 78, 159, 159, 159, 255, 8)
+      assert_pixel_near(frame, 132, 78, 64, 64, 64, 255, 8)
+      assert_pixel_near(frame, 150, 78, 191, 191, 191, 255, 8)
       assert_pixel_near(frame, 44, 108, 128, 128, 255, 255, 8)
       assert_pixel(frame, 38, 108, 255, 255, 255, 255)
       assert_pixel_near(frame, 66, 110, 0, 0, 0, 255, 8)
