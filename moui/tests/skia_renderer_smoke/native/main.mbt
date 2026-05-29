@@ -280,6 +280,37 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
         spread=0.0,
       ),
     ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        opacity=0.5,
+        mask=@core.LayerMask::RectMask(
+          @core.Rect::new(x=40.0, y=104.0, width=8.0, height=8.0),
+        ),
+      ),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=36.0, y=100.0, width=16.0, height=16.0),
+      blue(),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=60.0, y=104.0, width=12.0, height=12.0),
+      red(),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(blend_mode=@core.BlendMode::Multiply),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=60.0, y=104.0, width=12.0, height=12.0),
+      cyan(),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.5)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=82.0, y=104.0, width=10.0, height=10.0),
+      red(),
+    ),
+    @core.DrawCommand::PopFilter,
   ]
 }
 
@@ -301,7 +332,7 @@ fn main {
   )
   guard (try? @skia_renderer.create_with_present_target(
       @render.RendererSurfaceMetrics::from_logical(
-        size=@core.Size::new(width=96.0, height=96.0),
+        size=@core.Size::new(width=128.0, height=128.0),
         scale_factor=1.0,
       ),
       target,
@@ -324,7 +355,7 @@ fn main {
 
   match captured.val {
     Some(frame) => {
-      if frame.width != 96 || frame.height != 96 || frame.row_bytes < 384 {
+      if frame.width != 128 || frame.height != 128 || frame.row_bytes < 512 {
         fail_smoke("MoUI Skia smoke frame dimensions are unexpected")
       }
       assert_pixel(frame, 0, 0, 255, 255, 255, 255)
@@ -353,6 +384,10 @@ fn main {
       )
       assert_pixel_near(frame, 69, 75, 115, 115, 115, 255, 50)
       assert_pixel_near(frame, 58, 75, 230, 230, 230, 255, 35)
+      assert_pixel_near(frame, 44, 108, 128, 128, 255, 255, 8)
+      assert_pixel(frame, 38, 108, 255, 255, 255, 255)
+      assert_pixel_near(frame, 66, 110, 0, 0, 0, 255, 8)
+      assert_pixel_near(frame, 86, 108, 128, 0, 0, 255, 8)
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")
