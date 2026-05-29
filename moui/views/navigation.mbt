@@ -52,6 +52,21 @@ pub fn[Msg] navigation_stack_selected(
 }
 
 ///|
+pub fn[Msg] router_stack(
+  router : @core.RouterState,
+  destinations : Array[NavigationDestination[Msg]],
+  fallback? : @core.View[Msg] = empty(),
+) -> @core.View[Msg] {
+  let location = router.current()
+  for destination in destinations {
+    if destination.route == location.path || destination.route == location.to_route() {
+      return destination.view
+    }
+  }
+  fallback
+}
+
+///|
 pub fn[Msg] tab_view(
   selected : String,
   tabs : Array[TabItem[Msg]],

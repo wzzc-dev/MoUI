@@ -18,6 +18,8 @@ pub fn required_field(message? : String) -> (String) -> String?
 
 pub fn resolve_gesture_arena(Array[GestureArenaMember]) -> GestureArenaResult
 
+pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
+
 pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, Rect, FontSpec, text_system? : TextSystem) -> Rect?
 
 pub fn rich_text_document_height(RichTextDocument, FontSpec) -> Double
@@ -1057,19 +1059,41 @@ pub(all) struct RoundedRect {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RoundedRect::new(rect~ : Rect, radius? : Double) -> Self
 
+pub(all) struct RouteDescriptor {
+  id : String
+  path : String
+  title : String
+  fallback : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
+
 pub(all) struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Self
+pub fn RouteLocation::param_value(Self, String) -> String?
+pub fn RouteLocation::params(Self) -> Array[RouteParam]
 pub fn RouteLocation::parse(String) -> Self
 pub fn RouteLocation::query_value(Self, String) -> String?
 pub fn RouteLocation::to_route(Self) -> String
+
+pub(all) struct RouteParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteParam::new(key~ : String, value~ : String) -> Self
 
 pub(all) struct RouteQueryParam {
   key : String
   value : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteQueryParam::new(key~ : String, value~ : String) -> Self
+
+pub(all) struct RouterSnapshot {
+  routes : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouterSnapshot::new(routes~ : Array[String]) -> Self
 
 pub(all) struct RouterState {
   navigation : NavigationState
@@ -1079,6 +1103,10 @@ pub fn RouterState::new(initial? : RouteLocation) -> Self
 pub fn RouterState::pop(Self) -> Bool
 pub fn RouterState::push(Self, RouteLocation) -> Unit
 pub fn RouterState::replace(Self, RouteLocation) -> Unit
+pub fn RouterState::resolve(Self, Array[RouteDescriptor]) -> RouteDescriptor?
+pub fn RouterState::restore(Self, RouterSnapshot) -> Unit
+pub fn RouterState::snapshot(Self) -> RouterSnapshot
+pub fn RouterState::stack(Self) -> Array[RouteLocation]
 
 pub(all) struct RuntimeInspectorSnapshot {
   size : Size

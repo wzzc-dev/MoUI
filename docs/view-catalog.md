@@ -128,6 +128,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | --- | --- | --- | --- | --- | --- | --- |
 | `navigation_destination` | `views/navigation.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase | Route/view pair for navigation stack. |
 | `navigation_stack` / `navigation_stack_selected` | `views/navigation.mbt` | Child-based | Selected child semantics | `views/views_test.mbt`, Showcase tests | Showcase | Selects a view from `NavigationState` or a TEA-owned route string. |
+| `router_stack` | `views/navigation.mbt` | Child-based | Selected child semantics | `views/views_test.mbt`, `core/app_framework_wbtest.mbt`, Showcase tests | Showcase | Selects destinations from `@core.RouterState`, preserving query params and restoration snapshots while staying above the renderer. |
 | `sidebar` / `breadcrumb` | `views/navigation.mbt` | ButtonStyle/text/surface | List/group | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | Controlled navigation shell helpers built from buttons, text, and surface primitives. |
 | `split_view` / `master_detail` | `views/navigation.mbt` | Child-based | Group | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | Fixed-width shell composition for master/detail layouts; v1 does not drag-resize panes. |
 | `wizard` / `wizard_step` | `views/navigation.mbt` | ButtonStyle/surface | Group with tab-like step buttons | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | Controlled wizard workflow using `WizardStep` descriptors and app-owned current step. |

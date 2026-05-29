@@ -11,6 +11,25 @@ pub(all) struct RouteQueryParam {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct RouteParam {
+  key : String
+  value : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RouteDescriptor {
+  id : String
+  path : String
+  title : String
+  fallback : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RouterSnapshot {
+  routes : Array[String]
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct RouterState {
   navigation : NavigationState
 }
@@ -63,6 +82,34 @@ pub fn RouteLocation::new(
 }
 
 ///|
+pub fn RouteParam::new(key~ : String, value~ : String) -> RouteParam {
+  { key, value }
+}
+
+///|
+pub fn RouteQueryParam::new(
+  key~ : String,
+  value~ : String,
+) -> RouteQueryParam {
+  { key, value }
+}
+
+///|
+pub fn RouteDescriptor::new(
+  id~ : String,
+  path~ : String,
+  title? : String = "",
+  fallback? : Bool = false,
+) -> RouteDescriptor {
+  { id, path, title, fallback }
+}
+
+///|
+pub fn RouterSnapshot::new(routes~ : Array[String]) -> RouterSnapshot {
+  { routes, }
+}
+
+///|
 pub fn RouteLocation::parse(value : String) -> RouteLocation {
   let parts = split_once(value, '?')
   match parts {
@@ -97,6 +144,19 @@ pub fn RouteLocation::query_value(
 }
 
 ///|
+pub fn RouteLocation::params(self : RouteLocation) -> Array[RouteParam] {
+  self.query.map(param => RouteParam::new(key=param.key, value=param.value))
+}
+
+///|
+pub fn RouteLocation::param_value(
+  self : RouteLocation,
+  key : String,
+) -> String? {
+  self.query_value(key)
+}
+
+///|
 pub fn RouteLocation::to_route(self : RouteLocation) -> String {
   if self.query.length() == 0 {
     self.path
@@ -120,6 +180,25 @@ pub fn RouterState::new(
 ///|
 pub fn RouterState::current(self : RouterState) -> RouteLocation {
   RouteLocation::parse(self.navigation.current())
+}
+
+///|
+pub fn RouterState::stack(self : RouterState) -> Array[RouteLocation] {
+  self.navigation.stack().map(route => RouteLocation::parse(route))
+}
+
+///|
+pub fn RouterState::snapshot(self : RouterState) -> RouterSnapshot {
+  RouterSnapshot::new(routes=self.navigation.stack())
+}
+
+///|
+pub fn RouterState::restore(self : RouterState, snapshot : RouterSnapshot) -> Unit {
+  if snapshot.routes.length() == 0 {
+    self.navigation.replace("/")
+  } else {
+    self.navigation.stack_slot.set(snapshot.routes.copy())
+  }
 }
 
 ///|
@@ -151,6 +230,31 @@ pub fn RouterState::replace(
 ///|
 pub fn RouterState::pop(self : RouterState) -> Bool {
   self.navigation.pop()
+}
+
+///|
+pub fn RouterState::resolve(
+  self : RouterState,
+  routes : Array[RouteDescriptor],
+) -> RouteDescriptor? {
+  resolve_route(self.current(), routes)
+}
+
+///|
+pub fn resolve_route(
+  location : RouteLocation,
+  routes : Array[RouteDescriptor],
+) -> RouteDescriptor? {
+  let mut fallback : RouteDescriptor? = None
+  for route in routes {
+    if route.path == location.path || route.id == location.path {
+      return Some(route)
+    }
+    if route.fallback && fallback is None {
+      fallback = Some(route)
+    }
+  }
+  fallback
 }
 
 ///|
