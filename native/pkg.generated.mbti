@@ -48,12 +48,14 @@ pub fn Canvas::draw_oval(Self, @skia_mbt.Rect, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_paint(Self, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_paint_shader(Self, Shader, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_path(Self, Path, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_path_shader(Self, Path, Shader, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_path_value(Self, @skia_mbt.Path, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_point(Self, @skia_mbt.Point, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_points(Self, Array[@skia_mbt.Point], @skia_mbt.Paint, mode? : @skia_mbt.PointMode) -> Unit
 pub fn Canvas::draw_rect(Self, @skia_mbt.Rect, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_rect_shader(Self, @skia_mbt.Rect, Shader, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_round_rect(Self, @skia_mbt.Rect, Float, Float, @skia_mbt.Paint) -> Unit
+pub fn Canvas::draw_round_rect_shader(Self, @skia_mbt.Rect, Float, Float, Shader, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_rrect(Self, @skia_mbt.RRect, @skia_mbt.Paint) -> Unit
 pub fn Canvas::draw_text_utf8(Self, Bytes, @skia_mbt.Point, Font, @skia_mbt.Paint) -> Unit
 pub fn Canvas::is_available(Self) -> Bool
