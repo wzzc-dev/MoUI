@@ -1,9 +1,5 @@
 ///|
 #cfg(any(target="native", target="llvm"))
-extern "c" fn exit_with_code(code : Int) -> Unit = "exit"
-
-///|
-#cfg(any(target="native", target="llvm"))
 #borrow(message)
 extern "c" fn smoke_mark(message : Bytes) -> Unit = "skia_mbt_native_smoke_mark"
 
@@ -14,16 +10,9 @@ fn smoke_mark(message : Bytes) -> Unit {
 }
 
 ///|
-#cfg(not(any(target="native", target="llvm")))
-fn exit_with_code(code : Int) -> Unit {
-  ignore(code)
-  abort("native smoke test must be run with --target native")
-}
-
-///|
 fn fail_smoke(message : String) -> Unit {
   println(message)
-  exit_with_code(1)
+  abort("native smoke test failed")
 }
 
 ///|
