@@ -100,8 +100,13 @@ macOS examples use the shared app package plus `backend/macos` and native
 ```sh
 moon build examples/showcase/macos --target native
 moon build examples/showcase/macos_cosmic --target native
+moon build examples/showcase/macos_skia --target native
 moon build examples/markdown_editor/macos --target native
 ```
+
+The `macos_skia` entrypoint selects the native Skia raster renderer explicitly.
+It requires the local Skia native link setup that makes `skia_mbt/native`
+available at runtime.
 
 Run the generated executable under `_build/native/debug/build/...` for the
 example you built. If `moon run` exposes linker issues, use the build-and-execute

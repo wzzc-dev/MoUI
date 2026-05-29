@@ -117,6 +117,13 @@ explicitly:
 moon build examples/showcase/macos_cosmic --target native
 ```
 
+Build the visual showcase with the native Skia raster renderer selected
+explicitly:
+
+```sh
+moon build examples/showcase/macos_skia --target native
+```
+
 Build and run the WYSIWYG Markdown editor:
 
 ```sh

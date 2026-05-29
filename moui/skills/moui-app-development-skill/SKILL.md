@@ -63,7 +63,8 @@ separate framework task using `moui-framework-development-skill`.
   entrypoints.
 - Showcase also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic`
   entrypoints when an app task needs explicit Moon Cosmic text-provider
-  comparison.
+  comparison, plus `macos_skia` when it needs explicit native Skia renderer
+  selection.
 - Treat Linux as a scaffold until the framework has a real Linux backend.
 
 ## Development Workflow
@@ -102,6 +103,7 @@ Native example builds:
 ```sh
 moon build examples/showcase/macos --target native
 moon build examples/showcase/macos_cosmic --target native
+moon build examples/showcase/macos_skia --target native
 moon build examples/showcase/windows --target native
 moon build examples/showcase/windows_cosmic --target native
 moon build examples/showcase/linux --target native

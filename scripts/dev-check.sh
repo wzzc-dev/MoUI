@@ -77,6 +77,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
         run moon build examples/showcase/macos --target native
+        run moon build examples/showcase/macos_skia --target native
         run moon build examples/markdown_editor/macos --target native
       fi
       ;;

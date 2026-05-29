@@ -106,11 +106,14 @@ Use this skill when editing or reviewing:
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
 - `render/wgpu/fontconfig/`: Linux fontconfig/HarfBuzz/FreeType scaffold.
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
+- `render/skia/`: native Skia raster renderer over the local `skia_mbt` binding.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
 - `examples/*/app`: shared application logic.
 - `examples/*/{web_wasm,macos,windows}`: platform entrypoints.
 - `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
   Cosmic text provider comparison entrypoints.
+- `examples/showcase/macos_skia`: explicit native Skia renderer showcase
+  entrypoint.
 
 ## Development Workflow
 

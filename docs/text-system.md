@@ -56,7 +56,8 @@ macOS, Windows, and Linux hosts choose the startup text engine through
 `PlatformDefault` composes the platform provider with Cosmic fallback;
 `MoonCosmic` selects the Cosmic provider directly. Showcase also has explicit
 `macos_cosmic`, `windows_cosmic`, and `linux_cosmic` entrypoints for comparing
-those paths.
+those paths. The separate `macos_skia` entrypoint selects the Skia renderer,
+not a text-provider variant.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
