@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/file_importer/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+}
+
+// Values
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn update(FileImporterModel, FileImporterMsg) -> FileImporterModel
+
+pub fn view(FileImporterModel) -> @core.View[FileImporterMsg]
+
+// Errors
+
+// Types and methods
+pub struct FileImporterApp {
+  unit : Unit
+}
+pub fn FileImporterApp::new() -> Self
+pub fn FileImporterApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub(all) struct FileImporterModel {
+  files : Array[ImportedFile]
+  status : FileImporterStatus
+  last_event : String
+  availability_reason : String
+}
+pub fn FileImporterModel::availability(Self) -> @views.FileImportAvailability
+pub fn FileImporterModel::new() -> Self
+pub fn FileImporterModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn FileImporterModel::selection(Self) -> @views.FileSelection
+pub fn FileImporterModel::update(Self, FileImporterMsg) -> Self
+pub fn FileImporterModel::update_with_services(Self, FileImporterMsg, @host.HostAppServices) -> Self
+pub fn FileImporterModel::view(Self) -> @core.View[FileImporterMsg]
+
+pub(all) enum FileImporterMsg {
+  FilesDropped(Array[String])
+  BrowseRequested
+  HostCompleted(@host.HostCompletedServiceResponse)
+  ClearSelection
+}
+
+pub(all) enum FileImporterStatus {
+  Ready
+  Pending(@host.HostServiceRequestId)
+  Unavailable(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ImportedFile {
+  path : String
+  source : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ImportedFile::new(path~ : String, source~ : String) -> Self
+
+// Type aliases
+
+// Traits
+
