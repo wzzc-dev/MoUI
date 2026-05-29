@@ -175,6 +175,7 @@ Real macOS Skia renderer smoke:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 scripts/macos-skia-renderer-smoke.sh --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
@@ -183,8 +184,8 @@ scripts/macos-skia-renderer-smoke.sh --skia-provider source
 
 The helper resolves JetBrains, existing, or source-built Skia providers,
 temporarily configures the local `skia_mbt` and MoUI Skia smoke packages, runs
-the renderer pixel smoke, builds `examples/showcase/macos_skia`, and restores
-touched `moon.pkg` files.
+the renderer pixel smoke, optionally launches `examples/showcase/macos_skia` to
+verify its first presented frame, and restores touched `moon.pkg` files.
 
 Public API review:
 

@@ -33,9 +33,15 @@ Options:
                          paths are resolved from the repository root.
   --smoke-log PATH       Write MoUI renderer smoke output to PATH. Relative
                          paths are resolved from the repository root.
+  --showcase-log PATH    Write macos_skia Showcase smoke output to PATH.
+                         Relative paths are resolved from the repository root.
   --no-sync-deps         Skip python3 tools/git-sync-deps for source provider.
   --no-fetch             Reuse an existing Skia checkout for source provider.
   --skip-showcase-build  Only run the renderer pixel smoke.
+  --run-showcase-smoke   After building macos_skia, run it with a first-frame
+                         exit flag and verify the renderer-present marker.
+  --showcase-timeout SECONDS
+                         Seconds to wait for --run-showcase-smoke. Default: 20.
   --dry-run-config       Print resolved paths and flags, then exit without
                          rewriting package files or building executables.
   -h, --help             Show this help.
@@ -80,9 +86,12 @@ if [[ -n "${SKIA_MBT_EXTRA_LINK_FLAGS:-}" ]]; then
 fi
 requested_build_log=""
 requested_smoke_log=""
+requested_showcase_log=""
 sync_deps=1
 fetch_repo=1
 skip_showcase_build=0
+run_showcase_smoke=0
+showcase_timeout=20
 dry_run_config=0
 
 while [[ $# -gt 0 ]]; do
@@ -147,6 +156,10 @@ while [[ $# -gt 0 ]]; do
       requested_smoke_log="${2:-}"
       shift 2
       ;;
+    --showcase-log)
+      requested_showcase_log="${2:-}"
+      shift 2
+      ;;
     --no-sync-deps)
       sync_deps=0
       shift
@@ -158,6 +171,14 @@ while [[ $# -gt 0 ]]; do
     --skip-showcase-build)
       skip_showcase_build=1
       shift
+      ;;
+    --run-showcase-smoke)
+      run_showcase_smoke=1
+      shift
+      ;;
+    --showcase-timeout)
+      showcase_timeout="${2:-}"
+      shift 2
       ;;
     --dry-run-config)
       dry_run_config=1
@@ -185,7 +206,9 @@ showcase_pkg="$repo_root/examples/showcase/macos_skia/moon.pkg"
 showcase_pkg_backup="$showcase_pkg.moui-smoke.bak"
 build_log=""
 smoke_log=""
+showcase_log=""
 smoke_log_is_temporary=0
+showcase_log_is_temporary=0
 
 resolve_path() {
   local path="$1"
@@ -258,6 +281,20 @@ fi
 
 if [[ -n "$requested_smoke_log" ]]; then
   smoke_log="$(resolve_path "$requested_smoke_log")"
+fi
+
+if [[ -n "$requested_showcase_log" ]]; then
+  showcase_log="$(resolve_path "$requested_showcase_log")"
+fi
+
+if [[ $run_showcase_smoke -eq 1 && $skip_showcase_build -eq 1 ]]; then
+  echo "--run-showcase-smoke cannot be combined with --skip-showcase-build" >&2
+  exit 2
+fi
+
+if ! [[ "$showcase_timeout" =~ ^[0-9]+$ ]] || [[ "$showcase_timeout" -lt 1 ]]; then
+  echo "--showcase-timeout must be a positive integer number of seconds" >&2
+  exit 2
 fi
 
 source_build_args=()
@@ -408,7 +445,14 @@ echo "  showcase_link_flags=$showcase_link_flags"
 if [[ -n "$smoke_log" ]]; then
   echo "  smoke_log=$smoke_log"
 fi
+if [[ -n "$showcase_log" ]]; then
+  echo "  showcase_log=$showcase_log"
+fi
 echo "  skip_showcase_build=$skip_showcase_build"
+echo "  run_showcase_smoke=$run_showcase_smoke"
+if [[ $run_showcase_smoke -eq 1 ]]; then
+  echo "  showcase_timeout=$showcase_timeout"
+fi
 
 if [[ $dry_run_config -eq 1 ]]; then
   if [[ "$skia_provider" == "source" ]]; then
@@ -421,6 +465,9 @@ fi
 restore_packages() {
   if [[ $smoke_log_is_temporary -eq 1 && -n "${smoke_log:-}" && -f "$smoke_log" ]]; then
     rm -f "$smoke_log"
+  fi
+  if [[ $showcase_log_is_temporary -eq 1 && -n "${showcase_log:-}" && -f "$showcase_log" ]]; then
+    rm -f "$showcase_log"
   fi
   if [[ -f "$native_pkg_backup" ]]; then
     cp "$native_pkg_backup" "$native_pkg"
@@ -477,6 +524,7 @@ echo "Wrote temporary MoUI renderer smoke package link flags."
 
 cat > "$showcase_pkg" <<EOF
 import {
+  "moonbitlang/core/env",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/render",
   "examples/showcase/app",
@@ -535,7 +583,45 @@ if [[ $skip_showcase_build -eq 0 ]]; then
   if [[ -x "$showcase_exe" ]]; then
     echo "Built macos_skia showcase executable: $showcase_exe"
   else
-    echo "Built examples/showcase/macos_skia; executable path is managed by moon build output."
+    echo "macos_skia showcase executable was not produced at $showcase_exe" >&2
+    exit 1
+  fi
+
+  if [[ $run_showcase_smoke -eq 1 ]]; then
+    echo "Running macos_skia first-frame smoke executable: $showcase_exe"
+    if [[ -z "$showcase_log" ]]; then
+      showcase_log="$(mktemp "${TMPDIR:-/tmp}/moui-macos-skia-showcase-smoke.XXXXXX.log")"
+      showcase_log_is_temporary=1
+    else
+      mkdir -p "$(dirname "$showcase_log")"
+      : > "$showcase_log"
+    fi
+
+    set +e
+    MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 "$showcase_exe" >"$showcase_log" 2>&1 &
+    showcase_pid=$!
+    (
+      sleep "$showcase_timeout"
+      if kill -0 "$showcase_pid" 2>/dev/null; then
+        echo "macos_skia Showcase smoke timed out after ${showcase_timeout}s" >>"$showcase_log"
+        kill "$showcase_pid" 2>/dev/null
+      fi
+    ) &
+    watchdog_pid=$!
+    wait "$showcase_pid"
+    showcase_status=$?
+    kill "$watchdog_pid" 2>/dev/null
+    wait "$watchdog_pid" 2>/dev/null
+    cat "$showcase_log"
+    set -e
+    if [[ $showcase_status -ne 0 ]]; then
+      exit "$showcase_status"
+    fi
+    if ! grep -Fq "macOS renderer presented first frame; exiting by request" "$showcase_log"; then
+      echo "macos_skia Showcase smoke did not print the expected first-frame marker" >&2
+      exit 1
+    fi
+    echo "Verified macos_skia Showcase first-frame smoke marker."
   fi
 fi
 
