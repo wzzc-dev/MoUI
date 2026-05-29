@@ -1352,6 +1352,19 @@ pub fn Canvas::draw_path(
 }
 
 ///|
+pub fn Canvas::draw_path_shader(
+  self : Canvas,
+  path : Path,
+  shader : Shader,
+  paint : @skia.Paint,
+) -> Unit {
+  ignore(self)
+  ignore(path)
+  ignore(shader)
+  ignore(paint)
+}
+
+///|
 pub fn Canvas::draw_path_value(
   self : Canvas,
   path : @skia.Path,
@@ -1410,6 +1423,23 @@ pub fn Canvas::draw_rect_shader(
 ) -> Unit {
   ignore(self)
   ignore(rect)
+  ignore(shader)
+  ignore(paint)
+}
+
+///|
+pub fn Canvas::draw_round_rect_shader(
+  self : Canvas,
+  rect : @skia.Rect,
+  rx : Float,
+  ry : Float,
+  shader : Shader,
+  paint : @skia.Paint,
+) -> Unit {
+  ignore(self)
+  ignore(rect)
+  ignore(rx)
+  ignore(ry)
   ignore(shader)
   ignore(paint)
 }
