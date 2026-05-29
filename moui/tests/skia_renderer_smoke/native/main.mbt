@@ -873,6 +873,9 @@ fn assert_skia_text_system_carets(
       "Skia smoke text system final caret does not match measured width",
     )
   }
+  if layout.baseline <= 0.0 || layout.size.height < layout.baseline {
+    fail_smoke("Skia smoke text system did not use valid font metrics")
+  }
   if layout.caret_positions[1] <= 0.0 ||
     layout.caret_positions[2] <= layout.caret_positions[1] {
     fail_smoke("Skia smoke text system did not return measured prefix carets")

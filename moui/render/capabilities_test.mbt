@@ -367,6 +367,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_text_note.contains("FontSpec"))
   assert_true(skia_text_note.contains("FontMgr"))
   assert_true(skia_text_note.contains("weight"))
+  assert_true(skia_text_note.contains("baseline"))
   assert_true(skia_text_note.contains("caret positions"))
   assert_true(skia_text_note.contains("SkShaper"))
   guard @render.renderer_feature_capability(@render.RendererFeature::EmojiText)
