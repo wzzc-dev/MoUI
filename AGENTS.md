@@ -170,7 +170,9 @@ moon test moui/render/wgpu --target native
 
 If a change touches `render/skia/` or `.local_repos/skia_mbt`, also run the
 fallback-safe Skia checks. Use `sh scripts/dev-check.sh --skia-real-smoke` only
-after configuring real native Skia link flags.
+after configuring real native Skia link flags; that opt-in path also runs
+`moui/tests/skia_renderer_smoke/native` to verify MoUI `DrawCommand` rendering
+against captured Skia presenter pixels.
 
 ## Renderer Capability Tracking
 

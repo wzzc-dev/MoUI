@@ -108,6 +108,13 @@ The `macos_skia` entrypoint selects the native Skia raster renderer explicitly.
 It requires the local Skia native link setup that makes `skia_mbt/native`
 available at runtime.
 
+After configuring real Skia link flags, run the opt-in real-Skia check to verify
+both the binding smoke and MoUI renderer presenter pixels:
+
+```sh
+sh scripts/dev-check.sh --skia-real-smoke
+```
+
 Run the generated executable under `_build/native/debug/build/...` for the
 example you built. If `moon run` exposes linker issues, use the build-and-execute
 flow described in `platform-notes.md`.

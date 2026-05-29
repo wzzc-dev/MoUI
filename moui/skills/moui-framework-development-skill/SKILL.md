@@ -108,6 +108,8 @@ Use this skill when editing or reviewing:
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
 - `render/skia/`: native Skia raster renderer over the local `skia_mbt` binding.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
+- `tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
+  verifies MoUI draw commands against captured Skia presenter pixels.
 - `examples/*/app`: shared application logic.
 - `examples/*/{web_wasm,macos,windows}`: platform entrypoints.
 - `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
