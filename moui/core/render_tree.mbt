@@ -1,19 +1,4 @@
 ///|
-fn ElementNode::render(self : ElementNode, bounds : Rect) -> RenderNode {
-  self.render_with_focus(self.place(bounds), None)
-}
-
-///|
-fn ElementNode::render_focused(
-  self : ElementNode,
-  bounds : Rect,
-  focused~ : ElementId?,
-  environment? : Environment = Environment::default(),
-) -> RenderNode {
-  self.render_with_focus(self.place(bounds), focused, environment~)
-}
-
-///|
 fn RenderNode::collect_draw_commands(
   self : RenderNode,
   commands : Array[DrawCommand],
@@ -27,20 +12,6 @@ fn RenderNode::collect_draw_commands(
   for command in self.post_paint_commands {
     commands.push(command)
   }
-}
-
-///|
-fn ElementNode::render_with_focus(
-  self : ElementNode,
-  placed : PlacedNode,
-  focused : ElementId?,
-  environment? : Environment = Environment::default(),
-) -> RenderNode {
-  self.render_with_environment(
-    placed,
-    focused,
-    RenderEnvironment::from_environment(environment),
-  )
 }
 
 ///|
