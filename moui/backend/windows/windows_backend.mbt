@@ -206,6 +206,48 @@ pub fn windows_accessibility_bridge(
 }
 
 ///|
+pub fn windows_host_info() -> @host.HostAppInfo {
+  @host.HostAppInfo::new(
+    backend=@host.HostBackendKind::Native,
+    description="Windows Win32 window host with wgpu-native surface",
+  )
+}
+
+///|
+pub fn windows_input_capabilities() -> @host.HostInputCapabilities {
+  @host.HostInputCapabilities::new(
+    pointer=true,
+    scroll=true,
+    keyboard=true,
+    focus=true,
+    text_input=true,
+    ime=true,
+    clipboard=true,
+    drag_drop=true,
+  )
+}
+
+///|
+pub fn windows_capability_summary(
+  services? : @host.HostServiceCapabilities = windows_service_bridge().capabilities,
+) -> @host.HostCapabilitySummary {
+  @host.HostCapabilitySummary::from_contracts(
+    info=windows_host_info(),
+    services~,
+    input=windows_input_capabilities(),
+    label="Windows host",
+    window_lifecycle=true,
+    multi_window=true,
+    text_input_ready=true,
+    ime_ready=true,
+    drag_drop_ready=true,
+    async_services=false,
+    native_accessibility_ready=windows_accessibility_bridge_info().native_binding_ready,
+    description="Win32 host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
+  )
+}
+
+///|
 pub fn windows_system_theme() -> @core.ColorScheme {
   if windows_system_theme_is_light() != 0 {
     @core.ColorScheme::Light

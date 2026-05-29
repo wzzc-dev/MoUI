@@ -64,6 +64,22 @@ test "canvas host creates surface and input contracts" {
 }
 
 ///|
+test "web capability summary exposes known browser host services" {
+  let summary = web_capability_summary()
+  inspect(summary.backend.label(), content="Web")
+  inspect(summary.label, content="Web host")
+  inspect(summary.services.clipboard, content="true")
+  inspect(summary.services.file_dialogs, content="true")
+  inspect(summary.services.open_url, content="true")
+  inspect(summary.services.system_theme, content="true")
+  inspect(summary.input.drag_drop, content="true")
+  inspect(summary.drag_drop_ready, content="true")
+  inspect(summary.async_services, content="true")
+  inspect(summary.native_accessibility_ready, content="false")
+  inspect(summary.has_required_app_basics(), content="true")
+}
+
+///|
 test "web service bridge exposes open url and system theme contract" {
   let opened_url = Ref("")
   let bridge = web_service_bridge(system_theme=@core.ColorScheme::Dark, open_url=url => {

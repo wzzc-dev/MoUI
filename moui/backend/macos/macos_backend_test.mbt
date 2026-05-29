@@ -8,6 +8,18 @@ test "macos backend is native renderer ready" {
 }
 
 ///|
+test "macos capability summary exposes native service readiness" {
+  let summary = macos_capability_summary()
+  inspect(summary.label, content="macOS host")
+  inspect(summary.service_count(), content="5")
+  inspect(summary.input_count(), content="7")
+  inspect(summary.services.menus, content="true")
+  inspect(summary.drag_drop_ready, content="true")
+  inspect(summary.multi_window, content="true")
+  inspect(summary.native_accessibility_ready, content="false")
+}
+
+///|
 test "macos app options carry text engine and optional scene resolver" {
   let request = @host.HostWindowOpenRequest::new(
     title="Inspector",

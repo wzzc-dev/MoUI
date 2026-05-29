@@ -270,10 +270,12 @@ test "showcase embeds reusable example apps and renderer report" {
   assert_true(has_text(markdown_commands, "Text & Media"))
   assert_true(has_text(markdown_commands, "Local Markdown"))
   let renderer_commands = @app.ShowcaseModel::new()
-    .update(@app.ShowcaseMsg::SelectSection("theme-renderer"))
+    .update(@app.ShowcaseMsg::SelectSection("runtime-renderer"))
     .runtime(width=760.0, height=420.0)
     .draw_commands()
-  assert_true(has_text(renderer_commands, "Theme & Renderer"))
+  assert_true(has_text(renderer_commands, "Runtime & Renderer"))
+  assert_true(has_text(renderer_commands, "Host capability"))
+  assert_true(has_text(renderer_commands, "Showcase test host / Test"))
   assert_true(has_text(renderer_commands, "Renderer capability"))
 }
 
@@ -459,19 +461,20 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
 ///|
 test "showcase renderer section clips long capability content" {
   let runtime = @app.ShowcaseModel::new()
-    .update(@app.ShowcaseMsg::SelectSection("theme-renderer"))
+    .update(@app.ShowcaseMsg::SelectSection("runtime-renderer"))
     .runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(
     text_within(
       commands,
-      "Theme & Renderer",
+      "Runtime & Renderer",
       @core.Size::new(width=760.0, height=420.0),
     ),
   )
   assert_true(
     commands.any(command => command is @core.DrawCommand::PushClip(_)),
   )
+  assert_true(has_text(commands, "Host capability"))
   assert_true(has_text(commands, "transform"))
   assert_true(has_text(commands, "text-shaping"))
   assert_true(has_text(commands, "emoji-text"))

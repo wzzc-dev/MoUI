@@ -121,6 +121,40 @@ pub fn service_capabilities() -> @host.HostServiceCapabilities {
 }
 
 ///|
+pub fn linux_input_capabilities() -> @host.HostInputCapabilities {
+  @host.HostInputCapabilities::new(
+    pointer=true,
+    scroll=true,
+    keyboard=true,
+    focus=true,
+    text_input=false,
+    ime=false,
+    clipboard=false,
+    drag_drop=false,
+  )
+}
+
+///|
+pub fn linux_capability_summary(
+  services? : @host.HostServiceCapabilities = service_capabilities(),
+) -> @host.HostCapabilitySummary {
+  @host.HostCapabilitySummary::from_contracts(
+    info=backend_info().host_info,
+    services~,
+    input=linux_input_capabilities(),
+    label="Linux host",
+    window_lifecycle=true,
+    multi_window=true,
+    text_input_ready=false,
+    ime_ready=false,
+    drag_drop_ready=false,
+    async_services=false,
+    native_accessibility_ready=backend_info().accessibility.native_binding_ready,
+    description="Wayland host summary with renderer/window readiness and explicit gaps for clipboard, menus, file dialogs, text input, IME, drag/drop, and AT-SPI binding.",
+  )
+}
+
+///|
 pub fn readiness() -> LinuxBackendReadiness {
   {
     ready: true,

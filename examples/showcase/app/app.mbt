@@ -27,6 +27,7 @@ pub(all) struct ShowcaseModel {
   todo_draft : String
   last_drop_label : String
   gesture_label : String
+  host_summary : @host.HostCapabilitySummary
 }
 
 ///|
@@ -120,7 +121,16 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     todo_draft: "",
     last_drop_label: "No files dropped",
     gesture_label: "No gesture yet",
+    host_summary: @host.HostCapabilitySummary::test_host(label="Showcase test host"),
   }
+}
+
+///|
+pub fn ShowcaseModel::with_host_summary(
+  self : ShowcaseModel,
+  host_summary : @host.HostCapabilitySummary,
+) -> ShowcaseModel {
+  { ..self, host_summary }
 }
 
 ///|
@@ -239,6 +249,17 @@ pub fn ShowcaseApp::runtime(
 ) -> @core.AppRuntime {
   ignore(self)
   ShowcaseModel::new().runtime(width~, height~)
+}
+
+///|
+pub fn ShowcaseApp::runtime_with_host_summary(
+  self : ShowcaseApp,
+  host_summary : @host.HostCapabilitySummary,
+  width? : Double = 960.0,
+  height? : Double = 560.0,
+) -> @core.AppRuntime {
+  ignore(self)
+  ShowcaseModel::new().with_host_summary(host_summary).runtime(width~, height~)
 }
 
 ///|

@@ -3,6 +3,7 @@ package "examples/showcase/app"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
 }
 
@@ -16,6 +17,7 @@ pub struct ShowcaseApp {
 }
 pub fn ShowcaseApp::new() -> Self
 pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn ShowcaseApp::runtime_with_host_summary(Self, @host.HostCapabilitySummary, width? : Double, height? : Double) -> @core.AppRuntime
 
 pub(all) struct ShowcaseModel {
   dark : Bool
@@ -40,12 +42,14 @@ pub(all) struct ShowcaseModel {
   todo_draft : String
   last_drop_label : String
   gesture_label : String
+  host_summary : @host.HostCapabilitySummary
 }
 pub fn ShowcaseModel::new() -> Self
 pub fn ShowcaseModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn ShowcaseModel::todo_count(Self) -> Int
 pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
 pub fn ShowcaseModel::view(Self, @core.ViewEnvironment) -> @core.View[ShowcaseMsg]
+pub fn ShowcaseModel::with_host_summary(Self, @host.HostCapabilitySummary) -> Self
 
 pub(all) enum ShowcaseMsg {
   ToggleScheme

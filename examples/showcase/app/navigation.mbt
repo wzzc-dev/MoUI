@@ -79,6 +79,10 @@ fn ShowcaseModel::destinations(
       view=self.theme_renderer_section(theme, metrics, opacity),
     ),
     @views.navigation_destination(
+      route="runtime-renderer",
+      view=self.theme_renderer_section(theme, metrics, opacity),
+    ),
+    @views.navigation_destination(
       route="advanced-rendering",
       view=self.advanced_rendering_section(theme, metrics),
     ),
@@ -151,9 +155,9 @@ fn showcase_sections() -> Array[ShowcaseSection] {
       group: "Reuse",
     },
     {
-      route: "theme-renderer",
-      title: "Theme & Renderer",
-      summary: "Theme helpers and renderer report",
+      route: "runtime-renderer",
+      title: "Runtime & Renderer",
+      summary: "Host and renderer capability reports",
       group: "Runtime",
     },
     {
