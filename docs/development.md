@@ -119,6 +119,12 @@ JetBrains Skia binary provider from `.local_repos/skia_mbt`:
 scripts/macos-skia-renderer-smoke.sh
 ```
 
+Pass `--enable-skshaper` when the selected Skia library directory includes the
+SkShaper module libraries. The helper then configures `skia_mbt/native` with
+the SkShaper define, links `libskshaper`, `libskunicode_core`,
+`libskunicode_icu`, `libharfbuzz`, and `libicu`, and verifies the MoUI renderer
+smoke log proves the optional shaped-run path was available.
+
 Add `--run-showcase-smoke` when you want the helper to launch the built
 `examples/showcase/macos_skia` executable, wait for the first Skia-presented
 frame, and then exit automatically:

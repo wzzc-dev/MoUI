@@ -27,6 +27,9 @@ Options:
   --jetbrains-cache-dir PATH
                          JetBrains/skia cache root. Default: .skia-cache/jetbrains.
   --extra-gn-args STR    Extra GN args appended to the source-built Skia build.
+  --enable-skshaper      Enable the optional skia_mbt SkShaper boundary.
+                         Requires libskshaper and its dependent module
+                         libraries in --skia-lib-dir.
   --extra-cc-flags STR   Extra C/C++ flags appended to skia_mbt stub flags.
   --extra-link-flags STR Extra linker flags appended to executable link flags.
   --build-log PATH       Write source-built Skia build output to PATH. Relative
@@ -76,6 +79,7 @@ jetbrains_cache_dir="${SKIA_MBT_JETBRAINS_CACHE_DIR:-.skia-cache/jetbrains}"
 extra_gn_args="${SKIA_MBT_EXTRA_GN_ARGS:-}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
+enable_skshaper=0
 extra_cc_flags_explicit=0
 extra_link_flags_explicit=0
 if [[ -n "${SKIA_MBT_EXTRA_CC_FLAGS:-}" ]]; then
@@ -137,6 +141,10 @@ while [[ $# -gt 0 ]]; do
     --extra-gn-args)
       extra_gn_args="${2:-}"
       shift 2
+      ;;
+    --enable-skshaper)
+      enable_skshaper=1
+      shift
       ;;
     --extra-cc-flags)
       extra_cc_flags="${2:-}"
@@ -397,14 +405,39 @@ if [[ $dry_run_config -eq 0 ]]; then
     echo "Skia library lib$skia_lib.a or lib$skia_lib.dylib was not found in $lib_path" >&2
     exit 1
   fi
+  if [[ $enable_skshaper -eq 1 ]]; then
+    if [[ ! -f "$include_path/modules/skshaper/include/SkShaper.h" ]]; then
+      echo "SkShaper header was not found under $include_path/modules/skshaper/include" >&2
+      exit 1
+    fi
+    for shaper_lib in skshaper skunicode_core skunicode_icu harfbuzz icu; do
+      if [[ ! -f "$lib_path/lib$shaper_lib.a" && ! -f "$lib_path/lib$shaper_lib.dylib" ]]; then
+        echo "SkShaper dependency lib$shaper_lib.a or lib$shaper_lib.dylib was not found in $lib_path" >&2
+        exit 1
+      fi
+    done
+  fi
+fi
+
+native_extra_cc_flags="$extra_cc_flags"
+native_extra_link_flags="$extra_link_flags"
+if [[ $enable_skshaper -eq 1 ]]; then
+  native_extra_cc_flags="-DSKIA_MBT_HAS_SKSHAPER${native_extra_cc_flags:+ $native_extra_cc_flags}"
+  native_extra_link_flags="-lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu${native_extra_link_flags:+ $native_extra_link_flags}"
 fi
 
 cc_flags="-DSKIA_MBT_HAS_SKIA -std=c++17 -I$include_path"
+if [[ $enable_skshaper -eq 1 ]]; then
+  cc_flags="$cc_flags -DSKIA_MBT_HAS_SKSHAPER"
+fi
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
 skia_link_flags="-L$lib_path -l$skia_lib -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
+if [[ $enable_skshaper -eq 1 ]]; then
+  skia_link_flags="$skia_link_flags -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu"
+fi
 if [[ -n "$extra_link_flags" ]]; then
   skia_link_flags="$skia_link_flags $extra_link_flags"
 fi
@@ -439,6 +472,9 @@ fi
 echo "  skia_include=$include_path"
 echo "  skia_lib_dir=$lib_path"
 echo "  skia_lib=$skia_lib"
+if [[ $enable_skshaper -eq 1 ]]; then
+  echo "  skshaper=enabled"
+fi
 echo "  skia_stub_cc_flags=$cc_flags"
 echo "  skia_link_flags=$skia_link_flags"
 echo "  showcase_link_flags=$showcase_link_flags"
@@ -495,8 +531,8 @@ bash "$skia_repo/scripts/configure-macos-native-pkg.sh" \
   --skia-include "$include_path" \
   --skia-lib-dir "$lib_path" \
   --skia-lib "$skia_lib" \
-  --extra-cc-flags "$extra_cc_flags" \
-  --extra-link-flags "$extra_link_flags" \
+  --extra-cc-flags "$native_extra_cc_flags" \
+  --extra-link-flags "$native_extra_link_flags" \
   --output "$native_pkg" \
   --write >/dev/null
 echo "Wrote temporary skia_mbt/native/moon.pkg with macOS Skia link flags."
@@ -505,6 +541,7 @@ cat > "$renderer_pkg" <<EOF
 import {
   "moonbitlang/core/encoding/base64",
   "moonbitlang/x/fs",
+  "wzzc-dev/skia_mbt/native" @skia_native,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
@@ -578,6 +615,13 @@ if ! grep -Fq "MoUI Skia renderer smoke passed" "$smoke_log"; then
   exit 1
 fi
 echo "Verified MoUI Skia renderer smoke success marker."
+if [[ $enable_skshaper -eq 1 ]]; then
+  if ! grep -Fq "MoUI Skia renderer smoke shaper available" "$smoke_log"; then
+    echo "MoUI Skia renderer smoke did not prove the enabled SkShaper path" >&2
+    exit 1
+  fi
+  echo "Verified MoUI Skia renderer SkShaper marker."
+fi
 
 if [[ $skip_showcase_build -eq 0 ]]; then
   moon build examples/showcase/macos_skia --target native

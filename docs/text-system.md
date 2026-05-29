@@ -61,9 +61,10 @@ not a text-provider variant. Skia basic text measurement and drawing resolve the
 MoUI `FontSpec` family stack, weight, and style through `skia_mbt` `FontMgr` and
 `Font`, and its `TextSystem` returns Skia font-metric baseline/height plus
 Skia-measured prefix caret positions for basic input geometry. Rendering now
-passes positioned glyph runs to Skia, which gives the future SkShaper/SkParagraph
-path a stable draw boundary; this is still separate from full shaping, bidi, and
-line-breaking conformance.
+uses optional SkShaper shaped glyph runs when the `skia_mbt` native package is
+linked with SkShaper support, and otherwise falls back to positioned glyph runs;
+SkParagraph-style line breaking, bidi, and broader typography conformance remain
+follow-up work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all

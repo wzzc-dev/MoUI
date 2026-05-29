@@ -93,13 +93,13 @@ test "skia text system exposes measured caret positions" {
 }
 
 ///|
-test "skia text drawing builds positioned glyph runs" {
+test "skia text drawing builds best available glyph runs" {
   match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {
-      let run = skia_basic_glyph_run(font, "Slim")
+      let run = skia_glyph_run(font, "Slim")
       inspect(run.glyphs.length(), content="4")
       inspect(run.positions.length(), content="4")
-      assert_true(run.width == skia_measure_text_width(font, "Slim"))
+      assert_true(run.width > 0.0)
       assert_true(run.positions[0] == @skia_mbt.Point::zero())
       assert_true(run.positions[1].x > run.positions[0].x)
       assert_true(run.positions[2].x > run.positions[1].x)

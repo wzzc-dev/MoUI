@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/encoding/base64",
   "moonbitlang/x/fs",
+  "wzzc-dev/skia_mbt/native" @skia_native,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
