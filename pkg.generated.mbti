@@ -199,9 +199,11 @@ pub fn IRect::from_size(ISize) -> Self
 pub fn IRect::from_wh(Int, Int) -> Self
 pub fn IRect::from_xywh(Int, Int, Int, Int) -> Self
 pub fn IRect::height(Self) -> Int
+pub fn IRect::height_64(Self) -> Int64
 pub fn IRect::inset(Self, Int, Int) -> Self
 pub fn IRect::intersect(Self, Self) -> Self?
 pub fn IRect::is_empty(Self) -> Bool
+pub fn IRect::is_empty_64(Self) -> Bool
 pub fn IRect::is_sorted(Self) -> Bool
 pub fn IRect::join(Self, Self) -> Self
 pub fn IRect::new(Int, Int, Int, Int) -> Self
@@ -211,6 +213,8 @@ pub fn IRect::size(Self) -> ISize
 pub fn IRect::sorted(Self) -> Self
 pub fn IRect::to_rect(Self) -> Rect
 pub fn IRect::width(Self) -> Int
+pub fn IRect::width_64(Self) -> Int64
+pub fn IRect::with_adjustment(Self, Int, Int, Int, Int) -> Self
 pub fn IRect::with_inset(Self, ISize) -> Self
 pub fn IRect::with_offset(Self, IPoint) -> Self
 pub fn IRect::with_offset_to(Self, IPoint) -> Self

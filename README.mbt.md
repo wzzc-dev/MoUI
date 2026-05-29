@@ -278,6 +278,7 @@ test {
   )
   let sorted = @skia_mbt.Rect::new(5, 4, 1, 2).sorted()
   let fractional = @skia_mbt.Rect::new(1.2, -2.8, 5.7, 3.1)
+  let wide = @skia_mbt.IRect::new(-2000000000, 0, 2000000000, 1)
 
   assert_true(point.is_finite())
   assert_eq(point.length_squared(), 25.0)
@@ -305,6 +306,8 @@ test {
   )
   assert_true(sorted.is_sorted())
   assert_true(sorted.center() == @skia_mbt.Point::new(3, 3))
+  assert_eq(wide.width_64(), 4000000000L)
+  assert_true(!wide.is_empty_64())
   assert_true(fractional.round_in() == @skia_mbt.IRect::new(2, -2, 5, 3))
   assert_true(fractional.round_out() == @skia_mbt.IRect::new(1, -3, 6, 4))
 }

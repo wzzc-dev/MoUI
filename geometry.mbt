@@ -326,8 +326,18 @@ pub fn IRect::width(self : IRect) -> Int {
 }
 
 ///|
+pub fn IRect::width_64(self : IRect) -> Int64 {
+  self.right.to_int64() - self.left.to_int64()
+}
+
+///|
 pub fn IRect::height(self : IRect) -> Int {
   self.bottom - self.top
+}
+
+///|
+pub fn IRect::height_64(self : IRect) -> Int64 {
+  self.bottom.to_int64() - self.top.to_int64()
 }
 
 ///|
@@ -338,6 +348,11 @@ pub fn IRect::size(self : IRect) -> ISize {
 ///|
 pub fn IRect::is_empty(self : IRect) -> Bool {
   self.right <= self.left || self.bottom <= self.top
+}
+
+///|
+pub fn IRect::is_empty_64(self : IRect) -> Bool {
+  self.width_64() <= 0L || self.height_64() <= 0L
 }
 
 ///|
@@ -397,6 +412,22 @@ pub fn IRect::outset(self : IRect, dx : Int, dy : Int) -> IRect {
 ///|
 pub fn IRect::with_outset(self : IRect, outset : ISize) -> IRect {
   self.outset(outset.width, outset.height)
+}
+
+///|
+pub fn IRect::with_adjustment(
+  self : IRect,
+  delta_left : Int,
+  delta_top : Int,
+  delta_right : Int,
+  delta_bottom : Int,
+) -> IRect {
+  IRect::new(
+    self.left + delta_left,
+    self.top + delta_top,
+    self.right + delta_right,
+    self.bottom + delta_bottom,
+  )
 }
 
 ///|
