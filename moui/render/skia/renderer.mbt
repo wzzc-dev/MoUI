@@ -1024,10 +1024,10 @@ fn skia_rrect(rounded : @core.RoundedRect) -> @skia_mbt.RRect {
 fn skia_matrix(transform : @core.Transform2D) -> @skia_mbt.Matrix {
   @skia_mbt.Matrix::from_affine([
     Float::from_double(transform.a),
-    Float::from_double(transform.b),
     Float::from_double(transform.c),
-    Float::from_double(transform.d),
     Float::from_double(transform.tx),
+    Float::from_double(transform.b),
+    Float::from_double(transform.d),
     Float::from_double(transform.ty),
   ]).unwrap_or(@skia_mbt.Matrix::identity())
 }
