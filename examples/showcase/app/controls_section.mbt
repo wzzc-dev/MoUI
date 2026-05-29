@@ -4,6 +4,11 @@ fn ShowcaseModel::controls_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
+  let choice_items = [
+    choice_item("native", "Native"),
+    choice_item("web", "Web"),
+    choice_item("test", "Test"),
+  ]
   section_panel(
     theme,
     "Controls",
@@ -14,65 +19,117 @@ fn ShowcaseModel::controls_section(
         @views.tab_item(
           route="form",
           label="Form",
-          view=grid(
+          view=column(
             [
-              text_field(
-                self.draft,
-                on_input=value => DraftChanged(value),
-                on_submit=Some(ToggleActive),
-                placeholder="Type a label",
-                variant=@views.TextFieldVariant::Outline,
+              grid(
+                [
+                  text_field(
+                    self.draft,
+                    on_input=value => DraftChanged(value),
+                    on_submit=Some(ToggleActive),
+                    placeholder="Type a label",
+                    variant=@views.TextFieldVariant::Outline,
+                    theme~,
+                    width=220.0,
+                  ),
+                  searchbar(
+                    query=self.draft,
+                    on_input=value => DraftChanged(value),
+                    placeholder="Search catalog",
+                    theme~,
+                  ),
+                  button(
+                    "Primary",
+                    on_click=ToggleActive,
+                    variant=@views.ButtonVariant::Primary,
+                    theme~,
+                    width=104.0,
+                  ),
+                  menu_button(
+                    "Menu",
+                    on_click=ShowDialog,
+                    variant=@views.ButtonVariant::Tonal,
+                    theme~,
+                    width=104.0,
+                  ),
+                  checkbox(
+                    "Checkbox",
+                    checked=self.feature_enabled,
+                    on_change=value => FeatureEnabledChanged(value),
+                    check_color=theme.palette.primary,
+                  ),
+                  toggle(
+                    "Toggle",
+                    self.feature_enabled,
+                    on_change=value => FeatureEnabledChanged(value),
+                    check_color=theme.palette.primary,
+                  ),
+                  toggle_switch(
+                    "Toggle switch",
+                    self.secondary_enabled,
+                    on_change=value => SecondaryEnabledChanged(value),
+                    check_color=theme.palette.primary,
+                  ),
+                  radio(
+                    "Radio option",
+                    self.secondary_enabled,
+                    on_change=value => SecondaryEnabledChanged(value),
+                    check_color=theme.palette.primary,
+                  ),
+                ],
+                columns=2,
+                row_spacing=theme.spacing_scale.sm,
+                column_spacing=theme.spacing_scale.md,
+              ),
+              segmented_control(
+                choice_items,
+                selected=self.picker_value,
+                on_select=value => PickerSelected(value),
                 theme~,
-                width=220.0,
+                width=360.0,
               ),
-              searchbar(
-                query=self.draft,
-                on_input=value => DraftChanged(value),
-                placeholder="Search catalog",
-                theme~,
+              row(
+                [
+                  radio_group(
+                    choice_items,
+                    selected=self.picker_value,
+                    on_select=value => PickerSelected(value),
+                    theme~,
+                  ),
+                  checkbox_group(
+                    choice_items,
+                    selected=["native", "test"],
+                    on_change=(_id, value) => FeatureEnabledChanged(value),
+                    theme~,
+                  ),
+                ],
+                spacing=theme.spacing_scale.xl,
+                align=@views.CrossAlign::Start,
               ),
-              button(
-                "Primary",
-                on_click=ToggleActive,
-                variant=@views.ButtonVariant::Primary,
-                theme~,
-                width=104.0,
-              ),
-              menu_button(
-                "Menu",
-                on_click=ShowDialog,
-                variant=@views.ButtonVariant::Tonal,
-                theme~,
-                width=104.0,
-              ),
-              checkbox(
-                "Checkbox",
-                checked=self.feature_enabled,
-                on_change=value => FeatureEnabledChanged(value),
-                check_color=theme.palette.primary,
-              ),
-              toggle(
-                "Toggle",
-                self.feature_enabled,
-                on_change=value => FeatureEnabledChanged(value),
-                check_color=theme.palette.primary,
-              ),
-              toggle_switch(
-                "Toggle switch",
-                self.secondary_enabled,
-                on_change=value => SecondaryEnabledChanged(value),
-                check_color=theme.palette.primary,
-              ),
-              radio(
-                "Radio option",
-                self.secondary_enabled,
-                on_change=value => SecondaryEnabledChanged(value),
-                check_color=theme.palette.primary,
+              row(
+                [
+                  filter_chip(
+                    "Filter chip",
+                    selected=self.feature_enabled,
+                    on_change=value => FeatureEnabledChanged(value),
+                    theme~,
+                    width=132.0,
+                  ),
+                  choice_chip(
+                    "Choice chip",
+                    selected=self.secondary_enabled,
+                    on_select=SecondaryEnabledChanged(true),
+                    theme~,
+                    width=132.0,
+                  ),
+                  tag("Tag", theme~, width=76.0),
+                ],
+                spacing=theme.spacing_scale.sm,
+                align=@views.CrossAlign::Center,
               ),
             ],
-            columns=2,
-            row_spacing=theme.spacing_scale.sm,
-            column_spacing=theme.spacing_scale.md,
+            spacing=theme.spacing_scale.md,
+            align=@views.CrossAlign::Start,
           ),
         ),
         @views.tab_item(

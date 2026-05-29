@@ -354,6 +354,46 @@ test "enhanced input wrappers compose public controls" {
 }
 
 ///|
+test "grouped choice controls compose selections and chips" {
+  let choices = [
+    @views.choice_item("native", "Native"),
+    @views.choice_item("web", "Web"),
+    @views.choice_item("test", "Test"),
+  ]
+  let root : @core.View[Unit] = @views.column(
+    [
+      @views.radio_group(choices, selected="native", on_select=_id => ()),
+      @views.checkbox_group(
+        choices,
+        selected=["native", "test"],
+        on_change=(_id, _checked) => (),
+      ),
+      @views.segmented_control(choices, selected="web", on_select=_id => ()),
+      @views.row(
+        [
+          @views.chip("Stable", selected=true),
+          @views.tag("Tag"),
+          @views.filter_chip("Filter", selected=false, on_change=_value => ()),
+          @views.choice_chip("Choice", selected=true, on_select=()),
+        ],
+      ),
+    ],
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=560.0, height=360.0),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Native"))
+  assert_true(has_text(commands, "Web"))
+  assert_true(has_text(commands, "Test"))
+  assert_true(has_text(commands, "Stable"))
+  assert_true(has_text(commands, "Tag"))
+  assert_true(has_text(commands, "Filter"))
+  assert_true(has_text(commands, "Choice"))
+}
+
+///|
 test "card supports independent optional dimensions" {
   let root : @core.View[Unit] = @views.card(@views.text("Wide"), width=240.0)
   let runtime = @core.AppRuntime::new_view(

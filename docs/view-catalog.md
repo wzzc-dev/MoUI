@@ -58,6 +58,9 @@ fn view(draft : String) -> @core.View[Msg] {
 | `searchbar` | `views/searchbar.mbt` | Color/font params | Search field | `views/views_test.mbt` | Showcase | TEA-first text input specialized for filtering and clear actions; `searchbar_binding` remains for advanced state. |
 | `picker` | `views/picker.mbt` | Color/font params | Picker | `views/views_test.mbt` | Showcase | TEA-first option picker; `picker_binding` remains for advanced state. |
 | `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `views/views_test.mbt` | Showcase | TEA-first date picker with min/max range enforcement; `datepicker_binding` remains for advanced state. |
+| `radio_group` / `checkbox_group` | `views/choice_controls.mbt` | Color/font params | Group with radio/checkbox children | `views/views_test.mbt` | Showcase Controls | TEA-first grouped selection built from `ChoiceItem` descriptors. |
+| `segmented_control` | `views/choice_controls.mbt` | ButtonStyle/SurfaceStyle | Tab-like group | `views/views_test.mbt` | Showcase Controls | Controlled single-selection segmented buttons. |
+| `chip` / `tag` / `filter_chip` / `choice_chip` | `views/choice_controls.mbt` | SurfaceStyle/ButtonStyle | Button or text roles | `views/views_test.mbt` | Showcase Controls | Compact selection and labeling controls. |
 | `slider` | `views/controls.mbt` | Color params | Slider | `views/views_test.mbt` | Showcase | Custom painted scalar control. |
 | `progress` | `views/controls.mbt` | Color params | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `tooltip` | `views/controls.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |
