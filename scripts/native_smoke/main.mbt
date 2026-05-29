@@ -228,6 +228,27 @@ fn main {
   }
   canvas.draw_path(native_path, @skia.Paint::new(color=@skia.Color::magenta()))
 
+  guard @native.Path::new() is Some(native_poly) else {
+    fail_smoke("failed to create native polygon path")
+  }
+  native_poly.add_poly(
+    [
+      @skia.Point::new(12, 28),
+      @skia.Point::new(16, 28),
+      @skia.Point::new(16, 31),
+    ],
+    close=true,
+  )
+  if !native_poly.is_last_contour_closed() ||
+    native_poly.count_verbs() != 4 ||
+    native_poly.count_points() != 3 {
+    fail_smoke("native polygon path did not record the expected contour")
+  }
+  if !native_poly.contains(@skia.Point::new(15, 29)) {
+    fail_smoke("native polygon path does not contain an interior point")
+  }
+  canvas.draw_path(native_poly, @skia.Paint::new(color=@skia.Color::magenta()))
+
   let portable_path = @skia.Path::new().add_rect(
     @skia.Rect::from_xywh(22, 26, 4, 4),
   )
@@ -241,6 +262,31 @@ fn main {
     portable_path,
     @skia.Paint::new(color=@skia.Color::yellow()),
   )
+
+  guard @native.Path::new() is Some(appended_path) else {
+    fail_smoke("failed to create native add-path target")
+  }
+  appended_path.add_rect(@skia.Rect::from_xywh(28, 22, 2, 2))
+  appended_path.add_path_value(
+    @skia.Path::new().add_poly(
+      [
+        @skia.Point::new(0, 0),
+        @skia.Point::new(3, 0),
+        @skia.Point::new(3, 3),
+      ],
+      close=true,
+    ),
+    matrix=@skia.Matrix::translate(28, 26),
+  )
+  if appended_path.count_verbs() != 9 ||
+    appended_path.count_points() != 7 ||
+    appended_path.bounds() != Some(@skia.Rect::new(28, 22, 31, 29)) {
+    fail_smoke("native add_path_value did not append the expected geometry")
+  }
+  if !appended_path.contains(@skia.Point::new(30, 27)) {
+    fail_smoke("native add_path_value does not contain appended geometry")
+  }
+  canvas.draw_path(appended_path, @skia.Paint::new(color=@skia.Color::cyan()))
 
   let save_count_before_transform = canvas.save_count()
   ignore(canvas.save())

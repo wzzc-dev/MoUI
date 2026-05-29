@@ -1571,18 +1571,7 @@ pub fn Path::from_value(path : @skia.Path) -> Path? {
     None => None
     Some(native_path) => {
       native_path.set_fill_type(path.fill_type)
-      for verb in path.verbs {
-        match verb {
-          @skia.MoveTo(point) => native_path.move_to(point)
-          @skia.LineTo(point) => native_path.line_to(point)
-          @skia.QuadTo(control, end) => native_path.quad_to(control, end)
-          @skia.ConicTo(control, end, weight) =>
-            native_path.conic_to(control, end, weight)
-          @skia.CubicTo(control0, control1, end) =>
-            native_path.cubic_to(control0, control1, end)
-          @skia.Close => native_path.close()
-        }
-      }
+      native_path.add_path_value(path)
       Some(native_path)
     }
   }
@@ -1673,6 +1662,80 @@ pub fn Path::cubic_to(
 ///|
 pub fn Path::close(self : Path) -> Unit {
   native_path_close(self.handle)
+}
+
+///|
+pub fn Path::add_path_value(
+  self : Path,
+  path : @skia.Path,
+  matrix? : @skia.Matrix = @skia.Matrix::identity(),
+  mode? : @skia.AddPathMode = @skia.Append,
+) -> Unit {
+  let path = path.transform(matrix)
+  let start_index = if mode is @skia.Extend && !path.verbs.is_empty() {
+    match (self.last_point(), path.verbs[0]) {
+      (Some(_), @skia.MoveTo(point)) => {
+        self.line_to(point)
+        1
+      }
+      _ => 0
+    }
+  } else {
+    0
+  }
+  for i = start_index; i < path.verbs.length(); i = i + 1 {
+    let verb = path.verbs[i]
+    match verb {
+      @skia.MoveTo(point) => self.move_to(point)
+      @skia.LineTo(point) => self.line_to(point)
+      @skia.QuadTo(control, end) => self.quad_to(control, end)
+      @skia.ConicTo(control, end, weight) => self.conic_to(control, end, weight)
+      @skia.CubicTo(control0, control1, end) =>
+        self.cubic_to(control0, control1, end)
+      @skia.Close => self.close()
+    }
+  }
+}
+
+///|
+pub fn Path::add_path_value_matrix(
+  self : Path,
+  path : @skia.Path,
+  matrix : @skia.Matrix,
+  mode? : @skia.AddPathMode = @skia.Append,
+) -> Unit {
+  self.add_path_value(path, matrix~, mode~)
+}
+
+///|
+pub fn Path::add_path_value_offset(
+  self : Path,
+  path : @skia.Path,
+  offset : @skia.Point,
+  mode? : @skia.AddPathMode = @skia.Append,
+) -> Unit {
+  self.add_path_value(
+    path,
+    matrix=@skia.Matrix::translate(offset.x, offset.y),
+    mode~,
+  )
+}
+
+///|
+pub fn Path::add_poly(
+  self : Path,
+  points : Array[@skia.Point],
+  close? : Bool = false,
+) -> Unit {
+  if !points.is_empty() {
+    self.move_to(points[0])
+    for i = 1; i < points.length(); i = i + 1 {
+      self.line_to(points[i])
+    }
+    if close {
+      self.close()
+    }
+  }
 }
 
 ///|

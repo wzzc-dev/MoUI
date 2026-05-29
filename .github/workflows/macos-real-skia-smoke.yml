@@ -41,7 +41,7 @@ on:
         required: false
         default: ""
       dry_run_config:
-        description: Print resolved config without building Skia or rewriting native/moon.pkg
+        description: Print resolved config without building Skia or rewriting package files
         type: boolean
         required: false
         default: false
@@ -184,7 +184,7 @@ jobs:
             logs/macos-real-skia-acceptance.log
           if-no-files-found: warn
 
-      - name: Verify native package restored
+      - name: Verify package files restored
         if: ${{ always() }}
         shell: bash
         run: |
@@ -193,8 +193,12 @@ jobs:
             echo "native/moon.pkg smoke backup is still present" >&2
             restore_status="failed"
           fi
-          if ! git diff --exit-code -- native/moon.pkg; then
-            echo "native/moon.pkg differs after macOS Skia smoke" >&2
+          if [[ -f scripts/native_smoke/moon.pkg.smoke.bak ]]; then
+            echo "scripts/native_smoke/moon.pkg smoke backup is still present" >&2
+            restore_status="failed"
+          fi
+          if ! git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg; then
+            echo "package files differ after macOS Skia smoke" >&2
             restore_status="failed"
           fi
           echo "restore_status=$restore_status" >> "$GITHUB_ENV"

@@ -4,12 +4,6 @@ import {
 
 options(
   "native-stub": [ "skia_stub.cpp" ],
-  link: {
-    "native": {
-      "stub-cc-flags": "-DSKIA_MBT_HAS_SKIA -std=c++17 -I/Volumes/Data/Code/moon/GUI/skia_mbt/.skia-cache/jetbrains/m148-8967a2e80c/macos-Release-arm64/package",
-      "cc-link-flags": "-L/Volumes/Data/Code/moon/GUI/skia_mbt/.skia-cache/jetbrains/m148-8967a2e80c/macos-Release-arm64/package/out/Release-macos-arm64 -lskia -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
-    },
-  },
   targets: {
     "skia_native.mbt": [ "native", "llvm" ],
     "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],

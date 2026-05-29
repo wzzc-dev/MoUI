@@ -189,6 +189,61 @@ test "path api typechecks" {
       assert_eq(path.count_points(), 4)
       assert_true(path.is_last_contour_closed())
       path.rewind()
+      path.add_poly(
+        [
+          @skia.Point::new(0, 0),
+          @skia.Point::new(10, 0),
+          @skia.Point::new(10, 10),
+        ],
+        close=true,
+      )
+      assert_true(path.bounds() == Some(@skia.Rect::from_xywh(0, 0, 10, 10)))
+      assert_eq(path.count_verbs(), 4)
+      assert_eq(path.count_points(), 3)
+      assert_true(path.is_last_contour_closed())
+      assert_true(path.contains(@skia.Point::new(8, 2)))
+      let empty : Array[@skia.Point] = []
+      path.rewind()
+      path.add_poly(empty)
+      assert_true(path.is_empty())
+      path.rewind()
+      path.add_rect(@skia.Rect::from_xywh(0, 0, 2, 2))
+      let portable_triangle = @skia.Path::new().add_poly(
+        [
+          @skia.Point::new(0, 0),
+          @skia.Point::new(10, 0),
+          @skia.Point::new(10, 10),
+        ],
+        close=true,
+      )
+      path.add_path_value(
+        portable_triangle,
+        matrix=@skia.Matrix::translate(10, 0),
+      )
+      assert_true(path.bounds() == Some(@skia.Rect::new(0, 0, 20, 10)))
+      assert_eq(path.count_verbs(), 9)
+      assert_eq(path.count_points(), 7)
+      assert_true(path.contains(@skia.Point::new(18, 2)))
+      path.rewind()
+      path.add_rect(@skia.Rect::from_xywh(0, 0, 2, 2))
+      path.add_path_value_offset(portable_triangle, @skia.Point::new(10, 0))
+      assert_true(path.bounds() == Some(@skia.Rect::new(0, 0, 20, 10)))
+      assert_eq(path.count_verbs(), 9)
+      assert_eq(path.count_points(), 7)
+      path.rewind()
+      path.move_to(@skia.Point::new(0, 0))
+      path.line_to(@skia.Point::new(2, 0))
+      path.add_path_value(
+        @skia.Path::new()
+        .move_to(@skia.Point::new(10, 0))
+        .line_to(@skia.Point::new(12, 0)),
+        mode=@skia.Extend,
+      )
+      assert_eq(path.count_verbs(), 4)
+      assert_eq(path.count_points(), 4)
+      assert_true(path.last_point() == Some(@skia.Point::new(12, 0)))
+      assert_true(path.bounds() == Some(@skia.Rect::from_xywh(0, 0, 12, 0)))
+      path.rewind()
       path.add_oval(@skia.Rect::from_xywh(0, 0, 10, 20), direction=@skia.CCW)
       assert_true(path.bounds() == Some(@skia.Rect::from_xywh(0, 0, 10, 20)))
       assert_true(path.is_oval() == Some(@skia.Rect::from_xywh(0, 0, 10, 20)))
