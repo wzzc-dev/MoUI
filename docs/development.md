@@ -111,13 +111,32 @@ small `DrawCommand` frame through `render/skia` and verifies presenter pixels.
 The script builds those smoke packages and runs the produced native executables
 directly so failures propagate through the process exit status.
 
-On macOS, use the dedicated helper when you have a Skia checkout or binary
-package and want the helper to wire the temporary package link flags for you:
+On macOS, use the dedicated helper when you want the script to resolve Skia and
+wire the temporary package link flags for you. By default it uses the pinned
+JetBrains Skia binary provider from `.local_repos/skia_mbt`:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh
+```
+
+Use `--skia-provider existing` when you already have a Skia checkout or binary
+package:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh \
+  --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
+```
+
+Use `--skia-provider source` to build the small CPU Skia library through
+`.local_repos/skia_mbt/scripts/macos-build-skia.sh` before running the same
+MoUI renderer smoke:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh \
+  --skia-provider source \
+  --work-dir .skia-cache/macos
 ```
 
 It temporarily configures `.local_repos/skia_mbt/native`,

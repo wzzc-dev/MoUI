@@ -115,12 +115,20 @@ both the binding smoke and MoUI renderer presenter pixels:
 sh scripts/dev-check.sh --skia-real-smoke
 ```
 
-On macOS, the helper below temporarily wires the local Skia include/library
-paths into `skia_mbt`, the MoUI renderer smoke, and `macos_skia` before running
-the renderer pixel smoke and building the Showcase entrypoint:
+On macOS, the helper below resolves the pinned JetBrains Skia binary provider,
+temporarily wires the resulting include/library paths into `skia_mbt`, the MoUI
+renderer smoke, and `macos_skia`, then runs the renderer pixel smoke and builds
+the Showcase entrypoint:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh
+```
+
+Use `--skia-provider existing` when you already have a local Skia build:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh \
+  --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
 ```
