@@ -190,6 +190,7 @@ pub(all) struct IRect {
   right : Int
   bottom : Int
 } derive(Eq, @debug.Debug)
+pub fn IRect::bottom(Self) -> Int
 pub fn IRect::contains_point(Self, IPoint) -> Bool
 pub fn IRect::contains_rect(Self, Self) -> Bool
 pub fn IRect::empty() -> Self
@@ -202,16 +203,20 @@ pub fn IRect::height(Self) -> Int
 pub fn IRect::height_64(Self) -> Int64
 pub fn IRect::inset(Self, Int, Int) -> Self
 pub fn IRect::intersect(Self, Self) -> Self?
+pub fn IRect::intersects(Self, Self) -> Bool
 pub fn IRect::is_empty(Self) -> Bool
 pub fn IRect::is_empty_64(Self) -> Bool
 pub fn IRect::is_sorted(Self) -> Bool
 pub fn IRect::join(Self, Self) -> Self
+pub fn IRect::left(Self) -> Int
 pub fn IRect::new(Int, Int, Int, Int) -> Self
 pub fn IRect::offset(Self, Int, Int) -> Self
 pub fn IRect::outset(Self, Int, Int) -> Self
+pub fn IRect::right(Self) -> Int
 pub fn IRect::size(Self) -> ISize
 pub fn IRect::sorted(Self) -> Self
 pub fn IRect::to_rect(Self) -> Rect
+pub fn IRect::top(Self) -> Int
 pub fn IRect::width(Self) -> Int
 pub fn IRect::width_64(Self) -> Int64
 pub fn IRect::with_adjustment(Self, Int, Int, Int, Int) -> Self
@@ -569,8 +574,11 @@ pub(all) struct Rect {
   right : Float
   bottom : Float
 } derive(Eq, @debug.Debug)
+pub fn Rect::bl(Self) -> Point
+pub fn Rect::bottom(Self) -> Float
 pub fn Rect::bottom_left(Self) -> Point
 pub fn Rect::bottom_right(Self) -> Point
+pub fn Rect::br(Self) -> Point
 pub fn Rect::center(Self) -> Point
 pub fn Rect::center_x(Self) -> Float
 pub fn Rect::center_y(Self) -> Float
@@ -590,22 +598,28 @@ pub fn Rect::from_xywh(Float, Float, Float, Float) -> Self
 pub fn Rect::height(Self) -> Float
 pub fn Rect::inset(Self, Float, Float) -> Self
 pub fn Rect::intersect(Self, Self) -> Self?
+pub fn Rect::intersects(Self, Self) -> Bool
 pub fn Rect::is_empty(Self) -> Bool
 pub fn Rect::is_finite(Self) -> Bool
 pub fn Rect::is_sorted(Self) -> Bool
 pub fn Rect::join(Self, Self) -> Self
+pub fn Rect::left(Self) -> Float
 pub fn Rect::new(Float, Float, Float, Float) -> Self
 pub fn Rect::offset(Self, Float, Float) -> Self
 pub fn Rect::outset(Self, Float, Float) -> Self
+pub fn Rect::right(Self) -> Float
 pub fn Rect::round(Self) -> IRect
 pub fn Rect::round_in(Self) -> IRect
 pub fn Rect::round_out(Self) -> IRect
 pub fn Rect::size(Self) -> Size
 pub fn Rect::sorted(Self) -> Self
+pub fn Rect::tl(Self) -> Point
 pub fn Rect::to_irect_round(Self) -> IRect
 pub fn Rect::to_quad(Self, direction? : PathDirection) -> Array[Point]
+pub fn Rect::top(Self) -> Float
 pub fn Rect::top_left(Self) -> Point
 pub fn Rect::top_right(Self) -> Point
+pub fn Rect::tr(Self) -> Point
 pub fn Rect::width(Self) -> Float
 pub fn Rect::with_inset(Self, Size) -> Self
 pub fn Rect::with_offset(Self, Point) -> Self
