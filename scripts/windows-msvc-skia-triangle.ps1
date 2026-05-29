@@ -15,7 +15,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
-$trianglePkg = Join-Path $repoRoot "cmd/triangle_window/moon.pkg"
+$trianglePkg = Join-Path $repoRoot "examples/triangle_window/moon.pkg"
 $nativeBackup = "$nativePkg.triangle.bak"
 $triangleBackup = "$trianglePkg.triangle.bak"
 $defaultCacheRoot = Join-Path $repoRoot ".skia-cache/windows-msvc/aseprite/Skia-Windows-Release-x64"
@@ -69,7 +69,7 @@ if (Test-Path -LiteralPath $nativeBackup) {
   throw "native/moon.pkg triangle backup already exists: $nativeBackup. Resolve the stale backup before running."
 }
 if (Test-Path -LiteralPath $triangleBackup) {
-  throw "cmd/triangle_window/moon.pkg triangle backup already exists: $triangleBackup. Resolve the stale backup before running."
+  throw "examples/triangle_window/moon.pkg triangle backup already exists: $triangleBackup. Resolve the stale backup before running."
 }
 
 $packageLibs = Get-ChildItem -LiteralPath $resolvedLibDir -Filter "*.lib" |

@@ -34,7 +34,7 @@ pub(all) enum BlendMode {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for BlendMode with default() {
+pub impl Default for BlendMode with fn default() {
   SrcOver
 }
 
@@ -83,7 +83,7 @@ pub(all) enum PaintStyle {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for PaintStyle with default() {
+pub impl Default for PaintStyle with fn default() {
   Fill
 }
 
@@ -106,7 +106,7 @@ pub(all) enum StrokeCap {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for StrokeCap with default() {
+pub impl Default for StrokeCap with fn default() {
   Butt
 }
 
@@ -129,7 +129,7 @@ pub(all) enum StrokeJoin {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for StrokeJoin with default() {
+pub impl Default for StrokeJoin with fn default() {
   Miter
 }
 
@@ -152,7 +152,7 @@ pub(all) enum PointMode {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for PointMode with default() {
+pub impl Default for PointMode with fn default() {
   Points
 }
 
@@ -176,7 +176,7 @@ pub(all) enum AlphaType {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for AlphaType with default() {
+pub impl Default for AlphaType with fn default() {
   Unknown
 }
 
@@ -199,7 +199,7 @@ pub(all) enum ColorType {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for ColorType with default() {
+pub impl Default for ColorType with fn default() {
   Unknown
 }
 
@@ -214,7 +214,7 @@ pub(all) enum TileMode {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for TileMode with default() {
+pub impl Default for TileMode with fn default() {
   Clamp
 }
 
@@ -249,7 +249,7 @@ pub(all) enum EncodedImageFormat {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for EncodedImageFormat with default() {
+pub impl Default for EncodedImageFormat with fn default() {
   PNG
 }
 
@@ -305,7 +305,7 @@ pub(all) enum ClipOp {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for ClipOp with default() {
+pub impl Default for ClipOp with fn default() {
   Intersect
 }
 
@@ -326,7 +326,7 @@ pub(all) enum FilterMode {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for FilterMode with default() {
+pub impl Default for FilterMode with fn default() {
   Nearest
 }
 
@@ -348,7 +348,7 @@ pub(all) enum MipmapMode {
 } derive(Debug, Eq)
 
 ///|
-pub impl Default for MipmapMode with default() {
+pub impl Default for MipmapMode with fn default() {
   None
 }
 

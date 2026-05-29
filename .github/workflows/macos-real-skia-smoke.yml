@@ -7,6 +7,15 @@ on:
         description: Skia revision, branch, or tag to build; empty uses skia-revision.txt
         required: false
         default: ""
+      skia_provider:
+        description: Skia provider to use
+        type: choice
+        required: false
+        default: jetbrains
+        options:
+          - jetbrains
+          - source
+          - existing
       skia_include:
         description: Existing Skia checkout/include root; falls back to SKIA_MBT_SKIA_INCLUDE on the runner
         required: false
@@ -46,33 +55,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Detect smoke mode
-        id: smoke-mode
-        shell: bash
-        env:
-          SKIA_INCLUDE_INPUT: ${{ inputs.skia_include }}
-          SKIA_LIB_DIR_INPUT: ${{ inputs.skia_lib_dir }}
-        run: |
-          if [[ -n "$SKIA_INCLUDE_INPUT" || -n "$SKIA_LIB_DIR_INPUT" ]]; then
-            if [[ -z "$SKIA_INCLUDE_INPUT" || -z "$SKIA_LIB_DIR_INPUT" ]]; then
-              echo "skia_include and skia_lib_dir must be supplied together for existing-build mode" >&2
-              exit 2
-            fi
-            echo "existing_build=true" >> "$GITHUB_OUTPUT"
-          elif [[ -n "${SKIA_MBT_SKIA_INCLUDE:-}" || -n "${SKIA_MBT_SKIA_LIB_DIR:-}" ]]; then
-            if [[ -z "${SKIA_MBT_SKIA_INCLUDE:-}" || -z "${SKIA_MBT_SKIA_LIB_DIR:-}" ]]; then
-              echo "SKIA_MBT_SKIA_INCLUDE and SKIA_MBT_SKIA_LIB_DIR must be supplied together for existing-build mode" >&2
-              exit 2
-            fi
-            echo "existing_build=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "existing_build=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Preflight smoke configuration
         shell: bash
         env:
           SKIA_REV: ${{ inputs.skia_rev }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
           SKIA_LIB: ${{ inputs.skia_lib }}
@@ -81,52 +68,28 @@ jobs:
           EXTRA_LINK_FLAGS: ${{ inputs.extra_link_flags }}
         run: |
           mkdir -p logs
-          if [[ "${{ steps.smoke-mode.outputs.existing_build }}" == "true" ]]; then
-            smoke_args=(
-              --dry-run-config
-              --skia-lib "$SKIA_LIB"
-            )
-            if [[ -n "$SKIA_INCLUDE" ]]; then
-              smoke_args+=(--skia-include "$SKIA_INCLUDE")
-            fi
-            if [[ -n "$SKIA_LIB_DIR" ]]; then
-              smoke_args+=(--skia-lib-dir "$SKIA_LIB_DIR")
-            fi
-            if [[ -n "$EXTRA_CC_FLAGS" ]]; then
-              smoke_args+=(--extra-cc-flags "$EXTRA_CC_FLAGS")
-            fi
-            if [[ -n "$EXTRA_LINK_FLAGS" ]]; then
-              smoke_args+=(--extra-link-flags "$EXTRA_LINK_FLAGS")
-            fi
-            bash scripts/macos-skia-smoke.sh "${smoke_args[@]}" 2>&1 | tee logs/macos-real-skia-smoke-preflight.log
-            exit 0
-          fi
-
-          build_args=(--dry-run-config)
+          args=(--dry-run-config --skia-provider "$SKIA_PROVIDER")
           if [[ -n "$SKIA_REV" ]]; then
-            build_args+=(--skia-rev "$SKIA_REV")
+            args+=(--skia-rev "$SKIA_REV")
+          fi
+          if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
+            args+=(--skia-include "$SKIA_INCLUDE")
+            args+=(--skia-lib-dir "$SKIA_LIB_DIR")
+          fi
+          if [[ -n "$SKIA_LIB" ]]; then
+            args+=(--skia-lib "$SKIA_LIB")
           fi
           if [[ -n "$EXTRA_GN_ARGS" ]]; then
-            build_args+=(--extra-gn-args "$EXTRA_GN_ARGS")
+            args+=(--extra-gn-args "$EXTRA_GN_ARGS")
           fi
-          set -o pipefail
-          bash scripts/macos-build-skia.sh "${build_args[@]}" 2>&1 | tee logs/macos-real-skia-smoke-preflight.log
-
-          mkdir -p .skia-dry-run/skia/include/core .skia-dry-run/lib
-          touch .skia-dry-run/skia/include/core/SkSurface.h ".skia-dry-run/lib/lib$SKIA_LIB.a"
-          smoke_args=(
-            --dry-run-config
-            --skia-include .skia-dry-run/skia
-            --skia-lib-dir .skia-dry-run/lib
-            --skia-lib "$SKIA_LIB"
-          )
           if [[ -n "$EXTRA_CC_FLAGS" ]]; then
-            smoke_args+=(--extra-cc-flags "$EXTRA_CC_FLAGS")
+            args+=(--extra-cc-flags "$EXTRA_CC_FLAGS")
           fi
           if [[ -n "$EXTRA_LINK_FLAGS" ]]; then
-            smoke_args+=(--extra-link-flags "$EXTRA_LINK_FLAGS")
+            args+=(--extra-link-flags "$EXTRA_LINK_FLAGS")
           fi
-          bash scripts/macos-skia-smoke.sh "${smoke_args[@]}" 2>&1 | tee -a logs/macos-real-skia-smoke-preflight.log
+          set -o pipefail
+          bash scripts/macos-real-skia-smoke.sh "${args[@]}" 2>&1 | tee logs/macos-real-skia-smoke-preflight.log
 
       - name: Set up MoonBit
         if: ${{ !inputs.dry_run_config }}
@@ -141,38 +104,24 @@ jobs:
         run: brew install ninja
 
       - name: Cache Skia checkout and build
-        if: ${{ !inputs.dry_run_config && steps.smoke-mode.outputs.existing_build != 'true' }}
+        if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         uses: actions/cache@v4
         with:
           path: .skia-cache/macos
-          key: skia-macos-${{ inputs.skia_rev || hashFiles('skia-revision.txt') }}-${{ hashFiles('scripts/macos-build-skia.sh', 'scripts/macos-skia-smoke.sh') }}
+          key: skia-macos-${{ inputs.skia_rev || hashFiles('skia-revision.txt') }}-${{ hashFiles('scripts/macos-build-skia.sh', 'scripts/macos-real-skia-smoke.sh', 'scripts/macos-skia-smoke.sh') }}
           restore-keys: |
             skia-macos-${{ inputs.skia_rev || hashFiles('skia-revision.txt') }}-
             skia-macos-
-
-      - name: Build Skia for smoke test
-        if: ${{ !inputs.dry_run_config && steps.smoke-mode.outputs.existing_build != 'true' }}
-        shell: bash
-        env:
-          SKIA_REV: ${{ inputs.skia_rev }}
-          EXTRA_GN_ARGS: ${{ inputs.extra_gn_args }}
-        run: |
-          args=()
-          if [[ -n "$SKIA_REV" ]]; then
-            args+=(--skia-rev "$SKIA_REV")
-          fi
-          if [[ -n "$EXTRA_GN_ARGS" ]]; then
-            args+=(--extra-gn-args "$EXTRA_GN_ARGS")
-          fi
-          set -o pipefail
-          bash scripts/macos-build-skia.sh "${args[@]}" 2>&1 | tee logs/macos-skia-build.log
 
       - name: Run native smoke test
         shell: bash
         env:
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
+          SKIA_REV: ${{ inputs.skia_rev }}
           SKIA_LIB: ${{ inputs.skia_lib }}
+          EXTRA_GN_ARGS: ${{ inputs.extra_gn_args }}
           EXTRA_CC_FLAGS: ${{ inputs.extra_cc_flags }}
           EXTRA_LINK_FLAGS: ${{ inputs.extra_link_flags }}
           DRY_RUN_CONFIG: ${{ inputs.dry_run_config }}
@@ -182,21 +131,18 @@ jobs:
             echo "dry_run_config=true; real macOS smoke was not run" | tee logs/macos-real-skia-smoke.log
             exit 0
           fi
-          if [[ "${{ steps.smoke-mode.outputs.existing_build }}" == "true" ]]; then
-            args=()
-            if [[ -n "$SKIA_INCLUDE" ]]; then
-              args+=(--skia-include "$SKIA_INCLUDE")
-            fi
-            if [[ -n "$SKIA_LIB_DIR" ]]; then
-              args+=(--skia-lib-dir "$SKIA_LIB_DIR")
-            fi
-          else
-            args=(
-              --skia-include "$PWD/.skia-cache/macos/skia"
-              --skia-lib-dir "$PWD/.skia-cache/macos/skia/out/moonbit-smoke"
-            )
+          args=(--skia-provider "$SKIA_PROVIDER")
+          if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
+            args+=(--skia-include "$SKIA_INCLUDE")
+            args+=(--skia-lib-dir "$SKIA_LIB_DIR")
           fi
           args+=(--skia-lib "$SKIA_LIB")
+          if [[ -n "$SKIA_REV" ]]; then
+            args+=(--skia-rev "$SKIA_REV")
+          fi
+          if [[ -n "$EXTRA_GN_ARGS" ]]; then
+            args+=(--extra-gn-args "$EXTRA_GN_ARGS")
+          fi
           if [[ -n "$EXTRA_CC_FLAGS" ]]; then
             args+=(--extra-cc-flags "$EXTRA_CC_FLAGS")
           fi
@@ -221,7 +167,7 @@ jobs:
         run: bash scripts/verify-real-skia-artifact.sh --platform macos --log-dir logs
 
       - name: Verify pinned Skia revision match
-        if: ${{ always() && !inputs.dry_run_config }}
+        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider != 'jetbrains' }}
         shell: bash
         run: bash scripts/verify-skia-revision-pin.sh logs/macos-real-skia-acceptance.log --skip-if-unpinned
 
@@ -261,6 +207,7 @@ jobs:
         shell: bash
         env:
           SKIA_REV: ${{ inputs.skia_rev }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
           SKIA_LIB: ${{ inputs.skia_lib }}
@@ -281,9 +228,12 @@ jobs:
             echo "- Dry run only: ${DRY_RUN_CONFIG:-false}"
             if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
               echo "- Mode: existing Skia build"
+            elif [[ "$SKIA_PROVIDER" == "jetbrains" ]]; then
+              echo "- Mode: JetBrains Skia binary"
             else
               echo "- Mode: source-built Skia"
             fi
+            echo "- Skia provider: ${SKIA_PROVIDER:-jetbrains}"
             echo "- Skia revision: ${SKIA_REV:-<skia-revision.txt>}"
             echo "- Resolved Skia commit: ${resolved_commit:-not run}"
             echo "- Skia include: ${SKIA_INCLUDE:-<source build>}"

@@ -16,7 +16,7 @@ pub fn IPoint::zero() -> IPoint {
 }
 
 ///|
-pub impl Default for IPoint with default() {
+pub impl Default for IPoint with fn default() {
   IPoint::zero()
 }
 
@@ -58,7 +58,7 @@ pub fn Point::zero() -> Point {
 }
 
 ///|
-pub impl Default for Point with default() {
+pub impl Default for Point with fn default() {
   Point::zero()
 }
 
@@ -115,7 +115,7 @@ pub fn ISize::empty() -> ISize {
 }
 
 ///|
-pub impl Default for ISize with default() {
+pub impl Default for ISize with fn default() {
   ISize::empty()
 }
 
@@ -162,7 +162,7 @@ pub fn Size::from_isize(size : ISize) -> Size {
 }
 
 ///|
-pub impl Default for Size with default() {
+pub impl Default for Size with fn default() {
   Size::empty()
 }
 
@@ -216,7 +216,7 @@ pub fn IRect::from_size(size : ISize) -> IRect {
 }
 
 ///|
-pub impl Default for IRect with default() {
+pub impl Default for IRect with fn default() {
   IRect::empty()
 }
 
@@ -365,7 +365,7 @@ pub fn Rect::from_size(size : Size) -> Rect {
 }
 
 ///|
-pub impl Default for Rect with default() {
+pub impl Default for Rect with fn default() {
   Rect::empty()
 }
 
@@ -587,7 +587,7 @@ pub fn RRect::from_oval(oval : Rect) -> RRect {
 }
 
 ///|
-pub impl Default for RRect with default() {
+pub impl Default for RRect with fn default() {
   RRect::empty()
 }
 

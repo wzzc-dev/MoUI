@@ -15,7 +15,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
-$textPkg = Join-Path $repoRoot "cmd/text_window/moon.pkg"
+$textPkg = Join-Path $repoRoot "examples/text_window/moon.pkg"
 $nativeBackup = "$nativePkg.text.bak"
 $textBackup = "$textPkg.text.bak"
 $defaultCacheRoot = Join-Path $repoRoot ".skia-cache/windows-msvc/aseprite/Skia-Windows-Release-x64"
@@ -69,7 +69,7 @@ if (Test-Path -LiteralPath $nativeBackup) {
   throw "native/moon.pkg text backup already exists: $nativeBackup. Resolve the stale backup before running."
 }
 if (Test-Path -LiteralPath $textBackup) {
-  throw "cmd/text_window/moon.pkg text backup already exists: $textBackup. Resolve the stale backup before running."
+  throw "examples/text_window/moon.pkg text backup already exists: $textBackup. Resolve the stale backup before running."
 }
 
 $packageLibs = Get-ChildItem -LiteralPath $resolvedLibDir -Filter "*.lib" |

@@ -1,9 +1,15 @@
 param(
   [string] $SkiaRoot = $env:SKIA_MBT_SKIA_ROOT,
+  [string] $SkiaInclude = $env:SKIA_MBT_SKIA_INCLUDE,
   [string] $SkiaZip = $env:SKIA_MBT_SKIA_ZIP,
   [string] $SkiaLibDir = $env:SKIA_MBT_SKIA_LIB_DIR,
   [string] $VcVarsAll = $(if ($env:VCVARSALL) { $env:VCVARSALL } else { "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" }),
   [string] $VcArch = "x64",
+  [string] $SkiaProvider = $env:SKIA_MBT_SKIA_PROVIDER,
+  [string] $JetBrainsTag = $env:SKIA_MBT_JETBRAINS_TAG,
+  [string] $SkiaCommit = $env:SKIA_MBT_SKIA_COMMIT,
+  [string] $SkiaPackage = $env:SKIA_MBT_SKIA_PACKAGE,
+  [string] $SkiaPackageSha256 = $env:SKIA_MBT_SKIA_PACKAGE_SHA256,
   [string] $ExtraCcFlags = $env:SKIA_MBT_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:SKIA_MBT_EXTRA_LINK_FLAGS,
   [string] $SmokeLog = "",
@@ -52,9 +58,13 @@ if (!(Test-Path -LiteralPath $SkiaRoot -PathType Container)) {
 }
 
 $resolvedRoot = (Resolve-Path -LiteralPath $SkiaRoot).Path
-$headerPath = Join-Path $resolvedRoot "include/core/SkSurface.h"
+$resolvedIncludeRoot = $resolvedRoot
+if (![string]::IsNullOrWhiteSpace($SkiaInclude)) {
+  $resolvedIncludeRoot = (Resolve-Path -LiteralPath $SkiaInclude).Path
+}
+$headerPath = Join-Path $resolvedIncludeRoot "include/core/SkSurface.h"
 if (!(Test-Path -LiteralPath $headerPath -PathType Leaf)) {
-  throw "SkiaRoot does not look like a Skia release root: $resolvedRoot"
+  throw "Skia include root does not look like a Skia checkout/root: $resolvedIncludeRoot"
 }
 
 if ([string]::IsNullOrWhiteSpace($SkiaLibDir)) {
@@ -82,7 +92,7 @@ if ($SmokeLog.Trim().Length -gt 0) {
   }
 }
 
-$includePath = $resolvedRoot -replace "\\", "/"
+$includePath = $resolvedIncludeRoot -replace "\\", "/"
 $libPath = $resolvedLibDir -replace "\\", "/"
 $ccFlags = "/DSKIA_MBT_HAS_SKIA /std:c++17 /EHsc /I$includePath"
 if (![string]::IsNullOrWhiteSpace($ExtraCcFlags)) {
@@ -128,11 +138,25 @@ Write-Output "  skia_root=$resolvedRoot"
 Write-Output "  skia_include=$includePath"
 Write-Output "  skia_lib_dir=$libPath"
 Write-Output "  skia_lib=skia"
-if ((Get-Command git -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath (Join-Path $resolvedRoot ".git"))) {
-  $skiaCommit = (& git -C $resolvedRoot rev-parse HEAD 2>$null | Select-Object -First 1) -join ""
+if (![string]::IsNullOrWhiteSpace($SkiaProvider)) {
+  Write-Output "  skia_provider=$SkiaProvider"
+}
+if (![string]::IsNullOrWhiteSpace($JetBrainsTag)) {
+  Write-Output "  jetbrains_tag=$JetBrainsTag"
+}
+if (![string]::IsNullOrWhiteSpace($SkiaCommit)) {
+  Write-Output "  skia_commit=$SkiaCommit"
+} elseif ((Get-Command git -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath (Join-Path $resolvedIncludeRoot ".git"))) {
+  $skiaCommit = (& git -C $resolvedIncludeRoot rev-parse HEAD 2>$null | Select-Object -First 1) -join ""
   if ($skiaCommit.Trim().Length -gt 0) {
     Write-Output "  skia_commit=$skiaCommit"
   }
+}
+if (![string]::IsNullOrWhiteSpace($SkiaPackage)) {
+  Write-Output "  skia_package=$SkiaPackage"
+}
+if (![string]::IsNullOrWhiteSpace($SkiaPackageSha256)) {
+  Write-Output "  skia_package_sha256=$SkiaPackageSha256"
 }
 $item = Get-Item -LiteralPath $skiaLib
 Write-Output "  library=$($item.Name) $($item.Length) bytes"
@@ -158,6 +182,7 @@ try {
 
   & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
     -SkiaRoot $resolvedRoot `
+    -SkiaInclude $resolvedIncludeRoot `
     -SkiaLibDir $resolvedLibDir `
     -ExtraCcFlags $ExtraCcFlags `
     -ExtraLinkFlags $ExtraLinkFlags `

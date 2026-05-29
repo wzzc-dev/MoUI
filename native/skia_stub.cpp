@@ -10,6 +10,9 @@
 #if defined(_WIN32) && !defined(SK_BUILD_FOR_WIN)
 #define SK_BUILD_FOR_WIN
 #endif
+#if defined(__APPLE__) && !defined(SK_BUILD_FOR_MAC)
+#define SK_BUILD_FOR_MAC
+#endif
 #include "include/core/SkCanvas.h"
 #include "include/core/SkBitmap.h"
 #include "include/core/SkClipOp.h"
@@ -53,6 +56,9 @@
 #include "include/core/SkRefCnt.h"
 #if defined(_WIN32)
 #include "include/ports/SkTypeface_win.h"
+#endif
+#if defined(__APPLE__)
+#include "include/ports/SkFontMgr_mac_ct.h"
 #endif
 #endif
 
@@ -624,6 +630,42 @@ static sk_sp<SkTypeface> moonbit_skia_windows_typeface_from_family(
 }
 #endif
 
+#if defined(__APPLE__)
+static SkFontMgr* moonbit_skia_macos_font_mgr(void) {
+  static sk_sp<SkFontMgr> font_mgr = SkFontMgr_New_CoreText(nullptr);
+  return font_mgr.get();
+}
+
+static sk_sp<SkTypeface> moonbit_skia_macos_typeface_from_family(
+  const char* family_name
+) {
+  SkFontMgr* font_mgr = moonbit_skia_macos_font_mgr();
+  if (font_mgr == nullptr) {
+    return nullptr;
+  }
+
+  const bool has_family_name = family_name != nullptr && family_name[0] != '\0';
+  if (has_family_name) {
+    sk_sp<SkTypeface> typeface = font_mgr->matchFamilyStyle(
+      family_name,
+      SkFontStyle::Normal()
+    );
+    if (typeface) {
+      return typeface;
+    }
+  }
+
+  const char* zh_bcp47[] = {"zh-Hans", "zh"};
+  return font_mgr->matchFamilyStyleCharacter(
+    has_family_name ? family_name : nullptr,
+    SkFontStyle::Normal(),
+    zh_bcp47,
+    2,
+    0x4F60
+  );
+}
+#endif
+
 static sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
 #if defined(_WIN32)
   sk_sp<SkTypeface> typeface =
@@ -636,6 +678,21 @@ static sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
     return typeface;
   }
   return moonbit_skia_windows_typeface_from_family(nullptr);
+#elif defined(__APPLE__)
+  sk_sp<SkTypeface> typeface =
+    moonbit_skia_macos_typeface_from_family("PingFang SC");
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_macos_typeface_from_family("Hiragino Sans GB");
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_macos_typeface_from_family("Helvetica Neue");
+  if (typeface) {
+    return typeface;
+  }
+  return moonbit_skia_macos_typeface_from_family(nullptr);
 #endif
   return SkTypeface::MakeEmpty();
 }
@@ -645,6 +702,8 @@ static sk_sp<SkTypeface> moonbit_skia_typeface_from_family(
 ) {
 #if defined(_WIN32)
   return moonbit_skia_windows_typeface_from_family(family_name);
+#elif defined(__APPLE__)
+  return moonbit_skia_macos_typeface_from_family(family_name);
 #else
   (void)family_name;
 #endif
@@ -654,6 +713,13 @@ static sk_sp<SkTypeface> moonbit_skia_typeface_from_family(
 static sk_sp<SkFontMgr> moonbit_skia_default_font_mgr(void) {
 #if defined(_WIN32)
   SkFontMgr* font_mgr = moonbit_skia_windows_font_mgr();
+  if (font_mgr == nullptr) {
+    return nullptr;
+  }
+  font_mgr->ref();
+  return sk_sp<SkFontMgr>(font_mgr);
+#elif defined(__APPLE__)
+  SkFontMgr* font_mgr = moonbit_skia_macos_font_mgr();
   if (font_mgr == nullptr) {
     return nullptr;
   }

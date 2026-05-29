@@ -127,7 +127,7 @@ pub fn Color::magenta() -> Color {
 }
 
 ///|
-pub impl Default for Color with default() {
+pub impl Default for Color with fn default() {
   Color::black()
 }
 
@@ -171,6 +171,6 @@ pub fn Color4f::with_alpha(self : Color4f, alpha : Scalar) -> Color4f {
 }
 
 ///|
-pub impl Default for Color4f with default() {
+pub impl Default for Color4f with fn default() {
   Color::black().to_color4f()
 }
