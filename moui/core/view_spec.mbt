@@ -1291,6 +1291,64 @@ pub fn DateValue::format(self : DateValue, mode : DatePickerMode) -> String {
 }
 
 ///|
+fn compare_int(a : Int, b : Int) -> Int {
+  if a < b {
+    -1
+  } else if a > b {
+    1
+  } else {
+    0
+  }
+}
+
+///|
+fn DateValue::compare(self : DateValue, other : DateValue) -> Int {
+  let year = compare_int(self.year, other.year)
+  if year != 0 {
+    year
+  } else {
+    let month = compare_int(self.month, other.month)
+    if month != 0 {
+      month
+    } else {
+      let day = compare_int(self.day, other.day)
+      if day != 0 {
+        day
+      } else {
+        let hour = compare_int(self.hour, other.hour)
+        if hour != 0 {
+          hour
+        } else {
+          let minute = compare_int(self.minute, other.minute)
+          if minute != 0 {
+            minute
+          } else {
+            compare_int(self.second, other.second)
+          }
+        }
+      }
+    }
+  }
+}
+
+///|
+fn date_value_in_range(
+  value : DateValue,
+  min_date : DateValue?,
+  max_date : DateValue?,
+) -> Bool {
+  let after_min = match min_date {
+    Some(min_date) => value.compare(min_date) >= 0
+    None => true
+  }
+  let before_max = match max_date {
+    Some(max_date) => value.compare(max_date) <= 0
+    None => true
+  }
+  after_min && before_max
+}
+
+///|
 fn is_leap_year(year : Int) -> Bool {
   year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 }
