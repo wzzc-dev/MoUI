@@ -443,6 +443,11 @@ test {
   let path = @skia_mbt.Path::new().add_rrect(rrect)
 
   assert_true(!rrect.is_rect())
+  assert_true(
+    rrect.with_offset_to(@skia_mbt.Point::new(10, 20)).bounds() ==
+    @skia_mbt.Rect::from_xywh(10, 20, 10, 8),
+  )
+  assert_true(rrect.contains_rect(@skia_mbt.Rect::from_xywh(3, 3, 4, 2)))
   assert_eq(path.verb_count(), 10)
   assert_true(path.bounds() == Some(rrect.bounds()))
 }

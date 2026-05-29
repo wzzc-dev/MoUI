@@ -889,5 +889,140 @@ pub fn RRect::is_oval(self : RRect) -> Bool {
 
 ///|
 pub fn RRect::offset(self : RRect, dx : Scalar, dy : Scalar) -> RRect {
-  { ..self, rect: self.rect.offset(dx, dy) }
+  RRect::new(
+    self.rect.offset(dx, dy),
+    self.upper_left,
+    self.upper_right,
+    self.lower_right,
+    self.lower_left,
+  )
+}
+
+///|
+pub fn RRect::with_offset(self : RRect, delta : Point) -> RRect {
+  self.offset(delta.x, delta.y)
+}
+
+///|
+pub fn RRect::with_offset_to(self : RRect, point : Point) -> RRect {
+  let rect = self.bounds()
+  self.with_offset(Point::new(point.x - rect.x(), point.y - rect.y()))
+}
+
+///|
+pub fn RRect::with_inset(self : RRect, inset : Size) -> RRect {
+  RRect::new(
+    self.bounds().with_inset(inset),
+    Size::new(
+      Float::max(self.upper_left.width - inset.width, 0.0),
+      Float::max(self.upper_left.height - inset.height, 0.0),
+    ),
+    Size::new(
+      Float::max(self.upper_right.width - inset.width, 0.0),
+      Float::max(self.upper_right.height - inset.height, 0.0),
+    ),
+    Size::new(
+      Float::max(self.lower_right.width - inset.width, 0.0),
+      Float::max(self.lower_right.height - inset.height, 0.0),
+    ),
+    Size::new(
+      Float::max(self.lower_left.width - inset.width, 0.0),
+      Float::max(self.lower_left.height - inset.height, 0.0),
+    ),
+  )
+}
+
+///|
+pub fn RRect::with_outset(self : RRect, outset : Size) -> RRect {
+  RRect::new(
+    self.bounds().with_outset(outset),
+    Size::new(
+      self.upper_left.width + outset.width,
+      self.upper_left.height + outset.height,
+    ),
+    Size::new(
+      self.upper_right.width + outset.width,
+      self.upper_right.height + outset.height,
+    ),
+    Size::new(
+      self.lower_right.width + outset.width,
+      self.lower_right.height + outset.height,
+    ),
+    Size::new(
+      self.lower_left.width + outset.width,
+      self.lower_left.height + outset.height,
+    ),
+  )
+}
+
+///|
+pub fn RRect::contains_rect(self : RRect, rect : Rect) -> Bool {
+  let rect = rect.sorted()
+  if self.is_empty() || rect.is_empty() || !self.bounds().contains_rect(rect) {
+    false
+  } else {
+    self.contains_xy(rect.left, rect.top) &&
+    self.contains_xy(rect.right, rect.top) &&
+    self.contains_xy(rect.right, rect.bottom) &&
+    self.contains_xy(rect.left, rect.bottom)
+  }
+}
+
+///|
+fn RRect::contains_xy(self : RRect, x : Scalar, y : Scalar) -> Bool {
+  let rect = self.bounds()
+  let left = rect.left
+  let top = rect.top
+  let right = rect.right
+  let bottom = rect.bottom
+  if x < left || x > right || y < top || y > bottom {
+    false
+  } else {
+    let contains_corner = fn(
+      corner_x : Scalar,
+      corner_y : Scalar,
+      radius : Size,
+    ) -> Bool {
+      if radius.is_zero() {
+        true
+      } else {
+        let dx = x - corner_x
+        let dy = y - corner_y
+        dx * dx / (radius.width * radius.width) +
+        dy * dy / (radius.height * radius.height) <=
+        1.0
+      }
+    }
+
+    if x < left + self.upper_left.width && y < top + self.upper_left.height {
+      contains_corner(
+        left + self.upper_left.width,
+        top + self.upper_left.height,
+        self.upper_left,
+      )
+    } else if x > right - self.upper_right.width &&
+      y < top + self.upper_right.height {
+      contains_corner(
+        right - self.upper_right.width,
+        top + self.upper_right.height,
+        self.upper_right,
+      )
+    } else if x > right - self.lower_right.width &&
+      y > bottom - self.lower_right.height {
+      contains_corner(
+        right - self.lower_right.width,
+        bottom - self.lower_right.height,
+        self.lower_right,
+      )
+    } else if x < left + self.lower_left.width &&
+      y > bottom - self.lower_left.height {
+      contains_corner(
+        left + self.lower_left.width,
+        bottom - self.lower_left.height,
+        self.lower_left,
+      )
+    } else {
+      true
+    }
+  }
 }
