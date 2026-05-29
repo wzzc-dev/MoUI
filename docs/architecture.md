@@ -251,8 +251,11 @@ The visual system keeps platform-neutral tokens and styles:
   and shadow metadata.
 - `ShadowStyle` and `BorderStyle` are view-level style inputs; paint converts
   them into concrete `DrawCommand` payloads once the final frame is known.
-- `AnimatedDouble`, `AnimatedPoint`, and `AnimatedColor` provide small
-  property-animation samplers for state-driven visuals.
+- `AnimatedDouble`, `AnimatedPoint`, `AnimatedColor`, `TransitionSpec`, and
+  `TransitionStyle` provide small property-animation samplers for state-driven
+  visuals. `View::transition` and `View::presence` apply those samples through
+  existing opacity, offset, scale, and foreground modifiers, including a
+  reduced-motion shortcut.
 - `ImageFit::Contain/Cover` records image intent, with source, opacity, and
   rounded clipping preserved in the view spec.
 - Native and WebGPU renderers draw text through glyph-atlas GPU pipelines,

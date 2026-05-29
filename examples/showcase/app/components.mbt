@@ -157,6 +157,15 @@ fn ShowcaseModel::visual_card(
   let media_width = max_showcase_double(120.0, card_width - 36.0)
   let media_height = if metrics.compact { 96.0 } else { 136.0 }
   let card_height = if metrics.compact { 250.0 } else { 300.0 }
+  let transition = @core.TransitionSpec::new(
+    from=@core.TransitionStyle::identity()
+      .with_opacity(0.66)
+      .with_offset(dx=offset, dy=0.0),
+    to=@core.TransitionStyle::identity()
+      .with_opacity(opacity)
+      .with_offset(dx=offset, dy=0.0),
+    easing=@core.Easing::Linear,
+  )
   let gradient = @core.Brush::linear_gradient(
     start=@core.Point::new(x=0.0, y=0.0),
     end=@core.Point::new(x=260.0, y=160.0),
@@ -178,8 +187,7 @@ fn ShowcaseModel::visual_card(
         .background_brush(gradient)
         .corner_radius(theme.radius_scale.lg)
         .clip()
-        .opacity(opacity)
-        .offset(dx=offset, dy=0.0),
+        .transition(spec=transition, progress=1.0),
         text(
           if active {
             "Raised card with motion"
@@ -299,6 +307,11 @@ fn ShowcaseModel::visual_correctness_card(
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
   ignore(self)
+  let image_motion = @core.TransitionSpec::slide(
+    from_offset=@core.Point::new(x=0.0, y=0.0),
+    to_offset=@core.Point::new(x=if active { 10.0 } else { 0.0 }, y=0.0),
+    easing=@core.Easing::Linear,
+  )
   showcase_soft_card(
     theme,
     row(
@@ -329,7 +342,7 @@ fn ShowcaseModel::visual_correctness_card(
         )
         .clip()
         .scale(sx=0.92, sy=0.92)
-        .offset(dx=if active { 10.0 } else { 0.0 }, dy=0.0),
+        .transition(spec=image_motion, progress=1.0),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Center,

@@ -6,6 +6,12 @@ import {
 }
 
 // Values
+pub fn animated_color(from~ : Color, to~ : Color, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Color
+
+pub fn animated_point(from~ : Point, to~ : Point, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Point
+
+pub fn animated_value(from~ : Double, to~ : Double, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Double
+
 pub fn default_text_commands() -> Array[ActionCommand]
 
 pub fn focus_scope_command_intent(KeyboardEvent) -> CommandIntent?
@@ -1598,6 +1604,40 @@ pub fn Transform2D::identity() -> Self
 pub fn Transform2D::scale(sx~ : Double, sy~ : Double) -> Self
 pub fn Transform2D::translation(dx~ : Double, dy~ : Double) -> Self
 
+pub(all) struct TransitionSample {
+  progress : Double
+  style : TransitionStyle
+  present : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TransitionSpec {
+  from : TransitionStyle
+  to : TransitionStyle
+  duration_ms : Double
+  easing : Easing
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TransitionSpec::fade(from_opacity? : Double, to_opacity? : Double, duration_ms? : Double, easing? : Easing) -> Self
+pub fn TransitionSpec::new(from? : TransitionStyle, to? : TransitionStyle, duration_ms? : Double, easing? : Easing) -> Self
+pub fn TransitionSpec::presence(Self, present~ : Bool, progress~ : Double, reduced_motion? : Bool) -> TransitionSample
+pub fn TransitionSpec::sample(Self, Double, reduced_motion? : Bool) -> TransitionSample
+pub fn TransitionSpec::sample_elapsed(Self, Double, reduced_motion? : Bool) -> TransitionSample
+pub fn TransitionSpec::scale(from_scale? : Double, to_scale? : Double, duration_ms? : Double, easing? : Easing) -> Self
+pub fn TransitionSpec::slide(from_offset~ : Point, to_offset? : Point, duration_ms? : Double, easing? : Easing) -> Self
+
+pub(all) struct TransitionStyle {
+  opacity : Double
+  offset : Point
+  scale : Point
+  foreground : Color?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TransitionStyle::identity() -> Self
+pub fn TransitionStyle::interpolate(Self, Self, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Self
+pub fn TransitionStyle::new(opacity? : Double, offset? : Point, scale? : Point, foreground? : Color?) -> Self
+pub fn TransitionStyle::with_foreground(Self, Color) -> Self
+pub fn TransitionStyle::with_offset(Self, dx? : Double, dy? : Double) -> Self
+pub fn TransitionStyle::with_opacity(Self, Double) -> Self
+pub fn TransitionStyle::with_scale(Self, sx? : Double, sy? : Double) -> Self
+
 pub(all) struct Tween {
   from : Double
   to : Double
@@ -1672,6 +1712,7 @@ pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::padding_insets(child~ : Self[Msg], insets~ : Insets) -> Self[Msg]
 pub fn[Msg] View::picker(items~ : Array[PickerItem], selected~ : Binding[String], placeholder~ : String, font~ : FontSpec, foreground~ : Color, background~ : Brush, corner_radius~ : Double, max_height~ : Double) -> Self[Msg]
+pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::rich_text_editor(value~ : Binding[String], placeholder~ : String, size~ : Size, format~ : (String) -> RichTextDocument, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_selection_change? : ((Int, TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool) -> Self[Msg]
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
 pub fn[Msg] View::scroll(child~ : Self[Msg], offset? : Point, viewport? : Size?, state? : ScrollState?, on_scroll? : ((Point) -> Msg)?) -> Self[Msg]
@@ -1694,6 +1735,7 @@ pub fn[Msg] View::text(text~ : String, size~ : Size, font~ : FontSpec, color~ : 
 pub fn[Msg] View::text_field(value~ : Binding[String], placeholder~ : String, size~ : Size, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_submit? : Msg?) -> Self[Msg]
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 
 pub(all) struct ViewEnvironment {
   viewport_size : Size

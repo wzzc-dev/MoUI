@@ -69,6 +69,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `progress` | `views/controls.mbt` | Color params | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `tooltip` | `views/controls.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |
 | `View::on_long_press` / `View::on_double_tap` / `View::on_drag` | `core/view.mbt` | N/A | Button-like activation metadata | `core/gesture_action_wbtest.mbt`, `core/state_holder_wbtest.mbt`, `views/views_test.mbt` | Showcase Interaction Lab | High-level gesture wrappers over pointer events; recognizer state stays in core/runtime and disabled ancestors suppress activation. |
+| `View::transition` / `View::presence` | `core/view.mbt` | N/A | Child semantics preserved while present | `core/animation_wbtest.mbt` | Showcase visual cards | Samples `TransitionSpec` into existing opacity, offset, scale, and foreground modifiers; `presence` keeps exiting content mounted until controlled progress completes and respects reduced motion. |
 
 ## Feedback And States
 
