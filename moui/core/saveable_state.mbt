@@ -10,6 +10,11 @@ pub struct SaveableStateStore {
 }
 
 ///|
+pub(all) struct SaveableStateSnapshot {
+  entries : Array[SaveableStringEntry]
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct SaveableStringEntry {
   key : String
   mut value : String
@@ -21,6 +26,22 @@ pub fn[T] SaveableCodec::new(
   decode~ : (String) -> T?,
 ) -> SaveableCodec[T] {
   { encode, decode }
+}
+
+///|
+pub fn[T] SaveableCodec::encode_value(
+  self : SaveableCodec[T],
+  value : T,
+) -> String {
+  (self.encode)(value)
+}
+
+///|
+pub fn[T] SaveableCodec::decode_value(
+  self : SaveableCodec[T],
+  payload : String,
+) -> T? {
+  (self.decode)(payload)
 }
 
 ///|
@@ -53,13 +74,39 @@ pub fn SaveableStateStore::new() -> SaveableStateStore {
 }
 
 ///|
+pub fn SaveableStateSnapshot::new(
+  entries? : Array[SaveableStringEntry] = [],
+) -> SaveableStateSnapshot {
+  { entries, }
+}
+
+///|
+pub fn SaveableStateStore::snapshot(
+  self : SaveableStateStore,
+) -> SaveableStateSnapshot {
+  SaveableStateSnapshot::new(entries=self.strings.map(entry => {
+    { key: entry.key, value: entry.value }
+  }))
+}
+
+///|
+pub fn SaveableStateStore::restore(
+  self : SaveableStateStore,
+  snapshot : SaveableStateSnapshot,
+) -> Unit {
+  self.strings = snapshot.entries.map(entry => {
+    { key: entry.key, value: entry.value }
+  })
+}
+
+///|
 pub fn[T] SaveableStateStore::get(
   self : SaveableStateStore,
   key : String,
   codec : SaveableCodec[T],
 ) -> T? {
   match self.get_string(key) {
-    Some(value) => (codec.decode)(value)
+    Some(value) => codec.decode_value(value)
     None => None
   }
 }
@@ -71,7 +118,7 @@ pub fn[T] SaveableStateStore::set(
   value : T,
   codec : SaveableCodec[T],
 ) -> Unit {
-  self.set_string(key, (codec.encode)(value))
+  self.set_string(key, codec.encode_value(value))
 }
 
 ///|
@@ -177,7 +224,7 @@ pub fn BuildContext::save_string(
   key~ : String,
   value : String,
 ) -> Unit {
-  self.runtime.saveable_state.set_string(self.scoped_saveable_key(key), value)
+  self.save(key~, value, SaveableCodec::string())
 }
 
 ///|
@@ -185,7 +232,7 @@ pub fn BuildContext::restore_string(
   self : BuildContext,
   key~ : String,
 ) -> String? {
-  self.runtime.saveable_state.get_string(self.scoped_saveable_key(key))
+  self.restore(key~, SaveableCodec::string())
 }
 
 ///|
@@ -194,12 +241,12 @@ pub fn BuildContext::save_bool(
   key~ : String,
   value : Bool,
 ) -> Unit {
-  self.runtime.saveable_state.set_bool(self.scoped_saveable_key(key), value)
+  self.save(key~, value, SaveableCodec::bool())
 }
 
 ///|
 pub fn BuildContext::restore_bool(self : BuildContext, key~ : String) -> Bool? {
-  self.runtime.saveable_state.get_bool(self.scoped_saveable_key(key))
+  self.restore(key~, SaveableCodec::bool())
 }
 
 ///|
@@ -208,12 +255,12 @@ pub fn BuildContext::save_int(
   key~ : String,
   value : Int,
 ) -> Unit {
-  self.runtime.saveable_state.set_int(self.scoped_saveable_key(key), value)
+  self.save(key~, value, SaveableCodec::int())
 }
 
 ///|
 pub fn BuildContext::restore_int(self : BuildContext, key~ : String) -> Int? {
-  self.runtime.saveable_state.get_int(self.scoped_saveable_key(key))
+  self.restore(key~, SaveableCodec::int())
 }
 
 ///|

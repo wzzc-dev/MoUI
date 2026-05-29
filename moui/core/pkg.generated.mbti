@@ -1153,9 +1153,16 @@ pub struct SaveableCodec[T] {
   decode : (String) -> T?
 }
 pub fn SaveableCodec::bool() -> Self[Bool]
+pub fn[T] SaveableCodec::decode_value(Self[T], String) -> T?
+pub fn[T] SaveableCodec::encode_value(Self[T], T) -> String
 pub fn SaveableCodec::int() -> Self[Int]
 pub fn[T] SaveableCodec::new(encode~ : (T) -> String, decode~ : (String) -> T?) -> Self[T]
 pub fn SaveableCodec::string() -> Self[String]
+
+pub(all) struct SaveableStateSnapshot {
+  entries : Array[SaveableStringEntry]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SaveableStateSnapshot::new(entries? : Array[SaveableStringEntry]) -> Self
 
 pub struct SaveableStateStore {
   mut strings : Array[SaveableStringEntry]
@@ -1166,10 +1173,12 @@ pub fn SaveableStateStore::get_int(Self, String) -> Int?
 pub fn SaveableStateStore::get_string(Self, String) -> String?
 pub fn SaveableStateStore::new() -> Self
 pub fn SaveableStateStore::remove(Self, String) -> Unit
+pub fn SaveableStateStore::restore(Self, SaveableStateSnapshot) -> Unit
 pub fn[T] SaveableStateStore::set(Self, String, T, SaveableCodec[T]) -> Unit
 pub fn SaveableStateStore::set_bool(Self, String, Bool) -> Unit
 pub fn SaveableStateStore::set_int(Self, String, Int) -> Unit
 pub fn SaveableStateStore::set_string(Self, String, String) -> Unit
+pub fn SaveableStateStore::snapshot(Self) -> SaveableStateSnapshot
 
 pub(all) struct SaveableStringEntry {
   key : String
