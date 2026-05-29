@@ -79,6 +79,9 @@ test "showcase navigation shell demos use public constructors" {
   assert_true(has_text(commands, "Wizard Step: Profile"))
   assert_true(has_text(commands, "Permissions"))
   assert_true(has_text(commands, "Review"))
+  assert_true(has_text(commands, "New"))
+  assert_true(has_text(commands, "Archive"))
+  assert_true(has_text(commands, "Renderer neutral"))
 }
 
 ///|
@@ -206,6 +209,7 @@ test "showcase covers text media controls and layout sections" {
   assert_true(has_text(layout_commands, "Aspect ratio"))
   assert_true(has_text(layout_commands, "Intrinsic width"))
   assert_true(has_text(layout_commands, "Custom children layout"))
+  assert_true(has_text(layout_commands, "Resizable Panel"))
 }
 
 ///|
@@ -314,6 +318,9 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(feedback_commands, "Loading preview"))
   assert_true(has_text(feedback_commands, "Import failed"))
   assert_true(has_text(feedback_commands, "Beta"))
+  assert_true(has_text(feedback_commands, "Disclosure Details"))
+  assert_true(has_text(feedback_commands, "Inline Disclosure"))
+  assert_true(has_text(feedback_commands, "Collapsible Panel"))
 }
 
 ///|

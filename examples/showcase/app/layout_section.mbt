@@ -151,6 +151,19 @@ fn ShowcaseModel::layout_section(
         ),
         gallery_browser,
         advanced_layout_demos,
+        resizable_panel(
+          content=column(
+            [
+              text("Resizable Panel", role=@views.TextRole::Control, theme~, width=220.0, height=28.0),
+              text("Controlled size with a visual handle", role=@views.TextRole::Caption, theme~, width=240.0, height=28.0),
+            ],
+            spacing=theme.spacing_scale.xs,
+            align=@views.CrossAlign::Start,
+          ),
+          size=260.0,
+          theme~,
+          height=112.0,
+        ),
         self.sparkline(theme, self.slider_value),
       ],
       spacing=theme.spacing_scale.sm,

@@ -4,7 +4,6 @@ fn ShowcaseModel::feedback_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
-  ignore(self)
   let action = @views.StateViewAction::new(label="Retry", message=ToggleActive)
   section_panel(
     theme,
@@ -89,6 +88,44 @@ fn ShowcaseModel::feedback_section(
           ],
           spacing=theme.spacing_scale.sm,
           align=@views.CrossAlign::Center,
+        ),
+        accordion(
+          [
+            @views.WizardStep::new(
+              id="details",
+              title="Disclosure Details",
+              subtitle="Controlled by app state",
+              content=text("Expanded content stays in the view tree.", width=320.0, height=28.0),
+            ),
+            @views.WizardStep::new(
+              id="queue",
+              title="Queue Status",
+              subtitle="Collapsed until selected",
+              content=text("Queued notifications remain app-owned.", width=320.0, height=28.0),
+            ),
+          ],
+          expanded=if self.active { ["details", "queue"] } else { ["details"] },
+          on_toggle=_id => ToggleActive,
+          theme~,
+          width=520.0,
+        ),
+        disclosure(
+          "Inline Disclosure",
+          content=text("Inline disclosure content", width=300.0, height=28.0),
+          expanded=true,
+          on_toggle=ToggleActive,
+          subtitle="No renderer changes",
+          theme~,
+          width=520.0,
+        ),
+        collapsible_panel(
+          "Collapsible Panel",
+          content=text("Panel content remains controlled by the app.", width=320.0, height=28.0),
+          expanded=self.active,
+          on_toggle=ToggleActive,
+          subtitle="Collapsed when inactive",
+          theme~,
+          width=520.0,
         ),
       ],
       spacing=theme.spacing_scale.md,
