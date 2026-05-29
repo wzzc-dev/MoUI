@@ -113,8 +113,54 @@ pub(all) struct StateViewAction[Msg] {
 }
 
 ///|
+pub(all) enum FileImportAvailability {
+  Available
+  Unavailable(String)
+  Pending
+}
+
+///|
+pub(all) struct FileSelection {
+  paths : Array[String]
+}
+
+///|
 pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> StateViewAction[Msg] {
   { label, message }
+}
+
+///|
+pub fn FileSelection::new(paths~ : Array[String]) -> FileSelection {
+  { paths, }
+}
+
+///|
+pub fn FileSelection::empty() -> FileSelection {
+  { paths: [], }
+}
+
+///|
+pub fn FileSelection::is_empty(self : FileSelection) -> Bool {
+  self.paths.is_empty()
+}
+
+///|
+pub fn FileSelection::count(self : FileSelection) -> Int {
+  self.paths.length()
+}
+
+///|
+pub fn FileSelection::summary(
+  self : FileSelection,
+  empty? : String = "No files selected",
+) -> String {
+  if self.paths.is_empty() {
+    empty
+  } else if self.paths.length() == 1 {
+    self.paths[0]
+  } else {
+    "\{self.paths.length()} files selected"
+  }
 }
 
 ///|

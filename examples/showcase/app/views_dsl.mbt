@@ -29,6 +29,7 @@ using @views {
   dropdown,
   empty_state,
   error_state,
+  file_import_panel,
   form,
   form_error,
   form_field,
