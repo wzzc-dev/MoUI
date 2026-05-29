@@ -57,7 +57,10 @@ macOS, Windows, and Linux hosts choose the startup text engine through
 `MoonCosmic` selects the Cosmic provider directly. Showcase also has explicit
 `macos_cosmic`, `windows_cosmic`, and `linux_cosmic` entrypoints for comparing
 those paths. The separate `macos_skia` entrypoint selects the Skia renderer,
-not a text-provider variant.
+not a text-provider variant. Skia basic text measurement and drawing resolve the
+MoUI `FontSpec` family stack, weight, and style through `skia_mbt` `FontMgr` and
+`Font`; this is still separate from full shaping, bidi, and line-breaking
+conformance.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all

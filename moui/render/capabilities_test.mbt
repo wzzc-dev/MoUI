@@ -361,6 +361,13 @@ test "renderer capability report tracks draw command support" {
   assert_true(native_text_note.contains("run layout"))
   assert_true(native_text_note.contains("caret coverage"))
   assert_true(native_text_note.contains("coverage checks"))
+  let skia_text_note = text_shaping.note_for_backend(
+    @render.RendererBackendKind::SkiaRasterNative,
+  )
+  assert_true(skia_text_note.contains("FontSpec"))
+  assert_true(skia_text_note.contains("FontMgr"))
+  assert_true(skia_text_note.contains("weight"))
+  assert_true(skia_text_note.contains("SkShaper"))
   guard @render.renderer_feature_capability(@render.RendererFeature::EmojiText)
     is Some(emoji) else {
     fail("expected emoji capability")

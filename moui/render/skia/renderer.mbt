@@ -652,7 +652,7 @@ fn SkiaRasterRenderer::draw_text(
   canvas : @skia_native.Canvas,
   run : @core.TextRun,
 ) -> Unit {
-  match @skia_native.Font::default(size=Float::from_double(run.font.size)) {
+  match skia_font(run.font) {
     Some(font) => {
       let bytes = @utf8.encode(run.text[:], bom=false)
       let width = font.measure_text_utf8(bytes).to_double()
@@ -984,7 +984,7 @@ pub fn SkiaRasterRenderer::last_frame(
 ///|
 fn skia_text_system() -> @core.TextSystem {
   @core.TextSystem::new(id="skia-raster-text-system", measure=input => {
-    match @skia_native.Font::default(size=Float::from_double(input.font.size)) {
+    match skia_font(input.font) {
       Some(font) => {
         let bytes = @utf8.encode(input.text[:], bom=false)
         let measured = font.measure_text_utf8(bytes).to_double()
@@ -1001,6 +1001,100 @@ fn skia_text_system() -> @core.TextSystem {
       None => @core.TextSystem::fallback().measure_text(input)
     }
   })
+}
+
+///|
+fn skia_font(font : @core.FontSpec) -> @skia_native.Font? {
+  match skia_typeface(font) {
+    Some(typeface) =>
+      @skia_native.Font::from_typeface(
+        typeface,
+        size=Float::from_double(font.size),
+      )
+    None => @skia_native.Font::default(size=Float::from_double(font.size))
+  }
+}
+
+///|
+fn skia_typeface(font : @core.FontSpec) -> @skia_native.Typeface? {
+  match @skia_native.FontMgr::default() {
+    Some(font_mgr) => skia_typeface_from_font_mgr(font_mgr, font)
+    None => None
+  }
+}
+
+///|
+fn skia_typeface_from_font_mgr(
+  font_mgr : @skia_native.FontMgr,
+  font : @core.FontSpec,
+) -> @skia_native.Typeface? {
+  for family in font.families.families {
+    for family_name in skia_font_family_candidates(family) {
+      match
+        font_mgr.match_family_style(
+          @utf8.encode(family_name[:], bom=false),
+          weight=font.weight,
+          width=5,
+          slant=skia_font_slant(font.style),
+        ) {
+        Some(typeface) => return Some(typeface)
+        None => ()
+      }
+    }
+  }
+  None
+}
+
+///|
+fn skia_font_family_candidates(family : @core.FontFamily) -> Array[String] {
+  match family {
+    Name(name) => [name]
+    SystemUi | UiSansSerif | SansSerif => skia_system_sans_families()
+    UiSerif | Serif => skia_serif_families()
+    UiMonospace | Monospace => skia_monospace_families()
+    Emoji => skia_emoji_families()
+    Math => skia_serif_families()
+    FangSong => skia_fangsong_families()
+  }
+}
+
+///|
+fn skia_system_sans_families() -> Array[String] {
+  [
+    "Helvetica Neue", "Segoe UI", "Arial", "DejaVu Sans", "Noto Sans", "Liberation Sans",
+  ]
+}
+
+///|
+fn skia_serif_families() -> Array[String] {
+  [
+    "Times New Roman", "Georgia", "DejaVu Serif", "Noto Serif", "Liberation Serif",
+  ]
+}
+
+///|
+fn skia_monospace_families() -> Array[String] {
+  [
+    "Menlo", "Consolas", "Courier New", "DejaVu Sans Mono", "Noto Sans Mono", "Liberation Mono",
+  ]
+}
+
+///|
+fn skia_emoji_families() -> Array[String] {
+  ["Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji"]
+}
+
+///|
+fn skia_fangsong_families() -> Array[String] {
+  ["STFangsong", "FangSong", "FangSong SC", "SimSun"]
+}
+
+///|
+fn skia_font_slant(style : @core.FontStyle) -> Int {
+  match style {
+    Normal => 0
+    Italic => 1
+  }
 }
 
 ///|
