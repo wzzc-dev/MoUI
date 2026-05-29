@@ -734,7 +734,8 @@ static SkFontMgr* moonbit_skia_windows_font_mgr(void) {
 }
 
 static sk_sp<SkTypeface> moonbit_skia_windows_typeface_from_family(
-  const char* family_name
+  const char* family_name,
+  const SkFontStyle& style
 ) {
   SkFontMgr* font_mgr = moonbit_skia_windows_font_mgr();
   if (font_mgr == nullptr) {
@@ -745,7 +746,7 @@ static sk_sp<SkTypeface> moonbit_skia_windows_typeface_from_family(
   if (has_family_name) {
     sk_sp<SkTypeface> typeface = font_mgr->matchFamilyStyle(
       family_name,
-      SkFontStyle::Normal()
+      style
     );
     if (typeface) {
       return typeface;
@@ -755,7 +756,7 @@ static sk_sp<SkTypeface> moonbit_skia_windows_typeface_from_family(
   const char* zh_bcp47[] = {"zh-Hans", "zh"};
   return font_mgr->matchFamilyStyleCharacter(
     has_family_name ? family_name : nullptr,
-    SkFontStyle::Normal(),
+    style,
     zh_bcp47,
     2,
     0x4F60
@@ -770,7 +771,8 @@ static SkFontMgr* moonbit_skia_macos_font_mgr(void) {
 }
 
 static sk_sp<SkTypeface> moonbit_skia_macos_typeface_from_family(
-  const char* family_name
+  const char* family_name,
+  const SkFontStyle& style
 ) {
   SkFontMgr* font_mgr = moonbit_skia_macos_font_mgr();
   if (font_mgr == nullptr) {
@@ -781,7 +783,7 @@ static sk_sp<SkTypeface> moonbit_skia_macos_typeface_from_family(
   if (has_family_name) {
     sk_sp<SkTypeface> typeface = font_mgr->matchFamilyStyle(
       family_name,
-      SkFontStyle::Normal()
+      style
     );
     if (typeface) {
       return typeface;
@@ -791,7 +793,7 @@ static sk_sp<SkTypeface> moonbit_skia_macos_typeface_from_family(
   const char* zh_bcp47[] = {"zh-Hans", "zh"};
   return font_mgr->matchFamilyStyleCharacter(
     has_family_name ? family_name : nullptr,
-    SkFontStyle::Normal(),
+    style,
     zh_bcp47,
     2,
     0x4F60
@@ -802,43 +804,66 @@ static sk_sp<SkTypeface> moonbit_skia_macos_typeface_from_family(
 static sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
 #if defined(_WIN32)
   sk_sp<SkTypeface> typeface =
-    moonbit_skia_windows_typeface_from_family("Microsoft YaHei");
+    moonbit_skia_windows_typeface_from_family(
+      "Microsoft YaHei",
+      SkFontStyle::Normal()
+    );
   if (typeface) {
     return typeface;
   }
-  typeface = moonbit_skia_windows_typeface_from_family("SimSun");
+  typeface = moonbit_skia_windows_typeface_from_family(
+    "SimSun",
+    SkFontStyle::Normal()
+  );
   if (typeface) {
     return typeface;
   }
-  return moonbit_skia_windows_typeface_from_family(nullptr);
+  return moonbit_skia_windows_typeface_from_family(
+    nullptr,
+    SkFontStyle::Normal()
+  );
 #elif defined(__APPLE__)
   sk_sp<SkTypeface> typeface =
-    moonbit_skia_macos_typeface_from_family("PingFang SC");
+    moonbit_skia_macos_typeface_from_family(
+      "PingFang SC",
+      SkFontStyle::Normal()
+    );
   if (typeface) {
     return typeface;
   }
-  typeface = moonbit_skia_macos_typeface_from_family("Hiragino Sans GB");
+  typeface = moonbit_skia_macos_typeface_from_family(
+    "Hiragino Sans GB",
+    SkFontStyle::Normal()
+  );
   if (typeface) {
     return typeface;
   }
-  typeface = moonbit_skia_macos_typeface_from_family("Helvetica Neue");
+  typeface = moonbit_skia_macos_typeface_from_family(
+    "Helvetica Neue",
+    SkFontStyle::Normal()
+  );
   if (typeface) {
     return typeface;
   }
-  return moonbit_skia_macos_typeface_from_family(nullptr);
+  return moonbit_skia_macos_typeface_from_family(
+    nullptr,
+    SkFontStyle::Normal()
+  );
 #endif
   return SkTypeface::MakeEmpty();
 }
 
 static sk_sp<SkTypeface> moonbit_skia_typeface_from_family(
-  const char* family_name
+  const char* family_name,
+  const SkFontStyle& style
 ) {
 #if defined(_WIN32)
-  return moonbit_skia_windows_typeface_from_family(family_name);
+  return moonbit_skia_windows_typeface_from_family(family_name, style);
 #elif defined(__APPLE__)
-  return moonbit_skia_macos_typeface_from_family(family_name);
+  return moonbit_skia_macos_typeface_from_family(family_name, style);
 #else
   (void)family_name;
+  (void)style;
 #endif
   return SkTypeface::MakeEmpty();
 }
@@ -861,6 +886,46 @@ static sk_sp<SkFontMgr> moonbit_skia_default_font_mgr(void) {
 #else
   return SkFontMgr::RefEmpty();
 #endif
+}
+#endif
+
+static int32_t moonbit_skia_clamp_int32(
+  int32_t value,
+  int32_t min_value,
+  int32_t max_value
+) {
+  if (value < min_value) {
+    return min_value;
+  }
+  if (value > max_value) {
+    return max_value;
+  }
+  return value;
+}
+
+#if defined(SKIA_MBT_HAS_SKIA)
+static SkFontStyle moonbit_skia_font_style(
+  int32_t weight,
+  int32_t width,
+  int32_t slant
+) {
+  SkFontStyle::Slant skia_slant = SkFontStyle::kUpright_Slant;
+  switch (moonbit_skia_clamp_int32(slant, 0, 2)) {
+    case 1:
+      skia_slant = SkFontStyle::kItalic_Slant;
+      break;
+    case 2:
+      skia_slant = SkFontStyle::kOblique_Slant;
+      break;
+    default:
+      skia_slant = SkFontStyle::kUpright_Slant;
+      break;
+  }
+  return SkFontStyle(
+    moonbit_skia_clamp_int32(weight, 1, 1000),
+    moonbit_skia_clamp_int32(width, 1, 9),
+    skia_slant
+  );
 }
 #endif
 
@@ -1946,7 +2011,10 @@ moonbit_skia_font_mgr_family_name(MoonbitSkiaFontMgr* wrapper, int32_t index) {
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaTypeface*
 moonbit_skia_font_mgr_match_family_style(
   MoonbitSkiaFontMgr* wrapper,
-  moonbit_bytes_t family_name
+  moonbit_bytes_t family_name,
+  int32_t weight,
+  int32_t width,
+  int32_t slant
 ) {
   if (wrapper == nullptr || wrapper->font_mgr == nullptr) {
     return moonbit_skia_make_typeface_wrapper(nullptr);
@@ -1958,7 +2026,7 @@ moonbit_skia_font_mgr_match_family_style(
   }
   sk_sp<SkTypeface> typeface = wrapper->font_mgr->matchFamilyStyle(
     family,
-    SkFontStyle::Normal()
+    moonbit_skia_font_style(weight, width, slant)
   );
   if (!typeface) {
     return moonbit_skia_make_typeface_wrapper(nullptr);
@@ -1966,6 +2034,9 @@ moonbit_skia_font_mgr_match_family_style(
   return moonbit_skia_make_typeface_wrapper(typeface.release());
 #else
   (void)family_name;
+  (void)weight;
+  (void)width;
+  (void)slant;
   return moonbit_skia_make_typeface_wrapper(nullptr);
 #endif
 }
@@ -1984,19 +2055,28 @@ moonbit_skia_typeface_default(void) {
 }
 
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaTypeface*
-moonbit_skia_typeface_from_name(moonbit_bytes_t family_name) {
+moonbit_skia_typeface_from_name(
+  moonbit_bytes_t family_name,
+  int32_t weight,
+  int32_t width,
+  int32_t slant
+) {
   if (family_name == nullptr || Moonbit_array_length(family_name) <= 0) {
     return moonbit_skia_make_typeface_wrapper(nullptr);
   }
 #if defined(SKIA_MBT_HAS_SKIA)
   sk_sp<SkTypeface> typeface = moonbit_skia_typeface_from_family(
-    reinterpret_cast<const char*>(family_name)
+    reinterpret_cast<const char*>(family_name),
+    moonbit_skia_font_style(weight, width, slant)
   );
   if (!typeface) {
     return moonbit_skia_make_typeface_wrapper(nullptr);
   }
   return moonbit_skia_make_typeface_wrapper(typeface.release());
 #else
+  (void)weight;
+  (void)width;
+  (void)slant;
   return moonbit_skia_make_typeface_wrapper(nullptr);
 #endif
 }
