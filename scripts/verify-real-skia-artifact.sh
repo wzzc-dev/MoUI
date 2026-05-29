@@ -98,7 +98,32 @@ if [[ "$platform" == "macos" || "$platform" == "windows" ]]; then
   fi
 fi
 
-if [[ "$platform" == "linux" && $require_commit -eq 1 ]]; then
+extract_field() {
+  local log_path="$1"
+  local field="$2"
+  grep -E "^[[:space:]]*${field}=" "$log_path" \
+    | tail -n 1 \
+    | sed -E "s/^[[:space:]]*${field}=//" \
+    | sed -E 's/[[:space:]]*$//' \
+    || true
+}
+
+wrapper_provider="$(extract_field "$wrapper_log" skia_provider || true)"
+acceptance_provider="$(extract_field "$acceptance_log" skia_provider || true)"
+if [[ -z "$wrapper_provider" || "$wrapper_provider" == "unknown" ]]; then
+  wrapper_provider="source"
+fi
+if [[ -z "$acceptance_provider" || "$acceptance_provider" == "unknown" ]]; then
+  acceptance_provider="$wrapper_provider"
+fi
+if [[ "$wrapper_provider" != "$acceptance_provider" ]]; then
+  echo "wrapper and acceptance logs disagree on skia_provider" >&2
+  echo "  wrapper_provider=$wrapper_provider" >&2
+  echo "  acceptance_provider=$acceptance_provider" >&2
+  exit 1
+fi
+
+if [[ "$platform" == "linux" && $require_commit -eq 1 && "$wrapper_provider" == "source" ]]; then
   if [[ ! -f "$build_log" ]]; then
     echo "source-built Linux artifact is missing expected build log: $build_log" >&2
     exit 1
@@ -144,7 +169,7 @@ for log_name in "${artifact_log_names[@]}"; do
   fi
 done
 
-if [[ "$platform" == "linux" && $require_commit -eq 1 ]]; then
+if [[ "$platform" == "linux" && $require_commit -eq 1 && "$wrapper_provider" == "source" ]]; then
   if ! grep -Fq "$(basename "$build_log")" "$acceptance_log"; then
     echo "acceptance log does not reference expected source build log: $(basename "$build_log")" >&2
     exit 1
@@ -154,6 +179,84 @@ fi
 if [[ $require_commit -eq 1 ]] && ! grep -Eq 'skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$wrapper_log"; then
   echo "wrapper log is missing a full 40-character skia_commit hash" >&2
   exit 1
+fi
+
+if [[ "$wrapper_provider" == "jetbrains" ]]; then
+  for field in skia_provider= jetbrains_tag= skia_commit= skia_package= skia_package_sha256=; do
+    if ! grep -Fq "$field" "$wrapper_log"; then
+      echo "JetBrains wrapper log is missing required field: $field" >&2
+      exit 1
+    fi
+  done
+  if ! grep -Eq '^[[:space:]]*skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$wrapper_log"; then
+    echo "JetBrains wrapper log is missing a full 40-character skia_commit hash" >&2
+    exit 1
+  fi
+  if ! grep -Eq '^[[:space:]]*skia_package_sha256=[0-9a-fA-F]{64}[[:space:]]*$' "$wrapper_log"; then
+    echo "JetBrains wrapper log is missing a full 64-character skia_package_sha256 hash" >&2
+    exit 1
+  fi
+
+  python3 - \
+    "$repo_root/skia-provider-lock.json" \
+    "$platform" \
+    "$(extract_field "$wrapper_log" jetbrains_tag)" \
+    "$(extract_field "$wrapper_log" skia_commit)" \
+    "$(extract_field "$wrapper_log" skia_package)" \
+    "$(extract_field "$wrapper_log" skia_package_sha256)" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest_path = pathlib.Path(sys.argv[1])
+platform = sys.argv[2]
+tag = sys.argv[3]
+commit = sys.argv[4].lower()
+package = sys.argv[5]
+sha256 = sys.argv[6].lower()
+
+def fail(message: str) -> None:
+    print(message, file=sys.stderr)
+    raise SystemExit(1)
+
+try:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+except FileNotFoundError:
+    fail(f"JetBrains provider manifest is missing: {manifest_path}")
+except json.JSONDecodeError as error:
+    fail(f"JetBrains provider manifest is invalid: {error}")
+
+provider = manifest.get("providers", {}).get("jetbrains")
+if not isinstance(provider, dict):
+    fail("JetBrains provider manifest is missing providers.jetbrains")
+if tag != provider.get("tag"):
+    fail(f"JetBrains tag mismatch: log={tag} manifest={provider.get('tag')}")
+if commit != str(provider.get("commit", "")).lower():
+    fail(f"JetBrains commit mismatch: log={commit} manifest={provider.get('commit')}")
+
+assets = provider.get("assets", {}).get(platform, {})
+matches = []
+for by_arch in assets.values():
+    if isinstance(by_arch, dict):
+        for asset in by_arch.values():
+            if isinstance(asset, dict) and asset.get("name") == package:
+                matches.append(asset)
+if not matches:
+    fail(f"JetBrains package is not locked for platform={platform}: {package}")
+if not any(str(asset.get("sha256", "")).lower() == sha256 for asset in matches):
+    fail(f"JetBrains package SHA256 mismatch for {package}: {sha256}")
+PY
+
+  for field in jetbrains_tag skia_commit skia_package skia_package_sha256; do
+    wrapper_value="$(extract_field "$wrapper_log" "$field" | tr '[:upper:]' '[:lower:]' || true)"
+    acceptance_value="$(extract_field "$acceptance_log" "$field" | tr '[:upper:]' '[:lower:]' || true)"
+    if [[ "$wrapper_value" != "$acceptance_value" ]]; then
+      echo "wrapper and acceptance logs disagree on JetBrains $field" >&2
+      echo "  wrapper_$field=$wrapper_value" >&2
+      echo "  acceptance_$field=$acceptance_value" >&2
+      exit 1
+    fi
+  done
 fi
 
 extract_commit() {
@@ -175,7 +278,7 @@ if [[ $require_commit -eq 1 ]]; then
   fi
 fi
 
-if [[ "$platform" == "linux" && $require_commit -eq 1 ]]; then
+if [[ "$platform" == "linux" && $require_commit -eq 1 && "$wrapper_provider" == "source" ]]; then
   for field in 'Linux Skia source build environment:' 'skia_checkout=' 'skia_commit=' 'gn_args='; do
     if ! grep -Fq "$field" "$build_log"; then
       echo "Linux source build log is missing required field: $field" >&2

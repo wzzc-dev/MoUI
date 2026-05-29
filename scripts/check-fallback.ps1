@@ -151,6 +151,55 @@ function New-FakeLinuxSourceArtifact {
   $acceptanceLines | Set-Content -LiteralPath $acceptanceLog
 }
 
+function New-FakeJetBrainsArtifact {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Directory,
+    [string] $Commit = "8967a2e80c71be363146da2395f503cab5f5fb9c",
+    [string] $Tag = "m148-8967a2e80c",
+    [string] $Package = "Skia-m148-8967a2e80c-windows-Release-x64.zip",
+    [string] $Sha256 = "1927edce6567785870558bfc5e84fac99af45cbe91eb62f260025bc1cf7aa5df"
+  )
+
+  New-Item -ItemType Directory -Force -Path $Directory | Out-Null
+  $preflightLog = Join-Path $Directory "windows-real-skia-smoke-preflight.log"
+  $wrapperLog = Join-Path $Directory "windows-real-skia-smoke.log"
+  $nativeLog = Join-Path $Directory "windows-native-smoke-output.log"
+  $acceptanceLog = Join-Path $Directory "windows-real-skia-acceptance.log"
+
+  "JetBrains Skia provider dry run" | Set-Content -LiteralPath $preflightLog
+  @(
+    "Windows MSVC Skia smoke environment:"
+    "  skia_include=C:/fake/skia"
+    "  skia_lib_dir=C:/fake/skia/out/Release-x64"
+    "  skia_lib=skia"
+    "  skia_provider=jetbrains"
+    "  jetbrains_tag=$Tag"
+    "  skia_commit=$Commit"
+    "  skia_package=$Package"
+    "  skia_package_sha256=$Sha256"
+    "  library=skia.lib 123 bytes"
+    "  stub_cc_flags=/DSKIA_MBT_HAS_SKIA /IC:/fake/skia"
+    "  cc_link_flags=C:/fake/skia/out/Release-x64/skia.lib user32.lib"
+  ) | Set-Content -LiteralPath $wrapperLog
+  Set-FakeNativeSmokeLog -Path $nativeLog
+  @(
+    "Windows MSVC real Skia acceptance result:"
+    "  smoke_status=0"
+    "  native_smoke_marker=passed"
+    "  native_pkg_restore=passed"
+    "  skia_provider=jetbrains"
+    "  jetbrains_tag=$Tag"
+    "  skia_commit=$Commit"
+    "  skia_package=$Package"
+    "  skia_package_sha256=$Sha256"
+    "  preflight_log=$preflightLog"
+    "  wrapper_log=$wrapperLog"
+    "  native_log=$nativeLog"
+    "  acceptance_log=$acceptanceLog"
+  ) | Set-Content -LiteralPath $acceptanceLog
+}
+
 Push-Location $repoRoot
 try {
   moon fmt
@@ -160,6 +209,7 @@ try {
     moon info
   }
   moon test
+  Get-Content -LiteralPath (Join-Path $repoRoot "skia-provider-lock.json") -Raw | ConvertFrom-Json | Out-Null
 
   Push-Location (Join-Path $repoRoot "scripts/native_smoke")
   try {
@@ -217,6 +267,56 @@ try {
     }
 
     Assert-NativePkgUnchanged -ExpectedHash $beforeNativePkgHash
+
+    $fetchDryRunEnv = & (Join-Path $repoRoot "scripts/fetch-jetbrains-skia.ps1") `
+      -Platform windows `
+      -Arch x64 `
+      -Config Release `
+      -CacheDir (Join-Path $dryRunRoot "jetbrains-cache") `
+      -DryRunConfig `
+      -PrintEnv
+    if (($fetchDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PACKAGE=Skia-m148-8967a2e80c-windows-Release-x64.zip*" -or
+      ($fetchDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PACKAGE_SHA256=1927edce6567785870558bfc5e84fac99af45cbe91eb62f260025bc1cf7aa5df*") {
+      throw "fetch-jetbrains-skia.ps1 did not map Windows x64 Release to the locked package"
+    }
+
+    $fakeJetBrainsCache = Join-Path $dryRunRoot "jetbrains-cache"
+    $fakeJetBrainsPackage = Join-Path $fakeJetBrainsCache "m148-8967a2e80c/windows-Release-x64/package/fake"
+    New-Item -ItemType Directory -Force -Path (Join-Path $fakeJetBrainsPackage "include/core") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $fakeJetBrainsPackage "out/Release-x64") | Out-Null
+    New-Item -ItemType File -Force -Path (Join-Path $fakeJetBrainsPackage "include/core/SkSurface.h") | Out-Null
+    New-Item -ItemType File -Force -Path (Join-Path $fakeJetBrainsPackage "out/Release-x64/skia.lib") | Out-Null
+    $env:SKIA_MBT_ALLOW_FAKE_JETBRAINS_ZIP = "1"
+    try {
+      $fakeFetchEnv = & (Join-Path $repoRoot "scripts/fetch-jetbrains-skia.ps1") `
+        -Platform windows `
+        -Arch x64 `
+        -Config Release `
+        -CacheDir $fakeJetBrainsCache `
+        -PrintEnv
+    } finally {
+      Remove-Item Env:SKIA_MBT_ALLOW_FAKE_JETBRAINS_ZIP -ErrorAction SilentlyContinue
+    }
+    if (($fakeFetchEnv -join "`n") -notlike "*SKIA_MBT_SKIA_INCLUDE=*" -or
+      ($fakeFetchEnv -join "`n") -notlike "*SKIA_MBT_SKIA_LIB_DIR=*") {
+      throw "fetch-jetbrains-skia.ps1 did not resolve fake package include/lib paths"
+    }
+
+    $fakeJetBrainsNoHeaders = Join-Path $fakeJetBrainsCache "m148-8967a2e80c/windows-Release-arm64/package/fake"
+    New-Item -ItemType Directory -Force -Path (Join-Path $fakeJetBrainsNoHeaders "out/Release-arm64") | Out-Null
+    New-Item -ItemType File -Force -Path (Join-Path $fakeJetBrainsNoHeaders "out/Release-arm64/skia.lib") | Out-Null
+    $fakeJetBrainsSource = Join-Path $fakeJetBrainsCache "m148-8967a2e80c/source/JetBrains-skia-m148-8967a2e80c"
+    New-Item -ItemType Directory -Force -Path (Join-Path $fakeJetBrainsSource "include/core") | Out-Null
+    New-Item -ItemType File -Force -Path (Join-Path $fakeJetBrainsSource "include/core/SkSurface.h") | Out-Null
+    $fallbackFetchEnv = & (Join-Path $repoRoot "scripts/fetch-jetbrains-skia.ps1") `
+      -Platform windows `
+      -Arch arm64 `
+      -Config Release `
+      -CacheDir $fakeJetBrainsCache `
+      -PrintEnv
+    if (($fallbackFetchEnv -join "`n") -notlike "*jetbrains-cache/m148-8967a2e80c/source/*") {
+      throw "fetch-jetbrains-skia.ps1 did not fall back to source headers"
+    }
 
     try {
       & (Join-Path $repoRoot "scripts/windows-accept-real-skia-smoke.ps1") `
@@ -355,6 +455,20 @@ try {
       -LogDir $fakeArtifactDir `
       -RequireCommit
 
+    $fakeJetBrainsArtifactDir = Join-Path $dryRunRoot "fake-jetbrains-artifact"
+    New-FakeJetBrainsArtifact -Directory $fakeJetBrainsArtifactDir
+    & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") `
+      -Platform windows `
+      -LogDir $fakeJetBrainsArtifactDir
+
+    $fakeJetBrainsBadShaDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-bad-sha"
+    New-FakeJetBrainsArtifact `
+      -Directory $fakeJetBrainsBadShaDir `
+      -Sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadShaDir } `
+      -ExpectedMessage "SHA256 mismatch"
+
 
     $fakeMacosArtifactDir = Join-Path $dryRunRoot "fake-macos-artifact"
     New-Item -ItemType Directory -Force -Path $fakeMacosArtifactDir | Out-Null
@@ -432,7 +546,9 @@ try {
     $acceptedStatus = Get-Content -LiteralPath $fakePlatformStatus -Raw | ConvertFrom-Json
     if (!$acceptedStatus.platforms.linux.accepted -or
       $acceptedStatus.platforms.linux.accepted_artifact -ne "fake-linux-source-artifact" -or
-      $acceptedStatus.platforms.linux.accepted_commit -ne "0123456789abcdef0123456789abcdef01234567") {
+      $acceptedStatus.platforms.linux.accepted_commit -ne "0123456789abcdef0123456789abcdef01234567" -or
+      $acceptedStatus.platforms.linux.accepted_provider -ne "source" -or
+      $acceptedStatus.platforms.linux.accepted_version -ne "0123456789abcdef0123456789abcdef01234567") {
       throw "accept-platform-status did not mark Linux accepted with the expected artifact"
     }
 

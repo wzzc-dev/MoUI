@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/macos-accept-real-skia-smoke.sh [--log-dir PATH] [macos-skia-smoke options]
+Usage: scripts/macos-accept-real-skia-smoke.sh [--log-dir PATH] [macos-real-skia-smoke options]
 
 Runs the macOS real Skia smoke helper, captures both wrapper and native smoke
 executable logs, verifies the native success marker, and checks that
@@ -14,8 +14,9 @@ Options handled by this wrapper:
                        Relative paths are resolved from the repository root.
   -h, --help           Show this help.
 
-All other options are forwarded to scripts/macos-skia-smoke.sh. This wrapper
-owns --smoke-log so the native executable log has a predictable path.
+All other options are forwarded to scripts/macos-real-skia-smoke.sh. This wrapper
+owns --build-log and --smoke-log so build and native executable logs have
+predictable paths.
 EOF
 }
 
@@ -32,8 +33,12 @@ while [[ $# -gt 0 ]]; do
       echo "scripts/macos-accept-real-skia-smoke.sh owns --smoke-log; use --log-dir instead" >&2
       exit 2
       ;;
+    --build-log)
+      echo "scripts/macos-accept-real-skia-smoke.sh owns --build-log; use --log-dir instead" >&2
+      exit 2
+      ;;
     --dry-run-config)
-      echo "acceptance requires a real smoke run; use scripts/macos-skia-smoke.sh --dry-run-config for preflight" >&2
+      echo "acceptance requires a real smoke run; use scripts/macos-real-skia-smoke.sh --dry-run-config for preflight" >&2
       exit 2
       ;;
     -h|--help)
@@ -55,6 +60,7 @@ esac
 
 preflight_log="$resolved_log_dir/macos-real-skia-smoke-preflight.log"
 wrapper_log="$resolved_log_dir/macos-real-skia-smoke.log"
+build_log="$resolved_log_dir/macos-skia-build.log"
 native_log="$resolved_log_dir/macos-native-smoke-output.log"
 acceptance_log="$resolved_log_dir/macos-real-skia-acceptance.log"
 native_pkg="$repo_root/native/moon.pkg"
@@ -73,17 +79,20 @@ before_pkg_hash="$(shasum -a 256 "$native_pkg" | awk '{print $1}')"
 echo "macOS real Skia acceptance logs:"
 echo "  preflight_log=$preflight_log"
 echo "  wrapper_log=$wrapper_log"
+echo "  build_log=$build_log"
 echo "  native_log=$native_log"
 echo "  acceptance_log=$acceptance_log"
 
-bash "$repo_root/scripts/macos-skia-smoke.sh" \
+bash "$repo_root/scripts/macos-real-skia-smoke.sh" \
+  --build-log "$build_log" \
   --smoke-log "$native_log" \
   --dry-run-config \
   "${smoke_args[@]}" 2>&1 | tee "$preflight_log"
 
 set +e
 set -o pipefail
-bash "$repo_root/scripts/macos-skia-smoke.sh" \
+bash "$repo_root/scripts/macos-real-skia-smoke.sh" \
+  --build-log "$build_log" \
   --smoke-log "$native_log" \
   "${smoke_args[@]}" 2>&1 | tee "$wrapper_log"
 smoke_status=${PIPESTATUS[0]}
@@ -111,8 +120,16 @@ if [[ $smoke_status -eq 0 ]]; then
 fi
 
 skia_commit=""
+skia_provider=""
+jetbrains_tag=""
+skia_package=""
+skia_package_sha256=""
 if [[ -f "$wrapper_log" ]]; then
   skia_commit="$(grep -E '^[[:space:]]*skia_commit=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_commit=//' || true)"
+  skia_provider="$(grep -E '^[[:space:]]*skia_provider=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_provider=//' || true)"
+  jetbrains_tag="$(grep -E '^[[:space:]]*jetbrains_tag=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*jetbrains_tag=//' || true)"
+  skia_package="$(grep -E '^[[:space:]]*skia_package=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_package=//' || true)"
+  skia_package_sha256="$(grep -E '^[[:space:]]*skia_package_sha256=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_package_sha256=//' || true)"
 fi
 
 cat <<EOF | tee "$acceptance_log"
@@ -120,9 +137,14 @@ macOS real Skia acceptance result:
   smoke_status=$smoke_status
   native_smoke_marker=$marker_status
   native_pkg_restore=$restore_status
+  skia_provider=${skia_provider:-unknown}
+  jetbrains_tag=${jetbrains_tag:-unknown}
   skia_commit=${skia_commit:-unknown}
+  skia_package=${skia_package:-unknown}
+  skia_package_sha256=${skia_package_sha256:-unknown}
   preflight_log=$preflight_log
   wrapper_log=$wrapper_log
+  build_log=$build_log
   native_log=$native_log
   acceptance_log=$acceptance_log
 EOF
@@ -132,6 +154,7 @@ if [[ -n "${GITHUB_ENV:-}" ]]; then
     echo "native_smoke_marker_status=$marker_status"
     echo "restore_status=$restore_status"
     echo "macos_acceptance_log=$acceptance_log"
+    echo "macos_skia_provider=${skia_provider:-unknown}"
     echo "macos_skia_commit=${skia_commit:-unknown}"
   } >> "$GITHUB_ENV"
 fi

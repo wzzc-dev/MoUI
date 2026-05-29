@@ -17,7 +17,7 @@ pub fn ColorInfo::new(
 }
 
 ///|
-pub impl Default for ColorInfo with default() {
+pub impl Default for ColorInfo with fn default() {
   ColorInfo::new()
 }
 
@@ -126,7 +126,7 @@ pub fn ImageInfo::a8(dimensions : ISize) -> ImageInfo {
 }
 
 ///|
-pub impl Default for ImageInfo with default() {
+pub impl Default for ImageInfo with fn default() {
   ImageInfo::unknown()
 }
 
