@@ -280,8 +280,11 @@ test {
   let fractional = @skia_mbt.Rect::new(1.2, -2.8, 5.7, 3.1)
 
   assert_true(point.is_finite())
+  assert_eq(point.length_squared(), 25.0)
   assert_eq(point.dot(@skia_mbt.Point::new(-2, 5)), 14.0)
   assert_eq(point.cross(@skia_mbt.Point::new(-2, 5)), 23.0)
+  assert_true(point.with_length(10) == Some(@skia_mbt.Point::new(6, 8)))
+  assert_true(point.rotate_cw() == @skia_mbt.Point::new(4, -3))
   assert_true(rect == @skia_mbt.Rect::from_ltrb(2, 3, 6, 8))
   assert_true(
     rect.with_offset_to(@skia_mbt.Point::new(10, -1)) ==
