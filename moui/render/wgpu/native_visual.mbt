@@ -66,6 +66,7 @@ priv struct NativeShaderEffectRun {
   uniforms : Array[Double]
   fallback : @core.Brush
   opacity : Double
+  transform : @core.Transform2D
   scissor : NativeScissor?
 }
 
@@ -404,6 +405,7 @@ fn build_native_draw_plan_range(
                 uniforms: spec.uniforms,
                 fallback: spec.fallback,
                 opacity: state.opacity,
+                transform: state.transform,
                 scissor: native_scissor_for_state(state, size, scale_factor),
               }),
             )
@@ -1188,6 +1190,7 @@ fn advanced_rect_vertices(
   uv_rect? : @core.Rect? = None,
   mask_radius? : Double = 0.0,
   mask_kind? : Double = 0.0,
+  transform? : @core.Transform2D = @core.Transform2D::identity(),
 ) -> Array[AdvancedVertex] {
   let vertices : Array[AdvancedVertex] = []
   let x0 = rect.origin.x
@@ -1215,6 +1218,7 @@ fn advanced_rect_vertices(
     color1~,
     mask_radius~,
     mask_kind~,
+    transform~,
   )
   push_advanced_vertex(
     vertices,
@@ -1233,6 +1237,7 @@ fn advanced_rect_vertices(
     color1~,
     mask_radius~,
     mask_kind~,
+    transform~,
   )
   push_advanced_vertex(
     vertices,
@@ -1251,6 +1256,7 @@ fn advanced_rect_vertices(
     color1~,
     mask_radius~,
     mask_kind~,
+    transform~,
   )
   push_advanced_vertex(
     vertices,
@@ -1269,6 +1275,7 @@ fn advanced_rect_vertices(
     color1~,
     mask_radius~,
     mask_kind~,
+    transform~,
   )
   push_advanced_vertex(
     vertices,
@@ -1287,6 +1294,7 @@ fn advanced_rect_vertices(
     color1~,
     mask_radius~,
     mask_kind~,
+    transform~,
   )
   push_advanced_vertex(
     vertices,
@@ -1305,6 +1313,7 @@ fn advanced_rect_vertices(
     color1~,
     mask_radius~,
     mask_kind~,
+    transform~,
   )
   vertices
 }
@@ -1346,11 +1355,13 @@ fn push_advanced_vertex(
   color1~ : @core.Color,
   mask_radius~ : Double,
   mask_kind~ : Double,
+  transform~ : @core.Transform2D,
 ) -> Unit {
+  let transformed = transform_point(transform, x, y)
   let filter_payload = native_filter_payload(filter)
   vertices.push({
-    x: visual_pixel_x_to_ndc(x, size.width),
-    y: visual_pixel_y_to_ndc(y, size.height),
+    x: visual_pixel_x_to_ndc(transformed.x, size.width),
+    y: visual_pixel_y_to_ndc(transformed.y, size.height),
     u,
     v,
     opacity: clamp_opacity(opacity),

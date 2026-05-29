@@ -62,7 +62,14 @@ Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
 raster-affecting inputs such as glyph identity, font size, style, weight, and
 scale. Invalid layout or raster data is rejected at the renderer boundary and
-falls back when a fallback engine was supplied.
+falls back when a fallback engine was supplied. Run-layout responses may omit
+carets, but any non-empty caret array must be monotonic and cover the input
+text before glyphs are accepted for atlas upload.
+
+The Cosmic provider loads platform emoji fallback font candidates when they are
+available, and uses the same caret derivation for measurement and native
+run-layout responses, so representative single-codepoint, variation-selector,
+and ZWJ emoji samples carry monotonic caret coverage before glyph atlas upload.
 
 ## Web Wasm-GC
 
@@ -88,12 +95,17 @@ Remote font loading is intentionally outside the current backend contract.
 
 ## Current Gaps
 
-- Full bidi, line breaking, typography conformance, native color emoji, and
-  full grapheme-cluster parity remain follow-up work. Stable and diagnostic
-  tests assert caret counts, monotonicity, clamping, editor selection behavior,
-  IME anchor geometry, and provider fallback safety across mixed bidi, CJK,
-  single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples; they
-  do not claim full Unicode shaping parity.
+- Full bidi, line breaking, typography conformance, native emoji font fallback,
+  ZWJ/color emoji conformance, and full grapheme-cluster parity remain follow-up
+  work. Native WGPU can preserve RGBA color glyph payloads through the provider
+  protocol and glyph atlas path, with Cosmic platform emoji fallback candidate
+  loading, Cosmic color swash preservation, and a CoreText AppleColorEmoji RGBA
+  path covered by focused tests. Stable and diagnostic tests assert caret
+  counts, monotonicity, clamping, editor selection behavior, IME anchor
+  geometry, and provider fallback safety across mixed bidi, CJK,
+  single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples;
+  Cosmic run-layout tests additionally assert glyph output plus caret coverage
+  for those emoji samples. They do not claim full Unicode shaping parity.
 - Focused text inputs expose MoUI's default copy, cut, paste, undo, redo, and
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste

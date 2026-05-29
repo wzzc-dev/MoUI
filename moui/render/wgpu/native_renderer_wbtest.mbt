@@ -406,6 +406,55 @@ test "native renderer plans advanced GPU layer filter and shader items" {
 }
 
 ///|
+test "native shader effect carries transform into advanced vertices" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=10.0, dy=20.0),
+    ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="checker",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      ),
+    ),
+    @core.DrawCommand::PopTransform,
+  ])
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.draw_items.length(), content="1")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeShaderEffect(effect) => {
+      inspect(effect.transform.tx, content="10")
+      inspect(effect.transform.ty, content="20")
+      let colors = native_shader_effect_colors(effect)
+      let vertices = advanced_rect_vertices(
+        renderer.size,
+        effect.frame,
+        opacity=effect.opacity,
+        blend_mode=@core.BlendMode::SourceOver,
+        shader_kind=native_shader_kind(effect.name),
+        effect_amount=native_shader_effect_amount(effect),
+        filter=None,
+        color0=colors.0,
+        color1=colors.1,
+        transform=effect.transform,
+      )
+      inspect(vertices.length(), content="6")
+      inspect(vertices[0].x, content="-0.8")
+      inspect(vertices[0].y, content="0.6")
+      inspect(vertices[0].local_x, content="0")
+      inspect(vertices[0].local_y, content="0")
+    }
+    _ => fail("expected shader effect item")
+  }
+}
+
+///|
 test "native renderer scopes inherit transform and clip but composite opacity once" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
@@ -467,8 +516,66 @@ test "native renderer scopes inherit transform and clip but composite opacity on
       inspect(vertex.x, content="-0.8")
       inspect(vertex.y, content="0.6")
       inspect(vertex.a0, content="1")
+      let advanced = advanced_layer_vertices(renderer.size, layer)
+      inspect(advanced.length(), content="6")
+      inspect(advanced[0].x, content="-0.8")
+      inspect(advanced[0].y, content="0.6")
+      inspect(advanced[0].u, content="0.1")
+      inspect(advanced[0].v, content="0.2")
+      inspect(advanced[0].mask_kind, content="0")
     }
     _ => fail("expected native layer item")
+  }
+}
+
+///|
+test "native renderer filter scope inherits transform and transformed clip" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=10.0, dy=20.0),
+    ),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=40.0, height=30.0),
+    ),
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(3.0)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopTransform,
+  ])
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.draw_items.length(), content="1")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeLayer(filter_layer) => {
+      assert_true(filter_layer.filter is Some(@core.FilterEffect::Blur(3.0)))
+      match filter_layer.scissor {
+        Some(scissor) => {
+          inspect(scissor.x, content="10")
+          inspect(scissor.y, content="20")
+          inspect(scissor.width, content="40")
+          inspect(scissor.height, content="30")
+        }
+        None => fail("expected transformed filter scissor")
+      }
+      inspect(filter_layer.plan.visual_vertices.length(), content="6")
+      let vertex = filter_layer.plan.visual_vertices[0]
+      inspect(vertex.x, content="-0.8")
+      inspect(vertex.y, content="0.6")
+      let advanced = advanced_layer_vertices(renderer.size, filter_layer)
+      inspect(advanced.length(), content="6")
+      inspect(advanced[0].filter_kind, content="1")
+      inspect(advanced[0].filter_amount, content="3")
+    }
+    _ => fail("expected native filter layer item")
   }
 }
 

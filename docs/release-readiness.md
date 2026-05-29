@@ -129,16 +129,16 @@ Current alignment:
 | Text | Most catalog sections. | Showcase app tests assert many section labels and renderer report text. | Covered broadly as view output, while shaping conformance remains tracked in text tests. |
 | Image | Text/media and visual correctness cards. | Showcase app tests assert `DrawImage`; renderer/Web adapter tests cover image lifecycle snapshots. | Covered for visible image commands; async diagnostics are partial but Web snapshots now refresh ready/failed records from the browser image cache after host submission. |
 | Clip | Scroll/capability card and clipped image demos. | Showcase app tests assert `PushClip` and clipped long renderer content; Web adapter tests preserve rounded clip host calls. | Covered for visible clipping; Web rounded clip submit uses the browser layer-mask path. |
-| Transform | Capability card lists follow-up status first; visual correctness image uses scale/offset. | Native renderer tests cover scoped layer transform/clip inheritance; Web adapter tests preserve transform scope around layer commands; Showcase app tests assert the follow-up row is visible. | Keep capability status `partial` until richer render-pass transform state and browser pixel evidence exist. |
+| Transform | Capability card lists follow-up status first; visual correctness image uses scale/offset. | Native renderer tests cover scoped layer/filter transform/clip inheritance, transformed filter child vertices/scissors, shader-effect advanced-vertex transform state, and masked layer composite vertices; Web adapter tests preserve transform scope around layer, filter, and shader-effect commands, and the browser runtime now applies transform to shader-effect advanced vertices; Showcase app tests assert the follow-up row is visible. | Keep capability status `partial` until broader render-pass transform pixel evidence exists. |
 | Opacity | Visual correctness image and state-driven visuals. | Showcase app tests assert `PushOpacity`. | Covered for view-level opacity emission; renderer-specific blending remains renderer evidence. |
 | Layer compositing | Used indirectly by advanced renderer scopes where applicable. | Capability report card lists status; no dedicated Showcase assertion. | Keep primary evidence in renderer tests/report unless a visible layer demo is added. |
 | Blend mode | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only if a visible comparison demo is useful. |
 | Filter effect | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only if a visible comparison demo is useful. |
 | Path/vector | Theme/renderer section includes a vector path card that emits filled and stroked `DrawPath` commands. | Renderer tests cover `PathSpec` tessellation, native draw-plan path items, Web host-call forwarding, and fallback planning that keeps visible `DrawPath` out of fallback diagnostics; Showcase app tests assert `DrawPath` emission. | Covered by visible Showcase demo plus renderer/Web adapter command-level evidence. |
 | Shader effect | Capability card lists status. | No dedicated Showcase visual assertion. | Renderer tests/report are primary evidence; add Showcase only for user-inspectable built-ins. |
-| Text shaping | Capability card lists follow-up status first; text/media section exercises text views. | Text conformance tests are primary evidence; Showcase app tests assert the follow-up row is visible. | Do not use Showcase labels as proof of bidi/line-breaking/typography parity. |
-| Emoji text | Capability card lists follow-up status first. | Diagnostic text conformance covers single-codepoint, variation-selector, and ZWJ emoji measurement/caret invariants; Showcase app tests assert the native gap/Web partial row is visible. | Keep native `gap` and Web `partial`: the new evidence does not prove color emoji rendering, browser rasterization determinism, or full grapheme shaping parity. |
-| Async image | Capability card lists follow-up status first; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; Web records submitted sources as loading and refreshes ready/failed records from the browser image cache; Showcase app tests assert the follow-up row is visible. | Still partial because the app model does not receive renderer-specific async image notifications; diagnostics are renderer-local snapshots. |
+| Text shaping | Capability card lists follow-up status first; text/media section exercises text views. | Text conformance tests are primary evidence; provider validation now rejects non-empty run-layout carets that do not cover the input, and Cosmic run-layout tests assert glyph output plus monotonic caret coverage for representative emoji clusters. Showcase app tests assert the follow-up row is visible. | Do not use Showcase labels as proof of bidi/line-breaking/typography parity. |
+| Emoji text | Capability card lists follow-up status first. | Diagnostic text conformance covers single-codepoint, variation-selector, and ZWJ emoji measurement/caret invariants; renderer tests now cover native RGBA color glyph payload parsing/upload, text vertex shader marking, Cosmic platform emoji fallback loading/resolution, Cosmic run-layout caret coverage, Cosmic color swash preservation, and CoreText AppleColorEmoji format selection. Showcase app tests assert the partial follow-up row is visible. | Keep native/Web `partial`: the evidence does not prove full native emoji font fallback across all providers, ZWJ/color emoji conformance, browser rasterization determinism, or full grapheme shaping parity. |
+| Async image | Capability card lists follow-up status first; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; backend Web tests cover app/host-visible `WebRenderer::image_resources`; Web records submitted sources as loading, refreshes ready/failed records from the browser image cache, and the canonical Web boot path schedules a redraw after browser image load/error notifications; Showcase app tests assert the follow-up row is visible. | Still partial while broader native/general repaint policy and fresh release evidence remain outstanding; Web no longer depends on a manual app action to observe browser image completion. |
 
 If renderer support changes, update this alignment only when Showcase coverage
 or its evidence level changes. Otherwise keep the authoritative support status
@@ -153,11 +153,15 @@ documentation evidence.
 ### Renderer
 
 1. Layer-level transform state
-   - Current status: affine transforms are folded into visual, image, and text
+   - Current status: affine transforms are folded into visual, image, text,
+     shader-effect advanced vertices, and masked native layer composite
      vertices. Native scoped layer/filter child plans inherit transform and
-     clip while outer opacity is applied at composite time; Web scoped layers
-     clone current transform/clip state through the browser runtime.
-   - Done when: richer render-pass transform state and visible/pixel evidence
+     clip while outer opacity is applied at composite time, including
+     transformed filter child vertices/scissors; Web scoped layer/filter
+     commands clone current transform/clip state through the browser runtime,
+     and Web adapter tests preserve transform scope around shader-effect
+     commands.
+   - Done when: broader render-pass transform visible/pixel evidence
      are in place, or the remaining limits are explicitly documented for the
      preview handoff.
    - Evidence: renderer tests, `render/capabilities.mbt`,
@@ -167,19 +171,28 @@ documentation evidence.
 2. Async image diagnostics
    - Current status: renderer-neutral lifecycle records model loading, ready,
      failed, disposed, and eviction. Native/Web renderer facades expose image
-     resource snapshots; Web refreshes submitted sources from the browser
-     image cache that is updated by `Image.onload` / `Image.onerror`.
+     resource snapshots, and the backend WebRenderer facade forwards Web
+     snapshots to app/host integration code. Web refreshes submitted sources
+     from the browser image cache that is updated by `Image.onload` /
+     `Image.onerror`. The canonical Web boot path now schedules a redraw when
+     those browser image events report a resource change.
    - Done when: preview handoff has fresh focused renderer/Web adapter
-     evidence and any remaining app-level notification or repaint policy is
-     recorded as out of scope for renderer-local diagnostics.
+     evidence and any remaining native/general repaint policy is recorded as
+     out of scope for renderer-local diagnostics.
    - Evidence: focused renderer/Web adapter tests, docs, and capability report.
 
 3. Emoji and text shaping evidence
-   - Current status: Web can rely on browser font rasterization, native color
-     emoji is a gap, and full bidi/line breaking/typography conformance remains
+   - Current status: Web can rely on browser font rasterization. Native WGPU can
+     carry RGBA color glyph payloads through the provider protocol, atlas
+     upload path, and text vertex shader marker. Cosmic now loads platform
+     emoji fallback font candidates when available, while full native emoji
+     font fallback across all providers, ZWJ/color emoji conformance, and full bidi/line
+     breaking/typography conformance remain
      follow-up work. Diagnostic checks cover representative emoji measurement
      and caret invariants, including single-codepoint, variation-selector, and
-     ZWJ samples, but they document invariants and known gaps rather than
+     ZWJ samples; Cosmic tests also assert platform emoji fallback
+     loading/resolution plus run-layout glyph output and caret coverage for
+     those samples, but they document invariants and known gaps rather than
      claiming full Unicode shaping parity.
    - Done when: deterministic coverage keeps improving without claiming full
      Unicode shaping parity before it exists.

@@ -302,16 +302,27 @@ pub fn native_raster_glyph_from_bytes(
   let width = i32_le(bytes, 0)
   let height = i32_le(bytes, 4)
   let version = i32_le(bytes, 16)
+  let format_code = i32_le(bytes, 20)
+  let bytes_per_pixel = match format_code {
+    0 => 1
+    1 => 4
+    _ => return None
+  }
   if version != native_raster_glyph_protocol_version ||
     width <= 0 ||
     height <= 0 ||
-    width > (bytes.length() - 32) / height {
+    width > (bytes.length() - 32) / height / bytes_per_pixel {
     return None
   }
-  let pixel_len = width * height
+  let pixel_len = width * height * bytes_per_pixel
   let pixels : Array[Byte] = []
   for index in 0..<pixel_len {
     pixels.push(bytes[32 + index])
+  }
+  let format = match format_code {
+    0 => @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask
+    1 => @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba
+    _ => return None
   }
   Some(
     @wgpu_renderer.NativeRasterGlyph::new(
@@ -319,6 +330,7 @@ pub fn native_raster_glyph_from_bytes(
       height~,
       bearing_x=i32_le(bytes, 8),
       bearing_y=i32_le(bytes, 12),
+      format~,
       pixels=Bytes::from_array(pixels),
     ),
   )

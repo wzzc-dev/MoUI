@@ -28,6 +28,7 @@ test "cosmic text font path selects platform font weight" {
 }
 
 ///|
+#cfg(platform="macos")
 test "cosmic text macos primary font avoids sf small glyph variants" {
   let regular = macos_regular_font_path()
   if @fs.path_exists("/System/Library/Fonts/SFNSRounded.ttf") {
@@ -49,6 +50,27 @@ test "cosmic text fallback font path covers cjk when available" {
       cache.font_system.resolve_for_codepoint(
         cosmic_text_attrs_for_font(font),
         0x4F60U,
+      )
+      is Some(_),
+      content="true",
+    )
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "cosmic text fallback font path covers emoji when available" {
+  let emoji = cosmic_emoji_font_path()
+  if @fs.path_exists(emoji) {
+    let cache = CosmicTextCache::new()
+    let font = @core.FontSpec::new(size=16.0, weight=500)
+    cache.ensure_fonts_for_font(font)
+    inspect(cache.loaded_paths.get(emoji) is Some(true), content="true")
+    inspect(
+      cache.font_system.resolve_for_codepoint(
+        cosmic_text_attrs_for_font(font),
+        0x1F642U,
       )
       is Some(_),
       content="true",
@@ -210,13 +232,17 @@ test "cosmic text rasterizes lowercase and digits with valid glyph bitmaps" {
           physical.cache_key,
         )
         match cache.raster_cosmic_glyph(fallback) {
-          Some(raster) =>
+          Some(raster) => {
+            assert_true(
+              raster.format == @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
+            )
             match cosmic_text_char_at(run.text, glyph.start) {
               Some('A') => upper_height = raster.height
               Some('a') => letter_height = raster.height
               Some('1') => digit_height = raster.height
               _ => ()
             }
+          }
           None => ()
         }
       }
@@ -365,6 +391,47 @@ fn assert_cosmic_text_contract_sample(text : String) -> Unit raise {
   )
   for caret in clamped.caret_positions {
     inspect(caret <= 32.0, content="true")
+  }
+}
+
+///|
+fn assert_cosmic_run_layout_contract_sample(text : String) -> Unit raise {
+  let cache = CosmicTextCache::new()
+  let font = @core.FontSpec::new(size=18.0, weight=500)
+  let run = @core.TextRun::new(
+    text~,
+    frame=@core.Rect::new(x=0.0, y=0.0, width=120.0, height=40.0),
+    font~,
+    color=@core.Color::black(),
+    align=@core.TextAlign::TextStart,
+  )
+  match cache.layout_for_run(run, 1.0) {
+    Some(layout) => {
+      inspect(layout.size.width > 0.0, content="true")
+      inspect(layout.size.height > 0.0, content="true")
+      inspect(layout.baseline > 0.0, content="true")
+      inspect(layout.glyphs.length() > 0, content="true")
+      inspect(
+        layout.caret_positions.length(),
+        content="\{text.to_array().length() + 1}",
+      )
+      inspect(
+        cosmic_test_carets_are_monotonic(layout.caret_positions),
+        content="true",
+      )
+    }
+    None => fail("expected cosmic run layout for diagnostic sample")
+  }
+}
+
+///|
+test "cosmic run layout carries caret coverage for emoji clusters" {
+  if @fs.path_exists(cosmic_regular_font_path()) {
+    assert_cosmic_run_layout_contract_sample("\u{1F642}")
+    assert_cosmic_run_layout_contract_sample("\u{2615}\u{FE0F}")
+    assert_cosmic_run_layout_contract_sample("\u{1F469}\u{200D}\u{1F373}")
+  } else {
+    inspect("skipped", content="skipped")
   }
 }
 

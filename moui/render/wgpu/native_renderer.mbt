@@ -923,6 +923,7 @@ fn RendererHandle::draw_native_shader_effect(
         filter=None,
         color0=colors.0,
         color1=colors.1,
+        transform=effect.transform,
       )
       self.draw_advanced_vertices(
         pass,
@@ -1376,10 +1377,14 @@ fn create_text_pipeline(
   let builder = try! @wgpu_mbt.RenderPipelineDescBuilder::new(shader, layout~)
   try! builder.set_color_target_format(format)
   try! builder.enable_alpha_blend()
-  try! builder.set_vertex_buffer_layout(32UL, @wgpu_mbt.VERTEX_STEP_MODE_VERTEX)
+  try! builder.set_vertex_buffer_layout(
+    text_vertex_stride,
+    @wgpu_mbt.VERTEX_STEP_MODE_VERTEX,
+  )
   try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 0UL, 0U)
   try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X2, 8UL, 1U)
   try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32X4, 16UL, 2U)
+  try! builder.add_vertex_attribute(@wgpu_mbt.VERTEX_FORMAT_FLOAT32, 32UL, 3U)
   try! builder.create_pipeline(device)
 }
 

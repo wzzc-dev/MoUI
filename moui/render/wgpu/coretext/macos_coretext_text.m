@@ -1,8 +1,12 @@
 #import <moonbit.h>
 #import <limits.h>
 #import <stdint.h>
+#import <stdbool.h>
 #import <stdlib.h>
 #import <string.h>
+
+#define MOUI_NATIVE_FONT_SPEC_VERSION 1
+#define MOUI_NATIVE_FONT_REGISTRATION_VERSION 1
 
 #if defined(__APPLE__)
 
@@ -13,8 +17,6 @@
 #define MOUI_CORETEXT_LAYOUT_VERSION 1
 #define MOUI_CORETEXT_RUN_VERSION 1
 #define MOUI_CORETEXT_RASTER_VERSION 1
-#define MOUI_NATIVE_FONT_SPEC_VERSION 1
-#define MOUI_NATIVE_FONT_REGISTRATION_VERSION 1
 #define MOUI_CORETEXT_REGISTERED_FONT_LIMIT 64
 
 typedef struct {
@@ -62,6 +64,24 @@ static void moui_write_double_le(uint8_t *p, double value) {
   memcpy(&u, &value, sizeof(double));
   for (int i = 0; i < 8; i++) {
     p[i] = (uint8_t)((u >> (8 * i)) & 0xffu);
+  }
+}
+
+static uint8_t moui_coretext_unpremultiply_channel(uint8_t channel, uint8_t alpha) {
+  if (alpha == 0 || channel == 0) {
+    return 0;
+  }
+  uint32_t value = ((uint32_t)channel * 255u + (uint32_t)alpha / 2u) / (uint32_t)alpha;
+  return value > 255u ? 255u : (uint8_t)value;
+}
+
+static void moui_coretext_unpremultiply_rgba(uint8_t *pixels, int32_t width, int32_t height) {
+  int32_t len = width * height * 4;
+  for (int32_t offset = 0; offset < len; offset += 4) {
+    uint8_t alpha = pixels[offset + 3];
+    pixels[offset] = moui_coretext_unpremultiply_channel(pixels[offset], alpha);
+    pixels[offset + 1] = moui_coretext_unpremultiply_channel(pixels[offset + 1], alpha);
+    pixels[offset + 2] = moui_coretext_unpremultiply_channel(pixels[offset + 2], alpha);
   }
 }
 
@@ -485,6 +505,25 @@ static moonbit_bytes_t moui_coretext_font_name_bytes(CTFontRef font) {
   return out;
 }
 
+static int32_t moui_coretext_font_postscript_name_equals(CTFontRef font, const char *candidate) {
+  if (font == NULL || candidate == NULL) {
+    return 0;
+  }
+  CFStringRef name = CTFontCopyPostScriptName(font);
+  if (name == NULL) {
+    return 0;
+  }
+  CFStringRef expected = CFStringCreateWithCString(NULL, candidate, kCFStringEncodingUTF8);
+  if (expected == NULL) {
+    CFRelease(name);
+    return 0;
+  }
+  Boolean equal = CFStringCompare(name, expected, 0) == kCFCompareEqualTo;
+  CFRelease(expected);
+  CFRelease(name);
+  return equal ? 1 : 0;
+}
+
 static CTFontRef moui_create_font_from_name_bytes(moonbit_bytes_t font_name, double size, int32_t weight, int32_t style) {
   int32_t len = (int32_t)Moonbit_array_length(font_name);
   const uint8_t *name_bytes = (const uint8_t *)font_name;
@@ -816,6 +855,17 @@ int32_t moui_macos_coretext_debug_generic_font_name_len(moonbit_bytes_t family_n
 }
 
 MOONBIT_FFI_EXPORT
+int32_t moui_macos_coretext_debug_raster_format_for_font_name(moonbit_bytes_t font_name, double size, int32_t weight, int32_t style) {
+  CTFontRef font = moui_create_font_from_name_bytes(font_name, size, weight, style);
+  if (font == NULL) {
+    return -1;
+  }
+  int32_t format = moui_coretext_font_postscript_name_equals(font, "AppleColorEmoji") ? 1 : 0;
+  CFRelease(font);
+  return format;
+}
+
+MOONBIT_FFI_EXPORT
 int32_t moui_macos_coretext_glyph_id_for_codepoint(uint32_t codepoint, double size, int32_t weight, int32_t style) {
   CTFontRef font = moui_create_system_font(size, weight, style);
   if (font == NULL) {
@@ -872,19 +922,23 @@ moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t glyph_id, uint32_t cod
     CFRelease(font);
     return empty;
   }
+  int32_t format = moui_coretext_font_postscript_name_equals(font, "AppleColorEmoji") ? 1 : 0;
+  int32_t bytes_per_pixel = format == 1 ? 4 : 1;
   int32_t header = 32;
-  moonbit_bytes_t out = moonbit_make_bytes(header + width * height, 0);
+  moonbit_bytes_t out = moonbit_make_bytes(header + width * height * bytes_per_pixel, 0);
   uint8_t *dst = (uint8_t *)out;
   moui_write_i32_le(dst, width);
   moui_write_i32_le(dst + 4, height);
   moui_write_i32_le(dst + 8, (int32_t)floor(bounds.origin.x - padding));
   moui_write_i32_le(dst + 12, (int32_t)floor(-(ascent + padding)));
   moui_write_i32_le(dst + 16, MOUI_CORETEXT_RASTER_VERSION);
-  moui_write_i32_le(dst + 20, 0);
+  moui_write_i32_le(dst + 20, format);
   moui_write_double_le(dst + 24, advance / scale);
 
-  CGColorSpaceRef color_space = CGColorSpaceCreateDeviceGray();
-  CGContextRef ctx = CGBitmapContextCreate(dst + header, width, height, 8, width, color_space, (CGBitmapInfo)kCGImageAlphaNone);
+  CGColorSpaceRef color_space = format == 1 ? CGColorSpaceCreateDeviceRGB() : CGColorSpaceCreateDeviceGray();
+  CGContextRef ctx = format == 1
+    ? CGBitmapContextCreate(dst + header, width, height, 8, width * 4, color_space, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big)
+    : CGBitmapContextCreate(dst + header, width, height, 8, width, color_space, (CGBitmapInfo)kCGImageAlphaNone);
   CGColorSpaceRelease(color_space);
   if (ctx == NULL) {
     CFRelease(font);
@@ -892,11 +946,18 @@ moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t glyph_id, uint32_t cod
   }
   CGContextSetAllowsAntialiasing(ctx, true);
   CGContextSetShouldAntialias(ctx, true);
-  CGContextSetGrayFillColor(ctx, 1.0, 1.0);
+  if (format == 1) {
+    CGContextSetRGBFillColor(ctx, 1.0, 1.0, 1.0, 1.0);
+  } else {
+    CGContextSetGrayFillColor(ctx, 1.0, 1.0);
+  }
   CGContextSetTextMatrix(ctx, CGAffineTransformIdentity);
   CGPoint position = CGPointMake(padding - bounds.origin.x, height - (padding + ascent));
   CTFontDrawGlyphs(font, &glyph, &position, 1, ctx);
   CGContextRelease(ctx);
+  if (format == 1) {
+    moui_coretext_unpremultiply_rgba(dst + header, width, height);
+  }
   CFRelease(font);
   return out;
 }
@@ -965,6 +1026,15 @@ int32_t moui_macos_coretext_debug_font_registration_protocol_version(void) {
 MOONBIT_FFI_EXPORT
 int32_t moui_macos_coretext_debug_generic_font_name_len(moonbit_bytes_t family_name) {
   (void)family_name;
+  return -1;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_coretext_debug_raster_format_for_font_name(moonbit_bytes_t font_name, double size, int32_t weight, int32_t style) {
+  (void)font_name;
+  (void)size;
+  (void)weight;
+  (void)style;
   return -1;
 }
 

@@ -10,6 +10,18 @@ const ATLAS_SIZE = 2048;
 const WEB_FONT_STACK = 'system-ui';
 const ADVANCED_STRIDE_FLOATS = 44;
 
+export function createImageResourceChangeNotifier(callback, scheduleRedraw) {
+  const notify = typeof callback === "function" ? callback : undefined;
+  const schedule = typeof scheduleRedraw === "function" ? scheduleRedraw : () => {};
+  return event => {
+    try {
+      notify?.(event);
+    } finally {
+      schedule();
+    }
+  };
+}
+
 export function createWebGpuImports(options = {}) {
   if (!options.device || !options.format) {
     throw new Error("createWebGpuImports requires a pre-initialized WebGPU device. Use createWebGpuImportsAsync().");
@@ -26,6 +38,17 @@ export function createWebGpuImports(options = {}) {
   let nextRendererHandle = 1;
   const measureCanvas = document.createElement("canvas");
   const measureContext = measureCanvas.getContext("2d");
+  const notifyImageResourceChanged =
+    typeof options.onImageResourceChange === "function"
+      ? options.onImageResourceChange
+      : () => {};
+  const reportImageResourceChange = event => {
+    try {
+      notifyImageResourceChanged(event);
+    } catch (error) {
+      globalThis.console?.error?.("MoUI image resource notification failed", error);
+    }
+  };
 
   const createStringHandle = value => {
     const handle = nextStringHandle++;
@@ -226,13 +249,14 @@ export function createWebGpuImports(options = {}) {
     }
   };
 
-  const pushAdvancedVertex = (scope, renderer, px, py, u, v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask) => {
+  const pushAdvancedVertex = (scope, renderer, px, py, u, v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask, transform) => {
     const w = Number(renderer.width || renderer.surface.width || 1);
     const h = Number(renderer.height || renderer.surface.height || 1);
     const matrix = filter.matrix ?? emptyMatrix();
+    const transformed = transformPoint(transform, px, py);
     scope.advancedVertices.push(
-      px / w * 2 - 1,
-      1 - py / h * 2,
+      transformed.x / w * 2 - 1,
+      1 - transformed.y / h * 2,
       u, v,
       opacity,
       blendMode,
@@ -257,6 +281,7 @@ export function createWebGpuImports(options = {}) {
     const scope = rendererScope(renderer);
     const filter = normalizeFilter(filterInput);
     const uvRect = options.uvRect;
+    const transform = options.transform ?? identityTransform();
     const mask = options.mask ?? { width: rect.width, height: rect.height, radius: 0, rounded: false };
     const start = scope.advancedVertices.length / ADVANCED_STRIDE_FLOATS;
     const x0 = rect.x;
@@ -273,12 +298,12 @@ export function createWebGpuImports(options = {}) {
     const uv1 = uvFor(x0, y1, 0, 1);
     const uv2 = uvFor(x1, y1, 1, 1);
     const uv3 = uvFor(x1, y0, 1, 0);
-    pushAdvancedVertex(scope, renderer, x0, y0, uv0.u, uv0.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
-    pushAdvancedVertex(scope, renderer, x0, y1, uv1.u, uv1.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
-    pushAdvancedVertex(scope, renderer, x1, y1, uv2.u, uv2.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
-    pushAdvancedVertex(scope, renderer, x0, y0, uv0.u, uv0.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
-    pushAdvancedVertex(scope, renderer, x1, y1, uv2.u, uv2.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
-    pushAdvancedVertex(scope, renderer, x1, y0, uv3.u, uv3.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask);
+    pushAdvancedVertex(scope, renderer, x0, y0, uv0.u, uv0.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask, transform);
+    pushAdvancedVertex(scope, renderer, x0, y1, uv1.u, uv1.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask, transform);
+    pushAdvancedVertex(scope, renderer, x1, y1, uv2.u, uv2.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask, transform);
+    pushAdvancedVertex(scope, renderer, x0, y0, uv0.u, uv0.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask, transform);
+    pushAdvancedVertex(scope, renderer, x1, y1, uv2.u, uv2.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask, transform);
+    pushAdvancedVertex(scope, renderer, x1, y0, uv3.u, uv3.v, opacity, blendMode, shaderKind, effectAmount, filter, rect, color0, color1, mask, transform);
     scope.items.push({
       type: "advanced",
       start,
@@ -1193,12 +1218,25 @@ export function createWebGpuImports(options = {}) {
       if (!key.startsWith("data:") && !key.startsWith("blob:")) image.crossOrigin = "anonymous";
       entry = { source: key, image, loaded: false, failed: false };
       image.onload = () => {
+        entry.failed = false;
         entry.loaded = true;
         entry.width = image.naturalWidth || image.width || 1;
         entry.height = image.naturalHeight || image.height || 1;
+        reportImageResourceChange({
+          source: key,
+          status: "ready",
+          width: entry.width,
+          height: entry.height,
+        });
       };
       image.onerror = () => {
+        entry.loaded = false;
         entry.failed = true;
+        reportImageResourceChange({
+          source: key,
+          status: "failed",
+          diagnostic: "browser image load failed",
+        });
       };
       image.src = key;
       if (image.complete && image.naturalWidth > 0 && image.naturalHeight > 0) {
@@ -1927,6 +1965,7 @@ export function createWebGpuImports(options = {}) {
         { r: Number(r0), g: Number(g0), b: Number(b0), a: Number(a0) },
         { r: Number(r1), g: Number(g1), b: Number(b1), a: Number(a1) },
         rendererState(renderer).clip ? { ...rendererState(renderer).clip } : undefined,
+        { transform: { ...rendererState(renderer).transform } },
       );
       return ok();
     },
@@ -2061,9 +2100,15 @@ export async function bootMouiWasmGcApp(options = {}) {
   const windowWeb = createWindowWebImports({
     canvasHost: options.canvasHost ?? "#canvas-host",
   });
+  const userWebGpuOptions = options.webgpu ?? {};
+  const notifyImageResourceChanged = createImageResourceChangeNotifier(
+    userWebGpuOptions.onImageResourceChange,
+    () => windowWeb.schedule_animation_frame(),
+  );
   const webgpu = await createWebGpuImportsAsync({
-    ...(options.webgpu ?? {}),
+    ...userWebGpuOptions,
     onStatus: report,
+    onImageResourceChange: notifyImageResourceChanged,
   });
   const imports = {
     window_web: windowWeb,
