@@ -45,9 +45,10 @@ The `native` subpackage contains the first opt-in native boundary:
   encoded image metadata and decode to an N32 premultiplied `Bitmap`;
 - `@native.Bitmap::alloc_n32_premul(size)` owns raster pixel storage and can
   export a copied `@skia_mbt.Pixmap`;
-- `@native.Typeface::default()` / `from_name(family)` and
+- `@native.FontMgr::default()` enumerates native font families and matches a
+  family to a typeface; `@native.Typeface::default()` / `from_name(family)` and
   `@native.Font::default(size)` / `from_typeface(typeface, size)` create the
-  first native text handles for drawing;
+  first native text handles for drawing and measurement;
 - `@native.Shader::color(color)`, `linear_gradient(start, end, colors...)`,
   and `radial_gradient(center, radius, colors...)` create the first native
   shader handles for shader-backed paint calls;
@@ -66,7 +67,13 @@ The `native` subpackage contains the first opt-in native boundary:
   `draw_arc`, `draw_round_rect`, `draw_rrect`, `draw_drrect`, `draw_path`,
   `draw_image`, and `draw_image_rect` with explicit `SamplingOptions`, plus
   portable path drawing through `draw_path_value`, UTF-8 text through
-  `draw_text_utf8`, and
+  `draw_text_utf8`, font measurement through `Font::measure_text_utf8`, glyph IDs through
+  `Font::count_text_utf8` / `Font::text_to_glyphs_utf8`, glyph advances through
+  `Font::glyph_width` / `Font::glyph_widths`, glyph positions through
+  `Font::glyph_positions` / `Font::glyph_x_positions` and
+  `Font::text_glyph_positions_utf8` / `Font::text_glyph_x_positions_utf8`, glyph bounds through
+  `Font::glyph_bounds` / `Font::glyph_bounds_many`, text bounds through
+  `Font::measure_text_bounds_utf8`, font metrics through `Font::metrics`, and
   color-shader paint through `draw_paint_shader` / `draw_rect_shader`;
 - `@native.Canvas` also exposes the first state and transform calls:
   `save`, `save_layer`, `restore`, `restore_to_count`, `save_count`,

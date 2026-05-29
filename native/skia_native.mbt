@@ -31,6 +31,10 @@ priv type FontHandle
 priv type TypefaceHandle
 
 ///|
+/// Opaque native Skia font manager handle.
+priv type FontMgrHandle
+
+///|
 /// Opaque native Skia shader handle.
 priv type ShaderHandle
 
@@ -68,7 +72,162 @@ extern "C" fn native_font_size(font : FontHandle) -> Float = "moonbit_skia_font_
 extern "C" fn native_font_set_size(font : FontHandle, size : Float) -> Unit = "moonbit_skia_font_set_size"
 
 ///|
+#borrow(font, text)
+extern "C" fn native_font_measure_text_utf8(
+  font : FontHandle,
+  text : Bytes,
+) -> Float = "moonbit_skia_font_measure_text_utf8"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_count_text_utf8(
+  font : FontHandle,
+  text : Bytes,
+) -> Int = "moonbit_skia_font_count_text_utf8"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_text_to_glyphs_utf8(
+  font : FontHandle,
+  text : Bytes,
+) -> Array[GlyphId] = "moonbit_skia_font_text_to_glyphs_utf8"
+
+///|
+#borrow(font)
+extern "C" fn native_font_glyph_width(font : FontHandle, glyph : Int) -> Float = "moonbit_skia_font_glyph_width"
+
+///|
+#borrow(font, glyphs)
+extern "C" fn native_font_glyph_widths(
+  font : FontHandle,
+  glyphs : Array[GlyphId],
+) -> Array[Float] = "moonbit_skia_font_glyph_widths"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_text_glyph_positions_utf8(
+  font : FontHandle,
+  text : Bytes,
+  origin_x : Float,
+  origin_y : Float,
+) -> Array[@skia.Point] = "moonbit_skia_font_text_glyph_positions_utf8"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_text_glyph_x_positions_utf8(
+  font : FontHandle,
+  text : Bytes,
+  origin : Float,
+) -> Array[Float] = "moonbit_skia_font_text_glyph_x_positions_utf8"
+
+///|
+#borrow(font)
+extern "C" fn native_font_glyph_bounds_left(
+  font : FontHandle,
+  glyph : Int,
+) -> Float = "moonbit_skia_font_glyph_bounds_left"
+
+///|
+#borrow(font)
+extern "C" fn native_font_glyph_bounds_top(
+  font : FontHandle,
+  glyph : Int,
+) -> Float = "moonbit_skia_font_glyph_bounds_top"
+
+///|
+#borrow(font)
+extern "C" fn native_font_glyph_bounds_right(
+  font : FontHandle,
+  glyph : Int,
+) -> Float = "moonbit_skia_font_glyph_bounds_right"
+
+///|
+#borrow(font)
+extern "C" fn native_font_glyph_bounds_bottom(
+  font : FontHandle,
+  glyph : Int,
+) -> Float = "moonbit_skia_font_glyph_bounds_bottom"
+
+///|
+#borrow(font, glyphs)
+extern "C" fn native_font_glyph_bounds_many(
+  font : FontHandle,
+  glyphs : Array[GlyphId],
+) -> Array[@skia.Rect] = "moonbit_skia_font_glyph_bounds_many"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_measure_text_bounds_utf8(
+  font : FontHandle,
+  text : Bytes,
+) -> Bool = "moonbit_skia_font_measure_text_bounds_utf8"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_measure_text_bounds_utf8_left(
+  font : FontHandle,
+  text : Bytes,
+) -> Float = "moonbit_skia_font_measure_text_bounds_utf8_left"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_measure_text_bounds_utf8_top(
+  font : FontHandle,
+  text : Bytes,
+) -> Float = "moonbit_skia_font_measure_text_bounds_utf8_top"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_measure_text_bounds_utf8_right(
+  font : FontHandle,
+  text : Bytes,
+) -> Float = "moonbit_skia_font_measure_text_bounds_utf8_right"
+
+///|
+#borrow(font, text)
+extern "C" fn native_font_measure_text_bounds_utf8_bottom(
+  font : FontHandle,
+  text : Bytes,
+) -> Float = "moonbit_skia_font_measure_text_bounds_utf8_bottom"
+
+///|
+#borrow(font)
+extern "C" fn native_font_metrics_value(
+  font : FontHandle,
+  metric : Int,
+) -> Float = "moonbit_skia_font_metrics_value"
+
+///|
+#borrow(font)
+extern "C" fn native_font_metrics_has(font : FontHandle, metric : Int) -> Bool = "moonbit_skia_font_metrics_has"
+
+///|
 extern "C" fn native_typeface_default() -> TypefaceHandle = "moonbit_skia_typeface_default"
+
+///|
+extern "C" fn native_font_mgr_default() -> FontMgrHandle = "moonbit_skia_font_mgr_default"
+
+///|
+#borrow(font_mgr)
+extern "C" fn native_font_mgr_is_null(font_mgr : FontMgrHandle) -> Bool = "moonbit_skia_font_mgr_is_null"
+
+///|
+#borrow(font_mgr)
+extern "C" fn native_font_mgr_count_families(font_mgr : FontMgrHandle) -> Int = "moonbit_skia_font_mgr_count_families"
+
+///|
+#borrow(font_mgr)
+extern "C" fn native_font_mgr_family_name(
+  font_mgr : FontMgrHandle,
+  index : Int,
+) -> Bytes = "moonbit_skia_font_mgr_family_name"
+
+///|
+#borrow(font_mgr, family_name)
+extern "C" fn native_font_mgr_match_family_style(
+  font_mgr : FontMgrHandle,
+  family_name : Bytes,
+) -> TypefaceHandle = "moonbit_skia_font_mgr_match_family_style"
 
 ///|
 #borrow(family_name)
@@ -1159,9 +1318,56 @@ pub(all) struct Font {
 }
 
 ///|
+/// Native Skia glyph identifier.
+pub(all) struct GlyphId(UInt16) derive(Debug, Eq)
+
+///|
+pub fn GlyphId::new(value : UInt16) -> GlyphId {
+  GlyphId(value)
+}
+
+///|
+pub fn GlyphId::to_uint16(self : GlyphId) -> UInt16 {
+  let GlyphId(value) = self
+  value
+}
+
+///|
+pub fn GlyphId::to_int(self : GlyphId) -> Int {
+  self.to_uint16().to_int()
+}
+
+///|
+/// Native Skia font metrics in y-down coordinates.
+pub(all) struct FontMetrics {
+  top : Float
+  ascent : Float
+  descent : Float
+  bottom : Float
+  leading : Float
+  average_char_width : Float
+  max_char_width : Float
+  x_min : Float
+  x_max : Float
+  x_height : Float
+  cap_height : Float
+  underline_thickness : Float?
+  underline_position : Float?
+  strikeout_thickness : Float?
+  strikeout_position : Float?
+  has_bounds : Bool
+} derive(Debug, Eq)
+
+///|
 /// Native Skia typeface.
 pub(all) struct Typeface {
   priv handle : TypefaceHandle
+}
+
+///|
+/// Native Skia font manager.
+pub(all) struct FontMgr {
+  priv handle : FontMgrHandle
 }
 
 ///|
@@ -1768,6 +1974,178 @@ pub fn Font::set_size(self : Font, size : Float) -> Unit {
 }
 
 ///|
+pub fn Font::measure_text_utf8(self : Font, text : Bytes) -> Float {
+  if text.is_empty() {
+    0.0
+  } else {
+    native_font_measure_text_utf8(self.handle, text)
+  }
+}
+
+///|
+pub fn Font::count_text_utf8(self : Font, text : Bytes) -> Int {
+  if text.is_empty() {
+    0
+  } else {
+    native_font_count_text_utf8(self.handle, text)
+  }
+}
+
+///|
+pub fn Font::text_to_glyphs_utf8(self : Font, text : Bytes) -> Array[GlyphId] {
+  if text.is_empty() {
+    []
+  } else {
+    native_font_text_to_glyphs_utf8(self.handle, text)
+  }
+}
+
+///|
+pub fn Font::glyph_width(self : Font, glyph : GlyphId) -> Float {
+  native_font_glyph_width(self.handle, glyph.to_int())
+}
+
+///|
+pub fn Font::glyph_widths(self : Font, glyphs : Array[GlyphId]) -> Array[Float] {
+  if glyphs.is_empty() {
+    []
+  } else {
+    native_font_glyph_widths(self.handle, glyphs)
+  }
+}
+
+///|
+pub fn Font::glyph_x_positions(
+  self : Font,
+  glyphs : Array[GlyphId],
+  origin? : Float = 0.0,
+) -> Array[Float] {
+  let positions : Array[Float] = Array::new(capacity=glyphs.length())
+  for x = origin, i = 0; i < glyphs.length(); i = i + 1 {
+    positions.push(x)
+    continue x + self.glyph_width(glyphs[i]), i + 1
+  }
+  positions
+}
+
+///|
+pub fn Font::glyph_positions(
+  self : Font,
+  glyphs : Array[GlyphId],
+  origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
+) -> Array[@skia.Point] {
+  let positions : Array[@skia.Point] = Array::new(capacity=glyphs.length())
+  let x_positions = self.glyph_x_positions(glyphs, origin=origin.x)
+  for x in x_positions {
+    positions.push(@skia.Point::new(x, origin.y))
+  }
+  positions
+}
+
+///|
+pub fn Font::text_glyph_x_positions_utf8(
+  self : Font,
+  text : Bytes,
+  origin? : Float = 0.0,
+) -> Array[Float] {
+  if text.is_empty() {
+    []
+  } else {
+    native_font_text_glyph_x_positions_utf8(self.handle, text, origin)
+  }
+}
+
+///|
+pub fn Font::text_glyph_positions_utf8(
+  self : Font,
+  text : Bytes,
+  origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
+) -> Array[@skia.Point] {
+  if text.is_empty() {
+    []
+  } else {
+    native_font_text_glyph_positions_utf8(self.handle, text, origin.x, origin.y)
+  }
+}
+
+///|
+pub fn Font::glyph_bounds(self : Font, glyph : GlyphId) -> @skia.Rect {
+  let glyph_int = glyph.to_int()
+  @skia.Rect::new(
+    native_font_glyph_bounds_left(self.handle, glyph_int),
+    native_font_glyph_bounds_top(self.handle, glyph_int),
+    native_font_glyph_bounds_right(self.handle, glyph_int),
+    native_font_glyph_bounds_bottom(self.handle, glyph_int),
+  )
+}
+
+///|
+pub fn Font::glyph_bounds_many(
+  self : Font,
+  glyphs : Array[GlyphId],
+) -> Array[@skia.Rect] {
+  if glyphs.is_empty() {
+    []
+  } else {
+    native_font_glyph_bounds_many(self.handle, glyphs)
+  }
+}
+
+///|
+pub fn Font::measure_text_bounds_utf8(self : Font, text : Bytes) -> @skia.Rect? {
+  if text.is_empty() || !native_font_measure_text_bounds_utf8(self.handle, text) {
+    None
+  } else {
+    Some(
+      @skia.Rect::new(
+        native_font_measure_text_bounds_utf8_left(self.handle, text),
+        native_font_measure_text_bounds_utf8_top(self.handle, text),
+        native_font_measure_text_bounds_utf8_right(self.handle, text),
+        native_font_measure_text_bounds_utf8_bottom(self.handle, text),
+      ),
+    )
+  }
+}
+
+///|
+fn font_metric_optional(font : FontHandle, metric : Int) -> Float? {
+  if native_font_metrics_has(font, metric) {
+    Some(native_font_metrics_value(font, metric))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Font::metrics(self : Font) -> FontMetrics {
+  let font = self.handle
+  {
+    top: native_font_metrics_value(font, 0),
+    ascent: native_font_metrics_value(font, 1),
+    descent: native_font_metrics_value(font, 2),
+    bottom: native_font_metrics_value(font, 3),
+    leading: native_font_metrics_value(font, 4),
+    average_char_width: native_font_metrics_value(font, 5),
+    max_char_width: native_font_metrics_value(font, 6),
+    x_min: native_font_metrics_value(font, 7),
+    x_max: native_font_metrics_value(font, 8),
+    x_height: native_font_metrics_value(font, 9),
+    cap_height: native_font_metrics_value(font, 10),
+    underline_thickness: font_metric_optional(font, 11),
+    underline_position: font_metric_optional(font, 12),
+    strikeout_thickness: font_metric_optional(font, 13),
+    strikeout_position: font_metric_optional(font, 14),
+    has_bounds: native_font_metrics_has(font, 15),
+  }
+}
+
+///|
+pub fn Font::spacing(self : Font) -> Float {
+  let metrics = self.metrics()
+  metrics.descent - metrics.ascent + metrics.leading
+}
+
+///|
 fn Typeface::from_handle(handle : TypefaceHandle) -> Typeface? {
   if native_typeface_is_null(handle) {
     None
@@ -1788,6 +2166,66 @@ pub fn Typeface::from_name(family_name : Bytes) -> Typeface? {
   } else {
     Typeface::from_handle(native_typeface_from_name(family_name))
   }
+}
+
+///|
+fn FontMgr::from_handle(handle : FontMgrHandle) -> FontMgr? {
+  if native_font_mgr_is_null(handle) {
+    None
+  } else {
+    Some({ handle, })
+  }
+}
+
+///|
+pub fn FontMgr::default() -> FontMgr? {
+  FontMgr::from_handle(native_font_mgr_default())
+}
+
+///|
+pub fn FontMgr::is_available(self : FontMgr) -> Bool {
+  !native_font_mgr_is_null(self.handle)
+}
+
+///|
+pub fn FontMgr::count_families(self : FontMgr) -> Int {
+  native_font_mgr_count_families(self.handle)
+}
+
+///|
+pub fn FontMgr::family_name(self : FontMgr, index : Int) -> Bytes? {
+  if index < 0 || index >= self.count_families() {
+    None
+  } else {
+    let name = native_font_mgr_family_name(self.handle, index)
+    if name.is_empty() {
+      None
+    } else {
+      Some(name)
+    }
+  }
+}
+
+///|
+pub fn FontMgr::match_family_style(
+  self : FontMgr,
+  family_name : Bytes,
+) -> Typeface? {
+  if family_name.is_empty() {
+    None
+  } else {
+    Typeface::from_handle(
+      native_font_mgr_match_family_style(self.handle, family_name),
+    )
+  }
+}
+
+///|
+pub fn Typeface::from_font_mgr_family(
+  font_mgr : FontMgr,
+  family_name : Bytes,
+) -> Typeface? {
+  font_mgr.match_family_style(family_name)
 }
 
 ///|

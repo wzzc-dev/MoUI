@@ -53,6 +53,7 @@ case "$log_dir" in
   *) resolved_log_dir="$repo_root/$log_dir" ;;
 esac
 
+preflight_log="$resolved_log_dir/macos-real-skia-smoke-preflight.log"
 wrapper_log="$resolved_log_dir/macos-real-skia-smoke.log"
 native_log="$resolved_log_dir/macos-native-smoke-output.log"
 acceptance_log="$resolved_log_dir/macos-real-skia-acceptance.log"
@@ -70,9 +71,15 @@ mkdir -p "$resolved_log_dir"
 before_pkg_hash="$(shasum -a 256 "$native_pkg" | awk '{print $1}')"
 
 echo "macOS real Skia acceptance logs:"
+echo "  preflight_log=$preflight_log"
 echo "  wrapper_log=$wrapper_log"
 echo "  native_log=$native_log"
 echo "  acceptance_log=$acceptance_log"
+
+bash "$repo_root/scripts/macos-skia-smoke.sh" \
+  --smoke-log "$native_log" \
+  --dry-run-config \
+  "${smoke_args[@]}" 2>&1 | tee "$preflight_log"
 
 set +e
 set -o pipefail
@@ -114,6 +121,7 @@ macOS real Skia acceptance result:
   native_smoke_marker=$marker_status
   native_pkg_restore=$restore_status
   skia_commit=${skia_commit:-unknown}
+  preflight_log=$preflight_log
   wrapper_log=$wrapper_log
   native_log=$native_log
   acceptance_log=$acceptance_log

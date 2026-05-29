@@ -2,6 +2,7 @@
 package "wzzc-dev/skia_mbt/native"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/skia_mbt",
 }
 
@@ -95,11 +96,58 @@ pub fn Data::to_bytes(Self) -> Bytes
 pub(all) struct Font {
   // private fields
 }
+pub fn Font::count_text_utf8(Self, Bytes) -> Int
 pub fn Font::default(size? : Float) -> Self?
 pub fn Font::from_typeface(Typeface, size? : Float) -> Self?
+pub fn Font::glyph_bounds(Self, GlyphId) -> @skia_mbt.Rect
+pub fn Font::glyph_bounds_many(Self, Array[GlyphId]) -> Array[@skia_mbt.Rect]
+pub fn Font::glyph_positions(Self, Array[GlyphId], origin? : @skia_mbt.Point) -> Array[@skia_mbt.Point]
+pub fn Font::glyph_width(Self, GlyphId) -> Float
+pub fn Font::glyph_widths(Self, Array[GlyphId]) -> Array[Float]
+pub fn Font::glyph_x_positions(Self, Array[GlyphId], origin? : Float) -> Array[Float]
 pub fn Font::is_available(Self) -> Bool
+pub fn Font::measure_text_bounds_utf8(Self, Bytes) -> @skia_mbt.Rect?
+pub fn Font::measure_text_utf8(Self, Bytes) -> Float
+pub fn Font::metrics(Self) -> FontMetrics
 pub fn Font::set_size(Self, Float) -> Unit
 pub fn Font::size(Self) -> Float
+pub fn Font::spacing(Self) -> Float
+pub fn Font::text_glyph_positions_utf8(Self, Bytes, origin? : @skia_mbt.Point) -> Array[@skia_mbt.Point]
+pub fn Font::text_glyph_x_positions_utf8(Self, Bytes, origin? : Float) -> Array[Float]
+pub fn Font::text_to_glyphs_utf8(Self, Bytes) -> Array[GlyphId]
+
+pub(all) struct FontMetrics {
+  top : Float
+  ascent : Float
+  descent : Float
+  bottom : Float
+  leading : Float
+  average_char_width : Float
+  max_char_width : Float
+  x_min : Float
+  x_max : Float
+  x_height : Float
+  cap_height : Float
+  underline_thickness : Float?
+  underline_position : Float?
+  strikeout_thickness : Float?
+  strikeout_position : Float?
+  has_bounds : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct FontMgr {
+  // private fields
+}
+pub fn FontMgr::count_families(Self) -> Int
+pub fn FontMgr::default() -> Self?
+pub fn FontMgr::family_name(Self, Int) -> Bytes?
+pub fn FontMgr::is_available(Self) -> Bool
+pub fn FontMgr::match_family_style(Self, Bytes) -> Typeface?
+
+pub(all) struct GlyphId(UInt16) derive(Eq, @debug.Debug)
+pub fn GlyphId::new(UInt16) -> Self
+pub fn GlyphId::to_int(Self) -> Int
+pub fn GlyphId::to_uint16(Self) -> UInt16
 
 pub(all) struct Image {
   // private fields
@@ -177,6 +225,7 @@ pub(all) struct Typeface {
   // private fields
 }
 pub fn Typeface::default() -> Self?
+pub fn Typeface::from_font_mgr_family(FontMgr, Bytes) -> Self?
 pub fn Typeface::from_name(Bytes) -> Self?
 pub fn Typeface::is_available(Self) -> Bool
 pub fn Typeface::is_bold(Self) -> Bool
