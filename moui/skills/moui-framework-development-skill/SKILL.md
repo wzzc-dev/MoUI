@@ -171,6 +171,21 @@ sh scripts/dev-check.sh --platform-examples-test
 sh scripts/dev-check.sh --platform-examples-build
 ```
 
+Real macOS Skia renderer smoke:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh
+scripts/macos-skia-renderer-smoke.sh --skia-provider existing \
+  --skia-include /path/to/skia \
+  --skia-lib-dir /path/to/skia/out/Static
+scripts/macos-skia-renderer-smoke.sh --skia-provider source
+```
+
+The helper resolves JetBrains, existing, or source-built Skia providers,
+temporarily configures the local `skia_mbt` and MoUI Skia smoke packages, runs
+the renderer pixel smoke, builds `examples/showcase/macos_skia`, and restores
+touched `moon.pkg` files.
+
 Public API review:
 
 ```sh

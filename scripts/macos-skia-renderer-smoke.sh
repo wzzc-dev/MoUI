@@ -3,43 +3,94 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/macos-skia-renderer-smoke.sh --skia-include PATH --skia-lib-dir PATH [options]
+Usage: scripts/macos-skia-renderer-smoke.sh [options]
 
 Temporarily configures the local skia_mbt native package plus MoUI's Skia
 renderer smoke and macos_skia showcase entrypoints, runs the renderer pixel
 smoke, builds examples/showcase/macos_skia, then restores all package files.
 
 Options:
+  --skia-provider existing|jetbrains|source
+                         Skia acquisition mode. Default: jetbrains unless
+                         --skia-include/--skia-lib-dir select existing.
+  --work-dir PATH        Directory for source-built Skia work output.
+                         Default: .skia-cache/macos.
   --skia-include PATH    Skia checkout or include root containing Skia headers.
+                         When supplied with --skia-lib-dir, selects existing.
   --skia-lib-dir PATH    Directory containing libskia.a or libskia.dylib.
   --skia-lib NAME        Library name without lib prefix, default: skia.
+  --skia-rev REV         Skia git revision, branch, or tag for source provider.
+                         Default: .local_repos/skia_mbt/skia-revision.txt.
+  --jetbrains-tag TAG    JetBrains/skia release tag. Default: m148-8967a2e80c.
+  --jetbrains-config Release|Debug
+                         JetBrains/skia package configuration. Default: Release.
+  --jetbrains-cache-dir PATH
+                         JetBrains/skia cache root. Default: .skia-cache/jetbrains.
+  --extra-gn-args STR    Extra GN args appended to the source-built Skia build.
   --extra-cc-flags STR   Extra C/C++ flags appended to skia_mbt stub flags.
   --extra-link-flags STR Extra linker flags appended to executable link flags.
+  --build-log PATH       Write source-built Skia build output to PATH. Relative
+                         paths are resolved from the repository root.
   --smoke-log PATH       Write MoUI renderer smoke output to PATH. Relative
                          paths are resolved from the repository root.
+  --no-sync-deps         Skip python3 tools/git-sync-deps for source provider.
+  --no-fetch             Reuse an existing Skia checkout for source provider.
   --skip-showcase-build  Only run the renderer pixel smoke.
   --dry-run-config       Print resolved paths and flags, then exit without
                          rewriting package files or building executables.
   -h, --help             Show this help.
 
 Environment defaults:
-  SKIA_MBT_SKIA_INCLUDE, SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB,
+  SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_PROVIDER, SKIA_MBT_SKIA_INCLUDE,
+  SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB, SKIA_MBT_SKIA_REV,
+  SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_JETBRAINS_CONFIG,
+  SKIA_MBT_JETBRAINS_CACHE_DIR, SKIA_MBT_EXTRA_GN_ARGS,
   SKIA_MBT_EXTRA_CC_FLAGS, and SKIA_MBT_EXTRA_LINK_FLAGS are used when the
   matching command-line option is omitted.
 EOF
 }
 
+work_dir=".skia-cache/macos"
 skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
 skia_lib_dir="${SKIA_MBT_SKIA_LIB_DIR:-}"
 skia_lib="${SKIA_MBT_SKIA_LIB:-skia}"
+skia_provider="${SKIA_MBT_SKIA_PROVIDER:-${SKIA_MBT_PROVIDER:-}}"
+skia_provider_explicit=0
+if [[ -n "${SKIA_MBT_SKIA_PROVIDER:-}${SKIA_MBT_PROVIDER:-}" ]]; then
+  skia_provider_explicit=1
+fi
+skia_rev="${SKIA_MBT_SKIA_REV:-main}"
+skia_rev_explicit=0
+if [[ -n "${SKIA_MBT_SKIA_REV:-}" ]]; then
+  skia_rev_explicit=1
+fi
+jetbrains_tag="${SKIA_MBT_JETBRAINS_TAG:-m148-8967a2e80c}"
+jetbrains_config="${SKIA_MBT_JETBRAINS_CONFIG:-Release}"
+jetbrains_cache_dir="${SKIA_MBT_JETBRAINS_CACHE_DIR:-.skia-cache/jetbrains}"
+extra_gn_args="${SKIA_MBT_EXTRA_GN_ARGS:-}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
+extra_cc_flags_explicit=0
+extra_link_flags_explicit=0
+if [[ -n "${SKIA_MBT_EXTRA_CC_FLAGS:-}" ]]; then
+  extra_cc_flags_explicit=1
+fi
+if [[ -n "${SKIA_MBT_EXTRA_LINK_FLAGS:-}" ]]; then
+  extra_link_flags_explicit=1
+fi
+requested_build_log=""
 requested_smoke_log=""
+sync_deps=1
+fetch_repo=1
 skip_showcase_build=0
 dry_run_config=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --work-dir)
+      work_dir="${2:-}"
+      shift 2
+      ;;
     --skia-include)
       skia_include="${2:-}"
       shift 2
@@ -52,17 +103,57 @@ while [[ $# -gt 0 ]]; do
       skia_lib="${2:-}"
       shift 2
       ;;
+    --skia-provider)
+      skia_provider="${2:-}"
+      skia_provider_explicit=1
+      shift 2
+      ;;
+    --skia-rev)
+      skia_rev="${2:-}"
+      skia_rev_explicit=1
+      shift 2
+      ;;
+    --jetbrains-tag)
+      jetbrains_tag="${2:-}"
+      shift 2
+      ;;
+    --jetbrains-config)
+      jetbrains_config="${2:-}"
+      shift 2
+      ;;
+    --jetbrains-cache-dir)
+      jetbrains_cache_dir="${2:-}"
+      shift 2
+      ;;
+    --extra-gn-args)
+      extra_gn_args="${2:-}"
+      shift 2
+      ;;
     --extra-cc-flags)
       extra_cc_flags="${2:-}"
+      extra_cc_flags_explicit=1
       shift 2
       ;;
     --extra-link-flags)
       extra_link_flags="${2:-}"
+      extra_link_flags_explicit=1
+      shift 2
+      ;;
+    --build-log)
+      requested_build_log="${2:-}"
       shift 2
       ;;
     --smoke-log)
       requested_smoke_log="${2:-}"
       shift 2
+      ;;
+    --no-sync-deps)
+      sync_deps=0
+      shift
+      ;;
+    --no-fetch)
+      fetch_repo=0
+      shift
       ;;
     --skip-showcase-build)
       skip_showcase_build=1
@@ -84,11 +175,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$skia_include" || -z "$skia_lib_dir" ]]; then
-  usage >&2
-  exit 2
-fi
-
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 skia_repo="$repo_root/.local_repos/skia_mbt"
 native_pkg="$skia_repo/native/moon.pkg"
@@ -97,36 +183,184 @@ renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"
 renderer_pkg_backup="$renderer_pkg.moui-smoke.bak"
 showcase_pkg="$repo_root/examples/showcase/macos_skia/moon.pkg"
 showcase_pkg_backup="$showcase_pkg.moui-smoke.bak"
+build_log=""
 smoke_log=""
 smoke_log_is_temporary=0
 
-include_path="$(cd "$skia_include" && pwd)"
-lib_path="$(cd "$skia_lib_dir" && pwd)"
-
-if [[ -n "$requested_smoke_log" ]]; then
-  case "$requested_smoke_log" in
-    /*) smoke_log="$requested_smoke_log" ;;
-    *) smoke_log="$repo_root/$requested_smoke_log" ;;
+resolve_path() {
+  local path="$1"
+  case "$path" in
+    /*) printf '%s\n' "$path" ;;
+    *) printf '%s\n' "$repo_root/$path" ;;
   esac
-fi
+}
 
-if [[ ! -f "$include_path/include/core/SkSurface.h" ]]; then
-  echo "Skia include path does not look like a Skia checkout/root: $include_path" >&2
-  exit 1
-fi
-
-if [[ ! -f "$lib_path/lib$skia_lib.a" && ! -f "$lib_path/lib$skia_lib.dylib" ]]; then
-  echo "Skia library lib$skia_lib.a or lib$skia_lib.dylib was not found in $lib_path" >&2
-  exit 1
-fi
-
-for backup in "$native_pkg_backup" "$renderer_pkg_backup" "$showcase_pkg_backup"; do
-  if [[ -f "$backup" ]]; then
-    echo "package backup already exists: $backup" >&2
-    echo "Resolve the stale backup before running the MoUI Skia renderer smoke." >&2
+resolve_existing_dir() {
+  local label="$1"
+  local path="$2"
+  if [[ ! -d "$path" ]]; then
+    echo "$label does not exist or is not a directory: $path" >&2
     exit 1
   fi
-done
+  cd "$path" && pwd
+}
+
+get_assignment_value() {
+  local input="$1"
+  local key="$2"
+  printf '%s\n' "$input" | sed -n "s/^${key}=//p" | tail -n 1
+}
+
+check_package_backups() {
+  for backup in "$native_pkg_backup" "$renderer_pkg_backup" "$showcase_pkg_backup"; do
+    if [[ -f "$backup" ]]; then
+      echo "package backup already exists: $backup" >&2
+      echo "Resolve the stale backup before running the MoUI Skia renderer smoke." >&2
+      exit 1
+    fi
+  done
+}
+
+if [[ $dry_run_config -eq 0 ]]; then
+  check_package_backups
+fi
+
+if [[ $skia_rev_explicit -eq 0 && -f "$skia_repo/skia-revision.txt" ]]; then
+  pinned_skia_rev="$(grep -v '^[[:space:]]*#' "$skia_repo/skia-revision.txt" | grep -v '^[[:space:]]*$' | head -n 1 || true)"
+  if [[ -n "$pinned_skia_rev" ]]; then
+    skia_rev="$pinned_skia_rev"
+  fi
+fi
+
+if [[ $skia_provider_explicit -eq 0 ]]; then
+  if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then
+    skia_provider="existing"
+  else
+    skia_provider="jetbrains"
+  fi
+fi
+
+case "$skia_provider" in
+  source|existing|jetbrains) ;;
+  *) echo "unsupported --skia-provider: $skia_provider" >&2; exit 2 ;;
+esac
+case "$jetbrains_config" in
+  Release|Debug) ;;
+  *) echo "unsupported --jetbrains-config: $jetbrains_config" >&2; exit 2 ;;
+esac
+
+resolved_work_dir="$(resolve_path "$work_dir")"
+resolved_jetbrains_cache_dir="$(resolve_path "$jetbrains_cache_dir")"
+
+if [[ -n "$requested_build_log" ]]; then
+  build_log="$(resolve_path "$requested_build_log")"
+fi
+
+if [[ -n "$requested_smoke_log" ]]; then
+  smoke_log="$(resolve_path "$requested_smoke_log")"
+fi
+
+source_build_args=()
+smoke_mode=""
+jetbrains_package=""
+jetbrains_package_sha256=""
+jetbrains_commit=""
+
+if [[ "$skia_provider" == "existing" ]]; then
+  if [[ -z "$skia_include" || -z "$skia_lib_dir" ]]; then
+    echo "--skia-include and --skia-lib-dir must be supplied together for --skia-provider existing" >&2
+    exit 2
+  fi
+  smoke_mode="existing Skia build"
+  include_path="$(resolve_path "$skia_include")"
+  lib_path="$(resolve_path "$skia_lib_dir")"
+elif [[ "$skia_provider" == "source" ]]; then
+  if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then
+    echo "--skia-provider source cannot be combined with --skia-include/--skia-lib-dir" >&2
+    exit 2
+  fi
+  smoke_mode="source-built Skia"
+  include_path="$resolved_work_dir/skia"
+  lib_path="$resolved_work_dir/skia/out/moonbit-smoke"
+  source_build_args=(--work-dir "$resolved_work_dir" --skia-rev "$skia_rev")
+  if [[ -n "$extra_gn_args" ]]; then
+    source_build_args+=(--extra-gn-args "$extra_gn_args")
+  fi
+  if [[ $sync_deps -eq 0 ]]; then
+    source_build_args+=(--no-sync-deps)
+  fi
+  if [[ $fetch_repo -eq 0 ]]; then
+    source_build_args+=(--no-fetch)
+  fi
+else
+  if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then
+    echo "--skia-provider jetbrains cannot be combined with --skia-include/--skia-lib-dir" >&2
+    exit 2
+  fi
+  fetch_args=(
+    --platform macos
+    --arch auto
+    --config "$jetbrains_config"
+    --tag "$jetbrains_tag"
+    --cache-dir "$resolved_jetbrains_cache_dir"
+    --print-env
+  )
+  if [[ $dry_run_config -eq 1 ]]; then
+    fetch_args+=(--dry-run-config)
+  fi
+  fetch_output="$(bash "$skia_repo/scripts/fetch-jetbrains-skia.sh" "${fetch_args[@]}")"
+  smoke_mode="JetBrains Skia binary"
+  include_path="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_INCLUDE)"
+  lib_path="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_LIB_DIR)"
+  skia_lib="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_LIB)"
+  jetbrains_tag="$(get_assignment_value "$fetch_output" SKIA_MBT_JETBRAINS_TAG)"
+  jetbrains_commit="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_COMMIT)"
+  jetbrains_package="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_PACKAGE)"
+  jetbrains_package_sha256="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_PACKAGE_SHA256)"
+  if [[ $extra_cc_flags_explicit -eq 0 ]]; then
+    extra_cc_flags="$(get_assignment_value "$fetch_output" SKIA_MBT_EXTRA_CC_FLAGS)"
+  fi
+  if [[ $extra_link_flags_explicit -eq 0 ]]; then
+    extra_link_flags="$(get_assignment_value "$fetch_output" SKIA_MBT_EXTRA_LINK_FLAGS)"
+  fi
+fi
+
+if [[ -z "$include_path" || -z "$lib_path" || -z "$skia_lib" ]]; then
+  echo "Skia provider did not resolve a complete include/library configuration." >&2
+  exit 1
+fi
+
+if [[ $dry_run_config -eq 0 ]]; then
+  if [[ "$skia_provider" == "source" ]]; then
+    if [[ -n "$build_log" ]]; then
+      mkdir -p "$(dirname "$build_log")"
+      : > "$build_log"
+      set +e
+      set -o pipefail
+      bash "$skia_repo/scripts/macos-build-skia.sh" "${source_build_args[@]}" 2>&1 | tee "$build_log"
+      build_status=${PIPESTATUS[0]}
+      set +o pipefail
+      set -e
+      if [[ $build_status -ne 0 ]]; then
+        exit "$build_status"
+      fi
+    else
+      bash "$skia_repo/scripts/macos-build-skia.sh" "${source_build_args[@]}"
+    fi
+  fi
+
+  include_path="$(resolve_existing_dir "Skia include path" "$include_path")"
+  lib_path="$(resolve_existing_dir "Skia library path" "$lib_path")"
+  if [[ ! -f "$include_path/include/core/SkSurface.h" ]]; then
+    echo "Skia include path does not look like a Skia checkout/root: $include_path" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$lib_path/lib$skia_lib.a" && ! -f "$lib_path/lib$skia_lib.dylib" ]]; then
+    echo "Skia library lib$skia_lib.a or lib$skia_lib.dylib was not found in $lib_path" >&2
+    exit 1
+  fi
+fi
 
 cc_flags="-DSKIA_MBT_HAS_SKIA -std=c++17 -I$include_path"
 if [[ -n "$extra_cc_flags" ]]; then
@@ -142,6 +376,29 @@ showcase_link_flags="-framework AppKit -framework QuartzCore -framework UniformT
 echo "MoUI macOS Skia renderer smoke environment:"
 echo "  moon=$(moon version 2>/dev/null | head -n 1 || true)"
 echo "  cxx=$(${CXX:-c++} --version 2>/dev/null | head -n 1 || true)"
+echo "  skia_provider=$skia_provider"
+echo "  skia_mode=$smoke_mode"
+if [[ "$skia_provider" == "jetbrains" ]]; then
+  echo "  jetbrains_tag=$jetbrains_tag"
+  echo "  skia_commit=$jetbrains_commit"
+  echo "  skia_package=$jetbrains_package"
+  echo "  skia_package_sha256=$jetbrains_package_sha256"
+elif [[ "$skia_provider" == "source" ]]; then
+  echo "  work_dir=$resolved_work_dir"
+  echo "  skia_rev=$skia_rev"
+  echo "  sync_deps=$sync_deps"
+  echo "  fetch_repo=$fetch_repo"
+  if [[ -n "$extra_gn_args" ]]; then
+    echo "  extra_gn_args=$extra_gn_args"
+  fi
+  if [[ -n "$build_log" ]]; then
+    echo "  build_log=$build_log"
+  fi
+else
+  if [[ -n "$extra_gn_args" ]]; then
+    echo "  note: extra_gn_args is ignored unless --skia-provider source is selected"
+  fi
+fi
 echo "  skia_include=$include_path"
 echo "  skia_lib_dir=$lib_path"
 echo "  skia_lib=$skia_lib"
@@ -154,6 +411,9 @@ fi
 echo "  skip_showcase_build=$skip_showcase_build"
 
 if [[ $dry_run_config -eq 1 ]]; then
+  if [[ "$skia_provider" == "source" ]]; then
+    bash "$skia_repo/scripts/macos-build-skia.sh" --dry-run-config "${source_build_args[@]}"
+  fi
   echo "Dry run complete; package files were not modified and no build was run."
   exit 0
 fi
