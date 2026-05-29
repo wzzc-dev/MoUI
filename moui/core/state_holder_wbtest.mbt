@@ -159,3 +159,57 @@ test "app runtime focus traversal skips disabled controls" {
   inspect(disabled.get(), content="")
   inspect(third.get(), content="b")
 }
+
+///|
+test "focus scope traversal wraps and skips disabled items" {
+  let scope = FocusScope::new(
+    current=Some("first"),
+    items=[
+      FocusScopeItem::new(id="first"),
+      FocusScopeItem::new(id="disabled", enabled=false),
+      FocusScopeItem::new(id="third"),
+    ],
+  )
+  inspect(scope.next().unwrap_or(""), content="third")
+  let wrapped = FocusScope::new(
+    current=Some("third"),
+    items=scope.items,
+    wrap=true,
+  )
+  inspect(wrapped.next().unwrap_or(""), content="first")
+  let clamped = FocusScope::new(
+    current=Some("third"),
+    items=scope.items,
+    wrap=false,
+  )
+  inspect(clamped.next().unwrap_or(""), content="third")
+  inspect(clamped.previous().unwrap_or(""), content="first")
+}
+
+///|
+test "focus scope maps invalid fields and default actions" {
+  let scope = FocusScope::new(
+    current=Some("name"),
+    default_action="submit",
+    dismiss_action="close",
+    items=[
+      FocusScopeItem::new(id="name"),
+      FocusScopeItem::new(id="email"),
+      FocusScopeItem::new(id="submit", focusable=false),
+    ],
+  )
+  let summary = FormValidationSummary::from_errors([
+    { name: "email", message: "Email required" },
+  ])
+  inspect(scope.focus_first_invalid(summary).unwrap_or(""), content="email")
+  inspect(scope.command_target(CommandIntent::Submit).unwrap_or(""), content="submit")
+  inspect(scope.command_target(CommandIntent::Cancel).unwrap_or(""), content="close")
+  match focus_scope_command_intent(KeyboardEvent::new(key="Enter")) {
+    Some(Submit) => ()
+    _ => fail("expected Enter to map to submit")
+  }
+  match focus_scope_command_intent(KeyboardEvent::new(key="Escape")) {
+    Some(Cancel) => ()
+    _ => fail("expected Escape to map to cancel")
+  }
+}

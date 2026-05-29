@@ -15,6 +15,9 @@ remain in `views/*.mbt` and the generated public API summary in
 - TEA-first controls receive plain values plus `on_input`, `on_change`, or
   `on_select` callbacks. Binding-backed companions keep the `*_binding` suffix
   for component-local or advanced state.
+- Core exposes `FocusScope` helpers for app-owned focus order, first-invalid
+  form targeting, and Enter/Escape default action intents; actual element focus
+  traversal still lives in the runtime.
 - Visual customization usually flows through `@core.Theme`, style types, or
   ordered modifiers such as `.padding`, `.background`, `.title`, `.clip`, and `.opacity`.
 - File drop targets use the `View::on_file_drop` modifier so apps can accept
