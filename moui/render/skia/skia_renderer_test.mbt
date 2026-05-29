@@ -61,7 +61,7 @@ test "skia pixel frame carries presenter payload" {
 }
 
 ///|
-test "skia renderer spec exposes fallback-gated backend capabilities" {
+test "skia renderer spec exposes evidence-gated backend capabilities" {
   let spec = skia_raster_native_spec()
   let image = find_skia_spec_capability(spec, @render.RendererFeature::Image)
   let filter = find_skia_spec_capability(
@@ -76,9 +76,9 @@ test "skia renderer spec exposes fallback-gated backend capabilities" {
       assert_true(
         filter.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
-      assert_true(image.status == @render.RendererFeatureStatus::Unavailable)
+      assert_true(image.status == @render.RendererFeatureStatus::Partial)
       assert_true(filter.status == @render.RendererFeatureStatus::Unavailable)
-      assert_true(image.note.contains("decode"))
+      assert_true(image.note.contains("data URI"))
       assert_true(filter.note.contains("color-filter"))
     }
     _ => fail("expected Skia image and filter capability records")

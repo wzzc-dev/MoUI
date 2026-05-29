@@ -16,7 +16,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     image.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Unavailable,
+    @render.RendererFeatureStatus::Partial,
   )
   assert_true(
     image
@@ -28,6 +28,42 @@ test "renderer capability report tracks draw command support" {
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
     .contains("PNG"),
   )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("data URI"),
+  )
+  guard @render.renderer_feature_capability(@render.RendererFeature::Rect)
+    is Some(rect) else {
+    fail("expected rect capability")
+  }
+  assert_true(
+    rect.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  guard @render.renderer_feature_capability(
+      @render.RendererFeature::RoundedRect,
+    )
+    is Some(rounded) else {
+    fail("expected rounded rect capability")
+  }
+  assert_true(
+    rounded.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  guard @render.renderer_feature_capability(@render.RendererFeature::Gradient)
+    is Some(gradient) else {
+    fail("expected gradient capability")
+  }
+  assert_true(
+    gradient.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    gradient
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("gradient strokes"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::Transform)
     is Some(transform) else {
     fail("expected transform capability")
@@ -38,6 +74,10 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     transform.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    transform.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
     @render.RendererFeatureStatus::Partial,
   )
   assert_true(
@@ -103,6 +143,10 @@ test "renderer capability report tracks draw command support" {
     @render.RendererFeatureStatus::Ready,
   )
   assert_true(
+    clip.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
     clip
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
     .contains("offscreen layer masks"),
@@ -117,6 +161,10 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     opacity.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    opacity.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
     @render.RendererFeatureStatus::Ready,
   )
   guard @render.renderer_feature_capability(
@@ -188,6 +236,10 @@ test "renderer capability report tracks draw command support" {
     shader.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
     @render.RendererFeatureStatus::Ready,
   )
+  assert_true(
+    shader.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::PathVector)
     is Some(path) else {
     fail("expected path capability")
@@ -199,6 +251,10 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     path.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
     @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    path.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
   )
   assert_true(
     path

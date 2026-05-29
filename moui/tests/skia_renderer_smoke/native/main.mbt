@@ -34,6 +34,244 @@ fn assert_pixel(
 }
 
 ///|
+fn assert_pixel_near(
+  frame : @skia_renderer.SkiaPixelFrame,
+  x : Int,
+  y : Int,
+  r : Int,
+  g : Int,
+  b : Int,
+  a : Int,
+  tolerance : Int,
+) -> Unit {
+  if x < 0 || y < 0 || x >= frame.width || y >= frame.height {
+    fail_smoke("pixel sample is outside the Skia frame")
+  }
+  let offset = y * frame.row_bytes + x * 4
+  if offset + 3 >= frame.pixels.length() {
+    fail_smoke("pixel sample exceeds the Skia frame payload")
+  }
+  let actual_r = frame.pixels[offset].to_int()
+  let actual_g = frame.pixels[offset + 1].to_int()
+  let actual_b = frame.pixels[offset + 2].to_int()
+  let actual_a = frame.pixels[offset + 3].to_int()
+  if !component_near(actual_r, r, tolerance) ||
+    !component_near(actual_g, g, tolerance) ||
+    !component_near(actual_b, b, tolerance) ||
+    !component_near(actual_a, a, tolerance) {
+    println("unexpected Skia renderer pixel at \{x},\{y}")
+    println("expected rgba near=\{r},\{g},\{b},\{a} tolerance=\{tolerance}")
+    println("actual rgba=\{actual_r},\{actual_g},\{actual_b},\{actual_a}")
+    fail_smoke("MoUI Skia renderer smoke pixel mismatch")
+  }
+}
+
+///|
+fn component_near(actual : Int, expected : Int, tolerance : Int) -> Bool {
+  (actual - expected).abs() <= tolerance
+}
+
+///|
+fn assert_region_has_dark_pixel(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Unit {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      let offset = y * frame.row_bytes + x * 4
+      if offset + 3 < frame.pixels.length() {
+        let actual_r = frame.pixels[offset].to_int()
+        let actual_g = frame.pixels[offset + 1].to_int()
+        let actual_b = frame.pixels[offset + 2].to_int()
+        let actual_a = frame.pixels[offset + 3].to_int()
+        if actual_a > 0 && actual_r < 210 && actual_g < 210 && actual_b < 210 {
+          return ()
+        }
+      }
+    }
+  }
+  fail_smoke("MoUI Skia smoke text region did not contain rendered dark pixels")
+}
+
+///|
+fn red() -> @core.Color {
+  @core.Color::rgba(r=1.0, g=0.0, b=0.0)
+}
+
+///|
+fn green() -> @core.Color {
+  @core.Color::rgba(r=0.0, g=1.0, b=0.0)
+}
+
+///|
+fn blue() -> @core.Color {
+  @core.Color::rgba(r=0.0, g=0.0, b=1.0)
+}
+
+///|
+fn magenta() -> @core.Color {
+  @core.Color::rgba(r=1.0, g=0.0, b=1.0)
+}
+
+///|
+fn cyan() -> @core.Color {
+  @core.Color::rgba(r=0.0, g=1.0, b=1.0)
+}
+
+///|
+fn yellow() -> @core.Color {
+  @core.Color::rgba(r=1.0, g=1.0, b=0.0)
+}
+
+///|
+fn one_pixel_red_png_data_uri() -> String {
+  "data:image/png;base64," +
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
+}
+
+///|
+fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
+  [
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=4.0, y=4.0, width=10.0, height=10.0),
+      red(),
+    ),
+    @core.DrawCommand::StrokeRect(
+      @core.Rect::new(x=18.0, y=4.0, width=12.0, height=12.0),
+      green(),
+      2.0,
+    ),
+    @core.DrawCommand::FillRoundedRect(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=36.0, y=4.0, width=12.0, height=12.0),
+        radius=3.0,
+      ),
+      blue(),
+    ),
+    @core.DrawCommand::StrokeRoundedRect(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=52.0, y=4.0, width=12.0, height=12.0),
+        radius=3.0,
+      ),
+      magenta(),
+      2.0,
+    ),
+    @core.DrawCommand::FillRoundedRectBrush(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=68.0, y=4.0, width=20.0, height=12.0),
+        radius=2.0,
+      ),
+      @core.Brush::linear_gradient(
+        start=@core.Point::new(x=68.0, y=4.0),
+        end=@core.Point::new(x=88.0, y=4.0),
+        start_color=red(),
+        end_color=blue(),
+      ),
+    ),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=4.0, y=22.0, width=8.0, height=12.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=4.0, y=22.0, width=16.0, height=12.0),
+      cyan(),
+    ),
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PushRoundedClip(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=24.0, y=22.0, width=14.0, height=14.0),
+        radius=5.0,
+      ),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=24.0, y=22.0, width=14.0, height=14.0),
+      magenta(),
+    ),
+    @core.DrawCommand::PopRoundedClip,
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=40.0, dy=20.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=4.0, y=4.0, width=10.0, height=10.0),
+      yellow(),
+    ),
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PushOpacity(0.5),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=64.0, y=24.0, width=12.0, height=12.0),
+      @core.Color::black(),
+    ),
+    @core.DrawCommand::PopOpacity,
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=56.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=56.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=40.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(green())),
+      ),
+    ),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=30.0, y=56.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=46.0, y=56.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=38.0, y=40.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(
+          @core.Brush::linear_gradient(
+            start=@core.Point::new(x=30.0, y=40.0),
+            end=@core.Point::new(x=46.0, y=40.0),
+            start_color=red(),
+            end_color=blue(),
+          ),
+        ),
+        stroke=Some(@core.Brush::solid(@core.Color::black())),
+        stroke_width=1.0,
+      ),
+    ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="checker",
+        frame=@core.Rect::new(x=54.0, y=42.0, width=16.0, height=16.0),
+        uniforms=[4.0],
+        fallback=@core.Brush::linear_gradient(
+          start=@core.Point::new(x=54.0, y=42.0),
+          end=@core.Point::new(x=70.0, y=42.0),
+          start_color=blue(),
+          end_color=yellow(),
+        ),
+      ),
+    ),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: one_pixel_red_png_data_uri(),
+      frame: @core.Rect::new(x=76.0, y=42.0, width=12.0, height=12.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="Skia",
+        frame=@core.Rect::new(x=4.0, y=68.0, width=48.0, height=20.0),
+        font=@core.FontSpec::new(size=16.0),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      ),
+    ),
+  ]
+}
+
+///|
 fn main {
   if !@skia_renderer.skia_available() {
     fail_smoke(
@@ -51,7 +289,7 @@ fn main {
   )
   guard (try? @skia_renderer.create_with_present_target(
       @render.RendererSurfaceMetrics::from_logical(
-        size=@core.Size::new(width=32.0, height=32.0),
+        size=@core.Size::new(width=96.0, height=96.0),
         scale_factor=1.0,
       ),
       target,
@@ -60,21 +298,7 @@ fn main {
     fail_smoke("failed to create MoUI Skia renderer")
   }
 
-  renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=4.0, y=4.0, width=10.0, height=10.0),
-      @core.Color::rgba(r=1.0, g=0.0, b=0.0),
-    ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=18.0, y=4.0, width=10.0, height=10.0),
-      @core.Color::rgba(r=0.0, g=1.0, b=0.0),
-    ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=4.0, y=18.0, width=10.0, height=10.0),
-      @core.Color::rgba(r=0.0, g=0.0, b=1.0),
-    ),
-  ]) catch {
+  renderer.render(renderer_smoke_commands()) catch {
     err =>
       fail_smoke("failed to render MoUI Skia smoke frame: \{err.message()}")
   }
@@ -88,13 +312,33 @@ fn main {
 
   match captured.val {
     Some(frame) => {
-      if frame.width != 32 || frame.height != 32 || frame.row_bytes < 128 {
+      if frame.width != 96 || frame.height != 96 || frame.row_bytes < 384 {
         fail_smoke("MoUI Skia smoke frame dimensions are unexpected")
       }
       assert_pixel(frame, 0, 0, 255, 255, 255, 255)
       assert_pixel(frame, 8, 8, 255, 0, 0, 255)
-      assert_pixel(frame, 22, 8, 0, 255, 0, 255)
-      assert_pixel(frame, 8, 22, 0, 0, 255, 255)
+      assert_pixel(frame, 18, 8, 0, 255, 0, 255)
+      assert_pixel(frame, 24, 10, 255, 255, 255, 255)
+      assert_pixel(frame, 42, 10, 0, 0, 255, 255)
+      assert_pixel(frame, 52, 10, 255, 0, 255, 255)
+      assert_pixel(frame, 58, 10, 255, 255, 255, 255)
+      assert_pixel_near(frame, 70, 10, 230, 0, 25, 255, 35)
+      assert_pixel_near(frame, 86, 10, 25, 0, 230, 255, 35)
+      assert_pixel(frame, 8, 28, 0, 255, 255, 255)
+      assert_pixel(frame, 16, 28, 255, 255, 255, 255)
+      assert_pixel(frame, 31, 29, 255, 0, 255, 255)
+      assert_pixel(frame, 24, 22, 255, 255, 255, 255)
+      assert_pixel(frame, 48, 28, 255, 255, 0, 255)
+      assert_pixel_near(frame, 70, 30, 128, 128, 128, 255, 8)
+      assert_pixel(frame, 12, 50, 0, 255, 0, 255)
+      assert_pixel_near(frame, 38, 50, 128, 0, 128, 255, 80)
+      assert_pixel(frame, 56, 44, 0, 0, 255, 255)
+      assert_pixel(frame, 60, 44, 255, 255, 0, 255)
+      assert_pixel(frame, 82, 48, 255, 0, 0, 255)
+      assert_region_has_dark_pixel(
+        frame,
+        @core.Rect::new(x=4.0, y=68.0, width=48.0, height=20.0),
+      )
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")
