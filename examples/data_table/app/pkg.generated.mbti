@@ -1,0 +1,85 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/data_table/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn update(DataTableModel, DataTableMsg) -> DataTableModel
+
+pub fn view(DataTableModel) -> @core.View[DataTableMsg]
+
+// Errors
+
+// Types and methods
+pub(all) struct DataRecord {
+  id : Int
+  project : String
+  status : String
+  owner : String
+  team : String
+  priority : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DataRecord::new(id~ : Int, project~ : String, status~ : String, owner~ : String, team~ : String, priority~ : String) -> Self
+
+pub(all) enum DataSortKey {
+  Project
+  Owner
+  Status
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum DataStatus {
+  Ready
+  Loading
+  Failed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct DataTableApp {
+  unit : Unit
+}
+pub fn DataTableApp::new() -> Self
+pub fn DataTableApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub(all) struct DataTableModel {
+  records : Array[DataRecord]
+  query : String
+  selected_team : String
+  selected_row : Int
+  expanded : Array[String]
+  page : Int
+  page_size : Int
+  sort_key : DataSortKey
+  ascending : Bool
+  status : DataStatus
+}
+pub fn DataTableModel::filtered_records(Self) -> Array[DataRecord]
+pub fn DataTableModel::new() -> Self
+pub fn DataTableModel::page_count(Self) -> Int
+pub fn DataTableModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn DataTableModel::selected_record(Self) -> DataRecord?
+pub fn DataTableModel::sorted_records(Self) -> Array[DataRecord]
+pub fn DataTableModel::update(Self, DataTableMsg) -> Self
+pub fn DataTableModel::view(Self) -> @core.View[DataTableMsg]
+pub fn DataTableModel::visible_records(Self) -> Array[DataRecord]
+
+pub(all) enum DataTableMsg {
+  QueryChanged(String)
+  TeamSelected(String)
+  RowSelected(Int)
+  ToggleTree(String)
+  SortBy(DataSortKey)
+  NextPage
+  PreviousPage
+  SetLoading
+  SetFailed(String)
+  SetReady
+}
+
+// Type aliases
+
+// Traits
+
