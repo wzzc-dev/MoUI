@@ -851,8 +851,40 @@ fn SkiaRasterRenderer::draw_vignette_effect(
   spec : @core.ShaderEffectSpec,
 ) -> Unit {
   let (color, _) = skia_shader_effect_colors(spec.fallback)
-  canvas.draw_oval(skia_rect(spec.frame), skia_paint(color))
-  self.unsupported_command_count = self.unsupported_command_count + 1
+  let center = @core.Point::new(
+    x=spec.frame.origin.x + spec.frame.size.width / 2.0,
+    y=spec.frame.origin.y + spec.frame.size.height / 2.0,
+  )
+  let radius = spec.frame.size.width.max(spec.frame.size.height) /
+    2.0 *
+    skia_vignette_radius_scale(spec)
+  let outer_color = @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=color.a)
+  match
+    @skia_native.Shader::radial_gradient(
+      skia_point(center),
+      Float::from_double(radius),
+      skia_color(color),
+      skia_color(outer_color),
+    ) {
+    Some(shader) =>
+      canvas.draw_rect_shader(
+        skia_rect(spec.frame),
+        shader,
+        @skia_mbt.Paint::new(anti_alias=true),
+      )
+    None => {
+      self.draw_brush_rect(canvas, spec.frame, spec.fallback)
+      self.unsupported_command_count = self.unsupported_command_count + 1
+    }
+  }
+}
+
+///|
+fn skia_vignette_radius_scale(spec : @core.ShaderEffectSpec) -> Double {
+  match spec.uniforms.get(0) {
+    Some(amount) => amount.max(0.8)
+    None => 0.8
+  }
 }
 
 ///|

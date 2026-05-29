@@ -84,7 +84,11 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
     spec,
     @render.RendererFeature::FilterEffect,
   )
-  match (image, gradient, path, layer, blend, filter) {
+  let shader = find_skia_spec_capability(
+    spec,
+    @render.RendererFeature::ShaderEffect,
+  )
+  match (image, gradient, path, layer, blend, filter, shader) {
     (
       Some(image),
       Some(gradient),
@@ -92,6 +96,7 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
       Some(layer),
       Some(blend),
       Some(filter),
+      Some(shader),
     ) => {
       assert_true(
         image.backend == @render.RendererBackendKind::SkiaRasterNative,
@@ -109,22 +114,27 @@ test "skia renderer spec exposes evidence-gated backend capabilities" {
       assert_true(
         filter.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
+      assert_true(
+        shader.backend == @render.RendererBackendKind::SkiaRasterNative,
+      )
       assert_true(image.status == @render.RendererFeatureStatus::Partial)
       assert_true(gradient.status == @render.RendererFeatureStatus::Ready)
       assert_true(path.status == @render.RendererFeatureStatus::Ready)
       assert_true(layer.status == @render.RendererFeatureStatus::Ready)
       assert_true(blend.status == @render.RendererFeatureStatus::Ready)
       assert_true(filter.status == @render.RendererFeatureStatus::Ready)
+      assert_true(shader.status == @render.RendererFeatureStatus::Ready)
       assert_true(image.note.contains("data URI"))
       assert_true(gradient.note.contains("fills and strokes"))
       assert_true(path.note.contains("quadratic and cubic"))
       assert_true(layer.note.contains("nested layer/filter"))
       assert_true(blend.note.contains("overlay"))
       assert_true(filter.note.contains("color matrix"))
+      assert_true(shader.note.contains("vignette"))
     }
     _ =>
       fail(
-        "expected Skia image, gradient, path, layer, blend, and filter capability records",
+        "expected Skia image, gradient, path, layer, blend, filter, and shader capability records",
       )
   }
 }

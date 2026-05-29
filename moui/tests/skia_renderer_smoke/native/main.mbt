@@ -536,6 +536,14 @@ fn renderer_smoke_commands() -> Array[@core.DrawCommand] {
       @core.Color::black(),
     ),
     @core.DrawCommand::PopFilter,
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="vignette",
+        frame=@core.Rect::new(x=164.0, y=100.0, width=18.0, height=18.0),
+        uniforms=[0.9],
+        fallback=@core.Brush::solid(green()),
+      ),
+    ),
     @core.DrawCommand::PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
@@ -695,6 +703,8 @@ fn main {
       assert_pixel_luma_between(frame, 155, 109, 0, 160, 255)
       assert_pixel_luma_between(frame, 148, 109, 20, 245, 255)
       assert_pixel_near(frame, 142, 109, 255, 255, 255, 255, 2)
+      assert_pixel_near(frame, 173, 109, 0, 255, 0, 255, 45)
+      assert_pixel_luma_between(frame, 181, 101, 0, 95, 255)
       assert_pixel_near(frame, 198, 108, 192, 128, 128, 255, 8)
       assert_pixel(frame, 192, 108, 255, 255, 255, 255)
       println("MoUI Skia renderer smoke passed")
