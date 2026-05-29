@@ -46,6 +46,15 @@ run() {
   "$@"
 }
 
+run_built_executable() {
+  executable="$1"
+  if [ ! -x "$executable" ]; then
+    printf 'Built executable is missing or not executable: %s\n' "$executable" >&2
+    exit 1
+  fi
+  run "$executable"
+}
+
 run sh scripts/check-local-deps.sh
 
 run moon check
@@ -109,7 +118,10 @@ else
 fi
 
 if "$RUN_SKIA_REAL_SMOKE"; then
-  run moon run .local_repos/skia_mbt/scripts/native_smoke --target native
+  run moon build .local_repos/skia_mbt/scripts/native_smoke --target native
+  run_built_executable "./.local_repos/skia_mbt/scripts/native_smoke/_build/native/debug/build/skia_mbt_native_smoke.exe"
+  run moon build moui/tests/skia_renderer_smoke/native --target native
+  run_built_executable "./_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
 else
   printf '\nSkipping real Skia smoke. Pass --skia-real-smoke when local Skia link flags are configured.\n'
 fi
