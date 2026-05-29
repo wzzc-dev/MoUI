@@ -89,6 +89,35 @@ pub(all) enum SegmentedControlSize {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum FeedbackTone {
+  Neutral
+  Success
+  Warning
+  Danger
+  Info
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum BadgeTone {
+  Neutral
+  Accent
+  Success
+  Warning
+  Danger
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct StateViewAction[Msg] {
+  label : String
+  message : Msg
+}
+
+///|
+pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> StateViewAction[Msg] {
+  { label, message }
+}
+
+///|
 fn ButtonVariant::style(
   self : ButtonVariant,
   theme : @core.Theme,

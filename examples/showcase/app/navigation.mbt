@@ -60,6 +60,10 @@ fn ShowcaseModel::destinations(
       view=self.navigation_section(theme, metrics),
     ),
     @views.navigation_destination(
+      route="feedback",
+      view=self.feedback_section(theme, metrics),
+    ),
+    @views.navigation_destination(
       route="examples",
       view=self.examples_section(theme, metrics),
     ),
@@ -119,6 +123,12 @@ fn showcase_sections() -> Array[ShowcaseSection] {
       route: "navigation",
       title: "Navigation",
       summary: "Stack, tabs, dialog, sheet",
+      group: "Patterns",
+    },
+    {
+      route: "feedback",
+      title: "Feedback",
+      summary: "Status, banners, empty states",
       group: "Patterns",
     },
     {

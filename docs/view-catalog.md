@@ -65,6 +65,15 @@ fn view(draft : String) -> @core.View[Msg] {
 | `progress` | `views/controls.mbt` | Color params | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `tooltip` | `views/controls.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |
 
+## Feedback And States
+
+| Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `toast` / `snackbar` | `views/feedback.mbt` | Tone colors/surface | Group | `views/views_test.mbt` | Showcase Feedback | App-owned transient/status surfaces; no queue manager in v1. |
+| `banner` / `callout` | `views/feedback.mbt` | Tone colors/surface | Group | `views/views_test.mbt` | Showcase Feedback | Inline status and guidance surfaces with optional action. |
+| `empty_state` / `loading_state` / `error_state` | `views/feedback.mbt` | Tone colors/surface | Group | `views/views_test.mbt` | Showcase Feedback | Reusable workflow state panels using optional `StateViewAction`. |
+| `badge` / `stat_card` | `views/feedback.mbt` | Tone colors/surface | Text/group | `views/views_test.mbt` | Showcase Feedback | Compact metadata and metric cards. |
+
 ## Forms
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
