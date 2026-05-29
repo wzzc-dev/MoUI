@@ -111,6 +111,9 @@ fn view(draft : String) -> @core.View[Msg] {
 | --- | --- | --- | --- | --- | --- | --- |
 | `navigation_destination` | `views/navigation.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase | Route/view pair for navigation stack. |
 | `navigation_stack` / `navigation_stack_selected` | `views/navigation.mbt` | Child-based | Selected child semantics | `views/views_test.mbt`, Showcase tests | Showcase | Selects a view from `NavigationState` or a TEA-owned route string. |
+| `sidebar` / `breadcrumb` | `views/navigation.mbt` | ButtonStyle/text/surface | List/group | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | Controlled navigation shell helpers built from buttons, text, and surface primitives. |
+| `split_view` / `master_detail` | `views/navigation.mbt` | Child-based | Group | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | Fixed-width shell composition for master/detail layouts; v1 does not drag-resize panes. |
+| `wizard` / `wizard_step` | `views/navigation.mbt` | ButtonStyle/surface | Group with tab-like step buttons | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | Controlled wizard workflow using `WizardStep` descriptors and app-owned current step. |
 | `tab_item` | `views/navigation.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase | Tab descriptor. |
 | `tab_view` | `views/navigation.mbt` | ButtonStyle defaults | Tab buttons | `views/views_test.mbt` | Showcase | TEA-first tab selection; use `tab_view_binding` for component-local state. |
 | `dialog_host` | `views/navigation.mbt` | SurfaceStyle | Dialog when presented | `views/views_test.mbt`, Showcase tests | Showcase | Stack wrapper for modal content. |
