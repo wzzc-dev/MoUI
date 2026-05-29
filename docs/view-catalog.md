@@ -88,7 +88,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `tab_item` | `views/navigation.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase | Tab descriptor. |
 | `tab_view` | `views/navigation.mbt` | ButtonStyle defaults | Tab buttons | `views/views_test.mbt` | Showcase | TEA-first tab selection; use `tab_view_binding` for component-local state. |
 | `dialog_host` | `views/navigation.mbt` | SurfaceStyle | Dialog when presented | `views/views_test.mbt`, Showcase tests | Showcase | Stack wrapper for modal content. |
-| `sheet` / `sheet_host` | `views/sheet.mbt` | Brush, radius, shadow | Sheet presentation | `views/views_test.mbt` | Showcase | Modal or bottom-sheet presentation wrapper. |
+| `sheet` / `sheet_host` | `views/sheet.mbt` | Brush, radius, shadow | Sheet presentation | `views/views_test.mbt` | Showcase | Modal or bottom-sheet presentation with content dismissal support. |
 
 ## Theme And Environment
 

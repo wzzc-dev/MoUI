@@ -261,8 +261,15 @@ fn child_constraints_for_measure(
 ) -> Constraints {
   match spec {
     PaddingSpec(data) => constraints.deflate(data.insets)
-    SheetSpec(_) =>
-      constraints.deflate(Insets::symmetric(horizontal=16.0, vertical=16.0))
+    SheetSpec(data) => {
+      let content_constraints = constraints.deflate(
+        Insets::symmetric(horizontal=16.0, vertical=16.0),
+      )
+      match data.presentation_mode {
+        SheetPresentationMode::Modal => content_constraints
+        SheetPresentationMode::BottomSheet => content_constraints.loosen()
+      }
+    }
     FrameSpec(data) => frame_constraints_for_measure(data, constraints)
     ModifiedSpec(data) => modified_child_constraints(data.modifier, constraints)
     ScrollSpec(_) => Constraints::unbounded()
@@ -344,9 +351,9 @@ fn ElementNode::child_frames_for_place(
       } else {
         []
       }
-    SheetSpec(_) =>
+    SheetSpec(data) =>
       if self.children.length() > 0 {
-        [frame.inset(Insets::symmetric(horizontal=16.0, vertical=16.0))]
+        [sheet_content_frame(data, frame, self.children[0])]
       } else {
         []
       }
@@ -401,6 +408,28 @@ fn scroll_child_frame(
     width=max_double(viewport.width, child_size.width),
     height=max_double(viewport.height, child_size.height),
   )
+}
+
+///|
+fn sheet_content_frame(
+  data : SheetViewSpec,
+  frame : Rect,
+  child : ElementNode,
+) -> Rect {
+  let content = frame.inset(Insets::symmetric(horizontal=16.0, vertical=16.0))
+  match data.presentation_mode {
+    SheetPresentationMode::Modal => content
+    SheetPresentationMode::BottomSheet => {
+      let child_size = child.intrinsic_size()
+      let height = min_double(content.size.height, child_size.height)
+      Rect::new(
+        x=content.origin.x,
+        y=content.origin.y + content.size.height - height,
+        width=content.size.width,
+        height~,
+      )
+    }
+  }
 }
 
 ///|

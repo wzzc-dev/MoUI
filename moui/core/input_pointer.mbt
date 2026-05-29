@@ -39,9 +39,10 @@ fn ElementNode::dispatch_pointer(
     | GridSpec(_)
     | ListSpec(_)
     | CustomLayoutSpec(_)
-    | ComponentSpec(_)
-    | SheetSpec(_) =>
+    | ComponentSpec(_) =>
       self.dispatch_pointer_to_children(event, render, text_system~)
+    SheetSpec(data) =>
+      self.dispatch_sheet_pointer(data, event, render, text_system~)
     ScrollSpec(data) =>
       self.dispatch_scroll_pointer(data, event, render, text_system~)
     ModifiedSpec(data) =>
@@ -147,6 +148,40 @@ fn datepicker_popup_frame(frame : Rect) -> Rect {
     width=max_double(frame.size.width, 280.0),
     height=350.0,
   )
+}
+
+///|
+fn ElementNode::dispatch_sheet_pointer(
+  self : ElementNode,
+  data : SheetViewSpec,
+  event : PointerEvent,
+  render : RenderNode,
+  text_system~ : TextSystem,
+) -> ElementEventResult {
+  let child_result = self.dispatch_pointer_to_children(
+    event,
+    render,
+    text_system~,
+  )
+  if child_result.activated {
+    child_result
+  } else {
+    let outside_content = event.phase == PointerPhase::Up &&
+      render.frame.contains(event.position) &&
+      render.children.length() > 0 &&
+      !render.children[0].frame.contains(event.position)
+    if outside_content {
+      match data.on_dismiss {
+        Some(handler) => {
+          handler()
+          { changed: true, activated: true, focused: child_result.focused }
+        }
+        None => child_result
+      }
+    } else {
+      child_result
+    }
+  }
 }
 
 ///|
