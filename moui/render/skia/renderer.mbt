@@ -297,23 +297,56 @@ fn SkiaRasterRenderer::draw_shadow(
   canvas : @skia_native.Canvas,
   shadow : @core.ShadowSpec,
 ) -> Unit {
-  let rect = shadow.rect.rect
+  let blur = shadow.blur_radius.max(0.0)
   let spread = shadow.spread.max(0.0)
-  let expanded = @core.Rect::new(
-    x=rect.origin.x + shadow.offset.x - spread,
-    y=rect.origin.y + shadow.offset.y - spread,
-    width=rect.size.width + spread * 2.0,
-    height=rect.size.height + spread * 2.0,
-  )
+  let expanded = skia_shadow_rect(shadow, grow=spread)
+  let radius = (shadow.rect.radius + spread).max(0.0)
+  if blur > 0.0 {
+    match @skia_native.MaskFilter::blur(Float::from_double(blur)) {
+      Some(mask_filter) => {
+        let saved = canvas.save_layer(
+          bounds=Some(
+            skia_rect(skia_shadow_rect(shadow, grow=spread + blur * 3.0)),
+          ),
+          mask_filter=Some(mask_filter),
+        )
+        canvas.draw_round_rect(
+          skia_rect(expanded),
+          Float::from_double(radius),
+          Float::from_double(radius),
+          skia_paint(shadow.color),
+        )
+        canvas.restore_to_count(saved)
+      }
+      None => {
+        canvas.draw_round_rect(
+          skia_rect(expanded),
+          Float::from_double(radius),
+          Float::from_double(radius),
+          skia_paint(shadow.color),
+        )
+        self.unsupported_command_count = self.unsupported_command_count + 1
+      }
+    }
+    return ()
+  }
   canvas.draw_round_rect(
     skia_rect(expanded),
-    Float::from_double((shadow.rect.radius + spread).max(0.0)),
-    Float::from_double((shadow.rect.radius + spread).max(0.0)),
+    Float::from_double(radius),
+    Float::from_double(radius),
     skia_paint(shadow.color),
   )
-  if shadow.blur_radius > 0.0 {
-    self.unsupported_command_count = self.unsupported_command_count + 1
-  }
+}
+
+///|
+fn skia_shadow_rect(shadow : @core.ShadowSpec, grow~ : Double) -> @core.Rect {
+  let rect = shadow.rect.rect
+  @core.Rect::new(
+    x=rect.origin.x + shadow.offset.x - grow,
+    y=rect.origin.y + shadow.offset.y - grow,
+    width=rect.size.width + grow * 2.0,
+    height=rect.size.height + grow * 2.0,
+  )
 }
 
 ///|
