@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn[Msg] accordion(Array[WizardStep[Msg]], expanded~ : Array[String], on_toggle~ : (String) -> Msg, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] align(@core.View[Msg], alignment? : @core.Alignment) -> @core.View[Msg]
 
 pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
@@ -24,6 +26,8 @@ pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewActi
 pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] button_group(Array[MenuItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -45,9 +49,13 @@ pub fn choice_item(String, String) -> ChoiceItem
 
 pub fn[Msg] clearable_text_field(String, on_input~ : (String) -> Msg, on_clear~ : Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] collapsible_panel(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
 pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], expanded~ : Bool, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] command_bar(Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn component((@core.BuildContext) -> @core.View[Unit]) -> @core.View[Unit]
 
@@ -66,6 +74,8 @@ pub fn description_item(String, String) -> DescriptionItem
 pub fn[Msg] description_list(Array[DescriptionItem], theme? : @core.Theme, width? : Double, term_width? : Double, row_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] dropdown(String, Array[MenuItem[Msg]], state~ : DropdownState, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
@@ -163,6 +173,8 @@ pub fn[Msg] radio_binding(String, @core.Binding[Bool], foreground? : @core.Color
 
 pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
+pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double) -> @core.View[Msg]
+
 pub fn[Msg] rich_text_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] rich_text_editor_binding(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
@@ -197,6 +209,8 @@ pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
 
 pub fn[Msg] stat_card(String, String, caption? : String, tone? : FeedbackTone, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] status_bar(Array[String], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] stepper(on_decrement~ : Msg, on_increment~ : Msg, label? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] surface(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, variant? : SurfaceVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
@@ -230,6 +244,8 @@ pub fn[Msg] toggle_binding(String, @core.Binding[Bool], foreground? : @core.Colo
 pub fn[Msg] toggle_switch(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] toggle_switch_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+
+pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
 

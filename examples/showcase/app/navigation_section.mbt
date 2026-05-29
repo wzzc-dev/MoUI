@@ -66,6 +66,7 @@ fn ShowcaseModel::navigation_section(
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
+        self.navigation_command_card(theme, metrics),
         self.navigation_shell_card(theme, metrics),
         self.navigation_wizard_card(theme, metrics),
       ],
@@ -73,6 +74,46 @@ fn ShowcaseModel::navigation_section(
       align=@views.CrossAlign::Start,
     ),
     metrics~,
+  )
+}
+
+///|
+fn ShowcaseModel::navigation_command_card(
+  self : ShowcaseModel,
+  theme : @core.Theme,
+  metrics : ShowcaseMetrics,
+) -> @core.View[ShowcaseMsg] {
+  ignore(metrics)
+  let commands = [
+    @views.MenuItem::new(id="new", label="New", message=ShowDialog),
+    @views.MenuItem::new(id="open", label="Open", message=ShowSheet),
+    @views.MenuItem::new(id="archive", label="Archive", message=ToggleActive, enabled=false),
+  ]
+  let mode_items = [
+    @views.MenuItem::new(id="overview", label="Overview", message=SelectSection("overview")),
+    @views.MenuItem::new(id="data", label="Data", message=SelectSection("data")),
+  ]
+  surface(
+    column(
+      [
+        toolbar(
+          [
+            button_group(mode_items, selected=self.selected_section, theme~, button_width=96.0),
+            command_bar(commands, theme~, width=260.0),
+          ],
+          theme~,
+          width=520.0,
+        ),
+        status_bar(["Ready", "3 commands", "Renderer neutral"], theme~, width=520.0),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Start,
+    ),
+    width=520.0,
+    height=96.0,
+    variant=@views.SurfaceVariant::Base,
+    theme~,
+    padding=0.0,
   )
 }
 
