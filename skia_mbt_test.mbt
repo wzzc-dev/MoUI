@@ -724,6 +724,50 @@ test "rrect value layer normalizes per-corner radii" {
 }
 
 ///|
+test "rrect immutable geometry helpers preserve value semantics" {
+  let rrect = @skia_mbt.RRect::from_rect_xy(
+    @skia_mbt.Rect::from_xywh(0, 0, 10, 8),
+    2,
+    3,
+  )
+
+  let shifted = rrect.with_offset(@skia_mbt.Point::new(5, -2))
+  assert_true(shifted.bounds() == @skia_mbt.Rect::from_xywh(5, -2, 10, 8))
+  assert_true(shifted.upper_left == rrect.upper_left)
+  assert_true(
+    rrect.with_offset_to(@skia_mbt.Point::new(20, 30)).bounds() ==
+    @skia_mbt.Rect::from_xywh(20, 30, 10, 8),
+  )
+
+  let inset = rrect.with_inset(@skia_mbt.Size::new(1, 2))
+  assert_true(inset.bounds() == @skia_mbt.Rect::from_xywh(1, 2, 8, 4))
+  assert_true(inset.upper_left == @skia_mbt.Size::new(1, 1))
+
+  let outset = rrect.with_outset(@skia_mbt.Size::new(1, 2))
+  assert_true(outset.bounds() == @skia_mbt.Rect::from_xywh(-1, -2, 12, 12))
+  assert_true(outset.upper_left == @skia_mbt.Size::new(3, 5))
+}
+
+///|
+test "rrect contains rectangles inside rounded corners" {
+  let rrect = @skia_mbt.RRect::from_rect_xy(
+    @skia_mbt.Rect::from_xywh(0, 0, 10, 10),
+    4,
+    4,
+  )
+
+  assert_true(rrect.contains_rect(@skia_mbt.Rect::from_xywh(4, 4, 2, 2)))
+  assert_true(rrect.contains_rect(@skia_mbt.Rect::from_xywh(2, 2, 6, 6)))
+  assert_true(!rrect.contains_rect(@skia_mbt.Rect::from_xywh(0, 0, 1, 1)))
+  assert_true(!rrect.contains_rect(@skia_mbt.Rect::from_xywh(-1, 4, 2, 2)))
+  assert_true(
+    @skia_mbt.RRect::from_rect(@skia_mbt.Rect::from_xywh(0, 0, 10, 10)).contains_rect(
+      @skia_mbt.Rect::from_xywh(0, 0, 10, 10),
+    ),
+  )
+}
+
+///|
 test "path add rrect expands mixed corners" {
   let rect = @skia_mbt.Rect::from_xywh(0, 0, 10, 8)
   let rrect = @skia_mbt.RRect::new(
