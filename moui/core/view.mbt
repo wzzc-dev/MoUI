@@ -954,6 +954,51 @@ pub fn[Msg] View::scale(
 }
 
 ///|
+pub fn[Msg] View::transition(
+  self : View[Msg],
+  spec? : TransitionSpec = TransitionSpec::new(),
+  progress? : Double = 1.0,
+  reduced_motion? : Bool = false,
+) -> View[Msg] {
+  self.apply_transition_style(spec.sample(progress, reduced_motion~).style)
+}
+
+///|
+pub fn[Msg] View::presence(
+  self : View[Msg],
+  present~ : Bool,
+  spec? : TransitionSpec = TransitionSpec::fade(),
+  progress? : Double = 1.0,
+  reduced_motion? : Bool = false,
+) -> View[Msg] {
+  let sample = spec.presence(present~, progress~, reduced_motion~)
+  if sample.present {
+    self.apply_transition_style(sample.style)
+  } else {
+    View::empty()
+  }
+}
+
+///|
+fn[Msg] View::apply_transition_style(
+  self : View[Msg],
+  style : TransitionStyle,
+) -> View[Msg] {
+  let mut view = self
+  view = view.opacity(style.opacity)
+  if style.offset.x != 0.0 || style.offset.y != 0.0 {
+    view = view.offset(dx=style.offset.x, dy=style.offset.y)
+  }
+  if style.scale.x != 1.0 || style.scale.y != 1.0 {
+    view = view.scale(sx=style.scale.x, sy=style.scale.y)
+  }
+  match style.foreground {
+    Some(color) => view.foreground(color)
+    None => view
+  }
+}
+
+///|
 pub fn[Msg] View::disabled(
   self : View[Msg],
   disabled? : Bool = true,
