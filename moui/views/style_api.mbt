@@ -70,6 +70,25 @@ pub(all) enum FormValidationDisplay {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct ChoiceItem {
+  id : String
+  label : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum ChipVariant {
+  Filled
+  Outline
+  Soft
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum SegmentedControlSize {
+  Compact
+  Regular
+} derive(Eq, Debug, ToJson)
+
+///|
 fn ButtonVariant::style(
   self : ButtonVariant,
   theme : @core.Theme,
