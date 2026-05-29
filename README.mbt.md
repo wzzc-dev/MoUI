@@ -5,11 +5,14 @@ MoonBit bindings for the Skia Graphics Library, structured after
 
 The current package exposes the first value-layer API surface:
 
-- geometry: `Point`, `IPoint`, `Size`, `ISize`, `Rect`, `IRect`, `RRect`
+- geometry: `Point`, `IPoint`, `Size`, `ISize`, `Rect`, `IRect`, `RRect`,
+  including point vector helpers, rectangle constructors, sortedness, centers,
+  offsets, and integer rounding helpers
 - color: `Color`, `Color4f`
 - image metadata and pixel layout: `ColorInfo`, `ImageInfo`
 - copied pixel snapshots: `Pixmap`
-- transforms: `Matrix`
+- transforms: `Matrix`, including member access, finite and affine queries,
+  pre/post concat helpers, and point/vector/radius/rect mapping
 - paint state: `Paint`, `PaintStyle`, `StrokeCap`, `StrokeJoin`, `BlendMode`
 - canvas point drawing modes: `PointMode`
 - image sampling: `SamplingOptions`, `FilterMode`, `MipmapMode`,
@@ -17,8 +20,8 @@ The current package exposes the first value-layer API surface:
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,
-  rounded-rectangle contours, control-point and tight bounds, `reset`, and
-  `rewind`
+  rounded-rectangle and polyline/polygon contours, control-point and tight
+  bounds, append/extend path modes, path appends, `reset`, and `rewind`
 
 Native Skia object handles are intentionally staged behind a separate FFI plan so
 ownership, ref-counting, and linker configuration can be validated package by
@@ -58,8 +61,9 @@ The `native` subpackage contains the first opt-in native boundary:
   `conic_to`, `close`, `count_points`, `count_verbs`,
   `segment_masks`, `is_finite`, `is_inverse_fill_type`,
   `is_last_contour_closed`, `last_point`, `is_line`, `is_rect`, `is_oval`,
-  `contains`, `bounds`, `compute_tight_bounds`, `add_rect`, `add_oval`, `add_circle`,
-  `add_round_rect`, `add_rrect`, `transform`, `offset`, and `is_empty`;
+  `contains`, `bounds`, `compute_tight_bounds`, `add_path_value`, `add_poly`,
+  `add_rect`, `add_oval`, `add_circle`, `add_round_rect`, `add_rrect`,
+  `transform`, `offset`, and `is_empty`;
 - `@native.Path::from_value(path)` replays a portable `@skia_mbt.Path` into a
   native path when Skia is linked;
 - `@native.Canvas` supports `clear`, `draw_color`, `draw_paint`,
@@ -142,7 +146,7 @@ still match the drawn scene and N32 channel layout.
 
 On Windows with a MinGW-compatible Skia build, use the acceptance wrapper to
 temporarily inject the native link flags, run the smoke test, save logs, and
-verify `native/moon.pkg` was restored afterwards:
+verify the temporary package rewrites were restored afterwards:
 
 ```powershell
 .\scripts\windows-accept-real-skia-smoke.ps1 -LogDir logs `
@@ -256,13 +260,39 @@ summary. The same artifact check can be rerun manually with
 `scripts/verify-native-smoke-log.sh logs/linux-native-smoke-output.log`. The
 summary records the selected mode, dry-run setting, artifact name, key Skia
 inputs, expected log paths, the marker check, plus whether
-`native/moon.pkg` was restored after the run.
+the temporary package rewrites were restored after the run.
 Set the workflow's `dry_run_config` input to print the
 resolved build/smoke arguments without installing MoonBit/build dependencies,
-building Skia, restoring the Skia cache, or rewriting `native/moon.pkg`; with
+building Skia, restoring the Skia cache, or rewriting package files; with
 existing Skia paths it also checks for the Skia header and library files. The
 workflow only restores the Skia source-build cache when it is building Skia from
 source; `extra_gn_args` is ignored for existing builds.
+
+```mbt check
+///|
+test {
+  let point = @skia_mbt.Point::new(3, 4)
+  let rect = @skia_mbt.Rect::from_point_and_size(
+    @skia_mbt.Point::new(2, 3),
+    @skia_mbt.Size::new(4, 5),
+  )
+  let sorted = @skia_mbt.Rect::new(5, 4, 1, 2).sorted()
+  let fractional = @skia_mbt.Rect::new(1.2, -2.8, 5.7, 3.1)
+
+  assert_true(point.is_finite())
+  assert_eq(point.dot(@skia_mbt.Point::new(-2, 5)), 14.0)
+  assert_eq(point.cross(@skia_mbt.Point::new(-2, 5)), 23.0)
+  assert_true(rect == @skia_mbt.Rect::from_ltrb(2, 3, 6, 8))
+  assert_true(
+    rect.with_offset_to(@skia_mbt.Point::new(10, -1)) ==
+    @skia_mbt.Rect::from_xywh(10, -1, 4, 5),
+  )
+  assert_true(sorted.is_sorted())
+  assert_true(sorted.center() == @skia_mbt.Point::new(3, 3))
+  assert_true(fractional.round_in() == @skia_mbt.IRect::new(2, -2, 5, 3))
+  assert_true(fractional.round_out() == @skia_mbt.IRect::new(1, -3, 6, 4))
+}
+```
 
 ```mbt check
 ///|
@@ -318,9 +348,16 @@ test {
     @skia_mbt.Matrix::scale(2, 3),
   )
   let rect = matrix.map_rect(@skia_mbt.Rect::from_xywh(0, 0, 4, 5))
+  let points = @skia_mbt.Matrix::translate(1, 2).map_points([
+    @skia_mbt.Point::new(0, 0),
+    @skia_mbt.Point::new(3, 4),
+  ])
 
   assert_true(matrix.is_invertible())
   assert_true(rect == @skia_mbt.Rect::from_xywh(10, 20, 8, 15))
+  assert_true(
+    points == [@skia_mbt.Point::new(1, 2), @skia_mbt.Point::new(4, 6)],
+  )
 }
 ```
 
@@ -340,6 +377,53 @@ test {
   assert_true(
     shifted.bounds() == Some(@skia_mbt.Rect::from_xywh(10, 20, 10, 10)),
   )
+}
+```
+
+```mbt check
+///|
+test {
+  let triangle = @skia_mbt.Path::new().add_poly(
+    [
+      @skia_mbt.Point::new(0, 0),
+      @skia_mbt.Point::new(10, 0),
+      @skia_mbt.Point::new(10, 10),
+    ],
+    close=true,
+  )
+
+  assert_true(triangle.is_last_contour_closed())
+  assert_eq(triangle.count_points(), 3)
+  assert_true(
+    triangle.bounds() == Some(@skia_mbt.Rect::from_xywh(0, 0, 10, 10)),
+  )
+}
+```
+
+```mbt check
+///|
+test {
+  let base = @skia_mbt.Path::new().add_rect(
+    @skia_mbt.Rect::from_xywh(0, 0, 2, 2),
+  )
+  let triangle = @skia_mbt.Path::new().add_poly(
+    [
+      @skia_mbt.Point::new(0, 0),
+      @skia_mbt.Point::new(10, 0),
+      @skia_mbt.Point::new(10, 10),
+    ],
+    close=true,
+  )
+
+  let combined = base.add_path(
+    triangle,
+    matrix=@skia_mbt.Matrix::translate(10, 0),
+  )
+  let shifted = base.add_path_offset(triangle, @skia_mbt.Point::new(10, 0))
+
+  assert_eq(combined.count_verbs(), 9)
+  assert_true(combined.bounds() == Some(@skia_mbt.Rect::new(0, 0, 20, 10)))
+  assert_true(shifted == combined)
 }
 ```
 
