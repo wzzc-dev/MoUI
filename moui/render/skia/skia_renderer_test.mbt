@@ -64,24 +64,33 @@ test "skia pixel frame carries presenter payload" {
 test "skia renderer spec exposes evidence-gated backend capabilities" {
   let spec = skia_raster_native_spec()
   let image = find_skia_spec_capability(spec, @render.RendererFeature::Image)
+  let blend = find_skia_spec_capability(
+    spec,
+    @render.RendererFeature::BlendMode,
+  )
   let filter = find_skia_spec_capability(
     spec,
     @render.RendererFeature::FilterEffect,
   )
-  match (image, filter) {
-    (Some(image), Some(filter)) => {
+  match (image, blend, filter) {
+    (Some(image), Some(blend), Some(filter)) => {
       assert_true(
         image.backend == @render.RendererBackendKind::SkiaRasterNative,
+      )
+      assert_true(
+        blend.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
       assert_true(
         filter.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
       assert_true(image.status == @render.RendererFeatureStatus::Partial)
+      assert_true(blend.status == @render.RendererFeatureStatus::Ready)
       assert_true(filter.status == @render.RendererFeatureStatus::Ready)
       assert_true(image.note.contains("data URI"))
+      assert_true(blend.note.contains("overlay"))
       assert_true(filter.note.contains("color matrix"))
     }
-    _ => fail("expected Skia image and filter capability records")
+    _ => fail("expected Skia image, blend, and filter capability records")
   }
 }
 

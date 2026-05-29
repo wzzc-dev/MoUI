@@ -222,7 +222,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     blend.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Ready,
   )
   assert_true(
     blend
@@ -232,7 +232,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     blend
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
-    .contains("multiply"),
+    .contains("overlay"),
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::FilterEffect,

@@ -29,7 +29,7 @@ Status meanings:
 | Transform | partial | partial | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated draw pixel proof; broader scoped combinations remain follow-up. |
 | Opacity | ready | ready | ready | Skia save-layer opacity has blended pixel smoke coverage. |
 | Layer compositing | ready | partial | ready | WGPU/Web render layer scopes through offscreen textures. Skia validates `save_layer` opacity plus rectangular masks; rounded masks and richer nested layer/filter combinations remain follow-up. |
-| Blend mode | ready | partial | ready | WGPU/Web support source-over, multiply, screen, darken, lighten, and overlay. Skia validates multiply blending through paint blend modes; other blend modes need pixel evidence. |
+| Blend mode | ready | ready | ready | Skia maps all MoUI blend modes to Skia paint blend modes and validates multiply, screen, overlay, darken, and lighten output pixels in the real native renderer smoke. |
 | Filter effect | ready | ready | ready | Skia validates blur image filters plus saturation, brightness, contrast, and color matrix color filters in the real native renderer smoke. |
 | Path/vector | ready | partial | ready | WGPU/Web use `moon_zeno` tessellation. Skia replays `PathSpec` into native paths with solid/gradient fill and solid-stroke smoke coverage; gradient strokes and broader curve evidence remain follow-up. |
 | Shader effect | ready | partial | ready | WGPU/Web handle built-in shader effects. Skia procedural solid/checker/linear-gradient-debug effects are implemented with real checker pixel coverage; vignette and unknown names still use fallback paths. |
@@ -152,13 +152,13 @@ The current real Skia smoke uses JetBrains Skia link flags to render and read
 back a representative frame through `SkiaRasterRenderer`. It validates clear,
 rect fill/stroke, rounded fill/stroke, linear-gradient fills, soft rounded
 shadows, rectangular and rounded clips, affine translation, opacity, layer
-opacity with rectangular masks, multiply blending, blur/saturation/brightness/
-contrast/color-matrix filters, solid and gradient paths, the checker shader
-effect, PNG data URI image drawing, and basic text pixels while requiring
-`unsupported_command_count == 0`. Remaining Skia renderer gaps are now
-narrower: gradient strokes, rounded layer masks, broader layer/filter nesting,
-additional blend-mode pixel evidence, broader image source/failure coverage,
-vignette shader semantics, and complex text shaping. Basic text
+opacity with rectangular masks, multiply/screen/overlay/darken/lighten
+blending, blur/saturation/brightness/contrast/color-matrix filters, solid and
+gradient paths, the checker shader effect, PNG data URI image drawing, and
+basic text pixels while requiring `unsupported_command_count == 0`. Remaining
+Skia renderer gaps are now narrower: gradient strokes, rounded layer masks,
+broader layer/filter nesting, broader image source/failure coverage, vignette
+shader semantics, and complex text shaping. Basic text
 measurement/drawing uses Skia `Font`, while complex shaping, bidi, line
 breaking, and deterministic emoji behavior remain partial and separate from the
 WGPU Moon Cosmic provider stack.
