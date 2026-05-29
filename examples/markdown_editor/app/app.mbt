@@ -3,12 +3,11 @@ using @views {
   button,
   column,
   empty,
-  markdown_editor_binding,
+  frame,
   padding_edges,
   row,
   scroll_view,
   spacer,
-  stack,
   surface,
   text,
   text_field_binding,
@@ -315,6 +314,7 @@ fn MarkdownEditorApp::root(
   let binding = ctx.binding(self.document)
   let editor_font = @core.FontSpec::new(size=17.0)
   let show_source = ctx.watch(self.source_preview_visible)
+  let workspace_width = markdown_editor_workspace_width(show_source)
   let target_bar = self.target_bar(ctx, theme)
   let selection = ctx.watch(self.selection)
   let target_kind = ctx.watch(self.target_kind)
@@ -322,7 +322,9 @@ fn MarkdownEditorApp::root(
   let scroll_offset = ctx.watch_scroll(self.editor_scroll)
   let workspace = column(
     [
-      self.chrome(theme, snapshot, block_label, document, selection),
+      self.chrome(
+        theme, snapshot, block_label, document, selection, workspace_width,
+      ),
       row(
         [
           editor_source_layout(
@@ -344,18 +346,29 @@ fn MarkdownEditorApp::root(
         align=@views.CrossAlign::Start,
       ),
     ],
-    spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Center,
+    spacing=theme.spacing_scale.sm,
+    align=@views.CrossAlign::Start,
   )
   markdown_editor_centered_workspace(
     padding_edges(
       workspace,
-      top=theme.spacing_scale.lg,
-      right=theme.spacing_scale.lg,
-      bottom=theme.spacing_scale.lg,
+      top=theme.spacing_scale.md,
+      right=theme.spacing_scale.xl,
+      bottom=theme.spacing_scale.xl,
       left=theme.spacing_scale.md,
     ),
   )
+}
+
+///|
+fn markdown_editor_workspace_width(show_source : Bool) -> Double {
+  if show_source {
+    markdown_editor_source_editor_width() +
+    markdown_editor_source_inspector_width() +
+    @core.Theme::light().spacing_scale.lg
+  } else {
+    markdown_editor_page_width()
+  }
 }
 
 ///|
@@ -387,12 +400,7 @@ fn markdown_editor_centered_workspace(
       ]
     },
     paint=bounds => {
-      [
-        @core.DrawCommand::FillRect(
-          bounds,
-          @core.Color::rgba(r=0.985, g=0.985, b=0.98),
-        ),
-      ]
+      [@core.DrawCommand::FillRect(bounds, markdown_editor_window_background())]
     },
     semantics_label="Markdown editor workspace",
   )
@@ -406,29 +414,30 @@ fn MarkdownEditorApp::chrome(
   block_label : String,
   source : String,
   selection : MarkdownEditorSelection,
+  width : Double,
 ) -> @core.View[MarkdownEditorMsg] {
   ignore(self)
-  row(
-    [
-      text(
-        markdown_editor_status_label(block_label, snapshot) +
-        markdown_editor_active_format_suffix(source, selection),
-        width=560.0,
-        height=28.0,
-      )
-      .font(theme.typography.caption)
-      .foreground(theme.palette.muted),
-      editor_button("Undo", Undo, @views.ButtonVariant::Tonal, theme),
-      editor_button("Redo", Redo, @views.ButtonVariant::Tonal, theme),
-      editor_button(
-        "Src",
-        ToggleSourcePreview,
-        @views.ButtonVariant::Tonal,
-        theme,
-      ),
-    ],
-    spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
+  frame(
+    row(
+      [
+        text(
+          markdown_editor_status_label(block_label, snapshot) +
+          markdown_editor_active_format_suffix(source, selection),
+          width=420.0,
+          height=28.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(@core.Color::black().multiply_alpha(0.42)),
+        spacer(),
+        editor_chrome_button("Undo", Undo, theme),
+        editor_chrome_button("Redo", Redo, theme),
+        editor_chrome_button("Src", ToggleSourcePreview, theme),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Center,
+    ),
+    width~,
+    height=34.0,
   )
 }
 
@@ -924,6 +933,57 @@ fn editor_button(
 }
 
 ///|
+fn editor_chrome_button(
+  label : String,
+  message : MarkdownEditorMsg,
+  theme : @core.Theme,
+) -> @core.View[MarkdownEditorMsg] {
+  let width = if label == "Src" { 42.0 } else { 58.0 }
+  button(
+    label,
+    on_click=message,
+    variant=@views.ButtonVariant::Ghost,
+    theme~,
+    width~,
+    height=30.0,
+  )
+}
+
+///|
+fn markdown_editor_page_width() -> Double {
+  780.0
+}
+
+///|
+fn markdown_editor_source_editor_width() -> Double {
+  640.0
+}
+
+///|
+fn markdown_editor_source_inspector_width() -> Double {
+  292.0
+}
+
+///|
+fn markdown_editor_viewport_height() -> Double {
+  520.0
+}
+
+///|
+fn markdown_editor_window_background() -> @core.Color {
+  @core.Color::rgba(r=0.992, g=0.992, b=0.99)
+}
+
+///|
+fn markdown_editor_page_shadow() -> @core.ShadowStyle {
+  @core.ShadowStyle::new(
+    color=@core.Color::black().multiply_alpha(0.12),
+    offset=@core.Point::new(x=0.0, y=2.0),
+    blur_radius=18.0,
+  )
+}
+
+///|
 fn markdown_editor_min_double(a : Double, b : Double) -> Double {
   if a < b {
     a
@@ -1214,11 +1274,11 @@ fn source_inspector(
       bottom=theme.spacing_scale.md,
       left=theme.spacing_scale.sm,
     ),
-    width=292.0,
+    width=markdown_editor_source_inspector_width(),
     height~,
     variant=@views.SurfaceVariant::Base,
     theme~,
-    background=@core.Color::rgba(r=0.972, g=0.972, b=0.966),
+    background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
     corner_radius=theme.radius_scale.sm,
     padding=0.0,
   )
@@ -1239,11 +1299,15 @@ fn editor_source_layout(
   on_selection_change : (Int, @core.TextRange?) -> MarkdownEditorMsg,
   on_prefix_click : (Int) -> MarkdownEditorMsg,
 ) -> @core.View[MarkdownEditorMsg] {
-  let editor_width = if show_source { 640.0 } else { 780.0 }
-  let viewport_height = 520.0
+  let editor_width = if show_source {
+    markdown_editor_source_editor_width()
+  } else {
+    markdown_editor_page_width()
+  }
+  let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
     viewport_height,
-    @core.rich_text_document_height(snapshot.rich_text, editor_font) + 72.0,
+    @core.rich_text_document_height(snapshot.rich_text, editor_font) + 96.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,
@@ -1253,25 +1317,26 @@ fn editor_source_layout(
     x=0.0,
     y=markdown_editor_clamp_double(scroll_offset.y, 0.0, max_scroll),
   )
+  let editor_control = @core.View::rich_text_editor(
+    value=binding,
+    placeholder="Start writing Markdown",
+    size=@core.Size::new(width=editor_width, height=content_height),
+    format=source => markdown_editor_format_for_selection(source, selection),
+    font=editor_font,
+    foreground=@core.Color::rgba(r=0.12, g=0.12, b=0.12),
+    placeholder_color=@core.Color::black().multiply_alpha(0.35),
+    background=@core.Brush::solid(@core.Color::white()),
+    border=None,
+    focused_border=None,
+    cursor_color=theme.palette.primary,
+    corner_radius=theme.radius_scale.sm,
+    on_selection_change=Some(on_selection_change),
+    on_prefix_click=Some(on_prefix_click),
+    input_transform=Some(markdown_editor_transform_input),
+    accepts_tab_input=true,
+  ).key("markdown-editor")
   let editor = scroll_view(
-    editor_page(
-      markdown_editor_binding(
-        binding,
-        source => markdown_editor_format_for_selection(source, selection),
-        placeholder="Start writing Markdown",
-        variant=@views.TextFieldVariant::Plain,
-        theme~,
-        font=Some(editor_font),
-        width=editor_width,
-        height=content_height,
-        on_selection_change=Some(on_selection_change),
-        on_prefix_click=Some(on_prefix_click),
-        input_transform=Some(markdown_editor_transform_input),
-      ).key("markdown-editor"),
-      theme,
-      width=editor_width,
-      height=content_height,
-    ),
+    editor_page(editor_control, theme),
     offset=normalized_offset,
     width=editor_width,
     height=viewport_height,
@@ -1312,22 +1377,16 @@ fn editor_source_layout(
 fn editor_page(
   editor : @core.View[MarkdownEditorMsg],
   theme : @core.Theme,
-  width~ : Double,
-  height~ : Double,
 ) -> @core.View[MarkdownEditorMsg] {
-  stack([
-    surface(
-      spacer(min_length=0.0, weight=0.0),
-      width~,
-      height~,
-      variant=@views.SurfaceVariant::Raised,
-      theme~,
-      background=@core.Color::white(),
-      corner_radius=theme.radius_scale.sm,
-      padding=0.0,
+  editor
+  .shadow(markdown_editor_page_shadow())
+  .border(
+    @core.BorderStyle::new(
+      brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.10)),
+      width=1.0,
     ),
-    editor,
-  ])
+  )
+  .corner_radius(theme.radius_scale.sm)
 }
 
 ///|

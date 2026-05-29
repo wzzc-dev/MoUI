@@ -1170,7 +1170,7 @@ fn markdown_block_to_rich_text(
             width=4.0,
           ),
         ),
-        inset={ top: 0.0, right: 0.0, bottom: 0.0, left: 14.0 },
+        inset={ top: 4.0, right: 0.0, bottom: 12.0, left: 14.0 },
         line_height=Some(base.size * 1.55),
       )
     CodeBlock =>
@@ -1179,7 +1179,7 @@ fn markdown_block_to_rich_text(
         background=Some(
           @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.08)),
         ),
-        inset={ top: 4.0, right: 10.0, bottom: 4.0, left: 10.0 },
+        inset={ top: 8.0, right: 10.0, bottom: 8.0, left: 10.0 },
         line_height=Some(base.size * 1.1),
         corner_radius=6.0,
       )

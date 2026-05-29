@@ -1084,6 +1084,26 @@ test "markdown formatter produces rich text blocks and styled runs" {
 }
 
 ///|
+test "markdown formatter gives quotes and code blocks vertical breathing room" {
+  let document = markdown_to_rich_text(
+    "> quote\n\n```moonbit\nlet x = 1\nlet y = 2\n```",
+  )
+  guard document.blocks[0] is { border_left: Some(_), inset: quote_inset, .. } else {
+    fail("expected quoted block")
+  }
+  guard document.blocks[1] is { background: Some(_), inset: code_inset, .. } else {
+    fail("expected code block")
+  }
+  assert_true(quote_inset.top > 0.0)
+  assert_true(quote_inset.bottom >= 12.0)
+  assert_true(code_inset.top >= 8.0)
+  assert_true(code_inset.bottom >= 8.0)
+  assert_true(
+    @core.rich_text_document_height(document, @core.FontSpec::new()) > 100.0,
+  )
+}
+
+///|
 test "markdown formatter renders footnotes as structured rich text" {
   let document = markdown_to_rich_text("Text[^a]\n\n[^a]: Footnote")
   inspect(document.blocks.length(), content="2")

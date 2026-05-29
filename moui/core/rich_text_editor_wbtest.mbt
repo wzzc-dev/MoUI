@@ -479,6 +479,67 @@ test "rich text editor draw commands contain styled runs and block decorations" 
 }
 
 ///|
+test "rich text block height counts embedded visual newlines" {
+  let font = FontSpec::new(size=16.0, weight=400)
+  let block = RichTextBlock::new(
+    runs=[
+      RichTextRun::new(text="moonbit"),
+      RichTextRun::new(text="\nlet x = 1\nlet y = 2"),
+    ],
+    inset=Insets::symmetric(vertical=4.0),
+    line_height=Some(20.0),
+  )
+  inspect(rich_text_block_line_height(block, font).to_int(), content="60")
+  inspect(
+    rich_text_document_height(RichTextDocument::new(blocks=[block]), font).to_int(),
+    content="68",
+  )
+}
+
+///|
+test "rich text block left border stays outside inset text" {
+  let commands : Array[DrawCommand] = []
+  let font = FontSpec::new(size=16.0, weight=400)
+  let document = RichTextDocument::new(blocks=[
+    RichTextBlock::new(
+      runs=[RichTextRun::new(text="quote")],
+      border_left=Some(
+        BorderStyle::new(brush=Brush::solid(Color::gray()), width=4.0),
+      ),
+      inset={ top: 5.0, right: 0.0, bottom: 7.0, left: 14.0 },
+      line_height=Some(24.0),
+    ),
+  ])
+  append_rich_text_blocks(
+    commands,
+    document,
+    Rect::new(x=20.0, y=30.0, width=220.0, height=120.0),
+    font,
+    Color::black(),
+    TextSystem::fallback(),
+  )
+  let mut border_rect : Rect? = None
+  let mut text_frame : Rect? = None
+  for command in commands {
+    match command {
+      FillRoundedRectBrush({ rect, .. }, _) =>
+        if rect.size.width == 4.0 {
+          border_rect = Some(rect)
+        }
+      DrawText({ text: "quote", frame, .. }) => text_frame = Some(frame)
+      _ => ()
+    }
+  }
+  guard border_rect is Some(border) else { fail("expected left border") }
+  guard text_frame is Some(text) else { fail("expected quote text") }
+  inspect(border.origin.x, content="20")
+  inspect(border.origin.y, content="35")
+  inspect(border.size.height, content="24")
+  inspect(text.origin.x, content="34")
+  assert_true(border.origin.x + border.size.width < text.origin.x)
+}
+
+///|
 fn rich_text_editor_is_strike_rect(command : DrawCommand) -> Bool {
   match command {
     FillRect(rect, color) =>

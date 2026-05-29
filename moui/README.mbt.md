@@ -37,6 +37,13 @@ The example suite is intentionally small: Showcase is the visual catalog and now
 contains the Counter and Todo interaction patterns, while the WYSIWYG Markdown
 editor remains a separate practical editing demo.
 
+## Screenshots
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/markdown_editor.png" width="400px"/>
+  <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/showcase.png" width="400px"/>
+</div>
+
 ## Project Shape
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,

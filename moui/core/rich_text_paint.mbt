@@ -109,10 +109,10 @@ fn append_rich_text_blocks(
             FillRoundedRectBrush(
               RoundedRect::new(
                 rect=Rect::new(
-                  x=block_frame.origin.x + block.inset.left,
-                  y=block_frame.origin.y,
+                  x=block_frame.origin.x,
+                  y=block_frame.origin.y + block.inset.top,
                   width=border.width,
-                  height=block_frame.size.height,
+                  height=line_height,
                 ),
                 radius=border.width / 2.0,
               ),
@@ -381,7 +381,8 @@ fn rich_text_block_line_height(
   let text_height = block.line_height.unwrap_or(
     rich_text_block_font(block, base_font).size * 1.55,
   )
-  let mut height = text_height
+  let mut height = text_height *
+    rich_text_block_visual_line_count(block).to_double()
   match block.table {
     Some(table) =>
       height = max_double(
@@ -397,6 +398,28 @@ fn rich_text_block_line_height(
     }
   }
   height
+}
+
+///|
+fn rich_text_block_visual_line_count(block : RichTextBlock) -> Int {
+  let mut line_count = 1
+  line_count = line_count + rich_text_text_newline_count(block.prefix)
+  for run in block.runs {
+    line_count = line_count +
+      rich_text_text_newline_count(rich_text_run_visual_text(run))
+  }
+  line_count
+}
+
+///|
+fn rich_text_text_newline_count(text : String) -> Int {
+  let mut count = 0
+  for ch in text {
+    if ch == '\n' {
+      count = count + 1
+    }
+  }
+  count
 }
 
 ///|
