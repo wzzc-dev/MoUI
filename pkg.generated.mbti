@@ -540,6 +540,7 @@ pub(all) struct RRect {
   lower_left : Size
 } derive(Eq, @debug.Debug)
 pub fn RRect::bounds(Self) -> Rect
+pub fn RRect::contains_rect(Self, Rect) -> Bool
 pub fn RRect::empty() -> Self
 pub fn RRect::from_oval(Rect) -> Self
 pub fn RRect::from_rect(Rect) -> Self
@@ -552,6 +553,10 @@ pub fn RRect::is_simple(Self) -> Bool
 pub fn RRect::new(Rect, Size, Size, Size, Size) -> Self
 pub fn RRect::offset(Self, Float, Float) -> Self
 pub fn RRect::width(Self) -> Float
+pub fn RRect::with_inset(Self, Size) -> Self
+pub fn RRect::with_offset(Self, Point) -> Self
+pub fn RRect::with_offset_to(Self, Point) -> Self
+pub fn RRect::with_outset(Self, Size) -> Self
 pub impl Default for RRect
 
 pub(all) struct Rect {
