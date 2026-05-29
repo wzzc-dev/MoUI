@@ -67,6 +67,8 @@ pub(all) struct ActionCommand {
   shortcut : KeyboardShortcut?
   label : String
   enabled : Bool
+  group : String
+  description : String
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -163,8 +165,75 @@ pub fn ActionCommand::new(
   label? : String = "",
   shortcut? : KeyboardShortcut? = None,
   enabled? : Bool = true,
+  group? : String = "",
+  description? : String = "",
 ) -> ActionCommand {
-  { intent, shortcut, label, enabled }
+  { intent, shortcut, label, enabled, group, description }
+}
+
+///|
+pub fn ActionCommand::display_label(self : ActionCommand) -> String {
+  if self.label != "" {
+    self.label
+  } else {
+    self.intent.display_label()
+  }
+}
+
+///|
+pub fn ActionCommand::shortcut_label(self : ActionCommand) -> String {
+  match self.shortcut {
+    Some(shortcut) => shortcut.display_label()
+    None => ""
+  }
+}
+
+///|
+pub fn CommandIntent::display_label(self : CommandIntent) -> String {
+  match self {
+    Activate => "Activate"
+    Submit => "Submit"
+    Cancel => "Cancel"
+    Copy => "Copy"
+    Cut => "Cut"
+    Paste => "Paste"
+    Undo => "Undo"
+    Redo => "Redo"
+    SelectAll => "Select All"
+    OpenContextMenu => "Open Context Menu"
+  }
+}
+
+///|
+pub fn KeyboardShortcut::display_label(self : KeyboardShortcut) -> String {
+  let parts : Array[String] = []
+  if self.modifiers.control {
+    parts.push("Ctrl")
+  }
+  if self.modifiers.alt {
+    parts.push("Alt")
+  }
+  if self.modifiers.shift {
+    parts.push("Shift")
+  }
+  if self.modifiers.meta {
+    parts.push("Meta")
+  }
+  parts.push(keyboard_shortcut_key_label(self.key))
+  parts.join("+")
+}
+
+///|
+fn keyboard_shortcut_key_label(key : String) -> String {
+  match key {
+    " " => "Space"
+    "Escape" => "Esc"
+    "ArrowLeft" => "Left"
+    "ArrowRight" => "Right"
+    "ArrowUp" => "Up"
+    "ArrowDown" => "Down"
+    _ => key
+  }
 }
 
 ///|
@@ -251,6 +320,8 @@ pub fn default_text_commands() -> Array[ActionCommand] {
     ActionCommand::new(
       intent=CommandIntent::Copy,
       label="Copy",
+      group="Edit",
+      description="Copy the current selection.",
       shortcut=Some(
         KeyboardShortcut::new(key="c", modifiers=KeyModifiers::new(meta=true)),
       ),
@@ -258,6 +329,8 @@ pub fn default_text_commands() -> Array[ActionCommand] {
     ActionCommand::new(
       intent=CommandIntent::Cut,
       label="Cut",
+      group="Edit",
+      description="Cut the current selection.",
       shortcut=Some(
         KeyboardShortcut::new(key="x", modifiers=KeyModifiers::new(meta=true)),
       ),
@@ -265,6 +338,8 @@ pub fn default_text_commands() -> Array[ActionCommand] {
     ActionCommand::new(
       intent=CommandIntent::Paste,
       label="Paste",
+      group="Edit",
+      description="Paste clipboard text.",
       shortcut=Some(
         KeyboardShortcut::new(key="v", modifiers=KeyModifiers::new(meta=true)),
       ),
@@ -272,6 +347,8 @@ pub fn default_text_commands() -> Array[ActionCommand] {
     ActionCommand::new(
       intent=CommandIntent::Undo,
       label="Undo",
+      group="Edit",
+      description="Undo the last text edit.",
       shortcut=Some(
         KeyboardShortcut::new(key="z", modifiers=KeyModifiers::new(meta=true)),
       ),
@@ -279,6 +356,8 @@ pub fn default_text_commands() -> Array[ActionCommand] {
     ActionCommand::new(
       intent=CommandIntent::Redo,
       label="Redo",
+      group="Edit",
+      description="Redo the last undone text edit.",
       shortcut=Some(
         KeyboardShortcut::new(
           key="z",
@@ -289,6 +368,8 @@ pub fn default_text_commands() -> Array[ActionCommand] {
     ActionCommand::new(
       intent=CommandIntent::SelectAll,
       label="Select All",
+      group="Edit",
+      description="Select all text in the focused input.",
       shortcut=Some(
         KeyboardShortcut::new(key="a", modifiers=KeyModifiers::new(meta=true)),
       ),

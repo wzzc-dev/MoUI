@@ -646,6 +646,45 @@ test "toolbar and disclosure containers compose command surfaces" {
 }
 
 ///|
+test "command palette renders command metadata and filters rows" {
+  let commands = [
+    @core.ActionCommand::new(
+      intent=@core.CommandIntent::Submit,
+      label="Save Document",
+      shortcut=Some(
+        @core.KeyboardShortcut::new(
+          key="s",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+      group="File",
+      description="Persist the current document.",
+    ),
+    @core.ActionCommand::new(
+      intent=@core.CommandIntent::Cancel,
+      label="Close Panel",
+      enabled=false,
+      group="Window",
+      description="Dismiss the active panel.",
+    ),
+  ]
+  let root : @core.View[@core.CommandIntent] = @views.command_palette(
+    commands,
+    query="file",
+    on_select=intent => intent,
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=520.0, height=320.0),
+  )
+  let draw = runtime.draw_commands()
+  assert_true(has_text(draw, "Save Document"))
+  assert_true(has_text(draw, "Meta+s"))
+  assert_true(has_text(draw, "File - Persist the current document."))
+  assert_false(has_text(draw, "Close Panel"))
+}
+
+///|
 test "card supports independent optional dimensions" {
   let root : @core.View[Unit] = @views.card(@views.text("Wide"), width=240.0)
   let runtime = @core.AppRuntime::new_view(

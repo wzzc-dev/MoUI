@@ -57,6 +57,8 @@ pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], 
 
 pub fn[Msg] command_bar(Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
 pub fn component((@core.BuildContext) -> @core.View[Unit]) -> @core.View[Unit]
 
 pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]

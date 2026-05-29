@@ -39,9 +39,13 @@ pub(all) struct ActionCommand {
   shortcut : KeyboardShortcut?
   label : String
   enabled : Bool
+  group : String
+  description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ActionCommand::display_label(Self) -> String
 pub fn ActionCommand::matches(Self, KeyboardEvent) -> Bool
-pub fn ActionCommand::new(intent~ : CommandIntent, label? : String, shortcut? : KeyboardShortcut?, enabled? : Bool) -> Self
+pub fn ActionCommand::new(intent~ : CommandIntent, label? : String, shortcut? : KeyboardShortcut?, enabled? : Bool, group? : String, description? : String) -> Self
+pub fn ActionCommand::shortcut_label(Self) -> String
 
 pub(all) struct ActionCommandMap {
   bindings : Array[CommandBinding]
@@ -324,6 +328,7 @@ pub(all) enum CommandIntent {
   SelectAll
   OpenContextMenu
 } derive(Eq, ToJson, @debug.Debug)
+pub fn CommandIntent::display_label(Self) -> String
 
 pub(all) struct ComponentEffect {
   key : String
@@ -797,6 +802,7 @@ pub(all) struct KeyboardShortcut {
   key : String
   modifiers : KeyModifiers
 } derive(Eq, ToJson, @debug.Debug)
+pub fn KeyboardShortcut::display_label(Self) -> String
 pub fn KeyboardShortcut::matches(Self, KeyboardEvent) -> Bool
 pub fn KeyboardShortcut::new(key~ : String, modifiers? : KeyModifiers) -> Self
 
