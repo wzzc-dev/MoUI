@@ -32,7 +32,7 @@ Status meanings:
 | Blend mode | ready | ready | ready | Skia maps all MoUI blend modes to Skia paint blend modes and validates multiply, screen, overlay, darken, and lighten output pixels in the real native renderer smoke. |
 | Filter effect | ready | ready | ready | Skia validates blur image filters plus saturation, brightness, contrast, and color matrix color filters in the real native renderer smoke. |
 | Path/vector | ready | ready | ready | Skia replays `PathSpec` into native paths with solid/gradient fill and stroke smoke coverage, plus quadratic and cubic curve verbs. |
-| Shader effect | ready | partial | ready | WGPU/Web handle built-in shader effects. Skia procedural solid/checker/linear-gradient-debug effects are implemented with real checker pixel coverage; vignette and unknown names still use fallback paths. |
+| Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have real native renderer pixel smoke coverage; unknown names still use fallback paths. |
 | Text shaping | partial | partial | partial | Skia can provide basic `Font` measurement/drawing after linking, but SkShaper/SkParagraph-style shaping, bidi, line breaking, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia emoji behavior depends on platform font fallback and future shaping coverage; native WGPU/Web also retain grapheme/color-emoji gaps. |
 | Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Skia image lifecycle has data URI decode evidence; late async repaint and broader failure coverage remain follow-up work. |
@@ -156,11 +156,10 @@ opacity with rectangular and rounded masks, nested layer/filter composition,
 multiply/screen/overlay/darken/lighten blending,
 blur/saturation/brightness/contrast/color-matrix filters, solid and gradient
 paths including quadratic and cubic curve verbs, the checker shader effect,
-PNG data URI image drawing, and basic text
+vignette shader effect, PNG data URI image drawing, and basic text
 pixels while requiring `unsupported_command_count == 0`. Remaining Skia
 renderer gaps are now narrower: broader affine scoped combinations, broader
-image source/failure coverage, vignette shader semantics, and complex text
-shaping. Basic text
+image source/failure coverage, and complex text shaping. Basic text
 measurement/drawing uses Skia `Font`, while complex shaping, bidi, line
 breaking, and deterministic emoji behavior remain partial and separate from the
 WGPU Moon Cosmic provider stack.

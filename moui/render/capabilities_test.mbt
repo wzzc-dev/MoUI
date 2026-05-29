@@ -278,7 +278,12 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     shader.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    shader
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("vignette"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::PathVector)
     is Some(path) else {
