@@ -43,7 +43,6 @@ using @views {
   intrinsic_height,
   intrinsic_width,
   lazy_grid,
-  lazy_list,
   layout_priority,
   loading_state,
   markdown_editor,
@@ -63,6 +62,7 @@ using @views {
   row,
   scroll_view,
   searchbar,
+  sectioned_list,
   sheet,
   sidebar,
   spacer,
@@ -84,5 +84,6 @@ using @views {
   toast,
   tree_item,
   tree_view,
+  virtual_list,
   wizard,
 }

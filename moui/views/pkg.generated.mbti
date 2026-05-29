@@ -187,11 +187,15 @@ pub fn[Msg] router_stack(@core.RouterState, Array[NavigationDestination[Msg]], f
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
+pub fn scroll_to_index(@core.ScrollState, index~ : Int, item_height? : Double, spacing? : Double) -> ScrollToIndexIntent
+
 pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?) -> @core.View[Msg]
 
 pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
 
 pub fn[Msg] searchbar_binding(query~ : @core.Binding[String], placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
+
+pub fn[T, Msg] sectioned_list(Array[SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, header? : (SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
 pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -258,6 +262,8 @@ pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
 pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem]) -> TreeItem
 
 pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
 pub fn[Msg] wizard(Array[WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -372,6 +378,19 @@ pub(all) enum PopoverPlacement {
   TopStart
   TopEnd
 }
+
+pub(all) struct ScrollToIndexIntent {
+  index : Int
+  offset : @core.Point
+}
+pub fn ScrollToIndexIntent::new(index~ : Int, offset~ : @core.Point) -> Self
+
+pub(all) struct SectionListSection[T] {
+  id : String
+  title : String
+  items : Array[T]
+}
+pub fn[T] SectionListSection::new(id~ : String, title~ : String, items~ : Array[T]) -> Self[T]
 
 pub(all) enum SegmentedControlSize {
   Compact

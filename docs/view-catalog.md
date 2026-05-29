@@ -119,6 +119,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `list` | `views/grid_list.mbt` | N/A | List/list item roles through core | `views/views_test.mbt`, `core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout. |
 | `lazy_list` | `views/grid_list.mbt` | N/A | List output | `views/views_test.mbt` | Showcase | Windows visible rows from data. |
 | `lazy_grid` | `views/grid_list.mbt` | N/A | List/grid output | `views/views_test.mbt` | Showcase | Windows visible grid rows from data. |
+| `virtual_list` / `sectioned_list` / `scroll_to_index` | `views/grid_list.mbt` | N/A | List output | `views/views_test.mbt`, Showcase tests | Showcase Layout | Overscanned windowed lists, grouped section headers, empty states, and controlled offset intents built on existing scroll/list primitives. |
 | `accordion` / `disclosure` / `collapsible_panel` | `views/toolbar_disclosure.mbt` | ButtonStyle/surface/text | Group | `views/views_test.mbt`, Showcase tests | Showcase Feedback | Controlled disclosure containers; expanded state and toggle behavior stay in the app model. |
 | `resizable_panel` | `views/toolbar_disclosure.mbt` | SurfaceStyle | Group | `views/views_test.mbt`, Showcase tests | Showcase Layout | Controlled-size panel with a visual handle; drag resizing is left for gesture support. |
 

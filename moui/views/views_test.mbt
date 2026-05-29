@@ -201,6 +201,13 @@ test "text field submit emits typed message" {
 ///|
 test "lazy list and grid build public views" {
   let items = [1, 2, 3, 4, 5, 6]
+  let state = @core.ScrollState::new()
+  let intent = @views.scroll_to_index(
+    state,
+    index=3,
+    item_height=20.0,
+    spacing=2.0,
+  )
   let runtime = test_runtime(
     @views.column([
       @views.lazy_list(
@@ -216,9 +223,57 @@ test "lazy list and grid build public views" {
         columns=2,
         viewport_height=120.0,
       ),
+      @views.virtual_list(
+        items,
+        item => "virtual-\{item}",
+        item => @views.text("Virtual \{item}"),
+        state~,
+        item_height=20.0,
+        viewport_height=44.0,
+        spacing=2.0,
+        overscan=0,
+      ),
     ]),
   )
   inspect(runtime.layout().children.length() > 0, content="true")
+  inspect(intent.offset.y, content="66")
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Virtual 4"))
+  assert_true(has_text(commands, "Virtual 5"))
+  assert_true(has_text(commands, "Virtual 6"))
+  assert_false(has_text(commands, "Virtual 1"))
+}
+
+///|
+test "sectioned list renders headers rows and empty state" {
+  let sections = [
+    @views.SectionListSection::new(id="a", title="Group A", items=["Ada", "Alan"]),
+    @views.SectionListSection::new(id="b", title="Group B", items=["Grace"]),
+  ]
+  let runtime = test_runtime(
+    @views.sectioned_list(
+      sections,
+      item => "person-" + item,
+      item => @views.text(item),
+      header=section => @views.text(section.title),
+      item_height=20.0,
+      header_height=20.0,
+      viewport_height=96.0,
+    ),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Group A"))
+  assert_true(has_text(commands, "Ada"))
+  assert_true(has_text(commands, "Group B"))
+  let empty_runtime = test_runtime(
+    @views.sectioned_list(
+      [],
+      item => item,
+      item => @views.text(item),
+      empty=Some(@views.text("No sections")),
+    ),
+  )
+  assert_true(has_text(empty_runtime.draw_commands(), "No sections"))
 }
 
 ///|
