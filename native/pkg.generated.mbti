@@ -9,6 +9,8 @@ import {
 // Values
 pub fn skia_available() -> Bool
 
+pub fn skia_shaper_available() -> Bool
+
 // Errors
 
 // Types and methods
@@ -122,6 +124,7 @@ pub fn Font::measure_text_bounds_utf8(Self, Bytes) -> @skia_mbt.Rect?
 pub fn Font::measure_text_utf8(Self, Bytes) -> Float
 pub fn Font::metrics(Self) -> FontMetrics
 pub fn Font::set_size(Self, Float) -> Unit
+pub fn Font::shape_text_utf8(Self, Bytes, width? : Float, left_to_right? : Bool) -> ShapedTextRun?
 pub fn Font::size(Self) -> Float
 pub fn Font::spacing(Self) -> Float
 pub fn Font::text_glyph_positions_utf8(Self, Bytes, origin? : @skia_mbt.Point) -> Array[@skia_mbt.Point]
@@ -235,6 +238,16 @@ pub fn Shader::color(@skia_mbt.Color) -> Self?
 pub fn Shader::is_available(Self) -> Bool
 pub fn Shader::linear_gradient(@skia_mbt.Point, @skia_mbt.Point, @skia_mbt.Color, @skia_mbt.Color, tile_mode? : @skia_mbt.TileMode) -> Self?
 pub fn Shader::radial_gradient(@skia_mbt.Point, Float, @skia_mbt.Color, @skia_mbt.Color, tile_mode? : @skia_mbt.TileMode) -> Self?
+
+pub(all) struct ShapedTextRun {
+  // private fields
+}
+pub fn ShapedTextRun::advance(Self) -> @skia_mbt.Point
+pub fn ShapedTextRun::clusters(Self) -> Array[Int]
+pub fn ShapedTextRun::glyph_count(Self) -> Int
+pub fn ShapedTextRun::glyphs(Self) -> Array[GlyphId]
+pub fn ShapedTextRun::is_available(Self) -> Bool
+pub fn ShapedTextRun::positions(Self) -> Array[@skia_mbt.Point]
 
 pub(all) struct Surface {
   // private fields

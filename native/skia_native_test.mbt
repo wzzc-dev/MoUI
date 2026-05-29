@@ -435,6 +435,27 @@ test "font api typechecks" {
           assert_true(bounds.height() >= 0.0)
         }
       }
+      match font.shape_text_utf8(b"Skia") {
+        None => assert_true(!@native.skia_shaper_available())
+        Some(run) => {
+          assert_true(@native.skia_shaper_available())
+          assert_true(run.is_available())
+          let shaped_glyph_count = run.glyph_count()
+          assert_true(shaped_glyph_count > 0)
+          let shaped_glyphs = run.glyphs()
+          let shaped_positions = run.positions()
+          let shaped_clusters = run.clusters()
+          assert_eq(shaped_glyphs.length(), shaped_glyph_count)
+          assert_eq(shaped_positions.length(), shaped_glyph_count)
+          assert_eq(shaped_clusters.length(), shaped_glyph_count)
+          assert_true(shaped_glyphs[0].to_int() > 0)
+          assert_true(shaped_positions[0].x >= 0.0)
+          assert_true(shaped_clusters[0] >= 0)
+          assert_true(run.advance().x > 0.0)
+        }
+      }
+      assert_true(font.shape_text_utf8(b"") is None)
+      assert_true(font.shape_text_utf8(b"Skia", width=0.0) is None)
       let metrics = font.metrics()
       assert_true(metrics.ascent <= 0.0)
       assert_true(metrics.descent >= 0.0)

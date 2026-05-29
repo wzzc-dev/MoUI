@@ -15,6 +15,9 @@ Options:
   --skia-package NAME    Skia binary package name to record in logs.
   --skia-package-sha256 SHA256
                          Skia binary package SHA256 to record in logs.
+  --enable-skshaper      Enable the optional SkShaper FFI boundary. Requires
+                         libskshaper and its dependent module libraries in
+                         --skia-lib-dir.
   --extra-cc-flags STR   Extra C/C++ flags appended to stub-cc-flags.
   --extra-link-flags STR Extra linker flags appended to cc-link-flags.
   --smoke-log PATH       Write the native smoke executable output to PATH.
@@ -48,6 +51,7 @@ skia_package="${SKIA_MBT_SKIA_PACKAGE:-}"
 skia_package_sha256="${SKIA_MBT_SKIA_PACKAGE_SHA256:-}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
+enable_skshaper=0
 requested_smoke_log=""
 dry_run_config=0
 
@@ -84,6 +88,10 @@ while [[ $# -gt 0 ]]; do
     --skia-package-sha256)
       skia_package_sha256="${2:-}"
       shift 2
+      ;;
+    --enable-skshaper)
+      enable_skshaper=1
+      shift
       ;;
     --extra-cc-flags)
       extra_cc_flags="${2:-}"
@@ -143,6 +151,18 @@ if [[ ! -f "$lib_path/lib$skia_lib.a" && ! -f "$lib_path/lib$skia_lib.dylib" ]];
   echo "Skia library lib$skia_lib.a or lib$skia_lib.dylib was not found in $lib_path" >&2
   exit 1
 fi
+if [[ $enable_skshaper -eq 1 ]]; then
+  if [[ ! -f "$include_path/modules/skshaper/include/SkShaper.h" ]]; then
+    echo "SkShaper header was not found under $include_path/modules/skshaper/include" >&2
+    exit 1
+  fi
+  for shaper_lib in skshaper skunicode_core skunicode_icu harfbuzz icu; do
+    if [[ ! -f "$lib_path/lib$shaper_lib.a" && ! -f "$lib_path/lib$shaper_lib.dylib" ]]; then
+      echo "SkShaper dependency lib$shaper_lib.a or lib$shaper_lib.dylib was not found in $lib_path" >&2
+      exit 1
+    fi
+  done
+fi
 
 if [[ -f "$backup_pkg" ]]; then
   echo "native/moon.pkg smoke backup already exists: $backup_pkg" >&2
@@ -178,18 +198,34 @@ fi
 if [[ -n "$skia_package_sha256" ]]; then
   echo "  skia_package_sha256=$skia_package_sha256"
 fi
+if [[ $enable_skshaper -eq 1 ]]; then
+  echo "  skshaper=enabled"
+fi
 find "$lib_path" -maxdepth 1 \( -name "lib$skia_lib.a" -o -name "lib$skia_lib.dylib" \) \
   -print | while IFS= read -r lib_file; do
     size="$(wc -c < "$lib_file" | tr -d '[:space:]')"
     echo "  library=$(basename "$lib_file") ${size} bytes"
   done
 
+native_extra_cc_flags="$extra_cc_flags"
+native_extra_link_flags="$extra_link_flags"
+if [[ $enable_skshaper -eq 1 ]]; then
+  native_extra_cc_flags="-DSKIA_MBT_HAS_SKSHAPER${native_extra_cc_flags:+ $native_extra_cc_flags}"
+  native_extra_link_flags="-lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu${native_extra_link_flags:+ $native_extra_link_flags}"
+fi
+
 cc_flags="-DSKIA_MBT_HAS_SKIA -std=c++17 -I$include_path"
+if [[ $enable_skshaper -eq 1 ]]; then
+  cc_flags="$cc_flags -DSKIA_MBT_HAS_SKSHAPER"
+fi
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
 link_flags="-L$lib_path -l$skia_lib -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
+if [[ $enable_skshaper -eq 1 ]]; then
+  link_flags="$link_flags -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu"
+fi
 if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"
 fi
@@ -235,8 +271,8 @@ bash "$repo_root/scripts/configure-macos-native-pkg.sh" \
   --skia-include "$include_path" \
   --skia-lib-dir "$lib_path" \
   --skia-lib "$skia_lib" \
-  --extra-cc-flags "$extra_cc_flags" \
-  --extra-link-flags "$extra_link_flags" \
+  --extra-cc-flags "$native_extra_cc_flags" \
+  --extra-link-flags "$native_extra_link_flags" \
   --output "$native_pkg" \
   --write >/dev/null
 echo "Wrote temporary native/moon.pkg with macOS Skia link flags."
@@ -284,3 +320,10 @@ if ! grep -Fq "skia_mbt native smoke test passed" "$smoke_log"; then
   exit 1
 fi
 echo "Verified native smoke success marker."
+if [[ $enable_skshaper -eq 1 ]]; then
+  if ! grep -Fq "native smoke shaped glyph count" "$smoke_log"; then
+    echo "native smoke executable did not prove the enabled SkShaper path" >&2
+    exit 1
+  fi
+  echo "Verified native SkShaper smoke marker."
+fi
