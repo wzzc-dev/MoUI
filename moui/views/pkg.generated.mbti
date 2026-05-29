@@ -45,6 +45,16 @@ pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
 pub fn[Msg] flexible(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
+pub fn[Msg] form(Array[@core.View[Msg]], spacing? : Double, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_error(String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_field(label~ : String, child~ : @core.View[Msg], helper? : String, error? : String, status? : FormFieldStatus, layout? : FormFieldLayout, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_helper_text(String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_section(title? : String, Array[@core.View[Msg]], summary? : String, spacing? : Double, theme? : @core.Theme, width? : Double, padding? : Double) -> @core.View[Msg]
+
 pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
@@ -164,6 +174,25 @@ pub(all) enum CrossAlign {
   Center
   End
   Stretch
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum FormFieldLayout {
+  Vertical
+  Horizontal
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum FormFieldStatus {
+  Normal
+  Required
+  Invalid
+  Disabled
+  ReadOnly
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum FormValidationDisplay {
+  Always
+  OnInvalid
+  Hidden
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum MainAlign {

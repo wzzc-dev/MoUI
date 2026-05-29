@@ -48,6 +48,28 @@ pub(all) enum CrossAlign {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum FormFieldStatus {
+  Normal
+  Required
+  Invalid
+  Disabled
+  ReadOnly
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum FormFieldLayout {
+  Vertical
+  Horizontal
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum FormValidationDisplay {
+  Always
+  OnInvalid
+  Hidden
+} derive(Eq, Debug, ToJson)
+
+///|
 fn ButtonVariant::style(
   self : ButtonVariant,
   theme : @core.Theme,

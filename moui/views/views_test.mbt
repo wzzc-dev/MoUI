@@ -250,6 +250,65 @@ test "center card and title render simple content" {
 }
 
 ///|
+test "form field primitives build labels helper and errors" {
+  let root : @core.View[Unit] = @views.form(
+    [
+      @views.form_section(
+        [
+          @views.form_field(
+            label="Name",
+            child=@views.text_field("Ada", on_input=_value => ()),
+            helper="Shown on normal fields",
+            required=true,
+          ),
+          @views.form_field(
+            label="Email",
+            child=@views.text_field("", on_input=_value => ()),
+            error="Email is required",
+            status=@views.FormFieldStatus::Invalid,
+          ),
+          @views.form_field(
+            label="Token",
+            child=@views.text_field("readonly", on_input=_value => ()),
+            status=@views.FormFieldStatus::ReadOnly,
+            layout=@views.FormFieldLayout::Horizontal,
+          ),
+        ],
+        title="Profile",
+        summary="Grouped fields",
+        width=420.0,
+      ),
+    ],
+    width=440.0,
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=520.0, height=320.0),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Profile"))
+  assert_true(has_text(commands, "Name *"))
+  assert_true(has_text(commands, "Shown on normal fields"))
+  assert_true(has_text(commands, "Email is required"))
+  assert_true(runtime.semantics().children.length() > 0)
+}
+
+///|
+test "form validation display can hide support text" {
+  let root : @core.View[Unit] = @views.form_field(
+    label="Hidden",
+    child=@views.text_field("", on_input=_value => ()),
+    error="Should not draw",
+    validation_display=@views.FormValidationDisplay::Hidden,
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=360.0, height=120.0),
+  )
+  assert_false(has_text(runtime.draw_commands(), "Should not draw"))
+}
+
+///|
 test "card supports independent optional dimensions" {
   let root : @core.View[Unit] = @views.card(@views.text("Wide"), width=240.0)
   let runtime = @core.AppRuntime::new_view(
