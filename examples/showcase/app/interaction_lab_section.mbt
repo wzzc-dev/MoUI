@@ -14,6 +14,7 @@ fn ShowcaseModel::interaction_lab_section(
         self.tooltip_demo_card(theme, card_width),
         self.file_drop_card(theme, card_width, self.last_drop_label),
         self.focus_shortcut_card(theme, card_width),
+        self.gesture_card(theme, card_width, self.gesture_label),
         self.popover_dropdown_card(theme, card_width),
         self.variant_gallery_card(theme, card_width),
         self.image_lifecycle_card(theme, card_width),
@@ -86,6 +87,47 @@ fn ShowcaseModel::file_drop_card(
           padding=8.0,
         ).on_file_drop((paths, _point) => RecordFileDrop(paths)),
         text(drop_label, width=width - 32.0, height=24.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height=146.0,
+    padding=theme.spacing_scale.md,
+  )
+}
+
+///|
+fn ShowcaseModel::gesture_card(
+  self : ShowcaseModel,
+  theme : @core.Theme,
+  width : Double,
+  gesture_label : String,
+) -> @core.View[ShowcaseMsg] {
+  ignore(self)
+  showcase_soft_card(
+    theme,
+    column(
+      [
+        text("Gestures", width=width - 32.0, height=24.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+        surface(
+          text("Press, double tap, or drag", width=width - 64.0, height=24.0)
+          .font(theme.typography.body)
+          .foreground(theme.palette.foreground),
+          width=width - 32.0,
+          height=46.0,
+          background=theme.palette.surface_variant.multiply_alpha(0.44),
+          corner_radius=theme.radius_scale.sm,
+          padding=8.0,
+        )
+        .on_long_press(RecordGesture("Long press"))
+        .on_double_tap(RecordGesture("Double tap"))
+        .on_drag(event => RecordGesture(event.phase.label())),
+        text(gesture_label, width=width - 32.0, height=24.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
       ],

@@ -39,6 +39,7 @@ pub(all) struct ShowcaseModel {
   todo_next_id : Int
   todo_draft : String
   last_drop_label : String
+  gesture_label : String
 }
 pub fn ShowcaseModel::new() -> Self
 pub fn ShowcaseModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
@@ -69,6 +70,8 @@ pub(all) enum ShowcaseMsg {
   TodoToggled(Int, Bool)
   TodoRemove(Int)
   RecordFileDrop(Array[String])
+  RecordGesture(String)
+  ResizePanel(Double)
   SidebarScrollTo(Double)
 }
 

@@ -26,6 +26,7 @@ pub(all) struct ShowcaseModel {
   todo_next_id : Int
   todo_draft : String
   last_drop_label : String
+  gesture_label : String
 }
 
 ///|
@@ -59,6 +60,8 @@ pub(all) enum ShowcaseMsg {
   TodoToggled(Int, Bool)
   TodoRemove(Int)
   RecordFileDrop(Array[String])
+  RecordGesture(String)
+  ResizePanel(Double)
   SidebarScrollTo(Double)
 }
 
@@ -116,6 +119,7 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     todo_next_id: 2,
     todo_draft: "",
     last_drop_label: "No files dropped",
+    gesture_label: "No gesture yet",
   }
 }
 
@@ -183,6 +187,8 @@ pub fn ShowcaseModel::update(
       { ..self, todo_items: self.todo_items.filter(item => item.id != id) }
     RecordFileDrop(paths) =>
       { ..self, last_drop_label: "Dropped \{paths.length()} file(s)" }
+    RecordGesture(label) => { ..self, gesture_label: label }
+    ResizePanel(size) => { ..self, slider_value: size / 520.0 }
     SidebarScrollTo(y) =>
       { ..self, sidebar_scroll_offset: @core.Point::new(x=0.0, y~) }
   }

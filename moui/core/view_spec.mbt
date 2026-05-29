@@ -29,6 +29,9 @@ type ClickHandler = () -> Unit
 type FileDropHandler = (Array[String], Point) -> Unit
 
 ///|
+type DragGestureHandler = (DragGestureEvent) -> Unit
+
+///|
 pub(all) struct KeyboardShortcut {
   key : String
   modifiers : KeyModifiers
@@ -345,6 +348,9 @@ priv enum ViewModifier {
   SemanticsRoleModifier(SemanticsRole)
   FocusableModifier(Bool)
   OnTapModifier(ClickHandler)
+  OnLongPressModifier(ClickHandler)
+  OnDoubleTapModifier(ClickHandler)
+  OnDragModifier(DragGestureHandler)
   OnFileDropModifier(FileDropHandler)
   KeyboardShortcutModifier(KeyboardShortcut)
   FlexibleModifier(Double)
@@ -870,6 +876,30 @@ fn ViewSpec::disabled(self : ViewSpec, disabled? : Bool = true) -> ViewSpec {
 ///|
 fn ViewSpec::on_tap(self : ViewSpec, handler : ClickHandler) -> ViewSpec {
   self.modified(OnTapModifier(handler))
+}
+
+///|
+fn ViewSpec::on_long_press(
+  self : ViewSpec,
+  handler : ClickHandler,
+) -> ViewSpec {
+  self.modified(OnLongPressModifier(handler))
+}
+
+///|
+fn ViewSpec::on_double_tap(
+  self : ViewSpec,
+  handler : ClickHandler,
+) -> ViewSpec {
+  self.modified(OnDoubleTapModifier(handler))
+}
+
+///|
+fn ViewSpec::on_drag(
+  self : ViewSpec,
+  handler : DragGestureHandler,
+) -> ViewSpec {
+  self.modified(OnDragModifier(handler))
 }
 
 ///|

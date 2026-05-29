@@ -772,6 +772,130 @@ test "toolbar and disclosure containers compose command surfaces" {
 }
 
 ///|
+test "resizable panel drag handle emits controlled size" {
+  let last_size = Ref(0.0)
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.resizable_panel(
+      content=@views.text("Drag resize", width=120.0),
+      size=180.0,
+      height=80.0,
+      min_size=120.0,
+      max_size=240.0,
+      on_drag=Some(size => size),
+    ),
+    size=@core.Size::new(width=300.0, height=120.0),
+    on_message=Some(size => last_size.val = size),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=190.0, y=12.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=210.0, y=12.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=232.0, y=12.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  inspect(last_size.val, content="222")
+}
+
+///|
+test "public view gesture wrappers can be composed from views" {
+  let log = Ref("")
+  let root = @views.surface(
+    @views.text("Gesture", width=120.0),
+    width=160.0,
+    height=80.0,
+  )
+  .on_double_tap("double")
+  .on_long_press("long")
+  .on_drag(event => event.phase.label())
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=120.0),
+    on_message=Some(message => log.val = log.val + message + ";"),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+        time_ms=0.0,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Up,
+        time_ms=20.0,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=11.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+        time_ms=160.0,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=11.0, y=10.0),
+        phase=@core.PointerPhase::Up,
+        time_ms=180.0,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=20.0),
+        phase=@core.PointerPhase::Down,
+        time_ms=400.0,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=20.0),
+        phase=@core.PointerPhase::Move,
+        time_ms=920.0,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=20.0),
+        phase=@core.PointerPhase::Up,
+        time_ms=940.0,
+      ),
+    ),
+  )
+  inspect(log.val, content="double;long;")
+}
+
+///|
 test "command palette renders command metadata and filters rows" {
   let commands = [
     @core.ActionCommand::new(
