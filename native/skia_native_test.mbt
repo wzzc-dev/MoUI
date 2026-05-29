@@ -4,6 +4,32 @@ test "native backend reports availability" {
 }
 
 ///|
+test "filter api is fallback-safe" {
+  let matrix : Array[Float] = [
+    1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+  ]
+  if @native.skia_available() {
+    assert_true(@native.ColorFilter::matrix(matrix) is Some(_))
+    assert_true(@native.ColorFilter::saturation(0.5) is Some(_))
+    assert_true(@native.ColorFilter::brightness(1.2) is Some(_))
+    assert_true(@native.ColorFilter::contrast(1.1) is Some(_))
+    assert_true(@native.ImageFilter::blur(2.0, 3.0) is Some(_))
+    assert_true(@native.MaskFilter::blur(2.0) is Some(_))
+  } else {
+    assert_true(@native.ColorFilter::matrix(matrix) is None)
+    assert_true(@native.ColorFilter::saturation(0.5) is None)
+    assert_true(@native.ColorFilter::brightness(1.2) is None)
+    assert_true(@native.ColorFilter::contrast(1.1) is None)
+    assert_true(@native.ImageFilter::blur(2.0, 3.0) is None)
+    assert_true(@native.MaskFilter::blur(2.0) is None)
+  }
+  assert_true(@native.ColorFilter::matrix([1.0, 0.0]) is None)
+  assert_true(@native.ImageFilter::blur(0.0, 3.0) is None)
+  assert_true(@native.MaskFilter::blur(0.0) is None)
+}
+
+///|
 test "raster surface is unavailable without linked skia" {
   let surface = @native.Surface::raster_n32_premul(@skia.ISize::new(16, 16))
   assert_true(surface is None)
@@ -543,6 +569,16 @@ test "canvas draw api typechecks" {
       paint~,
     )
     assert_true(bounded_layer_count >= 0)
+    match @native.ImageFilter::blur(2.0, 2.0) {
+      Some(image_filter) => {
+        let filtered_layer_count = canvas.save_layer(
+          image_filter=Some(image_filter),
+        )
+        assert_true(filtered_layer_count >= 0)
+        canvas.restore_to_count(save_count)
+      }
+      None => ()
+    }
     canvas.translate(@skia.Point::new(1, 2))
     canvas.scale(@skia.Size::new(2, 2))
     canvas.rotate(45)
