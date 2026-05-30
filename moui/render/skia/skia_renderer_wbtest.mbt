@@ -84,6 +84,33 @@ test "skia empty typeface resolution avoids system font manager" {
 }
 
 ///|
+test "skia empty typeface drawing falls back when the glyph run is blank" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=1.0, height=1.0),
+    ),
+    target,
+    font_resolution=SkiaFontResolution::EmptyTypeface,
+  ) catch {
+    _ => return ()
+  }
+  match
+    renderer.skia_draw_text_payload(
+      @core.FontSpec::new(size=18.0, weight=400),
+      "Slim",
+    ) {
+    Some((font, run)) => {
+      assert_true(font.size() == 18.0)
+      assert_true(skia_glyph_run_has_visible_glyphs(run))
+    }
+    None =>
+      fail("expected empty typeface drawing to fall back to visible glyphs")
+  }
+}
+
+///|
 test "skia empty typeface text system delegates to fallback metrics" {
   let input = @core.TextLayoutInput::new(
     text="Slim",

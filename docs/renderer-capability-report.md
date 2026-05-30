@@ -173,11 +173,12 @@ caret positions, and optional SkShaper shaped glyph runs for rendering when
 linked, while SkParagraph-style line breaking, bidi, broader typography, and
 deterministic emoji behavior remain partial and separate from the WGPU Moon
 Cosmic provider stack. The macOS Skia showcase host currently constructs the
-renderer with `SkiaFontResolution::EmptyTypeface`: it still exercises Skia text
-drawing enough for first-frame smoke coverage, but uses core fallback text
+renderer with `SkiaFontResolution::EmptyTypeface`: it uses core fallback text
 measurement and skips SkShaper to avoid CoreText/Skia FontMgr crashes during
-early AppKit startup. The default renderer smoke continues to use the system
-FontMgr path so real Skia font and optional SkShaper coverage remain tracked.
+early AppKit startup, while renderer drawing falls back to Skia's default font
+when the empty typeface would produce a blank glyph run. The default renderer
+smoke continues to use the system FontMgr path so real Skia font and optional
+SkShaper coverage remain tracked.
 
 ## Current Web Notes
 
