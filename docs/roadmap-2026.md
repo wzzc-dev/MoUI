@@ -180,8 +180,9 @@ Focus areas:
   path.
 - Keep macOS native host documentation aligned with AppKit, CAMetalLayer, and
   wgpu-native requirements.
-- Keep Windows native setup reproducible with MSYS2 UCRT64 while letting
-  `wgpu_mbt` manage the static GNU `wgpu-native` release by default.
+- Keep Windows native setup reproducible with Visual Studio C++ build tools,
+  vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode using the official MSVC
+  `wgpu_native.dll` release.
 - Keep Linux clearly marked as minimal until the remaining platform service,
   IME, AT-SPI, and native font-provider gaps are implemented.
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,

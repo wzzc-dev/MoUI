@@ -12,11 +12,6 @@ on:
         required: false
         default: false
         type: boolean
-      run_windows_native:
-        description: Run Windows native backend checks and packaging smoke.
-        required: false
-        default: false
-        type: boolean
       run_real_skia_smoke:
         description: Run the opt-in macOS real Skia renderer smoke.
         required: false
@@ -185,29 +180,15 @@ jobs:
         run: sh scripts/conformance-check.sh --bench
 
   windows-native:
-    name: Windows native smoke
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_windows_native }}
+    name: Windows MSVC native smoke
     runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set up MSYS2 UCRT64
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-vulkan-loader
-            mingw-w64-ucrt-x86_64-vulkan-headers
-
-      - name: Configure Windows native toolchain
+      - name: Set up vcpkg zlib
         shell: pwsh
-        run: |
-          "C:\msys64\ucrt64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "CC=x86_64-w64-mingw32-gcc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "CXX=x86_64-w64-mingw32-g++" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
 
       - name: Set up MoonBit
         shell: pwsh
@@ -229,18 +210,18 @@ jobs:
       - name: Run Windows backend tests
         shell: pwsh
         run: |
+          . .\scripts\windows\msvc_env.ps1
           moon test moui/backend/windows --target native
           moon test moui/backend/windows/wgpu --target native
-          moon test moui/backend/windows/skia --target native
 
-      - name: Build Markdown Editor Windows entrypoint
+      - name: Build Showcase Windows entrypoint with MSVC
         shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 -Package examples/showcase/windows -BuildOnly
 
-      - name: Package Showcase Windows folder
+      - name: Package Showcase Windows folder with MSVC
         shell: pwsh
         run: |
-          powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+          powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
             -Package examples/showcase/windows `
             -AppName MoUIShowcase `
             -Version 0.1.0 `
@@ -249,8 +230,8 @@ jobs:
       - name: Upload Windows package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: moui-showcase-windows-portable
-          path: dist/windows/MoUIShowcase
+          name: moui-showcase-windows-msvc-portable
+          path: dist/windows-msvc/MoUIShowcase
           if-no-files-found: error
 
   real-skia-smoke:

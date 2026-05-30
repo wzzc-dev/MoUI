@@ -140,7 +140,11 @@ sh scripts/package-macos-app.sh \
 ```
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
   -Package examples/showcase/windows `
   -AppName MoUIShowcase `
   -Version 0.1.0

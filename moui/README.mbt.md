@@ -154,78 +154,56 @@ manifest under `Contents/Resources`.
 
 ## Windows Native
 
-Windows native examples use MSYS2 UCRT64 plus the static GNU `wgpu-native`
-release managed by `wgpu_mbt`'s prebuild flow. These builds are useful for
-platform validation, but they are intentionally treated as slow checks rather
-than routine package-level tests.
+Windows native examples use the MSVC toolchain, vcpkg `zlib:x64-windows`, and
+`wgpu_mbt` dynamic mode with the official MSVC `wgpu_native.dll` release. These
+builds are useful for platform validation, but they are intentionally treated as
+slow checks rather than routine package-level tests.
 
-Install native build/runtime dependencies with MSYS2 UCRT64:
-
-```powershell
-C:\msys64\usr\bin\pacman.exe -S --needed --noconfirm `
-  mingw-w64-ucrt-x86_64-gcc `
-  mingw-w64-ucrt-x86_64-vulkan-loader `
-  mingw-w64-ucrt-x86_64-vulkan-headers
-```
-
-### Showcase
+Setup, build, and package the Showcase:
 
 ```powershell
-$env:PATH = "C:\msys64\ucrt64\bin;$env:PATH"
-$env:CC = "x86_64-w64-mingw32-gcc"
-$env:CXX = "x86_64-w64-mingw32-g++"
-moon run examples/showcase/windows --target native
-```
-
-To use a preseeded local `wgpu-native` archive instead of the `wgpu_mbt`
-prebuild-managed copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted release root
-or pass `-WgpuNativeRoot` to the Windows helper scripts.
-
-The Showcase also has a Windows entrypoint that selects the shared Moon Cosmic
-text provider explicitly:
-
-```powershell
-moon run examples/showcase/windows_cosmic --target native
-```
-
-### Markdown Editor
-
-Build the WYSIWYG Markdown editor with the Windows helper:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
-```
-
-Package a native example as a reusable local folder:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
   -Package examples/showcase/windows `
   -AppName MoUIShowcase `
   -Version 0.1.0
 ```
 
-The output folder includes and validates the same schema version 1
-`moui-package.json` manifest plus copied runtime DLL metadata.
-
-Build and run the WYSIWYG Markdown editor with the Windows helper:
+The Showcase also has a Windows entrypoint that selects the shared Moon Cosmic
+text provider explicitly:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows_cosmic `
+  -BuildOnly
 ```
 
-Build and run the WYSIWYG Markdown editor:
+Build the WYSIWYG Markdown editor with the same MSVC helper:
 
 ```powershell
-moon build examples/markdown_editor/windows --target native
-.\_build\native\debug\build\examples\markdown_editor\windows\windows.exe
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows `
+  -BuildOnly
 ```
 
-Optional `moon run` shortcut:
+To run a Windows entrypoint directly, import the MSVC environment in the same
+PowerShell process:
 
-```sh
-moon run examples/markdown_editor/windows --target native
+```powershell
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
 ```
+
+The MSVC package is written under `dist\windows-msvc\MoUIShowcase` and includes
+`run.cmd`, `wgpu_native.dll`, WGPU release metadata, and the vcpkg zlib runtime
+DLL. Use `run.cmd` so `MBT_WGPU_NATIVE_ROOT` points at the bundled WGPU release.
+When Visual Studio's bundled vcpkg refuses direct classic installs, run the
+setup helper from the repository root; it creates an ignored manifest workspace
+under `.tools\vcpkg-msvc` and installs `zlib:x64-windows` there.
 
 ## Linux Native
 

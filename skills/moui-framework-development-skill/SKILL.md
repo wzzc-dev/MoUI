@@ -184,6 +184,12 @@ Use `--platform-examples-test` for normal current-host backend/provider checks.
 Run `moui/backend/<platform>/{wgpu,skia}` tests directly only on the matching
 host/toolchain when investigating that provider.
 
+Windows native uses the MSVC dynamic WGPU path. Use
+`scripts/windows/msvc_env.ps1` through the MSVC helpers and validate with
+`scripts/windows/build_windows_msvc.ps1` or
+`scripts/windows/package_windows_app_msvc.ps1` after installing vcpkg
+`zlib:x64-windows`.
+
 Real macOS Skia renderer smoke:
 
 ```sh

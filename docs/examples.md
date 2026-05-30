@@ -232,36 +232,49 @@ inspected without parsing `Info.plist`.
 
 ## Windows Native
 
-Windows examples use MSYS2 UCRT64. The static Windows GNU `wgpu-native` release
-is normally managed by `wgpu_mbt`'s prebuild flow, with optional explicit local
-roots documented in `platform-notes.md`:
-
-```sh
-moon build examples/showcase/windows --target native
-moon build examples/showcase/windows_cosmic --target native
-moon build examples/markdown_editor/windows --target native
-moon build examples/markdown_editor/windows_cosmic --target native
-```
-
-The Markdown editor can also use the helper script to configure MSYS2 and build
-the native entrypoint:
+Windows native examples use the MSVC toolchain, vcpkg `zlib:x64-windows`, and
+`wgpu_mbt` dynamic mode with the official MSVC `wgpu_native.dll` release. The
+setup helper checks Visual Studio Build Tools and prepares zlib; the build
+helper downloads the WGPU release into `.tools\wgpu-native` when needed.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows_cosmic `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows_cosmic `
+  -BuildOnly
+```
+
+To run an entrypoint directly, import the MSVC environment in the same
+PowerShell process:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
 ```
 
 For a reusable distributable folder with the built executable and runtime DLLs:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
   -Package examples/showcase/windows `
   -AppName MoUIShowcase `
   -Version 0.1.0
 ```
 
-The folder includes and validates a schema version 1 `moui-package.json` with
-app, source MoonBit package, version, executable, and copied runtime DLL
-metadata.
+The package is written under `dist\windows-msvc\MoUIShowcase` and includes a
+schema version 1 `moui-package.json`, `run.cmd`, `wgpu_native.dll`, WGPU release
+metadata, and the vcpkg zlib runtime DLL. Launch the packaged app through
+`run.cmd` so `MBT_WGPU_NATIVE_ROOT` points at the bundled WGPU release.
 
 ## Linux Native
 

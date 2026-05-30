@@ -244,10 +244,40 @@ README build-and-execute flow while debugging the toolchain/link configuration.
 
 ## Windows Native
 
-Windows native examples are built with MSYS2 UCRT64. The static Windows GNU
-`wgpu-native` release is normally downloaded and verified by `wgpu_mbt`'s
-prebuild flow during MoonBit builds; the MoUI helper scripts only use a local
-`-WgpuNativeRoot` when one is passed explicitly.
+Windows native examples use the MSVC toolchain with Visual Studio C++ build
+tools, vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode with the official
+`wgpu-windows-x86_64-msvc-release.zip` release.
+
+For MSVC setup and packaging:
+
+```powershell
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
+  -Package examples/showcase/windows `
+  -AppName MoUIShowcase
+```
+
+The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC=cl`, enables
+C11 atomics for `wgpu_mbt` native stubs with `CL=/std:c11
+/experimental:c11atomics`, sets `MBT_WGPU_LINK_MODE=dynamic`, and points
+`MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. Packaged MSVC apps
+use the vcpkg `zlib:x64-windows` runtime for native image decoding. When the
+Visual Studio-bundled vcpkg rejects direct classic installs, run
+`setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an
+ignored repository-local manifest workspace under `.tools\vcpkg-msvc`. Packaged
+apps should be launched through the generated `run.cmd` so the bundled WGPU
+release metadata is visible to the dynamic loader.
+
+To run an entrypoint directly after setup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
+```
+
 The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
 macOS, with platform-specific ownership limited to Win32 window handles,
 services, lifecycle, resize handling, text-input session synchronization, and
@@ -296,10 +326,11 @@ and blits it to the client DC with `StretchDIBits`. If `skia_mbt/native` is only
 in fallback mode, renderer creation is rejected with a diagnostic instead of
 opening an empty HWND.
 
-To use a preseeded local `wgpu-native` archive instead of the `wgpu_mbt`
-managed copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted release root or pass
-that path as `-WgpuNativeRoot` to the Windows helper scripts. The root should
-contain `lib\libwgpu_native.a` and `wgpu-native-meta\wgpu-native-git-tag`.
+To use a preseeded local `wgpu-native` release instead of the helper-managed
+copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted MSVC release root or pass that
+path as `-WgpuNativeRoot` to the Windows helper script. MSVC dynamic roots
+should contain `lib\wgpu_native.dll` and
+`wgpu-native-meta\wgpu-native-git-tag`.
 
 ## Linux Native
 

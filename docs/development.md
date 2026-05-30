@@ -249,23 +249,41 @@ with platform, output kind, app name, source MoonBit package, bundle id,
 version, build number, executable, bundle name, and runtime file metadata. The
 helper validates that manifest before reporting success.
 
-Windows distributable folder:
+Windows uses the MSVC dynamic WGPU path. Install Visual Studio C++ build tools,
+prepare vcpkg `zlib:x64-windows`, build the entrypoint once, and package the
+portable folder:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
   -Package examples/showcase/windows `
   -AppName MoUIShowcase `
   -Version 0.1.0 `
   -BuildNumber 1
 ```
 
-The folder is written under `dist\windows\<AppName>` by default and includes the
-built executable plus the MSYS2 Vulkan and pthread runtime DLLs used by the
-current Windows WGPU setup. The static `wgpu-native` archive is normally managed
-by `wgpu_mbt` during MoonBit builds; pass `-WgpuNativeRoot` only when using a
-preseeded local release root. The helper also writes the same schema version 1
-`moui-package.json` manifest with Windows platform metadata and copied runtime
-file names, then validates that manifest before reporting success.
+The helper imports `vcvarsall.bat`, sets `CC=cl` and
+`MBT_WGPU_LINK_MODE=dynamic`, uses vcpkg `zlib:x64-windows`, and extracts the
+official `wgpu-windows-x86_64-msvc-release.zip` release when no
+`-WgpuNativeRoot` is supplied. Its folder is written under
+`dist\windows-msvc\<AppName>` and includes `run.cmd`, `wgpu_native.dll`, the
+WGPU release metadata, and the vcpkg zlib runtime DLL. Run the app through
+`run.cmd` so `MBT_WGPU_NATIVE_ROOT` points at the bundled WGPU release tree.
+If Visual Studio's bundled vcpkg reports that classic mode is unavailable,
+use `setup_msvc_deps.ps1 -InstallZlib` from the repository root; the script
+creates a small ignored manifest workspace under `.tools\vcpkg-msvc` and uses
+manifest mode to install `zlib:x64-windows`.
+
+To run the Showcase directly after setup, dot-source the MSVC environment in
+the same PowerShell process:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
+```
 
 Manual manifest validation:
 

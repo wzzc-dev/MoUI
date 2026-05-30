@@ -266,14 +266,16 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   package manifest, and uploads the bundle artifact.
 - `Benchmark scaffold` runs `sh scripts/conformance-check.sh --bench` to keep
   benchmark build targets healthy.
+- `Windows MSVC native smoke` installs vcpkg `zlib:x64-windows`, imports the
+  Visual Studio C++ toolchain, runs Windows backend and WGPU provider tests,
+  builds Showcase with `MBT_WGPU_LINK_MODE=dynamic`, packages it under
+  `dist/windows-msvc`, validates the package manifest, and uploads the portable
+  folder artifact.
 
 Manual `workflow_dispatch` inputs add heavier coverage when needed:
 
 - `run_slow_native_examples` builds current-platform native examples in the
   macOS packaging and Linux platform jobs.
-- `run_windows_native` runs Windows backend checks, builds the Markdown Editor
-  Windows entrypoint while letting `wgpu_mbt` manage static `wgpu-native`,
-  packages Showcase, and uploads the portable folder artifact.
 - `run_real_skia_smoke` runs the opt-in macOS real Skia renderer smoke.
 
 CI still does not run browser screenshot automation or pixel diffing; the
