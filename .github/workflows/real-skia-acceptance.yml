@@ -3,7 +3,7 @@ name: Real Skia Acceptance
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - ".github/workflows/real-skia-acceptance.yml"
       - "native/**"

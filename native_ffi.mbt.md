@@ -1,8 +1,9 @@
 # Native FFI Sketch
 
-This file documents the MoonBit side of the first native package. The checked
-implementation lives in `native/skia_native.mbt`; this sketch keeps the intended
-FFI boundary visible without requiring Skia headers in documentation tests.
+This file documents the MoonBit side of the native package. The checked
+implementation is split across `native/*_native.mbt` files; this sketch keeps
+the intended FFI boundary visible without requiring Skia headers in
+documentation tests.
 
 ```mbt nocheck
 ///|

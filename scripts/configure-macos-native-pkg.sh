@@ -127,7 +127,14 @@ import {
 }
 
 options(
-  "native-stub": [ "skia_stub.cpp" ],
+  "native-stub": [
+    "skia_stub_common.cpp",
+    "skia_stub_surface_image_data.cpp",
+    "skia_stub_canvas.cpp",
+    "skia_stub_path.cpp",
+    "skia_stub_text_font.cpp",
+    "skia_stub_shader_filter.cpp",
+  ],
   link: {
     "native": {
       "stub-cc-flags": "$cc_flags",
@@ -135,8 +142,20 @@ options(
     },
   },
   targets: {
-    "skia_native.mbt": [ "native", "llvm" ],
-    "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "handles_native.mbt": [ "native", "llvm" ],
+    "availability_native.mbt": [ "native", "llvm" ],
+    "surface_image_data_native.mbt": [ "native", "llvm" ],
+    "canvas_native.mbt": [ "native", "llvm" ],
+    "path_native.mbt": [ "native", "llvm" ],
+    "text_font_native.mbt": [ "native", "llvm" ],
+    "shader_filter_native.mbt": [ "native", "llvm" ],
+    "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "availability_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "surface_image_data_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "canvas_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "path_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "text_font_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "shader_filter_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
   },
 )
 EOF
