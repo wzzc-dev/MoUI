@@ -308,6 +308,16 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     shader
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("solid"),
+  )
+  assert_true(
+    shader
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("linear-gradient-debug"),
+  )
+  assert_true(
+    shader
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("vignette"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::PathVector)

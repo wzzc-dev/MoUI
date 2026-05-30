@@ -585,6 +585,25 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         fallback=@core.Brush::solid(green()),
       ),
     ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="solid",
+        frame=@core.Rect::new(x=84.0, y=132.0, width=12.0, height=10.0),
+        fallback=@core.Brush::solid(magenta()),
+      ),
+    ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="linear-gradient-debug",
+        frame=@core.Rect::new(x=102.0, y=132.0, width=24.0, height=10.0),
+        fallback=@core.Brush::linear_gradient(
+          start=@core.Point::new(x=102.0, y=132.0),
+          end=@core.Point::new(x=126.0, y=132.0),
+          start_color=red(),
+          end_color=blue(),
+        ),
+      ),
+    ),
     @core.DrawCommand::PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
@@ -812,6 +831,25 @@ fn main {
       assert_pixel(frame, 48, 137, 255, 255, 255, 255)
       assert_pixel_near(frame, 63, 137, 128, 0, 0, 255, 8)
       assert_pixel(frame, 70, 137, 255, 255, 255, 255)
+      assert_pixel(frame, 90, 137, 255, 0, 255, 255)
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=103.0, y=134.0, width=7.0, height=6.0),
+        235,
+        0,
+        20,
+        255,
+        55,
+      )
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=120.0, y=134.0, width=6.0, height=6.0),
+        20,
+        0,
+        235,
+        255,
+        55,
+      )
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")

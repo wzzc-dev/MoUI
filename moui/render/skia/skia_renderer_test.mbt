@@ -159,6 +159,8 @@ test "skia renderer descriptor exposes evidence-gated backend capabilities" {
       assert_true(filter.note.contains("color matrix"))
       assert_true(transform.note.contains("scaled-and-clipped"))
       assert_true(transform.note.contains("filter-scoped"))
+      assert_true(shader.note.contains("solid"))
+      assert_true(shader.note.contains("linear-gradient-debug"))
       assert_true(shader.note.contains("vignette"))
     }
     _ =>
