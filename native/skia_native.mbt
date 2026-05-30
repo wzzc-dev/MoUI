@@ -73,6 +73,9 @@ extern "C" fn native_path_new() -> PathHandle = "moonbit_skia_path_new"
 extern "C" fn native_font_default(size : Float) -> FontHandle = "moonbit_skia_font_default"
 
 ///|
+extern "C" fn native_font_empty(size : Float) -> FontHandle = "moonbit_skia_font_empty"
+
+///|
 #borrow(typeface)
 extern "C" fn native_font_from_typeface(
   typeface : TypefaceHandle,
@@ -2349,6 +2352,15 @@ pub fn Font::default(size? : Float = 12.0) -> Font? {
     None
   } else {
     Font::from_handle(native_font_default(size))
+  }
+}
+
+///|
+pub fn Font::empty(size? : Float = 12.0) -> Font? {
+  if size <= 0.0 {
+    None
+  } else {
+    Font::from_handle(native_font_empty(size))
   }
 }
 
