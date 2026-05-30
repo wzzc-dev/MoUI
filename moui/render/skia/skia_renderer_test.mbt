@@ -39,6 +39,17 @@ test "skia renderer fails explicitly when real skia is unavailable" {
       Err(SkiaRendererError::SkiaUnavailable) => ()
       _ => fail("expected explicit unavailable error")
     }
+    let empty_font_result = try? create_with_present_target(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=16.0, height=16.0),
+      ),
+      target,
+      font_resolution=SkiaFontResolution::EmptyTypeface,
+    )
+    match empty_font_result {
+      Err(SkiaRendererError::SkiaUnavailable) => ()
+      _ => fail("expected explicit unavailable error")
+    }
   }
 }
 
