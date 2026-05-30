@@ -215,6 +215,68 @@ test "skia renderer dispose clears cached image resources and records disposal" 
 }
 
 ///|
+test "skia renderer resize updates presented frame metrics" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=3.0, height=2.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=8.0, height=6.0),
+      scale_factor=2.0,
+    ),
+  ) catch {
+    err => fail("expected Skia renderer resize: \{err.message()}")
+  }
+  renderer.render([@core.DrawCommand::Clear(@core.Color::white())]) catch {
+    err => fail("expected Skia renderer render: \{err.message()}")
+  }
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected Skia renderer to keep last frame after render")
+  }
+  inspect(frame.width, content="16")
+  inspect(frame.height, content="12")
+  inspect(frame.scale_factor, content="2")
+  inspect(renderer.present_count(), content="1")
+}
+
+///|
+test "skia renderer reports presenter failure without counting present" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="failing-presenter", present=_ => {
+    false
+  })
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let result = try? renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+  ])
+  match result {
+    Err(SkiaRendererError::PresentFailed(description)) =>
+      inspect(description, content="failing-presenter")
+    _ => fail("expected Skia presenter failure")
+  }
+  inspect(renderer.present_count(), content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected failed presentation to keep rendered frame for diagnostics")
+  }
+  inspect(frame.width, content="4")
+  inspect(frame.height, content="4")
+}
+
+///|
 test "skia text baseline is centered in taller text frames" {
   let frame = @core.Rect::new(x=4.0, y=10.0, width=120.0, height=44.0)
   let metrics = SkiaTextMetrics::{ baseline: 12.0, height: 20.0 }
