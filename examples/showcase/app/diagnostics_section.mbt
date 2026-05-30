@@ -15,32 +15,20 @@ fn ShowcaseModel::diagnostics_section(
         grid(
           [
             self.diagnostics_route_card(
-              theme,
-              "Interaction Lab",
-              "Tooltip, file drop, focus, gestures, variants, image lifecycle",
-              "interaction-lab",
-              card_width,
+              theme, "Interaction Lab", "Tooltip, file drop, focus, gestures, variants, image lifecycle",
+              "interaction-lab", card_width,
             ),
             self.diagnostics_route_card(
-              theme,
-              "Text Diagnostics",
-              "CJK, bidi, emoji, wrapping, Markdown and rich text samples",
-              "text-diagnostics",
-              card_width,
+              theme, "Text Diagnostics", "CJK, bidi, emoji, wrapping, Markdown and rich text samples",
+              "text-diagnostics", card_width,
             ),
             self.diagnostics_route_card(
-              theme,
-              "Advanced Rendering",
-              "Layer, blend, filter, shader, path, transform and opacity commands",
-              "advanced-rendering",
-              card_width,
+              theme, "Advanced Rendering", "Layer, blend, filter, shader, path, transform and opacity commands",
+              "advanced-rendering", card_width,
             ),
             self.diagnostics_route_card(
-              theme,
-              "Examples",
-              "Counter and Todo reusable app patterns before dedicated examples land",
-              "examples",
-              card_width,
+              theme, "Examples", "Counter and Todo reusable app patterns before dedicated examples land",
+              "examples", card_width,
             ),
           ],
           columns=if metrics.compact { 1 } else { 2 },
@@ -67,7 +55,10 @@ fn ShowcaseModel::inspector_snapshot_card(
   let stat_width = if stat_columns == 1 {
     inner_width
   } else {
-    max_showcase_double(140.0, (inner_width - theme.spacing_scale.sm * 2.0) / 3.0)
+    max_showcase_double(
+      140.0,
+      (inner_width - theme.spacing_scale.sm * 2.0) / 3.0,
+    )
   }
   let card_height = if stat_columns == 1 { 412.0 } else { 224.0 }
   let snapshot = showcase_inspector_snapshot(theme)
@@ -90,7 +81,8 @@ fn ShowcaseModel::inspector_snapshot_card(
             stat_card(
               "View nodes",
               snapshot.view_tree.node_count.to_string(),
-              caption="Components " + snapshot.view_tree.component_count.to_string(),
+              caption="Components " +
+                snapshot.view_tree.component_count.to_string(),
               theme~,
               width=stat_width,
               height=96.0,
@@ -134,32 +126,32 @@ fn ShowcaseModel::inspector_snapshot_card(
 }
 
 ///|
-fn showcase_inspector_snapshot(
-  theme : @core.Theme,
-) -> @core.InspectorSnapshot {
+fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
   let runtime = @core.AppRuntime::new_view(
     root=surface(
-      column(
-        [
-          text("Inspector sample", theme~, width=150.0, height=24.0),
-          button(
-            "Inspect",
-            on_click=ToggleActive,
-            variant=@views.ButtonVariant::Outline,
-            theme~,
-            width=112.0,
-            height=34.0,
-          ),
-        ],
-        spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Start,
-      ),
-      width=180.0,
-      height=76.0,
-      variant=@views.SurfaceVariant::Base,
-      theme~,
-      padding=theme.spacing_scale.sm,
-    ).semantics_invalid(invalid=true).semantics_description("Inspector sample surface"),
+        column(
+          [
+            text("Inspector sample", theme~, width=150.0, height=24.0),
+            button(
+              "Inspect",
+              on_click=ToggleActive,
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=112.0,
+              height=34.0,
+            ),
+          ],
+          spacing=theme.spacing_scale.xs,
+          align=@views.CrossAlign::Start,
+        ),
+        width=180.0,
+        height=76.0,
+        variant=@views.SurfaceVariant::Base,
+        theme~,
+        padding=theme.spacing_scale.sm,
+      )
+      .semantics_invalid(invalid=true)
+      .semantics_description("Inspector sample surface"),
     size=@core.Size::new(width=220.0, height=120.0),
   )
   runtime.inspector_snapshot()

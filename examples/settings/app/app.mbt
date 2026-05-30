@@ -80,10 +80,7 @@ pub fn SettingsModel::update(
     ThemeModeSelected(value) => { ..self, theme_mode: value }
     NotificationsChanged(value) => { ..self, notifications: value }
     TelemetryChanged(value) => { ..self, telemetry: value }
-    SaveSettings => {
-      ..self,
-      saved_label: "Saved: " + self.section_label(),
-    }
+    SaveSettings => { ..self, saved_label: "Saved: " + self.section_label() }
     ResetSettings => SettingsModel::new()
   }
 }
@@ -114,9 +111,9 @@ pub fn SettingsModel::from_store(
 ) -> SettingsModel {
   let base = SettingsModel::new()
   {
-    selected_section: store.get_string("selected_section").unwrap_or(
-      base.selected_section,
-    ),
+    selected_section: store
+    .get_string("selected_section")
+    .unwrap_or(base.selected_section),
     display_name: store.get_string("display_name").unwrap_or(base.display_name),
     email: store.get_string("email").unwrap_or(base.email),
     workspace: store.get_string("workspace").unwrap_or(base.workspace),
@@ -159,7 +156,13 @@ pub fn SettingsModel::view(self : SettingsModel) -> @core.View[SettingsMsg] {
         [
           column(
             [
-              text("Settings", role=@views.TextRole::Title, theme~, width=240.0, height=34.0),
+              text(
+                "Settings",
+                role=@views.TextRole::Title,
+                theme~,
+                width=240.0,
+                height=34.0,
+              ),
               text(
                 "Form, sidebar, saveable state, and theme preferences.",
                 role=@views.TextRole::Caption,
@@ -247,11 +250,7 @@ pub fn SettingsModel::runtime(
   height? : Double = 620.0,
 ) -> @core.AppRuntime {
   @core.AppRuntime::new_program(
-    program=@core.Program::simple(
-      init=self,
-      update~,
-      view~,
-    ),
+    program=@core.Program::simple(init=self, update~, view~),
     size=@core.Size::new(width~, height~),
   )
 }
@@ -386,7 +385,11 @@ fn SettingsModel::workspace_form(
           form_field(
             label="Notifications",
             child=toggle_switch(
-              if self.notifications { "Enabled" } else { "Disabled" },
+              if self.notifications {
+                "Enabled"
+              } else {
+                "Disabled"
+              },
               self.notifications,
               on_change=value => NotificationsChanged(value),
               foreground=theme.palette.foreground,
@@ -437,7 +440,11 @@ fn SettingsModel::preferences_form(
           form_field(
             label="Telemetry",
             child=toggle_switch(
-              if self.telemetry { "Enabled" } else { "Disabled" },
+              if self.telemetry {
+                "Enabled"
+              } else {
+                "Disabled"
+              },
               self.telemetry,
               on_change=value => TelemetryChanged(value),
               foreground=theme.palette.foreground,

@@ -29,7 +29,13 @@ pub fn[Msg] form_section(
   let rows : Array[@core.View[Msg]] = []
   if title != "" {
     rows.push(
-      text(title, role=TextRole::Control, theme~, width=content_width, height=28.0),
+      text(
+        title,
+        role=TextRole::Control,
+        theme~,
+        width=content_width,
+        height=28.0,
+      ),
     )
   }
   if summary != "" {
@@ -72,15 +78,12 @@ pub fn[Msg] form_field(
   label_width? : Double = 120.0,
 ) -> @core.View[Msg] {
   let resolved_status = form_field_resolved_status(
-    status,
-    required,
-    disabled,
-    read_only,
-    error,
+    status, required, disabled, read_only, error,
   )
   let content_width = match layout {
     Vertical => width
-    Horizontal => views_max_double(80.0, width - label_width - theme.spacing_scale.md)
+    Horizontal =>
+      views_max_double(80.0, width - label_width - theme.spacing_scale.md)
   }
   let label_view = form_field_label(
     label,
@@ -93,20 +96,25 @@ pub fn[Msg] form_field(
     theme~,
   )
   let body_rows : Array[@core.View[Msg]] = [
-    child.frame(width=content_width).disabled(disabled=disabled),
+    child.frame(width=content_width).disabled(disabled~),
   ]
-  match form_field_support_text(
-    helper~,
-    error~,
-    status=resolved_status,
-    validation_display~,
-    theme~,
-    width=content_width,
-  ) {
+  match
+    form_field_support_text(
+      helper~,
+      error~,
+      status=resolved_status,
+      validation_display~,
+      theme~,
+      width=content_width,
+    ) {
     Some(view) => body_rows.push(view)
     None => ()
   }
-  let body = column(body_rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Stretch)
+  let body = column(
+    body_rows,
+    spacing=theme.spacing_scale.xs,
+    align=CrossAlign::Stretch,
+  )
   let field = match layout {
     Vertical => column([label_view, body], spacing=theme.spacing_scale.xs)
     Horizontal =>
@@ -119,10 +127,14 @@ pub fn[Msg] form_field(
   field
   .frame(width~)
   .semantics_role(@core.SemanticsRole::FormField)
-  .semantics_required(required=required || resolved_status == FormFieldStatus::Required)
+  .semantics_required(
+    required=required || resolved_status == FormFieldStatus::Required,
+  )
   .semantics_invalid(invalid=resolved_status == FormFieldStatus::Invalid)
   .semantics_description(error)
-  .accessibility_label(form_field_accessibility_label(label, resolved_status, error))
+  .accessibility_label(
+    form_field_accessibility_label(label, resolved_status, error),
+  )
 }
 
 ///|
@@ -148,7 +160,11 @@ pub fn[Msg] form_field_state(
     child~,
     helper~,
     error~,
-    status=if error == "" { FormFieldStatus::Normal } else { FormFieldStatus::Invalid },
+    status=if error == "" {
+      FormFieldStatus::Normal
+    } else {
+      FormFieldStatus::Invalid
+    },
     validation_display~,
     required~,
     disabled~,
@@ -214,8 +230,9 @@ fn[Msg] form_field_label(
   theme~ : @core.Theme,
 ) -> @core.View[Msg] {
   let label_text = if required { label + " *" } else { label }
-  text(label_text, role=TextRole::Control, theme~, width~, height=26.0)
-  .foreground(form_field_label_color(status, theme))
+  text(label_text, role=TextRole::Control, theme~, width~, height=26.0).foreground(
+    form_field_label_color(status, theme),
+  )
 }
 
 ///|

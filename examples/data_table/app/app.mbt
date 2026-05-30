@@ -124,7 +124,8 @@ pub fn DataTableModel::update(
       } else {
         { ..self, sort_key: key, ascending: true, page: 0 }
       }
-    NextPage => { ..self, page: data_min_int(self.page + 1, self.page_count() - 1) }
+    NextPage =>
+      { ..self, page: data_min_int(self.page + 1, self.page_count() - 1) }
     PreviousPage => { ..self, page: data_max_int(0, self.page - 1) }
     SetLoading => { ..self, status: DataStatus::Loading }
     SetFailed(message) => { ..self, status: DataStatus::Failed(message) }
@@ -133,18 +134,18 @@ pub fn DataTableModel::update(
 }
 
 ///|
-pub fn update(
-  model : DataTableModel,
-  message : DataTableMsg,
-) -> DataTableModel {
+pub fn update(model : DataTableModel, message : DataTableMsg) -> DataTableModel {
   model.update(message)
 }
 
 ///|
-pub fn DataTableModel::filtered_records(self : DataTableModel) -> Array[DataRecord] {
+pub fn DataTableModel::filtered_records(
+  self : DataTableModel,
+) -> Array[DataRecord] {
   let needle = self.query.to_lower()
   self.records.filter(record => {
-    let team_match = self.selected_team == "all" || record.team == self.selected_team
+    let team_match = self.selected_team == "all" ||
+      record.team == self.selected_team
     let query_match = needle == "" ||
       record.project.to_lower().contains(needle) ||
       record.owner.to_lower().contains(needle) ||
@@ -155,12 +156,20 @@ pub fn DataTableModel::filtered_records(self : DataTableModel) -> Array[DataReco
 }
 
 ///|
-pub fn DataTableModel::sorted_records(self : DataTableModel) -> Array[DataRecord] {
-  sort_records(self.filtered_records(), key=self.sort_key, ascending=self.ascending)
+pub fn DataTableModel::sorted_records(
+  self : DataTableModel,
+) -> Array[DataRecord] {
+  sort_records(
+    self.filtered_records(),
+    key=self.sort_key,
+    ascending=self.ascending,
+  )
 }
 
 ///|
-pub fn DataTableModel::visible_records(self : DataTableModel) -> Array[DataRecord] {
+pub fn DataTableModel::visible_records(
+  self : DataTableModel,
+) -> Array[DataRecord] {
   let sorted = self.sorted_records()
   let start = self.page * self.page_size
   let end = data_min_int(sorted.length(), start + self.page_size)
@@ -208,7 +217,13 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
         [
           column(
             [
-              text("Data Table", role=@views.TextRole::Title, theme~, width=260.0, height=34.0),
+              text(
+                "Data Table",
+                role=@views.TextRole::Title,
+                theme~,
+                width=260.0,
+                height=34.0,
+              ),
               text(
                 "Filter, tree selection, pagination, and state panels.",
                 role=@views.TextRole::Caption,
@@ -220,18 +235,36 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
             spacing=0.0,
             align=@views.CrossAlign::Start,
           ),
-          button("Loading", on_click=SetLoading, variant=@views.ButtonVariant::Outline, theme~, width=96.0, height=36.0),
-          button("Error", on_click=SetFailed("Import failed"), variant=@views.ButtonVariant::Outline, theme~, width=82.0, height=36.0),
-          button("Ready", on_click=SetReady, variant=@views.ButtonVariant::Primary, theme~, width=82.0, height=36.0),
+          button(
+            "Loading",
+            on_click=SetLoading,
+            variant=@views.ButtonVariant::Outline,
+            theme~,
+            width=96.0,
+            height=36.0,
+          ),
+          button(
+            "Error",
+            on_click=SetFailed("Import failed"),
+            variant=@views.ButtonVariant::Outline,
+            theme~,
+            width=82.0,
+            height=36.0,
+          ),
+          button(
+            "Ready",
+            on_click=SetReady,
+            variant=@views.ButtonVariant::Primary,
+            theme~,
+            width=82.0,
+            height=36.0,
+          ),
         ],
         spacing=theme.spacing_scale.sm,
         align=@views.CrossAlign::Center,
       ),
       row(
-        [
-          self.filter_tree(theme),
-          self.data_panel(theme),
-        ],
+        [self.filter_tree(theme), self.data_panel(theme)],
         spacing=theme.spacing_scale.md,
         align=@views.CrossAlign::Start,
       ),
@@ -296,22 +329,26 @@ fn DataTableModel::filter_tree(
   surface(
     column(
       [
-        text("Teams", role=@views.TextRole::Control, theme~, width=190.0, height=26.0),
+        text(
+          "Teams",
+          role=@views.TextRole::Control,
+          theme~,
+          width=190.0,
+          height=26.0,
+        ),
         tree_view(
           [
-            tree_item(
-              id="teams",
-              label="All Teams",
-              children=[
-                tree_item(id="experience", label="Experience"),
-                tree_item(id="platform", label="Platform"),
-                tree_item(id="operations", label="Operations"),
-              ],
-            ),
+            tree_item(id="teams", label="All Teams", children=[
+              tree_item(id="experience", label="Experience"),
+              tree_item(id="platform", label="Platform"),
+              tree_item(id="operations", label="Operations"),
+            ]),
           ],
           expanded=self.expanded,
           selected=self.selected_team,
-          on_select=Some(id => TeamSelected(if id == "teams" { "all" } else { id })),
+          on_select=Some(id => {
+            TeamSelected(if id == "teams" { "all" } else { id })
+          }),
           on_toggle=Some(id => ToggleTree(id)),
           theme~,
           width=210.0,
@@ -348,9 +385,30 @@ fn DataTableModel::data_panel(
               width=260.0,
               height=38.0,
             ),
-            button("Project", on_click=SortBy(DataSortKey::Project), variant=@views.ButtonVariant::Ghost, theme~, width=88.0, height=36.0),
-            button("Owner", on_click=SortBy(DataSortKey::Owner), variant=@views.ButtonVariant::Ghost, theme~, width=76.0, height=36.0),
-            button("Status", on_click=SortBy(DataSortKey::Status), variant=@views.ButtonVariant::Ghost, theme~, width=82.0, height=36.0),
+            button(
+              "Project",
+              on_click=SortBy(DataSortKey::Project),
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=88.0,
+              height=36.0,
+            ),
+            button(
+              "Owner",
+              on_click=SortBy(DataSortKey::Owner),
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=76.0,
+              height=36.0,
+            ),
+            button(
+              "Status",
+              on_click=SortBy(DataSortKey::Status),
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=82.0,
+              height=36.0,
+            ),
           ],
           spacing=theme.spacing_scale.xs,
           align=@views.CrossAlign::Center,
@@ -358,9 +416,29 @@ fn DataTableModel::data_panel(
         self.state_or_table(theme),
         row(
           [
-            button("Previous", on_click=PreviousPage, variant=@views.ButtonVariant::Outline, theme~, width=98.0, height=36.0),
-            text("Page \{self.page + 1} of \{self.page_count()}", role=@views.TextRole::Caption, theme~, width=130.0, height=28.0),
-            button("Next", on_click=NextPage, variant=@views.ButtonVariant::Outline, theme~, width=82.0, height=36.0),
+            button(
+              "Previous",
+              on_click=PreviousPage,
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=98.0,
+              height=36.0,
+            ),
+            text(
+              "Page \{self.page + 1} of \{self.page_count()}",
+              role=@views.TextRole::Caption,
+              theme~,
+              width=130.0,
+              height=28.0,
+            ),
+            button(
+              "Next",
+              on_click=NextPage,
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=82.0,
+              height=36.0,
+            ),
           ],
           spacing=theme.spacing_scale.sm,
           align=@views.CrossAlign::Center,
@@ -383,12 +461,20 @@ fn DataTableModel::state_or_table(
   theme : @core.Theme,
 ) -> @core.View[DataTableMsg] {
   match self.status {
-    DataStatus::Loading => loading_state(title="Loading data", message="Fetching project rows.", theme~, width=600.0)
+    DataStatus::Loading =>
+      loading_state(
+        title="Loading data",
+        message="Fetching project rows.",
+        theme~,
+        width=600.0,
+      )
     DataStatus::Failed(message) =>
       error_state(
         "Could not load data",
         message,
-        action=Some(@views.StateViewAction::new(label="Retry", message=SetReady)),
+        action=Some(
+          @views.StateViewAction::new(label="Retry", message=SetReady),
+        ),
         theme~,
         width=600.0,
       )
@@ -410,14 +496,22 @@ fn DataTableModel::table_view(
   ]
   table(
     columns,
-    records.map(record => [record.project, record.status, record.owner, record.priority]),
+    records.map(record => {
+      [record.project, record.status, record.owner, record.priority]
+    }),
     selected_row=selected_visible_index(records, self.selected_row),
     cell=Some((row_index, column, value) => {
       let record = records[row_index]
       let base : @core.View[DataTableMsg] = if column.id == "status" {
         badge(value, tone=status_tone(value), theme~, width=82.0, height=24.0)
       } else {
-        text(value, role=@views.TextRole::Body, theme~, width=column.width - 16.0, height=30.0)
+        text(
+          value,
+          role=@views.TextRole::Body,
+          theme~,
+          width=column.width - 16.0,
+          height=30.0,
+        )
       }
       base.on_tap(RowSelected(record.id))
     }),
@@ -456,12 +550,54 @@ fn DataTableModel::selected_summary(
 ///|
 fn sample_records() -> Array[DataRecord] {
   [
-    DataRecord::new(id=0, project="Project Atlas", status="Active", owner="Mira", team="experience", priority="High"),
-    DataRecord::new(id=1, project="Billing Flow", status="Review", owner="Noah", team="operations", priority="Medium"),
-    DataRecord::new(id=2, project="Import Queue", status="Paused", owner="Iris", team="platform", priority="Low"),
-    DataRecord::new(id=3, project="Design Tokens", status="Active", owner="Ava", team="experience", priority="Medium"),
-    DataRecord::new(id=4, project="Sync Engine", status="Blocked", owner="Kai", team="platform", priority="High"),
-    DataRecord::new(id=5, project="Audit Trail", status="Review", owner="Ren", team="operations", priority="Medium"),
+    DataRecord::new(
+      id=0,
+      project="Project Atlas",
+      status="Active",
+      owner="Mira",
+      team="experience",
+      priority="High",
+    ),
+    DataRecord::new(
+      id=1,
+      project="Billing Flow",
+      status="Review",
+      owner="Noah",
+      team="operations",
+      priority="Medium",
+    ),
+    DataRecord::new(
+      id=2,
+      project="Import Queue",
+      status="Paused",
+      owner="Iris",
+      team="platform",
+      priority="Low",
+    ),
+    DataRecord::new(
+      id=3,
+      project="Design Tokens",
+      status="Active",
+      owner="Ava",
+      team="experience",
+      priority="Medium",
+    ),
+    DataRecord::new(
+      id=4,
+      project="Sync Engine",
+      status="Blocked",
+      owner="Kai",
+      team="platform",
+      priority="High",
+    ),
+    DataRecord::new(
+      id=5,
+      project="Audit Trail",
+      status="Review",
+      owner="Ren",
+      team="operations",
+      priority="Medium",
+    ),
   ]
 }
 
@@ -499,7 +635,11 @@ fn compare_records(
   let left_value = record_sort_value(left, key)
   let right_value = record_sort_value(right, key)
   let result = compare_string(left_value, right_value)
-  if ascending { result } else { 0 - result }
+  if ascending {
+    result
+  } else {
+    0 - result
+  }
 }
 
 ///|
@@ -541,7 +681,13 @@ fn sort_rank(value : String) -> Int {
 
 ///|
 fn data_compare_int(left : Int, right : Int) -> Int {
-  if left < right { -1 } else if left > right { 1 } else { 0 }
+  if left < right {
+    -1
+  } else if left > right {
+    1
+  } else {
+    0
+  }
 }
 
 ///|
@@ -588,10 +734,18 @@ fn toggle_id(values : Array[String], id : String) -> Array[String] {
 
 ///|
 fn data_min_int(left : Int, right : Int) -> Int {
-  if left < right { left } else { right }
+  if left < right {
+    left
+  } else {
+    right
+  }
 }
 
 ///|
 fn data_max_int(left : Int, right : Int) -> Int {
-  if left > right { left } else { right }
+  if left > right {
+    left
+  } else {
+    right
+  }
 }

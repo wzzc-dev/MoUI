@@ -74,7 +74,14 @@ pub fn[Msg] empty_state(
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  state_panel(title, message, action~, theme~, width~, tone=FeedbackTone::Neutral)
+  state_panel(
+    title,
+    message,
+    action~,
+    theme~,
+    width~,
+    tone=FeedbackTone::Neutral,
+  )
 }
 
 ///|
@@ -84,7 +91,14 @@ pub fn[Msg] loading_state(
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  state_panel(title, message, action=None, theme~, width~, tone=FeedbackTone::Info)
+  state_panel(
+    title,
+    message,
+    action=None,
+    theme~,
+    width~,
+    tone=FeedbackTone::Info,
+  )
 }
 
 ///|
@@ -95,7 +109,14 @@ pub fn[Msg] error_state(
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  state_panel(title, message, action~, theme~, width~, tone=FeedbackTone::Danger)
+  state_panel(
+    title,
+    message,
+    action~,
+    theme~,
+    width~,
+    tone=FeedbackTone::Danger,
+  )
 }
 
 ///|
@@ -107,8 +128,13 @@ pub fn[Msg] badge(
   height? : Double = 24.0,
 ) -> @core.View[Msg] {
   surface(
-    text(label, role=TextRole::Caption, theme~, width=width - 12.0, height=height - 6.0)
-    .foreground(badge_foreground(tone, theme)),
+    text(
+      label,
+      role=TextRole::Caption,
+      theme~,
+      width=width - 12.0,
+      height=height - 6.0,
+    ).foreground(badge_foreground(tone, theme)),
     width~,
     height~,
     background=badge_background(tone, theme),
@@ -129,11 +155,20 @@ pub fn[Msg] stat_card(
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = [
     text(label, role=TextRole::Caption, theme~, width=width - 24.0, height=22.0),
-    text(value, role=TextRole::Title, theme~, width=width - 24.0, height=34.0)
-    .foreground(feedback_accent(tone, theme)),
+    text(value, role=TextRole::Title, theme~, width=width - 24.0, height=34.0).foreground(
+      feedback_accent(tone, theme),
+    ),
   ]
   if caption != "" {
-    rows.push(text(caption, role=TextRole::Caption, theme~, width=width - 24.0, height=22.0))
+    rows.push(
+      text(
+        caption,
+        role=TextRole::Caption,
+        theme~,
+        width=width - 24.0,
+        height=22.0,
+      ),
+    )
   }
   surface(
     column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
@@ -161,10 +196,18 @@ fn[Msg] feedback_surface(
   }
   let rows : Array[@core.View[Msg]] = []
   if title != "" {
-    rows.push(text(title, role=TextRole::Control, theme~, width=text_width, height=24.0))
+    rows.push(
+      text(title, role=TextRole::Control, theme~, width=text_width, height=24.0),
+    )
   }
-  rows.push(text(message, role=TextRole::Caption, theme~, width=text_width, height=28.0))
-  let body = column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start)
+  rows.push(
+    text(message, role=TextRole::Caption, theme~, width=text_width, height=28.0),
+  )
+  let body = column(
+    rows,
+    spacing=theme.spacing_scale.xs,
+    align=CrossAlign::Start,
+  )
   let content : @core.View[Msg] = match action {
     Some(action) =>
       row(
@@ -194,7 +237,9 @@ fn[Msg] feedback_surface(
     padding=theme.spacing_scale.sm,
   ).border(
     @core.BorderStyle::new(
-      brush=@core.Brush::solid(feedback_accent(tone, theme).multiply_alpha(0.72)),
+      brush=@core.Brush::solid(
+        feedback_accent(tone, theme).multiply_alpha(0.72),
+      ),
       width=1.0,
     ),
   )
@@ -211,7 +256,13 @@ fn[Msg] state_panel(
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = [
     text(title, role=TextRole::Control, theme~, width=width - 32.0, height=28.0),
-    text(message, role=TextRole::Caption, theme~, width=width - 32.0, height=42.0),
+    text(
+      message,
+      role=TextRole::Caption,
+      theme~,
+      width=width - 32.0,
+      height=42.0,
+    ),
   ]
   match action {
     Some(action) =>
@@ -250,10 +301,12 @@ fn feedback_accent(tone : FeedbackTone, theme : @core.Theme) -> @core.Color {
 
 ///|
 fn feedback_background(tone : FeedbackTone, theme : @core.Theme) -> @core.Color {
-  feedback_accent(tone, theme).multiply_alpha(match theme.scheme {
-    @core.ColorScheme::Light => 0.12
-    @core.ColorScheme::Dark => 0.22
-  })
+  feedback_accent(tone, theme).multiply_alpha(
+    match theme.scheme {
+      @core.ColorScheme::Light => 0.12
+      @core.ColorScheme::Dark => 0.22
+    },
+  )
 }
 
 ///|

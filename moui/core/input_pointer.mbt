@@ -290,7 +290,9 @@ fn ElementNode::dispatch_modified_pointer(
           self.dirty.mark_paint()
         }
         {
-          changed: child_result.changed || event.phase == PointerPhase::Up || result.recognized,
+          changed: child_result.changed ||
+          event.phase == PointerPhase::Up ||
+          result.recognized,
           activated: result.recognized,
           focused: child_result.focused,
         }
@@ -319,7 +321,9 @@ fn ElementNode::dispatch_modified_pointer(
           self.dirty.mark_paint()
         }
         {
-          changed: child_result.changed || event.phase != PointerPhase::Move || activated,
+          changed: child_result.changed ||
+          event.phase != PointerPhase::Move ||
+          activated,
           activated,
           focused: child_result.focused,
         }

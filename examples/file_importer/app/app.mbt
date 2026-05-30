@@ -98,7 +98,9 @@ pub fn update(
 }
 
 ///|
-pub fn FileImporterModel::selection(self : FileImporterModel) -> @views.FileSelection {
+pub fn FileImporterModel::selection(
+  self : FileImporterModel,
+) -> @views.FileSelection {
   @views.FileSelection::new(paths=self.files.map(file => file.path))
 }
 
@@ -120,7 +122,9 @@ pub fn view(model : FileImporterModel) -> @core.View[FileImporterMsg] {
 }
 
 ///|
-pub fn FileImporterModel::view(self : FileImporterModel) -> @core.View[FileImporterMsg] {
+pub fn FileImporterModel::view(
+  self : FileImporterModel,
+) -> @core.View[FileImporterMsg] {
   let theme = @views.light_theme()
   let shell = column(
     [
@@ -128,7 +132,13 @@ pub fn FileImporterModel::view(self : FileImporterModel) -> @core.View[FileImpor
         [
           column(
             [
-              text("File Importer", role=@views.TextRole::Title, theme~, width=260.0, height=34.0),
+              text(
+                "File Importer",
+                role=@views.TextRole::Title,
+                theme~,
+                width=260.0,
+                height=34.0,
+              ),
               text(
                 "Drop files or request a host file dialog.",
                 role=@views.TextRole::Caption,
@@ -140,7 +150,14 @@ pub fn FileImporterModel::view(self : FileImporterModel) -> @core.View[FileImpor
             spacing=0.0,
             align=@views.CrossAlign::Start,
           ),
-          button("Clear", on_click=ClearSelection, variant=@views.ButtonVariant::Outline, theme~, width=82.0, height=36.0),
+          button(
+            "Clear",
+            on_click=ClearSelection,
+            variant=@views.ButtonVariant::Outline,
+            theme~,
+            width=82.0,
+            height=36.0,
+          ),
         ],
         spacing=theme.spacing_scale.md,
         align=@views.CrossAlign::Center,
@@ -214,27 +231,33 @@ fn FileImporterModel::request_file_dialog(
   self : FileImporterModel,
   services : @host.HostAppServices,
 ) -> FileImporterModel {
-  match services.open_file(title="Import files", filters=["csv", "json", "txt"]) {
-    @host.HostServiceResponse::Pending(id) => {
-      ..self,
-      status: FileImporterStatus::Pending(id),
-      last_event: "Waiting for file picker",
-      availability_reason: "",
-    }
+  match
+    services.open_file(title="Import files", filters=["csv", "json", "txt"]) {
+    @host.HostServiceResponse::Pending(id) =>
+      {
+        ..self,
+        status: FileImporterStatus::Pending(id),
+        last_event: "Waiting for file picker",
+        availability_reason: "",
+      }
     @host.HostServiceResponse::FileDialogSelection(paths) =>
       self.with_paths(paths, source="Dialog")
-    @host.HostServiceResponse::Unavailable(reason) => {
-      ..self,
-      status: FileImporterStatus::Unavailable(reason),
-      last_event: "File dialog unavailable",
-      availability_reason: reason,
-    }
-    _ => {
-      ..self,
-      status: FileImporterStatus::Unavailable("unexpected file dialog response"),
-      last_event: "File dialog unavailable",
-      availability_reason: "unexpected file dialog response",
-    }
+    @host.HostServiceResponse::Unavailable(reason) =>
+      {
+        ..self,
+        status: FileImporterStatus::Unavailable(reason),
+        last_event: "File dialog unavailable",
+        availability_reason: reason,
+      }
+    _ =>
+      {
+        ..self,
+        status: FileImporterStatus::Unavailable(
+          "unexpected file dialog response",
+        ),
+        last_event: "File dialog unavailable",
+        availability_reason: "unexpected file dialog response",
+      }
   }
 }
 
@@ -246,12 +269,13 @@ fn FileImporterModel::apply_host_completion(
   match completion.response {
     @host.HostServiceResponse::FileDialogSelection(paths) =>
       self.with_paths(paths, source="Dialog")
-    @host.HostServiceResponse::Unavailable(reason) => {
-      ..self,
-      status: FileImporterStatus::Unavailable(reason),
-      last_event: "File dialog unavailable",
-      availability_reason: reason,
-    }
+    @host.HostServiceResponse::Unavailable(reason) =>
+      {
+        ..self,
+        status: FileImporterStatus::Unavailable(reason),
+        last_event: "File dialog unavailable",
+        availability_reason: reason,
+      }
     _ => self
   }
 }
@@ -263,7 +287,11 @@ fn FileImporterModel::with_paths(
   source~ : String,
 ) -> FileImporterModel {
   if paths.is_empty() {
-    { ..self, status: FileImporterStatus::Ready, last_event: "No files selected" }
+    {
+      ..self,
+      status: FileImporterStatus::Ready,
+      last_event: "No files selected",
+    }
   } else {
     {
       files: paths.map(path => ImportedFile::new(path~, source~)),
@@ -291,7 +319,15 @@ fn FileImporterModel::import_summary(
     ),
   ]
   if self.files.is_empty() {
-    rows.push(text("Selection list is empty", role=@views.TextRole::Caption, theme~, width=340.0, height=26.0))
+    rows.push(
+      text(
+        "Selection list is empty",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=340.0,
+        height=26.0,
+      ),
+    )
   } else {
     rows.push(
       description_list(

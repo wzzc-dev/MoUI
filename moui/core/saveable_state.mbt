@@ -84,9 +84,9 @@ pub fn SaveableStateSnapshot::new(
 pub fn SaveableStateStore::snapshot(
   self : SaveableStateStore,
 ) -> SaveableStateSnapshot {
-  SaveableStateSnapshot::new(entries=self.strings.map(entry => {
-    { key: entry.key, value: entry.value }
-  }))
+  SaveableStateSnapshot::new(
+    entries=self.strings.map(entry => { key: entry.key, value: entry.value }),
+  )
 }
 
 ///|
@@ -95,7 +95,8 @@ pub fn SaveableStateStore::restore(
   snapshot : SaveableStateSnapshot,
 ) -> Unit {
   self.strings = snapshot.entries.map(entry => {
-    { key: entry.key, value: entry.value }
+    key: entry.key,
+    value: entry.value,
   })
 }
 

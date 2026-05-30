@@ -20,11 +20,12 @@ pub fn[Msg] radio_group(
         on_change=_value => on_select(item.id),
         foreground=theme.palette.foreground,
         check_color=theme.palette.primary,
-      )
-      .semantics_selected(selected=item.id == selected),
+      ).semantics_selected(selected=item.id == selected),
     )
   }
-  column(rows, spacing~, align=CrossAlign::Start).semantics_role(@core.SemanticsRole::Group)
+  column(rows, spacing~, align=CrossAlign::Start).semantics_role(
+    @core.SemanticsRole::Group,
+  )
 }
 
 ///|
@@ -45,11 +46,12 @@ pub fn[Msg] checkbox_group(
         on_change=value => on_change(item.id, value),
         foreground=theme.palette.foreground,
         check_color=theme.palette.primary,
-      )
-      .semantics_checked(checked~),
+      ).semantics_checked(checked~),
     )
   }
-  column(rows, spacing~, align=CrossAlign::Start).semantics_role(@core.SemanticsRole::Group)
+  column(rows, spacing~, align=CrossAlign::Start).semantics_role(
+    @core.SemanticsRole::Group,
+  )
 }
 
 ///|
@@ -77,7 +79,11 @@ pub fn[Msg] segmented_control(
       button(
         item.label,
         on_click=on_select(item.id),
-        variant=if active { ButtonVariant::Primary } else { ButtonVariant::Ghost },
+        variant=if active {
+          ButtonVariant::Primary
+        } else {
+          ButtonVariant::Ghost
+        },
         theme~,
         width=item_width,
         height~,
@@ -106,8 +112,13 @@ pub fn[Msg] chip(
   width? : Double = 112.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
-  let child = text(label, role=TextRole::Control, theme~, width=width - 18.0, height=height - 8.0)
-    .foreground(chip_foreground(selected, theme))
+  let child = text(
+    label,
+    role=TextRole::Control,
+    theme~,
+    width=width - 18.0,
+    height=height - 8.0,
+  ).foreground(chip_foreground(selected, theme))
   let surfaced = surface(
     child,
     width~,
@@ -120,8 +131,9 @@ pub fn[Msg] chip(
     Some(border) => surfaced.border(border)
     None => surfaced
   }
-  let base = bordered.semantics_role(@core.SemanticsRole::Button)
-  .semantics_selected(selected~)
+  let base = bordered
+    .semantics_role(@core.SemanticsRole::Button)
+    .semantics_selected(selected~)
   match on_click {
     Some(message) => base.on_tap(message)
     None => base
@@ -135,8 +147,14 @@ pub fn[Msg] tag(
   width? : Double = 96.0,
   height? : Double = 28.0,
 ) -> @core.View[Msg] {
-  chip(label, selected=false, variant=ChipVariant::Outline, theme~, width~, height~)
-  .semantics_role(@core.SemanticsRole::Text)
+  chip(
+    label,
+    selected=false,
+    variant=ChipVariant::Outline,
+    theme~,
+    width~,
+    height~,
+  ).semantics_role(@core.SemanticsRole::Text)
 }
 
 ///|
@@ -186,7 +204,11 @@ fn string_array_contains(items : Array[String], id : String) -> Bool {
 
 ///|
 fn chip_foreground(selected : Bool, theme : @core.Theme) -> @core.Color {
-  if selected { theme.palette.primary_foreground } else { theme.palette.foreground }
+  if selected {
+    theme.palette.primary_foreground
+  } else {
+    theme.palette.foreground
+  }
 }
 
 ///|
@@ -216,7 +238,11 @@ fn chip_border(
     Some(
       @core.BorderStyle::new(
         brush=@core.Brush::solid(
-          if selected { theme.palette.primary } else { theme.palette.outline },
+          if selected {
+            theme.palette.primary
+          } else {
+            theme.palette.outline
+          },
         ),
         width=1.0,
       ),

@@ -1,6 +1,8 @@
 ///|
 test "file importer maps dropped files into selection" {
-  let model = FileImporterModel::new().update(FilesDropped(["/tmp/a.csv", "/tmp/b.json"]))
+  let model = FileImporterModel::new().update(
+    FilesDropped(["/tmp/a.csv", "/tmp/b.json"]),
+  )
   inspect(model.files.length(), content="2")
   inspect(model.files[0].source, content="Drop")
   inspect(model.selection().summary(), content="2 files selected")
@@ -17,17 +19,25 @@ test "file importer handles empty selection" {
 
 ///|
 test "file importer uses unavailable host service state" {
-  let model = FileImporterModel::new()
-    .update_with_services(BrowseRequested, @host.HostAppServices::unavailable())
+  let model = FileImporterModel::new().update_with_services(
+    BrowseRequested,
+    @host.HostAppServices::unavailable(),
+  )
   assert_true(model.status is FileImporterStatus::Unavailable(_))
   inspect(model.last_event, content="File dialog unavailable")
-  inspect(model.availability_reason, content="file dialog service is unavailable")
+  inspect(
+    model.availability_reason,
+    content="file dialog service is unavailable",
+  )
 }
 
 ///|
 test "file importer handles immediate host file selection" {
   let services = host_services_for_file_dialog(["/tmp/report.csv"])
-  let model = FileImporterModel::new().update_with_services(BrowseRequested, services)
+  let model = FileImporterModel::new().update_with_services(
+    BrowseRequested,
+    services,
+  )
   inspect(model.files.length(), content="1")
   inspect(model.files[0].path, content="/tmp/report.csv")
   inspect(model.files[0].source, content="Dialog")
@@ -38,8 +48,10 @@ test "file importer handles immediate host file selection" {
 test "file importer handles mocked pending completion" {
   let queue = @host.HostServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
-  let pending_model = FileImporterModel::new()
-    .update_with_services(BrowseRequested, services)
+  let pending_model = FileImporterModel::new().update_with_services(
+    BrowseRequested,
+    services,
+  )
   guard pending_model.status is FileImporterStatus::Pending(id) else {
     fail("expected pending file dialog")
   }
@@ -73,7 +85,9 @@ test "file importer runtime draws panel labels" {
 }
 
 ///|
-fn host_services_for_file_dialog(paths : Array[String]) -> @host.HostAppServices {
+fn host_services_for_file_dialog(
+  paths : Array[String],
+) -> @host.HostAppServices {
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(file_dialogs=true),
     handle=request => {

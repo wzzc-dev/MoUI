@@ -95,13 +95,21 @@ fn ShowcaseModel::feedback_section(
               id="details",
               title="Disclosure Details",
               subtitle="Controlled by app state",
-              content=text("Expanded content stays in the view tree.", width=320.0, height=28.0),
+              content=text(
+                "Expanded content stays in the view tree.",
+                width=320.0,
+                height=28.0,
+              ),
             ),
             @views.WizardStep::new(
               id="queue",
               title="Queue Status",
               subtitle="Collapsed until selected",
-              content=text("Queued notifications remain app-owned.", width=320.0, height=28.0),
+              content=text(
+                "Queued notifications remain app-owned.",
+                width=320.0,
+                height=28.0,
+              ),
             ),
           ],
           expanded=if self.active { ["details", "queue"] } else { ["details"] },
@@ -120,7 +128,11 @@ fn ShowcaseModel::feedback_section(
         ),
         collapsible_panel(
           "Collapsible Panel",
-          content=text("Panel content remains controlled by the app.", width=320.0, height=28.0),
+          content=text(
+            "Panel content remains controlled by the app.",
+            width=320.0,
+            height=28.0,
+          ),
           expanded=self.active,
           on_toggle=ToggleActive,
           subtitle="Collapsed when inactive",

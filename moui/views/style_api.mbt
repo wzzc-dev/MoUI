@@ -125,7 +125,10 @@ pub(all) struct FileSelection {
 }
 
 ///|
-pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> StateViewAction[Msg] {
+pub fn[Msg] StateViewAction::new(
+  label~ : String,
+  message~ : Msg,
+) -> StateViewAction[Msg] {
   { label, message }
 }
 
@@ -136,7 +139,7 @@ pub fn FileSelection::new(paths~ : Array[String]) -> FileSelection {
 
 ///|
 pub fn FileSelection::empty() -> FileSelection {
-  { paths: [], }
+  { paths: [] }
 }
 
 ///|

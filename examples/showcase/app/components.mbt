@@ -298,7 +298,11 @@ fn ShowcaseModel::host_capability_card(
     ),
     host_capability_row(
       "Windows",
-      if summary.multi_window { "multi" } else { "single" },
+      if summary.multi_window {
+        "multi"
+      } else {
+        "single"
+      },
       if summary.window_lifecycle {
         "lifecycle queue ready"
       } else {
@@ -322,7 +326,11 @@ fn ShowcaseModel::host_capability_card(
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
-        column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
+        column(
+          rows,
+          spacing=theme.spacing_scale.xs,
+          align=@views.CrossAlign::Start,
+        ),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,
@@ -357,7 +365,7 @@ fn host_capability_row(
         spacing=8.0,
         align=@views.CrossAlign::Center,
       ),
-      text(detail, width=width, height=18.0)
+      text(detail, width~, height=18.0)
       .font(theme.typography.caption)
       .foreground(theme.palette.muted),
     ],

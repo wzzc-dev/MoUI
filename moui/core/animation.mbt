@@ -208,7 +208,11 @@ pub fn animated_value(
   reduced_motion? : Bool = false,
 ) -> Double {
   Tween::new(from~, to~, easing~).value(
-    if reduced_motion { 1.0 } else { progress },
+    if reduced_motion {
+      1.0
+    } else {
+      progress
+    },
   )
 }
 
@@ -269,7 +273,7 @@ pub fn TransitionStyle::with_opacity(
   self : TransitionStyle,
   opacity : Double,
 ) -> TransitionStyle {
-  { ..self, opacity }
+  { ..self, opacity, }
 }
 
 ///|
@@ -461,13 +465,7 @@ fn option_interpolate_color(
   match (from, to) {
     (Some(start), Some(end)) =>
       Some(
-        animated_color(
-          from=start,
-          to=end,
-          progress~,
-          easing~,
-          reduced_motion~,
-        ),
+        animated_color(from=start, to=end, progress~, easing~, reduced_motion~),
       )
     (None, Some(end)) => Some(end)
     (Some(start), None) => Some(start)
@@ -476,8 +474,15 @@ fn option_interpolate_color(
 }
 
 ///|
-fn transition_resolved_progress(progress : Double, reduced_motion~ : Bool) -> Double {
-  if reduced_motion { 1.0 } else { clamp_double(progress, 0.0, 1.0) }
+fn transition_resolved_progress(
+  progress : Double,
+  reduced_motion~ : Bool,
+) -> Double {
+  if reduced_motion {
+    1.0
+  } else {
+    clamp_double(progress, 0.0, 1.0)
+  }
 }
 
 ///|

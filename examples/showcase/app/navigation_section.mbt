@@ -17,7 +17,10 @@ fn ShowcaseModel::navigation_section(
               label="Catalog",
               message=Some(SelectSection("overview")),
             ),
-            @views.BreadcrumbItem::new(id="navigation", label="Navigation Shell"),
+            @views.BreadcrumbItem::new(
+              id="navigation",
+              label="Navigation Shell",
+            ),
           ],
           theme~,
         ),
@@ -88,35 +91,51 @@ fn ShowcaseModel::navigation_command_card(
   let commands = [
     @views.MenuItem::new(id="new", label="New", message=ShowDialog),
     @views.MenuItem::new(id="open", label="Open", message=ShowSheet),
-    @views.MenuItem::new(id="archive", label="Archive", message=ToggleActive, enabled=false),
+    @views.MenuItem::new(
+      id="archive",
+      label="Archive",
+      message=ToggleActive,
+      enabled=false,
+    ),
   ]
   let mode_items = [
-    @views.MenuItem::new(id="overview", label="Overview", message=SelectSection("overview")),
+    @views.MenuItem::new(
+      id="overview",
+      label="Overview",
+      message=SelectSection("overview"),
+    ),
     @views.MenuItem::new(id="data", label="Data", message=SelectSection("data")),
   ]
   let command_sections = [
-    @views.CommandMenuSection::new(
-      title="File",
-      commands=[
-        @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
-        @core.ActionCommand::new(intent=@core.CommandIntent::Cancel, label="Archive", enabled=false),
-      ],
-    ),
+    @views.CommandMenuSection::new(title="File", commands=[
+      @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Cancel,
+        label="Archive",
+        enabled=false,
+      ),
+    ]),
   ]
   surface(
     column(
       [
         toolbar(
           [
-            menu_bar(mode_items, active=self.selected_section, theme~, width=220.0),
+            menu_bar(
+              mode_items,
+              active=self.selected_section,
+              theme~,
+              width=220.0,
+            ),
             command_bar(commands, theme~, width=260.0),
           ],
           theme~,
           width=520.0,
         ),
         context_menu_region(
-          child=text("Context menu fallback", width=240.0, height=28.0)
-            .foreground(theme.palette.foreground),
+          child=text("Context menu fallback", width=240.0, height=28.0).foreground(
+            theme.palette.foreground,
+          ),
           menu=command_menu(
             command_sections,
             on_select=_intent => ToggleActive,
@@ -127,7 +146,11 @@ fn ShowcaseModel::navigation_command_card(
           visible=self.active,
           theme~,
         ),
-        status_bar(["Ready", "3 commands", "Renderer neutral"], theme~, width=520.0),
+        status_bar(
+          ["Ready", "3 commands", "Renderer neutral"],
+          theme~,
+          width=520.0,
+        ),
       ],
       spacing=theme.spacing_scale.xs,
       align=@views.CrossAlign::Start,
@@ -228,7 +251,13 @@ fn ShowcaseModel::navigation_shell_card(
     detail=surface(
       column(
         [
-          text("Master Detail", role=@views.TextRole::Control, theme~, width=220.0, height=28.0),
+          text(
+            "Master Detail",
+            role=@views.TextRole::Control,
+            theme~,
+            width=220.0,
+            height=28.0,
+          ),
           text(
             "Current section: " + self.selected_section,
             role=@views.TextRole::Caption,

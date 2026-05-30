@@ -149,21 +149,29 @@ test "view transition applies opacity offset scale and foreground modifiers" {
     size=Size::new(width=120.0, height=40.0),
   )
   let commands = runtime.build_draw_commands()
-  let transform_index = first_command_index(commands, command => command is PushTransform(_))
-  let opacity_index = first_command_index(commands, command => command is PushOpacity(0.2))
-  let text_index = first_command_index(
-    commands,
-    command => command is DrawText({ text: "Motion", .. }),
-  )
+  let transform_index = first_command_index(commands, command => {
+    command is PushTransform(_)
+  })
+  let opacity_index = first_command_index(commands, command => {
+    command is PushOpacity(0.2)
+  })
+  let text_index = first_command_index(commands, command => {
+    command is DrawText({ text: "Motion", .. })
+  })
   assert_true(transform_index < opacity_index)
   assert_true(opacity_index < text_index)
-  guard commands[text_index] is DrawText({ frame: frame, color: color, .. }) else {
+  guard commands[text_index] is DrawText({ frame, color, .. }) else {
     fail("expected transitioned text")
   }
   inspect(frame.origin.x, content="6")
   assert_true(color == Color::blue())
-  assert_true(first_command_index(commands, command => command is PopOpacity) > text_index)
-  assert_true(first_command_index(commands, command => command is PopTransform) > text_index)
+  assert_true(
+    first_command_index(commands, command => command is PopOpacity) > text_index,
+  )
+  assert_true(
+    first_command_index(commands, command => command is PopTransform) >
+    text_index,
+  )
 }
 
 ///|

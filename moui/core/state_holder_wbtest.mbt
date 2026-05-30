@@ -85,20 +85,20 @@ test "disabled wrapper suppresses pointer activation" {
 test "view gesture wrappers emit long double and drag messages" {
   let log = Ref("")
   let root : View[String] = View::container(
-    child=Some(
-      View::text(
-        text="Gesture target",
-        size=Size::new(width=180.0, height=44.0),
-        font=FontSpec::new(size=14.0),
-        color=Color::black(),
+      child=Some(
+        View::text(
+          text="Gesture target",
+          size=Size::new(width=180.0, height=44.0),
+          font=FontSpec::new(size=14.0),
+          color=Color::black(),
+        ),
       ),
-    ),
-    size=Some(Size::new(width=180.0, height=80.0)),
-    background=Some(Brush::solid(Color::gray())),
-  )
-  .on_long_press("long")
-  .on_double_tap("double")
-  .on_drag(event => event.phase.label())
+      size=Some(Size::new(width=180.0, height=80.0)),
+      background=Some(Brush::solid(Color::gray())),
+    )
+    .on_long_press("long")
+    .on_double_tap("double")
+    .on_drag(event => event.phase.label())
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=220.0, height=120.0),
@@ -210,13 +210,13 @@ test "view gesture wrappers emit long double and drag messages" {
 test "disabled wrapper suppresses high level gesture activation" {
   let log = Ref("")
   let root : View[String] = View::container(
-    size=Some(Size::new(width=120.0, height=80.0)),
-    background=Some(Brush::solid(Color::gray())),
-  )
-  .on_long_press("long")
-  .on_double_tap("double")
-  .on_drag(event => event.phase.label())
-  .disabled()
+      size=Some(Size::new(width=120.0, height=80.0)),
+      background=Some(Brush::solid(Color::gray())),
+    )
+    .on_long_press("long")
+    .on_double_tap("double")
+    .on_drag(event => event.phase.label())
+    .disabled()
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=160.0, height=120.0),
@@ -333,14 +333,11 @@ test "app runtime focus traversal skips disabled controls" {
 
 ///|
 test "focus scope traversal wraps and skips disabled items" {
-  let scope = FocusScope::new(
-    current=Some("first"),
-    items=[
-      FocusScopeItem::new(id="first"),
-      FocusScopeItem::new(id="disabled", enabled=false),
-      FocusScopeItem::new(id="third"),
-    ],
-  )
+  let scope = FocusScope::new(current=Some("first"), items=[
+    FocusScopeItem::new(id="first"),
+    FocusScopeItem::new(id="disabled", enabled=false),
+    FocusScopeItem::new(id="third"),
+  ])
   inspect(scope.next().unwrap_or(""), content="third")
   let wrapped = FocusScope::new(
     current=Some("third"),
@@ -373,8 +370,14 @@ test "focus scope maps invalid fields and default actions" {
     { name: "email", message: "Email required" },
   ])
   inspect(scope.focus_first_invalid(summary).unwrap_or(""), content="email")
-  inspect(scope.command_target(CommandIntent::Submit).unwrap_or(""), content="submit")
-  inspect(scope.command_target(CommandIntent::Cancel).unwrap_or(""), content="close")
+  inspect(
+    scope.command_target(CommandIntent::Submit).unwrap_or(""),
+    content="submit",
+  )
+  inspect(
+    scope.command_target(CommandIntent::Cancel).unwrap_or(""),
+    content="close",
+  )
   match focus_scope_command_intent(KeyboardEvent::new(key="Enter")) {
     Some(Submit) => ()
     _ => fail("expected Enter to map to submit")

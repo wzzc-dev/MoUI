@@ -27,20 +27,26 @@ fn ShowcaseModel::layout_section(
   )
   let sectioned_gallery = sectioned_list(
     [
-      @views.SectionListSection::new(
-        id="layout",
-        title="Layout helpers",
-        items=["Expanded", "Frame", "Priority"],
-      ),
-      @views.SectionListSection::new(
-        id="lists",
-        title="Virtual lists",
-        items=["Windowed", "Overscan", "Empty state"],
-      ),
+      @views.SectionListSection::new(id="layout", title="Layout helpers", items=[
+        "Expanded", "Frame", "Priority",
+      ]),
+      @views.SectionListSection::new(id="lists", title="Virtual lists", items=[
+        "Windowed", "Overscan", "Empty state",
+      ]),
     ],
     item => "layout-section-" + item,
-    item => text(item, width=180.0, height=22.0).foreground(theme.palette.foreground),
-    header=section => text(section.title, role=@views.TextRole::Caption, theme~, width=180.0, height=22.0),
+    item => {
+      text(item, width=180.0, height=22.0).foreground(theme.palette.foreground)
+    },
+    header=section => {
+      text(
+        section.title,
+        role=@views.TextRole::Caption,
+        theme~,
+        width=180.0,
+        height=22.0,
+      )
+    },
     item_height=24.0,
     header_height=24.0,
     viewport_height=108.0,
@@ -152,8 +158,19 @@ fn ShowcaseModel::layout_section(
       baseline_form_rows(
         [
           @views.BaselineFormRow::new(
-            label=text("Baseline label", role=@views.TextRole::Caption, theme~, width=100.0, height=24.0),
-            control=text_field("Aligned", on_input=value => DraftChanged(value), theme~, width=150.0),
+            label=text(
+              "Baseline label",
+              role=@views.TextRole::Caption,
+              theme~,
+              width=100.0,
+              height=24.0,
+            ),
+            control=text_field(
+              "Aligned",
+              on_input=value => DraftChanged(value),
+              theme~,
+              width=150.0,
+            ),
           ),
         ],
         width=300.0,
@@ -218,8 +235,20 @@ fn ShowcaseModel::layout_section(
         resizable_panel(
           content=column(
             [
-              text("Resizable Panel", role=@views.TextRole::Control, theme~, width=220.0, height=28.0),
-              text("Controlled size with a visual handle", role=@views.TextRole::Caption, theme~, width=240.0, height=28.0),
+              text(
+                "Resizable Panel",
+                role=@views.TextRole::Control,
+                theme~,
+                width=220.0,
+                height=28.0,
+              ),
+              text(
+                "Controlled size with a visual handle",
+                role=@views.TextRole::Caption,
+                theme~,
+                width=240.0,
+                height=28.0,
+              ),
             ],
             spacing=theme.spacing_scale.xs,
             align=@views.CrossAlign::Start,

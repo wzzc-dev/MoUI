@@ -96,8 +96,25 @@ pub fn[Msg] flow(
 ) -> @core.View[Msg] {
   custom_children_layout(
     children~,
-    measure=ctx => flow_measure(ctx.child_sizes, width, spacing, row_spacing, ctx.constraints),
-    place=ctx => flow_place(ctx.child_sizes, ctx.frame, width, spacing, row_spacing, ctx.layout_direction),
+    measure=ctx => {
+      flow_measure(
+        ctx.child_sizes,
+        width,
+        spacing,
+        row_spacing,
+        ctx.constraints,
+      )
+    },
+    place=ctx => {
+      flow_place(
+        ctx.child_sizes,
+        ctx.frame,
+        width,
+        spacing,
+        row_spacing,
+        ctx.layout_direction,
+      )
+    },
     semantics_label="Flow layout",
   )
 }
@@ -112,22 +129,26 @@ pub fn[Msg] responsive_grid(
 ) -> @core.View[Msg] {
   custom_children_layout(
     children~,
-    measure=ctx => responsive_grid_measure(
-      ctx.child_sizes,
-      width,
-      min_column_width,
-      row_spacing,
-      column_spacing,
-      ctx.constraints,
-    ),
-    place=ctx => responsive_grid_place(
-      ctx.child_sizes,
-      ctx.frame,
-      min_column_width,
-      row_spacing,
-      column_spacing,
-      ctx.layout_direction,
-    ),
+    measure=ctx => {
+      responsive_grid_measure(
+        ctx.child_sizes,
+        width,
+        min_column_width,
+        row_spacing,
+        column_spacing,
+        ctx.constraints,
+      )
+    },
+    place=ctx => {
+      responsive_grid_place(
+        ctx.child_sizes,
+        ctx.frame,
+        min_column_width,
+        row_spacing,
+        column_spacing,
+        ctx.layout_direction,
+      )
+    },
     semantics_label="Responsive grid",
   )
 }
@@ -147,22 +168,26 @@ pub fn[Msg] baseline_form_rows(
   }
   custom_children_layout(
     children~,
-    measure=ctx => baseline_form_measure(
-      ctx.child_sizes,
-      ctx.child_baselines,
-      width,
-      row_spacing,
-      ctx.constraints,
-    ),
-    place=ctx => baseline_form_place(
-      ctx.child_sizes,
-      ctx.child_baselines,
-      ctx.frame,
-      label_width,
-      row_spacing,
-      column_spacing,
-      ctx.layout_direction,
-    ),
+    measure=ctx => {
+      baseline_form_measure(
+        ctx.child_sizes,
+        ctx.child_baselines,
+        width,
+        row_spacing,
+        ctx.constraints,
+      )
+    },
+    place=ctx => {
+      baseline_form_place(
+        ctx.child_sizes,
+        ctx.child_baselines,
+        ctx.frame,
+        label_width,
+        row_spacing,
+        column_spacing,
+        ctx.layout_direction,
+      )
+    },
     semantics_label="Baseline form rows",
   )
 }
@@ -182,7 +207,12 @@ fn flow_measure(
   row_spacing : Double,
   constraints : @core.Constraints,
 ) -> @core.Size {
-  let measured = flow_size(sizes, available_width(width, constraints), spacing, row_spacing)
+  let measured = flow_size(
+    sizes,
+    available_width(width, constraints),
+    spacing,
+    row_spacing,
+  )
   constraints.constrain(measured)
 }
 
@@ -222,7 +252,9 @@ fn responsive_grid_measure(
   constraints : @core.Constraints,
 ) -> @core.Size {
   let available = available_width(width, constraints)
-  let columns = responsive_grid_columns(available, min_column_width, column_spacing)
+  let columns = responsive_grid_columns(
+    available, min_column_width, column_spacing,
+  )
   let rows = layout_ceil_div(sizes.length(), columns)
   let mut height = 0.0
   for row_index in 0..<rows {
@@ -249,8 +281,16 @@ fn responsive_grid_place(
   column_spacing : Double,
   direction : @core.LayoutDirection,
 ) -> Array[@core.Rect] {
-  let columns = responsive_grid_columns(frame.size.width, min_column_width, column_spacing)
-  let column_width = responsive_grid_column_width(frame.size.width, columns, column_spacing)
+  let columns = responsive_grid_columns(
+    frame.size.width,
+    min_column_width,
+    column_spacing,
+  )
+  let column_width = responsive_grid_column_width(
+    frame.size.width,
+    columns,
+    column_spacing,
+  )
   let rects : Array[@core.Rect] = []
   let mut y = frame.origin.y
   let rows = layout_ceil_div(sizes.length(), columns)
@@ -263,7 +303,8 @@ fn responsive_grid_place(
     }
     for index in start..<end {
       let column = index - start
-      let x = frame.origin.x + column.to_double() * (column_width + column_spacing)
+      let x = frame.origin.x +
+        column.to_double() * (column_width + column_spacing)
       rects.push(
         @core.Rect::new(
           x=layout_mirror_x(frame, x - frame.origin.x, column_width, direction),
@@ -294,7 +335,9 @@ fn baseline_form_measure(
       height = height + row_spacing
     }
   }
-  constraints.constrain(@core.Size::new(width=available_width(width, constraints), height~))
+  constraints.constrain(
+    @core.Size::new(width=available_width(width, constraints), height~),
+  )
 }
 
 ///|
@@ -309,7 +352,10 @@ fn baseline_form_place(
 ) -> Array[@core.Rect] {
   let rects : Array[@core.Rect] = []
   let row_count = sizes.length() / 2
-  let control_width = layout_max_double(0.0, frame.size.width - label_width - column_spacing)
+  let control_width = layout_max_double(
+    0.0,
+    frame.size.width - label_width - column_spacing,
+  )
   let mut y = frame.origin.y
   for row in 0..<row_count {
     let label_index = row * 2
@@ -331,7 +377,12 @@ fn baseline_form_place(
     )
     rects.push(
       @core.Rect::new(
-        x=layout_mirror_x(frame, label_width + column_spacing, control_width, direction),
+        x=layout_mirror_x(
+          frame,
+          label_width + column_spacing,
+          control_width,
+          direction,
+        ),
         y=control_y,
         width=control_width,
         height=control_size.height,
@@ -481,20 +532,36 @@ fn layout_mirror_x(
 ///|
 fn layout_ceil_div(a : Int, b : Int) -> Int {
   let b = layout_max_int(1, b)
-  if a == 0 { 0 } else { (a + b - 1) / b }
+  if a == 0 {
+    0
+  } else {
+    (a + b - 1) / b
+  }
 }
 
 ///|
 fn layout_min_int(a : Int, b : Int) -> Int {
-  if a < b { a } else { b }
+  if a < b {
+    a
+  } else {
+    b
+  }
 }
 
 ///|
 fn layout_max_int(a : Int, b : Int) -> Int {
-  if a > b { a } else { b }
+  if a > b {
+    a
+  } else {
+    b
+  }
 }
 
 ///|
 fn layout_max_double(a : Double, b : Double) -> Double {
-  if a > b { a } else { b }
+  if a > b {
+    a
+  } else {
+    b
+  }
 }

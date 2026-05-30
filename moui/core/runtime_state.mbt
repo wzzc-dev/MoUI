@@ -478,10 +478,18 @@ fn RuntimeState::inspector_rebuild_reason(self : RuntimeState) -> String {
 ///|
 fn RuntimeState::inspector_dirty_reasons(self : RuntimeState) -> Array[String] {
   let reasons : Array[String] = []
-  if self.needs_rebuild { reasons.push("rebuild") }
-  if self.needs_layout { reasons.push("layout") }
-  if self.needs_paint { reasons.push("paint") }
-  if self.needs_redraw { reasons.push("redraw") }
+  if self.needs_rebuild {
+    reasons.push("rebuild")
+  }
+  if self.needs_layout {
+    reasons.push("layout")
+  }
+  if self.needs_paint {
+    reasons.push("paint")
+  }
+  if self.needs_redraw {
+    reasons.push("redraw")
+  }
   if self.dirty_elements.length() > 0 {
     reasons.push("dirty elements: \{self.dirty_elements.length()}")
   }

@@ -1075,21 +1075,18 @@ fn skia_text_system(resolution : SkiaFontResolution) -> @core.TextSystem {
 
 ///|
 fn skia_empty_typeface_text_system() -> @core.TextSystem {
-  @core.TextSystem::new(
-    id="skia-raster-empty-typeface-text-system",
-    measure=input => {
-      let fallback = @core.TextSystem::fallback().measure_text(input)
-      match
-        skia_draw_text_payload_for_resolution(
-          input.font,
-          input.text,
-          SkiaFontResolution::EmptyTypeface,
-        ) {
-        Some((font, _)) => skia_text_layout_result(font, input, fallback)
-        None => fallback
-      }
-    },
-  )
+  @core.TextSystem::new(id="skia-raster-empty-typeface-text-system", measure=input => {
+    let fallback = @core.TextSystem::fallback().measure_text(input)
+    match
+      skia_draw_text_payload_for_resolution(
+        input.font,
+        input.text,
+        SkiaFontResolution::EmptyTypeface,
+      ) {
+      Some((font, _)) => skia_text_layout_result(font, input, fallback)
+      None => fallback
+    }
+  })
 }
 
 ///|

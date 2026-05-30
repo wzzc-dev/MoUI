@@ -580,20 +580,18 @@ fn ElementNode::collect_view_node_summaries(
   self : ElementNode,
   nodes : Array[ViewNodeInspectorSummary],
 ) -> Unit {
-  nodes.push(
-    {
-      element_id: self.id,
-      kind: self.spec.inspector_kind_label(),
-      key: match self.key {
-        Some(key) => key.value
-        None => ""
-      },
-      child_count: self.children.length(),
-      needs_build: self.dirty.needs_build,
-      needs_layout: self.dirty.needs_layout,
-      needs_paint: self.dirty.needs_paint,
+  nodes.push({
+    element_id: self.id,
+    kind: self.spec.inspector_kind_label(),
+    key: match self.key {
+      Some(key) => key.value
+      None => ""
     },
-  )
+    child_count: self.children.length(),
+    needs_build: self.dirty.needs_build,
+    needs_layout: self.dirty.needs_layout,
+    needs_paint: self.dirty.needs_paint,
+  })
   for child in self.children {
     child.collect_view_node_summaries(nodes)
   }

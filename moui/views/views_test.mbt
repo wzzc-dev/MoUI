@@ -247,7 +247,9 @@ test "lazy list and grid build public views" {
 ///|
 test "sectioned list renders headers rows and empty state" {
   let sections = [
-    @views.SectionListSection::new(id="a", title="Group A", items=["Ada", "Alan"]),
+    @views.SectionListSection::new(id="a", title="Group A", items=[
+      "Ada", "Alan",
+    ]),
     @views.SectionListSection::new(id="b", title="Group B", items=["Grace"]),
   ]
   let runtime = test_runtime(
@@ -318,7 +320,11 @@ test "flow responsive grid and baseline rows place children" {
         [
           @views.BaselineFormRow::new(
             label=@views.text("Label", width=80.0, height=24.0),
-            control=@views.text_field("Value", on_input=_value => (), width=140.0),
+            control=@views.text_field(
+              "Value",
+              on_input=_value => (),
+              width=140.0,
+            ),
           ),
         ],
         width=260.0,
@@ -409,11 +415,9 @@ test "form validation display can hide support text" {
 
 ///|
 test "form field state uses core validation errors" {
-  let field = @core.FormFieldState::new(
-    name="email",
-    label="Email",
-    rules=[@core.FormValidationRule::required(message="Email required")],
-  )
+  let field = @core.FormFieldState::new(name="email", label="Email", rules=[
+    @core.FormValidationRule::required(message="Email required"),
+  ])
   let root : @core.View[Unit] = @views.form_field_state(
     field~,
     child=@views.text_field(field.value.get(), on_input=_value => ()),
@@ -430,33 +434,23 @@ test "form field state uses core validation errors" {
 
 ///|
 test "enhanced input wrappers compose public controls" {
-  let root : @core.View[Unit] = @views.form(
-    [
-      @views.input_group(
-        child=@views.text_field("Grouped", on_input=_value => ()),
-        prefix=Some(@views.text("$", width=20.0, height=24.0)),
-        suffix=Some(@views.text("USD", width=44.0, height=24.0)),
-      ),
-      @views.clearable_text_field(
-        "Search",
-        on_input=_value => (),
-        on_clear=(),
-      ),
-      @views.password_field(
-        "secret",
-        on_input=_value => (),
-        revealed=false,
-        on_toggle_reveal=(),
-      ),
-      @views.number_field(
-        "42",
-        on_input=_value => (),
-        on_step=Some(_delta => ()),
-      ),
-      @views.stepper(on_decrement=(), on_increment=(), label="Page"),
-      @views.multiline_text_area_shell("Line one", on_input=_value => ()),
-    ],
-  )
+  let root : @core.View[Unit] = @views.form([
+    @views.input_group(
+      child=@views.text_field("Grouped", on_input=_value => ()),
+      prefix=Some(@views.text("$", width=20.0, height=24.0)),
+      suffix=Some(@views.text("USD", width=44.0, height=24.0)),
+    ),
+    @views.clearable_text_field("Search", on_input=_value => (), on_clear=()),
+    @views.password_field(
+      "secret",
+      on_input=_value => (),
+      revealed=false,
+      on_toggle_reveal=(),
+    ),
+    @views.number_field("42", on_input=_value => (), on_step=Some(_delta => ())),
+    @views.stepper(on_decrement=(), on_increment=(), label="Page"),
+    @views.multiline_text_area_shell("Line one", on_input=_value => ()),
+  ])
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=520.0, height=380.0),
@@ -480,25 +474,20 @@ test "grouped choice controls compose selections and chips" {
     @views.choice_item("web", "Web"),
     @views.choice_item("test", "Test"),
   ]
-  let root : @core.View[Unit] = @views.column(
-    [
-      @views.radio_group(choices, selected="native", on_select=_id => ()),
-      @views.checkbox_group(
-        choices,
-        selected=["native", "test"],
-        on_change=(_id, _checked) => (),
-      ),
-      @views.segmented_control(choices, selected="web", on_select=_id => ()),
-      @views.row(
-        [
-          @views.chip("Stable", selected=true),
-          @views.tag("Tag"),
-          @views.filter_chip("Filter", selected=false, on_change=_value => ()),
-          @views.choice_chip("Choice", selected=true, on_select=()),
-        ],
-      ),
-    ],
-  )
+  let root : @core.View[Unit] = @views.column([
+    @views.radio_group(choices, selected="native", on_select=_id => ()),
+    @views.checkbox_group(choices, selected=["native", "test"], on_change=(
+      _id,
+      _checked,
+    ) => ()),
+    @views.segmented_control(choices, selected="web", on_select=_id => ()),
+    @views.row([
+      @views.chip("Stable", selected=true),
+      @views.tag("Tag"),
+      @views.filter_chip("Filter", selected=false, on_change=_value => ()),
+      @views.choice_chip("Choice", selected=true, on_select=()),
+    ]),
+  ])
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=560.0, height=360.0),
@@ -520,34 +509,31 @@ test "component semantics expose selection validation and expanded states" {
     @views.choice_item("web", "Web"),
   ]
   let tree_items = [
-    @views.tree_item(
-      id="root",
-      label="Root",
-      children=[@views.tree_item(id="leaf", label="Leaf")],
-    ),
+    @views.tree_item(id="root", label="Root", children=[
+      @views.tree_item(id="leaf", label="Leaf"),
+    ]),
   ]
   let commands = [
     @views.MenuItem::new(id="save", label="Save", message=()),
     @views.MenuItem::new(id="open", label="Open", message=()),
   ]
-  let root : @core.View[Unit] = @views.column(
-    [
-      @views.form_field(
-        label="Email",
-        child=@views.text_field("", on_input=_value => ()),
-        error="Email required",
-        required=true,
-      ),
-      @views.segmented_control(choices, selected="web", on_select=_id => ()),
-      @views.tree_view(tree_items, expanded=["root"], selected="leaf"),
-      @views.button_group(commands, selected="save"),
-    ],
-  )
+  let root : @core.View[Unit] = @views.column([
+    @views.form_field(
+      label="Email",
+      child=@views.text_field("", on_input=_value => ()),
+      error="Email required",
+      required=true,
+    ),
+    @views.segmented_control(choices, selected="web", on_select=_id => ()),
+    @views.tree_view(tree_items, expanded=["root"], selected="leaf"),
+    @views.button_group(commands, selected="save"),
+  ])
   let semantics = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=760.0, height=520.0),
   ).semantics()
-  guard find_semantics_label(semantics, "Email, invalid, Email required") is Some(email) else {
+  guard find_semantics_label(semantics, "Email, invalid, Email required")
+    is Some(email) else {
     fail("expected email form field semantics")
   }
   assert_true(email.role == @core.SemanticsRole::FormField)
@@ -577,23 +563,23 @@ test "component semantics expose selection validation and expanded states" {
 ///|
 test "feedback and state components compose visible status surfaces" {
   let action = @views.StateViewAction::new(label="Retry", message=())
-  let root : @core.View[Unit] = @views.column(
-    [
-      @views.toast("Saved", tone=@views.FeedbackTone::Success),
-      @views.snackbar("Offline", action=Some(action)),
-      @views.banner("Heads up", "Sync is delayed", tone=@views.FeedbackTone::Warning),
-      @views.callout("Tip", "Use filters to narrow results"),
-      @views.empty_state("No items", "Create a first item", action=Some(action)),
-      @views.loading_state(),
-      @views.error_state("Failed", "Try again", action=Some(action)),
-      @views.row(
-        [
-          @views.badge("Beta", tone=@views.BadgeTone::Accent),
-          @views.stat_card("Views", "128", caption="Today"),
-        ],
-      ),
-    ],
-  )
+  let root : @core.View[Unit] = @views.column([
+    @views.toast("Saved", tone=@views.FeedbackTone::Success),
+    @views.snackbar("Offline", action=Some(action)),
+    @views.banner(
+      "Heads up",
+      "Sync is delayed",
+      tone=@views.FeedbackTone::Warning,
+    ),
+    @views.callout("Tip", "Use filters to narrow results"),
+    @views.empty_state("No items", "Create a first item", action=Some(action)),
+    @views.loading_state(),
+    @views.error_state("Failed", "Try again", action=Some(action)),
+    @views.row([
+      @views.badge("Beta", tone=@views.BadgeTone::Accent),
+      @views.stat_card("Views", "128", caption="Today"),
+    ]),
+  ])
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=680.0, height=760.0),
@@ -617,18 +603,22 @@ test "popover dropdown combobox and autocomplete compose menu surfaces" {
     @views.MenuItem::new(id="two", label="Two", message=(), enabled=false),
   ]
   let dropdown_state = @views.DropdownState::new(expanded=true, selected="one")
-  let root : @core.View[Unit] = @views.column(
-    [
-      @views.popover(
-        anchor=@views.button("Anchor", on_click=()),
-        content=@views.text("Popover content", width=160.0),
-        expanded=true,
-      ),
-      @views.dropdown("Mode", items, state=dropdown_state, on_toggle=()),
-      @views.combobox("O", on_input=_value => (), items, expanded=true, on_toggle=()),
-      @views.autocomplete("T", on_input=_value => (), items, expanded=true),
-    ],
-  )
+  let root : @core.View[Unit] = @views.column([
+    @views.popover(
+      anchor=@views.button("Anchor", on_click=()),
+      content=@views.text("Popover content", width=160.0),
+      expanded=true,
+    ),
+    @views.dropdown("Mode", items, state=dropdown_state, on_toggle=()),
+    @views.combobox(
+      "O",
+      on_input=_value => (),
+      items,
+      expanded=true,
+      on_toggle=(),
+    ),
+    @views.autocomplete("T", on_input=_value => (), items, expanded=true),
+  ])
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=640.0, height=520.0),
@@ -665,25 +655,23 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
       enabled=false,
     ),
   ]
-  let root : @core.View[Unit] = @views.column(
-    [
-      @views.breadcrumb(crumbs),
-      @views.split_view(
-        primary=@views.sidebar("Sections", nav_items, selected="settings"),
-        detail=@views.master_detail(
-          master=@views.text("Master", width=120.0),
-          detail=@views.text("Detail", width=160.0),
-          master_width=120.0,
-          detail_width=160.0,
-          height=80.0,
-        ),
-        primary_width=220.0,
-        detail_width=300.0,
-        height=180.0,
+  let root : @core.View[Unit] = @views.column([
+    @views.breadcrumb(crumbs),
+    @views.split_view(
+      primary=@views.sidebar("Sections", nav_items, selected="settings"),
+      detail=@views.master_detail(
+        master=@views.text("Master", width=120.0),
+        detail=@views.text("Detail", width=160.0),
+        master_width=120.0,
+        detail_width=160.0,
+        height=80.0,
       ),
-      @views.wizard(steps, current="first", on_select=_route => ()),
-    ],
-  )
+      primary_width=220.0,
+      detail_width=300.0,
+      height=180.0,
+    ),
+    @views.wizard(steps, current="first", on_select=_route => ()),
+  ])
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=760.0, height=620.0),
@@ -735,29 +723,25 @@ test "data display components compose tables trees descriptions and avatars" {
     @views.table_column(id="state", label="State", width=96.0),
   ]
   let tree = [
-    @views.tree_item(
-      id="root",
-      label="Root",
-      children=[@views.tree_item(id="leaf", label="Leaf")],
-    ),
+    @views.tree_item(id="root", label="Root", children=[
+      @views.tree_item(id="leaf", label="Leaf"),
+    ]),
   ]
-  let root : @core.View[Unit] = @views.column(
-    [
-      @views.description_list([
-        @views.description_item("Owner", "Mira"),
-        @views.description_item("Status", "Active"),
-      ]),
-      @views.table(
-        columns,
-        [["Atlas", "Active"], ["Billing", "Review"]],
-        selected_row=Some(1),
-      ),
-      @views.table(columns, [], empty=Some(@views.text("No data"))),
-      @views.tree_view(tree, expanded=["root"], selected="leaf"),
-      @views.avatar("Mira", size=32.0),
-      @views.avatar_group(["Mira", "Noah", "Iris", "Ava", "Kai"], size=28.0),
-    ],
-  )
+  let root : @core.View[Unit] = @views.column([
+    @views.description_list([
+      @views.description_item("Owner", "Mira"),
+      @views.description_item("Status", "Active"),
+    ]),
+    @views.table(
+      columns,
+      [["Atlas", "Active"], ["Billing", "Review"]],
+      selected_row=Some(1),
+    ),
+    @views.table(columns, [], empty=Some(@views.text("No data"))),
+    @views.tree_view(tree, expanded=["root"], selected="leaf"),
+    @views.avatar("Mira", size=32.0),
+    @views.avatar_group(["Mira", "Noah", "Iris", "Ava", "Kai"], size=28.0),
+  ])
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=720.0, height=680.0),
@@ -792,29 +776,30 @@ test "toolbar and disclosure containers compose command surfaces" {
       content=@views.text("Two content", width=180.0),
     ),
   ]
-  let root : @core.View[Unit] = @views.column(
-    [
-      @views.toolbar([
-        @views.button_group(commands, selected="save"),
-        @views.command_bar(commands, width=220.0),
-      ]),
-      @views.status_bar(["Ready", "2 commands"]),
-      @views.accordion(sections, expanded=["one"], on_toggle=_id => ()),
-      @views.disclosure(
-        "Inline Disclosure",
-        content=@views.text("Inline content", width=180.0),
-        expanded=true,
-        on_toggle=(),
-      ),
-      @views.collapsible_panel(
-        "Panel",
-        content=@views.text("Panel content", width=180.0),
-        expanded=true,
-        on_toggle=(),
-      ),
-      @views.resizable_panel(content=@views.text("Resizable", width=160.0), size=180.0),
-    ],
-  )
+  let root : @core.View[Unit] = @views.column([
+    @views.toolbar([
+      @views.button_group(commands, selected="save"),
+      @views.command_bar(commands, width=220.0),
+    ]),
+    @views.status_bar(["Ready", "2 commands"]),
+    @views.accordion(sections, expanded=["one"], on_toggle=_id => ()),
+    @views.disclosure(
+      "Inline Disclosure",
+      content=@views.text("Inline content", width=180.0),
+      expanded=true,
+      on_toggle=(),
+    ),
+    @views.collapsible_panel(
+      "Panel",
+      content=@views.text("Panel content", width=180.0),
+      expanded=true,
+      on_toggle=(),
+    ),
+    @views.resizable_panel(
+      content=@views.text("Resizable", width=160.0),
+      size=180.0,
+    ),
+  ])
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=760.0, height=760.0),
@@ -878,13 +863,13 @@ test "resizable panel drag handle emits controlled size" {
 test "public view gesture wrappers can be composed from views" {
   let log = Ref("")
   let root = @views.surface(
-    @views.text("Gesture", width=120.0),
-    width=160.0,
-    height=80.0,
-  )
-  .on_double_tap("double")
-  .on_long_press("long")
-  .on_drag(event => event.phase.label())
+      @views.text("Gesture", width=120.0),
+      width=160.0,
+      height=80.0,
+    )
+    .on_double_tap("double")
+    .on_long_press("long")
+    .on_drag(event => event.phase.label())
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=120.0),
@@ -1018,11 +1003,7 @@ test "drop zone maps dropped files to app message" {
   let runtime = @core.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=320.0, height=160.0),
-    on_message=Some(paths => {
-      if paths.length() > 0 {
-        seen.val = paths[0]
-      }
-    }),
+    on_message=Some(paths => if paths.length() > 0 { seen.val = paths[0] }),
   )
   runtime.dispatch_event(
     @core.AppEvent::DragDrop(
@@ -1069,24 +1050,29 @@ test "file import panel renders empty and unavailable states" {
 ///|
 test "menu bar and command menu render enabled disabled items" {
   let sections = [
-    @views.CommandMenuSection::new(
-      title="File",
-      commands=[
-        @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
-        @core.ActionCommand::new(
-          intent=@core.CommandIntent::Cancel,
-          label="Close",
-          enabled=false,
-        ),
-      ],
-    ),
+    @views.CommandMenuSection::new(title="File", commands=[
+      @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Cancel,
+        label="Close",
+        enabled=false,
+      ),
+    ]),
   ]
   let runtime = test_runtime(
     @views.column([
-      @views.menu_bar([
-        @views.MenuItem::new(id="file", label="File", message=()),
-        @views.MenuItem::new(id="edit", label="Edit", message=(), enabled=false),
-      ], active="file"),
+      @views.menu_bar(
+        [
+          @views.MenuItem::new(id="file", label="File", message=()),
+          @views.MenuItem::new(
+            id="edit",
+            label="Edit",
+            message=(),
+            enabled=false,
+          ),
+        ],
+        active="file",
+      ),
       @views.command_menu(sections, on_select=_intent => (), width=280.0),
     ]),
   )
@@ -1101,17 +1087,14 @@ test "menu bar and command menu render enabled disabled items" {
 test "command menu dispatches enabled command and ignores disabled command" {
   let selected = Ref("")
   let sections = [
-    @views.CommandMenuSection::new(
-      title="",
-      commands=[
-        @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
-        @core.ActionCommand::new(
-          intent=@core.CommandIntent::Cancel,
-          label="Cancel",
-          enabled=false,
-        ),
-      ],
-    ),
+    @views.CommandMenuSection::new(title="", commands=[
+      @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Cancel,
+        label="Cancel",
+        enabled=false,
+      ),
+    ]),
   ]
   let runtime = @core.AppRuntime::new_view(
     root=@views.command_menu(sections, on_select=intent => intent, width=280.0),
@@ -1180,15 +1163,12 @@ test "context menu region can render fallback view menu" {
       child=@views.text("Region"),
       menu=@views.command_menu(
         [
-          @views.CommandMenuSection::new(
-            title="Actions",
-            commands=[
-              @core.ActionCommand::new(
-                intent=@core.CommandIntent::Copy,
-                label="Copy Item",
-              ),
-            ],
-          ),
+          @views.CommandMenuSection::new(title="Actions", commands=[
+            @core.ActionCommand::new(
+              intent=@core.CommandIntent::Copy,
+              label="Copy Item",
+            ),
+          ]),
         ],
         on_select=_intent => (),
         width=240.0,
@@ -1203,7 +1183,9 @@ test "context menu region can render fallback view menu" {
   guard find_semantics_label(semantics, "Context menu region") is Some(node) else {
     fail("expected context menu region semantics")
   }
-  assert_true(node.actions.any(action => action == @core.SemanticsAction::Expand))
+  assert_true(
+    node.actions.any(action => action == @core.SemanticsAction::Expand),
+  )
 }
 
 ///|
@@ -1214,7 +1196,10 @@ fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
 }
 
 ///|
-fn text_frame(commands : Array[@core.DrawCommand], text : String) -> @core.Rect? {
+fn text_frame(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.Rect? {
   for command in commands {
     match command {
       @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
