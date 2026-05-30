@@ -9,6 +9,11 @@ Use this catalog as a support matrix for current view APIs. Source-level details
 remain in `views/*.mbt` and the generated public API summary in
 `views/pkg.generated.mbti`.
 
+For task-oriented composition patterns, see the
+[Non-render component cookbook](non-render-component-cookbook.md). It shows how
+to assemble forms, data tables, navigation shells, menus, host-service flows,
+and virtual lists without changing the renderer surface.
+
 Showcase exposes the current user-facing catalog in this order:
 `Overview -> Text & Media -> Controls -> Forms -> Data -> Layout -> Navigation
 Shell -> Feedback -> Runtime/Renderer -> Diagnostics`. Deeper routes for

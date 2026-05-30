@@ -40,6 +40,19 @@ or during public API reviews. Treat new unnecessary annotations as cleanup work,
 but do not require this stricter audit to be warning-free for every inner-loop
 change until existing warnings are resolved.
 
+When validating cookbook-style app patterns, start with the package that owns
+the contract and then run the shared example that demonstrates it. The common
+mapping is:
+
+| Pattern | Focused checks |
+| --- | --- |
+| Forms | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/settings/app --target native` |
+| Data table | `moon test moui/views --target native`, `moon test examples/data_table/app --target native` |
+| Navigation shell | `moon test moui/views --target native`, `moon test examples/showcase/app --target native` |
+| Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
+| Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
+| Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
+
 ## Platform Validation
 
 When platform behavior matters, include backend tests without forcing native
