@@ -209,8 +209,16 @@ pub fn LongPressGestureState::update(
     Down => {
       let next = {
         ..self,
-        phase: if inside { LongPressGesturePhase::Pressing } else { LongPressGesturePhase::Idle },
-        origin: if inside { Some(event.position) } else { None },
+        phase: if inside {
+          LongPressGesturePhase::Pressing
+        } else {
+          LongPressGesturePhase::Idle
+        },
+        origin: if inside {
+          Some(event.position)
+        } else {
+          None
+        },
         start_time_ms: event.time_ms,
       }
       { state: next, recognized: false, cancelled: false }
@@ -218,7 +226,8 @@ pub fn LongPressGestureState::update(
     Move =>
       match self.origin {
         Some(origin) => {
-          let outside = !inside || point_distance(origin, event.position) > self.max_movement
+          let outside = !inside ||
+            point_distance(origin, event.position) > self.max_movement
           let due = event.time_ms - self.start_time_ms >= self.duration_ms
           if outside {
             {
@@ -285,17 +294,24 @@ pub fn DoubleTapGestureState::tap(
         }
       } else {
         {
-          state: { ..self, first_position: Some(position), first_time_ms: time_ms },
+          state: {
+            ..self,
+            first_position: Some(position),
+            first_time_ms: time_ms,
+          },
           recognized: false,
         }
       }
     }
-    None => {
+    None =>
       {
-        state: { ..self, first_position: Some(position), first_time_ms: time_ms },
+        state: {
+          ..self,
+          first_position: Some(position),
+          first_time_ms: time_ms,
+        },
         recognized: false,
       }
-    }
   }
 }
 
@@ -336,9 +352,7 @@ pub fn DragGesturePhase::label(self : DragGesturePhase) -> String {
 }
 
 ///|
-pub fn DragGestureState::new(
-  min_distance? : Double = 3.0,
-) -> DragGestureState {
+pub fn DragGestureState::new(min_distance? : Double = 3.0) -> DragGestureState {
   {
     phase: DragGesturePhase::Idle,
     origin: None,
@@ -356,7 +370,12 @@ pub fn DragGestureState::update(
   match event.phase {
     Down => {
       let next = if inside {
-        { ..self, phase: DragGesturePhase::Pending, origin: Some(event.position), last_position: Some(event.position) }
+        {
+          ..self,
+          phase: DragGesturePhase::Pending,
+          origin: Some(event.position),
+          last_position: Some(event.position),
+        }
       } else {
         DragGestureState::new(min_distance=self.min_distance)
       }
@@ -368,7 +387,8 @@ pub fn DragGestureState::update(
           let translation = point_delta(origin, event.position)
           let delta = point_delta(last, event.position)
           let distance = point_distance(origin, event.position)
-          if self.phase == DragGesturePhase::Pending && distance < self.min_distance {
+          if self.phase == DragGesturePhase::Pending &&
+            distance < self.min_distance {
             {
               state: { ..self, last_position: Some(event.position) },
               event: None,
@@ -420,15 +440,17 @@ pub fn DragGestureState::update(
             event: drag_event,
           }
         }
-        _ => {
-          state: DragGestureState::new(min_distance=self.min_distance),
-          event: None,
-        }
+        _ =>
+          {
+            state: DragGestureState::new(min_distance=self.min_distance),
+            event: None,
+          }
       }
     Cancel => {
       let drag_event = match (self.origin, self.last_position) {
         (Some(origin), Some(last)) =>
-          if self.phase == DragGesturePhase::Started || self.phase == DragGesturePhase::Changed {
+          if self.phase == DragGesturePhase::Started ||
+            self.phase == DragGesturePhase::Changed {
             Some(
               DragGestureEvent::new(
                 phase=DragGesturePhase::Cancelled,

@@ -38,7 +38,11 @@ pub fn[Msg] dropdown(
   width? : Double = 240.0,
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
-  let selected_label = dropdown_selected_label(items, state.selected, placeholder)
+  let selected_label = dropdown_selected_label(
+    items,
+    state.selected,
+    placeholder,
+  )
   let anchor = button(
     label + ": " + selected_label,
     on_click=on_toggle,
@@ -48,7 +52,12 @@ pub fn[Msg] dropdown(
   )
   popover(
     anchor~,
-    content=dropdown_menu(items, theme~, width=width - theme.spacing_scale.sm * 2.0, max_height~),
+    content=dropdown_menu(
+      items,
+      theme~,
+      width=width - theme.spacing_scale.sm * 2.0,
+      max_height~,
+    ),
     expanded=state.expanded,
     theme~,
     width~,
@@ -78,14 +87,25 @@ pub fn[Msg] combobox(
         theme~,
         width=views_max_double(80.0, width - 70.0),
       ),
-      button("Open", on_click=on_toggle, variant=ButtonVariant::Ghost, theme~, width=62.0),
+      button(
+        "Open",
+        on_click=on_toggle,
+        variant=ButtonVariant::Ghost,
+        theme~,
+        width=62.0,
+      ),
     ],
     spacing=theme.spacing_scale.xs,
     align=CrossAlign::Center,
   ).frame(width~)
   popover(
     anchor~,
-    content=dropdown_menu(items, theme~, width=width - theme.spacing_scale.sm * 2.0, max_height~),
+    content=dropdown_menu(
+      items,
+      theme~,
+      width=width - theme.spacing_scale.sm * 2.0,
+      max_height~,
+    ),
     expanded~,
     theme~,
     width~,
@@ -139,14 +159,22 @@ fn[Msg] dropdown_menu(
       button(
         item.label,
         on_click=item.message,
-        variant=if item.enabled { ButtonVariant::Ghost } else { ButtonVariant::Outline },
+        variant=if item.enabled {
+          ButtonVariant::Ghost
+        } else {
+          ButtonVariant::Outline
+        },
         theme~,
         width~,
         height=34.0,
       ).disabled(disabled=!item.enabled),
     )
   }
-  scroll_view(column(rows, spacing=theme.spacing_scale.xs), width~, height=max_height)
+  scroll_view(
+    column(rows, spacing=theme.spacing_scale.xs),
+    width~,
+    height=max_height,
+  )
 }
 
 ///|

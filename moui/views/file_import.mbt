@@ -11,39 +11,53 @@ pub fn[Msg] drop_zone(
   let title_height = 28.0
   let message_height = if message == "" { 0.0 } else { 26.0 }
   let rows : Array[@core.View[Msg]] = [
-    text(title, role=TextRole::Control, theme~, width=width - 32.0, height=title_height),
+    text(
+      title,
+      role=TextRole::Control,
+      theme~,
+      width=width - 32.0,
+      height=title_height,
+    ),
   ]
   if message != "" {
-    rows.push(text(message, role=TextRole::Caption, theme~, width=width - 32.0, height=message_height))
+    rows.push(
+      text(
+        message,
+        role=TextRole::Caption,
+        theme~,
+        width=width - 32.0,
+        height=message_height,
+      ),
+    )
   }
   let zone = surface(
-    column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center),
-    width~,
-    height~,
-    background=if enabled {
-      theme.palette.surface_variant.multiply_alpha(0.54)
-    } else {
-      theme.palette.surface_variant.multiply_alpha(0.28)
-    },
-    corner_radius=theme.radius_scale.md,
-    theme~,
-    padding=theme.spacing_scale.md,
-  )
-  .border(
-    @core.BorderStyle::new(
-      brush=@core.Brush::solid(
-        if enabled {
-          theme.palette.primary.multiply_alpha(0.58)
-        } else {
-          theme.palette.outline.multiply_alpha(0.46)
-        },
+      column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center),
+      width~,
+      height~,
+      background=if enabled {
+        theme.palette.surface_variant.multiply_alpha(0.54)
+      } else {
+        theme.palette.surface_variant.multiply_alpha(0.28)
+      },
+      corner_radius=theme.radius_scale.md,
+      theme~,
+      padding=theme.spacing_scale.md,
+    )
+    .border(
+      @core.BorderStyle::new(
+        brush=@core.Brush::solid(
+          if enabled {
+            theme.palette.primary.multiply_alpha(0.58)
+          } else {
+            theme.palette.outline.multiply_alpha(0.46)
+          },
+        ),
+        width=1.0,
       ),
-      width=1.0,
-    ),
-  )
-  .semantics_role(@core.SemanticsRole::Button)
-  .semantics_description("File drop target")
-  .disabled(disabled=!enabled)
+    )
+    .semantics_role(@core.SemanticsRole::Button)
+    .semantics_description("File drop target")
+    .disabled(disabled=!enabled)
   if enabled {
     zone.on_file_drop((paths, _point) => on_drop(paths))
   } else {
@@ -81,7 +95,11 @@ pub fn[Msg] file_import_panel(
         button(
           "Browse",
           on_click=message,
-          variant=if enabled { ButtonVariant::Primary } else { ButtonVariant::Tonal },
+          variant=if enabled {
+            ButtonVariant::Primary
+          } else {
+            ButtonVariant::Tonal
+          },
           theme~,
           width=112.0,
           height=36.0,
@@ -89,7 +107,12 @@ pub fn[Msg] file_import_panel(
       )
     None => ()
   }
-  let list = file_selection_list(selection, theme~, width=width - 32.0, empty_message~)
+  let list = file_selection_list(
+    selection,
+    theme~,
+    width=width - 32.0,
+    empty_message~,
+  )
   rows.push(list)
   surface(
     column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
@@ -98,7 +121,8 @@ pub fn[Msg] file_import_panel(
     variant=SurfaceVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
-  ).semantics_role(@core.SemanticsRole::Group)
+  )
+  .semantics_role(@core.SemanticsRole::Group)
   .semantics_description("File import panel")
 }
 
@@ -134,7 +158,14 @@ fn[Msg] file_selection_list(
 }
 
 ///|
-fn file_import_panel_height(selection : FileSelection, has_browse : Bool) -> Double {
-  let list_rows = if selection.is_empty() { 1 } else { selection.paths.length() }
+fn file_import_panel_height(
+  selection : FileSelection,
+  has_browse : Bool,
+) -> Double {
+  let list_rows = if selection.is_empty() {
+    1
+  } else {
+    selection.paths.length()
+  }
   180.0 + (if has_browse { 44.0 } else { 0.0 }) + list_rows.to_double() * 28.0
 }

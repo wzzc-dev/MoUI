@@ -235,9 +235,21 @@ fn ElementNode::semantics_info(
     GridSpec(_) =>
       { role: Grid, label: "", value: "", description: "", actions: [] }
     ScrollSpec(_) =>
-      { role: ScrollView, label: "", value: "", description: "", actions: [Scroll] }
+      {
+        role: ScrollView,
+        label: "",
+        value: "",
+        description: "",
+        actions: [Scroll],
+      }
     ImageSpec(data) =>
-      { role: None, label: data.source, value: "", description: "", actions: [] }
+      {
+        role: None,
+        label: data.source,
+        value: "",
+        description: "",
+        actions: [],
+      }
     CustomSpec(data) =>
       {
         role: data.semantics_role,
@@ -291,7 +303,13 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
     | OnDoubleTapModifier(_)
     | OnDragModifier(_)
     | KeyboardShortcutModifier(_) =>
-      { role: Button, label: "", value: "", description: "", actions: [Focus, Activate] }
+      {
+        role: Button,
+        label: "",
+        value: "",
+        description: "",
+        actions: [Focus, Activate],
+      }
     SemanticsSelectedModifier(_) =>
       { role: Group, label: "", value: "", description: "", actions: [Select] }
     SemanticsCheckedModifier(_) =>
@@ -302,7 +320,11 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
         label: "",
         value: "",
         description: "",
-        actions: if expanded { [Collapse] } else { [Expand] },
+        actions: if expanded {
+          [Collapse]
+        } else {
+          [Expand]
+        },
       }
     SemanticsInvalidModifier(_) | SemanticsRequiredModifier(_) =>
       { role: Group, label: "", value: "", description: "", actions: [] }
@@ -336,10 +358,14 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
 }
 
 ///|
-fn ElementNode::semantics_role(self : ElementNode, role : SemanticsRole) -> SemanticsRole {
+fn ElementNode::semantics_role(
+  self : ElementNode,
+  role : SemanticsRole,
+) -> SemanticsRole {
   if role != SemanticsRole::Group {
     role
-  } else if self.should_inherit_child_semantics_role() && self.children.length() > 0 {
+  } else if self.should_inherit_child_semantics_role() &&
+    self.children.length() > 0 {
     self.children[0].primary_semantics_role()
   } else {
     role
@@ -389,7 +415,10 @@ fn ElementNode::semantics_actions(
 ) -> Array[SemanticsAction] {
   let merged = actions.copy()
   if self.should_merge_child_semantics() && self.children.length() > 0 {
-    append_unique_semantics_actions(merged, self.children[0].primary_semantics_actions())
+    append_unique_semantics_actions(
+      merged,
+      self.children[0].primary_semantics_actions(),
+    )
   }
   merged
 }
@@ -409,12 +438,16 @@ fn ElementNode::primary_semantics_label(self : ElementNode) -> String {
 ///|
 fn ElementNode::primary_semantics_role(self : ElementNode) -> SemanticsRole {
   let info = self.semantics_info(list_item=false)
-  let role = if info.role == SemanticsRole::Group && self.should_inherit_child_semantics_role() && self.children.length() > 0 {
+  let role = if info.role == SemanticsRole::Group &&
+    self.should_inherit_child_semantics_role() &&
+    self.children.length() > 0 {
     self.children[0].primary_semantics_role()
   } else {
     info.role
   }
-  if role == SemanticsRole::Group && self.children.length() > 0 && self.is_semantics_passthrough() {
+  if role == SemanticsRole::Group &&
+    self.children.length() > 0 &&
+    self.is_semantics_passthrough() {
     self.children[0].primary_semantics_role()
   } else {
     role
@@ -454,11 +487,16 @@ fn ElementNode::primary_semantics_description(self : ElementNode) -> String {
 }
 
 ///|
-fn ElementNode::primary_semantics_actions(self : ElementNode) -> Array[SemanticsAction] {
+fn ElementNode::primary_semantics_actions(
+  self : ElementNode,
+) -> Array[SemanticsAction] {
   let info = self.semantics_info(list_item=false)
   let actions = info.actions.copy()
   if self.children.length() > 0 && self.is_semantics_passthrough() {
-    append_unique_semantics_actions(actions, self.children[0].primary_semantics_actions())
+    append_unique_semantics_actions(
+      actions,
+      self.children[0].primary_semantics_actions(),
+    )
   }
   actions
 }

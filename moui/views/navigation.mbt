@@ -59,7 +59,8 @@ pub fn[Msg] router_stack(
 ) -> @core.View[Msg] {
   let location = router.current()
   for destination in destinations {
-    if destination.route == location.path || destination.route == location.to_route() {
+    if destination.route == location.path ||
+      destination.route == location.to_route() {
       return destination.view
     }
   }
@@ -80,17 +81,18 @@ pub fn[Msg] tab_view(
       content = tab.view
     }
     let tab_button = button(
-      tab.label,
-      on_click=on_select(tab.route),
-      variant=if tab.route == selected {
-        ButtonVariant::Primary
-      } else {
-        ButtonVariant::Tonal
-      },
-      width=112.0,
-      height=36.0,
-    ).semantics_role(@core.SemanticsRole::Tab)
-    .semantics_selected(selected=tab.route == selected)
+        tab.label,
+        on_click=on_select(tab.route),
+        variant=if tab.route == selected {
+          ButtonVariant::Primary
+        } else {
+          ButtonVariant::Tonal
+        },
+        width=112.0,
+        height=36.0,
+      )
+      .semantics_role(@core.SemanticsRole::Tab)
+      .semantics_selected(selected=tab.route == selected)
     buttons.push(tab_button)
   }
   column([row(buttons, spacing~), content], spacing~)
@@ -240,9 +242,15 @@ pub fn[Msg] wizard(
   width? : Double = 520.0,
   height? : Double = 260.0,
 ) -> @core.View[Msg] {
-  let header_width = views_max_double(120.0, width - theme.spacing_scale.md * 2.0)
+  let header_width = views_max_double(
+    120.0,
+    width - theme.spacing_scale.md * 2.0,
+  )
   let step_count = views_max_int(1, steps.length())
-  let step_width = views_max_double(88.0, header_width / step_count.to_double() - 4.0)
+  let step_width = views_max_double(
+    88.0,
+    header_width / step_count.to_double() - 4.0,
+  )
   let step_buttons : Array[@core.View[Msg]] = []
   let mut content = empty()
   for step in steps {
@@ -271,7 +279,11 @@ pub fn[Msg] wizard(
   surface(
     column(
       [
-        row(step_buttons, spacing=theme.spacing_scale.xs, align=CrossAlign::Center),
+        row(
+          step_buttons,
+          spacing=theme.spacing_scale.xs,
+          align=CrossAlign::Center,
+        ),
         content.frame(width=header_width, height=height - 74.0),
       ],
       spacing=theme.spacing_scale.md,

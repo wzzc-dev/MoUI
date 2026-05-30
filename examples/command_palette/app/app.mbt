@@ -85,8 +85,11 @@ pub fn CommandPaletteModel::filtered_commands(
   self : CommandPaletteModel,
 ) -> Array[@core.ActionCommand] {
   let needle = self.query.to_lower()
-  self.commands().filter(command => {
-    needle == "" || command.display_label().to_lower().contains(needle) ||
+  self
+  .commands()
+  .filter(command => {
+    needle == "" ||
+    command.display_label().to_lower().contains(needle) ||
     command.group.to_lower().contains(needle) ||
     command.description.to_lower().contains(needle) ||
     command.shortcut_label().to_lower().contains(needle)
@@ -133,7 +136,13 @@ pub fn CommandPaletteModel::view(
         [
           column(
             [
-              text("Command Palette", role=@views.TextRole::Title, theme~, width=300.0, height=34.0),
+              text(
+                "Command Palette",
+                role=@views.TextRole::Title,
+                theme~,
+                width=300.0,
+                height=34.0,
+              ),
               text(
                 "Metadata, shortcuts, disabled rows, and context fallback.",
                 role=@views.TextRole::Caption,
@@ -145,7 +154,14 @@ pub fn CommandPaletteModel::view(
             spacing=0.0,
             align=@views.CrossAlign::Start,
           ),
-          button("Clear Log", on_click=ClearLog, variant=@views.ButtonVariant::Outline, theme~, width=96.0, height=36.0),
+          button(
+            "Clear Log",
+            on_click=ClearLog,
+            variant=@views.ButtonVariant::Outline,
+            theme~,
+            width=96.0,
+            height=36.0,
+          ),
         ],
         spacing=theme.spacing_scale.md,
         align=@views.CrossAlign::Center,
@@ -161,8 +177,22 @@ pub fn CommandPaletteModel::view(
             width=260.0,
             height=38.0,
           ),
-          button("Context", on_click=ToggleContextMenu, variant=@views.ButtonVariant::Tonal, theme~, width=96.0, height=36.0),
-          button("Submit", on_click=CommandSelected(@core.CommandIntent::Submit), variant=@views.ButtonVariant::Primary, theme~, width=88.0, height=36.0),
+          button(
+            "Context",
+            on_click=ToggleContextMenu,
+            variant=@views.ButtonVariant::Tonal,
+            theme~,
+            width=96.0,
+            height=36.0,
+          ),
+          button(
+            "Submit",
+            on_click=CommandSelected(@core.CommandIntent::Submit),
+            variant=@views.ButtonVariant::Primary,
+            theme~,
+            width=88.0,
+            height=36.0,
+          ),
         ],
         theme~,
         width=700.0,
@@ -183,7 +213,11 @@ pub fn CommandPaletteModel::view(
         align=@views.CrossAlign::Start,
       ),
       self.command_log(theme),
-      status_bar([self.last_result, "Visible: \{self.filtered_commands().length()}"], theme~, width=700.0),
+      status_bar(
+        [self.last_result, "Visible: \{self.filtered_commands().length()}"],
+        theme~,
+        width=700.0,
+      ),
     ],
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Stretch,
@@ -239,8 +273,20 @@ fn CommandPaletteModel::context_region(
     child=surface(
       column(
         [
-          text("Context menu fallback", role=@views.TextRole::Control, theme~, width=230.0, height=28.0),
-          text("Use command menu rows when native menus are unavailable.", role=@views.TextRole::Caption, theme~, width=230.0, height=42.0),
+          text(
+            "Context menu fallback",
+            role=@views.TextRole::Control,
+            theme~,
+            width=230.0,
+            height=28.0,
+          ),
+          text(
+            "Use command menu rows when native menus are unavailable.",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=230.0,
+            height=42.0,
+          ),
         ],
         spacing=theme.spacing_scale.xs,
         align=@views.CrossAlign::Start,
@@ -269,13 +315,35 @@ fn CommandPaletteModel::command_log(
   theme : @core.Theme,
 ) -> @core.View[CommandPaletteMsg] {
   let rows : Array[@core.View[CommandPaletteMsg]] = [
-    text("Dispatch Log", role=@views.TextRole::Control, theme~, width=680.0, height=26.0),
+    text(
+      "Dispatch Log",
+      role=@views.TextRole::Control,
+      theme~,
+      width=680.0,
+      height=26.0,
+    ),
   ]
   if self.dispatched.is_empty() {
-    rows.push(text("No commands yet", role=@views.TextRole::Caption, theme~, width=680.0, height=24.0))
+    rows.push(
+      text(
+        "No commands yet",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=680.0,
+        height=24.0,
+      ),
+    )
   } else {
     for item in self.dispatched {
-      rows.push(text(item, role=@views.TextRole::Caption, theme~, width=680.0, height=24.0))
+      rows.push(
+        text(
+          item,
+          role=@views.TextRole::Caption,
+          theme~,
+          width=680.0,
+          height=24.0,
+        ),
+      )
     }
   }
   surface(
@@ -294,28 +362,48 @@ pub fn command_palette_commands() -> Array[@core.ActionCommand] {
     @core.ActionCommand::new(
       intent=@core.CommandIntent::Submit,
       label="Save Document",
-      shortcut=Some(@core.KeyboardShortcut::new(key="s", modifiers=@core.KeyModifiers::new(meta=true))),
+      shortcut=Some(
+        @core.KeyboardShortcut::new(
+          key="s",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
       group="File",
       description="Persist the current document.",
     ),
     @core.ActionCommand::new(
       intent=@core.CommandIntent::Copy,
       label="Copy Selection",
-      shortcut=Some(@core.KeyboardShortcut::new(key="c", modifiers=@core.KeyModifiers::new(meta=true))),
+      shortcut=Some(
+        @core.KeyboardShortcut::new(
+          key="c",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
       group="Edit",
       description="Copy the selected block.",
     ),
     @core.ActionCommand::new(
       intent=@core.CommandIntent::Paste,
       label="Paste Selection",
-      shortcut=Some(@core.KeyboardShortcut::new(key="v", modifiers=@core.KeyModifiers::new(meta=true))),
+      shortcut=Some(
+        @core.KeyboardShortcut::new(
+          key="v",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
       group="Edit",
       description="Paste from the clipboard.",
     ),
     @core.ActionCommand::new(
       intent=@core.CommandIntent::Cancel,
       label="Archive Document",
-      shortcut=Some(@core.KeyboardShortcut::new(key="Backspace", modifiers=@core.KeyModifiers::new(meta=true))),
+      shortcut=Some(
+        @core.KeyboardShortcut::new(
+          key="Backspace",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
       enabled=false,
       group="File",
       description="Disabled until a document is selected.",
@@ -323,7 +411,12 @@ pub fn command_palette_commands() -> Array[@core.ActionCommand] {
     @core.ActionCommand::new(
       intent=@core.CommandIntent::OpenContextMenu,
       label="Open Fallback Menu",
-      shortcut=Some(@core.KeyboardShortcut::new(key="k", modifiers=@core.KeyModifiers::new(meta=true))),
+      shortcut=Some(
+        @core.KeyboardShortcut::new(
+          key="k",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
       group="View",
       description="Show the view-level context menu.",
     ),
@@ -335,11 +428,15 @@ pub fn command_sections() -> Array[@views.CommandMenuSection] {
   [
     @views.CommandMenuSection::new(
       title="File",
-      commands=command_palette_commands().filter(command => command.group == "File"),
+      commands=command_palette_commands().filter(command => {
+        command.group == "File"
+      }),
     ),
     @views.CommandMenuSection::new(
       title="Edit",
-      commands=command_palette_commands().filter(command => command.group == "Edit"),
+      commands=command_palette_commands().filter(command => {
+        command.group == "Edit"
+      }),
     ),
   ]
 }
@@ -347,9 +444,11 @@ pub fn command_sections() -> Array[@views.CommandMenuSection] {
 ///|
 pub fn action_command_map() -> @core.ActionCommandMap {
   let commands = command_palette_commands()
-  @core.ActionCommandMap::new(bindings=commands.map(command => {
-    @core.CommandBinding::new(command~, handle=() => ())
-  }))
+  @core.ActionCommandMap::new(
+    bindings=commands.map(command => {
+      @core.CommandBinding::new(command~, handle=() => ())
+    }),
+  )
 }
 
 ///|

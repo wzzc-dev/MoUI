@@ -43,7 +43,13 @@ fn ShowcaseModel::data_table_card(
     theme,
     column(
       [
-        text("Data Table", role=@views.TextRole::Control, theme~, width=width - 32.0, height=28.0),
+        text(
+          "Data Table",
+          role=@views.TextRole::Control,
+          theme~,
+          width=width - 32.0,
+          height=28.0,
+        ),
         table(
           columns,
           [
@@ -72,21 +78,23 @@ fn ShowcaseModel::data_tree_card(
 ) -> @core.View[ShowcaseMsg] {
   ignore(self)
   let tree = [
-    tree_item(
-      id="workspace",
-      label="Workspace",
-      children=[
-        tree_item(id="forms", label="Forms"),
-        tree_item(id="data", label="Data"),
-      ],
-    ),
+    tree_item(id="workspace", label="Workspace", children=[
+      tree_item(id="forms", label="Forms"),
+      tree_item(id="data", label="Data"),
+    ]),
     tree_item(id="archive", label="Archive"),
   ]
   showcase_soft_card(
     theme,
     column(
       [
-        text("Tree View", role=@views.TextRole::Control, theme~, width=width - 32.0, height=28.0),
+        text(
+          "Tree View",
+          role=@views.TextRole::Control,
+          theme~,
+          width=width - 32.0,
+          height=28.0,
+        ),
         tree_view(
           tree,
           expanded=["workspace"],
@@ -122,8 +130,20 @@ fn ShowcaseModel::data_profile_card(
             avatar("Mira Chen", theme~, size=44.0),
             column(
               [
-                text("Mira Chen", role=@views.TextRole::Control, theme~, width=180.0, height=24.0),
-                text("Product lead", role=@views.TextRole::Caption, theme~, width=180.0, height=22.0),
+                text(
+                  "Mira Chen",
+                  role=@views.TextRole::Control,
+                  theme~,
+                  width=180.0,
+                  height=24.0,
+                ),
+                text(
+                  "Product lead",
+                  role=@views.TextRole::Caption,
+                  theme~,
+                  width=180.0,
+                  height=22.0,
+                ),
               ],
               spacing=theme.spacing_scale.xs,
               align=@views.CrossAlign::Start,
@@ -151,4 +171,3 @@ fn ShowcaseModel::data_profile_card(
     padding=theme.spacing_scale.md,
   )
 }
-

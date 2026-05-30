@@ -11,12 +11,21 @@ pub fn[Msg] description_list(
     rows.push(
       row(
         [
-          text(item.term, role=TextRole::Caption, theme~, width=term_width, height=row_height),
+          text(
+            item.term,
+            role=TextRole::Caption,
+            theme~,
+            width=term_width,
+            height=row_height,
+          ),
           text(
             item.detail,
             role=TextRole::Body,
             theme~,
-            width=views_max_double(80.0, width - term_width - theme.spacing_scale.sm),
+            width=views_max_double(
+              80.0,
+              width - term_width - theme.spacing_scale.sm,
+            ),
             height=row_height,
           ),
         ],
@@ -25,8 +34,9 @@ pub fn[Msg] description_list(
       ),
     )
   }
-  column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start)
-  .semantics_role(@core.SemanticsRole::Group)
+  column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start).semantics_role(
+    @core.SemanticsRole::Group,
+  )
 }
 
 ///|
@@ -85,10 +95,21 @@ pub fn[Msg] tree_view(
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
   for item in items {
-    append_tree_rows(rows, item, depth=0, expanded~, selected~, on_select~, on_toggle~, theme~, width~)
+    append_tree_rows(
+      rows,
+      item,
+      depth=0,
+      expanded~,
+      selected~,
+      on_select~,
+      on_toggle~,
+      theme~,
+      width~,
+    )
   }
-  column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start)
-  .semantics_role(@core.SemanticsRole::Tree)
+  column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start).semantics_role(
+    @core.SemanticsRole::Tree,
+  )
 }
 
 ///|
@@ -100,7 +121,10 @@ pub fn[Msg] avatar(
 ) -> @core.View[Msg] {
   match image {
     Some(source) =>
-      @core.View::image(source~, size=Some(@core.Size::new(width=size, height=size)))
+      @core.View::image(
+        source~,
+        size=Some(@core.Size::new(width=size, height=size)),
+      )
       .corner_radius(size / 2.0)
       .clip()
       .accessibility_label(label)
@@ -132,7 +156,9 @@ pub fn[Msg] avatar_group(
   let visible = views_min_int(labels.length(), views_max_int(0, max_visible))
   let children : Array[@core.View[Msg]] = []
   for index in 0..<visible {
-    children.push(avatar(labels[index], theme~, size~).key("avatar-" + labels[index]))
+    children.push(
+      avatar(labels[index], theme~, size~).key("avatar-" + labels[index]),
+    )
   }
   let remaining = labels.length() - visible
   if remaining > 0 {
@@ -166,7 +192,13 @@ fn[Msg] table_header(
   for column in columns {
     cells.push(
       surface(
-        text(column.label, role=TextRole::Caption, theme~, width=column.width - 16.0, height=row_height - 8.0),
+        text(
+          column.label,
+          role=TextRole::Caption,
+          theme~,
+          width=column.width - 16.0,
+          height=row_height - 8.0,
+        ),
         width=column.width,
         height=row_height,
         background=theme.palette.surface_variant.multiply_alpha(0.72),
@@ -191,10 +223,21 @@ fn[Msg] table_row(
 ) -> @core.View[Msg] {
   let cells : Array[@core.View[Msg]] = []
   for column_index, column in columns {
-    let value = if column_index < row_values.length() { row_values[column_index] } else { "" }
+    let value = if column_index < row_values.length() {
+      row_values[column_index]
+    } else {
+      ""
+    }
     let content = match cell {
       Some(render) => render(row_index, column, value)
-      None => text(value, role=TextRole::Body, theme~, width=column.width - 16.0, height=row_height - 8.0)
+      None =>
+        text(
+          value,
+          role=TextRole::Body,
+          theme~,
+          width=column.width - 16.0,
+          height=row_height - 8.0,
+        )
     }
     cells.push(
       surface(
@@ -209,7 +252,12 @@ fn[Msg] table_row(
         corner_radius=0.0,
         theme~,
         padding=4.0,
-      ).border(@core.BorderStyle::new(brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.48)), width=1.0)),
+      ).border(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.48)),
+          width=1.0,
+        ),
+      ),
     )
   }
   row(cells, spacing=0.0, align=CrossAlign::Start)
@@ -231,10 +279,31 @@ fn[Msg] append_tree_rows(
 ) -> Unit {
   let is_expanded = string_array_contains(expanded, item.id)
   let is_selected = selected == item.id
-  rows.push(tree_row(item, depth~, expanded=is_expanded, selected=is_selected, on_select~, on_toggle~, theme~, width~))
+  rows.push(
+    tree_row(
+      item,
+      depth~,
+      expanded=is_expanded,
+      selected=is_selected,
+      on_select~,
+      on_toggle~,
+      theme~,
+      width~,
+    ),
+  )
   if is_expanded {
     for child in item.children {
-      append_tree_rows(rows, child, depth=depth + 1, expanded~, selected~, on_select~, on_toggle~, theme~, width~)
+      append_tree_rows(
+        rows,
+        child,
+        depth=depth + 1,
+        expanded~,
+        selected~,
+        on_select~,
+        on_toggle~,
+        theme~,
+        width~,
+      )
     }
   }
 }
@@ -260,13 +329,45 @@ fn[Msg] tree_row(
   }
   let toggle = match on_toggle {
     Some(handler) =>
-      button(toggle_label, on_click=handler(item.id), variant=ButtonVariant::Ghost, theme~, width=28.0, height=30.0)
-    None => text(toggle_label, role=TextRole::Caption, theme~, width=28.0, height=30.0)
+      button(
+        toggle_label,
+        on_click=handler(item.id),
+        variant=ButtonVariant::Ghost,
+        theme~,
+        width=28.0,
+        height=30.0,
+      )
+    None =>
+      text(
+        toggle_label,
+        role=TextRole::Caption,
+        theme~,
+        width=28.0,
+        height=30.0,
+      )
   }
   let label_view = match on_select {
     Some(handler) =>
-      button(item.label, on_click=handler(item.id), variant=if selected { ButtonVariant::Primary } else { ButtonVariant::Ghost }, theme~, width=views_max_double(80.0, width - indent - 34.0), height=30.0)
-    None => text(item.label, role=TextRole::Body, theme~, width=views_max_double(80.0, width - indent - 34.0), height=30.0)
+      button(
+        item.label,
+        on_click=handler(item.id),
+        variant=if selected {
+          ButtonVariant::Primary
+        } else {
+          ButtonVariant::Ghost
+        },
+        theme~,
+        width=views_max_double(80.0, width - indent - 34.0),
+        height=30.0,
+      )
+    None =>
+      text(
+        item.label,
+        role=TextRole::Body,
+        theme~,
+        width=views_max_double(80.0, width - indent - 34.0),
+        height=30.0,
+      )
   }
   row(
     [spacer(min_length=indent, weight=0.0), toggle, label_view],
@@ -300,5 +401,9 @@ fn avatar_initials(label : String) -> String {
 
 ///|
 fn views_min_int(a : Int, b : Int) -> Int {
-  if a < b { a } else { b }
+  if a < b {
+    a
+  } else {
+    b
+  }
 }

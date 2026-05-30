@@ -95,10 +95,7 @@ pub fn HostAppServices::pick_directory(
   title? : String = "",
 ) -> HostServiceResponse {
   self.file_dialog(
-    HostFileDialogOptions::new(
-      kind=HostFileDialogKind::PickDirectory,
-      title~,
-    ),
+    HostFileDialogOptions::new(kind=HostFileDialogKind::PickDirectory, title~),
   )
 }
 

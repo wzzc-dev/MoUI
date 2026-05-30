@@ -87,10 +87,7 @@ pub fn RouteParam::new(key~ : String, value~ : String) -> RouteParam {
 }
 
 ///|
-pub fn RouteQueryParam::new(
-  key~ : String,
-  value~ : String,
-) -> RouteQueryParam {
+pub fn RouteQueryParam::new(key~ : String, value~ : String) -> RouteQueryParam {
   { key, value }
 }
 
@@ -193,7 +190,10 @@ pub fn RouterState::snapshot(self : RouterState) -> RouterSnapshot {
 }
 
 ///|
-pub fn RouterState::restore(self : RouterState, snapshot : RouterSnapshot) -> Unit {
+pub fn RouterState::restore(
+  self : RouterState,
+  snapshot : RouterSnapshot,
+) -> Unit {
   if snapshot.routes.length() == 0 {
     self.navigation.replace("/")
   } else {
@@ -305,7 +305,9 @@ pub fn FormValidationRule::new(
 }
 
 ///|
-pub fn FormValidationRule::required(message? : String = "Required") -> FormValidationRule {
+pub fn FormValidationRule::required(
+  message? : String = "Required",
+) -> FormValidationRule {
   FormValidationRule::new(message~, validate=value => value != "")
 }
 
@@ -337,7 +339,11 @@ pub fn FormValidationSummary::from_errors(
   {
     valid: errors.length() == 0,
     errors,
-    first_invalid_id: if errors.length() == 0 { None } else { Some(errors[0].name) },
+    first_invalid_id: if errors.length() == 0 {
+      None
+    } else {
+      Some(errors[0].name)
+    },
   }
 }
 

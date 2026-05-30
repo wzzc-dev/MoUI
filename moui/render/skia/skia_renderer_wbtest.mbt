@@ -137,10 +137,17 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
       Some((font, run)) => {
         let measured = system.measure_text(input)
         assert_true(measured.size.width == run.width)
-        assert_true(measured.caret_positions[input.text.to_array().length()] == run.width)
-        assert_true(measured.size.width == skia_measure_text_width(font, input.text))
+        assert_true(
+          measured.caret_positions[input.text.to_array().length()] == run.width,
+        )
+        assert_true(
+          measured.size.width == skia_measure_text_width(font, input.text),
+        )
       }
-      None => fail("expected empty typeface text system to find a visible fallback font")
+      None =>
+        fail(
+          "expected empty typeface text system to find a visible fallback font",
+        )
     }
   }
 }

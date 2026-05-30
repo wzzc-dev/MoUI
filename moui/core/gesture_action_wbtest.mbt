@@ -116,9 +116,7 @@ test "drag recognizer emits start update and end phases" {
       phase=PointerPhase::Move,
     ),
   )
-  guard started.event is Some(start_event) else {
-    fail("expected drag start")
-  }
+  guard started.event is Some(start_event) else { fail("expected drag start") }
   inspect(start_event.phase.label(), content="Started")
   inspect(start_event.translation.x, content="7")
   let changed = started.state.update(
@@ -138,9 +136,7 @@ test "drag recognizer emits start update and end phases" {
       phase=PointerPhase::Up,
     ),
   )
-  guard ended.event is Some(end_event) else {
-    fail("expected drag end")
-  }
+  guard ended.event is Some(end_event) else { fail("expected drag end") }
   inspect(end_event.phase.label(), content="Ended")
   inspect(end_event.translation.x, content="12")
   inspect(ended.state.phase.label(), content="Idle")

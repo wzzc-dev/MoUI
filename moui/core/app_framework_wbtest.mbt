@@ -70,22 +70,15 @@ test "form fields validate required values" {
 
 ///|
 test "form controller aggregates rules and first invalid field" {
-  let name = FormFieldState::new(
-    name="name",
-    label="Name",
-    rules=[FormValidationRule::required(message="Name required")],
-  )
-  let email = FormFieldState::new(
-    name="email",
-    initial="ada",
-    rules=[
-      FormValidationRule::required(message="Email required"),
-      FormValidationRule::new(
-        message="Email must contain @",
-        validate=value => value.contains("@"),
-      ),
-    ],
-  )
+  let name = FormFieldState::new(name="name", label="Name", rules=[
+    FormValidationRule::required(message="Name required"),
+  ])
+  let email = FormFieldState::new(name="email", initial="ada", rules=[
+    FormValidationRule::required(message="Email required"),
+    FormValidationRule::new(message="Email must contain @", validate=value => {
+      value.contains("@")
+    }),
+  ])
   let controller = FormController::new(fields=[name, email])
   let summary = controller.validate()
   inspect(summary.valid, content="false")
@@ -151,19 +144,17 @@ test "runtime inspector and frame profile expose devtool counters" {
 ///|
 test "inspector snapshot captures semantic states and dirty reasons" {
   let runtime = AppRuntime::new_spec(
-    root=ViewSpec::ModifiedSpec(
-      {
+    root=ViewSpec::ModifiedSpec({
+      key: None,
+      child: ViewSpec::TextSpec({
         key: None,
-        child: ViewSpec::TextSpec({
-          key: None,
-          text: "Invalid field",
-          size: Size::new(width=120.0, height=28.0),
-          font: FontSpec::new(size=12.0, weight=400),
-          color: Color::black(),
-        }),
-        modifier: SemanticsInvalidModifier(true),
-      },
-    ),
+        text: "Invalid field",
+        size: Size::new(width=120.0, height=28.0),
+        font: FontSpec::new(size=12.0, weight=400),
+        color: Color::black(),
+      }),
+      modifier: SemanticsInvalidModifier(true),
+    }),
     size=Size::new(width=160.0, height=60.0),
   )
   runtime.state.mark_dirty(runtime.state.element_tree.id())

@@ -31,7 +31,14 @@ pub fn[Msg] button_group(
       ButtonVariant::Outline
     }
     buttons.push(
-      button(item.label, on_click=item.message, variant~, theme~, width=button_width, height~)
+      button(
+        item.label,
+        on_click=item.message,
+        variant~,
+        theme~,
+        width=button_width,
+        height~,
+      )
       .disabled(disabled=!item.enabled)
       .semantics_selected(selected=item.id == selected),
     )
@@ -120,7 +127,15 @@ pub fn[Msg] status_bar(
 ) -> @core.View[Msg] {
   let segments : Array[@core.View[Msg]] = []
   for item in items {
-    segments.push(text(item, role=TextRole::Caption, theme~, width=command_item_width(item), height=22.0))
+    segments.push(
+      text(
+        item,
+        role=TextRole::Caption,
+        theme~,
+        width=command_item_width(item),
+        height=22.0,
+      ),
+    )
   }
   surface(
     row(segments, spacing=theme.spacing_scale.sm, align=CrossAlign::Center),
@@ -146,7 +161,13 @@ fn[Msg] command_palette_row(
   let rows : Array[@core.View[Msg]] = [
     row(
       [
-        text(command.display_label(), role=TextRole::Control, theme~, width=label_width, height=24.0),
+        text(
+          command.display_label(),
+          role=TextRole::Control,
+          theme~,
+          width=label_width,
+          height=24.0,
+        ),
         text(shortcut, role=TextRole::Mono, theme~, width=96.0, height=24.0),
       ],
       spacing=theme.spacing_scale.xs,
@@ -211,11 +232,30 @@ pub fn[Msg] disclosure(
     text(title, role=TextRole::Control, theme~, width=title_width, height=24.0),
   ]
   if subtitle != "" {
-    title_rows.push(text(subtitle, role=TextRole::Caption, theme~, width=title_width, height=22.0))
+    title_rows.push(
+      text(
+        subtitle,
+        role=TextRole::Caption,
+        theme~,
+        width=title_width,
+        height=22.0,
+      ),
+    )
   }
   let header = row(
     [
-      button(if expanded { "v" } else { ">" }, on_click=on_toggle, variant=ButtonVariant::Ghost, theme~, width=34.0, height=34.0),
+      button(
+        if expanded {
+          "v"
+        } else {
+          ">"
+        },
+        on_click=on_toggle,
+        variant=ButtonVariant::Ghost,
+        theme~,
+        width=34.0,
+        height=34.0,
+      ),
       column(title_rows, spacing=0.0, align=CrossAlign::Start),
     ],
     spacing=theme.spacing_scale.xs,
@@ -253,8 +293,9 @@ pub fn[Msg] accordion(
       ).disabled(disabled=!section.enabled),
     )
   }
-  column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start)
-  .semantics_role(@core.SemanticsRole::Group)
+  column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start).semantics_role(
+    @core.SemanticsRole::Group,
+  )
 }
 
 ///|
@@ -268,7 +309,15 @@ pub fn[Msg] collapsible_panel(
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
   surface(
-    disclosure(title, content~, expanded~, on_toggle~, subtitle~, theme~, width=width - theme.spacing_scale.md * 2.0),
+    disclosure(
+      title,
+      content~,
+      expanded~,
+      on_toggle~,
+      subtitle~,
+      theme~,
+      width=width - theme.spacing_scale.md * 2.0,
+    ),
     width~,
     variant=SurfaceVariant::Base,
     theme~,
@@ -303,15 +352,20 @@ pub fn[Msg] resizable_panel(
   ).accessibility_label("Resize handle")
   let handle = match on_drag {
     Some(handler) =>
-      handle.on_drag(event =>
-        handler(toolbar_clamp_double(size + event.translation.x, min_size, max_size))
-      )
+      handle.on_drag(event => {
+        handler(
+          toolbar_clamp_double(size + event.translation.x, min_size, max_size),
+        )
+      })
     None => handle
   }
   row(
     [
       surface(
-        content.frame(width=panel_width - theme.spacing_scale.md * 2.0, height=height - theme.spacing_scale.md * 2.0),
+        content.frame(
+          width=panel_width - theme.spacing_scale.md * 2.0,
+          height=height - theme.spacing_scale.md * 2.0,
+        ),
         width=panel_width,
         height~,
         variant=SurfaceVariant::Raised,

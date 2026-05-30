@@ -175,9 +175,18 @@ fn ShowcaseModel::popover_dropdown_card(
   width : Double,
 ) -> @core.View[ShowcaseMsg] {
   let items = [
-    @views.MenuItem::new(id="native", label="Native", message=PickerSelected("native")),
+    @views.MenuItem::new(
+      id="native",
+      label="Native",
+      message=PickerSelected("native"),
+    ),
     @views.MenuItem::new(id="web", label="Web", message=PickerSelected("web")),
-    @views.MenuItem::new(id="test", label="Test", message=PickerSelected("test"), enabled=false),
+    @views.MenuItem::new(
+      id="test",
+      label="Test",
+      message=PickerSelected("test"),
+      enabled=false,
+    ),
   ]
   showcase_soft_card(
     theme,
@@ -189,7 +198,10 @@ fn ShowcaseModel::popover_dropdown_card(
         dropdown(
           "Renderer",
           items,
-          state=@views.DropdownState::new(expanded=true, selected=self.picker_value),
+          state=@views.DropdownState::new(
+            expanded=true,
+            selected=self.picker_value,
+          ),
           on_toggle=ToggleActive,
           theme~,
           width=width - 32.0,

@@ -94,7 +94,11 @@ pub fn[Msg] password_field(
         height~,
       ),
       button(
-        if revealed { "Hide" } else { "Show" },
+        if revealed {
+          "Hide"
+        } else {
+          "Show"
+        },
         on_click=on_toggle_reveal,
         variant=ButtonVariant::Ghost,
         theme~,
@@ -147,7 +151,9 @@ pub fn[Msg] number_field(
       )
     None => ()
   }
-  row(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center).frame(width~)
+  row(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center).frame(
+    width~,
+  )
 }
 
 ///|
@@ -160,17 +166,40 @@ pub fn[Msg] stepper(
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = [
-    button("-", on_click=on_decrement, variant=ButtonVariant::Outline, theme~, width=36.0, height~),
+    button(
+      "-",
+      on_click=on_decrement,
+      variant=ButtonVariant::Outline,
+      theme~,
+      width=36.0,
+      height~,
+    ),
   ]
   if label != "" {
     rows.push(
-      text(label, role=TextRole::Control, theme~, width=views_max_double(24.0, width - 80.0), height~),
+      text(
+        label,
+        role=TextRole::Control,
+        theme~,
+        width=views_max_double(24.0, width - 80.0),
+        height~,
+      ),
     )
   }
   rows.push(
-    button("+", on_click=on_increment, variant=ButtonVariant::Outline, theme~, width=36.0, height~),
+    button(
+      "+",
+      on_click=on_increment,
+      variant=ButtonVariant::Outline,
+      theme~,
+      width=36.0,
+      height~,
+    ),
   )
-  row(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center).frame(width~, height~)
+  row(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center).frame(
+    width~,
+    height~,
+  )
 }
 
 ///|
@@ -192,8 +221,7 @@ pub fn[Msg] multiline_text_area_shell(
     theme~,
     width~,
     height=views_max_double(line_height, lines.to_double() * line_height),
-  )
-  .accessibility_label("Multiline text area")
+  ).accessibility_label("Multiline text area")
 }
 
 ///|

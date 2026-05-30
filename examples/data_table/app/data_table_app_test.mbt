@@ -1,7 +1,6 @@
 ///|
 test "data table filters by query and team" {
-  let model = DataTableModel::new()
-    .update(QueryChanged("flow"))
+  let model = DataTableModel::new().update(QueryChanged("flow"))
   let filtered = model.filtered_records()
   inspect(filtered.length(), content="1")
   inspect(filtered[0].project, content="Billing Flow")

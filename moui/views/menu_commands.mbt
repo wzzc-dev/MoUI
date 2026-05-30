@@ -13,11 +13,16 @@ pub fn[Msg] menu_bar(
       button(
         item.label,
         on_click=item.message,
-        variant=if selected { ButtonVariant::Tonal } else { ButtonVariant::Ghost },
+        variant=if selected {
+          ButtonVariant::Tonal
+        } else {
+          ButtonVariant::Ghost
+        },
         theme~,
         width=menu_command_item_width(item.label),
         height=34.0,
-      ).disabled(disabled=!item.enabled)
+      )
+      .disabled(disabled=!item.enabled)
       .semantics_selected(selected~),
     )
   }
@@ -99,13 +104,14 @@ pub fn[Msg] context_menu_region(
     overlay(
       child,
       surface(menu, variant=SurfaceVariant::Overlay, theme~, padding=0.0)
-        .semantics_role(@core.SemanticsRole::Menu)
-        .align(alignment=@core.Alignment::bottom_trailing()),
+      .semantics_role(@core.SemanticsRole::Menu)
+      .align(alignment=@core.Alignment::bottom_trailing()),
     )
   } else {
     child
   }
-  content.semantics_role(@core.SemanticsRole::Group)
+  content
+  .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label("Context menu region")
   .semantics_description("Context menu region")
   .semantics_action(@core.SemanticsAction::Expand)
@@ -122,7 +128,13 @@ fn[Msg] command_menu_row(
   let label_width = views_max_double(110.0, width - 96.0)
   let row_view = row(
     [
-      text(command.display_label(), role=TextRole::Control, theme~, width=label_width, height=24.0),
+      text(
+        command.display_label(),
+        role=TextRole::Control,
+        theme~,
+        width=label_width,
+        height=24.0,
+      ),
       text(shortcut, role=TextRole::Mono, theme~, width=88.0, height=24.0),
     ],
     spacing=theme.spacing_scale.xs,

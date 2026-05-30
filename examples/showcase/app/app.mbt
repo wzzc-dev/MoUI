@@ -121,7 +121,9 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     todo_draft: "",
     last_drop_label: "No files dropped",
     gesture_label: "No gesture yet",
-    host_summary: @host.HostCapabilitySummary::test_host(label="Showcase test host"),
+    host_summary: @host.HostCapabilitySummary::test_host(
+      label="Showcase test host",
+    ),
   }
 }
 
@@ -130,7 +132,7 @@ pub fn ShowcaseModel::with_host_summary(
   self : ShowcaseModel,
   host_summary : @host.HostCapabilitySummary,
 ) -> ShowcaseModel {
-  { ..self, host_summary }
+  { ..self, host_summary, }
 }
 
 ///|

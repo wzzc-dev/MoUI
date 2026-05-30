@@ -90,19 +90,22 @@ pub fn[T, Msg] virtual_list(
 ) -> @core.View[Msg] {
   if items.length() == 0 {
     match empty {
-      Some(view) => scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
-      None => lazy_list(items, key, row, state~, item_height~, viewport_height~, spacing~)
+      Some(view) =>
+        scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
+      None =>
+        lazy_list(
+          items,
+          key,
+          row,
+          state~,
+          item_height~,
+          viewport_height~,
+          spacing~,
+        )
     }
   } else {
     virtual_list_window(
-      items,
-      key,
-      row,
-      state,
-      item_height,
-      viewport_height,
-      spacing,
-      overscan,
+      items, key, row, state, item_height, viewport_height, spacing, overscan,
     )
   }
 }
@@ -113,7 +116,9 @@ pub fn[T, Msg] sectioned_list(
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
   state? : @core.ScrollState = @core.ScrollState::new(),
-  header? : (SectionListSection[T]) -> @core.View[Msg] = section => text(section.title),
+  header? : (SectionListSection[T]) -> @core.View[Msg] = section => {
+    text(section.title)
+  },
   item_height? : Double = 44.0,
   header_height? : Double = 30.0,
   viewport_height? : Double = 240.0,
@@ -124,8 +129,15 @@ pub fn[T, Msg] sectioned_list(
   let entries = sectioned_list_entries(sections)
   if entries.length() == 0 {
     match empty {
-      Some(view) => scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
-      None => scroll_view(@core.View::empty(), state=Some(state), width=0.0, height=viewport_height)
+      Some(view) =>
+        scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
+      None =>
+        scroll_view(
+          @core.View::empty(),
+          state=Some(state),
+          width=0.0,
+          height=viewport_height,
+        )
     }
   } else {
     let offset = state.offset().y
@@ -145,7 +157,11 @@ pub fn[T, Msg] sectioned_list(
           first_visible = index
         }
         last_visible = index
-        children.push(sectioned_entry_view(entry, header, row, key).key(sectioned_entry_key(entry, key)))
+        children.push(
+          sectioned_entry_view(entry, header, row, key).key(
+            sectioned_entry_key(entry, key),
+          ),
+        )
       }
       cursor = cursor + height + spacing
     }
@@ -153,7 +169,9 @@ pub fn[T, Msg] sectioned_list(
     if first_visible > 0 {
       virtual_children.push(
         @core.View::spacer(
-          min_length=sectioned_entries_height(entries, 0, first_visible, header_height, item_height, spacing),
+          min_length=sectioned_entries_height(
+            entries, 0, first_visible, header_height, item_height, spacing,
+          ),
           weight=0.0,
         ).key("sectioned-list-before"),
       )
@@ -164,7 +182,14 @@ pub fn[T, Msg] sectioned_list(
     if last_visible + 1 < entries.length() {
       virtual_children.push(
         @core.View::spacer(
-          min_length=sectioned_entries_height(entries, last_visible + 1, entries.length(), header_height, item_height, spacing),
+          min_length=sectioned_entries_height(
+            entries,
+            last_visible + 1,
+            entries.length(),
+            header_height,
+            item_height,
+            spacing,
+          ),
           weight=0.0,
         ).key("sectioned-list-after"),
       )
@@ -401,7 +426,8 @@ fn[T] sectioned_entries_height(
   let mut total = 0.0
   let end = min_int(entries.length(), end)
   for index in start..<end {
-    total = total + sectioned_entry_height(entries[index], header_height, item_height)
+    total = total +
+      sectioned_entry_height(entries[index], header_height, item_height)
     if index + 1 < end {
       total = total + spacing
     }

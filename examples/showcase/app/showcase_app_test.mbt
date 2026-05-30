@@ -474,18 +474,12 @@ test "showcase keeps header and overview content bounded across viewport sizes" 
 
 ///|
 test "showcase sidebar follows recommended catalog order" {
-  let commands = @app.ShowcaseModel::new().runtime(width=1400.0, height=760.0).draw_commands()
+  let commands = @app.ShowcaseModel::new()
+    .runtime(width=1400.0, height=760.0)
+    .draw_commands()
   let labels = [
-    "Overview",
-    "Text & Media",
-    "Controls",
-    "Forms",
-    "Data",
-    "Layout",
-    "Navigation Shell",
-    "Feedback",
-    "Runtime/Renderer",
-    "Diagnostics",
+    "Overview", "Text & Media", "Controls", "Forms", "Data", "Layout", "Navigation Shell",
+    "Feedback", "Runtime/Renderer", "Diagnostics",
   ]
   let mut previous_y = -1.0
   for label in labels {

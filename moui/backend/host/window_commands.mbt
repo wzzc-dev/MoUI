@@ -11,7 +11,9 @@ pub fn HostWindowCommands::new(
 }
 
 ///|
-pub fn HostWindowCommands::queue(self : HostWindowCommands) -> HostWindowRequestQueue {
+pub fn HostWindowCommands::queue(
+  self : HostWindowCommands,
+) -> HostWindowRequestQueue {
   self.queue
 }
 
@@ -46,7 +48,9 @@ pub fn HostWindowCommands::open(
   metrics~ : HostSurfaceMetrics,
   primary? : Bool = false,
 ) -> Unit {
-  self.open_window(HostWindowOpenRequest::new(title~, scene~, metrics~, primary~))
+  self.open_window(
+    HostWindowOpenRequest::new(title~, scene~, metrics~, primary~),
+  )
 }
 
 ///|

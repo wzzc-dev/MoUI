@@ -139,8 +139,18 @@ pub fn FocusScope::command_target(
   intent : CommandIntent,
 ) -> String? {
   match intent {
-    Submit | Activate => if self.default_action == "" { None } else { Some(self.default_action) }
-    Cancel => if self.dismiss_action == "" { None } else { Some(self.dismiss_action) }
+    Submit | Activate =>
+      if self.default_action == "" {
+        None
+      } else {
+        Some(self.default_action)
+      }
+    Cancel =>
+      if self.dismiss_action == "" {
+        None
+      } else {
+        Some(self.dismiss_action)
+      }
     _ => None
   }
 }
@@ -178,4 +188,3 @@ fn FocusScope::contains_focusable(self : FocusScope, id : String) -> Bool {
   }
   false
 }
-
