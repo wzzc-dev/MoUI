@@ -315,6 +315,7 @@ sh scripts/dev-check.sh --platform-examples-build
 moon build examples/showcase/macos --target native
 moon build examples/showcase/macos_skia --target native
 moon build examples/markdown_editor/macos --target native
+moon build examples/showcase/windows_skia --target native
 moon build examples/markdown_editor/windows --target native
 moon build examples/markdown_editor/windows_cosmic --target native
 moon build examples/showcase/linux --target native

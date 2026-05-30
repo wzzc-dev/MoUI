@@ -159,7 +159,7 @@ Windows native examples use the MSVC toolchain, vcpkg `zlib:x64-windows`, and
 builds are useful for platform validation, but they are intentionally treated as
 slow checks rather than routine package-level tests.
 
-Setup, build, and package the Showcase:
+Setup, build, and package the default Showcase:
 
 ```powershell
 winget install --id Microsoft.VisualStudio.2022.BuildTools -e
@@ -173,12 +173,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
   -Version 0.1.0
 ```
 
-The Showcase also has a Windows entrypoint that selects the shared Moon Cosmic
-text provider explicitly:
+The Showcase also has Windows entrypoints for explicit renderer or text-provider
+selection:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/showcase/windows_cosmic `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows_skia `
   -BuildOnly
 ```
 
@@ -195,6 +198,7 @@ PowerShell process:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
 ```
 

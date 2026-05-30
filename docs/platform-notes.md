@@ -262,9 +262,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
 ```
 
 The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC=cl`, enables
-C11 atomics for `wgpu_mbt` native stubs with `CL=/std:c11
-/experimental:c11atomics`, sets `MBT_WGPU_LINK_MODE=dynamic`, and points
-`MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. Packaged MSVC apps
+MSVC C11 atomics for `wgpu_mbt` native stubs with
+`CL=/experimental:c11atomics`, sets `MBT_WGPU_LINK_MODE=dynamic`, and points
+`MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `skia_mbt` emits
+`/std:c++20` stub flags for its Windows Skia C++ bindings. Packaged MSVC apps
 use the vcpkg `zlib:x64-windows` runtime for native image decoding. When the
 Visual Studio-bundled vcpkg rejects direct classic installs, run
 `setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an
@@ -276,6 +277,7 @@ To run an entrypoint directly after setup:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 ```
 
 The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
@@ -312,9 +314,10 @@ DirectWrite integration point while returning no platform layout/raster data,
 so the composed Cosmic fallback handles native text until the real DirectWrite
 engine lands. Choose `MoonCosmic` with
 `WindowsWgpuAppOptions::new(text_engine=...)`.
-The `examples/showcase/windows_cosmic` entrypoint selects `MoonCosmic`
-explicitly for comparison with the platform-default DirectWrite scaffold plus
-Cosmic fallback path.
+The `examples/showcase/windows_cosmic` entrypoint selects `MoonCosmic` explicitly
+for comparison with the platform-default DirectWrite scaffold plus Cosmic fallback
+path. The `examples/showcase/windows_skia` entrypoint selects the Windows Skia
+provider explicitly for Showcase.
 The Markdown Editor also has `examples/markdown_editor/windows_cosmic` for the
 same explicit text-provider comparison on the editing workflow.
 
