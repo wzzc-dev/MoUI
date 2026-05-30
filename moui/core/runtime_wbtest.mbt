@@ -287,6 +287,104 @@ test "program effects can dispatch typed follow-up messages" {
 }
 
 ///|
+enum ChildEffectMsg {
+  ChildEffectStart
+  ChildEffectSent(String)
+  ChildEffectDispatched(String)
+}
+
+///|
+enum ParentEffectMsg {
+  ParentChild(ChildEffectMsg)
+}
+
+///|
+struct ParentEffectModel {
+  child : String
+  log : Array[String]
+}
+
+///|
+test "program child effects map into parent messages" {
+  let program = Program::new(
+    init=() => ({ child: "idle", log: [] }, Effect::none()),
+    update=(model, message) => {
+      match message {
+        ParentChild(child_message) => {
+          let (child, effect) = update_child_effect(model.child, child_message)
+          ({ ..model, child }, effect.map(message => ParentChild(message)))
+        }
+      }
+    },
+    view=model => {
+      View::flex(
+        children=[
+          child_effect_view(model.child).map(message => ParentChild(message)),
+          runtime_test_label("Log " + model.log.join(",")),
+        ],
+        axis=Axis::Vertical,
+        spacing=4.0,
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=220.0, height=96.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "Child idle"))
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=20.0, y=20.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=20.0, y=20.0),
+        phase=PointerPhase::Up,
+      ),
+    ),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "Child dispatched"))
+}
+
+///|
+fn update_child_effect(
+  child : String,
+  message : ChildEffectMsg,
+) -> (String, Effect[ChildEffectMsg]) {
+  match message {
+    ChildEffectStart =>
+      (
+        "running",
+        Effect::batch([
+          Effect::send(ChildEffectSent("sent")),
+          Effect::dispatch(dispatch => dispatch(ChildEffectDispatched("dispatched"))),
+        ]),
+      )
+    ChildEffectSent(value) => ("\{child}+\{value}", Effect::none())
+    ChildEffectDispatched(value) => (value, Effect::none())
+  }
+}
+
+///|
+fn child_effect_view(child : String) -> View[ChildEffectMsg] {
+  View::button(
+    text="Child \{child}",
+    size=Size::new(width=160.0, height=44.0),
+    font=FontSpec::new(size=16.0),
+    foreground=Color::black(),
+    background=Brush::solid(Color::gray()),
+    hovered_background=Brush::solid(Color::gray()),
+    pressed_background=Brush::solid(Color::blue()),
+    on_click=Some(ChildEffectStart),
+  )
+}
+
+///|
 struct ControlledTextModel {
   draft : String
   query : String
