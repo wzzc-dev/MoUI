@@ -34,6 +34,20 @@ pub fn[Msg] Effect::dispatch(run : ((Msg) -> Unit) -> Unit) -> Effect[Msg] {
 }
 
 ///|
+pub fn[Msg, NextMsg] Effect::map(
+  self : Effect[Msg],
+  map : (Msg) -> NextMsg,
+) -> Effect[NextMsg] {
+  match self {
+    NoEffect => NoEffect
+    Batch(effects) => Batch(effects.map(effect => effect.map(map)))
+    Send(message) => Send(map(message))
+    Dispatch(run) =>
+      Dispatch(dispatch => run(message => dispatch(map(message))))
+  }
+}
+
+///|
 pub fn[Model, Msg] Program::new(
   init~ : () -> (Model, Effect[Msg]),
   update~ : (Model, Msg) -> (Model, Effect[Msg]),
