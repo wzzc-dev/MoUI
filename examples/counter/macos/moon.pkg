@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/backend/macos" @macos_backend,
+  "wzzc-dev/moui/backend/macos/wgpu" @macos_wgpu,
   "examples/counter/app" @counter_app,
 }
 

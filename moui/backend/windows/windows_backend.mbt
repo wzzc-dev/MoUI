@@ -1,23 +1,4 @@
 ///|
-extern "C" fn win32_surface_host_hinstance() -> @wgpu_c.OpaquePtr = "moui_windows_surface_host_hinstance"
-
-///|
-extern "C" fn win32_surface_host_hwnd_from_u64(
-  hwnd : UInt64,
-) -> @wgpu_c.OpaquePtr = "moui_windows_surface_host_hwnd_from_u64"
-
-///|
-#borrow(pixels)
-extern "C" fn windows_present_skia_pixels_to_hwnd(
-  hwnd : UInt64,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
-  pixels : Bytes,
-  pixels_len : Int,
-) -> Int = "moui_windows_present_skia_pixels_to_hwnd"
-
-///|
 extern "C" fn windows_clipboard_has_text() -> Int = "moui_windows_clipboard_has_text"
 
 ///|
@@ -57,10 +38,14 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct WindowsAppOptions {
-  text_engine : @wgpu_renderer.NativeTextEngineSetting
-  renderer : @render.RendererSelection
-  scene_resolver : @host.HostWindowSceneResolver
+pub struct WindowsHostAppOptions {
+  priv scene_resolver : @host.HostWindowSceneResolver
+}
+
+///|
+pub struct WindowsRendererProvider {
+  priv create_renderer : (@win.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
+  priv sync_surface : (@win.Window, @host.HostSurfaceMetrics) -> Unit
 }
 
 ///|
@@ -69,8 +54,7 @@ struct WindowsApp {
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
-  text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
-  renderer_selection : @render.RendererSelection
+  renderer_provider : WindowsRendererProvider
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
   scene_resolver : @host.HostWindowSceneResolver
@@ -87,13 +71,7 @@ priv struct WindowsWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @win.Window
-  renderer : WindowsWindowRenderer
-}
-
-///|
-priv enum WindowsWindowRenderer {
-  Wgpu(@wgpu_renderer.WgpuRenderer)
-  Skia(@skia_renderer.SkiaRasterRenderer)
+  renderer : @host.HostWindowRenderer
 }
 
 ///|
@@ -102,43 +80,29 @@ priv struct WindowsWindowPlatformSlots {
 }
 
 ///|
-pub fn WindowsAppOptions::new(
-  text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
-  renderer? : @render.RendererSelection = @render.RendererSelection::Default,
+pub fn WindowsHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-) -> WindowsAppOptions {
-  { text_engine, renderer, scene_resolver }
+) -> WindowsHostAppOptions {
+  { scene_resolver, }
 }
 
 ///|
-pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
-  run_app_with_options(
-    title,
-    runtime,
-    options=WindowsAppOptions::new(),
-    window_requests=@host.HostWindowRequestQueue::new(),
-  )
+pub fn WindowsRendererProvider::new(
+  create_renderer~ : (@win.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?,
+  sync_surface? : (@win.Window, @host.HostSurfaceMetrics) -> Unit = (
+    _window,
+    _metrics,
+  ) => (),
+) -> WindowsRendererProvider {
+  { create_renderer, sync_surface }
 }
 
 ///|
-pub fn run_app_with_window_requests(
+pub fn run_app_with_renderer_provider(
   title : String,
   runtime : @core.AppRuntime,
-  window_requests : @host.HostWindowRequestQueue,
-) -> Unit {
-  run_app_with_options(
-    title,
-    runtime,
-    options=WindowsAppOptions::new(),
-    window_requests~,
-  )
-}
-
-///|
-pub fn run_app_with_options(
-  title : String,
-  runtime : @core.AppRuntime,
-  options~ : WindowsAppOptions,
+  provider~ : WindowsRendererProvider,
+  options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
   let event_loop = @win.EventLoop::new()
@@ -151,8 +115,7 @@ pub fn run_app_with_options(
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
-    text_engine_setting: options.text_engine,
-    renderer_selection: options.renderer,
+    renderer_provider: provider,
     services,
     window_requests,
     scene_resolver: options.scene_resolver,
@@ -165,21 +128,6 @@ pub fn run_app_with_options(
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   event_loop.run_app(app)
-}
-
-///|
-fn windows_text_engine(
-  setting : @wgpu_renderer.NativeTextEngineSetting,
-) -> @wgpu_renderer.NativeTextEngine {
-  match setting {
-    @wgpu_renderer.NativeTextEngineSetting::MoonCosmic =>
-      @wgpu_cosmic_text.cosmic_text_engine()
-    @wgpu_renderer.NativeTextEngineSetting::PlatformDefault =>
-      @wgpu_renderer.native_platform_text_engine_with_fallback(
-        @wgpu_directwrite.directwrite_text_provider(),
-        fallback=@wgpu_cosmic_text.cosmic_text_engine(),
-      )
-  }
 }
 
 ///|
@@ -209,7 +157,7 @@ pub fn windows_accessibility_bridge(
 pub fn windows_host_info() -> @host.HostAppInfo {
   @host.HostAppInfo::new(
     backend=@host.HostBackendKind::Native,
-    description="Windows Win32 window host with wgpu-native surface",
+    description="Windows Win32 window host with renderer providers",
   )
 }
 
@@ -385,27 +333,6 @@ pub fn window_event_to_host_with_modifiers(
 }
 
 ///|
-pub fn create_windows_host_surface(
-  hwnd : UInt64,
-) -> @wgpu_renderer.HostWgpuSurface raise @wgpu.WgpuError {
-  let instance = @wgpu.Instance::create()
-  let surface = instance.create_surface_windows_hwnd(
-    win32_surface_host_hinstance(),
-    win32_surface_host_hwnd_from_u64(hwnd),
-  )
-  @wgpu_renderer.HostWgpuSurface::new(instance~, surface~)
-}
-
-///|
-pub fn windows_surface_host_info() -> @wgpu_renderer.SurfaceHostInfo {
-  {
-    platform: "windows",
-    owns_instance: true,
-    description: "Windows backend owns HWND surface creation and passes HostWgpuSurface to render/wgpu.",
-  }
-}
-
-///|
 fn WindowsWindowPlatformSlots::new() -> WindowsWindowPlatformSlots {
   { slots: [] }
 }
@@ -470,52 +397,6 @@ fn WindowsWindowPlatformSlots::remove_host(
 }
 
 ///|
-fn WindowsWindowRenderer::resize(
-  self : WindowsWindowRenderer,
-  metrics : @render.RendererSurfaceMetrics,
-) -> Unit {
-  match self {
-    Wgpu(renderer) => renderer.resize(metrics)
-    Skia(renderer) =>
-      renderer.resize(metrics) catch {
-        err => println("error resizing Windows Skia renderer: \{err.message()}")
-      }
-  }
-}
-
-///|
-fn WindowsWindowRenderer::render(
-  self : WindowsWindowRenderer,
-  commands : Array[@core.DrawCommand],
-) -> Unit {
-  match self {
-    Wgpu(renderer) => renderer.render(commands)
-    Skia(renderer) =>
-      renderer.render(commands) catch {
-        err => println("error rendering Windows Skia frame: \{err.message()}")
-      }
-  }
-}
-
-///|
-fn WindowsWindowRenderer::text_system(
-  self : WindowsWindowRenderer,
-) -> @core.TextSystem {
-  match self {
-    Wgpu(renderer) => renderer.text_system()
-    Skia(renderer) => renderer.text_system()
-  }
-}
-
-///|
-fn WindowsWindowRenderer::dispose(self : WindowsWindowRenderer) -> Unit {
-  match self {
-    Wgpu(renderer) => renderer.dispose()
-    Skia(renderer) => renderer.dispose()
-  }
-}
-
-///|
 pub impl @win.ApplicationHandler for WindowsApp with fn can_create_surfaces(
   self,
   event_loop,
@@ -552,7 +433,7 @@ pub impl @win.ApplicationHandler for WindowsApp with fn can_create_surfaces(
       self.driver.set_redraw_scheduler(() => {
         self.request_redraw_window_if_needed(window_id)
       })
-      match self.create_renderer_for_window(window, metrics) {
+      match (self.renderer_provider.create_renderer)(window, metrics) {
         Some(renderer) => {
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
@@ -611,7 +492,8 @@ pub impl @win.ApplicationHandler for WindowsApp with fn window_event(
               slot.window.surface_size(),
             ),
           )
-          slot.renderer.resize(renderer_metrics_from_host(metrics))
+          (self.renderer_provider.sync_surface)(slot.window, metrics)
+          slot.renderer.resize(metrics)
           slot.window.request_redraw()
         }
         None => ()
@@ -684,124 +566,6 @@ fn WindowsApp::redraw_window(
     }
     _ => ()
   }
-}
-
-///|
-fn WindowsApp::create_renderer_for_window(
-  self : WindowsApp,
-  window : @win.Window,
-  metrics : @host.HostSurfaceMetrics,
-) -> WindowsWindowRenderer? {
-  match self.resolve_renderer_selection() {
-    @render.RendererBackendKind::NativeWgpu =>
-      self.create_wgpu_renderer_for_window(window, metrics)
-    @render.RendererBackendKind::SkiaRasterNative =>
-      self.create_skia_renderer_for_window(window, metrics)
-    backend => {
-      println(
-        "Windows renderer selection \{backend.label()} is not supported by this platform backend",
-      )
-      None
-    }
-  }
-}
-
-///|
-fn WindowsApp::resolve_renderer_selection(
-  self : WindowsApp,
-) -> @render.RendererBackendKind {
-  match self.renderer_selection {
-    @render.RendererSelection::Default =>
-      @render.RendererBackendKind::NativeWgpu
-    @render.RendererSelection::Backend(backend) => backend
-    @render.RendererSelection::Family(@render.RendererFamily::Skia) =>
-      @render.RendererBackendKind::SkiaRasterNative
-    @render.RendererSelection::Family(@render.RendererFamily::Wgpu) =>
-      @render.RendererBackendKind::NativeWgpu
-    @render.RendererSelection::Family(@render.RendererFamily::WebGpu) =>
-      @render.RendererBackendKind::WebGpuWasm
-  }
-}
-
-///|
-fn WindowsApp::create_wgpu_renderer_for_window(
-  self : WindowsApp,
-  window : @win.Window,
-  metrics : @host.HostSurfaceMetrics,
-) -> WindowsWindowRenderer? {
-  Some(
-    WindowsWindowRenderer::Wgpu(
-      @wgpu_renderer.create_with_host_surface_and_text_engine(
-        renderer_metrics_from_host(metrics),
-        create_windows_host_surface(window.window_handle()),
-        text_engine=windows_text_engine(self.text_engine_setting),
-      ),
-    ),
-  ) catch {
-    err => {
-      println("error creating Windows WGPU renderer: \{err.message()}")
-      None
-    }
-  }
-}
-
-///|
-fn WindowsApp::create_skia_renderer_for_window(
-  self : WindowsApp,
-  window : @win.Window,
-  metrics : @host.HostSurfaceMetrics,
-) -> WindowsWindowRenderer? {
-  let _ = self
-  if !@skia_renderer.skia_available() {
-    println(
-      "Windows Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative",
-    )
-    return None
-  }
-  Some(
-    WindowsWindowRenderer::Skia(
-      @skia_renderer.create_with_present_target(
-        renderer_metrics_from_host(metrics),
-        windows_skia_present_target(window.window_handle()),
-      ),
-    ),
-  ) catch {
-    err => {
-      println("error creating Windows Skia renderer: \{err.message()}")
-      None
-    }
-  }
-}
-
-///|
-fn windows_skia_present_target(
-  hwnd : UInt64,
-) -> @skia_renderer.SkiaPresentTarget {
-  @skia_renderer.SkiaPresentTarget::new(
-    description="Windows GDI Skia pixel presenter",
-    present=frame => {
-      windows_present_skia_pixels_to_hwnd(
-        hwnd,
-        frame.width,
-        frame.height,
-        frame.row_bytes,
-        frame.pixels,
-        frame.pixels.length(),
-      ) ==
-      0
-    },
-  )
-}
-
-///|
-fn renderer_metrics_from_host(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
-  )
 }
 
 ///|
@@ -878,9 +642,9 @@ fn WindowsApp::apply_window_request(
     @host.HostWindowRequest::ResizeWindow(id, metrics) =>
       self.apply_platform_window_request(id, request, window => {
         ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
+        (self.renderer_provider.sync_surface)(window, metrics)
         match self.platform_slots.lookup_host(id) {
-          Some(slot) =>
-            slot.renderer.resize(renderer_metrics_from_host(metrics))
+          Some(slot) => slot.renderer.resize(metrics)
           None => ()
         }
         window.request_redraw()
@@ -972,7 +736,7 @@ fn WindowsApp::attach_resolved_window(
     logical_size=@host.physical_size_to_core(window.surface_size()),
     physical_size=@host.physical_size_to_core(window.surface_size()),
   )
-  match self.create_renderer_for_window(window, metrics) {
+  match (self.renderer_provider.create_renderer)(window, metrics) {
     Some(renderer) => {
       ignore(self.windows.resize(resolved.id, metrics))
       ignore(self.runtime_slots.sync_open_from_registry(self.windows))

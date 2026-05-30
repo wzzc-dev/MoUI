@@ -1,14 +1,6 @@
 import {
-  "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/skia" @skia_renderer,
-  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
-  "wzzc-dev/moui/render/wgpu/cosmic_text" @wgpu_cosmic_text,
-  "wzzc-dev/moui/render/wgpu/fontconfig" @wgpu_fontconfig,
-  "Milky2018/wgpu_mbt" @wgpu,
-  "Milky2018/wgpu_mbt/c" @wgpu_c,
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",
   "wzzc-dev/window/linux" @window_linux,
@@ -18,6 +10,5 @@ supported_targets = "native"
 
 options(
   link: { "native": { "cc-link-flags": "-lz" } },
-  "native-stub": [ "linux_surface_host.c" ],
   targets: { },
 )

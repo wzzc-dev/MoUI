@@ -62,6 +62,35 @@ test "host surface metrics tracks logical physical and dpr" {
 }
 
 ///|
+test "host window renderer forwards lifecycle closures" {
+  let resized = Ref(@core.Size::new(width=0.0, height=0.0))
+  let rendered = Ref(0)
+  let disposed = Ref(0)
+  let presenter = Ref(3)
+  let renderer = HostWindowRenderer::new(
+    resize=metrics => resized.val = metrics.logical_size,
+    render=commands => rendered.val = commands.length(),
+    text_system=() => @core.TextSystem::fallback(),
+    present_count=() => presenter.val,
+    dispose=() => disposed.val = disposed.val + 1,
+  )
+  renderer.resize(
+    HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=96.0, height=48.0),
+      scale_factor=2.0,
+    ),
+  )
+  renderer.render([@core.DrawCommand::Clear(@core.Color::white())])
+  inspect(resized.val.width, content="96")
+  inspect(resized.val.height, content="48")
+  inspect(rendered.val, content="1")
+  inspect(renderer.text_system().id(), content="core-fallback-text-system")
+  inspect(renderer.present_count(), content="3")
+  renderer.dispose()
+  inspect(disposed.val, content="1")
+}
+
+///|
 test "host app info records shared model boundaries" {
   let info = HostAppInfo::new(
     backend=HostBackendKind::Native,
@@ -1663,7 +1692,8 @@ test "host app services facade routes common platform requests" {
         }
         QuerySystemTheme =>
           HostServiceResponse::SystemTheme(@core.ColorScheme::Dark)
-        ShowMenu(commands) => HostServiceResponse::MenuCommand(commands[0].intent)
+        ShowMenu(commands) =>
+          HostServiceResponse::MenuCommand(commands[0].intent)
         _ => HostServiceResponse::Unavailable("unexpected request")
       }
     },
@@ -1752,7 +1782,9 @@ test "host app services facade exposes pending completions" {
   let pending = services.drain_pending()
   inspect(pending.length(), content="2")
   inspect(services.in_flight_count(), content="2")
-  assert_true(services.complete(clipboard_id, HostServiceResponse::ClipboardText("later")))
+  assert_true(
+    services.complete(clipboard_id, HostServiceResponse::ClipboardText("later")),
+  )
   assert_true(
     services.complete(
       file_id,
@@ -1768,7 +1800,11 @@ test "host app services facade exposes pending completions" {
   let completed = services.drain_completed()
   inspect(completed.length(), content="1")
   match completed[0] {
-    { request: FileDialog({ title, .. }), response: FileDialogSelection(paths), .. } => {
+    {
+      request: FileDialog({ title, .. }),
+      response: FileDialogSelection(paths),
+      ..,
+    } => {
       inspect(title, content="Open")
       inspect(paths[0], content="/tmp/file.txt")
     }
@@ -1817,7 +1853,8 @@ test "native accessibility bridge snapshots semantics recursively" {
         None => fail("expected child accessibility label")
       }
       match child_update.node().description() {
-        Some(description) => inspect(description, content="Save current document")
+        Some(description) =>
+          inspect(description, content="Save current document")
         None => fail("expected child accessibility description")
       }
       inspect(

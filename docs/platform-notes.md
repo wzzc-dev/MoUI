@@ -33,32 +33,34 @@ active backends, and removes closed slots. `HostPlatformWindowMap` binds
 platform `WindowId` values to `HostWindowId` values, giving multi-window
 dispatch a shared routing primitive before backends attach multiple
 renderer/window handle sets.
-The active Web, macOS, and Windows hosts accept a shared queue through
-`run_app_with_window_requests` and drain focus, close, resize, minimize, show,
-and set-primary requests at the platform edge. Each drained request records an
-ordered completion on the same queue, so tests and higher-level host code can
-observe accepted operations and explicit rejections. Active backends use the
-shared queue drain helper for that drain-and-record loop so request completion
-tracking remains host-owned. Once the platform reports a window as closed,
-queued commands for that window are rejected rather than being replayed against
-stale runtime slots, and those rejections are recorded as normal request
-completions.
-Web, macOS, and Windows create the primary window through the same
-registry/slot path, and now also support resolver-backed `OpenWindow` requests
-through `run_app_with_options` and their app options. A resolved Web window
-creates another browser canvas and `WebRenderer`; a resolved macOS window
-creates another AppKit window with a CAMetalLayer-backed `WgpuRenderer`; a
-resolved Windows window creates another Win32 window with an HWND-backed
-`WgpuRenderer`. Each registers a `HostRuntimeDriver`, platform binding, and
-platform slot, then routes redraw, events, context menus, host service
-completions, IME sync, and disposal by `HostWindowId`. Without a scene resolver,
-they reject `OpenWindow` with the shared unavailable-resolver response.
+Active platform entrypoints accept a shared queue through their options-bearing
+runner and drain focus, close, resize, minimize, show, and set-primary requests
+at the platform edge. Each drained request records an ordered completion on the
+same queue, so tests and higher-level host code can observe accepted operations
+and explicit rejections. Active backends use the shared queue drain helper for
+that drain-and-record loop so request completion tracking remains host-owned.
+Once the platform reports a window as closed, queued commands for that window
+are rejected rather than being replayed against stale runtime slots, and those
+rejections are recorded as normal request completions.
+Web creates the primary window through the same registry/slot path and supports
+resolver-backed `OpenWindow` requests through `run_app_with_options` and
+`WebAppOptions`. Native host cores create platform windows through the same
+registry/slot path but do not choose concrete renderer families themselves.
+Instead, public native entrypoints live in `backend/<platform>/wgpu` and
+`backend/<platform>/skia`; those packages call
+`backend/<platform>.run_app_with_renderer_provider` with a platform-local
+`RendererProvider`. A resolved native window asks that provider for a
+renderer-neutral `HostWindowRenderer`, then registers a `HostRuntimeDriver`,
+platform binding, and platform slot, and routes redraw, events, context menus,
+host service completions, IME sync, and disposal by `HostWindowId`. Without a
+scene resolver, hosts reject `OpenWindow` with the shared unavailable-resolver
+response.
 
-Native platform app options carry `renderer : @render.RendererSelection`.
-`Default` continues to resolve to `NativeWgpu` on macOS, Windows, and Linux;
-`Backend(SkiaRasterNative)` and `Family(Skia)` resolve to the Skia raster path.
-Web remains a browser WebGPU backend for now. The Skia selection is explicit and
-fails before opening a blank window when `skia_mbt/native` reports unavailable.
+Native renderer choice is package selection, not a field on host-core app
+options. Use `backend/<platform>/wgpu` for native WGPU or
+`backend/<platform>/skia` for native Skia raster. The Skia provider remains
+explicit and fails before opening a blank window when `skia_mbt/native` reports
+unavailable.
 
 The boundary is:
 
@@ -152,11 +154,15 @@ resize and input coordinates stay stable.
 
 ## macOS Native
 
-The macOS host uses `wzzc-dev/window/macos` for AppKit windows and installs a
-`CAMetalLayer` on the window `NSView` for the native `render/wgpu` renderer.
+The macOS host core uses `wzzc-dev/window/macos` for AppKit windows, lifecycle,
+events, services, text-input session synchronization, renderer resize calls, and
+redraw requests. It receives concrete rendering through
+`MacosRendererProvider`; `backend/macos/wgpu` installs a `CAMetalLayer` on the
+window `NSView` for native WGPU, while `backend/macos/skia` presents CPU pixel
+frames through an `NSImageView`.
 Window events pass through the shared `backend/host` conversion helpers, and the
-native host owns only AppKit window lifetime, CAMetalLayer surface creation,
-text-input session synchronization, renderer resize, and redraw requests.
+native host never imports `render/wgpu`, `render/skia`, `wgpu_mbt`, or
+`skia_mbt`.
 The macOS service bridge routes text clipboard requests through `NSPasteboard`,
 opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
 `NSOpenPanel` and `NSSavePanel`, presents command menus at the current pointer
@@ -172,9 +178,9 @@ File drag/drop events emitted by the local `window/macos` backend are normalized
 through `HostEvent::DragDrop` and dispatched to `View::on_file_drop`
 targets.
 Native WGPU text can use either the shared Moon Cosmic provider or a platform
-provider. macOS defaults to the CoreText/CoreGraphics provider for runtime
-measurement and glyph rasterization, explicitly composed with the Moon Cosmic
-provider as fallback; the Objective-C CoreText stub lives in
+provider. `backend/macos/wgpu` defaults to the CoreText/CoreGraphics provider
+for runtime measurement and glyph rasterization, explicitly composed with the
+Moon Cosmic provider as fallback; the Objective-C CoreText stub lives in
 `render/wgpu/coretext`, while the selectable/composed Cosmic provider lives in
 `render/wgpu/cosmic_text`. The CoreText provider consumes the shared native
 `FontSpec` payload, attempts named families from the structured family stack,
@@ -182,30 +188,29 @@ maps generic CSS families such as `ui-monospace` and `serif` to suitable macOS
 fonts, registers app-provided font bytes under their requested family alias when
 CoreText accepts them, and falls back to the system font for unavailable names
 before the renderer tries the composed Cosmic fallback.
-`backend/macos` chooses between them through
-`run_app_with_options(..., options=MacosAppOptions::new(text_engine=...))` when
-creating native WGPU renderers. The same options value can carry a
-`HostWindowSceneResolver` for resolver-backed secondary windows. `core` still
-owns only the neutral `FontSpec`, `TextSystem` contract, and deterministic
-fallback text system; it does not name concrete macOS font files.
+Choose the text engine with
+`@macos_wgpu.run_app_with_options(..., options=MacosWgpuAppOptions::new(text_engine=...))`.
+The same options value can carry a `HostWindowSceneResolver` for
+resolver-backed secondary windows and `exit_after_first_present` for first-frame
+smoke tests. `core` still owns only the neutral `FontSpec`, `TextSystem`
+contract, and deterministic fallback text system; it does not name concrete
+macOS font files.
 The `examples/showcase/macos_cosmic` entrypoint selects `MoonCosmic`
 explicitly for comparison with the platform-default CoreText path.
 
-When `MacosAppOptions::new(renderer=...)` selects `SkiaRasterNative` or the
-Skia family, the host creates `render/skia.SkiaRasterRenderer` instead of the
-native WGPU renderer. The renderer draws into a CPU raster surface in physical
-pixels, scales the canvas by the host scale factor, reads premultiplied pixels
-back after each frame, and sends them to a macOS presenter. The Objective-C
-presenter builds a `CGImage` from the pixel bytes and installs it on a dedicated
-`CALayer.contents` attached to the content view, updating layer bounds and scale
-with window metrics. This path is intentionally separate from
-`render/wgpu`; Skia is a renderer family, not a `NativeRenderer` variant.
+Select Skia by importing `wzzc-dev/moui/backend/macos/skia` and using
+`MacosSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer`,
+draws into a CPU raster surface in physical pixels, scales the canvas by the
+host scale factor, reads premultiplied pixels back after each frame, and sends
+them to a macOS presenter. The Objective-C presenter builds a `CGImage` from the
+pixel bytes and installs it on a dedicated `NSImageView` attached to the content
+view. This path is intentionally separate from `backend/macos/wgpu`; Skia is a
+provider package, not a host-core `NativeRenderer` variant.
 
-Packages that use `backend/macos` must link the macOS frameworks required by
-the Objective-C stubs during the final native link step. Missing surface/window
-symbols such as `_OBJC_CLASS_$_CAMetalLayer`, `_objc_msgSend`, or
-`___CFConstantStringClassReference` usually mean that link step is missing the
-backend flags:
+Packages that use `backend/macos` directly must link the AppKit service bridge
+frameworks during the final native link step. Missing `_objc_msgSend` or
+`___CFConstantStringClassReference` usually means that link step is missing the
+host-core flags:
 
 ```moonbit
 link: {
@@ -215,8 +220,10 @@ link: {
 },
 ```
 
-Missing CoreText raster symbols mean the `render/wgpu/coretext` provider flags
-are absent from the final link:
+Packages that use `backend/macos/wgpu` also need QuartzCore, CoreText,
+CoreGraphics, Foundation, CoreFoundation, and Objective-C flags for the WGPU
+surface and native text provider. Missing `CAMetalLayer` or CoreText raster
+symbols mean the provider flags are absent from the final link:
 
 ```moonbit
 link: {
@@ -237,9 +244,12 @@ Windows native examples are built with MSYS2 UCRT64 and the static Windows GNU
 `wgpu-native` release expected by
 `scripts/windows/markdown_editor_windows_static.ps1`.
 The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
-macOS, with platform-specific ownership limited to Win32 window handles, WGPU
-surface creation, resize handling, text-input session synchronization, and redraw
-requests. Text clipboard requests are implemented through the Win32
+macOS, with platform-specific ownership limited to Win32 window handles,
+services, lifecycle, resize handling, text-input session synchronization, and
+redraw requests. Concrete rendering is injected through
+`WindowsRendererProvider`; `backend/windows/wgpu` owns HWND/HINSTANCE WGPU
+surface creation and `backend/windows/skia` owns the GDI pixel presenter. Text
+clipboard requests are implemented through the Win32
 `CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
 boundary. The Windows service bridge also opens URLs through `ShellExecuteW`,
 presents basic open/save/directory dialogs through the Win32 common dialog and
@@ -255,27 +265,29 @@ the selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/windows` backend are
 normalized through `HostEvent::DragDrop` and dispatched to
 `View::on_file_drop` targets, matching the macOS host path.
-Windows installs the sibling `render/wgpu/directwrite` provider through the same
-renderer/runtime boundary used by macOS CoreText and composes it with
-`render/wgpu/cosmic_text` as fallback. That provider is currently an explicit
-scaffold using `render/wgpu/text_protocol` for UTF-32 input encoding, private
-versioned measurement payload parsing, a versioned registration payload, and a
-generic shaped-run envelope for glyph placements plus DirectWrite-private raster
-payloads. It also routes raster glyph bytes through the shared single-channel
-raster parser. Its native stub advertises the DirectWrite integration point
-while returning no platform layout/raster data, so the composed Cosmic fallback
-handles native text until the real DirectWrite engine lands.
+`backend/windows/wgpu` installs the sibling `render/wgpu/directwrite` provider
+through the same renderer/runtime boundary used by macOS CoreText and composes
+it with `render/wgpu/cosmic_text` as fallback. That provider is currently an
+explicit scaffold using `render/wgpu/text_protocol` for UTF-32 input encoding,
+private versioned measurement payload parsing, a versioned registration
+payload, and a generic shaped-run envelope for glyph placements plus
+DirectWrite-private raster payloads. It also routes raster glyph bytes through
+the shared single-channel raster parser. Its native stub advertises the
+DirectWrite integration point while returning no platform layout/raster data,
+so the composed Cosmic fallback handles native text until the real DirectWrite
+engine lands. Choose `MoonCosmic` with
+`WindowsWgpuAppOptions::new(text_engine=...)`.
 The `examples/showcase/windows_cosmic` entrypoint selects `MoonCosmic`
 explicitly for comparison with the platform-default DirectWrite scaffold plus
 Cosmic fallback path.
 
-When `WindowsAppOptions::new(renderer=...)` selects `SkiaRasterNative` or the
-Skia family, the host creates `render/skia.SkiaRasterRenderer` and presents the
-CPU pixel frame through the Win32 presenter. The C presenter copies the RGBA
-premultiplied readback into a top-down 32-bit BGRA DIB buffer and blits it to
-the client DC with `StretchDIBits`. If `skia_mbt/native` is only in fallback
-mode, renderer creation is rejected with a diagnostic instead of opening an
-empty HWND.
+Select Skia by importing `wzzc-dev/moui/backend/windows/skia` and using
+`WindowsSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer`
+and presents the CPU pixel frame through the Win32 presenter. The C presenter
+copies the RGBA premultiplied readback into a top-down 32-bit BGRA DIB buffer
+and blits it to the client DC with `StretchDIBits`. If `skia_mbt/native` is only
+in fallback mode, renderer creation is rejected with a diagnostic instead of
+opening an empty HWND.
 
 The expected archive extraction path is:
 
@@ -291,12 +303,14 @@ https://github.com/gfx-rs/wgpu-native/releases/tag/v27.0.4.0
 
 ## Linux Native
 
-`backend/linux` is a minimal native Wayland host. It uses the fork-owned
+`backend/linux` is a minimal native Wayland host core. It uses the fork-owned
 `.local_repos/window/linux` package for Wayland event-loop and window handles,
-creates native WGPU surfaces from `wl_display` and `wl_surface`, normalizes
-window/input events through the shared `HostEvent` contract, and runs the
-Showcase entrypoints through the same renderer/runtime boundary as macOS and
-Windows.
+normalizes window/input events through the shared `HostEvent` contract, and runs
+the Showcase entrypoints through the same renderer/runtime boundary as macOS
+and Windows. Concrete rendering is injected through `LinuxRendererProvider`;
+`backend/linux/wgpu` creates native WGPU surfaces from `wl_display` and
+`wl_surface`, while `backend/linux/skia` reuses the window package's
+`Window::present_rgba_pixels` presenter.
 
 Linux runtime requirements are intentionally native:
 
@@ -326,19 +340,20 @@ switching hosts or copy the checkout to a Linux-local temporary directory
 without `_build`; the native archive and MoonDB files are host-specific and can
 be corrupted by cross-host reuse.
 
-The platform-default text path composes the Linux
+The platform-default text path in `backend/linux/wgpu` composes the Linux
 `render/wgpu/fontconfig` scaffold provider with the shared Moon Cosmic fallback.
+Choose `MoonCosmic` with `LinuxWgpuAppOptions::new(text_engine=...)`;
 `examples/showcase/linux_cosmic` selects the Moon Cosmic provider explicitly for
 comparison.
 
-When `LinuxAppOptions::new(renderer=...)` selects `SkiaRasterNative` or the
-Skia family, the host creates `render/skia.SkiaRasterRenderer` and presents the
-CPU pixel frame through a narrow API exposed by `.local_repos/window/linux`.
-That window fork owns the Wayland objects and provides
-`Window::present_rgba_pixels`, implemented with reusable `wl_shm` buffers,
-buffer-release tracking, `wl_surface_attach`, damage, commit, and display
-flush. Keeping the `wl_shm` presenter in the window backend avoids duplicating
-Wayland registry and buffer ownership in MoUI.
+Select Skia by importing `wzzc-dev/moui/backend/linux/skia` and using
+`LinuxSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer` and
+presents the CPU pixel frame through a narrow API exposed by
+`.local_repos/window/linux`. That window fork owns the Wayland objects and
+provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
+buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
+display flush. Keeping the `wl_shm` presenter in the window backend avoids
+duplicating Wayland registry and buffer ownership in MoUI.
 
 Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 

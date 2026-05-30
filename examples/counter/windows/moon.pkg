@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui/backend/windows/wgpu" @windows_wgpu,
   "examples/counter/app" @counter_app,
 }
 

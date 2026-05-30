@@ -1,0 +1,20 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/windows" @windows_host,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+  "wzzc-dev/moui/render/wgpu/directwrite" @wgpu_directwrite,
+  "wzzc-dev/moui/render/wgpu/cosmic_text" @wgpu_cosmic_text,
+  "Milky2018/wgpu_mbt",
+  "Milky2018/wgpu_mbt/c" @wgpu_c,
+  "wzzc-dev/window/windows" @win,
+}
+
+supported_targets = "native"
+
+options(
+  link: { "native": { "cc-link-flags": "-ldwrite -ld2d1 -lz" } },
+  "native-stub": [ "win32_wgpu_surface_host.c" ],
+  targets: { },
+)

@@ -150,8 +150,9 @@ there is no JS-target fallback.
 
 ## macOS Native
 
-macOS examples use the shared app package plus `backend/macos` and native
-`render/wgpu` surface setup:
+macOS examples use the shared app package plus the macOS host core and renderer
+provider packages. The default and Cosmic entrypoints import
+`backend/macos/wgpu`; `macos_skia` imports `backend/macos/skia`:
 
 ```sh
 moon build examples/showcase/macos --target native
@@ -252,9 +253,9 @@ metadata.
 
 ## Linux Native
 
-Linux examples use the local fork-owned `window/linux` Wayland backend plus
-native `render/wgpu` surface setup. Run them on a configured Linux host with a
-Wayland compositor and Vulkan stack:
+Linux examples use the local fork-owned `window/linux` Wayland host core plus
+the `backend/linux/wgpu` renderer provider. Run them on a configured Linux host
+with a Wayland compositor and Vulkan stack:
 
 ```sh
 moon run examples/showcase/linux --target native

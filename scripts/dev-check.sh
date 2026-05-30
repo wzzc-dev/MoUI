@@ -57,6 +57,7 @@ run_built_executable() {
 }
 
 run sh scripts/check-local-deps.sh
+run node scripts/validate-renderer-provider-manifests.mjs
 
 run moon check
 
@@ -83,6 +84,8 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
     Darwin)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
         run moon test moui/backend/macos --target native
+        run moon test moui/backend/macos/wgpu --target native
+        run moon test moui/backend/macos/skia --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
@@ -94,6 +97,8 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
     MINGW*|MSYS*|CYGWIN*)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
         run moon test moui/backend/windows --target native
+        run moon test moui/backend/windows/wgpu --target native
+        run moon test moui/backend/windows/skia --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
@@ -103,6 +108,8 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
     Linux)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
         run moon test moui/backend/linux --target native
+        run moon test moui/backend/linux/wgpu --target native
+        run moon test moui/backend/linux/skia --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'

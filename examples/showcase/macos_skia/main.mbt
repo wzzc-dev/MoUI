@@ -6,11 +6,10 @@ fn main {
       "MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
     ) ==
     Some("1")
-  @macos_backend.run_app_with_options(
+  @macos_skia_backend.run_app_with_options(
     "MoUI Showcase",
     runtime,
-    options=@macos_backend.MacosAppOptions::new(
-      renderer=@render.RendererSelection::Family(@render.RendererFamily::Skia),
+    options=@macos_skia_backend.MacosSkiaAppOptions::new(
       exit_after_first_present~,
     ),
   )

@@ -1,7 +1,6 @@
 import {
   "moonbitlang/core/env",
-  "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "examples/showcase/app",
 }
 
@@ -11,7 +10,7 @@ options(
   "is-main": true,
   link: {
     "native": {
-      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz -L/Volumes/Data/Code/moon/MoUI/.skia-cache/jetbrains/m148-8967a2e80c/macos-Release-arm64/package/out/Release-macos-arm64 -lskia -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu -framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz",
     },
   },
   targets: { "main.mbt": [ "native" ] },

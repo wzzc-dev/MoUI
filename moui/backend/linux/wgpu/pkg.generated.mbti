@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/linux/wgpu"
+
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/linux",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn renderer_provider(options? : LinuxWgpuAppOptions) -> @linux.LinuxRendererProvider
+
+pub fn run_app(String, @core.AppRuntime) -> Unit
+
+pub fn run_app_with_options(String, @core.AppRuntime, options~ : LinuxWgpuAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct LinuxWgpuAppOptions {
+  // private fields
+}
+pub fn LinuxWgpuAppOptions::new(text_engine? : @wzzc-dev/moui/render/wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
+
+// Type aliases
+
+// Traits

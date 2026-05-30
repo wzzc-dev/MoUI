@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/linux" @linux_host,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/window/linux" @window_linux,
+}
+
+supported_targets = "native"
+
+options(
+  link: { "native": { "cc-link-flags": "-lz" } },
+  targets: { },
+)
