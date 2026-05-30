@@ -312,6 +312,13 @@ and Windows. Concrete rendering is injected through `LinuxRendererProvider`;
 `wl_surface`, while `backend/linux/skia` reuses the window package's
 `Window::present_rgba_pixels` presenter.
 
+The Wayland window path requests server-side decorations when the compositor
+exposes `xdg-decoration`. If the compositor falls back to client-side
+decorations, `backend/linux` reserves a small titlebar band above the MoUI
+content, draws the window title and basic controls into the renderer command
+stream, and translates input coordinates so application views still receive a
+content-origin coordinate space.
+
 Linux runtime requirements are intentionally native:
 
 - A Wayland compositor. For repeatable headless checks, run Weston with the
