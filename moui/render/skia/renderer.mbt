@@ -1108,6 +1108,9 @@ fn skia_text_layout_result(
   input : @core.TextLayoutInput,
   fallback : @core.TextLayoutResult,
 ) -> @core.TextLayoutResult {
+  if !skia_font_can_measure_text(font, input.text) {
+    return fallback
+  }
   let measured = skia_measure_text_width(font, input.text)
   let carets = skia_caret_positions(font, input.text)
   let metrics = skia_text_metrics(
@@ -1137,6 +1140,11 @@ fn skia_text_layout_result(
         caret_positions: carets,
       }
   }
+}
+
+///|
+fn skia_font_can_measure_text(font : @skia_native.Font, text : String) -> Bool {
+  text == "" || skia_measure_text_width(font, text) > 0.0
 }
 
 ///|
