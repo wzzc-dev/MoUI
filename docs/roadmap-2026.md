@@ -23,7 +23,7 @@ and clear engineering quality gates.
 MoUI keeps the runtime pipeline explicit:
 
 ```text
-View[Msg] -> internal ViewSpec -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ```
 
 The package boundaries follow that pipeline:

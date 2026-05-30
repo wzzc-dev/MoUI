@@ -8,7 +8,7 @@ declarative UI apps with shared platform-neutral app logic. Native hosts use
 The runtime pipeline is explicit:
 
 ```text
-View[Msg] -> internal ViewSpec -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ```
 
 Current P0/P1 foundations include component state subscriptions, keyed

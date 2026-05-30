@@ -26,8 +26,8 @@ pub fn native_surface_contract() -> @render.WgpuSurfaceContract {
 }
 
 ///|
-pub fn renderer_spec() -> @render.RendererSpec {
-  @render.RendererSpec::new(
+pub fn renderer_descriptor() -> @render.RendererDescriptor {
+  @render.RendererDescriptor::new(
     backend=@render.RendererBackendKind::NativeWgpu,
     family=@render.RendererFamily::Wgpu,
     presentation=@render.RendererPresentationModel::HostGpuSurface,

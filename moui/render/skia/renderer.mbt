@@ -88,13 +88,13 @@ pub fn backend_info() -> @render.RendererBackendInfo {
 }
 
 ///|
-pub fn renderer_spec() -> @render.RendererSpec {
-  skia_raster_native_spec()
+pub fn renderer_descriptor() -> @render.RendererDescriptor {
+  skia_raster_native_descriptor()
 }
 
 ///|
-pub fn skia_raster_native_spec() -> @render.RendererSpec {
-  @render.RendererSpec::new(
+pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor {
+  @render.RendererDescriptor::new(
     backend=@render.RendererBackendKind::SkiaRasterNative,
     family=@render.RendererFamily::Skia,
     presentation=@render.RendererPresentationModel::CpuPixelFrame,

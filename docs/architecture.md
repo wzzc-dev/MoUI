@@ -105,10 +105,11 @@ of exposing the internal view tree.
 MoUI keeps the runtime pipeline explicit:
 
 ```text
-View[Msg] -> internal ViewSpec -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ```
 
-- `View[Msg]` is the immutable, opaque public description produced by app code; `ViewSpec` is the private core tree realized by the runtime.
+- `View[Msg]` is the immutable, opaque public description produced by app code;
+  the internal view tree is the private core tree realized by the runtime.
 - `ElementTree` is the mounted runtime tree. Its `ElementNode` entries own
   identity, keys, child specs, dirty flags, control state, component state,
   layout cache, and render cache.
@@ -398,9 +399,9 @@ own GPU surface bridges, `wgpu-native`, and native WGPU text provider
 composition. Skia provider packages own Skia renderer creation, pixel presenter
 bridges, and Skia availability diagnostics.
 
-`RendererSpec` and `RendererSelection` remain renderer facade reporting tools:
+`RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:
 they describe static capability identity and matching, not native host runtime
-assembly. `View`/`ViewSpec` still describe UI declaration trees only, and
+assembly. `View` and the internal view tree still describe UI declaration trees only, and
 `Binding[T]` remains the TEA/control/state two-way binding term.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes

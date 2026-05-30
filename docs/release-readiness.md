@@ -11,7 +11,7 @@ MoUI is preview-ready when the repository can demonstrate all of these claims
 with current files and validation output:
 
 - The platform-neutral runtime pipeline remains explicit:
-  `View[Msg] -> internal ViewSpec -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer`.
+  `View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer`.
 - Public view constructors return opaque `@core.View[Msg]`; app code uses typed
   messages and shared logic through Web wasm-gc, macOS native, and Windows
   native entrypoints where those platforms are supported.

@@ -37,10 +37,10 @@ Status meanings:
 | Emoji text | partial | partial | partial | Skia emoji behavior depends on platform font fallback and future shaping coverage; native WGPU/Web also retain grapheme/color-emoji gaps. |
 | Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Skia image lifecycle has data URI, local-file, and failed-image placeholder evidence; late async repaint remains follow-up work. |
 
-## Renderer Specs
+## Renderer Descriptors
 
-Renderer identity is declared through `RendererSpec`, not by adding fixed fields
-to app code or `ViewSpec`. Current specs are:
+Renderer identity is declared through `RendererDescriptor`, not by adding fixed fields
+to app code or the internal view tree. Current descriptors are:
 
 - `NativeWgpu`: family `Wgpu`, presentation `HostGpuSurface`, target `Native`.
 - `WebGpuWasm`: family `WebGpu`, presentation `WebCanvas`, targets `WasmGc`
@@ -48,7 +48,7 @@ to app code or `ViewSpec`. Current specs are:
 - `SkiaRasterNative`: family `Skia`, presentation `CpuPixelFrame`, target
   `Native`.
 
-`RendererSpec` describes static renderer capability identity. Native host
+`RendererDescriptor` describes static renderer capability identity. Native host
 runtime assembly is handled by platform renderer providers instead:
 `backend/<platform>/wgpu` selects the `NativeWgpu` renderer family and
 `backend/<platform>/skia` selects the `SkiaRasterNative` renderer family. The
@@ -139,7 +139,7 @@ with dimensions, and failed decodes mark records failed with a diagnostic.
 
 `render/skia` is a native-only renderer package over the editable
 `wzzc-dev/skia_mbt` checkout. It exposes `SkiaRasterRenderer`,
-`SkiaPixelFrame`, `SkiaPresentTarget`, `SkiaFontResolution`, `renderer_spec()`,
+`SkiaPixelFrame`, `SkiaPresentTarget`, `SkiaFontResolution`, `renderer_descriptor()`,
 backend info, fallback-safe availability checks, a basic Skia-backed text
 system, image resource snapshots, and diagnostics for unsupported commands. In
 fallback builds `skia_available()` returns `false`, renderer creation raises

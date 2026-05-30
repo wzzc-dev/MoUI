@@ -15,8 +15,8 @@ test "renderer backend info records unified renderer capability" {
 }
 
 ///|
-test "renderer spec models backend family selection and presentation" {
-  let spec = @render.RendererSpec::new(
+test "renderer descriptor models backend family selection and presentation" {
+  let descriptor = @render.RendererDescriptor::new(
     backend=@render.RendererBackendKind::SkiaRasterNative,
     family=@render.RendererFamily::Skia,
     presentation=@render.RendererPresentationModel::CpuPixelFrame,
@@ -24,11 +24,11 @@ test "renderer spec models backend family selection and presentation" {
     capabilities=@render.renderer_backend_capabilities(
       @render.RendererBackendKind::SkiaRasterNative,
     ),
-    description="test skia raster spec",
+    description="test skia raster descriptor",
   )
-  assert_true(spec.backend.family() == @render.RendererFamily::Skia)
+  assert_true(descriptor.backend.family() == @render.RendererFamily::Skia)
   assert_true(
-    spec.presentation == @render.RendererPresentationModel::CpuPixelFrame,
+    descriptor.presentation == @render.RendererPresentationModel::CpuPixelFrame,
   )
   assert_true(
     @render.RendererSelection::Backend(
@@ -45,7 +45,7 @@ test "renderer spec models backend family selection and presentation" {
       @render.RendererBackendKind::SkiaRasterNative,
     ),
   )
-  inspect(spec.capabilities.length(), content="17")
+  inspect(descriptor.capabilities.length(), content="17")
 }
 
 ///|

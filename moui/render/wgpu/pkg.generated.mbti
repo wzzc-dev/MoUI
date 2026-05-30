@@ -27,7 +27,7 @@ pub fn native_text_system() -> @core.TextSystem
 
 pub fn native_text_system_with_engine(NativeTextEngine) -> @core.TextSystem
 
-pub fn renderer_spec() -> @render.RendererSpec
+pub fn renderer_descriptor() -> @render.RendererDescriptor
 
 // Errors
 
