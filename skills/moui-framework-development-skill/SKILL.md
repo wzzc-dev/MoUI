@@ -119,8 +119,8 @@ Use this skill when editing or reviewing:
   example has a runnable host package.
 - `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
   Cosmic text provider comparison entrypoints.
-- `examples/showcase/macos_skia`: explicit native Skia renderer showcase
-  entrypoint.
+- `examples/{showcase,markdown_editor}/macos_skia`: explicit native Skia
+  renderer example entrypoints.
 
 ## Development Workflow
 
@@ -169,6 +169,7 @@ moon test examples/markdown_editor/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/markdown_editor/macos_skia --target native
 node --check scripts/validate-package-manifest.mjs
 ```
 

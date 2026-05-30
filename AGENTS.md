@@ -42,8 +42,9 @@ paths, or abstractions that only preserve old shapes.
   package. `core/` owns only the neutral `TextSystem` contract.
 - `examples/*/app/` packages are shared app logic. Platform subpackages are
   entrypoints only. Showcase also has `macos_cosmic`, `windows_cosmic`, and
-  `linux_cosmic` entrypoints for explicit Moon Cosmic text-provider comparison,
-  plus `macos_skia` for explicitly selecting the native Skia renderer.
+  `linux_cosmic` entrypoints for explicit Moon Cosmic text-provider comparison.
+  Showcase and Markdown Editor have `macos_skia` entrypoints for explicitly
+  selecting the native Skia renderer.
 
 ## Local Dependencies
 
