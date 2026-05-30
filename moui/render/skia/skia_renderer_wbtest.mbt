@@ -172,6 +172,49 @@ test "skia empty typeface drawing falls back when the glyph run is blank" {
 }
 
 ///|
+fn skia_test_png_data_uri() -> String {
+  "data:image/png;base64," +
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
+}
+
+///|
+test "skia renderer dispose clears cached image resources and records disposal" {
+  guard skia_available() else { return () }
+  let source = skia_test_png_data_uri()
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err => fail("expected Skia image render: \{err.message()}")
+  }
+  assert_true(renderer.image_cache.get(source) is Some(_))
+  guard renderer.image_lifecycle.lookup(source) is Some(ready) else {
+    fail("expected ready image lifecycle record before dispose")
+  }
+  assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
+  renderer.dispose()
+  assert_true(renderer.image_cache.get(source) is None)
+  guard renderer.image_lifecycle.lookup(source) is Some(disposed) else {
+    fail("expected disposed image lifecycle record after dispose")
+  }
+  assert_true(disposed.status == @render.ImageResourceStatus::ImageDisposed)
+  inspect(renderer.image_resources().length(), content="1")
+}
+
+///|
 test "skia text baseline is centered in taller text frames" {
   let frame = @core.Rect::new(x=4.0, y=10.0, width=120.0, height=44.0)
   let metrics = SkiaTextMetrics::{ baseline: 12.0, height: 20.0 }

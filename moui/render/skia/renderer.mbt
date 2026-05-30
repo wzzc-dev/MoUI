@@ -1013,7 +1013,10 @@ pub fn SkiaRasterRenderer::image_resources(
 
 ///|
 pub fn SkiaRasterRenderer::dispose(self : SkiaRasterRenderer) -> Unit {
-  let _ = self
+  for source, _ in self.image_cache {
+    ignore(self.image_lifecycle.dispose(source))
+  }
+  self.image_cache.clear()
 }
 
 ///|

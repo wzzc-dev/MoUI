@@ -432,6 +432,11 @@ test "renderer capability report tracks draw command support" {
     async_image.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
     @render.RendererFeatureStatus::Partial,
   )
+  let skia_image_note = async_image.note_for_backend(
+    @render.RendererBackendKind::SkiaRasterNative,
+  )
+  assert_true(skia_image_note.contains("failed-image placeholder"))
+  assert_true(skia_image_note.contains("dispose-record"))
   let web_image_note = async_image.note_for_backend(
     @render.RendererBackendKind::WebGpuWasm,
   )

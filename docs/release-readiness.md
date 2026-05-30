@@ -140,7 +140,7 @@ Current alignment:
 | Shader effect | Advanced Rendering includes checker and vignette shader cards. | Showcase app tests assert `DrawShaderEffect` payloads for `checker` and `vignette`. | Covered by visible Showcase demo plus command-level app test; renderer tests remain primary evidence for shader pixels. |
 | Text shaping | Capability card lists follow-up status first; text/media section exercises text views. | Text conformance tests are primary evidence; Skia text now resolves `FontSpec` family, weight, and style through Skia `FontMgr`/`Font`, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, retries emoji font candidates on the system FontMgr path, and renders through optional SkShaper shaped glyph runs when linked or positioned glyph runs otherwise; the macOS Skia showcase first-frame path uses `EmptyTypeface` startup text resolution to avoid layout-time CoreText/Skia FontMgr and SkShaper crashes, with measurement and drawing retrying Skia's default font when the empty typeface would produce blank glyphs so text-field carets stay aligned, and default renderer smoke remains the Skia FontMgr/SkShaper evidence; provider validation rejects non-empty run-layout carets that do not cover the input, and Cosmic run-layout tests assert glyph output plus monotonic caret coverage through the provider-safe mapped layout path for representative emoji clusters. Showcase app tests assert the follow-up row is visible. | Do not use Showcase labels or basic Skia font matching/metrics/caret measurement as proof of bidi/line-breaking/typography parity. |
 | Emoji text | Capability card lists follow-up status first. | Diagnostic text conformance covers single-codepoint, variation-selector, and ZWJ emoji measurement/caret invariants; renderer tests now cover native RGBA color glyph payload parsing/upload, text vertex shader marking, Cosmic platform emoji fallback loading/resolution, provider-safe Cosmic run-layout caret coverage, Cosmic color swash preservation, CoreText AppleColorEmoji format selection, and Skia system-FontMgr emoji retry plus representative emoji caret coverage. Showcase app tests assert the partial follow-up row is visible. | Keep native/Web/Skia `partial`: the evidence does not prove full native emoji font fallback across all providers, ZWJ/color emoji conformance, browser rasterization determinism, or full grapheme shaping parity. |
-| Async image | Capability card lists follow-up status first; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; backend Web tests cover app/host-visible `WebRenderer::image_resources`; Web records submitted sources as loading, refreshes ready/failed records from the browser image cache, and the canonical Web boot path schedules a redraw after browser image load/error notifications; 2026-05-31 focused checks refreshed the renderer, Web adapter, Web backend, Showcase app, and Showcase Web build evidence. | Still partial while broader native/general repaint policy remains outside renderer-local diagnostics; Web no longer depends on a manual app action to observe browser image completion. |
+| Async image | Capability card lists follow-up status first; image demos render ordinary images. | Native/Web renderer tests expose image resource snapshots; Skia now records disposed cached image resources during renderer disposal; backend Web tests cover app/host-visible `WebRenderer::image_resources`; Web records submitted sources as loading, refreshes ready/failed records from the browser image cache, and the canonical Web boot path schedules a redraw after browser image load/error notifications; 2026-05-31 focused checks refreshed the renderer, Web adapter, Web backend, Showcase app, and Showcase Web build evidence. | Still partial while broader native/general repaint policy remains outside renderer-local diagnostics; Web no longer depends on a manual app action to observe browser image completion. |
 
 If renderer support changes, update this alignment only when Showcase coverage
 or its evidence level changes. Otherwise keep the authoritative support status
@@ -173,13 +173,14 @@ documentation evidence.
 
 2. Async image diagnostics
    - Current status: renderer-neutral lifecycle records model loading, ready,
-     failed, disposed, and eviction. Native/Web renderer facades expose image
-     resource snapshots, and the backend WebRenderer facade forwards Web
-     snapshots to app/host integration code. Web refreshes submitted sources
-     from the browser image cache that is updated by `Image.onload` /
-     `Image.onerror`. The canonical Web boot path now schedules a redraw when
-     those browser image events report a resource change. Focused renderer,
-     Web adapter, Web backend, Showcase app, and Showcase Web build evidence
+     failed, disposed, and eviction. Native/Web/Skia renderer facades expose
+     image resource snapshots; Skia clears cached images and records disposed
+     resources during renderer disposal, and the backend WebRenderer facade
+     forwards Web snapshots to app/host integration code. Web refreshes
+     submitted sources from the browser image cache that is updated by
+     `Image.onload` / `Image.onerror`. The canonical Web boot path now schedules
+     a redraw when those browser image events report a resource change. Focused
+     renderer, Web adapter, Web backend, Showcase app, and Showcase Web build evidence
      was refreshed on 2026-05-31 and recorded in
      `.idea/codex-goals/evidence.md`.
    - Done when: remaining native/general repaint policy is either implemented
