@@ -35,7 +35,7 @@ Status meanings:
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have real native renderer pixel smoke coverage; unknown names still use fallback paths. |
 | Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, returns Skia font-metric baseline/height plus measured prefix caret positions, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, and can draw optional SkShaper shaped glyph runs after linking; SkParagraph-style line breaking, bidi, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, and ZWJ emoji samples, keeps caret coverage stable, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path; deterministic color emoji, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
-| Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Skia image lifecycle has data URI, local-file, and failed-image placeholder evidence; late async repaint remains follow-up work. |
+| Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Web renderer/backend diagnostics were refreshed on 2026-05-31; late native/general async repaint policy remains follow-up work. |
 
 ## Renderer Descriptors
 
