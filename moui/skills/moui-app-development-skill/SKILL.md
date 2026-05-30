@@ -44,12 +44,14 @@ separate framework task using `moui-framework-development-skill`.
 3. `docs/development.md`
 4. `docs/view-catalog.md`
 5. `docs/examples.md`
-6. `docs/markdown-editor.md` when using or extending the Markdown Editor
-7. `docs/text-system.md` when app behavior depends on text metrics, fonts, or
+6. `docs/app-templates.md` when starting a new shared app package
+7. `docs/non-render-component-cookbook.md` when composing common app workflows
+8. `docs/markdown-editor.md` when using or extending the Markdown Editor
+9. `docs/text-system.md` when app behavior depends on text metrics, fonts, or
    native/Web text differences
-8. `docs/platform-notes.md` when platform setup matters
-9. The closest existing app under `examples/*/app`
-10. The app's `moon.pkg` and platform entrypoint `moon.pkg` files
+10. `docs/platform-notes.md` when platform setup matters
+11. The closest existing app under `examples/*/app`
+12. The app's `moon.pkg` and platform entrypoint `moon.pkg` files
 
 ## App Shape
 
@@ -147,9 +149,12 @@ sh scripts/dev-check.sh --platform-examples-build
 ### Create Or Extend An Example App
 
 - Put reusable logic in `examples/<name>/app`.
+- Start from `docs/app-templates.md` when the app does not have an established
+  local shape yet.
 - Copy platform wiring patterns from the closest existing example.
 - Add app-level tests for pure behavior.
-- Update `docs/examples.md` when adding a new example, command, or purpose.
+- Update `docs/examples.md` and `docs/app-templates.md` when adding a new
+  reusable app shape, command, or purpose.
   Update `docs/markdown-editor.md` when changing that editor's model,
   commands, or platform behavior.
 - Build the Web wasm-gc entrypoint if the app has Web output.

@@ -13,6 +13,10 @@ you want to copy a pattern rather than inspect a full example package. It maps
 forms, tables, shells, menus, host services, and virtual lists to the examples
 that exercise them.
 
+Use [App templates](app-templates.md) when starting a new shared app package.
+The templates cover counter, dashboard, and document-editor skeletons without
+introducing a generator.
+
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
