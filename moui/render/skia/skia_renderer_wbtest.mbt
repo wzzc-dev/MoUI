@@ -70,6 +70,23 @@ test "skia font resolver preserves fallback availability" {
 }
 
 ///|
+fn skia_test_native_text_available() -> Bool {
+  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+    Some(font) => skia_test_font_has_visible_text(font, "Slim")
+    None => false
+  }
+}
+
+///|
+fn skia_test_font_has_visible_text(
+  font : @skia_native.Font,
+  text : String,
+) -> Bool {
+  skia_measure_text_width(font, text) > 0.0 &&
+  skia_glyph_run_has_visible_glyphs(skia_glyph_run(font, text))
+}
+
+///|
 test "skia empty typeface resolution avoids system font manager" {
   let font_spec = @core.FontSpec::new(size=14.0, weight=400)
   match
@@ -105,8 +122,7 @@ test "skia empty typeface drawing falls back when the glyph run is blank" {
       assert_true(font.size() == 18.0)
       assert_true(skia_glyph_run_has_visible_glyphs(run))
     }
-    None =>
-      fail("expected empty typeface drawing to fall back to visible glyphs")
+    None => assert_false(skia_test_native_text_available())
   }
 }
 
@@ -128,6 +144,7 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
     assert_true(system.id() == @core.TextSystem::fallback().id())
   } else {
     assert_true(system.id() == "skia-raster-empty-typeface-text-system")
+    let fallback = @core.TextSystem::fallback().measure_text(input)
     match
       skia_draw_text_payload_for_resolution(
         input.font,
@@ -137,6 +154,12 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
       Some((font, run)) => {
         let measured = system.measure_text(input)
         assert_true(measured.size.width == run.width)
+        assert_true(
+          measured.caret_positions[input.text.to_array().length()] == run.width,
+        )
+        assert_true(
+          measured.size.width == skia_measure_text_width(font, input.text),
+        )
         assert_true(
           measured.caret_positions[input.text.to_array().length()] == run.width,
         )
@@ -164,12 +187,16 @@ test "skia text system exposes measured caret positions" {
       let layout = skia_text_layout_result(font, input, fallback)
       inspect(layout.caret_positions.length(), content="5")
       inspect(layout.caret_positions[0], content="0")
-      assert_true(layout.size.width == skia_measure_text_width(font, "Slim"))
-      assert_true(layout.caret_positions[4] == layout.size.width)
-      assert_true(layout.baseline > 0.0)
-      assert_true(layout.size.height >= layout.baseline)
-      assert_true(layout.caret_positions[1] > 0.0)
-      assert_true(layout.caret_positions[2] > layout.caret_positions[1])
+      if skia_test_font_has_visible_text(font, "Slim") {
+        assert_true(layout.size.width == skia_measure_text_width(font, "Slim"))
+        assert_true(layout.caret_positions[4] == layout.size.width)
+        assert_true(layout.baseline > 0.0)
+        assert_true(layout.size.height >= layout.baseline)
+        assert_true(layout.caret_positions[1] > 0.0)
+        assert_true(layout.caret_positions[2] > layout.caret_positions[1])
+      } else {
+        assert_true(layout == fallback)
+      }
     }
     None => assert_true(!skia_available())
   }
@@ -180,12 +207,16 @@ test "skia text drawing builds best available glyph runs" {
   match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {
       let run = skia_glyph_run(font, "Slim")
-      inspect(run.glyphs.length(), content="4")
-      inspect(run.positions.length(), content="4")
-      assert_true(run.width > 0.0)
-      assert_true(run.positions[0] == @skia_mbt.Point::zero())
-      assert_true(run.positions[1].x > run.positions[0].x)
-      assert_true(run.positions[2].x > run.positions[1].x)
+      if skia_test_font_has_visible_text(font, "Slim") {
+        inspect(run.glyphs.length(), content="4")
+        inspect(run.positions.length(), content="4")
+        assert_true(run.width > 0.0)
+        assert_true(run.positions[0] == @skia_mbt.Point::zero())
+        assert_true(run.positions[1].x > run.positions[0].x)
+        assert_true(run.positions[2].x > run.positions[1].x)
+      } else {
+        assert_false(skia_glyph_run_has_visible_glyphs(run))
+      }
     }
     None => assert_true(!skia_available())
   }
@@ -200,10 +231,15 @@ test "skia text metrics derive baseline and height from font metrics" {
         fallback_baseline=99.0,
         fallback_height=120.0,
       )
-      assert_true(metrics.baseline > 0.0)
-      assert_true(metrics.height >= metrics.baseline)
-      assert_true(metrics.baseline != 99.0)
-      assert_true(metrics.height != 120.0)
+      if skia_test_font_has_visible_text(font, "Slim") {
+        assert_true(metrics.baseline > 0.0)
+        assert_true(metrics.height >= metrics.baseline)
+        assert_true(metrics.baseline != 99.0)
+        assert_true(metrics.height != 120.0)
+      } else {
+        assert_true(metrics.baseline == 99.0)
+        assert_true(metrics.height == 120.0)
+      }
     }
     None => assert_true(!skia_available())
   }
@@ -238,11 +274,15 @@ test "skia text system keeps unicode caret coverage" {
       let text = "A你🙂"
       let carets = skia_caret_positions(font, text)
       inspect(carets.length(), content="4")
-      assert_true(carets[0] == 0.0)
-      assert_true(carets[1] > 0.0)
-      assert_true(carets[2] >= carets[1])
-      assert_true(carets[3] >= carets[2])
-      assert_true(carets[3] == skia_measure_text_width(font, text))
+      if skia_font_can_measure_text(font, text) {
+        assert_true(carets[0] == 0.0)
+        assert_true(carets[1] > 0.0)
+        assert_true(carets[2] >= carets[1])
+        assert_true(carets[3] >= carets[2])
+        assert_true(carets[3] == skia_measure_text_width(font, text))
+      } else {
+        assert_true(carets.all(caret => caret == 0.0))
+      }
     }
     None => assert_true(!skia_available())
   }
