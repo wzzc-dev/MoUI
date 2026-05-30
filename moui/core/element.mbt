@@ -557,6 +557,76 @@ fn ElementNode::has_dirty_paint(self : ElementNode) -> Bool {
 }
 
 ///|
+fn ElementNode::view_tree_inspector_snapshot(
+  self : ElementNode,
+) -> ViewTreeInspectorSnapshot {
+  let nodes : Array[ViewNodeInspectorSummary] = []
+  self.collect_view_node_summaries(nodes)
+  {
+    root_kind: self.spec.inspector_kind_label(),
+    node_count: nodes.length(),
+    component_count: self.inspector_component_count(),
+    control_count: self.inspector_control_count(),
+    modified_count: self.inspector_modified_count(),
+    dirty_build_count: nodes.filter(node => node.needs_build).length(),
+    dirty_layout_count: nodes.filter(node => node.needs_layout).length(),
+    dirty_paint_count: nodes.filter(node => node.needs_paint).length(),
+    nodes,
+  }
+}
+
+///|
+fn ElementNode::collect_view_node_summaries(
+  self : ElementNode,
+  nodes : Array[ViewNodeInspectorSummary],
+) -> Unit {
+  nodes.push(
+    {
+      element_id: self.id,
+      kind: self.spec.inspector_kind_label(),
+      key: match self.key {
+        Some(key) => key.value
+        None => ""
+      },
+      child_count: self.children.length(),
+      needs_build: self.dirty.needs_build,
+      needs_layout: self.dirty.needs_layout,
+      needs_paint: self.dirty.needs_paint,
+    },
+  )
+  for child in self.children {
+    child.collect_view_node_summaries(nodes)
+  }
+}
+
+///|
+fn ElementNode::inspector_component_count(self : ElementNode) -> Int {
+  let mut count = if self.spec is ComponentSpec(_) { 1 } else { 0 }
+  for child in self.children {
+    count = count + child.inspector_component_count()
+  }
+  count
+}
+
+///|
+fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
+  let mut count = if self.spec.inspector_is_control() { 1 } else { 0 }
+  for child in self.children {
+    count = count + child.inspector_control_count()
+  }
+  count
+}
+
+///|
+fn ElementNode::inspector_modified_count(self : ElementNode) -> Int {
+  let mut count = if self.spec is ModifiedSpec(_) { 1 } else { 0 }
+  for child in self.children {
+    count = count + child.inspector_modified_count()
+  }
+  count
+}
+
+///|
 fn ElementNode::mark_build_dirty_by_id(
   self : ElementNode,
   id : ElementId,

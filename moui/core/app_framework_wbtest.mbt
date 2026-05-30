@@ -111,13 +111,23 @@ test "runtime inspector and frame profile expose devtool counters" {
     }),
     size=Size::new(width=100.0, height=40.0),
   )
+  runtime.dispatch_event(Redraw(Initial))
   let snapshot = RuntimeInspectorSnapshot::from_runtime(runtime)
   inspect(snapshot.draw_command_count, content="2")
   inspect(snapshot.dirty_count, content="0")
+  inspect(snapshot.rebuild_reason, content="clean")
+  inspect(snapshot.dirty_reasons.length(), content="0")
+  let inspector = runtime.inspector_snapshot()
+  inspect(inspector.view_tree.node_count, content="1")
+  inspect(inspector.view_tree.root_kind, content="Text")
+  inspect(inspector.view_tree.nodes[0].kind, content="Text")
+  inspect(inspector.view_tree.dirty_paint_count, content="0")
   let layout = LayoutInspectorSnapshot::from_runtime(runtime)
   inspect(layout.node_count, content="1")
   inspect(layout.leaf_count, content="1")
   inspect(layout.max_depth, content="1")
+  inspect(layout.bounds.length(), content="1")
+  inspect(layout.bounds[0].depth, content="0")
   let render = RenderInspectorSnapshot::from_runtime(runtime)
   inspect(render.command_count, content="2")
   inspect(render.text_count, content="1")
@@ -128,12 +138,44 @@ test "runtime inspector and frame profile expose devtool counters" {
   assert_true(semantics.root_role == SemanticsRole::Text)
   inspect(semantics.node_count, content="1")
   inspect(semantics.action_count, content="0")
+  inspect(semantics.selected_count, content="0")
+  inspect(semantics.described_count, content="0")
   let profile = FrameProfile::capture(
     runtime,
     Frame::new(time_ms=16.0, delta_ms=16.0),
   )
   inspect(profile.draw_command_count, content="2")
   inspect(profile.active_animations, content="0")
+}
+
+///|
+test "inspector snapshot captures semantic states and dirty reasons" {
+  let runtime = AppRuntime::new_spec(
+    root=ViewSpec::ModifiedSpec(
+      {
+        key: None,
+        child: ViewSpec::TextSpec({
+          key: None,
+          text: "Invalid field",
+          size: Size::new(width=120.0, height=28.0),
+          font: FontSpec::new(size=12.0, weight=400),
+          color: Color::black(),
+        }),
+        modifier: SemanticsInvalidModifier(true),
+      },
+    ),
+    size=Size::new(width=160.0, height=60.0),
+  )
+  runtime.state.mark_dirty(runtime.state.element_tree.id())
+  let snapshot = runtime.inspector_snapshot()
+  inspect(snapshot.runtime.rebuild_reason, content="paint requested")
+  assert_true(snapshot.runtime.dirty_reasons.any(reason => reason == "paint"))
+  inspect(snapshot.runtime.dirty_count, content="1")
+  inspect(snapshot.view_tree.node_count, content="2")
+  inspect(snapshot.view_tree.modified_count, content="1")
+  inspect(snapshot.view_tree.dirty_paint_count, content="1")
+  inspect(snapshot.layout.bounds.length(), content="2")
+  inspect(snapshot.semantics.invalid_count, content="1")
 }
 
 ///|

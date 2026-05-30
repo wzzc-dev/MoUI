@@ -851,6 +851,45 @@ fn ViewSpec::kind(self : ViewSpec) -> Int {
 }
 
 ///|
+fn ViewSpec::inspector_kind_label(self : ViewSpec) -> String {
+  match self {
+    EmptySpec => "Empty"
+    TextSpec(_) => "Text"
+    ButtonSpec(_) => "Button"
+    TextFieldSpec(_) => "TextField"
+    RichTextEditorSpec(_) => "RichTextEditor"
+    ImageSpec(_) => "Image"
+    CheckboxSpec(_) => "Checkbox"
+    PickerSpec(_) => "Picker"
+    DatePickerSpec(_) => "DatePicker"
+    SearchBarSpec(_) => "SearchBar"
+    SheetSpec(_) => "Sheet"
+    FlexSpec(_) => "Flex"
+    PaddingSpec(_) => "Padding"
+    ContainerSpec(_) => "Container"
+    SpacerSpec(_) => "Spacer"
+    FrameSpec(_) => "Frame"
+    StackSpec(_) => "Stack"
+    ScrollSpec(_) => "Scroll"
+    GridSpec(_) => "Grid"
+    ListSpec(_) => "List"
+    ModifiedSpec(_) => "Modified"
+    CustomSpec(_) => "Custom"
+    CustomLayoutSpec(_) => "CustomLayout"
+    ComponentSpec(_) => "Component"
+  }
+}
+
+///|
+fn ViewSpec::inspector_is_control(self : ViewSpec) -> Bool {
+  match self {
+    ButtonSpec(_) | TextFieldSpec(_) | RichTextEditorSpec(_) | CheckboxSpec(_) |
+    PickerSpec(_) | DatePickerSpec(_) | SearchBarSpec(_) => true
+    _ => false
+  }
+}
+
+///|
 fn ViewSpec::same_identity(self : ViewSpec, next : ViewSpec) -> Bool {
   self.kind() == next.kind() && self.identity_key() == next.identity_key()
 }
