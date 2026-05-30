@@ -33,9 +33,10 @@ pub(all) struct FileImporterModel {
 pub fn FileImporterModel::availability(Self) -> @views.FileImportAvailability
 pub fn FileImporterModel::new() -> Self
 pub fn FileImporterModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn FileImporterModel::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn FileImporterModel::selection(Self) -> @views.FileSelection
 pub fn FileImporterModel::update(Self, FileImporterMsg) -> Self
-pub fn FileImporterModel::update_with_services(Self, FileImporterMsg, @host.HostAppServices) -> Self
+pub fn FileImporterModel::update_with_services(Self, FileImporterMsg, @host.HostAppServices) -> FileImporterUpdate
 pub fn FileImporterModel::view(Self) -> @core.View[FileImporterMsg]
 
 pub(all) enum FileImporterMsg {
@@ -47,9 +48,17 @@ pub(all) enum FileImporterMsg {
 
 pub(all) enum FileImporterStatus {
   Ready
+  Requesting
   Pending(@host.HostServiceRequestId)
   Unavailable(String)
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct FileImporterUpdate {
+  model : FileImporterModel
+  effect : @core.Effect[FileImporterMsg]
+}
+pub fn FileImporterUpdate::as_tuple(Self) -> (FileImporterModel, @core.Effect[FileImporterMsg])
+pub fn FileImporterUpdate::new(FileImporterModel, effect? : @core.Effect[FileImporterMsg]) -> Self
 
 pub(all) struct ImportedFile {
   path : String

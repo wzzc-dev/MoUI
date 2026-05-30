@@ -336,7 +336,7 @@ pub fn EditorModel::view(self : EditorModel) -> @core.View[EditorMsg] {
 }
 ```
 
-Host service update pattern:
+Host service effect pattern:
 
 ```moonbit
 ///|
@@ -344,19 +344,38 @@ pub fn EditorModel::update_with_services(
   self : EditorModel,
   msg : EditorMsg,
   services : @host.HostAppServices,
-) -> EditorModel {
+) -> (EditorModel, @core.Effect[EditorMsg]) {
   match msg {
     BrowseForDocument =>
-      match services.open_file(title="Open document", filters=["md", "txt"]) {
-        @host.HostServiceResponse::Pending(_) => self
-        @host.HostServiceResponse::FileDialogSelection(paths) => self.open_paths(paths)
-        @host.HostServiceResponse::Unavailable(_) => self
-        _ => self
-      }
-    DispatchCommand(intent) => self.dispatch_command(intent, services)
-    SourceChanged(source) => { ..self, source, dirty: true }
-    _ => self
+      (
+        self,
+        @core.Effect::dispatch(dispatch => {
+          let response = services.open_file(title="Open document", filters=["md", "txt"])
+          dispatch(HostCompleted(file_dialog_completion(response)))
+        }),
+      )
+    DispatchCommand(intent) => (self.dispatch_command(intent, services), @core.Effect::none())
+    SourceChanged(source) => ({ ..self, source, dirty: true }, @core.Effect::none())
+    HostCompleted(completion) => (self.apply_host_completion(completion), @core.Effect::none())
+    _ => (self, @core.Effect::none())
   }
+}
+
+///|
+pub fn EditorModel::runtime_with_services(
+  self : EditorModel,
+  services : @host.HostAppServices,
+  width? : Double = 980.0,
+  height? : Double = 700.0,
+) -> @core.AppRuntime {
+  @core.AppRuntime::new_program(
+    program=@core.Program::new(
+      init=() => (self, @core.Effect::none()),
+      update=(model, message) => model.update_with_services(message, services),
+      view=model => model.view(),
+    ),
+    size=@core.Size::new(width~, height~),
+  )
 }
 ```
 

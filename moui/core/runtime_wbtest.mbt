@@ -230,6 +230,63 @@ test "program simple with environment rebuilds from viewport and environment" {
 }
 
 ///|
+enum ProgramEffectMsg {
+  ProgramEffectStart
+  ProgramEffectFinished(String)
+}
+
+///|
+test "program effects can dispatch typed follow-up messages" {
+  let program = Program::new(
+    init=() => ("idle", Effect::none()),
+    update=(_model, message) => {
+      match message {
+        ProgramEffectStart =>
+          (
+            "running",
+            Effect::dispatch(dispatch => dispatch(ProgramEffectFinished("done"))),
+          )
+        ProgramEffectFinished(value) => (value, Effect::none())
+      }
+    },
+    view=model => {
+      View::button(
+        text=model,
+        size=Size::new(width=120.0, height=44.0),
+        font=FontSpec::new(size=16.0),
+        foreground=Color::black(),
+        background=Brush::solid(Color::gray()),
+        hovered_background=Brush::solid(Color::gray()),
+        pressed_background=Brush::solid(Color::blue()),
+        on_click=Some(ProgramEffectStart),
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=160.0, height=80.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "idle"))
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=20.0, y=20.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=20.0, y=20.0),
+        phase=PointerPhase::Up,
+      ),
+    ),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "done"))
+}
+
+///|
 struct ControlledTextModel {
   draft : String
   query : String

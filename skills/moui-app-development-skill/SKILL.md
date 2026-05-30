@@ -67,6 +67,14 @@ separate framework task using `moui-framework-development-skill`.
   opaque `@core.View[Msg]`.
 - Keep state, reducers, data models, and view composition in the shared app
   package when the behavior should work across platforms.
+- Prefer the TEA runtime helpers: use `@core.Program::simple` for pure
+  model/update/view apps, `@core.Program::simple_with_environment` when the
+  view needs `ViewEnvironment`, and `@core.Program::new` when `update` returns
+  `@core.Effect[Msg]` follow-up work.
+- Keep host-service calls out of pure reducers. For app-owned clipboard, file
+  dialog, URL, theme, or menu work, return `@core.Effect::dispatch`, call
+  `@host.HostAppServices` inside the effect runner, and dispatch a typed
+  completion message back into the model.
 - Keep platform-specific setup in `web_wasm`, `macos`, `windows`, or `linux`
   entrypoints.
 - Showcase also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic`
@@ -192,6 +200,10 @@ sh scripts/dev-check.sh --platform-examples-build
 
 - Keep app state transitions testable without platform hosts.
 - Route user actions through existing MoUI event APIs and app reducers/helpers.
+- Use `Program::new` plus `Effect::dispatch` for app-level host-service work;
+  views should emit intent messages such as `BrowseRequested`, and effects
+  should dispatch typed completion messages for sync, unavailable, or pending
+  responses.
 - Keep host-specific input conversion in backend packages out of app code.
 
 ### Add Platform Entry Points
