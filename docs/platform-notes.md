@@ -366,6 +366,12 @@ duplicating Wayland registry and buffer ownership in MoUI.
 
 `examples/showcase/linux_skia` selects this provider explicitly for Showcase.
 Configure real Skia link flags before relying on native Skia-rendered pixels.
+The default JetBrains Linux provider links fontconfig, FreeType, and HarfBuzz;
+with those libraries available, `skia_mbt` builds a system `FontMgr` through
+fontconfig and falls back to common font directories such as `/usr/share/fonts`
+when fontconfig reports no families. Missing CJK or emoji glyph coverage still
+depends on installed system fonts, and full mixed-script fallback runs remain a
+text-system follow-up rather than a Linux backend responsibility.
 
 Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 
