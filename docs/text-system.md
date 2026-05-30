@@ -28,6 +28,10 @@ View[Msg] -> internal view tree -> DrawCommand::DrawText(TextRun) -> active Text
 
 Caret positions, selection geometry, wrapping, clipping, and IME request
 coordinates should all use the same active `TextSystem` that layout uses.
+Rich text runs may contain explicit newline characters; core splits those runs
+into line fragments for drawing, hit testing, caret geometry, and document
+height so renderer-backed text systems never need to interpret embedded
+newlines inside a single draw command.
 
 ## Native WGPU
 

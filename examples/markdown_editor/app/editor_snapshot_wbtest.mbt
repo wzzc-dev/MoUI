@@ -5,7 +5,7 @@ test "markdown editor snapshot tracks typora core document shape" {
   )
   inspect(snapshot.active_heading, content="Title")
   inspect(snapshot.line_count, content="7")
-  inspect(snapshot.blocks.length(), content="4")
+  inspect(snapshot.blocks.length(), content="5")
   guard snapshot.blocks[0]
     is {
       block: { kind: Heading(1), text: "Title", .. },
@@ -14,7 +14,15 @@ test "markdown editor snapshot tracks typora core document shape" {
     } else {
     fail("expected heading source mapping")
   }
-  guard snapshot.blocks[2]
+  guard snapshot.blocks[1]
+    is {
+      block: { kind: Paragraph, text: "", inlines: [], .. },
+      source_range: { start: 8, end: 8 },
+      content_range: { start: 8, end: 8 },
+    } else {
+    fail("expected visible blank line mapping")
+  }
+  guard snapshot.blocks[3]
     is {
       block: { kind: TaskListItem(true), text: "done", .. },
       content_range: { start, end },
@@ -24,10 +32,10 @@ test "markdown editor snapshot tracks typora core document shape" {
   }
   inspect(start, content="39")
   inspect(end, content="43")
-  guard snapshot.blocks[3].block.kind is CodeBlock else {
+  guard snapshot.blocks[4].block.kind is CodeBlock else {
     fail("expected fenced code block")
   }
-  inspect(snapshot.rich_text.blocks.length(), content="4")
+  inspect(snapshot.rich_text.blocks.length(), content="5")
 }
 
 ///|
@@ -54,7 +62,7 @@ test "markdown editor snapshot resolves reference links and images" {
   let snapshot = MarkdownEditorSnapshot::parse(
     "See [MoUI][site] and ![Logo][logo]\n\n[site]: https://moui.dev\n[logo]: assets/logo.png",
   )
-  inspect(snapshot.blocks.length(), content="1")
+  inspect(snapshot.blocks.length(), content="2")
   guard snapshot.blocks[0].block.inlines[1]
     is {
       kind: MarkdownInlineKind::Link,
@@ -86,12 +94,12 @@ test "markdown editor snapshot tracks footnotes" {
   let snapshot = MarkdownEditorSnapshot::parse(
     "Paragraph with note[^1].\n\n[^1]: Footnote body",
   )
-  inspect(snapshot.blocks.length(), content="2")
+  inspect(snapshot.blocks.length(), content="3")
   guard snapshot.blocks[0].block.inlines[1]
     is { kind: MarkdownInlineKind::FootnoteReference, text: "1", .. } else {
     fail("expected footnote reference inline")
   }
-  guard snapshot.blocks[1]
+  guard snapshot.blocks[2]
     is {
       block: {
         kind: FootnoteDefinition("1"),
@@ -113,7 +121,7 @@ test "markdown editor snapshot tracks footnotes" {
     } else {
     fail("expected rich footnote reference marker")
   }
-  guard snapshot.rich_text.blocks[1]
+  guard snapshot.rich_text.blocks[2]
     is {
       border_left: Some(_),
       runs: [
@@ -153,9 +161,94 @@ test "markdown editor snapshot tracks long fenced code blocks" {
   }
   inspect(snapshot.rich_text.blocks.length(), content="1")
   guard snapshot.rich_text.blocks[0].runs
-    is [{ text: "moonbit", .. }, { text: "\n```", .. }] else {
+    is [{ text: "moonbit", .. }, { text: "\n", .. }, { text: "```", .. }] else {
     fail("expected language label before code content")
   }
+}
+
+///|
+test "markdown editor snapshot preserves code block blank lines" {
+  let snapshot = MarkdownEditorSnapshot::parse("```moonbit\nlet x = 1\n\n```")
+  inspect(snapshot.blocks.length(), content="1")
+  guard snapshot.blocks[0].block.kind is CodeBlock else {
+    fail("expected code block")
+  }
+  inspect(snapshot.blocks[0].block.text, content="let x = 1\n")
+  inspect(snapshot.blocks[0].content_range.start, content="11")
+  inspect(snapshot.blocks[0].content_range.end, content="22")
+  guard snapshot.rich_text.blocks[0].runs
+    is [
+      { text: "moonbit", .. },
+      { text: "\n", .. },
+      { text: "let x = 1\n", .. },
+    ] else {
+    fail("expected blank code line in rich text")
+  }
+  inspect(
+    @core.rich_text_document_height(snapshot.rich_text, @core.FontSpec::new()).to_int(),
+    content="68",
+  )
+}
+
+///|
+test "markdown editor snapshot preserves visible empty paragraph lines" {
+  inspect(MarkdownEditorSnapshot::parse("").blocks.length(), content="0")
+  let snapshot = MarkdownEditorSnapshot::parse("Title\n\nBody\n")
+  inspect(snapshot.line_count, content="4")
+  inspect(snapshot.blocks.length(), content="4")
+  guard snapshot.blocks[1]
+    is {
+      block: { kind: Paragraph, text: "", inlines: [], .. },
+      source_range: { start: 6, end: 6 },
+      content_range: { start: 6, end: 6 },
+    } else {
+    fail("expected middle blank line block")
+  }
+  guard snapshot.blocks[3]
+    is {
+      block: { kind: Paragraph, text: "", inlines: [], .. },
+      source_range: { start: 12, end: 12 },
+      content_range: { start: 12, end: 12 },
+    } else {
+    fail("expected trailing blank line block")
+  }
+  inspect(snapshot.word_count, content="2")
+  inspect(snapshot.rich_text.blocks.length(), content="4")
+  guard snapshot.rich_text.blocks[1]
+    is {
+      runs: [],
+      source_range: Some({ start: 6, end: 6 }),
+      content_range: Some({ start: 6, end: 6 }),
+      ..,
+    } else {
+    fail("expected visible rich text block for middle blank line")
+  }
+  inspect(
+    @core.rich_text_document_height(snapshot.rich_text, @core.FontSpec::new()).to_int(),
+    content="99",
+  )
+}
+
+///|
+test "markdown editor caret geometry lands on inserted blank line" {
+  let content = @core.Rect::new(x=10.0, y=20.0, width=320.0, height=160.0)
+  let font = @core.FontSpec::new(size=16.0)
+  let heading = markdown_editor_format("# Title\n")
+  guard @core.rich_text_document_caret_rect_at_source(heading, 8, content, font)
+    is Some(heading_blank) else {
+    fail("expected heading blank-line caret rect")
+  }
+  let paragraph = markdown_editor_format("Body\n")
+  guard @core.rich_text_document_caret_rect_at_source(
+      paragraph, 5, content, font,
+    )
+    is Some(paragraph_blank) else {
+    fail("expected paragraph blank-line caret rect")
+  }
+  inspect(heading.blocks.length(), content="2")
+  inspect(paragraph.blocks.length(), content="2")
+  assert_true(heading_blank.origin.y > content.origin.y + 20.0)
+  inspect(paragraph_blank.origin.y.to_int(), content="48")
 }
 
 ///|
@@ -408,6 +501,25 @@ test "markdown editor formatter reveals active block markers" {
     } else {
     fail("expected marker-only caret to keep task prefix clickable")
   }
+  let code = markdown_editor_format_for_selection(
+    "```moonbit\nlet saved = markdown\n```",
+    { caret: 15, selection: None },
+  )
+  guard code.blocks[0].content_range is Some(range) else {
+    fail("expected active code block source range")
+  }
+  inspect(range.start, content="0")
+  inspect(range.end, content="35")
+  inspect(code.blocks[0].runs.length(), content="1")
+  inspect(
+    code.blocks[0].runs[0].text,
+    content="```moonbit\nlet saved = markdown\n```",
+  )
+  guard code.blocks[0].runs[0].source_range is Some(run_range) else {
+    fail("expected active code block run source range")
+  }
+  inspect(run_range.start, content="0")
+  inspect(run_range.end, content="35")
 }
 
 ///|
@@ -1079,7 +1191,8 @@ test "markdown formatter produces rich text blocks and styled runs" {
   assert_true(document.blocks[3].border_left is Some(_))
   assert_true(document.blocks[4].background is Some(_))
   inspect(document.blocks[4].runs[0].text, content="moonbit")
-  inspect(document.blocks[4].runs[1].text, content="\ncode")
+  inspect(document.blocks[4].runs[1].text, content="\n")
+  inspect(document.blocks[4].runs[2].text, content="code")
   assert_true(document.blocks[5].rule)
 }
 

@@ -29,7 +29,6 @@ fn rich_text_block_run_visual_offset_from_source(
 ) -> Int? {
   let mut visual = 0
   for run in block.runs {
-    let length = text_length(run.text)
     let visual_length = text_length(rich_text_run_visual_text(run))
     match run.source_range {
       Some(range) =>
@@ -38,12 +37,12 @@ fn rich_text_block_run_visual_offset_from_source(
             visual +
             rich_text_run_visual_offset_from_source_offset(
               source_offset - range.start,
-              length,
+              text_length(run.text),
               visual_length,
             ),
           )
         }
-      None => return None
+      None => ()
     }
     visual = visual + visual_length
   }
@@ -175,20 +174,6 @@ fn rich_text_block_table_source_offset_at_point(
 }
 
 ///|
-fn rich_text_block_source_offset_at_x(
-  block : RichTextBlock,
-  x : Double,
-  frame : Rect,
-  base_font : FontSpec,
-  text_system : TextSystem,
-) -> Int {
-  let visual = rich_text_block_visual_offset_at_x(
-    block, x, frame, base_font, text_system,
-  )
-  rich_text_block_source_offset_from_visual(block, visual)
-}
-
-///|
 fn rich_text_block_source_offset_from_visual(
   block : RichTextBlock,
   visual_offset : Int,
@@ -224,6 +209,10 @@ fn rich_text_block_run_source_offset_from_visual(
   visual_offset : Int,
 ) -> Int? {
   let mut remaining = visual_offset
+  let mut fallback = match block.content_range {
+    Some(content) => Some(content.start)
+    None => None
+  }
   for run in block.runs {
     let length = text_length(run.text)
     let visual_length = text_length(rich_text_run_visual_text(run))
@@ -240,16 +229,20 @@ fn rich_text_block_run_source_offset_from_visual(
               range.end,
             ),
           )
-        None => return None
+        None => return fallback
       }
     }
     remaining = remaining - visual_length
+    match run.source_range {
+      Some(range) => fallback = Some(range.end)
+      None => ()
+    }
   }
   match block.runs.last() {
     Some(run) =>
       match run.source_range {
         Some(range) => Some(range.end)
-        None => None
+        None => fallback
       }
     None => None
   }
@@ -521,12 +514,8 @@ fn rich_text_document_source_offset_at_point(
       ),
       height=line_height,
     )
-    let offset = rich_text_block_source_offset_at_x(
-      block,
-      point.x,
-      frame,
-      base_font,
-      text_system,
+    let offset = rich_text_block_source_offset_at_point(
+      block, point, frame, base_font, text_system,
     )
     last_offset = Some(offset)
     if point.y < y + block_height {
@@ -542,52 +531,90 @@ fn rich_text_document_source_offset_at_point(
 }
 
 ///|
-fn rich_text_block_visual_offset_at_x(
+fn rich_text_block_visual_offset_at_point(
   block : RichTextBlock,
-  x : Double,
+  point : Point,
   frame : Rect,
   base_font : FontSpec,
   text_system : TextSystem,
 ) -> Int {
   let font = rich_text_block_font(block, base_font)
+  let line_step = rich_text_block_line_step(block, base_font)
+  let target_line = clamp_int(
+    ((point.y - frame.origin.y) / line_step).floor().to_int(),
+    0,
+    rich_text_block_visual_line_count(block) - 1,
+  )
   let mut origin = frame.origin.x
   let mut visual_offset = 0
+  let mut line = 0
+  let mut line_end = 0
   if block.prefix != "" {
     let prefix_length = text_length(block.prefix)
     let hit = rich_text_run_visual_offset_at_x(
       block.prefix,
       font,
-      x,
+      point.x,
       origin,
       text_system,
     )
-    if hit < prefix_length ||
-      x <= origin + rich_text_width(block.prefix, font, text_system) {
+    let width = rich_text_width(block.prefix, font, text_system)
+    if target_line == 0 && (hit < prefix_length || point.x <= origin + width) {
       return hit
     }
     visual_offset = visual_offset + prefix_length
-    origin = origin + rich_text_width(block.prefix, font, text_system)
+    line_end = visual_offset
+    origin = origin + width
   }
   for run in block.runs {
     let run_font = run.font.unwrap_or(font)
-    let text = rich_text_run_visual_text(run)
-    let run_length = text_length(text)
-    let run_width = rich_text_run_width(run, run_font, text_system)
-    if x <= origin + run_width {
-      return visual_offset +
-        rich_text_run_visual_offset_at_x(
-          text,
-          run_font,
-          x,
-          origin,
-          text_system,
-          width=rich_text_run_hit_width(run, run_width),
-        )
+    let segments = rich_text_split_lines(rich_text_run_visual_text(run))
+    for index, segment in segments {
+      let segment_length = text_length(segment)
+      let segment_width = rich_text_run_segment_width(
+        run, segment, run_font, text_system,
+      )
+      if line == target_line {
+        line_end = visual_offset + segment_length
+        if point.x <= origin + segment_width || segment_length == 0 {
+          return visual_offset +
+            rich_text_run_visual_offset_at_x(
+              segment,
+              run_font,
+              point.x,
+              origin,
+              text_system,
+              width=rich_text_run_hit_width(run, segment_width),
+            )
+        }
+      }
+      visual_offset = visual_offset + segment_length
+      origin = origin + segment_width
+      if index + 1 < segments.length() {
+        if line == target_line {
+          return line_end
+        }
+        visual_offset = visual_offset + 1
+        line = line + 1
+        origin = frame.origin.x
+      }
     }
-    visual_offset = visual_offset + run_length
-    origin = origin + run_width
   }
-  rich_text_block_visual_length(block)
+  line_end
+}
+
+///|
+fn rich_text_block_source_offset_at_point(
+  block : RichTextBlock,
+  point : Point,
+  frame : Rect,
+  base_font : FontSpec,
+  text_system : TextSystem,
+) -> Int {
+  let visual = rich_text_block_visual_offset_at_point(
+    block, point, frame, base_font, text_system,
+  )
+  rich_text_block_source_offset_from_visual(block, visual)
 }
 
 ///|
@@ -644,53 +671,99 @@ fn rich_text_block_caret_rect(
   text_system : TextSystem,
 ) -> Rect {
   let font = rich_text_block_font(block, base_font)
+  let line_step = rich_text_block_line_step(block, base_font)
   let mut remaining = clamp_int(
     visual_offset,
     0,
     rich_text_block_visual_length(block),
   )
   let mut x = frame.origin.x
+  let mut y = frame.origin.y
   if block.prefix != "" {
     let prefix_length = text_length(block.prefix)
     if remaining <= prefix_length {
       let prefix = rich_text_prefix(block.prefix, remaining)
       x = x + rich_text_width(prefix, font, text_system)
-      return rich_text_cursor_rect_at(x, frame, font)
+      return rich_text_cursor_rect_at(
+        x,
+        Rect::new(
+          x=frame.origin.x,
+          y~,
+          width=frame.size.width,
+          height=frame.size.height,
+        ),
+        font,
+      )
     }
     remaining = remaining - prefix_length
     x = x + rich_text_width(block.prefix, font, text_system)
   }
   for run in block.runs {
     let run_font = run.font.unwrap_or(font)
-    let text = rich_text_run_visual_text(run)
-    let run_length = text_length(text)
-    if remaining <= run_length {
-      x = x + rich_text_run_prefix_width(run, remaining, run_font, text_system)
-      return rich_text_cursor_rect_at(x, frame, run_font)
+    let segments = rich_text_split_lines(rich_text_run_visual_text(run))
+    for index, segment in segments {
+      let segment_length = text_length(segment)
+      if remaining <= segment_length {
+        x = x +
+          rich_text_run_segment_prefix_width(
+            run, segment, remaining, run_font, text_system,
+          )
+        return rich_text_cursor_rect_at(
+          x,
+          Rect::new(
+            x=frame.origin.x,
+            y~,
+            width=frame.size.width,
+            height=line_step,
+          ),
+          run_font,
+        )
+      }
+      remaining = remaining - segment_length
+      x = x + rich_text_run_segment_width(run, segment, run_font, text_system)
+      if index + 1 < segments.length() {
+        if remaining == 0 {
+          return rich_text_cursor_rect_at(
+            x,
+            Rect::new(
+              x=frame.origin.x,
+              y~,
+              width=frame.size.width,
+              height=line_step,
+            ),
+            run_font,
+          )
+        }
+        remaining = remaining - 1
+        y = y + line_step
+        x = frame.origin.x
+      }
     }
-    remaining = remaining - run_length
-    x = x + rich_text_run_width(run, run_font, text_system)
   }
-  rich_text_cursor_rect_at(x, frame, font)
+  rich_text_cursor_rect_at(
+    x,
+    Rect::new(x=frame.origin.x, y~, width=frame.size.width, height=line_step),
+    font,
+  )
 }
 
 ///|
-fn rich_text_run_prefix_width(
+fn rich_text_run_segment_prefix_width(
   run : RichTextRun,
+  text : String,
   visual_offset : Int,
   font : FontSpec,
   text_system : TextSystem,
 ) -> Double {
-  let text = rich_text_run_visual_text(run)
   let length = text_length(text)
   if length <= 0 || visual_offset <= 0 {
     0.0
   } else if visual_offset >= length {
-    rich_text_run_width(run, font, text_system)
+    rich_text_run_segment_width(run, text, font, text_system)
   } else {
     match run.image_source {
       Some(_) =>
-        rich_text_run_width(run, font, text_system) *
+        rich_text_run_segment_width(run, text, font, text_system) *
         visual_offset.to_double() /
         length.to_double()
       None =>

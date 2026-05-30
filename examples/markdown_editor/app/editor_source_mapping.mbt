@@ -51,9 +51,13 @@ fn markdown_editor_reveal_active_block_marker(
 ) -> @core.RichTextBlock {
   match (block.source_range, block.content_range) {
     (Some(source_range), Some(content_range)) => {
+      if markdown_editor_active_code_block(source, selection, block) {
+        return markdown_editor_reveal_active_code_block(source, block)
+      }
       if source_range.start >= content_range.start ||
-        !markdown_editor_selection_touches_range(selection, content_range) ||
-        block.runs.length() == 0 {
+        block.runs.length() == 0 ||
+        block.runs[0].source_range is None ||
+        !markdown_editor_selection_touches_range(selection, content_range) {
         return block
       }
       let prefix = markdown_editor_substring(
@@ -80,6 +84,76 @@ fn markdown_editor_reveal_active_block_marker(
     }
     _ => block
   }
+}
+
+///|
+fn markdown_editor_active_code_block(
+  source : String,
+  selection : MarkdownEditorSelection,
+  block : @core.RichTextBlock,
+) -> Bool {
+  match (block.source_range, block.content_range) {
+    (Some(source_range), Some(_content_range)) => {
+      let block_source = markdown_editor_substring(
+        source,
+        source_range.start,
+        source_range.end,
+      )
+      markdown_editor_source_starts_with_code_fence(block_source) &&
+      markdown_editor_selection_touches_range(selection, source_range)
+    }
+    _ => false
+  }
+}
+
+///|
+fn markdown_editor_reveal_active_code_block(
+  source : String,
+  block : @core.RichTextBlock,
+) -> @core.RichTextBlock {
+  match block.source_range {
+    Some(source_range) => {
+      let source_text = markdown_editor_substring(
+        source,
+        source_range.start,
+        source_range.end,
+      )
+      let font = markdown_editor_first_run_font(block)
+      {
+        ..block,
+        runs: [
+          @core.RichTextRun::new(
+            text=source_text,
+            font~,
+            source_range=Some(source_range),
+          ),
+        ],
+        content_range: Some(source_range),
+      }
+    }
+    None => block
+  }
+}
+
+///|
+fn markdown_editor_first_run_font(
+  block : @core.RichTextBlock,
+) -> @core.FontSpec? {
+  if block.runs.length() == 0 {
+    None
+  } else {
+    block.runs[0].font
+  }
+}
+
+///|
+fn markdown_editor_source_starts_with_code_fence(source : String) -> Bool {
+  let chars = source.trim().to_owned().to_array()
+  if chars.length() < 3 {
+    return false
+  }
+  (chars[0] == '`' && chars[1] == '`' && chars[2] == '`') ||
+  (chars[0] == '~' && chars[1] == '~' && chars[2] == '~')
 }
 
 ///|
@@ -200,6 +274,9 @@ fn markdown_editor_single_inline_marker_at(
 ///|
 fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
   let blocks : Array[MarkdownEditorBlock] = []
+  if source == "" {
+    return blocks
+  }
   let definitions = markdown_reference_definitions(source)
   let lines = markdown_editor_lines(source)
   let code_lines : Array[String] = []
@@ -213,7 +290,7 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
     let line = lines[index]
     if in_code {
       if markdown_editor_closing_code_fence(line.text, code_fence) {
-        let text = markdown_join_lines(code_lines).trim().to_owned()
+        let text = markdown_join_lines(code_lines)
         blocks.push({
           block: markdown_editor_code_block(text, code_language),
           source_range: { start: code_start, end: line.end },
@@ -226,7 +303,9 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
       } else {
         code_lines.push(line.text)
       }
-    } else if line.text.trim().to_owned() != "" {
+    } else if line.text.trim().to_owned() == "" {
+      blocks.push(markdown_editor_blank_line_block(line))
+    } else {
       match markdown_editor_opening_code_fence_marker(line.text) {
         Some(fence) => {
           in_code = true
@@ -286,7 +365,7 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
     index = index + 1
   }
   if in_code {
-    let text = markdown_join_lines(code_lines).trim().to_owned()
+    let text = markdown_join_lines(code_lines)
     let end = markdown_editor_text_length(source)
     blocks.push({
       block: markdown_editor_code_block(text, code_language),
@@ -295,6 +374,21 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
     })
   }
   blocks
+}
+
+///|
+fn markdown_editor_blank_line_block(line : MarkdownLine) -> MarkdownEditorBlock {
+  {
+    block: {
+      kind: MarkdownBlockKind::Paragraph,
+      text: "",
+      inlines: [],
+      table_alignments: [],
+      code_language: None,
+    },
+    source_range: { start: line.start, end: line.end },
+    content_range: { start: line.start, end: line.end },
+  }
 }
 
 ///|
@@ -604,7 +698,11 @@ fn markdown_editor_runs_with_source_ranges(
   let mut index = 0
   let content = markdown_editor_block_source_content(editor_block)
   for run in runs {
-    if index == 0 && editor_block.block.kind is FootnoteDefinition(_) {
+    if editor_block.block.kind is CodeBlock &&
+      editor_block.block.code_language is Some(_) &&
+      index < 2 {
+      mapped.push(run)
+    } else if index == 0 && editor_block.block.kind is FootnoteDefinition(_) {
       mapped.push({
         ..run,
         source_range: Some({

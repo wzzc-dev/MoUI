@@ -698,12 +698,9 @@ test "markdown editor reads selected link and image targets" {
 ///|
 test "markdown editor code language command updates fenced block" {
   let source = "Intro\n```moonbit\nlet x = 1\n```\nTail"
-  guard markdown_editor_selected_code_language(source, {
-      caret: 20,
-      selection: None,
-    })
-    is Some("moonbit") else {
-    fail("expected selected code language")
+  let snapshot = MarkdownEditorSnapshot::parse(source)
+  guard snapshot.blocks[1].block.code_language is Some("moonbit") else {
+    fail("expected parsed code language")
   }
   let updated = markdown_editor_apply_command_at(
     source,

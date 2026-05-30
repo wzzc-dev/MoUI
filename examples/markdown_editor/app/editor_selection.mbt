@@ -163,17 +163,6 @@ fn markdown_editor_bracketed_reference_range_at_caret(
 }
 
 ///|
-fn markdown_editor_selected_code_language(
-  source : String,
-  selection : MarkdownEditorSelection,
-) -> String? {
-  match markdown_editor_code_block_at_selection(source, selection) {
-    Some(block) => block.block.code_language
-    None => None
-  }
-}
-
-///|
 fn markdown_editor_selected_footnote_text(
   source : String,
   selection : MarkdownEditorSelection,
