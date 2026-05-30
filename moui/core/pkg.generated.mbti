@@ -164,7 +164,6 @@ pub fn AppRuntime::needs_layout(Self) -> Bool
 pub fn AppRuntime::needs_paint(Self) -> Bool
 pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
-pub fn[Msg] AppRuntime::new_component_view(root~ : (BuildContext) -> View[Msg], size~ : Size, environment? : Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn[Model, Msg] AppRuntime::new_program(program~ : Program[Model, Msg], size~ : Size, environment? : Environment) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : View[Msg], size~ : Size, environment? : Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::paint_pass(Self) -> Array[DrawCommand]

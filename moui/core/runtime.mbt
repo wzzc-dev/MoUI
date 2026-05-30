@@ -33,7 +33,7 @@ fn AppRuntime::new_component(
 }
 
 ///|
-pub fn[Msg] AppRuntime::new_component_view(
+fn[Msg] AppRuntime::new_component_view(
   root~ : (BuildContext) -> View[Msg],
   size~ : Size,
   environment? : Environment = Environment::default(),

@@ -50,8 +50,8 @@ The package boundaries follow that pipeline:
 
 Focus areas:
 
-- Stabilize `AppRuntime::new_view`, `AppRuntime::new_component_view`, and
-  `AppRuntime::new_program` usage.
+- Stabilize `AppRuntime::new_view` for direct static views and
+  `AppRuntime::new_program` as the default typed app runtime.
 - Keep `BuildContext::watch` and `ctx.binding` as the preferred state access
   patterns during component builds.
 - Use `BuildContext::run_effect` for component-scoped effects with cleanup, and
