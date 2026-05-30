@@ -51,17 +51,23 @@ fn ShowcaseModel::inspector_snapshot_card(
 ) -> @core.View[ShowcaseMsg] {
   ignore(self)
   let inner_width = max_showcase_double(180.0, width - 32.0)
-  let stat_columns = if inner_width < 520.0 { 1 } else { 3 }
+  let stat_columns = if inner_width < 520.0 { 1 } else { 4 }
   let stat_width = if stat_columns == 1 {
     inner_width
   } else {
     max_showcase_double(
       140.0,
-      (inner_width - theme.spacing_scale.sm * 2.0) / 3.0,
+      (inner_width - theme.spacing_scale.sm * 3.0) / 4.0,
     )
   }
-  let card_height = if stat_columns == 1 { 412.0 } else { 224.0 }
+  let card_height = if stat_columns == 1 { 468.0 } else { 248.0 }
   let snapshot = showcase_inspector_snapshot(theme)
+  let scope_caption = "Open scopes " +
+    snapshot.render.open_clip_depth.to_string() +
+    "/" +
+    snapshot.render.open_layer_depth.to_string() +
+    "/" +
+    snapshot.render.open_filter_depth.to_string()
   showcase_soft_card(
     theme,
     column(
@@ -103,6 +109,14 @@ fn ShowcaseModel::inspector_snapshot_card(
               width=stat_width,
               height=96.0,
             ),
+            stat_card(
+              "Render commands",
+              snapshot.render.command_count.to_string(),
+              caption="Text " + snapshot.render.text_count.to_string(),
+              theme~,
+              width=stat_width,
+              height=96.0,
+            ),
           ],
           columns=stat_columns,
           row_spacing=theme.spacing_scale.sm,
@@ -115,6 +129,22 @@ fn ShowcaseModel::inspector_snapshot_card(
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.primary),
+        text(
+          "Render scopes: max clip/layer/filter " +
+          snapshot.render.clip_depth.to_string() +
+          "/" +
+          snapshot.render.layer_depth.to_string() +
+          "/" +
+          snapshot.render.filter_depth.to_string() +
+          "; " +
+          scope_caption +
+          "; unbalanced pops " +
+          snapshot.render.unbalanced_pop_count.to_string(),
+          width=inner_width,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,

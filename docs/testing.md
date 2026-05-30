@@ -217,7 +217,9 @@ before it grows broad platform claims:
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, async host-service completion, window lifecycle
   registry behavior, devtool snapshots, render inspector scope diagnostics,
-  frame-profile counters, guidance freshness, and example builds.
+  frame-profile counters, guidance freshness, and example builds. Showcase app
+  tests also assert that the Diagnostics route surfaces render command and
+  render-scope inspector counters from the shared inspector snapshot.
 - Text system: stable fallback/provider/editor invariants for CJK, emoji,
   mixed bidi, caret positions, selection, and IME anchors, plus opt-in
   diagnostic packages under `moui/tests/text_conformance/`.
