@@ -154,23 +154,20 @@ moon test examples/command_palette/app --target native
 ## Host Services
 
 Use `@host.HostAppServices` for clipboard, file dialogs, URL opening, system
-theme, and native context menus. Apps should handle `Unavailable`, synchronous
+theme, and native context menus. Effect-capable apps should return
+`Effect::dispatch` from `Program::new` updates, call the service from the effect
+runner, and dispatch a typed completion message for `Unavailable`, synchronous
 responses, and pending async completions. `views` should only emit messages such
 as `BrowseRequested` or `RecordFileDrop(paths)`.
 
 ```moonbit nocheck
-fn handle_browse(
+fn request_browse(
   services : @host.HostAppServices,
-) -> ImportStatus {
-  match services.open_file(title="Import files", filters=["csv", "json"]) {
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      ImportStatus::Selected(paths)
-    @host.HostServiceResponse::Pending(id) =>
-      ImportStatus::Pending(id)
-    @host.HostServiceResponse::Unavailable(message) =>
-      ImportStatus::Unavailable(message)
-    _ => ImportStatus::Unavailable("unexpected file dialog response")
-  }
+) -> @core.Effect[ImportMsg] {
+  @core.Effect::dispatch(dispatch => {
+    let response = services.open_file(title="Import files", filters=["csv", "json"])
+    dispatch(HostCompleted(file_dialog_completion(response)))
+  })
 }
 ```
 

@@ -95,7 +95,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `banner` / `callout` | `views/feedback.mbt` | Tone colors/surface | Group | `views/views_test.mbt` | Showcase Feedback | Inline status and guidance surfaces with optional action. |
 | `empty_state` / `loading_state` / `error_state` | `views/feedback.mbt` | Tone colors/surface | Group | `views/views_test.mbt` | Showcase Feedback | Reusable workflow state panels using optional `StateViewAction`. |
 | `badge` / `stat_card` | `views/feedback.mbt` | Tone colors/surface | Text/group | `views/views_test.mbt` | Showcase Feedback | Compact metadata and metric cards. |
-| `drop_zone` / `file_import_panel` | `views/file_import.mbt` | Surface/button/text | Button-like drop target/group | `views/views_test.mbt` | Showcase Interaction Lab | Drag/drop maps through `View::on_file_drop`; browse buttons emit app messages so apps can call `HostAppServices::open_file` without making `views` depend on backend packages. Web hosts may surface browser file names or handles while native hosts can surface filesystem paths. |
+| `drop_zone` / `file_import_panel` | `views/file_import.mbt` | Surface/button/text | Button-like drop target/group | `views/views_test.mbt` | Showcase Interaction Lab | Drag/drop maps through `View::on_file_drop`; browse buttons emit app messages so effect-capable apps can call `HostAppServices::open_file` from `Effect::dispatch` without making `views` depend on backend packages. Web hosts may surface browser file names or handles while native hosts can surface filesystem paths. |
 
 ## Data Display
 

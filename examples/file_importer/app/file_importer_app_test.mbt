@@ -19,10 +19,12 @@ test "file importer handles empty selection" {
 
 ///|
 test "file importer uses unavailable host service state" {
-  let model = FileImporterModel::new().update_with_services(
+  let update = FileImporterModel::new().update_with_services(
     BrowseRequested,
     @host.HostAppServices::unavailable(),
   )
+  assert_true(update.model.status is FileImporterStatus::Requesting)
+  let model = run_file_importer_effect(update)
   assert_true(model.status is FileImporterStatus::Unavailable(_))
   inspect(model.last_event, content="File dialog unavailable")
   inspect(
@@ -34,10 +36,12 @@ test "file importer uses unavailable host service state" {
 ///|
 test "file importer handles immediate host file selection" {
   let services = host_services_for_file_dialog(["/tmp/report.csv"])
-  let model = FileImporterModel::new().update_with_services(
+  let update = FileImporterModel::new().update_with_services(
     BrowseRequested,
     services,
   )
+  assert_true(update.model.status is FileImporterStatus::Requesting)
+  let model = run_file_importer_effect(update)
   inspect(model.files.length(), content="1")
   inspect(model.files[0].path, content="/tmp/report.csv")
   inspect(model.files[0].source, content="Dialog")
@@ -48,10 +52,12 @@ test "file importer handles immediate host file selection" {
 test "file importer handles mocked pending completion" {
   let queue = @host.HostServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
-  let pending_model = FileImporterModel::new().update_with_services(
+  let update = FileImporterModel::new().update_with_services(
     BrowseRequested,
     services,
   )
+  assert_true(update.model.status is FileImporterStatus::Requesting)
+  let pending_model = run_file_importer_effect(update)
   guard pending_model.status is FileImporterStatus::Pending(id) else {
     fail("expected pending file dialog")
   }
@@ -71,6 +77,20 @@ test "file importer handles mocked pending completion" {
   inspect(completed.files.length(), content="1")
   inspect(completed.files[0].path, content="/tmp/later.txt")
   inspect(completed.last_event, content="Imported 1 file(s) from Dialog")
+}
+
+///|
+test "file importer runtime runs host service effects" {
+  let services = host_services_for_file_dialog(["/tmp/runtime.csv"])
+  let runtime = FileImporterModel::new().runtime_with_services(
+    services,
+    width=860.0,
+    height=620.0,
+  )
+  click_text(runtime, "Browse")
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "/tmp/runtime.csv"))
+  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
 }
 
 ///|
@@ -118,8 +138,65 @@ fn async_file_dialog_services(
 }
 
 ///|
+fn run_file_importer_effect(update : FileImporterUpdate) -> FileImporterModel {
+  let model = @core.State::new(update.model)
+  let dispatch = message => model.set(model.get().update(message))
+  match update.effect {
+    @core.Effect::NoEffect => ()
+    @core.Effect::Batch(effects) =>
+      for effect in effects {
+        let next = run_file_importer_effect(
+          FileImporterUpdate::new(model.get(), effect~),
+        )
+        model.set(next)
+      }
+    @core.Effect::Send(message) => dispatch(message)
+    @core.Effect::Dispatch(run) => run(dispatch)
+  }
+  model.get()
+}
+
+///|
+fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+  guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
+    fail("expected text frame for " + text)
+  }
+  let point = @core.Point::new(
+    x=frame.origin.x + frame.size.width / 2.0,
+    y=frame.origin.y + frame.size.height / 2.0,
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Up),
+    ),
+  )
+}
+
+///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
   })
+}
+
+///|
+fn text_frame(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.Rect? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+        if value == text {
+          return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
 }

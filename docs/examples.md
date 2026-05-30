@@ -126,12 +126,14 @@ summary, plus empty/loading/error panels built from public `views` constructors.
 ## File Importer
 
 The File Importer example demonstrates the non-render file workflow surface. The
-view uses `drop_zone` and `file_import_panel`; the model accepts dropped paths,
-requests an app-level host file dialog through `HostAppServices`, and handles
-both immediate and pending mocked completions. Browser hosts commonly expose
-file names while native hosts can expose filesystem paths, so production apps
-should treat these strings as host-provided display or import handles rather
-than assuming one platform shape.
+view uses `drop_zone` and `file_import_panel`; the pure model accepts dropped
+paths, while the effect-capable runtime uses `Program::new` and
+`Effect::dispatch` to request an app-level host file dialog through
+`HostAppServices` and feed unavailable, immediate, or pending responses back as
+typed `HostCompleted` messages. Browser hosts commonly expose file names while
+native hosts can expose filesystem paths, so production apps should treat these
+strings as host-provided display or import handles rather than assuming one
+platform shape.
 
 ## Command Palette
 

@@ -103,11 +103,14 @@ callbacks.
 
 Stateful examples can still use `AppRuntime::new_component_view` with
 `BuildContext`, while pure model examples should default to `Program::simple`
-and `AppRuntime::new_program`. Effect-capable apps can use `Program::new` when
-they need explicit `Effect[Msg]` output. Environment-aware TEA apps should use
-the `*_with_environment` constructors instead of taking `BuildContext` in their
-view layer. In both cases event dispatch flows through typed messages instead
-of exposing the internal view tree.
+and `AppRuntime::new_program`. Effect-capable apps should use `Program::new`
+when `update` returns follow-up work: `Effect::send` re-enters the typed message
+loop directly, and `Effect::dispatch` gives an effect runner the typed message
+dispatcher for app-owned host-service bridges or other callbacks without making
+`core` platform-specific. Environment-aware TEA apps should use the
+`*_with_environment` constructors instead of taking `BuildContext` in their view
+layer. In both cases event dispatch flows through typed messages instead of
+exposing the internal view tree.
 
 ## Runtime Mental Model
 
@@ -463,10 +466,12 @@ File drop targets use the `View::on_file_drop` modifier; hosts normalize native
 file drag/drop positions and paths before the runtime dispatches typed messages
 to the hit view. `views.drop_zone` and `views.file_import_panel` are view-level
 workflow shells over that modifier; their browse action remains an app message,
-so app code can call `HostAppServices::open_file` and handle unavailable or
-pending file dialog responses. Web file import may expose browser-selected file
-names or handles rather than native filesystem paths, while native hosts can
-return platform paths through the same selection array.
+so effect-capable app code can return an `Effect::dispatch` runner that calls
+`HostAppServices::open_file` and dispatches a typed completion message for
+unavailable, synchronous, or pending file dialog responses. Web file import may
+expose browser-selected file names or handles rather than native filesystem
+paths, while native hosts can return platform paths through the same selection
+array.
 
 See [Platform notes](platform-notes.md) for setup, backend-specific constraints,
 and validation commands.

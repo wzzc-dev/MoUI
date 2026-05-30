@@ -3,6 +3,7 @@ pub(all) enum Effect[Msg] {
   NoEffect
   Batch(Array[Effect[Msg]])
   Send(Msg)
+  Dispatch(((Msg) -> Unit) -> Unit)
 }
 
 ///|
@@ -25,6 +26,11 @@ pub fn[Msg] Effect::batch(effects : Array[Effect[Msg]]) -> Effect[Msg] {
 ///|
 pub fn[Msg] Effect::send(message : Msg) -> Effect[Msg] {
   Send(message)
+}
+
+///|
+pub fn[Msg] Effect::dispatch(run : ((Msg) -> Unit) -> Unit) -> Effect[Msg] {
+  Dispatch(run)
 }
 
 ///|
@@ -80,5 +86,6 @@ fn[Msg] run_effect(effect : Effect[Msg], dispatch : (Msg) -> Unit) -> Unit {
         run_effect(effect, dispatch)
       }
     Send(message) => dispatch(message)
+    Dispatch(run) => run(dispatch)
   }
 }

@@ -21,6 +21,7 @@ pub struct FileImporterApp {
 ///|
 pub(all) enum FileImporterStatus {
   Ready
+  Requesting
   Pending(@host.HostServiceRequestId)
   Unavailable(String)
 } derive(Eq, Debug, ToJson)
@@ -37,6 +38,12 @@ pub(all) struct FileImporterModel {
   status : FileImporterStatus
   last_event : String
   availability_reason : String
+}
+
+///|
+pub(all) struct FileImporterUpdate {
+  model : FileImporterModel
+  effect : @core.Effect[FileImporterMsg]
 }
 
 ///|
@@ -72,7 +79,20 @@ pub fn FileImporterModel::update(
   self : FileImporterModel,
   message : FileImporterMsg,
 ) -> FileImporterModel {
-  self.update_with_services(message, @host.HostAppServices::unavailable())
+  match message {
+    FilesDropped(paths) => self.with_paths(paths, source="Drop")
+    BrowseRequested =>
+      {
+        ..self,
+        status: FileImporterStatus::Unavailable(
+          "file dialog service is unavailable",
+        ),
+        last_event: "File dialog unavailable",
+        availability_reason: "file dialog service is unavailable",
+      }
+    HostCompleted(completion) => self.apply_host_completion(completion)
+    ClearSelection => { ..self, files: [], last_event: "Selection cleared" }
+  }
 }
 
 ///|
@@ -80,13 +100,26 @@ pub fn FileImporterModel::update_with_services(
   self : FileImporterModel,
   message : FileImporterMsg,
   services : @host.HostAppServices,
-) -> FileImporterModel {
+) -> FileImporterUpdate {
   match message {
-    FilesDropped(paths) => self.with_paths(paths, source="Drop")
     BrowseRequested => self.request_file_dialog(services)
-    HostCompleted(completion) => self.apply_host_completion(completion)
-    ClearSelection => { ..self, files: [], last_event: "Selection cleared" }
+    _ => FileImporterUpdate::new(self.update(message))
   }
+}
+
+///|
+pub fn FileImporterUpdate::new(
+  model : FileImporterModel,
+  effect? : @core.Effect[FileImporterMsg] = @core.Effect::none(),
+) -> FileImporterUpdate {
+  { model, effect }
+}
+
+///|
+pub fn FileImporterUpdate::as_tuple(
+  self : FileImporterUpdate,
+) -> (FileImporterModel, @core.Effect[FileImporterMsg]) {
+  (self.model, self.effect)
 }
 
 ///|
@@ -110,6 +143,7 @@ pub fn FileImporterModel::availability(
 ) -> @views.FileImportAvailability {
   match self.status {
     FileImporterStatus::Ready => @views.FileImportAvailability::Available
+    FileImporterStatus::Requesting => @views.FileImportAvailability::Pending
     FileImporterStatus::Pending(_) => @views.FileImportAvailability::Pending
     FileImporterStatus::Unavailable(reason) =>
       @views.FileImportAvailability::Unavailable(reason)
@@ -220,8 +254,28 @@ pub fn FileImporterModel::runtime(
   width? : Double = 860.0,
   height? : Double = 620.0,
 ) -> @core.AppRuntime {
+  self.runtime_with_services(
+    @host.HostAppServices::unavailable(),
+    width~,
+    height~,
+  )
+}
+
+///|
+pub fn FileImporterModel::runtime_with_services(
+  self : FileImporterModel,
+  services : @host.HostAppServices,
+  width? : Double = 860.0,
+  height? : Double = 620.0,
+) -> @core.AppRuntime {
   @core.AppRuntime::new_program(
-    program=@core.Program::simple(init=self, update~, view~),
+    program=@core.Program::new(
+      init=() => (self, @core.Effect::none()),
+      update=(model, message) => {
+        model.update_with_services(message, services).as_tuple()
+      },
+      view~,
+    ),
     size=@core.Size::new(width~, height~),
   )
 }
@@ -230,34 +284,49 @@ pub fn FileImporterModel::runtime(
 fn FileImporterModel::request_file_dialog(
   self : FileImporterModel,
   services : @host.HostAppServices,
-) -> FileImporterModel {
-  match
-    services.open_file(title="Import files", filters=["csv", "json", "txt"]) {
-    @host.HostServiceResponse::Pending(id) =>
-      {
-        ..self,
-        status: FileImporterStatus::Pending(id),
-        last_event: "Waiting for file picker",
-        availability_reason: "",
-      }
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      self.with_paths(paths, source="Dialog")
-    @host.HostServiceResponse::Unavailable(reason) =>
-      {
-        ..self,
-        status: FileImporterStatus::Unavailable(reason),
-        last_event: "File dialog unavailable",
-        availability_reason: reason,
-      }
-    _ =>
-      {
-        ..self,
-        status: FileImporterStatus::Unavailable(
-          "unexpected file dialog response",
-        ),
-        last_event: "File dialog unavailable",
-        availability_reason: "unexpected file dialog response",
-      }
+) -> FileImporterUpdate {
+  FileImporterUpdate::new(
+    {
+      ..self,
+      status: FileImporterStatus::Requesting,
+      last_event: "Waiting for file picker",
+      availability_reason: "",
+    },
+    effect=@core.Effect::dispatch(dispatch => {
+      let response = services.open_file(title="Import files", filters=[
+        "csv", "json", "txt",
+      ])
+      dispatch(HostCompleted(file_dialog_completion_for_response(response)))
+    }),
+  )
+}
+
+///|
+fn file_dialog_completion_for_response(
+  response : @host.HostServiceResponse,
+) -> @host.HostCompletedServiceResponse {
+  let id = match response {
+    @host.HostServiceResponse::Pending(id) => id
+    _ => @host.HostServiceRequestId::new(0)
+  }
+  file_dialog_completion(id, response)
+}
+
+///|
+fn file_dialog_completion(
+  id : @host.HostServiceRequestId,
+  response : @host.HostServiceResponse,
+) -> @host.HostCompletedServiceResponse {
+  {
+    id,
+    request: @host.HostServiceRequest::FileDialog(
+      @host.HostFileDialogOptions::new(
+        kind=@host.HostFileDialogKind::OpenFile,
+        title="Import files",
+        filters=["csv", "json", "txt"],
+      ),
+    ),
+    response,
   }
 }
 
@@ -267,6 +336,13 @@ fn FileImporterModel::apply_host_completion(
   completion : @host.HostCompletedServiceResponse,
 ) -> FileImporterModel {
   match completion.response {
+    @host.HostServiceResponse::Pending(id) =>
+      {
+        ..self,
+        status: FileImporterStatus::Pending(id),
+        last_event: "Waiting for file picker",
+        availability_reason: "",
+      }
     @host.HostServiceResponse::FileDialogSelection(paths) =>
       self.with_paths(paths, source="Dialog")
     @host.HostServiceResponse::Unavailable(reason) =>
@@ -367,6 +443,7 @@ fn FileImporterModel::platform_note(
 fn FileImporterModel::status_label(self : FileImporterModel) -> String {
   match self.status {
     FileImporterStatus::Ready => "Ready"
+    FileImporterStatus::Requesting => "Pending"
     FileImporterStatus::Pending(_) => "Pending"
     FileImporterStatus::Unavailable(reason) => "Unavailable: " + reason
   }

@@ -587,8 +587,10 @@ pub(all) enum Effect[Msg] {
   NoEffect
   Batch(Array[Effect[Msg]])
   Send(Msg)
+  Dispatch(((Msg) -> Unit) -> Unit)
 }
 pub fn[Msg] Effect::batch(Array[Self[Msg]]) -> Self[Msg]
+pub fn[Msg] Effect::dispatch(((Msg) -> Unit) -> Unit) -> Self[Msg]
 pub fn[Msg] Effect::none() -> Self[Msg]
 pub fn[Msg] Effect::send(Msg) -> Self[Msg]
 
