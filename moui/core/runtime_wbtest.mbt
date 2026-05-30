@@ -312,7 +312,7 @@ test "program child effects map into parent messages" {
       match message {
         ParentChild(child_message) => {
           let (child, effect) = update_child_effect(model.child, child_message)
-          ({ ..model, child }, effect.map(message => ParentChild(message)))
+          ({ ..model, child, }, effect.map(message => ParentChild(message)))
         }
       }
     },
@@ -362,7 +362,9 @@ fn update_child_effect(
         "running",
         Effect::batch([
           Effect::send(ChildEffectSent("sent")),
-          Effect::dispatch(dispatch => dispatch(ChildEffectDispatched("dispatched"))),
+          Effect::dispatch(dispatch => {
+            dispatch(ChildEffectDispatched("dispatched"))
+          }),
         ]),
       )
     ChildEffectSent(value) => ("\{child}+\{value}", Effect::none())

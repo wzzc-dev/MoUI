@@ -158,7 +158,10 @@ theme, and native context menus. Effect-capable apps should return
 `Effect::dispatch` from `Program::new` updates, call the service from the effect
 runner, and dispatch a typed completion message for `Unavailable`, synchronous
 responses, and pending async completions. `views` should only emit messages such
-as `BrowseRequested` or `RecordFileDrop(paths)`.
+as `BrowseRequested` or `RecordFileDrop(paths)`. When a host-service workflow is
+implemented as a child feature, lift the child view with `View::map` and lift
+the child effect with `Effect::map` in the parent update so the parent still owns
+the top-level message loop.
 
 ```moonbit nocheck
 fn request_browse(
