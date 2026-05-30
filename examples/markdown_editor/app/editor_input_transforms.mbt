@@ -1386,6 +1386,11 @@ fn markdown_editor_backspace_merge_block(
   let previous_start = markdown_editor_previous_line_start(chars, previous_end)
   let previous_line = String::from_array(chars[previous_start:previous_end])
   let current_line = String::from_array(chars[range.start:range.end])
+  if markdown_editor_blank_source_line(current_line) {
+    let text = String::from_array(chars[:previous_end]) +
+      String::from_array(chars[range.end:])
+    return Some(markdown_editor_transform_result(text~, caret=previous_end))
+  }
   let previous_content = markdown_editor_strip_block_marker(previous_line)
   let current_content = markdown_editor_strip_block_marker(current_line)
   let preserve_prefix = markdown_editor_preserved_merge_prefix(
@@ -1433,6 +1438,11 @@ fn markdown_editor_delete_merge_block(
   let next_end = markdown_editor_next_line_end(chars, next_start)
   let current_line = String::from_array(chars[range.start:range.end])
   let next_line = String::from_array(chars[next_start:next_end])
+  if markdown_editor_blank_source_line(next_line) {
+    let text = String::from_array(chars[:range.end]) +
+      String::from_array(chars[next_end:])
+    return Some(markdown_editor_transform_result(text~, caret=range.end))
+  }
   let current_content = markdown_editor_strip_block_marker(current_line)
   let next_content = markdown_editor_strip_block_marker(next_line)
   let preserve_prefix = markdown_editor_preserved_merge_prefix(
@@ -1455,6 +1465,11 @@ fn markdown_editor_delete_merge_block(
         markdown_editor_text_length(current_content),
     ),
   )
+}
+
+///|
+fn markdown_editor_blank_source_line(line : String) -> Bool {
+  line.trim().to_owned() == ""
 }
 
 ///|

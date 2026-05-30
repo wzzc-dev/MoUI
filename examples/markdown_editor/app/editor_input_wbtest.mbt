@@ -720,6 +720,30 @@ test "markdown editor backspace at block start merges with previous block" {
   ).unwrap()
   inspect(blank.text, content="First\nSecond")
   inspect(blank.caret, content="5")
+  let heading_blank = markdown_editor_transform_input(
+    "# Title\n\nBody",
+    8,
+    None,
+    "\u{0008}",
+  ).unwrap()
+  inspect(heading_blank.text, content="# Title\nBody")
+  inspect(heading_blank.caret, content="7")
+  let bullet_blank = markdown_editor_transform_input(
+    "- item\n\nBody",
+    7,
+    None,
+    "\u{0008}",
+  ).unwrap()
+  inspect(bullet_blank.text, content="- item\nBody")
+  inspect(bullet_blank.caret, content="6")
+  let spaced_blank = markdown_editor_transform_input(
+    "# Title\n   \nBody",
+    8,
+    None,
+    "\u{0008}",
+  ).unwrap()
+  inspect(spaced_blank.text, content="# Title\nBody")
+  inspect(spaced_blank.caret, content="7")
 }
 
 ///|
@@ -764,6 +788,30 @@ test "markdown editor delete at block end merges with next block" {
   ).unwrap()
   inspect(blank.text, content="First\nSecond")
   inspect(blank.caret, content="5")
+  let heading_blank = markdown_editor_transform_input(
+    "# Title\n\nBody",
+    7,
+    None,
+    "\u{007f}",
+  ).unwrap()
+  inspect(heading_blank.text, content="# Title\nBody")
+  inspect(heading_blank.caret, content="7")
+  let bullet_blank = markdown_editor_transform_input(
+    "- item\n\nBody",
+    6,
+    None,
+    "\u{007f}",
+  ).unwrap()
+  inspect(bullet_blank.text, content="- item\nBody")
+  inspect(bullet_blank.caret, content="6")
+  let spaced_blank = markdown_editor_transform_input(
+    "# Title\n   \nBody",
+    7,
+    None,
+    "\u{007f}",
+  ).unwrap()
+  inspect(spaced_blank.text, content="# Title\nBody")
+  inspect(spaced_blank.caret, content="7")
   inspect(
     markdown_editor_transform_input("First\nSecond", 6, None, "\u{007f}")
     is None,
