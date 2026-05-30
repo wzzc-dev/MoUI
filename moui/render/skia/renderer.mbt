@@ -738,17 +738,7 @@ fn skia_draw_text_payload_for_resolution(
       if skia_glyph_run_can_draw_text(glyph_run) {
         Some((font, glyph_run))
       } else {
-        match skia_fallback_draw_font(font_spec, resolution) {
-          Some(fallback_font) => {
-            let fallback_run = skia_glyph_run(fallback_font, text)
-            if skia_glyph_run_has_visible_glyphs(fallback_run) {
-              Some((fallback_font, fallback_run))
-            } else {
-              None
-            }
-          }
-          None => None
-        }
+        skia_fallback_draw_payload(font_spec, text, resolution)
       }
     }
     None => None
@@ -1256,14 +1246,112 @@ fn skia_glyph_run_can_draw_text(run : SkiaGlyphRun) -> Bool {
 }
 
 ///|
-fn skia_fallback_draw_font(
+fn skia_fallback_draw_payload(
   font : @core.FontSpec,
+  text : String,
+  resolution : SkiaFontResolution,
+) -> (@skia_native.Font, SkiaGlyphRun)? {
+  match skia_emoji_fallback_draw_font(font, text, resolution) {
+    Some(emoji_font) =>
+      match skia_complete_fallback_payload(emoji_font, text) {
+        Some(payload) => return Some(payload)
+        None => ()
+      }
+    None => ()
+  }
+  match skia_default_fallback_draw_font(font) {
+    Some(fallback_font) => skia_visible_fallback_payload(fallback_font, text)
+    None => None
+  }
+}
+
+///|
+fn skia_complete_fallback_payload(
+  font : @skia_native.Font,
+  text : String,
+) -> (@skia_native.Font, SkiaGlyphRun)? {
+  let fallback_run = skia_glyph_run(font, text)
+  if skia_glyph_run_can_draw_text(fallback_run) {
+    Some((font, fallback_run))
+  } else {
+    None
+  }
+}
+
+///|
+fn skia_visible_fallback_payload(
+  font : @skia_native.Font,
+  text : String,
+) -> (@skia_native.Font, SkiaGlyphRun)? {
+  let fallback_run = skia_glyph_run(font, text)
+  if skia_glyph_run_has_visible_glyphs(fallback_run) {
+    Some((font, fallback_run))
+  } else {
+    None
+  }
+}
+
+///|
+fn skia_emoji_fallback_draw_font(
+  font : @core.FontSpec,
+  text : String,
   resolution : SkiaFontResolution,
 ) -> @skia_native.Font? {
   match resolution {
-    SkiaFontResolution::SystemFontMgr | SkiaFontResolution::EmptyTypeface =>
-      @skia_native.Font::default(size=Float::from_double(font.size))
+    SkiaFontResolution::SystemFontMgr =>
+      if skia_text_contains_emoji_hint(text) {
+        skia_system_emoji_font(font)
+      } else {
+        None
+      }
+    SkiaFontResolution::EmptyTypeface => None
   }
+}
+
+///|
+fn skia_system_emoji_font(font : @core.FontSpec) -> @skia_native.Font? {
+  match @skia_native.FontMgr::default() {
+    Some(font_mgr) => {
+      let emoji_font = @core.FontSpec::new(
+        families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+        size=font.size,
+        weight=font.weight,
+        style=font.style,
+      )
+      match skia_typeface_from_font_mgr(font_mgr, emoji_font) {
+        Some(typeface) =>
+          @skia_native.Font::from_typeface(
+            typeface,
+            size=Float::from_double(font.size),
+          )
+        None => None
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn skia_default_fallback_draw_font(font : @core.FontSpec) -> @skia_native.Font? {
+  @skia_native.Font::default(size=Float::from_double(font.size))
+}
+
+///|
+fn skia_text_contains_emoji_hint(text : String) -> Bool {
+  for ch in text {
+    if skia_codepoint_is_emoji_hint(ch.to_int()) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn skia_codepoint_is_emoji_hint(codepoint : Int) -> Bool {
+  codepoint == 0x200D ||
+  codepoint == 0xFE0F ||
+  (codepoint >= 0x2600 && codepoint <= 0x27BF) ||
+  (codepoint >= 0x1F000 && codepoint <= 0x1FAFF)
 }
 
 ///|

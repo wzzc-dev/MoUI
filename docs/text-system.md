@@ -76,13 +76,15 @@ back to positioned glyph runs. Linux Skia resolves its default `FontMgr` through
 fontconfig/FreeType when those Skia port headers are available, with a directory
 font manager fallback over common system font directories. If the selected Skia
 font produces a blank or incomplete glyph run, the renderer retries measurement
-and drawing with Skia's default font so startup Showcase text remains visible
-and text-field caret positions stay aligned with the drawn glyphs. The macOS
-Skia provider currently starts with the safe `EmptyTypeface` font resolution
-mode, which avoids the system FontMgr and disables SkShaper during early
-startup while still using that same default-font retry path. SkParagraph-style
-line breaking, bidi, mixed-script fallback runs, and broader typography
-conformance remain follow-up work.
+and drawing; the system `FontMgr` path first tries platform emoji font
+candidates for emoji-hint text and then falls back to Skia's default font, so
+startup Showcase text remains visible and text-field caret positions stay
+aligned with the drawn glyphs. The macOS Skia provider currently starts with
+the safe `EmptyTypeface` font resolution mode, which avoids the system FontMgr,
+the emoji font retry, and SkShaper during early startup while still using that
+same default-font retry path. SkParagraph-style line breaking, bidi,
+mixed-script fallback runs, deterministic color emoji, grapheme shaping, and
+broader typography conformance remain follow-up work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
@@ -132,7 +134,9 @@ Remote font loading is intentionally outside the current backend contract.
   behavior, IME anchor geometry, and provider fallback safety across mixed bidi, CJK,
   single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples;
   Cosmic run-layout tests additionally assert glyph output plus caret coverage
-  through the safe-mapped layout path. They do not claim full Unicode shaping parity.
+  through the safe-mapped layout path. Skia renderer tests cover the same
+  representative emoji caret coverage and the system-FontMgr-only emoji font
+  retry boundary. They do not claim full Unicode shaping parity.
 - Focused text inputs expose MoUI's default copy, cut, paste, undo, redo, and
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste

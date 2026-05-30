@@ -52,6 +52,45 @@ test "skia font resolver maps MoUI font families to platform candidates" {
 }
 
 ///|
+test "skia emoji hints cover representative diagnostic samples" {
+  assert_true(skia_text_contains_emoji_hint("\u{1F642}"))
+  assert_true(skia_text_contains_emoji_hint("\u{2615}\u{FE0F}"))
+  assert_true(skia_text_contains_emoji_hint("\u{1F469}\u{200D}\u{1F373}"))
+  assert_false(skia_text_contains_emoji_hint("Plain MoUI"))
+}
+
+///|
+test "skia emoji fallback is limited to the system font manager path" {
+  let font = @core.FontSpec::new(size=18.0, weight=400)
+  assert_true(
+    skia_emoji_fallback_draw_font(
+      font,
+      "\u{1F642}",
+      SkiaFontResolution::EmptyTypeface,
+    )
+    is None,
+  )
+  assert_true(
+    skia_emoji_fallback_draw_font(
+      font,
+      "Plain MoUI",
+      SkiaFontResolution::SystemFontMgr,
+    )
+    is None,
+  )
+  match
+    skia_emoji_fallback_draw_font(
+      font,
+      "\u{1F642}",
+      SkiaFontResolution::SystemFontMgr,
+    ) {
+    Some(emoji_font) => assert_true(emoji_font.size() == 18.0)
+    None =>
+      assert_true(!skia_available() || skia_system_emoji_font(font) is None)
+  }
+}
+
+///|
 test "skia font resolver preserves fallback availability" {
   match skia_test_font(@core.FontSpec::new(size=14.0, weight=400)) {
     Some(font) => assert_true(font.size() == 14.0)
@@ -290,4 +329,36 @@ test "skia text system keeps unicode caret coverage" {
     }
     None => assert_true(!skia_available())
   }
+}
+
+///|
+test "skia text system keeps representative emoji caret coverage" {
+  let system = skia_text_system(SkiaFontResolution::SystemFontMgr)
+  for text in ["\u{1F642}", "\u{2615}\u{FE0F}", "\u{1F469}\u{200D}\u{1F373}"] {
+    let input = @core.TextLayoutInput::new(
+      text~,
+      font=@core.FontSpec::new(size=18.0, weight=400),
+    )
+    let layout = system.measure_text(input)
+    assert_true(layout.caret_positions.length() == text.to_array().length() + 1)
+    assert_true(skia_test_carets_are_monotonic(layout.caret_positions))
+    assert_true(
+      layout.size.width == layout.caret_positions[text.to_array().length()],
+    )
+  }
+}
+
+///|
+fn skia_test_carets_are_monotonic(carets : Array[Double]) -> Bool {
+  let mut previous = 0.0
+  for index, caret in carets {
+    if index == 0 {
+      previous = caret
+    } else if caret < previous {
+      return false
+    } else {
+      previous = caret
+    }
+  }
+  true
 }
