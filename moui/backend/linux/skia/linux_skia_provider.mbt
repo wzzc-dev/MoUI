@@ -29,6 +29,10 @@ pub fn run_app_with_options(
   options~ : LinuxSkiaAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
+  if !linux_skia_provider_ready() {
+    println(linux_skia_unavailable_message())
+    return
+  }
   @linux_host.run_app_with_renderer_provider(
     title,
     runtime,
@@ -55,10 +59,8 @@ fn create_renderer(
   metrics : @host.HostSurfaceMetrics,
   options : LinuxSkiaAppOptions,
 ) -> @host.HostWindowRenderer? {
-  if !@skia_renderer.skia_available() {
-    println(
-      "Linux Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative",
-    )
+  if !linux_skia_provider_ready() {
+    println(linux_skia_unavailable_message())
     return None
   }
   Some(
@@ -75,6 +77,16 @@ fn create_renderer(
       None
     }
   }
+}
+
+///|
+fn linux_skia_provider_ready() -> Bool {
+  @skia_renderer.backend_info().can_render
+}
+
+///|
+fn linux_skia_unavailable_message() -> String {
+  "Linux Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
 }
 
 ///|

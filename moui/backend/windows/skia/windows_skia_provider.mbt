@@ -40,6 +40,10 @@ pub fn run_app_with_options(
   options~ : WindowsSkiaAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
+  if !windows_skia_provider_ready() {
+    println(windows_skia_unavailable_message())
+    return
+  }
   @windows_host.run_app_with_renderer_provider(
     title,
     runtime,
@@ -66,10 +70,8 @@ fn create_renderer(
   metrics : @host.HostSurfaceMetrics,
   options : WindowsSkiaAppOptions,
 ) -> @host.HostWindowRenderer? {
-  if !@skia_renderer.skia_available() {
-    println(
-      "Windows Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative",
-    )
+  if !windows_skia_provider_ready() {
+    println(windows_skia_unavailable_message())
     return None
   }
   Some(
@@ -86,6 +88,16 @@ fn create_renderer(
       None
     }
   }
+}
+
+///|
+fn windows_skia_provider_ready() -> Bool {
+  @skia_renderer.backend_info().can_render
+}
+
+///|
+fn windows_skia_unavailable_message() -> String {
+  "Windows Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
 }
 
 ///|

@@ -143,8 +143,10 @@ with dimensions, and failed decodes mark records failed with a diagnostic.
 backend info, fallback-safe availability checks, a basic Skia-backed text
 system, image resource snapshots, cached-image disposal diagnostics, and
 diagnostics for unsupported commands. In fallback builds `skia_available()`
-returns `false`, renderer creation raises `SkiaUnavailable`, and platform
-backends reject explicit Skia selection before opening a blank window.
+returns `false`, renderer creation raises `SkiaUnavailable`, and platform Skia
+entrypoints preflight availability before handing control to host app assembly,
+so explicit Skia selection exits with a diagnostic instead of opening a blank
+window.
 
 When real Skia is linked, the renderer creates a CPU `raster_n32_premul` surface
 using physical pixels, scales the canvas by the host scale factor so MoUI
