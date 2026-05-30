@@ -983,6 +983,20 @@ test "markdown editor reports active block label" {
     markdown_editor_active_block_label(source, { caret: 29, selection: None }),
     content="Code block",
   )
+  inspect(
+    markdown_editor_active_block_label("# Title\nBody", {
+      caret: 7,
+      selection: None,
+    }),
+    content="Heading 1",
+  )
+  inspect(
+    markdown_editor_active_block_label("- item\nBody", {
+      caret: 6,
+      selection: None,
+    }),
+    content="Bullet list",
+  )
 }
 
 ///|
