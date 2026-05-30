@@ -69,22 +69,24 @@ packages, not WGPU text-provider variants. By default, Skia basic text
 measurement and drawing
 resolve the MoUI `FontSpec` family stack, weight, and style through `skia_mbt`
 `FontMgr` and `Font`, and its `TextSystem` returns Skia font-metric
-baseline/height plus Skia-measured prefix caret positions for basic input
-geometry. Rendering now uses optional SkShaper shaped glyph runs when the
-`skia_mbt` native package is linked with SkShaper support, and otherwise falls
-back to positioned glyph runs. Linux Skia resolves its default `FontMgr` through
-fontconfig/FreeType when those Skia port headers are available, with a directory
-font manager fallback over common system font directories. If the selected Skia
-font produces a blank or incomplete glyph run, the renderer retries measurement
-and drawing; the system `FontMgr` path first tries platform emoji font
-candidates for emoji-hint text and then falls back to Skia's default font, so
-startup Showcase text remains visible and text-field caret positions stay
-aligned with the drawn glyphs. The macOS Skia provider currently starts with
-the safe `EmptyTypeface` font resolution mode, which avoids the system FontMgr,
-the emoji font retry, and SkShaper during early startup while still using that
-same default-font retry path. SkParagraph-style line breaking, bidi,
-mixed-script fallback runs, deterministic color emoji, grapheme shaping, and
-broader typography conformance remain follow-up work.
+baseline/height plus caret positions for basic input geometry. When
+`skia_mbt/native` is linked with SkShaper support, the Skia text system maps
+shaped-run source clusters back to MoUI's per-character caret array; otherwise
+it falls back to Skia-measured prefix carets. Rendering uses the same optional
+SkShaper shaped glyph runs when linked, and otherwise falls back to positioned
+glyph runs. Linux Skia resolves its default `FontMgr` through fontconfig/FreeType
+when those Skia port headers are available, with a directory font manager
+fallback over common system font directories. If the selected Skia font produces
+a blank or incomplete glyph run, the renderer retries measurement and drawing;
+the system `FontMgr` path first tries platform emoji font candidates for
+emoji-hint text and then falls back to Skia's default font, so startup Showcase
+text remains visible and text-field caret positions stay aligned with the drawn
+glyphs. The macOS Skia provider currently starts with the safe `EmptyTypeface`
+font resolution mode, which avoids the system FontMgr, the emoji font retry, and
+SkShaper during early startup while still using that same default-font retry
+path. SkParagraph-style line breaking, bidi, mixed-script fallback runs,
+deterministic color emoji, grapheme shaping, and broader typography conformance
+remain follow-up work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all

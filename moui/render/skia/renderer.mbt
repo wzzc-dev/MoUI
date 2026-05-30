@@ -62,6 +62,7 @@ priv struct SkiaTextMetrics {
 priv struct SkiaGlyphRun {
   glyphs : Array[@skia_native.GlyphId]
   positions : Array[@skia_mbt.Point]
+  clusters : Array[Int]
   width : Double
 }
 
@@ -1104,8 +1105,9 @@ fn skia_text_layout_result(
   if !skia_font_can_measure_text(font, input.text) {
     return fallback
   }
-  let measured = skia_measure_text_width(font, input.text)
-  let carets = skia_caret_positions(font, input.text)
+  let glyph_run = skia_glyph_run(font, input.text)
+  let carets = skia_caret_positions(font, input.text, glyph_run~)
+  let measured = skia_layout_width_from_carets(carets)
   let metrics = skia_text_metrics(
     font,
     fallback_baseline=fallback.baseline,
@@ -1171,7 +1173,16 @@ fn skia_text_metrics(
 fn skia_caret_positions(
   font : @skia_native.Font,
   text : String,
+  glyph_run? : SkiaGlyphRun,
 ) -> Array[Double] {
+  match glyph_run {
+    Some(run) =>
+      match skia_shaped_caret_positions(text, run) {
+        Some(carets) => return carets
+        None => ()
+      }
+    None => ()
+  }
   let chars = text.to_array()
   let carets : Array[Double] = [0.0]
   for index in 1..<(chars.length() + 1) {
@@ -1179,6 +1190,88 @@ fn skia_caret_positions(
     carets.push(skia_measure_text_width(font, prefix))
   }
   carets
+}
+
+///|
+fn skia_layout_width_from_carets(carets : Array[Double]) -> Double {
+  if carets.is_empty() {
+    0.0
+  } else {
+    carets[carets.length() - 1]
+  }
+}
+
+///|
+fn skia_shaped_caret_positions(
+  text : String,
+  run : SkiaGlyphRun,
+) -> Array[Double]? {
+  if run.clusters.is_empty() ||
+    run.positions.length() != run.clusters.length() ||
+    run.width <= 0.0 {
+    return None
+  }
+  let offsets = skia_utf8_char_offsets(text)
+  if offsets.length() <= 1 {
+    return Some([0.0])
+  }
+  let carets : Array[Double] = Array::new(capacity=offsets.length())
+  for _ in offsets {
+    carets.push(-1.0)
+  }
+  carets[0] = 0.0
+  carets[carets.length() - 1] = run.width
+  for index, cluster in run.clusters {
+    match skia_char_index_for_utf8_offset(offsets, cluster) {
+      Some(caret_index) => {
+        let x = run.positions[index].x.to_double()
+        if x >= 0.0 && x <= run.width {
+          let current = carets[caret_index]
+          if current < 0.0 || x < current {
+            carets[caret_index] = x
+          }
+        }
+      }
+      None => ()
+    }
+  }
+  let mut previous = 0.0
+  for index in 0..<carets.length() {
+    if carets[index] < 0.0 || carets[index] < previous {
+      carets[index] = previous
+    } else {
+      previous = carets[index]
+    }
+  }
+  carets[carets.length() - 1] = run.width.max(carets[carets.length() - 1])
+  Some(carets)
+}
+
+///|
+fn skia_utf8_char_offsets(text : String) -> Array[Int] {
+  let offsets : Array[Int] = [0]
+  let mut offset = 0
+  for ch in text {
+    offset += @utf8.encode(ch.to_string()[:], bom=false).length()
+    offsets.push(offset)
+  }
+  offsets
+}
+
+///|
+fn skia_char_index_for_utf8_offset(offsets : Array[Int], offset : Int) -> Int? {
+  if offset < 0 {
+    return None
+  }
+  for index, current in offsets {
+    if current == offset {
+      return Some(index)
+    }
+    if current > offset {
+      return Some(index)
+    }
+  }
+  None
 }
 
 ///|
@@ -1217,7 +1310,15 @@ fn skia_glyph_run_with_shaper(
         let glyphs = run.glyphs()
         let positions = run.positions()
         if !glyphs.is_empty() && glyphs.length() == positions.length() {
-          return { glyphs, positions, width: run.advance().x.to_double() }
+          let clusters = run.clusters()
+          if clusters.length() == glyphs.length() {
+            return {
+              glyphs,
+              positions,
+              clusters,
+              width: run.advance().x.to_double(),
+            }
+          }
         }
       }
       None => ()
@@ -1227,6 +1328,7 @@ fn skia_glyph_run_with_shaper(
   {
     glyphs,
     positions: font.glyph_positions(glyphs),
+    clusters: [],
     width: font.measure_text_utf8(bytes).to_double(),
   }
 }
