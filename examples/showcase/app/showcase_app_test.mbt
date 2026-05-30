@@ -290,7 +290,14 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(diagnostics_commands, "View nodes"))
   assert_true(has_text(diagnostics_commands, "Layout bounds"))
   assert_true(has_text(diagnostics_commands, "Semantics nodes"))
+  assert_true(has_text(diagnostics_commands, "Render commands"))
   assert_true(has_text(diagnostics_commands, "Dirty: redraw requested"))
+  assert_true(
+    has_text_containing(
+      diagnostics_commands, "Render scopes: max clip/layer/filter",
+    ),
+  )
+  assert_true(has_text_containing(diagnostics_commands, "unbalanced pops 0"))
   assert_true(has_text(diagnostics_commands, "Interaction Lab"))
   assert_true(has_text(diagnostics_commands, "Text Diagnostics"))
   assert_true(has_text(diagnostics_commands, "Advanced Rendering"))

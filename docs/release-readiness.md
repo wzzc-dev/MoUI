@@ -46,7 +46,7 @@ with current files and validation output:
 | Renderer capability tracking | Capability status is recorded in code, tests, and `docs/renderer-capability-report.md`. | ready with tracked gaps |
 | Platform contracts | `backend/host` owns shared events, services, windows, redraw, and request/completion contracts. | ready with tracked Linux service gaps |
 | Text system | `docs/text-system.md` documents `TextSystem`, provider composition, embedded fonts, and shaping gaps; stable and diagnostic text conformance checks pass. | ready with tracked gaps |
-| Devtool counters | Core inspector snapshots expose runtime, layout, semantics, frame, and render command counters; render snapshots also report open clip/layer/filter scopes and unbalanced pops. | ready for command-level diagnostics |
+| Devtool counters | Core inspector snapshots expose runtime, layout, semantics, frame, and render command counters; render snapshots also report open clip/layer/filter scopes and unbalanced pops, and Showcase Diagnostics surfaces the render command/scope counters with app-test coverage. | ready for command-level diagnostics |
 | Guidance surface | `docs/ai-collaboration.md`, `AGENTS.md`, and `skills/` define focused agent workflows. | ready |
 
 ## Required Gates
@@ -263,11 +263,14 @@ documentation evidence.
    - Current status: `RenderInspectorSnapshot` can be built from an
      `AppRuntime` or an explicit draw-command stream and reports draw command
      counts, max clip/layer/filter depths, open scope depths, unbalanced pop
-     count, path count, and shader count.
-   - Done when: inspector data is surfaced through a developer UI or capture
-     artifact and connected to golden/benchmark handoffs.
-   - Evidence: `moon test moui/core --target native`, generated public API review
-     after inspector changes, and testing docs.
+     count, path count, and shader count. Showcase Diagnostics now surfaces
+     render command count plus max/open clip/layer/filter scope counters and
+     unbalanced pop count in the visible inspector snapshot card.
+   - Done when: inspector data is connected to golden/benchmark capture
+     artifacts.
+   - Evidence: `moon test moui/core --target native`, `moon test
+     examples/showcase/app --target native`, generated public API review after
+     inspector changes, and testing docs.
 
 ## Known Non-Goals
 
