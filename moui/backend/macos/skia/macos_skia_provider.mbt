@@ -42,6 +42,10 @@ pub fn run_app_with_options(
   options~ : MacosSkiaAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
+  if !macos_skia_provider_ready() {
+    println(macos_skia_unavailable_message())
+    return
+  }
   @macos_host.run_app_with_renderer_provider(
     title,
     runtime,
@@ -69,10 +73,8 @@ fn create_renderer(
   metrics : @host.HostSurfaceMetrics,
   options : MacosSkiaAppOptions,
 ) -> @host.HostWindowRenderer? {
-  if !@skia_renderer.skia_available() {
-    println(
-      "macOS Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative",
-    )
+  if !macos_skia_provider_ready() {
+    println(macos_skia_unavailable_message())
     return None
   }
   match content_view_handle(window) {
@@ -93,6 +95,16 @@ fn create_renderer(
       }
     None => None
   }
+}
+
+///|
+fn macos_skia_provider_ready() -> Bool {
+  @skia_renderer.backend_info().can_render
+}
+
+///|
+fn macos_skia_unavailable_message() -> String {
+  "macOS Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
 }
 
 ///|

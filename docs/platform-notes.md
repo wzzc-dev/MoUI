@@ -59,8 +59,9 @@ response.
 Native renderer choice is package selection, not a field on host-core app
 options. Use `backend/<platform>/wgpu` for native WGPU or
 `backend/<platform>/skia` for native Skia raster. The Skia provider remains
-explicit and fails before opening a blank window when `skia_mbt/native` reports
-unavailable.
+explicit and preflights `skia_mbt/native` availability before handing control
+to the host app runner. Fallback builds therefore return with a clear diagnostic
+instead of opening a platform window that later fails to attach a renderer.
 
 Current-platform provider tests are included by
 `sh scripts/dev-check.sh --platform-examples-test`. Run provider packages

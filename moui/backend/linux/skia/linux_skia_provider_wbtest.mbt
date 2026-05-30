@@ -23,4 +23,15 @@ test "linux skia availability follows render skia backend info" {
   assert_true(
     @skia_renderer.backend_info().can_render == @skia_renderer.skia_available(),
   )
+  assert_true(
+    linux_skia_provider_ready() == @skia_renderer.backend_info().can_render,
+  )
+}
+
+///|
+test "linux skia preflight diagnostic describes unavailable renderer setup" {
+  let message = linux_skia_unavailable_message()
+  assert_true(message.contains("Linux Skia renderer selected"))
+  assert_true(message.contains("skia_mbt/native is unavailable"))
+  assert_true(message.contains("real Skia link flags"))
 }
