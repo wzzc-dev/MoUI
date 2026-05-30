@@ -377,8 +377,10 @@ Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 
 - Clipboard, menus, file dialogs, drag/drop, and AT-SPI native bindings are not
   implemented yet.
-- Text input and IME requests are still reported as unsupported until the
-  Wayland window package exposes that protocol surface.
+- Basic US-QWERTY keyboard character input is derived from Wayland key events;
+  Wayland text-input protocol support and IME/composition requests are still
+  reported as unsupported until the window package exposes that protocol
+  surface.
 - The fontconfig/HarfBuzz/FreeType native provider remains a scaffold and relies
   on the composed Moon Cosmic fallback for actual glyph data.
 
