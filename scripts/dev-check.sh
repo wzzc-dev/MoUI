@@ -30,7 +30,7 @@ for arg in "$@"; do
       printf 'Pass --platform-examples-build to also build current-platform native examples.\n'
       printf 'Pass --skia-real-smoke to run the opt-in real Skia smoke when local Skia link flags are configured.\n'
       printf 'On macOS, scripts/macos-skia-renderer-smoke.sh can resolve JetBrains/source/existing Skia providers and temporarily configure those flags.\n'
-      printf 'Native example builds link platform stubs and wgpu-native, so cold builds can be slow.\n'
+      printf 'Native example builds link platform stubs and native renderer libraries, so cold builds can be slow.\n'
       printf 'Deprecated alias: --platform-examples behaves like --platform-examples-test.\n'
       exit 0
       ;;

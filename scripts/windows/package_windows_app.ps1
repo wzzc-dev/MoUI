@@ -30,10 +30,7 @@ function Convert-PackagePath {
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $scriptDir "..\..")).Path
-$defaultWgpuNativeRoot = Join-Path $repoRoot ".local_deps\wgpu-native\v27.0.4.0\wgpu-windows-x86_64-gnu-release"
-if ([string]::IsNullOrWhiteSpace($WgpuNativeRoot)) {
-  $WgpuNativeRoot = $defaultWgpuNativeRoot
-}
+$useExplicitWgpuNativeRoot = -not [string]::IsNullOrWhiteSpace($WgpuNativeRoot)
 
 $packageLeaf = Split-Path -Leaf (Convert-PackagePath $Package)
 $packageParent = Split-Path -Leaf (Split-Path -Parent (Convert-PackagePath $Package))
@@ -42,7 +39,6 @@ if ([string]::IsNullOrWhiteSpace($AppName)) {
 }
 
 $ucrtBin = Join-Path $Msys2Root "ucrt64\bin"
-$wgpuStaticLib = Join-Path $WgpuNativeRoot "lib\libwgpu_native.a"
 $vulkanDll = Join-Path $ucrtBin "vulkan-1.dll"
 $winpthreadDll = Join-Path $ucrtBin "libwinpthread-1.dll"
 $packageBuildDir = Join-Path $repoRoot ("_build\native\debug\build\" + (Convert-PackagePath $Package))
@@ -52,7 +48,12 @@ $appExe = Join-Path $appDir "$AppName.exe"
 $manifestPath = Join-Path $appDir "moui-package.json"
 
 Require-Path $ucrtBin "MSYS2 UCRT64 toolchain not found: $ucrtBin"
-Require-Path $wgpuStaticLib "Missing wgpu static library: $wgpuStaticLib"
+if ($useExplicitWgpuNativeRoot) {
+  $wgpuStaticLib = Join-Path $WgpuNativeRoot "lib\libwgpu_native.a"
+  $wgpuTagFile = Join-Path $WgpuNativeRoot "wgpu-native-meta\wgpu-native-git-tag"
+  Require-Path $wgpuStaticLib "Missing wgpu static library: $wgpuStaticLib"
+  Require-Path $wgpuTagFile "Missing wgpu release metadata: $wgpuTagFile"
+}
 Require-Path $vulkanDll "Missing Vulkan runtime from MSYS2: $vulkanDll"
 Require-Path $winpthreadDll "Missing libwinpthread runtime from MSYS2: $winpthreadDll"
 
@@ -67,7 +68,11 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
 $env:PATH = "$ucrtBin;$env:PATH"
 $env:CC = "x86_64-w64-mingw32-gcc"
 $env:CXX = "x86_64-w64-mingw32-g++"
-$env:MBT_WGPU_NATIVE_ROOT = $WgpuNativeRoot
+if ($useExplicitWgpuNativeRoot) {
+  $env:MBT_WGPU_NATIVE_ROOT = $WgpuNativeRoot
+} else {
+  Remove-Item Env:MBT_WGPU_NATIVE_ROOT -ErrorAction SilentlyContinue
+}
 
 Remove-Item Env:MBT_WGPU_LINK_MODE -ErrorAction SilentlyContinue
 Remove-Item Env:MBT_WGPU_NATIVE_LIB -ErrorAction SilentlyContinue
@@ -86,7 +91,11 @@ try {
   Write-Host "==> repo root: $repoRoot"
   Write-Host "==> package: $Package"
   Write-Host "==> MSYS2 UCRT64: $ucrtBin"
-  Write-Host "==> WGPU native root: $WgpuNativeRoot"
+  if ($useExplicitWgpuNativeRoot) {
+    Write-Host "==> WGPU native root: $WgpuNativeRoot"
+  } else {
+    Write-Host "==> WGPU native root: managed by wgpu_mbt prebuild"
+  }
 
   if (-not $NoBuild) {
     & moon build $Package --target native

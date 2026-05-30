@@ -240,9 +240,10 @@ README build-and-execute flow while debugging the toolchain/link configuration.
 
 ## Windows Native
 
-Windows native examples are built with MSYS2 UCRT64 and the static Windows GNU
-`wgpu-native` release expected by
-`scripts/windows/markdown_editor_windows_static.ps1`.
+Windows native examples are built with MSYS2 UCRT64. The static Windows GNU
+`wgpu-native` release is normally downloaded and verified by `wgpu_mbt`'s
+prebuild flow during MoonBit builds; the MoUI helper scripts only use a local
+`-WgpuNativeRoot` when one is passed explicitly.
 The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
 macOS, with platform-specific ownership limited to Win32 window handles,
 services, lifecycle, resize handling, text-input session synchronization, and
@@ -289,17 +290,10 @@ and blits it to the client DC with `StretchDIBits`. If `skia_mbt/native` is only
 in fallback mode, renderer creation is rejected with a diagnostic instead of
 opening an empty HWND.
 
-The expected archive extraction path is:
-
-```text
-.local_deps\wgpu-native\v27.0.4.0\wgpu-windows-x86_64-gnu-release
-```
-
-Download the archive from:
-
-```text
-https://github.com/gfx-rs/wgpu-native/releases/tag/v27.0.4.0
-```
+To use a preseeded local `wgpu-native` archive instead of the `wgpu_mbt`
+managed copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted release root or pass
+that path as `-WgpuNativeRoot` to the Windows helper scripts. The root should
+contain `lib\libwgpu_native.a` and `wgpu-native-meta\wgpu-native-git-tag`.
 
 ## Linux Native
 

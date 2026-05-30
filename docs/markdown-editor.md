@@ -134,7 +134,9 @@ moon build examples/markdown_editor/windows --target native
 .\_build\native\debug\build\examples\markdown_editor\windows\windows.exe
 ```
 
-The Windows static helper documents the expected `wgpu-native` layout:
+The Windows helper configures MSYS2 and lets `wgpu_mbt` manage the
+default `wgpu-native` prebuild; pass `-WgpuNativeRoot` only when using a
+preseeded local release root:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
