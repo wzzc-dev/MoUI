@@ -101,11 +101,12 @@ require complex local state, such as rich text editing or virtualized resources,
 keep that state explicit through bindings, cells, or dedicated integration
 callbacks.
 
-Stateful examples can still use `AppRuntime::new_component_view` with
-`BuildContext`, while pure model examples should default to `Program::simple`
-and `AppRuntime::new_program`. Effect-capable apps should use `Program::new`
-when `update` returns follow-up work: `Effect::send` re-enters the typed message
-loop directly, and `Effect::dispatch` gives an effect runner the typed message
+Stateful controls can use localized `View::component` adapters with
+`BuildContext` when they must subscribe to framework cells or bridge complex
+control state, but shared app runtimes should default to `Program::simple` and
+`AppRuntime::new_program`. Effect-capable apps should use `Program::new` when
+`update` returns follow-up work: `Effect::send` re-enters the typed message loop
+directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making
 `core` platform-specific. Environment-aware TEA apps should use the
 `*_with_environment` constructors instead of taking `BuildContext` in their view

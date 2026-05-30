@@ -51,6 +51,30 @@ test "markdown editor page decoration keeps editor interactive" {
 }
 
 ///|
+test "markdown editor controlled runtime rebuilds after input" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=84.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("Program path")),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Program path", .. })
+    }),
+  )
+}
+
+///|
 test "markdown editor toggles source preview from action" {
   let app = MarkdownEditorApp::new()
   inspect(app.source_preview_visible(), content="false")
