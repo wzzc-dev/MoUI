@@ -232,7 +232,40 @@ test "program simple with environment rebuilds from viewport and environment" {
 ///|
 enum ProgramEffectMsg {
   ProgramEffectStart
+  ProgramEffectBoot(String)
   ProgramEffectFinished(String)
+}
+
+///|
+test "program initial effects run before first view build" {
+  let program = Program::new(
+    init=() => {
+      (
+        "booting",
+        Effect::batch([
+          Effect::send(ProgramEffectBoot("sent")),
+          Effect::dispatch(dispatch => {
+            dispatch(ProgramEffectFinished("dispatched"))
+          }),
+        ]),
+      )
+    },
+    update=(model, message) => {
+      match message {
+        ProgramEffectStart => ("running", Effect::none())
+        ProgramEffectBoot(value) => ("\{model}+\{value}", Effect::none())
+        ProgramEffectFinished(value) => ("\{model}+\{value}", Effect::none())
+      }
+    },
+    view=model => runtime_test_label("Boot " + model),
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=220.0, height=72.0),
+  )
+  assert_true(
+    has_draw_text(runtime.draw_commands(), "Boot booting+sent+dispatched"),
+  )
 }
 
 ///|
@@ -246,6 +279,7 @@ test "program effects can dispatch typed follow-up messages" {
             "running",
             Effect::dispatch(dispatch => dispatch(ProgramEffectFinished("done"))),
           )
+        ProgramEffectBoot(value) => (value, Effect::none())
         ProgramEffectFinished(value) => (value, Effect::none())
       }
     },
