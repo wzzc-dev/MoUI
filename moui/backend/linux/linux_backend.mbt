@@ -14,6 +14,7 @@ pub(all) struct LinuxBackendInfo {
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
   renderer : Bool
+  titlebar : Bool
   pointer : Bool
   keyboard : Bool
   text_input : Bool
@@ -52,6 +53,12 @@ pub struct LinuxRendererProvider {
 }
 
 ///|
+pub(all) struct LinuxClientDecorationState {
+  active : Bool
+  titlebar_height : Double
+} derive(Eq, Debug, ToJson)
+
+///|
 struct LinuxApp {
   title : String
   runtime : @core.AppRuntime
@@ -75,6 +82,7 @@ priv struct LinuxWindowPlatformSlot {
   platform_id : @window_core.WindowId
   window : @window_linux.Window
   renderer : @host.HostWindowRenderer
+  mut decorations : LinuxClientDecorationState
 }
 
 ///|
@@ -101,10 +109,22 @@ pub fn LinuxRendererProvider::new(
 }
 
 ///|
+pub fn LinuxClientDecorationState::new(
+  active~ : Bool,
+  titlebar_height? : Double = linux_client_titlebar_height,
+) -> LinuxClientDecorationState {
+  { active, titlebar_height: if active { titlebar_height } else { 0.0 } }
+}
+
+///|
+let linux_client_titlebar_height : Double = 32.0
+
+///|
 pub fn capability_matrix() -> LinuxBackendCapabilities {
   {
     window: true,
     renderer: true,
+    titlebar: true,
     pointer: true,
     keyboard: true,
     text_input: false,
@@ -273,6 +293,240 @@ pub fn scaffold_input_host() -> @host.InputHostState {
 }
 
 ///|
+pub fn linux_client_decorated_commands(
+  commands : Array[@core.DrawCommand],
+  title~ : String,
+  metrics~ : @host.HostSurfaceMetrics,
+  decorations~ : LinuxClientDecorationState,
+) -> Array[@core.DrawCommand] {
+  if !decorations.active {
+    commands
+  } else {
+    let titlebar = decorations.titlebar_height
+    let width = metrics.logical_size.width
+    let height = metrics.logical_size.height
+    let output : Array[@core.DrawCommand] = []
+    output.push(@core.DrawCommand::Clear(linux_first_clear_color(commands)))
+    output.push(
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=0.0, y=0.0, width~, height=titlebar),
+        linux_titlebar_background_color(),
+      ),
+    )
+    output.push(
+      @core.DrawCommand::StrokeRect(
+        @core.Rect::new(x=0.0, y=titlebar - 1.0, width~, height=1.0),
+        linux_titlebar_border_color(),
+        1.0,
+      ),
+    )
+    output.push(
+      @core.DrawCommand::DrawText(
+        @core.TextRun::new(
+          text=title,
+          frame=@core.Rect::new(
+            x=14.0,
+            y=5.0,
+            width=(width - 150.0).max(24.0),
+            height=22.0,
+          ),
+          font=@core.FontSpec::new(size=14.0, weight=700),
+          color=linux_titlebar_text_color(),
+          align=@core.TextAlign::TextStart,
+        ),
+      ),
+    )
+    append_linux_titlebar_button(
+      output,
+      width~,
+      index_from_right=2,
+      color=linux_titlebar_minimize_color(),
+    )
+    append_linux_titlebar_button(
+      output,
+      width~,
+      index_from_right=1,
+      color=linux_titlebar_maximize_color(),
+    )
+    append_linux_titlebar_button(
+      output,
+      width~,
+      index_from_right=0,
+      color=linux_titlebar_close_color(),
+    )
+    let content_height = (height - titlebar).max(1.0)
+    output.push(
+      @core.DrawCommand::PushClip(
+        @core.Rect::new(x=0.0, y=titlebar, width~, height=content_height),
+      ),
+    )
+    output.push(
+      @core.DrawCommand::PushTransform(
+        @core.Transform2D::translation(dx=0.0, dy=titlebar),
+      ),
+    )
+    for command in commands {
+      match command {
+        @core.DrawCommand::Clear(_) => ()
+        _ => output.push(command)
+      }
+    }
+    output.push(@core.DrawCommand::PopTransform)
+    output.push(@core.DrawCommand::PopClip)
+    output
+  }
+}
+
+///|
+pub fn linux_surface_metrics_for_content(
+  metrics : @host.HostSurfaceMetrics,
+  decorations : LinuxClientDecorationState,
+) -> @host.HostSurfaceMetrics {
+  if !decorations.active {
+    metrics
+  } else {
+    let logical_titlebar = decorations.titlebar_height
+    let physical_titlebar = logical_titlebar * metrics.scale_factor
+    @host.HostSurfaceMetrics::new(
+      logical_size=@core.Size::new(
+        width=metrics.logical_size.width,
+        height=metrics.logical_size.height + logical_titlebar,
+      ),
+      physical_size=@core.Size::new(
+        width=metrics.physical_size.width,
+        height=metrics.physical_size.height + physical_titlebar,
+      ),
+      scale_factor=metrics.scale_factor,
+    )
+  }
+}
+
+///|
+pub fn linux_content_metrics_for_surface(
+  metrics : @host.HostSurfaceMetrics,
+  decorations : LinuxClientDecorationState,
+) -> @host.HostSurfaceMetrics {
+  if !decorations.active {
+    metrics
+  } else {
+    let logical_titlebar = decorations.titlebar_height
+    let physical_titlebar = logical_titlebar * metrics.scale_factor
+    @host.HostSurfaceMetrics::new(
+      logical_size=@core.Size::new(
+        width=metrics.logical_size.width,
+        height=(metrics.logical_size.height - logical_titlebar).max(1.0),
+      ),
+      physical_size=@core.Size::new(
+        width=metrics.physical_size.width,
+        height=(metrics.physical_size.height - physical_titlebar).max(1.0),
+      ),
+      scale_factor=metrics.scale_factor,
+    )
+  }
+}
+
+///|
+fn linux_request_surface_for_content(
+  window : @window_linux.Window,
+  metrics : @host.HostSurfaceMetrics,
+  decorations : LinuxClientDecorationState,
+) -> Unit {
+  let surface_metrics = linux_surface_metrics_for_content(metrics, decorations)
+  ignore(window.request_surface_size(host_metrics_to_dpi_size(surface_metrics)))
+}
+
+///|
+fn linux_window_surface_metrics(
+  window : @window_linux.Window,
+) -> @host.HostSurfaceMetrics {
+  @host.surface_metrics_from_physical(
+    window.surface_size(),
+    scale_factor=window.scale_factor(),
+  )
+}
+
+///|
+fn linux_first_clear_color(commands : Array[@core.DrawCommand]) -> @core.Color {
+  let mut clear = @core.Color::white()
+  let mut found = false
+  for command in commands {
+    if !found {
+      match command {
+        @core.DrawCommand::Clear(color) => {
+          clear = color
+          found = true
+        }
+        _ => ()
+      }
+    }
+  }
+  clear
+}
+
+///|
+fn linux_titlebar_background_color() -> @core.Color {
+  @core.Color::rgba(r=0.96, g=0.97, b=0.98)
+}
+
+///|
+fn linux_titlebar_border_color() -> @core.Color {
+  @core.Color::rgba(r=0.80, g=0.83, b=0.88)
+}
+
+///|
+fn linux_titlebar_text_color() -> @core.Color {
+  @core.Color::rgba(r=0.06, g=0.07, b=0.09)
+}
+
+///|
+fn linux_titlebar_close_color() -> @core.Color {
+  @core.Color::rgba(r=0.88, g=0.35, b=0.35)
+}
+
+///|
+fn linux_titlebar_maximize_color() -> @core.Color {
+  @core.Color::rgba(r=0.31, g=0.72, b=0.42)
+}
+
+///|
+fn linux_titlebar_minimize_color() -> @core.Color {
+  @core.Color::rgba(r=0.90, g=0.72, b=0.30)
+}
+
+///|
+fn append_linux_titlebar_button(
+  commands : Array[@core.DrawCommand],
+  width~ : Double,
+  index_from_right~ : Int,
+  color~ : @core.Color,
+) -> Unit {
+  let slot = 28.0
+  let gap = 8.0
+  let size = 12.0
+  let left = width -
+    gap -
+    (index_from_right + 1).to_double() * slot -
+    index_from_right.to_double() * gap +
+    (slot - size) / 2.0
+  commands.push(
+    @core.DrawCommand::FillRoundedRect(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=left, y=10.0, width=size, height=size),
+        radius=6.0,
+      ),
+      color,
+    ),
+  )
+}
+
+///|
+fn linux_client_decoration_state(
+  window : @window_linux.Window,
+) -> LinuxClientDecorationState {
+  LinuxClientDecorationState::new(active=window.uses_client_decorations())
+}
+
+///|
 pub fn run_app_with_renderer_provider(
   title : String,
   runtime : @core.AppRuntime,
@@ -352,6 +606,77 @@ pub fn window_event_to_host_with_modifiers(
   modifiers : @core.KeyModifiers,
 ) -> @host.HostEvent? {
   @host.window_event_to_host_with_modifiers(event, last_pointer, modifiers)
+}
+
+///|
+pub fn linux_adjust_host_event_for_client_decorations(
+  event : @host.HostEvent,
+  decorations : LinuxClientDecorationState,
+) -> @host.HostEvent? {
+  if !decorations.active {
+    Some(event)
+  } else {
+    match event {
+      @host.HostEvent::Pointer(pointer) => {
+        let y = pointer.position.y - decorations.titlebar_height
+        if y < 0.0 {
+          None
+        } else {
+          Some(
+            @host.HostEvent::Pointer(
+              @core.PointerEvent::new(
+                position=@core.Point::new(x=pointer.position.x, y~),
+                phase=pointer.phase,
+                button=pointer.button,
+                wheel_delta=pointer.wheel_delta,
+                time_ms=pointer.time_ms,
+              ),
+            ),
+          )
+        }
+      }
+      @host.HostEvent::Scroll(scroll) => {
+        let y = scroll.position.y - decorations.titlebar_height
+        if y < 0.0 {
+          None
+        } else {
+          Some(
+            @host.HostEvent::Scroll(
+              @host.HostScrollEvent::new(
+                position=@core.Point::new(x=scroll.position.x, y~),
+                delta=scroll.delta,
+                phase=scroll.phase,
+              ),
+            ),
+          )
+        }
+      }
+      @host.HostEvent::DragDrop(drop) =>
+        match drop.position {
+          Some(position) => {
+            let y = position.y - decorations.titlebar_height
+            let paths = drop.paths.copy()
+            if y < 0.0 {
+              None
+            } else {
+              Some(
+                @host.HostEvent::DragDrop(
+                  @core.DragDropEvent::new(
+                    phase=drop.phase,
+                    paths~,
+                    position=Some(@core.Point::new(x=position.x, y~)),
+                  ),
+                ),
+              )
+            }
+          }
+          None => Some(event)
+        }
+      @host.HostEvent::Resized(metrics) =>
+        Some(@host.HostEvent::Resized(metrics))
+      _ => Some(event)
+    }
+  }
 }
 
 ///|
@@ -442,9 +767,17 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfac
   }
   match window {
     Some(window) => {
-      let metrics = @host.surface_metrics_from_physical(
-        window.surface_size(),
-        scale_factor=window.scale_factor(),
+      let initial_surface_metrics = linux_window_surface_metrics(window)
+      let decorations = linux_client_decoration_state(window)
+      let initial_metrics = linux_content_metrics_for_surface(
+        initial_surface_metrics, decorations,
+      )
+      if decorations.active {
+        linux_request_surface_for_content(window, initial_metrics, decorations)
+      }
+      let surface_metrics = linux_window_surface_metrics(window)
+      let metrics = linux_content_metrics_for_surface(
+        surface_metrics, decorations,
       )
       let window_id = self.windows.open(
         title=self.title,
@@ -458,7 +791,7 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfac
       self.driver.set_redraw_scheduler(() => {
         self.request_redraw_window_if_needed(window_id)
       })
-      match (self.renderer_provider.create_renderer)(window, metrics) {
+      match (self.renderer_provider.create_renderer)(window, surface_metrics) {
         Some(renderer) => {
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
@@ -468,6 +801,7 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfac
               platform_id: window.id(),
               window,
               renderer,
+              decorations,
             }),
           )
           window.request_redraw()
@@ -508,33 +842,51 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn window_event(
       }
     }
     @window_core.WindowEvent::SurfaceResized(_) => {
-      self.dispatch_window_event(window_id, event)
+      let mut dispatched = false
       match self.platform_slots.lookup_host(window_id) {
         Some(slot) => {
-          let metrics = @host.surface_metrics_from_physical(
-            slot.window.surface_size(),
-            scale_factor=slot.window.scale_factor(),
+          slot.decorations = linux_client_decoration_state(slot.window)
+          let surface_metrics = linux_window_surface_metrics(slot.window)
+          let metrics = linux_content_metrics_for_surface(
+            surface_metrics,
+            slot.decorations,
           )
-          (self.renderer_provider.sync_surface)(slot.window, metrics)
-          slot.renderer.resize(metrics)
+          ignore(self.windows.resize(window_id, metrics))
+          self.sync_runtime_slot(window_id)
+          (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
+          slot.renderer.resize(surface_metrics)
           slot.window.request_redraw()
+          self.dispatch_host_event(window_id, @host.HostEvent::Resized(metrics))
+          dispatched = true
         }
         None => ()
       }
+      if !dispatched {
+        self.dispatch_window_event(window_id, event)
+      }
     }
     @window_core.WindowEvent::ScaleFactorChanged(_, _) => {
-      self.dispatch_window_event(window_id, event)
+      let mut dispatched = false
       match self.platform_slots.lookup_host(window_id) {
         Some(slot) => {
-          let metrics = @host.surface_metrics_from_physical(
-            slot.window.surface_size(),
-            scale_factor=slot.window.scale_factor(),
+          slot.decorations = linux_client_decoration_state(slot.window)
+          let surface_metrics = linux_window_surface_metrics(slot.window)
+          let metrics = linux_content_metrics_for_surface(
+            surface_metrics,
+            slot.decorations,
           )
-          (self.renderer_provider.sync_surface)(slot.window, metrics)
-          slot.renderer.resize(metrics)
+          ignore(self.windows.resize(window_id, metrics))
+          self.sync_runtime_slot(window_id)
+          (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
+          slot.renderer.resize(surface_metrics)
           slot.window.request_redraw()
+          self.dispatch_host_event(window_id, @host.HostEvent::Resized(metrics))
+          dispatched = true
         }
         None => ()
+      }
+      if !dispatched {
+        self.dispatch_window_event(window_id, event)
       }
     }
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
@@ -585,6 +937,9 @@ fn LinuxApp::dispatch_pointer_or_context_menu(
   event : @window_core.WindowEvent,
 ) -> Unit {
   if @host.window_event_is_context_menu_button(event) {
+    if self.pointer_is_in_client_titlebar(window_id) {
+      return ()
+    }
     if @host.window_event_is_context_menu_trigger(event) {
       match self.runtime_slots.lookup(window_id) {
         Some(slot) => ignore(slot.driver.show_context_menu(self.services))
@@ -594,6 +949,19 @@ fn LinuxApp::dispatch_pointer_or_context_menu(
     }
   } else {
     self.dispatch_window_event(window_id, event)
+  }
+}
+
+///|
+fn LinuxApp::pointer_is_in_client_titlebar(
+  self : LinuxApp,
+  window_id : @host.HostWindowId,
+) -> Bool {
+  match self.platform_slots.lookup_host(window_id) {
+    Some(slot) =>
+      slot.decorations.active &&
+      self.last_pointer.y < slot.decorations.titlebar_height
+    None => false
   }
 }
 
@@ -610,7 +978,14 @@ fn LinuxApp::redraw_window(
     (Some(platform_slot), Some(runtime_slot)) => {
       platform_slot.window.pre_present_notify()
       runtime_slot.driver.begin_redraw()
-      platform_slot.renderer.render(runtime_slot.driver.draw_commands())
+      let surface_metrics = linux_window_surface_metrics(platform_slot.window)
+      let commands = linux_client_decorated_commands(
+        runtime_slot.driver.draw_commands(),
+        title=runtime_slot.record.title,
+        metrics=surface_metrics,
+        decorations=platform_slot.decorations,
+      )
+      platform_slot.renderer.render(commands)
       runtime_slot.driver.finish_redraw()
       self.sync_text_input_session()
     }
@@ -635,11 +1010,28 @@ fn LinuxApp::dispatch_window_event(
       self.last_pointer,
       self.modifiers,
     ) {
-    Some(host_event) => {
-      self.apply_window_lifecycle(window_id, host_event)
+    Some(host_event) => self.dispatch_host_event(window_id, host_event)
+    None => ()
+  }
+}
+
+///|
+fn LinuxApp::dispatch_host_event(
+  self : LinuxApp,
+  window_id : @host.HostWindowId,
+  host_event : @host.HostEvent,
+) -> Unit {
+  let decorations = match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => slot.decorations
+    None => LinuxClientDecorationState::new(active=false)
+  }
+  match
+    linux_adjust_host_event_for_client_decorations(host_event, decorations) {
+    Some(adjusted) => {
+      self.apply_window_lifecycle(window_id, adjusted)
       match self.runtime_slots.lookup(window_id) {
         Some(slot) =>
-          match host_event {
+          match adjusted {
             @host.HostEvent::Keyboard(event) =>
               ignore(
                 slot.driver.dispatch_keyboard_with_services(
@@ -647,7 +1039,7 @@ fn LinuxApp::dispatch_window_event(
                   self.services,
                 ),
               )
-            _ => ignore(slot.driver.dispatch(host_event))
+            _ => ignore(slot.driver.dispatch(adjusted))
           }
         None => ()
       }
@@ -691,11 +1083,25 @@ fn LinuxApp::apply_window_request(
       })
     @host.HostWindowRequest::ResizeWindow(id, metrics) =>
       self.apply_platform_window_request(id, request, window => {
-        ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
-        (self.renderer_provider.sync_surface)(window, metrics)
         match self.platform_slots.lookup_host(id) {
-          Some(slot) => slot.renderer.resize(metrics)
-          None => ()
+          Some(slot) => {
+            linux_request_surface_for_content(window, metrics, slot.decorations)
+            let surface_metrics = linux_window_surface_metrics(window)
+            let content_metrics = linux_content_metrics_for_surface(
+              surface_metrics,
+              slot.decorations,
+            )
+            ignore(self.windows.resize(id, content_metrics))
+            self.sync_runtime_slot(id)
+            (self.renderer_provider.sync_surface)(window, surface_metrics)
+            slot.renderer.resize(surface_metrics)
+          }
+          None => {
+            ignore(
+              window.request_surface_size(host_metrics_to_dpi_size(metrics)),
+            )
+            (self.renderer_provider.sync_surface)(window, metrics)
+          }
         }
         window.request_redraw()
       })
@@ -756,9 +1162,13 @@ fn LinuxApp::create_resolved_window(
   event_loop : @window_linux.ActiveEventLoop,
   resolved : @host.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
+  let requested_surface_metrics = linux_surface_metrics_for_content(
+    resolved.record.metrics,
+    LinuxClientDecorationState::new(active=true),
+  )
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
-    .with_surface_size(host_metrics_to_dpi_size(resolved.record.metrics))
+    .with_surface_size(host_metrics_to_dpi_size(requested_surface_metrics))
   let linux_attributes = @window_linux.WindowAttributesLinux::default().with_app_id(
     "dev.wzzc.moui.showcase",
   )
@@ -789,11 +1199,17 @@ fn LinuxApp::attach_resolved_window(
   window : @window_linux.Window,
   resolved : @host.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
-  let metrics = @host.surface_metrics_from_physical(
-    window.surface_size(),
-    scale_factor=window.scale_factor(),
+  let initial_surface_metrics = linux_window_surface_metrics(window)
+  let decorations = linux_client_decoration_state(window)
+  let initial_metrics = linux_content_metrics_for_surface(
+    initial_surface_metrics, decorations,
   )
-  match (self.renderer_provider.create_renderer)(window, metrics) {
+  if decorations.active {
+    linux_request_surface_for_content(window, initial_metrics, decorations)
+  }
+  let surface_metrics = linux_window_surface_metrics(window)
+  let metrics = linux_content_metrics_for_surface(surface_metrics, decorations)
+  match (self.renderer_provider.create_renderer)(window, surface_metrics) {
     Some(renderer) => {
       ignore(self.windows.resize(resolved.id, metrics))
       ignore(self.runtime_slots.sync_open_from_registry(self.windows))
@@ -827,6 +1243,7 @@ fn LinuxApp::attach_resolved_window(
           platform_id: window.id(),
           window,
           renderer,
+          decorations,
         }),
       )
       self.request_platform_redraw(resolved.id)
