@@ -33,8 +33,8 @@ Status meanings:
 | Filter effect | ready | ready | ready | Skia validates blur image filters plus saturation, brightness, contrast, and color matrix color filters in the real native renderer smoke. |
 | Path/vector | ready | ready | ready | Skia replays `PathSpec` into native paths with solid/gradient fill and stroke smoke coverage, plus quadratic and cubic curve verbs. |
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have real native renderer pixel smoke coverage; unknown names still use fallback paths. |
-| Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, returns Skia font-metric baseline/height plus measured prefix caret positions, and can draw optional SkShaper shaped glyph runs after linking; SkParagraph-style line breaking, bidi, and typography conformance remain follow-up work. |
-| Emoji text | partial | partial | partial | Skia emoji behavior depends on platform font fallback and future shaping coverage; native WGPU/Web also retain grapheme/color-emoji gaps. |
+| Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, returns Skia font-metric baseline/height plus measured prefix caret positions, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, and can draw optional SkShaper shaped glyph runs after linking; SkParagraph-style line breaking, bidi, and typography conformance remain follow-up work. |
+| Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, and ZWJ emoji samples, keeps caret coverage stable, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path; deterministic color emoji, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
 | Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Skia image lifecycle has data URI, local-file, and failed-image placeholder evidence; late async repaint remains follow-up work. |
 
 ## Renderer Descriptors
@@ -169,10 +169,12 @@ when the smoke is run with `--enable-skshaper`, while requiring
 renderer gaps are now narrower: complex text shaping. Basic text
 measurement/drawing uses Skia `FontMgr`/`Font` with `FontSpec` family, weight,
 style selection, Skia font metrics for baseline/height, Skia-measured prefix
-caret positions, and optional SkShaper shaped glyph runs for rendering when
-linked, while SkParagraph-style line breaking, bidi, broader typography, and
-deterministic emoji behavior remain partial and separate from the WGPU Moon
-Cosmic provider stack. The macOS Skia showcase host currently constructs the
+caret positions, SystemFontMgr-only emoji font retry for emoji-hint text, and
+optional SkShaper shaped glyph runs for rendering when linked, while
+SkParagraph-style line breaking, bidi, broader typography, deterministic color
+emoji, grapheme shaping, and cross-platform emoji fallback conformance remain
+partial and separate from the WGPU Moon Cosmic provider stack. The macOS Skia
+showcase host currently constructs the
 renderer with `SkiaFontResolution::EmptyTypeface`: it skips the system FontMgr
 and SkShaper during early AppKit startup, while measurement and drawing fall
 back to Skia's default font when the empty typeface would produce a blank glyph

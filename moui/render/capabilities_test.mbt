@@ -369,6 +369,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_text_note.contains("weight"))
   assert_true(skia_text_note.contains("baseline"))
   assert_true(skia_text_note.contains("caret positions"))
+  assert_true(skia_text_note.contains("emoji-family fonts"))
   assert_true(skia_text_note.contains("glyph-run drawing"))
   assert_true(skia_text_note.contains("SkShaper"))
   guard @render.renderer_feature_capability(@render.RendererFeature::EmojiText)
@@ -394,6 +395,15 @@ test "renderer capability report tracks draw command support" {
   assert_true(native_emoji_note.contains("ZWJ"))
   assert_true(native_emoji_note.contains("AppleColorEmoji"))
   assert_true(native_emoji_note.contains("grapheme"))
+  let skia_emoji_note = emoji.note_for_backend(
+    @render.RendererBackendKind::SkiaRasterNative,
+  )
+  assert_true(skia_emoji_note.contains("single-codepoint"))
+  assert_true(skia_emoji_note.contains("variation-selector"))
+  assert_true(skia_emoji_note.contains("ZWJ"))
+  assert_true(skia_emoji_note.contains("platform emoji font candidates"))
+  assert_true(skia_emoji_note.contains("default-font fallback"))
+  assert_true(skia_emoji_note.contains("grapheme"))
   assert_true(
     emoji
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
