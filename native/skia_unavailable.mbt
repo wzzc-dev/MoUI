@@ -657,6 +657,12 @@ pub fn Font::default(size? : Float = 12.0) -> Font? {
 }
 
 ///|
+pub fn Font::empty(size? : Float = 12.0) -> Font? {
+  ignore(size)
+  None
+}
+
+///|
 pub fn Font::from_typeface(typeface : Typeface, size? : Float = 12.0) -> Font? {
   ignore(typeface)
   ignore(size)

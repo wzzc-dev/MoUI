@@ -1446,6 +1446,22 @@ moonbit_skia_font_default(float size) {
 }
 
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaFont*
+moonbit_skia_font_empty(float size) {
+  if (size <= 0.0f) {
+    return moonbit_skia_make_font_wrapper(nullptr);
+  }
+#if defined(SKIA_MBT_HAS_SKIA)
+  SkFont* font = new SkFont();
+  font->setTypeface(nullptr);
+  font->setSize(size);
+  return moonbit_skia_make_font_wrapper(font);
+#else
+  (void)size;
+  return moonbit_skia_make_font_wrapper(nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaFont*
 moonbit_skia_font_from_typeface(MoonbitSkiaTypeface* typeface, float size) {
   if (typeface == nullptr || typeface->typeface == nullptr || size <= 0.0f) {
     return moonbit_skia_make_font_wrapper(nullptr);

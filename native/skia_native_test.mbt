@@ -373,6 +373,19 @@ test "bitmap api typechecks" {
 ///|
 test "font api typechecks" {
   assert_true(@native.Font::default(size=0.0) is None)
+  assert_true(@native.Font::empty(size=0.0) is None)
+  match @native.Font::empty(size=14.0) {
+    None => assert_true(!@native.skia_available())
+    Some(font) => {
+      assert_true(font.is_available())
+      assert_eq(font.size(), 14.0)
+      assert_eq(font.measure_text_utf8(b""), 0.0)
+      assert_eq(font.count_text_utf8(b""), 0)
+      assert_eq(font.text_to_glyphs_utf8(b"").length(), 0)
+      font.set_size(18.0)
+      assert_eq(font.size(), 18.0)
+    }
+  }
   assert_true(@native.Typeface::from_name(b"") is None)
   assert_true(
     @native.Typeface::from_name(b"", weight=700, width=5, slant=1) is None,

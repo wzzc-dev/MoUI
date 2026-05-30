@@ -112,6 +112,7 @@ pub(all) struct Font {
 }
 pub fn Font::count_text_utf8(Self, Bytes) -> Int
 pub fn Font::default(size? : Float) -> Self?
+pub fn Font::empty(size? : Float) -> Self?
 pub fn Font::from_typeface(Typeface, size? : Float) -> Self?
 pub fn Font::glyph_bounds(Self, GlyphId) -> @skia_mbt.Rect
 pub fn Font::glyph_bounds_many(Self, Array[GlyphId]) -> Array[@skia_mbt.Rect]
