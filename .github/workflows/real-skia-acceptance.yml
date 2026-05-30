@@ -39,6 +39,10 @@ jobs:
         shell: bash
         run: moon version --all
 
+      - name: Update MoonBit registry
+        shell: bash
+        run: moon update
+
       - name: Cache JetBrains Skia
         uses: actions/cache@v4
         with:
@@ -116,6 +120,10 @@ jobs:
         shell: bash
         run: moon version --all
 
+      - name: Update MoonBit registry
+        shell: bash
+        run: moon update
+
       - name: Install build dependencies
         shell: bash
         run: brew install ninja
@@ -191,6 +199,10 @@ jobs:
       - name: Show MoonBit version
         shell: pwsh
         run: moon version --all
+
+      - name: Update MoonBit registry
+        shell: pwsh
+        run: moon update
 
       - name: Resolve Visual Studio environment
         shell: pwsh
