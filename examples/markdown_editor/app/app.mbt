@@ -10,7 +10,7 @@ using @views {
   spacer,
   surface,
   text,
-  text_field_binding,
+  text_field,
 }
 
 ///|
@@ -50,6 +50,11 @@ priv enum MarkdownEditorMsg {
   Undo
   Redo
   ToggleSourcePreview
+  UpdateDocument(String)
+  UpdateLinkTarget(String)
+  UpdateImageTarget(String)
+  UpdateFootnoteText(String)
+  UpdateHtmlBlockText(String)
   ApplyLinkTarget
   ApplyImageTarget
   ApplyFootnoteText
@@ -124,6 +129,14 @@ fn MarkdownEditorApp::set_selection(
 ) -> Unit {
   self.selection.set({ caret, selection })
   self.sync_target_inputs()
+}
+
+///|
+fn MarkdownEditorApp::set_document_from_input(
+  self : MarkdownEditorApp,
+  value : String,
+) -> Unit {
+  self.document.set(value)
 }
 
 ///|
@@ -264,11 +277,16 @@ fn MarkdownEditorApp::toggle_task_at(
 fn MarkdownEditorApp::update(
   self : MarkdownEditorApp,
   message : MarkdownEditorMsg,
-) -> Unit {
+) -> MarkdownEditorApp {
   match message {
     Undo => ignore(self.undo())
     Redo => ignore(self.redo())
     ToggleSourcePreview => self.toggle_source_preview()
+    UpdateDocument(value) => self.set_document_from_input(value)
+    UpdateLinkTarget(value) => self.link_target.set(value)
+    UpdateImageTarget(value) => self.image_target.set(value)
+    UpdateFootnoteText(value) => self.footnote_text.set(value)
+    UpdateHtmlBlockText(value) => self.html_block_text.set(value)
     ApplyLinkTarget => self.apply_link_target()
     ApplyImageTarget => self.apply_image_target()
     ApplyFootnoteText => self.apply_footnote_text()
@@ -278,25 +296,24 @@ fn MarkdownEditorApp::update(
     ToggleTaskAt(offset) => self.toggle_task_at(offset)
     EditorScrollTo(y) => self.editor_scroll.scroll_to(x=0.0, y~)
   }
+  self
 }
 
 ///|
 fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
-  ctx : @core.BuildContext,
 ) -> @core.View[MarkdownEditorMsg] {
   let theme = @core.Theme::light()
-  let document = ctx.watch(self.document)
+  let document = self.document.get()
   let snapshot = MarkdownEditorSnapshot::parse(document)
-  let binding = ctx.binding(self.document)
   let editor_font = @core.FontSpec::new(size=17.0)
-  let show_source = ctx.watch(self.source_preview_visible)
+  let show_source = self.source_preview_visible.get()
   let workspace_width = markdown_editor_workspace_width(show_source)
-  let target_bar = self.target_bar(ctx, theme)
-  let selection = ctx.watch(self.selection)
-  let target_kind = ctx.watch(self.target_kind)
-  let block_label = ctx.watch(self.block_label)
-  let scroll_offset = ctx.watch_scroll(self.editor_scroll)
+  let target_bar = self.target_bar(theme)
+  let selection = self.selection.get()
+  let target_kind = self.target_kind.get()
+  let block_label = self.block_label.get()
+  let scroll_offset = self.editor_scroll.offset()
   let workspace = column(
     [
       self.chrome(
@@ -306,7 +323,7 @@ fn MarkdownEditorApp::root(
         [
           editor_source_layout(
             self,
-            binding,
+            document,
             snapshot,
             editor_font,
             theme,
@@ -335,6 +352,24 @@ fn MarkdownEditorApp::root(
       left=theme.spacing_scale.md,
     ),
   )
+}
+
+///|
+fn MarkdownEditorApp::reactive_root(
+  self : MarkdownEditorApp,
+  ctx : @core.BuildContext,
+) -> @core.View[MarkdownEditorMsg] {
+  ignore(ctx.watch(self.document))
+  ignore(ctx.watch(self.selection))
+  ignore(ctx.watch(self.link_target))
+  ignore(ctx.watch(self.image_target))
+  ignore(ctx.watch(self.footnote_text))
+  ignore(ctx.watch(self.html_block_text))
+  ignore(ctx.watch(self.target_kind))
+  ignore(ctx.watch(self.block_label))
+  ignore(ctx.watch(self.source_preview_visible))
+  ignore(ctx.watch_scroll(self.editor_scroll))
+  self.root()
 }
 
 ///|
@@ -429,11 +464,10 @@ fn markdown_editor_status_label(
 ///|
 fn MarkdownEditorApp::target_bar(
   self : MarkdownEditorApp,
-  ctx : @core.BuildContext,
   theme : @core.Theme,
 ) -> @core.View[MarkdownEditorMsg] {
-  let kind = ctx.watch(self.target_kind)
-  let block_label = ctx.watch(self.block_label)
+  let kind = self.target_kind.get()
+  let block_label = self.block_label.get()
   let block_badge = text("Block: " + block_label, width=132.0, height=34.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.muted)
@@ -445,8 +479,9 @@ fn MarkdownEditorApp::target_bar(
           text("Link target", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field_binding(
-            ctx.binding(self.link_target),
+          text_field(
+            self.link_target.get(),
+            on_input=value => UpdateLinkTarget(value),
             on_submit=Some(ApplyLinkTarget),
             placeholder="https://example.com",
             variant=@views.TextFieldVariant::Outline,
@@ -471,8 +506,9 @@ fn MarkdownEditorApp::target_bar(
           text("Image src", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field_binding(
-            ctx.binding(self.image_target),
+          text_field(
+            self.image_target.get(),
+            on_input=value => UpdateImageTarget(value),
             on_submit=Some(ApplyImageTarget),
             placeholder="assets/image.png",
             variant=@views.TextFieldVariant::Outline,
@@ -497,8 +533,9 @@ fn MarkdownEditorApp::target_bar(
           text("Footnote", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field_binding(
-            ctx.binding(self.footnote_text),
+          text_field(
+            self.footnote_text.get(),
+            on_input=value => UpdateFootnoteText(value),
             on_submit=Some(ApplyFootnoteText),
             placeholder="Footnote text",
             variant=@views.TextFieldVariant::Outline,
@@ -523,8 +560,9 @@ fn MarkdownEditorApp::target_bar(
           text("HTML block", width=88.0, height=34.0)
           .font(theme.typography.caption)
           .foreground(theme.palette.muted),
-          text_field_binding(
-            ctx.binding(self.html_block_text),
+          text_field(
+            self.html_block_text.get(),
+            on_input=value => UpdateHtmlBlockText(value),
             on_submit=Some(ApplyHtmlBlockText),
             placeholder="<div>HTML</div>",
             variant=@views.TextFieldVariant::Outline,
@@ -1023,156 +1061,156 @@ fn MarkdownEditorApp::action_commands(
 ) -> @core.ActionCommandMap {
   @core.ActionCommandMap::new(bindings=[
     markdown_editor_command_binding("Bold", markdown_editor_shortcut("b"), () => {
-      self.update(ApplyCommand(Bold))
+      ignore(self.update(ApplyCommand(Bold)))
     }),
     markdown_editor_command_binding(
       "Bold",
       markdown_editor_control_shortcut("b"),
-      () => self.update(ApplyCommand(Bold)),
+      () => ignore(self.update(ApplyCommand(Bold))),
     ),
     markdown_editor_command_binding("Italic", markdown_editor_shortcut("i"), () => {
-      self.update(ApplyCommand(Italic))
+      ignore(self.update(ApplyCommand(Italic)))
     }),
     markdown_editor_command_binding(
       "Italic",
       markdown_editor_control_shortcut("i"),
-      () => self.update(ApplyCommand(Italic)),
+      () => ignore(self.update(ApplyCommand(Italic))),
     ),
     markdown_editor_command_binding(
       "Inline Code",
       markdown_editor_shortcut("e"),
-      () => self.update(ApplyCommand(Code)),
+      () => ignore(self.update(ApplyCommand(Code))),
     ),
     markdown_editor_command_binding(
       "Inline Code",
       markdown_editor_control_shortcut("e"),
-      () => self.update(ApplyCommand(Code)),
+      () => ignore(self.update(ApplyCommand(Code))),
     ),
     markdown_editor_command_binding(
       "Strikethrough",
       markdown_editor_shift_shortcut("x"),
-      () => self.update(ApplyCommand(Strikethrough)),
+      () => ignore(self.update(ApplyCommand(Strikethrough))),
     ),
     markdown_editor_command_binding(
       "Strikethrough",
       markdown_editor_control_shift_shortcut("x"),
-      () => self.update(ApplyCommand(Strikethrough)),
+      () => ignore(self.update(ApplyCommand(Strikethrough))),
     ),
     markdown_editor_command_binding("Link", markdown_editor_shortcut("l"), () => {
-      self.update(ApplyCommand(Link))
+      ignore(self.update(ApplyCommand(Link)))
     }),
     markdown_editor_command_binding(
       "Link",
       markdown_editor_control_shortcut("k"),
-      () => self.update(ApplyCommand(Link)),
+      () => ignore(self.update(ApplyCommand(Link))),
     ),
     markdown_editor_command_binding(
       "Image",
       markdown_editor_shift_shortcut("i"),
-      () => self.update(ApplyCommand(Image)),
+      () => ignore(self.update(ApplyCommand(Image))),
     ),
     markdown_editor_command_binding(
       "Heading 1",
       markdown_editor_shortcut("1"),
-      () => self.update(ApplyCommand(Heading(1))),
+      () => ignore(self.update(ApplyCommand(Heading(1)))),
     ),
     markdown_editor_command_binding(
       "Heading 1",
       markdown_editor_control_shortcut("1"),
-      () => self.update(ApplyCommand(Heading(1))),
+      () => ignore(self.update(ApplyCommand(Heading(1)))),
     ),
     markdown_editor_command_binding(
       "Heading 2",
       markdown_editor_shortcut("2"),
-      () => self.update(ApplyCommand(Heading(2))),
+      () => ignore(self.update(ApplyCommand(Heading(2)))),
     ),
     markdown_editor_command_binding(
       "Heading 2",
       markdown_editor_control_shortcut("2"),
-      () => self.update(ApplyCommand(Heading(2))),
+      () => ignore(self.update(ApplyCommand(Heading(2)))),
     ),
     markdown_editor_command_binding(
       "Heading 3",
       markdown_editor_shortcut("3"),
-      () => self.update(ApplyCommand(Heading(3))),
+      () => ignore(self.update(ApplyCommand(Heading(3)))),
     ),
     markdown_editor_command_binding(
       "Heading 3",
       markdown_editor_control_shortcut("3"),
-      () => self.update(ApplyCommand(Heading(3))),
+      () => ignore(self.update(ApplyCommand(Heading(3)))),
     ),
     markdown_editor_command_binding(
       "Heading 4",
       markdown_editor_shortcut("4"),
-      () => self.update(ApplyCommand(Heading(4))),
+      () => ignore(self.update(ApplyCommand(Heading(4)))),
     ),
     markdown_editor_command_binding(
       "Heading 4",
       markdown_editor_control_shortcut("4"),
-      () => self.update(ApplyCommand(Heading(4))),
+      () => ignore(self.update(ApplyCommand(Heading(4)))),
     ),
     markdown_editor_command_binding(
       "Heading 5",
       markdown_editor_shortcut("5"),
-      () => self.update(ApplyCommand(Heading(5))),
+      () => ignore(self.update(ApplyCommand(Heading(5)))),
     ),
     markdown_editor_command_binding(
       "Heading 5",
       markdown_editor_control_shortcut("5"),
-      () => self.update(ApplyCommand(Heading(5))),
+      () => ignore(self.update(ApplyCommand(Heading(5)))),
     ),
     markdown_editor_command_binding(
       "Heading 6",
       markdown_editor_shortcut("6"),
-      () => self.update(ApplyCommand(Heading(6))),
+      () => ignore(self.update(ApplyCommand(Heading(6)))),
     ),
     markdown_editor_command_binding(
       "Heading 6",
       markdown_editor_control_shortcut("6"),
-      () => self.update(ApplyCommand(Heading(6))),
+      () => ignore(self.update(ApplyCommand(Heading(6)))),
     ),
     markdown_editor_command_binding(
       "Bullet List",
       markdown_editor_shortcut("u"),
-      () => self.update(ApplyCommand(BulletList)),
+      () => ignore(self.update(ApplyCommand(BulletList))),
     ),
     markdown_editor_command_binding(
       "Task List",
       markdown_editor_shortcut("t"),
-      () => self.update(ApplyCommand(TaskList)),
+      () => ignore(self.update(ApplyCommand(TaskList))),
     ),
     markdown_editor_command_binding(
       "Ordered List",
       markdown_editor_shortcut("o"),
-      () => self.update(ApplyCommand(OrderedList)),
+      () => ignore(self.update(ApplyCommand(OrderedList))),
     ),
     markdown_editor_command_binding("Quote", markdown_editor_shortcut("q"), () => {
-      self.update(ApplyCommand(Quote))
+      ignore(self.update(ApplyCommand(Quote)))
     }),
     markdown_editor_command_binding(
       "Code Block",
       markdown_editor_shortcut("k"),
-      () => self.update(ApplyCommand(CodeBlock)),
+      () => ignore(self.update(ApplyCommand(CodeBlock))),
     ),
     markdown_editor_command_binding(
       "Insert Table Column",
       markdown_editor_shift_shortcut("="),
-      () => self.update(ApplyCommand(InsertTableColumn)),
+      () => ignore(self.update(ApplyCommand(InsertTableColumn))),
     ),
     markdown_editor_command_binding(
       "Insert Table Row",
       markdown_editor_shift_shortcut("Enter"),
-      () => self.update(ApplyCommand(InsertTableRow)),
+      () => ignore(self.update(ApplyCommand(InsertTableRow))),
     ),
     markdown_editor_command_binding(
       "Delete Table Row",
       markdown_editor_shift_shortcut("-"),
-      () => self.update(ApplyCommand(DeleteTableRow)),
+      () => ignore(self.update(ApplyCommand(DeleteTableRow))),
     ),
     markdown_editor_command_binding(
       "Delete Table Column",
       markdown_editor_shift_shortcut("_"),
-      () => self.update(ApplyCommand(DeleteTableColumn)),
+      () => ignore(self.update(ApplyCommand(DeleteTableColumn))),
     ),
   ])
 }
@@ -1238,7 +1276,7 @@ fn source_inspector(
 ///|
 fn editor_source_layout(
   _app : MarkdownEditorApp,
-  binding : @core.Binding[String],
+  source : String,
   snapshot : MarkdownEditorSnapshot,
   editor_font : @core.FontSpec,
   theme : @core.Theme,
@@ -1268,8 +1306,9 @@ fn editor_source_layout(
     x=0.0,
     y=markdown_editor_clamp_double(scroll_offset.y, 0.0, max_scroll),
   )
-  let editor_control = @core.View::rich_text_editor(
-    value=binding,
+  let editor_control = @core.View::controlled_rich_text_editor(
+    value=source,
+    on_input=value => UpdateDocument(value),
     placeholder="Start writing Markdown",
     size=@core.Size::new(width=editor_width, height=content_height),
     format=source => markdown_editor_format_for_selection(source, selection),
@@ -1390,10 +1429,13 @@ pub fn MarkdownEditorApp::runtime(
   width? : Double = 1120.0,
   height? : Double = 720.0,
 ) -> @core.AppRuntime {
-  let runtime = @core.AppRuntime::new_component_view(
-    root=ctx => self.root(ctx),
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=self,
+      update=(app, message) => app.update(message),
+      view=app => @core.View::component(ctx => app.reactive_root(ctx)),
+    ),
     size=@core.Size::new(width~, height~),
-    on_message=Some(message => self.update(message)),
   )
   runtime.set_action_commands(self.action_commands())
   runtime

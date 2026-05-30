@@ -378,6 +378,35 @@ test "program controlled text field and searchbar update model" {
 }
 
 ///|
+test "program controlled text field rebuilds after focused text commands" {
+  let program = Program::simple(
+    init={ draft: "Hello", query: "abc", cleared: false },
+    update=(model, message) => model.update(message),
+    view=model => model.view(),
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=320.0, height=180.0),
+  )
+  runtime_wbtest_click(runtime, x=10.0, y=34.0)
+  let pasted = runtime.dispatch_focused_text_command(
+    Paste,
+    paste_text=Some("!"),
+  )
+  assert_true(pasted.handled)
+  assert_true(pasted.changed)
+  assert_true(has_draw_text(runtime.draw_commands(), "Draft: Hello!"))
+  let undo = runtime.dispatch_focused_text_command(Undo)
+  assert_true(undo.handled)
+  assert_true(undo.changed)
+  assert_true(has_draw_text(runtime.draw_commands(), "Draft: Hello"))
+  let redo = runtime.dispatch_focused_text_command(Redo)
+  assert_true(redo.handled)
+  assert_true(redo.changed)
+  assert_true(has_draw_text(runtime.draw_commands(), "Draft: Hello!"))
+}
+
+///|
 enum ControlledChoiceMsg {
   ControlledChecked(Bool)
   ControlledPicked(String)

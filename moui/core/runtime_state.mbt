@@ -236,8 +236,10 @@ pub fn RuntimeState::dispatch_focused_text_command(
       )
       if result.changed {
         self.needs_redraw = true
+        self.needs_rebuild = true
         self.needs_paint = true
         self.mark_dirty(self.element_tree.id())
+        self.rebuild_if_possible()
       }
       result
     }

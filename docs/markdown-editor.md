@@ -24,6 +24,16 @@ contextual commands, and editing workflows.
 Platform packages should stay thin. Shared editor behavior belongs in the app
 package or the framework package that owns the reusable capability.
 
+The shared app runtime is installed with `Program::simple` and
+`AppRuntime::new_program`. Editor input, toolbar actions, shortcuts, target
+field edits, selection changes, task toggles, and scroll updates enter through
+typed `MarkdownEditorMsg` values. The package still keeps a small internal
+`View::component` adapter at the app boundary so the demo/test
+`MarkdownEditorApp` handle can expose mutable document and target-state helpers
+while the mounted runtime rebuilds from the same state cells. Ordinary app code
+should treat this as a rich-editor integration detail, not the default app
+shape.
+
 ## Editing Model
 
 The editor stores canonical Markdown source, then parses it into a
