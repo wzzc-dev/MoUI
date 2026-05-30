@@ -1,6 +1,6 @@
 name = "wzzc-dev/skia_mbt"
 
-version = "0.1.1"
+version = "0.1.2"
 
 import {
   "wzzc-dev/window@0.5.1",
