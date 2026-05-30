@@ -119,6 +119,21 @@ JetBrains Skia binary provider from `.local_repos/skia_mbt`:
 scripts/macos-skia-renderer-smoke.sh
 ```
 
+The repository default package files intentionally stay fallback-safe and do not
+contain machine-local Skia paths. If you want direct local commands such as
+`moon run examples/showcase/macos_skia --target native` to use real Skia, first
+persist the resolved local link configuration:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh --enable-skshaper --write-local-config
+```
+
+That command writes absolute paths into `.local_repos/skia_mbt/native/moon.pkg`,
+`moui/tests/skia_renderer_smoke/native/moon.pkg`, and
+`examples/showcase/macos_skia/moon.pkg`; keep those machine-local edits out of
+commits. Re-run the command after changing Skia provider options or after
+restoring those package files.
+
 Pass `--enable-skshaper` when the selected Skia library directory includes the
 SkShaper module libraries. The helper then configures `skia_mbt/native` with
 the SkShaper define, links `libskshaper`, `libskunicode_core`,

@@ -179,7 +179,10 @@ temporarily wires the resolved link flags into the local `skia_mbt` and MoUI
 packages, runs the renderer pixel smoke, builds `examples/showcase/macos_skia`,
 and restores the package files. Pass `--run-showcase-smoke` to also launch the
 Showcase entrypoint, verify that the macOS Skia renderer presents its first
-frame, and exit automatically.
+frame, and exit automatically. Pass `--write-local-config` only when you want to
+persist local absolute Skia paths so direct commands such as
+`moon run examples/showcase/macos_skia --target native` use real Skia; keep those
+machine-local `moon.pkg` edits out of commits.
 
 ## Renderer Capability Tracking
 

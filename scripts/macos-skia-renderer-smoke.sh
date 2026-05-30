@@ -8,6 +8,8 @@ Usage: scripts/macos-skia-renderer-smoke.sh [options]
 Temporarily configures the local skia_mbt native package plus MoUI's Skia
 renderer smoke and macos_skia showcase entrypoints, runs the renderer pixel
 smoke, builds examples/showcase/macos_skia, then restores all package files.
+Use --write-local-config when you want to keep the resolved local link flags so
+direct moon run/build commands can use the native Skia packages afterwards.
 
 Options:
   --skia-provider existing|jetbrains|source
@@ -47,6 +49,10 @@ Options:
                          Seconds to wait for --run-showcase-smoke. Default: 20.
   --dry-run-config       Print resolved paths and flags, then exit without
                          rewriting package files or building executables.
+  --write-local-config   Persistently write resolved link flags into the local
+                         skia_mbt native, renderer smoke, and macos_skia package
+                         files, then exit. Leaves machine-local moon.pkg edits;
+                         do not commit those path-specific package files.
   -h, --help             Show this help.
 
 Environment defaults:
@@ -97,6 +103,7 @@ skip_showcase_build=0
 run_showcase_smoke=0
 showcase_timeout=20
 dry_run_config=0
+write_local_config=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -190,6 +197,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --dry-run-config)
       dry_run_config=1
+      shift
+      ;;
+    --write-local-config)
+      write_local_config=1
       shift
       ;;
     -h|--help)
@@ -297,6 +308,16 @@ fi
 
 if [[ $run_showcase_smoke -eq 1 && $skip_showcase_build -eq 1 ]]; then
   echo "--run-showcase-smoke cannot be combined with --skip-showcase-build" >&2
+  exit 2
+fi
+
+if [[ $dry_run_config -eq 1 && $write_local_config -eq 1 ]]; then
+  echo "--dry-run-config and --write-local-config cannot be combined" >&2
+  exit 2
+fi
+
+if [[ $run_showcase_smoke -eq 1 && $write_local_config -eq 1 ]]; then
+  echo "--write-local-config writes package files and exits; run the showcase smoke afterwards" >&2
   exit 2
 fi
 
@@ -486,6 +507,7 @@ if [[ -n "$showcase_log" ]]; then
 fi
 echo "  skip_showcase_build=$skip_showcase_build"
 echo "  run_showcase_smoke=$run_showcase_smoke"
+echo "  write_local_config=$write_local_config"
 if [[ $run_showcase_smoke -eq 1 ]]; then
   echo "  showcase_timeout=$showcase_timeout"
 fi
@@ -495,6 +517,78 @@ if [[ $dry_run_config -eq 1 ]]; then
     bash "$skia_repo/scripts/macos-build-skia.sh" --dry-run-config "${source_build_args[@]}"
   fi
   echo "Dry run complete; package files were not modified and no build was run."
+  exit 0
+fi
+
+write_native_pkg_config() {
+  bash "$skia_repo/scripts/configure-macos-native-pkg.sh" \
+    --skia-include "$include_path" \
+    --skia-lib-dir "$lib_path" \
+    --skia-lib "$skia_lib" \
+    --extra-cc-flags "$native_extra_cc_flags" \
+    --extra-link-flags "$native_extra_link_flags" \
+    --output "$native_pkg" \
+    --write >/dev/null
+}
+
+write_renderer_smoke_pkg_config() {
+  cat > "$renderer_pkg" <<EOF
+import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/x/fs",
+  "wzzc-dev/skia_mbt/native" @skia_native,
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$skia_link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+EOF
+}
+
+write_showcase_pkg_config() {
+  cat > "$showcase_pkg" <<EOF
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/macos" @macos_backend,
+  "wzzc-dev/moui/render",
+  "examples/showcase/app",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$showcase_link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+EOF
+}
+
+if [[ $write_local_config -eq 1 ]]; then
+  write_native_pkg_config
+  echo "Wrote local skia_mbt/native/moon.pkg with macOS Skia link flags."
+  write_renderer_smoke_pkg_config
+  echo "Wrote local MoUI renderer smoke package link flags."
+  write_showcase_pkg_config
+  echo "Wrote local macos_skia showcase package link flags."
+  echo "Local macOS Skia configuration is ready. Direct run command:"
+  echo "  moon run examples/showcase/macos_skia --target native"
+  echo "These package files contain machine-local paths; keep them out of commits."
   exit 0
 fi
 
@@ -527,60 +621,13 @@ cp "$native_pkg" "$native_pkg_backup"
 cp "$renderer_pkg" "$renderer_pkg_backup"
 cp "$showcase_pkg" "$showcase_pkg_backup"
 
-bash "$skia_repo/scripts/configure-macos-native-pkg.sh" \
-  --skia-include "$include_path" \
-  --skia-lib-dir "$lib_path" \
-  --skia-lib "$skia_lib" \
-  --extra-cc-flags "$native_extra_cc_flags" \
-  --extra-link-flags "$native_extra_link_flags" \
-  --output "$native_pkg" \
-  --write >/dev/null
+write_native_pkg_config
 echo "Wrote temporary skia_mbt/native/moon.pkg with macOS Skia link flags."
 
-cat > "$renderer_pkg" <<EOF
-import {
-  "moonbitlang/core/encoding/base64",
-  "moonbitlang/x/fs",
-  "wzzc-dev/skia_mbt/native" @skia_native,
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/skia" @skia_renderer,
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$skia_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
+write_renderer_smoke_pkg_config
 echo "Wrote temporary MoUI renderer smoke package link flags."
 
-cat > "$showcase_pkg" <<EOF
-import {
-  "moonbitlang/core/env",
-  "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui/render",
-  "examples/showcase/app",
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$showcase_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
+write_showcase_pkg_config
 echo "Wrote temporary macos_skia showcase package link flags."
 
 cd "$repo_root"
