@@ -111,15 +111,38 @@ test "skia empty typeface drawing falls back when the glyph run is blank" {
 }
 
 ///|
-test "skia empty typeface text system delegates to fallback metrics" {
+test "skia text baseline is centered in taller text frames" {
+  let frame = @core.Rect::new(x=4.0, y=10.0, width=120.0, height=44.0)
+  let metrics = SkiaTextMetrics::{ baseline: 12.0, height: 20.0 }
+  inspect(skia_text_baseline_y(frame, metrics), content="34")
+}
+
+///|
+test "skia empty typeface text system follows drawing fallback font metrics" {
   let input = @core.TextLayoutInput::new(
-    text="Slim",
+    text="你好 MoUI",
     font=@core.FontSpec::new(size=18.0, weight=400),
   )
-  let fallback = @core.TextSystem::fallback().measure_text(input)
   let system = skia_text_system(SkiaFontResolution::EmptyTypeface)
-  assert_true(system.id() == @core.TextSystem::fallback().id())
-  assert_true(system.measure_text(input) == fallback)
+  if !skia_available() {
+    assert_true(system.id() == @core.TextSystem::fallback().id())
+  } else {
+    assert_true(system.id() == "skia-raster-empty-typeface-text-system")
+    match
+      skia_draw_text_payload_for_resolution(
+        input.font,
+        input.text,
+        SkiaFontResolution::EmptyTypeface,
+      ) {
+      Some((font, run)) => {
+        let measured = system.measure_text(input)
+        assert_true(measured.size.width == run.width)
+        assert_true(measured.caret_positions[input.text.to_array().length()] == run.width)
+        assert_true(measured.size.width == skia_measure_text_width(font, input.text))
+      }
+      None => fail("expected empty typeface text system to find a visible fallback font")
+    }
+  }
 }
 
 ///|
