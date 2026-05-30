@@ -6,7 +6,7 @@
 #import <string.h>
 
 static NSString *const MOUI_MACOS_SURFACE_LAYER_NAME = @"moui_macos_surface_layer";
-static NSString *const MOUI_MACOS_SKIA_LAYER_NAME = @"moui_macos_skia_pixel_layer";
+static NSString *const MOUI_MACOS_SKIA_IMAGE_VIEW_ID = @"moui_macos_skia_pixel_image_view";
 
 enum {
   MOUI_MACOS_SKIA_PRESENT_OK = 0,
@@ -280,29 +280,51 @@ int32_t moui_macos_present_skia_pixels_to_view(uint64_t raw_content_view_handle,
     return MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED;
   }
 
-  view.wantsLayer = YES;
-  CALayer *layer = nil;
-  for (CALayer *sublayer in view.layer.sublayers) {
-    if ([sublayer.name isEqualToString:MOUI_MACOS_SKIA_LAYER_NAME]) {
-      layer = sublayer;
+  CGFloat scale = view.window.backingScaleFactor > 0.0 ? view.window.backingScaleFactor : 1.0;
+  CGRect bounds = view.bounds;
+  if (bounds.size.width <= 0.0 || bounds.size.height <= 0.0) {
+    bounds = CGRectMake(0.0, 0.0, width / scale, height / scale);
+  }
+  if (bounds.size.width <= 0.0) {
+    bounds.size.width = 1.0;
+  }
+  if (bounds.size.height <= 0.0) {
+    bounds.size.height = 1.0;
+  }
+
+  NSImageView *image_view = nil;
+  for (NSView *subview in view.subviews) {
+    if ([subview isKindOfClass:[NSImageView class]] &&
+        [subview.identifier isEqualToString:MOUI_MACOS_SKIA_IMAGE_VIEW_ID]) {
+      image_view = (NSImageView *)subview;
       break;
     }
   }
-  if (layer == nil) {
-    layer = [CALayer layer];
-    layer.name = MOUI_MACOS_SKIA_LAYER_NAME;
-    layer.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
-    layer.contentsGravity = kCAGravityResize;
-    [view.layer addSublayer:layer];
+  if (image_view == nil) {
+    image_view = [[NSImageView alloc] initWithFrame:bounds];
+    if (image_view == nil) {
+      CGImageRelease(image);
+      return MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED;
+    }
+    image_view.identifier = MOUI_MACOS_SKIA_IMAGE_VIEW_ID;
+    image_view.imageScaling = NSImageScaleAxesIndependently;
+    image_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [view addSubview:image_view positioned:NSWindowAbove relativeTo:nil];
+    [image_view release];
   }
 
-  CGFloat scale = view.window.backingScaleFactor > 0.0 ? view.window.backingScaleFactor : 1.0;
-  layer.frame = view.bounds;
-  layer.bounds = CGRectMake(0.0, 0.0, view.bounds.size.width, view.bounds.size.height);
-  layer.contentsScale = scale;
-  layer.contents = (__bridge id)image;
-  [layer setNeedsDisplay];
+  NSImage *ns_image = [[NSImage alloc] initWithCGImage:image
+                                                 size:NSMakeSize(bounds.size.width,
+                                                                 bounds.size.height)];
+  if (ns_image == nil) {
+    CGImageRelease(image);
+    return MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED;
+  }
+  image_view.frame = bounds;
+  image_view.image = ns_image;
+  [image_view setNeedsDisplay:YES];
 
+  [ns_image release];
   CGImageRelease(image);
   return MOUI_MACOS_SKIA_PRESENT_OK;
 }
