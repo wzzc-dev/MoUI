@@ -370,15 +370,35 @@ test "showcase advanced rendering emits low level draw commands" {
     commands.any(command => command is @core.DrawCommand::PushLayer(_)),
   )
   assert_true(commands.any(command => command is @core.DrawCommand::PopLayer))
+  assert_true(has_layer_blend(commands, @core.BlendMode::Multiply))
+  assert_true(has_layer_blend(commands, @core.BlendMode::Screen))
+  assert_true(has_layer_blend(commands, @core.BlendMode::Overlay))
   assert_true(
     commands.any(command => command is @core.DrawCommand::PushFilter(_)),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(_))
+    }),
   )
   assert_true(commands.any(command => command is @core.DrawCommand::PopFilter))
   assert_true(
     commands.any(command => command is @core.DrawCommand::DrawShaderEffect(_)),
   )
+  assert_true(has_shader_effect(commands, "checker"))
+  assert_true(has_shader_effect(commands, "vignette"))
   assert_true(
     commands.any(command => command is @core.DrawCommand::DrawPath(_)),
+  )
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::PushOpacity(_)),
+  )
+  assert_true(commands.any(command => command is @core.DrawCommand::PopOpacity))
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::PushTransform(_)),
+  )
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::PopTransform),
   )
   assert_true(
     commands.any(command => command is @core.DrawCommand::PushClip(_)),
@@ -389,6 +409,28 @@ test "showcase advanced rendering emits low level draw commands" {
       is @core.DrawCommand::PushLayer({ mask: @core.LayerMask::NoMask, .. })
     }),
   )
+}
+
+///|
+fn has_layer_blend(
+  commands : Array[@core.DrawCommand],
+  blend : @core.BlendMode,
+) -> Bool {
+  commands.any(command => {
+    command is @core.DrawCommand::PushLayer({ blend_mode, .. }) &&
+    blend_mode == blend
+  })
+}
+
+///|
+fn has_shader_effect(
+  commands : Array[@core.DrawCommand],
+  name : String,
+) -> Bool {
+  commands.any(command => {
+    command is @core.DrawCommand::DrawShaderEffect({ name: value, .. }) &&
+    value == name
+  })
 }
 
 ///|
