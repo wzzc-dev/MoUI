@@ -94,6 +94,21 @@ test "file importer runtime runs host service effects" {
 }
 
 ///|
+test "file importer composes as effect-capable child program" {
+  let services = host_services_for_file_dialog(["/tmp/composed.csv"])
+  let runtime = ParentImporterModel::new().runtime_with_services(
+    services,
+    width=900.0,
+    height=680.0,
+  )
+  click_text(runtime, "Browse")
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Parent Shell"))
+  assert_true(has_text(commands, "/tmp/composed.csv"))
+  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
+}
+
+///|
 test "file importer runtime draws panel labels" {
   let commands = @app.runtime(width=860.0, height=620.0).draw_commands()
   assert_true(has_text(commands, "File Importer"))
@@ -135,6 +150,66 @@ fn async_file_dialog_services(
     },
   )
   @host.HostAppServices::new(bridge~, async_queue=Some(queue))
+}
+
+///|
+struct ParentImporterModel {
+  child : FileImporterModel
+}
+
+///|
+enum ParentImporterMsg {
+  Child(FileImporterMsg)
+}
+
+///|
+fn ParentImporterModel::new() -> ParentImporterModel {
+  { child: FileImporterModel::new() }
+}
+
+///|
+fn ParentImporterModel::update_with_services(
+  self : ParentImporterModel,
+  message : ParentImporterMsg,
+  services : @host.HostAppServices,
+) -> (ParentImporterModel, @core.Effect[ParentImporterMsg]) {
+  match message {
+    Child(child_message) => {
+      let update = self.child.update_with_services(child_message, services)
+      ({ child: update.model }, update.effect.map(message => Child(message)))
+    }
+  }
+}
+
+///|
+fn ParentImporterModel::view(
+  self : ParentImporterModel,
+) -> @core.View[ParentImporterMsg] {
+  @views.column(
+    [
+      @views.text("Parent Shell", width=220.0, height=28.0),
+      self.child.view().map(message => Child(message)),
+    ],
+    spacing=8.0,
+    align=@views.CrossAlign::Start,
+  )
+}
+
+///|
+fn ParentImporterModel::runtime_with_services(
+  self : ParentImporterModel,
+  services : @host.HostAppServices,
+  width? : Double = 900.0,
+  height? : Double = 680.0,
+) -> @core.AppRuntime {
+  @core.AppRuntime::new_program(
+    program=@core.Program::new(
+      init=() => (self, @core.Effect::none()),
+      update=(model, message) => model.update_with_services(message, services),
+      view=model => model.view(),
+    ),
+    size=@core.Size::new(width~, height~),
+  )
 }
 
 ///|
