@@ -133,6 +133,12 @@ frame, and then exit automatically:
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 ```
 
+The renderer smoke uses the default system-FontMgr text path, including optional
+SkShaper when enabled. The macOS showcase smoke intentionally uses the renderer's
+`EmptyTypeface` font resolution mode during startup, so it still verifies first
+Skia presentation through AppKit while avoiding known CoreText/Skia FontMgr and
+SkShaper crashes in early CLI-launched AppKit runs.
+
 Use `--skia-provider existing` when you already have a Skia checkout or binary
 package:
 

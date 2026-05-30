@@ -57,14 +57,18 @@ macOS, Windows, and Linux hosts choose the startup text engine through
 `MoonCosmic` selects the Cosmic provider directly. Showcase also has explicit
 `macos_cosmic`, `windows_cosmic`, and `linux_cosmic` entrypoints for comparing
 those paths. The separate `macos_skia` entrypoint selects the Skia renderer,
-not a text-provider variant. Skia basic text measurement and drawing resolve the
-MoUI `FontSpec` family stack, weight, and style through `skia_mbt` `FontMgr` and
-`Font`, and its `TextSystem` returns Skia font-metric baseline/height plus
-Skia-measured prefix caret positions for basic input geometry. Rendering now
-uses optional SkShaper shaped glyph runs when the `skia_mbt` native package is
-linked with SkShaper support, and otherwise falls back to positioned glyph runs;
-SkParagraph-style line breaking, bidi, and broader typography conformance remain
-follow-up work.
+not a text-provider variant. By default, Skia basic text measurement and drawing
+resolve the MoUI `FontSpec` family stack, weight, and style through `skia_mbt`
+`FontMgr` and `Font`, and its `TextSystem` returns Skia font-metric
+baseline/height plus Skia-measured prefix caret positions for basic input
+geometry. Rendering now uses optional SkShaper shaped glyph runs when the
+`skia_mbt` native package is linked with SkShaper support, and otherwise falls
+back to positioned glyph runs. The macOS Skia host currently starts with the
+safe `EmptyTypeface` font resolution mode, which delegates layout measurement to
+the core fallback text system and disables SkShaper for renderer text drawing;
+this avoids CoreText/Skia FontMgr startup crashes while the macOS Skia first
+frame path is being hardened. SkParagraph-style line breaking, bidi, and broader
+typography conformance remain follow-up work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all

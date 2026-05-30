@@ -134,12 +134,12 @@ with dimensions, and failed decodes mark records failed with a diagnostic.
 
 `render/skia` is a native-only renderer package over the editable
 `wzzc-dev/skia_mbt` checkout. It exposes `SkiaRasterRenderer`,
-`SkiaPixelFrame`, `SkiaPresentTarget`, `renderer_spec()`, backend info,
-fallback-safe availability checks, a basic Skia-backed text system, image
-resource snapshots, and diagnostics for unsupported commands. In fallback builds
-`skia_available()` returns `false`, renderer creation raises `SkiaUnavailable`,
-and platform backends reject explicit Skia selection before opening a blank
-window.
+`SkiaPixelFrame`, `SkiaPresentTarget`, `SkiaFontResolution`, `renderer_spec()`,
+backend info, fallback-safe availability checks, a basic Skia-backed text
+system, image resource snapshots, and diagnostics for unsupported commands. In
+fallback builds `skia_available()` returns `false`, renderer creation raises
+`SkiaUnavailable`, and platform backends reject explicit Skia selection before
+opening a blank window.
 
 When real Skia is linked, the renderer creates a CPU `raster_n32_premul` surface
 using physical pixels, scales the canvas by the host scale factor so MoUI
@@ -167,7 +167,12 @@ style selection, Skia font metrics for baseline/height, Skia-measured prefix
 caret positions, and optional SkShaper shaped glyph runs for rendering when
 linked, while SkParagraph-style line breaking, bidi, broader typography, and
 deterministic emoji behavior remain partial and separate from the WGPU Moon
-Cosmic provider stack.
+Cosmic provider stack. The macOS Skia showcase host currently constructs the
+renderer with `SkiaFontResolution::EmptyTypeface`: it still exercises Skia text
+drawing enough for first-frame smoke coverage, but uses core fallback text
+measurement and skips SkShaper to avoid CoreText/Skia FontMgr crashes during
+early AppKit startup. The default renderer smoke continues to use the system
+FontMgr path so real Skia font and optional SkShaper coverage remain tracked.
 
 ## Current Web Notes
 

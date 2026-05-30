@@ -11,7 +11,7 @@ import {
 // Values
 pub fn backend_info() -> @render.RendererBackendInfo
 
-pub fn create_with_present_target(@render.RendererSurfaceMetrics, SkiaPresentTarget) -> SkiaRasterRenderer raise SkiaRendererError
+pub fn create_with_present_target(@render.RendererSurfaceMetrics, SkiaPresentTarget, font_resolution? : SkiaFontResolution) -> SkiaRasterRenderer raise SkiaRendererError
 
 pub fn renderer_spec() -> @render.RendererSpec
 
@@ -30,6 +30,11 @@ pub(all) suberror SkiaRendererError {
 pub fn SkiaRendererError::message(Self) -> String
 
 // Types and methods
+pub(all) enum SkiaFontResolution {
+  SystemFontMgr
+  EmptyTypeface
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct SkiaPixelFrame {
   width : Int
   height : Int
@@ -47,7 +52,9 @@ pub fn SkiaPresentTarget::new(description~ : String, present~ : (SkiaPixelFrame)
 pub(all) struct SkiaRasterRenderer {
   mut metrics : @render.RendererSurfaceMetrics
   target : SkiaPresentTarget
+  font_resolution : SkiaFontResolution
   mut surface : @native.Surface
+  image_cache : Map[String, @native.Image]
   image_lifecycle : @render.ImageResourceLifecycle
   mut present_count : Int
   mut unsupported_command_count : Int
@@ -67,4 +74,3 @@ pub fn SkiaRasterRenderer::unsupported_command_count(Self) -> Int
 // Type aliases
 
 // Traits
-

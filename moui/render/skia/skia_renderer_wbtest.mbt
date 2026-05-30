@@ -70,6 +70,32 @@ test "skia font resolver preserves fallback availability" {
 }
 
 ///|
+test "skia empty typeface resolution avoids system font manager" {
+  let font_spec = @core.FontSpec::new(size=14.0, weight=400)
+  match
+    skia_font_with_resolution(font_spec, SkiaFontResolution::EmptyTypeface) {
+    None => assert_true(!skia_available())
+    Some(font) => {
+      assert_true(font.size() == 14.0)
+      let run = skia_glyph_run_with_shaper(font, "Slim", use_shaper=false)
+      assert_true(run.glyphs.length() == run.positions.length())
+    }
+  }
+}
+
+///|
+test "skia empty typeface text system delegates to fallback metrics" {
+  let input = @core.TextLayoutInput::new(
+    text="Slim",
+    font=@core.FontSpec::new(size=18.0, weight=400),
+  )
+  let fallback = @core.TextSystem::fallback().measure_text(input)
+  let system = skia_text_system(SkiaFontResolution::EmptyTypeface)
+  assert_true(system.id() == @core.TextSystem::fallback().id())
+  assert_true(system.measure_text(input) == fallback)
+}
+
+///|
 test "skia text system exposes measured caret positions" {
   match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {

@@ -34,9 +34,16 @@ pub(all) struct SkiaPresentTarget {
 }
 
 ///|
+pub(all) enum SkiaFontResolution {
+  SystemFontMgr
+  EmptyTypeface
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct SkiaRasterRenderer {
   mut metrics : @render.RendererSurfaceMetrics
   target : SkiaPresentTarget
+  font_resolution : SkiaFontResolution
   mut surface : @skia_native.Surface
   image_cache : Map[String, @skia_native.Image]
   image_lifecycle : @render.ImageResourceLifecycle
@@ -111,6 +118,7 @@ pub fn SkiaPresentTarget::new(
 pub fn create_with_present_target(
   metrics : @render.RendererSurfaceMetrics,
   target : SkiaPresentTarget,
+  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   if !skia_available() {
     raise SkiaRendererError::SkiaUnavailable
@@ -119,6 +127,7 @@ pub fn create_with_present_target(
   {
     metrics,
     target,
+    font_resolution,
     surface,
     image_cache: {},
     image_lifecycle: @render.ImageResourceLifecycle::new(),
@@ -665,9 +674,9 @@ fn SkiaRasterRenderer::draw_text(
   canvas : @skia_native.Canvas,
   run : @core.TextRun,
 ) -> Unit {
-  match skia_font(run.font) {
+  match self.skia_font(run.font) {
     Some(font) => {
-      let glyph_run = skia_glyph_run(font, run.text)
+      let glyph_run = self.skia_glyph_run(font, run.text)
       let x = match run.align {
         @core.TextAlign::TextStart => run.frame.origin.x
         @core.TextAlign::TextCenter =>
@@ -951,8 +960,7 @@ fn SkiaRasterRenderer::read_frame(
 pub fn SkiaRasterRenderer::text_system(
   self : SkiaRasterRenderer,
 ) -> @core.TextSystem {
-  let _ = self
-  skia_text_system()
+  skia_text_system(self.font_resolution)
 }
 
 ///|
@@ -1003,7 +1011,15 @@ pub fn SkiaRasterRenderer::last_frame(
 }
 
 ///|
-fn skia_text_system() -> @core.TextSystem {
+fn skia_text_system(resolution : SkiaFontResolution) -> @core.TextSystem {
+  match resolution {
+    SkiaFontResolution::EmptyTypeface => @core.TextSystem::fallback()
+    SkiaFontResolution::SystemFontMgr => skia_system_font_mgr_text_system()
+  }
+}
+
+///|
+fn skia_system_font_mgr_text_system() -> @core.TextSystem {
   @core.TextSystem::new(id="skia-raster-text-system", measure=input => {
     match skia_font(input.font) {
       Some(font) => {
@@ -1100,8 +1116,30 @@ fn skia_measure_text_width(font : @skia_native.Font, text : String) -> Double {
 
 ///|
 fn skia_glyph_run(font : @skia_native.Font, text : String) -> SkiaGlyphRun {
+  skia_glyph_run_with_shaper(font, text, use_shaper=true)
+}
+
+///|
+fn SkiaRasterRenderer::skia_glyph_run(
+  self : SkiaRasterRenderer,
+  font : @skia_native.Font,
+  text : String,
+) -> SkiaGlyphRun {
+  match self.font_resolution {
+    SkiaFontResolution::SystemFontMgr => skia_glyph_run(font, text)
+    SkiaFontResolution::EmptyTypeface =>
+      skia_glyph_run_with_shaper(font, text, use_shaper=false)
+  }
+}
+
+///|
+fn skia_glyph_run_with_shaper(
+  font : @skia_native.Font,
+  text : String,
+  use_shaper~ : Bool,
+) -> SkiaGlyphRun {
   let bytes = @utf8.encode(text[:], bom=false)
-  if @skia_native.skia_shaper_available() {
+  if use_shaper && @skia_native.skia_shaper_available() {
     match font.shape_text_utf8(bytes) {
       Some(run) => {
         let glyphs = run.glyphs()
@@ -1122,15 +1160,36 @@ fn skia_glyph_run(font : @skia_native.Font, text : String) -> SkiaGlyphRun {
 }
 
 ///|
-fn skia_font(font : @core.FontSpec) -> @skia_native.Font? {
-  match skia_typeface(font) {
-    Some(typeface) =>
-      @skia_native.Font::from_typeface(
-        typeface,
-        size=Float::from_double(font.size),
-      )
-    None => @skia_native.Font::default(size=Float::from_double(font.size))
+fn SkiaRasterRenderer::skia_font(
+  self : SkiaRasterRenderer,
+  font : @core.FontSpec,
+) -> @skia_native.Font? {
+  skia_font_with_resolution(font, self.font_resolution)
+}
+
+///|
+fn skia_font_with_resolution(
+  font : @core.FontSpec,
+  resolution : SkiaFontResolution,
+) -> @skia_native.Font? {
+  match resolution {
+    SkiaFontResolution::EmptyTypeface =>
+      @skia_native.Font::empty(size=Float::from_double(font.size))
+    SkiaFontResolution::SystemFontMgr =>
+      match skia_typeface(font) {
+        Some(typeface) =>
+          @skia_native.Font::from_typeface(
+            typeface,
+            size=Float::from_double(font.size),
+          )
+        None => @skia_native.Font::default(size=Float::from_double(font.size))
+      }
   }
+}
+
+///|
+fn skia_font(font : @core.FontSpec) -> @skia_native.Font? {
+  skia_font_with_resolution(font, SkiaFontResolution::SystemFontMgr)
 }
 
 ///|

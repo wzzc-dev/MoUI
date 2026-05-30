@@ -638,17 +638,8 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
               renderer,
             }),
           )
-          if self.exit_after_first_present {
-            if self.redraw_window(window_id) {
-              event_loop.exit()
-            } else {
-              window.request_redraw()
-              self.drain_window_requests(event_loop)
-            }
-          } else {
-            window.request_redraw()
-            self.drain_window_requests(event_loop)
-          }
+          window.request_redraw()
+          self.drain_window_requests(event_loop)
         }
         None => {
           self.rollback_window_record(window_id)
@@ -906,6 +897,7 @@ fn MacosApp::create_skia_renderer_for_window(
           @skia_renderer.create_with_present_target(
             renderer_metrics_from_host(metrics),
             macos_skia_present_target(raw_content_view_handle),
+            font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
           ),
         ),
       ) catch {
