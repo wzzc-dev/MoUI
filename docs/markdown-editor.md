@@ -13,6 +13,8 @@ contextual commands, and editing workflows.
   parsing adapter, rich text document mapping, and focused white-box tests.
 - `examples/markdown_editor/web_wasm/`: Web wasm-gc entrypoint.
 - `examples/markdown_editor/macos/`: macOS native entrypoint.
+- `examples/markdown_editor/macos_skia/`: macOS native entrypoint using the
+  Skia renderer provider.
 - `examples/markdown_editor/windows/`: Windows native entrypoint.
 - `views/markdown_editor.mbt`: public rich text editor wrappers used by the
   example.
@@ -127,6 +129,17 @@ moon build examples/markdown_editor/macos --target native
 ./_build/native/debug/build/examples/markdown_editor/macos/macos.exe
 ```
 
+macOS native with the Skia renderer:
+
+```sh
+moon build examples/markdown_editor/macos_skia --target native
+./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
+```
+
+The Skia entrypoint requires the same real native Skia link setup used by
+`examples/showcase/macos_skia`; `scripts/macos-skia-renderer-smoke.sh` can
+configure those flags temporarily while running Skia smoke checks.
+
 Windows native:
 
 ```powershell
@@ -149,6 +162,7 @@ Focused checks:
 ```sh
 moon test examples/markdown_editor/app --target native
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/markdown_editor/macos_skia --target native
 ```
 
 When editor work changes public view wrappers, also run:
