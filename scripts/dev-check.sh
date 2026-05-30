@@ -103,6 +103,9 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         printf '\nIncluding selected current-platform native example builds. These builds may be slow on a cold cache.\n'
+        run moon build examples/showcase/windows --target native
+        run moon build examples/showcase/windows_cosmic --target native
+        run moon build examples/showcase/windows_skia --target native
         run moon build examples/markdown_editor/windows --target native
       fi
       ;;

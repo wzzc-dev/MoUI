@@ -53,6 +53,7 @@ examples/showcase/macos_skia/ macOS showcase selecting native Skia raster
 examples/showcase/web_wasm/   Web showcase on wasm-gc
 examples/showcase/windows/    Windows native showcase
 examples/showcase/windows_cosmic/ Windows showcase selecting Moon Cosmic text
+examples/showcase/windows_skia/ Windows showcase selecting native Skia raster
 examples/showcase/linux/      Linux Wayland native showcase
 examples/showcase/linux_cosmic/ Linux showcase selecting Moon Cosmic text
 examples/showcase/linux_skia/ Linux showcase selecting native Skia raster

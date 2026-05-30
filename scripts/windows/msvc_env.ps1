@@ -187,7 +187,7 @@ if (Test-Path -LiteralPath $zlibBin) {
 $env:CC = "cl"
 $env:CXX = "cl"
 $env:MBT_WGPU_LINK_MODE = "dynamic"
-$env:CL = "/std:c11 /experimental:c11atomics /wd4005 /DMOONBIT_FFI_EXPORT="
+$env:CL = "/experimental:c11atomics /wd4005 /DMOONBIT_FFI_EXPORT="
 $env:LINK = "comdlg32.lib shell32.lib advapi32.lib ole32.lib user32.lib gdi32.lib dwrite.lib d2d1.lib $zlibImportLibName /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
 $env:MOUI_MSVC_VCPKG_ROOT = $resolvedVcpkgRoot
 $env:MOUI_MSVC_ZLIB_TRIPLET_ROOT = $vcpkgInstalled

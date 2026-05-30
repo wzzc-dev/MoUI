@@ -234,8 +234,9 @@ inspected without parsing `Info.plist`.
 
 Windows native examples use the MSVC toolchain, vcpkg `zlib:x64-windows`, and
 `wgpu_mbt` dynamic mode with the official MSVC `wgpu_native.dll` release. The
-setup helper checks Visual Studio Build Tools and prepares zlib; the build
-helper downloads the WGPU release into `.tools\wgpu-native` when needed.
+default and Cosmic entrypoints import `backend/windows/wgpu`; `windows_skia`
+imports `backend/windows/skia` and selects the native Skia raster provider
+explicitly.
 
 ```powershell
 winget install --id Microsoft.VisualStudio.2022.BuildTools -e
@@ -245,6 +246,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps
   -BuildOnly
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/showcase/windows_cosmic `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows_skia `
   -BuildOnly
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/markdown_editor/windows `
@@ -259,8 +263,13 @@ PowerShell process:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
 ```
+
+`windows_skia` follows the same Skia availability rules as the backend provider:
+if `skia_mbt/native` is only in fallback mode, renderer creation reports a
+diagnostic instead of opening an empty HWND.
 
 For a reusable distributable folder with the built executable and runtime DLLs:
 

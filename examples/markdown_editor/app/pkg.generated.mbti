@@ -22,7 +22,6 @@ pub struct MarkdownEditorApp {
   selection : @core.State[MarkdownEditorSelection]
   link_target : @core.State[String]
   image_target : @core.State[String]
-  code_language : @core.State[String]
   footnote_text : @core.State[String]
   html_block_text : @core.State[String]
   target_kind : @core.State[MarkdownEditorTargetKind]
