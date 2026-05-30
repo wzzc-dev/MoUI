@@ -55,6 +55,7 @@ examples/showcase/windows/    Windows native showcase
 examples/showcase/windows_cosmic/ Windows showcase selecting Moon Cosmic text
 examples/showcase/linux/      Linux Wayland native showcase
 examples/showcase/linux_cosmic/ Linux showcase selecting Moon Cosmic text
+examples/showcase/linux_skia/ Linux showcase selecting native Skia raster
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos/ macOS native Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc

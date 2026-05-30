@@ -60,8 +60,8 @@ the platform host cores. Use
 platform provider with Cosmic fallback; `MoonCosmic` selects the Cosmic provider
 directly. Showcase also has explicit `macos_cosmic`, `windows_cosmic`, and
 `linux_cosmic` entrypoints for comparing those paths. The separate
-`macos_skia` entrypoint selects the Skia provider package, not a WGPU
-text-provider variant. By default, Skia basic text measurement and drawing
+`macos_skia` and `linux_skia` entrypoints select Skia provider packages, not
+WGPU text-provider variants. By default, Skia basic text measurement and drawing
 resolve the MoUI `FontSpec` family stack, weight, and style through `skia_mbt`
 `FontMgr` and `Font`, and its `TextSystem` returns Skia font-metric
 baseline/height plus Skia-measured prefix caret positions for basic input

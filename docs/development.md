@@ -216,9 +216,9 @@ sh scripts/dev-check.sh --platform-examples-test
 Native platform example builds such as
 `moon build examples/showcase/macos --target native`,
 `moon build examples/showcase/macos_skia --target native`, or
-`moon build examples/showcase/linux --target native` link platform stubs and
-native renderer libraries, so cold builds can be slow. Include them only when
-validating the current host platform's executable examples:
+`moon build examples/showcase/linux_skia --target native` link platform stubs
+and native renderer libraries, so cold builds can be slow. Include them only
+when validating the current host platform's executable examples:
 
 ```sh
 sh scripts/dev-check.sh --platform-examples-build
@@ -301,6 +301,7 @@ moon build examples/markdown_editor/windows --target native
 moon build examples/markdown_editor/windows_cosmic --target native
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
+moon build examples/showcase/linux_skia --target native
 ```
 
 Use the direct native example builds only on a matching configured host. The

@@ -265,13 +265,16 @@ metadata.
 
 ## Linux Native
 
-Linux examples use the local fork-owned `window/linux` Wayland host core plus
-the `backend/linux/wgpu` renderer provider. Run them on a configured Linux host
-with a Wayland compositor and Vulkan stack:
+Linux examples use the local fork-owned `window/linux` Wayland host core. The
+default and `linux_cosmic` Showcase entrypoints use the `backend/linux/wgpu`
+renderer provider; `linux_skia` uses `backend/linux/skia` and presents Skia CPU
+pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
+host with a Wayland compositor and renderer stack:
 
 ```sh
 moon run examples/showcase/linux --target native
 moon run examples/showcase/linux_cosmic --target native
+moon run examples/showcase/linux_skia --target native
 ```
 
 For build-only validation, use:
@@ -279,11 +282,14 @@ For build-only validation, use:
 ```sh
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
+moon build examples/showcase/linux_skia --target native
 ```
 
 The `linux_cosmic` entrypoint selects the shared Moon Cosmic text provider
 explicitly. The platform-default Linux entrypoint composes the fontconfig
-provider scaffold with the same Cosmic fallback.
+provider scaffold with the same Cosmic fallback. The `linux_skia` entrypoint
+selects the native Skia raster renderer explicitly; configure real Skia link
+flags before relying on Skia-rendered pixels.
 
 ## Example Validation
 

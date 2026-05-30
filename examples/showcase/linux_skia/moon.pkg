@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui/backend/linux" @linux_backend,
+  "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
+  "examples/showcase/app" @showcase_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: { "native": { "cc-link-flags": "-lz" } },
+  targets: { "main.mbt": [ "native" ] },
+)

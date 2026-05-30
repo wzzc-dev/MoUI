@@ -337,8 +337,10 @@ Useful focused commands on a configured Linux host:
 moon test moui/backend/linux --target native
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
+moon build examples/showcase/linux_skia --target native
 moon run examples/showcase/linux --target native
 moon run examples/showcase/linux_cosmic --target native
+moon run examples/showcase/linux_skia --target native
 ```
 
 When validating from a Linux VM mounted over the same checkout as a macOS or
@@ -361,6 +363,9 @@ provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
 buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
 display flush. Keeping the `wl_shm` presenter in the window backend avoids
 duplicating Wayland registry and buffer ownership in MoUI.
+
+`examples/showcase/linux_skia` selects this provider explicitly for Showcase.
+Configure real Skia link flags before relying on native Skia-rendered pixels.
 
 Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 
