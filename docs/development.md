@@ -5,7 +5,7 @@ for MoUI development.
 
 ## Local Dependencies
 
-The upstream `Milky2018/window` package does not currently cover the targets
+The upstream `moonbit-community/window` package does not currently cover the targets
 MoUI needs, so use the `wzzc-dev/window` fork checkout instead.
 MoUI also uses `wzzc-dev/skia_mbt` as an editable local checkout while the Skia
 renderer backend and binding surface evolve together.
@@ -35,6 +35,10 @@ members = [
   "./examples/counter",
   "./examples/showcase",
   "./examples/markdown_editor",
+  "./examples/settings",
+  "./examples/data_table",
+  "./examples/file_importer",
+  "./examples/command_palette",
 ]
 ```
 
@@ -313,7 +317,7 @@ frontends and tooling:
 - `mizchi/svg` powers `render.import_svg(String) -> SvgImportResult`, lowering
   parsed SVG scene graph nodes into MoUI `DrawCommand` values.
 - `moonbitlang/quickcheck` and `mizchi/pixelmatch` are exercised from
-  `tests/tooling/` for property and pixel-diff coverage.
+  `moui/tests/tooling/` for property and pixel-diff coverage.
 
 The text stack has its own maintenance page because it spans `core`,
 `render/wgpu`, WGPU provider options, and browser host assets. See

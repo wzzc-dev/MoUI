@@ -30,7 +30,7 @@ jobs:
       - name: Check local dependency wiring
         run: sh scripts/check-local-deps.sh
 
-      - name: Run daily development checks
+      - name: Run daily development and guidance checks
         run: sh scripts/dev-check.sh
 
       - name: Run text conformance checks

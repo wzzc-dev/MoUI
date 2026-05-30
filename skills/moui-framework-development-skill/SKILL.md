@@ -69,7 +69,7 @@ Use this skill when editing or reviewing:
   and Showcase when visible.
 - Conformance work uses four layers: `core` contract tests, `backend/host` and
   platform routing tests, renderer/provider implementation tests, and matrix or
-  diagnostic tests under `tests/*_conformance` plus
+  diagnostic tests under `moui/tests/*_conformance` plus
   `scripts/conformance-check.sh`.
 - Guidance changes are part of the maintenance surface: when architecture,
   package layout, validation commands, docs placement, examples, renderer
@@ -108,10 +108,11 @@ Use this skill when editing or reviewing:
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
 - `render/skia/`: native Skia raster renderer over the local `skia_mbt` binding.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
-- `tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
+- `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels.
 - `examples/*/app`: shared application logic.
-- `examples/*/{web_wasm,macos,windows}`: platform entrypoints.
+- `examples/*/{web_wasm,macos,windows,linux}`: platform entrypoints where an
+  example has a runnable host package.
 - `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
   Cosmic text provider comparison entrypoints.
 - `examples/showcase/macos_skia`: explicit native Skia renderer showcase
@@ -149,6 +150,7 @@ moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
 moon test moui/render --target native
 moon test moui/render/wgpu --target native
+moon test moui/render/skia --target native
 moon test moui/render/wgpu/cosmic_text --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 sh scripts/conformance-check.sh --input

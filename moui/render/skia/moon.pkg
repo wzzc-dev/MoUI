@@ -11,5 +11,6 @@ import {
 supported_targets = "native"
 
 options(
+  link: { "native": { "cc-link-flags": "-lz" } },
   targets: { },
 )

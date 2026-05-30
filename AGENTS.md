@@ -154,7 +154,7 @@ node --check scripts/validate-package-manifest.mjs
 
 Conformance work should stay layered: `core` owns platform-neutral contracts,
 `backend/host` owns event/service/window routing, renderer/provider packages own
-implementation validation, and `tests/*_conformance` plus
+implementation validation, and `moui/tests/*_conformance` plus
 `scripts/conformance-check.sh` own cross-engine or cross-platform matrix
 evidence. Examples demonstrate workflows but should not be the only proof for a
 shared contract.

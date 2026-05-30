@@ -23,7 +23,7 @@ Use this skill when the user asks to:
 - Add or adjust shared app logic under `examples/<name>/app`.
 - Add or adjust platform entrypoints under `examples/<name>/web_wasm`,
   `examples/<name>/macos`, `examples/<name>/windows`, or
-  `examples/<name>/linux`.
+  `examples/<name>/linux` when that example has a runnable host package.
 - Validate an application build or app-level tests.
 
 ## Non-Goals
@@ -57,6 +57,9 @@ separate framework task using `moui-framework-development-skill`.
 
 - Shared app logic lives in `examples/<name>/app`.
 - Platform packages stay thin and only wire the shared app to the host.
+- Some examples are shared-app only. Settings, Data Table, File Importer, and
+  Command Palette intentionally exercise app patterns without platform
+  entrypoints.
 - App UI should be built from public view constructors returning
   opaque `@core.View[Msg]`.
 - Keep state, reducers, data models, and view composition in the shared app
@@ -91,6 +94,10 @@ App package tests:
 ```sh
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/settings/app --target native
+moon test examples/data_table/app --target native
+moon test examples/file_importer/app --target native
+moon test examples/command_palette/app --target native
 ```
 
 Web app builds:

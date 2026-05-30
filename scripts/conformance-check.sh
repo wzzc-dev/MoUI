@@ -119,6 +119,7 @@ fi
 if "$RUN_RENDER"; then
   run moon test moui/render --target native
   run moon test moui/render/wgpu --target native
+  run moon test moui/render/skia --target native
   run moon test moui/render/webgpu_adapter --target wasm-gc
 fi
 
