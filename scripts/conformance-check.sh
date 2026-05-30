@@ -14,6 +14,7 @@ RUN_RENDER=false
 RUN_PLATFORM_SERVICES=false
 RUN_TEXT=false
 RUN_TEXT_DIAGNOSTIC=false
+CAPTURE_ARTIFACT_DIR="artifacts/conformance"
 
 usage() {
   printf 'Usage: %s [--input] [--layout] [--render] [--platform-services] [--text] [--text-diagnostic] [--golden] [--bench] [--platform]\n' "$0"
@@ -82,6 +83,9 @@ Golden screenshot scaffold complete.
 Built target:
   examples/showcase/web_wasm
 
+Generated capture manifest:
+  artifacts/conformance/showcase-golden-capture.json
+
 Manual capture handoff:
   1. Serve the repository root or built example directory with a static server.
      Example: python3 -m http.server 18080
@@ -95,7 +99,68 @@ Manual capture handoff:
 
 This scaffold intentionally verifies the build and capture contract only. It
 does not run browser automation, pixel diffing, or renderer golden assertions.
+The capture manifest records the screenshot targets and render inspector
+counters that must be saved with the captured artifacts.
 EOF
+}
+
+write_showcase_capture_manifest() {
+  mode="$1"
+  manifest_path="$2"
+  mkdir -p "$(dirname "$manifest_path")"
+  cat > "$manifest_path" <<EOF
+{
+  "schemaVersion": 1,
+  "mode": "$mode",
+  "showcaseTarget": "examples/showcase/web_wasm",
+  "url": "http://127.0.0.1:18080/examples/showcase/web_wasm/",
+  "renderInspectorSource": "Showcase Diagnostics inspector snapshot card backed by @core.RenderInspectorSnapshot",
+  "renderInspectorCounters": [
+    "command_count",
+    "text_count",
+    "image_count",
+    "clip_depth",
+    "open_clip_depth",
+    "layer_depth",
+    "open_layer_depth",
+    "filter_depth",
+    "open_filter_depth",
+    "path_count",
+    "shader_count",
+    "unbalanced_pop_count"
+  ],
+  "screenshotArtifacts": [
+    {
+      "name": "desktop",
+      "viewport": "1440x900",
+      "path": "artifacts/golden/showcase-web-wasm/desktop.png"
+    },
+    {
+      "name": "tablet",
+      "viewport": "1024x768",
+      "path": "artifacts/golden/showcase-web-wasm/tablet.png"
+    },
+    {
+      "name": "mobile",
+      "viewport": "390x844",
+      "path": "artifacts/golden/showcase-web-wasm/mobile.png"
+    }
+  ],
+  "benchmarkMetrics": [
+    "startup_ms",
+    "frame_time_ms",
+    "dirty_count",
+    "draw_command_count",
+    "memory_bytes",
+    "render_inspector_counters"
+  ],
+  "notes": [
+    "This manifest connects the build scaffold to the manual capture artifacts.",
+    "It does not contain captured measurements or screenshots by itself."
+  ]
+}
+EOF
+  printf 'Wrote capture manifest: %s\n' "$manifest_path"
 }
 
 if "$RUN_DEFAULT"; then
@@ -151,13 +216,15 @@ fi
 
 if "$RUN_GOLDEN"; then
   run moon build examples/showcase/web_wasm --target wasm-gc
+  write_showcase_capture_manifest "golden" "$CAPTURE_ARTIFACT_DIR/showcase-golden-capture.json"
   print_golden_capture_instructions
 fi
 
 if "$RUN_BENCH"; then
   run moon build examples/showcase/web_wasm --target wasm-gc
   run moon build examples/markdown_editor/web_wasm --target wasm-gc
-  printf '\nBenchmark scaffold complete. Record startup, frame time, dirty-count, draw-command count, and memory from the built examples.\n'
+  write_showcase_capture_manifest "benchmark" "$CAPTURE_ARTIFACT_DIR/showcase-benchmark-capture.json"
+  printf '\nBenchmark scaffold complete. Record startup, frame time, dirty-count, draw-command count, memory, and render inspector counters from the built examples.\n'
 fi
 
 if "$RUN_PLATFORM"; then
