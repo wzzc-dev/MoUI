@@ -84,6 +84,7 @@ entrypoints:
 ```sh
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
+moon build examples/showcase/linux_skia --target native
 ```
 
 Runtime validation requires a Wayland compositor and Vulkan stack:
@@ -91,6 +92,7 @@ Runtime validation requires a Wayland compositor and Vulkan stack:
 ```sh
 moon run examples/showcase/linux --target native
 moon run examples/showcase/linux_cosmic --target native
+moon run examples/showcase/linux_skia --target native
 ```
 
 ## Public API Review

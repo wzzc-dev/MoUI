@@ -119,7 +119,7 @@ Use this skill when editing or reviewing:
   example has a runnable host package.
 - `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
   Cosmic text provider comparison entrypoints.
-- `examples/{showcase,markdown_editor}/macos_skia`: explicit native Skia
+- `examples/{showcase,markdown_editor}/{macos_skia,linux_skia}`: explicit native Skia
   renderer example entrypoints.
 
 ## Development Workflow
