@@ -1,0 +1,131 @@
+///|
+extern "C" fn win32_surface_host_hinstance() -> @wgpu_c.OpaquePtr = "moui_windows_surface_host_hinstance"
+
+///|
+extern "C" fn win32_surface_host_hwnd_from_u64(
+  hwnd : UInt64,
+) -> @wgpu_c.OpaquePtr = "moui_windows_surface_host_hwnd_from_u64"
+
+///|
+pub struct WindowsWgpuAppOptions {
+  priv text_engine : @wgpu_renderer.NativeTextEngineSetting
+  priv scene_resolver : @host.HostWindowSceneResolver
+}
+
+///|
+pub fn WindowsWgpuAppOptions::new(
+  text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+) -> WindowsWgpuAppOptions {
+  { text_engine, scene_resolver }
+}
+
+///|
+pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
+  run_app_with_options(
+    title,
+    runtime,
+    options=WindowsWgpuAppOptions::new(),
+    window_requests=@host.HostWindowRequestQueue::new(),
+  )
+}
+
+///|
+pub fn run_app_with_options(
+  title : String,
+  runtime : @core.AppRuntime,
+  options~ : WindowsWgpuAppOptions,
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+) -> Unit {
+  @windows_host.run_app_with_renderer_provider(
+    title,
+    runtime,
+    provider=renderer_provider(options~),
+    options=@windows_host.WindowsHostAppOptions::new(
+      scene_resolver=options.scene_resolver,
+    ),
+    window_requests~,
+  )
+}
+
+///|
+pub fn renderer_provider(
+  options? : WindowsWgpuAppOptions = WindowsWgpuAppOptions::new(),
+) -> @windows_host.WindowsRendererProvider {
+  @windows_host.WindowsRendererProvider::new(create_renderer=(window, metrics) => {
+    create_renderer(window, metrics, options)
+  })
+}
+
+///|
+fn create_windows_host_surface(
+  hwnd : UInt64,
+) -> @wgpu_renderer.HostWgpuSurface raise @wgpu_mbt.WgpuError {
+  let instance = @wgpu_mbt.Instance::create()
+  let surface = instance.create_surface_windows_hwnd(
+    win32_surface_host_hinstance(),
+    win32_surface_host_hwnd_from_u64(hwnd),
+  )
+  @wgpu_renderer.HostWgpuSurface::new(instance~, surface~)
+}
+
+///|
+fn create_renderer(
+  window : @win.Window,
+  metrics : @host.HostSurfaceMetrics,
+  options : WindowsWgpuAppOptions,
+) -> @host.HostWindowRenderer? {
+  Some(
+    host_renderer_from_wgpu(
+      @wgpu_renderer.create_with_host_surface_and_text_engine(
+        renderer_metrics_from_host(metrics),
+        create_windows_host_surface(window.window_handle()),
+        text_engine=windows_text_engine(options.text_engine),
+      ),
+    ),
+  ) catch {
+    err => {
+      println("error creating Windows WGPU renderer: \{err.message()}")
+      None
+    }
+  }
+}
+
+///|
+fn windows_text_engine(
+  setting : @wgpu_renderer.NativeTextEngineSetting,
+) -> @wgpu_renderer.NativeTextEngine {
+  match setting {
+    @wgpu_renderer.NativeTextEngineSetting::MoonCosmic =>
+      @wgpu_cosmic_text.cosmic_text_engine()
+    @wgpu_renderer.NativeTextEngineSetting::PlatformDefault =>
+      @wgpu_renderer.native_platform_text_engine_with_fallback(
+        @wgpu_directwrite.directwrite_text_provider(),
+        fallback=@wgpu_cosmic_text.cosmic_text_engine(),
+      )
+  }
+}
+
+///|
+fn host_renderer_from_wgpu(
+  renderer : @wgpu_renderer.WgpuRenderer,
+) -> @host.HostWindowRenderer {
+  @host.HostWindowRenderer::new(
+    resize=metrics => renderer.resize(renderer_metrics_from_host(metrics)),
+    render=commands => renderer.render(commands),
+    text_system=() => renderer.text_system(),
+    present_count=() => renderer.present_count(),
+    dispose=() => renderer.dispose(),
+  )
+}
+
+///|
+fn renderer_metrics_from_host(
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.RendererSurfaceMetrics {
+  @render.RendererSurfaceMetrics::new(
+    logical_size=metrics.logical_size,
+    physical_size=metrics.physical_size,
+    scale_factor=metrics.scale_factor,
+  )
+}

@@ -32,9 +32,13 @@ The package boundaries follow that pipeline:
   opaque `View[Msg]`, typed events, effects, and the draw command model.
 - `views/` exposes public facade constructors that return `@core.View[Msg]`.
 - `backend/host/` defines shared host contracts.
-- `backend/web/`, `backend/macos/`, `backend/windows/`, and `backend/linux/`
-  normalize platform events into `HostEvent`.
-- `backend/linux/` is a minimal Wayland/WGPU backend with explicit remaining
+- `backend/web/` is the browser wasm-gc host.
+- `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
+  cores that normalize platform events into `HostEvent` and receive concrete
+  renderers through platform renderer providers.
+- `backend/<platform>/wgpu` and `backend/<platform>/skia` own native renderer
+  assembly for WGPU and Skia respectively.
+- `backend/linux/` is a minimal Wayland host core with explicit remaining
   service, IME, AT-SPI, and native font-provider gaps.
 - `render/` owns renderer facades and capability reporting.
 - `render/wgpu/` implements the native wgpu renderer.
@@ -200,28 +204,26 @@ Focus areas:
   environment before the first layout/redraw pass. Web startup uses the browser
   `prefers-color-scheme` query, and Web/macOS/Windows theme-change window events
   flow through `HostEvent::ThemeChanged`.
-- Keep window lifecycle state flowing through `HostWindowRegistry`; current Web,
-  macOS, and Windows entrypoints allocate primary window records, register the
-  current runtime/driver as primary runtime slots, bind platform window ids to
-  host ids, route incoming platform window events through that map, and sync
-  those slots from the shared lifecycle path. Their active loops expose
-  `run_app_with_window_requests` and drain `HostWindowRequestQueue` for focus,
-  close, resize, minimize, show, and set-primary requests. Drained request
-  completions are recorded back onto the queue through a shared host helper so
-  request outcomes stay observable. `OpenWindow` requests carry a
-  platform-neutral scene id and payload. `HostWindowSceneResolver` is the shared
-  scene-to-`AppRuntime` contract for that resolution step, and
-  `HostWindowRegistry::resolve_open_request` pairs successful resolutions with
-  window records. `HostWindowRuntimeSlot` wraps those records with per-window
-  `HostRuntimeDriver` instances, while `HostWindowRuntimeSlots` manages lookup,
-  focused/primary slot selection, and registry-backed insert/sync/request/
-  lifecycle helpers plus closed-slot cleanup. Web, macOS, and Windows now wire
-  that path into resolver-backed `OpenWindow`: Web creates another browser
-  canvas and `WebRenderer`, macOS creates another AppKit window and
-  CAMetalLayer-backed `WgpuRenderer`, and Windows creates another Win32 window
-  and HWND-backed `WgpuRenderer`; each attaches platform-window bindings,
-  platform slots, and per-window drivers, then routes redraw/event/context-menu/
-  IME/dispose paths through `HostWindowId`.
+- Keep window lifecycle state flowing through `HostWindowRegistry`; active
+  entrypoints allocate primary window records, register the current
+  runtime/driver as primary runtime slots, bind platform window ids to host ids,
+  route incoming platform window events through that map, and sync those slots
+  from the shared lifecycle path. Options-bearing runners drain
+  `HostWindowRequestQueue` for focus, close, resize, minimize, show, and
+  set-primary requests. Drained request completions are recorded back onto the
+  queue through a shared host helper so request outcomes stay observable.
+  `OpenWindow` requests carry a platform-neutral scene id and payload.
+  `HostWindowSceneResolver` is the shared scene-to-`AppRuntime` contract for
+  that resolution step, and `HostWindowRegistry::resolve_open_request` pairs
+  successful resolutions with window records. `HostWindowRuntimeSlot` wraps
+  those records with per-window `HostRuntimeDriver` instances, while
+  `HostWindowRuntimeSlots` manages lookup, focused/primary slot selection, and
+  registry-backed insert/sync/request/lifecycle helpers plus closed-slot
+  cleanup. Web creates another browser canvas and `WebRenderer`; native hosts
+  create another platform window and ask their renderer provider for a
+  renderer-neutral `HostWindowRenderer`, then attach platform-window bindings,
+  platform slots, and per-window drivers before routing redraw/event/
+  context-menu/IME/dispose paths through `HostWindowId`.
 - Keep Linux readiness explicit through its backend readiness report until
   clipboard, menus, dialogs, drag/drop, IME, AT-SPI, and native font provider
   support are available.

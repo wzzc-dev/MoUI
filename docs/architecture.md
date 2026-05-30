@@ -1,6 +1,6 @@
 # Architecture
 
-MoUI is a multi-platform MoonBit GUI framework prototype. The current architecture keeps the app/runtime/view model platform-neutral, with native hosts using `window + wgpu-native` and the Web host using a single `wasm-gc + window/web + browser WebGPU host imports` path. The project roadmap keeps this architecture focused on shared app logic, explicit backend contracts, transparent renderer capabilities, and bounded validation.
+MoUI is a multi-platform MoonBit GUI framework prototype. The current architecture keeps the app/runtime/view model platform-neutral. Native hosts own platform windows, events, services, and lifecycle, then receive concrete renderers through platform `RendererProvider` packages; the Web host uses a single `wasm-gc + window/web + browser WebGPU host imports` path. The project roadmap keeps this architecture focused on shared app logic, explicit backend contracts, transparent renderer capabilities, and bounded validation.
 
 ## Scope
 
@@ -10,7 +10,7 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 - `style` is the MoonBit package boundary for visual tokens and style type aliases during the gradual split from `core`.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `surface`, row/column layout, and spacer primitives.
 - Unified host boundaries in `backend/host`, with shared window-event mapping and platform hosts normalizing events into `HostEvent`.
-- Native rendering through `render/wgpu`, including GPU text, rounded geometry, gradients, and soft shadows.
+- Native rendering through provider packages over `render/wgpu` or `render/skia`, including GPU text, rounded geometry, gradients, soft shadows, and Skia CPU pixel-frame presentation.
 - Web rendering through `render/webgpu_adapter` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
 
 ## Packages
@@ -20,10 +20,16 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 core/                         one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
 style/                        visual token and control style compatibility package
 views/                        public view constructors
-backend/host/                 shared HostEvent, metrics, input, redraw driver, window/core + dpi event conversion
-backend/windows/              Windows native host
-backend/macos/                macOS native host
-backend/linux/                Linux Wayland native host
+backend/host/                 shared HostEvent, metrics, HostWindowRenderer, input, redraw driver, window/core + dpi event conversion
+backend/windows/              Windows native host core
+backend/windows/wgpu/         Windows WGPU renderer provider
+backend/windows/skia/         Windows Skia renderer provider
+backend/macos/                macOS native host core
+backend/macos/wgpu/           macOS WGPU renderer provider
+backend/macos/skia/           macOS Skia renderer provider
+backend/linux/                Linux Wayland native host core
+backend/linux/wgpu/           Linux WGPU renderer provider
+backend/linux/skia/           Linux Skia renderer provider
 backend/web/                  canonical Web host on wasm-gc plus browser JS assets
 render/                       renderer facade and shared draw helpers
 render/wgpu/                  native wgpu renderer
@@ -32,6 +38,7 @@ render/wgpu/coretext/         macOS CoreText provider for native wgpu text
 render/wgpu/text_protocol/    shared native measure/run/raster/register bytes protocol
 render/wgpu/directwrite/      Windows DirectWrite provider scaffold
 render/wgpu/fontconfig/       Linux fontconfig/HarfBuzz/FreeType provider scaffold
+render/skia/                  native Skia raster renderer facade over skia_mbt
 render/webgpu_adapter/        browser WebGPU host-import renderer for wasm-gc
 tests/tooling/                quickcheck and pixelmatch integration tests
 examples/showcase/app/        shared visual showcase app with Counter/Todo patterns
@@ -359,25 +366,42 @@ incoming platform window events through that mapping, apply resize/focus/close
 `HostEvent` values through the registry, sync slot records after lifecycle
 changes, and remove slot, platform binding, and record when a host window is
 disposed. That makes multi-window lifecycle state a shared host concern instead
-of a future platform-specific rewrite. They also accept a shared
-`HostWindowRequestQueue` through `run_app_with_window_requests` and drain focus,
-close, resize, minimize, show, and set-primary requests at the platform edge.
-The same queue records ordered request completions, making accepted operations
-and explicit rejections observable. Active backends use the shared queue drain
-helper so completion recording stays a host contract instead of a platform-local
-loop.
+of a future platform-specific rewrite. Platform entrypoints also accept a
+shared `HostWindowRequestQueue` through their options-bearing runner and drain
+focus, close, resize, minimize, show, and set-primary requests at the platform
+edge. The same queue records ordered request completions, making accepted
+operations and explicit rejections observable. Active backends use the shared
+queue drain helper so completion recording stays a host contract instead of a
+platform-local loop.
 `HostWindowCommands` is the higher-level command facade over the same queue for
 app-facing open/focus/resize/minimize/show/close helpers and shared draining
 into a registry or window runtime slots.
-The Web, macOS, and Windows hosts also expose `run_app_with_options` with app
-options that accept a `HostWindowSceneResolver`. With a resolver, `OpenWindow`
+Web exposes `run_app_with_options` directly because the browser renderer is part
+of that host. Native host cores instead expose
+`run_app_with_renderer_provider`; public native entrypoints live in
+`backend/<platform>/wgpu` and `backend/<platform>/skia`. Those provider packages
+carry the user-facing `run_app`, `run_app_with_options`, renderer-specific
+options, and `renderer_provider` constructor. With a resolver, `OpenWindow`
 requests resolve a scene into a new `AppRuntime`, create another platform
-window (browser canvas on Web, AppKit window with CAMetalLayer on macOS, Win32
-window with HWND surface on Windows), attach a dedicated renderer, register a
-per-window `HostRuntimeDriver`, bind the platform id, and then route redraw,
-events, context menus, service completions, IME sync, and disposal through
-window-indexed slots. Without a resolver, those hosts reject `OpenWindow` with
-the shared unavailable-resolver message.
+window, ask the provider for a `HostWindowRenderer`, register a per-window
+`HostRuntimeDriver`, bind the platform id, and then route redraw, events,
+context menus, service completions, IME sync, and disposal through
+window-indexed slots. Without a resolver, hosts reject `OpenWindow` with the
+shared unavailable-resolver message.
+
+`HostWindowRenderer` is the renderer-neutral runtime handle used by native host
+cores. It is a record of closures for resize, render, text-system access,
+present-count diagnostics, and disposal. Host cores depend only on
+`core`/`backend/host` plus the platform `window` package; they do not import
+`render/wgpu`, `render/skia`, `wgpu_mbt`, or `skia_mbt`. WGPU provider packages
+own GPU surface bridges, `wgpu-native`, and native WGPU text provider
+composition. Skia provider packages own Skia renderer creation, pixel presenter
+bridges, and Skia availability diagnostics.
+
+`RendererSpec` and `RendererSelection` remain renderer facade reporting tools:
+they describe static capability identity and matching, not native host runtime
+assembly. `View`/`ViewSpec` still describe UI declaration trees only, and
+`Binding[T]` remains the TEA/control/state two-way binding term.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and

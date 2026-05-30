@@ -23,9 +23,15 @@ paths, or abstractions that only preserve old shapes.
   host-service, window lifecycle, window scene resolution,
   per-window runtime slot collection, platform-window id mapping,
   request/completion, and window event conversion contracts.
-- `backend/macos/`, `backend/windows/`, `backend/linux/`, and `backend/web/`
-  normalize platform events into `HostEvent`. The Linux backend is a minimal
-  Wayland/WGPU host with explicit remaining service and text-provider gaps.
+- `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
+  cores: platform windows, event conversion, services, lifecycle, runtime slots,
+  and renderer-neutral provider hooks. They must not import `render/wgpu`,
+  `render/skia`, `wgpu_mbt`, or `skia_mbt`. `backend/web/` is the browser
+  wasm-gc host.
+- `backend/macos/wgpu`, `backend/windows/wgpu`, and `backend/linux/wgpu`
+  provide native WGPU renderer providers. `backend/macos/skia`,
+  `backend/windows/skia`, and `backend/linux/skia` provide native Skia renderer
+  providers.
 - `render/` is the renderer facade and shared reporting layer.
 - `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
   wasm-gc browser WebGPU host-import bridge. `render/skia/` is the native Skia
@@ -135,6 +141,7 @@ moon test moui/backend/web --target wasm-gc
 moon test moui/render/skia --target native
 moon test .local_repos/skia_mbt --target native
 moon test moui/render/wgpu/cosmic_text --target native
+node scripts/validate-renderer-provider-manifests.mjs
 sh scripts/conformance-check.sh --input
 sh scripts/conformance-check.sh --layout
 sh scripts/conformance-check.sh --render
@@ -189,9 +196,11 @@ machine-local `moon.pkg` edits out of commits.
 Renderer feature status is tracked per backend in `render/capabilities.mbt` and
 summarized in `docs/renderer-capability-report.md`. Update both the structured
 report and tests when changing image, clip, opacity, transform, or other draw
-command support. Renderer families and backend selection live at the renderer
-facade layer; `core`, `ViewSpec`, and `Program` must not depend on concrete
-renderer choices.
+command support. `RendererSpec` and `RendererSelection` are reporting and
+matching concepts, not native host runtime assembly. Native runtime assembly
+belongs to `backend/<platform>/wgpu` or `backend/<platform>/skia` renderer
+provider packages; `core`, `ViewSpec`, `Program`, and host cores must not depend
+on concrete renderer choices.
 
 ## Documentation Updates
 

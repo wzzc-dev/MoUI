@@ -51,19 +51,23 @@ Provider packages are intentionally separate:
   input, versioned `FontSpec` encoding, measure/run/raster envelopes, and
   embedded-font registration payloads.
 
-macOS, Windows, and Linux hosts choose the startup text engine through
-`run_app_with_options(..., options=<Platform>AppOptions::new(text_engine=...))`.
-`PlatformDefault` composes the platform provider with Cosmic fallback;
-`MoonCosmic` selects the Cosmic provider directly. Showcase also has explicit
-`macos_cosmic`, `windows_cosmic`, and `linux_cosmic` entrypoints for comparing
-those paths. The separate `macos_skia` entrypoint selects the Skia renderer,
-not a text-provider variant. By default, Skia basic text measurement and drawing
+Native WGPU text-engine selection belongs to the WGPU provider packages, not to
+the platform host cores. Use
+`MacosWgpuAppOptions::new(text_engine=...)`,
+`WindowsWgpuAppOptions::new(text_engine=...)`, or
+`LinuxWgpuAppOptions::new(text_engine=...)` through
+`backend/<platform>/wgpu.run_app_with_options`. `PlatformDefault` composes the
+platform provider with Cosmic fallback; `MoonCosmic` selects the Cosmic provider
+directly. Showcase also has explicit `macos_cosmic`, `windows_cosmic`, and
+`linux_cosmic` entrypoints for comparing those paths. The separate
+`macos_skia` entrypoint selects the Skia provider package, not a WGPU
+text-provider variant. By default, Skia basic text measurement and drawing
 resolve the MoUI `FontSpec` family stack, weight, and style through `skia_mbt`
 `FontMgr` and `Font`, and its `TextSystem` returns Skia font-metric
 baseline/height plus Skia-measured prefix caret positions for basic input
 geometry. Rendering now uses optional SkShaper shaped glyph runs when the
 `skia_mbt` native package is linked with SkShaper support, and otherwise falls
-back to positioned glyph runs. The macOS Skia host currently starts with the
+back to positioned glyph runs. The macOS Skia provider currently starts with the
 safe `EmptyTypeface` font resolution mode, which delegates layout measurement to
 the core fallback text system and disables SkShaper for renderer text drawing;
 this avoids CoreText/Skia FontMgr startup crashes while the macOS Skia first
@@ -157,6 +161,6 @@ moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 ```
 
-Platform text provider changes should also run the affected backend/provider
-tests. Public API changes require `moon info` and review of generated
+Platform text provider changes should also run the affected WGPU provider
+package tests. Public API changes require `moon info` and review of generated
 `pkg.generated.mbti` diffs.

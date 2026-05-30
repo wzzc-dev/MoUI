@@ -2,11 +2,8 @@
 package "wzzc-dev/moui/backend/linux"
 
 import {
-  "Milky2018/wgpu_mbt",
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/wgpu",
 }
 
 // Values
@@ -14,23 +11,19 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
-pub fn create_linux_host_surface(UInt64, UInt64) -> @wgpu.HostWgpuSurface raise @wgpu_mbt.WgpuError
-
 pub fn linux_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> @host.NativeAccessibilityBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
-pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme) -> @host.HostServiceBridge
+pub fn linux_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
 
-pub fn linux_surface_host_info() -> @wgpu.SurfaceHostInfo
+pub fn linux_input_capabilities() -> @host.HostInputCapabilities
+
+pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme) -> @host.HostServiceBridge
 
 pub fn readiness() -> LinuxBackendReadiness
 
-pub fn run_app(String, @wzzc-dev/moui/core.AppRuntime) -> Unit
-
-pub fn run_app_with_options(String, @wzzc-dev/moui/core.AppRuntime, options~ : LinuxAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
-
-pub fn run_app_with_window_requests(String, @wzzc-dev/moui/core.AppRuntime, @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_renderer_provider(String, @wzzc-dev/moui/core.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn scaffold_input_host() -> @host.InputHostState
 
@@ -62,13 +55,6 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
 type LinuxApp
 pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxApp
 
-pub(all) struct LinuxAppOptions {
-  text_engine : @wgpu.NativeTextEngineSetting
-  renderer : @render.RendererSelection
-  scene_resolver : @host.HostWindowSceneResolver
-}
-pub fn LinuxAppOptions::new(text_engine? : @wgpu.NativeTextEngineSetting, renderer? : @render.RendererSelection, scene_resolver? : @host.HostWindowSceneResolver) -> Self
-
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
   renderer : Bool
@@ -98,6 +84,16 @@ pub(all) struct LinuxBackendReadiness {
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct LinuxHostAppOptions {
+  // private fields
+}
+pub fn LinuxHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver) -> Self
+
+pub struct LinuxRendererProvider {
+  // private fields
+}
+pub fn LinuxRendererProvider::new(create_renderer~ : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> Unit) -> Self
 
 // Type aliases
 

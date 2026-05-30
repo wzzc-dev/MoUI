@@ -26,54 +26,10 @@ test "windows capability summary exposes native service readiness" {
 }
 
 ///|
-test "windows app options carry text engine and optional scene resolver" {
-  let request = @host.HostWindowOpenRequest::new(
-    title="Inspector",
-    scene=@host.HostWindowScene::new(scene_id="inspector"),
-    metrics=@host.HostSurfaceMetrics::from_logical(
-      size=@core.Size::new(width=320.0, height=240.0),
-    ),
-  )
-  match WindowsAppOptions::new().scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneRejected(message) =>
-      inspect(message, content="window scene resolver is unavailable")
-    _ => fail("expected default Windows scene resolver rejection")
-  }
-  assert_true(
-    WindowsAppOptions::new().renderer == @render.RendererSelection::Default,
-  )
-  let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
-    @host.HostWindowSceneResolution::SceneResolved(
-      @host.HostWindowSceneInstance::new(
-        request~,
-        runtime=@core.AppRuntime::new_view(
-          root=(@core.View::empty() : @core.View[Unit]),
-          size=request.metrics.logical_size,
-        ),
-      ),
-    )
-  })
-  let options = WindowsAppOptions::new(
-    text_engine=@wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
-    renderer=@render.RendererSelection::Backend(
-      @render.RendererBackendKind::SkiaRasterNative,
-    ),
-    scene_resolver=resolver,
-  )
-  assert_true(
-    options.text_engine == @wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
-  )
-  assert_true(
-    options.renderer ==
-    @render.RendererSelection::Backend(
-      @render.RendererBackendKind::SkiaRasterNative,
-    ),
-  )
-  match options.scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
-      assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
-    _ => fail("expected configured Windows scene resolver")
-  }
+test "windows host options construct without renderer dependencies" {
+  let options = WindowsHostAppOptions::new()
+  let _ = options
+  inspect(windows_capability_summary().label, content="Windows host")
 }
 
 ///|
@@ -427,13 +383,6 @@ test "windows backend keeps ime composition separate at host layer" {
       inspect(text, content="x")
     _ => fail("expected host composition end")
   }
-}
-
-///|
-test "windows backend exposes platform-owned surface host metadata" {
-  let info = windows_surface_host_info()
-  inspect(info.platform, content="windows")
-  inspect(info.owns_instance, content="true")
 }
 
 ///|

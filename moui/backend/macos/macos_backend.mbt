@@ -1,23 +1,4 @@
 ///|
-extern "C" fn macos_surface_host_layer_from_view(
-  raw_content_view_handle : UInt64,
-  width : Int,
-  height : Int,
-  scale_factor : Double,
-) -> @wgpu_c.OpaquePtr = "moui_macos_surface_host_layer_from_view"
-
-///|
-#borrow(pixels)
-extern "C" fn macos_present_skia_pixels_to_view(
-  raw_content_view_handle : UInt64,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
-  pixels : Bytes,
-  pixels_len : Int,
-) -> Int = "moui_macos_present_skia_pixels_to_view"
-
-///|
 extern "C" fn macos_clipboard_has_text() -> Int = "moui_macos_clipboard_has_text"
 
 ///|
@@ -48,11 +29,6 @@ extern "C" fn macos_file_dialog_bytes(
 extern "C" fn macos_show_menu_bytes(commands : Bytes) -> Int = "moui_macos_show_menu"
 
 ///|
-pub(all) suberror MacosSurfaceHostError {
-  MacosSurfaceHostLayerUnavailable(String)
-}
-
-///|
 let macos_first_present_pump_limit = 16
 
 ///|
@@ -73,11 +49,15 @@ pub(all) struct MacosAccessibilityBridgeInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct MacosAppOptions {
-  text_engine : @wgpu_renderer.NativeTextEngineSetting
-  renderer : @render.RendererSelection
-  scene_resolver : @host.HostWindowSceneResolver
-  exit_after_first_present : Bool
+pub struct MacosHostAppOptions {
+  priv scene_resolver : @host.HostWindowSceneResolver
+  priv exit_after_first_present : Bool
+}
+
+///|
+pub struct MacosRendererProvider {
+  priv create_renderer : (@window_macos.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
+  priv sync_surface : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit
 }
 
 ///|
@@ -86,8 +66,7 @@ struct MacosApp {
   runtime : @core.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
-  text_engine_setting : @wgpu_renderer.NativeTextEngineSetting
-  renderer_selection : @render.RendererSelection
+  renderer_provider : MacosRendererProvider
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
   scene_resolver : @host.HostWindowSceneResolver
@@ -105,13 +84,7 @@ priv struct MacosWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @window_macos.Window
-  renderer : MacosWindowRenderer
-}
-
-///|
-priv enum MacosWindowRenderer {
-  Wgpu(@wgpu_renderer.WgpuRenderer)
-  Skia(@skia_renderer.SkiaRasterRenderer)
+  renderer : @host.HostWindowRenderer
 }
 
 ///|
@@ -120,13 +93,22 @@ priv struct MacosWindowPlatformSlots {
 }
 
 ///|
-pub fn MacosAppOptions::new(
-  text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
-  renderer? : @render.RendererSelection = @render.RendererSelection::Default,
+pub fn MacosHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   exit_after_first_present? : Bool = false,
-) -> MacosAppOptions {
-  { text_engine, renderer, scene_resolver, exit_after_first_present }
+) -> MacosHostAppOptions {
+  { scene_resolver, exit_after_first_present }
+}
+
+///|
+pub fn MacosRendererProvider::new(
+  create_renderer~ : (@window_macos.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?,
+  sync_surface? : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit = (
+    _window,
+    _metrics,
+  ) => (),
+) -> MacosRendererProvider {
+  { create_renderer, sync_surface }
 }
 
 ///|
@@ -134,11 +116,11 @@ pub fn backend_info() -> MacosBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="macOS AppKit window host with CAMetalLayer wgpu surface",
+      description="macOS AppKit window host with renderer providers",
     ),
     renderer_ready: true,
     accessibility: macos_accessibility_bridge_info(),
-    description: "macOS backend uses wzzc-dev/window/macos for AppKit events and installs a CAMetalLayer on the window NSView for render/wgpu.",
+    description: "macOS backend uses wzzc-dev/window/macos for AppKit events and delegates concrete rendering to platform renderer provider packages.",
   }
 }
 
@@ -300,34 +282,11 @@ fn dispatch_macos_clipboard(
 }
 
 ///|
-pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
-  run_app_with_options(
-    title,
-    runtime,
-    options=MacosAppOptions::new(),
-    window_requests=@host.HostWindowRequestQueue::new(),
-  )
-}
-
-///|
-pub fn run_app_with_window_requests(
+pub fn run_app_with_renderer_provider(
   title : String,
   runtime : @core.AppRuntime,
-  window_requests : @host.HostWindowRequestQueue,
-) -> Unit {
-  run_app_with_options(
-    title,
-    runtime,
-    options=MacosAppOptions::new(),
-    window_requests~,
-  )
-}
-
-///|
-pub fn run_app_with_options(
-  title : String,
-  runtime : @core.AppRuntime,
-  options~ : MacosAppOptions,
+  provider~ : MacosRendererProvider,
+  options? : MacosHostAppOptions = MacosHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
   let event_loop = @window_macos.EventLoop::EventLoop()
@@ -340,8 +299,7 @@ pub fn run_app_with_options(
     runtime,
     driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
-    text_engine_setting: options.text_engine,
-    renderer_selection: options.renderer,
+    renderer_provider: provider,
     services,
     window_requests,
     scene_resolver: options.scene_resolver,
@@ -379,21 +337,6 @@ fn run_app_until_first_present(
       "macOS renderer first-frame smoke did not present before pump limit",
     )
     event_loop.exit()
-  }
-}
-
-///|
-fn macos_text_engine(
-  setting : @wgpu_renderer.NativeTextEngineSetting,
-) -> @wgpu_renderer.NativeTextEngine {
-  match setting {
-    @wgpu_renderer.NativeTextEngineSetting::MoonCosmic =>
-      @wgpu_cosmic_text.cosmic_text_engine()
-    @wgpu_renderer.NativeTextEngineSetting::PlatformDefault =>
-      @wgpu_renderer.native_platform_text_engine_with_fallback(
-        @wgpu_coretext.coretext_text_provider(),
-        fallback=@wgpu_cosmic_text.cosmic_text_engine(),
-      )
   }
 }
 
@@ -438,68 +381,6 @@ pub fn window_event_to_host_with_modifiers(
     modifiers,
     scale_factor~,
   )
-}
-
-///|
-pub fn create_macos_host_surface(
-  raw_content_view_handle : UInt64,
-  size : @core.Size,
-  scale_factor? : Double = 1.0,
-) -> @wgpu_renderer.HostWgpuSurface raise Error {
-  let instance = @wgpu.Instance::create()
-  let layer = macos_surface_host_layer_from_content_view(
-    raw_content_view_handle,
-    size,
-    scale_factor~,
-  )
-  let desc = @wgpu.surface_descriptor_metal_layer_new(layer)
-  let surface = instance.create_surface(desc)
-  @wgpu.surface_descriptor_free(desc)
-  @wgpu_renderer.HostWgpuSurface::new(instance~, surface~)
-}
-
-///|
-fn sync_macos_host_surface(
-  raw_content_view_handle : UInt64,
-  size : @core.Size,
-  scale_factor? : Double = 1.0,
-) -> Unit raise Error {
-  ignore(
-    macos_surface_host_layer_from_content_view(
-      raw_content_view_handle,
-      size,
-      scale_factor~,
-    ),
-  )
-}
-
-///|
-fn macos_surface_host_layer_from_content_view(
-  raw_content_view_handle : UInt64,
-  size : @core.Size,
-  scale_factor~ : Double,
-) -> @wgpu_c.OpaquePtr raise MacosSurfaceHostError {
-  let layer = macos_surface_host_layer_from_view(
-    raw_content_view_handle,
-    size_dim_to_int(size.width),
-    size_dim_to_int(size.height),
-    scale_factor,
-  )
-  guard !@wgpu_c.opaque_ptr_is_null(layer) else {
-    raise MacosSurfaceHostError::MacosSurfaceHostLayerUnavailable(
-      "macOS CAMetalLayer bridge returned a null layer",
-    )
-  }
-  layer
-}
-
-///|
-pub fn macos_surface_host_info() -> @wgpu_renderer.SurfaceHostInfo {
-  {
-    platform: "macos",
-    owns_instance: true,
-    description: "macOS backend installs a CAMetalLayer on the window NSView and passes HostWgpuSurface to render/wgpu.",
-  }
 }
 
 ///|
@@ -572,60 +453,6 @@ fn MacosWindowPlatformSlots::remove_host(
 }
 
 ///|
-fn MacosWindowRenderer::resize(
-  self : MacosWindowRenderer,
-  metrics : @render.RendererSurfaceMetrics,
-) -> Unit {
-  match self {
-    Wgpu(renderer) => renderer.resize(metrics)
-    Skia(renderer) =>
-      renderer.resize(metrics) catch {
-        err => println("error resizing macOS Skia renderer: \{err.message()}")
-      }
-  }
-}
-
-///|
-fn MacosWindowRenderer::render(
-  self : MacosWindowRenderer,
-  commands : Array[@core.DrawCommand],
-) -> Unit {
-  match self {
-    Wgpu(renderer) => renderer.render(commands)
-    Skia(renderer) =>
-      renderer.render(commands) catch {
-        err => println("error rendering macOS Skia frame: \{err.message()}")
-      }
-  }
-}
-
-///|
-fn MacosWindowRenderer::present_count(self : MacosWindowRenderer) -> Int {
-  match self {
-    Wgpu(renderer) => renderer.present_count()
-    Skia(renderer) => renderer.present_count()
-  }
-}
-
-///|
-fn MacosWindowRenderer::text_system(
-  self : MacosWindowRenderer,
-) -> @core.TextSystem {
-  match self {
-    Wgpu(renderer) => renderer.text_system()
-    Skia(renderer) => renderer.text_system()
-  }
-}
-
-///|
-fn MacosWindowRenderer::dispose(self : MacosWindowRenderer) -> Unit {
-  match self {
-    Wgpu(renderer) => renderer.dispose()
-    Skia(renderer) => renderer.dispose()
-  }
-}
-
-///|
 pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfaces(
   self,
   event_loop,
@@ -660,7 +487,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
       self.driver.set_redraw_scheduler(() => {
         self.request_redraw_window_if_needed(window_id)
       })
-      match self.create_renderer_for_window(window, metrics) {
+      match (self.renderer_provider.create_renderer)(window, metrics) {
         Some(renderer) => {
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
@@ -717,8 +544,8 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
             slot.window.surface_size(),
             scale_factor=slot.window.scale_factor(),
           )
-          self.sync_macos_surface_layer(slot.window, metrics)
-          slot.renderer.resize(renderer_metrics_from_host(metrics))
+          (self.renderer_provider.sync_surface)(slot.window, metrics)
+          slot.renderer.resize(metrics)
           slot.window.request_redraw()
         }
         None => ()
@@ -732,8 +559,8 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
             slot.window.surface_size(),
             scale_factor=slot.window.scale_factor(),
           )
-          self.sync_macos_surface_layer(slot.window, metrics)
-          slot.renderer.resize(renderer_metrics_from_host(metrics))
+          (self.renderer_provider.sync_surface)(slot.window, metrics)
+          slot.renderer.resize(metrics)
           slot.window.request_redraw()
         }
         None => ()
@@ -833,175 +660,6 @@ fn MacosApp::redraw_window(
 }
 
 ///|
-fn MacosApp::create_renderer_for_window(
-  self : MacosApp,
-  window : @window_macos.Window,
-  metrics : @host.HostSurfaceMetrics,
-) -> MacosWindowRenderer? {
-  match self.resolve_renderer_selection() {
-    @render.RendererBackendKind::NativeWgpu =>
-      self.create_wgpu_renderer_for_window(window, metrics)
-    @render.RendererBackendKind::SkiaRasterNative =>
-      self.create_skia_renderer_for_window(window, metrics)
-    backend => {
-      println(
-        "macOS renderer selection \{backend.label()} is not supported by this platform backend",
-      )
-      None
-    }
-  }
-}
-
-///|
-fn MacosApp::resolve_renderer_selection(
-  self : MacosApp,
-) -> @render.RendererBackendKind {
-  match self.renderer_selection {
-    @render.RendererSelection::Default =>
-      @render.RendererBackendKind::NativeWgpu
-    @render.RendererSelection::Backend(backend) => backend
-    @render.RendererSelection::Family(@render.RendererFamily::Skia) =>
-      @render.RendererBackendKind::SkiaRasterNative
-    @render.RendererSelection::Family(@render.RendererFamily::Wgpu) =>
-      @render.RendererBackendKind::NativeWgpu
-    @render.RendererSelection::Family(@render.RendererFamily::WebGpu) =>
-      @render.RendererBackendKind::WebGpuWasm
-  }
-}
-
-///|
-fn MacosApp::create_wgpu_renderer_for_window(
-  self : MacosApp,
-  window : @window_macos.Window,
-  metrics : @host.HostSurfaceMetrics,
-) -> MacosWindowRenderer? {
-  let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
-    err => {
-      println("error resolving macOS content view handle: \{err}")
-      None
-    }
-  }
-  match raw_content_view_handle {
-    Some(raw_content_view_handle) =>
-      Some(
-        MacosWindowRenderer::Wgpu(
-          @wgpu_renderer.create_with_host_surface_and_text_engine(
-            renderer_metrics_from_host(metrics),
-            create_macos_host_surface(
-              raw_content_view_handle,
-              metrics.physical_size,
-              scale_factor=metrics.scale_factor,
-            ),
-            text_engine=macos_text_engine(self.text_engine_setting),
-          ),
-        ),
-      ) catch {
-        err => {
-          println("error creating macOS WGPU renderer: \{err}")
-          None
-        }
-      }
-    None => None
-  }
-}
-
-///|
-fn MacosApp::create_skia_renderer_for_window(
-  self : MacosApp,
-  window : @window_macos.Window,
-  metrics : @host.HostSurfaceMetrics,
-) -> MacosWindowRenderer? {
-  let _ = self
-  if !@skia_renderer.skia_available() {
-    println(
-      "macOS Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative",
-    )
-    return None
-  }
-  let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
-    err => {
-      println("error resolving macOS content view handle for Skia: \{err}")
-      None
-    }
-  }
-  match raw_content_view_handle {
-    Some(raw_content_view_handle) =>
-      Some(
-        MacosWindowRenderer::Skia(
-          @skia_renderer.create_with_present_target(
-            renderer_metrics_from_host(metrics),
-            macos_skia_present_target(raw_content_view_handle),
-            font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
-          ),
-        ),
-      ) catch {
-        err => {
-          println("error creating macOS Skia renderer: \{err.message()}")
-          None
-        }
-      }
-    None => None
-  }
-}
-
-///|
-fn macos_skia_present_target(
-  raw_content_view_handle : UInt64,
-) -> @skia_renderer.SkiaPresentTarget {
-  @skia_renderer.SkiaPresentTarget::new(
-    description="macOS CALayer Skia pixel presenter",
-    present=frame => {
-      macos_present_skia_pixels_to_view(
-        raw_content_view_handle,
-        frame.width,
-        frame.height,
-        frame.row_bytes,
-        frame.pixels,
-        frame.pixels.length(),
-      ) ==
-      0
-    },
-  )
-}
-
-///|
-fn MacosApp::sync_macos_surface_layer(
-  self : MacosApp,
-  window : @window_macos.Window,
-  metrics : @host.HostSurfaceMetrics,
-) -> Unit {
-  let _ = self
-  let raw_content_view_handle : UInt64? = Some(window.content_view_handle()) catch {
-    err => {
-      println("error resolving macOS content view handle: \{err}")
-      None
-    }
-  }
-  match raw_content_view_handle {
-    Some(raw_content_view_handle) =>
-      sync_macos_host_surface(
-        raw_content_view_handle,
-        metrics.physical_size,
-        scale_factor=metrics.scale_factor,
-      ) catch {
-        err => println("error syncing macOS CAMetalLayer: \{err}")
-      }
-    None => ()
-  }
-}
-
-///|
-fn renderer_metrics_from_host(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
-  )
-}
-
-///|
 fn MacosApp::dispatch_window_event(
   self : MacosApp,
   window_id : @host.HostWindowId,
@@ -1077,10 +735,9 @@ fn MacosApp::apply_window_request(
     @host.HostWindowRequest::ResizeWindow(id, metrics) =>
       self.apply_platform_window_request(id, request, window => {
         ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
-        self.sync_macos_surface_layer(window, metrics)
+        (self.renderer_provider.sync_surface)(window, metrics)
         match self.platform_slots.lookup_host(id) {
-          Some(slot) =>
-            slot.renderer.resize(renderer_metrics_from_host(metrics))
+          Some(slot) => slot.renderer.resize(metrics)
           None => ()
         }
         window.request_redraw()
@@ -1174,7 +831,7 @@ fn MacosApp::attach_resolved_window(
     window.surface_size(),
     scale_factor=window.scale_factor(),
   )
-  match self.create_renderer_for_window(window, metrics) {
+  match (self.renderer_provider.create_renderer)(window, metrics) {
     Some(renderer) => {
       ignore(self.windows.resize(resolved.id, metrics))
       ignore(self.runtime_slots.sync_open_from_registry(self.windows))
@@ -1373,15 +1030,6 @@ fn MacosApp::rollback_window_record(
   ignore(self.windows.close(window_id))
   ignore(self.windows.remove_closed())
   self.sync_runtime_slots()
-}
-
-///|
-fn size_dim_to_int(value : Double) -> Int {
-  if value < 1.0 {
-    1
-  } else {
-    value.to_int()
-  }
 }
 
 ///|

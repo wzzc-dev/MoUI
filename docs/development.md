@@ -275,6 +275,10 @@ moon build moui/tests/skia_renderer_smoke/native --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
 moon test moui/backend/web --target wasm-gc
+node scripts/validate-renderer-provider-manifests.mjs
+moon test moui/backend/macos --target native
+moon test moui/backend/macos/wgpu --target native
+moon test moui/backend/macos/skia --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
@@ -312,7 +316,7 @@ frontends and tooling:
   `tests/tooling/` for property and pixel-diff coverage.
 
 The text stack has its own maintenance page because it spans `core`,
-`render/wgpu`, backend startup options, and browser host assets. See
+`render/wgpu`, WGPU provider options, and browser host assets. See
 [Text system](text-system.md) before changing `TextSystem`, native text
 providers, embedded font registration, or Web text measurement.
 

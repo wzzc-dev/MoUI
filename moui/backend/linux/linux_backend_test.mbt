@@ -64,24 +64,10 @@ test "linux scaffold exposes host contracts without owning a surface" {
 }
 
 ///|
-test "linux app options carry renderer selection" {
-  let defaults = LinuxAppOptions::new()
-  assert_true(defaults.renderer == @render.RendererSelection::Default)
-  assert_true(
-    defaults.text_engine ==
-    @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
-  )
-  let options = LinuxAppOptions::new(
-    renderer=@render.RendererSelection::Family(@render.RendererFamily::Skia),
-    text_engine=@wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
-  )
-  assert_true(
-    options.renderer ==
-    @render.RendererSelection::Family(@render.RendererFamily::Skia),
-  )
-  assert_true(
-    options.text_engine == @wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
-  )
+test "linux host options construct without renderer dependencies" {
+  let options = LinuxHostAppOptions::new()
+  let _ = options
+  assert_true(backend_info().renderer_ready)
 }
 
 ///|

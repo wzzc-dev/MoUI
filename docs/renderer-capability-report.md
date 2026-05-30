@@ -48,10 +48,15 @@ to app code or `ViewSpec`. Current specs are:
 - `SkiaRasterNative`: family `Skia`, presentation `CpuPixelFrame`, target
   `Native`.
 
-Native platform backends resolve `RendererSelection::Default` to `NativeWgpu`.
-`Backend(SkiaRasterNative)` and `Family(Skia)` opt into Skia raster. Web keeps
-using the WebGPU wasm backend; future Skia Web or Skia GPU variants can add new
-`RendererBackendKind` values without changing the capability record shape.
+`RendererSpec` describes static renderer capability identity. Native host
+runtime assembly is handled by platform renderer providers instead:
+`backend/<platform>/wgpu` selects the `NativeWgpu` renderer family and
+`backend/<platform>/skia` selects the `SkiaRasterNative` renderer family. The
+`RendererSelection` helper remains useful for reports and tests that match
+families or backend ids, but it is not a native host-core option or provider
+contract. Web keeps using the WebGPU wasm backend; future Skia Web or Skia GPU
+variants can add new `RendererBackendKind` values without changing the
+capability record shape.
 
 ## Current Native Notes
 

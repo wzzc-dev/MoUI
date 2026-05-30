@@ -1,4 +1,4 @@
 ///|
 fn main {
-  @macos_backend.run_app("MoUI Counter", @counter_app.runtime())
+  @macos_wgpu.run_app("MoUI Counter", @counter_app.runtime())
 }

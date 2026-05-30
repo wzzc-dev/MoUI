@@ -218,8 +218,8 @@ documentation evidence.
 ### Platform
 
 1. Linux backend
-   - Current status: minimal Wayland/WGPU backend with tracked service,
-     accessibility, IME, and native font-provider gaps.
+   - Current status: minimal Wayland host core plus WGPU provider path with
+     tracked service, accessibility, IME, and native font-provider gaps.
    - Done when: Showcase `linux` and `linux_cosmic` run under a real Wayland
      compositor with a usable Vulkan stack, and readiness wording continues to
      describe the remaining unsupported platform services honestly.
