@@ -271,12 +271,17 @@ documentation evidence.
      counts, max clip/layer/filter depths, open scope depths, unbalanced pop
      count, path count, and shader count. Showcase Diagnostics now surfaces
      render command count plus max/open clip/layer/filter scope counters and
-     unbalanced pop count in the visible inspector snapshot card.
+     unbalanced pop count in the visible inspector snapshot card. The
+     conformance `--golden` and `--bench` scaffolds now write ignored capture
+     manifests under `artifacts/conformance/` that name the screenshot targets,
+     benchmark metrics, and render-inspector counters to save with the manual
+     capture artifacts.
    - Done when: inspector data is connected to golden/benchmark capture
      artifacts.
    - Evidence: `moon test moui/core --target native`, `moon test
-     examples/showcase/app --target native`, generated public API review after
-     inspector changes, and testing docs.
+     examples/showcase/app --target native`, `sh scripts/conformance-check.sh
+     --golden`, `sh scripts/conformance-check.sh --bench`, generated public API
+     review after inspector changes, and testing docs.
 
 ## Known Non-Goals
 
