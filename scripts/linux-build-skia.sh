@@ -177,5 +177,5 @@ Built libraries:
 $(find "$out_dir" -maxdepth 1 \( -name 'libskia.a' -o -name 'libskia.so' \) -printf '  %f %s bytes\n')
 
 Run smoke test:
-  bash scripts/linux-skia-smoke.sh --skia-include "$skia_dir" --skia-lib-dir "$out_dir" --extra-link-flags "-lpthread -ldl -lm"
+  bash scripts/linux-skia-smoke.sh --skia-include "$skia_dir" --skia-lib-dir "$out_dir" --extra-link-flags "-lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm"
 EOF

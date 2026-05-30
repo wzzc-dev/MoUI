@@ -25,6 +25,9 @@ packages=(
   clang
   curl
   ca-certificates
+  libfontconfig1-dev
+  libfreetype-dev
+  libharfbuzz-dev
 )
 
 check_only=0

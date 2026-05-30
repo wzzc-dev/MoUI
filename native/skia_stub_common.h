@@ -95,6 +95,25 @@
 #if defined(__APPLE__)
 #include "include/ports/SkFontMgr_mac_ct.h"
 #endif
+#if defined(__linux__) && __has_include(<fontconfig/fontconfig.h>) && \
+  __has_include("include/ports/SkFontMgr_fontconfig.h") && \
+  __has_include("include/ports/SkFontScanner_FreeType.h")
+#include "include/ports/SkFontMgr_fontconfig.h"
+#include "include/ports/SkFontScanner_FreeType.h"
+#define SKIA_MBT_HAS_FONTCONFIG_FONTMGR 1
+#endif
+#if defined(__linux__) && __has_include("include/ports/SkFontMgr_directory.h")
+#include "include/ports/SkFontMgr_directory.h"
+#define SKIA_MBT_HAS_DIRECTORY_FONTMGR 1
+#endif
+#if defined(__linux__) && __has_include("include/ports/SkFontMgr_empty.h")
+#include "include/ports/SkFontMgr_empty.h"
+#define SKIA_MBT_HAS_EMPTY_FONTMGR 1
+#endif
+#if defined(__linux__) && __has_include("include/utils/SkOrderedFontMgr.h")
+#include "include/utils/SkOrderedFontMgr.h"
+#define SKIA_MBT_HAS_ORDERED_FONTMGR 1
+#endif
 #endif
 
 struct MoonbitSkiaSurface {

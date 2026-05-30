@@ -26,7 +26,7 @@ Options:
   --extra-cc-flags STR  Extra C/C++ flags appended when linking the MoonBit stub.
   --extra-link-flags STR
                         Extra linker flags appended when linking the smoke binary.
-                        Default: -lpthread -ldl -lm.
+                        Default: -lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm.
   --build-log PATH      Write source-built Skia build output to PATH.
                         Relative paths are resolved from the repository root.
   --smoke-log PATH      Write the native smoke executable output to PATH.
@@ -220,7 +220,7 @@ if [[ "$skia_provider" == "existing" ]]; then
   smoke_include="$skia_include"
   smoke_lib_dir="$skia_lib_dir"
   if [[ -z "$extra_link_flags" && $extra_link_flags_explicit -eq 0 ]]; then
-    extra_link_flags="-lpthread -ldl -lm"
+    extra_link_flags="-lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm"
   fi
 elif [[ "$skia_provider" == "source" ]]; then
   if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then
@@ -231,7 +231,7 @@ elif [[ "$skia_provider" == "source" ]]; then
   smoke_include="$resolved_work_dir/skia"
   smoke_lib_dir="$resolved_work_dir/skia/out/moonbit-smoke"
   if [[ -z "$extra_link_flags" && $extra_link_flags_explicit -eq 0 ]]; then
-    extra_link_flags="-lpthread -ldl -lm"
+    extra_link_flags="-lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm"
   fi
 else
   if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then

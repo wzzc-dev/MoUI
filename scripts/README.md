@@ -62,7 +62,8 @@ bash scripts/linux-accept-real-skia-smoke.sh --skia-provider source --work-dir .
 
 On Ubuntu, `scripts/install-linux-smoke-deps.sh` installs the apt packages used
 by the workflow: `build-essential`, `git`, `python3`, `ninja-build`, `clang`,
-`curl`, and `ca-certificates`. Use `--check` to verify an already prepared
+`curl`, `ca-certificates`, `libfontconfig1-dev`, `libfreetype-dev`, and
+`libharfbuzz-dev`. Use `--check` to verify an already prepared
 runner, or `--print-packages` to audit the package list without touching the
 system. The Linux source-build GN defaults set `cc="clang"` and `cxx="clang++"`
 so source-built smoke runs do not depend on the runner's default C++ compiler.
@@ -219,7 +220,7 @@ after native-link configuration knobs:
 export SKIA_MBT_SKIA_INCLUDE=/path/to/skia
 export SKIA_MBT_SKIA_LIB_DIR=/path/to/skia/out/Static
 export SKIA_MBT_SKIA_LIB=skia
-export SKIA_MBT_EXTRA_LINK_FLAGS="-lpthread -ldl -lm"
+export SKIA_MBT_EXTRA_LINK_FLAGS="-lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm"
 bash scripts/linux-accept-real-skia-smoke.sh --log-dir logs
 ```
 
