@@ -27,6 +27,7 @@ Detailed notes live in:
 - [Renderer capability report](docs/renderer-capability-report.md)
 - [View catalog](docs/view-catalog.md)
 - [Non-render component cookbook](docs/non-render-component-cookbook.md)
+- [App templates](docs/app-templates.md)
 - [Examples](docs/examples.md)
 - [Markdown Editor](docs/markdown-editor.md)
 - [Testing](docs/testing.md)

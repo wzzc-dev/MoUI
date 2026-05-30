@@ -2,6 +2,8 @@
 
 Use these templates when adding packages, platform service bridges, renderer
 capabilities, or Showcase coverage. Keep each new slice independently testable.
+For end-user app skeletons, use [App templates](app-templates.md); this file is
+for repository maintenance patterns.
 
 ## Package Template
 
