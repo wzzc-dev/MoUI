@@ -72,7 +72,8 @@ Checklist:
 
 Checklist:
 
-- Keep `README.mbt.md` as the short entrypoint.
+- Keep the root `README.md` as the short entrypoint; its source is
+  `moui/README.mbt.md`.
 - Put setup and command loops in `docs/development.md`.
 - Put platform caveats in `docs/platform-notes.md`.
 - Put text architecture in `docs/text-system.md`.

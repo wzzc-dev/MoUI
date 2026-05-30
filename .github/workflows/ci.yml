@@ -96,7 +96,7 @@ jobs:
       - name: Install native Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwayland-dev wayland-protocols wayland-scanner pkg-config unzip
+          sudo apt-get install -y libwayland-dev libwayland-bin wayland-protocols pkg-config unzip
 
       - name: Set up MoonBit
         run: |

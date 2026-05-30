@@ -20,7 +20,9 @@ Use this skill when editing or reviewing:
 - `views/` public constructors and modifiers.
 - `backend/host`, `backend/web`, `backend/macos`, `backend/windows`, or
   `backend/linux`.
-- `render/`, `render/wgpu`, or `render/webgpu_adapter`.
+- `render/`, `render/wgpu`, `render/skia`, or `render/webgpu_adapter`.
+- `backend/<platform>/wgpu` or `backend/<platform>/skia` native renderer
+  provider packages.
 - `examples/*/app` shared app logic or platform example entrypoints when they
   are being used as framework examples or validation coverage.
 - `docs/*`, README, roadmap, testing docs, or AI collaboration materials.
@@ -30,7 +32,7 @@ Use this skill when editing or reviewing:
 ## First Files To Read
 
 1. `AGENTS.md`
-2. `README.mbt.md`
+2. `README.md`
 3. `docs/architecture.md`
 4. `docs/development.md`
 5. `docs/platform-notes.md`
@@ -110,6 +112,8 @@ Use this skill when editing or reviewing:
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
 - `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels.
+- `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
+  packages for comparing supported text systems and documented gaps.
 - `examples/*/app`: shared application logic.
 - `examples/*/{web_wasm,macos,windows,linux}`: platform entrypoints where an
   example has a runnable host package.
@@ -160,7 +164,9 @@ sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
 moon test examples/showcase/app --target native
+moon test examples/counter/app --target native
 moon test examples/markdown_editor/app --target native
+moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 node --check scripts/validate-package-manifest.mjs
@@ -172,6 +178,10 @@ Platform validation:
 sh scripts/dev-check.sh --platform-examples-test
 sh scripts/dev-check.sh --platform-examples-build
 ```
+
+Use `--platform-examples-test` for normal current-host backend/provider checks.
+Run `moui/backend/<platform>/{wgpu,skia}` tests directly only on the matching
+host/toolchain when investigating that provider.
 
 Real macOS Skia renderer smoke:
 
@@ -250,7 +260,7 @@ moon info
 
 ### Update Documentation
 
-- Keep `README.mbt.md` short.
+- Keep the root `README.md` short; its source is `moui/README.mbt.md`.
 - Put architecture in `docs/architecture.md`.
 - Put setup and command loops in `docs/development.md`.
 - Put platform caveats in `docs/platform-notes.md`.

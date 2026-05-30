@@ -17,8 +17,8 @@ sh scripts/setup-local-deps.sh
 sh scripts/check-local-deps.sh
 ```
 
-This keeps `wzzc-dev/window` declared in `moon.mod` and resolved through the
-local workspace member in `moon.work`:
+This keeps `wzzc-dev/window` and `wzzc-dev/skia_mbt` declared in
+`moui/moon.mod` and resolved through local workspace members in `moon.work`:
 
 ```moonbit
 import {
@@ -98,10 +98,11 @@ For routine local development, prefer the bounded daily check:
 sh scripts/dev-check.sh
 ```
 
-It runs stable package-level tests, native renderer contract tests, fallback-safe
-Skia checks, and Web wasm-gc example builds without invoking all-repository
-native or wasm-gc test targets. Fallback-safe Skia checks prove API shape and
-unavailable diagnostics; they do not mean a real Skia renderer is ready.
+It runs stable package-level tests, native renderer contract tests, native Skia
+fallback-safe checks, guidance consistency checks, and Web wasm-gc example
+builds without invoking all-repository native or wasm-gc test targets.
+Fallback-safe Skia checks prove API shape and unavailable diagnostics; they do
+not mean a real Skia renderer is ready.
 
 Run the real Skia native smoke only after configuring local Skia link flags:
 
@@ -191,6 +192,7 @@ wasm-gc example:
 ```sh
 sh scripts/preview-loop.sh
 sh scripts/preview-loop.sh --watch
+sh scripts/preview-loop.sh --package examples/counter/web_wasm --watch
 sh scripts/preview-loop.sh --package examples/markdown_editor/web_wasm --watch
 ```
 
@@ -282,21 +284,26 @@ moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
 moon test moui/backend/web --target wasm-gc
 node scripts/validate-renderer-provider-manifests.mjs
-moon test moui/backend/macos --target native
-moon test moui/backend/macos/wgpu --target native
-moon test moui/backend/macos/skia --target native
+sh scripts/dev-check.sh --platform-examples-test
+moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
+moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
-moon test --target native
+sh scripts/dev-check.sh --platform-examples-build
 moon build examples/showcase/macos --target native
 moon build examples/showcase/macos_skia --target native
 moon build examples/markdown_editor/macos --target native
 moon build examples/markdown_editor/windows --target native
+moon build examples/markdown_editor/windows_cosmic --target native
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
 ```
+
+Use the direct native example builds only on a matching configured host. The
+helper flags keep current-platform backend/provider checks separate from slow
+native example builds.
 
 ## Mooncakes Integration Notes
 

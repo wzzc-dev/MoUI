@@ -1,8 +1,9 @@
 # MoUI
 
 MoUI is a multi-platform MoonBit GUI framework prototype for building
-declarative UI apps with shared platform-neutral app logic. Native hosts use
-`window + wgpu-native`; the Web host uses a single
+declarative UI apps with shared platform-neutral app logic. Native host cores
+own windows, events, services, and lifecycle, then receive concrete renderers
+through platform WGPU or Skia provider packages. The Web host uses a single
 `wasm-gc + window/web + browser WebGPU host imports` path.
 
 The runtime pipeline is explicit:
@@ -49,19 +50,24 @@ editor remains a separate practical editing demo.
 ## Project Shape
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
-  and draw command model.
+  draw command model, typed events, `Program`, and `Effect`.
+- `style/` owns visual tokens and style aliases during the split from `core`.
 - `views/` exposes public view constructors returning opaque `@core.View[Msg]`.
 - `backend/host/` defines shared host contracts; platform backends normalize
   window and input events into `HostEvent`.
-- `render/` provides the renderer facade, with native wgpu and WebGPU adapter
-  implementations under `render/wgpu/` and `render/webgpu_adapter/`.
+- `backend/<platform>/wgpu` and `backend/<platform>/skia` select native WGPU or
+  native Skia renderer providers; host-core packages do not import concrete
+  renderer implementations.
+- `render/` provides the renderer facade, with native wgpu, native Skia raster,
+  and WebGPU adapter implementations under `render/wgpu/`, `render/skia/`, and
+  `render/webgpu_adapter/`.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
   thin entrypoints.
 
 ## Quick Start
 
-Set up the local `wzzc-dev/window` checkout and run the bounded development
-check:
+Set up the local `wzzc-dev/window` and `wzzc-dev/skia_mbt` checkouts, then run
+the bounded development check:
 
 ```sh
 sh scripts/setup-local-deps.sh

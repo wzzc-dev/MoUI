@@ -12,7 +12,7 @@ editable Skia binding used by the opt-in native Skia raster renderer.
 
 Platform backends normalize window, input, surface, focus, text input, redraw,
 and close events through `backend/host`. App code receives the same core event
-model regardless of whether the host is Web, macOS, or Windows.
+model across Web, macOS, Windows, and the current Linux Wayland scaffold.
 `HostWindowRegistry` also provides shared bookkeeping for window ids, primary
 windows, focused windows, close requests, closed-window cleanup, and per-window
 surface metrics so future multi-window platform hosts do not duplicate lifecycle
@@ -61,6 +61,10 @@ options. Use `backend/<platform>/wgpu` for native WGPU or
 `backend/<platform>/skia` for native Skia raster. The Skia provider remains
 explicit and fails before opening a blank window when `skia_mbt/native` reports
 unavailable.
+
+Current-platform provider tests are included by
+`sh scripts/dev-check.sh --platform-examples-test`. Run provider packages
+directly only when you are already on the matching host and toolchain.
 
 The boundary is:
 
@@ -281,6 +285,8 @@ engine lands. Choose `MoonCosmic` with
 The `examples/showcase/windows_cosmic` entrypoint selects `MoonCosmic`
 explicitly for comparison with the platform-default DirectWrite scaffold plus
 Cosmic fallback path.
+The Markdown Editor also has `examples/markdown_editor/windows_cosmic` for the
+same explicit text-provider comparison on the editing workflow.
 
 Select Skia by importing `wzzc-dev/moui/backend/windows/skia` and using
 `WindowsSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer`

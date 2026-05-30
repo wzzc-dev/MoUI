@@ -61,7 +61,7 @@ Before calling a preview-release handoff complete, collect fresh evidence for:
 | Text conformance | Stable text contracts and diagnostic gaps are current. | `sh scripts/conformance-check.sh --text`, `sh scripts/conformance-check.sh --text-diagnostic` |
 | Platform contracts | Shared host and active backend behavior stay covered. | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `sh scripts/dev-check.sh --platform-examples-test` when platform behavior changes |
 | Examples | Showcase and Markdown Editor remain runnable docs; new user-facing features have visible Showcase coverage or a recorded reason to skip it. | App package tests plus Web wasm-gc builds |
-| Guidance freshness | Docs, `AGENTS.md`, and repo-local skills agree after guidance-affecting changes. | Manual audit recorded in the handoff |
+| Guidance freshness | Docs, `AGENTS.md`, and repo-local skills agree after guidance-affecting changes. | `node scripts/validate-guidance-consistency.mjs` plus manual audit notes in the handoff |
 
 ## Current Evidence Snapshot
 
@@ -77,7 +77,7 @@ This snapshot records the current preview-readiness evidence gathered on
 | Text conformance | Stable text conformance covers core, native renderer/provider validation, Web adapter, and Web backend. Diagnostic matrix tests cover core fallback, Cosmic, platform-default composed fallback/scaffolds, malformed-provider fallback, and Web text systems where available. | current with shaping/color-emoji gaps documented |
 | Platform contracts | `backend/host` now covers post-close queued window command rejection and completion recording. `--platform-services` passed on the current host with host/Web/macOS service evidence and explicit Linux skip wording. | current for macOS host; Windows/Linux runtime evidence remains host-limited |
 | Examples | `moon test examples/showcase/app --target native`, `moon test examples/markdown_editor/app --target native`, and both Web wasm-gc builds passed. Showcase capability cards now surface follow-up rows first; Markdown Editor app tests cover Unicode paste through runtime undo/redo. | current |
-| Guidance freshness | `AGENTS.md`, framework skill, and app skill were updated/checked after conformance layering, platform validation, Showcase alignment, and text evidence updates. | current |
+| Guidance freshness | `AGENTS.md`, framework skill, app skill, docs, README entrypoint wording, provider package paths, and example entrypoints are covered by `scripts/validate-guidance-consistency.mjs` after guidance-affecting updates. | current |
 
 ## Platform Validation Matrix
 
