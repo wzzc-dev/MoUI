@@ -69,10 +69,12 @@ geometry. Rendering now uses optional SkShaper shaped glyph runs when the
 `skia_mbt` native package is linked with SkShaper support, and otherwise falls
 back to positioned glyph runs. The macOS Skia provider currently starts with the
 safe `EmptyTypeface` font resolution mode, which delegates layout measurement to
-the core fallback text system and disables SkShaper for renderer text drawing;
-this avoids CoreText/Skia FontMgr startup crashes while the macOS Skia first
-frame path is being hardened. SkParagraph-style line breaking, bidi, and broader
-typography conformance remain follow-up work.
+the core fallback text system and disables SkShaper for renderer text drawing.
+When that empty typeface produces a blank glyph run, the renderer retries the
+draw with Skia's default font so startup Showcase text remains visible while the
+layout-time system FontMgr and SkShaper paths stay out of the first-frame path.
+SkParagraph-style line breaking, bidi, and broader typography conformance remain
+follow-up work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
