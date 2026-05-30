@@ -168,12 +168,13 @@ when the smoke is run with `--enable-skshaper`, while requiring
 `unsupported_command_count == 0`. Remaining Skia
 renderer gaps are now narrower: complex text shaping. Basic text
 measurement/drawing uses Skia `FontMgr`/`Font` with `FontSpec` family, weight,
-style selection, Skia font metrics for baseline/height, Skia-measured prefix
-caret positions, SystemFontMgr-only emoji font retry for emoji-hint text, and
-optional SkShaper shaped glyph runs for rendering when linked, while
-SkParagraph-style line breaking, bidi, broader typography, deterministic color
-emoji, grapheme shaping, and cross-platform emoji fallback conformance remain
-partial and separate from the WGPU Moon Cosmic provider stack. The macOS Skia
+style selection, Skia font metrics for baseline/height, shaped-run cluster
+carets when SkShaper is linked, Skia-measured prefix carets otherwise,
+SystemFontMgr-only emoji font retry for emoji-hint text, and optional SkShaper
+shaped glyph runs for rendering when linked, while SkParagraph-style line
+breaking, bidi, broader typography, deterministic color emoji, grapheme shaping,
+and cross-platform emoji fallback conformance remain partial and separate from
+the WGPU Moon Cosmic provider stack. The macOS Skia
 showcase host currently constructs the
 renderer with `SkiaFontResolution::EmptyTypeface`: it skips the system FontMgr
 and SkShaper during early AppKit startup, while measurement and drawing fall

@@ -140,6 +140,7 @@ test "skia empty typeface resolution avoids system font manager" {
       assert_true(font.size() == 14.0)
       let run = skia_glyph_run_with_shaper(font, "Slim", use_shaper=false)
       assert_true(run.glyphs.length() == run.positions.length())
+      assert_true(run.clusters.is_empty())
     }
   }
 }
@@ -257,6 +258,11 @@ test "skia text drawing builds best available glyph runs" {
         assert_true(run.positions[0] == @skia_mbt.Point::zero())
         assert_true(run.positions[1].x > run.positions[0].x)
         assert_true(run.positions[2].x > run.positions[1].x)
+        if @skia_native.skia_shaper_available() {
+          assert_true(run.clusters.length() == run.glyphs.length())
+        } else {
+          assert_true(run.clusters.is_empty())
+        }
       } else {
         assert_false(skia_glyph_run_has_visible_glyphs(run))
       }
@@ -308,6 +314,72 @@ test "skia text system clamps measured carets to max width" {
     }
     None => assert_true(!skia_available())
   }
+}
+
+///|
+test "skia shaped caret mapping uses glyph clusters when available" {
+  let run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(10),
+      @skia_native.GlyphId::new(11),
+      @skia_native.GlyphId::new(12),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(9.0, 0.0),
+      @skia_mbt.Point::new(21.0, 0.0),
+    ],
+    clusters: [0, 1, 4],
+    width: 30.0,
+  }
+  match skia_shaped_caret_positions("A你B", run) {
+    Some(carets) => {
+      inspect(carets.length(), content="4")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="9")
+      inspect(carets[2], content="21")
+      inspect(carets[3], content="30")
+    }
+    None => fail("expected shaped caret mapping")
+  }
+}
+
+///|
+test "skia shaped caret mapping fills cluster gaps monotonically" {
+  let run = SkiaGlyphRun::{
+    glyphs: [@skia_native.GlyphId::new(10), @skia_native.GlyphId::new(11)],
+    positions: [@skia_mbt.Point::new(0.0, 0.0), @skia_mbt.Point::new(18.0, 0.0)],
+    clusters: [0, 5],
+    width: 24.0,
+  }
+  match skia_shaped_caret_positions("A🙂B", run) {
+    Some(carets) => {
+      inspect(carets.length(), content="4")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="0")
+      inspect(carets[2], content="18")
+      inspect(carets[3], content="24")
+      assert_true(skia_test_carets_are_monotonic(carets))
+    }
+    None => fail("expected shaped caret mapping")
+  }
+}
+
+///|
+test "skia layout width follows caret source" {
+  inspect(skia_layout_width_from_carets([0.0, 4.0, 9.0]), content="9")
+  inspect(skia_layout_width_from_carets([]), content="0")
+}
+
+///|
+test "skia shaped caret mapping rejects invalid shaped data" {
+  let run = SkiaGlyphRun::{
+    glyphs: [@skia_native.GlyphId::new(10)],
+    positions: [@skia_mbt.Point::new(0.0, 0.0)],
+    clusters: [],
+    width: 10.0,
+  }
+  assert_true(skia_shaped_caret_positions("A", run) is None)
 }
 
 ///|
