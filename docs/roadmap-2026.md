@@ -243,7 +243,8 @@ code to extending the framework.
 
 Planned documentation set:
 
-- `README.mbt.md`: short entry point, quick start, example commands, docs index.
+- `README.md`: short entry point, quick start, example commands, docs index.
+  Its source file is `moui/README.mbt.md`.
 - `docs/architecture.md`: package model and runtime mental model.
 - `docs/development.md`: setup, focused checks, platform validation commands.
 - `docs/platform-notes.md`: platform-specific requirements and troubleshooting.

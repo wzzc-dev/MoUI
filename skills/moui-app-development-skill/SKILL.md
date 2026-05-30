@@ -40,7 +40,7 @@ separate framework task using `moui-framework-development-skill`.
 ## First Files To Read
 
 1. `AGENTS.md`
-2. `README.mbt.md`
+2. `README.md`
 3. `docs/development.md`
 4. `docs/view-catalog.md`
 5. `docs/examples.md`
@@ -50,13 +50,16 @@ separate framework task using `moui-framework-development-skill`.
 9. `docs/text-system.md` when app behavior depends on text metrics, fonts, or
    native/Web text differences
 10. `docs/platform-notes.md` when platform setup matters
-11. The closest existing app under `examples/*/app`
+11. The closest existing app under `examples/*/app`, especially
+    `examples/counter/app` for the smallest TEA shape
 12. The app's `moon.pkg` and platform entrypoint `moon.pkg` files
 
 ## App Shape
 
 - Shared app logic lives in `examples/<name>/app`.
 - Platform packages stay thin and only wire the shared app to the host.
+- Counter has `web_wasm`, `macos`, `windows`, `linux`, and `windows_cosmic`
+  entrypoints and is the smallest runnable app shape.
 - Some examples are shared-app only. Settings, Data Table, File Importer, and
   Command Palette intentionally exercise app patterns without platform
   entrypoints.
@@ -93,6 +96,7 @@ App package tests:
 
 ```sh
 moon test examples/showcase/app --target native
+moon test examples/counter/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
@@ -103,6 +107,7 @@ moon test examples/command_palette/app --target native
 Web app builds:
 
 ```sh
+moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
@@ -119,6 +124,7 @@ moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
 moon build examples/markdown_editor/macos --target native
 moon build examples/markdown_editor/windows --target native
+moon build examples/markdown_editor/windows_cosmic --target native
 ```
 
 Native packaging helpers:

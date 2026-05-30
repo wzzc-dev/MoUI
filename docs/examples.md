@@ -31,7 +31,9 @@ introducing a generator.
 
 Counter is the smallest recommended app shape. It keeps user code in
 `Model / Msg / update / view`, then lets `Program::simple` connect that pure
-model loop to the runtime:
+model loop to the runtime. It has Web, macOS, Windows, Linux, and
+`windows_cosmic` entrypoints, so it is also the quickest way to verify a thin
+platform package without the full Showcase surface:
 
 ```moonbit
 using @views {button, card, center, column, row, text}
@@ -69,6 +71,13 @@ pub fn view(model : Model) -> @core.View[Msg] {
     ),
   )
 }
+```
+
+Focused Counter checks:
+
+```sh
+moon test examples/counter/app --target native
+moon build examples/counter/web_wasm --target wasm-gc
 ```
 
 Showcase is organized around the main catalog order:
@@ -230,6 +239,7 @@ roots documented in `platform-notes.md`:
 moon build examples/showcase/windows --target native
 moon build examples/showcase/windows_cosmic --target native
 moon build examples/markdown_editor/windows --target native
+moon build examples/markdown_editor/windows_cosmic --target native
 ```
 
 The Markdown editor can also use the helper script to configure MSYS2 and build
@@ -281,6 +291,7 @@ points:
 
 ```sh
 moon test examples/showcase/app --target native
+moon test examples/counter/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
 moon test examples/file_importer/app --target native

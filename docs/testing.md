@@ -25,10 +25,12 @@ moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render --target native
 moon test moui/render/wgpu --target native
+moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
+moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 ```
@@ -71,6 +73,10 @@ sh scripts/dev-check.sh --platform-examples-build
 
 Native builds link platform stubs and `wgpu-native`, so they are intentionally
 not part of every inner-loop check.
+
+Renderer provider packages are platform-specific. Use the current-host helper
+above for normal backend/provider validation instead of trying to run every
+`moui/backend/<platform>/{wgpu,skia}` test package on every machine.
 
 On Linux, the platform example build step covers both Showcase native
 entrypoints:
@@ -159,9 +165,13 @@ Suggested validation:
 ```sh
 moon test moui/render --target native
 moon test moui/render/wgpu --target native
+moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
+
+This renderer slice includes the native Skia raster package at
+`moui/render/skia`; real presenter pixels still require the opt-in Skia smoke.
 
 ## Conformance Ownership Layers
 

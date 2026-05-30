@@ -16,31 +16,36 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 ## Packages
 
 ```text
-./                            root public facade package
-core/                         one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
-style/                        visual token and control style compatibility package
-views/                        public view constructors
-backend/host/                 shared HostEvent, metrics, HostWindowRenderer, input, redraw driver, window/core + dpi event conversion
-backend/windows/              Windows native host core
-backend/windows/wgpu/         Windows WGPU renderer provider
-backend/windows/skia/         Windows Skia renderer provider
-backend/macos/                macOS native host core
-backend/macos/wgpu/           macOS WGPU renderer provider
-backend/macos/skia/           macOS Skia renderer provider
-backend/linux/                Linux Wayland native host core
-backend/linux/wgpu/           Linux WGPU renderer provider
-backend/linux/skia/           Linux Skia renderer provider
-backend/web/                  canonical Web host on wasm-gc plus browser JS assets
-render/                       renderer facade and shared draw helpers
-render/wgpu/                  native wgpu renderer
-render/wgpu/cosmic_text/      Moon Cosmic provider for native wgpu text
-render/wgpu/coretext/         macOS CoreText provider for native wgpu text
-render/wgpu/text_protocol/    shared native measure/run/raster/register bytes protocol
-render/wgpu/directwrite/      Windows DirectWrite provider scaffold
-render/wgpu/fontconfig/       Linux fontconfig/HarfBuzz/FreeType provider scaffold
-render/skia/                  native Skia raster renderer facade over skia_mbt
-render/webgpu_adapter/        browser WebGPU host-import renderer for wasm-gc
-tests/tooling/                quickcheck and pixelmatch integration tests
+moui/                         root public facade workspace member
+moui/core/                    one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
+moui/style/                   visual token and control style compatibility package
+moui/views/                   public view constructors
+moui/backend/host/            shared HostEvent, metrics, HostWindowRenderer, input, redraw driver, window/core + dpi event conversion
+moui/backend/windows/         Windows native host core
+moui/backend/windows/wgpu/    Windows WGPU renderer provider
+moui/backend/windows/skia/    Windows Skia renderer provider
+moui/backend/macos/           macOS native host core
+moui/backend/macos/wgpu/      macOS WGPU renderer provider
+moui/backend/macos/skia/      macOS Skia renderer provider
+moui/backend/linux/           Linux Wayland native host core
+moui/backend/linux/wgpu/      Linux WGPU renderer provider
+moui/backend/linux/skia/      Linux Skia renderer provider
+moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
+moui/render/                  renderer facade and shared draw helpers
+moui/render/wgpu/             native wgpu renderer
+moui/render/wgpu/cosmic_text/ Moon Cosmic provider for native wgpu text
+moui/render/wgpu/coretext/    macOS CoreText provider for native wgpu text
+moui/render/wgpu/text_protocol/ shared native measure/run/raster/register bytes protocol
+moui/render/wgpu/directwrite/ Windows DirectWrite provider scaffold
+moui/render/wgpu/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
+moui/render/skia/             native Skia raster renderer facade over skia_mbt
+moui/render/webgpu_adapter/   browser WebGPU host-import renderer for wasm-gc
+moui/tests/tooling/           quickcheck and pixelmatch integration tests
+moui/tests/text_conformance/  opt-in native/Web text diagnostic matrix
+moui/tests/skia_renderer_smoke/native/ opt-in real-Skia renderer pixel smoke
+examples/counter/app/         smallest shared app shape
+examples/counter/{web_wasm,macos,windows,linux}/ platform counter entrypoints
+examples/counter/windows_cosmic/ Windows counter selecting Moon Cosmic text
 examples/showcase/app/        shared visual showcase app with Counter/Todo patterns
 examples/showcase/macos/      macOS native showcase
 examples/showcase/macos_cosmic/ macOS showcase selecting Moon Cosmic text
@@ -54,6 +59,8 @@ examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos/ macOS native Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
 examples/markdown_editor/windows/ Windows native Markdown editor
+examples/markdown_editor/windows_cosmic/ Windows Markdown editor selecting Moon Cosmic text
+examples/{settings,data_table,file_importer,command_palette}/app/ shared app-pattern packages without platform entrypoints
 ```
 
 ## Public View API

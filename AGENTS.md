@@ -212,9 +212,9 @@ or `*_capabilities.mbt` when organizing package-local source.
 
 When development changes affect package layout, build commands, validation
 commands, platform setup, renderer capabilities, or user-facing behavior, update
-the relevant files under `docs/` in the same change. Keep `README.mbt.md` as a
-short entry point and move detailed development guidance into
-`docs/development.md`.
+the relevant files under `docs/` in the same change. Keep the root `README.md`
+as a short entry point; its source is `moui/README.mbt.md`. Move detailed
+development guidance into `docs/development.md`.
 
 The project moves quickly, so guidance files are part of the maintenance
 surface. When changes affect architecture, package boundaries, docs placement,
