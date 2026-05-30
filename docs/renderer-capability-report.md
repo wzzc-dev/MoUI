@@ -161,10 +161,11 @@ clip, transformed layer opacity masks, transformed filter scopes, opacity, layer
 opacity with rectangular and rounded masks, nested layer/filter composition,
 multiply/screen/overlay/darken/lighten blending,
 blur/saturation/brightness/contrast/color-matrix filters, solid and gradient
-paths including quadratic and cubic curve verbs, the checker shader effect,
-vignette shader effect, PNG data URI and local PNG image drawing, failed-image
-placeholders, basic text glyph-run pixels, and optional SkShaper availability
-when the smoke is run with `--enable-skshaper`, while requiring
+paths including quadratic and cubic curve verbs, the solid, checker,
+linear-gradient-debug, and vignette shader effects, PNG data URI and local PNG
+image drawing, failed-image placeholders, basic text glyph-run pixels, and
+optional SkShaper availability when the smoke is run with `--enable-skshaper`,
+while requiring
 `unsupported_command_count == 0`. Remaining Skia
 renderer gaps are now narrower: complex text shaping. Basic text
 measurement/drawing uses Skia `FontMgr`/`Font` with `FontSpec` family, weight,
