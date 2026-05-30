@@ -74,6 +74,30 @@ run() {
   "$@"
 }
 
+print_golden_capture_instructions() {
+  cat <<'EOF'
+
+Golden screenshot scaffold complete.
+
+Built target:
+  examples/showcase/web_wasm
+
+Manual capture handoff:
+  1. Serve the repository root or built example directory with a static server.
+     Example: python3 -m http.server 18080
+  2. Open http://127.0.0.1:18080/examples/showcase/web_wasm/
+  3. Capture these canonical viewports:
+     - desktop: 1440x900
+     - tablet: 1024x768
+     - mobile: 390x844
+  4. Save artifacts under:
+     artifacts/golden/showcase-web-wasm/<viewport>.png
+
+This scaffold intentionally verifies the build and capture contract only. It
+does not run browser automation, pixel diffing, or renderer golden assertions.
+EOF
+}
+
 if "$RUN_DEFAULT"; then
   run moon test moui/core --target native
   run moon test moui/backend/host --target native
@@ -126,7 +150,7 @@ fi
 
 if "$RUN_GOLDEN"; then
   run moon build examples/showcase/web_wasm --target wasm-gc
-  printf '\nGolden scaffold complete. Capture browser screenshots from examples/showcase/web_wasm and compare against approved artifacts when a screenshot runner is configured.\n'
+  print_golden_capture_instructions
 fi
 
 if "$RUN_BENCH"; then

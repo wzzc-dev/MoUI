@@ -228,10 +228,24 @@ windowing and browser dependencies.
 ## Golden Screenshots And Benchmarks
 
 Showcase is the golden source of truth for visible component coverage. Golden
-tests should capture the List-Detail catalog at stable desktop and mobile
+tests should capture the catalog at stable desktop, tablet, and mobile
 viewports, then compare screenshots against approved artifacts. Until a browser
 screenshot runner is checked in, `sh scripts/conformance-check.sh --golden`
-verifies that the golden target builds and prints the capture handoff point.
+verifies that the Showcase Web wasm-gc target builds and prints the manual
+capture handoff point.
+
+The scaffold's canonical handoff is:
+
+```sh
+sh scripts/conformance-check.sh --golden
+python3 -m http.server 18080
+```
+
+Then open `http://127.0.0.1:18080/examples/showcase/web_wasm/`, capture
+`1440x900`, `1024x768`, and `390x844`, and save artifacts under
+`artifacts/golden/showcase-web-wasm/<viewport>.png`. This is deliberately a
+non-rendering scaffold: it does not introduce browser automation, pixel diffing,
+or renderer golden assertions.
 
 Benchmarks should use the same examples and record comparable counters:
 frame-time, dirty-count, draw-command count, render inspector scope diagnostics,
