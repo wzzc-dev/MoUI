@@ -139,7 +139,14 @@ To link real Skia, update `native/moon.pkg` with native flags similar to:
 
 ```moonbit nocheck
 options(
-  "native-stub": [ "skia_stub.cpp" ],
+  "native-stub": [
+    "skia_stub_common.cpp",
+    "skia_stub_surface_image_data.cpp",
+    "skia_stub_canvas.cpp",
+    "skia_stub_path.cpp",
+    "skia_stub_text_font.cpp",
+    "skia_stub_shader_filter.cpp",
+  ],
   link: {
     "native": {
       "stub-cc-flags": "-DSKIA_MBT_HAS_SKIA -I/path/to/skia",
