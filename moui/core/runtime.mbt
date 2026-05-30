@@ -153,6 +153,28 @@ pub fn AppRuntime::layout(self : AppRuntime) -> LayoutResult {
 }
 
 ///|
+fn AppRuntime::layout_tree_root(self : AppRuntime) -> PlacedNode {
+  self.state.layout_tree_root()
+}
+
+///|
+fn AppRuntime::view_tree_inspector_snapshot(
+  self : AppRuntime,
+) -> ViewTreeInspectorSnapshot {
+  self.state.view_tree_inspector_snapshot()
+}
+
+///|
+fn AppRuntime::inspector_rebuild_reason(self : AppRuntime) -> String {
+  self.state.inspector_rebuild_reason()
+}
+
+///|
+fn AppRuntime::inspector_dirty_reasons(self : AppRuntime) -> Array[String] {
+  self.state.inspector_dirty_reasons()
+}
+
+///|
 pub fn AppRuntime::paint_pass(self : AppRuntime) -> Array[DrawCommand] {
   self.state.paint_pass()
 }
@@ -210,6 +232,11 @@ pub fn AppRuntime::needs_paint(self : AppRuntime) -> Bool {
 ///|
 pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
   self.state.dirty_count()
+}
+
+///|
+pub fn AppRuntime::inspector_snapshot(self : AppRuntime) -> InspectorSnapshot {
+  InspectorSnapshot::from_runtime(self)
 }
 
 ///|

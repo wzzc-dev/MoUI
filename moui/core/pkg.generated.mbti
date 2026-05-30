@@ -157,6 +157,7 @@ pub fn AppRuntime::environment(Self) -> Environment
 pub fn AppRuntime::focus_next(Self) -> Bool
 pub fn AppRuntime::focus_previous(Self) -> Bool
 pub fn AppRuntime::focused_text_input(Self) -> TextInputState
+pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot
 pub fn AppRuntime::layout(Self) -> LayoutResult
 pub fn AppRuntime::layout_pass(Self) -> Unit
 pub fn AppRuntime::needs_layout(Self) -> Bool
@@ -831,6 +832,15 @@ pub(all) struct Insets {
 pub fn Insets::all(Double) -> Self
 pub fn Insets::symmetric(horizontal? : Double, vertical? : Double) -> Self
 
+pub(all) struct InspectorSnapshot {
+  runtime : RuntimeInspectorSnapshot
+  view_tree : ViewTreeInspectorSnapshot
+  layout : LayoutInspectorSnapshot
+  render : RenderInspectorSnapshot
+  semantics : SemanticsInspectorSnapshot
+} derive(Eq, ToJson, @debug.Debug)
+pub fn InspectorSnapshot::from_runtime(AppRuntime) -> Self
+
 pub(all) struct Key {
   value : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -876,6 +886,13 @@ pub(all) struct LayerSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LayerSpec::new(opacity? : Double, blend_mode? : BlendMode, mask? : LayerMask, offscreen? : Bool) -> Self
 
+pub(all) struct LayoutBoundsInspectorEntry {
+  element_id : ElementId
+  frame : Rect
+  depth : Int
+  child_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum LayoutDirection {
   LeftToRight
   RightToLeft
@@ -886,6 +903,7 @@ pub(all) struct LayoutInspectorSnapshot {
   node_count : Int
   leaf_count : Int
   max_depth : Int
+  bounds : Array[LayoutBoundsInspectorEntry]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LayoutInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
@@ -1195,7 +1213,9 @@ pub(all) struct RuntimeInspectorSnapshot {
   needs_paint : Bool
   needs_redraw : Bool
   draw_command_count : Int
-}
+  rebuild_reason : String
+  dirty_reasons : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
 pub fn RuntimeInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
 type RuntimeState
@@ -1291,6 +1311,12 @@ pub(all) struct SemanticsInspectorSnapshot {
   focusable_count : Int
   action_count : Int
   max_depth : Int
+  selected_count : Int
+  checked_count : Int
+  expanded_count : Int
+  invalid_count : Int
+  required_count : Int
+  described_count : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
@@ -1747,6 +1773,16 @@ pub fn ViewEnvironment::viewport_size(Self) -> Size
 
 type ViewNode[Msg]
 
+pub(all) struct ViewNodeInspectorSummary {
+  element_id : ElementId
+  kind : String
+  key : String
+  child_count : Int
+  needs_build : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct ViewStyle {
   font : FontSpec?
   foreground : Color?
@@ -1756,6 +1792,19 @@ pub(all) struct ViewStyle {
 pub fn ViewStyle::empty() -> Self
 pub fn ViewStyle::from_theme(Theme) -> Self
 pub fn ViewStyle::merge(Self, Self) -> Self
+
+pub(all) struct ViewTreeInspectorSnapshot {
+  root_kind : String
+  node_count : Int
+  component_count : Int
+  control_count : Int
+  modified_count : Int
+  dirty_build_count : Int
+  dirty_layout_count : Int
+  dirty_paint_count : Int
+  nodes : Array[ViewNodeInspectorSummary]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ViewTreeInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
 pub(all) struct VisualStyle {
   background : Brush?

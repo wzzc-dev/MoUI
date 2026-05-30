@@ -448,6 +448,47 @@ pub fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
 }
 
 ///|
+fn RuntimeState::layout_tree_root(self : RuntimeState) -> PlacedNode {
+  self.ensure_layout_tree()
+  self.layout_tree.root
+}
+
+///|
+fn RuntimeState::view_tree_inspector_snapshot(
+  self : RuntimeState,
+) -> ViewTreeInspectorSnapshot {
+  self.element_tree.root.view_tree_inspector_snapshot()
+}
+
+///|
+fn RuntimeState::inspector_rebuild_reason(self : RuntimeState) -> String {
+  if self.needs_rebuild {
+    "rebuild requested"
+  } else if self.needs_layout {
+    "layout requested"
+  } else if self.needs_paint {
+    "paint requested"
+  } else if self.needs_redraw {
+    "redraw requested"
+  } else {
+    "clean"
+  }
+}
+
+///|
+fn RuntimeState::inspector_dirty_reasons(self : RuntimeState) -> Array[String] {
+  let reasons : Array[String] = []
+  if self.needs_rebuild { reasons.push("rebuild") }
+  if self.needs_layout { reasons.push("layout") }
+  if self.needs_paint { reasons.push("paint") }
+  if self.needs_redraw { reasons.push("redraw") }
+  if self.dirty_elements.length() > 0 {
+    reasons.push("dirty elements: \{self.dirty_elements.length()}")
+  }
+  reasons
+}
+
+///|
 pub fn RuntimeState::semantics(self : RuntimeState) -> SemanticsNode {
   self.ensure_render_tree()
   self.element_tree.root.semantics(

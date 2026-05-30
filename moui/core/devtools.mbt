@@ -7,7 +7,41 @@ pub(all) struct RuntimeInspectorSnapshot {
   needs_paint : Bool
   needs_redraw : Bool
   draw_command_count : Int
-}
+  rebuild_reason : String
+  dirty_reasons : Array[String]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ViewNodeInspectorSummary {
+  element_id : ElementId
+  kind : String
+  key : String
+  child_count : Int
+  needs_build : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ViewTreeInspectorSnapshot {
+  root_kind : String
+  node_count : Int
+  component_count : Int
+  control_count : Int
+  modified_count : Int
+  dirty_build_count : Int
+  dirty_layout_count : Int
+  dirty_paint_count : Int
+  nodes : Array[ViewNodeInspectorSummary]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct LayoutBoundsInspectorEntry {
+  element_id : ElementId
+  frame : Rect
+  depth : Int
+  child_count : Int
+} derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct LayoutInspectorSnapshot {
@@ -15,6 +49,7 @@ pub(all) struct LayoutInspectorSnapshot {
   node_count : Int
   leaf_count : Int
   max_depth : Int
+  bounds : Array[LayoutBoundsInspectorEntry]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -40,6 +75,21 @@ pub(all) struct SemanticsInspectorSnapshot {
   focusable_count : Int
   action_count : Int
   max_depth : Int
+  selected_count : Int
+  checked_count : Int
+  expanded_count : Int
+  invalid_count : Int
+  required_count : Int
+  described_count : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct InspectorSnapshot {
+  runtime : RuntimeInspectorSnapshot
+  view_tree : ViewTreeInspectorSnapshot
+  layout : LayoutInspectorSnapshot
+  render : RenderInspectorSnapshot
+  semantics : SemanticsInspectorSnapshot
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -51,18 +101,48 @@ pub(all) struct FrameProfile {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub fn InspectorSnapshot::from_runtime(
+  runtime : AppRuntime,
+) -> InspectorSnapshot {
+  let view_tree = ViewTreeInspectorSnapshot::from_runtime(runtime)
+  {
+    runtime: RuntimeInspectorSnapshot::from_runtime(runtime),
+    view_tree,
+    layout: LayoutInspectorSnapshot::from_runtime(runtime),
+    render: RenderInspectorSnapshot::from_runtime(runtime),
+    semantics: SemanticsInspectorSnapshot::from_runtime(runtime),
+  }
+}
+
+///|
 pub fn RuntimeInspectorSnapshot::from_runtime(
   runtime : AppRuntime,
 ) -> RuntimeInspectorSnapshot {
+  let dirty_count = runtime.dirty_count()
+  let needs_rebuild = runtime.needs_rebuild()
+  let needs_layout = runtime.needs_layout()
+  let needs_paint = runtime.needs_paint()
+  let needs_redraw = runtime.needs_redraw()
+  let rebuild_reason = runtime.inspector_rebuild_reason()
+  let dirty_reasons = runtime.inspector_dirty_reasons()
   RuntimeInspectorSnapshot::{
     size: runtime.size(),
-    dirty_count: runtime.dirty_count(),
-    needs_rebuild: runtime.needs_rebuild(),
-    needs_layout: runtime.needs_layout(),
-    needs_paint: runtime.needs_paint(),
-    needs_redraw: runtime.needs_redraw(),
+    dirty_count,
+    needs_rebuild,
+    needs_layout,
+    needs_paint,
+    needs_redraw,
     draw_command_count: runtime.draw_commands().length(),
+    rebuild_reason,
+    dirty_reasons,
   }
+}
+
+///|
+pub fn ViewTreeInspectorSnapshot::from_runtime(
+  runtime : AppRuntime,
+) -> ViewTreeInspectorSnapshot {
+  runtime.view_tree_inspector_snapshot()
 }
 
 ///|
@@ -75,6 +155,7 @@ pub fn LayoutInspectorSnapshot::from_runtime(
     node_count: layout_node_count(layout),
     leaf_count: layout_leaf_count(layout),
     max_depth: layout_max_depth(layout),
+    bounds: layout_bounds_entries(runtime.layout_tree_root(), depth=0),
   }
 }
 
@@ -103,6 +184,12 @@ pub fn SemanticsInspectorSnapshot::from_runtime(
     focusable_count: semantics_focusable_count(semantics),
     action_count: semantics_action_count(semantics),
     max_depth: semantics_max_depth(semantics),
+    selected_count: semantics_selected_count(semantics),
+    checked_count: semantics_checked_count(semantics),
+    expanded_count: semantics_expanded_count(semantics),
+    invalid_count: semantics_invalid_count(semantics),
+    required_count: semantics_required_count(semantics),
+    described_count: semantics_described_count(semantics),
   }
 }
 
@@ -149,6 +236,25 @@ fn layout_max_depth(node : LayoutResult) -> Int {
     depth = devtools_max_int(depth, 1 + layout_max_depth(child))
   }
   depth
+}
+
+///|
+fn layout_bounds_entries(
+  node : PlacedNode,
+  depth~ : Int,
+) -> Array[LayoutBoundsInspectorEntry] {
+  let entries : Array[LayoutBoundsInspectorEntry] = [
+    {
+      element_id: node.element_id,
+      frame: node.frame,
+      depth,
+      child_count: node.children.length(),
+    },
+  ]
+  for child in node.children {
+    entries.append(layout_bounds_entries(child, depth=depth + 1))
+  }
+  entries
 }
 
 ///|
@@ -255,6 +361,60 @@ fn semantics_max_depth(node : SemanticsNode) -> Int {
     depth = devtools_max_int(depth, 1 + semantics_max_depth(child))
   }
   depth
+}
+
+///|
+fn semantics_selected_count(node : SemanticsNode) -> Int {
+  let mut count = if node.state.selected { 1 } else { 0 }
+  for child in node.children {
+    count = count + semantics_selected_count(child)
+  }
+  count
+}
+
+///|
+fn semantics_checked_count(node : SemanticsNode) -> Int {
+  let mut count = if node.state.checked { 1 } else { 0 }
+  for child in node.children {
+    count = count + semantics_checked_count(child)
+  }
+  count
+}
+
+///|
+fn semantics_expanded_count(node : SemanticsNode) -> Int {
+  let mut count = if node.state.expanded { 1 } else { 0 }
+  for child in node.children {
+    count = count + semantics_expanded_count(child)
+  }
+  count
+}
+
+///|
+fn semantics_invalid_count(node : SemanticsNode) -> Int {
+  let mut count = if node.state.invalid { 1 } else { 0 }
+  for child in node.children {
+    count = count + semantics_invalid_count(child)
+  }
+  count
+}
+
+///|
+fn semantics_required_count(node : SemanticsNode) -> Int {
+  let mut count = if node.state.required { 1 } else { 0 }
+  for child in node.children {
+    count = count + semantics_required_count(child)
+  }
+  count
+}
+
+///|
+fn semantics_described_count(node : SemanticsNode) -> Int {
+  let mut count = if node.description != "" { 1 } else { 0 }
+  for child in node.children {
+    count = count + semantics_described_count(child)
+  }
+  count
 }
 
 ///|
