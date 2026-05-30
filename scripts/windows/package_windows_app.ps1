@@ -28,6 +28,16 @@ function Convert-PackagePath {
   return ($Value -replace '/', '\')
 }
 
+function Write-Utf8NoBom {
+  param(
+    [string]$PathValue,
+    [string]$Value
+  )
+
+  $encoding = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($PathValue, $Value, $encoding)
+}
+
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $scriptDir "..\..")).Path
 $useExplicitWgpuNativeRoot = -not [string]::IsNullOrWhiteSpace($WgpuNativeRoot)
@@ -127,7 +137,7 @@ try {
     bundleName = $AppName
     runtimeFiles = @("vulkan-1.dll", "libwinpthread-1.dll")
   } | ConvertTo-Json -Depth 4
-  Set-Content -LiteralPath $manifestPath -Value $manifest -Encoding UTF8
+  Write-Utf8NoBom $manifestPath $manifest
 
   & node (Join-Path $repoRoot "scripts\validate-package-manifest.mjs") $manifestPath --platform windows
   if ($LASTEXITCODE -ne 0) {

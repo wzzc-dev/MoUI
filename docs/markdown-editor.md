@@ -147,19 +147,15 @@ The Skia entrypoint requires the same real native Skia link setup used by
 `examples/showcase/macos_skia`; `scripts/macos-skia-renderer-smoke.sh` can
 configure those flags temporarily while running Skia smoke checks.
 
-Windows native:
+Windows native uses the shared MSVC helper. It accepts any Windows entrypoint
+package, including the Markdown Editor package:
 
 ```powershell
-moon build examples/markdown_editor/windows --target native
-.\_build\native\debug\build\examples\markdown_editor\windows\windows.exe
-```
-
-The Windows helper configures MSYS2 and lets `wgpu_mbt` manage the
-default `wgpu-native` prebuild; pass `-WgpuNativeRoot` only when using a
-preseeded local release root:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
 ```
 
 ## Validation

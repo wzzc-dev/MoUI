@@ -193,6 +193,14 @@ persist local absolute Skia paths so direct commands such as
 `moon run examples/showcase/macos_skia --target native` use real Skia; keep those
 machine-local `moon.pkg` edits out of commits.
 
+Windows native uses the MSVC WGPU toolchain path: Visual Studio C++ build
+tools, vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode with the official
+MSVC `wgpu_native.dll`. Use `scripts/windows/setup_msvc_deps.ps1`,
+`scripts/windows/build_windows_msvc.ps1`, and
+`scripts/windows/package_windows_app_msvc.ps1` for setup, build, and packaging.
+When changing Windows native setup, keep docs, CI, and repo-local skills aligned
+with this MSVC-only route.
+
 ## Renderer Capability Tracking
 
 Renderer feature status is tracked per backend in `render/capabilities.mbt` and

@@ -10,7 +10,6 @@ import {
 supported_targets = "native"
 
 options(
-  link: { "native": { "cc-link-flags": "-lgdi32 -luser32 -lz" } },
   "native-stub": [ "win32_skia_presenter.c" ],
   targets: { },
 )
