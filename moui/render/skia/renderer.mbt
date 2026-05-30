@@ -735,7 +735,7 @@ fn skia_draw_text_payload_for_resolution(
   match skia_font_with_resolution(font_spec, resolution) {
     Some(font) => {
       let glyph_run = skia_glyph_run_for_resolution(font, text, resolution)
-      if skia_glyph_run_has_visible_glyphs(glyph_run) {
+      if skia_glyph_run_can_draw_text(glyph_run) {
         Some((font, glyph_run))
       } else {
         match skia_fallback_draw_font(font_spec, resolution) {
@@ -1092,12 +1092,15 @@ fn skia_empty_typeface_text_system() -> @core.TextSystem {
 ///|
 fn skia_system_font_mgr_text_system() -> @core.TextSystem {
   @core.TextSystem::new(id="skia-raster-text-system", measure=input => {
-    match skia_font(input.font) {
-      Some(font) => {
-        let fallback = @core.TextSystem::fallback().measure_text(input)
-        skia_text_layout_result(font, input, fallback)
-      }
-      None => @core.TextSystem::fallback().measure_text(input)
+    let fallback = @core.TextSystem::fallback().measure_text(input)
+    match
+      skia_draw_text_payload_for_resolution(
+        input.font,
+        input.text,
+        SkiaFontResolution::SystemFontMgr,
+      ) {
+      Some((font, _)) => skia_text_layout_result(font, input, fallback)
+      None => fallback
     }
   })
 }
@@ -1247,13 +1250,18 @@ fn skia_glyph_run_has_visible_glyphs(run : SkiaGlyphRun) -> Bool {
 }
 
 ///|
+fn skia_glyph_run_can_draw_text(run : SkiaGlyphRun) -> Bool {
+  skia_glyph_run_has_visible_glyphs(run) &&
+  run.glyphs.all(glyph => glyph.to_int() != 0)
+}
+
+///|
 fn skia_fallback_draw_font(
   font : @core.FontSpec,
   resolution : SkiaFontResolution,
 ) -> @skia_native.Font? {
   match resolution {
-    SkiaFontResolution::SystemFontMgr => None
-    SkiaFontResolution::EmptyTypeface =>
+    SkiaFontResolution::SystemFontMgr | SkiaFontResolution::EmptyTypeface =>
       @skia_native.Font::default(size=Float::from_double(font.size))
   }
 }
@@ -1276,11 +1284,6 @@ fn skia_font_with_resolution(
         None => @skia_native.Font::default(size=Float::from_double(font.size))
       }
   }
-}
-
-///|
-fn skia_font(font : @core.FontSpec) -> @skia_native.Font? {
-  skia_font_with_resolution(font, SkiaFontResolution::SystemFontMgr)
 }
 
 ///|

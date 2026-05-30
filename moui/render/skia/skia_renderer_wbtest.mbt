@@ -53,7 +53,7 @@ test "skia font resolver maps MoUI font families to platform candidates" {
 
 ///|
 test "skia font resolver preserves fallback availability" {
-  match skia_font(@core.FontSpec::new(size=14.0, weight=400)) {
+  match skia_test_font(@core.FontSpec::new(size=14.0, weight=400)) {
     Some(font) => assert_true(font.size() == 14.0)
     None => assert_true(!skia_available())
   }
@@ -63,7 +63,7 @@ test "skia font resolver preserves fallback availability" {
     weight=700,
     style=@core.FontStyle::Italic,
   )
-  match skia_font(missing) {
+  match skia_test_font(missing) {
     Some(font) => assert_true(font.size() == 15.0)
     None => assert_true(!skia_available())
   }
@@ -71,7 +71,7 @@ test "skia font resolver preserves fallback availability" {
 
 ///|
 fn skia_test_native_text_available() -> Bool {
-  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+  match skia_test_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => skia_test_font_has_visible_text(font, "Slim")
     None => false
   }
@@ -84,6 +84,11 @@ fn skia_test_font_has_visible_text(
 ) -> Bool {
   skia_measure_text_width(font, text) > 0.0 &&
   skia_glyph_run_has_visible_glyphs(skia_glyph_run(font, text))
+}
+
+///|
+fn skia_test_font(font : @core.FontSpec) -> @skia_native.Font? {
+  skia_font_with_resolution(font, SkiaFontResolution::SystemFontMgr)
 }
 
 ///|
@@ -144,7 +149,6 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
     assert_true(system.id() == @core.TextSystem::fallback().id())
   } else {
     assert_true(system.id() == "skia-raster-empty-typeface-text-system")
-    let fallback = @core.TextSystem::fallback().measure_text(input)
     match
       skia_draw_text_payload_for_resolution(
         input.font,
@@ -177,7 +181,7 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
 
 ///|
 test "skia text system exposes measured caret positions" {
-  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+  match skia_test_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {
       let input = @core.TextLayoutInput::new(
         text="Slim",
@@ -204,7 +208,7 @@ test "skia text system exposes measured caret positions" {
 
 ///|
 test "skia text drawing builds best available glyph runs" {
-  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+  match skia_test_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {
       let run = skia_glyph_run(font, "Slim")
       if skia_test_font_has_visible_text(font, "Slim") {
@@ -224,7 +228,7 @@ test "skia text drawing builds best available glyph runs" {
 
 ///|
 test "skia text metrics derive baseline and height from font metrics" {
-  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+  match skia_test_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {
       let metrics = skia_text_metrics(
         font,
@@ -247,7 +251,7 @@ test "skia text metrics derive baseline and height from font metrics" {
 
 ///|
 test "skia text system clamps measured carets to max width" {
-  match skia_font(@core.FontSpec::new(size=20.0, weight=400)) {
+  match skia_test_font(@core.FontSpec::new(size=20.0, weight=400)) {
     Some(font) => {
       let input = @core.TextLayoutInput::new(
         text="MoUI",
@@ -269,7 +273,7 @@ test "skia text system clamps measured carets to max width" {
 
 ///|
 test "skia text system keeps unicode caret coverage" {
-  match skia_font(@core.FontSpec::new(size=18.0, weight=400)) {
+  match skia_test_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {
       let text = "A你🙂"
       let carets = skia_caret_positions(font, text)

@@ -67,14 +67,17 @@ resolve the MoUI `FontSpec` family stack, weight, and style through `skia_mbt`
 baseline/height plus Skia-measured prefix caret positions for basic input
 geometry. Rendering now uses optional SkShaper shaped glyph runs when the
 `skia_mbt` native package is linked with SkShaper support, and otherwise falls
-back to positioned glyph runs. The macOS Skia provider currently starts with the
-safe `EmptyTypeface` font resolution mode, which avoids the system FontMgr and
-disables SkShaper during early startup. When that empty typeface produces a
-blank glyph run, the renderer retries measurement and drawing with Skia's
-default font so startup Showcase text remains visible and text-field caret
-positions stay aligned with the drawn glyphs while the layout-time system
-FontMgr and SkShaper paths stay out of the first-frame path. SkParagraph-style
-line breaking, bidi, and broader typography conformance remain follow-up work.
+back to positioned glyph runs. Linux Skia resolves its default `FontMgr` through
+fontconfig/FreeType when those Skia port headers are available, with a directory
+font manager fallback over common system font directories. If the selected Skia
+font produces a blank or incomplete glyph run, the renderer retries measurement
+and drawing with Skia's default font so startup Showcase text remains visible
+and text-field caret positions stay aligned with the drawn glyphs. The macOS
+Skia provider currently starts with the safe `EmptyTypeface` font resolution
+mode, which avoids the system FontMgr and disables SkShaper during early
+startup while still using that same default-font retry path. SkParagraph-style
+line breaking, bidi, mixed-script fallback runs, and broader typography
+conformance remain follow-up work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
