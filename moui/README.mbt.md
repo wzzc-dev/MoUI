@@ -148,9 +148,10 @@ manifest under `Contents/Resources`.
 
 ## Windows Native
 
-Windows native examples use the static GNU `wgpu-native` release below. These
-builds are useful for platform validation, but they are intentionally treated as
-slow checks rather than routine package-level tests.
+Windows native examples use MSYS2 UCRT64 plus the static GNU `wgpu-native`
+release managed by `wgpu_mbt`'s prebuild flow. These builds are useful for
+platform validation, but they are intentionally treated as slow checks rather
+than routine package-level tests.
 
 Install native build/runtime dependencies with MSYS2 UCRT64:
 
@@ -161,26 +162,18 @@ C:\msys64\usr\bin\pacman.exe -S --needed --noconfirm `
   mingw-w64-ucrt-x86_64-vulkan-headers
 ```
 
-Use the static Windows GNU `wgpu-native` release expected by the helper script:
-
-```text
-.local_deps\wgpu-native\v27.0.4.0\wgpu-windows-x86_64-gnu-release
-```
-
-Download it manually from:
-
-```text
-https://github.com/gfx-rs/wgpu-native/releases/tag/v27.0.4.0
-```
 ### Showcase
 
 ```powershell
 $env:PATH = "C:\msys64\ucrt64\bin;$env:PATH"
 $env:CC = "x86_64-w64-mingw32-gcc"
 $env:CXX = "x86_64-w64-mingw32-g++"
-$env:MBT_WGPU_NATIVE_ROOT = "$PWD\.local_deps\wgpu-native\v27.0.4.0\wgpu-windows-x86_64-gnu-release"
 moon run examples/showcase/windows --target native
 ```
+
+To use a preseeded local `wgpu-native` archive instead of the `wgpu_mbt`
+prebuild-managed copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted release root
+or pass `-WgpuNativeRoot` to the Windows helper scripts.
 
 The Showcase also has a Windows entrypoint that selects the shared Moon Cosmic
 text provider explicitly:
@@ -191,7 +184,7 @@ moon run examples/showcase/windows_cosmic --target native
 
 ### Markdown Editor
 
-Build the WYSIWYG Markdown editor with the static helper:
+Build the WYSIWYG Markdown editor with the Windows helper:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
@@ -209,7 +202,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.p
 The output folder includes and validates the same schema version 1
 `moui-package.json` manifest plus copied runtime DLL metadata.
 
-Build and run the WYSIWYG Markdown editor with the static helper:
+Build and run the WYSIWYG Markdown editor with the Windows helper:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1

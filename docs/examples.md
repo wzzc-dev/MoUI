@@ -222,8 +222,9 @@ inspected without parsing `Info.plist`.
 
 ## Windows Native
 
-Windows examples use MSYS2 UCRT64 and the static Windows GNU `wgpu-native`
-release documented in `platform-notes.md`:
+Windows examples use MSYS2 UCRT64. The static Windows GNU `wgpu-native` release
+is normally managed by `wgpu_mbt`'s prebuild flow, with optional explicit local
+roots documented in `platform-notes.md`:
 
 ```sh
 moon build examples/showcase/windows --target native
@@ -231,8 +232,8 @@ moon build examples/showcase/windows_cosmic --target native
 moon build examples/markdown_editor/windows --target native
 ```
 
-The Markdown editor can also use the helper script for the expected static
-dependency layout:
+The Markdown editor can also use the helper script to configure MSYS2 and build
+the native entrypoint:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly

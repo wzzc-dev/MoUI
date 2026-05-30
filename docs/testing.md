@@ -242,11 +242,30 @@ measurement set: startup, frame time, dirty-count, draw-command count, and
 memory. `--platform` layers in current-platform backend checks through
 `scripts/dev-check.sh --platform-examples-test`.
 
-CI runs the daily check, text conformance plus text diagnostic matrix, and the
-Showcase golden build scaffold from `.github/workflows/ci.yml`. Keep this
-workflow package-scoped: platform-native executable builds and real screenshot
-capture should be added as separate jobs once the runner images have the needed
-windowing and browser dependencies.
+CI runs several bounded jobs from `.github/workflows/ci.yml`:
+
+- `Core conformance` runs the daily check, text conformance plus the diagnostic
+  text matrix, and the Showcase golden build scaffold.
+- `Public API surface` runs `moon info` and fails if generated
+  `pkg.generated.mbti` files drift.
+- `Linux platform contracts` installs Wayland development packages and runs the
+  current-platform backend checks on Ubuntu.
+- `macOS packaging smoke` packages Showcase as a local `.app`, validates the
+  package manifest, and uploads the bundle artifact.
+- `Benchmark scaffold` runs `sh scripts/conformance-check.sh --bench` to keep
+  benchmark build targets healthy.
+
+Manual `workflow_dispatch` inputs add heavier coverage when needed:
+
+- `run_slow_native_examples` builds current-platform native examples in the
+  macOS packaging and Linux platform jobs.
+- `run_windows_native` runs Windows backend checks, builds the Markdown Editor
+  Windows entrypoint while letting `wgpu_mbt` manage static `wgpu-native`,
+  packages Showcase, and uploads the portable folder artifact.
+- `run_real_skia_smoke` runs the opt-in macOS real Skia renderer smoke.
+
+CI still does not run browser screenshot automation or pixel diffing; the
+golden job remains a build-and-capture handoff until a browser runner is added.
 
 ## Golden Screenshots And Benchmarks
 

@@ -5,6 +5,27 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_slow_native_examples:
+        description: Build current-platform native examples on macOS and Linux.
+        required: false
+        default: false
+        type: boolean
+      run_windows_native:
+        description: Run Windows native backend checks and packaging smoke.
+        required: false
+        default: false
+        type: boolean
+      run_real_skia_smoke:
+        description: Run the opt-in macOS real Skia renderer smoke.
+        required: false
+        default: false
+        type: boolean
+
+env:
+  MOUI_WINDOW_REMOTE: https://github.com/wzzc-dev/window.git
+  MOUI_SKIA_MBT_REMOTE: https://github.com/wzzc-dev/skia_mbt.git
 
 jobs:
   conformance:
@@ -38,3 +59,220 @@ jobs:
 
       - name: Build showcase preview target
         run: sh scripts/conformance-check.sh --golden
+
+  api-surface:
+    name: Public API surface
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Restore local dependencies
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Generate public API interfaces
+        run: moon info
+
+      - name: Check generated interface drift
+        run: git diff --exit-code -- '**/pkg.generated.mbti'
+
+  linux-platform:
+    name: Linux platform contracts
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install native Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwayland-dev wayland-protocols wayland-scanner pkg-config unzip
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Restore local dependencies
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Run Linux backend tests
+        run: sh scripts/dev-check.sh --platform-examples-test
+
+      - name: Build Linux native examples
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_slow_native_examples }}
+        run: sh scripts/dev-check.sh --platform-examples-build
+
+  macos-packaging:
+    name: macOS packaging smoke
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Restore local dependencies
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Package Showcase app bundle
+        run: |
+          sh scripts/package-macos-app.sh \
+            --package examples/showcase/macos \
+            --name "MoUI Showcase" \
+            --bundle-id dev.wzzc.moui.showcase \
+            --version 0.1.0 \
+            --build-version "$GITHUB_RUN_NUMBER"
+
+      - name: Build macOS native examples
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_slow_native_examples }}
+        run: |
+          moon build examples/showcase/macos --target native
+          moon build examples/showcase/macos_skia --target native
+          moon build examples/markdown_editor/macos --target native
+
+      - name: Upload macOS package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-showcase-macos-app
+          path: dist/macos/MoUI Showcase.app
+          if-no-files-found: error
+
+  benchmark-scaffold:
+    name: Benchmark scaffold
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Restore local dependencies
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Build benchmark targets
+        run: sh scripts/conformance-check.sh --bench
+
+  windows-native:
+    name: Windows native smoke
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_windows_native }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MSYS2 UCRT64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-vulkan-loader
+            mingw-w64-ucrt-x86_64-vulkan-headers
+
+      - name: Configure Windows native toolchain
+        shell: pwsh
+        run: |
+          "C:\msys64\ucrt64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "CC=x86_64-w64-mingw32-gcc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CXX=x86_64-w64-mingw32-g++" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Set up MoonBit
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -UseBasicParsing https://cli.moonbitlang.com/install/powershell.ps1 -OutFile install-moonbit.ps1
+          ./install-moonbit.ps1
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Restore local dependencies
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          moon version --all
+          moon update
+
+      - name: Run Windows backend tests
+        shell: pwsh
+        run: |
+          moon test moui/backend/windows --target native
+          moon test moui/backend/windows/wgpu --target native
+          moon test moui/backend/windows/skia --target native
+
+      - name: Build Markdown Editor Windows entrypoint
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\markdown_editor_windows_static.ps1 -BuildOnly
+
+      - name: Package Showcase Windows folder
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app.ps1 `
+            -Package examples/showcase/windows `
+            -AppName MoUIShowcase `
+            -Version 0.1.0 `
+            -BuildNumber $env:GITHUB_RUN_NUMBER
+
+      - name: Upload Windows package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-showcase-windows-portable
+          path: dist/windows/MoUIShowcase
+          if-no-files-found: error
+
+  real-skia-smoke:
+    name: Real Skia smoke
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_real_skia_smoke }}
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Restore local dependencies
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Run macOS real Skia smoke
+        run: sh scripts/macos-skia-renderer-smoke.sh
