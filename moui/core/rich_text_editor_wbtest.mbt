@@ -497,6 +497,74 @@ test "rich text block height counts embedded visual newlines" {
 }
 
 ///|
+test "rich text block draws embedded visual newlines on separate rows" {
+  let commands : Array[DrawCommand] = []
+  let font = FontSpec::new(size=16.0, weight=400)
+  let document = RichTextDocument::new(blocks=[
+    RichTextBlock::new(
+      runs=[
+        RichTextRun::new(text="moonbit"),
+        RichTextRun::new(text="\nlet x = 1\n"),
+      ],
+      inset=Insets::symmetric(vertical=4.0),
+      line_height=Some(20.0),
+    ),
+  ])
+  append_rich_text_blocks(
+    commands,
+    document,
+    Rect::new(x=10.0, y=20.0, width=260.0, height=120.0),
+    font,
+    Color::black(),
+    TextSystem::fallback(),
+  )
+  let mut first_y = -1
+  let mut second_y = -1
+  for command in commands {
+    match command {
+      DrawText({ text: "moonbit", frame, .. }) =>
+        first_y = frame.origin.y.to_int()
+      DrawText({ text: "let x = 1", frame, .. }) =>
+        second_y = frame.origin.y.to_int()
+      _ => ()
+    }
+  }
+  inspect(first_y, content="24")
+  inspect(second_y, content="44")
+}
+
+///|
+test "rich text caret geometry follows embedded visual newlines" {
+  let font = FontSpec::new(size=16.0, weight=400)
+  let content = Rect::new(x=10.0, y=20.0, width=260.0, height=120.0)
+  let document = RichTextDocument::new(blocks=[
+    RichTextBlock::new(
+      runs=[
+        RichTextRun::new(text="moonbit"),
+        RichTextRun::new(text="\n", source_range=None),
+        RichTextRun::new(
+          text="let x = 1\n",
+          source_range=Some({ start: 0, end: 10 }),
+        ),
+      ],
+      line_height=Some(20.0),
+      source_range=Some({ start: 0, end: 10 }),
+      content_range=Some({ start: 0, end: 10 }),
+    ),
+  ])
+  guard rich_text_document_caret_rect_at_source(document, 0, content, font)
+    is Some(first_code_rect) else {
+    fail("expected code caret rect")
+  }
+  guard rich_text_document_caret_rect_at_source(document, 10, content, font)
+    is Some(blank_line_rect) else {
+    fail("expected blank line caret rect")
+  }
+  inspect(first_code_rect.origin.y.to_int(), content="44")
+  inspect(blank_line_rect.origin.y.to_int(), content="64")
+}
+
+///|
 test "rich text block left border stays outside inset text" {
   let commands : Array[DrawCommand] = []
   let font = FontSpec::new(size=16.0, weight=400)

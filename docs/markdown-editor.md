@@ -69,12 +69,19 @@ The editor supports formatted editing for common block and inline structures:
   autolink text.
 - The active block also temporarily reveals its Markdown prefix, including
   heading markers, list and task markers, ordered-list numbers, and blockquote
-  markers, while inactive blocks keep their cleaner visual presentation.
+  markers, while inactive blocks keep their cleaner visual presentation. Fenced
+  code blocks reveal their full source, including opening and closing fences,
+  so language info and fence text are edited directly in the code area.
 - Setext heading handling, list and quote-list continuation on Enter,
   ordered-list renumbering, Tab and Shift-Tab indentation, inline marker
   pairing/skip, and marker-aware Backspace.
+- Blank Markdown source lines are preserved as visible editable paragraph lines,
+  so pressing Enter after a heading or paragraph immediately creates a blank
+  line for the caret before any further text is typed.
 - Fenced code editing supports both backtick and tilde fences, including Enter
-  completion for `~~~`/`~~~~` openers with optional language info.
+  completion for `~~~`/`~~~~` openers with optional language info. Code content
+  preserves intentional leading and trailing blank lines, so pressing Enter
+  inside a code block immediately creates a visible empty code line.
 - Typed-space block shortcuts recognize common Markdown marker variants,
   including `+ ` bullets and `1) ` ordered-list markers, and normalize them to
   the editor's canonical Markdown source. Natural task-list marker forms such

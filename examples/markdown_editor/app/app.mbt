@@ -19,7 +19,6 @@ pub struct MarkdownEditorApp {
   selection : @core.State[MarkdownEditorSelection]
   link_target : @core.State[String]
   image_target : @core.State[String]
-  code_language : @core.State[String]
   footnote_text : @core.State[String]
   html_block_text : @core.State[String]
   target_kind : @core.State[MarkdownEditorTargetKind]
@@ -41,7 +40,6 @@ enum MarkdownEditorTargetKind {
   PlainSelection
   LinkTarget
   ImageTarget
-  CodeLanguageTarget
   FootnoteTarget
   HtmlBlockTarget
   TableTools
@@ -54,7 +52,6 @@ priv enum MarkdownEditorMsg {
   ToggleSourcePreview
   ApplyLinkTarget
   ApplyImageTarget
-  ApplyCodeLanguage
   ApplyFootnoteText
   ApplyHtmlBlockText
   ApplyCommand(MarkdownEditorCommand)
@@ -70,7 +67,6 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     selection: @core.State::new({ caret: 0, selection: None }),
     link_target: @core.State::new("https://moui.dev"),
     image_target: @core.State::new("assets/image.png"),
-    code_language: @core.State::new("moonbit"),
     footnote_text: @core.State::new("Footnote text"),
     html_block_text: @core.State::new("<div>HTML</div>"),
     target_kind: @core.State::new(PlainSelection),
@@ -138,11 +134,6 @@ fn MarkdownEditorApp::apply_link_target(self : MarkdownEditorApp) -> Unit {
 ///|
 fn MarkdownEditorApp::apply_image_target(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetImageTarget(self.image_target.get()))
-}
-
-///|
-fn MarkdownEditorApp::apply_code_language(self : MarkdownEditorApp) -> Unit {
-  self.apply_command_to_selection(SetCodeLanguage(self.code_language.get()))
 }
 
 ///|
@@ -236,32 +227,19 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
         }
         None =>
           match
-            markdown_editor_selected_code_language(
+            markdown_editor_selected_html_block_text(
               self.document.get(),
               selection,
             ) {
-            Some(language) => {
-              self.code_language.set(language)
-              self.target_kind.set(CodeLanguageTarget)
+            Some(text) => {
+              self.html_block_text.set(text)
+              self.target_kind.set(HtmlBlockTarget)
             }
             None =>
-              match
-                markdown_editor_selected_html_block_text(
-                  self.document.get(),
-                  selection,
-                ) {
-                Some(text) => {
-                  self.html_block_text.set(text)
-                  self.target_kind.set(HtmlBlockTarget)
-                }
-                None =>
-                  if block_label == "Table" {
-                    self.target_kind.set(TableTools)
-                  } else if block_label == "Code block" {
-                    self.target_kind.set(CodeLanguageTarget)
-                  } else {
-                    self.target_kind.set(PlainSelection)
-                  }
+              if block_label == "Table" {
+                self.target_kind.set(TableTools)
+              } else {
+                self.target_kind.set(PlainSelection)
               }
           }
       }
@@ -293,7 +271,6 @@ fn MarkdownEditorApp::update(
     ToggleSourcePreview => self.toggle_source_preview()
     ApplyLinkTarget => self.apply_link_target()
     ApplyImageTarget => self.apply_image_target()
-    ApplyCodeLanguage => self.apply_code_language()
     ApplyFootnoteText => self.apply_footnote_text()
     ApplyHtmlBlockText => self.apply_html_block_text()
     ApplyCommand(command) => self.apply_command_to_selection(command)
@@ -506,32 +483,6 @@ fn MarkdownEditorApp::target_bar(
           editor_button(
             "Apply",
             ApplyImageTarget,
-            @views.ButtonVariant::Tonal,
-            theme,
-          ),
-        ],
-        spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Center,
-      )
-    CodeLanguageTarget =>
-      row(
-        [
-          block_badge,
-          text("Code lang", width=88.0, height=34.0)
-          .font(theme.typography.caption)
-          .foreground(theme.palette.muted),
-          text_field_binding(
-            ctx.binding(self.code_language),
-            on_submit=Some(ApplyCodeLanguage),
-            placeholder="moonbit",
-            variant=@views.TextFieldVariant::Outline,
-            theme~,
-            width=360.0,
-            height=34.0,
-          ).key("markdown-code-language"),
-          editor_button(
-            "Apply",
-            ApplyCodeLanguage,
             @views.ButtonVariant::Tonal,
             theme,
           ),

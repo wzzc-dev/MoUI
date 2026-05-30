@@ -297,13 +297,9 @@ test "markdown editor app target inputs sync from selection and apply edits" {
   }
   app.set_document("```moonbit\nlet x = 1\n```")
   app.set_selection(15, None)
-  guard app.target_kind() is CodeLanguageTarget else {
-    fail("expected code language mode")
+  guard app.target_kind() is PlainSelection else {
+    fail("expected direct code source editing mode")
   }
-  inspect(app.code_language(), content="moonbit")
-  app.set_code_language("rust")
-  app.apply_code_language()
-  inspect(app.document(), content="```rust\nlet x = 1\n```")
   app.set_document("Note[^a]\n\n[^a]: Old text")
   app.set_selection(7, Some(@core.TextRange::new(start=6, end=7)))
   guard app.target_kind() is FootnoteTarget else {
@@ -454,6 +450,16 @@ test "markdown editor target bar renders contextual controls" {
   app.set_selection(15, None)
   let code = app.runtime(width=980.0, height=700.0).draw_commands()
   assert_true(
+    code.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "```moonbit", .. })
+    }),
+  )
+  assert_true(
+    code.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "```", .. })
+    }),
+  )
+  assert_false(
     code.any(command => {
       command is @core.DrawCommand::DrawText({ text: "Code lang", .. })
     }),
@@ -1257,7 +1263,7 @@ test "markdown editor copy exports visual text without hidden markdown markers" 
   guard copied.clipboard_text is Some(text) else {
     fail("expected copied visual text")
   }
-  inspect(text, content="Title\nbold")
+  inspect(text, content="Title\n\nbold")
 }
 
 ///|

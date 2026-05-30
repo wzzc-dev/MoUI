@@ -74,10 +74,7 @@ fn parse_markdown(text : String) -> Array[MarkdownBlock] {
     if in_code {
       if markdown_closing_code_fence(line, code_fence) {
         blocks.push(
-          markdown_code_block(
-            markdown_join_lines(code_lines).trim().to_owned(),
-            code_language,
-          ),
+          markdown_code_block(markdown_join_lines(code_lines), code_language),
         )
         code_lines.clear()
         code_fence = ""
@@ -134,10 +131,7 @@ fn parse_markdown(text : String) -> Array[MarkdownBlock] {
   }
   if in_code {
     blocks.push(
-      markdown_code_block(
-        markdown_join_lines(code_lines).trim().to_owned(),
-        code_language,
-      ),
+      markdown_code_block(markdown_join_lines(code_lines), code_language),
     )
   }
   blocks
@@ -416,12 +410,14 @@ fn append_markdown_ast_block(
     FencedCode(code~, info~, ..) =>
       blocks.push(
         markdown_code_block(
-          code.trim().to_owned(),
+          markdown_trim_single_trailing_newline(code),
           markdown_normalize_code_info(Some(info)),
         ),
       )
     IndentedCode(code~, ..) =>
-      blocks.push(markdown_code_block(code.trim().to_owned(), None))
+      blocks.push(
+        markdown_code_block(markdown_trim_single_trailing_newline(code), None),
+      )
     Blockquote(children~, ..) => {
       let text = markdown_blocks_text(children)
       blocks.push({
@@ -505,6 +501,16 @@ fn append_markdown_ast_block(
         code_language: None,
       })
     }
+  }
+}
+
+///|
+fn markdown_trim_single_trailing_newline(text : String) -> String {
+  let chars = text.to_array()
+  if chars.length() > 0 && chars[chars.length() - 1] == '\n' {
+    String::from_array(chars[:chars.length() - 1])
+  } else {
+    text
   }
 }
 
@@ -1283,7 +1289,8 @@ fn markdown_code_block_runs(
           visual_text=Some(language),
           color=Some(@core.Color::black().multiply_alpha(0.56)),
         ),
-        @core.RichTextRun::new(text="\n" + block.text, font=Some(font)),
+        @core.RichTextRun::new(text="\n", font=Some(font)),
+        @core.RichTextRun::new(text=block.text, font=Some(font)),
       ]
     None => [@core.RichTextRun::new(text=block.text, font=Some(font))]
   }

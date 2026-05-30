@@ -83,14 +83,6 @@ fn MarkdownEditorApp::set_image_target(
 }
 
 ///|
-fn MarkdownEditorApp::set_code_language(
-  self : MarkdownEditorApp,
-  language : String,
-) -> Unit {
-  self.code_language.set(language)
-}
-
-///|
 fn MarkdownEditorApp::set_footnote_text(
   self : MarkdownEditorApp,
   text : String,
@@ -114,11 +106,6 @@ fn MarkdownEditorApp::link_target(self : MarkdownEditorApp) -> String {
 ///|
 fn MarkdownEditorApp::image_target(self : MarkdownEditorApp) -> String {
   self.image_target.get()
-}
-
-///|
-fn MarkdownEditorApp::code_language(self : MarkdownEditorApp) -> String {
-  self.code_language.get()
 }
 
 ///|

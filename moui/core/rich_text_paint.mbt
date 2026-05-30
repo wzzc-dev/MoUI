@@ -262,7 +262,9 @@ fn append_rich_text_block_runs(
 ) -> Unit {
   let font = rich_text_block_font(block, base_font)
   let color = rich_text_block_color(block, foreground)
+  let line_height = rich_text_block_line_step(block, base_font)
   let mut x = frame.origin.x
+  let mut line = 0
   if block.prefix != "" {
     let width = rich_text_width(block.prefix, font, text_system)
     commands.push(
@@ -286,63 +288,83 @@ fn append_rich_text_block_runs(
   for run in block.runs {
     let run_font = run.font.unwrap_or(font)
     let run_color = run.color.unwrap_or(color)
-    let text = rich_text_run_visual_text(run)
-    let width = rich_text_run_width(run, run_font, text_system)
-    let run_frame = Rect::new(
-      x~,
-      y=frame.origin.y,
-      width=max_double(
-        0.0,
-        min_double(width, frame.origin.x + frame.size.width - x),
-      ),
-      height=frame.size.height,
-    )
-    match run.background {
-      Some(background) =>
-        commands.push(
-          FillRoundedRectBrush(
-            RoundedRect::new(
-              rect=Rect::new(
-                x=x - 3.0,
-                y=frame.origin.y + 4.0,
-                width=width + 6.0,
-                height=max_double(12.0, frame.size.height - 8.0),
-              ),
-              radius=run.background_radius,
-            ),
-            background,
-          ),
+    let segments = rich_text_split_lines(rich_text_run_visual_text(run))
+    for index, segment in segments {
+      let width = rich_text_run_segment_width(
+        run, segment, run_font, text_system,
+      )
+      let line_y = frame.origin.y + line.to_double() * line_height
+      let run_frame = Rect::new(
+        x~,
+        y=line_y,
+        width=max_double(
+          0.0,
+          min_double(width, frame.origin.x + frame.size.width - x),
+        ),
+        height=rich_text_run_segment_height(run, line_height),
+      )
+      if segment != "" || run.image_source is Some(_) {
+        append_rich_text_run_segment(
+          commands, run, segment, run_frame, width, run_font, run_color,
         )
-      None => ()
+      }
+      if index + 1 < segments.length() {
+        line = line + 1
+        x = frame.origin.x
+      } else {
+        x = x + width
+      }
     }
-    match run.image_source {
-      Some(source) =>
-        commands.push(
-          DrawImage({
-            source,
-            frame: run_frame,
-            opacity: 1.0,
-            fit: run.image_fit,
-          }),
-        )
-      None =>
-        commands.push(
-          DrawText(
-            TextRun::new(
-              text~,
-              frame=run_frame,
-              font=run_font,
-              color=run_color,
-              align=TextAlign::TextStart,
-            ),
-          ),
-        )
-    }
-    append_rich_text_run_decoration(
-      commands, run, run_frame, width, run_font, run_color,
-    )
-    x = x + width
   }
+}
+
+///|
+fn append_rich_text_run_segment(
+  commands : Array[DrawCommand],
+  run : RichTextRun,
+  text : String,
+  run_frame : Rect,
+  width : Double,
+  font : FontSpec,
+  color : Color,
+) -> Unit {
+  match run.background {
+    Some(background) =>
+      commands.push(
+        FillRoundedRectBrush(
+          RoundedRect::new(
+            rect=Rect::new(
+              x=run_frame.origin.x - 3.0,
+              y=run_frame.origin.y + 4.0,
+              width=width + 6.0,
+              height=max_double(12.0, run_frame.size.height - 8.0),
+            ),
+            radius=run.background_radius,
+          ),
+          background,
+        ),
+      )
+    None => ()
+  }
+  match run.image_source {
+    Some(source) =>
+      commands.push(
+        DrawImage({ source, frame: run_frame, opacity: 1.0, fit: run.image_fit }),
+      )
+    None =>
+      commands.push(
+        DrawText(
+          TextRun::new(
+            text~,
+            frame=run_frame,
+            font~,
+            color~,
+            align=TextAlign::TextStart,
+          ),
+        ),
+      )
+  }
+  append_rich_text_run_decoration(commands, run, run_frame, width, font, color)
 }
 
 ///|
@@ -378,9 +400,7 @@ fn rich_text_block_line_height(
   block : RichTextBlock,
   base_font : FontSpec,
 ) -> Double {
-  let text_height = block.line_height.unwrap_or(
-    rich_text_block_font(block, base_font).size * 1.55,
-  )
+  let text_height = rich_text_block_line_step(block, base_font)
   let mut height = text_height *
     rich_text_block_visual_line_count(block).to_double()
   match block.table {
@@ -401,6 +421,16 @@ fn rich_text_block_line_height(
 }
 
 ///|
+fn rich_text_block_line_step(
+  block : RichTextBlock,
+  base_font : FontSpec,
+) -> Double {
+  block.line_height.unwrap_or(
+    rich_text_block_font(block, base_font).size * 1.55,
+  )
+}
+
+///|
 fn rich_text_block_visual_line_count(block : RichTextBlock) -> Int {
   let mut line_count = 1
   line_count = line_count + rich_text_text_newline_count(block.prefix)
@@ -409,6 +439,22 @@ fn rich_text_block_visual_line_count(block : RichTextBlock) -> Int {
       rich_text_text_newline_count(rich_text_run_visual_text(run))
   }
   line_count
+}
+
+///|
+fn rich_text_split_lines(text : String) -> Array[String] {
+  let lines : Array[String] = []
+  let current : Array[Char] = []
+  for ch in text {
+    if ch == '\n' {
+      lines.push(String::from_array(current))
+      current.clear()
+    } else {
+      current.push(ch)
+    }
+  }
+  lines.push(String::from_array(current))
+  lines
 }
 
 ///|
@@ -460,14 +506,26 @@ fn rich_text_width(
 }
 
 ///|
-fn rich_text_run_width(
+fn rich_text_run_segment_width(
   run : RichTextRun,
+  text : String,
   font : FontSpec,
   text_system : TextSystem,
 ) -> Double {
   match run.image_size {
     Some(size) => size.width
-    None => rich_text_width(rich_text_run_visual_text(run), font, text_system)
+    None => rich_text_width(text, font, text_system)
+  }
+}
+
+///|
+fn rich_text_run_segment_height(
+  run : RichTextRun,
+  line_height : Double,
+) -> Double {
+  match run.image_size {
+    Some(size) => max_double(line_height, size.height)
+    None => line_height
   }
 }
 
