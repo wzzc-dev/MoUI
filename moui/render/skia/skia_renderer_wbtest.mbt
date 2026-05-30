@@ -409,6 +409,63 @@ test "skia shaped caret mapping fills cluster gaps monotonically" {
 }
 
 ///|
+test "skia shaped caret mapping keeps emoji cluster caret coverage" {
+  let variation_run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(10),
+      @skia_native.GlyphId::new(11),
+      @skia_native.GlyphId::new(12),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(10.0, 0.0),
+      @skia_mbt.Point::new(22.0, 0.0),
+    ],
+    clusters: [0, 1, 7],
+    width: 30.0,
+  }
+  match skia_shaped_caret_positions("A\u{2615}\u{FE0F}B", variation_run) {
+    Some(carets) => {
+      inspect(carets.length(), content="5")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="10")
+      inspect(carets[2], content="10")
+      inspect(carets[3], content="22")
+      inspect(carets[4], content="30")
+      assert_true(skia_test_carets_are_monotonic(carets))
+    }
+    None => fail("expected variation-selector caret mapping")
+  }
+  let zwj_run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(20),
+      @skia_native.GlyphId::new(21),
+      @skia_native.GlyphId::new(22),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(14.0, 0.0),
+      @skia_mbt.Point::new(28.0, 0.0),
+    ],
+    clusters: [0, 1, 12],
+    width: 34.0,
+  }
+  match skia_shaped_caret_positions("A\u{1F469}\u{200D}\u{1F373}B", zwj_run) {
+    Some(carets) => {
+      inspect(carets.length(), content="6")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="14")
+      inspect(carets[2], content="14")
+      inspect(carets[3], content="14")
+      inspect(carets[4], content="28")
+      inspect(carets[5], content="34")
+      assert_true(skia_test_carets_are_monotonic(carets))
+    }
+    None => fail("expected ZWJ caret mapping")
+  }
+}
+
+///|
 test "skia layout width follows caret source" {
   inspect(skia_layout_width_from_carets([0.0, 4.0, 9.0]), content="9")
   inspect(skia_layout_width_from_carets([]), content="0")
