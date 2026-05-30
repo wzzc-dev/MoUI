@@ -69,6 +69,24 @@ these facts recorded in logs:
 - `native/moon.pkg` and `scripts/native_smoke/moon.pkg` were restored after the
   temporary link rewrite.
 
+The `Real Skia Acceptance` GitHub Actions workflow is designed to produce that
+evidence with the locked JetBrains/skia provider. A successful job for one
+platform can be used as that platform's acceptance evidence when all of these
+conditions are true:
+
+- the job is not a dry run and did not use the fallback workflow;
+- the job used `skia_provider=jetbrains` from `skia-provider-lock.json`;
+- the native smoke executable log contains the full required marker set and
+  `skia_mbt native smoke test passed`;
+- `scripts/verify-real-skia-artifact.*` passed for the uploaded log bundle;
+- the job produced a non-empty `*-platform-acceptance.patch`, proving
+  `accept-platform-status.*` would mark the platform accepted from those logs;
+- the uploaded artifact is retained or downloaded before updating
+  `skia-platform-status.json`.
+
+Passing the older `Fallback` workflow, a dry run, or a syntax-only workflow is
+not acceptance evidence.
+
 Linux source-built acceptance also needs stronger revision evidence:
 
 - `logs/linux-skia-build.log` exists and records the Skia build environment,
