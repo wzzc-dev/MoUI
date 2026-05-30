@@ -36,6 +36,9 @@ jobs:
       - name: Show MoonBit version
         run: moon version --all
 
+      - name: Update MoonBit registry
+        run: moon update
+
       - name: Run fallback gate on Windows
         if: runner.os == 'Windows'
         shell: pwsh

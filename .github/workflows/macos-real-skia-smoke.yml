@@ -98,6 +98,11 @@ jobs:
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
+      - name: Update MoonBit registry
+        if: ${{ !inputs.dry_run_config }}
+        shell: bash
+        run: moon update
+
       - name: Install build dependencies
         if: ${{ !inputs.dry_run_config }}
         shell: bash
