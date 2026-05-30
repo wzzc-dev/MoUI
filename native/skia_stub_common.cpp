@@ -617,6 +617,272 @@ static sk_sp<SkTypeface> moonbit_skia_macos_typeface_from_family(
 }
 #endif
 
+#if defined(__linux__) && \
+  (defined(SKIA_MBT_HAS_FONTCONFIG_FONTMGR) || defined(SKIA_MBT_HAS_DIRECTORY_FONTMGR))
+static bool moonbit_skia_typeface_can_draw_character(
+  const sk_sp<SkTypeface>& typeface,
+  SkUnichar character
+) {
+  return typeface && typeface->unicharToGlyph(character) != 0;
+}
+
+static SkFontMgr* moonbit_skia_linux_font_mgr(void);
+
+static SkFontMgr* moonbit_skia_linux_file_font_mgr(void) {
+#if defined(SKIA_MBT_HAS_EMPTY_FONTMGR)
+  static sk_sp<SkFontMgr> font_mgr = SkFontMgr_New_Custom_Empty();
+  return font_mgr.get();
+#else
+  return moonbit_skia_linux_font_mgr();
+#endif
+}
+
+#if defined(SKIA_MBT_HAS_FONTCONFIG_FONTMGR)
+static int moonbit_skia_fontconfig_weight(const SkFontStyle& style) {
+  int weight = style.weight();
+  if (weight < 150) return FC_WEIGHT_THIN;
+  if (weight < 250) return FC_WEIGHT_EXTRALIGHT;
+  if (weight < 350) return FC_WEIGHT_LIGHT;
+  if (weight < 450) return FC_WEIGHT_REGULAR;
+  if (weight < 550) return FC_WEIGHT_MEDIUM;
+  if (weight < 650) return FC_WEIGHT_DEMIBOLD;
+  if (weight < 750) return FC_WEIGHT_BOLD;
+  if (weight < 850) return FC_WEIGHT_EXTRABOLD;
+  return FC_WEIGHT_BLACK;
+}
+#endif
+
+static bool moonbit_skia_font_mgr_has_families(
+  const sk_sp<SkFontMgr>& font_mgr
+) {
+  return font_mgr && font_mgr->countFamilies() > 0;
+}
+
+static sk_sp<SkFontMgr> moonbit_skia_linux_fontconfig_font_mgr(void) {
+#if defined(SKIA_MBT_HAS_FONTCONFIG_FONTMGR)
+  sk_sp<SkFontMgr> font_mgr = SkFontMgr_New_FontConfig(
+    FcInitLoadConfigAndFonts(),
+    SkFontScanner_Make_FreeType()
+  );
+  if (moonbit_skia_font_mgr_has_families(font_mgr)) {
+    return font_mgr;
+  }
+#endif
+  return nullptr;
+}
+
+#if defined(SKIA_MBT_HAS_DIRECTORY_FONTMGR) && defined(SKIA_MBT_HAS_ORDERED_FONTMGR)
+static void moonbit_skia_linux_append_font_dir(
+  SkOrderedFontMgr* ordered,
+  const char* dir
+) {
+  if (ordered == nullptr || dir == nullptr || dir[0] == '\0') {
+    return;
+  }
+  sk_sp<SkFontMgr> font_mgr = SkFontMgr_New_Custom_Directory(dir);
+  if (moonbit_skia_font_mgr_has_families(font_mgr)) {
+    ordered->append(font_mgr);
+  }
+}
+#endif
+
+static sk_sp<SkFontMgr> moonbit_skia_linux_directory_font_mgr(void) {
+#if defined(SKIA_MBT_HAS_DIRECTORY_FONTMGR) && defined(SKIA_MBT_HAS_ORDERED_FONTMGR)
+  sk_sp<SkOrderedFontMgr> ordered = sk_make_sp<SkOrderedFontMgr>();
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts/truetype/dejavu");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts/truetype/droid");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts/truetype/noto");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts/opentype");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts/truetype");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/local/share/fonts");
+  if (ordered->countFamilies() > 0) {
+    return ordered;
+  }
+#endif
+  return nullptr;
+}
+
+static SkFontMgr* moonbit_skia_linux_font_mgr(void) {
+  static sk_sp<SkFontMgr> font_mgr = []() -> sk_sp<SkFontMgr> {
+    sk_sp<SkFontMgr> fontconfig_mgr = moonbit_skia_linux_fontconfig_font_mgr();
+    if (fontconfig_mgr) {
+      return fontconfig_mgr;
+    }
+    sk_sp<SkFontMgr> directory_mgr = moonbit_skia_linux_directory_font_mgr();
+    if (directory_mgr) {
+      return directory_mgr;
+    }
+    return SkFontMgr::RefEmpty();
+  }();
+  return font_mgr.get();
+}
+
+#if defined(SKIA_MBT_HAS_FONTCONFIG_FONTMGR)
+static int moonbit_skia_fontconfig_width(const SkFontStyle& style) {
+  switch (style.width()) {
+    case 1: return FC_WIDTH_ULTRACONDENSED;
+    case 2: return FC_WIDTH_EXTRACONDENSED;
+    case 3: return FC_WIDTH_CONDENSED;
+    case 4: return FC_WIDTH_SEMICONDENSED;
+    case 6: return FC_WIDTH_SEMIEXPANDED;
+    case 7: return FC_WIDTH_EXPANDED;
+    case 8: return FC_WIDTH_EXTRAEXPANDED;
+    case 9: return FC_WIDTH_ULTRAEXPANDED;
+    default: return FC_WIDTH_NORMAL;
+  }
+}
+#endif
+
+static sk_sp<SkTypeface> moonbit_skia_linux_typeface_from_fontconfig(
+  const char* family_name,
+  const SkFontStyle& style,
+  SkUnichar character
+) {
+#if defined(SKIA_MBT_HAS_FONTCONFIG_FONTMGR)
+  FcConfig* config = FcInitLoadConfigAndFonts();
+  if (config == nullptr) {
+    return nullptr;
+  }
+
+  FcPattern* pattern = FcPatternCreate();
+  if (pattern == nullptr) {
+    FcConfigDestroy(config);
+    return nullptr;
+  }
+
+  const bool has_family_name = family_name != nullptr && family_name[0] != '\0';
+  if (has_family_name) {
+    FcPatternAddString(
+      pattern,
+      FC_FAMILY,
+      reinterpret_cast<const FcChar8*>(family_name)
+    );
+  }
+  if (character != 0) {
+    FcCharSet* charset = FcCharSetCreate();
+    if (charset != nullptr) {
+      FcCharSetAddChar(charset, static_cast<FcChar32>(character));
+      FcPatternAddCharSet(pattern, FC_CHARSET, charset);
+      FcCharSetDestroy(charset);
+    }
+  }
+  FcPatternAddInteger(pattern, FC_WEIGHT, moonbit_skia_fontconfig_weight(style));
+  FcPatternAddInteger(pattern, FC_WIDTH, moonbit_skia_fontconfig_width(style));
+  if (style.slant() != SkFontStyle::kUpright_Slant) {
+    FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ITALIC);
+  }
+  FcConfigSubstitute(config, pattern, FcMatchPattern);
+  FcDefaultSubstitute(pattern);
+
+  FcResult result = FcResultNoMatch;
+  FcPattern* matched = FcFontMatch(config, pattern, &result);
+  FcPatternDestroy(pattern);
+  if (matched == nullptr || result != FcResultMatch) {
+    if (matched != nullptr) {
+      FcPatternDestroy(matched);
+    }
+    FcConfigDestroy(config);
+    return nullptr;
+  }
+
+  FcChar8* file = nullptr;
+  int index = 0;
+  if (FcPatternGetString(matched, FC_FILE, 0, &file) != FcResultMatch) {
+    FcPatternDestroy(matched);
+    FcConfigDestroy(config);
+    return nullptr;
+  }
+  if (FcPatternGetInteger(matched, FC_INDEX, 0, &index) != FcResultMatch) {
+    index = 0;
+  }
+
+  SkFontMgr* font_mgr = moonbit_skia_linux_file_font_mgr();
+  sk_sp<SkTypeface> typeface;
+  if (font_mgr != nullptr) {
+    typeface = font_mgr->makeFromFile(
+      reinterpret_cast<const char*>(file),
+      index
+    );
+  }
+  FcPatternDestroy(matched);
+  FcConfigDestroy(config);
+  if (character == 0 || moonbit_skia_typeface_can_draw_character(typeface, character)) {
+    return typeface;
+  }
+#else
+  (void)family_name;
+  (void)style;
+  (void)character;
+#endif
+  return nullptr;
+}
+
+static sk_sp<SkTypeface> moonbit_skia_linux_typeface_from_family(
+  const char* family_name,
+  const SkFontStyle& style
+) {
+  SkFontMgr* font_mgr = moonbit_skia_linux_font_mgr();
+  if (font_mgr == nullptr) {
+    return nullptr;
+  }
+
+  const bool has_family_name = family_name != nullptr && family_name[0] != '\0';
+  if (has_family_name) {
+    sk_sp<SkTypeface> typeface = font_mgr->matchFamilyStyle(
+      family_name,
+      style
+    );
+    if (typeface) {
+      return typeface;
+    }
+  }
+
+  const char* zh_bcp47[] = {"zh-Hans", "zh"};
+  return font_mgr->matchFamilyStyleCharacter(
+    has_family_name ? family_name : nullptr,
+    style,
+    zh_bcp47,
+    2,
+    0x4F60
+  );
+}
+
+static sk_sp<SkTypeface> moonbit_skia_linux_typeface_for_character(
+  const char* family_name,
+  const SkFontStyle& style,
+  SkUnichar character
+) {
+  sk_sp<SkTypeface> from_fontconfig = moonbit_skia_linux_typeface_from_fontconfig(
+    family_name,
+    style,
+    character
+  );
+  if (from_fontconfig) {
+    return from_fontconfig;
+  }
+
+  SkFontMgr* font_mgr = moonbit_skia_linux_font_mgr();
+  if (font_mgr == nullptr) {
+    return nullptr;
+  }
+
+  const bool has_family_name = family_name != nullptr && family_name[0] != '\0';
+  const char* zh_bcp47[] = {"zh-Hans", "zh"};
+  sk_sp<SkTypeface> typeface = font_mgr->matchFamilyStyleCharacter(
+    has_family_name ? family_name : nullptr,
+    style,
+    zh_bcp47,
+    2,
+    character
+  );
+  if (moonbit_skia_typeface_can_draw_character(typeface, character)) {
+    return typeface;
+  }
+  return nullptr;
+}
+#endif
+
 sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
 #if defined(_WIN32)
   sk_sp<SkTypeface> typeface =
@@ -665,6 +931,82 @@ sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
     nullptr,
     SkFontStyle::Normal()
   );
+#elif defined(__linux__) && \
+  (defined(SKIA_MBT_HAS_FONTCONFIG_FONTMGR) || defined(SKIA_MBT_HAS_DIRECTORY_FONTMGR))
+  sk_sp<SkTypeface> typeface =
+    moonbit_skia_linux_typeface_for_character(
+      "DejaVu Sans",
+      SkFontStyle::Normal(),
+      'S'
+    );
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_linux_typeface_for_character(
+    "Noto Sans",
+    SkFontStyle::Normal(),
+    'S'
+  );
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_linux_typeface_for_character(
+    "Liberation Sans",
+    SkFontStyle::Normal(),
+    'S'
+  );
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_linux_typeface_for_character(
+    "Nimbus Sans",
+    SkFontStyle::Normal(),
+    'S'
+  );
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_linux_typeface_for_character(
+    nullptr,
+    SkFontStyle::Normal(),
+    'S'
+  );
+  if (typeface) {
+    return typeface;
+  }
+  typeface =
+    moonbit_skia_linux_typeface_from_family(
+      "Noto Sans CJK SC",
+      SkFontStyle::Normal()
+    );
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_linux_typeface_from_family(
+    "Noto Sans CJK",
+    SkFontStyle::Normal()
+  );
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_linux_typeface_from_family(
+    "Noto Sans",
+    SkFontStyle::Normal()
+  );
+  if (typeface) {
+    return typeface;
+  }
+  typeface = moonbit_skia_linux_typeface_from_family(
+    "DejaVu Sans",
+    SkFontStyle::Normal()
+  );
+  if (typeface) {
+    return typeface;
+  }
+  return moonbit_skia_linux_typeface_from_family(
+    nullptr,
+    SkFontStyle::Normal()
+  );
 #endif
   return SkTypeface::MakeEmpty();
 }
@@ -677,6 +1019,9 @@ sk_sp<SkTypeface> moonbit_skia_typeface_from_family(
   return moonbit_skia_windows_typeface_from_family(family_name, style);
 #elif defined(__APPLE__)
   return moonbit_skia_macos_typeface_from_family(family_name, style);
+#elif defined(__linux__) && \
+  (defined(SKIA_MBT_HAS_FONTCONFIG_FONTMGR) || defined(SKIA_MBT_HAS_DIRECTORY_FONTMGR))
+  return moonbit_skia_linux_typeface_from_family(family_name, style);
 #else
   (void)family_name;
   (void)style;
@@ -694,6 +1039,14 @@ sk_sp<SkFontMgr> moonbit_skia_default_font_mgr(void) {
   return sk_sp<SkFontMgr>(font_mgr);
 #elif defined(__APPLE__)
   SkFontMgr* font_mgr = moonbit_skia_macos_font_mgr();
+  if (font_mgr == nullptr) {
+    return nullptr;
+  }
+  font_mgr->ref();
+  return sk_sp<SkFontMgr>(font_mgr);
+#elif defined(__linux__) && \
+  (defined(SKIA_MBT_HAS_FONTCONFIG_FONTMGR) || defined(SKIA_MBT_HAS_DIRECTORY_FONTMGR))
+  SkFontMgr* font_mgr = moonbit_skia_linux_font_mgr();
   if (font_mgr == nullptr) {
     return nullptr;
   }

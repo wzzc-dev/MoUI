@@ -23,7 +23,7 @@
         "wasm": ""
       },
       "default_extra_link_flags": {
-        "linux": "-lpthread -ldl -lm",
+        "linux": "-lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm",
         "macos": "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
         "windows": "",
         "android": "",

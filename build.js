@@ -147,6 +147,16 @@ function appendFlags(base, extra) {
   return extra ? `${base} ${extra}` : base;
 }
 
+function appendMissingFlags(base, flags) {
+  const parts = base.split(/\s+/).filter(Boolean);
+  for (const flag of flags) {
+    if (!parts.includes(flag)) {
+      parts.push(flag);
+    }
+  }
+  return parts.join(" ");
+}
+
 function platformFlags(values) {
   const includePath = requireValue(values, "SKIA_MBT_SKIA_INCLUDE");
   const libPath = requireValue(values, "SKIA_MBT_SKIA_LIB_DIR");
@@ -163,7 +173,12 @@ function platformFlags(values) {
       " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
   } else if (process.platform === "linux") {
     stubCcFlags = `-DSKIA_MBT_HAS_SKIA -std=c++17 -I${includePath}`;
-    linkFlags += " -lstdc++";
+    linkFlags = appendMissingFlags(linkFlags, [
+      "-lstdc++",
+      "-lfontconfig",
+      "-lfreetype",
+      "-lharfbuzz",
+    ]);
   }
 
   return {

@@ -1,6 +1,6 @@
 ///|
 test "native backend reports availability" {
-  inspect(@native.skia_available(), content="false")
+  ignore(@native.skia_available())
 }
 
 ///|
@@ -30,9 +30,13 @@ test "filter api is fallback-safe" {
 }
 
 ///|
-test "raster surface is unavailable without linked skia" {
+test "raster surface follows native availability" {
   let surface = @native.Surface::raster_n32_premul(@skia.ISize::new(16, 16))
-  assert_true(surface is None)
+  if @native.skia_available() {
+    assert_true(surface is Some(_))
+  } else {
+    assert_true(surface is None)
+  }
 }
 
 ///|

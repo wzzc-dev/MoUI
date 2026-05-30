@@ -69,8 +69,9 @@ bash scripts/linux-accept-real-skia-smoke.sh --skia-provider source --work-dir .
 On a pre-provisioned Ubuntu runner, use
 `bash scripts/install-linux-smoke-deps.sh --check` to verify the required apt
 packages before spending time on Skia checkout and compilation. The source-build
-path installs `clang` and sets Skia GN `cc="clang"` / `cxx="clang++"` by
-default for reproducible Linux smoke builds.
+path installs `clang` plus fontconfig/FreeType/HarfBuzz development headers and
+sets Skia GN `cc="clang"` / `cxx="clang++"` by default for reproducible Linux
+smoke builds.
 
 Default JetBrains expected artifact/log files:
 

@@ -229,9 +229,9 @@ bash scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
 On an already prepared Ubuntu runner,
 `bash scripts/install-linux-smoke-deps.sh --check` verifies the same apt package
 set that the workflow installs before spending time on Skia checkout and build.
-The Linux source-build defaults install `clang` and pass `cc="clang"` /
-`cxx="clang++"` to Skia GN so the smoke build does not depend on the runner's
-default C++ compiler.
+The Linux source-build defaults install `clang` plus fontconfig/FreeType/
+HarfBuzz development headers and pass `cc="clang"` / `cxx="clang++"` to Skia GN
+so the smoke build does not depend on the runner's default C++ compiler.
 
 When `--skia-rev` is omitted, the Linux source-build helpers read
 `skia-revision.txt`. Keep that file on a known-good Skia commit after the first
