@@ -15,3 +15,7 @@ license = "Apache-2.0"
 keywords = [ "skia", "graphics", "bindings" ]
 
 description = "MoonBit bindings for the Skia Graphics Library"
+
+options(
+  "--moonbit-unstable-prebuild": "build.js",
+)

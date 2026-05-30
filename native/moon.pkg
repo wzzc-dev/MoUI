@@ -4,6 +4,7 @@ import {
 
 options(
   "native-stub": [ "skia_stub.cpp" ],
+  link: { "native": { "stub-cc-flags": "${build.SKIA_MBT_STUB_CC_FLAGS}" } },
   targets: {
     "skia_native.mbt": [ "native", "llvm" ],
     "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
