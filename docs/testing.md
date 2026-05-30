@@ -120,7 +120,10 @@ sh -n scripts/setup-local-deps.sh
 sh -n scripts/check-local-deps.sh
 sh -n scripts/preview-loop.sh
 sh -n scripts/package-macos-app.sh
+node --check scripts/validate-guidance-consistency.mjs
+node scripts/validate-guidance-consistency.mjs
 node --check scripts/validate-package-manifest.mjs
+node --check scripts/validate-renderer-provider-manifests.mjs
 ```
 
 When packaging helpers change, also run at least one `--no-build` smoke against
@@ -175,7 +178,7 @@ instead of one large end-to-end assertion:
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter
    host payload checks.
-4. Matrix layer: `tests/*_conformance` and `scripts/conformance-check.sh`
+4. Matrix layer: `moui/tests/*_conformance` and `scripts/conformance-check.sh`
    compare supported engines or platforms. Strict failures are reserved for
    contract invariants; engine-specific metric differences should be reported
    with documented tolerances or diagnostic wording.
@@ -205,7 +208,7 @@ before it grows broad platform claims:
   frame-profile counters, guidance freshness, and example builds.
 - Text system: stable fallback/provider/editor invariants for CJK, emoji,
   mixed bidi, caret positions, selection, and IME anchors, plus opt-in
-  diagnostic packages under `tests/text_conformance/`.
+  diagnostic packages under `moui/tests/text_conformance/`.
 
 Use the conformance entrypoint for this suite:
 

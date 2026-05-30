@@ -25,7 +25,7 @@ for arg in "$@"; do
     --help|-h)
       printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke]\n' "$0"
       printf '\n'
-      printf 'Runs bounded package-level checks and Web wasm-gc example builds.\n'
+      printf 'Runs bounded package-level checks, guidance consistency checks, and Web wasm-gc example builds.\n'
       printf 'Pass --platform-examples-test to also run current-platform backend tests.\n'
       printf 'Pass --platform-examples-build to also build current-platform native examples.\n'
       printf 'Pass --skia-real-smoke to run the opt-in real Skia smoke when local Skia link flags are configured.\n'
@@ -57,6 +57,7 @@ run_built_executable() {
 }
 
 run sh scripts/check-local-deps.sh
+run node scripts/validate-guidance-consistency.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
 
 run moon check
@@ -88,7 +89,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon test moui/backend/macos/skia --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
-        printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
+        printf '\nIncluding selected current-platform native example builds. These builds may be slow on a cold cache.\n'
         run moon build examples/showcase/macos --target native
         run moon build examples/showcase/macos_skia --target native
         run moon build examples/markdown_editor/macos --target native
@@ -101,7 +102,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon test moui/backend/windows/skia --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
-        printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
+        printf '\nIncluding selected current-platform native example builds. These builds may be slow on a cold cache.\n'
         run moon build examples/markdown_editor/windows --target native
       fi
       ;;
@@ -112,7 +113,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon test moui/backend/linux/skia --target native
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
-        printf '\nIncluding native platform example builds. These builds may be slow on a cold cache.\n'
+        printf '\nIncluding selected current-platform native example builds. These builds may be slow on a cold cache.\n'
         run moon build examples/showcase/linux --target native
         run moon build examples/showcase/linux_cosmic --target native
       fi

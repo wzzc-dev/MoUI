@@ -47,9 +47,18 @@ while [ "$#" -gt 0 ]; do
 done
 
 snapshot_inputs() {
-  find core views backend render examples docs -type f \
-    \( -name '*.mbt' -o -name '*.mbti' -o -name '*.json' -o -name '*.md' -o -name '*.html' -o -name '*.js' -o -name '*.css' \) \
-    -print0 2>/dev/null | xargs -0 stat -f '%m %N' 2>/dev/null | sort
+  find moui examples docs resource skills scripts README.md AGENTS.md moon.work -type f \
+    \( -name '*.mbt' -o -name '*.mbti' -o -name '*.json' -o -name '*.md' -o -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.sh' -o -name '*.mjs' -o -name 'moon.work' \) \
+    -print0 2>/dev/null | {
+      case "$(uname -s)" in
+        Darwin|FreeBSD|OpenBSD|NetBSD)
+          xargs -0 stat -f '%m %N' 2>/dev/null
+          ;;
+        *)
+          xargs -0 stat -c '%Y %n' 2>/dev/null
+          ;;
+      esac
+    } | sort
 }
 
 build_preview() {
