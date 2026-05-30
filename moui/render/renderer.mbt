@@ -60,7 +60,7 @@ pub(all) struct RendererBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RendererSpec {
+pub(all) struct RendererDescriptor {
   backend : RendererBackendKind
   family : RendererFamily
   presentation : RendererPresentationModel
@@ -70,7 +70,7 @@ pub(all) struct RendererSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RenderFrameSpec {
+pub(all) struct RenderFrameInput {
   metrics : RendererSurfaceMetrics
   commands : Array[@core.DrawCommand]
   clear_color : @core.Color?
@@ -203,14 +203,14 @@ pub fn RendererBackendKind::family(
 }
 
 ///|
-pub fn RendererSpec::new(
+pub fn RendererDescriptor::new(
   backend~ : RendererBackendKind,
   family~ : RendererFamily,
   presentation~ : RendererPresentationModel,
   supported_targets~ : Array[RendererTarget],
   capabilities~ : Array[RendererBackendFeatureCapability],
   description? : String = "",
-) -> RendererSpec {
+) -> RendererDescriptor {
   {
     backend,
     family,
@@ -222,11 +222,11 @@ pub fn RendererSpec::new(
 }
 
 ///|
-pub fn RenderFrameSpec::new(
+pub fn RenderFrameInput::new(
   metrics~ : RendererSurfaceMetrics,
   commands~ : Array[@core.DrawCommand],
   clear_color? : @core.Color? = None,
-) -> RenderFrameSpec {
+) -> RenderFrameInput {
   { metrics, commands, clear_color }
 }
 

@@ -883,8 +883,13 @@ fn ViewSpec::inspector_kind_label(self : ViewSpec) -> String {
 ///|
 fn ViewSpec::inspector_is_control(self : ViewSpec) -> Bool {
   match self {
-    ButtonSpec(_) | TextFieldSpec(_) | RichTextEditorSpec(_) | CheckboxSpec(_) |
-    PickerSpec(_) | DatePickerSpec(_) | SearchBarSpec(_) => true
+    ButtonSpec(_)
+    | TextFieldSpec(_)
+    | RichTextEditorSpec(_)
+    | CheckboxSpec(_)
+    | PickerSpec(_)
+    | DatePickerSpec(_)
+    | SearchBarSpec(_) => true
     _ => false
   }
 }
@@ -925,26 +930,17 @@ fn ViewSpec::on_tap(self : ViewSpec, handler : ClickHandler) -> ViewSpec {
 }
 
 ///|
-fn ViewSpec::on_long_press(
-  self : ViewSpec,
-  handler : ClickHandler,
-) -> ViewSpec {
+fn ViewSpec::on_long_press(self : ViewSpec, handler : ClickHandler) -> ViewSpec {
   self.modified(OnLongPressModifier(handler))
 }
 
 ///|
-fn ViewSpec::on_double_tap(
-  self : ViewSpec,
-  handler : ClickHandler,
-) -> ViewSpec {
+fn ViewSpec::on_double_tap(self : ViewSpec, handler : ClickHandler) -> ViewSpec {
   self.modified(OnDoubleTapModifier(handler))
 }
 
 ///|
-fn ViewSpec::on_drag(
-  self : ViewSpec,
-  handler : DragGestureHandler,
-) -> ViewSpec {
+fn ViewSpec::on_drag(self : ViewSpec, handler : DragGestureHandler) -> ViewSpec {
   self.modified(OnDragModifier(handler))
 }
 

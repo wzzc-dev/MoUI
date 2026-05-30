@@ -13,11 +13,11 @@ pub fn backend_info() -> @render.RendererBackendInfo
 
 pub fn create_with_present_target(@render.RendererSurfaceMetrics, SkiaPresentTarget, font_resolution? : SkiaFontResolution) -> SkiaRasterRenderer raise SkiaRendererError
 
-pub fn renderer_spec() -> @render.RendererSpec
+pub fn renderer_descriptor() -> @render.RendererDescriptor
 
 pub fn skia_available() -> Bool
 
-pub fn skia_raster_native_spec() -> @render.RendererSpec
+pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor
 
 // Errors
 pub(all) suberror SkiaRendererError {

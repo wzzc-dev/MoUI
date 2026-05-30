@@ -196,11 +196,17 @@ machine-local `moon.pkg` edits out of commits.
 Renderer feature status is tracked per backend in `render/capabilities.mbt` and
 summarized in `docs/renderer-capability-report.md`. Update both the structured
 report and tests when changing image, clip, opacity, transform, or other draw
-command support. `RendererSpec` and `RendererSelection` are reporting and
+command support. `RendererDescriptor` and `RendererSelection` are reporting and
 matching concepts, not native host runtime assembly. Native runtime assembly
 belongs to `backend/<platform>/wgpu` or `backend/<platform>/skia` renderer
 provider packages; `core`, `ViewSpec`, `Program`, and host cores must not depend
 on concrete renderer choices.
+
+Use `pkg.generated.mbti` as the public API contract baseline and focused
+contract/conformance tests as behavior evidence. Do not add long-lived
+`*_spec.mbt` files for ordinary implementation structure; prefer responsibility
+names such as `*_tree.mbt`, `*_descriptor.mbt`, `*_input.mbt`, `*_protocol.mbt`,
+or `*_capabilities.mbt` when organizing package-local source.
 
 ## Documentation Updates
 

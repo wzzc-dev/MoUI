@@ -50,7 +50,7 @@ Use this skill when editing or reviewing:
 - Runtime pipeline:
 
   ```text
-  View[Msg] -> internal ViewSpec -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+  View[Msg] -> internal view tree -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
   ```
 
 - `core/` stays platform-neutral.

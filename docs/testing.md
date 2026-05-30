@@ -99,6 +99,13 @@ moon info
 Review generated `pkg.generated.mbti` diffs. If no public API changed, generated
 interfaces should stay unchanged.
 
+Treat generated interfaces as the public API contract baseline. Behavioral
+contracts should be covered by focused `*_contract_test.mbt` files or the
+conformance matrix; avoid adding long-lived `*_spec.mbt` files for ordinary
+implementation structure. Use `*_tree.mbt`, `*_descriptor.mbt`, `*_input.mbt`,
+`*_protocol.mbt`, and `*_capabilities.mbt` for package-local source
+organization when those names match the responsibility.
+
 ## Documentation And Guidance Checks
 
 For docs-only changes, keep validation lightweight and focused on the edited

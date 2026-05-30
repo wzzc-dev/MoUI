@@ -701,7 +701,7 @@ pub fn[Msg] View::spacer(
 }
 
 ///|
-pub fn[Msg] View::frame_spec(
+pub fn[Msg] View::frame_node(
   child~ : View[Msg],
   width~ : Double?,
   height~ : Double?,
@@ -1097,18 +1097,12 @@ pub fn[Msg] View::on_tap(self : View[Msg], message : Msg) -> View[Msg] {
 }
 
 ///|
-pub fn[Msg] View::on_long_press(
-  self : View[Msg],
-  message : Msg,
-) -> View[Msg] {
+pub fn[Msg] View::on_long_press(self : View[Msg], message : Msg) -> View[Msg] {
   modify_view(self, LongPressModifier(message))
 }
 
 ///|
-pub fn[Msg] View::on_double_tap(
-  self : View[Msg],
-  message : Msg,
-) -> View[Msg] {
+pub fn[Msg] View::on_double_tap(self : View[Msg], message : Msg) -> View[Msg] {
   modify_view(self, DoubleTapModifier(message))
 }
 

@@ -103,12 +103,12 @@ pub(all) struct RectVertex {
   a : Double
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct RenderFrameSpec {
+pub(all) struct RenderFrameInput {
   metrics : RendererSurfaceMetrics
   commands : Array[@core.DrawCommand]
   clear_color : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFrameSpec::new(metrics~ : RendererSurfaceMetrics, commands~ : Array[@core.DrawCommand], clear_color? : @core.Color?) -> Self
+pub fn RenderFrameInput::new(metrics~ : RendererSurfaceMetrics, commands~ : Array[@core.DrawCommand], clear_color? : @core.Color?) -> Self
 
 pub(all) struct RendererBackendFeatureCapability {
   feature : RendererFeature
@@ -165,6 +165,16 @@ pub(all) struct RendererCommandPlan {
   final_filter_depth : Int
   fallbacks : Array[RendererCommandFallback]
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RendererDescriptor {
+  backend : RendererBackendKind
+  family : RendererFamily
+  presentation : RendererPresentationModel
+  supported_targets : Array[RendererTarget]
+  capabilities : Array[RendererBackendFeatureCapability]
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererDescriptor::new(backend~ : RendererBackendKind, family~ : RendererFamily, presentation~ : RendererPresentationModel, supported_targets~ : Array[RendererTarget], capabilities~ : Array[RendererBackendFeatureCapability], description? : String) -> Self
 
 pub(all) enum RendererFamily {
   Wgpu
@@ -230,16 +240,6 @@ pub(all) enum RendererSelection {
 pub fn RendererSelection::matches_backend(Self, RendererBackendKind) -> Bool
 pub fn RendererSelection::native_default() -> Self
 pub fn RendererSelection::web_default() -> Self
-
-pub(all) struct RendererSpec {
-  backend : RendererBackendKind
-  family : RendererFamily
-  presentation : RendererPresentationModel
-  supported_targets : Array[RendererTarget]
-  capabilities : Array[RendererBackendFeatureCapability]
-  description : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RendererSpec::new(backend~ : RendererBackendKind, family~ : RendererFamily, presentation~ : RendererPresentationModel, supported_targets~ : Array[RendererTarget], capabilities~ : Array[RendererBackendFeatureCapability], description? : String) -> Self
 
 pub(all) struct RendererSurfaceMetrics {
   logical_size : @core.Size

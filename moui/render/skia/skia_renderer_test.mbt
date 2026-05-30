@@ -13,14 +13,16 @@ test "skia renderer backend info reflects native availability" {
 }
 
 ///|
-test "skia renderer spec is a skia cpu pixel backend" {
-  let spec = renderer_spec()
-  assert_true(spec.backend == @render.RendererBackendKind::SkiaRasterNative)
-  assert_true(spec.family == @render.RendererFamily::Skia)
+test "skia renderer descriptor is a skia cpu pixel backend" {
+  let descriptor = renderer_descriptor()
   assert_true(
-    spec.presentation == @render.RendererPresentationModel::CpuPixelFrame,
+    descriptor.backend == @render.RendererBackendKind::SkiaRasterNative,
   )
-  inspect(spec.capabilities.length(), content="17")
+  assert_true(descriptor.family == @render.RendererFamily::Skia)
+  assert_true(
+    descriptor.presentation == @render.RendererPresentationModel::CpuPixelFrame,
+  )
+  inspect(descriptor.capabilities.length(), content="17")
 }
 
 ///|
@@ -72,35 +74,38 @@ test "skia pixel frame carries presenter payload" {
 }
 
 ///|
-test "skia renderer spec exposes evidence-gated backend capabilities" {
-  let spec = skia_raster_native_spec()
-  let image = find_skia_spec_capability(spec, @render.RendererFeature::Image)
-  let gradient = find_skia_spec_capability(
-    spec,
+test "skia renderer descriptor exposes evidence-gated backend capabilities" {
+  let descriptor = skia_raster_native_descriptor()
+  let image = find_skia_descriptor_capability(
+    descriptor,
+    @render.RendererFeature::Image,
+  )
+  let gradient = find_skia_descriptor_capability(
+    descriptor,
     @render.RendererFeature::Gradient,
   )
-  let path = find_skia_spec_capability(
-    spec,
+  let path = find_skia_descriptor_capability(
+    descriptor,
     @render.RendererFeature::PathVector,
   )
-  let layer = find_skia_spec_capability(
-    spec,
+  let layer = find_skia_descriptor_capability(
+    descriptor,
     @render.RendererFeature::LayerCompositing,
   )
-  let blend = find_skia_spec_capability(
-    spec,
+  let blend = find_skia_descriptor_capability(
+    descriptor,
     @render.RendererFeature::BlendMode,
   )
-  let filter = find_skia_spec_capability(
-    spec,
+  let filter = find_skia_descriptor_capability(
+    descriptor,
     @render.RendererFeature::FilterEffect,
   )
-  let transform = find_skia_spec_capability(
-    spec,
+  let transform = find_skia_descriptor_capability(
+    descriptor,
     @render.RendererFeature::Transform,
   )
-  let shader = find_skia_spec_capability(
-    spec,
+  let shader = find_skia_descriptor_capability(
+    descriptor,
     @render.RendererFeature::ShaderEffect,
   )
   match (image, gradient, path, layer, blend, filter, transform, shader) {
@@ -181,11 +186,11 @@ test "skia filter bindings stay fallback-safe" {
 }
 
 ///|
-fn find_skia_spec_capability(
-  spec : @render.RendererSpec,
+fn find_skia_descriptor_capability(
+  descriptor : @render.RendererDescriptor,
   feature : @render.RendererFeature,
 ) -> @render.RendererBackendFeatureCapability? {
-  for capability in spec.capabilities {
+  for capability in descriptor.capabilities {
     if capability.feature == feature {
       return Some(capability)
     }
