@@ -100,6 +100,11 @@ test "renderer capability report tracks draw command support" {
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("TextRun frame"),
   )
+  assert_true(
+    text
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("real native renderer smoke"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::Transform)
     is Some(transform) else {
     fail("expected transform capability")

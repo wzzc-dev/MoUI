@@ -266,7 +266,7 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       RendererFeatureStatus::Ready,
       "Native wgpu uses shaped glyphs and a glyph-atlas text pipeline.",
       RendererFeatureStatus::Ready,
-      "Skia raster text measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked, measured prefix carets otherwise, and best-available glyph-run rendering clip to the TextRun frame while resolving FontSpec family, weight, and style through Skia FontMgr/Font; real native renderer smoke covers glyph-run pixels and package tests cover frame clipping; broader shaping remains tracked separately.",
+      "Skia raster text measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked, measured prefix carets otherwise, and best-available glyph-run rendering clip to the TextRun frame while resolving FontSpec family, weight, and style through Skia FontMgr/Font; real native renderer smoke covers glyph-run pixels and bounded TextRun frame clipping; broader shaping remains tracked separately.",
       RendererFeatureStatus::Ready,
       "The browser WebGPU host uses a canvas-rasterized DPR-aware glyph atlas and WebGPU text pipeline.",
     ),

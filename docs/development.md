@@ -113,6 +113,8 @@ sh scripts/dev-check.sh --skia-real-smoke
 That opt-in check runs both the `skia_mbt` native binding smoke and MoUI's
 renderer-level smoke at `moui/tests/skia_renderer_smoke/native`, which renders a
 small `DrawCommand` frame through `render/skia` and verifies presenter pixels.
+The renderer smoke includes bounded `TextRun.frame` text clipping alongside the
+general glyph-run text pixel check.
 The script builds those smoke packages and runs the produced native executables
 directly so failures propagate through the process exit status.
 
