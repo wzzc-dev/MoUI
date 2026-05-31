@@ -77,8 +77,10 @@ pub(all) struct PiAgentSnapshot {
   queued_steering : Int
   queued_follow_up : Int
   thinking_level : String
+  steering_mode : String
+  follow_up_mode : String
 } derive(Eq, @debug.Debug)
-pub fn PiAgentSnapshot::new(phase? : String, turn_index? : Int, message_role? : String, message_preview? : String, active_tool_call_id? : String, active_tool_name? : String, queued_steering? : Int, queued_follow_up? : Int, thinking_level? : String) -> Self
+pub fn PiAgentSnapshot::new(phase? : String, turn_index? : Int, message_role? : String, message_preview? : String, active_tool_call_id? : String, active_tool_name? : String, queued_steering? : Int, queued_follow_up? : Int, thinking_level? : String, steering_mode? : String, follow_up_mode? : String) -> Self
 pub fn PiAgentSnapshot::status_label(Self) -> String
 
 pub(all) struct PiCommandInfo {
@@ -97,11 +99,14 @@ pub(all) struct PiRpcSnapshot {
   session_file : String
   session_name : String
   model : String
+  thinking_level : String
+  steering_mode : String
+  follow_up_mode : String
   pending_message_count : Int
   message_count : Int
   error : String
 } derive(Eq, @debug.Debug)
-pub fn PiRpcSnapshot::new(command? : String, success? : Bool, session_id? : String, session_file? : String, session_name? : String, model? : String, pending_message_count? : Int, message_count? : Int, error? : String) -> Self
+pub fn PiRpcSnapshot::new(command? : String, success? : Bool, session_id? : String, session_file? : String, session_name? : String, model? : String, thinking_level? : String, steering_mode? : String, follow_up_mode? : String, pending_message_count? : Int, message_count? : Int, error? : String) -> Self
 
 pub(all) struct PiSessionBinding {
   workbench_session_id : String
@@ -142,6 +147,8 @@ pub(all) enum PiTransportCommand {
   FetchRpcCommands(String)
   FetchRpcSessionStats(String)
   CycleRpcThinkingLevel(String)
+  SetRpcSteeringMode(String, String)
+  SetRpcFollowUpMode(String, String)
   SetRpcSessionName(String, String)
   SendUserInput(String, String)
   RunShellCommand(String, String)
@@ -256,6 +263,8 @@ pub(all) enum WorkbenchMsg {
   MarkCommandComplete(Int, Int)
   SyncSessionName
   CycleThinkingLevel
+  ToggleSteeringMode
+  ToggleFollowUpMode
   CancelRun
   ClearDiagnostics
   ToggleContext(String)

@@ -40,9 +40,8 @@ packages:
 - A session-first desktop shell named `Mo Workbench`.
 - Header subtitle `A Pi agent desktop`.
 - A Codex / Claude Code-style native shell with macOS chrome, a gray session
-  sidebar, a compact workspace summary, state-driven transcript, Pi command
-  catalog, command evidence, file context, diff summary, and a rounded
-  composer.
+  sidebar, a compact workspace summary, state-driven transcript, compact
+  activity/workspace digests, and a restrained composer.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
@@ -59,9 +58,10 @@ packages:
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
   (`get_state`, `get_messages`, `get_commands`, `get_session_stats`,
-  `cycle_thinking_level`, `switch_session`, `prompt`, `set_session_name`,
-  `bash`, `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell
-  fixtures to prove direct JSONL stdin/stdout process
+  `cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`,
+  `switch_session`, `prompt`, `set_session_name`, `bash`, `abort_bash`, and
+  `abort`; shutdown is stdin EOF), and uses shell fixtures to prove direct
+  JSONL stdin/stdout process
   driving without C FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
@@ -75,11 +75,13 @@ packages:
 - A macOS Skia entrypoint wired to `PiNativeTransportOwner::runtime()` and
   `backend/macos/skia.run_app_with_options_async_pump`, so the AppKit pump and
   Pi transport worker cooperate on the same native async loop.
-- Conversation-first workbench UI that keeps command evidence, file context,
-  diff review, transport status, and the next prompt in one visible flow. The
-  current shell avoids screenshot-only filler: the old validation transcript,
-  hard-coded shell command block, fake attachment cards, and copy/vote toolbar
-  were replaced with panels driven by `WorkbenchModel` state.
+- Conversation-first workbench UI that keeps session state, transcript,
+  command evidence, command discovery, file context, diff review, transport
+  status, and the next prompt in one visible flow. The current shell avoids
+  screenshot-only filler: the old validation transcript, hard-coded shell
+  command block, fake attachment cards, copy/vote toolbar, and future-workflow
+  placeholder session were replaced with compact panels driven by
+  `WorkbenchModel` state.
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
@@ -107,6 +109,10 @@ packages:
   The shared app emits a platform-neutral `CycleRpcThinkingLevel` command,
   ingests `cycle_thinking_level` responses and `thinking_level_changed` events,
   and keeps `PiAgentSnapshot.thinking_level` visible without native-only state.
+- The composer exposes compact steering and follow-up mode controls. The shared
+  app emits platform-neutral `SetRpcSteeringMode` and `SetRpcFollowUpMode`
+  commands, ingests their acknowledgements, and refreshes both modes from
+  `get_state` so Pi remains the source of truth for input queue policy.
 - Run cancellation is command-aware: active Workbench shell commands queue a
   platform-neutral `CancelShellCommand` that the native encoder maps to Pi RPC
   `abort_bash`, while prompt/agent cancellation continues to use `abort`.
@@ -127,6 +133,8 @@ packages:
   and optional context counters. Successful `cycle_thinking_level` responses
   update the agent snapshot when Pi returns the new level, while
   `thinking_level_changed` events remain the authoritative stream update.
+  Successful `set_steering_mode` and `set_follow_up_mode` responses acknowledge
+  the compact composer controls; `get_state` refreshes the current mode values.
   Successful `set_session_name` responses mark the session-name sync as
   acknowledged; the preceding
   `session_info_changed` event carries the actual display name and updates
@@ -159,7 +167,8 @@ packages:
 - The native encoder is aligned with the installed Pi RPC protocol and has
   no-model smoke paths using offline `get_state`, `get_messages`,
   `get_commands`, `get_session_stats`, `cycle_thinking_level`,
-  `set_session_name`, and `abort_bash` over `pi --mode rpc`.
+  `set_steering_mode`, `set_follow_up_mode`, `set_session_name`, and
+  `abort_bash` over `pi --mode rpc`.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
@@ -236,12 +245,13 @@ Session selection is also app-layer state. If a selected `WorkbenchSession` has
 The `switch_session` response marks the Workbench session binding as switching
 or cancelled. The following `get_state` response binds that Workbench session id
 to Pi's concrete `sessionId`, `sessionFile`, optional `sessionName`, and current
-model. The following `get_messages` response fills the transcript panel from
-Pi's `AgentMessage[]`, and the following `get_commands` response fills the
-command catalog from Pi's slash command registry. The following
-`get_session_stats` response fills the compact status metrics from Pi's session
-statistics. This keeps `PiTransportEvent` platform-neutral while letting the app
-separate Mo Workbench sidebar ids from Pi's runtime session identity.
+model plus thinking, steering, and follow-up modes. The following
+`get_messages` response fills the transcript panel from Pi's `AgentMessage[]`,
+and the following `get_commands` response fills the command catalog from Pi's
+slash command registry. The following `get_session_stats` response fills the
+compact status metrics from Pi's session statistics. This keeps
+`PiTransportEvent` platform-neutral while letting the app separate Mo Workbench
+sidebar ids from Pi's runtime session identity.
 
 Streaming Pi session events also use the same app-layer path:
 
@@ -279,6 +289,8 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `FetchRpcCommands` sends `{"type":"get_commands"}`,
 `FetchRpcSessionStats` sends `{"type":"get_session_stats"}`,
 `CycleRpcThinkingLevel` sends `{"type":"cycle_thinking_level"}`,
+`SetRpcSteeringMode` sends `{"type":"set_steering_mode","mode":...}`,
+`SetRpcFollowUpMode` sends `{"type":"set_follow_up_mode","mode":...}`,
 `SwitchRpcSession` sends `{"type":"switch_session","sessionPath":...}`,
 `SetRpcSessionName` sends `{"type":"set_session_name","name":...}`,
 `SendUserInput` sends `{"type":"prompt","message":...}`, `RunShellCommand`
@@ -308,6 +320,12 @@ printf '{"type":"get_session_stats"}\n' | \
 printf '{"type":"cycle_thinking_level"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"set_steering_mode","mode":"all"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"set_follow_up_mode","mode":"one-at-a-time"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
@@ -321,9 +339,10 @@ second should return a `get_messages` response with a `messages` array, the
 third should return a `get_commands` response with a `commands` array, the
 fourth should return a `get_session_stats` response with message, tool, token,
 and cost counters, the fifth should return a successful
-`cycle_thinking_level` acknowledgement, the sixth should emit
+`cycle_thinking_level` acknowledgement, the sixth and seventh should acknowledge
+the steering/follow-up mode changes, the eighth should emit
 `session_info_changed` and a successful `set_session_name` response, and the
-seventh should return a successful
+ninth should return a successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -362,6 +381,12 @@ printf '{"type":"get_session_stats"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"set_steering_mode","mode":"all"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"set_follow_up_mode","mode":"one-at-a-time"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \

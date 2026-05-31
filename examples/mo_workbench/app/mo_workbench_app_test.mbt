@@ -258,6 +258,73 @@ test "workbench thinking cycle runtime effect updates Pi agent snapshot" {
 }
 
 ///|
+test "workbench toggles Pi input queue modes through platform-neutral transport" {
+  let steering = WorkbenchModel::new().update(ToggleSteeringMode)
+  inspect(steering.last_status, content="Pi steering mode queued")
+  inspect(steering.pending_transport_count(), content="2")
+  inspect(steering.pi_agent.steering_mode, content="all")
+  match steering.transport.command_queue[1] {
+    SetRpcSteeringMode(session, mode) => {
+      inspect(session, content="moui-skia")
+      inspect(mode, content="all")
+    }
+    _ => fail("expected queued steering mode")
+  }
+  let follow_up = WorkbenchModel::new().update(ToggleFollowUpMode)
+  inspect(follow_up.last_status, content="Pi follow-up mode queued")
+  inspect(follow_up.pending_transport_count(), content="2")
+  inspect(follow_up.pi_agent.follow_up_mode, content="all")
+  match follow_up.transport.command_queue[1] {
+    SetRpcFollowUpMode(session, mode) => {
+      inspect(session, content="moui-skia")
+      inspect(mode, content="all")
+    }
+    _ => fail("expected queued follow-up mode")
+  }
+}
+
+///|
+test "workbench queue mode runtime effect acknowledges Pi steering mode" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"set_steering_mode\",\"mode\":\"all\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"set_steering_mode\",\"success\":true}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    ToggleSteeringMode,
+    transport,
+  )
+  inspect(update.model.pi_agent.steering_mode, content="all")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SetRpcSteeringMode(session, mode) => {
+      inspect(session, content="moui-skia")
+      inspect(mode, content="all")
+    }
+    _ => fail("expected captured steering mode")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="set_steering_mode")
+  inspect(model.pi_agent.steering_mode, content="all")
+  inspect(model.last_status, content="Pi steering mode acknowledged")
+  assert_true(
+    model.events.any(event => event.title == "Pi steering mode applied"),
+  )
+}
+
+///|
 test "workbench cancel run targets active Pi RPC bash command" {
   let model = WorkbenchModel::new()
     .update(QueueCommand("moon check"))
@@ -458,7 +525,7 @@ test "workbench ingests Pi RPC get_state response jsonl" {
       JsonLineReceived(
         "moui-skia",
         (
-          #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e7eb5","messageCount":4,"pendingMessageCount":1}}
+          #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"thinkingLevel":"medium","steeringMode":"all","followUpMode":"one-at-a-time","sessionId":"019e7eb5","messageCount":4,"pendingMessageCount":1}}
         ),
       ),
     ),
@@ -469,6 +536,9 @@ test "workbench ingests Pi RPC get_state response jsonl" {
   inspect(model.pi_rpc.session_file, content="")
   inspect(model.pi_rpc.session_name, content="")
   inspect(model.pi_rpc.model, content="openai/gpt-5")
+  inspect(model.pi_rpc.thinking_level, content="medium")
+  inspect(model.pi_rpc.steering_mode, content="all")
+  inspect(model.pi_rpc.follow_up_mode, content="one-at-a-time")
   inspect(model.pi_rpc.message_count, content="4")
   inspect(model.pi_rpc.pending_message_count, content="1")
   let session = model.active_session()
@@ -479,6 +549,9 @@ test "workbench ingests Pi RPC get_state response jsonl" {
   inspect(binding.workbench_session_id, content="moui-skia")
   inspect(binding.rpc_session_id, content="019e7eb5")
   inspect(binding.status, content="bound")
+  inspect(model.pi_agent.thinking_level, content="medium")
+  inspect(model.pi_agent.steering_mode, content="all")
+  inspect(model.pi_agent.follow_up_mode, content="one-at-a-time")
   inspect(model.last_status, content="Pi RPC response applied")
   assert_true(
     model.events.any(event => event.title == "Pi RPC response: get_state"),
@@ -906,25 +979,27 @@ test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "A Pi agent desktop"))
-  assert_true(has_text(commands, "Session status"))
+  assert_true(has_text(commands, "Session"))
   assert_true(has_text(commands, "Messages 3"))
   assert_true(has_text(commands, "Tools 1/1"))
   assert_true(has_text(commands, "Tokens 31960"))
   assert_true(has_text(commands, "Context 16%"))
   assert_true(has_text(commands, "Thinking: default"))
   assert_true(has_text(commands, "思考"))
+  assert_true(has_text(commands, "Steer 1"))
+  assert_true(has_text(commands, "Follow 1"))
   assert_true(has_text(commands, "Pi transcript"))
-  assert_true(has_text(commands, "Pi commands"))
+  assert_true(has_text(commands, "Activity"))
   assert_true(has_text(commands, "/review"))
-  assert_true(has_text(commands, "Command evidence"))
-  assert_true(has_text(commands, "Context files"))
-  assert_true(has_text(commands, "同步标题"))
+  assert_true(has_text(commands, "Workspace"))
+  assert_true(has_text(commands, "同步"))
   assert_true(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_true(has_text(commands, "Pi RPC"))
-  assert_true(has_text(commands, "Diff summary · ready for review"))
   assert_false(has_text(commands, "验证已通过："))
   assert_false(has_text(commands, "打开方式⌄"))
   assert_false(has_text(commands, "复制"))
+  assert_false(has_text(commands, "Research notebook"))
+  assert_false(has_text(commands, "Skia native"))
 }
 
 ///|
@@ -939,16 +1014,16 @@ fn run_workbench_effect(update : WorkbenchUpdate) -> WorkbenchModel {
   let model = @core.State::new(update.model)
   let dispatch = message => model.set(model.get().update(message))
   match update.effect {
-    @core.Effect::NoEffect => ()
-    @core.Effect::Batch(effects) =>
+    NoEffect => ()
+    Batch(effects) =>
       for effect in effects {
         let next = run_workbench_effect(
           WorkbenchUpdate::new(model.get(), effect~),
         )
         model.set(next)
       }
-    @core.Effect::Send(message) => dispatch(message)
-    @core.Effect::Dispatch(run) => run(dispatch)
+    Send(message) => dispatch(message)
+    Dispatch(run) => run(dispatch)
   }
   model.get()
 }

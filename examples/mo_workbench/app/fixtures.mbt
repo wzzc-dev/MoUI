@@ -8,7 +8,7 @@ fn sample_sessions() -> Array[WorkbenchSession] {
       branch="codex/mo-workbench",
       status="active",
       summary="Native Skia dogfood slice for a Pi-backed coding workbench.",
-      active_task="Wire the first session-first workbench UI and transport boundary.",
+      active_task="Pi RPC + macOS Skia dogfood.",
       unread_events=3,
     ),
     WorkbenchSession::new(
@@ -19,18 +19,8 @@ fn sample_sessions() -> Array[WorkbenchSession] {
       branch="main",
       status="queued",
       summary="JSONL stdin/stdout transport exercise for pi --mode rpc.",
-      active_task="Align get_state, prompt, abort, and EOF shutdown with Pi RPC.",
+      active_task="Validate Pi JSONL RPC.",
       unread_events=1,
-    ),
-    WorkbenchSession::new(
-      id="docs-research",
-      title="Research notebook",
-      project_path="/Users/example/Research",
-      branch="notes",
-      status="idle",
-      summary="Future non-code workflow proving the app is not only an IDE.",
-      active_task="Collect citations and reusable summaries.",
-      unread_events=0,
     ),
   ]
 }
@@ -50,7 +40,7 @@ fn sample_plan() -> Array[PlanStep] {
       title="Keep PiTransport platform-neutral",
       status="active",
       owner="agent",
-      detail="Route prompts, RPC bash commands, shell cancellation, session switches, session-name sync, command catalog refreshes, stdout, stderr, process failures, RPC responses, and streaming session events through app-level state.",
+      detail="Route Pi RPC commands, stdout, stderr, responses, and session events through app state.",
     ),
     PlanStep::new(
       id="skia",
@@ -64,7 +54,7 @@ fn sample_plan() -> Array[PlanStep] {
       title="Capture framework pressure",
       status="watch",
       owner="framework",
-      detail="Promote missing text, image, path, or surface APIs through skia_mbt first.",
+      detail="Promote missing Skia APIs through skia_mbt first.",
     ),
   ]
 }
@@ -75,13 +65,13 @@ fn sample_events() -> Array[AgentEvent] {
     AgentEvent::new(
       phase="system",
       title="Mo Workbench initialized",
-      detail="Session-first Pi agent desktop for coding workflows.",
+      detail="Pi agent desktop for coding workflows.",
       tone="success",
     ),
     AgentEvent::new(
       phase="agent",
       title="Repository context loaded",
-      detail="core, views, backend, render/skia, and examples indexed.",
+      detail="MoUI app, host, and Skia paths indexed.",
       tone="info",
     ),
     AgentEvent::new(
@@ -236,20 +226,6 @@ fn sample_commands() -> Array[CommandRun] {
       status="ready",
       exit_code=None,
     ),
-    CommandRun::new(
-      id=3,
-      command="moon build examples/mo_workbench/macos_skia --target native",
-      cwd="/Volumes/Data/Code/moon/MoUI",
-      status="pending skia link",
-      exit_code=None,
-    ),
-    CommandRun::new(
-      id=4,
-      command="scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke",
-      cwd="/Volumes/Data/Code/moon/MoUI",
-      status="manual",
-      exit_code=None,
-    ),
   ]
 }
 
@@ -259,7 +235,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="PiTransport",
       severity="watch",
-      message="Native owner speaks Pi RPC JSONL; Workbench binds session switches, session-name sync, get_state/get_messages/get_commands/get_session_stats/cycle_thinking_level responses, direct bash command evidence and cancellation, streaming agent/tool events, stderr, failures, and restart evidence.",
+      message="Native owner speaks Pi RPC JSONL and keeps UI state platform-neutral.",
     ),
     DiagnosticItem::new(
       source="Skia",
@@ -269,7 +245,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="Product",
       severity="note",
-      message="Session model leaves room for docs, research, and automation workflows.",
+      message="Session model leaves room for non-code workflows.",
     ),
   ]
 }
