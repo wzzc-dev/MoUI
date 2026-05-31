@@ -796,7 +796,7 @@ fn WorkbenchModel::primary_command_run_row(
   if self.commands.is_empty() {
     blank_row(32.0)
   } else {
-    command_run_row(self.commands[0], theme)
+    command_run_row(self.commands[self.commands.length() - 1], theme)
   }
 }
 
@@ -827,12 +827,12 @@ fn command_run_row(
       ),
       column(
         [
-          text(command.command, role=Control, theme~, width=356.0, height=24.0),
+          text(command.command, role=Control, theme~, width=300.0, height=24.0),
           text(
             command_detail_label(command),
             role=Caption,
             theme~,
-            width=356.0,
+            width=300.0,
             height=22.0,
           ),
         ],
@@ -843,15 +843,28 @@ fn command_run_row(
         command_exit_label(command),
         role=Caption,
         theme~,
-        width=76.0,
+        width=68.0,
         height=30.0,
+      ),
+      button(
+        "分析",
+        on_click=InspectCommandRun(
+          command.command,
+          command.status,
+          command.cwd,
+          command.output_path,
+        ),
+        variant=Outline,
+        theme~,
+        width=54.0,
+        height=32.0,
       ),
       button(
         "重跑",
         on_click=QueueCommand(command.command),
         variant=Outline,
         theme~,
-        width=58.0,
+        width=54.0,
         height=32.0,
       ),
     ],

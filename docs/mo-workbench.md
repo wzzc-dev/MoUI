@@ -111,6 +111,11 @@ packages:
   lets the native encoder emit `{"type":"bash","command":...}`. Successful
   bash responses preserve Pi's optional `fullOutputPath` on `CommandRun`, and
   Activity rows display that output path when it is available.
+- Command evidence rows in the Activity digest can queue an
+  `Inspect command output for ...` prompt through `SendUserInput`, carrying the
+  command text, status, cwd, and output path back into Pi without adding a
+  native-only output-opening bridge. The digest shows the latest command
+  evidence row so the action follows the newest bash result.
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
@@ -176,8 +181,10 @@ packages:
   `session_info_changed` event carries the actual display name and updates
   `PiSessionBinding`. Successful `bash` responses mark the latest
   queued/running Workbench command as passed, failed, or cancelled and add
-  diagnostics for nonzero, missing, truncated, or cancelled output. Failed RPC
-  responses append a diagnostic without involving the native transport layer.
+  diagnostics for nonzero, missing, truncated, or cancelled output. Visible bash
+  evidence can be sent back as a prompt for analysis through the same app-layer
+  command path. Failed RPC responses append a diagnostic without involving the
+  native transport layer.
 - Pi RPC session event ingestion for the real streaming protocol. The shared
   app now recognizes `agent_start` / `agent_end`, `turn_start` / `turn_end`,
   `message_start` / `message_update` / `message_end`, `tool_execution_*`,

@@ -476,6 +476,64 @@ test "workbench reruns command evidence through Pi RPC bash path" {
 }
 
 ///|
+test "workbench queues command evidence analysis through prompt RPC" {
+  let model = WorkbenchModel::new().update(
+    InspectCommandRun("moon check", "failed", "/repo", "/tmp/mo-check.log"),
+  )
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued command evidence for Pi RPC")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)",
+      )
+    }
+    _ => fail("expected queued command evidence prompt")
+  }
+  assert_true(
+    model.events.any(event => event.title == "Command evidence queued"),
+  )
+}
+
+///|
+test "workbench command evidence runtime effect dispatches prompt" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)\"}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    InspectCommandRun("moon check", "failed", "/repo", "/tmp/mo-check.log"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)",
+      )
+    }
+    _ => fail("expected captured command evidence prompt")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Running")
+}
+
+///|
 test "workbench command runtime effect dispatches Pi RPC bash command" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, emit) => {
@@ -522,6 +580,10 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
   inspect(model.pi_rpc.command, content="bash")
   inspect(model.last_status, content="Pi bash response applied")
   assert_true(model.events.any(event => event.title == "Pi bash completed"))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "output /tmp/mo-workbench-bash.log"))
+  assert_true(has_text(commands, "分析"))
+  assert_true(has_text(commands, "重跑"))
 }
 
 ///|
@@ -1467,6 +1529,30 @@ test "workbench command completion updates command table state" {
 }
 
 ///|
+test "workbench activity draws latest command evidence" {
+  let model = {
+    ..WorkbenchModel::new(),
+    commands: [
+      CommandRun::new(id=1, command="old command", cwd="/repo", status="passed"),
+      CommandRun::new(
+        id=2,
+        command="new command",
+        cwd="/repo",
+        status="failed",
+        exit_code=Some(2),
+        output_path="/tmp/new-command.log",
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "new command"))
+  assert_true(has_text(commands, "output /tmp/new-command.log"))
+  assert_true(has_text(commands, "exit 2"))
+  assert_true(has_text(commands, "分析"))
+  assert_false(has_text(commands, "old command"))
+}
+
+///|
 test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
@@ -1492,6 +1578,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "0 runs"))
   assert_false(has_text(commands, "0 cmds"))
   assert_false(has_text(commands, "/review"))
+  assert_false(has_text(commands, "分析"))
   assert_false(has_text(commands, "重跑"))
   assert_false(has_text(commands, "跟进"))
   assert_false(has_text(commands, "output /tmp/mo-workbench-app-test.log"))
