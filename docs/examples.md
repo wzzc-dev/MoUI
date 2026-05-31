@@ -26,6 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Session-first coding-agent shell, platform-neutral Pi transport command/event model, plan/file/command/diagnostic panels, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -151,6 +152,26 @@ uses `ActionCommandMap` for shortcut dispatch. Disabled commands stay visible
 for discoverability but do not dispatch through model actions or runtime command
 bindings.
 
+## Mo Workbench
+
+Mo Workbench is the real product-shaped dogfood app for the native Skia route.
+It is named `Mo Workbench` with the subtitle `A Pi agent desktop`, and starts as
+a coding-agent workbench for project sessions, task planning, execution
+feedback, diff/file context, command queues, and diagnostics. The shared app
+package keeps the Pi boundary as platform-neutral `PiTransportCommand` and
+`PiTransportEvent` values so future Web or automation-focused workflows can
+reuse the same event model.
+
+The first native entrypoint is macOS Skia:
+
+```sh
+moon test examples/mo_workbench/app --target native
+moon build examples/mo_workbench/macos_skia --target native
+```
+
+See [Mo Workbench](mo-workbench.md) for the app architecture, current slice,
+and transport follow-up notes.
+
 ## Web Wasm-GC
 
 Build any Web example from the repository root, then serve the repository with a
@@ -179,6 +200,7 @@ moon build examples/showcase/macos_cosmic --target native
 moon build examples/showcase/macos_skia --target native
 moon build examples/markdown_editor/macos --target native
 moon build examples/markdown_editor/macos_skia --target native
+moon build examples/mo_workbench/macos_skia --target native
 ```
 
 The `macos_skia` entrypoints select the native Skia raster renderer explicitly.

@@ -1,0 +1,17 @@
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "examples/mo_workbench/app",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
