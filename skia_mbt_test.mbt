@@ -1244,6 +1244,24 @@ test "font fallback contracts normalize style family and language requests" {
   assert_eq(plan.length(), 1)
   assert_eq(plan.cacheable_count, 1)
   assert_eq(plan.uncacheable_count, 0)
+
+  let fallback_font = request.font_descriptor(size=14.0, scale_x=1.1)
+  assert_true(fallback_font.typeface_key == key)
+  assert_true(fallback_font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(fallback_font.resource_descriptor().is_cacheable())
+  let fallback_font_plan = request.resource_plan(size=14.0, scale_x=1.1)
+  assert_eq(fallback_font_plan.length(), 2)
+  assert_eq(fallback_font_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(fallback_font_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_true(fallback_font_plan.contains_key(key))
+  assert_true(fallback_font_plan.contains_key(fallback_font.resource_key()))
+  assert_true(fallback_font_plan.byte_size > descriptor.byte_size)
+  assert_true(
+    request
+    .resource_plan(size=15.0)
+    .descriptor_for_key(fallback_font.resource_key())
+    is None,
+  )
 }
 
 ///|
