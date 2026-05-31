@@ -540,6 +540,15 @@ test "font api typechecks" {
       )
       assert_true(font_mgr.match_family_style_request(b"", bold_italic) is None)
       assert_true(
+        font_mgr.match_family_style_character(
+          b"",
+          [b"en"],
+          0,
+          style=bold_italic,
+        )
+        is None,
+      )
+      assert_true(
         @native.Typeface::from_font_mgr_request(
           font_mgr,
           @skia.FontFallbackRequest::new(),
@@ -582,6 +591,30 @@ test "font api typechecks" {
                   style=bold_italic,
                 )
                 match font_mgr.match_fallback_request(fallback_request) {
+                  None => ()
+                  Some(fallback_typeface) =>
+                    assert_true(fallback_typeface.is_available())
+                }
+                let latin_fallback_request = @skia.FontFallbackRequest::new(
+                  families=@skia.FontFallbackChain::new(
+                    primary_family=family_name,
+                  ),
+                  bcp47=[b"en"],
+                  character=0x53,
+                  style=bold_italic,
+                )
+                match font_mgr.match_fallback_request(latin_fallback_request) {
+                  None => ()
+                  Some(fallback_typeface) =>
+                    assert_true(fallback_typeface.is_available())
+                }
+                match
+                  font_mgr.match_family_style_character(
+                    family_name,
+                    [b"en"],
+                    0x53,
+                    style=bold_italic,
+                  ) {
                   None => ()
                   Some(fallback_typeface) =>
                     assert_true(fallback_typeface.is_available())

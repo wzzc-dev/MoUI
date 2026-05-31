@@ -303,6 +303,22 @@ pub fn FontMgr::match_family_style_request(
 }
 
 ///|
+pub fn FontMgr::match_family_style_character(
+  self : FontMgr,
+  family_name : Bytes,
+  bcp47 : Array[Bytes],
+  character : Int,
+  style? : @skia.FontStyleRequest = @skia.FontStyleRequest::new(),
+) -> Typeface? {
+  ignore(self)
+  ignore(family_name)
+  ignore(bcp47)
+  ignore(character)
+  ignore(style)
+  None
+}
+
+///|
 pub fn FontMgr::match_fallback_request(
   self : FontMgr,
   request : @skia.FontFallbackRequest,
