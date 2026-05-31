@@ -252,7 +252,7 @@ test "workbench cancel runtime effect dispatches Pi RPC abort_bash command" {
 }
 
 ///|
-test "workbench selection with transport switches Pi session then refreshes state and commands" {
+test "workbench selection with transport switches Pi session then refreshes state, commands, and stats" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, _emit) => {
     captured.val = commands
@@ -262,9 +262,9 @@ test "workbench selection with transport switches Pi session then refreshes stat
     transport,
   )
   inspect(update.model.selected_session_id, content="pi-rpc")
-  inspect(update.model.pending_transport_count(), content="4")
+  inspect(update.model.pending_transport_count(), content="5")
   let model = run_workbench_effect(update)
-  inspect(captured.val.length(), content="4")
+  inspect(captured.val.length(), content="5")
   match captured.val[0] {
     SwitchRpcSession(session, path) => {
       inspect(session, content="pi-rpc")
@@ -286,6 +286,10 @@ test "workbench selection with transport switches Pi session then refreshes stat
   match captured.val[3] {
     FetchRpcCommands(session) => inspect(session, content="pi-rpc")
     _ => fail("expected queued command catalog refresh")
+  }
+  match captured.val[4] {
+    FetchRpcSessionStats(session) => inspect(session, content="pi-rpc")
+    _ => fail("expected queued session stats refresh")
   }
   inspect(model.selected_session_id, content="pi-rpc")
 }
@@ -471,6 +475,62 @@ test "workbench ingests Pi RPC get_commands response into command catalog" {
   inspect(model.command_catalog[1].source_scope, content="user")
   inspect(model.last_status, content="Pi commands refreshed")
   assert_true(model.events.any(event => event.title == "Pi commands refreshed"))
+}
+
+///|
+test "workbench ingests Pi RPC get_session_stats response into session metrics" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_session_stats","success":true,"data":{"sessionFile":"/tmp/mo-workbench.jsonl","sessionId":"019e7f62","userMessages":2,"assistantMessages":3,"toolCalls":4,"toolResults":5,"totalMessages":10,"tokens":{"input":1000,"output":240,"cacheRead":80,"cacheWrite":20,"total":1340},"cost":0.0123,"contextUsage":{"tokens":1340,"contextWindow":200000,"percent":16}}}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="get_session_stats")
+  inspect(model.pi_rpc.success, content="true")
+  inspect(model.pi_rpc.session_id, content="019e7f62")
+  inspect(model.pi_rpc.session_file, content="/tmp/mo-workbench.jsonl")
+  inspect(model.pi_rpc.message_count, content="10")
+  inspect(model.pi_session_stats.session_id, content="019e7f62")
+  inspect(
+    model.pi_session_stats.session_file,
+    content="/tmp/mo-workbench.jsonl",
+  )
+  inspect(model.pi_session_stats.user_messages, content="2")
+  inspect(model.pi_session_stats.assistant_messages, content="3")
+  inspect(model.pi_session_stats.tool_calls, content="4")
+  inspect(model.pi_session_stats.tool_results, content="5")
+  inspect(model.pi_session_stats.total_messages, content="10")
+  inspect(model.pi_session_stats.token_input, content="1000")
+  inspect(model.pi_session_stats.token_output, content="240")
+  inspect(model.pi_session_stats.token_cache_read, content="80")
+  inspect(model.pi_session_stats.token_cache_write, content="20")
+  inspect(model.pi_session_stats.token_total, content="1340")
+  match model.pi_session_stats.context_tokens {
+    Some(tokens) => inspect(tokens, content="1340")
+    None => fail("expected context token count")
+  }
+  inspect(model.pi_session_stats.context_window, content="200000")
+  match model.pi_session_stats.context_percent {
+    Some(percent) => inspect(percent.to_int(), content="16")
+    None => fail("expected context percentage")
+  }
+  let binding = model.active_pi_session_binding()
+  inspect(binding.rpc_session_id, content="019e7f62")
+  inspect(binding.session_file, content="/tmp/mo-workbench.jsonl")
+  inspect(binding.status, content="bound")
+  inspect(binding.last_command, content="get_session_stats")
+  inspect(
+    model.active_session().summary,
+    content="Pi stats: 10 messages, 4 tools, 1340 tokens",
+  )
+  inspect(model.last_status, content="Pi session stats refreshed")
+  assert_true(
+    model.events.any(event => event.title == "Pi session stats refreshed"),
+  )
 }
 
 ///|
@@ -787,6 +847,10 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "A Pi agent desktop"))
   assert_true(has_text(commands, "Session status"))
+  assert_true(has_text(commands, "Messages 3"))
+  assert_true(has_text(commands, "Tools 1/1"))
+  assert_true(has_text(commands, "Tokens 31960"))
+  assert_true(has_text(commands, "Context 16%"))
   assert_true(has_text(commands, "Pi transcript"))
   assert_true(has_text(commands, "Pi commands"))
   assert_true(has_text(commands, "/review"))

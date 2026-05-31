@@ -515,7 +515,7 @@ fn WorkbenchModel::session_status_panel(
           align=Center,
         ),
         text(active.active_task, role=Body, theme~, width=650.0, height=28.0),
-        text(self.last_status, role=Caption, theme~, width=650.0, height=24.0),
+        session_stats_row(self.pi_session_stats, theme),
         row(
           [
             text(
@@ -557,12 +557,73 @@ fn WorkbenchModel::session_status_panel(
       align=Start,
     ),
     width=690.0,
-    height=148.0,
+    height=164.0,
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn session_stats_row(
+  stats : PiSessionStatsSnapshot,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      text(
+        "Messages " + stats.total_messages.to_string(),
+        role=Caption,
+        theme~,
+        width=128.0,
+        height=28.0,
+      ),
+      text(
+        "Tools " +
+        stats.tool_calls.to_string() +
+        "/" +
+        stats.tool_results.to_string(),
+        role=Caption,
+        theme~,
+        width=108.0,
+        height=28.0,
+      ),
+      text(
+        "Tokens " + stats.token_total.to_string(),
+        role=Caption,
+        theme~,
+        width=138.0,
+        height=28.0,
+      ),
+      text(
+        session_stats_context_label(stats),
+        role=Caption,
+        theme~,
+        width=112.0,
+        height=28.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn session_stats_context_label(stats : PiSessionStatsSnapshot) -> String {
+  match stats.context_percent {
+    Some(percent) => "Context " + compact_percent(percent)
+    None => "Context n/a"
+  }
+}
+
+///|
+fn compact_percent(percent : Double) -> String {
+  if percent > 0.0 && percent < 1.0 {
+    "<1%"
+  } else {
+    percent.to_int().to_string() + "%"
+  }
 }
 
 ///|
