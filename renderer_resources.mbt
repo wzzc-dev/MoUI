@@ -224,6 +224,14 @@ pub fn RendererResourceDescriptor::typeface(
 }
 
 ///|
+pub fn RendererResourceDescriptor::font(
+  id : Bytes,
+  byte_size? : Int64 = 0L,
+) -> RendererResourceDescriptor {
+  RendererResourceDescriptor::of_kind(FontResource, id, byte_size~)
+}
+
+///|
 pub fn RendererResourceDescriptor::path(
   id : Bytes,
   byte_size? : Int64 = 0L,

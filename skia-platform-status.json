@@ -145,6 +145,11 @@
       "marker": "native smoke font spacing"
     },
     {
+      "id": "text.font-resource-plan",
+      "area": "Text",
+      "marker": "native smoke font resource plan count"
+    },
+    {
       "id": "text.measure",
       "area": "Text",
       "marker": "native smoke measured text width"

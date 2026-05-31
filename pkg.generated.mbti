@@ -185,6 +185,23 @@ pub(all) enum FilterMode {
 pub fn FilterMode::to_skia_ordinal(Self) -> Int
 pub impl Default for FilterMode
 
+pub(all) struct FontDescriptor {
+  typeface_key : RendererResourceKey
+  size : Float
+  scale_x : Float
+  skew_x : Float
+} derive(Eq, @debug.Debug)
+pub fn FontDescriptor::default(size? : Float) -> Self
+pub fn FontDescriptor::from_typeface(RendererResourceKey, size? : Float) -> Self
+pub fn FontDescriptor::is_valid(Self) -> Bool
+pub fn FontDescriptor::new(typeface_key? : RendererResourceKey, size? : Float, scale_x? : Float, skew_x? : Float) -> Self
+pub fn FontDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn FontDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn FontDescriptor::with_scale_x(Self, Float) -> Self
+pub fn FontDescriptor::with_size(Self, Float) -> Self
+pub fn FontDescriptor::with_skew_x(Self, Float) -> Self
+pub fn FontDescriptor::with_typeface_key(Self, RendererResourceKey) -> Self
+
 pub(all) struct FontFallbackChain {
   primary_family : Bytes
   fallback_families : Array[Bytes]
@@ -849,6 +866,7 @@ pub(all) struct RendererResourceDescriptor {
 } derive(Eq, @debug.Debug)
 pub fn RendererResourceDescriptor::color_filter(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::filter(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::font(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::gpu_context(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::gpu_surface(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::image(Bytes, byte_size? : Int64) -> Self
