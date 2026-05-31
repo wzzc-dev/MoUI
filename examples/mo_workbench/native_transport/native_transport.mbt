@@ -88,6 +88,11 @@ pub fn pi_rpc_bash_line(command~ : String) -> String {
 }
 
 ///|
+pub fn pi_rpc_abort_bash_line() -> String {
+  ({ "type": "abort_bash" } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_abort_line() -> String {
   ({ "type": "abort" } : Json).stringify()
 }
@@ -131,6 +136,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_bash_line(command~))
+      }
+      CancelShellCommand(session) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_abort_bash_line())
       }
       CancelRpcRun(session) => {
         if session_id == default_session_id {

@@ -55,9 +55,9 @@ packages:
   events back through the same TEA message loop.
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
-  (`get_state`, `switch_session`, `prompt`, `bash`, and `abort`; shutdown is
-  stdin EOF), and uses shell fixtures to prove direct JSONL stdin/stdout
-  process driving without C FFI or a Node bridge.
+  (`get_state`, `switch_session`, `prompt`, `bash`, `abort_bash`, and
+  `abort`; shutdown is stdin EOF), and uses shell fixtures to prove direct
+  JSONL stdin/stdout process driving without C FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
 - A native multi-batch session runner that accepts an array of command batches
@@ -78,6 +78,9 @@ packages:
 - Workbench command queue entries now use Pi RPC `bash` directly instead of
   prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
   lets the native encoder emit `{"type":"bash","command":...}`.
+- Run cancellation is command-aware: active Workbench shell commands queue a
+  platform-neutral `CancelShellCommand` that the native encoder maps to Pi RPC
+  `abort_bash`, while prompt/agent cancellation continues to use `abort`.
 - Structured Pi JSONL ingestion for coding-agent evidence:
   `command_started`, `command_finished`, `diagnostic`, `file_context`, and
   `diff_summary` payloads update the shared model, timeline, diagnostics,
@@ -113,8 +116,9 @@ packages:
   as transport failures, but the owner stays alive and lazily starts a fresh
   JSONL process for the next UI command batch. Explicit `Shutdown` still closes
   the owner.
-- The native encoder is aligned with the installed Pi RPC protocol and has a
-  no-model smoke path using offline `get_state` over `pi --mode rpc`.
+- The native encoder is aligned with the installed Pi RPC protocol and has
+  no-model smoke paths using offline `get_state` and `abort_bash` over
+  `pi --mode rpc`.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
@@ -206,11 +210,12 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `StartRpc` sends `{"type":"get_state"}` as a cheap liveness/state probe,
 `SwitchRpcSession` sends `{"type":"switch_session","sessionPath":...}`,
 `SendUserInput` sends `{"type":"prompt","message":...}`, `RunShellCommand`
-sends `{"type":"bash","command":...}`, `CancelRpcRun` sends `{"type":"abort"}`,
-and `Shutdown` closes stdin instead of sending a JSON command. Workbench
-session ids remain part of the Mo Workbench event labels and state;
-`PiSessionBinding` records which concrete Pi session the current process
-reported for each Workbench session.
+sends `{"type":"bash","command":...}`, `CancelShellCommand` sends
+`{"type":"abort_bash"}`, `CancelRpcRun` sends `{"type":"abort"}`, and
+`Shutdown` closes stdin instead of sending a JSON command. Workbench session ids
+remain part of the Mo Workbench event labels and state; `PiSessionBinding`
+records which concrete Pi session the current process reported for each
+Workbench session.
 
 The smallest real CLI smoke avoids model calls and validates the stdin/stdout
 contract only:
@@ -219,10 +224,14 @@ contract only:
 printf '{"type":"get_state"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"abort_bash"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 ```
 
-It should return a JSONL `response` object for `get_state` and then exit through
-stdin EOF.
+The first command should return a JSONL `response` object for `get_state`; the
+second should return a successful `abort_bash` response even when no bash
+command is active. Both exit through stdin EOF.
 
 ## Skia Native-First Notes
 
@@ -247,6 +256,9 @@ moon test examples/mo_workbench/native_transport --target native
 moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
 printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"abort_bash"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 ```

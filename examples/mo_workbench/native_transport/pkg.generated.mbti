@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn pi_rpc_abort_bash_line() -> String
+
 pub fn pi_rpc_abort_line() -> String
 
 pub fn pi_rpc_bash_line(command~ : String) -> String

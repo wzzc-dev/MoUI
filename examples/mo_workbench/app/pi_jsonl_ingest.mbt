@@ -1207,9 +1207,7 @@ fn WorkbenchModel::mark_latest_shell_command_complete(
   let status = shell_command_status(exit_code, cancelled)
   let mut target_id : Int? = None
   for command in self.commands {
-    if command.cwd == session.project_path &&
-      command.tool_call_id == "" &&
-      (command.status == "queued" || command.status == "running") {
+    if command.is_active_shell_for_session(session) {
       target_id = Some(command.id)
     }
   }

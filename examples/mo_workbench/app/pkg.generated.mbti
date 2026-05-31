@@ -111,6 +111,7 @@ pub(all) enum PiTransportCommand {
   SwitchRpcSession(String, String)
   SendUserInput(String, String)
   RunShellCommand(String, String)
+  CancelShellCommand(String)
   CancelRpcRun(String)
   Shutdown
 } derive(Eq, @debug.Debug)

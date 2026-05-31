@@ -172,16 +172,18 @@ platform-neutral warning event and nonzero process exits become
 child exits do not close the native owner; the next UI command batch restarts a
 fresh JSONL process, while explicit `Shutdown` remains the close path. The
 native encoder targets Pi's actual RPC command names: `get_state`, `prompt`,
-`bash`, and `abort`, with process shutdown handled by stdin EOF. The focused
-smoke for machines with Pi installed is an offline `get_state` JSONL round trip
-through `pi --mode rpc`, so it validates the process protocol without making a
-model request. The shared app ingests successful and failed Pi RPC `response`
-JSONL objects: `get_state` refreshes the current Workbench session snapshot,
-while RPC failures become diagnostics without leaking native process details
-into the app model.
+`bash`, `abort_bash`, and `abort`, with process shutdown handled by stdin EOF.
+The focused smoke for machines with Pi installed is an offline `get_state`
+JSONL round trip plus an `abort_bash` acknowledgement through `pi --mode rpc`,
+so it validates the process protocol without making a model request. The shared
+app ingests successful and failed Pi RPC `response` JSONL objects: `get_state`
+refreshes the current Workbench session snapshot, while RPC failures become
+diagnostics without leaking native process details into the app model.
 Workbench command queue actions now dispatch platform-neutral shell commands
 that the native encoder maps to Pi RPC `bash`, and successful `bash` responses
 mark command evidence as passed, failed, or cancelled inside the shared model.
+Cancelling while such a shell command is active now maps to Pi RPC `abort_bash`;
+prompt/agent cancellation still maps to Pi RPC `abort`.
 The shared app also ingests Pi's streaming session events such as
 `agent_start`, `message_update`, `tool_execution_start`,
 `tool_execution_end`, `queue_update`, thinking-level changes, compaction, and
@@ -202,6 +204,9 @@ moon test examples/mo_workbench/native_transport --target native
 moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
 printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"abort_bash"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 ```

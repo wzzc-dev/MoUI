@@ -121,6 +121,60 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
 }
 
 ///|
+test "workbench cancel run targets active Pi RPC bash command" {
+  let model = WorkbenchModel::new()
+    .update(QueueCommand("moon check"))
+    .update(CancelRun)
+  inspect(model.last_status, content="Shell command cancellation queued")
+  inspect(model.pending_transport_count(), content="3")
+  let command = model.commands[model.commands.length() - 1]
+  inspect(command.status, content="cancelling")
+  match model.transport.command_queue[2] {
+    CancelShellCommand(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued shell cancellation")
+  }
+  assert_true(
+    model.events.any(event => {
+      event.title == "Shell command cancellation requested"
+    }),
+  )
+}
+
+///|
+test "workbench cancel run falls back to agent abort without active shell command" {
+  let model = WorkbenchModel::new().update(CancelRun)
+  inspect(model.last_status, content="Cancellation queued")
+  inspect(model.pending_transport_count(), content="1")
+  match model.transport.command_queue[0] {
+    CancelRpcRun(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued agent cancellation")
+  }
+}
+
+///|
+test "workbench cancel runtime effect dispatches Pi RPC abort_bash command" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let update = WorkbenchModel::new()
+    .update(QueueCommand("moon check"))
+    .update_with_transport(CancelRun, transport)
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.last_status, content="Shell command cancellation queued")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="1")
+  match captured.val[0] {
+    CancelShellCommand(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured shell cancellation")
+  }
+  inspect(
+    model.commands[model.commands.length() - 1].status,
+    content="cancelling",
+  )
+}
+
+///|
 test "workbench selection with transport switches Pi session then refreshes state" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, _emit) => {
@@ -478,6 +532,36 @@ test "workbench ingests Pi RPC bash failure into command diagnostics" {
   inspect(diagnostic.message, content="bash exited with code 2")
   inspect(model.last_status, content="Pi bash response applied")
   assert_true(model.events.any(event => event.title == "Pi bash completed"))
+}
+
+///|
+test "workbench ingests Pi RPC bash cancellation into command diagnostics" {
+  let model = WorkbenchModel::new()
+    .update(QueueCommand("moon check"))
+    .update(CancelRun)
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"bash","success":true,"data":{"output":"","cancelled":true,"truncated":false}}
+          ),
+        ),
+      ),
+    )
+  let command = model.commands[model.commands.length() - 1]
+  inspect(command.command, content="moon check")
+  inspect(command.status, content="cancelled")
+  match command.exit_code {
+    Some(_) => fail("expected cancelled bash without exit code")
+    None => inspect("none", content="none")
+  }
+  let diagnostic = model.diagnostics[model.diagnostics.length() - 1]
+  inspect(diagnostic.source, content="Pi bash")
+  inspect(diagnostic.severity, content="warning")
+  inspect(diagnostic.message, content="bash command was cancelled")
+  inspect(model.last_status, content="Pi bash response applied")
+  assert_true(model.events.any(event => event.title == "Pi bash cancelled"))
 }
 
 ///|
