@@ -59,11 +59,16 @@ fn WorkbenchModel::ingest_rpc_response(
   let command = json_string(fields, "command").unwrap_or("unknown")
   let success = json_bool(fields, "success").unwrap_or(false)
   if success {
-    let snapshot = match fields.get("data") {
-      Some(Object(data)) => rpc_snapshot_from_data(command, data)
-      _ => PiRpcSnapshot::new(command~, success=true)
+    match command {
+      "switch_session" => self.apply_switch_session_success(session_id, fields)
+      _ => {
+        let snapshot = match fields.get("data") {
+          Some(Object(data)) => rpc_snapshot_from_data(command, data)
+          _ => PiRpcSnapshot::new(command~, success=true)
+        }
+        self.apply_rpc_success(session_id, snapshot)
+      }
     }
-    self.apply_rpc_success(session_id, snapshot)
   } else {
     let error = json_string(fields, "error").unwrap_or("Pi RPC command failed")
     self.apply_rpc_failure(session_id, command, error)
@@ -76,7 +81,7 @@ fn WorkbenchModel::apply_rpc_success(
   session_id : String,
   snapshot : PiRpcSnapshot,
 ) -> WorkbenchModel {
-  let model = self.update_active_session_from_rpc(snapshot)
+  let model = self.update_session_from_rpc(session_id, snapshot)
   model.append_ingested_event(
     AgentEvent::new(
       phase="agent",
@@ -119,12 +124,57 @@ fn WorkbenchModel::apply_rpc_failure(
 }
 
 ///|
-fn WorkbenchModel::update_active_session_from_rpc(
+fn WorkbenchModel::apply_switch_session_success(
   self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let cancelled = match json_object(fields, "data") {
+    Some(data) => json_bool(data, "cancelled").unwrap_or(false)
+    None => false
+  }
+  let session = self.session_for_id(session_id)
+  let binding = PiSessionBinding::new(
+    workbench_session_id=session_id,
+    session_file=session.pi_session_path,
+    status=if cancelled { "cancelled" } else { "switching" },
+    last_command="switch_session",
+  )
+  let model = {
+    ..self.upsert_pi_session_binding(binding),
+    pi_rpc: PiRpcSnapshot::new(command="switch_session", success=true),
+  }
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title=if cancelled {
+        "Pi session switch cancelled"
+      } else {
+        "Pi session switch accepted"
+      },
+      detail=if session.pi_session_path == "" {
+        session_id
+      } else {
+        session_id + ": " + session.pi_session_path
+      },
+      tone=if cancelled { "warning" } else { "success" },
+    ),
+    status=if cancelled {
+      "Pi session switch cancelled"
+    } else {
+      "Pi session switch accepted"
+    },
+  )
+}
+
+///|
+fn WorkbenchModel::update_session_from_rpc(
+  self : WorkbenchModel,
+  workbench_session_id : String,
   snapshot : PiRpcSnapshot,
 ) -> WorkbenchModel {
   let sessions = self.sessions.map(session => {
-    if session.id == self.selected_session_id && snapshot.session_id != "" {
+    if session.id == workbench_session_id && snapshot.session_id != "" {
       let model_label = if snapshot.model == "" {
         "unknown model"
       } else {
@@ -144,7 +194,22 @@ fn WorkbenchModel::update_active_session_from_rpc(
       session
     }
   })
-  { ..self, sessions, pi_rpc: snapshot }
+  let model = { ..self, sessions, pi_rpc: snapshot }
+  if snapshot.session_id == "" && snapshot.session_file == "" {
+    model
+  } else {
+    model.upsert_pi_session_binding(
+      PiSessionBinding::new(
+        workbench_session_id~,
+        rpc_session_id=snapshot.session_id,
+        session_file=snapshot.session_file,
+        session_name=snapshot.session_name,
+        model=snapshot.model,
+        status="bound",
+        last_command=snapshot.command,
+      ),
+    )
+  }
 }
 
 ///|
@@ -156,6 +221,8 @@ fn rpc_snapshot_from_data(
     command~,
     success=true,
     session_id=json_string(data, "sessionId").unwrap_or(""),
+    session_file=json_string(data, "sessionFile").unwrap_or(""),
+    session_name=json_string(data, "sessionName").unwrap_or(""),
     model=json_model_label(data),
     pending_message_count=json_int(data, "pendingMessageCount").unwrap_or(0),
     message_count=json_int(data, "messageCount").unwrap_or(0),
@@ -169,13 +236,19 @@ fn rpc_response_detail(session_id : String, snapshot : PiRpcSnapshot) -> String 
   } else {
     "Pi session " + snapshot.session_id
   }
+  let file = if snapshot.session_file == "" {
+    ""
+  } else {
+    ", file " + snapshot.session_file
+  }
   session_id +
   ": " +
   rpc_session +
   ", model " +
   (if snapshot.model == "" { "unknown" } else { snapshot.model }) +
   ", pending " +
-  snapshot.pending_message_count.to_string()
+  snapshot.pending_message_count.to_string() +
+  file
 }
 
 ///|
@@ -936,6 +1009,42 @@ fn WorkbenchModel::upsert_file(
     next.push(file)
     { ..self, files: next }
   }
+}
+
+///|
+fn WorkbenchModel::upsert_pi_session_binding(
+  self : WorkbenchModel,
+  binding : PiSessionBinding,
+) -> WorkbenchModel {
+  let mut found = false
+  let bindings = self.pi_session_bindings.map(existing => {
+    if existing.workbench_session_id == binding.workbench_session_id {
+      found = true
+      binding
+    } else {
+      existing
+    }
+  })
+  if found {
+    { ..self, pi_session_bindings: bindings }
+  } else {
+    let next = bindings.copy()
+    next.push(binding)
+    { ..self, pi_session_bindings: next }
+  }
+}
+
+///|
+fn WorkbenchModel::session_for_id(
+  self : WorkbenchModel,
+  id : String,
+) -> WorkbenchSession {
+  for session in self.sessions {
+    if session.id == id {
+      return session
+    }
+  }
+  self.active_session()
 }
 
 ///|

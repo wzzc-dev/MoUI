@@ -8,6 +8,7 @@ pub(all) struct WorkbenchSession {
   id : String
   title : String
   project_path : String
+  pi_session_path : String
   branch : String
   status : String
   summary : String
@@ -71,6 +72,8 @@ pub(all) struct PiRpcSnapshot {
   command : String
   success : Bool
   session_id : String
+  session_file : String
+  session_name : String
   model : String
   pending_message_count : Int
   message_count : Int
@@ -91,6 +94,17 @@ pub(all) struct PiAgentSnapshot {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct PiSessionBinding {
+  workbench_session_id : String
+  rpc_session_id : String
+  session_file : String
+  session_name : String
+  model : String
+  status : String
+  last_command : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
@@ -106,6 +120,7 @@ pub(all) struct WorkbenchModel {
   transport : PiTransportState
   pi_rpc : PiRpcSnapshot
   pi_agent : PiAgentSnapshot
+  pi_session_bindings : Array[PiSessionBinding]
   last_status : String
 }
 
@@ -139,6 +154,7 @@ pub fn WorkbenchSession::new(
   id~ : String,
   title~ : String,
   project_path~ : String,
+  pi_session_path? : String = "",
   branch~ : String,
   status~ : String,
   summary~ : String,
@@ -149,6 +165,7 @@ pub fn WorkbenchSession::new(
     id,
     title,
     project_path,
+    pi_session_path,
     branch,
     status,
     summary,
@@ -225,6 +242,8 @@ pub fn PiRpcSnapshot::new(
   command? : String = "",
   success? : Bool = false,
   session_id? : String = "",
+  session_file? : String = "",
+  session_name? : String = "",
   model? : String = "",
   pending_message_count? : Int = 0,
   message_count? : Int = 0,
@@ -234,10 +253,51 @@ pub fn PiRpcSnapshot::new(
     command,
     success,
     session_id,
+    session_file,
+    session_name,
     model,
     pending_message_count,
     message_count,
     error,
+  }
+}
+
+///|
+pub fn PiSessionBinding::new(
+  workbench_session_id~ : String,
+  rpc_session_id? : String = "",
+  session_file? : String = "",
+  session_name? : String = "",
+  model? : String = "",
+  status? : String = "unbound",
+  last_command? : String = "",
+) -> PiSessionBinding {
+  {
+    workbench_session_id,
+    rpc_session_id,
+    session_file,
+    session_name,
+    model,
+    status,
+    last_command,
+  }
+}
+
+///|
+pub fn PiSessionBinding::status_label(self : PiSessionBinding) -> String {
+  if self.status == "unbound" {
+    "unbound"
+  } else {
+    let name = if self.session_name != "" {
+      self.session_name
+    } else if self.rpc_session_id != "" {
+      self.rpc_session_id
+    } else if self.session_file != "" {
+      self.session_file
+    } else {
+      "Pi session"
+    }
+    self.status + " · " + name
   }
 }
 
@@ -298,6 +358,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     transport: PiTransportState::new(),
     pi_rpc: PiRpcSnapshot::new(),
     pi_agent: PiAgentSnapshot::new(),
+    pi_session_bindings: [],
     last_status: "Ready for Pi RPC",
   }
 }
@@ -308,7 +369,7 @@ pub fn WorkbenchModel::update(
   message : WorkbenchMsg,
 ) -> WorkbenchModel {
   match message {
-    SelectSession(id) => { ..self, selected_session_id: id }
+    SelectSession(id) => self.select_session(id)
     SelectPanel(panel) => { ..self, selected_panel: panel }
     PromptChanged(value) => { ..self, prompt: value }
     DispatchPrompt => self.dispatch_prompt()
@@ -439,6 +500,18 @@ pub fn WorkbenchModel::active_session(
 }
 
 ///|
+pub fn WorkbenchModel::active_pi_session_binding(
+  self : WorkbenchModel,
+) -> PiSessionBinding {
+  for binding in self.pi_session_bindings {
+    if binding.workbench_session_id == self.selected_session_id {
+      return binding
+    }
+  }
+  PiSessionBinding::new(workbench_session_id=self.selected_session_id)
+}
+
+///|
 pub fn WorkbenchModel::pending_transport_count(self : WorkbenchModel) -> Int {
   self.transport.command_queue.length()
 }
@@ -455,12 +528,37 @@ pub fn WorkbenchModel::update_with_transport(
   transport_runtime : PiTransportRuntime,
 ) -> WorkbenchUpdate {
   match message {
+    SelectSession(id) =>
+      self.select_session_with_transport(id, transport_runtime)
     DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
     CancelRun => self.cancel_run_with_transport(transport_runtime)
     _ => WorkbenchUpdate::new(self.update(message))
   }
+}
+
+///|
+fn WorkbenchModel::select_session(
+  self : WorkbenchModel,
+  id : String,
+) -> WorkbenchModel {
+  { ..self, selected_session_id: id, last_status: "Workbench session selected" }
+}
+
+///|
+fn WorkbenchModel::select_session_with_transport(
+  self : WorkbenchModel,
+  id : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let selected = self.select_session(id)
+  let session = selected.active_session()
+  let commands = selected.commands_for_session_selection(session)
+  WorkbenchUpdate::new(
+    { ..selected, transport: selected.transport.enqueue_many(commands) },
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
 }
 
 ///|
@@ -633,6 +731,22 @@ fn WorkbenchModel::cancel_run_with_transport(
     self.cancel_run(),
     effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
   )
+}
+
+///|
+fn WorkbenchModel::commands_for_session_selection(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> Array[PiTransportCommand] {
+  ignore(self)
+  if session.pi_session_path == "" {
+    [StartRpc(session.id, session.project_path)]
+  } else {
+    [
+      SwitchRpcSession(session.id, session.pi_session_path),
+      StartRpc(session.id, session.project_path),
+    ]
+  }
 }
 
 ///|

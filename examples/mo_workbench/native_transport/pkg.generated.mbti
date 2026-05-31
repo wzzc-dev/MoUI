@@ -13,6 +13,8 @@ pub fn pi_rpc_get_state_line() -> String
 
 pub fn pi_rpc_prompt_line(message~ : String) -> String
 
+pub fn pi_rpc_switch_session_line(session_path~ : String) -> String
+
 pub async fn run_interactive_jsonl_session(PiNativeTransportConfig, session_id~ : String, async (PiNativeTransportSession) -> Unit) -> PiNativeTransportRun
 
 pub async fn run_jsonl_command_batches(PiNativeTransportConfig, session_id~ : String, Array[Array[@app.PiTransportCommand]]) -> PiNativeTransportRun

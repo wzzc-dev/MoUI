@@ -85,15 +85,30 @@ pub(all) struct PiRpcSnapshot {
   command : String
   success : Bool
   session_id : String
+  session_file : String
+  session_name : String
   model : String
   pending_message_count : Int
   message_count : Int
   error : String
 } derive(Eq, @debug.Debug)
-pub fn PiRpcSnapshot::new(command? : String, success? : Bool, session_id? : String, model? : String, pending_message_count? : Int, message_count? : Int, error? : String) -> Self
+pub fn PiRpcSnapshot::new(command? : String, success? : Bool, session_id? : String, session_file? : String, session_name? : String, model? : String, pending_message_count? : Int, message_count? : Int, error? : String) -> Self
+
+pub(all) struct PiSessionBinding {
+  workbench_session_id : String
+  rpc_session_id : String
+  session_file : String
+  session_name : String
+  model : String
+  status : String
+  last_command : String
+} derive(Eq, @debug.Debug)
+pub fn PiSessionBinding::new(workbench_session_id~ : String, rpc_session_id? : String, session_file? : String, session_name? : String, model? : String, status? : String, last_command? : String) -> Self
+pub fn PiSessionBinding::status_label(Self) -> String
 
 pub(all) enum PiTransportCommand {
   StartRpc(String, String)
+  SwitchRpcSession(String, String)
   SendUserInput(String, String)
   CancelRpcRun(String)
   Shutdown
@@ -169,8 +184,10 @@ pub(all) struct WorkbenchModel {
   transport : PiTransportState
   pi_rpc : PiRpcSnapshot
   pi_agent : PiAgentSnapshot
+  pi_session_bindings : Array[PiSessionBinding]
   last_status : String
 }
+pub fn WorkbenchModel::active_pi_session_binding(Self) -> PiSessionBinding
 pub fn WorkbenchModel::active_session(Self) -> WorkbenchSession
 pub fn WorkbenchModel::new() -> Self
 pub fn WorkbenchModel::open_diagnostic_count(Self) -> Int
@@ -198,13 +215,14 @@ pub(all) struct WorkbenchSession {
   id : String
   title : String
   project_path : String
+  pi_session_path : String
   branch : String
   status : String
   summary : String
   active_task : String
   unread_events : Int
 } derive(Eq, @debug.Debug)
-pub fn WorkbenchSession::new(id~ : String, title~ : String, project_path~ : String, branch~ : String, status~ : String, summary~ : String, active_task~ : String, unread_events~ : Int) -> Self
+pub fn WorkbenchSession::new(id~ : String, title~ : String, project_path~ : String, pi_session_path? : String, branch~ : String, status~ : String, summary~ : String, active_task~ : String, unread_events~ : Int) -> Self
 
 pub(all) struct WorkbenchUpdate {
   model : WorkbenchModel
