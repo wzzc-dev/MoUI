@@ -48,6 +48,37 @@ test "workbench transport runtime effect dispatches prompt events" {
 }
 
 ///|
+test "workbench selection with transport switches Pi session then refreshes state" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    SelectSession("pi-rpc"),
+    transport,
+  )
+  inspect(update.model.selected_session_id, content="pi-rpc")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[0] {
+    SwitchRpcSession(session, path) => {
+      inspect(session, content="pi-rpc")
+      inspect(path, content="/tmp/mo-workbench-pi-rpc-session.jsonl")
+    }
+    _ => fail("expected queued Pi session switch")
+  }
+  match captured.val[1] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="pi-rpc")
+      inspect(cwd, content="/Volumes/Data/Code/moon/pi")
+    }
+    _ => fail("expected queued state refresh")
+  }
+  inspect(model.selected_session_id, content="pi-rpc")
+}
+
+///|
 test "workbench applies transport events to model timeline" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(ProcessStarted("4242")),
@@ -159,6 +190,8 @@ test "workbench ingests Pi RPC get_state response jsonl" {
   inspect(model.pi_rpc.command, content="get_state")
   inspect(model.pi_rpc.success, content="true")
   inspect(model.pi_rpc.session_id, content="019e7eb5")
+  inspect(model.pi_rpc.session_file, content="")
+  inspect(model.pi_rpc.session_name, content="")
   inspect(model.pi_rpc.model, content="openai/gpt-5")
   inspect(model.pi_rpc.message_count, content="4")
   inspect(model.pi_rpc.pending_message_count, content="1")
@@ -166,9 +199,58 @@ test "workbench ingests Pi RPC get_state response jsonl" {
   inspect(session.status, content="running")
   inspect(session.unread_events, content="1")
   inspect(session.summary, content="Pi RPC session 019e7eb5 on openai/gpt-5")
+  let binding = model.active_pi_session_binding()
+  inspect(binding.workbench_session_id, content="moui-skia")
+  inspect(binding.rpc_session_id, content="019e7eb5")
+  inspect(binding.status, content="bound")
   inspect(model.last_status, content="Pi RPC response applied")
   assert_true(
     model.events.any(event => event.title == "Pi RPC response: get_state"),
+  )
+}
+
+///|
+test "workbench binds switched Pi session after get_state refresh" {
+  let model = WorkbenchModel::new()
+    .update(SelectSession("pi-rpc"))
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "pi-rpc",
+          (
+            #|{"type":"response","command":"switch_session","success":true,"data":{"cancelled":false}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "pi-rpc",
+          (
+            #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e7ed4","sessionFile":"/tmp/mo-workbench-pi-rpc-session.jsonl","sessionName":"Mo Workbench smoke","messageCount":8,"pendingMessageCount":0}}
+          ),
+        ),
+      ),
+    )
+  let binding = model.active_pi_session_binding()
+  inspect(binding.workbench_session_id, content="pi-rpc")
+  inspect(binding.rpc_session_id, content="019e7ed4")
+  inspect(
+    binding.session_file,
+    content="/tmp/mo-workbench-pi-rpc-session.jsonl",
+  )
+  inspect(binding.session_name, content="Mo Workbench smoke")
+  inspect(binding.model, content="openai/gpt-5")
+  inspect(binding.status, content="bound")
+  inspect(binding.last_command, content="get_state")
+  inspect(binding.status_label(), content="bound · Mo Workbench smoke")
+  let session = model.active_session()
+  inspect(session.status, content="active")
+  inspect(session.summary, content="Pi RPC session 019e7ed4 on openai/gpt-5")
+  inspect(model.last_status, content="Pi RPC response applied")
+  assert_true(
+    model.events.any(event => event.title == "Pi session switch accepted"),
   )
 }
 

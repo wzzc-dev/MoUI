@@ -12,9 +12,14 @@ async test "native transport default command targets pi rpc" {
 ///|
 async test "native transport builds structured jsonl request lines" {
   let state = pi_rpc_get_state_line()
+  let switch_session = pi_rpc_switch_session_line(session_path="/tmp/pi.jsonl")
   let input = pi_rpc_prompt_line(message="Inspect renderer capability tests")
   let abort = pi_rpc_abort_line()
   json_inspect(@json.parse(state), content={ "type": "get_state" })
+  json_inspect(@json.parse(switch_session), content={
+    "type": "switch_session",
+    "sessionPath": "/tmp/pi.jsonl",
+  })
   json_inspect(@json.parse(input), content={
     "type": "prompt",
     "message": "Inspect renderer capability tests",
@@ -26,18 +31,23 @@ async test "native transport builds structured jsonl request lines" {
 async test "native transport maps command batches to jsonl requests" {
   let request = PiNativeTransportRequest::from_commands([
     StartRpc("session-1", "/repo"),
+    SwitchRpcSession("session-1", "/tmp/pi.jsonl"),
     SendUserInput("session-1", "hello"),
     CancelRpcRun("session-1"),
     Shutdown,
   ])
   inspect(request.session_id, content="session-1")
-  inspect(request.lines.length(), content="3")
+  inspect(request.lines.length(), content="4")
   json_inspect(@json.parse(request.lines[0]), content={ "type": "get_state" })
   json_inspect(@json.parse(request.lines[1]), content={
+    "type": "switch_session",
+    "sessionPath": "/tmp/pi.jsonl",
+  })
+  json_inspect(@json.parse(request.lines[2]), content={
     "type": "prompt",
     "message": "hello",
   })
-  json_inspect(@json.parse(request.lines[2]), content={ "type": "abort" })
+  json_inspect(@json.parse(request.lines[3]), content={ "type": "abort" })
 }
 
 ///|

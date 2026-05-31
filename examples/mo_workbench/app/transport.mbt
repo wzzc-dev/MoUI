@@ -16,6 +16,7 @@ pub(all) enum PiTransportStatus {
 ///|
 pub(all) enum PiTransportCommand {
   StartRpc(String, String)
+  SwitchRpcSession(String, String)
   SendUserInput(String, String)
   CancelRpcRun(String)
   Shutdown
@@ -136,6 +137,8 @@ pub fn PiTransportKind::label(self : PiTransportKind) -> String {
 pub fn PiTransportCommand::label(self : PiTransportCommand) -> String {
   match self {
     StartRpc(session, cwd) => "start rpc for " + session + " in " + cwd
+    SwitchRpcSession(session, path) =>
+      "switch rpc session for " + session + ": " + path
     SendUserInput(session, text) => "send prompt for " + session + ": " + text
     CancelRpcRun(session) => "cancel run for " + session
     Shutdown => "shutdown rpc"
