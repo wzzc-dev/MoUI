@@ -22,6 +22,9 @@ pub struct HostServiceAsyncQueue {
   mut pending : Array[HostPendingServiceRequest]
   mut in_flight : Array[HostPendingServiceRequest]
   mut completed : Array[HostCompletedServiceResponse]
+  priv mut completion_handlers : Array[
+    (HostServiceRequestId, (HostCompletedServiceResponse) -> Unit),
+  ]
 }
 
 ///|
@@ -31,7 +34,13 @@ pub fn HostServiceRequestId::new(value : Int) -> HostServiceRequestId {
 
 ///|
 pub fn HostServiceAsyncQueue::new() -> HostServiceAsyncQueue {
-  { next_value: 1, pending: [], in_flight: [], completed: [] }
+  {
+    next_value: 1,
+    pending: [],
+    in_flight: [],
+    completed: [],
+    completion_handlers: [],
+  }
 }
 
 ///|
@@ -126,11 +135,71 @@ pub fn HostServiceAsyncQueue::complete(
   }
   match request {
     Some(request) => {
-      self.completed.push({ id, request, response })
+      let completion = { id, request, response }
+      if !self.dispatch_completion_handlers(completion) {
+        self.completed.push(completion)
+      }
       true
     }
     None => false
   }
+}
+
+///|
+pub fn HostServiceAsyncQueue::on_completed(
+  self : HostServiceAsyncQueue,
+  id : HostServiceRequestId,
+  handle : (HostCompletedServiceResponse) -> Unit,
+) -> Bool {
+  match self.take_completed(id) {
+    Some(completion) => {
+      handle(completion)
+      true
+    }
+    None =>
+      if self.has_outstanding(id) {
+        self.completion_handlers.push((id, handle))
+        true
+      } else {
+        false
+      }
+  }
+}
+
+///|
+fn HostServiceAsyncQueue::dispatch_completion_handlers(
+  self : HostServiceAsyncQueue,
+  completion : HostCompletedServiceResponse,
+) -> Bool {
+  let handlers : Array[
+    (HostServiceRequestId, (HostCompletedServiceResponse) -> Unit),
+  ] = []
+  let remaining : Array[
+    (HostServiceRequestId, (HostCompletedServiceResponse) -> Unit),
+  ] = []
+  for handler in self.completion_handlers {
+    let (id, _) = handler
+    if id == completion.id {
+      handlers.push(handler)
+    } else {
+      remaining.push(handler)
+    }
+  }
+  self.completion_handlers = remaining
+  for handler in handlers {
+    let (_, handle) = handler
+    handle(completion)
+  }
+  !handlers.is_empty()
+}
+
+///|
+fn HostServiceAsyncQueue::has_outstanding(
+  self : HostServiceAsyncQueue,
+  id : HostServiceRequestId,
+) -> Bool {
+  self.pending.any(request => request.id == id) ||
+  self.in_flight.any(request => request.id == id)
 }
 
 ///|

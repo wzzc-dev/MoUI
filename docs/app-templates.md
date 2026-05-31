@@ -352,6 +352,15 @@ pub fn EditorModel::update_with_services(
         @core.Effect::dispatch(dispatch => {
           let response = services.open_file(title="Open document", filters=["md", "txt"])
           dispatch(HostCompleted(file_dialog_completion(response)))
+          match response {
+            @host.HostServiceResponse::Pending(id) =>
+              ignore(
+                services.on_completed(id, completion => {
+                  dispatch(HostCompleted(completion))
+                }),
+              )
+            _ => ()
+          }
         }),
       )
     DispatchCommand(intent) => (self.dispatch_command(intent, services), @core.Effect::none())

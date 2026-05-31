@@ -74,7 +74,9 @@ separate framework task using `moui-framework-development-skill`.
 - Keep host-service calls out of pure reducers. For app-owned clipboard, file
   dialog, URL, theme, or menu work, return `@core.Effect::dispatch`, call
   `@host.HostAppServices` inside the effect runner, and dispatch a typed
-  completion message back into the model.
+  completion message back into the model. When a service returns
+  `HostServiceResponse::Pending(id)`, register `HostAppServices::on_completed`
+  so the later host callback re-enters the same typed message loop.
 - Keep platform-specific setup in `web_wasm`, `macos`, `windows`, or `linux`
   entrypoints.
 - Showcase also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic`

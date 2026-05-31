@@ -260,6 +260,9 @@ moon info
 - Add or update `backend/host` tests when shared behavior changes.
 - Use `HostServiceAsyncQueue` for permission- or callback-driven services
   instead of pretending browser/platform async work completed synchronously.
+- For app-owned pending services, expose a typed completion path through
+  `HostAppServices::on_completed` so callbacks re-enter `Effect::dispatch`
+  instead of teaching `HostRuntimeDriver` about app messages.
 - Run the affected backend package tests.
 - Update `docs/platform-notes.md` when constraints or setup change.
 

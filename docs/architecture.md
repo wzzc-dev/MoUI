@@ -436,9 +436,11 @@ Services that cannot finish synchronously, especially browser clipboard reads
 and file dialogs that need a permission or picker callback, can return
 `HostServiceResponse::Pending` through `HostServiceAsyncQueue`. The host drains
 pending requests into an in-flight set at the platform edge, completes them with
-the original request attached, and hands the completion back to
-`HostRuntimeDriver` so runtime-owned effects such as async paste stay on the
-same command path as synchronous services.
+the original request attached, and records the completion. Runtime-owned
+effects such as async paste are handed to `HostRuntimeDriver`, while app-owned
+service flows can register a `HostAppServices::on_completed` callback from
+`Effect::dispatch` so the completion re-enters the typed message loop without
+exposing platform APIs to `core`.
 The Web backend wires that queue to browser host imports and exported wasm
 completion callbacks for clipboard reads and file pickers.
 Web, macOS, and Windows entrypoints query that bridge at startup and install
@@ -470,8 +472,9 @@ file drag/drop positions and paths before the runtime dispatches typed messages
 to the hit view. `views.drop_zone` and `views.file_import_panel` are view-level
 workflow shells over that modifier; their browse action remains an app message,
 so effect-capable app code can return an `Effect::dispatch` runner that calls
-`HostAppServices::open_file` and dispatches a typed completion message for
-unavailable, synchronous, or pending file dialog responses. Web file import may
+`HostAppServices::open_file`, register `HostAppServices::on_completed` for
+pending dialogs, and dispatch typed completion messages for unavailable,
+synchronous, or async file dialog responses. Web file import may
 expose browser-selected file names or handles rather than native filesystem
 paths, while native hosts can return platform paths through the same selection
 array.

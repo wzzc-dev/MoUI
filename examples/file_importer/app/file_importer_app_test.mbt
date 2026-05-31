@@ -57,8 +57,13 @@ test "file importer handles mocked pending completion" {
     services,
   )
   assert_true(update.model.status is FileImporterStatus::Requesting)
-  let pending_model = run_file_importer_effect(update)
-  guard pending_model.status is FileImporterStatus::Pending(id) else {
+  let model = @core.State::new(update.model)
+  match update.effect {
+    @core.Effect::Dispatch(run) =>
+      run(message => model.set(model.get().update(message)))
+    _ => fail("expected file importer browse effect")
+  }
+  guard model.get().status is FileImporterStatus::Pending(id) else {
     fail("expected pending file dialog")
   }
   inspect(services.pending_count(), content="1")
@@ -70,13 +75,56 @@ test "file importer handles mocked pending completion" {
       @host.HostServiceResponse::FileDialogSelection(["/tmp/later.txt"]),
     ),
   )
-  guard services.take_completed(id) is Some(completion) else {
-    fail("expected completion")
+  match services.take_completed(id) {
+    Some(_) => fail("expected registered completion to be consumed")
+    None => ()
   }
-  let completed = pending_model.update(HostCompleted(completion))
+  let completed = model.get()
   inspect(completed.files.length(), content="1")
   inspect(completed.files[0].path, content="/tmp/later.txt")
   inspect(completed.last_event, content="Imported 1 file(s) from Dialog")
+}
+
+///|
+test "file importer runtime receives async file dialog completion" {
+  let queue = @host.HostServiceAsyncQueue::new()
+  let services = async_file_dialog_services(queue)
+  let runtime = FileImporterModel::new().runtime_with_services(
+    services,
+    width=860.0,
+    height=620.0,
+  )
+  click_text(runtime, "Browse")
+  assert_true(has_text(runtime.draw_commands(), "Waiting for file picker"))
+  let pending = services.drain_pending()
+  inspect(pending.length(), content="1")
+  assert_true(
+    services.complete(
+      pending[0].id,
+      @host.HostServiceResponse::FileDialogSelection(["/tmp/later.txt"]),
+    ),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "/tmp/later.txt"))
+  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
+}
+
+///|
+test "file importer runtime receives async file dialog rejection" {
+  let queue = @host.HostServiceAsyncQueue::new()
+  let services = async_file_dialog_services(queue)
+  let runtime = FileImporterModel::new().runtime_with_services(
+    services,
+    width=860.0,
+    height=620.0,
+  )
+  click_text(runtime, "Browse")
+  let pending = services.drain_pending()
+  inspect(pending.length(), content="1")
+  assert_true(services.reject(pending[0].id, "file picker canceled"))
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "File dialog unavailable"))
+  assert_true(has_text(commands, "file picker canceled"))
 }
 
 ///|
@@ -105,6 +153,31 @@ test "file importer composes as effect-capable child program" {
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Parent Shell"))
   assert_true(has_text(commands, "/tmp/composed.csv"))
+  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
+}
+
+///|
+test "file importer child effect maps pending completion into parent" {
+  let queue = @host.HostServiceAsyncQueue::new()
+  let services = async_file_dialog_services(queue)
+  let runtime = ParentImporterModel::new().runtime_with_services(
+    services,
+    width=900.0,
+    height=680.0,
+  )
+  click_text(runtime, "Browse")
+  assert_true(has_text(runtime.draw_commands(), "Parent Shell"))
+  let pending = services.drain_pending()
+  inspect(pending.length(), content="1")
+  assert_true(
+    services.complete(
+      pending[0].id,
+      @host.HostServiceResponse::FileDialogSelection(["/tmp/child-later.csv"]),
+    ),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Parent Shell"))
+  assert_true(has_text(commands, "/tmp/child-later.csv"))
   assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
 }
 

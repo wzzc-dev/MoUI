@@ -1627,6 +1627,79 @@ test "host async service queue rejects in-flight service requests" {
 }
 
 ///|
+test "host async service queue invokes completion handlers" {
+  let queue = HostServiceAsyncQueue::new()
+  let delivered : Ref[HostCompletedServiceResponse?] = Ref(None)
+  let request_id = match
+    queue.submit(
+      HostServiceRequest::FileDialog(
+        HostFileDialogOptions::new(
+          kind=HostFileDialogKind::OpenFile,
+          title="Import files",
+        ),
+      ),
+    ) {
+    HostServiceResponse::Pending(id) => id
+    _ => fail("expected pending file-dialog request")
+  }
+  assert_true(
+    queue.on_completed(request_id, completion => {
+      delivered.val = Some(completion)
+    }),
+  )
+  let pending = queue.drain_pending()
+  inspect(pending.length(), content="1")
+  assert_true(
+    queue.complete(
+      request_id,
+      HostServiceResponse::FileDialogSelection(["/tmp/later.csv"]),
+    ),
+  )
+  inspect(queue.completed_count(), content="0")
+  match queue.take_completed(request_id) {
+    Some(_) => fail("expected handled completion to be consumed")
+    None => ()
+  }
+  match delivered.val {
+    Some(
+      { request: HostServiceRequest::FileDialog({ title, .. }), response, .. }
+    ) => {
+      inspect(title, content="Import files")
+      match response {
+        HostServiceResponse::FileDialogSelection(paths) =>
+          inspect(paths[0], content="/tmp/later.csv")
+        _ => fail("expected file dialog selection")
+      }
+    }
+    _ => fail("expected completion handler to receive file dialog response")
+  }
+  assert_false(
+    queue.on_completed(HostServiceRequestId::new(404), _completion => ()),
+  )
+  let delivered_late : Ref[HostCompletedServiceResponse?] = Ref(None)
+  let late_id = match
+    queue.submit(HostServiceRequest::OpenUrl("https://late.test")) {
+    HostServiceResponse::Pending(id) => id
+    _ => fail("expected pending URL request")
+  }
+  assert_true(queue.complete(late_id, HostServiceResponse::UrlOpened))
+  inspect(queue.completed_count(), content="1")
+  assert_true(
+    queue.on_completed(late_id, completion => {
+      delivered_late.val = Some(completion)
+    }),
+  )
+  match delivered_late.val {
+    Some({ request: HostServiceRequest::OpenUrl(url), response, .. }) => {
+      inspect(url, content="https://late.test")
+      assert_true(response is HostServiceResponse::UrlOpened)
+    }
+    _ => fail("expected late completion registration to consume record")
+  }
+  inspect(queue.completed_count(), content="0")
+}
+
+///|
 test "host driver applies async clipboard read completion to focused text" {
   let text = @core.State::new("")
   let runtime = host_test_runtime(
@@ -1779,6 +1852,7 @@ test "host app services facade reports unavailable service responses" {
 ///|
 test "host app services facade exposes pending completions" {
   let queue = HostServiceAsyncQueue::new()
+  let file_dialog_completed = Ref(false)
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(clipboard=true, file_dialogs=true),
     handle=request => {
@@ -1799,6 +1873,15 @@ test "host app services facade exposes pending completions" {
     HostServiceResponse::Pending(id) => id
     _ => fail("expected pending file dialog")
   }
+  assert_true(
+    services.on_completed(file_id, completion => {
+      match completion.response {
+        HostServiceResponse::FileDialogSelection(paths) =>
+          file_dialog_completed.val = paths.length() == 1
+        _ => ()
+      }
+    }),
+  )
   inspect(services.pending_count(), content="2")
   inspect(services.outstanding_count(), content="2")
   let pending = services.drain_pending()
@@ -1813,25 +1896,15 @@ test "host app services facade exposes pending completions" {
       HostServiceResponse::FileDialogSelection(["/tmp/file.txt"]),
     ),
   )
-  inspect(services.completed_count(), content="2")
+  inspect(file_dialog_completed.val, content="true")
+  inspect(services.completed_count(), content="1")
   match services.take_completed(clipboard_id) {
     Some({ request: Clipboard(ReadText), response: ClipboardText(text), .. }) =>
       inspect(text, content="later")
     _ => fail("expected completed clipboard read")
   }
   let completed = services.drain_completed()
-  inspect(completed.length(), content="1")
-  match completed[0] {
-    {
-      request: FileDialog({ title, .. }),
-      response: FileDialogSelection(paths),
-      ..,
-    } => {
-      inspect(title, content="Open")
-      inspect(paths[0], content="/tmp/file.txt")
-    }
-    _ => fail("expected completed file dialog")
-  }
+  inspect(completed.length(), content="0")
 }
 
 ///|

@@ -157,11 +157,13 @@ Use `@host.HostAppServices` for clipboard, file dialogs, URL opening, system
 theme, and native context menus. Effect-capable apps should return
 `Effect::dispatch` from `Program::new` updates, call the service from the effect
 runner, and dispatch a typed completion message for `Unavailable`, synchronous
-responses, and pending async completions. `views` should only emit messages such
-as `BrowseRequested` or `RecordFileDrop(paths)`. When a host-service workflow is
-implemented as a child feature, lift the child view with `View::map` and lift
-the child effect with `Effect::map` in the parent update so the parent still owns
-the top-level message loop.
+responses, and pending async completions. For pending app-owned services,
+register `HostAppServices::on_completed` with the pending request id so the
+later host callback re-enters the same typed message loop. `views` should only
+emit messages such as `BrowseRequested` or `RecordFileDrop(paths)`. When a
+host-service workflow is implemented as a child feature, lift the child view
+with `View::map` and lift the child effect with `Effect::map` in the parent
+update so the parent still owns the top-level message loop.
 
 ```moonbit nocheck
 fn request_browse(
@@ -170,6 +172,15 @@ fn request_browse(
   @core.Effect::dispatch(dispatch => {
     let response = services.open_file(title="Import files", filters=["csv", "json"])
     dispatch(HostCompleted(file_dialog_completion(response)))
+    match response {
+      @host.HostServiceResponse::Pending(id) =>
+        ignore(
+          services.on_completed(id, completion => {
+            dispatch(HostCompleted(completion))
+          }),
+        )
+      _ => ()
+    }
   })
 }
 ```

@@ -297,6 +297,15 @@ fn FileImporterModel::request_file_dialog(
         "csv", "json", "txt",
       ])
       dispatch(HostCompleted(file_dialog_completion_for_response(response)))
+      match response {
+        @host.HostServiceResponse::Pending(id) =>
+          ignore(
+            services.on_completed(id, completion => {
+              dispatch(HostCompleted(completion))
+            }),
+          )
+        _ => ()
+      }
     }),
   )
 }
