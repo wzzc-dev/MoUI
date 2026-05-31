@@ -30,7 +30,8 @@ The current package exposes the first value-layer API surface:
 - render pass contracts: `RenderPassDescriptor`, `RenderPassLoadOp`, and
   `RenderPassStoreOp` define target bounds plus load/clear/store/present
   semantics before a concrete backend records draw commands, including defaults
-  derived from `SurfaceTargetDescriptor`
+  derived from `SurfaceTargetDescriptor` and resource descriptors for target
+  surfaces
 - render command contracts: `RenderCommandList`, `RenderCommand`, and
   `RenderCommandStats` provide the backend-neutral command stream boundary a GUI
   renderer can validate before replaying into a native Canvas, including
