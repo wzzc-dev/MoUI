@@ -659,6 +659,16 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform linux -LogDir $fakeLinuxMismatchedBuildCommitDir -RequireCommit } `
       -ExpectedMessage "build and wrapper logs disagree"
 
+    $fakeMissingCiGateStatus = Join-Path $dryRunRoot "fake-platform-status-missing-ci-gate.json"
+    $missingCiGateStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
+    $missingCiGateStatus.ci_gates = @($missingCiGateStatus.ci_gates | Where-Object { $_.id -ne "native.ffi-borrows" })
+    $missingCiGateStatus |
+      ConvertTo-Json -Depth 20 |
+      Set-Content -LiteralPath $fakeMissingCiGateStatus
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingCiGateStatus } `
+      -ExpectedMessage "CI gate coverage is missing ids"
+
     & (Join-Path $repoRoot "scripts/verify-platform-status.ps1")
   } finally {
     $resolvedDryRunRoot = Resolve-Path -LiteralPath $dryRunRoot -ErrorAction SilentlyContinue

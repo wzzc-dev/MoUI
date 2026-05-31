@@ -50,8 +50,67 @@ if ($providerLockData -and $providerLockData.providers.jetbrains) {
   $jetbrainsTag = $providerLockData.providers.jetbrains.tag
 }
 
-if ($status.schema_version -notin @(1, 2, 3)) {
+if ($status.schema_version -notin @(1, 2, 3, 4)) {
   throw "unsupported Skia platform status schema_version: $($status.schema_version)"
+}
+
+if ($status.schema_version -ge 4) {
+  $gates = @($status.ci_gates)
+  if ($gates.Count -eq 0) {
+    throw "schema v4 platform status is missing ci_gates list"
+  }
+
+  $requiredGateIds = @(
+    "moonbit.fmt-check",
+    "moonbit.check-test",
+    "native.smoke-build",
+    "native.ownership",
+    "native.ffi-borrows",
+    "platform.status",
+    "artifact.native-smoke-log",
+    "artifact.real-skia"
+  )
+  $seenGateIds = @{}
+  $seenGateCommands = @{}
+  $seenGateAreas = @{}
+  foreach ($gate in $gates) {
+    $gateId = "$($gate.id)".Trim()
+    $area = "$($gate.area)".Trim()
+    $unixCommand = "$($gate.unix_command)".Trim()
+    $powershellCommand = "$($gate.powershell_command)".Trim()
+    if ([string]::IsNullOrWhiteSpace($gateId)) {
+      throw "CI gate is missing id"
+    }
+    if ([string]::IsNullOrWhiteSpace($area)) {
+      throw "CI gate is missing area: $gateId"
+    }
+    if ([string]::IsNullOrWhiteSpace($unixCommand) -and [string]::IsNullOrWhiteSpace($powershellCommand)) {
+      throw "CI gate is missing verifier command: $gateId"
+    }
+    if ($seenGateIds.ContainsKey($gateId)) {
+      throw "duplicate CI gate id: $gateId"
+    }
+    foreach ($command in @($unixCommand, $powershellCommand)) {
+      if (![string]::IsNullOrWhiteSpace($command)) {
+        $commandKey = "$area`n$command"
+        if ($seenGateCommands.ContainsKey($commandKey)) {
+          throw "duplicate CI gate command: $command"
+        }
+        $seenGateCommands[$commandKey] = $true
+      }
+    }
+    $seenGateIds[$gateId] = $true
+    $seenGateAreas[$area] = $true
+  }
+  $missingGateIds = @($requiredGateIds | Where-Object { !$seenGateIds.ContainsKey($_) })
+  if ($missingGateIds.Count -gt 0) {
+    throw "CI gate coverage is missing ids: $($missingGateIds -join ', ')"
+  }
+  $requiredGateAreas = @("MoonBit", "NativeSmoke", "FFI", "PlatformStatus", "Artifact")
+  $missingGateAreas = @($requiredGateAreas | Where-Object { !$seenGateAreas.ContainsKey($_) })
+  if ($missingGateAreas.Count -gt 0) {
+    throw "CI gate coverage is missing areas: $($missingGateAreas -join ', ')"
+  }
 }
 
 if ($status.schema_version -ge 3) {

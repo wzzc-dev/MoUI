@@ -159,6 +159,22 @@ jobs:
           printf '%s\n' 'main' > logs/fake-floating-skia-revision.txt
           bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-floating-skia-revision.txt --skip-if-unpinned
           bash scripts/verify-platform-status.sh
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          status['ci_gates'] = [
+              gate for gate in status['ci_gates']
+              if gate['id'] != 'native.ffi-borrows'
+          ]
+          Path('logs/fake-platform-status-missing-ci-gate.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-missing-ci-gate.json; then
+            echo "verify-platform-status unexpectedly accepted a missing CI gate" >&2
+            exit 1
+          fi
           if bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-floating-skia-revision.txt; then
             echo "verify-skia-revision-pin unexpectedly accepted a floating revision" >&2
             exit 1

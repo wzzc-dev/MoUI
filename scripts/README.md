@@ -8,11 +8,13 @@ machine-readable platform status; validate it with
 `./scripts/verify-platform-status.ps1` from PowerShell or
 `bash scripts/verify-platform-status.sh` on Linux/macOS.
 
-`skia-platform-status.json` schema v3 is also the source of truth for native
-smoke capability markers. `verify-native-smoke-log.*` reads its
-`native_smoke_capabilities` list so artifact verification checks the same
-Surface, Canvas, Shader, Filter, Path, Image, Text, and FontMgr boundaries that
-the platform status file claims.
+`skia-platform-status.json` schema v4 is also the source of truth for CI gate
+coverage and native smoke capability markers. Its `ci_gates` list records the
+MoonBit, native-smoke, FFI ownership, FFI borrow, platform-status, and artifact
+verification commands that must stay wired into CI. `verify-native-smoke-log.*`
+reads its `native_smoke_capabilities` list so artifact verification checks the
+same Surface, Canvas, Shader, Filter, Path, Image, Text, and FontMgr boundaries
+that the platform status file claims.
 
 Native handle ownership is tracked separately in `../native/ownership.json`.
 Run `bash scripts/verify-native-ownership.sh` or

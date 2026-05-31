@@ -20,9 +20,15 @@ On Linux or macOS runners, use the shell equivalent:
 bash scripts/verify-platform-status.sh
 ```
 
-Schema v3 also records `native_smoke_capabilities`: the canonical list of smoke
-markers that must appear in every accepted native smoke executable log. The
-platform-status verifier checks this list covers Surface, Canvas, Shader,
+Schema v4 also records `ci_gates`: the canonical list of repository and artifact
+verification commands that must stay wired into CI. The status verifier checks
+that MoonBit checks/tests, native smoke build, FFI ownership, FFI borrow
+annotations, platform status, native smoke log verification, and real-Skia
+artifact verification are all represented.
+
+The same status file records `native_smoke_capabilities`: the canonical list of
+smoke markers that must appear in every accepted native smoke executable log.
+The platform-status verifier checks this list covers Surface, Canvas, Shader,
 Filter, Path, Image, Text, and FontMgr boundaries, and
 `verify-native-smoke-log.*` reads the same list when validating artifact logs.
 

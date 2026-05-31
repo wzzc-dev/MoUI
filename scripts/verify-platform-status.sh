@@ -120,8 +120,55 @@ for line in revision_path.read_text(encoding="utf-8").splitlines():
         break
 
 schema_version = status.get("schema_version")
-if schema_version not in (1, 2, 3):
+if schema_version not in (1, 2, 3, 4):
     fail(f"unsupported Skia platform status schema_version: {status.get('schema_version')}")
+
+if schema_version >= 4:
+    gates = status.get("ci_gates")
+    if not isinstance(gates, list):
+        fail("schema v4 platform status is missing ci_gates list")
+    required_gate_ids = {
+        "moonbit.fmt-check",
+        "moonbit.check-test",
+        "native.smoke-build",
+        "native.ownership",
+        "native.ffi-borrows",
+        "platform.status",
+        "artifact.native-smoke-log",
+        "artifact.real-skia",
+    }
+    seen_gate_ids = set()
+    seen_gate_commands = set()
+    seen_gate_areas = set()
+    for gate in gates:
+        if not isinstance(gate, dict):
+            fail("ci_gates entries must be objects")
+        gate_id = str(gate.get("id", "")).strip()
+        area = str(gate.get("area", "")).strip()
+        unix_command = str(gate.get("unix_command", "")).strip()
+        powershell_command = str(gate.get("powershell_command", "")).strip()
+        if not gate_id:
+            fail("CI gate is missing id")
+        if not area:
+            fail(f"CI gate is missing area: {gate_id}")
+        if not unix_command and not powershell_command:
+            fail(f"CI gate is missing verifier command: {gate_id}")
+        if gate_id in seen_gate_ids:
+            fail(f"duplicate CI gate id: {gate_id}")
+        for command in (unix_command, powershell_command):
+            if command:
+                command_key = (area, command)
+                if command_key in seen_gate_commands:
+                    fail(f"duplicate CI gate command: {command}")
+                seen_gate_commands.add(command_key)
+        seen_gate_ids.add(gate_id)
+        seen_gate_areas.add(area)
+    missing_gate_ids = sorted(required_gate_ids - seen_gate_ids)
+    if missing_gate_ids:
+        fail("CI gate coverage is missing ids: " + ", ".join(missing_gate_ids))
+    missing_gate_areas = sorted({"MoonBit", "NativeSmoke", "FFI", "PlatformStatus", "Artifact"} - seen_gate_areas)
+    if missing_gate_areas:
+        fail("CI gate coverage is missing areas: " + ", ".join(missing_gate_areas))
 
 if schema_version >= 3:
     capabilities = status.get("native_smoke_capabilities")
