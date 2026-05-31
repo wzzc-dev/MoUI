@@ -29,6 +29,23 @@ fn render_frame_resource_descriptors(
 }
 
 ///|
+/// Validation outcome for a finalized render frame.
+#warnings("-deprecated_syntax")
+pub(all) enum RenderFrameValidationStatus {
+  FrameReady
+  FrameTargetMismatch
+  FrameUnbalancedState
+  FrameMissingPresent
+} derive(Debug, Eq)
+
+///|
+pub fn RenderFrameValidationStatus::is_ready(
+  self : RenderFrameValidationStatus,
+) -> Bool {
+  self is FrameReady
+}
+
+///|
 /// Frame-level value boundary for a target plus its finalized render commands.
 pub(all) struct RenderFrameDescriptor {
   target : SurfaceTargetDescriptor
@@ -83,10 +100,23 @@ pub fn RenderFrameDescriptor::has_present(self : RenderFrameDescriptor) -> Bool 
 }
 
 ///|
+pub fn RenderFrameDescriptor::validation_status(
+  self : RenderFrameDescriptor,
+) -> RenderFrameValidationStatus {
+  if !self.is_target_consistent() {
+    FrameTargetMismatch
+  } else if !self.stats.is_state_balanced() {
+    FrameUnbalancedState
+  } else if self.needs_present() && !self.has_present() {
+    FrameMissingPresent
+  } else {
+    FrameReady
+  }
+}
+
+///|
 pub fn RenderFrameDescriptor::is_ready(self : RenderFrameDescriptor) -> Bool {
-  self.is_target_consistent() &&
-  self.stats.is_state_balanced() &&
-  (!self.needs_present() || self.has_present())
+  self.validation_status().is_ready()
 }
 
 ///|
