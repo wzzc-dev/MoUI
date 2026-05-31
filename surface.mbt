@@ -393,6 +393,7 @@ pub(all) struct SurfaceTargetDescriptor {
   surface : SurfaceDescriptor
   present_mode : SurfacePresentMode?
   max_frames_in_flight : Int
+  gpu_context_key : RendererResourceKey?
 } derive(Debug, Eq)
 
 ///|
@@ -408,15 +409,35 @@ fn normalized_surface_present_mode(
 }
 
 ///|
+fn normalized_surface_gpu_context_key(
+  surface : SurfaceDescriptor,
+  gpu_context_key : RendererResourceKey?,
+) -> RendererResourceKey? {
+  match gpu_context_key {
+    Some(key) =>
+      if surface.is_gpu() && key.kind == GpuContextResource && !key.is_empty() {
+        Some(key)
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
 pub fn SurfaceTargetDescriptor::new(
   surface : SurfaceDescriptor,
   present_mode? : SurfacePresentMode? = None,
   max_frames_in_flight? : Int = 1,
+  gpu_context_key? : RendererResourceKey? = None,
 ) -> SurfaceTargetDescriptor {
   {
     surface,
     present_mode: normalized_surface_present_mode(surface, present_mode),
     max_frames_in_flight: Int::max(1, max_frames_in_flight),
+    gpu_context_key: normalized_surface_gpu_context_key(
+      surface, gpu_context_key,
+    ),
   }
 }
 
@@ -457,6 +478,7 @@ pub fn SurfaceTargetDescriptor::gpu_n32_premul(
   budget? : SurfaceBudget = Budgeted,
   present_mode? : SurfacePresentMode = FifoPresent,
   max_frames_in_flight? : Int = 2,
+  gpu_context_key? : RendererResourceKey? = None,
 ) -> SurfaceTargetDescriptor {
   SurfaceTargetDescriptor::new(
     SurfaceDescriptor::gpu_n32_premul(
@@ -468,6 +490,7 @@ pub fn SurfaceTargetDescriptor::gpu_n32_premul(
     ),
     present_mode=Some(present_mode),
     max_frames_in_flight~,
+    gpu_context_key~,
   )
 }
 
@@ -505,6 +528,13 @@ pub fn SurfaceTargetDescriptor::is_multibuffered(
 }
 
 ///|
+pub fn SurfaceTargetDescriptor::has_gpu_context(
+  self : SurfaceTargetDescriptor,
+) -> Bool {
+  self.gpu_context_key is Some(_)
+}
+
+///|
 pub fn SurfaceTargetDescriptor::with_dimensions(
   self : SurfaceTargetDescriptor,
   dimensions : ISize,
@@ -513,6 +543,7 @@ pub fn SurfaceTargetDescriptor::with_dimensions(
     self.surface.with_dimensions(dimensions),
     present_mode=self.present_mode,
     max_frames_in_flight=self.max_frames_in_flight,
+    gpu_context_key=self.gpu_context_key,
   )
 }
 
@@ -525,6 +556,7 @@ pub fn SurfaceTargetDescriptor::with_present_mode(
     self.surface,
     present_mode=Some(present_mode),
     max_frames_in_flight=self.max_frames_in_flight,
+    gpu_context_key=self.gpu_context_key,
   )
 }
 
@@ -535,6 +567,7 @@ pub fn SurfaceTargetDescriptor::without_present(
   SurfaceTargetDescriptor::new(
     self.surface,
     max_frames_in_flight=self.max_frames_in_flight,
+    gpu_context_key=self.gpu_context_key,
   )
 }
 
@@ -547,6 +580,31 @@ pub fn SurfaceTargetDescriptor::with_max_frames_in_flight(
     self.surface,
     present_mode=self.present_mode,
     max_frames_in_flight~,
+    gpu_context_key=self.gpu_context_key,
+  )
+}
+
+///|
+pub fn SurfaceTargetDescriptor::with_gpu_context(
+  self : SurfaceTargetDescriptor,
+  gpu_context : GpuContextDescriptor,
+) -> SurfaceTargetDescriptor {
+  SurfaceTargetDescriptor::new(
+    self.surface,
+    present_mode=self.present_mode,
+    max_frames_in_flight=self.max_frames_in_flight,
+    gpu_context_key=Some(gpu_context.resource_key()),
+  )
+}
+
+///|
+pub fn SurfaceTargetDescriptor::without_gpu_context(
+  self : SurfaceTargetDescriptor,
+) -> SurfaceTargetDescriptor {
+  SurfaceTargetDescriptor::new(
+    self.surface,
+    present_mode=self.present_mode,
+    max_frames_in_flight=self.max_frames_in_flight,
   )
 }
 
@@ -572,6 +630,16 @@ fn surface_target_present_resource_id(
 }
 
 ///|
+fn surface_target_gpu_context_resource_id(
+  gpu_context_key : RendererResourceKey?,
+) -> Bytes {
+  match gpu_context_key {
+    None => b"none"
+    Some(key) => key.id
+  }
+}
+
+///|
 pub fn SurfaceTargetDescriptor::resource_key(
   self : SurfaceTargetDescriptor,
 ) -> RendererResourceKey {
@@ -586,8 +654,21 @@ pub fn SurfaceTargetDescriptor::resource_key(
       surface_resource_bytes(
         surface_target_present_resource_id(self.present_mode),
       ) +
-      surface_resource_u64(self.max_frames_in_flight),
+      surface_resource_u64(self.max_frames_in_flight) +
+      surface_resource_bytes(
+        surface_target_gpu_context_resource_id(self.gpu_context_key),
+      ),
     )
+  }
+}
+
+///|
+pub fn SurfaceTargetDescriptor::gpu_context_resource_descriptor(
+  self : SurfaceTargetDescriptor,
+) -> RendererResourceDescriptor? {
+  match self.gpu_context_key {
+    None => None
+    Some(key) => Some(RendererResourceDescriptor::new(key))
   }
 }
 

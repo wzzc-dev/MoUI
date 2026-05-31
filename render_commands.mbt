@@ -223,7 +223,7 @@ pub fn RenderCommandList::for_target(
   clear_color? : Color? = None,
   store_op? : RenderPassStoreOp? = None,
 ) -> RenderCommandList {
-  RenderCommandList::new(
+  let commands = RenderCommandList::new(
     RenderPassDescriptor::for_target(
       target,
       bounds~,
@@ -232,6 +232,10 @@ pub fn RenderCommandList::for_target(
       store_op~,
     ),
   )
+  match target.gpu_context_resource_descriptor() {
+    None => commands
+    Some(descriptor) => commands.declare_resource(descriptor)
+  }
 }
 
 ///|

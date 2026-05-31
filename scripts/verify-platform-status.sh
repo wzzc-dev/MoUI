@@ -196,6 +196,7 @@ if schema_version >= 3:
         "canvas.state",
         "canvas.command-replay",
         "pipeline.resource-plan",
+        "gpu.context-resource-plan",
         "shader.draw",
         "shader.resource-plan",
         "filter.layer",
@@ -247,7 +248,7 @@ if schema_version >= 3:
     missing_ids = sorted(required_capability_ids - seen_ids)
     if missing_ids:
         fail("native smoke capability coverage is missing ids: " + ", ".join(missing_ids))
-    missing_areas = sorted({"Surface", "Canvas", "Shader", "Filter", "Path", "Image", "Text", "FontMgr"} - seen_areas)
+    missing_areas = sorted({"Surface", "Canvas", "GPU", "Shader", "Filter", "Path", "Image", "Text", "FontMgr"} - seen_areas)
     if missing_areas:
         fail("native smoke capability coverage is missing areas: " + ", ".join(missing_areas))
 
