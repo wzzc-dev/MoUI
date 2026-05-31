@@ -170,6 +170,11 @@
       "marker": "native smoke first font family bytes"
     },
     {
+      "id": "fontmgr.typeface-family",
+      "area": "FontMgr",
+      "marker": "native smoke typeface family bytes"
+    },
+    {
       "id": "fontmgr.character-fallback",
       "area": "FontMgr",
       "marker": "native smoke font fallback width"

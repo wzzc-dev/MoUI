@@ -377,3 +377,9 @@ pub fn Typeface::is_fixed_pitch(self : Typeface) -> Bool {
   ignore(self)
   false
 }
+
+///|
+pub fn Typeface::family_name(self : Typeface) -> Bytes? {
+  ignore(self)
+  None
+}

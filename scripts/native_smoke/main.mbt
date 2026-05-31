@@ -700,6 +700,14 @@ fn main {
   guard font_mgr.match_family_style(first_family) is Some(family_typeface) else {
     fail_smoke("native font manager did not match first family typeface")
   }
+  guard family_typeface.family_name() is Some(matched_family) else {
+    fail_smoke("native typeface did not report a family name")
+  }
+  if matched_family.is_empty() {
+    fail_smoke("native typeface reported an empty family name")
+  }
+  println("native smoke typeface family bytes")
+  println(matched_family.length())
   guard @native.Font::from_typeface(family_typeface, size=8.0) is Some(family_font) else {
     fail_smoke("failed to create native font from font manager family")
   }

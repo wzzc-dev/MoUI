@@ -166,7 +166,9 @@ if ($status.schema_version -ge 3) {
     "text.glyph-bounds",
     "text.bounds",
     "fontmgr.family-count",
-    "fontmgr.family-name"
+    "fontmgr.family-name",
+    "fontmgr.typeface-family",
+    "fontmgr.character-fallback"
   )
   $seenIds = @{}
   $seenMarkers = @{}

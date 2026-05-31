@@ -74,8 +74,8 @@ these facts recorded in logs:
   decoded bitmap readback, surface descriptor reporting, canvas state restore,
   shader draws, native/portable path geometry, UTF-8 text measurement, glyph
   count, glyph ID mapping, glyph advances, glyph positions, glyph bounds, text
-  bounds measurement, font metrics, font family enumeration, and FontMgr
-  character fallback.
+  bounds measurement, font metrics, font family enumeration, native typeface
+  family metadata, and FontMgr character fallback.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.
