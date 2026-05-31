@@ -82,6 +82,10 @@ packages:
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
   by `WorkbenchModel` state.
+- File context rows in the Workspace digest can queue an `Inspect <path>`
+  prompt for Pi. The action reuses the platform-neutral `SendUserInput` command
+  so file evidence becomes an agent workflow entrypoint without native-only
+  transport.
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
