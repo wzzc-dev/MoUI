@@ -234,6 +234,18 @@ extern "C" fn native_font_mgr_match_family_style(
 ) -> TypefaceHandle = "moonbit_skia_font_mgr_match_family_style"
 
 ///|
+#borrow(font_mgr, family_name, bcp47)
+extern "C" fn native_font_mgr_match_family_style_character(
+  font_mgr : FontMgrHandle,
+  family_name : Bytes,
+  bcp47 : Array[Bytes],
+  character : Int,
+  weight : Int,
+  width : Int,
+  slant : Int,
+) -> TypefaceHandle = "moonbit_skia_font_mgr_match_family_style_character"
+
+///|
 #borrow(family_name)
 extern "C" fn native_typeface_from_name(
   family_name : Bytes,
@@ -680,20 +692,84 @@ pub fn FontMgr::match_family_style_request(
 }
 
 ///|
+pub fn FontMgr::match_family_style_character(
+  self : FontMgr,
+  family_name : Bytes,
+  bcp47 : Array[Bytes],
+  character : Int,
+  style? : @skia.FontStyleRequest = @skia.FontStyleRequest::new(),
+) -> Typeface? {
+  if character <= 0 {
+    None
+  } else {
+    Typeface::from_handle(
+      native_font_mgr_match_family_style_character(
+        self.handle,
+        family_name,
+        bcp47,
+        character,
+        style.weight,
+        style.width,
+        style.slant,
+      ),
+    )
+  }
+}
+
+///|
 pub fn FontMgr::match_fallback_request(
   self : FontMgr,
   request : @skia.FontFallbackRequest,
 ) -> Typeface? {
   let mut matched : Typeface? = None
-  for index in 0..<request.families.length() {
-    match matched {
-      Some(_) => ()
-      None =>
-        match request.families.family_at(index) {
-          None => ()
-          Some(family) =>
-            matched = self.match_family_style_request(family, request.style)
+  if request.has_character() {
+    let family_count = request.families.length()
+    if family_count == 0 {
+      matched = self.match_family_style_character(
+        b"",
+        request.bcp47,
+        request.character,
+        style=request.style,
+      )
+    } else {
+      for index in 0..<family_count {
+        match matched {
+          Some(_) => ()
+          None =>
+            match request.families.family_at(index) {
+              None => ()
+              Some(family) =>
+                matched = self.match_family_style_character(
+                  family,
+                  request.bcp47,
+                  request.character,
+                  style=request.style,
+                )
+            }
         }
+      }
+      match matched {
+        Some(_) => ()
+        None =>
+          matched = self.match_family_style_character(
+            b"",
+            request.bcp47,
+            request.character,
+            style=request.style,
+          )
+      }
+    }
+  } else {
+    for index in 0..<request.families.length() {
+      match matched {
+        Some(_) => ()
+        None =>
+          match request.families.family_at(index) {
+            None => ()
+            Some(family) =>
+              matched = self.match_family_style_request(family, request.style)
+          }
+      }
     }
   }
   matched

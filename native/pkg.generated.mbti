@@ -160,6 +160,7 @@ pub fn FontMgr::family_name(Self, Int) -> Bytes?
 pub fn FontMgr::is_available(Self) -> Bool
 pub fn FontMgr::match_fallback_request(Self, @skia_mbt.FontFallbackRequest) -> Typeface?
 pub fn FontMgr::match_family_style(Self, Bytes, weight? : Int, width? : Int, slant? : Int) -> Typeface?
+pub fn FontMgr::match_family_style_character(Self, Bytes, Array[Bytes], Int, style? : @skia_mbt.FontStyleRequest) -> Typeface?
 pub fn FontMgr::match_family_style_request(Self, Bytes, @skia_mbt.FontStyleRequest) -> Typeface?
 
 pub(all) struct GlyphId(UInt16) derive(Eq, @debug.Debug)
