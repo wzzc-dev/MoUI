@@ -66,6 +66,17 @@ pub fn MoWorkbenchApp::new() -> Self
 pub fn MoWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn MoWorkbenchApp::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
 
+pub(all) struct PiRpcSnapshot {
+  command : String
+  success : Bool
+  session_id : String
+  model : String
+  pending_message_count : Int
+  message_count : Int
+  error : String
+} derive(Eq, @debug.Debug)
+pub fn PiRpcSnapshot::new(command? : String, success? : Bool, session_id? : String, model? : String, pending_message_count? : Int, message_count? : Int, error? : String) -> Self
+
 pub(all) enum PiTransportCommand {
   StartRpc(String, String)
   SendUserInput(String, String)
@@ -141,6 +152,7 @@ pub(all) struct WorkbenchModel {
   commands : Array[CommandRun]
   diagnostics : Array[DiagnosticItem]
   transport : PiTransportState
+  pi_rpc : PiRpcSnapshot
   last_status : String
 }
 pub fn WorkbenchModel::active_session(Self) -> WorkbenchSession

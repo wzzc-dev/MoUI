@@ -49,7 +49,7 @@ fn sample_plan() -> Array[PlanStep] {
       title="Keep PiTransport platform-neutral",
       status="active",
       owner="agent",
-      detail="Route commands, stdout, stderr, and process failures through app-level events.",
+      detail="Route commands, stdout, stderr, process failures, and Pi RPC responses through app-level events.",
     ),
     PlanStep::new(
       id="skia",
@@ -119,7 +119,7 @@ fn sample_files() -> Array[FileContext] {
     FileContext::new(
       id="native-transport",
       path="examples/mo_workbench/native_transport/owned_runtime.mbt",
-      summary="moonbitlang/async owner for long-lived Pi JSONL sessions.",
+      summary="moonbitlang/async owner for supervised Pi RPC JSONL sessions.",
       change_kind="added",
       lines_changed=180,
     ),
@@ -183,7 +183,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="PiTransport",
       severity="watch",
-      message="Native owner speaks Pi RPC JSONL, reports stderr/nonzero exits, and restarts on the next command batch.",
+      message="Native owner speaks Pi RPC JSONL; Workbench ingests get_state responses, stderr, failures, and restart evidence.",
     ),
     DiagnosticItem::new(
       source="Skia",

@@ -145,6 +145,57 @@ test "workbench ingests Pi diagnostics files and diff jsonl" {
 }
 
 ///|
+test "workbench ingests Pi RPC get_state response jsonl" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e7eb5","messageCount":4,"pendingMessageCount":1}}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="get_state")
+  inspect(model.pi_rpc.success, content="true")
+  inspect(model.pi_rpc.session_id, content="019e7eb5")
+  inspect(model.pi_rpc.model, content="openai/gpt-5")
+  inspect(model.pi_rpc.message_count, content="4")
+  inspect(model.pi_rpc.pending_message_count, content="1")
+  let session = model.active_session()
+  inspect(session.status, content="running")
+  inspect(session.unread_events, content="1")
+  inspect(session.summary, content="Pi RPC session 019e7eb5 on openai/gpt-5")
+  inspect(model.last_status, content="Pi RPC response applied")
+  assert_true(
+    model.events.any(event => event.title == "Pi RPC response: get_state"),
+  )
+}
+
+///|
+test "workbench turns Pi RPC error responses into diagnostics" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"prompt","success":false,"error":"missing API key"}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="prompt")
+  inspect(model.pi_rpc.success, content="false")
+  inspect(model.pi_rpc.error, content="missing API key")
+  let diagnostic = model.diagnostics[model.diagnostics.length() - 1]
+  inspect(diagnostic.source, content="Pi RPC")
+  inspect(diagnostic.severity, content="error")
+  inspect(diagnostic.message, content="prompt: missing API key")
+  inspect(model.last_status, content="Pi RPC failure applied")
+  assert_true(model.events.any(event => event.title == "Pi RPC failed: prompt"))
+}
+
+///|
 test "workbench ignores non-json Pi lines without losing raw transport state" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(JsonLineReceived("moui-skia", "not-json")),

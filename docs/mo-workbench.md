@@ -80,6 +80,11 @@ packages:
   `diff_summary` payloads update the shared model, timeline, diagnostics,
   file context, and diff overview while still preserving raw JSONL transport
   events.
+- Real Pi RPC `response` ingestion for the current CLI protocol. Successful
+  `get_state` responses update a small `PiRpcSnapshot`, refresh the selected
+  Workbench session with the Pi session id, model label, message count, and
+  pending count, and append a timeline event. Failed RPC responses append a
+  diagnostic without involving the native transport layer.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
 - Nonzero native process exits now emit `TransportFailed` with the exit code and
@@ -94,10 +99,10 @@ packages:
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
-stderr/nonzero-exit failures, restarts after unexpected child exits, and speaks
-the current Pi RPC command names. The next slice should ingest richer real Pi
-RPC response/event payloads and decide how Workbench session ids map onto Pi
-session selection.
+stderr/nonzero-exit failures, restarts after unexpected child exits, speaks the
+current Pi RPC command names, and ingests basic RPC responses. The next slice
+should ingest streaming assistant/tool events beyond command responses and
+decide how Workbench session ids map onto Pi session selection.
 
 ## Pi JSONL Workbench Events
 
@@ -119,6 +124,14 @@ after the raw transport event is recorded. This keeps the platform-neutral
 `PiTransportEvent` contract stable for native, Web, and fixture transports
 while allowing the Workbench app to grow coding-agent affordances at the
 application layer.
+
+Pi RPC responses use the same path. A successful
+`{"type":"response","command":"get_state","success":true,...}` line updates
+`WorkbenchModel.pi_rpc`, refreshes the selected session summary/status with the
+Pi session id, model label, and pending count, and appends a `Pi RPC response`
+timeline event. A failed `response` line records a `Pi RPC` diagnostic and a
+failure timeline event. The native transport does not parse these payloads; it
+only delivers stdout JSONL as `JsonLineReceived`.
 
 Stderr remains separate from stdout JSONL. `ProcessStderr(session, line)` updates
 the raw transport tail as `stderr: ...`, adds a warning diagnostic sourced from

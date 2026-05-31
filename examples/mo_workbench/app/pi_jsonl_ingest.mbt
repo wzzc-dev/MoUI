@@ -18,6 +18,7 @@ fn WorkbenchModel::ingest_pi_json_object(
   fields : Map[String, Json],
 ) -> WorkbenchModel {
   match json_string(fields, "type") {
+    Some("response") => self.ingest_rpc_response(session_id, fields)
     Some("command_started") => self.ingest_command_started(session_id, fields)
     Some("command_finished") => self.ingest_command_finished(session_id, fields)
     Some("diagnostic") => self.ingest_diagnostic(session_id, fields)
@@ -25,6 +26,134 @@ fn WorkbenchModel::ingest_pi_json_object(
     Some("diff_summary") => self.ingest_diff_summary(session_id, fields)
     _ => self
   }
+}
+
+///|
+fn WorkbenchModel::ingest_rpc_response(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let command = json_string(fields, "command").unwrap_or("unknown")
+  let success = json_bool(fields, "success").unwrap_or(false)
+  if success {
+    let snapshot = match fields.get("data") {
+      Some(Object(data)) => rpc_snapshot_from_data(command, data)
+      _ => PiRpcSnapshot::new(command~, success=true)
+    }
+    self.apply_rpc_success(session_id, snapshot)
+  } else {
+    let error = json_string(fields, "error").unwrap_or("Pi RPC command failed")
+    self.apply_rpc_failure(session_id, command, error)
+  }
+}
+
+///|
+fn WorkbenchModel::apply_rpc_success(
+  self : WorkbenchModel,
+  session_id : String,
+  snapshot : PiRpcSnapshot,
+) -> WorkbenchModel {
+  let model = self.update_active_session_from_rpc(snapshot)
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi RPC response: " + snapshot.command,
+      detail=rpc_response_detail(session_id, snapshot),
+      tone="success",
+    ),
+    status="Pi RPC response applied",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_rpc_failure(
+  self : WorkbenchModel,
+  session_id : String,
+  command : String,
+  error : String,
+) -> WorkbenchModel {
+  let diagnostics = self.diagnostics.copy()
+  diagnostics.push(
+    DiagnosticItem::new(
+      source="Pi RPC",
+      severity="error",
+      message=command + ": " + error,
+    ),
+  )
+  {
+    ..self,
+    diagnostics,
+    pi_rpc: PiRpcSnapshot::new(command~, success=false, error~),
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="diagnostic",
+      title="Pi RPC failed: " + command,
+      detail=session_id + ": " + error,
+      tone="danger",
+    ),
+    status="Pi RPC failure applied",
+  )
+}
+
+///|
+fn WorkbenchModel::update_active_session_from_rpc(
+  self : WorkbenchModel,
+  snapshot : PiRpcSnapshot,
+) -> WorkbenchModel {
+  let sessions = self.sessions.map(session => {
+    if session.id == self.selected_session_id && snapshot.session_id != "" {
+      let model_label = if snapshot.model == "" {
+        "unknown model"
+      } else {
+        snapshot.model
+      }
+      {
+        ..session,
+        status: if snapshot.pending_message_count == 0 {
+          "active"
+        } else {
+          "running"
+        },
+        summary: "Pi RPC session " + snapshot.session_id + " on " + model_label,
+        unread_events: snapshot.pending_message_count,
+      }
+    } else {
+      session
+    }
+  })
+  { ..self, sessions, pi_rpc: snapshot }
+}
+
+///|
+fn rpc_snapshot_from_data(
+  command : String,
+  data : Map[String, Json],
+) -> PiRpcSnapshot {
+  PiRpcSnapshot::new(
+    command~,
+    success=true,
+    session_id=json_string(data, "sessionId").unwrap_or(""),
+    model=json_model_label(data),
+    pending_message_count=json_int(data, "pendingMessageCount").unwrap_or(0),
+    message_count=json_int(data, "messageCount").unwrap_or(0),
+  )
+}
+
+///|
+fn rpc_response_detail(session_id : String, snapshot : PiRpcSnapshot) -> String {
+  let rpc_session = if snapshot.session_id == "" {
+    "no Pi session id"
+  } else {
+    "Pi session " + snapshot.session_id
+  }
+  session_id +
+  ": " +
+  rpc_session +
+  ", model " +
+  (if snapshot.model == "" { "unknown" } else { snapshot.model }) +
+  ", pending " +
+  snapshot.pending_message_count.to_string()
 }
 
 ///|
@@ -221,6 +350,35 @@ fn json_int(fields : Map[String, Json], key : String) -> Int? {
   match fields.get(key) {
     Some(Number(value, ..)) => Some(value.to_int())
     _ => None
+  }
+}
+
+///|
+fn json_bool(fields : Map[String, Json], key : String) -> Bool? {
+  match fields.get(key) {
+    Some(True) => Some(true)
+    Some(False) => Some(false)
+    _ => None
+  }
+}
+
+///|
+fn json_model_label(fields : Map[String, Json]) -> String {
+  match fields.get("model") {
+    Some(Object(model)) => {
+      let provider = json_string(model, "provider").unwrap_or("")
+      let id = json_string(model, "id").unwrap_or(
+        json_string(model, "name").unwrap_or(""),
+      )
+      if provider == "" {
+        id
+      } else if id == "" {
+        provider
+      } else {
+        provider + "/" + id
+      }
+    }
+    _ => ""
   }
 }
 
