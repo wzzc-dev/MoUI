@@ -339,6 +339,68 @@ test "surface target descriptors model present modes and frame pacing" {
 }
 
 ///|
+test "gpu context descriptors attach to gpu surface targets" {
+  let anonymous = @skia_mbt.GpuContextDescriptor::new(
+    backend=@skia_mbt.MetalGpuContext,
+  )
+  assert_true(anonymous.is_anonymous())
+  assert_true(anonymous.resource_key().is_empty())
+  assert_true(!anonymous.resource_descriptor().is_cacheable())
+
+  let metal = @skia_mbt.GpuContextDescriptor::metal(
+    b"main-metal",
+    adapter_id=b"apple-gpu",
+    device_id=b"m2",
+  ).with_protected_context(true)
+  let same_metal = @skia_mbt.GpuContextDescriptor::metal(
+    b"main-metal",
+    adapter_id=b"apple-gpu",
+    device_id=b"m2",
+  ).with_protected_context(true)
+  assert_true(metal.backend.is_native_window_backend())
+  assert_true(metal.resource_key() == same_metal.resource_key())
+  assert_true(metal.resource_key().kind == @skia_mbt.GpuContextResource)
+  assert_true(metal.resource_descriptor().is_gpu_backed())
+  assert_true(!metal.resource_descriptor().key.kind.is_surface())
+
+  let vulkan = @skia_mbt.GpuContextDescriptor::vulkan(
+    b"vk-0",
+    adapter_id=b"discrete",
+    device_id=b"queue",
+    queue_family_index=-4,
+  )
+  assert_eq(vulkan.queue_family_index, 0)
+  assert_true(vulkan.resource_key() != metal.resource_key())
+  assert_true(@skia_mbt.GpuContextDescriptor::mock().backend.is_mock())
+
+  let gpu = @skia_mbt.SurfaceTargetDescriptor::gpu_n32_premul(
+    @skia_mbt.ISize::new(64, 48),
+    gpu_context_key=Some(metal.resource_key()),
+  )
+  assert_true(gpu.has_gpu_context())
+  assert_true(gpu.gpu_context_key == Some(metal.resource_key()))
+  assert_true(gpu.resource_key() != gpu.without_gpu_context().resource_key())
+  guard gpu.gpu_context_resource_descriptor() is Some(context_descriptor) else {
+    fail("gpu target should expose its context resource descriptor")
+  }
+  assert_true(context_descriptor.key == metal.resource_key())
+  assert_true(context_descriptor.is_gpu_backed())
+
+  let gpu_plan = @skia_mbt.RenderCommandList::for_target(gpu).resource_plan()
+  assert_eq(gpu_plan.length(), 2)
+  assert_eq(gpu_plan.gpu_backed_count, 2)
+  assert_true(gpu_plan.has_gpu_backed_resources())
+  assert_true(
+    @skia_mbt.RenderCommandList::for_target(gpu).commands[0].is_resource_declaration(),
+  )
+
+  let window = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
+    @skia_mbt.ISize::new(64, 48),
+  ).with_gpu_context(metal)
+  assert_true(!window.has_gpu_context())
+}
+
+///|
 test "resource cache tracks lru budget and stats" {
   let cache : @skia_mbt.ResourceCache[String, Int] = @skia_mbt.ResourceCache::new(
     max_bytes=10L,
@@ -447,17 +509,27 @@ test "renderer resource descriptors provide typed cache keys" {
   )
   assert_true(gpu_surface.is_gpu_backed())
   assert_true(gpu_surface.key.kind.is_surface())
+  let gpu_context = @skia_mbt.RendererResourceDescriptor::gpu_context(
+    b"metal:main",
+    byte_size=0L,
+  )
+  assert_true(gpu_context.is_gpu_backed())
+  assert_true(!gpu_context.key.kind.is_surface())
+  assert_true(
+    gpu_context.key == @skia_mbt.RendererResourceKey::gpu_context(b"metal:main"),
+  )
   let plan = @skia_mbt.RendererResourcePlan::new([
     image,
     image,
     gpu_surface,
+    gpu_context,
     @skia_mbt.RendererResourceDescriptor::image(b"scratch", byte_size=2L).uncacheable(),
   ])
-  assert_eq(plan.length(), 3)
+  assert_eq(plan.length(), 4)
   assert_eq(plan.byte_size, 42L)
-  assert_eq(plan.cacheable_count, 2)
+  assert_eq(plan.cacheable_count, 3)
   assert_eq(plan.uncacheable_count, 1)
-  assert_eq(plan.gpu_backed_count, 1)
+  assert_eq(plan.gpu_backed_count, 2)
   assert_true(plan.has_gpu_backed_resources())
   assert_true(@skia_mbt.RendererResourcePlan::empty().is_empty())
 

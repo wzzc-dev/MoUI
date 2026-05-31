@@ -148,6 +148,7 @@ if ($status.schema_version -ge 3) {
     "canvas.state",
     "canvas.command-replay",
     "pipeline.resource-plan",
+    "gpu.context-resource-plan",
     "shader.draw",
     "shader.resource-plan",
     "filter.layer",
@@ -204,7 +205,7 @@ if ($status.schema_version -ge 3) {
   if ($missingIds.Count -gt 0) {
     throw "native smoke capability coverage is missing ids: $($missingIds -join ', ')"
   }
-  $requiredAreas = @("Surface", "Canvas", "Shader", "Filter", "Path", "Image", "Text", "FontMgr")
+  $requiredAreas = @("Surface", "Canvas", "GPU", "Shader", "Filter", "Path", "Image", "Text", "FontMgr")
   $missingAreas = @($requiredAreas | Where-Object { !$seenAreas.ContainsKey($_) })
   if ($missingAreas.Count -gt 0) {
     throw "native smoke capability coverage is missing areas: $($missingAreas -join ', ')"
