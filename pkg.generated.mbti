@@ -219,12 +219,14 @@ pub(all) struct FontFallbackRequest {
   character : Int
   style : FontStyleRequest
 } derive(Eq, @debug.Debug)
+pub fn FontFallbackRequest::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> FontDescriptor
 pub fn FontFallbackRequest::has_character(Self) -> Bool
 pub fn FontFallbackRequest::language_at(Self, Int) -> Bytes?
 pub fn FontFallbackRequest::language_count(Self) -> Int
 pub fn FontFallbackRequest::new(families? : FontFallbackChain, bcp47? : Array[Bytes], character? : Int, style? : FontStyleRequest) -> Self
 pub fn FontFallbackRequest::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn FontFallbackRequest::resource_key(Self) -> RendererResourceKey
+pub fn FontFallbackRequest::resource_plan(Self, size? : Float, scale_x? : Float, skew_x? : Float, fallback_byte_size? : Int64, font_byte_size? : Int64) -> RendererResourcePlan
 pub fn FontFallbackRequest::with_character(Self, Int) -> Self
 pub fn FontFallbackRequest::with_style(Self, FontStyleRequest) -> Self
 
