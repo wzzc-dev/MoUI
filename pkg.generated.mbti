@@ -106,6 +106,19 @@ pub fn Color4f::transparent() -> Self
 pub fn Color4f::with_alpha(Self, Float) -> Self
 pub impl Default for Color4f
 
+pub(all) enum ColorFilterDescriptor {
+  ColorMatrixFilter(Array[Float])
+  SaturationFilter(Float)
+  BrightnessFilter(Float)
+  ContrastFilter(Float)
+} derive(Eq, @debug.Debug)
+pub fn ColorFilterDescriptor::brightness(Float) -> Self?
+pub fn ColorFilterDescriptor::contrast(Float) -> Self?
+pub fn ColorFilterDescriptor::matrix(Array[Float]) -> Self?
+pub fn ColorFilterDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn ColorFilterDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn ColorFilterDescriptor::saturation(Float) -> Self?
+
 pub(all) struct ColorInfo {
   color_type : ColorType
   alpha_type : AlphaType
@@ -277,6 +290,13 @@ pub fn ISize::new(Int, Int) -> Self
 pub fn ISize::to_size(Self) -> Size
 pub impl Default for ISize
 
+pub(all) enum ImageFilterDescriptor {
+  BlurImageFilter(Float, Float)
+} derive(Eq, @debug.Debug)
+pub fn ImageFilterDescriptor::blur(Float, Float) -> Self?
+pub fn ImageFilterDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn ImageFilterDescriptor::resource_key(Self) -> RendererResourceKey
+
 pub(all) struct ImageInfo {
   dimensions : ISize
   color_info : ColorInfo
@@ -308,6 +328,13 @@ pub fn ImageInfo::with_alpha_type(Self, AlphaType) -> Self
 pub fn ImageInfo::with_color_type(Self, ColorType) -> Self
 pub fn ImageInfo::with_dimensions(Self, ISize) -> Self
 pub impl Default for ImageInfo
+
+pub(all) enum MaskFilterDescriptor {
+  BlurMaskFilter(Float)
+} derive(Eq, @debug.Debug)
+pub fn MaskFilterDescriptor::blur(Float) -> Self?
+pub fn MaskFilterDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn MaskFilterDescriptor::resource_key(Self) -> RendererResourceKey
 
 pub(all) struct Matrix {
   scale_x : Float
@@ -893,6 +920,17 @@ pub fn SamplingOptions::mitchell() -> Self
 pub fn SamplingOptions::new(filter? : FilterMode, mipmap? : MipmapMode) -> Self
 pub fn SamplingOptions::uses_cubic(Self) -> Bool
 pub impl Default for SamplingOptions
+
+pub(all) enum ShaderDescriptor {
+  ColorShader(Color)
+  LinearGradientShader(Point, Point, Color, Color, TileMode)
+  RadialGradientShader(Point, Float, Color, Color, TileMode)
+} derive(Eq, @debug.Debug)
+pub fn ShaderDescriptor::color(Color) -> Self
+pub fn ShaderDescriptor::linear_gradient(Point, Point, Color, Color, tile_mode? : TileMode) -> Self?
+pub fn ShaderDescriptor::radial_gradient(Point, Float, Color, Color, tile_mode? : TileMode) -> Self?
+pub fn ShaderDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn ShaderDescriptor::resource_key(Self) -> RendererResourceKey
 
 pub(all) struct Size {
   width : Float
