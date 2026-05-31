@@ -349,6 +349,73 @@ test "render pass descriptor clips clear and present boundaries" {
 }
 
 ///|
+test "font fallback contracts normalize style family and language requests" {
+  let style = @skia_mbt.FontStyleRequest::new(weight=1200, width=-2, slant=9)
+  assert_eq(style.weight, 1000)
+  assert_eq(style.width, 1)
+  assert_eq(style.slant, 2)
+  assert_true(style.is_bold())
+  assert_true(style.is_italic())
+
+  let chain = @skia_mbt.FontFallbackChain::new(primary_family=b"Inter", fallback_families=[
+    b"Noto Sans CJK SC", b"Inter", b"", b"Segoe UI Emoji",
+  ])
+  assert_eq(chain.length(), 3)
+  assert_true(chain.family_at(0) == Some(b"Inter"))
+  assert_true(chain.family_at(1) == Some(b"Noto Sans CJK SC"))
+  assert_true(chain.family_at(2) == Some(b"Segoe UI Emoji"))
+  assert_true(chain.family_at(3) is None)
+  assert_true(chain.contains_family(b"Segoe UI Emoji"))
+  let extended = chain.with_family(b"Apple Color Emoji").with_family(b"Inter")
+  assert_eq(extended.length(), 4)
+  assert_true(extended.family_at(3) == Some(b"Apple Color Emoji"))
+
+  let request = @skia_mbt.FontFallbackRequest::new(
+    families=extended,
+    bcp47=[b"zh-Hans", b"", b"en", b"zh-Hans"],
+    character=0x4F60,
+    style=@skia_mbt.FontStyleRequest::bold(),
+  )
+  assert_eq(request.language_count(), 2)
+  assert_true(request.language_at(0) == Some(b"zh-Hans"))
+  assert_true(request.language_at(1) == Some(b"en"))
+  assert_true(request.language_at(2) is None)
+  assert_true(request.has_character())
+  assert_true(
+    request.with_character(-1).character == 0 &&
+    !request.with_character(-1).has_character(),
+  )
+}
+
+///|
+test "text run descriptor records byte ranges direction and fallback query" {
+  let range = @skia_mbt.TextRange::new(-2, 6)
+  assert_eq(range.start, 0)
+  assert_eq(range.end, 6)
+  assert_eq(range.length(), 6)
+  assert_true(range.contains_offset(5))
+  assert_true(!range.contains_offset(6))
+  assert_true(@skia_mbt.TextRange::new(9, 3).is_empty())
+
+  let fallback = @skia_mbt.FontFallbackRequest::new(
+    families=@skia_mbt.FontFallbackChain::new(primary_family=b"Inter"),
+    character=0x1F642,
+  )
+  let run = @skia_mbt.TextRunDescriptor::new(
+    range~,
+    direction=@skia_mbt.RightToLeft,
+    fallback~,
+  )
+  assert_true(run.is_right_to_left())
+  assert_true(!run.is_empty())
+  assert_true(run.fallback.families.primary_family == b"Inter")
+  assert_true(
+    run.with_direction(@skia_mbt.LeftToRight).direction.is_left_to_right(),
+  )
+  assert_true(run.with_range(@skia_mbt.TextRange::new(1, 1)).is_empty())
+}
+
+///|
 test "matrix exposes skia-style members and affine conversion" {
   let matrix = @skia_mbt.Matrix::new_all(2, 1, 10, 3, 4, 20, 0, 0, 1)
   assert_eq(matrix.scale_x(), 2.0)
