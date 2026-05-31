@@ -62,21 +62,31 @@ pub async fn PiNativeTransportOwner::run(self : PiNativeTransportOwner) -> Unit 
     self.running = false
     self.stopped = true
   }
-  let first = Some(self.queue.get()) catch {
-    err => {
-      self.emit_event(TransportFailed("native Pi queue failed: \{err}"))
-      None
-    }
-  }
-  match first {
-    Some(batch) =>
-      if !batch.shutdown_without_process() {
-        self.run_process(batch) catch {
-          err =>
-            self.emit_event(TransportFailed("native Pi owner failed: \{err}"))
-        }
+  while !self.shutdown_requested {
+    let next = Some(self.queue.get()) catch {
+      err => {
+        self.emit_event(TransportFailed("native Pi queue failed: \{err}"))
+        self.shutdown_requested = true
+        None
       }
-    None => ()
+    }
+    match next {
+      Some(batch) =>
+        if !batch.shutdown_without_process() {
+          let requested_shutdown = self.run_process(batch) catch {
+            err => {
+              self.emit_event(TransportFailed("native Pi owner failed: \{err}"))
+              false
+            }
+          }
+          if requested_shutdown {
+            self.shutdown_requested = true
+          }
+        } else {
+          self.shutdown_requested = true
+        }
+      None => ()
+    }
   }
 }
 
@@ -107,7 +117,7 @@ fn PiNativeTransportOwner::enqueue(
 async fn PiNativeTransportOwner::run_process(
   self : PiNativeTransportOwner,
   first : PiNativeTransportBatch,
-) -> Unit {
+) -> Bool {
   @async.with_task_group(group => {
     let (process_stdin, stdin_writer) = @process.write_to_process()
     let (stdout_reader, process_stdout) = @process.read_from_process()
@@ -132,7 +142,10 @@ async fn PiNativeTransportOwner::run_process(
         self.emit_event(event)
       })
     })
-    let mut should_close = self.send_batch(stdin_writer, active_session, first)
+    let mut requested_shutdown = self.send_batch(
+      stdin_writer, active_session, first,
+    )
+    let mut should_close = requested_shutdown
     let mut observed_exit : Int? = None
     while !should_close && observed_exit is None {
       match process.try_wait() {
@@ -142,10 +155,15 @@ async fn PiNativeTransportOwner::run_process(
         }
         None =>
           match (self.queue.try_get() catch { _ => None }) {
-            Some(batch) =>
-              should_close = self.send_batch(
+            Some(batch) => {
+              let batch_shutdown = self.send_batch(
                 stdin_writer, active_session, batch,
               )
+              if batch_shutdown {
+                requested_shutdown = true
+                should_close = true
+              }
+            }
             None => @async.sleep(8)
           }
       }
@@ -169,6 +187,7 @@ async fn PiNativeTransportOwner::run_process(
         ),
       )
     }
+    requested_shutdown
   })
 }
 

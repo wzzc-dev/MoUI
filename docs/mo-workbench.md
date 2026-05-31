@@ -24,7 +24,8 @@ automation runs, and knowledge organization.
   `PiNativeTransportOwner` is the native lifecycle owner that accepts queued UI
   command batches through an async queue, lazily starts one JSONL process, and
   emits stdout, stderr, and process events back through the app runtime
-  dispatch hook.
+  dispatch hook. Unexpected process exits end only the child process; the owner
+  remains available and restarts the JSONL process for the next command batch.
 - `examples/mo_workbench/macos_skia` is a thin entrypoint that selects
   `backend/macos/skia`, injects the owned native Pi transport runtime, and runs
   the shared app runtime with the macOS Skia async pump.
@@ -53,9 +54,10 @@ packages:
   MoUI effects, so prompt, command, and cancel actions can dispatch transport
   events back through the same TEA message loop.
 - A native-only async transport package whose default command is
-  `pi --mode rpc`, maps command batches to Pi JSONL request lines, and uses
-  shell fixtures to prove direct JSONL stdin/stdout process driving without C
-  FFI or a Node bridge.
+  `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
+  (`get_state`, `prompt`, and `abort`; shutdown is stdin EOF), and uses shell
+  fixtures to prove direct JSONL stdin/stdout process driving without C FFI or
+  a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
 - A native multi-batch session runner that accepts an array of command batches
@@ -83,11 +85,19 @@ packages:
 - Nonzero native process exits now emit `TransportFailed` with the exit code and
   the last stderr line, clear pending transport commands, and leave the app in a
   failed transport state instead of silently disconnecting.
+- The native owner now supervises the Pi child process: unexpected exits surface
+  as transport failures, but the owner stays alive and lazily starts a fresh
+  JSONL process for the next UI command batch. Explicit `Shutdown` still closes
+  the owner.
+- The native encoder is aligned with the installed Pi RPC protocol and has a
+  no-model smoke path using offline `get_state` over `pi --mode rpc`.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
-owner now keeps one process alive across real runtime dispatches and reports
-stderr/nonzero-exit failures. The next slice should handle restart policy and
-real `pi --mode rpc` smoke evidence when the local Pi CLI is available.
+owner now keeps one process alive across real runtime dispatches, reports
+stderr/nonzero-exit failures, restarts after unexpected child exits, and speaks
+the current Pi RPC command names. The next slice should ingest richer real Pi
+RPC response/event payloads and decide how Workbench session ids map onto Pi
+session selection.
 
 ## Pi JSONL Workbench Events
 
@@ -117,6 +127,31 @@ with a nonzero status, `TransportFailed(reason)` uses the command label, exit
 code, and last stderr line so the UI can explain the failure without depending
 on native-only process details.
 
+Restart is owner-scoped rather than app-scoped. A nonzero child exit emits
+`ProcessExited(code)` and `TransportFailed(reason)`, then the owner returns to
+its command queue. The next `PiTransportRuntime.dispatch` starts a new child
+process and sends the queued commands through the same platform-neutral event
+contract. Dispatching `Shutdown` is the only normal path that stops the owner.
+
+The native encoder intentionally uses the Pi CLI's current RPC command shape:
+`StartRpc` sends `{"type":"get_state"}` as a cheap liveness/state probe,
+`SendUserInput` sends `{"type":"prompt","message":...}`, `CancelRpcRun` sends
+`{"type":"abort"}`, and `Shutdown` closes stdin instead of sending a JSON
+command. Session ids remain part of the Mo Workbench event labels and state;
+the current Pi RPC process owns the concrete Pi session.
+
+The smallest real CLI smoke avoids model calls and validates the stdin/stdout
+contract only:
+
+```sh
+printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+```
+
+It should return a JSONL `response` object for `get_state` and then exit through
+stdin EOF.
+
 ## Skia Native-First Notes
 
 The macOS app intentionally selects the Skia provider instead of the default
@@ -139,6 +174,9 @@ moon test examples/mo_workbench/app --target wasm-gc
 moon test examples/mo_workbench/native_transport --target native
 moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
+printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 ```
 
 When real Skia is configured locally, also run:

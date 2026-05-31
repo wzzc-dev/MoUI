@@ -68,23 +68,18 @@ pub fn PiNativeTransportConfig::command_label(
 }
 
 ///|
-pub fn pi_rpc_start_line(session_id~ : String, cwd~ : String) -> String {
-  ({ "type": "start_session", "session_id": session_id, "cwd": cwd } : Json).stringify()
+pub fn pi_rpc_get_state_line() -> String {
+  ({ "type": "get_state" } : Json).stringify()
 }
 
 ///|
-pub fn pi_rpc_user_input_line(session_id~ : String, text~ : String) -> String {
-  ({ "type": "user_input", "session_id": session_id, "text": text } : Json).stringify()
+pub fn pi_rpc_prompt_line(message~ : String) -> String {
+  ({ "type": "prompt", "message": message } : Json).stringify()
 }
 
 ///|
-pub fn pi_rpc_cancel_line(session_id~ : String) -> String {
-  ({ "type": "cancel_run", "session_id": session_id } : Json).stringify()
-}
-
-///|
-pub fn pi_rpc_shutdown_line() -> String {
-  ({ "type": "shutdown" } : Json).stringify()
+pub fn pi_rpc_abort_line() -> String {
+  ({ "type": "abort" } : Json).stringify()
 }
 
 ///|
@@ -103,25 +98,25 @@ fn commands_to_request(
   let mut session_id = default_session_id
   for command in commands {
     match command {
-      StartRpc(session, cwd) => {
+      StartRpc(session, _cwd) => {
         if session_id == default_session_id {
           session_id = session
         }
-        lines.push(pi_rpc_start_line(session_id=session, cwd~))
+        lines.push(pi_rpc_get_state_line())
       }
       SendUserInput(session, text) => {
         if session_id == default_session_id {
           session_id = session
         }
-        lines.push(pi_rpc_user_input_line(session_id=session, text~))
+        lines.push(pi_rpc_prompt_line(message=text))
       }
       CancelRpcRun(session) => {
         if session_id == default_session_id {
           session_id = session
         }
-        lines.push(pi_rpc_cancel_line(session_id=session))
+        lines.push(pi_rpc_abort_line())
       }
-      Shutdown => lines.push(pi_rpc_shutdown_line())
+      Shutdown => ()
     }
   }
   { session_id, lines }

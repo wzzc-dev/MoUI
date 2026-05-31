@@ -18,7 +18,7 @@ fn sample_sessions() -> Array[WorkbenchSession] {
       branch="main",
       status="queued",
       summary="JSONL stdin/stdout transport exercise for pi --mode rpc.",
-      active_task="Define request, event, and completion replay fixtures.",
+      active_task="Align get_state, prompt, abort, and EOF shutdown with Pi RPC.",
       unread_events=1,
     ),
     WorkbenchSession::new(
@@ -183,7 +183,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="PiTransport",
       severity="watch",
-      message="Native owner keeps one Pi JSONL process alive and reports stderr/nonzero exits; restart policy is next.",
+      message="Native owner speaks Pi RPC JSONL, reports stderr/nonzero exits, and restarts on the next command batch.",
     ),
     DiagnosticItem::new(
       source="Skia",

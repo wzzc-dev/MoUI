@@ -7,13 +7,11 @@ import {
 }
 
 // Values
-pub fn pi_rpc_cancel_line(session_id~ : String) -> String
+pub fn pi_rpc_abort_line() -> String
 
-pub fn pi_rpc_shutdown_line() -> String
+pub fn pi_rpc_get_state_line() -> String
 
-pub fn pi_rpc_start_line(session_id~ : String, cwd~ : String) -> String
-
-pub fn pi_rpc_user_input_line(session_id~ : String, text~ : String) -> String
+pub fn pi_rpc_prompt_line(message~ : String) -> String
 
 pub async fn run_interactive_jsonl_session(PiNativeTransportConfig, session_id~ : String, async (PiNativeTransportSession) -> Unit) -> PiNativeTransportRun
 

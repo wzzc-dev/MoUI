@@ -28,8 +28,8 @@ test "workbench transport runtime effect dispatches prompt events" {
   let transport = PiTransportRuntime::new(run=(commands, emit) => {
     captured.val = commands
     emit(ProcessStarted("fixture-pid"))
-    emit(JsonLineSent("moui-skia", "{\"type\":\"start_session\"}"))
-    emit(JsonLineSent("moui-skia", "{\"type\":\"user_input\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"prompt\"}"))
     emit(JsonLineReceived("moui-skia", "{\"event\":\"done\"}"))
   })
   let update = WorkbenchModel::new()
