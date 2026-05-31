@@ -15,6 +15,9 @@ verification commands that must stay wired into CI. `verify-native-smoke-log.*`
 reads its `native_smoke_capabilities` list so artifact verification checks the
 same Surface, Canvas, Pipeline, GPU, Shader, Filter, Path, Image, Codec, Bitmap,
 Text, and FontMgr boundaries that the platform status file claims.
+`verify-platform-status.*` also reads `ci_gate_evidence_files` and rejects a
+status file when any `ci_gates` verifier script or MoonBit command fragment is
+not present in the checked-in workflow/fallback-helper evidence corpus.
 
 Native handle ownership is tracked separately in `../native/ownership.json`.
 Run `bash scripts/verify-native-ownership.sh` or

@@ -75,6 +75,65 @@ if ($status.schema_version -ge 4) {
   $seenGateCommands = @{}
   $seenGateAreas = @{}
 
+  if ($null -eq $status.ci_gate_evidence_files) {
+    throw "schema v4 platform status is missing ci_gate_evidence_files list"
+  }
+  $evidenceFiles = @($status.ci_gate_evidence_files)
+  if ($evidenceFiles.Count -eq 0) {
+    throw "schema v4 platform status is missing ci_gate_evidence_files list"
+  }
+  $requiredEvidenceFiles = @(
+    ".github/workflows/fallback.yml",
+    ".github/workflows/linux-real-skia-smoke.yml",
+    ".github/workflows/macos-real-skia-smoke.yml",
+    ".github/workflows/windows-real-skia-smoke.yml",
+    ".github/workflows/real-skia-acceptance.yml",
+    "scripts/check-fallback.ps1"
+  )
+  $seenEvidenceFiles = @{}
+  $evidenceParts = @()
+
+  function Normalize-RepoRelativePath {
+    param(
+      [Parameter(Mandatory = $true)]
+      [string] $Path
+    )
+
+    $normalized = $Path.Trim().Replace("\", "/")
+    while ($normalized.StartsWith("./")) {
+      $normalized = $normalized.Substring(2)
+    }
+    if ([string]::IsNullOrWhiteSpace($normalized)) {
+      throw "CI gate evidence file is missing path"
+    }
+    $pathParts = @($normalized -split "/" | Where-Object { $_ -ne "" })
+    if ([System.IO.Path]::IsPathRooted($normalized) -or ($pathParts -contains "..")) {
+      throw "CI gate evidence file must be repo-relative: $Path"
+    }
+    return $normalized
+  }
+
+  foreach ($evidenceFile in $evidenceFiles) {
+    $evidencePath = Normalize-RepoRelativePath "$evidenceFile"
+    if ($seenEvidenceFiles.ContainsKey($evidencePath)) {
+      throw "duplicate CI gate evidence file: $evidencePath"
+    }
+    $resolvedEvidencePath = Join-Path $repoRoot $evidencePath
+    if (!(Test-Path -LiteralPath $resolvedEvidencePath -PathType Leaf)) {
+      throw "CI gate evidence file is missing: $evidencePath"
+    }
+    $seenEvidenceFiles[$evidencePath] = $true
+    $evidenceParts += (Get-Content -LiteralPath $resolvedEvidencePath -Raw)
+  }
+
+  $missingEvidenceFiles = @($requiredEvidenceFiles | Where-Object { !$seenEvidenceFiles.ContainsKey($_) })
+  if ($missingEvidenceFiles.Count -gt 0) {
+    throw "CI gate evidence is missing files: $($missingEvidenceFiles -join ', ')"
+  }
+
+  $evidenceCorpus = ($evidenceParts -join "`n").Replace("\", "/")
+  $evidenceCompact = $evidenceCorpus -replace "\s+", " "
+
   function Get-CiGateScriptPaths {
     param(
       [string] $Command
@@ -90,6 +149,34 @@ if ($status.schema_version -ge 4) {
         $scriptPath
       }
     }
+  }
+
+  function Get-CiGateEvidenceTerms {
+    param(
+      [string] $Command
+    )
+
+    $scriptPaths = @(Get-CiGateScriptPaths $Command)
+    if ($scriptPaths.Count -gt 0) {
+      $terms = @($scriptPaths)
+      $normalized = $Command.Replace("\", "/")
+      foreach ($token in ($normalized -split "[\s;&|]+")) {
+        $option = $token.Trim().Trim("'", '"')
+        if ($option.StartsWith("-") -and $option -ne "-n") {
+          $terms += $option
+        }
+      }
+      return $terms
+    }
+    $terms = @()
+    $normalized = $Command.Replace("\", "/")
+    foreach ($part in ($normalized -split "\s*(?:&&|;|\|\|?|\n)\s*")) {
+      $term = ($part.Trim() -replace "\s+", " ")
+      if (![string]::IsNullOrWhiteSpace($term)) {
+        $terms += $term
+      }
+    }
+    return $terms
   }
 
   foreach ($gate in $gates) {
@@ -120,6 +207,11 @@ if ($status.schema_version -ge 4) {
           $resolvedScriptPath = Join-Path $repoRoot $scriptPath
           if (!(Test-Path -LiteralPath $resolvedScriptPath -PathType Leaf)) {
             throw "CI gate references missing verifier script: ${gateId}: $scriptPath"
+          }
+        }
+        foreach ($evidenceTerm in Get-CiGateEvidenceTerms $command) {
+          if (!$evidenceCorpus.Contains($evidenceTerm) -and !$evidenceCompact.Contains($evidenceTerm)) {
+            throw "CI gate evidence is missing command wiring: ${gateId}: $evidenceTerm"
           }
         }
       }

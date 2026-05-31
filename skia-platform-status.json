@@ -3,6 +3,14 @@
   "revision_file": "skia-revision.txt",
   "default_provider": "jetbrains",
   "provider_lock_file": "skia-provider-lock.json",
+  "ci_gate_evidence_files": [
+    ".github/workflows/fallback.yml",
+    ".github/workflows/linux-real-skia-smoke.yml",
+    ".github/workflows/macos-real-skia-smoke.yml",
+    ".github/workflows/windows-real-skia-smoke.yml",
+    ".github/workflows/real-skia-acceptance.yml",
+    "scripts/check-fallback.ps1"
+  ],
   "ci_gates": [
     {
       "id": "moonbit.fmt-check",
