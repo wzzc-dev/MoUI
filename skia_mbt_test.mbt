@@ -418,6 +418,29 @@ test "renderer resource descriptors provide typed cache keys" {
     byte_size=4L,
   )
   assert_true(filter.key.kind.is_filter())
+  let color_filter = @skia_mbt.RendererResourceDescriptor::color_filter(
+    b"saturation:0.8",
+    byte_size=4L,
+  )
+  assert_true(
+    color_filter.key ==
+    @skia_mbt.RendererResourceKey::color_filter(b"saturation:0.8"),
+  )
+  assert_true(color_filter.key.kind.is_filter())
+  let image_filter = @skia_mbt.RendererResourceDescriptor::image_filter(
+    b"blur:2",
+    byte_size=4L,
+  )
+  assert_true(image_filter.key == filter.key)
+  let mask_filter = @skia_mbt.RendererResourceDescriptor::mask_filter(
+    b"mask-blur:2",
+    byte_size=4L,
+  )
+  assert_true(
+    mask_filter.key ==
+    @skia_mbt.RendererResourceKey::mask_filter(b"mask-blur:2"),
+  )
+  assert_true(mask_filter.key.kind.is_filter())
   let gpu_surface = @skia_mbt.RendererResourceDescriptor::gpu_surface(
     b"swapchain",
     byte_size=32L,
