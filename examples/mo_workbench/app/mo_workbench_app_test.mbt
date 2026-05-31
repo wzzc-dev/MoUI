@@ -198,6 +198,66 @@ test "workbench session name runtime effect updates Pi binding" {
 }
 
 ///|
+test "workbench cycles Pi thinking level through platform-neutral transport" {
+  let model = WorkbenchModel::new().update(CycleThinkingLevel)
+  inspect(model.last_status, content="Pi thinking level cycle queued")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    CycleRpcThinkingLevel(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued thinking level cycle")
+  }
+  assert_true(
+    model.events.any(event => event.title == "Pi thinking level cycle queued"),
+  )
+}
+
+///|
+test "workbench thinking cycle runtime effect updates Pi agent snapshot" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"cycle_thinking_level\"}"))
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"cycle_thinking_level","success":true,"data":{"level":"high"}}
+        ),
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    CycleThinkingLevel,
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    CycleRpcThinkingLevel(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured thinking level cycle")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="cycle_thinking_level")
+  inspect(model.pi_agent.thinking_level, content="high")
+  inspect(model.active_session().active_task, content="Pi thinking level: high")
+  inspect(model.last_status, content="Pi thinking level cycle acknowledged")
+  assert_true(
+    model.events.any(event => event.title == "Pi thinking level cycled"),
+  )
+}
+
+///|
 test "workbench cancel run targets active Pi RPC bash command" {
   let model = WorkbenchModel::new()
     .update(QueueCommand("moon check"))
@@ -851,6 +911,8 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Tools 1/1"))
   assert_true(has_text(commands, "Tokens 31960"))
   assert_true(has_text(commands, "Context 16%"))
+  assert_true(has_text(commands, "Thinking: default"))
+  assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Pi transcript"))
   assert_true(has_text(commands, "Pi commands"))
   assert_true(has_text(commands, "/review"))
