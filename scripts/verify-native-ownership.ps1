@@ -179,16 +179,26 @@ if ($externalWrappers.Count -eq 0) {
   throw "native ownership manifest is missing external_wrappers"
 }
 $regularObjects = @($manifestData.regular_objects)
-$allEntries = @($externalWrappers + $regularObjects)
+$regularRuntimeObjects = if ($manifestData.regular_runtime_objects) {
+  @($manifestData.regular_runtime_objects)
+} else {
+  @()
+}
+$handleEntries = @($externalWrappers + $regularObjects)
+$regularManifestEntries = @($regularObjects + $regularRuntimeObjects)
+$allEntries = @($externalWrappers + $regularManifestEntries)
 
-foreach ($key in @("name", "moonbit_handle", "moonbit_type", "wrapper_struct")) {
+foreach ($key in @("name", "wrapper_struct")) {
   Assert-Unique -Entries $allEntries -Key $key -Label "native ownership"
 }
-Assert-Unique -Entries $externalWrappers -Key "factory" -Label "external wrapper"
+foreach ($key in @("moonbit_handle", "moonbit_type")) {
+  Assert-Unique -Entries $handleEntries -Key $key -Label "native ownership"
+}
+Assert-Unique -Entries $allEntries -Key "factory" -Label "native ownership"
 Assert-Unique -Entries $externalWrappers -Key "finalizer" -Label "external wrapper"
 
 $manifestHandles = @{}
-foreach ($entry in $allEntries) {
+foreach ($entry in $handleEntries) {
   $manifestHandles[$entry.moonbit_handle] = $true
 }
 foreach ($resolvedHandles in $resolvedHandleFiles) {
@@ -225,6 +235,33 @@ if ($missingFactories.Count -gt 0) {
 $extraFactories = @($foundFactoryPairs.Keys | Where-Object { !$expectedFactories.ContainsKey($_) } | Sort-Object)
 if ($extraFactories.Count -gt 0) {
   throw "external wrapper factories are missing from ownership manifest: $($extraFactories -join ', ')"
+}
+
+$expectedRegularFactories = @{}
+foreach ($entry in $regularManifestEntries) {
+  $expectedRegularFactories[$entry.factory] = $true
+}
+$foundRegularFactories = @{}
+[regex]::Matches(
+  $sourceText,
+  "\b(MoonbitSkia[A-Za-z0-9_]+)\s*\*\s*(moonbit_skia_make_[A-Za-z0-9_]+)\s*\([^{}]*\)\s*\{"
+) | ForEach-Object {
+  $factory = $_.Groups[2].Value
+  $factoryBody = Find-BracedBody `
+    -Text $sourceText `
+    -Pattern "\b$([regex]::Escape($factory))\b[^{}]*" `
+    -Label "regular object factory $factory"
+  if ($factoryBody.Contains("moonbit_malloc")) {
+    $foundRegularFactories[$factory] = $true
+  }
+}
+$missingRegularFactories = @($expectedRegularFactories.Keys | Where-Object { !$foundRegularFactories.ContainsKey($_) } | Sort-Object)
+if ($missingRegularFactories.Count -gt 0) {
+  throw "ownership manifest references missing regular object factories: $($missingRegularFactories -join ', ')"
+}
+$extraRegularFactories = @($foundRegularFactories.Keys | Where-Object { !$expectedRegularFactories.ContainsKey($_) } | Sort-Object)
+if ($extraRegularFactories.Count -gt 0) {
+  throw "moonbit_malloc regular object factories are missing from ownership manifest: $($extraRegularFactories -join ', ')"
 }
 
 $foundFinalizers = @{}
@@ -330,10 +367,33 @@ foreach ($entry in $externalWrappers) {
   }
 }
 
-foreach ($entry in $regularObjects) {
+function Get-RequiredStringList {
+  param(
+    [object]$Entry,
+    [string]$Key,
+    [string]$Name
+  )
+
+  $property = $Entry.PSObject.Properties[$Key]
+  if ($null -eq $property -or $null -eq $property.Value) {
+    throw "$Name regular object is missing $Key list"
+  }
+  $fields = @($property.Value)
+  foreach ($field in $fields) {
+    if (-not ($field -is [string]) -or [string]::IsNullOrWhiteSpace($field)) {
+      throw "$Name regular object is missing $Key list"
+    }
+  }
+  return $fields
+}
+
+function Test-RegularObject {
+  param(
+    [object]$Entry,
+    [bool]$RequireMoonBitWrapper
+  )
+
   $name = $entry.name
-  $handle = $entry.moonbit_handle
-  $typeName = $entry.moonbit_type
   $structName = $entry.wrapper_struct
   $factory = $entry.factory
   if ($entry.allocation -ne "moonbit_malloc") {
@@ -343,24 +403,22 @@ foreach ($entry in $regularObjects) {
   if ($null -eq $entry.pointer_field_count -or $pointerFieldCount -lt 0) {
     throw "$name regular object is missing non-negative pointer_field_count"
   }
-  if ($null -eq $entry.pointer_fields) {
-    throw "$name regular object is missing pointer_fields list"
-  }
-  $pointerFields = @($entry.pointer_fields)
-  foreach ($pointerField in $pointerFields) {
-    if (-not ($pointerField -is [string]) -or [string]::IsNullOrWhiteSpace($pointerField)) {
-      throw "$name regular object is missing pointer_fields list"
-    }
-  }
+  $pointerFields = @(Get-RequiredStringList -Entry $entry -Key "pointer_fields" -Name $name)
+  $valueFields = @(Get-RequiredStringList -Entry $entry -Key "value_fields" -Name $name)
   if ($pointerFields.Count -ne $pointerFieldCount) {
     throw "$name regular object pointer_fields length does not match pointer_field_count=$pointerFieldCount"
   }
 
-  $typeBody = Get-MoonBitTypeBody -TypeText $typesText -TypeName $typeName
-  Assert-Matches `
-    -Text $typeBody `
-    -Pattern "\bpriv\s+handle\s*:\s*$([regex]::Escape($handle))\b" `
-    -Message "$typeName does not store $handle"
+  if ($RequireMoonBitWrapper) {
+    $handle = $entry.moonbit_handle
+    $typeName = $entry.moonbit_type
+    $typeBody = Get-MoonBitTypeBody -TypeText $typesText -TypeName $typeName
+    Assert-Matches `
+      -Text $typeBody `
+      -Pattern "\bpriv\s+handle\s*:\s*$([regex]::Escape($handle))\b" `
+      -Message "$typeName does not store $handle"
+  }
+
   $cBody = Get-CStructBody -HeaderText $headerText -StructName $structName
   $actualPointerFields = @(
     [regex]::Matches($cBody, "\*\s+([A-Za-z_][A-Za-z0-9_]*)\s*;") |
@@ -372,6 +430,12 @@ foreach ($entry in $regularObjects) {
   }
   if (($actualPointerFields -join ",") -ne ($pointerFields -join ",")) {
     throw "$name regular object pointer_fields mismatch: manifest=$($pointerFields -join ',') struct=$($actualPointerFields -join ',')"
+  }
+  foreach ($valueField in $valueFields) {
+    Assert-Matches `
+      -Text $cBody `
+      -Pattern "\b$([regex]::Escape($valueField))\s*;" `
+      -Message "$structName is missing value field $valueField"
   }
   $factoryBody = Find-BracedBody `
     -Text $sourceText `
@@ -392,16 +456,28 @@ foreach ($entry in $regularObjects) {
       -Text $factoryBody `
       -Needle "offsetof($structName, $firstPointerField)" `
       -Message "$factory must encode pointer-field offset with offsetof($structName, $firstPointerField)"
+  } else {
+    Assert-Contains `
+      -Text $factoryBody `
+      -Needle "sizeof($structName) >> 2" `
+      -Message "$factory must encode scalar-only header size with sizeof($structName) >> 2"
   }
-  foreach ($pointerField in $pointerFields) {
+  foreach ($field in @($pointerFields + $valueFields)) {
     Assert-Matches `
       -Text $factoryBody `
-      -Pattern "\b[A-Za-z_][A-Za-z0-9_]*->$([regex]::Escape($pointerField))\s*=" `
-      -Message "$factory must initialize pointer field $pointerField"
+      -Pattern "\b[A-Za-z_][A-Za-z0-9_]*->$([regex]::Escape($field))\s*=" `
+      -Message "$factory must initialize field $field"
   }
   if ($factoryBody.Contains("moonbit_make_external_object")) {
     throw "$factory must not allocate a MoonBit external object"
   }
+}
+
+foreach ($entry in $regularObjects) {
+  Test-RegularObject -Entry $entry -RequireMoonBitWrapper $true
+}
+foreach ($entry in $regularRuntimeObjects) {
+  Test-RegularObject -Entry $entry -RequireMoonBitWrapper $false
 }
 
 Write-Host "Verified native ownership manifest: $resolvedManifest"

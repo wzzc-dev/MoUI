@@ -165,6 +165,104 @@
         "glyphs",
         "positions",
         "clusters"
+      ],
+      "value_fields": [
+        "glyph_count",
+        "advance_x",
+        "advance_y"
+      ]
+    }
+  ],
+  "regular_runtime_objects": [
+    {
+      "name": "FloatArray",
+      "wrapper_struct": "MoonbitSkiaFloatArray",
+      "factory": "moonbit_skia_make_float_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    },
+    {
+      "name": "GlyphIdArray",
+      "wrapper_struct": "MoonbitSkiaGlyphIdArray",
+      "factory": "moonbit_skia_make_glyph_id_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    },
+    {
+      "name": "Point",
+      "wrapper_struct": "MoonbitSkiaPoint",
+      "factory": "moonbit_skia_make_point",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 0,
+      "pointer_fields": [],
+      "value_fields": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "name": "Rect",
+      "wrapper_struct": "MoonbitSkiaRect",
+      "factory": "moonbit_skia_make_rect",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 0,
+      "pointer_fields": [],
+      "value_fields": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ]
+    },
+    {
+      "name": "PointArray",
+      "wrapper_struct": "MoonbitSkiaPointArray",
+      "factory": "moonbit_skia_make_point_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    },
+    {
+      "name": "RectArray",
+      "wrapper_struct": "MoonbitSkiaRectArray",
+      "factory": "moonbit_skia_make_rect_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    },
+    {
+      "name": "Int32Array",
+      "wrapper_struct": "MoonbitSkiaInt32Array",
+      "factory": "moonbit_skia_make_int32_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
       ]
     }
   ]
