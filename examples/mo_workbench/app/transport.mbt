@@ -15,11 +15,16 @@ pub(all) enum PiTransportStatus {
 
 ///|
 pub(all) enum PiTransportCommand {
-  StartRpc(String)
+  StartRpc(String, String)
   SendUserInput(String, String)
-  CancelRun(String)
+  CancelRpcRun(String)
   Shutdown
 } derive(Eq, Debug)
+
+///|
+pub struct PiTransportRuntime {
+  priv run : (Array[PiTransportCommand], (PiTransportEvent) -> Unit) -> Unit
+}
 
 ///|
 pub(all) enum PiTransportEvent {
@@ -53,8 +58,18 @@ pub fn PiTransportState::enqueue(
   self : PiTransportState,
   command : PiTransportCommand,
 ) -> PiTransportState {
+  self.enqueue_many([command])
+}
+
+///|
+pub fn PiTransportState::enqueue_many(
+  self : PiTransportState,
+  commands : Array[PiTransportCommand],
+) -> PiTransportState {
   let command_queue = self.command_queue.copy()
-  command_queue.push(command)
+  for command in commands {
+    command_queue.push(command)
+  }
   { ..self, command_queue, status: Starting }
 }
 
@@ -106,9 +121,58 @@ pub fn PiTransportKind::label(self : PiTransportKind) -> String {
 ///|
 pub fn PiTransportCommand::label(self : PiTransportCommand) -> String {
   match self {
-    StartRpc(cwd) => "start rpc in " + cwd
+    StartRpc(session, cwd) => "start rpc for " + session + " in " + cwd
     SendUserInput(session, text) => "send prompt for " + session + ": " + text
-    CancelRun(session) => "cancel run for " + session
+    CancelRpcRun(session) => "cancel run for " + session
     Shutdown => "shutdown rpc"
+  }
+}
+
+///|
+pub fn PiTransportRuntime::new(
+  run~ : (Array[PiTransportCommand], (PiTransportEvent) -> Unit) -> Unit,
+) -> PiTransportRuntime {
+  { run, }
+}
+
+///|
+pub fn PiTransportRuntime::unavailable(
+  reason? : String = "Pi transport runtime is unavailable",
+) -> PiTransportRuntime {
+  PiTransportRuntime::new(run=(_commands, emit) => emit(TransportFailed(reason)))
+}
+
+///|
+pub fn PiTransportRuntime::fixture(
+  events~ : (Array[PiTransportCommand]) -> Array[PiTransportEvent],
+) -> PiTransportRuntime {
+  PiTransportRuntime::new(run=(commands, emit) => {
+    for event in events(commands) {
+      emit(event)
+    }
+  })
+}
+
+///|
+pub fn PiTransportRuntime::dispatch(
+  self : PiTransportRuntime,
+  commands : Array[PiTransportCommand],
+  emit : (PiTransportEvent) -> Unit,
+) -> Unit {
+  (self.run)(commands, emit)
+}
+
+///|
+pub fn[Msg] PiTransportRuntime::effect(
+  self : PiTransportRuntime,
+  commands : Array[PiTransportCommand],
+  map : (PiTransportEvent) -> Msg,
+) -> @core.Effect[Msg] {
+  if commands.is_empty() {
+    @core.Effect::none()
+  } else {
+    @core.Effect::dispatch(dispatch => {
+      self.dispatch(commands, event => dispatch(map(event)))
+    })
   }
 }

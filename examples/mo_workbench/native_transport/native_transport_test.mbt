@@ -26,11 +26,40 @@ async test "native transport builds structured jsonl request lines" {
     "session_id": "session-1",
     "text": "Inspect renderer capability tests",
   })
+  json_inspect(@json.parse(pi_rpc_cancel_line(session_id="session-1")), content={
+    "type": "cancel_run",
+    "session_id": "session-1",
+  })
+  json_inspect(@json.parse(pi_rpc_shutdown_line()), content={
+    "type": "shutdown",
+  })
+}
+
+///|
+async test "native transport maps command batches to jsonl requests" {
+  let request = PiNativeTransportRequest::from_commands([
+    StartRpc("session-1", "/repo"),
+    SendUserInput("session-1", "hello"),
+    CancelRpcRun("session-1"),
+    Shutdown,
+  ])
+  inspect(request.session_id, content="session-1")
+  inspect(request.lines.length(), content="4")
+  json_inspect(@json.parse(request.lines[0]), content={
+    "type": "start_session",
+    "session_id": "session-1",
+    "cwd": "/repo",
+  })
+  json_inspect(@json.parse(request.lines[1]), content={
+    "type": "user_input",
+    "session_id": "session-1",
+    "text": "hello",
+  })
 }
 
 ///|
 #cfg(all(target="native", not(platform="windows")))
-async test "native transport drives jsonl stdin stdout process" {
+async test "native transport drives jsonl command batch through stdin stdout process" {
   let config = PiNativeTransportConfig::shell(
     script=(
       #|while IFS= read -r line; do
@@ -38,9 +67,10 @@ async test "native transport drives jsonl stdin stdout process" {
       #|done
     ),
   )
-  let start = pi_rpc_start_line(session_id="fixture", cwd="/repo")
-  let input = pi_rpc_user_input_line(session_id="fixture", text="hello pi")
-  let run = run_jsonl_session(config, session_id="fixture", [start, input])
+  let run = run_jsonl_commands(config, [
+    StartRpc("fixture", "/repo"),
+    SendUserInput("fixture", "hello pi"),
+  ])
   inspect(run.exit_code, content="0")
   inspect(run.sent_lines().length(), content="2")
   inspect(run.received_lines().length(), content="2")
@@ -56,4 +86,31 @@ async test "native transport drives jsonl stdin stdout process" {
   })
   assert_true(run.events.any(event => event is ProcessStarted(_)))
   assert_true(run.events.any(event => event is ProcessExited(0)))
+}
+
+///|
+#cfg(all(target="native", not(platform="windows")))
+test "native transport runtime emits command batch events through app hook" {
+  let config = PiNativeTransportConfig::shell(
+    script=(
+      #|while IFS= read -r line; do
+      #|  printf '{"echo":%s}\n' "$line"
+      #|done
+    ),
+  )
+  let events : Ref[Array[@app.PiTransportEvent]] = Ref([])
+  config
+  .runtime()
+  .dispatch(
+    [StartRpc("fixture", "/repo"), SendUserInput("fixture", "hello pi")],
+    event => {
+      let next = events.val.copy()
+      next.push(event)
+      events.val = next
+    },
+  )
+  inspect(events.val.length(), content="6")
+  assert_true(events.val.any(event => event is ProcessStarted(_)))
+  assert_true(events.val.any(event => event is JsonLineReceived(_, _)))
+  assert_true(events.val.any(event => event is ProcessExited(0)))
 }

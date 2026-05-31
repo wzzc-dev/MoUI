@@ -1,7 +1,12 @@
 ///|
 fn main {
   let app = @app.MoWorkbenchApp::new()
-  let runtime = app.runtime(width=1220.0, height=780.0)
+  let transport = @native_transport.PiNativeTransportConfig::pi().runtime()
+  let runtime = app.runtime_with_transport(
+    transport,
+    width=1220.0,
+    height=780.0,
+  )
   let exit_after_first_present = @env.get_env_var(
       "MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
     ) ==

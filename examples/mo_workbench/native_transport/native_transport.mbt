@@ -1,5 +1,9 @@
 ///|
-using @app {type PiTransportEvent}
+using @app {
+  type PiTransportCommand,
+  type PiTransportEvent,
+  type PiTransportRuntime,
+}
 
 ///|
 pub(all) struct PiNativeTransportConfig {
@@ -12,6 +16,12 @@ pub(all) struct PiNativeTransportConfig {
 pub(all) struct PiNativeTransportRun {
   events : Array[PiTransportEvent]
   exit_code : Int
+} derive(Eq, Debug)
+
+///|
+pub(all) struct PiNativeTransportRequest {
+  session_id : String
+  lines : Array[String]
 } derive(Eq, Debug)
 
 ///|
@@ -60,6 +70,48 @@ pub fn pi_rpc_user_input_line(session_id~ : String, text~ : String) -> String {
 }
 
 ///|
+pub fn pi_rpc_cancel_line(session_id~ : String) -> String {
+  ({ "type": "cancel_run", "session_id": session_id } : Json).stringify()
+}
+
+///|
+pub fn pi_rpc_shutdown_line() -> String {
+  ({ "type": "shutdown" } : Json).stringify()
+}
+
+///|
+pub fn PiNativeTransportRequest::from_commands(
+  commands : Array[PiTransportCommand],
+) -> PiNativeTransportRequest {
+  let lines : Array[String] = []
+  let mut session_id = "process"
+  for command in commands {
+    match command {
+      StartRpc(session, cwd) => {
+        if session_id == "process" {
+          session_id = session
+        }
+        lines.push(pi_rpc_start_line(session_id=session, cwd~))
+      }
+      SendUserInput(session, text) => {
+        if session_id == "process" {
+          session_id = session
+        }
+        lines.push(pi_rpc_user_input_line(session_id=session, text~))
+      }
+      CancelRpcRun(session) => {
+        if session_id == "process" {
+          session_id = session
+        }
+        lines.push(pi_rpc_cancel_line(session_id=session))
+      }
+      Shutdown => lines.push(pi_rpc_shutdown_line())
+    }
+  }
+  { session_id, lines }
+}
+
+///|
 pub async fn run_jsonl_session(
   config : PiNativeTransportConfig,
   session_id~ : String,
@@ -89,6 +141,50 @@ pub async fn run_jsonl_session(
     events.push(ProcessExited(exit_code))
     { events, exit_code }
   })
+}
+
+///|
+pub async fn run_jsonl_commands(
+  config : PiNativeTransportConfig,
+  commands : Array[PiTransportCommand],
+) -> PiNativeTransportRun {
+  let request = PiNativeTransportRequest::from_commands(commands)
+  run_jsonl_session(config, session_id=request.session_id, request.lines)
+}
+
+///|
+pub fn run_jsonl_commands_blocking(
+  config : PiNativeTransportConfig,
+  commands : Array[PiTransportCommand],
+) -> PiNativeTransportRun {
+  let result : Ref[PiNativeTransportRun?] = Ref(None)
+  @async.run_async_main(() => {
+    let run = run_jsonl_commands(config, commands) catch {
+      err => failed_run("\{err}")
+    }
+    result.val = Some(run)
+  })
+  match result.val {
+    Some(run) => run
+    None => failed_run("native async transport did not produce a result")
+  }
+}
+
+///|
+pub fn PiNativeTransportConfig::runtime(
+  self : PiNativeTransportConfig,
+) -> PiTransportRuntime {
+  PiTransportRuntime::new(run=(commands, emit) => {
+    let run = run_jsonl_commands_blocking(self, commands)
+    for event in run.events {
+      emit(event)
+    }
+  })
+}
+
+///|
+fn failed_run(reason : String) -> PiNativeTransportRun {
+  { events: [TransportFailed(reason)], exit_code: -1 }
 }
 
 ///|
