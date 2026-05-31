@@ -105,6 +105,74 @@ test "workbench command catalog runtime effect dispatches slash prompt" {
 }
 
 ///|
+test "workbench refreshes current Pi session through platform-neutral commands" {
+  let model = WorkbenchModel::new().update(RefreshSession)
+  inspect(model.last_status, content="Pi session refresh queued")
+  inspect(model.pending_transport_count(), content="4")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued state refresh")
+  }
+  match model.transport.command_queue[1] {
+    FetchRpcMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued messages refresh")
+  }
+  match model.transport.command_queue[2] {
+    FetchRpcCommands(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued command catalog refresh")
+  }
+  match model.transport.command_queue[3] {
+    FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued session stats refresh")
+  }
+  assert_true(
+    model.events.any(event => event.title == "Pi session refresh queued"),
+  )
+}
+
+///|
+test "workbench refresh runtime effect dispatches current session batch" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_messages\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_commands\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_session_stats\"}"))
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    RefreshSession,
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="4")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="4")
+  match captured.val[0] {
+    StartRpc(session, _) => inspect(session, content="moui-skia")
+    _ => fail("expected captured state refresh")
+  }
+  match captured.val[1] {
+    FetchRpcMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured messages refresh")
+  }
+  match captured.val[2] {
+    FetchRpcCommands(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured commands refresh")
+  }
+  match captured.val[3] {
+    FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured stats refresh")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Running")
+}
+
+///|
 test "workbench command queue uses Pi RPC bash command" {
   let model = WorkbenchModel::new().update(QueueCommand("moon check"))
   inspect(model.last_status, content="Command queued for Pi RPC bash")
@@ -1042,6 +1110,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Tokens 31960"))
   assert_true(has_text(commands, "Context 16%"))
   assert_true(has_text(commands, "Thinking: default"))
+  assert_true(has_text(commands, "刷新"))
   assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Steer 1"))
   assert_true(has_text(commands, "Follow 1"))

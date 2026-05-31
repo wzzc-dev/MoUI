@@ -85,6 +85,9 @@ packages:
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
+- The current session can be refreshed manually from the session panel. The
+  shared app reuses the same platform-neutral command batch as session
+  selection: state, messages, command catalog, and session stats.
 - Workbench command queue entries now use Pi RPC `bash` directly instead of
   prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
   lets the native encoder emit `{"type":"bash","command":...}`.
@@ -258,6 +261,11 @@ prompt RPC channel used by manual user input. The following
 compact status metrics from Pi's session statistics. This keeps
 `PiTransportEvent` platform-neutral while letting the app separate Mo Workbench
 sidebar ids from Pi's runtime session identity.
+
+Manual refresh uses the same app-layer batch without changing the selected
+Workbench session. This gives the macOS Skia UI a direct resync affordance while
+keeping process ownership in the native async transport and state ownership in
+the shared app package.
 
 Streaming Pi session events also use the same app-layer path:
 
