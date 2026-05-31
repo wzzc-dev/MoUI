@@ -657,7 +657,7 @@ fn WorkbenchModel::activity_panel(
       [
         row(
           [
-            text("Activity", role=Control, theme~, width=414.0, height=28.0),
+            text("Activity", role=Control, theme~, width=310.0, height=28.0),
             badge(
               self.commands.length().to_string() + " runs",
               tone=Neutral,
@@ -670,10 +670,17 @@ fn WorkbenchModel::activity_panel(
               theme~,
               width=94.0,
             ),
+            badge(
+              self.events.length().to_string() + " events",
+              tone=Neutral,
+              theme~,
+              width=102.0,
+            ),
           ],
           spacing=8.0,
           align=Center,
         ),
+        self.primary_event_row(theme),
         self.primary_command_run_row(theme),
         self.primary_command_catalog_row(theme),
       ],
@@ -681,11 +688,50 @@ fn WorkbenchModel::activity_panel(
       align=Start,
     ),
     width=690.0,
-    height=136.0,
+    height=188.0,
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
+  )
+}
+
+///|
+fn WorkbenchModel::primary_event_row(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.events.is_empty() {
+    blank_row(42.0)
+  } else {
+    event_row(self.events[self.events.length() - 1], theme)
+  }
+}
+
+///|
+fn event_row(
+  event : AgentEvent,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge(
+        event.phase,
+        tone=transcript_badge_tone(event.tone),
+        theme~,
+        width=104.0,
+      ),
+      column(
+        [
+          text(event.title, role=Control, theme~, width=520.0, height=24.0),
+          text(event.detail, role=Caption, theme~, width=520.0, height=22.0),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+    ],
+    spacing=10.0,
+    align=Center,
   )
 }
 

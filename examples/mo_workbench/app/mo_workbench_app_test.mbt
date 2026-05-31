@@ -704,6 +704,17 @@ test "workbench applies transport events to model timeline" {
 }
 
 ///|
+test "workbench runtime draws latest activity event" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(ProcessStarted("4242")),
+  )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "1 events"))
+  assert_true(has_text(commands, "Pi RPC process started"))
+  assert_true(has_text(commands, "pid 4242"))
+}
+
+///|
 test "workbench surfaces Pi stderr as diagnostics" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(ProcessStderr("moui-skia", "permission denied")),
@@ -1292,6 +1303,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Pi transcript"))
   assert_true(has_text(commands, "0 messages"))
   assert_true(has_text(commands, "Activity"))
+  assert_true(has_text(commands, "0 events"))
   assert_true(has_text(commands, "/review"))
   assert_true(has_text(commands, "重跑"))
   assert_true(has_text(commands, "output /tmp/mo-workbench-app-test.log"))

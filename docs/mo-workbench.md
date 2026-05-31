@@ -105,6 +105,9 @@ packages:
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
+- The Activity digest surfaces the latest shared-app timeline event, so Pi RPC,
+  streaming agent, tool, and stderr progress stays visible next to command
+  evidence without opening a separate log view.
 - Session selection now refreshes Pi messages after state binding. The shared
   app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
   records so the conversation surface can replay user, assistant, tool result,
