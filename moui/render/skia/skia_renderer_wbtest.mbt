@@ -126,6 +126,35 @@ fn skia_test_font_has_visible_text(
 }
 
 ///|
+fn skia_test_region_has_dark_pixel(
+  frame : SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Bool {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      let offset = y * frame.row_bytes + x * 4
+      if offset + 3 < frame.pixels.length() {
+        let actual_r = frame.pixels[offset].to_int()
+        let actual_g = frame.pixels[offset + 1].to_int()
+        let actual_b = frame.pixels[offset + 2].to_int()
+        let actual_a = frame.pixels[offset + 3].to_int()
+        if actual_a > 0 && actual_r < 210 && actual_g < 210 && actual_b < 210 {
+          return true
+        }
+      }
+    }
+  }
+  false
+}
+
+///|
 fn skia_test_font(font : @core.FontSpec) -> @skia_native.Font? {
   skia_font_with_resolution(font, SkiaFontResolution::SystemFontMgr)
 }
@@ -169,6 +198,43 @@ test "skia empty typeface drawing falls back when the glyph run is blank" {
     }
     None => assert_false(skia_test_native_text_available())
   }
+}
+
+///|
+test "skia text drawing clips glyphs to the TextRun frame" {
+  guard skia_test_native_text_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=96.0, height=36.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="MMMMMMMM",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=36.0),
+        font=@core.FontSpec::new(size=18.0, weight=400),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia text render: \{err.message()}")
+  }
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_false(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=8.0, y=0.0, width=84.0, height=36.0),
+    ),
+  )
 }
 
 ///|
@@ -313,6 +379,50 @@ test "skia text baseline is centered in taller text frames" {
   let frame = @core.Rect::new(x=4.0, y=10.0, width=120.0, height=44.0)
   let metrics = SkiaTextMetrics::{ baseline: 12.0, height: 20.0 }
   inspect(skia_text_baseline_y(frame, metrics), content="34")
+}
+
+///|
+test "skia text placement clips to the TextRun frame" {
+  let frame = @core.Rect::new(x=20.0, y=4.0, width=100.0, height=30.0)
+  let run = @core.TextRun::new(
+    text="Bounded",
+    frame~,
+    font=@core.FontSpec::new(size=16.0),
+    color=@core.Color::black(),
+    align=@core.TextAlign::TextEnd,
+  )
+  let glyph_run = SkiaGlyphRun::{
+    glyphs: [@skia_native.GlyphId::new(10)],
+    positions: [@skia_mbt.Point::zero()],
+    clusters: [0],
+    width: 70.0,
+  }
+  let placement = skia_text_placement(run, glyph_run, SkiaTextMetrics::{
+    baseline: 10.0,
+    height: 20.0,
+  })
+  assert_true(placement.clip == frame)
+  inspect(placement.origin.x.to_double(), content="50")
+  inspect(placement.origin.y.to_double(), content="19")
+}
+
+///|
+test "skia text draw skips non-positive text frames" {
+  assert_true(
+    skia_text_frame_can_draw(
+      @core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
+    ),
+  )
+  assert_false(
+    skia_text_frame_can_draw(
+      @core.Rect::new(x=0.0, y=0.0, width=0.0, height=1.0),
+    ),
+  )
+  assert_false(
+    skia_text_frame_can_draw(
+      @core.Rect::new(x=0.0, y=0.0, width=1.0, height=0.0),
+    ),
+  )
 }
 
 ///|

@@ -67,6 +67,12 @@ priv struct SkiaGlyphRun {
 }
 
 ///|
+priv struct SkiaTextPlacement {
+  origin : @skia_mbt.Point
+  clip : @core.Rect
+}
+
+///|
 pub fn skia_available() -> Bool {
   @skia_native.skia_available()
 }
@@ -675,33 +681,54 @@ fn SkiaRasterRenderer::draw_text(
   canvas : @skia_native.Canvas,
   run : @core.TextRun,
 ) -> Unit {
+  if !skia_text_frame_can_draw(run.frame) {
+    return ()
+  }
   match self.skia_draw_text_payload(run.font, run.text) {
     Some((font, glyph_run)) => {
-      let x = match run.align {
-        @core.TextAlign::TextStart => run.frame.origin.x
-        @core.TextAlign::TextCenter =>
-          run.frame.origin.x + (run.frame.size.width - glyph_run.width) / 2.0
-        @core.TextAlign::TextEnd =>
-          run.frame.origin.x + run.frame.size.width - glyph_run.width
-      }
       let metrics = skia_text_metrics(
         font,
         fallback_baseline=run.font.size,
         fallback_height=run.font.size * 1.25,
       )
-      let y = skia_text_baseline_y(run.frame, metrics)
+      let placement = skia_text_placement(run, glyph_run, metrics)
+      let saved = canvas.save()
+      canvas.clip_rect(skia_rect(placement.clip), anti_alias=true)
       canvas.draw_glyphs(
         glyph_run.glyphs,
         glyph_run.positions,
         font,
         skia_paint(run.color),
-        origin=@skia_mbt.Point::new(
-          Float::from_double(x),
-          Float::from_double(y),
-        ),
+        origin=placement.origin,
       )
+      canvas.restore_to_count(saved)
     }
     None => self.unsupported_command_count = self.unsupported_command_count + 1
+  }
+}
+
+///|
+fn skia_text_frame_can_draw(frame : @core.Rect) -> Bool {
+  frame.size.width > 0.0 && frame.size.height > 0.0
+}
+
+///|
+fn skia_text_placement(
+  run : @core.TextRun,
+  glyph_run : SkiaGlyphRun,
+  metrics : SkiaTextMetrics,
+) -> SkiaTextPlacement {
+  let x = match run.align {
+    @core.TextAlign::TextStart => run.frame.origin.x
+    @core.TextAlign::TextCenter =>
+      run.frame.origin.x + (run.frame.size.width - glyph_run.width) / 2.0
+    @core.TextAlign::TextEnd =>
+      run.frame.origin.x + run.frame.size.width - glyph_run.width
+  }
+  let y = skia_text_baseline_y(run.frame, metrics)
+  {
+    origin: @skia_mbt.Point::new(Float::from_double(x), Float::from_double(y)),
+    clip: run.frame,
   }
 }
 
