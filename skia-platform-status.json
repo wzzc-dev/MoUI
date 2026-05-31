@@ -65,6 +65,11 @@
       "marker": "native smoke canvas state restored"
     },
     {
+      "id": "canvas.command-replay",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay commands"
+    },
+    {
       "id": "shader.draw",
       "area": "Shader",
       "marker": "native smoke shader draws"

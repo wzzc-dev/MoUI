@@ -65,6 +65,7 @@ pub fn Canvas::is_available(Self) -> Bool
 pub fn Canvas::local_clip_bounds(Self) -> @skia_mbt.Rect?
 pub fn Canvas::quick_reject_path(Self, Path) -> Bool
 pub fn Canvas::quick_reject_rect(Self, @skia_mbt.Rect) -> Bool
+pub fn Canvas::replay(Self, @skia_mbt.RenderCommandList, font? : Font?) -> CanvasReplayStats
 pub fn Canvas::reset_matrix(Self) -> Unit
 pub fn Canvas::restore(Self) -> Unit
 pub fn Canvas::restore_to_count(Self, Int) -> Unit
@@ -75,6 +76,17 @@ pub fn Canvas::save_layer(Self, bounds? : @skia_mbt.Rect?, paint? : @skia_mbt.Pa
 pub fn Canvas::scale(Self, @skia_mbt.Size) -> Unit
 pub fn Canvas::skew(Self, @skia_mbt.Point) -> Unit
 pub fn Canvas::translate(Self, @skia_mbt.Point) -> Unit
+
+pub(all) struct CanvasReplayStats {
+  command_count : Int
+  replayed_count : Int
+  skipped_count : Int
+  draw_count : Int
+  text_count : Int
+  present_count : Int
+} derive(Eq, @debug.Debug)
+pub fn CanvasReplayStats::empty() -> Self
+pub fn CanvasReplayStats::is_complete(Self) -> Bool
 
 pub(all) struct Codec {
   // private fields

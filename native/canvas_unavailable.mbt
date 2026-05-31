@@ -439,5 +439,43 @@ pub fn Canvas::draw_glyphs(
 }
 
 ///|
+/// Replay is a counted no-op when the native Canvas target is unavailable.
+pub fn Canvas::replay(
+  self : Canvas,
+  commands : @skia.RenderCommandList,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  ignore(self)
+  ignore(font)
+  let mut command_count = 0
+  let mut skipped_count = 0
+  let mut draw_count = 0
+  let mut text_count = 0
+  let mut present_count = 0
+  for command in commands.commands {
+    command_count += 1
+    if command.is_draw() {
+      draw_count += 1
+    }
+    if command.is_text() {
+      text_count += 1
+    }
+    if command.is_present() {
+      present_count += 1
+    } else {
+      skipped_count += 1
+    }
+  }
+  {
+    command_count,
+    replayed_count: 0,
+    skipped_count,
+    draw_count,
+    text_count,
+    present_count,
+  }
+}
+
+///|
 /// Allocate a raster N32 premultiplied surface.
 ///

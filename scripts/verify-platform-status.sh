@@ -194,6 +194,7 @@ if schema_version >= 3:
     required_capability_ids = {
         "surface.descriptor",
         "canvas.state",
+        "canvas.command-replay",
         "shader.draw",
         "filter.layer",
         "path.geometry",

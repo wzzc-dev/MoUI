@@ -146,6 +146,7 @@ if ($status.schema_version -ge 3) {
   $requiredCapabilityIds = @(
     "surface.descriptor",
     "canvas.state",
+    "canvas.command-replay",
     "shader.draw",
     "filter.layer",
     "path.geometry",
