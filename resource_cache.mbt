@@ -220,3 +220,29 @@ pub fn[K : Hash + Eq, V] ResourceCache::set_max_bytes(
   self.max_bytes = non_negative_i64(max_bytes)
   self.evict_until_fit()
 }
+
+///|
+pub fn ResourceCache::insert_resource_descriptor(
+  self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+  descriptor : RendererResourceDescriptor,
+) -> Bool {
+  if descriptor.is_cacheable() {
+    self.insert(descriptor.key, descriptor, byte_size=descriptor.byte_size)
+  } else {
+    false
+  }
+}
+
+///|
+pub fn ResourceCache::insert_resource_plan(
+  self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+  plan : RendererResourcePlan,
+) -> Int {
+  let mut inserted = 0
+  for descriptor in plan.descriptors {
+    if self.insert_resource_descriptor(descriptor) {
+      inserted += 1
+    }
+  }
+  inserted
+}
