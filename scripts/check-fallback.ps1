@@ -130,6 +130,8 @@ function Set-FakeNativeSmokeLog {
     "5"
     "native smoke typeface family bytes"
     "5"
+    "native smoke font fallback resource plan count"
+    "1"
     "native smoke font fallback width"
     "12"
     "skia_mbt native smoke test passed"

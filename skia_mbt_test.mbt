@@ -1028,6 +1028,22 @@ test "font fallback contracts normalize style family and language requests" {
     request.with_character(-1).character == 0 &&
     !request.with_character(-1).has_character(),
   )
+  let key = request.resource_key()
+  assert_true(key.kind == @skia_mbt.TypefaceResource)
+  assert_true(key == request.resource_key())
+  assert_true(key != request.with_character(0x4F61).resource_key())
+  assert_true(
+    key !=
+    request.with_style(@skia_mbt.FontStyleRequest::italic()).resource_key(),
+  )
+  let descriptor = request.resource_descriptor()
+  assert_true(descriptor.key == key)
+  assert_true(descriptor.is_cacheable())
+  assert_true(descriptor.byte_size > 0L)
+  let plan = @skia_mbt.RendererResourcePlan::new([descriptor, descriptor])
+  assert_eq(plan.length(), 1)
+  assert_eq(plan.cacheable_count, 1)
+  assert_eq(plan.uncacheable_count, 0)
 }
 
 ///|
