@@ -1192,6 +1192,33 @@ test "render frame descriptor summarizes target commands and resources" {
     unbalanced_frame.validation_status() == @skia_mbt.FrameUnbalancedState,
   )
   assert_true(!unbalanced_frame.is_ready())
+
+  let gpu_context = @skia_mbt.GpuContextDescriptor::mock(
+    id=b"frame-gpu-context",
+  )
+  let gpu_target = @skia_mbt.SurfaceTargetDescriptor::gpu_n32_premul(
+    @skia_mbt.ISize::new(16, 16),
+    gpu_context_key=Some(gpu_context.resource_key()),
+  )
+  let gpu_frame = @skia_mbt.RenderCommandList::for_target(gpu_target).frame_descriptor(
+    gpu_target,
+  )
+  assert_true(gpu_frame.requires_gpu_context())
+  assert_true(gpu_frame.has_gpu_context())
+  assert_true(gpu_frame.is_ready())
+  assert_eq(gpu_frame.resource_plan.gpu_backed_count, 2)
+
+  let missing_context_target = gpu_target.without_gpu_context()
+  let missing_context_frame = @skia_mbt.RenderCommandList::for_target(
+    missing_context_target,
+  ).frame_descriptor(missing_context_target)
+  assert_true(missing_context_frame.requires_gpu_context())
+  assert_true(!missing_context_frame.has_gpu_context())
+  assert_true(
+    missing_context_frame.validation_status() ==
+    @skia_mbt.FrameMissingGpuContext,
+  )
+  assert_true(!missing_context_frame.is_ready())
 }
 
 ///|

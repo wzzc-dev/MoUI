@@ -75,8 +75,9 @@ these facts recorded in logs:
   all required stage markers for readback, snapshots, PNG encode/decode, codec,
   decoded bitmap readback, surface descriptor reporting, canvas state restore,
   canvas command replay, render resource planning, GPU context resource
-  planning, shader draws, native/portable path geometry, UTF-8 text
-  measurement, glyph count, glyph ID mapping, glyph advances, glyph positions,
+  planning, GPU frame context validation, shader draws, native/portable path
+  geometry, UTF-8 text measurement, glyph count, glyph ID mapping, glyph
+  advances, glyph positions,
   glyph bounds, text bounds measurement, font resource planning, font
   metrics, font family enumeration, native typeface family metadata, FontMgr
   character fallback, font fallback resource planning, and shader/filter
