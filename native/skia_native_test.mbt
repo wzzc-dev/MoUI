@@ -399,6 +399,13 @@ test "font api typechecks" {
   assert_true(
     @native.Typeface::from_name(b"", weight=700, width=5, slant=1) is None,
   )
+  assert_true(
+    @native.Typeface::from_name_style(
+      b"",
+      @skia.FontStyleRequest::new(weight=700, width=5, slant=1),
+    )
+    is None,
+  )
   match @native.Font::default(size=14.0) {
     None => ()
     Some(font) => {
@@ -526,6 +533,19 @@ test "font api typechecks" {
     Some(font_mgr) => {
       assert_true(font_mgr.is_available())
       assert_true(@native.Typeface::from_font_mgr_family(font_mgr, b"") is None)
+      let bold_italic = @skia.FontStyleRequest::new(
+        weight=700,
+        width=5,
+        slant=1,
+      )
+      assert_true(font_mgr.match_family_style_request(b"", bold_italic) is None)
+      assert_true(
+        @native.Typeface::from_font_mgr_request(
+          font_mgr,
+          @skia.FontFallbackRequest::new(),
+        )
+        is None,
+      )
       assert_true(
         @native.Typeface::from_font_mgr_family(
           font_mgr,
@@ -553,6 +573,19 @@ test "font api typechecks" {
                   @native.Typeface::from_font_mgr_family(font_mgr, family_name)
                   is Some(_),
                 )
+                let fallback_request = @skia.FontFallbackRequest::new(
+                  families=@skia.FontFallbackChain::new(fallback_families=[
+                    b"", family_name,
+                  ]),
+                  bcp47=[b"zh-Hans"],
+                  character=0x4F60,
+                  style=bold_italic,
+                )
+                match font_mgr.match_fallback_request(fallback_request) {
+                  None => ()
+                  Some(fallback_typeface) =>
+                    assert_true(fallback_typeface.is_available())
+                }
                 match
                   font_mgr.match_family_style(
                     family_name,

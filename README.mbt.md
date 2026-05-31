@@ -67,7 +67,9 @@ The `native` subpackage contains the first opt-in native boundary:
   family plus Skia-style weight/width/slant values to a typeface;
   `@native.Typeface::default()` / `from_name(family, weight, width, slant)` and
   `@native.Font::default(size)` / `from_typeface(typeface, size)` create the
-  first native text handles for drawing and measurement;
+  first native text handles for drawing and measurement; `FontStyleRequest` and
+  `FontFallbackRequest` can be passed through the native FontMgr/Typeface
+  adapters before a full shaping/fallback engine is linked;
 - `@native.Shader::color(color)`, `linear_gradient(start, end, colors...)`,
   and `radial_gradient(center, radius, colors...)` create the first native
   shader handles for shader-backed paint calls;
