@@ -33,6 +33,8 @@ GPU, Shader, Filter, Path, Image, Codec, Bitmap, Text, and FontMgr boundaries, a
 `verify-native-smoke-log.*` reads the same list when validating artifact logs.
 It also records `ci_gate_evidence_files`, the workflow and fallback-helper files
 that must contain every `ci_gates` verifier script or MoonBit command fragment.
+For each platform, the verifier also requires the exact preflight, wrapper,
+native smoke, and acceptance summary log names that artifact verification needs.
 
 When a real artifact has passed verification and the Skia revision has been
 pinned, mark a platform accepted through the guarded helper instead of editing
