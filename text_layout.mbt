@@ -104,7 +104,7 @@ fn copy_non_empty_unique_bytes(
 pub(all) struct FontFallbackChain {
   primary_family : Bytes
   fallback_families : Array[Bytes]
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn FontFallbackChain::new(
@@ -185,7 +185,7 @@ pub(all) struct FontFallbackRequest {
   bcp47 : Array[Bytes]
   character : Int
   style : FontStyleRequest
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn FontFallbackRequest::new(
@@ -274,7 +274,7 @@ pub(all) struct TextRunDescriptor {
   range : TextRange
   direction : TextDirection
   fallback : FontFallbackRequest
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn TextRunDescriptor::new(
