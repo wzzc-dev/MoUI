@@ -783,11 +783,14 @@ pub(all) struct RendererResourceDescriptor {
   byte_size : Int64
   cacheable : Bool
 } derive(Eq, @debug.Debug)
+pub fn RendererResourceDescriptor::color_filter(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::filter(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::gpu_surface(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::image(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::image_filter(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::is_cacheable(Self) -> Bool
 pub fn RendererResourceDescriptor::is_gpu_backed(Self) -> Bool
+pub fn RendererResourceDescriptor::mask_filter(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::new(RendererResourceKey, byte_size? : Int64, cacheable? : Bool) -> Self
 pub fn RendererResourceDescriptor::of_kind(RendererResourceKind, Bytes, byte_size? : Int64, cacheable? : Bool) -> Self
 pub fn RendererResourceDescriptor::path(Bytes, byte_size? : Int64) -> Self

@@ -178,11 +178,35 @@ pub fn RendererResourceDescriptor::shader(
 }
 
 ///|
-pub fn RendererResourceDescriptor::filter(
+pub fn RendererResourceDescriptor::color_filter(
+  id : Bytes,
+  byte_size? : Int64 = 0L,
+) -> RendererResourceDescriptor {
+  RendererResourceDescriptor::of_kind(ColorFilterResource, id, byte_size~)
+}
+
+///|
+pub fn RendererResourceDescriptor::image_filter(
   id : Bytes,
   byte_size? : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(ImageFilterResource, id, byte_size~)
+}
+
+///|
+pub fn RendererResourceDescriptor::mask_filter(
+  id : Bytes,
+  byte_size? : Int64 = 0L,
+) -> RendererResourceDescriptor {
+  RendererResourceDescriptor::of_kind(MaskFilterResource, id, byte_size~)
+}
+
+///|
+pub fn RendererResourceDescriptor::filter(
+  id : Bytes,
+  byte_size? : Int64 = 0L,
+) -> RendererResourceDescriptor {
+  RendererResourceDescriptor::image_filter(id, byte_size~)
 }
 
 ///|
