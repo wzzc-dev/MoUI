@@ -629,6 +629,32 @@ pub fn Rect::x(Self) -> Float
 pub fn Rect::y(Self) -> Float
 pub impl Default for Rect
 
+pub(all) struct ResourceCache[K, V] {
+  // private fields
+}
+pub fn[K, V] ResourceCache::byte_size(Self[K, V]) -> Int64
+pub fn[K, V] ResourceCache::clear(Self[K, V]) -> Unit
+pub fn[K : Hash + Eq, V] ResourceCache::contains(Self[K, V], K) -> Bool
+pub fn[K : Hash + Eq, V] ResourceCache::get(Self[K, V], K) -> V?
+pub fn[K : Hash + Eq, V] ResourceCache::insert(Self[K, V], K, V, byte_size? : Int64) -> Bool
+pub fn[K, V] ResourceCache::is_empty(Self[K, V]) -> Bool
+pub fn[K, V] ResourceCache::length(Self[K, V]) -> Int
+pub fn[K, V] ResourceCache::max_bytes(Self[K, V]) -> Int64
+pub fn[K, V] ResourceCache::new(max_bytes? : Int64) -> Self[K, V]
+pub fn[K : Hash + Eq, V] ResourceCache::peek(Self[K, V], K) -> V?
+pub fn[K : Hash + Eq, V] ResourceCache::remove(Self[K, V], K) -> Bool
+pub fn[K : Hash + Eq, V] ResourceCache::set_max_bytes(Self[K, V], Int64) -> Unit
+pub fn[K, V] ResourceCache::stats(Self[K, V]) -> ResourceCacheStats
+
+pub(all) struct ResourceCacheStats {
+  count : Int
+  byte_size : Int64
+  max_bytes : Int64
+  hits : Int
+  misses : Int
+  evictions : Int
+} derive(Eq, @debug.Debug)
+
 pub(all) struct SamplingOptions {
   filter : FilterMode
   mipmap : MipmapMode

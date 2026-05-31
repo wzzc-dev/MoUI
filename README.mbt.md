@@ -19,6 +19,9 @@ The current package exposes the first value-layer API surface:
   `CubicResampler`
 - surface contracts: `SurfaceDescriptor`, `SurfaceBackend`, `SurfaceOrigin`,
   and `SurfaceBudget` for raster, window, and future GPU render targets
+- renderer resource cache: `ResourceCache` and `ResourceCacheStats` provide a
+  deterministic byte-budgeted LRU boundary for images, shaders, typefaces, and
+  other backend-owned resources
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,

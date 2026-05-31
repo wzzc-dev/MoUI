@@ -88,6 +88,9 @@ Current implemented milestone:
   width, stroke miter, stroke cap, stroke join, and blend mode;
 - value-layer `SurfaceDescriptor` contracts for raster, window, and future GPU
   surfaces, with native raster surfaces reporting the descriptor they satisfy;
+- value-layer `ResourceCache` contracts for byte-budgeted LRU resource reuse
+  and renderer-cache hit/miss/eviction accounting without taking native handle
+  ownership;
 - fallback C++ stub path for environments without Skia.
 - `scripts/native_smoke` real-backend smoke executable that forces
   `skia_available()`, draws red/green/blue rectangles to a raster surface,
