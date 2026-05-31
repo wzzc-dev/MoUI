@@ -175,11 +175,14 @@ pub async fn run_jsonl_session(
   @async.with_task_group(group => {
     let (process_stdin, stdin_writer) = @process.write_to_process()
     let (stdout_reader, process_stdout) = @process.read_from_process()
+    let (stderr_reader, process_stderr) = @process.read_from_process()
+    let last_stderr = Ref("")
     let process = spawn_process(
       group,
       config,
       stdin=process_stdin,
       stdout=process_stdout,
+      stderr=process_stderr,
     )
     let writer_task = group.spawn(() => {
       write_jsonl_lines(stdin_writer, session_id~, lines)
@@ -187,13 +190,17 @@ pub async fn run_jsonl_session(
     let reader_task = group.spawn(() => {
       read_jsonl_lines(stdout_reader, session_id~)
     })
+    let stderr_task = group.spawn(() => {
+      read_stderr_lines(stderr_reader, session_id~, last_stderr)
+    })
     let exit_code = process.wait()
     let events : Array[PiTransportEvent] = [
       ProcessStarted(process.pid.to_string()),
     ]
     events.append(writer_task.wait())
     events.append(reader_task.wait())
-    events.push(ProcessExited(exit_code))
+    events.append(stderr_task.wait())
+    append_process_exit_events(events, config, exit_code, last_stderr.val)
     { events, exit_code }
   })
 }
@@ -207,11 +214,14 @@ pub async fn run_interactive_jsonl_session(
   @async.with_task_group(group => {
     let (process_stdin, stdin_writer) = @process.write_to_process()
     let (stdout_reader, process_stdout) = @process.read_from_process()
+    let (stderr_reader, process_stderr) = @process.read_from_process()
+    let last_stderr = Ref("")
     let process = spawn_process(
       group,
       config,
       stdin=process_stdin,
       stdout=process_stdout,
+      stderr=process_stderr,
     )
     let session = PiNativeTransportSession::{
       session_id,
@@ -222,6 +232,9 @@ pub async fn run_interactive_jsonl_session(
     let reader_task = group.spawn(() => {
       read_jsonl_lines(stdout_reader, session_id~)
     })
+    let stderr_task = group.spawn(() => {
+      read_stderr_lines(stderr_reader, session_id~, last_stderr)
+    })
     let events : Array[PiTransportEvent] = [
       ProcessStarted(process.pid.to_string()),
     ]
@@ -231,7 +244,8 @@ pub async fn run_interactive_jsonl_session(
     let exit_code = process.wait()
     events.append(session.sent_events)
     events.append(reader_task.wait())
-    events.push(ProcessExited(exit_code))
+    events.append(stderr_task.wait())
+    append_process_exit_events(events, config, exit_code, last_stderr.val)
     { events, exit_code }
   })
 }
@@ -313,14 +327,48 @@ fn failed_run(reason : String) -> PiNativeTransportRun {
 }
 
 ///|
+fn append_process_exit_events(
+  events : Array[PiTransportEvent],
+  config : PiNativeTransportConfig,
+  exit_code : Int,
+  last_stderr : String,
+) -> Unit {
+  events.push(ProcessExited(exit_code))
+  if exit_code != 0 {
+    events.push(
+      TransportFailed(
+        process_exit_failure_reason(config, exit_code, last_stderr),
+      ),
+    )
+  }
+}
+
+///|
+fn process_exit_failure_reason(
+  config : PiNativeTransportConfig,
+  exit_code : Int,
+  last_stderr : String,
+) -> String {
+  let prefix = config.command_label() +
+    " exited with code " +
+    exit_code.to_string()
+  if last_stderr == "" {
+    prefix
+  } else {
+    prefix + ": " + last_stderr
+  }
+}
+
+///|
 async fn[X] spawn_process(
   group : @async.TaskGroup[X],
   config : PiNativeTransportConfig,
   stdin~ : &@process.ProcessInput,
   stdout~ : &@process.ProcessOutput,
+  stderr? : &@process.ProcessOutput,
 ) -> @process.Process {
   if config.cwd == "" {
-    @process.spawn(group, config.command, config.args, stdin~, stdout~)
+    @process.spawn(group, config.command, config.args, stdin~, stdout~, stderr?)
   } else {
     @process.spawn(
       group,
@@ -328,6 +376,7 @@ async fn[X] spawn_process(
       config.args,
       stdin~,
       stdout~,
+      stderr?,
       cwd=config.cwd,
     )
   }
@@ -360,6 +409,25 @@ async fn read_jsonl_lines(
     let line = line.trim(char_set="\r").to_owned()
     if line != "" {
       events.push(JsonLineReceived(session_id, line))
+    }
+  }
+  events
+}
+
+///|
+async fn read_stderr_lines(
+  reader : @process.ReadFromProcess,
+  session_id~ : String,
+  last_stderr : Ref[String],
+) -> Array[PiTransportEvent] {
+  defer reader.close()
+  let events : Array[PiTransportEvent] = []
+  for ;; {
+    guard reader.read_until("\n") is Some(line) else { break }
+    let line = line.trim(char_set="\r").to_owned()
+    if line != "" {
+      last_stderr.val = line
+      events.push(ProcessStderr(session_id, line))
     }
   }
   events

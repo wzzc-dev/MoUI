@@ -60,6 +60,20 @@ test "workbench applies transport events to model timeline" {
 }
 
 ///|
+test "workbench surfaces Pi stderr as diagnostics" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(ProcessStderr("moui-skia", "permission denied")),
+  )
+  inspect(model.transport.last_json_line, content="stderr: permission denied")
+  inspect(model.last_status, content="Pi stderr received")
+  let diagnostic = model.diagnostics[model.diagnostics.length() - 1]
+  inspect(diagnostic.source, content="Pi stderr")
+  inspect(diagnostic.severity, content="warning")
+  inspect(diagnostic.message, content="moui-skia: permission denied")
+  assert_true(model.events.any(event => event.title == "Pi stderr: moui-skia"))
+}
+
+///|
 test "workbench ingests structured Pi command jsonl" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(

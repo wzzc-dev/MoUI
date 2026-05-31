@@ -23,7 +23,8 @@ automation runs, and knowledge organization.
   of the shared model while reusing the same command/event contract. Its
   `PiNativeTransportOwner` is the native lifecycle owner that accepts queued UI
   command batches through an async queue, lazily starts one JSONL process, and
-  emits stdout/process events back through the app runtime dispatch hook.
+  emits stdout, stderr, and process events back through the app runtime
+  dispatch hook.
 - `examples/mo_workbench/macos_skia` is a thin entrypoint that selects
   `backend/macos/skia`, injects the owned native Pi transport runtime, and runs
   the shared app runtime with the macOS Skia async pump.
@@ -46,8 +47,8 @@ packages:
   fixture transport kinds.
 - Typed transport commands for starting RPC, sending prompts, cancelling runs,
   and shutdown.
-- Typed transport events for process lifecycle, JSONL sent/received lines, and
-  failures.
+- Typed transport events for process lifecycle, JSONL sent/received lines,
+  stderr diagnostics, and failures.
 - A platform-neutral `PiTransportRuntime` that turns command batches into
   MoUI effects, so prompt, command, and cancel actions can dispatch transport
   events back through the same TEA message loop.
@@ -77,12 +78,16 @@ packages:
   `diff_summary` payloads update the shared model, timeline, diagnostics,
   file context, and diff overview while still preserving raw JSONL transport
   events.
+- Native stderr surfacing through platform-neutral `ProcessStderr` events,
+  warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
+- Nonzero native process exits now emit `TransportFailed` with the exit code and
+  the last stderr line, clear pending transport commands, and leave the app in a
+  failed transport state instead of silently disconnecting.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
-owner now keeps one process alive across real runtime dispatches, and the next
-slice should handle unexpected process exit, restart policy, stderr/error
-surfacing, and real `pi --mode rpc` smoke evidence when the local Pi CLI is
-available.
+owner now keeps one process alive across real runtime dispatches and reports
+stderr/nonzero-exit failures. The next slice should handle restart policy and
+real `pi --mode rpc` smoke evidence when the local Pi CLI is available.
 
 ## Pi JSONL Workbench Events
 
@@ -104,6 +109,13 @@ after the raw transport event is recorded. This keeps the platform-neutral
 `PiTransportEvent` contract stable for native, Web, and fixture transports
 while allowing the Workbench app to grow coding-agent affordances at the
 application layer.
+
+Stderr remains separate from stdout JSONL. `ProcessStderr(session, line)` updates
+the raw transport tail as `stderr: ...`, adds a warning diagnostic sourced from
+`Pi stderr`, and records a warning timeline event. If the native process exits
+with a nonzero status, `TransportFailed(reason)` uses the command label, exit
+code, and last stderr line so the UI can explain the failure without depending
+on native-only process details.
 
 ## Skia Native-First Notes
 

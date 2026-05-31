@@ -436,6 +436,7 @@ fn WorkbenchModel::receive_transport(
   }
   match event {
     JsonLineReceived(session, line) => model.ingest_pi_jsonl(session, line)
+    ProcessStderr(session, line) => model.record_transport_stderr(session, line)
     _ => model
   }
 }
@@ -581,6 +582,13 @@ fn PiTransportEvent::to_agent_event(self : PiTransportEvent) -> AgentEvent {
         detail=line,
         tone="success",
       )
+    ProcessStderr(session, line) =>
+      AgentEvent::new(
+        phase="transport",
+        title="Pi stderr: " + session,
+        detail=line,
+        tone="warning",
+      )
     ProcessExited(code) =>
       AgentEvent::new(
         phase="transport",
@@ -596,6 +604,23 @@ fn PiTransportEvent::to_agent_event(self : PiTransportEvent) -> AgentEvent {
         tone="danger",
       )
   }
+}
+
+///|
+fn WorkbenchModel::record_transport_stderr(
+  self : WorkbenchModel,
+  session : String,
+  line : String,
+) -> WorkbenchModel {
+  let diagnostics = self.diagnostics.copy()
+  diagnostics.push(
+    DiagnosticItem::new(
+      source="Pi stderr",
+      severity="warning",
+      message=session + ": " + line,
+    ),
+  )
+  { ..self, diagnostics, last_status: "Pi stderr received" }
 }
 
 ///|
