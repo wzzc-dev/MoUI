@@ -184,6 +184,7 @@ pub(all) enum WorkbenchMsg {
   DispatchPrompt
   InvokeCommand(String)
   InspectFile(String)
+  ReviewDiff
   RefreshSession
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)
@@ -502,6 +503,7 @@ pub fn WorkbenchModel::update(
     DispatchPrompt => self.dispatch_prompt()
     InvokeCommand(name) => self.invoke_command(name)
     InspectFile(path) => self.inspect_file(path)
+    ReviewDiff => self.review_diff()
     RefreshSession => self.refresh_session()
     ReceiveTransport(event) => self.receive_transport(event)
     QueueCommand(command) => self.queue_command(command)
@@ -669,6 +671,7 @@ pub fn WorkbenchModel::update_with_transport(
       self.invoke_command_with_transport(name, transport_runtime)
     InspectFile(path) =>
       self.inspect_file_with_transport(path, transport_runtime)
+    ReviewDiff => self.review_diff_with_transport(transport_runtime)
     RefreshSession => self.refresh_session_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
@@ -898,6 +901,59 @@ fn WorkbenchModel::inspect_file_with_transport(
       effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
     )
   }
+}
+
+///|
+fn WorkbenchModel::review_diff(self : WorkbenchModel) -> WorkbenchModel {
+  let prompt = self.diff_review_prompt()
+  let session = self.active_session()
+  let events = self.events.copy()
+  events.push(
+    AgentEvent::new(
+      phase="user",
+      title="Diff review queued",
+      detail=prompt,
+      tone="info",
+    ),
+  )
+  let command = SendUserInput(session.id, prompt)
+  let commands = self.commands_with_session_start(session, command)
+  {
+    ..self,
+    prompt: "",
+    events,
+    transport: self.transport.enqueue_many(commands),
+    last_status: "Queued diff review for Pi RPC",
+  }
+}
+
+///|
+fn WorkbenchModel::review_diff_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let prompt = self.diff_review_prompt()
+  let commands = self.commands_with_session_start(
+    session,
+    SendUserInput(session.id, prompt),
+  )
+  WorkbenchUpdate::new(
+    self.review_diff(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::diff_review_prompt(self : WorkbenchModel) -> String {
+  "Review diff: " +
+  self.diff.status +
+  ", " +
+  self.diff.changed_files.to_string() +
+  " files, +" +
+  self.diff.additions.to_string() +
+  " -" +
+  self.diff.deletions.to_string()
 }
 
 ///|
