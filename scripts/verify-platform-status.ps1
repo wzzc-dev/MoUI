@@ -73,6 +73,24 @@ if ($status.schema_version -ge 4) {
   $seenGateIds = @{}
   $seenGateCommands = @{}
   $seenGateAreas = @{}
+
+  function Get-CiGateScriptPaths {
+    param(
+      [string] $Command
+    )
+
+    $normalized = $Command.Replace("\", "/")
+    foreach ($token in ($normalized -split "[\s;&|]+")) {
+      $scriptPath = $token.Trim().Trim("'", '"')
+      while ($scriptPath.StartsWith("./")) {
+        $scriptPath = $scriptPath.Substring(2)
+      }
+      if ($scriptPath.StartsWith("scripts/") -and ($scriptPath.EndsWith(".sh") -or $scriptPath.EndsWith(".ps1"))) {
+        $scriptPath
+      }
+    }
+  }
+
   foreach ($gate in $gates) {
     $gateId = "$($gate.id)".Trim()
     $area = "$($gate.area)".Trim()
@@ -97,6 +115,12 @@ if ($status.schema_version -ge 4) {
           throw "duplicate CI gate command: $command"
         }
         $seenGateCommands[$commandKey] = $true
+        foreach ($scriptPath in Get-CiGateScriptPaths $command) {
+          $resolvedScriptPath = Join-Path $repoRoot $scriptPath
+          if (!(Test-Path -LiteralPath $resolvedScriptPath -PathType Leaf)) {
+            throw "CI gate references missing verifier script: ${gateId}: $scriptPath"
+          }
+        }
       }
     }
     $seenGateIds[$gateId] = $true
