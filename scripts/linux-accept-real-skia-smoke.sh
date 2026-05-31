@@ -5,8 +5,8 @@ usage() {
   cat <<'EOF'
 Usage: scripts/linux-accept-real-skia-smoke.sh [--log-dir PATH] [linux-real-skia-smoke options]
 
-Runs the Linux real Skia smoke helper, captures both wrapper and native smoke
-executable logs, verifies the native success marker, and checks that
+Runs the Linux real Skia smoke helper, captures preflight, wrapper, and native
+smoke executable logs, verifies the native success marker, and checks that
 native/moon.pkg and scripts/native_smoke/moon.pkg were restored after the run.
 
 Options handled by this wrapper:
@@ -55,6 +55,7 @@ case "$log_dir" in
 esac
 
 wrapper_log="$resolved_log_dir/linux-real-skia-smoke.log"
+preflight_log="$resolved_log_dir/linux-real-skia-smoke-preflight.log"
 build_log="$resolved_log_dir/linux-skia-build.log"
 native_log="$resolved_log_dir/linux-native-smoke-output.log"
 acceptance_log="$resolved_log_dir/linux-real-skia-acceptance.log"
@@ -80,10 +81,17 @@ before_pkg_hash="$(sha256sum "$native_pkg" | cut -d ' ' -f 1)"
 before_smoke_pkg_hash="$(sha256sum "$smoke_pkg" | cut -d ' ' -f 1)"
 
 echo "Linux real Skia acceptance logs:"
+echo "  preflight_log=$preflight_log"
 echo "  wrapper_log=$wrapper_log"
 echo "  build_log=$build_log"
 echo "  native_log=$native_log"
 echo "  acceptance_log=$acceptance_log"
+
+bash "$repo_root/scripts/linux-real-skia-smoke.sh" \
+  --build-log "$build_log" \
+  --smoke-log "$native_log" \
+  --dry-run-config \
+  "${smoke_args[@]}" 2>&1 | tee "$preflight_log"
 
 set +e
 set -o pipefail
@@ -147,6 +155,7 @@ Linux real Skia acceptance result:
   skia_commit=${skia_commit:-unknown}
   skia_package=${skia_package:-unknown}
   skia_package_sha256=${skia_package_sha256:-unknown}
+  preflight_log=$preflight_log
   wrapper_log=$wrapper_log
   build_log=$build_log
   native_log=$native_log
