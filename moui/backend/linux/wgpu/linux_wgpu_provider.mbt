@@ -112,6 +112,7 @@ fn host_renderer_from_wgpu(
     resize=metrics => renderer.resize(renderer_metrics_from_host(metrics)),
     render=commands => renderer.render(commands),
     text_system=() => renderer.text_system(),
+    image_resources=() => renderer.image_resources(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
   )

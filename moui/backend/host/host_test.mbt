@@ -67,10 +67,18 @@ test "host window renderer forwards lifecycle closures" {
   let rendered = Ref(0)
   let disposed = Ref(0)
   let presenter = Ref(3)
+  let image_records = [
+    @render.ImageResourceRecord::ready("loaded.png", width=32, height=18),
+    @render.ImageResourceRecord::failed(
+      "missing.png",
+      diagnostic="decode failed",
+    ),
+  ]
   let renderer = HostWindowRenderer::new(
     resize=metrics => resized.val = metrics.logical_size,
     render=commands => rendered.val = commands.length(),
     text_system=() => @core.TextSystem::fallback(),
+    image_resources=() => image_records,
     present_count=() => presenter.val,
     dispose=() => disposed.val = disposed.val + 1,
   )
@@ -85,9 +93,23 @@ test "host window renderer forwards lifecycle closures" {
   inspect(resized.val.height, content="48")
   inspect(rendered.val, content="1")
   inspect(renderer.text_system().id(), content="core-fallback-text-system")
+  let resources = renderer.image_resources()
+  inspect(resources.length(), content="2")
+  assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
+  inspect(resources[0].width, content="32")
+  assert_true(resources[1].status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(resources[1].diagnostic.contains("decode"))
   inspect(renderer.present_count(), content="3")
   renderer.dispose()
   inspect(disposed.val, content="1")
+}
+
+///|
+test "host window renderer image resource diagnostics default empty" {
+  let renderer = HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+    @core.TextSystem::fallback()
+  })
+  inspect(renderer.image_resources().length(), content="0")
 }
 
 ///|

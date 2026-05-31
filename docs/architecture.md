@@ -407,7 +407,7 @@ shared unavailable-resolver message.
 
 `HostWindowRenderer` is the renderer-neutral runtime handle used by native host
 cores. It is a record of closures for resize, render, text-system access,
-present-count diagnostics, and disposal. Host cores depend only on
+image-resource diagnostics, present-count diagnostics, and disposal. Host cores depend only on
 `core`/`backend/host` plus the platform `window` package; they do not import
 `render/wgpu`, `render/skia`, `wgpu_mbt`, or `skia_mbt`. WGPU provider packages
 own GPU surface bridges, `wgpu-native`, and native WGPU text provider

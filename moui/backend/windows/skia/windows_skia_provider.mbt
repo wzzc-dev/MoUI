@@ -136,6 +136,7 @@ fn host_renderer_from_skia(
       }
     },
     text_system=() => renderer.text_system(),
+    image_resources=() => renderer.image_resources(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
   )

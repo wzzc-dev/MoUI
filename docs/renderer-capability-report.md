@@ -35,7 +35,7 @@ Status meanings:
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have real native renderer pixel smoke coverage; unknown names still use fallback paths. |
 | Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, and can draw optional SkShaper shaped glyph runs after linking; SkParagraph-style line breaking, bidi, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, and ZWJ emoji samples, keeps caret coverage stable, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path; deterministic color emoji, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
-| Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Skia now records disposed cached image resources during renderer disposal; Web renderer/backend diagnostics were refreshed on 2026-05-31; late native/general async repaint policy remains follow-up work. |
+| Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; Skia records disposed cached image resources during renderer disposal; Web renderer/backend diagnostics were refreshed on 2026-05-31; late native/general async repaint policy remains follow-up work. |
 
 ## Renderer Descriptors
 
@@ -131,9 +131,11 @@ conformance, and full grapheme shaping are still follow-up work.
 The cross-package text boundary is documented in [Text system](text-system.md).
 Native image support is synchronous from the app model's point of view.
 `WgpuRenderer::image_resources()` exposes renderer-local image resource
-snapshots. Planned image commands are marked loading until the native cache can
-resolve them; successful synchronous decode/cache upload marks records ready
-with dimensions, and failed decodes mark records failed with a diagnostic.
+snapshots, and native WGPU providers forward those records through
+`HostWindowRenderer::image_resources()` for host-visible diagnostics. Planned
+image commands are marked loading until the native cache can resolve them;
+successful synchronous decode/cache upload marks records ready with dimensions,
+and failed decodes mark records failed with a diagnostic.
 
 ## Current Skia Raster Notes
 
@@ -141,8 +143,9 @@ with dimensions, and failed decodes mark records failed with a diagnostic.
 `wzzc-dev/skia_mbt` checkout. It exposes `SkiaRasterRenderer`,
 `SkiaPixelFrame`, `SkiaPresentTarget`, `SkiaFontResolution`, `renderer_descriptor()`,
 backend info, fallback-safe availability checks, a basic Skia-backed text
-system, image resource snapshots, cached-image disposal diagnostics, and
-diagnostics for unsupported commands. In fallback builds `skia_available()`
+system, image resource snapshots that native Skia providers forward through
+`HostWindowRenderer`, cached-image disposal diagnostics, and diagnostics for
+unsupported commands. In fallback builds `skia_available()`
 returns `false`, renderer creation raises `SkiaUnavailable`, and platform Skia
 entrypoints preflight availability before handing control to host app assembly,
 so explicit Skia selection exits with a diagnostic instead of opening a blank
@@ -168,7 +171,10 @@ linear-gradient-debug, and vignette shader effects, PNG data URI and local PNG
 image drawing, failed-image placeholders, basic text glyph-run pixels, and
 optional SkShaper availability when the smoke is run with `--enable-skshaper`,
 while requiring
-`unsupported_command_count == 0`. Remaining Skia
+`unsupported_command_count == 0`. Native Skia provider packages expose the same
+renderer image-resource snapshot records through `HostWindowRenderer`, so host
+diagnostics can inspect loading, ready, failed, and disposed image resources
+without importing `render/skia`. Remaining Skia
 renderer gaps are now narrower: complex text shaping. Basic text
 measurement/drawing uses Skia `FontMgr`/`Font` with `FontSpec` family, weight,
 style selection, Skia font metrics for baseline/height, shaped-run cluster
