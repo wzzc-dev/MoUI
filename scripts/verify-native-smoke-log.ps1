@@ -59,7 +59,14 @@ $defaultStageMarkers = @(
   "native smoke font fallback font resource plan count",
   "native smoke font fallback width"
 )
+$defaultExpectedStageValues = @(
+  [pscustomobject]@{
+    Marker = "native smoke text run resource plan count"
+    Value = "3"
+  }
+)
 $stageMarkers = $defaultStageMarkers
+$expectedStageValues = $defaultExpectedStageValues
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $statusFile = Join-Path $repoRoot "skia-platform-status.json"
 if (Test-Path -LiteralPath $statusFile -PathType Leaf) {
@@ -72,10 +79,48 @@ if (Test-Path -LiteralPath $statusFile -PathType Leaf) {
   if ($statusStageMarkers.Count -gt 0) {
     $stageMarkers = $statusStageMarkers
   }
+  $statusExpectedStageValues = @($status.native_smoke_expected_values | ForEach-Object {
+      $marker = "$($_.marker)".Trim()
+      $value = "$($_.value)".Trim()
+      if ($marker -ne "" -and $value -ne "") {
+        [pscustomobject]@{
+          Marker = $marker
+          Value = $value
+        }
+      }
+    })
+  if ($statusExpectedStageValues.Count -gt 0) {
+    $expectedStageValues = $statusExpectedStageValues
+  }
 }
 foreach ($stageMarker in $stageMarkers) {
   if (!$content.Contains($stageMarker)) {
     throw "native smoke executable log is missing required stage marker: $stageMarker"
+  }
+}
+
+function Get-MarkerValue {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Marker
+  )
+
+  $lines = Get-Content -LiteralPath $LogPath
+  for ($index = 0; $index -lt $lines.Count; $index += 1) {
+    if ($lines[$index].Trim() -eq $Marker) {
+      if ($index + 1 -ge $lines.Count) {
+        throw "native smoke executable log marker has no value: $Marker"
+      }
+      return $lines[$index + 1].Trim()
+    }
+  }
+  throw "native smoke executable log is missing exact stage marker line: $Marker"
+}
+
+foreach ($expectedStageValue in $expectedStageValues) {
+  $actualValue = Get-MarkerValue -Marker $expectedStageValue.Marker
+  if ($actualValue -ne $expectedStageValue.Value) {
+    throw "native smoke executable log has unexpected stage marker value: $($expectedStageValue.Marker) expected=$($expectedStageValue.Value) actual=$actualValue"
   }
 }
 

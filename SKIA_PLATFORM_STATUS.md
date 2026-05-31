@@ -31,6 +31,8 @@ smoke markers that must appear in every accepted native smoke executable log.
 The platform-status verifier checks this list covers Surface, Canvas, Pipeline,
 GPU, Shader, Filter, Path, Image, Codec, Bitmap, Text, and FontMgr boundaries, and
 `verify-native-smoke-log.*` reads the same list when validating artifact logs.
+`native_smoke_expected_values` records exact values for markers where a presence
+check is too weak, such as text-run dependency plan counts.
 It also records `ci_gate_evidence_files`, the workflow and fallback-helper files
 that must contain every `ci_gates` verifier script or MoonBit command fragment.
 For each platform, the verifier also requires the exact preflight, wrapper,
