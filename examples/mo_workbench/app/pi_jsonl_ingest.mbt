@@ -61,6 +61,7 @@ fn WorkbenchModel::ingest_rpc_response(
   if success {
     match command {
       "switch_session" => self.apply_switch_session_success(session_id, fields)
+      "bash" => self.apply_bash_success(session_id, fields)
       _ => {
         let snapshot = match fields.get("data") {
           Some(Object(data)) => rpc_snapshot_from_data(command, data)
@@ -120,6 +121,55 @@ fn WorkbenchModel::apply_rpc_failure(
       tone="danger",
     ),
     status="Pi RPC failure applied",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_bash_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let data : Map[String, Json] = match json_object(fields, "data") {
+    Some(data) => data
+    None => {}
+  }
+  let exit_code = json_int(data, "exitCode")
+  let cancelled = json_bool(data, "cancelled").unwrap_or(false)
+  let truncated = json_bool(data, "truncated").unwrap_or(false)
+  let full_output_path = json_string(data, "fullOutputPath").unwrap_or("")
+  let output = json_string(data, "output").unwrap_or("")
+  let model = self
+    .mark_latest_shell_command_complete(session_id, exit_code, cancelled)
+    .append_bash_diagnostics(exit_code, cancelled, truncated, full_output_path)
+  {
+    ..model.update_active_session_for_pi(
+      status=if cancelled {
+        "cancelled"
+      } else if exit_code.unwrap_or(1) == 0 {
+        "active"
+      } else {
+        "failed"
+      },
+      active_task="Pi bash completed",
+    ),
+    pi_rpc: PiRpcSnapshot::new(command="bash", success=true),
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="tool",
+      title=if cancelled { "Pi bash cancelled" } else { "Pi bash completed" },
+      detail=bash_response_detail(
+        session_id, exit_code, cancelled, truncated, full_output_path, output,
+      ),
+      tone=if cancelled {
+        "warning"
+      } else if exit_code.unwrap_or(1) == 0 {
+        "success"
+      } else {
+        "danger"
+      },
+    ),
+    status="Pi bash response applied",
   )
 }
 
@@ -1143,6 +1193,146 @@ fn WorkbenchModel::mark_tool_command_complete(
       ),
     )
     { ..self, commands: next }
+  }
+}
+
+///|
+fn WorkbenchModel::mark_latest_shell_command_complete(
+  self : WorkbenchModel,
+  session_id : String,
+  exit_code : Int?,
+  cancelled : Bool,
+) -> WorkbenchModel {
+  let session = self.session_for_id(session_id)
+  let status = shell_command_status(exit_code, cancelled)
+  let mut target_id : Int? = None
+  for command in self.commands {
+    if command.cwd == session.project_path &&
+      command.tool_call_id == "" &&
+      (command.status == "queued" || command.status == "running") {
+      target_id = Some(command.id)
+    }
+  }
+  match target_id {
+    Some(id) => {
+      let commands = self.commands.map(command => {
+        if command.id == id {
+          { ..command, status, exit_code }
+        } else {
+          command
+        }
+      })
+      { ..self, commands, }
+    }
+    None =>
+      self.upsert_command(
+        CommandRun::new(
+          id=self.next_command_id(),
+          command="Pi RPC bash",
+          cwd=session.project_path,
+          status~,
+          exit_code~,
+        ),
+      )
+  }
+}
+
+///|
+fn WorkbenchModel::append_bash_diagnostics(
+  self : WorkbenchModel,
+  exit_code : Int?,
+  cancelled : Bool,
+  truncated : Bool,
+  full_output_path : String,
+) -> WorkbenchModel {
+  let diagnostics = self.diagnostics.copy()
+  if cancelled {
+    diagnostics.push(
+      DiagnosticItem::new(
+        source="Pi bash",
+        severity="warning",
+        message="bash command was cancelled",
+      ),
+    )
+  } else {
+    match exit_code {
+      Some(0) => ()
+      Some(code) =>
+        diagnostics.push(
+          DiagnosticItem::new(
+            source="Pi bash",
+            severity="error",
+            message="bash exited with code " + code.to_string(),
+          ),
+        )
+      None =>
+        diagnostics.push(
+          DiagnosticItem::new(
+            source="Pi bash",
+            severity="error",
+            message="bash response did not include an exit code",
+          ),
+        )
+    }
+  }
+  if truncated {
+    diagnostics.push(
+      DiagnosticItem::new(
+        source="Pi bash",
+        severity="warning",
+        message=if full_output_path == "" {
+          "bash output was truncated"
+        } else {
+          "bash output was truncated: " + full_output_path
+        },
+      ),
+    )
+  }
+  { ..self, diagnostics, }
+}
+
+///|
+fn shell_command_status(exit_code : Int?, cancelled : Bool) -> String {
+  if cancelled {
+    "cancelled"
+  } else {
+    match exit_code {
+      Some(0) => "passed"
+      _ => "failed"
+    }
+  }
+}
+
+///|
+fn bash_response_detail(
+  session_id : String,
+  exit_code : Int?,
+  cancelled : Bool,
+  truncated : Bool,
+  full_output_path : String,
+  output : String,
+) -> String {
+  let state = if cancelled {
+    "cancelled"
+  } else {
+    "exit code " + bash_exit_code_label(exit_code)
+  }
+  let truncated_suffix = if truncated && full_output_path != "" {
+    " - truncated output at " + full_output_path
+  } else if truncated {
+    " - output truncated"
+  } else {
+    ""
+  }
+  let output_suffix = if output == "" { "" } else { " - " + output }
+  session_id + ": " + state + truncated_suffix + output_suffix
+}
+
+///|
+fn bash_exit_code_label(exit_code : Int?) -> String {
+  match exit_code {
+    Some(code) => code.to_string()
+    None => "unknown"
   }
 }
 
