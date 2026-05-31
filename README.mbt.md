@@ -25,6 +25,9 @@ The current package exposes the first value-layer API surface:
 - render pass contracts: `RenderPassDescriptor`, `RenderPassLoadOp`, and
   `RenderPassStoreOp` define target bounds plus load/clear/store/present
   semantics before a concrete backend records draw commands
+- text layout and fallback contracts: `TextRunDescriptor`,
+  `FontFallbackRequest`, `FontFallbackChain`, and `FontStyleRequest` define the
+  value-layer input to native shaping and font fallback
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,

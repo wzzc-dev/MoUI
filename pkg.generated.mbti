@@ -172,6 +172,43 @@ pub(all) enum FilterMode {
 pub fn FilterMode::to_skia_ordinal(Self) -> Int
 pub impl Default for FilterMode
 
+pub(all) struct FontFallbackChain {
+  primary_family : Bytes
+  fallback_families : Array[Bytes]
+}
+pub fn FontFallbackChain::contains_family(Self, Bytes) -> Bool
+pub fn FontFallbackChain::family_at(Self, Int) -> Bytes?
+pub fn FontFallbackChain::is_empty(Self) -> Bool
+pub fn FontFallbackChain::length(Self) -> Int
+pub fn FontFallbackChain::new(primary_family? : Bytes, fallback_families? : Array[Bytes]) -> Self
+pub fn FontFallbackChain::with_family(Self, Bytes) -> Self
+
+pub(all) struct FontFallbackRequest {
+  families : FontFallbackChain
+  bcp47 : Array[Bytes]
+  character : Int
+  style : FontStyleRequest
+}
+pub fn FontFallbackRequest::has_character(Self) -> Bool
+pub fn FontFallbackRequest::language_at(Self, Int) -> Bytes?
+pub fn FontFallbackRequest::language_count(Self) -> Int
+pub fn FontFallbackRequest::new(families? : FontFallbackChain, bcp47? : Array[Bytes], character? : Int, style? : FontStyleRequest) -> Self
+pub fn FontFallbackRequest::with_character(Self, Int) -> Self
+pub fn FontFallbackRequest::with_style(Self, FontStyleRequest) -> Self
+
+pub(all) struct FontStyleRequest {
+  weight : Int
+  width : Int
+  slant : Int
+} derive(Eq, @debug.Debug)
+pub fn FontStyleRequest::bold() -> Self
+pub fn FontStyleRequest::is_bold(Self) -> Bool
+pub fn FontStyleRequest::is_italic(Self) -> Bool
+pub fn FontStyleRequest::italic() -> Self
+pub fn FontStyleRequest::new(weight? : Int, width? : Int, slant? : Int) -> Self
+pub fn FontStyleRequest::normal() -> Self
+pub impl Default for FontStyleRequest
+
 pub(all) struct IPoint {
   x : Int
   y : Int
@@ -793,6 +830,35 @@ pub(all) enum SurfaceOrigin {
   BottomLeft
 } derive(Eq, @debug.Debug)
 pub impl Default for SurfaceOrigin
+
+pub(all) enum TextDirection {
+  LeftToRight
+  RightToLeft
+} derive(Eq, @debug.Debug)
+pub fn TextDirection::is_left_to_right(Self) -> Bool
+pub fn TextDirection::is_right_to_left(Self) -> Bool
+pub impl Default for TextDirection
+
+pub(all) struct TextRange {
+  start : Int
+  end : Int
+} derive(Eq, @debug.Debug)
+pub fn TextRange::contains_offset(Self, Int) -> Bool
+pub fn TextRange::is_empty(Self) -> Bool
+pub fn TextRange::length(Self) -> Int
+pub fn TextRange::new(Int, Int) -> Self
+
+pub(all) struct TextRunDescriptor {
+  range : TextRange
+  direction : TextDirection
+  fallback : FontFallbackRequest
+}
+pub fn TextRunDescriptor::is_empty(Self) -> Bool
+pub fn TextRunDescriptor::is_right_to_left(Self) -> Bool
+pub fn TextRunDescriptor::new(range? : TextRange, direction? : TextDirection, fallback? : FontFallbackRequest) -> Self
+pub fn TextRunDescriptor::with_direction(Self, TextDirection) -> Self
+pub fn TextRunDescriptor::with_fallback(Self, FontFallbackRequest) -> Self
+pub fn TextRunDescriptor::with_range(Self, TextRange) -> Self
 
 pub(all) enum TileMode {
   Clamp
