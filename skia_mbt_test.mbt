@@ -595,6 +595,32 @@ test "render command list exposes text run resource keys" {
   let keys = commands.text_run_resource_keys()
   assert_eq(keys.length(), 1)
   assert_true(keys[0] == expected_key)
+
+  let descriptors = commands
+    .draw_text_run_utf8(
+      b"hello",
+      @skia_mbt.Point::new(4, 12),
+      descriptor=Some(descriptor),
+      font_key~,
+    )
+    .resource_descriptors()
+  assert_eq(descriptors.length(), 1)
+  assert_true(descriptors[0].key == expected_key)
+  assert_eq(descriptors[0].byte_size, 5L)
+  assert_true(descriptors[0].is_cacheable())
+
+  let cache : @skia_mbt.ResourceCache[
+    @skia_mbt.RendererResourceKey,
+    @skia_mbt.RendererResourceDescriptor,
+  ] = @skia_mbt.ResourceCache::new(max_bytes=8L)
+  assert_true(
+    cache.insert(
+      descriptors[0].key,
+      descriptors[0],
+      byte_size=descriptors[0].byte_size,
+    ),
+  )
+  assert_true(cache.contains(expected_key))
 }
 
 ///|
