@@ -23,6 +23,9 @@ The current package exposes the first value-layer API surface:
 - renderer resource cache: `ResourceCache` and `ResourceCacheStats` provide a
   deterministic byte-budgeted LRU boundary for images, shaders, typefaces, and
   other backend-owned resources
+- renderer resource identity: `RendererResourceKind`, `RendererResourceKey`,
+  and `RendererResourceDescriptor` give those caches typed keys for images,
+  shaders, filters, text, paths, surfaces, and future GPU resources
 - render pass contracts: `RenderPassDescriptor`, `RenderPassLoadOp`, and
   `RenderPassStoreOp` define target bounds plus load/clear/store/present
   semantics before a concrete backend records draw commands, including defaults
