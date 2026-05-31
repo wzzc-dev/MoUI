@@ -91,6 +91,10 @@ packages:
 - The Workspace diff review control queues a `Review diff: ...` prompt through
   the same path, making code review a first-class coding-agent action while
   keeping PiTransport platform-neutral.
+- Latest diagnostic rows in the Workspace digest can queue a
+  `Fix <severity> diagnostic from <source>: ...` prompt through
+  `SendUserInput`, turning build/check failures into the next coding-agent
+  task without adding a diagnostic-specific native transport command.
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.

@@ -203,6 +203,62 @@ test "workbench diff review runtime effect dispatches prompt" {
 }
 
 ///|
+test "workbench queues diagnostic fix through prompt RPC" {
+  let model = WorkbenchModel::new().update(
+    FixDiagnostic("moon check", "error", "unused variable in app.mbt"),
+  )
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued diagnostic fix for Pi RPC")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Fix error diagnostic from moon check: unused variable in app.mbt",
+      )
+    }
+    _ => fail("expected queued diagnostic fix prompt")
+  }
+  assert_true(model.events.any(event => event.title == "Diagnostic fix queued"))
+}
+
+///|
+test "workbench diagnostic fix runtime effect dispatches prompt" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Fix error diagnostic from moon check: unused variable in app.mbt\"}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    FixDiagnostic("moon check", "error", "unused variable in app.mbt"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Fix error diagnostic from moon check: unused variable in app.mbt",
+      )
+    }
+    _ => fail("expected captured diagnostic fix prompt")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Running")
+}
+
+///|
 test "workbench refreshes current Pi session through platform-neutral commands" {
   let model = WorkbenchModel::new().update(RefreshSession)
   inspect(model.last_status, content="Pi session refresh queued")
@@ -800,6 +856,25 @@ test "workbench ingests Pi diagnostics files and diff jsonl" {
 }
 
 ///|
+test "workbench runtime draws diagnostic fix action" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"diagnostic","source":"moon check","severity":"error","message":"unused variable in app.mbt"}
+        ),
+      ),
+    ),
+  )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "1 diag"))
+  assert_true(has_text(commands, "moon check"))
+  assert_true(has_text(commands, "unused variable in app.mbt"))
+  assert_true(has_text(commands, "修复"))
+}
+
+///|
 test "workbench ingests Pi RPC get_state response jsonl" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(
@@ -1322,6 +1397,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "验证已通过："))
   assert_false(has_text(commands, "打开方式⌄"))
   assert_false(has_text(commands, "复制"))
+  assert_false(has_text(commands, "修复"))
   assert_false(has_text(commands, "Research notebook"))
   assert_false(has_text(commands, "Skia native"))
 }
