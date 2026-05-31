@@ -220,6 +220,9 @@ stay discoverable without native-only state.
 The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
+It also surfaces the latest Pi/agent timeline event from shared app state, so
+streaming transport, tool, and RPC progress is visible next to command evidence
+without adding a separate log view.
 Cancelling while such a shell command is active now maps to Pi RPC `abort_bash`;
 prompt/agent cancellation still maps to Pi RPC `abort`.
 The shared app also ingests Pi's streaming session events such as
