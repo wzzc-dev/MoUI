@@ -120,6 +120,14 @@ pub fn RenderFrameDescriptor::is_ready(self : RenderFrameDescriptor) -> Bool {
 }
 
 ///|
+pub fn RenderFrameDescriptor::cache_resources(
+  self : RenderFrameDescriptor,
+  cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+) -> Int {
+  cache.insert_resource_plan(self.resource_plan)
+}
+
+///|
 pub fn RenderCommandList::frame_descriptor(
   self : RenderCommandList,
   target : SurfaceTargetDescriptor,

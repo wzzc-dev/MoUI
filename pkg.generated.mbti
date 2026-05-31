@@ -827,6 +827,7 @@ pub(all) struct RenderFrameDescriptor {
   stats : RenderCommandStats
   touched_bounds : Rect?
 } derive(Eq, @debug.Debug)
+pub fn RenderFrameDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int
 pub fn RenderFrameDescriptor::empty(SurfaceTargetDescriptor) -> Self
 pub fn RenderFrameDescriptor::has_present(Self) -> Bool
 pub fn RenderFrameDescriptor::is_ready(Self) -> Bool

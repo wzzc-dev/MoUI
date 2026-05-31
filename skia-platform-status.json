@@ -85,6 +85,11 @@
       "marker": "native smoke render frame validation status"
     },
     {
+      "id": "pipeline.frame-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render frame cache resources"
+    },
+    {
       "id": "pipeline.resource-cache",
       "area": "Pipeline",
       "marker": "native smoke render resource cache inserts"

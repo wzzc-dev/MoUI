@@ -1168,7 +1168,10 @@ test "render frame descriptor summarizes target commands and resources" {
     @skia_mbt.RendererResourceKey,
     @skia_mbt.RendererResourceDescriptor,
   ] = @skia_mbt.ResourceCache::new()
-  assert_eq(cache.insert_resource_plan(frame.resource_plan), 2)
+  assert_eq(frame.cache_resources(cache), 2)
+  assert_eq(cache.length(), 2)
+  assert_true(cache.contains(target.resource_key()))
+  assert_true(cache.contains(path.resource_key()))
 
   let mismatch_target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
     @skia_mbt.ISize::new(24, 16),
