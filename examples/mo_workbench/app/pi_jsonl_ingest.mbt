@@ -362,7 +362,9 @@ fn WorkbenchModel::apply_bash_success(
   let full_output_path = json_string(data, "fullOutputPath").unwrap_or("")
   let output = json_string(data, "output").unwrap_or("")
   let model = self
-    .mark_latest_shell_command_complete(session_id, exit_code, cancelled)
+    .mark_latest_shell_command_complete(
+      session_id, exit_code, cancelled, full_output_path,
+    )
     .append_bash_diagnostics(exit_code, cancelled, truncated, full_output_path)
   {
     ..model.update_active_session_for_pi(
@@ -1597,6 +1599,7 @@ fn WorkbenchModel::mark_latest_shell_command_complete(
   session_id : String,
   exit_code : Int?,
   cancelled : Bool,
+  output_path : String,
 ) -> WorkbenchModel {
   let session = self.session_for_id(session_id)
   let status = shell_command_status(exit_code, cancelled)
@@ -1610,7 +1613,7 @@ fn WorkbenchModel::mark_latest_shell_command_complete(
     Some(id) => {
       let commands = self.commands.map(command => {
         if command.id == id {
-          { ..command, status, exit_code }
+          { ..command, status, exit_code, output_path }
         } else {
           command
         }
@@ -1625,6 +1628,7 @@ fn WorkbenchModel::mark_latest_shell_command_complete(
           cwd=session.project_path,
           status~,
           exit_code~,
+          output_path~,
         ),
       )
   }

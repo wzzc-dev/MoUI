@@ -685,7 +685,13 @@ fn command_run_row(
       column(
         [
           text(command.command, role=Control, theme~, width=356.0, height=24.0),
-          text(command.cwd, role=Caption, theme~, width=356.0, height=22.0),
+          text(
+            command_detail_label(command),
+            role=Caption,
+            theme~,
+            width=356.0,
+            height=22.0,
+          ),
         ],
         spacing=0.0,
         align=Start,
@@ -716,6 +722,15 @@ fn command_exit_label(command : CommandRun) -> String {
   match command.exit_code {
     Some(code) => "exit " + code.to_string()
     None => command.status
+  }
+}
+
+///|
+fn command_detail_label(command : CommandRun) -> String {
+  if command.output_path == "" {
+    command.cwd
+  } else {
+    "output " + command.output_path
   }
 }
 

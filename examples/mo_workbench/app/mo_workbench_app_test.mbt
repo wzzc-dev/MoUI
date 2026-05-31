@@ -348,7 +348,7 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
       JsonLineReceived(
         "moui-skia",
         (
-          #|{"type":"response","command":"bash","success":true,"data":{"output":"ok","exitCode":0,"cancelled":false,"truncated":false}}
+          #|{"type":"response","command":"bash","success":true,"data":{"output":"ok","exitCode":0,"cancelled":false,"truncated":false,"fullOutputPath":"/tmp/mo-workbench-bash.log"}}
         ),
       ),
     )
@@ -371,6 +371,7 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
   inspect(model.pending_transport_count(), content="0")
   let command = model.commands[model.commands.length() - 1]
   inspect(command.status, content="passed")
+  inspect(command.output_path, content="/tmp/mo-workbench-bash.log")
   match command.exit_code {
     Some(code) => inspect(code, content="0")
     None => fail("expected command exit code")
@@ -1253,6 +1254,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Activity"))
   assert_true(has_text(commands, "/review"))
   assert_true(has_text(commands, "重跑"))
+  assert_true(has_text(commands, "output /tmp/mo-workbench-app-test.log"))
   assert_true(has_text(commands, "Workspace"))
   assert_true(has_text(commands, "3 diag"))
   assert_true(has_text(commands, "清除"))
