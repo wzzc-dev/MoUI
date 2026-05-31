@@ -25,8 +25,9 @@ The current package exposes the first value-layer API surface:
   deterministic byte-budgeted LRU boundary for images, shaders, typefaces, and
   other backend-owned resources
 - renderer resource identity: `RendererResourceKind`, `RendererResourceKey`,
-  and `RendererResourceDescriptor` give those caches typed keys for images,
-  shaders, filters, text runs, paths, surfaces, and future GPU resources
+  `RendererResourceDescriptor`, and `RendererResourcePlan` give those caches
+  typed keys and auditable resource requirements for images, shaders, filters,
+  text runs, paths, surfaces, and future GPU resources
 - render pass contracts: `RenderPassDescriptor`, `RenderPassLoadOp`, and
   `RenderPassStoreOp` define target bounds plus load/clear/store/present
   semantics before a concrete backend records draw commands, including defaults
@@ -35,7 +36,7 @@ The current package exposes the first value-layer API surface:
 - render command contracts: `RenderCommandList`, `RenderCommand`, and
   `RenderCommandStats` provide the backend-neutral command stream boundary a GUI
   renderer can validate before replaying into a native Canvas, including
-  cacheable text-run draw commands and resource descriptors for backend caches
+  cacheable text-run draw commands and resource plans for backend caches
 - text layout and fallback contracts: `TextRunDescriptor`,
   `FontFallbackRequest`, `FontFallbackChain`, and `FontStyleRequest` define the
   value-layer input to native shaping and font fallback, including deterministic

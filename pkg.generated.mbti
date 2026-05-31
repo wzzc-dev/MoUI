@@ -714,6 +714,7 @@ pub fn RenderCommandList::length(Self) -> Int
 pub fn RenderCommandList::new(RenderPassDescriptor) -> Self
 pub fn RenderCommandList::present(Self) -> Self
 pub fn RenderCommandList::resource_descriptors(Self) -> Array[RendererResourceDescriptor]
+pub fn RenderCommandList::resource_plan(Self) -> RendererResourcePlan
 pub fn RenderCommandList::restore(Self) -> Self
 pub fn RenderCommandList::save(Self) -> Self
 pub fn RenderCommandList::stats(Self) -> RenderCommandStats
@@ -833,6 +834,19 @@ pub fn RendererResourceKind::is_filter(Self) -> Bool
 pub fn RendererResourceKind::is_gpu_backed(Self) -> Bool
 pub fn RendererResourceKind::is_surface(Self) -> Bool
 pub fn RendererResourceKind::is_text(Self) -> Bool
+
+pub(all) struct RendererResourcePlan {
+  descriptors : Array[RendererResourceDescriptor]
+  byte_size : Int64
+  cacheable_count : Int
+  uncacheable_count : Int
+  gpu_backed_count : Int
+} derive(Eq, @debug.Debug)
+pub fn RendererResourcePlan::empty() -> Self
+pub fn RendererResourcePlan::has_gpu_backed_resources(Self) -> Bool
+pub fn RendererResourcePlan::is_empty(Self) -> Bool
+pub fn RendererResourcePlan::length(Self) -> Int
+pub fn RendererResourcePlan::new(Array[RendererResourceDescriptor]) -> Self
 
 pub(all) struct ResourceCache[K, V] {
   // private fields

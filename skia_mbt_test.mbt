@@ -328,6 +328,9 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(gpu.present_mode == Some(@skia_mbt.FifoPresent))
   assert_true(gpu.resource_key().kind == @skia_mbt.GpuSurfaceResource)
   assert_true(gpu.resource_descriptor().is_gpu_backed())
+  let gpu_plan = @skia_mbt.RenderCommandList::for_target(gpu).resource_plan()
+  assert_true(gpu_plan.has_gpu_backed_resources())
+  assert_eq(gpu_plan.gpu_backed_count, 1)
   match gpu.present_mode {
     None => fail("gpu target should retain a fifo present mode")
     Some(mode) => assert_true(mode.prefers_vsync())
@@ -421,6 +424,19 @@ test "renderer resource descriptors provide typed cache keys" {
   )
   assert_true(gpu_surface.is_gpu_backed())
   assert_true(gpu_surface.key.kind.is_surface())
+  let plan = @skia_mbt.RendererResourcePlan::new([
+    image,
+    image,
+    gpu_surface,
+    @skia_mbt.RendererResourceDescriptor::image(b"scratch", byte_size=2L).uncacheable(),
+  ])
+  assert_eq(plan.length(), 3)
+  assert_eq(plan.byte_size, 42L)
+  assert_eq(plan.cacheable_count, 2)
+  assert_eq(plan.uncacheable_count, 1)
+  assert_eq(plan.gpu_backed_count, 1)
+  assert_true(plan.has_gpu_backed_resources())
+  assert_true(@skia_mbt.RendererResourcePlan::empty().is_empty())
 
   let cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
@@ -652,6 +668,23 @@ test "render command list exposes text run resource keys" {
   }
   assert_eq(text_descriptor.byte_size, 5L)
   assert_true(text_descriptor.is_cacheable())
+  let plan = commands
+    .draw_path(
+      @skia_mbt.Path::new().add_rect(@skia_mbt.Rect::from_xywh(0, 0, 4, 4)),
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::blue()),
+    )
+    .draw_text_run_utf8(
+      b"hello",
+      @skia_mbt.Point::new(4, 12),
+      descriptor=Some(descriptor),
+      font_key~,
+    )
+    .resource_plan()
+  assert_eq(plan.length(), 3)
+  assert_true(plan.byte_size > 2053L)
+  assert_eq(plan.cacheable_count, 3)
+  assert_eq(plan.uncacheable_count, 0)
+  assert_eq(plan.gpu_backed_count, 0)
 
   let cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
