@@ -462,7 +462,7 @@ pub fn Canvas::replay(
     }
     if command.is_present() {
       present_count += 1
-    } else {
+    } else if !command.is_resource_declaration() {
       skipped_count += 1
     }
   }
