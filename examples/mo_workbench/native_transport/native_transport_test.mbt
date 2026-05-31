@@ -90,6 +90,50 @@ async test "native transport drives jsonl command batch through stdin stdout pro
 
 ///|
 #cfg(all(target="native", not(platform="windows")))
+async test "native transport keeps one jsonl process across command batches" {
+  let config = PiNativeTransportConfig::shell(
+    script=(
+      #|count=0
+      #|while IFS= read -r line; do
+      #|  count=$((count + 1))
+      #|  printf '{"count":%s,"echo":%s}\n' "$count" "$line"
+      #|done
+    ),
+  )
+  let run = run_interactive_jsonl_session(config, session_id="fixture", session => {
+    session.send_commands([StartRpc(session.session_id(), "/repo")])
+    @async.sleep(1)
+    session.send_commands([SendUserInput(session.session_id(), "first prompt")])
+    @async.sleep(1)
+    session.send_commands([SendUserInput(session.session_id(), "second prompt")])
+  })
+  inspect(run.exit_code, content="0")
+  inspect(run.sent_lines().length(), content="3")
+  inspect(run.received_lines().length(), content="3")
+  json_inspect(@json.parse(run.received_lines()[0]), content={
+    "count": 1,
+    "echo": { "type": "start_session", "session_id": "fixture", "cwd": "/repo" },
+  })
+  json_inspect(@json.parse(run.received_lines()[1]), content={
+    "count": 2,
+    "echo": {
+      "type": "user_input",
+      "session_id": "fixture",
+      "text": "first prompt",
+    },
+  })
+  json_inspect(@json.parse(run.received_lines()[2]), content={
+    "count": 3,
+    "echo": {
+      "type": "user_input",
+      "session_id": "fixture",
+      "text": "second prompt",
+    },
+  })
+}
+
+///|
+#cfg(all(target="native", not(platform="windows")))
 test "native transport runtime emits command batch events through app hook" {
   let config = PiNativeTransportConfig::shell(
     script=(

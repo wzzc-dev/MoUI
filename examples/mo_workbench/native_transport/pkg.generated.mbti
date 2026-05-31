@@ -15,6 +15,8 @@ pub fn pi_rpc_start_line(session_id~ : String, cwd~ : String) -> String
 
 pub fn pi_rpc_user_input_line(session_id~ : String, text~ : String) -> String
 
+pub async fn run_interactive_jsonl_session(PiNativeTransportConfig, session_id~ : String, async (PiNativeTransportSession) -> Unit) -> PiNativeTransportRun
+
 pub async fn run_jsonl_commands(PiNativeTransportConfig, Array[@app.PiTransportCommand]) -> PiNativeTransportRun
 
 pub fn run_jsonl_commands_blocking(PiNativeTransportConfig, Array[@app.PiTransportCommand]) -> PiNativeTransportRun
@@ -47,6 +49,14 @@ pub(all) struct PiNativeTransportRun {
 } derive(Eq, @debug.Debug)
 pub fn PiNativeTransportRun::received_lines(Self) -> Array[String]
 pub fn PiNativeTransportRun::sent_lines(Self) -> Array[String]
+
+pub struct PiNativeTransportSession {
+  // private fields
+}
+pub fn PiNativeTransportSession::close(Self) -> Unit
+pub async fn PiNativeTransportSession::send_commands(Self, Array[@app.PiTransportCommand]) -> Unit
+pub async fn PiNativeTransportSession::send_lines(Self, String, Array[String]) -> Unit
+pub fn PiNativeTransportSession::session_id(Self) -> String
 
 // Type aliases
 
