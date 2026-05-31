@@ -39,9 +39,10 @@ packages:
 
 - A session-first desktop shell named `Mo Workbench`.
 - Header subtitle `A Pi agent desktop`.
-- A Codex / Claude Code-style native shell with macOS chrome, a gray
-  session/project sidebar, a white assistant transcript, command output,
-  attachment cards, a diff summary, and a rounded composer.
+- A Codex / Claude Code-style native shell with macOS chrome, a gray session
+  sidebar, a compact workspace summary, state-driven transcript, Pi command
+  catalog, command evidence, file context, diff summary, and a rounded
+  composer.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
@@ -73,7 +74,10 @@ packages:
   `backend/macos/skia.run_app_with_options_async_pump`, so the AppKit pump and
   Pi transport worker cooperate on the same native async loop.
 - Conversation-first workbench UI that keeps command evidence, file context,
-  diff review, transport status, and the next prompt in one visible flow.
+  diff review, transport status, and the next prompt in one visible flow. The
+  current shell avoids screenshot-only filler: the old validation transcript,
+  hard-coded shell command block, fake attachment cards, and copy/vote toolbar
+  were replaced with panels driven by `WorkbenchModel` state.
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.

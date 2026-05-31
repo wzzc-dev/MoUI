@@ -39,11 +39,10 @@ fn WorkbenchModel::app_sidebar(
     column(
       [
         self.sidebar_brand(theme),
-        self.sidebar_actions(theme),
-        self.sidebar_section_label("置顶", theme),
+        self.sidebar_section_label("会话", theme),
         self.pinned_threads(theme),
-        self.sidebar_section_label("项目", theme),
-        self.project_threads(theme),
+        self.sidebar_section_label("工作区", theme),
+        self.workspace_summary(theme),
         spacer(min_length=8.0, weight=1.0),
         self.sidebar_footer(theme),
       ],
@@ -76,75 +75,59 @@ fn WorkbenchModel::sidebar_brand(
 }
 
 ///|
-fn WorkbenchModel::sidebar_actions(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  ignore(self)
-  column(
-    [
-      sidebar_text_row("新对话", theme),
-      sidebar_text_row("搜索", theme),
-      sidebar_text_row("插件 - 已解锁", theme),
-      sidebar_text_row("自动化", theme),
-    ],
-    spacing=2.0,
-    align=Stretch,
-  )
-}
-
-///|
 fn WorkbenchModel::pinned_threads(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  column(
-    [
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  for session in self.sessions {
+    rows.push(
       self.thread_button(
-        "分析这个项目",
-        SelectSession("moui-skia"),
+        session.title,
+        SelectSession(session.id),
         theme,
-        selected=self.selected_session_id == "moui-skia",
-        meta="",
+        selected=self.selected_session_id == session.id,
+        meta=session.status,
       ),
-      self.thread_button(
-        "回复问候",
-        SelectSession("pi-rpc"),
-        theme,
-        selected=self.selected_session_id == "pi-rpc",
-        meta="15 小时",
-      ),
-      self.thread_button(
-        "推进 TEA/Skia 基线",
-        SelectSession("docs-research"),
-        theme,
-        selected=self.selected_session_id == "docs-research",
-        meta="5 小时",
-      ),
-    ],
-    spacing=2.0,
-    align=Stretch,
-  )
+    )
+  }
+  column(rows, spacing=2.0, align=Stretch)
 }
 
 ///|
-fn WorkbenchModel::project_threads(
+fn WorkbenchModel::workspace_summary(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  ignore(self)
-  column(
-    [
-      sidebar_text_row("MoUI", theme),
-      sidebar_text_row("实现 Mo Workbench 原型        42 分", theme),
-      sidebar_text_row("新增 Mo Workbench 原型        3 小时", theme),
-      sidebar_text_row("评估项目拆分方式              3 小时", theme),
-      sidebar_text_row("定位当前渲染方式              3 小时", theme),
-      sidebar_text_row("Fix render/skia linker flags   5 小时", theme),
-      sidebar_text_row("展开显示", theme),
-    ],
-    spacing=2.0,
-    align=Stretch,
+  let active = self.active_session()
+  surface(
+    column(
+      [
+        text(
+          active.project_path,
+          role=Caption,
+          theme~,
+          width=230.0,
+          height=40.0,
+        ),
+        text(active.branch, role=Control, theme~, width=230.0, height=26.0),
+        text(
+          self.pending_transport_count().to_string() + " queued transport",
+          role=Caption,
+          theme~,
+          width=230.0,
+          height=24.0,
+        ),
+      ],
+      spacing=2.0,
+      align=Start,
+    ),
+    width=260.0,
+    height=112.0,
+    background=ui_color(0.88, 0.89, 0.89),
+    corner_radius=8.0,
+    theme~,
+    padding=10.0,
   )
 }
 
@@ -153,11 +136,11 @@ fn WorkbenchModel::sidebar_footer(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  ignore(self)
+  let status = self.transport.status_label()
   row(
     [
-      text("设置", role=Control, theme~, width=164.0, height=28.0),
-      text("▯", role=Caption, theme~, width=28.0, height=28.0),
+      text("Pi RPC", role=Control, theme~, width=56.0, height=28.0),
+      text(status, role=Caption, theme~, width=168.0, height=28.0),
     ],
     spacing=8.0,
     align=Center,
@@ -239,15 +222,16 @@ fn WorkbenchModel::top_bar(
     row(
       [
         text("◆", role=Caption, theme~, width=26.0, height=30.0),
+        text(active.title, role=Control, theme~, width=280.0, height=30.0),
         text(
-          "在 MoUI 仓库 examples/mo_workbench，交付 Mo Workbench",
-          role=Control,
+          active.project_path,
+          role=Caption,
           theme~,
-          width=520.0,
-          height=30.0,
+          width=330.0,
+          height=28.0,
         ),
         spacer(min_length=10.0, weight=1.0),
-        text(active.branch, role=Caption, theme~, width=132.0, height=28.0),
+        text(active.branch, role=Caption, theme~, width=120.0, height=28.0),
         text("…", role=Title, theme~, width=34.0, height=30.0),
       ],
       spacing=6.0,
@@ -268,19 +252,12 @@ fn WorkbenchModel::chat_transcript(
 ) -> @core.View[WorkbenchMsg] {
   column(
     [
-      self.assistant_summary(theme),
+      self.session_status_panel(theme),
       self.transcript_panel(theme),
       self.command_catalog_panel(theme),
-      self.command_block(theme),
-      self.status_paragraph(theme),
-      self.file_attachment_card(
-        "examples.md", "文档 · MD", "打开方式⌄", theme,
-      ),
-      self.file_attachment_card(
-        "mo-workbench.md", "文档 · MD", "打开方式⌄", theme,
-      ),
+      self.command_evidence_panel(theme),
+      self.context_panel(theme),
       self.diff_summary_card(theme),
-      self.message_toolbar(theme),
     ],
     spacing=12.0,
     align=Center,
@@ -509,58 +486,79 @@ fn command_source_tone(source : String) -> @views.BadgeTone {
 }
 
 ///|
-fn WorkbenchModel::assistant_summary(
+fn WorkbenchModel::session_status_panel(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  ignore(self)
-  column(
-    [
-      text("验证已通过：", role=Control, theme~, width=680.0, height=30.0),
-      text(
-        "Mo Workbench 已接入 native owned Pi session，并保持 PiTransport 平台无关。",
-        role=Body,
-        theme~,
-        width=680.0,
-        height=34.0,
-      ),
-    ],
-    spacing=2.0,
-    align=Start,
-  )
-}
-
-///|
-fn WorkbenchModel::command_block(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  ignore(self)
+  let active = self.active_session()
   surface(
     column(
       [
-        text("sh", role=Caption, theme~, width=660.0, height=24.0),
-        code_line("moon test examples/mo_workbench/app --target native", theme),
-        code_line("moon test examples/mo_workbench/app --target wasm-gc", theme),
-        code_line(
-          "moon test examples/mo_workbench/native_transport --target native", theme,
+        row(
+          [
+            text(
+              "Session status",
+              role=Control,
+              theme~,
+              width=368.0,
+              height=28.0,
+            ),
+            badge(active.status, tone=Success, theme~, width=92.0),
+            badge(
+              self.pending_transport_count().to_string() + " queued",
+              tone=Neutral,
+              theme~,
+              width=104.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
         ),
-        code_line(
-          "moon build examples/mo_workbench/macos_skia --target native", theme,
+        text(active.active_task, role=Body, theme~, width=650.0, height=28.0),
+        text(self.last_status, role=Caption, theme~, width=650.0, height=24.0),
+        row(
+          [
+            text(
+              "Transport: " + self.transport.status_label(),
+              role=Caption,
+              theme~,
+              width=220.0,
+              height=30.0,
+            ),
+            text(
+              "Agent: " + self.pi_agent.status_label(),
+              role=Caption,
+              theme~,
+              width=214.0,
+              height=30.0,
+            ),
+            button(
+              "同步标题",
+              on_click=SyncSessionName,
+              variant=Outline,
+              theme~,
+              width=86.0,
+              height=34.0,
+            ),
+            button(
+              "停止",
+              on_click=CancelRun,
+              variant=Ghost,
+              theme~,
+              width=58.0,
+              height=34.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
         ),
-        code_line("moon info examples/mo_workbench/app --target native", theme),
-        code_line(
-          "moon info examples/mo_workbench/native_transport --target native", theme,
-        ),
-        code_line("node --check scripts/validate-package-manifest.mjs", theme),
-        code_line("git diff --check", theme),
       ],
-      spacing=0.0,
+      spacing=6.0,
       align=Start,
     ),
     width=690.0,
-    height=230.0,
-    background=ui_color(0.93, 0.93, 0.93),
+    height=148.0,
+    background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
@@ -568,125 +566,191 @@ fn WorkbenchModel::command_block(
 }
 
 ///|
-fn WorkbenchModel::status_paragraph(
+fn WorkbenchModel::command_evidence_panel(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  column(
-    [
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  let mut visible = 0
+  for command in self.commands {
+    if visible < 3 {
+      rows.push(command_run_row(command, theme))
+      visible = visible + 1
+    }
+  }
+  if rows.is_empty() {
+    rows.push(
       text(
-        "当前 UI 已切到截图式会话流；macOS app 现在持有长生命周期 Pi session owner，",
-        role=Body,
+        "No command evidence",
+        role=Caption,
         theme~,
-        width=690.0,
+        width=650.0,
         height=28.0,
       ),
-      text(
-        "Skia window pump 与 moonbitlang/async transport worker 在同一 native 主循环轮转。",
-        role=Body,
-        theme~,
-        width=690.0,
-        height=28.0,
-      ),
-      text(
-        "Transport: " +
-        self.transport.status_label() +
-        " · Queued: " +
-        self.pending_transport_count().to_string(),
-        role=Caption,
-        theme~,
-        width=690.0,
-        height=24.0,
-      ),
-      text(
-        "Pi agent: " + self.pi_agent.status_label(),
-        role=Caption,
-        theme~,
-        width=690.0,
-        height=24.0,
-      ),
-      text(
-        "Pi session: " + self.active_pi_session_binding().status_label(),
-        role=Caption,
-        theme~,
-        width=690.0,
-        height=24.0,
-      ),
-      row(
-        [
-          button(
-            "同步标题",
-            on_click=SyncSessionName,
-            variant=Outline,
-            theme~,
-            width=86.0,
-            height=34.0,
-          ),
-          text(
-            "Pi title target: " + self.active_session().title,
-            role=Caption,
-            theme~,
-            width=560.0,
-            height=30.0,
-          ),
-        ],
-        spacing=8.0,
-        align=Center,
-      ),
-    ],
-    spacing=0.0,
-    align=Start,
-  )
-}
-
-///|
-fn WorkbenchModel::file_attachment_card(
-  self : WorkbenchModel,
-  title : String,
-  subtitle : String,
-  action : String,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  ignore(self)
+    )
+  }
   surface(
-    row(
+    column(
       [
-        surface(
-          text("▣", role=Control, theme~, width=32.0, height=32.0),
-          width=42.0,
-          height=42.0,
-          background=ui_color(0.95, 0.95, 0.95),
-          corner_radius=8.0,
-          theme~,
-          padding=5.0,
-        ),
-        column(
+        row(
           [
-            text(title, role=Control, theme~, width=430.0, height=26.0),
-            text(subtitle, role=Caption, theme~, width=430.0, height=24.0),
+            text(
+              "Command evidence",
+              role=Control,
+              theme~,
+              width=520.0,
+              height=28.0,
+            ),
+            badge(
+              self.commands.length().to_string() + " runs",
+              tone=Neutral,
+              theme~,
+              width=116.0,
+            ),
           ],
-          spacing=0.0,
-          align=Start,
+          spacing=8.0,
+          align=Center,
         ),
-        spacer(min_length=8.0, weight=1.0),
-        button(
-          action,
-          on_click=SelectPanel("files"),
-          variant=Outline,
-          theme~,
-          width=110.0,
-          height=36.0,
-        ),
+        column(rows, spacing=6.0, align=Start),
       ],
-      spacing=10.0,
-      align=Center,
+      spacing=8.0,
+      align=Start,
     ),
     width=690.0,
-    height=76.0,
+    height=178.0,
     background=@core.Color::white(),
     corner_radius=10.0,
     theme~,
     padding=12.0,
+  )
+}
+
+///|
+fn command_run_row(
+  command : CommandRun,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge(
+        command.status,
+        tone=command_status_tone(command.status),
+        theme~,
+        width=104.0,
+      ),
+      column(
+        [
+          text(command.command, role=Control, theme~, width=420.0, height=24.0),
+          text(command.cwd, role=Caption, theme~, width=420.0, height=22.0),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+      text(
+        command_exit_label(command),
+        role=Caption,
+        theme~,
+        width=86.0,
+        height=30.0,
+      ),
+    ],
+    spacing=10.0,
+    align=Center,
+  )
+}
+
+///|
+fn command_exit_label(command : CommandRun) -> String {
+  match command.exit_code {
+    Some(code) => "exit " + code.to_string()
+    None => command.status
+  }
+}
+
+///|
+fn command_status_tone(status : String) -> @views.BadgeTone {
+  match status {
+    "passed" | "ready" => Success
+    "running" | "queued" | "cancelling" => Accent
+    "failed" => Danger
+    "cancelled" | "manual" => Warning
+    _ => Neutral
+  }
+}
+
+///|
+fn WorkbenchModel::context_panel(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  let mut visible = 0
+  for file in self.files {
+    if visible < 3 {
+      rows.push(file_context_row(file, theme))
+      visible = visible + 1
+    }
+  }
+  if rows.is_empty() {
+    rows.push(
+      text("No file context", role=Caption, theme~, width=650.0, height=28.0),
+    )
+  }
+  surface(
+    column(
+      [
+        row(
+          [
+            text(
+              "Context files",
+              role=Control,
+              theme~,
+              width=520.0,
+              height=28.0,
+            ),
+            badge(
+              self.files.length().to_string() + " files",
+              tone=Neutral,
+              theme~,
+              width=116.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
+        ),
+        column(rows, spacing=6.0, align=Start),
+      ],
+      spacing=8.0,
+      align=Start,
+    ),
+    width=690.0,
+    height=178.0,
+    background=@core.Color::white(),
+    corner_radius=10.0,
+    theme~,
+    padding=12.0,
+  )
+}
+
+///|
+fn file_context_row(
+  file : FileContext,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge(file.change_kind, tone=Neutral, theme~, width=104.0),
+      column(
+        [
+          text(file.path, role=Control, theme~, width=520.0, height=24.0),
+          text(file.summary, role=Caption, theme~, width=520.0, height=22.0),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+    ],
+    spacing=10.0,
+    align=Center,
   )
 }
 
@@ -700,34 +764,24 @@ fn WorkbenchModel::diff_summary_card(
       [
         row(
           [
-            surface(
-              text("⊞", role=Control, theme~, width=32.0, height=32.0),
-              width=42.0,
-              height=42.0,
-              background=ui_color(0.95, 0.95, 0.95),
-              corner_radius=8.0,
-              theme~,
-              padding=5.0,
-            ),
             column(
               [
                 text(
-                  "已编辑 " +
-                  self.diff.changed_files.to_string() +
-                  " 个文件",
+                  "Diff summary · " + self.diff.status,
                   role=Control,
                   theme~,
                   width=350.0,
                   height=26.0,
                 ),
                 text(
-                  "+" +
+                  self.diff.changed_files.to_string() +
+                  " files · +" +
                   self.diff.additions.to_string() +
                   " -" +
                   self.diff.deletions.to_string(),
                   role=Caption,
                   theme~,
-                  width=150.0,
+                  width=350.0,
                   height=24.0,
                 ),
               ],
@@ -736,7 +790,7 @@ fn WorkbenchModel::diff_summary_card(
             ),
             spacer(min_length=8.0, weight=1.0),
             button(
-              "撤销 ↶",
+              "停止",
               on_click=CancelRun,
               variant=Ghost,
               theme~,
@@ -755,48 +809,16 @@ fn WorkbenchModel::diff_summary_card(
           spacing=8.0,
           align=Center,
         ),
-        divider(666.0),
-        diff_row("docs/examples.md", "+1 -0", theme),
-        diff_row("examples/mo_workbench/app/pkg.generated.mbti", "+0 -2", theme),
-        diff_row(
-          "examples/mo_workbench/native_transport/native_transport.mbt", "+92 -4",
-          theme,
-        ),
-        text(
-          "再显示 3 个文件⌄",
-          role=Control,
-          theme~,
-          width=660.0,
-          height=30.0,
-        ),
       ],
       spacing=8.0,
       align=Start,
     ),
     width=690.0,
-    height=218.0,
+    height=80.0,
     background=@core.Color::white(),
     corner_radius=10.0,
     theme~,
     padding=12.0,
-  )
-}
-
-///|
-fn WorkbenchModel::message_toolbar(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  ignore(self)
-  row(
-    [
-      text("复制", role=Caption, theme~, width=42.0, height=26.0),
-      text("赞", role=Caption, theme~, width=28.0, height=26.0),
-      text("踩", role=Caption, theme~, width=28.0, height=26.0),
-      text("展开", role=Caption, theme~, width=42.0, height=26.0),
-    ],
-    spacing=8.0,
-    align=Center,
   )
 }
 
@@ -828,12 +850,16 @@ fn WorkbenchModel::composer(
               width=38.0,
               height=34.0,
             ),
-            badge("自动审查", tone=Accent, theme~, width=86.0),
-            text("目标", role=Caption, theme~, width=42.0, height=28.0),
-            badge("fast", tone=Success, theme~, width=60.0),
+            badge("Pi RPC", tone=Accent, theme~, width=76.0),
+            badge("Skia native", tone=Success, theme~, width=104.0),
             spacer(min_length=10.0, weight=1.0),
-            badge("custom", tone=Neutral, theme~, width=82.0),
-            text("5.5 超高", role=Control, theme~, width=78.0, height=30.0),
+            text(
+              self.active_session().status,
+              role=Caption,
+              theme~,
+              width=72.0,
+              height=30.0,
+            ),
             button(
               "↑",
               on_click=DispatchPrompt,
@@ -857,36 +883,6 @@ fn WorkbenchModel::composer(
     theme~,
     padding=12.0,
   )
-}
-
-///|
-fn code_line(line : String, theme : @core.Theme) -> @core.View[WorkbenchMsg] {
-  text(line, role=Mono, theme~, width=660.0, height=24.0)
-}
-
-///|
-fn diff_row(
-  path : String,
-  change : String,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  row(
-    [
-      text(path, role=Body, theme~, width=532.0, height=30.0),
-      text(change, role=Control, theme~, width=78.0, height=30.0),
-      text("⌄", role=Caption, theme~, width=24.0, height=30.0),
-    ],
-    spacing=4.0,
-    align=Center,
-  )
-}
-
-///|
-fn sidebar_text_row(
-  label : String,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  text(label, role=Control, theme~, width=246.0, height=34.0)
 }
 
 ///|
