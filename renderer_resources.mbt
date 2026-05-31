@@ -253,3 +253,93 @@ pub fn RendererResourceDescriptor::uncacheable(
 ) -> RendererResourceDescriptor {
   { ..self, cacheable: false }
 }
+
+///|
+fn renderer_resource_descriptor_array_contains_key(
+  descriptors : Array[RendererResourceDescriptor],
+  key : RendererResourceKey,
+) -> Bool {
+  let mut found = false
+  for descriptor in descriptors {
+    if descriptor.key == key {
+      found = true
+    }
+  }
+  found
+}
+
+///|
+fn renderer_resource_plan_unique_descriptors(
+  descriptors : Array[RendererResourceDescriptor],
+) -> Array[RendererResourceDescriptor] {
+  let result : Array[RendererResourceDescriptor] = Array::new(
+    capacity=descriptors.length(),
+  )
+  for descriptor in descriptors {
+    if !renderer_resource_descriptor_array_contains_key(result, descriptor.key) {
+      result.push(descriptor)
+    }
+  }
+  result
+}
+
+///|
+/// Auditable resource requirements for a backend render step.
+pub(all) struct RendererResourcePlan {
+  descriptors : Array[RendererResourceDescriptor]
+  byte_size : Int64
+  cacheable_count : Int
+  uncacheable_count : Int
+  gpu_backed_count : Int
+} derive(Debug, Eq)
+
+///|
+pub fn RendererResourcePlan::new(
+  descriptors : Array[RendererResourceDescriptor],
+) -> RendererResourcePlan {
+  let descriptors = renderer_resource_plan_unique_descriptors(descriptors)
+  let mut byte_size = 0L
+  let mut cacheable_count = 0
+  let mut uncacheable_count = 0
+  let mut gpu_backed_count = 0
+  for descriptor in descriptors {
+    byte_size += descriptor.byte_size
+    if descriptor.is_cacheable() {
+      cacheable_count += 1
+    } else {
+      uncacheable_count += 1
+    }
+    if descriptor.is_gpu_backed() {
+      gpu_backed_count += 1
+    }
+  }
+  {
+    descriptors,
+    byte_size,
+    cacheable_count,
+    uncacheable_count,
+    gpu_backed_count,
+  }
+}
+
+///|
+pub fn RendererResourcePlan::empty() -> RendererResourcePlan {
+  RendererResourcePlan::new([])
+}
+
+///|
+pub fn RendererResourcePlan::length(self : RendererResourcePlan) -> Int {
+  self.descriptors.length()
+}
+
+///|
+pub fn RendererResourcePlan::is_empty(self : RendererResourcePlan) -> Bool {
+  self.descriptors.is_empty()
+}
+
+///|
+pub fn RendererResourcePlan::has_gpu_backed_resources(
+  self : RendererResourcePlan,
+) -> Bool {
+  self.gpu_backed_count > 0
+}

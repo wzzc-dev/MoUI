@@ -397,6 +397,13 @@ pub fn RenderCommandList::resource_descriptors(
 }
 
 ///|
+pub fn RenderCommandList::resource_plan(
+  self : RenderCommandList,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new(self.resource_descriptors())
+}
+
+///|
 fn RenderCommandStats::record_command(
   self : RenderCommandStats,
   command : RenderCommand,
