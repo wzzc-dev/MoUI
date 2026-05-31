@@ -54,9 +54,15 @@ packages:
   FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
+- A native multi-batch session runner that accepts an array of command batches
+  and proves the same JSONL process can serve the start, prompt, follow-up,
+  and cancel phases that would otherwise arrive through separate UI dispatches.
 - A macOS Skia entrypoint wired to `PiNativeTransportConfig::pi().runtime()`.
 - Conversation-first workbench UI that keeps command evidence, file context,
   diff review, transport status, and the next prompt in one visible flow.
+- Pending transport command counts now drain as `JsonLineSent` events arrive
+  and clear on process exit or failure, so the visible queue reflects work
+  still waiting to be handed to Pi instead of a historical command log.
 - Structured Pi JSONL ingestion for coding-agent evidence:
   `command_started`, `command_finished`, `diagnostic`, `file_context`, and
   `diff_summary` payloads update the shared model, timeline, diagnostics,
@@ -64,9 +70,9 @@ packages:
   events.
 
 The remaining V1 transport boundary is true long-lived lifecycle ownership:
-the native transport can now keep one process alive inside async tests, and the
-next slice should make the macOS app own that session without blocking the
-native window loop.
+the native transport can now keep one process alive across scripted dispatch
+batches inside async tests, and the next slice should make the macOS app own
+that session from the native host loop without blocking window events.
 
 ## Pi JSONL Workbench Events
 

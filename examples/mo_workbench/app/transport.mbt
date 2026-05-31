@@ -81,16 +81,27 @@ pub fn PiTransportState::apply_event(
   match event {
     ProcessStarted(pid) =>
       { ..self, status: Running, last_json_line: "pid " + pid }
-    JsonLineSent(_session, line) => { ..self, last_json_line: line }
+    JsonLineSent(_session, line) =>
+      {
+        ..self,
+        command_queue: drop_first_command(self.command_queue),
+        last_json_line: line,
+      }
     JsonLineReceived(_session, line) => { ..self, last_json_line: line }
     ProcessExited(code) =>
       {
         ..self,
         status: Disconnected,
+        command_queue: [],
         last_json_line: "process exited: " + code.to_string(),
       }
     TransportFailed(reason) =>
-      { ..self, status: Failed(reason), last_json_line: reason }
+      {
+        ..self,
+        status: Failed(reason),
+        command_queue: [],
+        last_json_line: reason,
+      }
   }
 }
 
@@ -174,5 +185,16 @@ pub fn[Msg] PiTransportRuntime::effect(
     @core.Effect::dispatch(dispatch => {
       self.dispatch(commands, event => dispatch(map(event)))
     })
+  }
+}
+
+///|
+fn drop_first_command(
+  commands : Array[PiTransportCommand],
+) -> Array[PiTransportCommand] {
+  if commands.length() == 0 {
+    []
+  } else {
+    commands[1:].to_owned()
   }
 }
