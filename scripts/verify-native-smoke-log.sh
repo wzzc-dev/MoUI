@@ -56,6 +56,7 @@ default_stage_markers=(
   "native smoke decoded bitmap width" \
   "native smoke font spacing" \
   "native smoke font resource plan count" \
+  "native smoke text run resource plan count" \
   "native smoke measured text width" \
   "native smoke text glyph count" \
   "native smoke first glyph id" \

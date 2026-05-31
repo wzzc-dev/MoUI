@@ -199,6 +199,11 @@
       "marker": "native smoke font resource plan count"
     },
     {
+      "id": "text.text-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke text run resource plan count"
+    },
+    {
       "id": "text.measure",
       "area": "Text",
       "marker": "native smoke measured text width"

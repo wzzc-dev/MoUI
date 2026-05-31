@@ -221,6 +221,7 @@ pub(all) struct FontFallbackRequest {
 } derive(Eq, @debug.Debug)
 pub fn FontFallbackRequest::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> FontDescriptor
 pub fn FontFallbackRequest::has_character(Self) -> Bool
+pub fn FontFallbackRequest::is_empty(Self) -> Bool
 pub fn FontFallbackRequest::language_at(Self, Int) -> Bytes?
 pub fn FontFallbackRequest::language_count(Self) -> Int
 pub fn FontFallbackRequest::new(families? : FontFallbackChain, bcp47? : Array[Bytes], character? : Int, style? : FontStyleRequest) -> Self
@@ -773,6 +774,7 @@ pub fn RenderCommand::is_resource_declaration(Self) -> Bool
 pub fn RenderCommand::is_state(Self) -> Bool
 pub fn RenderCommand::is_text(Self) -> Bool
 pub fn RenderCommand::resource_descriptor(Self) -> RendererResourceDescriptor?
+pub fn RenderCommand::resource_descriptors(Self) -> Array[RendererResourceDescriptor]
 pub fn RenderCommand::text_run_resource_key(Self) -> RendererResourceKey?
 
 pub(all) struct RenderCommandList {
@@ -1182,6 +1184,7 @@ pub fn TextRunDescriptor::is_right_to_left(Self) -> Bool
 pub fn TextRunDescriptor::new(range? : TextRange, direction? : TextDirection, fallback? : FontFallbackRequest) -> Self
 pub fn TextRunDescriptor::resource_descriptor(Self, Bytes, font_key? : RendererResourceKey, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn TextRunDescriptor::resource_key(Self, Bytes, font_key? : RendererResourceKey) -> RendererResourceKey
+pub fn TextRunDescriptor::resource_plan(Self, Bytes, font_key? : RendererResourceKey, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
 pub fn TextRunDescriptor::with_direction(Self, TextDirection) -> Self
 pub fn TextRunDescriptor::with_fallback(Self, FontFallbackRequest) -> Self
 pub fn TextRunDescriptor::with_range(Self, TextRange) -> Self

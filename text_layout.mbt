@@ -348,6 +348,11 @@ pub fn FontFallbackRequest::has_character(self : FontFallbackRequest) -> Bool {
 }
 
 ///|
+pub fn FontFallbackRequest::is_empty(self : FontFallbackRequest) -> Bool {
+  self.families.is_empty() && self.bcp47.is_empty() && !self.has_character()
+}
+
+///|
 pub fn FontFallbackRequest::with_character(
   self : FontFallbackRequest,
   character : Int,
@@ -648,4 +653,30 @@ pub fn TextRunDescriptor::resource_descriptor(
     self.resource_key(text, font_key~).id,
     byte_size=measured_byte_size,
   )
+}
+
+///|
+pub fn TextRunDescriptor::resource_plan(
+  self : TextRunDescriptor,
+  text : Bytes,
+  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
+  text_byte_size? : Int64 = -1L,
+  font_byte_size? : Int64 = 0L,
+  fallback_byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  descriptors.push(
+    self.resource_descriptor(text, font_key~, byte_size=text_byte_size),
+  )
+  if font_key.kind == FontResource && !font_key.is_empty() {
+    descriptors.push(
+      RendererResourceDescriptor::new(font_key, byte_size=font_byte_size),
+    )
+  }
+  if !self.fallback.is_empty() {
+    descriptors.push(
+      self.fallback.resource_descriptor(byte_size=fallback_byte_size),
+    )
+  }
+  RendererResourcePlan::new(descriptors)
 }
