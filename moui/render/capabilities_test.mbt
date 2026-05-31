@@ -87,6 +87,19 @@ test "renderer capability report tracks draw command support" {
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("MaskFilter"),
   )
+  guard @render.renderer_feature_capability(@render.RendererFeature::Text)
+    is Some(text) else {
+    fail("expected text capability")
+  }
+  assert_true(
+    text.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
+    @render.RendererFeatureStatus::Ready,
+  )
+  assert_true(
+    text
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("TextRun frame"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::Transform)
     is Some(transform) else {
     fail("expected transform capability")

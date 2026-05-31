@@ -81,12 +81,15 @@ a blank or incomplete glyph run, the renderer retries measurement and drawing;
 the system `FontMgr` path first tries platform emoji font candidates for
 emoji-hint text and then falls back to Skia's default font, so startup Showcase
 text remains visible and text-field caret positions stay aligned with the drawn
-glyphs. The macOS Skia provider currently starts with the safe `EmptyTypeface`
-font resolution mode, which avoids the system FontMgr, the emoji font retry, and
-SkShaper during early startup while still using that same default-font retry
-path. SkParagraph-style line breaking, bidi, mixed-script fallback runs,
-deterministic color emoji, grapheme shaping, and broader typography conformance
-remain follow-up work.
+glyphs. Skia drawing aligns the selected glyph run inside `TextRun.frame` and
+clips the canvas to that same frame before rasterization, so bounded text
+controls use the same platform-neutral frame for measurement, caret geometry,
+and native raster output. The macOS Skia provider currently starts with the safe
+`EmptyTypeface` font resolution mode, which avoids the system FontMgr, the emoji
+font retry, and SkShaper during early startup while still using that same
+default-font retry path. SkParagraph-style line breaking, bidi, mixed-script
+fallback runs, deterministic color emoji, grapheme shaping, and broader
+typography conformance remain follow-up work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
