@@ -73,9 +73,14 @@ default_stage_markers=(
   "native smoke font fallback width"
 )
 
+default_expected_stage_values=(
+  $'native smoke text run resource plan count\t3'
+)
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 status_file="$repo_root/skia-platform-status.json"
 stage_markers=("${default_stage_markers[@]}")
+expected_stage_values=("${default_expected_stage_values[@]}")
 if [[ -f "$status_file" ]]; then
   status_stage_markers="$(
     python3 - "$status_file" <<'PY'
@@ -99,11 +104,66 @@ PY
       fi
     done <<< "$status_stage_markers"
   fi
+  status_expected_stage_values="$(
+    python3 - "$status_file" <<'PY'
+import json
+import pathlib
+import sys
+
+status_path = pathlib.Path(sys.argv[1])
+status = json.loads(status_path.read_text(encoding="utf-8"))
+for expected in status.get("native_smoke_expected_values", []):
+    marker = str(expected.get("marker", "")).strip()
+    value = str(expected.get("value", "")).strip()
+    if marker and value:
+        print(marker + "\t" + value)
+PY
+  )"
+  if [[ -n "$status_expected_stage_values" ]]; then
+    expected_stage_values=()
+    while IFS= read -r status_expected_stage_value; do
+      if [[ -n "$status_expected_stage_value" ]]; then
+        expected_stage_values+=("$status_expected_stage_value")
+      fi
+    done <<< "$status_expected_stage_values"
+  fi
 fi
 
 for stage_marker in "${stage_markers[@]}"; do
   if ! grep -Fq "$stage_marker" "$log_path"; then
     echo "native smoke executable log is missing required stage marker: $stage_marker" >&2
+    exit 1
+  fi
+done
+
+marker_value() {
+  local marker="$1"
+  python3 - "$log_path" "$marker" <<'PY'
+import pathlib
+import sys
+
+log_path = pathlib.Path(sys.argv[1])
+marker = sys.argv[2]
+lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+for index, line in enumerate(lines):
+    if line.strip() == marker:
+        if index + 1 >= len(lines):
+            print(f"native smoke executable log marker has no value: {marker}", file=sys.stderr)
+            raise SystemExit(1)
+        print(lines[index + 1].strip())
+        raise SystemExit(0)
+print(f"native smoke executable log is missing exact stage marker line: {marker}", file=sys.stderr)
+raise SystemExit(1)
+PY
+}
+
+for expected_stage_value in "${expected_stage_values[@]}"; do
+  IFS=$'\t' read -r expected_marker expected_value <<< "$expected_stage_value"
+  actual_value="$(marker_value "$expected_marker")"
+  if [[ "$actual_value" != "$expected_value" ]]; then
+    echo "native smoke executable log has unexpected stage marker value: $expected_marker" >&2
+    echo "  expected=$expected_value" >&2
+    echo "  actual=$actual_value" >&2
     exit 1
   fi
 done

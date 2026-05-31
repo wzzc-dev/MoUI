@@ -274,6 +274,13 @@
       "marker": "native smoke font fallback font resource plan count"
     }
   ],
+  "native_smoke_expected_values": [
+    {
+      "id": "text.text-run-resource-plan",
+      "marker": "native smoke text run resource plan count",
+      "value": "3"
+    }
+  ],
   "platforms": {
     "linux": {
       "accepted": false,
