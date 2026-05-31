@@ -32,6 +32,7 @@ fi
 default_stage_markers=(
   "native smoke surface descriptor backend" \
   "native smoke canvas state restored" \
+  "native smoke canvas replay commands" \
   "native smoke shader draws" \
   "native smoke path verbs" \
   "native smoke readback width" \
