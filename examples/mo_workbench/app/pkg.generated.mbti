@@ -266,6 +266,7 @@ pub(all) enum WorkbenchMsg {
   RefreshSession
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)
+  InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
   FixDiagnostic(String, String, String)
   SyncSessionName

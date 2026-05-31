@@ -223,7 +223,10 @@ that the native encoder maps to Pi RPC `bash`, and successful `bash` responses
 mark command evidence as passed, failed, or cancelled inside the shared model
 while preserving Pi's optional `fullOutputPath` as command evidence. Activity
 rows display that output path when present, so long/truncated command output can
-stay discoverable without native-only state.
+stay discoverable without native-only state. Activity command rows can now queue
+an `Inspect command output for ...` prompt from the latest command status, cwd,
+and output path, turning bash evidence into the next Pi task through
+`SendUserInput`.
 The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
