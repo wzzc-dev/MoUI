@@ -17,6 +17,7 @@ pub(all) enum RenderCommand {
     Point,
     Paint
   )
+  DeclareRenderResource(RendererResourceDescriptor)
   PresentSurface
 } derive(Debug, Eq)
 
@@ -79,6 +80,13 @@ pub fn RenderCommand::draw_text_run_utf8(
 }
 
 ///|
+pub fn RenderCommand::declare_resource(
+  descriptor : RendererResourceDescriptor,
+) -> RenderCommand {
+  DeclareRenderResource(descriptor)
+}
+
+///|
 pub fn RenderCommand::is_draw(self : RenderCommand) -> Bool {
   self
   is (DrawCanvasRect(_, _)
@@ -113,6 +121,11 @@ pub fn RenderCommand::is_text(self : RenderCommand) -> Bool {
 }
 
 ///|
+pub fn RenderCommand::is_resource_declaration(self : RenderCommand) -> Bool {
+  self is DeclareRenderResource(_)
+}
+
+///|
 pub fn RenderCommand::text_run_resource_key(
   self : RenderCommand,
 ) -> RendererResourceKey? {
@@ -131,6 +144,7 @@ pub fn RenderCommand::resource_descriptor(
     DrawCanvasPath(path, _) => Some(path.resource_descriptor())
     DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
       Some(descriptor.resource_descriptor(text, font_key~))
+    DeclareRenderResource(descriptor) => Some(descriptor)
     _ => None
   }
 }
@@ -318,6 +332,30 @@ pub fn RenderCommandList::draw_text_run_utf8(
 }
 
 ///|
+pub fn RenderCommandList::declare_resource(
+  self : RenderCommandList,
+  descriptor : RendererResourceDescriptor,
+) -> RenderCommandList {
+  if descriptor.key.is_empty() {
+    self
+  } else {
+    self.append(RenderCommand::declare_resource(descriptor))
+  }
+}
+
+///|
+pub fn RenderCommandList::declare_resources(
+  self : RenderCommandList,
+  descriptors : Array[RendererResourceDescriptor],
+) -> RenderCommandList {
+  let mut result = self
+  for descriptor in descriptors {
+    result = result.declare_resource(descriptor)
+  }
+  result
+}
+
+///|
 pub fn RenderCommandList::present(
   self : RenderCommandList,
 ) -> RenderCommandList {
@@ -385,7 +423,8 @@ pub fn RenderCommandList::resource_descriptors(
     match command.resource_descriptor() {
       None => ()
       Some(descriptor) =>
-        if !renderer_resource_descriptor_list_contains_key(
+        if !descriptor.key.is_empty() &&
+          !renderer_resource_descriptor_list_contains_key(
             descriptors,
             descriptor.key,
           ) {

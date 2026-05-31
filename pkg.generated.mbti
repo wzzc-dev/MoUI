@@ -704,10 +704,12 @@ pub(all) enum RenderCommand {
   DrawCanvasPath(Path, Paint)
   DrawCanvasTextUtf8(Bytes, Point, Paint)
   DrawCanvasTextRunUtf8(Bytes, TextRunDescriptor, RendererResourceKey, Point, Paint)
+  DeclareRenderResource(RendererResourceDescriptor)
   PresentSurface
 } derive(Eq, @debug.Debug)
 pub fn RenderCommand::clear(Color) -> Self
 pub fn RenderCommand::clip_rect(Rect, op? : ClipOp) -> Self
+pub fn RenderCommand::declare_resource(RendererResourceDescriptor) -> Self
 pub fn RenderCommand::draw_path(Path, paint? : Paint) -> Self
 pub fn RenderCommand::draw_rect(Rect, paint? : Paint) -> Self
 pub fn RenderCommand::draw_text_run_utf8(Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self
@@ -716,6 +718,7 @@ pub fn RenderCommand::is_clear(Self) -> Bool
 pub fn RenderCommand::is_clip(Self) -> Bool
 pub fn RenderCommand::is_draw(Self) -> Bool
 pub fn RenderCommand::is_present(Self) -> Bool
+pub fn RenderCommand::is_resource_declaration(Self) -> Bool
 pub fn RenderCommand::is_state(Self) -> Bool
 pub fn RenderCommand::is_text(Self) -> Bool
 pub fn RenderCommand::resource_descriptor(Self) -> RendererResourceDescriptor?
@@ -728,6 +731,8 @@ pub(all) struct RenderCommandList {
 pub fn RenderCommandList::append(Self, RenderCommand) -> Self
 pub fn RenderCommandList::clear(Self, Color) -> Self
 pub fn RenderCommandList::clip_rect(Self, Rect, op? : ClipOp) -> Self
+pub fn RenderCommandList::declare_resource(Self, RendererResourceDescriptor) -> Self
+pub fn RenderCommandList::declare_resources(Self, Array[RendererResourceDescriptor]) -> Self
 pub fn RenderCommandList::draw_path(Self, Path, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_rect(Self, Rect, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_text_run_utf8(Self, Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self

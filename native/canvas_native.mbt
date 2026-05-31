@@ -1466,6 +1466,7 @@ fn Canvas::replay_command(
       self.replay_text_utf8(text, origin, paint, font)
     @skia.DrawCanvasTextRunUtf8(text, _, _, origin, paint) =>
       self.replay_text_utf8(text, origin, paint, font)
+    @skia.DeclareRenderResource(_) => true
     @skia.PresentSurface => false
   }
 }

@@ -463,9 +463,16 @@ fn main {
   guard @native.Font::default(size=8.0) is Some(replay_font) else {
     fail_smoke("failed to create replay smoke font")
   }
+  let replay_resource_descriptors = [
+    color_shader_descriptor.resource_descriptor(),
+    color_filter_descriptor.resource_descriptor(),
+    image_filter_descriptor.resource_descriptor(),
+    mask_filter_descriptor.resource_descriptor(),
+  ]
   let replay_commands = @skia.RenderCommandList::for_target(
       @skia.SurfaceTargetDescriptor::raster_n32_premul(replay_size),
     )
+    .declare_resources(replay_resource_descriptors)
     .clear(@skia.Color::white())
     .draw_rect(
       @skia.Rect::from_xywh(1, 1, 4, 4),
@@ -483,8 +490,8 @@ fn main {
       paint=@skia.Paint::new(color=@skia.Color::black()),
     )
   let replay_plan = replay_commands.resource_plan()
-  if replay_plan.length() != 3 ||
-    replay_plan.cacheable_count != 3 ||
+  if replay_plan.length() != 7 ||
+    replay_plan.cacheable_count != 7 ||
     replay_plan.uncacheable_count != 0 ||
     replay_plan.gpu_backed_count != 0 ||
     replay_plan.byte_size <= 0L {

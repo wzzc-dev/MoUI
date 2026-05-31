@@ -40,7 +40,8 @@ The current package exposes the first value-layer API surface:
 - render command contracts: `RenderCommandList`, `RenderCommand`, and
   `RenderCommandStats` provide the backend-neutral command stream boundary a GUI
   renderer can validate before replaying into a native Canvas, including
-  cacheable text-run draw commands and resource plans for backend caches
+  cacheable text-run draw commands, explicit shader/filter/image resource
+  declarations, and resource plans for backend caches
 - text layout and fallback contracts: `TextRunDescriptor`,
   `FontFallbackRequest`, `FontFallbackChain`, and `FontStyleRequest` define the
   value-layer input to native shaping and font fallback, including deterministic
