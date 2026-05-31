@@ -76,7 +76,7 @@ resolved_status_file="$(resolve_repo_path "$status_file")"
 resolved_revision_file="$(resolve_repo_path "$revision_file")"
 resolved_provider_lock="$(resolve_repo_path "$provider_lock")"
 
-python3 - "$resolved_status_file" "$resolved_revision_file" "$resolved_provider_lock" <<'PY'
+python3 - "$resolved_status_file" "$resolved_revision_file" "$resolved_provider_lock" "$repo_root" <<'PY'
 import json
 import pathlib
 import re
@@ -85,6 +85,7 @@ import sys
 status_path = pathlib.Path(sys.argv[1])
 revision_path = pathlib.Path(sys.argv[2])
 provider_lock_path = pathlib.Path(sys.argv[3])
+repo_root = pathlib.Path(sys.argv[4])
 
 def fail(message: str) -> None:
     print(message, file=sys.stderr)
@@ -140,6 +141,16 @@ if schema_version >= 4:
     seen_gate_ids = set()
     seen_gate_commands = set()
     seen_gate_areas = set()
+
+    def ci_gate_script_paths(command):
+        normalized = command.replace("\\", "/")
+        for token in re.split(r"[\s;&|]+", normalized):
+            token = token.strip().strip("'\"")
+            while token.startswith("./"):
+                token = token[2:]
+            if token.startswith("scripts/") and token.endswith((".sh", ".ps1")):
+                yield token
+
     for gate in gates:
         if not isinstance(gate, dict):
             fail("ci_gates entries must be objects")
@@ -161,6 +172,12 @@ if schema_version >= 4:
                 if command_key in seen_gate_commands:
                     fail(f"duplicate CI gate command: {command}")
                 seen_gate_commands.add(command_key)
+                for script_path in ci_gate_script_paths(command):
+                    if not (repo_root / script_path).is_file():
+                        fail(
+                            "CI gate references missing verifier script: "
+                            f"{gate_id}: {script_path}"
+                        )
         seen_gate_ids.add(gate_id)
         seen_gate_areas.add(area)
     missing_gate_ids = sorted(required_gate_ids - seen_gate_ids)
