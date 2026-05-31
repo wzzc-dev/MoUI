@@ -190,6 +190,7 @@ pub(all) enum WorkbenchMsg {
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)
   MarkCommandComplete(Int, Int)
+  FixDiagnostic(String, String, String)
   SyncSessionName
   CycleThinkingLevel
   ToggleSteeringMode
@@ -510,6 +511,8 @@ pub fn WorkbenchModel::update(
     ReceiveTransport(event) => self.receive_transport(event)
     QueueCommand(command) => self.queue_command(command)
     MarkCommandComplete(id, code) => self.mark_command_complete(id, code)
+    FixDiagnostic(source, severity, message) =>
+      self.fix_diagnostic(source, severity, message)
     SyncSessionName => self.sync_session_name()
     CycleThinkingLevel => self.cycle_thinking_level()
     ToggleSteeringMode => self.toggle_steering_mode()
@@ -681,6 +684,10 @@ pub fn WorkbenchModel::update_with_transport(
     RefreshSession => self.refresh_session_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
+    FixDiagnostic(source, severity, message) =>
+      self.fix_diagnostic_with_transport(
+        source, severity, message, transport_runtime,
+      )
     SyncSessionName => self.sync_session_name_with_transport(transport_runtime)
     CycleThinkingLevel =>
       self.cycle_thinking_level_with_transport(transport_runtime)
@@ -960,6 +967,86 @@ fn WorkbenchModel::diff_review_prompt(self : WorkbenchModel) -> String {
   self.diff.additions.to_string() +
   " -" +
   self.diff.deletions.to_string()
+}
+
+///|
+fn WorkbenchModel::fix_diagnostic(
+  self : WorkbenchModel,
+  source : String,
+  severity : String,
+  message : String,
+) -> WorkbenchModel {
+  let clean_source = source.trim().to_owned()
+  let clean_message = message.trim().to_owned()
+  if clean_source == "" && clean_message == "" {
+    { ..self, last_status: "Diagnostic is empty" }
+  } else {
+    let prompt = diagnostic_fix_prompt(source, severity, message)
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="Diagnostic fix queued",
+        detail=prompt,
+        tone="warning",
+      ),
+    )
+    let command = SendUserInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued diagnostic fix for Pi RPC",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::fix_diagnostic_with_transport(
+  self : WorkbenchModel,
+  source : String,
+  severity : String,
+  message : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let clean_source = source.trim().to_owned()
+  let clean_message = message.trim().to_owned()
+  if clean_source == "" && clean_message == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Diagnostic is empty" })
+  } else {
+    let prompt = diagnostic_fix_prompt(source, severity, message)
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      SendUserInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.fix_diagnostic(source, severity, message),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
+fn diagnostic_fix_prompt(
+  source : String,
+  severity : String,
+  message : String,
+) -> String {
+  let source = source.trim().to_owned()
+  let severity = severity.trim().to_owned()
+  let message = message.trim().to_owned()
+  let label = if severity == "" {
+    "diagnostic"
+  } else {
+    severity + " diagnostic"
+  }
+  let origin = if source == "" { "" } else { " from " + source }
+  let detail = if message == "" { "" } else { ": " + message }
+  "Fix " + label + origin + detail
 }
 
 ///|
