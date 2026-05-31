@@ -147,6 +147,27 @@ fn assert_region_has_dark_pixel(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
 ) -> Unit {
+  if region_has_dark_pixel(frame, rect) {
+    return ()
+  }
+  fail_smoke("MoUI Skia smoke text region did not contain rendered dark pixels")
+}
+
+///|
+fn assert_region_has_no_dark_pixel(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Unit {
+  if region_has_dark_pixel(frame, rect) {
+    fail_smoke("MoUI Skia smoke text leaked dark pixels outside its frame")
+  }
+}
+
+///|
+fn region_has_dark_pixel(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
   let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
@@ -163,12 +184,12 @@ fn assert_region_has_dark_pixel(
         let actual_b = frame.pixels[offset + 2].to_int()
         let actual_a = frame.pixels[offset + 3].to_int()
         if actual_a > 0 && actual_r < 210 && actual_g < 210 && actual_b < 210 {
-          return ()
+          return true
         }
       }
     }
   }
-  fail_smoke("MoUI Skia smoke text region did not contain rendered dark pixels")
+  false
 }
 
 ///|
@@ -604,6 +625,15 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         ),
       ),
     ),
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="MMMMMMMM",
+        frame=@core.Rect::new(x=132.0, y=124.0, width=8.0, height=22.0),
+        font=@core.FontSpec::new(size=18.0),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      ),
+    ),
     @core.DrawCommand::PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
@@ -849,6 +879,14 @@ fn main {
         235,
         255,
         55,
+      )
+      assert_region_has_dark_pixel(
+        frame,
+        @core.Rect::new(x=132.0, y=124.0, width=8.0, height=22.0),
+      )
+      assert_region_has_no_dark_pixel(
+        frame,
+        @core.Rect::new(x=146.0, y=124.0, width=44.0, height=22.0),
       )
       println("MoUI Skia renderer smoke passed")
     }

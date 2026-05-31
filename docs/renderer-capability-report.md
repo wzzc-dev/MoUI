@@ -23,7 +23,7 @@ Status meanings:
 | Rounded rect | ready | ready | ready | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
 | Gradient | ready | ready | ready | Skia linear-gradient fills and strokes for rounded rects and paths have real native renderer pixel smoke coverage. |
 | Shadow | ready | ready | ready | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
-| Text | ready | ready | ready | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked, measured prefix carets otherwise, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, and style through Skia `FontMgr`/`Font`; real native renderer smoke covers glyph-run pixels and package tests cover frame clipping; broader shaping is tracked separately. |
+| Text | ready | ready | ready | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked, measured prefix carets otherwise, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, and style through Skia `FontMgr`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
 | Image | ready | ready | ready | Skia validates PNG data URI and local PNG decode, `draw_image_rect` output, ready/failed lifecycle records, and failed-image placeholders in the real native renderer smoke. |
 | Clip | ready | ready | ready | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. |
 | Transform | partial | ready | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel proof. |
@@ -168,9 +168,9 @@ multiply/screen/overlay/darken/lighten blending,
 blur/saturation/brightness/contrast/color-matrix filters, solid and gradient
 paths including quadratic and cubic curve verbs, the solid, checker,
 linear-gradient-debug, and vignette shader effects, PNG data URI and local PNG
-image drawing, failed-image placeholders, basic text glyph-run pixels, and
-optional SkShaper availability when the smoke is run with `--enable-skshaper`,
-while requiring
+image drawing, failed-image placeholders, basic text glyph-run pixels, bounded
+`TextRun.frame` clipping, and optional SkShaper availability when the smoke is
+run with `--enable-skshaper`, while requiring
 `unsupported_command_count == 0`. Native Skia provider packages expose the same
 renderer image-resource snapshot records through `HostWindowRenderer`, so host
 diagnostics can inspect loading, ready, failed, and disposed image resources
@@ -182,11 +182,11 @@ carets when SkShaper is linked, Skia-measured prefix carets otherwise,
 SystemFontMgr-only emoji font retry for emoji-hint text, and optional SkShaper
 shaped glyph runs for rendering when linked. The renderer clips aligned text
 glyphs to each `TextRun.frame`; fallback-safe white-box tests cover the
-placement contract, and real-Skia package tests verify that long glyph runs do
-not leak outside narrow text frames when native Skia is linked. SkParagraph-style
-line breaking, bidi, broader typography, deterministic color emoji, grapheme
-shaping, and cross-platform emoji fallback conformance remain partial and
-separate from the WGPU Moon Cosmic provider stack. The macOS Skia
+placement contract, and the opt-in real-Skia smoke verifies that long glyph runs
+do not leak outside narrow text frames when native Skia is linked.
+SkParagraph-style line breaking, bidi, broader typography, deterministic color
+emoji, grapheme shaping, and cross-platform emoji fallback conformance remain
+partial and separate from the WGPU Moon Cosmic provider stack. The macOS Skia
 showcase host currently constructs the
 renderer with `SkiaFontResolution::EmptyTypeface`: it skips the system FontMgr
 and SkShaper during early AppKit startup, while measurement and drawing fall
