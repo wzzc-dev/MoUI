@@ -88,6 +88,7 @@ pub(all) struct CommandRun {
   status : String
   exit_code : Int?
   tool_call_id : String
+  output_path : String
 } derive(Eq, Debug)
 
 ///|
@@ -329,8 +330,9 @@ pub fn CommandRun::new(
   status~ : String,
   exit_code? : Int? = None,
   tool_call_id? : String = "",
+  output_path? : String = "",
 ) -> CommandRun {
-  { id, command, cwd, status, exit_code, tool_call_id }
+  { id, command, cwd, status, exit_code, tool_call_id, output_path }
 }
 
 ///|

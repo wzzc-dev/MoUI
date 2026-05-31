@@ -218,6 +218,7 @@ fn sample_commands() -> Array[CommandRun] {
       cwd="/Volumes/Data/Code/moon/MoUI",
       status="ready",
       exit_code=None,
+      output_path="/tmp/mo-workbench-app-test.log",
     ),
     CommandRun::new(
       id=2,
