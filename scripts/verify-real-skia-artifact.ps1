@@ -160,7 +160,7 @@ if ($wrapperProvider -eq "jetbrains") {
     }
   }
   if ($matchedAssets.Count -eq 0) {
-    throw "JetBrains package is not locked for platform=$Platform: $jetbrainsPackage"
+    throw "JetBrains package is not locked for platform=${Platform}: $jetbrainsPackage"
   }
   $shaMatched = $false
   foreach ($asset in $matchedAssets) {
