@@ -121,6 +121,83 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
 }
 
 ///|
+test "workbench syncs selected title to Pi session name" {
+  let model = WorkbenchModel::new().update(SyncSessionName)
+  inspect(model.last_status, content="Pi session name sync queued")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    SetRpcSessionName(session, name) => {
+      inspect(session, content="moui-skia")
+      inspect(name, content="MoUI Skia renderer")
+    }
+    _ => fail("expected queued session name sync")
+  }
+  assert_true(
+    model.events.any(event => event.title == "Pi session name sync queued"),
+  )
+}
+
+///|
+test "workbench session name runtime effect updates Pi binding" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"set_session_name\",\"name\":\"MoUI Skia renderer\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"session_info_changed\",\"name\":\"MoUI Skia renderer\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"set_session_name\",\"success\":true}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    SyncSessionName,
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SetRpcSessionName(session, name) => {
+      inspect(session, content="moui-skia")
+      inspect(name, content="MoUI Skia renderer")
+    }
+    _ => fail("expected captured session name sync")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="set_session_name")
+  inspect(model.last_status, content="Pi session name synced")
+  let binding = model.active_pi_session_binding()
+  inspect(binding.session_name, content="MoUI Skia renderer")
+  inspect(binding.status, content="named")
+  inspect(binding.last_command, content="set_session_name")
+  assert_true(
+    model.events.any(event => event.title == "Pi session info changed"),
+  )
+  assert_true(
+    model.events.any(event => event.title == "Pi session name synced"),
+  )
+}
+
+///|
 test "workbench cancel run targets active Pi RPC bash command" {
   let model = WorkbenchModel::new()
     .update(QueueCommand("moon check"))
@@ -442,6 +519,30 @@ test "workbench binds switched Pi session after get_state refresh" {
 }
 
 ///|
+test "workbench ingests Pi session info changes into session binding" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"session_info_changed\",\"name\":\"Mo Workbench smoke\"}",
+      ),
+    ),
+  )
+  let binding = model.active_pi_session_binding()
+  inspect(binding.workbench_session_id, content="moui-skia")
+  inspect(binding.session_name, content="Mo Workbench smoke")
+  inspect(binding.status, content="named")
+  inspect(binding.last_command, content="session_info_changed")
+  inspect(
+    model.active_session().summary,
+    content="Pi session name: Mo Workbench smoke",
+  )
+  inspect(model.last_status, content="Pi session info applied")
+  assert_true(
+    model.events.any(event => event.title == "Pi session info changed"),
+  )
+}
+
+///|
 test "workbench turns Pi RPC error responses into diagnostics" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(
@@ -688,6 +789,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Pi transcript"))
   assert_true(has_text(commands, "Pi commands"))
   assert_true(has_text(commands, "/review"))
+  assert_true(has_text(commands, "同步标题"))
   assert_true(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_true(has_text(commands, "新对话"))
   assert_true(has_text(commands, "置顶"))

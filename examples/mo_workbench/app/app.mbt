@@ -159,6 +159,7 @@ pub(all) enum WorkbenchMsg {
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)
   MarkCommandComplete(Int, Int)
+  SyncSessionName
   CancelRun
   ClearDiagnostics
   ToggleContext(String)
@@ -420,6 +421,7 @@ pub fn WorkbenchModel::update(
     ReceiveTransport(event) => self.receive_transport(event)
     QueueCommand(command) => self.queue_command(command)
     MarkCommandComplete(id, code) => self.mark_command_complete(id, code)
+    SyncSessionName => self.sync_session_name()
     CancelRun => self.cancel_run()
     ClearDiagnostics =>
       {
@@ -577,6 +579,7 @@ pub fn WorkbenchModel::update_with_transport(
     DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
+    SyncSessionName => self.sync_session_name_with_transport(transport_runtime)
     CancelRun => self.cancel_run_with_transport(transport_runtime)
     _ => WorkbenchUpdate::new(self.update(message))
   }
@@ -742,6 +745,47 @@ fn WorkbenchModel::mark_command_complete(
     }
   })
   { ..self, commands, last_status: "Command " + id.to_string() + " completed" }
+}
+
+///|
+fn WorkbenchModel::sync_session_name(self : WorkbenchModel) -> WorkbenchModel {
+  let session = self.active_session()
+  let name = session.title
+  let transport_commands = self.commands_with_session_start(
+    session,
+    SetRpcSessionName(session.id, name),
+  )
+  let events = self.events.copy()
+  events.push(
+    AgentEvent::new(
+      phase="control",
+      title="Pi session name sync queued",
+      detail=session.id + ": " + name,
+      tone="info",
+    ),
+  )
+  {
+    ..self,
+    events,
+    transport: self.transport.enqueue_many(transport_commands),
+    last_status: "Pi session name sync queued",
+  }
+}
+
+///|
+fn WorkbenchModel::sync_session_name_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let commands = self.commands_with_session_start(
+    session,
+    SetRpcSessionName(session.id, session.title),
+  )
+  WorkbenchUpdate::new(
+    self.sync_session_name(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
 }
 
 ///|

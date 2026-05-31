@@ -15,6 +15,7 @@ async test "native transport builds structured jsonl request lines" {
   let messages = pi_rpc_get_messages_line()
   let commands = pi_rpc_get_commands_line()
   let switch_session = pi_rpc_switch_session_line(session_path="/tmp/pi.jsonl")
+  let session_name = pi_rpc_set_session_name_line(name="Mo Workbench")
   let input = pi_rpc_prompt_line(message="Inspect renderer capability tests")
   let bash = pi_rpc_bash_line(command="moon check")
   let abort_bash = pi_rpc_abort_bash_line()
@@ -25,6 +26,10 @@ async test "native transport builds structured jsonl request lines" {
   json_inspect(@json.parse(switch_session), content={
     "type": "switch_session",
     "sessionPath": "/tmp/pi.jsonl",
+  })
+  json_inspect(@json.parse(session_name), content={
+    "type": "set_session_name",
+    "name": "Mo Workbench",
   })
   json_inspect(@json.parse(input), content={
     "type": "prompt",
@@ -45,6 +50,7 @@ async test "native transport maps command batches to jsonl requests" {
     SwitchRpcSession("session-1", "/tmp/pi.jsonl"),
     FetchRpcMessages("session-1"),
     FetchRpcCommands("session-1"),
+    SetRpcSessionName("session-1", "Mo Workbench"),
     SendUserInput("session-1", "hello"),
     RunShellCommand("session-1", "moon check"),
     CancelShellCommand("session-1"),
@@ -52,7 +58,7 @@ async test "native transport maps command batches to jsonl requests" {
     Shutdown,
   ])
   inspect(request.session_id, content="session-1")
-  inspect(request.lines.length(), content="8")
+  inspect(request.lines.length(), content="9")
   json_inspect(@json.parse(request.lines[0]), content={ "type": "get_state" })
   json_inspect(@json.parse(request.lines[1]), content={
     "type": "switch_session",
@@ -61,15 +67,19 @@ async test "native transport maps command batches to jsonl requests" {
   json_inspect(@json.parse(request.lines[2]), content={ "type": "get_messages" })
   json_inspect(@json.parse(request.lines[3]), content={ "type": "get_commands" })
   json_inspect(@json.parse(request.lines[4]), content={
+    "type": "set_session_name",
+    "name": "Mo Workbench",
+  })
+  json_inspect(@json.parse(request.lines[5]), content={
     "type": "prompt",
     "message": "hello",
   })
-  json_inspect(@json.parse(request.lines[5]), content={
+  json_inspect(@json.parse(request.lines[6]), content={
     "type": "bash",
     "command": "moon check",
   })
-  json_inspect(@json.parse(request.lines[6]), content={ "type": "abort_bash" })
-  json_inspect(@json.parse(request.lines[7]), content={ "type": "abort" })
+  json_inspect(@json.parse(request.lines[7]), content={ "type": "abort_bash" })
+  json_inspect(@json.parse(request.lines[8]), content={ "type": "abort" })
 }
 
 ///|

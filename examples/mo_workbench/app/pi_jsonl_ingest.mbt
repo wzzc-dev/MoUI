@@ -64,6 +64,7 @@ fn WorkbenchModel::ingest_rpc_response(
       "bash" => self.apply_bash_success(session_id, fields)
       "get_messages" => self.apply_get_messages_success(session_id, fields)
       "get_commands" => self.apply_get_commands_success(session_id, fields)
+      "set_session_name" => self.apply_set_session_name_success(session_id)
       _ => {
         let snapshot = match fields.get("data") {
           Some(Object(data)) => rpc_snapshot_from_data(command, data)
@@ -158,6 +159,36 @@ fn WorkbenchModel::apply_get_messages_success(
       tone="success",
     ),
     status="Pi messages refreshed",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_set_session_name_success(
+  self : WorkbenchModel,
+  session_id : String,
+) -> WorkbenchModel {
+  let binding = self.pi_session_binding_for_id(session_id)
+  let session = self.session_for_id(session_id)
+  let name = if binding.session_name == "" {
+    session.title
+  } else {
+    binding.session_name
+  }
+  {
+    ..self.sync_pi_session_name_binding(
+      session_id,
+      name,
+      last_command="set_session_name",
+    ),
+    pi_rpc: PiRpcSnapshot::new(command="set_session_name", success=true),
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi session name synced",
+      detail=session_id + ": " + name,
+      tone="success",
+    ),
+    status="Pi session name synced",
   )
 }
 
@@ -784,6 +815,11 @@ fn WorkbenchModel::ingest_session_info_changed(
   let name = json_string(fields, "name").unwrap_or("")
   let summary = if name == "" { None } else { Some("Pi session name: " + name) }
   self
+  .sync_pi_session_name_binding(
+    session_id,
+    name,
+    last_command="session_info_changed",
+  )
   .update_active_session_for_pi(
     status=self.active_session().status,
     active_task=if name == "" {
@@ -1124,6 +1160,53 @@ fn WorkbenchModel::upsert_file(
     let next = files.copy()
     next.push(file)
     { ..self, files: next }
+  }
+}
+
+///|
+fn WorkbenchModel::pi_session_binding_for_id(
+  self : WorkbenchModel,
+  workbench_session_id : String,
+) -> PiSessionBinding {
+  for binding in self.pi_session_bindings {
+    if binding.workbench_session_id == workbench_session_id {
+      return binding
+    }
+  }
+  let session = self.session_for_id(workbench_session_id)
+  PiSessionBinding::new(
+    workbench_session_id~,
+    session_file=session.pi_session_path,
+  )
+}
+
+///|
+fn WorkbenchModel::sync_pi_session_name_binding(
+  self : WorkbenchModel,
+  workbench_session_id : String,
+  name : String,
+  last_command~ : String,
+) -> WorkbenchModel {
+  if name == "" {
+    self
+  } else {
+    let existing = self.pi_session_binding_for_id(workbench_session_id)
+    let status = if existing.status == "unbound" {
+      "named"
+    } else {
+      existing.status
+    }
+    self.upsert_pi_session_binding(
+      PiSessionBinding::new(
+        workbench_session_id~,
+        rpc_session_id=existing.rpc_session_id,
+        session_file=existing.session_file,
+        session_name=name,
+        model=existing.model,
+        status~,
+        last_command~,
+      ),
+    )
   }
 }
 

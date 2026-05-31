@@ -172,17 +172,20 @@ platform-neutral warning event and nonzero process exits become
 child exits do not close the native owner; the next UI command batch restarts a
 fresh JSONL process, while explicit `Shutdown` remains the close path. The
 native encoder targets Pi's actual RPC command names: `get_state`, `prompt`,
-`get_messages`, `get_commands`, `bash`, `abort_bash`, and `abort`, with process shutdown
-handled by stdin EOF. The focused smoke for machines with Pi installed is an
-offline `get_state` JSONL round trip, a `get_messages` transcript response, and
-an offline `get_commands` command-catalog response plus an `abort_bash`
+`get_messages`, `get_commands`, `set_session_name`, `bash`, `abort_bash`, and
+`abort`, with process shutdown handled by stdin EOF. The focused smoke for
+machines with Pi installed is an offline `get_state` JSONL round trip, a
+`get_messages` transcript response, an offline `get_commands` command-catalog
+response, a `set_session_name` acknowledgement, and an `abort_bash`
 acknowledgement through `pi --mode rpc`, so it validates the process protocol
 without making a model request. The shared app ingests
 successful and failed Pi RPC `response` JSONL objects: `get_state` refreshes
 the current Workbench session snapshot, `get_messages` refreshes the transcript
 model, and `get_commands` refreshes the available slash/prompt/extension/skill
-command catalog, while RPC failures become diagnostics without leaking native
-process details into the app model.
+command catalog. `set_session_name` responses and `session_info_changed` events
+keep the Workbench-to-Pi session binding display name in sync, while RPC
+failures become diagnostics without leaking native process details into the app
+model.
 Workbench command queue actions now dispatch platform-neutral shell commands
 that the native encoder maps to Pi RPC `bash`, and successful `bash` responses
 mark command evidence as passed, failed, or cancelled inside the shared model.
@@ -214,6 +217,9 @@ printf '{"type":"get_messages"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_commands"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"abort_bash"}\n' | \
