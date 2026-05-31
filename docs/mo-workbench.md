@@ -176,6 +176,8 @@ packages:
   followed by a `get_state` refresh. `switch_session` and `get_state` responses
   update `PiSessionBinding` entries keyed by Workbench session id, recording the
   live Pi session id, session file, display name, model, and binding status.
+  The session status panel now displays the active binding as a compact Pi row,
+  including the live Pi session name/id and model when Pi has reported them.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
 - The workspace digest surfaces the current diagnostics count and latest
