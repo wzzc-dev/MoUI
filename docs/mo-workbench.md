@@ -91,6 +91,9 @@ packages:
 - Workbench command queue entries now use Pi RPC `bash` directly instead of
   prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
   lets the native encoder emit `{"type":"bash","command":...}`.
+- Command evidence rows in the Activity digest can be rerun from the UI. The
+  action reuses the existing shared-app `QueueCommand` reducer and native Pi
+  RPC `bash` encoder instead of adding a separate native shortcut.
 - Session selection now refreshes Pi messages after state binding. The shared
   app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
   records so the conversation surface can replay user, assistant, tool result,
