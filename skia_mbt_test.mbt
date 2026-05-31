@@ -361,6 +361,60 @@ test "resource cache supports unbounded and zero-byte resources" {
 }
 
 ///|
+test "renderer resource descriptors provide typed cache keys" {
+  let image = @skia_mbt.RendererResourceDescriptor::image(b"logo", byte_size=8L)
+  let shader = @skia_mbt.RendererResourceDescriptor::shader(
+    b"linear-gradient",
+    byte_size=8L,
+  )
+  let path = @skia_mbt.RendererResourceDescriptor::path(
+    b"rounded-card",
+    byte_size=8L,
+  )
+  assert_true(image.key == @skia_mbt.RendererResourceKey::image(b"logo"))
+  assert_true(!image.is_gpu_backed())
+  assert_true(!image.key.kind.is_filter())
+  assert_true(shader.is_cacheable())
+  assert_true(path.with_byte_size(-9L).byte_size == 0L)
+
+  let empty = @skia_mbt.RendererResourceDescriptor::image(b"")
+  assert_true(!empty.is_cacheable())
+  assert_true(empty.key.is_empty())
+  assert_true(!empty.uncacheable().is_cacheable())
+
+  let text = @skia_mbt.RendererResourceDescriptor::text_run(
+    b"latin:hello",
+    byte_size=4L,
+  )
+  assert_true(text.key.kind.is_text())
+  let filter = @skia_mbt.RendererResourceDescriptor::filter(
+    b"blur:2",
+    byte_size=4L,
+  )
+  assert_true(filter.key.kind.is_filter())
+  let gpu_surface = @skia_mbt.RendererResourceDescriptor::gpu_surface(
+    b"swapchain",
+    byte_size=32L,
+  )
+  assert_true(gpu_surface.is_gpu_backed())
+  assert_true(gpu_surface.key.kind.is_surface())
+
+  let cache : @skia_mbt.ResourceCache[
+    @skia_mbt.RendererResourceKey,
+    @skia_mbt.RendererResourceDescriptor,
+  ] = @skia_mbt.ResourceCache::new(max_bytes=16L)
+  assert_true(cache.insert(image.key, image, byte_size=image.byte_size))
+  assert_true(cache.insert(shader.key, shader, byte_size=shader.byte_size))
+  assert_true(cache.get(image.key) == Some(image))
+  assert_true(cache.insert(path.key, path, byte_size=path.byte_size))
+  assert_true(cache.contains(image.key))
+  assert_true(!cache.contains(shader.key))
+  assert_true(cache.contains(path.key))
+  assert_eq(cache.byte_size(), 16L)
+  assert_eq(cache.stats().evictions, 1)
+}
+
+///|
 test "render pass descriptor clips clear and present boundaries" {
   let surface = @skia_mbt.SurfaceDescriptor::window_n32_premul(
     @skia_mbt.ISize::new(20, 10),
