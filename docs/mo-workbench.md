@@ -81,7 +81,9 @@ packages:
   avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
-  by `WorkbenchModel` state.
+  by `WorkbenchModel` state. The default fixture now leaves transcript and
+  diagnostics empty until Pi or command evidence arrives, and empty digest rows
+  render quietly instead of placeholder punctuation.
 - File context rows in the Workspace digest can queue an `Inspect <path>`
   prompt for Pi. The action reuses the platform-neutral `SendUserInput` command
   so file evidence becomes an agent workflow entrypoint without native-only

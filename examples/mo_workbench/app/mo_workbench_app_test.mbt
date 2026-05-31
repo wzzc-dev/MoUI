@@ -272,8 +272,17 @@ test "workbench refresh runtime effect dispatches current session batch" {
 
 ///|
 test "workbench clears visible diagnostics" {
-  let model = WorkbenchModel::new()
-  inspect(model.open_diagnostic_count(), content="3")
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"diagnostic","source":"moon check","severity":"warning","message":"check output changed"}
+        ),
+      ),
+    ),
+  )
+  inspect(model.open_diagnostic_count(), content="1")
   let cleared = model.update(ClearDiagnostics)
   inspect(cleared.open_diagnostic_count(), content="0")
   inspect(
@@ -1251,20 +1260,23 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Steer 1"))
   assert_true(has_text(commands, "Follow 1"))
   assert_true(has_text(commands, "Pi transcript"))
+  assert_true(has_text(commands, "0 messages"))
   assert_true(has_text(commands, "Activity"))
   assert_true(has_text(commands, "/review"))
   assert_true(has_text(commands, "重跑"))
   assert_true(has_text(commands, "output /tmp/mo-workbench-app-test.log"))
   assert_true(has_text(commands, "Workspace"))
-  assert_true(has_text(commands, "3 diag"))
+  assert_true(has_text(commands, "0 diag"))
   assert_true(has_text(commands, "清除"))
   assert_true(has_text(commands, "聚焦"))
   assert_true(has_text(commands, "审核"))
-  assert_true(has_text(commands, "Product"))
   assert_true(has_text(commands, "同步"))
   assert_true(has_text(commands, "运行"))
-  assert_true(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_true(has_text(commands, "Pi RPC"))
+  assert_false(has_text(commands, "要求继续推进 Mo Workbench"))
+  assert_false(has_text(commands, "Product"))
+  assert_false(has_text(commands, "No description"))
+  assert_false(has_text(commands, "-"))
   assert_false(has_text(commands, "验证已通过："))
   assert_false(has_text(commands, "打开方式⌄"))
   assert_false(has_text(commands, "复制"))

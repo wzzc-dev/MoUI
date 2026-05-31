@@ -163,7 +163,9 @@ transcript, a compact activity digest, and a compact workspace digest instead
 of long placeholder validation text, future-workflow filler, or hard-coded
 attachment cards. The workspace digest now includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
-visible without adding a separate diagnostics page. File context rows can queue
+visible without adding a separate diagnostics page. The default fixture no
+longer injects mock transcript or diagnostic prose; empty digest slots stay
+visually quiet until Pi or command evidence arrives. File context rows can queue
 an `Inspect <path>` prompt through the same platform-neutral prompt transport,
 turning Pi-provided file evidence into the next coding-agent action. The diff
 summary review button likewise queues a concise `Review diff: ...` prompt, so
