@@ -592,6 +592,19 @@ pub fn Typeface::from_name(
 }
 
 ///|
+pub fn Typeface::from_name_style(
+  family_name : Bytes,
+  style : @skia.FontStyleRequest,
+) -> Typeface? {
+  Typeface::from_name(
+    family_name,
+    weight=style.weight,
+    width=style.width,
+    slant=style.slant,
+  )
+}
+
+///|
 fn FontMgr::from_handle(handle : FontMgrHandle) -> FontMgr? {
   if native_font_mgr_is_null(handle) {
     None
@@ -653,6 +666,40 @@ pub fn FontMgr::match_family_style(
 }
 
 ///|
+pub fn FontMgr::match_family_style_request(
+  self : FontMgr,
+  family_name : Bytes,
+  style : @skia.FontStyleRequest,
+) -> Typeface? {
+  self.match_family_style(
+    family_name,
+    weight=style.weight,
+    width=style.width,
+    slant=style.slant,
+  )
+}
+
+///|
+pub fn FontMgr::match_fallback_request(
+  self : FontMgr,
+  request : @skia.FontFallbackRequest,
+) -> Typeface? {
+  let mut matched : Typeface? = None
+  for index in 0..<request.families.length() {
+    match matched {
+      Some(_) => ()
+      None =>
+        match request.families.family_at(index) {
+          None => ()
+          Some(family) =>
+            matched = self.match_family_style_request(family, request.style)
+        }
+    }
+  }
+  matched
+}
+
+///|
 pub fn Typeface::from_font_mgr_family(
   font_mgr : FontMgr,
   family_name : Bytes,
@@ -661,6 +708,14 @@ pub fn Typeface::from_font_mgr_family(
   slant? : Int = 0,
 ) -> Typeface? {
   font_mgr.match_family_style(family_name, weight~, width~, slant~)
+}
+
+///|
+pub fn Typeface::from_font_mgr_request(
+  font_mgr : FontMgr,
+  request : @skia.FontFallbackRequest,
+) -> Typeface? {
+  font_mgr.match_fallback_request(request)
 }
 
 ///|
