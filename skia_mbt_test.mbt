@@ -284,6 +284,7 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(
     !raster.with_present_mode(@skia_mbt.ImmediatePresent).is_presentable(),
   )
+  assert_true(!raster.with_target_id(b"ignored-raster").has_target_id())
 
   let window = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
     @skia_mbt.ISize::new(32, 24),
@@ -299,6 +300,13 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(window.resource_key().kind == @skia_mbt.SurfaceResource)
   assert_true(window.resource_descriptor().is_cacheable())
   assert_eq(window.resource_descriptor().byte_size, 3072L)
+  let named_window = window.with_target_id(b"window:main")
+  assert_true(named_window.has_target_id())
+  assert_true(named_window.target_id == b"window:main")
+  assert_true(named_window.resource_key() != window.resource_key())
+  assert_true(
+    named_window.without_target_id().resource_key() == window.resource_key(),
+  )
   assert_true(
     window.with_present_mode(@skia_mbt.ImmediatePresent).present_mode ==
     Some(@skia_mbt.ImmediatePresent),
@@ -344,6 +352,76 @@ test "surface target descriptors model present modes and frame pacing" {
     Some(mode) => assert_true(mode.prefers_vsync())
   }
   assert_true(gpu.bounds() == @skia_mbt.IRect::from_wh(64, 48))
+}
+
+///|
+test "window surface descriptors derive stable targets and resource plans" {
+  let window = @skia_mbt.WindowSurfaceDescriptor::new(
+    window_id=b"main-window",
+    logical_size=@skia_mbt.Size::new(320, 200),
+    device_pixel_ratio=2.0,
+    sample_count=4,
+    stencil_bits=8,
+    present_mode=@skia_mbt.MailboxPresent,
+    max_frames_in_flight=3,
+  )
+  assert_true(window.has_window_id())
+  assert_true(!window.is_empty())
+  assert_true(window.logical_dimensions() == @skia_mbt.Size::new(320, 200))
+  assert_true(window.dimensions() == @skia_mbt.ISize::new(640, 400))
+  assert_eq(window.sample_count, 4)
+  assert_eq(window.stencil_bits, 8)
+  assert_eq(window.max_frames_in_flight, 3)
+  let target = window.target_descriptor()
+  assert_true(target.surface.is_window())
+  assert_true(target.is_presentable())
+  assert_true(target.has_target_id())
+  assert_true(target.target_id == b"main-window")
+  assert_true(target.present_mode == Some(@skia_mbt.MailboxPresent))
+  assert_eq(target.resource_descriptor().byte_size, 4096000L)
+  assert_true(window.resource_key() == target.resource_key())
+  let plan = window.resource_plan()
+  assert_eq(plan.length(), 1)
+  assert_true(plan.contains_key(target.resource_key()))
+  assert_eq(plan.byte_size, 4096000L)
+
+  let same_size_other_window = window.with_window_id(b"settings-window")
+  assert_true(same_size_other_window.resource_key() != window.resource_key())
+  let resized = window.with_physical_size(@skia_mbt.ISize::new(800, 600))
+  assert_true(resized.dimensions() == @skia_mbt.ISize::new(800, 600))
+  assert_true(resized.logical_dimensions() == @skia_mbt.Size::new(400, 300))
+
+  let invalid = @skia_mbt.WindowSurfaceDescriptor::new(
+    window_id=b"invalid-scale",
+    logical_size=@skia_mbt.Size::new(10, 10),
+    device_pixel_ratio=0.0,
+    sample_count=-4,
+    stencil_bits=-2,
+    max_frames_in_flight=-3,
+  )
+  assert_eq(invalid.device_pixel_ratio, 1.0)
+  assert_true(invalid.dimensions() == @skia_mbt.ISize::new(10, 10))
+  assert_eq(invalid.sample_count, 1)
+  assert_eq(invalid.stencil_bits, 0)
+  assert_eq(invalid.max_frames_in_flight, 1)
+
+  let context = @skia_mbt.GpuContextDescriptor::vulkan(
+    b"window-vulkan",
+    adapter_id=b"discrete-gpu",
+    device_id=b"queue-0",
+  )
+  let gpu_target = window.gpu_target_descriptor(
+    gpu_context_key=Some(context.resource_key()),
+  )
+  assert_true(gpu_target.surface.is_gpu())
+  assert_true(gpu_target.has_target_id())
+  assert_true(gpu_target.target_id == b"main-window")
+  assert_true(gpu_target.has_gpu_context())
+  let gpu_plan = gpu_target.resource_plan()
+  assert_eq(gpu_plan.length(), 2)
+  assert_eq(gpu_plan.gpu_backed_count, 2)
+  assert_true(gpu_plan.contains_key(gpu_target.resource_key()))
+  assert_true(gpu_plan.contains_key(context.resource_key()))
 }
 
 ///|

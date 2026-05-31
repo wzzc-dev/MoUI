@@ -1110,6 +1110,7 @@ pub impl Default for SurfacePresentMode
 
 pub(all) struct SurfaceTargetDescriptor {
   surface : SurfaceDescriptor
+  target_id : Bytes
   present_mode : SurfacePresentMode?
   max_frames_in_flight : Int
   gpu_context_key : RendererResourceKey?
@@ -1117,24 +1118,27 @@ pub(all) struct SurfaceTargetDescriptor {
 pub fn SurfaceTargetDescriptor::bounds(Self) -> IRect
 pub fn SurfaceTargetDescriptor::dimensions(Self) -> ISize
 pub fn SurfaceTargetDescriptor::gpu_context_resource_descriptor(Self) -> RendererResourceDescriptor?
-pub fn SurfaceTargetDescriptor::gpu_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?) -> Self
+pub fn SurfaceTargetDescriptor::gpu_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?, target_id? : Bytes) -> Self
 pub fn SurfaceTargetDescriptor::has_gpu_context(Self) -> Bool
+pub fn SurfaceTargetDescriptor::has_target_id(Self) -> Bool
 pub fn SurfaceTargetDescriptor::is_multibuffered(Self) -> Bool
 pub fn SurfaceTargetDescriptor::is_presentable(Self) -> Bool
 pub fn SurfaceTargetDescriptor::needs_present(Self) -> Bool
-pub fn SurfaceTargetDescriptor::new(SurfaceDescriptor, present_mode? : SurfacePresentMode?, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?) -> Self
+pub fn SurfaceTargetDescriptor::new(SurfaceDescriptor, present_mode? : SurfacePresentMode?, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?, target_id? : Bytes) -> Self
 pub fn SurfaceTargetDescriptor::raster_n32_premul(ISize) -> Self
 pub fn SurfaceTargetDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn SurfaceTargetDescriptor::resource_descriptors(Self, byte_size? : Int64) -> Array[RendererResourceDescriptor]
 pub fn SurfaceTargetDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn SurfaceTargetDescriptor::resource_plan(Self, byte_size? : Int64) -> RendererResourcePlan
-pub fn SurfaceTargetDescriptor::window_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
+pub fn SurfaceTargetDescriptor::window_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int, target_id? : Bytes) -> Self
 pub fn SurfaceTargetDescriptor::with_dimensions(Self, ISize) -> Self
 pub fn SurfaceTargetDescriptor::with_gpu_context(Self, GpuContextDescriptor) -> Self
 pub fn SurfaceTargetDescriptor::with_max_frames_in_flight(Self, Int) -> Self
 pub fn SurfaceTargetDescriptor::with_present_mode(Self, SurfacePresentMode) -> Self
+pub fn SurfaceTargetDescriptor::with_target_id(Self, Bytes) -> Self
 pub fn SurfaceTargetDescriptor::without_gpu_context(Self) -> Self
 pub fn SurfaceTargetDescriptor::without_present(Self) -> Self
+pub fn SurfaceTargetDescriptor::without_target_id(Self) -> Self
 
 pub(all) enum TextDirection {
   LeftToRight
@@ -1175,6 +1179,36 @@ pub(all) enum TileMode {
 } derive(Eq, @debug.Debug)
 pub fn TileMode::to_skia_ordinal(Self) -> Int
 pub impl Default for TileMode
+
+pub(all) struct WindowSurfaceDescriptor {
+  window_id : Bytes
+  logical_size : Size
+  physical_size : ISize
+  device_pixel_ratio : Float
+  origin : SurfaceOrigin
+  sample_count : Int
+  stencil_bits : Int
+  present_mode : SurfacePresentMode
+  max_frames_in_flight : Int
+} derive(Eq, @debug.Debug)
+pub fn WindowSurfaceDescriptor::dimensions(Self) -> ISize
+pub fn WindowSurfaceDescriptor::from_physical_size(Bytes, ISize, device_pixel_ratio? : Float, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
+pub fn WindowSurfaceDescriptor::gpu_target_descriptor(Self, budget? : SurfaceBudget, gpu_context_key? : RendererResourceKey?) -> SurfaceTargetDescriptor
+pub fn WindowSurfaceDescriptor::has_window_id(Self) -> Bool
+pub fn WindowSurfaceDescriptor::is_empty(Self) -> Bool
+pub fn WindowSurfaceDescriptor::logical_dimensions(Self) -> Size
+pub fn WindowSurfaceDescriptor::new(window_id? : Bytes, logical_size? : Size, physical_size? : ISize, device_pixel_ratio? : Float, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
+pub fn WindowSurfaceDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn WindowSurfaceDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn WindowSurfaceDescriptor::resource_plan(Self, byte_size? : Int64) -> RendererResourcePlan
+pub fn WindowSurfaceDescriptor::surface_descriptor(Self) -> SurfaceDescriptor
+pub fn WindowSurfaceDescriptor::target_descriptor(Self) -> SurfaceTargetDescriptor
+pub fn WindowSurfaceDescriptor::with_device_pixel_ratio(Self, Float) -> Self
+pub fn WindowSurfaceDescriptor::with_logical_size(Self, Size) -> Self
+pub fn WindowSurfaceDescriptor::with_max_frames_in_flight(Self, Int) -> Self
+pub fn WindowSurfaceDescriptor::with_physical_size(Self, ISize) -> Self
+pub fn WindowSurfaceDescriptor::with_present_mode(Self, SurfacePresentMode) -> Self
+pub fn WindowSurfaceDescriptor::with_window_id(Self, Bytes) -> Self
 
 // Type aliases
 pub type Scalar = Float
