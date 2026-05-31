@@ -181,6 +181,7 @@ pub(all) enum WorkbenchMsg {
   QueueCommand(String)
   MarkCommandComplete(Int, Int)
   SyncSessionName
+  CycleThinkingLevel
   CancelRun
   ClearDiagnostics
   ToggleContext(String)
@@ -483,6 +484,7 @@ pub fn WorkbenchModel::update(
     QueueCommand(command) => self.queue_command(command)
     MarkCommandComplete(id, code) => self.mark_command_complete(id, code)
     SyncSessionName => self.sync_session_name()
+    CycleThinkingLevel => self.cycle_thinking_level()
     CancelRun => self.cancel_run()
     ClearDiagnostics =>
       {
@@ -641,6 +643,8 @@ pub fn WorkbenchModel::update_with_transport(
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
     SyncSessionName => self.sync_session_name_with_transport(transport_runtime)
+    CycleThinkingLevel =>
+      self.cycle_thinking_level_with_transport(transport_runtime)
     CancelRun => self.cancel_run_with_transport(transport_runtime)
     _ => WorkbenchUpdate::new(self.update(message))
   }
@@ -845,6 +849,48 @@ fn WorkbenchModel::sync_session_name_with_transport(
   )
   WorkbenchUpdate::new(
     self.sync_session_name(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::cycle_thinking_level(
+  self : WorkbenchModel,
+) -> WorkbenchModel {
+  let session = self.active_session()
+  let transport_commands = self.commands_with_session_start(
+    session,
+    CycleRpcThinkingLevel(session.id),
+  )
+  let events = self.events.copy()
+  events.push(
+    AgentEvent::new(
+      phase="control",
+      title="Pi thinking level cycle queued",
+      detail=session.title,
+      tone="info",
+    ),
+  )
+  {
+    ..self,
+    events,
+    transport: self.transport.enqueue_many(transport_commands),
+    last_status: "Pi thinking level cycle queued",
+  }
+}
+
+///|
+fn WorkbenchModel::cycle_thinking_level_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let commands = self.commands_with_session_start(
+    session,
+    CycleRpcThinkingLevel(session.id),
+  )
+  WorkbenchUpdate::new(
+    self.cycle_thinking_level(),
     effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
   )
 }

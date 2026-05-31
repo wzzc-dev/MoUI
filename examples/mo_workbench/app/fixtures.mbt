@@ -259,7 +259,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="PiTransport",
       severity="watch",
-      message="Native owner speaks Pi RPC JSONL; Workbench binds session switches, session-name sync, get_state/get_messages/get_commands/get_session_stats responses, direct bash command evidence and cancellation, streaming agent/tool events, stderr, failures, and restart evidence.",
+      message="Native owner speaks Pi RPC JSONL; Workbench binds session switches, session-name sync, get_state/get_messages/get_commands/get_session_stats/cycle_thinking_level responses, direct bash command evidence and cancellation, streaming agent/tool events, stderr, failures, and restart evidence.",
     ),
     DiagnosticItem::new(
       source="Skia",

@@ -522,15 +522,37 @@ fn WorkbenchModel::session_status_panel(
               "Transport: " + self.transport.status_label(),
               role=Caption,
               theme~,
-              width=220.0,
+              width=310.0,
               height=30.0,
             ),
             text(
               "Agent: " + self.pi_agent.status_label(),
               role=Caption,
               theme~,
-              width=214.0,
+              width=310.0,
               height=30.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
+        ),
+        row(
+          [
+            text(
+              "Thinking: " + self.thinking_level_label(),
+              role=Caption,
+              theme~,
+              width=176.0,
+              height=30.0,
+            ),
+            spacer(min_length=8.0, weight=1.0),
+            button(
+              "思考",
+              on_click=CycleThinkingLevel,
+              variant=Outline,
+              theme~,
+              width=62.0,
+              height=34.0,
             ),
             button(
               "同步标题",
@@ -557,12 +579,21 @@ fn WorkbenchModel::session_status_panel(
       align=Start,
     ),
     width=690.0,
-    height=164.0,
+    height=202.0,
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn WorkbenchModel::thinking_level_label(self : WorkbenchModel) -> String {
+  if self.pi_agent.thinking_level == "" {
+    "default"
+  } else {
+    self.pi_agent.thinking_level
+  }
 }
 
 ///|

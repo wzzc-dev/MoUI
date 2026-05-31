@@ -66,6 +66,8 @@ fn WorkbenchModel::ingest_rpc_response(
       "get_commands" => self.apply_get_commands_success(session_id, fields)
       "get_session_stats" =>
         self.apply_get_session_stats_success(session_id, fields)
+      "cycle_thinking_level" =>
+        self.apply_cycle_thinking_level_success(session_id, fields)
       "set_session_name" => self.apply_set_session_name_success(session_id)
       _ => {
         let snapshot = match fields.get("data") {
@@ -261,6 +263,46 @@ fn WorkbenchModel::apply_get_session_stats_success(
       tone="success",
     ),
     status="Pi session stats refreshed",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_cycle_thinking_level_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let level = match json_object(fields, "data") {
+    Some(data) => json_string(data, "level").unwrap_or("")
+    None => ""
+  }
+  let model = if level == "" {
+    {
+      ..self,
+      pi_rpc: PiRpcSnapshot::new(command="cycle_thinking_level", success=true),
+    }
+  } else {
+    {
+      ..self.update_active_session_for_pi(
+        status=self.active_session().status,
+        active_task="Pi thinking level: " + level,
+      ),
+      pi_agent: { ..self.pi_agent, thinking_level: level },
+      pi_rpc: PiRpcSnapshot::new(command="cycle_thinking_level", success=true),
+    }
+  }
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi thinking level cycled",
+      detail=if level == "" {
+        session_id + ": accepted"
+      } else {
+        session_id + ": " + level
+      },
+      tone="success",
+    ),
+    status="Pi thinking level cycle acknowledged",
   )
 }
 
@@ -980,7 +1022,13 @@ fn WorkbenchModel::ingest_thinking_level_changed(
   fields : Map[String, Json],
 ) -> WorkbenchModel {
   let level = json_string(fields, "level").unwrap_or("default")
-  { ..self, pi_agent: { ..self.pi_agent, thinking_level: level } }.append_ingested_event(
+  {
+    ..self.update_active_session_for_pi(
+      status=self.active_session().status,
+      active_task="Pi thinking level: " + level,
+    ),
+    pi_agent: { ..self.pi_agent, thinking_level: level },
+  }.append_ingested_event(
     AgentEvent::new(
       phase="agent",
       title="Pi thinking level changed",

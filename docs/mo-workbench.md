@@ -59,9 +59,9 @@ packages:
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
   (`get_state`, `get_messages`, `get_commands`, `get_session_stats`,
-  `switch_session`, `prompt`, `set_session_name`, `bash`, `abort_bash`, and
-  `abort`; shutdown is stdin EOF), and uses shell fixtures to prove direct
-  JSONL stdin/stdout process
+  `cycle_thinking_level`, `switch_session`, `prompt`, `set_session_name`,
+  `bash`, `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell
+  fixtures to prove direct JSONL stdin/stdout process
   driving without C FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
@@ -103,6 +103,10 @@ packages:
   Pi through `set_session_name`. Pi's `session_info_changed` event updates the
   same `PiSessionBinding`, so user-visible Workbench session identity and Pi's
   runtime session display name stay aligned without native-only state.
+- The workbench can cycle Pi's thinking level from the session status panel.
+  The shared app emits a platform-neutral `CycleRpcThinkingLevel` command,
+  ingests `cycle_thinking_level` responses and `thinking_level_changed` events,
+  and keeps `PiAgentSnapshot.thinking_level` visible without native-only state.
 - Run cancellation is command-aware: active Workbench shell commands queue a
   platform-neutral `CancelShellCommand` that the native encoder maps to Pi RPC
   `abort_bash`, while prompt/agent cancellation continues to use `abort`.
@@ -120,8 +124,11 @@ packages:
   with normalized `PiCommandInfo` rows that preserve command name, kind,
   description, source scope, and source path. Successful `get_session_stats`
   responses refresh `PiSessionStatsSnapshot` with message, tool, token, cost,
-  and optional context counters. Successful `set_session_name` responses mark
-  the session-name sync as acknowledged; the preceding
+  and optional context counters. Successful `cycle_thinking_level` responses
+  update the agent snapshot when Pi returns the new level, while
+  `thinking_level_changed` events remain the authoritative stream update.
+  Successful `set_session_name` responses mark the session-name sync as
+  acknowledged; the preceding
   `session_info_changed` event carries the actual display name and updates
   `PiSessionBinding`. Successful `bash` responses mark the latest
   queued/running Workbench command as passed, failed, or cancelled and add
@@ -151,7 +158,8 @@ packages:
   the owner.
 - The native encoder is aligned with the installed Pi RPC protocol and has
   no-model smoke paths using offline `get_state`, `get_messages`,
-  `get_commands`, `set_session_name`, and `abort_bash` over `pi --mode rpc`.
+  `get_commands`, `get_session_stats`, `cycle_thinking_level`,
+  `set_session_name`, and `abort_bash` over `pi --mode rpc`.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
@@ -198,6 +206,11 @@ extension, and skill commands. A successful
 refreshes `PiSessionStatsSnapshot` with message/tool/token/context metrics and
 updates the Workbench-to-Pi binding from the reported `sessionId` and
 `sessionFile`. A successful
+`{"type":"response","command":"cycle_thinking_level","success":true,...}` line
+acknowledges the compact Thinking control and, when Pi includes a `data.level`,
+updates `PiAgentSnapshot.thinking_level`. The streamed
+`{"type":"thinking_level_changed","level":"..."}` event can still arrive
+separately and is treated as the authoritative level change. A successful
 `{"type":"response","command":"set_session_name","success":true}` line confirms
 the app's session-name sync request, while a preceding
 `{"type":"session_info_changed","name":"..."}` event updates the binding's
@@ -265,6 +278,7 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `FetchRpcMessages` sends `{"type":"get_messages"}`,
 `FetchRpcCommands` sends `{"type":"get_commands"}`,
 `FetchRpcSessionStats` sends `{"type":"get_session_stats"}`,
+`CycleRpcThinkingLevel` sends `{"type":"cycle_thinking_level"}`,
 `SwitchRpcSession` sends `{"type":"switch_session","sessionPath":...}`,
 `SetRpcSessionName` sends `{"type":"set_session_name","name":...}`,
 `SendUserInput` sends `{"type":"prompt","message":...}`, `RunShellCommand`
@@ -291,6 +305,9 @@ printf '{"type":"get_commands"}\n' | \
 printf '{"type":"get_session_stats"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"cycle_thinking_level"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
@@ -303,8 +320,10 @@ The first command should return a JSONL `response` object for `get_state`, the
 second should return a `get_messages` response with a `messages` array, the
 third should return a `get_commands` response with a `commands` array, the
 fourth should return a `get_session_stats` response with message, tool, token,
-and cost counters, the fifth should emit `session_info_changed` and a successful
-`set_session_name` response, and the sixth should return a successful
+and cost counters, the fifth should return a successful
+`cycle_thinking_level` acknowledgement, the sixth should emit
+`session_info_changed` and a successful `set_session_name` response, and the
+seventh should return a successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -340,6 +359,9 @@ printf '{"type":"get_commands"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_session_stats"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"cycle_thinking_level"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \

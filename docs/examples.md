@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, RPC message transcript refresh, RPC command catalog and session stats refresh, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, RPC message transcript refresh, RPC command catalog and session stats refresh, thinking-level control, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -176,19 +176,22 @@ platform-neutral warning event and nonzero process exits become
 child exits do not close the native owner; the next UI command batch restarts a
 fresh JSONL process, while explicit `Shutdown` remains the close path. The
 native encoder targets Pi's actual RPC command names: `get_state`, `prompt`,
-`get_messages`, `get_commands`, `get_session_stats`, `set_session_name`,
-`bash`, `abort_bash`, and `abort`, with process shutdown handled by stdin EOF.
-The focused smoke for machines with Pi installed is an offline `get_state`
-JSONL round trip, a `get_messages` transcript response, an offline
-`get_commands` command-catalog response, a `get_session_stats` metrics response,
-a `set_session_name` acknowledgement, and an `abort_bash` acknowledgement
-through `pi --mode rpc`, so it validates the process protocol without making a
-model request. The shared app ingests
+`get_messages`, `get_commands`, `get_session_stats`, `cycle_thinking_level`,
+`set_session_name`, `bash`, `abort_bash`, and `abort`, with process shutdown
+handled by stdin EOF. The focused smoke for machines with Pi installed is an
+offline `get_state` JSONL round trip, a `get_messages` transcript response, an
+offline `get_commands` command-catalog response, a `get_session_stats` metrics
+response, a `cycle_thinking_level` acknowledgement, a `set_session_name`
+acknowledgement, and an `abort_bash` acknowledgement through `pi --mode rpc`, so
+it validates the process protocol without making a model request. The shared app
+ingests
 successful and failed Pi RPC `response` JSONL objects: `get_state` refreshes
 the current Workbench session snapshot, `get_messages` refreshes the transcript
 model, `get_commands` refreshes the available slash/prompt/extension/skill
 command catalog, and `get_session_stats` refreshes compact
-message/tool/token/context metrics. `set_session_name` responses and
+message/tool/token/context metrics. `cycle_thinking_level` responses and
+`thinking_level_changed` events keep the compact Thinking control and
+`PiAgentSnapshot` aligned. `set_session_name` responses and
 `session_info_changed` events keep the Workbench-to-Pi session binding display
 name in sync, while RPC failures become diagnostics without leaking native
 process details into the app model.
@@ -227,6 +230,9 @@ printf '{"type":"get_commands"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_session_stats"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"cycle_thinking_level"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \

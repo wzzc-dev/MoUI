@@ -141,6 +141,7 @@ pub(all) enum PiTransportCommand {
   FetchRpcMessages(String)
   FetchRpcCommands(String)
   FetchRpcSessionStats(String)
+  CycleRpcThinkingLevel(String)
   SetRpcSessionName(String, String)
   SendUserInput(String, String)
   RunShellCommand(String, String)
@@ -254,6 +255,7 @@ pub(all) enum WorkbenchMsg {
   QueueCommand(String)
   MarkCommandComplete(Int, Int)
   SyncSessionName
+  CycleThinkingLevel
   CancelRun
   ClearDiagnostics
   ToggleContext(String)
