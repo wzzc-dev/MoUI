@@ -244,6 +244,125 @@ pub fn SurfaceDescriptor::with_budget(
 }
 
 ///|
+fn surface_resource_u64(value : Int) -> Bytes {
+  Int::max(0, value).to_uint64().to_be_bytes()
+}
+
+///|
+fn surface_resource_bytes(value : Bytes) -> Bytes {
+  value.length().to_uint64().to_be_bytes() + value
+}
+
+///|
+fn SurfaceBackend::surface_resource_name(self : SurfaceBackend) -> Bytes {
+  match self {
+    Raster => b"raster"
+    Window => b"window"
+    Gpu => b"gpu"
+  }
+}
+
+///|
+fn SurfaceOrigin::surface_resource_name(self : SurfaceOrigin) -> Bytes {
+  match self {
+    TopLeft => b"top-left"
+    BottomLeft => b"bottom-left"
+  }
+}
+
+///|
+fn SurfaceBudget::surface_resource_name(self : SurfaceBudget) -> Bytes {
+  match self {
+    Budgeted => b"budgeted"
+    Unbudgeted => b"unbudgeted"
+  }
+}
+
+///|
+fn ColorType::surface_resource_name(self : ColorType) -> Bytes {
+  match self {
+    Unknown => b"unknown"
+    Alpha8 => b"alpha8"
+    RGB565 => b"rgb565"
+    ARGB4444 => b"argb4444"
+    RGBA8888 => b"rgba8888"
+    RGB888x => b"rgb888x"
+    BGRA8888 => b"bgra8888"
+    RGBA1010102 => b"rgba1010102"
+    RGB101010x => b"rgb101010x"
+    Gray8 => b"gray8"
+    RGBAF16 => b"rgbaf16"
+    RGBAF32 => b"rgbaf32"
+  }
+}
+
+///|
+fn AlphaType::surface_resource_name(self : AlphaType) -> Bytes {
+  match self {
+    Unknown => b"unknown"
+    Opaque => b"opaque"
+    Premul => b"premul"
+    Unpremul => b"unpremul"
+  }
+}
+
+///|
+fn ImageInfo::surface_resource_id(self : ImageInfo) -> Bytes {
+  surface_resource_u64(self.width()) +
+  surface_resource_u64(self.height()) +
+  surface_resource_bytes(self.color_type().surface_resource_name()) +
+  surface_resource_bytes(self.alpha_type().surface_resource_name())
+}
+
+///|
+fn SurfaceDescriptor::resource_id(self : SurfaceDescriptor) -> Bytes {
+  if self.is_empty() {
+    b""
+  } else {
+    b"skia_mbt:surface:v1" +
+    surface_resource_bytes(self.backend.surface_resource_name()) +
+    self.image_info.surface_resource_id() +
+    surface_resource_bytes(self.origin.surface_resource_name()) +
+    surface_resource_u64(self.sample_count) +
+    surface_resource_u64(self.stencil_bits) +
+    surface_resource_bytes(self.budget.surface_resource_name())
+  }
+}
+
+///|
+pub fn SurfaceDescriptor::resource_key(
+  self : SurfaceDescriptor,
+) -> RendererResourceKey {
+  if self.is_gpu() {
+    RendererResourceKey::gpu_surface(self.resource_id())
+  } else {
+    RendererResourceKey::surface(self.resource_id())
+  }
+}
+
+///|
+fn SurfaceDescriptor::resource_byte_size(self : SurfaceDescriptor) -> Int64 {
+  self.image_info.compute_min_byte_size64() * self.sample_count.to_int64()
+}
+
+///|
+pub fn SurfaceDescriptor::resource_descriptor(
+  self : SurfaceDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let measured_byte_size = if byte_size < 0L {
+    self.resource_byte_size()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::new(
+    self.resource_key(),
+    byte_size=measured_byte_size,
+    cacheable=!self.is_empty(),
+  )
+}
+
+///|
 /// Presentation policy for a window or GPU-backed surface target.
 #warnings("-deprecated_syntax")
 pub(all) enum SurfacePresentMode {
@@ -428,5 +547,63 @@ pub fn SurfaceTargetDescriptor::with_max_frames_in_flight(
     self.surface,
     present_mode=self.present_mode,
     max_frames_in_flight~,
+  )
+}
+
+///|
+fn SurfacePresentMode::surface_resource_name(
+  self : SurfacePresentMode,
+) -> Bytes {
+  match self {
+    ImmediatePresent => b"immediate"
+    MailboxPresent => b"mailbox"
+    FifoPresent => b"fifo"
+  }
+}
+
+///|
+fn surface_target_present_resource_id(
+  present_mode : SurfacePresentMode?,
+) -> Bytes {
+  match present_mode {
+    None => b"none"
+    Some(present_mode) => present_mode.surface_resource_name()
+  }
+}
+
+///|
+pub fn SurfaceTargetDescriptor::resource_key(
+  self : SurfaceTargetDescriptor,
+) -> RendererResourceKey {
+  let surface_key = self.surface.resource_key()
+  if surface_key.is_empty() {
+    surface_key
+  } else {
+    RendererResourceKey::new(
+      surface_key.kind,
+      b"skia_mbt:surface-target:v1" +
+      surface_resource_bytes(surface_key.id) +
+      surface_resource_bytes(
+        surface_target_present_resource_id(self.present_mode),
+      ) +
+      surface_resource_u64(self.max_frames_in_flight),
+    )
+  }
+}
+
+///|
+pub fn SurfaceTargetDescriptor::resource_descriptor(
+  self : SurfaceTargetDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let measured_byte_size = if byte_size < 0L {
+    self.surface.resource_byte_size()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::new(
+    self.resource_key(),
+    byte_size=measured_byte_size,
+    cacheable=!self.surface.is_empty(),
   )
 }
