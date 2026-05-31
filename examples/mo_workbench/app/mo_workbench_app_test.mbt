@@ -786,23 +786,19 @@ test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "A Pi agent desktop"))
+  assert_true(has_text(commands, "Session status"))
   assert_true(has_text(commands, "Pi transcript"))
   assert_true(has_text(commands, "Pi commands"))
   assert_true(has_text(commands, "/review"))
+  assert_true(has_text(commands, "Command evidence"))
+  assert_true(has_text(commands, "Context files"))
   assert_true(has_text(commands, "同步标题"))
   assert_true(has_text(commands, "要求继续推进 Mo Workbench"))
-  assert_true(has_text(commands, "新对话"))
-  assert_true(has_text(commands, "置顶"))
-  assert_true(
-    has_text(
-      commands, "在 MoUI 仓库 examples/mo_workbench，交付 Mo Workbench",
-    ),
-  )
-  assert_true(has_text(commands, "验证已通过："))
-  assert_true(has_text(commands, "examples.md"))
-  assert_true(has_text(commands, "已编辑 5 个文件"))
-  assert_true(has_text(commands, "要求后续变更"))
-  assert_true(has_text(commands, "自动审查"))
+  assert_true(has_text(commands, "Pi RPC"))
+  assert_true(has_text(commands, "Diff summary · ready for review"))
+  assert_false(has_text(commands, "验证已通过："))
+  assert_false(has_text(commands, "打开方式⌄"))
+  assert_false(has_text(commands, "复制"))
 }
 
 ///|
