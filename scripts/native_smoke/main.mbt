@@ -107,6 +107,26 @@ fn main {
   }
   println("native smoke surface descriptor backend")
   println("raster")
+
+  let smoke_gpu_context = @skia.GpuContextDescriptor::mock(
+    id=b"native-smoke-gpu-context",
+  )
+  let smoke_gpu_target = @skia.SurfaceTargetDescriptor::gpu_n32_premul(
+    @skia.ISize::new(16, 16),
+    gpu_context_key=Some(smoke_gpu_context.resource_key()),
+  )
+  let smoke_gpu_plan = @skia.RenderCommandList::for_target(
+    smoke_gpu_target,
+  ).resource_plan()
+  if !smoke_gpu_target.has_gpu_context() ||
+    smoke_gpu_plan.length() != 2 ||
+    smoke_gpu_plan.gpu_backed_count != 2 ||
+    !smoke_gpu_plan.has_gpu_backed_resources() {
+    fail_smoke("gpu context resource plan did not include context and surface")
+  }
+  println("native smoke gpu context resource plan count")
+  println(smoke_gpu_plan.length())
+
   guard surface.canvas() is Some(canvas) else {
     fail_smoke("failed to borrow native canvas")
   }

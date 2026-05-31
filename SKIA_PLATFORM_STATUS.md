@@ -72,9 +72,10 @@ these facts recorded in logs:
 - The native smoke log passed `scripts/verify-native-smoke-log.*`, including
   all required stage markers for readback, snapshots, PNG encode/decode, codec,
   decoded bitmap readback, surface descriptor reporting, canvas state restore,
-  canvas command replay, render resource planning, shader draws, native/portable
-  path geometry, UTF-8 text measurement, glyph count, glyph ID mapping, glyph
-  advances, glyph positions, glyph bounds, text bounds measurement, font
+  canvas command replay, render resource planning, GPU context resource
+  planning, shader draws, native/portable path geometry, UTF-8 text
+  measurement, glyph count, glyph ID mapping, glyph advances, glyph positions,
+  glyph bounds, text bounds measurement, font
   metrics, font family enumeration, native typeface family metadata, FontMgr
   character fallback, and shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains

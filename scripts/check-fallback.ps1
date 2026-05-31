@@ -81,6 +81,8 @@ function Set-FakeNativeSmokeLog {
     "8"
     "native smoke render resource plan count"
     "7"
+    "native smoke gpu context resource plan count"
+    "2"
     "native smoke shader draws"
     "3"
     "native smoke shader resource plan count"

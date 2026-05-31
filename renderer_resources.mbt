@@ -12,6 +12,7 @@ pub(all) enum RendererResourceKind {
   PathResource
   TextRunResource
   SurfaceResource
+  GpuContextResource
   GpuSurfaceResource
 } derive(Debug, Eq, Hash)
 
@@ -27,7 +28,7 @@ pub fn RendererResourceKind::is_text(self : RendererResourceKind) -> Bool {
 
 ///|
 pub fn RendererResourceKind::is_gpu_backed(self : RendererResourceKind) -> Bool {
-  self is GpuSurfaceResource
+  self is (GpuContextResource | GpuSurfaceResource)
 }
 
 ///|
@@ -99,6 +100,11 @@ pub fn RendererResourceKey::text_run(id : Bytes) -> RendererResourceKey {
 ///|
 pub fn RendererResourceKey::surface(id : Bytes) -> RendererResourceKey {
   RendererResourceKey::new(SurfaceResource, id)
+}
+
+///|
+pub fn RendererResourceKey::gpu_context(id : Bytes) -> RendererResourceKey {
+  RendererResourceKey::new(GpuContextResource, id)
 }
 
 ///|
@@ -239,6 +245,14 @@ pub fn RendererResourceDescriptor::surface(
   byte_size? : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(SurfaceResource, id, byte_size~)
+}
+
+///|
+pub fn RendererResourceDescriptor::gpu_context(
+  id : Bytes,
+  byte_size? : Int64 = 0L,
+) -> RendererResourceDescriptor {
+  RendererResourceDescriptor::of_kind(GpuContextResource, id, byte_size~)
 }
 
 ///|

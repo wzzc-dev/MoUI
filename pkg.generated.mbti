@@ -222,6 +222,36 @@ pub fn FontStyleRequest::new(weight? : Int, width? : Int, slant? : Int) -> Self
 pub fn FontStyleRequest::normal() -> Self
 pub impl Default for FontStyleRequest
 
+pub(all) enum GpuContextBackend {
+  MockGpuContext
+  MetalGpuContext
+  VulkanGpuContext
+  Direct3D12GpuContext
+  OpenGLGpuContext
+} derive(Eq, @debug.Debug)
+pub fn GpuContextBackend::is_mock(Self) -> Bool
+pub fn GpuContextBackend::is_native_window_backend(Self) -> Bool
+pub impl Default for GpuContextBackend
+
+pub(all) struct GpuContextDescriptor {
+  backend : GpuContextBackend
+  id : Bytes
+  adapter_id : Bytes
+  device_id : Bytes
+  queue_family_index : Int
+  protected_context : Bool
+} derive(Eq, @debug.Debug)
+pub fn GpuContextDescriptor::direct3d12(Bytes, adapter_id? : Bytes, device_id? : Bytes) -> Self
+pub fn GpuContextDescriptor::is_anonymous(Self) -> Bool
+pub fn GpuContextDescriptor::metal(Bytes, adapter_id? : Bytes, device_id? : Bytes) -> Self
+pub fn GpuContextDescriptor::mock(id? : Bytes) -> Self
+pub fn GpuContextDescriptor::new(backend? : GpuContextBackend, id? : Bytes, adapter_id? : Bytes, device_id? : Bytes, queue_family_index? : Int, protected_context? : Bool) -> Self
+pub fn GpuContextDescriptor::opengl(Bytes, adapter_id? : Bytes, device_id? : Bytes) -> Self
+pub fn GpuContextDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn GpuContextDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn GpuContextDescriptor::vulkan(Bytes, adapter_id? : Bytes, device_id? : Bytes, queue_family_index? : Int) -> Self
+pub fn GpuContextDescriptor::with_protected_context(Self, Bool) -> Self
+
 pub(all) struct IPoint {
   x : Int
   y : Int
@@ -817,6 +847,7 @@ pub(all) struct RendererResourceDescriptor {
 } derive(Eq, @debug.Debug)
 pub fn RendererResourceDescriptor::color_filter(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::filter(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::gpu_context(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::gpu_surface(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::image(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::image_filter(Bytes, byte_size? : Int64) -> Self
@@ -839,6 +870,7 @@ pub(all) struct RendererResourceKey {
 } derive(Eq, Hash, @debug.Debug)
 pub fn RendererResourceKey::color_filter(Bytes) -> Self
 pub fn RendererResourceKey::font(Bytes) -> Self
+pub fn RendererResourceKey::gpu_context(Bytes) -> Self
 pub fn RendererResourceKey::gpu_surface(Bytes) -> Self
 pub fn RendererResourceKey::image(Bytes) -> Self
 pub fn RendererResourceKey::image_filter(Bytes) -> Self
@@ -863,6 +895,7 @@ pub(all) enum RendererResourceKind {
   PathResource
   TextRunResource
   SurfaceResource
+  GpuContextResource
   GpuSurfaceResource
 } derive(Eq, Hash, @debug.Debug)
 pub fn RendererResourceKind::is_filter(Self) -> Bool
@@ -1037,21 +1070,26 @@ pub(all) struct SurfaceTargetDescriptor {
   surface : SurfaceDescriptor
   present_mode : SurfacePresentMode?
   max_frames_in_flight : Int
+  gpu_context_key : RendererResourceKey?
 } derive(Eq, @debug.Debug)
 pub fn SurfaceTargetDescriptor::bounds(Self) -> IRect
 pub fn SurfaceTargetDescriptor::dimensions(Self) -> ISize
-pub fn SurfaceTargetDescriptor::gpu_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
+pub fn SurfaceTargetDescriptor::gpu_context_resource_descriptor(Self) -> RendererResourceDescriptor?
+pub fn SurfaceTargetDescriptor::gpu_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?) -> Self
+pub fn SurfaceTargetDescriptor::has_gpu_context(Self) -> Bool
 pub fn SurfaceTargetDescriptor::is_multibuffered(Self) -> Bool
 pub fn SurfaceTargetDescriptor::is_presentable(Self) -> Bool
 pub fn SurfaceTargetDescriptor::needs_present(Self) -> Bool
-pub fn SurfaceTargetDescriptor::new(SurfaceDescriptor, present_mode? : SurfacePresentMode?, max_frames_in_flight? : Int) -> Self
+pub fn SurfaceTargetDescriptor::new(SurfaceDescriptor, present_mode? : SurfacePresentMode?, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?) -> Self
 pub fn SurfaceTargetDescriptor::raster_n32_premul(ISize) -> Self
 pub fn SurfaceTargetDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn SurfaceTargetDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn SurfaceTargetDescriptor::window_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
 pub fn SurfaceTargetDescriptor::with_dimensions(Self, ISize) -> Self
+pub fn SurfaceTargetDescriptor::with_gpu_context(Self, GpuContextDescriptor) -> Self
 pub fn SurfaceTargetDescriptor::with_max_frames_in_flight(Self, Int) -> Self
 pub fn SurfaceTargetDescriptor::with_present_mode(Self, SurfacePresentMode) -> Self
+pub fn SurfaceTargetDescriptor::without_gpu_context(Self) -> Self
 pub fn SurfaceTargetDescriptor::without_present(Self) -> Self
 
 pub(all) enum TextDirection {
