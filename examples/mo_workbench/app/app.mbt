@@ -74,6 +74,12 @@ pub(all) struct WorkbenchModel {
 }
 
 ///|
+pub(all) struct WorkbenchUpdate {
+  model : WorkbenchModel
+  effect : @core.Effect[WorkbenchMsg]
+}
+
+///|
 pub(all) enum WorkbenchMsg {
   SelectSession(String)
   SelectPanel(String)
@@ -231,6 +237,17 @@ pub fn MoWorkbenchApp::runtime(
 }
 
 ///|
+pub fn MoWorkbenchApp::runtime_with_transport(
+  self : MoWorkbenchApp,
+  transport_runtime : PiTransportRuntime,
+  width? : Double = 1220.0,
+  height? : Double = 780.0,
+) -> @core.AppRuntime {
+  ignore(self)
+  runtime_with_transport(transport_runtime, width~, height~)
+}
+
+///|
 pub fn runtime(
   width? : Double = 1220.0,
   height? : Double = 780.0,
@@ -239,15 +256,63 @@ pub fn runtime(
 }
 
 ///|
+pub fn runtime_with_transport(
+  transport_runtime : PiTransportRuntime,
+  width? : Double = 1220.0,
+  height? : Double = 780.0,
+) -> @core.AppRuntime {
+  WorkbenchModel::new().runtime_with_transport(
+    transport_runtime,
+    width~,
+    height~,
+  )
+}
+
+///|
 pub fn WorkbenchModel::runtime(
   self : WorkbenchModel,
   width? : Double = 1220.0,
   height? : Double = 780.0,
 ) -> @core.AppRuntime {
+  self.runtime_with_transport(
+    PiTransportRuntime::unavailable(),
+    width~,
+    height~,
+  )
+}
+
+///|
+pub fn WorkbenchModel::runtime_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+  width? : Double = 1220.0,
+  height? : Double = 780.0,
+) -> @core.AppRuntime {
   @core.AppRuntime::new_program(
-    program=@core.Program::simple(init=self, update~, view~),
+    program=@core.Program::new(
+      init=() => (self, @core.Effect::none()),
+      update=(model, message) => {
+        model.update_with_transport(message, transport_runtime).as_tuple()
+      },
+      view~,
+    ),
     size=@core.Size::new(width~, height~),
   )
+}
+
+///|
+pub fn WorkbenchUpdate::new(
+  model : WorkbenchModel,
+  effect? : @core.Effect[WorkbenchMsg] = @core.Effect::none(),
+) -> WorkbenchUpdate {
+  { model, effect }
+}
+
+///|
+pub fn WorkbenchUpdate::as_tuple(
+  self : WorkbenchUpdate,
+) -> (WorkbenchModel, @core.Effect[WorkbenchMsg]) {
+  (self.model, self.effect)
 }
 
 ///|
@@ -273,6 +338,21 @@ pub fn WorkbenchModel::open_diagnostic_count(self : WorkbenchModel) -> Int {
 }
 
 ///|
+pub fn WorkbenchModel::update_with_transport(
+  self : WorkbenchModel,
+  message : WorkbenchMsg,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  match message {
+    DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
+    QueueCommand(command) =>
+      self.queue_command_with_transport(command, transport_runtime)
+    CancelRun => self.cancel_run_with_transport(transport_runtime)
+    _ => WorkbenchUpdate::new(self.update(message))
+  }
+}
+
+///|
 fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
   let prompt = self.prompt.trim().to_owned()
   if prompt == "" {
@@ -289,13 +369,35 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
       ),
     )
     let command = SendUserInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
     {
       ..self,
       prompt: "",
       events,
-      transport: self.transport.enqueue(command),
+      transport: self.transport.enqueue_many(commands),
       last_status: "Queued prompt for Pi JSONL RPC",
     }
+  }
+}
+
+///|
+fn WorkbenchModel::dispatch_prompt_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let prompt = self.prompt.trim().to_owned()
+  if prompt == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
+  } else {
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      SendUserInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.dispatch_prompt(),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
   }
 }
 
@@ -321,6 +423,10 @@ fn WorkbenchModel::queue_command(
 ) -> WorkbenchModel {
   let session = self.active_session()
   let commands = self.commands.copy()
+  let transport_commands = self.commands_with_session_start(
+    session,
+    SendUserInput(session.id, "run: " + command),
+  )
   commands.push(
     CommandRun::new(
       id=commands.length() + 1,
@@ -332,11 +438,28 @@ fn WorkbenchModel::queue_command(
   {
     ..self,
     commands,
-    transport: self.transport.enqueue(
-      SendUserInput(session.id, "run: " + command),
-    ),
+    transport: self.transport.enqueue_many(transport_commands),
     last_status: "Command queued for agent execution",
   }
+}
+
+///|
+fn WorkbenchModel::queue_command_with_transport(
+  self : WorkbenchModel,
+  command : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let transport_commands = self.commands_with_session_start(
+    session,
+    SendUserInput(session.id, "run: " + command),
+  )
+  WorkbenchUpdate::new(
+    self.queue_command(command),
+    effect=transport_runtime.effect(transport_commands, event => {
+      ReceiveTransport(event)
+    }),
+  )
 }
 
 ///|
@@ -378,9 +501,36 @@ fn WorkbenchModel::cancel_run(self : WorkbenchModel) -> WorkbenchModel {
   {
     ..self,
     events,
-    transport: self.transport.enqueue(CancelRun(session.id)),
+    transport: self.transport.enqueue(CancelRpcRun(session.id)),
     last_status: "Cancellation queued",
   }
+}
+
+///|
+fn WorkbenchModel::cancel_run_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let commands = [CancelRpcRun(session.id)]
+  WorkbenchUpdate::new(
+    self.cancel_run(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::commands_with_session_start(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+  command : PiTransportCommand,
+) -> Array[PiTransportCommand] {
+  let commands : Array[PiTransportCommand] = []
+  if self.transport.status is Disconnected {
+    commands.push(StartRpc(session.id, session.project_path))
+  }
+  commands.push(command)
+  commands
 }
 
 ///|

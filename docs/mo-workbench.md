@@ -14,19 +14,22 @@ automation runs, and knowledge organization.
 ## Package Shape
 
 - `examples/mo_workbench/app` owns the shared TEA model, view composition,
-  sample fixtures, and platform-neutral Pi transport event model.
+  sample fixtures, platform-neutral Pi transport event model, and injectable
+  `PiTransportRuntime` effect boundary.
 - `examples/mo_workbench/native_transport` owns the native
   `moonbitlang/async` process driver for JSONL stdin/stdout sessions. It
-  imports the shared app package only for `PiTransportEvent`, keeping the app
-  model reusable by Web and other future hosts.
+  imports the shared app package for `PiTransportCommand`,
+  `PiTransportEvent`, and `PiTransportRuntime`, keeping process ownership out
+  of the shared model while reusing the same command/event contract.
 - `examples/mo_workbench/macos_skia` is a thin entrypoint that selects
-  `backend/macos/skia` and runs the shared app runtime.
+  `backend/macos/skia`, injects the native Pi transport runtime, and runs the
+  shared app runtime.
 - Future Web or other native entrypoints should reuse the same app package and
   feed the same `PiTransportCommand` / `PiTransportEvent` model.
 
 ## Current Vertical Slice
 
-The first slice establishes the dogfood app without changing framework
+The current slices establish the dogfood app without changing framework
 packages:
 
 - A session-first desktop shell named `Mo Workbench`.
@@ -39,16 +42,22 @@ packages:
   and shutdown.
 - Typed transport events for process lifecycle, JSONL sent/received lines, and
   failures.
+- A platform-neutral `PiTransportRuntime` that turns command batches into
+  MoUI effects, so prompt, command, and cancel actions can dispatch transport
+  events back through the same TEA message loop.
 - A native-only async transport package whose default command is
-  `pi --mode rpc`, with focused tests that use a shell fixture to prove direct
-  JSONL stdin/stdout process driving without C FFI or a Node bridge.
+  `pi --mode rpc`, maps command batches to Pi JSONL request lines, and uses
+  shell fixtures to prove direct JSONL stdin/stdout process driving without C
+  FFI or a Node bridge.
+- A macOS Skia entrypoint wired to `PiNativeTransportConfig::pi().runtime()`.
 - Workbench panels for agent timeline, plan, diff/file context, command queue,
   and diagnostics.
 
-The remaining V1 transport boundary is lifecycle ownership from the macOS app:
-the native driver can start and drive a finite JSONL session, and the next slice
-should keep a Pi RPC task alive for the desktop session, feed UI prompts into
-its writer, and dispatch reader events back through the MoUI message loop.
+The remaining V1 transport boundary is true long-lived lifecycle ownership:
+the native runtime can now feed command-batch events through the MoUI message
+loop, and the next slice should keep one Pi RPC task alive for the desktop
+session, write later UI prompts into the same stdin stream, and read stdout
+without blocking the native window loop.
 
 ## Skia Native-First Notes
 
@@ -68,6 +77,7 @@ Use these checks while working on the first app slices:
 
 ```sh
 moon test examples/mo_workbench/app --target native
+moon test examples/mo_workbench/app --target wasm-gc
 moon test examples/mo_workbench/native_transport --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```

@@ -7,9 +7,17 @@ import {
 }
 
 // Values
+pub fn pi_rpc_cancel_line(session_id~ : String) -> String
+
+pub fn pi_rpc_shutdown_line() -> String
+
 pub fn pi_rpc_start_line(session_id~ : String, cwd~ : String) -> String
 
 pub fn pi_rpc_user_input_line(session_id~ : String, text~ : String) -> String
+
+pub async fn run_jsonl_commands(PiNativeTransportConfig, Array[@app.PiTransportCommand]) -> PiNativeTransportRun
+
+pub fn run_jsonl_commands_blocking(PiNativeTransportConfig, Array[@app.PiTransportCommand]) -> PiNativeTransportRun
 
 pub async fn run_jsonl_session(PiNativeTransportConfig, session_id~ : String, Array[String]) -> PiNativeTransportRun
 
@@ -24,7 +32,14 @@ pub(all) struct PiNativeTransportConfig {
 pub fn PiNativeTransportConfig::command_label(Self) -> String
 pub fn PiNativeTransportConfig::new(command~ : String, args? : Array[String], cwd? : String) -> Self
 pub fn PiNativeTransportConfig::pi(cwd? : String) -> Self
+pub fn PiNativeTransportConfig::runtime(Self) -> @app.PiTransportRuntime
 pub fn PiNativeTransportConfig::shell(script~ : String, cwd? : String) -> Self
+
+pub(all) struct PiNativeTransportRequest {
+  session_id : String
+  lines : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn PiNativeTransportRequest::from_commands(Array[@app.PiTransportCommand]) -> Self
 
 pub(all) struct PiNativeTransportRun {
   events : Array[@app.PiTransportEvent]

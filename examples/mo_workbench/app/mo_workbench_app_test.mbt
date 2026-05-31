@@ -5,14 +5,44 @@ test "workbench dispatch queues prompt for selected session" {
     .update(DispatchPrompt)
   inspect(model.prompt, content="")
   inspect(model.last_status, content="Queued prompt for Pi JSONL RPC")
-  inspect(model.pending_transport_count(), content="1")
+  inspect(model.pending_transport_count(), content="2")
   match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
     SendUserInput(session, text) => {
       inspect(session, content="moui-skia")
       inspect(text, content="Inspect the Skia renderer route")
     }
     _ => fail("expected queued user input")
   }
+}
+
+///|
+test "workbench transport runtime effect dispatches prompt events" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"user_input\"}"))
+    emit(JsonLineReceived("moui-skia", "{\"event\":\"done\"}"))
+  })
+  let update = WorkbenchModel::new()
+    .update(PromptChanged("Summarize the staged diff"))
+    .update_with_transport(DispatchPrompt, transport)
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.last_json_line, content="{\"event\":\"done\"}")
+  assert_true(
+    model.events.any(event => event.title == "JSONL received: moui-skia"),
+  )
 }
 
 ///|
@@ -60,4 +90,23 @@ fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is DrawText({ text: value, .. }) && value == text
   })
+}
+
+///|
+fn run_workbench_effect(update : WorkbenchUpdate) -> WorkbenchModel {
+  let model = @core.State::new(update.model)
+  let dispatch = message => model.set(model.get().update(message))
+  match update.effect {
+    @core.Effect::NoEffect => ()
+    @core.Effect::Batch(effects) =>
+      for effect in effects {
+        let next = run_workbench_effect(
+          WorkbenchUpdate::new(model.get(), effect~),
+        )
+        model.set(next)
+      }
+    @core.Effect::Send(message) => dispatch(message)
+    @core.Effect::Dispatch(run) => run(dispatch)
+  }
+  model.get()
 }

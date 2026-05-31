@@ -9,6 +9,8 @@ import {
 // Values
 pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
 
+pub fn runtime_with_transport(PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
+
 pub fn update(WorkbenchModel, WorkbenchMsg) -> WorkbenchModel
 
 pub fn view(WorkbenchModel) -> @core.View[WorkbenchMsg]
@@ -54,11 +56,12 @@ pub struct MoWorkbenchApp {
 }
 pub fn MoWorkbenchApp::new() -> Self
 pub fn MoWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn MoWorkbenchApp::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
 
 pub(all) enum PiTransportCommand {
-  StartRpc(String)
+  StartRpc(String, String)
   SendUserInput(String, String)
-  CancelRun(String)
+  CancelRpcRun(String)
   Shutdown
 } derive(Eq, @debug.Debug)
 pub fn PiTransportCommand::label(Self) -> String
@@ -78,6 +81,15 @@ pub(all) enum PiTransportKind {
 } derive(Eq, @debug.Debug)
 pub fn PiTransportKind::label(Self) -> String
 
+pub struct PiTransportRuntime {
+  // private fields
+}
+pub fn PiTransportRuntime::dispatch(Self, Array[PiTransportCommand], (PiTransportEvent) -> Unit) -> Unit
+pub fn[Msg] PiTransportRuntime::effect(Self, Array[PiTransportCommand], (PiTransportEvent) -> Msg) -> @core.Effect[Msg]
+pub fn PiTransportRuntime::fixture(events~ : (Array[PiTransportCommand]) -> Array[PiTransportEvent]) -> Self
+pub fn PiTransportRuntime::new(run~ : (Array[PiTransportCommand], (PiTransportEvent) -> Unit) -> Unit) -> Self
+pub fn PiTransportRuntime::unavailable(reason? : String) -> Self
+
 pub(all) struct PiTransportState {
   kind : PiTransportKind
   status : PiTransportStatus
@@ -86,6 +98,7 @@ pub(all) struct PiTransportState {
 } derive(Eq, @debug.Debug)
 pub fn PiTransportState::apply_event(Self, PiTransportEvent) -> Self
 pub fn PiTransportState::enqueue(Self, PiTransportCommand) -> Self
+pub fn PiTransportState::enqueue_many(Self, Array[PiTransportCommand]) -> Self
 pub fn PiTransportState::new() -> Self
 pub fn PiTransportState::status_label(Self) -> String
 
@@ -125,7 +138,9 @@ pub fn WorkbenchModel::new() -> Self
 pub fn WorkbenchModel::open_diagnostic_count(Self) -> Int
 pub fn WorkbenchModel::pending_transport_count(Self) -> Int
 pub fn WorkbenchModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn WorkbenchModel::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn WorkbenchModel::update(Self, WorkbenchMsg) -> Self
+pub fn WorkbenchModel::update_with_transport(Self, WorkbenchMsg, PiTransportRuntime) -> WorkbenchUpdate
 pub fn WorkbenchModel::view(Self) -> @core.View[WorkbenchMsg]
 
 pub(all) enum WorkbenchMsg {
@@ -152,6 +167,13 @@ pub(all) struct WorkbenchSession {
   unread_events : Int
 } derive(Eq, @debug.Debug)
 pub fn WorkbenchSession::new(id~ : String, title~ : String, project_path~ : String, branch~ : String, status~ : String, summary~ : String, active_task~ : String, unread_events~ : Int) -> Self
+
+pub(all) struct WorkbenchUpdate {
+  model : WorkbenchModel
+  effect : @core.Effect[WorkbenchMsg]
+}
+pub fn WorkbenchUpdate::as_tuple(Self) -> (WorkbenchModel, @core.Effect[WorkbenchMsg])
+pub fn WorkbenchUpdate::new(WorkbenchModel, effect? : @core.Effect[WorkbenchMsg]) -> Self
 
 // Type aliases
 
