@@ -495,8 +495,11 @@ fn main {
     image_filter_descriptor.resource_descriptor(),
     mask_filter_descriptor.resource_descriptor(),
   ]
+  let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    replay_size,
+  )
   let replay_commands = @skia.RenderCommandList::for_target(
-      @skia.SurfaceTargetDescriptor::raster_n32_premul(replay_size),
+      replay_target,
     )
     .declare_resources(replay_resource_descriptors)
     .clear(@skia.Color::white())
@@ -523,6 +526,15 @@ fn main {
     replay_plan.byte_size <= 0L {
     fail_smoke("native render resource plan did not match command list")
   }
+  let replay_frame = replay_commands.frame_descriptor(replay_target)
+  if !replay_frame.is_ready() ||
+    replay_frame.resource_plan.length() != 7 ||
+    !replay_frame.resource_plan.contains_key(replay_target.resource_key()) ||
+    replay_frame.resource_plan.contains_key(
+      replay_frame.command_list.pass.resource_descriptor().key,
+    ) {
+    fail_smoke("native render frame descriptor did not match target resource plan")
+  }
   let replay_stats = replay_canvas.replay(
     replay_commands,
     font=Some(replay_font),
@@ -542,6 +554,8 @@ fn main {
   println(replay_stats.command_count)
   println("native smoke render resource plan count")
   println(replay_plan.length())
+  println("native smoke render frame resource plan count")
+  println(replay_frame.resource_plan.length())
 
   guard surface.image_snapshot() is Some(image) else {
     fail_smoke("failed to snapshot surface")

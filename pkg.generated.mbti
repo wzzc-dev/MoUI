@@ -788,6 +788,7 @@ pub fn RenderCommandList::draw_text_run_utf8(Self, Bytes, Point, descriptor? : T
 pub fn RenderCommandList::draw_text_utf8(Self, Bytes, Point, paint? : Paint) -> Self
 pub fn RenderCommandList::finish(Self) -> Self
 pub fn RenderCommandList::for_target(SurfaceTargetDescriptor, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp?) -> Self
+pub fn RenderCommandList::frame_descriptor(Self, SurfaceTargetDescriptor) -> RenderFrameDescriptor
 pub fn RenderCommandList::has_present(Self) -> Bool
 pub fn RenderCommandList::is_empty(Self) -> Bool
 pub fn RenderCommandList::is_state_balanced(Self) -> Bool
@@ -816,6 +817,20 @@ pub(all) struct RenderCommandStats {
 } derive(Eq, @debug.Debug)
 pub fn RenderCommandStats::empty() -> Self
 pub fn RenderCommandStats::is_state_balanced(Self) -> Bool
+
+pub(all) struct RenderFrameDescriptor {
+  target : SurfaceTargetDescriptor
+  command_list : RenderCommandList
+  resource_plan : RendererResourcePlan
+  stats : RenderCommandStats
+  touched_bounds : Rect?
+} derive(Eq, @debug.Debug)
+pub fn RenderFrameDescriptor::empty(SurfaceTargetDescriptor) -> Self
+pub fn RenderFrameDescriptor::has_present(Self) -> Bool
+pub fn RenderFrameDescriptor::is_ready(Self) -> Bool
+pub fn RenderFrameDescriptor::is_target_consistent(Self) -> Bool
+pub fn RenderFrameDescriptor::needs_present(Self) -> Bool
+pub fn RenderFrameDescriptor::new(SurfaceTargetDescriptor, RenderCommandList) -> Self
 
 pub(all) struct RenderPassDescriptor {
   surface : SurfaceDescriptor
