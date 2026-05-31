@@ -229,11 +229,12 @@ bash scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
 On an already prepared Ubuntu runner,
 `bash scripts/install-linux-smoke-deps.sh --check` verifies the same apt package
 set that the workflow installs before spending time on native smoke work. This
-includes `wayland-protocols`, which `wzzc-dev/window` needs while preparing the
-native smoke dependency graph. The Linux source-build defaults install `clang`
-plus fontconfig/FreeType/HarfBuzz development headers and pass `cc="clang"` /
-`cxx="clang++"` to Skia GN so the smoke build does not depend on the runner's
-default C++ compiler.
+includes `libwayland-dev`, `libwayland-bin`, and `wayland-protocols`, which
+`wzzc-dev/window` needs while preparing the native smoke dependency graph and
+generating the xdg-shell client header. The Linux source-build defaults install
+`clang` plus fontconfig/FreeType/HarfBuzz development headers and pass
+`cc="clang"` / `cxx="clang++"` to Skia GN so the smoke build does not depend on
+the runner's default C++ compiler.
 
 When `--skia-rev` is omitted, the Linux source-build helpers read
 `skia-revision.txt`. Keep that file on a known-good Skia commit after the first
