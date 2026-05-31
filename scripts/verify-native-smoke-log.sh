@@ -74,7 +74,22 @@ default_stage_markers=(
 )
 
 default_expected_stage_values=(
+  $'native smoke render resource plan count\t9'
+  $'native smoke render frame resource plan count\t9'
+  $'native smoke render frame validation status\t1'
+  $'native smoke render frame cache resources\t9'
+  $'native smoke render resource cache inserts\t9'
+  $'native smoke gpu context resource plan count\t2'
+  $'native smoke gpu frame context validation\t1'
+  $'native smoke surface target resource plan count\t2'
+  $'native smoke window target resource plan count\t1'
+  $'native smoke shader draws\t3'
+  $'native smoke shader resource plan count\t3'
+  $'native smoke filter resource plan count\t3'
   $'native smoke text run resource plan count\t3'
+  $'native smoke font resource plan count\t1'
+  $'native smoke font fallback resource plan count\t1'
+  $'native smoke font fallback font resource plan count\t2'
 )
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
