@@ -9,6 +9,8 @@ Runs the Linux source-built real Skia smoke acceptance, verifies the complete
 artifact bundle with a required 40-character Skia commit, and pins
 skia-revision.txt to that accepted commit. Pass --accept-platform-status to
 also mark Linux accepted in skia-platform-status.json after the pin verifies.
+The acceptance wrapper records both a dry-run preflight log and the real smoke
+logs before the artifact verifier runs.
 
 Options handled by this wrapper:
   --log-dir PATH             Directory for acceptance logs. Default: logs.
