@@ -261,6 +261,7 @@ pub(all) enum WorkbenchMsg {
   DispatchPrompt
   InvokeCommand(String)
   FollowTranscript(String, String, String)
+  FollowActivity(String, String, String)
   InspectFile(String)
   ReviewDiff
   RefreshSession

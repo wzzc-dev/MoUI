@@ -89,6 +89,11 @@ packages:
   Pi through the existing platform-neutral `SendUserInput` path, so visible
   conversation evidence can become the next agent action without native-only
   transport.
+- Activity timeline rows can queue a
+  `Follow up on <phase> activity: ...` prompt through the same
+  `SendUserInput` path, so visible Pi RPC, stderr, tool, and stream events can
+  become the next agent action without adding event-specific transport
+  commands.
 - File context rows in the Workspace digest can queue an `Inspect <path>`
   prompt for Pi. The action reuses the platform-neutral `SendUserInput` command
   so file evidence becomes an agent workflow entrypoint without native-only
@@ -121,7 +126,8 @@ packages:
   RPC `bash` encoder instead of adding a separate native shortcut.
 - The Activity digest surfaces the latest shared-app timeline event, so Pi RPC,
   streaming agent, tool, and stderr progress stays visible next to command
-  evidence without opening a separate log view.
+  evidence without opening a separate log view. The visible event can also be
+  sent back as a follow-up prompt through the shared app command path.
 - Session selection now refreshes Pi messages after state binding. The shared
   app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
   records so the conversation surface can replay user, assistant, tool result,
