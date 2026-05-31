@@ -132,6 +132,7 @@ if schema_version >= 4:
         "moonbit.fmt-check",
         "moonbit.check-test",
         "native.smoke-build",
+        "native.smoke-capability-sync",
         "native.ownership",
         "native.ffi-borrows",
         "platform.status",

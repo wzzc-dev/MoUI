@@ -64,6 +64,7 @@ if ($status.schema_version -ge 4) {
     "moonbit.fmt-check",
     "moonbit.check-test",
     "native.smoke-build",
+    "native.smoke-capability-sync",
     "native.ownership",
     "native.ffi-borrows",
     "platform.status",
