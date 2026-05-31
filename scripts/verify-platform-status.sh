@@ -229,6 +229,7 @@ if schema_version >= 3:
         "fontmgr.typeface-family",
         "fontmgr.character-fallback",
         "fontmgr.fallback-resource-plan",
+        "fontmgr.fallback-font-resource-plan",
     }
     seen_ids = set()
     seen_markers = set()

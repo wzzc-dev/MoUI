@@ -970,6 +970,16 @@ fn main {
   }
   println("native smoke font resource plan count")
   println(font_plan.length())
+  let fallback_font_plan = fallback_request.resource_plan(size=8.0)
+  if fallback_font_plan.length() != 2 ||
+    fallback_font_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    fallback_font_plan.count_kind(@skia.FontResource) != 1 ||
+    fallback_font_plan.cacheable_count != 2 ||
+    fallback_font_plan.byte_size <= font_plan.byte_size {
+    fail_smoke("native fallback font resource plan is invalid")
+  }
+  println("native smoke font fallback font resource plan count")
+  println(fallback_font_plan.length())
   let fallback_width = fallback_font.measure_text_utf8(smoke_text_bytes())
   if fallback_width <= 0.0 {
     fail_smoke("native font fallback request font did not measure text")
