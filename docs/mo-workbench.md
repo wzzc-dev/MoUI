@@ -57,11 +57,37 @@ packages:
 - A macOS Skia entrypoint wired to `PiNativeTransportConfig::pi().runtime()`.
 - Conversation-first workbench UI that keeps command evidence, file context,
   diff review, transport status, and the next prompt in one visible flow.
+- Structured Pi JSONL ingestion for coding-agent evidence:
+  `command_started`, `command_finished`, `diagnostic`, `file_context`, and
+  `diff_summary` payloads update the shared model, timeline, diagnostics,
+  file context, and diff overview while still preserving raw JSONL transport
+  events.
 
 The remaining V1 transport boundary is true long-lived lifecycle ownership:
 the native transport can now keep one process alive inside async tests, and the
 next slice should make the macOS app own that session without blocking the
 native window loop.
+
+## Pi JSONL Workbench Events
+
+The app treats Pi stdout as transport evidence first and product state second.
+Every `JsonLineReceived(session, line)` updates `PiTransportState` with the raw
+line. If the line is a supported JSON object, the app also applies a typed
+Workbench update:
+
+```json
+{"type":"command_started","id":9,"command":"moon check","cwd":"/repo","status":"running"}
+{"type":"command_finished","id":9,"exit_code":0}
+{"type":"diagnostic","source":"moon check","severity":"warning","message":"unused value"}
+{"type":"file_context","id":"app","path":"examples/mo_workbench/app/app.mbt","summary":"Reducer update","change_kind":"modified","lines_changed":12}
+{"type":"diff_summary","changed_files":6,"additions":180,"deletions":12,"status":"requires_review"}
+```
+
+Malformed or unsupported lines are intentionally ignored by the product model
+after the raw transport event is recorded. This keeps the platform-neutral
+`PiTransportEvent` contract stable for native, Web, and fixture transports
+while allowing the Workbench app to grow coding-agent affordances at the
+application layer.
 
 ## Skia Native-First Notes
 

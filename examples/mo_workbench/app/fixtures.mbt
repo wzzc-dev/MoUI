@@ -134,6 +134,16 @@ fn sample_files() -> Array[FileContext] {
 }
 
 ///|
+fn sample_diff_overview() -> DiffOverview {
+  DiffOverview::new(
+    changed_files=5,
+    additions=160,
+    deletions=10,
+    status="ready for review",
+  )
+}
+
+///|
 fn sample_commands() -> Array[CommandRun] {
   [
     CommandRun::new(

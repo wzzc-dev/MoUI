@@ -58,6 +58,86 @@ test "workbench applies transport events to model timeline" {
 }
 
 ///|
+test "workbench ingests structured Pi command jsonl" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"command_started","id":9,"command":"moon check","cwd":"/repo","status":"running"}
+        ),
+      ),
+    ),
+  )
+  let command = model.commands[model.commands.length() - 1]
+  inspect(command.id, content="9")
+  inspect(command.command, content="moon check")
+  inspect(command.cwd, content="/repo")
+  inspect(command.status, content="running")
+  inspect(model.last_status, content="Pi command update applied")
+  assert_true(
+    model.events.any(event => event.title == "Command started: moon check"),
+  )
+}
+
+///|
+test "workbench ingests Pi diagnostics files and diff jsonl" {
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"diagnostic","source":"moon check","severity":"error","message":"unused variable in app.mbt"}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"file_context","id":"jsonl","path":"examples/mo_workbench/app/pi_jsonl_ingest.mbt","summary":"Structured Pi event ingestion","change_kind":"added","lines_changed":140}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"diff_summary","changed_files":6,"additions":180,"deletions":12,"status":"requires_review"}
+          ),
+        ),
+      ),
+    )
+  let diagnostic = model.diagnostics[model.diagnostics.length() - 1]
+  inspect(diagnostic.source, content="moon check")
+  inspect(diagnostic.severity, content="error")
+  inspect(diagnostic.message, content="unused variable in app.mbt")
+  let file = model.files[model.files.length() - 1]
+  inspect(file.path, content="examples/mo_workbench/app/pi_jsonl_ingest.mbt")
+  inspect(file.change_kind, content="added")
+  inspect(file.lines_changed, content="140")
+  inspect(model.diff.changed_files, content="6")
+  inspect(model.diff.additions, content="180")
+  inspect(model.diff.deletions, content="12")
+  inspect(model.last_status, content="Pi diff summary applied")
+  assert_true(model.events.any(event => event.title == "Diff summary updated"))
+}
+
+///|
+test "workbench ignores non-json Pi lines without losing raw transport state" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(JsonLineReceived("moui-skia", "not-json")),
+  )
+  inspect(model.transport.last_json_line, content="not-json")
+  inspect(model.last_status, content="Pi transport event received")
+}
+
+///|
 test "workbench command completion updates command table state" {
   let model = WorkbenchModel::new().update(QueueCommand("moon check"))
   let command_id = model.commands.length()
