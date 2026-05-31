@@ -1314,3 +1314,17 @@ moonbit_skia_typeface_is_fixed_pitch(MoonbitSkiaTypeface* wrapper) {
   return 0;
 #endif
 }
+
+extern "C" MOONBIT_FFI_EXPORT moonbit_bytes_t
+moonbit_skia_typeface_family_name(MoonbitSkiaTypeface* wrapper) {
+  if (wrapper == nullptr || wrapper->typeface == nullptr) {
+    return moonbit_make_bytes(0, 0);
+  }
+#if defined(SKIA_MBT_HAS_SKIA)
+  SkString family_name;
+  wrapper->typeface->getFamilyName(&family_name);
+  return moonbit_skia_make_bytes_from_sk_string(family_name);
+#else
+  return moonbit_make_bytes(0, 0);
+#endif
+}

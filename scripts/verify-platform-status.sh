@@ -215,6 +215,8 @@ if schema_version >= 3:
         "text.bounds",
         "fontmgr.family-count",
         "fontmgr.family-name",
+        "fontmgr.typeface-family",
+        "fontmgr.character-fallback",
     }
     seen_ids = set()
     seen_markers = set()

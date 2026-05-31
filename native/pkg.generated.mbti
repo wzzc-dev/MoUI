@@ -271,6 +271,7 @@ pub(all) struct Typeface {
   // private fields
 }
 pub fn Typeface::default() -> Self?
+pub fn Typeface::family_name(Self) -> Bytes?
 pub fn Typeface::from_font_mgr_family(FontMgr, Bytes, weight? : Int, width? : Int, slant? : Int) -> Self?
 pub fn Typeface::from_font_mgr_request(FontMgr, @skia_mbt.FontFallbackRequest) -> Self?
 pub fn Typeface::from_name(Bytes, weight? : Int, width? : Int, slant? : Int) -> Self?
