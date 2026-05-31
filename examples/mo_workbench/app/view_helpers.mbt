@@ -269,6 +269,7 @@ fn WorkbenchModel::chat_transcript(
   column(
     [
       self.assistant_summary(theme),
+      self.transcript_panel(theme),
       self.command_block(theme),
       self.status_paragraph(theme),
       self.file_attachment_card(
@@ -283,6 +284,104 @@ fn WorkbenchModel::chat_transcript(
     spacing=12.0,
     align=Center,
   )
+}
+
+///|
+fn WorkbenchModel::transcript_panel(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  let mut visible = 0
+  for item in self.transcript {
+    if visible < 3 {
+      rows.push(transcript_row(item, theme))
+      visible = visible + 1
+    }
+  }
+  if rows.is_empty() {
+    rows.push(
+      text(
+        "No Pi messages loaded yet",
+        role=Caption,
+        theme~,
+        width=650.0,
+        height=28.0,
+      ),
+    )
+  }
+  surface(
+    column(
+      [
+        row(
+          [
+            text(
+              "Pi transcript",
+              role=Control,
+              theme~,
+              width=520.0,
+              height=28.0,
+            ),
+            badge(
+              self.transcript.length().to_string() + " messages",
+              tone=Neutral,
+              theme~,
+              width=116.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
+        ),
+        column(rows, spacing=6.0, align=Start),
+      ],
+      spacing=8.0,
+      align=Start,
+    ),
+    width=690.0,
+    height=178.0,
+    background=@core.Color::white(),
+    corner_radius=10.0,
+    theme~,
+    padding=12.0,
+  )
+}
+
+///|
+fn transcript_row(
+  item : TranscriptItem,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge(
+        item.role,
+        tone=transcript_badge_tone(item.tone),
+        theme~,
+        width=104.0,
+      ),
+      column(
+        [
+          text(item.summary, role=Control, theme~, width=520.0, height=24.0),
+          text(item.detail, role=Caption, theme~, width=520.0, height=22.0),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+    ],
+    spacing=10.0,
+    align=Center,
+  )
+}
+
+///|
+fn transcript_badge_tone(tone : String) -> @views.BadgeTone {
+  match tone {
+    "success" => Success
+    "warning" => Warning
+    "danger" => Danger
+    "info" => Accent
+    _ => Neutral
+  }
 }
 
 ///|
