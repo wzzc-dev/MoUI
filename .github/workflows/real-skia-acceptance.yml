@@ -245,24 +245,24 @@ jobs:
               $envMap[$Matches[1]] = $Matches[2]
             }
           }
-          $acceptArgs = @(
-            "-LogDir", "logs",
-            "-SkiaRoot", $envMap["SKIA_MBT_SKIA_ROOT"],
-            "-SkiaInclude", $envMap["SKIA_MBT_SKIA_INCLUDE"],
-            "-SkiaLibDir", $envMap["SKIA_MBT_SKIA_LIB_DIR"],
-            "-SkiaProvider", "jetbrains",
-            "-JetBrainsTag", $envMap["SKIA_MBT_JETBRAINS_TAG"],
-            "-SkiaCommit", $envMap["SKIA_MBT_SKIA_COMMIT"],
-            "-SkiaPackage", $envMap["SKIA_MBT_SKIA_PACKAGE"],
-            "-SkiaPackageSha256", $envMap["SKIA_MBT_SKIA_PACKAGE_SHA256"],
-            "-VcVarsAll", $env:VCVARSALL,
-            "-VcArch", "x64"
-          )
+          $acceptArgs = @{
+            LogDir = "logs"
+            SkiaRoot = $envMap["SKIA_MBT_SKIA_ROOT"]
+            SkiaInclude = $envMap["SKIA_MBT_SKIA_INCLUDE"]
+            SkiaLibDir = $envMap["SKIA_MBT_SKIA_LIB_DIR"]
+            SkiaProvider = "jetbrains"
+            JetBrainsTag = $envMap["SKIA_MBT_JETBRAINS_TAG"]
+            SkiaCommit = $envMap["SKIA_MBT_SKIA_COMMIT"]
+            SkiaPackage = $envMap["SKIA_MBT_SKIA_PACKAGE"]
+            SkiaPackageSha256 = $envMap["SKIA_MBT_SKIA_PACKAGE_SHA256"]
+            VcVarsAll = $env:VCVARSALL
+            VcArch = "x64"
+          }
           if (![string]::IsNullOrWhiteSpace($envMap["SKIA_MBT_EXTRA_CC_FLAGS"])) {
-            $acceptArgs += @("-ExtraCcFlags", $envMap["SKIA_MBT_EXTRA_CC_FLAGS"])
+            $acceptArgs["ExtraCcFlags"] = $envMap["SKIA_MBT_EXTRA_CC_FLAGS"]
           }
           if (![string]::IsNullOrWhiteSpace($envMap["SKIA_MBT_EXTRA_LINK_FLAGS"])) {
-            $acceptArgs += @("-ExtraLinkFlags", $envMap["SKIA_MBT_EXTRA_LINK_FLAGS"])
+            $acceptArgs["ExtraLinkFlags"] = $envMap["SKIA_MBT_EXTRA_LINK_FLAGS"]
           }
           .\scripts\windows-msvc-accept-real-skia-smoke.ps1 @acceptArgs
 
