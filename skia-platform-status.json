@@ -203,6 +203,11 @@
       "id": "fontmgr.character-fallback",
       "area": "FontMgr",
       "marker": "native smoke font fallback width"
+    },
+    {
+      "id": "fontmgr.fallback-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback resource plan count"
     }
   ],
   "platforms": {

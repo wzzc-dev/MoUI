@@ -869,6 +869,17 @@ fn main {
     bcp47=[b"en"],
     character=0x53,
   )
+  let fallback_plan = @skia.RendererResourcePlan::new([
+    fallback_request.resource_descriptor(),
+  ])
+  if fallback_plan.length() != 1 ||
+    fallback_plan.cacheable_count != 1 ||
+    fallback_plan.uncacheable_count != 0 ||
+    fallback_plan.byte_size <= 0L {
+    fail_smoke("native font fallback resource plan is invalid")
+  }
+  println("native smoke font fallback resource plan count")
+  println(fallback_plan.length())
   guard font_mgr.match_fallback_request(fallback_request)
     is Some(fallback_typeface) else {
     fail_smoke("native font manager did not match a fallback request")
