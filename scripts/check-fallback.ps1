@@ -676,6 +676,19 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingCapabilityAreaStatus } `
       -ExpectedMessage "native smoke capability coverage is missing areas: Bitmap"
 
+    $fakeMissingArtifactLogStatus = Join-Path $dryRunRoot "fake-platform-status-missing-artifact-log.json"
+    $missingArtifactLogStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
+    $missingArtifactLogStatus.platforms.linux.required_artifact_logs = @(
+      $missingArtifactLogStatus.platforms.linux.required_artifact_logs |
+        Where-Object { $_ -ne "linux-native-smoke-output.log" }
+    )
+    $missingArtifactLogStatus |
+      ConvertTo-Json -Depth 20 |
+      Set-Content -LiteralPath $fakeMissingArtifactLogStatus
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingArtifactLogStatus } `
+      -ExpectedMessage "platform status required_artifact_logs do not match expected contract: linux"
+
     & (Join-Path $repoRoot "scripts/verify-platform-status.ps1")
   } finally {
     $resolvedDryRunRoot = Resolve-Path -LiteralPath $dryRunRoot -ErrorAction SilentlyContinue

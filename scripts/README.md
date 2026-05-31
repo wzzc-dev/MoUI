@@ -17,7 +17,8 @@ same Surface, Canvas, Pipeline, GPU, Shader, Filter, Path, Image, Codec, Bitmap,
 Text, and FontMgr boundaries that the platform status file claims.
 `verify-platform-status.*` also reads `ci_gate_evidence_files` and rejects a
 status file when any `ci_gates` verifier script or MoonBit command fragment is
-not present in the checked-in workflow/fallback-helper evidence corpus.
+not present in the checked-in workflow/fallback-helper evidence corpus. The same
+check pins each platform to the exact artifact log names required for acceptance.
 
 Native handle ownership is tracked separately in `../native/ownership.json`.
 Run `bash scripts/verify-native-ownership.sh` or

@@ -364,6 +364,31 @@ for platform in platforms:
         fail(f"platform status is missing required platform: {platform}")
 
 accepted_platforms = []
+expected_artifact_logs = {
+    "linux": [
+        "linux-real-skia-smoke-preflight.log",
+        "linux-real-skia-smoke.log",
+        "linux-native-smoke-output.log",
+        "linux-real-skia-acceptance.log",
+    ],
+    "macos": [
+        "macos-real-skia-smoke-preflight.log",
+        "macos-real-skia-smoke.log",
+        "macos-native-smoke-output.log",
+        "macos-real-skia-acceptance.log",
+    ],
+    "windows": [
+        "windows-real-skia-smoke-preflight.log",
+        "windows-real-skia-smoke.log",
+        "windows-native-smoke-output.log",
+        "windows-real-skia-acceptance.log",
+    ],
+}
+expected_verifiers = {
+    "linux": "scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs",
+    "macos": "scripts/verify-real-skia-artifact.sh --platform macos --log-dir logs",
+    "windows": "scripts/verify-real-skia-artifact.ps1 -Platform windows -LogDir logs",
+}
 for platform in platforms:
     entry = platform_entries[platform]
     if not isinstance(entry, dict):
@@ -374,10 +399,11 @@ for platform in platforms:
         fail(f"platform accepted flag must be boolean: {platform}")
     if not entry.get("state"):
         fail(f"platform status is missing state: {platform}")
-    if len(entry.get("required_artifact_logs") or []) < 3:
-        fail(f"platform status does not list enough artifact logs: {platform}")
-    if not entry.get("required_verifier"):
-        fail(f"platform status is missing required verifier: {platform}")
+    required_artifact_logs = entry.get("required_artifact_logs")
+    if not isinstance(required_artifact_logs, list) or required_artifact_logs != expected_artifact_logs[platform]:
+        fail(f"platform status required_artifact_logs do not match expected contract: {platform}")
+    if entry.get("required_verifier") != expected_verifiers[platform]:
+        fail(f"platform status required_verifier does not match expected verifier: {platform}")
     if not entry.get("next_step"):
         fail(f"platform status is missing next step: {platform}")
 
