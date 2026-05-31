@@ -246,6 +246,7 @@ if ($status.schema_version -ge 3) {
     "pipeline.frame-cache-resources",
     "pipeline.resource-cache",
     "gpu.context-resource-plan",
+    "gpu.frame-context-validation",
     "surface.target-resource-plan",
     "surface.window-target-resource-plan",
     "shader.draw",

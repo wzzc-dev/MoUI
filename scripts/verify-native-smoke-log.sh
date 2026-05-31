@@ -39,6 +39,7 @@ default_stage_markers=(
   "native smoke render frame cache resources" \
   "native smoke render resource cache inserts" \
   "native smoke gpu context resource plan count" \
+  "native smoke gpu frame context validation" \
   "native smoke surface target resource plan count" \
   "native smoke window target resource plan count" \
   "native smoke shader draws" \

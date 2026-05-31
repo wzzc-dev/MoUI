@@ -114,6 +114,11 @@
       "marker": "native smoke gpu context resource plan count"
     },
     {
+      "id": "gpu.frame-context-validation",
+      "area": "GPU",
+      "marker": "native smoke gpu frame context validation"
+    },
+    {
       "id": "surface.target-resource-plan",
       "area": "Surface",
       "marker": "native smoke surface target resource plan count"
