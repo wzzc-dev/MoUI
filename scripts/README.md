@@ -20,6 +20,9 @@ Run `bash scripts/verify-native-ownership.sh` or
 MoonBit handle declarations, or finalizers. The verifier rejects undeclared
 external wrapper factories, missing finalizers, and release code that no longer
 matches the declared `delete`, Skia `unref`, or borrowed-owner contract.
+`verify-native-ffi-borrows.*` complements that C++ check on the MoonBit side by
+requiring every non-primitive `extern "C"` parameter in `native/*_native.mbt` to
+appear in `#borrow(...)` or `#owned(...)`.
 
 ## JetBrains/skia provider
 
