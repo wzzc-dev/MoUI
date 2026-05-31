@@ -80,6 +80,11 @@
       "marker": "native smoke render frame resource plan count"
     },
     {
+      "id": "pipeline.resource-cache",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache inserts"
+    },
+    {
       "id": "gpu.context-resource-plan",
       "area": "GPU",
       "marker": "native smoke gpu context resource plan count"

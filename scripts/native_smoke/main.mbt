@@ -535,6 +535,17 @@ fn main {
     ) {
     fail_smoke("native render frame descriptor did not match target resource plan")
   }
+  let replay_resource_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @skia.RendererResourceDescriptor,
+  ] = @skia.ResourceCache::new(max_bytes=replay_frame.resource_plan.byte_size)
+  let replay_cache_inserts = replay_resource_cache.insert_resource_plan(
+    replay_frame.resource_plan,
+  )
+  if replay_cache_inserts != replay_frame.resource_plan.cacheable_count ||
+    replay_resource_cache.byte_size() != replay_frame.resource_plan.byte_size {
+    fail_smoke("native render frame resources did not populate the resource cache")
+  }
   let replay_stats = replay_canvas.replay(
     replay_commands,
     font=Some(replay_font),
@@ -556,6 +567,8 @@ fn main {
   println(replay_plan.length())
   println("native smoke render frame resource plan count")
   println(replay_frame.resource_plan.length())
+  println("native smoke render resource cache inserts")
+  println(replay_cache_inserts)
 
   guard surface.image_snapshot() is Some(image) else {
     fail_smoke("failed to snapshot surface")
