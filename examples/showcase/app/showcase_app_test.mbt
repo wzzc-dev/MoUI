@@ -434,12 +434,12 @@ fn has_shader_effect(
 }
 
 ///|
-test "showcase text diagnostics keeps key labels bounded" {
+test "showcase text diagnostics keeps key labels and frame clip sample bounded" {
   let runtime = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("text-diagnostics"))
-    .runtime(width=760.0, height=420.0)
+    .runtime(width=960.0, height=620.0)
   let commands = runtime.draw_commands()
-  let size = @core.Size::new(width=760.0, height=420.0)
+  let size = @core.Size::new(width=960.0, height=620.0)
   assert_true(text_within(commands, "Text Diagnostics", size))
   assert_true(text_within(commands, "CJK", size))
   assert_true(text_within(commands, "RTL / Bidi", size))
@@ -449,6 +449,17 @@ test "showcase text diagnostics keeps key labels bounded" {
   assert_true(has_text_containing(commands, "中文混排"))
   assert_true(has_text_containing(commands, "שלום עולם"))
   assert_true(has_text(commands, "Wrapping"))
+  assert_true(has_text(commands, "Text Frame Clip"))
+  guard text_frame(
+      commands, "Sphinx of black quartz, judge my vexing MoUI layout preview.",
+    )
+    is Some(frame) else {
+    fail("expected bounded TextRun sample frame")
+  }
+  assert_true(frame.size.width <= 88.0)
+  assert_true(frame.size.height <= 28.0)
+  assert_true(frame.origin.x + frame.size.width <= size.width)
+  assert_true(frame.origin.y + frame.size.height <= size.height)
 }
 
 ///|

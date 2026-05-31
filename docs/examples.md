@@ -96,7 +96,8 @@ development workflows:
 - `Advanced Rendering`: app-local `custom_layout` demos for layer/blend,
   filter, shader effect, path, transform, and opacity draw commands.
 - `Text Diagnostics`: CJK mixed text, RTL/bidi samples, emoji status labels,
-  fixed-width wrapping, and a compact Markdown/rich text diagnostic.
+  fixed-width wrapping, a narrow `TextRun.frame` clipping sample, and a compact
+  Markdown/rich text diagnostic.
 - `Interaction Lab`: tooltip, file-drop modifier wiring, focus/shortcut
   affordances, button/text-field variants, and deterministic image lifecycle
   states.
