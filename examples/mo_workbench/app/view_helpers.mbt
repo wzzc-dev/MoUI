@@ -375,6 +375,13 @@ fn WorkbenchModel::status_paragraph(
         width=690.0,
         height=24.0,
       ),
+      text(
+        "Pi agent: " + self.pi_agent.status_label(),
+        role=Caption,
+        theme~,
+        width=690.0,
+        height=24.0,
+      ),
     ],
     spacing=0.0,
     align=Start,

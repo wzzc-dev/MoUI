@@ -196,6 +196,141 @@ test "workbench turns Pi RPC error responses into diagnostics" {
 }
 
 ///|
+test "workbench ingests Pi streaming message lifecycle jsonl" {
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived("moui-skia", "{\"type\":\"agent_start\"}"),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia", "{\"type\":\"turn_start\",\"turnIndex\":2}",
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"message_update","message":{"role":"assistant","content":[{"type":"text","text":"Inspecting renderer route"}]},"assistantMessageEvent":{"type":"text_delta","delta":"Inspecting renderer route"}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"message_end","message":{"role":"assistant","content":[{"type":"text","text":"Renderer route inspected"}]}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"agent_end","messages":[{"role":"assistant","content":[{"type":"text","text":"Renderer route inspected"}]}],"willRetry":false}
+          ),
+        ),
+      ),
+    )
+  inspect(model.pi_agent.phase, content="idle")
+  inspect(model.pi_agent.turn_index, content="2")
+  inspect(model.pi_agent.message_role, content="assistant")
+  inspect(model.pi_agent.message_preview, content="Renderer route inspected")
+  let session = model.active_session()
+  inspect(session.status, content="active")
+  inspect(session.active_task, content="Pi agent run completed")
+  inspect(model.last_status, content="Pi agent completion applied")
+  assert_true(model.events.any(event => event.title == "Pi agent started"))
+  assert_true(
+    model.events.any(event => event.title == "Pi message update: assistant"),
+  )
+}
+
+///|
+test "workbench ingests Pi tool execution jsonl into command evidence" {
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"tool_execution_start","toolCallId":"call-bash-1","toolName":"bash","args":{"command":"moon test examples/mo_workbench/app --target native","cwd":"/Volumes/Data/Code/moon/MoUI"}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"tool_execution_end","toolCallId":"call-bash-1","toolName":"bash","result":{"details":{"exitCode":0},"content":[{"type":"text","text":"ok"}]},"isError":false}
+          ),
+        ),
+      ),
+    )
+  let command = model.commands[model.commands.length() - 1]
+  inspect(
+    command.command,
+    content="moon test examples/mo_workbench/app --target native",
+  )
+  inspect(command.cwd, content="/Volumes/Data/Code/moon/MoUI")
+  inspect(command.status, content="passed")
+  inspect(command.tool_call_id, content="call-bash-1")
+  match command.exit_code {
+    Some(code) => inspect(code, content="0")
+    None => fail("expected Pi tool exit code")
+  }
+  inspect(model.pi_agent.phase, content="tool complete")
+  inspect(model.pi_agent.active_tool_name, content="")
+  inspect(model.last_status, content="Pi tool execution completed")
+  assert_true(model.events.any(event => event.title == "Pi tool started: bash"))
+  assert_true(model.events.any(event => event.title == "Pi tool ended: bash"))
+}
+
+///|
+test "workbench ingests Pi queue and thinking session events" {
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"queue_update","steering":["stop"],"followUp":["run checks","update docs"]}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia", "{\"type\":\"thinking_level_changed\",\"level\":\"high\"}",
+        ),
+      ),
+    )
+  inspect(model.pi_agent.queued_steering, content="1")
+  inspect(model.pi_agent.queued_follow_up, content="2")
+  inspect(model.pi_agent.thinking_level, content="high")
+  inspect(model.pi_agent.status_label(), content="queue pending · queued 3")
+  let session = model.active_session()
+  inspect(session.status, content="running")
+  inspect(session.unread_events, content="3")
+  inspect(model.last_status, content="Pi thinking level applied")
+  assert_true(model.events.any(event => event.title == "Pi queue updated"))
+  assert_true(
+    model.events.any(event => event.title == "Pi thinking level changed"),
+  )
+}
+
+///|
 test "workbench ignores non-json Pi lines without losing raw transport state" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(JsonLineReceived("moui-skia", "not-json")),

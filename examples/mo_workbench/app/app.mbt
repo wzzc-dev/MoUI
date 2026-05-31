@@ -48,6 +48,7 @@ pub(all) struct CommandRun {
   cwd : String
   status : String
   exit_code : Int?
+  tool_call_id : String
 } derive(Eq, Debug)
 
 ///|
@@ -77,6 +78,19 @@ pub(all) struct PiRpcSnapshot {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct PiAgentSnapshot {
+  phase : String
+  turn_index : Int
+  message_role : String
+  message_preview : String
+  active_tool_call_id : String
+  active_tool_name : String
+  queued_steering : Int
+  queued_follow_up : Int
+  thinking_level : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
@@ -91,6 +105,7 @@ pub(all) struct WorkbenchModel {
   diagnostics : Array[DiagnosticItem]
   transport : PiTransportState
   pi_rpc : PiRpcSnapshot
+  pi_agent : PiAgentSnapshot
   last_status : String
 }
 
@@ -181,8 +196,9 @@ pub fn CommandRun::new(
   cwd~ : String,
   status~ : String,
   exit_code? : Int? = None,
+  tool_call_id? : String = "",
 ) -> CommandRun {
-  { id, command, cwd, status, exit_code }
+  { id, command, cwd, status, exit_code, tool_call_id }
 }
 
 ///|
@@ -226,6 +242,46 @@ pub fn PiRpcSnapshot::new(
 }
 
 ///|
+pub fn PiAgentSnapshot::new(
+  phase? : String = "idle",
+  turn_index? : Int = 0,
+  message_role? : String = "",
+  message_preview? : String = "",
+  active_tool_call_id? : String = "",
+  active_tool_name? : String = "",
+  queued_steering? : Int = 0,
+  queued_follow_up? : Int = 0,
+  thinking_level? : String = "",
+) -> PiAgentSnapshot {
+  {
+    phase,
+    turn_index,
+    message_role,
+    message_preview,
+    active_tool_call_id,
+    active_tool_name,
+    queued_steering,
+    queued_follow_up,
+    thinking_level,
+  }
+}
+
+///|
+pub fn PiAgentSnapshot::status_label(self : PiAgentSnapshot) -> String {
+  let tool = if self.active_tool_name == "" {
+    ""
+  } else {
+    " · tool " + self.active_tool_name
+  }
+  let queue = if self.queued_steering + self.queued_follow_up == 0 {
+    ""
+  } else {
+    " · queued " + (self.queued_steering + self.queued_follow_up).to_string()
+  }
+  self.phase + tool + queue
+}
+
+///|
 pub fn WorkbenchModel::new() -> WorkbenchModel {
   {
     selected_session_id: "moui-skia",
@@ -241,6 +297,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     diagnostics: sample_diagnostics(),
     transport: PiTransportState::new(),
     pi_rpc: PiRpcSnapshot::new(),
+    pi_agent: PiAgentSnapshot::new(),
     last_status: "Ready for Pi RPC",
   }
 }

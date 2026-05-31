@@ -49,7 +49,7 @@ fn sample_plan() -> Array[PlanStep] {
       title="Keep PiTransport platform-neutral",
       status="active",
       owner="agent",
-      detail="Route commands, stdout, stderr, process failures, and Pi RPC responses through app-level events.",
+      detail="Route commands, stdout, stderr, process failures, RPC responses, and streaming session events through app-level state.",
     ),
     PlanStep::new(
       id="skia",
@@ -183,7 +183,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="PiTransport",
       severity="watch",
-      message="Native owner speaks Pi RPC JSONL; Workbench ingests get_state responses, stderr, failures, and restart evidence.",
+      message="Native owner speaks Pi RPC JSONL; Workbench ingests get_state responses, streaming agent/tool events, stderr, failures, and restart evidence.",
     ),
     DiagnosticItem::new(
       source="Skia",
