@@ -76,12 +76,12 @@ packages:
   `backend/macos/skia.run_app_with_options_async_pump`, so the AppKit pump and
   Pi transport worker cooperate on the same native async loop.
 - Conversation-first workbench UI that keeps session state, transcript,
-  command evidence, command discovery, file context, diff review, transport
-  status, and the next prompt in one visible flow. The current shell avoids
-  screenshot-only filler: the old validation transcript, hard-coded shell
-  command block, fake attachment cards, copy/vote toolbar, and future-workflow
-  placeholder session were replaced with compact panels driven by
-  `WorkbenchModel` state.
+  command evidence, command discovery, file context, diff review, diagnostics,
+  transport status, and the next prompt in one visible flow. The current shell
+  avoids screenshot-only filler: the old validation transcript, hard-coded
+  shell command block, fake attachment cards, copy/vote toolbar, and
+  future-workflow placeholder session were replaced with compact panels driven
+  by `WorkbenchModel` state.
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
@@ -164,6 +164,9 @@ packages:
   live Pi session id, session file, display name, model, and binding status.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
+- The workspace digest surfaces the current diagnostics count and latest
+  diagnostic row, with a shared-app `ClearDiagnostics` action for clearing
+  visible Pi stderr/RPC/bash diagnostics without touching native process state.
 - Nonzero native process exits now emit `TransportFailed` with the exit code and
   the last stderr line, clear pending transport commands, and leave the app in a
   failed transport state instead of silently disconnecting.

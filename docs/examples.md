@@ -161,7 +161,9 @@ assistant transcripts, command evidence, diff/file context, and diagnostics.
 Its current UI keeps the first screen focused on live session state,
 transcript, a compact activity digest, and a compact workspace digest instead
 of long placeholder validation text, future-workflow filler, or hard-coded
-attachment cards.
+attachment cards. The workspace digest now includes file, diff, and latest
+diagnostic state with a short clear action so stderr/RPC/bash failures remain
+visible without adding a separate diagnostics page.
 The shared app package keeps the Pi boundary as platform-neutral
 `PiTransportCommand` and `PiTransportEvent` values so future Web or
 automation-focused workflows can reuse the same event model. Structured Pi
@@ -192,9 +194,11 @@ model, `get_commands` refreshes the available slash/prompt/extension/skill
 command catalog, and `get_session_stats` refreshes compact
 message/tool/token/context metrics. Catalog rows can run a command by sending
 `/<name>` through the same platform-neutral `SendUserInput` prompt path, so
-native transport does not need a command-specific bridge. `cycle_thinking_level`
-responses and
-`thinking_level_changed` events keep the compact Thinking control and
+native transport does not need a command-specific bridge. Diagnostics collected
+from Pi stderr, RPC failures, structured diagnostic events, and bash results are
+surfaced in the workspace digest and can be cleared from shared app state.
+`cycle_thinking_level` responses and `thinking_level_changed` events keep the
+compact Thinking control and
 `PiAgentSnapshot` aligned. `set_steering_mode` and `set_follow_up_mode`
 responses acknowledge the compact composer controls, while `get_state` refreshes
 the source-of-truth modes from Pi. `set_session_name` responses and

@@ -173,6 +173,18 @@ test "workbench refresh runtime effect dispatches current session batch" {
 }
 
 ///|
+test "workbench clears visible diagnostics" {
+  let model = WorkbenchModel::new()
+  inspect(model.open_diagnostic_count(), content="3")
+  let cleared = model.update(ClearDiagnostics)
+  inspect(cleared.open_diagnostic_count(), content="0")
+  inspect(
+    cleared.last_status,
+    content="Diagnostics cleared for current session",
+  )
+}
+
+///|
 test "workbench command queue uses Pi RPC bash command" {
   let model = WorkbenchModel::new().update(QueueCommand("moon check"))
   inspect(model.last_status, content="Command queued for Pi RPC bash")
@@ -1118,6 +1130,9 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Activity"))
   assert_true(has_text(commands, "/review"))
   assert_true(has_text(commands, "Workspace"))
+  assert_true(has_text(commands, "3 diag"))
+  assert_true(has_text(commands, "清除"))
+  assert_true(has_text(commands, "Product"))
   assert_true(has_text(commands, "同步"))
   assert_true(has_text(commands, "运行"))
   assert_true(has_text(commands, "要求继续推进 Mo Workbench"))

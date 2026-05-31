@@ -754,12 +754,26 @@ fn WorkbenchModel::workspace_digest_panel(
       [
         row(
           [
-            text("Workspace", role=Control, theme~, width=438.0, height=28.0),
+            text("Workspace", role=Control, theme~, width=318.0, height=28.0),
             badge(
               self.files.length().to_string() + " files",
               tone=Neutral,
               theme~,
-              width=94.0,
+              width=86.0,
+            ),
+            badge(
+              self.open_diagnostic_count().to_string() + " diag",
+              tone=diagnostic_count_tone(self.open_diagnostic_count()),
+              theme~,
+              width=86.0,
+            ),
+            button(
+              "清除",
+              on_click=ClearDiagnostics,
+              variant=Ghost,
+              theme~,
+              width=58.0,
+              height=34.0,
             ),
             button(
               "审核",
@@ -775,17 +789,27 @@ fn WorkbenchModel::workspace_digest_panel(
         ),
         diff_digest_row(self.diff, theme),
         self.primary_file_context_row(theme),
+        self.primary_diagnostic_row(theme),
       ],
       spacing=7.0,
       align=Start,
     ),
     width=690.0,
-    height=132.0,
+    height=178.0,
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn diagnostic_count_tone(count : Int) -> @views.BadgeTone {
+  if count > 0 {
+    Warning
+  } else {
+    Neutral
+  }
 }
 
 ///|
@@ -814,6 +838,55 @@ fn diff_digest_row(
 }
 
 ///|
+fn diagnostic_row(
+  diagnostic : DiagnosticItem,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge(
+        diagnostic.severity,
+        tone=diagnostic_badge_tone(diagnostic.severity),
+        theme~,
+        width=104.0,
+      ),
+      column(
+        [
+          text(
+            diagnostic.source,
+            role=Control,
+            theme~,
+            width=520.0,
+            height=24.0,
+          ),
+          text(
+            diagnostic.message,
+            role=Caption,
+            theme~,
+            width=520.0,
+            height=22.0,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+    ],
+    spacing=10.0,
+    align=Center,
+  )
+}
+
+///|
+fn diagnostic_badge_tone(severity : String) -> @views.BadgeTone {
+  match severity {
+    "error" => Danger
+    "warning" | "watch" => Warning
+    "note" => Accent
+    _ => Neutral
+  }
+}
+
+///|
 fn WorkbenchModel::primary_file_context_row(
   self : WorkbenchModel,
   theme : @core.Theme,
@@ -822,6 +895,18 @@ fn WorkbenchModel::primary_file_context_row(
     text("-", role=Caption, theme~, width=650.0, height=28.0)
   } else {
     file_context_row(self.files[0], theme)
+  }
+}
+
+///|
+fn WorkbenchModel::primary_diagnostic_row(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.diagnostics.is_empty() {
+    text("-", role=Caption, theme~, width=650.0, height=28.0)
+  } else {
+    diagnostic_row(self.diagnostics[self.diagnostics.length() - 1], theme)
   }
 }
 
