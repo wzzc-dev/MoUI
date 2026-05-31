@@ -51,7 +51,8 @@ default_stage_markers=(
   "native smoke first glyph bounds width" \
   "native smoke measured text bounds width" \
   "native smoke font family count" \
-  "native smoke first font family bytes"
+  "native smoke first font family bytes" \
+  "native smoke font fallback width"
 )
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
