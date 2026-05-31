@@ -233,6 +233,13 @@ pub fn RenderPassDescriptor::is_msaa(self : RenderPassDescriptor) -> Bool {
 }
 
 ///|
+pub fn RenderPassDescriptor::resource_descriptor(
+  self : RenderPassDescriptor,
+) -> RendererResourceDescriptor {
+  self.surface.resource_descriptor()
+}
+
+///|
 pub fn RenderPassDescriptor::with_bounds(
   self : RenderPassDescriptor,
   bounds : IRect,

@@ -459,6 +459,8 @@ test "render pass descriptor clips clear and present boundaries" {
   assert_true(pass.needs_present())
   assert_true(pass.keeps_pixels())
   assert_true(pass.is_msaa())
+  assert_true(pass.resource_descriptor().key.kind == @skia_mbt.SurfaceResource)
+  assert_eq(pass.resource_descriptor().byte_size, 3200L)
 
   let load = @skia_mbt.RenderPassDescriptor::new(surface)
   assert_true(load.load_op == @skia_mbt.LoadExisting)
@@ -627,10 +629,12 @@ test "render command list exposes text run resource keys" {
       font_key~,
     )
     .resource_descriptors()
-  assert_eq(descriptors.length(), 1)
-  assert_true(descriptors[0].key == expected_key)
-  assert_eq(descriptors[0].byte_size, 5L)
-  assert_true(descriptors[0].is_cacheable())
+  assert_eq(descriptors.length(), 2)
+  assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
+  assert_eq(descriptors[0].byte_size, 2048L)
+  assert_true(descriptors[1].key == expected_key)
+  assert_eq(descriptors[1].byte_size, 5L)
+  assert_true(descriptors[1].is_cacheable())
 
   let cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
@@ -638,9 +642,9 @@ test "render command list exposes text run resource keys" {
   ] = @skia_mbt.ResourceCache::new(max_bytes=8L)
   assert_true(
     cache.insert(
-      descriptors[0].key,
-      descriptors[0],
-      byte_size=descriptors[0].byte_size,
+      descriptors[1].key,
+      descriptors[1],
+      byte_size=descriptors[1].byte_size,
     ),
   )
   assert_true(cache.contains(expected_key))

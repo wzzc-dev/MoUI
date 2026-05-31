@@ -376,6 +376,10 @@ pub fn RenderCommandList::resource_descriptors(
   self : RenderCommandList,
 ) -> Array[RendererResourceDescriptor] {
   let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let target_descriptor = self.pass.resource_descriptor()
+  if !target_descriptor.key.is_empty() {
+    descriptors.push(target_descriptor)
+  }
   for command in self.commands {
     match command.resource_descriptor() {
       None => ()
