@@ -35,6 +35,7 @@ pub(all) enum RenderFrameValidationStatus {
   FrameReady
   FrameTargetMismatch
   FrameUnbalancedState
+  FrameMissingGpuContext
   FrameMissingPresent
 } derive(Debug, Eq)
 
@@ -100,6 +101,20 @@ pub fn RenderFrameDescriptor::has_present(self : RenderFrameDescriptor) -> Bool 
 }
 
 ///|
+pub fn RenderFrameDescriptor::requires_gpu_context(
+  self : RenderFrameDescriptor,
+) -> Bool {
+  self.target.surface.is_gpu()
+}
+
+///|
+pub fn RenderFrameDescriptor::has_gpu_context(
+  self : RenderFrameDescriptor,
+) -> Bool {
+  self.target.has_gpu_context()
+}
+
+///|
 pub fn RenderFrameDescriptor::validation_status(
   self : RenderFrameDescriptor,
 ) -> RenderFrameValidationStatus {
@@ -107,6 +122,8 @@ pub fn RenderFrameDescriptor::validation_status(
     FrameTargetMismatch
   } else if !self.stats.is_state_balanced() {
     FrameUnbalancedState
+  } else if self.requires_gpu_context() && !self.has_gpu_context() {
+    FrameMissingGpuContext
   } else if self.needs_present() && !self.has_present() {
     FrameMissingPresent
   } else {
