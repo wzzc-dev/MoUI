@@ -99,7 +99,7 @@ if ($detectedProvider -eq "source") {
 }
 
 $status = Get-Content -LiteralPath $resolvedStatusFile -Raw | ConvertFrom-Json
-if ($status.schema_version -notin @(1, 2, 3)) {
+if ($status.schema_version -notin @(1, 2, 3, 4)) {
   throw "unsupported Skia platform status schema_version: $($status.schema_version)"
 }
 if (!$status.platforms.PSObject.Properties.Name.Contains($Platform)) {
