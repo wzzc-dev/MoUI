@@ -83,8 +83,11 @@ packages:
   future-workflow placeholder session were replaced with compact panels driven
   by `WorkbenchModel` state. The default fixture now leaves transcript,
   metrics, command catalog, file context, diff summary, command evidence, and
-  diagnostics empty until Pi or user command evidence arrives. Zero-count badges
-  and contextless actions render quietly instead of placeholder punctuation.
+  diagnostics empty until Pi or user command evidence arrives, and no longer
+  displays sample active-task text. Zero queues, unbound Pi state, idle
+  transport/agent state, and contextless actions render quietly instead of
+  placeholder punctuation; transcript/activity/workspace panels shrink to their
+  headers while empty.
 - Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for
   Pi through the existing platform-neutral `SendUserInput` path, so visible
   conversation evidence can become the next agent action without native-only

@@ -100,30 +100,26 @@ fn WorkbenchModel::workspace_summary(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let active = self.active_session()
+  let pending = self.pending_transport_count()
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    text(active.project_path, role=Caption, theme~, width=230.0, height=40.0),
+    text(active.branch, role=Control, theme~, width=230.0, height=26.0),
+  ]
+  if pending > 0 {
+    rows.push(
+      text(
+        pending.to_string() + " queued",
+        role=Caption,
+        theme~,
+        width=230.0,
+        height=24.0,
+      ),
+    )
+  }
   surface(
-    column(
-      [
-        text(
-          active.project_path,
-          role=Caption,
-          theme~,
-          width=230.0,
-          height=40.0,
-        ),
-        text(active.branch, role=Control, theme~, width=230.0, height=26.0),
-        text(
-          "Queue " + self.pending_transport_count().to_string(),
-          role=Caption,
-          theme~,
-          width=230.0,
-          height=24.0,
-        ),
-      ],
-      spacing=2.0,
-      align=Start,
-    ),
+    column(rows, spacing=2.0, align=Start),
     width=260.0,
-    height=112.0,
+    height=if pending > 0 { 116.0 } else { 90.0 },
     background=ui_color(0.88, 0.89, 0.89),
     corner_radius=8.0,
     theme~,
@@ -275,41 +271,29 @@ fn WorkbenchModel::transcript_panel(
       visible = visible + 1
     }
   }
-  let transcript_body = if rows.is_empty() {
-    blank_row(104.0)
-  } else {
-    column(rows, spacing=6.0, align=Start)
-  }
-  surface(
-    column(
+  let panel_rows : Array[@core.View[WorkbenchMsg]] = [
+    row(
       [
-        row(
-          [
-            text(
-              "Pi transcript",
-              role=Control,
-              theme~,
-              width=520.0,
-              height=28.0,
-            ),
-            count_badge(
-              self.transcript.length(),
-              label=self.transcript.length().to_string() + " messages",
-              tone=Neutral,
-              theme~,
-              width=116.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
+        text("Pi transcript", role=Control, theme~, width=520.0, height=28.0),
+        count_badge(
+          self.transcript.length(),
+          label=self.transcript.length().to_string() + " messages",
+          tone=Neutral,
+          theme~,
+          width=116.0,
         ),
-        transcript_body,
       ],
       spacing=8.0,
-      align=Start,
+      align=Center,
     ),
+  ]
+  if !rows.is_empty() {
+    panel_rows.push(column(rows, spacing=6.0, align=Start))
+  }
+  surface(
+    column(panel_rows, spacing=8.0, align=Start),
     width=690.0,
-    height=178.0,
+    height=if rows.is_empty() { 54.0 } else { 178.0 },
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
@@ -457,104 +441,215 @@ fn WorkbenchModel::session_status_panel(
 ) -> @core.View[WorkbenchMsg] {
   let active = self.active_session()
   let binding = self.active_pi_session_binding()
-  surface(
-    column(
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    row(
       [
-        row(
-          [
-            text("Session", role=Control, theme~, width=368.0, height=28.0),
-            badge(active.status, tone=Success, theme~, width=92.0),
-            count_badge(
-              self.pending_transport_count(),
-              label=self.pending_transport_count().to_string() + " queued",
-              tone=Neutral,
-              theme~,
-              width=104.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
-        ),
-        text(active.active_task, role=Body, theme~, width=650.0, height=28.0),
-        session_stats_row(self.pi_session_stats, theme),
-        session_binding_row(binding, theme),
-        row(
-          [
-            text(
-              "Transport: " + self.transport.status_label(),
-              role=Caption,
-              theme~,
-              width=310.0,
-              height=30.0,
-            ),
-            text(
-              "Agent: " + self.pi_agent.status_label(),
-              role=Caption,
-              theme~,
-              width=310.0,
-              height=30.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
-        ),
-        row(
-          [
-            text(
-              "Thinking: " + self.thinking_level_label(),
-              role=Caption,
-              theme~,
-              width=176.0,
-              height=30.0,
-            ),
-            spacer(min_length=8.0, weight=1.0),
-            button(
-              "刷新",
-              on_click=RefreshSession,
-              variant=Outline,
-              theme~,
-              width=58.0,
-              height=34.0,
-            ),
-            button(
-              "思考",
-              on_click=CycleThinkingLevel,
-              variant=Outline,
-              theme~,
-              width=62.0,
-              height=34.0,
-            ),
-            button(
-              "同步",
-              on_click=SyncSessionName,
-              variant=Outline,
-              theme~,
-              width=66.0,
-              height=34.0,
-            ),
-            button(
-              "停止",
-              on_click=CancelRun,
-              variant=Ghost,
-              theme~,
-              width=58.0,
-              height=34.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
+        text("Session", role=Control, theme~, width=368.0, height=28.0),
+        badge(active.status, tone=Success, theme~, width=92.0),
+        count_badge(
+          self.pending_transport_count(),
+          label=self.pending_transport_count().to_string() + " queued",
+          tone=Neutral,
+          theme~,
+          width=104.0,
         ),
       ],
-      spacing=6.0,
-      align=Start,
+      spacing=8.0,
+      align=Center,
     ),
+  ]
+  if active.active_task != "" {
+    rows.push(
+      text(active.active_task, role=Body, theme~, width=650.0, height=28.0),
+    )
+  }
+  if self.pi_session_stats.has_visible_metrics() {
+    rows.push(session_stats_row(self.pi_session_stats, theme))
+  }
+  if binding.has_visible_binding() {
+    rows.push(session_binding_row(binding, theme))
+  }
+  if self.has_runtime_signal() {
+    rows.push(self.runtime_signal_row(theme))
+  }
+  rows.push(self.session_controls_row(theme))
+  surface(
+    column(rows, spacing=6.0, align=Start),
     width=690.0,
-    height=236.0,
+    height=session_status_panel_height(rows.length()),
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn session_status_panel_height(row_count : Int) -> Double {
+  92.0 + (row_count - 2).max(0).to_double() * 36.0
+}
+
+///|
+fn WorkbenchModel::runtime_signal_row(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      text(
+        "Transport: " + self.transport.status_label(),
+        role=Caption,
+        theme~,
+        width=310.0,
+        height=30.0,
+      ),
+      text(
+        "Agent: " + self.pi_agent.status_label(),
+        role=Caption,
+        theme~,
+        width=310.0,
+        height=30.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::session_controls_row(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      self.thinking_level_cell(theme),
+      spacer(min_length=8.0, weight=1.0),
+      button(
+        "刷新",
+        on_click=RefreshSession,
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=34.0,
+      ),
+      button(
+        "思考",
+        on_click=CycleThinkingLevel,
+        variant=Outline,
+        theme~,
+        width=62.0,
+        height=34.0,
+      ),
+      button(
+        "同步",
+        on_click=SyncSessionName,
+        variant=Outline,
+        theme~,
+        width=66.0,
+        height=34.0,
+      ),
+      self.cancel_run_button(theme),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::thinking_level_cell(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.pi_agent.thinking_level == "" {
+    blank_cell(width=176.0, height=30.0)
+  } else {
+    text(
+      "Thinking: " + self.thinking_level_label(),
+      role=Caption,
+      theme~,
+      width=176.0,
+      height=30.0,
+    )
+  }
+}
+
+///|
+fn WorkbenchModel::cancel_run_button(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.has_cancel_target() {
+    button(
+      "停止",
+      on_click=CancelRun,
+      variant=Ghost,
+      theme~,
+      width=58.0,
+      height=34.0,
+    )
+  } else {
+    blank_cell(width=58.0, height=34.0)
+  }
+}
+
+///|
+fn WorkbenchModel::has_runtime_signal(self : WorkbenchModel) -> Bool {
+  self.transport.has_visible_signal() || self.pi_agent.has_visible_signal()
+}
+
+///|
+fn WorkbenchModel::has_cancel_target(self : WorkbenchModel) -> Bool {
+  self.has_active_shell_command(self.active_session()) ||
+  self.transport.has_active_signal() ||
+  self.pi_agent.has_active_signal()
+}
+
+///|
+fn PiTransportState::has_visible_signal(self : PiTransportState) -> Bool {
+  if self.command_queue.length() > 0 || self.last_json_line != "" {
+    true
+  } else {
+    self.has_active_signal()
+  }
+}
+
+///|
+fn PiTransportState::has_active_signal(self : PiTransportState) -> Bool {
+  match self.status {
+    Starting | Running => true
+    _ => false
+  }
+}
+
+///|
+fn PiAgentSnapshot::has_visible_signal(self : PiAgentSnapshot) -> Bool {
+  self.phase != "idle" ||
+  self.message_preview != "" ||
+  self.active_tool_name != "" ||
+  self.queued_steering + self.queued_follow_up > 0
+}
+
+///|
+fn PiAgentSnapshot::has_active_signal(self : PiAgentSnapshot) -> Bool {
+  self.phase == "running" ||
+  self.phase == "turn" ||
+  self.phase == "message" ||
+  self.phase == "streaming" ||
+  self.phase == "tool" ||
+  self.phase == "tool streaming" ||
+  self.phase == "compacting" ||
+  self.phase == "retrying"
+}
+
+///|
+fn PiSessionBinding::has_visible_binding(self : PiSessionBinding) -> Bool {
+  self.status != "unbound" ||
+  self.rpc_session_id != "" ||
+  self.session_file != "" ||
+  self.session_name != "" ||
+  self.model != "" ||
+  self.last_command != ""
 }
 
 ///|
@@ -702,63 +797,54 @@ fn WorkbenchModel::activity_panel(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  surface(
-    column(
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    row(
       [
-        row(
-          [
-            text("Activity", role=Control, theme~, width=310.0, height=28.0),
-            count_badge(
-              self.commands.length(),
-              label=self.commands.length().to_string() + " runs",
-              tone=Neutral,
-              theme~,
-              width=94.0,
-            ),
-            count_badge(
-              self.command_catalog.length(),
-              label=self.command_catalog.length().to_string() + " cmds",
-              tone=Accent,
-              theme~,
-              width=94.0,
-            ),
-            count_badge(
-              self.events.length(),
-              label=self.events.length().to_string() + " events",
-              tone=Neutral,
-              theme~,
-              width=102.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
+        text("Activity", role=Control, theme~, width=310.0, height=28.0),
+        count_badge(
+          self.commands.length(),
+          label=self.commands.length().to_string() + " runs",
+          tone=Neutral,
+          theme~,
+          width=94.0,
         ),
-        self.primary_event_row(theme),
-        self.primary_command_run_row(theme),
-        self.primary_command_catalog_row(theme),
+        count_badge(
+          self.command_catalog.length(),
+          label=self.command_catalog.length().to_string() + " cmds",
+          tone=Accent,
+          theme~,
+          width=94.0,
+        ),
+        count_badge(
+          self.events.length(),
+          label=self.events.length().to_string() + " events",
+          tone=Neutral,
+          theme~,
+          width=102.0,
+        ),
       ],
-      spacing=7.0,
-      align=Start,
+      spacing=8.0,
+      align=Center,
     ),
+  ]
+  if !self.events.is_empty() {
+    rows.push(event_row(self.events[self.events.length() - 1], theme))
+  }
+  if !self.commands.is_empty() {
+    rows.push(command_run_row(self.commands[self.commands.length() - 1], theme))
+  }
+  if !self.command_catalog.is_empty() {
+    rows.push(command_catalog_row(self.command_catalog[0], theme))
+  }
+  surface(
+    column(rows, spacing=7.0, align=Start),
     width=690.0,
-    height=188.0,
+    height=evidence_panel_height(rows.length(), expanded=188.0),
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
   )
-}
-
-///|
-fn WorkbenchModel::primary_event_row(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  if self.events.is_empty() {
-    blank_row(42.0)
-  } else {
-    event_row(self.events[self.events.length() - 1], theme)
-  }
 }
 
 ///|
@@ -794,30 +880,6 @@ fn event_row(
     spacing=8.0,
     align=Center,
   )
-}
-
-///|
-fn WorkbenchModel::primary_command_run_row(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  if self.commands.is_empty() {
-    blank_row(32.0)
-  } else {
-    command_run_row(self.commands[self.commands.length() - 1], theme)
-  }
-}
-
-///|
-fn WorkbenchModel::primary_command_catalog_row(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  if self.command_catalog.is_empty() {
-    blank_row(32.0)
-  } else {
-    command_catalog_row(self.command_catalog[0], theme)
-  }
 }
 
 ///|
@@ -944,46 +1006,60 @@ fn WorkbenchModel::workspace_digest_panel(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  surface(
-    column(
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    row(
       [
-        row(
-          [
-            text("Workspace", role=Control, theme~, width=318.0, height=28.0),
-            count_badge(
-              self.files.length(),
-              label=self.files.length().to_string() + " files",
-              tone=Neutral,
-              theme~,
-              width=86.0,
-            ),
-            count_badge(
-              self.open_diagnostic_count(),
-              label=self.open_diagnostic_count().to_string() + " diag",
-              tone=diagnostic_count_tone(self.open_diagnostic_count()),
-              theme~,
-              width=86.0,
-            ),
-            self.clear_diagnostics_button(theme),
-            self.review_diff_button(theme),
-          ],
-          spacing=8.0,
-          align=Center,
+        text("Workspace", role=Control, theme~, width=318.0, height=28.0),
+        count_badge(
+          self.files.length(),
+          label=self.files.length().to_string() + " files",
+          tone=Neutral,
+          theme~,
+          width=86.0,
         ),
-        diff_digest_row(self.diff, theme),
-        self.primary_file_context_row(theme),
-        self.primary_diagnostic_row(theme),
+        count_badge(
+          self.open_diagnostic_count(),
+          label=self.open_diagnostic_count().to_string() + " diag",
+          tone=diagnostic_count_tone(self.open_diagnostic_count()),
+          theme~,
+          width=86.0,
+        ),
+        self.clear_diagnostics_button(theme),
+        self.review_diff_button(theme),
       ],
-      spacing=7.0,
-      align=Start,
+      spacing=8.0,
+      align=Center,
     ),
+  ]
+  if self.diff.has_context() {
+    rows.push(diff_digest_row(self.diff, theme))
+  }
+  if !self.files.is_empty() {
+    rows.push(file_context_row(self.files[0], theme))
+  }
+  if !self.diagnostics.is_empty() {
+    rows.push(
+      diagnostic_row(self.diagnostics[self.diagnostics.length() - 1], theme),
+    )
+  }
+  surface(
+    column(rows, spacing=7.0, align=Start),
     width=690.0,
-    height=178.0,
+    height=evidence_panel_height(rows.length(), expanded=178.0),
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn evidence_panel_height(row_count : Int, expanded~ : Double) -> Double {
+  if row_count <= 1 {
+    54.0
+  } else {
+    expanded
+  }
 }
 
 ///|
@@ -1120,30 +1196,6 @@ fn diagnostic_badge_tone(severity : String) -> @views.BadgeTone {
     "warning" | "watch" => Warning
     "note" => Accent
     _ => Neutral
-  }
-}
-
-///|
-fn WorkbenchModel::primary_file_context_row(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  if self.files.is_empty() {
-    blank_row(32.0)
-  } else {
-    file_context_row(self.files[0], theme)
-  }
-}
-
-///|
-fn WorkbenchModel::primary_diagnostic_row(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  if self.diagnostics.is_empty() {
-    blank_row(32.0)
-  } else {
-    diagnostic_row(self.diagnostics[self.diagnostics.length() - 1], theme)
   }
 }
 

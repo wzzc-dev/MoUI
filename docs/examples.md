@@ -165,8 +165,10 @@ attachment cards. The workspace digest now includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
-diff rows, command runs, or diagnostic prose; zero-count badges and empty
-digest actions stay visually quiet until Pi or command evidence arrives.
+diff rows, command runs, diagnostic prose, or sample active-task copy. Zero
+queues, unbound Pi state, idle transport/agent state, and empty digest actions
+stay visually quiet; transcript/activity/workspace panels shrink to their
+headers until Pi or command evidence arrives.
 Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
 the shared prompt transport, turning visible Pi conversation evidence into the
 next agent task. Activity timeline rows can queue a
