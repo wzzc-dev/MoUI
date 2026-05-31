@@ -210,6 +210,7 @@ if schema_version >= 3:
         "codec.metadata",
         "bitmap.decode-readback",
         "text.font-spacing",
+        "text.font-resource-plan",
         "text.measure",
         "text.glyph-count",
         "text.glyph-id",

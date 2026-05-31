@@ -888,6 +888,21 @@ fn main {
     is Some(fallback_font) else {
     fail_smoke("failed to create native font from fallback request typeface")
   }
+  let fallback_font_descriptor = @skia.FontDescriptor::from_typeface(
+    fallback_request.resource_key(),
+    size=8.0,
+  )
+  let font_plan = @skia.RendererResourcePlan::new([
+    fallback_font_descriptor.resource_descriptor(),
+  ])
+  if font_plan.length() != 1 ||
+    font_plan.cacheable_count != 1 ||
+    font_plan.uncacheable_count != 0 ||
+    font_plan.byte_size <= 0L {
+    fail_smoke("native font resource plan is invalid")
+  }
+  println("native smoke font resource plan count")
+  println(font_plan.length())
   let fallback_width = fallback_font.measure_text_utf8(smoke_text_bytes())
   if fallback_width <= 0.0 {
     fail_smoke("native font fallback request font did not measure text")

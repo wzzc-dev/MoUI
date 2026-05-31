@@ -475,6 +475,12 @@ test "renderer resource descriptors provide typed cache keys" {
     byte_size=4L,
   )
   assert_true(text.key.kind.is_text())
+  let font = @skia_mbt.RendererResourceDescriptor::font(
+    b"Inter:16:400",
+    byte_size=4L,
+  )
+  assert_true(font.key == @skia_mbt.RendererResourceKey::font(b"Inter:16:400"))
+  assert_true(font.key.kind.is_text())
   let filter = @skia_mbt.RendererResourceDescriptor::filter(
     b"blur:2",
     byte_size=4L,
@@ -1041,6 +1047,51 @@ test "font fallback contracts normalize style family and language requests" {
   assert_true(descriptor.is_cacheable())
   assert_true(descriptor.byte_size > 0L)
   let plan = @skia_mbt.RendererResourcePlan::new([descriptor, descriptor])
+  assert_eq(plan.length(), 1)
+  assert_eq(plan.cacheable_count, 1)
+  assert_eq(plan.uncacheable_count, 0)
+}
+
+///|
+test "font descriptors derive font resource keys" {
+  let typeface_key = @skia_mbt.RendererResourceKey::typeface(b"Inter:400:5:0")
+  let font = @skia_mbt.FontDescriptor::from_typeface(typeface_key, size=16.0)
+  let same_font = @skia_mbt.FontDescriptor::from_typeface(
+    typeface_key,
+    size=16.0,
+  )
+  assert_true(font.is_valid())
+  assert_true(font.resource_key() == same_font.resource_key())
+  assert_true(font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(font.resource_key() != font.with_size(18.0).resource_key())
+  assert_true(font.resource_key() != font.with_scale_x(1.2).resource_key())
+  assert_true(font.resource_key() != font.with_skew_x(0.25).resource_key())
+  assert_true(
+    font.resource_key() !=
+    font
+    .with_typeface_key(@skia_mbt.RendererResourceKey::typeface(b"Serif"))
+    .resource_key(),
+  )
+  let descriptor = font.resource_descriptor()
+  assert_true(descriptor.key == font.resource_key())
+  assert_true(descriptor.is_cacheable())
+  assert_true(descriptor.byte_size > 0L)
+
+  let default_font = @skia_mbt.FontDescriptor::default(size=12.0)
+  assert_true(default_font.is_valid())
+  assert_true(default_font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(!font.with_size(-1.0).is_valid())
+  assert_true(font.with_size(-1.0).resource_key().is_empty())
+  assert_true(!font.with_scale_x(0.0).resource_descriptor().is_cacheable())
+  assert_true(
+    !font
+    .with_typeface_key(@skia_mbt.RendererResourceKey::shader(b"not-typeface"))
+    .is_valid(),
+  )
+  let plan = @skia_mbt.RendererResourcePlan::new([
+    font.resource_descriptor(),
+    same_font.resource_descriptor(),
+  ])
   assert_eq(plan.length(), 1)
   assert_eq(plan.cacheable_count, 1)
   assert_eq(plan.uncacheable_count, 0)
