@@ -180,8 +180,8 @@ the saved native executable log for `skia_mbt native smoke test passed`, and
 verifies that `native/moon.pkg` did not change. The smoke executable covers
 raster drawing, readback, snapshots, PNG encode/decode, bitmap decode, and
 canvas save/restore with clipping behavior. It also exercises shader-backed
-draws, native Canvas replay of value-layer render commands, native and portable
-path drawing, image drawing, transforms, default font text
+draws, native Canvas replay of value-layer render commands, render resource
+planning, native and portable path drawing, image drawing, transforms, default font text
 drawing/measurement/metrics, default-typeface text drawing/measurement/metrics when the selected Skia build
 provides a default typeface, and font manager family enumeration/matching when
 the platform font manager is available. It also exercises native typeface family

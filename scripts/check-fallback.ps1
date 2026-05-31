@@ -79,6 +79,8 @@ function Set-FakeNativeSmokeLog {
     "1"
     "native smoke canvas replay commands"
     "4"
+    "native smoke render resource plan count"
+    "3"
     "native smoke shader draws"
     "3"
     "native smoke filter layer count"
