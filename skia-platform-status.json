@@ -95,6 +95,11 @@
       "marker": "native smoke surface target resource plan count"
     },
     {
+      "id": "surface.window-target-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke window target resource plan count"
+    },
+    {
       "id": "shader.draw",
       "area": "Shader",
       "marker": "native smoke shader draws"
