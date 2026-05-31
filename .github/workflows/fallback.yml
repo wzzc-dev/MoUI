@@ -162,6 +162,21 @@ jobs:
           import json
           from pathlib import Path
           status = json.loads(Path('skia-platform-status.json').read_text())
+          for gate in status['ci_gates']:
+              if gate['id'] == 'native.ffi-borrows':
+                  gate['unix_command'] = 'bash scripts/verify-native-ffi-borrows.sh --' + 'unwired'
+          Path('logs/fake-platform-status-unwired-ci-gate.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-unwired-ci-gate.json; then
+            echo "verify-platform-status unexpectedly accepted an unwired CI gate" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
           for capability in status['native_smoke_capabilities']:
               if capability['id'] == 'bitmap.decode-readback':
                   capability['area'] = 'Image'

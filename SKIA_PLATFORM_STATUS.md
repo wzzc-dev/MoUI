@@ -31,6 +31,8 @@ smoke markers that must appear in every accepted native smoke executable log.
 The platform-status verifier checks this list covers Surface, Canvas, Pipeline,
 GPU, Shader, Filter, Path, Image, Codec, Bitmap, Text, and FontMgr boundaries, and
 `verify-native-smoke-log.*` reads the same list when validating artifact logs.
+It also records `ci_gate_evidence_files`, the workflow and fallback-helper files
+that must contain every `ci_gates` verifier script or MoonBit command fragment.
 
 When a real artifact has passed verification and the Skia revision has been
 pinned, mark a platform accepted through the guarded helper instead of editing

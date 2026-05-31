@@ -648,6 +648,20 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingCiScriptStatus } `
       -ExpectedMessage "CI gate references missing verifier script"
 
+    $fakeUnwiredCiGateStatus = Join-Path $dryRunRoot "fake-platform-status-unwired-ci-gate.json"
+    $unwiredCiGateStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
+    foreach ($gate in $unwiredCiGateStatus.ci_gates) {
+      if ($gate.id -eq "native.ffi-borrows") {
+        $gate.powershell_command = ".\scripts\verify-native-ffi-borrows.ps1 -" + "Unwired"
+      }
+    }
+    $unwiredCiGateStatus |
+      ConvertTo-Json -Depth 20 |
+      Set-Content -LiteralPath $fakeUnwiredCiGateStatus
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeUnwiredCiGateStatus } `
+      -ExpectedMessage "CI gate evidence is missing command wiring"
+
     $fakeMissingCapabilityAreaStatus = Join-Path $dryRunRoot "fake-platform-status-missing-capability-area.json"
     $missingCapabilityAreaStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
     foreach ($capability in @($missingCapabilityAreaStatus.native_smoke_capabilities)) {

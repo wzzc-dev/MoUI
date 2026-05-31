@@ -143,6 +143,47 @@ if schema_version >= 4:
     seen_gate_commands = set()
     seen_gate_areas = set()
 
+    evidence_files = status.get("ci_gate_evidence_files")
+    if not isinstance(evidence_files, list) or not evidence_files:
+        fail("schema v4 platform status is missing ci_gate_evidence_files list")
+    required_evidence_files = {
+        ".github/workflows/fallback.yml",
+        ".github/workflows/linux-real-skia-smoke.yml",
+        ".github/workflows/macos-real-skia-smoke.yml",
+        ".github/workflows/windows-real-skia-smoke.yml",
+        ".github/workflows/real-skia-acceptance.yml",
+        "scripts/check-fallback.ps1",
+    }
+    seen_evidence_files = set()
+    evidence_parts = []
+
+    def normalize_repo_relative_path(path):
+        normalized = str(path).strip().replace("\\", "/")
+        while normalized.startswith("./"):
+            normalized = normalized[2:]
+        if not normalized:
+            fail("CI gate evidence file is missing path")
+        if normalized.startswith("/") or ".." in pathlib.PurePosixPath(normalized).parts:
+            fail(f"CI gate evidence file must be repo-relative: {path}")
+        return normalized
+
+    for evidence_file in evidence_files:
+        evidence_path = normalize_repo_relative_path(evidence_file)
+        if evidence_path in seen_evidence_files:
+            fail(f"duplicate CI gate evidence file: {evidence_path}")
+        resolved_evidence_path = repo_root / evidence_path
+        if not resolved_evidence_path.is_file():
+            fail(f"CI gate evidence file is missing: {evidence_path}")
+        seen_evidence_files.add(evidence_path)
+        evidence_parts.append(resolved_evidence_path.read_text(encoding="utf-8"))
+
+    missing_evidence_files = sorted(required_evidence_files - seen_evidence_files)
+    if missing_evidence_files:
+        fail("CI gate evidence is missing files: " + ", ".join(missing_evidence_files))
+
+    evidence_corpus = "\n".join(evidence_parts).replace("\\", "/")
+    evidence_compact = re.sub(r"\s+", " ", evidence_corpus)
+
     def ci_gate_script_paths(command):
         normalized = command.replace("\\", "/")
         for token in re.split(r"[\s;&|]+", normalized):
@@ -151,6 +192,24 @@ if schema_version >= 4:
                 token = token[2:]
             if token.startswith("scripts/") and token.endswith((".sh", ".ps1")):
                 yield token
+
+    def ci_gate_evidence_terms(command):
+        script_paths = list(ci_gate_script_paths(command))
+        if script_paths:
+            normalized = command.replace("\\", "/")
+            option_terms = []
+            for token in re.split(r"[\s;&|]+", normalized):
+                token = token.strip().strip("'\"")
+                if token.startswith("-") and token not in {"-n"}:
+                    option_terms.append(token)
+            return script_paths + option_terms
+        normalized = command.replace("\\", "/")
+        terms = []
+        for part in re.split(r"\s*(?:&&|;|\|\|?|\n)\s*", normalized):
+            term = re.sub(r"\s+", " ", part.strip())
+            if term:
+                terms.append(term)
+        return terms
 
     for gate in gates:
         if not isinstance(gate, dict):
@@ -178,6 +237,15 @@ if schema_version >= 4:
                         fail(
                             "CI gate references missing verifier script: "
                             f"{gate_id}: {script_path}"
+                        )
+                for evidence_term in ci_gate_evidence_terms(command):
+                    if (
+                        evidence_term not in evidence_corpus
+                        and evidence_term not in evidence_compact
+                    ):
+                        fail(
+                            "CI gate evidence is missing command wiring: "
+                            f"{gate_id}: {evidence_term}"
                         )
         seen_gate_ids.add(gate_id)
         seen_gate_areas.add(area)
