@@ -48,6 +48,63 @@ test "workbench transport runtime effect dispatches prompt events" {
 }
 
 ///|
+test "workbench invokes Pi command catalog entries through prompt RPC" {
+  let model = WorkbenchModel::new()
+    .update(PromptChanged("draft text"))
+    .update(InvokeCommand("review"))
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued Pi command for RPC")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="/review")
+    }
+    _ => fail("expected queued command prompt")
+  }
+  assert_true(model.events.any(event => event.title == "Pi command queued"))
+}
+
+///|
+test "workbench command catalog runtime effect dispatches slash prompt" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent("moui-skia", "{\"type\":\"prompt\",\"message\":\"/review\"}"),
+    )
+    emit(JsonLineReceived("moui-skia", "{\"event\":\"done\"}"))
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    InvokeCommand("review"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="/review")
+    }
+    _ => fail("expected captured command prompt")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.last_json_line, content="{\"event\":\"done\"}")
+}
+
+///|
 test "workbench command queue uses Pi RPC bash command" {
   let model = WorkbenchModel::new().update(QueueCommand("moon check"))
   inspect(model.last_status, content="Command queued for Pi RPC bash")
@@ -993,6 +1050,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "/review"))
   assert_true(has_text(commands, "Workspace"))
   assert_true(has_text(commands, "同步"))
+  assert_true(has_text(commands, "运行"))
   assert_true(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_true(has_text(commands, "Pi RPC"))
   assert_false(has_text(commands, "验证已通过："))
