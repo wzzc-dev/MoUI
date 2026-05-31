@@ -188,10 +188,11 @@ showcase host currently constructs the
 renderer with `SkiaFontResolution::EmptyTypeface`: it skips the system FontMgr
 and SkShaper during early AppKit startup, while measurement and drawing fall
 back to Skia's default font when the empty typeface would produce a blank glyph
-run. Using the same fallback font for measurement keeps text-field caret
-positions aligned with the drawn glyphs. The default renderer smoke continues
-to use the system FontMgr path so real Skia font and optional SkShaper coverage
-remain tracked.
+run. Measurement now consumes the same fallback font and glyph-run payload that
+drawing selected, so text-field caret positions stay aligned with the drawn
+glyphs without re-entering SkShaper on the empty-typeface startup path. The
+default renderer smoke continues to use the system FontMgr path so real Skia
+font and optional SkShaper coverage remain tracked.
 
 ## Current Web Notes
 
