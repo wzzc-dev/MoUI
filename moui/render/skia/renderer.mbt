@@ -73,6 +73,16 @@ priv struct SkiaTextPlacement {
 }
 
 ///|
+priv enum SkiaCanvasScopeKind {
+  Clip
+  RoundedClip
+  Transform
+  Opacity
+  Layer
+  Filter
+} derive(Eq)
+
+///|
 pub fn skia_available() -> Bool {
   @skia_native.skia_available()
 }
@@ -182,8 +192,9 @@ pub fn SkiaRasterRenderer::render(
         ),
       )
       self.unsupported_command_count = 0
+      let canvas_scopes : Array[SkiaCanvasScopeKind] = []
       for command in commands {
-        self.render_command(canvas, command)
+        self.render_command(canvas, command, canvas_scopes)
       }
       canvas.restore_to_count(saved)
       let frame = self.read_frame()
@@ -203,6 +214,7 @@ fn SkiaRasterRenderer::render_command(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   command : @core.DrawCommand,
+  canvas_scopes : Array[SkiaCanvasScopeKind],
 ) -> Unit {
   match command {
     @core.DrawCommand::Clear(color) => canvas.clear(skia_color(color))
@@ -238,29 +250,73 @@ fn SkiaRasterRenderer::render_command(
     @core.DrawCommand::DrawImage(run) => self.draw_image(canvas, run)
     @core.DrawCommand::PushClip(rect) => {
       ignore(canvas.save())
+      canvas_scopes.push(SkiaCanvasScopeKind::Clip)
       canvas.clip_rect(skia_rect(rect), anti_alias=true)
     }
-    @core.DrawCommand::PopClip => canvas.restore()
+    @core.DrawCommand::PopClip =>
+      self.pop_canvas_scope(canvas, canvas_scopes, SkiaCanvasScopeKind::Clip)
     @core.DrawCommand::PushRoundedClip(rounded) => {
       ignore(canvas.save())
+      canvas_scopes.push(SkiaCanvasScopeKind::RoundedClip)
       canvas.clip_rrect(skia_rrect(rounded), anti_alias=true)
     }
-    @core.DrawCommand::PopRoundedClip => canvas.restore()
+    @core.DrawCommand::PopRoundedClip =>
+      self.pop_canvas_scope(
+        canvas,
+        canvas_scopes,
+        SkiaCanvasScopeKind::RoundedClip,
+      )
     @core.DrawCommand::PushTransform(transform) => {
       ignore(canvas.save())
+      canvas_scopes.push(SkiaCanvasScopeKind::Transform)
       canvas.concat(skia_matrix(transform))
     }
-    @core.DrawCommand::PopTransform => canvas.restore()
-    @core.DrawCommand::PushOpacity(opacity) =>
+    @core.DrawCommand::PopTransform =>
+      self.pop_canvas_scope(
+        canvas,
+        canvas_scopes,
+        SkiaCanvasScopeKind::Transform,
+      )
+    @core.DrawCommand::PushOpacity(opacity) => {
       ignore(canvas.save_layer(paint=skia_opacity_paint(opacity)))
-    @core.DrawCommand::PopOpacity => canvas.restore()
-    @core.DrawCommand::PushLayer(layer) => self.push_layer(canvas, layer)
-    @core.DrawCommand::PopLayer => canvas.restore()
-    @core.DrawCommand::PushFilter(filter) => self.push_filter(canvas, filter)
-    @core.DrawCommand::PopFilter => canvas.restore()
+      canvas_scopes.push(SkiaCanvasScopeKind::Opacity)
+    }
+    @core.DrawCommand::PopOpacity =>
+      self.pop_canvas_scope(canvas, canvas_scopes, SkiaCanvasScopeKind::Opacity)
+    @core.DrawCommand::PushLayer(layer) => {
+      self.push_layer(canvas, layer)
+      canvas_scopes.push(SkiaCanvasScopeKind::Layer)
+    }
+    @core.DrawCommand::PopLayer =>
+      self.pop_canvas_scope(canvas, canvas_scopes, SkiaCanvasScopeKind::Layer)
+    @core.DrawCommand::PushFilter(filter) => {
+      self.push_filter(canvas, filter)
+      canvas_scopes.push(SkiaCanvasScopeKind::Filter)
+    }
+    @core.DrawCommand::PopFilter =>
+      self.pop_canvas_scope(canvas, canvas_scopes, SkiaCanvasScopeKind::Filter)
     @core.DrawCommand::DrawPath(path) => self.draw_path(canvas, path)
     @core.DrawCommand::DrawShaderEffect(spec) =>
       self.draw_shader_effect(canvas, spec)
+  }
+}
+
+///|
+fn SkiaRasterRenderer::pop_canvas_scope(
+  self : SkiaRasterRenderer,
+  canvas : @skia_native.Canvas,
+  canvas_scopes : Array[SkiaCanvasScopeKind],
+  expected : SkiaCanvasScopeKind,
+) -> Unit {
+  match canvas_scopes.pop() {
+    Some(actual) =>
+      if actual == expected {
+        canvas.restore()
+      } else {
+        canvas_scopes.push(actual)
+        self.unsupported_command_count = self.unsupported_command_count + 1
+      }
+    None => self.unsupported_command_count = self.unsupported_command_count + 1
   }
 }
 
