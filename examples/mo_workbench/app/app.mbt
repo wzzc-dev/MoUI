@@ -183,6 +183,7 @@ pub(all) enum WorkbenchMsg {
   PromptChanged(String)
   DispatchPrompt
   InvokeCommand(String)
+  RefreshSession
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)
   MarkCommandComplete(Int, Int)
@@ -499,6 +500,7 @@ pub fn WorkbenchModel::update(
     PromptChanged(value) => { ..self, prompt: value }
     DispatchPrompt => self.dispatch_prompt()
     InvokeCommand(name) => self.invoke_command(name)
+    RefreshSession => self.refresh_session()
     ReceiveTransport(event) => self.receive_transport(event)
     QueueCommand(command) => self.queue_command(command)
     MarkCommandComplete(id, code) => self.mark_command_complete(id, code)
@@ -663,6 +665,7 @@ pub fn WorkbenchModel::update_with_transport(
     DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
     InvokeCommand(name) =>
       self.invoke_command_with_transport(name, transport_runtime)
+    RefreshSession => self.refresh_session_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
     SyncSessionName => self.sync_session_name_with_transport(transport_runtime)
@@ -696,6 +699,40 @@ fn WorkbenchModel::select_session_with_transport(
   let commands = selected.commands_for_session_selection(session)
   WorkbenchUpdate::new(
     { ..selected, transport: selected.transport.enqueue_many(commands) },
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::refresh_session(self : WorkbenchModel) -> WorkbenchModel {
+  let session = self.active_session()
+  let commands = self.commands_for_session_selection(session)
+  let events = self.events.copy()
+  events.push(
+    AgentEvent::new(
+      phase="control",
+      title="Pi session refresh queued",
+      detail=session.title,
+      tone="info",
+    ),
+  )
+  {
+    ..self,
+    events,
+    transport: self.transport.enqueue_many(commands),
+    last_status: "Pi session refresh queued",
+  }
+}
+
+///|
+fn WorkbenchModel::refresh_session_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let commands = self.commands_for_session_selection(session)
+  WorkbenchUpdate::new(
+    self.refresh_session(),
     effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
   )
 }
