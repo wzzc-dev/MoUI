@@ -446,6 +446,66 @@ test "render pass descriptor derives present defaults from surface targets" {
 }
 
 ///|
+test "render command list tracks stats balance and touched bounds" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
+    @skia_mbt.ISize::new(40, 20),
+  )
+  let path = @skia_mbt.Path::new()
+    .move_to(@skia_mbt.Point::new(5, 5))
+    .line_to(@skia_mbt.Point::new(12, 7))
+  let commands = @skia_mbt.RenderCommandList::for_target(
+      target,
+      bounds=Some(@skia_mbt.IRect::from_xywh(0, 0, 30, 10)),
+    )
+    .save()
+    .clip_rect(@skia_mbt.Rect::from_xywh(0, 0, 12, 8))
+    .draw_rect(
+      @skia_mbt.Rect::from_xywh(2, 2, 8, 4),
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::red()),
+    )
+    .draw_path(path, paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::blue()))
+    .draw_text_utf8(
+      b"Skia",
+      @skia_mbt.Point::new(4, 8),
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::black()),
+    )
+    .restore()
+    .finish()
+  let stats = commands.stats()
+  assert_eq(commands.length(), 7)
+  assert_eq(stats.command_count, 7)
+  assert_eq(stats.draw_count, 3)
+  assert_eq(stats.clip_count, 1)
+  assert_eq(stats.state_count, 2)
+  assert_eq(stats.present_count, 1)
+  assert_eq(stats.text_count, 1)
+  assert_eq(stats.max_save_depth, 1)
+  assert_true(stats.is_state_balanced())
+  assert_true(commands.is_state_balanced())
+  assert_true(commands.has_present())
+  assert_true(
+    commands.touched_bounds() == Some(@skia_mbt.Rect::new(2, 2, 12, 7)),
+  )
+  assert_true(commands.finish().length() == commands.length())
+
+  let raster_commands = @skia_mbt.RenderCommandList::for_target(
+      @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+        @skia_mbt.ISize::new(8, 8),
+      ),
+    )
+    .clear(@skia_mbt.Color::white())
+    .finish()
+  assert_true(!raster_commands.has_present())
+  assert_true(
+    raster_commands.touched_bounds() == Some(@skia_mbt.Rect::from_iwh(8, 8)),
+  )
+
+  let unbalanced = @skia_mbt.RenderCommandList::for_target(target).restore()
+  assert_true(!unbalanced.is_state_balanced())
+  assert_eq(unbalanced.stats().unbalanced_restore_count, 1)
+}
+
+///|
 test "font fallback contracts normalize style family and language requests" {
   let style = @skia_mbt.FontStyleRequest::new(weight=1200, width=-2, slant=9)
   assert_eq(style.weight, 1000)
