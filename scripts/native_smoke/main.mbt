@@ -99,6 +99,14 @@ fn main {
     surface.image_info() != @skia.ImageInfo::n32_premul(size) {
     fail_smoke("surface metadata does not match requested N32 premul size")
   }
+  let descriptor = surface.descriptor()
+  if !descriptor.is_raster() ||
+    descriptor.image_info != surface.image_info() ||
+    descriptor.dimensions() != size {
+    fail_smoke("surface descriptor does not match the raster surface")
+  }
+  println("native smoke surface descriptor backend")
+  println("raster")
   guard surface.canvas() is Some(canvas) else {
     fail_smoke("failed to borrow native canvas")
   }
@@ -181,6 +189,8 @@ fn main {
   if canvas.save_count() != save_count_before_clip {
     fail_smoke("canvas save count did not restore after restore_to_count")
   }
+  println("native smoke canvas state restored")
+  println(canvas.save_count())
   canvas.draw_rect(
     @skia.Rect::from_xywh(28, 18, 4, 4),
     @skia.Paint::new(color=@skia.Color::black()),
@@ -222,6 +232,8 @@ fn main {
     radial_shader,
     @skia.Paint::new(),
   )
+  println("native smoke shader draws")
+  println(3)
 
   guard @native.Path::new() is Some(native_path) else {
     fail_smoke("failed to create native path")
@@ -296,6 +308,8 @@ fn main {
   if !appended_path.contains(@skia.Point::new(30, 27)) {
     fail_smoke("native add_path_value does not contain appended geometry")
   }
+  println("native smoke path verbs")
+  println(appended_path.count_verbs())
   canvas.draw_path(appended_path, @skia.Paint::new(color=@skia.Color::cyan()))
 
   let save_count_before_transform = canvas.save_count()
