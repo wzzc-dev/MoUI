@@ -560,6 +560,44 @@ test "render command list tracks stats balance and touched bounds" {
 }
 
 ///|
+test "render command list exposes text run resource keys" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(32, 16),
+  )
+  let fallback = @skia_mbt.FontFallbackRequest::new(
+    families=@skia_mbt.FontFallbackChain::new(primary_family=b"Inter"),
+    bcp47=[b"en"],
+    character=0x68,
+    style=@skia_mbt.FontStyleRequest::normal(),
+  )
+  let descriptor = @skia_mbt.TextRunDescriptor::new(
+    range=@skia_mbt.TextRange::new(0, 5),
+    fallback~,
+  )
+  let font_key = @skia_mbt.RendererResourceKey::font(b"Inter:16:400")
+  let expected_key = descriptor.resource_key(b"hello", font_key~)
+  let commands = @skia_mbt.RenderCommandList::for_target(target)
+    .draw_text_run_utf8(
+      b"hello",
+      @skia_mbt.Point::new(2, 12),
+      descriptor=Some(descriptor),
+      font_key~,
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::black()),
+    )
+    .draw_text_utf8(b"legacy", @skia_mbt.Point::new(2, 8))
+  let stats = commands.stats()
+  assert_eq(stats.draw_count, 2)
+  assert_eq(stats.text_count, 2)
+  assert_true(
+    commands.commands[0].text_run_resource_key() == Some(expected_key),
+  )
+  assert_true(commands.commands[1].text_run_resource_key() is None)
+  let keys = commands.text_run_resource_keys()
+  assert_eq(keys.length(), 1)
+  assert_true(keys[0] == expected_key)
+}
+
+///|
 test "font fallback contracts normalize style family and language requests" {
   let style = @skia_mbt.FontStyleRequest::new(weight=1200, width=-2, slant=9)
   assert_eq(style.weight, 1000)
