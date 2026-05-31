@@ -66,6 +66,17 @@ pub(all) struct DiffOverview {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct PiRpcSnapshot {
+  command : String
+  success : Bool
+  session_id : String
+  model : String
+  pending_message_count : Int
+  message_count : Int
+  error : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
@@ -79,6 +90,7 @@ pub(all) struct WorkbenchModel {
   commands : Array[CommandRun]
   diagnostics : Array[DiagnosticItem]
   transport : PiTransportState
+  pi_rpc : PiRpcSnapshot
   last_status : String
 }
 
@@ -193,6 +205,27 @@ pub fn DiffOverview::new(
 }
 
 ///|
+pub fn PiRpcSnapshot::new(
+  command? : String = "",
+  success? : Bool = false,
+  session_id? : String = "",
+  model? : String = "",
+  pending_message_count? : Int = 0,
+  message_count? : Int = 0,
+  error? : String = "",
+) -> PiRpcSnapshot {
+  {
+    command,
+    success,
+    session_id,
+    model,
+    pending_message_count,
+    message_count,
+    error,
+  }
+}
+
+///|
 pub fn WorkbenchModel::new() -> WorkbenchModel {
   {
     selected_session_id: "moui-skia",
@@ -207,6 +240,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     commands: sample_commands(),
     diagnostics: sample_diagnostics(),
     transport: PiTransportState::new(),
+    pi_rpc: PiRpcSnapshot::new(),
     last_status: "Ready for Pi RPC",
   }
 }

@@ -175,7 +175,10 @@ native encoder targets Pi's actual RPC command names: `get_state`, `prompt`,
 and `abort`, with process shutdown handled by stdin EOF. The focused smoke for
 machines with Pi installed is an offline `get_state` JSONL round trip through
 `pi --mode rpc`, so it validates the process protocol without making a model
-request.
+request. The shared app ingests successful and failed Pi RPC `response` JSONL
+objects: `get_state` refreshes the current Workbench session snapshot, while
+RPC failures become diagnostics without leaking native process details into the
+app model.
 
 The first native entrypoint is macOS Skia:
 
