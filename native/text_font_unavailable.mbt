@@ -241,6 +241,16 @@ pub fn Typeface::from_name(
 }
 
 ///|
+pub fn Typeface::from_name_style(
+  family_name : Bytes,
+  style : @skia.FontStyleRequest,
+) -> Typeface? {
+  ignore(family_name)
+  ignore(style)
+  None
+}
+
+///|
 pub fn FontMgr::default() -> FontMgr? {
   None
 }
@@ -281,6 +291,28 @@ pub fn FontMgr::match_family_style(
 }
 
 ///|
+pub fn FontMgr::match_family_style_request(
+  self : FontMgr,
+  family_name : Bytes,
+  style : @skia.FontStyleRequest,
+) -> Typeface? {
+  ignore(self)
+  ignore(family_name)
+  ignore(style)
+  None
+}
+
+///|
+pub fn FontMgr::match_fallback_request(
+  self : FontMgr,
+  request : @skia.FontFallbackRequest,
+) -> Typeface? {
+  ignore(self)
+  ignore(request)
+  None
+}
+
+///|
 pub fn Typeface::from_font_mgr_family(
   font_mgr : FontMgr,
   family_name : Bytes,
@@ -293,6 +325,16 @@ pub fn Typeface::from_font_mgr_family(
   ignore(weight)
   ignore(width)
   ignore(slant)
+  None
+}
+
+///|
+pub fn Typeface::from_font_mgr_request(
+  font_mgr : FontMgr,
+  request : @skia.FontFallbackRequest,
+) -> Typeface? {
+  ignore(font_mgr)
+  ignore(request)
   None
 }
 
