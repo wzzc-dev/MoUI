@@ -150,6 +150,19 @@ pub fn RenderCommand::resource_descriptor(
 }
 
 ///|
+pub fn RenderCommand::resource_descriptors(
+  self : RenderCommand,
+) -> Array[RendererResourceDescriptor] {
+  match self {
+    DrawCanvasPath(path, _) => [path.resource_descriptor()]
+    DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
+      descriptor.resource_plan(text, font_key~).descriptors
+    DeclareRenderResource(descriptor) => [descriptor]
+    _ => []
+  }
+}
+
+///|
 fn RenderCommand::draw_bounds(self : RenderCommand) -> Rect? {
   match self {
     DrawCanvasRect(rect, _) => Some(rect.sorted())
@@ -424,16 +437,14 @@ pub fn RenderCommandList::resource_descriptors(
     descriptors.push(target_descriptor)
   }
   for command in self.commands {
-    match command.resource_descriptor() {
-      None => ()
-      Some(descriptor) =>
-        if !descriptor.key.is_empty() &&
-          !renderer_resource_descriptor_list_contains_key(
-            descriptors,
-            descriptor.key,
-          ) {
-          descriptors.push(descriptor)
-        }
+    for descriptor in command.resource_descriptors() {
+      if !descriptor.key.is_empty() &&
+        !renderer_resource_descriptor_list_contains_key(
+          descriptors,
+          descriptor.key,
+        ) {
+        descriptors.push(descriptor)
+      }
     }
   }
   descriptors
