@@ -105,6 +105,64 @@ test "workbench command catalog runtime effect dispatches slash prompt" {
 }
 
 ///|
+test "workbench queues transcript follow-up through prompt RPC" {
+  let model = WorkbenchModel::new().update(
+    FollowTranscript("assistant", "Skia route inspected", "All checks pass"),
+  )
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued transcript follow-up for Pi RPC")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Follow up on assistant transcript: Skia route inspected. Context: All checks pass",
+      )
+    }
+    _ => fail("expected queued transcript follow-up prompt")
+  }
+  assert_true(
+    model.events.any(event => event.title == "Transcript follow-up queued"),
+  )
+}
+
+///|
+test "workbench transcript follow-up runtime effect dispatches prompt" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Follow up on assistant transcript: Skia route inspected. Context: All checks pass\"}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    FollowTranscript("assistant", "Skia route inspected", "All checks pass"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Follow up on assistant transcript: Skia route inspected. Context: All checks pass",
+      )
+    }
+    _ => fail("expected captured transcript follow-up prompt")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Running")
+}
+
+///|
 test "workbench queues file context inspection through prompt RPC" {
   let model = WorkbenchModel::new().update(
     InspectFile("examples/mo_workbench/app/app.mbt"),
@@ -156,7 +214,7 @@ test "workbench file context runtime effect dispatches prompt" {
 
 ///|
 test "workbench queues diff review through prompt RPC" {
-  let model = WorkbenchModel::new().update(ReviewDiff)
+  let model = model_with_reviewable_diff().update(ReviewDiff)
   inspect(model.prompt, content="")
   inspect(model.last_status, content="Queued diff review for Pi RPC")
   inspect(model.pending_transport_count(), content="2")
@@ -168,6 +226,14 @@ test "workbench queues diff review through prompt RPC" {
     _ => fail("expected queued diff review prompt")
   }
   assert_true(model.events.any(event => event.title == "Diff review queued"))
+}
+
+///|
+test "workbench keeps empty diff review quiet" {
+  let model = WorkbenchModel::new().update(ReviewDiff)
+  inspect(model.last_status, content="Diff context is empty")
+  inspect(model.pending_transport_count(), content="0")
+  assert_false(model.events.any(event => event.title == "Diff review queued"))
 }
 
 ///|
@@ -183,7 +249,7 @@ test "workbench diff review runtime effect dispatches prompt" {
       ),
     )
   })
-  let update = WorkbenchModel::new().update_with_transport(
+  let update = model_with_reviewable_diff().update_with_transport(
     ReviewDiff,
     transport,
   )
@@ -374,7 +440,19 @@ test "workbench command queue uses Pi RPC bash command" {
 
 ///|
 test "workbench reruns command evidence through Pi RPC bash path" {
-  let seed = WorkbenchModel::new()
+  let seed = {
+    ..WorkbenchModel::new(),
+    commands: [
+      CommandRun::new(
+        id=1,
+        command="moon test examples/mo_workbench/app --target native",
+        cwd="/Volumes/Data/Code/moon/MoUI",
+        status="ready",
+        exit_code=None,
+        output_path="/tmp/mo-workbench-app-test.log",
+      ),
+    ],
+  }
   let command = seed.commands[0].command
   let model = seed.update(QueueCommand(command))
   inspect(model.last_status, content="Command queued for Pi RPC bash")
@@ -853,6 +931,15 @@ test "workbench ingests Pi diagnostics files and diff jsonl" {
   inspect(model.diff.deletions, content="12")
   inspect(model.last_status, content="Pi diff summary applied")
   assert_true(model.events.any(event => event.title == "Diff summary updated"))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "1 files"))
+  assert_true(has_text(commands, "1 diag"))
+  assert_true(has_text(commands, "requires_review"))
+  assert_true(has_text(commands, "6 files · +180 -12"))
+  assert_true(has_text(commands, "聚焦"))
+  assert_true(has_text(commands, "审核"))
+  assert_true(has_text(commands, "清除"))
+  assert_true(has_text(commands, "修复"))
 }
 
 ///|
@@ -871,6 +958,7 @@ test "workbench runtime draws diagnostic fix action" {
   assert_true(has_text(commands, "1 diag"))
   assert_true(has_text(commands, "moon check"))
   assert_true(has_text(commands, "unused variable in app.mbt"))
+  assert_true(has_text(commands, "清除"))
   assert_true(has_text(commands, "修复"))
 }
 
@@ -938,6 +1026,25 @@ test "workbench ingests Pi RPC get_messages response into transcript" {
   inspect(model.transcript[2].detail, content="exit code 0 - ok")
   inspect(model.last_status, content="Pi messages refreshed")
   assert_true(model.events.any(event => event.title == "Pi messages refreshed"))
+}
+
+///|
+test "workbench runtime draws transcript follow-up action after Pi messages" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_messages","success":true,"data":{"messages":[{"role":"user","content":"Inspect the Skia route","timestamp":1},{"role":"assistant","content":[{"type":"text","text":"Skia route inspected"}],"model":"gpt-5","timestamp":2}]}}
+        ),
+      ),
+    ),
+  )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "2 messages"))
+  assert_true(has_text(commands, "Inspect the Skia route"))
+  assert_true(has_text(commands, "Skia route inspected"))
+  assert_true(has_text(commands, "跟进"))
 }
 
 ///|
@@ -1365,10 +1472,6 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "A Pi agent desktop"))
   assert_true(has_text(commands, "Session"))
-  assert_true(has_text(commands, "Messages 3"))
-  assert_true(has_text(commands, "Tools 1/1"))
-  assert_true(has_text(commands, "Tokens 31960"))
-  assert_true(has_text(commands, "Context 16%"))
   assert_true(has_text(commands, "Thinking: default"))
   assert_true(has_text(commands, "Pi: unbound"))
   assert_true(has_text(commands, "刷新"))
@@ -1376,20 +1479,26 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Steer 1"))
   assert_true(has_text(commands, "Follow 1"))
   assert_true(has_text(commands, "Pi transcript"))
-  assert_true(has_text(commands, "0 messages"))
   assert_true(has_text(commands, "Activity"))
-  assert_true(has_text(commands, "0 events"))
-  assert_true(has_text(commands, "/review"))
-  assert_true(has_text(commands, "重跑"))
-  assert_true(has_text(commands, "output /tmp/mo-workbench-app-test.log"))
   assert_true(has_text(commands, "Workspace"))
-  assert_true(has_text(commands, "0 diag"))
-  assert_true(has_text(commands, "清除"))
-  assert_true(has_text(commands, "聚焦"))
-  assert_true(has_text(commands, "审核"))
   assert_true(has_text(commands, "同步"))
-  assert_true(has_text(commands, "运行"))
   assert_true(has_text(commands, "Pi RPC"))
+  assert_false(has_text(commands, "Messages 0"))
+  assert_false(has_text(commands, "Context n/a"))
+  assert_false(has_text(commands, "0 messages"))
+  assert_false(has_text(commands, "0 events"))
+  assert_false(has_text(commands, "0 diag"))
+  assert_false(has_text(commands, "0 files"))
+  assert_false(has_text(commands, "0 runs"))
+  assert_false(has_text(commands, "0 cmds"))
+  assert_false(has_text(commands, "/review"))
+  assert_false(has_text(commands, "重跑"))
+  assert_false(has_text(commands, "跟进"))
+  assert_false(has_text(commands, "output /tmp/mo-workbench-app-test.log"))
+  assert_false(has_text(commands, "清除"))
+  assert_false(has_text(commands, "聚焦"))
+  assert_false(has_text(commands, "审核"))
+  assert_false(has_text(commands, "运行"))
   assert_false(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_false(has_text(commands, "Product"))
   assert_false(has_text(commands, "No description"))
@@ -1400,6 +1509,19 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "修复"))
   assert_false(has_text(commands, "Research notebook"))
   assert_false(has_text(commands, "Skia native"))
+}
+
+///|
+fn model_with_reviewable_diff() -> WorkbenchModel {
+  {
+    ..WorkbenchModel::new(),
+    diff: DiffOverview::new(
+      changed_files=5,
+      additions=160,
+      deletions=10,
+      status="ready for review",
+    ),
+  }
 }
 
 ///|
