@@ -784,6 +784,7 @@ pub(all) enum SurfaceBackend {
   Gpu
 } derive(Eq, @debug.Debug)
 pub fn SurfaceBackend::is_gpu(Self) -> Bool
+pub fn SurfaceBackend::is_presentable(Self) -> Bool
 pub fn SurfaceBackend::is_raster(Self) -> Bool
 pub fn SurfaceBackend::is_window(Self) -> Bool
 pub impl Default for SurfaceBackend
@@ -811,6 +812,7 @@ pub fn SurfaceDescriptor::is_budgeted(Self) -> Bool
 pub fn SurfaceDescriptor::is_empty(Self) -> Bool
 pub fn SurfaceDescriptor::is_gpu(Self) -> Bool
 pub fn SurfaceDescriptor::is_msaa(Self) -> Bool
+pub fn SurfaceDescriptor::is_presentable(Self) -> Bool
 pub fn SurfaceDescriptor::is_raster(Self) -> Bool
 pub fn SurfaceDescriptor::is_window(Self) -> Bool
 pub fn SurfaceDescriptor::new(SurfaceBackend, ImageInfo, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget) -> Self
@@ -830,6 +832,34 @@ pub(all) enum SurfaceOrigin {
   BottomLeft
 } derive(Eq, @debug.Debug)
 pub impl Default for SurfaceOrigin
+
+pub(all) enum SurfacePresentMode {
+  ImmediatePresent
+  MailboxPresent
+  FifoPresent
+} derive(Eq, @debug.Debug)
+pub fn SurfacePresentMode::allows_tearing(Self) -> Bool
+pub fn SurfacePresentMode::prefers_vsync(Self) -> Bool
+pub impl Default for SurfacePresentMode
+
+pub(all) struct SurfaceTargetDescriptor {
+  surface : SurfaceDescriptor
+  present_mode : SurfacePresentMode?
+  max_frames_in_flight : Int
+} derive(Eq, @debug.Debug)
+pub fn SurfaceTargetDescriptor::bounds(Self) -> IRect
+pub fn SurfaceTargetDescriptor::dimensions(Self) -> ISize
+pub fn SurfaceTargetDescriptor::gpu_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
+pub fn SurfaceTargetDescriptor::is_multibuffered(Self) -> Bool
+pub fn SurfaceTargetDescriptor::is_presentable(Self) -> Bool
+pub fn SurfaceTargetDescriptor::needs_present(Self) -> Bool
+pub fn SurfaceTargetDescriptor::new(SurfaceDescriptor, present_mode? : SurfacePresentMode?, max_frames_in_flight? : Int) -> Self
+pub fn SurfaceTargetDescriptor::raster_n32_premul(ISize) -> Self
+pub fn SurfaceTargetDescriptor::window_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
+pub fn SurfaceTargetDescriptor::with_dimensions(Self, ISize) -> Self
+pub fn SurfaceTargetDescriptor::with_max_frames_in_flight(Self, Int) -> Self
+pub fn SurfaceTargetDescriptor::with_present_mode(Self, SurfacePresentMode) -> Self
+pub fn SurfaceTargetDescriptor::without_present(Self) -> Self
 
 pub(all) enum TextDirection {
   LeftToRight
