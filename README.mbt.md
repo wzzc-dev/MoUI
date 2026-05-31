@@ -25,7 +25,7 @@ The current package exposes the first value-layer API surface:
   other backend-owned resources
 - renderer resource identity: `RendererResourceKind`, `RendererResourceKey`,
   and `RendererResourceDescriptor` give those caches typed keys for images,
-  shaders, filters, text, paths, surfaces, and future GPU resources
+  shaders, filters, text runs, paths, surfaces, and future GPU resources
 - render pass contracts: `RenderPassDescriptor`, `RenderPassLoadOp`, and
   `RenderPassStoreOp` define target bounds plus load/clear/store/present
   semantics before a concrete backend records draw commands, including defaults
@@ -35,7 +35,8 @@ The current package exposes the first value-layer API surface:
   renderer can validate before replaying into a native Canvas
 - text layout and fallback contracts: `TextRunDescriptor`,
   `FontFallbackRequest`, `FontFallbackChain`, and `FontStyleRequest` define the
-  value-layer input to native shaping and font fallback
+  value-layer input to native shaping and font fallback, including deterministic
+  text-run resource keys for backend measurement/shaping caches
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,
