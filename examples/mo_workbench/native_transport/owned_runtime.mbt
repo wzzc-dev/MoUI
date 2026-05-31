@@ -111,31 +111,64 @@ async fn PiNativeTransportOwner::run_process(
   @async.with_task_group(group => {
     let (process_stdin, stdin_writer) = @process.write_to_process()
     let (stdout_reader, process_stdout) = @process.read_from_process()
+    let (stderr_reader, process_stderr) = @process.read_from_process()
     let process = spawn_process(
       group,
       self.config,
       stdin=process_stdin,
       stdout=process_stdout,
+      stderr=process_stderr,
     )
     let active_session = Ref(self.session_id)
+    let last_stderr = Ref("")
     self.emit_event(ProcessStarted(process.pid.to_string()))
-    group.spawn_bg(allow_failure=true, () => {
+    let stdout_task = group.spawn(allow_failure=true, () => {
       emit_jsonl_lines(stdout_reader, active_session, event => {
         self.emit_event(event)
       })
     })
+    let stderr_task = group.spawn(allow_failure=true, () => {
+      emit_stderr_lines(stderr_reader, active_session, last_stderr, event => {
+        self.emit_event(event)
+      })
+    })
     let mut should_close = self.send_batch(stdin_writer, active_session, first)
-    while !should_close {
-      let next = Some(self.queue.get()) catch { _ => None }
-      match next {
-        Some(batch) =>
-          should_close = self.send_batch(stdin_writer, active_session, batch)
-        None => should_close = true
+    let mut observed_exit : Int? = None
+    while !should_close && observed_exit is None {
+      match process.try_wait() {
+        Some(code) => {
+          observed_exit = Some(code)
+          should_close = true
+        }
+        None =>
+          match (self.queue.try_get() catch { _ => None }) {
+            Some(batch) =>
+              should_close = self.send_batch(
+                stdin_writer, active_session, batch,
+              )
+            None => @async.sleep(8)
+          }
       }
     }
     stdin_writer.close()
-    let exit_code = process.wait()
+    let exit_code = match observed_exit {
+      Some(code) => code
+      None => process.wait()
+    }
+    stdout_task.wait() catch {
+      _ => ()
+    }
+    stderr_task.wait() catch {
+      _ => ()
+    }
     self.emit_event(ProcessExited(exit_code))
+    if exit_code != 0 {
+      self.emit_event(
+        TransportFailed(
+          process_exit_failure_reason(self.config, exit_code, last_stderr.val),
+        ),
+      )
+    }
   })
 }
 
@@ -188,6 +221,24 @@ async fn emit_jsonl_lines(
     let line = line.trim(char_set="\r").to_owned()
     if line != "" {
       emit(JsonLineReceived(active_session.val, line))
+    }
+  }
+}
+
+///|
+async fn emit_stderr_lines(
+  reader : @process.ReadFromProcess,
+  active_session : Ref[String],
+  last_stderr : Ref[String],
+  emit : (PiTransportEvent) -> Unit,
+) -> Unit {
+  defer reader.close()
+  for ;; {
+    guard reader.read_until("\n") is Some(line) else { break }
+    let line = line.trim(char_set="\r").to_owned()
+    if line != "" {
+      last_stderr.val = line
+      emit(ProcessStderr(active_session.val, line))
     }
   }
 }

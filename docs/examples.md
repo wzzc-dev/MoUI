@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, command/file/diff transcript evidence, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -166,7 +166,9 @@ and diff summaries are ingested inside the shared app model rather than the
 native process driver. The native transport also exposes a
 `PiNativeTransportOwner` so the macOS Skia entrypoint can keep one
 `pi --mode rpc` JSONL process alive across repeated app runtime dispatches
-while the shared app remains platform-neutral.
+while the shared app remains platform-neutral. Native stderr is surfaced as a
+platform-neutral warning event and nonzero process exits become
+`TransportFailed` events with the exit code and last stderr line.
 
 The first native entrypoint is macOS Skia:
 

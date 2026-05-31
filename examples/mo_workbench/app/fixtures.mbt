@@ -49,7 +49,7 @@ fn sample_plan() -> Array[PlanStep] {
       title="Keep PiTransport platform-neutral",
       status="active",
       owner="agent",
-      detail="Route commands through app-level events while native owns async process IO.",
+      detail="Route commands, stdout, stderr, and process failures through app-level events.",
     ),
     PlanStep::new(
       id="skia",
@@ -183,7 +183,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="PiTransport",
       severity="watch",
-      message="Native owner keeps one Pi JSONL process alive; restart/error policy is next.",
+      message="Native owner keeps one Pi JSONL process alive and reports stderr/nonzero exits; restart policy is next.",
     ),
     DiagnosticItem::new(
       source="Skia",

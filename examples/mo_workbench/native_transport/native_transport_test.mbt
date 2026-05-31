@@ -90,6 +90,34 @@ async test "native transport drives jsonl command batch through stdin stdout pro
 
 ///|
 #cfg(all(target="native", not(platform="windows")))
+async test "native transport command run surfaces stderr and nonzero exit" {
+  let config = PiNativeTransportConfig::shell(
+    script=(
+      #|if IFS= read -r line; then
+      #|  printf 'pi exploded\n' >&2
+      #|  exit 7
+      #|fi
+    ),
+  )
+  let run = run_jsonl_commands(config, [StartRpc("fixture", "/repo")])
+  inspect(run.exit_code, content="7")
+  assert_true(run.events.any(event => event is ProcessStarted(_)))
+  assert_true(run.events.any(event => event is JsonLineSent(_, _)))
+  assert_true(
+    run.events.any(event => event is ProcessStderr("fixture", "pi exploded")),
+  )
+  assert_true(run.events.any(event => event is ProcessExited(7)))
+  assert_true(
+    run.events.any(event => {
+      event is TransportFailed(reason) &&
+      reason.contains("exited with code 7") &&
+      reason.contains("pi exploded")
+    }),
+  )
+}
+
+///|
+#cfg(all(target="native", not(platform="windows")))
 async test "native transport keeps one jsonl process across command batches" {
   let config = PiNativeTransportConfig::shell(
     script=(
@@ -214,6 +242,40 @@ async test "native transport owner reuses one jsonl process across runtime dispa
     }
     _ => fail("expected received JSONL line")
   }
+}
+
+///|
+#cfg(all(target="native", not(platform="windows")))
+async test "native transport owner surfaces stderr and nonzero exit" {
+  let config = PiNativeTransportConfig::shell(
+    script=(
+      #|if IFS= read -r line; then
+      #|  printf 'pi exploded\n' >&2
+      #|  exit 7
+      #|fi
+    ),
+  )
+  let owner = PiNativeTransportOwner::new(config, session_id="fixture")
+  let runtime = owner.runtime()
+  let events : Ref[Array[@app.PiTransportEvent]] = Ref([])
+  let emit = event => events.val.push(event)
+  @async.with_task_group(group => {
+    group.spawn_bg(() => owner.run())
+    runtime.dispatch([StartRpc("fixture", "/repo")], emit)
+  })
+  assert_true(events.val.any(event => event is ProcessStarted(_)))
+  assert_true(events.val.any(event => event is JsonLineSent(_, _)))
+  assert_true(
+    events.val.any(event => event is ProcessStderr("fixture", "pi exploded")),
+  )
+  assert_true(events.val.any(event => event is ProcessExited(7)))
+  assert_true(
+    events.val.any(event => {
+      event is TransportFailed(reason) &&
+      reason.contains("exited with code 7") &&
+      reason.contains("pi exploded")
+    }),
+  )
 }
 
 ///|

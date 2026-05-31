@@ -31,6 +31,7 @@ pub(all) enum PiTransportEvent {
   ProcessStarted(String)
   JsonLineSent(String, String)
   JsonLineReceived(String, String)
+  ProcessStderr(String, String)
   ProcessExited(Int)
   TransportFailed(String)
 } derive(Eq, Debug)
@@ -88,6 +89,8 @@ pub fn PiTransportState::apply_event(
         last_json_line: line,
       }
     JsonLineReceived(_session, line) => { ..self, last_json_line: line }
+    ProcessStderr(_session, line) =>
+      { ..self, last_json_line: "stderr: " + line }
     ProcessExited(code) =>
       {
         ..self,

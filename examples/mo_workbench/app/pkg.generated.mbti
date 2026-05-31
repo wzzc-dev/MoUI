@@ -78,6 +78,7 @@ pub(all) enum PiTransportEvent {
   ProcessStarted(String)
   JsonLineSent(String, String)
   JsonLineReceived(String, String)
+  ProcessStderr(String, String)
   ProcessExited(Int)
   TransportFailed(String)
 } derive(Eq, @debug.Debug)
