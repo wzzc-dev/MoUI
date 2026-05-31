@@ -43,6 +43,14 @@ jobs:
         shell: bash
         run: moon update
 
+      - name: Install build dependencies
+        shell: bash
+        run: bash scripts/install-linux-smoke-deps.sh
+
+      - name: Verify build dependencies
+        shell: bash
+        run: bash scripts/install-linux-smoke-deps.sh --check
+
       - name: Cache JetBrains Skia
         uses: actions/cache@v4
         with:
