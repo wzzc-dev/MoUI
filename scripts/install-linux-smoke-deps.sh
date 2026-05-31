@@ -28,6 +28,7 @@ packages=(
   libfontconfig1-dev
   libfreetype-dev
   libharfbuzz-dev
+  wayland-protocols
 )
 
 check_only=0
