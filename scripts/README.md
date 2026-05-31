@@ -188,10 +188,12 @@ the platform font manager is available. It also exercises native typeface family
 metadata and FontMgr character fallback through the value-layer
 `FontFallbackRequest`. Pixel assertions are reserved for deterministic
 geometry and color operations so minimal CPU-only Skia builds do not fail only
-because their font manager differs. Font coverage still verifies positive text
-advance, glyph count, glyph ID mapping, glyph advances, glyph positions, glyph
-bounds, text bounds, metrics, font-family typeface matching, and typeface family
-metadata whenever the native smoke can create the relevant font objects.
+because their font manager differs. Shader and filter coverage also verifies
+that the value-layer resource descriptors produce cacheable renderer resource
+plans before native handles are allocated. Font coverage still verifies positive
+text advance, glyph count, glyph ID mapping, glyph advances, glyph positions,
+glyph bounds, text bounds, metrics, font-family typeface matching, and typeface
+family metadata whenever the native smoke can create the relevant font objects.
 
 To reuse an existing Skia checkout/build instead of the default JetBrains
 provider:

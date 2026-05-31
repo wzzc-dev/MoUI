@@ -235,6 +235,41 @@ fn main {
   println("native smoke shader draws")
   println(3)
 
+  let color_shader_descriptor = @skia.ShaderDescriptor::color(
+    @skia.Color::cyan(),
+  )
+  guard @skia.ShaderDescriptor::linear_gradient(
+      @skia.Point::new(22, 18),
+      @skia.Point::new(26, 18),
+      @skia.Color::yellow(),
+      @skia.Color::magenta(),
+    )
+    is Some(linear_shader_descriptor) else {
+    fail_smoke("failed to create value-layer linear shader descriptor")
+  }
+  guard @skia.ShaderDescriptor::radial_gradient(
+      @skia.Point::new(26, 24),
+      2.0,
+      @skia.Color::white(),
+      @skia.Color::black(),
+    )
+    is Some(radial_shader_descriptor) else {
+    fail_smoke("failed to create value-layer radial shader descriptor")
+  }
+  let shader_resource_plan = @skia.RendererResourcePlan::new([
+    color_shader_descriptor.resource_descriptor(),
+    linear_shader_descriptor.resource_descriptor(),
+    radial_shader_descriptor.resource_descriptor(),
+  ])
+  if shader_resource_plan.length() != 3 ||
+    shader_resource_plan.cacheable_count != 3 ||
+    shader_resource_plan.uncacheable_count != 0 ||
+    shader_resource_plan.byte_size <= 0L {
+    fail_smoke("native shader resource plan did not match shader descriptors")
+  }
+  println("native smoke shader resource plan count")
+  println(shader_resource_plan.length())
+
   guard @native.ColorFilter::saturation(0.8) is Some(color_filter) else {
     fail_smoke("failed to create native color filter")
   }
@@ -256,6 +291,31 @@ fn main {
   canvas.restore_to_count(save_count_before_clip)
   println("native smoke filter layer count")
   println(filtered_layer_count)
+
+  guard @skia.ColorFilterDescriptor::saturation(0.8)
+    is Some(color_filter_descriptor) else {
+    fail_smoke("failed to create value-layer color filter descriptor")
+  }
+  guard @skia.ImageFilterDescriptor::blur(1.0, 1.0)
+    is Some(image_filter_descriptor) else {
+    fail_smoke("failed to create value-layer image filter descriptor")
+  }
+  guard @skia.MaskFilterDescriptor::blur(1.0) is Some(mask_filter_descriptor) else {
+    fail_smoke("failed to create value-layer mask filter descriptor")
+  }
+  let filter_resource_plan = @skia.RendererResourcePlan::new([
+    color_filter_descriptor.resource_descriptor(),
+    image_filter_descriptor.resource_descriptor(),
+    mask_filter_descriptor.resource_descriptor(),
+  ])
+  if filter_resource_plan.length() != 3 ||
+    filter_resource_plan.cacheable_count != 3 ||
+    filter_resource_plan.uncacheable_count != 0 ||
+    filter_resource_plan.byte_size <= 0L {
+    fail_smoke("native filter resource plan did not match filter descriptors")
+  }
+  println("native smoke filter resource plan count")
+  println(filter_resource_plan.length())
 
   guard @native.Path::new() is Some(native_path) else {
     fail_smoke("failed to create native path")
@@ -313,11 +373,7 @@ fn main {
   appended_path.add_rect(@skia.Rect::from_xywh(28, 22, 2, 2))
   appended_path.add_path_value(
     @skia.Path::new().add_poly(
-      [
-        @skia.Point::new(0, 0),
-        @skia.Point::new(3, 0),
-        @skia.Point::new(3, 3),
-      ],
+      [@skia.Point::new(0, 0), @skia.Point::new(3, 0), @skia.Point::new(3, 3)],
       close=true,
     ),
     matrix=@skia.Matrix::translate(28, 26),
@@ -390,8 +446,7 @@ fn main {
   println(red_pixmap.height())
 
   let replay_size = @skia.ISize::new(12, 12)
-  guard @native.Surface::raster_n32_premul(replay_size) is Some(replay_surface)
-  else {
+  guard @native.Surface::raster_n32_premul(replay_size) is Some(replay_surface) else {
     fail_smoke("failed to create replay smoke surface")
   }
   guard replay_surface.canvas() is Some(replay_canvas) else {
@@ -774,7 +829,8 @@ fn main {
   }
   println("native smoke typeface family bytes")
   println(matched_family.length())
-  guard @native.Font::from_typeface(family_typeface, size=8.0) is Some(family_font) else {
+  guard @native.Font::from_typeface(family_typeface, size=8.0)
+    is Some(family_font) else {
     fail_smoke("failed to create native font from font manager family")
   }
   if family_font.measure_text_utf8(smoke_text_bytes()) <= 0.0 {
