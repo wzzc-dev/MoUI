@@ -6,8 +6,8 @@ usage() {
 Usage: scripts/verify-real-skia-artifact.sh --platform NAME --log-dir PATH [options]
 
 Checks a real Skia smoke artifact/log directory as a bundle. The directory must
-contain the wrapper log, native smoke executable log, and acceptance summary for
-the selected platform.
+contain the preflight log, wrapper log, native smoke executable log, and
+acceptance summary for the selected platform.
 
 Options:
   --platform NAME    linux, macos, or windows.
@@ -84,19 +84,12 @@ native_log="$resolved_log_dir/$platform-native-smoke-output.log"
 acceptance_log="$resolved_log_dir/$platform-real-skia-acceptance.log"
 build_log="$resolved_log_dir/$platform-skia-build.log"
 
-for log_path in "$wrapper_log" "$native_log" "$acceptance_log"; do
+for log_path in "$preflight_log" "$wrapper_log" "$native_log" "$acceptance_log"; do
   if [[ ! -f "$log_path" ]]; then
     echo "real Skia artifact is missing expected log: $log_path" >&2
     exit 1
   fi
 done
-
-if [[ "$platform" == "macos" || "$platform" == "windows" ]]; then
-  if [[ ! -f "$preflight_log" ]]; then
-    echo "real Skia artifact is missing expected preflight log: $preflight_log" >&2
-    exit 1
-  fi
-fi
 
 extract_field() {
   local log_path="$1"
@@ -154,13 +147,11 @@ if ! grep -Eq 'library=.*\b(lib)?skia\.(a|so|dylib|lib)\b' "$wrapper_log"; then
 fi
 
 artifact_log_names=(
+  "$(basename "$preflight_log")"
   "$(basename "$wrapper_log")"
   "$(basename "$native_log")"
   "$(basename "$acceptance_log")"
 )
-if [[ "$platform" == "macos" || "$platform" == "windows" ]]; then
-  artifact_log_names+=("$(basename "$preflight_log")")
-fi
 
 for log_name in "${artifact_log_names[@]}"; do
   if ! grep -Fq "$log_name" "$acceptance_log"; then

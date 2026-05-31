@@ -27,15 +27,9 @@ $buildLog = Join-Path $resolvedLogDir "$Platform-skia-build.log"
 $nativeLog = Join-Path $resolvedLogDir "$Platform-native-smoke-output.log"
 $acceptanceLog = Join-Path $resolvedLogDir "$Platform-real-skia-acceptance.log"
 
-foreach ($logPath in @($wrapperLog, $nativeLog, $acceptanceLog)) {
+foreach ($logPath in @($preflightLog, $wrapperLog, $nativeLog, $acceptanceLog)) {
   if (!(Test-Path -LiteralPath $logPath -PathType Leaf)) {
     throw "real Skia artifact is missing expected log: $logPath"
-  }
-}
-
-if ($Platform -in @("macos", "windows")) {
-  if (!(Test-Path -LiteralPath $preflightLog -PathType Leaf)) {
-    throw "real Skia artifact is missing expected preflight log: $preflightLog"
   }
 }
 
@@ -92,13 +86,11 @@ if ($wrapperContent -notmatch 'library=.*\b(lib)?skia\.(a|so|dylib|lib)\b') {
 }
 
 $artifactLogNames = @(
+  (Split-Path -Leaf $preflightLog),
   (Split-Path -Leaf $wrapperLog),
   (Split-Path -Leaf $nativeLog),
   (Split-Path -Leaf $acceptanceLog)
 )
-if ($Platform -in @("macos", "windows")) {
-  $artifactLogNames += (Split-Path -Leaf $preflightLog)
-}
 
 foreach ($logName in $artifactLogNames) {
   if (!$acceptanceContent.Contains($logName)) {

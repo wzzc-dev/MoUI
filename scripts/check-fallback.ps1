@@ -110,11 +110,13 @@ function New-FakeLinuxSourceArtifact {
   )
 
   New-Item -ItemType Directory -Force -Path $Directory | Out-Null
+  $preflightLog = Join-Path $Directory "linux-real-skia-smoke-preflight.log"
   $wrapperLog = Join-Path $Directory "linux-real-skia-smoke.log"
   $buildLog = Join-Path $Directory "linux-skia-build.log"
   $nativeLog = Join-Path $Directory "linux-native-smoke-output.log"
   $acceptanceLog = Join-Path $Directory "linux-real-skia-acceptance.log"
 
+  "Linux Skia dry-run preflight" | Set-Content -LiteralPath $preflightLog
   $wrapperLines = @(
     "Linux Skia smoke environment:"
     "  skia_include=C:/fake/skia"
@@ -150,6 +152,7 @@ function New-FakeLinuxSourceArtifact {
     "  native_smoke_marker=passed"
     "  native_pkg_restore=passed"
     "  skia_commit=$AcceptanceCommit"
+    "  preflight_log=$preflightLog"
     "  wrapper_log=$wrapperLog"
   )
   if (!$OmitAcceptanceBuildLog) {
@@ -543,7 +546,7 @@ try {
     Copy-Item -LiteralPath $fakeMacosAcceptanceLog -Destination (Join-Path $fakeMacosMissingPreflightDir "macos-real-skia-acceptance.log")
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform macos -LogDir $fakeMacosMissingPreflightDir -RequireCommit } `
-      -ExpectedMessage "missing expected preflight log"
+      -ExpectedMessage "missing expected log"
     $fakeBadArtifactDir = Join-Path $dryRunRoot "fake-artifact-missing-wrapper-field"
     New-Item -ItemType Directory -Force -Path $fakeBadArtifactDir | Out-Null
     Copy-Item -LiteralPath $fakeArtifactPreflightLog -Destination (Join-Path $fakeBadArtifactDir "windows-real-skia-smoke-preflight.log")
@@ -618,6 +621,13 @@ try {
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/accept-platform-status.ps1") -Platform linux -LogDir $fakeLinuxArtifactDir -StatusFile $fakeFloatingPlatformStatus -RevisionFile (Join-Path $repoRoot "skia-revision.txt") -ArtifactLabel "should-not-accept-floating-revision" } `
       -ExpectedMessage "Skia revision is not pinned"
+
+    $fakeLinuxMissingPreflightDir = Join-Path $dryRunRoot "fake-linux-missing-preflight"
+    New-FakeLinuxSourceArtifact -Directory $fakeLinuxMissingPreflightDir
+    Remove-Item -LiteralPath (Join-Path $fakeLinuxMissingPreflightDir "linux-real-skia-smoke-preflight.log")
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform linux -LogDir $fakeLinuxMissingPreflightDir -RequireCommit } `
+      -ExpectedMessage "missing expected log"
 
     $fakeLinuxMissingWrapperBuildLogDir = Join-Path $dryRunRoot "fake-linux-missing-wrapper-build-log"
     New-FakeLinuxSourceArtifact -Directory $fakeLinuxMissingWrapperBuildLogDir -OmitWrapperBuildLog

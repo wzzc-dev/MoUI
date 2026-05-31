@@ -285,7 +285,9 @@ jobs:
             echo "pin-skia-revision unexpectedly accepted a missing restore field" >&2
             exit 1
           fi
-          mkdir -p logs/fake-artifact logs/fake-artifact-missing-wrapper-field logs/fake-artifact-missing-build-reference logs/fake-artifact-mismatched-acceptance-commit logs/fake-artifact-mismatched-build-commit
+          mkdir -p logs/fake-artifact logs/fake-artifact-missing-preflight logs/fake-artifact-missing-wrapper-field logs/fake-artifact-missing-build-reference logs/fake-artifact-mismatched-acceptance-commit logs/fake-artifact-mismatched-build-commit
+          printf '%s\n' 'Linux Skia dry-run preflight' \
+            > logs/fake-artifact/linux-real-skia-smoke-preflight.log
           printf '%s\n' \
             'Linux Skia smoke environment:' \
             '  skia_include=/tmp/fake/skia' \
@@ -316,6 +318,7 @@ jobs:
             '  native_smoke_marker=passed' \
             '  native_pkg_restore=passed' \
             '  skia_commit=0123456789abcdef0123456789abcdef01234567' \
+            '  preflight_log=logs/fake-artifact/linux-real-skia-smoke-preflight.log' \
             '  wrapper_log=logs/fake-artifact/linux-real-skia-smoke.log' \
             '  build_log=logs/fake-artifact/linux-skia-build.log' \
             '  native_log=logs/fake-artifact/linux-native-smoke-output.log' \
@@ -323,6 +326,8 @@ jobs:
             > logs/fake-artifact/linux-real-skia-acceptance.log
           bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact --require-commit
           mkdir -p logs/fake-jetbrains-linux logs/fake-jetbrains-linux-bad-sha
+          printf '%s\n' 'Linux JetBrains Skia dry-run preflight' \
+            > logs/fake-jetbrains-linux/linux-real-skia-smoke-preflight.log
           printf '%s\n' \
             'Linux Skia smoke environment:' \
             '  skia_include=/tmp/fake/skia' \
@@ -348,11 +353,13 @@ jobs:
             '  skia_commit=8967a2e80c71be363146da2395f503cab5f5fb9c' \
             '  skia_package=Skia-m148-8967a2e80c-linux-Release-x64.zip' \
             '  skia_package_sha256=37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2' \
+            '  preflight_log=logs/fake-jetbrains-linux/linux-real-skia-smoke-preflight.log' \
             '  wrapper_log=logs/fake-jetbrains-linux/linux-real-skia-smoke.log' \
             '  native_log=logs/fake-jetbrains-linux/linux-native-smoke-output.log' \
             '  acceptance_log=logs/fake-jetbrains-linux/linux-real-skia-acceptance.log' \
             > logs/fake-jetbrains-linux/linux-real-skia-acceptance.log
           bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-jetbrains-linux
+          cp logs/fake-jetbrains-linux/linux-real-skia-smoke-preflight.log logs/fake-jetbrains-linux-bad-sha/linux-real-skia-smoke-preflight.log
           cp logs/fake-jetbrains-linux/linux-real-skia-smoke.log logs/fake-jetbrains-linux-bad-sha/linux-real-skia-smoke.log
           cp logs/fake-jetbrains-linux/linux-native-smoke-output.log logs/fake-jetbrains-linux-bad-sha/linux-native-smoke-output.log
           sed 's/37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2/0000000000000000000000000000000000000000000000000000000000000000/' \
@@ -398,6 +405,7 @@ jobs:
             exit 1
           fi
           cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-missing-wrapper-field/linux-skia-build.log
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-missing-wrapper-field/linux-real-skia-smoke-preflight.log
           cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-missing-wrapper-field/linux-native-smoke-output.log
           cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-missing-wrapper-field/linux-real-skia-acceptance.log
           printf '%s\n' '  library=libskia.a 123 bytes' > logs/fake-artifact-missing-wrapper-field/linux-real-skia-smoke.log
@@ -411,6 +419,15 @@ jobs:
             echo "linux-accept-artifact-and-pin unexpectedly accepted a bad artifact" >&2
             exit 1
           fi
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-missing-preflight/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-missing-preflight/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-missing-preflight/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-missing-preflight/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-missing-preflight --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a missing Linux preflight log" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-missing-build-reference/linux-real-skia-smoke-preflight.log
           cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-missing-build-reference/linux-real-skia-smoke.log
           cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-missing-build-reference/linux-skia-build.log
           cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-missing-build-reference/linux-native-smoke-output.log
@@ -420,6 +437,7 @@ jobs:
             echo "verify-real-skia-artifact unexpectedly accepted a missing build log reference" >&2
             exit 1
           fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-mismatched-acceptance-commit/linux-real-skia-smoke-preflight.log
           cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-mismatched-acceptance-commit/linux-real-skia-smoke.log
           cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-mismatched-acceptance-commit/linux-skia-build.log
           cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-mismatched-acceptance-commit/linux-native-smoke-output.log
@@ -430,6 +448,7 @@ jobs:
             echo "verify-real-skia-artifact unexpectedly accepted mismatched acceptance commit" >&2
             exit 1
           fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-mismatched-build-commit/linux-real-skia-smoke-preflight.log
           cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-mismatched-build-commit/linux-real-skia-smoke.log
           cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-mismatched-build-commit/linux-real-skia-acceptance.log
           cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-mismatched-build-commit/linux-native-smoke-output.log
