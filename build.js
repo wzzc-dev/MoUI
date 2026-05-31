@@ -167,7 +167,11 @@ function platformFlags(values) {
   let stubCcFlags = `-DSKIA_MBT_HAS_SKIA -I${includePath}`;
   let linkFlags = `-L${libPath} -l${skiaLib}`;
 
-  if (process.platform === "darwin") {
+  if (process.platform === "win32") {
+    stubCcFlags = `/DSKIA_MBT_HAS_SKIA /std:c++20 /EHsc /I${includePath}`;
+    const skiaLibFlag = path.join(libPath, `${skiaLib}.lib`).replace(/\\/g, "/");
+    linkFlags = `${skiaLibFlag} user32.lib gdi32.lib ole32.lib opengl32.lib usp10.lib fontsub.lib imm32.lib winmm.lib version.lib dwrite.lib d2d1.lib dxgi.lib advapi32.lib shell32.lib`;
+  } else if (process.platform === "darwin") {
     stubCcFlags = `-DSKIA_MBT_HAS_SKIA -std=c++17 -I${includePath}`;
     linkFlags +=
       " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
