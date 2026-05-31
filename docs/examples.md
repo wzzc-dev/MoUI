@@ -157,10 +157,13 @@ bindings.
 Mo Workbench is the real product-shaped dogfood app for the native Skia route.
 It is named `Mo Workbench` with the subtitle `A Pi agent desktop`, and starts as
 a Codex / Claude Code-style coding-agent workbench for project sessions,
-assistant transcripts, command evidence, diff/file context, and diagnostics. The shared app
-package keeps the Pi boundary as platform-neutral `PiTransportCommand` and
-`PiTransportEvent` values so future Web or automation-focused workflows can
-reuse the same event model.
+assistant transcripts, command evidence, diff/file context, and diagnostics.
+The shared app package keeps the Pi boundary as platform-neutral
+`PiTransportCommand` and `PiTransportEvent` values so future Web or
+automation-focused workflows can reuse the same event model. Structured Pi
+JSONL payloads such as command starts/completions, diagnostics, file context,
+and diff summaries are ingested inside the shared app model rather than the
+native process driver.
 
 The first native entrypoint is macOS Skia:
 

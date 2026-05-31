@@ -58,6 +58,14 @@ pub(all) struct DiagnosticItem {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct DiffOverview {
+  changed_files : Int
+  additions : Int
+  deletions : Int
+  status : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
@@ -67,6 +75,7 @@ pub(all) struct WorkbenchModel {
   plan : Array[PlanStep]
   events : Array[AgentEvent]
   files : Array[FileContext]
+  diff : DiffOverview
   commands : Array[CommandRun]
   diagnostics : Array[DiagnosticItem]
   transport : PiTransportState
@@ -174,6 +183,16 @@ pub fn DiagnosticItem::new(
 }
 
 ///|
+pub fn DiffOverview::new(
+  changed_files~ : Int,
+  additions~ : Int,
+  deletions~ : Int,
+  status~ : String,
+) -> DiffOverview {
+  { changed_files, additions, deletions, status }
+}
+
+///|
 pub fn WorkbenchModel::new() -> WorkbenchModel {
   {
     selected_session_id: "moui-skia",
@@ -184,6 +203,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     plan: sample_plan(),
     events: sample_events(),
     files: sample_files(),
+    diff: sample_diff_overview(),
     commands: sample_commands(),
     diagnostics: sample_diagnostics(),
     transport: PiTransportState::new(),
@@ -408,11 +428,15 @@ fn WorkbenchModel::receive_transport(
 ) -> WorkbenchModel {
   let events = self.events.copy()
   events.push(event.to_agent_event())
-  {
+  let model = {
     ..self,
     events,
     transport: self.transport.apply_event(event),
     last_status: "Pi transport event received",
+  }
+  match event {
+    JsonLineReceived(session, line) => model.ingest_pi_jsonl(session, line)
+    _ => model
   }
 }
 

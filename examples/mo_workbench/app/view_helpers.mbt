@@ -454,13 +454,24 @@ fn WorkbenchModel::diff_summary_card(
             column(
               [
                 text(
-                  "已编辑 " + self.files.length().to_string() + " 个文件",
+                  "已编辑 " +
+                  self.diff.changed_files.to_string() +
+                  " 个文件",
                   role=Control,
                   theme~,
                   width=350.0,
                   height=26.0,
                 ),
-                text("+160 -10", role=Caption, theme~, width=150.0, height=24.0),
+                text(
+                  "+" +
+                  self.diff.additions.to_string() +
+                  " -" +
+                  self.diff.deletions.to_string(),
+                  role=Caption,
+                  theme~,
+                  width=150.0,
+                  height=24.0,
+                ),
               ],
               spacing=0.0,
               align=Start,
