@@ -199,6 +199,8 @@ if schema_version >= 3:
         "pipeline.frame-resource-plan",
         "pipeline.resource-cache",
         "gpu.context-resource-plan",
+        "surface.target-resource-plan",
+        "surface.window-target-resource-plan",
         "shader.draw",
         "shader.resource-plan",
         "filter.layer",

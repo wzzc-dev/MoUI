@@ -133,6 +133,30 @@ fn main {
   println("native smoke gpu context resource plan count")
   println(smoke_gpu_plan.length())
 
+  let smoke_window = @skia.WindowSurfaceDescriptor::new(
+    window_id=b"native-smoke-window",
+    logical_size=@skia.Size::new(8, 8),
+    device_pixel_ratio=2.0,
+    present_mode=@skia.MailboxPresent,
+  )
+  let smoke_window_target = smoke_window.target_descriptor()
+  let smoke_window_plan = smoke_window.resource_plan()
+  let smoke_window_gpu_target = smoke_window.gpu_target_descriptor(
+    gpu_context_key=Some(smoke_gpu_context.resource_key()),
+  )
+  if smoke_window.dimensions() != @skia.ISize::new(16, 16) ||
+    !smoke_window_target.has_target_id() ||
+    smoke_window_target.target_id != b"native-smoke-window" ||
+    !smoke_window_target.is_presentable() ||
+    smoke_window_plan.length() != 1 ||
+    !smoke_window_plan.contains_key(smoke_window_target.resource_key()) ||
+    !smoke_window_gpu_target.surface.is_gpu() ||
+    smoke_window_gpu_target.resource_plan().length() != 2 {
+    fail_smoke("window surface descriptor did not derive target resources")
+  }
+  println("native smoke window target resource plan count")
+  println(smoke_window_plan.length())
+
   guard surface.canvas() is Some(canvas) else {
     fail_smoke("failed to borrow native canvas")
   }
