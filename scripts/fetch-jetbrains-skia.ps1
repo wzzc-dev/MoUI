@@ -150,6 +150,33 @@ function Expand-ZipArchive {
   Expand-Archive -LiteralPath $Archive -DestinationPath $Destination -Force
 }
 
+function Get-Sha256Hex {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Path
+  )
+
+  if (Get-Command -Name Get-FileHash -ErrorAction SilentlyContinue) {
+    return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash.ToLowerInvariant()
+  }
+
+  $stream = [System.IO.File]::OpenRead($Path)
+  try {
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+      $hashBytes = $sha256.ComputeHash($stream)
+    } finally {
+      if ($null -ne $sha256) {
+        $sha256.Dispose()
+      }
+    }
+  } finally {
+    $stream.Dispose()
+  }
+
+  return ([System.BitConverter]::ToString($hashBytes) -replace "-", "").ToLowerInvariant()
+}
+
 if (!(Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
   throw "JetBrains Skia provider manifest is missing: $manifestPath"
 }
@@ -218,11 +245,11 @@ if (!$DryRunConfig) {
   if ($Force -or !(Test-Path -LiteralPath $packageDir -PathType Container)) {
     New-Item -ItemType Directory -Force -Path $entryDir | Out-Null
     if ($Force -or !(Test-Path -LiteralPath $packageZip -PathType Leaf)) {
-      Write-Error "Downloading JetBrains Skia asset: $assetName" -ErrorAction Continue
+      [Console]::Error.WriteLine("Downloading JetBrains Skia asset: $assetName")
       Download-File -Url $assetUrl -Output $packageZip
     }
     if ($env:SKIA_MBT_ALLOW_FAKE_JETBRAINS_ZIP -ne "1") {
-      $actualSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $packageZip).Hash.ToLowerInvariant()
+      $actualSha256 = Get-Sha256Hex -Path $packageZip
       if ($actualSha256 -ne $assetSha256) {
         throw "JetBrains Skia asset SHA256 mismatch: $packageZip expected=$assetSha256 actual=$actualSha256"
       }
@@ -239,7 +266,7 @@ if (!$skiaInclude) {
     if ($Force -or !(Test-Path -LiteralPath $sourceDir -PathType Container)) {
       New-Item -ItemType Directory -Force -Path $tagDir | Out-Null
       if ($Force -or !(Test-Path -LiteralPath $sourceZip -PathType Leaf)) {
-        Write-Error "Downloading JetBrains Skia source archive for headers: $Tag" -ErrorAction Continue
+        [Console]::Error.WriteLine("Downloading JetBrains Skia source archive for headers: $Tag")
         Download-File -Url $sourceUrl -Output $sourceZip
       }
       Expand-ZipArchive -Archive $sourceZip -Destination $sourceDir
