@@ -115,15 +115,21 @@ fn main {
     @skia.ISize::new(16, 16),
     gpu_context_key=Some(smoke_gpu_context.resource_key()),
   )
+  let smoke_gpu_target_plan = smoke_gpu_target.resource_plan()
   let smoke_gpu_plan = @skia.RenderCommandList::for_target(
     smoke_gpu_target,
   ).resource_plan()
   if !smoke_gpu_target.has_gpu_context() ||
+    smoke_gpu_target_plan.length() != 2 ||
+    smoke_gpu_target_plan.count_kind(@skia.GpuSurfaceResource) != 1 ||
+    smoke_gpu_target_plan.count_kind(@skia.GpuContextResource) != 1 ||
     smoke_gpu_plan.length() != 2 ||
     smoke_gpu_plan.gpu_backed_count != 2 ||
     !smoke_gpu_plan.has_gpu_backed_resources() {
     fail_smoke("gpu context resource plan did not include context and surface")
   }
+  println("native smoke surface target resource plan count")
+  println(smoke_gpu_target_plan.length())
   println("native smoke gpu context resource plan count")
   println(smoke_gpu_plan.length())
 

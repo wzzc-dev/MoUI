@@ -22,6 +22,7 @@ $defaultStageMarkers = @(
   "native smoke canvas replay commands",
   "native smoke render resource plan count",
   "native smoke gpu context resource plan count",
+  "native smoke surface target resource plan count",
   "native smoke shader draws",
   "native smoke shader resource plan count",
   "native smoke filter layer count",

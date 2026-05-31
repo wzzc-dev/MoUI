@@ -80,6 +80,11 @@
       "marker": "native smoke gpu context resource plan count"
     },
     {
+      "id": "surface.target-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke surface target resource plan count"
+    },
+    {
       "id": "shader.draw",
       "area": "Shader",
       "marker": "native smoke shader draws"

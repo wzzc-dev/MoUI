@@ -328,6 +328,14 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(gpu.present_mode == Some(@skia_mbt.FifoPresent))
   assert_true(gpu.resource_key().kind == @skia_mbt.GpuSurfaceResource)
   assert_true(gpu.resource_descriptor().is_gpu_backed())
+  let target_plan = gpu.resource_plan()
+  assert_eq(target_plan.length(), 1)
+  assert_eq(target_plan.gpu_backed_count, 1)
+  assert_true(target_plan.contains_key(gpu.resource_key()))
+  assert_eq(
+    target_plan.byte_size_for_kind(@skia_mbt.GpuSurfaceResource),
+    12288L,
+  )
   let gpu_plan = @skia_mbt.RenderCommandList::for_target(gpu).resource_plan()
   assert_true(gpu_plan.has_gpu_backed_resources())
   assert_eq(gpu_plan.gpu_backed_count, 1)
@@ -385,6 +393,13 @@ test "gpu context descriptors attach to gpu surface targets" {
   }
   assert_true(context_descriptor.key == metal.resource_key())
   assert_true(context_descriptor.is_gpu_backed())
+  let target_plan = gpu.resource_plan()
+  assert_eq(target_plan.length(), 2)
+  assert_eq(target_plan.gpu_backed_count, 2)
+  assert_true(target_plan.contains_key(gpu.resource_key()))
+  assert_true(target_plan.contains_key(metal.resource_key()))
+  assert_eq(target_plan.count_kind(@skia_mbt.GpuContextResource), 1)
+  assert_eq(target_plan.count_kind(@skia_mbt.GpuSurfaceResource), 1)
 
   let gpu_plan = @skia_mbt.RenderCommandList::for_target(gpu).resource_plan()
   assert_eq(gpu_plan.length(), 2)

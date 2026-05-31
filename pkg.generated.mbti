@@ -1108,7 +1108,9 @@ pub fn SurfaceTargetDescriptor::needs_present(Self) -> Bool
 pub fn SurfaceTargetDescriptor::new(SurfaceDescriptor, present_mode? : SurfacePresentMode?, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?) -> Self
 pub fn SurfaceTargetDescriptor::raster_n32_premul(ISize) -> Self
 pub fn SurfaceTargetDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn SurfaceTargetDescriptor::resource_descriptors(Self, byte_size? : Int64) -> Array[RendererResourceDescriptor]
 pub fn SurfaceTargetDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn SurfaceTargetDescriptor::resource_plan(Self, byte_size? : Int64) -> RendererResourcePlan
 pub fn SurfaceTargetDescriptor::window_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
 pub fn SurfaceTargetDescriptor::with_dimensions(Self, ISize) -> Self
 pub fn SurfaceTargetDescriptor::with_gpu_context(Self, GpuContextDescriptor) -> Self
