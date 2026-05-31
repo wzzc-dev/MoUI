@@ -46,7 +46,8 @@ The current package exposes the first value-layer API surface:
 - text layout and fallback contracts: `TextRunDescriptor`,
   `FontFallbackRequest`, `FontFallbackChain`, and `FontStyleRequest` define the
   value-layer input to native shaping and font fallback, including deterministic
-  text-run resource keys for backend measurement/shaping caches
+  text-run and font-fallback resource keys for backend measurement, shaping, and
+  typeface-resolution caches
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,
