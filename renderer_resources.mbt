@@ -389,3 +389,61 @@ pub fn RendererResourcePlan::has_gpu_backed_resources(
 ) -> Bool {
   self.gpu_backed_count > 0
 }
+
+///|
+pub fn RendererResourcePlan::contains_key(
+  self : RendererResourcePlan,
+  key : RendererResourceKey,
+) -> Bool {
+  renderer_resource_descriptor_array_contains_key(self.descriptors, key)
+}
+
+///|
+pub fn RendererResourcePlan::descriptor_for_key(
+  self : RendererResourcePlan,
+  key : RendererResourceKey,
+) -> RendererResourceDescriptor? {
+  let mut result : RendererResourceDescriptor? = None
+  for descriptor in self.descriptors {
+    if descriptor.key == key {
+      result = Some(descriptor)
+    }
+  }
+  result
+}
+
+///|
+pub fn RendererResourcePlan::descriptors_of_kind(
+  self : RendererResourcePlan,
+  kind : RendererResourceKind,
+) -> Array[RendererResourceDescriptor] {
+  let result : Array[RendererResourceDescriptor] = Array::new()
+  for descriptor in self.descriptors {
+    if descriptor.key.kind == kind {
+      result.push(descriptor)
+    }
+  }
+  result
+}
+
+///|
+pub fn RendererResourcePlan::count_kind(
+  self : RendererResourcePlan,
+  kind : RendererResourceKind,
+) -> Int {
+  self.descriptors_of_kind(kind).length()
+}
+
+///|
+pub fn RendererResourcePlan::byte_size_for_kind(
+  self : RendererResourcePlan,
+  kind : RendererResourceKind,
+) -> Int64 {
+  let mut byte_size = 0L
+  for descriptor in self.descriptors {
+    if descriptor.key.kind == kind {
+      byte_size += descriptor.byte_size
+    }
+  }
+  byte_size
+}

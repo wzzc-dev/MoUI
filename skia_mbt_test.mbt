@@ -537,6 +537,18 @@ test "renderer resource descriptors provide typed cache keys" {
   assert_eq(plan.uncacheable_count, 1)
   assert_eq(plan.gpu_backed_count, 2)
   assert_true(plan.has_gpu_backed_resources())
+  assert_true(plan.contains_key(image.key))
+  assert_true(!plan.contains_key(shader.key))
+  assert_true(plan.descriptor_for_key(gpu_surface.key) == Some(gpu_surface))
+  assert_true(plan.descriptor_for_key(shader.key) is None)
+  let gpu_surface_descriptors = plan.descriptors_of_kind(
+    @skia_mbt.GpuSurfaceResource,
+  )
+  assert_eq(gpu_surface_descriptors.length(), 1)
+  assert_true(gpu_surface_descriptors[0] == gpu_surface)
+  assert_eq(plan.count_kind(@skia_mbt.ImageResource), 2)
+  assert_eq(plan.byte_size_for_kind(@skia_mbt.ImageResource), 10L)
+  assert_eq(plan.byte_size_for_kind(@skia_mbt.ShaderResource), 0L)
   assert_true(@skia_mbt.RendererResourcePlan::empty().is_empty())
 
   let cache : @skia_mbt.ResourceCache[
