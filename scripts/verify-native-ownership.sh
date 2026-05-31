@@ -158,10 +158,13 @@ types = read_text(types_path, "MoonBit native type file")
 
 external_wrappers = manifest.get("external_wrappers")
 regular_objects = manifest.get("regular_objects", [])
+regular_runtime_objects = manifest.get("regular_runtime_objects", [])
 if not isinstance(external_wrappers, list) or not external_wrappers:
     fail("native ownership manifest is missing external_wrappers")
 if not isinstance(regular_objects, list):
     fail("native ownership manifest regular_objects must be a list")
+if not isinstance(regular_runtime_objects, list):
+    fail("native ownership manifest regular_runtime_objects must be a list")
 
 
 def ensure_unique(entries, key: str, label: str) -> None:
@@ -175,10 +178,15 @@ def ensure_unique(entries, key: str, label: str) -> None:
         seen.add(value)
 
 
-for key in ("name", "moonbit_handle", "moonbit_type", "wrapper_struct"):
-    ensure_unique(external_wrappers + regular_objects, key, "native ownership")
-for key in ("factory",):
-    ensure_unique(external_wrappers, key, "external wrapper")
+handle_entries = external_wrappers + regular_objects
+regular_manifest_entries = regular_objects + regular_runtime_objects
+all_manifest_entries = external_wrappers + regular_manifest_entries
+
+for key in ("name", "wrapper_struct"):
+    ensure_unique(all_manifest_entries, key, "native ownership")
+for key in ("moonbit_handle", "moonbit_type"):
+    ensure_unique(handle_entries, key, "native ownership")
+ensure_unique(all_manifest_entries, "factory", "native ownership")
 ensure_unique(external_wrappers, "finalizer", "external wrapper")
 
 allowed_ownership = {"owned_delete", "sk_refcnt", "borrowed_with_refcnt_owner"}
@@ -228,7 +236,7 @@ def c_struct_body(struct_name: str) -> str:
     )
 
 
-manifest_handles = {entry["moonbit_handle"] for entry in external_wrappers + regular_objects}
+manifest_handles = {entry["moonbit_handle"] for entry in handle_entries}
 for handles_path in handle_paths:
     handles = read_text(handles_path, "MoonBit native handle file")
     declared_handles = set(re.findall(r"\bpriv\s+type\s+([A-Za-z_][A-Za-z0-9_]*Handle)\b", handles))
@@ -253,6 +261,27 @@ if missing_factories:
 extra_factories = sorted(found_factory_pairs - expected_factories)
 if extra_factories:
     fail("external wrapper factories are missing from ownership manifest: " + ", ".join(extra_factories))
+
+expected_regular_factories = {entry["factory"] for entry in regular_manifest_entries}
+found_regular_factories = set()
+for match in re.finditer(
+    r"\b(MoonbitSkia[A-Za-z0-9_]+)\s*\*\s*(moonbit_skia_make_[A-Za-z0-9_]+)\s*\([^{}]*\)\s*\{",
+    source,
+):
+    factory = match.group(2)
+    factory_body = find_braced_body(
+        source,
+        rf"\b{re.escape(factory)}\b[^{{}}]*",
+        f"regular object factory {factory}",
+    )
+    if "moonbit_malloc" in factory_body:
+        found_regular_factories.add(factory)
+missing_regular_factories = sorted(expected_regular_factories - found_regular_factories)
+if missing_regular_factories:
+    fail("ownership manifest references missing regular object factories: " + ", ".join(missing_regular_factories))
+extra_regular_factories = sorted(found_regular_factories - expected_regular_factories)
+if extra_regular_factories:
+    fail("moonbit_malloc regular object factories are missing from ownership manifest: " + ", ".join(extra_regular_factories))
 
 found_finalizers = set(re.findall(r"\bstatic\s+void\s+(moonbit_skia_[A-Za-z0-9_]+_finalize)\s*\(", source))
 expected_finalizers = {entry["finalizer"] for entry in external_wrappers}
@@ -318,32 +347,37 @@ for entry in external_wrappers:
         if re.search(rf"\bdelete\s+wrapper->{re.escape(field)}\s*;", finalizer_body):
             fail(f"{finalizer} must not delete borrowed field {field}")
 
-for entry in regular_objects:
+def require_string_list(entry, key: str, name: str) -> list[str]:
+    fields = entry.get(key)
+    if not isinstance(fields, list) or any(not isinstance(field, str) or not field.strip() for field in fields):
+        fail(f"{name} regular object is missing {key} list")
+    return fields
+
+
+def verify_regular_object(entry, require_moonbit_wrapper: bool) -> None:
     name = entry["name"]
-    handle = entry["moonbit_handle"]
-    type_name = entry["moonbit_type"]
     struct_name = entry["wrapper_struct"]
     factory = entry["factory"]
     allocation = entry.get("allocation")
     pointer_field_count = entry.get("pointer_field_count")
-    pointer_fields = entry.get("pointer_fields")
+    pointer_fields = require_string_list(entry, "pointer_fields", name)
+    value_fields = require_string_list(entry, "value_fields", name)
     if allocation != "moonbit_malloc":
         fail(f"{name} regular object uses unsupported allocation: {allocation}")
     if not isinstance(pointer_field_count, int) or pointer_field_count < 0:
         fail(f"{name} regular object is missing non-negative pointer_field_count")
-    if (
-        not isinstance(pointer_fields, list)
-        or any(not isinstance(field, str) or not field.strip() for field in pointer_fields)
-    ):
-        fail(f"{name} regular object is missing pointer_fields list")
     if len(pointer_fields) != pointer_field_count:
         fail(
             f"{name} regular object pointer_fields length does not match "
             f"pointer_field_count={pointer_field_count}"
         )
 
-    type_body = moonbit_type_body(type_name)
-    require_regex(type_body, rf"\bpriv\s+handle\s*:\s*{re.escape(handle)}\b", f"{type_name} does not store {handle}")
+    if require_moonbit_wrapper:
+        handle = entry["moonbit_handle"]
+        type_name = entry["moonbit_type"]
+        type_body = moonbit_type_body(type_name)
+        require_regex(type_body, rf"\bpriv\s+handle\s*:\s*{re.escape(handle)}\b", f"{type_name} does not store {handle}")
+
     c_body = c_struct_body(struct_name)
     actual_pointer_fields = re.findall(r"\*\s+([A-Za-z_][A-Za-z0-9_]*)\s*;", c_body)
     actual_pointer_field_count = len(actual_pointer_fields)
@@ -356,6 +390,12 @@ for entry in regular_objects:
         fail(
             f"{name} regular object pointer_fields mismatch: "
             f"manifest={pointer_fields} struct={actual_pointer_fields}"
+        )
+    for value_field in value_fields:
+        require_regex(
+            c_body,
+            rf"\b{re.escape(value_field)}\s*;",
+            f"{struct_name} is missing value field {value_field}",
         )
     factory_body = find_braced_body(source, rf"\b{re.escape(factory)}\b[^{{}}]*", f"regular object factory {factory}")
     require_contains(factory_body, "moonbit_malloc", f"{factory} must use moonbit_malloc")
@@ -376,17 +416,29 @@ for entry in regular_objects:
             f"offsetof({struct_name}, {first_pointer_field})",
             f"{factory} must encode pointer-field offset with offsetof({struct_name}, {first_pointer_field})",
         )
-    for pointer_field in pointer_fields:
+    else:
+        require_contains(
+            factory_body,
+            f"sizeof({struct_name}) >> 2",
+            f"{factory} must encode scalar-only header size with sizeof({struct_name}) >> 2",
+        )
+    for field in pointer_fields + value_fields:
         require_regex(
             factory_body,
-            rf"\b[A-Za-z_][A-Za-z0-9_]*->{re.escape(pointer_field)}\s*=",
-            f"{factory} must initialize pointer field {pointer_field}",
+            rf"\b[A-Za-z_][A-Za-z0-9_]*->{re.escape(field)}\s*=",
+            f"{factory} must initialize field {field}",
         )
     if "moonbit_make_external_object" in factory_body:
         fail(f"{factory} must not allocate a MoonBit external object")
     finalizer_name = factory.replace("make_", "").replace("_run", "_run_finalize")
     if finalizer_name in source:
         fail(f"{name} regular object unexpectedly has a finalizer: {finalizer_name}")
+
+
+for entry in regular_objects:
+    verify_regular_object(entry, require_moonbit_wrapper=True)
+for entry in regular_runtime_objects:
+    verify_regular_object(entry, require_moonbit_wrapper=False)
 
 print(f"Verified native ownership manifest: {manifest_path}")
 PY

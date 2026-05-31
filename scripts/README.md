@@ -21,7 +21,10 @@ Run `bash scripts/verify-native-ownership.sh` or
 `.\scripts\verify-native-ownership.ps1` after changing C++ wrapper structs,
 MoonBit handle declarations, or finalizers. The verifier rejects undeclared
 external wrapper factories, missing finalizers, and release code that no longer
-matches the declared `delete`, Skia `unref`, or borrowed-owner contract.
+matches the declared `delete`, Skia `unref`, or borrowed-owner contract. It also
+tracks `moonbit_malloc` regular runtime objects in `native/skia_stub_common.cpp`
+so their GC pointer-field counts, pointer-field order, and initialized value
+fields stay manifest-backed.
 `verify-native-ffi-borrows.*` complements that C++ check on the MoonBit side by
 requiring every non-primitive `extern "C"` parameter in `native/*_native.mbt` to
 appear in `#borrow(...)` or `#owned(...)`.
