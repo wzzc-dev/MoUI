@@ -80,9 +80,19 @@
       "marker": "native smoke shader draws"
     },
     {
+      "id": "shader.resource-plan",
+      "area": "Shader",
+      "marker": "native smoke shader resource plan count"
+    },
+    {
       "id": "filter.layer",
       "area": "Filter",
       "marker": "native smoke filter layer count"
+    },
+    {
+      "id": "filter.resource-plan",
+      "area": "Filter",
+      "marker": "native smoke filter resource plan count"
     },
     {
       "id": "path.geometry",
