@@ -673,6 +673,34 @@ pub fn SurfaceTargetDescriptor::gpu_context_resource_descriptor(
 }
 
 ///|
+pub fn SurfaceTargetDescriptor::resource_descriptors(
+  self : SurfaceTargetDescriptor,
+  byte_size? : Int64 = -1L,
+) -> Array[RendererResourceDescriptor] {
+  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let surface_descriptor = self.resource_descriptor(byte_size~)
+  if !surface_descriptor.key.is_empty() {
+    descriptors.push(surface_descriptor)
+  }
+  match self.gpu_context_resource_descriptor() {
+    None => ()
+    Some(context_descriptor) =>
+      if !context_descriptor.key.is_empty() {
+        descriptors.push(context_descriptor)
+      }
+  }
+  descriptors
+}
+
+///|
+pub fn SurfaceTargetDescriptor::resource_plan(
+  self : SurfaceTargetDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new(self.resource_descriptors(byte_size~))
+}
+
+///|
 pub fn SurfaceTargetDescriptor::resource_descriptor(
   self : SurfaceTargetDescriptor,
   byte_size? : Int64 = -1L,
