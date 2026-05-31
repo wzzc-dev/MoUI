@@ -81,6 +81,15 @@ pub(all) struct PiAgentSnapshot {
 pub fn PiAgentSnapshot::new(phase? : String, turn_index? : Int, message_role? : String, message_preview? : String, active_tool_call_id? : String, active_tool_name? : String, queued_steering? : Int, queued_follow_up? : Int, thinking_level? : String) -> Self
 pub fn PiAgentSnapshot::status_label(Self) -> String
 
+pub(all) struct PiCommandInfo {
+  name : String
+  source : String
+  description : String
+  source_scope : String
+  source_path : String
+} derive(Eq, @debug.Debug)
+pub fn PiCommandInfo::new(name~ : String, source~ : String, description~ : String, source_scope~ : String, source_path~ : String) -> Self
+
 pub(all) struct PiRpcSnapshot {
   command : String
   success : Bool
@@ -110,6 +119,7 @@ pub(all) enum PiTransportCommand {
   StartRpc(String, String)
   SwitchRpcSession(String, String)
   FetchRpcMessages(String)
+  FetchRpcCommands(String)
   SendUserInput(String, String)
   RunShellCommand(String, String)
   CancelShellCommand(String)
@@ -190,6 +200,7 @@ pub(all) struct WorkbenchModel {
   plan : Array[PlanStep]
   events : Array[AgentEvent]
   transcript : Array[TranscriptItem]
+  command_catalog : Array[PiCommandInfo]
   files : Array[FileContext]
   diff : DiffOverview
   commands : Array[CommandRun]

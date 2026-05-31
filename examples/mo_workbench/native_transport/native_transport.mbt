@@ -78,6 +78,11 @@ pub fn pi_rpc_get_messages_line() -> String {
 }
 
 ///|
+pub fn pi_rpc_get_commands_line() -> String {
+  ({ "type": "get_commands" } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_switch_session_line(session_path~ : String) -> String {
   ({ "type": "switch_session", "sessionPath": session_path } : Json).stringify()
 }
@@ -135,6 +140,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_get_messages_line())
+      }
+      FetchRpcCommands(session) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_get_commands_line())
       }
       SendUserInput(session, text) => {
         if session_id == default_session_id {
