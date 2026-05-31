@@ -38,7 +38,6 @@ fn WorkbenchModel::app_sidebar(
   surface(
     column(
       [
-        self.window_chrome(theme),
         self.sidebar_brand(theme),
         self.sidebar_actions(theme),
         self.sidebar_section_label("置顶", theme),
@@ -57,32 +56,6 @@ fn WorkbenchModel::app_sidebar(
     corner_radius=0.0,
     theme~,
     padding=14.0,
-  )
-}
-
-///|
-fn WorkbenchModel::window_chrome(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  ignore(self)
-  row(
-    [
-      traffic_dot(ui_color(1.0, 0.32, 0.31)),
-      traffic_dot(ui_color(1.0, 0.78, 0.12)),
-      traffic_dot(ui_color(0.20, 0.74, 0.35)),
-      spacer(min_length=16.0, weight=1.0),
-      button(
-        "更新",
-        on_click=QueueCommand("git status --short"),
-        variant=Primary,
-        theme~,
-        width=58.0,
-        height=30.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
   )
 }
 
@@ -655,18 +628,6 @@ fn WorkbenchModel::sidebar_section_label(
 ) -> @core.View[WorkbenchMsg] {
   ignore(self)
   text(label, role=Caption, theme~, width=246.0, height=30.0)
-}
-
-///|
-fn traffic_dot(color : @core.Color) -> @core.View[WorkbenchMsg] {
-  surface(
-    empty(),
-    width=12.0,
-    height=12.0,
-    background=color,
-    corner_radius=6.0,
-    padding=0.0,
-  )
 }
 
 ///|
