@@ -177,6 +177,21 @@ jobs:
             echo "verify-platform-status unexpectedly accepted a missing CI gate" >&2
             exit 1
           fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          for gate in status['ci_gates']:
+              if gate['id'] == 'native.ffi-borrows':
+                  gate['unix_command'] = 'bash scripts/missing-native-ffi-borrows.sh'
+          Path('logs/fake-platform-status-missing-ci-script.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-missing-ci-script.json; then
+            echo "verify-platform-status unexpectedly accepted a missing CI script" >&2
+            exit 1
+          fi
           if bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-floating-skia-revision.txt; then
             echo "verify-skia-revision-pin unexpectedly accepted a floating revision" >&2
             exit 1
