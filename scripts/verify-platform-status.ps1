@@ -173,7 +173,8 @@ if ($status.schema_version -ge 3) {
     "fontmgr.family-count",
     "fontmgr.family-name",
     "fontmgr.typeface-family",
-    "fontmgr.character-fallback"
+    "fontmgr.character-fallback",
+    "fontmgr.fallback-resource-plan"
   )
   $seenIds = @{}
   $seenMarkers = @{}

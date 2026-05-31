@@ -391,6 +391,34 @@ fn FontFallbackRequest::text_run_cache_id(self : FontFallbackRequest) -> Bytes {
 }
 
 ///|
+fn FontFallbackRequest::resource_id(self : FontFallbackRequest) -> Bytes {
+  b"skia_mbt:font-fallback:v1" + self.text_run_cache_id()
+}
+
+///|
+/// Deterministic renderer cache key for native font fallback/typeface matching.
+pub fn FontFallbackRequest::resource_key(
+  self : FontFallbackRequest,
+) -> RendererResourceKey {
+  RendererResourceKey::typeface(self.resource_id())
+}
+
+///|
+/// Cache descriptor for a native font fallback/typeface match result.
+pub fn FontFallbackRequest::resource_descriptor(
+  self : FontFallbackRequest,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let id = self.resource_id()
+  let measured_byte_size = if byte_size < 0L {
+    id.length().to_int64()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::typeface(id, byte_size=measured_byte_size)
+}
+
+///|
 fn TextRange::text_run_cache_id(self : TextRange) -> Bytes {
   text_run_cache_u64(self.start) + text_run_cache_u64(self.end)
 }
