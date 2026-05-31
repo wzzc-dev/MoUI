@@ -648,6 +648,20 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingCiScriptStatus } `
       -ExpectedMessage "CI gate references missing verifier script"
 
+    $fakeMissingCapabilityAreaStatus = Join-Path $dryRunRoot "fake-platform-status-missing-capability-area.json"
+    $missingCapabilityAreaStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
+    foreach ($capability in @($missingCapabilityAreaStatus.native_smoke_capabilities)) {
+      if ($capability.id -eq "bitmap.decode-readback") {
+        $capability.area = "Image"
+      }
+    }
+    $missingCapabilityAreaStatus |
+      ConvertTo-Json -Depth 20 |
+      Set-Content -LiteralPath $fakeMissingCapabilityAreaStatus
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingCapabilityAreaStatus } `
+      -ExpectedMessage "native smoke capability coverage is missing areas: Bitmap"
+
     & (Join-Path $repoRoot "scripts/verify-platform-status.ps1")
   } finally {
     $resolvedDryRunRoot = Resolve-Path -LiteralPath $dryRunRoot -ErrorAction SilentlyContinue
