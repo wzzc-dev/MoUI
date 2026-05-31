@@ -17,6 +17,10 @@ if (!$content.Contains($Marker)) {
 }
 
 $stageMarkers = @(
+  "native smoke surface descriptor backend",
+  "native smoke canvas state restored",
+  "native smoke shader draws",
+  "native smoke path verbs",
   "native smoke readback width",
   "native smoke bounded readback width",
   "native smoke bounded snapshot width",

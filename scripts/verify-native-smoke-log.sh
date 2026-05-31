@@ -30,6 +30,10 @@ if ! grep -Fq "$marker" "$log_path"; then
 fi
 
 for stage_marker in \
+  "native smoke surface descriptor backend" \
+  "native smoke canvas state restored" \
+  "native smoke shader draws" \
+  "native smoke path verbs" \
   "native smoke readback width" \
   "native smoke bounded readback width" \
   "native smoke bounded snapshot width" \
