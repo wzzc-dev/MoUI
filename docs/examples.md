@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -179,6 +179,12 @@ request. The shared app ingests successful and failed Pi RPC `response` JSONL
 objects: `get_state` refreshes the current Workbench session snapshot, while
 RPC failures become diagnostics without leaking native process details into the
 app model.
+The shared app also ingests Pi's streaming session events such as
+`agent_start`, `message_update`, `tool_execution_start`,
+`tool_execution_end`, `queue_update`, thinking-level changes, compaction, and
+auto-retry updates. These refresh a `PiAgentSnapshot`, selected-session status,
+timeline events, and command evidence while leaving the native transport as a
+JSONL process driver.
 
 The first native entrypoint is macOS Skia:
 

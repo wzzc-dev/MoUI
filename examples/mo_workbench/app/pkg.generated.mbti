@@ -32,8 +32,9 @@ pub(all) struct CommandRun {
   cwd : String
   status : String
   exit_code : Int?
+  tool_call_id : String
 } derive(Eq, @debug.Debug)
-pub fn CommandRun::new(id~ : Int, command~ : String, cwd~ : String, status~ : String, exit_code? : Int?) -> Self
+pub fn CommandRun::new(id~ : Int, command~ : String, cwd~ : String, status~ : String, exit_code? : Int?, tool_call_id? : String) -> Self
 
 pub(all) struct DiagnosticItem {
   source : String
@@ -65,6 +66,20 @@ pub struct MoWorkbenchApp {
 pub fn MoWorkbenchApp::new() -> Self
 pub fn MoWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn MoWorkbenchApp::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub(all) struct PiAgentSnapshot {
+  phase : String
+  turn_index : Int
+  message_role : String
+  message_preview : String
+  active_tool_call_id : String
+  active_tool_name : String
+  queued_steering : Int
+  queued_follow_up : Int
+  thinking_level : String
+} derive(Eq, @debug.Debug)
+pub fn PiAgentSnapshot::new(phase? : String, turn_index? : Int, message_role? : String, message_preview? : String, active_tool_call_id? : String, active_tool_name? : String, queued_steering? : Int, queued_follow_up? : Int, thinking_level? : String) -> Self
+pub fn PiAgentSnapshot::status_label(Self) -> String
 
 pub(all) struct PiRpcSnapshot {
   command : String
@@ -153,6 +168,7 @@ pub(all) struct WorkbenchModel {
   diagnostics : Array[DiagnosticItem]
   transport : PiTransportState
   pi_rpc : PiRpcSnapshot
+  pi_agent : PiAgentSnapshot
   last_status : String
 }
 pub fn WorkbenchModel::active_session(Self) -> WorkbenchSession

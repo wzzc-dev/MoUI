@@ -85,6 +85,13 @@ packages:
   Workbench session with the Pi session id, model label, message count, and
   pending count, and append a timeline event. Failed RPC responses append a
   diagnostic without involving the native transport layer.
+- Pi RPC session event ingestion for the real streaming protocol. The shared
+  app now recognizes `agent_start` / `agent_end`, `turn_start` / `turn_end`,
+  `message_start` / `message_update` / `message_end`, `tool_execution_*`,
+  `queue_update`, thinking-level changes, compaction, and auto-retry events.
+  These update a small `PiAgentSnapshot`, selected-session status, timeline
+  entries, and command evidence while keeping stdout payload parsing out of the
+  native transport package.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
 - Nonzero native process exits now emit `TransportFailed` with the exit code and
@@ -100,9 +107,10 @@ packages:
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
 stderr/nonzero-exit failures, restarts after unexpected child exits, speaks the
-current Pi RPC command names, and ingests basic RPC responses. The next slice
-should ingest streaming assistant/tool events beyond command responses and
-decide how Workbench session ids map onto Pi session selection.
+current Pi RPC command names, and the shared app ingests both command responses
+and streaming session events. The next transport slice should decide how
+Workbench session ids map onto Pi session selection and add real end-to-end
+prompt smoke evidence when a model can be used safely.
 
 ## Pi JSONL Workbench Events
 
@@ -132,6 +140,23 @@ Pi session id, model label, and pending count, and appends a `Pi RPC response`
 timeline event. A failed `response` line records a `Pi RPC` diagnostic and a
 failure timeline event. The native transport does not parse these payloads; it
 only delivers stdout JSONL as `JsonLineReceived`.
+
+Streaming Pi session events also use the same app-layer path:
+
+```json
+{"type":"agent_start"}
+{"type":"turn_start","turnIndex":2}
+{"type":"message_update","message":{"role":"assistant","content":[{"type":"text","text":"Inspecting renderer route"}]},"assistantMessageEvent":{"type":"text_delta","delta":"Inspecting renderer route"}}
+{"type":"tool_execution_start","toolCallId":"call-bash-1","toolName":"bash","args":{"command":"moon test examples/mo_workbench/app --target native","cwd":"/Volumes/Data/Code/moon/MoUI"}}
+{"type":"tool_execution_end","toolCallId":"call-bash-1","toolName":"bash","result":{"details":{"exitCode":0}},"isError":false}
+{"type":"queue_update","steering":[],"followUp":["update docs"]}
+```
+
+`PiAgentSnapshot` tracks the current phase, turn index, streamed message
+preview, active tool, queue counts, and thinking level. Tool execution start/end
+events upsert `CommandRun` evidence using Pi's `toolCallId`, so bash and future
+coding tools can appear in the command evidence surface without changing the
+transport event enum.
 
 Stderr remains separate from stdout JSONL. `ProcessStderr(session, line)` updates
 the raw transport tail as `stderr: ...`, adds a warning diagnostic sourced from
