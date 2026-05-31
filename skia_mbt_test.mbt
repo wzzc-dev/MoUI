@@ -622,6 +622,10 @@ test "render command list exposes text run resource keys" {
   assert_true(keys[0] == expected_key)
 
   let descriptors = commands
+    .draw_path(
+      @skia_mbt.Path::new().add_rect(@skia_mbt.Rect::from_xywh(0, 0, 4, 4)),
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::blue()),
+    )
     .draw_text_run_utf8(
       b"hello",
       @skia_mbt.Point::new(4, 12),
@@ -629,12 +633,25 @@ test "render command list exposes text run resource keys" {
       font_key~,
     )
     .resource_descriptors()
-  assert_eq(descriptors.length(), 2)
+  assert_eq(descriptors.length(), 3)
   assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
   assert_eq(descriptors[0].byte_size, 2048L)
-  assert_true(descriptors[1].key == expected_key)
-  assert_eq(descriptors[1].byte_size, 5L)
-  assert_true(descriptors[1].is_cacheable())
+  let mut path_descriptor_seen = false
+  let mut text_descriptor : @skia_mbt.RendererResourceDescriptor? = None
+  for descriptor in descriptors {
+    if descriptor.key.kind == @skia_mbt.PathResource {
+      path_descriptor_seen = descriptor.is_cacheable()
+    }
+    if descriptor.key == expected_key {
+      text_descriptor = Some(descriptor)
+    }
+  }
+  assert_true(path_descriptor_seen)
+  guard text_descriptor is Some(text_descriptor) else {
+    fail("text run descriptor should be included in resource plan")
+  }
+  assert_eq(text_descriptor.byte_size, 5L)
+  assert_true(text_descriptor.is_cacheable())
 
   let cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
@@ -642,9 +659,9 @@ test "render command list exposes text run resource keys" {
   ] = @skia_mbt.ResourceCache::new(max_bytes=8L)
   assert_true(
     cache.insert(
-      descriptors[1].key,
-      descriptors[1],
-      byte_size=descriptors[1].byte_size,
+      text_descriptor.key,
+      text_descriptor,
+      byte_size=text_descriptor.byte_size,
     ),
   )
   assert_true(cache.contains(expected_key))

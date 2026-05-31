@@ -128,6 +128,7 @@ pub fn RenderCommand::resource_descriptor(
   self : RenderCommand,
 ) -> RendererResourceDescriptor? {
   match self {
+    DrawCanvasPath(path, _) => Some(path.resource_descriptor())
     DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
       Some(descriptor.resource_descriptor(text, font_key~))
     _ => None
