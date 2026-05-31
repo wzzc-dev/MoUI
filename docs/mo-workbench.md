@@ -47,8 +47,8 @@ packages:
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
   fixture transport kinds.
 - Typed transport commands for starting RPC, sending prompts, running shell
-  commands, refreshing Pi messages and command catalogs, cancelling runs,
-  switching Pi sessions, and shutdown.
+  commands, refreshing Pi messages and command catalogs, syncing Pi session
+  names, cancelling runs, switching Pi sessions, and shutdown.
 - Typed transport events for process lifecycle, JSONL sent/received lines,
   stderr diagnostics, and failures.
 - A platform-neutral `PiTransportRuntime` that turns command batches into
@@ -57,9 +57,9 @@ packages:
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
   (`get_state`, `get_messages`, `get_commands`, `switch_session`, `prompt`,
-  `bash`, `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell fixtures
-  to prove direct JSONL stdin/stdout process driving without C FFI or a Node
-  bridge.
+  `set_session_name`, `bash`, `abort_bash`, and `abort`; shutdown is stdin
+  EOF), and uses shell fixtures to prove direct JSONL stdin/stdout process
+  driving without C FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
 - A native multi-batch session runner that accepts an array of command batches
@@ -89,6 +89,10 @@ packages:
   into generic `PiCommandInfo` rows so coding-agent command discovery can later
   grow into document, research, automation, and knowledge workflows without
   changing the platform-neutral transport contract.
+- The workbench can explicitly sync the selected Workbench session title into
+  Pi through `set_session_name`. Pi's `session_info_changed` event updates the
+  same `PiSessionBinding`, so user-visible Workbench session identity and Pi's
+  runtime session display name stay aligned without native-only state.
 - Run cancellation is command-aware: active Workbench shell commands queue a
   platform-neutral `CancelShellCommand` that the native encoder maps to Pi RPC
   `abort_bash`, while prompt/agent cancellation continues to use `abort`.
@@ -104,11 +108,13 @@ packages:
   responses replace the visible transcript with normalized `TranscriptItem`
   rows. Successful `get_commands` responses replace the visible command catalog
   with normalized `PiCommandInfo` rows that preserve command name, kind,
-  description, source scope, and source path. Successful `bash` responses mark
-  the latest queued/running Workbench command as passed, failed, or cancelled
-  and add diagnostics for nonzero, missing, truncated, or cancelled output.
-  Failed RPC responses append a diagnostic without involving the native
-  transport layer.
+  description, source scope, and source path. Successful `set_session_name`
+  responses mark the session-name sync as acknowledged; the preceding
+  `session_info_changed` event carries the actual display name and updates
+  `PiSessionBinding`. Successful `bash` responses mark the latest
+  queued/running Workbench command as passed, failed, or cancelled and add
+  diagnostics for nonzero, missing, truncated, or cancelled output. Failed RPC
+  responses append a diagnostic without involving the native transport layer.
 - Pi RPC session event ingestion for the real streaming protocol. The shared
   app now recognizes `agent_start` / `agent_end`, `turn_start` / `turn_end`,
   `message_start` / `message_update` / `message_end`, `tool_execution_*`,
@@ -133,7 +139,7 @@ packages:
   the owner.
 - The native encoder is aligned with the installed Pi RPC protocol and has
   no-model smoke paths using offline `get_state`, `get_messages`,
-  `get_commands`, and `abort_bash` over `pi --mode rpc`.
+  `get_commands`, `set_session_name`, and `abort_bash` over `pi --mode rpc`.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
@@ -176,6 +182,10 @@ the raw JSONL transport event. A successful
 `{"type":"response","command":"get_commands","success":true,...}` line replaces
 the visible command catalog with normalized `PiCommandInfo` rows for prompt,
 extension, and skill commands. A successful
+`{"type":"response","command":"set_session_name","success":true}` line confirms
+the app's session-name sync request, while a preceding
+`{"type":"session_info_changed","name":"..."}` event updates the binding's
+visible session name. A successful
 `{"type":"response","command":"bash","success":true,...}` line updates the
 latest queued/running command evidence for that Workbench session using Pi's
 `BashResult.exitCode`, `cancelled`, `truncated`, and optional
@@ -237,6 +247,7 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `FetchRpcMessages` sends `{"type":"get_messages"}`,
 `FetchRpcCommands` sends `{"type":"get_commands"}`,
 `SwitchRpcSession` sends `{"type":"switch_session","sessionPath":...}`,
+`SetRpcSessionName` sends `{"type":"set_session_name","name":...}`,
 `SendUserInput` sends `{"type":"prompt","message":...}`, `RunShellCommand`
 sends `{"type":"bash","command":...}`, `CancelShellCommand` sends
 `{"type":"abort_bash"}`, `CancelRpcRun` sends `{"type":"abort"}`, and
@@ -258,6 +269,9 @@ printf '{"type":"get_messages"}\n' | \
 printf '{"type":"get_commands"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"abort_bash"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
@@ -265,9 +279,10 @@ printf '{"type":"abort_bash"}\n' | \
 
 The first command should return a JSONL `response` object for `get_state`, the
 second should return a `get_messages` response with a `messages` array, the
-third should return a `get_commands` response with a `commands` array, and the
-fourth should return a successful `abort_bash` response even when no bash
-command is active. All exit through stdin EOF.
+third should return a `get_commands` response with a `commands` array, the
+fourth should emit `session_info_changed` and a successful `set_session_name`
+response, and the fifth should return a successful `abort_bash` response even
+when no bash command is active. All exit through stdin EOF.
 
 ## Skia Native-First Notes
 
@@ -298,6 +313,9 @@ printf '{"type":"get_messages"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_commands"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"abort_bash"}\n' | \

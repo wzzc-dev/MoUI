@@ -612,6 +612,27 @@ fn WorkbenchModel::status_paragraph(
         width=690.0,
         height=24.0,
       ),
+      row(
+        [
+          button(
+            "同步标题",
+            on_click=SyncSessionName,
+            variant=Outline,
+            theme~,
+            width=86.0,
+            height=34.0,
+          ),
+          text(
+            "Pi title target: " + self.active_session().title,
+            role=Caption,
+            theme~,
+            width=560.0,
+            height=30.0,
+          ),
+        ],
+        spacing=8.0,
+        align=Center,
+      ),
     ],
     spacing=0.0,
     align=Start,

@@ -88,6 +88,11 @@ pub fn pi_rpc_switch_session_line(session_path~ : String) -> String {
 }
 
 ///|
+pub fn pi_rpc_set_session_name_line(name~ : String) -> String {
+  ({ "type": "set_session_name", "name": name } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_prompt_line(message~ : String) -> String {
   ({ "type": "prompt", "message": message } : Json).stringify()
 }
@@ -146,6 +151,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_get_commands_line())
+      }
+      SetRpcSessionName(session, name) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_set_session_name_line(name~))
       }
       SendUserInput(session, text) => {
         if session_id == default_session_id {
