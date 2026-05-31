@@ -23,6 +23,12 @@
       "powershell_command": "moon -C scripts/native_smoke check; moon -C scripts/native_smoke build --target native"
     },
     {
+      "id": "native.smoke-capability-sync",
+      "area": "NativeSmoke",
+      "unix_command": "bash scripts/verify-native-smoke-capabilities.sh",
+      "powershell_command": ".\\scripts\\verify-native-smoke-capabilities.ps1"
+    },
+    {
       "id": "native.ownership",
       "area": "FFI",
       "unix_command": "bash scripts/verify-native-ownership.sh",
