@@ -20,6 +20,12 @@ On Linux or macOS runners, use the shell equivalent:
 bash scripts/verify-platform-status.sh
 ```
 
+Schema v3 also records `native_smoke_capabilities`: the canonical list of smoke
+markers that must appear in every accepted native smoke executable log. The
+platform-status verifier checks this list covers Surface, Canvas, Shader,
+Filter, Path, Image, Text, and FontMgr boundaries, and
+`verify-native-smoke-log.*` reads the same list when validating artifact logs.
+
 When a real artifact has passed verification and the Skia revision has been
 pinned, mark a platform accepted through the guarded helper instead of editing
 the JSON by hand:
