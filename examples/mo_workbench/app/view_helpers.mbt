@@ -112,7 +112,7 @@ fn WorkbenchModel::workspace_summary(
         ),
         text(active.branch, role=Control, theme~, width=230.0, height=26.0),
         text(
-          self.pending_transport_count().to_string() + " queued transport",
+          "Queue " + self.pending_transport_count().to_string(),
           role=Caption,
           theme~,
           width=230.0,
@@ -181,7 +181,7 @@ fn WorkbenchModel::thread_button(
     width=260.0,
     height=38.0,
     background~,
-    corner_radius=10.0,
+    corner_radius=8.0,
     theme~,
     padding=2.0,
   )
@@ -254,12 +254,10 @@ fn WorkbenchModel::chat_transcript(
     [
       self.session_status_panel(theme),
       self.transcript_panel(theme),
-      self.command_catalog_panel(theme),
-      self.command_evidence_panel(theme),
-      self.context_panel(theme),
-      self.diff_summary_card(theme),
+      self.activity_panel(theme),
+      self.workspace_digest_panel(theme),
     ],
-    spacing=12.0,
+    spacing=10.0,
     align=Center,
   )
 }
@@ -278,15 +276,7 @@ fn WorkbenchModel::transcript_panel(
     }
   }
   if rows.is_empty() {
-    rows.push(
-      text(
-        "No Pi messages loaded yet",
-        role=Caption,
-        theme~,
-        width=650.0,
-        height=28.0,
-      ),
-    )
+    rows.push(text("-", role=Caption, theme~, width=650.0, height=28.0))
   }
   surface(
     column(
@@ -318,7 +308,7 @@ fn WorkbenchModel::transcript_panel(
     width=690.0,
     height=178.0,
     background=@core.Color::white(),
-    corner_radius=10.0,
+    corner_radius=8.0,
     theme~,
     padding=12.0,
   )
@@ -360,60 +350,6 @@ fn transcript_badge_tone(tone : String) -> @views.BadgeTone {
     "info" => Accent
     _ => Neutral
   }
-}
-
-///|
-fn WorkbenchModel::command_catalog_panel(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
-  let mut visible = 0
-  for command in self.command_catalog {
-    if visible < 3 {
-      rows.push(command_catalog_row(command, theme))
-      visible = visible + 1
-    }
-  }
-  if rows.is_empty() {
-    rows.push(
-      text(
-        "No Pi commands loaded yet",
-        role=Caption,
-        theme~,
-        width=650.0,
-        height=28.0,
-      ),
-    )
-  }
-  surface(
-    column(
-      [
-        row(
-          [
-            text("Pi commands", role=Control, theme~, width=520.0, height=28.0),
-            badge(
-              self.command_catalog.length().to_string() + " commands",
-              tone=Accent,
-              theme~,
-              width=116.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
-        ),
-        column(rows, spacing=6.0, align=Start),
-      ],
-      spacing=8.0,
-      align=Start,
-    ),
-    width=690.0,
-    height=178.0,
-    background=@core.Color::white(),
-    corner_radius=10.0,
-    theme~,
-    padding=12.0,
-  )
 }
 
 ///|
@@ -496,13 +432,7 @@ fn WorkbenchModel::session_status_panel(
       [
         row(
           [
-            text(
-              "Session status",
-              role=Control,
-              theme~,
-              width=368.0,
-              height=28.0,
-            ),
+            text("Session", role=Control, theme~, width=368.0, height=28.0),
             badge(active.status, tone=Success, theme~, width=92.0),
             badge(
               self.pending_transport_count().to_string() + " queued",
@@ -555,11 +485,11 @@ fn WorkbenchModel::session_status_panel(
               height=34.0,
             ),
             button(
-              "同步标题",
+              "同步",
               on_click=SyncSessionName,
               variant=Outline,
               theme~,
-              width=86.0,
+              width=66.0,
               height=34.0,
             ),
             button(
@@ -658,63 +588,69 @@ fn compact_percent(percent : Double) -> String {
 }
 
 ///|
-fn WorkbenchModel::command_evidence_panel(
+fn WorkbenchModel::activity_panel(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
-  let mut visible = 0
-  for command in self.commands {
-    if visible < 3 {
-      rows.push(command_run_row(command, theme))
-      visible = visible + 1
-    }
-  }
-  if rows.is_empty() {
-    rows.push(
-      text(
-        "No command evidence",
-        role=Caption,
-        theme~,
-        width=650.0,
-        height=28.0,
-      ),
-    )
-  }
   surface(
     column(
       [
         row(
           [
-            text(
-              "Command evidence",
-              role=Control,
-              theme~,
-              width=520.0,
-              height=28.0,
-            ),
+            text("Activity", role=Control, theme~, width=414.0, height=28.0),
             badge(
               self.commands.length().to_string() + " runs",
               tone=Neutral,
               theme~,
-              width=116.0,
+              width=94.0,
+            ),
+            badge(
+              self.command_catalog.length().to_string() + " cmds",
+              tone=Accent,
+              theme~,
+              width=94.0,
             ),
           ],
           spacing=8.0,
           align=Center,
         ),
-        column(rows, spacing=6.0, align=Start),
+        self.primary_command_run_row(theme),
+        self.primary_command_catalog_row(theme),
       ],
-      spacing=8.0,
+      spacing=7.0,
       align=Start,
     ),
     width=690.0,
-    height=178.0,
+    height=136.0,
     background=@core.Color::white(),
-    corner_radius=10.0,
+    corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn WorkbenchModel::primary_command_run_row(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.commands.is_empty() {
+    text("-", role=Caption, theme~, width=650.0, height=28.0)
+  } else {
+    command_run_row(self.commands[0], theme)
+  }
+}
+
+///|
+fn WorkbenchModel::primary_command_catalog_row(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.command_catalog.is_empty() {
+    text("-", role=Caption, theme~, width=650.0, height=28.0)
+  } else {
+    command_catalog_row(self.command_catalog[0], theme)
+  }
 }
 
 ///|
@@ -771,60 +707,6 @@ fn command_status_tone(status : String) -> @views.BadgeTone {
 }
 
 ///|
-fn WorkbenchModel::context_panel(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
-  let mut visible = 0
-  for file in self.files {
-    if visible < 3 {
-      rows.push(file_context_row(file, theme))
-      visible = visible + 1
-    }
-  }
-  if rows.is_empty() {
-    rows.push(
-      text("No file context", role=Caption, theme~, width=650.0, height=28.0),
-    )
-  }
-  surface(
-    column(
-      [
-        row(
-          [
-            text(
-              "Context files",
-              role=Control,
-              theme~,
-              width=520.0,
-              height=28.0,
-            ),
-            badge(
-              self.files.length().to_string() + " files",
-              tone=Neutral,
-              theme~,
-              width=116.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
-        ),
-        column(rows, spacing=6.0, align=Start),
-      ],
-      spacing=8.0,
-      align=Start,
-    ),
-    width=690.0,
-    height=178.0,
-    background=@core.Color::white(),
-    corner_radius=10.0,
-    theme~,
-    padding=12.0,
-  )
-}
-
-///|
 fn file_context_row(
   file : FileContext,
   theme : @core.Theme,
@@ -847,7 +729,7 @@ fn file_context_row(
 }
 
 ///|
-fn WorkbenchModel::diff_summary_card(
+fn WorkbenchModel::workspace_digest_panel(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
@@ -856,38 +738,12 @@ fn WorkbenchModel::diff_summary_card(
       [
         row(
           [
-            column(
-              [
-                text(
-                  "Diff summary · " + self.diff.status,
-                  role=Control,
-                  theme~,
-                  width=350.0,
-                  height=26.0,
-                ),
-                text(
-                  self.diff.changed_files.to_string() +
-                  " files · +" +
-                  self.diff.additions.to_string() +
-                  " -" +
-                  self.diff.deletions.to_string(),
-                  role=Caption,
-                  theme~,
-                  width=350.0,
-                  height=24.0,
-                ),
-              ],
-              spacing=0.0,
-              align=Start,
-            ),
-            spacer(min_length=8.0, weight=1.0),
-            button(
-              "停止",
-              on_click=CancelRun,
-              variant=Ghost,
+            text("Workspace", role=Control, theme~, width=438.0, height=28.0),
+            badge(
+              self.files.length().to_string() + " files",
+              tone=Neutral,
               theme~,
-              width=74.0,
-              height=34.0,
+              width=94.0,
             ),
             button(
               "审核",
@@ -901,17 +757,56 @@ fn WorkbenchModel::diff_summary_card(
           spacing=8.0,
           align=Center,
         ),
+        diff_digest_row(self.diff, theme),
+        self.primary_file_context_row(theme),
       ],
-      spacing=8.0,
+      spacing=7.0,
       align=Start,
     ),
     width=690.0,
-    height=80.0,
+    height=132.0,
     background=@core.Color::white(),
-    corner_radius=10.0,
+    corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn diff_digest_row(
+  diff : DiffOverview,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge(diff.status, tone=Neutral, theme~, width=126.0),
+      text(
+        diff.changed_files.to_string() +
+        " files · +" +
+        diff.additions.to_string() +
+        " -" +
+        diff.deletions.to_string(),
+        role=Caption,
+        theme~,
+        width=492.0,
+        height=28.0,
+      ),
+    ],
+    spacing=10.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::primary_file_context_row(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.files.is_empty() {
+    text("-", role=Caption, theme~, width=650.0, height=28.0)
+  } else {
+    file_context_row(self.files[0], theme)
+  }
 }
 
 ///|
@@ -926,7 +821,7 @@ fn WorkbenchModel::composer(
           self.prompt,
           on_input=value => PromptChanged(value),
           on_submit=Some(DispatchPrompt),
-          placeholder="要求后续变更",
+          placeholder="给 Pi 一个任务",
           variant=Plain,
           theme~,
           width=748.0,
@@ -942,16 +837,24 @@ fn WorkbenchModel::composer(
               width=38.0,
               height=34.0,
             ),
-            badge("Pi RPC", tone=Accent, theme~, width=76.0),
-            badge("Skia native", tone=Success, theme~, width=104.0),
-            spacer(min_length=10.0, weight=1.0),
-            text(
-              self.active_session().status,
-              role=Caption,
+            badge("RPC", tone=Accent, theme~, width=54.0),
+            button(
+              self.steering_mode_label(),
+              on_click=ToggleSteeringMode,
+              variant=Outline,
               theme~,
-              width=72.0,
-              height=30.0,
+              width=76.0,
+              height=34.0,
             ),
+            button(
+              self.follow_up_mode_label(),
+              on_click=ToggleFollowUpMode,
+              variant=Outline,
+              theme~,
+              width=82.0,
+              height=34.0,
+            ),
+            spacer(min_length=10.0, weight=1.0),
             button(
               "↑",
               on_click=DispatchPrompt,
@@ -971,10 +874,29 @@ fn WorkbenchModel::composer(
     width=760.0,
     height=126.0,
     background=@core.Color::white(),
-    corner_radius=18.0,
+    corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn WorkbenchModel::steering_mode_label(self : WorkbenchModel) -> String {
+  "Steer " + mode_short_label(self.pi_agent.steering_mode)
+}
+
+///|
+fn WorkbenchModel::follow_up_mode_label(self : WorkbenchModel) -> String {
+  "Follow " + mode_short_label(self.pi_agent.follow_up_mode)
+}
+
+///|
+fn mode_short_label(mode : String) -> String {
+  if mode == "all" {
+    "all"
+  } else {
+    "1"
+  }
 }
 
 ///|

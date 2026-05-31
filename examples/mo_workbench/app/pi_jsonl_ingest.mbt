@@ -68,6 +68,8 @@ fn WorkbenchModel::ingest_rpc_response(
         self.apply_get_session_stats_success(session_id, fields)
       "cycle_thinking_level" =>
         self.apply_cycle_thinking_level_success(session_id, fields)
+      "set_steering_mode" => self.apply_set_steering_mode_success(session_id)
+      "set_follow_up_mode" => self.apply_set_follow_up_mode_success(session_id)
       "set_session_name" => self.apply_set_session_name_success(session_id)
       _ => {
         let snapshot = match fields.get("data") {
@@ -307,6 +309,44 @@ fn WorkbenchModel::apply_cycle_thinking_level_success(
 }
 
 ///|
+fn WorkbenchModel::apply_set_steering_mode_success(
+  self : WorkbenchModel,
+  session_id : String,
+) -> WorkbenchModel {
+  {
+    ..self,
+    pi_rpc: PiRpcSnapshot::new(command="set_steering_mode", success=true),
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi steering mode applied",
+      detail=session_id + ": " + self.pi_agent.steering_mode,
+      tone="success",
+    ),
+    status="Pi steering mode acknowledged",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_set_follow_up_mode_success(
+  self : WorkbenchModel,
+  session_id : String,
+) -> WorkbenchModel {
+  {
+    ..self,
+    pi_rpc: PiRpcSnapshot::new(command="set_follow_up_mode", success=true),
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi follow-up mode applied",
+      detail=session_id + ": " + self.pi_agent.follow_up_mode,
+      tone="success",
+    ),
+    status="Pi follow-up mode acknowledged",
+  )
+}
+
+///|
 fn WorkbenchModel::apply_bash_success(
   self : WorkbenchModel,
   session_id : String,
@@ -426,7 +466,29 @@ fn WorkbenchModel::update_session_from_rpc(
       session
     }
   })
-  let model = { ..self, sessions, pi_rpc: snapshot }
+  let model = {
+    ..self,
+    sessions,
+    pi_rpc: snapshot,
+    pi_agent: {
+      ..self.pi_agent,
+      thinking_level: if snapshot.thinking_level == "" {
+        self.pi_agent.thinking_level
+      } else {
+        snapshot.thinking_level
+      },
+      steering_mode: if snapshot.steering_mode == "" {
+        self.pi_agent.steering_mode
+      } else {
+        snapshot.steering_mode
+      },
+      follow_up_mode: if snapshot.follow_up_mode == "" {
+        self.pi_agent.follow_up_mode
+      } else {
+        snapshot.follow_up_mode
+      },
+    },
+  }
   if snapshot.session_id == "" && snapshot.session_file == "" {
     model
   } else {
@@ -513,6 +575,9 @@ fn rpc_snapshot_from_data(
     session_file=json_string(data, "sessionFile").unwrap_or(""),
     session_name=json_string(data, "sessionName").unwrap_or(""),
     model=json_model_label(data),
+    thinking_level=json_string(data, "thinkingLevel").unwrap_or(""),
+    steering_mode=json_string(data, "steeringMode").unwrap_or(""),
+    follow_up_mode=json_string(data, "followUpMode").unwrap_or(""),
     pending_message_count=json_int(data, "pendingMessageCount").unwrap_or(0),
     message_count=json_int(data, "messageCount").unwrap_or(0),
   )

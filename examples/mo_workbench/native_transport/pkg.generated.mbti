@@ -25,7 +25,11 @@ pub fn pi_rpc_get_state_line() -> String
 
 pub fn pi_rpc_prompt_line(message~ : String) -> String
 
+pub fn pi_rpc_set_follow_up_mode_line(mode~ : String) -> String
+
 pub fn pi_rpc_set_session_name_line(name~ : String) -> String
+
+pub fn pi_rpc_set_steering_mode_line(mode~ : String) -> String
 
 pub fn pi_rpc_switch_session_line(session_path~ : String) -> String
 

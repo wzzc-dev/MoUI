@@ -93,6 +93,16 @@ pub fn pi_rpc_cycle_thinking_level_line() -> String {
 }
 
 ///|
+pub fn pi_rpc_set_steering_mode_line(mode~ : String) -> String {
+  ({ "type": "set_steering_mode", "mode": mode } : Json).stringify()
+}
+
+///|
+pub fn pi_rpc_set_follow_up_mode_line(mode~ : String) -> String {
+  ({ "type": "set_follow_up_mode", "mode": mode } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_switch_session_line(session_path~ : String) -> String {
   ({ "type": "switch_session", "sessionPath": session_path } : Json).stringify()
 }
@@ -173,6 +183,18 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_cycle_thinking_level_line())
+      }
+      SetRpcSteeringMode(session, mode) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_set_steering_mode_line(mode~))
+      }
+      SetRpcFollowUpMode(session, mode) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_set_follow_up_mode_line(mode~))
       }
       SetRpcSessionName(session, name) => {
         if session_id == default_session_id {

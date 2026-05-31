@@ -113,6 +113,9 @@ pub(all) struct PiRpcSnapshot {
   session_file : String
   session_name : String
   model : String
+  thinking_level : String
+  steering_mode : String
+  follow_up_mode : String
   pending_message_count : Int
   message_count : Int
   error : String
@@ -129,6 +132,8 @@ pub(all) struct PiAgentSnapshot {
   queued_steering : Int
   queued_follow_up : Int
   thinking_level : String
+  steering_mode : String
+  follow_up_mode : String
 } derive(Eq, Debug)
 
 ///|
@@ -182,6 +187,8 @@ pub(all) enum WorkbenchMsg {
   MarkCommandComplete(Int, Int)
   SyncSessionName
   CycleThinkingLevel
+  ToggleSteeringMode
+  ToggleFollowUpMode
   CancelRun
   ClearDiagnostics
   ToggleContext(String)
@@ -349,6 +356,9 @@ pub fn PiRpcSnapshot::new(
   session_file? : String = "",
   session_name? : String = "",
   model? : String = "",
+  thinking_level? : String = "",
+  steering_mode? : String = "",
+  follow_up_mode? : String = "",
   pending_message_count? : Int = 0,
   message_count? : Int = 0,
   error? : String = "",
@@ -360,6 +370,9 @@ pub fn PiRpcSnapshot::new(
     session_file,
     session_name,
     model,
+    thinking_level,
+    steering_mode,
+    follow_up_mode,
     pending_message_count,
     message_count,
     error,
@@ -416,6 +429,8 @@ pub fn PiAgentSnapshot::new(
   queued_steering? : Int = 0,
   queued_follow_up? : Int = 0,
   thinking_level? : String = "",
+  steering_mode? : String = "one-at-a-time",
+  follow_up_mode? : String = "one-at-a-time",
 ) -> PiAgentSnapshot {
   {
     phase,
@@ -427,6 +442,8 @@ pub fn PiAgentSnapshot::new(
     queued_steering,
     queued_follow_up,
     thinking_level,
+    steering_mode,
+    follow_up_mode,
   }
 }
 
@@ -485,6 +502,8 @@ pub fn WorkbenchModel::update(
     MarkCommandComplete(id, code) => self.mark_command_complete(id, code)
     SyncSessionName => self.sync_session_name()
     CycleThinkingLevel => self.cycle_thinking_level()
+    ToggleSteeringMode => self.toggle_steering_mode()
+    ToggleFollowUpMode => self.toggle_follow_up_mode()
     CancelRun => self.cancel_run()
     ClearDiagnostics =>
       {
@@ -645,6 +664,10 @@ pub fn WorkbenchModel::update_with_transport(
     SyncSessionName => self.sync_session_name_with_transport(transport_runtime)
     CycleThinkingLevel =>
       self.cycle_thinking_level_with_transport(transport_runtime)
+    ToggleSteeringMode =>
+      self.toggle_steering_mode_with_transport(transport_runtime)
+    ToggleFollowUpMode =>
+      self.toggle_follow_up_mode_with_transport(transport_runtime)
     CancelRun => self.cancel_run_with_transport(transport_runtime)
     _ => WorkbenchUpdate::new(self.update(message))
   }
@@ -893,6 +916,125 @@ fn WorkbenchModel::cycle_thinking_level_with_transport(
     self.cycle_thinking_level(),
     effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
   )
+}
+
+///|
+fn WorkbenchModel::toggle_steering_mode(
+  self : WorkbenchModel,
+) -> WorkbenchModel {
+  let session = self.active_session()
+  let mode = next_agent_input_mode(self.pi_agent.steering_mode)
+  let transport_commands = self.commands_with_session_start(
+    session,
+    SetRpcSteeringMode(session.id, mode),
+  )
+  self
+  .record_agent_mode_event(
+    title="Pi steering mode queued",
+    detail=mode,
+    status="Pi steering mode queued",
+  )
+  .set_agent_modes(steering_mode=Some(mode), follow_up_mode=None)
+  .enqueue_transport_commands(transport_commands)
+}
+
+///|
+fn WorkbenchModel::toggle_steering_mode_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let mode = next_agent_input_mode(self.pi_agent.steering_mode)
+  let commands = self.commands_with_session_start(
+    session,
+    SetRpcSteeringMode(session.id, mode),
+  )
+  WorkbenchUpdate::new(
+    self.toggle_steering_mode(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::toggle_follow_up_mode(
+  self : WorkbenchModel,
+) -> WorkbenchModel {
+  let session = self.active_session()
+  let mode = next_agent_input_mode(self.pi_agent.follow_up_mode)
+  let transport_commands = self.commands_with_session_start(
+    session,
+    SetRpcFollowUpMode(session.id, mode),
+  )
+  self
+  .record_agent_mode_event(
+    title="Pi follow-up mode queued",
+    detail=mode,
+    status="Pi follow-up mode queued",
+  )
+  .set_agent_modes(steering_mode=None, follow_up_mode=Some(mode))
+  .enqueue_transport_commands(transport_commands)
+}
+
+///|
+fn WorkbenchModel::toggle_follow_up_mode_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let mode = next_agent_input_mode(self.pi_agent.follow_up_mode)
+  let commands = self.commands_with_session_start(
+    session,
+    SetRpcFollowUpMode(session.id, mode),
+  )
+  WorkbenchUpdate::new(
+    self.toggle_follow_up_mode(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::record_agent_mode_event(
+  self : WorkbenchModel,
+  title~ : String,
+  detail~ : String,
+  status~ : String,
+) -> WorkbenchModel {
+  let events = self.events.copy()
+  events.push(AgentEvent::new(phase="control", title~, detail~, tone="info"))
+  { ..self, events, last_status: status }
+}
+
+///|
+fn WorkbenchModel::set_agent_modes(
+  self : WorkbenchModel,
+  steering_mode~ : String?,
+  follow_up_mode~ : String?,
+) -> WorkbenchModel {
+  {
+    ..self,
+    pi_agent: {
+      ..self.pi_agent,
+      steering_mode: steering_mode.unwrap_or(self.pi_agent.steering_mode),
+      follow_up_mode: follow_up_mode.unwrap_or(self.pi_agent.follow_up_mode),
+    },
+  }
+}
+
+///|
+fn WorkbenchModel::enqueue_transport_commands(
+  self : WorkbenchModel,
+  commands : Array[PiTransportCommand],
+) -> WorkbenchModel {
+  { ..self, transport: self.transport.enqueue_many(commands) }
+}
+
+///|
+fn next_agent_input_mode(mode : String) -> String {
+  if mode == "all" {
+    "one-at-a-time"
+  } else {
+    "all"
+  }
 }
 
 ///|
