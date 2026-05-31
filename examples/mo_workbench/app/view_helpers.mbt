@@ -22,9 +22,7 @@ using @views {
 }
 
 ///|
-pub fn WorkbenchModel::view(
-  self : WorkbenchModel,
-) -> @core.View[WorkbenchMsg] {
+pub fn WorkbenchModel::view(self : WorkbenchModel) -> @core.View[WorkbenchMsg] {
   let theme = @views.light_theme()
   let active = self.active_session()
   let body = column(
@@ -74,13 +72,7 @@ fn WorkbenchModel::header(
     [
       column(
         [
-          text(
-            "Mo Workbench",
-            role=Title,
-            theme~,
-            width=260.0,
-            height=36.0,
-          ),
+          text("Mo Workbench", role=Title, theme~, width=260.0, height=36.0),
           text(
             "A Pi agent desktop",
             role=Caption,
@@ -94,13 +86,7 @@ fn WorkbenchModel::header(
       ),
       badge("macOS Skia", tone=Accent, theme~, width=104.0),
       badge("Pi JSONL RPC", tone=Success, theme~, width=118.0),
-      text(
-        active.project_path,
-        role=Mono,
-        theme~,
-        width=430.0,
-        height=28.0,
-      ),
+      text(active.project_path, role=Mono, theme~, width=430.0, height=28.0),
     ],
     spacing=theme.spacing_scale.md,
     align=Center,
@@ -199,8 +185,20 @@ fn WorkbenchModel::session_summary(
       [
         text("Active Task", role=Control, theme~, width=214.0, height=26.0),
         text(active.active_task, role=Body, theme~, width=214.0, height=56.0),
-        text("Branch: " + active.branch, role=Mono, theme~, width=214.0, height=28.0),
-        text("Status: " + active.status, role=Caption, theme~, width=214.0, height=24.0),
+        text(
+          "Branch: " + active.branch,
+          role=Mono,
+          theme~,
+          width=214.0,
+          height=28.0,
+        ),
+        text(
+          "Status: " + active.status,
+          role=Caption,
+          theme~,
+          width=214.0,
+          height=24.0,
+        ),
       ],
       spacing=theme.spacing_scale.xs,
       align=Start,
@@ -223,14 +221,24 @@ fn WorkbenchModel::detail_panel(
     tab_item(route="agent", label="Agent", view=self.agent_panel(theme, active)),
     tab_item(route="plan", label="Plan", view=self.plan_panel(theme)),
     tab_item(route="files", label="Files", view=self.files_panel(theme)),
-    tab_item(route="commands", label="Commands", view=self.commands_panel(theme)),
-    tab_item(route="diagnostics", label="Diagnostics", view=self.diagnostics_panel(theme)),
+    tab_item(
+      route="commands",
+      label="Commands",
+      view=self.commands_panel(theme),
+    ),
+    tab_item(
+      route="diagnostics",
+      label="Diagnostics",
+      view=self.diagnostics_panel(theme),
+    ),
   ]
   surface(
     column(
       [
         self.prompt_bar(theme),
-        tab_view(self.selected_panel, tabs, on_select=panel => SelectPanel(panel)),
+        tab_view(self.selected_panel, tabs, on_select=panel => {
+          SelectPanel(panel)
+        }),
       ],
       spacing=theme.spacing_scale.md,
       align=Stretch,
@@ -291,11 +299,7 @@ fn WorkbenchModel::agent_panel(
   row(
     [
       surface(
-        scroll_view(
-          self.event_timeline(theme),
-          width=520.0,
-          height=332.0,
-        ),
+        scroll_view(self.event_timeline(theme), width=520.0, height=332.0),
         width=544.0,
         height=356.0,
         variant=Base,
@@ -347,13 +351,43 @@ fn WorkbenchModel::transport_panel(
     column(
       [
         text("PiTransport", role=Control, theme~, width=240.0, height=28.0),
-        text(self.transport.kind.label(), role=Caption, theme~, width=240.0, height=24.0),
-        text("Session: " + active.id, role=Mono, theme~, width=240.0, height=28.0),
-        text("Status: " + self.transport.status_label(), role=Body, theme~, width=240.0, height=28.0),
+        text(
+          self.transport.kind.label(),
+          role=Caption,
+          theme~,
+          width=240.0,
+          height=24.0,
+        ),
+        text(
+          "Session: " + active.id,
+          role=Mono,
+          theme~,
+          width=240.0,
+          height=28.0,
+        ),
+        text(
+          "Status: " + self.transport.status_label(),
+          role=Body,
+          theme~,
+          width=240.0,
+          height=28.0,
+        ),
         text("Last JSONL", role=Caption, theme~, width=240.0, height=24.0),
-        text(self.transport.last_json_line, role=Mono, theme~, width=240.0, height=54.0),
+        text(
+          self.transport.last_json_line,
+          role=Mono,
+          theme~,
+          width=240.0,
+          height=54.0,
+        ),
         text("Queued commands", role=Caption, theme~, width=240.0, height=24.0),
-        text(self.transport_queue_label(), role=Mono, theme~, width=240.0, height=74.0),
+        text(
+          self.transport_queue_label(),
+          role=Mono,
+          theme~,
+          width=240.0,
+          height=74.0,
+        ),
       ],
       spacing=theme.spacing_scale.xs,
       align=Start,
@@ -392,21 +426,13 @@ fn WorkbenchModel::files_panel(
     [
       tree_view(
         [
-          tree_item(
-            id="repo",
-            label="MoUI",
-            children=[
-              tree_item(
-                id="examples",
-                label="examples",
-                children=[
-                  tree_item(id="mo_workbench", label="mo_workbench"),
-                ],
-              ),
-              tree_item(id="render", label="render/skia"),
-              tree_item(id="backend", label="backend/macos/skia"),
-            ],
-          ),
+          tree_item(id="repo", label="MoUI", children=[
+            tree_item(id="examples", label="examples", children=[
+              tree_item(id="mo_workbench", label="mo_workbench"),
+            ]),
+            tree_item(id="render", label="render/skia"),
+            tree_item(id="backend", label="backend/macos/skia"),
+          ]),
         ],
         expanded=self.expanded_context,
         selected="mo_workbench",
@@ -421,12 +447,14 @@ fn WorkbenchModel::files_panel(
           table_column(id="lines", label="Lines", width=74.0),
           table_column(id="summary", label="Summary", width=284.0),
         ],
-        self.files.map(file => [
-          file.path,
-          file.change_kind,
-          file.lines_changed.to_string(),
-          file.summary,
-        ]),
+        self.files.map(file => {
+          [
+            file.path,
+            file.change_kind,
+            file.lines_changed.to_string(),
+            file.summary,
+          ]
+        }),
         theme~,
       ),
     ],
@@ -446,7 +474,9 @@ fn WorkbenchModel::commands_panel(
         [
           button(
             "Queue Tests",
-            on_click=QueueCommand("moon test examples/mo_workbench/app --target native"),
+            on_click=QueueCommand(
+              "moon test examples/mo_workbench/app --target native",
+            ),
             variant=Primary,
             theme~,
             width=126.0,
@@ -454,7 +484,9 @@ fn WorkbenchModel::commands_panel(
           ),
           button(
             "Queue Build",
-            on_click=QueueCommand("moon build examples/mo_workbench/macos_skia --target native"),
+            on_click=QueueCommand(
+              "moon build examples/mo_workbench/macos_skia --target native",
+            ),
             variant=Outline,
             theme~,
             width=126.0,
@@ -470,11 +502,9 @@ fn WorkbenchModel::commands_panel(
           table_column(id="cwd", label="CWD", width=210.0),
           table_column(id="status", label="Status", width=118.0),
         ],
-        self.commands.map(command => [
-          command.command,
-          command.cwd,
-          command.status_label(),
-        ]),
+        self.commands.map(command => {
+          [command.command, command.cwd, command.status_label()]
+        }),
         theme~,
       ),
     ],

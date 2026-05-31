@@ -29,12 +29,12 @@ test "workbench applies transport events to model timeline" {
 
 ///|
 test "workbench command completion updates command table state" {
-  let model = WorkbenchModel::new()
-    .update(QueueCommand("moon check"))
-    .update(MarkCommandComplete(4, 1))
-  inspect(model.commands.length(), content="4")
-  inspect(model.commands[3].status, content="failed")
-  match model.commands[3].exit_code {
+  let model = WorkbenchModel::new().update(QueueCommand("moon check"))
+  let command_id = model.commands.length()
+  let completed = model.update(MarkCommandComplete(command_id, 1))
+  assert_true(completed.commands.length() == command_id)
+  inspect(completed.commands[command_id - 1].status, content="failed")
+  match completed.commands[command_id - 1].exit_code {
     Some(code) => inspect(code, content="1")
     None => fail("expected command exit code")
   }

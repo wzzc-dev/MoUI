@@ -103,7 +103,16 @@ pub fn WorkbenchSession::new(
   active_task~ : String,
   unread_events~ : Int,
 ) -> WorkbenchSession {
-  { id, title, project_path, branch, status, summary, active_task, unread_events }
+  {
+    id,
+    title,
+    project_path,
+    branch,
+    status,
+    summary,
+    active_task,
+    unread_events,
+  }
 }
 
 ///|
@@ -196,7 +205,8 @@ pub fn WorkbenchModel::update(
         diagnostics: [],
         last_status: "Diagnostics cleared for current session",
       }
-    ToggleContext(id) => { ..self, expanded_context: toggle_id(self.expanded_context, id) }
+    ToggleContext(id) =>
+      { ..self, expanded_context: toggle_id(self.expanded_context, id) }
   }
 }
 
@@ -241,7 +251,9 @@ pub fn WorkbenchModel::runtime(
 }
 
 ///|
-pub fn WorkbenchModel::active_session(self : WorkbenchModel) -> WorkbenchSession {
+pub fn WorkbenchModel::active_session(
+  self : WorkbenchModel,
+) -> WorkbenchSession {
   for session in self.sessions {
     if session.id == self.selected_session_id {
       return session
@@ -337,18 +349,18 @@ fn WorkbenchModel::mark_command_complete(
     if command.id == id {
       {
         ..command,
-        status: if code == 0 { "passed" } else { "failed" },
+        status: if code == 0 {
+          "passed"
+        } else {
+          "failed"
+        },
         exit_code: Some(code),
       }
     } else {
       command
     }
   })
-  {
-    ..self,
-    commands,
-    last_status: "Command " + id.to_string() + " completed",
-  }
+  { ..self, commands, last_status: "Command " + id.to_string() + " completed" }
 }
 
 ///|

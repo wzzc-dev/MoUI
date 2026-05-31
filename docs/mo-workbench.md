@@ -15,6 +15,10 @@ automation runs, and knowledge organization.
 
 - `examples/mo_workbench/app` owns the shared TEA model, view composition,
   sample fixtures, and platform-neutral Pi transport event model.
+- `examples/mo_workbench/native_transport` owns the native
+  `moonbitlang/async` process driver for JSONL stdin/stdout sessions. It
+  imports the shared app package only for `PiTransportEvent`, keeping the app
+  model reusable by Web and other future hosts.
 - `examples/mo_workbench/macos_skia` is a thin entrypoint that selects
   `backend/macos/skia` and runs the shared app runtime.
 - Future Web or other native entrypoints should reuse the same app package and
@@ -35,14 +39,16 @@ packages:
   and shutdown.
 - Typed transport events for process lifecycle, JSONL sent/received lines, and
   failures.
+- A native-only async transport package whose default command is
+  `pi --mode rpc`, with focused tests that use a shell fixture to prove direct
+  JSONL stdin/stdout process driving without C FFI or a Node bridge.
 - Workbench panels for agent timeline, plan, diff/file context, command queue,
   and diagnostics.
 
-This slice keeps the transport driver itself as the next boundary. The native
-V1 driver should use `moonbitlang/async` to start and drive
-`pi --mode rpc` over JSONL stdin/stdout, then dispatch the same transport events
-already consumed by the app model. It should not introduce C FFI or a Node
-bridge.
+The remaining V1 transport boundary is lifecycle ownership from the macOS app:
+the native driver can start and drive a finite JSONL session, and the next slice
+should keep a Pi RPC task alive for the desktop session, feed UI prompts into
+its writer, and dispatch reader events back through the MoUI message loop.
 
 ## Skia Native-First Notes
 
@@ -62,6 +68,7 @@ Use these checks while working on the first app slices:
 
 ```sh
 moon test examples/mo_workbench/app --target native
+moon test examples/mo_workbench/native_transport --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```
 

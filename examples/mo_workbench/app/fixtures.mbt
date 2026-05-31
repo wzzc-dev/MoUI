@@ -117,6 +117,13 @@ fn sample_files() -> Array[FileContext] {
       lines_changed=16,
     ),
     FileContext::new(
+      id="native-transport",
+      path="examples/mo_workbench/native_transport/native_transport.mbt",
+      summary="moonbitlang/async process driver for JSONL stdin/stdout.",
+      change_kind="added",
+      lines_changed=180,
+    ),
+    FileContext::new(
       id="docs",
       path="docs/mo-workbench.md",
       summary="Product intent, architecture boundary, and validation notes.",
@@ -138,13 +145,20 @@ fn sample_commands() -> Array[CommandRun] {
     ),
     CommandRun::new(
       id=2,
+      command="moon test examples/mo_workbench/native_transport --target native",
+      cwd="/Volumes/Data/Code/moon/MoUI",
+      status="ready",
+      exit_code=None,
+    ),
+    CommandRun::new(
+      id=3,
       command="moon build examples/mo_workbench/macos_skia --target native",
       cwd="/Volumes/Data/Code/moon/MoUI",
       status="pending skia link",
       exit_code=None,
     ),
     CommandRun::new(
-      id=3,
+      id=4,
       command="scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke",
       cwd="/Volumes/Data/Code/moon/MoUI",
       status="manual",
@@ -158,8 +172,8 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
   [
     DiagnosticItem::new(
       source="PiTransport",
-      severity="gap",
-      message="Native async process driver is the next vertical slice.",
+      severity="next",
+      message="Native driver can run JSONL sessions; UI-owned lifecycle wiring is next.",
     ),
     DiagnosticItem::new(
       source="Skia",

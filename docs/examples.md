@@ -166,6 +166,7 @@ The first native entrypoint is macOS Skia:
 
 ```sh
 moon test examples/mo_workbench/app --target native
+moon test examples/mo_workbench/native_transport --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```
 
