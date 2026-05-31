@@ -185,6 +185,7 @@ pub(all) enum WorkbenchMsg {
   DispatchPrompt
   InvokeCommand(String)
   FollowTranscript(String, String, String)
+  FollowActivity(String, String, String)
   InspectFile(String)
   ReviewDiff
   RefreshSession
@@ -514,6 +515,8 @@ pub fn WorkbenchModel::update(
     InvokeCommand(name) => self.invoke_command(name)
     FollowTranscript(role, summary, detail) =>
       self.follow_transcript(role, summary, detail)
+    FollowActivity(phase, title, detail) =>
+      self.follow_activity(phase, title, detail)
     InspectFile(path) => self.inspect_file(path)
     ReviewDiff => self.review_diff()
     RefreshSession => self.refresh_session()
@@ -692,6 +695,10 @@ pub fn WorkbenchModel::update_with_transport(
     FollowTranscript(role, summary, detail) =>
       self.follow_transcript_with_transport(
         role, summary, detail, transport_runtime,
+      )
+    FollowActivity(phase, title, detail) =>
+      self.follow_activity_with_transport(
+        phase, title, detail, transport_runtime,
       )
     InspectFile(path) =>
       self.inspect_file_with_transport(path, transport_runtime)
@@ -957,6 +964,87 @@ fn transcript_follow_up_prompt(
     summary
   } else {
     summary + ". Context: " + detail
+  }
+  "Follow up on " + label + ": " + body
+}
+
+///|
+fn WorkbenchModel::follow_activity(
+  self : WorkbenchModel,
+  phase : String,
+  title : String,
+  detail : String,
+) -> WorkbenchModel {
+  let clean_title = title.trim().to_owned()
+  let clean_detail = detail.trim().to_owned()
+  if clean_title == "" && clean_detail == "" {
+    { ..self, last_status: "Activity item is empty" }
+  } else {
+    let prompt = activity_follow_up_prompt(phase, title, detail)
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="Activity follow-up queued",
+        detail=prompt,
+        tone="info",
+      ),
+    )
+    let command = SendUserInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued activity follow-up for Pi RPC",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::follow_activity_with_transport(
+  self : WorkbenchModel,
+  phase : String,
+  title : String,
+  detail : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let clean_title = title.trim().to_owned()
+  let clean_detail = detail.trim().to_owned()
+  if clean_title == "" && clean_detail == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Activity item is empty" })
+  } else {
+    let prompt = activity_follow_up_prompt(phase, title, detail)
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      SendUserInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.follow_activity(phase, title, detail),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
+fn activity_follow_up_prompt(
+  phase : String,
+  title : String,
+  detail : String,
+) -> String {
+  let phase = phase.trim().to_owned()
+  let title = title.trim().to_owned()
+  let detail = detail.trim().to_owned()
+  let label = if phase == "" { "activity" } else { phase + " activity" }
+  let body = if title == "" {
+    detail
+  } else if detail == "" {
+    title
+  } else {
+    title + ". Context: " + detail
   }
   "Follow up on " + label + ": " + body
 }

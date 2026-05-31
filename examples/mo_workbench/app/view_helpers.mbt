@@ -776,14 +776,22 @@ fn event_row(
       ),
       column(
         [
-          text(event.title, role=Control, theme~, width=520.0, height=24.0),
-          text(event.detail, role=Caption, theme~, width=520.0, height=22.0),
+          text(event.title, role=Control, theme~, width=452.0, height=24.0),
+          text(event.detail, role=Caption, theme~, width=452.0, height=22.0),
         ],
         spacing=0.0,
         align=Start,
       ),
+      button(
+        "跟进",
+        on_click=FollowActivity(event.phase, event.title, event.detail),
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
+      ),
     ],
-    spacing=10.0,
+    spacing=8.0,
     align=Center,
   )
 }

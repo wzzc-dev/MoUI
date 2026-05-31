@@ -163,6 +163,64 @@ test "workbench transcript follow-up runtime effect dispatches prompt" {
 }
 
 ///|
+test "workbench queues activity follow-up through prompt RPC" {
+  let model = WorkbenchModel::new().update(
+    FollowActivity("transport", "Pi RPC process started", "pid 4242"),
+  )
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued activity follow-up for Pi RPC")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Follow up on transport activity: Pi RPC process started. Context: pid 4242",
+      )
+    }
+    _ => fail("expected queued activity follow-up prompt")
+  }
+  assert_true(
+    model.events.any(event => event.title == "Activity follow-up queued"),
+  )
+}
+
+///|
+test "workbench activity follow-up runtime effect dispatches prompt" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Follow up on transport activity: Pi RPC process started. Context: pid 4242\"}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    FollowActivity("transport", "Pi RPC process started", "pid 4242"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Follow up on transport activity: Pi RPC process started. Context: pid 4242",
+      )
+    }
+    _ => fail("expected captured activity follow-up prompt")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Running")
+}
+
+///|
 test "workbench queues file context inspection through prompt RPC" {
   let model = WorkbenchModel::new().update(
     InspectFile("examples/mo_workbench/app/app.mbt"),
@@ -908,6 +966,7 @@ test "workbench runtime draws latest activity event" {
   assert_true(has_text(commands, "1 events"))
   assert_true(has_text(commands, "Pi RPC process started"))
   assert_true(has_text(commands, "pid 4242"))
+  assert_true(has_text(commands, "跟进"))
 }
 
 ///|
