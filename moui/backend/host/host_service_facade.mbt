@@ -204,6 +204,18 @@ pub fn HostAppServices::reject(
 }
 
 ///|
+pub fn HostAppServices::on_completed(
+  self : HostAppServices,
+  id : HostServiceRequestId,
+  handle : (HostCompletedServiceResponse) -> Unit,
+) -> Bool {
+  match self.async_queue {
+    Some(queue) => queue.on_completed(id, handle)
+    None => false
+  }
+}
+
+///|
 pub fn HostAppServices::take_completed(
   self : HostAppServices,
   id : HostServiceRequestId,

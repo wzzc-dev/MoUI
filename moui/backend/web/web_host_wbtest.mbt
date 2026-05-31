@@ -13,7 +13,7 @@ test "web async host service descriptors drain and complete browser responses" {
     @host.HostServiceResponse::Pending(id) => inspect(id.value, content="1")
     _ => fail("expected pending clipboard read")
   }
-  match
+  let file_id = match
     bridge.dispatch(
       @host.HostServiceRequest::FileDialog(
         @host.HostFileDialogOptions::new(
@@ -22,7 +22,10 @@ test "web async host service descriptors drain and complete browser responses" {
         ),
       ),
     ) {
-    @host.HostServiceResponse::Pending(id) => inspect(id.value, content="2")
+    @host.HostServiceResponse::Pending(id) => {
+      inspect(id.value, content="2")
+      id
+    }
     _ => fail("expected pending file dialog")
   }
   let requests = drain_web_async_host_service_requests(queue)
@@ -36,6 +39,12 @@ test "web async host service descriptors drain and complete browser responses" {
   inspect(requests[1].title, content="Open note")
   inspect(requests[1].kind.browser_code(), content="0")
 
+  let file_completion : Ref[@host.HostCompletedServiceResponse?] = Ref(None)
+  assert_true(
+    queue.on_completed(file_id, completion => {
+      file_completion.val = Some(completion)
+    }),
+  )
   set_web_async_host_service_queue(Some(queue))
   assert_true(web_complete_async_clipboard_read_text(1, true, "from browser"))
   assert_true(
@@ -44,14 +53,16 @@ test "web async host service descriptors drain and complete browser responses" {
     ),
   )
   let completed = queue.drain_completed()
-  inspect(completed.length(), content="2")
+  inspect(completed.length(), content="1")
   match completed[0].response {
     @host.HostServiceResponse::ClipboardText(text) =>
       inspect(text, content="from browser")
     _ => fail("expected clipboard text completion")
   }
-  match completed[1].response {
-    @host.HostServiceResponse::FileDialogSelection(paths) => {
+  match file_completion.val {
+    Some(
+      { response: @host.HostServiceResponse::FileDialogSelection(paths), .. }
+    ) => {
       inspect(paths.length(), content="2")
       inspect(paths[0], content="note.md")
       inspect(paths[1], content="folder/project.mbt")

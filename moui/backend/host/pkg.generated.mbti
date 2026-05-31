@@ -91,6 +91,7 @@ pub fn HostAppServices::file_dialog(Self, HostFileDialogOptions) -> HostServiceR
 pub fn HostAppServices::has_async_queue(Self) -> Bool
 pub fn HostAppServices::in_flight_count(Self) -> Int
 pub fn HostAppServices::new(bridge~ : HostServiceBridge, async_queue? : HostServiceAsyncQueue?) -> Self
+pub fn HostAppServices::on_completed(Self, HostServiceRequestId, (HostCompletedServiceResponse) -> Unit) -> Bool
 pub fn HostAppServices::open_file(Self, title? : String, filters? : Array[String]) -> HostServiceResponse
 pub fn HostAppServices::open_url(Self, String) -> HostServiceResponse
 pub fn HostAppServices::outstanding_count(Self) -> Int
@@ -295,6 +296,7 @@ pub struct HostServiceAsyncQueue {
   mut pending : Array[HostPendingServiceRequest]
   mut in_flight : Array[HostPendingServiceRequest]
   mut completed : Array[HostCompletedServiceResponse]
+  // private fields
 }
 pub fn HostServiceAsyncQueue::complete(Self, HostServiceRequestId, HostServiceResponse) -> Bool
 pub fn HostServiceAsyncQueue::completed_count(Self) -> Int
@@ -302,6 +304,7 @@ pub fn HostServiceAsyncQueue::drain_completed(Self) -> Array[HostCompletedServic
 pub fn HostServiceAsyncQueue::drain_pending(Self) -> Array[HostPendingServiceRequest]
 pub fn HostServiceAsyncQueue::in_flight_count(Self) -> Int
 pub fn HostServiceAsyncQueue::new() -> Self
+pub fn HostServiceAsyncQueue::on_completed(Self, HostServiceRequestId, (HostCompletedServiceResponse) -> Unit) -> Bool
 pub fn HostServiceAsyncQueue::outstanding_count(Self) -> Int
 pub fn HostServiceAsyncQueue::pending_count(Self) -> Int
 pub fn HostServiceAsyncQueue::reject(Self, HostServiceRequestId, String) -> Bool
