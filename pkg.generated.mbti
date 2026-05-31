@@ -674,6 +674,8 @@ pub(all) struct RenderPassDescriptor {
   store_op : RenderPassStoreOp
 } derive(Eq, @debug.Debug)
 pub fn RenderPassDescriptor::clear(SurfaceDescriptor, Color, bounds? : IRect?, store_op? : RenderPassStoreOp) -> Self
+pub fn RenderPassDescriptor::clear_target(SurfaceTargetDescriptor, Color, bounds? : IRect?, store_op? : RenderPassStoreOp?) -> Self
+pub fn RenderPassDescriptor::for_target(SurfaceTargetDescriptor, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp?) -> Self
 pub fn RenderPassDescriptor::is_empty(Self) -> Bool
 pub fn RenderPassDescriptor::is_msaa(Self) -> Bool
 pub fn RenderPassDescriptor::keeps_pixels(Self) -> Bool

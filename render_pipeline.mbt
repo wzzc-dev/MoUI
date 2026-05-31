@@ -105,6 +105,28 @@ fn resolved_render_pass_clear_color(
 }
 
 ///|
+fn default_render_pass_store_for_target(
+  target : SurfaceTargetDescriptor,
+) -> RenderPassStoreOp {
+  if target.needs_present() {
+    PresentPixels
+  } else {
+    StorePixels
+  }
+}
+
+///|
+fn resolved_render_pass_store_for_target(
+  target : SurfaceTargetDescriptor,
+  store_op : RenderPassStoreOp?,
+) -> RenderPassStoreOp {
+  match store_op {
+    None => default_render_pass_store_for_target(target)
+    Some(store_op) => store_op
+  }
+}
+
+///|
 pub fn RenderPassDescriptor::new(
   surface : SurfaceDescriptor,
   bounds? : IRect? = None,
@@ -131,6 +153,39 @@ pub fn RenderPassDescriptor::clear(
 ) -> RenderPassDescriptor {
   RenderPassDescriptor::new(
     surface,
+    bounds~,
+    load_op=ClearBeforeDraw,
+    clear_color=Some(color),
+    store_op~,
+  )
+}
+
+///|
+pub fn RenderPassDescriptor::for_target(
+  target : SurfaceTargetDescriptor,
+  bounds? : IRect? = None,
+  load_op? : RenderPassLoadOp = LoadExisting,
+  clear_color? : Color? = None,
+  store_op? : RenderPassStoreOp? = None,
+) -> RenderPassDescriptor {
+  RenderPassDescriptor::new(
+    target.surface,
+    bounds~,
+    load_op~,
+    clear_color~,
+    store_op=resolved_render_pass_store_for_target(target, store_op),
+  )
+}
+
+///|
+pub fn RenderPassDescriptor::clear_target(
+  target : SurfaceTargetDescriptor,
+  color : Color,
+  bounds? : IRect? = None,
+  store_op? : RenderPassStoreOp? = None,
+) -> RenderPassDescriptor {
+  RenderPassDescriptor::for_target(
+    target,
     bounds~,
     load_op=ClearBeforeDraw,
     clear_color=Some(color),
