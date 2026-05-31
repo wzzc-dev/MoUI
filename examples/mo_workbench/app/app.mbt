@@ -183,6 +183,7 @@ pub(all) enum WorkbenchMsg {
   PromptChanged(String)
   DispatchPrompt
   InvokeCommand(String)
+  InspectFile(String)
   RefreshSession
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)
@@ -500,6 +501,7 @@ pub fn WorkbenchModel::update(
     PromptChanged(value) => { ..self, prompt: value }
     DispatchPrompt => self.dispatch_prompt()
     InvokeCommand(name) => self.invoke_command(name)
+    InspectFile(path) => self.inspect_file(path)
     RefreshSession => self.refresh_session()
     ReceiveTransport(event) => self.receive_transport(event)
     QueueCommand(command) => self.queue_command(command)
@@ -665,6 +667,8 @@ pub fn WorkbenchModel::update_with_transport(
     DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
     InvokeCommand(name) =>
       self.invoke_command_with_transport(name, transport_runtime)
+    InspectFile(path) =>
+      self.inspect_file_with_transport(path, transport_runtime)
     RefreshSession => self.refresh_session_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
@@ -836,6 +840,61 @@ fn WorkbenchModel::invoke_command_with_transport(
     )
     WorkbenchUpdate::new(
       self.invoke_command(name),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
+fn WorkbenchModel::inspect_file(
+  self : WorkbenchModel,
+  path : String,
+) -> WorkbenchModel {
+  let file_path = path.trim().to_owned()
+  if file_path == "" {
+    { ..self, last_status: "File context is empty" }
+  } else {
+    let prompt = "Inspect " + file_path
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="File context queued",
+        detail=file_path,
+        tone="info",
+      ),
+    )
+    let command = SendUserInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued file context for Pi RPC",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::inspect_file_with_transport(
+  self : WorkbenchModel,
+  path : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let file_path = path.trim().to_owned()
+  if file_path == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "File context is empty" })
+  } else {
+    let session = self.active_session()
+    let prompt = "Inspect " + file_path
+    let commands = self.commands_with_session_start(
+      session,
+      SendUserInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.inspect_file(path),
       effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
     )
   }

@@ -163,7 +163,9 @@ transcript, a compact activity digest, and a compact workspace digest instead
 of long placeholder validation text, future-workflow filler, or hard-coded
 attachment cards. The workspace digest now includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
-visible without adding a separate diagnostics page.
+visible without adding a separate diagnostics page. File context rows can queue
+an `Inspect <path>` prompt through the same platform-neutral prompt transport,
+turning Pi-provided file evidence into the next coding-agent action.
 The shared app package keeps the Pi boundary as platform-neutral
 `PiTransportCommand` and `PiTransportEvent` values so future Web or
 automation-focused workflows can reuse the same event model. Structured Pi

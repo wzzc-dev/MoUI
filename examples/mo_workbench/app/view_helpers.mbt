@@ -740,14 +740,22 @@ fn file_context_row(
       badge(file.change_kind, tone=Neutral, theme~, width=104.0),
       column(
         [
-          text(file.path, role=Control, theme~, width=520.0, height=24.0),
-          text(file.summary, role=Caption, theme~, width=520.0, height=22.0),
+          text(file.path, role=Control, theme~, width=430.0, height=24.0),
+          text(file.summary, role=Caption, theme~, width=430.0, height=22.0),
         ],
         spacing=0.0,
         align=Start,
       ),
+      button(
+        "聚焦",
+        on_click=InspectFile(file.path),
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
+      ),
     ],
-    spacing=10.0,
+    spacing=8.0,
     align=Center,
   )
 }

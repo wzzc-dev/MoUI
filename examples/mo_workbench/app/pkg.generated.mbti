@@ -259,6 +259,7 @@ pub(all) enum WorkbenchMsg {
   PromptChanged(String)
   DispatchPrompt
   InvokeCommand(String)
+  InspectFile(String)
   RefreshSession
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)

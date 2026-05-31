@@ -105,6 +105,56 @@ test "workbench command catalog runtime effect dispatches slash prompt" {
 }
 
 ///|
+test "workbench queues file context inspection through prompt RPC" {
+  let model = WorkbenchModel::new().update(
+    InspectFile("examples/mo_workbench/app/app.mbt"),
+  )
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued file context for Pi RPC")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="Inspect examples/mo_workbench/app/app.mbt")
+    }
+    _ => fail("expected queued file inspection prompt")
+  }
+  assert_true(model.events.any(event => event.title == "File context queued"))
+}
+
+///|
+test "workbench file context runtime effect dispatches prompt" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Inspect examples/mo_workbench/app/app.mbt\"}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    InspectFile("examples/mo_workbench/app/app.mbt"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="Inspect examples/mo_workbench/app/app.mbt")
+    }
+    _ => fail("expected captured file inspection prompt")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Running")
+}
+
+///|
 test "workbench refreshes current Pi session through platform-neutral commands" {
   let model = WorkbenchModel::new().update(RefreshSession)
   inspect(model.last_status, content="Pi session refresh queued")
@@ -1158,6 +1208,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Workspace"))
   assert_true(has_text(commands, "3 diag"))
   assert_true(has_text(commands, "清除"))
+  assert_true(has_text(commands, "聚焦"))
   assert_true(has_text(commands, "Product"))
   assert_true(has_text(commands, "同步"))
   assert_true(has_text(commands, "运行"))
