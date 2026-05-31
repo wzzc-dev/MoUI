@@ -3,7 +3,7 @@ param(
   [string] $SkiaInclude = $env:SKIA_MBT_SKIA_INCLUDE,
   [string] $SkiaZip = $env:SKIA_MBT_SKIA_ZIP,
   [string] $SkiaLibDir = $env:SKIA_MBT_SKIA_LIB_DIR,
-  [string] $VcVarsAll = $(if ($env:VCVARSALL) { $env:VCVARSALL } else { "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" }),
+  [string] $VcVarsAll = $env:VCVARSALL,
   [string] $VcArch = "x64",
   [string] $SkiaProvider = $env:SKIA_MBT_SKIA_PROVIDER,
   [string] $JetBrainsTag = $env:SKIA_MBT_JETBRAINS_TAG,
@@ -27,6 +27,39 @@ $smokeBackupPkg = "$smokePkg.smoke.bak"
 $defaultCacheRoot = Join-Path $repoRoot ".skia-cache/windows-msvc/aseprite/Skia-Windows-Release-x64"
 $defaultZip = Join-Path $env:USERPROFILE "Downloads/Skia-Windows-Release-x64.zip"
 
+function Resolve-VcVarsAll {
+  param(
+    [string] $Path
+  )
+
+  if (![string]::IsNullOrWhiteSpace($Path)) {
+    return $Path
+  }
+
+  $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+  if (Test-Path -LiteralPath $vswhere -PathType Leaf) {
+    $installPath = (& $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath) -join ""
+    if (![string]::IsNullOrWhiteSpace($installPath)) {
+      return (Join-Path $installPath "VC\Auxiliary\Build\vcvarsall.bat")
+    }
+  }
+
+  $candidates = @(
+    "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat",
+    "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat",
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat",
+    "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
+  )
+  foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+      return $candidate
+    }
+  }
+
+  return $candidates[0]
+}
+
+$VcVarsAll = Resolve-VcVarsAll -Path $VcVarsAll
 if (!(Test-Path -LiteralPath $VcVarsAll -PathType Leaf)) {
   throw "vcvarsall.bat was not found: $VcVarsAll"
 }

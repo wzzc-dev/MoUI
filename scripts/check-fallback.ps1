@@ -52,6 +52,20 @@ function Assert-CommandFailsWith {
   }
 }
 
+function Assert-WorkflowUsesHashtableSplatting {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Path
+  )
+
+  $content = Get-Content -LiteralPath $Path -Raw
+  foreach ($pattern in @('\$(args|acceptArgs)\s*=\s*@\(', '\$(args|acceptArgs)\s*\+=\s*@\(')) {
+    if ($content -match $pattern) {
+      throw "workflow uses array splatting for PowerShell named parameters: $Path"
+    }
+  }
+}
+
 function Set-FakeNativeSmokeLog {
   param(
     [Parameter(Mandatory = $true)]
@@ -221,6 +235,8 @@ try {
   }
   moon test
   Get-Content -LiteralPath (Join-Path $repoRoot "skia-provider-lock.json") -Raw | ConvertFrom-Json | Out-Null
+  Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/windows-real-skia-smoke.yml")
+  Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/real-skia-acceptance.yml")
 
   Push-Location (Join-Path $repoRoot "scripts/native_smoke")
   try {

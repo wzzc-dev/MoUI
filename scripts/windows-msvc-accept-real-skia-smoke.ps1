@@ -4,7 +4,7 @@ param(
   [string] $SkiaInclude = $env:SKIA_MBT_SKIA_INCLUDE,
   [string] $SkiaZip = $env:SKIA_MBT_SKIA_ZIP,
   [string] $SkiaLibDir = $env:SKIA_MBT_SKIA_LIB_DIR,
-  [string] $VcVarsAll = $(if ($env:VCVARSALL) { $env:VCVARSALL } else { "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" }),
+  [string] $VcVarsAll = $env:VCVARSALL,
   [string] $VcArch = "x64",
   [string] $SkiaProvider = $env:SKIA_MBT_SKIA_PROVIDER,
   [string] $JetBrainsTag = $env:SKIA_MBT_JETBRAINS_TAG,

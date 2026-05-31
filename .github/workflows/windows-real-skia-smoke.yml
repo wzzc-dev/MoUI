@@ -86,21 +86,21 @@ jobs:
             New-Item -ItemType Directory -Force -Path .skia-dry-run/msvc/out/Release-x64 | Out-Null
             New-Item -ItemType File -Force -Path .skia-dry-run/msvc/include/core/SkSurface.h | Out-Null
             New-Item -ItemType File -Force -Path .skia-dry-run/msvc/out/Release-x64/skia.lib | Out-Null
-            $args = @(
-              "-SkiaRoot", ".skia-dry-run/msvc",
-              "-SkiaLibDir", ".skia-dry-run/msvc/out/Release-x64",
-              "-VcArch", "${{ inputs.vc_arch }}",
-              "-SkiaProvider", "existing",
-              "-DryRunConfig"
-            )
+            $args = @{
+              SkiaRoot = ".skia-dry-run/msvc"
+              SkiaLibDir = ".skia-dry-run/msvc/out/Release-x64"
+              VcArch = "${{ inputs.vc_arch }}"
+              SkiaProvider = "existing"
+              DryRunConfig = $true
+            }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.vcvarsall }}")) {
-              $args += @("-VcVarsAll", "${{ inputs.vcvarsall }}")
+              $args["VcVarsAll"] = "${{ inputs.vcvarsall }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
-              $args += @("-ExtraCcFlags", "${{ inputs.extra_cc_flags }}")
+              $args["ExtraCcFlags"] = "${{ inputs.extra_cc_flags }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
-              $args += @("-ExtraLinkFlags", "${{ inputs.extra_link_flags }}")
+              $args["ExtraLinkFlags"] = "${{ inputs.extra_link_flags }}"
             }
             .\scripts\windows-msvc-skia-smoke.ps1 @args 2>&1 | Tee-Object -FilePath logs/windows-real-skia-smoke-preflight.log
           } else {
@@ -137,7 +137,7 @@ jobs:
             "dry_run_config=true; real Windows smoke was not run" | Tee-Object -FilePath logs/windows-real-skia-smoke.log
             exit 0
           }
-          $args = @("-LogDir", "logs")
+          $args = @{ LogDir = "logs" }
           if ("${{ inputs.toolchain }}" -eq "msvc") {
             if ("${{ inputs.skia_provider }}" -eq "jetbrains") {
               $envLines = .\scripts\fetch-jetbrains-skia.ps1 `
@@ -151,62 +151,60 @@ jobs:
                   $envMap[$Matches[1]] = $Matches[2]
                 }
               }
-              $args += @(
-                "-SkiaRoot", $envMap["SKIA_MBT_SKIA_ROOT"],
-                "-SkiaInclude", $envMap["SKIA_MBT_SKIA_INCLUDE"],
-                "-SkiaLibDir", $envMap["SKIA_MBT_SKIA_LIB_DIR"],
-                "-SkiaProvider", "jetbrains",
-                "-JetBrainsTag", $envMap["SKIA_MBT_JETBRAINS_TAG"],
-                "-SkiaCommit", $envMap["SKIA_MBT_SKIA_COMMIT"],
-                "-SkiaPackage", $envMap["SKIA_MBT_SKIA_PACKAGE"],
-                "-SkiaPackageSha256", $envMap["SKIA_MBT_SKIA_PACKAGE_SHA256"]
-              )
+              $args["SkiaRoot"] = $envMap["SKIA_MBT_SKIA_ROOT"]
+              $args["SkiaInclude"] = $envMap["SKIA_MBT_SKIA_INCLUDE"]
+              $args["SkiaLibDir"] = $envMap["SKIA_MBT_SKIA_LIB_DIR"]
+              $args["SkiaProvider"] = "jetbrains"
+              $args["JetBrainsTag"] = $envMap["SKIA_MBT_JETBRAINS_TAG"]
+              $args["SkiaCommit"] = $envMap["SKIA_MBT_SKIA_COMMIT"]
+              $args["SkiaPackage"] = $envMap["SKIA_MBT_SKIA_PACKAGE"]
+              $args["SkiaPackageSha256"] = $envMap["SKIA_MBT_SKIA_PACKAGE_SHA256"]
               if (![string]::IsNullOrWhiteSpace($envMap["SKIA_MBT_EXTRA_CC_FLAGS"])) {
-                $args += @("-ExtraCcFlags", $envMap["SKIA_MBT_EXTRA_CC_FLAGS"])
+                $args["ExtraCcFlags"] = $envMap["SKIA_MBT_EXTRA_CC_FLAGS"]
               }
               if (![string]::IsNullOrWhiteSpace($envMap["SKIA_MBT_EXTRA_LINK_FLAGS"])) {
-                $args += @("-ExtraLinkFlags", $envMap["SKIA_MBT_EXTRA_LINK_FLAGS"])
+                $args["ExtraLinkFlags"] = $envMap["SKIA_MBT_EXTRA_LINK_FLAGS"]
               }
             } else {
-              $args += @("-SkiaProvider", "existing")
+              $args["SkiaProvider"] = "existing"
               if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_root }}")) {
-                $args += @("-SkiaRoot", "${{ inputs.skia_root }}")
+                $args["SkiaRoot"] = "${{ inputs.skia_root }}"
               }
               if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_zip }}")) {
-                $args += @("-SkiaZip", "${{ inputs.skia_zip }}")
+                $args["SkiaZip"] = "${{ inputs.skia_zip }}"
               }
               if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib_dir }}")) {
-                $args += @("-SkiaLibDir", "${{ inputs.skia_lib_dir }}")
+                $args["SkiaLibDir"] = "${{ inputs.skia_lib_dir }}"
               }
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.vcvarsall }}")) {
-              $args += @("-VcVarsAll", "${{ inputs.vcvarsall }}")
+              $args["VcVarsAll"] = "${{ inputs.vcvarsall }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.vc_arch }}")) {
-              $args += @("-VcArch", "${{ inputs.vc_arch }}")
+              $args["VcArch"] = "${{ inputs.vc_arch }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
-              $args += @("-ExtraCcFlags", "${{ inputs.extra_cc_flags }}")
+              $args["ExtraCcFlags"] = "${{ inputs.extra_cc_flags }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
-              $args += @("-ExtraLinkFlags", "${{ inputs.extra_link_flags }}")
+              $args["ExtraLinkFlags"] = "${{ inputs.extra_link_flags }}"
             }
             .\scripts\windows-msvc-accept-real-skia-smoke.ps1 @args
           } else {
             if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_include }}")) {
-              $args += @("-SkiaInclude", "${{ inputs.skia_include }}")
+              $args["SkiaInclude"] = "${{ inputs.skia_include }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib_dir }}")) {
-              $args += @("-SkiaLibDir", "${{ inputs.skia_lib_dir }}")
+              $args["SkiaLibDir"] = "${{ inputs.skia_lib_dir }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib }}")) {
-              $args += @("-SkiaLib", "${{ inputs.skia_lib }}")
+              $args["SkiaLib"] = "${{ inputs.skia_lib }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
-              $args += @("-ExtraCcFlags", "${{ inputs.extra_cc_flags }}")
+              $args["ExtraCcFlags"] = "${{ inputs.extra_cc_flags }}"
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
-              $args += @("-ExtraLinkFlags", "${{ inputs.extra_link_flags }}")
+              $args["ExtraLinkFlags"] = "${{ inputs.extra_link_flags }}"
             }
             .\scripts\windows-accept-real-skia-smoke.ps1 @args
           }
