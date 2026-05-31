@@ -188,6 +188,22 @@ jobs:
             echo "verify-platform-status unexpectedly accepted a missing capability area" >&2
             exit 1
           fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          status['platforms']['linux']['required_artifact_logs'] = [
+              log for log in status['platforms']['linux']['required_artifact_logs']
+              if log != 'linux-native-smoke-output.log'
+          ]
+          Path('logs/fake-platform-status-missing-artifact-log.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-missing-artifact-log.json; then
+            echo "verify-platform-status unexpectedly accepted missing artifact log coverage" >&2
+            exit 1
+          fi
           if bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-floating-skia-revision.txt; then
             echo "verify-skia-revision-pin unexpectedly accepted a floating revision" >&2
             exit 1

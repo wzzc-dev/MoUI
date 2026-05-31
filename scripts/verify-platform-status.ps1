@@ -344,6 +344,31 @@ foreach ($platform in $platforms) {
 }
 
 $acceptedPlatforms = @()
+$expectedArtifactLogs = @{
+  linux = @(
+    "linux-real-skia-smoke-preflight.log",
+    "linux-real-skia-smoke.log",
+    "linux-native-smoke-output.log",
+    "linux-real-skia-acceptance.log"
+  )
+  macos = @(
+    "macos-real-skia-smoke-preflight.log",
+    "macos-real-skia-smoke.log",
+    "macos-native-smoke-output.log",
+    "macos-real-skia-acceptance.log"
+  )
+  windows = @(
+    "windows-real-skia-smoke-preflight.log",
+    "windows-real-skia-smoke.log",
+    "windows-native-smoke-output.log",
+    "windows-real-skia-acceptance.log"
+  )
+}
+$expectedVerifiers = @{
+  linux = "scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs"
+  macos = "scripts/verify-real-skia-artifact.sh --platform macos --log-dir logs"
+  windows = "scripts/verify-real-skia-artifact.ps1 -Platform windows -LogDir logs"
+}
 foreach ($platform in $platforms) {
   $entry = $status.platforms.$platform
   if ($null -eq $entry.accepted) {
@@ -352,11 +377,21 @@ foreach ($platform in $platforms) {
   if ([string]::IsNullOrWhiteSpace($entry.state)) {
     throw "platform status is missing state: $platform"
   }
-  if ($entry.required_artifact_logs.Count -lt 3) {
-    throw "platform status does not list enough artifact logs: $platform"
+  if ($null -eq $entry.required_artifact_logs) {
+    throw "platform status required_artifact_logs do not match expected contract: $platform"
   }
-  if ([string]::IsNullOrWhiteSpace($entry.required_verifier)) {
-    throw "platform status is missing required verifier: $platform"
+  $requiredArtifactLogs = @($entry.required_artifact_logs)
+  $expectedLogs = @($expectedArtifactLogs[$platform])
+  if ($requiredArtifactLogs.Count -ne $expectedLogs.Count) {
+    throw "platform status required_artifact_logs do not match expected contract: $platform"
+  }
+  for ($i = 0; $i -lt $expectedLogs.Count; $i += 1) {
+    if ($requiredArtifactLogs[$i] -ne $expectedLogs[$i]) {
+      throw "platform status required_artifact_logs do not match expected contract: $platform"
+    }
+  }
+  if ($entry.required_verifier -ne $expectedVerifiers[$platform]) {
+    throw "platform status required_verifier does not match expected verifier: $platform"
   }
   if ([string]::IsNullOrWhiteSpace($entry.next_step)) {
     throw "platform status is missing next step: $platform"
