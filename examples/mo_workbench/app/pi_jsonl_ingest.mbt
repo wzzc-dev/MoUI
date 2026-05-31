@@ -63,6 +63,7 @@ fn WorkbenchModel::ingest_rpc_response(
       "switch_session" => self.apply_switch_session_success(session_id, fields)
       "bash" => self.apply_bash_success(session_id, fields)
       "get_messages" => self.apply_get_messages_success(session_id, fields)
+      "get_commands" => self.apply_get_commands_success(session_id, fields)
       _ => {
         let snapshot = match fields.get("data") {
           Some(Object(data)) => rpc_snapshot_from_data(command, data)
@@ -157,6 +158,35 @@ fn WorkbenchModel::apply_get_messages_success(
       tone="success",
     ),
     status="Pi messages refreshed",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_get_commands_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let commands = match json_object(fields, "data") {
+    Some(data) =>
+      match json_array(data, "commands") {
+        Some(values) => pi_command_infos_from_values(values)
+        None => []
+      }
+    None => []
+  }
+  {
+    ..self,
+    command_catalog: commands,
+    pi_rpc: { ..self.pi_rpc, command: "get_commands", success: true, error: "" },
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi commands refreshed",
+      detail=session_id + ": " + commands.length().to_string() + " commands",
+      tone="success",
+    ),
+    status="Pi commands refreshed",
   )
 }
 
@@ -1379,6 +1409,41 @@ fn transcript_items_from_messages(
     items.push(transcript_item_from_json(index, value))
   }
   items
+}
+
+///|
+fn pi_command_infos_from_values(values : Array[Json]) -> Array[PiCommandInfo] {
+  let commands : Array[PiCommandInfo] = []
+  for index, value in values {
+    commands.push(pi_command_info_from_json(index, value))
+  }
+  commands
+}
+
+///|
+fn pi_command_info_from_json(index : Int, value : Json) -> PiCommandInfo {
+  match value {
+    Object(fields) => {
+      let source_info = json_object(fields, "sourceInfo").unwrap_or({})
+      PiCommandInfo::new(
+        name=json_string(fields, "name").unwrap_or(
+          "command-" + index.to_string(),
+        ),
+        source=json_string(fields, "source").unwrap_or("unknown"),
+        description=json_string(fields, "description").unwrap_or(""),
+        source_scope=json_string(source_info, "scope").unwrap_or(""),
+        source_path=json_string(source_info, "path").unwrap_or(""),
+      )
+    }
+    _ =>
+      PiCommandInfo::new(
+        name="command-" + index.to_string(),
+        source="unknown",
+        description=value.stringify(),
+        source_scope="",
+        source_path="",
+      )
+  }
 }
 
 ///|

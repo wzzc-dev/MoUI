@@ -50,7 +50,7 @@ fn sample_plan() -> Array[PlanStep] {
       title="Keep PiTransport platform-neutral",
       status="active",
       owner="agent",
-      detail="Route prompts, RPC bash commands, shell cancellation, session switches, stdout, stderr, process failures, RPC responses, and streaming session events through app-level state.",
+      detail="Route prompts, RPC bash commands, shell cancellation, session switches, command catalog refreshes, stdout, stderr, process failures, RPC responses, and streaming session events through app-level state.",
     ),
     PlanStep::new(
       id="skia",
@@ -106,8 +106,8 @@ fn sample_transcript() -> Array[TranscriptItem] {
     TranscriptItem::new(
       id="sample-assistant-1",
       role="assistant",
-      summary="已接入 Pi RPC 状态、bash 执行和取消",
-      detail="下一步回放 Pi 会话消息，让 transcript 不只依赖 fixture 文案。",
+      summary="已接入 Pi RPC 状态、bash 执行、取消和命令目录",
+      detail="下一步把命令目录接到 slash command invocation 与权限提示。",
       tone="success",
     ),
     TranscriptItem::new(
@@ -116,6 +116,33 @@ fn sample_transcript() -> Array[TranscriptItem] {
       summary="moon test examples/mo_workbench/app --target native",
       detail="exit code 0",
       tone="success",
+    ),
+  ]
+}
+
+///|
+fn sample_pi_commands() -> Array[PiCommandInfo] {
+  [
+    PiCommandInfo::new(
+      name="review",
+      source="prompt",
+      description="Review the current diff and call out risks.",
+      source_scope="project",
+      source_path=".pi/prompts/review.md",
+    ),
+    PiCommandInfo::new(
+      name="skill:moonbit-agent-guide",
+      source="skill",
+      description="Use MoonBit package and validation conventions.",
+      source_scope="user",
+      source_path="skills/moonbit-agent-guide/SKILL.md",
+    ),
+    PiCommandInfo::new(
+      name="release-notes",
+      source="extension",
+      description="Draft a concise release note from merged changes.",
+      source_scope="project",
+      source_path="extensions/release-notes.ts",
     ),
   ]
 }
@@ -211,7 +238,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="PiTransport",
       severity="watch",
-      message="Native owner speaks Pi RPC JSONL; Workbench binds session switches, get_state responses, direct bash command evidence and cancellation, streaming agent/tool events, stderr, failures, and restart evidence.",
+      message="Native owner speaks Pi RPC JSONL; Workbench binds session switches, get_state/get_messages/get_commands responses, direct bash command evidence and cancellation, streaming agent/tool events, stderr, failures, and restart evidence.",
     ),
     DiagnosticItem::new(
       source="Skia",

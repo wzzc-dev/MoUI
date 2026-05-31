@@ -270,6 +270,7 @@ fn WorkbenchModel::chat_transcript(
     [
       self.assistant_summary(theme),
       self.transcript_panel(theme),
+      self.command_catalog_panel(theme),
       self.command_block(theme),
       self.status_paragraph(theme),
       self.file_attachment_card(
@@ -380,6 +381,129 @@ fn transcript_badge_tone(tone : String) -> @views.BadgeTone {
     "warning" => Warning
     "danger" => Danger
     "info" => Accent
+    _ => Neutral
+  }
+}
+
+///|
+fn WorkbenchModel::command_catalog_panel(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  let mut visible = 0
+  for command in self.command_catalog {
+    if visible < 3 {
+      rows.push(command_catalog_row(command, theme))
+      visible = visible + 1
+    }
+  }
+  if rows.is_empty() {
+    rows.push(
+      text(
+        "No Pi commands loaded yet",
+        role=Caption,
+        theme~,
+        width=650.0,
+        height=28.0,
+      ),
+    )
+  }
+  surface(
+    column(
+      [
+        row(
+          [
+            text("Pi commands", role=Control, theme~, width=520.0, height=28.0),
+            badge(
+              self.command_catalog.length().to_string() + " commands",
+              tone=Accent,
+              theme~,
+              width=116.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
+        ),
+        column(rows, spacing=6.0, align=Start),
+      ],
+      spacing=8.0,
+      align=Start,
+    ),
+    width=690.0,
+    height=178.0,
+    background=@core.Color::white(),
+    corner_radius=10.0,
+    theme~,
+    padding=12.0,
+  )
+}
+
+///|
+fn command_catalog_row(
+  command : PiCommandInfo,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge(
+        command.source,
+        tone=command_source_tone(command.source),
+        theme~,
+        width=104.0,
+      ),
+      column(
+        [
+          text(
+            "/" + command.name,
+            role=Control,
+            theme~,
+            width=520.0,
+            height=24.0,
+          ),
+          text(
+            command_catalog_detail(command),
+            role=Caption,
+            theme~,
+            width=520.0,
+            height=22.0,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+    ],
+    spacing=10.0,
+    align=Center,
+  )
+}
+
+///|
+fn command_catalog_detail(command : PiCommandInfo) -> String {
+  let description = if command.description == "" {
+    "No description"
+  } else {
+    command.description
+  }
+  let scope = if command.source_scope == "" {
+    ""
+  } else {
+    " · " + command.source_scope
+  }
+  let path = if command.source_path == "" {
+    ""
+  } else {
+    " · " + command.source_path
+  }
+  description + scope + path
+}
+
+///|
+fn command_source_tone(source : String) -> @views.BadgeTone {
+  match source {
+    "prompt" => Accent
+    "skill" => Success
+    "extension" => Warning
     _ => Neutral
   }
 }

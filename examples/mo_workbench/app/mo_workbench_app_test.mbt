@@ -175,7 +175,7 @@ test "workbench cancel runtime effect dispatches Pi RPC abort_bash command" {
 }
 
 ///|
-test "workbench selection with transport switches Pi session then refreshes state" {
+test "workbench selection with transport switches Pi session then refreshes state and commands" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, _emit) => {
     captured.val = commands
@@ -185,9 +185,9 @@ test "workbench selection with transport switches Pi session then refreshes stat
     transport,
   )
   inspect(update.model.selected_session_id, content="pi-rpc")
-  inspect(update.model.pending_transport_count(), content="3")
+  inspect(update.model.pending_transport_count(), content="4")
   let model = run_workbench_effect(update)
-  inspect(captured.val.length(), content="3")
+  inspect(captured.val.length(), content="4")
   match captured.val[0] {
     SwitchRpcSession(session, path) => {
       inspect(session, content="pi-rpc")
@@ -205,6 +205,10 @@ test "workbench selection with transport switches Pi session then refreshes stat
   match captured.val[2] {
     FetchRpcMessages(session) => inspect(session, content="pi-rpc")
     _ => fail("expected queued message refresh")
+  }
+  match captured.val[3] {
+    FetchRpcCommands(session) => inspect(session, content="pi-rpc")
+    _ => fail("expected queued command catalog refresh")
   }
   inspect(model.selected_session_id, content="pi-rpc")
 }
@@ -364,6 +368,32 @@ test "workbench ingests Pi RPC get_messages response into transcript" {
   inspect(model.transcript[2].detail, content="exit code 0 - ok")
   inspect(model.last_status, content="Pi messages refreshed")
   assert_true(model.events.any(event => event.title == "Pi messages refreshed"))
+}
+
+///|
+test "workbench ingests Pi RPC get_commands response into command catalog" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_commands","success":true,"data":{"commands":[{"name":"review","description":"Review current diff","source":"prompt","sourceInfo":{"path":".pi/prompts/review.md","source":"project","scope":"project","origin":"top-level"}},{"name":"skill:moonbit-agent-guide","description":"Use MoonBit conventions","source":"skill","sourceInfo":{"path":"skills/moonbit-agent-guide/SKILL.md","source":"user","scope":"user","origin":"top-level"}}]}}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="get_commands")
+  inspect(model.command_catalog.length(), content="2")
+  inspect(model.command_catalog[0].name, content="review")
+  inspect(model.command_catalog[0].source, content="prompt")
+  inspect(model.command_catalog[0].description, content="Review current diff")
+  inspect(model.command_catalog[0].source_scope, content="project")
+  inspect(model.command_catalog[0].source_path, content=".pi/prompts/review.md")
+  inspect(model.command_catalog[1].name, content="skill:moonbit-agent-guide")
+  inspect(model.command_catalog[1].source, content="skill")
+  inspect(model.command_catalog[1].source_scope, content="user")
+  inspect(model.last_status, content="Pi commands refreshed")
+  assert_true(model.events.any(event => event.title == "Pi commands refreshed"))
 }
 
 ///|
@@ -656,6 +686,8 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "A Pi agent desktop"))
   assert_true(has_text(commands, "Pi transcript"))
+  assert_true(has_text(commands, "Pi commands"))
+  assert_true(has_text(commands, "/review"))
   assert_true(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_true(has_text(commands, "新对话"))
   assert_true(has_text(commands, "置顶"))

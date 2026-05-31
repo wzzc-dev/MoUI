@@ -43,6 +43,15 @@ pub(all) struct TranscriptItem {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct PiCommandInfo {
+  name : String
+  source : String
+  description : String
+  source_scope : String
+  source_path : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct FileContext {
   id : String
   path : String
@@ -123,6 +132,7 @@ pub(all) struct WorkbenchModel {
   plan : Array[PlanStep]
   events : Array[AgentEvent]
   transcript : Array[TranscriptItem]
+  command_catalog : Array[PiCommandInfo]
   files : Array[FileContext]
   diff : DiffOverview
   commands : Array[CommandRun]
@@ -214,6 +224,17 @@ pub fn TranscriptItem::new(
   tone~ : String,
 ) -> TranscriptItem {
   { id, role, summary, detail, tone }
+}
+
+///|
+pub fn PiCommandInfo::new(
+  name~ : String,
+  source~ : String,
+  description~ : String,
+  source_scope~ : String,
+  source_path~ : String,
+) -> PiCommandInfo {
+  { name, source, description, source_scope, source_path }
 }
 
 ///|
@@ -373,6 +394,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     plan: sample_plan(),
     events: sample_events(),
     transcript: sample_transcript(),
+    command_catalog: sample_pi_commands(),
     files: sample_files(),
     diff: sample_diff_overview(),
     commands: sample_commands(),
@@ -838,12 +860,17 @@ fn WorkbenchModel::commands_for_session_selection(
 ) -> Array[PiTransportCommand] {
   ignore(self)
   if session.pi_session_path == "" {
-    [StartRpc(session.id, session.project_path), FetchRpcMessages(session.id)]
+    [
+      StartRpc(session.id, session.project_path),
+      FetchRpcMessages(session.id),
+      FetchRpcCommands(session.id),
+    ]
   } else {
     [
       SwitchRpcSession(session.id, session.pi_session_path),
       StartRpc(session.id, session.project_path),
       FetchRpcMessages(session.id),
+      FetchRpcCommands(session.id),
     ]
   }
 }
