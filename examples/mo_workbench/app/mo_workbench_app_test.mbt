@@ -48,6 +48,79 @@ test "workbench transport runtime effect dispatches prompt events" {
 }
 
 ///|
+test "workbench command queue uses Pi RPC bash command" {
+  let model = WorkbenchModel::new().update(QueueCommand("moon check"))
+  inspect(model.last_status, content="Command queued for Pi RPC bash")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    RunShellCommand(session, command) => {
+      inspect(session, content="moui-skia")
+      inspect(command, content="moon check")
+    }
+    _ => fail("expected queued shell command")
+  }
+  let command = model.commands[model.commands.length() - 1]
+  inspect(command.command, content="moon check")
+  inspect(command.cwd, content="/Volumes/Data/Code/moon/MoUI")
+  inspect(command.status, content="queued")
+}
+
+///|
+test "workbench command runtime effect dispatches Pi RPC bash command" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"bash\",\"command\":\"moon check\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"bash","success":true,"data":{"output":"ok","exitCode":0,"cancelled":false,"truncated":false}}
+        ),
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    QueueCommand("moon check"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    RunShellCommand(session, command) => {
+      inspect(session, content="moui-skia")
+      inspect(command, content="moon check")
+    }
+    _ => fail("expected captured shell command")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  let command = model.commands[model.commands.length() - 1]
+  inspect(command.status, content="passed")
+  match command.exit_code {
+    Some(code) => inspect(code, content="0")
+    None => fail("expected command exit code")
+  }
+  inspect(model.pi_rpc.command, content="bash")
+  inspect(model.last_status, content="Pi bash response applied")
+  assert_true(model.events.any(event => event.title == "Pi bash completed"))
+}
+
+///|
 test "workbench selection with transport switches Pi session then refreshes state" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, _emit) => {
@@ -376,6 +449,35 @@ test "workbench ingests Pi tool execution jsonl into command evidence" {
   inspect(model.last_status, content="Pi tool execution completed")
   assert_true(model.events.any(event => event.title == "Pi tool started: bash"))
   assert_true(model.events.any(event => event.title == "Pi tool ended: bash"))
+}
+
+///|
+test "workbench ingests Pi RPC bash failure into command diagnostics" {
+  let model = WorkbenchModel::new()
+    .update(QueueCommand("moon check"))
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"bash","success":true,"data":{"output":"failed","exitCode":2,"cancelled":false,"truncated":false}}
+          ),
+        ),
+      ),
+    )
+  let command = model.commands[model.commands.length() - 1]
+  inspect(command.command, content="moon check")
+  inspect(command.status, content="failed")
+  match command.exit_code {
+    Some(code) => inspect(code, content="2")
+    None => fail("expected command exit code")
+  }
+  let diagnostic = model.diagnostics[model.diagnostics.length() - 1]
+  inspect(diagnostic.source, content="Pi bash")
+  inspect(diagnostic.severity, content="error")
+  inspect(diagnostic.message, content="bash exited with code 2")
+  inspect(model.last_status, content="Pi bash response applied")
+  assert_true(model.events.any(event => event.title == "Pi bash completed"))
 }
 
 ///|

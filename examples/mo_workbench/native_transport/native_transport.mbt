@@ -83,6 +83,11 @@ pub fn pi_rpc_prompt_line(message~ : String) -> String {
 }
 
 ///|
+pub fn pi_rpc_bash_line(command~ : String) -> String {
+  ({ "type": "bash", "command": command } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_abort_line() -> String {
   ({ "type": "abort" } : Json).stringify()
 }
@@ -120,6 +125,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_prompt_line(message=text))
+      }
+      RunShellCommand(session, command) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_bash_line(command~))
       }
       CancelRpcRun(session) => {
         if session_id == default_session_id {

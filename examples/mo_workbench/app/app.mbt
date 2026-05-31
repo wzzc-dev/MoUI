@@ -639,7 +639,7 @@ fn WorkbenchModel::queue_command(
   let commands = self.commands.copy()
   let transport_commands = self.commands_with_session_start(
     session,
-    SendUserInput(session.id, "run: " + command),
+    RunShellCommand(session.id, command),
   )
   commands.push(
     CommandRun::new(
@@ -653,7 +653,7 @@ fn WorkbenchModel::queue_command(
     ..self,
     commands,
     transport: self.transport.enqueue_many(transport_commands),
-    last_status: "Command queued for agent execution",
+    last_status: "Command queued for Pi RPC bash",
   }
 }
 
@@ -666,7 +666,7 @@ fn WorkbenchModel::queue_command_with_transport(
   let session = self.active_session()
   let transport_commands = self.commands_with_session_start(
     session,
-    SendUserInput(session.id, "run: " + command),
+    RunShellCommand(session.id, command),
   )
   WorkbenchUpdate::new(
     self.queue_command(command),

@@ -46,8 +46,8 @@ packages:
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
   fixture transport kinds.
-- Typed transport commands for starting RPC, sending prompts, cancelling runs,
-  switching Pi sessions, and shutdown.
+- Typed transport commands for starting RPC, sending prompts, running shell
+  commands, cancelling runs, switching Pi sessions, and shutdown.
 - Typed transport events for process lifecycle, JSONL sent/received lines,
   stderr diagnostics, and failures.
 - A platform-neutral `PiTransportRuntime` that turns command batches into
@@ -55,9 +55,9 @@ packages:
   events back through the same TEA message loop.
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
-  (`get_state`, `switch_session`, `prompt`, and `abort`; shutdown is stdin
-  EOF), and uses shell fixtures to prove direct JSONL stdin/stdout process
-  driving without C FFI or a Node bridge.
+  (`get_state`, `switch_session`, `prompt`, `bash`, and `abort`; shutdown is
+  stdin EOF), and uses shell fixtures to prove direct JSONL stdin/stdout
+  process driving without C FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
 - A native multi-batch session runner that accepts an array of command batches
@@ -75,6 +75,9 @@ packages:
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
+- Workbench command queue entries now use Pi RPC `bash` directly instead of
+  prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
+  lets the native encoder emit `{"type":"bash","command":...}`.
 - Structured Pi JSONL ingestion for coding-agent evidence:
   `command_started`, `command_finished`, `diagnostic`, `file_context`, and
   `diff_summary` payloads update the shared model, timeline, diagnostics,
@@ -83,8 +86,11 @@ packages:
 - Real Pi RPC `response` ingestion for the current CLI protocol. Successful
   `get_state` responses update a small `PiRpcSnapshot`, refresh the selected
   Workbench session with the Pi session id, model label, message count, and
-  pending count, and append a timeline event. Failed RPC responses append a
-  diagnostic without involving the native transport layer.
+  pending count, and append a timeline event. Successful `bash` responses mark
+  the latest queued/running Workbench command as passed, failed, or cancelled
+  and add diagnostics for nonzero, missing, truncated, or cancelled output.
+  Failed RPC responses append a diagnostic without involving the native
+  transport layer.
 - Pi RPC session event ingestion for the real streaming protocol. The shared
   app now recognizes `agent_start` / `agent_end`, `turn_start` / `turn_end`,
   `message_start` / `message_update` / `message_end`, `tool_execution_*`,
@@ -144,9 +150,13 @@ Pi RPC responses use the same path. A successful
 `{"type":"response","command":"get_state","success":true,...}` line updates
 `WorkbenchModel.pi_rpc`, refreshes the selected session summary/status with the
 Pi session id, model label, and pending count, and appends a `Pi RPC response`
-timeline event. A failed `response` line records a `Pi RPC` diagnostic and a
-failure timeline event. The native transport does not parse these payloads; it
-only delivers stdout JSONL as `JsonLineReceived`.
+timeline event. A successful
+`{"type":"response","command":"bash","success":true,...}` line updates the
+latest queued/running command evidence for that Workbench session using Pi's
+`BashResult.exitCode`, `cancelled`, `truncated`, and optional
+`fullOutputPath` fields. A failed `response` line records a `Pi RPC`
+diagnostic and a failure timeline event. The native transport does not parse
+these payloads; it only delivers stdout JSONL as `JsonLineReceived`.
 
 Session selection is also app-layer state. If a selected `WorkbenchSession` has
 `pi_session_path`, the shared app queues:
@@ -195,10 +205,11 @@ contract. Dispatching `Shutdown` is the only normal path that stops the owner.
 The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `StartRpc` sends `{"type":"get_state"}` as a cheap liveness/state probe,
 `SwitchRpcSession` sends `{"type":"switch_session","sessionPath":...}`,
-`SendUserInput` sends `{"type":"prompt","message":...}`, `CancelRpcRun` sends
-`{"type":"abort"}`, and `Shutdown` closes stdin instead of sending a JSON
-command. Workbench session ids remain part of the Mo Workbench event labels and
-state; `PiSessionBinding` records which concrete Pi session the current process
+`SendUserInput` sends `{"type":"prompt","message":...}`, `RunShellCommand`
+sends `{"type":"bash","command":...}`, `CancelRpcRun` sends `{"type":"abort"}`,
+and `Shutdown` closes stdin instead of sending a JSON command. Workbench
+session ids remain part of the Mo Workbench event labels and state;
+`PiSessionBinding` records which concrete Pi session the current process
 reported for each Workbench session.
 
 The smallest real CLI smoke avoids model calls and validates the stdin/stdout
