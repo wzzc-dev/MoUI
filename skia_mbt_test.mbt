@@ -221,6 +221,12 @@ test "surface descriptors model raster window and gpu contracts" {
   assert_eq(raster.width(), 32)
   assert_eq(raster.height(), 24)
   assert_true(raster.bounds() == @skia_mbt.IRect::from_wh(32, 24))
+  assert_true(raster.resource_key().kind == @skia_mbt.SurfaceResource)
+  assert_true(raster.resource_key() == raster.resource_key())
+  let raster_resource = raster.resource_descriptor()
+  assert_true(raster_resource.is_cacheable())
+  assert_true(!raster_resource.is_gpu_backed())
+  assert_eq(raster_resource.byte_size, 3072L)
 
   let window = @skia_mbt.SurfaceDescriptor::window_n32_premul(
     size,
@@ -231,6 +237,8 @@ test "surface descriptors model raster window and gpu contracts" {
   assert_true(window.is_msaa())
   assert_eq(window.sample_count, 4)
   assert_eq(window.stencil_bits, 8)
+  assert_true(window.resource_key().kind == @skia_mbt.SurfaceResource)
+  assert_true(window.resource_key() != raster.resource_key())
 
   let gpu = @skia_mbt.SurfaceDescriptor::gpu_n32_premul(
     size,
@@ -250,11 +258,17 @@ test "surface descriptors model raster window and gpu contracts" {
   )
   assert_eq(gpu.with_sample_count(-2).sample_count, 1)
   assert_eq(gpu.with_stencil_bits(-2).stencil_bits, 0)
+  let gpu_resource = gpu.resource_descriptor()
+  assert_true(gpu_resource.key.kind == @skia_mbt.GpuSurfaceResource)
+  assert_true(gpu_resource.is_gpu_backed())
+  assert_eq(gpu_resource.byte_size, 12288L)
 
   let empty = @skia_mbt.SurfaceDescriptor::raster_n32_premul(
     @skia_mbt.ISize::empty(),
   )
   assert_true(empty.is_empty())
+  assert_true(empty.resource_key().is_empty())
+  assert_true(!empty.resource_descriptor().is_cacheable())
 }
 
 ///|
@@ -282,9 +296,16 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(window.needs_present())
   assert_true(window.is_multibuffered())
   assert_true(window.present_mode == Some(@skia_mbt.MailboxPresent))
+  assert_true(window.resource_key().kind == @skia_mbt.SurfaceResource)
+  assert_true(window.resource_descriptor().is_cacheable())
+  assert_eq(window.resource_descriptor().byte_size, 3072L)
   assert_true(
     window.with_present_mode(@skia_mbt.ImmediatePresent).present_mode ==
     Some(@skia_mbt.ImmediatePresent),
+  )
+  assert_true(
+    window.with_present_mode(@skia_mbt.ImmediatePresent).resource_key() !=
+    window.resource_key(),
   )
   match window.with_present_mode(@skia_mbt.ImmediatePresent).present_mode {
     None => fail("window target should retain an immediate present mode")
@@ -305,6 +326,8 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(gpu.surface.is_gpu())
   assert_true(gpu.surface.origin == @skia_mbt.BottomLeft)
   assert_true(gpu.present_mode == Some(@skia_mbt.FifoPresent))
+  assert_true(gpu.resource_key().kind == @skia_mbt.GpuSurfaceResource)
+  assert_true(gpu.resource_descriptor().is_gpu_backed())
   match gpu.present_mode {
     None => fail("gpu target should retain a fifo present mode")
     Some(mode) => assert_true(mode.prefers_vsync())

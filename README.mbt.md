@@ -19,7 +19,8 @@ The current package exposes the first value-layer API surface:
   `CubicResampler`
 - surface contracts: `SurfaceDescriptor`, `SurfaceTargetDescriptor`,
   `SurfaceBackend`, `SurfaceOrigin`, `SurfaceBudget`, and `SurfacePresentMode`
-  for raster, window, and future GPU render targets
+  for raster, window, and future GPU render targets, with typed resource
+  descriptors for backend surface caches
 - renderer resource cache: `ResourceCache` and `ResourceCacheStats` provide a
   deterministic byte-budgeted LRU boundary for images, shaders, typefaces, and
   other backend-owned resources
