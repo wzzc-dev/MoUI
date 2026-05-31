@@ -943,6 +943,8 @@ pub fn SurfaceDescriptor::is_raster(Self) -> Bool
 pub fn SurfaceDescriptor::is_window(Self) -> Bool
 pub fn SurfaceDescriptor::new(SurfaceBackend, ImageInfo, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget) -> Self
 pub fn SurfaceDescriptor::raster_n32_premul(ISize) -> Self
+pub fn SurfaceDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn SurfaceDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn SurfaceDescriptor::width(Self) -> Int
 pub fn SurfaceDescriptor::window_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int) -> Self
 pub fn SurfaceDescriptor::with_backend(Self, SurfaceBackend) -> Self
@@ -981,6 +983,8 @@ pub fn SurfaceTargetDescriptor::is_presentable(Self) -> Bool
 pub fn SurfaceTargetDescriptor::needs_present(Self) -> Bool
 pub fn SurfaceTargetDescriptor::new(SurfaceDescriptor, present_mode? : SurfacePresentMode?, max_frames_in_flight? : Int) -> Self
 pub fn SurfaceTargetDescriptor::raster_n32_premul(ISize) -> Self
+pub fn SurfaceTargetDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn SurfaceTargetDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn SurfaceTargetDescriptor::window_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int) -> Self
 pub fn SurfaceTargetDescriptor::with_dimensions(Self, ISize) -> Self
 pub fn SurfaceTargetDescriptor::with_max_frames_in_flight(Self, Int) -> Self
