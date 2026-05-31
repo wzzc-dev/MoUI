@@ -506,6 +506,10 @@ test "font api typechecks" {
       ignore(typeface.is_bold())
       ignore(typeface.is_italic())
       ignore(typeface.is_fixed_pitch())
+      match typeface.family_name() {
+        None => ()
+        Some(family_name) => assert_true(!family_name.is_empty())
+      }
       match @native.Font::from_typeface(typeface, size=16.0) {
         None => ()
         Some(font) => {
@@ -578,6 +582,11 @@ test "font api typechecks" {
               None => ()
               Some(typeface) => {
                 assert_true(typeface.is_available())
+                match typeface.family_name() {
+                  None => ()
+                  Some(matched_family_name) =>
+                    assert_true(!matched_family_name.is_empty())
+                }
                 assert_true(
                   @native.Typeface::from_font_mgr_family(font_mgr, family_name)
                   is Some(_),

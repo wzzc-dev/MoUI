@@ -271,6 +271,10 @@ extern "C" fn native_typeface_is_italic(typeface : TypefaceHandle) -> Bool = "mo
 extern "C" fn native_typeface_is_fixed_pitch(typeface : TypefaceHandle) -> Bool = "moonbit_skia_typeface_is_fixed_pitch"
 
 ///|
+#borrow(typeface)
+extern "C" fn native_typeface_family_name(typeface : TypefaceHandle) -> Bytes = "moonbit_skia_typeface_family_name"
+
+///|
 fn Font::from_handle(handle : FontHandle) -> Font? {
   if native_font_is_null(handle) {
     None
@@ -812,4 +816,14 @@ pub fn Typeface::is_italic(self : Typeface) -> Bool {
 ///|
 pub fn Typeface::is_fixed_pitch(self : Typeface) -> Bool {
   native_typeface_is_fixed_pitch(self.handle)
+}
+
+///|
+pub fn Typeface::family_name(self : Typeface) -> Bytes? {
+  let family_name = native_typeface_family_name(self.handle)
+  if family_name.is_empty() {
+    None
+  } else {
+    Some(family_name)
+  }
 }

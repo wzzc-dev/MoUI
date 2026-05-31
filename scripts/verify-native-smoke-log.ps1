@@ -39,6 +39,7 @@ $defaultStageMarkers = @(
   "native smoke measured text bounds width",
   "native smoke font family count",
   "native smoke first font family bytes",
+  "native smoke typeface family bytes",
   "native smoke font fallback width"
 )
 $stageMarkers = $defaultStageMarkers
