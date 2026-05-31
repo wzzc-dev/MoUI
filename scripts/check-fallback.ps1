@@ -247,6 +247,7 @@ try {
   Get-Content -LiteralPath (Join-Path $repoRoot "skia-provider-lock.json") -Raw | ConvertFrom-Json | Out-Null
   Get-Content -LiteralPath (Join-Path $repoRoot "native/ownership.json") -Raw | ConvertFrom-Json | Out-Null
   & (Join-Path $repoRoot "scripts/verify-native-ownership.ps1")
+  & (Join-Path $repoRoot "scripts/verify-native-ffi-borrows.ps1")
   Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/windows-real-skia-smoke.yml")
   Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/real-skia-acceptance.yml")
 
