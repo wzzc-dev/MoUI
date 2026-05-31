@@ -326,19 +326,36 @@ for entry in regular_objects:
     factory = entry["factory"]
     allocation = entry.get("allocation")
     pointer_field_count = entry.get("pointer_field_count")
+    pointer_fields = entry.get("pointer_fields")
     if allocation != "moonbit_malloc":
         fail(f"{name} regular object uses unsupported allocation: {allocation}")
     if not isinstance(pointer_field_count, int) or pointer_field_count < 0:
         fail(f"{name} regular object is missing non-negative pointer_field_count")
+    if (
+        not isinstance(pointer_fields, list)
+        or any(not isinstance(field, str) or not field.strip() for field in pointer_fields)
+    ):
+        fail(f"{name} regular object is missing pointer_fields list")
+    if len(pointer_fields) != pointer_field_count:
+        fail(
+            f"{name} regular object pointer_fields length does not match "
+            f"pointer_field_count={pointer_field_count}"
+        )
 
     type_body = moonbit_type_body(type_name)
     require_regex(type_body, rf"\bpriv\s+handle\s*:\s*{re.escape(handle)}\b", f"{type_name} does not store {handle}")
     c_body = c_struct_body(struct_name)
-    actual_pointer_field_count = len(re.findall(r"\*\s+[A-Za-z_][A-Za-z0-9_]*\s*;", c_body))
+    actual_pointer_fields = re.findall(r"\*\s+([A-Za-z_][A-Za-z0-9_]*)\s*;", c_body)
+    actual_pointer_field_count = len(actual_pointer_fields)
     if actual_pointer_field_count != pointer_field_count:
         fail(
             f"{name} regular object pointer_field_count mismatch: "
             f"manifest={pointer_field_count} struct={actual_pointer_field_count}"
+        )
+    if actual_pointer_fields != pointer_fields:
+        fail(
+            f"{name} regular object pointer_fields mismatch: "
+            f"manifest={pointer_fields} struct={actual_pointer_fields}"
         )
     factory_body = find_braced_body(source, rf"\b{re.escape(factory)}\b[^{{}}]*", f"regular object factory {factory}")
     require_contains(factory_body, "moonbit_malloc", f"{factory} must use moonbit_malloc")
@@ -353,10 +370,17 @@ for entry in regular_objects:
         f"{factory} must encode pointer_field_count={pointer_field_count} in its object header",
     )
     if pointer_field_count > 0:
+        first_pointer_field = pointer_fields[0]
         require_contains(
             factory_body,
-            f"offsetof({struct_name},",
-            f"{factory} must encode pointer-field offset with offsetof({struct_name}, ...)",
+            f"offsetof({struct_name}, {first_pointer_field})",
+            f"{factory} must encode pointer-field offset with offsetof({struct_name}, {first_pointer_field})",
+        )
+    for pointer_field in pointer_fields:
+        require_regex(
+            factory_body,
+            rf"\b[A-Za-z_][A-Za-z0-9_]*->{re.escape(pointer_field)}\s*=",
+            f"{factory} must initialize pointer field {pointer_field}",
         )
     if "moonbit_make_external_object" in factory_body:
         fail(f"{factory} must not allocate a MoonBit external object")

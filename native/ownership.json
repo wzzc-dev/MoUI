@@ -160,7 +160,12 @@
       "wrapper_struct": "MoonbitSkiaShapedTextRun",
       "factory": "moonbit_skia_make_shaped_text_run",
       "allocation": "moonbit_malloc",
-      "pointer_field_count": 3
+      "pointer_field_count": 3,
+      "pointer_fields": [
+        "glyphs",
+        "positions",
+        "clusters"
+      ]
     }
   ]
 }

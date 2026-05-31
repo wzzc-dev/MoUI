@@ -343,6 +343,18 @@ foreach ($entry in $regularObjects) {
   if ($null -eq $entry.pointer_field_count -or $pointerFieldCount -lt 0) {
     throw "$name regular object is missing non-negative pointer_field_count"
   }
+  if ($null -eq $entry.pointer_fields) {
+    throw "$name regular object is missing pointer_fields list"
+  }
+  $pointerFields = @($entry.pointer_fields)
+  foreach ($pointerField in $pointerFields) {
+    if (-not ($pointerField -is [string]) -or [string]::IsNullOrWhiteSpace($pointerField)) {
+      throw "$name regular object is missing pointer_fields list"
+    }
+  }
+  if ($pointerFields.Count -ne $pointerFieldCount) {
+    throw "$name regular object pointer_fields length does not match pointer_field_count=$pointerFieldCount"
+  }
 
   $typeBody = Get-MoonBitTypeBody -TypeText $typesText -TypeName $typeName
   Assert-Matches `
@@ -350,9 +362,16 @@ foreach ($entry in $regularObjects) {
     -Pattern "\bpriv\s+handle\s*:\s*$([regex]::Escape($handle))\b" `
     -Message "$typeName does not store $handle"
   $cBody = Get-CStructBody -HeaderText $headerText -StructName $structName
-  $actualPointerFieldCount = [regex]::Matches($cBody, "\*\s+[A-Za-z_][A-Za-z0-9_]*\s*;").Count
+  $actualPointerFields = @(
+    [regex]::Matches($cBody, "\*\s+([A-Za-z_][A-Za-z0-9_]*)\s*;") |
+      ForEach-Object { $_.Groups[1].Value }
+  )
+  $actualPointerFieldCount = $actualPointerFields.Count
   if ($actualPointerFieldCount -ne $pointerFieldCount) {
     throw "$name regular object pointer_field_count mismatch: manifest=$pointerFieldCount struct=$actualPointerFieldCount"
+  }
+  if (($actualPointerFields -join ",") -ne ($pointerFields -join ",")) {
+    throw "$name regular object pointer_fields mismatch: manifest=$($pointerFields -join ',') struct=$($actualPointerFields -join ',')"
   }
   $factoryBody = Find-BracedBody `
     -Text $sourceText `
@@ -368,10 +387,17 @@ foreach ($entry in $regularObjects) {
     -Pattern "moonbit_skia_regular_object_header\s*\([^;]*,\s*$pointerFieldCount\s*,\s*0\s*\)" `
     -Message "$factory must encode pointer_field_count=$pointerFieldCount in its object header"
   if ($pointerFieldCount -gt 0) {
+    $firstPointerField = $pointerFields[0]
     Assert-Contains `
       -Text $factoryBody `
-      -Needle "offsetof($structName," `
-      -Message "$factory must encode pointer-field offset with offsetof($structName, ...)"
+      -Needle "offsetof($structName, $firstPointerField)" `
+      -Message "$factory must encode pointer-field offset with offsetof($structName, $firstPointerField)"
+  }
+  foreach ($pointerField in $pointerFields) {
+    Assert-Matches `
+      -Text $factoryBody `
+      -Pattern "\b[A-Za-z_][A-Za-z0-9_]*->$([regex]::Escape($pointerField))\s*=" `
+      -Message "$factory must initialize pointer field $pointerField"
   }
   if ($factoryBody.Contains("moonbit_make_external_object")) {
     throw "$factory must not allocate a MoonBit external object"

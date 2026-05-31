@@ -42,7 +42,10 @@ unknown parameter.
   borrow `SkCanvas*` from `SkSurface`.
 - `regular_objects`: GC-allocated MoonBit runtime objects made with
   `moonbit_malloc`, not `moonbit_make_external_object`. They do not have C++
-  finalizers.
+  finalizers. Their `pointer_field_count` and ordered `pointer_fields` list must
+  match the C struct exactly, and the factory must encode the first pointer
+  field offset in `moonbit_skia_regular_object_header(...)` before assigning
+  every listed pointer field.
 
 When adding a new native handle, update `ownership.json` in the same patch as
 the C++ wrapper. The verifier rejects undeclared external factories, undeclared
