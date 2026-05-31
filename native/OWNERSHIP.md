@@ -16,6 +16,20 @@ bash scripts/verify-native-ownership.sh
 .\scripts\verify-native-ownership.ps1
 ```
 
+MoonBit `extern "C"` declarations have a second gate:
+
+```bash
+bash scripts/verify-native-ffi-borrows.sh
+```
+
+```powershell
+.\scripts\verify-native-ffi-borrows.ps1
+```
+
+That verifier rejects any non-primitive extern parameter that is missing
+`#borrow(...)` or `#owned(...)`, plus stale annotations that name a primitive or
+unknown parameter.
+
 ## Ownership Kinds
 
 - `owned_delete`: the MoonBit external object owns a heap allocation and its
