@@ -1397,3 +1397,115 @@ pub fn Canvas::draw_glyphs(
     )
   }
 }
+
+///|
+fn Canvas::replay_text_utf8(
+  self : Canvas,
+  text : Bytes,
+  origin : @skia.Point,
+  paint : @skia.Paint,
+  font : Font?,
+) -> Bool {
+  let font = match font {
+    Some(font) => Some(font)
+    None => Font::default()
+  }
+  match font {
+    None => false
+    Some(font) => {
+      self.draw_text_utf8(text, origin, font, paint)
+      true
+    }
+  }
+}
+
+///|
+fn Canvas::replay_path_value(
+  self : Canvas,
+  path : @skia.Path,
+  paint : @skia.Paint,
+) -> Bool {
+  match Path::from_value(path) {
+    None => false
+    Some(native_path) => {
+      self.draw_path(native_path, paint)
+      true
+    }
+  }
+}
+
+///|
+fn Canvas::replay_command(
+  self : Canvas,
+  command : @skia.RenderCommand,
+  font : Font?,
+) -> Bool {
+  match command {
+    @skia.SaveCanvas => {
+      ignore(self.save())
+      true
+    }
+    @skia.RestoreCanvas => {
+      self.restore()
+      true
+    }
+    @skia.ClearCanvas(color) => {
+      self.clear(color)
+      true
+    }
+    @skia.ClipCanvasRect(rect, op) => {
+      self.clip_rect(rect, op~)
+      true
+    }
+    @skia.DrawCanvasRect(rect, paint) => {
+      self.draw_rect(rect, paint)
+      true
+    }
+    @skia.DrawCanvasPath(path, paint) => self.replay_path_value(path, paint)
+    @skia.DrawCanvasTextUtf8(text, origin, paint) =>
+      self.replay_text_utf8(text, origin, paint, font)
+    @skia.DrawCanvasTextRunUtf8(text, _, _, origin, paint) =>
+      self.replay_text_utf8(text, origin, paint, font)
+    @skia.PresentSurface => false
+  }
+}
+
+///|
+/// Replay the CPU Canvas subset of a value-layer render command list.
+pub fn Canvas::replay(
+  self : Canvas,
+  commands : @skia.RenderCommandList,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  let mut command_count = 0
+  let mut replayed_count = 0
+  let mut skipped_count = 0
+  let mut draw_count = 0
+  let mut text_count = 0
+  let mut present_count = 0
+  for command in commands.commands {
+    command_count += 1
+    if command.is_draw() {
+      draw_count += 1
+    }
+    if command.is_text() {
+      text_count += 1
+    }
+    if command.is_present() {
+      present_count += 1
+    }
+    if self.replay_command(command, font) {
+      replayed_count += 1
+    } else if !command.is_present() {
+      skipped_count += 1
+    }
+  }
+  {
+    command_count,
+    replayed_count,
+    skipped_count,
+    draw_count,
+    text_count,
+    present_count,
+  }
+}

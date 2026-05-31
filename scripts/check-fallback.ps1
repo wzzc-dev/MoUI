@@ -77,6 +77,8 @@ function Set-FakeNativeSmokeLog {
     "raster"
     "native smoke canvas state restored"
     "1"
+    "native smoke canvas replay commands"
+    "4"
     "native smoke shader draws"
     "3"
     "native smoke filter layer count"
