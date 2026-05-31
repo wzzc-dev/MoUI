@@ -112,12 +112,12 @@ jobs:
         run: moon update
 
       - name: Install build dependencies
-        if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' }}
+        if: ${{ !inputs.dry_run_config }}
         shell: bash
         run: bash scripts/install-linux-smoke-deps.sh
 
       - name: Verify build dependencies
-        if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' }}
+        if: ${{ !inputs.dry_run_config }}
         shell: bash
         run: bash scripts/install-linux-smoke-deps.sh --check
 
