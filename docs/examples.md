@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Session-first coding-agent shell, platform-neutral Pi transport command/event model, plan/file/command/diagnostic panels, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, command/file/diff transcript evidence, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -156,8 +156,8 @@ bindings.
 
 Mo Workbench is the real product-shaped dogfood app for the native Skia route.
 It is named `Mo Workbench` with the subtitle `A Pi agent desktop`, and starts as
-a coding-agent workbench for project sessions, task planning, execution
-feedback, diff/file context, command queues, and diagnostics. The shared app
+a Codex / Claude Code-style coding-agent workbench for project sessions,
+assistant transcripts, command evidence, diff/file context, and diagnostics. The shared app
 package keeps the Pi boundary as platform-neutral `PiTransportCommand` and
 `PiTransportEvent` values so future Web or automation-focused workflows can
 reuse the same event model.
