@@ -86,6 +86,9 @@ packages:
   prompt for Pi. The action reuses the platform-neutral `SendUserInput` command
   so file evidence becomes an agent workflow entrypoint without native-only
   transport.
+- The Workspace diff review control queues a `Review diff: ...` prompt through
+  the same path, making code review a first-class coding-agent action while
+  keeping PiTransport platform-neutral.
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.

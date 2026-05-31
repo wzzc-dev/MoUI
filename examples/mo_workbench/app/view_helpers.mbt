@@ -793,7 +793,7 @@ fn WorkbenchModel::workspace_digest_panel(
             ),
             button(
               "审核",
-              on_click=SelectPanel("files"),
+              on_click=ReviewDiff,
               variant=Outline,
               theme~,
               width=64.0,

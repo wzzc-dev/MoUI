@@ -165,7 +165,9 @@ attachment cards. The workspace digest now includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. File context rows can queue
 an `Inspect <path>` prompt through the same platform-neutral prompt transport,
-turning Pi-provided file evidence into the next coding-agent action.
+turning Pi-provided file evidence into the next coding-agent action. The diff
+summary review button likewise queues a concise `Review diff: ...` prompt, so
+code review starts from shared app state rather than a native-only shortcut.
 The shared app package keeps the Pi boundary as platform-neutral
 `PiTransportCommand` and `PiTransportEvent` values so future Web or
 automation-focused workflows can reuse the same event model. Structured Pi
