@@ -766,6 +766,89 @@ test "workbench fork cancellation does not refresh Pi state" {
 }
 
 ///|
+test "workbench queues Pi session HTML export through platform-neutral commands" {
+  let model = WorkbenchModel::new().update(ExportSessionHtml)
+  inspect(model.last_status, content="Pi HTML export queued")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    ExportRpcSessionHtml(session, path) => {
+      inspect(session, content="moui-skia")
+      inspect(path, content="")
+    }
+    _ => fail("expected queued HTML export")
+  }
+  assert_true(model.events.any(event => event.title == "Pi HTML export queued"))
+}
+
+///|
+test "workbench HTML export runtime effect dispatches export command" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"export_html\"}"))
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"export_html\",\"success\":true,\"data\":{\"path\":\"/tmp/mo-workbench-export.html\"}}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    ExportSessionHtml,
+    transport,
+  )
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    ExportRpcSessionHtml(session, path) => {
+      inspect(session, content="moui-skia")
+      inspect(path, content="")
+    }
+    _ => fail("expected captured HTML export")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.files.length(), content="1")
+  inspect(model.files[0].path, content="/tmp/mo-workbench-export.html")
+  inspect(model.files[0].change_kind, content="export")
+  inspect(model.last_status, content="Pi session exported")
+}
+
+///|
+test "workbench ingests Pi RPC export_html response into workspace evidence" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"export_html","success":true,"data":{"path":"/tmp/mo-workbench-export.html"}}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="export_html")
+  inspect(model.pi_rpc.success, content="true")
+  inspect(model.files.length(), content="1")
+  inspect(model.files[0].id, content="pi-export-moui-skia")
+  inspect(model.files[0].path, content="/tmp/mo-workbench-export.html")
+  inspect(model.files[0].summary, content="Pi session HTML export")
+  inspect(model.files[0].change_kind, content="export")
+  inspect(model.last_status, content="Pi session exported")
+  assert_true(model.events.any(event => event.title == "Pi session exported"))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "1 files"))
+  assert_true(has_text(commands, "/tmp/mo-workbench-export.html"))
+  assert_true(has_text(commands, "Pi session HTML export"))
+}
+
+///|
 test "workbench clears visible diagnostics" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(
@@ -1939,6 +2022,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "新建"))
   assert_true(has_text(commands, "刷新"))
   assert_true(has_text(commands, "分叉"))
+  assert_true(has_text(commands, "导出"))
   assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Steer 1"))
   assert_true(has_text(commands, "Follow 1"))

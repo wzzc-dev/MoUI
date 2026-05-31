@@ -112,6 +112,7 @@ fn WorkbenchModel::ingest_rpc_response(
       "get_commands" => self.apply_get_commands_success(session_id, fields)
       "get_session_stats" =>
         self.apply_get_session_stats_success(session_id, fields)
+      "export_html" => self.apply_export_html_success(session_id, fields)
       "cycle_thinking_level" =>
         self.apply_cycle_thinking_level_success(session_id, fields)
       "set_steering_mode" => self.apply_set_steering_mode_success(session_id)
@@ -345,6 +346,40 @@ fn WorkbenchModel::apply_get_session_stats_success(
       tone="success",
     ),
     status="Pi session stats refreshed",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_export_html_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let path = match json_object(fields, "data") {
+    Some(data) => json_string(data, "path").unwrap_or("")
+    None => ""
+  }
+  let model = if path == "" {
+    self
+  } else {
+    self.upsert_file(
+      FileContext::new(
+        id="pi-export-" + session_id,
+        path~,
+        summary="Pi session HTML export",
+        change_kind="export",
+        lines_changed=0,
+      ),
+    )
+  }
+  { ..model, pi_rpc: PiRpcSnapshot::new(command="export_html", success=true) }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi session exported",
+      detail=if path == "" { session_id } else { session_id + ": " + path },
+      tone="success",
+    ),
+    status="Pi session exported",
   )
 }
 

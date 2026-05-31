@@ -156,6 +156,7 @@ pub(all) enum PiTransportCommand {
   FetchRpcCommands(String)
   FetchRpcSessionStats(String)
   ForkRpcSession(String, String)
+  ExportRpcSessionHtml(String, String)
   CycleRpcThinkingLevel(String)
   SetRpcSteeringMode(String, String)
   SetRpcFollowUpMode(String, String)
@@ -279,6 +280,7 @@ pub(all) enum WorkbenchMsg {
   NewSession
   RefreshForkMessages
   ForkFromMessage(String)
+  ExportSessionHtml
   QueueCommand(String)
   InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
