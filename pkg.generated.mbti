@@ -175,7 +175,7 @@ pub impl Default for FilterMode
 pub(all) struct FontFallbackChain {
   primary_family : Bytes
   fallback_families : Array[Bytes]
-}
+} derive(Eq, @debug.Debug)
 pub fn FontFallbackChain::contains_family(Self, Bytes) -> Bool
 pub fn FontFallbackChain::family_at(Self, Int) -> Bytes?
 pub fn FontFallbackChain::is_empty(Self) -> Bool
@@ -188,7 +188,7 @@ pub(all) struct FontFallbackRequest {
   bcp47 : Array[Bytes]
   character : Int
   style : FontStyleRequest
-}
+} derive(Eq, @debug.Debug)
 pub fn FontFallbackRequest::has_character(Self) -> Bool
 pub fn FontFallbackRequest::language_at(Self, Int) -> Bytes?
 pub fn FontFallbackRequest::language_count(Self) -> Int
@@ -674,12 +674,14 @@ pub(all) enum RenderCommand {
   DrawCanvasRect(Rect, Paint)
   DrawCanvasPath(Path, Paint)
   DrawCanvasTextUtf8(Bytes, Point, Paint)
+  DrawCanvasTextRunUtf8(Bytes, TextRunDescriptor, RendererResourceKey, Point, Paint)
   PresentSurface
 } derive(Eq, @debug.Debug)
 pub fn RenderCommand::clear(Color) -> Self
 pub fn RenderCommand::clip_rect(Rect, op? : ClipOp) -> Self
 pub fn RenderCommand::draw_path(Path, paint? : Paint) -> Self
 pub fn RenderCommand::draw_rect(Rect, paint? : Paint) -> Self
+pub fn RenderCommand::draw_text_run_utf8(Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self
 pub fn RenderCommand::draw_text_utf8(Bytes, Point, paint? : Paint) -> Self
 pub fn RenderCommand::is_clear(Self) -> Bool
 pub fn RenderCommand::is_clip(Self) -> Bool
@@ -687,6 +689,7 @@ pub fn RenderCommand::is_draw(Self) -> Bool
 pub fn RenderCommand::is_present(Self) -> Bool
 pub fn RenderCommand::is_state(Self) -> Bool
 pub fn RenderCommand::is_text(Self) -> Bool
+pub fn RenderCommand::text_run_resource_key(Self) -> RendererResourceKey?
 
 pub(all) struct RenderCommandList {
   pass : RenderPassDescriptor
@@ -697,6 +700,7 @@ pub fn RenderCommandList::clear(Self, Color) -> Self
 pub fn RenderCommandList::clip_rect(Self, Rect, op? : ClipOp) -> Self
 pub fn RenderCommandList::draw_path(Self, Path, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_rect(Self, Rect, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_text_run_utf8(Self, Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_text_utf8(Self, Bytes, Point, paint? : Paint) -> Self
 pub fn RenderCommandList::finish(Self) -> Self
 pub fn RenderCommandList::for_target(SurfaceTargetDescriptor, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp?) -> Self
@@ -709,6 +713,7 @@ pub fn RenderCommandList::present(Self) -> Self
 pub fn RenderCommandList::restore(Self) -> Self
 pub fn RenderCommandList::save(Self) -> Self
 pub fn RenderCommandList::stats(Self) -> RenderCommandStats
+pub fn RenderCommandList::text_run_resource_keys(Self) -> Array[RendererResourceKey]
 pub fn RenderCommandList::touched_bounds(Self) -> Rect?
 
 pub(all) struct RenderCommandStats {
@@ -1001,7 +1006,7 @@ pub(all) struct TextRunDescriptor {
   range : TextRange
   direction : TextDirection
   fallback : FontFallbackRequest
-}
+} derive(Eq, @debug.Debug)
 pub fn TextRunDescriptor::is_empty(Self) -> Bool
 pub fn TextRunDescriptor::is_right_to_left(Self) -> Bool
 pub fn TextRunDescriptor::new(range? : TextRange, direction? : TextDirection, fallback? : FontFallbackRequest) -> Self

@@ -10,6 +10,13 @@ pub(all) enum RenderCommand {
   DrawCanvasRect(Rect, Paint)
   DrawCanvasPath(Path, Paint)
   DrawCanvasTextUtf8(Bytes, Point, Paint)
+  DrawCanvasTextRunUtf8(
+    Bytes,
+    TextRunDescriptor,
+    RendererResourceKey,
+    Point,
+    Paint
+  )
   PresentSurface
 } derive(Debug, Eq)
 
@@ -52,9 +59,32 @@ pub fn RenderCommand::draw_text_utf8(
 }
 
 ///|
+fn default_render_text_run_descriptor(text : Bytes) -> TextRunDescriptor {
+  TextRunDescriptor::new(range=TextRange::new(0, text.length()))
+}
+
+///|
+pub fn RenderCommand::draw_text_run_utf8(
+  text : Bytes,
+  origin : Point,
+  descriptor? : TextRunDescriptor? = None,
+  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  let descriptor = match descriptor {
+    None => default_render_text_run_descriptor(text)
+    Some(descriptor) => descriptor
+  }
+  DrawCanvasTextRunUtf8(text, descriptor, font_key, origin, paint)
+}
+
+///|
 pub fn RenderCommand::is_draw(self : RenderCommand) -> Bool {
   self
-  is (DrawCanvasRect(_, _) | DrawCanvasPath(_, _) | DrawCanvasTextUtf8(_, _, _))
+  is (DrawCanvasRect(_, _)
+  | DrawCanvasPath(_, _)
+  | DrawCanvasTextUtf8(_, _, _)
+  | DrawCanvasTextRunUtf8(_, _, _, _, _))
 }
 
 ///|
@@ -79,7 +109,18 @@ pub fn RenderCommand::is_present(self : RenderCommand) -> Bool {
 
 ///|
 pub fn RenderCommand::is_text(self : RenderCommand) -> Bool {
-  self is DrawCanvasTextUtf8(_, _, _)
+  self is (DrawCanvasTextUtf8(_, _, _) | DrawCanvasTextRunUtf8(_, _, _, _, _))
+}
+
+///|
+pub fn RenderCommand::text_run_resource_key(
+  self : RenderCommand,
+) -> RendererResourceKey? {
+  match self {
+    DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
+      Some(descriptor.resource_key(text, font_key~))
+    _ => None
+  }
 }
 
 ///|
@@ -245,6 +286,26 @@ pub fn RenderCommandList::draw_text_utf8(
 }
 
 ///|
+pub fn RenderCommandList::draw_text_run_utf8(
+  self : RenderCommandList,
+  text : Bytes,
+  origin : Point,
+  descriptor? : TextRunDescriptor? = None,
+  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(
+    RenderCommand::draw_text_run_utf8(
+      text,
+      origin,
+      descriptor~,
+      font_key~,
+      paint~,
+    ),
+  )
+}
+
+///|
 pub fn RenderCommandList::present(
   self : RenderCommandList,
 ) -> RenderCommandList {
@@ -269,6 +330,20 @@ pub fn RenderCommandList::has_present(self : RenderCommandList) -> Bool {
     }
   }
   found
+}
+
+///|
+pub fn RenderCommandList::text_run_resource_keys(
+  self : RenderCommandList,
+) -> Array[RendererResourceKey] {
+  let keys : Array[RendererResourceKey] = Array::new()
+  for command in self.commands {
+    match command.text_run_resource_key() {
+      None => ()
+      Some(key) => keys.push(key)
+    }
+  }
+  keys
 }
 
 ///|
