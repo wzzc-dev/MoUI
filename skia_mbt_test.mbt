@@ -204,6 +204,60 @@ test "matrix maps point" {
 }
 
 ///|
+test "surface descriptors model raster window and gpu contracts" {
+  let size = @skia_mbt.ISize::new(32, 24)
+  let raster = @skia_mbt.SurfaceDescriptor::raster_n32_premul(size)
+  assert_true(raster.backend == @skia_mbt.Raster)
+  assert_true(raster.image_info == @skia_mbt.ImageInfo::n32_premul(size))
+  assert_true(raster.origin == @skia_mbt.TopLeft)
+  assert_eq(raster.sample_count, 1)
+  assert_eq(raster.stencil_bits, 0)
+  assert_true(raster.budget == @skia_mbt.Unbudgeted)
+  assert_true(raster.is_raster())
+  assert_true(!raster.is_window())
+  assert_true(!raster.is_gpu())
+  assert_true(!raster.is_msaa())
+  assert_true(!raster.is_budgeted())
+  assert_eq(raster.width(), 32)
+  assert_eq(raster.height(), 24)
+  assert_true(raster.bounds() == @skia_mbt.IRect::from_wh(32, 24))
+
+  let window = @skia_mbt.SurfaceDescriptor::window_n32_premul(
+    size,
+    sample_count=4,
+    stencil_bits=8,
+  )
+  assert_true(window.is_window())
+  assert_true(window.is_msaa())
+  assert_eq(window.sample_count, 4)
+  assert_eq(window.stencil_bits, 8)
+
+  let gpu = @skia_mbt.SurfaceDescriptor::gpu_n32_premul(
+    size,
+    origin=@skia_mbt.BottomLeft,
+    sample_count=4,
+    stencil_bits=8,
+  )
+  assert_true(gpu.is_gpu())
+  assert_true(gpu.origin == @skia_mbt.BottomLeft)
+  assert_true(gpu.is_budgeted())
+  assert_true(
+    gpu.with_budget(@skia_mbt.Unbudgeted).budget == @skia_mbt.Unbudgeted,
+  )
+  assert_true(
+    gpu.with_dimensions(@skia_mbt.ISize::new(8, 6)).dimensions() ==
+    @skia_mbt.ISize::new(8, 6),
+  )
+  assert_eq(gpu.with_sample_count(-2).sample_count, 1)
+  assert_eq(gpu.with_stencil_bits(-2).stencil_bits, 0)
+
+  let empty = @skia_mbt.SurfaceDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::empty(),
+  )
+  assert_true(empty.is_empty())
+}
+
+///|
 test "matrix exposes skia-style members and affine conversion" {
   let matrix = @skia_mbt.Matrix::new_all(2, 1, 10, 3, 4, 20, 0, 0, 1)
   assert_eq(matrix.scale_x(), 2.0)
