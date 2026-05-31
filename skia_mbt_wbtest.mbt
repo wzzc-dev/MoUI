@@ -23,3 +23,22 @@ test "color info opacity combines alpha and storage type" {
     !ColorInfo::new(color_type=RGBA8888, alpha_type=Premul).is_opaque(),
   )
 }
+
+///|
+test "render frame validation reports missing present command" {
+  let target = SurfaceTargetDescriptor::window_n32_premul(ISize::new(8, 8))
+  let command_list = RenderCommandList::new(
+    RenderPassDescriptor::for_target(target),
+  )
+  let frame : RenderFrameDescriptor = {
+    target,
+    command_list,
+    resource_plan: RendererResourcePlan::empty(),
+    stats: command_list.stats(),
+    touched_bounds: command_list.touched_bounds(),
+  }
+  assert_true(frame.needs_present())
+  assert_true(!frame.has_present())
+  assert_true(frame.validation_status() == FrameMissingPresent)
+  assert_true(!frame.is_ready())
+}
