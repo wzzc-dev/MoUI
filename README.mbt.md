@@ -27,6 +27,9 @@ The current package exposes the first value-layer API surface:
   `RenderPassStoreOp` define target bounds plus load/clear/store/present
   semantics before a concrete backend records draw commands, including defaults
   derived from `SurfaceTargetDescriptor`
+- render command contracts: `RenderCommandList`, `RenderCommand`, and
+  `RenderCommandStats` provide the backend-neutral command stream boundary a GUI
+  renderer can validate before replaying into a native Canvas
 - text layout and fallback contracts: `TextRunDescriptor`,
   `FontFallbackRequest`, `FontFallbackChain`, and `FontStyleRequest` define the
   value-layer input to native shaping and font fallback

@@ -666,6 +666,66 @@ pub fn Rect::x(Self) -> Float
 pub fn Rect::y(Self) -> Float
 pub impl Default for Rect
 
+pub(all) enum RenderCommand {
+  SaveCanvas
+  RestoreCanvas
+  ClearCanvas(Color)
+  ClipCanvasRect(Rect, ClipOp)
+  DrawCanvasRect(Rect, Paint)
+  DrawCanvasPath(Path, Paint)
+  DrawCanvasTextUtf8(Bytes, Point, Paint)
+  PresentSurface
+} derive(Eq, @debug.Debug)
+pub fn RenderCommand::clear(Color) -> Self
+pub fn RenderCommand::clip_rect(Rect, op? : ClipOp) -> Self
+pub fn RenderCommand::draw_path(Path, paint? : Paint) -> Self
+pub fn RenderCommand::draw_rect(Rect, paint? : Paint) -> Self
+pub fn RenderCommand::draw_text_utf8(Bytes, Point, paint? : Paint) -> Self
+pub fn RenderCommand::is_clear(Self) -> Bool
+pub fn RenderCommand::is_clip(Self) -> Bool
+pub fn RenderCommand::is_draw(Self) -> Bool
+pub fn RenderCommand::is_present(Self) -> Bool
+pub fn RenderCommand::is_state(Self) -> Bool
+pub fn RenderCommand::is_text(Self) -> Bool
+
+pub(all) struct RenderCommandList {
+  pass : RenderPassDescriptor
+  commands : Array[RenderCommand]
+} derive(Eq, @debug.Debug)
+pub fn RenderCommandList::append(Self, RenderCommand) -> Self
+pub fn RenderCommandList::clear(Self, Color) -> Self
+pub fn RenderCommandList::clip_rect(Self, Rect, op? : ClipOp) -> Self
+pub fn RenderCommandList::draw_path(Self, Path, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_rect(Self, Rect, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_text_utf8(Self, Bytes, Point, paint? : Paint) -> Self
+pub fn RenderCommandList::finish(Self) -> Self
+pub fn RenderCommandList::for_target(SurfaceTargetDescriptor, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp?) -> Self
+pub fn RenderCommandList::has_present(Self) -> Bool
+pub fn RenderCommandList::is_empty(Self) -> Bool
+pub fn RenderCommandList::is_state_balanced(Self) -> Bool
+pub fn RenderCommandList::length(Self) -> Int
+pub fn RenderCommandList::new(RenderPassDescriptor) -> Self
+pub fn RenderCommandList::present(Self) -> Self
+pub fn RenderCommandList::restore(Self) -> Self
+pub fn RenderCommandList::save(Self) -> Self
+pub fn RenderCommandList::stats(Self) -> RenderCommandStats
+pub fn RenderCommandList::touched_bounds(Self) -> Rect?
+
+pub(all) struct RenderCommandStats {
+  command_count : Int
+  draw_count : Int
+  state_count : Int
+  clip_count : Int
+  clear_count : Int
+  present_count : Int
+  text_count : Int
+  max_save_depth : Int
+  final_save_depth : Int
+  unbalanced_restore_count : Int
+} derive(Eq, @debug.Debug)
+pub fn RenderCommandStats::empty() -> Self
+pub fn RenderCommandStats::is_state_balanced(Self) -> Bool
+
 pub(all) struct RenderPassDescriptor {
   surface : SurfaceDescriptor
   bounds : IRect
