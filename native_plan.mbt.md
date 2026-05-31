@@ -306,7 +306,7 @@ GitHub Actions:
 - `.github/workflows/fallback.yml` runs the fallback gate on Windows and Linux;
   the Linux job also syntax-checks the Linux shell helpers with `bash -n`,
   verifies `native/ownership.json` against the MoonBit handle declarations and
-  C++ wrapper finalizers,
+  C++ wrapper finalizers, checks MoonBit native extern borrow annotations,
   dry-runs `scripts/linux-real-skia-smoke.sh` in source-build mode, and dry-runs
   existing-build mode against fake Skia header/library files so both wrapper
   branches and argument construction are checked without building Skia. It also
