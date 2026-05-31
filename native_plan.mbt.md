@@ -86,6 +86,8 @@ Current implemented milestone:
   `CubicResampler`, and `SamplingOptions`;
 - primitive paint conversion for color, anti-aliasing, dither, style, stroke
   width, stroke miter, stroke cap, stroke join, and blend mode;
+- value-layer `SurfaceDescriptor` contracts for raster, window, and future GPU
+  surfaces, with native raster surfaces reporting the descriptor they satisfy;
 - fallback C++ stub path for environments without Skia.
 - `scripts/native_smoke` real-backend smoke executable that forces
   `skia_available()`, draws red/green/blue rectangles to a raster surface,
