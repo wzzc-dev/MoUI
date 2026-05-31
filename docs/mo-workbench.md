@@ -81,9 +81,14 @@ packages:
   avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
-  by `WorkbenchModel` state. The default fixture now leaves transcript and
-  diagnostics empty until Pi or command evidence arrives, and empty digest rows
-  render quietly instead of placeholder punctuation.
+  by `WorkbenchModel` state. The default fixture now leaves transcript,
+  metrics, command catalog, file context, diff summary, command evidence, and
+  diagnostics empty until Pi or user command evidence arrives. Zero-count badges
+  and contextless actions render quietly instead of placeholder punctuation.
+- Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for
+  Pi through the existing platform-neutral `SendUserInput` path, so visible
+  conversation evidence can become the next agent action without native-only
+  transport.
 - File context rows in the Workspace digest can queue an `Inspect <path>`
   prompt for Pi. The action reuses the platform-neutral `SendUserInput` command
   so file evidence becomes an agent workflow entrypoint without native-only
@@ -116,6 +121,9 @@ packages:
   app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
   records so the conversation surface can replay user, assistant, tool result,
   bash, compaction, branch summary, and future workflow messages.
+- Visible transcript rows can send a follow-up prompt through `SendUserInput`.
+  The action keeps the transcript model generic while letting coding-agent users
+  continue from a specific user, assistant, bash, or tool message.
 - Session selection also refreshes Pi's available command catalog through
   `get_commands`. The shared app maps prompt, extension, and skill commands
   into generic `PiCommandInfo` rows so coding-agent command discovery can later

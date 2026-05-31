@@ -164,12 +164,16 @@ of long placeholder validation text, future-workflow filler, or hard-coded
 attachment cards. The workspace digest now includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. The default fixture no
-longer injects mock transcript or diagnostic prose; empty digest slots stay
-visually quiet until Pi or command evidence arrives. File context rows can queue
-an `Inspect <path>` prompt through the same platform-neutral prompt transport,
-turning Pi-provided file evidence into the next coding-agent action. The diff
-summary review button likewise queues a concise `Review diff: ...` prompt, so
-code review starts from shared app state rather than a native-only shortcut.
+longer injects mock transcript, sample stats, command catalog rows, file rows,
+diff rows, command runs, or diagnostic prose; zero-count badges and empty
+digest actions stay visually quiet until Pi or command evidence arrives.
+Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
+the shared prompt transport, turning visible Pi conversation evidence into the
+next agent task. File context rows can queue an `Inspect <path>` prompt through
+the same platform-neutral prompt transport, turning Pi-provided file evidence
+into the next coding-agent action. The diff summary review button likewise
+queues a concise `Review diff: ...` prompt, so code review starts from shared
+app state rather than a native-only shortcut.
 Latest diagnostic rows can queue a `Fix <severity> diagnostic from <source>: ...`
 prompt through the same `SendUserInput` path, turning build/check failures into
 the next agent task without adding a transport-specific command.

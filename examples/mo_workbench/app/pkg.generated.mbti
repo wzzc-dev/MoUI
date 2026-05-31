@@ -260,6 +260,7 @@ pub(all) enum WorkbenchMsg {
   PromptChanged(String)
   DispatchPrompt
   InvokeCommand(String)
+  FollowTranscript(String, String, String)
   InspectFile(String)
   ReviewDiff
   RefreshSession

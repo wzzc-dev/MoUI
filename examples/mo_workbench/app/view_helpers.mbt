@@ -292,8 +292,9 @@ fn WorkbenchModel::transcript_panel(
               width=520.0,
               height=28.0,
             ),
-            badge(
-              self.transcript.length().to_string() + " messages",
+            count_badge(
+              self.transcript.length(),
+              label=self.transcript.length().to_string() + " messages",
               tone=Neutral,
               theme~,
               width=116.0,
@@ -331,14 +332,22 @@ fn transcript_row(
       ),
       column(
         [
-          text(item.summary, role=Control, theme~, width=520.0, height=24.0),
-          text(item.detail, role=Caption, theme~, width=520.0, height=22.0),
+          text(item.summary, role=Control, theme~, width=452.0, height=24.0),
+          text(item.detail, role=Caption, theme~, width=452.0, height=22.0),
         ],
         spacing=0.0,
         align=Start,
       ),
+      button(
+        "跟进",
+        on_click=FollowTranscript(item.role, item.summary, item.detail),
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
+      ),
     ],
-    spacing=10.0,
+    spacing=8.0,
     align=Center,
   )
 }
@@ -351,6 +360,21 @@ fn transcript_badge_tone(tone : String) -> @views.BadgeTone {
     "danger" => Danger
     "info" => Accent
     _ => Neutral
+  }
+}
+
+///|
+fn count_badge(
+  count : Int,
+  label~ : String,
+  tone~ : @views.BadgeTone,
+  theme~ : @core.Theme,
+  width~ : Double,
+) -> @core.View[WorkbenchMsg] {
+  if count == 0 {
+    blank_cell(width~, height=24.0)
+  } else {
+    badge(label, tone~, theme~, width~)
   }
 }
 
@@ -440,8 +464,9 @@ fn WorkbenchModel::session_status_panel(
           [
             text("Session", role=Control, theme~, width=368.0, height=28.0),
             badge(active.status, tone=Success, theme~, width=92.0),
-            badge(
-              self.pending_transport_count().to_string() + " queued",
+            count_badge(
+              self.pending_transport_count(),
+              label=self.pending_transport_count().to_string() + " queued",
               tone=Neutral,
               theme~,
               width=104.0,
@@ -591,50 +616,75 @@ fn session_stats_row(
   stats : PiSessionStatsSnapshot,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  row(
-    [
+  if stats.has_visible_metrics() {
+    row(
+      [
+        text(
+          "Messages " + stats.total_messages.to_string(),
+          role=Caption,
+          theme~,
+          width=128.0,
+          height=28.0,
+        ),
+        text(
+          "Tools " +
+          stats.tool_calls.to_string() +
+          "/" +
+          stats.tool_results.to_string(),
+          role=Caption,
+          theme~,
+          width=108.0,
+          height=28.0,
+        ),
+        text(
+          "Tokens " + stats.token_total.to_string(),
+          role=Caption,
+          theme~,
+          width=138.0,
+          height=28.0,
+        ),
+        session_stats_context_cell(stats, theme),
+      ],
+      spacing=8.0,
+      align=Center,
+    )
+  } else {
+    blank_row(28.0)
+  }
+}
+
+///|
+fn PiSessionStatsSnapshot::has_visible_metrics(
+  self : PiSessionStatsSnapshot,
+) -> Bool {
+  if self.total_messages > 0 ||
+    self.tool_calls > 0 ||
+    self.tool_results > 0 ||
+    self.token_total > 0 {
+    true
+  } else {
+    match self.context_percent {
+      Some(_) => true
+      None => false
+    }
+  }
+}
+
+///|
+fn session_stats_context_cell(
+  stats : PiSessionStatsSnapshot,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  match stats.context_percent {
+    Some(percent) =>
       text(
-        "Messages " + stats.total_messages.to_string(),
-        role=Caption,
-        theme~,
-        width=128.0,
-        height=28.0,
-      ),
-      text(
-        "Tools " +
-        stats.tool_calls.to_string() +
-        "/" +
-        stats.tool_results.to_string(),
-        role=Caption,
-        theme~,
-        width=108.0,
-        height=28.0,
-      ),
-      text(
-        "Tokens " + stats.token_total.to_string(),
-        role=Caption,
-        theme~,
-        width=138.0,
-        height=28.0,
-      ),
-      text(
-        session_stats_context_label(stats),
+        "Context " + compact_percent(percent),
         role=Caption,
         theme~,
         width=112.0,
         height=28.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
-  )
-}
-
-///|
-fn session_stats_context_label(stats : PiSessionStatsSnapshot) -> String {
-  match stats.context_percent {
-    Some(percent) => "Context " + compact_percent(percent)
-    None => "Context n/a"
+      )
+    None => blank_cell(width=112.0, height=28.0)
   }
 }
 
@@ -658,20 +708,23 @@ fn WorkbenchModel::activity_panel(
         row(
           [
             text("Activity", role=Control, theme~, width=310.0, height=28.0),
-            badge(
-              self.commands.length().to_string() + " runs",
+            count_badge(
+              self.commands.length(),
+              label=self.commands.length().to_string() + " runs",
               tone=Neutral,
               theme~,
               width=94.0,
             ),
-            badge(
-              self.command_catalog.length().to_string() + " cmds",
+            count_badge(
+              self.command_catalog.length(),
+              label=self.command_catalog.length().to_string() + " cmds",
               tone=Accent,
               theme~,
               width=94.0,
             ),
-            badge(
-              self.events.length().to_string() + " events",
+            count_badge(
+              self.events.length(),
+              label=self.events.length().to_string() + " events",
               tone=Neutral,
               theme~,
               width=102.0,
@@ -876,34 +929,22 @@ fn WorkbenchModel::workspace_digest_panel(
         row(
           [
             text("Workspace", role=Control, theme~, width=318.0, height=28.0),
-            badge(
-              self.files.length().to_string() + " files",
+            count_badge(
+              self.files.length(),
+              label=self.files.length().to_string() + " files",
               tone=Neutral,
               theme~,
               width=86.0,
             ),
-            badge(
-              self.open_diagnostic_count().to_string() + " diag",
+            count_badge(
+              self.open_diagnostic_count(),
+              label=self.open_diagnostic_count().to_string() + " diag",
               tone=diagnostic_count_tone(self.open_diagnostic_count()),
               theme~,
               width=86.0,
             ),
-            button(
-              "清除",
-              on_click=ClearDiagnostics,
-              variant=Ghost,
-              theme~,
-              width=58.0,
-              height=34.0,
-            ),
-            button(
-              "审核",
-              on_click=ReviewDiff,
-              variant=Outline,
-              theme~,
-              width=64.0,
-              height=34.0,
-            ),
+            self.clear_diagnostics_button(theme),
+            self.review_diff_button(theme),
           ],
           spacing=8.0,
           align=Center,
@@ -934,28 +975,70 @@ fn diagnostic_count_tone(count : Int) -> @views.BadgeTone {
 }
 
 ///|
+fn WorkbenchModel::clear_diagnostics_button(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.open_diagnostic_count() == 0 {
+    blank_cell(width=58.0, height=34.0)
+  } else {
+    button(
+      "清除",
+      on_click=ClearDiagnostics,
+      variant=Ghost,
+      theme~,
+      width=58.0,
+      height=34.0,
+    )
+  }
+}
+
+///|
+fn WorkbenchModel::review_diff_button(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.diff.has_context() {
+    button(
+      "审核",
+      on_click=ReviewDiff,
+      variant=Outline,
+      theme~,
+      width=64.0,
+      height=34.0,
+    )
+  } else {
+    blank_cell(width=64.0, height=34.0)
+  }
+}
+
+///|
 fn diff_digest_row(
   diff : DiffOverview,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  row(
-    [
-      badge(diff.status, tone=Neutral, theme~, width=126.0),
-      text(
-        diff.changed_files.to_string() +
-        " files · +" +
-        diff.additions.to_string() +
-        " -" +
-        diff.deletions.to_string(),
-        role=Caption,
-        theme~,
-        width=492.0,
-        height=28.0,
-      ),
-    ],
-    spacing=10.0,
-    align=Center,
-  )
+  if diff.has_context() {
+    row(
+      [
+        badge(diff.status_label(), tone=Neutral, theme~, width=126.0),
+        text(
+          diff.changed_files.to_string() +
+          " files · +" +
+          diff.additions.to_string() +
+          " -" +
+          diff.deletions.to_string(),
+          role=Caption,
+          theme~,
+          width=492.0,
+          height=28.0,
+        ),
+      ],
+      spacing=10.0,
+      align=Center,
+    )
+  } else {
+    blank_row(28.0)
+  }
 }
 
 ///|

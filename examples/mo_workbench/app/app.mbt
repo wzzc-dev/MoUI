@@ -184,6 +184,7 @@ pub(all) enum WorkbenchMsg {
   PromptChanged(String)
   DispatchPrompt
   InvokeCommand(String)
+  FollowTranscript(String, String, String)
   InspectFile(String)
   ReviewDiff
   RefreshSession
@@ -480,11 +481,16 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     plan: [],
     events: [],
     transcript: [],
-    command_catalog: sample_pi_commands(),
-    pi_session_stats: sample_pi_session_stats(),
-    files: sample_files(),
-    diff: sample_diff_overview(),
-    commands: sample_commands(),
+    command_catalog: [],
+    pi_session_stats: PiSessionStatsSnapshot::new(),
+    files: [],
+    diff: DiffOverview::new(
+      changed_files=0,
+      additions=0,
+      deletions=0,
+      status="",
+    ),
+    commands: [],
     diagnostics: [],
     transport: PiTransportState::new(),
     pi_rpc: PiRpcSnapshot::new(),
@@ -505,6 +511,8 @@ pub fn WorkbenchModel::update(
     PromptChanged(value) => { ..self, prompt: value }
     DispatchPrompt => self.dispatch_prompt()
     InvokeCommand(name) => self.invoke_command(name)
+    FollowTranscript(role, summary, detail) =>
+      self.follow_transcript(role, summary, detail)
     InspectFile(path) => self.inspect_file(path)
     ReviewDiff => self.review_diff()
     RefreshSession => self.refresh_session()
@@ -678,6 +686,10 @@ pub fn WorkbenchModel::update_with_transport(
     DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
     InvokeCommand(name) =>
       self.invoke_command_with_transport(name, transport_runtime)
+    FollowTranscript(role, summary, detail) =>
+      self.follow_transcript_with_transport(
+        role, summary, detail, transport_runtime,
+      )
     InspectFile(path) =>
       self.inspect_file_with_transport(path, transport_runtime)
     ReviewDiff => self.review_diff_with_transport(transport_runtime)
@@ -862,6 +874,87 @@ fn WorkbenchModel::invoke_command_with_transport(
 }
 
 ///|
+fn WorkbenchModel::follow_transcript(
+  self : WorkbenchModel,
+  role : String,
+  summary : String,
+  detail : String,
+) -> WorkbenchModel {
+  let clean_summary = summary.trim().to_owned()
+  let clean_detail = detail.trim().to_owned()
+  if clean_summary == "" && clean_detail == "" {
+    { ..self, last_status: "Transcript item is empty" }
+  } else {
+    let prompt = transcript_follow_up_prompt(role, summary, detail)
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="Transcript follow-up queued",
+        detail=prompt,
+        tone="info",
+      ),
+    )
+    let command = SendUserInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued transcript follow-up for Pi RPC",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::follow_transcript_with_transport(
+  self : WorkbenchModel,
+  role : String,
+  summary : String,
+  detail : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let clean_summary = summary.trim().to_owned()
+  let clean_detail = detail.trim().to_owned()
+  if clean_summary == "" && clean_detail == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Transcript item is empty" })
+  } else {
+    let prompt = transcript_follow_up_prompt(role, summary, detail)
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      SendUserInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.follow_transcript(role, summary, detail),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
+fn transcript_follow_up_prompt(
+  role : String,
+  summary : String,
+  detail : String,
+) -> String {
+  let role = role.trim().to_owned()
+  let summary = summary.trim().to_owned()
+  let detail = detail.trim().to_owned()
+  let label = if role == "" { "message" } else { role + " transcript" }
+  let body = if summary == "" {
+    detail
+  } else if detail == "" {
+    summary
+  } else {
+    summary + ". Context: " + detail
+  }
+  "Follow up on " + label + ": " + body
+}
+
+///|
 fn WorkbenchModel::inspect_file(
   self : WorkbenchModel,
   path : String,
@@ -918,25 +1011,29 @@ fn WorkbenchModel::inspect_file_with_transport(
 
 ///|
 fn WorkbenchModel::review_diff(self : WorkbenchModel) -> WorkbenchModel {
-  let prompt = self.diff_review_prompt()
-  let session = self.active_session()
-  let events = self.events.copy()
-  events.push(
-    AgentEvent::new(
-      phase="user",
-      title="Diff review queued",
-      detail=prompt,
-      tone="info",
-    ),
-  )
-  let command = SendUserInput(session.id, prompt)
-  let commands = self.commands_with_session_start(session, command)
-  {
-    ..self,
-    prompt: "",
-    events,
-    transport: self.transport.enqueue_many(commands),
-    last_status: "Queued diff review for Pi RPC",
+  if self.diff.has_context() {
+    let prompt = self.diff_review_prompt()
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="Diff review queued",
+        detail=prompt,
+        tone="info",
+      ),
+    )
+    let command = SendUserInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued diff review for Pi RPC",
+    }
+  } else {
+    { ..self, last_status: "Diff context is empty" }
   }
 }
 
@@ -945,28 +1042,50 @@ fn WorkbenchModel::review_diff_with_transport(
   self : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
 ) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let prompt = self.diff_review_prompt()
-  let commands = self.commands_with_session_start(
-    session,
-    SendUserInput(session.id, prompt),
-  )
-  WorkbenchUpdate::new(
-    self.review_diff(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
+  if self.diff.has_context() {
+    let session = self.active_session()
+    let prompt = self.diff_review_prompt()
+    let commands = self.commands_with_session_start(
+      session,
+      SendUserInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.review_diff(),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  } else {
+    WorkbenchUpdate::new({ ..self, last_status: "Diff context is empty" })
+  }
 }
 
 ///|
 fn WorkbenchModel::diff_review_prompt(self : WorkbenchModel) -> String {
   "Review diff: " +
-  self.diff.status +
+  self.diff.status_label() +
   ", " +
   self.diff.changed_files.to_string() +
   " files, +" +
   self.diff.additions.to_string() +
   " -" +
   self.diff.deletions.to_string()
+}
+
+///|
+fn DiffOverview::has_context(self : DiffOverview) -> Bool {
+  self.changed_files > 0 ||
+  self.additions > 0 ||
+  self.deletions > 0 ||
+  self.status.trim().to_owned() != ""
+}
+
+///|
+fn DiffOverview::status_label(self : DiffOverview) -> String {
+  let status = self.status.trim().to_owned()
+  if status == "" {
+    "changed"
+  } else {
+    status
+  }
 }
 
 ///|
