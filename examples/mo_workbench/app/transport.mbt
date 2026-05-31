@@ -19,6 +19,7 @@ pub(all) enum PiTransportCommand {
   SwitchRpcSession(String, String)
   FetchRpcMessages(String)
   FetchRpcCommands(String)
+  FetchRpcSessionStats(String)
   SetRpcSessionName(String, String)
   SendUserInput(String, String)
   RunShellCommand(String, String)
@@ -146,6 +147,7 @@ pub fn PiTransportCommand::label(self : PiTransportCommand) -> String {
       "switch rpc session for " + session + ": " + path
     FetchRpcMessages(session) => "fetch rpc messages for " + session
     FetchRpcCommands(session) => "fetch rpc commands for " + session
+    FetchRpcSessionStats(session) => "fetch rpc session stats for " + session
     SetRpcSessionName(session, name) =>
       "set rpc session name for " + session + ": " + name
     SendUserInput(session, text) => "send prompt for " + session + ": " + text

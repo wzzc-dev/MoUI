@@ -115,11 +115,32 @@ pub(all) struct PiSessionBinding {
 pub fn PiSessionBinding::new(workbench_session_id~ : String, rpc_session_id? : String, session_file? : String, session_name? : String, model? : String, status? : String, last_command? : String) -> Self
 pub fn PiSessionBinding::status_label(Self) -> String
 
+pub(all) struct PiSessionStatsSnapshot {
+  session_file : String
+  session_id : String
+  user_messages : Int
+  assistant_messages : Int
+  tool_calls : Int
+  tool_results : Int
+  total_messages : Int
+  token_input : Int
+  token_output : Int
+  token_cache_read : Int
+  token_cache_write : Int
+  token_total : Int
+  cost : Double
+  context_tokens : Int?
+  context_window : Int
+  context_percent : Double?
+} derive(Eq, @debug.Debug)
+pub fn PiSessionStatsSnapshot::new(session_file? : String, session_id? : String, user_messages? : Int, assistant_messages? : Int, tool_calls? : Int, tool_results? : Int, total_messages? : Int, token_input? : Int, token_output? : Int, token_cache_read? : Int, token_cache_write? : Int, token_total? : Int, cost? : Double, context_tokens? : Int?, context_window? : Int, context_percent? : Double?) -> Self
+
 pub(all) enum PiTransportCommand {
   StartRpc(String, String)
   SwitchRpcSession(String, String)
   FetchRpcMessages(String)
   FetchRpcCommands(String)
+  FetchRpcSessionStats(String)
   SetRpcSessionName(String, String)
   SendUserInput(String, String)
   RunShellCommand(String, String)
@@ -202,6 +223,7 @@ pub(all) struct WorkbenchModel {
   events : Array[AgentEvent]
   transcript : Array[TranscriptItem]
   command_catalog : Array[PiCommandInfo]
+  pi_session_stats : PiSessionStatsSnapshot
   files : Array[FileContext]
   diff : DiffOverview
   commands : Array[CommandRun]

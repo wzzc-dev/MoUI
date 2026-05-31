@@ -52,6 +52,26 @@ pub(all) struct PiCommandInfo {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct PiSessionStatsSnapshot {
+  session_file : String
+  session_id : String
+  user_messages : Int
+  assistant_messages : Int
+  tool_calls : Int
+  tool_results : Int
+  total_messages : Int
+  token_input : Int
+  token_output : Int
+  token_cache_read : Int
+  token_cache_write : Int
+  token_total : Int
+  cost : Double
+  context_tokens : Int?
+  context_window : Int
+  context_percent : Double?
+} derive(Eq, Debug)
+
+///|
 pub(all) struct FileContext {
   id : String
   path : String
@@ -133,6 +153,7 @@ pub(all) struct WorkbenchModel {
   events : Array[AgentEvent]
   transcript : Array[TranscriptItem]
   command_catalog : Array[PiCommandInfo]
+  pi_session_stats : PiSessionStatsSnapshot
   files : Array[FileContext]
   diff : DiffOverview
   commands : Array[CommandRun]
@@ -236,6 +257,45 @@ pub fn PiCommandInfo::new(
   source_path~ : String,
 ) -> PiCommandInfo {
   { name, source, description, source_scope, source_path }
+}
+
+///|
+pub fn PiSessionStatsSnapshot::new(
+  session_file? : String = "",
+  session_id? : String = "",
+  user_messages? : Int = 0,
+  assistant_messages? : Int = 0,
+  tool_calls? : Int = 0,
+  tool_results? : Int = 0,
+  total_messages? : Int = 0,
+  token_input? : Int = 0,
+  token_output? : Int = 0,
+  token_cache_read? : Int = 0,
+  token_cache_write? : Int = 0,
+  token_total? : Int = 0,
+  cost? : Double = 0.0,
+  context_tokens? : Int? = None,
+  context_window? : Int = 0,
+  context_percent? : Double? = None,
+) -> PiSessionStatsSnapshot {
+  {
+    session_file,
+    session_id,
+    user_messages,
+    assistant_messages,
+    tool_calls,
+    tool_results,
+    total_messages,
+    token_input,
+    token_output,
+    token_cache_read,
+    token_cache_write,
+    token_total,
+    cost,
+    context_tokens,
+    context_window,
+    context_percent,
+  }
 }
 
 ///|
@@ -396,6 +456,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     events: sample_events(),
     transcript: sample_transcript(),
     command_catalog: sample_pi_commands(),
+    pi_session_stats: sample_pi_session_stats(),
     files: sample_files(),
     diff: sample_diff_overview(),
     commands: sample_commands(),
@@ -908,6 +969,7 @@ fn WorkbenchModel::commands_for_session_selection(
       StartRpc(session.id, session.project_path),
       FetchRpcMessages(session.id),
       FetchRpcCommands(session.id),
+      FetchRpcSessionStats(session.id),
     ]
   } else {
     [
@@ -915,6 +977,7 @@ fn WorkbenchModel::commands_for_session_selection(
       StartRpc(session.id, session.project_path),
       FetchRpcMessages(session.id),
       FetchRpcCommands(session.id),
+      FetchRpcSessionStats(session.id),
     ]
   }
 }

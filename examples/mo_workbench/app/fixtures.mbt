@@ -148,6 +148,27 @@ fn sample_pi_commands() -> Array[PiCommandInfo] {
 }
 
 ///|
+fn sample_pi_session_stats() -> PiSessionStatsSnapshot {
+  PiSessionStatsSnapshot::new(
+    session_id="sample-moui-skia",
+    user_messages=1,
+    assistant_messages=1,
+    tool_calls=1,
+    tool_results=1,
+    total_messages=3,
+    token_input=18240,
+    token_output=4120,
+    token_cache_read=9600,
+    token_cache_write=0,
+    token_total=31960,
+    cost=0.0,
+    context_tokens=Some(31960),
+    context_window=200000,
+    context_percent=Some(16.0),
+  )
+}
+
+///|
 fn sample_files() -> Array[FileContext] {
   [
     FileContext::new(
@@ -238,7 +259,7 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
     DiagnosticItem::new(
       source="PiTransport",
       severity="watch",
-      message="Native owner speaks Pi RPC JSONL; Workbench binds session switches, session-name sync, get_state/get_messages/get_commands responses, direct bash command evidence and cancellation, streaming agent/tool events, stderr, failures, and restart evidence.",
+      message="Native owner speaks Pi RPC JSONL; Workbench binds session switches, session-name sync, get_state/get_messages/get_commands/get_session_stats responses, direct bash command evidence and cancellation, streaming agent/tool events, stderr, failures, and restart evidence.",
     ),
     DiagnosticItem::new(
       source="Skia",

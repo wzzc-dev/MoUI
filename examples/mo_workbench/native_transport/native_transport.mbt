@@ -83,6 +83,11 @@ pub fn pi_rpc_get_commands_line() -> String {
 }
 
 ///|
+pub fn pi_rpc_get_session_stats_line() -> String {
+  ({ "type": "get_session_stats" } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_switch_session_line(session_path~ : String) -> String {
   ({ "type": "switch_session", "sessionPath": session_path } : Json).stringify()
 }
@@ -151,6 +156,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_get_commands_line())
+      }
+      FetchRpcSessionStats(session) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_get_session_stats_line())
       }
       SetRpcSessionName(session, name) => {
         if session_id == default_session_id {

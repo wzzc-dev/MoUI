@@ -64,6 +64,8 @@ fn WorkbenchModel::ingest_rpc_response(
       "bash" => self.apply_bash_success(session_id, fields)
       "get_messages" => self.apply_get_messages_success(session_id, fields)
       "get_commands" => self.apply_get_commands_success(session_id, fields)
+      "get_session_stats" =>
+        self.apply_get_session_stats_success(session_id, fields)
       "set_session_name" => self.apply_set_session_name_success(session_id)
       _ => {
         let snapshot = match fields.get("data") {
@@ -222,6 +224,47 @@ fn WorkbenchModel::apply_get_commands_success(
 }
 
 ///|
+fn WorkbenchModel::apply_get_session_stats_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let stats = match json_object(fields, "data") {
+    Some(data) => pi_session_stats_from_data(data)
+    None => PiSessionStatsSnapshot::new()
+  }
+  {
+    ..self.update_session_from_stats(session_id, stats),
+    pi_rpc: {
+      ..self.pi_rpc,
+      command: "get_session_stats",
+      success: true,
+      session_id: if stats.session_id == "" {
+        self.pi_rpc.session_id
+      } else {
+        stats.session_id
+      },
+      session_file: if stats.session_file == "" {
+        self.pi_rpc.session_file
+      } else {
+        stats.session_file
+      },
+      message_count: stats.total_messages,
+      error: "",
+    },
+    pi_session_stats: stats,
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi session stats refreshed",
+      detail=session_stats_detail(session_id, stats),
+      tone="success",
+    ),
+    status="Pi session stats refreshed",
+  )
+}
+
+///|
 fn WorkbenchModel::apply_bash_success(
   self : WorkbenchModel,
   session_id : String,
@@ -360,6 +403,63 @@ fn WorkbenchModel::update_session_from_rpc(
 }
 
 ///|
+fn WorkbenchModel::update_session_from_stats(
+  self : WorkbenchModel,
+  workbench_session_id : String,
+  stats : PiSessionStatsSnapshot,
+) -> WorkbenchModel {
+  let summary = "Pi stats: " +
+    stats.total_messages.to_string() +
+    " messages, " +
+    stats.tool_calls.to_string() +
+    " tools, " +
+    stats.token_total.to_string() +
+    " tokens"
+  let sessions = self.sessions.map(session => {
+    if session.id == workbench_session_id {
+      {
+        ..session,
+        status: if session.status == "running" {
+          "running"
+        } else {
+          "active"
+        },
+        summary,
+      }
+    } else {
+      session
+    }
+  })
+  let existing = self.pi_session_binding_for_id(workbench_session_id)
+  let rpc_session_id = if stats.session_id == "" {
+    existing.rpc_session_id
+  } else {
+    stats.session_id
+  }
+  let session_file = if stats.session_file == "" {
+    existing.session_file
+  } else {
+    stats.session_file
+  }
+  let status = if rpc_session_id == "" && session_file == "" {
+    existing.status
+  } else {
+    "bound"
+  }
+  { ..self, sessions, }.upsert_pi_session_binding(
+    PiSessionBinding::new(
+      workbench_session_id~,
+      rpc_session_id~,
+      session_file~,
+      session_name=existing.session_name,
+      model=existing.model,
+      status~,
+      last_command="get_session_stats",
+    ),
+  )
+}
+
+///|
 fn rpc_snapshot_from_data(
   command : String,
   data : Map[String, Json],
@@ -374,6 +474,39 @@ fn rpc_snapshot_from_data(
     pending_message_count=json_int(data, "pendingMessageCount").unwrap_or(0),
     message_count=json_int(data, "messageCount").unwrap_or(0),
   )
+}
+
+///|
+fn session_stats_detail(
+  session_id : String,
+  stats : PiSessionStatsSnapshot,
+) -> String {
+  session_id +
+  ": " +
+  stats.total_messages.to_string() +
+  " messages, " +
+  stats.tool_calls.to_string() +
+  " tool calls, " +
+  stats.token_total.to_string() +
+  " tokens" +
+  session_stats_context_suffix(stats)
+}
+
+///|
+fn session_stats_context_suffix(stats : PiSessionStatsSnapshot) -> String {
+  match stats.context_percent {
+    Some(percent) => ", context " + compact_stats_percent(percent)
+    None => ""
+  }
+}
+
+///|
+fn compact_stats_percent(percent : Double) -> String {
+  if percent > 0.0 && percent < 1.0 {
+    "<1%"
+  } else {
+    percent.to_int().to_string() + "%"
+  }
 }
 
 ///|
@@ -1504,6 +1637,32 @@ fn pi_command_infos_from_values(values : Array[Json]) -> Array[PiCommandInfo] {
 }
 
 ///|
+fn pi_session_stats_from_data(
+  data : Map[String, Json],
+) -> PiSessionStatsSnapshot {
+  let tokens = json_object(data, "tokens").unwrap_or({})
+  let context = json_object(data, "contextUsage").unwrap_or({})
+  PiSessionStatsSnapshot::new(
+    session_file=json_string(data, "sessionFile").unwrap_or(""),
+    session_id=json_string(data, "sessionId").unwrap_or(""),
+    user_messages=json_int(data, "userMessages").unwrap_or(0),
+    assistant_messages=json_int(data, "assistantMessages").unwrap_or(0),
+    tool_calls=json_int(data, "toolCalls").unwrap_or(0),
+    tool_results=json_int(data, "toolResults").unwrap_or(0),
+    total_messages=json_int(data, "totalMessages").unwrap_or(0),
+    token_input=json_int(tokens, "input").unwrap_or(0),
+    token_output=json_int(tokens, "output").unwrap_or(0),
+    token_cache_read=json_int(tokens, "cacheRead").unwrap_or(0),
+    token_cache_write=json_int(tokens, "cacheWrite").unwrap_or(0),
+    token_total=json_int(tokens, "total").unwrap_or(0),
+    cost=json_number(data, "cost").unwrap_or(0.0),
+    context_tokens=json_int(context, "tokens"),
+    context_window=json_int(context, "contextWindow").unwrap_or(0),
+    context_percent=json_number(context, "percent"),
+  )
+}
+
+///|
 fn pi_command_info_from_json(index : Int, value : Json) -> PiCommandInfo {
   match value {
     Object(fields) => {
@@ -1619,6 +1778,14 @@ fn json_string(fields : Map[String, Json], key : String) -> String? {
 fn json_int(fields : Map[String, Json], key : String) -> Int? {
   match fields.get(key) {
     Some(Number(value, ..)) => Some(value.to_int())
+    _ => None
+  }
+}
+
+///|
+fn json_number(fields : Map[String, Json], key : String) -> Double? {
+  match fields.get(key) {
+    Some(Number(value, ..)) => Some(value)
     _ => None
   }
 }
