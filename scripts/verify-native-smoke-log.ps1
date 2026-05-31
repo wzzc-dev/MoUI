@@ -53,6 +53,7 @@ $defaultStageMarkers = @(
   "native smoke first font family bytes",
   "native smoke typeface family bytes",
   "native smoke font fallback resource plan count",
+  "native smoke font fallback font resource plan count",
   "native smoke font fallback width"
 )
 $stageMarkers = $defaultStageMarkers

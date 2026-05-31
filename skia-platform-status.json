@@ -238,6 +238,11 @@
       "id": "fontmgr.fallback-resource-plan",
       "area": "FontMgr",
       "marker": "native smoke font fallback resource plan count"
+    },
+    {
+      "id": "fontmgr.fallback-font-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback font resource plan count"
     }
   ],
   "platforms": {

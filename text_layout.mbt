@@ -576,6 +576,40 @@ pub fn FontFallbackRequest::resource_descriptor(
 }
 
 ///|
+/// Font descriptor derived from a native fallback/typeface match result.
+pub fn FontFallbackRequest::font_descriptor(
+  self : FontFallbackRequest,
+  size? : Float = 12.0,
+  scale_x? : Float = 1.0,
+  skew_x? : Float = 0.0,
+) -> FontDescriptor {
+  FontDescriptor::new(
+    typeface_key=self.resource_key(),
+    size~,
+    scale_x~,
+    skew_x~,
+  )
+}
+
+///|
+/// Combined resource plan for matching a fallback typeface and creating a font.
+pub fn FontFallbackRequest::resource_plan(
+  self : FontFallbackRequest,
+  size? : Float = 12.0,
+  scale_x? : Float = 1.0,
+  skew_x? : Float = 0.0,
+  fallback_byte_size? : Int64 = -1L,
+  font_byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new([
+    self.resource_descriptor(byte_size=fallback_byte_size),
+    self
+    .font_descriptor(size~, scale_x~, skew_x~)
+    .resource_descriptor(byte_size=font_byte_size),
+  ])
+}
+
+///|
 fn TextRange::text_run_cache_id(self : TextRange) -> Bytes {
   text_run_cache_u64(self.start) + text_run_cache_u64(self.end)
 }
