@@ -97,6 +97,10 @@ packages:
   into generic `PiCommandInfo` rows so coding-agent command discovery can later
   grow into document, research, automation, and knowledge workflows without
   changing the platform-neutral transport contract.
+- The command catalog can invoke a listed command by sending `/<name>` through
+  the existing platform-neutral `SendUserInput` prompt path. This keeps slash
+  command execution usable in the native UI without adding a native-only
+  transport command or process bridge.
 - Session selection refreshes Pi session stats through `get_session_stats`.
   The shared app maps message counts, tool counts, token totals, cost, and
   optional context usage into `PiSessionStatsSnapshot`, then surfaces compact
@@ -248,7 +252,9 @@ to Pi's concrete `sessionId`, `sessionFile`, optional `sessionName`, and current
 model plus thinking, steering, and follow-up modes. The following
 `get_messages` response fills the transcript panel from Pi's `AgentMessage[]`,
 and the following `get_commands` response fills the command catalog from Pi's
-slash command registry. The following `get_session_stats` response fills the
+slash command registry. Invoking a catalog row sends `/<name>` through the same
+prompt RPC channel used by manual user input. The following
+`get_session_stats` response fills the
 compact status metrics from Pi's session statistics. This keeps
 `PiTransportEvent` platform-neutral while letting the app separate Mo Workbench
 sidebar ids from Pi's runtime session identity.

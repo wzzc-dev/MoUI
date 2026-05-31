@@ -182,6 +182,7 @@ pub(all) enum WorkbenchMsg {
   SelectPanel(String)
   PromptChanged(String)
   DispatchPrompt
+  InvokeCommand(String)
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)
   MarkCommandComplete(Int, Int)
@@ -497,6 +498,7 @@ pub fn WorkbenchModel::update(
     SelectPanel(panel) => { ..self, selected_panel: panel }
     PromptChanged(value) => { ..self, prompt: value }
     DispatchPrompt => self.dispatch_prompt()
+    InvokeCommand(name) => self.invoke_command(name)
     ReceiveTransport(event) => self.receive_transport(event)
     QueueCommand(command) => self.queue_command(command)
     MarkCommandComplete(id, code) => self.mark_command_complete(id, code)
@@ -659,6 +661,8 @@ pub fn WorkbenchModel::update_with_transport(
     SelectSession(id) =>
       self.select_session_with_transport(id, transport_runtime)
     DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
+    InvokeCommand(name) =>
+      self.invoke_command_with_transport(name, transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
     SyncSessionName => self.sync_session_name_with_transport(transport_runtime)
@@ -740,6 +744,61 @@ fn WorkbenchModel::dispatch_prompt_with_transport(
     )
     WorkbenchUpdate::new(
       self.dispatch_prompt(),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
+fn WorkbenchModel::invoke_command(
+  self : WorkbenchModel,
+  name : String,
+) -> WorkbenchModel {
+  let command_name = name.trim().to_owned()
+  if command_name == "" {
+    { ..self, last_status: "Pi command is empty" }
+  } else {
+    let prompt = "/" + command_name
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="Pi command queued",
+        detail=prompt,
+        tone="info",
+      ),
+    )
+    let command = SendUserInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued Pi command for RPC",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::invoke_command_with_transport(
+  self : WorkbenchModel,
+  name : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let command_name = name.trim().to_owned()
+  if command_name == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Pi command is empty" })
+  } else {
+    let session = self.active_session()
+    let prompt = "/" + command_name
+    let commands = self.commands_with_session_start(
+      session,
+      SendUserInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.invoke_command(name),
       effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
     )
   }

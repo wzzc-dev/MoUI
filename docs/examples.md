@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, RPC message transcript refresh, RPC command catalog and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, RPC message transcript refresh, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -190,7 +190,10 @@ successful and failed Pi RPC `response` JSONL objects: `get_state` refreshes
 the current Workbench session snapshot, `get_messages` refreshes the transcript
 model, `get_commands` refreshes the available slash/prompt/extension/skill
 command catalog, and `get_session_stats` refreshes compact
-message/tool/token/context metrics. `cycle_thinking_level` responses and
+message/tool/token/context metrics. Catalog rows can run a command by sending
+`/<name>` through the same platform-neutral `SendUserInput` prompt path, so
+native transport does not need a command-specific bridge. `cycle_thinking_level`
+responses and
 `thinking_level_changed` events keep the compact Thinking control and
 `PiAgentSnapshot` aligned. `set_steering_mode` and `set_follow_up_mode`
 responses acknowledge the compact composer controls, while `get_state` refreshes

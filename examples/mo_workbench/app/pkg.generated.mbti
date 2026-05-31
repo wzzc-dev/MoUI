@@ -258,6 +258,7 @@ pub(all) enum WorkbenchMsg {
   SelectPanel(String)
   PromptChanged(String)
   DispatchPrompt
+  InvokeCommand(String)
   ReceiveTransport(PiTransportEvent)
   QueueCommand(String)
   MarkCommandComplete(Int, Int)
