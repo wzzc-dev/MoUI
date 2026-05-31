@@ -145,6 +145,11 @@ test "image api typechecks" {
           assert_eq(pixmap.row_bytes, 16)
         }
       }
+      let descriptor = surface.descriptor()
+      assert_true(descriptor.is_raster())
+      assert_true(descriptor.image_info == surface.image_info())
+      assert_true(descriptor.dimensions() == @skia.ISize::new(16, 16))
+      assert_true(!descriptor.is_gpu())
     }
   }
 }

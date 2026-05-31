@@ -676,6 +676,59 @@ pub(all) enum StrokeJoin {
 pub fn StrokeJoin::to_skia_ordinal(Self) -> Int
 pub impl Default for StrokeJoin
 
+pub(all) enum SurfaceBackend {
+  Raster
+  Window
+  Gpu
+} derive(Eq, @debug.Debug)
+pub fn SurfaceBackend::is_gpu(Self) -> Bool
+pub fn SurfaceBackend::is_raster(Self) -> Bool
+pub fn SurfaceBackend::is_window(Self) -> Bool
+pub impl Default for SurfaceBackend
+
+pub(all) enum SurfaceBudget {
+  Budgeted
+  Unbudgeted
+} derive(Eq, @debug.Debug)
+pub fn SurfaceBudget::is_budgeted(Self) -> Bool
+pub impl Default for SurfaceBudget
+
+pub(all) struct SurfaceDescriptor {
+  backend : SurfaceBackend
+  image_info : ImageInfo
+  origin : SurfaceOrigin
+  sample_count : Int
+  stencil_bits : Int
+  budget : SurfaceBudget
+} derive(Eq, @debug.Debug)
+pub fn SurfaceDescriptor::bounds(Self) -> IRect
+pub fn SurfaceDescriptor::dimensions(Self) -> ISize
+pub fn SurfaceDescriptor::gpu_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget) -> Self
+pub fn SurfaceDescriptor::height(Self) -> Int
+pub fn SurfaceDescriptor::is_budgeted(Self) -> Bool
+pub fn SurfaceDescriptor::is_empty(Self) -> Bool
+pub fn SurfaceDescriptor::is_gpu(Self) -> Bool
+pub fn SurfaceDescriptor::is_msaa(Self) -> Bool
+pub fn SurfaceDescriptor::is_raster(Self) -> Bool
+pub fn SurfaceDescriptor::is_window(Self) -> Bool
+pub fn SurfaceDescriptor::new(SurfaceBackend, ImageInfo, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget) -> Self
+pub fn SurfaceDescriptor::raster_n32_premul(ISize) -> Self
+pub fn SurfaceDescriptor::width(Self) -> Int
+pub fn SurfaceDescriptor::window_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int) -> Self
+pub fn SurfaceDescriptor::with_backend(Self, SurfaceBackend) -> Self
+pub fn SurfaceDescriptor::with_budget(Self, SurfaceBudget) -> Self
+pub fn SurfaceDescriptor::with_dimensions(Self, ISize) -> Self
+pub fn SurfaceDescriptor::with_image_info(Self, ImageInfo) -> Self
+pub fn SurfaceDescriptor::with_origin(Self, SurfaceOrigin) -> Self
+pub fn SurfaceDescriptor::with_sample_count(Self, Int) -> Self
+pub fn SurfaceDescriptor::with_stencil_bits(Self, Int) -> Self
+
+pub(all) enum SurfaceOrigin {
+  TopLeft
+  BottomLeft
+} derive(Eq, @debug.Debug)
+pub impl Default for SurfaceOrigin
+
 pub(all) enum TileMode {
   Clamp
   Repeat
