@@ -83,6 +83,11 @@ pub fn pi_rpc_get_messages_line() -> String {
 }
 
 ///|
+pub fn pi_rpc_get_fork_messages_line() -> String {
+  ({ "type": "get_fork_messages" } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_get_commands_line() -> String {
   ({ "type": "get_commands" } : Json).stringify()
 }
@@ -110,6 +115,11 @@ pub fn pi_rpc_set_follow_up_mode_line(mode~ : String) -> String {
 ///|
 pub fn pi_rpc_switch_session_line(session_path~ : String) -> String {
   ({ "type": "switch_session", "sessionPath": session_path } : Json).stringify()
+}
+
+///|
+pub fn pi_rpc_fork_line(entry_id~ : String) -> String {
+  ({ "type": "fork", "entryId": entry_id } : Json).stringify()
 }
 
 ///|
@@ -177,6 +187,12 @@ fn commands_to_request(
         }
         lines.push(pi_rpc_get_messages_line())
       }
+      FetchRpcForkMessages(session) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_get_fork_messages_line())
+      }
       FetchRpcCommands(session) => {
         if session_id == default_session_id {
           session_id = session
@@ -188,6 +204,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_get_session_stats_line())
+      }
+      ForkRpcSession(session, entry_id) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_fork_line(entry_id~))
       }
       CycleRpcThinkingLevel(session) => {
         if session_id == default_session_id {

@@ -158,9 +158,17 @@ packages:
 - The session panel can request a fresh Pi session through a platform-neutral
   `NewRpcSession` command. The native encoder emits `{"type":"new_session"}`,
   then the shared app waits for the `new_session` success response before
-  queuing the state, message, command catalog, and stats refresh. This keeps
-  the Workbench-to-Pi binding updated from Pi's next `get_state` response
-  rather than from native process state or JSONL write order.
+  queuing the state, message, fork-candidate, command catalog, and stats
+  refresh. This keeps the Workbench-to-Pi binding updated from Pi's next
+  `get_state` response rather than from native process state or JSONL write
+  order.
+- The session panel can discover Pi fork points through `get_fork_messages`.
+  The shared app stores Pi's `{entryId,text}` rows as `PiForkMessage` values,
+  shows a compact fork affordance in the transcript panel only when candidates
+  exist, and sends `ForkRpcSession(session, entryId)` for the selected user
+  message. After an uncancelled `fork` response, the app waits for the
+  acknowledgement before refreshing state, messages, fork candidates, command
+  catalog, and stats so Pi's new session file remains the source of truth.
 - The workbench can cycle Pi's thinking level from the session status panel.
   The shared app emits a platform-neutral `CycleRpcThinkingLevel` command,
   ingests `cycle_thinking_level` responses and `thinking_level_changed` events,
@@ -182,12 +190,17 @@ packages:
   Workbench session with the Pi session id, model label, message count, and
   pending count, and append a timeline event. Successful `get_messages`
   responses replace the visible transcript with normalized `TranscriptItem`
-  rows. Successful `get_commands` responses replace the visible command catalog
-  with normalized `PiCommandInfo` rows that preserve command name, kind,
-  description, source scope, and source path. Successful `get_session_stats`
-  responses refresh `PiSessionStatsSnapshot` with message, tool, token, cost,
-  and optional context counters. Successful `cycle_thinking_level` responses
-  update the agent snapshot when Pi returns the new level, while
+  rows. Successful `get_fork_messages` responses replace the visible fork
+  candidate list with normalized `PiForkMessage` rows containing Pi's fork
+  `entryId` and display text. Successful `fork` responses mark the binding as
+  forking or cancelled; accepted forks then trigger the same chained refresh as
+  new-session creation. Successful `get_commands` responses replace the visible
+  command catalog with normalized `PiCommandInfo` rows that preserve command
+  name, kind, description, source scope, and source path. Successful
+  `get_session_stats` responses refresh `PiSessionStatsSnapshot` with message,
+  tool, token, cost, and optional context counters. Successful
+  `cycle_thinking_level` responses update the agent snapshot when Pi returns
+  the new level, while
   `thinking_level_changed` events remain the authoritative stream update.
   Successful `set_steering_mode` and `set_follow_up_mode` responses acknowledge
   the compact composer controls; `get_state` refreshes the current mode values.
@@ -229,9 +242,9 @@ packages:
   the owner.
 - The native encoder is aligned with the installed Pi RPC protocol and has
   no-model smoke paths using offline `get_state`, `new_session`, `get_messages`,
-  `get_commands`, `get_session_stats`, `cycle_thinking_level`,
-  `set_steering_mode`, `set_follow_up_mode`, `set_session_name`, and
-  `abort_bash` over `pi --mode rpc`.
+  `get_fork_messages`, `get_commands`, `get_session_stats`,
+  `cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`,
+  `set_session_name`, and `abort_bash` over `pi --mode rpc`.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
@@ -239,8 +252,8 @@ stderr/nonzero-exit failures, restarts after unexpected child exits, speaks the
 current Pi RPC command names, and the shared app ingests command responses,
 streaming session events, and Workbench-to-Pi session bindings. The next
 transport slice should add real end-to-end prompt smoke evidence when a model
-can be used safely and decide the precise `fork` entry-id affordance once Pi's
-RPC fork payload is documented or discoverable.
+can be used safely and broaden fork smoke evidence once a persisted session
+with real user-message entry ids is available.
 
 ## Pi JSONL Workbench Events
 
@@ -271,6 +284,9 @@ timeline event. A successful
 `{"type":"response","command":"get_messages","success":true,...}` line replaces
 the visible transcript with normalized `TranscriptItem` rows while preserving
 the raw JSONL transport event. A successful
+`{"type":"response","command":"get_fork_messages","success":true,...}` line
+fills compact fork candidates from Pi's `messages[].entryId` and
+`messages[].text` values. A successful
 `{"type":"response","command":"get_commands","success":true,...}` line replaces
 the visible command catalog with normalized `PiCommandInfo` rows for prompt,
 extension, and skill commands. A successful
@@ -301,6 +317,7 @@ Session selection is also app-layer state. If a selected `WorkbenchSession` has
 {"type":"switch_session","sessionPath":"/tmp/mo-workbench-pi-rpc-session.jsonl"}
 {"type":"get_state"}
 {"type":"get_messages"}
+{"type":"get_fork_messages"}
 {"type":"get_commands"}
 {"type":"get_session_stats"}
 ```
@@ -310,11 +327,12 @@ or cancelled. The following `get_state` response binds that Workbench session id
 to Pi's concrete `sessionId`, `sessionFile`, optional `sessionName`, and current
 model plus thinking, steering, and follow-up modes. The following
 `get_messages` response fills the transcript panel from Pi's `AgentMessage[]`,
-and the following `get_commands` response fills the command catalog from Pi's
-slash command registry. Invoking a catalog row sends `/<name>` through the same
-prompt RPC channel used by manual user input. The following
-`get_session_stats` response fills the
-compact status metrics from Pi's session statistics. This keeps
+the following `get_fork_messages` response fills the fork affordance from Pi's
+user-message entry ids, and the following `get_commands` response fills the
+command catalog from Pi's slash command registry. Invoking a catalog row sends
+`/<name>` through the same prompt RPC channel used by manual user input. The
+following `get_session_stats` response fills the compact status metrics from
+Pi's session statistics. This keeps
 `PiTransportEvent` platform-neutral while letting the app separate Mo Workbench
 sidebar ids from Pi's runtime session identity.
 
@@ -335,6 +353,7 @@ second platform-neutral refresh batch:
 ```json
 {"type":"get_state"}
 {"type":"get_messages"}
+{"type":"get_fork_messages"}
 {"type":"get_commands"}
 {"type":"get_session_stats"}
 ```
@@ -346,8 +365,25 @@ response binds the Workbench session id to Pi's fresh `sessionId` /
 platform-neutral command/event contract. Pi 0.77.0 accepts `new_session` over
 RPC, but batched follow-up reads can be answered before the `new_session`
 acknowledgement, so Mo Workbench intentionally waits for that acknowledgement
-before refreshing. `fork` exists but requires an entry id shape that is not yet
-wired into Mo Workbench.
+before refreshing.
+
+Forking follows the same acknowledgement-first pattern. `get_fork_messages`
+returns user-message fork points:
+
+```json
+{"type":"response","command":"get_fork_messages","success":true,"data":{"messages":[{"entryId":"entry-user-1","text":"Inspect the Skia route"}]}}
+```
+
+Selecting a fork candidate sends:
+
+```json
+{"type":"fork","entryId":"entry-user-1"}
+```
+
+If Pi accepts the fork, Mo Workbench queues the same second-stage refresh batch
+shown above and binds the Workbench session id from the next `get_state`
+response. If Pi reports `cancelled:true`, the binding records the cancellation
+and no refresh is queued.
 
 Streaming Pi session events also use the same app-layer path:
 
@@ -382,8 +418,10 @@ contract. Dispatching `Shutdown` is the only normal path that stops the owner.
 The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `StartRpc` sends `{"type":"get_state"}` as a cheap liveness/state probe,
 `FetchRpcMessages` sends `{"type":"get_messages"}`,
+`FetchRpcForkMessages` sends `{"type":"get_fork_messages"}`,
 `FetchRpcCommands` sends `{"type":"get_commands"}`,
 `FetchRpcSessionStats` sends `{"type":"get_session_stats"}`,
+`ForkRpcSession` sends `{"type":"fork","entryId":...}`,
 `CycleRpcThinkingLevel` sends `{"type":"cycle_thinking_level"}`,
 `SetRpcSteeringMode` sends `{"type":"set_steering_mode","mode":...}`,
 `SetRpcFollowUpMode` sends `{"type":"set_follow_up_mode","mode":...}`,
@@ -409,6 +447,9 @@ printf '{"type":"new_session"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_messages"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"get_fork_messages"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_commands"}\n' | \
@@ -437,13 +478,14 @@ printf '{"type":"abort_bash"}\n' | \
 The first command should return a JSONL `response` object for `get_state`, the
 second should return a successful `new_session` acknowledgement, the third
 should return a `get_messages` response with a `messages` array, the fourth
-should return a `get_commands` response with a `commands` array, the fifth
-should return a `get_session_stats` response with message, tool, token, and cost
-counters, the sixth should return a successful `cycle_thinking_level`
-acknowledgement, the seventh and eighth should acknowledge the
-steering/follow-up mode changes, the ninth should emit `session_info_changed`
-and a successful `set_session_name` response, and the tenth should return a
-successful
+should return a `get_fork_messages` response with a fork `messages` array, the
+fifth should return a `get_commands` response with a `commands` array, the
+sixth should return a `get_session_stats` response with message, tool, token,
+and cost counters, the seventh should return a successful
+`cycle_thinking_level` acknowledgement, the eighth and ninth should acknowledge
+the steering/follow-up mode changes, the tenth should emit
+`session_info_changed` and a successful `set_session_name` response, and the
+eleventh should return a successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -476,6 +518,9 @@ printf '{"type":"new_session"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_messages"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"get_fork_messages"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_commands"}\n' | \
