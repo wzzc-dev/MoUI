@@ -343,6 +343,88 @@ test "skia renderer reports presenter failure without counting present" {
 }
 
 ///|
+test "skia unmatched scope pops are ignored and counted" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=8.0, height=8.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopRoundedClip,
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PopOpacity,
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      @core.Color::black(),
+    ),
+  ]) catch {
+    err =>
+      fail("expected Skia renderer to ignore unmatched pops: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="6")
+  inspect(renderer.present_count(), content="1")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  inspect(frame.width, content="8")
+  inspect(frame.height, content="8")
+}
+
+///|
+test "skia mismatched scope pop preserves the active scope" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=12.0, height=8.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
+    ),
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
+      @core.Color::black(),
+    ),
+    @core.DrawCommand::PopClip,
+  ]) catch {
+    err =>
+      fail("expected Skia renderer to ignore mismatched pop: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="1")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+  assert_false(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=6.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+}
+
+///|
 test "skia unsupported command diagnostics reset per frame" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)

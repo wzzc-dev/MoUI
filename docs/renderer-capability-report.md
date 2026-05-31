@@ -145,7 +145,9 @@ and failed decodes mark records failed with a diagnostic.
 backend info, fallback-safe availability checks, a basic Skia-backed text
 system, image resource snapshots that native Skia providers forward through
 `HostWindowRenderer`, cached-image disposal diagnostics, and diagnostics for
-unsupported commands. In fallback builds `skia_available()`
+unsupported commands. Unmatched or mismatched scope-pop commands are treated as
+unsupported diagnostics and ignored instead of restoring the frame-root canvas
+scope. In fallback builds `skia_available()`
 returns `false`, renderer creation raises `SkiaUnavailable`, and platform Skia
 entrypoints preflight availability before handing control to host app assembly,
 so explicit Skia selection exits with a diagnostic instead of opening a blank
@@ -171,7 +173,9 @@ linear-gradient-debug, and vignette shader effects, PNG data URI and local PNG
 image drawing, failed-image placeholders, basic text glyph-run pixels, bounded
 `TextRun.frame` clipping, and optional SkShaper availability when the smoke is
 run with `--enable-skshaper`, while requiring
-`unsupported_command_count == 0`. Native Skia provider packages expose the same
+`unsupported_command_count == 0`. Focused Skia renderer white-box tests also
+cover unmatched and mismatched scope-pop diagnostics. Native Skia provider
+packages expose the same
 renderer image-resource snapshot records through `HostWindowRenderer`, so host
 diagnostics can inspect loading, ready, failed, and disposed image resources
 without importing `render/skia`. Remaining Skia
