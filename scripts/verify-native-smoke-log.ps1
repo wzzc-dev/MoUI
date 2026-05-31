@@ -61,8 +61,68 @@ $defaultStageMarkers = @(
 )
 $defaultExpectedStageValues = @(
   [pscustomobject]@{
+    Marker = "native smoke render resource plan count"
+    Value = "9"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame resource plan count"
+    Value = "9"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame validation status"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame cache resources"
+    Value = "9"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render resource cache inserts"
+    Value = "9"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke gpu context resource plan count"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke gpu frame context validation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface target resource plan count"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke window target resource plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke shader draws"
+    Value = "3"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke shader resource plan count"
+    Value = "3"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke filter resource plan count"
+    Value = "3"
+  }
+  [pscustomobject]@{
     Marker = "native smoke text run resource plan count"
     Value = "3"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke font resource plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke font fallback resource plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke font fallback font resource plan count"
+    Value = "2"
   }
 )
 $stageMarkers = $defaultStageMarkers

@@ -333,7 +333,22 @@ if ($status.schema_version -ge 3) {
       throw "schema v4 platform status is missing native_smoke_expected_values list"
     }
     $requiredExpectedValues = @{
+      "native smoke render resource plan count" = "9"
+      "native smoke render frame resource plan count" = "9"
+      "native smoke render frame validation status" = "1"
+      "native smoke render frame cache resources" = "9"
+      "native smoke render resource cache inserts" = "9"
+      "native smoke gpu context resource plan count" = "2"
+      "native smoke gpu frame context validation" = "1"
+      "native smoke surface target resource plan count" = "2"
+      "native smoke window target resource plan count" = "1"
+      "native smoke shader draws" = "3"
+      "native smoke shader resource plan count" = "3"
+      "native smoke filter resource plan count" = "3"
       "native smoke text run resource plan count" = "3"
+      "native smoke font resource plan count" = "1"
+      "native smoke font fallback resource plan count" = "1"
+      "native smoke font fallback font resource plan count" = "2"
     }
     $seenExpectedMarkers = @{}
     foreach ($expected in $expectedValues) {
