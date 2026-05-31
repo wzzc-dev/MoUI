@@ -8,7 +8,7 @@ fn sample_sessions() -> Array[WorkbenchSession] {
       branch="codex/mo-workbench",
       status="active",
       summary="Native Skia dogfood slice for a Pi-backed coding workbench.",
-      active_task="Pi RPC + macOS Skia dogfood.",
+      active_task="",
       unread_events=3,
     ),
     WorkbenchSession::new(
@@ -19,7 +19,7 @@ fn sample_sessions() -> Array[WorkbenchSession] {
       branch="main",
       status="queued",
       summary="JSONL stdin/stdout transport exercise for pi --mode rpc.",
-      active_task="Validate Pi JSONL RPC.",
+      active_task="",
       unread_events=1,
     ),
   ]
