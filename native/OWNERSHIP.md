@@ -45,7 +45,14 @@ unknown parameter.
   finalizers. Their `pointer_field_count` and ordered `pointer_fields` list must
   match the C struct exactly, and the factory must encode the first pointer
   field offset in `moonbit_skia_regular_object_header(...)` before assigning
-  every listed pointer field.
+  every listed pointer field. Their `value_fields` list records non-pointer
+  fields that must also exist in the struct and be initialized by the factory.
+- `regular_runtime_objects`: regular MoonBit runtime objects that cross the C++
+  ABI as values, arrays, or helper records rather than public MoonBit handle
+  wrappers. These follow the same `moonbit_malloc`, `pointer_fields`, and
+  `value_fields` checks as `regular_objects`; the verifier also rejects any
+  `moonbit_malloc` factory in `native/skia_stub_common.cpp` that is not listed
+  in one of these regular-object manifest sections.
 
 When adding a new native handle, update `ownership.json` in the same patch as
 the C++ wrapper. The verifier rejects undeclared external factories, undeclared
