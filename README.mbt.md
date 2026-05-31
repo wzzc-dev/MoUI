@@ -17,8 +17,9 @@ The current package exposes the first value-layer API surface:
 - canvas point drawing modes: `PointMode`
 - image sampling: `SamplingOptions`, `FilterMode`, `MipmapMode`,
   `CubicResampler`
-- surface contracts: `SurfaceDescriptor`, `SurfaceBackend`, `SurfaceOrigin`,
-  and `SurfaceBudget` for raster, window, and future GPU render targets
+- surface contracts: `SurfaceDescriptor`, `SurfaceTargetDescriptor`,
+  `SurfaceBackend`, `SurfaceOrigin`, `SurfaceBudget`, and `SurfacePresentMode`
+  for raster, window, and future GPU render targets
 - renderer resource cache: `ResourceCache` and `ResourceCacheStats` provide a
   deterministic byte-budgeted LRU boundary for images, shaders, typefaces, and
   other backend-owned resources

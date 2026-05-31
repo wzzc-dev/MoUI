@@ -258,6 +258,61 @@ test "surface descriptors model raster window and gpu contracts" {
 }
 
 ///|
+test "surface target descriptors model present modes and frame pacing" {
+  let raster = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(8, 8),
+  )
+  assert_true(!raster.surface.is_presentable())
+  assert_true(!raster.is_presentable())
+  assert_true(!raster.needs_present())
+  assert_true(raster.present_mode is None)
+  assert_eq(raster.max_frames_in_flight, 1)
+  assert_true(
+    !raster.with_present_mode(@skia_mbt.ImmediatePresent).is_presentable(),
+  )
+
+  let window = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
+    @skia_mbt.ISize::new(32, 24),
+    present_mode=@skia_mbt.MailboxPresent,
+    max_frames_in_flight=3,
+  )
+  assert_true(window.surface.is_window())
+  assert_true(window.surface.is_presentable())
+  assert_true(window.is_presentable())
+  assert_true(window.needs_present())
+  assert_true(window.is_multibuffered())
+  assert_true(window.present_mode == Some(@skia_mbt.MailboxPresent))
+  assert_true(
+    window.with_present_mode(@skia_mbt.ImmediatePresent).present_mode ==
+    Some(@skia_mbt.ImmediatePresent),
+  )
+  match window.with_present_mode(@skia_mbt.ImmediatePresent).present_mode {
+    None => fail("window target should retain an immediate present mode")
+    Some(mode) => assert_true(mode.allows_tearing())
+  }
+  assert_true(window.without_present().present_mode is None)
+  assert_eq(window.with_max_frames_in_flight(-2).max_frames_in_flight, 1)
+  assert_true(
+    window.with_dimensions(@skia_mbt.ISize::new(4, 2)).dimensions() ==
+    @skia_mbt.ISize::new(4, 2),
+  )
+
+  let gpu = @skia_mbt.SurfaceTargetDescriptor::gpu_n32_premul(
+    @skia_mbt.ISize::new(64, 48),
+    origin=@skia_mbt.BottomLeft,
+    present_mode=@skia_mbt.FifoPresent,
+  )
+  assert_true(gpu.surface.is_gpu())
+  assert_true(gpu.surface.origin == @skia_mbt.BottomLeft)
+  assert_true(gpu.present_mode == Some(@skia_mbt.FifoPresent))
+  match gpu.present_mode {
+    None => fail("gpu target should retain a fifo present mode")
+    Some(mode) => assert_true(mode.prefers_vsync())
+  }
+  assert_true(gpu.bounds() == @skia_mbt.IRect::from_wh(64, 48))
+}
+
+///|
 test "resource cache tracks lru budget and stats" {
   let cache : @skia_mbt.ResourceCache[String, Int] = @skia_mbt.ResourceCache::new(
     max_bytes=10L,
