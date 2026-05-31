@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/mo_workbench/native_transport"
+
+import {
+  "examples/mo_workbench/app",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn pi_rpc_start_line(session_id~ : String, cwd~ : String) -> String
+
+pub fn pi_rpc_user_input_line(session_id~ : String, text~ : String) -> String
+
+pub async fn run_jsonl_session(PiNativeTransportConfig, session_id~ : String, Array[String]) -> PiNativeTransportRun
+
+// Errors
+
+// Types and methods
+pub(all) struct PiNativeTransportConfig {
+  command : String
+  args : Array[String]
+  cwd : String
+}
+pub fn PiNativeTransportConfig::command_label(Self) -> String
+pub fn PiNativeTransportConfig::new(command~ : String, args? : Array[String], cwd? : String) -> Self
+pub fn PiNativeTransportConfig::pi(cwd? : String) -> Self
+pub fn PiNativeTransportConfig::shell(script~ : String, cwd? : String) -> Self
+
+pub(all) struct PiNativeTransportRun {
+  events : Array[@app.PiTransportEvent]
+  exit_code : Int
+} derive(Eq, @debug.Debug)
+pub fn PiNativeTransportRun::received_lines(Self) -> Array[String]
+pub fn PiNativeTransportRun::sent_lines(Self) -> Array[String]
+
+// Type aliases
+
+// Traits
