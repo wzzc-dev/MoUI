@@ -62,12 +62,14 @@ bash scripts/linux-accept-real-skia-smoke.sh --skia-provider source --work-dir .
 
 On Ubuntu, `scripts/install-linux-smoke-deps.sh` installs the apt packages used
 by the workflow: `build-essential`, `git`, `python3`, `ninja-build`, `clang`,
-`curl`, `ca-certificates`, `libfontconfig1-dev`, `libfreetype-dev`, and
-`libharfbuzz-dev`, plus `wayland-protocols` for the `wzzc-dev/window` native
-prebuild. Use `--check` to verify an already prepared
-runner, or `--print-packages` to audit the package list without touching the
-system. The Linux source-build GN defaults set `cc="clang"` and `cxx="clang++"`
-so source-built smoke runs do not depend on the runner's default C++ compiler.
+`curl`, `ca-certificates`, `libfontconfig1-dev`, `libfreetype-dev`,
+`libharfbuzz-dev`, `libwayland-dev`, `libwayland-bin`, and `wayland-protocols`.
+The Wayland packages provide the protocol XML, headers, and `wayland-scanner`
+used by the `wzzc-dev/window` native prebuild. Use `--check` to verify an
+already prepared runner, or `--print-packages` to audit the package list without
+touching the system. The Linux source-build GN defaults set `cc="clang"` and
+`cxx="clang++"` so source-built smoke runs do not depend on the runner's default
+C++ compiler.
 
 When `--skia-rev` is omitted, the Linux source-build helpers read the first
 non-comment line from `skia-revision.txt`. After a real runner proves a Skia
