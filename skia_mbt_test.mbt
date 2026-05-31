@@ -1053,6 +1053,45 @@ test "render command list includes declared resource descriptors" {
 }
 
 ///|
+test "render frame descriptor summarizes target commands and resources" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
+    @skia_mbt.ISize::new(24, 16),
+    present_mode=@skia_mbt.MailboxPresent,
+  )
+  let path = @skia_mbt.Path::new().add_rect(
+    @skia_mbt.Rect::from_xywh(2, 3, 5, 6),
+  )
+  let commands = @skia_mbt.RenderCommandList::for_target(target)
+    .save()
+    .draw_path(path, paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::blue()))
+    .restore()
+  let frame = commands.frame_descriptor(target)
+  assert_true(frame.is_target_consistent())
+  assert_true(frame.needs_present())
+  assert_true(frame.has_present())
+  assert_true(frame.is_ready())
+  assert_eq(frame.stats.command_count, 4)
+  assert_eq(frame.stats.present_count, 1)
+  assert_true(
+    frame.touched_bounds == Some(@skia_mbt.Rect::from_xywh(2, 3, 5, 6)),
+  )
+  assert_true(frame.resource_plan.contains_key(target.resource_key()))
+  assert_true(frame.resource_plan.contains_key(path.resource_key()))
+  assert_true(
+    !frame.resource_plan.contains_key(
+      frame.command_list.pass.resource_descriptor().key,
+    ),
+  )
+  assert_eq(frame.resource_plan.count_kind(@skia_mbt.SurfaceResource), 1)
+  assert_eq(frame.resource_plan.count_kind(@skia_mbt.PathResource), 1)
+  let cache : @skia_mbt.ResourceCache[
+    @skia_mbt.RendererResourceKey,
+    @skia_mbt.RendererResourceDescriptor,
+  ] = @skia_mbt.ResourceCache::new()
+  assert_eq(cache.insert_resource_plan(frame.resource_plan), 2)
+}
+
+///|
 test "font fallback contracts normalize style family and language requests" {
   let style = @skia_mbt.FontStyleRequest::new(weight=1200, width=-2, slant=9)
   assert_eq(style.weight, 1000)
