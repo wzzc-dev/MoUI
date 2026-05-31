@@ -1005,6 +1005,8 @@ pub(all) struct TextRunDescriptor {
 pub fn TextRunDescriptor::is_empty(Self) -> Bool
 pub fn TextRunDescriptor::is_right_to_left(Self) -> Bool
 pub fn TextRunDescriptor::new(range? : TextRange, direction? : TextDirection, fallback? : FontFallbackRequest) -> Self
+pub fn TextRunDescriptor::resource_descriptor(Self, Bytes, font_key? : RendererResourceKey, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn TextRunDescriptor::resource_key(Self, Bytes, font_key? : RendererResourceKey) -> RendererResourceKey
 pub fn TextRunDescriptor::with_direction(Self, TextDirection) -> Self
 pub fn TextRunDescriptor::with_fallback(Self, FontFallbackRequest) -> Self
 pub fn TextRunDescriptor::with_range(Self, TextRange) -> Self

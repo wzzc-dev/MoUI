@@ -624,6 +624,40 @@ test "text run descriptor records byte ranges direction and fallback query" {
     run.with_direction(@skia_mbt.LeftToRight).direction.is_left_to_right(),
   )
   assert_true(run.with_range(@skia_mbt.TextRange::new(1, 1)).is_empty())
+
+  let font_key = @skia_mbt.RendererResourceKey::font(b"Inter:16:400")
+  let key = run.resource_key(b"hello", font_key~)
+  assert_true(key.kind == @skia_mbt.TextRunResource)
+  assert_true(!key.is_empty())
+  assert_true(key == run.resource_key(b"hello", font_key~))
+  assert_true(key != run.resource_key(b"hello!", font_key~))
+  assert_true(
+    key !=
+    run
+    .with_range(@skia_mbt.TextRange::new(0, 3))
+    .resource_key(b"hello", font_key~),
+  )
+  assert_true(
+    key !=
+    run.with_direction(@skia_mbt.LeftToRight).resource_key(b"hello", font_key~),
+  )
+  assert_true(
+    key !=
+    run
+    .with_fallback(fallback.with_character(0x4E2D))
+    .resource_key(b"hello", font_key~),
+  )
+  assert_true(
+    key !=
+    run.resource_key(
+      b"hello",
+      font_key=@skia_mbt.RendererResourceKey::font(b"Serif:16:400"),
+    ),
+  )
+  let descriptor = run.resource_descriptor(b"hello", font_key~)
+  assert_true(descriptor.key == key)
+  assert_eq(descriptor.byte_size, 5L)
+  assert_true(descriptor.is_cacheable())
 }
 
 ///|
