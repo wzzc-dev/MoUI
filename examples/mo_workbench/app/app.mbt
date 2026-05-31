@@ -703,20 +703,35 @@ fn WorkbenchModel::mark_command_complete(
 ///|
 fn WorkbenchModel::cancel_run(self : WorkbenchModel) -> WorkbenchModel {
   let session = self.active_session()
+  let transport_command = self.cancel_transport_command(session)
+  let shell_cancel = transport_command is CancelShellCommand(_)
+  let model = if shell_cancel {
+    self.mark_latest_shell_command_cancelling(session)
+  } else {
+    self
+  }
   let events = self.events.copy()
   events.push(
     AgentEvent::new(
       phase="control",
-      title="Run cancellation requested",
+      title=if shell_cancel {
+        "Shell command cancellation requested"
+      } else {
+        "Run cancellation requested"
+      },
       detail=session.title,
       tone="warning",
     ),
   )
   {
-    ..self,
+    ..model,
     events,
-    transport: self.transport.enqueue(CancelRpcRun(session.id)),
-    last_status: "Cancellation queued",
+    transport: model.transport.enqueue(transport_command),
+    last_status: if shell_cancel {
+      "Shell command cancellation queued"
+    } else {
+      "Cancellation queued"
+    },
   }
 }
 
@@ -726,11 +741,72 @@ fn WorkbenchModel::cancel_run_with_transport(
   transport_runtime : PiTransportRuntime,
 ) -> WorkbenchUpdate {
   let session = self.active_session()
-  let commands = [CancelRpcRun(session.id)]
+  let commands = [self.cancel_transport_command(session)]
   WorkbenchUpdate::new(
     self.cancel_run(),
     effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
   )
+}
+
+///|
+fn WorkbenchModel::cancel_transport_command(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> PiTransportCommand {
+  if self.has_active_shell_command(session) {
+    CancelShellCommand(session.id)
+  } else {
+    CancelRpcRun(session.id)
+  }
+}
+
+///|
+fn WorkbenchModel::has_active_shell_command(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> Bool {
+  self.commands.any(command => command.is_active_shell_for_session(session))
+}
+
+///|
+fn WorkbenchModel::mark_latest_shell_command_cancelling(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> WorkbenchModel {
+  let mut target_id : Int? = None
+  for command in self.commands {
+    if command.is_active_shell_for_session(session) {
+      target_id = Some(command.id)
+    }
+  }
+  match target_id {
+    Some(id) => {
+      let commands = self.commands.map(command => {
+        if command.id == id {
+          { ..command, status: "cancelling" }
+        } else {
+          command
+        }
+      })
+      { ..self, commands, }
+    }
+    None => self
+  }
+}
+
+///|
+fn CommandRun::is_active_shell_for_session(
+  self : CommandRun,
+  session : WorkbenchSession,
+) -> Bool {
+  self.cwd == session.project_path &&
+  self.tool_call_id == "" &&
+  shell_command_status_is_active(self.status)
+}
+
+///|
+fn shell_command_status_is_active(status : String) -> Bool {
+  status == "queued" || status == "running" || status == "cancelling"
 }
 
 ///|
