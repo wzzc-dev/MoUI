@@ -185,9 +185,9 @@ test "workbench selection with transport switches Pi session then refreshes stat
     transport,
   )
   inspect(update.model.selected_session_id, content="pi-rpc")
-  inspect(update.model.pending_transport_count(), content="2")
+  inspect(update.model.pending_transport_count(), content="3")
   let model = run_workbench_effect(update)
-  inspect(captured.val.length(), content="2")
+  inspect(captured.val.length(), content="3")
   match captured.val[0] {
     SwitchRpcSession(session, path) => {
       inspect(session, content="pi-rpc")
@@ -201,6 +201,10 @@ test "workbench selection with transport switches Pi session then refreshes stat
       inspect(cwd, content="/Volumes/Data/Code/moon/pi")
     }
     _ => fail("expected queued state refresh")
+  }
+  match captured.val[2] {
+    FetchRpcMessages(session) => inspect(session, content="pi-rpc")
+    _ => fail("expected queued message refresh")
   }
   inspect(model.selected_session_id, content="pi-rpc")
 }
@@ -334,6 +338,32 @@ test "workbench ingests Pi RPC get_state response jsonl" {
   assert_true(
     model.events.any(event => event.title == "Pi RPC response: get_state"),
   )
+}
+
+///|
+test "workbench ingests Pi RPC get_messages response into transcript" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_messages","success":true,"data":{"messages":[{"role":"user","content":"Inspect the Skia route","timestamp":1},{"role":"assistant","content":[{"type":"text","text":"Skia route inspected"}],"model":"gpt-5","timestamp":2},{"role":"bashExecution","command":"moon check","output":"ok","exitCode":0,"cancelled":false,"truncated":false,"timestamp":3}]}}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="get_messages")
+  inspect(model.pi_rpc.message_count, content="3")
+  inspect(model.transcript.length(), content="3")
+  inspect(model.transcript[0].role, content="user")
+  inspect(model.transcript[0].summary, content="Inspect the Skia route")
+  inspect(model.transcript[1].role, content="assistant")
+  inspect(model.transcript[1].detail, content="Skia route inspected")
+  inspect(model.transcript[2].role, content="bashExecution")
+  inspect(model.transcript[2].summary, content="moon check")
+  inspect(model.transcript[2].detail, content="exit code 0 - ok")
+  inspect(model.last_status, content="Pi messages refreshed")
+  assert_true(model.events.any(event => event.title == "Pi messages refreshed"))
 }
 
 ///|
@@ -625,6 +655,8 @@ test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "A Pi agent desktop"))
+  assert_true(has_text(commands, "Pi transcript"))
+  assert_true(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_true(has_text(commands, "新对话"))
   assert_true(has_text(commands, "置顶"))
   assert_true(

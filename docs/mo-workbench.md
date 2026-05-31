@@ -55,9 +55,10 @@ packages:
   events back through the same TEA message loop.
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
-  (`get_state`, `switch_session`, `prompt`, `bash`, `abort_bash`, and
-  `abort`; shutdown is stdin EOF), and uses shell fixtures to prove direct
-  JSONL stdin/stdout process driving without C FFI or a Node bridge.
+  (`get_state`, `get_messages`, `switch_session`, `prompt`, `bash`,
+  `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell fixtures
+  to prove direct JSONL stdin/stdout process driving without C FFI or a Node
+  bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
 - A native multi-batch session runner that accepts an array of command batches
@@ -78,6 +79,10 @@ packages:
 - Workbench command queue entries now use Pi RPC `bash` directly instead of
   prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
   lets the native encoder emit `{"type":"bash","command":...}`.
+- Session selection now refreshes Pi messages after state binding. The shared
+  app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
+  records so the conversation surface can replay user, assistant, tool result,
+  bash, compaction, branch summary, and future workflow messages.
 - Run cancellation is command-aware: active Workbench shell commands queue a
   platform-neutral `CancelShellCommand` that the native encoder maps to Pi RPC
   `abort_bash`, while prompt/agent cancellation continues to use `abort`.
@@ -89,11 +94,12 @@ packages:
 - Real Pi RPC `response` ingestion for the current CLI protocol. Successful
   `get_state` responses update a small `PiRpcSnapshot`, refresh the selected
   Workbench session with the Pi session id, model label, message count, and
-  pending count, and append a timeline event. Successful `bash` responses mark
-  the latest queued/running Workbench command as passed, failed, or cancelled
-  and add diagnostics for nonzero, missing, truncated, or cancelled output.
-  Failed RPC responses append a diagnostic without involving the native
-  transport layer.
+  pending count, and append a timeline event. Successful `get_messages`
+  responses replace the visible transcript with normalized `TranscriptItem`
+  rows. Successful `bash` responses mark the latest queued/running Workbench
+  command as passed, failed, or cancelled and add diagnostics for nonzero,
+  missing, truncated, or cancelled output. Failed RPC responses append a
+  diagnostic without involving the native transport layer.
 - Pi RPC session event ingestion for the real streaming protocol. The shared
   app now recognizes `agent_start` / `agent_end`, `turn_start` / `turn_end`,
   `message_start` / `message_update` / `message_end`, `tool_execution_*`,
@@ -117,8 +123,8 @@ packages:
   JSONL process for the next UI command batch. Explicit `Shutdown` still closes
   the owner.
 - The native encoder is aligned with the installed Pi RPC protocol and has
-  no-model smoke paths using offline `get_state` and `abort_bash` over
-  `pi --mode rpc`.
+  no-model smoke paths using offline `get_state`, `get_messages`, and
+  `abort_bash` over `pi --mode rpc`.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
@@ -155,6 +161,9 @@ Pi RPC responses use the same path. A successful
 `WorkbenchModel.pi_rpc`, refreshes the selected session summary/status with the
 Pi session id, model label, and pending count, and appends a `Pi RPC response`
 timeline event. A successful
+`{"type":"response","command":"get_messages","success":true,...}` line replaces
+the visible transcript with normalized `TranscriptItem` rows while preserving
+the raw JSONL transport event. A successful
 `{"type":"response","command":"bash","success":true,...}` line updates the
 latest queued/running command evidence for that Workbench session using Pi's
 `BashResult.exitCode`, `cancelled`, `truncated`, and optional
@@ -168,13 +177,16 @@ Session selection is also app-layer state. If a selected `WorkbenchSession` has
 ```json
 {"type":"switch_session","sessionPath":"/tmp/mo-workbench-pi-rpc-session.jsonl"}
 {"type":"get_state"}
+{"type":"get_messages"}
 ```
 
 The `switch_session` response marks the Workbench session binding as switching
 or cancelled. The following `get_state` response binds that Workbench session id
 to Pi's concrete `sessionId`, `sessionFile`, optional `sessionName`, and current
-model. This keeps `PiTransportEvent` platform-neutral while letting the app
-separate Mo Workbench sidebar ids from Pi's runtime session identity.
+model. The following `get_messages` response fills the transcript panel from
+Pi's `AgentMessage[]`. This keeps `PiTransportEvent` platform-neutral while
+letting the app separate Mo Workbench sidebar ids from Pi's runtime session
+identity.
 
 Streaming Pi session events also use the same app-layer path:
 
@@ -208,6 +220,7 @@ contract. Dispatching `Shutdown` is the only normal path that stops the owner.
 
 The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `StartRpc` sends `{"type":"get_state"}` as a cheap liveness/state probe,
+`FetchRpcMessages` sends `{"type":"get_messages"}`,
 `SwitchRpcSession` sends `{"type":"switch_session","sessionPath":...}`,
 `SendUserInput` sends `{"type":"prompt","message":...}`, `RunShellCommand`
 sends `{"type":"bash","command":...}`, `CancelShellCommand` sends
@@ -224,14 +237,18 @@ contract only:
 printf '{"type":"get_state"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"get_messages"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"abort_bash"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 ```
 
-The first command should return a JSONL `response` object for `get_state`; the
-second should return a successful `abort_bash` response even when no bash
-command is active. Both exit through stdin EOF.
+The first command should return a JSONL `response` object for `get_state`, the
+second should return a `get_messages` response with a `messages` array, and the
+third should return a successful `abort_bash` response even when no bash command
+is active. All exit through stdin EOF.
 
 ## Skia Native-First Notes
 
@@ -256,6 +273,9 @@ moon test examples/mo_workbench/native_transport --target native
 moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
 printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"get_messages"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"abort_bash"}\n' | \

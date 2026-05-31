@@ -94,6 +94,33 @@ fn sample_events() -> Array[AgentEvent] {
 }
 
 ///|
+fn sample_transcript() -> Array[TranscriptItem] {
+  [
+    TranscriptItem::new(
+      id="sample-user-1",
+      role="user",
+      summary="要求继续推进 Mo Workbench",
+      detail="保持 PiTransport 平台无关，并优先完善 macOS Skia native 路线。",
+      tone="info",
+    ),
+    TranscriptItem::new(
+      id="sample-assistant-1",
+      role="assistant",
+      summary="已接入 Pi RPC 状态、bash 执行和取消",
+      detail="下一步回放 Pi 会话消息，让 transcript 不只依赖 fixture 文案。",
+      tone="success",
+    ),
+    TranscriptItem::new(
+      id="sample-bash-1",
+      role="bashExecution",
+      summary="moon test examples/mo_workbench/app --target native",
+      detail="exit code 0",
+      tone="success",
+    ),
+  ]
+}
+
+///|
 fn sample_files() -> Array[FileContext] {
   [
     FileContext::new(

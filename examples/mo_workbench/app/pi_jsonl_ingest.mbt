@@ -62,6 +62,7 @@ fn WorkbenchModel::ingest_rpc_response(
     match command {
       "switch_session" => self.apply_switch_session_success(session_id, fields)
       "bash" => self.apply_bash_success(session_id, fields)
+      "get_messages" => self.apply_get_messages_success(session_id, fields)
       _ => {
         let snapshot = match fields.get("data") {
           Some(Object(data)) => rpc_snapshot_from_data(command, data)
@@ -121,6 +122,41 @@ fn WorkbenchModel::apply_rpc_failure(
       tone="danger",
     ),
     status="Pi RPC failure applied",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_get_messages_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let messages = match json_object(fields, "data") {
+    Some(data) =>
+      match json_array(data, "messages") {
+        Some(values) => transcript_items_from_messages(values)
+        None => []
+      }
+    None => []
+  }
+  {
+    ..self,
+    transcript: messages,
+    pi_rpc: {
+      ..self.pi_rpc,
+      command: "get_messages",
+      success: true,
+      message_count: messages.length(),
+      error: "",
+    },
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi messages refreshed",
+      detail=session_id + ": " + messages.length().to_string() + " messages",
+      tone="success",
+    ),
+    status="Pi messages refreshed",
   )
 }
 
@@ -1331,6 +1367,95 @@ fn bash_exit_code_label(exit_code : Int?) -> String {
   match exit_code {
     Some(code) => code.to_string()
     None => "unknown"
+  }
+}
+
+///|
+fn transcript_items_from_messages(
+  values : Array[Json],
+) -> Array[TranscriptItem] {
+  let items : Array[TranscriptItem] = []
+  for index, value in values {
+    items.push(transcript_item_from_json(index, value))
+  }
+  items
+}
+
+///|
+fn transcript_item_from_json(index : Int, value : Json) -> TranscriptItem {
+  match value {
+    Object(fields) => {
+      let role = json_string(fields, "role").unwrap_or("message")
+      TranscriptItem::new(
+        id=json_string(fields, "id").unwrap_or(role + "-" + index.to_string()),
+        role~,
+        summary=transcript_summary(role, fields),
+        detail=transcript_detail(role, fields),
+        tone=transcript_tone(role),
+      )
+    }
+    _ =>
+      TranscriptItem::new(
+        id="message-" + index.to_string(),
+        role="message",
+        summary="Pi message",
+        detail=value.stringify(),
+        tone="neutral",
+      )
+  }
+}
+
+///|
+fn transcript_summary(role : String, fields : Map[String, Json]) -> String {
+  match role {
+    "user" => non_empty(json_message_content_summary(fields), "User message")
+    "assistant" =>
+      non_empty(json_message_content_summary(fields), "Assistant message")
+    "toolResult" =>
+      "Tool result: " + json_string(fields, "toolName").unwrap_or("tool")
+    "bashExecution" =>
+      non_empty(json_string(fields, "command").unwrap_or(""), "Bash execution")
+    "branchSummary" => "Branch summary"
+    "compactionSummary" => "Compaction summary"
+    "custom" =>
+      "Custom: " + json_string(fields, "customType").unwrap_or("message")
+    _ => non_empty(json_message_content_summary(fields), role)
+  }
+}
+
+///|
+fn transcript_detail(role : String, fields : Map[String, Json]) -> String {
+  match role {
+    "bashExecution" => {
+      let exit_code = json_int(fields, "exitCode")
+      let output = json_string(fields, "output").unwrap_or("")
+      let output_suffix = if output == "" { "" } else { " - " + output }
+      "exit code " + bash_exit_code_label(exit_code) + output_suffix
+    }
+    "branchSummary" =>
+      non_empty(json_string(fields, "summary").unwrap_or(""), "summary")
+    "compactionSummary" =>
+      non_empty(json_string(fields, "summary").unwrap_or(""), "summary")
+    _ => non_empty(json_message_content_summary(fields), "message")
+  }
+}
+
+///|
+fn transcript_tone(role : String) -> String {
+  match role {
+    "assistant" => "success"
+    "toolResult" | "bashExecution" => "warning"
+    "user" => "info"
+    _ => "neutral"
+  }
+}
+
+///|
+fn non_empty(value : String, fallback : String) -> String {
+  if value == "" {
+    fallback
+  } else {
+    value
   }
 }
 

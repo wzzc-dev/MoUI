@@ -13,6 +13,8 @@ pub fn pi_rpc_abort_line() -> String
 
 pub fn pi_rpc_bash_line(command~ : String) -> String
 
+pub fn pi_rpc_get_messages_line() -> String
+
 pub fn pi_rpc_get_state_line() -> String
 
 pub fn pi_rpc_prompt_line(message~ : String) -> String
