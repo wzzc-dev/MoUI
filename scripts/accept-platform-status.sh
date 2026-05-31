@@ -168,7 +168,7 @@ except json.JSONDecodeError as error:
     fail(f"Skia platform status JSON is invalid: {error}")
 
 if status.get("schema_version") != 1:
-    if status.get("schema_version") not in (2, 3):
+    if status.get("schema_version") not in (2, 3, 4):
         fail(f"unsupported Skia platform status schema_version: {status.get('schema_version')}")
 
 platforms = status.get("platforms")

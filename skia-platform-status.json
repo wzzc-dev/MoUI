@@ -1,8 +1,58 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "revision_file": "skia-revision.txt",
   "default_provider": "jetbrains",
   "provider_lock_file": "skia-provider-lock.json",
+  "ci_gates": [
+    {
+      "id": "moonbit.fmt-check",
+      "area": "MoonBit",
+      "unix_command": "moon fmt && moon check --fmt",
+      "powershell_command": "moon fmt; moon check --fmt"
+    },
+    {
+      "id": "moonbit.check-test",
+      "area": "MoonBit",
+      "unix_command": "moon check && moon test",
+      "powershell_command": "moon check; moon test"
+    },
+    {
+      "id": "native.smoke-build",
+      "area": "NativeSmoke",
+      "unix_command": "moon -C scripts/native_smoke check && moon -C scripts/native_smoke build --target native",
+      "powershell_command": "moon -C scripts/native_smoke check; moon -C scripts/native_smoke build --target native"
+    },
+    {
+      "id": "native.ownership",
+      "area": "FFI",
+      "unix_command": "bash scripts/verify-native-ownership.sh",
+      "powershell_command": ".\\scripts\\verify-native-ownership.ps1"
+    },
+    {
+      "id": "native.ffi-borrows",
+      "area": "FFI",
+      "unix_command": "bash scripts/verify-native-ffi-borrows.sh",
+      "powershell_command": ".\\scripts\\verify-native-ffi-borrows.ps1"
+    },
+    {
+      "id": "platform.status",
+      "area": "PlatformStatus",
+      "unix_command": "bash scripts/verify-platform-status.sh",
+      "powershell_command": ".\\scripts\\verify-platform-status.ps1"
+    },
+    {
+      "id": "artifact.native-smoke-log",
+      "area": "Artifact",
+      "unix_command": "bash scripts/verify-native-smoke-log.sh logs/<platform>-native-smoke-output.log",
+      "powershell_command": ".\\scripts\\verify-native-smoke-log.ps1 -LogPath logs\\<platform>-native-smoke-output.log"
+    },
+    {
+      "id": "artifact.real-skia",
+      "area": "Artifact",
+      "unix_command": "bash scripts/verify-real-skia-artifact.sh --platform <platform> --log-dir logs",
+      "powershell_command": ".\\scripts\\verify-real-skia-artifact.ps1 -Platform <platform> -LogDir logs"
+    }
+  ],
   "native_smoke_capabilities": [
     {
       "id": "surface.descriptor",
