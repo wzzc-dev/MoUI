@@ -39,6 +39,11 @@ jobs:
       - name: Update MoonBit registry
         run: moon update
 
+      - name: Install Linux smoke dependencies
+        if: runner.os != 'Windows'
+        shell: bash
+        run: bash scripts/install-linux-smoke-deps.sh
+
       - name: Run fallback gate on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -335,7 +340,7 @@ jobs:
             exit 1
           fi
           bash scripts/linux-real-skia-smoke.sh --skia-provider source --dry-run-config --work-dir .skia-cache/linux
-          test "$(bash scripts/install-linux-smoke-deps.sh --print-packages | tr '\n' ' ')" = "build-essential git python3 ninja-build clang curl ca-certificates "
+          test "$(bash scripts/install-linux-smoke-deps.sh --print-packages | tr '\n' ' ')" = "build-essential git python3 ninja-build clang curl ca-certificates libfontconfig1-dev libfreetype-dev libharfbuzz-dev wayland-protocols "
           SKIA_MBT_SKIA_REV=fake-env-revision \
             SKIA_MBT_EXTRA_GN_ARGS='skia_enable_fontmgr_empty=true' \
             bash scripts/linux-real-skia-smoke.sh --skia-provider source --dry-run-config --work-dir .skia-cache/linux-env-rev
