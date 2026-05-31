@@ -207,6 +207,12 @@ contract, and deterministic fallback text system; it does not name concrete
 macOS font files.
 The `examples/showcase/macos_cosmic` entrypoint selects `MoonCosmic`
 explicitly for comparison with the platform-default CoreText path.
+`backend/macos` also exposes an async pump variant for native app entrypoints
+that must run `moonbitlang/async` side work on the same thread as the AppKit
+event pump. `backend/macos/skia.run_app_with_options_async_pump` keeps the
+default blocking `run_app_with_options` behavior unchanged, but lets
+`examples/mo_workbench/macos_skia` interleave the Skia window pump with its
+owned Pi JSONL transport worker.
 
 Select Skia by importing `wzzc-dev/moui/backend/macos/skia` and using
 `MacosSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer`,

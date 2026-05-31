@@ -295,7 +295,7 @@ fn WorkbenchModel::assistant_summary(
     [
       text("验证已通过：", role=Control, theme~, width=680.0, height=30.0),
       text(
-        "Mo Workbench 已切到会话优先布局，下一步集中处理 host/session ownership。",
+        "Mo Workbench 已接入 native owned Pi session，并保持 PiTransport 平台无关。",
         role=Body,
         theme~,
         width=680.0,
@@ -352,14 +352,14 @@ fn WorkbenchModel::status_paragraph(
   column(
     [
       text(
-        "当前 UI 已切到截图式会话流；剩余核心缺口是 macOS app 持有长生命周期 Pi session，",
+        "当前 UI 已切到截图式会话流；macOS app 现在持有长生命周期 Pi session owner，",
         role=Body,
         theme~,
         width=690.0,
         height=28.0,
       ),
       text(
-        "并避免阻塞 native window loop；native transport 侧已有可测试 primitive。",
+        "Skia window pump 与 moonbitlang/async transport worker 在同一 native 主循环轮转。",
         role=Body,
         theme~,
         width=690.0,

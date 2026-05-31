@@ -20,10 +20,13 @@ automation runs, and knowledge organization.
   `moonbitlang/async` process driver for JSONL stdin/stdout sessions. It
   imports the shared app package for `PiTransportCommand`,
   `PiTransportEvent`, and `PiTransportRuntime`, keeping process ownership out
-  of the shared model while reusing the same command/event contract.
+  of the shared model while reusing the same command/event contract. Its
+  `PiNativeTransportOwner` is the native lifecycle owner that accepts queued UI
+  command batches through an async queue, lazily starts one JSONL process, and
+  emits stdout/process events back through the app runtime dispatch hook.
 - `examples/mo_workbench/macos_skia` is a thin entrypoint that selects
-  `backend/macos/skia`, injects the native Pi transport runtime, and runs the
-  shared app runtime.
+  `backend/macos/skia`, injects the owned native Pi transport runtime, and runs
+  the shared app runtime with the macOS Skia async pump.
 - Future Web or other native entrypoints should reuse the same app package and
   feed the same `PiTransportCommand` / `PiTransportEvent` model.
 
@@ -57,7 +60,13 @@ packages:
 - A native multi-batch session runner that accepts an array of command batches
   and proves the same JSONL process can serve the start, prompt, follow-up,
   and cancel phases that would otherwise arrive through separate UI dispatches.
-- A macOS Skia entrypoint wired to `PiNativeTransportConfig::pi().runtime()`.
+- A native `PiNativeTransportOwner` that turns repeated
+  `PiTransportRuntime.dispatch` calls into one long-lived JSONL process
+  lifecycle using `moonbitlang/async/aqueue`, without changing the
+  platform-neutral app transport contract.
+- A macOS Skia entrypoint wired to `PiNativeTransportOwner::runtime()` and
+  `backend/macos/skia.run_app_with_options_async_pump`, so the AppKit pump and
+  Pi transport worker cooperate on the same native async loop.
 - Conversation-first workbench UI that keeps command evidence, file context,
   diff review, transport status, and the next prompt in one visible flow.
 - Pending transport command counts now drain as `JsonLineSent` events arrive
@@ -69,10 +78,11 @@ packages:
   file context, and diff overview while still preserving raw JSONL transport
   events.
 
-The remaining V1 transport boundary is true long-lived lifecycle ownership:
-the native transport can now keep one process alive across scripted dispatch
-batches inside async tests, and the next slice should make the macOS app own
-that session from the native host loop without blocking window events.
+The remaining V1 transport boundary is production lifecycle polish: the native
+owner now keeps one process alive across real runtime dispatches, and the next
+slice should handle unexpected process exit, restart policy, stderr/error
+surfacing, and real `pi --mode rpc` smoke evidence when the local Pi CLI is
+available.
 
 ## Pi JSONL Workbench Events
 
@@ -115,6 +125,7 @@ Use these checks while working on the first app slices:
 moon test examples/mo_workbench/app --target native
 moon test examples/mo_workbench/app --target wasm-gc
 moon test examples/mo_workbench/native_transport --target native
+moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```
 

@@ -41,6 +41,14 @@ pub fn PiNativeTransportConfig::pi(cwd? : String) -> Self
 pub fn PiNativeTransportConfig::runtime(Self) -> @app.PiTransportRuntime
 pub fn PiNativeTransportConfig::shell(script~ : String, cwd? : String) -> Self
 
+pub struct PiNativeTransportOwner {
+  // private fields
+}
+pub fn PiNativeTransportOwner::new(PiNativeTransportConfig, session_id? : String) -> Self
+pub async fn PiNativeTransportOwner::run(Self) -> Unit
+pub fn PiNativeTransportOwner::runtime(Self) -> @app.PiTransportRuntime
+pub fn PiNativeTransportOwner::shutdown(Self) -> Unit
+
 pub(all) struct PiNativeTransportRequest {
   session_id : String
   lines : Array[String]

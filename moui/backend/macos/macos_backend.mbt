@@ -289,6 +289,57 @@ pub fn run_app_with_renderer_provider(
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
+  let (event_loop, app) = create_macos_app(
+    title,
+    runtime,
+    provider~,
+    options~,
+    window_requests~,
+  )
+  if options.exit_after_first_present {
+    run_app_until_first_present(event_loop, app)
+  } else {
+    event_loop.run_app(app)
+  }
+}
+
+///|
+pub async fn run_app_with_renderer_provider_async_pump(
+  title : String,
+  runtime : @core.AppRuntime,
+  provider~ : MacosRendererProvider,
+  options? : MacosHostAppOptions = MacosHostAppOptions::new(),
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  frame_interval_ms? : Int = 8,
+) -> Unit {
+  let (event_loop, app) = create_macos_app(
+    title,
+    runtime,
+    provider~,
+    options~,
+    window_requests~,
+  )
+  if options.exit_after_first_present {
+    run_app_until_first_present(event_loop, app)
+  } else {
+    while !event_loop.exiting() {
+      match event_loop.pump_app_events(Some(0), app) {
+        @window_core.PumpStatus::Exit(_) => return ()
+        @window_core.PumpStatus::Continue => ()
+      }
+      @async.sleep(frame_interval_ms)
+    }
+  }
+}
+
+///|
+fn create_macos_app(
+  title : String,
+  runtime : @core.AppRuntime,
+  provider~ : MacosRendererProvider,
+  options~ : MacosHostAppOptions,
+  window_requests~ : @host.HostWindowRequestQueue,
+) -> (@window_macos.EventLoop, MacosApp) {
   let event_loop = @window_macos.EventLoop::EventLoop()
   let services = macos_service_bridge()
   runtime.set_environment(
@@ -312,11 +363,7 @@ pub fn run_app_with_renderer_provider(
     exit_after_first_present: options.exit_after_first_present,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  if options.exit_after_first_present {
-    run_app_until_first_present(event_loop, app)
-  } else {
-    event_loop.run_app(app)
-  }
+  (event_loop, app)
 }
 
 ///|

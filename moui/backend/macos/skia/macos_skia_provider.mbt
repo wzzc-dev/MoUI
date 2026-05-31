@@ -59,6 +59,31 @@ pub fn run_app_with_options(
 }
 
 ///|
+pub async fn run_app_with_options_async_pump(
+  title : String,
+  runtime : @core.AppRuntime,
+  options~ : MacosSkiaAppOptions,
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  frame_interval_ms? : Int = 8,
+) -> Unit {
+  if !macos_skia_provider_ready() {
+    println(macos_skia_unavailable_message())
+    return ()
+  }
+  @macos_host.run_app_with_renderer_provider_async_pump(
+    title,
+    runtime,
+    provider=renderer_provider(options~),
+    options=@macos_host.MacosHostAppOptions::new(
+      scene_resolver=options.scene_resolver,
+      exit_after_first_present=options.exit_after_first_present,
+    ),
+    window_requests~,
+    frame_interval_ms~,
+  )
+}
+
+///|
 pub fn renderer_provider(
   options? : MacosSkiaAppOptions = MacosSkiaAppOptions::new(),
 ) -> @macos_host.MacosRendererProvider {
