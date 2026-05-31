@@ -404,6 +404,48 @@ test "render pass descriptor clips clear and present boundaries" {
 }
 
 ///|
+test "render pass descriptor derives present defaults from surface targets" {
+  let raster_target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(16, 16),
+  )
+  let raster_pass = @skia_mbt.RenderPassDescriptor::for_target(raster_target)
+  assert_true(!raster_pass.needs_present())
+  assert_true(raster_pass.keeps_pixels())
+  assert_true(raster_pass.store_op == @skia_mbt.StorePixels)
+
+  let window_target = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
+    @skia_mbt.ISize::new(20, 10),
+    sample_count=4,
+    stencil_bits=8,
+  )
+  let present_pass = @skia_mbt.RenderPassDescriptor::for_target(
+    window_target,
+    bounds=Some(@skia_mbt.IRect::from_xywh(4, 2, 30, 30)),
+  )
+  assert_true(present_pass.needs_present())
+  assert_true(present_pass.keeps_pixels())
+  assert_true(present_pass.store_op == @skia_mbt.PresentPixels)
+  assert_true(present_pass.bounds == @skia_mbt.IRect::new(4, 2, 20, 10))
+  assert_true(present_pass.is_msaa())
+
+  let clear_pass = @skia_mbt.RenderPassDescriptor::clear_target(
+    window_target,
+    @skia_mbt.Color::blue(),
+  )
+  assert_true(clear_pass.needs_clear())
+  assert_true(clear_pass.needs_present())
+  assert_true(clear_pass.clear_color == Some(@skia_mbt.Color::blue()))
+
+  let discard_pass = @skia_mbt.RenderPassDescriptor::for_target(
+    window_target.without_present(),
+    store_op=Some(@skia_mbt.DiscardPixels),
+  )
+  assert_true(!discard_pass.needs_present())
+  assert_true(!discard_pass.keeps_pixels())
+  assert_true(discard_pass.store_op == @skia_mbt.DiscardPixels)
+}
+
+///|
 test "font fallback contracts normalize style family and language requests" {
   let style = @skia_mbt.FontStyleRequest::new(weight=1200, width=-2, slant=9)
   assert_eq(style.weight, 1000)
