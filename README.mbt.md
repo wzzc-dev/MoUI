@@ -44,7 +44,8 @@ The current package exposes the first value-layer API surface:
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,
   rounded-rectangle and polyline/polygon contours, control-point and tight
-  bounds, append/extend path modes, path appends, `reset`, and `rewind`
+  bounds, append/extend path modes, path appends, resource descriptors, `reset`,
+  and `rewind`
 
 Native Skia object handles are intentionally staged behind a separate FFI plan so
 ownership, ref-counting, and linker configuration can be validated package by
