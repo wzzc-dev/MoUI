@@ -465,6 +465,8 @@ pub fn Path::new(fill_type? : PathFillType) -> Self
 pub fn Path::offset(Self, Float, Float) -> Self
 pub fn Path::quad_to(Self, Point, Point) -> Self
 pub fn Path::reset(Self) -> Self
+pub fn Path::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn Path::resource_key(Self) -> RendererResourceKey
 pub fn Path::rewind(Self) -> Self
 pub fn Path::segment_masks(Self) -> PathSegmentMask
 pub fn Path::stroke_bounds(Self, Paint) -> Rect?
