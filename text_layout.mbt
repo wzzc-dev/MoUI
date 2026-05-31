@@ -318,3 +318,114 @@ pub fn TextRunDescriptor::with_fallback(
 ) -> TextRunDescriptor {
   { ..self, fallback, }
 }
+
+///|
+fn text_run_cache_u64(value : Int) -> Bytes {
+  Int::max(0, value).to_uint64().to_be_bytes()
+}
+
+///|
+fn text_run_cache_bytes(value : Bytes) -> Bytes {
+  value.length().to_uint64().to_be_bytes() + value
+}
+
+///|
+fn RendererResourceKind::text_run_cache_name(
+  self : RendererResourceKind,
+) -> Bytes {
+  match self {
+    ImageResource => b"image"
+    ShaderResource => b"shader"
+    ColorFilterResource => b"color-filter"
+    ImageFilterResource => b"image-filter"
+    MaskFilterResource => b"mask-filter"
+    TypefaceResource => b"typeface"
+    FontResource => b"font"
+    PathResource => b"path"
+    TextRunResource => b"text-run"
+    SurfaceResource => b"surface"
+    GpuSurfaceResource => b"gpu-surface"
+  }
+}
+
+///|
+fn RendererResourceKey::text_run_cache_id(self : RendererResourceKey) -> Bytes {
+  text_run_cache_bytes(self.kind.text_run_cache_name()) +
+  text_run_cache_bytes(self.id)
+}
+
+///|
+fn TextDirection::text_run_cache_id(self : TextDirection) -> Bytes {
+  match self {
+    LeftToRight => b"ltr"
+    RightToLeft => b"rtl"
+  }
+}
+
+///|
+fn FontStyleRequest::text_run_cache_id(self : FontStyleRequest) -> Bytes {
+  text_run_cache_u64(self.weight) +
+  text_run_cache_u64(self.width) +
+  text_run_cache_u64(self.slant)
+}
+
+///|
+fn FontFallbackChain::text_run_cache_id(self : FontFallbackChain) -> Bytes {
+  let mut id = text_run_cache_bytes(self.primary_family) +
+    text_run_cache_u64(self.fallback_families.length())
+  for family in self.fallback_families {
+    id = id + text_run_cache_bytes(family)
+  }
+  id
+}
+
+///|
+fn FontFallbackRequest::text_run_cache_id(self : FontFallbackRequest) -> Bytes {
+  let mut id = self.families.text_run_cache_id() +
+    text_run_cache_u64(self.bcp47.length())
+  for language in self.bcp47 {
+    id = id + text_run_cache_bytes(language)
+  }
+  id + text_run_cache_u64(self.character) + self.style.text_run_cache_id()
+}
+
+///|
+fn TextRange::text_run_cache_id(self : TextRange) -> Bytes {
+  text_run_cache_u64(self.start) + text_run_cache_u64(self.end)
+}
+
+///|
+/// Deterministic renderer cache key for a shaped or measured text run.
+pub fn TextRunDescriptor::resource_key(
+  self : TextRunDescriptor,
+  text : Bytes,
+  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
+) -> RendererResourceKey {
+  RendererResourceKey::text_run(
+    b"skia_mbt:text-run:v1" +
+    text_run_cache_bytes(text) +
+    self.range.text_run_cache_id() +
+    text_run_cache_bytes(self.direction.text_run_cache_id()) +
+    self.fallback.text_run_cache_id() +
+    font_key.text_run_cache_id(),
+  )
+}
+
+///|
+/// Cache descriptor for a shaped or measured text run resource.
+pub fn TextRunDescriptor::resource_descriptor(
+  self : TextRunDescriptor,
+  text : Bytes,
+  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let measured_byte_size = if byte_size < 0L {
+    text.length().to_int64()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::text_run(
+    self.resource_key(text, font_key~).id,
+    byte_size=measured_byte_size,
+  )
+}
