@@ -35,6 +35,9 @@ default_stage_markers=(
   "native smoke canvas replay commands" \
   "native smoke render resource plan count" \
   "native smoke shader draws" \
+  "native smoke shader resource plan count" \
+  "native smoke filter layer count" \
+  "native smoke filter resource plan count" \
   "native smoke path verbs" \
   "native smoke readback width" \
   "native smoke bounded readback width" \
