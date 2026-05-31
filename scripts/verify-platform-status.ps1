@@ -147,6 +147,7 @@ if ($status.schema_version -ge 3) {
     "surface.descriptor",
     "canvas.state",
     "canvas.command-replay",
+    "pipeline.resource-plan",
     "shader.draw",
     "filter.layer",
     "path.geometry",

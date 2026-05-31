@@ -70,6 +70,11 @@
       "marker": "native smoke canvas replay commands"
     },
     {
+      "id": "pipeline.resource-plan",
+      "area": "Pipeline",
+      "marker": "native smoke render resource plan count"
+    },
+    {
       "id": "shader.draw",
       "area": "Shader",
       "marker": "native smoke shader draws"

@@ -427,6 +427,14 @@ fn main {
       font_key=@skia.RendererResourceKey::font(b"default:8"),
       paint=@skia.Paint::new(color=@skia.Color::black()),
     )
+  let replay_plan = replay_commands.resource_plan()
+  if replay_plan.length() != 3 ||
+    replay_plan.cacheable_count != 3 ||
+    replay_plan.uncacheable_count != 0 ||
+    replay_plan.gpu_backed_count != 0 ||
+    replay_plan.byte_size <= 0L {
+    fail_smoke("native render resource plan did not match command list")
+  }
   let replay_stats = replay_canvas.replay(
     replay_commands,
     font=Some(replay_font),
@@ -444,6 +452,8 @@ fn main {
   assert_pixel(replay_pixmap, @skia.IPoint::new(0, 0), 0xff, 0x00, 0x00, 0xff)
   println("native smoke canvas replay commands")
   println(replay_stats.command_count)
+  println("native smoke render resource plan count")
+  println(replay_plan.length())
 
   guard surface.image_snapshot() is Some(image) else {
     fail_smoke("failed to snapshot surface")
