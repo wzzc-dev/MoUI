@@ -192,9 +192,10 @@ because their font manager differs. GPU, shader, and filter coverage also
 verifies that value-layer resource descriptors produce cacheable renderer
 resource plans before native handles are allocated. Font coverage still verifies
 positive text advance, glyph count, glyph ID mapping, glyph advances, glyph
-positions, glyph bounds, text bounds, metrics, font-family typeface matching,
-typeface family metadata, and font fallback resource planning whenever the
-native smoke can create the relevant font objects.
+positions, glyph bounds, text bounds, metrics, font resource planning,
+font-family typeface matching, typeface family metadata, and font fallback
+resource planning whenever the native smoke can create the relevant font
+objects.
 
 To reuse an existing Skia checkout/build instead of the default JetBrains
 provider:

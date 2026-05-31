@@ -162,6 +162,7 @@ if ($status.schema_version -ge 3) {
     "codec.metadata",
     "bitmap.decode-readback",
     "text.font-spacing",
+    "text.font-resource-plan",
     "text.measure",
     "text.glyph-count",
     "text.glyph-id",

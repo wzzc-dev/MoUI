@@ -127,6 +127,8 @@ jobs:
             '32' \
             'native smoke font spacing' \
             '16' \
+            'native smoke font resource plan count' \
+            '1' \
             'native smoke measured text width' \
             '12' \
             'native smoke text glyph count' \
