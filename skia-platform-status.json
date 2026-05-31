@@ -276,9 +276,84 @@
   ],
   "native_smoke_expected_values": [
     {
+      "id": "pipeline.resource-plan",
+      "marker": "native smoke render resource plan count",
+      "value": "9"
+    },
+    {
+      "id": "pipeline.frame-resource-plan",
+      "marker": "native smoke render frame resource plan count",
+      "value": "9"
+    },
+    {
+      "id": "pipeline.frame-validation",
+      "marker": "native smoke render frame validation status",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-cache-resources",
+      "marker": "native smoke render frame cache resources",
+      "value": "9"
+    },
+    {
+      "id": "pipeline.resource-cache",
+      "marker": "native smoke render resource cache inserts",
+      "value": "9"
+    },
+    {
+      "id": "gpu.context-resource-plan",
+      "marker": "native smoke gpu context resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "gpu.frame-context-validation",
+      "marker": "native smoke gpu frame context validation",
+      "value": "1"
+    },
+    {
+      "id": "surface.target-resource-plan",
+      "marker": "native smoke surface target resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "surface.window-target-resource-plan",
+      "marker": "native smoke window target resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "shader.draw",
+      "marker": "native smoke shader draws",
+      "value": "3"
+    },
+    {
+      "id": "shader.resource-plan",
+      "marker": "native smoke shader resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "filter.resource-plan",
+      "marker": "native smoke filter resource plan count",
+      "value": "3"
+    },
+    {
       "id": "text.text-run-resource-plan",
       "marker": "native smoke text run resource plan count",
       "value": "3"
+    },
+    {
+      "id": "text.font-resource-plan",
+      "marker": "native smoke font resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-resource-plan",
+      "marker": "native smoke font fallback resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-font-resource-plan",
+      "marker": "native smoke font fallback font resource plan count",
+      "value": "2"
     }
   ],
   "platforms": {
