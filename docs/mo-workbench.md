@@ -34,6 +34,9 @@ packages:
 
 - A session-first desktop shell named `Mo Workbench`.
 - Header subtitle `A Pi agent desktop`.
+- A Codex / Claude Code-style native shell with macOS chrome, a gray
+  session/project sidebar, a white assistant transcript, command output,
+  attachment cards, a diff summary, and a rounded composer.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
@@ -52,8 +55,8 @@ packages:
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
 - A macOS Skia entrypoint wired to `PiNativeTransportConfig::pi().runtime()`.
-- Workbench panels for agent timeline, plan, diff/file context, command queue,
-  and diagnostics.
+- Conversation-first workbench UI that keeps command evidence, file context,
+  diff review, transport status, and the next prompt in one visible flow.
 
 The remaining V1 transport boundary is true long-lived lifecycle ownership:
 the native transport can now keep one process alive inside async tests, and the

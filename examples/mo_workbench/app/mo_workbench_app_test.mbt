@@ -75,14 +75,18 @@ test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "A Pi agent desktop"))
-  assert_true(has_text(commands, "Project Sessions"))
-  assert_true(has_text(commands, "PiTransport"))
-  assert_true(has_text(commands, "Pi JSONL RPC"))
-  let command_commands = WorkbenchModel::new()
-    .update(SelectPanel("commands"))
-    .runtime(width=1220.0, height=780.0)
-    .draw_commands()
-  assert_true(has_text(command_commands, "Queue Tests"))
+  assert_true(has_text(commands, "新对话"))
+  assert_true(has_text(commands, "置顶"))
+  assert_true(
+    has_text(
+      commands, "在 MoUI 仓库 examples/mo_workbench，交付 Mo Workbench",
+    ),
+  )
+  assert_true(has_text(commands, "验证已通过："))
+  assert_true(has_text(commands, "examples.md"))
+  assert_true(has_text(commands, "已编辑 5 个文件"))
+  assert_true(has_text(commands, "要求后续变更"))
+  assert_true(has_text(commands, "自动审查"))
 }
 
 ///|
