@@ -838,6 +838,88 @@ test "render command list exposes text run resource keys" {
 }
 
 ///|
+test "render command list includes declared resource descriptors" {
+  guard @skia_mbt.ShaderDescriptor::linear_gradient(
+      @skia_mbt.Point::new(0, 0),
+      @skia_mbt.Point::new(16, 0),
+      @skia_mbt.Color::red(),
+      @skia_mbt.Color::blue(),
+    )
+    is Some(shader) else {
+    fail("linear shader descriptor should be accepted")
+  }
+  guard @skia_mbt.ColorFilterDescriptor::saturation(0.8) is Some(color_filter) else {
+    fail("color filter descriptor should be accepted")
+  }
+  guard @skia_mbt.ImageFilterDescriptor::blur(1.0, 2.0) is Some(image_filter) else {
+    fail("image filter descriptor should be accepted")
+  }
+  guard @skia_mbt.MaskFilterDescriptor::blur(2.0) is Some(mask_filter) else {
+    fail("mask filter descriptor should be accepted")
+  }
+  let shader_descriptor = shader.resource_descriptor()
+  let color_filter_descriptor = color_filter.resource_descriptor()
+  let image_filter_descriptor = image_filter.resource_descriptor()
+  let mask_filter_descriptor = mask_filter.resource_descriptor()
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(16, 16),
+  )
+  let commands = @skia_mbt.RenderCommandList::for_target(target)
+    .declare_resource(shader_descriptor)
+    .declare_resources([
+      color_filter_descriptor, image_filter_descriptor, mask_filter_descriptor, shader_descriptor,
+    ])
+    .declare_resource(@skia_mbt.RendererResourceDescriptor::shader(b""))
+    .draw_rect(
+      @skia_mbt.Rect::from_xywh(2, 2, 4, 4),
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::green()),
+    )
+
+  assert_true(
+    @skia_mbt.RenderCommand::declare_resource(shader_descriptor).is_resource_declaration(),
+  )
+  assert_eq(commands.length(), 6)
+  let stats = commands.stats()
+  assert_eq(stats.command_count, 6)
+  assert_eq(stats.draw_count, 1)
+  assert_eq(stats.state_count, 0)
+  assert_eq(stats.text_count, 0)
+  assert_true(
+    commands.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(2, 2, 4, 4)),
+  )
+  let descriptors = commands.resource_descriptors()
+  assert_eq(descriptors.length(), 5)
+  assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
+  let plan = commands.resource_plan()
+  assert_eq(plan.length(), 5)
+  assert_eq(plan.cacheable_count, 5)
+  assert_eq(plan.uncacheable_count, 0)
+  assert_eq(plan.gpu_backed_count, 0)
+  let mut shader_seen = false
+  let mut color_filter_seen = false
+  let mut image_filter_seen = false
+  let mut mask_filter_seen = false
+  for descriptor in descriptors {
+    if descriptor.key == shader_descriptor.key {
+      shader_seen = true
+    }
+    if descriptor.key == color_filter_descriptor.key {
+      color_filter_seen = true
+    }
+    if descriptor.key == image_filter_descriptor.key {
+      image_filter_seen = true
+    }
+    if descriptor.key == mask_filter_descriptor.key {
+      mask_filter_seen = true
+    }
+  }
+  assert_true(shader_seen)
+  assert_true(color_filter_seen)
+  assert_true(image_filter_seen)
+  assert_true(mask_filter_seen)
+}
+
+///|
 test "font fallback contracts normalize style family and language requests" {
   let style = @skia_mbt.FontStyleRequest::new(weight=1200, width=-2, slant=9)
   assert_eq(style.weight, 1000)
