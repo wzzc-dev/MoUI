@@ -1,8 +1,125 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "revision_file": "skia-revision.txt",
   "default_provider": "jetbrains",
   "provider_lock_file": "skia-provider-lock.json",
+  "native_smoke_capabilities": [
+    {
+      "id": "surface.descriptor",
+      "area": "Surface",
+      "marker": "native smoke surface descriptor backend"
+    },
+    {
+      "id": "canvas.state",
+      "area": "Canvas",
+      "marker": "native smoke canvas state restored"
+    },
+    {
+      "id": "shader.draw",
+      "area": "Shader",
+      "marker": "native smoke shader draws"
+    },
+    {
+      "id": "filter.layer",
+      "area": "Filter",
+      "marker": "native smoke filter layer count"
+    },
+    {
+      "id": "path.geometry",
+      "area": "Path",
+      "marker": "native smoke path verbs"
+    },
+    {
+      "id": "surface.readback",
+      "area": "Surface",
+      "marker": "native smoke readback width"
+    },
+    {
+      "id": "surface.bounded-readback",
+      "area": "Surface",
+      "marker": "native smoke bounded readback width"
+    },
+    {
+      "id": "surface.bounded-snapshot",
+      "area": "Surface",
+      "marker": "native smoke bounded snapshot width"
+    },
+    {
+      "id": "image.encode-png",
+      "area": "Image",
+      "marker": "native smoke encoded PNG bytes"
+    },
+    {
+      "id": "image.decode",
+      "area": "Image",
+      "marker": "native smoke decoded image width"
+    },
+    {
+      "id": "codec.metadata",
+      "area": "Codec",
+      "marker": "native smoke codec encoded format PNG"
+    },
+    {
+      "id": "bitmap.decode-readback",
+      "area": "Bitmap",
+      "marker": "native smoke decoded bitmap width"
+    },
+    {
+      "id": "text.font-spacing",
+      "area": "Text",
+      "marker": "native smoke font spacing"
+    },
+    {
+      "id": "text.measure",
+      "area": "Text",
+      "marker": "native smoke measured text width"
+    },
+    {
+      "id": "text.glyph-count",
+      "area": "Text",
+      "marker": "native smoke text glyph count"
+    },
+    {
+      "id": "text.glyph-id",
+      "area": "Text",
+      "marker": "native smoke first glyph id"
+    },
+    {
+      "id": "text.glyph-width",
+      "area": "Text",
+      "marker": "native smoke first glyph width"
+    },
+    {
+      "id": "text.glyph-position",
+      "area": "Text",
+      "marker": "native smoke second glyph position x"
+    },
+    {
+      "id": "text.glyph-x-position",
+      "area": "Text",
+      "marker": "native smoke second glyph x position"
+    },
+    {
+      "id": "text.glyph-bounds",
+      "area": "Text",
+      "marker": "native smoke first glyph bounds width"
+    },
+    {
+      "id": "text.bounds",
+      "area": "Text",
+      "marker": "native smoke measured text bounds width"
+    },
+    {
+      "id": "fontmgr.family-count",
+      "area": "FontMgr",
+      "marker": "native smoke font family count"
+    },
+    {
+      "id": "fontmgr.family-name",
+      "area": "FontMgr",
+      "marker": "native smoke first font family bytes"
+    }
+  ],
   "platforms": {
     "linux": {
       "accepted": false,

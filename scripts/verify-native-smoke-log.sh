@@ -29,7 +29,7 @@ if ! grep -Fq "$marker" "$log_path"; then
   exit 1
 fi
 
-for stage_marker in \
+default_stage_markers=(
   "native smoke surface descriptor backend" \
   "native smoke canvas state restored" \
   "native smoke shader draws" \
@@ -51,7 +51,38 @@ for stage_marker in \
   "native smoke first glyph bounds width" \
   "native smoke measured text bounds width" \
   "native smoke font family count" \
-  "native smoke first font family bytes"; do
+  "native smoke first font family bytes"
+)
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+status_file="$repo_root/skia-platform-status.json"
+stage_markers=("${default_stage_markers[@]}")
+if [[ -f "$status_file" ]]; then
+  status_stage_markers="$(
+    python3 - "$status_file" <<'PY'
+import json
+import pathlib
+import sys
+
+status_path = pathlib.Path(sys.argv[1])
+status = json.loads(status_path.read_text(encoding="utf-8"))
+for capability in status.get("native_smoke_capabilities", []):
+    marker = str(capability.get("marker", "")).strip()
+    if marker:
+        print(marker)
+PY
+  )"
+  if [[ -n "$status_stage_markers" ]]; then
+    stage_markers=()
+    while IFS= read -r status_stage_marker; do
+      if [[ -n "$status_stage_marker" ]]; then
+        stage_markers+=("$status_stage_marker")
+      fi
+    done <<< "$status_stage_markers"
+  fi
+fi
+
+for stage_marker in "${stage_markers[@]}"; do
   if ! grep -Fq "$stage_marker" "$log_path"; then
     echo "native smoke executable log is missing required stage marker: $stage_marker" >&2
     exit 1

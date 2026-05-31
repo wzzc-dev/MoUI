@@ -120,8 +120,66 @@ for line in revision_path.read_text(encoding="utf-8").splitlines():
         break
 
 schema_version = status.get("schema_version")
-if schema_version not in (1, 2):
+if schema_version not in (1, 2, 3):
     fail(f"unsupported Skia platform status schema_version: {status.get('schema_version')}")
+
+if schema_version >= 3:
+    capabilities = status.get("native_smoke_capabilities")
+    if not isinstance(capabilities, list):
+        fail("schema v3 platform status is missing native_smoke_capabilities list")
+    required_capability_ids = {
+        "surface.descriptor",
+        "canvas.state",
+        "shader.draw",
+        "filter.layer",
+        "path.geometry",
+        "surface.readback",
+        "surface.bounded-readback",
+        "surface.bounded-snapshot",
+        "image.encode-png",
+        "image.decode",
+        "codec.metadata",
+        "bitmap.decode-readback",
+        "text.font-spacing",
+        "text.measure",
+        "text.glyph-count",
+        "text.glyph-id",
+        "text.glyph-width",
+        "text.glyph-position",
+        "text.glyph-x-position",
+        "text.glyph-bounds",
+        "text.bounds",
+        "fontmgr.family-count",
+        "fontmgr.family-name",
+    }
+    seen_ids = set()
+    seen_markers = set()
+    seen_areas = set()
+    for capability in capabilities:
+        if not isinstance(capability, dict):
+            fail("native_smoke_capabilities entries must be objects")
+        capability_id = str(capability.get("id", "")).strip()
+        area = str(capability.get("area", "")).strip()
+        marker = str(capability.get("marker", "")).strip()
+        if not capability_id:
+            fail("native smoke capability is missing id")
+        if not area:
+            fail(f"native smoke capability is missing area: {capability_id}")
+        if not marker:
+            fail(f"native smoke capability is missing marker: {capability_id}")
+        if capability_id in seen_ids:
+            fail(f"duplicate native smoke capability id: {capability_id}")
+        if marker in seen_markers:
+            fail(f"duplicate native smoke capability marker: {marker}")
+        seen_ids.add(capability_id)
+        seen_markers.add(marker)
+        seen_areas.add(area)
+    missing_ids = sorted(required_capability_ids - seen_ids)
+    if missing_ids:
+        fail("native smoke capability coverage is missing ids: " + ", ".join(missing_ids))
+    missing_areas = sorted({"Surface", "Canvas", "Shader", "Filter", "Path", "Image", "Text", "FontMgr"} - seen_areas)
+    if missing_areas:
+        fail("native smoke capability coverage is missing areas: " + ", ".join(missing_areas))
 
 if status.get("revision_file") != revision_path.name:
     fail(

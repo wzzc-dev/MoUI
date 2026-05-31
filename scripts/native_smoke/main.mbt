@@ -235,6 +235,28 @@ fn main {
   println("native smoke shader draws")
   println(3)
 
+  guard @native.ColorFilter::saturation(0.8) is Some(color_filter) else {
+    fail_smoke("failed to create native color filter")
+  }
+  guard @native.ImageFilter::blur(1.0, 1.0) is Some(image_filter) else {
+    fail_smoke("failed to create native image filter")
+  }
+  guard @native.MaskFilter::blur(1.0) is Some(mask_filter) else {
+    fail_smoke("failed to create native mask filter")
+  }
+  let filtered_layer_count = canvas.save_layer(
+    bounds=Some(@skia.Rect::from_xywh(0, 0, 16, 16)),
+    color_filter=Some(color_filter),
+    image_filter=Some(image_filter),
+    mask_filter=Some(mask_filter),
+  )
+  if filtered_layer_count <= 0 {
+    fail_smoke("native filtered save_layer did not return a valid save count")
+  }
+  canvas.restore_to_count(save_count_before_clip)
+  println("native smoke filter layer count")
+  println(filtered_layer_count)
+
   guard @native.Path::new() is Some(native_path) else {
     fail_smoke("failed to create native path")
   }

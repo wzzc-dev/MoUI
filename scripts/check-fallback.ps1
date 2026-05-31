@@ -79,6 +79,8 @@ function Set-FakeNativeSmokeLog {
     "1"
     "native smoke shader draws"
     "3"
+    "native smoke filter layer count"
+    "2"
     "native smoke path verbs"
     "9"
     "native smoke readback width"
