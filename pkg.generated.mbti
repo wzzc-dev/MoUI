@@ -767,6 +767,63 @@ pub fn RenderPassStoreOp::keeps_pixels(Self) -> Bool
 pub fn RenderPassStoreOp::needs_present(Self) -> Bool
 pub impl Default for RenderPassStoreOp
 
+pub(all) struct RendererResourceDescriptor {
+  key : RendererResourceKey
+  byte_size : Int64
+  cacheable : Bool
+} derive(Eq, @debug.Debug)
+pub fn RendererResourceDescriptor::filter(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::gpu_surface(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::image(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::is_cacheable(Self) -> Bool
+pub fn RendererResourceDescriptor::is_gpu_backed(Self) -> Bool
+pub fn RendererResourceDescriptor::new(RendererResourceKey, byte_size? : Int64, cacheable? : Bool) -> Self
+pub fn RendererResourceDescriptor::of_kind(RendererResourceKind, Bytes, byte_size? : Int64, cacheable? : Bool) -> Self
+pub fn RendererResourceDescriptor::path(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::shader(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::surface(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::text_run(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::typeface(Bytes, byte_size? : Int64) -> Self
+pub fn RendererResourceDescriptor::uncacheable(Self) -> Self
+pub fn RendererResourceDescriptor::with_byte_size(Self, Int64) -> Self
+
+pub(all) struct RendererResourceKey {
+  kind : RendererResourceKind
+  id : Bytes
+} derive(Eq, Hash, @debug.Debug)
+pub fn RendererResourceKey::color_filter(Bytes) -> Self
+pub fn RendererResourceKey::font(Bytes) -> Self
+pub fn RendererResourceKey::gpu_surface(Bytes) -> Self
+pub fn RendererResourceKey::image(Bytes) -> Self
+pub fn RendererResourceKey::image_filter(Bytes) -> Self
+pub fn RendererResourceKey::is_empty(Self) -> Bool
+pub fn RendererResourceKey::is_gpu_backed(Self) -> Bool
+pub fn RendererResourceKey::mask_filter(Bytes) -> Self
+pub fn RendererResourceKey::new(RendererResourceKind, Bytes) -> Self
+pub fn RendererResourceKey::path(Bytes) -> Self
+pub fn RendererResourceKey::shader(Bytes) -> Self
+pub fn RendererResourceKey::surface(Bytes) -> Self
+pub fn RendererResourceKey::text_run(Bytes) -> Self
+pub fn RendererResourceKey::typeface(Bytes) -> Self
+
+pub(all) enum RendererResourceKind {
+  ImageResource
+  ShaderResource
+  ColorFilterResource
+  ImageFilterResource
+  MaskFilterResource
+  TypefaceResource
+  FontResource
+  PathResource
+  TextRunResource
+  SurfaceResource
+  GpuSurfaceResource
+} derive(Eq, Hash, @debug.Debug)
+pub fn RendererResourceKind::is_filter(Self) -> Bool
+pub fn RendererResourceKind::is_gpu_backed(Self) -> Bool
+pub fn RendererResourceKind::is_surface(Self) -> Bool
+pub fn RendererResourceKind::is_text(Self) -> Bool
+
 pub(all) struct ResourceCache[K, V] {
   // private fields
 }
