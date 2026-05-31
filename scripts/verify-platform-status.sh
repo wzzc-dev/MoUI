@@ -198,6 +198,7 @@ if schema_version >= 3:
         "pipeline.resource-plan",
         "pipeline.frame-resource-plan",
         "pipeline.frame-validation",
+        "pipeline.frame-cache-resources",
         "pipeline.resource-cache",
         "gpu.context-resource-plan",
         "surface.target-resource-plan",

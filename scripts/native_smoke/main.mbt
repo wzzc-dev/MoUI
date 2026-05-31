@@ -571,9 +571,7 @@ fn main {
     @skia.RendererResourceKey,
     @skia.RendererResourceDescriptor,
   ] = @skia.ResourceCache::new(max_bytes=replay_frame.resource_plan.byte_size)
-  let replay_cache_inserts = replay_resource_cache.insert_resource_plan(
-    replay_frame.resource_plan,
-  )
+  let replay_cache_inserts = replay_frame.cache_resources(replay_resource_cache)
   if replay_cache_inserts != replay_frame.resource_plan.cacheable_count ||
     replay_resource_cache.byte_size() != replay_frame.resource_plan.byte_size {
     fail_smoke("native render frame resources did not populate the resource cache")
@@ -601,6 +599,8 @@ fn main {
   println(replay_frame.resource_plan.length())
   println("native smoke render frame validation status")
   println(1)
+  println("native smoke render frame cache resources")
+  println(replay_cache_inserts)
   println("native smoke render resource cache inserts")
   println(replay_cache_inserts)
 
