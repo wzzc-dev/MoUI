@@ -671,6 +671,20 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingCiGateStatus } `
       -ExpectedMessage "CI gate coverage is missing ids"
 
+    $fakeMissingCiScriptStatus = Join-Path $dryRunRoot "fake-platform-status-missing-ci-script.json"
+    $missingCiScriptStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
+    foreach ($gate in $missingCiScriptStatus.ci_gates) {
+      if ($gate.id -eq "native.ffi-borrows") {
+        $gate.powershell_command = ".\scripts\missing-native-ffi-borrows.ps1"
+      }
+    }
+    $missingCiScriptStatus |
+      ConvertTo-Json -Depth 20 |
+      Set-Content -LiteralPath $fakeMissingCiScriptStatus
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingCiScriptStatus } `
+      -ExpectedMessage "CI gate references missing verifier script"
+
     & (Join-Path $repoRoot "scripts/verify-platform-status.ps1")
   } finally {
     $resolvedDryRunRoot = Resolve-Path -LiteralPath $dryRunRoot -ErrorAction SilentlyContinue
