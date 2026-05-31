@@ -582,6 +582,34 @@ test "renderer resource descriptors provide typed cache keys" {
 }
 
 ///|
+test "resource cache inserts renderer resource plans" {
+  let image = @skia_mbt.RendererResourceDescriptor::image(
+    b"atlas",
+    byte_size=6L,
+  )
+  let path = @skia_mbt.RendererResourceDescriptor::path(b"shape", byte_size=4L)
+  let scratch = @skia_mbt.RendererResourceDescriptor::shader(
+    b"scratch",
+    byte_size=2L,
+  ).uncacheable()
+  let plan = @skia_mbt.RendererResourcePlan::new([image, path, scratch])
+  let cache : @skia_mbt.ResourceCache[
+    @skia_mbt.RendererResourceKey,
+    @skia_mbt.RendererResourceDescriptor,
+  ] = @skia_mbt.ResourceCache::new(max_bytes=10L)
+  assert_eq(cache.insert_resource_plan(plan), 2)
+  assert_eq(cache.length(), 2)
+  assert_eq(cache.byte_size(), 10L)
+  assert_true(cache.contains(image.key))
+  assert_true(cache.contains(path.key))
+  assert_true(!cache.contains(scratch.key))
+  assert_true(!cache.insert_resource_descriptor(scratch))
+  let huge = @skia_mbt.RendererResourceDescriptor::image(b"huge", byte_size=99L)
+  assert_true(!cache.insert_resource_descriptor(huge))
+  assert_true(!cache.contains(huge.key))
+}
+
+///|
 test "shader descriptors produce stable resource keys" {
   let color = @skia_mbt.ShaderDescriptor::color(@skia_mbt.Color::red())
   let same_color = @skia_mbt.ShaderDescriptor::color(@skia_mbt.Color::red())
