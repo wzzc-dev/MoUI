@@ -306,6 +306,49 @@ test "resource cache supports unbounded and zero-byte resources" {
 }
 
 ///|
+test "render pass descriptor clips clear and present boundaries" {
+  let surface = @skia_mbt.SurfaceDescriptor::window_n32_premul(
+    @skia_mbt.ISize::new(20, 10),
+    sample_count=4,
+    stencil_bits=8,
+  )
+  let pass = @skia_mbt.RenderPassDescriptor::clear(
+    surface,
+    @skia_mbt.Color::black(),
+    bounds=Some(@skia_mbt.IRect::from_xywh(5, -5, 20, 20)),
+    store_op=@skia_mbt.PresentPixels,
+  )
+  assert_true(pass.surface == surface)
+  assert_true(pass.bounds == @skia_mbt.IRect::new(5, 0, 20, 10))
+  assert_true(pass.load_op == @skia_mbt.ClearBeforeDraw)
+  assert_true(pass.clear_color == Some(@skia_mbt.Color::black()))
+  assert_true(pass.store_op == @skia_mbt.PresentPixels)
+  assert_true(pass.needs_clear())
+  assert_true(pass.needs_present())
+  assert_true(pass.keeps_pixels())
+  assert_true(pass.is_msaa())
+
+  let load = @skia_mbt.RenderPassDescriptor::new(surface)
+  assert_true(load.load_op == @skia_mbt.LoadExisting)
+  assert_true(load.clear_color is None)
+  assert_true(load.store_op == @skia_mbt.StorePixels)
+  assert_true(load.bounds == surface.bounds())
+  assert_true(
+    load.with_store_op(@skia_mbt.DiscardPixels).store_op ==
+    @skia_mbt.DiscardPixels,
+  )
+  assert_true(load.with_clear_color(@skia_mbt.Color::red()).needs_clear())
+  assert_true(
+    load.with_clear_color(@skia_mbt.Color::red()).without_clear().clear_color
+    is None,
+  )
+
+  let outside = pass.with_bounds(@skia_mbt.IRect::from_xywh(99, 99, 4, 4))
+  assert_true(outside.is_empty())
+  assert_true(outside.bounds == @skia_mbt.IRect::empty())
+}
+
+///|
 test "matrix exposes skia-style members and affine conversion" {
   let matrix = @skia_mbt.Matrix::new_all(2, 1, 10, 3, 4, 20, 0, 0, 1)
   assert_eq(matrix.scale_x(), 2.0)
