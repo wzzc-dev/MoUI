@@ -339,18 +339,40 @@ foreach ($entry in $regularObjects) {
   if ($entry.allocation -ne "moonbit_malloc") {
     throw "$name regular object uses unsupported allocation: $($entry.allocation)"
   }
+  $pointerFieldCount = [int] $entry.pointer_field_count
+  if ($null -eq $entry.pointer_field_count -or $pointerFieldCount -lt 0) {
+    throw "$name regular object is missing non-negative pointer_field_count"
+  }
 
   $typeBody = Get-MoonBitTypeBody -TypeText $typesText -TypeName $typeName
   Assert-Matches `
     -Text $typeBody `
     -Pattern "\bpriv\s+handle\s*:\s*$([regex]::Escape($handle))\b" `
     -Message "$typeName does not store $handle"
-  Get-CStructBody -HeaderText $headerText -StructName $structName | Out-Null
+  $cBody = Get-CStructBody -HeaderText $headerText -StructName $structName
+  $actualPointerFieldCount = [regex]::Matches($cBody, "\*\s+[A-Za-z_][A-Za-z0-9_]*\s*;").Count
+  if ($actualPointerFieldCount -ne $pointerFieldCount) {
+    throw "$name regular object pointer_field_count mismatch: manifest=$pointerFieldCount struct=$actualPointerFieldCount"
+  }
   $factoryBody = Find-BracedBody `
     -Text $sourceText `
     -Pattern "\b$([regex]::Escape($factory))\b[^{}]*" `
     -Label "regular object factory $factory"
   Assert-Contains -Text $factoryBody -Needle "moonbit_malloc" -Message "$factory must use moonbit_malloc"
+  Assert-Contains `
+    -Text $factoryBody `
+    -Needle "moonbit_skia_regular_object_header" `
+    -Message "$factory must initialize a regular object header"
+  Assert-Matches `
+    -Text $factoryBody `
+    -Pattern "moonbit_skia_regular_object_header\s*\([^;]*,\s*$pointerFieldCount\s*,\s*0\s*\)" `
+    -Message "$factory must encode pointer_field_count=$pointerFieldCount in its object header"
+  if ($pointerFieldCount -gt 0) {
+    Assert-Contains `
+      -Text $factoryBody `
+      -Needle "offsetof($structName," `
+      -Message "$factory must encode pointer-field offset with offsetof($structName, ...)"
+  }
   if ($factoryBody.Contains("moonbit_make_external_object")) {
     throw "$factory must not allocate a MoonBit external object"
   }

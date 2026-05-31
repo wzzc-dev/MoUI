@@ -325,14 +325,39 @@ for entry in regular_objects:
     struct_name = entry["wrapper_struct"]
     factory = entry["factory"]
     allocation = entry.get("allocation")
+    pointer_field_count = entry.get("pointer_field_count")
     if allocation != "moonbit_malloc":
         fail(f"{name} regular object uses unsupported allocation: {allocation}")
+    if not isinstance(pointer_field_count, int) or pointer_field_count < 0:
+        fail(f"{name} regular object is missing non-negative pointer_field_count")
 
     type_body = moonbit_type_body(type_name)
     require_regex(type_body, rf"\bpriv\s+handle\s*:\s*{re.escape(handle)}\b", f"{type_name} does not store {handle}")
-    c_struct_body(struct_name)
+    c_body = c_struct_body(struct_name)
+    actual_pointer_field_count = len(re.findall(r"\*\s+[A-Za-z_][A-Za-z0-9_]*\s*;", c_body))
+    if actual_pointer_field_count != pointer_field_count:
+        fail(
+            f"{name} regular object pointer_field_count mismatch: "
+            f"manifest={pointer_field_count} struct={actual_pointer_field_count}"
+        )
     factory_body = find_braced_body(source, rf"\b{re.escape(factory)}\b[^{{}}]*", f"regular object factory {factory}")
     require_contains(factory_body, "moonbit_malloc", f"{factory} must use moonbit_malloc")
+    require_contains(
+        factory_body,
+        "moonbit_skia_regular_object_header",
+        f"{factory} must initialize a regular object header",
+    )
+    require_regex(
+        factory_body,
+        rf"moonbit_skia_regular_object_header\s*\([^;]*,\s*{pointer_field_count}\s*,\s*0\s*\)",
+        f"{factory} must encode pointer_field_count={pointer_field_count} in its object header",
+    )
+    if pointer_field_count > 0:
+        require_contains(
+            factory_body,
+            f"offsetof({struct_name},",
+            f"{factory} must encode pointer-field offset with offsetof({struct_name}, ...)",
+        )
     if "moonbit_make_external_object" in factory_body:
         fail(f"{factory} must not allocate a MoonBit external object")
     finalizer_name = factory.replace("make_", "").replace("_run", "_run_finalize")
