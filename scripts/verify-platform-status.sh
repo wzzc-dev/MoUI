@@ -345,6 +345,45 @@ if schema_version >= 3:
     missing_areas = sorted(required_areas - seen_areas)
     if missing_areas:
         fail("native smoke capability coverage is missing areas: " + ", ".join(missing_areas))
+    if schema_version >= 4:
+        expected_values = status.get("native_smoke_expected_values")
+        if not isinstance(expected_values, list) or not expected_values:
+            fail("schema v4 platform status is missing native_smoke_expected_values list")
+        required_expected_values = {
+            "native smoke text run resource plan count": "3",
+        }
+        seen_expected_markers = set()
+        for expected in expected_values:
+            if not isinstance(expected, dict):
+                fail("native_smoke_expected_values entries must be objects")
+            expected_id = str(expected.get("id", "")).strip()
+            marker = str(expected.get("marker", "")).strip()
+            value = str(expected.get("value", "")).strip()
+            if not expected_id:
+                fail("native smoke expected value is missing id")
+            if expected_id not in seen_ids:
+                fail(f"native smoke expected value references unknown capability id: {expected_id}")
+            if not marker:
+                fail(f"native smoke expected value is missing marker: {expected_id}")
+            if marker not in seen_markers:
+                fail(f"native smoke expected value references unknown marker: {marker}")
+            if not value:
+                fail(f"native smoke expected value is missing value: {marker}")
+            if marker in seen_expected_markers:
+                fail(f"duplicate native smoke expected value marker: {marker}")
+            seen_expected_markers.add(marker)
+        for marker, value in required_expected_values.items():
+            if marker not in seen_expected_markers:
+                fail(f"native smoke expected value coverage is missing marker: {marker}")
+            expected = next(
+                item for item in expected_values
+                if str(item.get("marker", "")).strip() == marker
+            )
+            if str(expected.get("value", "")).strip() != value:
+                fail(
+                    "native smoke expected value mismatch: "
+                    f"{marker}: expected {value}"
+                )
 
 if status.get("revision_file") != revision_path.name:
     fail(

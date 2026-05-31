@@ -74,12 +74,24 @@ function Set-FakeNativeSmokeLog {
 
   $statusPath = Join-Path $repoRoot "skia-platform-status.json"
   $status = Get-Content -LiteralPath $statusPath -Raw | ConvertFrom-Json
+  $expectedValues = @{}
+  foreach ($expected in @($status.native_smoke_expected_values)) {
+    $marker = "$($expected.marker)".Trim()
+    $value = "$($expected.value)".Trim()
+    if (![string]::IsNullOrWhiteSpace($marker) -and ![string]::IsNullOrWhiteSpace($value)) {
+      $expectedValues[$marker] = $value
+    }
+  }
   $lines = @()
   foreach ($capability in @($status.native_smoke_capabilities)) {
     $marker = "$($capability.marker)".Trim()
     if (![string]::IsNullOrWhiteSpace($marker)) {
       $lines += $marker
-      $lines += "1"
+      if ($expectedValues.ContainsKey($marker)) {
+        $lines += $expectedValues[$marker]
+      } else {
+        $lines += "1"
+      }
     }
   }
   $lines += "skia_mbt native smoke test passed"
@@ -347,6 +359,20 @@ try {
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/verify-native-smoke-log.ps1") -LogPath $fakeMissingStageNativeSmokeLog } `
       -ExpectedMessage "required stage marker"
+
+    $fakeBadStageValueNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke-bad-stage-value.log"
+    Set-FakeNativeSmokeLog -Path $fakeBadStageValueNativeSmokeLog
+    $badStageValueLines = @(Get-Content -LiteralPath $fakeBadStageValueNativeSmokeLog)
+    for ($index = 0; $index -lt $badStageValueLines.Count - 1; $index += 1) {
+      if ($badStageValueLines[$index] -eq "native smoke text run resource plan count") {
+        $badStageValueLines[$index + 1] = "2"
+        break
+      }
+    }
+    $badStageValueLines | Set-Content -LiteralPath $fakeBadStageValueNativeSmokeLog
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-native-smoke-log.ps1") -LogPath $fakeBadStageValueNativeSmokeLog } `
+      -ExpectedMessage "unexpected stage marker value"
 
     $fakeBadNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke-missing-marker.log"
     Set-Content -LiteralPath $fakeBadNativeSmokeLog -Value "native smoke stopped before marker"

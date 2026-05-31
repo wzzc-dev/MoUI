@@ -327,6 +327,48 @@ if ($status.schema_version -ge 3) {
   if ($missingAreas.Count -gt 0) {
     throw "native smoke capability coverage is missing areas: $($missingAreas -join ', ')"
   }
+  if ($status.schema_version -ge 4) {
+    $expectedValues = @($status.native_smoke_expected_values)
+    if ($expectedValues.Count -eq 0) {
+      throw "schema v4 platform status is missing native_smoke_expected_values list"
+    }
+    $requiredExpectedValues = @{
+      "native smoke text run resource plan count" = "3"
+    }
+    $seenExpectedMarkers = @{}
+    foreach ($expected in $expectedValues) {
+      $expectedId = "$($expected.id)".Trim()
+      $marker = "$($expected.marker)".Trim()
+      $value = "$($expected.value)".Trim()
+      if ([string]::IsNullOrWhiteSpace($expectedId)) {
+        throw "native smoke expected value is missing id"
+      }
+      if (!$seenIds.ContainsKey($expectedId)) {
+        throw "native smoke expected value references unknown capability id: $expectedId"
+      }
+      if ([string]::IsNullOrWhiteSpace($marker)) {
+        throw "native smoke expected value is missing marker: $expectedId"
+      }
+      if (!$seenMarkers.ContainsKey($marker)) {
+        throw "native smoke expected value references unknown marker: $marker"
+      }
+      if ([string]::IsNullOrWhiteSpace($value)) {
+        throw "native smoke expected value is missing value: $marker"
+      }
+      if ($seenExpectedMarkers.ContainsKey($marker)) {
+        throw "duplicate native smoke expected value marker: $marker"
+      }
+      $seenExpectedMarkers[$marker] = $value
+    }
+    foreach ($marker in $requiredExpectedValues.Keys) {
+      if (!$seenExpectedMarkers.ContainsKey($marker)) {
+        throw "native smoke expected value coverage is missing marker: $marker"
+      }
+      if ($seenExpectedMarkers[$marker] -ne $requiredExpectedValues[$marker]) {
+        throw "native smoke expected value mismatch: ${marker}: expected $($requiredExpectedValues[$marker])"
+      }
+    }
+  }
 }
 
 if ($status.revision_file -ne (Split-Path -Leaf $resolvedRevisionFile)) {
