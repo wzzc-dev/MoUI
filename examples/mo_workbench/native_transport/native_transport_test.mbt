@@ -134,6 +134,36 @@ async test "native transport keeps one jsonl process across command batches" {
 
 ///|
 #cfg(all(target="native", not(platform="windows")))
+async test "native transport command batch runner reuses one jsonl process" {
+  let config = PiNativeTransportConfig::shell(
+    script=(
+      #|count=0
+      #|while IFS= read -r line; do
+      #|  count=$((count + 1))
+      #|  printf '{"count":%s,"echo":%s}\n' "$count" "$line"
+      #|done
+    ),
+  )
+  let run = run_jsonl_command_batches(config, session_id="fixture", [
+    [StartRpc("fixture", "/repo")],
+    [SendUserInput("fixture", "first prompt")],
+    [SendUserInput("fixture", "second prompt"), CancelRpcRun("fixture")],
+  ])
+  inspect(run.exit_code, content="0")
+  inspect(run.sent_lines().length(), content="4")
+  inspect(run.received_lines().length(), content="4")
+  inspect(
+    run.events.filter(event => event is ProcessStarted(_)).length(),
+    content="1",
+  )
+  json_inspect(@json.parse(run.received_lines()[3]), content={
+    "count": 4,
+    "echo": { "type": "cancel_run", "session_id": "fixture" },
+  })
+}
+
+///|
+#cfg(all(target="native", not(platform="windows")))
 test "native transport runtime emits command batch events through app hook" {
   let config = PiNativeTransportConfig::shell(
     script=(

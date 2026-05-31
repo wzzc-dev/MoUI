@@ -163,7 +163,10 @@ The shared app package keeps the Pi boundary as platform-neutral
 automation-focused workflows can reuse the same event model. Structured Pi
 JSONL payloads such as command starts/completions, diagnostics, file context,
 and diff summaries are ingested inside the shared app model rather than the
-native process driver.
+native process driver. The native transport also exposes a multi-batch JSONL
+session runner so the same `pi --mode rpc` process can serve start, prompt,
+follow-up, and cancel batches in tests before that ownership is moved into the
+macOS host loop.
 
 The first native entrypoint is macOS Skia:
 

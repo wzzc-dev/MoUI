@@ -17,6 +17,10 @@ pub fn pi_rpc_user_input_line(session_id~ : String, text~ : String) -> String
 
 pub async fn run_interactive_jsonl_session(PiNativeTransportConfig, session_id~ : String, async (PiNativeTransportSession) -> Unit) -> PiNativeTransportRun
 
+pub async fn run_jsonl_command_batches(PiNativeTransportConfig, session_id~ : String, Array[Array[@app.PiTransportCommand]]) -> PiNativeTransportRun
+
+pub fn run_jsonl_command_batches_blocking(PiNativeTransportConfig, session_id~ : String, Array[Array[@app.PiTransportCommand]]) -> PiNativeTransportRun
+
 pub async fn run_jsonl_commands(PiNativeTransportConfig, Array[@app.PiTransportCommand]) -> PiNativeTransportRun
 
 pub fn run_jsonl_commands_blocking(PiNativeTransportConfig, Array[@app.PiTransportCommand]) -> PiNativeTransportRun

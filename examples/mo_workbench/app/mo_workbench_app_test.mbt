@@ -28,6 +28,7 @@ test "workbench transport runtime effect dispatches prompt events" {
   let transport = PiTransportRuntime::new(run=(commands, emit) => {
     captured.val = commands
     emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"start_session\"}"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"user_input\"}"))
     emit(JsonLineReceived("moui-skia", "{\"event\":\"done\"}"))
   })
@@ -38,6 +39,7 @@ test "workbench transport runtime effect dispatches prompt events" {
   inspect(update.model.pending_transport_count(), content="2")
   let model = run_workbench_effect(update)
   inspect(captured.val.length(), content="2")
+  inspect(model.pending_transport_count(), content="0")
   inspect(model.transport.status_label(), content="Running")
   inspect(model.transport.last_json_line, content="{\"event\":\"done\"}")
   assert_true(

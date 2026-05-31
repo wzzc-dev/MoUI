@@ -246,6 +246,38 @@ pub async fn run_jsonl_commands(
 }
 
 ///|
+pub async fn run_jsonl_command_batches(
+  config : PiNativeTransportConfig,
+  session_id~ : String,
+  batches : Array[Array[PiTransportCommand]],
+) -> PiNativeTransportRun {
+  run_interactive_jsonl_session(config, session_id~, session => {
+    for commands in batches {
+      session.send_commands(commands)
+    }
+  })
+}
+
+///|
+pub fn run_jsonl_command_batches_blocking(
+  config : PiNativeTransportConfig,
+  session_id~ : String,
+  batches : Array[Array[PiTransportCommand]],
+) -> PiNativeTransportRun {
+  let result : Ref[PiNativeTransportRun?] = Ref(None)
+  @async.run_async_main(() => {
+    let run = run_jsonl_command_batches(config, session_id~, batches) catch {
+      err => failed_run("\{err}")
+    }
+    result.val = Some(run)
+  })
+  match result.val {
+    Some(run) => run
+    None => failed_run("native async session did not produce a result")
+  }
+}
+
+///|
 pub fn run_jsonl_commands_blocking(
   config : PiNativeTransportConfig,
   commands : Array[PiTransportCommand],
