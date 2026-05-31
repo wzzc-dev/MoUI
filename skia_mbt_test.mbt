@@ -258,6 +258,54 @@ test "surface descriptors model raster window and gpu contracts" {
 }
 
 ///|
+test "resource cache tracks lru budget and stats" {
+  let cache : @skia_mbt.ResourceCache[String, Int] = @skia_mbt.ResourceCache::new(
+    max_bytes=10L,
+  )
+  assert_true(cache.is_empty())
+  assert_eq(cache.max_bytes(), 10L)
+  assert_true(cache.insert("a", 1, byte_size=4L))
+  assert_true(cache.insert("b", 2, byte_size=4L))
+  assert_eq(cache.length(), 2)
+  assert_eq(cache.byte_size(), 8L)
+  assert_true(cache.get("a") == Some(1))
+  assert_true(cache.insert("c", 3, byte_size=4L))
+  assert_true(cache.contains("a"))
+  assert_true(!cache.contains("b"))
+  assert_true(cache.contains("c"))
+  assert_eq(cache.byte_size(), 8L)
+  let after_evict = cache.stats()
+  assert_eq(after_evict.hits, 1)
+  assert_eq(after_evict.misses, 0)
+  assert_eq(after_evict.evictions, 1)
+  assert_true(cache.get("missing") is None)
+  assert_eq(cache.stats().misses, 1)
+  assert_true(!cache.insert("huge", 9, byte_size=99L))
+  assert_true(!cache.contains("huge"))
+  assert_eq(cache.byte_size(), 8L)
+  cache.set_max_bytes(4L)
+  assert_eq(cache.length(), 1)
+  assert_true(cache.byte_size() <= 4L)
+  cache.clear()
+  assert_true(cache.is_empty())
+  assert_eq(cache.byte_size(), 0L)
+}
+
+///|
+test "resource cache supports unbounded and zero-byte resources" {
+  let cache : @skia_mbt.ResourceCache[String, String] = @skia_mbt.ResourceCache::new()
+  assert_eq(cache.max_bytes(), 0L)
+  assert_true(cache.insert("typeface:default", "font", byte_size=-8L))
+  assert_eq(cache.byte_size(), 0L)
+  assert_true(cache.peek("typeface:default") == Some("font"))
+  assert_eq(cache.stats().hits, 0)
+  assert_true(cache.get("typeface:default") == Some("font"))
+  assert_eq(cache.stats().hits, 1)
+  assert_true(cache.remove("typeface:default"))
+  assert_true(!cache.remove("typeface:default"))
+}
+
+///|
 test "matrix exposes skia-style members and affine conversion" {
   let matrix = @skia_mbt.Matrix::new_all(2, 1, 10, 3, 4, 20, 0, 0, 1)
   assert_eq(matrix.scale_x(), 2.0)
