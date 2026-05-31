@@ -71,6 +71,7 @@ jobs:
           bash -n scripts/install-linux-smoke-deps.sh
           bash -n scripts/configure-linux-native-pkg.sh
           bash -n scripts/verify-native-smoke-log.sh
+          bash -n scripts/verify-native-smoke-capabilities.sh
           bash -n scripts/verify-acceptance-log.sh
           bash -n scripts/verify-real-skia-artifact.sh
           bash -n scripts/verify-skia-revision-pin.sh
@@ -88,75 +89,24 @@ jobs:
           python3 -m json.tool native/ownership.json >/dev/null
           bash scripts/verify-native-ownership.sh
           bash scripts/verify-native-ffi-borrows.sh
+          bash scripts/verify-native-smoke-capabilities.sh
           bash scripts/fetch-jetbrains-skia.sh --platform linux --arch x64 --config Release --cache-dir .skia-dry-run/jetbrains-cache --dry-run-config --print-env > logs/fetch-jetbrains-linux.env
           grep -Fq 'SKIA_MBT_SKIA_PACKAGE=Skia-m148-8967a2e80c-linux-Release-x64.zip' logs/fetch-jetbrains-linux.env
           grep -Fq 'SKIA_MBT_SKIA_PACKAGE_SHA256=37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2' logs/fetch-jetbrains-linux.env
-          printf '%s\n' \
-            'native smoke surface descriptor backend' \
-            'raster' \
-            'native smoke canvas state restored' \
-            '1' \
-            'native smoke canvas replay commands' \
-            '8' \
-            'native smoke render resource plan count' \
-            '7' \
-            'native smoke gpu context resource plan count' \
-            '2' \
-            'native smoke shader draws' \
-            '3' \
-            'native smoke shader resource plan count' \
-            '3' \
-            'native smoke filter layer count' \
-            '2' \
-            'native smoke filter resource plan count' \
-            '3' \
-            'native smoke path verbs' \
-            '9' \
-            'native smoke readback width' \
-            '32' \
-            'native smoke bounded readback width' \
-            '4' \
-            'native smoke bounded snapshot width' \
-            '4' \
-            'native smoke encoded PNG bytes' \
-            '128' \
-            'native smoke decoded image width' \
-            '32' \
-            'native smoke codec encoded format PNG' \
-            'native smoke decoded bitmap width' \
-            '32' \
-            'native smoke font spacing' \
-            '16' \
-            'native smoke font resource plan count' \
-            '1' \
-            'native smoke measured text width' \
-            '12' \
-            'native smoke text glyph count' \
-            '4' \
-            'native smoke first glyph id' \
-            '54' \
-            'native smoke first glyph width' \
-            '7' \
-            'native smoke second glyph position x' \
-            '8' \
-            'native smoke second glyph x position' \
-            '8' \
-            'native smoke first glyph bounds width' \
-            '6' \
-            'native smoke measured text bounds width' \
-            '11' \
-            'native smoke font family count' \
-            '3' \
-            'native smoke first font family bytes' \
-            '5' \
-            'native smoke typeface family bytes' \
-            '5' \
-            'native smoke font fallback resource plan count' \
-            '1' \
-            'native smoke font fallback width' \
-            '12' \
-            'skia_mbt native smoke test passed' \
-            > logs/fake-native-smoke-good.log
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          lines = []
+          for capability in status['native_smoke_capabilities']:
+              marker = capability['marker'].strip()
+              if marker:
+                  lines.extend([marker, '1'])
+          lines.append('skia_mbt native smoke test passed')
+          Path('logs/fake-native-smoke-good.log').write_text(
+              '\n'.join(lines) + '\n'
+          )
+          PY
           bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-good.log
           printf '%s\n' 'skia_mbt native smoke test passed' > logs/fake-native-smoke-missing-stage.log
           if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-missing-stage.log; then
