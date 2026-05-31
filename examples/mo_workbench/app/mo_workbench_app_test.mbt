@@ -210,6 +210,31 @@ test "workbench command queue uses Pi RPC bash command" {
 }
 
 ///|
+test "workbench reruns command evidence through Pi RPC bash path" {
+  let seed = WorkbenchModel::new()
+  let command = seed.commands[0].command
+  let model = seed.update(QueueCommand(command))
+  inspect(model.last_status, content="Command queued for Pi RPC bash")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[1] {
+    RunShellCommand(session, rerun) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        rerun,
+        content="moon test examples/mo_workbench/app --target native",
+      )
+    }
+    _ => fail("expected queued rerun shell command")
+  }
+  let queued = model.commands[model.commands.length() - 1]
+  inspect(
+    queued.command,
+    content="moon test examples/mo_workbench/app --target native",
+  )
+  inspect(queued.status, content="queued")
+}
+
+///|
 test "workbench command runtime effect dispatches Pi RPC bash command" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, emit) => {
@@ -1129,6 +1154,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Pi transcript"))
   assert_true(has_text(commands, "Activity"))
   assert_true(has_text(commands, "/review"))
+  assert_true(has_text(commands, "重跑"))
   assert_true(has_text(commands, "Workspace"))
   assert_true(has_text(commands, "3 diag"))
   assert_true(has_text(commands, "清除"))

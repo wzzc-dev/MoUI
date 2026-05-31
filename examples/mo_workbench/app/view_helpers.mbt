@@ -684,8 +684,8 @@ fn command_run_row(
       ),
       column(
         [
-          text(command.command, role=Control, theme~, width=420.0, height=24.0),
-          text(command.cwd, role=Caption, theme~, width=420.0, height=22.0),
+          text(command.command, role=Control, theme~, width=356.0, height=24.0),
+          text(command.cwd, role=Caption, theme~, width=356.0, height=22.0),
         ],
         spacing=0.0,
         align=Start,
@@ -694,11 +694,19 @@ fn command_run_row(
         command_exit_label(command),
         role=Caption,
         theme~,
-        width=86.0,
+        width=76.0,
         height=30.0,
       ),
+      button(
+        "重跑",
+        on_click=QueueCommand(command.command),
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
+      ),
     ],
-    spacing=10.0,
+    spacing=8.0,
     align=Center,
   )
 }

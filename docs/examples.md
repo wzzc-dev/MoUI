@@ -208,6 +208,9 @@ process details into the app model.
 Workbench command queue actions now dispatch platform-neutral shell commands
 that the native encoder maps to Pi RPC `bash`, and successful `bash` responses
 mark command evidence as passed, failed, or cancelled inside the shared model.
+The Activity digest can rerun a visible command evidence row through the same
+`QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
+replayed without introducing a native-only shortcut.
 Cancelling while such a shell command is active now maps to Pi RPC `abort_bash`;
 prompt/agent cancellation still maps to Pi RPC `abort`.
 The shared app also ingests Pi's streaming session events such as
