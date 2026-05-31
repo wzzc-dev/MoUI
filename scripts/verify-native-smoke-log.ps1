@@ -16,7 +16,7 @@ if (!$content.Contains($Marker)) {
   throw "native smoke executable log is missing the success marker: $Marker"
 }
 
-$stageMarkers = @(
+$defaultStageMarkers = @(
   "native smoke surface descriptor backend",
   "native smoke canvas state restored",
   "native smoke shader draws",
@@ -40,6 +40,20 @@ $stageMarkers = @(
   "native smoke font family count",
   "native smoke first font family bytes"
 )
+$stageMarkers = $defaultStageMarkers
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$statusFile = Join-Path $repoRoot "skia-platform-status.json"
+if (Test-Path -LiteralPath $statusFile -PathType Leaf) {
+  $status = Get-Content -LiteralPath $statusFile -Raw | ConvertFrom-Json
+  $statusStageMarkers = @($status.native_smoke_capabilities | ForEach-Object {
+      "$($_.marker)".Trim()
+    } | Where-Object {
+      $_ -ne ""
+    })
+  if ($statusStageMarkers.Count -gt 0) {
+    $stageMarkers = $statusStageMarkers
+  }
+}
 foreach ($stageMarker in $stageMarkers) {
   if (!$content.Contains($stageMarker)) {
     throw "native smoke executable log is missing required stage marker: $stageMarker"

@@ -50,8 +50,76 @@ if ($providerLockData -and $providerLockData.providers.jetbrains) {
   $jetbrainsTag = $providerLockData.providers.jetbrains.tag
 }
 
-if ($status.schema_version -notin @(1, 2)) {
+if ($status.schema_version -notin @(1, 2, 3)) {
   throw "unsupported Skia platform status schema_version: $($status.schema_version)"
+}
+
+if ($status.schema_version -ge 3) {
+  $capabilities = @($status.native_smoke_capabilities)
+  if ($capabilities.Count -eq 0) {
+    throw "schema v3 platform status is missing native_smoke_capabilities list"
+  }
+
+  $requiredCapabilityIds = @(
+    "surface.descriptor",
+    "canvas.state",
+    "shader.draw",
+    "filter.layer",
+    "path.geometry",
+    "surface.readback",
+    "surface.bounded-readback",
+    "surface.bounded-snapshot",
+    "image.encode-png",
+    "image.decode",
+    "codec.metadata",
+    "bitmap.decode-readback",
+    "text.font-spacing",
+    "text.measure",
+    "text.glyph-count",
+    "text.glyph-id",
+    "text.glyph-width",
+    "text.glyph-position",
+    "text.glyph-x-position",
+    "text.glyph-bounds",
+    "text.bounds",
+    "fontmgr.family-count",
+    "fontmgr.family-name"
+  )
+  $seenIds = @{}
+  $seenMarkers = @{}
+  $seenAreas = @{}
+  foreach ($capability in $capabilities) {
+    $capabilityId = "$($capability.id)".Trim()
+    $area = "$($capability.area)".Trim()
+    $marker = "$($capability.marker)".Trim()
+    if ([string]::IsNullOrWhiteSpace($capabilityId)) {
+      throw "native smoke capability is missing id"
+    }
+    if ([string]::IsNullOrWhiteSpace($area)) {
+      throw "native smoke capability is missing area: $capabilityId"
+    }
+    if ([string]::IsNullOrWhiteSpace($marker)) {
+      throw "native smoke capability is missing marker: $capabilityId"
+    }
+    if ($seenIds.ContainsKey($capabilityId)) {
+      throw "duplicate native smoke capability id: $capabilityId"
+    }
+    if ($seenMarkers.ContainsKey($marker)) {
+      throw "duplicate native smoke capability marker: $marker"
+    }
+    $seenIds[$capabilityId] = $true
+    $seenMarkers[$marker] = $true
+    $seenAreas[$area] = $true
+  }
+  $missingIds = @($requiredCapabilityIds | Where-Object { !$seenIds.ContainsKey($_) })
+  if ($missingIds.Count -gt 0) {
+    throw "native smoke capability coverage is missing ids: $($missingIds -join ', ')"
+  }
+  $requiredAreas = @("Surface", "Canvas", "Shader", "Filter", "Path", "Image", "Text", "FontMgr")
+  $missingAreas = @($requiredAreas | Where-Object { !$seenAreas.ContainsKey($_) })
+  if ($missingAreas.Count -gt 0) {
+    throw "native smoke capability coverage is missing areas: $($missingAreas -join ', ')"
+  }
 }
 
 if ($status.revision_file -ne (Split-Path -Leaf $resolvedRevisionFile)) {
