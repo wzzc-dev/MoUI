@@ -1077,7 +1077,8 @@ fn skia_empty_typeface_text_system() -> @core.TextSystem {
         input.text,
         SkiaFontResolution::EmptyTypeface,
       ) {
-      Some((font, _)) => skia_text_layout_result(font, input, fallback)
+      Some((font, glyph_run)) =>
+        skia_text_layout_result(font, input, fallback, glyph_run~)
       None => fallback
     }
   })
@@ -1093,7 +1094,8 @@ fn skia_system_font_mgr_text_system() -> @core.TextSystem {
         input.text,
         SkiaFontResolution::SystemFontMgr,
       ) {
-      Some((font, _)) => skia_text_layout_result(font, input, fallback)
+      Some((font, glyph_run)) =>
+        skia_text_layout_result(font, input, fallback, glyph_run~)
       None => fallback
     }
   })
@@ -1104,11 +1106,11 @@ fn skia_text_layout_result(
   font : @skia_native.Font,
   input : @core.TextLayoutInput,
   fallback : @core.TextLayoutResult,
+  glyph_run~ : SkiaGlyphRun,
 ) -> @core.TextLayoutResult {
   if !skia_font_can_measure_text(font, input.text) {
     return fallback
   }
-  let glyph_run = skia_glyph_run(font, input.text)
   let carets = skia_caret_positions(font, input.text, glyph_run~)
   let measured = skia_layout_width_from_carets(carets)
   let metrics = skia_text_metrics(

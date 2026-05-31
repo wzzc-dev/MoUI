@@ -365,7 +365,8 @@ test "skia text system exposes measured caret positions" {
         font=@core.FontSpec::new(size=18.0, weight=400),
       )
       let fallback = @core.TextSystem::fallback().measure_text(input)
-      let layout = skia_text_layout_result(font, input, fallback)
+      let glyph_run = skia_glyph_run(font, input.text)
+      let layout = skia_text_layout_result(font, input, fallback, glyph_run~)
       inspect(layout.caret_positions.length(), content="5")
       inspect(layout.caret_positions[0], content="0")
       if skia_test_font_has_visible_text(font, "Slim") {
@@ -432,6 +433,36 @@ test "skia text metrics derive baseline and height from font metrics" {
 }
 
 ///|
+test "skia text layout consumes the draw payload glyph run" {
+  match skia_test_font(@core.FontSpec::new(size=18.0, weight=400)) {
+    Some(font) => {
+      let input = @core.TextLayoutInput::new(
+        text="AB",
+        font=@core.FontSpec::new(size=18.0, weight=400),
+      )
+      guard skia_font_can_measure_text(font, input.text) else { return () }
+      let fallback = @core.TextSystem::fallback().measure_text(input)
+      let glyph_run = SkiaGlyphRun::{
+        glyphs: [@skia_native.GlyphId::new(10), @skia_native.GlyphId::new(11)],
+        positions: [
+          @skia_mbt.Point::new(0.0, 0.0),
+          @skia_mbt.Point::new(77.0, 0.0),
+        ],
+        clusters: [0, 1],
+        width: 123.0,
+      }
+      let layout = skia_text_layout_result(font, input, fallback, glyph_run~)
+      inspect(layout.size.width, content="123")
+      inspect(layout.caret_positions.length(), content="3")
+      inspect(layout.caret_positions[0], content="0")
+      inspect(layout.caret_positions[1], content="77")
+      inspect(layout.caret_positions[2], content="123")
+    }
+    None => assert_true(!skia_available())
+  }
+}
+
+///|
 test "skia text system clamps measured carets to max width" {
   match skia_test_font(@core.FontSpec::new(size=20.0, weight=400)) {
     Some(font) => {
@@ -441,7 +472,8 @@ test "skia text system clamps measured carets to max width" {
         max_width=12.0,
       )
       let fallback = @core.TextSystem::fallback().measure_text(input)
-      let layout = skia_text_layout_result(font, input, fallback)
+      let glyph_run = skia_glyph_run(font, input.text)
+      let layout = skia_text_layout_result(font, input, fallback, glyph_run~)
       inspect(layout.caret_positions.length(), content="5")
       inspect(layout.size.width, content="12")
       for caret in layout.caret_positions {
