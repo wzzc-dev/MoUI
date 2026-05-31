@@ -75,7 +75,7 @@ if ([System.IO.Path]::IsPathRooted($Output)) {
 $includePath = $resolvedIncludeRoot -replace "\\", "/"
 $libPath = $resolvedLibDir -replace "\\", "/"
 
-$ccFlags = "/DSKIA_MBT_HAS_SKIA /std:c++17 /EHsc /I$includePath"
+$ccFlags = "/DSKIA_MBT_HAS_SKIA /std:c++20 /EHsc /I$includePath"
 if (![string]::IsNullOrWhiteSpace($ExtraCcFlags)) {
   $ccFlags = "$ccFlags $ExtraCcFlags"
 }
