@@ -168,7 +168,14 @@ native process driver. The native transport also exposes a
 `pi --mode rpc` JSONL process alive across repeated app runtime dispatches
 while the shared app remains platform-neutral. Native stderr is surfaced as a
 platform-neutral warning event and nonzero process exits become
-`TransportFailed` events with the exit code and last stderr line.
+`TransportFailed` events with the exit code and last stderr line. Unexpected
+child exits do not close the native owner; the next UI command batch restarts a
+fresh JSONL process, while explicit `Shutdown` remains the close path. The
+native encoder targets Pi's actual RPC command names: `get_state`, `prompt`,
+and `abort`, with process shutdown handled by stdin EOF. The focused smoke for
+machines with Pi installed is an offline `get_state` JSONL round trip through
+`pi --mode rpc`, so it validates the process protocol without making a model
+request.
 
 The first native entrypoint is macOS Skia:
 
@@ -178,6 +185,9 @@ moon test examples/mo_workbench/app --target wasm-gc
 moon test examples/mo_workbench/native_transport --target native
 moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
+printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 ```
 
 See [Mo Workbench](mo-workbench.md) for the app architecture, current slice,
