@@ -28,8 +28,8 @@ artifact verification are all represented.
 
 The same status file records `native_smoke_capabilities`: the canonical list of
 smoke markers that must appear in every accepted native smoke executable log.
-The platform-status verifier checks this list covers Surface, Canvas, Shader,
-Filter, Path, Image, Text, and FontMgr boundaries, and
+The platform-status verifier checks this list covers Surface, Canvas, Pipeline,
+GPU, Shader, Filter, Path, Image, Codec, Bitmap, Text, and FontMgr boundaries, and
 `verify-native-smoke-log.*` reads the same list when validating artifact logs.
 
 When a real artifact has passed verification and the Skia revision has been
