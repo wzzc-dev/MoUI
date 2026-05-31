@@ -1148,6 +1148,8 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(frame.needs_present())
   assert_true(frame.has_present())
   assert_true(frame.is_ready())
+  assert_true(frame.validation_status() == @skia_mbt.FrameReady)
+  assert_true(frame.validation_status().is_ready())
   assert_eq(frame.stats.command_count, 4)
   assert_eq(frame.stats.present_count, 1)
   assert_true(
@@ -1167,6 +1169,26 @@ test "render frame descriptor summarizes target commands and resources" {
     @skia_mbt.RendererResourceDescriptor,
   ] = @skia_mbt.ResourceCache::new()
   assert_eq(cache.insert_resource_plan(frame.resource_plan), 2)
+
+  let mismatch_target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(24, 16),
+  )
+  let mismatch_frame = @skia_mbt.RenderCommandList::for_target(mismatch_target).frame_descriptor(
+    target,
+  )
+  assert_true(!mismatch_frame.is_target_consistent())
+  assert_true(
+    mismatch_frame.validation_status() == @skia_mbt.FrameTargetMismatch,
+  )
+  assert_true(!mismatch_frame.is_ready())
+
+  let unbalanced_frame = @skia_mbt.RenderCommandList::for_target(target)
+    .save()
+    .frame_descriptor(target)
+  assert_true(
+    unbalanced_frame.validation_status() == @skia_mbt.FrameUnbalancedState,
+  )
+  assert_true(!unbalanced_frame.is_ready())
 }
 
 ///|

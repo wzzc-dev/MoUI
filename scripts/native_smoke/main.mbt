@@ -552,12 +552,20 @@ fn main {
   }
   let replay_frame = replay_commands.frame_descriptor(replay_target)
   if !replay_frame.is_ready() ||
+    replay_frame.validation_status() != @skia.FrameReady ||
     replay_frame.resource_plan.length() != 7 ||
     !replay_frame.resource_plan.contains_key(replay_target.resource_key()) ||
     replay_frame.resource_plan.contains_key(
       replay_frame.command_list.pass.resource_descriptor().key,
     ) {
     fail_smoke("native render frame descriptor did not match target resource plan")
+  }
+  let replay_unbalanced_frame = @skia.RenderCommandList::for_target(
+    replay_target,
+  ).save().frame_descriptor(replay_target)
+  if replay_unbalanced_frame.validation_status() != @skia.FrameUnbalancedState ||
+    replay_unbalanced_frame.is_ready() {
+    fail_smoke("native render frame validation did not report unbalanced state")
   }
   let replay_resource_cache : @skia.ResourceCache[
     @skia.RendererResourceKey,
@@ -591,6 +599,8 @@ fn main {
   println(replay_plan.length())
   println("native smoke render frame resource plan count")
   println(replay_frame.resource_plan.length())
+  println("native smoke render frame validation status")
+  println(1)
   println("native smoke render resource cache inserts")
   println(replay_cache_inserts)
 
