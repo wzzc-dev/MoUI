@@ -750,6 +750,7 @@ pub fn RenderPassDescriptor::needs_clear(Self) -> Bool
 pub fn RenderPassDescriptor::needs_present(Self) -> Bool
 pub fn RenderPassDescriptor::new(SurfaceDescriptor, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp) -> Self
 pub fn RenderPassDescriptor::present(SurfaceDescriptor, bounds? : IRect?, clear_color? : Color?) -> Self
+pub fn RenderPassDescriptor::resource_descriptor(Self) -> RendererResourceDescriptor
 pub fn RenderPassDescriptor::with_bounds(Self, IRect) -> Self
 pub fn RenderPassDescriptor::with_clear_color(Self, Color) -> Self
 pub fn RenderPassDescriptor::with_load_op(Self, RenderPassLoadOp) -> Self
