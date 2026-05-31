@@ -14,6 +14,13 @@ smoke capability markers. `verify-native-smoke-log.*` reads its
 Surface, Canvas, Shader, Filter, Path, Image, Text, and FontMgr boundaries that
 the platform status file claims.
 
+Native handle ownership is tracked separately in `../native/ownership.json`.
+Run `bash scripts/verify-native-ownership.sh` or
+`.\scripts\verify-native-ownership.ps1` after changing C++ wrapper structs,
+MoonBit handle declarations, or finalizers. The verifier rejects undeclared
+external wrapper factories, missing finalizers, and release code that no longer
+matches the declared `delete`, Skia `unref`, or borrowed-owner contract.
+
 ## JetBrains/skia provider
 
 JetBrains/skia is the default binary provider for desktop real-smoke runs. The
