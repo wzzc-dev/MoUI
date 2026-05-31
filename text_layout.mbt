@@ -344,6 +344,7 @@ fn RendererResourceKind::text_run_cache_name(
     PathResource => b"path"
     TextRunResource => b"text-run"
     SurfaceResource => b"surface"
+    GpuContextResource => b"gpu-context"
     GpuSurfaceResource => b"gpu-surface"
   }
 }
