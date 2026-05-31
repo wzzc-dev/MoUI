@@ -22,7 +22,8 @@ paths, or abstractions that only preserve old shapes.
 - `backend/host/` defines shared host event, surface, input, async
   host-service, window lifecycle, window scene resolution,
   per-window runtime slot collection, platform-window id mapping,
-  request/completion, and window event conversion contracts.
+  request/completion, window event conversion, and renderer-neutral
+  `HostWindowRenderer` diagnostics contracts.
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
   cores: platform windows, event conversion, services, lifecycle, runtime slots,
   and renderer-neutral provider hooks. They must not import `render/wgpu`,

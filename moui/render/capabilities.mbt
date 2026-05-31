@@ -372,9 +372,9 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     renderer_feature_capability_entry(
       RendererFeature::AsyncImage,
       RendererFeatureStatus::Partial,
-      "Renderer-neutral image lifecycle state models loading, ready, failed, disposed, and eviction; native WgpuRenderer now exposes renderer-local image resource snapshots, with synchronous decode paths marking ready or failed.",
+      "Renderer-neutral image lifecycle state models loading, ready, failed, disposed, and eviction; native WgpuRenderer exposes renderer-local image resource snapshots, native WGPU providers forward them through HostWindowRenderer, and synchronous decode paths mark ready or failed.",
       RendererFeatureStatus::Partial,
-      "Skia raster image lifecycle uses the same renderer-neutral records and has real data URI, local-file, failed-image placeholder, and dispose-record evidence; late async repaint remains follow-up work.",
+      "Skia raster image lifecycle uses the same renderer-neutral records, native Skia providers forward snapshots through HostWindowRenderer, and real Skia evidence covers data URI, local-file, failed-image placeholder, and dispose-record diagnostics; late async repaint remains follow-up work.",
       RendererFeatureStatus::Partial,
       "Renderer-neutral image lifecycle state matches the browser async loading cache contract; WebGpuWasmRenderer and the backend WebRenderer facade expose app-visible image resource snapshots, refresh loading, ready, or failed records from the browser cache after host submission, and the canonical Web boot path schedules a redraw when Image.onload or Image.onerror reports a resource change.",
     ),
