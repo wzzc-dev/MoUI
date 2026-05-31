@@ -17,6 +17,8 @@ The current package exposes the first value-layer API surface:
 - canvas point drawing modes: `PointMode`
 - image sampling: `SamplingOptions`, `FilterMode`, `MipmapMode`,
   `CubicResampler`
+- surface contracts: `SurfaceDescriptor`, `SurfaceBackend`, `SurfaceOrigin`,
+  and `SurfaceBudget` for raster, window, and future GPU render targets
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,
@@ -34,6 +36,8 @@ The `native` subpackage contains the first opt-in native boundary:
 - `@native.skia_shaper_available()` reports whether the optional SkShaper
   boundary was compiled and linked;
 - `@native.Surface::raster_n32_premul(size)` is the first raster surface entry;
+- `@native.Surface::descriptor()` reports the value-layer surface contract
+  satisfied by the native raster surface;
 - `@native.Surface::image_snapshot()` returns an immutable `@native.Image`
   handle when a surface is available;
 - `@native.Surface::image_snapshot_with_bounds(bounds)` snapshots a bounded

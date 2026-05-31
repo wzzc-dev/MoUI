@@ -230,6 +230,11 @@ pub fn Surface::image_info(self : Surface) -> @skia.ImageInfo {
 }
 
 ///|
+pub fn Surface::descriptor(self : Surface) -> @skia.SurfaceDescriptor {
+  @skia.SurfaceDescriptor::raster_n32_premul(self.dimensions())
+}
+
+///|
 /// Snapshot current surface contents into an immutable image.
 pub fn Surface::image_snapshot(self : Surface) -> Image? {
   ignore(self)
