@@ -707,6 +707,26 @@ fn main {
     fail_smoke("native font manager family font did not measure text")
   }
   smoke_mark(b"font manager family")
+  let fallback_request = @skia.FontFallbackRequest::new(
+    families=@skia.FontFallbackChain::new(primary_family=first_family),
+    bcp47=[b"en"],
+    character=0x53,
+  )
+  guard font_mgr.match_fallback_request(fallback_request)
+    is Some(fallback_typeface) else {
+    fail_smoke("native font manager did not match a fallback request")
+  }
+  guard @native.Font::from_typeface(fallback_typeface, size=8.0)
+    is Some(fallback_font) else {
+    fail_smoke("failed to create native font from fallback request typeface")
+  }
+  let fallback_width = fallback_font.measure_text_utf8(smoke_text_bytes())
+  if fallback_width <= 0.0 {
+    fail_smoke("native font fallback request font did not measure text")
+  }
+  println("native smoke font fallback width")
+  println(fallback_width)
+  smoke_mark(b"font manager fallback request")
 
   smoke_mark(b"done")
   println("skia_mbt native smoke test passed")

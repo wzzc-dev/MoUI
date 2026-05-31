@@ -38,7 +38,8 @@ $defaultStageMarkers = @(
   "native smoke first glyph bounds width",
   "native smoke measured text bounds width",
   "native smoke font family count",
-  "native smoke first font family bytes"
+  "native smoke first font family bytes",
+  "native smoke font fallback width"
 )
 $stageMarkers = $defaultStageMarkers
 $repoRoot = Split-Path -Parent $PSScriptRoot

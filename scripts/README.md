@@ -183,7 +183,8 @@ canvas save/restore with clipping behavior. It also exercises shader-backed
 draws, native and portable path drawing, image drawing, transforms, default font
 text drawing/measurement/metrics, default-typeface text drawing/measurement/metrics when the selected Skia build
 provides a default typeface, and font manager family enumeration/matching when
-the platform font manager is available. Pixel assertions are reserved for deterministic
+the platform font manager is available. It also exercises FontMgr character
+fallback through the value-layer `FontFallbackRequest`. Pixel assertions are reserved for deterministic
 geometry and color operations so minimal CPU-only Skia builds do not fail only
 because their font manager differs. Font coverage still verifies positive text
 advance, glyph count, glyph ID mapping, glyph advances, glyph positions, glyph

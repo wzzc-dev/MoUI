@@ -118,6 +118,8 @@ function Set-FakeNativeSmokeLog {
     "3"
     "native smoke first font family bytes"
     "5"
+    "native smoke font fallback width"
+    "12"
     "skia_mbt native smoke test passed"
   ) | Set-Content -LiteralPath $Path
 }

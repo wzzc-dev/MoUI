@@ -137,6 +137,8 @@ jobs:
             '3' \
             'native smoke first font family bytes' \
             '5' \
+            'native smoke font fallback width' \
+            '12' \
             'skia_mbt native smoke test passed' \
             > logs/fake-native-smoke-good.log
           bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-good.log
