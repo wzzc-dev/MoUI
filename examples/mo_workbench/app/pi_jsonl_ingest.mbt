@@ -12,6 +12,42 @@ fn WorkbenchModel::ingest_pi_jsonl(
 }
 
 ///|
+fn PiTransportEvent::new_session_refresh_session_id(
+  self : PiTransportEvent,
+) -> String? {
+  match self {
+    JsonLineReceived(session_id, line) =>
+      if json_line_is_uncancelled_success_response(line, "new_session") {
+        Some(session_id)
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn json_line_is_uncancelled_success_response(
+  line : String,
+  command : String,
+) -> Bool {
+  let parsed : Json? = Some(@json.parse(line)) catch { _ => None }
+  match parsed {
+    Some(Object(fields)) => {
+      let cancelled = match json_object(fields, "data") {
+        Some(data) => json_bool(data, "cancelled").unwrap_or(false)
+        None => false
+      }
+      json_string(fields, "type").unwrap_or("") == "response" &&
+      json_string(fields, "command").unwrap_or("") == command &&
+      json_bool(fields, "success").unwrap_or(false) &&
+      !cancelled
+    }
+    _ => false
+  }
+}
+
+///|
 fn WorkbenchModel::ingest_pi_json_object(
   self : WorkbenchModel,
   session_id : String,
@@ -61,6 +97,7 @@ fn WorkbenchModel::ingest_rpc_response(
   if success {
     match command {
       "switch_session" => self.apply_switch_session_success(session_id, fields)
+      "new_session" => self.apply_new_session_success(session_id, fields)
       "bash" => self.apply_bash_success(session_id, fields)
       "get_messages" => self.apply_get_messages_success(session_id, fields)
       "get_commands" => self.apply_get_commands_success(session_id, fields)
@@ -437,6 +474,66 @@ fn WorkbenchModel::apply_switch_session_success(
       "Pi session switch cancelled"
     } else {
       "Pi session switch accepted"
+    },
+  )
+}
+
+///|
+fn WorkbenchModel::apply_new_session_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let cancelled = match json_object(fields, "data") {
+    Some(data) => json_bool(data, "cancelled").unwrap_or(false)
+    None => false
+  }
+  let existing = self.pi_session_binding_for_id(session_id)
+  let bound = self.upsert_pi_session_binding(
+    PiSessionBinding::new(
+      workbench_session_id=session_id,
+      rpc_session_id=if cancelled { existing.rpc_session_id } else { "" },
+      session_file=if cancelled { existing.session_file } else { "" },
+      session_name=if cancelled { existing.session_name } else { "" },
+      model=if cancelled { existing.model } else { "" },
+      status=if cancelled { "cancelled" } else { "creating" },
+      last_command="new_session",
+    ),
+  )
+  let updated = bound.update_active_session_for_pi(
+    status=if cancelled { "active" } else { "running" },
+    active_task=if cancelled {
+      "Pi new session cancelled"
+    } else {
+      "Pi new session requested"
+    },
+    summary=Some(
+      if cancelled {
+        "Pi kept the current session"
+      } else {
+        "Waiting for Pi new session state"
+      },
+    ),
+  )
+  let model = {
+    ..updated,
+    pi_rpc: PiRpcSnapshot::new(command="new_session", success=true),
+  }
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title=if cancelled {
+        "Pi new session cancelled"
+      } else {
+        "Pi new session accepted"
+      },
+      detail=session_id,
+      tone=if cancelled { "warning" } else { "success" },
+    ),
+    status=if cancelled {
+      "Pi new session cancelled"
+    } else {
+      "Pi new session accepted"
     },
   )
 }

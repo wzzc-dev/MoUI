@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, RPC message transcript refresh, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC message transcript refresh, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -195,17 +195,18 @@ platform-neutral warning event and nonzero process exits become
 `TransportFailed` events with the exit code and last stderr line. Unexpected
 child exits do not close the native owner; the next UI command batch restarts a
 fresh JSONL process, while explicit `Shutdown` remains the close path. The
-native encoder targets Pi's actual RPC command names: `get_state`, `prompt`,
-`get_messages`, `get_commands`, `get_session_stats`, `cycle_thinking_level`,
-`set_steering_mode`, `set_follow_up_mode`, `set_session_name`, `bash`,
-`abort_bash`, and `abort`, with process shutdown handled by stdin EOF. The
-focused smoke for machines with Pi installed is an offline `get_state` JSONL
-round trip, a `get_messages` transcript response, an offline `get_commands`
-command-catalog response, a `get_session_stats` metrics response, a
-`cycle_thinking_level` acknowledgement, steering/follow-up mode
-acknowledgements, a `set_session_name` acknowledgement, and an `abort_bash`
-acknowledgement through `pi --mode rpc`, so it validates the process protocol
-without making a model request. The shared app ingests
+native encoder targets Pi's actual RPC command names: `get_state`,
+`new_session`, `prompt`, `get_messages`, `get_commands`, `get_session_stats`,
+`cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`,
+`set_session_name`, `bash`, `abort_bash`, and `abort`, with process shutdown
+handled by stdin EOF. The focused smoke for machines with Pi installed is an
+offline `get_state` JSONL round trip, a `new_session` acknowledgement, a
+`get_messages` transcript response, an offline `get_commands` command-catalog
+response, a `get_session_stats` metrics response, a `cycle_thinking_level`
+acknowledgement, steering/follow-up mode acknowledgements, a `set_session_name`
+acknowledgement, and an `abort_bash` acknowledgement through `pi --mode rpc`, so
+it validates the process protocol without making a model request. The shared
+app ingests
 successful and failed Pi RPC `response` JSONL objects: `get_state` refreshes
 the current Workbench session snapshot, `get_messages` refreshes the transcript
 model, `get_commands` refreshes the available slash/prompt/extension/skill
@@ -257,6 +258,15 @@ without opening a separate diagnostics view.
 The current session can also be refreshed manually from the session panel using
 the same platform-neutral command batch, so the native UI can resync Pi state,
 transcript, command catalog, and stats without changing selection.
+The session panel also includes a fresh-session control. It queues
+`NewRpcSession` first; after the `new_session` success response arrives,
+`ReceiveTransport` queues the state, messages, commands, and stats refresh
+through the same platform-neutral transport model. The native encoder emits
+`{"type":"new_session"}`, and the chained `get_state` response becomes the
+source of truth for the new Pi `sessionId` and session file. This two-stage
+flow avoids relying on Pi's response order when multiple JSONL requests are
+batched. Pi's RPC `fork` command is not surfaced yet because its entry-id
+payload is still a separate protocol follow-up.
 
 The first native entrypoint is macOS Skia:
 
@@ -267,6 +277,9 @@ moon test examples/mo_workbench/native_transport --target native
 moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
 printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"new_session"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_messages"}\n' | \
