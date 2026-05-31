@@ -26,91 +26,6 @@ fn sample_sessions() -> Array[WorkbenchSession] {
 }
 
 ///|
-fn sample_plan() -> Array[PlanStep] {
-  [
-    PlanStep::new(
-      id="survey",
-      title="Read framework and example boundaries",
-      status="done",
-      owner="agent",
-      detail="Stay inside examples/mo_workbench unless Skia or host gaps appear.",
-    ),
-    PlanStep::new(
-      id="transport",
-      title="Keep PiTransport platform-neutral",
-      status="active",
-      owner="agent",
-      detail="Route Pi RPC commands, stdout, stderr, responses, and session events through app state.",
-    ),
-    PlanStep::new(
-      id="skia",
-      title="Prefer macOS Skia native entrypoint",
-      status="next",
-      owner="runtime",
-      detail="Use backend/macos/skia provider and real-Skia smoke when link flags exist.",
-    ),
-    PlanStep::new(
-      id="dogfood",
-      title="Capture framework pressure",
-      status="watch",
-      owner="framework",
-      detail="Promote missing Skia APIs through skia_mbt first.",
-    ),
-  ]
-}
-
-///|
-fn sample_events() -> Array[AgentEvent] {
-  [
-    AgentEvent::new(
-      phase="system",
-      title="Mo Workbench initialized",
-      detail="Pi agent desktop for coding workflows.",
-      tone="success",
-    ),
-    AgentEvent::new(
-      phase="agent",
-      title="Repository context loaded",
-      detail="MoUI app, host, and Skia paths indexed.",
-      tone="info",
-    ),
-    AgentEvent::new(
-      phase="tool",
-      title="Focused checks selected",
-      detail="moon test examples/mo_workbench/app --target native",
-      tone="warning",
-    ),
-  ]
-}
-
-///|
-fn sample_transcript() -> Array[TranscriptItem] {
-  [
-    TranscriptItem::new(
-      id="sample-user-1",
-      role="user",
-      summary="要求继续推进 Mo Workbench",
-      detail="保持 PiTransport 平台无关，并优先完善 macOS Skia native 路线。",
-      tone="info",
-    ),
-    TranscriptItem::new(
-      id="sample-assistant-1",
-      role="assistant",
-      summary="已接入 Pi RPC 状态、bash 执行、取消和命令目录",
-      detail="下一步把命令目录接到 slash command invocation 与权限提示。",
-      tone="success",
-    ),
-    TranscriptItem::new(
-      id="sample-bash-1",
-      role="bashExecution",
-      summary="moon test examples/mo_workbench/app --target native",
-      detail="exit code 0",
-      tone="success",
-    ),
-  ]
-}
-
-///|
 fn sample_pi_commands() -> Array[PiCommandInfo] {
   [
     PiCommandInfo::new(
@@ -192,7 +107,7 @@ fn sample_files() -> Array[FileContext] {
     FileContext::new(
       id="docs",
       path="docs/mo-workbench.md",
-      summary="Product intent, architecture boundary, and validation notes.",
+      summary="Architecture boundary and validation notes.",
       change_kind="added",
       lines_changed=80,
     ),
@@ -226,27 +141,6 @@ fn sample_commands() -> Array[CommandRun] {
       cwd="/Volumes/Data/Code/moon/MoUI",
       status="ready",
       exit_code=None,
-    ),
-  ]
-}
-
-///|
-fn sample_diagnostics() -> Array[DiagnosticItem] {
-  [
-    DiagnosticItem::new(
-      source="PiTransport",
-      severity="watch",
-      message="Native owner speaks Pi RPC JSONL and keeps UI state platform-neutral.",
-    ),
-    DiagnosticItem::new(
-      source="Skia",
-      severity="watch",
-      message="Real renderer smoke still depends on local skia_mbt link flags.",
-    ),
-    DiagnosticItem::new(
-      source="Product",
-      severity="note",
-      message="Session model leaves room for non-code workflows.",
     ),
   ]
 }

@@ -275,8 +275,10 @@ fn WorkbenchModel::transcript_panel(
       visible = visible + 1
     }
   }
-  if rows.is_empty() {
-    rows.push(text("-", role=Caption, theme~, width=650.0, height=28.0))
+  let transcript_body = if rows.is_empty() {
+    blank_row(104.0)
+  } else {
+    column(rows, spacing=6.0, align=Start)
   }
   surface(
     column(
@@ -300,7 +302,7 @@ fn WorkbenchModel::transcript_panel(
           spacing=8.0,
           align=Center,
         ),
-        column(rows, spacing=6.0, align=Start),
+        transcript_body,
       ],
       spacing=8.0,
       align=Start,
@@ -401,22 +403,17 @@ fn command_catalog_row(
 
 ///|
 fn command_catalog_detail(command : PiCommandInfo) -> String {
-  let description = if command.description == "" {
-    "No description"
-  } else {
-    command.description
+  let parts : Array[String] = []
+  if command.description != "" {
+    parts.push(command.description)
   }
-  let scope = if command.source_scope == "" {
-    ""
-  } else {
-    " · " + command.source_scope
+  if command.source_scope != "" {
+    parts.push(command.source_scope)
   }
-  let path = if command.source_path == "" {
-    ""
-  } else {
-    " · " + command.source_path
+  if command.source_path != "" {
+    parts.push(command.source_path)
   }
-  description + scope + path
+  parts.join(" · ")
 }
 
 ///|
@@ -651,7 +648,7 @@ fn WorkbenchModel::primary_command_run_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   if self.commands.is_empty() {
-    text("-", role=Caption, theme~, width=650.0, height=28.0)
+    blank_row(32.0)
   } else {
     command_run_row(self.commands[0], theme)
   }
@@ -663,7 +660,7 @@ fn WorkbenchModel::primary_command_catalog_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   if self.command_catalog.is_empty() {
-    text("-", role=Caption, theme~, width=650.0, height=28.0)
+    blank_row(32.0)
   } else {
     command_catalog_row(self.command_catalog[0], theme)
   }
@@ -923,7 +920,7 @@ fn WorkbenchModel::primary_file_context_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   if self.files.is_empty() {
-    text("-", role=Caption, theme~, width=650.0, height=28.0)
+    blank_row(32.0)
   } else {
     file_context_row(self.files[0], theme)
   }
@@ -935,10 +932,21 @@ fn WorkbenchModel::primary_diagnostic_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   if self.diagnostics.is_empty() {
-    text("-", role=Caption, theme~, width=650.0, height=28.0)
+    blank_row(32.0)
   } else {
     diagnostic_row(self.diagnostics[self.diagnostics.length() - 1], theme)
   }
+}
+
+///|
+fn blank_row(height : Double) -> @core.View[WorkbenchMsg] {
+  surface(
+    empty(),
+    width=650.0,
+    height~,
+    background=@core.Color::white(),
+    padding=0.0,
+  )
 }
 
 ///|
