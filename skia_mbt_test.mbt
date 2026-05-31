@@ -1029,6 +1029,19 @@ test "path value layer records portable verbs" {
   assert_true(!path.fill_type.is_inverse())
   assert_true(!path.is_inverse_fill_type())
   assert_true(@skia_mbt.InverseEvenOdd.is_inverse())
+  let key = path.resource_key()
+  assert_true(key.kind == @skia_mbt.PathResource)
+  assert_true(!key.is_empty())
+  assert_true(key == path.resource_key())
+  assert_true(key != path.with_fill_type(@skia_mbt.Winding).resource_key())
+  assert_true(
+    key != path.transform(@skia_mbt.Matrix::translate(1, 0)).resource_key(),
+  )
+  let descriptor = path.resource_descriptor()
+  assert_true(descriptor.key == key)
+  assert_true(descriptor.byte_size > 0L)
+  assert_true(descriptor.is_cacheable())
+  assert_true(!@skia_mbt.Path::new().resource_descriptor().is_cacheable())
 }
 
 ///|
