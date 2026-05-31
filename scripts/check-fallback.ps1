@@ -73,6 +73,14 @@ function Set-FakeNativeSmokeLog {
   )
 
   @(
+    "native smoke surface descriptor backend"
+    "raster"
+    "native smoke canvas state restored"
+    "1"
+    "native smoke shader draws"
+    "3"
+    "native smoke path verbs"
+    "9"
     "native smoke readback width"
     "32"
     "native smoke bounded readback width"
