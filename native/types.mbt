@@ -144,3 +144,31 @@ pub(all) struct Canvas {
   priv handle : CanvasHandle
   priv owner : Surface?
 }
+
+///|
+/// Summary of replaying a value-layer render command list into a native Canvas.
+pub(all) struct CanvasReplayStats {
+  command_count : Int
+  replayed_count : Int
+  skipped_count : Int
+  draw_count : Int
+  text_count : Int
+  present_count : Int
+} derive(Debug, Eq)
+
+///|
+pub fn CanvasReplayStats::empty() -> CanvasReplayStats {
+  {
+    command_count: 0,
+    replayed_count: 0,
+    skipped_count: 0,
+    draw_count: 0,
+    text_count: 0,
+    present_count: 0,
+  }
+}
+
+///|
+pub fn CanvasReplayStats::is_complete(self : CanvasReplayStats) -> Bool {
+  self.skipped_count == 0
+}

@@ -389,6 +389,62 @@ fn main {
   println("native smoke bounded readback height")
   println(red_pixmap.height())
 
+  let replay_size = @skia.ISize::new(12, 12)
+  guard @native.Surface::raster_n32_premul(replay_size) is Some(replay_surface)
+  else {
+    fail_smoke("failed to create replay smoke surface")
+  }
+  guard replay_surface.canvas() is Some(replay_canvas) else {
+    fail_smoke("failed to create replay smoke canvas")
+  }
+  let replay_descriptor = @skia.TextRunDescriptor::new(
+    range=@skia.TextRange::new(0, 5),
+    fallback=@skia.FontFallbackRequest::new(
+      families=@skia.FontFallbackChain::new(primary_family=b"Inter"),
+      bcp47=[b"en"],
+      character=0x68,
+    ),
+  )
+  guard @native.Font::default(size=8.0) is Some(replay_font) else {
+    fail_smoke("failed to create replay smoke font")
+  }
+  let replay_commands = @skia.RenderCommandList::for_target(
+      @skia.SurfaceTargetDescriptor::raster_n32_premul(replay_size),
+    )
+    .clear(@skia.Color::white())
+    .draw_rect(
+      @skia.Rect::from_xywh(1, 1, 4, 4),
+      paint=@skia.Paint::new(color=@skia.Color::red()),
+    )
+    .draw_path(
+      @skia.Path::new().add_rect(@skia.Rect::from_xywh(6, 1, 4, 4)),
+      paint=@skia.Paint::new(color=@skia.Color::blue()),
+    )
+    .draw_text_run_utf8(
+      b"hello",
+      @skia.Point::new(1, 10),
+      descriptor=Some(replay_descriptor),
+      font_key=@skia.RendererResourceKey::font(b"default:8"),
+      paint=@skia.Paint::new(color=@skia.Color::black()),
+    )
+  let replay_stats = replay_canvas.replay(
+    replay_commands,
+    font=Some(replay_font),
+  )
+  if replay_stats.command_count != replay_commands.length() ||
+    replay_stats.draw_count != 3 ||
+    replay_stats.text_count != 1 ||
+    !replay_stats.is_complete() {
+    fail_smoke("native canvas replay stats did not match command list")
+  }
+  guard replay_surface.read_pixels(bounds=@skia.IRect::from_xywh(1, 1, 1, 1))
+    is Some(replay_pixmap) else {
+    fail_smoke("failed to read replay smoke pixels")
+  }
+  assert_pixel(replay_pixmap, @skia.IPoint::new(0, 0), 0xff, 0x00, 0x00, 0xff)
+  println("native smoke canvas replay commands")
+  println(replay_stats.command_count)
+
   guard surface.image_snapshot() is Some(image) else {
     fail_smoke("failed to snapshot surface")
   }

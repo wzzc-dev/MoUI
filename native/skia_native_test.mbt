@@ -941,3 +941,65 @@ test "canvas draw api typechecks" {
       }
   }
 }
+
+///|
+test "canvas replays render command lists" {
+  let path = @skia.Path::new().add_rect(@skia.Rect::from_xywh(10, 2, 4, 4))
+  let text_descriptor = @skia.TextRunDescriptor::new(
+    range=@skia.TextRange::new(0, 5),
+    fallback=@skia.FontFallbackRequest::new(
+      families=@skia.FontFallbackChain::new(primary_family=b"Inter"),
+      bcp47=[b"en"],
+      character=0x68,
+    ),
+  )
+  let commands = @skia.RenderCommandList::for_target(
+      @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(16, 16)),
+    )
+    .clear(@skia.Color::white())
+    .clip_rect(@skia.Rect::from_xywh(0, 0, 16, 16))
+    .draw_rect(
+      @skia.Rect::from_xywh(2, 2, 4, 4),
+      paint=@skia.Paint::new(color=@skia.Color::red()),
+    )
+    .draw_path(path, paint=@skia.Paint::new(color=@skia.Color::blue()))
+    .draw_text_run_utf8(
+      b"hello",
+      @skia.Point::new(2, 12),
+      descriptor=Some(text_descriptor),
+      font_key=@skia.RendererResourceKey::font(b"default:8"),
+      paint=@skia.Paint::new(color=@skia.Color::black()),
+    )
+  assert_eq(commands.text_run_resource_keys().length(), 1)
+  match @native.Surface::raster_n32_premul(@skia.ISize::new(16, 16)) {
+    None => ()
+    Some(surface) =>
+      match surface.canvas() {
+        None => ()
+        Some(canvas) => {
+          let font = @native.Font::default(size=8.0)
+          let stats = canvas.replay(commands, font~)
+          assert_eq(stats.command_count, commands.length())
+          assert_eq(stats.draw_count, 3)
+          assert_eq(stats.text_count, 1)
+          assert_eq(stats.present_count, 0)
+          match font {
+            None => assert_true(stats.skipped_count <= 1)
+            Some(_) => assert_true(stats.is_complete())
+          }
+          assert_true(
+            stats.replayed_count + stats.skipped_count == commands.length(),
+          )
+          match surface.read_pixels(bounds=@skia.IRect::from_xywh(2, 2, 1, 1)) {
+            None => ()
+            Some(pixmap) => {
+              assert_eq(pixmap.pixels[0], 0xff)
+              assert_eq(pixmap.pixels[1], 0x00)
+              assert_eq(pixmap.pixels[2], 0x00)
+              assert_eq(pixmap.pixels[3], 0xff)
+            }
+          }
+        }
+      }
+  }
+}

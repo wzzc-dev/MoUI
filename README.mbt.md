@@ -100,7 +100,8 @@ The `native` subpackage contains the first opt-in native boundary:
   `draw_point`, `draw_line`, `draw_points`, `draw_rect`, `draw_oval`, `draw_circle`,
   `draw_arc`, `draw_round_rect`, `draw_rrect`, `draw_drrect`, `draw_path`,
   `draw_image`, and `draw_image_rect` with explicit `SamplingOptions`, plus
-  portable path drawing through `draw_path_value`, UTF-8 text through
+  portable path drawing through `draw_path_value`, render command replay through
+  `replay`, UTF-8 text through
   `draw_text_utf8`, positioned glyph runs through `draw_glyphs`, optional
   shaped glyph runs through `Font::shape_text_utf8` when SkShaper is linked,
   font measurement through `Font::measure_text_utf8`, glyph IDs through
