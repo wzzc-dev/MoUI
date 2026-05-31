@@ -49,15 +49,16 @@ packages:
   `pi --mode rpc`, maps command batches to Pi JSONL request lines, and uses
   shell fixtures to prove direct JSONL stdin/stdout process driving without C
   FFI or a Node bridge.
+- A native interactive session primitive that keeps one JSONL process alive
+  across multiple command batches in the same async task group.
 - A macOS Skia entrypoint wired to `PiNativeTransportConfig::pi().runtime()`.
 - Workbench panels for agent timeline, plan, diff/file context, command queue,
   and diagnostics.
 
 The remaining V1 transport boundary is true long-lived lifecycle ownership:
-the native runtime can now feed command-batch events through the MoUI message
-loop, and the next slice should keep one Pi RPC task alive for the desktop
-session, write later UI prompts into the same stdin stream, and read stdout
-without blocking the native window loop.
+the native transport can now keep one process alive inside async tests, and the
+next slice should make the macOS app own that session without blocking the
+native window loop.
 
 ## Skia Native-First Notes
 

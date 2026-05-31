@@ -25,6 +25,14 @@ pub(all) struct PiNativeTransportRequest {
 } derive(Eq, Debug)
 
 ///|
+pub struct PiNativeTransportSession {
+  priv session_id : String
+  priv writer : @process.WriteToProcess
+  priv sent_events : Array[PiTransportEvent]
+  priv mut closed : Bool
+}
+
+///|
 pub fn PiNativeTransportConfig::new(
   command~ : String,
   args? : Array[String] = [],
@@ -83,24 +91,32 @@ pub fn pi_rpc_shutdown_line() -> String {
 pub fn PiNativeTransportRequest::from_commands(
   commands : Array[PiTransportCommand],
 ) -> PiNativeTransportRequest {
+  commands_to_request(commands, default_session_id="process")
+}
+
+///|
+fn commands_to_request(
+  commands : Array[PiTransportCommand],
+  default_session_id~ : String,
+) -> PiNativeTransportRequest {
   let lines : Array[String] = []
-  let mut session_id = "process"
+  let mut session_id = default_session_id
   for command in commands {
     match command {
       StartRpc(session, cwd) => {
-        if session_id == "process" {
+        if session_id == default_session_id {
           session_id = session
         }
         lines.push(pi_rpc_start_line(session_id=session, cwd~))
       }
       SendUserInput(session, text) => {
-        if session_id == "process" {
+        if session_id == default_session_id {
           session_id = session
         }
         lines.push(pi_rpc_user_input_line(session_id=session, text~))
       }
       CancelRpcRun(session) => {
-        if session_id == "process" {
+        if session_id == default_session_id {
           session_id = session
         }
         lines.push(pi_rpc_cancel_line(session_id=session))
@@ -109,6 +125,45 @@ pub fn PiNativeTransportRequest::from_commands(
     }
   }
   { session_id, lines }
+}
+
+///|
+pub fn PiNativeTransportSession::session_id(
+  self : PiNativeTransportSession,
+) -> String {
+  self.session_id
+}
+
+///|
+pub async fn PiNativeTransportSession::send_commands(
+  self : PiNativeTransportSession,
+  commands : Array[PiTransportCommand],
+) -> Unit {
+  let request = commands_to_request(
+    commands,
+    default_session_id=self.session_id,
+  )
+  self.send_lines(request.session_id, request.lines)
+}
+
+///|
+pub async fn PiNativeTransportSession::send_lines(
+  self : PiNativeTransportSession,
+  session_id : String,
+  lines : Array[String],
+) -> Unit {
+  for line in lines {
+    self.writer.write(line + "\n")
+    self.sent_events.push(JsonLineSent(session_id, line))
+  }
+}
+
+///|
+pub fn PiNativeTransportSession::close(self : PiNativeTransportSession) -> Unit {
+  if !self.closed {
+    self.writer.close()
+    self.closed = true
+  }
 }
 
 ///|
@@ -137,6 +192,44 @@ pub async fn run_jsonl_session(
       ProcessStarted(process.pid.to_string()),
     ]
     events.append(writer_task.wait())
+    events.append(reader_task.wait())
+    events.push(ProcessExited(exit_code))
+    { events, exit_code }
+  })
+}
+
+///|
+pub async fn run_interactive_jsonl_session(
+  config : PiNativeTransportConfig,
+  session_id~ : String,
+  drive : async (PiNativeTransportSession) -> Unit,
+) -> PiNativeTransportRun {
+  @async.with_task_group(group => {
+    let (process_stdin, stdin_writer) = @process.write_to_process()
+    let (stdout_reader, process_stdout) = @process.read_from_process()
+    let process = spawn_process(
+      group,
+      config,
+      stdin=process_stdin,
+      stdout=process_stdout,
+    )
+    let session = PiNativeTransportSession::{
+      session_id,
+      writer: stdin_writer,
+      sent_events: [],
+      closed: false,
+    }
+    let reader_task = group.spawn(() => {
+      read_jsonl_lines(stdout_reader, session_id~)
+    })
+    let events : Array[PiTransportEvent] = [
+      ProcessStarted(process.pid.to_string()),
+    ]
+    defer session.close()
+    drive(session)
+    session.close()
+    let exit_code = process.wait()
+    events.append(session.sent_events)
     events.append(reader_task.wait())
     events.push(ProcessExited(exit_code))
     { events, exit_code }
