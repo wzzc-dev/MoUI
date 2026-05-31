@@ -124,6 +124,17 @@ pub fn RenderCommand::text_run_resource_key(
 }
 
 ///|
+pub fn RenderCommand::resource_descriptor(
+  self : RenderCommand,
+) -> RendererResourceDescriptor? {
+  match self {
+    DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
+      Some(descriptor.resource_descriptor(text, font_key~))
+    _ => None
+  }
+}
+
+///|
 fn RenderCommand::draw_bounds(self : RenderCommand) -> Rect? {
   match self {
     DrawCanvasRect(rect, _) => Some(rect.sorted())
@@ -344,6 +355,40 @@ pub fn RenderCommandList::text_run_resource_keys(
     }
   }
   keys
+}
+
+///|
+fn renderer_resource_descriptor_list_contains_key(
+  descriptors : Array[RendererResourceDescriptor],
+  key : RendererResourceKey,
+) -> Bool {
+  let mut found = false
+  for descriptor in descriptors {
+    if descriptor.key == key {
+      found = true
+    }
+  }
+  found
+}
+
+///|
+pub fn RenderCommandList::resource_descriptors(
+  self : RenderCommandList,
+) -> Array[RendererResourceDescriptor] {
+  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  for command in self.commands {
+    match command.resource_descriptor() {
+      None => ()
+      Some(descriptor) =>
+        if !renderer_resource_descriptor_list_contains_key(
+            descriptors,
+            descriptor.key,
+          ) {
+          descriptors.push(descriptor)
+        }
+    }
+  }
+  descriptors
 }
 
 ///|

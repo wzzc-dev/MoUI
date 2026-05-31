@@ -689,6 +689,7 @@ pub fn RenderCommand::is_draw(Self) -> Bool
 pub fn RenderCommand::is_present(Self) -> Bool
 pub fn RenderCommand::is_state(Self) -> Bool
 pub fn RenderCommand::is_text(Self) -> Bool
+pub fn RenderCommand::resource_descriptor(Self) -> RendererResourceDescriptor?
 pub fn RenderCommand::text_run_resource_key(Self) -> RendererResourceKey?
 
 pub(all) struct RenderCommandList {
@@ -710,6 +711,7 @@ pub fn RenderCommandList::is_state_balanced(Self) -> Bool
 pub fn RenderCommandList::length(Self) -> Int
 pub fn RenderCommandList::new(RenderPassDescriptor) -> Self
 pub fn RenderCommandList::present(Self) -> Self
+pub fn RenderCommandList::resource_descriptors(Self) -> Array[RendererResourceDescriptor]
 pub fn RenderCommandList::restore(Self) -> Self
 pub fn RenderCommandList::save(Self) -> Self
 pub fn RenderCommandList::stats(Self) -> RenderCommandStats
