@@ -26,6 +26,7 @@ fn ShowcaseModel::text_diagnostics_section(
           theme, "Wrapping", "A deliberately long diagnostic sentence is clipped inside a fixed card so layout bounds stay visible.",
           card_width,
         ),
+        text_frame_clip_card(theme, card_width),
         showcase_soft_card(
           theme,
           column(
@@ -57,6 +58,45 @@ fn ShowcaseModel::text_diagnostics_section(
       column_spacing=theme.spacing_scale.md,
     ),
     metrics~,
+  )
+}
+
+///|
+fn text_frame_clip_sample() -> String {
+  "Sphinx of black quartz, judge my vexing MoUI layout preview."
+}
+
+///|
+fn text_frame_clip_card(
+  theme : @core.Theme,
+  width : Double,
+) -> @core.View[ShowcaseMsg] {
+  let frame_width = 96.0
+  showcase_soft_card(
+    theme,
+    column(
+      [
+        text("Text Frame Clip", width=width - 32.0, height=24.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+        surface(
+          text(text_frame_clip_sample(), width=frame_width - 16.0, height=28.0)
+          .font(theme.typography.body)
+          .foreground(theme.palette.foreground),
+          width=frame_width,
+          height=42.0,
+          background=theme.palette.background,
+          corner_radius=theme.radius_scale.sm,
+          theme~,
+          padding=8.0,
+        ),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height=124.0,
+    padding=theme.spacing_scale.md,
   )
 }
 
