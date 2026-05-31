@@ -149,6 +149,7 @@ if ($status.schema_version -ge 3) {
     "canvas.command-replay",
     "pipeline.resource-plan",
     "pipeline.frame-resource-plan",
+    "pipeline.resource-cache",
     "gpu.context-resource-plan",
     "shader.draw",
     "shader.resource-plan",
