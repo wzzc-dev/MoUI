@@ -629,6 +629,45 @@ pub fn Rect::x(Self) -> Float
 pub fn Rect::y(Self) -> Float
 pub impl Default for Rect
 
+pub(all) struct RenderPassDescriptor {
+  surface : SurfaceDescriptor
+  bounds : IRect
+  load_op : RenderPassLoadOp
+  clear_color : Color?
+  store_op : RenderPassStoreOp
+} derive(Eq, @debug.Debug)
+pub fn RenderPassDescriptor::clear(SurfaceDescriptor, Color, bounds? : IRect?, store_op? : RenderPassStoreOp) -> Self
+pub fn RenderPassDescriptor::is_empty(Self) -> Bool
+pub fn RenderPassDescriptor::is_msaa(Self) -> Bool
+pub fn RenderPassDescriptor::keeps_pixels(Self) -> Bool
+pub fn RenderPassDescriptor::needs_clear(Self) -> Bool
+pub fn RenderPassDescriptor::needs_present(Self) -> Bool
+pub fn RenderPassDescriptor::new(SurfaceDescriptor, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp) -> Self
+pub fn RenderPassDescriptor::present(SurfaceDescriptor, bounds? : IRect?, clear_color? : Color?) -> Self
+pub fn RenderPassDescriptor::with_bounds(Self, IRect) -> Self
+pub fn RenderPassDescriptor::with_clear_color(Self, Color) -> Self
+pub fn RenderPassDescriptor::with_load_op(Self, RenderPassLoadOp) -> Self
+pub fn RenderPassDescriptor::with_store_op(Self, RenderPassStoreOp) -> Self
+pub fn RenderPassDescriptor::without_clear(Self) -> Self
+
+pub(all) enum RenderPassLoadOp {
+  LoadExisting
+  ClearBeforeDraw
+  DontCareLoad
+} derive(Eq, @debug.Debug)
+pub fn RenderPassLoadOp::needs_clear(Self) -> Bool
+pub fn RenderPassLoadOp::preserves_existing_pixels(Self) -> Bool
+pub impl Default for RenderPassLoadOp
+
+pub(all) enum RenderPassStoreOp {
+  StorePixels
+  DiscardPixels
+  PresentPixels
+} derive(Eq, @debug.Debug)
+pub fn RenderPassStoreOp::keeps_pixels(Self) -> Bool
+pub fn RenderPassStoreOp::needs_present(Self) -> Bool
+pub impl Default for RenderPassStoreOp
+
 pub(all) struct ResourceCache[K, V] {
   // private fields
 }
