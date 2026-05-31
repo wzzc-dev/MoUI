@@ -432,6 +432,7 @@ fn WorkbenchModel::session_status_panel(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let active = self.active_session()
+  let binding = self.active_pi_session_binding()
   surface(
     column(
       [
@@ -451,6 +452,7 @@ fn WorkbenchModel::session_status_panel(
         ),
         text(active.active_task, role=Body, theme~, width=650.0, height=28.0),
         session_stats_row(self.pi_session_stats, theme),
+        session_binding_row(binding, theme),
         row(
           [
             text(
@@ -522,12 +524,57 @@ fn WorkbenchModel::session_status_panel(
       align=Start,
     ),
     width=690.0,
-    height=202.0,
+    height=236.0,
     background=@core.Color::white(),
     corner_radius=8.0,
     theme~,
     padding=12.0,
   )
+}
+
+///|
+fn session_binding_row(
+  binding : PiSessionBinding,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      text(
+        "Pi: " + binding.status_label(),
+        role=Caption,
+        theme~,
+        width=310.0,
+        height=30.0,
+      ),
+      session_binding_detail(binding, theme),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn session_binding_detail(
+  binding : PiSessionBinding,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let detail = session_binding_detail_label(binding)
+  if detail == "" {
+    blank_cell(width=310.0, height=30.0)
+  } else {
+    text(detail, role=Caption, theme~, width=310.0, height=30.0)
+  }
+}
+
+///|
+fn session_binding_detail_label(binding : PiSessionBinding) -> String {
+  if binding.model != "" {
+    "Model: " + binding.model
+  } else if binding.session_file != "" {
+    "File: " + binding.session_file
+  } else {
+    ""
+  }
 }
 
 ///|
@@ -940,9 +987,14 @@ fn WorkbenchModel::primary_diagnostic_row(
 
 ///|
 fn blank_row(height : Double) -> @core.View[WorkbenchMsg] {
+  blank_cell(width=650.0, height~)
+}
+
+///|
+fn blank_cell(width~ : Double, height~ : Double) -> @core.View[WorkbenchMsg] {
   surface(
     empty(),
-    width=650.0,
+    width~,
     height~,
     background=@core.Color::white(),
     padding=0.0,

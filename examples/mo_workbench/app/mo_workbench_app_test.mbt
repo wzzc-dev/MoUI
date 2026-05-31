@@ -982,6 +982,35 @@ test "workbench binds switched Pi session after get_state refresh" {
 }
 
 ///|
+test "workbench active Pi binding keeps configured session path" {
+  let model = WorkbenchModel::new().update(SelectSession("pi-rpc"))
+  let binding = model.active_pi_session_binding()
+  inspect(binding.workbench_session_id, content="pi-rpc")
+  inspect(
+    binding.session_file,
+    content="/tmp/mo-workbench-pi-rpc-session.jsonl",
+  )
+  inspect(binding.status, content="unbound")
+}
+
+///|
+test "workbench draws Pi session binding identity after get_state" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e7eb5","sessionName":"Mo Workbench smoke","sessionFile":"/tmp/mo-workbench-smoke.jsonl","messageCount":4,"pendingMessageCount":0}}
+        ),
+      ),
+    ),
+  )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "Pi: bound · Mo Workbench smoke"))
+  assert_true(has_text(commands, "Model: openai/gpt-5"))
+}
+
+///|
 test "workbench ingests Pi session info changes into session binding" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(
@@ -1255,6 +1284,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Tokens 31960"))
   assert_true(has_text(commands, "Context 16%"))
   assert_true(has_text(commands, "Thinking: default"))
+  assert_true(has_text(commands, "Pi: unbound"))
   assert_true(has_text(commands, "刷新"))
   assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Steer 1"))

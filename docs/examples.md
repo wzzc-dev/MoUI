@@ -233,6 +233,9 @@ injected transport sends `switch_session` followed by `get_state`,
 `get_messages`, `get_commands`, and `get_session_stats`, then records a
 `PiSessionBinding` from the Workbench sidebar id to Pi's concrete session id,
 file/name, model, and binding status while stats refresh the status metrics.
+The session panel now surfaces that binding directly with a compact Pi status
+row, so a coding-agent run can show the live Pi session name/id and model
+without opening a separate diagnostics view.
 The current session can also be refreshed manually from the session panel using
 the same platform-neutral command batch, so the native UI can resync Pi state,
 transcript, command catalog, and stats without changing selection.

@@ -646,7 +646,11 @@ pub fn WorkbenchModel::active_pi_session_binding(
       return binding
     }
   }
-  PiSessionBinding::new(workbench_session_id=self.selected_session_id)
+  let session = self.active_session()
+  PiSessionBinding::new(
+    workbench_session_id=self.selected_session_id,
+    session_file=session.pi_session_path,
+  )
 }
 
 ///|
