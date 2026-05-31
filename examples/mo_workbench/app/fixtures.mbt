@@ -49,7 +49,7 @@ fn sample_plan() -> Array[PlanStep] {
       title="Keep PiTransport platform-neutral",
       status="active",
       owner="agent",
-      detail="Model commands and JSONL events before attaching native async process IO.",
+      detail="Route commands through app-level events while native owns async process IO.",
     ),
     PlanStep::new(
       id="skia",
@@ -112,14 +112,14 @@ fn sample_files() -> Array[FileContext] {
     FileContext::new(
       id="entry",
       path="examples/mo_workbench/macos_skia/main.mbt",
-      summary="Thin native-first entrypoint selecting backend/macos/skia.",
+      summary="Thin native-first entrypoint selecting Skia and owned Pi transport.",
       change_kind="added",
       lines_changed=16,
     ),
     FileContext::new(
       id="native-transport",
-      path="examples/mo_workbench/native_transport/native_transport.mbt",
-      summary="moonbitlang/async process driver for JSONL stdin/stdout.",
+      path="examples/mo_workbench/native_transport/owned_runtime.mbt",
+      summary="moonbitlang/async owner for long-lived Pi JSONL sessions.",
       change_kind="added",
       lines_changed=180,
     ),
@@ -182,8 +182,8 @@ fn sample_diagnostics() -> Array[DiagnosticItem] {
   [
     DiagnosticItem::new(
       source="PiTransport",
-      severity="next",
-      message="Native driver can run JSONL sessions; UI-owned lifecycle wiring is next.",
+      severity="watch",
+      message="Native owner keeps one Pi JSONL process alive; restart/error policy is next.",
     ),
     DiagnosticItem::new(
       source="Skia",

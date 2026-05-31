@@ -164,6 +164,60 @@ async test "native transport command batch runner reuses one jsonl process" {
 
 ///|
 #cfg(all(target="native", not(platform="windows")))
+async test "native transport owner reuses one jsonl process across runtime dispatches" {
+  let config = PiNativeTransportConfig::shell(
+    script=(
+      #|count=0
+      #|while IFS= read -r line; do
+      #|  count=$((count + 1))
+      #|  printf '{"count":%s,"echo":%s}\n' "$count" "$line"
+      #|done
+    ),
+  )
+  let owner = PiNativeTransportOwner::new(config, session_id="fixture")
+  let runtime = owner.runtime()
+  let events : Ref[Array[@app.PiTransportEvent]] = Ref([])
+  let emit = event => events.val.push(event)
+  @async.with_task_group(group => {
+    group.spawn_bg(() => owner.run())
+    runtime.dispatch([StartRpc("fixture", "/repo")], emit)
+    @async.sleep(1)
+    runtime.dispatch([SendUserInput("fixture", "first prompt")], emit)
+    @async.sleep(1)
+    runtime.dispatch(
+      [SendUserInput("fixture", "second prompt"), Shutdown],
+      emit,
+    )
+  })
+  inspect(
+    events.val.filter(event => event is ProcessStarted(_)).length(),
+    content="1",
+  )
+  inspect(
+    events.val.filter(event => event is JsonLineSent(_, _)).length(),
+    content="4",
+  )
+  let received = events.val.filter(event => event is JsonLineReceived(_, _))
+  inspect(received.length(), content="4")
+  assert_true(events.val.any(event => event is ProcessExited(0)))
+  match received[2] {
+    JsonLineReceived(session, line) => {
+      inspect(session, content="fixture")
+      json_inspect(@json.parse(line), content={
+        "count": 3,
+        "echo": {
+          "type": "user_input",
+          "session_id": "fixture",
+          "text": "second prompt",
+        },
+      })
+    }
+    _ => fail("expected received JSONL line")
+  }
+}
+
+///|
+#cfg(all(target="native", not(platform="windows")))
 test "native transport runtime emits command batch events through app hook" {
   let config = PiNativeTransportConfig::shell(
     script=(

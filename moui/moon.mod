@@ -13,6 +13,7 @@ import {
   "mizchi/image@0.3.0",
   "mizchi/pixelmatch@0.4.1",
   "mizchi/svg@0.2.1",
+  "moonbitlang/async@0.16.6",
   "moonbitlang/quickcheck@0.13.0",
   "moonbitlang/x@0.4.43",
   "wzzc-dev/skia_mbt@0.1.1",

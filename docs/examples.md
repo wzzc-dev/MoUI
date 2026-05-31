@@ -163,10 +163,10 @@ The shared app package keeps the Pi boundary as platform-neutral
 automation-focused workflows can reuse the same event model. Structured Pi
 JSONL payloads such as command starts/completions, diagnostics, file context,
 and diff summaries are ingested inside the shared app model rather than the
-native process driver. The native transport also exposes a multi-batch JSONL
-session runner so the same `pi --mode rpc` process can serve start, prompt,
-follow-up, and cancel batches in tests before that ownership is moved into the
-macOS host loop.
+native process driver. The native transport also exposes a
+`PiNativeTransportOwner` so the macOS Skia entrypoint can keep one
+`pi --mode rpc` JSONL process alive across repeated app runtime dispatches
+while the shared app remains platform-neutral.
 
 The first native entrypoint is macOS Skia:
 
@@ -174,6 +174,7 @@ The first native entrypoint is macOS Skia:
 moon test examples/mo_workbench/app --target native
 moon test examples/mo_workbench/app --target wasm-gc
 moon test examples/mo_workbench/native_transport --target native
+moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```
 
