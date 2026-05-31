@@ -477,6 +477,120 @@ test "renderer resource descriptors provide typed cache keys" {
 }
 
 ///|
+test "shader descriptors produce stable resource keys" {
+  let color = @skia_mbt.ShaderDescriptor::color(@skia_mbt.Color::red())
+  let same_color = @skia_mbt.ShaderDescriptor::color(@skia_mbt.Color::red())
+  assert_true(color.resource_key() == same_color.resource_key())
+  let color_descriptor = color.resource_descriptor()
+  assert_true(color_descriptor.key.kind == @skia_mbt.ShaderResource)
+  assert_true(color_descriptor.is_cacheable())
+  assert_true(color_descriptor.byte_size > 0L)
+
+  guard @skia_mbt.ShaderDescriptor::linear_gradient(
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(12.0, 6.0),
+      @skia_mbt.Color::red(),
+      @skia_mbt.Color::blue(),
+      tile_mode=@skia_mbt.Repeat,
+    )
+    is Some(linear) else {
+    fail("finite linear gradient descriptor should be accepted")
+  }
+  guard @skia_mbt.ShaderDescriptor::linear_gradient(
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(12.0, 6.0),
+      @skia_mbt.Color::red(),
+      @skia_mbt.Color::blue(),
+    )
+    is Some(clamp_linear) else {
+    fail("default linear gradient descriptor should be accepted")
+  }
+  assert_true(linear.resource_key() != clamp_linear.resource_key())
+
+  guard @skia_mbt.ShaderDescriptor::radial_gradient(
+      @skia_mbt.Point::new(4.0, 5.0),
+      8.0,
+      @skia_mbt.Color::cyan(),
+      @skia_mbt.Color::magenta(),
+    )
+    is Some(radial) else {
+    fail("positive radial gradient descriptor should be accepted")
+  }
+  assert_true(
+    @skia_mbt.ShaderDescriptor::radial_gradient(
+      @skia_mbt.Point::new(4.0, 5.0),
+      0.0,
+      @skia_mbt.Color::cyan(),
+      @skia_mbt.Color::magenta(),
+    )
+    is None,
+  )
+
+  let plan = @skia_mbt.RendererResourcePlan::new([
+    color.resource_descriptor(),
+    linear.resource_descriptor(),
+    radial.resource_descriptor(),
+    same_color.resource_descriptor(),
+  ])
+  assert_eq(plan.length(), 3)
+  assert_eq(plan.cacheable_count, 3)
+  assert_eq(plan.uncacheable_count, 0)
+}
+
+///|
+test "filter descriptors produce typed resource keys" {
+  let matrix_values : Array[Float] = [
+    1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+  ]
+  guard @skia_mbt.ColorFilterDescriptor::matrix(matrix_values) is Some(matrix) else {
+    fail("20-value color matrix descriptor should be accepted")
+  }
+  guard @skia_mbt.ColorFilterDescriptor::saturation(0.8) is Some(saturation) else {
+    fail("finite saturation descriptor should be accepted")
+  }
+  guard @skia_mbt.ColorFilterDescriptor::brightness(1.2) is Some(brightness) else {
+    fail("finite brightness descriptor should be accepted")
+  }
+  guard @skia_mbt.ColorFilterDescriptor::contrast(1.1) is Some(contrast) else {
+    fail("finite contrast descriptor should be accepted")
+  }
+  assert_true(@skia_mbt.ColorFilterDescriptor::matrix([1.0, 0.0]) is None)
+  assert_true(matrix.resource_key() != saturation.resource_key())
+  assert_true(brightness.resource_key() != contrast.resource_key())
+
+  guard @skia_mbt.ImageFilterDescriptor::blur(2.0, 3.0) is Some(image_blur) else {
+    fail("positive image blur descriptor should be accepted")
+  }
+  guard @skia_mbt.MaskFilterDescriptor::blur(2.0) is Some(mask_blur) else {
+    fail("positive mask blur descriptor should be accepted")
+  }
+  assert_true(@skia_mbt.ImageFilterDescriptor::blur(0.0, 3.0) is None)
+  assert_true(@skia_mbt.MaskFilterDescriptor::blur(-1.0) is None)
+
+  let color_descriptor = saturation.resource_descriptor()
+  let image_descriptor = image_blur.resource_descriptor()
+  let mask_descriptor = mask_blur.resource_descriptor()
+  assert_true(color_descriptor.key.kind == @skia_mbt.ColorFilterResource)
+  assert_true(image_descriptor.key.kind == @skia_mbt.ImageFilterResource)
+  assert_true(mask_descriptor.key.kind == @skia_mbt.MaskFilterResource)
+  assert_true(color_descriptor.key.kind.is_filter())
+  assert_true(image_descriptor.key.kind.is_filter())
+  assert_true(mask_descriptor.key.kind.is_filter())
+
+  let plan = @skia_mbt.RendererResourcePlan::new([
+    matrix.resource_descriptor(),
+    color_descriptor,
+    image_descriptor,
+    mask_descriptor,
+  ])
+  assert_eq(plan.length(), 4)
+  assert_eq(plan.cacheable_count, 4)
+  assert_eq(plan.uncacheable_count, 0)
+  assert_true(plan.byte_size > 0L)
+}
+
+///|
 test "render pass descriptor clips clear and present boundaries" {
   let surface = @skia_mbt.SurfaceDescriptor::window_n32_premul(
     @skia_mbt.ISize::new(20, 10),

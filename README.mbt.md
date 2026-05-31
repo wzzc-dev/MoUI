@@ -28,6 +28,10 @@ The current package exposes the first value-layer API surface:
   `RendererResourceDescriptor`, and `RendererResourcePlan` give those caches
   typed keys and auditable resource requirements for images, shaders, filters,
   text runs, paths, surfaces, and future GPU resources
+- shader and filter resource recipes: `ShaderDescriptor`,
+  `ColorFilterDescriptor`, `ImageFilterDescriptor`, and `MaskFilterDescriptor`
+  provide stable cache keys for native shader/filter handles before a backend
+  allocates them
 - render pass contracts: `RenderPassDescriptor`, `RenderPassLoadOp`, and
   `RenderPassStoreOp` define target bounds plus load/clear/store/present
   semantics before a concrete backend records draw commands, including defaults
