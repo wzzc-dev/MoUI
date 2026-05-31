@@ -59,9 +59,10 @@ these facts recorded in logs:
 - The native smoke executable printed `skia_mbt native smoke test passed`.
 - The native smoke log passed `scripts/verify-native-smoke-log.*`, including
   all required stage markers for readback, snapshots, PNG encode/decode, codec,
-  decoded bitmap readback, UTF-8 text measurement, glyph count, glyph ID
-  mapping, glyph advances, glyph positions, glyph bounds, text bounds
-  measurement, and font metrics.
+  decoded bitmap readback, surface descriptor reporting, canvas state restore,
+  shader draws, native/portable path geometry, UTF-8 text measurement, glyph
+  count, glyph ID mapping, glyph advances, glyph positions, glyph bounds, text
+  bounds measurement, and font metrics.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.

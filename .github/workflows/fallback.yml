@@ -87,6 +87,14 @@ jobs:
           grep -Fq 'SKIA_MBT_SKIA_PACKAGE=Skia-m148-8967a2e80c-linux-Release-x64.zip' logs/fetch-jetbrains-linux.env
           grep -Fq 'SKIA_MBT_SKIA_PACKAGE_SHA256=37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2' logs/fetch-jetbrains-linux.env
           printf '%s\n' \
+            'native smoke surface descriptor backend' \
+            'raster' \
+            'native smoke canvas state restored' \
+            '1' \
+            'native smoke shader draws' \
+            '3' \
+            'native smoke path verbs' \
+            '9' \
             'native smoke readback width' \
             '32' \
             'native smoke bounded readback width' \
