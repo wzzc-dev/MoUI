@@ -126,6 +126,30 @@ good_dir="$tmp_root/good"
 write_jetbrains_artifact "$good_dir"
 bash "$repo_root/scripts/verify-real-skia-artifact.sh" --platform linux --log-dir "$good_dir"
 
+bad_dry_run_dir="$tmp_root/bad-dry-run"
+write_jetbrains_artifact "$bad_dry_run_dir"
+printf '%s\n' "dry_run_config=true; real Linux smoke was not run" \
+  >> "$bad_dry_run_dir/linux-real-skia-smoke.log"
+assert_fails_with \
+  "artifact wrapper log is from a dry-run configuration" \
+  bash "$repo_root/scripts/verify-real-skia-artifact.sh" --platform linux --log-dir "$bad_dry_run_dir"
+
+bad_native_dry_run_dir="$tmp_root/bad-native-dry-run"
+write_jetbrains_artifact "$bad_native_dry_run_dir"
+printf '%s\n' "Dry run complete; no build was run." \
+  >> "$bad_native_dry_run_dir/linux-native-smoke-output.log"
+assert_fails_with \
+  "artifact native smoke log is from a dry-run configuration" \
+  bash "$repo_root/scripts/verify-real-skia-artifact.sh" --platform linux --log-dir "$bad_native_dry_run_dir"
+
+bad_acceptance_dry_run_dir="$tmp_root/bad-acceptance-dry-run"
+write_jetbrains_artifact "$bad_acceptance_dry_run_dir"
+printf '%s\n' "dry-run=true" \
+  >> "$bad_acceptance_dry_run_dir/linux-real-skia-acceptance.log"
+assert_fails_with \
+  "artifact acceptance log is from a dry-run configuration" \
+  bash "$repo_root/scripts/verify-real-skia-artifact.sh" --platform linux --log-dir "$bad_acceptance_dry_run_dir"
+
 bad_tag_dir="$tmp_root/bad-tag"
 write_jetbrains_artifact "$bad_tag_dir" "m000-0000000000"
 assert_fails_with \
