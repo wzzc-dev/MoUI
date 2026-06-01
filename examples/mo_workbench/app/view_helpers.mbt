@@ -111,7 +111,7 @@ fn workbench_layout(
     workbench_min_double(460.0, content_available_width),
     860.0,
   )
-  let composer_height = 160.0
+  let composer_height = 122.0
   let top_text_available = workbench_max_double(
     1.0,
     content_width - 86.0 - 120.0 - 10.0 - 24.0,
@@ -3036,8 +3036,10 @@ fn WorkbenchModel::composer(
       width=layout.composer_input_width,
       height=54.0,
     ),
-    self.context_chip_row(layout, theme),
   ]
+  if self.should_show_context_chip_row() {
+    content.push(self.context_chip_row(layout, theme))
+  }
   if self.should_show_composer_agent_row() {
     content.push(self.composer_agent_row(layout, theme))
   }
@@ -3064,6 +3066,9 @@ fn WorkbenchModel::composer_height(
   layout : WorkbenchLayout,
 ) -> Double {
   let mut height = layout.composer_height
+  if self.should_show_context_chip_row() {
+    height = height + 38.0
+  }
   if self.should_show_composer_agent_row() {
     height = height + 38.0
   }
@@ -3071,6 +3076,20 @@ fn WorkbenchModel::composer_height(
     height = height + 38.0
   }
   height
+}
+
+///|
+fn WorkbenchModel::should_show_context_chip_row(self : WorkbenchModel) -> Bool {
+  self.prompt.trim().to_owned() != "" ||
+  self.active_agent_profile() is Some(_) ||
+  !self.context_is_default()
+}
+
+///|
+fn WorkbenchModel::context_is_default(self : WorkbenchModel) -> Bool {
+  self.expanded_context.length() == 2 &&
+  self.context_is_selected("repo") &&
+  self.context_is_selected("examples")
 }
 
 ///|

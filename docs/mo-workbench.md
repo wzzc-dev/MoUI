@@ -94,11 +94,11 @@ packages:
   Pi/RPC protocol nouns. The default chrome shows short project names and
   localized session status labels, while full project paths remain in the shared
   model and Pi transport commands. The default shell keeps only refresh,
-  new-session, context, and send controls prominent, and the idle Pi RPC footer
-  stays label-only until transport is starting, running, or failed. Agent focus
-  controls, advanced session actions, steering/follow-up composer controls, and
-  focused-check presets stay collapsed until Pi state, typed input, selected
-  focus, or command evidence makes them relevant.
+  new-session, and send controls prominent. Context chips, the idle Pi RPC
+  status, agent focus controls, advanced session actions, steering/follow-up
+  composer controls, and focused-check presets stay collapsed until Pi state,
+  typed input, non-default context, selected focus, or command evidence makes
+  them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
@@ -140,11 +140,13 @@ packages:
   conversation evidence can become the next agent action without native-only
   transport.
 - The composer now exposes explicit context chips for repository, examples,
-  evidence, and Pi session scope. Direct prompt, steering, and follow-up submits
-  prefix the selected context labels into the text payload before it enters the
-  existing platform-neutral `SendUserInput`, `SendSteeringInput`, or
-  `SendFollowUpInput` paths; no new transport command or native bridge is
-  required, and users can turn all context chips off to send the raw text.
+  evidence, and Pi session scope on demand while composing, after selecting an
+  agent focus, or after changing the default context. Direct prompt, steering,
+  and follow-up submits prefix the selected context labels into the text payload
+  before it enters the existing platform-neutral `SendUserInput`,
+  `SendSteeringInput`, or `SendFollowUpInput` paths; no new transport command
+  or native bridge is required, and users can turn all context chips off to send
+  the raw text.
 - Activity timeline rows can queue a
   `Follow up on <phase> activity: ...` prompt through the same
   `SendUserInput` path, so visible Pi RPC, stderr, tool, and stream events can
