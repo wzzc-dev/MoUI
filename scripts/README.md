@@ -10,9 +10,9 @@ machine-readable platform status; validate it with
 
 `skia-platform-status.json` schema v4 is also the source of truth for CI gate
 coverage and native smoke capability markers. Its `ci_gates` list records the
-MoonBit, all-target MoonBit, native-smoke, FFI ownership, FFI borrow, native
-fallback parity, platform-status, and artifact verification commands that must
-stay wired into CI. `verify-native-smoke-log.*` reads its
+MoonBit, all-target MoonBit, native-smoke build, Unix ASan smoke dry-run, FFI
+ownership, FFI borrow, native fallback parity, platform-status, and artifact
+verification commands that must stay wired into CI. `verify-native-smoke-log.*` reads its
 `native_smoke_capabilities` and `native_smoke_conditional_capabilities` lists so
 artifact verification checks the same Surface, Canvas, Pipeline, GPU, Shader,
 Filter, Path, Image, Codec, Bitmap, Text, and FontMgr boundaries that the
@@ -296,13 +296,16 @@ bash scripts/linux-real-skia-smoke.sh --dry-run-config
 ```
 
 The `Linux Real Skia Smoke` GitHub Actions workflow exposes the same options as
-manual inputs, including `dry_run_config`, and also runs weekly as an expensive
-real-backend canary. The default fallback workflow also runs `bash -n` over the
+manual inputs, including `dry_run_config` and `enable_asan`, and also runs
+weekly as an expensive real-backend canary. The default fallback workflow also runs `bash -n` over the
 Linux helpers, runs the source-built dry-run, and runs an existing-build dry-run
 against fake Skia header/library files on Ubuntu. It additionally dry-runs the
 lower-level smoke helper against fake static and shared libraries and checks that
 `native/moon.pkg` is unchanged, so wrapper branches, argument construction, and
-no-rewrite behavior are checked without building Skia.
+no-rewrite behavior are checked without building Skia. The fallback workflow
+also dry-runs Linux and macOS `--enable-asan` smoke configs against fake Skia
+paths and checks for `asan=enabled`, `ASAN_OPTIONS`, and
+`-fsanitize=address` in the resolved flags.
 The real-smoke workflow uses `linux-accept-real-skia-smoke.sh` for real runs and
 saves the wrapper log, source-build Skia build log when present, dedicated
 native smoke executable output, and acceptance summary as the
@@ -350,6 +353,13 @@ existing Skia build and runs `native_smoke`; pass `--dry-run-config` to this
 lower-level helper to validate paths and flags without rewriting
 `native/moon.pkg`. Prefer the one-step `linux-real-skia-smoke.sh` wrapper unless
 you need to debug one stage in isolation.
+Pass `--enable-asan` or set `SKIA_MBT_ENABLE_ASAN=1` on Linux/macOS smoke
+helpers to append `-g -fsanitize=address -fno-omit-frame-pointer` to native stub
+compile flags and `-fsanitize=address` to executable link flags. Linux defaults
+`ASAN_OPTIONS` to `detect_leaks=1:fast_unwind_on_malloc=0`; macOS defaults to
+`detect_leaks=0:fast_unwind_on_malloc=0` unless the runner already set
+`ASAN_OPTIONS`. Windows MSVC smoke remains artifact verification only until an
+ASan mode is proven separately for that toolchain.
 
 ## macOS real Skia smoke
 
@@ -372,7 +382,8 @@ When `--skia-rev` is omitted in source mode, `scripts/macos-real-skia-smoke.sh`
 and `scripts/macos-build-skia.sh` read
 `SKIA_MBT_SKIA_REV`, then `skia-revision.txt`, matching Linux's revision
 priority. The real wrapper and lower-level smoke scripts support
-`--dry-run-config` for CI preflight. The acceptance wrapper captures the
+`--dry-run-config` and `--enable-asan` for CI preflight and optional sanitizer
+smoke runs. The acceptance wrapper captures the
 dry-run preflight log, optional source-build log, wrapper log, native executable
 log, and `macos-real-skia-acceptance.log`;
 checks the final `skia_mbt native smoke test passed` marker; and verifies that
