@@ -513,16 +513,20 @@ fn WorkbenchCheckPreset::new(
 fn workbench_check_presets() -> Array[WorkbenchCheckPreset] {
   [
     WorkbenchCheckPreset::new(
-      label="App 测试",
+      label="Native",
       command="moon test examples/mo_workbench/app --target native",
     ),
     WorkbenchCheckPreset::new(
-      label="Wasm 测试",
+      label="Wasm",
       command="moon test examples/mo_workbench/app --target wasm-gc",
     ),
     WorkbenchCheckPreset::new(
-      label="Skia 构建",
+      label="构建",
       command="moon build examples/mo_workbench/macos_skia --target native",
+    ),
+    WorkbenchCheckPreset::new(
+      label="首帧",
+      command="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
     ),
   ]
 }

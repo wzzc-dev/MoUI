@@ -2491,7 +2491,32 @@ fn WorkbenchModel::activity_panel_row_count(self : WorkbenchModel) -> Int {
 
 ///|
 fn WorkbenchModel::visible_activity_command_count(self : WorkbenchModel) -> Int {
-  workbench_min_int(self.commands.length(), 3)
+  let focused_count = workbench_check_presets().length()
+  if self.commands_end_with_focused_check_batch(focused_count) {
+    focused_count
+  } else {
+    workbench_min_int(self.commands.length(), 3)
+  }
+}
+
+///|
+fn WorkbenchModel::commands_end_with_focused_check_batch(
+  self : WorkbenchModel,
+  focused_count : Int,
+) -> Bool {
+  let presets = workbench_check_presets()
+  if focused_count != presets.length() || self.commands.length() < focused_count {
+    false
+  } else {
+    let start = self.commands.length() - focused_count
+    let mut matches = true
+    for index in 0..<focused_count {
+      if self.commands[start + index].command != presets[index].command {
+        matches = false
+      }
+    }
+    matches
+  }
 }
 
 ///|
@@ -2522,9 +2547,11 @@ fn focused_check_preset_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let presets = workbench_check_presets()
+  let action_count = presets.length() + 1
   let button_width = workbench_clamp_double(
-    (layout.panel_body_width - 72.0 - 40.0) / 4.0,
-    74.0,
+    (layout.panel_body_width - 72.0 - (action_count + 1).to_double() * 8.0) /
+    action_count.to_double(),
+    58.0,
     112.0,
   )
   let controls : Array[@core.View[WorkbenchMsg]] = [

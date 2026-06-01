@@ -180,9 +180,11 @@ packages:
   command text, status, cwd, and output path back into Pi without adding a
   native-only output-opening bridge. These prompts preserve the current context
   chips and selected agent focus, so evidence actions keep the same repo,
-  examples, and coding/verification intent as composer prompts. The digest shows
-  up to three recent command evidence rows, so a focused-check batch remains
-  visible while the newest bash result is still easy to act on.
+  examples, and coding/verification intent as composer prompts. The digest
+  normally shows up to three recent command evidence rows, then expands to the
+  full focused-check batch when the newest command group matches those presets,
+  so the batch remains visible while the newest bash result is still easy to act
+  on.
 - Failed command evidence rows use a `修复` primary action that queues a
   `Fix failed command ...` prompt through the same `SendUserInput` path,
   carrying the output path when Pi provided one and the same context/focus
@@ -193,12 +195,13 @@ packages:
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
 - The Activity digest also exposes compact focused-check presets for the
-  Workbench app package native test, app package wasm-gc test, and macOS Skia
-  entrypoint build. They use the same `QueueCommand` / Pi RPC `bash` path as
-  manual command reruns, so validation evidence stays in the shared model.
-  The `全部` action queues all three checks in one platform-neutral command
+  Workbench app package native test, app package wasm-gc test, macOS Skia
+  entrypoint build, and macOS Skia first-frame smoke. They use the same
+  `QueueCommand` / Pi RPC `bash` path as manual command reruns, so validation
+  evidence stays in the shared model.
+  The `全部` action queues all four checks in one platform-neutral command
   batch, reusing a single session start and recording each check as its own
-  `CommandRun`; the Activity digest keeps those three recent command rows
+  `CommandRun`; the Activity digest keeps those four recent command rows
   visible together for inspection or rerun.
 - The Activity digest surfaces the latest shared-app timeline event, so Pi RPC,
   streaming agent, tool, and stderr progress stays visible next to command

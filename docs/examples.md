@@ -300,8 +300,9 @@ stay discoverable without native-only state. Activity command rows can now queue
 an `Inspect command output for ...` prompt from the latest command status, cwd,
 and output path, turning bash evidence into the next Pi task through
 `SendUserInput` while preserving the current context chips and selected agent
-focus. The Activity digest keeps up to three recent command evidence rows
-visible, so the focused-check batch can be inspected as a group without a
+focus. The Activity digest normally keeps up to three recent command evidence
+rows, then expands to the full focused-check batch when the newest command group
+matches those presets, so the batch can be inspected as a group without a
 separate log page. Failed command rows use a `修复` primary action that queues a
 `Fix failed command ...` prompt with the command status, cwd, output path, and
 the same context/focus wrapper, turning a failed focused check directly into the
@@ -310,9 +311,10 @@ The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
 It also exposes focused-check presets for the app native test, app wasm-gc test,
-and macOS Skia build. Each preset uses the same `QueueCommand` /
+macOS Skia build, and macOS Skia first-frame smoke. Each preset uses the same
+`QueueCommand` /
 `RunShellCommand` path, so checks started from the UI become normal Pi bash
-evidence. The `全部` action batches all three focused checks through one
+evidence. The `全部` action batches all four focused checks through one
 platform-neutral queue operation while preserving separate `CommandRun`
 evidence rows in that recent-command digest. Generic Pi `bash` responses are
 applied to the next queued/running command, so batched focused-check evidence
