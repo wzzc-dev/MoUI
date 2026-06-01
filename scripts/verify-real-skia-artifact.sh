@@ -121,6 +121,26 @@ require_exact_log_line() {
   fi
 }
 
+require_acceptance_log_reference() {
+  local field="$1"
+  local expected_path="$2"
+  local expected_name
+  local actual_path
+  local actual_name
+  expected_name="$(basename "$expected_path")"
+  actual_path="$(extract_field "$acceptance_log" "$field" || true)"
+  if [[ -z "$actual_path" ]]; then
+    echo "acceptance log is missing required artifact log field: ${field}=" >&2
+    exit 1
+  fi
+  actual_name="$(basename "$actual_path")"
+  if [[ "$actual_name" != "$expected_name" ]]; then
+    echo "acceptance log field ${field}= does not reference expected artifact log: $expected_name" >&2
+    echo "  actual_${field}=$actual_path" >&2
+    exit 1
+  fi
+}
+
 wrapper_provider="$(extract_field "$wrapper_log" skia_provider || true)"
 acceptance_provider="$(extract_field "$acceptance_log" skia_provider || true)"
 if [[ -z "$wrapper_provider" || "$wrapper_provider" == "unknown" ]]; then
@@ -160,25 +180,13 @@ if ! grep -Eq 'library=.*\b(lib)?skia\.(a|so|dylib|lib)\b' "$wrapper_log"; then
   exit 1
 fi
 
-artifact_log_names=(
-  "$(basename "$preflight_log")"
-  "$(basename "$wrapper_log")"
-  "$(basename "$native_log")"
-  "$(basename "$acceptance_log")"
-)
-
-for log_name in "${artifact_log_names[@]}"; do
-  if ! grep -Fq "$log_name" "$acceptance_log"; then
-    echo "acceptance log does not reference expected artifact log: $log_name" >&2
-    exit 1
-  fi
-done
+require_acceptance_log_reference "preflight_log" "$preflight_log"
+require_acceptance_log_reference "wrapper_log" "$wrapper_log"
+require_acceptance_log_reference "native_log" "$native_log"
+require_acceptance_log_reference "acceptance_log" "$acceptance_log"
 
 if [[ "$platform" == "linux" && $require_commit -eq 1 && "$wrapper_provider" == "source" ]]; then
-  if ! grep -Fq "$(basename "$build_log")" "$acceptance_log"; then
-    echo "acceptance log does not reference expected source build log: $(basename "$build_log")" >&2
-    exit 1
-  fi
+  require_acceptance_log_reference "build_log" "$build_log"
 fi
 
 if [[ $require_commit -eq 1 ]] && ! grep -Eq 'skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$wrapper_log"; then
