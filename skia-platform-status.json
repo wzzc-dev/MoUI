@@ -126,6 +126,11 @@
       "marker": "native smoke render target resource binding"
     },
     {
+      "id": "pipeline.frame-present",
+      "area": "Pipeline",
+      "marker": "native smoke render frame present count"
+    },
+    {
       "id": "pipeline.frame-cache-resources",
       "area": "Pipeline",
       "marker": "native smoke render frame cache resources"
@@ -345,6 +350,11 @@
     {
       "id": "pipeline.target-resource-binding",
       "marker": "native smoke render target resource binding",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-present",
+      "marker": "native smoke render frame present count",
       "value": "1"
     },
     {
