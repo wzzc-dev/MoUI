@@ -1461,6 +1461,20 @@ test "text run descriptor records byte ranges direction and fallback query" {
   assert_true(descriptor.key == key)
   assert_eq(descriptor.byte_size, 5L)
   assert_true(descriptor.is_cacheable())
+  let ranged_run = @skia_mbt.TextRunDescriptor::new(
+    range=@skia_mbt.TextRange::new(2, 5),
+  )
+  let ranged_key = ranged_run.resource_key(b"--abc++", font_key~)
+  assert_true(ranged_key == ranged_run.resource_key(b"XXabcYY", font_key~))
+  assert_true(ranged_key != ranged_run.resource_key(b"XXabdYY", font_key~))
+  assert_eq(ranged_run.resource_descriptor(b"--abc++", font_key~).byte_size, 3L)
+  assert_true(
+    @skia_mbt.TextRunDescriptor::new(range=@skia_mbt.TextRange::new(2, 99)).resource_key(
+      b"--abc",
+      font_key~,
+    ) ==
+    ranged_run.resource_key(b"--abc", font_key~),
+  )
   let text_plan = run.resource_plan(b"hello", font_key~)
   assert_eq(text_plan.length(), 3)
   assert_eq(text_plan.count_kind(@skia_mbt.TextRunResource), 1)

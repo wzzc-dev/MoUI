@@ -59,6 +59,7 @@ default_stage_markers=(
   "native smoke font spacing" \
   "native smoke font resource plan count" \
   "native smoke text run resource plan count" \
+  "native smoke text run range byte size" \
   "native smoke measured text width" \
   "native smoke text glyph count" \
   "native smoke first glyph id" \
@@ -91,6 +92,7 @@ default_expected_stage_values=(
   $'native smoke shader resource plan count\t3'
   $'native smoke filter resource plan count\t3'
   $'native smoke text run resource plan count\t3'
+  $'native smoke text run range byte size\t4'
   $'native smoke font resource plan count\t1'
   $'native smoke font fallback resource plan count\t1'
   $'native smoke font fallback font resource plan count\t2'
