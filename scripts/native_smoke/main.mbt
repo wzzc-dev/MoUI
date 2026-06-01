@@ -971,8 +971,15 @@ fn main {
     @skia.Paint::new(color=@skia.Color::black()),
   )
   smoke_mark(b"drew default text")
-  match @native.Typeface::default() {
-    None => println("native smoke default typeface unavailable")
+  let default_typeface = @native.Typeface::default()
+  println("native smoke default typeface availability")
+  if default_typeface is Some(_) {
+    println(1)
+  } else {
+    println(0)
+  }
+  match default_typeface {
+    None => ()
     Some(typeface) => {
       smoke_mark(b"typeface default")
       guard @native.Font::from_typeface(typeface, size=9.0)
