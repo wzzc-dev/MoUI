@@ -103,9 +103,10 @@ source-built runs that will be used to pin `skia-revision.txt`.
 The native smoke log verifier checks both the final pass marker and intermediate
 stage markers for readback, bounded readback, snapshot/image drawing, PNG
 encode/decode, codec creation, decoded bitmap readback, render resource
-planning, target identity/resource binding, UTF-8 text measurement, glyph count,
-glyph ID mapping, glyph advances, glyph positions, glyph bounds, text bounds
-measurement, font metrics, and font manager family enumeration.
+planning, target identity/resource binding, byte-range text-run resource keys,
+UTF-8 text measurement, glyph count, glyph ID mapping, glyph advances, glyph
+positions, glyph bounds, text bounds measurement, font metrics, and font manager
+family enumeration.
 
 The `--require-commit` checks are mandatory for the first source-built Linux
 acceptance because that run establishes the revision to pin. Existing-build

@@ -266,6 +266,7 @@ if ($status.schema_version -ge 3) {
     "text.font-spacing",
     "text.font-resource-plan",
     "text.text-run-resource-plan",
+    "text.text-run-range",
     "text.measure",
     "text.glyph-count",
     "text.glyph-id",
@@ -350,6 +351,7 @@ if ($status.schema_version -ge 3) {
       "native smoke shader resource plan count" = "3"
       "native smoke filter resource plan count" = "3"
       "native smoke text run resource plan count" = "3"
+      "native smoke text run range byte size" = "4"
       "native smoke font resource plan count" = "1"
       "native smoke font fallback resource plan count" = "1"
       "native smoke font fallback font resource plan count" = "2"
