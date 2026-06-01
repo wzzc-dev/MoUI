@@ -1968,7 +1968,9 @@ fn WorkbenchModel::inspect_command_run(
   if clean_command == "" && clean_output_path == "" {
     { ..self, last_status: "Command evidence is empty" }
   } else {
-    let prompt = command_evidence_prompt(command, status, cwd, output_path)
+    let prompt = self.command_evidence_payload(
+      command, status, cwd, output_path,
+    )
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
@@ -2005,7 +2007,9 @@ fn WorkbenchModel::inspect_command_run_with_transport(
   if clean_command == "" && clean_output_path == "" {
     WorkbenchUpdate::new({ ..self, last_status: "Command evidence is empty" })
   } else {
-    let prompt = command_evidence_prompt(command, status, cwd, output_path)
+    let prompt = self.command_evidence_payload(
+      command, status, cwd, output_path,
+    )
     let session = self.active_session()
     let commands = self.commands_with_session_start(
       session,
@@ -2031,7 +2035,7 @@ fn WorkbenchModel::fix_command_run(
   if clean_command == "" && clean_output_path == "" {
     { ..self, last_status: "Command evidence is empty" }
   } else {
-    let prompt = command_fix_prompt(command, status, cwd, output_path)
+    let prompt = self.command_fix_payload(command, status, cwd, output_path)
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
@@ -2068,7 +2072,7 @@ fn WorkbenchModel::fix_command_run_with_transport(
   if clean_command == "" && clean_output_path == "" {
     WorkbenchUpdate::new({ ..self, last_status: "Command evidence is empty" })
   } else {
-    let prompt = command_fix_prompt(command, status, cwd, output_path)
+    let prompt = self.command_fix_payload(command, status, cwd, output_path)
     let session = self.active_session()
     let commands = self.commands_with_session_start(
       session,
@@ -2113,6 +2117,19 @@ fn command_evidence_prompt(
 }
 
 ///|
+fn WorkbenchModel::command_evidence_payload(
+  self : WorkbenchModel,
+  command : String,
+  status : String,
+  cwd : String,
+  output_path : String,
+) -> String {
+  self.composer_prompt_payload(
+    command_evidence_prompt(command, status, cwd, output_path),
+  )
+}
+
+///|
 fn command_fix_prompt(
   command : String,
   status : String,
@@ -2141,6 +2158,19 @@ fn command_fix_prompt(
   } else {
     prefix + " (" + context.join(", ") + ")"
   }
+}
+
+///|
+fn WorkbenchModel::command_fix_payload(
+  self : WorkbenchModel,
+  command : String,
+  status : String,
+  cwd : String,
+  output_path : String,
+) -> String {
+  self.composer_prompt_payload(
+    command_fix_prompt(command, status, cwd, output_path),
+  )
 }
 
 ///|

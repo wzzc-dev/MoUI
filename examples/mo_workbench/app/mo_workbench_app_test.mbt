@@ -1181,7 +1181,9 @@ test "workbench queues command evidence analysis through prompt RPC" {
       inspect(session, content="moui-skia")
       inspect(
         text,
-        content="Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)",
+        content=context_task_payload(
+          "Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)",
+        ),
       )
     }
     _ => fail("expected queued command evidence prompt")
@@ -1200,7 +1202,7 @@ test "workbench command evidence runtime effect dispatches prompt" {
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
     emit(
       JsonLineSent(
-        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)\"}",
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Context: repo, examples\\n\\nTask: Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)\"}",
       ),
     )
   })
@@ -1217,7 +1219,9 @@ test "workbench command evidence runtime effect dispatches prompt" {
       inspect(session, content="moui-skia")
       inspect(
         text,
-        content="Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)",
+        content=context_task_payload(
+          "Inspect command output for moon check: /tmp/mo-check.log (status failed, cwd /repo)",
+        ),
       )
     }
     _ => fail("expected captured command evidence prompt")
@@ -1239,12 +1243,33 @@ test "workbench queues failed command fix through prompt RPC" {
       inspect(session, content="moui-skia")
       inspect(
         text,
-        content="Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)",
+        content=context_task_payload(
+          "Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)",
+        ),
       )
     }
     _ => fail("expected queued command fix prompt")
   }
   assert_true(model.events.any(event => event.title == "Command fix queued"))
+}
+
+///|
+test "workbench command fix preserves selected agent focus" {
+  let model = WorkbenchModel::new()
+    .update(SelectAgent("coding"))
+    .update(FixCommandRun("moon check", "failed", "/repo", "/tmp/mo-check.log"))
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=agent_context_task_payload(
+          "Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)",
+        ),
+      )
+    }
+    _ => fail("expected focused command fix prompt")
+  }
 }
 
 ///|
@@ -1256,7 +1281,7 @@ test "workbench command fix runtime effect dispatches prompt" {
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
     emit(
       JsonLineSent(
-        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)\"}",
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Context: repo, examples\\n\\nTask: Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)\"}",
       ),
     )
   })
@@ -1273,7 +1298,9 @@ test "workbench command fix runtime effect dispatches prompt" {
       inspect(session, content="moui-skia")
       inspect(
         text,
-        content="Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)",
+        content=context_task_payload(
+          "Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)",
+        ),
       )
     }
     _ => fail("expected captured command fix prompt")

@@ -167,14 +167,17 @@ packages:
 - Command evidence rows in the Activity digest can queue an
   `Inspect command output for ...` prompt through `SendUserInput`, carrying the
   command text, status, cwd, and output path back into Pi without adding a
-  native-only output-opening bridge. The digest shows up to three recent
-  command evidence rows, so a focused-check batch remains visible while the
-  newest bash result is still easy to act on.
+  native-only output-opening bridge. These prompts preserve the current context
+  chips and selected agent focus, so evidence actions keep the same repo,
+  examples, and coding/verification intent as composer prompts. The digest shows
+  up to three recent command evidence rows, so a focused-check batch remains
+  visible while the newest bash result is still easy to act on.
 - Failed command evidence rows use a `修复` primary action that queues a
   `Fix failed command ...` prompt through the same `SendUserInput` path,
-  carrying the output path when Pi provided one. This keeps the fix loop inside
-  the shared app model instead of adding an output-opening bridge or native-only
-  command shortcut.
+  carrying the output path when Pi provided one and the same context/focus
+  wrapper as analysis prompts. This keeps the fix loop inside the shared app
+  model instead of adding an output-opening bridge or native-only command
+  shortcut.
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
