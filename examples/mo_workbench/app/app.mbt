@@ -1084,17 +1084,18 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
   if prompt == "" {
     { ..self, last_status: "Prompt is empty" }
   } else {
+    let payload = self.composer_prompt_payload(prompt)
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
       AgentEvent::new(
         phase="user",
         title="User request queued",
-        detail=prompt,
+        detail=payload,
         tone="info",
       ),
     )
-    let command = SendUserInput(session.id, prompt)
+    let command = SendUserInput(session.id, payload)
     let commands = self.commands_with_session_start(session, command)
     {
       ..self,
@@ -1115,10 +1116,11 @@ fn WorkbenchModel::dispatch_prompt_with_transport(
   if prompt == "" {
     WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
   } else {
+    let payload = self.composer_prompt_payload(prompt)
     let session = self.active_session()
     let commands = self.commands_with_session_start(
       session,
-      SendUserInput(session.id, prompt),
+      SendUserInput(session.id, payload),
     )
     WorkbenchUpdate::new(
       self.dispatch_prompt(),
@@ -1133,17 +1135,18 @@ fn WorkbenchModel::dispatch_steering(self : WorkbenchModel) -> WorkbenchModel {
   if prompt == "" {
     { ..self, last_status: "Prompt is empty" }
   } else {
+    let payload = self.composer_prompt_payload(prompt)
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
       AgentEvent::new(
         phase="user",
         title="Steering input queued",
-        detail=prompt,
+        detail=payload,
         tone="info",
       ),
     )
-    let command = SendSteeringInput(session.id, prompt)
+    let command = SendSteeringInput(session.id, payload)
     let commands = self.commands_with_session_start(session, command)
     {
       ..self,
@@ -1164,10 +1167,11 @@ fn WorkbenchModel::dispatch_steering_with_transport(
   if prompt == "" {
     WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
   } else {
+    let payload = self.composer_prompt_payload(prompt)
     let session = self.active_session()
     let commands = self.commands_with_session_start(
       session,
-      SendSteeringInput(session.id, prompt),
+      SendSteeringInput(session.id, payload),
     )
     WorkbenchUpdate::new(
       self.dispatch_steering(),
@@ -1182,17 +1186,18 @@ fn WorkbenchModel::dispatch_follow_up(self : WorkbenchModel) -> WorkbenchModel {
   if prompt == "" {
     { ..self, last_status: "Prompt is empty" }
   } else {
+    let payload = self.composer_prompt_payload(prompt)
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
       AgentEvent::new(
         phase="user",
         title="Follow-up input queued",
-        detail=prompt,
+        detail=payload,
         tone="info",
       ),
     )
-    let command = SendFollowUpInput(session.id, prompt)
+    let command = SendFollowUpInput(session.id, payload)
     let commands = self.commands_with_session_start(session, command)
     {
       ..self,
@@ -1213,16 +1218,72 @@ fn WorkbenchModel::dispatch_follow_up_with_transport(
   if prompt == "" {
     WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
   } else {
+    let payload = self.composer_prompt_payload(prompt)
     let session = self.active_session()
     let commands = self.commands_with_session_start(
       session,
-      SendFollowUpInput(session.id, prompt),
+      SendFollowUpInput(session.id, payload),
     )
     WorkbenchUpdate::new(
       self.dispatch_follow_up(),
       effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
     )
   }
+}
+
+///|
+fn WorkbenchModel::composer_prompt_payload(
+  self : WorkbenchModel,
+  prompt : String,
+) -> String {
+  let context = self.composer_context_prompt_label()
+  if context == "" {
+    prompt
+  } else {
+    "Context: " + context + "\n\nTask: " + prompt
+  }
+}
+
+///|
+fn WorkbenchModel::composer_context_prompt_label(
+  self : WorkbenchModel,
+) -> String {
+  let labels : Array[String] = []
+  for id in ["repo", "examples", "evidence", "session"] {
+    if self.context_is_selected(id) {
+      labels.push(context_prompt_label(id))
+    }
+  }
+  for id in self.expanded_context {
+    if !known_context_id(id) {
+      labels.push(id)
+    }
+  }
+  labels.join(", ")
+}
+
+///|
+fn WorkbenchModel::context_is_selected(
+  self : WorkbenchModel,
+  id : String,
+) -> Bool {
+  self.expanded_context.any(value => value == id)
+}
+
+///|
+fn context_prompt_label(id : String) -> String {
+  match id {
+    "repo" => "repo"
+    "examples" => "examples"
+    "evidence" => "current evidence"
+    "session" => "Pi session"
+    _ => id
+  }
+}
+
+///|
+fn known_context_id(id : String) -> Bool {
+  id == "repo" || id == "examples" || id == "evidence" || id == "session"
 }
 
 ///|

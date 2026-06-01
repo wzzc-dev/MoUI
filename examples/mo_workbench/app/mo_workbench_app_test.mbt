@@ -16,8 +16,24 @@ test "workbench dispatch queues prompt for selected session" {
   match model.transport.command_queue[1] {
     SendUserInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Inspect the Skia renderer route")
+      inspect(
+        text,
+        content=context_task_payload("Inspect the Skia renderer route"),
+      )
     }
+    _ => fail("expected queued user input")
+  }
+}
+
+///|
+test "workbench composer can send a prompt without selected context" {
+  let model = WorkbenchModel::new()
+    .update(ToggleContext("repo"))
+    .update(ToggleContext("examples"))
+    .update(PromptChanged("Inspect without context"))
+    .update(DispatchPrompt)
+  match model.transport.command_queue[1] {
+    SendUserInput(_, text) => inspect(text, content="Inspect without context")
     _ => fail("expected queued user input")
   }
 }
@@ -58,7 +74,7 @@ test "workbench dispatch queues steering and follow-up inputs" {
   match steering.transport.command_queue[1] {
     SendSteeringInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Prefer the Skia route")
+      inspect(text, content=context_task_payload("Prefer the Skia route"))
     }
     _ => fail("expected queued steering input")
   }
@@ -74,7 +90,7 @@ test "workbench dispatch queues steering and follow-up inputs" {
   match follow_up.transport.command_queue[1] {
     SendFollowUpInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Run the focused checks next")
+      inspect(text, content=context_task_payload("Run the focused checks next"))
     }
     _ => fail("expected queued follow-up input")
   }
@@ -111,7 +127,7 @@ test "workbench steering runtime effect dispatches steer RPC" {
   match captured.val[1] {
     SendSteeringInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Prefer narrow edits")
+      inspect(text, content=context_task_payload("Prefer narrow edits"))
     }
     _ => fail("expected captured steering input")
   }
@@ -149,7 +165,7 @@ test "workbench follow-up runtime effect dispatches follow_up RPC" {
   match captured.val[1] {
     SendFollowUpInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Update docs")
+      inspect(text, content=context_task_payload("Update docs"))
     }
     _ => fail("expected captured follow-up input")
   }
@@ -2558,6 +2574,11 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "引导 单条"))
   assert_true(has_text(commands, "跟进 单条"))
   assert_true(has_text(commands, "上下文"))
+  assert_true(has_text(commands, "仓库"))
+  assert_true(has_text(commands, "示例"))
+  assert_true(has_text(commands, "证据"))
+  assert_true(has_text(commands, "会话"))
+  assert_true(has_text(commands, "仓库、示例"))
   assert_true(has_text(commands, "发送"))
   assert_true(has_text(commands, "引导"))
   assert_true(has_text(commands, "跟进"))
@@ -2708,6 +2729,11 @@ fn long_assistant_reply() -> String {
   "Pi reply block alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau " +
   "Pi reply block alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau " +
   "Pi reply block alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau"
+}
+
+///|
+fn context_task_payload(task : String) -> String {
+  "Context: repo, examples\n\nTask: " + task
 }
 
 ///|

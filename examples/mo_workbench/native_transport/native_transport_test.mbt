@@ -35,6 +35,9 @@ async test "native transport builds structured jsonl request lines" {
   let switch_session = pi_rpc_switch_session_line(session_path="/tmp/pi.jsonl")
   let session_name = pi_rpc_set_session_name_line(name="Mo Workbench")
   let input = pi_rpc_prompt_line(message="Inspect renderer capability tests")
+  let contextual_input = pi_rpc_prompt_line(
+    message="Context: repo, examples\n\nTask: Inspect renderer capability tests",
+  )
   let steer = pi_rpc_steer_line(message="Prefer narrow edits")
   let follow_up_input = pi_rpc_follow_up_line(message="Update docs")
   let bash = pi_rpc_bash_line(command="moon check")
@@ -91,6 +94,10 @@ async test "native transport builds structured jsonl request lines" {
   json_inspect(@json.parse(input), content={
     "type": "prompt",
     "message": "Inspect renderer capability tests",
+  })
+  json_inspect(@json.parse(contextual_input), content={
+    "type": "prompt",
+    "message": "Context: repo, examples\n\nTask: Inspect renderer capability tests",
   })
   json_inspect(@json.parse(steer), content={
     "type": "steer",
