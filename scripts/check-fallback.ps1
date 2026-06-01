@@ -83,15 +83,28 @@ function Set-FakeNativeSmokeLog {
     }
   }
   $lines = @()
+  $markerValues = @{}
   foreach ($capability in @($status.native_smoke_capabilities)) {
     $marker = "$($capability.marker)".Trim()
     if (![string]::IsNullOrWhiteSpace($marker)) {
-      $lines += $marker
+      $value = "1"
       if ($expectedValues.ContainsKey($marker)) {
-        $lines += $expectedValues[$marker]
-      } else {
-        $lines += "1"
+        $value = $expectedValues[$marker]
       }
+      $markerValues[$marker] = $value
+      $lines += $marker
+      $lines += $value
+    }
+  }
+  foreach ($conditional in @($status.native_smoke_conditional_capabilities)) {
+    $marker = "$($conditional.marker)".Trim()
+    $whenMarker = "$($conditional.when_marker)".Trim()
+    $whenValue = "$($conditional.when_value)".Trim()
+    if (![string]::IsNullOrWhiteSpace($marker) -and
+      $markerValues.ContainsKey($whenMarker) -and
+      $markerValues[$whenMarker] -eq $whenValue) {
+      $lines += $marker
+      $lines += "1"
     }
   }
   $lines += "skia_mbt native smoke test passed"
@@ -375,6 +388,37 @@ try {
     $fakeNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke.log"
     Set-FakeNativeSmokeLog -Path $fakeNativeSmokeLog
     & (Join-Path $repoRoot "scripts/verify-native-smoke-log.ps1") -LogPath $fakeNativeSmokeLog
+
+    $fakeMissingConditionalNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke-missing-conditional.log"
+    $missingConditionalLines = @()
+    $nativeSmokeLines = @(Get-Content -LiteralPath $fakeNativeSmokeLog)
+    for ($index = 0; $index -lt $nativeSmokeLines.Count; $index += 1) {
+      if ($nativeSmokeLines[$index] -eq "native smoke shaped glyph count") {
+        $index += 1
+      } else {
+        $missingConditionalLines += $nativeSmokeLines[$index]
+      }
+    }
+    $missingConditionalLines | Set-Content -LiteralPath $fakeMissingConditionalNativeSmokeLog
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-native-smoke-log.ps1") -LogPath $fakeMissingConditionalNativeSmokeLog } `
+      -ExpectedMessage "conditional stage marker"
+
+    $fakeUnavailableConditionalNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke-unavailable-conditional.log"
+    $unavailableConditionalLines = @()
+    for ($index = 0; $index -lt $nativeSmokeLines.Count; $index += 1) {
+      if ($nativeSmokeLines[$index] -eq "native smoke shaper availability" -and $index + 1 -lt $nativeSmokeLines.Count) {
+        $unavailableConditionalLines += $nativeSmokeLines[$index]
+        $unavailableConditionalLines += "0"
+        $index += 1
+      } elseif ($nativeSmokeLines[$index] -eq "native smoke shaped glyph count") {
+        $index += 1
+      } else {
+        $unavailableConditionalLines += $nativeSmokeLines[$index]
+      }
+    }
+    $unavailableConditionalLines | Set-Content -LiteralPath $fakeUnavailableConditionalNativeSmokeLog
+    & (Join-Path $repoRoot "scripts/verify-native-smoke-log.ps1") -LogPath $fakeUnavailableConditionalNativeSmokeLog
 
     $fakePrefixedSuccessNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke-prefixed-success.log"
     (Get-Content -LiteralPath $fakeNativeSmokeLog) `
