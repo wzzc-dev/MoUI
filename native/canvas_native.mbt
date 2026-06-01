@@ -1420,6 +1420,49 @@ fn Canvas::replay_text_utf8(
 }
 
 ///|
+fn shaped_glyph_run_native_glyph_ids(
+  glyph_run : @skia.ShapedGlyphRunDescriptor,
+) -> Array[GlyphId] {
+  let glyphs : Array[GlyphId] = Array::new(
+    capacity=glyph_run.glyph_ids.length(),
+  )
+  for glyph_id in glyph_run.glyph_ids {
+    glyphs.push(GlyphId::new(glyph_id.clamp(min=0, max=65535).to_uint16()))
+  }
+  glyphs
+}
+
+///|
+fn Canvas::replay_shaped_glyph_run_utf8(
+  self : Canvas,
+  glyph_run : @skia.ShapedGlyphRunDescriptor,
+  origin : @skia.Point,
+  paint : @skia.Paint,
+  font : Font?,
+) -> Bool {
+  let font = match font {
+    Some(font) => Some(font)
+    None => Font::default()
+  }
+  match font {
+    None => false
+    Some(font) =>
+      if !glyph_run.is_valid() {
+        false
+      } else {
+        self.draw_glyphs(
+          shaped_glyph_run_native_glyph_ids(glyph_run),
+          glyph_run.positions,
+          font,
+          paint,
+          origin~,
+        )
+        true
+      }
+  }
+}
+
+///|
 fn Canvas::replay_path_value(
   self : Canvas,
   path : @skia.Path,
@@ -1466,6 +1509,8 @@ fn Canvas::replay_command(
       self.replay_text_utf8(text, origin, paint, font)
     @skia.DrawCanvasTextRunUtf8(text, _, _, origin, paint) =>
       self.replay_text_utf8(text, origin, paint, font)
+    @skia.DrawCanvasShapedGlyphRunUtf8(_, glyph_run, origin, paint) =>
+      self.replay_shaped_glyph_run_utf8(glyph_run, origin, paint, font)
     @skia.DeclareRenderResource(_) => true
     @skia.PresentSurface => false
   }

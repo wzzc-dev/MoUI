@@ -91,8 +91,8 @@ these facts recorded in logs:
   filtering,
   render target identity
   validation, render-frame unbalanced-state validation, missing-present
-  validation, missing-finalization validation, bound target resource planning,
-  window physical-size derivation, frame pacing, frame-pacing key variation,
+  validation, missing-finalization validation, shaped glyph-run command replay,
+  bound target resource planning, window physical-size derivation, frame pacing, frame-pacing key variation,
   present-mode key variation, window-frame present finalization,
   render-frame present descriptor validation, render-frame submission resource
   planning, render-frame submission cache population, render-frame finalization

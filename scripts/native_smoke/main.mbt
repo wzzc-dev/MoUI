@@ -916,6 +916,26 @@ fn main {
     image_filter_descriptor.resource_descriptor(),
     mask_filter_descriptor.resource_descriptor(),
   ]
+  let replay_shaping = @skia.TextShapingDescriptor::new(
+    run=replay_descriptor,
+    font_key=@skia.RendererResourceKey::font(b"default:8"),
+    width=128.0,
+  )
+  let replay_shaped_run = replay_shaping.shaped_run_descriptor(
+    glyph_count=4,
+    cluster_count=4,
+    advance=@skia.Point::new(16.0, 0.0),
+  )
+  let replay_shaped_glyph_run = replay_shaped_run.glyph_run_descriptor(
+    glyph_ids=[1, 2, 3, 4],
+    positions=[
+      @skia.Point::new(0.0, 0.0),
+      @skia.Point::new(4.0, 0.0),
+      @skia.Point::new(8.0, 0.0),
+      @skia.Point::new(12.0, 0.0),
+    ],
+    clusters=[0, 1, 2, 3],
+  )
   let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
     replay_size,
   )
@@ -937,6 +957,12 @@ fn main {
       @skia.Point::new(1, 10),
       descriptor=Some(replay_descriptor),
       font_key=@skia.RendererResourceKey::font(b"default:8"),
+      paint=@skia.Paint::new(color=@skia.Color::black()),
+    )
+    .draw_shaped_glyph_run_utf8(
+      b"hello",
+      replay_shaped_glyph_run,
+      @skia.Point::new(1, 10),
       paint=@skia.Paint::new(color=@skia.Color::black()),
     )
   let replay_plan = replay_commands.resource_plan()
@@ -999,11 +1025,6 @@ fn main {
     ).resource_key(b"hello") {
     fail_smoke("native measured text run resource key did not encode result metadata")
   }
-  let replay_shaping = @skia.TextShapingDescriptor::new(
-    run=replay_descriptor,
-    font_key=@skia.RendererResourceKey::font(b"default:8"),
-    width=128.0,
-  )
   let replay_shaping_plan = replay_shaping.resource_plan(b"hello")
   if replay_shaping_plan.length() != 4 ||
     replay_shaping_plan.count_kind(@skia.TextRunResource) != 2 ||
@@ -1020,11 +1041,6 @@ fn main {
     ).resource_key(b"hello") {
     fail_smoke("native text shaping resource key did not encode shaping inputs")
   }
-  let replay_shaped_run = replay_shaping.shaped_run_descriptor(
-    glyph_count=4,
-    cluster_count=4,
-    advance=@skia.Point::new(16.0, 0.0),
-  )
   let replay_shaped_run_plan = replay_shaped_run.resource_plan(b"hello")
   if !replay_shaped_run.is_valid() ||
     replay_shaped_run_plan.length() != 5 ||
@@ -1042,16 +1058,6 @@ fn main {
     ).resource_key(b"hello") {
     fail_smoke("native shaped text run resource key did not encode result metadata")
   }
-  let replay_shaped_glyph_run = replay_shaped_run.glyph_run_descriptor(
-    glyph_ids=[1, 2, 3, 4],
-    positions=[
-      @skia.Point::new(0.0, 0.0),
-      @skia.Point::new(4.0, 0.0),
-      @skia.Point::new(8.0, 0.0),
-      @skia.Point::new(12.0, 0.0),
-    ],
-    clusters=[0, 1, 2, 3],
-  )
   let replay_shaped_glyph_run_plan = replay_shaped_glyph_run.resource_plan(
     b"hello",
   )
@@ -1117,18 +1123,22 @@ fn main {
     ranged_text_resource.byte_size != 4L {
     fail_smoke("native text run resource key was not scoped to byte range")
   }
-  if replay_plan.length() != 9 ||
-    replay_plan.cacheable_count != 9 ||
+  if replay_plan.length() != 12 ||
+    replay_plan.cacheable_count != 12 ||
     replay_plan.uncacheable_count != 0 ||
     replay_plan.gpu_backed_count != 0 ||
-    replay_plan.byte_size <= 0L {
+    replay_plan.byte_size <= 0L ||
+    !replay_plan.contains_key(replay_shaped_glyph_run.resource_key(b"hello")) {
     fail_smoke("native render resource plan did not match command list")
   }
   let replay_frame = replay_commands.frame_descriptor(replay_target)
   if !replay_frame.is_ready() ||
     replay_frame.validation_status() != @skia.FrameReady ||
-    replay_frame.resource_plan.length() != 9 ||
+    replay_frame.resource_plan.length() != 12 ||
     !replay_frame.resource_plan.contains_key(replay_target.resource_key()) ||
+    !replay_frame.resource_plan.contains_key(
+      replay_shaped_glyph_run.resource_key(b"hello"),
+    ) ||
     !replay_frame.resource_plan.contains_key(
       replay_frame.command_list.pass.resource_descriptor().key,
     ) ||
@@ -1193,8 +1203,8 @@ fn main {
     font=Some(replay_font),
   )
   if replay_stats.command_count != replay_commands.length() ||
-    replay_stats.draw_count != 3 ||
-    replay_stats.text_count != 1 ||
+    replay_stats.draw_count != 4 ||
+    replay_stats.text_count != 2 ||
     !replay_stats.is_complete() {
     fail_smoke("native canvas replay stats did not match command list")
   }
@@ -1205,6 +1215,8 @@ fn main {
   assert_pixel(replay_pixmap, @skia.IPoint::new(0, 0), 0xff, 0x00, 0x00, 0xff)
   println("native smoke canvas replay commands")
   println(replay_stats.command_count)
+  println("native smoke render shaped glyph run command replay")
+  println(1)
   println("native smoke render resource plan count")
   println(replay_plan.length())
   println("native smoke text run resource plan count")

@@ -101,6 +101,11 @@
       "marker": "native smoke canvas replay commands"
     },
     {
+      "id": "pipeline.shaped-glyph-run-command",
+      "area": "Pipeline",
+      "marker": "native smoke render shaped glyph run command replay"
+    },
+    {
       "id": "pipeline.resource-plan",
       "area": "Pipeline",
       "marker": "native smoke render resource plan count"
@@ -618,17 +623,22 @@
     {
       "id": "canvas.command-replay",
       "marker": "native smoke canvas replay commands",
-      "value": "8"
+      "value": "9"
+    },
+    {
+      "id": "pipeline.shaped-glyph-run-command",
+      "marker": "native smoke render shaped glyph run command replay",
+      "value": "1"
     },
     {
       "id": "pipeline.resource-plan",
       "marker": "native smoke render resource plan count",
-      "value": "9"
+      "value": "12"
     },
     {
       "id": "pipeline.frame-resource-plan",
       "marker": "native smoke render frame resource plan count",
-      "value": "9"
+      "value": "12"
     },
     {
       "id": "pipeline.frame-validation",
@@ -698,12 +708,12 @@
     {
       "id": "pipeline.frame-cache-resources",
       "marker": "native smoke render frame cache resources",
-      "value": "9"
+      "value": "12"
     },
     {
       "id": "pipeline.resource-cache",
       "marker": "native smoke render resource cache inserts",
-      "value": "9"
+      "value": "12"
     },
     {
       "id": "pipeline.resource-cache-plan-coverage",
