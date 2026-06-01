@@ -211,14 +211,34 @@
       "marker": "native smoke readback width"
     },
     {
+      "id": "surface.readback-height",
+      "area": "Surface",
+      "marker": "native smoke readback height"
+    },
+    {
+      "id": "surface.readback-row-bytes",
+      "area": "Surface",
+      "marker": "native smoke readback row_bytes"
+    },
+    {
       "id": "surface.bounded-readback",
       "area": "Surface",
       "marker": "native smoke bounded readback width"
     },
     {
+      "id": "surface.bounded-readback-height",
+      "area": "Surface",
+      "marker": "native smoke bounded readback height"
+    },
+    {
       "id": "surface.bounded-snapshot",
       "area": "Surface",
       "marker": "native smoke bounded snapshot width"
+    },
+    {
+      "id": "surface.bounded-snapshot-height",
+      "area": "Surface",
+      "marker": "native smoke bounded snapshot height"
     },
     {
       "id": "image.encode-png",
@@ -426,6 +446,41 @@
       "id": "surface.flush-and-submit",
       "marker": "native smoke surface flush-and-submit",
       "value": "1"
+    },
+    {
+      "id": "surface.readback",
+      "marker": "native smoke readback width",
+      "value": "32"
+    },
+    {
+      "id": "surface.readback-height",
+      "marker": "native smoke readback height",
+      "value": "32"
+    },
+    {
+      "id": "surface.readback-row-bytes",
+      "marker": "native smoke readback row_bytes",
+      "value": "128"
+    },
+    {
+      "id": "surface.bounded-readback",
+      "marker": "native smoke bounded readback width",
+      "value": "4"
+    },
+    {
+      "id": "surface.bounded-readback-height",
+      "marker": "native smoke bounded readback height",
+      "value": "4"
+    },
+    {
+      "id": "surface.bounded-snapshot",
+      "marker": "native smoke bounded snapshot width",
+      "value": "4"
+    },
+    {
+      "id": "surface.bounded-snapshot-height",
+      "marker": "native smoke bounded snapshot height",
+      "value": "4"
     },
     {
       "id": "shader.draw",
