@@ -592,6 +592,25 @@ fn main {
     replay_text_run_plan.byte_size <= 0L {
     fail_smoke("native text run resource plan did not include font and fallback dependencies")
   }
+  let ranged_text_descriptor = @skia.TextRunDescriptor::new(
+    range=@skia.TextRange::new(1, 5),
+  )
+  let ranged_text_key = ranged_text_descriptor.resource_key(
+    b"xhelloz",
+    font_key=@skia.RendererResourceKey::font(b"default:8"),
+  )
+  let same_ranged_text_key = ranged_text_descriptor.resource_key(
+    b"yhelloq",
+    font_key=@skia.RendererResourceKey::font(b"default:8"),
+  )
+  let ranged_text_resource = ranged_text_descriptor.resource_descriptor(
+    b"xhelloz",
+    font_key=@skia.RendererResourceKey::font(b"default:8"),
+  )
+  if ranged_text_key != same_ranged_text_key ||
+    ranged_text_resource.byte_size != 4L {
+    fail_smoke("native text run resource key was not scoped to byte range")
+  }
   if replay_plan.length() != 9 ||
     replay_plan.cacheable_count != 9 ||
     replay_plan.uncacheable_count != 0 ||
@@ -649,6 +668,8 @@ fn main {
   println(replay_plan.length())
   println("native smoke text run resource plan count")
   println(replay_text_run_plan.length())
+  println("native smoke text run range byte size")
+  println(ranged_text_resource.byte_size)
   println("native smoke render frame resource plan count")
   println(replay_frame.resource_plan.length())
   println("native smoke render frame validation status")

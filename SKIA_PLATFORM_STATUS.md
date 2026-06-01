@@ -81,8 +81,8 @@ these facts recorded in logs:
   canvas command replay, render resource planning, GPU context resource
   planning, GPU frame context validation, render target identity validation,
   bound target resource planning, shader draws, native/portable path geometry,
-  text-run dependency planning, UTF-8 text measurement, glyph count, glyph ID
-  mapping, glyph advances, glyph positions,
+  text-run dependency planning, byte-range text-run resource keys, UTF-8 text
+  measurement, glyph count, glyph ID mapping, glyph advances, glyph positions,
   glyph bounds, text bounds measurement, font resource planning, font
   metrics, font family enumeration, native typeface family metadata, FontMgr
   character fallback, font fallback resource planning, and shader/filter
