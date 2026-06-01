@@ -128,10 +128,27 @@ fn main {
     !smoke_gpu_plan.has_gpu_backed_resources() {
     fail_smoke("gpu context resource plan did not include context and surface")
   }
+  let smoke_gpu_frame = @skia.RenderCommandList::for_target(
+    smoke_gpu_target,
+  ).frame_descriptor(smoke_gpu_target)
+  let smoke_gpu_missing_context_target = smoke_gpu_target.without_gpu_context()
+  let smoke_gpu_missing_context_frame = @skia.RenderCommandList::for_target(
+    smoke_gpu_missing_context_target,
+  ).frame_descriptor(smoke_gpu_missing_context_target)
+  if !smoke_gpu_frame.requires_gpu_context() ||
+    !smoke_gpu_frame.has_gpu_context() ||
+    !smoke_gpu_frame.is_ready() ||
+    smoke_gpu_missing_context_frame.validation_status() !=
+    @skia.FrameMissingGpuContext ||
+    smoke_gpu_missing_context_frame.is_ready() {
+    fail_smoke("gpu frame validation did not require an attached context")
+  }
   println("native smoke surface target resource plan count")
   println(smoke_gpu_target_plan.length())
   println("native smoke gpu context resource plan count")
   println(smoke_gpu_plan.length())
+  println("native smoke gpu frame context validation")
+  println(1)
 
   let smoke_window = @skia.WindowSurfaceDescriptor::new(
     window_id=b"native-smoke-window",
