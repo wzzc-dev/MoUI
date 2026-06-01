@@ -1634,22 +1634,6 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
       tone: Warning,
     })
   }
-  if !self.diagnostics.is_empty() {
-    let diagnostic = self.diagnostics[self.diagnostics.length() - 1]
-    return Some({
-      title: "修复最新诊断",
-      detail: diagnostic_detail_label(diagnostic),
-      primary_label: "修复",
-      primary_message: FixDiagnostic(
-        diagnostic.source,
-        diagnostic.severity,
-        diagnostic.message,
-      ),
-      secondary_label: "清除",
-      secondary_message: Some(ClearDiagnostics),
-      tone: Warning,
-    })
-  }
   match self.latest_failed_command() {
     Some(command) =>
       return Some({
@@ -1667,6 +1651,22 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
         tone: Danger,
       })
     None => ()
+  }
+  if !self.diagnostics.is_empty() {
+    let diagnostic = self.diagnostics[self.diagnostics.length() - 1]
+    return Some({
+      title: "修复最新诊断",
+      detail: diagnostic_detail_label(diagnostic),
+      primary_label: "修复",
+      primary_message: FixDiagnostic(
+        diagnostic.source,
+        diagnostic.severity,
+        diagnostic.message,
+      ),
+      secondary_label: "清除",
+      secondary_message: Some(ClearDiagnostics),
+      tone: Warning,
+    })
   }
   match self.current_plan_action_step() {
     Some(step) =>

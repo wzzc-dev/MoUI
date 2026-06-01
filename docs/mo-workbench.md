@@ -120,11 +120,11 @@ packages:
   the current active/open step, open-step count, and a `继续` action that reuses
   the platform-neutral follow-up prompt path.
 - The current session panel now derives one `下一步` row from live state when
-  there is actionable evidence. It prioritizes cancelable Pi runs, diagnostics,
-  failed command evidence, active plan steps, reviewable diffs, file context,
-  transcript rows, command catalog entries, and latest activity events, then
-  routes the chosen button back through the existing shared-app messages such
-  as `CancelRun`, `FixDiagnostic`, `FixCommandRun`, `InspectCommandRun`,
+  there is actionable evidence. It prioritizes cancelable Pi runs, failed
+  command evidence, diagnostics, active plan steps, reviewable diffs, file
+  context, transcript rows, command catalog entries, and latest activity events,
+  then routes the chosen button back through the existing shared-app messages
+  such as `CancelRun`, `FixCommandRun`, `FixDiagnostic`, `InspectCommandRun`,
   `FollowActivity`, `ReviewDiff`, `InspectFile`, `FollowTranscript`, or
   `InvokeCommand`.
 - Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for

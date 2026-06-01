@@ -2805,6 +2805,65 @@ test "workbench current session prioritizes failed command next action" {
 }
 
 ///|
+test "workbench current session prioritizes failed command over bash diagnostic" {
+  let model = {
+    ..WorkbenchModel::new(),
+    commands: [
+      CommandRun::new(
+        id=1,
+        command="moon test examples/mo_workbench/app --target native",
+        cwd="/Volumes/Data/Code/moon/MoUI",
+        status="failed",
+        exit_code=Some(2),
+        output_path="/tmp/mo-workbench-native.log",
+      ),
+    ],
+    diagnostics: [
+      DiagnosticItem::new(
+        source="Pi bash",
+        severity="error",
+        message="bash exited with code 2",
+      ),
+    ],
+  }
+  inspect(model.diagnostics.length(), content="1")
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "下一步"))
+  assert_true(has_text(commands, "修复失败命令"))
+  assert_true(
+    has_text(commands, "moon test examples/mo_workbench/app --target native"),
+  )
+  assert_true(has_text(commands, "输出 /tmp/mo-workbench-native.log"))
+}
+
+///|
+test "workbench active command still prioritizes cancellation before failed evidence" {
+  let model = {
+    ..WorkbenchModel::new(),
+    commands: [
+      CommandRun::new(
+        id=1,
+        command="moon test examples/mo_workbench/app --target native",
+        cwd="/Volumes/Data/Code/moon/MoUI",
+        status="running",
+      ),
+      CommandRun::new(
+        id=2,
+        command="moon test examples/mo_workbench/app --target wasm-gc",
+        cwd="/Volumes/Data/Code/moon/MoUI",
+        status="failed",
+        exit_code=Some(2),
+        output_path="/tmp/mo-workbench-wasm.log",
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "下一步"))
+  assert_true(has_text(commands, "等待 Pi 完成当前运行"))
+  assert_false(has_text(commands, "修复失败命令"))
+}
+
+///|
 test "workbench current session prioritizes active plan before diff next action" {
   let model = {
     ..model_with_reviewable_diff(),
