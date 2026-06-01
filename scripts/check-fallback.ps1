@@ -592,6 +592,42 @@ try {
       -LogDir $fakeArtifactDir `
       -RequireCommit
 
+    $fakeDryRunArtifactDir = Join-Path $dryRunRoot "fake-artifact-dry-run-wrapper"
+    New-Item -ItemType Directory -Force -Path $fakeDryRunArtifactDir | Out-Null
+    Copy-Item -LiteralPath $fakeArtifactPreflightLog -Destination (Join-Path $fakeDryRunArtifactDir "windows-real-skia-smoke-preflight.log")
+    Copy-Item -LiteralPath $fakeArtifactNativeLog -Destination (Join-Path $fakeDryRunArtifactDir "windows-native-smoke-output.log")
+    Copy-Item -LiteralPath $fakeArtifactAcceptanceLog -Destination (Join-Path $fakeDryRunArtifactDir "windows-real-skia-acceptance.log")
+    Copy-Item -LiteralPath $fakeArtifactWrapperLog -Destination (Join-Path $fakeDryRunArtifactDir "windows-real-skia-smoke.log")
+    Add-Content -LiteralPath (Join-Path $fakeDryRunArtifactDir "windows-real-skia-smoke.log") `
+      -Value "dry_run_config=true; real Windows smoke was not run"
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeDryRunArtifactDir -RequireCommit } `
+      -ExpectedMessage "artifact wrapper log is from a dry-run configuration"
+
+    $fakeNativeDryRunArtifactDir = Join-Path $dryRunRoot "fake-artifact-dry-run-native"
+    New-Item -ItemType Directory -Force -Path $fakeNativeDryRunArtifactDir | Out-Null
+    Copy-Item -LiteralPath $fakeArtifactPreflightLog -Destination (Join-Path $fakeNativeDryRunArtifactDir "windows-real-skia-smoke-preflight.log")
+    Copy-Item -LiteralPath $fakeArtifactWrapperLog -Destination (Join-Path $fakeNativeDryRunArtifactDir "windows-real-skia-smoke.log")
+    Copy-Item -LiteralPath $fakeArtifactAcceptanceLog -Destination (Join-Path $fakeNativeDryRunArtifactDir "windows-real-skia-acceptance.log")
+    Copy-Item -LiteralPath $fakeArtifactNativeLog -Destination (Join-Path $fakeNativeDryRunArtifactDir "windows-native-smoke-output.log")
+    Add-Content -LiteralPath (Join-Path $fakeNativeDryRunArtifactDir "windows-native-smoke-output.log") `
+      -Value "Dry run complete; no build was run."
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeNativeDryRunArtifactDir -RequireCommit } `
+      -ExpectedMessage "artifact native smoke log is from a dry-run configuration"
+
+    $fakeAcceptanceDryRunArtifactDir = Join-Path $dryRunRoot "fake-artifact-dry-run-acceptance"
+    New-Item -ItemType Directory -Force -Path $fakeAcceptanceDryRunArtifactDir | Out-Null
+    Copy-Item -LiteralPath $fakeArtifactPreflightLog -Destination (Join-Path $fakeAcceptanceDryRunArtifactDir "windows-real-skia-smoke-preflight.log")
+    Copy-Item -LiteralPath $fakeArtifactWrapperLog -Destination (Join-Path $fakeAcceptanceDryRunArtifactDir "windows-real-skia-smoke.log")
+    Copy-Item -LiteralPath $fakeArtifactNativeLog -Destination (Join-Path $fakeAcceptanceDryRunArtifactDir "windows-native-smoke-output.log")
+    Copy-Item -LiteralPath $fakeArtifactAcceptanceLog -Destination (Join-Path $fakeAcceptanceDryRunArtifactDir "windows-real-skia-acceptance.log")
+    Add-Content -LiteralPath (Join-Path $fakeAcceptanceDryRunArtifactDir "windows-real-skia-acceptance.log") `
+      -Value "dry-run=true"
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeAcceptanceDryRunArtifactDir -RequireCommit } `
+      -ExpectedMessage "artifact acceptance log is from a dry-run configuration"
+
     $fakePrefixedWrapperFieldArtifactDir = Join-Path $dryRunRoot "fake-artifact-prefixed-wrapper-field"
     New-Item -ItemType Directory -Force -Path $fakePrefixedWrapperFieldArtifactDir | Out-Null
     Copy-Item -LiteralPath $fakeArtifactPreflightLog -Destination (Join-Path $fakePrefixedWrapperFieldArtifactDir "windows-real-skia-smoke-preflight.log")

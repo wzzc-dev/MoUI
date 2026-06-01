@@ -78,6 +78,21 @@ function Assert-ExactLogLine {
   }
 }
 
+function Assert-NotDryRunLog {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Content,
+    [Parameter(Mandatory = $true)]
+    [string] $Label,
+    [Parameter(Mandatory = $true)]
+    [string] $Path
+  )
+
+  if ($Content -match "(?im)dry[_ -]?run(_config)?\s*=\s*true|Dry run complete|real .* smoke was not run|no build was run") {
+    throw "$Label log is from a dry-run configuration: $Path"
+  }
+}
+
 function Assert-AcceptanceLogReference {
   param(
     [Parameter(Mandatory = $true)]
@@ -100,6 +115,11 @@ function Assert-AcceptanceLogReference {
 }
 
 $wrapperContent = Get-Content -LiteralPath $wrapperLog -Raw
+$nativeContent = Get-Content -LiteralPath $nativeLog -Raw
+$acceptanceContent = Get-Content -LiteralPath $acceptanceLog -Raw
+Assert-NotDryRunLog -Content $wrapperContent -Label "artifact wrapper" -Path $wrapperLog
+Assert-NotDryRunLog -Content $nativeContent -Label "artifact native smoke" -Path $nativeLog
+Assert-NotDryRunLog -Content $acceptanceContent -Label "artifact acceptance" -Path $acceptanceLog
 $wrapperProvider = Get-LogField -LogPath $wrapperLog -Field "skia_provider"
 $acceptanceProvider = Get-LogField -LogPath $acceptanceLog -Field "skia_provider"
 if ([string]::IsNullOrWhiteSpace($wrapperProvider) -or $wrapperProvider -eq "unknown") {

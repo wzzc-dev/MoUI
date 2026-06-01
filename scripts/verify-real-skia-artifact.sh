@@ -121,6 +121,15 @@ require_exact_log_line() {
   fi
 }
 
+reject_dry_run_log() {
+  local log_path="$1"
+  local label="$2"
+  if grep -Eiq 'dry[_ -]?run(_config)?[[:space:]]*=[[:space:]]*true|Dry run complete|real .* smoke was not run|no build was run' "$log_path"; then
+    echo "$label log is from a dry-run configuration: $log_path" >&2
+    exit 1
+  fi
+}
+
 require_acceptance_log_reference() {
   local field="$1"
   local expected_path="$2"
@@ -140,6 +149,10 @@ require_acceptance_log_reference() {
     exit 1
   fi
 }
+
+reject_dry_run_log "$wrapper_log" "artifact wrapper"
+reject_dry_run_log "$native_log" "artifact native smoke"
+reject_dry_run_log "$acceptance_log" "artifact acceptance"
 
 wrapper_provider="$(extract_field "$wrapper_log" skia_provider || true)"
 acceptance_provider="$(extract_field "$acceptance_log" skia_provider || true)"
