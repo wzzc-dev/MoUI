@@ -500,6 +500,90 @@ test "gpu context descriptors attach to gpu surface targets" {
 }
 
 ///|
+test "surface present descriptors track frame pacing slots and resources" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
+    @skia_mbt.ISize::new(64, 48),
+    present_mode=@skia_mbt.MailboxPresent,
+    max_frames_in_flight=3,
+    target_id=b"main-window",
+  )
+  let present = target.present_descriptor(frame_index=5)
+  assert_true(present.is_presentable())
+  assert_eq(present.frame_index, 5)
+  assert_eq(present.buffer_index, 2)
+  assert_true(present.present_mode == Some(@skia_mbt.MailboxPresent))
+  assert_true(!present.prefers_vsync())
+  assert_true(!present.allows_tearing())
+  let present_key = present.resource_key()
+  assert_true(present_key.kind == @skia_mbt.SurfaceResource)
+  assert_true(present_key == present.resource_key())
+  assert_true(
+    present_key != target.present_descriptor(frame_index=6).resource_key(),
+  )
+  assert_true(
+    present_key !=
+    target.present_descriptor(frame_index=5, buffer_index=1).resource_key(),
+  )
+  assert_true(
+    present_key !=
+    target
+    .with_present_mode(@skia_mbt.ImmediatePresent)
+    .present_descriptor(frame_index=5)
+    .resource_key(),
+  )
+  let explicit_buffer = target.present_descriptor(frame_index=5, buffer_index=7)
+  assert_eq(explicit_buffer.buffer_index, 1)
+  let present_resource = present.resource_descriptor()
+  assert_true(present_resource.key == present_key)
+  assert_true(!present_resource.is_cacheable())
+  assert_true(present_resource.byte_size > 0L)
+  let plan = present.resource_plan()
+  assert_eq(plan.length(), 2)
+  assert_eq(plan.cacheable_count, 1)
+  assert_eq(plan.uncacheable_count, 1)
+  assert_eq(plan.count_kind(@skia_mbt.SurfaceResource), 2)
+  assert_true(plan.contains_key(target.resource_key()))
+  assert_true(plan.contains_key(present_key))
+
+  let fifo = target
+    .with_present_mode(@skia_mbt.FifoPresent)
+    .present_descriptor(frame_index=0)
+  assert_true(fifo.prefers_vsync())
+  assert_true(!fifo.allows_tearing())
+  let immediate = target
+    .with_present_mode(@skia_mbt.ImmediatePresent)
+    .present_descriptor(frame_index=0)
+  assert_true(!immediate.prefers_vsync())
+  assert_true(immediate.allows_tearing())
+
+  let gpu_context = @skia_mbt.GpuContextDescriptor::mock(
+    id=b"present-gpu-context",
+  )
+  let gpu_target = @skia_mbt.SurfaceTargetDescriptor::gpu_n32_premul(
+    @skia_mbt.ISize::new(64, 48),
+    gpu_context_key=Some(gpu_context.resource_key()),
+  )
+  let gpu_present = gpu_target.present_descriptor(frame_index=2)
+  let gpu_plan = gpu_present.resource_plan()
+  assert_true(gpu_present.resource_key().kind == @skia_mbt.GpuSurfaceResource)
+  assert_eq(gpu_plan.length(), 3)
+  assert_eq(gpu_plan.gpu_backed_count, 3)
+  assert_eq(gpu_plan.cacheable_count, 2)
+  assert_eq(gpu_plan.uncacheable_count, 1)
+  assert_true(gpu_plan.contains_key(gpu_target.resource_key()))
+  assert_true(gpu_plan.contains_key(gpu_context.resource_key()))
+  assert_true(gpu_plan.contains_key(gpu_present.resource_key()))
+
+  let raster_present = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(16, 16),
+  ).present_descriptor(frame_index=4)
+  assert_true(!raster_present.is_presentable())
+  assert_true(raster_present.resource_key().is_empty())
+  assert_true(!raster_present.resource_descriptor().is_cacheable())
+  assert_true(raster_present.resource_plan().is_empty())
+}
+
+///|
 test "resource cache tracks lru budget and stats" {
   let cache : @skia_mbt.ResourceCache[String, Int] = @skia_mbt.ResourceCache::new(
     max_bytes=10L,
@@ -1236,6 +1320,20 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(cache.contains_resource_plan(frame.resource_plan))
   assert_true(cache.contains(target.resource_key()))
   assert_true(cache.contains(path.resource_key()))
+  guard frame.present_descriptor(frame_index=5) is Some(present) else {
+    fail("ready window frame should expose a present descriptor")
+  }
+  assert_eq(present.frame_index, 5)
+  assert_eq(present.buffer_index, 1)
+  assert_true(present.present_mode == Some(@skia_mbt.MailboxPresent))
+  assert_true(present.resource_key().kind == @skia_mbt.SurfaceResource)
+  assert_true(!present.resource_descriptor().is_cacheable())
+  let present_plan = frame.present_resource_plan(frame_index=5)
+  assert_eq(present_plan.length(), 2)
+  assert_eq(present_plan.cacheable_count, 1)
+  assert_eq(present_plan.uncacheable_count, 1)
+  assert_true(present_plan.contains_key(target.resource_key()))
+  assert_true(present_plan.contains_key(present.resource_key()))
 
   let mismatch_target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
     @skia_mbt.ISize::new(24, 16),
@@ -1248,6 +1346,8 @@ test "render frame descriptor summarizes target commands and resources" {
     mismatch_frame.validation_status() == @skia_mbt.FrameTargetMismatch,
   )
   assert_true(!mismatch_frame.is_ready())
+  assert_true(mismatch_frame.present_descriptor(frame_index=5) is None)
+  assert_true(mismatch_frame.present_resource_plan(frame_index=5).is_empty())
 
   let identity_target = target.with_target_id(b"frame-window")
   let identity_mismatch_target = identity_target.with_target_id(
@@ -1296,6 +1396,7 @@ test "render frame descriptor summarizes target commands and resources" {
     @skia_mbt.FrameMissingGpuContext,
   )
   assert_true(!missing_context_frame.is_ready())
+  assert_true(missing_context_frame.present_descriptor(frame_index=1) is None)
 }
 
 ///|

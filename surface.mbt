@@ -662,6 +662,103 @@ pub fn SurfaceTargetDescriptor::without_gpu_context(
 }
 
 ///|
+fn normalized_surface_present_frame_index(frame_index : Int) -> Int {
+  Int::max(0, frame_index)
+}
+
+///|
+fn surface_present_mod(value : Int, divisor : Int) -> Int {
+  let divisor = Int::max(1, divisor)
+  value - value / divisor * divisor
+}
+
+///|
+fn normalized_surface_present_buffer_index(
+  target : SurfaceTargetDescriptor,
+  frame_index : Int,
+  buffer_index : Int,
+) -> Int {
+  if !target.is_presentable() {
+    0
+  } else {
+    surface_present_mod(
+      if buffer_index < 0 {
+        frame_index
+      } else {
+        buffer_index
+      },
+      target.max_frames_in_flight,
+    )
+  }
+}
+
+///|
+/// Per-frame presentation scheduling metadata for a presentable target.
+pub(all) struct SurfacePresentDescriptor {
+  target : SurfaceTargetDescriptor
+  frame_index : Int
+  buffer_index : Int
+  present_mode : SurfacePresentMode?
+} derive(Debug, Eq)
+
+///|
+pub fn SurfacePresentDescriptor::new(
+  target : SurfaceTargetDescriptor,
+  frame_index? : Int = 0,
+  buffer_index? : Int = -1,
+) -> SurfacePresentDescriptor {
+  let frame_index = normalized_surface_present_frame_index(frame_index)
+  {
+    target,
+    frame_index,
+    buffer_index: normalized_surface_present_buffer_index(
+      target, frame_index, buffer_index,
+    ),
+    present_mode: if target.is_presentable() {
+      target.present_mode
+    } else {
+      None
+    },
+  }
+}
+
+///|
+pub fn SurfaceTargetDescriptor::present_descriptor(
+  self : SurfaceTargetDescriptor,
+  frame_index? : Int = 0,
+  buffer_index? : Int = -1,
+) -> SurfacePresentDescriptor {
+  SurfacePresentDescriptor::new(self, frame_index~, buffer_index~)
+}
+
+///|
+pub fn SurfacePresentDescriptor::is_presentable(
+  self : SurfacePresentDescriptor,
+) -> Bool {
+  self.present_mode is Some(_) && self.target.is_presentable()
+}
+
+///|
+pub fn SurfacePresentDescriptor::prefers_vsync(
+  self : SurfacePresentDescriptor,
+) -> Bool {
+  match self.present_mode {
+    Some(mode) => mode.prefers_vsync()
+    None => false
+  }
+}
+
+///|
+pub fn SurfacePresentDescriptor::allows_tearing(
+  self : SurfacePresentDescriptor,
+) -> Bool {
+  match self.present_mode {
+    Some(mode) => mode.allows_tearing()
+    None => false
+  }
+}
+
+///|
 fn SurfacePresentMode::surface_resource_name(
   self : SurfacePresentMode,
 ) -> Bytes {
@@ -693,6 +790,24 @@ fn surface_target_gpu_context_resource_id(
 }
 
 ///|
+fn SurfacePresentDescriptor::resource_id(
+  self : SurfacePresentDescriptor,
+) -> Bytes {
+  let target_key = self.target.resource_key()
+  if !self.is_presentable() || target_key.is_empty() {
+    b""
+  } else {
+    b"skia_mbt:surface-present:v1" +
+    surface_resource_bytes(target_key.id) +
+    surface_resource_bytes(
+      surface_target_present_resource_id(self.present_mode),
+    ) +
+    surface_resource_u64(self.frame_index) +
+    surface_resource_u64(self.buffer_index)
+  }
+}
+
+///|
 pub fn SurfaceTargetDescriptor::resource_key(
   self : SurfaceTargetDescriptor,
 ) -> RendererResourceKey {
@@ -714,6 +829,32 @@ pub fn SurfaceTargetDescriptor::resource_key(
       ),
     )
   }
+}
+
+///|
+pub fn SurfacePresentDescriptor::resource_key(
+  self : SurfacePresentDescriptor,
+) -> RendererResourceKey {
+  let target_key = self.target.resource_key()
+  RendererResourceKey::new(target_key.kind, self.resource_id())
+}
+
+///|
+pub fn SurfacePresentDescriptor::resource_descriptor(
+  self : SurfacePresentDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let id = self.resource_id()
+  let measured_byte_size = if byte_size < 0L {
+    id.length().to_int64()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::new(
+    self.resource_key(),
+    byte_size=measured_byte_size,
+    cacheable=false,
+  )
 }
 
 ///|
@@ -744,6 +885,31 @@ pub fn SurfaceTargetDescriptor::resource_descriptors(
       }
   }
   descriptors
+}
+
+///|
+pub fn SurfacePresentDescriptor::resource_descriptors(
+  self : SurfacePresentDescriptor,
+  byte_size? : Int64 = -1L,
+) -> Array[RendererResourceDescriptor] {
+  if !self.is_presentable() {
+    []
+  } else {
+    let descriptors = self.target.resource_descriptors()
+    let present_descriptor = self.resource_descriptor(byte_size~)
+    if !present_descriptor.key.is_empty() {
+      descriptors.push(present_descriptor)
+    }
+    descriptors
+  }
+}
+
+///|
+pub fn SurfacePresentDescriptor::resource_plan(
+  self : SurfacePresentDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new(self.resource_descriptors(byte_size~))
 }
 
 ///|

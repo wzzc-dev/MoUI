@@ -58,6 +58,7 @@ default_stage_markers=(
   "native smoke render target identity validation" \
   "native smoke render target resource binding" \
   "native smoke render frame present count" \
+  "native smoke render frame present descriptor validation" \
   "native smoke render frame missing present validation" \
   "native smoke render frame touched bounds width" \
   "native smoke render frame cache resources" \
@@ -70,12 +71,15 @@ default_stage_markers=(
   "native smoke gpu context resource plan count" \
   "native smoke gpu context key variation" \
   "native smoke gpu frame context validation" \
+  "native smoke gpu present resource plan count" \
   "native smoke surface target resource plan count" \
   "native smoke window target resource plan count" \
   "native smoke window physical width" \
   "native smoke window frame pacing" \
   "native smoke window frame pacing key variation" \
   "native smoke window present mode key variation" \
+  "native smoke surface present buffer index" \
+  "native smoke surface present resource plan count" \
   "native smoke surface flush-and-submit" \
   "native smoke shader draws" \
   "native smoke shader resource plan count" \
@@ -138,6 +142,7 @@ default_expected_stage_values=(
   $'native smoke render target identity validation\t1'
   $'native smoke render target resource binding\t1'
   $'native smoke render frame present count\t1'
+  $'native smoke render frame present descriptor validation\t1'
   $'native smoke render frame missing present validation\t1'
   $'native smoke render frame touched bounds width\t4'
   $'native smoke render frame cache resources\t9'
@@ -150,12 +155,15 @@ default_expected_stage_values=(
   $'native smoke gpu context resource plan count\t2'
   $'native smoke gpu context key variation\t1'
   $'native smoke gpu frame context validation\t1'
+  $'native smoke gpu present resource plan count\t3'
   $'native smoke surface target resource plan count\t2'
   $'native smoke window target resource plan count\t1'
   $'native smoke window physical width\t16'
   $'native smoke window frame pacing\t2'
   $'native smoke window frame pacing key variation\t1'
   $'native smoke window present mode key variation\t1'
+  $'native smoke surface present buffer index\t1'
+  $'native smoke surface present resource plan count\t2'
   $'native smoke surface flush-and-submit\t1'
   $'native smoke readback width\t32'
   $'native smoke readback height\t32'

@@ -107,8 +107,10 @@ source-built runs that will be used to pin `skia-revision.txt`.
 The native smoke log verifier checks both the final pass marker and intermediate
 stage markers for readback, bounded readback, snapshot/image drawing, PNG
 encode/decode, codec creation, decoded bitmap readback, render resource
-planning, target identity/resource binding, byte-range text-run resource keys,
-text measurement resource planning, text measurement cache-key variation,
+planning, target identity/resource binding, present descriptor validation,
+surface present resource planning, GPU present resource planning,
+byte-range text-run resource keys, text measurement resource planning,
+text measurement cache-key variation,
 text shaping resource planning, shaped-text result resource planning, UTF-8 text
 measurement, glyph count, glyph ID mapping, glyph advances, glyph positions,
 glyph bounds, text bounds measurement, font metrics, and font manager family

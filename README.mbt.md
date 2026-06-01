@@ -18,11 +18,12 @@ The current package exposes the first value-layer API surface:
 - image sampling: `SamplingOptions`, `FilterMode`, `MipmapMode`,
   `CubicResampler`
 - surface contracts: `SurfaceDescriptor`, `SurfaceTargetDescriptor`,
-  `WindowSurfaceDescriptor`, `SurfaceBackend`, `SurfaceOrigin`,
-  `SurfaceBudget`, `SurfacePresentMode`, `GpuContextBackend`, and
-  `GpuContextDescriptor` for raster, window, and future GPU render targets,
-  with stable window target identity plus typed resource descriptors for backend
-  surface and GPU context caches
+  `SurfacePresentDescriptor`, `WindowSurfaceDescriptor`, `SurfaceBackend`,
+  `SurfaceOrigin`, `SurfaceBudget`, `SurfacePresentMode`,
+  `GpuContextBackend`, and `GpuContextDescriptor` for raster, window, and
+  future GPU render targets, with stable window target identity plus typed
+  resource descriptors for backend surface, present scheduling, and GPU context
+  caches
 - renderer resource cache: `ResourceCache` and `ResourceCacheStats` provide a
   deterministic byte-budgeted LRU boundary for images, shaders, typefaces, and
   other backend-owned resources
@@ -46,8 +47,8 @@ The current package exposes the first value-layer API surface:
   declarations, and target-bound resource plans for backend caches
 - render frame contracts: `RenderFrameDescriptor` and
   `RenderFrameValidationStatus` combine a target, finalized command stream,
-  resource plan, readiness diagnostics, and cache population boundary for one
-  backend submission
+  resource plan, readiness diagnostics, cache population boundary, and optional
+  present scheduling descriptor for one backend submission
 - text layout and fallback contracts: `TextRunDescriptor`,
   `TextMeasurementDescriptor`, `TextShapingDescriptor`,
   `ShapedTextRunDescriptor`, `FontDescriptor`, `FontFallbackRequest`,

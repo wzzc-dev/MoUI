@@ -853,6 +853,8 @@ pub fn RenderFrameDescriptor::is_ready(Self) -> Bool
 pub fn RenderFrameDescriptor::is_target_consistent(Self) -> Bool
 pub fn RenderFrameDescriptor::needs_present(Self) -> Bool
 pub fn RenderFrameDescriptor::new(SurfaceTargetDescriptor, RenderCommandList) -> Self
+pub fn RenderFrameDescriptor::present_descriptor(Self, frame_index? : Int, buffer_index? : Int) -> SurfacePresentDescriptor?
+pub fn RenderFrameDescriptor::present_resource_plan(Self, frame_index? : Int, buffer_index? : Int) -> RendererResourcePlan
 pub fn RenderFrameDescriptor::requires_gpu_context(Self) -> Bool
 pub fn RenderFrameDescriptor::validation_status(Self) -> RenderFrameValidationStatus
 
@@ -1149,6 +1151,21 @@ pub(all) enum SurfaceOrigin {
 } derive(Eq, @debug.Debug)
 pub impl Default for SurfaceOrigin
 
+pub(all) struct SurfacePresentDescriptor {
+  target : SurfaceTargetDescriptor
+  frame_index : Int
+  buffer_index : Int
+  present_mode : SurfacePresentMode?
+} derive(Eq, @debug.Debug)
+pub fn SurfacePresentDescriptor::allows_tearing(Self) -> Bool
+pub fn SurfacePresentDescriptor::is_presentable(Self) -> Bool
+pub fn SurfacePresentDescriptor::new(SurfaceTargetDescriptor, frame_index? : Int, buffer_index? : Int) -> Self
+pub fn SurfacePresentDescriptor::prefers_vsync(Self) -> Bool
+pub fn SurfacePresentDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn SurfacePresentDescriptor::resource_descriptors(Self, byte_size? : Int64) -> Array[RendererResourceDescriptor]
+pub fn SurfacePresentDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn SurfacePresentDescriptor::resource_plan(Self, byte_size? : Int64) -> RendererResourcePlan
+
 pub(all) enum SurfacePresentMode {
   ImmediatePresent
   MailboxPresent
@@ -1175,6 +1192,7 @@ pub fn SurfaceTargetDescriptor::is_multibuffered(Self) -> Bool
 pub fn SurfaceTargetDescriptor::is_presentable(Self) -> Bool
 pub fn SurfaceTargetDescriptor::needs_present(Self) -> Bool
 pub fn SurfaceTargetDescriptor::new(SurfaceDescriptor, present_mode? : SurfacePresentMode?, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?, target_id? : Bytes) -> Self
+pub fn SurfaceTargetDescriptor::present_descriptor(Self, frame_index? : Int, buffer_index? : Int) -> SurfacePresentDescriptor
 pub fn SurfaceTargetDescriptor::raster_n32_premul(ISize) -> Self
 pub fn SurfaceTargetDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn SurfaceTargetDescriptor::resource_descriptors(Self, byte_size? : Int64) -> Array[RendererResourceDescriptor]
