@@ -1077,6 +1077,21 @@ fn main {
     bcp47=[b"en"],
     character=0x53,
   )
+  let fallback_key = fallback_request.resource_key()
+  let fallback_language_key = @skia.FontFallbackRequest::new(
+    families=@skia.FontFallbackChain::new(primary_family=first_family),
+    bcp47=[b"ja"],
+    character=0x53,
+  ).resource_key()
+  let fallback_character_key = fallback_request.with_character(0x4F61).resource_key()
+  if fallback_key.is_empty() ||
+    fallback_key != fallback_request.resource_key() ||
+    fallback_key == fallback_language_key ||
+    fallback_key == fallback_character_key {
+    fail_smoke("native font fallback resource key did not encode request inputs")
+  }
+  println("native smoke font fallback key variation")
+  println(1)
   let fallback_plan = @skia.RendererResourcePlan::new([
     fallback_request.resource_descriptor(),
   ])
@@ -1105,7 +1120,7 @@ fn main {
     fail_smoke("failed to create native font from fallback request typeface")
   }
   let fallback_font_descriptor = @skia.FontDescriptor::from_typeface(
-    fallback_request.resource_key(),
+    fallback_key,
     size=8.0,
   )
   let font_plan = @skia.RendererResourcePlan::new([

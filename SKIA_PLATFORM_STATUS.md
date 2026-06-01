@@ -89,8 +89,8 @@ these facts recorded in logs:
   ID mapping, glyph advances, glyph positions, glyph bounds, text bounds
   measurement, font resource planning, font metrics, font family enumeration,
   native typeface family metadata, FontMgr character fallback, font fallback
-  family metadata, font fallback resource planning, and shader/filter resource
-  planning.
+  cache-key variation, font fallback family metadata, font fallback resource
+  planning, and shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.
