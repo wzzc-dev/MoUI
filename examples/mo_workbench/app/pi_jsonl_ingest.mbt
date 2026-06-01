@@ -713,7 +713,7 @@ fn WorkbenchModel::apply_bash_success(
   let full_output_path = json_string(data, "fullOutputPath").unwrap_or("")
   let output = json_string(data, "output").unwrap_or("")
   let model = self
-    .mark_latest_shell_command_complete(
+    .mark_next_shell_command_complete(
       session_id, exit_code, cancelled, full_output_path,
     )
     .append_bash_diagnostics(exit_code, cancelled, truncated, full_output_path)
@@ -2179,7 +2179,7 @@ fn WorkbenchModel::mark_tool_command_complete(
 }
 
 ///|
-fn WorkbenchModel::mark_latest_shell_command_complete(
+fn WorkbenchModel::mark_next_shell_command_complete(
   self : WorkbenchModel,
   session_id : String,
   exit_code : Int?,
@@ -2190,7 +2190,7 @@ fn WorkbenchModel::mark_latest_shell_command_complete(
   let status = shell_command_status(exit_code, cancelled)
   let mut target_id : Int? = None
   for command in self.commands {
-    if command.is_active_shell_for_session(session) {
+    if target_id is None && command.is_active_shell_for_session(session) {
       target_id = Some(command.id)
     }
   }

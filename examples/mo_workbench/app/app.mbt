@@ -2415,7 +2415,7 @@ fn WorkbenchModel::cancel_run(self : WorkbenchModel) -> WorkbenchModel {
   let transport_command = self.cancel_transport_command(session)
   let shell_cancel = transport_command is CancelShellCommand(_)
   let model = if shell_cancel {
-    self.mark_latest_shell_command_cancelling(session)
+    self.mark_next_shell_command_cancelling(session)
   } else {
     self
   }
@@ -2478,13 +2478,13 @@ fn WorkbenchModel::has_active_shell_command(
 }
 
 ///|
-fn WorkbenchModel::mark_latest_shell_command_cancelling(
+fn WorkbenchModel::mark_next_shell_command_cancelling(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> WorkbenchModel {
   let mut target_id : Int? = None
   for command in self.commands {
-    if command.is_active_shell_for_session(session) {
+    if target_id is None && command.is_active_shell_for_session(session) {
       target_id = Some(command.id)
     }
   }

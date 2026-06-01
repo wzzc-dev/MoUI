@@ -1280,6 +1280,81 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
 }
 
 ///|
+test "workbench focused check bash responses complete queued commands in order" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"bash\",\"command\":\"moon test examples/mo_workbench/app --target native\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"bash","success":true,"data":{"output":"native ok","exitCode":0,"cancelled":false,"truncated":false,"fullOutputPath":"/tmp/mo-workbench-native.log"}}
+        ),
+      ),
+    )
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"bash\",\"command\":\"moon test examples/mo_workbench/app --target wasm-gc\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"bash","success":true,"data":{"output":"wasm failed","exitCode":2,"cancelled":false,"truncated":false,"fullOutputPath":"/tmp/mo-workbench-wasm.log"}}
+        ),
+      ),
+    )
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"bash\",\"command\":\"moon build examples/mo_workbench/macos_skia --target native\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"bash","success":true,"data":{"output":"skia ok","exitCode":0,"cancelled":false,"truncated":false,"fullOutputPath":"/tmp/mo-workbench-skia.log"}}
+        ),
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    QueueFocusedChecks,
+    transport,
+  )
+  inspect(update.model.commands.length(), content="3")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="4")
+  inspect(model.pending_transport_count(), content="0")
+  inspect(
+    model.commands[0].command,
+    content="moon test examples/mo_workbench/app --target native",
+  )
+  inspect(model.commands[0].status, content="passed")
+  inspect(model.commands[0].output_path, content="/tmp/mo-workbench-native.log")
+  inspect(
+    model.commands[1].command,
+    content="moon test examples/mo_workbench/app --target wasm-gc",
+  )
+  inspect(model.commands[1].status, content="failed")
+  inspect(model.commands[1].output_path, content="/tmp/mo-workbench-wasm.log")
+  inspect(
+    model.commands[2].command,
+    content="moon build examples/mo_workbench/macos_skia --target native",
+  )
+  inspect(model.commands[2].status, content="passed")
+  inspect(model.commands[2].output_path, content="/tmp/mo-workbench-skia.log")
+}
+
+///|
 test "workbench syncs selected title to Pi session name" {
   let model = WorkbenchModel::new().update(SyncSessionName)
   inspect(model.last_status, content="Pi session name sync queued")
@@ -1501,6 +1576,20 @@ test "workbench cancel run targets active Pi RPC bash command" {
       event.title == "Shell command cancellation requested"
     }),
   )
+}
+
+///|
+test "workbench cancel run marks first active focused check command" {
+  let model = WorkbenchModel::new().update(QueueFocusedChecks).update(CancelRun)
+  inspect(model.last_status, content="Shell command cancellation queued")
+  inspect(model.commands.length(), content="3")
+  inspect(model.commands[0].status, content="cancelling")
+  inspect(model.commands[1].status, content="queued")
+  inspect(model.commands[2].status, content="queued")
+  match model.transport.command_queue[4] {
+    CancelShellCommand(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued shell cancellation")
+  }
 }
 
 ///|
