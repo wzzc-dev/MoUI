@@ -45,10 +45,11 @@ The current package exposes the first value-layer API surface:
   renderer can validate before replaying into a native Canvas, including
   cacheable text-run draw commands, explicit shader/filter/image resource
   declarations, and target-bound resource plans for backend caches
-- render frame contracts: `RenderFrameDescriptor` and
-  `RenderFrameValidationStatus` combine a target, finalized command stream,
-  resource plan, readiness diagnostics, cache population boundary, and optional
-  present scheduling descriptor for one backend submission
+- render frame contracts: `RenderFrameDescriptor`,
+  `RenderFrameSubmissionDescriptor`, and `RenderFrameValidationStatus` combine
+  a target, finalized command stream, resource plan, readiness diagnostics,
+  cache population boundary, optional present scheduling descriptor, and
+  auditable per-frame submission resource plan for one backend submission
 - text layout and fallback contracts: `TextRunDescriptor`,
   `TextMeasurementDescriptor`, `TextShapingDescriptor`,
   `ShapedTextRunDescriptor`, `FontDescriptor`, `FontFallbackRequest`,
