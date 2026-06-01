@@ -1829,6 +1829,10 @@ test "workbench ingests Pi RPC get_commands response into command catalog" {
   inspect(model.command_catalog[1].source_scope, content="user")
   inspect(model.last_status, content="Pi commands refreshed")
   assert_true(model.events.any(event => event.title == "Pi commands refreshed"))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "命令"))
+  assert_true(has_text(commands, "/review"))
+  assert_true(draw_text_count_containing(commands, "/skill:moonbit") > 0)
 }
 
 ///|

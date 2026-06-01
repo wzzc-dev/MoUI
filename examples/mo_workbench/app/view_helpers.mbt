@@ -34,7 +34,6 @@ priv struct WorkbenchLayout {
   diff_text_width : Double
   top_title_width : Double
   top_path_width : Double
-  scroll_height : Double
   composer_width : Double
   composer_input_width : Double
   composer_height : Double
@@ -145,7 +144,6 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     diff_text_width,
     top_title_width,
     top_path_width,
-    scroll_height: workbench_max_double(220.0, viewport.height - 292.0),
     composer_width,
     composer_input_width: workbench_max_double(1.0, composer_width - 24.0),
     composer_height,
@@ -501,11 +499,9 @@ fn WorkbenchModel::conversation_surface(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  let scroll_height = self.main_scroll_height(layout)
   let content_height = self.chat_content_height(layout)
-  let max_scroll = workbench_max_double(
-    0.0,
-    content_height - layout.scroll_height,
-  )
+  let max_scroll = workbench_max_double(0.0, content_height - scroll_height)
   let offset_y = workbench_clamp_double(
     self.main_scroll_offset_y,
     0.0,
@@ -520,7 +516,7 @@ fn WorkbenchModel::conversation_surface(
             self.chat_transcript(layout, theme),
             offset=@core.Point::new(x=0.0, y=offset_y),
             width=layout.content_width,
-            height=layout.scroll_height,
+            height=scroll_height,
             on_scroll=Some(delta => {
               MainScrollTo(
                 workbench_clamp_double(offset_y - delta.y, 0.0, max_scroll),
@@ -529,7 +525,7 @@ fn WorkbenchModel::conversation_surface(
           ),
           main_scrollbar(
             theme,
-            viewport_height=layout.scroll_height,
+            viewport_height=scroll_height,
             content_height~,
             offset_y~,
           ),
@@ -538,7 +534,7 @@ fn WorkbenchModel::conversation_surface(
         align=Start,
       ).frame(
         width=layout.content_width + layout.scrollbar_width,
-        height=layout.scroll_height,
+        height=scroll_height,
       ),
       self.composer(layout, theme),
     ],
@@ -562,6 +558,21 @@ fn WorkbenchModel::conversation_surface(
     corner_radius=0.0,
     theme~,
     padding=layout.main_padding,
+  )
+}
+
+///|
+fn WorkbenchModel::main_scroll_height(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+) -> Double {
+  workbench_max_double(
+    220.0,
+    layout.viewport.height -
+    layout.main_padding * 2.0 -
+    58.0 -
+    28.0 -
+    self.composer_height(layout),
   )
 }
 
@@ -3028,73 +3039,27 @@ fn WorkbenchModel::composer(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  surface(
-    column(
-      [
-        text_field(
-          self.prompt,
-          on_input=value => PromptChanged(value),
-          on_submit=Some(DispatchPrompt),
-          placeholder="给 Pi 一个任务",
-          variant=Plain,
-          theme~,
-          width=layout.composer_input_width,
-          height=54.0,
-        ),
-        self.context_chip_row(layout, theme),
-        row(
-          [
-            button(
-              self.steering_mode_label(),
-              on_click=ToggleSteeringMode,
-              variant=Outline,
-              theme~,
-              width=82.0,
-              height=34.0,
-            ),
-            button(
-              self.follow_up_mode_label(),
-              on_click=ToggleFollowUpMode,
-              variant=Outline,
-              theme~,
-              width=82.0,
-              height=34.0,
-            ),
-            spacer(min_length=10.0, weight=1.0),
-            button(
-              "引导",
-              on_click=DispatchSteering,
-              variant=Outline,
-              theme~,
-              width=54.0,
-              height=36.0,
-            ),
-            button(
-              "跟进",
-              on_click=DispatchFollowUp,
-              variant=Outline,
-              theme~,
-              width=54.0,
-              height=36.0,
-            ),
-            button(
-              "发送",
-              on_click=DispatchPrompt,
-              variant=Primary,
-              theme~,
-              width=54.0,
-              height=36.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
-        ),
-      ],
-      spacing=6.0,
-      align=Stretch,
+  let content : Array[@core.View[WorkbenchMsg]] = [
+    text_field(
+      self.prompt,
+      on_input=value => PromptChanged(value),
+      on_submit=Some(DispatchPrompt),
+      placeholder="给 Pi 一个任务",
+      variant=Plain,
+      theme~,
+      width=layout.composer_input_width,
+      height=54.0,
     ),
+    self.context_chip_row(layout, theme),
+  ]
+  if !self.command_catalog.is_empty() {
+    content.push(self.composer_command_row(layout, theme))
+  }
+  content.push(self.composer_action_row(theme))
+  surface(
+    column(content, spacing=6.0, align=Stretch),
     width=layout.composer_width,
-    height=layout.composer_height,
+    height=self.composer_height(layout),
     background=@core.Color::white(),
     corner_radius=14.0,
     theme~,
@@ -3102,6 +3067,123 @@ fn WorkbenchModel::composer(
   )
   .border(workbench_hairline_border())
   .shadow(workbench_soft_shadow())
+}
+
+///|
+fn WorkbenchModel::composer_height(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+) -> Double {
+  if self.command_catalog.is_empty() {
+    layout.composer_height
+  } else {
+    layout.composer_height + 38.0
+  }
+}
+
+///|
+fn WorkbenchModel::composer_action_row(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      button(
+        self.steering_mode_label(),
+        on_click=ToggleSteeringMode,
+        variant=Outline,
+        theme~,
+        width=82.0,
+        height=34.0,
+      ),
+      button(
+        self.follow_up_mode_label(),
+        on_click=ToggleFollowUpMode,
+        variant=Outline,
+        theme~,
+        width=82.0,
+        height=34.0,
+      ),
+      spacer(min_length=10.0, weight=1.0),
+      button(
+        "引导",
+        on_click=DispatchSteering,
+        variant=Outline,
+        theme~,
+        width=54.0,
+        height=36.0,
+      ),
+      button(
+        "跟进",
+        on_click=DispatchFollowUp,
+        variant=Outline,
+        theme~,
+        width=54.0,
+        height=36.0,
+      ),
+      button(
+        "发送",
+        on_click=DispatchPrompt,
+        variant=Primary,
+        theme~,
+        width=54.0,
+        height=36.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::composer_command_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let limit = workbench_min_int(self.command_catalog.length(), 3)
+  let button_width = workbench_clamp_double(
+    (layout.composer_input_width - 42.0 - 16.0) / 3.0,
+    96.0,
+    142.0,
+  )
+  let controls : Array[@core.View[WorkbenchMsg]] = [
+    text("命令", role=Caption, theme~, width=42.0, height=30.0),
+  ]
+  for index in 0..<limit {
+    let command = self.command_catalog[index]
+    controls.push(
+      button(
+        command.composer_label(button_width),
+        on_click=InvokeCommand(command.name),
+        variant=Ghost,
+        theme~,
+        width=button_width,
+        height=30.0,
+      ),
+    )
+  }
+  controls.push(spacer(min_length=8.0, weight=1.0))
+  row(controls, spacing=8.0, align=Center)
+}
+
+///|
+fn PiCommandInfo::composer_label(
+  self : PiCommandInfo,
+  width : Double,
+) -> String {
+  compact_label("/" + self.name, max_chars=readable_line_char_limit(width))
+}
+
+///|
+fn compact_label(value : String, max_chars~ : Int) -> String {
+  let chars = value.to_array()
+  if chars.length() <= max_chars {
+    value
+  } else {
+    let end = workbench_max_int(1, max_chars - 3)
+    String::from_array(chars[0:end]) + "..."
+  }
 }
 
 ///|
