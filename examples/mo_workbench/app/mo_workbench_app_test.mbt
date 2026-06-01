@@ -401,7 +401,12 @@ test "workbench queues file context inspection through prompt RPC" {
   match model.transport.command_queue[1] {
     SendUserInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Inspect examples/mo_workbench/app/app.mbt")
+      inspect(
+        text,
+        content=context_task_payload(
+          "Inspect examples/mo_workbench/app/app.mbt",
+        ),
+      )
     }
     _ => fail("expected queued file inspection prompt")
   }
@@ -417,7 +422,7 @@ test "workbench file context runtime effect dispatches prompt" {
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
     emit(
       JsonLineSent(
-        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Inspect examples/mo_workbench/app/app.mbt\"}",
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Context: repo, examples\\n\\nTask: Inspect examples/mo_workbench/app/app.mbt\"}",
       ),
     )
   })
@@ -432,7 +437,12 @@ test "workbench file context runtime effect dispatches prompt" {
   match captured.val[1] {
     SendUserInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Inspect examples/mo_workbench/app/app.mbt")
+      inspect(
+        text,
+        content=context_task_payload(
+          "Inspect examples/mo_workbench/app/app.mbt",
+        ),
+      )
     }
     _ => fail("expected captured file inspection prompt")
   }
@@ -449,11 +459,50 @@ test "workbench queues diff review through prompt RPC" {
   match model.transport.command_queue[1] {
     SendUserInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Review diff: ready for review, 5 files, +160 -10")
+      inspect(
+        text,
+        content=context_task_payload(
+          "Review diff: ready for review, 5 files, +160 -10",
+        ),
+      )
     }
     _ => fail("expected queued diff review prompt")
   }
   assert_true(model.events.any(event => event.title == "Diff review queued"))
+}
+
+///|
+test "workbench file and diff evidence preserve selected agent focus" {
+  let file_model = WorkbenchModel::new()
+    .update(SelectAgent("coding"))
+    .update(InspectFile("examples/mo_workbench/app/app.mbt"))
+  match file_model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=agent_context_task_payload(
+          "Inspect examples/mo_workbench/app/app.mbt",
+        ),
+      )
+    }
+    _ => fail("expected focused file inspection prompt")
+  }
+  let diff_model = model_with_reviewable_diff()
+    .update(SelectAgent("coding"))
+    .update(ReviewDiff)
+  match diff_model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=agent_context_task_payload(
+          "Review diff: ready for review, 5 files, +160 -10",
+        ),
+      )
+    }
+    _ => fail("expected focused diff review prompt")
+  }
 }
 
 ///|
@@ -473,7 +522,7 @@ test "workbench diff review runtime effect dispatches prompt" {
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
     emit(
       JsonLineSent(
-        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Review diff: ready for review, 5 files, +160 -10\"}",
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Context: repo, examples\\n\\nTask: Review diff: ready for review, 5 files, +160 -10\"}",
       ),
     )
   })
@@ -488,7 +537,12 @@ test "workbench diff review runtime effect dispatches prompt" {
   match captured.val[1] {
     SendUserInput(session, text) => {
       inspect(session, content="moui-skia")
-      inspect(text, content="Review diff: ready for review, 5 files, +160 -10")
+      inspect(
+        text,
+        content=context_task_payload(
+          "Review diff: ready for review, 5 files, +160 -10",
+        ),
+      )
     }
     _ => fail("expected captured diff review prompt")
   }
@@ -3003,46 +3057,49 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "Pi agent 桌面工作台"))
   assert_true(has_text(commands, "当前会话"))
-  assert_true(has_text(commands, "进度"))
   assert_true(has_text(commands, "Agents"))
   assert_true(has_text(commands, "通用"))
   assert_true(has_text(commands, "编码"))
   assert_true(has_text(commands, "校验"))
-  assert_true(has_text(commands, "拆解请求、整理上下文"))
-  assert_true(has_text(commands, "代码修改、测试、重构"))
-  assert_true(has_text(commands, "诊断、diff、文档收口"))
-  assert_true(has_text(commands, "工作文件夹"))
-  assert_true(has_text(commands, "等待 Pi 计划更新"))
-  assert_true(has_text(commands, "等待活动"))
-  assert_true(has_text(commands, "等待 Pi 文件证据"))
+  assert_true(has_text(commands, "协调"))
+  assert_true(has_text(commands, "实现"))
+  assert_true(has_text(commands, "检查"))
   assert_true(has_text(commands, "新会话"))
   assert_true(has_text(commands, "刷新"))
-  assert_true(has_text(commands, "找分叉"))
-  assert_true(has_text(commands, "导出"))
-  assert_true(has_text(commands, "压缩"))
-  assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Pi 运行状态"))
-  assert_true(has_text(commands, "引导 单条"))
-  assert_true(has_text(commands, "跟进 单条"))
   assert_true(has_text(commands, "上下文"))
   assert_true(has_text(commands, "仓库"))
   assert_true(has_text(commands, "示例"))
   assert_true(has_text(commands, "证据"))
   assert_true(has_text(commands, "会话"))
-  assert_true(has_text(commands, "仓库、示例"))
   assert_true(has_text(commands, "发送"))
-  assert_true(has_text(commands, "引导"))
-  assert_true(has_text(commands, "跟进"))
   assert_true(has_text(commands, "会话记录"))
   assert_true(has_text(commands, "运行证据"))
-  assert_true(has_text(commands, "常用检查"))
-  assert_true(has_text(commands, "全部"))
-  assert_true(has_text(commands, "App 测试"))
-  assert_true(has_text(commands, "Wasm 测试"))
-  assert_true(has_text(commands, "Skia 构建"))
   assert_true(has_text(commands, "工作区证据"))
-  assert_true(has_text(commands, "同步名"))
   assert_true(has_text(commands, "Pi RPC"))
+  assert_false(has_text(commands, "进度"))
+  assert_false(has_text(commands, "工作文件夹"))
+  assert_false(has_text(commands, "等待 Pi 计划更新"))
+  assert_false(has_text(commands, "等待活动"))
+  assert_false(has_text(commands, "等待 Pi 文件证据"))
+  assert_false(has_text(commands, "找分叉"))
+  assert_false(has_text(commands, "导出"))
+  assert_false(has_text(commands, "压缩"))
+  assert_false(has_text(commands, "思考"))
+  assert_false(has_text(commands, "同步名"))
+  assert_false(has_text(commands, "引导 单条"))
+  assert_false(has_text(commands, "跟进 单条"))
+  assert_false(has_text(commands, "引导"))
+  assert_false(has_text(commands, "跟进"))
+  assert_false(has_text(commands, "仓库、示例"))
+  assert_false(has_text(commands, "常用检查"))
+  assert_false(has_text(commands, "全部"))
+  assert_false(has_text(commands, "App 测试"))
+  assert_false(has_text(commands, "Wasm 测试"))
+  assert_false(has_text(commands, "Skia 构建"))
+  assert_false(has_text(commands, "拆解请求、整理上下文"))
+  assert_false(has_text(commands, "代码修改、测试、重构"))
+  assert_false(has_text(commands, "诊断、diff、文档收口"))
   assert_false(has_text(commands, "下一步"))
   assert_false(has_text(commands, "Session"))
   assert_false(has_text(commands, "Pi transcript"))
@@ -3084,6 +3141,19 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "修复"))
   assert_false(has_text(commands, "Research notebook"))
   assert_false(has_text(commands, "Skia native"))
+}
+
+///|
+test "workbench composer reveals secondary actions while composing" {
+  let commands = WorkbenchModel::new()
+    .update(PromptChanged("Run focused checks"))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(commands, "引导 单条"))
+  assert_true(has_text(commands, "跟进 单条"))
+  assert_true(has_text(commands, "引导"))
+  assert_true(has_text(commands, "跟进"))
+  assert_true(has_text(commands, "发送"))
 }
 
 ///|

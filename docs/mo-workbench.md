@@ -91,8 +91,10 @@ packages:
   replies, a compact current-state strip, and a centered floating composer. The
   visible hierarchy uses quieter Chinese section labels (`当前会话`, `Pi 运行状态`,
   `会话记录`, `运行证据`, `工作区证据`) while preserving Pi/RPC protocol nouns, and
-  secondary session controls are visually quieter than the primary
-  refresh/new-session actions.
+  the default shell keeps only refresh, new-session, context, and send controls
+  prominent. Advanced session actions, steering/follow-up composer controls,
+  and focused-check presets stay collapsed until Pi state, typed input, or
+  command evidence makes them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
@@ -102,13 +104,14 @@ packages:
   displays sample active-task text. Zero queues, unbound Pi state, idle
   transport/agent state, and contextless actions render quietly instead of
   placeholder punctuation; transcript/activity/workspace panels shrink to their
-  headers while empty.
+  headers while empty, and empty wide windows no longer reserve space for
+  workflow-rail placeholder cards.
 - Wide Workbench windows now add a screenshot-style right workflow rail beside
-  the conversation canvas. The rail is still driven only by shared app state:
-  `进度` summarizes live `PlanStep` rows, `Agents` reflects plan owners or recent
-  activity events, and `工作文件夹` shows the active project plus the latest file
-  evidence. Compact windows collapse the rail and keep the single-column
-  conversation flow.
+  the conversation canvas only when there is live evidence to summarize. The
+  rail is still driven only by shared app state: `进度` summarizes live
+  `PlanStep` rows, `Agents` reflects plan owners or recent activity events, and
+  `工作文件夹` shows the active project plus the latest file evidence. Empty or
+  compact windows collapse the rail and keep the conversation flow primary.
 - The left sidebar has a lightweight `Agents` focus roster for `通用`, `编码`,
   and `校验`. Selecting a role does not create a native-only worker or transport
   command; it appends an `agent focus: ...` hint to the existing prompt,
