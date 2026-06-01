@@ -105,6 +105,10 @@ these facts recorded in logs:
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.
 - The platform artifact passed `scripts/verify-real-skia-artifact.*`.
+- The wrapper, native-smoke, and acceptance logs do not contain dry-run markers
+  such as `dry_run_config=true`, `Dry run complete`, or
+  `real <platform> smoke was not run`. The preflight log is allowed to come
+  from `--dry-run-config`; the accepted artifact itself is not.
 - `native/moon.pkg` and `scripts/native_smoke/moon.pkg` were restored after the
   temporary link rewrite.
 

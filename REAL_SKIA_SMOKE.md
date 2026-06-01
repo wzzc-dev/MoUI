@@ -16,6 +16,9 @@ matrix and the exact evidence still missing per platform.
   library file, and resolved `skia_commit` when the Skia checkout is available.
 - The acceptance log records `smoke_status=0`, `native_smoke_marker=passed`,
   and `native_pkg_restore=passed`.
+- Artifact verification rejects wrapper, native-smoke, or acceptance logs that
+  still contain dry-run markers. The preflight log is intentionally a dry-run
+  configuration preview, but it is not acceptance evidence by itself.
 
 ## JetBrains/skia Provider
 
