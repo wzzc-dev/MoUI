@@ -276,8 +276,12 @@ if ($status.schema_version -ge 3) {
     "surface.bounded-snapshot-height",
     "image.encode-png",
     "image.decode",
+    "image.decode-height",
     "codec.metadata",
+    "codec.width",
+    "codec.height",
     "bitmap.decode-readback",
+    "bitmap.decode-readback-height",
     "text.font-spacing",
     "text.font-resource-plan",
     "text.text-run-resource-plan",
@@ -377,6 +381,12 @@ if ($status.schema_version -ge 3) {
       "native smoke bounded readback height" = "4"
       "native smoke bounded snapshot width" = "4"
       "native smoke bounded snapshot height" = "4"
+      "native smoke decoded image width" = "32"
+      "native smoke decoded image height" = "32"
+      "native smoke codec width" = "32"
+      "native smoke codec height" = "32"
+      "native smoke decoded bitmap width" = "32"
+      "native smoke decoded bitmap height" = "32"
       "native smoke shader draws" = "3"
       "native smoke shader resource plan count" = "3"
       "native smoke filter resource plan count" = "3"
