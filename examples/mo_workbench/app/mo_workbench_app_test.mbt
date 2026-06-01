@@ -3119,6 +3119,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "/Volumes/Data/Code/moon/pi"))
   assert_false(has_text(commands, "active"))
   assert_false(has_text(commands, "queued"))
+  assert_false(has_text(commands, "未连接"))
   assert_false(has_text(commands, "进度"))
   assert_false(has_text(commands, "工作文件夹"))
   assert_false(has_text(commands, "等待 Pi 计划更新"))
@@ -3183,6 +3184,25 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "修复"))
   assert_false(has_text(commands, "Research notebook"))
   assert_false(has_text(commands, "Skia native"))
+}
+
+///|
+test "workbench sidebar transport status appears only when live" {
+  let idle = WorkbenchModel::new()
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(idle, "Pi RPC"))
+  assert_false(has_text(idle, "未连接"))
+  let running = WorkbenchModel::new()
+    .update(ReceiveTransport(ProcessStarted("4242")))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(running, "运行中"))
+  let failed = WorkbenchModel::new()
+    .update(ReceiveTransport(TransportFailed("pi unavailable")))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(failed, "失败：pi unavailable"))
 }
 
 ///|

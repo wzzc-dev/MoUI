@@ -94,8 +94,9 @@ packages:
   Pi/RPC protocol nouns. The default chrome shows short project names and
   localized session status labels, while full project paths remain in the shared
   model and Pi transport commands. The default shell keeps only refresh,
-  new-session, context, and send controls prominent. Agent focus controls,
-  advanced session actions, steering/follow-up composer controls, and
+  new-session, context, and send controls prominent, and the idle Pi RPC footer
+  stays label-only until transport is starting, running, or failed. Agent focus
+  controls, advanced session actions, steering/follow-up composer controls, and
   focused-check presets stay collapsed until Pi state, typed input, selected
   focus, or command evidence makes them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded

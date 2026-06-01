@@ -347,21 +347,34 @@ fn WorkbenchModel::sidebar_footer(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let status = self.transport.display_status_label()
   row(
     [
       text("Pi RPC", role=Control, theme~, width=56.0, height=28.0),
-      text(
-        status,
-        role=Caption,
-        theme~,
-        width=layout.sidebar_inner_width - 72.0,
-        height=28.0,
-      ),
+      self.sidebar_transport_status_cell(layout, theme),
     ],
     spacing=8.0,
     align=Center,
   )
+}
+
+///|
+fn WorkbenchModel::sidebar_transport_status_cell(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let width = layout.sidebar_inner_width - 72.0
+  if self.transport.status is Disconnected {
+    blank_cell(width~, height=28.0)
+  } else {
+    text(
+      self.transport.display_status_label(),
+      role=Caption,
+      theme~,
+      width~,
+      height=28.0,
+    )
+  }
 }
 
 ///|
