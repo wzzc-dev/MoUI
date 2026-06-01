@@ -20,6 +20,10 @@ priv struct WorkbenchLayout {
   sidebar_inner_width : Double
   main_width : Double
   main_padding : Double
+  workflow_rail_visible : Bool
+  workflow_rail_width : Double
+  workflow_rail_gap : Double
+  workflow_rail_body_width : Double
   content_width : Double
   scrollbar_width : Double
   panel_width : Double
@@ -61,9 +65,23 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
   let main_width = workbench_max_double(1.0, viewport.width - sidebar_width)
   let main_padding = if main_width < 760.0 { 14.0 } else { 22.0 }
   let scrollbar_width = 12.0
+  let main_available_width = workbench_max_double(
+    1.0,
+    main_width - main_padding * 2.0,
+  )
+  let workflow_rail_visible = viewport.width >= 1180.0
+  let workflow_rail_gap = if workflow_rail_visible { 16.0 } else { 0.0 }
+  let workflow_rail_width = if workflow_rail_visible {
+    workbench_clamp_double(main_available_width * 0.28, 240.0, 276.0)
+  } else {
+    0.0
+  }
   let content_available_width = workbench_max_double(
     1.0,
-    main_width - main_padding * 2.0 - scrollbar_width,
+    main_available_width -
+    workflow_rail_width -
+    workflow_rail_gap -
+    scrollbar_width,
   )
   let content_width = workbench_clamp_double(
     content_available_width,
@@ -110,6 +128,13 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     sidebar_inner_width: workbench_max_double(160.0, sidebar_width - 36.0),
     main_width,
     main_padding,
+    workflow_rail_visible,
+    workflow_rail_width,
+    workflow_rail_gap,
+    workflow_rail_body_width: workbench_max_double(
+      1.0,
+      workflow_rail_width - 24.0,
+    ),
     content_width,
     scrollbar_width,
     panel_width,
@@ -400,41 +425,51 @@ fn WorkbenchModel::conversation_surface(
     0.0,
     max_scroll,
   )
+  let center_column = column(
+    [
+      self.top_bar(layout, theme),
+      row(
+        [
+          scroll_view(
+            self.chat_transcript(layout, theme),
+            offset=@core.Point::new(x=0.0, y=offset_y),
+            width=layout.content_width,
+            height=layout.scroll_height,
+            on_scroll=Some(delta => {
+              MainScrollTo(
+                workbench_clamp_double(offset_y - delta.y, 0.0, max_scroll),
+              )
+            }),
+          ),
+          main_scrollbar(
+            theme,
+            viewport_height=layout.scroll_height,
+            content_height~,
+            offset_y~,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ).frame(
+        width=layout.content_width + layout.scrollbar_width,
+        height=layout.scroll_height,
+      ),
+      self.composer(layout, theme),
+    ],
+    spacing=14.0,
+    align=Center,
+  )
+  let content = if layout.workflow_rail_visible {
+    row(
+      [center_column, self.workflow_rail(layout, theme)],
+      spacing=layout.workflow_rail_gap,
+      align=Start,
+    )
+  } else {
+    center_column
+  }
   surface(
-    column(
-      [
-        self.top_bar(layout, theme),
-        row(
-          [
-            scroll_view(
-              self.chat_transcript(layout, theme),
-              offset=@core.Point::new(x=0.0, y=offset_y),
-              width=layout.content_width,
-              height=layout.scroll_height,
-              on_scroll=Some(delta => {
-                MainScrollTo(
-                  workbench_clamp_double(offset_y - delta.y, 0.0, max_scroll),
-                )
-              }),
-            ),
-            main_scrollbar(
-              theme,
-              viewport_height=layout.scroll_height,
-              content_height~,
-              offset_y~,
-            ),
-          ],
-          spacing=0.0,
-          align=Start,
-        ).frame(
-          width=layout.content_width + layout.scrollbar_width,
-          height=layout.scroll_height,
-        ),
-        self.composer(layout, theme),
-      ],
-      spacing=14.0,
-      align=Center,
-    ),
+    content,
     width=layout.main_width,
     height=layout.viewport.height,
     background=ui_color(0.975, 0.976, 0.970),
@@ -442,6 +477,413 @@ fn WorkbenchModel::conversation_surface(
     theme~,
     padding=layout.main_padding,
   )
+}
+
+///|
+fn WorkbenchModel::workflow_rail(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  column(
+    [
+      self.workflow_progress_card(layout, theme),
+      self.workflow_agents_card(layout, theme),
+      self.workflow_folder_card(layout, theme),
+    ],
+    spacing=14.0,
+    align=Stretch,
+  ).frame(
+    width=layout.workflow_rail_width,
+    height=workbench_max_double(
+      1.0,
+      layout.viewport.height - layout.main_padding * 2.0,
+    ),
+  )
+}
+
+///|
+fn WorkbenchModel::workflow_progress_card(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  if self.plan.is_empty() {
+    rows.push(workflow_note_row("等待 Pi 计划更新", layout, theme))
+  } else {
+    let limit = workbench_min_int(self.plan.length(), 3)
+    for index in 0..<limit {
+      rows.push(workflow_plan_step_row(self.plan[index], layout, theme))
+    }
+  }
+  workflow_rail_card(
+    "进度",
+    workflow_plan_summary_label(self.plan),
+    rows,
+    layout,
+    theme,
+    height=self.workflow_progress_card_height(),
+  )
+}
+
+///|
+fn WorkbenchModel::workflow_progress_card_height(
+  self : WorkbenchModel,
+) -> Double {
+  if self.plan.is_empty() {
+    110.0
+  } else {
+    66.0 + workbench_min_int(self.plan.length(), 3).to_double() * 44.0
+  }
+}
+
+///|
+fn workflow_plan_summary_label(steps : Array[PlanStep]) -> String {
+  if steps.is_empty() {
+    ""
+  } else {
+    let done = steps.length() - plan_open_count(steps)
+    done.to_string() + "/" + steps.length().to_string() + " 完成"
+  }
+}
+
+///|
+fn workflow_plan_step_row(
+  step : PlanStep,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let text_width = workbench_max_double(
+    1.0,
+    layout.workflow_rail_body_width - 52.0 - 8.0,
+  )
+  row(
+    [
+      badge(
+        workflow_plan_step_badge(step.status),
+        tone=plan_step_tone(step.status),
+        theme~,
+        width=52.0,
+      ),
+      column(
+        [
+          text(step.title, role=Control, theme~, width=text_width, height=24.0),
+          text(
+            plan_step_detail_label(step),
+            role=Caption,
+            theme~,
+            width=text_width,
+            height=20.0,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn workflow_plan_step_badge(status : String) -> String {
+  match status {
+    "done" | "completed" => "完成"
+    "in_progress" | "running" | "active" => "进行"
+    "blocked" => "受阻"
+    "cancelled" | "skipped" => "跳过"
+    _ => "待办"
+  }
+}
+
+///|
+fn WorkbenchModel::workflow_agents_card(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  if !self.plan.is_empty() {
+    let limit = workbench_min_int(self.plan.length(), 3)
+    for index in 0..<limit {
+      rows.push(workflow_agent_plan_row(self.plan[index], layout, theme))
+    }
+  } else if !self.events.is_empty() {
+    let start = workbench_max_int(0, self.events.length() - 3)
+    for index in start..<self.events.length() {
+      rows.push(workflow_agent_event_row(self.events[index], layout, theme))
+    }
+  } else {
+    rows.push(self.workflow_agent_idle_row(layout, theme))
+  }
+  workflow_rail_card(
+    "Agents",
+    workflow_agents_summary_label(self),
+    rows,
+    layout,
+    theme,
+    height=self.workflow_agents_card_height(),
+  )
+}
+
+///|
+fn WorkbenchModel::workflow_agents_card_height(self : WorkbenchModel) -> Double {
+  let row_count = if !self.plan.is_empty() {
+    workbench_min_int(self.plan.length(), 3)
+  } else if !self.events.is_empty() {
+    workbench_min_int(self.events.length(), 3)
+  } else {
+    1
+  }
+  66.0 + row_count.to_double() * 46.0
+}
+
+///|
+fn workflow_agents_summary_label(model : WorkbenchModel) -> String {
+  if !model.plan.is_empty() {
+    "计划所有者"
+  } else if !model.events.is_empty() {
+    "最近活动"
+  } else {
+    "等待活动"
+  }
+}
+
+///|
+fn workflow_agent_plan_row(
+  step : PlanStep,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let owner = if step.owner.trim().to_owned() == "" { "Pi" } else { step.owner }
+  workflow_agent_row(
+    owner,
+    step.title,
+    plan_step_tone(step.status),
+    layout,
+    theme,
+  )
+}
+
+///|
+fn workflow_agent_event_row(
+  event : AgentEvent,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  workflow_agent_row(
+    event_phase_label(event.phase),
+    event.title,
+    transcript_badge_tone(event.tone),
+    layout,
+    theme,
+  )
+}
+
+///|
+fn WorkbenchModel::workflow_agent_idle_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  workflow_agent_row(
+    "Pi",
+    self.pi_agent.display_status_label(),
+    Neutral,
+    layout,
+    theme,
+  )
+}
+
+///|
+fn workflow_agent_row(
+  label : String,
+  detail : String,
+  tone : @views.BadgeTone,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let text_width = workbench_max_double(
+    1.0,
+    layout.workflow_rail_body_width - 58.0 - 8.0,
+  )
+  row(
+    [
+      badge(label, tone~, theme~, width=58.0),
+      text(detail, role=Caption, theme~, width=text_width, height=28.0),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::workflow_folder_card(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let active = self.active_session()
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    workflow_folder_project_row(active, layout, theme),
+  ]
+  if self.files.is_empty() {
+    rows.push(workflow_note_row("等待 Pi 文件证据", layout, theme))
+  } else {
+    rows.push(
+      workflow_file_context_row(
+        self.files[self.files.length() - 1],
+        layout,
+        theme,
+      ),
+    )
+  }
+  workflow_rail_card(
+    "工作文件夹",
+    active.title,
+    rows,
+    layout,
+    theme,
+    height=154.0,
+  )
+}
+
+///|
+fn workflow_folder_project_row(
+  session : WorkbenchSession,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  column(
+    [
+      text(
+        "项目",
+        role=Caption,
+        theme~,
+        width=layout.workflow_rail_body_width,
+        height=20.0,
+      ),
+      text(
+        session.project_path,
+        role=Control,
+        theme~,
+        width=layout.workflow_rail_body_width,
+        height=24.0,
+      ),
+    ],
+    spacing=0.0,
+    align=Start,
+  )
+}
+
+///|
+fn workflow_file_context_row(
+  file : FileContext,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let text_width = workbench_max_double(
+    1.0,
+    layout.workflow_rail_body_width - 58.0 - 8.0,
+  )
+  row(
+    [
+      column(
+        [
+          text(file.path, role=Control, theme~, width=text_width, height=24.0),
+          text(
+            file.summary,
+            role=Caption,
+            theme~,
+            width=text_width,
+            height=20.0,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+      button(
+        "聚焦",
+        on_click=InspectFile(file.path),
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn workflow_note_row(
+  value : String,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  text(
+    value,
+    role=Caption,
+    theme~,
+    width=layout.workflow_rail_body_width,
+    height=28.0,
+  )
+}
+
+///|
+fn workflow_rail_card(
+  title : String,
+  summary : String,
+  rows : Array[@core.View[WorkbenchMsg]],
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+  height~ : Double,
+) -> @core.View[WorkbenchMsg] {
+  let content : Array[@core.View[WorkbenchMsg]] = [
+    row(
+      [
+        text(
+          title,
+          role=Control,
+          theme~,
+          width=workbench_max_double(
+            1.0,
+            layout.workflow_rail_body_width - 76.0,
+          ),
+          height=28.0,
+        ),
+        workflow_card_summary(summary, theme),
+      ],
+      spacing=8.0,
+      align=Center,
+    ),
+  ]
+  for row in rows {
+    content.push(row)
+  }
+  surface(
+    column(content, spacing=8.0, align=Start),
+    width=layout.workflow_rail_width,
+    height~,
+    background=@core.Color::white(),
+    corner_radius=12.0,
+    theme~,
+    padding=12.0,
+  ).border(workbench_hairline_border())
+}
+
+///|
+fn workflow_card_summary(
+  summary : String,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if summary == "" {
+    blank_cell(width=68.0, height=28.0)
+  } else {
+    text(summary, role=Caption, theme~, width=68.0, height=28.0)
+  }
 }
 
 ///|

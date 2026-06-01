@@ -103,6 +103,12 @@ packages:
   transport/agent state, and contextless actions render quietly instead of
   placeholder punctuation; transcript/activity/workspace panels shrink to their
   headers while empty.
+- Wide Workbench windows now add a screenshot-style right workflow rail beside
+  the conversation canvas. The rail is still driven only by shared app state:
+  `进度` summarizes live `PlanStep` rows, `Agents` reflects plan owners or recent
+  activity events, and `工作文件夹` shows the active project plus the latest file
+  evidence. Compact windows collapse the rail and keep the single-column
+  conversation flow.
 - Pi `plan_update` JSONL now fills the existing shared-app `PlanStep` model and
   renders a compact `当前计划` row in the current session panel. The row shows
   the current active/open step, open-step count, and a `继续` action that reuses
