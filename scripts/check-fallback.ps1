@@ -359,6 +359,22 @@ try {
     Set-FakeNativeSmokeLog -Path $fakeNativeSmokeLog
     & (Join-Path $repoRoot "scripts/verify-native-smoke-log.ps1") -LogPath $fakeNativeSmokeLog
 
+    $fakePrefixedSuccessNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke-prefixed-success.log"
+    (Get-Content -LiteralPath $fakeNativeSmokeLog) `
+      -replace "^skia_mbt native smoke test passed$", "not_skia_mbt native smoke test passed" `
+      | Set-Content -LiteralPath $fakePrefixedSuccessNativeSmokeLog
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-native-smoke-log.ps1") -LogPath $fakePrefixedSuccessNativeSmokeLog } `
+      -ExpectedMessage "success marker"
+
+    $fakePrefixedStageNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke-prefixed-stage.log"
+    (Get-Content -LiteralPath $fakeNativeSmokeLog) `
+      -replace "^native smoke surface descriptor backend$", "not_native smoke surface descriptor backend" `
+      | Set-Content -LiteralPath $fakePrefixedStageNativeSmokeLog
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-native-smoke-log.ps1") -LogPath $fakePrefixedStageNativeSmokeLog } `
+      -ExpectedMessage "required stage marker"
+
     $fakeMissingStageNativeSmokeLog = Join-Path $dryRunRoot "fake-native-smoke-missing-stage.log"
     Set-Content -LiteralPath $fakeMissingStageNativeSmokeLog -Value "skia_mbt native smoke test passed"
     Assert-CommandFailsWith `
