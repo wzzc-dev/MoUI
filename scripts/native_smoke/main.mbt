@@ -929,7 +929,14 @@ fn main {
   }
   println("native smoke measured text bounds width")
   println(text_bounds.width())
-  if @native.skia_shaper_available() {
+  let shaper_available = @native.skia_shaper_available()
+  println("native smoke shaper availability")
+  if shaper_available {
+    println(1)
+  } else {
+    println(0)
+  }
+  if shaper_available {
     smoke_mark(b"skshaper available")
     guard font.shape_text_utf8(smoke_text_bytes()) is Some(shaped_run) else {
       fail_smoke("native SkShaper was available but did not shape text")

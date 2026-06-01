@@ -84,6 +84,7 @@ $defaultStageMarkers = @(
   "native smoke second glyph x position",
   "native smoke first glyph bounds width",
   "native smoke measured text bounds width",
+  "native smoke shaper availability",
   "native smoke font family count",
   "native smoke first font family bytes",
   "native smoke typeface family bytes",
