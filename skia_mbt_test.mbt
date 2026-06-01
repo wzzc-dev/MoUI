@@ -824,6 +824,7 @@ test "render pass descriptor clips clear and present boundaries" {
   assert_true(pass.keeps_pixels())
   assert_true(pass.is_msaa())
   assert_true(pass.resource_descriptor().key.kind == @skia_mbt.SurfaceResource)
+  assert_true(pass.resource_descriptor().key == surface.resource_key())
   assert_eq(pass.resource_descriptor().byte_size, 3200L)
 
   let load = @skia_mbt.RenderPassDescriptor::new(surface)
@@ -861,6 +862,13 @@ test "render pass descriptor derives present defaults from surface targets" {
   let raster_pass = @skia_mbt.RenderPassDescriptor::for_target(raster_target)
   assert_true(raster_pass.has_target_binding())
   assert_true(raster_pass.is_bound_to_target(raster_target))
+  assert_true(
+    raster_pass.resource_descriptor().key == raster_target.resource_key(),
+  )
+  assert_true(
+    raster_pass.resource_descriptor().key !=
+    raster_target.surface.resource_key(),
+  )
   assert_true(!raster_pass.needs_present())
   assert_true(raster_pass.keeps_pixels())
   assert_true(raster_pass.store_op == @skia_mbt.StorePixels)
@@ -880,6 +888,13 @@ test "render pass descriptor derives present defaults from surface targets" {
   assert_true(
     !present_pass.is_bound_to_target(window_target.with_target_id(b"other")),
   )
+  assert_true(
+    present_pass.resource_descriptor().key == window_target.resource_key(),
+  )
+  assert_true(
+    present_pass.resource_descriptor().key !=
+    window_target.surface.resource_key(),
+  )
   assert_true(present_pass.keeps_pixels())
   assert_true(present_pass.store_op == @skia_mbt.PresentPixels)
   assert_true(present_pass.bounds == @skia_mbt.IRect::new(4, 2, 20, 10))
@@ -892,6 +907,9 @@ test "render pass descriptor derives present defaults from surface targets" {
   assert_true(clear_pass.needs_clear())
   assert_true(clear_pass.needs_present())
   assert_true(clear_pass.clear_color == Some(@skia_mbt.Color::blue()))
+  assert_true(
+    clear_pass.resource_descriptor().key == window_target.resource_key(),
+  )
 
   let discard_pass = @skia_mbt.RenderPassDescriptor::for_target(
     window_target.without_present(),
@@ -1013,6 +1031,8 @@ test "render command list exposes text run resource keys" {
     .resource_descriptors()
   assert_eq(descriptors.length(), 5)
   assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
+  assert_true(descriptors[0].key == target.resource_key())
+  assert_true(descriptors[0].key != target.surface.resource_key())
   assert_eq(descriptors[0].byte_size, 2048L)
   let mut path_descriptor_seen = false
   let mut text_descriptor : @skia_mbt.RendererResourceDescriptor? = None
@@ -1127,6 +1147,8 @@ test "render command list includes declared resource descriptors" {
   let descriptors = commands.resource_descriptors()
   assert_eq(descriptors.length(), 5)
   assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
+  assert_true(descriptors[0].key == target.resource_key())
+  assert_true(descriptors[0].key != target.surface.resource_key())
   let plan = commands.resource_plan()
   assert_eq(plan.length(), 5)
   assert_eq(plan.cacheable_count, 5)
@@ -1184,10 +1206,11 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(frame.resource_plan.contains_key(target.resource_key()))
   assert_true(frame.resource_plan.contains_key(path.resource_key()))
   assert_true(
-    !frame.resource_plan.contains_key(
+    frame.resource_plan.contains_key(
       frame.command_list.pass.resource_descriptor().key,
     ),
   )
+  assert_true(!frame.resource_plan.contains_key(target.surface.resource_key()))
   assert_eq(frame.resource_plan.count_kind(@skia_mbt.SurfaceResource), 1)
   assert_eq(frame.resource_plan.count_kind(@skia_mbt.PathResource), 1)
   let cache : @skia_mbt.ResourceCache[
