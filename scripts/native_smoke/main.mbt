@@ -206,6 +206,21 @@ fn main {
     smoke_window_frame.stats.present_count != 1 {
     fail_smoke("render frame did not finalize a present command for window target")
   }
+  let smoke_window_unfinished_commands = @skia.RenderCommandList::new(
+    @skia.RenderPassDescriptor::for_target(smoke_window_target),
+  )
+  let smoke_window_missing_present_frame : @skia.RenderFrameDescriptor = {
+    target: smoke_window_target,
+    command_list: smoke_window_unfinished_commands,
+    resource_plan: smoke_window_unfinished_commands.resource_plan(),
+    stats: smoke_window_unfinished_commands.stats(),
+    touched_bounds: smoke_window_unfinished_commands.touched_bounds(),
+  }
+  if smoke_window_missing_present_frame.validation_status() !=
+    @skia.FrameMissingPresent ||
+    smoke_window_missing_present_frame.is_ready() {
+    fail_smoke("render frame validation did not reject missing present command")
+  }
   guard smoke_window_frame.touched_bounds is Some(smoke_window_touched_bounds) else {
     fail_smoke("render frame did not record touched bounds for window target")
   }
@@ -214,6 +229,8 @@ fn main {
   }
   println("native smoke render frame present count")
   println(smoke_window_frame.stats.present_count)
+  println("native smoke render frame missing present validation")
+  println(1)
   println("native smoke render frame touched bounds width")
   println(smoke_window_touched_bounds.width().round().to_int())
 
