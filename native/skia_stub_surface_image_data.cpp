@@ -428,6 +428,22 @@ moonbit_skia_surface_raster_n32_premul(int32_t width, int32_t height) {
 
 
 
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
+  if (wrapper == nullptr || wrapper->surface == nullptr) {
+    return 0;
+  }
+#if defined(SKIA_MBT_HAS_SKIA)
+  // The current public native constructor is raster-only. Future GPU surfaces
+  // must wire a real context submit path before this returns true for them.
+  return wrapper->surface->recordingContext() == nullptr;
+#else
+  return 0;
+#endif
+}
+
+
+
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaImage*
 moonbit_skia_surface_image_snapshot(MoonbitSkiaSurface* wrapper) {
   if (wrapper == nullptr || wrapper->surface == nullptr) {
@@ -566,4 +582,3 @@ moonbit_skia_surface_canvas(MoonbitSkiaSurface* wrapper) {
   return moonbit_skia_make_canvas_wrapper(nullptr, nullptr);
 #endif
 }
-

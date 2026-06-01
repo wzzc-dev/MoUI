@@ -235,6 +235,13 @@ pub fn Surface::descriptor(self : Surface) -> @skia.SurfaceDescriptor {
 }
 
 ///|
+/// Finalize pending surface work; current raster surfaces use this as a no-op boundary.
+pub fn Surface::flush_and_submit(self : Surface) -> Bool {
+  ignore(self)
+  false
+}
+
+///|
 /// Snapshot current surface contents into an immutable image.
 pub fn Surface::image_snapshot(self : Surface) -> Image? {
   ignore(self)

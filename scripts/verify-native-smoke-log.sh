@@ -61,6 +61,7 @@ default_stage_markers=(
   "native smoke gpu frame context validation" \
   "native smoke surface target resource plan count" \
   "native smoke window target resource plan count" \
+  "native smoke surface flush-and-submit" \
   "native smoke shader draws" \
   "native smoke shader resource plan count" \
   "native smoke filter layer count" \
@@ -105,6 +106,7 @@ default_expected_stage_values=(
   $'native smoke gpu frame context validation\t1'
   $'native smoke surface target resource plan count\t2'
   $'native smoke window target resource plan count\t1'
+  $'native smoke surface flush-and-submit\t1'
   $'native smoke shader draws\t3'
   $'native smoke shader resource plan count\t3'
   $'native smoke filter resource plan count\t3'

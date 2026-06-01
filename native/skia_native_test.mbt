@@ -150,6 +150,7 @@ test "image api typechecks" {
       assert_true(descriptor.image_info == surface.image_info())
       assert_true(descriptor.dimensions() == @skia.ISize::new(16, 16))
       assert_true(!descriptor.is_gpu())
+      assert_true(surface.flush_and_submit())
     }
   }
 }
@@ -990,6 +991,7 @@ test "canvas replays render command lists" {
           assert_true(
             stats.replayed_count + stats.skipped_count == commands.length(),
           )
+          assert_true(surface.flush_and_submit())
           match surface.read_pixels(bounds=@skia.IRect::from_xywh(2, 2, 1, 1)) {
             None => ()
             Some(pixmap) => {

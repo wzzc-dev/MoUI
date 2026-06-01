@@ -253,6 +253,7 @@ if ($status.schema_version -ge 3) {
     "gpu.frame-context-validation",
     "surface.target-resource-plan",
     "surface.window-target-resource-plan",
+    "surface.flush-and-submit",
     "shader.draw",
     "shader.resource-plan",
     "filter.layer",
@@ -349,6 +350,7 @@ if ($status.schema_version -ge 3) {
       "native smoke gpu frame context validation" = "1"
       "native smoke surface target resource plan count" = "2"
       "native smoke window target resource plan count" = "1"
+      "native smoke surface flush-and-submit" = "1"
       "native smoke shader draws" = "3"
       "native smoke shader resource plan count" = "3"
       "native smoke filter resource plan count" = "3"

@@ -129,6 +129,10 @@ extern "C" fn native_surface_canvas(surface : SurfaceHandle) -> CanvasHandle = "
 
 ///|
 #borrow(surface)
+extern "C" fn native_surface_flush_and_submit(surface : SurfaceHandle) -> Bool = "moonbit_skia_surface_flush_and_submit"
+
+///|
+#borrow(surface)
 extern "C" fn native_surface_image_snapshot(
   surface : SurfaceHandle,
 ) -> ImageHandle = "moonbit_skia_surface_image_snapshot"
@@ -427,6 +431,12 @@ pub fn Surface::image_info(self : Surface) -> @skia.ImageInfo {
 ///|
 pub fn Surface::descriptor(self : Surface) -> @skia.SurfaceDescriptor {
   @skia.SurfaceDescriptor::raster_n32_premul(self.dimensions())
+}
+
+///|
+/// Finalize pending surface work; current raster surfaces use this as a no-op boundary.
+pub fn Surface::flush_and_submit(self : Surface) -> Bool {
+  native_surface_flush_and_submit(self.handle)
 }
 
 ///|
