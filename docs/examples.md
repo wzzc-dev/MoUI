@@ -155,13 +155,19 @@ bindings.
 ## Mo Workbench
 
 Mo Workbench is the real product-shaped dogfood app for the native Skia route.
-It is named `Mo Workbench` with the subtitle `A Pi agent desktop`, and starts as
+It is named `Mo Workbench` with the subtitle `Pi agent 桌面工作台`, and starts as
 a Codex / Claude Code-style coding-agent workbench for project sessions,
 assistant transcripts, command evidence, diff/file context, and diagnostics.
 Its current UI keeps the first screen focused on live session state,
 transcript, a compact activity digest, and a compact workspace digest instead
 of long placeholder validation text, future-workflow filler, or hard-coded
-attachment cards. The workspace digest now includes file, diff, and latest
+attachment cards. The shell now derives its sidebar, main panel, scroll, and
+composer dimensions from the runtime viewport instead of a fixed `1200x750`
+surface, so the macOS Skia entrypoint can be resized while preserving the
+session-first hierarchy. Primary section labels are quieter and consistently
+Chinese (`当前会话`, `会话记录`, `运行证据`, `工作区证据`), with Pi/RPC left as
+protocol nouns. Empty `思考` / `停止` control slots no longer reserve operation
+row space. The workspace digest now includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
@@ -240,7 +246,7 @@ The session panel can send platform-neutral `CompactRpcSession`; successful
 the active session summary, while offline/no-provider failures remain Pi RPC
 diagnostics.
 `cycle_thinking_level` responses and `thinking_level_changed` events keep the
-compact Thinking control and
+compact `思考` control and
 `PiAgentSnapshot` aligned. `set_steering_mode` and `set_follow_up_mode`
 responses acknowledge the compact composer controls, while `get_state` refreshes
 the source-of-truth modes from Pi. The composer can also send explicit

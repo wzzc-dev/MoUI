@@ -771,8 +771,8 @@ test "workbench runtime draws fork affordance after Pi fork candidates" {
     ),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "1 forks"))
-  assert_true(has_text(commands, "Fork point"))
+  assert_true(has_text(commands, "1 分叉"))
+  assert_true(has_text(commands, "可分叉消息"))
   assert_true(has_text(commands, "Inspect the Skia route"))
   assert_true(has_text(commands, "分支"))
 }
@@ -970,7 +970,7 @@ test "workbench ingests Pi RPC export_html response into workspace evidence" {
   inspect(model.last_status, content="Pi session exported")
   assert_true(model.events.any(event => event.title == "Pi session exported"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "1 files"))
+  assert_true(has_text(commands, "1 文件"))
   assert_true(has_text(commands, "/tmp/mo-workbench-export.html"))
   assert_true(has_text(commands, "Pi session HTML export"))
 }
@@ -1496,7 +1496,7 @@ test "workbench runtime draws latest activity event" {
     ReceiveTransport(ProcessStarted("4242")),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "1 events"))
+  assert_true(has_text(commands, "1 事件"))
   assert_true(has_text(commands, "Pi RPC process started"))
   assert_true(has_text(commands, "pid 4242"))
   assert_true(has_text(commands, "跟进"))
@@ -1586,10 +1586,10 @@ test "workbench ingests Pi diagnostics files and diff jsonl" {
   inspect(model.last_status, content="Pi diff summary applied")
   assert_true(model.events.any(event => event.title == "Diff summary updated"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "1 files"))
-  assert_true(has_text(commands, "1 diag"))
+  assert_true(has_text(commands, "1 文件"))
+  assert_true(has_text(commands, "1 诊断"))
   assert_true(has_text(commands, "requires_review"))
-  assert_true(has_text(commands, "6 files · +180 -12"))
+  assert_true(has_text(commands, "6 文件 · +180 -12"))
   assert_true(has_text(commands, "聚焦"))
   assert_true(has_text(commands, "审核"))
   assert_true(has_text(commands, "清除"))
@@ -1609,7 +1609,7 @@ test "workbench runtime draws diagnostic fix action" {
     ),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "1 diag"))
+  assert_true(has_text(commands, "1 诊断"))
   assert_true(has_text(commands, "moon check"))
   assert_true(has_text(commands, "unused variable in app.mbt"))
   assert_true(has_text(commands, "清除"))
@@ -1695,7 +1695,7 @@ test "workbench runtime draws transcript follow-up action after Pi messages" {
     ),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "2 messages"))
+  assert_true(has_text(commands, "2 条"))
   assert_true(has_text(commands, "Inspect the Skia route"))
   assert_true(has_text(commands, "Skia route inspected"))
   assert_true(has_text(commands, "跟进"))
@@ -1766,7 +1766,7 @@ test "workbench runtime draws Pi model catalog summary after refresh" {
     ),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "Models 2"))
+  assert_true(has_text(commands, "模型 2"))
   assert_true(has_text(commands, "GPT-5 (openai/gpt-5) +1"))
   assert_true(has_text(commands, "使用"))
   assert_true(has_text(commands, "切换"))
@@ -2130,8 +2130,8 @@ test "workbench draws Pi session binding identity after get_state" {
     ),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "Pi: bound · Mo Workbench smoke"))
-  assert_true(has_text(commands, "Model: openai/gpt-5"))
+  assert_true(has_text(commands, "Pi 会话：已绑定 · Mo Workbench smoke"))
+  assert_true(has_text(commands, "模型：openai/gpt-5"))
 }
 
 ///|
@@ -2425,35 +2425,39 @@ test "workbench activity draws latest command evidence" {
 test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
-  assert_true(has_text(commands, "A Pi agent desktop"))
-  assert_true(has_text(commands, "Session"))
-  assert_true(has_text(commands, "新建"))
+  assert_true(has_text(commands, "Pi agent 桌面工作台"))
+  assert_true(has_text(commands, "当前会话"))
+  assert_true(has_text(commands, "新会话"))
   assert_true(has_text(commands, "刷新"))
-  assert_true(has_text(commands, "分叉"))
+  assert_true(has_text(commands, "找分叉"))
   assert_true(has_text(commands, "导出"))
   assert_true(has_text(commands, "压缩"))
   assert_true(has_text(commands, "思考"))
-  assert_true(has_text(commands, "Steer 1"))
-  assert_true(has_text(commands, "Follow 1"))
+  assert_true(has_text(commands, "引导 1"))
+  assert_true(has_text(commands, "跟进 1"))
   assert_true(has_text(commands, "引导"))
   assert_true(has_text(commands, "跟进"))
-  assert_true(has_text(commands, "Pi transcript"))
-  assert_true(has_text(commands, "Activity"))
-  assert_true(has_text(commands, "Workspace"))
-  assert_true(has_text(commands, "同步"))
+  assert_true(has_text(commands, "会话记录"))
+  assert_true(has_text(commands, "运行证据"))
+  assert_true(has_text(commands, "工作区证据"))
+  assert_true(has_text(commands, "同步名"))
   assert_true(has_text(commands, "Pi RPC"))
-  assert_false(has_text(commands, "Messages 0"))
-  assert_false(has_text(commands, "Context n/a"))
+  assert_false(has_text(commands, "Session"))
+  assert_false(has_text(commands, "Pi transcript"))
+  assert_false(has_text(commands, "Activity"))
+  assert_false(has_text(commands, "Workspace"))
+  assert_false(has_text(commands, "消息 0"))
+  assert_false(has_text(commands, "上下文 n/a"))
   assert_false(has_text(commands, "Queue 0"))
-  assert_false(has_text(commands, "0 queued"))
+  assert_false(has_text(commands, "0 排队"))
   assert_false(has_text(commands, "Thinking: default"))
-  assert_false(has_text(commands, "0 messages"))
-  assert_false(has_text(commands, "0 forks"))
-  assert_false(has_text(commands, "0 events"))
-  assert_false(has_text(commands, "0 diag"))
-  assert_false(has_text(commands, "0 files"))
-  assert_false(has_text(commands, "0 runs"))
-  assert_false(has_text(commands, "0 cmds"))
+  assert_false(has_text(commands, "0 条"))
+  assert_false(has_text(commands, "0 分叉"))
+  assert_false(has_text(commands, "0 事件"))
+  assert_false(has_text(commands, "0 诊断"))
+  assert_false(has_text(commands, "0 文件"))
+  assert_false(has_text(commands, "0 运行"))
+  assert_false(has_text(commands, "0 命令"))
   assert_false(has_text(commands, "/review"))
   assert_false(has_text(commands, "分析"))
   assert_false(has_text(commands, "重跑"))
@@ -2465,8 +2469,8 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "运行"))
   assert_false(has_text(commands, "停止"))
   assert_false(has_text(commands, "Pi: unbound"))
-  assert_false(has_text(commands, "Transport: Disconnected"))
-  assert_false(has_text(commands, "Agent: idle"))
+  assert_false(has_text(commands, "传输：未连接"))
+  assert_false(has_text(commands, "Pi：空闲"))
   assert_false(has_text(commands, "Pi RPC + macOS Skia dogfood."))
   assert_false(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_false(has_text(commands, "Product"))
@@ -2478,6 +2482,26 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "修复"))
   assert_false(has_text(commands, "Research notebook"))
   assert_false(has_text(commands, "Skia native"))
+}
+
+///|
+test "workbench shell adapts to runtime viewport resize" {
+  let runtime = @app.runtime(width=960.0, height=640.0)
+  guard first_surface_frame(runtime.draw_commands()) is Some(compact_frame) else {
+    fail("expected root surface frame before resize")
+  }
+  inspect(compact_frame.size.width, content="960")
+  inspect(compact_frame.size.height, content="640")
+  assert_true(has_text(runtime.draw_commands(), "当前会话"))
+  runtime.dispatch_event(
+    @core.AppEvent::Resize(@core.Size::new(width=1440.0, height=900.0)),
+  )
+  guard first_surface_frame(runtime.draw_commands()) is Some(expanded_frame) else {
+    fail("expected root surface frame after resize")
+  }
+  inspect(expanded_frame.size.width, content="1440")
+  inspect(expanded_frame.size.height, content="900")
+  assert_true(has_text(runtime.draw_commands(), "当前会话"))
 }
 
 ///|
@@ -2498,6 +2522,19 @@ fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is DrawText({ text: value, .. }) && value == text
   })
+}
+
+///|
+fn first_surface_frame(commands : Array[@core.DrawCommand]) -> @core.Rect? {
+  for command in commands {
+    match command {
+      FillRoundedRectBrush({ rect, .. }, _) => return Some(rect)
+      FillRoundedRect({ rect, .. }, _) => return Some(rect)
+      FillRect(rect, _) => return Some(rect)
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|

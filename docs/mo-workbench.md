@@ -6,10 +6,10 @@ Code desktop: project sessions, code understanding, task planning, execution
 feedback, diff and file context, command queues, and diagnostics all live in
 one session-first surface.
 
-The subtitle is **A Pi agent desktop**. The app is deliberately not modeled as
-only a code editor. The same session, transport event, context, plan, command,
-and diagnostic concepts should later support document workflows, research,
-automation runs, and knowledge organization.
+The visible subtitle is **Pi agent 桌面工作台**. The app is deliberately not
+modeled as only a code editor. The same session, transport event, context,
+plan, command, and diagnostic concepts should later support document workflows,
+research, automation runs, and knowledge organization.
 
 ## Package Shape
 
@@ -38,7 +38,7 @@ The current slices establish the dogfood app without changing framework
 packages:
 
 - A session-first desktop shell named `Mo Workbench`.
-- Header subtitle `A Pi agent desktop`.
+- Header subtitle `Pi agent 桌面工作台`.
 - A Codex / Claude Code-style native shell with macOS chrome, a gray session
   sidebar, a compact workspace summary, state-driven transcript, compact
   activity/workspace digests, and a restrained composer.
@@ -82,7 +82,13 @@ packages:
 - Conversation-first workbench UI that keeps session state, transcript,
   command evidence, command discovery, file context, diff review, diagnostics,
   transport status, and the next prompt in one visible flow. The current shell
-  avoids screenshot-only filler: the old validation transcript, hard-coded
+  is rebuilt from `ViewEnvironment.viewport_size()` instead of a fixed
+  `1200x750` surface, so the macOS Skia runtime responds to window resize
+  events with adaptive sidebar, panel, scroll, and composer dimensions. The
+  visible hierarchy now uses quieter Chinese section labels (`当前会话`,
+  `会话记录`, `运行证据`, `工作区证据`) while preserving Pi/RPC protocol nouns,
+  and empty `思考` / `停止` controls no longer reserve blank operation-row space.
+  It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
   by `WorkbenchModel` state. The default fixture now leaves transcript,
@@ -357,7 +363,7 @@ summary with `tokensBefore` when Pi reports it. A failed compact response, such
 as the no-provider response from offline smoke, is recorded through the normal
 Pi RPC diagnostic path. A successful
 `{"type":"response","command":"cycle_thinking_level","success":true,...}` line
-acknowledges the compact Thinking control and, when Pi includes a `data.level`,
+acknowledges the compact `思考` control and, when Pi includes a `data.level`,
 updates `PiAgentSnapshot.thinking_level`. The streamed
 `{"type":"thinking_level_changed","level":"..."}` event can still arrive
 separately and is treated as the authoritative level change. A successful
