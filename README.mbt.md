@@ -50,10 +50,12 @@ The current package exposes the first value-layer API surface:
   backend submission
 - text layout and fallback contracts: `TextRunDescriptor`,
   `TextMeasurementDescriptor`, `FontDescriptor`, `FontFallbackRequest`,
-  `FontFallbackChain`, and `FontStyleRequest` define the value-layer input to
-  native shaping and font fallback, including deterministic byte-range text-run,
-  text-measurement, font, and font-fallback resource keys and plans for backend
-  measurement, shaping, font-handle, and typeface-resolution caches
+  `FontFallbackMatchDescriptor`, `FontFallbackChain`, and `FontStyleRequest`
+  define the value-layer input and resolved-match metadata for native shaping
+  and font fallback, including deterministic byte-range text-run,
+  text-measurement, font, fallback request, and fallback match resource keys and
+  plans for backend measurement, shaping, font-handle, and typeface-resolution
+  caches
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,
@@ -100,7 +102,8 @@ The `native` subpackage contains the first opt-in native boundary:
   report their Skia family name; `FontStyleRequest` and `FontFallbackRequest`
   can be passed through the native FontMgr/Typeface adapters, including Skia
   character fallback when the request includes BCP47 language tags and a code
-  point;
+  point, then recorded with `FontFallbackMatchDescriptor` metadata for cache
+  planning;
 - `@native.Shader::color(color)`, `linear_gradient(start, end, colors...)`,
   and `radial_gradient(center, radius, colors...)` create the first native
   shader handles for shader-backed paint calls;

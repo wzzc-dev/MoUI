@@ -213,6 +213,21 @@ pub fn FontFallbackChain::length(Self) -> Int
 pub fn FontFallbackChain::new(primary_family? : Bytes, fallback_families? : Array[Bytes]) -> Self
 pub fn FontFallbackChain::with_family(Self, Bytes) -> Self
 
+pub(all) struct FontFallbackMatchDescriptor {
+  request : FontFallbackRequest
+  matched_family : Bytes
+  fallback_index : Int
+  synthetic : Bool
+} derive(Eq, @debug.Debug)
+pub fn FontFallbackMatchDescriptor::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> FontDescriptor
+pub fn FontFallbackMatchDescriptor::is_valid(Self) -> Bool
+pub fn FontFallbackMatchDescriptor::matched_in_request(Self) -> Bool
+pub fn FontFallbackMatchDescriptor::new(request? : FontFallbackRequest, matched_family? : Bytes, fallback_index? : Int, synthetic? : Bool) -> Self
+pub fn FontFallbackMatchDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn FontFallbackMatchDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn FontFallbackMatchDescriptor::resource_plan(Self, size? : Float, scale_x? : Float, skew_x? : Float, match_byte_size? : Int64, font_byte_size? : Int64) -> RendererResourcePlan
+pub fn FontFallbackMatchDescriptor::source_family(Self) -> Bytes?
+
 pub(all) struct FontFallbackRequest {
   families : FontFallbackChain
   bcp47 : Array[Bytes]
@@ -224,6 +239,7 @@ pub fn FontFallbackRequest::has_character(Self) -> Bool
 pub fn FontFallbackRequest::is_empty(Self) -> Bool
 pub fn FontFallbackRequest::language_at(Self, Int) -> Bytes?
 pub fn FontFallbackRequest::language_count(Self) -> Int
+pub fn FontFallbackRequest::match_descriptor(Self, Bytes, fallback_index? : Int, synthetic? : Bool) -> FontFallbackMatchDescriptor
 pub fn FontFallbackRequest::new(families? : FontFallbackChain, bcp47? : Array[Bytes], character? : Int, style? : FontStyleRequest) -> Self
 pub fn FontFallbackRequest::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn FontFallbackRequest::resource_key(Self) -> RendererResourceKey
