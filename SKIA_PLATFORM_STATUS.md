@@ -77,9 +77,10 @@ these facts recorded in logs:
   `SKIA_MBT_HAS_SKIA` and real Skia include/link flags.
 - The native smoke executable printed `skia_mbt native smoke test passed`.
 - The native smoke log passed `scripts/verify-native-smoke-log.*`, including
-  all required stage markers for readback, snapshots, PNG encode/decode, codec,
-  decoded bitmap readback, surface descriptor reporting, canvas state restore,
-  canvas clipping, canvas command replay, render resource planning, GPU context
+  all required stage markers for readback dimensions, readback row bytes,
+  bounded snapshots, PNG encode/decode, codec, decoded bitmap readback, surface
+  descriptor reporting, canvas state restore, canvas clipping, canvas command
+  replay, render resource planning, GPU context
   resource planning, GPU frame context validation, render target identity
   validation, render-frame unbalanced-state validation, bound target resource
   planning, window-frame present finalization, render-frame touched bounds,

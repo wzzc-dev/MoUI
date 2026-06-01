@@ -58,8 +58,12 @@ $defaultStageMarkers = @(
   "native smoke filter resource plan count",
   "native smoke path verbs",
   "native smoke readback width",
+  "native smoke readback height",
+  "native smoke readback row_bytes",
   "native smoke bounded readback width",
+  "native smoke bounded readback height",
   "native smoke bounded snapshot width",
+  "native smoke bounded snapshot height",
   "native smoke encoded PNG bytes",
   "native smoke decoded image width",
   "native smoke codec encoded format PNG",
@@ -153,6 +157,34 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke surface flush-and-submit"
     Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke readback width"
+    Value = "32"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke readback height"
+    Value = "32"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke readback row_bytes"
+    Value = "128"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke bounded readback width"
+    Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke bounded readback height"
+    Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke bounded snapshot width"
+    Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke bounded snapshot height"
+    Value = "4"
   }
   [pscustomobject]@{
     Marker = "native smoke shader draws"
