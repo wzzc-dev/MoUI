@@ -158,18 +158,20 @@ Mo Workbench is the real product-shaped dogfood app for the native Skia route.
 It is named `Mo Workbench` with the subtitle `Pi agent 桌面工作台`, and starts as
 a Codex / Claude Code-style coding-agent workbench for project sessions,
 assistant transcripts, command evidence, diff/file context, and diagnostics.
-Its current UI keeps the first screen focused on live session state,
-transcript, a compact activity digest, and a compact workspace digest instead
-of long placeholder validation text, future-workflow filler, or hard-coded
-attachment cards. The shell now derives its sidebar, main panel, scroll, and
-composer dimensions from the runtime viewport instead of a fixed `1200x750`
-surface, so the macOS Skia entrypoint can be resized while preserving the
-session-first hierarchy, including narrower panel/composer widths in smaller
-windows. Primary section labels are quieter and consistently Chinese
-(`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`), with Pi/RPC left
-as protocol nouns. Secondary session controls now use quieter visual treatment
-than the primary refresh/new-session actions. The workspace digest now includes
-file, diff, and latest
+Its current UI keeps the first screen focused on the current session row,
+scrollable transcript blocks, compact activity/workspace evidence, and a
+centered floating composer instead of long placeholder validation text,
+future-workflow filler, or hard-coded attachment cards. The shell now derives
+its sidebar, main canvas, scroll area, and composer dimensions from the runtime
+viewport instead of a fixed `1200x750` surface, so the macOS Skia entrypoint can
+be resized while preserving the session-first hierarchy, including narrower
+panel/composer widths in smaller windows. The transcript uses multi-line
+message blocks for long Pi replies and draws an explicit scrollbar when the
+main workflow overflows. Primary section labels are quieter and consistently
+Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`), with Pi/RPC
+left as protocol nouns. Secondary session controls now use quieter visual
+treatment than the primary refresh/new-session actions. The workspace digest now
+includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. When actionable evidence is
 present, the current session panel derives one quiet `下一步` row that points

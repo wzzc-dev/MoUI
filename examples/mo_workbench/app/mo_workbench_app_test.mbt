@@ -2610,6 +2610,50 @@ test "workbench runtime draws agent desktop shell" {
 }
 
 ///|
+test "workbench transcript renders long assistant replies as readable lines" {
+  let detail = long_assistant_reply()
+  let item = TranscriptItem::new(
+    id="assistant-long",
+    role="assistant",
+    summary="Pi readable reply",
+    detail~,
+    tone="success",
+  )
+  let model = { ..WorkbenchModel::new(), transcript: [item] }
+  let commands = model.runtime(width=960.0, height=640.0).draw_commands()
+  assert_true(has_text(commands, "Pi readable reply"))
+  assert_true(draw_text_count_containing(commands, "Pi reply block alpha") >= 2)
+  assert_false(has_text(commands, detail))
+}
+
+///|
+test "workbench main workflow shows and moves visible scrollbar" {
+  let runtime = model_with_overflowing_transcript().runtime(
+    width=960.0,
+    height=640.0,
+  )
+  guard main_scrollbar_thumb_frame(runtime.draw_commands()) is Some(before) else {
+    fail("expected visible main scrollbar before scroll")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=before.origin.x - 80.0,
+          y=before.origin.y + 24.0,
+        ),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-240.0),
+      ),
+    ),
+  )
+  guard main_scrollbar_thumb_frame(runtime.draw_commands()) is Some(after) else {
+    fail("expected visible main scrollbar after scroll")
+  }
+  assert_true(after.origin.y > before.origin.y)
+}
+
+///|
 test "workbench shell adapts to runtime viewport resize" {
   let runtime = @app.runtime(width=960.0, height=640.0)
   guard first_surface_frame(runtime.draw_commands()) is Some(compact_frame) else {
@@ -2643,10 +2687,72 @@ fn model_with_reviewable_diff() -> WorkbenchModel {
 }
 
 ///|
+fn model_with_overflowing_transcript() -> WorkbenchModel {
+  let transcript : Array[TranscriptItem] = []
+  for index in 0..<8 {
+    transcript.push(
+      TranscriptItem::new(
+        id="overflow-" + index.to_string(),
+        role=if index % 2 == 0 { "assistant" } else { "user" },
+        summary="Overflow transcript " + index.to_string(),
+        detail=long_assistant_reply(),
+        tone=if index % 2 == 0 { "success" } else { "info" },
+      ),
+    )
+  }
+  { ..WorkbenchModel::new(), transcript, }
+}
+
+///|
+fn long_assistant_reply() -> String {
+  "Pi reply block alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau " +
+  "Pi reply block alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau " +
+  "Pi reply block alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau"
+}
+
+///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is DrawText({ text: value, .. }) && value == text
   })
+}
+
+///|
+fn draw_text_count_containing(
+  commands : Array[@core.DrawCommand],
+  needle : String,
+) -> Int {
+  let mut count = 0
+  for command in commands {
+    match command {
+      DrawText({ text, .. }) => if text.contains(needle) { count = count + 1 }
+      _ => ()
+    }
+  }
+  count
+}
+
+///|
+fn main_scrollbar_thumb_frame(
+  commands : Array[@core.DrawCommand],
+) -> @core.Rect? {
+  let mut thumb : @core.Rect? = None
+  for command in commands {
+    match command {
+      FillRoundedRectBrush({ rect, .. }, _) =>
+        if rect.size.width == 4.0 && rect.size.height >= 36.0 {
+          match thumb {
+            Some(current) =>
+              if rect.size.height < current.size.height {
+                thumb = Some(rect)
+              }
+            None => thumb = Some(rect)
+          }
+        }
+      _ => ()
+    }
+  }
+  thumb
 }
 
 ///|
