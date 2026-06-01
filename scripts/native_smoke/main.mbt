@@ -761,6 +761,12 @@ fn main {
   println(replay_cache_inserts)
   println("native smoke render resource cache evictions")
   println(lru_stats.evictions)
+  println("native smoke render resource cache hits")
+  println(lru_stats.hits)
+  println("native smoke render resource cache misses")
+  println(lru_stats.misses)
+  println("native smoke render resource cache byte size")
+  println(lru_cache.byte_size())
 
   guard surface.image_snapshot() is Some(image) else {
     fail_smoke("failed to snapshot surface")

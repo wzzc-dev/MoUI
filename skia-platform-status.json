@@ -161,6 +161,21 @@
       "marker": "native smoke render resource cache evictions"
     },
     {
+      "id": "pipeline.resource-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache hits"
+    },
+    {
+      "id": "pipeline.resource-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache misses"
+    },
+    {
+      "id": "pipeline.resource-cache-byte-size",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache byte size"
+    },
+    {
       "id": "gpu.context-resource-plan",
       "area": "GPU",
       "marker": "native smoke gpu context resource plan count"
@@ -471,6 +486,21 @@
       "id": "pipeline.resource-cache-eviction",
       "marker": "native smoke render resource cache evictions",
       "value": "1"
+    },
+    {
+      "id": "pipeline.resource-cache-hits",
+      "marker": "native smoke render resource cache hits",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.resource-cache-misses",
+      "marker": "native smoke render resource cache misses",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.resource-cache-byte-size",
+      "marker": "native smoke render resource cache byte size",
+      "value": "8"
     },
     {
       "id": "gpu.context-resource-plan",
