@@ -48,6 +48,36 @@ function Get-LogField {
   return $matches[-1].Matches[0].Groups[1].Value.Trim()
 }
 
+function Assert-LogFieldLine {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Content,
+    [Parameter(Mandatory = $true)]
+    [string] $Field,
+    [Parameter(Mandatory = $true)]
+    [string] $MessagePrefix
+  )
+
+  if ($Content -notmatch "(?m)^\s*$([regex]::Escape($Field))") {
+    throw "$MessagePrefix: $Field"
+  }
+}
+
+function Assert-ExactLogLine {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Content,
+    [Parameter(Mandatory = $true)]
+    [string] $Line,
+    [Parameter(Mandatory = $true)]
+    [string] $MessagePrefix
+  )
+
+  if ($Content -notmatch "(?m)^\s*$([regex]::Escape($Line))\s*$") {
+    throw "$MessagePrefix: $Line"
+  }
+}
+
 $wrapperContent = Get-Content -LiteralPath $wrapperLog -Raw
 $acceptanceContent = Get-Content -LiteralPath $acceptanceLog -Raw
 $wrapperProvider = Get-LogField -LogPath $wrapperLog -Field "skia_provider"
@@ -72,13 +102,11 @@ if ($Platform -eq "linux" -and $RequireCommit -and $wrapperProvider -eq "source"
 & (Join-Path $PSScriptRoot "verify-acceptance-log.ps1") -LogPath $acceptanceLog -RequireCommit:$RequireCommit
 
 foreach ($field in @("skia_include=", "skia_lib_dir=", "skia_lib=", "stub_cc_flags=", "cc_link_flags=")) {
-  if (!$wrapperContent.Contains($field)) {
-    throw "wrapper log is missing required field: $field"
-  }
+  Assert-LogFieldLine -Content $wrapperContent -Field $field -MessagePrefix "wrapper log is missing required field"
 }
 
-if ($Platform -eq "linux" -and $RequireCommit -and $wrapperProvider -eq "source" -and !$wrapperContent.Contains("build_log=")) {
-  throw "wrapper log is missing required field: build_log="
+if ($Platform -eq "linux" -and $RequireCommit -and $wrapperProvider -eq "source") {
+  Assert-LogFieldLine -Content $wrapperContent -Field "build_log=" -MessagePrefix "wrapper log is missing required field"
 }
 
 if ($wrapperContent -notmatch 'library=.*\b(lib)?skia\.(a|so|dylib|lib)\b') {
@@ -111,9 +139,7 @@ if ($RequireCommit -and $wrapperContent -notmatch 'skia_commit=[0-9a-fA-F]{40}(\
 
 if ($wrapperProvider -eq "jetbrains") {
   foreach ($field in @("skia_provider=", "jetbrains_tag=", "skia_commit=", "skia_package=", "skia_package_sha256=")) {
-    if (!$wrapperContent.Contains($field)) {
-      throw "JetBrains wrapper log is missing required field: $field"
-    }
+    Assert-LogFieldLine -Content $wrapperContent -Field $field -MessagePrefix "JetBrains wrapper log is missing required field"
   }
   if ($wrapperContent -notmatch '(?m)^\s*skia_commit=[0-9a-fA-F]{40}\s*$') {
     throw "JetBrains wrapper log is missing a full 40-character skia_commit hash"
@@ -191,10 +217,12 @@ if ($RequireCommit) {
 
 if ($Platform -eq "linux" -and $RequireCommit -and $wrapperProvider -eq "source") {
   $buildContent = Get-Content -LiteralPath $buildLog -Raw
-  foreach ($field in @("Linux Skia source build environment:", "skia_checkout=", "skia_commit=", "gn_args=")) {
-    if (!$buildContent.Contains($field)) {
-      throw "Linux source build log is missing required field: $field"
-    }
+  Assert-ExactLogLine `
+    -Content $buildContent `
+    -Line "Linux Skia source build environment:" `
+    -MessagePrefix "Linux source build log is missing required field"
+  foreach ($field in @("skia_checkout=", "skia_commit=", "gn_args=")) {
+    Assert-LogFieldLine -Content $buildContent -Field $field -MessagePrefix "Linux source build log is missing required field"
   }
   $buildCommit = Get-AcceptedSkiaCommit $buildLog
   if ($wrapperCommit -ne $buildCommit) {

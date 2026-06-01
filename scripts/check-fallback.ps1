@@ -515,6 +515,18 @@ try {
       -LogDir $fakeArtifactDir `
       -RequireCommit
 
+    $fakePrefixedWrapperFieldArtifactDir = Join-Path $dryRunRoot "fake-artifact-prefixed-wrapper-field"
+    New-Item -ItemType Directory -Force -Path $fakePrefixedWrapperFieldArtifactDir | Out-Null
+    Copy-Item -LiteralPath $fakeArtifactPreflightLog -Destination (Join-Path $fakePrefixedWrapperFieldArtifactDir "windows-real-skia-smoke-preflight.log")
+    Copy-Item -LiteralPath $fakeArtifactNativeLog -Destination (Join-Path $fakePrefixedWrapperFieldArtifactDir "windows-native-smoke-output.log")
+    Copy-Item -LiteralPath $fakeArtifactAcceptanceLog -Destination (Join-Path $fakePrefixedWrapperFieldArtifactDir "windows-real-skia-acceptance.log")
+    (Get-Content -LiteralPath $fakeArtifactWrapperLog) `
+      -replace "skia_include=", "not_skia_include=" `
+      | Set-Content -LiteralPath (Join-Path $fakePrefixedWrapperFieldArtifactDir "windows-real-skia-smoke.log")
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakePrefixedWrapperFieldArtifactDir -RequireCommit } `
+      -ExpectedMessage "wrapper log is missing required field: skia_include="
+
     $fakeJetBrainsArtifactDir = Join-Path $dryRunRoot "fake-jetbrains-artifact"
     New-FakeJetBrainsArtifact -Directory $fakeJetBrainsArtifactDir
     & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") `
@@ -588,6 +600,24 @@ try {
       -Platform linux `
       -LogDir $fakeLinuxArtifactDir `
       -RequireCommit
+
+    $fakeLinuxPrefixedWrapperBuildLogDir = Join-Path $dryRunRoot "fake-linux-prefixed-wrapper-build-log"
+    New-FakeLinuxSourceArtifact -Directory $fakeLinuxPrefixedWrapperBuildLogDir
+    (Get-Content -LiteralPath (Join-Path $fakeLinuxPrefixedWrapperBuildLogDir "linux-real-skia-smoke.log")) `
+      -replace "build_log=", "not_build_log=" `
+      | Set-Content -LiteralPath (Join-Path $fakeLinuxPrefixedWrapperBuildLogDir "linux-real-skia-smoke.log")
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform linux -LogDir $fakeLinuxPrefixedWrapperBuildLogDir -RequireCommit } `
+      -ExpectedMessage "build_log="
+
+    $fakeLinuxPrefixedBuildFieldDir = Join-Path $dryRunRoot "fake-linux-prefixed-build-field"
+    New-FakeLinuxSourceArtifact -Directory $fakeLinuxPrefixedBuildFieldDir
+    (Get-Content -LiteralPath (Join-Path $fakeLinuxPrefixedBuildFieldDir "linux-skia-build.log")) `
+      -replace "skia_checkout=", "not_skia_checkout=" `
+      | Set-Content -LiteralPath (Join-Path $fakeLinuxPrefixedBuildFieldDir "linux-skia-build.log")
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform linux -LogDir $fakeLinuxPrefixedBuildFieldDir -RequireCommit } `
+      -ExpectedMessage "skia_checkout="
 
     $fakePlatformStatusDir = Join-Path $dryRunRoot "fake-accepted-platform-status"
     New-Item -ItemType Directory -Force -Path $fakePlatformStatusDir | Out-Null

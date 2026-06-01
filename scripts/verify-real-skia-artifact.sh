@@ -101,6 +101,26 @@ extract_field() {
     || true
 }
 
+require_log_field() {
+  local log_path="$1"
+  local field="$2"
+  local message_prefix="$3"
+  if ! grep -Eq "^[[:space:]]*${field}" "$log_path"; then
+    echo "$message_prefix: $field" >&2
+    exit 1
+  fi
+}
+
+require_exact_log_line() {
+  local log_path="$1"
+  local expected="$2"
+  local message_prefix="$3"
+  if ! grep -Eq "^[[:space:]]*${expected}[[:space:]]*$" "$log_path"; then
+    echo "$message_prefix: $expected" >&2
+    exit 1
+  fi
+}
+
 wrapper_provider="$(extract_field "$wrapper_log" skia_provider || true)"
 acceptance_provider="$(extract_field "$acceptance_log" skia_provider || true)"
 if [[ -z "$wrapper_provider" || "$wrapper_provider" == "unknown" ]]; then
@@ -121,10 +141,7 @@ if [[ "$platform" == "linux" && $require_commit -eq 1 && "$wrapper_provider" == 
     echo "source-built Linux artifact is missing expected build log: $build_log" >&2
     exit 1
   fi
-  if ! grep -Fq "build_log=" "$wrapper_log"; then
-    echo "wrapper log is missing required field: build_log=" >&2
-    exit 1
-  fi
+  require_log_field "$wrapper_log" "build_log=" "wrapper log is missing required field"
 fi
 
 bash "$repo_root/scripts/verify-native-smoke-log.sh" "$native_log"
@@ -135,10 +152,7 @@ fi
 bash "$repo_root/scripts/verify-acceptance-log.sh" "${acceptance_args[@]}"
 
 for field in skia_include= skia_lib_dir= skia_lib= stub_cc_flags= cc_link_flags=; do
-  if ! grep -Fq "$field" "$wrapper_log"; then
-    echo "wrapper log is missing required field: $field" >&2
-    exit 1
-  fi
+  require_log_field "$wrapper_log" "$field" "wrapper log is missing required field"
 done
 
 if ! grep -Eq 'library=.*\b(lib)?skia\.(a|so|dylib|lib)\b' "$wrapper_log"; then
@@ -174,10 +188,7 @@ fi
 
 if [[ "$wrapper_provider" == "jetbrains" ]]; then
   for field in skia_provider= jetbrains_tag= skia_commit= skia_package= skia_package_sha256=; do
-    if ! grep -Fq "$field" "$wrapper_log"; then
-      echo "JetBrains wrapper log is missing required field: $field" >&2
-      exit 1
-    fi
+    require_log_field "$wrapper_log" "$field" "JetBrains wrapper log is missing required field"
   done
   if ! grep -Eq '^[[:space:]]*skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$wrapper_log"; then
     echo "JetBrains wrapper log is missing a full 40-character skia_commit hash" >&2
@@ -270,11 +281,12 @@ if [[ $require_commit -eq 1 ]]; then
 fi
 
 if [[ "$platform" == "linux" && $require_commit -eq 1 && "$wrapper_provider" == "source" ]]; then
-  for field in 'Linux Skia source build environment:' 'skia_checkout=' 'skia_commit=' 'gn_args='; do
-    if ! grep -Fq "$field" "$build_log"; then
-      echo "Linux source build log is missing required field: $field" >&2
-      exit 1
-    fi
+  require_exact_log_line \
+    "$build_log" \
+    "Linux Skia source build environment:" \
+    "Linux source build log is missing required field"
+  for field in skia_checkout= skia_commit= gn_args=; do
+    require_log_field "$build_log" "$field" "Linux source build log is missing required field"
   done
   build_commit="$(extract_commit "$build_log")"
   if [[ "$wrapper_commit" != "$build_commit" ]]; then
