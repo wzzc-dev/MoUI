@@ -173,13 +173,14 @@ evidence exists, with Pi/RPC left as protocol nouns. Default chrome uses short
 project names and localized session status labels while keeping full
 `project_path` values in the shared model and transport commands. The default
 shell keeps only refresh, new-session, context, and send controls prominent;
-agent focus controls, advanced session actions, steering / follow-up composer
-controls, and focused-check presets appear once Pi state, typed input, or
-command evidence makes them relevant. The workspace digest now includes file,
-diff, and latest diagnostic state with a short clear action so stderr/RPC/bash
-failures remain visible without adding a separate diagnostics page. When
-actionable evidence is present, the current session panel derives one quiet
-`下一步` row that points
+the idle Pi RPC footer stays label-only until the transport is starting,
+running, or failed. Agent focus controls, advanced session actions, steering /
+follow-up composer controls, and focused-check presets appear once Pi state,
+typed input, or command evidence makes them relevant. The workspace digest now
+includes file, diff, and latest diagnostic state with a short clear action so
+stderr/RPC/bash failures remain visible without adding a separate diagnostics
+page. When actionable evidence is present, the current session panel derives
+one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, failed command
 evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
 rows, and activity events. Pi `plan_update` JSONL also
