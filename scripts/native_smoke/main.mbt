@@ -604,8 +604,11 @@ fn main {
     replay_frame.validation_status() != @skia.FrameReady ||
     replay_frame.resource_plan.length() != 9 ||
     !replay_frame.resource_plan.contains_key(replay_target.resource_key()) ||
-    replay_frame.resource_plan.contains_key(
+    !replay_frame.resource_plan.contains_key(
       replay_frame.command_list.pass.resource_descriptor().key,
+    ) ||
+    replay_frame.resource_plan.contains_key(
+      replay_target.surface.resource_key(),
     ) {
     fail_smoke("native render frame descriptor did not match target resource plan")
   }
