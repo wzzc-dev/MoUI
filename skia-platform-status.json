@@ -341,6 +341,11 @@
       "marker": "native smoke measured text bounds width"
     },
     {
+      "id": "text.shaper-availability",
+      "area": "Text",
+      "marker": "native smoke shaper availability"
+    },
+    {
       "id": "fontmgr.family-count",
       "area": "FontMgr",
       "marker": "native smoke font family count"
