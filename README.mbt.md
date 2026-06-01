@@ -53,14 +53,15 @@ The current package exposes the first value-layer API surface:
   auditable per-frame submission resource plan with GPU-backed subsets for one
   backend submission
 - text layout and fallback contracts: `TextRunDescriptor`,
-  `TextMeasurementDescriptor`, `TextShapingDescriptor`,
+  `TextMeasurementDescriptor`, `MeasuredTextRunDescriptor`,
+  `TextShapingDescriptor`,
   `ShapedTextRunDescriptor`, `FontDescriptor`, `FontFallbackRequest`,
   `FontFallbackMatchDescriptor`, `FontFallbackChain`, and `FontStyleRequest`
   define the value-layer input and resolved-match metadata for native shaping
   and font fallback, including deterministic byte-range text-run,
-  text-measurement, text-shaping, shaped-result, font, fallback request, and
-  fallback match resource keys and plans for backend measurement, shaping,
-  font-handle, and typeface-resolution caches
+  text-measurement, measured-result, text-shaping, shaped-result, font,
+  fallback request, and fallback match resource keys and plans for backend
+  measurement, shaping, font-handle, and typeface-resolution caches
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,

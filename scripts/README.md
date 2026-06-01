@@ -209,10 +209,10 @@ verifies that value-layer resource descriptors produce cacheable renderer
 resource plans before native handles are allocated. Font coverage still verifies
 byte-range text-run resource keys, positive text advance, glyph count, glyph ID
 mapping, glyph advances, glyph positions, glyph bounds, text bounds, metrics,
-font resource planning, text shaping resource planning, shaped-text result
-metadata planning, font-family typeface matching, typeface family metadata, and
-font fallback resource planning whenever the native smoke can create the relevant
-font objects.
+font resource planning, measured-text result metadata planning, text shaping
+resource planning, shaped-text result metadata planning, font-family typeface
+matching, typeface family metadata, and font fallback resource planning whenever
+the native smoke can create the relevant font objects.
 
 To reuse an existing Skia checkout/build instead of the default JetBrains
 provider:
@@ -322,8 +322,8 @@ check a saved native smoke executable log for key stage markers plus the final
 success marker. They also enforce status-declared exact marker values for
 counts that prove specific resource dependencies, including render-frame
 submission resource planning, cache population, and GPU-backed submission
-subplans, and are used by the real-smoke workflows after the one-step helper
-runs.
+subplans, plus measured-text result metadata planning, and are used by the
+real-smoke workflows after the one-step helper runs.
 `scripts/verify-acceptance-log.sh` and `scripts/verify-acceptance-log.ps1` check
 the acceptance summary fields; the shell version can also require a full
 `skia_commit` hash for source-built revision pinning. `scripts/pin-skia-revision.sh`
