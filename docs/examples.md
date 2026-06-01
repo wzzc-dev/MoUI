@@ -180,9 +180,11 @@ footer, the `Pi 运行状态` panel, agent focus controls, advanced session acti
 steering / follow-up composer controls, and focused-check presets appear once
 Pi state, expanded composer options, non-default context, selected focus, or
 command evidence makes them relevant. The workspace
-digest now includes file, diff, and latest diagnostic state with a short clear
-action so stderr/RPC/bash failures remain visible without adding a separate
-diagnostics page. When actionable evidence is present, the current session panel
+digest now includes file, diff, and latest non-duplicated diagnostic state with
+a short clear action so stderr/RPC/structured failures remain visible without
+adding a separate diagnostics page. Pi bash exit/cancel diagnostics stay in
+shared state but are hidden from the digest when Activity command evidence
+already shows the same failure. When actionable evidence is present, the current session panel
 derives one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, failed command
 evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
@@ -277,8 +279,9 @@ composer hides context/focus/steering controls and shows up to three filtered
 slash-command suggestions plus the normal send action. Those suggestions reuse
 the same `InvokeCommand` / `SendUserInput` route while keeping the Activity
 digest free of catalog-only command rows or focused-check presets. Diagnostics
-collected from Pi stderr, RPC failures, structured diagnostic events, and bash results are
-surfaced in the workspace digest and can be cleared from shared app state.
+collected from Pi stderr, RPC failures, structured diagnostic events, and
+non-duplicated bash results are surfaced in the workspace digest and can be
+cleared from shared app state.
 The model catalog summary can send platform-neutral `SetRpcModel` for the
 visible model and `CycleRpcModel` for Pi's scoped model cycle; successful
 `set_model` and `cycle_model` responses update the active binding model when Pi
@@ -316,7 +319,8 @@ path, and the same context/focus wrapper, turning a failed focused check
 directly into the next coding-agent task without adding native-only output
 handling. The current session `下一步` row mirrors the latest failed command's
 exit code and output path so the fix entrypoint carries the same evidence as
-the Activity row.
+the Activity row. Matching Pi bash diagnostics remain available in shared state
+but no longer render as a duplicate Workspace digest row.
 The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
