@@ -243,6 +243,7 @@ if ($status.schema_version -ge 3) {
     "pipeline.resource-plan",
     "pipeline.frame-resource-plan",
     "pipeline.frame-validation",
+    "pipeline.target-identity-validation",
     "pipeline.frame-cache-resources",
     "pipeline.resource-cache",
     "gpu.context-resource-plan",
@@ -336,6 +337,7 @@ if ($status.schema_version -ge 3) {
       "native smoke render resource plan count" = "9"
       "native smoke render frame resource plan count" = "9"
       "native smoke render frame validation status" = "1"
+      "native smoke render target identity validation" = "1"
       "native smoke render frame cache resources" = "9"
       "native smoke render resource cache inserts" = "9"
       "native smoke gpu context resource plan count" = "2"

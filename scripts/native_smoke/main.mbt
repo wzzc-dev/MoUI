@@ -173,6 +173,16 @@ fn main {
   }
   println("native smoke window target resource plan count")
   println(smoke_window_plan.length())
+  let smoke_window_identity_mismatch_frame = @skia.RenderCommandList::for_target(
+    smoke_window_target,
+  ).frame_descriptor(smoke_window_target.with_target_id(b"other-native-window"))
+  if smoke_window_identity_mismatch_frame.validation_status() !=
+    @skia.FrameTargetMismatch ||
+    smoke_window_identity_mismatch_frame.is_ready() {
+    fail_smoke("render frame validation did not reject target identity mismatch")
+  }
+  println("native smoke render target identity validation")
+  println(1)
 
   guard surface.canvas() is Some(canvas) else {
     fail_smoke("failed to borrow native canvas")

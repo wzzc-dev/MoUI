@@ -827,6 +827,13 @@ test "render pass descriptor clips clear and present boundaries" {
   assert_eq(pass.resource_descriptor().byte_size, 3200L)
 
   let load = @skia_mbt.RenderPassDescriptor::new(surface)
+  let unbound_target = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
+    @skia_mbt.ISize::new(20, 10),
+    sample_count=4,
+    stencil_bits=8,
+  )
+  assert_true(!load.has_target_binding())
+  assert_true(load.is_bound_to_target(unbound_target))
   assert_true(load.load_op == @skia_mbt.LoadExisting)
   assert_true(load.clear_color is None)
   assert_true(load.store_op == @skia_mbt.StorePixels)
@@ -852,6 +859,8 @@ test "render pass descriptor derives present defaults from surface targets" {
     @skia_mbt.ISize::new(16, 16),
   )
   let raster_pass = @skia_mbt.RenderPassDescriptor::for_target(raster_target)
+  assert_true(raster_pass.has_target_binding())
+  assert_true(raster_pass.is_bound_to_target(raster_target))
   assert_true(!raster_pass.needs_present())
   assert_true(raster_pass.keeps_pixels())
   assert_true(raster_pass.store_op == @skia_mbt.StorePixels)
@@ -866,6 +875,11 @@ test "render pass descriptor derives present defaults from surface targets" {
     bounds=Some(@skia_mbt.IRect::from_xywh(4, 2, 30, 30)),
   )
   assert_true(present_pass.needs_present())
+  assert_true(present_pass.has_target_binding())
+  assert_true(present_pass.is_bound_to_target(window_target))
+  assert_true(
+    !present_pass.is_bound_to_target(window_target.with_target_id(b"other")),
+  )
   assert_true(present_pass.keeps_pixels())
   assert_true(present_pass.store_op == @skia_mbt.PresentPixels)
   assert_true(present_pass.bounds == @skia_mbt.IRect::new(4, 2, 20, 10))
@@ -1196,6 +1210,19 @@ test "render frame descriptor summarizes target commands and resources" {
     mismatch_frame.validation_status() == @skia_mbt.FrameTargetMismatch,
   )
   assert_true(!mismatch_frame.is_ready())
+
+  let identity_target = target.with_target_id(b"frame-window")
+  let identity_mismatch_target = identity_target.with_target_id(
+    b"other-frame-window",
+  )
+  let identity_mismatch_frame = @skia_mbt.RenderCommandList::for_target(
+    identity_target,
+  ).frame_descriptor(identity_mismatch_target)
+  assert_true(!identity_mismatch_frame.is_target_consistent())
+  assert_true(
+    identity_mismatch_frame.validation_status() == @skia_mbt.FrameTargetMismatch,
+  )
+  assert_true(!identity_mismatch_frame.is_ready())
 
   let unbalanced_frame = @skia_mbt.RenderCommandList::for_target(target)
     .save()

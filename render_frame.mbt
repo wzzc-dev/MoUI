@@ -85,7 +85,7 @@ pub fn RenderFrameDescriptor::empty(
 pub fn RenderFrameDescriptor::is_target_consistent(
   self : RenderFrameDescriptor,
 ) -> Bool {
-  self.command_list.pass.surface == self.target.surface
+  self.command_list.pass.is_bound_to_target(self.target)
 }
 
 ///|
