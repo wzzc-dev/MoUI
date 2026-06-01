@@ -538,6 +538,7 @@ fn model_catalog_row(
   models : Array[PiModelInfo],
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  let primary = models[0]
   row(
     [
       text(
@@ -551,8 +552,16 @@ fn model_catalog_row(
         model_catalog_label(models),
         role=Caption,
         theme~,
-        width=424.0,
+        width=358.0,
         height=28.0,
+      ),
+      button(
+        "使用",
+        on_click=SetModel(primary.provider, primary.id, primary.label),
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
       ),
       button(
         "切换",
