@@ -668,6 +668,8 @@ fn main {
     replay_unbalanced_frame.is_ready() {
     fail_smoke("native render frame validation did not report unbalanced state")
   }
+  println("native smoke render frame unbalanced validation")
+  println(1)
   let replay_resource_cache : @skia.ResourceCache[
     @skia.RendererResourceKey,
     @skia.RendererResourceDescriptor,

@@ -249,6 +249,7 @@ if ($status.schema_version -ge 3) {
     "pipeline.resource-plan",
     "pipeline.frame-resource-plan",
     "pipeline.frame-validation",
+    "pipeline.frame-unbalanced-validation",
     "pipeline.target-identity-validation",
     "pipeline.target-resource-binding",
     "pipeline.frame-present",
@@ -350,6 +351,7 @@ if ($status.schema_version -ge 3) {
       "native smoke render resource plan count" = "9"
       "native smoke render frame resource plan count" = "9"
       "native smoke render frame validation status" = "1"
+      "native smoke render frame unbalanced validation" = "1"
       "native smoke render target identity validation" = "1"
       "native smoke render target resource binding" = "1"
       "native smoke render frame present count" = "1"

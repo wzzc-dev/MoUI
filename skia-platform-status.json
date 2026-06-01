@@ -116,6 +116,11 @@
       "marker": "native smoke render frame validation status"
     },
     {
+      "id": "pipeline.frame-unbalanced-validation",
+      "area": "Pipeline",
+      "marker": "native smoke render frame unbalanced validation"
+    },
+    {
       "id": "pipeline.target-identity-validation",
       "area": "Pipeline",
       "marker": "native smoke render target identity validation"
@@ -345,6 +350,11 @@
     {
       "id": "pipeline.frame-validation",
       "marker": "native smoke render frame validation status",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-unbalanced-validation",
+      "marker": "native smoke render frame unbalanced validation",
       "value": "1"
     },
     {
