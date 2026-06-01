@@ -78,8 +78,28 @@ function Assert-ExactLogLine {
   }
 }
 
+function Assert-AcceptanceLogReference {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $LogPath,
+    [Parameter(Mandatory = $true)]
+    [string] $Field,
+    [Parameter(Mandatory = $true)]
+    [string] $ExpectedPath
+  )
+
+  $actualPath = Get-LogField -LogPath $LogPath -Field $Field
+  if ([string]::IsNullOrWhiteSpace($actualPath)) {
+    throw "acceptance log is missing required artifact log field: $Field="
+  }
+  $expectedName = Split-Path -Leaf $ExpectedPath
+  $actualName = Split-Path -Leaf $actualPath
+  if ($actualName -ne $expectedName) {
+    throw "acceptance log field $Field= does not reference expected artifact log: $expectedName actual_$Field=$actualPath"
+  }
+}
+
 $wrapperContent = Get-Content -LiteralPath $wrapperLog -Raw
-$acceptanceContent = Get-Content -LiteralPath $acceptanceLog -Raw
 $wrapperProvider = Get-LogField -LogPath $wrapperLog -Field "skia_provider"
 $acceptanceProvider = Get-LogField -LogPath $acceptanceLog -Field "skia_provider"
 if ([string]::IsNullOrWhiteSpace($wrapperProvider) -or $wrapperProvider -eq "unknown") {
@@ -113,24 +133,24 @@ if ($wrapperContent -notmatch 'library=.*\b(lib)?skia\.(a|so|dylib|lib)\b') {
   throw "wrapper log does not record a Skia library file"
 }
 
-$artifactLogNames = @(
-  (Split-Path -Leaf $preflightLog),
-  (Split-Path -Leaf $wrapperLog),
-  (Split-Path -Leaf $nativeLog),
-  (Split-Path -Leaf $acceptanceLog)
+$artifactLogReferences = @(
+  @{ Field = "preflight_log"; Path = $preflightLog }
+  @{ Field = "wrapper_log"; Path = $wrapperLog }
+  @{ Field = "native_log"; Path = $nativeLog }
+  @{ Field = "acceptance_log"; Path = $acceptanceLog }
 )
-
-foreach ($logName in $artifactLogNames) {
-  if (!$acceptanceContent.Contains($logName)) {
-    throw "acceptance log does not reference expected artifact log: $logName"
-  }
+foreach ($reference in $artifactLogReferences) {
+  Assert-AcceptanceLogReference `
+    -LogPath $acceptanceLog `
+    -Field $reference.Field `
+    -ExpectedPath $reference.Path
 }
 
 if ($Platform -eq "linux" -and $RequireCommit -and $wrapperProvider -eq "source") {
-  $buildLogName = Split-Path -Leaf $buildLog
-  if (!$acceptanceContent.Contains($buildLogName)) {
-    throw "acceptance log does not reference expected source build log: $buildLogName"
-  }
+  Assert-AcceptanceLogReference `
+    -LogPath $acceptanceLog `
+    -Field "build_log" `
+    -ExpectedPath $buildLog
 }
 
 if ($RequireCommit -and $wrapperContent -notmatch 'skia_commit=[0-9a-fA-F]{40}(\r?\n|$)') {
