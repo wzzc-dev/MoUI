@@ -2958,6 +2958,10 @@ test "workbench activity draws recent command evidence" {
   assert_true(has_text(commands, "修复"))
   assert_true(has_text(commands, "重跑"))
   assert_false(has_text(commands, "stale command"))
+  assert_false(has_text(commands, "常用检查"))
+  assert_false(has_text(commands, "全部"))
+  assert_false(has_text(commands, "Native"))
+  assert_false(has_text(commands, "Wasm"))
 }
 
 ///|
@@ -2980,6 +2984,10 @@ test "workbench focused check batch stays visible in activity evidence" {
       commands, "MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
     ),
   )
+  assert_false(has_text(commands, "常用检查"))
+  assert_false(has_text(commands, "全部"))
+  assert_false(has_text(commands, "Native"))
+  assert_false(has_text(commands, "Wasm"))
 }
 
 ///|
@@ -3000,6 +3008,9 @@ test "workbench current session draws diagnostic next action" {
   assert_true(has_text(commands, "moon check: unused variable in app.mbt"))
   assert_true(has_text(commands, "修复"))
   assert_true(has_text(commands, "清除"))
+  assert_true(has_text(commands, "常用检查"))
+  assert_true(has_text(commands, "Native"))
+  assert_true(has_text(commands, "Wasm"))
 }
 
 ///|
@@ -3192,6 +3203,9 @@ test "workbench current session prioritizes failed command over bash diagnostic"
     draw_text_count_containing(commands, "输出 /tmp/mo-workbench-native.log") >=
     2,
   )
+  assert_false(has_text(commands, "常用检查"))
+  assert_false(has_text(commands, "全部"))
+  assert_false(has_text(commands, "Native"))
   assert_false(has_text(commands, "工作区证据"))
   assert_false(has_text(commands, "Pi bash"))
   assert_false(has_text(commands, "bash exited with code 2"))
@@ -3225,6 +3239,9 @@ test "workbench workspace still shows structured diagnostics beside failed comma
   assert_true(has_text(commands, "moon check"))
   assert_true(has_text(commands, "unused variable in app.mbt"))
   assert_true(has_text(commands, "修复失败命令"))
+  assert_false(has_text(commands, "常用检查"))
+  assert_false(has_text(commands, "全部"))
+  assert_false(has_text(commands, "Native"))
 }
 
 ///|

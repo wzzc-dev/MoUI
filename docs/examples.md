@@ -179,7 +179,7 @@ showing fake active, queue, or idle labels; context chips, the idle Pi RPC
 footer, the `Pi 运行状态` panel, agent focus controls, advanced session actions,
 steering / follow-up composer controls, and focused-check presets appear once
 Pi state, expanded composer options, non-default context, selected focus, or
-command evidence makes them relevant. The workspace
+actionable diagnostics without command evidence make them relevant. The workspace
 digest now includes file, diff, and latest non-duplicated diagnostic state with
 a short clear action so stderr/RPC/structured failures remain visible without
 adding a separate diagnostics page. Pi bash exit/cancel diagnostics stay in
@@ -325,8 +325,11 @@ The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
 It also exposes focused-check presets for the app native test, app wasm-gc test,
-macOS Skia build, and macOS Skia first-frame smoke. Each preset uses the same
-`QueueCommand` /
+macOS Skia build, and macOS Skia first-frame smoke only while actionable
+diagnostics need a validation entry and no command evidence is already visible.
+Once command evidence exists, the Activity digest keeps the command rows primary
+and relies on their inline analysis, fix, and rerun actions instead of adding a
+second preset row. Each preset uses the same `QueueCommand` /
 `RunShellCommand` path, so checks started from the UI become normal Pi bash
 evidence. The `全部` action batches all four focused checks through one
 platform-neutral queue operation while preserving separate `CommandRun`

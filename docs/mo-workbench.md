@@ -101,7 +101,7 @@ packages:
   footer, the `Pi 运行状态` panel, agent focus controls, advanced session actions,
   steering/follow-up composer controls, and focused-check presets stay collapsed
   until Pi state, expanded composer options, non-default context, selected
-  focus, or command evidence makes them relevant.
+  focus, or actionable diagnostics without command evidence make them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
@@ -206,11 +206,14 @@ packages:
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
-- The Activity digest also exposes compact focused-check presets for the
-  Workbench app package native test, app package wasm-gc test, macOS Skia
-  entrypoint build, and macOS Skia first-frame smoke. They use the same
-  `QueueCommand` / Pi RPC `bash` path as manual command reruns, so validation
-  evidence stays in the shared model.
+- The Activity digest exposes compact focused-check presets for the Workbench
+  app package native test, app package wasm-gc test, macOS Skia entrypoint
+  build, and macOS Skia first-frame smoke only when actionable diagnostics need
+  a validation entry and no command evidence is already displayed. Once command
+  evidence exists, the digest keeps the command rows primary and relies on their
+  inline `分析`, `修复`, and `重跑` actions instead of adding another preset row.
+  The presets use the same `QueueCommand` / Pi RPC `bash` path as manual command
+  reruns, so validation evidence stays in the shared model.
   The `全部` action queues all four checks in one platform-neutral command
   batch, reusing a single session start and recording each check as its own
   `CommandRun`; the Activity digest keeps those four recent command rows
