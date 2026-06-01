@@ -49,11 +49,11 @@ The current package exposes the first value-layer API surface:
   resource plan, readiness diagnostics, and cache population boundary for one
   backend submission
 - text layout and fallback contracts: `TextRunDescriptor`,
-  `FontDescriptor`, `FontFallbackRequest`, `FontFallbackChain`, and
-  `FontStyleRequest` define the value-layer input to native shaping and font
-  fallback, including deterministic byte-range text-run, font, and
-  font-fallback resource keys and plans for backend measurement, shaping,
-  font-handle, and typeface-resolution caches
+  `TextMeasurementDescriptor`, `FontDescriptor`, `FontFallbackRequest`,
+  `FontFallbackChain`, and `FontStyleRequest` define the value-layer input to
+  native shaping and font fallback, including deterministic byte-range text-run,
+  text-measurement, font, and font-fallback resource keys and plans for backend
+  measurement, shaping, font-handle, and typeface-resolution caches
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,

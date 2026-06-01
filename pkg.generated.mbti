@@ -1170,6 +1170,24 @@ pub fn TextDirection::is_left_to_right(Self) -> Bool
 pub fn TextDirection::is_right_to_left(Self) -> Bool
 pub impl Default for TextDirection
 
+pub(all) struct TextMeasurementDescriptor {
+  run : TextRunDescriptor
+  font_key : RendererResourceKey
+  width : Float
+  measure_bounds : Bool
+  shape : Bool
+} derive(Eq, @debug.Debug)
+pub fn TextMeasurementDescriptor::is_shaped(Self) -> Bool
+pub fn TextMeasurementDescriptor::new(run? : TextRunDescriptor, font_key? : RendererResourceKey, width? : Float, measure_bounds? : Bool, shape? : Bool) -> Self
+pub fn TextMeasurementDescriptor::resource_descriptor(Self, Bytes, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn TextMeasurementDescriptor::resource_key(Self, Bytes) -> RendererResourceKey
+pub fn TextMeasurementDescriptor::resource_plan(Self, Bytes, measurement_byte_size? : Int64, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
+pub fn TextMeasurementDescriptor::with_font_key(Self, RendererResourceKey) -> Self
+pub fn TextMeasurementDescriptor::with_measure_bounds(Self, Bool) -> Self
+pub fn TextMeasurementDescriptor::with_run(Self, TextRunDescriptor) -> Self
+pub fn TextMeasurementDescriptor::with_shape(Self, Bool) -> Self
+pub fn TextMeasurementDescriptor::with_width(Self, Float) -> Self
+
 pub(all) struct TextRange {
   start : Int
   end : Int

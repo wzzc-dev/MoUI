@@ -458,6 +458,15 @@ fn text_run_cache_bytes(value : Bytes) -> Bytes {
 }
 
 ///|
+fn text_run_cache_bool(value : Bool) -> Bytes {
+  if value {
+    b"true"
+  } else {
+    b"false"
+  }
+}
+
+///|
 fn RendererResourceKind::text_run_cache_name(
   self : RendererResourceKind,
 ) -> Bytes {
@@ -701,6 +710,145 @@ pub fn TextRunDescriptor::resource_plan(
     descriptors.push(
       self.fallback.resource_descriptor(byte_size=fallback_byte_size),
     )
+  }
+  RendererResourcePlan::new(descriptors)
+}
+
+///|
+fn normalized_text_measurement_width(width : Float) -> Float {
+  if font_descriptor_scalar_is_finite(width) && width > 0.0 {
+    width
+  } else {
+    1000000000.0
+  }
+}
+
+///|
+/// Value-layer request for measuring or shaping a text run with stable cache
+/// identity and explicit font/fallback dependencies.
+pub(all) struct TextMeasurementDescriptor {
+  run : TextRunDescriptor
+  font_key : RendererResourceKey
+  width : Float
+  measure_bounds : Bool
+  shape : Bool
+} derive(Debug, Eq)
+
+///|
+pub fn TextMeasurementDescriptor::new(
+  run? : TextRunDescriptor = TextRunDescriptor::new(),
+  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
+  width? : Float = 1000000000.0,
+  measure_bounds? : Bool = true,
+  shape? : Bool = false,
+) -> TextMeasurementDescriptor {
+  {
+    run,
+    font_key,
+    width: normalized_text_measurement_width(width),
+    measure_bounds,
+    shape,
+  }
+}
+
+///|
+pub fn TextMeasurementDescriptor::is_shaped(
+  self : TextMeasurementDescriptor,
+) -> Bool {
+  self.shape
+}
+
+///|
+pub fn TextMeasurementDescriptor::with_run(
+  self : TextMeasurementDescriptor,
+  run : TextRunDescriptor,
+) -> TextMeasurementDescriptor {
+  { ..self, run, }
+}
+
+///|
+pub fn TextMeasurementDescriptor::with_font_key(
+  self : TextMeasurementDescriptor,
+  font_key : RendererResourceKey,
+) -> TextMeasurementDescriptor {
+  { ..self, font_key, }
+}
+
+///|
+pub fn TextMeasurementDescriptor::with_width(
+  self : TextMeasurementDescriptor,
+  width : Float,
+) -> TextMeasurementDescriptor {
+  { ..self, width: normalized_text_measurement_width(width) }
+}
+
+///|
+pub fn TextMeasurementDescriptor::with_measure_bounds(
+  self : TextMeasurementDescriptor,
+  measure_bounds : Bool,
+) -> TextMeasurementDescriptor {
+  { ..self, measure_bounds, }
+}
+
+///|
+pub fn TextMeasurementDescriptor::with_shape(
+  self : TextMeasurementDescriptor,
+  shape : Bool,
+) -> TextMeasurementDescriptor {
+  { ..self, shape, }
+}
+
+///|
+pub fn TextMeasurementDescriptor::resource_key(
+  self : TextMeasurementDescriptor,
+  text : Bytes,
+) -> RendererResourceKey {
+  RendererResourceKey::text_run(
+    b"skia_mbt:text-measurement:v1" +
+    text_run_cache_bytes(self.run.resource_key(text, font_key=self.font_key).id) +
+    self.width.to_be_bytes() +
+    text_run_cache_bytes(text_run_cache_bool(self.measure_bounds)) +
+    text_run_cache_bytes(text_run_cache_bool(self.shape)),
+  )
+}
+
+///|
+pub fn TextMeasurementDescriptor::resource_descriptor(
+  self : TextMeasurementDescriptor,
+  text : Bytes,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let id = self.resource_key(text).id
+  let measured_byte_size = if byte_size < 0L {
+    id.length().to_int64()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::text_run(id, byte_size=measured_byte_size)
+}
+
+///|
+pub fn TextMeasurementDescriptor::resource_plan(
+  self : TextMeasurementDescriptor,
+  text : Bytes,
+  measurement_byte_size? : Int64 = -1L,
+  text_byte_size? : Int64 = -1L,
+  font_byte_size? : Int64 = 0L,
+  fallback_byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  descriptors.push(
+    self.resource_descriptor(text, byte_size=measurement_byte_size),
+  )
+  for
+    descriptor in self.run.resource_plan(
+      text,
+      font_key=self.font_key,
+      text_byte_size~,
+      font_byte_size~,
+      fallback_byte_size~,
+    ).descriptors {
+    descriptors.push(descriptor)
   }
   RendererResourcePlan::new(descriptors)
 }
