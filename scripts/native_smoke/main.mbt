@@ -1480,6 +1480,37 @@ fn main {
   }
   println("native smoke font fallback match resource plan count")
   println(fallback_match_plan.length())
+  let fallback_resolution = fallback_request.resolution_descriptor(
+    fallback_family,
+    fallback_index=fallback_match_descriptor.fallback_index,
+  )
+  let fallback_resolution_plan = fallback_resolution.resource_plan(size=8.0)
+  if !fallback_resolution.is_valid() ||
+    fallback_resolution.resource_key().is_empty() ||
+    fallback_resolution.resource_key() == fallback_key ||
+    fallback_resolution.resource_key() ==
+    fallback_match_descriptor.resource_key() ||
+    fallback_resolution.resource_key() ==
+    fallback_request.resolution_descriptor(
+      fallback_family,
+      fallback_index=fallback_match_descriptor.fallback_index,
+      synthetic=true,
+    ).resource_key() ||
+    fallback_resolution_plan.length() != 4 ||
+    fallback_resolution_plan.count_kind(@skia.TypefaceResource) != 3 ||
+    fallback_resolution_plan.count_kind(@skia.FontResource) != 1 ||
+    !fallback_resolution_plan.contains_key(fallback_key) ||
+    !fallback_resolution_plan.contains_key(
+      fallback_match_descriptor.resource_key(),
+    ) ||
+    !fallback_resolution_plan.contains_key(fallback_resolution.resource_key()) ||
+    fallback_resolution_plan.byte_size <= fallback_match_plan.byte_size {
+    fail_smoke("native font fallback resolution metadata resource plan is invalid")
+  }
+  println("native smoke font fallback resolution key variation")
+  println(1)
+  println("native smoke font fallback resolution resource plan count")
+  println(fallback_resolution_plan.length())
   guard @native.Font::from_typeface(fallback_typeface, size=8.0)
     is Some(fallback_font) else {
     fail_smoke("failed to create native font from fallback request typeface")

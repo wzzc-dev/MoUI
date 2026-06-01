@@ -806,6 +806,150 @@ pub fn FontFallbackMatchDescriptor::resource_plan(
 }
 
 ///|
+/// Value-layer metadata for a completed font fallback resolution.
+pub(all) struct FontFallbackResolutionDescriptor {
+  request : FontFallbackRequest
+  resolved_match : FontFallbackMatchDescriptor
+} derive(Debug, Eq)
+
+///|
+fn font_fallback_resolution_normalized_match(
+  request : FontFallbackRequest,
+  resolved_match : FontFallbackMatchDescriptor,
+) -> FontFallbackMatchDescriptor {
+  if resolved_match.request == request {
+    resolved_match
+  } else {
+    request.match_descriptor(
+      resolved_match.matched_family,
+      fallback_index=resolved_match.fallback_index,
+      synthetic=resolved_match.synthetic,
+    )
+  }
+}
+
+///|
+pub fn FontFallbackResolutionDescriptor::new(
+  request? : FontFallbackRequest = FontFallbackRequest::new(),
+  resolved_match? : FontFallbackMatchDescriptor = FontFallbackMatchDescriptor::new(),
+) -> FontFallbackResolutionDescriptor {
+  {
+    request,
+    resolved_match: font_fallback_resolution_normalized_match(
+      request, resolved_match,
+    ),
+  }
+}
+
+///|
+pub fn FontFallbackRequest::resolution_descriptor(
+  self : FontFallbackRequest,
+  matched_family : Bytes,
+  fallback_index? : Int = -1,
+  synthetic? : Bool = false,
+) -> FontFallbackResolutionDescriptor {
+  FontFallbackResolutionDescriptor::new(
+    request=self,
+    resolved_match=self.match_descriptor(
+      matched_family,
+      fallback_index~,
+      synthetic~,
+    ),
+  )
+}
+
+///|
+pub fn FontFallbackResolutionDescriptor::is_valid(
+  self : FontFallbackResolutionDescriptor,
+) -> Bool {
+  self.resolved_match.request == self.request && self.resolved_match.is_valid()
+}
+
+///|
+pub fn FontFallbackResolutionDescriptor::matched_in_request(
+  self : FontFallbackResolutionDescriptor,
+) -> Bool {
+  self.resolved_match.matched_in_request()
+}
+
+///|
+pub fn FontFallbackResolutionDescriptor::source_family(
+  self : FontFallbackResolutionDescriptor,
+) -> Bytes? {
+  self.resolved_match.source_family()
+}
+
+///|
+fn FontFallbackResolutionDescriptor::resource_id(
+  self : FontFallbackResolutionDescriptor,
+) -> Bytes {
+  if !self.is_valid() {
+    b""
+  } else {
+    b"skia_mbt:font-fallback-resolution:v1" +
+    text_run_cache_bytes(self.request.resource_key().id) +
+    text_run_cache_bytes(self.resolved_match.resource_key().id)
+  }
+}
+
+///|
+pub fn FontFallbackResolutionDescriptor::resource_key(
+  self : FontFallbackResolutionDescriptor,
+) -> RendererResourceKey {
+  RendererResourceKey::typeface(self.resource_id())
+}
+
+///|
+pub fn FontFallbackResolutionDescriptor::resource_descriptor(
+  self : FontFallbackResolutionDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let id = self.resource_id()
+  let measured_byte_size = if byte_size < 0L {
+    id.length().to_int64()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::typeface(id, byte_size=measured_byte_size)
+}
+
+///|
+pub fn FontFallbackResolutionDescriptor::font_descriptor(
+  self : FontFallbackResolutionDescriptor,
+  size? : Float = 12.0,
+  scale_x? : Float = 1.0,
+  skew_x? : Float = 0.0,
+) -> FontDescriptor {
+  FontDescriptor::new(
+    typeface_key=self.resource_key(),
+    size~,
+    scale_x~,
+    skew_x~,
+  )
+}
+
+///|
+pub fn FontFallbackResolutionDescriptor::resource_plan(
+  self : FontFallbackResolutionDescriptor,
+  size? : Float = 12.0,
+  scale_x? : Float = 1.0,
+  skew_x? : Float = 0.0,
+  request_byte_size? : Int64 = -1L,
+  resolution_byte_size? : Int64 = -1L,
+  match_byte_size? : Int64 = -1L,
+  font_byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new([
+    self.request.resource_descriptor(byte_size=request_byte_size),
+    self.resource_descriptor(byte_size=resolution_byte_size),
+    self.resolved_match.resource_descriptor(byte_size=match_byte_size),
+    self
+    .font_descriptor(size~, scale_x~, skew_x~)
+    .resource_descriptor(byte_size=font_byte_size),
+  ])
+}
+
+///|
 fn TextRange::text_run_cache_id(self : TextRange) -> Bytes {
   text_run_cache_u64(self.start) + text_run_cache_u64(self.end)
 }
