@@ -198,9 +198,10 @@ planning, present descriptor validation, surface/GPU present resource planning,
 surface/GPU finalization resource planning, render-frame submission/finalization
 planning, GPU-backed submission/finalization subplans, native and portable path
 drawing, image drawing, transforms, default font text
-drawing/measurement/metrics, default-typeface text drawing/measurement/metrics
-when the selected Skia build provides a default typeface, and font manager
-family enumeration/matching when the platform font manager is available. It also
+drawing/measurement/metrics, shaped glyph-run metadata, default-typeface text
+drawing/measurement/metrics when the selected Skia build provides a default
+typeface, and font manager family enumeration/matching when the platform font
+manager is available. It also
 exercises native typeface family
 metadata and FontMgr character fallback through the value-layer
 `FontFallbackRequest`. Pixel assertions are reserved for deterministic
@@ -325,9 +326,9 @@ success marker. They also enforce status-declared exact marker values for
 counts that prove specific resource dependencies, including render-frame
 submission/finalization resource planning, cache population, and GPU-backed
 submission/finalization subplans, surface/GPU finalization planning,
-measured-text result metadata planning, and fallback resolution metadata
-planning, and are used by the real-smoke workflows after the one-step helper
-runs.
+measured-text result metadata planning, shaped glyph-run planning, and fallback
+resolution metadata planning, and are used by the real-smoke workflows after
+the one-step helper runs.
 `scripts/verify-acceptance-log.sh` and `scripts/verify-acceptance-log.ps1` check
 the acceptance summary fields; the shell version can also require a full
 `skia_commit` hash for source-built revision pinning. `scripts/pin-skia-revision.sh`

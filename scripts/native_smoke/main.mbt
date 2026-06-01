@@ -1042,10 +1042,62 @@ fn main {
     ).resource_key(b"hello") {
     fail_smoke("native shaped text run resource key did not encode result metadata")
   }
+  let replay_shaped_glyph_run = replay_shaped_run.glyph_run_descriptor(
+    glyph_ids=[1, 2, 3, 4],
+    positions=[
+      @skia.Point::new(0.0, 0.0),
+      @skia.Point::new(4.0, 0.0),
+      @skia.Point::new(8.0, 0.0),
+      @skia.Point::new(12.0, 0.0),
+    ],
+    clusters=[0, 1, 2, 3],
+  )
+  let replay_shaped_glyph_run_plan = replay_shaped_glyph_run.resource_plan(
+    b"hello",
+  )
+  if !replay_shaped_glyph_run.is_valid() ||
+    replay_shaped_glyph_run.glyph_count() != 4 ||
+    replay_shaped_glyph_run.cluster_count() != 4 ||
+    replay_shaped_glyph_run_plan.length() != 6 ||
+    replay_shaped_glyph_run_plan.count_kind(@skia.TextRunResource) != 4 ||
+    replay_shaped_glyph_run_plan.count_kind(@skia.FontResource) != 1 ||
+    replay_shaped_glyph_run_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    replay_shaped_glyph_run_plan.byte_size <= replay_shaped_run_plan.byte_size ||
+    !replay_shaped_glyph_run_plan.contains_key(
+      replay_shaped_glyph_run.resource_key(b"hello"),
+    ) ||
+    !replay_shaped_glyph_run_plan.contains_key(
+      replay_shaped_run.resource_key(b"hello"),
+    ) {
+    fail_smoke("native shaped glyph run resource plan is invalid")
+  }
+  if replay_shaped_glyph_run.resource_key(b"hello") ==
+    replay_shaped_run.glyph_run_descriptor(
+      glyph_ids=[1, 2, 3, 5],
+      positions=replay_shaped_glyph_run.positions,
+      clusters=replay_shaped_glyph_run.clusters,
+    ).resource_key(b"hello") ||
+    replay_shaped_glyph_run.resource_key(b"hello") ==
+    replay_shaped_run.glyph_run_descriptor(
+      glyph_ids=replay_shaped_glyph_run.glyph_ids,
+      positions=[
+        @skia.Point::new(0.0, 0.0),
+        @skia.Point::new(5.0, 0.0),
+        @skia.Point::new(8.0, 0.0),
+        @skia.Point::new(12.0, 0.0),
+      ],
+      clusters=replay_shaped_glyph_run.clusters,
+    ).resource_key(b"hello") {
+    fail_smoke("native shaped glyph run key did not encode glyph metadata")
+  }
   println("native smoke text shaping resource plan count")
   println(replay_shaping_plan.length())
   println("native smoke shaped text resource plan count")
   println(replay_shaped_run_plan.length())
+  println("native smoke shaped glyph run resource plan count")
+  println(replay_shaped_glyph_run_plan.length())
+  println("native smoke shaped glyph run key variation")
+  println(1)
   let ranged_text_descriptor = @skia.TextRunDescriptor::new(
     range=@skia.TextRange::new(1, 5),
   )
@@ -1408,6 +1460,20 @@ fn main {
     let shaped_smoke_plan = shaped_smoke_descriptor.resource_plan(
       smoke_text_bytes(),
     )
+    let shaped_smoke_glyph_ids : Array[Int] = Array::new(
+      capacity=shaped_glyphs.length(),
+    )
+    for glyph in shaped_glyphs {
+      shaped_smoke_glyph_ids.push(glyph.to_int())
+    }
+    let shaped_smoke_glyph_run = shaped_smoke_descriptor.glyph_run_descriptor(
+      glyph_ids=shaped_smoke_glyph_ids,
+      positions=shaped_positions,
+      clusters=shaped_clusters,
+    )
+    let shaped_smoke_glyph_run_plan = shaped_smoke_glyph_run.resource_plan(
+      smoke_text_bytes(),
+    )
     if !shaped_smoke_descriptor.is_valid() ||
       shaped_smoke_plan.length() != 4 ||
       shaped_smoke_plan.count_kind(@skia.TextRunResource) != 3 ||
@@ -1421,8 +1487,23 @@ fn main {
       ) {
       fail_smoke("native shaped text run descriptor did not record SkShaper metadata")
     }
+    if !shaped_smoke_glyph_run.is_valid() ||
+      shaped_smoke_glyph_run.glyph_count() != shaped_glyph_count ||
+      shaped_smoke_glyph_run_plan.length() != 5 ||
+      shaped_smoke_glyph_run_plan.count_kind(@skia.TextRunResource) != 4 ||
+      shaped_smoke_glyph_run_plan.count_kind(@skia.FontResource) != 1 ||
+      !shaped_smoke_glyph_run_plan.contains_key(
+        shaped_smoke_glyph_run.resource_key(smoke_text_bytes()),
+      ) ||
+      !shaped_smoke_glyph_run_plan.contains_key(
+        shaped_smoke_descriptor.resource_key(smoke_text_bytes()),
+      ) {
+      fail_smoke("native shaped glyph run descriptor did not record SkShaper metadata")
+    }
     println("native smoke shaped text native resource plan count")
     println(shaped_smoke_plan.length())
+    println("native smoke shaped glyph run native resource plan count")
+    println(shaped_smoke_glyph_run_plan.length())
     println("native smoke shaped glyph count")
     println(shaped_glyph_count)
     canvas.draw_glyphs(

@@ -461,6 +461,16 @@
       "marker": "native smoke shaped text resource plan count"
     },
     {
+      "id": "text.shaped-glyph-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke shaped glyph run resource plan count"
+    },
+    {
+      "id": "text.shaped-glyph-run-key",
+      "area": "Text",
+      "marker": "native smoke shaped glyph run key variation"
+    },
+    {
       "id": "text.measure",
       "area": "Text",
       "marker": "native smoke measured text width"
@@ -583,6 +593,13 @@
       "id": "text.native-shaped-text-resource-plan",
       "area": "Text",
       "marker": "native smoke shaped text native resource plan count",
+      "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.native-shaped-glyph-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke shaped glyph run native resource plan count",
       "when_marker": "native smoke shaper availability",
       "when_value": "1"
     }
@@ -942,6 +959,16 @@
       "id": "text.shaped-text-resource-plan",
       "marker": "native smoke shaped text resource plan count",
       "value": "5"
+    },
+    {
+      "id": "text.shaped-glyph-run-resource-plan",
+      "marker": "native smoke shaped glyph run resource plan count",
+      "value": "6"
+    },
+    {
+      "id": "text.shaped-glyph-run-key",
+      "marker": "native smoke shaped glyph run key variation",
+      "value": "1"
     },
     {
       "id": "text.font-resource-plan",

@@ -2163,10 +2163,99 @@ test "text shaping descriptors track request and shaped run resources" {
   assert_true(shaped_plan.contains_key(shaped_key))
   assert_true(shaped_plan.contains_key(key))
   assert_true(shaped_plan.byte_size > plan.byte_size)
+  let glyph_run = shaped.glyph_run_descriptor(
+    glyph_ids=[10, 11, 12, 13],
+    positions=[
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(4.0, 0.0),
+      @skia_mbt.Point::new(8.0, 0.0),
+      @skia_mbt.Point::new(12.0, 0.0),
+    ],
+    clusters=[0, 1, 2, 3],
+  )
+  assert_true(glyph_run.is_valid())
+  assert_true(!glyph_run.is_empty())
+  assert_eq(glyph_run.glyph_count(), 4)
+  assert_eq(glyph_run.cluster_count(), 4)
+  assert_true(glyph_run.shaped_run == shaped)
+  assert_eq(glyph_run.glyph_ids[0], 10)
+  assert_true(glyph_run.positions[1] == @skia_mbt.Point::new(4.0, 0.0))
+  assert_eq(glyph_run.clusters[2], 2)
+  let glyph_run_key = glyph_run.resource_key(b"xhelloz")
+  assert_true(glyph_run_key.kind == @skia_mbt.TextRunResource)
+  assert_true(glyph_run_key != shaped_key)
+  assert_true(glyph_run_key == glyph_run.resource_key(b"yhelloq"))
+  assert_true(
+    glyph_run_key !=
+    shaped
+    .glyph_run_descriptor(
+      glyph_ids=[10, 11, 12, 14],
+      positions=glyph_run.positions,
+      clusters=glyph_run.clusters,
+    )
+    .resource_key(b"xhelloz"),
+  )
+  assert_true(
+    glyph_run_key !=
+    shaped
+    .glyph_run_descriptor(
+      glyph_ids=glyph_run.glyph_ids,
+      positions=[
+        @skia_mbt.Point::new(0.0, 0.0),
+        @skia_mbt.Point::new(4.5, 0.0),
+        @skia_mbt.Point::new(8.0, 0.0),
+        @skia_mbt.Point::new(12.0, 0.0),
+      ],
+      clusters=glyph_run.clusters,
+    )
+    .resource_key(b"xhelloz"),
+  )
+  assert_true(
+    glyph_run_key !=
+    shaped
+    .glyph_run_descriptor(
+      glyph_ids=glyph_run.glyph_ids,
+      positions=glyph_run.positions,
+      clusters=[0, 1, 1, 3],
+    )
+    .resource_key(b"xhelloz"),
+  )
+  let glyph_run_plan = glyph_run.resource_plan(b"xhelloz")
+  assert_eq(glyph_run_plan.length(), 6)
+  assert_eq(glyph_run_plan.count_kind(@skia_mbt.TextRunResource), 4)
+  assert_eq(glyph_run_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(glyph_run_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_true(glyph_run_plan.contains_key(glyph_run_key))
+  assert_true(glyph_run_plan.contains_key(shaped_key))
+  assert_true(glyph_run_plan.contains_key(key))
+  assert_true(glyph_run_plan.byte_size > shaped_plan.byte_size)
+  let truncated_glyph_run = shaped.glyph_run_descriptor(
+    glyph_ids=[1, 2],
+    positions=[@skia_mbt.Point::new(1.0, 0.0)],
+    clusters=[0, 1, 2],
+  )
+  assert_eq(truncated_glyph_run.glyph_count(), 1)
+  assert_eq(truncated_glyph_run.cluster_count(), 1)
+  assert_eq(truncated_glyph_run.shaped_run.glyph_count, 1)
+  let normalized_glyph_run = shaped.glyph_run_descriptor(
+    glyph_ids=[-1],
+    positions=[@skia_mbt.Point::new(1.0 / 0.0, 0.0)],
+    clusters=[-1],
+  )
+  assert_eq(normalized_glyph_run.glyph_ids[0], 0)
+  assert_true(normalized_glyph_run.positions[0] == @skia_mbt.Point::zero())
+  assert_eq(normalized_glyph_run.clusters[0], 0)
 
   let invalid = shaping.shaped_run_descriptor(glyph_count=0)
   assert_true(!invalid.is_valid())
   assert_true(!invalid.resource_descriptor(b"xhelloz").is_cacheable())
+  assert_true(!invalid.glyph_run_descriptor().is_valid())
+  assert_true(
+    !invalid
+    .glyph_run_descriptor()
+    .resource_descriptor(b"xhelloz")
+    .is_cacheable(),
+  )
 }
 
 ///|

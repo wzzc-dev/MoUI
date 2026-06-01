@@ -56,13 +56,14 @@ The current package exposes the first value-layer API surface:
 - text layout and fallback contracts: `TextRunDescriptor`,
   `TextMeasurementDescriptor`, `MeasuredTextRunDescriptor`,
   `TextShapingDescriptor`,
-  `ShapedTextRunDescriptor`, `FontDescriptor`, `FontFallbackRequest`,
-  `FontFallbackMatchDescriptor`, `FontFallbackResolutionDescriptor`,
-  `FontFallbackChain`, and `FontStyleRequest`
+  `ShapedTextRunDescriptor`, `ShapedGlyphRunDescriptor`, `FontDescriptor`,
+  `FontFallbackRequest`, `FontFallbackMatchDescriptor`,
+  `FontFallbackResolutionDescriptor`, `FontFallbackChain`, and `FontStyleRequest`
   define the value-layer input and resolved-match metadata for native shaping
   and font fallback, including deterministic byte-range text-run,
-  text-measurement, measured-result, text-shaping, shaped-result, font,
-  fallback request, fallback match, and fallback resolution resource keys and
+  text-measurement, measured-result, text-shaping, shaped-result, detailed
+  shaped-glyph, font, fallback request, fallback match, and fallback resolution
+  resource keys and
   plans for backend measurement, shaping, font-handle, and typeface-resolution
   caches
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
@@ -136,7 +137,8 @@ The `native` subpackage contains the first opt-in native boundary:
   `draw_text_utf8`, positioned glyph runs through `draw_glyphs`, optional
   shaped glyph runs through `Font::shape_text_utf8` when SkShaper is linked,
   shaped-run metadata through `TextShapingDescriptor` and
-  `ShapedTextRunDescriptor`,
+  `ShapedTextRunDescriptor`, detailed shaped glyph-run metadata through
+  `ShapedGlyphRunDescriptor`,
   font measurement through `Font::measure_text_utf8`, glyph IDs through
   `Font::count_text_utf8` / `Font::text_to_glyphs_utf8`, glyph advances through
   `Font::glyph_width` / `Font::glyph_widths`, glyph positions through
