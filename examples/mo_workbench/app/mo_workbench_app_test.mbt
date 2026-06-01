@@ -39,6 +39,22 @@ test "workbench composer can send a prompt without selected context" {
 }
 
 ///|
+test "workbench composer sends slash prompts without context wrapper" {
+  let model = WorkbenchModel::new()
+    .update(PromptChanged("/review"))
+    .update(DispatchPrompt)
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued prompt for Pi JSONL RPC")
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="/review")
+    }
+    _ => fail("expected queued slash prompt")
+  }
+}
+
+///|
 test "workbench agent focus routes prompt context without new transport command" {
   let model = WorkbenchModel::new()
     .update(SelectAgent("coding"))
@@ -2131,9 +2147,24 @@ test "workbench ingests Pi RPC get_commands response into command catalog" {
   inspect(model.last_status, content="Pi commands refreshed")
   assert_true(model.events.any(event => event.title == "Pi commands refreshed"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "命令"))
+  assert_false(has_text(commands, "命令"))
   assert_true(has_text(commands, "/review"))
-  assert_true(draw_text_count_containing(commands, "/skill:moonbit") > 0)
+  assert_false(draw_text_count_containing(commands, "/skill:moonbit") > 0)
+  let slash_commands = model
+    .update(PromptChanged("/"))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(slash_commands, "命令"))
+  assert_true(draw_text_count_containing(slash_commands, "/review") > 1)
+  assert_true(draw_text_count_containing(slash_commands, "/skill:moonbit") > 0)
+  let filtered_commands = model
+    .update(PromptChanged("/skill"))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(filtered_commands, "命令"))
+  assert_true(
+    draw_text_count_containing(filtered_commands, "/skill:moonbit") > 0,
+  )
 }
 
 ///|

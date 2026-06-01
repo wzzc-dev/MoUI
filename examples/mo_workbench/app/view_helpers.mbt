@@ -3145,7 +3145,7 @@ fn WorkbenchModel::composer(
     ),
     self.context_chip_row(layout, theme),
   ]
-  if !self.command_catalog.is_empty() {
+  if self.should_show_composer_command_row() {
     content.push(self.composer_command_row(layout, theme))
   }
   content.push(self.composer_action_row(theme))
@@ -3167,10 +3167,10 @@ fn WorkbenchModel::composer_height(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
 ) -> Double {
-  if self.command_catalog.is_empty() {
-    layout.composer_height
-  } else {
+  if self.should_show_composer_command_row() {
     layout.composer_height + 38.0
+  } else {
+    layout.composer_height
   }
 }
 
@@ -3254,7 +3254,8 @@ fn WorkbenchModel::composer_command_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let limit = workbench_min_int(self.command_catalog.length(), 3)
+  let suggestions = self.composer_command_suggestions()
+  let limit = workbench_min_int(suggestions.length(), 3)
   let button_width = workbench_clamp_double(
     (layout.composer_input_width - 42.0 - 16.0) / 3.0,
     96.0,
@@ -3264,7 +3265,7 @@ fn WorkbenchModel::composer_command_row(
     text("命令", role=Caption, theme~, width=42.0, height=30.0),
   ]
   for index in 0..<limit {
-    let command = self.command_catalog[index]
+    let command = suggestions[index]
     controls.push(
       button(
         command.composer_label(button_width),
@@ -3278,6 +3279,52 @@ fn WorkbenchModel::composer_command_row(
   }
   controls.push(spacer(min_length=8.0, weight=1.0))
   row(controls, spacing=8.0, align=Center)
+}
+
+///|
+fn WorkbenchModel::should_show_composer_command_row(
+  self : WorkbenchModel,
+) -> Bool {
+  !self.composer_command_suggestions().is_empty()
+}
+
+///|
+fn WorkbenchModel::composer_command_suggestions(
+  self : WorkbenchModel,
+) -> Array[PiCommandInfo] {
+  let suggestions : Array[PiCommandInfo] = []
+  match self.composer_slash_query() {
+    Some(query) =>
+      for command in self.command_catalog {
+        if command.matches_composer_query(query) {
+          suggestions.push(command)
+        }
+      }
+    None => ()
+  }
+  suggestions
+}
+
+///|
+fn WorkbenchModel::composer_slash_query(self : WorkbenchModel) -> String? {
+  let clean = self.prompt.trim().to_owned()
+  let chars = clean.to_array()
+  if chars.length() == 0 || chars[0] != '/' {
+    None
+  } else {
+    Some(String::from_array(chars[1:]).trim().to_owned().to_lower())
+  }
+}
+
+///|
+fn PiCommandInfo::matches_composer_query(
+  self : PiCommandInfo,
+  query : String,
+) -> Bool {
+  query == "" ||
+  self.name.to_lower().contains(query) ||
+  self.description.to_lower().contains(query) ||
+  self.source.to_lower().contains(query)
 }
 
 ///|

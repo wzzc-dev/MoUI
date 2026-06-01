@@ -225,10 +225,12 @@ packages:
 - The command catalog can invoke a listed command by sending `/<name>` through
   the existing platform-neutral `SendUserInput` prompt path. This keeps slash
   command execution usable in the native UI without adding a native-only
-  transport command or process bridge.
-- The composer now shows a compact slash-command shortcut strip when Pi has
-  returned a command catalog. The strip lists up to three `PiCommandInfo`
-  commands near the prompt input and each shortcut reuses the same
+  transport command or process bridge. Typed slash prompts such as `/review`
+  are sent raw rather than wrapped in composer context.
+- The composer now shows a compact slash-command suggestion strip only when Pi
+  has returned a command catalog and the user starts the prompt with `/`. The
+  strip filters `PiCommandInfo` commands by the typed query, lists up to three
+  matches near the prompt input, and each shortcut reuses the same
   `InvokeCommand` / `SendUserInput` route as the Activity digest command row.
 - Session selection refreshes Pi session stats through `get_session_stats`.
   The shared app maps message counts, tool counts, token totals, cost, and
