@@ -208,6 +208,12 @@ pub fn Surface::raster_n32_premul(size : @skia.ISize) -> Surface? {
 }
 
 ///|
+pub fn Surface::for_target(target : @skia.SurfaceTargetDescriptor) -> Surface? {
+  ignore(target)
+  None
+}
+
+///|
 pub fn Surface::width(self : Surface) -> Int {
   ignore(self)
   0

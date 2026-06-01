@@ -98,6 +98,16 @@
       "marker": "native smoke surface descriptor backend"
     },
     {
+      "id": "surface.target-factory-raster",
+      "area": "Surface",
+      "marker": "native smoke surface target factory raster"
+    },
+    {
+      "id": "surface.target-factory-unsupported",
+      "area": "Surface",
+      "marker": "native smoke surface target factory unsupported"
+    },
+    {
       "id": "canvas.state",
       "area": "Canvas",
       "marker": "native smoke canvas state restored"
