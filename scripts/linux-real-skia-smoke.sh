@@ -27,6 +27,9 @@ Options:
   --extra-link-flags STR
                         Extra linker flags appended when linking the smoke binary.
                         Default: -lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm.
+  --enable-asan         Forward AddressSanitizer flags to the native smoke
+                        helper. Linux uses leak detection by default unless
+                        ASAN_OPTIONS is already set.
   --build-log PATH      Write source-built Skia build output to PATH.
                         Relative paths are resolved from the repository root.
   --smoke-log PATH      Write the native smoke executable output to PATH.
@@ -48,9 +51,21 @@ Environment defaults:
   SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_PROVIDER, SKIA_MBT_SKIA_REV,
   SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_JETBRAINS_CONFIG,
   SKIA_MBT_JETBRAINS_CACHE_DIR, SKIA_MBT_EXTRA_GN_ARGS,
-  SKIA_MBT_EXTRA_CC_FLAGS, and SKIA_MBT_EXTRA_LINK_FLAGS are used when the
-  matching command-line option is omitted.
+  SKIA_MBT_ENABLE_ASAN, SKIA_MBT_EXTRA_CC_FLAGS, and
+  SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option is
+  omitted.
 EOF
+}
+
+normalize_bool() {
+  case "$1" in
+    1|true|TRUE|yes|YES|on|ON) printf '1\n' ;;
+    ""|0|false|FALSE|no|NO|off|OFF) printf '0\n' ;;
+    *)
+      echo "unsupported boolean value for SKIA_MBT_ENABLE_ASAN: $1" >&2
+      exit 2
+      ;;
+  esac
 }
 
 work_dir=".skia-cache/linux"
@@ -81,6 +96,7 @@ fi
 if [[ -n "${SKIA_MBT_EXTRA_LINK_FLAGS:-}" ]]; then
   extra_link_flags_explicit=1
 fi
+enable_asan="${SKIA_MBT_ENABLE_ASAN:-0}"
 build_log=""
 smoke_log=""
 sync_deps=1
@@ -141,6 +157,10 @@ while [[ $# -gt 0 ]]; do
       extra_link_flags_explicit=1
       shift 2
       ;;
+    --enable-asan)
+      enable_asan=1
+      shift
+      ;;
     --build-log)
       build_log="${2:-}"
       shift 2
@@ -172,6 +192,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+enable_asan="$(normalize_bool "$enable_asan")"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ $skia_rev_explicit -eq 0 && -f "$repo_root/skia-revision.txt" ]]; then
@@ -286,6 +308,9 @@ else
   echo "  work_dir=$resolved_work_dir"
   echo "  skia_rev=$skia_rev"
 fi
+if [[ $enable_asan -eq 1 ]]; then
+  echo "  asan=enabled"
+fi
 
 resolved_build_log=""
 if [[ -n "$build_log" ]]; then
@@ -340,6 +365,9 @@ fi
 if [[ -n "$extra_link_flags" ]]; then
   echo "  extra_link_flags=$extra_link_flags"
 fi
+if [[ $enable_asan -eq 1 ]]; then
+  echo "  asan_helper=linux-skia-smoke"
+fi
 if [[ -n "$build_log" ]]; then
   echo "  build_log=$build_log"
 fi
@@ -366,6 +394,9 @@ if [[ -n "$extra_cc_flags" ]]; then
 fi
 if [[ -n "$extra_link_flags" ]]; then
   smoke_args+=(--extra-link-flags "$extra_link_flags")
+fi
+if [[ $enable_asan -eq 1 ]]; then
+  smoke_args+=(--enable-asan)
 fi
 if [[ -n "$smoke_log" ]]; then
   smoke_args+=(--smoke-log "$smoke_log")
