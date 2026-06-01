@@ -206,9 +206,10 @@ verifies that value-layer resource descriptors produce cacheable renderer
 resource plans before native handles are allocated. Font coverage still verifies
 byte-range text-run resource keys, positive text advance, glyph count, glyph ID
 mapping, glyph advances, glyph positions, glyph bounds, text bounds, metrics,
-font resource planning, font-family typeface matching, typeface family metadata,
-and font fallback resource planning whenever the native smoke can create the
-relevant font objects.
+font resource planning, text shaping resource planning, shaped-text result
+metadata planning, font-family typeface matching, typeface family metadata, and
+font fallback resource planning whenever the native smoke can create the relevant
+font objects.
 
 To reuse an existing Skia checkout/build instead of the default JetBrains
 provider:

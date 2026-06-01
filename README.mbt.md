@@ -49,13 +49,14 @@ The current package exposes the first value-layer API surface:
   resource plan, readiness diagnostics, and cache population boundary for one
   backend submission
 - text layout and fallback contracts: `TextRunDescriptor`,
-  `TextMeasurementDescriptor`, `FontDescriptor`, `FontFallbackRequest`,
+  `TextMeasurementDescriptor`, `TextShapingDescriptor`,
+  `ShapedTextRunDescriptor`, `FontDescriptor`, `FontFallbackRequest`,
   `FontFallbackMatchDescriptor`, `FontFallbackChain`, and `FontStyleRequest`
   define the value-layer input and resolved-match metadata for native shaping
   and font fallback, including deterministic byte-range text-run,
-  text-measurement, font, fallback request, and fallback match resource keys and
-  plans for backend measurement, shaping, font-handle, and typeface-resolution
-  caches
+  text-measurement, text-shaping, shaped-result, font, fallback request, and
+  fallback match resource keys and plans for backend measurement, shaping,
+  font-handle, and typeface-resolution caches
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
   `PathDirection`, `PathSegmentMask`,
   including verb/point counts, contour closed queries, rectangle, oval, circle,
@@ -126,6 +127,8 @@ The `native` subpackage contains the first opt-in native boundary:
   `replay`, UTF-8 text through
   `draw_text_utf8`, positioned glyph runs through `draw_glyphs`, optional
   shaped glyph runs through `Font::shape_text_utf8` when SkShaper is linked,
+  shaped-run metadata through `TextShapingDescriptor` and
+  `ShapedTextRunDescriptor`,
   font measurement through `Font::measure_text_utf8`, glyph IDs through
   `Font::count_text_utf8` / `Font::text_to_glyphs_utf8`, glyph advances through
   `Font::glyph_width` / `Font::glyph_widths`, glyph positions through

@@ -88,6 +88,8 @@ $defaultStageMarkers = @(
   "native smoke text run range byte size",
   "native smoke text measurement resource plan count",
   "native smoke text measurement key variation",
+  "native smoke text shaping resource plan count",
+  "native smoke shaped text resource plan count",
   "native smoke measured text width",
   "native smoke text glyph count",
   "native smoke first glyph id",
@@ -315,6 +317,14 @@ $defaultExpectedStageValues = @(
     Value = "1"
   }
   [pscustomobject]@{
+    Marker = "native smoke text shaping resource plan count"
+    Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke shaped text resource plan count"
+    Value = "5"
+  }
+  [pscustomobject]@{
     Marker = "native smoke font resource plan count"
     Value = "1"
   }
@@ -342,6 +352,11 @@ $defaultExpectedStageValues = @(
 $defaultConditionalStageMarkers = @(
   [pscustomobject]@{
     Marker = "native smoke shaped glyph count"
+    WhenMarker = "native smoke shaper availability"
+    WhenValue = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke shaped text native resource plan count"
     WhenMarker = "native smoke shaper availability"
     WhenValue = "1"
   }

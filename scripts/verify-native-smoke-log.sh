@@ -103,6 +103,8 @@ default_stage_markers=(
   "native smoke text run range byte size" \
   "native smoke text measurement resource plan count" \
   "native smoke text measurement key variation" \
+  "native smoke text shaping resource plan count" \
+  "native smoke shaped text resource plan count" \
   "native smoke measured text width" \
   "native smoke text glyph count" \
   "native smoke first glyph id" \
@@ -177,6 +179,8 @@ default_expected_stage_values=(
   $'native smoke text run range byte size\t4'
   $'native smoke text measurement resource plan count\t4'
   $'native smoke text measurement key variation\t1'
+  $'native smoke text shaping resource plan count\t4'
+  $'native smoke shaped text resource plan count\t5'
   $'native smoke font resource plan count\t1'
   $'native smoke font fallback key variation\t1'
   $'native smoke font fallback match key variation\t1'
@@ -191,6 +195,7 @@ stage_markers=("${default_stage_markers[@]}")
 expected_stage_values=("${default_expected_stage_values[@]}")
 default_conditional_stage_markers=(
   $'native smoke shaped glyph count\tnative smoke shaper availability\t1'
+  $'native smoke shaped text native resource plan count\tnative smoke shaper availability\t1'
 )
 conditional_stage_markers=("${default_conditional_stage_markers[@]}")
 if [[ -f "$status_file" ]]; then

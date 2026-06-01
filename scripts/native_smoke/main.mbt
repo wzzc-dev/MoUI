@@ -698,6 +698,53 @@ fn main {
     replay_measurement.with_shape(false).resource_key(b"hello") {
     fail_smoke("native text measurement resource key did not encode measurement inputs")
   }
+  let replay_shaping = @skia.TextShapingDescriptor::new(
+    run=replay_descriptor,
+    font_key=@skia.RendererResourceKey::font(b"default:8"),
+    width=128.0,
+  )
+  let replay_shaping_plan = replay_shaping.resource_plan(b"hello")
+  if replay_shaping_plan.length() != 4 ||
+    replay_shaping_plan.count_kind(@skia.TextRunResource) != 2 ||
+    replay_shaping_plan.count_kind(@skia.FontResource) != 1 ||
+    replay_shaping_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    replay_shaping_plan.byte_size <= replay_text_run_plan.byte_size {
+    fail_smoke("native text shaping resource plan did not include shaped run dependencies")
+  }
+  if replay_shaping.resource_key(b"hello") ==
+    replay_shaping.with_width(64.0).resource_key(b"hello") ||
+    replay_shaping.resource_key(b"hello") ==
+    replay_shaping.with_run(
+      replay_descriptor.with_direction(@skia.RightToLeft),
+    ).resource_key(b"hello") {
+    fail_smoke("native text shaping resource key did not encode shaping inputs")
+  }
+  let replay_shaped_run = replay_shaping.shaped_run_descriptor(
+    glyph_count=4,
+    cluster_count=4,
+    advance=@skia.Point::new(16.0, 0.0),
+  )
+  let replay_shaped_run_plan = replay_shaped_run.resource_plan(b"hello")
+  if !replay_shaped_run.is_valid() ||
+    replay_shaped_run_plan.length() != 5 ||
+    replay_shaped_run_plan.count_kind(@skia.TextRunResource) != 3 ||
+    replay_shaped_run_plan.count_kind(@skia.FontResource) != 1 ||
+    replay_shaped_run_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    replay_shaped_run_plan.byte_size <= replay_shaping_plan.byte_size {
+    fail_smoke("native shaped text run resource plan is invalid")
+  }
+  if replay_shaped_run.resource_key(b"hello") ==
+    replay_shaped_run.shaping.shaped_run_descriptor(
+      glyph_count=5,
+      cluster_count=4,
+      advance=@skia.Point::new(16.0, 0.0),
+    ).resource_key(b"hello") {
+    fail_smoke("native shaped text run resource key did not encode result metadata")
+  }
+  println("native smoke text shaping resource plan count")
+  println(replay_shaping_plan.length())
+  println("native smoke shaped text resource plan count")
+  println(replay_shaped_run_plan.length())
   let ranged_text_descriptor = @skia.TextRunDescriptor::new(
     range=@skia.TextRange::new(1, 5),
   )
@@ -1042,6 +1089,35 @@ fn main {
       shaped_run.advance().x <= 0.0 {
       fail_smoke("native SkShaper did not produce a valid shaped glyph run")
     }
+    let shaped_smoke_shaping = @skia.TextShapingDescriptor::new(
+      run=@skia.TextRunDescriptor::new(
+        range=@skia.TextRange::new(0, smoke_text_bytes().length()),
+      ),
+      font_key=@skia.RendererResourceKey::font(b"native-default:11"),
+    )
+    let shaped_smoke_descriptor = shaped_smoke_shaping.shaped_run_descriptor(
+      glyph_count=shaped_glyph_count,
+      cluster_count=shaped_clusters.length(),
+      advance=shaped_run.advance(),
+    )
+    let shaped_smoke_plan = shaped_smoke_descriptor.resource_plan(
+      smoke_text_bytes(),
+    )
+    if !shaped_smoke_descriptor.is_valid() ||
+      shaped_smoke_plan.length() != 4 ||
+      shaped_smoke_plan.count_kind(@skia.TextRunResource) != 3 ||
+      shaped_smoke_plan.count_kind(@skia.FontResource) != 1 ||
+      shaped_smoke_plan.count_kind(@skia.TypefaceResource) != 0 ||
+      !shaped_smoke_plan.contains_key(
+        shaped_smoke_descriptor.resource_key(smoke_text_bytes()),
+      ) ||
+      !shaped_smoke_plan.contains_key(
+        shaped_smoke_shaping.resource_key(smoke_text_bytes()),
+      ) {
+      fail_smoke("native shaped text run descriptor did not record SkShaper metadata")
+    }
+    println("native smoke shaped text native resource plan count")
+    println(shaped_smoke_plan.length())
     println("native smoke shaped glyph count")
     println(shaped_glyph_count)
     canvas.draw_glyphs(
