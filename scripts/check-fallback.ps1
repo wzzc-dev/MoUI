@@ -396,6 +396,29 @@ try {
     & (Join-Path $repoRoot "scripts/verify-acceptance-log.ps1") -LogPath $fakeGoodAcceptanceLog
     & (Join-Path $repoRoot "scripts/verify-acceptance-log.ps1") -LogPath $fakeGoodAcceptanceLog -RequireCommit
 
+    $fakePrefixedStatusAcceptanceLog = Join-Path $dryRunRoot "fake-acceptance-prefixed-status.log"
+    @(
+      "Windows real Skia acceptance result:"
+      "  not_smoke_status=0"
+      "  native_smoke_marker=passed"
+      "  native_pkg_restore=passed"
+    ) | Set-Content -LiteralPath $fakePrefixedStatusAcceptanceLog
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-acceptance-log.ps1") -LogPath $fakePrefixedStatusAcceptanceLog } `
+      -ExpectedMessage "smoke_status=0"
+
+    $fakePrefixedCommitAcceptanceLog = Join-Path $dryRunRoot "fake-acceptance-prefixed-commit.log"
+    @(
+      "Windows real Skia acceptance result:"
+      "  smoke_status=0"
+      "  native_smoke_marker=passed"
+      "  native_pkg_restore=passed"
+      "  not_skia_commit=0123456789abcdef0123456789abcdef01234567"
+    ) | Set-Content -LiteralPath $fakePrefixedCommitAcceptanceLog
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-acceptance-log.ps1") -LogPath $fakePrefixedCommitAcceptanceLog -RequireCommit } `
+      -ExpectedMessage "skia_commit"
+
     $fakePinnedRevision = Join-Path $dryRunRoot "fake-skia-revision.txt"
     Set-Content -LiteralPath $fakePinnedRevision -Value "0123456789abcdef0123456789abcdef01234567"
     & (Join-Path $repoRoot "scripts/verify-skia-revision-pin.ps1") `
