@@ -672,12 +672,12 @@ pub fn WorkbenchModel::runtime_with_transport(
   height? : Double = 780.0,
 ) -> @core.AppRuntime {
   @core.AppRuntime::new_program(
-    program=@core.Program::new(
+    program=@core.Program::new_with_environment(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => {
         model.update_with_transport(message, transport_runtime).as_tuple()
       },
-      view~,
+      view=(model, env) => model.view_with_environment(env),
     ),
     size=@core.Size::new(width~, height~),
   )
