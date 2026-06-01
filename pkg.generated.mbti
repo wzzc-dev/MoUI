@@ -1050,6 +1050,18 @@ pub fn ShaderDescriptor::radial_gradient(Point, Float, Color, Color, tile_mode? 
 pub fn ShaderDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn ShaderDescriptor::resource_key(Self) -> RendererResourceKey
 
+pub(all) struct ShapedTextRunDescriptor {
+  shaping : TextShapingDescriptor
+  glyph_count : Int
+  cluster_count : Int
+  advance : Point
+} derive(Eq, @debug.Debug)
+pub fn ShapedTextRunDescriptor::is_valid(Self) -> Bool
+pub fn ShapedTextRunDescriptor::new(shaping? : TextShapingDescriptor, glyph_count? : Int, cluster_count? : Int, advance? : Point) -> Self
+pub fn ShapedTextRunDescriptor::resource_descriptor(Self, Bytes, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn ShapedTextRunDescriptor::resource_key(Self, Bytes) -> RendererResourceKey
+pub fn ShapedTextRunDescriptor::resource_plan(Self, Bytes, shaped_byte_size? : Int64, shaping_byte_size? : Int64, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
+
 pub(all) struct Size {
   width : Float
   height : Float
@@ -1227,6 +1239,21 @@ pub fn TextRunDescriptor::resource_plan(Self, Bytes, font_key? : RendererResourc
 pub fn TextRunDescriptor::with_direction(Self, TextDirection) -> Self
 pub fn TextRunDescriptor::with_fallback(Self, FontFallbackRequest) -> Self
 pub fn TextRunDescriptor::with_range(Self, TextRange) -> Self
+
+pub(all) struct TextShapingDescriptor {
+  run : TextRunDescriptor
+  font_key : RendererResourceKey
+  width : Float
+} derive(Eq, @debug.Debug)
+pub fn TextShapingDescriptor::measurement_descriptor(Self) -> TextMeasurementDescriptor
+pub fn TextShapingDescriptor::new(run? : TextRunDescriptor, font_key? : RendererResourceKey, width? : Float) -> Self
+pub fn TextShapingDescriptor::resource_descriptor(Self, Bytes, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn TextShapingDescriptor::resource_key(Self, Bytes) -> RendererResourceKey
+pub fn TextShapingDescriptor::resource_plan(Self, Bytes, shaping_byte_size? : Int64, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
+pub fn TextShapingDescriptor::shaped_run_descriptor(Self, glyph_count? : Int, cluster_count? : Int, advance? : Point) -> ShapedTextRunDescriptor
+pub fn TextShapingDescriptor::with_font_key(Self, RendererResourceKey) -> Self
+pub fn TextShapingDescriptor::with_run(Self, TextRunDescriptor) -> Self
+pub fn TextShapingDescriptor::with_width(Self, Float) -> Self
 
 pub(all) enum TileMode {
   Clamp

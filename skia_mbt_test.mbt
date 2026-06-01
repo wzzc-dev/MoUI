@@ -1631,6 +1631,109 @@ test "text measurement descriptors track cache identity and dependencies" {
 }
 
 ///|
+test "text shaping descriptors track request and shaped run resources" {
+  let fallback = @skia_mbt.FontFallbackRequest::new(
+    families=@skia_mbt.FontFallbackChain::new(primary_family=b"Inter"),
+    bcp47=[b"en"],
+    character=0x68,
+  )
+  let run = @skia_mbt.TextRunDescriptor::new(
+    range=@skia_mbt.TextRange::new(1, 5),
+    direction=@skia_mbt.LeftToRight,
+    fallback~,
+  )
+  let font_key = @skia_mbt.RendererResourceKey::font(b"Inter:14")
+  let shaping = @skia_mbt.TextShapingDescriptor::new(
+    run~,
+    font_key~,
+    width=240.0,
+  )
+  let key = shaping.resource_key(b"xhelloz")
+  assert_true(key.kind == @skia_mbt.TextRunResource)
+  assert_true(key == shaping.resource_key(b"yhelloq"))
+  assert_true(key != shaping.resource_key(b"yhelpq"))
+  assert_true(key != shaping.with_width(120.0).resource_key(b"xhelloz"))
+  assert_true(
+    key !=
+    shaping
+    .with_font_key(@skia_mbt.RendererResourceKey::font(b"Serif:14"))
+    .resource_key(b"xhelloz"),
+  )
+  assert_true(
+    key !=
+    shaping
+    .with_run(run.with_direction(@skia_mbt.RightToLeft))
+    .resource_key(b"xhelloz"),
+  )
+  assert_eq(
+    @skia_mbt.TextShapingDescriptor::new(width=-1.0).width,
+    1000000000.0,
+  )
+
+  let measurement = shaping.measurement_descriptor()
+  assert_true(measurement.is_shaped())
+  assert_true(!measurement.measure_bounds)
+  assert_true(measurement.resource_key(b"xhelloz") != key)
+
+  let descriptor = shaping.resource_descriptor(b"xhelloz")
+  assert_true(descriptor.key == key)
+  assert_true(descriptor.is_cacheable())
+  assert_true(descriptor.byte_size > 0L)
+  let plan = shaping.resource_plan(b"xhelloz")
+  assert_eq(plan.length(), 4)
+  assert_eq(plan.count_kind(@skia_mbt.TextRunResource), 2)
+  assert_eq(plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_true(plan.contains_key(key))
+  assert_true(plan.contains_key(run.resource_key(b"xhelloz", font_key~)))
+  assert_true(plan.contains_key(font_key))
+  assert_true(plan.contains_key(fallback.resource_key()))
+
+  let shaped = shaping.shaped_run_descriptor(
+    glyph_count=4,
+    cluster_count=4,
+    advance=@skia_mbt.Point::new(16.0, 0.0),
+  )
+  assert_true(shaped.is_valid())
+  let shaped_key = shaped.resource_key(b"xhelloz")
+  assert_true(shaped_key.kind == @skia_mbt.TextRunResource)
+  assert_true(shaped_key != key)
+  assert_true(shaped_key == shaped.resource_key(b"yhelloq"))
+  assert_true(
+    shaped_key !=
+    shaping
+    .shaped_run_descriptor(
+      glyph_count=5,
+      cluster_count=4,
+      advance=@skia_mbt.Point::new(16.0, 0.0),
+    )
+    .resource_key(b"xhelloz"),
+  )
+  assert_true(
+    shaped_key !=
+    shaping
+    .shaped_run_descriptor(
+      glyph_count=4,
+      cluster_count=4,
+      advance=@skia_mbt.Point::new(17.0, 0.0),
+    )
+    .resource_key(b"xhelloz"),
+  )
+  let shaped_plan = shaped.resource_plan(b"xhelloz")
+  assert_eq(shaped_plan.length(), 5)
+  assert_eq(shaped_plan.count_kind(@skia_mbt.TextRunResource), 3)
+  assert_eq(shaped_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(shaped_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_true(shaped_plan.contains_key(shaped_key))
+  assert_true(shaped_plan.contains_key(key))
+  assert_true(shaped_plan.byte_size > plan.byte_size)
+
+  let invalid = shaping.shaped_run_descriptor(glyph_count=0)
+  assert_true(!invalid.is_valid())
+  assert_true(!invalid.resource_descriptor(b"xhelloz").is_cacheable())
+}
+
+///|
 test "matrix exposes skia-style members and affine conversion" {
   let matrix = @skia_mbt.Matrix::new_all(2, 1, 10, 3, 4, 20, 0, 0, 1)
   assert_eq(matrix.scale_x(), 2.0)
