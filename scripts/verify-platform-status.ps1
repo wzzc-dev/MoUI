@@ -360,6 +360,8 @@ if ($status.schema_version -ge 3) {
     }
     $requiredExpectedValues = @{
       "native smoke canvas clip device width" = "4"
+      "native smoke canvas state restored" = "1"
+      "native smoke canvas replay commands" = "8"
       "native smoke render resource plan count" = "9"
       "native smoke render frame resource plan count" = "9"
       "native smoke render frame validation status" = "1"
@@ -383,6 +385,8 @@ if ($status.schema_version -ge 3) {
       "native smoke bounded readback height" = "4"
       "native smoke bounded snapshot width" = "4"
       "native smoke bounded snapshot height" = "4"
+      "native smoke filter layer count" = "1"
+      "native smoke path verbs" = "9"
       "native smoke decoded image width" = "32"
       "native smoke decoded image height" = "32"
       "native smoke codec width" = "32"

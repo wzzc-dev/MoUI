@@ -113,6 +113,8 @@ default_stage_markers=(
 
 default_expected_stage_values=(
   $'native smoke canvas clip device width\t4'
+  $'native smoke canvas state restored\t1'
+  $'native smoke canvas replay commands\t8'
   $'native smoke render resource plan count\t9'
   $'native smoke render frame resource plan count\t9'
   $'native smoke render frame validation status\t1'
@@ -136,6 +138,8 @@ default_expected_stage_values=(
   $'native smoke bounded readback height\t4'
   $'native smoke bounded snapshot width\t4'
   $'native smoke bounded snapshot height\t4'
+  $'native smoke filter layer count\t1'
+  $'native smoke path verbs\t9'
   $'native smoke decoded image width\t32'
   $'native smoke decoded image height\t32'
   $'native smoke codec width\t32'

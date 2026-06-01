@@ -398,6 +398,16 @@
       "value": "4"
     },
     {
+      "id": "canvas.state",
+      "marker": "native smoke canvas state restored",
+      "value": "1"
+    },
+    {
+      "id": "canvas.command-replay",
+      "marker": "native smoke canvas replay commands",
+      "value": "8"
+    },
+    {
       "id": "pipeline.resource-plan",
       "marker": "native smoke render resource plan count",
       "value": "9"
@@ -511,6 +521,16 @@
       "id": "surface.bounded-snapshot-height",
       "marker": "native smoke bounded snapshot height",
       "value": "4"
+    },
+    {
+      "id": "filter.layer",
+      "marker": "native smoke filter layer count",
+      "value": "1"
+    },
+    {
+      "id": "path.geometry",
+      "marker": "native smoke path verbs",
+      "value": "9"
     },
     {
       "id": "image.decode",
