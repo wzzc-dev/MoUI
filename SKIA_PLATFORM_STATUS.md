@@ -103,7 +103,8 @@ these facts recorded in logs:
   finalization resource planning, GPU frame finalization resource filtering,
   surface present buffer-slot derivation, surface present resource planning, GPU
   present resource planning, GPU-backed submission subplans, render-frame
-  touched bounds, resource-cache insertion, cache-plan coverage,
+  touched bounds, resource-cache insertion, preflight missing/resident splits,
+  cache-plan coverage,
   hit/miss accounting, byte-budget behavior, and LRU eviction, surface flush-and-submit, shader
   draws, native/portable path geometry, text-run dependency planning,
   byte-range text-run resource keys, text measurement resource planning,

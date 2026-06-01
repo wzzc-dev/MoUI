@@ -269,3 +269,33 @@ pub fn ResourceCache::contains_resource_plan(
   }
   covered
 }
+
+///|
+pub fn ResourceCache::cached_cacheable_resource_plan(
+  self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+  plan : RendererResourcePlan,
+) -> RendererResourcePlan {
+  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  for descriptor in plan.descriptors {
+    if descriptor.is_cacheable() &&
+      self.contains_resource_descriptor(descriptor) {
+      descriptors.push(descriptor)
+    }
+  }
+  RendererResourcePlan::new(descriptors)
+}
+
+///|
+pub fn ResourceCache::missing_cacheable_resource_plan(
+  self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+  plan : RendererResourcePlan,
+) -> RendererResourcePlan {
+  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  for descriptor in plan.descriptors {
+    if descriptor.is_cacheable() &&
+      !self.contains_resource_descriptor(descriptor) {
+      descriptors.push(descriptor)
+    }
+  }
+  RendererResourcePlan::new(descriptors)
+}

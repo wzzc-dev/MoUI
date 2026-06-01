@@ -1204,11 +1204,27 @@ fn main {
     @skia.RendererResourceKey,
     @skia.RendererResourceDescriptor,
   ] = @skia.ResourceCache::new(max_bytes=replay_frame.resource_plan.byte_size)
+  let replay_cached_before = replay_resource_cache.cached_cacheable_resource_plan(
+    replay_frame.resource_plan,
+  )
+  let replay_missing_before = replay_resource_cache.missing_cacheable_resource_plan(
+    replay_frame.resource_plan,
+  )
   let replay_cache_inserts = replay_frame.cache_resources(replay_resource_cache)
+  let replay_cached_after = replay_resource_cache.cached_cacheable_resource_plan(
+    replay_frame.resource_plan,
+  )
+  let replay_missing_after = replay_resource_cache.missing_cacheable_resource_plan(
+    replay_frame.resource_plan,
+  )
   let replay_frame_cacheable_plan = replay_frame.cacheable_resource_plan()
   let replay_frame_uncacheable_plan = replay_frame.uncacheable_resource_plan()
-  if replay_cache_inserts != replay_frame.resource_plan.cacheable_count ||
+  if !replay_cached_before.is_empty() ||
+    replay_missing_before.length() != replay_frame.resource_plan.cacheable_count ||
+    replay_cache_inserts != replay_frame.resource_plan.cacheable_count ||
     replay_resource_cache.byte_size() != replay_frame.resource_plan.byte_size ||
+    replay_cached_after.length() != replay_frame.resource_plan.cacheable_count ||
+    !replay_missing_after.is_empty() ||
     replay_frame_cacheable_plan.length() != replay_frame.resource_plan.length() ||
     !replay_frame_uncacheable_plan.is_empty() ||
     !replay_resource_cache.contains_resource_plan(replay_frame.resource_plan) {
@@ -1291,6 +1307,10 @@ fn main {
   println(replay_cache_inserts)
   println("native smoke render resource cache inserts")
   println(replay_cache_inserts)
+  println("native smoke render resource cache preflight missing count")
+  println(replay_missing_before.length())
+  println("native smoke render resource cache preflight cached count")
+  println(replay_cached_after.length())
   println("native smoke render resource cache plan coverage")
   println(1)
   println("native smoke render resource cache evictions")

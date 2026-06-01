@@ -117,7 +117,7 @@ finalization cache population, surface finalization resource planning, surface
 finalization cache-key variation, GPU finalization resource planning, GPU frame
 finalization resource filtering, surface present resource planning, GPU present
 resource planning, GPU frame submission resource planning, GPU-backed submission
-subplans,
+subplans, resource-cache preflight missing/resident splits,
 byte-range text-run resource keys, text measurement resource planning,
 measured-text result resource planning, measured-text result cache-key
 variation, text measurement cache-key variation,

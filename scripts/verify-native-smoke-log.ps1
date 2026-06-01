@@ -60,6 +60,8 @@ $defaultStageMarkers = @(
   "native smoke render frame touched bounds width",
   "native smoke render frame cache resources",
   "native smoke render resource cache inserts",
+  "native smoke render resource cache preflight missing count",
+  "native smoke render resource cache preflight cached count",
   "native smoke render resource cache plan coverage",
   "native smoke render resource cache evictions",
   "native smoke render resource cache hits",
@@ -247,6 +249,14 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke render resource cache inserts"
+    Value = "12"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render resource cache preflight missing count"
+    Value = "12"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render resource cache preflight cached count"
     Value = "12"
   }
   [pscustomobject]@{
