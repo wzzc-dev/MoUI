@@ -182,6 +182,8 @@ fn main {
   let smoke_window_immediate_target = smoke_window_target.with_present_mode(
     @skia.ImmediatePresent,
   )
+  let smoke_window_deeper_pacing_target = smoke_window_target
+    .with_max_frames_in_flight(3)
   if smoke_window.dimensions() != @skia.ISize::new(16, 16) ||
     smoke_window.logical_dimensions() != @skia.Size::new(8, 8) ||
     !smoke_window_target.has_target_id() ||
@@ -192,7 +194,10 @@ fn main {
     smoke_window_target.present_mode != Some(@skia.MailboxPresent) ||
     smoke_window_immediate_target.resource_key() ==
     smoke_window_target.resource_key() ||
+    smoke_window_deeper_pacing_target.resource_key() ==
+    smoke_window_target.resource_key() ||
     !smoke_window_immediate_target.needs_present() ||
+    smoke_window_deeper_pacing_target.max_frames_in_flight != 3 ||
     smoke_window_plan.length() != 1 ||
     !smoke_window_plan.contains_key(smoke_window_target.resource_key()) ||
     !smoke_window_gpu_target.surface.is_gpu() ||
@@ -204,6 +209,8 @@ fn main {
   println("native smoke window frame pacing")
   println(smoke_window_target.max_frames_in_flight)
   println("native smoke window present mode key variation")
+  println(1)
+  println("native smoke window frame pacing key variation")
   println(1)
   println("native smoke window target resource plan count")
   println(smoke_window_plan.length())

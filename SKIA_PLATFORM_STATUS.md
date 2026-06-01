@@ -90,7 +90,8 @@ these facts recorded in logs:
   render target identity
   validation, render-frame unbalanced-state validation, missing-present
   validation, bound target resource planning, window physical-size derivation,
-  frame pacing, present-mode key variation, window-frame present finalization,
+  frame pacing, frame-pacing key variation, present-mode key variation,
+  window-frame present finalization,
   render-frame touched bounds, resource-cache insertion, cache-plan coverage,
   hit/miss accounting, byte-budget behavior, and LRU eviction, surface flush-and-submit, shader
   draws, native/portable path geometry, text-run dependency planning,

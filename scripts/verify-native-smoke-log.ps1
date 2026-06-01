@@ -59,6 +59,7 @@ $defaultStageMarkers = @(
   "native smoke window target resource plan count",
   "native smoke window physical width",
   "native smoke window frame pacing",
+  "native smoke window frame pacing key variation",
   "native smoke window present mode key variation",
   "native smoke surface flush-and-submit",
   "native smoke shader draws",
@@ -208,6 +209,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke window frame pacing"
     Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke window frame pacing key variation"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke window present mode key variation"
