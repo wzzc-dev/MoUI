@@ -252,6 +252,7 @@ pub(all) struct WorkbenchModel {
   selected_agent_id : String
   main_scroll_offset_y : Double
   prompt : String
+  composer_controls_expanded : Bool
   expanded_context : Array[String]
   sessions : Array[WorkbenchSession]
   plan : Array[PlanStep]
@@ -287,6 +288,7 @@ pub(all) enum WorkbenchMsg {
   SelectPanel(String)
   SelectAgent(String)
   PromptChanged(String)
+  ToggleComposerControls
   DispatchPrompt
   DispatchSteering
   DispatchFollowUp

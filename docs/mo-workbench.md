@@ -95,12 +95,13 @@ packages:
   signal-bearing localized session status labels, while full project paths
   remain in the shared model and Pi transport commands. The default shell keeps
   only top-bar refresh/new-session controls and the composer input prominent,
-  while submit actions appear once typed input exists. Active/idle session rows
-  omit status meta instead of showing fake active, queue, or idle labels.
-  Context chips, the idle Pi RPC footer, the `Pi 运行状态` panel, agent focus
-  controls, advanced session actions, steering/follow-up composer controls, and
-  focused-check presets stay collapsed until Pi state, typed input, non-default
-  context, selected focus, or command evidence makes them relevant.
+  while typed input adds a compact `选项`/`发送` row instead of opening every
+  secondary control. Active/idle session rows omit status meta instead of
+  showing fake active, queue, or idle labels. Context chips, the idle Pi RPC
+  footer, the `Pi 运行状态` panel, agent focus controls, advanced session actions,
+  steering/follow-up composer controls, and focused-check presets stay collapsed
+  until Pi state, expanded composer options, non-default context, selected
+  focus, or command evidence makes them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
@@ -119,9 +120,9 @@ packages:
   `工作文件夹` shows the active project plus the latest file evidence. Empty or
   compact windows collapse the rail and keep the conversation flow primary.
 - Agent focus controls for `通用`, `编码`, and `校验` now live in the composer's
-  visible `焦点` row instead of the default sidebar. They appear while composing
-  or when a focus is selected, keeping the idle shell closer to Codex's
-  session-first layout.
+  optional `焦点` row instead of the default sidebar. They appear after opening
+  composer options or when a focus is selected, keeping the idle shell closer to
+  Codex's session-first layout.
   Selecting a role does not create a native-only worker or transport command;
   it appends an `agent focus: ...` hint to the existing prompt, steering, and
   follow-up text context before the shared app emits the same platform-neutral
@@ -143,10 +144,11 @@ packages:
   conversation evidence can become the next agent action without native-only
   transport.
 - The composer now exposes explicit context chips for repository, examples,
-  evidence, and Pi session scope on demand while composing, after selecting an
-  agent focus, or after changing the default context. Direct prompt, steering,
-  and follow-up submits prefix the selected context labels into the text payload
-  before it enters the existing platform-neutral `SendUserInput`,
+  evidence, and Pi session scope after opening composer options, after
+  selecting an agent focus, or after changing the default context. Direct
+  prompt, steering, and follow-up submits prefix the selected context labels
+  into the text payload before it enters the existing platform-neutral
+  `SendUserInput`,
   `SendSteeringInput`, or `SendFollowUpInput` paths; no new transport command
   or native bridge is required, and users can turn all context chips off to send
   the raw text.
@@ -277,11 +279,13 @@ packages:
   The shared app emits a platform-neutral `CycleRpcThinkingLevel` command,
   ingests `cycle_thinking_level` responses and `thinking_level_changed` events,
   and keeps `PiAgentSnapshot.thinking_level` visible without native-only state.
-- The composer exposes compact steering and follow-up mode controls. The shared
-  app emits platform-neutral `SetRpcSteeringMode` and `SetRpcFollowUpMode`
-  commands, ingests their acknowledgements, and refreshes both modes from
-  `get_state` so Pi remains the source of truth for input queue policy.
-  The same composer also has explicit steering and follow-up submit actions:
+- The composer exposes compact steering and follow-up mode controls only inside
+  expanded composer options or when Pi reports non-default queue modes. The
+  shared app emits platform-neutral `SetRpcSteeringMode` and
+  `SetRpcFollowUpMode` commands, ingests their acknowledgements, and refreshes
+  both modes from `get_state` so Pi remains the source of truth for input queue
+  policy. The same optional composer row also has explicit steering and
+  follow-up submit actions:
   `SendSteeringInput` maps to Pi RPC `steer`, while `SendFollowUpInput` maps to
   Pi RPC `follow_up`.
 - Run cancellation is command-aware: active Workbench shell commands queue a
@@ -320,7 +324,8 @@ packages:
   the new level, while
   `thinking_level_changed` events remain the authoritative stream update.
   Successful `set_steering_mode` and `set_follow_up_mode` responses acknowledge
-  the compact composer controls; `get_state` refreshes the current mode values.
+  the compact optional composer controls; `get_state` refreshes the current mode
+  values.
   Successful `steer` and `follow_up` responses acknowledge explicit queued
   steering/follow-up input submissions, while `queue_update` remains the source
   of truth for visible queued input counts.

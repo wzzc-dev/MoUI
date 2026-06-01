@@ -3183,7 +3183,7 @@ fn WorkbenchModel::composer_height(
 fn WorkbenchModel::should_show_context_chip_row(self : WorkbenchModel) -> Bool {
   !self.is_composer_slash_prompt() &&
   (
-    self.has_composer_prompt() ||
+    self.composer_controls_expanded ||
     self.active_agent_profile() is Some(_) ||
     !self.context_is_default()
   )
@@ -3201,7 +3201,7 @@ fn WorkbenchModel::should_show_composer_agent_row(
   self : WorkbenchModel,
 ) -> Bool {
   !self.is_composer_slash_prompt() &&
-  (self.has_composer_prompt() || self.active_agent_profile() is Some(_))
+  (self.composer_controls_expanded || self.active_agent_profile() is Some(_))
 }
 
 ///|
@@ -3245,6 +3245,22 @@ fn WorkbenchModel::composer_action_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let controls : Array[@core.View[WorkbenchMsg]] = []
+  if self.should_show_composer_options_toggle() {
+    controls.push(
+      button(
+        if self.composer_controls_expanded {
+          "收起"
+        } else {
+          "选项"
+        },
+        on_click=ToggleComposerControls,
+        variant=Ghost,
+        theme~,
+        width=54.0,
+        height=36.0,
+      ),
+    )
+  }
   if self.should_show_composer_secondary_actions() {
     controls.push(
       button(
@@ -3311,7 +3327,17 @@ fn WorkbenchModel::composer_action_row(
 fn WorkbenchModel::should_show_composer_action_row(
   self : WorkbenchModel,
 ) -> Bool {
-  self.has_composer_prompt() || self.should_show_composer_secondary_actions()
+  self.has_composer_prompt() ||
+  self.should_show_composer_options_toggle() ||
+  self.should_show_composer_secondary_actions()
+}
+
+///|
+fn WorkbenchModel::should_show_composer_options_toggle(
+  self : WorkbenchModel,
+) -> Bool {
+  !self.is_composer_slash_prompt() &&
+  (self.has_composer_prompt() || self.composer_controls_expanded)
 }
 
 ///|
@@ -3320,7 +3346,7 @@ fn WorkbenchModel::should_show_composer_secondary_actions(
 ) -> Bool {
   !self.is_composer_slash_prompt() &&
   (
-    self.has_composer_prompt() ||
+    self.composer_controls_expanded ||
     self.pi_agent.steering_mode != "one-at-a-time" ||
     self.pi_agent.follow_up_mode != "one-at-a-time" ||
     self.pi_agent.queued_steering + self.pi_agent.queued_follow_up > 0

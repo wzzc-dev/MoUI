@@ -182,6 +182,7 @@ pub(all) struct WorkbenchModel {
   selected_agent_id : String
   main_scroll_offset_y : Double
   prompt : String
+  composer_controls_expanded : Bool
   expanded_context : Array[String]
   sessions : Array[WorkbenchSession]
   plan : Array[PlanStep]
@@ -214,6 +215,7 @@ pub(all) enum WorkbenchMsg {
   SelectPanel(String)
   SelectAgent(String)
   PromptChanged(String)
+  ToggleComposerControls
   DispatchPrompt
   DispatchSteering
   DispatchFollowUp
@@ -616,6 +618,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     selected_agent_id: "",
     main_scroll_offset_y: 0.0,
     prompt: "",
+    composer_controls_expanded: false,
     expanded_context: ["repo", "examples"],
     sessions: sample_sessions(),
     plan: [],
@@ -652,6 +655,8 @@ pub fn WorkbenchModel::update(
     SelectPanel(panel) => { ..self, selected_panel: panel }
     SelectAgent(id) => self.select_agent(id)
     PromptChanged(value) => { ..self, prompt: value }
+    ToggleComposerControls =>
+      { ..self, composer_controls_expanded: !self.composer_controls_expanded }
     DispatchPrompt => self.dispatch_prompt()
     DispatchSteering => self.dispatch_steering()
     DispatchFollowUp => self.dispatch_follow_up()
@@ -1222,6 +1227,7 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
     {
       ..self,
       prompt: "",
+      composer_controls_expanded: false,
       events,
       transport: self.transport.enqueue_many(commands),
       last_status: "Queued prompt for Pi JSONL RPC",
@@ -1273,6 +1279,7 @@ fn WorkbenchModel::dispatch_steering(self : WorkbenchModel) -> WorkbenchModel {
     {
       ..self,
       prompt: "",
+      composer_controls_expanded: false,
       events,
       transport: self.transport.enqueue_many(commands),
       last_status: "Queued steering input for Pi RPC",
@@ -1324,6 +1331,7 @@ fn WorkbenchModel::dispatch_follow_up(self : WorkbenchModel) -> WorkbenchModel {
     {
       ..self,
       prompt: "",
+      composer_controls_expanded: false,
       events,
       transport: self.transport.enqueue_many(commands),
       last_status: "Queued follow-up input for Pi RPC",
