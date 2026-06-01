@@ -91,15 +91,17 @@ these facts recorded in logs:
   filtering,
   render target identity
   validation, render-frame unbalanced-state validation, missing-present
-  validation, bound target resource planning, window physical-size derivation,
-  frame pacing, frame-pacing key variation, present-mode key variation,
-  window-frame present finalization,
+  validation, missing-finalization validation, bound target resource planning,
+  window physical-size derivation, frame pacing, frame-pacing key variation,
+  present-mode key variation, window-frame present finalization,
   render-frame present descriptor validation, render-frame submission resource
-  planning, render-frame submission cache population, surface finalization
-  resource planning, surface finalization cache-key variation, GPU finalization
-  resource planning, surface present buffer-slot derivation, surface present
-  resource planning, GPU present resource planning, GPU-backed submission
-  subplans, render-frame touched bounds, resource-cache insertion, cache-plan coverage,
+  planning, render-frame submission cache population, render-frame finalization
+  resource planning, render-frame finalization cache population, surface
+  finalization resource planning, surface finalization cache-key variation, GPU
+  finalization resource planning, GPU frame finalization resource filtering,
+  surface present buffer-slot derivation, surface present resource planning, GPU
+  present resource planning, GPU-backed submission subplans, render-frame
+  touched bounds, resource-cache insertion, cache-plan coverage,
   hit/miss accounting, byte-budget behavior, and LRU eviction, surface flush-and-submit, shader
   draws, native/portable path geometry, text-run dependency planning,
   byte-range text-run resource keys, text measurement resource planning,
