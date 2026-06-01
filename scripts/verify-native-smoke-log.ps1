@@ -59,6 +59,7 @@ $defaultStageMarkers = @(
   "native smoke gpu context key variation",
   "native smoke gpu frame context validation",
   "native smoke gpu present resource plan count",
+  "native smoke gpu finalization resource plan count",
   "native smoke gpu frame submission resource plan count",
   "native smoke gpu frame submission gpu resource count",
   "native smoke surface target resource plan count",
@@ -67,6 +68,8 @@ $defaultStageMarkers = @(
   "native smoke window frame pacing",
   "native smoke window frame pacing key variation",
   "native smoke window present mode key variation",
+  "native smoke surface finalization resource plan count",
+  "native smoke surface finalization key variation",
   "native smoke surface present buffer index",
   "native smoke surface present resource plan count",
   "native smoke surface flush-and-submit",
@@ -229,6 +232,10 @@ $defaultExpectedStageValues = @(
     Value = "3"
   }
   [pscustomobject]@{
+    Marker = "native smoke gpu finalization resource plan count"
+    Value = "3"
+  }
+  [pscustomobject]@{
     Marker = "native smoke gpu frame submission resource plan count"
     Value = "3"
   }
@@ -258,6 +265,14 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke window present mode key variation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface finalization resource plan count"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface finalization key variation"
     Value = "1"
   }
   [pscustomobject]@{

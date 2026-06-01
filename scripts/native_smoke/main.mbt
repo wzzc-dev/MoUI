@@ -125,6 +125,10 @@ fn main {
   let smoke_gpu_plan = @skia.RenderCommandList::for_target(
     smoke_gpu_target,
   ).resource_plan()
+  let smoke_gpu_finalization = smoke_gpu_target.finalization_descriptor(
+    frame_index=2,
+  )
+  let smoke_gpu_finalization_plan = smoke_gpu_finalization.resource_plan()
   if !smoke_gpu_target.has_gpu_context() ||
     smoke_gpu_target_plan.length() != 2 ||
     smoke_gpu_target_plan.count_kind(@skia.GpuSurfaceResource) != 1 ||
@@ -135,6 +139,21 @@ fn main {
     !smoke_gpu_plan.contains_key(smoke_gpu_target.resource_key()) ||
     smoke_gpu_plan.contains_key(smoke_gpu_target.surface.resource_key()) {
     fail_smoke("gpu context resource plan did not include context and surface")
+  }
+  if !smoke_gpu_finalization.is_finalizable() ||
+    !smoke_gpu_finalization.requires_gpu_context() ||
+    smoke_gpu_finalization_plan.length() != 3 ||
+    smoke_gpu_finalization_plan.gpu_backed_count != 3 ||
+    smoke_gpu_finalization_plan.count_kind(@skia.GpuSurfaceResource) != 2 ||
+    smoke_gpu_finalization_plan.count_kind(@skia.GpuContextResource) != 1 ||
+    !smoke_gpu_finalization_plan.contains_key(smoke_gpu_target.resource_key()) ||
+    !smoke_gpu_finalization_plan.contains_key(
+      smoke_gpu_context.resource_key(),
+    ) ||
+    !smoke_gpu_finalization_plan.contains_key(
+      smoke_gpu_finalization.resource_key(),
+    ) {
+    fail_smoke("gpu finalization descriptor resource plan is invalid")
   }
   let smoke_gpu_frame = @skia.RenderCommandList::for_target(
     smoke_gpu_target,
@@ -214,6 +233,8 @@ fn main {
   }
   println("native smoke gpu present resource plan count")
   println(smoke_gpu_present_plan.length())
+  println("native smoke gpu finalization resource plan count")
+  println(smoke_gpu_finalization_plan.length())
   println("native smoke gpu frame submission resource plan count")
   println(smoke_gpu_submission.resource_plan.length())
   println("native smoke gpu frame submission gpu resource count")
@@ -227,6 +248,13 @@ fn main {
   )
   let smoke_window_target = smoke_window.target_descriptor()
   let smoke_window_plan = smoke_window.resource_plan()
+  let smoke_window_finalization = smoke_window_target.finalization_descriptor(
+    frame_index=3,
+  )
+  let smoke_window_next_finalization = smoke_window_target.finalization_descriptor(
+    frame_index=4,
+  )
+  let smoke_window_finalization_plan = smoke_window_finalization.resource_plan()
   let smoke_window_gpu_target = smoke_window.gpu_target_descriptor(
     gpu_context_key=Some(smoke_gpu_context.resource_key()),
   )
@@ -255,10 +283,29 @@ fn main {
     smoke_window_gpu_target.resource_plan().length() != 2 {
     fail_smoke("window surface descriptor did not derive target resources")
   }
+  if !smoke_window_finalization.is_finalizable() ||
+    smoke_window_finalization.requires_gpu_context() ||
+    smoke_window_finalization_plan.length() != 2 ||
+    smoke_window_finalization_plan.cacheable_count != 1 ||
+    smoke_window_finalization_plan.uncacheable_count != 1 ||
+    !smoke_window_finalization_plan.contains_key(
+      smoke_window_target.resource_key(),
+    ) ||
+    !smoke_window_finalization_plan.contains_key(
+      smoke_window_finalization.resource_key(),
+    ) ||
+    smoke_window_finalization.resource_key() ==
+    smoke_window_next_finalization.resource_key() {
+    fail_smoke("window finalization descriptor resource plan is invalid")
+  }
   println("native smoke window physical width")
   println(smoke_window.dimensions().width)
   println("native smoke window frame pacing")
   println(smoke_window_target.max_frames_in_flight)
+  println("native smoke surface finalization resource plan count")
+  println(smoke_window_finalization_plan.length())
+  println("native smoke surface finalization key variation")
+  println(1)
   println("native smoke window present mode key variation")
   println(1)
   println("native smoke window frame pacing key variation")

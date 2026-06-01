@@ -268,6 +268,7 @@ if ($status.schema_version -ge 3) {
     "gpu.context-key-variation",
     "gpu.frame-context-validation",
     "gpu.present-resource-plan",
+    "gpu.finalization-resource-plan",
     "gpu.frame-submission-resource-plan",
     "gpu.frame-submission-gpu-resources",
     "surface.target-resource-plan",
@@ -275,6 +276,8 @@ if ($status.schema_version -ge 3) {
     "surface.window-physical-width",
     "surface.window-frame-pacing",
     "surface.window-present-mode-key",
+    "surface.finalization-resource-plan",
+    "surface.finalization-key",
     "surface.flush-and-submit",
     "shader.draw",
     "shader.resource-plan",
@@ -473,6 +476,7 @@ if ($status.schema_version -ge 3) {
       "native smoke gpu context resource plan count" = "2"
       "native smoke gpu context key variation" = "1"
       "native smoke gpu frame context validation" = "1"
+      "native smoke gpu finalization resource plan count" = "3"
       "native smoke gpu frame submission resource plan count" = "3"
       "native smoke gpu frame submission gpu resource count" = "3"
       "native smoke surface target resource plan count" = "2"
@@ -480,6 +484,8 @@ if ($status.schema_version -ge 3) {
       "native smoke window physical width" = "16"
       "native smoke window frame pacing" = "2"
       "native smoke window present mode key variation" = "1"
+      "native smoke surface finalization resource plan count" = "2"
+      "native smoke surface finalization key variation" = "1"
       "native smoke surface flush-and-submit" = "1"
       "native smoke readback width" = "32"
       "native smoke readback height" = "32"
