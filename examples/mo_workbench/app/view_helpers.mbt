@@ -1119,7 +1119,9 @@ fn WorkbenchModel::has_transcript_panel_content(self : WorkbenchModel) -> Bool {
 
 ///|
 fn WorkbenchModel::has_activity_panel_content(self : WorkbenchModel) -> Bool {
-  self.should_show_focused_check_presets() || !self.events.is_empty()
+  self.should_show_focused_check_presets() ||
+  !self.events.is_empty() ||
+  !self.commands.is_empty()
 }
 
 ///|
@@ -2589,7 +2591,7 @@ fn WorkbenchModel::visible_activity_command_start(self : WorkbenchModel) -> Int 
 fn WorkbenchModel::should_show_focused_check_presets(
   self : WorkbenchModel,
 ) -> Bool {
-  !self.commands.is_empty() || !self.diagnostics.is_empty()
+  self.commands.is_empty() && self.visible_workspace_diagnostic_count() > 0
 }
 
 ///|
