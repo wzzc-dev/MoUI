@@ -101,6 +101,14 @@ $defaultExpectedStageValues = @(
     Value = "4"
   }
   [pscustomobject]@{
+    Marker = "native smoke canvas state restored"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke canvas replay commands"
+    Value = "8"
+  }
+  [pscustomobject]@{
     Marker = "native smoke render resource plan count"
     Value = "9"
   }
@@ -191,6 +199,14 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke bounded snapshot height"
     Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke filter layer count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke path verbs"
+    Value = "9"
   }
   [pscustomobject]@{
     Marker = "native smoke decoded image width"
