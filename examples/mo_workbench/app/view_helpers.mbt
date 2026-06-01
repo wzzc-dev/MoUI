@@ -288,7 +288,7 @@ fn WorkbenchModel::pinned_threads(
         layout,
         theme,
         selected=self.selected_session_id == session.id,
-        meta=session.status,
+        meta=sidebar_session_meta(session),
       ),
     )
   }
@@ -305,18 +305,18 @@ fn WorkbenchModel::workspace_summary(
   let pending = self.pending_transport_count()
   let rows : Array[@core.View[WorkbenchMsg]] = [
     text(
-      active.project_path,
-      role=Caption,
-      theme~,
-      width=layout.sidebar_inner_width - 30.0,
-      height=40.0,
-    ),
-    text(
-      active.branch,
+      project_display_label(active.project_path),
       role=Control,
       theme~,
       width=layout.sidebar_inner_width - 30.0,
-      height=26.0,
+      height=28.0,
+    ),
+    text(
+      active.branch,
+      role=Caption,
+      theme~,
+      width=layout.sidebar_inner_width - 30.0,
+      height=24.0,
     ),
   ]
   if pending > 0 {
@@ -333,7 +333,7 @@ fn WorkbenchModel::workspace_summary(
   surface(
     column(rows, spacing=2.0, align=Start),
     width=layout.sidebar_inner_width,
-    height=if pending > 0 { 116.0 } else { 90.0 },
+    height=if pending > 0 { 104.0 } else { 74.0 },
     background=ui_color(0.96, 0.96, 0.95),
     corner_radius=8.0,
     theme~,
@@ -925,7 +925,7 @@ fn WorkbenchModel::top_bar(
           height=30.0,
         ),
         text(
-          active.project_path,
+          project_display_label(active.project_path),
           role=Caption,
           theme~,
           width=layout.top_path_width,
@@ -950,6 +950,32 @@ fn WorkbenchModel::top_bar(
     theme~,
     padding=12.0,
   ).border(workbench_hairline_border())
+}
+
+///|
+fn sidebar_session_meta(session : WorkbenchSession) -> String {
+  session_status_label(session.status)
+}
+
+///|
+fn project_display_label(path : String) -> String {
+  let clean = path.trim().to_owned()
+  if clean == "" {
+    "未绑定工作区"
+  } else {
+    let chars = clean.to_array()
+    let mut start = 0
+    for index in 0..<chars.length() {
+      if chars[index] == '/' || chars[index] == '\\' {
+        start = index + 1
+      }
+    }
+    if start >= chars.length() {
+      clean
+    } else {
+      String::from_array(chars[start:])
+    }
+  }
 }
 
 ///|
