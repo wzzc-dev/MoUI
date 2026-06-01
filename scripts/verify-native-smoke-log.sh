@@ -24,7 +24,24 @@ if [[ ! -f "$log_path" ]]; then
   exit 1
 fi
 
-if ! grep -Fq "$marker" "$log_path"; then
+has_exact_line() {
+  local expected="$1"
+  awk -v expected="$expected" '
+    {
+      line = $0
+      sub(/^[[:space:]]+/, "", line)
+      sub(/[[:space:]]+$/, "", line)
+      if (line == expected) {
+        found = 1
+      }
+    }
+    END {
+      exit(found ? 0 : 1)
+    }
+  ' "$log_path"
+}
+
+if ! has_exact_line "$marker"; then
   echo "native smoke executable log is missing the success marker: $marker" >&2
   exit 1
 fi
@@ -151,7 +168,7 @@ PY
 fi
 
 for stage_marker in "${stage_markers[@]}"; do
-  if ! grep -Fq "$stage_marker" "$log_path"; then
+  if ! has_exact_line "$stage_marker"; then
     echo "native smoke executable log is missing required stage marker: $stage_marker" >&2
     exit 1
   fi

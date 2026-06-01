@@ -11,8 +11,23 @@ if (!(Test-Path -LiteralPath $LogPath)) {
   throw "native smoke executable log is missing: $LogPath"
 }
 
-$content = Get-Content -LiteralPath $LogPath -Raw
-if (!$content.Contains($Marker)) {
+$lines = @(Get-Content -LiteralPath $LogPath)
+
+function Test-ExactLogLine {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Expected
+  )
+
+  foreach ($line in $lines) {
+    if ($line.Trim() -eq $Expected) {
+      return $true
+    }
+  }
+  return $false
+}
+
+if (!(Test-ExactLogLine -Expected $Marker)) {
   throw "native smoke executable log is missing the success marker: $Marker"
 }
 
@@ -169,7 +184,7 @@ if (Test-Path -LiteralPath $statusFile -PathType Leaf) {
   }
 }
 foreach ($stageMarker in $stageMarkers) {
-  if (!$content.Contains($stageMarker)) {
+  if (!(Test-ExactLogLine -Expected $stageMarker)) {
     throw "native smoke executable log is missing required stage marker: $stageMarker"
   }
 }
@@ -180,7 +195,6 @@ function Get-MarkerValue {
     [string] $Marker
   )
 
-  $lines = Get-Content -LiteralPath $LogPath
   for ($index = 0; $index -lt $lines.Count; $index += 1) {
     if ($lines[$index].Trim() -eq $Marker) {
       if ($index + 1 -ge $lines.Count) {

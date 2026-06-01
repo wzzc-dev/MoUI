@@ -116,6 +116,20 @@ jobs:
           )
           PY
           bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-good.log
+          sed 's/^skia_mbt native smoke test passed$/not_skia_mbt native smoke test passed/' \
+            logs/fake-native-smoke-good.log \
+            > logs/fake-native-smoke-prefixed-success.log
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-prefixed-success.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a prefixed success marker" >&2
+            exit 1
+          fi
+          sed 's/^native smoke surface descriptor backend$/not_native smoke surface descriptor backend/' \
+            logs/fake-native-smoke-good.log \
+            > logs/fake-native-smoke-prefixed-stage.log
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-prefixed-stage.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a prefixed stage marker" >&2
+            exit 1
+          fi
           printf '%s\n' 'skia_mbt native smoke test passed' > logs/fake-native-smoke-missing-stage.log
           if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-missing-stage.log; then
             echo "verify-native-smoke-log unexpectedly accepted a missing stage marker" >&2
