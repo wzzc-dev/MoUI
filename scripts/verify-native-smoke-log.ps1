@@ -52,6 +52,7 @@ $defaultStageMarkers = @(
   "native smoke render resource cache misses",
   "native smoke render resource cache byte size",
   "native smoke gpu context resource plan count",
+  "native smoke gpu context key variation",
   "native smoke gpu frame context validation",
   "native smoke surface target resource plan count",
   "native smoke window target resource plan count",
@@ -178,6 +179,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke gpu context resource plan count"
     Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke gpu context key variation"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke gpu frame context validation"

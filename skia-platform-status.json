@@ -181,6 +181,11 @@
       "marker": "native smoke gpu context resource plan count"
     },
     {
+      "id": "gpu.context-key-variation",
+      "area": "GPU",
+      "marker": "native smoke gpu context key variation"
+    },
+    {
       "id": "gpu.frame-context-validation",
       "area": "GPU",
       "marker": "native smoke gpu frame context validation"
@@ -530,6 +535,11 @@
       "id": "gpu.context-resource-plan",
       "marker": "native smoke gpu context resource plan count",
       "value": "2"
+    },
+    {
+      "id": "gpu.context-key-variation",
+      "marker": "native smoke gpu context key variation",
+      "value": "1"
     },
     {
       "id": "gpu.frame-context-validation",
