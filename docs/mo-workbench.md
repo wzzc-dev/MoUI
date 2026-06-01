@@ -124,8 +124,9 @@ packages:
   failed command evidence, active plan steps, reviewable diffs, file context,
   transcript rows, command catalog entries, and latest activity events, then
   routes the chosen button back through the existing shared-app messages such
-  as `CancelRun`, `FixDiagnostic`, `InspectCommandRun`, `FollowActivity`,
-  `ReviewDiff`, `InspectFile`, `FollowTranscript`, or `InvokeCommand`.
+  as `CancelRun`, `FixDiagnostic`, `FixCommandRun`, `InspectCommandRun`,
+  `FollowActivity`, `ReviewDiff`, `InspectFile`, `FollowTranscript`, or
+  `InvokeCommand`.
 - Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for
   Pi through the existing platform-neutral `SendUserInput` path, so visible
   conversation evidence can become the next agent action without native-only
@@ -169,6 +170,11 @@ packages:
   native-only output-opening bridge. The digest shows up to three recent
   command evidence rows, so a focused-check batch remains visible while the
   newest bash result is still easy to act on.
+- Failed command evidence rows use a `修复` primary action that queues a
+  `Fix failed command ...` prompt through the same `SendUserInput` path,
+  carrying the output path when Pi provided one. This keeps the fix loop inside
+  the shared app model instead of adding an output-opening bridge or native-only
+  command shortcut.
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.

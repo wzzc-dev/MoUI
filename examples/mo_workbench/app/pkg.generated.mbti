@@ -304,6 +304,7 @@ pub(all) enum WorkbenchMsg {
   QueueCommand(String)
   QueueFocusedChecks
   InspectCommandRun(String, String, String, String)
+  FixCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
   FixDiagnostic(String, String, String)
   SyncSessionName
