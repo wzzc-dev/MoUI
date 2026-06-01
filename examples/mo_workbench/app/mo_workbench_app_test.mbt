@@ -2558,27 +2558,59 @@ test "workbench command completion updates command table state" {
 }
 
 ///|
-test "workbench activity draws latest command evidence" {
+test "workbench activity draws recent command evidence" {
   let model = {
     ..WorkbenchModel::new(),
     commands: [
-      CommandRun::new(id=1, command="old command", cwd="/repo", status="passed"),
+      CommandRun::new(
+        id=1,
+        command="stale command",
+        cwd="/repo",
+        status="passed",
+      ),
       CommandRun::new(
         id=2,
-        command="new command",
+        command="native check",
+        cwd="/repo",
+        status="passed",
+      ),
+      CommandRun::new(
+        id=3,
+        command="wasm check",
         cwd="/repo",
         status="failed",
         exit_code=Some(2),
-        output_path="/tmp/new-command.log",
+        output_path="/tmp/wasm-check.log",
       ),
+      CommandRun::new(id=4, command="skia build", cwd="/repo", status="queued"),
     ],
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "new command"))
-  assert_true(has_text(commands, "输出 /tmp/new-command.log"))
+  assert_true(has_text(commands, "native check"))
+  assert_true(has_text(commands, "wasm check"))
+  assert_true(has_text(commands, "skia build"))
+  assert_true(has_text(commands, "输出 /tmp/wasm-check.log"))
   assert_true(has_text(commands, "退出码 2"))
   assert_true(has_text(commands, "分析"))
-  assert_false(has_text(commands, "old command"))
+  assert_true(has_text(commands, "重跑"))
+  assert_false(has_text(commands, "stale command"))
+}
+
+///|
+test "workbench focused check batch stays visible in activity evidence" {
+  let model = WorkbenchModel::new().update(QueueFocusedChecks)
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(
+    has_text(commands, "moon test examples/mo_workbench/app --target native"),
+  )
+  assert_true(
+    has_text(commands, "moon test examples/mo_workbench/app --target wasm-gc"),
+  )
+  assert_true(
+    has_text(
+      commands, "moon build examples/mo_workbench/macos_skia --target native",
+    ),
+  )
 }
 
 ///|

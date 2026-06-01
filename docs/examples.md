@@ -287,7 +287,9 @@ rows display that output path when present, so long/truncated command output can
 stay discoverable without native-only state. Activity command rows can now queue
 an `Inspect command output for ...` prompt from the latest command status, cwd,
 and output path, turning bash evidence into the next Pi task through
-`SendUserInput`.
+`SendUserInput`. The Activity digest keeps up to three recent command evidence
+rows visible, so the focused-check batch can be inspected as a group without a
+separate log page.
 The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
@@ -296,7 +298,7 @@ and macOS Skia build. Each preset uses the same `QueueCommand` /
 `RunShellCommand` path, so checks started from the UI become normal Pi bash
 evidence. The `全部` action batches all three focused checks through one
 platform-neutral queue operation while preserving separate `CommandRun`
-evidence rows.
+evidence rows in that recent-command digest.
 It also surfaces the latest Pi/agent timeline event from shared app state, so
 streaming transport, tool, and RPC progress is visible next to command evidence
 without adding a separate log view.
