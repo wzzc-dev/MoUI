@@ -83,10 +83,11 @@ these facts recorded in logs:
   restore, canvas clipping, canvas command replay, render resource planning,
   GPU context
   resource planning, GPU frame context validation, render target identity
-  validation, render-frame unbalanced-state validation, bound target resource
-  planning, window-frame present finalization, render-frame touched bounds,
-  resource-cache insertion and LRU eviction, surface flush-and-submit, shader
-  draws, native/portable path geometry, text-run dependency planning,
+  validation, render-frame unbalanced-state validation, missing-present
+  validation, bound target resource planning, window-frame present finalization,
+  render-frame touched bounds, resource-cache insertion and LRU eviction,
+  surface flush-and-submit, shader draws, native/portable path geometry,
+  text-run dependency planning,
   byte-range text-run resource keys, UTF-8 text measurement, glyph count, glyph
   ID mapping, glyph advances, glyph positions, glyph bounds, text bounds
   measurement, SkShaper availability reporting, default typeface availability,
