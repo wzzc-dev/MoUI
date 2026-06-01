@@ -23,9 +23,9 @@ bash scripts/verify-platform-status.sh
 Schema v4 also records `ci_gates`: the canonical list of repository and artifact
 verification commands that must stay wired into CI. The status verifier checks
 that MoonBit checks/tests, all-target MoonBit compilation, native smoke build,
-FFI ownership, FFI borrow annotations, native fallback parity, platform status,
-native smoke log verification, and real-Skia artifact verification are all
-represented.
+native capability contract, FFI ownership, FFI borrow annotations, native
+fallback parity, platform status, native smoke log verification, and real-Skia
+artifact verification are all represented.
 
 The same status file records `native_smoke_capabilities`: the canonical list of
 smoke markers that must appear in every accepted native smoke executable log.

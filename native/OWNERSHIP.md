@@ -30,6 +30,23 @@ That verifier rejects any non-primitive extern parameter that is missing
 `#borrow(...)` or `#owned(...)`, plus stale annotations that name a primitive or
 unknown parameter.
 
+The release-facing capability gate ties these lower-level checks to runtime
+evidence:
+
+```bash
+bash scripts/verify-native-capability-contract.sh
+```
+
+```powershell
+.\scripts\verify-native-capability-contract.ps1
+```
+
+When adding a new native Canvas, Path, Text, Shader, Filter, GPU, or resource
+handle capability, update `native/capabilities.json` in the same patch. Each
+capability must name its native and unavailable MoonBit files, list any owned
+handles from `ownership.json`, and either point to native-smoke markers or
+record why runtime smoke evidence is not applicable.
+
 ## Ownership Kinds
 
 - `owned_delete`: the MoonBit external object owns a heap allocation and its

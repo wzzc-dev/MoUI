@@ -43,6 +43,12 @@
       "powershell_command": ".\\scripts\\verify-native-smoke-capabilities.ps1"
     },
     {
+      "id": "native.capability-contract",
+      "area": "FFI",
+      "unix_command": "bash scripts/verify-native-capability-contract.sh",
+      "powershell_command": ".\\scripts\\verify-native-capability-contract.ps1"
+    },
+    {
       "id": "native.ownership",
       "area": "FFI",
       "unix_command": "bash scripts/verify-native-ownership.sh",
