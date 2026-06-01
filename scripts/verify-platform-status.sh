@@ -131,6 +131,7 @@ if schema_version >= 4:
     required_gate_ids = {
         "moonbit.fmt-check",
         "moonbit.check-test",
+        "moonbit.all-target-check",
         "native.smoke-build",
         "native.smoke-capability-sync",
         "native.ownership",

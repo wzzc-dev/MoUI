@@ -219,6 +219,7 @@ try {
   moon fmt
   moon check --fmt
   moon check
+  moon check --target all
   if (!$SkipInfo) {
     moon info
   }

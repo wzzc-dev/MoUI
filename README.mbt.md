@@ -146,7 +146,9 @@ the dedicated smoke test:
 
 The fallback gate also verifies that each target-specific native MoonBit file
 has an unavailable fallback twin in `native/moon.pkg`, so new native bindings do
-not accidentally compile only on the linked Skia path.
+not accidentally compile only on the linked Skia path. CI also runs
+`moon check --target all` to keep the wasm/js fallback and native/LLVM target
+maps compileable together.
 
 ```text
 cd scripts/native_smoke

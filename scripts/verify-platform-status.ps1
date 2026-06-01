@@ -63,6 +63,7 @@ if ($status.schema_version -ge 4) {
   $requiredGateIds = @(
     "moonbit.fmt-check",
     "moonbit.check-test",
+    "moonbit.all-target-check",
     "native.smoke-build",
     "native.smoke-capability-sync",
     "native.ownership",

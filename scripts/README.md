@@ -10,10 +10,10 @@ machine-readable platform status; validate it with
 
 `skia-platform-status.json` schema v4 is also the source of truth for CI gate
 coverage and native smoke capability markers. Its `ci_gates` list records the
-MoonBit, native-smoke, FFI ownership, FFI borrow, native fallback parity,
-platform-status, and artifact verification commands that must stay wired into CI.
-`verify-native-smoke-log.*` reads its `native_smoke_capabilities` list so
-artifact verification checks the
+MoonBit, all-target MoonBit, native-smoke, FFI ownership, FFI borrow, native
+fallback parity, platform-status, and artifact verification commands that must
+stay wired into CI. `verify-native-smoke-log.*` reads its
+`native_smoke_capabilities` list so artifact verification checks the
 same Surface, Canvas, Pipeline, GPU, Shader, Filter, Path, Image, Codec, Bitmap,
 Text, and FontMgr boundaries that the platform status file claims.
 `verify-platform-status.*` also reads `ci_gate_evidence_files` and rejects a
