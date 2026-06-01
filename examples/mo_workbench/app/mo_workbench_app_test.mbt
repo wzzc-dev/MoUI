@@ -2559,11 +2559,71 @@ test "workbench current session draws diff next action" {
 }
 
 ///|
+test "workbench wide shell renders workflow rail from live evidence" {
+  let model = {
+    ..WorkbenchModel::new(),
+    plan: [
+      PlanStep::new(
+        id="draft",
+        title="整理功能亮点",
+        status="done",
+        owner="通用",
+        detail="收集 Pi RPC 证据",
+      ),
+      PlanStep::new(
+        id="merge",
+        title="合并最终输出",
+        status="in_progress",
+        owner="校验",
+        detail="对齐 Skia native route",
+      ),
+    ],
+    files: [
+      FileContext::new(
+        id="rail",
+        path="examples/mo_workbench/app/view_helpers.mbt",
+        summary="Workflow rail view composition",
+        change_kind="modified",
+        lines_changed=120,
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "进度"))
+  assert_true(has_text(commands, "1/2 完成"))
+  assert_true(has_text(commands, "整理功能亮点"))
+  assert_true(has_text(commands, "合并最终输出"))
+  assert_true(has_text(commands, "Agents"))
+  assert_true(has_text(commands, "计划所有者"))
+  assert_true(has_text(commands, "通用"))
+  assert_true(has_text(commands, "校验"))
+  assert_true(has_text(commands, "工作文件夹"))
+  assert_true(has_text(commands, "MoUI Skia renderer"))
+  assert_true(has_text(commands, "examples/mo_workbench/app/view_helpers.mbt"))
+  assert_true(has_text(commands, "Workflow rail view composition"))
+  assert_true(has_text(commands, "聚焦"))
+}
+
+///|
+test "workbench compact shell keeps workflow rail collapsed" {
+  let commands = @app.runtime(width=960.0, height=640.0).draw_commands()
+  assert_false(has_text(commands, "进度"))
+  assert_false(has_text(commands, "Agents"))
+  assert_false(has_text(commands, "工作文件夹"))
+}
+
+///|
 test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "Pi agent 桌面工作台"))
   assert_true(has_text(commands, "当前会话"))
+  assert_true(has_text(commands, "进度"))
+  assert_true(has_text(commands, "Agents"))
+  assert_true(has_text(commands, "工作文件夹"))
+  assert_true(has_text(commands, "等待 Pi 计划更新"))
+  assert_true(has_text(commands, "等待活动"))
+  assert_true(has_text(commands, "等待 Pi 文件证据"))
   assert_true(has_text(commands, "新会话"))
   assert_true(has_text(commands, "刷新"))
   assert_true(has_text(commands, "找分叉"))
