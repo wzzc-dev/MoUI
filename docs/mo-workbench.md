@@ -199,7 +199,10 @@ packages:
   shared app model instead of adding an output-opening bridge or native-only
   command shortcut. The session-panel `下一步` row mirrors the latest failed
   command's exit code and output path, keeping the next repair action
-  self-contained.
+  self-contained. When a Pi bash failure or cancellation already has visible
+  command evidence, the Workspace digest suppresses that duplicate bash
+  diagnostic row and leaves the Activity row plus `下一步` repair action as the
+  primary signal; unrelated structured diagnostics still surface normally.
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
@@ -360,9 +363,11 @@ packages:
   including the live Pi session name/id and model when Pi has reported them.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
-- The workspace digest surfaces the current diagnostics count and latest
-  diagnostic row, with a shared-app `ClearDiagnostics` action for clearing
-  visible Pi stderr/RPC/bash diagnostics without touching native process state.
+- The workspace digest surfaces the current visible diagnostics count and latest
+  non-duplicated diagnostic row, with a shared-app `ClearDiagnostics` action for
+  clearing visible Pi stderr/RPC/bash diagnostics without touching native
+  process state. Pi bash exit/cancel diagnostics stay in shared state but are
+  hidden from the digest when command evidence already shows the same failure.
 - Nonzero native process exits now emit `TransportFailed` with the exit code and
   the last stderr line, clear pending transport commands, and leave the app in a
   failed transport state instead of silently disconnecting.

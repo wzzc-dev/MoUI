@@ -2818,6 +2818,13 @@ test "workbench ingests Pi RPC bash failure into command diagnostics" {
   inspect(diagnostic.message, content="bash exited with code 2")
   inspect(model.last_status, content="Pi bash response applied")
   assert_true(model.events.any(event => event.title == "Pi bash completed"))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "运行证据"))
+  assert_true(has_text(commands, "moon check"))
+  assert_true(has_text(commands, "退出码 2"))
+  assert_false(has_text(commands, "工作区证据"))
+  assert_false(has_text(commands, "Pi bash"))
+  assert_false(has_text(commands, "bash exited with code 2"))
 }
 
 ///|
@@ -2848,6 +2855,13 @@ test "workbench ingests Pi RPC bash cancellation into command diagnostics" {
   inspect(diagnostic.message, content="bash command was cancelled")
   inspect(model.last_status, content="Pi bash response applied")
   assert_true(model.events.any(event => event.title == "Pi bash cancelled"))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "运行证据"))
+  assert_true(has_text(commands, "moon check"))
+  assert_true(has_text(commands, "已取消"))
+  assert_false(has_text(commands, "工作区证据"))
+  assert_false(has_text(commands, "Pi bash"))
+  assert_false(has_text(commands, "bash command was cancelled"))
 }
 
 ///|
@@ -3178,6 +3192,39 @@ test "workbench current session prioritizes failed command over bash diagnostic"
     draw_text_count_containing(commands, "输出 /tmp/mo-workbench-native.log") >=
     2,
   )
+  assert_false(has_text(commands, "工作区证据"))
+  assert_false(has_text(commands, "Pi bash"))
+  assert_false(has_text(commands, "bash exited with code 2"))
+}
+
+///|
+test "workbench workspace still shows structured diagnostics beside failed command" {
+  let model = {
+    ..WorkbenchModel::new(),
+    commands: [
+      CommandRun::new(
+        id=1,
+        command="moon test examples/mo_workbench/app --target native",
+        cwd="/Volumes/Data/Code/moon/MoUI",
+        status="failed",
+        exit_code=Some(2),
+        output_path="/tmp/mo-workbench-native.log",
+      ),
+    ],
+    diagnostics: [
+      DiagnosticItem::new(
+        source="moon check",
+        severity="error",
+        message="unused variable in app.mbt",
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "工作区证据"))
+  assert_true(has_text(commands, "1 诊断"))
+  assert_true(has_text(commands, "moon check"))
+  assert_true(has_text(commands, "unused variable in app.mbt"))
+  assert_true(has_text(commands, "修复失败命令"))
 }
 
 ///|

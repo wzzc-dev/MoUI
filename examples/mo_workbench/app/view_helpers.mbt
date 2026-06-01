@@ -1126,7 +1126,7 @@ fn WorkbenchModel::has_activity_panel_content(self : WorkbenchModel) -> Bool {
 fn WorkbenchModel::has_workspace_digest_content(self : WorkbenchModel) -> Bool {
   self.diff.has_context() ||
   !self.files.is_empty() ||
-  !self.diagnostics.is_empty()
+  self.visible_workspace_diagnostic_count() > 0
 }
 
 ///|
@@ -2910,6 +2910,7 @@ fn WorkbenchModel::workspace_digest_panel(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  let diagnostic_count = self.visible_workspace_diagnostic_count()
   let rows : Array[@core.View[WorkbenchMsg]] = [
     row(
       [
@@ -2928,13 +2929,13 @@ fn WorkbenchModel::workspace_digest_panel(
           width=86.0,
         ),
         count_badge(
-          self.open_diagnostic_count(),
-          label=self.open_diagnostic_count().to_string() + " 诊断",
-          tone=diagnostic_count_tone(self.open_diagnostic_count()),
+          diagnostic_count,
+          label=diagnostic_count.to_string() + " 诊断",
+          tone=diagnostic_count_tone(diagnostic_count),
           theme~,
           width=86.0,
         ),
-        self.clear_diagnostics_button(theme),
+        self.clear_diagnostics_button(diagnostic_count, theme),
         self.review_diff_button(theme),
       ],
       spacing=8.0,
@@ -2947,14 +2948,9 @@ fn WorkbenchModel::workspace_digest_panel(
   if !self.files.is_empty() {
     rows.push(file_context_row(self.files[0], layout, theme))
   }
-  if !self.diagnostics.is_empty() {
-    rows.push(
-      diagnostic_row(
-        self.diagnostics[self.diagnostics.length() - 1],
-        layout,
-        theme,
-      ),
-    )
+  match self.latest_visible_workspace_diagnostic() {
+    Some(diagnostic) => rows.push(diagnostic_row(diagnostic, layout, theme))
+    None => ()
   }
   surface(
     column(rows, spacing=7.0, align=Start),
@@ -2981,10 +2977,60 @@ fn WorkbenchModel::workspace_digest_panel_row_count(
   if !self.files.is_empty() {
     count = count + 1
   }
-  if !self.diagnostics.is_empty() {
+  if self.visible_workspace_diagnostic_count() > 0 {
     count = count + 1
   }
   count
+}
+
+///|
+fn WorkbenchModel::visible_workspace_diagnostic_count(
+  self : WorkbenchModel,
+) -> Int {
+  let mut count = 0
+  for diagnostic in self.diagnostics {
+    if !self.workspace_diagnostic_is_command_shadow(diagnostic) {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
+fn WorkbenchModel::latest_visible_workspace_diagnostic(
+  self : WorkbenchModel,
+) -> DiagnosticItem? {
+  let mut latest : DiagnosticItem? = None
+  for diagnostic in self.diagnostics {
+    if !self.workspace_diagnostic_is_command_shadow(diagnostic) {
+      latest = Some(diagnostic)
+    }
+  }
+  latest
+}
+
+///|
+fn WorkbenchModel::workspace_diagnostic_is_command_shadow(
+  self : WorkbenchModel,
+  diagnostic : DiagnosticItem,
+) -> Bool {
+  let source = diagnostic.source.trim().to_owned()
+  let message = diagnostic.message.trim().to_owned()
+  source == "Pi bash" &&
+  (
+    (message.contains("bash exited with code") && self.has_failed_command()) ||
+    (message == "bash command was cancelled" && self.has_cancelled_command())
+  )
+}
+
+///|
+fn WorkbenchModel::has_failed_command(self : WorkbenchModel) -> Bool {
+  self.commands.any(command => command.status == "failed")
+}
+
+///|
+fn WorkbenchModel::has_cancelled_command(self : WorkbenchModel) -> Bool {
+  self.commands.any(command => command.status == "cancelled")
 }
 
 ///|
@@ -3008,9 +3054,11 @@ fn diagnostic_count_tone(count : Int) -> @views.BadgeTone {
 ///|
 fn WorkbenchModel::clear_diagnostics_button(
   self : WorkbenchModel,
+  diagnostic_count : Int,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  if self.open_diagnostic_count() == 0 {
+  ignore(self)
+  if diagnostic_count == 0 {
     blank_cell(width=58.0, height=34.0)
   } else {
     button(
