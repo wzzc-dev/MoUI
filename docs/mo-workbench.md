@@ -115,7 +115,7 @@ packages:
 - Wide Workbench windows now add a screenshot-style right workflow rail beside
   the conversation canvas only when there is live evidence to summarize. The
   rail is still driven only by shared app state: `进度` summarizes live
-  `PlanStep` rows, `Agents` reflects plan owners or recent activity events, and
+  `PlanStep` rows, `执行` reflects plan owners or recent activity events, and
   `工作文件夹` shows the active project plus the latest file evidence. Empty or
   compact windows collapse the rail and keep the conversation flow primary.
 - Agent focus controls for `通用`, `编码`, and `校验` now live in the composer's
