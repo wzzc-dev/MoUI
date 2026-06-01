@@ -173,12 +173,13 @@ evidence exists, with Pi/RPC left as protocol nouns. Default chrome uses short
 project names and signal-bearing localized session status labels while keeping
 full `project_path` values in the shared model and transport commands. The default
 shell keeps only top-bar refresh/new-session controls and the composer input
-prominent, while submit actions appear once typed input exists. Active/idle
-session rows omit status meta instead of showing fake active, queue, or idle
-labels; context chips, the idle Pi RPC footer, the
-`Pi 运行状态` panel, agent focus controls, advanced session actions, steering /
-follow-up composer controls, and focused-check presets appear once Pi state,
-typed input, non-default context, or command evidence makes them relevant. The workspace
+prominent, while typed input adds a compact `选项`/`发送` row instead of opening
+every secondary control. Active/idle session rows omit status meta instead of
+showing fake active, queue, or idle labels; context chips, the idle Pi RPC
+footer, the `Pi 运行状态` panel, agent focus controls, advanced session actions,
+steering / follow-up composer controls, and focused-check presets appear once
+Pi state, expanded composer options, non-default context, selected focus, or
+command evidence makes them relevant. The workspace
 digest now includes file, diff, and latest diagnostic state with a short clear
 action so stderr/RPC/bash failures remain visible without adding a separate
 diagnostics page. When actionable evidence is present, the current session panel
@@ -202,14 +203,15 @@ Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
 the shared prompt transport, turning visible Pi conversation evidence into the
 next agent task. The default sidebar now stays focused on sessions and
 workspace identity; lightweight `通用`, `编码`, and `校验` focus controls move
-into the composer's `焦点` row and appear only while composing or when a focus is
-selected. Selecting one only appends an `agent focus: ...` hint to the existing
-platform-neutral prompt, steering, and follow-up text payloads.
+into the composer's optional `焦点` row and appear only after opening composer
+options or when a focus is selected. Selecting one only appends an
+`agent focus: ...` hint to the existing platform-neutral prompt, steering, and
+follow-up text payloads.
 The composer exposes repository, examples, evidence, and Pi session context
-chips on demand while composing, after selecting a focus, or after changing the
-default context; direct prompt, steering, and follow-up submits still prefix the
-selected scopes into the same platform-neutral text payloads, while turning all
-chips off sends the raw input. Activity timeline rows can queue a
+chips after opening composer options, after selecting a focus, or after
+changing the default context; direct prompt, steering, and follow-up submits
+still prefix the selected scopes into the same platform-neutral text payloads,
+while turning all chips off sends the raw input. Activity timeline rows can queue a
 `Follow up on <phase> activity: ...` prompt the same way, so visible Pi RPC,
 stderr, tool, and stream events can become the next agent action. File context
 rows can queue an `Inspect <path>` prompt through the same platform-neutral
@@ -287,10 +289,10 @@ diagnostics.
 `cycle_thinking_level` responses and `thinking_level_changed` events keep the
 compact `思考` control and
 `PiAgentSnapshot` aligned. `set_steering_mode` and `set_follow_up_mode`
-responses acknowledge the compact composer controls, while `get_state` refreshes
-the source-of-truth modes from Pi. The composer can also send explicit
-platform-neutral steering and follow-up inputs that the native encoder maps to
-Pi RPC `steer` and `follow_up`. `set_session_name` responses and
+responses acknowledge the compact optional composer controls, while `get_state`
+refreshes the source-of-truth modes from Pi. Expanded composer options can also
+send explicit platform-neutral steering and follow-up inputs that the native
+encoder maps to Pi RPC `steer` and `follow_up`. `set_session_name` responses and
 `session_info_changed` events keep the Workbench-to-Pi session binding display
 name in sync, while RPC failures become diagnostics without leaking native
 process details into the app model.

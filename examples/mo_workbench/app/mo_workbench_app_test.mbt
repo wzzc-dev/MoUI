@@ -2,8 +2,10 @@
 test "workbench dispatch queues prompt for selected session" {
   let model = WorkbenchModel::new()
     .update(PromptChanged("Inspect the Skia renderer route"))
+    .update(ToggleComposerControls)
     .update(DispatchPrompt)
   inspect(model.prompt, content="")
+  inspect(model.composer_controls_expanded, content="false")
   inspect(model.last_status, content="Queued prompt for Pi JSONL RPC")
   inspect(model.pending_transport_count(), content="2")
   match model.transport.command_queue[0] {
@@ -133,8 +135,10 @@ test "workbench transport runtime effect dispatches prompt events" {
 test "workbench dispatch queues steering and follow-up inputs" {
   let steering = WorkbenchModel::new()
     .update(PromptChanged("Prefer the Skia route"))
+    .update(ToggleComposerControls)
     .update(DispatchSteering)
   inspect(steering.prompt, content="")
+  inspect(steering.composer_controls_expanded, content="false")
   inspect(steering.last_status, content="Queued steering input for Pi RPC")
   inspect(steering.pending_transport_count(), content="2")
   match steering.transport.command_queue[1] {
@@ -149,8 +153,10 @@ test "workbench dispatch queues steering and follow-up inputs" {
   )
   let follow_up = WorkbenchModel::new()
     .update(PromptChanged("Run the focused checks next"))
+    .update(ToggleComposerControls)
     .update(DispatchFollowUp)
   inspect(follow_up.prompt, content="")
+  inspect(follow_up.composer_controls_expanded, content="false")
   inspect(follow_up.last_status, content="Queued follow-up input for Pi RPC")
   inspect(follow_up.pending_transport_count(), content="2")
   match follow_up.transport.command_queue[1] {
@@ -3365,9 +3371,26 @@ test "workbench evidence panels mount only when content arrives" {
 }
 
 ///|
-test "workbench composer reveals secondary actions while composing" {
+test "workbench composer keeps ordinary prompts low noise" {
   let commands = WorkbenchModel::new()
     .update(PromptChanged("Run focused checks"))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(commands, "选项"))
+  assert_true(has_text(commands, "发送"))
+  assert_false(has_text(commands, "上下文"))
+  assert_false(has_text(commands, "焦点"))
+  assert_false(has_text(commands, "引导 单条"))
+  assert_false(has_text(commands, "跟进 单条"))
+  assert_false(has_text(commands, "引导"))
+  assert_false(has_text(commands, "跟进"))
+}
+
+///|
+test "workbench composer reveals secondary actions after options expand" {
+  let commands = WorkbenchModel::new()
+    .update(PromptChanged("Run focused checks"))
+    .update(ToggleComposerControls)
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
   assert_true(has_text(commands, "上下文"))
@@ -3379,6 +3402,7 @@ test "workbench composer reveals secondary actions while composing" {
   assert_true(has_text(commands, "跟进 单条"))
   assert_true(has_text(commands, "引导"))
   assert_true(has_text(commands, "跟进"))
+  assert_true(has_text(commands, "收起"))
   assert_true(has_text(commands, "发送"))
 }
 
@@ -3396,9 +3420,10 @@ test "workbench composer reveals context chips for non-default context" {
 }
 
 ///|
-test "workbench composer reveals agent focus controls while composing" {
+test "workbench composer reveals agent focus controls in options" {
   let commands = WorkbenchModel::new()
     .update(PromptChanged("Implement the focused slice"))
+    .update(ToggleComposerControls)
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
   assert_true(has_text(commands, "焦点"))
