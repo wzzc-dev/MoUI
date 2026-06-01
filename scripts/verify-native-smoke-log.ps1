@@ -44,6 +44,8 @@ $defaultStageMarkers = @(
   "native smoke render target resource binding",
   "native smoke render frame present count",
   "native smoke render frame present descriptor validation",
+  "native smoke render frame submission resource plan count",
+  "native smoke render frame submission cache resources",
   "native smoke render frame missing present validation",
   "native smoke render frame touched bounds width",
   "native smoke render frame cache resources",
@@ -158,6 +160,14 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke render frame present descriptor validation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame submission resource plan count"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame submission cache resources"
     Value = "1"
   }
   [pscustomobject]@{
