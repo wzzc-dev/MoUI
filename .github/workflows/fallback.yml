@@ -309,7 +309,7 @@ jobs:
             echo "pin-skia-revision unexpectedly accepted a missing restore field" >&2
             exit 1
           fi
-          mkdir -p logs/fake-artifact logs/fake-artifact-missing-preflight logs/fake-artifact-missing-wrapper-field logs/fake-artifact-missing-build-reference logs/fake-artifact-mismatched-acceptance-commit logs/fake-artifact-mismatched-build-commit
+          mkdir -p logs/fake-artifact logs/fake-artifact-prefixed-wrapper-field logs/fake-artifact-prefixed-wrapper-build-log logs/fake-artifact-prefixed-build-field logs/fake-artifact-missing-preflight logs/fake-artifact-missing-wrapper-field logs/fake-artifact-missing-build-reference logs/fake-artifact-mismatched-acceptance-commit logs/fake-artifact-mismatched-build-commit
           printf '%s\n' 'Linux Skia dry-run preflight' \
             > logs/fake-artifact/linux-real-skia-smoke-preflight.log
           printf '%s\n' \
@@ -349,6 +349,39 @@ jobs:
             '  acceptance_log=logs/fake-artifact/linux-real-skia-acceptance.log' \
             > logs/fake-artifact/linux-real-skia-acceptance.log
           bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact --require-commit
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-prefixed-wrapper-field/linux-real-skia-smoke-preflight.log
+          sed 's/skia_include=/not_skia_include=/' \
+            logs/fake-artifact/linux-real-skia-smoke.log \
+            > logs/fake-artifact-prefixed-wrapper-field/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-prefixed-wrapper-field/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-prefixed-wrapper-field/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-prefixed-wrapper-field/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-prefixed-wrapper-field --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a prefixed wrapper field" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-prefixed-wrapper-build-log/linux-real-skia-smoke-preflight.log
+          sed 's/build_log=/not_build_log=/' \
+            logs/fake-artifact/linux-real-skia-smoke.log \
+            > logs/fake-artifact-prefixed-wrapper-build-log/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-prefixed-wrapper-build-log/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-prefixed-wrapper-build-log/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-prefixed-wrapper-build-log/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-prefixed-wrapper-build-log --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a prefixed wrapper build_log field" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-prefixed-build-field/linux-real-skia-smoke-preflight.log
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-prefixed-build-field/linux-real-skia-smoke.log
+          sed 's/skia_checkout=/not_skia_checkout=/' \
+            logs/fake-artifact/linux-skia-build.log \
+            > logs/fake-artifact-prefixed-build-field/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-prefixed-build-field/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-prefixed-build-field/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-prefixed-build-field --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a prefixed source build field" >&2
+            exit 1
+          fi
           mkdir -p logs/fake-jetbrains-linux logs/fake-jetbrains-linux-bad-sha
           printf '%s\n' 'Linux JetBrains Skia dry-run preflight' \
             > logs/fake-jetbrains-linux/linux-real-skia-smoke-preflight.log
