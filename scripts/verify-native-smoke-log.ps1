@@ -34,6 +34,7 @@ if (!(Test-ExactLogLine -Expected $Marker)) {
 $defaultStageMarkers = @(
   "native smoke surface descriptor backend",
   "native smoke canvas state restored",
+  "native smoke canvas clip device width",
   "native smoke canvas replay commands",
   "native smoke render resource plan count",
   "native smoke render frame resource plan count",
@@ -79,6 +80,10 @@ $defaultStageMarkers = @(
   "native smoke font fallback width"
 )
 $defaultExpectedStageValues = @(
+  [pscustomobject]@{
+    Marker = "native smoke canvas clip device width"
+    Value = "4"
+  }
   [pscustomobject]@{
     Marker = "native smoke render resource plan count"
     Value = "9"

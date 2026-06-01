@@ -269,6 +269,8 @@ fn main {
   if device_clip != @skia.IRect::from_xywh(28, 14, 4, 4) {
     fail_smoke("canvas device clip bounds do not match clipped rect")
   }
+  println("native smoke canvas clip device width")
+  println(device_clip.width())
   canvas.draw_rect(
     @skia.Rect::from_xywh(0, 0, 32, 32),
     @skia.Paint::new(color=@skia.Color::black()),
