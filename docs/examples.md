@@ -298,7 +298,9 @@ and macOS Skia build. Each preset uses the same `QueueCommand` /
 `RunShellCommand` path, so checks started from the UI become normal Pi bash
 evidence. The `全部` action batches all three focused checks through one
 platform-neutral queue operation while preserving separate `CommandRun`
-evidence rows in that recent-command digest.
+evidence rows in that recent-command digest. Generic Pi `bash` responses are
+applied to the next queued/running command, so batched focused-check evidence
+keeps the same FIFO order as the UI queue.
 It also surfaces the latest Pi/agent timeline event from shared app state, so
 streaming transport, tool, and RPC progress is visible next to command evidence
 without adding a separate log view.

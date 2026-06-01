@@ -297,12 +297,13 @@ packages:
   Successful `set_session_name` responses mark the session-name sync as
   acknowledged; the preceding
   `session_info_changed` event carries the actual display name and updates
-  `PiSessionBinding`. Successful `bash` responses mark the latest
-  queued/running Workbench command as passed, failed, or cancelled and add
-  diagnostics for nonzero, missing, truncated, or cancelled output. Visible bash
-  evidence can be sent back as a prompt for analysis through the same app-layer
-  command path. Failed RPC responses append a diagnostic without involving the
-  native transport layer.
+  `PiSessionBinding`. Successful `bash` responses mark the next queued/running
+  Workbench command as passed, failed, or cancelled, preserving FIFO attribution
+  for batched checks even when Pi's response only says `command: "bash"`, and
+  add diagnostics for nonzero, missing, truncated, or cancelled output. Visible
+  bash evidence can be sent back as a prompt for analysis through the same
+  app-layer command path. Failed RPC responses append a diagnostic without
+  involving the native transport layer.
 - Pi RPC session event ingestion for the real streaming protocol. The shared
   app now recognizes `agent_start` / `agent_end`, `turn_start` / `turn_end`,
   `message_start` / `message_update` / `message_end`, `tool_execution_*`,
