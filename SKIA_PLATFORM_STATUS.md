@@ -89,11 +89,11 @@ these facts recorded in logs:
   draws, native/portable path geometry, text-run dependency planning,
   byte-range text-run resource keys, UTF-8 text measurement, glyph count, glyph
   ID mapping, glyph advances, glyph positions, glyph bounds, text bounds
-  measurement, SkShaper availability reporting, font resource planning, font
-  metrics, font family enumeration, native typeface family metadata, FontMgr
-  character fallback, font fallback cache-key variation, font fallback family
-  metadata, font fallback resource planning, and shader/filter resource
-  planning.
+  measurement, SkShaper availability reporting, default typeface availability,
+  font resource planning, font metrics, font family enumeration, native typeface
+  family metadata, FontMgr character fallback, font fallback cache-key
+  variation, font fallback family metadata, font fallback resource planning, and
+  shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.

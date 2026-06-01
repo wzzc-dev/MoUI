@@ -100,6 +100,7 @@ default_stage_markers=(
   "native smoke first glyph bounds width" \
   "native smoke measured text bounds width" \
   "native smoke shaper availability" \
+  "native smoke default typeface availability" \
   "native smoke font family count" \
   "native smoke first font family bytes" \
   "native smoke typeface family bytes" \

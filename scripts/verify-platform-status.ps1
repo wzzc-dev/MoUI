@@ -295,6 +295,7 @@ if ($status.schema_version -ge 3) {
     "text.glyph-bounds",
     "text.bounds",
     "text.shaper-availability",
+    "text.default-typeface-availability",
     "fontmgr.family-count",
     "fontmgr.family-name",
     "fontmgr.typeface-family",
