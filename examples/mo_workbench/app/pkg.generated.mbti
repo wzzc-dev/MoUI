@@ -93,6 +93,12 @@ pub(all) struct PiCommandInfo {
 } derive(Eq, @debug.Debug)
 pub fn PiCommandInfo::new(name~ : String, source~ : String, description~ : String, source_scope~ : String, source_path~ : String) -> Self
 
+pub(all) struct PiForkMessage {
+  entry_id : String
+  text : String
+} derive(Eq, @debug.Debug)
+pub fn PiForkMessage::new(entry_id~ : String, text~ : String) -> Self
+
 pub(all) struct PiRpcSnapshot {
   command : String
   success : Bool
@@ -146,8 +152,10 @@ pub(all) enum PiTransportCommand {
   NewRpcSession(String)
   SwitchRpcSession(String, String)
   FetchRpcMessages(String)
+  FetchRpcForkMessages(String)
   FetchRpcCommands(String)
   FetchRpcSessionStats(String)
+  ForkRpcSession(String, String)
   CycleRpcThinkingLevel(String)
   SetRpcSteeringMode(String, String)
   SetRpcFollowUpMode(String, String)
@@ -233,6 +241,7 @@ pub(all) struct WorkbenchModel {
   events : Array[AgentEvent]
   transcript : Array[TranscriptItem]
   command_catalog : Array[PiCommandInfo]
+  fork_messages : Array[PiForkMessage]
   pi_session_stats : PiSessionStatsSnapshot
   files : Array[FileContext]
   diff : DiffOverview
@@ -268,6 +277,8 @@ pub(all) enum WorkbenchMsg {
   RefreshSession
   ReceiveTransport(PiTransportEvent)
   NewSession
+  RefreshForkMessages
+  ForkFromMessage(String)
   QueueCommand(String)
   InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)

@@ -386,7 +386,7 @@ test "workbench diagnostic fix runtime effect dispatches prompt" {
 test "workbench refreshes current Pi session through platform-neutral commands" {
   let model = WorkbenchModel::new().update(RefreshSession)
   inspect(model.last_status, content="Pi session refresh queued")
-  inspect(model.pending_transport_count(), content="4")
+  inspect(model.pending_transport_count(), content="5")
   match model.transport.command_queue[0] {
     StartRpc(session, cwd) => {
       inspect(session, content="moui-skia")
@@ -399,10 +399,14 @@ test "workbench refreshes current Pi session through platform-neutral commands" 
     _ => fail("expected queued messages refresh")
   }
   match model.transport.command_queue[2] {
+    FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued fork messages refresh")
+  }
+  match model.transport.command_queue[3] {
     FetchRpcCommands(session) => inspect(session, content="moui-skia")
     _ => fail("expected queued command catalog refresh")
   }
-  match model.transport.command_queue[3] {
+  match model.transport.command_queue[4] {
     FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
     _ => fail("expected queued session stats refresh")
   }
@@ -419,6 +423,7 @@ test "workbench refresh runtime effect dispatches current session batch" {
     emit(ProcessStarted("fixture-pid"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_messages\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_fork_messages\"}"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_commands\"}"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_session_stats\"}"))
   })
@@ -427,9 +432,9 @@ test "workbench refresh runtime effect dispatches current session batch" {
     transport,
   )
   inspect(captured.val.length(), content="0")
-  inspect(update.model.pending_transport_count(), content="4")
+  inspect(update.model.pending_transport_count(), content="5")
   let model = run_workbench_effect(update)
-  inspect(captured.val.length(), content="4")
+  inspect(captured.val.length(), content="5")
   match captured.val[0] {
     StartRpc(session, _) => inspect(session, content="moui-skia")
     _ => fail("expected captured state refresh")
@@ -439,10 +444,14 @@ test "workbench refresh runtime effect dispatches current session batch" {
     _ => fail("expected captured messages refresh")
   }
   match captured.val[2] {
+    FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured fork messages refresh")
+  }
+  match captured.val[3] {
     FetchRpcCommands(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured commands refresh")
   }
-  match captured.val[3] {
+  match captured.val[4] {
     FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured stats refresh")
   }
@@ -480,6 +489,7 @@ test "workbench new session runtime effect binds refreshed Pi state" {
       StartRpc(_, _) => {
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_messages\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_fork_messages\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_commands\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_session_stats\"}"))
         emit(
@@ -507,7 +517,7 @@ test "workbench new session runtime effect binds refreshed Pi state" {
     NewRpcSession(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured new session request")
   }
-  inspect(captured.val[1].length(), content="4")
+  inspect(captured.val[1].length(), content="5")
   match captured.val[1][0] {
     StartRpc(session, cwd) => {
       inspect(session, content="moui-skia")
@@ -520,10 +530,14 @@ test "workbench new session runtime effect binds refreshed Pi state" {
     _ => fail("expected captured message refresh")
   }
   match captured.val[1][2] {
+    FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured fork messages refresh")
+  }
+  match captured.val[1][3] {
     FetchRpcCommands(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured command refresh")
   }
-  match captured.val[1][3] {
+  match captured.val[1][4] {
     FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured stats refresh")
   }
@@ -572,6 +586,183 @@ test "workbench new session cancellation does not refresh Pi state" {
   inspect(binding.status, content="cancelled")
   inspect(binding.last_command, content="new_session")
   inspect(model.last_status, content="Pi new session cancelled")
+}
+
+///|
+test "workbench queues Pi fork discovery through platform-neutral commands" {
+  let model = WorkbenchModel::new().update(RefreshForkMessages)
+  inspect(model.last_status, content="Pi fork discovery queued")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued fork discovery")
+  }
+  assert_true(
+    model.events.any(event => event.title == "Pi fork discovery queued"),
+  )
+}
+
+///|
+test "workbench ingests Pi RPC fork candidates" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_fork_messages","success":true,"data":{"messages":[{"entryId":"entry-user-1","text":"Inspect the Skia route"},{"entryId":"entry-user-2","text":"Run renderer smoke"}]}}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="get_fork_messages")
+  inspect(model.fork_messages.length(), content="2")
+  inspect(model.fork_messages[0].entry_id, content="entry-user-1")
+  inspect(model.fork_messages[0].text, content="Inspect the Skia route")
+  inspect(model.fork_messages[1].entry_id, content="entry-user-2")
+  inspect(model.last_status, content="Pi fork messages refreshed")
+  assert_true(
+    model.events.any(event => event.title == "Pi fork messages refreshed"),
+  )
+}
+
+///|
+test "workbench runtime draws fork affordance after Pi fork candidates" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_fork_messages","success":true,"data":{"messages":[{"entryId":"entry-user-1","text":"Inspect the Skia route"}]}}
+        ),
+      ),
+    ),
+  )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "1 forks"))
+  assert_true(has_text(commands, "Fork point"))
+  assert_true(has_text(commands, "Inspect the Skia route"))
+  assert_true(has_text(commands, "分支"))
+}
+
+///|
+test "workbench queues Pi fork from selected message entry" {
+  let model = WorkbenchModel::new().update(ForkFromMessage("entry-user-1"))
+  inspect(model.last_status, content="Pi fork queued")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[1] {
+    ForkRpcSession(session, entry_id) => {
+      inspect(session, content="moui-skia")
+      inspect(entry_id, content="entry-user-1")
+    }
+    _ => fail("expected queued fork command")
+  }
+  assert_true(model.events.any(event => event.title == "Pi fork queued"))
+}
+
+///|
+test "workbench fork runtime effect refreshes Pi state after accepted fork" {
+  let captured : Ref[Array[Array[PiTransportCommand]]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val.push(commands)
+    emit(ProcessStarted("fixture-pid"))
+    match commands[0] {
+      ForkRpcSession(_, _) => {
+        emit(
+          JsonLineSent(
+            "moui-skia", "{\"type\":\"fork\",\"entryId\":\"entry-user-1\"}",
+          ),
+        )
+        emit(
+          JsonLineReceived(
+            "moui-skia", "{\"type\":\"response\",\"command\":\"fork\",\"success\":true,\"data\":{\"text\":\"Inspect the Skia route\",\"cancelled\":false}}",
+          ),
+        )
+      }
+      StartRpc(_, _) => {
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_messages\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_fork_messages\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_commands\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_session_stats\"}"))
+        emit(
+          JsonLineReceived(
+            "moui-skia",
+            (
+              #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e81f0","sessionFile":"/tmp/mo-workbench-fork.jsonl","sessionName":"Mo Workbench fork","messageCount":1,"pendingMessageCount":0}}
+            ),
+          ),
+        )
+      }
+      _ => emit(TransportFailed("unexpected fork command batch"))
+    }
+  })
+  let update = WorkbenchModel::new()
+    .update(ReceiveTransport(ProcessStarted("fixture-pid")))
+    .update_with_transport(ForkFromMessage("entry-user-1"), transport)
+  inspect(update.model.pending_transport_count(), content="1")
+  let model = run_workbench_effect_with_transport(update, transport)
+  inspect(captured.val.length(), content="2")
+  match captured.val[0][0] {
+    ForkRpcSession(session, entry_id) => {
+      inspect(session, content="moui-skia")
+      inspect(entry_id, content="entry-user-1")
+    }
+    _ => fail("expected captured fork request")
+  }
+  inspect(captured.val[1].length(), content="5")
+  match captured.val[1][2] {
+    FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured fork messages refresh")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  let binding = model.active_pi_session_binding()
+  inspect(binding.rpc_session_id, content="019e81f0")
+  inspect(binding.session_file, content="/tmp/mo-workbench-fork.jsonl")
+  inspect(binding.session_name, content="Mo Workbench fork")
+  inspect(binding.status, content="bound")
+  inspect(binding.last_command, content="get_state")
+  inspect(model.last_status, content="Pi RPC response applied")
+  assert_true(model.events.any(event => event.title == "Pi fork accepted"))
+  assert_true(
+    model.events.any(event => event.title == "Pi fork refresh queued"),
+  )
+}
+
+///|
+test "workbench fork cancellation does not refresh Pi state" {
+  let captured : Ref[Array[Array[PiTransportCommand]]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val.push(commands)
+    emit(ProcessStarted("fixture-pid"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"fork\",\"entryId\":\"entry-user-1\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"fork\",\"success\":true,\"data\":{\"text\":\"Inspect the Skia route\",\"cancelled\":true}}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new()
+    .update(ReceiveTransport(ProcessStarted("fixture-pid")))
+    .update_with_transport(ForkFromMessage("entry-user-1"), transport)
+  let model = run_workbench_effect_with_transport(update, transport)
+  inspect(captured.val.length(), content="1")
+  inspect(captured.val[0].length(), content="1")
+  inspect(model.pending_transport_count(), content="0")
+  let binding = model.active_pi_session_binding()
+  inspect(binding.status, content="cancelled")
+  inspect(binding.last_command, content="fork")
+  inspect(model.last_status, content="Pi fork cancelled")
 }
 
 ///|
@@ -1027,7 +1218,7 @@ test "workbench cancel runtime effect dispatches Pi RPC abort_bash command" {
 }
 
 ///|
-test "workbench selection with transport switches Pi session then refreshes state, commands, and stats" {
+test "workbench selection with transport switches Pi session then refreshes state, fork points, commands, and stats" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, _emit) => {
     captured.val = commands
@@ -1037,9 +1228,9 @@ test "workbench selection with transport switches Pi session then refreshes stat
     transport,
   )
   inspect(update.model.selected_session_id, content="pi-rpc")
-  inspect(update.model.pending_transport_count(), content="5")
+  inspect(update.model.pending_transport_count(), content="6")
   let model = run_workbench_effect(update)
-  inspect(captured.val.length(), content="5")
+  inspect(captured.val.length(), content="6")
   match captured.val[0] {
     SwitchRpcSession(session, path) => {
       inspect(session, content="pi-rpc")
@@ -1059,10 +1250,14 @@ test "workbench selection with transport switches Pi session then refreshes stat
     _ => fail("expected queued message refresh")
   }
   match captured.val[3] {
+    FetchRpcForkMessages(session) => inspect(session, content="pi-rpc")
+    _ => fail("expected queued fork messages refresh")
+  }
+  match captured.val[4] {
     FetchRpcCommands(session) => inspect(session, content="pi-rpc")
     _ => fail("expected queued command catalog refresh")
   }
-  match captured.val[4] {
+  match captured.val[5] {
     FetchRpcSessionStats(session) => inspect(session, content="pi-rpc")
     _ => fail("expected queued session stats refresh")
   }
@@ -1743,6 +1938,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Session"))
   assert_true(has_text(commands, "新建"))
   assert_true(has_text(commands, "刷新"))
+  assert_true(has_text(commands, "分叉"))
   assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Steer 1"))
   assert_true(has_text(commands, "Follow 1"))
@@ -1757,6 +1953,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "0 queued"))
   assert_false(has_text(commands, "Thinking: default"))
   assert_false(has_text(commands, "0 messages"))
+  assert_false(has_text(commands, "0 forks"))
   assert_false(has_text(commands, "0 events"))
   assert_false(has_text(commands, "0 diag"))
   assert_false(has_text(commands, "0 files"))
@@ -1766,6 +1963,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "分析"))
   assert_false(has_text(commands, "重跑"))
   assert_false(has_text(commands, "跟进"))
+  assert_false(has_text(commands, "分支"))
   assert_false(has_text(commands, "output /tmp/mo-workbench-app-test.log"))
   assert_false(has_text(commands, "清除"))
   assert_false(has_text(commands, "聚焦"))

@@ -15,7 +15,11 @@ pub fn pi_rpc_bash_line(command~ : String) -> String
 
 pub fn pi_rpc_cycle_thinking_level_line() -> String
 
+pub fn pi_rpc_fork_line(entry_id~ : String) -> String
+
 pub fn pi_rpc_get_commands_line() -> String
+
+pub fn pi_rpc_get_fork_messages_line() -> String
 
 pub fn pi_rpc_get_messages_line() -> String
 

@@ -52,6 +52,12 @@ pub(all) struct PiCommandInfo {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct PiForkMessage {
+  entry_id : String
+  text : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PiSessionStatsSnapshot {
   session_file : String
   session_id : String
@@ -159,6 +165,7 @@ pub(all) struct WorkbenchModel {
   events : Array[AgentEvent]
   transcript : Array[TranscriptItem]
   command_catalog : Array[PiCommandInfo]
+  fork_messages : Array[PiForkMessage]
   pi_session_stats : PiSessionStatsSnapshot
   files : Array[FileContext]
   diff : DiffOverview
@@ -191,6 +198,8 @@ pub(all) enum WorkbenchMsg {
   RefreshSession
   ReceiveTransport(PiTransportEvent)
   NewSession
+  RefreshForkMessages
+  ForkFromMessage(String)
   QueueCommand(String)
   InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
@@ -275,6 +284,11 @@ pub fn PiCommandInfo::new(
   source_path~ : String,
 ) -> PiCommandInfo {
   { name, source, description, source_scope, source_path }
+}
+
+///|
+pub fn PiForkMessage::new(entry_id~ : String, text~ : String) -> PiForkMessage {
+  { entry_id, text }
 }
 
 ///|
@@ -485,6 +499,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     events: [],
     transcript: [],
     command_catalog: [],
+    fork_messages: [],
     pi_session_stats: PiSessionStatsSnapshot::new(),
     files: [],
     diff: DiffOverview::new(
@@ -523,6 +538,8 @@ pub fn WorkbenchModel::update(
     RefreshSession => self.refresh_session()
     ReceiveTransport(event) => self.receive_transport(event)
     NewSession => self.new_session()
+    RefreshForkMessages => self.refresh_fork_messages()
+    ForkFromMessage(entry_id) => self.fork_from_message(entry_id)
     QueueCommand(command) => self.queue_command(command)
     InspectCommandRun(command, status, cwd, output_path) =>
       self.inspect_command_run(command, status, cwd, output_path)
@@ -709,6 +726,10 @@ pub fn WorkbenchModel::update_with_transport(
     ReceiveTransport(event) =>
       self.receive_transport_with_transport(event, transport_runtime)
     NewSession => self.new_session_with_transport(transport_runtime)
+    RefreshForkMessages =>
+      self.refresh_fork_messages_with_transport(transport_runtime)
+    ForkFromMessage(entry_id) =>
+      self.fork_from_message_with_transport(entry_id, transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
     InspectCommandRun(command, status, cwd, output_path) =>
@@ -823,21 +844,117 @@ fn WorkbenchModel::new_session_with_transport(
 }
 
 ///|
+fn WorkbenchModel::refresh_fork_messages(
+  self : WorkbenchModel,
+) -> WorkbenchModel {
+  let session = self.active_session()
+  let commands = self.commands_with_session_start(
+    session,
+    FetchRpcForkMessages(session.id),
+  )
+  let events = self.events.copy()
+  events.push(
+    AgentEvent::new(
+      phase="control",
+      title="Pi fork discovery queued",
+      detail=session.title,
+      tone="info",
+    ),
+  )
+  {
+    ..self,
+    events,
+    transport: self.transport.enqueue_many(commands),
+    last_status: "Pi fork discovery queued",
+  }
+}
+
+///|
+fn WorkbenchModel::refresh_fork_messages_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let commands = self.commands_with_session_start(
+    session,
+    FetchRpcForkMessages(session.id),
+  )
+  WorkbenchUpdate::new(
+    self.refresh_fork_messages(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::fork_from_message(
+  self : WorkbenchModel,
+  entry_id : String,
+) -> WorkbenchModel {
+  let clean_entry_id = entry_id.trim().to_owned()
+  if clean_entry_id == "" {
+    { ..self, last_status: "Fork entry id is empty" }
+  } else {
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      ForkRpcSession(session.id, clean_entry_id),
+    )
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="control",
+        title="Pi fork queued",
+        detail=session.title + ": " + clean_entry_id,
+        tone="info",
+      ),
+    )
+    {
+      ..self,
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Pi fork queued",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::fork_from_message_with_transport(
+  self : WorkbenchModel,
+  entry_id : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let clean_entry_id = entry_id.trim().to_owned()
+  if clean_entry_id == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Fork entry id is empty" })
+  } else {
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      ForkRpcSession(session.id, clean_entry_id),
+    )
+    WorkbenchUpdate::new(
+      self.fork_from_message(entry_id),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
 fn WorkbenchModel::receive_transport_with_transport(
   self : WorkbenchModel,
   event : PiTransportEvent,
   transport_runtime : PiTransportRuntime,
 ) -> WorkbenchUpdate {
   let model = self.receive_transport(event)
-  match event.new_session_refresh_session_id() {
-    Some(session_id) => {
+  match event.session_replacement_refresh() {
+    Some((session_id, title, status)) => {
       let session = model.session_for_id(session_id)
-      let commands = model.commands_for_new_session_refresh(session)
+      let commands = model.commands_for_session_replacement_refresh(session)
       let events = model.events.copy()
       events.push(
         AgentEvent::new(
           phase="control",
-          title="Pi new session refresh queued",
+          title~,
           detail=session.title,
           tone="info",
         ),
@@ -847,7 +964,7 @@ fn WorkbenchModel::receive_transport_with_transport(
           ..model,
           events,
           transport: model.transport.enqueue_many(commands),
-          last_status: "Pi new session refresh queued",
+          last_status: status,
         },
         effect=transport_runtime.effect(commands, event => {
           ReceiveTransport(event)
@@ -1843,6 +1960,7 @@ fn WorkbenchModel::commands_for_session_selection(
     [
       StartRpc(session.id, session.project_path),
       FetchRpcMessages(session.id),
+      FetchRpcForkMessages(session.id),
       FetchRpcCommands(session.id),
       FetchRpcSessionStats(session.id),
     ]
@@ -1851,6 +1969,7 @@ fn WorkbenchModel::commands_for_session_selection(
       SwitchRpcSession(session.id, session.pi_session_path),
       StartRpc(session.id, session.project_path),
       FetchRpcMessages(session.id),
+      FetchRpcForkMessages(session.id),
       FetchRpcCommands(session.id),
       FetchRpcSessionStats(session.id),
     ]
@@ -1867,7 +1986,7 @@ fn WorkbenchModel::commands_for_new_session(
 }
 
 ///|
-fn WorkbenchModel::commands_for_new_session_refresh(
+fn WorkbenchModel::commands_for_session_replacement_refresh(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
@@ -1875,6 +1994,7 @@ fn WorkbenchModel::commands_for_new_session_refresh(
   let commands : Array[PiTransportCommand] = []
   commands.push(StartRpc(session.id, session.project_path))
   commands.push(FetchRpcMessages(session.id))
+  commands.push(FetchRpcForkMessages(session.id))
   commands.push(FetchRpcCommands(session.id))
   commands.push(FetchRpcSessionStats(session.id))
   commands

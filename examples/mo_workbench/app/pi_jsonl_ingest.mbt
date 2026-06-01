@@ -12,13 +12,19 @@ fn WorkbenchModel::ingest_pi_jsonl(
 }
 
 ///|
-fn PiTransportEvent::new_session_refresh_session_id(
+fn PiTransportEvent::session_replacement_refresh(
   self : PiTransportEvent,
-) -> String? {
+) -> (String, String, String)? {
   match self {
     JsonLineReceived(session_id, line) =>
       if json_line_is_uncancelled_success_response(line, "new_session") {
-        Some(session_id)
+        Some(
+          (
+            session_id, "Pi new session refresh queued", "Pi new session refresh queued",
+          ),
+        )
+      } else if json_line_is_uncancelled_success_response(line, "fork") {
+        Some((session_id, "Pi fork refresh queued", "Pi fork refresh queued"))
       } else {
         None
       }
@@ -98,8 +104,11 @@ fn WorkbenchModel::ingest_rpc_response(
     match command {
       "switch_session" => self.apply_switch_session_success(session_id, fields)
       "new_session" => self.apply_new_session_success(session_id, fields)
+      "fork" => self.apply_fork_success(session_id, fields)
       "bash" => self.apply_bash_success(session_id, fields)
       "get_messages" => self.apply_get_messages_success(session_id, fields)
+      "get_fork_messages" =>
+        self.apply_get_fork_messages_success(session_id, fields)
       "get_commands" => self.apply_get_commands_success(session_id, fields)
       "get_session_stats" =>
         self.apply_get_session_stats_success(session_id, fields)
@@ -202,6 +211,40 @@ fn WorkbenchModel::apply_get_messages_success(
       tone="success",
     ),
     status="Pi messages refreshed",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_get_fork_messages_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let messages = match json_object(fields, "data") {
+    Some(data) =>
+      match json_array(data, "messages") {
+        Some(values) => pi_fork_messages_from_values(values)
+        None => []
+      }
+    None => []
+  }
+  {
+    ..self,
+    fork_messages: messages,
+    pi_rpc: {
+      ..self.pi_rpc,
+      command: "get_fork_messages",
+      success: true,
+      error: "",
+    },
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi fork messages refreshed",
+      detail=session_id + ": " + messages.length().to_string() + " fork points",
+      tone="success",
+    ),
+    status="Pi fork messages refreshed",
   )
 }
 
@@ -535,6 +578,55 @@ fn WorkbenchModel::apply_new_session_success(
     } else {
       "Pi new session accepted"
     },
+  )
+}
+
+///|
+fn WorkbenchModel::apply_fork_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let data = json_object(fields, "data").unwrap_or({})
+  let cancelled = json_bool(data, "cancelled").unwrap_or(false)
+  let text = json_string(data, "text").unwrap_or("")
+  let existing = self.pi_session_binding_for_id(session_id)
+  let bound = self.upsert_pi_session_binding(
+    PiSessionBinding::new(
+      workbench_session_id=session_id,
+      rpc_session_id=if cancelled { existing.rpc_session_id } else { "" },
+      session_file=if cancelled { existing.session_file } else { "" },
+      session_name=if cancelled { existing.session_name } else { "" },
+      model=if cancelled { existing.model } else { "" },
+      status=if cancelled { "cancelled" } else { "forking" },
+      last_command="fork",
+    ),
+  )
+  let updated = bound.update_active_session_for_pi(
+    status=if cancelled { "active" } else { "running" },
+    active_task=if cancelled {
+      "Pi fork cancelled"
+    } else {
+      "Pi fork requested"
+    },
+    summary=Some(
+      if cancelled {
+        "Pi kept the current session"
+      } else if text == "" {
+        "Waiting for Pi fork state"
+      } else {
+        "Forking before: " + text
+      },
+    ),
+  )
+  { ..updated, pi_rpc: PiRpcSnapshot::new(command="fork", success=true) }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title=if cancelled { "Pi fork cancelled" } else { "Pi fork accepted" },
+      detail=if text == "" { session_id } else { session_id + ": " + text },
+      tone=if cancelled { "warning" } else { "success" },
+    ),
+    status=if cancelled { "Pi fork cancelled" } else { "Pi fork accepted" },
   )
 }
 
@@ -1851,6 +1943,15 @@ fn pi_command_infos_from_values(values : Array[Json]) -> Array[PiCommandInfo] {
 }
 
 ///|
+fn pi_fork_messages_from_values(values : Array[Json]) -> Array[PiForkMessage] {
+  let messages : Array[PiForkMessage] = []
+  for index, value in values {
+    messages.push(pi_fork_message_from_json(index, value))
+  }
+  messages
+}
+
+///|
 fn pi_session_stats_from_data(
   data : Map[String, Json],
 ) -> PiSessionStatsSnapshot {
@@ -1898,6 +1999,24 @@ fn pi_command_info_from_json(index : Int, value : Json) -> PiCommandInfo {
         description=value.stringify(),
         source_scope="",
         source_path="",
+      )
+  }
+}
+
+///|
+fn pi_fork_message_from_json(index : Int, value : Json) -> PiForkMessage {
+  match value {
+    Object(fields) =>
+      PiForkMessage::new(
+        entry_id=json_string(fields, "entryId").unwrap_or(
+          "entry-" + index.to_string(),
+        ),
+        text=json_string(fields, "text").unwrap_or(""),
+      )
+    _ =>
+      PiForkMessage::new(
+        entry_id="entry-" + index.to_string(),
+        text=value.stringify(),
       )
   }
 }

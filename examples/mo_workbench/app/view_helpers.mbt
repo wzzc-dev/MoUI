@@ -264,23 +264,34 @@ fn WorkbenchModel::transcript_panel(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let rows : Array[@core.View[WorkbenchMsg]] = []
+  let visible_limit = if self.fork_messages.is_empty() { 3 } else { 2 }
   let mut visible = 0
   for item in self.transcript {
-    if visible < 3 {
+    if visible < visible_limit {
       rows.push(transcript_row(item, theme))
       visible = visible + 1
     }
   }
+  if !self.fork_messages.is_empty() {
+    rows.push(fork_message_row(self.fork_messages[0], theme))
+  }
   let panel_rows : Array[@core.View[WorkbenchMsg]] = [
     row(
       [
-        text("Pi transcript", role=Control, theme~, width=520.0, height=28.0),
+        text("Pi transcript", role=Control, theme~, width=396.0, height=28.0),
         count_badge(
           self.transcript.length(),
           label=self.transcript.length().to_string() + " messages",
           tone=Neutral,
           theme~,
-          width=116.0,
+          width=112.0,
+        ),
+        count_badge(
+          self.fork_messages.length(),
+          label=self.fork_messages.length().to_string() + " forks",
+          tone=Accent,
+          theme~,
+          width=112.0,
         ),
       ],
       spacing=8.0,
@@ -325,6 +336,36 @@ fn transcript_row(
       button(
         "跟进",
         on_click=FollowTranscript(item.role, item.summary, item.detail),
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn fork_message_row(
+  message : PiForkMessage,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge("fork", tone=Accent, theme~, width=104.0),
+      column(
+        [
+          text("Fork point", role=Control, theme~, width=452.0, height=24.0),
+          text(message.text, role=Caption, theme~, width=452.0, height=22.0),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+      button(
+        "分支",
+        on_click=ForkFromMessage(message.entry_id),
         variant=Outline,
         theme~,
         width=58.0,
@@ -536,6 +577,14 @@ fn WorkbenchModel::session_controls_row(
       button(
         "刷新",
         on_click=RefreshSession,
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=34.0,
+      ),
+      button(
+        "分叉",
+        on_click=RefreshForkMessages,
         variant=Outline,
         theme~,
         width=58.0,
