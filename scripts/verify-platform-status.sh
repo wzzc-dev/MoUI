@@ -150,6 +150,7 @@ if schema_version >= 4:
         "moonbit.all-target-check",
         "native.smoke-build",
         "native.smoke-capability-sync",
+        "native.capability-contract",
         "native.ownership",
         "native.ffi-borrows",
         "native.fallback-parity",

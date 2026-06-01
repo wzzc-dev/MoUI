@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "capabilities": [
+    {
+      "id": "native.handles",
+      "area": "FFI",
+      "native_file": "handles_native.mbt",
+      "unavailable_file": "handles_unavailable.mbt",
+      "handles": [
+        "Surface",
+        "Canvas",
+        "Data",
+        "Codec",
+        "Image",
+        "Path",
+        "Font",
+        "ShapedTextRun",
+        "Typeface",
+        "FontMgr",
+        "Shader",
+        "ColorFilter",
+        "ImageFilter",
+        "MaskFilter",
+        "Bitmap"
+      ],
+      "smoke_markers": [],
+      "non_smoke_rationale": "Private handle declarations are proven through native ownership and fallback parity gates rather than runtime smoke markers."
+    },
+    {
+      "id": "native.availability",
+      "area": "FFI",
+      "native_file": "availability_native.mbt",
+      "unavailable_file": "availability_unavailable.mbt",
+      "handles": [],
+      "smoke_markers": [
+        "native smoke shaper availability"
+      ],
+      "non_smoke_rationale": ""
+    },
+    {
+      "id": "native.package-sentinel",
+      "area": "FFI",
+      "native_file": "skia_native.mbt",
+      "unavailable_file": "skia_unavailable.mbt",
+      "handles": [],
+      "smoke_markers": [],
+      "non_smoke_rationale": "Empty target-specific package sentinels keep the native and unavailable target maps paired; they do not expose runtime APIs."
+    },
+    {
+      "id": "native.surface-image-data",
+      "area": "Surface",
+      "native_file": "surface_image_data_native.mbt",
+      "unavailable_file": "surface_image_data_unavailable.mbt",
+      "handles": [
+        "Surface",
+        "Data",
+        "Codec",
+        "Image",
+        "Bitmap",
+        "Canvas"
+      ],
+      "smoke_markers": [
+        "native smoke surface descriptor backend",
+        "native smoke surface flush-and-submit",
+        "native smoke readback width",
+        "native smoke bounded readback width",
+        "native smoke bounded snapshot width",
+        "native smoke encoded PNG bytes",
+        "native smoke decoded image width",
+        "native smoke codec encoded format PNG",
+        "native smoke decoded bitmap width"
+      ],
+      "non_smoke_rationale": ""
+    },
+    {
+      "id": "native.canvas",
+      "area": "Canvas",
+      "native_file": "canvas_native.mbt",
+      "unavailable_file": "canvas_unavailable.mbt",
+      "handles": [
+        "Canvas",
+        "Path",
+        "Image",
+        "Shader",
+        "Font",
+        "ColorFilter",
+        "ImageFilter",
+        "MaskFilter"
+      ],
+      "smoke_markers": [
+        "native smoke canvas state restored",
+        "native smoke canvas clip device width",
+        "native smoke canvas replay commands",
+        "native smoke shader draws",
+        "native smoke filter layer count"
+      ],
+      "non_smoke_rationale": ""
+    },
+    {
+      "id": "native.path",
+      "area": "Path",
+      "native_file": "path_native.mbt",
+      "unavailable_file": "path_unavailable.mbt",
+      "handles": [
+        "Path"
+      ],
+      "smoke_markers": [
+        "native smoke path verbs"
+      ],
+      "non_smoke_rationale": ""
+    },
+    {
+      "id": "native.text-font",
+      "area": "Text",
+      "native_file": "text_font_native.mbt",
+      "unavailable_file": "text_font_unavailable.mbt",
+      "handles": [
+        "Font",
+        "ShapedTextRun",
+        "Typeface",
+        "FontMgr"
+      ],
+      "smoke_markers": [
+        "native smoke font spacing",
+        "native smoke measured text width",
+        "native smoke text glyph count",
+        "native smoke first glyph id",
+        "native smoke shaper availability",
+        "native smoke font family count",
+        "native smoke font fallback width"
+      ],
+      "non_smoke_rationale": ""
+    },
+    {
+      "id": "native.shader-filter",
+      "area": "Shader",
+      "native_file": "shader_filter_native.mbt",
+      "unavailable_file": "shader_filter_unavailable.mbt",
+      "handles": [
+        "Shader",
+        "ColorFilter",
+        "ImageFilter",
+        "MaskFilter"
+      ],
+      "smoke_markers": [
+        "native smoke shader draws",
+        "native smoke shader resource plan count",
+        "native smoke filter layer count",
+        "native smoke filter resource plan count"
+      ],
+      "non_smoke_rationale": ""
+    }
+  ]
+}
