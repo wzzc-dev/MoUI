@@ -74,6 +74,8 @@ default_stage_markers=(
   "native smoke gpu context key variation" \
   "native smoke gpu frame context validation" \
   "native smoke gpu present resource plan count" \
+  "native smoke gpu frame submission resource plan count" \
+  "native smoke gpu frame submission gpu resource count" \
   "native smoke surface target resource plan count" \
   "native smoke window target resource plan count" \
   "native smoke window physical width" \
@@ -160,6 +162,8 @@ default_expected_stage_values=(
   $'native smoke gpu context key variation\t1'
   $'native smoke gpu frame context validation\t1'
   $'native smoke gpu present resource plan count\t3'
+  $'native smoke gpu frame submission resource plan count\t3'
+  $'native smoke gpu frame submission gpu resource count\t3'
   $'native smoke surface target resource plan count\t2'
   $'native smoke window target resource plan count\t1'
   $'native smoke window physical width\t16'

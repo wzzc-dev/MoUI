@@ -182,8 +182,42 @@ fn main {
     !smoke_gpu_present_plan.contains_key(smoke_gpu_present.resource_key()) {
     fail_smoke("gpu present descriptor resource plan is invalid")
   }
+  let smoke_gpu_submission = smoke_gpu_frame.submission_descriptor(
+    frame_index=2,
+  )
+  let smoke_gpu_submission_gpu_plan = smoke_gpu_submission
+    .gpu_backed_resource_plan()
+  let smoke_gpu_missing_submission = smoke_gpu_missing_context_frame
+    .submission_descriptor(frame_index=2)
+  if !smoke_gpu_submission.is_ready() ||
+    !smoke_gpu_submission.has_present() ||
+    smoke_gpu_submission.resource_plan.length() != 3 ||
+    smoke_gpu_submission.resource_plan.gpu_backed_count != 3 ||
+    smoke_gpu_submission_gpu_plan.length() != 3 ||
+    smoke_gpu_submission_gpu_plan.count_kind(@skia.GpuSurfaceResource) != 2 ||
+    smoke_gpu_submission_gpu_plan.count_kind(@skia.GpuContextResource) != 1 ||
+    !smoke_gpu_submission_gpu_plan.contains_key(
+      smoke_gpu_target.resource_key(),
+    ) ||
+    !smoke_gpu_submission_gpu_plan.contains_key(
+      smoke_gpu_context.resource_key(),
+    ) ||
+    !smoke_gpu_submission_gpu_plan.contains_key(
+      smoke_gpu_present.resource_key(),
+    ) ||
+    smoke_gpu_missing_submission.is_ready() ||
+    smoke_gpu_missing_submission.has_present() ||
+    smoke_gpu_missing_submission.gpu_backed_resource_plan().count_kind(
+      @skia.GpuContextResource,
+    ) != 0 {
+    fail_smoke("gpu frame submission resource plan is invalid")
+  }
   println("native smoke gpu present resource plan count")
   println(smoke_gpu_present_plan.length())
+  println("native smoke gpu frame submission resource plan count")
+  println(smoke_gpu_submission.resource_plan.length())
+  println("native smoke gpu frame submission gpu resource count")
+  println(smoke_gpu_submission_gpu_plan.length())
 
   let smoke_window = @skia.WindowSurfaceDescriptor::new(
     window_id=b"native-smoke-window",
