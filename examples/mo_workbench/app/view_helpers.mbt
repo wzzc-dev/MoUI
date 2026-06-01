@@ -111,7 +111,7 @@ fn workbench_layout(
     workbench_min_double(460.0, content_available_width),
     860.0,
   )
-  let composer_height = 122.0
+  let composer_height = 84.0
   let top_text_available = workbench_max_double(
     1.0,
     content_width - 86.0 - 74.0 - 120.0 - 66.0 - 54.0 - 42.0 - 24.0,
@@ -3142,7 +3142,9 @@ fn WorkbenchModel::composer(
   if self.should_show_composer_command_row() {
     content.push(self.composer_command_row(layout, theme))
   }
-  content.push(self.composer_action_row(theme))
+  if self.should_show_composer_action_row() {
+    content.push(self.composer_action_row(theme))
+  }
   surface(
     column(content, spacing=6.0, align=Stretch),
     width=layout.composer_width,
@@ -3171,12 +3173,15 @@ fn WorkbenchModel::composer_height(
   if self.should_show_composer_command_row() {
     height = height + 38.0
   }
+  if self.should_show_composer_action_row() {
+    height = height + 42.0
+  }
   height
 }
 
 ///|
 fn WorkbenchModel::should_show_context_chip_row(self : WorkbenchModel) -> Bool {
-  self.prompt.trim().to_owned() != "" ||
+  self.has_composer_prompt() ||
   self.active_agent_profile() is Some(_) ||
   !self.context_is_default()
 }
@@ -3192,7 +3197,7 @@ fn WorkbenchModel::context_is_default(self : WorkbenchModel) -> Bool {
 fn WorkbenchModel::should_show_composer_agent_row(
   self : WorkbenchModel,
 ) -> Bool {
-  self.prompt.trim().to_owned() != "" || self.active_agent_profile() is Some(_)
+  self.has_composer_prompt() || self.active_agent_profile() is Some(_)
 }
 
 ///|
@@ -3259,7 +3264,7 @@ fn WorkbenchModel::composer_action_row(
     )
   }
   controls.push(spacer(min_length=10.0, weight=1.0))
-  if self.should_show_composer_secondary_actions() {
+  if self.has_composer_prompt() && self.should_show_composer_secondary_actions() {
     controls.push(
       button(
         "引导",
@@ -3281,27 +3286,41 @@ fn WorkbenchModel::composer_action_row(
       ),
     )
   }
-  controls.push(
-    button(
-      "发送",
-      on_click=DispatchPrompt,
-      variant=Primary,
-      theme~,
-      width=54.0,
-      height=36.0,
-    ),
-  )
+  if self.has_composer_prompt() {
+    controls.push(
+      button(
+        "发送",
+        on_click=DispatchPrompt,
+        variant=Primary,
+        theme~,
+        width=54.0,
+        height=36.0,
+      ),
+    )
+  }
   row(controls, spacing=8.0, align=Center)
+}
+
+///|
+fn WorkbenchModel::should_show_composer_action_row(
+  self : WorkbenchModel,
+) -> Bool {
+  self.should_show_composer_secondary_actions()
 }
 
 ///|
 fn WorkbenchModel::should_show_composer_secondary_actions(
   self : WorkbenchModel,
 ) -> Bool {
-  self.prompt.trim().to_owned() != "" ||
+  self.has_composer_prompt() ||
   self.pi_agent.steering_mode != "one-at-a-time" ||
   self.pi_agent.follow_up_mode != "one-at-a-time" ||
   self.pi_agent.queued_steering + self.pi_agent.queued_follow_up > 0
+}
+
+///|
+fn WorkbenchModel::has_composer_prompt(self : WorkbenchModel) -> Bool {
+  self.prompt.trim().to_owned() != ""
 }
 
 ///|
