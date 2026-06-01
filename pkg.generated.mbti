@@ -876,6 +876,7 @@ pub(all) struct RenderFrameDescriptor {
 } derive(Eq, @debug.Debug)
 pub fn RenderFrameDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int
 pub fn RenderFrameDescriptor::cacheable_resource_plan(Self) -> RendererResourcePlan
+pub fn RenderFrameDescriptor::cached_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
 pub fn RenderFrameDescriptor::empty(SurfaceTargetDescriptor) -> Self
 pub fn RenderFrameDescriptor::finalization_descriptor(Self, frame_index? : Int) -> RenderFrameFinalizationDescriptor
 pub fn RenderFrameDescriptor::finalization_resource_plan(Self, frame_index? : Int) -> RendererResourcePlan
@@ -883,6 +884,7 @@ pub fn RenderFrameDescriptor::has_gpu_context(Self) -> Bool
 pub fn RenderFrameDescriptor::has_present(Self) -> Bool
 pub fn RenderFrameDescriptor::is_ready(Self) -> Bool
 pub fn RenderFrameDescriptor::is_target_consistent(Self) -> Bool
+pub fn RenderFrameDescriptor::missing_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
 pub fn RenderFrameDescriptor::needs_present(Self) -> Bool
 pub fn RenderFrameDescriptor::new(SurfaceTargetDescriptor, RenderCommandList) -> Self
 pub fn RenderFrameDescriptor::present_descriptor(Self, frame_index? : Int, buffer_index? : Int) -> SurfacePresentDescriptor?
@@ -901,9 +903,11 @@ pub(all) struct RenderFrameFinalizationDescriptor {
 } derive(Eq, @debug.Debug)
 pub fn RenderFrameFinalizationDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int
 pub fn RenderFrameFinalizationDescriptor::cacheable_resource_plan(Self) -> RendererResourcePlan
+pub fn RenderFrameFinalizationDescriptor::cached_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
 pub fn RenderFrameFinalizationDescriptor::gpu_backed_resource_plan(Self) -> RendererResourcePlan
 pub fn RenderFrameFinalizationDescriptor::has_finalization(Self) -> Bool
 pub fn RenderFrameFinalizationDescriptor::is_ready(Self) -> Bool
+pub fn RenderFrameFinalizationDescriptor::missing_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
 pub fn RenderFrameFinalizationDescriptor::new(RenderFrameDescriptor, frame_index? : Int) -> Self
 pub fn RenderFrameFinalizationDescriptor::requires_gpu_context(Self) -> Bool
 pub fn RenderFrameFinalizationDescriptor::uncacheable_resource_plan(Self) -> RendererResourcePlan
@@ -917,9 +921,11 @@ pub(all) struct RenderFrameSubmissionDescriptor {
 } derive(Eq, @debug.Debug)
 pub fn RenderFrameSubmissionDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int
 pub fn RenderFrameSubmissionDescriptor::cacheable_resource_plan(Self) -> RendererResourcePlan
+pub fn RenderFrameSubmissionDescriptor::cached_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
 pub fn RenderFrameSubmissionDescriptor::gpu_backed_resource_plan(Self) -> RendererResourcePlan
 pub fn RenderFrameSubmissionDescriptor::has_present(Self) -> Bool
 pub fn RenderFrameSubmissionDescriptor::is_ready(Self) -> Bool
+pub fn RenderFrameSubmissionDescriptor::missing_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
 pub fn RenderFrameSubmissionDescriptor::new(RenderFrameDescriptor, frame_index? : Int, buffer_index? : Int) -> Self
 pub fn RenderFrameSubmissionDescriptor::uncacheable_resource_plan(Self) -> RendererResourcePlan
 

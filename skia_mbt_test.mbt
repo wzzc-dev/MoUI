@@ -1534,8 +1534,20 @@ test "render frame descriptor summarizes target commands and resources" {
     @skia_mbt.RendererResourceDescriptor,
   ] = @skia_mbt.ResourceCache::new()
   assert_true(!cache.contains_resource_plan(frame.resource_plan))
+  let frame_cached_before = frame.cached_cacheable_resource_plan(cache)
+  let frame_missing_before = frame.missing_cacheable_resource_plan(cache)
+  assert_true(frame_cached_before.is_empty())
+  assert_eq(frame_missing_before.length(), 2)
+  assert_true(frame_missing_before.contains_key(target.resource_key()))
+  assert_true(frame_missing_before.contains_key(path.resource_key()))
   assert_eq(frame.cache_resources(cache), 2)
   assert_eq(cache.length(), 2)
+  let frame_cached_after = frame.cached_cacheable_resource_plan(cache)
+  let frame_missing_after = frame.missing_cacheable_resource_plan(cache)
+  assert_eq(frame_cached_after.length(), 2)
+  assert_true(frame_cached_after.contains_key(target.resource_key()))
+  assert_true(frame_cached_after.contains_key(path.resource_key()))
+  assert_true(frame_missing_after.is_empty())
   assert_true(cache.contains_resource_plan(frame.resource_plan))
   assert_true(cache.contains(target.resource_key()))
   assert_true(cache.contains(path.resource_key()))
@@ -1588,8 +1600,25 @@ test "render frame descriptor summarizes target commands and resources" {
     @skia_mbt.RendererResourceKey,
     @skia_mbt.RendererResourceDescriptor,
   ] = @skia_mbt.ResourceCache::new()
+  assert_true(
+    submission.cached_cacheable_resource_plan(submission_cache).is_empty(),
+  )
+  let submission_missing_before = submission.missing_cacheable_resource_plan(
+    submission_cache,
+  )
+  assert_eq(submission_missing_before.length(), 2)
+  assert_true(submission_missing_before.contains_key(target.resource_key()))
+  assert_true(submission_missing_before.contains_key(path.resource_key()))
+  assert_true(!submission_missing_before.contains_key(present.resource_key()))
   assert_eq(submission.cache_resources(submission_cache), 2)
   assert_eq(submission_cache.length(), 2)
+  assert_eq(
+    submission.cached_cacheable_resource_plan(submission_cache).length(),
+    2,
+  )
+  assert_true(
+    submission.missing_cacheable_resource_plan(submission_cache).is_empty(),
+  )
   assert_true(submission_cache.contains(target.resource_key()))
   assert_true(submission_cache.contains(path.resource_key()))
   assert_true(!submission_cache.contains(present.resource_key()))
@@ -1651,8 +1680,29 @@ test "render frame descriptor summarizes target commands and resources" {
     @skia_mbt.RendererResourceKey,
     @skia_mbt.RendererResourceDescriptor,
   ] = @skia_mbt.ResourceCache::new()
+  assert_true(
+    finalization.cached_cacheable_resource_plan(finalization_cache).is_empty(),
+  )
+  let finalization_missing_before = finalization.missing_cacheable_resource_plan(
+    finalization_cache,
+  )
+  assert_eq(finalization_missing_before.length(), 2)
+  assert_true(finalization_missing_before.contains_key(target.resource_key()))
+  assert_true(finalization_missing_before.contains_key(path.resource_key()))
+  assert_true(
+    !finalization_missing_before.contains_key(
+      surface_finalization.resource_key(),
+    ),
+  )
   assert_eq(finalization.cache_resources(finalization_cache), 2)
   assert_eq(finalization_cache.length(), 2)
+  assert_eq(
+    finalization.cached_cacheable_resource_plan(finalization_cache).length(),
+    2,
+  )
+  assert_true(
+    finalization.missing_cacheable_resource_plan(finalization_cache).is_empty(),
+  )
   assert_true(finalization_cache.contains(target.resource_key()))
   assert_true(finalization_cache.contains(path.resource_key()))
   assert_true(!finalization_cache.contains(surface_finalization.resource_key()))
