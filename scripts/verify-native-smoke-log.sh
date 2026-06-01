@@ -61,8 +61,12 @@ default_stage_markers=(
   "native smoke render frame present count" \
   "native smoke render frame present descriptor validation" \
   "native smoke render frame submission resource plan count" \
+  "native smoke render frame submission cacheable subplan count" \
+  "native smoke render frame submission uncacheable subplan count" \
   "native smoke render frame submission cache resources" \
   "native smoke render frame finalization resource plan count" \
+  "native smoke render frame finalization cacheable subplan count" \
+  "native smoke render frame finalization uncacheable subplan count" \
   "native smoke render frame finalization cache resources" \
   "native smoke render frame missing present validation" \
   "native smoke render frame missing finalization validation" \
@@ -164,8 +168,12 @@ default_expected_stage_values=(
   $'native smoke render frame present count\t1'
   $'native smoke render frame present descriptor validation\t1'
   $'native smoke render frame submission resource plan count\t2'
+  $'native smoke render frame submission cacheable subplan count\t1'
+  $'native smoke render frame submission uncacheable subplan count\t1'
   $'native smoke render frame submission cache resources\t1'
   $'native smoke render frame finalization resource plan count\t2'
+  $'native smoke render frame finalization cacheable subplan count\t1'
+  $'native smoke render frame finalization uncacheable subplan count\t1'
   $'native smoke render frame finalization cache resources\t1'
   $'native smoke render frame missing present validation\t1'
   $'native smoke render frame missing finalization validation\t1'
