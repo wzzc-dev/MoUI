@@ -32,6 +32,17 @@ priv struct WorkbenchLayout {
 }
 
 ///|
+priv struct WorkbenchNextAction {
+  title : String
+  detail : String
+  primary_label : String
+  primary_message : WorkbenchMsg
+  secondary_label : String
+  secondary_message : WorkbenchMsg?
+  tone : @views.BadgeTone
+}
+
+///|
 fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
   let viewport = @core.Size::new(
     width=workbench_max_double(1.0, viewport.width),
@@ -721,6 +732,10 @@ fn WorkbenchModel::session_status_panel(
   if self.has_runtime_signal() {
     rows.push(self.runtime_signal_row(layout, theme))
   }
+  match self.next_action() {
+    Some(action) => rows.push(next_action_row(action, layout, theme))
+    None => ()
+  }
   rows.push(self.session_controls_row(layout, theme))
   surface(
     column(rows, spacing=6.0, align=Start),
@@ -735,7 +750,228 @@ fn WorkbenchModel::session_status_panel(
 
 ///|
 fn session_status_panel_height(row_count : Int) -> Double {
-  92.0 + (row_count - 2).max(0).to_double() * 36.0
+  92.0 + (row_count - 2).max(0).to_double() * 42.0
+}
+
+///|
+fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
+  let session = self.active_session()
+  if self.has_cancel_target() {
+    return Some({
+      title: "等待 Pi 完成当前运行",
+      detail: current_run_detail(session, self.last_status),
+      primary_label: "停止",
+      primary_message: CancelRun,
+      secondary_label: "",
+      secondary_message: None,
+      tone: Warning,
+    })
+  }
+  if !self.diagnostics.is_empty() {
+    let diagnostic = self.diagnostics[self.diagnostics.length() - 1]
+    return Some({
+      title: "修复最新诊断",
+      detail: diagnostic_detail_label(diagnostic),
+      primary_label: "修复",
+      primary_message: FixDiagnostic(
+        diagnostic.source,
+        diagnostic.severity,
+        diagnostic.message,
+      ),
+      secondary_label: "清除",
+      secondary_message: Some(ClearDiagnostics),
+      tone: Warning,
+    })
+  }
+  match self.latest_failed_command() {
+    Some(command) =>
+      return Some({
+        title: "分析失败命令",
+        detail: command.command,
+        primary_label: "分析",
+        primary_message: InspectCommandRun(
+          command.command,
+          command.status,
+          command.cwd,
+          command.output_path,
+        ),
+        secondary_label: "重跑",
+        secondary_message: Some(QueueCommand(command.command)),
+        tone: Danger,
+      })
+    None => ()
+  }
+  if self.diff.has_context() {
+    return Some({
+      title: "审核当前变更",
+      detail: diff_next_action_detail(self.diff),
+      primary_label: "审核",
+      primary_message: ReviewDiff,
+      secondary_label: "",
+      secondary_message: None,
+      tone: Accent,
+    })
+  }
+  if !self.files.is_empty() {
+    let file = self.files[self.files.length() - 1]
+    return Some({
+      title: "聚焦文件证据",
+      detail: file.path,
+      primary_label: "聚焦",
+      primary_message: InspectFile(file.path),
+      secondary_label: "",
+      secondary_message: None,
+      tone: Neutral,
+    })
+  }
+  if !self.transcript.is_empty() {
+    let item = self.transcript[self.transcript.length() - 1]
+    return Some({
+      title: "跟进最新消息",
+      detail: item.summary,
+      primary_label: "跟进",
+      primary_message: FollowTranscript(item.role, item.summary, item.detail),
+      secondary_label: "",
+      secondary_message: None,
+      tone: Neutral,
+    })
+  }
+  if !self.command_catalog.is_empty() {
+    let command = self.command_catalog[0]
+    return Some({
+      title: "运行可用命令",
+      detail: "/" + command.name,
+      primary_label: "运行",
+      primary_message: InvokeCommand(command.name),
+      secondary_label: "",
+      secondary_message: None,
+      tone: Accent,
+    })
+  }
+  if !self.events.is_empty() {
+    let event = self.events[self.events.length() - 1]
+    return Some({
+      title: "跟进最新事件",
+      detail: event.title,
+      primary_label: "跟进",
+      primary_message: FollowActivity(event.phase, event.title, event.detail),
+      secondary_label: "",
+      secondary_message: None,
+      tone: Neutral,
+    })
+  }
+  None
+}
+
+///|
+fn WorkbenchModel::latest_failed_command(self : WorkbenchModel) -> CommandRun? {
+  let mut failed : CommandRun? = None
+  for command in self.commands {
+    if command.status == "failed" {
+      failed = Some(command)
+    }
+  }
+  failed
+}
+
+///|
+fn current_run_detail(session : WorkbenchSession, fallback : String) -> String {
+  if session.active_task != "" {
+    session.active_task
+  } else {
+    fallback
+  }
+}
+
+///|
+fn diagnostic_detail_label(diagnostic : DiagnosticItem) -> String {
+  let source = diagnostic.source.trim().to_owned()
+  let message = diagnostic.message.trim().to_owned()
+  if source == "" {
+    message
+  } else if message == "" {
+    source
+  } else {
+    source + ": " + message
+  }
+}
+
+///|
+fn diff_next_action_detail(diff : DiffOverview) -> String {
+  diff.status_label() +
+  " · " +
+  diff.changed_files.to_string() +
+  " 文件 · +" +
+  diff.additions.to_string() +
+  " -" +
+  diff.deletions.to_string()
+}
+
+///|
+fn next_action_row(
+  action : WorkbenchNextAction,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let detail_width = workbench_max_double(
+    180.0,
+    layout.panel_body_width - 86.0 - 68.0 - 58.0 - 32.0,
+  )
+  row(
+    [
+      badge("接续建议", tone=action.tone, theme~, width=86.0),
+      column(
+        [
+          text(
+            action.title,
+            role=Control,
+            theme~,
+            width=detail_width,
+            height=24.0,
+          ),
+          text(
+            action.detail,
+            role=Caption,
+            theme~,
+            width=detail_width,
+            height=22.0,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+      button(
+        action.primary_label,
+        on_click=action.primary_message,
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
+      ),
+      secondary_next_action_button(action, theme),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn secondary_next_action_button(
+  action : WorkbenchNextAction,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  match action.secondary_message {
+    Some(message) =>
+      button(
+        action.secondary_label,
+        on_click=message,
+        variant=Ghost,
+        theme~,
+        width=58.0,
+        height=32.0,
+      )
+    None => blank_cell(width=58.0, height=32.0)
+  }
 }
 
 ///|
