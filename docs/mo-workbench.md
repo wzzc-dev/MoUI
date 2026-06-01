@@ -84,10 +84,12 @@ packages:
   transport status, and the next prompt in one visible flow. The current shell
   is rebuilt from `ViewEnvironment.viewport_size()` instead of a fixed
   `1200x750` surface, so the macOS Skia runtime responds to window resize
-  events with adaptive sidebar, panel, scroll, and composer dimensions. The
-  visible hierarchy now uses quieter Chinese section labels (`当前会话`,
-  `会话记录`, `运行证据`, `工作区证据`) while preserving Pi/RPC protocol nouns,
-  and empty `思考` / `停止` controls no longer reserve blank operation-row space.
+  events with adaptive sidebar, panel, scroll, and composer dimensions, including
+  narrower panel/composer widths when the main region is smaller than the old
+  fixed desktop frame. The visible hierarchy now uses quieter Chinese section
+  labels (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`) while
+  preserving Pi/RPC protocol nouns, and secondary session controls are visually
+  quieter than the primary refresh/new-session actions.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
@@ -102,7 +104,7 @@ packages:
   renders a compact `当前计划` row in the current session panel. The row shows
   the current active/open step, open-step count, and a `继续` action that reuses
   the platform-neutral follow-up prompt path.
-- The current session panel now derives one `接续建议` row from live state when
+- The current session panel now derives one `下一步` row from live state when
   there is actionable evidence. It prioritizes cancelable Pi runs, diagnostics,
   failed command evidence, active plan steps, reviewable diffs, file context,
   transcript rows, command catalog entries, and latest activity events, then
