@@ -32,6 +32,10 @@ smoke markers that must appear in every accepted native smoke executable log.
 The platform-status verifier checks this list covers Surface, Canvas, Pipeline,
 GPU, Shader, Filter, Path, Image, Codec, Bitmap, Text, and FontMgr boundaries, and
 `verify-native-smoke-log.*` reads the same list when validating artifact logs.
+Conditional markers such as SkShaper-shaped glyph counts live in
+`native_smoke_conditional_capabilities`; those markers are required only when
+their availability marker reports the enabled value, and the status verifier
+checks that the conditional contract remains declared.
 `native_smoke_expected_values` records exact values for markers where a presence
 check is too weak, such as text-run dependency plan counts.
 It also records `ci_gate_evidence_files`, the workflow and fallback-helper files
