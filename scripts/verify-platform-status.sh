@@ -327,6 +327,7 @@ if schema_version >= 3:
         "fontmgr.family-name",
         "fontmgr.typeface-family",
         "fontmgr.character-fallback",
+        "fontmgr.fallback-family-name",
         "fontmgr.fallback-resource-plan",
         "fontmgr.fallback-font-resource-plan",
     }
