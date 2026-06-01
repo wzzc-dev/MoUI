@@ -131,6 +131,11 @@
       "marker": "native smoke render frame present count"
     },
     {
+      "id": "pipeline.frame-touched-bounds",
+      "area": "Pipeline",
+      "marker": "native smoke render frame touched bounds width"
+    },
+    {
       "id": "pipeline.frame-cache-resources",
       "area": "Pipeline",
       "marker": "native smoke render frame cache resources"
@@ -356,6 +361,11 @@
       "id": "pipeline.frame-present",
       "marker": "native smoke render frame present count",
       "value": "1"
+    },
+    {
+      "id": "pipeline.frame-touched-bounds",
+      "marker": "native smoke render frame touched bounds width",
+      "value": "4"
     },
     {
       "id": "pipeline.frame-cache-resources",
