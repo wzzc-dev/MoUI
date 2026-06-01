@@ -115,6 +115,7 @@ fn WorkbenchModel::ingest_rpc_response(
       "get_session_stats" =>
         self.apply_get_session_stats_success(session_id, fields)
       "export_html" => self.apply_export_html_success(session_id, fields)
+      "cycle_model" => self.apply_cycle_model_success(session_id, fields)
       "cycle_thinking_level" =>
         self.apply_cycle_thinking_level_success(session_id, fields)
       "set_steering_mode" => self.apply_set_steering_mode_success(session_id)
@@ -416,6 +417,73 @@ fn WorkbenchModel::apply_export_html_success(
       tone="success",
     ),
     status="Pi session exported",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_cycle_model_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let data = json_object(fields, "data")
+  let model_label = match data {
+    Some(data) => json_model_label(data)
+    None => ""
+  }
+  let thinking_level = match data {
+    Some(data) => json_string(data, "thinkingLevel").unwrap_or("")
+    None => ""
+  }
+  let model = if model_label == "" {
+    { ..self, pi_rpc: PiRpcSnapshot::new(command="cycle_model", success=true) }
+  } else {
+    let updated = self
+      .update_pi_session_binding_model(
+        session_id,
+        model_label,
+        last_command="cycle_model",
+      )
+      .update_active_session_for_pi(
+        status=self.active_session().status,
+        active_task="Pi model: " + model_label,
+        summary=Some("Pi model switched to " + model_label),
+      )
+    {
+      ..updated,
+      pi_rpc: {
+        ..self.pi_rpc,
+        command: "cycle_model",
+        success: true,
+        model: model_label,
+        error: "",
+      },
+      pi_agent: {
+        ..updated.pi_agent,
+        thinking_level: if thinking_level == "" {
+          updated.pi_agent.thinking_level
+        } else {
+          thinking_level
+        },
+      },
+    }
+  }
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi model cycled",
+      detail=if model_label == "" {
+        session_id + ": no alternate model"
+      } else {
+        session_id + ": " + model_label
+      },
+      tone=if model_label == "" { "warning" } else { "success" },
+    ),
+    status=if model_label == "" {
+      "Pi model cycle acknowledged"
+    } else {
+      "Pi model changed"
+    },
   )
 }
 
@@ -1711,6 +1779,36 @@ fn WorkbenchModel::sync_pi_session_name_binding(
         session_file=existing.session_file,
         session_name=name,
         model=existing.model,
+        status~,
+        last_command~,
+      ),
+    )
+  }
+}
+
+///|
+fn WorkbenchModel::update_pi_session_binding_model(
+  self : WorkbenchModel,
+  workbench_session_id : String,
+  model : String,
+  last_command~ : String,
+) -> WorkbenchModel {
+  if model == "" {
+    self
+  } else {
+    let existing = self.pi_session_binding_for_id(workbench_session_id)
+    let status = if existing.status == "unbound" {
+      "bound"
+    } else {
+      existing.status
+    }
+    self.upsert_pi_session_binding(
+      PiSessionBinding::new(
+        workbench_session_id~,
+        rpc_session_id=existing.rpc_session_id,
+        session_file=existing.session_file,
+        session_name=existing.session_name,
+        model~,
         status~,
         last_command~,
       ),
