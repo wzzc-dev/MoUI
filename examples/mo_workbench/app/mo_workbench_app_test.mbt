@@ -26,6 +26,14 @@ test "workbench dispatch queues prompt for selected session" {
 }
 
 ///|
+test "workbench ignores empty composer dispatch" {
+  let model = WorkbenchModel::new().update(DispatchPrompt)
+  inspect(model.last_status, content="Prompt is empty")
+  inspect(model.pending_transport_count(), content="0")
+  assert_true(model.events.is_empty())
+}
+
+///|
 test "workbench composer can send a prompt without selected context" {
   let model = WorkbenchModel::new()
     .update(ToggleContext("repo"))
@@ -3144,7 +3152,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "示例"))
   assert_false(has_text(commands, "证据"))
   assert_false(has_text(commands, "会话"))
-  assert_true(has_text(commands, "发送"))
+  assert_false(has_text(commands, "发送"))
   assert_false(has_text(commands, "会话记录"))
   assert_false(has_text(commands, "运行证据"))
   assert_false(has_text(commands, "工作区证据"))

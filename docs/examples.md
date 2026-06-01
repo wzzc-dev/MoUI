@@ -170,11 +170,12 @@ message blocks for long Pi replies and draws an explicit scrollbar when the
 main workflow overflows. Primary section labels are quieter and consistently
 Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`) once their
 evidence exists, with Pi/RPC left as protocol nouns. Default chrome uses short
-project names and signal-bearing localized session status labels while keeping full
-`project_path` values in the shared model and transport commands. The default
-shell keeps only top-bar refresh/new-session controls and composer send
-prominent, and active/idle session rows omit status meta instead of showing
-fake active, queue, or idle labels; context chips, the idle Pi RPC footer, the
+project names and signal-bearing localized session status labels while keeping
+full `project_path` values in the shared model and transport commands. The default
+shell keeps only top-bar refresh/new-session controls and the composer input
+prominent, while submit actions appear once typed input exists. Active/idle
+session rows omit status meta instead of showing fake active, queue, or idle
+labels; context chips, the idle Pi RPC footer, the
 `Pi 运行状态` panel, agent focus controls, advanced session actions, steering /
 follow-up composer controls, and focused-check presets appear once Pi state,
 typed input, non-default context, or command evidence makes them relevant. The workspace
