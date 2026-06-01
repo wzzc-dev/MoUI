@@ -136,6 +136,11 @@
       "marker": "native smoke render frame present count"
     },
     {
+      "id": "pipeline.frame-missing-present-validation",
+      "area": "Pipeline",
+      "marker": "native smoke render frame missing present validation"
+    },
+    {
       "id": "pipeline.frame-touched-bounds",
       "area": "Pipeline",
       "marker": "native smoke render frame touched bounds width"
@@ -440,6 +445,11 @@
     {
       "id": "pipeline.frame-present",
       "marker": "native smoke render frame present count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-missing-present-validation",
+      "marker": "native smoke render frame missing present validation",
       "value": "1"
     },
     {
