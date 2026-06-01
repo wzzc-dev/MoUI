@@ -175,8 +175,8 @@ includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. When actionable evidence is
 present, the current session panel derives one quiet `下一步` row that points
-to the next shared-app action, prioritizing cancelable Pi work, diagnostics,
-failed command evidence, active plan steps, reviewable diffs, files, transcript
+to the next shared-app action, prioritizing cancelable Pi work, failed command
+evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
 rows, command catalog entries, and activity events. Pi `plan_update` JSONL also
 feeds a compact `当前计划` row so the visible session state includes current
 planning evidence without opening a separate pane. The default fixture no
