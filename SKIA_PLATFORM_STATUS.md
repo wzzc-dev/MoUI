@@ -111,7 +111,8 @@ these facts recorded in logs:
   font resource planning, font metrics, font family enumeration, native typeface
   family metadata, FontMgr character fallback, font fallback cache-key
   variation, font fallback family metadata, resolved fallback match cache-key
-  variation, fallback match resource planning, font fallback resource planning,
+  variation, fallback match resource planning, fallback resolution cache-key
+  variation, fallback resolution resource planning, font fallback resource planning,
   and shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
