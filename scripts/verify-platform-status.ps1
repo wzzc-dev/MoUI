@@ -253,6 +253,7 @@ if ($status.schema_version -ge 3) {
     "pipeline.target-resource-binding",
     "pipeline.frame-cache-resources",
     "pipeline.resource-cache",
+    "pipeline.resource-cache-eviction",
     "gpu.context-resource-plan",
     "gpu.frame-context-validation",
     "surface.target-resource-plan",
@@ -351,6 +352,7 @@ if ($status.schema_version -ge 3) {
       "native smoke render target resource binding" = "1"
       "native smoke render frame cache resources" = "9"
       "native smoke render resource cache inserts" = "9"
+      "native smoke render resource cache evictions" = "1"
       "native smoke gpu context resource plan count" = "2"
       "native smoke gpu frame context validation" = "1"
       "native smoke surface target resource plan count" = "2"

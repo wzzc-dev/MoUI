@@ -43,6 +43,7 @@ $defaultStageMarkers = @(
   "native smoke render target resource binding",
   "native smoke render frame cache resources",
   "native smoke render resource cache inserts",
+  "native smoke render resource cache evictions",
   "native smoke gpu context resource plan count",
   "native smoke gpu frame context validation",
   "native smoke surface target resource plan count",
@@ -111,6 +112,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke render resource cache inserts"
     Value = "9"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render resource cache evictions"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke gpu context resource plan count"

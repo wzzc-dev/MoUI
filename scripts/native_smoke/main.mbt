@@ -655,6 +655,38 @@ fn main {
     replay_resource_cache.byte_size() != replay_frame.resource_plan.byte_size {
     fail_smoke("native render frame resources did not populate the resource cache")
   }
+  let lru_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @skia.RendererResourceDescriptor,
+  ] = @skia.ResourceCache::new(max_bytes=8L)
+  let lru_image = @skia.RendererResourceDescriptor::image(
+    b"native-smoke-cache-image",
+    byte_size=4L,
+  )
+  let lru_shader = @skia.RendererResourceDescriptor::shader(
+    b"native-smoke-cache-shader",
+    byte_size=4L,
+  )
+  let lru_path = @skia.RendererResourceDescriptor::path(
+    b"native-smoke-cache-path",
+    byte_size=4L,
+  )
+  ignore(lru_cache.insert_resource_descriptor(lru_image))
+  ignore(lru_cache.insert_resource_descriptor(lru_shader))
+  if lru_cache.get(lru_image.key) != Some(lru_image) {
+    fail_smoke("native resource cache did not report a refreshed LRU hit")
+  }
+  ignore(lru_cache.insert_resource_descriptor(lru_path))
+  let lru_stats = lru_cache.stats()
+  if lru_stats.evictions != 1 ||
+    lru_stats.hits != 1 ||
+    lru_stats.misses != 0 ||
+    lru_cache.byte_size() != 8L ||
+    !lru_cache.contains(lru_image.key) ||
+    lru_cache.contains(lru_shader.key) ||
+    !lru_cache.contains(lru_path.key) {
+    fail_smoke("native resource cache LRU budget behavior did not match expectations")
+  }
   let replay_stats = replay_canvas.replay(
     replay_commands,
     font=Some(replay_font),
@@ -686,6 +718,8 @@ fn main {
   println(replay_cache_inserts)
   println("native smoke render resource cache inserts")
   println(replay_cache_inserts)
+  println("native smoke render resource cache evictions")
+  println(lru_stats.evictions)
 
   guard surface.image_snapshot() is Some(image) else {
     fail_smoke("failed to snapshot surface")

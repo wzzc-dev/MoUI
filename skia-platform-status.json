@@ -136,6 +136,11 @@
       "marker": "native smoke render resource cache inserts"
     },
     {
+      "id": "pipeline.resource-cache-eviction",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache evictions"
+    },
+    {
       "id": "gpu.context-resource-plan",
       "area": "GPU",
       "marker": "native smoke gpu context resource plan count"
@@ -351,6 +356,11 @@
       "id": "pipeline.resource-cache",
       "marker": "native smoke render resource cache inserts",
       "value": "9"
+    },
+    {
+      "id": "pipeline.resource-cache-eviction",
+      "marker": "native smoke render resource cache evictions",
+      "value": "1"
     },
     {
       "id": "gpu.context-resource-plan",
