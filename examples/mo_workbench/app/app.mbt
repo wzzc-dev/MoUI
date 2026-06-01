@@ -172,6 +172,12 @@ priv struct WorkbenchAgentProfile {
 }
 
 ///|
+priv struct WorkbenchCheckPreset {
+  label : String
+  command : String
+}
+
+///|
 pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
@@ -225,6 +231,7 @@ pub(all) enum WorkbenchMsg {
   ForkFromMessage(String)
   ExportSessionHtml
   QueueCommand(String)
+  QueueFocusedChecks
   InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
   FixDiagnostic(String, String, String)
@@ -498,6 +505,32 @@ fn WorkbenchAgentProfile::new(
 }
 
 ///|
+fn WorkbenchCheckPreset::new(
+  label~ : String,
+  command~ : String,
+) -> WorkbenchCheckPreset {
+  { label, command }
+}
+
+///|
+fn workbench_check_presets() -> Array[WorkbenchCheckPreset] {
+  [
+    WorkbenchCheckPreset::new(
+      label="App 测试",
+      command="moon test examples/mo_workbench/app --target native",
+    ),
+    WorkbenchCheckPreset::new(
+      label="Wasm 测试",
+      command="moon test examples/mo_workbench/app --target wasm-gc",
+    ),
+    WorkbenchCheckPreset::new(
+      label="Skia 构建",
+      command="moon build examples/mo_workbench/macos_skia --target native",
+    ),
+  ]
+}
+
+///|
 fn workbench_agent_profiles() -> Array[WorkbenchAgentProfile] {
   [
     WorkbenchAgentProfile::new(
@@ -641,6 +674,7 @@ pub fn WorkbenchModel::update(
     ForkFromMessage(entry_id) => self.fork_from_message(entry_id)
     ExportSessionHtml => self.export_session_html()
     QueueCommand(command) => self.queue_command(command)
+    QueueFocusedChecks => self.queue_focused_checks()
     InspectCommandRun(command, status, cwd, output_path) =>
       self.inspect_command_run(command, status, cwd, output_path)
     MarkCommandComplete(id, code) => self.mark_command_complete(id, code)
@@ -841,6 +875,8 @@ pub fn WorkbenchModel::update_with_transport(
       self.export_session_html_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
+    QueueFocusedChecks =>
+      self.queue_focused_checks_with_transport(transport_runtime)
     InspectCommandRun(command, status, cwd, output_path) =>
       self.inspect_command_run_with_transport(
         command, status, cwd, output_path, transport_runtime,
@@ -1873,6 +1909,46 @@ fn WorkbenchModel::queue_command_with_transport(
 }
 
 ///|
+fn WorkbenchModel::queue_focused_checks(
+  self : WorkbenchModel,
+) -> WorkbenchModel {
+  let session = self.active_session()
+  let commands = self.commands.copy()
+  for preset in workbench_check_presets() {
+    commands.push(
+      CommandRun::new(
+        id=commands.length() + 1,
+        command=preset.command,
+        cwd=session.project_path,
+        status="queued",
+      ),
+    )
+  }
+  let transport_commands = self.commands_for_focused_checks(session)
+  {
+    ..self,
+    commands,
+    transport: self.transport.enqueue_many(transport_commands),
+    last_status: "Focused checks queued for Pi RPC bash",
+  }
+}
+
+///|
+fn WorkbenchModel::queue_focused_checks_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let transport_commands = self.commands_for_focused_checks(session)
+  WorkbenchUpdate::new(
+    self.queue_focused_checks(),
+    effect=transport_runtime.effect(transport_commands, event => {
+      ReceiveTransport(event)
+    }),
+  )
+}
+
+///|
 fn WorkbenchModel::inspect_command_run(
   self : WorkbenchModel,
   command : String,
@@ -2492,6 +2568,21 @@ fn WorkbenchModel::commands_for_session_replacement_refresh(
   commands.push(FetchRpcForkMessages(session.id))
   commands.push(FetchRpcCommands(session.id))
   commands.push(FetchRpcSessionStats(session.id))
+  commands
+}
+
+///|
+fn WorkbenchModel::commands_for_focused_checks(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> Array[PiTransportCommand] {
+  let commands : Array[PiTransportCommand] = []
+  if self.transport.status is Disconnected {
+    commands.push(StartRpc(session.id, session.project_path))
+  }
+  for preset in workbench_check_presets() {
+    commands.push(RunShellCommand(session.id, preset.command))
+  }
   commands
 }
 
