@@ -108,6 +108,7 @@ The native smoke log verifier checks both the final pass marker and intermediate
 stage markers for readback, bounded readback, snapshot/image drawing, PNG
 encode/decode, codec creation, decoded bitmap readback, render resource
 planning, target identity/resource binding, byte-range text-run resource keys,
+text measurement resource planning, text measurement cache-key variation,
 UTF-8 text measurement, glyph count, glyph ID mapping, glyph advances, glyph
 positions, glyph bounds, text bounds measurement, font metrics, and font manager
 family enumeration.
