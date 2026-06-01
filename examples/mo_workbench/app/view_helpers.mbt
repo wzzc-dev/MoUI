@@ -1003,7 +1003,10 @@ fn WorkbenchModel::top_bar(
 
 ///|
 fn sidebar_session_meta(session : WorkbenchSession) -> String {
-  session_status_label(session.status)
+  match session.status {
+    "idle" => ""
+    _ => session_status_label(session.status)
+  }
 }
 
 ///|

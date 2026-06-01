@@ -17,10 +17,10 @@ fn sample_sessions() -> Array[WorkbenchSession] {
       project_path="/Volumes/Data/Code/moon/pi",
       pi_session_path="/tmp/mo-workbench-pi-rpc-session.jsonl",
       branch="main",
-      status="queued",
+      status="idle",
       summary="JSONL stdin/stdout transport exercise for pi --mode rpc.",
       active_task="",
-      unread_events=1,
+      unread_events=0,
     ),
   ]
 }
