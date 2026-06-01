@@ -321,6 +321,11 @@
       "marker": "native smoke font fallback width"
     },
     {
+      "id": "fontmgr.fallback-family-name",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback family bytes"
+    },
+    {
       "id": "fontmgr.fallback-resource-plan",
       "area": "FontMgr",
       "marker": "native smoke font fallback resource plan count"
