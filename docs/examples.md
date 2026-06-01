@@ -170,11 +170,10 @@ message blocks for long Pi replies and draws an explicit scrollbar when the
 main workflow overflows. Primary section labels are quieter and consistently
 Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`) once their
 evidence exists, with Pi/RPC left as protocol nouns. The default shell keeps
-only refresh, new-session,
-context, and send controls prominent; advanced session actions, steering /
-follow-up composer controls, and focused-check presets appear once Pi state,
-typed input, or command evidence makes them relevant. The workspace digest now
-includes file, diff, and latest
+only refresh, new-session, context, and send controls prominent; agent focus
+controls, advanced session actions, steering / follow-up composer controls, and
+focused-check presets appear once Pi state, typed input, or command evidence
+makes them relevant. The workspace digest now includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. When actionable evidence is
 present, the current session panel derives one quiet `下一步` row that points
@@ -195,9 +194,11 @@ state from the shared app model, stays hidden when those evidence streams are
 empty, and collapses on compact widths so the conversation flow remains primary.
 Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
 the shared prompt transport, turning visible Pi conversation evidence into the
-next agent task. The sidebar exposes lightweight `通用`, `编码`, and `校验`
-agent focus controls; selecting one only appends an `agent focus: ...` hint to
-the existing platform-neutral prompt, steering, and follow-up text payloads.
+next agent task. The default sidebar now stays focused on sessions and
+workspace identity; lightweight `通用`, `编码`, and `校验` agent focus controls
+move into the composer and appear only while composing or when a focus is
+selected. Selecting one only appends an `agent focus: ...` hint to the existing
+platform-neutral prompt, steering, and follow-up text payloads.
 The composer exposes repository, examples, evidence, and Pi session context
 chips; direct prompt, steering, and follow-up submits prefix the selected scopes
 into the same platform-neutral text payloads, while turning all chips off sends

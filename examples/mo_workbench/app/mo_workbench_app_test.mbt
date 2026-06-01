@@ -3091,13 +3091,14 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "Pi agent 桌面工作台"))
   assert_true(has_text(commands, "当前会话"))
-  assert_true(has_text(commands, "Agents"))
-  assert_true(has_text(commands, "通用"))
-  assert_true(has_text(commands, "编码"))
-  assert_true(has_text(commands, "校验"))
-  assert_true(has_text(commands, "协调"))
-  assert_true(has_text(commands, "实现"))
-  assert_true(has_text(commands, "检查"))
+  assert_false(has_text(commands, "Agents"))
+  assert_false(has_text(commands, "Agent"))
+  assert_false(has_text(commands, "通用"))
+  assert_false(has_text(commands, "编码"))
+  assert_false(has_text(commands, "校验"))
+  assert_false(has_text(commands, "协调"))
+  assert_false(has_text(commands, "实现"))
+  assert_false(has_text(commands, "检查"))
   assert_true(has_text(commands, "新会话"))
   assert_true(has_text(commands, "刷新"))
   assert_true(has_text(commands, "Pi 运行状态"))
@@ -3244,6 +3245,21 @@ test "workbench composer reveals secondary actions while composing" {
   assert_true(has_text(commands, "引导"))
   assert_true(has_text(commands, "跟进"))
   assert_true(has_text(commands, "发送"))
+}
+
+///|
+test "workbench composer reveals agent focus controls while composing" {
+  let commands = WorkbenchModel::new()
+    .update(PromptChanged("Implement the focused slice"))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(commands, "Agent"))
+  assert_true(has_text(commands, "通用"))
+  assert_true(has_text(commands, "编码"))
+  assert_true(has_text(commands, "校验"))
+  assert_false(has_text(commands, "协调"))
+  assert_false(has_text(commands, "实现"))
+  assert_false(has_text(commands, "检查"))
 }
 
 ///|

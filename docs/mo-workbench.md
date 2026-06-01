@@ -93,9 +93,9 @@ packages:
   `会话记录`, `运行证据`, `工作区证据`) once their evidence exists while preserving
   Pi/RPC protocol nouns, and
   the default shell keeps only refresh, new-session, context, and send controls
-  prominent. Advanced session actions, steering/follow-up composer controls,
-  and focused-check presets stay collapsed until Pi state, typed input, or
-  command evidence makes them relevant.
+  prominent. Agent focus controls, advanced session actions, steering/follow-up
+  composer controls, and focused-check presets stay collapsed until Pi state,
+  typed input, selected focus, or command evidence makes them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
@@ -113,12 +113,13 @@ packages:
   `PlanStep` rows, `Agents` reflects plan owners or recent activity events, and
   `工作文件夹` shows the active project plus the latest file evidence. Empty or
   compact windows collapse the rail and keep the conversation flow primary.
-- The left sidebar has a lightweight `Agents` focus roster for `通用`, `编码`,
-  and `校验`. Selecting a role does not create a native-only worker or transport
-  command; it appends an `agent focus: ...` hint to the existing prompt,
-  steering, and follow-up text context before the shared app emits the same
-  platform-neutral `SendUserInput`, `SendSteeringInput`, or `SendFollowUpInput`
-  commands.
+- Agent focus controls for `通用`, `编码`, and `校验` now live in the composer
+  instead of the default sidebar. They appear while composing or when a focus is
+  selected, keeping the idle shell closer to Codex's session-first layout.
+  Selecting a role does not create a native-only worker or transport command;
+  it appends an `agent focus: ...` hint to the existing prompt, steering, and
+  follow-up text context before the shared app emits the same platform-neutral
+  `SendUserInput`, `SendSteeringInput`, or `SendFollowUpInput` commands.
 - Pi `plan_update` JSONL now fills the existing shared-app `PlanStep` model and
   renders a compact `当前计划` row in the current session panel. The row shows
   the current active/open step, open-step count, and a `继续` action that reuses
