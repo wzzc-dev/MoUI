@@ -300,6 +300,8 @@ if ($status.schema_version -ge 3) {
     "text.font-resource-plan",
     "text.text-run-resource-plan",
     "text.text-run-range",
+    "text.measured-run-resource-plan",
+    "text.measured-run-key",
     "text.measure",
     "text.glyph-count",
     "text.glyph-id",
@@ -495,6 +497,8 @@ if ($status.schema_version -ge 3) {
       "native smoke filter resource plan count" = "3"
       "native smoke text run resource plan count" = "3"
       "native smoke text run range byte size" = "4"
+      "native smoke measured text resource plan count" = "5"
+      "native smoke measured text key variation" = "1"
       "native smoke font resource plan count" = "1"
       "native smoke font fallback key variation" = "1"
       "native smoke font fallback resource plan count" = "1"

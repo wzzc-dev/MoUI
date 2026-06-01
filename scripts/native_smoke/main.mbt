@@ -828,6 +828,34 @@ fn main {
     replay_measurement.with_shape(false).resource_key(b"hello") {
     fail_smoke("native text measurement resource key did not encode measurement inputs")
   }
+  let replay_measured_advance = replay_font.measure_text_utf8(b"hello")
+  let replay_measured_run = replay_measurement.measured_run_descriptor(
+    advance=replay_measured_advance,
+    bounds=replay_font.measure_text_bounds_utf8(b"hello"),
+  )
+  let replay_measured_run_plan = replay_measured_run.resource_plan(b"hello")
+  if !replay_measured_run.is_valid() ||
+    replay_measured_advance <= 0.0 ||
+    replay_measured_run_plan.length() != 5 ||
+    replay_measured_run_plan.count_kind(@skia.TextRunResource) != 3 ||
+    replay_measured_run_plan.count_kind(@skia.FontResource) != 1 ||
+    replay_measured_run_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    replay_measured_run_plan.byte_size <= replay_measurement_plan.byte_size ||
+    !replay_measured_run_plan.contains_key(
+      replay_measured_run.resource_key(b"hello"),
+    ) ||
+    !replay_measured_run_plan.contains_key(
+      replay_measurement.resource_key(b"hello"),
+    ) {
+    fail_smoke("native measured text run metadata resource plan is invalid")
+  }
+  if replay_measured_run.resource_key(b"hello") ==
+    replay_measurement.measured_run_descriptor(
+      advance=replay_measured_advance + 1.0,
+      bounds=replay_measured_run.bounds,
+    ).resource_key(b"hello") {
+    fail_smoke("native measured text run resource key did not encode result metadata")
+  }
   let replay_shaping = @skia.TextShapingDescriptor::new(
     run=replay_descriptor,
     font_key=@skia.RendererResourceKey::font(b"default:8"),
@@ -990,6 +1018,10 @@ fn main {
   println(ranged_text_resource.byte_size)
   println("native smoke text measurement resource plan count")
   println(replay_measurement_plan.length())
+  println("native smoke measured text resource plan count")
+  println(replay_measured_run_plan.length())
+  println("native smoke measured text key variation")
+  println(1)
   println("native smoke text measurement key variation")
   println(1)
   println("native smoke render frame resource plan count")

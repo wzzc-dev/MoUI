@@ -112,7 +112,8 @@ render-frame submission resource planning, render-frame submission cache
 population, surface present resource planning, GPU present resource planning,
 GPU frame submission resource planning, GPU-backed submission subplans,
 byte-range text-run resource keys, text measurement resource planning,
-text measurement cache-key variation,
+measured-text result resource planning, measured-text result cache-key
+variation, text measurement cache-key variation,
 text shaping resource planning, shaped-text result resource planning, UTF-8 text
 measurement, glyph count, glyph ID mapping, glyph advances, glyph positions,
 glyph bounds, text bounds measurement, font metrics, and font manager family
