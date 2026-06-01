@@ -1794,6 +1794,43 @@ test "text measurement descriptors track cache identity and dependencies" {
   assert_true(plan.contains_key(run.resource_key(b"xhelloz", font_key~)))
   assert_true(plan.contains_key(font_key))
   assert_true(plan.contains_key(fallback.resource_key()))
+  let measured = measurement.measured_run_descriptor(
+    advance=18.0,
+    bounds=Some(@skia_mbt.Rect::new(12.0, -2.0, 2.0, 6.0)),
+  )
+  assert_true(measured.is_valid())
+  assert_true(measured.has_bounds())
+  assert_true(
+    measured.bounds == Some(@skia_mbt.Rect::new(2.0, -2.0, 12.0, 6.0)),
+  )
+  let measured_key = measured.resource_key(b"xhelloz")
+  assert_true(measured_key.kind == @skia_mbt.TextRunResource)
+  assert_true(measured_key != key)
+  assert_true(measured_key == measured.resource_key(b"yhelloq"))
+  assert_true(
+    measured_key !=
+    measurement
+    .measured_run_descriptor(advance=19.0, bounds=measured.bounds)
+    .resource_key(b"xhelloz"),
+  )
+  assert_true(
+    measured_key !=
+    measurement.measured_run_descriptor(advance=18.0).resource_key(b"xhelloz"),
+  )
+  let measured_plan = measured.resource_plan(b"xhelloz")
+  assert_eq(measured_plan.length(), 5)
+  assert_eq(measured_plan.count_kind(@skia_mbt.TextRunResource), 3)
+  assert_eq(measured_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(measured_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_true(measured_plan.contains_key(measured_key))
+  assert_true(measured_plan.contains_key(key))
+  assert_true(measured_plan.byte_size > plan.byte_size)
+  let normalized_measured = measurement.measured_run_descriptor(
+    advance=-1.0,
+    bounds=Some(@skia_mbt.Rect::new(0, 0, 1.0 / 0.0, 1)),
+  )
+  assert_eq(normalized_measured.advance, 0.0)
+  assert_true(!normalized_measured.has_bounds())
 
   let plain = @skia_mbt.TextMeasurementDescriptor::new(
     run=@skia_mbt.TextRunDescriptor::new(range=@skia_mbt.TextRange::new(0, 5)),

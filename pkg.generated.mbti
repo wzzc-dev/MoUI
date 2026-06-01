@@ -475,6 +475,18 @@ pub(all) enum MatrixMember {
   Persp2
 } derive(Eq, @debug.Debug)
 
+pub(all) struct MeasuredTextRunDescriptor {
+  measurement : TextMeasurementDescriptor
+  advance : Float
+  bounds : Rect?
+} derive(Eq, @debug.Debug)
+pub fn MeasuredTextRunDescriptor::has_bounds(Self) -> Bool
+pub fn MeasuredTextRunDescriptor::is_valid(Self) -> Bool
+pub fn MeasuredTextRunDescriptor::new(measurement? : TextMeasurementDescriptor, advance? : Float, bounds? : Rect?) -> Self
+pub fn MeasuredTextRunDescriptor::resource_descriptor(Self, Bytes, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn MeasuredTextRunDescriptor::resource_key(Self, Bytes) -> RendererResourceKey
+pub fn MeasuredTextRunDescriptor::resource_plan(Self, Bytes, measured_byte_size? : Int64, measurement_byte_size? : Int64, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
+
 pub(all) enum MipmapMode {
   None
   Nearest
@@ -1240,6 +1252,7 @@ pub(all) struct TextMeasurementDescriptor {
   shape : Bool
 } derive(Eq, @debug.Debug)
 pub fn TextMeasurementDescriptor::is_shaped(Self) -> Bool
+pub fn TextMeasurementDescriptor::measured_run_descriptor(Self, advance? : Float, bounds? : Rect?) -> MeasuredTextRunDescriptor
 pub fn TextMeasurementDescriptor::new(run? : TextRunDescriptor, font_key? : RendererResourceKey, width? : Float, measure_bounds? : Bool, shape? : Bool) -> Self
 pub fn TextMeasurementDescriptor::resource_descriptor(Self, Bytes, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn TextMeasurementDescriptor::resource_key(Self, Bytes) -> RendererResourceKey
