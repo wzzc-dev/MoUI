@@ -95,7 +95,7 @@ packages:
   localized session status labels, while full project paths remain in the shared
   model and Pi transport commands. The default shell keeps only top-bar
   refresh/new-session controls and composer send prominent. Context chips, the
-  idle Pi RPC status, the `Pi 运行状态` panel, agent focus controls, advanced
+  idle Pi RPC footer, the `Pi 运行状态` panel, agent focus controls, advanced
   session actions, steering/follow-up composer controls, and focused-check
   presets stay collapsed until Pi state, typed input, non-default context,
   selected focus, or command evidence makes them relevant.

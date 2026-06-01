@@ -173,7 +173,7 @@ evidence exists, with Pi/RPC left as protocol nouns. Default chrome uses short
 project names and localized session status labels while keeping full
 `project_path` values in the shared model and transport commands. The default
 shell keeps only top-bar refresh/new-session controls and composer send
-prominent; context chips, the idle Pi RPC status, the `Pi 运行状态` panel, agent
+prominent; context chips, the idle Pi RPC footer, the `Pi 运行状态` panel, agent
 focus controls, advanced session actions, steering / follow-up composer
 controls, and focused-check presets appear once Pi state, typed input,
 non-default context, or command evidence makes them relevant. The workspace

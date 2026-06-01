@@ -221,20 +221,19 @@ fn WorkbenchModel::app_sidebar(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    self.sidebar_brand(layout, theme),
+    self.sidebar_section_label("任务历史", layout, theme),
+    self.pinned_threads(layout, theme),
+    self.sidebar_section_label("工作区", layout, theme),
+    self.workspace_summary(layout, theme),
+    spacer(min_length=8.0, weight=1.0),
+  ]
+  if self.should_show_sidebar_transport_footer() {
+    rows.push(self.sidebar_footer(layout, theme))
+  }
   surface(
-    column(
-      [
-        self.sidebar_brand(layout, theme),
-        self.sidebar_section_label("任务历史", layout, theme),
-        self.pinned_threads(layout, theme),
-        self.sidebar_section_label("工作区", layout, theme),
-        self.workspace_summary(layout, theme),
-        spacer(min_length=8.0, weight=1.0),
-        self.sidebar_footer(layout, theme),
-      ],
-      spacing=theme.spacing_scale.sm,
-      align=Stretch,
-    ),
+    column(rows, spacing=theme.spacing_scale.sm, align=Stretch),
     width=layout.sidebar_width,
     height=layout.viewport.height,
     background=ui_color(0.93, 0.94, 0.93),
@@ -342,6 +341,16 @@ fn WorkbenchModel::workspace_summary(
 }
 
 ///|
+fn WorkbenchModel::should_show_sidebar_transport_footer(
+  self : WorkbenchModel,
+) -> Bool {
+  match self.transport.status {
+    Disconnected => self.pending_transport_count() > 0
+    _ => true
+  }
+}
+
+///|
 fn WorkbenchModel::sidebar_footer(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
@@ -364,8 +373,19 @@ fn WorkbenchModel::sidebar_transport_status_cell(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let width = layout.sidebar_inner_width - 72.0
+  let pending = self.pending_transport_count()
   if self.transport.status is Disconnected {
-    blank_cell(width~, height=28.0)
+    if pending > 0 {
+      text(
+        pending.to_string() + " 排队",
+        role=Caption,
+        theme~,
+        width~,
+        height=28.0,
+      )
+    } else {
+      blank_cell(width~, height=28.0)
+    }
   } else {
     text(
       self.transport.display_status_label(),

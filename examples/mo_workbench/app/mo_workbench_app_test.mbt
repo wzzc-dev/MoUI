@@ -3146,7 +3146,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "会话记录"))
   assert_false(has_text(commands, "运行证据"))
   assert_false(has_text(commands, "工作区证据"))
-  assert_true(has_text(commands, "Pi RPC"))
+  assert_false(has_text(commands, "Pi RPC"))
   assert_false(has_text(commands, "/Volumes/Data/Code/moon/MoUI"))
   assert_false(has_text(commands, "/Volumes/Data/Code/moon/pi"))
   assert_false(has_text(commands, "active"))
@@ -3221,12 +3221,18 @@ test "workbench runtime draws agent desktop shell" {
 }
 
 ///|
-test "workbench sidebar transport status appears only when live" {
+test "workbench sidebar transport status appears only when useful" {
   let idle = WorkbenchModel::new()
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(idle, "Pi RPC"))
+  assert_false(has_text(idle, "Pi RPC"))
   assert_false(has_text(idle, "未连接"))
+  let queued = WorkbenchModel::new()
+    .update(QueueCommand("moon check"))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(queued, "Pi RPC"))
+  assert_true(has_text(queued, "启动中"))
   let running = WorkbenchModel::new()
     .update(ReceiveTransport(ProcessStarted("4242")))
     .runtime(width=1220.0, height=780.0)
