@@ -49,7 +49,7 @@ packages:
 - Typed transport commands for starting RPC, sending prompts, running shell
   commands, refreshing Pi messages and command catalogs, syncing Pi session
   names, refreshing Pi session stats, creating fresh Pi sessions, cancelling
-  runs, switching Pi sessions, and shutdown.
+  runs, switching Pi sessions, exporting Pi sessions to HTML, and shutdown.
 - Typed transport events for process lifecycle, JSONL sent/received lines,
   stderr diagnostics, and failures.
 - A platform-neutral `PiTransportRuntime` that turns command batches into
@@ -59,8 +59,9 @@ packages:
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
   (`get_state`, `get_messages`, `get_commands`, `get_session_stats`,
   `cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`,
-  `new_session`, `switch_session`, `prompt`, `set_session_name`, `bash`,
-  `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell fixtures to
+  `new_session`, `switch_session`, `fork`, `get_fork_messages`, `export_html`,
+  `prompt`, `set_session_name`, `bash`, `abort_bash`, and `abort`; shutdown is
+  stdin EOF), and uses shell fixtures to
   prove direct JSONL stdin/stdout process
   driving without C FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
@@ -151,6 +152,10 @@ packages:
   The shared app maps message counts, tool counts, token totals, cost, and
   optional context usage into `PiSessionStatsSnapshot`, then surfaces compact
   metrics in the session status panel without adding native-only state.
+- The session panel can export the current Pi session through `export_html`.
+  The shared app emits `ExportRpcSessionHtml`, ingests Pi's returned path as
+  `FileContext` evidence in the Workspace digest, and keeps the export artifact
+  in app state rather than adding a native file-opening bridge.
 - The workbench can explicitly sync the selected Workbench session title into
   Pi through `set_session_name`. Pi's `session_info_changed` event updates the
   same `PiSessionBinding`, so user-visible Workbench session identity and Pi's
@@ -198,7 +203,8 @@ packages:
   command catalog with normalized `PiCommandInfo` rows that preserve command
   name, kind, description, source scope, and source path. Successful
   `get_session_stats` responses refresh `PiSessionStatsSnapshot` with message,
-  tool, token, cost, and optional context counters. Successful
+  tool, token, cost, and optional context counters. Successful `export_html`
+  responses add the returned HTML path as Workspace file evidence. Successful
   `cycle_thinking_level` responses update the agent snapshot when Pi returns
   the new level, while
   `thinking_level_changed` events remain the authoritative stream update.
@@ -244,7 +250,9 @@ packages:
   no-model smoke paths using offline `get_state`, `new_session`, `get_messages`,
   `get_fork_messages`, `get_commands`, `get_session_stats`,
   `cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`,
-  `set_session_name`, and `abort_bash` over `pi --mode rpc`.
+  `set_session_name`, and `abort_bash` over `pi --mode rpc`; it also records
+  the expected `export_html` failure boundary for in-memory `--no-session`
+  smoke runs.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
@@ -294,6 +302,10 @@ extension, and skill commands. A successful
 refreshes `PiSessionStatsSnapshot` with message/tool/token/context metrics and
 updates the Workbench-to-Pi binding from the reported `sessionId` and
 `sessionFile`. A successful
+`{"type":"response","command":"export_html","success":true,...}` line adds the
+returned HTML path as a Workspace file evidence row, so exported Pi sessions can
+become coding, documentation, or knowledge artifacts without native-only state.
+A successful
 `{"type":"response","command":"cycle_thinking_level","success":true,...}` line
 acknowledges the compact Thinking control and, when Pi includes a `data.level`,
 updates `PiAgentSnapshot.thinking_level`. The streamed
@@ -422,6 +434,8 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `FetchRpcCommands` sends `{"type":"get_commands"}`,
 `FetchRpcSessionStats` sends `{"type":"get_session_stats"}`,
 `ForkRpcSession` sends `{"type":"fork","entryId":...}`,
+`ExportRpcSessionHtml` sends `{"type":"export_html"}` or includes
+`"outputPath"` when the app supplies one,
 `CycleRpcThinkingLevel` sends `{"type":"cycle_thinking_level"}`,
 `SetRpcSteeringMode` sends `{"type":"set_steering_mode","mode":...}`,
 `SetRpcFollowUpMode` sends `{"type":"set_follow_up_mode","mode":...}`,
@@ -458,6 +472,9 @@ printf '{"type":"get_commands"}\n' | \
 printf '{"type":"get_session_stats"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"export_html","outputPath":"/tmp/mo-workbench-export-smoke.html"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
@@ -481,11 +498,12 @@ should return a `get_messages` response with a `messages` array, the fourth
 should return a `get_fork_messages` response with a fork `messages` array, the
 fifth should return a `get_commands` response with a `commands` array, the
 sixth should return a `get_session_stats` response with message, tool, token,
-and cost counters, the seventh should return a successful
-`cycle_thinking_level` acknowledgement, the eighth and ninth should acknowledge
-the steering/follow-up mode changes, the tenth should emit
-`session_info_changed` and a successful `set_session_name` response, and the
-eleventh should return a successful
+and cost counters, the seventh should return an `export_html` failure explaining
+that in-memory `--no-session` sessions cannot be exported, the eighth should
+return a successful `cycle_thinking_level` acknowledgement, the ninth and tenth
+should acknowledge the steering/follow-up mode changes, the eleventh should
+emit `session_info_changed` and a successful `set_session_name` response, and
+the twelfth should return a successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -527,6 +545,9 @@ printf '{"type":"get_commands"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_session_stats"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"export_html","outputPath":"/tmp/mo-workbench-export-smoke.html"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \

@@ -200,6 +200,7 @@ pub(all) enum WorkbenchMsg {
   NewSession
   RefreshForkMessages
   ForkFromMessage(String)
+  ExportSessionHtml
   QueueCommand(String)
   InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
@@ -540,6 +541,7 @@ pub fn WorkbenchModel::update(
     NewSession => self.new_session()
     RefreshForkMessages => self.refresh_fork_messages()
     ForkFromMessage(entry_id) => self.fork_from_message(entry_id)
+    ExportSessionHtml => self.export_session_html()
     QueueCommand(command) => self.queue_command(command)
     InspectCommandRun(command, status, cwd, output_path) =>
       self.inspect_command_run(command, status, cwd, output_path)
@@ -730,6 +732,8 @@ pub fn WorkbenchModel::update_with_transport(
       self.refresh_fork_messages_with_transport(transport_runtime)
     ForkFromMessage(entry_id) =>
       self.fork_from_message_with_transport(entry_id, transport_runtime)
+    ExportSessionHtml =>
+      self.export_session_html_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
     InspectCommandRun(command, status, cwd, output_path) =>
@@ -937,6 +941,46 @@ fn WorkbenchModel::fork_from_message_with_transport(
       effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
     )
   }
+}
+
+///|
+fn WorkbenchModel::export_session_html(self : WorkbenchModel) -> WorkbenchModel {
+  let session = self.active_session()
+  let commands = self.commands_with_session_start(
+    session,
+    ExportRpcSessionHtml(session.id, ""),
+  )
+  let events = self.events.copy()
+  events.push(
+    AgentEvent::new(
+      phase="control",
+      title="Pi HTML export queued",
+      detail=session.title,
+      tone="info",
+    ),
+  )
+  {
+    ..self,
+    events,
+    transport: self.transport.enqueue_many(commands),
+    last_status: "Pi HTML export queued",
+  }
+}
+
+///|
+fn WorkbenchModel::export_session_html_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let commands = self.commands_with_session_start(
+    session,
+    ExportRpcSessionHtml(session.id, ""),
+  )
+  WorkbenchUpdate::new(
+    self.export_session_html(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
 }
 
 ///|

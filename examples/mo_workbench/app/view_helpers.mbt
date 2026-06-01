@@ -591,6 +591,14 @@ fn WorkbenchModel::session_controls_row(
         height=34.0,
       ),
       button(
+        "导出",
+        on_click=ExportSessionHtml,
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=34.0,
+      ),
+      button(
         "思考",
         on_click=CycleThinkingLevel,
         variant=Outline,

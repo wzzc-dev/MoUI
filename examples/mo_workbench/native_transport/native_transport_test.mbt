@@ -18,6 +18,10 @@ async test "native transport builds structured jsonl request lines" {
   let commands = pi_rpc_get_commands_line()
   let stats = pi_rpc_get_session_stats_line()
   let fork = pi_rpc_fork_line(entry_id="entry-1")
+  let export_default = pi_rpc_export_html_line(output_path="")
+  let export_path = pi_rpc_export_html_line(
+    output_path="/tmp/mo-workbench.html",
+  )
   let thinking = pi_rpc_cycle_thinking_level_line()
   let steering = pi_rpc_set_steering_mode_line(mode="all")
   let follow_up = pi_rpc_set_follow_up_mode_line(mode="one-at-a-time")
@@ -38,6 +42,11 @@ async test "native transport builds structured jsonl request lines" {
   json_inspect(@json.parse(fork), content={
     "type": "fork",
     "entryId": "entry-1",
+  })
+  json_inspect(@json.parse(export_default), content={ "type": "export_html" })
+  json_inspect(@json.parse(export_path), content={
+    "type": "export_html",
+    "outputPath": "/tmp/mo-workbench.html",
   })
   json_inspect(@json.parse(thinking), content={ "type": "cycle_thinking_level" })
   json_inspect(@json.parse(steering), content={
@@ -79,6 +88,7 @@ async test "native transport maps command batches to jsonl requests" {
     FetchRpcCommands("session-1"),
     FetchRpcSessionStats("session-1"),
     ForkRpcSession("session-1", "entry-1"),
+    ExportRpcSessionHtml("session-1", "/tmp/mo-workbench.html"),
     CycleRpcThinkingLevel("session-1"),
     SetRpcSteeringMode("session-1", "all"),
     SetRpcFollowUpMode("session-1", "one-at-a-time"),
@@ -90,7 +100,7 @@ async test "native transport maps command batches to jsonl requests" {
     Shutdown,
   ])
   inspect(request.session_id, content="session-1")
-  inspect(request.lines.length(), content="16")
+  inspect(request.lines.length(), content="17")
   json_inspect(@json.parse(request.lines[0]), content={ "type": "get_state" })
   json_inspect(@json.parse(request.lines[1]), content={ "type": "new_session" })
   json_inspect(@json.parse(request.lines[2]), content={
@@ -110,30 +120,34 @@ async test "native transport maps command batches to jsonl requests" {
     "entryId": "entry-1",
   })
   json_inspect(@json.parse(request.lines[8]), content={
-    "type": "cycle_thinking_level",
+    "type": "export_html",
+    "outputPath": "/tmp/mo-workbench.html",
   })
   json_inspect(@json.parse(request.lines[9]), content={
+    "type": "cycle_thinking_level",
+  })
+  json_inspect(@json.parse(request.lines[10]), content={
     "type": "set_steering_mode",
     "mode": "all",
   })
-  json_inspect(@json.parse(request.lines[10]), content={
+  json_inspect(@json.parse(request.lines[11]), content={
     "type": "set_follow_up_mode",
     "mode": "one-at-a-time",
   })
-  json_inspect(@json.parse(request.lines[11]), content={
+  json_inspect(@json.parse(request.lines[12]), content={
     "type": "set_session_name",
     "name": "Mo Workbench",
   })
-  json_inspect(@json.parse(request.lines[12]), content={
+  json_inspect(@json.parse(request.lines[13]), content={
     "type": "prompt",
     "message": "hello",
   })
-  json_inspect(@json.parse(request.lines[13]), content={
+  json_inspect(@json.parse(request.lines[14]), content={
     "type": "bash",
     "command": "moon check",
   })
-  json_inspect(@json.parse(request.lines[14]), content={ "type": "abort_bash" })
-  json_inspect(@json.parse(request.lines[15]), content={ "type": "abort" })
+  json_inspect(@json.parse(request.lines[15]), content={ "type": "abort_bash" })
+  json_inspect(@json.parse(request.lines[16]), content={ "type": "abort" })
 }
 
 ///|

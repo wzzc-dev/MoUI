@@ -23,6 +23,7 @@ pub(all) enum PiTransportCommand {
   FetchRpcCommands(String)
   FetchRpcSessionStats(String)
   ForkRpcSession(String, String)
+  ExportRpcSessionHtml(String, String)
   CycleRpcThinkingLevel(String)
   SetRpcSteeringMode(String, String)
   SetRpcFollowUpMode(String, String)
@@ -158,6 +159,12 @@ pub fn PiTransportCommand::label(self : PiTransportCommand) -> String {
     FetchRpcSessionStats(session) => "fetch rpc session stats for " + session
     ForkRpcSession(session, entry_id) =>
       "fork rpc session for " + session + ": " + entry_id
+    ExportRpcSessionHtml(session, path) =>
+      if path == "" {
+        "export rpc session html for " + session
+      } else {
+        "export rpc session html for " + session + ": " + path
+      }
     CycleRpcThinkingLevel(session) => "cycle rpc thinking level for " + session
     SetRpcSteeringMode(session, mode) =>
       "set rpc steering mode for " + session + ": " + mode

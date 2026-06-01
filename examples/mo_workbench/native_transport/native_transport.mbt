@@ -98,6 +98,15 @@ pub fn pi_rpc_get_session_stats_line() -> String {
 }
 
 ///|
+pub fn pi_rpc_export_html_line(output_path~ : String) -> String {
+  if output_path == "" {
+    ({ "type": "export_html" } : Json).stringify()
+  } else {
+    ({ "type": "export_html", "outputPath": output_path } : Json).stringify()
+  }
+}
+
+///|
 pub fn pi_rpc_cycle_thinking_level_line() -> String {
   ({ "type": "cycle_thinking_level" } : Json).stringify()
 }
@@ -210,6 +219,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_fork_line(entry_id~))
+      }
+      ExportRpcSessionHtml(session, path) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_export_html_line(output_path=path))
       }
       CycleRpcThinkingLevel(session) => {
         if session_id == default_session_id {
