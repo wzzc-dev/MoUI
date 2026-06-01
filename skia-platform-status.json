@@ -91,6 +91,11 @@
       "marker": "native smoke canvas state restored"
     },
     {
+      "id": "canvas.clip",
+      "area": "Canvas",
+      "marker": "native smoke canvas clip device width"
+    },
+    {
       "id": "canvas.command-replay",
       "area": "Canvas",
       "marker": "native smoke canvas replay commands"
@@ -307,6 +312,11 @@
     }
   ],
   "native_smoke_expected_values": [
+    {
+      "id": "canvas.clip",
+      "marker": "native smoke canvas clip device width",
+      "value": "4"
+    },
     {
       "id": "pipeline.resource-plan",
       "marker": "native smoke render resource plan count",

@@ -244,6 +244,7 @@ if ($status.schema_version -ge 3) {
   $requiredCapabilityIds = @(
     "surface.descriptor",
     "canvas.state",
+    "canvas.clip",
     "canvas.command-replay",
     "pipeline.resource-plan",
     "pipeline.frame-resource-plan",
@@ -342,6 +343,7 @@ if ($status.schema_version -ge 3) {
       throw "schema v4 platform status is missing native_smoke_expected_values list"
     }
     $requiredExpectedValues = @{
+      "native smoke canvas clip device width" = "4"
       "native smoke render resource plan count" = "9"
       "native smoke render frame resource plan count" = "9"
       "native smoke render frame validation status" = "1"
