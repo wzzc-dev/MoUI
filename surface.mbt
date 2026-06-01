@@ -732,6 +732,43 @@ pub fn SurfaceTargetDescriptor::present_descriptor(
 }
 
 ///|
+/// Per-frame surface finalization metadata before a backend flushes/submits work.
+pub(all) struct SurfaceFinalizationDescriptor {
+  target : SurfaceTargetDescriptor
+  frame_index : Int
+} derive(Debug, Eq)
+
+///|
+pub fn SurfaceFinalizationDescriptor::new(
+  target : SurfaceTargetDescriptor,
+  frame_index? : Int = 0,
+) -> SurfaceFinalizationDescriptor {
+  { target, frame_index: normalized_surface_present_frame_index(frame_index) }
+}
+
+///|
+pub fn SurfaceTargetDescriptor::finalization_descriptor(
+  self : SurfaceTargetDescriptor,
+  frame_index? : Int = 0,
+) -> SurfaceFinalizationDescriptor {
+  SurfaceFinalizationDescriptor::new(self, frame_index~)
+}
+
+///|
+pub fn SurfaceFinalizationDescriptor::is_finalizable(
+  self : SurfaceFinalizationDescriptor,
+) -> Bool {
+  !self.target.resource_key().is_empty()
+}
+
+///|
+pub fn SurfaceFinalizationDescriptor::requires_gpu_context(
+  self : SurfaceFinalizationDescriptor,
+) -> Bool {
+  self.target.surface.is_gpu()
+}
+
+///|
 pub fn SurfacePresentDescriptor::is_presentable(
   self : SurfacePresentDescriptor,
 ) -> Bool {
@@ -808,6 +845,20 @@ fn SurfacePresentDescriptor::resource_id(
 }
 
 ///|
+fn SurfaceFinalizationDescriptor::resource_id(
+  self : SurfaceFinalizationDescriptor,
+) -> Bytes {
+  let target_key = self.target.resource_key()
+  if !self.is_finalizable() || target_key.is_empty() {
+    b""
+  } else {
+    b"skia_mbt:surface-finalization:v1" +
+    surface_resource_bytes(target_key.id) +
+    surface_resource_u64(self.frame_index)
+  }
+}
+
+///|
 pub fn SurfaceTargetDescriptor::resource_key(
   self : SurfaceTargetDescriptor,
 ) -> RendererResourceKey {
@@ -840,8 +891,34 @@ pub fn SurfacePresentDescriptor::resource_key(
 }
 
 ///|
+pub fn SurfaceFinalizationDescriptor::resource_key(
+  self : SurfaceFinalizationDescriptor,
+) -> RendererResourceKey {
+  let target_key = self.target.resource_key()
+  RendererResourceKey::new(target_key.kind, self.resource_id())
+}
+
+///|
 pub fn SurfacePresentDescriptor::resource_descriptor(
   self : SurfacePresentDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let id = self.resource_id()
+  let measured_byte_size = if byte_size < 0L {
+    id.length().to_int64()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::new(
+    self.resource_key(),
+    byte_size=measured_byte_size,
+    cacheable=false,
+  )
+}
+
+///|
+pub fn SurfaceFinalizationDescriptor::resource_descriptor(
+  self : SurfaceFinalizationDescriptor,
   byte_size? : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
@@ -905,8 +982,33 @@ pub fn SurfacePresentDescriptor::resource_descriptors(
 }
 
 ///|
+pub fn SurfaceFinalizationDescriptor::resource_descriptors(
+  self : SurfaceFinalizationDescriptor,
+  byte_size? : Int64 = -1L,
+) -> Array[RendererResourceDescriptor] {
+  if !self.is_finalizable() {
+    []
+  } else {
+    let descriptors = self.target.resource_descriptors()
+    let finalization_descriptor = self.resource_descriptor(byte_size~)
+    if !finalization_descriptor.key.is_empty() {
+      descriptors.push(finalization_descriptor)
+    }
+    descriptors
+  }
+}
+
+///|
 pub fn SurfacePresentDescriptor::resource_plan(
   self : SurfacePresentDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new(self.resource_descriptors(byte_size~))
+}
+
+///|
+pub fn SurfaceFinalizationDescriptor::resource_plan(
+  self : SurfaceFinalizationDescriptor,
   byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
   RendererResourcePlan::new(self.resource_descriptors(byte_size~))

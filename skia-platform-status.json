@@ -216,6 +216,11 @@
       "marker": "native smoke gpu present resource plan count"
     },
     {
+      "id": "gpu.finalization-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu finalization resource plan count"
+    },
+    {
       "id": "gpu.frame-submission-resource-plan",
       "area": "GPU",
       "marker": "native smoke gpu frame submission resource plan count"
@@ -254,6 +259,16 @@
       "id": "surface.window-present-mode-key",
       "area": "Surface",
       "marker": "native smoke window present mode key variation"
+    },
+    {
+      "id": "surface.finalization-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke surface finalization resource plan count"
+    },
+    {
+      "id": "surface.finalization-key",
+      "area": "Surface",
+      "marker": "native smoke surface finalization key variation"
     },
     {
       "id": "surface.present-buffer-index",
@@ -679,6 +694,11 @@
       "value": "3"
     },
     {
+      "id": "gpu.finalization-resource-plan",
+      "marker": "native smoke gpu finalization resource plan count",
+      "value": "3"
+    },
+    {
       "id": "gpu.frame-submission-resource-plan",
       "marker": "native smoke gpu frame submission resource plan count",
       "value": "3"
@@ -716,6 +736,16 @@
     {
       "id": "surface.window-present-mode-key",
       "marker": "native smoke window present mode key variation",
+      "value": "1"
+    },
+    {
+      "id": "surface.finalization-resource-plan",
+      "marker": "native smoke surface finalization resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "surface.finalization-key",
+      "marker": "native smoke surface finalization key variation",
       "value": "1"
     },
     {

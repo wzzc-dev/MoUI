@@ -1187,6 +1187,18 @@ pub fn SurfaceDescriptor::with_origin(Self, SurfaceOrigin) -> Self
 pub fn SurfaceDescriptor::with_sample_count(Self, Int) -> Self
 pub fn SurfaceDescriptor::with_stencil_bits(Self, Int) -> Self
 
+pub(all) struct SurfaceFinalizationDescriptor {
+  target : SurfaceTargetDescriptor
+  frame_index : Int
+} derive(Eq, @debug.Debug)
+pub fn SurfaceFinalizationDescriptor::is_finalizable(Self) -> Bool
+pub fn SurfaceFinalizationDescriptor::new(SurfaceTargetDescriptor, frame_index? : Int) -> Self
+pub fn SurfaceFinalizationDescriptor::requires_gpu_context(Self) -> Bool
+pub fn SurfaceFinalizationDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn SurfaceFinalizationDescriptor::resource_descriptors(Self, byte_size? : Int64) -> Array[RendererResourceDescriptor]
+pub fn SurfaceFinalizationDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn SurfaceFinalizationDescriptor::resource_plan(Self, byte_size? : Int64) -> RendererResourcePlan
+
 pub(all) enum SurfaceOrigin {
   TopLeft
   BottomLeft
@@ -1226,6 +1238,7 @@ pub(all) struct SurfaceTargetDescriptor {
 } derive(Eq, @debug.Debug)
 pub fn SurfaceTargetDescriptor::bounds(Self) -> IRect
 pub fn SurfaceTargetDescriptor::dimensions(Self) -> ISize
+pub fn SurfaceTargetDescriptor::finalization_descriptor(Self, frame_index? : Int) -> SurfaceFinalizationDescriptor
 pub fn SurfaceTargetDescriptor::gpu_context_resource_descriptor(Self) -> RendererResourceDescriptor?
 pub fn SurfaceTargetDescriptor::gpu_n32_premul(ISize, origin? : SurfaceOrigin, sample_count? : Int, stencil_bits? : Int, budget? : SurfaceBudget, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int, gpu_context_key? : RendererResourceKey?, target_id? : Bytes) -> Self
 pub fn SurfaceTargetDescriptor::has_gpu_context(Self) -> Bool
