@@ -184,6 +184,21 @@ jobs:
           printf '%s\n' 'main' > logs/fake-floating-skia-revision.txt
           bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-floating-skia-revision.txt --skip-if-unpinned
           bash scripts/verify-platform-status.sh
+          cat > logs/fake-platform-status-doc.md <<'EOF'
+          ## Current Matrix
+
+          | Platform | Current state | What exists | Missing before accepted |
+          | --- | --- | --- | --- |
+          | Linux | Ready, not accepted yet | fake | fake |
+          | macOS | Ready, not accepted yet | fake | fake |
+          | Windows | Ready, not accepted yet | fake | fake |
+
+          ## Next Section
+          EOF
+          if bash scripts/verify-platform-status.sh --status-doc logs/fake-platform-status-doc.md; then
+            echo "verify-platform-status unexpectedly accepted a stale Markdown status matrix" >&2
+            exit 1
+          fi
           python3 - <<'PY'
           import json
           from pathlib import Path

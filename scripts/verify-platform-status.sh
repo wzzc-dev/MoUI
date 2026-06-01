@@ -13,6 +13,7 @@ Options:
   --status-file PATH    Platform status JSON file. Defaults to skia-platform-status.json.
   --revision-file PATH  Skia revision file. Defaults to skia-revision.txt.
   --provider-lock PATH   Skia provider lock JSON. Defaults to skia-provider-lock.json.
+  --status-doc PATH     Platform status Markdown file. Defaults to SKIA_PLATFORM_STATUS.md.
   -h, --help            Show this help.
 EOF
 }
@@ -20,6 +21,8 @@ EOF
 status_file="skia-platform-status.json"
 revision_file="skia-revision.txt"
 provider_lock="skia-provider-lock.json"
+status_doc="SKIA_PLATFORM_STATUS.md"
+status_doc_explicit=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -50,6 +53,16 @@ while [[ $# -gt 0 ]]; do
       provider_lock="$2"
       shift 2
       ;;
+    --status-doc)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --status-doc" >&2
+        usage >&2
+        exit 2
+      fi
+      status_doc="$2"
+      status_doc_explicit=1
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -75,8 +88,9 @@ resolve_repo_path() {
 resolved_status_file="$(resolve_repo_path "$status_file")"
 resolved_revision_file="$(resolve_repo_path "$revision_file")"
 resolved_provider_lock="$(resolve_repo_path "$provider_lock")"
+resolved_status_doc="$(resolve_repo_path "$status_doc")"
 
-python3 - "$resolved_status_file" "$resolved_revision_file" "$resolved_provider_lock" "$repo_root" <<'PY'
+python3 - "$resolved_status_file" "$resolved_revision_file" "$resolved_provider_lock" "$repo_root" "$resolved_status_doc" "$status_doc_explicit" <<'PY'
 import json
 import pathlib
 import re
@@ -86,6 +100,8 @@ status_path = pathlib.Path(sys.argv[1])
 revision_path = pathlib.Path(sys.argv[2])
 provider_lock_path = pathlib.Path(sys.argv[3])
 repo_root = pathlib.Path(sys.argv[4])
+status_doc_path = pathlib.Path(sys.argv[5])
+status_doc_explicit = sys.argv[6] == "1"
 
 def fail(message: str) -> None:
     print(message, file=sys.stderr)
@@ -544,6 +560,66 @@ if not linux.get("source_build"):
 
 if windows.get("source_build"):
     fail("Windows status must not claim source_build=true until a repeatable Windows Skia build path exists")
+
+default_status_path = (repo_root / "skia-platform-status.json").resolve()
+should_check_status_doc = status_doc_explicit or status_path.resolve() == default_status_path
+if should_check_status_doc:
+    if not status_doc_path.is_file():
+        fail(f"Skia platform status Markdown file is missing: {status_doc_path}")
+
+    platform_names = {
+        "linux": "Linux",
+        "macos": "macOS",
+        "windows": "Windows",
+    }
+    rows = {}
+    in_current_matrix = False
+    for line in status_doc_path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped == "## Current Matrix":
+            in_current_matrix = True
+            continue
+        if in_current_matrix and stripped.startswith("## "):
+            break
+        if not in_current_matrix or not stripped.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) >= 4 and cells[0] in platform_names.values():
+            key = next(
+                platform for platform, name in platform_names.items()
+                if name == cells[0]
+            )
+            rows[key] = cells
+
+    for platform, display_name in platform_names.items():
+        if platform not in rows:
+            fail(f"platform status Markdown matrix is missing row: {display_name}")
+        entry = platform_entries[platform]
+        row_text = " ".join(rows[platform][1:]).lower()
+        state_cell = rows[platform][1].lower()
+        if entry["accepted"]:
+            if "accepted" not in state_cell or "not accepted" in state_cell:
+                fail(
+                    "platform status Markdown matrix does not mark accepted platform: "
+                    f"{display_name}"
+                )
+            accepted_provider = str(entry.get("__accepted_provider", ""))
+            accepted_version = str(entry.get("__accepted_version", ""))
+            if accepted_provider and accepted_provider.lower() not in row_text:
+                fail(
+                    "platform status Markdown matrix is missing accepted provider: "
+                    f"{display_name}: {accepted_provider}"
+                )
+            if accepted_version and accepted_version.lower() not in row_text:
+                fail(
+                    "platform status Markdown matrix is missing accepted version: "
+                    f"{display_name}: {accepted_version}"
+                )
+        elif "not accepted" not in state_cell:
+            fail(
+                "platform status Markdown matrix does not mark unaccepted platform: "
+                f"{display_name}"
+            )
 
 print(f"Verified Skia platform status in {status_path} with revision {revision}.")
 PY
