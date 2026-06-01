@@ -1227,6 +1227,62 @@ test "workbench command evidence runtime effect dispatches prompt" {
 }
 
 ///|
+test "workbench queues failed command fix through prompt RPC" {
+  let model = WorkbenchModel::new().update(
+    FixCommandRun("moon check", "failed", "/repo", "/tmp/mo-check.log"),
+  )
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued command fix for Pi RPC")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)",
+      )
+    }
+    _ => fail("expected queued command fix prompt")
+  }
+  assert_true(model.events.any(event => event.title == "Command fix queued"))
+}
+
+///|
+test "workbench command fix runtime effect dispatches prompt" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)\"}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    FixCommandRun("moon check", "failed", "/repo", "/tmp/mo-check.log"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content="Fix failed command moon check using output /tmp/mo-check.log (status failed, cwd /repo)",
+      )
+    }
+    _ => fail("expected captured command fix prompt")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Running")
+}
+
+///|
 test "workbench command runtime effect dispatches Pi RPC bash command" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, emit) => {
@@ -2681,6 +2737,7 @@ test "workbench activity draws recent command evidence" {
   assert_true(has_text(commands, "输出 /tmp/wasm-check.log"))
   assert_true(has_text(commands, "退出码 2"))
   assert_true(has_text(commands, "分析"))
+  assert_true(has_text(commands, "修复"))
   assert_true(has_text(commands, "重跑"))
   assert_false(has_text(commands, "stale command"))
 }
@@ -2739,7 +2796,8 @@ test "workbench current session prioritizes failed command next action" {
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "下一步"))
-  assert_true(has_text(commands, "分析失败命令"))
+  assert_true(has_text(commands, "修复失败命令"))
+  assert_true(has_text(commands, "修复"))
   assert_true(
     has_text(commands, "moon test examples/mo_workbench/app --target native"),
   )

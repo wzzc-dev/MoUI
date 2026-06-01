@@ -233,6 +233,7 @@ pub(all) enum WorkbenchMsg {
   QueueCommand(String)
   QueueFocusedChecks
   InspectCommandRun(String, String, String, String)
+  FixCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
   FixDiagnostic(String, String, String)
   SyncSessionName
@@ -677,6 +678,8 @@ pub fn WorkbenchModel::update(
     QueueFocusedChecks => self.queue_focused_checks()
     InspectCommandRun(command, status, cwd, output_path) =>
       self.inspect_command_run(command, status, cwd, output_path)
+    FixCommandRun(command, status, cwd, output_path) =>
+      self.fix_command_run(command, status, cwd, output_path)
     MarkCommandComplete(id, code) => self.mark_command_complete(id, code)
     FixDiagnostic(source, severity, message) =>
       self.fix_diagnostic(source, severity, message)
@@ -879,6 +882,10 @@ pub fn WorkbenchModel::update_with_transport(
       self.queue_focused_checks_with_transport(transport_runtime)
     InspectCommandRun(command, status, cwd, output_path) =>
       self.inspect_command_run_with_transport(
+        command, status, cwd, output_path, transport_runtime,
+      )
+    FixCommandRun(command, status, cwd, output_path) =>
+      self.fix_command_run_with_transport(
         command, status, cwd, output_path, transport_runtime,
       )
     FixDiagnostic(source, severity, message) =>
@@ -2012,6 +2019,69 @@ fn WorkbenchModel::inspect_command_run_with_transport(
 }
 
 ///|
+fn WorkbenchModel::fix_command_run(
+  self : WorkbenchModel,
+  command : String,
+  status : String,
+  cwd : String,
+  output_path : String,
+) -> WorkbenchModel {
+  let clean_command = command.trim().to_owned()
+  let clean_output_path = output_path.trim().to_owned()
+  if clean_command == "" && clean_output_path == "" {
+    { ..self, last_status: "Command evidence is empty" }
+  } else {
+    let prompt = command_fix_prompt(command, status, cwd, output_path)
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="Command fix queued",
+        detail=prompt,
+        tone="warning",
+      ),
+    )
+    let transport_command = SendUserInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, transport_command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued command fix for Pi RPC",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::fix_command_run_with_transport(
+  self : WorkbenchModel,
+  command : String,
+  status : String,
+  cwd : String,
+  output_path : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let clean_command = command.trim().to_owned()
+  let clean_output_path = output_path.trim().to_owned()
+  if clean_command == "" && clean_output_path == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Command evidence is empty" })
+  } else {
+    let prompt = command_fix_prompt(command, status, cwd, output_path)
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      SendUserInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.fix_command_run(command, status, cwd, output_path),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
 fn command_evidence_prompt(
   command : String,
   status : String,
@@ -2027,6 +2097,37 @@ fn command_evidence_prompt(
     "Inspect command run: " + command_label
   } else {
     "Inspect command output for " + command_label + ": " + output_path
+  }
+  let context : Array[String] = []
+  if status != "" {
+    context.push("status " + status)
+  }
+  if cwd != "" {
+    context.push("cwd " + cwd)
+  }
+  if context.is_empty() {
+    prefix
+  } else {
+    prefix + " (" + context.join(", ") + ")"
+  }
+}
+
+///|
+fn command_fix_prompt(
+  command : String,
+  status : String,
+  cwd : String,
+  output_path : String,
+) -> String {
+  let command = command.trim().to_owned()
+  let status = status.trim().to_owned()
+  let cwd = cwd.trim().to_owned()
+  let output_path = output_path.trim().to_owned()
+  let command_label = if command == "" { "command run" } else { command }
+  let prefix = if output_path == "" {
+    "Fix failed command run: " + command_label
+  } else {
+    "Fix failed command " + command_label + " using output " + output_path
   }
   let context : Array[String] = []
   if status != "" {

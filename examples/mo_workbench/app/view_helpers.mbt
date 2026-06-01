@@ -1653,10 +1653,10 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
   match self.latest_failed_command() {
     Some(command) =>
       return Some({
-        title: "分析失败命令",
+        title: "修复失败命令",
         detail: command.command,
-        primary_label: "分析",
-        primary_message: InspectCommandRun(
+        primary_label: "修复",
+        primary_message: FixCommandRun(
           command.command,
           command.status,
           command.cwd,
@@ -2725,13 +2725,8 @@ fn command_run_row(
         height=30.0,
       ),
       button(
-        "分析",
-        on_click=InspectCommandRun(
-          command.command,
-          command.status,
-          command.cwd,
-          command.output_path,
-        ),
+        command_primary_action_label(command),
+        on_click=command_primary_action_message(command),
         variant=Outline,
         theme~,
         width=54.0,
@@ -2749,6 +2744,34 @@ fn command_run_row(
     spacing=8.0,
     align=Center,
   )
+}
+
+///|
+fn command_primary_action_label(command : CommandRun) -> String {
+  if command.status == "failed" {
+    "修复"
+  } else {
+    "分析"
+  }
+}
+
+///|
+fn command_primary_action_message(command : CommandRun) -> WorkbenchMsg {
+  if command.status == "failed" {
+    FixCommandRun(
+      command.command,
+      command.status,
+      command.cwd,
+      command.output_path,
+    )
+  } else {
+    InspectCommandRun(
+      command.command,
+      command.status,
+      command.cwd,
+      command.output_path,
+    )
+  }
 }
 
 ///|
