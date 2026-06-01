@@ -1092,6 +1092,14 @@ fn main {
     is Some(fallback_typeface) else {
     fail_smoke("native font manager did not match a fallback request")
   }
+  guard fallback_typeface.family_name() is Some(fallback_family) else {
+    fail_smoke("native fallback typeface did not report a family name")
+  }
+  if fallback_family.is_empty() {
+    fail_smoke("native fallback typeface reported an empty family name")
+  }
+  println("native smoke font fallback family bytes")
+  println(fallback_family.length())
   guard @native.Font::from_typeface(fallback_typeface, size=8.0)
     is Some(fallback_font) else {
     fail_smoke("failed to create native font from fallback request typeface")
