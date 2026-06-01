@@ -179,7 +179,7 @@ visible without adding a separate diagnostics page. When actionable evidence is
 present, the current session panel derives one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, failed command
 evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
-rows, command catalog entries, and activity events. Pi `plan_update` JSONL also
+rows, and activity events. Pi `plan_update` JSONL also
 feeds a compact `当前计划` row so the visible session state includes current
 planning evidence without opening a separate pane. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
@@ -255,15 +255,15 @@ refreshes the available slash/prompt/extension/skill command catalog, and
 `get_session_stats` refreshes compact message/tool/token/context metrics.
 `export_html` success responses add the returned path as Workspace file
 evidence, so exported sessions can become handoff, documentation, or knowledge
-artifacts without native-only state. Catalog rows can run a command by sending
-`/<name>` through the same platform-neutral `SendUserInput` prompt path, so
-native transport does not need a command-specific bridge. Typed slash prompts
-such as `/review` are sent raw rather than wrapped in composer context. When
-command catalog entries are available and the prompt starts with `/`, the
+artifacts without native-only state. Catalog entries can run a command by
+sending `/<name>` through the same platform-neutral `SendUserInput` prompt
+path, so native transport does not need a command-specific bridge. Typed slash
+prompts such as `/review` are sent raw rather than wrapped in composer context.
+When command catalog entries are available and the prompt starts with `/`, the
 composer shows up to three filtered slash-command suggestions that reuse the
-same `InvokeCommand` / `SendUserInput` route as the Activity digest command
-row. Diagnostics collected from Pi stderr, RPC
-failures, structured diagnostic events, and bash results are
+same `InvokeCommand` / `SendUserInput` route while keeping the Activity digest
+free of catalog-only command rows or focused-check presets. Diagnostics
+collected from Pi stderr, RPC failures, structured diagnostic events, and bash results are
 surfaced in the workspace digest and can be cleared from shared app state.
 The model catalog summary can send platform-neutral `SetRpcModel` for the
 visible model and `CycleRpcModel` for Pi's scoped model cycle; successful

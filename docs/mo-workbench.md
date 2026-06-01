@@ -125,7 +125,7 @@ packages:
 - The current session panel now derives one `下一步` row from live state when
   there is actionable evidence. It prioritizes cancelable Pi runs, failed
   command evidence, diagnostics, active plan steps, reviewable diffs, file
-  context, transcript rows, command catalog entries, and latest activity events,
+  context, transcript rows, and latest activity events,
   then routes the chosen button back through the existing shared-app messages
   such as `CancelRun`, `FixCommandRun`, `FixDiagnostic`, `InspectCommandRun`,
   `FollowActivity`, `ReviewDiff`, `InspectFile`, `FollowTranscript`, or
@@ -231,7 +231,8 @@ packages:
   has returned a command catalog and the user starts the prompt with `/`. The
   strip filters `PiCommandInfo` commands by the typed query, lists up to three
   matches near the prompt input, and each shortcut reuses the same
-  `InvokeCommand` / `SendUserInput` route as the Activity digest command row.
+  `InvokeCommand` / `SendUserInput` route while catalog-only refreshes do not
+  add Activity command rows or focused-check presets.
 - Session selection refreshes Pi session stats through `get_session_stats`.
   The shared app maps message counts, tool counts, token totals, cost, and
   optional context usage into `PiSessionStatsSnapshot`, then surfaces compact

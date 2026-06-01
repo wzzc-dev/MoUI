@@ -1389,89 +1389,6 @@ fn count_badge(
 }
 
 ///|
-fn command_catalog_row(
-  command : PiCommandInfo,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  row(
-    [
-      badge(
-        command_source_label(command.source),
-        tone=command_source_tone(command.source),
-        theme~,
-        width=layout.row_badge_width,
-      ),
-      column(
-        [
-          text(
-            "/" + command.name,
-            role=Control,
-            theme~,
-            width=layout.row_text_width,
-            height=24.0,
-          ),
-          text(
-            command_catalog_detail(command),
-            role=Caption,
-            theme~,
-            width=layout.row_text_width,
-            height=22.0,
-          ),
-        ],
-        spacing=0.0,
-        align=Start,
-      ),
-      button(
-        "运行",
-        on_click=InvokeCommand(command.name),
-        variant=Outline,
-        theme~,
-        width=58.0,
-        height=32.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
-  )
-}
-
-///|
-fn command_catalog_detail(command : PiCommandInfo) -> String {
-  let parts : Array[String] = []
-  if command.description != "" {
-    parts.push(command.description)
-  }
-  if command.source_scope != "" {
-    parts.push(command.source_scope)
-  }
-  if command.source_path != "" {
-    parts.push(command.source_path)
-  }
-  parts.join(" · ")
-}
-
-///|
-fn command_source_tone(source : String) -> @views.BadgeTone {
-  match source {
-    "prompt" => Accent
-    "skill" => Success
-    "extension" => Warning
-    _ => Neutral
-  }
-}
-
-///|
-fn command_source_label(source : String) -> String {
-  match source {
-    "prompt" => "提示"
-    "skill" => "技能"
-    "extension" => "扩展"
-    _ => source
-  }
-}
-
-///|
 fn WorkbenchModel::session_status_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
@@ -1700,18 +1617,6 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
       secondary_label: "",
       secondary_message: None,
       tone: Neutral,
-    })
-  }
-  if !self.command_catalog.is_empty() {
-    let command = self.command_catalog[0]
-    return Some({
-      title: "运行可用命令",
-      detail: "/" + command.name,
-      primary_label: "运行",
-      primary_message: InvokeCommand(command.name),
-      secondary_label: "",
-      secondary_message: None,
-      tone: Accent,
     })
   }
   if !self.events.is_empty() {
@@ -2533,9 +2438,6 @@ fn WorkbenchModel::activity_panel(
   for index in command_start..<self.commands.length() {
     rows.push(command_run_row(self.commands[index], layout, theme))
   }
-  if !self.command_catalog.is_empty() {
-    rows.push(command_catalog_row(self.command_catalog[0], layout, theme))
-  }
   surface(
     column(rows, spacing=7.0, align=Start),
     width=layout.panel_width,
@@ -2557,9 +2459,6 @@ fn WorkbenchModel::activity_panel_row_count(self : WorkbenchModel) -> Int {
     count = count + 1
   }
   count = count + self.visible_activity_command_count()
-  if !self.command_catalog.is_empty() {
-    count = count + 1
-  }
   count
 }
 
@@ -2577,10 +2476,7 @@ fn WorkbenchModel::visible_activity_command_start(self : WorkbenchModel) -> Int 
 fn WorkbenchModel::should_show_focused_check_presets(
   self : WorkbenchModel,
 ) -> Bool {
-  !self.commands.is_empty() ||
-  !self.events.is_empty() ||
-  !self.command_catalog.is_empty() ||
-  !self.diagnostics.is_empty()
+  !self.commands.is_empty() || !self.diagnostics.is_empty()
 }
 
 ///|
