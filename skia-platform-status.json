@@ -136,6 +136,11 @@
       "marker": "native smoke render frame present count"
     },
     {
+      "id": "pipeline.frame-present-descriptor",
+      "area": "Pipeline",
+      "marker": "native smoke render frame present descriptor validation"
+    },
+    {
       "id": "pipeline.frame-missing-present-validation",
       "area": "Pipeline",
       "marker": "native smoke render frame missing present validation"
@@ -196,6 +201,11 @@
       "marker": "native smoke gpu frame context validation"
     },
     {
+      "id": "gpu.present-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu present resource plan count"
+    },
+    {
       "id": "surface.target-resource-plan",
       "area": "Surface",
       "marker": "native smoke surface target resource plan count"
@@ -224,6 +234,16 @@
       "id": "surface.window-present-mode-key",
       "area": "Surface",
       "marker": "native smoke window present mode key variation"
+    },
+    {
+      "id": "surface.present-buffer-index",
+      "area": "Surface",
+      "marker": "native smoke surface present buffer index"
+    },
+    {
+      "id": "surface.present-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke surface present resource plan count"
     },
     {
       "id": "surface.flush-and-submit",
@@ -539,6 +559,11 @@
       "value": "1"
     },
     {
+      "id": "pipeline.frame-present-descriptor",
+      "marker": "native smoke render frame present descriptor validation",
+      "value": "1"
+    },
+    {
       "id": "pipeline.frame-missing-present-validation",
       "marker": "native smoke render frame missing present validation",
       "value": "1"
@@ -599,6 +624,11 @@
       "value": "1"
     },
     {
+      "id": "gpu.present-resource-plan",
+      "marker": "native smoke gpu present resource plan count",
+      "value": "3"
+    },
+    {
       "id": "surface.target-resource-plan",
       "marker": "native smoke surface target resource plan count",
       "value": "2"
@@ -627,6 +657,16 @@
       "id": "surface.window-present-mode-key",
       "marker": "native smoke window present mode key variation",
       "value": "1"
+    },
+    {
+      "id": "surface.present-buffer-index",
+      "marker": "native smoke surface present buffer index",
+      "value": "1"
+    },
+    {
+      "id": "surface.present-resource-plan",
+      "marker": "native smoke surface present resource plan count",
+      "value": "2"
     },
     {
       "id": "surface.flush-and-submit",

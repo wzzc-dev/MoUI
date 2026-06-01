@@ -167,6 +167,23 @@ fn main {
   println(1)
   println("native smoke gpu frame context validation")
   println(1)
+  guard smoke_gpu_frame.present_descriptor(frame_index=2)
+    is Some(smoke_gpu_present) else {
+    fail_smoke("gpu frame did not expose a present descriptor")
+  }
+  let smoke_gpu_present_plan = smoke_gpu_present.resource_plan()
+  if smoke_gpu_present.buffer_index != 0 ||
+    smoke_gpu_present_plan.length() != 3 ||
+    smoke_gpu_present_plan.gpu_backed_count != 3 ||
+    smoke_gpu_present_plan.cacheable_count != 2 ||
+    smoke_gpu_present_plan.uncacheable_count != 1 ||
+    !smoke_gpu_present_plan.contains_key(smoke_gpu_target.resource_key()) ||
+    !smoke_gpu_present_plan.contains_key(smoke_gpu_context.resource_key()) ||
+    !smoke_gpu_present_plan.contains_key(smoke_gpu_present.resource_key()) {
+    fail_smoke("gpu present descriptor resource plan is invalid")
+  }
+  println("native smoke gpu present resource plan count")
+  println(smoke_gpu_present_plan.length())
 
   let smoke_window = @skia.WindowSurfaceDescriptor::new(
     window_id=b"native-smoke-window",
@@ -245,6 +262,28 @@ fn main {
     smoke_window_frame.stats.present_count != 1 {
     fail_smoke("render frame did not finalize a present command for window target")
   }
+  guard smoke_window_frame.present_descriptor(frame_index=3)
+    is Some(smoke_window_present) else {
+    fail_smoke("window frame did not expose a present descriptor")
+  }
+  let smoke_window_present_plan = smoke_window_frame.present_resource_plan(
+    frame_index=3,
+  )
+  guard smoke_window_frame.present_descriptor(frame_index=4)
+    is Some(smoke_window_next_present) else {
+    fail_smoke("window frame did not expose the next present descriptor")
+  }
+  if smoke_window_present.buffer_index != 1 ||
+    smoke_window_present.present_mode != Some(@skia.MailboxPresent) ||
+    smoke_window_present_plan.length() != 2 ||
+    smoke_window_present_plan.cacheable_count != 1 ||
+    smoke_window_present_plan.uncacheable_count != 1 ||
+    !smoke_window_present_plan.contains_key(smoke_window_target.resource_key()) ||
+    !smoke_window_present_plan.contains_key(smoke_window_present.resource_key()) ||
+    smoke_window_present.resource_key() ==
+    smoke_window_next_present.resource_key() {
+    fail_smoke("window present descriptor resource plan is invalid")
+  }
   let smoke_window_unfinished_commands = @skia.RenderCommandList::new(
     @skia.RenderPassDescriptor::for_target(smoke_window_target),
   )
@@ -260,6 +299,12 @@ fn main {
     smoke_window_missing_present_frame.is_ready() {
     fail_smoke("render frame validation did not reject missing present command")
   }
+  if smoke_window_missing_present_frame.present_descriptor(frame_index=3) is Some(_) ||
+    !smoke_window_missing_present_frame.present_resource_plan(
+      frame_index=3,
+    ).is_empty() {
+    fail_smoke("missing-present frame exposed a present descriptor")
+  }
   guard smoke_window_frame.touched_bounds is Some(smoke_window_touched_bounds) else {
     fail_smoke("render frame did not record touched bounds for window target")
   }
@@ -268,6 +313,12 @@ fn main {
   }
   println("native smoke render frame present count")
   println(smoke_window_frame.stats.present_count)
+  println("native smoke surface present buffer index")
+  println(smoke_window_present.buffer_index)
+  println("native smoke surface present resource plan count")
+  println(smoke_window_present_plan.length())
+  println("native smoke render frame present descriptor validation")
+  println(1)
   println("native smoke render frame missing present validation")
   println(1)
   println("native smoke render frame touched bounds width")
