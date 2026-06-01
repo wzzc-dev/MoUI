@@ -56,7 +56,7 @@ The current package exposes the first value-layer API surface:
   resource plan, readiness diagnostics, cache population boundary, optional
   present scheduling descriptor, and auditable per-frame submission/finalization
   resource plans with GPU-backed plus cacheable/uncacheable subsets for backend
-  admission and cache staging
+  admission, cache staging, and resident/missing preflight
 - text layout and fallback contracts: `TextRunDescriptor`,
   `TextMeasurementDescriptor`, `MeasuredTextRunDescriptor`,
   `TextShapingDescriptor`,

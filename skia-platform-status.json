@@ -171,6 +171,16 @@
       "marker": "native smoke render frame submission uncacheable subplan count"
     },
     {
+      "id": "pipeline.frame-submission-preflight-missing",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission preflight missing count"
+    },
+    {
+      "id": "pipeline.frame-submission-preflight-cached",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission preflight cached count"
+    },
+    {
       "id": "pipeline.frame-submission-cache-resources",
       "area": "Pipeline",
       "marker": "native smoke render frame submission cache resources"
@@ -189,6 +199,16 @@
       "id": "pipeline.frame-finalization-uncacheable-subplan",
       "area": "Pipeline",
       "marker": "native smoke render frame finalization uncacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-finalization-preflight-missing",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization preflight missing count"
+    },
+    {
+      "id": "pipeline.frame-finalization-preflight-cached",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization preflight cached count"
     },
     {
       "id": "pipeline.frame-finalization-cache-resources",
@@ -736,6 +756,16 @@
       "value": "1"
     },
     {
+      "id": "pipeline.frame-submission-preflight-missing",
+      "marker": "native smoke render frame submission preflight missing count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-submission-preflight-cached",
+      "marker": "native smoke render frame submission preflight cached count",
+      "value": "1"
+    },
+    {
       "id": "pipeline.frame-submission-cache-resources",
       "marker": "native smoke render frame submission cache resources",
       "value": "1"
@@ -753,6 +783,16 @@
     {
       "id": "pipeline.frame-finalization-uncacheable-subplan",
       "marker": "native smoke render frame finalization uncacheable subplan count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-finalization-preflight-missing",
+      "marker": "native smoke render frame finalization preflight missing count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-finalization-preflight-cached",
+      "marker": "native smoke render frame finalization preflight cached count",
       "value": "1"
     },
     {

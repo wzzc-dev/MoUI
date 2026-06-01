@@ -415,9 +415,17 @@ fn main {
     @skia.RendererResourceKey,
     @skia.RendererResourceDescriptor,
   ] = @skia.ResourceCache::new()
+  let smoke_window_submission_cached_before = smoke_window_submission
+    .cached_cacheable_resource_plan(smoke_window_submission_cache)
+  let smoke_window_submission_missing_before = smoke_window_submission
+    .missing_cacheable_resource_plan(smoke_window_submission_cache)
   let smoke_window_submission_cache_inserts = smoke_window_submission.cache_resources(
     smoke_window_submission_cache,
   )
+  let smoke_window_submission_cached_after = smoke_window_submission
+    .cached_cacheable_resource_plan(smoke_window_submission_cache)
+  let smoke_window_submission_missing_after = smoke_window_submission
+    .missing_cacheable_resource_plan(smoke_window_submission_cache)
   let smoke_window_submission_cacheable_plan = smoke_window_submission
     .cacheable_resource_plan()
   let smoke_window_submission_uncacheable_plan = smoke_window_submission
@@ -430,8 +438,12 @@ fn main {
     smoke_window_submission.resource_plan.uncacheable_count != 1 ||
     smoke_window_submission_cacheable_plan.length() != 1 ||
     smoke_window_submission_uncacheable_plan.length() != 1 ||
+    !smoke_window_submission_cached_before.is_empty() ||
+    smoke_window_submission_missing_before.length() != 1 ||
     smoke_window_submission_cache_inserts != 1 ||
     smoke_window_submission_cache.length() != 1 ||
+    smoke_window_submission_cached_after.length() != 1 ||
+    !smoke_window_submission_missing_after.is_empty() ||
     !smoke_window_submission.resource_plan.contains_key(
       smoke_window_target.resource_key(),
     ) ||
@@ -464,9 +476,17 @@ fn main {
     @skia.RendererResourceKey,
     @skia.RendererResourceDescriptor,
   ] = @skia.ResourceCache::new()
+  let smoke_window_frame_finalization_cached_before = smoke_window_frame_finalization
+    .cached_cacheable_resource_plan(smoke_window_frame_finalization_cache)
+  let smoke_window_frame_finalization_missing_before = smoke_window_frame_finalization
+    .missing_cacheable_resource_plan(smoke_window_frame_finalization_cache)
   let smoke_window_frame_finalization_cache_inserts = smoke_window_frame_finalization.cache_resources(
     smoke_window_frame_finalization_cache,
   )
+  let smoke_window_frame_finalization_cached_after = smoke_window_frame_finalization
+    .cached_cacheable_resource_plan(smoke_window_frame_finalization_cache)
+  let smoke_window_frame_finalization_missing_after = smoke_window_frame_finalization
+    .missing_cacheable_resource_plan(smoke_window_frame_finalization_cache)
   let smoke_window_frame_finalization_cacheable_plan = smoke_window_frame_finalization
     .cacheable_resource_plan()
   let smoke_window_frame_finalization_uncacheable_plan = smoke_window_frame_finalization
@@ -479,8 +499,12 @@ fn main {
     smoke_window_frame_finalization.resource_plan.uncacheable_count != 1 ||
     smoke_window_frame_finalization_cacheable_plan.length() != 1 ||
     smoke_window_frame_finalization_uncacheable_plan.length() != 1 ||
+    !smoke_window_frame_finalization_cached_before.is_empty() ||
+    smoke_window_frame_finalization_missing_before.length() != 1 ||
     smoke_window_frame_finalization_cache_inserts != 1 ||
     smoke_window_frame_finalization_cache.length() != 1 ||
+    smoke_window_frame_finalization_cached_after.length() != 1 ||
+    !smoke_window_frame_finalization_missing_after.is_empty() ||
     !smoke_window_frame_finalization.resource_plan.contains_key(
       smoke_window_target.resource_key(),
     ) ||
@@ -573,6 +597,10 @@ fn main {
   println(smoke_window_submission_cacheable_plan.length())
   println("native smoke render frame submission uncacheable subplan count")
   println(smoke_window_submission_uncacheable_plan.length())
+  println("native smoke render frame submission preflight missing count")
+  println(smoke_window_submission_missing_before.length())
+  println("native smoke render frame submission preflight cached count")
+  println(smoke_window_submission_cached_after.length())
   println("native smoke render frame submission cache resources")
   println(smoke_window_submission_cache_inserts)
   println("native smoke render frame finalization resource plan count")
@@ -581,6 +609,10 @@ fn main {
   println(smoke_window_frame_finalization_cacheable_plan.length())
   println("native smoke render frame finalization uncacheable subplan count")
   println(smoke_window_frame_finalization_uncacheable_plan.length())
+  println("native smoke render frame finalization preflight missing count")
+  println(smoke_window_frame_finalization_missing_before.length())
+  println("native smoke render frame finalization preflight cached count")
+  println(smoke_window_frame_finalization_cached_after.length())
   println("native smoke render frame finalization cache resources")
   println(smoke_window_frame_finalization_cache_inserts)
   println("native smoke render frame missing present validation")
@@ -1204,18 +1236,18 @@ fn main {
     @skia.RendererResourceKey,
     @skia.RendererResourceDescriptor,
   ] = @skia.ResourceCache::new(max_bytes=replay_frame.resource_plan.byte_size)
-  let replay_cached_before = replay_resource_cache.cached_cacheable_resource_plan(
-    replay_frame.resource_plan,
+  let replay_cached_before = replay_frame.cached_cacheable_resource_plan(
+    replay_resource_cache,
   )
-  let replay_missing_before = replay_resource_cache.missing_cacheable_resource_plan(
-    replay_frame.resource_plan,
+  let replay_missing_before = replay_frame.missing_cacheable_resource_plan(
+    replay_resource_cache,
   )
   let replay_cache_inserts = replay_frame.cache_resources(replay_resource_cache)
-  let replay_cached_after = replay_resource_cache.cached_cacheable_resource_plan(
-    replay_frame.resource_plan,
+  let replay_cached_after = replay_frame.cached_cacheable_resource_plan(
+    replay_resource_cache,
   )
-  let replay_missing_after = replay_resource_cache.missing_cacheable_resource_plan(
-    replay_frame.resource_plan,
+  let replay_missing_after = replay_frame.missing_cacheable_resource_plan(
+    replay_resource_cache,
   )
   let replay_frame_cacheable_plan = replay_frame.cacheable_resource_plan()
   let replay_frame_uncacheable_plan = replay_frame.uncacheable_resource_plan()

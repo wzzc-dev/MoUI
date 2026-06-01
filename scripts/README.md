@@ -198,8 +198,8 @@ planning, shaped glyph-run render command replay, present descriptor validation,
 surface/GPU present resource planning, surface/GPU finalization resource
 planning, render-frame submission/finalization planning, render-frame
 cacheable/uncacheable subplans, GPU-backed and cacheable/uncacheable
-submission/finalization subplans, resource-cache preflight splits, native and
-portable path drawing, image drawing, transforms, default font text
+submission/finalization subplans, descriptor and resource-cache preflight
+splits, native and portable path drawing, image drawing, transforms, default font text
 drawing/measurement/metrics, shaped glyph-run metadata, default-typeface text
 drawing/measurement/metrics when the selected Skia build provides a default
 typeface, and font manager family enumeration/matching when the platform font

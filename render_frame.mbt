@@ -159,6 +159,22 @@ pub fn RenderFrameDescriptor::uncacheable_resource_plan(
 }
 
 ///|
+pub fn RenderFrameDescriptor::cached_cacheable_resource_plan(
+  self : RenderFrameDescriptor,
+  cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+) -> RendererResourcePlan {
+  cache.cached_cacheable_resource_plan(self.resource_plan)
+}
+
+///|
+pub fn RenderFrameDescriptor::missing_cacheable_resource_plan(
+  self : RenderFrameDescriptor,
+  cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+) -> RendererResourcePlan {
+  cache.missing_cacheable_resource_plan(self.resource_plan)
+}
+
+///|
 pub fn RenderFrameDescriptor::present_descriptor(
   self : RenderFrameDescriptor,
   frame_index? : Int = 0,
@@ -294,6 +310,22 @@ pub fn RenderFrameFinalizationDescriptor::uncacheable_resource_plan(
 }
 
 ///|
+pub fn RenderFrameFinalizationDescriptor::cached_cacheable_resource_plan(
+  self : RenderFrameFinalizationDescriptor,
+  cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+) -> RendererResourcePlan {
+  cache.cached_cacheable_resource_plan(self.resource_plan)
+}
+
+///|
+pub fn RenderFrameFinalizationDescriptor::missing_cacheable_resource_plan(
+  self : RenderFrameFinalizationDescriptor,
+  cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+) -> RendererResourcePlan {
+  cache.missing_cacheable_resource_plan(self.resource_plan)
+}
+
+///|
 pub fn RenderFrameFinalizationDescriptor::cache_resources(
   self : RenderFrameFinalizationDescriptor,
   cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
@@ -394,6 +426,22 @@ pub fn RenderFrameSubmissionDescriptor::uncacheable_resource_plan(
   self : RenderFrameSubmissionDescriptor,
 ) -> RendererResourcePlan {
   self.resource_plan.uncacheable_resource_plan()
+}
+
+///|
+pub fn RenderFrameSubmissionDescriptor::cached_cacheable_resource_plan(
+  self : RenderFrameSubmissionDescriptor,
+  cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+) -> RendererResourcePlan {
+  cache.cached_cacheable_resource_plan(self.resource_plan)
+}
+
+///|
+pub fn RenderFrameSubmissionDescriptor::missing_cacheable_resource_plan(
+  self : RenderFrameSubmissionDescriptor,
+  cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+) -> RendererResourcePlan {
+  cache.missing_cacheable_resource_plan(self.resource_plan)
 }
 
 ///|

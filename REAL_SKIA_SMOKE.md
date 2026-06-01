@@ -111,9 +111,9 @@ planning, target identity/resource binding, present descriptor validation,
 shaped glyph-run command replay, cacheable/uncacheable render-frame resource
 subplans, render-frame submission resource planning,
 cacheable/uncacheable submission resource subplans, render-frame submission
-cache population, render-frame finalization resource planning,
+preflight/cache population, render-frame finalization resource planning,
 cacheable/uncacheable finalization resource subplans, render-frame
-finalization cache population, surface finalization resource planning, surface
+finalization preflight/cache population, surface finalization resource planning, surface
 finalization cache-key variation, GPU finalization resource planning, GPU frame
 finalization resource filtering, surface present resource planning, GPU present
 resource planning, GPU frame submission resource planning, GPU-backed submission
