@@ -673,7 +673,7 @@ fn WorkbenchModel::workflow_agents_card(
     rows.push(self.workflow_agent_idle_row(layout, theme))
   }
   workflow_rail_card(
-    "Agents",
+    "执行",
     workflow_agents_summary_label(self),
     rows,
     layout,

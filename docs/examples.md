@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, lightweight agent focus routing, composer slash-command suggestions, wide workflow rail for progress/agents/work folder evidence, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, lightweight agent focus routing, composer slash-command suggestions, wide workflow rail for progress/execution/work folder evidence, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -194,7 +194,7 @@ queues, unbound Pi state, idle transport/agent state, and empty digest actions
 stay visually quiet; transcript/activity/workspace panels stay unmounted until
 Pi, command, or workspace evidence arrives.
 On wide windows, the shell now mirrors the three-column desktop shape more
-closely with a right workflow rail for live progress, agents, and work-folder
+closely with a right workflow rail for live progress, execution, and work-folder
 evidence. The rail reuses `PlanStep`, `AgentEvent`, session, and `FileContext`
 state from the shared app model, stays hidden when those evidence streams are
 empty, and collapses on compact widths so the conversation flow remains primary.
