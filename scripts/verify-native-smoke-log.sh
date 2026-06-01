@@ -48,6 +48,8 @@ fi
 
 default_stage_markers=(
   "native smoke surface descriptor backend" \
+  "native smoke surface target factory raster" \
+  "native smoke surface target factory unsupported" \
   "native smoke canvas state restored" \
   "native smoke canvas clip device width" \
   "native smoke canvas replay commands" \

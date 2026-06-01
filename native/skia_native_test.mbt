@@ -40,6 +40,52 @@ test "raster surface follows native availability" {
 }
 
 ///|
+test "surface factory follows target descriptor support" {
+  let size = @skia.ISize::new(16, 16)
+  let raster_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(size)
+  let raster_surface = @native.Surface::for_target(raster_target)
+  if @native.skia_available() {
+    match raster_surface {
+      Some(surface) => {
+        assert_true(surface.dimensions() == size)
+        assert_true(surface.descriptor() == raster_target.surface)
+      }
+      None => fail("@native.Surface::for_target should create raster surfaces")
+    }
+  } else {
+    assert_true(raster_surface is None)
+  }
+  assert_true(
+    @native.Surface::for_target(
+      @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(0, 16)),
+    )
+    is None,
+  )
+
+  let window_target = @skia.SurfaceTargetDescriptor::window_n32_premul(
+    size,
+    target_id=b"native-test-window",
+  )
+  assert_true(@native.Surface::for_target(window_target) is None)
+  let window_plan = window_target.resource_plan()
+  assert_eq(window_plan.count_kind(@skia.SurfaceResource), 1)
+  assert_eq(window_plan.length(), 1)
+
+  let gpu_context = @skia.GpuContextDescriptor::mock(
+    id=b"native-test-gpu-context",
+  )
+  let gpu_target = @skia.SurfaceTargetDescriptor::gpu_n32_premul(
+    size,
+    gpu_context_key=Some(gpu_context.resource_key()),
+  )
+  assert_true(@native.Surface::for_target(gpu_target) is None)
+  let gpu_plan = gpu_target.resource_plan()
+  assert_eq(gpu_plan.count_kind(@skia.GpuSurfaceResource), 1)
+  assert_eq(gpu_plan.count_kind(@skia.GpuContextResource), 1)
+  assert_eq(gpu_plan.length(), 2)
+}
+
+///|
 test "image snapshot is unavailable without linked skia" {
   if !@native.skia_available() {
     let surface = @native.Surface::raster_n32_premul(@skia.ISize::new(16, 16))

@@ -107,6 +107,41 @@ fn main {
   }
   println("native smoke surface descriptor backend")
   println("raster")
+  guard
+    @native.Surface::for_target(
+      @skia.SurfaceTargetDescriptor::raster_n32_premul(size),
+    ) is Some(target_surface)
+  else {
+    fail_smoke("failed to create raster surface from target descriptor")
+  }
+  if target_surface.dimensions() != size ||
+    target_surface.descriptor() != @skia.SurfaceDescriptor::raster_n32_premul(size) {
+    fail_smoke("surface target factory raster metadata mismatch")
+  }
+  println("native smoke surface target factory raster")
+  println(1)
+
+  let unsupported_window_target = @skia.SurfaceTargetDescriptor::window_n32_premul(
+    @skia.ISize::new(16, 16),
+    target_id=b"native-smoke-window-factory",
+  )
+  let unsupported_gpu_target = @skia.SurfaceTargetDescriptor::gpu_n32_premul(
+    @skia.ISize::new(16, 16),
+    gpu_context_key=Some(
+      @skia.GpuContextDescriptor::mock(
+        id=b"native-smoke-gpu-factory",
+      ).resource_key(),
+    ),
+  )
+  if @native.Surface::for_target(unsupported_window_target) is Some(_) ||
+    @native.Surface::for_target(unsupported_gpu_target) is Some(_) ||
+    unsupported_window_target.resource_plan().count_kind(@skia.SurfaceResource) != 1 ||
+    unsupported_gpu_target.resource_plan().count_kind(@skia.GpuSurfaceResource) != 1 ||
+    unsupported_gpu_target.resource_plan().count_kind(@skia.GpuContextResource) != 1 {
+    fail_smoke("future window/GPU target surface boundary is not predictable")
+  }
+  println("native smoke surface target factory unsupported")
+  println(1)
 
   let smoke_gpu_context = @skia.GpuContextDescriptor::mock(
     id=b"native-smoke-gpu-context",

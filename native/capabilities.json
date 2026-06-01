@@ -61,6 +61,8 @@
       ],
       "smoke_markers": [
         "native smoke surface descriptor backend",
+        "native smoke surface target factory raster",
+        "native smoke surface target factory unsupported",
         "native smoke surface flush-and-submit",
         "native smoke readback width",
         "native smoke bounded readback width",

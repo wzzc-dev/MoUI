@@ -244,6 +244,8 @@ if ($status.schema_version -ge 3) {
 
   $requiredCapabilityIds = @(
     "surface.descriptor",
+    "surface.target-factory-raster",
+    "surface.target-factory-unsupported",
     "canvas.state",
     "canvas.clip",
     "canvas.command-replay",

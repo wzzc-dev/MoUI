@@ -281,6 +281,8 @@ if schema_version >= 3:
         fail("schema v3 platform status is missing native_smoke_capabilities list")
     required_capability_ids = {
         "surface.descriptor",
+        "surface.target-factory-raster",
+        "surface.target-factory-unsupported",
         "canvas.state",
         "canvas.clip",
         "canvas.command-replay",
