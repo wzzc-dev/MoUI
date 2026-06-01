@@ -97,11 +97,16 @@ jobs:
           import json
           from pathlib import Path
           status = json.loads(Path('skia-platform-status.json').read_text())
+          expected_values = {
+              entry['marker'].strip(): str(entry['value']).strip()
+              for entry in status.get('native_smoke_expected_values', [])
+              if entry.get('marker', '').strip() and str(entry.get('value', '')).strip()
+          }
           lines = []
           for capability in status['native_smoke_capabilities']:
               marker = capability['marker'].strip()
               if marker:
-                  lines.extend([marker, '1'])
+                  lines.extend([marker, expected_values.get(marker, '1')])
           lines.append('skia_mbt native smoke test passed')
           Path('logs/fake-native-smoke-good.log').write_text(
               '\n'.join(lines) + '\n'
@@ -111,6 +116,20 @@ jobs:
           printf '%s\n' 'skia_mbt native smoke test passed' > logs/fake-native-smoke-missing-stage.log
           if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-missing-stage.log; then
             echo "verify-native-smoke-log unexpectedly accepted a missing stage marker" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('logs/fake-native-smoke-good.log').read_text().splitlines()
+          marker = 'native smoke text run resource plan count'
+          index = lines.index(marker)
+          lines[index + 1] = '2'
+          Path('logs/fake-native-smoke-bad-stage-value.log').write_text(
+              '\n'.join(lines) + '\n'
+          )
+          PY
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-bad-stage-value.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a bad stage marker value" >&2
             exit 1
           fi
           printf '%s\n' \
