@@ -897,6 +897,33 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingCapabilityAreaStatus } `
       -ExpectedMessage "native smoke capability coverage is missing areas: Bitmap"
 
+    $fakeMissingConditionalCapabilityStatus = Join-Path $dryRunRoot "fake-platform-status-missing-conditional-capability.json"
+    $missingConditionalCapabilityStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
+    $missingConditionalCapabilityStatus.native_smoke_conditional_capabilities = @(
+      $missingConditionalCapabilityStatus.native_smoke_conditional_capabilities |
+        Where-Object { $_.id -ne "text.shaped-glyph-count" }
+    )
+    $missingConditionalCapabilityStatus |
+      ConvertTo-Json -Depth 20 |
+      Set-Content -LiteralPath $fakeMissingConditionalCapabilityStatus
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingConditionalCapabilityStatus } `
+      -ExpectedMessage "native smoke conditional capability coverage is missing ids"
+
+    $fakeBadConditionalConditionStatus = Join-Path $dryRunRoot "fake-platform-status-bad-conditional-condition.json"
+    $badConditionalConditionStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
+    foreach ($capability in @($badConditionalConditionStatus.native_smoke_conditional_capabilities)) {
+      if ($capability.id -eq "text.shaped-glyph-count") {
+        $capability.when_marker = "native smoke unknown optional marker"
+      }
+    }
+    $badConditionalConditionStatus |
+      ConvertTo-Json -Depth 20 |
+      Set-Content -LiteralPath $fakeBadConditionalConditionStatus
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeBadConditionalConditionStatus } `
+      -ExpectedMessage "unknown condition marker"
+
     $fakeMissingArtifactLogStatus = Join-Path $dryRunRoot "fake-platform-status-missing-artifact-log.json"
     $missingArtifactLogStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
     $missingArtifactLogStatus.platforms.linux.required_artifact_logs = @(

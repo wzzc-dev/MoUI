@@ -13,9 +13,10 @@ coverage and native smoke capability markers. Its `ci_gates` list records the
 MoonBit, all-target MoonBit, native-smoke, FFI ownership, FFI borrow, native
 fallback parity, platform-status, and artifact verification commands that must
 stay wired into CI. `verify-native-smoke-log.*` reads its
-`native_smoke_capabilities` list so artifact verification checks the
-same Surface, Canvas, Pipeline, GPU, Shader, Filter, Path, Image, Codec, Bitmap,
-Text, and FontMgr boundaries that the platform status file claims.
+`native_smoke_capabilities` and `native_smoke_conditional_capabilities` lists so
+artifact verification checks the same Surface, Canvas, Pipeline, GPU, Shader,
+Filter, Path, Image, Codec, Bitmap, Text, and FontMgr boundaries that the
+platform status file claims, including optional SkShaper-only markers.
 `verify-platform-status.*` also reads `ci_gate_evidence_files` and rejects a
 status file when any `ci_gates` verifier script or MoonBit command fragment is
 not present in the checked-in workflow/fallback-helper evidence corpus. The same
