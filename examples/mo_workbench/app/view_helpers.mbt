@@ -3213,7 +3213,7 @@ fn WorkbenchModel::composer_agent_row(
     118.0,
   )
   let controls : Array[@core.View[WorkbenchMsg]] = [
-    text("Agent", role=Caption, theme~, width=42.0, height=30.0),
+    text("焦点", role=Caption, theme~, width=42.0, height=30.0),
   ]
   for profile in profiles {
     controls.push(
@@ -3480,7 +3480,7 @@ fn WorkbenchModel::context_summary_label(self : WorkbenchModel) -> String {
     }
   }
   match self.active_agent_profile() {
-    Some(profile) => labels.push("Agent " + profile.label)
+    Some(profile) => labels.push("焦点 " + profile.label)
     None => ()
   }
   if labels.is_empty() {

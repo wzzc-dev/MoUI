@@ -118,9 +118,10 @@ packages:
   `PlanStep` rows, `Agents` reflects plan owners or recent activity events, and
   `工作文件夹` shows the active project plus the latest file evidence. Empty or
   compact windows collapse the rail and keep the conversation flow primary.
-- Agent focus controls for `通用`, `编码`, and `校验` now live in the composer
-  instead of the default sidebar. They appear while composing or when a focus is
-  selected, keeping the idle shell closer to Codex's session-first layout.
+- Agent focus controls for `通用`, `编码`, and `校验` now live in the composer's
+  visible `焦点` row instead of the default sidebar. They appear while composing
+  or when a focus is selected, keeping the idle shell closer to Codex's
+  session-first layout.
   Selecting a role does not create a native-only worker or transport command;
   it appends an `agent focus: ...` hint to the existing prompt, steering, and
   follow-up text context before the shared app emits the same platform-neutral

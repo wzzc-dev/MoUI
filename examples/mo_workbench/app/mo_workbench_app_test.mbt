@@ -3138,6 +3138,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "空闲"))
   assert_false(has_text(commands, "Agents"))
   assert_false(has_text(commands, "Agent"))
+  assert_false(has_text(commands, "焦点"))
   assert_false(has_text(commands, "通用"))
   assert_false(has_text(commands, "编码"))
   assert_false(has_text(commands, "校验"))
@@ -3373,7 +3374,8 @@ test "workbench composer reveals agent focus controls while composing" {
     .update(PromptChanged("Implement the focused slice"))
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(commands, "Agent"))
+  assert_true(has_text(commands, "焦点"))
+  assert_false(has_text(commands, "Agent"))
   assert_true(has_text(commands, "通用"))
   assert_true(has_text(commands, "编码"))
   assert_true(has_text(commands, "校验"))
@@ -3450,7 +3452,7 @@ test "workbench shell adapts to runtime viewport resize" {
 test "workbench composer displays selected agent focus in context summary" {
   let model = WorkbenchModel::new().update(SelectAgent("coding"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "仓库、示例、Agent 编码"))
+  assert_true(has_text(commands, "仓库、示例、焦点 编码"))
 }
 
 ///|
