@@ -111,6 +111,12 @@ fn main {
   let smoke_gpu_context = @skia.GpuContextDescriptor::mock(
     id=b"native-smoke-gpu-context",
   )
+  let smoke_gpu_context_variant = @skia.GpuContextDescriptor::vulkan(
+    b"native-smoke-gpu-context",
+    adapter_id=b"native-smoke-adapter",
+    device_id=b"native-smoke-device",
+    queue_family_index=1,
+  ).with_protected_context(true)
   let smoke_gpu_target = @skia.SurfaceTargetDescriptor::gpu_n32_premul(
     @skia.ISize::new(16, 16),
     gpu_context_key=Some(smoke_gpu_context.resource_key()),
@@ -145,10 +151,20 @@ fn main {
     smoke_gpu_missing_context_frame.is_ready() {
     fail_smoke("gpu frame validation did not require an attached context")
   }
+  if smoke_gpu_context.resource_key().is_empty() ||
+    smoke_gpu_context_variant.resource_key().is_empty() ||
+    smoke_gpu_context.resource_key() == smoke_gpu_context_variant.resource_key() ||
+    smoke_gpu_context_variant.resource_descriptor().key !=
+    smoke_gpu_context_variant.resource_key() ||
+    !smoke_gpu_context_variant.resource_descriptor().is_gpu_backed() {
+    fail_smoke("gpu context resource key did not encode identity inputs")
+  }
   println("native smoke surface target resource plan count")
   println(smoke_gpu_target_plan.length())
   println("native smoke gpu context resource plan count")
   println(smoke_gpu_plan.length())
+  println("native smoke gpu context key variation")
+  println(1)
   println("native smoke gpu frame context validation")
   println(1)
 
