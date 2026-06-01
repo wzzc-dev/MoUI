@@ -151,6 +151,16 @@
       "marker": "native smoke render frame submission resource plan count"
     },
     {
+      "id": "pipeline.frame-submission-cacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission cacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-submission-uncacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission uncacheable subplan count"
+    },
+    {
       "id": "pipeline.frame-submission-cache-resources",
       "area": "Pipeline",
       "marker": "native smoke render frame submission cache resources"
@@ -159,6 +169,16 @@
       "id": "pipeline.frame-finalization-resource-plan",
       "area": "Pipeline",
       "marker": "native smoke render frame finalization resource plan count"
+    },
+    {
+      "id": "pipeline.frame-finalization-cacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization cacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-finalization-uncacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization uncacheable subplan count"
     },
     {
       "id": "pipeline.frame-finalization-cache-resources",
@@ -676,6 +696,16 @@
       "value": "2"
     },
     {
+      "id": "pipeline.frame-submission-cacheable-subplan",
+      "marker": "native smoke render frame submission cacheable subplan count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-submission-uncacheable-subplan",
+      "marker": "native smoke render frame submission uncacheable subplan count",
+      "value": "1"
+    },
+    {
       "id": "pipeline.frame-submission-cache-resources",
       "marker": "native smoke render frame submission cache resources",
       "value": "1"
@@ -684,6 +714,16 @@
       "id": "pipeline.frame-finalization-resource-plan",
       "marker": "native smoke render frame finalization resource plan count",
       "value": "2"
+    },
+    {
+      "id": "pipeline.frame-finalization-cacheable-subplan",
+      "marker": "native smoke render frame finalization cacheable subplan count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-finalization-uncacheable-subplan",
+      "marker": "native smoke render frame finalization uncacheable subplan count",
+      "value": "1"
     },
     {
       "id": "pipeline.frame-finalization-cache-resources",

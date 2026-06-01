@@ -1043,6 +1043,8 @@ pub(all) struct RendererResourcePlan {
   gpu_backed_count : Int
 } derive(Eq, @debug.Debug)
 pub fn RendererResourcePlan::byte_size_for_kind(Self, RendererResourceKind) -> Int64
+pub fn RendererResourcePlan::cacheable_descriptors(Self) -> Array[RendererResourceDescriptor]
+pub fn RendererResourcePlan::cacheable_resource_plan(Self) -> Self
 pub fn RendererResourcePlan::contains_key(Self, RendererResourceKey) -> Bool
 pub fn RendererResourcePlan::count_kind(Self, RendererResourceKind) -> Int
 pub fn RendererResourcePlan::descriptor_for_key(Self, RendererResourceKey) -> RendererResourceDescriptor?
@@ -1050,10 +1052,14 @@ pub fn RendererResourcePlan::descriptors_of_kind(Self, RendererResourceKind) -> 
 pub fn RendererResourcePlan::empty() -> Self
 pub fn RendererResourcePlan::gpu_backed_descriptors(Self) -> Array[RendererResourceDescriptor]
 pub fn RendererResourcePlan::gpu_backed_resource_plan(Self) -> Self
+pub fn RendererResourcePlan::has_cacheable_resources(Self) -> Bool
 pub fn RendererResourcePlan::has_gpu_backed_resources(Self) -> Bool
+pub fn RendererResourcePlan::has_uncacheable_resources(Self) -> Bool
 pub fn RendererResourcePlan::is_empty(Self) -> Bool
 pub fn RendererResourcePlan::length(Self) -> Int
 pub fn RendererResourcePlan::new(Array[RendererResourceDescriptor]) -> Self
+pub fn RendererResourcePlan::uncacheable_descriptors(Self) -> Array[RendererResourceDescriptor]
+pub fn RendererResourcePlan::uncacheable_resource_plan(Self) -> Self
 
 pub(all) struct ResourceCache[K, V] {
   // private fields

@@ -88,7 +88,7 @@ these facts recorded in logs:
   GPU context
   resource planning, GPU context identity variation, GPU frame context validation,
   GPU frame submission resource planning, GPU frame submission GPU-resource
-  filtering,
+  filtering, cacheable/uncacheable frame submission resource subplans,
   render target identity
   validation, render-frame unbalanced-state validation, missing-present
   validation, missing-finalization validation, shaped glyph-run command replay,
@@ -96,7 +96,8 @@ these facts recorded in logs:
   present-mode key variation, window-frame present finalization,
   render-frame present descriptor validation, render-frame submission resource
   planning, render-frame submission cache population, render-frame finalization
-  resource planning, render-frame finalization cache population, surface
+  resource planning, cacheable/uncacheable frame finalization resource subplans,
+  render-frame finalization cache population, surface
   finalization resource planning, surface finalization cache-key variation, GPU
   finalization resource planning, GPU frame finalization resource filtering,
   surface present buffer-slot derivation, surface present resource planning, GPU

@@ -196,8 +196,9 @@ canvas save/restore with clipping behavior. It also exercises shader-backed
 draws, native Canvas replay of value-layer render commands, render resource
 planning, shaped glyph-run render command replay, present descriptor validation,
 surface/GPU present resource planning, surface/GPU finalization resource
-planning, render-frame submission/finalization planning, GPU-backed
-submission/finalization subplans, native and portable path drawing, image drawing, transforms, default font text
+planning, render-frame submission/finalization planning, GPU-backed and
+cacheable/uncacheable submission/finalization subplans, native and portable path
+drawing, image drawing, transforms, default font text
 drawing/measurement/metrics, shaped glyph-run metadata, default-typeface text
 drawing/measurement/metrics when the selected Skia build provides a default
 typeface, and font manager family enumeration/matching when the platform font
