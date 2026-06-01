@@ -145,6 +145,31 @@ pub fn RenderFrameDescriptor::cache_resources(
 }
 
 ///|
+pub fn RenderFrameDescriptor::present_descriptor(
+  self : RenderFrameDescriptor,
+  frame_index? : Int = 0,
+  buffer_index? : Int = -1,
+) -> SurfacePresentDescriptor? {
+  if self.is_ready() && self.needs_present() && self.has_present() {
+    Some(self.target.present_descriptor(frame_index~, buffer_index~))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn RenderFrameDescriptor::present_resource_plan(
+  self : RenderFrameDescriptor,
+  frame_index? : Int = 0,
+  buffer_index? : Int = -1,
+) -> RendererResourcePlan {
+  match self.present_descriptor(frame_index~, buffer_index~) {
+    Some(descriptor) => descriptor.resource_plan()
+    None => RendererResourcePlan::empty()
+  }
+}
+
+///|
 pub fn RenderCommandList::frame_descriptor(
   self : RenderCommandList,
   target : SurfaceTargetDescriptor,

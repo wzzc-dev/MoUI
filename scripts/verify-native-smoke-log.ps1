@@ -43,6 +43,7 @@ $defaultStageMarkers = @(
   "native smoke render target identity validation",
   "native smoke render target resource binding",
   "native smoke render frame present count",
+  "native smoke render frame present descriptor validation",
   "native smoke render frame missing present validation",
   "native smoke render frame touched bounds width",
   "native smoke render frame cache resources",
@@ -55,12 +56,15 @@ $defaultStageMarkers = @(
   "native smoke gpu context resource plan count",
   "native smoke gpu context key variation",
   "native smoke gpu frame context validation",
+  "native smoke gpu present resource plan count",
   "native smoke surface target resource plan count",
   "native smoke window target resource plan count",
   "native smoke window physical width",
   "native smoke window frame pacing",
   "native smoke window frame pacing key variation",
   "native smoke window present mode key variation",
+  "native smoke surface present buffer index",
+  "native smoke surface present resource plan count",
   "native smoke surface flush-and-submit",
   "native smoke shader draws",
   "native smoke shader resource plan count",
@@ -153,6 +157,10 @@ $defaultExpectedStageValues = @(
     Value = "1"
   }
   [pscustomobject]@{
+    Marker = "native smoke render frame present descriptor validation"
+    Value = "1"
+  }
+  [pscustomobject]@{
     Marker = "native smoke render frame missing present validation"
     Value = "1"
   }
@@ -201,6 +209,10 @@ $defaultExpectedStageValues = @(
     Value = "1"
   }
   [pscustomobject]@{
+    Marker = "native smoke gpu present resource plan count"
+    Value = "3"
+  }
+  [pscustomobject]@{
     Marker = "native smoke surface target resource plan count"
     Value = "2"
   }
@@ -223,6 +235,14 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke window present mode key variation"
     Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface present buffer index"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface present resource plan count"
+    Value = "2"
   }
   [pscustomobject]@{
     Marker = "native smoke surface flush-and-submit"
