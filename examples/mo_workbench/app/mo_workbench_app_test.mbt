@@ -1191,8 +1191,8 @@ test "workbench focused check preset routes through Pi RPC bash command" {
 test "workbench queues all focused checks through one Pi RPC bash batch" {
   let model = WorkbenchModel::new().update(QueueFocusedChecks)
   inspect(model.last_status, content="Focused checks queued for Pi RPC bash")
-  inspect(model.pending_transport_count(), content="4")
-  inspect(model.commands.length(), content="3")
+  inspect(model.pending_transport_count(), content="5")
+  inspect(model.commands.length(), content="4")
   inspect(
     model.commands[0].command,
     content="moon test examples/mo_workbench/app --target native",
@@ -1205,6 +1205,10 @@ test "workbench queues all focused checks through one Pi RPC bash batch" {
     model.commands[2].command,
     content="moon build examples/mo_workbench/macos_skia --target native",
   )
+  inspect(
+    model.commands[3].command,
+    content="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
+  )
   match model.transport.command_queue[0] {
     StartRpc(session, cwd) => {
       inspect(session, content="moui-skia")
@@ -1212,12 +1216,12 @@ test "workbench queues all focused checks through one Pi RPC bash batch" {
     }
     _ => fail("expected queued session start")
   }
-  match model.transport.command_queue[3] {
+  match model.transport.command_queue[4] {
     RunShellCommand(session, command) => {
       inspect(session, content="moui-skia")
       inspect(
         command,
-        content="moon build examples/mo_workbench/macos_skia --target native",
+        content="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
       )
     }
     _ => fail("expected queued final focused check")
@@ -1501,14 +1505,27 @@ test "workbench focused check bash responses complete queued commands in order" 
         ),
       ),
     )
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"bash\",\"command\":\"MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"bash","success":true,"data":{"output":"first frame ok","exitCode":0,"cancelled":false,"truncated":false,"fullOutputPath":"/tmp/mo-workbench-first-frame.log"}}
+        ),
+      ),
+    )
   })
   let update = WorkbenchModel::new().update_with_transport(
     QueueFocusedChecks,
     transport,
   )
-  inspect(update.model.commands.length(), content="3")
+  inspect(update.model.commands.length(), content="4")
   let model = run_workbench_effect(update)
-  inspect(captured.val.length(), content="4")
+  inspect(captured.val.length(), content="5")
   inspect(model.pending_transport_count(), content="0")
   inspect(
     model.commands[0].command,
@@ -1528,6 +1545,15 @@ test "workbench focused check bash responses complete queued commands in order" 
   )
   inspect(model.commands[2].status, content="passed")
   inspect(model.commands[2].output_path, content="/tmp/mo-workbench-skia.log")
+  inspect(
+    model.commands[3].command,
+    content="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
+  )
+  inspect(model.commands[3].status, content="passed")
+  inspect(
+    model.commands[3].output_path,
+    content="/tmp/mo-workbench-first-frame.log",
+  )
 }
 
 ///|
@@ -1758,11 +1784,12 @@ test "workbench cancel run targets active Pi RPC bash command" {
 test "workbench cancel run marks first active focused check command" {
   let model = WorkbenchModel::new().update(QueueFocusedChecks).update(CancelRun)
   inspect(model.last_status, content="Shell command cancellation queued")
-  inspect(model.commands.length(), content="3")
+  inspect(model.commands.length(), content="4")
   inspect(model.commands[0].status, content="cancelling")
   inspect(model.commands[1].status, content="queued")
   inspect(model.commands[2].status, content="queued")
-  match model.transport.command_queue[4] {
+  inspect(model.commands[3].status, content="queued")
+  match model.transport.command_queue[5] {
     CancelShellCommand(session) => inspect(session, content="moui-skia")
     _ => fail("expected queued shell cancellation")
   }
@@ -2152,7 +2179,7 @@ test "workbench ingests Pi RPC get_commands response into command catalog" {
   assert_false(draw_text_count_containing(commands, "/skill:moonbit") > 0)
   assert_false(has_text(commands, "运行可用命令"))
   assert_false(has_text(commands, "常用检查"))
-  assert_false(has_text(commands, "App 测试"))
+  assert_false(has_text(commands, "首帧"))
   let slash_commands = model
     .update(PromptChanged("/"))
     .runtime(width=1220.0, height=780.0)
@@ -2895,6 +2922,11 @@ test "workbench focused check batch stays visible in activity evidence" {
       commands, "moon build examples/mo_workbench/macos_skia --target native",
     ),
   )
+  assert_true(
+    has_text(
+      commands, "MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
+    ),
+  )
 }
 
 ///|
@@ -3137,9 +3169,10 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "仓库、示例"))
   assert_false(has_text(commands, "常用检查"))
   assert_false(has_text(commands, "全部"))
-  assert_false(has_text(commands, "App 测试"))
-  assert_false(has_text(commands, "Wasm 测试"))
-  assert_false(has_text(commands, "Skia 构建"))
+  assert_false(has_text(commands, "Native"))
+  assert_false(has_text(commands, "Wasm"))
+  assert_false(has_text(commands, "构建"))
+  assert_false(has_text(commands, "首帧"))
   assert_false(has_text(commands, "拆解请求、整理上下文"))
   assert_false(has_text(commands, "代码修改、测试、重构"))
   assert_false(has_text(commands, "诊断、diff、文档收口"))
