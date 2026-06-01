@@ -95,7 +95,8 @@ these facts recorded in logs:
   render-frame touched bounds, resource-cache insertion, cache-plan coverage,
   hit/miss accounting, byte-budget behavior, and LRU eviction, surface flush-and-submit, shader
   draws, native/portable path geometry, text-run dependency planning,
-  byte-range text-run resource keys, UTF-8 text measurement, glyph count, glyph
+  byte-range text-run resource keys, text measurement resource planning,
+  text measurement cache-key variation, UTF-8 text measurement, glyph count, glyph
   ID mapping, glyph advances, glyph positions, glyph bounds, text bounds
   measurement, SkShaper availability reporting, default typeface availability,
   font resource planning, font metrics, font family enumeration, native typeface
