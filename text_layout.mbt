@@ -283,6 +283,30 @@ pub fn FontFallbackChain::contains_family(
 }
 
 ///|
+fn FontFallbackChain::index_of_family(
+  self : FontFallbackChain,
+  family : Bytes,
+) -> Int {
+  if family.is_empty() {
+    -1
+  } else if self.primary_family == family {
+    0
+  } else {
+    let mut index = -1
+    for fallback_index, fallback_family in self.fallback_families {
+      if index < 0 && fallback_family == family {
+        index = if self.primary_family.is_empty() {
+          fallback_index
+        } else {
+          fallback_index + 1
+        }
+      }
+    }
+    index
+  }
+}
+
+///|
 pub fn FontFallbackChain::with_family(
   self : FontFallbackChain,
   family : Bytes,
@@ -366,6 +390,85 @@ pub fn FontFallbackRequest::with_style(
   style : FontStyleRequest,
 ) -> FontFallbackRequest {
   { ..self, style, }
+}
+
+///|
+/// Value-layer metadata for a native font fallback/typeface match result.
+pub(all) struct FontFallbackMatchDescriptor {
+  request : FontFallbackRequest
+  matched_family : Bytes
+  fallback_index : Int
+  synthetic : Bool
+} derive(Debug, Eq)
+
+///|
+fn normalized_font_fallback_index(
+  request : FontFallbackRequest,
+  matched_family : Bytes,
+  fallback_index : Int,
+) -> Int {
+  if fallback_index >= 0 && fallback_index < request.families.length() {
+    fallback_index
+  } else {
+    request.families.index_of_family(matched_family)
+  }
+}
+
+///|
+pub fn FontFallbackMatchDescriptor::new(
+  request? : FontFallbackRequest = FontFallbackRequest::new(),
+  matched_family? : Bytes = b"",
+  fallback_index? : Int = -1,
+  synthetic? : Bool = false,
+) -> FontFallbackMatchDescriptor {
+  {
+    request,
+    matched_family,
+    fallback_index: normalized_font_fallback_index(
+      request, matched_family, fallback_index,
+    ),
+    synthetic,
+  }
+}
+
+///|
+pub fn FontFallbackRequest::match_descriptor(
+  self : FontFallbackRequest,
+  matched_family : Bytes,
+  fallback_index? : Int = -1,
+  synthetic? : Bool = false,
+) -> FontFallbackMatchDescriptor {
+  FontFallbackMatchDescriptor::new(
+    request=self,
+    matched_family~,
+    fallback_index~,
+    synthetic~,
+  )
+}
+
+///|
+pub fn FontFallbackMatchDescriptor::is_valid(
+  self : FontFallbackMatchDescriptor,
+) -> Bool {
+  !self.matched_family.is_empty()
+}
+
+///|
+pub fn FontFallbackMatchDescriptor::source_family(
+  self : FontFallbackMatchDescriptor,
+) -> Bytes? {
+  if self.fallback_index < 0 {
+    None
+  } else {
+    self.request.families.family_at(self.fallback_index)
+  }
+}
+
+///|
+pub fn FontFallbackMatchDescriptor::matched_in_request(
+  self : FontFallbackMatchDescriptor,
+) -> Bool {
+  self.request.families.contains_family(self.matched_family)
 }
 
 ///|
@@ -567,6 +670,28 @@ fn FontFallbackRequest::resource_id(self : FontFallbackRequest) -> Bytes {
 }
 
 ///|
+fn FontFallbackMatchDescriptor::text_run_cache_id(
+  self : FontFallbackMatchDescriptor,
+) -> Bytes {
+  self.request.text_run_cache_id() +
+  text_run_cache_bytes(self.matched_family) +
+  text_run_cache_bool(self.fallback_index >= 0) +
+  text_run_cache_u64(self.fallback_index) +
+  text_run_cache_bool(self.synthetic)
+}
+
+///|
+fn FontFallbackMatchDescriptor::resource_id(
+  self : FontFallbackMatchDescriptor,
+) -> Bytes {
+  if !self.is_valid() {
+    b""
+  } else {
+    b"skia_mbt:font-fallback-match:v1" + self.text_run_cache_id()
+  }
+}
+
+///|
 /// Deterministic renderer cache key for native font fallback/typeface matching.
 pub fn FontFallbackRequest::resource_key(
   self : FontFallbackRequest,
@@ -617,6 +742,63 @@ pub fn FontFallbackRequest::resource_plan(
 ) -> RendererResourcePlan {
   RendererResourcePlan::new([
     self.resource_descriptor(byte_size=fallback_byte_size),
+    self
+    .font_descriptor(size~, scale_x~, skew_x~)
+    .resource_descriptor(byte_size=font_byte_size),
+  ])
+}
+
+///|
+/// Deterministic renderer cache key for a resolved native fallback match.
+pub fn FontFallbackMatchDescriptor::resource_key(
+  self : FontFallbackMatchDescriptor,
+) -> RendererResourceKey {
+  RendererResourceKey::typeface(self.resource_id())
+}
+
+///|
+/// Cache descriptor for resolved fallback/typeface match metadata.
+pub fn FontFallbackMatchDescriptor::resource_descriptor(
+  self : FontFallbackMatchDescriptor,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let id = self.resource_id()
+  let measured_byte_size = if byte_size < 0L {
+    id.length().to_int64()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::typeface(id, byte_size=measured_byte_size)
+}
+
+///|
+/// Font descriptor derived from a resolved fallback/typeface match.
+pub fn FontFallbackMatchDescriptor::font_descriptor(
+  self : FontFallbackMatchDescriptor,
+  size? : Float = 12.0,
+  scale_x? : Float = 1.0,
+  skew_x? : Float = 0.0,
+) -> FontDescriptor {
+  FontDescriptor::new(
+    typeface_key=self.resource_key(),
+    size~,
+    scale_x~,
+    skew_x~,
+  )
+}
+
+///|
+/// Combined resource plan for retaining a fallback match and derived font.
+pub fn FontFallbackMatchDescriptor::resource_plan(
+  self : FontFallbackMatchDescriptor,
+  size? : Float = 12.0,
+  scale_x? : Float = 1.0,
+  skew_x? : Float = 0.0,
+  match_byte_size? : Int64 = -1L,
+  font_byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new([
+    self.resource_descriptor(byte_size=match_byte_size),
     self
     .font_descriptor(size~, scale_x~, skew_x~)
     .resource_descriptor(byte_size=font_byte_size),
