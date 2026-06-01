@@ -253,6 +253,8 @@ if ($status.schema_version -ge 3) {
     "pipeline.target-identity-validation",
     "pipeline.target-resource-binding",
     "pipeline.frame-present",
+    "pipeline.frame-submission-resource-plan",
+    "pipeline.frame-submission-cache-resources",
     "pipeline.frame-missing-present-validation",
     "pipeline.frame-touched-bounds",
     "pipeline.frame-cache-resources",
@@ -448,6 +450,8 @@ if ($status.schema_version -ge 3) {
       "native smoke render target identity validation" = "1"
       "native smoke render target resource binding" = "1"
       "native smoke render frame present count" = "1"
+      "native smoke render frame submission resource plan count" = "2"
+      "native smoke render frame submission cache resources" = "1"
       "native smoke render frame missing present validation" = "1"
       "native smoke render frame touched bounds width" = "4"
       "native smoke render frame cache resources" = "9"

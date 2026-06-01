@@ -319,8 +319,9 @@ log includes the resolved `skia_commit` when the Skia checkout was available.
 `scripts/verify-native-smoke-log.sh` and `scripts/verify-native-smoke-log.ps1`
 check a saved native smoke executable log for key stage markers plus the final
 success marker. They also enforce status-declared exact marker values for
-counts that prove specific resource dependencies, and are used by the real-smoke
-workflows after the one-step helper runs.
+counts that prove specific resource dependencies, including render-frame
+submission resource planning and cache population, and are used by the
+real-smoke workflows after the one-step helper runs.
 `scripts/verify-acceptance-log.sh` and `scripts/verify-acceptance-log.ps1` check
 the acceptance summary fields; the shell version can also require a full
 `skia_commit` hash for source-built revision pinning. `scripts/pin-skia-revision.sh`
