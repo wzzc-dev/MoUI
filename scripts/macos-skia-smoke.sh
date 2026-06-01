@@ -18,6 +18,9 @@ Options:
   --enable-skshaper      Enable the optional SkShaper FFI boundary. Requires
                          libskshaper and its dependent module libraries in
                          --skia-lib-dir.
+  --enable-asan          Add AddressSanitizer compile/link flags to the native
+                         smoke build. macOS disables leak detection by default
+                         unless ASAN_OPTIONS is already set.
   --extra-cc-flags STR   Extra C/C++ flags appended to stub-cc-flags.
   --extra-link-flags STR Extra linker flags appended to cc-link-flags.
   --smoke-log PATH       Write the native smoke executable output to PATH.
@@ -36,9 +39,21 @@ Environment defaults:
   SKIA_MBT_SKIA_INCLUDE, SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB,
   SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_SKIA_COMMIT,
   SKIA_MBT_SKIA_PACKAGE, SKIA_MBT_SKIA_PACKAGE_SHA256,
-  SKIA_MBT_EXTRA_CC_FLAGS, and SKIA_MBT_EXTRA_LINK_FLAGS are used when the
-  matching command-line option is omitted.
+  SKIA_MBT_ENABLE_ASAN, SKIA_MBT_EXTRA_CC_FLAGS, and
+  SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option is
+  omitted.
 EOF
+}
+
+normalize_bool() {
+  case "$1" in
+    1|true|TRUE|yes|YES|on|ON) printf '1\n' ;;
+    ""|0|false|FALSE|no|NO|off|OFF) printf '0\n' ;;
+    *)
+      echo "unsupported boolean value for SKIA_MBT_ENABLE_ASAN: $1" >&2
+      exit 2
+      ;;
+  esac
 }
 
 skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
@@ -52,6 +67,7 @@ skia_package_sha256="${SKIA_MBT_SKIA_PACKAGE_SHA256:-}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
 enable_skshaper=0
+enable_asan="${SKIA_MBT_ENABLE_ASAN:-0}"
 requested_smoke_log=""
 dry_run_config=0
 
@@ -93,6 +109,10 @@ while [[ $# -gt 0 ]]; do
       enable_skshaper=1
       shift
       ;;
+    --enable-asan)
+      enable_asan=1
+      shift
+      ;;
     --extra-cc-flags)
       extra_cc_flags="${2:-}"
       shift 2
@@ -120,6 +140,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+enable_asan="$(normalize_bool "$enable_asan")"
 
 if [[ -z "$skia_include" || -z "$skia_lib_dir" ]]; then
   usage >&2
@@ -201,11 +223,25 @@ fi
 if [[ $enable_skshaper -eq 1 ]]; then
   echo "  skshaper=enabled"
 fi
+if [[ $enable_asan -eq 1 ]]; then
+  echo "  asan=enabled"
+fi
 find "$lib_path" -maxdepth 1 \( -name "lib$skia_lib.a" -o -name "lib$skia_lib.dylib" \) \
   -print | while IFS= read -r lib_file; do
     size="$(wc -c < "$lib_file" | tr -d '[:space:]')"
     echo "  library=$(basename "$lib_file") ${size} bytes"
   done
+
+if [[ $enable_asan -eq 1 ]]; then
+  asan_cc_flags="-g -fsanitize=address -fno-omit-frame-pointer"
+  asan_link_flags="-fsanitize=address"
+  extra_cc_flags="${extra_cc_flags:+$extra_cc_flags }$asan_cc_flags"
+  extra_link_flags="${extra_link_flags:+$extra_link_flags }$asan_link_flags"
+  if [[ -z "${ASAN_OPTIONS:-}" ]]; then
+    export ASAN_OPTIONS="detect_leaks=0:fast_unwind_on_malloc=0"
+  fi
+  echo "  asan_options=$ASAN_OPTIONS"
+fi
 
 native_extra_cc_flags="$extra_cc_flags"
 native_extra_link_flags="$extra_link_flags"

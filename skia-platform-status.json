@@ -37,6 +37,12 @@
       "powershell_command": "moon -C scripts/native_smoke check; moon -C scripts/native_smoke build --target native"
     },
     {
+      "id": "native.asan-smoke-dry-run",
+      "area": "NativeSmoke",
+      "unix_command": "bash scripts/linux-skia-smoke.sh --dry-run-config --enable-asan && bash scripts/macos-skia-smoke.sh --dry-run-config --enable-asan",
+      "powershell_command": ""
+    },
+    {
       "id": "native.smoke-capability-sync",
       "area": "NativeSmoke",
       "unix_command": "bash scripts/verify-native-smoke-capabilities.sh",

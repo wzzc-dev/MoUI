@@ -54,6 +54,14 @@ Use `--skia-provider source` for source-built fallback and diagnostic runs, or
 `--skia-provider existing` with explicit include/lib paths for a prepared Skia
 build.
 
+Linux and macOS native smoke helpers also accept `--enable-asan` or
+`SKIA_MBT_ENABLE_ASAN=1`. That mode appends AddressSanitizer compile/link flags,
+records `asan=enabled` in the wrapper logs, and sets conservative default
+`ASAN_OPTIONS` when the runner has not provided its own. ASan is extra evidence
+for a real smoke run, not a substitute for the required native-smoke,
+acceptance-log, and artifact verifiers. Windows MSVC remains artifact
+verification only until its sanitizer mode is proven separately.
+
 ## Linux Source Acceptance
 
 Linux remains the first source-build path and should be used when establishing

@@ -758,5 +758,19 @@ jobs:
             --skia-include .skia-dry-run/skia \
             --skia-lib-dir .skia-dry-run/shared \
             --smoke-log logs/linux-native-smoke-output.log
+          bash scripts/linux-skia-smoke.sh --dry-run-config --enable-asan \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            > logs/linux-skia-smoke-asan-dry-run.log
+          grep -Fq 'asan=enabled' logs/linux-skia-smoke-asan-dry-run.log
+          grep -Fq 'asan_options=detect_leaks=1:fast_unwind_on_malloc=0' logs/linux-skia-smoke-asan-dry-run.log
+          grep -Fq -- '-fsanitize=address' logs/linux-skia-smoke-asan-dry-run.log
+          bash scripts/macos-skia-smoke.sh --dry-run-config --enable-asan \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            > logs/macos-skia-smoke-asan-dry-run.log
+          grep -Fq 'asan=enabled' logs/macos-skia-smoke-asan-dry-run.log
+          grep -Fq 'asan_options=detect_leaks=0:fast_unwind_on_malloc=0' logs/macos-skia-smoke-asan-dry-run.log
+          grep -Fq -- '-fsanitize=address' logs/macos-skia-smoke-asan-dry-run.log
           after_pkg_hash="$(sha256sum native/moon.pkg | cut -d ' ' -f 1)"
           test "$before_pkg_hash" = "$after_pkg_hash"

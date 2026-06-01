@@ -40,6 +40,11 @@ on:
         description: Extra linker flags for the smoke executable
         required: false
         default: ""
+      enable_asan:
+        description: Enable AddressSanitizer for the native smoke helper
+        type: boolean
+        required: false
+        default: false
       dry_run_config:
         description: Print resolved config without building Skia or rewriting package files
         type: boolean
@@ -66,6 +71,7 @@ jobs:
           EXTRA_GN_ARGS: ${{ inputs.extra_gn_args }}
           EXTRA_CC_FLAGS: ${{ inputs.extra_cc_flags }}
           EXTRA_LINK_FLAGS: ${{ inputs.extra_link_flags }}
+          ENABLE_ASAN: ${{ inputs.enable_asan }}
         run: |
           mkdir -p logs
           args=(--dry-run-config --skia-provider "$SKIA_PROVIDER")
@@ -87,6 +93,9 @@ jobs:
           fi
           if [[ -n "$EXTRA_LINK_FLAGS" ]]; then
             args+=(--extra-link-flags "$EXTRA_LINK_FLAGS")
+          fi
+          if [[ "$ENABLE_ASAN" == "true" ]]; then
+            args+=(--enable-asan)
           fi
           set -o pipefail
           bash scripts/macos-real-skia-smoke.sh "${args[@]}" 2>&1 | tee logs/macos-real-skia-smoke-preflight.log
@@ -129,6 +138,7 @@ jobs:
           EXTRA_GN_ARGS: ${{ inputs.extra_gn_args }}
           EXTRA_CC_FLAGS: ${{ inputs.extra_cc_flags }}
           EXTRA_LINK_FLAGS: ${{ inputs.extra_link_flags }}
+          ENABLE_ASAN: ${{ inputs.enable_asan }}
           DRY_RUN_CONFIG: ${{ inputs.dry_run_config }}
         run: |
           mkdir -p logs
@@ -153,6 +163,9 @@ jobs:
           fi
           if [[ -n "$EXTRA_LINK_FLAGS" ]]; then
             args+=(--extra-link-flags "$EXTRA_LINK_FLAGS")
+          fi
+          if [[ "$ENABLE_ASAN" == "true" ]]; then
+            args+=(--enable-asan)
           fi
           bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs "${args[@]}"
 
@@ -223,6 +236,7 @@ jobs:
           EXTRA_GN_ARGS: ${{ inputs.extra_gn_args }}
           EXTRA_CC_FLAGS: ${{ inputs.extra_cc_flags }}
           EXTRA_LINK_FLAGS: ${{ inputs.extra_link_flags }}
+          ENABLE_ASAN: ${{ inputs.enable_asan }}
           DRY_RUN_CONFIG: ${{ inputs.dry_run_config }}
         run: |
           resolved_commit="not run"
@@ -251,6 +265,7 @@ jobs:
             echo "- Extra GN args: ${EXTRA_GN_ARGS:-<none>}"
             echo "- Extra C/C++ flags: ${EXTRA_CC_FLAGS:-<none>}"
             echo "- Extra link flags: ${EXTRA_LINK_FLAGS:-<none>}"
+            echo "- AddressSanitizer: ${ENABLE_ASAN:-false}"
             echo "- Artifact: macos-real-skia-smoke-log"
             echo "- Preflight log: logs/macos-real-skia-smoke-preflight.log"
             echo "- Build log: logs/macos-skia-build.log"
