@@ -14,6 +14,7 @@ options(
   link: { "native": { "stub-cc-flags": "${build.SKIA_MBT_STUB_CC_FLAGS}" } },
   targets: {
     "handles_native.mbt": [ "native", "llvm" ],
+    "skia_native.mbt": [ "native", "llvm" ],
     "availability_native.mbt": [ "native", "llvm" ],
     "surface_image_data_native.mbt": [ "native", "llvm" ],
     "canvas_native.mbt": [ "native", "llvm" ],
@@ -21,6 +22,7 @@ options(
     "text_font_native.mbt": [ "native", "llvm" ],
     "shader_filter_native.mbt": [ "native", "llvm" ],
     "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "availability_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "surface_image_data_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "canvas_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
