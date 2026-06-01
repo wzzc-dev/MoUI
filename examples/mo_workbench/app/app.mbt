@@ -1207,7 +1207,7 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
   if prompt == "" {
     { ..self, last_status: "Prompt is empty" }
   } else {
-    let payload = self.composer_prompt_payload(prompt)
+    let payload = self.dispatch_prompt_payload(prompt)
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
@@ -1239,7 +1239,7 @@ fn WorkbenchModel::dispatch_prompt_with_transport(
   if prompt == "" {
     WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
   } else {
-    let payload = self.composer_prompt_payload(prompt)
+    let payload = self.dispatch_prompt_payload(prompt)
     let session = self.active_session()
     let commands = self.commands_with_session_start(
       session,
@@ -1365,6 +1365,25 @@ fn WorkbenchModel::composer_prompt_payload(
   } else {
     "Context: " + context + "\n\nTask: " + prompt
   }
+}
+
+///|
+fn WorkbenchModel::dispatch_prompt_payload(
+  self : WorkbenchModel,
+  prompt : String,
+) -> String {
+  if is_slash_prompt(prompt) {
+    prompt
+  } else {
+    self.composer_prompt_payload(prompt)
+  }
+}
+
+///|
+fn is_slash_prompt(prompt : String) -> Bool {
+  let clean = prompt.trim().to_owned()
+  let chars = clean.to_array()
+  chars.length() > 0 && chars[0] == '/'
 }
 
 ///|

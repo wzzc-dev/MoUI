@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, lightweight agent focus routing, composer slash-command shortcuts, wide workflow rail for progress/agents/work folder evidence, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, lightweight agent focus routing, composer slash-command suggestions, wide workflow rail for progress/agents/work folder evidence, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -257,10 +257,12 @@ refreshes the available slash/prompt/extension/skill command catalog, and
 evidence, so exported sessions can become handoff, documentation, or knowledge
 artifacts without native-only state. Catalog rows can run a command by sending
 `/<name>` through the same platform-neutral `SendUserInput` prompt path, so
-native transport does not need a command-specific bridge. When command catalog
-entries are available, the composer also shows up to three slash-command
-shortcuts that reuse the same `InvokeCommand` / `SendUserInput` route as the
-Activity digest command row. Diagnostics collected from Pi stderr, RPC
+native transport does not need a command-specific bridge. Typed slash prompts
+such as `/review` are sent raw rather than wrapped in composer context. When
+command catalog entries are available and the prompt starts with `/`, the
+composer shows up to three filtered slash-command suggestions that reuse the
+same `InvokeCommand` / `SendUserInput` route as the Activity digest command
+row. Diagnostics collected from Pi stderr, RPC
 failures, structured diagnostic events, and bash results are
 surfaced in the workspace digest and can be cleared from shared app state.
 The model catalog summary can send platform-neutral `SetRpcModel` for the
