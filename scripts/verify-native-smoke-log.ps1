@@ -55,6 +55,9 @@ $defaultStageMarkers = @(
   "native smoke gpu frame context validation",
   "native smoke surface target resource plan count",
   "native smoke window target resource plan count",
+  "native smoke window physical width",
+  "native smoke window frame pacing",
+  "native smoke window present mode key variation",
   "native smoke surface flush-and-submit",
   "native smoke shader draws",
   "native smoke shader resource plan count",
@@ -186,6 +189,18 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke window target resource plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke window physical width"
+    Value = "16"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke window frame pacing"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke window present mode key variation"
     Value = "1"
   }
   [pscustomobject]@{

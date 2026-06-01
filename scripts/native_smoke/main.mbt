@@ -163,16 +163,32 @@ fn main {
   let smoke_window_gpu_target = smoke_window.gpu_target_descriptor(
     gpu_context_key=Some(smoke_gpu_context.resource_key()),
   )
+  let smoke_window_immediate_target = smoke_window_target.with_present_mode(
+    @skia.ImmediatePresent,
+  )
   if smoke_window.dimensions() != @skia.ISize::new(16, 16) ||
+    smoke_window.logical_dimensions() != @skia.Size::new(8, 8) ||
     !smoke_window_target.has_target_id() ||
     smoke_window_target.target_id != b"native-smoke-window" ||
     !smoke_window_target.is_presentable() ||
+    !smoke_window_target.is_multibuffered() ||
+    smoke_window_target.max_frames_in_flight != 2 ||
+    smoke_window_target.present_mode != Some(@skia.MailboxPresent) ||
+    smoke_window_immediate_target.resource_key() ==
+    smoke_window_target.resource_key() ||
+    !smoke_window_immediate_target.needs_present() ||
     smoke_window_plan.length() != 1 ||
     !smoke_window_plan.contains_key(smoke_window_target.resource_key()) ||
     !smoke_window_gpu_target.surface.is_gpu() ||
     smoke_window_gpu_target.resource_plan().length() != 2 {
     fail_smoke("window surface descriptor did not derive target resources")
   }
+  println("native smoke window physical width")
+  println(smoke_window.dimensions().width)
+  println("native smoke window frame pacing")
+  println(smoke_window_target.max_frames_in_flight)
+  println("native smoke window present mode key variation")
+  println(1)
   println("native smoke window target resource plan count")
   println(smoke_window_plan.length())
   let smoke_window_identity_mismatch_frame = @skia.RenderCommandList::for_target(
