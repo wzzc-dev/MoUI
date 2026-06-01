@@ -52,6 +52,7 @@ pub fn RenderPassStoreOp::needs_present(self : RenderPassStoreOp) -> Bool {
 /// Value-layer boundary for a single render pass.
 pub(all) struct RenderPassDescriptor {
   surface : SurfaceDescriptor
+  target_key : RendererResourceKey?
   bounds : IRect
   load_op : RenderPassLoadOp
   clear_color : Color?
@@ -127,8 +128,25 @@ fn resolved_render_pass_store_for_target(
 }
 
 ///|
+fn normalized_render_pass_target_key(
+  surface : SurfaceDescriptor,
+  target_key : RendererResourceKey?,
+) -> RendererResourceKey? {
+  match target_key {
+    None => None
+    Some(key) =>
+      if !key.is_empty() && key.kind == surface.resource_key().kind {
+        Some(key)
+      } else {
+        None
+      }
+  }
+}
+
+///|
 pub fn RenderPassDescriptor::new(
   surface : SurfaceDescriptor,
+  target_key? : RendererResourceKey? = None,
   bounds? : IRect? = None,
   load_op? : RenderPassLoadOp = LoadExisting,
   clear_color? : Color? = None,
@@ -137,6 +155,7 @@ pub fn RenderPassDescriptor::new(
   let load_op = resolved_render_pass_load(load_op, clear_color)
   {
     surface,
+    target_key: normalized_render_pass_target_key(surface, target_key),
     bounds: normalized_render_pass_bounds(surface, bounds),
     load_op,
     clear_color: resolved_render_pass_clear_color(load_op, clear_color),
@@ -170,6 +189,7 @@ pub fn RenderPassDescriptor::for_target(
 ) -> RenderPassDescriptor {
   RenderPassDescriptor::new(
     target.surface,
+    target_key=Some(target.resource_key()),
     bounds~,
     load_op~,
     clear_color~,
@@ -233,6 +253,25 @@ pub fn RenderPassDescriptor::is_msaa(self : RenderPassDescriptor) -> Bool {
 }
 
 ///|
+pub fn RenderPassDescriptor::has_target_binding(
+  self : RenderPassDescriptor,
+) -> Bool {
+  self.target_key is Some(_)
+}
+
+///|
+pub fn RenderPassDescriptor::is_bound_to_target(
+  self : RenderPassDescriptor,
+  target : SurfaceTargetDescriptor,
+) -> Bool {
+  self.surface == target.surface &&
+  (match self.target_key {
+    None => true
+    Some(key) => key == target.resource_key()
+  })
+}
+
+///|
 pub fn RenderPassDescriptor::resource_descriptor(
   self : RenderPassDescriptor,
 ) -> RendererResourceDescriptor {
@@ -255,6 +294,7 @@ pub fn RenderPassDescriptor::with_load_op(
   let clear_color = if load_op.needs_clear() { self.clear_color } else { None }
   RenderPassDescriptor::new(
     self.surface,
+    target_key=self.target_key,
     bounds=Some(self.bounds),
     load_op~,
     clear_color~,
@@ -269,6 +309,7 @@ pub fn RenderPassDescriptor::with_clear_color(
 ) -> RenderPassDescriptor {
   RenderPassDescriptor::new(
     self.surface,
+    target_key=self.target_key,
     bounds=Some(self.bounds),
     load_op=ClearBeforeDraw,
     clear_color=Some(color),
@@ -282,6 +323,7 @@ pub fn RenderPassDescriptor::without_clear(
 ) -> RenderPassDescriptor {
   RenderPassDescriptor::new(
     self.surface,
+    target_key=self.target_key,
     bounds=Some(self.bounds),
     load_op=LoadExisting,
     store_op=self.store_op,
