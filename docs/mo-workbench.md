@@ -91,11 +91,13 @@ packages:
   replies, a compact current-state strip, and a centered floating composer. The
   visible hierarchy uses quieter Chinese section labels (`当前会话`, `Pi 运行状态`,
   `会话记录`, `运行证据`, `工作区证据`) once their evidence exists while preserving
-  Pi/RPC protocol nouns, and
-  the default shell keeps only refresh, new-session, context, and send controls
-  prominent. Agent focus controls, advanced session actions, steering/follow-up
-  composer controls, and focused-check presets stay collapsed until Pi state,
-  typed input, selected focus, or command evidence makes them relevant.
+  Pi/RPC protocol nouns. The default chrome shows short project names and
+  localized session status labels, while full project paths remain in the shared
+  model and Pi transport commands. The default shell keeps only refresh,
+  new-session, context, and send controls prominent. Agent focus controls,
+  advanced session actions, steering/follow-up composer controls, and
+  focused-check presets stay collapsed until Pi state, typed input, selected
+  focus, or command evidence makes them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
