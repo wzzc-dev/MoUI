@@ -49,6 +49,12 @@
       "powershell_command": ".\\scripts\\verify-native-ffi-borrows.ps1"
     },
     {
+      "id": "native.fallback-parity",
+      "area": "FFI",
+      "unix_command": "bash scripts/verify-native-fallback-parity.sh",
+      "powershell_command": ".\\scripts\\verify-native-fallback-parity.ps1"
+    },
+    {
       "id": "platform.status",
       "area": "PlatformStatus",
       "unix_command": "bash scripts/verify-platform-status.sh",

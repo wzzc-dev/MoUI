@@ -135,6 +135,7 @@ if schema_version >= 4:
         "native.smoke-capability-sync",
         "native.ownership",
         "native.ffi-borrows",
+        "native.fallback-parity",
         "platform.status",
         "artifact.native-smoke-log",
         "artifact.real-skia",
