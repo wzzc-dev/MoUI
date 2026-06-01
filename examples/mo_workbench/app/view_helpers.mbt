@@ -90,7 +90,7 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     workbench_min_double(460.0, content_available_width),
     860.0,
   )
-  let composer_height = 128.0
+  let composer_height = 160.0
   let top_text_available = workbench_max_double(
     1.0,
     content_width - 86.0 - 120.0 - 10.0 - 24.0,
@@ -120,7 +120,7 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     diff_text_width,
     top_title_width,
     top_path_width,
-    scroll_height: workbench_max_double(220.0, viewport.height - 260.0),
+    scroll_height: workbench_max_double(220.0, viewport.height - 292.0),
     composer_width,
     composer_input_width: workbench_max_double(1.0, composer_width - 24.0),
     composer_height,
@@ -2513,16 +2513,9 @@ fn WorkbenchModel::composer(
           width=layout.composer_input_width,
           height=54.0,
         ),
+        self.context_chip_row(layout, theme),
         row(
           [
-            button(
-              "上下文",
-              on_click=ToggleContext("repo"),
-              variant=Ghost,
-              theme~,
-              width=60.0,
-              height=34.0,
-            ),
             button(
               self.steering_mode_label(),
               on_click=ToggleSteeringMode,
@@ -2581,6 +2574,82 @@ fn WorkbenchModel::composer(
   )
   .border(workbench_hairline_border())
   .shadow(workbench_soft_shadow())
+}
+
+///|
+fn WorkbenchModel::context_chip_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      text("上下文", role=Caption, theme~, width=52.0, height=30.0),
+      self.context_chip("仓库", "repo", theme, width=50.0),
+      self.context_chip("示例", "examples", theme, width=50.0),
+      self.context_chip("证据", "evidence", theme, width=50.0),
+      self.context_chip("会话", "session", theme, width=50.0),
+      spacer(min_length=8.0, weight=1.0),
+      text(
+        self.context_summary_label(),
+        role=Caption,
+        theme~,
+        width=workbench_max_double(1.0, layout.composer_input_width - 304.0),
+        height=30.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::context_chip(
+  self : WorkbenchModel,
+  label : String,
+  id : String,
+  theme : @core.Theme,
+  width~ : Double,
+) -> @core.View[WorkbenchMsg] {
+  button(
+    label,
+    on_click=ToggleContext(id),
+    variant=if self.context_is_selected(id) { Outline } else { Ghost },
+    theme~,
+    width~,
+    height=30.0,
+  )
+}
+
+///|
+fn WorkbenchModel::context_summary_label(self : WorkbenchModel) -> String {
+  let labels : Array[String] = []
+  for id in ["repo", "examples", "evidence", "session"] {
+    if self.context_is_selected(id) {
+      labels.push(context_display_label(id))
+    }
+  }
+  for id in self.expanded_context {
+    if !known_context_id(id) {
+      labels.push(id)
+    }
+  }
+  if labels.is_empty() {
+    "不附加上下文"
+  } else {
+    labels.join("、")
+  }
+}
+
+///|
+fn context_display_label(id : String) -> String {
+  match id {
+    "repo" => "仓库"
+    "examples" => "示例"
+    "evidence" => "证据"
+    "session" => "Pi 会话"
+    _ => id
+  }
 }
 
 ///|

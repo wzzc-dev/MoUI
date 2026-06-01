@@ -118,6 +118,12 @@ packages:
   Pi through the existing platform-neutral `SendUserInput` path, so visible
   conversation evidence can become the next agent action without native-only
   transport.
+- The composer now exposes explicit context chips for repository, examples,
+  evidence, and Pi session scope. Direct prompt, steering, and follow-up submits
+  prefix the selected context labels into the text payload before it enters the
+  existing platform-neutral `SendUserInput`, `SendSteeringInput`, or
+  `SendFollowUpInput` paths; no new transport command or native bridge is
+  required, and users can turn all context chips off to send the raw text.
 - Activity timeline rows can queue a
   `Follow up on <phase> activity: ...` prompt through the same
   `SendUserInput` path, so visible Pi RPC, stderr, tool, and stream events can

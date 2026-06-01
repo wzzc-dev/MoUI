@@ -187,7 +187,10 @@ stay visually quiet; transcript/activity/workspace panels shrink to their
 headers until Pi or command evidence arrives.
 Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
 the shared prompt transport, turning visible Pi conversation evidence into the
-next agent task. Activity timeline rows can queue a
+next agent task. The composer exposes repository, examples, evidence, and Pi
+session context chips; direct prompt, steering, and follow-up submits prefix the
+selected scopes into the same platform-neutral text payloads, while turning all
+chips off sends the raw input. Activity timeline rows can queue a
 `Follow up on <phase> activity: ...` prompt the same way, so visible Pi RPC,
 stderr, tool, and stream events can become the next agent action. File context
 rows can queue an `Inspect <path>` prompt through the same platform-neutral
