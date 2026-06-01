@@ -175,6 +175,9 @@ packages:
   Workbench app package native test, app package wasm-gc test, and macOS Skia
   entrypoint build. They use the same `QueueCommand` / Pi RPC `bash` path as
   manual command reruns, so validation evidence stays in the shared model.
+  The `全部` action queues all three checks in one platform-neutral command
+  batch, reusing a single session start and recording each check as its own
+  `CommandRun`.
 - The Activity digest surfaces the latest shared-app timeline event, so Pi RPC,
   streaming agent, tool, and stderr progress stays visible next to command
   evidence without opening a separate log view. The visible event can also be

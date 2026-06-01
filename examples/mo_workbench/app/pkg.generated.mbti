@@ -302,6 +302,7 @@ pub(all) enum WorkbenchMsg {
   ForkFromMessage(String)
   ExportSessionHtml
   QueueCommand(String)
+  QueueFocusedChecks
   InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
   FixDiagnostic(String, String, String)

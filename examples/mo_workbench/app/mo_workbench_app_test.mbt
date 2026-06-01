@@ -1095,6 +1095,43 @@ test "workbench focused check preset routes through Pi RPC bash command" {
 }
 
 ///|
+test "workbench queues all focused checks through one Pi RPC bash batch" {
+  let model = WorkbenchModel::new().update(QueueFocusedChecks)
+  inspect(model.last_status, content="Focused checks queued for Pi RPC bash")
+  inspect(model.pending_transport_count(), content="4")
+  inspect(model.commands.length(), content="3")
+  inspect(
+    model.commands[0].command,
+    content="moon test examples/mo_workbench/app --target native",
+  )
+  inspect(
+    model.commands[1].command,
+    content="moon test examples/mo_workbench/app --target wasm-gc",
+  )
+  inspect(
+    model.commands[2].command,
+    content="moon build examples/mo_workbench/macos_skia --target native",
+  )
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[3] {
+    RunShellCommand(session, command) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        command,
+        content="moon build examples/mo_workbench/macos_skia --target native",
+      )
+    }
+    _ => fail("expected queued final focused check")
+  }
+}
+
+///|
 test "workbench reruns command evidence through Pi RPC bash path" {
   let seed = {
     ..WorkbenchModel::new(),
@@ -2711,6 +2748,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "会话记录"))
   assert_true(has_text(commands, "运行证据"))
   assert_true(has_text(commands, "常用检查"))
+  assert_true(has_text(commands, "全部"))
   assert_true(has_text(commands, "App 测试"))
   assert_true(has_text(commands, "Wasm 测试"))
   assert_true(has_text(commands, "Skia 构建"))

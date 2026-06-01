@@ -51,38 +51,6 @@ priv struct WorkbenchNextAction {
 }
 
 ///|
-priv struct WorkbenchCheckPreset {
-  label : String
-  command : String
-}
-
-///|
-fn WorkbenchCheckPreset::new(
-  label~ : String,
-  command~ : String,
-) -> WorkbenchCheckPreset {
-  { label, command }
-}
-
-///|
-fn workbench_check_presets() -> Array[WorkbenchCheckPreset] {
-  [
-    WorkbenchCheckPreset::new(
-      label="App 测试",
-      command="moon test examples/mo_workbench/app --target native",
-    ),
-    WorkbenchCheckPreset::new(
-      label="Wasm 测试",
-      command="moon test examples/mo_workbench/app --target wasm-gc",
-    ),
-    WorkbenchCheckPreset::new(
-      label="Skia 构建",
-      command="moon build examples/mo_workbench/macos_skia --target native",
-    ),
-  ]
-}
-
-///|
 fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
   let viewport = @core.Size::new(
     width=workbench_max_double(1.0, viewport.width),
@@ -2603,13 +2571,23 @@ fn focused_check_preset_row(
 ) -> @core.View[WorkbenchMsg] {
   let presets = workbench_check_presets()
   let button_width = workbench_clamp_double(
-    (layout.panel_body_width - 72.0 - 32.0) / 3.0,
-    94.0,
-    132.0,
+    (layout.panel_body_width - 72.0 - 40.0) / 4.0,
+    74.0,
+    112.0,
   )
   let controls : Array[@core.View[WorkbenchMsg]] = [
     text("常用检查", role=Caption, theme~, width=72.0, height=30.0),
   ]
+  controls.push(
+    button(
+      "全部",
+      on_click=QueueFocusedChecks,
+      variant=Outline,
+      theme~,
+      width=button_width,
+      height=30.0,
+    ),
+  )
   for preset in presets {
     controls.push(
       button(

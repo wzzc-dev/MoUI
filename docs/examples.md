@@ -294,7 +294,9 @@ replayed without introducing a native-only shortcut.
 It also exposes focused-check presets for the app native test, app wasm-gc test,
 and macOS Skia build. Each preset uses the same `QueueCommand` /
 `RunShellCommand` path, so checks started from the UI become normal Pi bash
-evidence.
+evidence. The `全部` action batches all three focused checks through one
+platform-neutral queue operation while preserving separate `CommandRun`
+evidence rows.
 It also surfaces the latest Pi/agent timeline event from shared app state, so
 streaming transport, tool, and RPC progress is visible next to command evidence
 without adding a separate log view.
