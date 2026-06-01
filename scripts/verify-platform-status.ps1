@@ -310,6 +310,8 @@ if ($status.schema_version -ge 3) {
     "text.text-run-range",
     "text.measured-run-resource-plan",
     "text.measured-run-key",
+    "text.shaped-glyph-run-resource-plan",
+    "text.shaped-glyph-run-key",
     "text.measure",
     "text.glyph-count",
     "text.glyph-id",
@@ -393,6 +395,12 @@ if ($status.schema_version -ge 3) {
       "text.shaped-glyph-count" = @{
         Area = "Text"
         Marker = "native smoke shaped glyph count"
+        WhenMarker = "native smoke shaper availability"
+        WhenValue = "1"
+      }
+      "text.native-shaped-glyph-run-resource-plan" = @{
+        Area = "Text"
+        Marker = "native smoke shaped glyph run native resource plan count"
         WhenMarker = "native smoke shaper availability"
         WhenValue = "1"
       }
@@ -519,6 +527,8 @@ if ($status.schema_version -ge 3) {
       "native smoke text run range byte size" = "4"
       "native smoke measured text resource plan count" = "5"
       "native smoke measured text key variation" = "1"
+      "native smoke shaped glyph run resource plan count" = "6"
+      "native smoke shaped glyph run key variation" = "1"
       "native smoke font resource plan count" = "1"
       "native smoke font fallback key variation" = "1"
       "native smoke font fallback match key variation" = "1"
