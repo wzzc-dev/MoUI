@@ -201,8 +201,8 @@ empty, and collapses on compact widths so the conversation flow remains primary.
 Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
 the shared prompt transport, turning visible Pi conversation evidence into the
 next agent task. The default sidebar now stays focused on sessions and
-workspace identity; lightweight `通用`, `编码`, and `校验` agent focus controls
-move into the composer and appear only while composing or when a focus is
+workspace identity; lightweight `通用`, `编码`, and `校验` focus controls move
+into the composer's `焦点` row and appear only while composing or when a focus is
 selected. Selecting one only appends an `agent focus: ...` hint to the existing
 platform-neutral prompt, steering, and follow-up text payloads.
 The composer exposes repository, examples, evidence, and Pi session context
