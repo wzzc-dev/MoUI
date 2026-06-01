@@ -101,8 +101,9 @@ these facts recorded in logs:
   measurement, SkShaper availability reporting, default typeface availability,
   font resource planning, font metrics, font family enumeration, native typeface
   family metadata, FontMgr character fallback, font fallback cache-key
-  variation, font fallback family metadata, font fallback resource planning, and
-  shader/filter resource planning.
+  variation, font fallback family metadata, resolved fallback match cache-key
+  variation, fallback match resource planning, font fallback resource planning,
+  and shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.

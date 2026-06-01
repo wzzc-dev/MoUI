@@ -441,6 +441,16 @@
       "marker": "native smoke font fallback family bytes"
     },
     {
+      "id": "fontmgr.fallback-match-key",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback match key variation"
+    },
+    {
+      "id": "fontmgr.fallback-match-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback match resource plan count"
+    },
+    {
       "id": "fontmgr.fallback-resource-plan",
       "area": "FontMgr",
       "marker": "native smoke font fallback resource plan count"
@@ -725,6 +735,16 @@
       "id": "fontmgr.fallback-key",
       "marker": "native smoke font fallback key variation",
       "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-match-key",
+      "marker": "native smoke font fallback match key variation",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-match-resource-plan",
+      "marker": "native smoke font fallback match resource plan count",
+      "value": "2"
     },
     {
       "id": "fontmgr.fallback-resource-plan",

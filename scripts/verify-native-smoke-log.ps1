@@ -103,6 +103,8 @@ $defaultStageMarkers = @(
   "native smoke typeface family bytes",
   "native smoke font fallback key variation",
   "native smoke font fallback family bytes",
+  "native smoke font fallback match key variation",
+  "native smoke font fallback match resource plan count",
   "native smoke font fallback resource plan count",
   "native smoke font fallback font resource plan count",
   "native smoke font fallback width"
@@ -319,6 +321,14 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke font fallback key variation"
     Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke font fallback match key variation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke font fallback match resource plan count"
+    Value = "2"
   }
   [pscustomobject]@{
     Marker = "native smoke font fallback resource plan count"

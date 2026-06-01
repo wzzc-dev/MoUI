@@ -1369,6 +1369,59 @@ test "font fallback contracts normalize style family and language requests" {
     .descriptor_for_key(fallback_font.resource_key())
     is None,
   )
+
+  let match_descriptor = request.match_descriptor(
+    b"Noto Sans CJK SC",
+    fallback_index=1,
+    synthetic=true,
+  )
+  assert_true(match_descriptor.is_valid())
+  assert_true(match_descriptor.source_family() == Some(b"Noto Sans CJK SC"))
+  assert_true(match_descriptor.matched_in_request())
+  let inferred_match = request.match_descriptor(b"Segoe UI Emoji")
+  assert_eq(inferred_match.fallback_index, 2)
+  assert_true(inferred_match.source_family() == Some(b"Segoe UI Emoji"))
+  let match_key = match_descriptor.resource_key()
+  assert_true(match_key.kind == @skia_mbt.TypefaceResource)
+  assert_true(match_key != key)
+  assert_true(match_key == match_descriptor.resource_key())
+  assert_true(
+    match_key !=
+    request
+    .match_descriptor(b"Noto Sans CJK SC", fallback_index=1, synthetic=false)
+    .resource_key(),
+  )
+  assert_true(
+    match_key !=
+    request
+    .match_descriptor(b"Segoe UI Emoji", fallback_index=2, synthetic=true)
+    .resource_key(),
+  )
+  let match_resource = match_descriptor.resource_descriptor()
+  assert_true(match_resource.key == match_key)
+  assert_true(match_resource.is_cacheable())
+  assert_true(match_resource.byte_size > descriptor.byte_size)
+  let match_font = match_descriptor.font_descriptor(size=14.0, scale_x=1.1)
+  assert_true(match_font.typeface_key == match_key)
+  assert_true(match_font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(match_font.resource_descriptor().is_cacheable())
+  let match_plan = match_descriptor.resource_plan(size=14.0, scale_x=1.1)
+  assert_eq(match_plan.length(), 2)
+  assert_eq(match_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(match_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_true(match_plan.contains_key(match_key))
+  assert_true(match_plan.contains_key(match_font.resource_key()))
+  assert_true(match_plan.byte_size > match_resource.byte_size)
+  let platform_match = request.match_descriptor(
+    b"Platform Fallback",
+    fallback_index=99,
+  )
+  assert_eq(platform_match.fallback_index, -1)
+  assert_true(platform_match.source_family() is None)
+  assert_true(!platform_match.matched_in_request())
+  let invalid_match = request.match_descriptor(b"")
+  assert_true(!invalid_match.is_valid())
+  assert_true(!invalid_match.resource_descriptor().is_cacheable())
 }
 
 ///|

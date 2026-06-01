@@ -111,7 +111,8 @@ planning, target identity/resource binding, byte-range text-run resource keys,
 text measurement resource planning, text measurement cache-key variation,
 UTF-8 text measurement, glyph count, glyph ID mapping, glyph advances, glyph
 positions, glyph bounds, text bounds measurement, font metrics, and font manager
-family enumeration.
+family enumeration, character fallback, fallback family metadata, and resolved
+fallback match resource planning.
 
 The `--require-commit` checks are mandatory for the first source-built Linux
 acceptance because that run establishes the revision to pin. Existing-build
