@@ -27,7 +27,8 @@ The current package exposes the first value-layer API surface:
   and GPU context caches
 - renderer resource cache: `ResourceCache` and `ResourceCacheStats` provide a
   deterministic byte-budgeted LRU boundary for images, shaders, typefaces, and
-  other backend-owned resources
+  other backend-owned resources, including cache preflight splits for resident
+  and missing cacheable resource plans
 - renderer resource identity: `RendererResourceKind`, `RendererResourceKey`,
   `RendererResourceDescriptor`, and `RendererResourcePlan` give those caches
   typed keys and auditable resource requirements for images, shaders, filters,
