@@ -145,6 +145,20 @@ pub fn RenderFrameDescriptor::cache_resources(
 }
 
 ///|
+pub fn RenderFrameDescriptor::cacheable_resource_plan(
+  self : RenderFrameDescriptor,
+) -> RendererResourcePlan {
+  self.resource_plan.cacheable_resource_plan()
+}
+
+///|
+pub fn RenderFrameDescriptor::uncacheable_resource_plan(
+  self : RenderFrameDescriptor,
+) -> RendererResourcePlan {
+  self.resource_plan.uncacheable_resource_plan()
+}
+
+///|
 pub fn RenderFrameDescriptor::present_descriptor(
   self : RenderFrameDescriptor,
   frame_index? : Int = 0,
@@ -266,6 +280,20 @@ pub fn RenderFrameFinalizationDescriptor::gpu_backed_resource_plan(
 }
 
 ///|
+pub fn RenderFrameFinalizationDescriptor::cacheable_resource_plan(
+  self : RenderFrameFinalizationDescriptor,
+) -> RendererResourcePlan {
+  self.resource_plan.cacheable_resource_plan()
+}
+
+///|
+pub fn RenderFrameFinalizationDescriptor::uncacheable_resource_plan(
+  self : RenderFrameFinalizationDescriptor,
+) -> RendererResourcePlan {
+  self.resource_plan.uncacheable_resource_plan()
+}
+
+///|
 pub fn RenderFrameFinalizationDescriptor::cache_resources(
   self : RenderFrameFinalizationDescriptor,
   cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
@@ -352,6 +380,20 @@ pub fn RenderFrameSubmissionDescriptor::gpu_backed_resource_plan(
   self : RenderFrameSubmissionDescriptor,
 ) -> RendererResourcePlan {
   self.resource_plan.gpu_backed_resource_plan()
+}
+
+///|
+pub fn RenderFrameSubmissionDescriptor::cacheable_resource_plan(
+  self : RenderFrameSubmissionDescriptor,
+) -> RendererResourcePlan {
+  self.resource_plan.cacheable_resource_plan()
+}
+
+///|
+pub fn RenderFrameSubmissionDescriptor::uncacheable_resource_plan(
+  self : RenderFrameSubmissionDescriptor,
+) -> RendererResourcePlan {
+  self.resource_plan.uncacheable_resource_plan()
 }
 
 ///|

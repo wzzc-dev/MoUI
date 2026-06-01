@@ -108,7 +108,8 @@ The native smoke log verifier checks both the final pass marker and intermediate
 stage markers for readback, bounded readback, snapshot/image drawing, PNG
 encode/decode, codec creation, decoded bitmap readback, render resource
 planning, target identity/resource binding, present descriptor validation,
-shaped glyph-run command replay, render-frame submission resource planning,
+shaped glyph-run command replay, cacheable/uncacheable render-frame resource
+subplans, render-frame submission resource planning,
 cacheable/uncacheable submission resource subplans, render-frame submission
 cache population, render-frame finalization resource planning,
 cacheable/uncacheable finalization resource subplans, render-frame

@@ -1503,6 +1503,16 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(!frame.resource_plan.contains_key(target.surface.resource_key()))
   assert_eq(frame.resource_plan.count_kind(@skia_mbt.SurfaceResource), 1)
   assert_eq(frame.resource_plan.count_kind(@skia_mbt.PathResource), 1)
+  let frame_cacheable_plan = frame.cacheable_resource_plan()
+  let frame_uncacheable_plan = frame.uncacheable_resource_plan()
+  assert_true(
+    frame_cacheable_plan == frame.resource_plan.cacheable_resource_plan(),
+  )
+  assert_eq(frame_cacheable_plan.length(), 2)
+  assert_eq(frame_cacheable_plan.cacheable_count, 2)
+  assert_true(frame_cacheable_plan.contains_key(target.resource_key()))
+  assert_true(frame_cacheable_plan.contains_key(path.resource_key()))
+  assert_true(frame_uncacheable_plan.is_empty())
   let cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
     @skia_mbt.RendererResourceDescriptor,
@@ -1541,6 +1551,23 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(submission.resource_plan.contains_key(target.resource_key()))
   assert_true(submission.resource_plan.contains_key(path.resource_key()))
   assert_true(submission.resource_plan.contains_key(present.resource_key()))
+  let submission_cacheable_plan = submission.cacheable_resource_plan()
+  let submission_uncacheable_plan = submission.uncacheable_resource_plan()
+  assert_true(
+    submission_cacheable_plan ==
+    submission.resource_plan.cacheable_resource_plan(),
+  )
+  assert_eq(submission_cacheable_plan.length(), 2)
+  assert_eq(submission_cacheable_plan.cacheable_count, 2)
+  assert_eq(submission_cacheable_plan.uncacheable_count, 0)
+  assert_true(submission_cacheable_plan.contains_key(target.resource_key()))
+  assert_true(submission_cacheable_plan.contains_key(path.resource_key()))
+  assert_true(!submission_cacheable_plan.contains_key(present.resource_key()))
+  assert_eq(submission_uncacheable_plan.length(), 1)
+  assert_eq(submission_uncacheable_plan.cacheable_count, 0)
+  assert_eq(submission_uncacheable_plan.uncacheable_count, 1)
+  assert_true(submission_uncacheable_plan.contains_key(present.resource_key()))
+  assert_true(!submission_uncacheable_plan.contains_key(target.resource_key()))
   let submission_cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
     @skia_mbt.RendererResourceDescriptor,
@@ -1577,6 +1604,33 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(
     finalization.resource_plan.contains_key(surface_finalization.resource_key()),
   )
+  let finalization_cacheable_plan = finalization.cacheable_resource_plan()
+  let finalization_uncacheable_plan = finalization.uncacheable_resource_plan()
+  assert_true(
+    finalization_cacheable_plan ==
+    finalization.resource_plan.cacheable_resource_plan(),
+  )
+  assert_eq(finalization_cacheable_plan.length(), 2)
+  assert_eq(finalization_cacheable_plan.cacheable_count, 2)
+  assert_eq(finalization_cacheable_plan.uncacheable_count, 0)
+  assert_true(finalization_cacheable_plan.contains_key(target.resource_key()))
+  assert_true(finalization_cacheable_plan.contains_key(path.resource_key()))
+  assert_true(
+    !finalization_cacheable_plan.contains_key(
+      surface_finalization.resource_key(),
+    ),
+  )
+  assert_eq(finalization_uncacheable_plan.length(), 1)
+  assert_eq(finalization_uncacheable_plan.cacheable_count, 0)
+  assert_eq(finalization_uncacheable_plan.uncacheable_count, 1)
+  assert_true(
+    finalization_uncacheable_plan.contains_key(
+      surface_finalization.resource_key(),
+    ),
+  )
+  assert_true(
+    !finalization_uncacheable_plan.contains_key(target.resource_key()),
+  )
   let finalization_cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
     @skia_mbt.RendererResourceDescriptor,
@@ -1605,6 +1659,8 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_eq(offscreen_finalization.resource_plan.length(), 2)
   assert_eq(offscreen_finalization.resource_plan.cacheable_count, 1)
   assert_eq(offscreen_finalization.resource_plan.uncacheable_count, 1)
+  assert_eq(offscreen_finalization.cacheable_resource_plan().length(), 1)
+  assert_eq(offscreen_finalization.uncacheable_resource_plan().length(), 1)
   assert_true(
     offscreen_finalization.resource_plan.contains_key(
       offscreen_target.resource_key(),
@@ -1701,6 +1757,8 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_eq(gpu_submission_plan.uncacheable_count, 1)
   assert_true(gpu_submission_plan.contains_key(gpu_target.resource_key()))
   assert_true(gpu_submission_plan.contains_key(gpu_context.resource_key()))
+  assert_eq(gpu_submission.cacheable_resource_plan().length(), 2)
+  assert_eq(gpu_submission.uncacheable_resource_plan().length(), 1)
   guard gpu_submission.present is Some(gpu_present) else {
     fail("gpu frame submission should expose a present descriptor")
   }
@@ -1718,6 +1776,8 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_eq(gpu_finalization_plan.uncacheable_count, 1)
   assert_true(gpu_finalization_plan.contains_key(gpu_target.resource_key()))
   assert_true(gpu_finalization_plan.contains_key(gpu_context.resource_key()))
+  assert_eq(gpu_finalization.cacheable_resource_plan().length(), 2)
+  assert_eq(gpu_finalization.uncacheable_resource_plan().length(), 1)
   guard gpu_finalization.finalization is Some(gpu_surface_finalization) else {
     fail(
       "gpu frame finalization should expose a surface finalization descriptor",

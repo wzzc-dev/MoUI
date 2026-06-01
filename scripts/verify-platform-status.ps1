@@ -250,6 +250,8 @@ if ($status.schema_version -ge 3) {
     "pipeline.resource-plan",
     "pipeline.frame-resource-plan",
     "pipeline.frame-validation",
+    "pipeline.frame-cacheable-subplan",
+    "pipeline.frame-uncacheable-subplan",
     "pipeline.frame-unbalanced-validation",
     "pipeline.target-identity-validation",
     "pipeline.target-resource-binding",
@@ -477,6 +479,8 @@ if ($status.schema_version -ge 3) {
       "native smoke render resource plan count" = "12"
       "native smoke render frame resource plan count" = "12"
       "native smoke render frame validation status" = "1"
+      "native smoke render frame cacheable subplan count" = "12"
+      "native smoke render frame uncacheable subplan count" = "0"
       "native smoke render frame unbalanced validation" = "1"
       "native smoke render target identity validation" = "1"
       "native smoke render target resource binding" = "1"

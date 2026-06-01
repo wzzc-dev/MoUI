@@ -121,6 +121,16 @@
       "marker": "native smoke render frame validation status"
     },
     {
+      "id": "pipeline.frame-cacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame cacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-uncacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame uncacheable subplan count"
+    },
+    {
       "id": "pipeline.frame-unbalanced-validation",
       "area": "Pipeline",
       "marker": "native smoke render frame unbalanced validation"
@@ -664,6 +674,16 @@
       "id": "pipeline.frame-validation",
       "marker": "native smoke render frame validation status",
       "value": "1"
+    },
+    {
+      "id": "pipeline.frame-cacheable-subplan",
+      "marker": "native smoke render frame cacheable subplan count",
+      "value": "12"
+    },
+    {
+      "id": "pipeline.frame-uncacheable-subplan",
+      "marker": "native smoke render frame uncacheable subplan count",
+      "value": "0"
     },
     {
       "id": "pipeline.frame-unbalanced-validation",

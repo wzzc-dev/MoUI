@@ -54,7 +54,8 @@ The current package exposes the first value-layer API surface:
   `RenderFrameValidationStatus` combine a target, finalized command stream,
   resource plan, readiness diagnostics, cache population boundary, optional
   present scheduling descriptor, and auditable per-frame submission/finalization
-  resource plans with GPU-backed subsets for one backend submission
+  resource plans with GPU-backed plus cacheable/uncacheable subsets for backend
+  admission and cache staging
 - text layout and fallback contracts: `TextRunDescriptor`,
   `TextMeasurementDescriptor`, `MeasuredTextRunDescriptor`,
   `TextShapingDescriptor`,
