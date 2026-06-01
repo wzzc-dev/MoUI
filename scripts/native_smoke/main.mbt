@@ -560,8 +560,19 @@ fn main {
       paint=@skia.Paint::new(color=@skia.Color::black()),
     )
   let replay_plan = replay_commands.resource_plan()
-  if replay_plan.length() != 7 ||
-    replay_plan.cacheable_count != 7 ||
+  let replay_text_run_plan = replay_descriptor.resource_plan(
+    b"hello",
+    font_key=@skia.RendererResourceKey::font(b"default:8"),
+  )
+  if replay_text_run_plan.length() != 3 ||
+    replay_text_run_plan.count_kind(@skia.TextRunResource) != 1 ||
+    replay_text_run_plan.count_kind(@skia.FontResource) != 1 ||
+    replay_text_run_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    replay_text_run_plan.byte_size <= 0L {
+    fail_smoke("native text run resource plan did not include font and fallback dependencies")
+  }
+  if replay_plan.length() != 9 ||
+    replay_plan.cacheable_count != 9 ||
     replay_plan.uncacheable_count != 0 ||
     replay_plan.gpu_backed_count != 0 ||
     replay_plan.byte_size <= 0L {
@@ -570,7 +581,7 @@ fn main {
   let replay_frame = replay_commands.frame_descriptor(replay_target)
   if !replay_frame.is_ready() ||
     replay_frame.validation_status() != @skia.FrameReady ||
-    replay_frame.resource_plan.length() != 7 ||
+    replay_frame.resource_plan.length() != 9 ||
     !replay_frame.resource_plan.contains_key(replay_target.resource_key()) ||
     replay_frame.resource_plan.contains_key(
       replay_frame.command_list.pass.resource_descriptor().key,
@@ -612,6 +623,8 @@ fn main {
   println(replay_stats.command_count)
   println("native smoke render resource plan count")
   println(replay_plan.length())
+  println("native smoke text run resource plan count")
+  println(replay_text_run_plan.length())
   println("native smoke render frame resource plan count")
   println(replay_frame.resource_plan.length())
   println("native smoke render frame validation status")

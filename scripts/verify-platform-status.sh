@@ -287,6 +287,7 @@ if schema_version >= 3:
         "bitmap.decode-readback",
         "text.font-spacing",
         "text.font-resource-plan",
+        "text.text-run-resource-plan",
         "text.measure",
         "text.glyph-count",
         "text.glyph-id",

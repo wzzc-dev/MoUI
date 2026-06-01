@@ -997,11 +997,13 @@ test "render command list exposes text run resource keys" {
       font_key~,
     )
     .resource_descriptors()
-  assert_eq(descriptors.length(), 3)
+  assert_eq(descriptors.length(), 5)
   assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
   assert_eq(descriptors[0].byte_size, 2048L)
   let mut path_descriptor_seen = false
   let mut text_descriptor : @skia_mbt.RendererResourceDescriptor? = None
+  let mut font_descriptor_seen = false
+  let mut fallback_descriptor_seen = false
   for descriptor in descriptors {
     if descriptor.key.kind == @skia_mbt.PathResource {
       path_descriptor_seen = descriptor.is_cacheable()
@@ -1009,8 +1011,16 @@ test "render command list exposes text run resource keys" {
     if descriptor.key == expected_key {
       text_descriptor = Some(descriptor)
     }
+    if descriptor.key == font_key {
+      font_descriptor_seen = descriptor.is_cacheable()
+    }
+    if descriptor.key == fallback.resource_key() {
+      fallback_descriptor_seen = descriptor.is_cacheable()
+    }
   }
   assert_true(path_descriptor_seen)
+  assert_true(font_descriptor_seen)
+  assert_true(fallback_descriptor_seen)
   guard text_descriptor is Some(text_descriptor) else {
     fail("text run descriptor should be included in resource plan")
   }
@@ -1028,11 +1038,13 @@ test "render command list exposes text run resource keys" {
       font_key~,
     )
     .resource_plan()
-  assert_eq(plan.length(), 3)
+  assert_eq(plan.length(), 5)
   assert_true(plan.byte_size > 2053L)
-  assert_eq(plan.cacheable_count, 3)
+  assert_eq(plan.cacheable_count, 5)
   assert_eq(plan.uncacheable_count, 0)
   assert_eq(plan.gpu_backed_count, 0)
+  assert_eq(plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(plan.count_kind(@skia_mbt.TypefaceResource), 1)
 
   let cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
@@ -1399,6 +1411,21 @@ test "text run descriptor records byte ranges direction and fallback query" {
   assert_true(descriptor.key == key)
   assert_eq(descriptor.byte_size, 5L)
   assert_true(descriptor.is_cacheable())
+  let text_plan = run.resource_plan(b"hello", font_key~)
+  assert_eq(text_plan.length(), 3)
+  assert_eq(text_plan.count_kind(@skia_mbt.TextRunResource), 1)
+  assert_eq(text_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(text_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_true(text_plan.contains_key(key))
+  assert_true(text_plan.contains_key(font_key))
+  assert_true(text_plan.contains_key(fallback.resource_key()))
+  assert_true(text_plan.byte_size > descriptor.byte_size)
+  let plain_run = @skia_mbt.TextRunDescriptor::new(range~)
+  let plain_plan = plain_run.resource_plan(b"hello")
+  assert_eq(plain_plan.length(), 1)
+  assert_eq(plain_plan.count_kind(@skia_mbt.TextRunResource), 1)
+  assert_eq(plain_plan.count_kind(@skia_mbt.FontResource), 0)
+  assert_eq(plain_plan.count_kind(@skia_mbt.TypefaceResource), 0)
 }
 
 ///|
