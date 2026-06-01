@@ -527,6 +527,18 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakePrefixedWrapperFieldArtifactDir -RequireCommit } `
       -ExpectedMessage "wrapper log is missing required field: skia_include="
 
+    $fakePrefixedAcceptanceReferenceArtifactDir = Join-Path $dryRunRoot "fake-artifact-prefixed-acceptance-reference"
+    New-Item -ItemType Directory -Force -Path $fakePrefixedAcceptanceReferenceArtifactDir | Out-Null
+    Copy-Item -LiteralPath $fakeArtifactPreflightLog -Destination (Join-Path $fakePrefixedAcceptanceReferenceArtifactDir "windows-real-skia-smoke-preflight.log")
+    Copy-Item -LiteralPath $fakeArtifactWrapperLog -Destination (Join-Path $fakePrefixedAcceptanceReferenceArtifactDir "windows-real-skia-smoke.log")
+    Copy-Item -LiteralPath $fakeArtifactNativeLog -Destination (Join-Path $fakePrefixedAcceptanceReferenceArtifactDir "windows-native-smoke-output.log")
+    (Get-Content -LiteralPath $fakeArtifactAcceptanceLog) `
+      -replace "preflight_log=", "not_preflight_log=" `
+      | Set-Content -LiteralPath (Join-Path $fakePrefixedAcceptanceReferenceArtifactDir "windows-real-skia-acceptance.log")
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakePrefixedAcceptanceReferenceArtifactDir -RequireCommit } `
+      -ExpectedMessage "preflight_log="
+
     $fakeJetBrainsArtifactDir = Join-Path $dryRunRoot "fake-jetbrains-artifact"
     New-FakeJetBrainsArtifact -Directory $fakeJetBrainsArtifactDir
     & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") `
@@ -619,6 +631,15 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform linux -LogDir $fakeLinuxPrefixedBuildFieldDir -RequireCommit } `
       -ExpectedMessage "skia_checkout="
 
+    $fakeLinuxPrefixedAcceptanceBuildLogDir = Join-Path $dryRunRoot "fake-linux-prefixed-acceptance-build-log"
+    New-FakeLinuxSourceArtifact -Directory $fakeLinuxPrefixedAcceptanceBuildLogDir
+    (Get-Content -LiteralPath (Join-Path $fakeLinuxPrefixedAcceptanceBuildLogDir "linux-real-skia-acceptance.log")) `
+      -replace "build_log=", "not_build_log=" `
+      | Set-Content -LiteralPath (Join-Path $fakeLinuxPrefixedAcceptanceBuildLogDir "linux-real-skia-acceptance.log")
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform linux -LogDir $fakeLinuxPrefixedAcceptanceBuildLogDir -RequireCommit } `
+      -ExpectedMessage "build_log="
+
     $fakePlatformStatusDir = Join-Path $dryRunRoot "fake-accepted-platform-status"
     New-Item -ItemType Directory -Force -Path $fakePlatformStatusDir | Out-Null
     $fakePlatformStatus = Join-Path $fakePlatformStatusDir "skia-platform-status.json"
@@ -697,7 +718,7 @@ try {
     New-FakeLinuxSourceArtifact -Directory $fakeLinuxMissingAcceptanceBuildLogDir -OmitAcceptanceBuildLog
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform linux -LogDir $fakeLinuxMissingAcceptanceBuildLogDir -RequireCommit } `
-      -ExpectedMessage "source build log"
+      -ExpectedMessage "build_log="
 
     $fakeLinuxMismatchedAcceptanceCommitDir = Join-Path $dryRunRoot "fake-linux-mismatched-acceptance-commit"
     New-FakeLinuxSourceArtifact `
