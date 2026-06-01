@@ -80,6 +80,7 @@ jobs:
           bash -n scripts/verify-native-ownership.sh
           bash -n scripts/verify-native-ffi-borrows.sh
           bash -n scripts/verify-native-fallback-parity.sh
+          bash -n scripts/check-real-skia-artifact-lock.sh
           bash -n scripts/accept-platform-status.sh
           bash -n scripts/pin-skia-revision.sh
           bash -n scripts/macos-build-skia.sh
@@ -93,6 +94,7 @@ jobs:
           bash scripts/verify-native-ffi-borrows.sh
           bash scripts/verify-native-fallback-parity.sh
           bash scripts/verify-native-smoke-capabilities.sh
+          bash scripts/check-real-skia-artifact-lock.sh
           bash scripts/fetch-jetbrains-skia.sh --platform linux --arch x64 --config Release --cache-dir .skia-dry-run/jetbrains-cache --dry-run-config --print-env > logs/fetch-jetbrains-linux.env
           grep -Fq 'SKIA_MBT_SKIA_PACKAGE=Skia-m148-8967a2e80c-linux-Release-x64.zip' logs/fetch-jetbrains-linux.env
           grep -Fq 'SKIA_MBT_SKIA_PACKAGE_SHA256=37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2' logs/fetch-jetbrains-linux.env
