@@ -1187,7 +1187,7 @@ extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaTypeface*
 moonbit_skia_font_mgr_match_family_style_character(
   MoonbitSkiaFontMgr* wrapper,
   moonbit_bytes_t family_name,
-  void** bcp47,
+  moonbit_bytes_t language_tag,
   int32_t character,
   int32_t weight,
   int32_t width,
@@ -1205,24 +1205,19 @@ moonbit_skia_font_mgr_match_family_style_character(
   if (family_name != nullptr && Moonbit_array_length(family_name) > 0) {
     family = reinterpret_cast<const char*>(family_name);
   }
-  std::vector<const char*> languages;
-  if (bcp47 != nullptr) {
-    int32_t language_count = Moonbit_array_length(bcp47);
-    languages.reserve(static_cast<size_t>(language_count));
-    for (int32_t index = 0; index < language_count; ++index) {
-      moonbit_bytes_t language = static_cast<moonbit_bytes_t>(bcp47[index]);
-      if (language != nullptr && Moonbit_array_length(language) > 0) {
-        languages.push_back(reinterpret_cast<const char*>(language));
-      }
-    }
+  const char* languages[1] = {nullptr};
+  int language_count = 0;
+  if (language_tag != nullptr && Moonbit_array_length(language_tag) > 0) {
+    languages[0] = reinterpret_cast<const char*>(language_tag);
+    language_count = 1;
   }
-  const char** language_data = languages.empty() ? nullptr : languages.data();
+  const char** language_data = language_count == 0 ? nullptr : languages;
   sk_sp<SkTypeface> typeface =
     wrapper->font_mgr->matchFamilyStyleCharacter(
       family,
       moonbit_skia_font_style(weight, width, slant),
       language_data,
-      static_cast<int>(languages.size()),
+      language_count,
       static_cast<SkUnichar>(character)
     );
   if (!typeface) {
@@ -1231,7 +1226,7 @@ moonbit_skia_font_mgr_match_family_style_character(
   return moonbit_skia_make_typeface_wrapper(typeface.release());
 #else
   (void)family_name;
-  (void)bcp47;
+  (void)language_tag;
   (void)weight;
   (void)width;
   (void)slant;
