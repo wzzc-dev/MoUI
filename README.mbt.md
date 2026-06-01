@@ -32,7 +32,8 @@ The current package exposes the first value-layer API surface:
   `RendererResourceDescriptor`, and `RendererResourcePlan` give those caches
   typed keys and auditable resource requirements for images, shaders, filters,
   text runs, paths, surfaces, and future GPU resources, including GPU-backed
-  resource subplans for backend admission checks
+  resource subplans for backend admission checks plus cacheable/uncacheable
+  subplans for separating reusable handles from one-shot frame work
 - shader and filter resource recipes: `ShaderDescriptor`,
   `ColorFilterDescriptor`, `ImageFilterDescriptor`, and `MaskFilterDescriptor`
   provide stable cache keys for native shader/filter handles before a backend
