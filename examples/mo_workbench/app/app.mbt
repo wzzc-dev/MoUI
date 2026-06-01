@@ -52,6 +52,14 @@ pub(all) struct PiCommandInfo {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct PiModelInfo {
+  provider : String
+  id : String
+  name : String
+  label : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PiForkMessage {
   entry_id : String
   text : String
@@ -165,6 +173,7 @@ pub(all) struct WorkbenchModel {
   events : Array[AgentEvent]
   transcript : Array[TranscriptItem]
   command_catalog : Array[PiCommandInfo]
+  model_catalog : Array[PiModelInfo]
   fork_messages : Array[PiForkMessage]
   pi_session_stats : PiSessionStatsSnapshot
   files : Array[FileContext]
@@ -285,6 +294,21 @@ pub fn PiCommandInfo::new(
   source_path~ : String,
 ) -> PiCommandInfo {
   { name, source, description, source_scope, source_path }
+}
+
+///|
+pub fn PiModelInfo::new(
+  provider~ : String,
+  id~ : String,
+  name? : String = "",
+  label? : String = "",
+) -> PiModelInfo {
+  let label = if label == "" {
+    pi_model_label(provider, id, name)
+  } else {
+    label
+  }
+  { provider, id, name, label }
 }
 
 ///|
@@ -500,6 +524,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     events: [],
     transcript: [],
     command_catalog: [],
+    model_catalog: [],
     fork_messages: [],
     pi_session_stats: PiSessionStatsSnapshot::new(),
     files: [],
@@ -2003,6 +2028,7 @@ fn WorkbenchModel::commands_for_session_selection(
   if session.pi_session_path == "" {
     [
       StartRpc(session.id, session.project_path),
+      FetchRpcAvailableModels(session.id),
       FetchRpcMessages(session.id),
       FetchRpcForkMessages(session.id),
       FetchRpcCommands(session.id),
@@ -2012,6 +2038,7 @@ fn WorkbenchModel::commands_for_session_selection(
     [
       SwitchRpcSession(session.id, session.pi_session_path),
       StartRpc(session.id, session.project_path),
+      FetchRpcAvailableModels(session.id),
       FetchRpcMessages(session.id),
       FetchRpcForkMessages(session.id),
       FetchRpcCommands(session.id),
@@ -2037,6 +2064,7 @@ fn WorkbenchModel::commands_for_session_replacement_refresh(
   ignore(self)
   let commands : Array[PiTransportCommand] = []
   commands.push(StartRpc(session.id, session.project_path))
+  commands.push(FetchRpcAvailableModels(session.id))
   commands.push(FetchRpcMessages(session.id))
   commands.push(FetchRpcForkMessages(session.id))
   commands.push(FetchRpcCommands(session.id))

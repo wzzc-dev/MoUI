@@ -107,6 +107,8 @@ fn WorkbenchModel::ingest_rpc_response(
       "fork" => self.apply_fork_success(session_id, fields)
       "bash" => self.apply_bash_success(session_id, fields)
       "get_messages" => self.apply_get_messages_success(session_id, fields)
+      "get_available_models" =>
+        self.apply_get_available_models_success(session_id, fields)
       "get_fork_messages" =>
         self.apply_get_fork_messages_success(session_id, fields)
       "get_commands" => self.apply_get_commands_success(session_id, fields)
@@ -212,6 +214,40 @@ fn WorkbenchModel::apply_get_messages_success(
       tone="success",
     ),
     status="Pi messages refreshed",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_get_available_models_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let models = match json_object(fields, "data") {
+    Some(data) =>
+      match json_array(data, "models") {
+        Some(values) => pi_model_infos_from_values(values)
+        None => []
+      }
+    None => []
+  }
+  {
+    ..self,
+    model_catalog: models,
+    pi_rpc: {
+      ..self.pi_rpc,
+      command: "get_available_models",
+      success: true,
+      error: "",
+    },
+  }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi models refreshed",
+      detail=session_id + ": " + models.length().to_string() + " models",
+      tone="success",
+    ),
+    status="Pi models refreshed",
   )
 }
 
@@ -1978,6 +2014,15 @@ fn pi_command_infos_from_values(values : Array[Json]) -> Array[PiCommandInfo] {
 }
 
 ///|
+fn pi_model_infos_from_values(values : Array[Json]) -> Array[PiModelInfo] {
+  let models : Array[PiModelInfo] = []
+  for index, value in values {
+    models.push(pi_model_info_from_json(index, value))
+  }
+  models
+}
+
+///|
 fn pi_fork_messages_from_values(values : Array[Json]) -> Array[PiForkMessage] {
   let messages : Array[PiForkMessage] = []
   for index, value in values {
@@ -2034,6 +2079,28 @@ fn pi_command_info_from_json(index : Int, value : Json) -> PiCommandInfo {
         description=value.stringify(),
         source_scope="",
         source_path="",
+      )
+  }
+}
+
+///|
+fn pi_model_info_from_json(index : Int, value : Json) -> PiModelInfo {
+  match value {
+    Object(fields) => {
+      let provider = json_string(fields, "provider").unwrap_or("")
+      let id = json_string(fields, "id").unwrap_or(
+        json_string(fields, "model").unwrap_or(
+          json_string(fields, "name").unwrap_or("model-" + index.to_string()),
+        ),
+      )
+      let name = json_string(fields, "name").unwrap_or("")
+      PiModelInfo::new(provider~, id~, name~)
+    }
+    _ =>
+      PiModelInfo::new(
+        provider="",
+        id="model-" + index.to_string(),
+        name=value.stringify(),
       )
   }
 }
@@ -2377,6 +2444,24 @@ fn json_model_label(fields : Map[String, Json]) -> String {
       }
     }
     _ => ""
+  }
+}
+
+///|
+fn pi_model_label(provider : String, id : String, name : String) -> String {
+  let provider_id = if provider == "" {
+    id
+  } else if id == "" {
+    provider
+  } else {
+    provider + "/" + id
+  }
+  if name == "" || name == id || name == provider_id {
+    provider_id
+  } else if provider_id == "" {
+    name
+  } else {
+    name + " (" + provider_id + ")"
   }
 }
 

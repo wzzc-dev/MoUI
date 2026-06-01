@@ -507,6 +507,9 @@ fn WorkbenchModel::session_status_panel(
   if self.pi_session_stats.has_visible_metrics() {
     rows.push(session_stats_row(self.pi_session_stats, theme))
   }
+  if self.model_catalog.length() > 0 {
+    rows.push(model_catalog_row(self.model_catalog, theme))
+  }
   if binding.has_visible_binding() {
     rows.push(session_binding_row(binding, theme))
   }
@@ -528,6 +531,44 @@ fn WorkbenchModel::session_status_panel(
 ///|
 fn session_status_panel_height(row_count : Int) -> Double {
   92.0 + (row_count - 2).max(0).to_double() * 36.0
+}
+
+///|
+fn model_catalog_row(
+  models : Array[PiModelInfo],
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      text(
+        "Models " + models.length().to_string(),
+        role=Caption,
+        theme~,
+        width=128.0,
+        height=28.0,
+      ),
+      text(
+        model_catalog_label(models),
+        role=Caption,
+        theme~,
+        width=490.0,
+        height=28.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn model_catalog_label(models : Array[PiModelInfo]) -> String {
+  if models.length() == 0 {
+    ""
+  } else if models.length() == 1 {
+    models[0].label
+  } else {
+    models[0].label + " +" + (models.length() - 1).to_string()
+  }
 }
 
 ///|

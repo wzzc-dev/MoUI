@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC message transcript refresh, fork candidate discovery and fork refresh, HTML export evidence, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, fork candidate discovery and fork refresh, HTML export evidence, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -196,15 +196,17 @@ platform-neutral warning event and nonzero process exits become
 child exits do not close the native owner; the next UI command batch restarts a
 fresh JSONL process, while explicit `Shutdown` remains the close path. The
 native encoder targets Pi's actual RPC command names: `get_state`,
-`new_session`, `prompt`, `get_messages`, `get_fork_messages`, `fork`,
-`get_commands`, `get_session_stats`, `export_html`, `cycle_thinking_level`,
+`new_session`, `prompt`, `get_available_models`, `get_messages`,
+`get_fork_messages`, `fork`, `get_commands`, `get_session_stats`,
+`export_html`, `cycle_thinking_level`,
 `set_steering_mode`, `set_follow_up_mode`, `set_session_name`, `bash`,
 `abort_bash`, and `abort`, with process shutdown handled by stdin EOF. The
 focused smoke for machines with Pi installed is an
 offline `get_state` JSONL round trip, a `new_session` acknowledgement, a
-`get_messages` transcript response, an offline `get_commands` command-catalog
-response, an offline `get_fork_messages` response, a `get_session_stats`
-metrics response, the expected in-memory `export_html` failure boundary, a
+`get_messages` transcript response, an offline `get_available_models` model
+catalog response, an offline `get_commands` command-catalog response, an
+offline `get_fork_messages` response, a `get_session_stats` metrics response,
+the expected in-memory `export_html` failure boundary, a
 `cycle_thinking_level` acknowledgement,
 steering/follow-up mode acknowledgements, a `set_session_name`
 acknowledgement, and an `abort_bash` acknowledgement through `pi --mode rpc`,
@@ -212,17 +214,17 @@ so it validates the process protocol without making a model request. The shared
 app ingests
 successful and failed Pi RPC `response` JSONL objects: `get_state` refreshes
 the current Workbench session snapshot, `get_messages` refreshes the transcript
-model, `get_fork_messages` refreshes forkable user-message entry ids,
-`get_commands` refreshes the available slash/prompt/extension/skill command
-catalog, and `get_session_stats` refreshes compact message/tool/token/context
-metrics. `export_html` success responses add the returned path as Workspace
-file evidence, so exported sessions can become handoff, documentation, or
-knowledge artifacts without native-only state. Catalog rows can run a command
-by sending `/<name>` through the same platform-neutral `SendUserInput` prompt
-path, so native transport does not need a command-specific bridge. Diagnostics
-collected from Pi stderr, RPC failures, structured diagnostic events, and bash
-results are surfaced in the workspace digest and can be cleared from shared app
-state.
+model, `get_available_models` refreshes the compact model catalog,
+`get_fork_messages` refreshes forkable user-message entry ids, `get_commands`
+refreshes the available slash/prompt/extension/skill command catalog, and
+`get_session_stats` refreshes compact message/tool/token/context metrics.
+`export_html` success responses add the returned path as Workspace file
+evidence, so exported sessions can become handoff, documentation, or knowledge
+artifacts without native-only state. Catalog rows can run a command by sending
+`/<name>` through the same platform-neutral `SendUserInput` prompt path, so
+native transport does not need a command-specific bridge. Diagnostics collected
+from Pi stderr, RPC failures, structured diagnostic events, and bash results are
+surfaced in the workspace digest and can be cleared from shared app state.
 `cycle_thinking_level` responses and `thinking_level_changed` events keep the
 compact Thinking control and
 `PiAgentSnapshot` aligned. `set_steering_mode` and `set_follow_up_mode`
@@ -256,29 +258,29 @@ timeline events, and command evidence while leaving the native transport as a
 JSONL process driver.
 Workbench sessions can now carry a Pi `sessionPath`; selecting one through an
 injected transport sends `switch_session` followed by `get_state`,
-`get_messages`, `get_fork_messages`, `get_commands`, and `get_session_stats`,
-then records a `PiSessionBinding` from the Workbench sidebar id to Pi's
-concrete session id, file/name, model, and binding status while stats refresh
-the status metrics.
+`get_available_models`, `get_messages`, `get_fork_messages`, `get_commands`,
+and `get_session_stats`, then records a `PiSessionBinding` from the Workbench
+sidebar id to Pi's concrete session id, file/name, model, and binding status
+while models and stats refresh the compact status panel.
 The session panel now surfaces that binding directly with a compact Pi status
 row, so a coding-agent run can show the live Pi session name/id and model
 without opening a separate diagnostics view.
 The current session can also be refreshed manually from the session panel using
 the same platform-neutral command batch, so the native UI can resync Pi state,
-transcript, fork affordances, command catalog, and stats without changing
-selection.
+model catalog, transcript, fork affordances, command catalog, and stats without
+changing selection.
 The session panel also includes a fresh-session control. It queues
 `NewRpcSession` first; after the `new_session` success response arrives,
-`ReceiveTransport` queues the state, messages, fork candidates, commands, and
-stats refresh through the same platform-neutral transport model. The native
-encoder emits `{"type":"new_session"}`, and the chained `get_state` response
-becomes the source of truth for the new Pi `sessionId` and session file. This
-two-stage flow avoids relying on Pi's response order when multiple JSONL
-requests are batched. The session panel also discovers forkable user-message
-entry ids with `get_fork_messages`; selecting a visible fork candidate sends
-`{"type":"fork","entryId":...}` and, after an uncancelled acknowledgement,
-queues the same second-stage refresh before rebinding from Pi's next
-`get_state` response.
+`ReceiveTransport` queues the state, model catalog, messages, fork candidates,
+commands, and stats refresh through the same platform-neutral transport model.
+The native encoder emits `{"type":"new_session"}`, and the chained `get_state`
+response becomes the source of truth for the new Pi `sessionId` and session file.
+This two-stage flow avoids relying on Pi's response order when multiple
+JSONL requests are batched. The session panel also discovers forkable
+user-message entry ids with `get_fork_messages`; selecting a visible fork
+candidate sends `{"type":"fork","entryId":...}` and, after an uncancelled
+acknowledgement, queues the same second-stage refresh before rebinding from
+Pi's next `get_state` response.
 The session panel also has an HTML export action. It sends Pi RPC
 `export_html`, and a successful response appears as file evidence in the
 Workspace digest.
@@ -298,6 +300,9 @@ printf '{"type":"new_session"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_messages"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"get_available_models"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_fork_messages"}\n' | \

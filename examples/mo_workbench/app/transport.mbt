@@ -18,6 +18,7 @@ pub(all) enum PiTransportCommand {
   StartRpc(String, String)
   NewRpcSession(String)
   SwitchRpcSession(String, String)
+  FetchRpcAvailableModels(String)
   FetchRpcMessages(String)
   FetchRpcForkMessages(String)
   FetchRpcCommands(String)
@@ -153,6 +154,8 @@ pub fn PiTransportCommand::label(self : PiTransportCommand) -> String {
     NewRpcSession(session) => "new rpc session for " + session
     SwitchRpcSession(session, path) =>
       "switch rpc session for " + session + ": " + path
+    FetchRpcAvailableModels(session) =>
+      "fetch rpc available models for " + session
     FetchRpcMessages(session) => "fetch rpc messages for " + session
     FetchRpcForkMessages(session) => "fetch rpc fork messages for " + session
     FetchRpcCommands(session) => "fetch rpc commands for " + session

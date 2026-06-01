@@ -14,6 +14,7 @@ async test "native transport builds structured jsonl request lines" {
   let state = pi_rpc_get_state_line()
   let new_session = pi_rpc_new_session_line()
   let messages = pi_rpc_get_messages_line()
+  let available_models = pi_rpc_get_available_models_line()
   let fork_messages = pi_rpc_get_fork_messages_line()
   let commands = pi_rpc_get_commands_line()
   let stats = pi_rpc_get_session_stats_line()
@@ -34,6 +35,9 @@ async test "native transport builds structured jsonl request lines" {
   json_inspect(@json.parse(state), content={ "type": "get_state" })
   json_inspect(@json.parse(new_session), content={ "type": "new_session" })
   json_inspect(@json.parse(messages), content={ "type": "get_messages" })
+  json_inspect(@json.parse(available_models), content={
+    "type": "get_available_models",
+  })
   json_inspect(@json.parse(fork_messages), content={
     "type": "get_fork_messages",
   })
@@ -83,6 +87,7 @@ async test "native transport maps command batches to jsonl requests" {
     StartRpc("session-1", "/repo"),
     NewRpcSession("session-1"),
     SwitchRpcSession("session-1", "/tmp/pi.jsonl"),
+    FetchRpcAvailableModels("session-1"),
     FetchRpcMessages("session-1"),
     FetchRpcForkMessages("session-1"),
     FetchRpcCommands("session-1"),
@@ -100,54 +105,57 @@ async test "native transport maps command batches to jsonl requests" {
     Shutdown,
   ])
   inspect(request.session_id, content="session-1")
-  inspect(request.lines.length(), content="17")
+  inspect(request.lines.length(), content="18")
   json_inspect(@json.parse(request.lines[0]), content={ "type": "get_state" })
   json_inspect(@json.parse(request.lines[1]), content={ "type": "new_session" })
   json_inspect(@json.parse(request.lines[2]), content={
     "type": "switch_session",
     "sessionPath": "/tmp/pi.jsonl",
   })
-  json_inspect(@json.parse(request.lines[3]), content={ "type": "get_messages" })
-  json_inspect(@json.parse(request.lines[4]), content={
+  json_inspect(@json.parse(request.lines[3]), content={
+    "type": "get_available_models",
+  })
+  json_inspect(@json.parse(request.lines[4]), content={ "type": "get_messages" })
+  json_inspect(@json.parse(request.lines[5]), content={
     "type": "get_fork_messages",
   })
-  json_inspect(@json.parse(request.lines[5]), content={ "type": "get_commands" })
-  json_inspect(@json.parse(request.lines[6]), content={
+  json_inspect(@json.parse(request.lines[6]), content={ "type": "get_commands" })
+  json_inspect(@json.parse(request.lines[7]), content={
     "type": "get_session_stats",
   })
-  json_inspect(@json.parse(request.lines[7]), content={
+  json_inspect(@json.parse(request.lines[8]), content={
     "type": "fork",
     "entryId": "entry-1",
   })
-  json_inspect(@json.parse(request.lines[8]), content={
+  json_inspect(@json.parse(request.lines[9]), content={
     "type": "export_html",
     "outputPath": "/tmp/mo-workbench.html",
   })
-  json_inspect(@json.parse(request.lines[9]), content={
+  json_inspect(@json.parse(request.lines[10]), content={
     "type": "cycle_thinking_level",
   })
-  json_inspect(@json.parse(request.lines[10]), content={
+  json_inspect(@json.parse(request.lines[11]), content={
     "type": "set_steering_mode",
     "mode": "all",
   })
-  json_inspect(@json.parse(request.lines[11]), content={
+  json_inspect(@json.parse(request.lines[12]), content={
     "type": "set_follow_up_mode",
     "mode": "one-at-a-time",
   })
-  json_inspect(@json.parse(request.lines[12]), content={
+  json_inspect(@json.parse(request.lines[13]), content={
     "type": "set_session_name",
     "name": "Mo Workbench",
   })
-  json_inspect(@json.parse(request.lines[13]), content={
+  json_inspect(@json.parse(request.lines[14]), content={
     "type": "prompt",
     "message": "hello",
   })
-  json_inspect(@json.parse(request.lines[14]), content={
+  json_inspect(@json.parse(request.lines[15]), content={
     "type": "bash",
     "command": "moon check",
   })
-  json_inspect(@json.parse(request.lines[15]), content={ "type": "abort_bash" })
-  json_inspect(@json.parse(request.lines[16]), content={ "type": "abort" })
+  json_inspect(@json.parse(request.lines[16]), content={ "type": "abort_bash" })
+  json_inspect(@json.parse(request.lines[17]), content={ "type": "abort" })
 }
 
 ///|

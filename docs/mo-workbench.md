@@ -47,9 +47,10 @@ packages:
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
   fixture transport kinds.
 - Typed transport commands for starting RPC, sending prompts, running shell
-  commands, refreshing Pi messages and command catalogs, syncing Pi session
-  names, refreshing Pi session stats, creating fresh Pi sessions, cancelling
-  runs, switching Pi sessions, exporting Pi sessions to HTML, and shutdown.
+  commands, refreshing Pi messages, model catalogs, and command catalogs,
+  syncing Pi session names, refreshing Pi session stats, creating fresh Pi
+  sessions, cancelling runs, switching Pi sessions, exporting Pi sessions to
+  HTML, and shutdown.
 - Typed transport events for process lifecycle, JSONL sent/received lines,
   stderr diagnostics, and failures.
 - A platform-neutral `PiTransportRuntime` that turns command batches into
@@ -57,11 +58,11 @@ packages:
   events back through the same TEA message loop.
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
-  (`get_state`, `get_messages`, `get_commands`, `get_session_stats`,
-  `cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`,
-  `new_session`, `switch_session`, `fork`, `get_fork_messages`, `export_html`,
-  `prompt`, `set_session_name`, `bash`, `abort_bash`, and `abort`; shutdown is
-  stdin EOF), and uses shell fixtures to
+  (`get_state`, `get_available_models`, `get_messages`, `get_commands`,
+  `get_session_stats`, `cycle_thinking_level`, `set_steering_mode`,
+  `set_follow_up_mode`, `new_session`, `switch_session`, `fork`,
+  `get_fork_messages`, `export_html`, `prompt`, `set_session_name`, `bash`,
+  `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell fixtures to
   prove direct JSONL stdin/stdout process
   driving without C FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
@@ -144,6 +145,10 @@ packages:
   into generic `PiCommandInfo` rows so coding-agent command discovery can later
   grow into document, research, automation, and knowledge workflows without
   changing the platform-neutral transport contract.
+- Session selection and manual refresh also query Pi's available model catalog
+  through `get_available_models`. The shared app normalizes provider/id/name
+  rows into `PiModelInfo` and shows a compact session-panel summary only when
+  models are reported, keeping no-model offline smoke quiet.
 - The command catalog can invoke a listed command by sending `/<name>` through
   the existing platform-neutral `SendUserInput` prompt path. This keeps slash
   command execution usable in the native UI without adding a native-only
@@ -199,9 +204,12 @@ packages:
   candidate list with normalized `PiForkMessage` rows containing Pi's fork
   `entryId` and display text. Successful `fork` responses mark the binding as
   forking or cancelled; accepted forks then trigger the same chained refresh as
-  new-session creation. Successful `get_commands` responses replace the visible
-  command catalog with normalized `PiCommandInfo` rows that preserve command
-  name, kind, description, source scope, and source path. Successful
+  new-session creation. Successful `get_available_models` responses replace
+  the visible model catalog with normalized `PiModelInfo` rows that preserve
+  provider, id, name, and a display label. Successful `get_commands` responses
+  replace the visible command catalog with normalized `PiCommandInfo` rows that
+  preserve command name, kind, description, source scope, and source path.
+  Successful
   `get_session_stats` responses refresh `PiSessionStatsSnapshot` with message,
   tool, token, cost, and optional context counters. Successful `export_html`
   responses add the returned HTML path as Workspace file evidence. Successful
@@ -248,8 +256,9 @@ packages:
   the owner.
 - The native encoder is aligned with the installed Pi RPC protocol and has
   no-model smoke paths using offline `get_state`, `new_session`, `get_messages`,
-  `get_fork_messages`, `get_commands`, `get_session_stats`,
-  `cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`,
+  `get_available_models`, `get_fork_messages`, `get_commands`,
+  `get_session_stats`, `cycle_thinking_level`, `set_steering_mode`,
+  `set_follow_up_mode`,
   `set_session_name`, and `abort_bash` over `pi --mode rpc`; it also records
   the expected `export_html` failure boundary for in-memory `--no-session`
   smoke runs.
@@ -292,6 +301,10 @@ timeline event. A successful
 `{"type":"response","command":"get_messages","success":true,...}` line replaces
 the visible transcript with normalized `TranscriptItem` rows while preserving
 the raw JSONL transport event. A successful
+`{"type":"response","command":"get_available_models","success":true,...}` line
+replaces the compact model catalog with normalized `PiModelInfo` rows and shows
+a session-panel model summary only when Pi reports at least one model. A
+successful
 `{"type":"response","command":"get_fork_messages","success":true,...}` line
 fills compact fork candidates from Pi's `messages[].entryId` and
 `messages[].text` values. A successful
@@ -328,6 +341,7 @@ Session selection is also app-layer state. If a selected `WorkbenchSession` has
 ```json
 {"type":"switch_session","sessionPath":"/tmp/mo-workbench-pi-rpc-session.jsonl"}
 {"type":"get_state"}
+{"type":"get_available_models"}
 {"type":"get_messages"}
 {"type":"get_fork_messages"}
 {"type":"get_commands"}
@@ -338,13 +352,14 @@ The `switch_session` response marks the Workbench session binding as switching
 or cancelled. The following `get_state` response binds that Workbench session id
 to Pi's concrete `sessionId`, `sessionFile`, optional `sessionName`, and current
 model plus thinking, steering, and follow-up modes. The following
-`get_messages` response fills the transcript panel from Pi's `AgentMessage[]`,
-the following `get_fork_messages` response fills the fork affordance from Pi's
-user-message entry ids, and the following `get_commands` response fills the
-command catalog from Pi's slash command registry. Invoking a catalog row sends
-`/<name>` through the same prompt RPC channel used by manual user input. The
-following `get_session_stats` response fills the compact status metrics from
-Pi's session statistics. This keeps
+`get_available_models` response fills the compact model catalog from Pi's model
+registry, the following `get_messages` response fills the transcript panel from
+Pi's `AgentMessage[]`, the following `get_fork_messages` response fills the
+fork affordance from Pi's user-message entry ids, and the following
+`get_commands` response fills the command catalog from Pi's slash command
+registry. Invoking a catalog row sends `/<name>` through the same prompt RPC
+channel used by manual user input. The following `get_session_stats` response
+fills the compact status metrics from Pi's session statistics. This keeps
 `PiTransportEvent` platform-neutral while letting the app separate Mo Workbench
 sidebar ids from Pi's runtime session identity.
 
@@ -364,6 +379,7 @@ second platform-neutral refresh batch:
 
 ```json
 {"type":"get_state"}
+{"type":"get_available_models"}
 {"type":"get_messages"}
 {"type":"get_fork_messages"}
 {"type":"get_commands"}
@@ -429,6 +445,7 @@ contract. Dispatching `Shutdown` is the only normal path that stops the owner.
 
 The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `StartRpc` sends `{"type":"get_state"}` as a cheap liveness/state probe,
+`FetchRpcAvailableModels` sends `{"type":"get_available_models"}`,
 `FetchRpcMessages` sends `{"type":"get_messages"}`,
 `FetchRpcForkMessages` sends `{"type":"get_fork_messages"}`,
 `FetchRpcCommands` sends `{"type":"get_commands"}`,
@@ -463,6 +480,9 @@ printf '{"type":"new_session"}\n' | \
 printf '{"type":"get_messages"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"get_available_models"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"get_fork_messages"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
@@ -495,15 +515,16 @@ printf '{"type":"abort_bash"}\n' | \
 The first command should return a JSONL `response` object for `get_state`, the
 second should return a successful `new_session` acknowledgement, the third
 should return a `get_messages` response with a `messages` array, the fourth
+should return a `get_available_models` response with a `models` array, the fifth
 should return a `get_fork_messages` response with a fork `messages` array, the
-fifth should return a `get_commands` response with a `commands` array, the
-sixth should return a `get_session_stats` response with message, tool, token,
-and cost counters, the seventh should return an `export_html` failure explaining
-that in-memory `--no-session` sessions cannot be exported, the eighth should
-return a successful `cycle_thinking_level` acknowledgement, the ninth and tenth
-should acknowledge the steering/follow-up mode changes, the eleventh should
-emit `session_info_changed` and a successful `set_session_name` response, and
-the twelfth should return a successful
+sixth should return a `get_commands` response with a `commands` array, the
+seventh should return a `get_session_stats` response with message, tool, token,
+and cost counters, the eighth should return an `export_html` failure explaining
+that in-memory `--no-session` sessions cannot be exported, the ninth should
+return a successful `cycle_thinking_level` acknowledgement, the tenth and
+eleventh should acknowledge the steering/follow-up mode changes, the twelfth
+should emit `session_info_changed` and a successful `set_session_name` response,
+and the thirteenth should return a successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -536,6 +557,9 @@ printf '{"type":"new_session"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_messages"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"get_available_models"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_fork_messages"}\n' | \
