@@ -45,8 +45,9 @@ The current package exposes the first value-layer API surface:
 - render command contracts: `RenderCommandList`, `RenderCommand`, and
   `RenderCommandStats` provide the backend-neutral command stream boundary a GUI
   renderer can validate before replaying into a native Canvas, including
-  cacheable text-run draw commands, explicit shader/filter/image resource
-  declarations, and target-bound resource plans for backend caches
+  cacheable text-run and shaped glyph-run draw commands, explicit
+  shader/filter/image resource declarations, and target-bound resource plans for
+  backend caches
 - render frame contracts: `RenderFrameDescriptor`,
   `RenderFrameSubmissionDescriptor`, `RenderFrameFinalizationDescriptor`, and
   `RenderFrameValidationStatus` combine a target, finalized command stream,
