@@ -88,7 +88,8 @@ these facts recorded in logs:
   GPU context
   resource planning, GPU context identity variation, GPU frame context validation,
   GPU frame submission resource planning, GPU frame submission GPU-resource
-  filtering, cacheable/uncacheable frame submission resource subplans,
+  filtering, cacheable/uncacheable render-frame resource subplans,
+  cacheable/uncacheable frame submission resource subplans,
   render target identity
   validation, render-frame unbalanced-state validation, missing-present
   validation, missing-finalization validation, shaped glyph-run command replay,

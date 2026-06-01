@@ -419,10 +419,8 @@ fn main {
     smoke_window_submission_cache,
   )
   let smoke_window_submission_cacheable_plan = smoke_window_submission
-    .resource_plan
     .cacheable_resource_plan()
   let smoke_window_submission_uncacheable_plan = smoke_window_submission
-    .resource_plan
     .uncacheable_resource_plan()
   if !smoke_window_submission.is_ready() ||
     !smoke_window_submission.has_present() ||
@@ -470,10 +468,8 @@ fn main {
     smoke_window_frame_finalization_cache,
   )
   let smoke_window_frame_finalization_cacheable_plan = smoke_window_frame_finalization
-    .resource_plan
     .cacheable_resource_plan()
   let smoke_window_frame_finalization_uncacheable_plan = smoke_window_frame_finalization
-    .resource_plan
     .uncacheable_resource_plan()
   if !smoke_window_frame_finalization.is_ready() ||
     !smoke_window_frame_finalization.has_finalization() ||
@@ -1209,8 +1205,12 @@ fn main {
     @skia.RendererResourceDescriptor,
   ] = @skia.ResourceCache::new(max_bytes=replay_frame.resource_plan.byte_size)
   let replay_cache_inserts = replay_frame.cache_resources(replay_resource_cache)
+  let replay_frame_cacheable_plan = replay_frame.cacheable_resource_plan()
+  let replay_frame_uncacheable_plan = replay_frame.uncacheable_resource_plan()
   if replay_cache_inserts != replay_frame.resource_plan.cacheable_count ||
     replay_resource_cache.byte_size() != replay_frame.resource_plan.byte_size ||
+    replay_frame_cacheable_plan.length() != replay_frame.resource_plan.length() ||
+    !replay_frame_uncacheable_plan.is_empty() ||
     !replay_resource_cache.contains_resource_plan(replay_frame.resource_plan) {
     fail_smoke("native render frame resources did not populate the resource cache")
   }
@@ -1283,6 +1283,10 @@ fn main {
   println(replay_frame.resource_plan.length())
   println("native smoke render frame validation status")
   println(1)
+  println("native smoke render frame cacheable subplan count")
+  println(replay_frame_cacheable_plan.length())
+  println("native smoke render frame uncacheable subplan count")
+  println(replay_frame_uncacheable_plan.length())
   println("native smoke render frame cache resources")
   println(replay_cache_inserts)
   println("native smoke render resource cache inserts")
