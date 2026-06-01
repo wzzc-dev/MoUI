@@ -194,10 +194,12 @@ verifies that `native/moon.pkg` did not change. The smoke executable covers
 raster drawing, readback, snapshots, PNG encode/decode, bitmap decode, and
 canvas save/restore with clipping behavior. It also exercises shader-backed
 draws, native Canvas replay of value-layer render commands, render resource
-planning, native and portable path drawing, image drawing, transforms, default font text
-drawing/measurement/metrics, default-typeface text drawing/measurement/metrics when the selected Skia build
-provides a default typeface, and font manager family enumeration/matching when
-the platform font manager is available. It also exercises native typeface family
+planning, present descriptor validation, surface/GPU present resource planning,
+native and portable path drawing, image drawing, transforms, default font text
+drawing/measurement/metrics, default-typeface text drawing/measurement/metrics
+when the selected Skia build provides a default typeface, and font manager family
+enumeration/matching when the platform font manager is available. It also
+exercises native typeface family
 metadata and FontMgr character fallback through the value-layer
 `FontFallbackRequest`. Pixel assertions are reserved for deterministic
 geometry and color operations so minimal CPU-only Skia builds do not fail only
