@@ -46,7 +46,10 @@ $defaultStageMarkers = @(
   "native smoke render frame present descriptor validation",
   "native smoke render frame submission resource plan count",
   "native smoke render frame submission cache resources",
+  "native smoke render frame finalization resource plan count",
+  "native smoke render frame finalization cache resources",
   "native smoke render frame missing present validation",
+  "native smoke render frame missing finalization validation",
   "native smoke render frame touched bounds width",
   "native smoke render frame cache resources",
   "native smoke render resource cache inserts",
@@ -60,6 +63,8 @@ $defaultStageMarkers = @(
   "native smoke gpu frame context validation",
   "native smoke gpu present resource plan count",
   "native smoke gpu finalization resource plan count",
+  "native smoke gpu frame finalization resource plan count",
+  "native smoke gpu frame finalization gpu resource count",
   "native smoke gpu frame submission resource plan count",
   "native smoke gpu frame submission gpu resource count",
   "native smoke surface target resource plan count",
@@ -180,7 +185,19 @@ $defaultExpectedStageValues = @(
     Value = "1"
   }
   [pscustomobject]@{
+    Marker = "native smoke render frame finalization resource plan count"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame finalization cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
     Marker = "native smoke render frame missing present validation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame missing finalization validation"
     Value = "1"
   }
   [pscustomobject]@{
@@ -233,6 +250,14 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke gpu finalization resource plan count"
+    Value = "3"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke gpu frame finalization resource plan count"
+    Value = "3"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke gpu frame finalization gpu resource count"
     Value = "3"
   }
   [pscustomobject]@{
