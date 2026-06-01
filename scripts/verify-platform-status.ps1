@@ -265,6 +265,9 @@ if ($status.schema_version -ge 3) {
     "gpu.frame-context-validation",
     "surface.target-resource-plan",
     "surface.window-target-resource-plan",
+    "surface.window-physical-width",
+    "surface.window-frame-pacing",
+    "surface.window-present-mode-key",
     "surface.flush-and-submit",
     "shader.draw",
     "shader.resource-plan",
@@ -455,6 +458,9 @@ if ($status.schema_version -ge 3) {
       "native smoke gpu frame context validation" = "1"
       "native smoke surface target resource plan count" = "2"
       "native smoke window target resource plan count" = "1"
+      "native smoke window physical width" = "16"
+      "native smoke window frame pacing" = "2"
+      "native smoke window present mode key variation" = "1"
       "native smoke surface flush-and-submit" = "1"
       "native smoke readback width" = "32"
       "native smoke readback height" = "32"

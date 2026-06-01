@@ -196,6 +196,21 @@
       "marker": "native smoke window target resource plan count"
     },
     {
+      "id": "surface.window-physical-width",
+      "area": "Surface",
+      "marker": "native smoke window physical width"
+    },
+    {
+      "id": "surface.window-frame-pacing",
+      "area": "Surface",
+      "marker": "native smoke window frame pacing"
+    },
+    {
+      "id": "surface.window-present-mode-key",
+      "area": "Surface",
+      "marker": "native smoke window present mode key variation"
+    },
+    {
       "id": "surface.flush-and-submit",
       "area": "Surface",
       "marker": "native smoke surface flush-and-submit"
@@ -529,6 +544,21 @@
     {
       "id": "surface.window-target-resource-plan",
       "marker": "native smoke window target resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "surface.window-physical-width",
+      "marker": "native smoke window physical width",
+      "value": "16"
+    },
+    {
+      "id": "surface.window-frame-pacing",
+      "marker": "native smoke window frame pacing",
+      "value": "2"
+    },
+    {
+      "id": "surface.window-present-mode-key",
+      "marker": "native smoke window present mode key variation",
       "value": "1"
     },
     {
