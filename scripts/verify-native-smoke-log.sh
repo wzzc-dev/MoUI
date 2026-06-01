@@ -55,6 +55,8 @@ default_stage_markers=(
   "native smoke render resource plan count" \
   "native smoke render frame resource plan count" \
   "native smoke render frame validation status" \
+  "native smoke render frame cacheable subplan count" \
+  "native smoke render frame uncacheable subplan count" \
   "native smoke render frame unbalanced validation" \
   "native smoke render target identity validation" \
   "native smoke render target resource binding" \
@@ -162,6 +164,8 @@ default_expected_stage_values=(
   $'native smoke render resource plan count\t12'
   $'native smoke render frame resource plan count\t12'
   $'native smoke render frame validation status\t1'
+  $'native smoke render frame cacheable subplan count\t12'
+  $'native smoke render frame uncacheable subplan count\t0'
   $'native smoke render frame unbalanced validation\t1'
   $'native smoke render target identity validation\t1'
   $'native smoke render target resource binding\t1'
