@@ -526,6 +526,14 @@ fn WorkbenchModel::session_controls_row(
       self.thinking_level_cell(theme),
       spacer(min_length=8.0, weight=1.0),
       button(
+        "新建",
+        on_click=NewSession,
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=34.0,
+      ),
+      button(
         "刷新",
         on_click=RefreshSession,
         variant=Outline,

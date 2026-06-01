@@ -143,6 +143,7 @@ pub fn PiSessionStatsSnapshot::new(session_file? : String, session_id? : String,
 
 pub(all) enum PiTransportCommand {
   StartRpc(String, String)
+  NewRpcSession(String)
   SwitchRpcSession(String, String)
   FetchRpcMessages(String)
   FetchRpcCommands(String)
@@ -266,6 +267,7 @@ pub(all) enum WorkbenchMsg {
   ReviewDiff
   RefreshSession
   ReceiveTransport(PiTransportEvent)
+  NewSession
   QueueCommand(String)
   InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)

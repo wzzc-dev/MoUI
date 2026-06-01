@@ -23,6 +23,8 @@ pub fn pi_rpc_get_session_stats_line() -> String
 
 pub fn pi_rpc_get_state_line() -> String
 
+pub fn pi_rpc_new_session_line() -> String
+
 pub fn pi_rpc_prompt_line(message~ : String) -> String
 
 pub fn pi_rpc_set_follow_up_mode_line(mode~ : String) -> String

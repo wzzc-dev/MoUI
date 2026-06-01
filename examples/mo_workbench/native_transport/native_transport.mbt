@@ -73,6 +73,11 @@ pub fn pi_rpc_get_state_line() -> String {
 }
 
 ///|
+pub fn pi_rpc_new_session_line() -> String {
+  ({ "type": "new_session" } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_get_messages_line() -> String {
   ({ "type": "get_messages" } : Json).stringify()
 }
@@ -153,6 +158,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_get_state_line())
+      }
+      NewRpcSession(session) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_new_session_line())
       }
       SwitchRpcSession(session, path) => {
         if session_id == default_session_id {

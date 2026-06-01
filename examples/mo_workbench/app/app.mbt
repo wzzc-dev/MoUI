@@ -190,6 +190,7 @@ pub(all) enum WorkbenchMsg {
   ReviewDiff
   RefreshSession
   ReceiveTransport(PiTransportEvent)
+  NewSession
   QueueCommand(String)
   InspectCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
@@ -521,6 +522,7 @@ pub fn WorkbenchModel::update(
     ReviewDiff => self.review_diff()
     RefreshSession => self.refresh_session()
     ReceiveTransport(event) => self.receive_transport(event)
+    NewSession => self.new_session()
     QueueCommand(command) => self.queue_command(command)
     InspectCommandRun(command, status, cwd, output_path) =>
       self.inspect_command_run(command, status, cwd, output_path)
@@ -704,6 +706,9 @@ pub fn WorkbenchModel::update_with_transport(
       self.inspect_file_with_transport(path, transport_runtime)
     ReviewDiff => self.review_diff_with_transport(transport_runtime)
     RefreshSession => self.refresh_session_with_transport(transport_runtime)
+    ReceiveTransport(event) =>
+      self.receive_transport_with_transport(event, transport_runtime)
+    NewSession => self.new_session_with_transport(transport_runtime)
     QueueCommand(command) =>
       self.queue_command_with_transport(command, transport_runtime)
     InspectCommandRun(command, status, cwd, output_path) =>
@@ -781,6 +786,76 @@ fn WorkbenchModel::refresh_session_with_transport(
     self.refresh_session(),
     effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
   )
+}
+
+///|
+fn WorkbenchModel::new_session(self : WorkbenchModel) -> WorkbenchModel {
+  let session = self.active_session()
+  let commands = self.commands_for_new_session(session)
+  let events = self.events.copy()
+  events.push(
+    AgentEvent::new(
+      phase="control",
+      title="Pi new session queued",
+      detail=session.title,
+      tone="info",
+    ),
+  )
+  {
+    ..self,
+    events,
+    transport: self.transport.enqueue_many(commands),
+    last_status: "Pi new session queued",
+  }
+}
+
+///|
+fn WorkbenchModel::new_session_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let session = self.active_session()
+  let commands = self.commands_for_new_session(session)
+  WorkbenchUpdate::new(
+    self.new_session(),
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::receive_transport_with_transport(
+  self : WorkbenchModel,
+  event : PiTransportEvent,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let model = self.receive_transport(event)
+  match event.new_session_refresh_session_id() {
+    Some(session_id) => {
+      let session = model.session_for_id(session_id)
+      let commands = model.commands_for_new_session_refresh(session)
+      let events = model.events.copy()
+      events.push(
+        AgentEvent::new(
+          phase="control",
+          title="Pi new session refresh queued",
+          detail=session.title,
+          tone="info",
+        ),
+      )
+      WorkbenchUpdate::new(
+        {
+          ..model,
+          events,
+          transport: model.transport.enqueue_many(commands),
+          last_status: "Pi new session refresh queued",
+        },
+        effect=transport_runtime.effect(commands, event => {
+          ReceiveTransport(event)
+        }),
+      )
+    }
+    None => WorkbenchUpdate::new(model)
+  }
 }
 
 ///|
@@ -1780,6 +1855,29 @@ fn WorkbenchModel::commands_for_session_selection(
       FetchRpcSessionStats(session.id),
     ]
   }
+}
+
+///|
+fn WorkbenchModel::commands_for_new_session(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> Array[PiTransportCommand] {
+  ignore(self)
+  [NewRpcSession(session.id)]
+}
+
+///|
+fn WorkbenchModel::commands_for_new_session_refresh(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> Array[PiTransportCommand] {
+  ignore(self)
+  let commands : Array[PiTransportCommand] = []
+  commands.push(StartRpc(session.id, session.project_path))
+  commands.push(FetchRpcMessages(session.id))
+  commands.push(FetchRpcCommands(session.id))
+  commands.push(FetchRpcSessionStats(session.id))
+  commands
 }
 
 ///|

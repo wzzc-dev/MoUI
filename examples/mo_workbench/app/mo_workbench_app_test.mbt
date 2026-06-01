@@ -451,6 +451,130 @@ test "workbench refresh runtime effect dispatches current session batch" {
 }
 
 ///|
+test "workbench queues a new Pi session through platform-neutral commands" {
+  let model = WorkbenchModel::new().update(NewSession)
+  inspect(model.last_status, content="Pi new session queued")
+  inspect(model.pending_transport_count(), content="1")
+  match model.transport.command_queue[0] {
+    NewRpcSession(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued new session request")
+  }
+  assert_true(model.events.any(event => event.title == "Pi new session queued"))
+}
+
+///|
+test "workbench new session runtime effect binds refreshed Pi state" {
+  let captured : Ref[Array[Array[PiTransportCommand]]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val.push(commands)
+    emit(ProcessStarted("fixture-pid"))
+    match commands[0] {
+      NewRpcSession(_) => {
+        emit(JsonLineSent("moui-skia", "{\"type\":\"new_session\"}"))
+        emit(
+          JsonLineReceived(
+            "moui-skia", "{\"type\":\"response\",\"command\":\"new_session\",\"success\":true,\"data\":{\"cancelled\":false}}",
+          ),
+        )
+      }
+      StartRpc(_, _) => {
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_messages\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_commands\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_session_stats\"}"))
+        emit(
+          JsonLineReceived(
+            "moui-skia",
+            (
+              #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e80f5","sessionFile":"/tmp/mo-workbench-new.jsonl","sessionName":"Mo Workbench new","messageCount":0,"pendingMessageCount":0}}
+            ),
+          ),
+        )
+      }
+      _ => emit(TransportFailed("unexpected new session command batch"))
+    }
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    NewSession,
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="1")
+  let model = run_workbench_effect_with_transport(update, transport)
+  inspect(captured.val.length(), content="2")
+  inspect(captured.val[0].length(), content="1")
+  match captured.val[0][0] {
+    NewRpcSession(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured new session request")
+  }
+  inspect(captured.val[1].length(), content="4")
+  match captured.val[1][0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected captured state refresh")
+  }
+  match captured.val[1][1] {
+    FetchRpcMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured message refresh")
+  }
+  match captured.val[1][2] {
+    FetchRpcCommands(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured command refresh")
+  }
+  match captured.val[1][3] {
+    FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured stats refresh")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="get_state")
+  let binding = model.active_pi_session_binding()
+  inspect(binding.rpc_session_id, content="019e80f5")
+  inspect(binding.session_file, content="/tmp/mo-workbench-new.jsonl")
+  inspect(binding.session_name, content="Mo Workbench new")
+  inspect(binding.status, content="bound")
+  inspect(binding.last_command, content="get_state")
+  inspect(model.last_status, content="Pi RPC response applied")
+  assert_true(
+    model.events.any(event => event.title == "Pi new session accepted"),
+  )
+  assert_true(
+    model.events.any(event => event.title == "Pi new session refresh queued"),
+  )
+  assert_true(
+    model.events.any(event => event.title == "Pi RPC response: get_state"),
+  )
+}
+
+///|
+test "workbench new session cancellation does not refresh Pi state" {
+  let captured : Ref[Array[Array[PiTransportCommand]]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val.push(commands)
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"new_session\"}"))
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"new_session\",\"success\":true,\"data\":{\"cancelled\":true}}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    NewSession,
+    transport,
+  )
+  let model = run_workbench_effect_with_transport(update, transport)
+  inspect(captured.val.length(), content="1")
+  inspect(captured.val[0].length(), content="1")
+  inspect(model.pending_transport_count(), content="0")
+  let binding = model.active_pi_session_binding()
+  inspect(binding.status, content="cancelled")
+  inspect(binding.last_command, content="new_session")
+  inspect(model.last_status, content="Pi new session cancelled")
+}
+
+///|
 test "workbench clears visible diagnostics" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(
@@ -1617,6 +1741,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "A Pi agent desktop"))
   assert_true(has_text(commands, "Session"))
+  assert_true(has_text(commands, "新建"))
   assert_true(has_text(commands, "刷新"))
   assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Steer 1"))
@@ -1693,6 +1818,37 @@ fn run_workbench_effect(update : WorkbenchUpdate) -> WorkbenchModel {
       for effect in effects {
         let next = run_workbench_effect(
           WorkbenchUpdate::new(model.get(), effect~),
+        )
+        model.set(next)
+      }
+    Send(message) => dispatch(message)
+    Dispatch(run) => run(dispatch)
+  }
+  model.get()
+}
+
+///|
+fn run_workbench_effect_with_transport(
+  update : WorkbenchUpdate,
+  transport : PiTransportRuntime,
+) -> WorkbenchModel {
+  let model = @core.State::new(update.model)
+  fn dispatch(message : WorkbenchMsg) -> Unit {
+    let next = model.get().update_with_transport(message, transport)
+    model.set(next.model)
+    let chained = run_workbench_effect_with_transport(
+      WorkbenchUpdate::new(model.get(), effect=next.effect),
+      transport,
+    )
+    model.set(chained)
+  }
+  match update.effect {
+    NoEffect => ()
+    Batch(effects) =>
+      for effect in effects {
+        let next = run_workbench_effect_with_transport(
+          WorkbenchUpdate::new(model.get(), effect~),
+          transport,
         )
         model.set(next)
       }

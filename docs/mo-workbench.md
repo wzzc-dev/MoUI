@@ -48,8 +48,8 @@ packages:
   fixture transport kinds.
 - Typed transport commands for starting RPC, sending prompts, running shell
   commands, refreshing Pi messages and command catalogs, syncing Pi session
-  names, refreshing Pi session stats, cancelling runs, switching Pi sessions,
-  and shutdown.
+  names, refreshing Pi session stats, creating fresh Pi sessions, cancelling
+  runs, switching Pi sessions, and shutdown.
 - Typed transport events for process lifecycle, JSONL sent/received lines,
   stderr diagnostics, and failures.
 - A platform-neutral `PiTransportRuntime` that turns command batches into
@@ -59,9 +59,9 @@ packages:
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
   (`get_state`, `get_messages`, `get_commands`, `get_session_stats`,
   `cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`,
-  `switch_session`, `prompt`, `set_session_name`, `bash`, `abort_bash`, and
-  `abort`; shutdown is stdin EOF), and uses shell fixtures to prove direct
-  JSONL stdin/stdout process
+  `new_session`, `switch_session`, `prompt`, `set_session_name`, `bash`,
+  `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell fixtures to
+  prove direct JSONL stdin/stdout process
   driving without C FFI or a Node bridge.
 - A native interactive session primitive that keeps one JSONL process alive
   across multiple command batches in the same async task group.
@@ -155,6 +155,12 @@ packages:
   Pi through `set_session_name`. Pi's `session_info_changed` event updates the
   same `PiSessionBinding`, so user-visible Workbench session identity and Pi's
   runtime session display name stay aligned without native-only state.
+- The session panel can request a fresh Pi session through a platform-neutral
+  `NewRpcSession` command. The native encoder emits `{"type":"new_session"}`,
+  then the shared app waits for the `new_session` success response before
+  queuing the state, message, command catalog, and stats refresh. This keeps
+  the Workbench-to-Pi binding updated from Pi's next `get_state` response
+  rather than from native process state or JSONL write order.
 - The workbench can cycle Pi's thinking level from the session status panel.
   The shared app emits a platform-neutral `CycleRpcThinkingLevel` command,
   ingests `cycle_thinking_level` responses and `thinking_level_changed` events,
@@ -222,7 +228,7 @@ packages:
   JSONL process for the next UI command batch. Explicit `Shutdown` still closes
   the owner.
 - The native encoder is aligned with the installed Pi RPC protocol and has
-  no-model smoke paths using offline `get_state`, `get_messages`,
+  no-model smoke paths using offline `get_state`, `new_session`, `get_messages`,
   `get_commands`, `get_session_stats`, `cycle_thinking_level`,
   `set_steering_mode`, `set_follow_up_mode`, `set_session_name`, and
   `abort_bash` over `pi --mode rpc`.
@@ -233,8 +239,8 @@ stderr/nonzero-exit failures, restarts after unexpected child exits, speaks the
 current Pi RPC command names, and the shared app ingests command responses,
 streaming session events, and Workbench-to-Pi session bindings. The next
 transport slice should add real end-to-end prompt smoke evidence when a model
-can be used safely and decide how session creation/forking should appear in the
-Workbench UI.
+can be used safely and decide the precise `fork` entry-id affordance once Pi's
+RPC fork payload is documented or discoverable.
 
 ## Pi JSONL Workbench Events
 
@@ -317,6 +323,32 @@ Workbench session. This gives the macOS Skia UI a direct resync affordance while
 keeping process ownership in the native async transport and state ownership in
 the shared app package.
 
+The session panel's new-session control first queues:
+
+```json
+{"type":"new_session"}
+```
+
+After the `new_session` success response arrives, `ReceiveTransport` queues a
+second platform-neutral refresh batch:
+
+```json
+{"type":"get_state"}
+{"type":"get_messages"}
+{"type":"get_commands"}
+{"type":"get_session_stats"}
+```
+
+The `new_session` response marks the current Workbench session binding as
+creating or cancelled. If Pi accepts the request, the chained `get_state`
+response binds the Workbench session id to Pi's fresh `sessionId` /
+`sessionFile` / `sessionName`, keeping session creation in the
+platform-neutral command/event contract. Pi 0.77.0 accepts `new_session` over
+RPC, but batched follow-up reads can be answered before the `new_session`
+acknowledgement, so Mo Workbench intentionally waits for that acknowledgement
+before refreshing. `fork` exists but requires an entry id shape that is not yet
+wired into Mo Workbench.
+
 Streaming Pi session events also use the same app-layer path:
 
 ```json
@@ -355,6 +387,7 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `CycleRpcThinkingLevel` sends `{"type":"cycle_thinking_level"}`,
 `SetRpcSteeringMode` sends `{"type":"set_steering_mode","mode":...}`,
 `SetRpcFollowUpMode` sends `{"type":"set_follow_up_mode","mode":...}`,
+`NewRpcSession` sends `{"type":"new_session"}`,
 `SwitchRpcSession` sends `{"type":"switch_session","sessionPath":...}`,
 `SetRpcSessionName` sends `{"type":"set_session_name","name":...}`,
 `SendUserInput` sends `{"type":"prompt","message":...}`, `RunShellCommand`
@@ -370,6 +403,9 @@ contract only:
 
 ```sh
 printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"new_session"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_messages"}\n' | \
@@ -399,14 +435,15 @@ printf '{"type":"abort_bash"}\n' | \
 ```
 
 The first command should return a JSONL `response` object for `get_state`, the
-second should return a `get_messages` response with a `messages` array, the
-third should return a `get_commands` response with a `commands` array, the
-fourth should return a `get_session_stats` response with message, tool, token,
-and cost counters, the fifth should return a successful
-`cycle_thinking_level` acknowledgement, the sixth and seventh should acknowledge
-the steering/follow-up mode changes, the eighth should emit
-`session_info_changed` and a successful `set_session_name` response, and the
-ninth should return a successful
+second should return a successful `new_session` acknowledgement, the third
+should return a `get_messages` response with a `messages` array, the fourth
+should return a `get_commands` response with a `commands` array, the fifth
+should return a `get_session_stats` response with message, tool, token, and cost
+counters, the sixth should return a successful `cycle_thinking_level`
+acknowledgement, the seventh and eighth should acknowledge the
+steering/follow-up mode changes, the ninth should emit `session_info_changed`
+and a successful `set_session_name` response, and the tenth should return a
+successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -433,6 +470,9 @@ moon test examples/mo_workbench/native_transport --target native
 moon test moui/backend/macos --target native
 moon build examples/mo_workbench/macos_skia --target native
 printf '{"type":"get_state"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"new_session"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"get_messages"}\n' | \
