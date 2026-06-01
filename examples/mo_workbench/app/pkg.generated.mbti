@@ -174,6 +174,8 @@ pub(all) enum PiTransportCommand {
   SetRpcFollowUpMode(String, String)
   SetRpcSessionName(String, String)
   SendUserInput(String, String)
+  SendSteeringInput(String, String)
+  SendFollowUpInput(String, String)
   RunShellCommand(String, String)
   CancelShellCommand(String)
   CancelRpcRun(String)
@@ -283,6 +285,8 @@ pub(all) enum WorkbenchMsg {
   SelectPanel(String)
   PromptChanged(String)
   DispatchPrompt
+  DispatchSteering
+  DispatchFollowUp
   InvokeCommand(String)
   FollowTranscript(String, String, String)
   FollowActivity(String, String, String)

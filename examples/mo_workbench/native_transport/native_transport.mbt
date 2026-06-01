@@ -166,6 +166,16 @@ pub fn pi_rpc_prompt_line(message~ : String) -> String {
 }
 
 ///|
+pub fn pi_rpc_steer_line(message~ : String) -> String {
+  ({ "type": "steer", "message": message } : Json).stringify()
+}
+
+///|
+pub fn pi_rpc_follow_up_line(message~ : String) -> String {
+  ({ "type": "follow_up", "message": message } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_bash_line(command~ : String) -> String {
   ({ "type": "bash", "command": command } : Json).stringify()
 }
@@ -303,6 +313,18 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_prompt_line(message=text))
+      }
+      SendSteeringInput(session, text) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_steer_line(message=text))
+      }
+      SendFollowUpInput(session, text) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_follow_up_line(message=text))
       }
       RunShellCommand(session, command) => {
         if session_id == default_session_id {

@@ -120,6 +120,8 @@ fn WorkbenchModel::ingest_rpc_response(
       "compact" => self.apply_compact_success(session_id, fields)
       "cycle_thinking_level" =>
         self.apply_cycle_thinking_level_success(session_id, fields)
+      "steer" => self.apply_steer_success(session_id)
+      "follow_up" => self.apply_follow_up_success(session_id)
       "set_steering_mode" => self.apply_set_steering_mode_success(session_id)
       "set_follow_up_mode" => self.apply_set_follow_up_mode_success(session_id)
       "set_session_name" => self.apply_set_session_name_success(session_id)
@@ -640,6 +642,38 @@ fn WorkbenchModel::apply_set_steering_mode_success(
       tone="success",
     ),
     status="Pi steering mode acknowledged",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_steer_success(
+  self : WorkbenchModel,
+  session_id : String,
+) -> WorkbenchModel {
+  { ..self, pi_rpc: PiRpcSnapshot::new(command="steer", success=true) }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi steering accepted",
+      detail=session_id,
+      tone="success",
+    ),
+    status="Pi steering accepted",
+  )
+}
+
+///|
+fn WorkbenchModel::apply_follow_up_success(
+  self : WorkbenchModel,
+  session_id : String,
+) -> WorkbenchModel {
+  { ..self, pi_rpc: PiRpcSnapshot::new(command="follow_up", success=true) }.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi follow-up accepted",
+      detail=session_id,
+      tone="success",
+    ),
+    status="Pi follow-up accepted",
   )
 }
 

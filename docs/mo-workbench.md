@@ -62,7 +62,8 @@ packages:
   `get_session_stats`, `set_model`, `cycle_model`, `compact`, `cycle_thinking_level`,
   `set_steering_mode`, `set_follow_up_mode`, `new_session`, `switch_session`,
   `fork`,
-  `get_fork_messages`, `export_html`, `prompt`, `set_session_name`, `bash`,
+  `get_fork_messages`, `export_html`, `prompt`, `steer`, `follow_up`,
+  `set_session_name`, `bash`,
   `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell fixtures to
   prove direct JSONL stdin/stdout process
   driving without C FFI or a Node bridge.
@@ -197,6 +198,9 @@ packages:
   app emits platform-neutral `SetRpcSteeringMode` and `SetRpcFollowUpMode`
   commands, ingests their acknowledgements, and refreshes both modes from
   `get_state` so Pi remains the source of truth for input queue policy.
+  The same composer also has explicit steering and follow-up submit actions:
+  `SendSteeringInput` maps to Pi RPC `steer`, while `SendFollowUpInput` maps to
+  Pi RPC `follow_up`.
 - Run cancellation is command-aware: active Workbench shell commands queue a
   platform-neutral `CancelShellCommand` that the native encoder maps to Pi RPC
   `abort_bash`, while prompt/agent cancellation continues to use `abort`.
@@ -234,6 +238,9 @@ packages:
   `thinking_level_changed` events remain the authoritative stream update.
   Successful `set_steering_mode` and `set_follow_up_mode` responses acknowledge
   the compact composer controls; `get_state` refreshes the current mode values.
+  Successful `steer` and `follow_up` responses acknowledge explicit queued
+  steering/follow-up input submissions, while `queue_update` remains the source
+  of truth for visible queued input counts.
   Successful `set_session_name` responses mark the session-name sync as
   acknowledged; the preceding
   `session_info_changed` event carries the actual display name and updates
@@ -275,7 +282,8 @@ packages:
   `get_available_models`, `get_fork_messages`, `get_commands`,
   `get_session_stats`, `set_model`, `cycle_model`, `compact`, `cycle_thinking_level`, `set_steering_mode`,
   `set_follow_up_mode`,
-  `set_session_name`, and `abort_bash` over `pi --mode rpc`; it also records
+  `steer`, `follow_up`, `set_session_name`, and `abort_bash` over
+  `pi --mode rpc`; it also records
   the expected `export_html`, `set_model`, and `compact` failure boundaries for
   in-memory `--no-session` smoke runs.
 
@@ -493,7 +501,9 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `NewRpcSession` sends `{"type":"new_session"}`,
 `SwitchRpcSession` sends `{"type":"switch_session","sessionPath":...}`,
 `SetRpcSessionName` sends `{"type":"set_session_name","name":...}`,
-`SendUserInput` sends `{"type":"prompt","message":...}`, `RunShellCommand`
+`SendUserInput` sends `{"type":"prompt","message":...}`,
+`SendSteeringInput` sends `{"type":"steer","message":...}`,
+`SendFollowUpInput` sends `{"type":"follow_up","message":...}`, `RunShellCommand`
 sends `{"type":"bash","command":...}`, `CancelShellCommand` sends
 `{"type":"abort_bash"}`, `CancelRpcRun` sends `{"type":"abort"}`, and
 `Shutdown` closes stdin instead of sending a JSON command. Workbench session ids
@@ -547,6 +557,12 @@ printf '{"type":"set_steering_mode","mode":"all"}\n' | \
 printf '{"type":"set_follow_up_mode","mode":"one-at-a-time"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"steer","message":"Prefer narrow edits"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"follow_up","message":"Update docs"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
@@ -572,8 +588,10 @@ and return a failed `compact` response when the offline smoke has no API
 provider available for compaction, the twelfth should return a successful
 `cycle_thinking_level` acknowledgement, the
 thirteenth and fourteenth should acknowledge the steering/follow-up mode changes,
-the fifteenth should emit `session_info_changed` and a successful
-`set_session_name` response, and the sixteenth should return a successful
+the fifteenth and sixteenth should emit `queue_update` events and acknowledge
+the explicit steering/follow-up inputs, the seventeenth should emit
+`session_info_changed` and a successful
+`set_session_name` response, and the eighteenth should return a successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -639,6 +657,12 @@ printf '{"type":"set_steering_mode","mode":"all"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"set_follow_up_mode","mode":"one-at-a-time"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"steer","message":"Prefer narrow edits"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"follow_up","message":"Update docs"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \

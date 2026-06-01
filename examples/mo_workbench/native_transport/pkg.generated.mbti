@@ -21,6 +21,8 @@ pub fn pi_rpc_cycle_thinking_level_line() -> String
 
 pub fn pi_rpc_export_html_line(output_path~ : String) -> String
 
+pub fn pi_rpc_follow_up_line(message~ : String) -> String
+
 pub fn pi_rpc_fork_line(entry_id~ : String) -> String
 
 pub fn pi_rpc_get_available_models_line() -> String
@@ -46,6 +48,8 @@ pub fn pi_rpc_set_model_line(provider~ : String, model_id~ : String) -> String
 pub fn pi_rpc_set_session_name_line(name~ : String) -> String
 
 pub fn pi_rpc_set_steering_mode_line(mode~ : String) -> String
+
+pub fn pi_rpc_steer_line(message~ : String) -> String
 
 pub fn pi_rpc_switch_session_line(session_path~ : String) -> String
 

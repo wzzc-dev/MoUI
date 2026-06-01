@@ -48,6 +48,118 @@ test "workbench transport runtime effect dispatches prompt events" {
 }
 
 ///|
+test "workbench dispatch queues steering and follow-up inputs" {
+  let steering = WorkbenchModel::new()
+    .update(PromptChanged("Prefer the Skia route"))
+    .update(DispatchSteering)
+  inspect(steering.prompt, content="")
+  inspect(steering.last_status, content="Queued steering input for Pi RPC")
+  inspect(steering.pending_transport_count(), content="2")
+  match steering.transport.command_queue[1] {
+    SendSteeringInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="Prefer the Skia route")
+    }
+    _ => fail("expected queued steering input")
+  }
+  assert_true(
+    steering.events.any(event => event.title == "Steering input queued"),
+  )
+  let follow_up = WorkbenchModel::new()
+    .update(PromptChanged("Run the focused checks next"))
+    .update(DispatchFollowUp)
+  inspect(follow_up.prompt, content="")
+  inspect(follow_up.last_status, content="Queued follow-up input for Pi RPC")
+  inspect(follow_up.pending_transport_count(), content="2")
+  match follow_up.transport.command_queue[1] {
+    SendFollowUpInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="Run the focused checks next")
+    }
+    _ => fail("expected queued follow-up input")
+  }
+  assert_true(
+    follow_up.events.any(event => event.title == "Follow-up input queued"),
+  )
+}
+
+///|
+test "workbench steering runtime effect dispatches steer RPC" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"steer\",\"message\":\"Prefer narrow edits\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"steer\",\"success\":true}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new()
+    .update(PromptChanged("Prefer narrow edits"))
+    .update_with_transport(DispatchSteering, transport)
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendSteeringInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="Prefer narrow edits")
+    }
+    _ => fail("expected captured steering input")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="steer")
+  inspect(model.last_status, content="Pi steering accepted")
+  assert_true(model.events.any(event => event.title == "Pi steering accepted"))
+}
+
+///|
+test "workbench follow-up runtime effect dispatches follow_up RPC" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"follow_up\",\"message\":\"Update docs\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"follow_up\",\"success\":true}",
+      ),
+    )
+  })
+  let update = WorkbenchModel::new()
+    .update(PromptChanged("Update docs"))
+    .update_with_transport(DispatchFollowUp, transport)
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendFollowUpInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(text, content="Update docs")
+    }
+    _ => fail("expected captured follow-up input")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="follow_up")
+  inspect(model.last_status, content="Pi follow-up accepted")
+  assert_true(model.events.any(event => event.title == "Pi follow-up accepted"))
+}
+
+///|
 test "workbench invokes Pi command catalog entries through prompt RPC" {
   let model = WorkbenchModel::new()
     .update(PromptChanged("draft text"))
@@ -2323,6 +2435,8 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Steer 1"))
   assert_true(has_text(commands, "Follow 1"))
+  assert_true(has_text(commands, "引导"))
+  assert_true(has_text(commands, "跟进"))
   assert_true(has_text(commands, "Pi transcript"))
   assert_true(has_text(commands, "Activity"))
   assert_true(has_text(commands, "Workspace"))
@@ -2343,7 +2457,6 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "/review"))
   assert_false(has_text(commands, "分析"))
   assert_false(has_text(commands, "重跑"))
-  assert_false(has_text(commands, "跟进"))
   assert_false(has_text(commands, "分支"))
   assert_false(has_text(commands, "output /tmp/mo-workbench-app-test.log"))
   assert_false(has_text(commands, "清除"))

@@ -35,6 +35,8 @@ async test "native transport builds structured jsonl request lines" {
   let switch_session = pi_rpc_switch_session_line(session_path="/tmp/pi.jsonl")
   let session_name = pi_rpc_set_session_name_line(name="Mo Workbench")
   let input = pi_rpc_prompt_line(message="Inspect renderer capability tests")
+  let steer = pi_rpc_steer_line(message="Prefer narrow edits")
+  let follow_up_input = pi_rpc_follow_up_line(message="Update docs")
   let bash = pi_rpc_bash_line(command="moon check")
   let abort_bash = pi_rpc_abort_bash_line()
   let abort = pi_rpc_abort_line()
@@ -90,6 +92,14 @@ async test "native transport builds structured jsonl request lines" {
     "type": "prompt",
     "message": "Inspect renderer capability tests",
   })
+  json_inspect(@json.parse(steer), content={
+    "type": "steer",
+    "message": "Prefer narrow edits",
+  })
+  json_inspect(@json.parse(follow_up_input), content={
+    "type": "follow_up",
+    "message": "Update docs",
+  })
   json_inspect(@json.parse(bash), content={
     "type": "bash",
     "command": "moon check",
@@ -119,13 +129,15 @@ async test "native transport maps command batches to jsonl requests" {
     SetRpcFollowUpMode("session-1", "one-at-a-time"),
     SetRpcSessionName("session-1", "Mo Workbench"),
     SendUserInput("session-1", "hello"),
+    SendSteeringInput("session-1", "prefer tests"),
+    SendFollowUpInput("session-1", "update docs"),
     RunShellCommand("session-1", "moon check"),
     CancelShellCommand("session-1"),
     CancelRpcRun("session-1"),
     Shutdown,
   ])
   inspect(request.session_id, content="session-1")
-  inspect(request.lines.length(), content="21")
+  inspect(request.lines.length(), content="23")
   json_inspect(@json.parse(request.lines[0]), content={ "type": "get_state" })
   json_inspect(@json.parse(request.lines[1]), content={ "type": "new_session" })
   json_inspect(@json.parse(request.lines[2]), content={
@@ -178,11 +190,19 @@ async test "native transport maps command batches to jsonl requests" {
     "message": "hello",
   })
   json_inspect(@json.parse(request.lines[18]), content={
+    "type": "steer",
+    "message": "prefer tests",
+  })
+  json_inspect(@json.parse(request.lines[19]), content={
+    "type": "follow_up",
+    "message": "update docs",
+  })
+  json_inspect(@json.parse(request.lines[20]), content={
     "type": "bash",
     "command": "moon check",
   })
-  json_inspect(@json.parse(request.lines[19]), content={ "type": "abort_bash" })
-  json_inspect(@json.parse(request.lines[20]), content={ "type": "abort" })
+  json_inspect(@json.parse(request.lines[21]), content={ "type": "abort_bash" })
+  json_inspect(@json.parse(request.lines[22]), content={ "type": "abort" })
 }
 
 ///|

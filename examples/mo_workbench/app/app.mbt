@@ -199,6 +199,8 @@ pub(all) enum WorkbenchMsg {
   SelectPanel(String)
   PromptChanged(String)
   DispatchPrompt
+  DispatchSteering
+  DispatchFollowUp
   InvokeCommand(String)
   FollowTranscript(String, String, String)
   FollowActivity(String, String, String)
@@ -557,6 +559,8 @@ pub fn WorkbenchModel::update(
     SelectPanel(panel) => { ..self, selected_panel: panel }
     PromptChanged(value) => { ..self, prompt: value }
     DispatchPrompt => self.dispatch_prompt()
+    DispatchSteering => self.dispatch_steering()
+    DispatchFollowUp => self.dispatch_follow_up()
     InvokeCommand(name) => self.invoke_command(name)
     FollowTranscript(role, summary, detail) =>
       self.follow_transcript(role, summary, detail)
@@ -742,6 +746,9 @@ pub fn WorkbenchModel::update_with_transport(
     SelectSession(id) =>
       self.select_session_with_transport(id, transport_runtime)
     DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
+    DispatchSteering => self.dispatch_steering_with_transport(transport_runtime)
+    DispatchFollowUp =>
+      self.dispatch_follow_up_with_transport(transport_runtime)
     InvokeCommand(name) =>
       self.invoke_command_with_transport(name, transport_runtime)
     FollowTranscript(role, summary, detail) =>
@@ -1098,6 +1105,104 @@ fn WorkbenchModel::dispatch_prompt_with_transport(
     )
     WorkbenchUpdate::new(
       self.dispatch_prompt(),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
+fn WorkbenchModel::dispatch_steering(self : WorkbenchModel) -> WorkbenchModel {
+  let prompt = self.prompt.trim().to_owned()
+  if prompt == "" {
+    { ..self, last_status: "Prompt is empty" }
+  } else {
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="Steering input queued",
+        detail=prompt,
+        tone="info",
+      ),
+    )
+    let command = SendSteeringInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued steering input for Pi RPC",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::dispatch_steering_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let prompt = self.prompt.trim().to_owned()
+  if prompt == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
+  } else {
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      SendSteeringInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.dispatch_steering(),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
+}
+
+///|
+fn WorkbenchModel::dispatch_follow_up(self : WorkbenchModel) -> WorkbenchModel {
+  let prompt = self.prompt.trim().to_owned()
+  if prompt == "" {
+    { ..self, last_status: "Prompt is empty" }
+  } else {
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="user",
+        title="Follow-up input queued",
+        detail=prompt,
+        tone="info",
+      ),
+    )
+    let command = SendFollowUpInput(session.id, prompt)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: "Queued follow-up input for Pi RPC",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::dispatch_follow_up_with_transport(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let prompt = self.prompt.trim().to_owned()
+  if prompt == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
+  } else {
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      SendFollowUpInput(session.id, prompt),
+    )
+    WorkbenchUpdate::new(
+      self.dispatch_follow_up(),
       effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
     )
   }

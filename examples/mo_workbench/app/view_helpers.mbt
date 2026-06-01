@@ -1393,6 +1393,22 @@ fn WorkbenchModel::composer(
             ),
             spacer(min_length=10.0, weight=1.0),
             button(
+              "引导",
+              on_click=DispatchSteering,
+              variant=Outline,
+              theme~,
+              width=54.0,
+              height=36.0,
+            ),
+            button(
+              "跟进",
+              on_click=DispatchFollowUp,
+              variant=Outline,
+              theme~,
+              width=54.0,
+              height=36.0,
+            ),
+            button(
               "↑",
               on_click=DispatchPrompt,
               variant=Primary,
