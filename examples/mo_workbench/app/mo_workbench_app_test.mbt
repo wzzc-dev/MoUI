@@ -386,7 +386,7 @@ test "workbench diagnostic fix runtime effect dispatches prompt" {
 test "workbench refreshes current Pi session through platform-neutral commands" {
   let model = WorkbenchModel::new().update(RefreshSession)
   inspect(model.last_status, content="Pi session refresh queued")
-  inspect(model.pending_transport_count(), content="5")
+  inspect(model.pending_transport_count(), content="6")
   match model.transport.command_queue[0] {
     StartRpc(session, cwd) => {
       inspect(session, content="moui-skia")
@@ -395,18 +395,22 @@ test "workbench refreshes current Pi session through platform-neutral commands" 
     _ => fail("expected queued state refresh")
   }
   match model.transport.command_queue[1] {
+    FetchRpcAvailableModels(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued model catalog refresh")
+  }
+  match model.transport.command_queue[2] {
     FetchRpcMessages(session) => inspect(session, content="moui-skia")
     _ => fail("expected queued messages refresh")
   }
-  match model.transport.command_queue[2] {
+  match model.transport.command_queue[3] {
     FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
     _ => fail("expected queued fork messages refresh")
   }
-  match model.transport.command_queue[3] {
+  match model.transport.command_queue[4] {
     FetchRpcCommands(session) => inspect(session, content="moui-skia")
     _ => fail("expected queued command catalog refresh")
   }
-  match model.transport.command_queue[4] {
+  match model.transport.command_queue[5] {
     FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
     _ => fail("expected queued session stats refresh")
   }
@@ -422,6 +426,7 @@ test "workbench refresh runtime effect dispatches current session batch" {
     captured.val = commands
     emit(ProcessStarted("fixture-pid"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_available_models\"}"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_messages\"}"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_fork_messages\"}"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_commands\"}"))
@@ -432,26 +437,30 @@ test "workbench refresh runtime effect dispatches current session batch" {
     transport,
   )
   inspect(captured.val.length(), content="0")
-  inspect(update.model.pending_transport_count(), content="5")
+  inspect(update.model.pending_transport_count(), content="6")
   let model = run_workbench_effect(update)
-  inspect(captured.val.length(), content="5")
+  inspect(captured.val.length(), content="6")
   match captured.val[0] {
     StartRpc(session, _) => inspect(session, content="moui-skia")
     _ => fail("expected captured state refresh")
   }
   match captured.val[1] {
+    FetchRpcAvailableModels(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured model catalog refresh")
+  }
+  match captured.val[2] {
     FetchRpcMessages(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured messages refresh")
   }
-  match captured.val[2] {
+  match captured.val[3] {
     FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured fork messages refresh")
   }
-  match captured.val[3] {
+  match captured.val[4] {
     FetchRpcCommands(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured commands refresh")
   }
-  match captured.val[4] {
+  match captured.val[5] {
     FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured stats refresh")
   }
@@ -488,6 +497,7 @@ test "workbench new session runtime effect binds refreshed Pi state" {
       }
       StartRpc(_, _) => {
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_available_models\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_messages\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_fork_messages\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_commands\"}"))
@@ -517,7 +527,7 @@ test "workbench new session runtime effect binds refreshed Pi state" {
     NewRpcSession(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured new session request")
   }
-  inspect(captured.val[1].length(), content="5")
+  inspect(captured.val[1].length(), content="6")
   match captured.val[1][0] {
     StartRpc(session, cwd) => {
       inspect(session, content="moui-skia")
@@ -526,18 +536,22 @@ test "workbench new session runtime effect binds refreshed Pi state" {
     _ => fail("expected captured state refresh")
   }
   match captured.val[1][1] {
+    FetchRpcAvailableModels(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured model catalog refresh")
+  }
+  match captured.val[1][2] {
     FetchRpcMessages(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured message refresh")
   }
-  match captured.val[1][2] {
+  match captured.val[1][3] {
     FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured fork messages refresh")
   }
-  match captured.val[1][3] {
+  match captured.val[1][4] {
     FetchRpcCommands(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured command refresh")
   }
-  match captured.val[1][4] {
+  match captured.val[1][5] {
     FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured stats refresh")
   }
@@ -687,6 +701,7 @@ test "workbench fork runtime effect refreshes Pi state after accepted fork" {
       }
       StartRpc(_, _) => {
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+        emit(JsonLineSent("moui-skia", "{\"type\":\"get_available_models\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_messages\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_fork_messages\"}"))
         emit(JsonLineSent("moui-skia", "{\"type\":\"get_commands\"}"))
@@ -716,8 +731,8 @@ test "workbench fork runtime effect refreshes Pi state after accepted fork" {
     }
     _ => fail("expected captured fork request")
   }
-  inspect(captured.val[1].length(), content="5")
-  match captured.val[1][2] {
+  inspect(captured.val[1].length(), content="6")
+  match captured.val[1][3] {
     FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
     _ => fail("expected captured fork messages refresh")
   }
@@ -1301,7 +1316,7 @@ test "workbench cancel runtime effect dispatches Pi RPC abort_bash command" {
 }
 
 ///|
-test "workbench selection with transport switches Pi session then refreshes state, fork points, commands, and stats" {
+test "workbench selection with transport switches Pi session then refreshes state, models, fork points, commands, and stats" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, _emit) => {
     captured.val = commands
@@ -1311,9 +1326,9 @@ test "workbench selection with transport switches Pi session then refreshes stat
     transport,
   )
   inspect(update.model.selected_session_id, content="pi-rpc")
-  inspect(update.model.pending_transport_count(), content="6")
+  inspect(update.model.pending_transport_count(), content="7")
   let model = run_workbench_effect(update)
-  inspect(captured.val.length(), content="6")
+  inspect(captured.val.length(), content="7")
   match captured.val[0] {
     SwitchRpcSession(session, path) => {
       inspect(session, content="pi-rpc")
@@ -1329,18 +1344,22 @@ test "workbench selection with transport switches Pi session then refreshes stat
     _ => fail("expected queued state refresh")
   }
   match captured.val[2] {
+    FetchRpcAvailableModels(session) => inspect(session, content="pi-rpc")
+    _ => fail("expected queued model catalog refresh")
+  }
+  match captured.val[3] {
     FetchRpcMessages(session) => inspect(session, content="pi-rpc")
     _ => fail("expected queued message refresh")
   }
-  match captured.val[3] {
+  match captured.val[4] {
     FetchRpcForkMessages(session) => inspect(session, content="pi-rpc")
     _ => fail("expected queued fork messages refresh")
   }
-  match captured.val[4] {
+  match captured.val[5] {
     FetchRpcCommands(session) => inspect(session, content="pi-rpc")
     _ => fail("expected queued command catalog refresh")
   }
-  match captured.val[5] {
+  match captured.val[6] {
     FetchRpcSessionStats(session) => inspect(session, content="pi-rpc")
     _ => fail("expected queued session stats refresh")
   }
@@ -1594,6 +1613,49 @@ test "workbench ingests Pi RPC get_commands response into command catalog" {
   inspect(model.command_catalog[1].source_scope, content="user")
   inspect(model.last_status, content="Pi commands refreshed")
   assert_true(model.events.any(event => event.title == "Pi commands refreshed"))
+}
+
+///|
+test "workbench ingests Pi RPC get_available_models response into model catalog" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_available_models","success":true,"data":{"models":[{"provider":"openai","id":"gpt-5","name":"GPT-5"},{"provider":"anthropic","id":"claude-sonnet-4.5","name":"Claude Sonnet 4.5"}]}}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="get_available_models")
+  inspect(model.model_catalog.length(), content="2")
+  inspect(model.model_catalog[0].provider, content="openai")
+  inspect(model.model_catalog[0].id, content="gpt-5")
+  inspect(model.model_catalog[0].name, content="GPT-5")
+  inspect(model.model_catalog[0].label, content="GPT-5 (openai/gpt-5)")
+  inspect(
+    model.model_catalog[1].label,
+    content="Claude Sonnet 4.5 (anthropic/claude-sonnet-4.5)",
+  )
+  inspect(model.last_status, content="Pi models refreshed")
+  assert_true(model.events.any(event => event.title == "Pi models refreshed"))
+}
+
+///|
+test "workbench runtime draws Pi model catalog summary after refresh" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_available_models","success":true,"data":{"models":[{"provider":"openai","id":"gpt-5","name":"GPT-5"},{"provider":"anthropic","id":"claude-sonnet-4.5","name":"Claude Sonnet 4.5"}]}}
+        ),
+      ),
+    ),
+  )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "Models 2"))
+  assert_true(has_text(commands, "GPT-5 (openai/gpt-5) +1"))
 }
 
 ///|

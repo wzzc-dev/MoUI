@@ -83,6 +83,11 @@ pub fn pi_rpc_get_messages_line() -> String {
 }
 
 ///|
+pub fn pi_rpc_get_available_models_line() -> String {
+  ({ "type": "get_available_models" } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_get_fork_messages_line() -> String {
   ({ "type": "get_fork_messages" } : Json).stringify()
 }
@@ -189,6 +194,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_switch_session_line(session_path=path))
+      }
+      FetchRpcAvailableModels(session) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_get_available_models_line())
       }
       FetchRpcMessages(session) => {
         if session_id == default_session_id {
