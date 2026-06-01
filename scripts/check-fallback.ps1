@@ -172,8 +172,25 @@ function New-FakeJetBrainsArtifact {
     [string] $Commit = "8967a2e80c71be363146da2395f503cab5f5fb9c",
     [string] $Tag = "m148-8967a2e80c",
     [string] $Package = "Skia-m148-8967a2e80c-windows-Release-x64.zip",
-    [string] $Sha256 = "1927edce6567785870558bfc5e84fac99af45cbe91eb62f260025bc1cf7aa5df"
+    [string] $Sha256 = "1927edce6567785870558bfc5e84fac99af45cbe91eb62f260025bc1cf7aa5df",
+    [string] $AcceptanceCommit = "",
+    [string] $AcceptanceTag = "",
+    [string] $AcceptancePackage = "",
+    [string] $AcceptanceSha256 = ""
   )
+
+  if ([string]::IsNullOrWhiteSpace($AcceptanceCommit)) {
+    $AcceptanceCommit = $Commit
+  }
+  if ([string]::IsNullOrWhiteSpace($AcceptanceTag)) {
+    $AcceptanceTag = $Tag
+  }
+  if ([string]::IsNullOrWhiteSpace($AcceptancePackage)) {
+    $AcceptancePackage = $Package
+  }
+  if ([string]::IsNullOrWhiteSpace($AcceptanceSha256)) {
+    $AcceptanceSha256 = $Sha256
+  }
 
   New-Item -ItemType Directory -Force -Path $Directory | Out-Null
   $preflightLog = Join-Path $Directory "windows-real-skia-smoke-preflight.log"
@@ -203,10 +220,10 @@ function New-FakeJetBrainsArtifact {
     "  native_smoke_marker=passed"
     "  native_pkg_restore=passed"
     "  skia_provider=jetbrains"
-    "  jetbrains_tag=$Tag"
-    "  skia_commit=$Commit"
-    "  skia_package=$Package"
-    "  skia_package_sha256=$Sha256"
+    "  jetbrains_tag=$AcceptanceTag"
+    "  skia_commit=$AcceptanceCommit"
+    "  skia_package=$AcceptancePackage"
+    "  skia_package_sha256=$AcceptanceSha256"
     "  preflight_log=$preflightLog"
     "  wrapper_log=$wrapperLog"
     "  native_log=$nativeLog"
@@ -568,6 +585,38 @@ try {
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadShaDir } `
       -ExpectedMessage "SHA256 mismatch"
+
+    $fakeJetBrainsBadTagDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-bad-tag"
+    New-FakeJetBrainsArtifact `
+      -Directory $fakeJetBrainsBadTagDir `
+      -Tag "m000-0000000000"
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadTagDir } `
+      -ExpectedMessage "JetBrains tag mismatch"
+
+    $fakeJetBrainsBadCommitDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-bad-commit"
+    New-FakeJetBrainsArtifact `
+      -Directory $fakeJetBrainsBadCommitDir `
+      -Commit "0123456789abcdef0123456789abcdef01234567"
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadCommitDir } `
+      -ExpectedMessage "JetBrains commit mismatch"
+
+    $fakeJetBrainsBadPackageDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-bad-package"
+    New-FakeJetBrainsArtifact `
+      -Directory $fakeJetBrainsBadPackageDir `
+      -Package "Skia-m148-8967a2e80c-windows-Release-ppc64.zip"
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadPackageDir } `
+      -ExpectedMessage "not locked"
+
+    $fakeJetBrainsMismatchedAcceptanceDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-mismatched-acceptance"
+    New-FakeJetBrainsArtifact `
+      -Directory $fakeJetBrainsMismatchedAcceptanceDir `
+      -AcceptanceTag "m000-0000000000"
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsMismatchedAcceptanceDir } `
+      -ExpectedMessage "disagree on JetBrains jetbrains_tag"
 
 
     $fakeMacosArtifactDir = Join-Path $dryRunRoot "fake-macos-artifact"
