@@ -206,8 +206,16 @@ fn main {
     smoke_window_frame.stats.present_count != 1 {
     fail_smoke("render frame did not finalize a present command for window target")
   }
+  guard smoke_window_frame.touched_bounds is Some(smoke_window_touched_bounds) else {
+    fail_smoke("render frame did not record touched bounds for window target")
+  }
+  if smoke_window_touched_bounds != @skia.Rect::from_xywh(0, 0, 4, 4) {
+    fail_smoke("render frame touched bounds did not match window draw")
+  }
   println("native smoke render frame present count")
   println(smoke_window_frame.stats.present_count)
+  println("native smoke render frame touched bounds width")
+  println(smoke_window_touched_bounds.width().round().to_int())
 
   guard surface.canvas() is Some(canvas) else {
     fail_smoke("failed to borrow native canvas")
