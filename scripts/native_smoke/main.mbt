@@ -194,6 +194,20 @@ fn main {
   }
   println("native smoke render target resource binding")
   println(1)
+  let smoke_window_frame = @skia.RenderCommandList::for_target(
+    smoke_window_target,
+  ).draw_rect(
+    @skia.Rect::from_xywh(0, 0, 4, 4),
+    paint=@skia.Paint::new(color=@skia.Color::black()),
+  ).frame_descriptor(smoke_window_target)
+  if !smoke_window_frame.needs_present() ||
+    !smoke_window_frame.has_present() ||
+    !smoke_window_frame.is_ready() ||
+    smoke_window_frame.stats.present_count != 1 {
+    fail_smoke("render frame did not finalize a present command for window target")
+  }
+  println("native smoke render frame present count")
+  println(smoke_window_frame.stats.present_count)
 
   guard surface.canvas() is Some(canvas) else {
     fail_smoke("failed to borrow native canvas")
