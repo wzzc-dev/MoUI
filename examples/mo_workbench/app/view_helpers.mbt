@@ -54,22 +54,48 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     workbench_clamp_double(viewport.width * 0.24, 276.0, 316.0)
   }
   let main_width = workbench_max_double(1.0, viewport.width - sidebar_width)
-  let panel_width = workbench_clamp_double(main_width - 80.0, 480.0, 920.0)
+  let main_horizontal_margin = if main_width < 720.0 { 24.0 } else { 80.0 }
+  let panel_available_width = workbench_max_double(
+    1.0,
+    main_width - main_horizontal_margin,
+  )
+  let panel_width = workbench_clamp_double(
+    panel_available_width,
+    workbench_min_double(480.0, panel_available_width),
+    920.0,
+  )
   let panel_body_width = workbench_max_double(1.0, panel_width - 24.0)
   let row_badge_width = if panel_width < 620.0 { 88.0 } else { 104.0 }
   let row_text_width = workbench_max_double(
-    220.0,
+    1.0,
     panel_body_width - row_badge_width - 58.0 - 16.0,
   )
   let command_text_width = workbench_max_double(
-    190.0,
+    1.0,
     panel_body_width - row_badge_width - 68.0 - 54.0 - 54.0 - 40.0,
   )
   let diff_text_width = workbench_max_double(
-    220.0,
+    1.0,
     panel_body_width - 126.0 - 10.0,
   )
-  let composer_width = workbench_clamp_double(main_width - 80.0, 480.0, 900.0)
+  let composer_width = workbench_clamp_double(
+    panel_available_width,
+    workbench_min_double(480.0, panel_available_width),
+    900.0,
+  )
+  let top_text_available = workbench_max_double(
+    1.0,
+    main_width - 86.0 - 120.0 - 10.0 - 24.0,
+  )
+  let top_title_width = workbench_clamp_double(
+    top_text_available * 0.45,
+    workbench_min_double(180.0, top_text_available * 0.45),
+    360.0,
+  )
+  let top_path_width = workbench_min_double(
+    420.0,
+    workbench_max_double(1.0, top_text_available - top_title_width),
+  )
   {
     viewport,
     sidebar_width,
@@ -81,8 +107,8 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     row_text_width,
     command_text_width,
     diff_text_width,
-    top_title_width: workbench_clamp_double(main_width * 0.30, 180.0, 360.0),
-    top_path_width: workbench_clamp_double(main_width * 0.34, 180.0, 420.0),
+    top_title_width,
+    top_path_width,
     scroll_height: workbench_max_double(240.0, viewport.height - 175.0),
     composer_width,
     composer_input_width: workbench_max_double(1.0, composer_width - 24.0),
@@ -380,7 +406,7 @@ fn WorkbenchModel::top_bar(
   surface(
     row(
       [
-        badge("Pi", tone=Accent, theme~, width=42.0),
+        badge("当前会话", tone=Accent, theme~, width=86.0),
         text(
           active.title,
           role=Control,
@@ -452,7 +478,7 @@ fn WorkbenchModel::transcript_panel(
           "会话记录",
           role=Control,
           theme~,
-          width=layout.panel_body_width - 240.0,
+          width=workbench_max_double(1.0, layout.panel_body_width - 240.0),
           height=28.0,
         ),
         count_badge(
@@ -497,7 +523,7 @@ fn transcript_row(
   row(
     [
       badge(
-        item.role,
+        transcript_role_label(item.role),
         tone=transcript_badge_tone(item.tone),
         theme~,
         width=layout.row_badge_width,
@@ -591,6 +617,20 @@ fn transcript_badge_tone(tone : String) -> @views.BadgeTone {
 }
 
 ///|
+fn transcript_role_label(role : String) -> String {
+  match role {
+    "user" => "用户"
+    "assistant" => "Pi"
+    "toolResult" => "工具"
+    "bashExecution" => "命令"
+    "branchSummary" => "分支"
+    "compactionSummary" => "压缩"
+    "message" => "消息"
+    _ => role
+  }
+}
+
+///|
 fn count_badge(
   count : Int,
   label~ : String,
@@ -614,7 +654,7 @@ fn command_catalog_row(
   row(
     [
       badge(
-        command.source,
+        command_source_label(command.source),
         tone=command_source_tone(command.source),
         theme~,
         width=layout.row_badge_width,
@@ -679,6 +719,16 @@ fn command_source_tone(source : String) -> @views.BadgeTone {
 }
 
 ///|
+fn command_source_label(source : String) -> String {
+  match source {
+    "prompt" => "提示"
+    "skill" => "技能"
+    "extension" => "扩展"
+    _ => source
+  }
+}
+
+///|
 fn WorkbenchModel::session_status_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
@@ -690,13 +740,18 @@ fn WorkbenchModel::session_status_panel(
     row(
       [
         text(
-          "当前会话",
+          "Pi 运行状态",
           role=Control,
           theme~,
-          width=layout.panel_body_width - 212.0,
+          width=workbench_max_double(1.0, layout.panel_body_width - 212.0),
           height=28.0,
         ),
-        badge(active.status, tone=Success, theme~, width=92.0),
+        badge(
+          session_status_label(active.status),
+          tone=session_status_tone(active.status),
+          theme~,
+          width=92.0,
+        ),
         count_badge(
           self.pending_transport_count(),
           label=self.pending_transport_count().to_string() + " 排队",
@@ -754,6 +809,28 @@ fn WorkbenchModel::session_status_panel(
 ///|
 fn session_status_panel_height(row_count : Int) -> Double {
   92.0 + (row_count - 2).max(0).to_double() * 42.0
+}
+
+///|
+fn session_status_label(status : String) -> String {
+  match status {
+    "active" => "活跃"
+    "queued" => "排队"
+    "running" => "运行中"
+    "idle" => "空闲"
+    "failed" => "失败"
+    _ => status
+  }
+}
+
+///|
+fn session_status_tone(status : String) -> @views.BadgeTone {
+  match status {
+    "running" | "active" => Success
+    "queued" => Accent
+    "failed" => Danger
+    _ => Neutral
+  }
 }
 
 ///|
@@ -935,12 +1012,12 @@ fn next_action_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let detail_width = workbench_max_double(
-    180.0,
-    layout.panel_body_width - 86.0 - 68.0 - 58.0 - 32.0,
+    1.0,
+    layout.panel_body_width - 66.0 - 68.0 - 58.0 - 32.0,
   )
   row(
     [
-      badge("接续建议", tone=action.tone, theme~, width=86.0),
+      badge("下一步", tone=action.tone, theme~, width=66.0),
       column(
         [
           text(
@@ -1016,7 +1093,7 @@ fn plan_progress_row(
     None => Success
   }
   let detail_width = workbench_max_double(
-    220.0,
+    1.0,
     layout.panel_body_width - 86.0 - 84.0 - 58.0 - 32.0,
   )
   row(
@@ -1138,7 +1215,10 @@ fn model_catalog_row(
         model_catalog_label(models),
         role=Caption,
         theme~,
-        width=layout.panel_body_width - 128.0 - 58.0 - 58.0 - 24.0,
+        width=workbench_max_double(
+          1.0,
+          layout.panel_body_width - 128.0 - 58.0 - 58.0 - 24.0,
+        ),
         height=28.0,
       ),
       button(
@@ -1180,18 +1260,21 @@ fn WorkbenchModel::runtime_signal_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let signal_width = (layout.panel_body_width - 8.0) / 2.0
+  let signal_width = workbench_max_double(
+    1.0,
+    (layout.panel_body_width - 8.0) / 2.0,
+  )
   row(
     [
       text(
-        "传输：" + self.transport.display_status_label(),
+        "RPC 通道：" + self.transport.display_status_label(),
         role=Caption,
         theme~,
         width=signal_width,
         height=30.0,
       ),
       text(
-        "Pi：" + self.pi_agent.display_status_label(),
+        "Pi 运行：" + self.pi_agent.display_status_label(),
         role=Caption,
         theme~,
         width=signal_width,
@@ -1285,7 +1368,7 @@ fn WorkbenchModel::session_controls_row(
     button(
       "找分叉",
       on_click=RefreshForkMessages,
-      variant=Outline,
+      variant=Ghost,
       theme~,
       width=66.0,
       height=34.0,
@@ -1295,7 +1378,7 @@ fn WorkbenchModel::session_controls_row(
     button(
       "导出",
       on_click=ExportSessionHtml,
-      variant=Outline,
+      variant=Ghost,
       theme~,
       width=54.0,
       height=34.0,
@@ -1305,7 +1388,7 @@ fn WorkbenchModel::session_controls_row(
     button(
       "压缩",
       on_click=CompactSession,
-      variant=Outline,
+      variant=Ghost,
       theme~,
       width=54.0,
       height=34.0,
@@ -1315,7 +1398,7 @@ fn WorkbenchModel::session_controls_row(
     button(
       "思考",
       on_click=CycleThinkingLevel,
-      variant=Outline,
+      variant=Ghost,
       theme~,
       width=54.0,
       height=34.0,
@@ -1325,7 +1408,7 @@ fn WorkbenchModel::session_controls_row(
     button(
       "同步名",
       on_click=SyncSessionName,
-      variant=Outline,
+      variant=Ghost,
       theme~,
       width=66.0,
       height=34.0,
@@ -1435,7 +1518,10 @@ fn session_binding_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let cell_width = (layout.panel_body_width - 8.0) / 2.0
+  let cell_width = workbench_max_double(
+    1.0,
+    (layout.panel_body_width - 8.0) / 2.0,
+  )
   row(
     [
       text(
@@ -1508,10 +1594,12 @@ fn pi_session_binding_status_label(status : String) -> String {
 
 ///|
 fn WorkbenchModel::thinking_level_label(self : WorkbenchModel) -> String {
-  if self.pi_agent.thinking_level == "" {
-    "default"
-  } else {
-    self.pi_agent.thinking_level
+  match self.pi_agent.thinking_level {
+    "" | "default" => "默认"
+    "low" => "低"
+    "medium" => "中"
+    "high" => "高"
+    _ => self.pi_agent.thinking_level
   }
 }
 
@@ -1522,7 +1610,7 @@ fn session_stats_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let token_width = workbench_max_double(
-    118.0,
+    1.0,
     layout.panel_body_width - 128.0 - 108.0 - 112.0 - 24.0,
   )
   if stats.has_visible_metrics() {
@@ -1619,7 +1707,7 @@ fn WorkbenchModel::activity_panel(
           "运行证据",
           role=Control,
           theme~,
-          width=layout.panel_body_width - 290.0,
+          width=workbench_max_double(1.0, layout.panel_body_width - 290.0),
           height=28.0,
         ),
         count_badge(
@@ -1679,7 +1767,7 @@ fn event_row(
   row(
     [
       badge(
-        event.phase,
+        event_phase_label(event.phase),
         tone=transcript_badge_tone(event.tone),
         theme~,
         width=layout.row_badge_width,
@@ -1719,6 +1807,23 @@ fn event_row(
 }
 
 ///|
+fn event_phase_label(phase : String) -> String {
+  match phase {
+    "user" => "用户"
+    "agent" => "Pi"
+    "assistant" => "Pi"
+    "tool" => "工具"
+    "transport" => "传输"
+    "diagnostic" => "诊断"
+    "context" => "上下文"
+    "diff" => "变更"
+    "plan" => "计划"
+    "control" => "操作"
+    _ => phase
+  }
+}
+
+///|
 fn command_run_row(
   command : CommandRun,
   layout : WorkbenchLayout,
@@ -1727,7 +1832,7 @@ fn command_run_row(
   row(
     [
       badge(
-        command.status,
+        command_status_label(command.status),
         tone=command_status_tone(command.status),
         theme~,
         width=layout.row_badge_width,
@@ -1789,8 +1894,8 @@ fn command_run_row(
 ///|
 fn command_exit_label(command : CommandRun) -> String {
   match command.exit_code {
-    Some(code) => "exit " + code.to_string()
-    None => command.status
+    Some(code) => "退出码 " + code.to_string()
+    None => command_status_label(command.status)
   }
 }
 
@@ -1799,7 +1904,21 @@ fn command_detail_label(command : CommandRun) -> String {
   if command.output_path == "" {
     command.cwd
   } else {
-    "output " + command.output_path
+    "输出 " + command.output_path
+  }
+}
+
+///|
+fn command_status_label(status : String) -> String {
+  match status {
+    "passed" | "ready" => "通过"
+    "running" => "运行中"
+    "queued" => "排队"
+    "cancelling" => "停止中"
+    "failed" => "失败"
+    "cancelled" => "已取消"
+    "manual" => "手动"
+    _ => status
   }
 }
 
@@ -1875,7 +1994,7 @@ fn WorkbenchModel::workspace_digest_panel(
           "工作区证据",
           role=Control,
           theme~,
-          width=layout.panel_body_width - 302.0,
+          width=workbench_max_double(1.0, layout.panel_body_width - 302.0),
           height=28.0,
         ),
         count_badge(
@@ -2111,20 +2230,19 @@ fn WorkbenchModel::composer(
         row(
           [
             button(
-              "+",
+              "上下文",
               on_click=ToggleContext("repo"),
               variant=Ghost,
               theme~,
-              width=38.0,
+              width=60.0,
               height=34.0,
             ),
-            badge("RPC", tone=Accent, theme~, width=54.0),
             button(
               self.steering_mode_label(),
               on_click=ToggleSteeringMode,
               variant=Outline,
               theme~,
-              width=76.0,
+              width=82.0,
               height=34.0,
             ),
             button(
@@ -2153,11 +2271,11 @@ fn WorkbenchModel::composer(
               height=36.0,
             ),
             button(
-              "↑",
+              "发送",
               on_click=DispatchPrompt,
               variant=Primary,
               theme~,
-              width=42.0,
+              width=54.0,
               height=36.0,
             ),
           ],
@@ -2190,9 +2308,9 @@ fn WorkbenchModel::follow_up_mode_label(self : WorkbenchModel) -> String {
 ///|
 fn mode_short_label(mode : String) -> String {
   if mode == "all" {
-    "all"
+    "全部"
   } else {
-    "1"
+    "单条"
   }
 }
 

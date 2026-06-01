@@ -1164,7 +1164,7 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
   inspect(model.last_status, content="Pi bash response applied")
   assert_true(model.events.any(event => event.title == "Pi bash completed"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "output /tmp/mo-workbench-bash.log"))
+  assert_true(has_text(commands, "输出 /tmp/mo-workbench-bash.log"))
   assert_true(has_text(commands, "分析"))
   assert_true(has_text(commands, "重跑"))
 }
@@ -1637,7 +1637,7 @@ test "workbench renders current plan and continuation action" {
   assert_true(has_text(commands, "Fix Skia smoke"))
   assert_true(has_text(commands, "进行中 · Run focused checks"))
   assert_true(has_text(commands, "1 待办"))
-  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "下一步"))
   assert_true(has_text(commands, "继续当前计划"))
   assert_true(has_text(commands, "继续"))
 }
@@ -2461,8 +2461,8 @@ test "workbench activity draws latest command evidence" {
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "new command"))
-  assert_true(has_text(commands, "output /tmp/new-command.log"))
-  assert_true(has_text(commands, "exit 2"))
+  assert_true(has_text(commands, "输出 /tmp/new-command.log"))
+  assert_true(has_text(commands, "退出码 2"))
   assert_true(has_text(commands, "分析"))
   assert_false(has_text(commands, "old command"))
 }
@@ -2480,7 +2480,7 @@ test "workbench current session draws diagnostic next action" {
     ],
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "下一步"))
   assert_true(has_text(commands, "修复最新诊断"))
   assert_true(has_text(commands, "moon check: unused variable in app.mbt"))
   assert_true(has_text(commands, "修复"))
@@ -2503,7 +2503,7 @@ test "workbench current session prioritizes failed command next action" {
     ],
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "下一步"))
   assert_true(has_text(commands, "分析失败命令"))
   assert_true(
     has_text(commands, "moon test examples/mo_workbench/app --target native"),
@@ -2526,7 +2526,7 @@ test "workbench current session prioritizes active plan before diff next action"
     ],
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "下一步"))
   assert_true(has_text(commands, "继续当前计划"))
   assert_true(has_text(commands, "进行中 · Run focused checks"))
   assert_false(has_text(commands, "审核当前变更"))
@@ -2537,7 +2537,7 @@ test "workbench current session draws diff next action" {
   let commands = model_with_reviewable_diff()
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "下一步"))
   assert_true(has_text(commands, "审核当前变更"))
   assert_true(has_text(commands, "ready for review · 5 文件 · +160 -10"))
 }
@@ -2554,8 +2554,11 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "导出"))
   assert_true(has_text(commands, "压缩"))
   assert_true(has_text(commands, "思考"))
-  assert_true(has_text(commands, "引导 1"))
-  assert_true(has_text(commands, "跟进 1"))
+  assert_true(has_text(commands, "Pi 运行状态"))
+  assert_true(has_text(commands, "引导 单条"))
+  assert_true(has_text(commands, "跟进 单条"))
+  assert_true(has_text(commands, "上下文"))
+  assert_true(has_text(commands, "发送"))
   assert_true(has_text(commands, "引导"))
   assert_true(has_text(commands, "跟进"))
   assert_true(has_text(commands, "会话记录"))
@@ -2563,7 +2566,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "工作区证据"))
   assert_true(has_text(commands, "同步名"))
   assert_true(has_text(commands, "Pi RPC"))
-  assert_false(has_text(commands, "接续建议"))
+  assert_false(has_text(commands, "下一步"))
   assert_false(has_text(commands, "Session"))
   assert_false(has_text(commands, "Pi transcript"))
   assert_false(has_text(commands, "Activity"))
@@ -2584,15 +2587,15 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "分析"))
   assert_false(has_text(commands, "重跑"))
   assert_false(has_text(commands, "分支"))
-  assert_false(has_text(commands, "output /tmp/mo-workbench-app-test.log"))
+  assert_false(has_text(commands, "输出 /tmp/mo-workbench-app-test.log"))
   assert_false(has_text(commands, "清除"))
   assert_false(has_text(commands, "聚焦"))
   assert_false(has_text(commands, "审核"))
   assert_false(has_text(commands, "运行"))
   assert_false(has_text(commands, "停止"))
   assert_false(has_text(commands, "Pi: unbound"))
-  assert_false(has_text(commands, "传输：未连接"))
-  assert_false(has_text(commands, "Pi：空闲"))
+  assert_false(has_text(commands, "RPC 通道：未连接"))
+  assert_false(has_text(commands, "Pi 运行：空闲"))
   assert_false(has_text(commands, "Pi RPC + macOS Skia dogfood."))
   assert_false(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_false(has_text(commands, "Product"))

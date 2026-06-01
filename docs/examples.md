@@ -164,13 +164,15 @@ of long placeholder validation text, future-workflow filler, or hard-coded
 attachment cards. The shell now derives its sidebar, main panel, scroll, and
 composer dimensions from the runtime viewport instead of a fixed `1200x750`
 surface, so the macOS Skia entrypoint can be resized while preserving the
-session-first hierarchy. Primary section labels are quieter and consistently
-Chinese (`当前会话`, `会话记录`, `运行证据`, `工作区证据`), with Pi/RPC left as
-protocol nouns. Empty `思考` / `停止` control slots no longer reserve operation
-row space. The workspace digest now includes file, diff, and latest
+session-first hierarchy, including narrower panel/composer widths in smaller
+windows. Primary section labels are quieter and consistently Chinese
+(`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`), with Pi/RPC left
+as protocol nouns. Secondary session controls now use quieter visual treatment
+than the primary refresh/new-session actions. The workspace digest now includes
+file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. When actionable evidence is
-present, the current session panel derives one quiet `接续建议` row that points
+present, the current session panel derives one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, diagnostics,
 failed command evidence, active plan steps, reviewable diffs, files, transcript
 rows, command catalog entries, and activity events. Pi `plan_update` JSONL also
