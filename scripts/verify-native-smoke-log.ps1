@@ -46,6 +46,7 @@ $defaultStageMarkers = @(
   "native smoke gpu frame context validation",
   "native smoke surface target resource plan count",
   "native smoke window target resource plan count",
+  "native smoke surface flush-and-submit",
   "native smoke shader draws",
   "native smoke shader resource plan count",
   "native smoke filter layer count",
@@ -120,6 +121,10 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke window target resource plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface flush-and-submit"
     Value = "1"
   }
   [pscustomobject]@{

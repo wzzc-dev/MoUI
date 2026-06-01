@@ -78,6 +78,8 @@ The `native` subpackage contains the first opt-in native boundary:
   handle when a surface is available;
 - `@native.Surface::image_snapshot_with_bounds(bounds)` snapshots a bounded
   surface rectangle;
+- `@native.Surface::flush_and_submit()` establishes an explicit finalization
+  boundary for native surfaces; current raster surfaces treat it as a no-op;
 - `@native.Surface::read_pixels(bounds)` reads N32 premultiplied surface pixels
   into an owned `@skia_mbt.Pixmap`;
 - `@native.Image::encode_to_data(format, quality)` returns immutable

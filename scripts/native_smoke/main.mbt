@@ -487,6 +487,12 @@ fn main {
   )
   canvas.restore_to_count(save_count_before_transform)
 
+  if !surface.flush_and_submit() {
+    fail_smoke("failed to flush and submit native surface")
+  }
+  println("native smoke surface flush-and-submit")
+  println(1)
+
   guard surface.read_pixels() is Some(pixmap) else {
     fail_smoke("failed to read surface pixels")
   }
