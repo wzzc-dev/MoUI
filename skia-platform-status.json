@@ -346,6 +346,11 @@
       "marker": "native smoke shaper availability"
     },
     {
+      "id": "text.default-typeface-availability",
+      "area": "Text",
+      "marker": "native smoke default typeface availability"
+    },
+    {
       "id": "fontmgr.family-count",
       "area": "FontMgr",
       "marker": "native smoke font family count"
