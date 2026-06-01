@@ -305,17 +305,18 @@ while preserving Pi's optional `fullOutputPath` as command evidence. Activity
 rows display that output path when present, so long/truncated command output can
 stay discoverable without native-only state. Activity command rows can now queue
 an `Inspect command output for ...` prompt from the latest command status, cwd,
-and output path, turning bash evidence into the next Pi task through
+exit code, and output path, turning bash evidence into the next Pi task through
 `SendUserInput` while preserving the current context chips and selected agent
 focus. The Activity digest normally keeps up to three recent command evidence
 rows, then expands to the full focused-check batch when the newest command group
 matches those presets, so the batch can be inspected as a group without a
 separate log page. Failed command rows use a `修复` primary action that queues a
-`Fix failed command ...` prompt with the command status, cwd, output path, and
-the same context/focus wrapper, turning a failed focused check directly into the
-next coding-agent task without adding native-only output handling. The current
-session `下一步` row mirrors the latest failed command's exit code and output
-path so the fix entrypoint carries the same evidence as the Activity row.
+`Fix failed command ...` prompt with the command status, exit code, cwd, output
+path, and the same context/focus wrapper, turning a failed focused check
+directly into the next coding-agent task without adding native-only output
+handling. The current session `下一步` row mirrors the latest failed command's
+exit code and output path so the fix entrypoint carries the same evidence as
+the Activity row.
 The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.

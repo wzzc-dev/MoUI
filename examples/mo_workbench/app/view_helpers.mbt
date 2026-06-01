@@ -1624,7 +1624,7 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
         primary_label: "修复",
         primary_message: FixCommandRun(
           command.command,
-          command.status,
+          command_status_context(command),
           command.cwd,
           command.output_path,
         ),
@@ -2786,17 +2786,31 @@ fn command_primary_action_message(command : CommandRun) -> WorkbenchMsg {
   if command.status == "failed" {
     FixCommandRun(
       command.command,
-      command.status,
+      command_status_context(command),
       command.cwd,
       command.output_path,
     )
   } else {
     InspectCommandRun(
       command.command,
-      command.status,
+      command_status_context(command),
       command.cwd,
       command.output_path,
     )
+  }
+}
+
+///|
+fn command_status_context(command : CommandRun) -> String {
+  let status = command.status.trim().to_owned()
+  match command.exit_code {
+    Some(code) =>
+      if status == "" {
+        "exit code " + code.to_string()
+      } else {
+        status + ", exit code " + code.to_string()
+      }
+    None => status
   }
 }
 

@@ -184,21 +184,22 @@ packages:
   Activity rows display that output path when it is available.
 - Command evidence rows in the Activity digest can queue an
   `Inspect command output for ...` prompt through `SendUserInput`, carrying the
-  command text, status, cwd, and output path back into Pi without adding a
-  native-only output-opening bridge. These prompts preserve the current context
-  chips and selected agent focus, so evidence actions keep the same repo,
-  examples, and coding/verification intent as composer prompts. The digest
+  command text, status, exit code, cwd, and output path back into Pi without
+  adding a native-only output-opening bridge. These prompts preserve the current
+  context chips and selected agent focus, so evidence actions keep the same
+  repo, examples, and coding/verification intent as composer prompts. The digest
   normally shows up to three recent command evidence rows, then expands to the
   full focused-check batch when the newest command group matches those presets,
   so the batch remains visible while the newest bash result is still easy to act
   on.
 - Failed command evidence rows use a `修复` primary action that queues a
   `Fix failed command ...` prompt through the same `SendUserInput` path,
-  carrying the output path when Pi provided one and the same context/focus
-  wrapper as analysis prompts. This keeps the fix loop inside the shared app
-  model instead of adding an output-opening bridge or native-only command
-  shortcut. The session-panel `下一步` row mirrors the latest failed command's
-  exit code and output path, keeping the next repair action self-contained.
+  carrying the exit code and output path when Pi provided them plus the same
+  context/focus wrapper as analysis prompts. This keeps the fix loop inside the
+  shared app model instead of adding an output-opening bridge or native-only
+  command shortcut. The session-panel `下一步` row mirrors the latest failed
+  command's exit code and output path, keeping the next repair action
+  self-contained.
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.

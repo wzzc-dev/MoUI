@@ -3019,6 +3019,132 @@ test "workbench current session prioritizes failed command next action" {
 }
 
 ///|
+test "workbench failed command fix actions carry exit code evidence" {
+  let failed = CommandRun::new(
+    id=1,
+    command="moon test examples/mo_workbench/app --target native",
+    cwd="/Volumes/Data/Code/moon/MoUI",
+    status="failed",
+    exit_code=Some(1),
+    output_path="/tmp/mo-workbench-test.log",
+  )
+  let model = { ..WorkbenchModel::new(), commands: [failed] }
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let runtime = model.runtime_with_transport(
+    transport,
+    width=1220.0,
+    height=780.0,
+  )
+  click_text(runtime, "修复")
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=context_task_payload(
+          "Fix failed command moon test examples/mo_workbench/app --target native using output /tmp/mo-workbench-test.log (status failed, exit code 1, cwd /Volumes/Data/Code/moon/MoUI)",
+        ),
+      )
+    }
+    _ => fail("expected clicked command fix prompt")
+  }
+}
+
+///|
+test "workbench activity failed command fix carries exit code evidence" {
+  let running = CommandRun::new(
+    id=1,
+    command="moon check",
+    cwd="/Volumes/Data/Code/moon/MoUI",
+    status="running",
+  )
+  let failed = CommandRun::new(
+    id=2,
+    command="moon test examples/mo_workbench/app --target wasm-gc",
+    cwd="/Volumes/Data/Code/moon/MoUI",
+    status="failed",
+    exit_code=Some(2),
+    output_path="/tmp/mo-workbench-wasm.log",
+  )
+  let model = { ..WorkbenchModel::new(), commands: [running, failed] }
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let runtime = model.runtime_with_transport(
+    transport,
+    width=1220.0,
+    height=780.0,
+  )
+  click_text(runtime, "修复")
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=context_task_payload(
+          "Fix failed command moon test examples/mo_workbench/app --target wasm-gc using output /tmp/mo-workbench-wasm.log (status failed, exit code 2, cwd /Volumes/Data/Code/moon/MoUI)",
+        ),
+      )
+    }
+    _ => fail("expected clicked activity command fix prompt")
+  }
+}
+
+///|
+test "workbench command evidence analysis carries exit code evidence" {
+  let command = CommandRun::new(
+    id=1,
+    command="moon test examples/mo_workbench/app --target native",
+    cwd="/Volumes/Data/Code/moon/MoUI",
+    status="passed",
+    exit_code=Some(0),
+    output_path="/tmp/mo-workbench-test.log",
+  )
+  let model = {
+    ..WorkbenchModel::new(),
+    commands: [command],
+    plan: [
+      PlanStep::new(
+        id="active",
+        title="Keep next action off command evidence",
+        status="in_progress",
+        owner="Pi",
+        detail="Inspect activity row only",
+      ),
+    ],
+  }
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let runtime = model.runtime_with_transport(
+    transport,
+    width=1220.0,
+    height=780.0,
+  )
+  click_text(runtime, "分析")
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=context_task_payload(
+          "Inspect command output for moon test examples/mo_workbench/app --target native: /tmp/mo-workbench-test.log (status passed, exit code 0, cwd /Volumes/Data/Code/moon/MoUI)",
+        ),
+      )
+    }
+    _ => fail("expected clicked command evidence prompt")
+  }
+}
+
+///|
 test "workbench current session prioritizes failed command over bash diagnostic" {
   let model = {
     ..WorkbenchModel::new(),
@@ -3584,6 +3710,44 @@ fn draw_text_count_containing(
     }
   }
   count
+}
+
+///|
+fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+  guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
+    fail("expected text to click: " + text)
+  }
+  let point = @core.Point::new(
+    x=frame.origin.x + frame.size.width / 2.0,
+    y=frame.origin.y + frame.size.height / 2.0,
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Up),
+    ),
+  )
+}
+
+///|
+fn text_frame(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.Rect? {
+  for command in commands {
+    match command {
+      DrawText({ text: value, frame, .. }) =>
+        if value == text {
+          return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|
