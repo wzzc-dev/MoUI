@@ -281,6 +281,7 @@ if schema_version >= 3:
     required_capability_ids = {
         "surface.descriptor",
         "canvas.state",
+        "canvas.clip",
         "canvas.command-replay",
         "pipeline.resource-plan",
         "pipeline.frame-resource-plan",
@@ -372,6 +373,7 @@ if schema_version >= 3:
         if not isinstance(expected_values, list) or not expected_values:
             fail("schema v4 platform status is missing native_smoke_expected_values list")
         required_expected_values = {
+            "native smoke canvas clip device width": "4",
             "native smoke render resource plan count": "9",
             "native smoke render frame resource plan count": "9",
             "native smoke render frame validation status": "1",
