@@ -172,14 +172,15 @@ Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工
 evidence exists, with Pi/RPC left as protocol nouns. Default chrome uses short
 project names and localized session status labels while keeping full
 `project_path` values in the shared model and transport commands. The default
-shell keeps only refresh, new-session, and send controls prominent; context
-chips, the idle Pi RPC status, agent focus controls, advanced session actions,
-steering / follow-up composer controls, and focused-check presets appear once
-Pi state, typed input, non-default context, or command evidence makes them
-relevant. The workspace digest now includes file, diff, and latest diagnostic
-state with a short clear action so stderr/RPC/bash failures remain visible
-without adding a separate diagnostics page. When actionable evidence is
-present, the current session panel derives one quiet `下一步` row that points
+shell keeps only top-bar refresh/new-session controls and composer send
+prominent; context chips, the idle Pi RPC status, the `Pi 运行状态` panel, agent
+focus controls, advanced session actions, steering / follow-up composer
+controls, and focused-check presets appear once Pi state, typed input,
+non-default context, or command evidence makes them relevant. The workspace
+digest now includes file, diff, and latest diagnostic state with a short clear
+action so stderr/RPC/bash failures remain visible without adding a separate
+diagnostics page. When actionable evidence is present, the current session panel
+derives one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, failed command
 evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
 rows, and activity events. Pi `plan_update` JSONL also
@@ -336,11 +337,11 @@ while models and stats refresh the compact status panel.
 The session panel now surfaces that binding directly with a compact Pi status
 row, so a coding-agent run can show the live Pi session name/id and model
 without opening a separate diagnostics view.
-The current session can also be refreshed manually from the session panel using
-the same platform-neutral command batch, so the native UI can resync Pi state,
-model catalog, transcript, fork affordances, command catalog, and stats without
+The current session can also be refreshed manually from the top bar using the
+same platform-neutral command batch, so the native UI can resync Pi state, model
+catalog, transcript, fork affordances, command catalog, and stats without
 changing selection.
-The session panel also includes a fresh-session control. It queues
+The top bar also includes a fresh-session control. It queues
 `NewRpcSession` first; after the `new_session` success response arrives,
 `ReceiveTransport` queues the state, model catalog, messages, fork candidates,
 commands, and stats refresh through the same platform-neutral transport model.

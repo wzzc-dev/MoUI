@@ -88,17 +88,17 @@ packages:
   narrower panel/composer widths when the main region is smaller than the old
   fixed desktop frame. The right-side workflow is now a scrollable main canvas
   with an explicit scrollbar, multi-line transcript message blocks for long Pi
-  replies, a compact current-state strip, and a centered floating composer. The
-  visible hierarchy uses quieter Chinese section labels (`当前会话`, `Pi 运行状态`,
+  replies, an on-demand current-state strip, and a centered floating composer.
+  The visible hierarchy uses quieter Chinese section labels (`当前会话`, `Pi 运行状态`,
   `会话记录`, `运行证据`, `工作区证据`) once their evidence exists while preserving
   Pi/RPC protocol nouns. The default chrome shows short project names and
   localized session status labels, while full project paths remain in the shared
-  model and Pi transport commands. The default shell keeps only refresh,
-  new-session, and send controls prominent. Context chips, the idle Pi RPC
-  status, agent focus controls, advanced session actions, steering/follow-up
-  composer controls, and focused-check presets stay collapsed until Pi state,
-  typed input, non-default context, selected focus, or command evidence makes
-  them relevant.
+  model and Pi transport commands. The default shell keeps only top-bar
+  refresh/new-session controls and composer send prominent. Context chips, the
+  idle Pi RPC status, the `Pi 运行状态` panel, agent focus controls, advanced
+  session actions, steering/follow-up composer controls, and focused-check
+  presets stay collapsed until Pi state, typed input, non-default context,
+  selected focus, or command evidence makes them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
@@ -167,7 +167,7 @@ packages:
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
-- The current session can be refreshed manually from the session panel. The
+- The current session can be refreshed manually from the top bar. The
   shared app reuses the same platform-neutral command batch as session
   selection: state, messages, command catalog, and session stats.
 - Workbench command queue entries now use Pi RPC `bash` directly instead of
@@ -483,7 +483,7 @@ Workbench session. This gives the macOS Skia UI a direct resync affordance while
 keeping process ownership in the native async transport and state ownership in
 the shared app package.
 
-The session panel's new-session control first queues:
+The top bar's new-session control first queues:
 
 ```json
 {"type":"new_session"}

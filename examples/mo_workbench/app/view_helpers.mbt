@@ -114,7 +114,7 @@ fn workbench_layout(
   let composer_height = 122.0
   let top_text_available = workbench_max_double(
     1.0,
-    content_width - 86.0 - 120.0 - 10.0 - 24.0,
+    content_width - 86.0 - 74.0 - 120.0 - 66.0 - 54.0 - 42.0 - 24.0,
   )
   let top_title_width = workbench_clamp_double(
     top_text_available * 0.45,
@@ -952,6 +952,22 @@ fn WorkbenchModel::top_bar(
           width=74.0,
         ),
         text(active.branch, role=Caption, theme~, width=120.0, height=28.0),
+        button(
+          "新会话",
+          on_click=NewSession,
+          variant=Outline,
+          theme~,
+          width=66.0,
+          height=34.0,
+        ),
+        button(
+          "刷新",
+          on_click=RefreshSession,
+          variant=Outline,
+          theme~,
+          width=54.0,
+          height=34.0,
+        ),
       ],
       spacing=6.0,
       align=Center,
@@ -997,9 +1013,10 @@ fn WorkbenchModel::chat_transcript(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = [
-    self.session_status_panel(layout, theme),
-  ]
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  if self.has_session_status_panel_content() {
+    rows.push(self.session_status_panel(layout, theme))
+  }
   if self.has_transcript_panel_content() {
     rows.push(self.transcript_panel(layout, theme))
   }
@@ -1017,7 +1034,11 @@ fn WorkbenchModel::chat_content_height(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
 ) -> Double {
-  let mut height = session_status_panel_height(self.session_status_row_count())
+  let mut height = 0.0
+  if self.has_session_status_panel_content() {
+    height = height +
+      session_status_panel_height(self.session_status_row_count())
+  }
   if self.has_transcript_panel_content() {
     height = height + 10.0 + self.transcript_panel_height(layout)
   }
@@ -1033,6 +1054,23 @@ fn WorkbenchModel::chat_content_height(
       )
   }
   height
+}
+
+///|
+fn WorkbenchModel::has_session_status_panel_content(
+  self : WorkbenchModel,
+) -> Bool {
+  let active = self.active_session()
+  let binding = self.active_pi_session_binding()
+  active.active_task != "" ||
+  self.pending_transport_count() > 0 ||
+  !self.plan.is_empty() ||
+  self.pi_session_stats.has_visible_metrics() ||
+  self.model_catalog.length() > 0 ||
+  binding.has_visible_binding() ||
+  self.has_runtime_signal() ||
+  self.next_action() is Some(_) ||
+  self.has_session_panel_controls()
 }
 
 ///|
@@ -1451,7 +1489,9 @@ fn WorkbenchModel::session_status_panel(
     Some(action) => rows.push(next_action_row(action, layout, theme))
     None => ()
   }
-  rows.push(self.session_controls_row(layout, theme))
+  if self.has_session_panel_controls() {
+    rows.push(self.session_controls_row(layout, theme))
+  }
   surface(
     column(rows, spacing=6.0, align=Start),
     width=layout.panel_width,
@@ -1467,7 +1507,7 @@ fn WorkbenchModel::session_status_panel(
 fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
   let active = self.active_session()
   let binding = self.active_pi_session_binding()
-  let mut count = 2
+  let mut count = 1
   if active.active_task != "" {
     count = count + 1
   }
@@ -1490,12 +1530,15 @@ fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
     Some(_) => count = count + 1
     None => ()
   }
+  if self.has_session_panel_controls() {
+    count = count + 1
+  }
   count
 }
 
 ///|
 fn session_status_panel_height(row_count : Int) -> Double {
-  92.0 + (row_count - 2).max(0).to_double() * 42.0
+  54.0 + (row_count - 1).max(0).to_double() * 42.0
 }
 
 ///|
@@ -2019,26 +2062,6 @@ fn WorkbenchModel::session_controls_row(
     controls.push(self.thinking_level_cell(theme))
   }
   controls.push(spacer(min_length=4.0, weight=1.0))
-  controls.push(
-    button(
-      "新会话",
-      on_click=NewSession,
-      variant=Outline,
-      theme~,
-      width=66.0,
-      height=34.0,
-    ),
-  )
-  controls.push(
-    button(
-      "刷新",
-      on_click=RefreshSession,
-      variant=Outline,
-      theme~,
-      width=54.0,
-      height=34.0,
-    ),
-  )
   if self.has_advanced_session_controls() {
     controls.push(
       button(
@@ -2095,6 +2118,13 @@ fn WorkbenchModel::session_controls_row(
     controls.push(self.cancel_run_button(theme))
   }
   row(controls, spacing=8.0, align=Center)
+}
+
+///|
+fn WorkbenchModel::has_session_panel_controls(self : WorkbenchModel) -> Bool {
+  self.pi_agent.thinking_level != "" ||
+  self.has_advanced_session_controls() ||
+  self.has_cancel_target()
 }
 
 ///|
