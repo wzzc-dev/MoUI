@@ -1,12 +1,14 @@
 param(
   [string] $StatusFile = "skia-platform-status.json",
   [string] $RevisionFile = "skia-revision.txt",
-  [string] $ProviderLock = "skia-provider-lock.json"
+  [string] $ProviderLock = "skia-provider-lock.json",
+  [string] $StatusDoc = "SKIA_PLATFORM_STATUS.md"
 )
 
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$statusDocExplicit = $PSBoundParameters.ContainsKey("StatusDoc")
 
 function Resolve-RepoPath {
   param(
@@ -24,6 +26,7 @@ function Resolve-RepoPath {
 $resolvedStatusFile = Resolve-RepoPath $StatusFile
 $resolvedRevisionFile = Resolve-RepoPath $RevisionFile
 $resolvedProviderLock = Resolve-RepoPath $ProviderLock
+$resolvedStatusDoc = Resolve-RepoPath $StatusDoc
 
 if (!(Test-Path -LiteralPath $resolvedStatusFile -PathType Leaf)) {
   throw "Skia platform status file is missing: $resolvedStatusFile"
@@ -538,6 +541,74 @@ if (!$status.platforms.linux.source_build) {
 
 if ($status.platforms.windows.source_build) {
   throw "Windows status must not claim source_build=true until a repeatable Windows Skia build path exists"
+}
+
+$defaultStatusPath = Join-Path $repoRoot "skia-platform-status.json"
+$shouldCheckStatusDoc = $statusDocExplicit
+if (!$shouldCheckStatusDoc) {
+  $resolvedDefaultStatusPath = (Resolve-Path -LiteralPath $defaultStatusPath).Path
+  $actualStatusPath = (Resolve-Path -LiteralPath $resolvedStatusFile).Path
+  $shouldCheckStatusDoc = $actualStatusPath -eq $resolvedDefaultStatusPath
+}
+if ($shouldCheckStatusDoc) {
+  if (!(Test-Path -LiteralPath $resolvedStatusDoc -PathType Leaf)) {
+    throw "Skia platform status Markdown file is missing: $resolvedStatusDoc"
+  }
+
+  $platformNames = @{
+    linux = "Linux"
+    macos = "macOS"
+    windows = "Windows"
+  }
+  $rows = @{}
+  $inCurrentMatrix = $false
+  foreach ($line in Get-Content -LiteralPath $resolvedStatusDoc) {
+    $stripped = $line.Trim()
+    if ($stripped -eq "## Current Matrix") {
+      $inCurrentMatrix = $true
+      continue
+    }
+    if ($inCurrentMatrix -and $stripped.StartsWith("## ")) {
+      break
+    }
+    if (!$inCurrentMatrix -or !$stripped.StartsWith("|")) {
+      continue
+    }
+    $cells = @($stripped.Trim("|").Split("|") | ForEach-Object { $_.Trim() })
+    if ($cells.Count -ge 4) {
+      foreach ($platform in $platformNames.Keys) {
+        if ($cells[0] -eq $platformNames[$platform]) {
+          $rows[$platform] = $cells
+        }
+      }
+    }
+  }
+
+  foreach ($platform in $platformNames.Keys) {
+    $displayName = $platformNames[$platform]
+    if (!$rows.ContainsKey($platform)) {
+      throw "platform status Markdown matrix is missing row: $displayName"
+    }
+    $entry = $status.platforms.$platform
+    $rowCells = @($rows[$platform])
+    $stateCell = $rowCells[1].ToLowerInvariant()
+    $rowText = (@($rowCells[1..($rowCells.Count - 1)]) -join " ").ToLowerInvariant()
+    if ($entry.accepted) {
+      if (!$stateCell.Contains("accepted") -or $stateCell.Contains("not accepted")) {
+        throw "platform status Markdown matrix does not mark accepted platform: $displayName"
+      }
+      $acceptedProvider = "$($entry.__accepted_provider)"
+      $acceptedVersion = "$($entry.__accepted_version)"
+      if (![string]::IsNullOrWhiteSpace($acceptedProvider) -and !$rowText.Contains($acceptedProvider.ToLowerInvariant())) {
+        throw "platform status Markdown matrix is missing accepted provider: ${displayName}: $acceptedProvider"
+      }
+      if (![string]::IsNullOrWhiteSpace($acceptedVersion) -and !$rowText.Contains($acceptedVersion.ToLowerInvariant())) {
+        throw "platform status Markdown matrix is missing accepted version: ${displayName}: $acceptedVersion"
+      }
+    } elseif (!$stateCell.Contains("not accepted")) {
+      throw "platform status Markdown matrix does not mark unaccepted platform: $displayName"
+    }
+  }
 }
 
 Write-Host "Verified Skia platform status in $resolvedStatusFile with revision $revision."
