@@ -873,6 +873,8 @@ pub(all) struct RenderFrameDescriptor {
 } derive(Eq, @debug.Debug)
 pub fn RenderFrameDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int
 pub fn RenderFrameDescriptor::empty(SurfaceTargetDescriptor) -> Self
+pub fn RenderFrameDescriptor::finalization_descriptor(Self, frame_index? : Int) -> RenderFrameFinalizationDescriptor
+pub fn RenderFrameDescriptor::finalization_resource_plan(Self, frame_index? : Int) -> RendererResourcePlan
 pub fn RenderFrameDescriptor::has_gpu_context(Self) -> Bool
 pub fn RenderFrameDescriptor::has_present(Self) -> Bool
 pub fn RenderFrameDescriptor::is_ready(Self) -> Bool
@@ -884,6 +886,20 @@ pub fn RenderFrameDescriptor::present_resource_plan(Self, frame_index? : Int, bu
 pub fn RenderFrameDescriptor::requires_gpu_context(Self) -> Bool
 pub fn RenderFrameDescriptor::submission_descriptor(Self, frame_index? : Int, buffer_index? : Int) -> RenderFrameSubmissionDescriptor
 pub fn RenderFrameDescriptor::validation_status(Self) -> RenderFrameValidationStatus
+
+pub(all) struct RenderFrameFinalizationDescriptor {
+  frame : RenderFrameDescriptor
+  frame_index : Int
+  validation_status : RenderFrameValidationStatus
+  finalization : SurfaceFinalizationDescriptor?
+  resource_plan : RendererResourcePlan
+} derive(Eq, @debug.Debug)
+pub fn RenderFrameFinalizationDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int
+pub fn RenderFrameFinalizationDescriptor::gpu_backed_resource_plan(Self) -> RendererResourcePlan
+pub fn RenderFrameFinalizationDescriptor::has_finalization(Self) -> Bool
+pub fn RenderFrameFinalizationDescriptor::is_ready(Self) -> Bool
+pub fn RenderFrameFinalizationDescriptor::new(RenderFrameDescriptor, frame_index? : Int) -> Self
+pub fn RenderFrameFinalizationDescriptor::requires_gpu_context(Self) -> Bool
 
 pub(all) struct RenderFrameSubmissionDescriptor {
   frame : RenderFrameDescriptor

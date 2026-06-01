@@ -208,6 +208,13 @@ fn main {
     .gpu_backed_resource_plan()
   let smoke_gpu_missing_submission = smoke_gpu_missing_context_frame
     .submission_descriptor(frame_index=2)
+  let smoke_gpu_frame_finalization = smoke_gpu_frame.finalization_descriptor(
+    frame_index=2,
+  )
+  let smoke_gpu_frame_finalization_gpu_plan = smoke_gpu_frame_finalization
+    .gpu_backed_resource_plan()
+  let smoke_gpu_missing_frame_finalization = smoke_gpu_missing_context_frame
+    .finalization_descriptor(frame_index=2)
   if !smoke_gpu_submission.is_ready() ||
     !smoke_gpu_submission.has_present() ||
     smoke_gpu_submission.resource_plan.length() != 3 ||
@@ -231,10 +238,46 @@ fn main {
     ) != 0 {
     fail_smoke("gpu frame submission resource plan is invalid")
   }
+  guard smoke_gpu_frame_finalization.finalization
+    is Some(smoke_gpu_surface_finalization) else {
+    fail_smoke("gpu frame did not expose a finalization descriptor")
+  }
+  if !smoke_gpu_frame_finalization.is_ready() ||
+    !smoke_gpu_frame_finalization.has_finalization() ||
+    !smoke_gpu_frame_finalization.requires_gpu_context() ||
+    smoke_gpu_frame_finalization.resource_plan.length() != 3 ||
+    smoke_gpu_frame_finalization.resource_plan.gpu_backed_count != 3 ||
+    smoke_gpu_frame_finalization_gpu_plan.length() != 3 ||
+    smoke_gpu_frame_finalization_gpu_plan.count_kind(
+      @skia.GpuSurfaceResource,
+    ) != 2 ||
+    smoke_gpu_frame_finalization_gpu_plan.count_kind(
+      @skia.GpuContextResource,
+    ) != 1 ||
+    !smoke_gpu_frame_finalization_gpu_plan.contains_key(
+      smoke_gpu_target.resource_key(),
+    ) ||
+    !smoke_gpu_frame_finalization_gpu_plan.contains_key(
+      smoke_gpu_context.resource_key(),
+    ) ||
+    !smoke_gpu_frame_finalization_gpu_plan.contains_key(
+      smoke_gpu_surface_finalization.resource_key(),
+    ) ||
+    smoke_gpu_missing_frame_finalization.is_ready() ||
+    smoke_gpu_missing_frame_finalization.has_finalization() ||
+    smoke_gpu_missing_frame_finalization.gpu_backed_resource_plan().count_kind(
+      @skia.GpuContextResource,
+    ) != 0 {
+    fail_smoke("gpu frame finalization resource plan is invalid")
+  }
   println("native smoke gpu present resource plan count")
   println(smoke_gpu_present_plan.length())
   println("native smoke gpu finalization resource plan count")
   println(smoke_gpu_finalization_plan.length())
+  println("native smoke gpu frame finalization resource plan count")
+  println(smoke_gpu_frame_finalization.resource_plan.length())
+  println("native smoke gpu frame finalization gpu resource count")
+  println(smoke_gpu_frame_finalization_gpu_plan.length())
   println("native smoke gpu frame submission resource plan count")
   println(smoke_gpu_submission.resource_plan.length())
   println("native smoke gpu frame submission gpu resource count")
@@ -392,6 +435,39 @@ fn main {
     smoke_window_submission_cache.contains(smoke_window_present.resource_key()) {
     fail_smoke("window frame submission descriptor is invalid")
   }
+  let smoke_window_frame_finalization = smoke_window_frame.finalization_descriptor(
+    frame_index=3,
+  )
+  guard smoke_window_frame_finalization.finalization
+    is Some(smoke_window_frame_surface_finalization) else {
+    fail_smoke("window frame did not expose a finalization descriptor")
+  }
+  let smoke_window_frame_finalization_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @skia.RendererResourceDescriptor,
+  ] = @skia.ResourceCache::new()
+  let smoke_window_frame_finalization_cache_inserts = smoke_window_frame_finalization.cache_resources(
+    smoke_window_frame_finalization_cache,
+  )
+  if !smoke_window_frame_finalization.is_ready() ||
+    !smoke_window_frame_finalization.has_finalization() ||
+    smoke_window_frame_finalization.validation_status != @skia.FrameReady ||
+    smoke_window_frame_finalization.resource_plan.length() != 2 ||
+    smoke_window_frame_finalization.resource_plan.cacheable_count != 1 ||
+    smoke_window_frame_finalization.resource_plan.uncacheable_count != 1 ||
+    smoke_window_frame_finalization_cache_inserts != 1 ||
+    smoke_window_frame_finalization_cache.length() != 1 ||
+    !smoke_window_frame_finalization.resource_plan.contains_key(
+      smoke_window_target.resource_key(),
+    ) ||
+    !smoke_window_frame_finalization.resource_plan.contains_key(
+      smoke_window_frame_surface_finalization.resource_key(),
+    ) ||
+    smoke_window_frame_finalization_cache.contains(
+      smoke_window_frame_surface_finalization.resource_key(),
+    ) {
+    fail_smoke("window frame finalization descriptor is invalid")
+  }
   let smoke_window_unfinished_commands = @skia.RenderCommandList::new(
     @skia.RenderPassDescriptor::for_target(smoke_window_target),
   )
@@ -427,6 +503,20 @@ fn main {
     !smoke_window_missing_submission_cache.is_empty() {
     fail_smoke("missing-present frame submission descriptor was ready")
   }
+  let smoke_window_missing_finalization = smoke_window_missing_present_frame
+    .finalization_descriptor(frame_index=3)
+  let smoke_window_missing_finalization_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @skia.RendererResourceDescriptor,
+  ] = @skia.ResourceCache::new()
+  if smoke_window_missing_finalization.is_ready() ||
+    smoke_window_missing_finalization.has_finalization() ||
+    smoke_window_missing_finalization.cache_resources(
+      smoke_window_missing_finalization_cache,
+    ) != 0 ||
+    !smoke_window_missing_finalization_cache.is_empty() {
+    fail_smoke("missing-present frame finalization descriptor was ready")
+  }
   guard smoke_window_frame.touched_bounds is Some(smoke_window_touched_bounds) else {
     fail_smoke("render frame did not record touched bounds for window target")
   }
@@ -445,7 +535,13 @@ fn main {
   println(smoke_window_submission.resource_plan.length())
   println("native smoke render frame submission cache resources")
   println(smoke_window_submission_cache_inserts)
+  println("native smoke render frame finalization resource plan count")
+  println(smoke_window_frame_finalization.resource_plan.length())
+  println("native smoke render frame finalization cache resources")
+  println(smoke_window_frame_finalization_cache_inserts)
   println("native smoke render frame missing present validation")
+  println(1)
+  println("native smoke render frame missing finalization validation")
   println(1)
   println("native smoke render frame touched bounds width")
   println(smoke_window_touched_bounds.width().round().to_int())

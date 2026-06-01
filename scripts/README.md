@@ -195,9 +195,9 @@ raster drawing, readback, snapshots, PNG encode/decode, bitmap decode, and
 canvas save/restore with clipping behavior. It also exercises shader-backed
 draws, native Canvas replay of value-layer render commands, render resource
 planning, present descriptor validation, surface/GPU present resource planning,
-surface/GPU finalization resource planning, render-frame submission planning,
-GPU-backed submission subplans, native and portable path drawing, image drawing,
-transforms, default font text
+surface/GPU finalization resource planning, render-frame submission/finalization
+planning, GPU-backed submission/finalization subplans, native and portable path
+drawing, image drawing, transforms, default font text
 drawing/measurement/metrics, default-typeface text drawing/measurement/metrics
 when the selected Skia build provides a default typeface, and font manager
 family enumeration/matching when the platform font manager is available. It also
@@ -323,10 +323,11 @@ log includes the resolved `skia_commit` when the Skia checkout was available.
 check a saved native smoke executable log for key stage markers plus the final
 success marker. They also enforce status-declared exact marker values for
 counts that prove specific resource dependencies, including render-frame
-submission resource planning, cache population, and GPU-backed submission
-subplans, surface/GPU finalization planning, measured-text result metadata
-planning, and fallback resolution metadata planning, and are used by the
-real-smoke workflows after the one-step helper runs.
+submission/finalization resource planning, cache population, and GPU-backed
+submission/finalization subplans, surface/GPU finalization planning,
+measured-text result metadata planning, and fallback resolution metadata
+planning, and are used by the real-smoke workflows after the one-step helper
+runs.
 `scripts/verify-acceptance-log.sh` and `scripts/verify-acceptance-log.ps1` check
 the acceptance summary fields; the shell version can also require a full
 `skia_commit` hash for source-built revision pinning. `scripts/pin-skia-revision.sh`

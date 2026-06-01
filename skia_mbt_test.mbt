@@ -1424,6 +1424,66 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(submission_cache.contains(target.resource_key()))
   assert_true(submission_cache.contains(path.resource_key()))
   assert_true(!submission_cache.contains(present.resource_key()))
+  let finalization = frame.finalization_descriptor(frame_index=5)
+  assert_true(finalization.is_ready())
+  assert_true(finalization.has_finalization())
+  assert_eq(finalization.frame_index, 5)
+  assert_true(finalization.validation_status == @skia_mbt.FrameReady)
+  assert_true(!finalization.requires_gpu_context())
+  guard finalization.finalization is Some(surface_finalization) else {
+    fail("ready window frame should expose a finalization descriptor")
+  }
+  assert_true(
+    surface_finalization == target.finalization_descriptor(frame_index=5),
+  )
+  assert_true(!surface_finalization.resource_descriptor().is_cacheable())
+  assert_true(
+    frame.finalization_resource_plan(frame_index=5) ==
+    finalization.resource_plan,
+  )
+  assert_eq(finalization.resource_plan.length(), 3)
+  assert_eq(finalization.resource_plan.cacheable_count, 2)
+  assert_eq(finalization.resource_plan.uncacheable_count, 1)
+  assert_eq(finalization.resource_plan.count_kind(@skia_mbt.SurfaceResource), 2)
+  assert_eq(finalization.resource_plan.count_kind(@skia_mbt.PathResource), 1)
+  assert_true(finalization.resource_plan.contains_key(target.resource_key()))
+  assert_true(finalization.resource_plan.contains_key(path.resource_key()))
+  assert_true(
+    finalization.resource_plan.contains_key(surface_finalization.resource_key()),
+  )
+  let finalization_cache : @skia_mbt.ResourceCache[
+    @skia_mbt.RendererResourceKey,
+    @skia_mbt.RendererResourceDescriptor,
+  ] = @skia_mbt.ResourceCache::new()
+  assert_eq(finalization.cache_resources(finalization_cache), 2)
+  assert_eq(finalization_cache.length(), 2)
+  assert_true(finalization_cache.contains(target.resource_key()))
+  assert_true(finalization_cache.contains(path.resource_key()))
+  assert_true(!finalization_cache.contains(surface_finalization.resource_key()))
+
+  let offscreen_target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(8, 8),
+  )
+  let offscreen_frame = @skia_mbt.RenderCommandList::for_target(
+      offscreen_target,
+    )
+    .draw_rect(@skia_mbt.Rect::from_xywh(1, 1, 2, 2))
+    .frame_descriptor(offscreen_target)
+  let offscreen_finalization = offscreen_frame.finalization_descriptor(
+    frame_index=-2,
+  )
+  assert_true(!offscreen_frame.needs_present())
+  assert_true(offscreen_finalization.is_ready())
+  assert_true(offscreen_finalization.has_finalization())
+  assert_eq(offscreen_finalization.frame_index, 0)
+  assert_eq(offscreen_finalization.resource_plan.length(), 2)
+  assert_eq(offscreen_finalization.resource_plan.cacheable_count, 1)
+  assert_eq(offscreen_finalization.resource_plan.uncacheable_count, 1)
+  assert_true(
+    offscreen_finalization.resource_plan.contains_key(
+      offscreen_target.resource_key(),
+    ),
+  )
 
   let mismatch_target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
     @skia_mbt.ISize::new(24, 16),
@@ -1450,6 +1510,23 @@ test "render frame descriptor summarizes target commands and resources" {
   ] = @skia_mbt.ResourceCache::new()
   assert_eq(mismatch_submission.cache_resources(mismatch_cache), 0)
   assert_true(mismatch_cache.is_empty())
+  let mismatch_finalization = mismatch_frame.finalization_descriptor(
+    frame_index=5,
+  )
+  assert_true(!mismatch_finalization.is_ready())
+  assert_true(!mismatch_finalization.has_finalization())
+  assert_true(
+    mismatch_finalization.validation_status == @skia_mbt.FrameTargetMismatch,
+  )
+  let mismatch_finalization_cache : @skia_mbt.ResourceCache[
+    @skia_mbt.RendererResourceKey,
+    @skia_mbt.RendererResourceDescriptor,
+  ] = @skia_mbt.ResourceCache::new()
+  assert_eq(
+    mismatch_finalization.cache_resources(mismatch_finalization_cache),
+    0,
+  )
+  assert_true(mismatch_finalization_cache.is_empty())
 
   let identity_target = target.with_target_id(b"frame-window")
   let identity_mismatch_target = identity_target.with_target_id(
@@ -1502,6 +1579,27 @@ test "render frame descriptor summarizes target commands and resources" {
     fail("gpu frame submission should expose a present descriptor")
   }
   assert_true(gpu_submission_plan.contains_key(gpu_present.resource_key()))
+  let gpu_finalization = gpu_frame.finalization_descriptor(frame_index=2)
+  let gpu_finalization_plan = gpu_finalization.gpu_backed_resource_plan()
+  assert_true(gpu_finalization.is_ready())
+  assert_true(gpu_finalization.has_finalization())
+  assert_true(gpu_finalization.requires_gpu_context())
+  assert_eq(gpu_finalization.resource_plan.length(), 3)
+  assert_eq(gpu_finalization.resource_plan.gpu_backed_count, 3)
+  assert_eq(gpu_finalization_plan.length(), 3)
+  assert_eq(gpu_finalization_plan.gpu_backed_count, 3)
+  assert_eq(gpu_finalization_plan.cacheable_count, 2)
+  assert_eq(gpu_finalization_plan.uncacheable_count, 1)
+  assert_true(gpu_finalization_plan.contains_key(gpu_target.resource_key()))
+  assert_true(gpu_finalization_plan.contains_key(gpu_context.resource_key()))
+  guard gpu_finalization.finalization is Some(gpu_surface_finalization) else {
+    fail(
+      "gpu frame finalization should expose a surface finalization descriptor",
+    )
+  }
+  assert_true(
+    gpu_finalization_plan.contains_key(gpu_surface_finalization.resource_key()),
+  )
 
   let missing_context_target = gpu_target.without_gpu_context()
   let missing_context_frame = @skia_mbt.RenderCommandList::for_target(
@@ -1522,6 +1620,18 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(!missing_context_submission.has_present())
   assert_eq(
     missing_context_submission
+    .gpu_backed_resource_plan()
+    .count_kind(@skia_mbt.GpuContextResource),
+    0,
+  )
+  let missing_context_finalization = missing_context_frame.finalization_descriptor(
+    frame_index=1,
+  )
+  assert_true(!missing_context_finalization.is_ready())
+  assert_true(!missing_context_finalization.has_finalization())
+  assert_true(missing_context_finalization.requires_gpu_context())
+  assert_eq(
+    missing_context_finalization
     .gpu_backed_resource_plan()
     .count_kind(@skia_mbt.GpuContextResource),
     0,
