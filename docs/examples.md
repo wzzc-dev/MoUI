@@ -198,7 +198,7 @@ fresh JSONL process, while explicit `Shutdown` remains the close path. The
 native encoder targets Pi's actual RPC command names: `get_state`,
 `new_session`, `prompt`, `get_available_models`, `get_messages`,
 `get_fork_messages`, `fork`, `get_commands`, `get_session_stats`,
-`export_html`, `cycle_thinking_level`,
+`export_html`, `cycle_model`, `cycle_thinking_level`,
 `set_steering_mode`, `set_follow_up_mode`, `set_session_name`, `bash`,
 `abort_bash`, and `abort`, with process shutdown handled by stdin EOF. The
 focused smoke for machines with Pi installed is an
@@ -207,6 +207,7 @@ offline `get_state` JSONL round trip, a `new_session` acknowledgement, a
 catalog response, an offline `get_commands` command-catalog response, an
 offline `get_fork_messages` response, a `get_session_stats` metrics response,
 the expected in-memory `export_html` failure boundary, a
+`cycle_model` no-alternate-model acknowledgement, a
 `cycle_thinking_level` acknowledgement,
 steering/follow-up mode acknowledgements, a `set_session_name`
 acknowledgement, and an `abort_bash` acknowledgement through `pi --mode rpc`,
@@ -225,6 +226,9 @@ artifacts without native-only state. Catalog rows can run a command by sending
 native transport does not need a command-specific bridge. Diagnostics collected
 from Pi stderr, RPC failures, structured diagnostic events, and bash results are
 surfaced in the workspace digest and can be cleared from shared app state.
+The model catalog summary can also send platform-neutral `CycleRpcModel`; a
+successful `cycle_model` response updates the active binding model when Pi
+returns one, while `data:null` is treated as a no-op acknowledgement.
 `cycle_thinking_level` responses and `thinking_level_changed` events keep the
 compact Thinking control and
 `PiAgentSnapshot` aligned. `set_steering_mode` and `set_follow_up_mode`
@@ -315,6 +319,9 @@ printf '{"type":"get_session_stats"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"export_html","outputPath":"/tmp/mo-workbench-export-smoke.html"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"cycle_model"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \

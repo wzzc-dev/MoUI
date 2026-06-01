@@ -59,8 +59,9 @@ packages:
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
   (`get_state`, `get_available_models`, `get_messages`, `get_commands`,
-  `get_session_stats`, `cycle_thinking_level`, `set_steering_mode`,
-  `set_follow_up_mode`, `new_session`, `switch_session`, `fork`,
+  `get_session_stats`, `cycle_model`, `cycle_thinking_level`,
+  `set_steering_mode`, `set_follow_up_mode`, `new_session`, `switch_session`,
+  `fork`,
   `get_fork_messages`, `export_html`, `prompt`, `set_session_name`, `bash`,
   `abort_bash`, and `abort`; shutdown is stdin EOF), and uses shell fixtures to
   prove direct JSONL stdin/stdout process
@@ -149,6 +150,10 @@ packages:
   through `get_available_models`. The shared app normalizes provider/id/name
   rows into `PiModelInfo` and shows a compact session-panel summary only when
   models are reported, keeping no-model offline smoke quiet.
+- The model catalog summary has a compact cycle action. The shared app emits
+  platform-neutral `CycleRpcModel`, ingests `cycle_model` responses, and updates
+  the active `PiSessionBinding` model plus thinking level when Pi reports a new
+  scoped model.
 - The command catalog can invoke a listed command by sending `/<name>` through
   the existing platform-neutral `SendUserInput` prompt path. This keeps slash
   command execution usable in the native UI without adding a native-only
@@ -213,6 +218,9 @@ packages:
   `get_session_stats` responses refresh `PiSessionStatsSnapshot` with message,
   tool, token, cost, and optional context counters. Successful `export_html`
   responses add the returned HTML path as Workspace file evidence. Successful
+  `cycle_model` responses update the active Workbench-to-Pi binding and session
+  summary when Pi returns a new model, or acknowledge that no alternate model is
+  available when Pi returns `null`. Successful
   `cycle_thinking_level` responses update the agent snapshot when Pi returns
   the new level, while
   `thinking_level_changed` events remain the authoritative stream update.
@@ -257,7 +265,7 @@ packages:
 - The native encoder is aligned with the installed Pi RPC protocol and has
   no-model smoke paths using offline `get_state`, `new_session`, `get_messages`,
   `get_available_models`, `get_fork_messages`, `get_commands`,
-  `get_session_stats`, `cycle_thinking_level`, `set_steering_mode`,
+  `get_session_stats`, `cycle_model`, `cycle_thinking_level`, `set_steering_mode`,
   `set_follow_up_mode`,
   `set_session_name`, and `abort_bash` over `pi --mode rpc`; it also records
   the expected `export_html` failure boundary for in-memory `--no-session`
@@ -319,6 +327,10 @@ updates the Workbench-to-Pi binding from the reported `sessionId` and
 returned HTML path as a Workspace file evidence row, so exported Pi sessions can
 become coding, documentation, or knowledge artifacts without native-only state.
 A successful
+`{"type":"response","command":"cycle_model","success":true,...}` line updates
+the active binding model and status panel when Pi returns a model. If Pi
+returns `data:null`, the app records the acknowledgement without changing the
+current model. A successful
 `{"type":"response","command":"cycle_thinking_level","success":true,...}` line
 acknowledges the compact Thinking control and, when Pi includes a `data.level`,
 updates `PiAgentSnapshot.thinking_level`. The streamed
@@ -453,6 +465,7 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `ForkRpcSession` sends `{"type":"fork","entryId":...}`,
 `ExportRpcSessionHtml` sends `{"type":"export_html"}` or includes
 `"outputPath"` when the app supplies one,
+`CycleRpcModel` sends `{"type":"cycle_model"}`,
 `CycleRpcThinkingLevel` sends `{"type":"cycle_thinking_level"}`,
 `SetRpcSteeringMode` sends `{"type":"set_steering_mode","mode":...}`,
 `SetRpcFollowUpMode` sends `{"type":"set_follow_up_mode","mode":...}`,
@@ -495,6 +508,9 @@ printf '{"type":"get_session_stats"}\n' | \
 printf '{"type":"export_html","outputPath":"/tmp/mo-workbench-export-smoke.html"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"cycle_model"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
@@ -521,10 +537,12 @@ sixth should return a `get_commands` response with a `commands` array, the
 seventh should return a `get_session_stats` response with message, tool, token,
 and cost counters, the eighth should return an `export_html` failure explaining
 that in-memory `--no-session` sessions cannot be exported, the ninth should
-return a successful `cycle_thinking_level` acknowledgement, the tenth and
-eleventh should acknowledge the steering/follow-up mode changes, the twelfth
-should emit `session_info_changed` and a successful `set_session_name` response,
-and the thirteenth should return a successful
+return a successful `cycle_model` response with `data:null` when no alternate
+scoped model is available, the tenth should return a successful
+`cycle_thinking_level` acknowledgement, the eleventh and twelfth should
+acknowledge the steering/follow-up mode changes, the thirteenth should emit
+`session_info_changed` and a successful `set_session_name` response, and the
+fourteenth should return a successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -572,6 +590,9 @@ printf '{"type":"get_session_stats"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"export_html","outputPath":"/tmp/mo-workbench-export-smoke.html"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"cycle_model"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \

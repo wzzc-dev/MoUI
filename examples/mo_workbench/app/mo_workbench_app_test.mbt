@@ -1656,6 +1656,89 @@ test "workbench runtime draws Pi model catalog summary after refresh" {
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Models 2"))
   assert_true(has_text(commands, "GPT-5 (openai/gpt-5) +1"))
+  assert_true(has_text(commands, "切换"))
+}
+
+///|
+test "workbench queues Pi model cycle through platform-neutral transport" {
+  let model = WorkbenchModel::new().update(CycleModel)
+  inspect(model.last_status, content="Pi model cycle queued")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    CycleRpcModel(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued model cycle")
+  }
+  assert_true(model.events.any(event => event.title == "Pi model cycle queued"))
+}
+
+///|
+test "workbench model cycle runtime effect updates active Pi binding" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"cycle_model\"}"))
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"cycle_model","success":true,"data":{"model":{"id":"gpt-5","provider":"openai","name":"GPT-5"},"thinkingLevel":"high","isScoped":true}}
+        ),
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    CycleModel,
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    CycleRpcModel(session) => inspect(session, content="moui-skia")
+    _ => fail("expected captured model cycle")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="cycle_model")
+  inspect(model.pi_rpc.model, content="openai/gpt-5")
+  inspect(model.pi_agent.thinking_level, content="high")
+  let binding = model.active_pi_session_binding()
+  inspect(binding.model, content="openai/gpt-5")
+  inspect(binding.last_command, content="cycle_model")
+  inspect(model.active_session().active_task, content="Pi model: openai/gpt-5")
+  inspect(
+    model.active_session().summary,
+    content="Pi model switched to openai/gpt-5",
+  )
+  inspect(model.last_status, content="Pi model changed")
+  assert_true(model.events.any(event => event.title == "Pi model cycled"))
+}
+
+///|
+test "workbench model cycle acknowledges unavailable alternate model" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"cycle_model","success":true,"data":null}
+        ),
+      ),
+    ),
+  )
+  inspect(model.pi_rpc.command, content="cycle_model")
+  inspect(model.active_pi_session_binding().model, content="")
+  inspect(model.last_status, content="Pi model cycle acknowledged")
+  assert_true(model.events.any(event => event.title == "Pi model cycled"))
 }
 
 ///|
