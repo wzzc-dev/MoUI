@@ -159,7 +159,7 @@ It is named `Mo Workbench` with the subtitle `Pi agent 桌面工作台`, and sta
 a Codex / Claude Code-style coding-agent workbench for project sessions,
 assistant transcripts, command evidence, diff/file context, and diagnostics.
 Its current UI keeps the first screen focused on the current session row,
-scrollable transcript blocks, compact activity/workspace evidence, and a
+on-demand transcript/activity/workspace evidence panels, and a
 centered floating composer instead of long placeholder validation text,
 future-workflow filler, or hard-coded attachment cards. The shell now derives
 its sidebar, main canvas, scroll area, and composer dimensions from the runtime
@@ -168,8 +168,9 @@ be resized while preserving the session-first hierarchy, including narrower
 panel/composer widths in smaller windows. The transcript uses multi-line
 message blocks for long Pi replies and draws an explicit scrollbar when the
 main workflow overflows. Primary section labels are quieter and consistently
-Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`), with Pi/RPC
-left as protocol nouns. The default shell keeps only refresh, new-session,
+Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`) once their
+evidence exists, with Pi/RPC left as protocol nouns. The default shell keeps
+only refresh, new-session,
 context, and send controls prominent; advanced session actions, steering /
 follow-up composer controls, and focused-check presets appear once Pi state,
 typed input, or command evidence makes them relevant. The workspace digest now
@@ -185,8 +186,8 @@ planning evidence without opening a separate pane. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
 diff rows, command runs, diagnostic prose, or sample active-task copy. Zero
 queues, unbound Pi state, idle transport/agent state, and empty digest actions
-stay visually quiet; transcript/activity/workspace panels shrink to their
-headers until Pi or command evidence arrives.
+stay visually quiet; transcript/activity/workspace panels stay unmounted until
+Pi, command, or workspace evidence arrives.
 On wide windows, the shell now mirrors the three-column desktop shape more
 closely with a right workflow rail for live progress, agents, and work-folder
 evidence. The rail reuses `PlanStep`, `AgentEvent`, session, and `FileContext`
