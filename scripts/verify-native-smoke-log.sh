@@ -67,6 +67,7 @@ default_stage_markers=(
   "native smoke render resource cache misses" \
   "native smoke render resource cache byte size" \
   "native smoke gpu context resource plan count" \
+  "native smoke gpu context key variation" \
   "native smoke gpu frame context validation" \
   "native smoke surface target resource plan count" \
   "native smoke window target resource plan count" \
@@ -138,6 +139,7 @@ default_expected_stage_values=(
   $'native smoke render resource cache misses\t0'
   $'native smoke render resource cache byte size\t8'
   $'native smoke gpu context resource plan count\t2'
+  $'native smoke gpu context key variation\t1'
   $'native smoke gpu frame context validation\t1'
   $'native smoke surface target resource plan count\t2'
   $'native smoke window target resource plan count\t1'

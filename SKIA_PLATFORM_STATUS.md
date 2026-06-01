@@ -86,7 +86,8 @@ these facts recorded in logs:
   bitmap readback dimensions, surface descriptor reporting, canvas state
   restore, canvas clipping, canvas command replay, render resource planning,
   GPU context
-  resource planning, GPU frame context validation, render target identity
+  resource planning, GPU context identity variation, GPU frame context validation,
+  render target identity
   validation, render-frame unbalanced-state validation, missing-present
   validation, bound target resource planning, window physical-size derivation,
   frame pacing, present-mode key variation, window-frame present finalization,
