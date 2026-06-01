@@ -3105,11 +3105,11 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "新会话"))
   assert_true(has_text(commands, "刷新"))
   assert_true(has_text(commands, "Pi 运行状态"))
-  assert_true(has_text(commands, "上下文"))
-  assert_true(has_text(commands, "仓库"))
-  assert_true(has_text(commands, "示例"))
-  assert_true(has_text(commands, "证据"))
-  assert_true(has_text(commands, "会话"))
+  assert_false(has_text(commands, "上下文"))
+  assert_false(has_text(commands, "仓库"))
+  assert_false(has_text(commands, "示例"))
+  assert_false(has_text(commands, "证据"))
+  assert_false(has_text(commands, "会话"))
   assert_true(has_text(commands, "发送"))
   assert_false(has_text(commands, "会话记录"))
   assert_false(has_text(commands, "运行证据"))
@@ -3267,11 +3267,29 @@ test "workbench composer reveals secondary actions while composing" {
     .update(PromptChanged("Run focused checks"))
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
+  assert_true(has_text(commands, "上下文"))
+  assert_true(has_text(commands, "仓库"))
+  assert_true(has_text(commands, "示例"))
+  assert_true(has_text(commands, "证据"))
+  assert_true(has_text(commands, "会话"))
   assert_true(has_text(commands, "引导 单条"))
   assert_true(has_text(commands, "跟进 单条"))
   assert_true(has_text(commands, "引导"))
   assert_true(has_text(commands, "跟进"))
   assert_true(has_text(commands, "发送"))
+}
+
+///|
+test "workbench composer reveals context chips for non-default context" {
+  let commands = WorkbenchModel::new()
+    .update(ToggleContext("evidence"))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(commands, "上下文"))
+  assert_true(has_text(commands, "仓库"))
+  assert_true(has_text(commands, "示例"))
+  assert_true(has_text(commands, "证据"))
+  assert_true(has_text(commands, "会话"))
 }
 
 ///|

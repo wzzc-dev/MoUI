@@ -172,15 +172,14 @@ Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工
 evidence exists, with Pi/RPC left as protocol nouns. Default chrome uses short
 project names and localized session status labels while keeping full
 `project_path` values in the shared model and transport commands. The default
-shell keeps only refresh, new-session, context, and send controls prominent;
-the idle Pi RPC footer stays label-only until the transport is starting,
-running, or failed. Agent focus controls, advanced session actions, steering /
-follow-up composer controls, and focused-check presets appear once Pi state,
-typed input, or command evidence makes them relevant. The workspace digest now
-includes file, diff, and latest diagnostic state with a short clear action so
-stderr/RPC/bash failures remain visible without adding a separate diagnostics
-page. When actionable evidence is present, the current session panel derives
-one quiet `下一步` row that points
+shell keeps only refresh, new-session, and send controls prominent; context
+chips, the idle Pi RPC status, agent focus controls, advanced session actions,
+steering / follow-up composer controls, and focused-check presets appear once
+Pi state, typed input, non-default context, or command evidence makes them
+relevant. The workspace digest now includes file, diff, and latest diagnostic
+state with a short clear action so stderr/RPC/bash failures remain visible
+without adding a separate diagnostics page. When actionable evidence is
+present, the current session panel derives one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, failed command
 evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
 rows, and activity events. Pi `plan_update` JSONL also
@@ -204,9 +203,10 @@ move into the composer and appear only while composing or when a focus is
 selected. Selecting one only appends an `agent focus: ...` hint to the existing
 platform-neutral prompt, steering, and follow-up text payloads.
 The composer exposes repository, examples, evidence, and Pi session context
-chips; direct prompt, steering, and follow-up submits prefix the selected scopes
-into the same platform-neutral text payloads, while turning all chips off sends
-the raw input. Activity timeline rows can queue a
+chips on demand while composing, after selecting a focus, or after changing the
+default context; direct prompt, steering, and follow-up submits still prefix the
+selected scopes into the same platform-neutral text payloads, while turning all
+chips off sends the raw input. Activity timeline rows can queue a
 `Follow up on <phase> activity: ...` prompt the same way, so visible Pi RPC,
 stderr, tool, and stream events can become the next agent action. File context
 rows can queue an `Inspect <path>` prompt through the same platform-neutral
