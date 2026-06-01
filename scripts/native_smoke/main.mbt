@@ -1218,6 +1218,30 @@ fn main {
   }
   println("native smoke font fallback family bytes")
   println(fallback_family.length())
+  let fallback_match_descriptor = fallback_request.match_descriptor(fallback_family)
+  if !fallback_match_descriptor.is_valid() ||
+    fallback_match_descriptor.resource_key().is_empty() ||
+    fallback_match_descriptor.resource_key() == fallback_key ||
+    fallback_match_descriptor.resource_key() ==
+    fallback_request.match_descriptor(
+      fallback_family,
+      fallback_index=fallback_match_descriptor.fallback_index,
+      synthetic=true,
+    ).resource_key() {
+    fail_smoke("native font fallback match metadata key is invalid")
+  }
+  println("native smoke font fallback match key variation")
+  println(1)
+  let fallback_match_plan = fallback_match_descriptor.resource_plan(size=8.0)
+  if fallback_match_plan.length() != 2 ||
+    fallback_match_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    fallback_match_plan.count_kind(@skia.FontResource) != 1 ||
+    fallback_match_plan.cacheable_count != 2 ||
+    fallback_match_plan.byte_size <= fallback_plan.byte_size {
+    fail_smoke("native font fallback match resource plan is invalid")
+  }
+  println("native smoke font fallback match resource plan count")
+  println(fallback_match_plan.length())
   guard @native.Font::from_typeface(fallback_typeface, size=8.0)
     is Some(fallback_font) else {
     fail_smoke("failed to create native font from fallback request typeface")
