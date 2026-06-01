@@ -111,8 +111,9 @@ packages:
   displays sample active-task text. Zero queues, unbound Pi state, idle
   transport/agent state, and contextless actions render quietly instead of
   placeholder punctuation; transcript/activity/workspace panels stay unmounted
-  while empty, and empty wide windows no longer reserve space for workflow-rail
-  placeholder cards.
+  while empty, Activity header badges only occupy space for nonzero run,
+  command-catalog, or event counts, and empty wide windows no longer reserve
+  space for workflow-rail placeholder cards.
 - Wide Workbench windows now add a screenshot-style right workflow rail beside
   the conversation canvas only when there is live evidence to summarize. The
   rail is still driven only by shared app state: `进度` summarizes live
@@ -221,7 +222,10 @@ packages:
 - The Activity digest surfaces the latest shared-app timeline event, so Pi RPC,
   streaming agent, tool, and stderr progress stays visible next to command
   evidence without opening a separate log view. The visible event can also be
-  sent back as a follow-up prompt through the shared app command path.
+  sent back as a follow-up prompt through the shared app command path. Its
+  title row keeps the `运行证据` label stable while omitting zero-value count
+  placeholders, so command-only and event-only evidence rows have more readable
+  horizontal space.
 - Session selection now refreshes Pi messages after state binding. The shared
   app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
   records so the conversation surface can replay user, assistant, tool result,

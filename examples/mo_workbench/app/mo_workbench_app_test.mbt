@@ -1912,10 +1912,16 @@ test "workbench runtime draws latest activity event" {
     ReceiveTransport(ProcessStarted("4242")),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  guard text_frame(commands, "运行证据") is Some(activity_title) else {
+    fail("expected activity title")
+  }
+  assert_true(activity_title.size.width > 450.0)
   assert_true(has_text(commands, "1 事件"))
   assert_true(has_text(commands, "Pi RPC process started"))
   assert_true(has_text(commands, "pid 4242"))
   assert_true(has_text(commands, "跟进"))
+  assert_false(has_text(commands, "0 运行"))
+  assert_false(has_text(commands, "0 命令"))
 }
 
 ///|
@@ -2949,6 +2955,11 @@ test "workbench activity draws recent command evidence" {
     ],
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  guard text_frame(commands, "运行证据") is Some(activity_title) else {
+    fail("expected activity title")
+  }
+  assert_true(activity_title.size.width > 700.0)
+  assert_true(has_text(commands, "4 运行"))
   assert_true(has_text(commands, "native check"))
   assert_true(has_text(commands, "wasm check"))
   assert_true(has_text(commands, "skia build"))
@@ -2962,6 +2973,8 @@ test "workbench activity draws recent command evidence" {
   assert_false(has_text(commands, "全部"))
   assert_false(has_text(commands, "Native"))
   assert_false(has_text(commands, "Wasm"))
+  assert_false(has_text(commands, "0 命令"))
+  assert_false(has_text(commands, "0 事件"))
 }
 
 ///|
@@ -3554,12 +3567,19 @@ test "workbench evidence panels mount only when content arrives" {
   let activity = activity_model
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
+  guard text_frame(activity, "运行证据") is Some(activity_title) else {
+    fail("expected activity title")
+  }
+  assert_true(activity_title.size.width > 700.0)
+  assert_true(has_text(activity, "1 运行"))
   assert_true(has_text(activity, "运行证据"))
   assert_true(
     has_text(activity, "moon test examples/mo_workbench/app --target native"),
   )
   assert_false(has_text(activity, "会话记录"))
   assert_false(has_text(activity, "工作区证据"))
+  assert_false(has_text(activity, "0 命令"))
+  assert_false(has_text(activity, "0 事件"))
   let workspace_model = model_with_reviewable_diff()
   let workspace = workspace_model
     .runtime(width=1220.0, height=780.0)

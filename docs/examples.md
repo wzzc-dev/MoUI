@@ -197,7 +197,8 @@ longer injects mock transcript, sample stats, command catalog rows, file rows,
 diff rows, command runs, diagnostic prose, or sample active-task copy. Zero
 queues, unbound Pi state, idle transport/agent state, and empty digest actions
 stay visually quiet; transcript/activity/workspace panels stay unmounted until
-Pi, command, or workspace evidence arrives.
+Pi, command, or workspace evidence arrives, and Activity header count badges
+only reserve space for nonzero run, command-catalog, or event counts.
 On wide windows, the shell now mirrors the three-column desktop shape more
 closely with a right workflow rail for live progress, execution, and work-folder
 evidence. The rail reuses `PlanStep`, `AgentEvent`, session, and `FileContext`
@@ -338,7 +339,9 @@ applied to the next queued/running command, so batched focused-check evidence
 keeps the same FIFO order as the UI queue.
 It also surfaces the latest Pi/agent timeline event from shared app state, so
 streaming transport, tool, and RPC progress is visible next to command evidence
-without adding a separate log view.
+without adding a separate log view. The Activity title row keeps `运行证据`
+stable but omits zero-value count placeholders, leaving command-only and
+event-only evidence rows more horizontal space.
 Cancelling while such a shell command is active now maps to Pi RPC `abort_bash`;
 prompt/agent cancellation still maps to Pi RPC `abort`.
 The shared app also ingests Pi's streaming session events such as
