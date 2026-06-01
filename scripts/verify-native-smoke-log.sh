@@ -74,6 +74,7 @@ default_stage_markers=(
   "native smoke gpu context key variation" \
   "native smoke gpu frame context validation" \
   "native smoke gpu present resource plan count" \
+  "native smoke gpu finalization resource plan count" \
   "native smoke gpu frame submission resource plan count" \
   "native smoke gpu frame submission gpu resource count" \
   "native smoke surface target resource plan count" \
@@ -82,6 +83,8 @@ default_stage_markers=(
   "native smoke window frame pacing" \
   "native smoke window frame pacing key variation" \
   "native smoke window present mode key variation" \
+  "native smoke surface finalization resource plan count" \
+  "native smoke surface finalization key variation" \
   "native smoke surface present buffer index" \
   "native smoke surface present resource plan count" \
   "native smoke surface flush-and-submit" \
@@ -166,6 +169,7 @@ default_expected_stage_values=(
   $'native smoke gpu context key variation\t1'
   $'native smoke gpu frame context validation\t1'
   $'native smoke gpu present resource plan count\t3'
+  $'native smoke gpu finalization resource plan count\t3'
   $'native smoke gpu frame submission resource plan count\t3'
   $'native smoke gpu frame submission gpu resource count\t3'
   $'native smoke surface target resource plan count\t2'
@@ -174,6 +178,8 @@ default_expected_stage_values=(
   $'native smoke window frame pacing\t2'
   $'native smoke window frame pacing key variation\t1'
   $'native smoke window present mode key variation\t1'
+  $'native smoke surface finalization resource plan count\t2'
+  $'native smoke surface finalization key variation\t1'
   $'native smoke surface present buffer index\t1'
   $'native smoke surface present resource plan count\t2'
   $'native smoke surface flush-and-submit\t1'

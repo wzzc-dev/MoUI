@@ -18,12 +18,13 @@ The current package exposes the first value-layer API surface:
 - image sampling: `SamplingOptions`, `FilterMode`, `MipmapMode`,
   `CubicResampler`
 - surface contracts: `SurfaceDescriptor`, `SurfaceTargetDescriptor`,
-  `SurfacePresentDescriptor`, `WindowSurfaceDescriptor`, `SurfaceBackend`,
-  `SurfaceOrigin`, `SurfaceBudget`, `SurfacePresentMode`,
+  `SurfacePresentDescriptor`, `SurfaceFinalizationDescriptor`,
+  `WindowSurfaceDescriptor`, `SurfaceBackend`, `SurfaceOrigin`, `SurfaceBudget`,
+  `SurfacePresentMode`,
   `GpuContextBackend`, and `GpuContextDescriptor` for raster, window, and
   future GPU render targets, with stable window target identity plus typed
-  resource descriptors for backend surface, present scheduling, and GPU context
-  caches
+  resource descriptors for backend surface, present scheduling, finalization,
+  and GPU context caches
 - renderer resource cache: `ResourceCache` and `ResourceCacheStats` provide a
   deterministic byte-budgeted LRU boundary for images, shaders, typefaces, and
   other backend-owned resources

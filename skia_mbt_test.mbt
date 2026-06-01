@@ -544,6 +544,36 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_eq(plan.count_kind(@skia_mbt.SurfaceResource), 2)
   assert_true(plan.contains_key(target.resource_key()))
   assert_true(plan.contains_key(present_key))
+  let finalization = target.finalization_descriptor(frame_index=5)
+  assert_true(finalization.is_finalizable())
+  assert_true(!finalization.requires_gpu_context())
+  assert_eq(finalization.frame_index, 5)
+  let finalization_key = finalization.resource_key()
+  assert_true(finalization_key.kind == @skia_mbt.SurfaceResource)
+  assert_true(finalization_key != present_key)
+  assert_true(finalization_key == finalization.resource_key())
+  assert_true(
+    finalization_key !=
+    target.finalization_descriptor(frame_index=6).resource_key(),
+  )
+  assert_true(
+    finalization_key !=
+    target
+    .with_present_mode(@skia_mbt.ImmediatePresent)
+    .finalization_descriptor(frame_index=5)
+    .resource_key(),
+  )
+  let finalization_resource = finalization.resource_descriptor()
+  assert_true(finalization_resource.key == finalization_key)
+  assert_true(!finalization_resource.is_cacheable())
+  assert_true(finalization_resource.byte_size > 0L)
+  let finalization_plan = finalization.resource_plan()
+  assert_eq(finalization_plan.length(), 2)
+  assert_eq(finalization_plan.cacheable_count, 1)
+  assert_eq(finalization_plan.uncacheable_count, 1)
+  assert_eq(finalization_plan.count_kind(@skia_mbt.SurfaceResource), 2)
+  assert_true(finalization_plan.contains_key(target.resource_key()))
+  assert_true(finalization_plan.contains_key(finalization_key))
 
   let fifo = target
     .with_present_mode(@skia_mbt.FifoPresent)
@@ -573,6 +603,23 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_true(gpu_plan.contains_key(gpu_target.resource_key()))
   assert_true(gpu_plan.contains_key(gpu_context.resource_key()))
   assert_true(gpu_plan.contains_key(gpu_present.resource_key()))
+  let gpu_finalization = gpu_target.finalization_descriptor(frame_index=2)
+  let gpu_finalization_plan = gpu_finalization.resource_plan()
+  assert_true(gpu_finalization.requires_gpu_context())
+  assert_true(
+    gpu_finalization.resource_key().kind == @skia_mbt.GpuSurfaceResource,
+  )
+  assert_eq(gpu_finalization_plan.length(), 3)
+  assert_eq(gpu_finalization_plan.gpu_backed_count, 3)
+  assert_eq(gpu_finalization_plan.cacheable_count, 2)
+  assert_eq(gpu_finalization_plan.uncacheable_count, 1)
+  assert_eq(gpu_finalization_plan.count_kind(@skia_mbt.GpuSurfaceResource), 2)
+  assert_eq(gpu_finalization_plan.count_kind(@skia_mbt.GpuContextResource), 1)
+  assert_true(gpu_finalization_plan.contains_key(gpu_target.resource_key()))
+  assert_true(gpu_finalization_plan.contains_key(gpu_context.resource_key()))
+  assert_true(
+    gpu_finalization_plan.contains_key(gpu_finalization.resource_key()),
+  )
 
   let raster_present = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
     @skia_mbt.ISize::new(16, 16),
@@ -581,6 +628,14 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_true(raster_present.resource_key().is_empty())
   assert_true(!raster_present.resource_descriptor().is_cacheable())
   assert_true(raster_present.resource_plan().is_empty())
+  let empty_finalization = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::empty(),
+  ).finalization_descriptor(frame_index=-4)
+  assert_eq(empty_finalization.frame_index, 0)
+  assert_true(!empty_finalization.is_finalizable())
+  assert_true(empty_finalization.resource_key().is_empty())
+  assert_true(!empty_finalization.resource_descriptor().is_cacheable())
+  assert_true(empty_finalization.resource_plan().is_empty())
 }
 
 ///|

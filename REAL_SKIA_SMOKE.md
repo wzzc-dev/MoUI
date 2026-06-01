@@ -109,8 +109,10 @@ stage markers for readback, bounded readback, snapshot/image drawing, PNG
 encode/decode, codec creation, decoded bitmap readback, render resource
 planning, target identity/resource binding, present descriptor validation,
 render-frame submission resource planning, render-frame submission cache
-population, surface present resource planning, GPU present resource planning,
-GPU frame submission resource planning, GPU-backed submission subplans,
+population, surface finalization resource planning, surface finalization
+cache-key variation, GPU finalization resource planning, surface present
+resource planning, GPU present resource planning, GPU frame submission resource
+planning, GPU-backed submission subplans,
 byte-range text-run resource keys, text measurement resource planning,
 measured-text result resource planning, measured-text result cache-key
 variation, text measurement cache-key variation,
