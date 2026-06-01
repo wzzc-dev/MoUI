@@ -138,7 +138,9 @@ packages:
   then routes the chosen button back through the existing shared-app messages
   such as `CancelRun`, `FixCommandRun`, `FixDiagnostic`, `InspectCommandRun`,
   `FollowActivity`, `ReviewDiff`, `InspectFile`, `FollowTranscript`, or
-  `InvokeCommand`.
+  `InvokeCommand`. Failed-command next actions include a compact command label,
+  exit code, and output path when Pi provided them, so the repair loop has the
+  same evidence as the Activity row without opening another panel.
 - Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for
   Pi through the existing platform-neutral `SendUserInput` path, so visible
   conversation evidence can become the next agent action without native-only
@@ -195,7 +197,8 @@ packages:
   carrying the output path when Pi provided one and the same context/focus
   wrapper as analysis prompts. This keeps the fix loop inside the shared app
   model instead of adding an output-opening bridge or native-only command
-  shortcut.
+  shortcut. The session-panel `下一步` row mirrors the latest failed command's
+  exit code and output path, keeping the next repair action self-contained.
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
