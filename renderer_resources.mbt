@@ -391,6 +391,26 @@ pub fn RendererResourcePlan::has_gpu_backed_resources(
 }
 
 ///|
+pub fn RendererResourcePlan::gpu_backed_descriptors(
+  self : RendererResourcePlan,
+) -> Array[RendererResourceDescriptor] {
+  let result : Array[RendererResourceDescriptor] = Array::new()
+  for descriptor in self.descriptors {
+    if descriptor.is_gpu_backed() {
+      result.push(descriptor)
+    }
+  }
+  result
+}
+
+///|
+pub fn RendererResourcePlan::gpu_backed_resource_plan(
+  self : RendererResourcePlan,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new(self.gpu_backed_descriptors())
+}
+
+///|
 pub fn RendererResourcePlan::contains_key(
   self : RendererResourcePlan,
   key : RendererResourceKey,

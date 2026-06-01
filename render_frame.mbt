@@ -240,6 +240,13 @@ pub fn RenderFrameSubmissionDescriptor::has_present(
 }
 
 ///|
+pub fn RenderFrameSubmissionDescriptor::gpu_backed_resource_plan(
+  self : RenderFrameSubmissionDescriptor,
+) -> RendererResourcePlan {
+  self.resource_plan.gpu_backed_resource_plan()
+}
+
+///|
 pub fn RenderFrameSubmissionDescriptor::cache_resources(
   self : RenderFrameSubmissionDescriptor,
   cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],

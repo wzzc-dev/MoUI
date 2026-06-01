@@ -30,7 +30,8 @@ The current package exposes the first value-layer API surface:
 - renderer resource identity: `RendererResourceKind`, `RendererResourceKey`,
   `RendererResourceDescriptor`, and `RendererResourcePlan` give those caches
   typed keys and auditable resource requirements for images, shaders, filters,
-  text runs, paths, surfaces, and future GPU resources
+  text runs, paths, surfaces, and future GPU resources, including GPU-backed
+  resource subplans for backend admission checks
 - shader and filter resource recipes: `ShaderDescriptor`,
   `ColorFilterDescriptor`, `ImageFilterDescriptor`, and `MaskFilterDescriptor`
   provide stable cache keys for native shader/filter handles before a backend
@@ -49,7 +50,8 @@ The current package exposes the first value-layer API surface:
   `RenderFrameSubmissionDescriptor`, and `RenderFrameValidationStatus` combine
   a target, finalized command stream, resource plan, readiness diagnostics,
   cache population boundary, optional present scheduling descriptor, and
-  auditable per-frame submission resource plan for one backend submission
+  auditable per-frame submission resource plan with GPU-backed subsets for one
+  backend submission
 - text layout and fallback contracts: `TextRunDescriptor`,
   `TextMeasurementDescriptor`, `TextShapingDescriptor`,
   `ShapedTextRunDescriptor`, `FontDescriptor`, `FontFallbackRequest`,

@@ -867,6 +867,7 @@ pub(all) struct RenderFrameSubmissionDescriptor {
   resource_plan : RendererResourcePlan
 } derive(Eq, @debug.Debug)
 pub fn RenderFrameSubmissionDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int
+pub fn RenderFrameSubmissionDescriptor::gpu_backed_resource_plan(Self) -> RendererResourcePlan
 pub fn RenderFrameSubmissionDescriptor::has_present(Self) -> Bool
 pub fn RenderFrameSubmissionDescriptor::is_ready(Self) -> Bool
 pub fn RenderFrameSubmissionDescriptor::new(RenderFrameDescriptor, frame_index? : Int, buffer_index? : Int) -> Self
@@ -1002,6 +1003,8 @@ pub fn RendererResourcePlan::count_kind(Self, RendererResourceKind) -> Int
 pub fn RendererResourcePlan::descriptor_for_key(Self, RendererResourceKey) -> RendererResourceDescriptor?
 pub fn RendererResourcePlan::descriptors_of_kind(Self, RendererResourceKind) -> Array[RendererResourceDescriptor]
 pub fn RendererResourcePlan::empty() -> Self
+pub fn RendererResourcePlan::gpu_backed_descriptors(Self) -> Array[RendererResourceDescriptor]
+pub fn RendererResourcePlan::gpu_backed_resource_plan(Self) -> Self
 pub fn RendererResourcePlan::has_gpu_backed_resources(Self) -> Bool
 pub fn RendererResourcePlan::is_empty(Self) -> Bool
 pub fn RendererResourcePlan::length(Self) -> Int

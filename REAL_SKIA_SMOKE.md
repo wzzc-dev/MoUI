@@ -110,6 +110,7 @@ encode/decode, codec creation, decoded bitmap readback, render resource
 planning, target identity/resource binding, present descriptor validation,
 render-frame submission resource planning, render-frame submission cache
 population, surface present resource planning, GPU present resource planning,
+GPU frame submission resource planning, GPU-backed submission subplans,
 byte-range text-run resource keys, text measurement resource planning,
 text measurement cache-key variation,
 text shaping resource planning, shaped-text result resource planning, UTF-8 text

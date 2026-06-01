@@ -216,6 +216,16 @@
       "marker": "native smoke gpu present resource plan count"
     },
     {
+      "id": "gpu.frame-submission-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu frame submission resource plan count"
+    },
+    {
+      "id": "gpu.frame-submission-gpu-resources",
+      "area": "GPU",
+      "marker": "native smoke gpu frame submission gpu resource count"
+    },
+    {
       "id": "surface.target-resource-plan",
       "area": "Surface",
       "marker": "native smoke surface target resource plan count"
@@ -646,6 +656,16 @@
     {
       "id": "gpu.present-resource-plan",
       "marker": "native smoke gpu present resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.frame-submission-resource-plan",
+      "marker": "native smoke gpu frame submission resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.frame-submission-gpu-resources",
+      "marker": "native smoke gpu frame submission gpu resource count",
       "value": "3"
     },
     {

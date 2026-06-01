@@ -729,6 +729,18 @@ test "renderer resource descriptors provide typed cache keys" {
   )
   assert_eq(gpu_surface_descriptors.length(), 1)
   assert_true(gpu_surface_descriptors[0] == gpu_surface)
+  let gpu_backed_descriptors = plan.gpu_backed_descriptors()
+  assert_eq(gpu_backed_descriptors.length(), 2)
+  assert_true(gpu_backed_descriptors[0] == gpu_surface)
+  assert_true(gpu_backed_descriptors[1] == gpu_context)
+  let gpu_backed_plan = plan.gpu_backed_resource_plan()
+  assert_eq(gpu_backed_plan.length(), 2)
+  assert_eq(gpu_backed_plan.gpu_backed_count, 2)
+  assert_eq(gpu_backed_plan.cacheable_count, 2)
+  assert_eq(gpu_backed_plan.byte_size, 32L)
+  assert_true(gpu_backed_plan.contains_key(gpu_surface.key))
+  assert_true(gpu_backed_plan.contains_key(gpu_context.key))
+  assert_true(!gpu_backed_plan.contains_key(image.key))
   assert_eq(plan.count_kind(@skia_mbt.ImageResource), 2)
   assert_eq(plan.byte_size_for_kind(@skia_mbt.ImageResource), 10L)
   assert_eq(plan.byte_size_for_kind(@skia_mbt.ShaderResource), 0L)
@@ -1419,6 +1431,22 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(gpu_frame.has_gpu_context())
   assert_true(gpu_frame.is_ready())
   assert_eq(gpu_frame.resource_plan.gpu_backed_count, 2)
+  let gpu_submission = gpu_frame.submission_descriptor(frame_index=2)
+  let gpu_submission_plan = gpu_submission.gpu_backed_resource_plan()
+  assert_true(gpu_submission.is_ready())
+  assert_true(gpu_submission.has_present())
+  assert_eq(gpu_submission.resource_plan.length(), 3)
+  assert_eq(gpu_submission.resource_plan.gpu_backed_count, 3)
+  assert_eq(gpu_submission_plan.length(), 3)
+  assert_eq(gpu_submission_plan.gpu_backed_count, 3)
+  assert_eq(gpu_submission_plan.cacheable_count, 2)
+  assert_eq(gpu_submission_plan.uncacheable_count, 1)
+  assert_true(gpu_submission_plan.contains_key(gpu_target.resource_key()))
+  assert_true(gpu_submission_plan.contains_key(gpu_context.resource_key()))
+  guard gpu_submission.present is Some(gpu_present) else {
+    fail("gpu frame submission should expose a present descriptor")
+  }
+  assert_true(gpu_submission_plan.contains_key(gpu_present.resource_key()))
 
   let missing_context_target = gpu_target.without_gpu_context()
   let missing_context_frame = @skia_mbt.RenderCommandList::for_target(
@@ -1432,6 +1460,17 @@ test "render frame descriptor summarizes target commands and resources" {
   )
   assert_true(!missing_context_frame.is_ready())
   assert_true(missing_context_frame.present_descriptor(frame_index=1) is None)
+  let missing_context_submission = missing_context_frame.submission_descriptor(
+    frame_index=1,
+  )
+  assert_true(!missing_context_submission.is_ready())
+  assert_true(!missing_context_submission.has_present())
+  assert_eq(
+    missing_context_submission
+    .gpu_backed_resource_plan()
+    .count_kind(@skia_mbt.GpuContextResource),
+    0,
+  )
 }
 
 ///|
