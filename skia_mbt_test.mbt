@@ -322,6 +322,9 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(window.without_present().present_mode is None)
   assert_eq(window.with_max_frames_in_flight(-2).max_frames_in_flight, 1)
   assert_true(
+    window.with_max_frames_in_flight(4).resource_key() != window.resource_key(),
+  )
+  assert_true(
     window.with_dimensions(@skia_mbt.ISize::new(4, 2)).dimensions() ==
     @skia_mbt.ISize::new(4, 2),
   )
@@ -387,6 +390,9 @@ test "window surface descriptors derive stable targets and resource plans" {
 
   let same_size_other_window = window.with_window_id(b"settings-window")
   assert_true(same_size_other_window.resource_key() != window.resource_key())
+  assert_true(
+    window.with_max_frames_in_flight(4).resource_key() != window.resource_key(),
+  )
   let resized = window.with_physical_size(@skia_mbt.ISize::new(800, 600))
   assert_true(resized.dimensions() == @skia_mbt.ISize::new(800, 600))
   assert_true(resized.logical_dimensions() == @skia_mbt.Size::new(400, 300))

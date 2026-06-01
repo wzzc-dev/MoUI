@@ -74,6 +74,7 @@ default_stage_markers=(
   "native smoke window target resource plan count" \
   "native smoke window physical width" \
   "native smoke window frame pacing" \
+  "native smoke window frame pacing key variation" \
   "native smoke window present mode key variation" \
   "native smoke surface flush-and-submit" \
   "native smoke shader draws" \
@@ -147,6 +148,7 @@ default_expected_stage_values=(
   $'native smoke window target resource plan count\t1'
   $'native smoke window physical width\t16'
   $'native smoke window frame pacing\t2'
+  $'native smoke window frame pacing key variation\t1'
   $'native smoke window present mode key variation\t1'
   $'native smoke surface flush-and-submit\t1'
   $'native smoke readback width\t32'
