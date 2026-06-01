@@ -65,7 +65,7 @@ commits to match `skia-revision.txt` and JetBrains commits/versions to match
 | Platform | Current state | What exists | Missing before accepted |
 | --- | --- | --- | --- |
 | Linux | Ready for JetBrains binary acceptance, not accepted yet | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, dependency checker, artifact verifier, guarded revision pin wrapper, workflow | A real Linux artifact using the default JetBrains provider, or a source-built artifact when refreshing `skia-revision.txt` |
-| macOS | Ready for JetBrains binary acceptance, not accepted yet | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, artifact verifier, workflow | A real macOS artifact using the default JetBrains provider |
+| macOS | Accepted with JetBrains `m148-8967a2e80c` artifact | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, artifact verifier, workflow | Keep verifying refreshed macOS runs against the locked JetBrains provider |
 | Windows | Ready for JetBrains MSVC binary acceptance, not accepted yet | JetBrains fetch/cache provider, existing MinGW-compatible helper, MSVC smoke/acceptance helper, artifact verifier, workflow, persistent link-config generators | A real Windows MSVC artifact using the default JetBrains provider |
 
 ## Acceptance Evidence
@@ -140,8 +140,10 @@ JetBrains acceptance needs provider evidence:
 ## Next Acceptance Step
 
 The next concrete milestone is a desktop JetBrains-provider acceptance run on
-Linux, macOS, and Windows through the real-smoke workflows. The source-built
-Linux path remains the canonical fallback pin path:
+Linux and Windows through the real-smoke workflows. macOS is accepted with the
+locked JetBrains `m148-8967a2e80c` package and should continue to run as a
+regression check. The source-built Linux path remains the canonical fallback pin
+path:
 
 ```bash
 bash scripts/linux-accept-and-pin-skia.sh --install-deps --work-dir .skia-cache/linux --accept-platform-status
@@ -153,9 +155,9 @@ handled elsewhere. Keep `skia-revision.txt` as `main` until this run produces a
 verified full Skia commit. The `--accept-platform-status` flag marks Linux
 accepted only after artifact verification and revision-pin verification pass.
 
-After Linux pins the first known-good Skia revision, run the macOS and Windows
-real-smoke workflows against the same revision or explicitly document why a
-different revision is being evaluated.
+After Linux pins the first known-good Skia revision, run Windows real-smoke
+against the same revision or explicitly document why a different revision is
+being evaluated; keep macOS JetBrains smoke green against the locked provider.
 For source-built Linux workflow runs, the uploaded
 `logs/linux-acceptance-state.patch` contains the `skia-revision.txt` and
 `skia-platform-status.json` changes produced by the guarded artifact-and-status

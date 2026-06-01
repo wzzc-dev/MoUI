@@ -817,6 +817,22 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusFile $fakeMissingArtifactLogStatus } `
       -ExpectedMessage "platform status required_artifact_logs do not match expected contract: linux"
 
+    $fakeStatusDoc = Join-Path $dryRunRoot "fake-platform-status-doc.md"
+    @(
+      "## Current Matrix"
+      ""
+      "| Platform | Current state | What exists | Missing before accepted |"
+      "| --- | --- | --- | --- |"
+      "| Linux | Ready, not accepted yet | fake | fake |"
+      "| macOS | Ready, not accepted yet | fake | fake |"
+      "| Windows | Ready, not accepted yet | fake | fake |"
+      ""
+      "## Next Section"
+    ) | Set-Content -LiteralPath $fakeStatusDoc
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusDoc $fakeStatusDoc } `
+      -ExpectedMessage "platform status Markdown matrix does not mark accepted platform: macOS"
+
     & (Join-Path $repoRoot "scripts/verify-platform-status.ps1")
   } finally {
     $resolvedDryRunRoot = Resolve-Path -LiteralPath $dryRunRoot -ErrorAction SilentlyContinue
