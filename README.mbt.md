@@ -144,6 +144,10 @@ The regular test suite keeps the no-Skia fallback build green by skipping the
 real-backend-only assertions. A real native Skia build should additionally pass
 the dedicated smoke test:
 
+The fallback gate also verifies that each target-specific native MoonBit file
+has an unavailable fallback twin in `native/moon.pkg`, so new native bindings do
+not accidentally compile only on the linked Skia path.
+
 ```text
 cd scripts/native_smoke
 moon run --target native .
