@@ -169,7 +169,11 @@ Chinese (`当前会话`, `会话记录`, `运行证据`, `工作区证据`), wit
 protocol nouns. Empty `思考` / `停止` control slots no longer reserve operation
 row space. The workspace digest now includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
-visible without adding a separate diagnostics page. The default fixture no
+visible without adding a separate diagnostics page. When actionable evidence is
+present, the current session panel derives one quiet `接续建议` row that points
+to the next shared-app action, prioritizing cancelable Pi work, diagnostics,
+failed command evidence, reviewable diffs, files, transcript rows, command
+catalog entries, and activity events. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
 diff rows, command runs, diagnostic prose, or sample active-task copy. Zero
 queues, unbound Pi state, idle transport/agent state, and empty digest actions

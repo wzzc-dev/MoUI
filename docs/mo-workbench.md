@@ -98,6 +98,13 @@ packages:
   transport/agent state, and contextless actions render quietly instead of
   placeholder punctuation; transcript/activity/workspace panels shrink to their
   headers while empty.
+- The current session panel now derives one `接续建议` row from live state when
+  there is actionable evidence. It prioritizes cancelable Pi runs, diagnostics,
+  failed command evidence, reviewable diffs, file context, transcript rows,
+  command catalog entries, and latest activity events, then routes the chosen
+  button back through the existing shared-app messages such as `CancelRun`,
+  `FixDiagnostic`, `InspectCommandRun`, `ReviewDiff`, `InspectFile`,
+  `FollowTranscript`, `InvokeCommand`, or `FollowActivity`.
 - Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for
   Pi through the existing platform-neutral `SendUserInput` path, so visible
   conversation evidence can become the next agent action without native-only

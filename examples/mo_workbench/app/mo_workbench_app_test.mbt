@@ -2422,6 +2422,60 @@ test "workbench activity draws latest command evidence" {
 }
 
 ///|
+test "workbench current session draws diagnostic next action" {
+  let model = {
+    ..WorkbenchModel::new(),
+    diagnostics: [
+      DiagnosticItem::new(
+        source="moon check",
+        severity="error",
+        message="unused variable in app.mbt",
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "修复最新诊断"))
+  assert_true(has_text(commands, "moon check: unused variable in app.mbt"))
+  assert_true(has_text(commands, "修复"))
+  assert_true(has_text(commands, "清除"))
+}
+
+///|
+test "workbench current session prioritizes failed command next action" {
+  let model = {
+    ..model_with_reviewable_diff(),
+    commands: [
+      CommandRun::new(
+        id=1,
+        command="moon test examples/mo_workbench/app --target native",
+        cwd="/Volumes/Data/Code/moon/MoUI",
+        status="failed",
+        exit_code=Some(1),
+        output_path="/tmp/mo-workbench-test.log",
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "分析失败命令"))
+  assert_true(
+    has_text(commands, "moon test examples/mo_workbench/app --target native"),
+  )
+  assert_false(has_text(commands, "审核当前变更"))
+}
+
+///|
+test "workbench current session draws diff next action" {
+  let commands = model_with_reviewable_diff()
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "审核当前变更"))
+  assert_true(has_text(commands, "ready for review · 5 文件 · +160 -10"))
+}
+
+///|
 test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
@@ -2442,6 +2496,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "工作区证据"))
   assert_true(has_text(commands, "同步名"))
   assert_true(has_text(commands, "Pi RPC"))
+  assert_false(has_text(commands, "接续建议"))
   assert_false(has_text(commands, "Session"))
   assert_false(has_text(commands, "Pi transcript"))
   assert_false(has_text(commands, "Activity"))
