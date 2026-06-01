@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, fork candidate discovery and fork refresh, HTML export evidence, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -198,7 +198,7 @@ fresh JSONL process, while explicit `Shutdown` remains the close path. The
 native encoder targets Pi's actual RPC command names: `get_state`,
 `new_session`, `prompt`, `get_available_models`, `get_messages`,
 `get_fork_messages`, `fork`, `get_commands`, `get_session_stats`,
-`export_html`, `cycle_model`, `cycle_thinking_level`,
+`export_html`, `cycle_model`, `compact`, `cycle_thinking_level`,
 `set_steering_mode`, `set_follow_up_mode`, `set_session_name`, `bash`,
 `abort_bash`, and `abort`, with process shutdown handled by stdin EOF. The
 focused smoke for machines with Pi installed is an
@@ -208,10 +208,12 @@ catalog response, an offline `get_commands` command-catalog response, an
 offline `get_fork_messages` response, a `get_session_stats` metrics response,
 the expected in-memory `export_html` failure boundary, a
 `cycle_model` no-alternate-model acknowledgement, a
+`compact` offline failure boundary, a
 `cycle_thinking_level` acknowledgement,
 steering/follow-up mode acknowledgements, a `set_session_name`
 acknowledgement, and an `abort_bash` acknowledgement through `pi --mode rpc`,
-so it validates the process protocol without making a model request. The shared
+so it validates the process protocol without requiring a successful model call.
+The shared
 app ingests
 successful and failed Pi RPC `response` JSONL objects: `get_state` refreshes
 the current Workbench session snapshot, `get_messages` refreshes the transcript
@@ -229,6 +231,10 @@ surfaced in the workspace digest and can be cleared from shared app state.
 The model catalog summary can also send platform-neutral `CycleRpcModel`; a
 successful `cycle_model` response updates the active binding model when Pi
 returns one, while `data:null` is treated as a no-op acknowledgement.
+The session panel can send platform-neutral `CompactRpcSession`; successful
+`compact` responses append the returned summary to the transcript and update
+the active session summary, while offline/no-provider failures remain Pi RPC
+diagnostics.
 `cycle_thinking_level` responses and `thinking_level_changed` events keep the
 compact Thinking control and
 `PiAgentSnapshot` aligned. `set_steering_mode` and `set_follow_up_mode`
@@ -322,6 +328,9 @@ printf '{"type":"export_html","outputPath":"/tmp/mo-workbench-export-smoke.html"
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_model"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"compact"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \

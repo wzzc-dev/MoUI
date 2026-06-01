@@ -49,8 +49,8 @@ packages:
 - Typed transport commands for starting RPC, sending prompts, running shell
   commands, refreshing Pi messages, model catalogs, and command catalogs,
   syncing Pi session names, refreshing Pi session stats, creating fresh Pi
-  sessions, cancelling runs, switching Pi sessions, exporting Pi sessions to
-  HTML, and shutdown.
+  sessions, compacting context, cancelling runs, switching Pi sessions,
+  exporting Pi sessions to HTML, and shutdown.
 - Typed transport events for process lifecycle, JSONL sent/received lines,
   stderr diagnostics, and failures.
 - A platform-neutral `PiTransportRuntime` that turns command batches into
@@ -59,7 +59,7 @@ packages:
 - A native-only async transport package whose default command is
   `pi --mode rpc`, maps command batches to the real Pi RPC JSONL commands
   (`get_state`, `get_available_models`, `get_messages`, `get_commands`,
-  `get_session_stats`, `cycle_model`, `cycle_thinking_level`,
+  `get_session_stats`, `cycle_model`, `compact`, `cycle_thinking_level`,
   `set_steering_mode`, `set_follow_up_mode`, `new_session`, `switch_session`,
   `fork`,
   `get_fork_messages`, `export_html`, `prompt`, `set_session_name`, `bash`,
@@ -154,6 +154,10 @@ packages:
   platform-neutral `CycleRpcModel`, ingests `cycle_model` responses, and updates
   the active `PiSessionBinding` model plus thinking level when Pi reports a new
   scoped model.
+- The session panel has a manual context compaction action. The shared app emits
+  platform-neutral `CompactRpcSession`, ingests successful `compact` responses
+  into the transcript as compaction summaries, and records offline/no-provider
+  failures as normal Pi RPC diagnostics.
 - The command catalog can invoke a listed command by sending `/<name>` through
   the existing platform-neutral `SendUserInput` prompt path. This keeps slash
   command execution usable in the native UI without adding a native-only
@@ -220,7 +224,9 @@ packages:
   responses add the returned HTML path as Workspace file evidence. Successful
   `cycle_model` responses update the active Workbench-to-Pi binding and session
   summary when Pi returns a new model, or acknowledge that no alternate model is
-  available when Pi returns `null`. Successful
+  available when Pi returns `null`. Successful `compact` responses append the
+  returned summary to the transcript and update the active Workbench session
+  summary with the pre-compaction token count when Pi reports it. Successful
   `cycle_thinking_level` responses update the agent snapshot when Pi returns
   the new level, while
   `thinking_level_changed` events remain the authoritative stream update.
@@ -265,11 +271,11 @@ packages:
 - The native encoder is aligned with the installed Pi RPC protocol and has
   no-model smoke paths using offline `get_state`, `new_session`, `get_messages`,
   `get_available_models`, `get_fork_messages`, `get_commands`,
-  `get_session_stats`, `cycle_model`, `cycle_thinking_level`, `set_steering_mode`,
+  `get_session_stats`, `cycle_model`, `compact`, `cycle_thinking_level`, `set_steering_mode`,
   `set_follow_up_mode`,
   `set_session_name`, and `abort_bash` over `pi --mode rpc`; it also records
-  the expected `export_html` failure boundary for in-memory `--no-session`
-  smoke runs.
+  the expected `export_html` and `compact` failure boundaries for in-memory
+  `--no-session` smoke runs.
 
 The remaining V1 transport boundary is production lifecycle polish: the native
 owner now keeps one process alive across real runtime dispatches, reports
@@ -331,6 +337,11 @@ A successful
 the active binding model and status panel when Pi returns a model. If Pi
 returns `data:null`, the app records the acknowledgement without changing the
 current model. A successful
+`{"type":"response","command":"compact","success":true,...}` line appends Pi's
+returned compaction summary to the transcript and updates the active session
+summary with `tokensBefore` when Pi reports it. A failed compact response, such
+as the no-provider response from offline smoke, is recorded through the normal
+Pi RPC diagnostic path. A successful
 `{"type":"response","command":"cycle_thinking_level","success":true,...}` line
 acknowledges the compact Thinking control and, when Pi includes a `data.level`,
 updates `PiAgentSnapshot.thinking_level`. The streamed
@@ -466,6 +477,8 @@ The native encoder intentionally uses the Pi CLI's current RPC command shape:
 `ExportRpcSessionHtml` sends `{"type":"export_html"}` or includes
 `"outputPath"` when the app supplies one,
 `CycleRpcModel` sends `{"type":"cycle_model"}`,
+`CompactRpcSession` sends `{"type":"compact"}` or includes
+`"customInstructions"` when the app supplies them,
 `CycleRpcThinkingLevel` sends `{"type":"cycle_thinking_level"}`,
 `SetRpcSteeringMode` sends `{"type":"set_steering_mode","mode":...}`,
 `SetRpcFollowUpMode` sends `{"type":"set_follow_up_mode","mode":...}`,
@@ -480,8 +493,8 @@ remain part of the Mo Workbench event labels and state; `PiSessionBinding`
 records which concrete Pi session the current process reported for each
 Workbench session.
 
-The smallest real CLI smoke avoids model calls and validates the stdin/stdout
-contract only:
+The smallest real CLI smoke does not require a successful model call and
+validates the stdin/stdout contract only:
 
 ```sh
 printf '{"type":"get_state"}\n' | \
@@ -511,6 +524,9 @@ printf '{"type":"export_html","outputPath":"/tmp/mo-workbench-export-smoke.html"
 printf '{"type":"cycle_model"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
+printf '{"type":"compact"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
@@ -538,11 +554,13 @@ seventh should return a `get_session_stats` response with message, tool, token,
 and cost counters, the eighth should return an `export_html` failure explaining
 that in-memory `--no-session` sessions cannot be exported, the ninth should
 return a successful `cycle_model` response with `data:null` when no alternate
-scoped model is available, the tenth should return a successful
-`cycle_thinking_level` acknowledgement, the eleventh and twelfth should
-acknowledge the steering/follow-up mode changes, the thirteenth should emit
-`session_info_changed` and a successful `set_session_name` response, and the
-fourteenth should return a successful
+scoped model is available, the tenth should emit compaction start/end events
+and return a failed `compact` response when the offline smoke has no API
+provider available for compaction, the eleventh should return a successful
+`cycle_thinking_level` acknowledgement, the
+twelfth and thirteenth should acknowledge the steering/follow-up mode changes,
+the fourteenth should emit `session_info_changed` and a successful
+`set_session_name` response, and the fifteenth should return a successful
 `abort_bash` response even when no bash command is active. All exit through
 stdin EOF.
 
@@ -593,6 +611,9 @@ printf '{"type":"export_html","outputPath":"/tmp/mo-workbench-export-smoke.html"
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_model"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"compact"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"cycle_thinking_level"}\n' | \
