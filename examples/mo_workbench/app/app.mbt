@@ -166,6 +166,7 @@ pub(all) struct PiSessionBinding {
 pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
+  main_scroll_offset_y : Double
   prompt : String
   expanded_context : Array[String]
   sessions : Array[WorkbenchSession]
@@ -226,6 +227,7 @@ pub(all) enum WorkbenchMsg {
   CancelRun
   ClearDiagnostics
   ToggleContext(String)
+  MainScrollTo(Double)
 } derive(Eq, Debug)
 
 ///|
@@ -522,6 +524,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
   {
     selected_session_id: "moui-skia",
     selected_panel: "agent",
+    main_scroll_offset_y: 0.0,
     prompt: "",
     expanded_context: ["repo", "examples"],
     sessions: sample_sessions(),
@@ -596,6 +599,7 @@ pub fn WorkbenchModel::update(
       }
     ToggleContext(id) =>
       { ..self, expanded_context: toggle_id(self.expanded_context, id) }
+    MainScrollTo(offset_y) => self.scroll_main_to(offset_y)
   }
 }
 
@@ -803,7 +807,20 @@ fn WorkbenchModel::select_session(
   self : WorkbenchModel,
   id : String,
 ) -> WorkbenchModel {
-  { ..self, selected_session_id: id, last_status: "Workbench session selected" }
+  {
+    ..self,
+    selected_session_id: id,
+    main_scroll_offset_y: 0.0,
+    last_status: "Workbench session selected",
+  }
+}
+
+///|
+fn WorkbenchModel::scroll_main_to(
+  self : WorkbenchModel,
+  offset_y : Double,
+) -> WorkbenchModel {
+  { ..self, main_scroll_offset_y: workbench_max_double(0.0, offset_y) }
 }
 
 ///|

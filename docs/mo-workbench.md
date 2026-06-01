@@ -39,9 +39,9 @@ packages:
 
 - A session-first desktop shell named `Mo Workbench`.
 - Header subtitle `Pi agent 桌面工作台`.
-- A Codex / Claude Code-style native shell with macOS chrome, a gray session
-  sidebar, a compact workspace summary, state-driven transcript, compact
-  activity/workspace digests, and a restrained composer.
+- A Codex / Claude Code-style native shell with macOS chrome, a quiet
+  task-history sidebar, a clean white main work canvas, readable transcript
+  blocks, compact activity/workspace digests, and a floating composer.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
@@ -86,10 +86,13 @@ packages:
   `1200x750` surface, so the macOS Skia runtime responds to window resize
   events with adaptive sidebar, panel, scroll, and composer dimensions, including
   narrower panel/composer widths when the main region is smaller than the old
-  fixed desktop frame. The visible hierarchy now uses quieter Chinese section
-  labels (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`) while
-  preserving Pi/RPC protocol nouns, and secondary session controls are visually
-  quieter than the primary refresh/new-session actions.
+  fixed desktop frame. The right-side workflow is now a scrollable main canvas
+  with an explicit scrollbar, multi-line transcript message blocks for long Pi
+  replies, a compact current-state strip, and a centered floating composer. The
+  visible hierarchy uses quieter Chinese section labels (`当前会话`, `Pi 运行状态`,
+  `会话记录`, `运行证据`, `工作区证据`) while preserving Pi/RPC protocol nouns, and
+  secondary session controls are visually quieter than the primary
+  refresh/new-session actions.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven

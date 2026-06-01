@@ -3,6 +3,7 @@ using @views {
   badge,
   button,
   column,
+  custom_layout,
   empty,
   row,
   scroll_view,
@@ -18,6 +19,9 @@ priv struct WorkbenchLayout {
   sidebar_width : Double
   sidebar_inner_width : Double
   main_width : Double
+  main_padding : Double
+  content_width : Double
+  scrollbar_width : Double
   panel_width : Double
   panel_body_width : Double
   row_badge_width : Double
@@ -29,6 +33,7 @@ priv struct WorkbenchLayout {
   scroll_height : Double
   composer_width : Double
   composer_input_width : Double
+  composer_height : Double
 }
 
 ///|
@@ -51,19 +56,21 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
   let sidebar_width = if viewport.width < 980.0 {
     workbench_clamp_double(viewport.width * 0.26, 220.0, 268.0)
   } else {
-    workbench_clamp_double(viewport.width * 0.24, 276.0, 316.0)
+    workbench_clamp_double(viewport.width * 0.22, 260.0, 300.0)
   }
   let main_width = workbench_max_double(1.0, viewport.width - sidebar_width)
-  let main_horizontal_margin = if main_width < 720.0 { 24.0 } else { 80.0 }
-  let panel_available_width = workbench_max_double(
+  let main_padding = if main_width < 760.0 { 14.0 } else { 22.0 }
+  let scrollbar_width = 12.0
+  let content_available_width = workbench_max_double(
     1.0,
-    main_width - main_horizontal_margin,
+    main_width - main_padding * 2.0 - scrollbar_width,
   )
-  let panel_width = workbench_clamp_double(
-    panel_available_width,
-    workbench_min_double(480.0, panel_available_width),
+  let content_width = workbench_clamp_double(
+    content_available_width,
+    workbench_min_double(460.0, content_available_width),
     920.0,
   )
+  let panel_width = content_width
   let panel_body_width = workbench_max_double(1.0, panel_width - 24.0)
   let row_badge_width = if panel_width < 620.0 { 88.0 } else { 104.0 }
   let row_text_width = workbench_max_double(
@@ -79,13 +86,14 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     panel_body_width - 126.0 - 10.0,
   )
   let composer_width = workbench_clamp_double(
-    panel_available_width,
-    workbench_min_double(480.0, panel_available_width),
-    900.0,
+    content_available_width,
+    workbench_min_double(460.0, content_available_width),
+    860.0,
   )
+  let composer_height = 128.0
   let top_text_available = workbench_max_double(
     1.0,
-    main_width - 86.0 - 120.0 - 10.0 - 24.0,
+    content_width - 86.0 - 120.0 - 10.0 - 24.0,
   )
   let top_title_width = workbench_clamp_double(
     top_text_available * 0.45,
@@ -99,8 +107,11 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
   {
     viewport,
     sidebar_width,
-    sidebar_inner_width: workbench_max_double(160.0, sidebar_width - 28.0),
+    sidebar_inner_width: workbench_max_double(160.0, sidebar_width - 36.0),
     main_width,
+    main_padding,
+    content_width,
+    scrollbar_width,
     panel_width,
     panel_body_width,
     row_badge_width,
@@ -109,9 +120,10 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     diff_text_width,
     top_title_width,
     top_path_width,
-    scroll_height: workbench_max_double(240.0, viewport.height - 175.0),
+    scroll_height: workbench_max_double(220.0, viewport.height - 260.0),
     composer_width,
     composer_input_width: workbench_max_double(1.0, composer_width - 24.0),
+    composer_height,
   }
 }
 
@@ -186,7 +198,7 @@ fn WorkbenchModel::app_sidebar(
     column(
       [
         self.sidebar_brand(layout, theme),
-        self.sidebar_section_label("会话", layout, theme),
+        self.sidebar_section_label("任务历史", layout, theme),
         self.pinned_threads(layout, theme),
         self.sidebar_section_label("工作区", layout, theme),
         self.workspace_summary(layout, theme),
@@ -198,10 +210,10 @@ fn WorkbenchModel::app_sidebar(
     ),
     width=layout.sidebar_width,
     height=layout.viewport.height,
-    background=ui_color(0.91, 0.92, 0.92),
+    background=ui_color(0.93, 0.94, 0.93),
     corner_radius=0.0,
     theme~,
-    padding=14.0,
+    padding=18.0,
   )
 }
 
@@ -295,11 +307,11 @@ fn WorkbenchModel::workspace_summary(
     column(rows, spacing=2.0, align=Start),
     width=layout.sidebar_inner_width,
     height=if pending > 0 { 116.0 } else { 90.0 },
-    background=ui_color(0.88, 0.89, 0.89),
+    background=ui_color(0.96, 0.96, 0.95),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  )
+  ).border(workbench_hairline_border())
 }
 
 ///|
@@ -337,9 +349,9 @@ fn WorkbenchModel::thread_button(
 ) -> @core.View[WorkbenchMsg] {
   ignore(self)
   let background = if selected {
-    ui_color(0.84, 0.85, 0.85)
+    @core.Color::white()
   } else {
-    ui_color(0.91, 0.92, 0.92)
+    ui_color(0.93, 0.94, 0.93)
   }
   surface(
     row(
@@ -363,6 +375,12 @@ fn WorkbenchModel::thread_button(
     corner_radius=8.0,
     theme~,
     padding=2.0,
+  ).border(
+    if selected {
+      workbench_hairline_border()
+    } else {
+      workbench_clear_border()
+    },
   )
 }
 
@@ -372,27 +390,57 @@ fn WorkbenchModel::conversation_surface(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  let content_height = self.chat_content_height(layout)
+  let max_scroll = workbench_max_double(
+    0.0,
+    content_height - layout.scroll_height,
+  )
+  let offset_y = workbench_clamp_double(
+    self.main_scroll_offset_y,
+    0.0,
+    max_scroll,
+  )
   surface(
     column(
       [
         self.top_bar(layout, theme),
-        divider(layout.main_width),
-        scroll_view(
-          self.chat_transcript(layout, theme),
-          width=layout.main_width,
+        row(
+          [
+            scroll_view(
+              self.chat_transcript(layout, theme),
+              offset=@core.Point::new(x=0.0, y=offset_y),
+              width=layout.content_width,
+              height=layout.scroll_height,
+              on_scroll=Some(delta => {
+                MainScrollTo(
+                  workbench_clamp_double(offset_y - delta.y, 0.0, max_scroll),
+                )
+              }),
+            ),
+            main_scrollbar(
+              theme,
+              viewport_height=layout.scroll_height,
+              content_height~,
+              offset_y~,
+            ),
+          ],
+          spacing=0.0,
+          align=Start,
+        ).frame(
+          width=layout.content_width + layout.scrollbar_width,
           height=layout.scroll_height,
         ),
         self.composer(layout, theme),
       ],
-      spacing=0.0,
-      align=Stretch,
+      spacing=14.0,
+      align=Center,
     ),
     width=layout.main_width,
     height=layout.viewport.height,
-    background=@core.Color::white(),
+    background=ui_color(0.975, 0.976, 0.970),
     corner_radius=0.0,
     theme~,
-    padding=0.0,
+    padding=layout.main_padding,
   )
 }
 
@@ -422,17 +470,24 @@ fn WorkbenchModel::top_bar(
           height=28.0,
         ),
         spacer(min_length=10.0, weight=1.0),
+        badge(
+          session_status_label(active.status),
+          tone=session_status_tone(active.status),
+          theme~,
+          width=74.0,
+        ),
         text(active.branch, role=Caption, theme~, width=120.0, height=28.0),
       ],
       spacing=6.0,
       align=Center,
     ),
-    width=layout.main_width,
-    height=48.0,
+    width=layout.content_width + layout.scrollbar_width,
+    height=58.0,
     background=@core.Color::white(),
+    corner_radius=12.0,
     theme~,
-    padding=10.0,
-  )
+    padding=12.0,
+  ).border(workbench_hairline_border())
 }
 
 ///|
@@ -454,22 +509,29 @@ fn WorkbenchModel::chat_transcript(
 }
 
 ///|
+fn WorkbenchModel::chat_content_height(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+) -> Double {
+  session_status_panel_height(self.session_status_row_count()) +
+  self.transcript_panel_height(layout) +
+  evidence_panel_height(self.activity_panel_row_count(), expanded=188.0) +
+  evidence_panel_height(self.workspace_digest_panel_row_count(), expanded=178.0) +
+  30.0
+}
+
+///|
 fn WorkbenchModel::transcript_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let rows : Array[@core.View[WorkbenchMsg]] = []
-  let visible_limit = if self.fork_messages.is_empty() { 3 } else { 2 }
-  let mut visible = 0
   for item in self.transcript {
-    if visible < visible_limit {
-      rows.push(transcript_row(item, layout, theme))
-      visible = visible + 1
-    }
+    rows.push(transcript_row(item, layout, theme))
   }
-  if !self.fork_messages.is_empty() {
-    rows.push(fork_message_row(self.fork_messages[0], layout, theme))
+  for message in self.fork_messages {
+    rows.push(fork_message_row(message, layout, theme))
   }
   let panel_rows : Array[@core.View[WorkbenchMsg]] = [
     row(
@@ -500,18 +562,47 @@ fn WorkbenchModel::transcript_panel(
       align=Center,
     ),
   ]
-  if !rows.is_empty() {
-    panel_rows.push(column(rows, spacing=6.0, align=Start))
+  if rows.is_empty() {
+    panel_rows.push(
+      text(
+        "等待 Pi 回复，当前 digest 保持安静。",
+        role=Caption,
+        theme~,
+        width=layout.panel_body_width,
+        height=28.0,
+      ),
+    )
+  } else {
+    panel_rows.push(column(rows, spacing=8.0, align=Start))
   }
   surface(
     column(panel_rows, spacing=8.0, align=Start),
     width=layout.panel_width,
-    height=if rows.is_empty() { 54.0 } else { 178.0 },
+    height=self.transcript_panel_height(layout),
     background=@core.Color::white(),
-    corner_radius=8.0,
+    corner_radius=12.0,
     theme~,
     padding=12.0,
-  )
+  ).border(workbench_hairline_border())
+}
+
+///|
+fn WorkbenchModel::transcript_panel_height(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+) -> Double {
+  if self.transcript.is_empty() && self.fork_messages.is_empty() {
+    84.0
+  } else {
+    let mut height = 24.0 + 28.0 + 8.0
+    for item in self.transcript {
+      height = height + transcript_row_height(item, layout) + 8.0
+    }
+    for message in self.fork_messages {
+      height = height + fork_message_row_height(message, layout) + 8.0
+    }
+    height
+  }
 }
 
 ///|
@@ -520,45 +611,173 @@ fn transcript_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  row(
-    [
-      badge(
-        transcript_role_label(item.role),
-        tone=transcript_badge_tone(item.tone),
-        theme~,
-        width=layout.row_badge_width,
-      ),
-      column(
-        [
-          text(
-            item.summary,
-            role=Control,
-            theme~,
-            width=layout.row_text_width,
-            height=24.0,
-          ),
-          text(
-            item.detail,
-            role=Caption,
-            theme~,
-            width=layout.row_text_width,
-            height=22.0,
-          ),
-        ],
-        spacing=0.0,
-        align=Start,
-      ),
-      button(
-        "跟进",
-        on_click=FollowTranscript(item.role, item.summary, item.detail),
-        variant=Outline,
-        theme~,
-        width=58.0,
-        height=32.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
+  let inner_width = workbench_max_double(1.0, layout.panel_body_width - 20.0)
+  let text_width = workbench_max_double(1.0, inner_width - 58.0 - 12.0)
+  surface(
+    column(
+      [
+        row(
+          [
+            badge(
+              transcript_role_label(item.role),
+              tone=transcript_badge_tone(item.tone),
+              theme~,
+              width=layout.row_badge_width,
+            ),
+            spacer(min_length=8.0, weight=1.0),
+            button(
+              "跟进",
+              on_click=FollowTranscript(item.role, item.summary, item.detail),
+              variant=Outline,
+              theme~,
+              width=58.0,
+              height=32.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
+        ),
+        transcript_text_block(item, text_width, theme),
+      ],
+      spacing=8.0,
+      align=Start,
+    ),
+    width=layout.panel_body_width,
+    height=transcript_row_height(item, layout),
+    background=transcript_row_background(item.role),
+    corner_radius=10.0,
+    theme~,
+    padding=10.0,
+  ).border(workbench_hairline_border())
+}
+
+///|
+fn transcript_text_block(
+  item : TranscriptItem,
+  width : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let max_chars = readable_line_char_limit(width)
+  let lines : Array[@core.View[WorkbenchMsg]] = []
+  for line in readable_text_lines(item.summary, max_chars, max_lines=3) {
+    lines.push(text(line, role=Body, theme~, width~, height=24.0))
+  }
+  for line in readable_text_lines(item.detail, max_chars, max_lines=6) {
+    lines.push(text(line, role=Caption, theme~, width~, height=22.0))
+  }
+  if lines.is_empty() {
+    lines.push(text("空消息", role=Caption, theme~, width~, height=22.0))
+  }
+  column(lines, spacing=2.0, align=Start)
+}
+
+///|
+fn transcript_row_height(
+  item : TranscriptItem,
+  layout : WorkbenchLayout,
+) -> Double {
+  let inner_width = workbench_max_double(1.0, layout.panel_body_width - 20.0)
+  let text_width = workbench_max_double(1.0, inner_width - 58.0 - 12.0)
+  20.0 + 32.0 + 8.0 + readable_text_block_height(item, text_width)
+}
+
+///|
+fn readable_text_block_height(item : TranscriptItem, width : Double) -> Double {
+  let max_chars = readable_line_char_limit(width)
+  let line_count = readable_text_lines(item.summary, max_chars, max_lines=3).length() +
+    readable_text_lines(item.detail, max_chars, max_lines=6).length()
+  let safe_line_count = line_count.max(1)
+  safe_line_count.to_double() * 23.0 +
+  (safe_line_count - 1).max(0).to_double() * 2.0
+}
+
+///|
+fn transcript_row_background(role : String) -> @core.Color {
+  match role {
+    "assistant" => ui_color(0.985, 0.987, 0.982)
+    "user" => ui_color(0.965, 0.974, 0.985)
+    _ => ui_color(0.985, 0.985, 0.980)
+  }
+}
+
+///|
+fn readable_line_char_limit(width : Double) -> Int {
+  workbench_clamp_int((width / 7.2).to_int(), 24, 92)
+}
+
+///|
+fn readable_text_lines(
+  value : String,
+  max_chars : Int,
+  max_lines~ : Int,
+) -> Array[String] {
+  let clean = value.trim().to_owned()
+  let lines : Array[String] = []
+  if clean == "" || max_lines <= 0 {
+    return lines
+  }
+  let chars = clean.to_array()
+  let limit = max_chars.max(1)
+  let mut start = 0
+  while start < chars.length() && lines.length() < max_lines {
+    let end = workbench_min_int(chars.length(), start + limit)
+    if lines.length() + 1 == max_lines && end < chars.length() {
+      let trim_end = workbench_max_int(start, end - 3)
+      lines.push(String::from_array(chars[start:trim_end]) + "...")
+    } else {
+      lines.push(String::from_array(chars[start:end]))
+    }
+    start = end
+  }
+  lines
+}
+
+///|
+fn workbench_clamp_int(value : Int, min : Int, max : Int) -> Int {
+  workbench_min_int(max, workbench_max_int(min, value))
+}
+
+///|
+fn workbench_max_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn workbench_min_int(a : Int, b : Int) -> Int {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn fork_message_row_height(
+  message : PiForkMessage,
+  layout : WorkbenchLayout,
+) -> Double {
+  let item = TranscriptItem::new(
+    id=message.entry_id,
+    role="branchSummary",
+    summary="可分叉消息",
+    detail=message.text,
+    tone="info",
+  )
+  transcript_row_height(item, layout)
+}
+
+///|
+fn fork_message_item(message : PiForkMessage) -> TranscriptItem {
+  TranscriptItem::new(
+    id=message.entry_id,
+    role="branchSummary",
+    summary="可分叉消息",
+    detail=message.text,
+    tone="info",
   )
 }
 
@@ -568,41 +787,40 @@ fn fork_message_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  row(
-    [
-      badge("分叉", tone=Accent, theme~, width=layout.row_badge_width),
-      column(
-        [
-          text(
-            "可分叉消息",
-            role=Control,
-            theme~,
-            width=layout.row_text_width,
-            height=24.0,
-          ),
-          text(
-            message.text,
-            role=Caption,
-            theme~,
-            width=layout.row_text_width,
-            height=22.0,
-          ),
-        ],
-        spacing=0.0,
-        align=Start,
-      ),
-      button(
-        "分支",
-        on_click=ForkFromMessage(message.entry_id),
-        variant=Outline,
-        theme~,
-        width=58.0,
-        height=32.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
-  )
+  let item = fork_message_item(message)
+  let inner_width = workbench_max_double(1.0, layout.panel_body_width - 20.0)
+  let text_width = workbench_max_double(1.0, inner_width - 58.0 - 12.0)
+  surface(
+    column(
+      [
+        row(
+          [
+            badge("分叉", tone=Accent, theme~, width=layout.row_badge_width),
+            spacer(min_length=8.0, weight=1.0),
+            button(
+              "分支",
+              on_click=ForkFromMessage(message.entry_id),
+              variant=Outline,
+              theme~,
+              width=58.0,
+              height=32.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
+        ),
+        transcript_text_block(item, text_width, theme),
+      ],
+      spacing=8.0,
+      align=Start,
+    ),
+    width=layout.panel_body_width,
+    height=fork_message_row_height(message, layout),
+    background=ui_color(0.980, 0.985, 0.990),
+    corner_radius=10.0,
+    theme~,
+    padding=10.0,
+  ).border(workbench_hairline_border())
 }
 
 ///|
@@ -798,12 +1016,42 @@ fn WorkbenchModel::session_status_panel(
   surface(
     column(rows, spacing=6.0, align=Start),
     width=layout.panel_width,
-    height=session_status_panel_height(rows.length()),
+    height=session_status_panel_height(self.session_status_row_count()),
     background=@core.Color::white(),
-    corner_radius=8.0,
+    corner_radius=12.0,
     theme~,
     padding=12.0,
-  )
+  ).border(workbench_hairline_border())
+}
+
+///|
+fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
+  let active = self.active_session()
+  let binding = self.active_pi_session_binding()
+  let mut count = 2
+  if active.active_task != "" {
+    count = count + 1
+  }
+  if !self.plan.is_empty() {
+    count = count + 1
+  }
+  if self.pi_session_stats.has_visible_metrics() {
+    count = count + 1
+  }
+  if self.model_catalog.length() > 0 {
+    count = count + 1
+  }
+  if binding.has_visible_binding() {
+    count = count + 1
+  }
+  if self.has_runtime_signal() {
+    count = count + 1
+  }
+  match self.next_action() {
+    Some(_) => count = count + 1
+    None => ()
+  }
+  count
 }
 
 ///|
@@ -1750,12 +1998,30 @@ fn WorkbenchModel::activity_panel(
   surface(
     column(rows, spacing=7.0, align=Start),
     width=layout.panel_width,
-    height=evidence_panel_height(rows.length(), expanded=188.0),
+    height=evidence_panel_height(
+      self.activity_panel_row_count(),
+      expanded=188.0,
+    ),
     background=@core.Color::white(),
-    corner_radius=8.0,
+    corner_radius=12.0,
     theme~,
     padding=12.0,
-  )
+  ).border(workbench_hairline_border())
+}
+
+///|
+fn WorkbenchModel::activity_panel_row_count(self : WorkbenchModel) -> Int {
+  let mut count = 1
+  if !self.events.is_empty() {
+    count = count + 1
+  }
+  if !self.commands.is_empty() {
+    count = count + 1
+  }
+  if !self.command_catalog.is_empty() {
+    count = count + 1
+  }
+  count
 }
 
 ///|
@@ -2036,12 +2302,32 @@ fn WorkbenchModel::workspace_digest_panel(
   surface(
     column(rows, spacing=7.0, align=Start),
     width=layout.panel_width,
-    height=evidence_panel_height(rows.length(), expanded=178.0),
+    height=evidence_panel_height(
+      self.workspace_digest_panel_row_count(),
+      expanded=178.0,
+    ),
     background=@core.Color::white(),
-    corner_radius=8.0,
+    corner_radius=12.0,
     theme~,
     padding=12.0,
-  )
+  ).border(workbench_hairline_border())
+}
+
+///|
+fn WorkbenchModel::workspace_digest_panel_row_count(
+  self : WorkbenchModel,
+) -> Int {
+  let mut count = 1
+  if self.diff.has_context() {
+    count = count + 1
+  }
+  if !self.files.is_empty() {
+    count = count + 1
+  }
+  if !self.diagnostics.is_empty() {
+    count = count + 1
+  }
+  count
 }
 
 ///|
@@ -2287,12 +2573,14 @@ fn WorkbenchModel::composer(
       align=Stretch,
     ),
     width=layout.composer_width,
-    height=126.0,
+    height=layout.composer_height,
     background=@core.Color::white(),
-    corner_radius=8.0,
+    corner_radius=14.0,
     theme~,
     padding=12.0,
   )
+  .border(workbench_hairline_border())
+  .shadow(workbench_soft_shadow())
 }
 
 ///|
@@ -2332,13 +2620,82 @@ fn WorkbenchModel::sidebar_section_label(
 }
 
 ///|
-fn divider(width : Double) -> @core.View[WorkbenchMsg] {
-  surface(
-    empty(),
-    width~,
-    height=1.0,
-    background=ui_color(0.90, 0.90, 0.90),
-    padding=0.0,
+fn main_scrollbar(
+  theme : @core.Theme,
+  viewport_height~ : Double,
+  content_height~ : Double,
+  offset_y~ : Double,
+) -> @core.View[WorkbenchMsg] {
+  let width = 12.0
+  custom_layout(
+    measure=_ => @core.Size::new(width~, height=viewport_height),
+    paint=frame => {
+      let max_scroll = workbench_max_double(
+        0.0,
+        content_height - viewport_height,
+      )
+      if max_scroll <= 0.0 {
+        return []
+      }
+      let track_width = 4.0
+      let track = @core.Rect::new(
+        x=frame.origin.x + (frame.size.width - track_width) / 2.0,
+        y=frame.origin.y,
+        width=track_width,
+        height=frame.size.height,
+      )
+      let thumb_height = workbench_clamp_double(
+        frame.size.height * frame.size.height / content_height,
+        36.0,
+        frame.size.height,
+      )
+      let thumb_y = frame.origin.y +
+        (frame.size.height - thumb_height) *
+        workbench_clamp_double(offset_y, 0.0, max_scroll) /
+        max_scroll
+      let thumb = @core.Rect::new(
+        x=track.origin.x,
+        y=thumb_y,
+        width=track_width,
+        height=thumb_height,
+      )
+      [
+        @core.DrawCommand::FillRoundedRectBrush(
+          @core.RoundedRect::new(rect=track, radius=2.0),
+          @core.Brush::solid(theme.palette.outline.multiply_alpha(0.18)),
+        ),
+        @core.DrawCommand::FillRoundedRectBrush(
+          @core.RoundedRect::new(rect=thumb, radius=2.0),
+          @core.Brush::solid(theme.palette.primary.multiply_alpha(0.58)),
+        ),
+      ]
+    },
+    semantics_label="Mo Workbench main scrollbar",
+  )
+}
+
+///|
+fn workbench_hairline_border() -> @core.BorderStyle {
+  @core.BorderStyle::new(
+    brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.08)),
+    width=1.0,
+  )
+}
+
+///|
+fn workbench_clear_border() -> @core.BorderStyle {
+  @core.BorderStyle::new(
+    brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.0)),
+    width=1.0,
+  )
+}
+
+///|
+fn workbench_soft_shadow() -> @core.ShadowStyle {
+  @core.ShadowStyle::new(
+    color=@core.Color::black().multiply_alpha(0.10),
+    offset=@core.Point::new(x=0.0, y=3.0),
+    blur_radius=18.0,
   )
 }
 

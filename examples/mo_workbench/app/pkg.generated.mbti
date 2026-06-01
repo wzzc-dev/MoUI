@@ -249,6 +249,7 @@ pub fn TranscriptItem::new(id~ : String, role~ : String, summary~ : String, deta
 pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
+  main_scroll_offset_y : Double
   prompt : String
   expanded_context : Array[String]
   sessions : Array[WorkbenchSession]
@@ -312,6 +313,7 @@ pub(all) enum WorkbenchMsg {
   CancelRun
   ClearDiagnostics
   ToggleContext(String)
+  MainScrollTo(Double)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct WorkbenchSession {
