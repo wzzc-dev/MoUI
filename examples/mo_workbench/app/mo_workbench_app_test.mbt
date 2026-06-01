@@ -1656,7 +1656,88 @@ test "workbench runtime draws Pi model catalog summary after refresh" {
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Models 2"))
   assert_true(has_text(commands, "GPT-5 (openai/gpt-5) +1"))
+  assert_true(has_text(commands, "使用"))
   assert_true(has_text(commands, "切换"))
+}
+
+///|
+test "workbench sets visible Pi model through platform-neutral transport" {
+  let model = WorkbenchModel::new().update(
+    SetModel("openai", "gpt-5", "GPT-5 (openai/gpt-5)"),
+  )
+  inspect(model.last_status, content="Pi model set queued")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    SetRpcModel(session, provider, id) => {
+      inspect(session, content="moui-skia")
+      inspect(provider, content="openai")
+      inspect(id, content="gpt-5")
+    }
+    _ => fail("expected queued model set")
+  }
+  assert_true(model.events.any(event => event.title == "Pi model set queued"))
+}
+
+///|
+test "workbench set model runtime effect updates active Pi binding" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(
+      JsonLineSent(
+        "moui-skia", "{\"type\":\"set_model\",\"provider\":\"openai\",\"modelId\":\"gpt-5\"}",
+      ),
+    )
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"set_model","success":true,"data":{"id":"gpt-5","provider":"openai","name":"GPT-5"}}
+        ),
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    SetModel("openai", "gpt-5", "GPT-5 (openai/gpt-5)"),
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    SetRpcModel(session, provider, id) => {
+      inspect(session, content="moui-skia")
+      inspect(provider, content="openai")
+      inspect(id, content="gpt-5")
+    }
+    _ => fail("expected captured model set")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="set_model")
+  inspect(model.pi_rpc.model, content="GPT-5 (openai/gpt-5)")
+  let binding = model.active_pi_session_binding()
+  inspect(binding.model, content="GPT-5 (openai/gpt-5)")
+  inspect(binding.last_command, content="set_model")
+  inspect(
+    model.active_session().active_task,
+    content="Pi model: GPT-5 (openai/gpt-5)",
+  )
+  inspect(
+    model.active_session().summary,
+    content="Pi model set to GPT-5 (openai/gpt-5)",
+  )
+  inspect(model.last_status, content="Pi model set")
+  assert_true(model.events.any(event => event.title == "Pi model set"))
 }
 
 ///|

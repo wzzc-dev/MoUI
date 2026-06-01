@@ -112,6 +112,11 @@ pub fn pi_rpc_export_html_line(output_path~ : String) -> String {
 }
 
 ///|
+pub fn pi_rpc_set_model_line(provider~ : String, model_id~ : String) -> String {
+  ({ "type": "set_model", "provider": provider, "modelId": model_id } : Json).stringify()
+}
+
+///|
 pub fn pi_rpc_cycle_model_line() -> String {
   ({ "type": "cycle_model" } : Json).stringify()
 }
@@ -250,6 +255,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_export_html_line(output_path=path))
+      }
+      SetRpcModel(session, provider, model_id) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_set_model_line(provider~, model_id~))
       }
       CycleRpcModel(session) => {
         if session_id == default_session_id {

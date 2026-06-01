@@ -215,6 +215,7 @@ pub(all) enum WorkbenchMsg {
   MarkCommandComplete(Int, Int)
   FixDiagnostic(String, String, String)
   SyncSessionName
+  SetModel(String, String, String)
   CycleModel
   CompactSession
   CycleThinkingLevel
@@ -576,6 +577,7 @@ pub fn WorkbenchModel::update(
     FixDiagnostic(source, severity, message) =>
       self.fix_diagnostic(source, severity, message)
     SyncSessionName => self.sync_session_name()
+    SetModel(provider, id, label) => self.set_model(provider, id, label)
     CycleModel => self.cycle_model()
     CompactSession => self.compact_session()
     CycleThinkingLevel => self.cycle_thinking_level()
@@ -774,6 +776,8 @@ pub fn WorkbenchModel::update_with_transport(
         source, severity, message, transport_runtime,
       )
     SyncSessionName => self.sync_session_name_with_transport(transport_runtime)
+    SetModel(provider, id, label) =>
+      self.set_model_with_transport(provider, id, label, transport_runtime)
     CycleModel => self.cycle_model_with_transport(transport_runtime)
     CompactSession => self.compact_session_with_transport(transport_runtime)
     CycleThinkingLevel =>
@@ -1753,6 +1757,67 @@ fn WorkbenchModel::sync_session_name_with_transport(
     self.sync_session_name(),
     effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
   )
+}
+
+///|
+fn WorkbenchModel::set_model(
+  self : WorkbenchModel,
+  provider : String,
+  id : String,
+  label : String,
+) -> WorkbenchModel {
+  let provider = provider.trim().to_owned()
+  let id = id.trim().to_owned()
+  if provider == "" || id == "" {
+    { ..self, last_status: "Pi model selection is empty" }
+  } else {
+    let session = self.active_session()
+    let model_label = if label == "" { provider + "/" + id } else { label }
+    let transport_commands = self.commands_with_session_start(
+      session,
+      SetRpcModel(session.id, provider, id),
+    )
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="control",
+        title="Pi model set queued",
+        detail=model_label,
+        tone="info",
+      ),
+    )
+    {
+      ..self,
+      events,
+      transport: self.transport.enqueue_many(transport_commands),
+      last_status: "Pi model set queued",
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::set_model_with_transport(
+  self : WorkbenchModel,
+  provider : String,
+  id : String,
+  label : String,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let provider = provider.trim().to_owned()
+  let id = id.trim().to_owned()
+  if provider == "" || id == "" {
+    WorkbenchUpdate::new({ ..self, last_status: "Pi model selection is empty" })
+  } else {
+    let session = self.active_session()
+    let commands = self.commands_with_session_start(
+      session,
+      SetRpcModel(session.id, provider, id),
+    )
+    WorkbenchUpdate::new(
+      self.set_model(provider, id, label),
+      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+    )
+  }
 }
 
 ///|

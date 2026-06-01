@@ -166,6 +166,7 @@ pub(all) enum PiTransportCommand {
   FetchRpcSessionStats(String)
   ForkRpcSession(String, String)
   ExportRpcSessionHtml(String, String)
+  SetRpcModel(String, String, String)
   CycleRpcModel(String)
   CompactRpcSession(String, String)
   CycleRpcThinkingLevel(String)
@@ -298,6 +299,7 @@ pub(all) enum WorkbenchMsg {
   MarkCommandComplete(Int, Int)
   FixDiagnostic(String, String, String)
   SyncSessionName
+  SetModel(String, String, String)
   CycleModel
   CompactSession
   CycleThinkingLevel

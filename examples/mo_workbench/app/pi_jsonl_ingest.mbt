@@ -115,6 +115,7 @@ fn WorkbenchModel::ingest_rpc_response(
       "get_session_stats" =>
         self.apply_get_session_stats_success(session_id, fields)
       "export_html" => self.apply_export_html_success(session_id, fields)
+      "set_model" => self.apply_set_model_success(session_id, fields)
       "cycle_model" => self.apply_cycle_model_success(session_id, fields)
       "compact" => self.apply_compact_success(session_id, fields)
       "cycle_thinking_level" =>
@@ -485,6 +486,56 @@ fn WorkbenchModel::apply_cycle_model_success(
     } else {
       "Pi model changed"
     },
+  )
+}
+
+///|
+fn WorkbenchModel::apply_set_model_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let model_label = match json_object(fields, "data") {
+    Some(data) => json_model_label(data)
+    None => ""
+  }
+  let model = if model_label == "" {
+    { ..self, pi_rpc: PiRpcSnapshot::new(command="set_model", success=true) }
+  } else {
+    let updated = self
+      .update_pi_session_binding_model(
+        session_id,
+        model_label,
+        last_command="set_model",
+      )
+      .update_active_session_for_pi(
+        status=self.active_session().status,
+        active_task="Pi model: " + model_label,
+        summary=Some("Pi model set to " + model_label),
+      )
+    {
+      ..updated,
+      pi_rpc: {
+        ..self.pi_rpc,
+        command: "set_model",
+        success: true,
+        model: model_label,
+        error: "",
+      },
+    }
+  }
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi model set",
+      detail=if model_label == "" {
+        session_id
+      } else {
+        session_id + ": " + model_label
+      },
+      tone="success",
+    ),
+    status="Pi model set",
   )
 }
 
@@ -2648,7 +2699,18 @@ fn json_model_label(fields : Map[String, Json]) -> String {
         provider + "/" + id
       }
     }
-    _ => ""
+    _ => {
+      let provider = json_string(fields, "provider").unwrap_or("")
+      let id = json_string(fields, "id").unwrap_or(
+        json_string(fields, "name").unwrap_or(""),
+      )
+      let name = json_string(fields, "name").unwrap_or("")
+      if provider == "" && id == "" && name == "" {
+        ""
+      } else {
+        pi_model_label(provider, id, name)
+      }
+    }
   }
 }
 

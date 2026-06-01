@@ -23,6 +23,7 @@ async test "native transport builds structured jsonl request lines" {
   let export_path = pi_rpc_export_html_line(
     output_path="/tmp/mo-workbench.html",
   )
+  let set_model = pi_rpc_set_model_line(provider="openai", model_id="gpt-5")
   let model = pi_rpc_cycle_model_line()
   let compact = pi_rpc_compact_line(custom_instructions="")
   let compact_custom = pi_rpc_compact_line(
@@ -56,6 +57,11 @@ async test "native transport builds structured jsonl request lines" {
   json_inspect(@json.parse(export_path), content={
     "type": "export_html",
     "outputPath": "/tmp/mo-workbench.html",
+  })
+  json_inspect(@json.parse(set_model), content={
+    "type": "set_model",
+    "provider": "openai",
+    "modelId": "gpt-5",
   })
   json_inspect(@json.parse(model), content={ "type": "cycle_model" })
   json_inspect(@json.parse(compact), content={ "type": "compact" })
@@ -105,6 +111,7 @@ async test "native transport maps command batches to jsonl requests" {
     FetchRpcSessionStats("session-1"),
     ForkRpcSession("session-1", "entry-1"),
     ExportRpcSessionHtml("session-1", "/tmp/mo-workbench.html"),
+    SetRpcModel("session-1", "openai", "gpt-5"),
     CycleRpcModel("session-1"),
     CompactRpcSession("session-1", ""),
     CycleRpcThinkingLevel("session-1"),
@@ -118,7 +125,7 @@ async test "native transport maps command batches to jsonl requests" {
     Shutdown,
   ])
   inspect(request.session_id, content="session-1")
-  inspect(request.lines.length(), content="20")
+  inspect(request.lines.length(), content="21")
   json_inspect(@json.parse(request.lines[0]), content={ "type": "get_state" })
   json_inspect(@json.parse(request.lines[1]), content={ "type": "new_session" })
   json_inspect(@json.parse(request.lines[2]), content={
@@ -144,33 +151,38 @@ async test "native transport maps command batches to jsonl requests" {
     "type": "export_html",
     "outputPath": "/tmp/mo-workbench.html",
   })
-  json_inspect(@json.parse(request.lines[10]), content={ "type": "cycle_model" })
-  json_inspect(@json.parse(request.lines[11]), content={ "type": "compact" })
-  json_inspect(@json.parse(request.lines[12]), content={
+  json_inspect(@json.parse(request.lines[10]), content={
+    "type": "set_model",
+    "provider": "openai",
+    "modelId": "gpt-5",
+  })
+  json_inspect(@json.parse(request.lines[11]), content={ "type": "cycle_model" })
+  json_inspect(@json.parse(request.lines[12]), content={ "type": "compact" })
+  json_inspect(@json.parse(request.lines[13]), content={
     "type": "cycle_thinking_level",
   })
-  json_inspect(@json.parse(request.lines[13]), content={
+  json_inspect(@json.parse(request.lines[14]), content={
     "type": "set_steering_mode",
     "mode": "all",
   })
-  json_inspect(@json.parse(request.lines[14]), content={
+  json_inspect(@json.parse(request.lines[15]), content={
     "type": "set_follow_up_mode",
     "mode": "one-at-a-time",
   })
-  json_inspect(@json.parse(request.lines[15]), content={
+  json_inspect(@json.parse(request.lines[16]), content={
     "type": "set_session_name",
     "name": "Mo Workbench",
   })
-  json_inspect(@json.parse(request.lines[16]), content={
+  json_inspect(@json.parse(request.lines[17]), content={
     "type": "prompt",
     "message": "hello",
   })
-  json_inspect(@json.parse(request.lines[17]), content={
+  json_inspect(@json.parse(request.lines[18]), content={
     "type": "bash",
     "command": "moon check",
   })
-  json_inspect(@json.parse(request.lines[18]), content={ "type": "abort_bash" })
-  json_inspect(@json.parse(request.lines[19]), content={ "type": "abort" })
+  json_inspect(@json.parse(request.lines[19]), content={ "type": "abort_bash" })
+  json_inspect(@json.parse(request.lines[20]), content={ "type": "abort" })
 }
 
 ///|
