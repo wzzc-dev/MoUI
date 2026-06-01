@@ -151,6 +151,11 @@
       "marker": "native smoke window target resource plan count"
     },
     {
+      "id": "surface.flush-and-submit",
+      "area": "Surface",
+      "marker": "native smoke surface flush-and-submit"
+    },
+    {
       "id": "shader.draw",
       "area": "Shader",
       "marker": "native smoke shader draws"
@@ -355,6 +360,11 @@
     {
       "id": "surface.window-target-resource-plan",
       "marker": "native smoke window target resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "surface.flush-and-submit",
+      "marker": "native smoke surface flush-and-submit",
       "value": "1"
     },
     {
