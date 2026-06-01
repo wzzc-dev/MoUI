@@ -72,72 +72,18 @@ function Set-FakeNativeSmokeLog {
     [string] $Path
   )
 
-  @(
-    "native smoke surface descriptor backend"
-    "raster"
-    "native smoke canvas state restored"
-    "1"
-    "native smoke canvas replay commands"
-    "8"
-    "native smoke render resource plan count"
-    "7"
-    "native smoke gpu context resource plan count"
-    "2"
-    "native smoke shader draws"
-    "3"
-    "native smoke shader resource plan count"
-    "3"
-    "native smoke filter layer count"
-    "2"
-    "native smoke filter resource plan count"
-    "3"
-    "native smoke path verbs"
-    "9"
-    "native smoke readback width"
-    "32"
-    "native smoke bounded readback width"
-    "4"
-    "native smoke bounded snapshot width"
-    "4"
-    "native smoke encoded PNG bytes"
-    "128"
-    "native smoke decoded image width"
-    "32"
-    "native smoke codec encoded format PNG"
-    "native smoke decoded bitmap width"
-    "32"
-    "native smoke font spacing"
-    "16"
-    "native smoke font resource plan count"
-    "1"
-    "native smoke measured text width"
-    "12"
-    "native smoke text glyph count"
-    "4"
-    "native smoke first glyph id"
-    "54"
-    "native smoke first glyph width"
-    "7"
-    "native smoke second glyph position x"
-    "8"
-    "native smoke second glyph x position"
-    "8"
-    "native smoke first glyph bounds width"
-    "6"
-    "native smoke measured text bounds width"
-    "11"
-    "native smoke font family count"
-    "3"
-    "native smoke first font family bytes"
-    "5"
-    "native smoke typeface family bytes"
-    "5"
-    "native smoke font fallback resource plan count"
-    "1"
-    "native smoke font fallback width"
-    "12"
-    "skia_mbt native smoke test passed"
-  ) | Set-Content -LiteralPath $Path
+  $statusPath = Join-Path $repoRoot "skia-platform-status.json"
+  $status = Get-Content -LiteralPath $statusPath -Raw | ConvertFrom-Json
+  $lines = @()
+  foreach ($capability in @($status.native_smoke_capabilities)) {
+    $marker = "$($capability.marker)".Trim()
+    if (![string]::IsNullOrWhiteSpace($marker)) {
+      $lines += $marker
+      $lines += "1"
+    }
+  }
+  $lines += "skia_mbt native smoke test passed"
+  $lines | Set-Content -LiteralPath $Path
 }
 
 function New-FakeLinuxSourceArtifact {
@@ -266,6 +212,7 @@ try {
   Get-Content -LiteralPath (Join-Path $repoRoot "native/ownership.json") -Raw | ConvertFrom-Json | Out-Null
   & (Join-Path $repoRoot "scripts/verify-native-ownership.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-ffi-borrows.ps1")
+  & (Join-Path $repoRoot "scripts/verify-native-smoke-capabilities.ps1")
   Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/windows-real-skia-smoke.yml")
   Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/real-skia-acceptance.yml")
 
