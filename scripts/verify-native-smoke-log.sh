@@ -59,6 +59,8 @@ default_stage_markers=(
   "native smoke render target resource binding" \
   "native smoke render frame present count" \
   "native smoke render frame present descriptor validation" \
+  "native smoke render frame submission resource plan count" \
+  "native smoke render frame submission cache resources" \
   "native smoke render frame missing present validation" \
   "native smoke render frame touched bounds width" \
   "native smoke render frame cache resources" \
@@ -143,6 +145,8 @@ default_expected_stage_values=(
   $'native smoke render target resource binding\t1'
   $'native smoke render frame present count\t1'
   $'native smoke render frame present descriptor validation\t1'
+  $'native smoke render frame submission resource plan count\t2'
+  $'native smoke render frame submission cache resources\t1'
   $'native smoke render frame missing present validation\t1'
   $'native smoke render frame touched bounds width\t4'
   $'native smoke render frame cache resources\t9'

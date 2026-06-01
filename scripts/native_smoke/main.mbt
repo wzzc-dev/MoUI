@@ -284,6 +284,33 @@ fn main {
     smoke_window_next_present.resource_key() {
     fail_smoke("window present descriptor resource plan is invalid")
   }
+  let smoke_window_submission = smoke_window_frame.submission_descriptor(
+    frame_index=3,
+  )
+  let smoke_window_submission_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @skia.RendererResourceDescriptor,
+  ] = @skia.ResourceCache::new()
+  let smoke_window_submission_cache_inserts = smoke_window_submission.cache_resources(
+    smoke_window_submission_cache,
+  )
+  if !smoke_window_submission.is_ready() ||
+    !smoke_window_submission.has_present() ||
+    smoke_window_submission.validation_status != @skia.FrameReady ||
+    smoke_window_submission.resource_plan.length() != 2 ||
+    smoke_window_submission.resource_plan.cacheable_count != 1 ||
+    smoke_window_submission.resource_plan.uncacheable_count != 1 ||
+    smoke_window_submission_cache_inserts != 1 ||
+    smoke_window_submission_cache.length() != 1 ||
+    !smoke_window_submission.resource_plan.contains_key(
+      smoke_window_target.resource_key(),
+    ) ||
+    !smoke_window_submission.resource_plan.contains_key(
+      smoke_window_present.resource_key(),
+    ) ||
+    smoke_window_submission_cache.contains(smoke_window_present.resource_key()) {
+    fail_smoke("window frame submission descriptor is invalid")
+  }
   let smoke_window_unfinished_commands = @skia.RenderCommandList::new(
     @skia.RenderPassDescriptor::for_target(smoke_window_target),
   )
@@ -305,6 +332,20 @@ fn main {
     ).is_empty() {
     fail_smoke("missing-present frame exposed a present descriptor")
   }
+  let smoke_window_missing_submission = smoke_window_missing_present_frame
+    .submission_descriptor(frame_index=3)
+  let smoke_window_missing_submission_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @skia.RendererResourceDescriptor,
+  ] = @skia.ResourceCache::new()
+  if smoke_window_missing_submission.is_ready() ||
+    smoke_window_missing_submission.has_present() ||
+    smoke_window_missing_submission.cache_resources(
+      smoke_window_missing_submission_cache,
+    ) != 0 ||
+    !smoke_window_missing_submission_cache.is_empty() {
+    fail_smoke("missing-present frame submission descriptor was ready")
+  }
   guard smoke_window_frame.touched_bounds is Some(smoke_window_touched_bounds) else {
     fail_smoke("render frame did not record touched bounds for window target")
   }
@@ -319,6 +360,10 @@ fn main {
   println(smoke_window_present_plan.length())
   println("native smoke render frame present descriptor validation")
   println(1)
+  println("native smoke render frame submission resource plan count")
+  println(smoke_window_submission.resource_plan.length())
+  println("native smoke render frame submission cache resources")
+  println(smoke_window_submission_cache_inserts)
   println("native smoke render frame missing present validation")
   println(1)
   println("native smoke render frame touched bounds width")

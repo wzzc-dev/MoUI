@@ -856,7 +856,20 @@ pub fn RenderFrameDescriptor::new(SurfaceTargetDescriptor, RenderCommandList) ->
 pub fn RenderFrameDescriptor::present_descriptor(Self, frame_index? : Int, buffer_index? : Int) -> SurfacePresentDescriptor?
 pub fn RenderFrameDescriptor::present_resource_plan(Self, frame_index? : Int, buffer_index? : Int) -> RendererResourcePlan
 pub fn RenderFrameDescriptor::requires_gpu_context(Self) -> Bool
+pub fn RenderFrameDescriptor::submission_descriptor(Self, frame_index? : Int, buffer_index? : Int) -> RenderFrameSubmissionDescriptor
 pub fn RenderFrameDescriptor::validation_status(Self) -> RenderFrameValidationStatus
+
+pub(all) struct RenderFrameSubmissionDescriptor {
+  frame : RenderFrameDescriptor
+  frame_index : Int
+  validation_status : RenderFrameValidationStatus
+  present : SurfacePresentDescriptor?
+  resource_plan : RendererResourcePlan
+} derive(Eq, @debug.Debug)
+pub fn RenderFrameSubmissionDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int
+pub fn RenderFrameSubmissionDescriptor::has_present(Self) -> Bool
+pub fn RenderFrameSubmissionDescriptor::is_ready(Self) -> Bool
+pub fn RenderFrameSubmissionDescriptor::new(RenderFrameDescriptor, frame_index? : Int, buffer_index? : Int) -> Self
 
 pub(all) enum RenderFrameValidationStatus {
   FrameReady

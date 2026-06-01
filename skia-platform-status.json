@@ -141,6 +141,16 @@
       "marker": "native smoke render frame present descriptor validation"
     },
     {
+      "id": "pipeline.frame-submission-resource-plan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission resource plan count"
+    },
+    {
+      "id": "pipeline.frame-submission-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission cache resources"
+    },
+    {
       "id": "pipeline.frame-missing-present-validation",
       "area": "Pipeline",
       "marker": "native smoke render frame missing present validation"
@@ -561,6 +571,16 @@
     {
       "id": "pipeline.frame-present-descriptor",
       "marker": "native smoke render frame present descriptor validation",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-submission-resource-plan",
+      "marker": "native smoke render frame submission resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.frame-submission-cache-resources",
+      "marker": "native smoke render frame submission cache resources",
       "value": "1"
     },
     {

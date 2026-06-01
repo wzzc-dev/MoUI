@@ -1334,6 +1334,29 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_eq(present_plan.uncacheable_count, 1)
   assert_true(present_plan.contains_key(target.resource_key()))
   assert_true(present_plan.contains_key(present.resource_key()))
+  let submission = frame.submission_descriptor(frame_index=5)
+  assert_true(submission.is_ready())
+  assert_eq(submission.frame_index, 5)
+  assert_true(submission.validation_status == @skia_mbt.FrameReady)
+  assert_true(submission.has_present())
+  assert_true(submission.present == Some(present))
+  assert_eq(submission.resource_plan.length(), 3)
+  assert_eq(submission.resource_plan.cacheable_count, 2)
+  assert_eq(submission.resource_plan.uncacheable_count, 1)
+  assert_eq(submission.resource_plan.count_kind(@skia_mbt.SurfaceResource), 2)
+  assert_eq(submission.resource_plan.count_kind(@skia_mbt.PathResource), 1)
+  assert_true(submission.resource_plan.contains_key(target.resource_key()))
+  assert_true(submission.resource_plan.contains_key(path.resource_key()))
+  assert_true(submission.resource_plan.contains_key(present.resource_key()))
+  let submission_cache : @skia_mbt.ResourceCache[
+    @skia_mbt.RendererResourceKey,
+    @skia_mbt.RendererResourceDescriptor,
+  ] = @skia_mbt.ResourceCache::new()
+  assert_eq(submission.cache_resources(submission_cache), 2)
+  assert_eq(submission_cache.length(), 2)
+  assert_true(submission_cache.contains(target.resource_key()))
+  assert_true(submission_cache.contains(path.resource_key()))
+  assert_true(!submission_cache.contains(present.resource_key()))
 
   let mismatch_target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
     @skia_mbt.ISize::new(24, 16),
@@ -1348,6 +1371,18 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(!mismatch_frame.is_ready())
   assert_true(mismatch_frame.present_descriptor(frame_index=5) is None)
   assert_true(mismatch_frame.present_resource_plan(frame_index=5).is_empty())
+  let mismatch_submission = mismatch_frame.submission_descriptor(frame_index=5)
+  assert_true(!mismatch_submission.is_ready())
+  assert_true(!mismatch_submission.has_present())
+  assert_true(
+    mismatch_submission.validation_status == @skia_mbt.FrameTargetMismatch,
+  )
+  let mismatch_cache : @skia_mbt.ResourceCache[
+    @skia_mbt.RendererResourceKey,
+    @skia_mbt.RendererResourceDescriptor,
+  ] = @skia_mbt.ResourceCache::new()
+  assert_eq(mismatch_submission.cache_resources(mismatch_cache), 0)
+  assert_true(mismatch_cache.is_empty())
 
   let identity_target = target.with_target_id(b"frame-window")
   let identity_mismatch_target = identity_target.with_target_id(
