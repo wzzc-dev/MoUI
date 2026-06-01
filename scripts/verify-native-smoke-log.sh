@@ -81,8 +81,12 @@ default_stage_markers=(
   "native smoke bounded snapshot height" \
   "native smoke encoded PNG bytes" \
   "native smoke decoded image width" \
+  "native smoke decoded image height" \
   "native smoke codec encoded format PNG" \
+  "native smoke codec width" \
+  "native smoke codec height" \
   "native smoke decoded bitmap width" \
+  "native smoke decoded bitmap height" \
   "native smoke font spacing" \
   "native smoke font resource plan count" \
   "native smoke text run resource plan count" \
@@ -130,6 +134,12 @@ default_expected_stage_values=(
   $'native smoke bounded readback height\t4'
   $'native smoke bounded snapshot width\t4'
   $'native smoke bounded snapshot height\t4'
+  $'native smoke decoded image width\t32'
+  $'native smoke decoded image height\t32'
+  $'native smoke codec width\t32'
+  $'native smoke codec height\t32'
+  $'native smoke decoded bitmap width\t32'
+  $'native smoke decoded bitmap height\t32'
   $'native smoke shader draws\t3'
   $'native smoke shader resource plan count\t3'
   $'native smoke filter resource plan count\t3'

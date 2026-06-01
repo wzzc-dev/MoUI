@@ -251,14 +251,34 @@
       "marker": "native smoke decoded image width"
     },
     {
+      "id": "image.decode-height",
+      "area": "Image",
+      "marker": "native smoke decoded image height"
+    },
+    {
       "id": "codec.metadata",
       "area": "Codec",
       "marker": "native smoke codec encoded format PNG"
     },
     {
+      "id": "codec.width",
+      "area": "Codec",
+      "marker": "native smoke codec width"
+    },
+    {
+      "id": "codec.height",
+      "area": "Codec",
+      "marker": "native smoke codec height"
+    },
+    {
       "id": "bitmap.decode-readback",
       "area": "Bitmap",
       "marker": "native smoke decoded bitmap width"
+    },
+    {
+      "id": "bitmap.decode-readback-height",
+      "area": "Bitmap",
+      "marker": "native smoke decoded bitmap height"
     },
     {
       "id": "text.font-spacing",
@@ -481,6 +501,36 @@
       "id": "surface.bounded-snapshot-height",
       "marker": "native smoke bounded snapshot height",
       "value": "4"
+    },
+    {
+      "id": "image.decode",
+      "marker": "native smoke decoded image width",
+      "value": "32"
+    },
+    {
+      "id": "image.decode-height",
+      "marker": "native smoke decoded image height",
+      "value": "32"
+    },
+    {
+      "id": "codec.width",
+      "marker": "native smoke codec width",
+      "value": "32"
+    },
+    {
+      "id": "codec.height",
+      "marker": "native smoke codec height",
+      "value": "32"
+    },
+    {
+      "id": "bitmap.decode-readback",
+      "marker": "native smoke decoded bitmap width",
+      "value": "32"
+    },
+    {
+      "id": "bitmap.decode-readback-height",
+      "marker": "native smoke decoded bitmap height",
+      "value": "32"
     },
     {
       "id": "shader.draw",
