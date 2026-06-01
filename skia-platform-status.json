@@ -156,6 +156,11 @@
       "marker": "native smoke render resource cache inserts"
     },
     {
+      "id": "pipeline.resource-cache-plan-coverage",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache plan coverage"
+    },
+    {
       "id": "pipeline.resource-cache-eviction",
       "area": "Pipeline",
       "marker": "native smoke render resource cache evictions"
@@ -510,6 +515,11 @@
       "id": "pipeline.resource-cache",
       "marker": "native smoke render resource cache inserts",
       "value": "9"
+    },
+    {
+      "id": "pipeline.resource-cache-plan-coverage",
+      "marker": "native smoke render resource cache plan coverage",
+      "value": "1"
     },
     {
       "id": "pipeline.resource-cache-eviction",
