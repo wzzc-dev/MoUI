@@ -75,6 +75,8 @@ default_stage_markers=(
   "native smoke render frame touched bounds width" \
   "native smoke render frame cache resources" \
   "native smoke render resource cache inserts" \
+  "native smoke render resource cache preflight missing count" \
+  "native smoke render resource cache preflight cached count" \
   "native smoke render resource cache plan coverage" \
   "native smoke render resource cache evictions" \
   "native smoke render resource cache hits" \
@@ -184,6 +186,8 @@ default_expected_stage_values=(
   $'native smoke render frame touched bounds width\t4'
   $'native smoke render frame cache resources\t12'
   $'native smoke render resource cache inserts\t12'
+  $'native smoke render resource cache preflight missing count\t12'
+  $'native smoke render resource cache preflight cached count\t12'
   $'native smoke render resource cache plan coverage\t1'
   $'native smoke render resource cache evictions\t1'
   $'native smoke render resource cache hits\t1'

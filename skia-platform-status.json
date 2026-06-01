@@ -221,6 +221,16 @@
       "marker": "native smoke render resource cache inserts"
     },
     {
+      "id": "pipeline.resource-cache-preflight-missing",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache preflight missing count"
+    },
+    {
+      "id": "pipeline.resource-cache-preflight-cached",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache preflight cached count"
+    },
+    {
       "id": "pipeline.resource-cache-plan-coverage",
       "area": "Pipeline",
       "marker": "native smoke render resource cache plan coverage"
@@ -773,6 +783,16 @@
     {
       "id": "pipeline.resource-cache",
       "marker": "native smoke render resource cache inserts",
+      "value": "12"
+    },
+    {
+      "id": "pipeline.resource-cache-preflight-missing",
+      "marker": "native smoke render resource cache preflight missing count",
+      "value": "12"
+    },
+    {
+      "id": "pipeline.resource-cache-preflight-cached",
+      "marker": "native smoke render resource cache preflight cached count",
       "value": "12"
     },
     {
