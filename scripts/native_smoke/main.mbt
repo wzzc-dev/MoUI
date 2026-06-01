@@ -125,7 +125,9 @@ fn main {
     smoke_gpu_target_plan.count_kind(@skia.GpuContextResource) != 1 ||
     smoke_gpu_plan.length() != 2 ||
     smoke_gpu_plan.gpu_backed_count != 2 ||
-    !smoke_gpu_plan.has_gpu_backed_resources() {
+    !smoke_gpu_plan.has_gpu_backed_resources() ||
+    !smoke_gpu_plan.contains_key(smoke_gpu_target.resource_key()) ||
+    smoke_gpu_plan.contains_key(smoke_gpu_target.surface.resource_key()) {
     fail_smoke("gpu context resource plan did not include context and surface")
   }
   let smoke_gpu_frame = @skia.RenderCommandList::for_target(
@@ -182,6 +184,15 @@ fn main {
     fail_smoke("render frame validation did not reject target identity mismatch")
   }
   println("native smoke render target identity validation")
+  println(1)
+  let smoke_window_command_plan = @skia.RenderCommandList::for_target(
+    smoke_window_target,
+  ).resource_plan()
+  if !smoke_window_command_plan.contains_key(smoke_window_target.resource_key()) ||
+    smoke_window_command_plan.contains_key(smoke_window_target.surface.resource_key()) {
+    fail_smoke("render command resource plan did not bind target identity")
+  }
+  println("native smoke render target resource binding")
   println(1)
 
   guard surface.canvas() is Some(canvas) else {
