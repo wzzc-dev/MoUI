@@ -327,6 +327,7 @@ if schema_version >= 3:
         "fontmgr.family-name",
         "fontmgr.typeface-family",
         "fontmgr.character-fallback",
+        "fontmgr.fallback-key",
         "fontmgr.fallback-family-name",
         "fontmgr.fallback-resource-plan",
         "fontmgr.fallback-font-resource-plan",
@@ -401,6 +402,7 @@ if schema_version >= 3:
             "native smoke text run resource plan count": "3",
             "native smoke text run range byte size": "4",
             "native smoke font resource plan count": "1",
+            "native smoke font fallback key variation": "1",
             "native smoke font fallback resource plan count": "1",
             "native smoke font fallback font resource plan count": "2",
         }
