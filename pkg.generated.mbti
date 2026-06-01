@@ -241,11 +241,25 @@ pub fn FontFallbackRequest::language_at(Self, Int) -> Bytes?
 pub fn FontFallbackRequest::language_count(Self) -> Int
 pub fn FontFallbackRequest::match_descriptor(Self, Bytes, fallback_index? : Int, synthetic? : Bool) -> FontFallbackMatchDescriptor
 pub fn FontFallbackRequest::new(families? : FontFallbackChain, bcp47? : Array[Bytes], character? : Int, style? : FontStyleRequest) -> Self
+pub fn FontFallbackRequest::resolution_descriptor(Self, Bytes, fallback_index? : Int, synthetic? : Bool) -> FontFallbackResolutionDescriptor
 pub fn FontFallbackRequest::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn FontFallbackRequest::resource_key(Self) -> RendererResourceKey
 pub fn FontFallbackRequest::resource_plan(Self, size? : Float, scale_x? : Float, skew_x? : Float, fallback_byte_size? : Int64, font_byte_size? : Int64) -> RendererResourcePlan
 pub fn FontFallbackRequest::with_character(Self, Int) -> Self
 pub fn FontFallbackRequest::with_style(Self, FontStyleRequest) -> Self
+
+pub(all) struct FontFallbackResolutionDescriptor {
+  request : FontFallbackRequest
+  resolved_match : FontFallbackMatchDescriptor
+} derive(Eq, @debug.Debug)
+pub fn FontFallbackResolutionDescriptor::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> FontDescriptor
+pub fn FontFallbackResolutionDescriptor::is_valid(Self) -> Bool
+pub fn FontFallbackResolutionDescriptor::matched_in_request(Self) -> Bool
+pub fn FontFallbackResolutionDescriptor::new(request? : FontFallbackRequest, resolved_match? : FontFallbackMatchDescriptor) -> Self
+pub fn FontFallbackResolutionDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn FontFallbackResolutionDescriptor::resource_key(Self) -> RendererResourceKey
+pub fn FontFallbackResolutionDescriptor::resource_plan(Self, size? : Float, scale_x? : Float, skew_x? : Float, request_byte_size? : Int64, resolution_byte_size? : Int64, match_byte_size? : Int64, font_byte_size? : Int64) -> RendererResourcePlan
+pub fn FontFallbackResolutionDescriptor::source_family(Self) -> Bytes?
 
 pub(all) struct FontStyleRequest {
   weight : Int

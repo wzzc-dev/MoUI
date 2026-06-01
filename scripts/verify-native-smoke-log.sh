@@ -132,6 +132,8 @@ default_stage_markers=(
   "native smoke font fallback family bytes" \
   "native smoke font fallback match key variation" \
   "native smoke font fallback match resource plan count" \
+  "native smoke font fallback resolution key variation" \
+  "native smoke font fallback resolution resource plan count" \
   "native smoke font fallback resource plan count" \
   "native smoke font fallback font resource plan count" \
   "native smoke font fallback width"
@@ -205,6 +207,8 @@ default_expected_stage_values=(
   $'native smoke font fallback key variation\t1'
   $'native smoke font fallback match key variation\t1'
   $'native smoke font fallback match resource plan count\t2'
+  $'native smoke font fallback resolution key variation\t1'
+  $'native smoke font fallback resolution resource plan count\t4'
   $'native smoke font fallback resource plan count\t1'
   $'native smoke font fallback font resource plan count\t2'
 )
