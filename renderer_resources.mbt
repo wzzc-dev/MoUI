@@ -391,6 +391,60 @@ pub fn RendererResourcePlan::has_gpu_backed_resources(
 }
 
 ///|
+pub fn RendererResourcePlan::has_cacheable_resources(
+  self : RendererResourcePlan,
+) -> Bool {
+  self.cacheable_count > 0
+}
+
+///|
+pub fn RendererResourcePlan::has_uncacheable_resources(
+  self : RendererResourcePlan,
+) -> Bool {
+  self.uncacheable_count > 0
+}
+
+///|
+pub fn RendererResourcePlan::cacheable_descriptors(
+  self : RendererResourcePlan,
+) -> Array[RendererResourceDescriptor] {
+  let result : Array[RendererResourceDescriptor] = Array::new()
+  for descriptor in self.descriptors {
+    if descriptor.is_cacheable() {
+      result.push(descriptor)
+    }
+  }
+  result
+}
+
+///|
+pub fn RendererResourcePlan::cacheable_resource_plan(
+  self : RendererResourcePlan,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new(self.cacheable_descriptors())
+}
+
+///|
+pub fn RendererResourcePlan::uncacheable_descriptors(
+  self : RendererResourcePlan,
+) -> Array[RendererResourceDescriptor] {
+  let result : Array[RendererResourceDescriptor] = Array::new()
+  for descriptor in self.descriptors {
+    if !descriptor.is_cacheable() {
+      result.push(descriptor)
+    }
+  }
+  result
+}
+
+///|
+pub fn RendererResourcePlan::uncacheable_resource_plan(
+  self : RendererResourcePlan,
+) -> RendererResourcePlan {
+  RendererResourcePlan::new(self.uncacheable_descriptors())
+}
+
+///|
 pub fn RendererResourcePlan::gpu_backed_descriptors(
   self : RendererResourcePlan,
 ) -> Array[RendererResourceDescriptor] {

@@ -418,12 +418,20 @@ fn main {
   let smoke_window_submission_cache_inserts = smoke_window_submission.cache_resources(
     smoke_window_submission_cache,
   )
+  let smoke_window_submission_cacheable_plan = smoke_window_submission
+    .resource_plan
+    .cacheable_resource_plan()
+  let smoke_window_submission_uncacheable_plan = smoke_window_submission
+    .resource_plan
+    .uncacheable_resource_plan()
   if !smoke_window_submission.is_ready() ||
     !smoke_window_submission.has_present() ||
     smoke_window_submission.validation_status != @skia.FrameReady ||
     smoke_window_submission.resource_plan.length() != 2 ||
     smoke_window_submission.resource_plan.cacheable_count != 1 ||
     smoke_window_submission.resource_plan.uncacheable_count != 1 ||
+    smoke_window_submission_cacheable_plan.length() != 1 ||
+    smoke_window_submission_uncacheable_plan.length() != 1 ||
     smoke_window_submission_cache_inserts != 1 ||
     smoke_window_submission_cache.length() != 1 ||
     !smoke_window_submission.resource_plan.contains_key(
@@ -431,6 +439,18 @@ fn main {
     ) ||
     !smoke_window_submission.resource_plan.contains_key(
       smoke_window_present.resource_key(),
+    ) ||
+    !smoke_window_submission_cacheable_plan.contains_key(
+      smoke_window_target.resource_key(),
+    ) ||
+    smoke_window_submission_cacheable_plan.contains_key(
+      smoke_window_present.resource_key(),
+    ) ||
+    !smoke_window_submission_uncacheable_plan.contains_key(
+      smoke_window_present.resource_key(),
+    ) ||
+    smoke_window_submission_uncacheable_plan.contains_key(
+      smoke_window_target.resource_key(),
     ) ||
     smoke_window_submission_cache.contains(smoke_window_present.resource_key()) {
     fail_smoke("window frame submission descriptor is invalid")
@@ -449,12 +469,20 @@ fn main {
   let smoke_window_frame_finalization_cache_inserts = smoke_window_frame_finalization.cache_resources(
     smoke_window_frame_finalization_cache,
   )
+  let smoke_window_frame_finalization_cacheable_plan = smoke_window_frame_finalization
+    .resource_plan
+    .cacheable_resource_plan()
+  let smoke_window_frame_finalization_uncacheable_plan = smoke_window_frame_finalization
+    .resource_plan
+    .uncacheable_resource_plan()
   if !smoke_window_frame_finalization.is_ready() ||
     !smoke_window_frame_finalization.has_finalization() ||
     smoke_window_frame_finalization.validation_status != @skia.FrameReady ||
     smoke_window_frame_finalization.resource_plan.length() != 2 ||
     smoke_window_frame_finalization.resource_plan.cacheable_count != 1 ||
     smoke_window_frame_finalization.resource_plan.uncacheable_count != 1 ||
+    smoke_window_frame_finalization_cacheable_plan.length() != 1 ||
+    smoke_window_frame_finalization_uncacheable_plan.length() != 1 ||
     smoke_window_frame_finalization_cache_inserts != 1 ||
     smoke_window_frame_finalization_cache.length() != 1 ||
     !smoke_window_frame_finalization.resource_plan.contains_key(
@@ -462,6 +490,18 @@ fn main {
     ) ||
     !smoke_window_frame_finalization.resource_plan.contains_key(
       smoke_window_frame_surface_finalization.resource_key(),
+    ) ||
+    !smoke_window_frame_finalization_cacheable_plan.contains_key(
+      smoke_window_target.resource_key(),
+    ) ||
+    smoke_window_frame_finalization_cacheable_plan.contains_key(
+      smoke_window_frame_surface_finalization.resource_key(),
+    ) ||
+    !smoke_window_frame_finalization_uncacheable_plan.contains_key(
+      smoke_window_frame_surface_finalization.resource_key(),
+    ) ||
+    smoke_window_frame_finalization_uncacheable_plan.contains_key(
+      smoke_window_target.resource_key(),
     ) ||
     smoke_window_frame_finalization_cache.contains(
       smoke_window_frame_surface_finalization.resource_key(),
@@ -533,10 +573,18 @@ fn main {
   println(1)
   println("native smoke render frame submission resource plan count")
   println(smoke_window_submission.resource_plan.length())
+  println("native smoke render frame submission cacheable subplan count")
+  println(smoke_window_submission_cacheable_plan.length())
+  println("native smoke render frame submission uncacheable subplan count")
+  println(smoke_window_submission_uncacheable_plan.length())
   println("native smoke render frame submission cache resources")
   println(smoke_window_submission_cache_inserts)
   println("native smoke render frame finalization resource plan count")
   println(smoke_window_frame_finalization.resource_plan.length())
+  println("native smoke render frame finalization cacheable subplan count")
+  println(smoke_window_frame_finalization_cacheable_plan.length())
+  println("native smoke render frame finalization uncacheable subplan count")
+  println(smoke_window_frame_finalization_uncacheable_plan.length())
   println("native smoke render frame finalization cache resources")
   println(smoke_window_frame_finalization_cache_inserts)
   println("native smoke render frame missing present validation")

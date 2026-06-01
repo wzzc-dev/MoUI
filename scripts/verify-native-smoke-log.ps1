@@ -46,8 +46,12 @@ $defaultStageMarkers = @(
   "native smoke render frame present count",
   "native smoke render frame present descriptor validation",
   "native smoke render frame submission resource plan count",
+  "native smoke render frame submission cacheable subplan count",
+  "native smoke render frame submission uncacheable subplan count",
   "native smoke render frame submission cache resources",
   "native smoke render frame finalization resource plan count",
+  "native smoke render frame finalization cacheable subplan count",
+  "native smoke render frame finalization uncacheable subplan count",
   "native smoke render frame finalization cache resources",
   "native smoke render frame missing present validation",
   "native smoke render frame missing finalization validation",
@@ -188,12 +192,28 @@ $defaultExpectedStageValues = @(
     Value = "2"
   }
   [pscustomobject]@{
+    Marker = "native smoke render frame submission cacheable subplan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame submission uncacheable subplan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
     Marker = "native smoke render frame submission cache resources"
     Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame finalization resource plan count"
     Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame finalization cacheable subplan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame finalization uncacheable subplan count"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame finalization cache resources"
