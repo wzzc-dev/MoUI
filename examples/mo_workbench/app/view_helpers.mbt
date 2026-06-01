@@ -51,7 +51,10 @@ priv struct WorkbenchNextAction {
 }
 
 ///|
-fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
+fn workbench_layout(
+  viewport : @core.Size,
+  workflow_rail_requested : Bool,
+) -> WorkbenchLayout {
   let viewport = @core.Size::new(
     width=workbench_max_double(1.0, viewport.width),
     height=workbench_max_double(1.0, viewport.height),
@@ -68,7 +71,8 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
     1.0,
     main_width - main_padding * 2.0,
   )
-  let workflow_rail_visible = viewport.width >= 1180.0
+  let workflow_rail_visible = workflow_rail_requested &&
+    viewport.width >= 1180.0
   let workflow_rail_gap = if workflow_rail_visible { 16.0 } else { 0.0 }
   let workflow_rail_width = if workflow_rail_visible {
     workbench_clamp_double(main_available_width * 0.28, 240.0, 276.0)
@@ -192,7 +196,7 @@ fn WorkbenchModel::view_for_size(
   viewport : @core.Size,
 ) -> @core.View[WorkbenchMsg] {
   let theme = @views.light_theme()
-  let layout = workbench_layout(viewport)
+  let layout = workbench_layout(viewport, self.has_workflow_rail_evidence())
   surface(
     row(
       [
@@ -335,35 +339,22 @@ fn WorkbenchModel::agent_button(
           on_click=SelectAgent(profile.id),
           variant=Ghost,
           theme~,
-          width=60.0,
-          height=32.0,
+          width=56.0,
+          height=30.0,
         ),
-        column(
-          [
-            text(
-              profile.role,
-              role=Control,
-              theme~,
-              width=layout.sidebar_inner_width - 92.0,
-              height=18.0,
-            ),
-            text(
-              profile.detail,
-              role=Caption,
-              theme~,
-              width=layout.sidebar_inner_width - 92.0,
-              height=18.0,
-            ),
-          ],
-          spacing=0.0,
-          align=Start,
+        text(
+          profile.role,
+          role=Caption,
+          theme~,
+          width=layout.sidebar_inner_width - 86.0,
+          height=28.0,
         ),
       ],
       spacing=6.0,
       align=Center,
     ),
     width=layout.sidebar_inner_width,
-    height=42.0,
+    height=34.0,
     background~,
     corner_radius=8.0,
     theme~,
@@ -582,21 +573,28 @@ fn WorkbenchModel::workflow_rail(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  column(
-    [
-      self.workflow_progress_card(layout, theme),
-      self.workflow_agents_card(layout, theme),
-      self.workflow_folder_card(layout, theme),
-    ],
-    spacing=14.0,
-    align=Stretch,
-  ).frame(
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  if !self.plan.is_empty() {
+    rows.push(self.workflow_progress_card(layout, theme))
+    rows.push(self.workflow_agents_card(layout, theme))
+  } else if !self.events.is_empty() {
+    rows.push(self.workflow_agents_card(layout, theme))
+  }
+  if !self.files.is_empty() {
+    rows.push(self.workflow_folder_card(layout, theme))
+  }
+  column(rows, spacing=14.0, align=Stretch).frame(
     width=layout.workflow_rail_width,
     height=workbench_max_double(
       1.0,
       layout.viewport.height - layout.main_padding * 2.0,
     ),
   )
+}
+
+///|
+fn WorkbenchModel::has_workflow_rail_evidence(self : WorkbenchModel) -> Bool {
+  !self.plan.is_empty() || !self.events.is_empty() || !self.files.is_empty()
 }
 
 ///|
@@ -825,9 +823,7 @@ fn WorkbenchModel::workflow_folder_card(
   let rows : Array[@core.View[WorkbenchMsg]] = [
     workflow_folder_project_row(active, layout, theme),
   ]
-  if self.files.is_empty() {
-    rows.push(workflow_note_row("等待 Pi 文件证据", layout, theme))
-  } else {
+  if !self.files.is_empty() {
     rows.push(
       workflow_file_context_row(
         self.files[self.files.length() - 1],
@@ -1101,17 +1097,7 @@ fn WorkbenchModel::transcript_panel(
       align=Center,
     ),
   ]
-  if rows.is_empty() {
-    panel_rows.push(
-      text(
-        "等待 Pi 回复，当前 digest 保持安静。",
-        role=Caption,
-        theme~,
-        width=layout.panel_body_width,
-        height=28.0,
-      ),
-    )
-  } else {
+  if !rows.is_empty() {
     panel_rows.push(column(rows, spacing=8.0, align=Start))
   }
   surface(
@@ -1131,7 +1117,7 @@ fn WorkbenchModel::transcript_panel_height(
   layout : WorkbenchLayout,
 ) -> Double {
   if self.transcript.is_empty() && self.fork_messages.is_empty() {
-    84.0
+    54.0
   } else {
     let mut height = 24.0 + 28.0 + 8.0
     for item in self.transcript {
@@ -2151,60 +2137,74 @@ fn WorkbenchModel::session_controls_row(
       height=34.0,
     ),
   )
-  controls.push(
-    button(
-      "找分叉",
-      on_click=RefreshForkMessages,
-      variant=Ghost,
-      theme~,
-      width=66.0,
-      height=34.0,
-    ),
-  )
-  controls.push(
-    button(
-      "导出",
-      on_click=ExportSessionHtml,
-      variant=Ghost,
-      theme~,
-      width=54.0,
-      height=34.0,
-    ),
-  )
-  controls.push(
-    button(
-      "压缩",
-      on_click=CompactSession,
-      variant=Ghost,
-      theme~,
-      width=54.0,
-      height=34.0,
-    ),
-  )
-  controls.push(
-    button(
-      "思考",
-      on_click=CycleThinkingLevel,
-      variant=Ghost,
-      theme~,
-      width=54.0,
-      height=34.0,
-    ),
-  )
-  controls.push(
-    button(
-      "同步名",
-      on_click=SyncSessionName,
-      variant=Ghost,
-      theme~,
-      width=66.0,
-      height=34.0,
-    ),
-  )
+  if self.has_advanced_session_controls() {
+    controls.push(
+      button(
+        "找分叉",
+        on_click=RefreshForkMessages,
+        variant=Ghost,
+        theme~,
+        width=66.0,
+        height=34.0,
+      ),
+    )
+    controls.push(
+      button(
+        "导出",
+        on_click=ExportSessionHtml,
+        variant=Ghost,
+        theme~,
+        width=54.0,
+        height=34.0,
+      ),
+    )
+    controls.push(
+      button(
+        "压缩",
+        on_click=CompactSession,
+        variant=Ghost,
+        theme~,
+        width=54.0,
+        height=34.0,
+      ),
+    )
+    controls.push(
+      button(
+        "思考",
+        on_click=CycleThinkingLevel,
+        variant=Ghost,
+        theme~,
+        width=54.0,
+        height=34.0,
+      ),
+    )
+    controls.push(
+      button(
+        "同步名",
+        on_click=SyncSessionName,
+        variant=Ghost,
+        theme~,
+        width=66.0,
+        height=34.0,
+      ),
+    )
+  }
   if self.has_cancel_target() {
     controls.push(self.cancel_run_button(theme))
   }
   row(controls, spacing=8.0, align=Center)
+}
+
+///|
+fn WorkbenchModel::has_advanced_session_controls(self : WorkbenchModel) -> Bool {
+  let binding = self.active_pi_session_binding()
+  binding.has_visible_binding() ||
+  !self.transcript.is_empty() ||
+  !self.fork_messages.is_empty() ||
+  self.pi_session_stats.has_visible_metrics() ||
+  self.model_catalog.length() > 0 ||
+  self.pi_agent.thinking_level != "" ||
+  self.transport.has_active_signal()
 }
 
 ///|
@@ -2523,7 +2523,9 @@ fn WorkbenchModel::activity_panel(
       align=Center,
     ),
   ]
-  rows.push(focused_check_preset_row(layout, theme))
+  if self.should_show_focused_check_presets() {
+    rows.push(focused_check_preset_row(layout, theme))
+  }
   if !self.events.is_empty() {
     rows.push(event_row(self.events[self.events.length() - 1], layout, theme))
   }
@@ -2547,7 +2549,10 @@ fn WorkbenchModel::activity_panel(
 
 ///|
 fn WorkbenchModel::activity_panel_row_count(self : WorkbenchModel) -> Int {
-  let mut count = 2
+  let mut count = 1
+  if self.should_show_focused_check_presets() {
+    count = count + 1
+  }
   if !self.events.is_empty() {
     count = count + 1
   }
@@ -2566,6 +2571,16 @@ fn WorkbenchModel::visible_activity_command_count(self : WorkbenchModel) -> Int 
 ///|
 fn WorkbenchModel::visible_activity_command_start(self : WorkbenchModel) -> Int {
   self.commands.length() - self.visible_activity_command_count()
+}
+
+///|
+fn WorkbenchModel::should_show_focused_check_presets(
+  self : WorkbenchModel,
+) -> Bool {
+  !self.commands.is_empty() ||
+  !self.events.is_empty() ||
+  !self.command_catalog.is_empty() ||
+  !self.diagnostics.is_empty()
 }
 
 ///|
@@ -3164,8 +3179,9 @@ fn WorkbenchModel::composer_action_row(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  row(
-    [
+  let controls : Array[@core.View[WorkbenchMsg]] = []
+  if self.should_show_composer_secondary_actions() {
+    controls.push(
       button(
         self.steering_mode_label(),
         on_click=ToggleSteeringMode,
@@ -3174,6 +3190,8 @@ fn WorkbenchModel::composer_action_row(
         width=82.0,
         height=34.0,
       ),
+    )
+    controls.push(
       button(
         self.follow_up_mode_label(),
         on_click=ToggleFollowUpMode,
@@ -3182,7 +3200,11 @@ fn WorkbenchModel::composer_action_row(
         width=82.0,
         height=34.0,
       ),
-      spacer(min_length=10.0, weight=1.0),
+    )
+  }
+  controls.push(spacer(min_length=10.0, weight=1.0))
+  if self.should_show_composer_secondary_actions() {
+    controls.push(
       button(
         "引导",
         on_click=DispatchSteering,
@@ -3191,6 +3213,8 @@ fn WorkbenchModel::composer_action_row(
         width=54.0,
         height=36.0,
       ),
+    )
+    controls.push(
       button(
         "跟进",
         on_click=DispatchFollowUp,
@@ -3199,18 +3223,29 @@ fn WorkbenchModel::composer_action_row(
         width=54.0,
         height=36.0,
       ),
-      button(
-        "发送",
-        on_click=DispatchPrompt,
-        variant=Primary,
-        theme~,
-        width=54.0,
-        height=36.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
+    )
+  }
+  controls.push(
+    button(
+      "发送",
+      on_click=DispatchPrompt,
+      variant=Primary,
+      theme~,
+      width=54.0,
+      height=36.0,
+    ),
   )
+  row(controls, spacing=8.0, align=Center)
+}
+
+///|
+fn WorkbenchModel::should_show_composer_secondary_actions(
+  self : WorkbenchModel,
+) -> Bool {
+  self.prompt.trim().to_owned() != "" ||
+  self.pi_agent.steering_mode != "one-at-a-time" ||
+  self.pi_agent.follow_up_mode != "one-at-a-time" ||
+  self.pi_agent.queued_steering + self.pi_agent.queued_follow_up > 0
 }
 
 ///|
@@ -3329,7 +3364,10 @@ fn WorkbenchModel::context_summary_label(self : WorkbenchModel) -> String {
   if labels.is_empty() {
     "不附加上下文"
   } else {
-    labels.join("、")
+    match self.active_agent_profile() {
+      Some(_) => labels.join("、")
+      None => ""
+    }
   }
 }
 

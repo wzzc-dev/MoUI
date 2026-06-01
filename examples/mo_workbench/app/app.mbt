@@ -167,7 +167,6 @@ priv struct WorkbenchAgentProfile {
   id : String
   label : String
   role : String
-  detail : String
   prompt_hint : String
 }
 
@@ -499,10 +498,9 @@ fn WorkbenchAgentProfile::new(
   id~ : String,
   label~ : String,
   role~ : String,
-  detail~ : String,
   prompt_hint~ : String,
 ) -> WorkbenchAgentProfile {
-  { id, label, role, detail, prompt_hint }
+  { id, label, role, prompt_hint }
 }
 
 ///|
@@ -538,21 +536,18 @@ fn workbench_agent_profiles() -> Array[WorkbenchAgentProfile] {
       id="general",
       label="通用",
       role="协调",
-      detail="拆解请求、整理上下文",
       prompt_hint="general task planning and coordination",
     ),
     WorkbenchAgentProfile::new(
       id="coding",
       label="编码",
       role="实现",
-      detail="代码修改、测试、重构",
       prompt_hint="coding implementation, focused tests, and refactors",
     ),
     WorkbenchAgentProfile::new(
       id="verify",
       label="校验",
       role="检查",
-      detail="诊断、diff、文档收口",
       prompt_hint="verification, diagnostics, docs, and handoff",
     ),
   ]
@@ -1644,7 +1639,7 @@ fn WorkbenchModel::inspect_file(
   if file_path == "" {
     { ..self, last_status: "File context is empty" }
   } else {
-    let prompt = "Inspect " + file_path
+    let prompt = self.file_inspection_payload(file_path)
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
@@ -1678,7 +1673,7 @@ fn WorkbenchModel::inspect_file_with_transport(
     WorkbenchUpdate::new({ ..self, last_status: "File context is empty" })
   } else {
     let session = self.active_session()
-    let prompt = "Inspect " + file_path
+    let prompt = self.file_inspection_payload(file_path)
     let commands = self.commands_with_session_start(
       session,
       SendUserInput(session.id, prompt),
@@ -1693,7 +1688,7 @@ fn WorkbenchModel::inspect_file_with_transport(
 ///|
 fn WorkbenchModel::review_diff(self : WorkbenchModel) -> WorkbenchModel {
   if self.diff.has_context() {
-    let prompt = self.diff_review_prompt()
+    let prompt = self.diff_review_payload()
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
@@ -1725,7 +1720,7 @@ fn WorkbenchModel::review_diff_with_transport(
 ) -> WorkbenchUpdate {
   if self.diff.has_context() {
     let session = self.active_session()
-    let prompt = self.diff_review_prompt()
+    let prompt = self.diff_review_payload()
     let commands = self.commands_with_session_start(
       session,
       SendUserInput(session.id, prompt),
@@ -1749,6 +1744,19 @@ fn WorkbenchModel::diff_review_prompt(self : WorkbenchModel) -> String {
   self.diff.additions.to_string() +
   " -" +
   self.diff.deletions.to_string()
+}
+
+///|
+fn WorkbenchModel::file_inspection_payload(
+  self : WorkbenchModel,
+  file_path : String,
+) -> String {
+  self.composer_prompt_payload("Inspect " + file_path)
+}
+
+///|
+fn WorkbenchModel::diff_review_payload(self : WorkbenchModel) -> String {
+  self.composer_prompt_payload(self.diff_review_prompt())
 }
 
 ///|

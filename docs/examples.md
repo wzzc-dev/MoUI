@@ -169,8 +169,10 @@ panel/composer widths in smaller windows. The transcript uses multi-line
 message blocks for long Pi replies and draws an explicit scrollbar when the
 main workflow overflows. Primary section labels are quieter and consistently
 Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`), with Pi/RPC
-left as protocol nouns. Secondary session controls now use quieter visual
-treatment than the primary refresh/new-session actions. The workspace digest now
+left as protocol nouns. The default shell keeps only refresh, new-session,
+context, and send controls prominent; advanced session actions, steering /
+follow-up composer controls, and focused-check presets appear once Pi state,
+typed input, or command evidence makes them relevant. The workspace digest now
 includes file, diff, and latest
 diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. When actionable evidence is
@@ -188,8 +190,8 @@ headers until Pi or command evidence arrives.
 On wide windows, the shell now mirrors the three-column desktop shape more
 closely with a right workflow rail for live progress, agents, and work-folder
 evidence. The rail reuses `PlanStep`, `AgentEvent`, session, and `FileContext`
-state from the shared app model, and collapses on compact widths so the
-conversation flow remains primary.
+state from the shared app model, stays hidden when those evidence streams are
+empty, and collapses on compact widths so the conversation flow remains primary.
 Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
 the shared prompt transport, turning visible Pi conversation evidence into the
 next agent task. The sidebar exposes lightweight `通用`, `编码`, and `校验`
