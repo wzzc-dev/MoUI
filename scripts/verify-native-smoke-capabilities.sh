@@ -119,6 +119,11 @@ except json.JSONDecodeError as error:
 capabilities = status.get("native_smoke_capabilities")
 if not isinstance(capabilities, list) or not capabilities:
     fail("platform status is missing native_smoke_capabilities")
+conditional_capabilities = status.get("native_smoke_conditional_capabilities", [])
+if conditional_capabilities is None:
+    conditional_capabilities = []
+if not isinstance(conditional_capabilities, list):
+    fail("platform status native_smoke_conditional_capabilities must be a list")
 
 smoke_source = smoke_source_path.read_text(encoding="utf-8")
 unix_log_verifier = unix_log_verifier_path.read_text(encoding="utf-8")
@@ -138,6 +143,34 @@ for capability in capabilities:
         fail(f"native smoke capability is missing marker: {capability_id}")
     if marker in seen_markers:
         fail(f"duplicate native smoke capability marker: {marker}")
+    seen_markers.add(marker)
+    if marker not in smoke_source:
+        missing_from_source.append(marker)
+    if marker not in unix_log_verifier:
+        missing_from_unix_log_verifier.append(marker)
+    if marker not in powershell_log_verifier:
+        missing_from_powershell_log_verifier.append(marker)
+
+for capability in conditional_capabilities:
+    if not isinstance(capability, dict):
+        fail("native_smoke_conditional_capabilities entries must be objects")
+    marker = str(capability.get("marker", "")).strip()
+    when_marker = str(capability.get("when_marker", "")).strip()
+    when_value = str(capability.get("when_value", "")).strip()
+    capability_id = str(capability.get("id", "")).strip()
+    if not marker:
+        fail(f"native smoke conditional capability is missing marker: {capability_id}")
+    if not when_marker:
+        fail(f"native smoke conditional capability is missing when_marker: {capability_id}")
+    if not when_value:
+        fail(f"native smoke conditional capability is missing when_value: {capability_id}")
+    if marker in seen_markers:
+        fail(f"duplicate native smoke capability marker: {marker}")
+    if when_marker not in seen_markers:
+        fail(
+            "native smoke conditional capability references an unknown condition marker: "
+            f"{capability_id}: {when_marker}"
+        )
     seen_markers.add(marker)
     if marker not in smoke_source:
         missing_from_source.append(marker)

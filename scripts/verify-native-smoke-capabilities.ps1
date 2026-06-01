@@ -43,6 +43,10 @@ $capabilities = @($status.native_smoke_capabilities)
 if ($capabilities.Count -eq 0) {
   throw "platform status is missing native_smoke_capabilities"
 }
+$conditionalCapabilities = @()
+if ($null -ne $status.native_smoke_conditional_capabilities) {
+  $conditionalCapabilities = @($status.native_smoke_conditional_capabilities)
+}
 
 $smokeSourceContent = Get-Content -LiteralPath $resolvedSmokeSource -Raw
 $unixLogVerifierContent = Get-Content -LiteralPath $resolvedUnixLogVerifier -Raw
@@ -61,6 +65,38 @@ foreach ($capability in $capabilities) {
   }
   if ($seenMarkers.ContainsKey($marker)) {
     throw "duplicate native smoke capability marker: $marker"
+  }
+  $seenMarkers[$marker] = $true
+  if (!$smokeSourceContent.Contains($marker)) {
+    $missingFromSource += $marker
+  }
+  if (!$unixLogVerifierContent.Contains($marker)) {
+    $missingFromUnixLogVerifier += $marker
+  }
+  if (!$powershellLogVerifierContent.Contains($marker)) {
+    $missingFromPowershellLogVerifier += $marker
+  }
+}
+
+foreach ($capability in $conditionalCapabilities) {
+  $capabilityId = "$($capability.id)".Trim()
+  $marker = "$($capability.marker)".Trim()
+  $whenMarker = "$($capability.when_marker)".Trim()
+  $whenValue = "$($capability.when_value)".Trim()
+  if ([string]::IsNullOrWhiteSpace($marker)) {
+    throw "native smoke conditional capability is missing marker: $capabilityId"
+  }
+  if ([string]::IsNullOrWhiteSpace($whenMarker)) {
+    throw "native smoke conditional capability is missing when_marker: $capabilityId"
+  }
+  if ([string]::IsNullOrWhiteSpace($whenValue)) {
+    throw "native smoke conditional capability is missing when_value: $capabilityId"
+  }
+  if ($seenMarkers.ContainsKey($marker)) {
+    throw "duplicate native smoke capability marker: $marker"
+  }
+  if (!$seenMarkers.ContainsKey($whenMarker)) {
+    throw "native smoke conditional capability references an unknown condition marker: ${capabilityId}: $whenMarker"
   }
   $seenMarkers[$marker] = $true
   if (!$smokeSourceContent.Contains($marker)) {
