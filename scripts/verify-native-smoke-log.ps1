@@ -40,6 +40,8 @@ $defaultStageMarkers = @(
   "native smoke render resource plan count",
   "native smoke render frame resource plan count",
   "native smoke render frame validation status",
+  "native smoke render frame cacheable subplan count",
+  "native smoke render frame uncacheable subplan count",
   "native smoke render frame unbalanced validation",
   "native smoke render target identity validation",
   "native smoke render target resource binding",
@@ -166,6 +168,14 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke render frame validation status"
     Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame cacheable subplan count"
+    Value = "12"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame uncacheable subplan count"
+    Value = "0"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame unbalanced validation"
