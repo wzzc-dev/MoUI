@@ -1781,7 +1781,7 @@ fn WorkbenchModel::fix_diagnostic(
   if clean_source == "" && clean_message == "" {
     { ..self, last_status: "Diagnostic is empty" }
   } else {
-    let prompt = diagnostic_fix_prompt(source, severity, message)
+    let prompt = self.diagnostic_fix_payload(source, severity, message)
     let session = self.active_session()
     let events = self.events.copy()
     events.push(
@@ -1817,7 +1817,7 @@ fn WorkbenchModel::fix_diagnostic_with_transport(
   if clean_source == "" && clean_message == "" {
     WorkbenchUpdate::new({ ..self, last_status: "Diagnostic is empty" })
   } else {
-    let prompt = diagnostic_fix_prompt(source, severity, message)
+    let prompt = self.diagnostic_fix_payload(source, severity, message)
     let session = self.active_session()
     let commands = self.commands_with_session_start(
       session,
@@ -1847,6 +1847,16 @@ fn diagnostic_fix_prompt(
   let origin = if source == "" { "" } else { " from " + source }
   let detail = if message == "" { "" } else { ": " + message }
   "Fix " + label + origin + detail
+}
+
+///|
+fn WorkbenchModel::diagnostic_fix_payload(
+  self : WorkbenchModel,
+  source : String,
+  severity : String,
+  message : String,
+) -> String {
+  self.composer_prompt_payload(diagnostic_fix_prompt(source, severity, message))
 }
 
 ///|

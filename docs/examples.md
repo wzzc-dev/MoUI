@@ -207,8 +207,9 @@ action. The diff summary review button likewise queues a concise
 `Review diff: ...` prompt, so code review starts from shared app state rather
 than a native-only shortcut.
 Latest diagnostic rows can queue a `Fix <severity> diagnostic from <source>: ...`
-prompt through the same `SendUserInput` path, turning build/check failures into
-the next agent task without adding a transport-specific command.
+prompt through the same `SendUserInput` path while preserving the current
+context chips and selected agent focus, turning build/check failures into the
+next agent task without adding a transport-specific command.
 The shared app package keeps the Pi boundary as platform-neutral
 `PiTransportCommand` and `PiTransportEvent` values so future Web or
 automation-focused workflows can reuse the same event model. Structured Pi

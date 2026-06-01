@@ -509,12 +509,33 @@ test "workbench queues diagnostic fix through prompt RPC" {
       inspect(session, content="moui-skia")
       inspect(
         text,
-        content="Fix error diagnostic from moon check: unused variable in app.mbt",
+        content=context_task_payload(
+          "Fix error diagnostic from moon check: unused variable in app.mbt",
+        ),
       )
     }
     _ => fail("expected queued diagnostic fix prompt")
   }
   assert_true(model.events.any(event => event.title == "Diagnostic fix queued"))
+}
+
+///|
+test "workbench diagnostic fix preserves selected agent focus" {
+  let model = WorkbenchModel::new()
+    .update(SelectAgent("coding"))
+    .update(FixDiagnostic("moon check", "error", "unused variable in app.mbt"))
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=agent_context_task_payload(
+          "Fix error diagnostic from moon check: unused variable in app.mbt",
+        ),
+      )
+    }
+    _ => fail("expected focused diagnostic fix prompt")
+  }
 }
 
 ///|
@@ -526,7 +547,7 @@ test "workbench diagnostic fix runtime effect dispatches prompt" {
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
     emit(
       JsonLineSent(
-        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Fix error diagnostic from moon check: unused variable in app.mbt\"}",
+        "moui-skia", "{\"type\":\"prompt\",\"message\":\"Context: repo, examples\\n\\nTask: Fix error diagnostic from moon check: unused variable in app.mbt\"}",
       ),
     )
   })
@@ -543,7 +564,9 @@ test "workbench diagnostic fix runtime effect dispatches prompt" {
       inspect(session, content="moui-skia")
       inspect(
         text,
-        content="Fix error diagnostic from moon check: unused variable in app.mbt",
+        content=context_task_payload(
+          "Fix error diagnostic from moon check: unused variable in app.mbt",
+        ),
       )
     }
     _ => fail("expected captured diagnostic fix prompt")

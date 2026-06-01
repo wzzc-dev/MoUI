@@ -151,8 +151,9 @@ packages:
   keeping PiTransport platform-neutral.
 - Latest diagnostic rows in the Workspace digest can queue a
   `Fix <severity> diagnostic from <source>: ...` prompt through
-  `SendUserInput`, turning build/check failures into the next coding-agent
-  task without adding a diagnostic-specific native transport command.
+  `SendUserInput`, preserving the current context chips and selected agent
+  focus while turning build/check failures into the next coding-agent task
+  without adding a diagnostic-specific native transport command.
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
