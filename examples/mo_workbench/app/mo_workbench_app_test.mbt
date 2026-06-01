@@ -1742,6 +1742,76 @@ test "workbench model cycle acknowledges unavailable alternate model" {
 }
 
 ///|
+test "workbench compacts Pi context through platform-neutral transport" {
+  let model = WorkbenchModel::new().update(CompactSession)
+  inspect(model.last_status, content="Pi compact queued")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    CompactRpcSession(session, instructions) => {
+      inspect(session, content="moui-skia")
+      inspect(instructions, content="")
+    }
+    _ => fail("expected queued compact")
+  }
+  assert_true(model.events.any(event => event.title == "Pi compact queued"))
+}
+
+///|
+test "workbench compact runtime effect records compaction summary" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, emit) => {
+    captured.val = commands
+    emit(ProcessStarted("fixture-pid"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
+    emit(JsonLineSent("moui-skia", "{\"type\":\"compact\"}"))
+    emit(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"compact","success":true,"data":{"summary":"Renderer route summarized","firstKeptEntryId":"entry-7","tokensBefore":42000}}
+        ),
+      ),
+    )
+  })
+  let update = WorkbenchModel::new().update_with_transport(
+    CompactSession,
+    transport,
+  )
+  inspect(captured.val.length(), content="0")
+  inspect(update.model.pending_transport_count(), content="2")
+  let model = run_workbench_effect(update)
+  inspect(captured.val.length(), content="2")
+  match captured.val[1] {
+    CompactRpcSession(session, instructions) => {
+      inspect(session, content="moui-skia")
+      inspect(instructions, content="")
+    }
+    _ => fail("expected captured compact")
+  }
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.pi_rpc.command, content="compact")
+  inspect(model.active_session().active_task, content="Pi context compacted")
+  inspect(
+    model.active_session().summary,
+    content="Pi compacted context from 42000 tokens",
+  )
+  inspect(model.transcript.length(), content="1")
+  inspect(model.transcript[0].id, content="pi-compact-entry-7")
+  inspect(model.transcript[0].role, content="compactionSummary")
+  inspect(model.transcript[0].detail, content="Renderer route summarized")
+  inspect(model.active_pi_session_binding().last_command, content="compact")
+  inspect(model.last_status, content="Pi context compacted")
+  assert_true(model.events.any(event => event.title == "Pi context compacted"))
+}
+
+///|
 test "workbench ingests Pi RPC get_session_stats response into session metrics" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(
@@ -2168,6 +2238,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "刷新"))
   assert_true(has_text(commands, "分叉"))
   assert_true(has_text(commands, "导出"))
+  assert_true(has_text(commands, "压缩"))
   assert_true(has_text(commands, "思考"))
   assert_true(has_text(commands, "Steer 1"))
   assert_true(has_text(commands, "Follow 1"))

@@ -117,6 +117,15 @@ pub fn pi_rpc_cycle_model_line() -> String {
 }
 
 ///|
+pub fn pi_rpc_compact_line(custom_instructions~ : String) -> String {
+  if custom_instructions == "" {
+    ({ "type": "compact" } : Json).stringify()
+  } else {
+    ({ "type": "compact", "customInstructions": custom_instructions } : Json).stringify()
+  }
+}
+
+///|
 pub fn pi_rpc_cycle_thinking_level_line() -> String {
   ({ "type": "cycle_thinking_level" } : Json).stringify()
 }
@@ -247,6 +256,12 @@ fn commands_to_request(
           session_id = session
         }
         lines.push(pi_rpc_cycle_model_line())
+      }
+      CompactRpcSession(session, instructions) => {
+        if session_id == default_session_id {
+          session_id = session
+        }
+        lines.push(pi_rpc_compact_line(custom_instructions=instructions))
       }
       CycleRpcThinkingLevel(session) => {
         if session_id == default_session_id {

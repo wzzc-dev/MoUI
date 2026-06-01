@@ -614,13 +614,13 @@ fn WorkbenchModel::session_controls_row(
   row(
     [
       self.thinking_level_cell(theme),
-      spacer(min_length=8.0, weight=1.0),
+      spacer(min_length=4.0, weight=1.0),
       button(
         "新建",
         on_click=NewSession,
         variant=Outline,
         theme~,
-        width=58.0,
+        width=54.0,
         height=34.0,
       ),
       button(
@@ -628,7 +628,7 @@ fn WorkbenchModel::session_controls_row(
         on_click=RefreshSession,
         variant=Outline,
         theme~,
-        width=58.0,
+        width=54.0,
         height=34.0,
       ),
       button(
@@ -636,7 +636,7 @@ fn WorkbenchModel::session_controls_row(
         on_click=RefreshForkMessages,
         variant=Outline,
         theme~,
-        width=58.0,
+        width=54.0,
         height=34.0,
       ),
       button(
@@ -644,7 +644,15 @@ fn WorkbenchModel::session_controls_row(
         on_click=ExportSessionHtml,
         variant=Outline,
         theme~,
-        width=58.0,
+        width=54.0,
+        height=34.0,
+      ),
+      button(
+        "压缩",
+        on_click=CompactSession,
+        variant=Outline,
+        theme~,
+        width=54.0,
         height=34.0,
       ),
       button(
@@ -652,7 +660,7 @@ fn WorkbenchModel::session_controls_row(
         on_click=CycleThinkingLevel,
         variant=Outline,
         theme~,
-        width=62.0,
+        width=54.0,
         height=34.0,
       ),
       button(
@@ -676,13 +684,13 @@ fn WorkbenchModel::thinking_level_cell(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   if self.pi_agent.thinking_level == "" {
-    blank_cell(width=176.0, height=30.0)
+    blank_cell(width=158.0, height=30.0)
   } else {
     text(
       "Thinking: " + self.thinking_level_label(),
       role=Caption,
       theme~,
-      width=176.0,
+      width=158.0,
       height=30.0,
     )
   }
@@ -699,11 +707,11 @@ fn WorkbenchModel::cancel_run_button(
       on_click=CancelRun,
       variant=Ghost,
       theme~,
-      width=58.0,
+      width=54.0,
       height=34.0,
     )
   } else {
-    blank_cell(width=58.0, height=34.0)
+    blank_cell(width=54.0, height=34.0)
   }
 }
 

@@ -13,6 +13,8 @@ pub fn pi_rpc_abort_line() -> String
 
 pub fn pi_rpc_bash_line(command~ : String) -> String
 
+pub fn pi_rpc_compact_line(custom_instructions~ : String) -> String
+
 pub fn pi_rpc_cycle_model_line() -> String
 
 pub fn pi_rpc_cycle_thinking_level_line() -> String

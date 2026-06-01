@@ -116,6 +116,7 @@ fn WorkbenchModel::ingest_rpc_response(
         self.apply_get_session_stats_success(session_id, fields)
       "export_html" => self.apply_export_html_success(session_id, fields)
       "cycle_model" => self.apply_cycle_model_success(session_id, fields)
+      "compact" => self.apply_compact_success(session_id, fields)
       "cycle_thinking_level" =>
         self.apply_cycle_thinking_level_success(session_id, fields)
       "set_steering_mode" => self.apply_set_steering_mode_success(session_id)
@@ -484,6 +485,51 @@ fn WorkbenchModel::apply_cycle_model_success(
     } else {
       "Pi model changed"
     },
+  )
+}
+
+///|
+fn WorkbenchModel::apply_compact_success(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let data = json_object(fields, "data").unwrap_or({})
+  let summary = json_string(data, "summary").unwrap_or("")
+  let first_kept_entry_id = json_string(data, "firstKeptEntryId").unwrap_or("")
+  let tokens_before = json_int(data, "tokensBefore").unwrap_or(0)
+  let transcript = self.transcript.copy()
+  if summary != "" {
+    transcript.push(
+      TranscriptItem::new(
+        id=compact_transcript_id(session_id, first_kept_entry_id),
+        role="compactionSummary",
+        summary="Compaction summary",
+        detail=summary,
+        tone="neutral",
+      ),
+    )
+  }
+  let model = {
+    ..self
+    .update_pi_session_binding_command(session_id, last_command="compact")
+    .update_active_session_for_pi(
+      status="active",
+      active_task="Pi context compacted",
+      summary=Some(compact_session_summary(tokens_before)),
+    ),
+    transcript,
+    pi_rpc: PiRpcSnapshot::new(command="compact", success=true),
+    pi_agent: { ..self.pi_agent, phase: "compaction complete" },
+  }
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title="Pi context compacted",
+      detail=compact_response_detail(session_id, tokens_before, summary),
+      tone="success",
+    ),
+    status="Pi context compacted",
   )
 }
 
@@ -927,6 +973,42 @@ fn session_stats_detail(
   stats.token_total.to_string() +
   " tokens" +
   session_stats_context_suffix(stats)
+}
+
+///|
+fn compact_transcript_id(
+  session_id : String,
+  first_kept_entry_id : String,
+) -> String {
+  if first_kept_entry_id == "" {
+    "pi-compact-" + session_id
+  } else {
+    "pi-compact-" + first_kept_entry_id
+  }
+}
+
+///|
+fn compact_session_summary(tokens_before : Int) -> String {
+  if tokens_before > 0 {
+    "Pi compacted context from " + tokens_before.to_string() + " tokens"
+  } else {
+    "Pi compacted context"
+  }
+}
+
+///|
+fn compact_response_detail(
+  session_id : String,
+  tokens_before : Int,
+  summary : String,
+) -> String {
+  let tokens = if tokens_before > 0 {
+    ", " + tokens_before.to_string() + " tokens before"
+  } else {
+    ""
+  }
+  let summary_suffix = if summary == "" { "" } else { ": " + summary }
+  session_id + tokens + summary_suffix
 }
 
 ///|
@@ -1814,6 +1896,31 @@ fn WorkbenchModel::update_pi_session_binding_model(
       ),
     )
   }
+}
+
+///|
+fn WorkbenchModel::update_pi_session_binding_command(
+  self : WorkbenchModel,
+  workbench_session_id : String,
+  last_command~ : String,
+) -> WorkbenchModel {
+  let existing = self.pi_session_binding_for_id(workbench_session_id)
+  let status = if existing.status == "unbound" {
+    "bound"
+  } else {
+    existing.status
+  }
+  self.upsert_pi_session_binding(
+    PiSessionBinding::new(
+      workbench_session_id~,
+      rpc_session_id=existing.rpc_session_id,
+      session_file=existing.session_file,
+      session_name=existing.session_name,
+      model=existing.model,
+      status~,
+      last_command~,
+    ),
+  )
 }
 
 ///|
