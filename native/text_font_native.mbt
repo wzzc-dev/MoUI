@@ -234,11 +234,11 @@ extern "C" fn native_font_mgr_match_family_style(
 ) -> TypefaceHandle = "moonbit_skia_font_mgr_match_family_style"
 
 ///|
-#borrow(font_mgr, family_name, bcp47)
+#borrow(font_mgr, family_name, language_tag)
 extern "C" fn native_font_mgr_match_family_style_character(
   font_mgr : FontMgrHandle,
   family_name : Bytes,
-  bcp47 : Array[Bytes],
+  language_tag : Bytes,
   character : Int,
   weight : Int,
   width : Int,
@@ -696,6 +696,31 @@ pub fn FontMgr::match_family_style_request(
 }
 
 ///|
+fn FontMgr::match_family_style_character_language(
+  self : FontMgr,
+  family_name : Bytes,
+  language_tag : Bytes,
+  character : Int,
+  style : @skia.FontStyleRequest,
+) -> Typeface? {
+  if character <= 0 {
+    None
+  } else {
+    Typeface::from_handle(
+      native_font_mgr_match_family_style_character(
+        self.handle,
+        family_name,
+        language_tag,
+        character,
+        style.weight,
+        style.width,
+        style.slant,
+      ),
+    )
+  }
+}
+
+///|
 pub fn FontMgr::match_family_style_character(
   self : FontMgr,
   family_name : Bytes,
@@ -705,18 +730,22 @@ pub fn FontMgr::match_family_style_character(
 ) -> Typeface? {
   if character <= 0 {
     None
-  } else {
-    Typeface::from_handle(
-      native_font_mgr_match_family_style_character(
-        self.handle,
-        family_name,
-        bcp47,
-        character,
-        style.weight,
-        style.width,
-        style.slant,
-      ),
+  } else if bcp47.is_empty() {
+    self.match_family_style_character_language(
+      family_name, b"", character, style,
     )
+  } else {
+    let mut matched : Typeface? = None
+    for language_tag in bcp47 {
+      match matched {
+        Some(_) => ()
+        None =>
+          matched = self.match_family_style_character_language(
+            family_name, language_tag, character, style,
+          )
+      }
+    }
+    matched
   }
 }
 
