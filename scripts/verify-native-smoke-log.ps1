@@ -66,8 +66,12 @@ $defaultStageMarkers = @(
   "native smoke bounded snapshot height",
   "native smoke encoded PNG bytes",
   "native smoke decoded image width",
+  "native smoke decoded image height",
   "native smoke codec encoded format PNG",
+  "native smoke codec width",
+  "native smoke codec height",
   "native smoke decoded bitmap width",
+  "native smoke decoded bitmap height",
   "native smoke font spacing",
   "native smoke font resource plan count",
   "native smoke text run resource plan count",
@@ -185,6 +189,30 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke bounded snapshot height"
     Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke decoded image width"
+    Value = "32"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke decoded image height"
+    Value = "32"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke codec width"
+    Value = "32"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke codec height"
+    Value = "32"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke decoded bitmap width"
+    Value = "32"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke decoded bitmap height"
+    Value = "32"
   }
   [pscustomobject]@{
     Marker = "native smoke shader draws"
