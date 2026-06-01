@@ -118,7 +118,8 @@ subplans,
 byte-range text-run resource keys, text measurement resource planning,
 measured-text result resource planning, measured-text result cache-key
 variation, text measurement cache-key variation,
-text shaping resource planning, shaped-text result resource planning, UTF-8 text
+text shaping resource planning, shaped-text result resource planning, shaped
+glyph-run resource planning, shaped glyph-run cache-key variation, UTF-8 text
 measurement, glyph count, glyph ID mapping, glyph advances, glyph positions,
 glyph bounds, text bounds measurement, font metrics, and font manager family
 enumeration, character fallback, fallback family metadata, resolved fallback
