@@ -275,7 +275,16 @@ pub fn RenderPassDescriptor::is_bound_to_target(
 pub fn RenderPassDescriptor::resource_descriptor(
   self : RenderPassDescriptor,
 ) -> RendererResourceDescriptor {
-  self.surface.resource_descriptor()
+  let descriptor = self.surface.resource_descriptor()
+  match self.target_key {
+    None => descriptor
+    Some(key) =>
+      RendererResourceDescriptor::new(
+        key,
+        byte_size=descriptor.byte_size,
+        cacheable=descriptor.cacheable,
+      )
+  }
 }
 
 ///|

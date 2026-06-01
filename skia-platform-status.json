@@ -104,6 +104,11 @@
       "marker": "native smoke render target identity validation"
     },
     {
+      "id": "pipeline.target-resource-binding",
+      "area": "Pipeline",
+      "marker": "native smoke render target resource binding"
+    },
+    {
       "id": "pipeline.frame-cache-resources",
       "area": "Pipeline",
       "marker": "native smoke render frame cache resources"
@@ -298,6 +303,11 @@
     {
       "id": "pipeline.target-identity-validation",
       "marker": "native smoke render target identity validation",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.target-resource-binding",
+      "marker": "native smoke render target resource binding",
       "value": "1"
     },
     {
