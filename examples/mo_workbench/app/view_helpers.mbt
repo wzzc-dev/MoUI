@@ -225,6 +225,8 @@ fn WorkbenchModel::app_sidebar(
         self.sidebar_brand(layout, theme),
         self.sidebar_section_label("任务历史", layout, theme),
         self.pinned_threads(layout, theme),
+        self.sidebar_section_label("Agents", layout, theme),
+        self.agent_roster(layout, theme),
         self.sidebar_section_label("工作区", layout, theme),
         self.workspace_summary(layout, theme),
         spacer(min_length=8.0, weight=1.0),
@@ -291,6 +293,90 @@ fn WorkbenchModel::pinned_threads(
     )
   }
   column(rows, spacing=2.0, align=Stretch)
+}
+
+///|
+fn WorkbenchModel::agent_roster(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = []
+  for profile in workbench_agent_profiles() {
+    rows.push(
+      self.agent_button(
+        profile,
+        layout,
+        theme,
+        selected=self.selected_agent_id == profile.id,
+      ),
+    )
+  }
+  column(rows, spacing=2.0, align=Stretch)
+}
+
+///|
+fn WorkbenchModel::agent_button(
+  self : WorkbenchModel,
+  profile : WorkbenchAgentProfile,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+  selected~ : Bool,
+) -> @core.View[WorkbenchMsg] {
+  ignore(self)
+  let background = if selected {
+    @core.Color::white()
+  } else {
+    ui_color(0.93, 0.94, 0.93)
+  }
+  surface(
+    row(
+      [
+        button(
+          profile.label,
+          on_click=SelectAgent(profile.id),
+          variant=Ghost,
+          theme~,
+          width=60.0,
+          height=32.0,
+        ),
+        column(
+          [
+            text(
+              profile.role,
+              role=Control,
+              theme~,
+              width=layout.sidebar_inner_width - 92.0,
+              height=18.0,
+            ),
+            text(
+              profile.detail,
+              role=Caption,
+              theme~,
+              width=layout.sidebar_inner_width - 92.0,
+              height=18.0,
+            ),
+          ],
+          spacing=0.0,
+          align=Start,
+        ),
+      ],
+      spacing=6.0,
+      align=Center,
+    ),
+    width=layout.sidebar_inner_width,
+    height=42.0,
+    background~,
+    corner_radius=8.0,
+    theme~,
+    padding=2.0,
+  ).border(
+    if selected {
+      workbench_hairline_border()
+    } else {
+      workbench_clear_border()
+    },
+  )
 }
 
 ///|
@@ -3075,6 +3161,10 @@ fn WorkbenchModel::context_summary_label(self : WorkbenchModel) -> String {
     if !known_context_id(id) {
       labels.push(id)
     }
+  }
+  match self.active_agent_profile() {
+    Some(profile) => labels.push("Agent " + profile.label)
+    None => ()
   }
   if labels.is_empty() {
     "不附加上下文"

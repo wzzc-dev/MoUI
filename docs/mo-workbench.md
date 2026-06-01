@@ -109,6 +109,12 @@ packages:
   activity events, and `工作文件夹` shows the active project plus the latest file
   evidence. Compact windows collapse the rail and keep the single-column
   conversation flow.
+- The left sidebar has a lightweight `Agents` focus roster for `通用`, `编码`,
+  and `校验`. Selecting a role does not create a native-only worker or transport
+  command; it appends an `agent focus: ...` hint to the existing prompt,
+  steering, and follow-up text context before the shared app emits the same
+  platform-neutral `SendUserInput`, `SendSteeringInput`, or `SendFollowUpInput`
+  commands.
 - Pi `plan_update` JSONL now fills the existing shared-app `PlanStep` model and
   renders a compact `当前计划` row in the current session panel. The row shows
   the current active/open step, open-step count, and a `继续` action that reuses

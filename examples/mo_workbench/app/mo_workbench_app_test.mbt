@@ -39,6 +39,48 @@ test "workbench composer can send a prompt without selected context" {
 }
 
 ///|
+test "workbench agent focus routes prompt context without new transport command" {
+  let model = WorkbenchModel::new()
+    .update(SelectAgent("coding"))
+    .update(PromptChanged("Implement the next focused slice"))
+    .update(DispatchPrompt)
+  inspect(model.selected_agent_id, content="coding")
+  inspect(model.prompt, content="")
+  inspect(model.last_status, content="Queued prompt for Pi JSONL RPC")
+  inspect(model.pending_transport_count(), content="2")
+  match model.transport.command_queue[0] {
+    StartRpc(session, cwd) => {
+      inspect(session, content="moui-skia")
+      inspect(cwd, content="/Volumes/Data/Code/moon/MoUI")
+    }
+    _ => fail("expected queued session start")
+  }
+  match model.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=agent_context_task_payload("Implement the next focused slice"),
+      )
+    }
+    _ => fail("expected queued user input")
+  }
+}
+
+///|
+test "workbench agent focus selection toggles and rejects unknown ids" {
+  let selected = WorkbenchModel::new().update(SelectAgent("verify"))
+  inspect(selected.selected_agent_id, content="verify")
+  inspect(selected.last_status, content="Agent focus selected: 校验")
+  let cleared = selected.update(SelectAgent("verify"))
+  inspect(cleared.selected_agent_id, content="")
+  inspect(cleared.last_status, content="Agent focus cleared")
+  let unknown = cleared.update(SelectAgent("unknown"))
+  inspect(unknown.selected_agent_id, content="")
+  inspect(unknown.last_status, content="Agent focus unavailable")
+}
+
+///|
 test "workbench transport runtime effect dispatches prompt events" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, emit) => {
@@ -2608,7 +2650,6 @@ test "workbench wide shell renders workflow rail from live evidence" {
 test "workbench compact shell keeps workflow rail collapsed" {
   let commands = @app.runtime(width=960.0, height=640.0).draw_commands()
   assert_false(has_text(commands, "进度"))
-  assert_false(has_text(commands, "Agents"))
   assert_false(has_text(commands, "工作文件夹"))
 }
 
@@ -2620,6 +2661,12 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "当前会话"))
   assert_true(has_text(commands, "进度"))
   assert_true(has_text(commands, "Agents"))
+  assert_true(has_text(commands, "通用"))
+  assert_true(has_text(commands, "编码"))
+  assert_true(has_text(commands, "校验"))
+  assert_true(has_text(commands, "拆解请求、整理上下文"))
+  assert_true(has_text(commands, "代码修改、测试、重构"))
+  assert_true(has_text(commands, "诊断、diff、文档收口"))
   assert_true(has_text(commands, "工作文件夹"))
   assert_true(has_text(commands, "等待 Pi 计划更新"))
   assert_true(has_text(commands, "等待活动"))
@@ -2755,6 +2802,13 @@ test "workbench shell adapts to runtime viewport resize" {
 }
 
 ///|
+test "workbench composer displays selected agent focus in context summary" {
+  let model = WorkbenchModel::new().update(SelectAgent("coding"))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "仓库、示例、Agent 编码"))
+}
+
+///|
 fn model_with_reviewable_diff() -> WorkbenchModel {
   {
     ..WorkbenchModel::new(),
@@ -2794,6 +2848,12 @@ fn long_assistant_reply() -> String {
 ///|
 fn context_task_payload(task : String) -> String {
   "Context: repo, examples\n\nTask: " + task
+}
+
+///|
+fn agent_context_task_payload(task : String) -> String {
+  "Context: repo, examples, agent focus: coding implementation, focused tests, and refactors\n\nTask: " +
+  task
 }
 
 ///|
