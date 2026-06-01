@@ -411,6 +411,15 @@
       "marker": "native smoke font fallback font resource plan count"
     }
   ],
+  "native_smoke_conditional_capabilities": [
+    {
+      "id": "text.shaped-glyph-count",
+      "area": "Text",
+      "marker": "native smoke shaped glyph count",
+      "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    }
+  ],
   "native_smoke_expected_values": [
     {
       "id": "canvas.clip",

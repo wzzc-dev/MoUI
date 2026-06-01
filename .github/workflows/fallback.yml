@@ -107,17 +107,65 @@ jobs:
               for entry in status.get('native_smoke_expected_values', [])
               if entry.get('marker', '').strip() and str(entry.get('value', '')).strip()
           }
+          marker_values = {}
           lines = []
           for capability in status['native_smoke_capabilities']:
               marker = capability['marker'].strip()
               if marker:
-                  lines.extend([marker, expected_values.get(marker, '1')])
+                  value = expected_values.get(marker, '1')
+                  marker_values[marker] = value
+                  lines.extend([marker, value])
+          for conditional in status.get('native_smoke_conditional_capabilities', []):
+              marker = conditional.get('marker', '').strip()
+              when_marker = conditional.get('when_marker', '').strip()
+              when_value = str(conditional.get('when_value', '')).strip()
+              if marker and marker_values.get(when_marker) == when_value:
+                  lines.extend([marker, '1'])
           lines.append('skia_mbt native smoke test passed')
           Path('logs/fake-native-smoke-good.log').write_text(
               '\n'.join(lines) + '\n'
           )
           PY
           bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-good.log
+          python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('logs/fake-native-smoke-good.log').read_text().splitlines()
+          filtered = []
+          index = 0
+          while index < len(lines):
+              if lines[index] == 'native smoke shaped glyph count':
+                  index += 2
+                  continue
+              filtered.append(lines[index])
+              index += 1
+          Path('logs/fake-native-smoke-missing-conditional.log').write_text(
+              '\n'.join(filtered) + '\n'
+          )
+          PY
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-missing-conditional.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a missing conditional stage marker" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('logs/fake-native-smoke-good.log').read_text().splitlines()
+          filtered = []
+          index = 0
+          while index < len(lines):
+              if lines[index] == 'native smoke shaper availability' and index + 1 < len(lines):
+                  filtered.extend([lines[index], '0'])
+                  index += 2
+                  continue
+              if lines[index] == 'native smoke shaped glyph count':
+                  index += 2
+                  continue
+              filtered.append(lines[index])
+              index += 1
+          Path('logs/fake-native-smoke-unavailable-conditional.log').write_text(
+              '\n'.join(filtered) + '\n'
+          )
+          PY
+          bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-unavailable-conditional.log
           sed 's/^skia_mbt native smoke test passed$/not_skia_mbt native smoke test passed/' \
             logs/fake-native-smoke-good.log \
             > logs/fake-native-smoke-prefixed-success.log
