@@ -171,6 +171,10 @@ packages:
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
+- The Activity digest also exposes compact focused-check presets for the
+  Workbench app package native test, app package wasm-gc test, and macOS Skia
+  entrypoint build. They use the same `QueueCommand` / Pi RPC `bash` path as
+  manual command reruns, so validation evidence stays in the shared model.
 - The Activity digest surfaces the latest shared-app timeline event, so Pi RPC,
   streaming agent, tool, and stderr progress stays visible next to command
   evidence without opening a separate log view. The visible event can also be

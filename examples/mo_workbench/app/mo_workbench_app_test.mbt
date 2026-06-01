@@ -1080,6 +1080,21 @@ test "workbench command queue uses Pi RPC bash command" {
 }
 
 ///|
+test "workbench focused check preset routes through Pi RPC bash command" {
+  let focused_check = "moon test examples/mo_workbench/app --target native"
+  let model = WorkbenchModel::new().update(QueueCommand(focused_check))
+  match model.transport.command_queue[1] {
+    RunShellCommand(session, command) => {
+      inspect(session, content="moui-skia")
+      inspect(command, content=focused_check)
+    }
+    _ => fail("expected focused check to queue shell command")
+  }
+  let queued = model.commands[model.commands.length() - 1]
+  inspect(queued.command, content=focused_check)
+}
+
+///|
 test "workbench reruns command evidence through Pi RPC bash path" {
   let seed = {
     ..WorkbenchModel::new(),
@@ -2695,6 +2710,10 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "跟进"))
   assert_true(has_text(commands, "会话记录"))
   assert_true(has_text(commands, "运行证据"))
+  assert_true(has_text(commands, "常用检查"))
+  assert_true(has_text(commands, "App 测试"))
+  assert_true(has_text(commands, "Wasm 测试"))
+  assert_true(has_text(commands, "Skia 构建"))
   assert_true(has_text(commands, "工作区证据"))
   assert_true(has_text(commands, "同步名"))
   assert_true(has_text(commands, "Pi RPC"))

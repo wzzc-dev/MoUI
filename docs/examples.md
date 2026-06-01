@@ -291,6 +291,10 @@ and output path, turning bash evidence into the next Pi task through
 The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
+It also exposes focused-check presets for the app native test, app wasm-gc test,
+and macOS Skia build. Each preset uses the same `QueueCommand` /
+`RunShellCommand` path, so checks started from the UI become normal Pi bash
+evidence.
 It also surfaces the latest Pi/agent timeline event from shared app state, so
 streaming transport, tool, and RPC progress is visible next to command evidence
 without adding a separate log view.

@@ -51,6 +51,38 @@ priv struct WorkbenchNextAction {
 }
 
 ///|
+priv struct WorkbenchCheckPreset {
+  label : String
+  command : String
+}
+
+///|
+fn WorkbenchCheckPreset::new(
+  label~ : String,
+  command~ : String,
+) -> WorkbenchCheckPreset {
+  { label, command }
+}
+
+///|
+fn workbench_check_presets() -> Array[WorkbenchCheckPreset] {
+  [
+    WorkbenchCheckPreset::new(
+      label="App 测试",
+      command="moon test examples/mo_workbench/app --target native",
+    ),
+    WorkbenchCheckPreset::new(
+      label="Wasm 测试",
+      command="moon test examples/mo_workbench/app --target wasm-gc",
+    ),
+    WorkbenchCheckPreset::new(
+      label="Skia 构建",
+      command="moon build examples/mo_workbench/macos_skia --target native",
+    ),
+  ]
+}
+
+///|
 fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
   let viewport = @core.Size::new(
     width=workbench_max_double(1.0, viewport.width),
@@ -2523,6 +2555,7 @@ fn WorkbenchModel::activity_panel(
       align=Center,
     ),
   ]
+  rows.push(focused_check_preset_row(layout, theme))
   if !self.events.is_empty() {
     rows.push(event_row(self.events[self.events.length() - 1], layout, theme))
   }
@@ -2550,7 +2583,7 @@ fn WorkbenchModel::activity_panel(
 
 ///|
 fn WorkbenchModel::activity_panel_row_count(self : WorkbenchModel) -> Int {
-  let mut count = 1
+  let mut count = 2
   if !self.events.is_empty() {
     count = count + 1
   }
@@ -2561,6 +2594,36 @@ fn WorkbenchModel::activity_panel_row_count(self : WorkbenchModel) -> Int {
     count = count + 1
   }
   count
+}
+
+///|
+fn focused_check_preset_row(
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let presets = workbench_check_presets()
+  let button_width = workbench_clamp_double(
+    (layout.panel_body_width - 72.0 - 32.0) / 3.0,
+    94.0,
+    132.0,
+  )
+  let controls : Array[@core.View[WorkbenchMsg]] = [
+    text("常用检查", role=Caption, theme~, width=72.0, height=30.0),
+  ]
+  for preset in presets {
+    controls.push(
+      button(
+        preset.label,
+        on_click=QueueCommand(preset.command),
+        variant=Ghost,
+        theme~,
+        width=button_width,
+        height=30.0,
+      ),
+    )
+  }
+  controls.push(spacer(min_length=8.0, weight=1.0))
+  row(controls, spacing=8.0, align=Center)
 }
 
 ///|
