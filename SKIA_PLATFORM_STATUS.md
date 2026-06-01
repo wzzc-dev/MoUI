@@ -96,8 +96,10 @@ these facts recorded in logs:
   bound target resource planning, window physical-size derivation, frame pacing, frame-pacing key variation,
   present-mode key variation, window-frame present finalization,
   render-frame present descriptor validation, render-frame submission resource
-  planning, render-frame submission cache population, render-frame finalization
+  planning, render-frame submission preflight/cache population,
+  render-frame finalization
   resource planning, cacheable/uncacheable frame finalization resource subplans,
+  render-frame finalization preflight,
   render-frame finalization cache population, surface
   finalization resource planning, surface finalization cache-key variation, GPU
   finalization resource planning, GPU frame finalization resource filtering,
