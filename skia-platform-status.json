@@ -25,6 +25,12 @@
       "powershell_command": "moon check; moon test"
     },
     {
+      "id": "moonbit.all-target-check",
+      "area": "MoonBit",
+      "unix_command": "moon check --target all",
+      "powershell_command": ""
+    },
+    {
       "id": "native.smoke-build",
       "area": "NativeSmoke",
       "unix_command": "moon -C scripts/native_smoke check && moon -C scripts/native_smoke build --target native",
