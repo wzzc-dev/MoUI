@@ -1597,6 +1597,52 @@ test "workbench ingests Pi diagnostics files and diff jsonl" {
 }
 
 ///|
+test "workbench ingests Pi plan update jsonl into session plan evidence" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"plan_update","steps":[{"id":"inspect","title":"Inspect renderer path","status":"done","owner":"Pi","detail":"Core route mapped"},{"id":"fix","title":"Fix Skia smoke","status":"in_progress","owner":"Pi","detail":"Run focused checks"}]}
+        ),
+      ),
+    ),
+  )
+  inspect(model.plan.length(), content="2")
+  inspect(model.plan[0].status, content="done")
+  inspect(model.plan[1].title, content="Fix Skia smoke")
+  inspect(model.plan[1].detail, content="Run focused checks")
+  inspect(model.active_session().status, content="running")
+  inspect(model.active_session().active_task, content="Pi plan: Fix Skia smoke")
+  inspect(model.active_session().unread_events, content="1")
+  inspect(model.active_session().summary, content="1/2 plan steps complete")
+  inspect(model.last_status, content="Pi plan updated")
+  assert_true(model.events.any(event => event.title == "Pi plan updated"))
+}
+
+///|
+test "workbench renders current plan and continuation action" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"plan_update","steps":[{"id":"fix","title":"Fix Skia smoke","status":"in_progress","owner":"Pi","detail":"Run focused checks"}]}
+        ),
+      ),
+    ),
+  )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "当前计划"))
+  assert_true(has_text(commands, "Fix Skia smoke"))
+  assert_true(has_text(commands, "进行中 · Run focused checks"))
+  assert_true(has_text(commands, "1 待办"))
+  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "继续当前计划"))
+  assert_true(has_text(commands, "继续"))
+}
+
+///|
 test "workbench runtime draws diagnostic fix action" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(
@@ -2462,6 +2508,27 @@ test "workbench current session prioritizes failed command next action" {
   assert_true(
     has_text(commands, "moon test examples/mo_workbench/app --target native"),
   )
+  assert_false(has_text(commands, "审核当前变更"))
+}
+
+///|
+test "workbench current session prioritizes active plan before diff next action" {
+  let model = {
+    ..model_with_reviewable_diff(),
+    plan: [
+      PlanStep::new(
+        id="fix",
+        title="Fix Skia smoke",
+        status="in_progress",
+        owner="Pi",
+        detail="Run focused checks",
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "接续建议"))
+  assert_true(has_text(commands, "继续当前计划"))
+  assert_true(has_text(commands, "进行中 · Run focused checks"))
   assert_false(has_text(commands, "审核当前变更"))
 }
 

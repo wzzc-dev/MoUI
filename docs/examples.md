@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool event ingestion, command/file/diff transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -172,8 +172,10 @@ diagnostic state with a short clear action so stderr/RPC/bash failures remain
 visible without adding a separate diagnostics page. When actionable evidence is
 present, the current session panel derives one quiet `接续建议` row that points
 to the next shared-app action, prioritizing cancelable Pi work, diagnostics,
-failed command evidence, reviewable diffs, files, transcript rows, command
-catalog entries, and activity events. The default fixture no
+failed command evidence, active plan steps, reviewable diffs, files, transcript
+rows, command catalog entries, and activity events. Pi `plan_update` JSONL also
+feeds a compact `当前计划` row so the visible session state includes current
+planning evidence without opening a separate pane. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
 diff rows, command runs, diagnostic prose, or sample active-task copy. Zero
 queues, unbound Pi state, idle transport/agent state, and empty digest actions

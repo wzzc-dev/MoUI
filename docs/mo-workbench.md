@@ -98,13 +98,17 @@ packages:
   transport/agent state, and contextless actions render quietly instead of
   placeholder punctuation; transcript/activity/workspace panels shrink to their
   headers while empty.
+- Pi `plan_update` JSONL now fills the existing shared-app `PlanStep` model and
+  renders a compact `当前计划` row in the current session panel. The row shows
+  the current active/open step, open-step count, and a `继续` action that reuses
+  the platform-neutral follow-up prompt path.
 - The current session panel now derives one `接续建议` row from live state when
   there is actionable evidence. It prioritizes cancelable Pi runs, diagnostics,
-  failed command evidence, reviewable diffs, file context, transcript rows,
-  command catalog entries, and latest activity events, then routes the chosen
-  button back through the existing shared-app messages such as `CancelRun`,
-  `FixDiagnostic`, `InspectCommandRun`, `ReviewDiff`, `InspectFile`,
-  `FollowTranscript`, `InvokeCommand`, or `FollowActivity`.
+  failed command evidence, active plan steps, reviewable diffs, file context,
+  transcript rows, command catalog entries, and latest activity events, then
+  routes the chosen button back through the existing shared-app messages such
+  as `CancelRun`, `FixDiagnostic`, `InspectCommandRun`, `FollowActivity`,
+  `ReviewDiff`, `InspectFile`, `FollowTranscript`, or `InvokeCommand`.
 - Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for
   Pi through the existing platform-neutral `SendUserInput` path, so visible
   conversation evidence can become the next agent action without native-only
@@ -322,6 +326,7 @@ Workbench update:
 {"type":"diagnostic","source":"moon check","severity":"warning","message":"unused value"}
 {"type":"file_context","id":"app","path":"examples/mo_workbench/app/app.mbt","summary":"Reducer update","change_kind":"modified","lines_changed":12}
 {"type":"diff_summary","changed_files":6,"additions":180,"deletions":12,"status":"requires_review"}
+{"type":"plan_update","steps":[{"id":"inspect","title":"Inspect renderer path","status":"done","owner":"Pi","detail":"Core route mapped"},{"id":"fix","title":"Fix Skia smoke","status":"in_progress","owner":"Pi","detail":"Run focused checks"}]}
 ```
 
 Malformed or unsupported lines are intentionally ignored by the product model

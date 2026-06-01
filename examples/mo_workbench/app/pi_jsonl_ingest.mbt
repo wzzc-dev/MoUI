@@ -66,6 +66,7 @@ fn WorkbenchModel::ingest_pi_json_object(
     Some("diagnostic") => self.ingest_diagnostic(session_id, fields)
     Some("file_context") => self.ingest_file_context(session_id, fields)
     Some("diff_summary") => self.ingest_diff_summary(session_id, fields)
+    Some("plan_update") => self.ingest_plan_update(session_id, fields)
     Some("agent_start") => self.ingest_agent_start(session_id)
     Some("agent_end") => self.ingest_agent_end(session_id, fields)
     Some("turn_start") => self.ingest_turn_start(session_id, fields)
@@ -1861,6 +1862,40 @@ fn WorkbenchModel::ingest_diff_summary(
 }
 
 ///|
+fn WorkbenchModel::ingest_plan_update(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let plan = match json_array(fields, "steps") {
+    Some(values) => plan_steps_from_values(values)
+    None => []
+  }
+  let active_step = current_plan_step(plan)
+  let model = {
+    ..self.update_active_session_for_pi(
+      status=if plan_has_running_step(plan) { "running" } else { "active" },
+      active_task=match active_step {
+        Some(step) => "Pi plan: " + step.title
+        None => ""
+      },
+      unread_events=Some(plan_open_count(plan)),
+      summary=if plan.is_empty() { None } else { Some(plan_summary(plan)) },
+    ),
+    plan,
+  }
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="plan",
+      title="Pi plan updated",
+      detail=session_id + ": " + plan.length().to_string() + " steps",
+      tone=if plan_has_blocked_step(plan) { "warning" } else { "info" },
+    ),
+    status="Pi plan updated",
+  )
+}
+
+///|
 fn WorkbenchModel::upsert_command(
   self : WorkbenchModel,
   run : CommandRun,
@@ -2489,6 +2524,105 @@ fn non_empty(value : String, fallback : String) -> String {
   } else {
     value
   }
+}
+
+///|
+fn plan_steps_from_values(values : Array[Json]) -> Array[PlanStep] {
+  let steps : Array[PlanStep] = []
+  let mut index = 0
+  for value in values {
+    match value {
+      Object(fields) => {
+        let title = json_string(fields, "title").unwrap_or(
+          json_string(fields, "text").unwrap_or(
+            "Step " + (index + 1).to_string(),
+          ),
+        )
+        steps.push(
+          PlanStep::new(
+            id=json_string(fields, "id").unwrap_or("step-" + index.to_string()),
+            title~,
+            status=json_string(fields, "status").unwrap_or("pending"),
+            owner=json_string(fields, "owner").unwrap_or("pi"),
+            detail=json_string(fields, "detail").unwrap_or(
+              json_string(fields, "summary").unwrap_or(""),
+            ),
+          ),
+        )
+      }
+      String(title) =>
+        steps.push(
+          PlanStep::new(
+            id="step-" + index.to_string(),
+            title~,
+            status="pending",
+            owner="pi",
+            detail="",
+          ),
+        )
+      _ => ()
+    }
+    index = index + 1
+  }
+  steps
+}
+
+///|
+fn current_plan_step(steps : Array[PlanStep]) -> PlanStep? {
+  for step in steps {
+    if plan_step_is_active(step) {
+      return Some(step)
+    }
+  }
+  for step in steps {
+    if plan_step_is_open(step) {
+      return Some(step)
+    }
+  }
+  None
+}
+
+///|
+fn plan_has_running_step(steps : Array[PlanStep]) -> Bool {
+  steps.any(step => plan_step_is_active(step))
+}
+
+///|
+fn plan_has_blocked_step(steps : Array[PlanStep]) -> Bool {
+  steps.any(step => step.status == "blocked")
+}
+
+///|
+fn plan_open_count(steps : Array[PlanStep]) -> Int {
+  let mut count = 0
+  for step in steps {
+    if plan_step_is_open(step) {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
+fn plan_step_is_open(step : PlanStep) -> Bool {
+  step.status != "done" &&
+  step.status != "completed" &&
+  step.status != "cancelled" &&
+  step.status != "skipped"
+}
+
+///|
+fn plan_step_is_active(step : PlanStep) -> Bool {
+  step.status == "in_progress" ||
+  step.status == "running" ||
+  step.status == "active" ||
+  step.status == "blocked"
+}
+
+///|
+fn plan_summary(steps : Array[PlanStep]) -> String {
+  let done = steps.length() - plan_open_count(steps)
+  done.to_string() + "/" + steps.length().to_string() + " plan steps complete"
 }
 
 ///|

@@ -720,6 +720,9 @@ fn WorkbenchModel::session_status_panel(
       ),
     )
   }
+  if !self.plan.is_empty() {
+    rows.push(plan_progress_row(self.plan, layout, theme))
+  }
   if self.pi_session_stats.has_visible_metrics() {
     rows.push(session_stats_row(self.pi_session_stats, layout, theme))
   }
@@ -801,6 +804,19 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
       })
     None => ()
   }
+  match self.current_plan_action_step() {
+    Some(step) =>
+      return Some({
+        title: "继续当前计划",
+        detail: plan_step_detail_label(step),
+        primary_label: "继续",
+        primary_message: FollowActivity("plan", step.title, step.detail),
+        secondary_label: "",
+        secondary_message: None,
+        tone: plan_step_tone(step.status),
+      })
+    None => ()
+  }
   if self.diff.has_context() {
     return Some({
       title: "审核当前变更",
@@ -861,6 +877,11 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
     })
   }
   None
+}
+
+///|
+fn WorkbenchModel::current_plan_action_step(self : WorkbenchModel) -> PlanStep? {
+  current_plan_step(self.plan)
 }
 
 ///|
@@ -971,6 +992,129 @@ fn secondary_next_action_button(
         height=32.0,
       )
     None => blank_cell(width=58.0, height=32.0)
+  }
+}
+
+///|
+fn plan_progress_row(
+  steps : Array[PlanStep],
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let open_count = plan_open_count(steps)
+  let current = current_plan_step(steps)
+  let step_title = match current {
+    Some(step) => step.title
+    None => "计划已完成"
+  }
+  let step_detail = match current {
+    Some(step) => plan_step_detail_label(step)
+    None => steps.length().to_string() + " 步"
+  }
+  let tone = match current {
+    Some(step) => plan_step_tone(step.status)
+    None => Success
+  }
+  let detail_width = workbench_max_double(
+    220.0,
+    layout.panel_body_width - 86.0 - 84.0 - 58.0 - 32.0,
+  )
+  row(
+    [
+      badge("当前计划", tone~, theme~, width=86.0),
+      column(
+        [
+          text(
+            step_title,
+            role=Control,
+            theme~,
+            width=detail_width,
+            height=24.0,
+          ),
+          text(
+            step_detail,
+            role=Caption,
+            theme~,
+            width=detail_width,
+            height=22.0,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+      count_badge(
+        open_count,
+        label=open_count.to_string() + " 待办",
+        tone=Neutral,
+        theme~,
+        width=84.0,
+      ),
+      plan_continue_button(current, theme),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn plan_continue_button(
+  step : PlanStep?,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  match step {
+    Some(value) =>
+      button(
+        "继续",
+        on_click=FollowActivity("plan", value.title, value.detail),
+        variant=Outline,
+        theme~,
+        width=58.0,
+        height=32.0,
+      )
+    None => blank_cell(width=58.0, height=32.0)
+  }
+}
+
+///|
+fn plan_step_detail_label(step : PlanStep) -> String {
+  let status = plan_step_status_label(step.status)
+  let detail = step.detail.trim().to_owned()
+  let owner = step.owner.trim().to_owned()
+  let suffix = if detail != "" {
+    detail
+  } else if owner != "" {
+    owner
+  } else {
+    step.id
+  }
+  if suffix == "" {
+    status
+  } else {
+    status + " · " + suffix
+  }
+}
+
+///|
+fn plan_step_status_label(status : String) -> String {
+  match status {
+    "pending" => "待办"
+    "in_progress" | "running" | "active" => "进行中"
+    "blocked" => "受阻"
+    "done" | "completed" => "完成"
+    "cancelled" => "取消"
+    "skipped" => "跳过"
+    _ => status
+  }
+}
+
+///|
+fn plan_step_tone(status : String) -> @views.BadgeTone {
+  match status {
+    "in_progress" | "running" | "active" => Accent
+    "blocked" => Warning
+    "done" | "completed" => Success
+    "cancelled" | "skipped" => Neutral
+    _ => Neutral
   }
 }
 
