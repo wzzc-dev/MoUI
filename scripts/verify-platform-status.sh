@@ -389,6 +389,63 @@ if schema_version >= 3:
     if missing_areas:
         fail("native smoke capability coverage is missing areas: " + ", ".join(missing_areas))
     if schema_version >= 4:
+        conditional_capabilities = status.get("native_smoke_conditional_capabilities")
+        if not isinstance(conditional_capabilities, list) or not conditional_capabilities:
+            fail("schema v4 platform status is missing native_smoke_conditional_capabilities list")
+        required_conditionals = {
+            "text.shaped-glyph-count": {
+                "area": "Text",
+                "marker": "native smoke shaped glyph count",
+                "when_marker": "native smoke shaper availability",
+                "when_value": "1",
+            },
+        }
+        seen_conditional_ids = set()
+        seen_conditional_markers = set()
+        for conditional in conditional_capabilities:
+            if not isinstance(conditional, dict):
+                fail("native_smoke_conditional_capabilities entries must be objects")
+            conditional_id = str(conditional.get("id", "")).strip()
+            area = str(conditional.get("area", "")).strip()
+            marker = str(conditional.get("marker", "")).strip()
+            when_marker = str(conditional.get("when_marker", "")).strip()
+            when_value = str(conditional.get("when_value", "")).strip()
+            if not conditional_id:
+                fail("native smoke conditional capability is missing id")
+            if not area:
+                fail(f"native smoke conditional capability is missing area: {conditional_id}")
+            if not marker:
+                fail(f"native smoke conditional capability is missing marker: {conditional_id}")
+            if not when_marker:
+                fail(f"native smoke conditional capability is missing when_marker: {conditional_id}")
+            if not when_value:
+                fail(f"native smoke conditional capability is missing when_value: {conditional_id}")
+            if conditional_id in seen_conditional_ids:
+                fail(f"duplicate native smoke conditional capability id: {conditional_id}")
+            if marker in seen_markers or marker in seen_conditional_markers:
+                fail(f"duplicate native smoke conditional capability marker: {marker}")
+            if when_marker not in seen_markers:
+                fail(
+                    "native smoke conditional capability references unknown condition marker: "
+                    f"{conditional_id}: {when_marker}"
+                )
+            if conditional_id in required_conditionals:
+                required = required_conditionals[conditional_id]
+                for field in ("area", "marker", "when_marker", "when_value"):
+                    if str(conditional.get(field, "")).strip() != required[field]:
+                        fail(
+                            "native smoke conditional capability mismatch: "
+                            f"{conditional_id}: {field}"
+                        )
+            seen_conditional_ids.add(conditional_id)
+            seen_conditional_markers.add(marker)
+        missing_conditional_ids = sorted(set(required_conditionals) - seen_conditional_ids)
+        if missing_conditional_ids:
+            fail(
+                "native smoke conditional capability coverage is missing ids: "
+                + ", ".join(missing_conditional_ids)
+            )
+
         expected_values = status.get("native_smoke_expected_values")
         if not isinstance(expected_values, list) or not expected_values:
             fail("schema v4 platform status is missing native_smoke_expected_values list")

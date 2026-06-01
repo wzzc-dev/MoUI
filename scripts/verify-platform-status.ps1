@@ -358,6 +358,76 @@ if ($status.schema_version -ge 3) {
     throw "native smoke capability coverage is missing areas: $($missingAreas -join ', ')"
   }
   if ($status.schema_version -ge 4) {
+    $conditionalCapabilities = @()
+    if ($null -ne $status.native_smoke_conditional_capabilities) {
+      $conditionalCapabilities = @($status.native_smoke_conditional_capabilities)
+    }
+    if ($conditionalCapabilities.Count -eq 0) {
+      throw "schema v4 platform status is missing native_smoke_conditional_capabilities list"
+    }
+    $requiredConditionalCapabilities = @{
+      "text.shaped-glyph-count" = @{
+        Area = "Text"
+        Marker = "native smoke shaped glyph count"
+        WhenMarker = "native smoke shaper availability"
+        WhenValue = "1"
+      }
+    }
+    $seenConditionalIds = @{}
+    $seenConditionalMarkers = @{}
+    foreach ($conditional in $conditionalCapabilities) {
+      $conditionalId = "$($conditional.id)".Trim()
+      $area = "$($conditional.area)".Trim()
+      $marker = "$($conditional.marker)".Trim()
+      $whenMarker = "$($conditional.when_marker)".Trim()
+      $whenValue = "$($conditional.when_value)".Trim()
+      if ([string]::IsNullOrWhiteSpace($conditionalId)) {
+        throw "native smoke conditional capability is missing id"
+      }
+      if ([string]::IsNullOrWhiteSpace($area)) {
+        throw "native smoke conditional capability is missing area: $conditionalId"
+      }
+      if ([string]::IsNullOrWhiteSpace($marker)) {
+        throw "native smoke conditional capability is missing marker: $conditionalId"
+      }
+      if ([string]::IsNullOrWhiteSpace($whenMarker)) {
+        throw "native smoke conditional capability is missing when_marker: $conditionalId"
+      }
+      if ([string]::IsNullOrWhiteSpace($whenValue)) {
+        throw "native smoke conditional capability is missing when_value: $conditionalId"
+      }
+      if ($seenConditionalIds.ContainsKey($conditionalId)) {
+        throw "duplicate native smoke conditional capability id: $conditionalId"
+      }
+      if ($seenMarkers.ContainsKey($marker) -or $seenConditionalMarkers.ContainsKey($marker)) {
+        throw "duplicate native smoke conditional capability marker: $marker"
+      }
+      if (!$seenMarkers.ContainsKey($whenMarker)) {
+        throw "native smoke conditional capability references unknown condition marker: ${conditionalId}: $whenMarker"
+      }
+      if ($requiredConditionalCapabilities.ContainsKey($conditionalId)) {
+        $required = $requiredConditionalCapabilities[$conditionalId]
+        if ($area -ne $required.Area) {
+          throw "native smoke conditional capability mismatch: ${conditionalId}: area"
+        }
+        if ($marker -ne $required.Marker) {
+          throw "native smoke conditional capability mismatch: ${conditionalId}: marker"
+        }
+        if ($whenMarker -ne $required.WhenMarker) {
+          throw "native smoke conditional capability mismatch: ${conditionalId}: when_marker"
+        }
+        if ($whenValue -ne $required.WhenValue) {
+          throw "native smoke conditional capability mismatch: ${conditionalId}: when_value"
+        }
+      }
+      $seenConditionalIds[$conditionalId] = $true
+      $seenConditionalMarkers[$marker] = $true
+    }
+    $missingConditionalIds = @($requiredConditionalCapabilities.Keys | Where-Object { !$seenConditionalIds.ContainsKey($_) })
+    if ($missingConditionalIds.Count -gt 0) {
+      throw "native smoke conditional capability coverage is missing ids: $($missingConditionalIds -join ', ')"
+    }
+
     $expectedValues = @($status.native_smoke_expected_values)
     if ($expectedValues.Count -eq 0) {
       throw "schema v4 platform status is missing native_smoke_expected_values list"
