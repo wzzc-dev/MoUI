@@ -48,11 +48,11 @@ The current package exposes the first value-layer API surface:
   cacheable text-run draw commands, explicit shader/filter/image resource
   declarations, and target-bound resource plans for backend caches
 - render frame contracts: `RenderFrameDescriptor`,
-  `RenderFrameSubmissionDescriptor`, and `RenderFrameValidationStatus` combine
-  a target, finalized command stream, resource plan, readiness diagnostics,
-  cache population boundary, optional present scheduling descriptor, and
-  auditable per-frame submission resource plan with GPU-backed subsets for one
-  backend submission
+  `RenderFrameSubmissionDescriptor`, `RenderFrameFinalizationDescriptor`, and
+  `RenderFrameValidationStatus` combine a target, finalized command stream,
+  resource plan, readiness diagnostics, cache population boundary, optional
+  present scheduling descriptor, and auditable per-frame submission/finalization
+  resource plans with GPU-backed subsets for one backend submission
 - text layout and fallback contracts: `TextRunDescriptor`,
   `TextMeasurementDescriptor`, `MeasuredTextRunDescriptor`,
   `TextShapingDescriptor`,

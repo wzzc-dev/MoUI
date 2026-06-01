@@ -255,7 +255,10 @@ if ($status.schema_version -ge 3) {
     "pipeline.frame-present",
     "pipeline.frame-submission-resource-plan",
     "pipeline.frame-submission-cache-resources",
+    "pipeline.frame-finalization-resource-plan",
+    "pipeline.frame-finalization-cache-resources",
     "pipeline.frame-missing-present-validation",
+    "pipeline.frame-missing-finalization-validation",
     "pipeline.frame-touched-bounds",
     "pipeline.frame-cache-resources",
     "pipeline.resource-cache",
@@ -269,6 +272,8 @@ if ($status.schema_version -ge 3) {
     "gpu.frame-context-validation",
     "gpu.present-resource-plan",
     "gpu.finalization-resource-plan",
+    "gpu.frame-finalization-resource-plan",
+    "gpu.frame-finalization-gpu-resources",
     "gpu.frame-submission-resource-plan",
     "gpu.frame-submission-gpu-resources",
     "surface.target-resource-plan",
@@ -464,7 +469,10 @@ if ($status.schema_version -ge 3) {
       "native smoke render frame present count" = "1"
       "native smoke render frame submission resource plan count" = "2"
       "native smoke render frame submission cache resources" = "1"
+      "native smoke render frame finalization resource plan count" = "2"
+      "native smoke render frame finalization cache resources" = "1"
       "native smoke render frame missing present validation" = "1"
+      "native smoke render frame missing finalization validation" = "1"
       "native smoke render frame touched bounds width" = "4"
       "native smoke render frame cache resources" = "9"
       "native smoke render resource cache inserts" = "9"
@@ -477,6 +485,8 @@ if ($status.schema_version -ge 3) {
       "native smoke gpu context key variation" = "1"
       "native smoke gpu frame context validation" = "1"
       "native smoke gpu finalization resource plan count" = "3"
+      "native smoke gpu frame finalization resource plan count" = "3"
+      "native smoke gpu frame finalization gpu resource count" = "3"
       "native smoke gpu frame submission resource plan count" = "3"
       "native smoke gpu frame submission gpu resource count" = "3"
       "native smoke surface target resource plan count" = "2"

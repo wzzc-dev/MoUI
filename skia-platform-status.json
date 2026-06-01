@@ -151,9 +151,24 @@
       "marker": "native smoke render frame submission cache resources"
     },
     {
+      "id": "pipeline.frame-finalization-resource-plan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization resource plan count"
+    },
+    {
+      "id": "pipeline.frame-finalization-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization cache resources"
+    },
+    {
       "id": "pipeline.frame-missing-present-validation",
       "area": "Pipeline",
       "marker": "native smoke render frame missing present validation"
+    },
+    {
+      "id": "pipeline.frame-missing-finalization-validation",
+      "area": "Pipeline",
+      "marker": "native smoke render frame missing finalization validation"
     },
     {
       "id": "pipeline.frame-touched-bounds",
@@ -219,6 +234,16 @@
       "id": "gpu.finalization-resource-plan",
       "area": "GPU",
       "marker": "native smoke gpu finalization resource plan count"
+    },
+    {
+      "id": "gpu.frame-finalization-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu frame finalization resource plan count"
+    },
+    {
+      "id": "gpu.frame-finalization-gpu-resources",
+      "area": "GPU",
+      "marker": "native smoke gpu frame finalization gpu resource count"
     },
     {
       "id": "gpu.frame-submission-resource-plan",
@@ -629,8 +654,23 @@
       "value": "1"
     },
     {
+      "id": "pipeline.frame-finalization-resource-plan",
+      "marker": "native smoke render frame finalization resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.frame-finalization-cache-resources",
+      "marker": "native smoke render frame finalization cache resources",
+      "value": "1"
+    },
+    {
       "id": "pipeline.frame-missing-present-validation",
       "marker": "native smoke render frame missing present validation",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-missing-finalization-validation",
+      "marker": "native smoke render frame missing finalization validation",
       "value": "1"
     },
     {
@@ -696,6 +736,16 @@
     {
       "id": "gpu.finalization-resource-plan",
       "marker": "native smoke gpu finalization resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.frame-finalization-resource-plan",
+      "marker": "native smoke gpu frame finalization resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.frame-finalization-gpu-resources",
+      "marker": "native smoke gpu frame finalization gpu resource count",
       "value": "3"
     },
     {

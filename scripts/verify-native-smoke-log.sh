@@ -61,7 +61,10 @@ default_stage_markers=(
   "native smoke render frame present descriptor validation" \
   "native smoke render frame submission resource plan count" \
   "native smoke render frame submission cache resources" \
+  "native smoke render frame finalization resource plan count" \
+  "native smoke render frame finalization cache resources" \
   "native smoke render frame missing present validation" \
+  "native smoke render frame missing finalization validation" \
   "native smoke render frame touched bounds width" \
   "native smoke render frame cache resources" \
   "native smoke render resource cache inserts" \
@@ -75,6 +78,8 @@ default_stage_markers=(
   "native smoke gpu frame context validation" \
   "native smoke gpu present resource plan count" \
   "native smoke gpu finalization resource plan count" \
+  "native smoke gpu frame finalization resource plan count" \
+  "native smoke gpu frame finalization gpu resource count" \
   "native smoke gpu frame submission resource plan count" \
   "native smoke gpu frame submission gpu resource count" \
   "native smoke surface target resource plan count" \
@@ -156,7 +161,10 @@ default_expected_stage_values=(
   $'native smoke render frame present descriptor validation\t1'
   $'native smoke render frame submission resource plan count\t2'
   $'native smoke render frame submission cache resources\t1'
+  $'native smoke render frame finalization resource plan count\t2'
+  $'native smoke render frame finalization cache resources\t1'
   $'native smoke render frame missing present validation\t1'
+  $'native smoke render frame missing finalization validation\t1'
   $'native smoke render frame touched bounds width\t4'
   $'native smoke render frame cache resources\t9'
   $'native smoke render resource cache inserts\t9'
@@ -170,6 +178,8 @@ default_expected_stage_values=(
   $'native smoke gpu frame context validation\t1'
   $'native smoke gpu present resource plan count\t3'
   $'native smoke gpu finalization resource plan count\t3'
+  $'native smoke gpu frame finalization resource plan count\t3'
+  $'native smoke gpu frame finalization gpu resource count\t3'
   $'native smoke gpu frame submission resource plan count\t3'
   $'native smoke gpu frame submission gpu resource count\t3'
   $'native smoke surface target resource plan count\t2'
