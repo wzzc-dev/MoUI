@@ -50,7 +50,7 @@ fi
 
 require_field() {
   local expected="$1"
-  if ! grep -Fq "$expected" "$log_path"; then
+  if ! grep -Eq "^[[:space:]]*${expected}[[:space:]]*$" "$log_path"; then
     echo "acceptance log is missing required field: $expected" >&2
     exit 1
   fi
@@ -61,7 +61,7 @@ require_field "native_smoke_marker=passed"
 require_field "native_pkg_restore=passed"
 
 if [[ $require_commit -eq 1 ]]; then
-  if ! grep -Eq 'skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$log_path"; then
+  if ! grep -Eq '^[[:space:]]*skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$log_path"; then
     echo "acceptance log is missing a full 40-character skia_commit hash" >&2
     exit 1
   fi
