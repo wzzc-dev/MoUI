@@ -1620,7 +1620,7 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
     Some(command) =>
       return Some({
         title: "修复失败命令",
-        detail: command.command,
+        detail: failed_command_next_action_detail(command),
         primary_label: "修复",
         primary_message: FixCommandRun(
           command.command,
@@ -1748,6 +1748,28 @@ fn diagnostic_detail_label(diagnostic : DiagnosticItem) -> String {
     source
   } else {
     source + ": " + message
+  }
+}
+
+///|
+fn failed_command_next_action_detail(command : CommandRun) -> String {
+  let parts : Array[String] = []
+  match command.exit_code {
+    Some(code) => parts.push("退出码 " + code.to_string())
+    None => ()
+  }
+  if command.output_path != "" {
+    parts.push("输出 " + command.output_path)
+  }
+  if parts.is_empty() {
+    parts.push(command_status_label(command.status))
+  }
+  let evidence = parts.join(" · ")
+  let command_label = compact_label(command.command, max_chars=44)
+  if command_label == "" {
+    evidence
+  } else {
+    command_label + " · " + evidence
   }
 }
 

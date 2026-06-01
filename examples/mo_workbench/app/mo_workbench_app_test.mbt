@@ -3010,6 +3010,11 @@ test "workbench current session prioritizes failed command next action" {
   assert_true(
     has_text(commands, "moon test examples/mo_workbench/app --target native"),
   )
+  assert_true(draw_text_count_containing(commands, "退出码 1") >= 2)
+  assert_true(
+    draw_text_count_containing(commands, "输出 /tmp/mo-workbench-test.log") >=
+    2,
+  )
   assert_false(has_text(commands, "审核当前变更"))
 }
 
@@ -3042,7 +3047,11 @@ test "workbench current session prioritizes failed command over bash diagnostic"
   assert_true(
     has_text(commands, "moon test examples/mo_workbench/app --target native"),
   )
-  assert_true(has_text(commands, "输出 /tmp/mo-workbench-native.log"))
+  assert_true(draw_text_count_containing(commands, "退出码 2") >= 2)
+  assert_true(
+    draw_text_count_containing(commands, "输出 /tmp/mo-workbench-native.log") >=
+    2,
+  )
 }
 
 ///|

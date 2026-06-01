@@ -186,7 +186,9 @@ diagnostics page. When actionable evidence is present, the current session panel
 derives one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, failed command
 evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
-rows, and activity events. Pi `plan_update` JSONL also
+rows, and activity events. Failed-command next actions carry the compact command
+label plus Pi's exit code and output path when available, keeping the repair
+loop actionable without opening another panel. Pi `plan_update` JSONL also
 feeds a compact `当前计划` row so the visible session state includes current
 planning evidence without opening a separate pane. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
@@ -311,7 +313,9 @@ matches those presets, so the batch can be inspected as a group without a
 separate log page. Failed command rows use a `修复` primary action that queues a
 `Fix failed command ...` prompt with the command status, cwd, output path, and
 the same context/focus wrapper, turning a failed focused check directly into the
-next coding-agent task without adding native-only output handling.
+next coding-agent task without adding native-only output handling. The current
+session `下一步` row mirrors the latest failed command's exit code and output
+path so the fix entrypoint carries the same evidence as the Activity row.
 The Activity digest can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
