@@ -982,6 +982,8 @@ pub(all) struct ResourceCache[K, V] {
 pub fn[K, V] ResourceCache::byte_size(Self[K, V]) -> Int64
 pub fn[K, V] ResourceCache::clear(Self[K, V]) -> Unit
 pub fn[K : Hash + Eq, V] ResourceCache::contains(Self[K, V], K) -> Bool
+pub fn ResourceCache::contains_resource_descriptor(Self[RendererResourceKey, RendererResourceDescriptor], RendererResourceDescriptor) -> Bool
+pub fn ResourceCache::contains_resource_plan(Self[RendererResourceKey, RendererResourceDescriptor], RendererResourcePlan) -> Bool
 pub fn[K : Hash + Eq, V] ResourceCache::get(Self[K, V], K) -> V?
 pub fn[K : Hash + Eq, V] ResourceCache::insert(Self[K, V], K, V, byte_size? : Int64) -> Bool
 pub fn ResourceCache::insert_resource_descriptor(Self[RendererResourceKey, RendererResourceDescriptor], RendererResourceDescriptor) -> Bool
