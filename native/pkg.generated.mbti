@@ -272,6 +272,7 @@ pub fn Surface::canvas(Self) -> Canvas?
 pub fn Surface::descriptor(Self) -> @skia_mbt.SurfaceDescriptor
 pub fn Surface::dimensions(Self) -> @skia_mbt.ISize
 pub fn Surface::flush_and_submit(Self) -> Bool
+pub fn Surface::for_target(@skia_mbt.SurfaceTargetDescriptor) -> Self?
 pub fn Surface::height(Self) -> Int
 pub fn Surface::image_info(Self) -> @skia_mbt.ImageInfo
 pub fn Surface::image_snapshot(Self) -> Image?
