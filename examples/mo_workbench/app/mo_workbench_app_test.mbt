@@ -3107,9 +3107,9 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "证据"))
   assert_true(has_text(commands, "会话"))
   assert_true(has_text(commands, "发送"))
-  assert_true(has_text(commands, "会话记录"))
-  assert_true(has_text(commands, "运行证据"))
-  assert_true(has_text(commands, "工作区证据"))
+  assert_false(has_text(commands, "会话记录"))
+  assert_false(has_text(commands, "运行证据"))
+  assert_false(has_text(commands, "工作区证据"))
   assert_true(has_text(commands, "Pi RPC"))
   assert_false(has_text(commands, "进度"))
   assert_false(has_text(commands, "工作文件夹"))
@@ -3175,6 +3175,62 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "修复"))
   assert_false(has_text(commands, "Research notebook"))
   assert_false(has_text(commands, "Skia native"))
+}
+
+///|
+test "workbench evidence panels mount only when content arrives" {
+  let empty = WorkbenchModel::new()
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_false(has_text(empty, "会话记录"))
+  assert_false(has_text(empty, "运行证据"))
+  assert_false(has_text(empty, "工作区证据"))
+  let transcript_model = {
+    ..WorkbenchModel::new(),
+    transcript: [
+      TranscriptItem::new(
+        id="assistant",
+        role="assistant",
+        summary="Pi summarized the fix",
+        detail="Use the shared app state only.",
+        tone="success",
+      ),
+    ],
+  }
+  let transcript = transcript_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(transcript, "会话记录"))
+  assert_true(has_text(transcript, "Pi summarized the fix"))
+  assert_false(has_text(transcript, "运行证据"))
+  assert_false(has_text(transcript, "工作区证据"))
+  let activity_model = {
+    ..WorkbenchModel::new(),
+    commands: [
+      CommandRun::new(
+        id=1,
+        command="moon test examples/mo_workbench/app --target native",
+        cwd="/repo",
+        status="passed",
+      ),
+    ],
+  }
+  let activity = activity_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(activity, "运行证据"))
+  assert_true(
+    has_text(activity, "moon test examples/mo_workbench/app --target native"),
+  )
+  assert_false(has_text(activity, "会话记录"))
+  assert_false(has_text(activity, "工作区证据"))
+  let workspace_model = model_with_reviewable_diff()
+  let workspace = workspace_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(workspace, "工作区证据"))
+  assert_true(has_text(workspace, "5 文件 · +160 -10"))
+  assert_false(has_text(workspace, "会话记录"))
 }
 
 ///|

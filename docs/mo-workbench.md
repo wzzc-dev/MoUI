@@ -41,7 +41,7 @@ packages:
 - Header subtitle `Pi agent 桌面工作台`.
 - A Codex / Claude Code-style native shell with macOS chrome, a quiet
   task-history sidebar, a clean white main work canvas, readable transcript
-  blocks, compact activity/workspace digests, and a floating composer.
+  blocks, on-demand evidence digests, and a floating composer.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
@@ -90,7 +90,8 @@ packages:
   with an explicit scrollbar, multi-line transcript message blocks for long Pi
   replies, a compact current-state strip, and a centered floating composer. The
   visible hierarchy uses quieter Chinese section labels (`当前会话`, `Pi 运行状态`,
-  `会话记录`, `运行证据`, `工作区证据`) while preserving Pi/RPC protocol nouns, and
+  `会话记录`, `运行证据`, `工作区证据`) once their evidence exists while preserving
+  Pi/RPC protocol nouns, and
   the default shell keeps only refresh, new-session, context, and send controls
   prominent. Advanced session actions, steering/follow-up composer controls,
   and focused-check presets stay collapsed until Pi state, typed input, or
@@ -103,9 +104,9 @@ packages:
   diagnostics empty until Pi or user command evidence arrives, and no longer
   displays sample active-task text. Zero queues, unbound Pi state, idle
   transport/agent state, and contextless actions render quietly instead of
-  placeholder punctuation; transcript/activity/workspace panels shrink to their
-  headers while empty, and empty wide windows no longer reserve space for
-  workflow-rail placeholder cards.
+  placeholder punctuation; transcript/activity/workspace panels stay unmounted
+  while empty, and empty wide windows no longer reserve space for workflow-rail
+  placeholder cards.
 - Wide Workbench windows now add a screenshot-style right workflow rail beside
   the conversation canvas only when there is live evidence to summarize. The
   rail is still driven only by shared app state: `进度` summarizes live

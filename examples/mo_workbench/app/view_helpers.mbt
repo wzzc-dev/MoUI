@@ -1031,16 +1031,19 @@ fn WorkbenchModel::chat_transcript(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  column(
-    [
-      self.session_status_panel(layout, theme),
-      self.transcript_panel(layout, theme),
-      self.activity_panel(layout, theme),
-      self.workspace_digest_panel(layout, theme),
-    ],
-    spacing=10.0,
-    align=Center,
-  )
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    self.session_status_panel(layout, theme),
+  ]
+  if self.has_transcript_panel_content() {
+    rows.push(self.transcript_panel(layout, theme))
+  }
+  if self.has_activity_panel_content() {
+    rows.push(self.activity_panel(layout, theme))
+  }
+  if self.has_workspace_digest_content() {
+    rows.push(self.workspace_digest_panel(layout, theme))
+  }
+  column(rows, spacing=10.0, align=Center)
 }
 
 ///|
@@ -1048,11 +1051,39 @@ fn WorkbenchModel::chat_content_height(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
 ) -> Double {
-  session_status_panel_height(self.session_status_row_count()) +
-  self.transcript_panel_height(layout) +
-  self.activity_panel_height() +
-  evidence_panel_height(self.workspace_digest_panel_row_count(), expanded=178.0) +
-  30.0
+  let mut height = session_status_panel_height(self.session_status_row_count())
+  if self.has_transcript_panel_content() {
+    height = height + 10.0 + self.transcript_panel_height(layout)
+  }
+  if self.has_activity_panel_content() {
+    height = height + 10.0 + self.activity_panel_height()
+  }
+  if self.has_workspace_digest_content() {
+    height = height +
+      10.0 +
+      evidence_panel_height(
+        self.workspace_digest_panel_row_count(),
+        expanded=178.0,
+      )
+  }
+  height
+}
+
+///|
+fn WorkbenchModel::has_transcript_panel_content(self : WorkbenchModel) -> Bool {
+  !self.transcript.is_empty() || !self.fork_messages.is_empty()
+}
+
+///|
+fn WorkbenchModel::has_activity_panel_content(self : WorkbenchModel) -> Bool {
+  self.should_show_focused_check_presets() || !self.events.is_empty()
+}
+
+///|
+fn WorkbenchModel::has_workspace_digest_content(self : WorkbenchModel) -> Bool {
+  self.diff.has_context() ||
+  !self.files.is_empty() ||
+  !self.diagnostics.is_empty()
 }
 
 ///|
