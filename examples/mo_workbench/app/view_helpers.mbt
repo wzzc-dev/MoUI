@@ -1054,7 +1054,7 @@ fn WorkbenchModel::chat_content_height(
 ) -> Double {
   session_status_panel_height(self.session_status_row_count()) +
   self.transcript_panel_height(layout) +
-  evidence_panel_height(self.activity_panel_row_count(), expanded=188.0) +
+  self.activity_panel_height() +
   evidence_panel_height(self.workspace_digest_panel_row_count(), expanded=178.0) +
   30.0
 }
@@ -2527,10 +2527,9 @@ fn WorkbenchModel::activity_panel(
   if !self.events.is_empty() {
     rows.push(event_row(self.events[self.events.length() - 1], layout, theme))
   }
-  if !self.commands.is_empty() {
-    rows.push(
-      command_run_row(self.commands[self.commands.length() - 1], layout, theme),
-    )
+  let command_start = self.visible_activity_command_start()
+  for index in command_start..<self.commands.length() {
+    rows.push(command_run_row(self.commands[index], layout, theme))
   }
   if !self.command_catalog.is_empty() {
     rows.push(command_catalog_row(self.command_catalog[0], layout, theme))
@@ -2538,10 +2537,7 @@ fn WorkbenchModel::activity_panel(
   surface(
     column(rows, spacing=7.0, align=Start),
     width=layout.panel_width,
-    height=evidence_panel_height(
-      self.activity_panel_row_count(),
-      expanded=188.0,
-    ),
+    height=self.activity_panel_height(),
     background=@core.Color::white(),
     corner_radius=12.0,
     theme~,
@@ -2555,13 +2551,31 @@ fn WorkbenchModel::activity_panel_row_count(self : WorkbenchModel) -> Int {
   if !self.events.is_empty() {
     count = count + 1
   }
-  if !self.commands.is_empty() {
-    count = count + 1
-  }
+  count = count + self.visible_activity_command_count()
   if !self.command_catalog.is_empty() {
     count = count + 1
   }
   count
+}
+
+///|
+fn WorkbenchModel::visible_activity_command_count(self : WorkbenchModel) -> Int {
+  workbench_min_int(self.commands.length(), 3)
+}
+
+///|
+fn WorkbenchModel::visible_activity_command_start(self : WorkbenchModel) -> Int {
+  self.commands.length() - self.visible_activity_command_count()
+}
+
+///|
+fn WorkbenchModel::activity_panel_height(self : WorkbenchModel) -> Double {
+  let row_count = self.activity_panel_row_count()
+  if row_count <= 1 {
+    54.0
+  } else {
+    52.0 + (row_count - 1).to_double() * 53.0
+  }
 }
 
 ///|

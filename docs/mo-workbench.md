@@ -166,8 +166,9 @@ packages:
 - Command evidence rows in the Activity digest can queue an
   `Inspect command output for ...` prompt through `SendUserInput`, carrying the
   command text, status, cwd, and output path back into Pi without adding a
-  native-only output-opening bridge. The digest shows the latest command
-  evidence row so the action follows the newest bash result.
+  native-only output-opening bridge. The digest shows up to three recent
+  command evidence rows, so a focused-check batch remains visible while the
+  newest bash result is still easy to act on.
 - Command evidence rows in the Activity digest can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
@@ -177,7 +178,8 @@ packages:
   manual command reruns, so validation evidence stays in the shared model.
   The `全部` action queues all three checks in one platform-neutral command
   batch, reusing a single session start and recording each check as its own
-  `CommandRun`.
+  `CommandRun`; the Activity digest keeps those three recent command rows
+  visible together for inspection or rerun.
 - The Activity digest surfaces the latest shared-app timeline event, so Pi RPC,
   streaming agent, tool, and stderr progress stays visible next to command
   evidence without opening a separate log view. The visible event can also be
