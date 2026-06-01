@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, wide workflow rail for progress/agents/work folder evidence, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, lightweight agent focus routing, wide workflow rail for progress/agents/work folder evidence, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -192,10 +192,13 @@ state from the shared app model, and collapses on compact widths so the
 conversation flow remains primary.
 Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
 the shared prompt transport, turning visible Pi conversation evidence into the
-next agent task. The composer exposes repository, examples, evidence, and Pi
-session context chips; direct prompt, steering, and follow-up submits prefix the
-selected scopes into the same platform-neutral text payloads, while turning all
-chips off sends the raw input. Activity timeline rows can queue a
+next agent task. The sidebar exposes lightweight `通用`, `编码`, and `校验`
+agent focus controls; selecting one only appends an `agent focus: ...` hint to
+the existing platform-neutral prompt, steering, and follow-up text payloads.
+The composer exposes repository, examples, evidence, and Pi session context
+chips; direct prompt, steering, and follow-up submits prefix the selected scopes
+into the same platform-neutral text payloads, while turning all chips off sends
+the raw input. Activity timeline rows can queue a
 `Follow up on <phase> activity: ...` prompt the same way, so visible Pi RPC,
 stderr, tool, and stream events can become the next agent action. File context
 rows can queue an `Inspect <path>` prompt through the same platform-neutral

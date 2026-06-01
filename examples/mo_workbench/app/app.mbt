@@ -163,9 +163,19 @@ pub(all) struct PiSessionBinding {
 } derive(Eq, Debug)
 
 ///|
+priv struct WorkbenchAgentProfile {
+  id : String
+  label : String
+  role : String
+  detail : String
+  prompt_hint : String
+}
+
+///|
 pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
+  selected_agent_id : String
   main_scroll_offset_y : Double
   prompt : String
   expanded_context : Array[String]
@@ -198,6 +208,7 @@ pub(all) struct WorkbenchUpdate {
 pub(all) enum WorkbenchMsg {
   SelectSession(String)
   SelectPanel(String)
+  SelectAgent(String)
   PromptChanged(String)
   DispatchPrompt
   DispatchSteering
@@ -476,6 +487,56 @@ pub fn PiSessionBinding::status_label(self : PiSessionBinding) -> String {
 }
 
 ///|
+fn WorkbenchAgentProfile::new(
+  id~ : String,
+  label~ : String,
+  role~ : String,
+  detail~ : String,
+  prompt_hint~ : String,
+) -> WorkbenchAgentProfile {
+  { id, label, role, detail, prompt_hint }
+}
+
+///|
+fn workbench_agent_profiles() -> Array[WorkbenchAgentProfile] {
+  [
+    WorkbenchAgentProfile::new(
+      id="general",
+      label="通用",
+      role="协调",
+      detail="拆解请求、整理上下文",
+      prompt_hint="general task planning and coordination",
+    ),
+    WorkbenchAgentProfile::new(
+      id="coding",
+      label="编码",
+      role="实现",
+      detail="代码修改、测试、重构",
+      prompt_hint="coding implementation, focused tests, and refactors",
+    ),
+    WorkbenchAgentProfile::new(
+      id="verify",
+      label="校验",
+      role="检查",
+      detail="诊断、diff、文档收口",
+      prompt_hint="verification, diagnostics, docs, and handoff",
+    ),
+  ]
+}
+
+///|
+fn WorkbenchModel::active_agent_profile(
+  self : WorkbenchModel,
+) -> WorkbenchAgentProfile? {
+  for profile in workbench_agent_profiles() {
+    if profile.id == self.selected_agent_id {
+      return Some(profile)
+    }
+  }
+  None
+}
+
+///|
 pub fn PiAgentSnapshot::new(
   phase? : String = "idle",
   turn_index? : Int = 0,
@@ -524,6 +585,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
   {
     selected_session_id: "moui-skia",
     selected_panel: "agent",
+    selected_agent_id: "",
     main_scroll_offset_y: 0.0,
     prompt: "",
     expanded_context: ["repo", "examples"],
@@ -560,6 +622,7 @@ pub fn WorkbenchModel::update(
   match message {
     SelectSession(id) => self.select_session(id)
     SelectPanel(panel) => { ..self, selected_panel: panel }
+    SelectAgent(id) => self.select_agent(id)
     PromptChanged(value) => { ..self, prompt: value }
     DispatchPrompt => self.dispatch_prompt()
     DispatchSteering => self.dispatch_steering()
@@ -812,6 +875,28 @@ fn WorkbenchModel::select_session(
     selected_session_id: id,
     main_scroll_offset_y: 0.0,
     last_status: "Workbench session selected",
+  }
+}
+
+///|
+fn WorkbenchModel::select_agent(
+  self : WorkbenchModel,
+  id : String,
+) -> WorkbenchModel {
+  let clean_id = id.trim().to_owned()
+  if clean_id == "" || clean_id == self.selected_agent_id {
+    { ..self, selected_agent_id: "", last_status: "Agent focus cleared" }
+  } else {
+    for profile in workbench_agent_profiles() {
+      if profile.id == clean_id {
+        return {
+          ..self,
+          selected_agent_id: clean_id,
+          last_status: "Agent focus selected: " + profile.label,
+        }
+      }
+    }
+    { ..self, last_status: "Agent focus unavailable" }
   }
 }
 
@@ -1258,6 +1343,10 @@ fn WorkbenchModel::composer_context_prompt_label(
     if !known_context_id(id) {
       labels.push(id)
     }
+  }
+  match self.active_agent_profile() {
+    Some(profile) => labels.push("agent focus: " + profile.prompt_hint)
+    None => ()
   }
   labels.join(", ")
 }
