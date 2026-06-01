@@ -851,6 +851,7 @@ pub fn RenderFrameValidationStatus::is_ready(Self) -> Bool
 
 pub(all) struct RenderPassDescriptor {
   surface : SurfaceDescriptor
+  target_key : RendererResourceKey?
   bounds : IRect
   load_op : RenderPassLoadOp
   clear_color : Color?
@@ -859,12 +860,14 @@ pub(all) struct RenderPassDescriptor {
 pub fn RenderPassDescriptor::clear(SurfaceDescriptor, Color, bounds? : IRect?, store_op? : RenderPassStoreOp) -> Self
 pub fn RenderPassDescriptor::clear_target(SurfaceTargetDescriptor, Color, bounds? : IRect?, store_op? : RenderPassStoreOp?) -> Self
 pub fn RenderPassDescriptor::for_target(SurfaceTargetDescriptor, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp?) -> Self
+pub fn RenderPassDescriptor::has_target_binding(Self) -> Bool
+pub fn RenderPassDescriptor::is_bound_to_target(Self, SurfaceTargetDescriptor) -> Bool
 pub fn RenderPassDescriptor::is_empty(Self) -> Bool
 pub fn RenderPassDescriptor::is_msaa(Self) -> Bool
 pub fn RenderPassDescriptor::keeps_pixels(Self) -> Bool
 pub fn RenderPassDescriptor::needs_clear(Self) -> Bool
 pub fn RenderPassDescriptor::needs_present(Self) -> Bool
-pub fn RenderPassDescriptor::new(SurfaceDescriptor, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp) -> Self
+pub fn RenderPassDescriptor::new(SurfaceDescriptor, target_key? : RendererResourceKey?, bounds? : IRect?, load_op? : RenderPassLoadOp, clear_color? : Color?, store_op? : RenderPassStoreOp) -> Self
 pub fn RenderPassDescriptor::present(SurfaceDescriptor, bounds? : IRect?, clear_color? : Color?) -> Self
 pub fn RenderPassDescriptor::resource_descriptor(Self) -> RendererResourceDescriptor
 pub fn RenderPassDescriptor::with_bounds(Self, IRect) -> Self
