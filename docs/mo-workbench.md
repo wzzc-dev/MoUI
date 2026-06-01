@@ -94,11 +94,12 @@ packages:
   Pi/RPC protocol nouns. The default chrome shows short project names and
   localized session status labels, while full project paths remain in the shared
   model and Pi transport commands. The default shell keeps only top-bar
-  refresh/new-session controls and composer send prominent. Context chips, the
-  idle Pi RPC footer, the `Pi 运行状态` panel, agent focus controls, advanced
-  session actions, steering/follow-up composer controls, and focused-check
-  presets stay collapsed until Pi state, typed input, non-default context,
-  selected focus, or command evidence makes them relevant.
+  refresh/new-session controls and composer send prominent, and inactive idle
+  session rows omit status meta instead of showing fake queue or idle labels.
+  Context chips, the idle Pi RPC footer, the `Pi 运行状态` panel, agent focus
+  controls, advanced session actions, steering/follow-up composer controls, and
+  focused-check presets stay collapsed until Pi state, typed input, non-default
+  context, selected focus, or command evidence makes them relevant.
   It also avoids screenshot-only filler: the old validation transcript, hard-coded
   shell command block, fake attachment cards, copy/vote toolbar, and
   future-workflow placeholder session were replaced with compact panels driven
