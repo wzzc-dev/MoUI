@@ -84,6 +84,7 @@ Default JetBrains expected artifact/log files:
 
 Source-built expected artifact/log files:
 
+- `logs/linux-real-skia-smoke-preflight.log`
 - `logs/linux-real-skia-smoke.log`
 - `logs/linux-skia-build.log` for source-built runs
 - `logs/linux-native-smoke-output.log`
