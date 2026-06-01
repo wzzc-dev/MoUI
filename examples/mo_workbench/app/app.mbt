@@ -166,7 +166,6 @@ pub(all) struct PiSessionBinding {
 priv struct WorkbenchAgentProfile {
   id : String
   label : String
-  role : String
   prompt_hint : String
 }
 
@@ -497,10 +496,9 @@ pub fn PiSessionBinding::status_label(self : PiSessionBinding) -> String {
 fn WorkbenchAgentProfile::new(
   id~ : String,
   label~ : String,
-  role~ : String,
   prompt_hint~ : String,
 ) -> WorkbenchAgentProfile {
-  { id, label, role, prompt_hint }
+  { id, label, prompt_hint }
 }
 
 ///|
@@ -535,19 +533,16 @@ fn workbench_agent_profiles() -> Array[WorkbenchAgentProfile] {
     WorkbenchAgentProfile::new(
       id="general",
       label="通用",
-      role="协调",
       prompt_hint="general task planning and coordination",
     ),
     WorkbenchAgentProfile::new(
       id="coding",
       label="编码",
-      role="实现",
       prompt_hint="coding implementation, focused tests, and refactors",
     ),
     WorkbenchAgentProfile::new(
       id="verify",
       label="校验",
-      role="检查",
       prompt_hint="verification, diagnostics, docs, and handoff",
     ),
   ]

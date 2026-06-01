@@ -227,8 +227,6 @@ fn WorkbenchModel::app_sidebar(
         self.sidebar_brand(layout, theme),
         self.sidebar_section_label("任务历史", layout, theme),
         self.pinned_threads(layout, theme),
-        self.sidebar_section_label("Agents", layout, theme),
-        self.agent_roster(layout, theme),
         self.sidebar_section_label("工作区", layout, theme),
         self.workspace_summary(layout, theme),
         spacer(min_length=8.0, weight=1.0),
@@ -295,77 +293,6 @@ fn WorkbenchModel::pinned_threads(
     )
   }
   column(rows, spacing=2.0, align=Stretch)
-}
-
-///|
-fn WorkbenchModel::agent_roster(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
-  for profile in workbench_agent_profiles() {
-    rows.push(
-      self.agent_button(
-        profile,
-        layout,
-        theme,
-        selected=self.selected_agent_id == profile.id,
-      ),
-    )
-  }
-  column(rows, spacing=2.0, align=Stretch)
-}
-
-///|
-fn WorkbenchModel::agent_button(
-  self : WorkbenchModel,
-  profile : WorkbenchAgentProfile,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-  selected~ : Bool,
-) -> @core.View[WorkbenchMsg] {
-  ignore(self)
-  let background = if selected {
-    @core.Color::white()
-  } else {
-    ui_color(0.93, 0.94, 0.93)
-  }
-  surface(
-    row(
-      [
-        button(
-          profile.label,
-          on_click=SelectAgent(profile.id),
-          variant=Ghost,
-          theme~,
-          width=56.0,
-          height=30.0,
-        ),
-        text(
-          profile.role,
-          role=Caption,
-          theme~,
-          width=layout.sidebar_inner_width - 86.0,
-          height=28.0,
-        ),
-      ],
-      spacing=6.0,
-      align=Center,
-    ),
-    width=layout.sidebar_inner_width,
-    height=34.0,
-    background~,
-    corner_radius=8.0,
-    theme~,
-    padding=2.0,
-  ).border(
-    if selected {
-      workbench_hairline_border()
-    } else {
-      workbench_clear_border()
-    },
-  )
 }
 
 ///|
@@ -3072,6 +2999,9 @@ fn WorkbenchModel::composer(
     ),
     self.context_chip_row(layout, theme),
   ]
+  if self.should_show_composer_agent_row() {
+    content.push(self.composer_agent_row(layout, theme))
+  }
   if self.should_show_composer_command_row() {
     content.push(self.composer_command_row(layout, theme))
   }
@@ -3094,11 +3024,56 @@ fn WorkbenchModel::composer_height(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
 ) -> Double {
-  if self.should_show_composer_command_row() {
-    layout.composer_height + 38.0
-  } else {
-    layout.composer_height
+  let mut height = layout.composer_height
+  if self.should_show_composer_agent_row() {
+    height = height + 38.0
   }
+  if self.should_show_composer_command_row() {
+    height = height + 38.0
+  }
+  height
+}
+
+///|
+fn WorkbenchModel::should_show_composer_agent_row(
+  self : WorkbenchModel,
+) -> Bool {
+  self.prompt.trim().to_owned() != "" || self.active_agent_profile() is Some(_)
+}
+
+///|
+fn WorkbenchModel::composer_agent_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let profiles = workbench_agent_profiles()
+  let button_width = workbench_clamp_double(
+    (layout.composer_input_width - 42.0 - 16.0) / 3.0,
+    74.0,
+    118.0,
+  )
+  let controls : Array[@core.View[WorkbenchMsg]] = [
+    text("Agent", role=Caption, theme~, width=42.0, height=30.0),
+  ]
+  for profile in profiles {
+    controls.push(
+      button(
+        profile.label,
+        on_click=SelectAgent(profile.id),
+        variant=if self.selected_agent_id == profile.id {
+          Outline
+        } else {
+          Ghost
+        },
+        theme~,
+        width=button_width,
+        height=30.0,
+      ),
+    )
+  }
+  controls.push(spacer(min_length=8.0, weight=1.0))
+  row(controls, spacing=8.0, align=Center)
 }
 
 ///|
