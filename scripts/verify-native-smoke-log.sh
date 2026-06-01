@@ -58,6 +58,7 @@ default_stage_markers=(
   "native smoke render target resource binding" \
   "native smoke render frame cache resources" \
   "native smoke render resource cache inserts" \
+  "native smoke render resource cache evictions" \
   "native smoke gpu context resource plan count" \
   "native smoke gpu frame context validation" \
   "native smoke surface target resource plan count" \
@@ -104,6 +105,7 @@ default_expected_stage_values=(
   $'native smoke render target resource binding\t1'
   $'native smoke render frame cache resources\t9'
   $'native smoke render resource cache inserts\t9'
+  $'native smoke render resource cache evictions\t1'
   $'native smoke gpu context resource plan count\t2'
   $'native smoke gpu frame context validation\t1'
   $'native smoke surface target resource plan count\t2'
