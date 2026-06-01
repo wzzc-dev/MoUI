@@ -1259,6 +1259,99 @@ test "render command list exposes text run resource keys" {
 }
 
 ///|
+test "render command list records shaped glyph run resources" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(48, 24),
+  )
+  let fallback = @skia_mbt.FontFallbackRequest::new(
+    families=@skia_mbt.FontFallbackChain::new(primary_family=b"Inter"),
+    bcp47=[b"en"],
+    character=0x68,
+  )
+  let run = @skia_mbt.TextRunDescriptor::new(
+    range=@skia_mbt.TextRange::new(0, 5),
+    fallback~,
+  )
+  let shaping = @skia_mbt.TextShapingDescriptor::new(
+    run~,
+    font_key=@skia_mbt.RendererResourceKey::font(b"Inter:14"),
+    width=128.0,
+  )
+  let shaped = shaping.shaped_run_descriptor(
+    glyph_count=5,
+    cluster_count=5,
+    advance=@skia_mbt.Point::new(18.0, 6.0),
+  )
+  let glyph_run = shaped.glyph_run_descriptor(
+    glyph_ids=[7, 8, 9, 10, 11],
+    positions=[
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(4.0, 0.0),
+      @skia_mbt.Point::new(8.0, 0.0),
+      @skia_mbt.Point::new(12.0, 0.0),
+      @skia_mbt.Point::new(16.0, 0.0),
+    ],
+    clusters=[0, 1, 2, 3, 4],
+  )
+  let command = @skia_mbt.RenderCommand::draw_shaped_glyph_run_utf8(
+    b"hello",
+    glyph_run,
+    @skia_mbt.Point::new(2.0, 3.0),
+    paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::black()),
+  )
+  assert_true(command.is_draw())
+  assert_true(command.is_text())
+  assert_true(
+    command.text_run_resource_key() == Some(glyph_run.resource_key(b"hello")),
+  )
+  guard command.resource_descriptor() is Some(glyph_descriptor) else {
+    fail("shaped glyph command should expose its primary resource descriptor")
+  }
+  assert_true(glyph_descriptor.key == glyph_run.resource_key(b"hello"))
+  let command_descriptors = command.resource_descriptors()
+  assert_eq(command_descriptors.length(), 6)
+  assert_true(command_descriptors[0].key == glyph_run.resource_key(b"hello"))
+
+  let commands = @skia_mbt.RenderCommandList::for_target(target).draw_shaped_glyph_run_utf8(
+    b"hello",
+    glyph_run,
+    @skia_mbt.Point::new(2.0, 3.0),
+    paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::black()),
+  )
+  let stats = commands.stats()
+  assert_eq(stats.command_count, 1)
+  assert_eq(stats.draw_count, 1)
+  assert_eq(stats.text_count, 1)
+  assert_true(
+    commands.text_run_resource_keys() == [glyph_run.resource_key(b"hello")],
+  )
+  assert_true(
+    commands.touched_bounds() == Some(@skia_mbt.Rect::new(2.0, 3.0, 20.0, 9.0)),
+  )
+  let descriptors = commands.resource_descriptors()
+  assert_eq(descriptors.length(), 7)
+  assert_true(descriptors[0].key == target.resource_key())
+  let plan = commands.resource_plan()
+  assert_eq(plan.length(), 7)
+  assert_eq(plan.count_kind(@skia_mbt.SurfaceResource), 1)
+  assert_eq(plan.count_kind(@skia_mbt.TextRunResource), 4)
+  assert_eq(plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_true(plan.contains_key(glyph_run.resource_key(b"hello")))
+  assert_true(plan.contains_key(shaped.resource_key(b"hello")))
+  assert_true(plan.contains_key(shaping.resource_key(b"hello")))
+  assert_true(
+    plan.contains_key(run.resource_key(b"hello", font_key=shaping.font_key)),
+  )
+  let frame = commands.frame_descriptor(target)
+  assert_true(frame.is_ready())
+  assert_eq(frame.resource_plan.length(), 7)
+  assert_true(
+    frame.resource_plan.contains_key(glyph_run.resource_key(b"hello")),
+  )
+}
+
+///|
 test "render command list includes declared resource descriptors" {
   guard @skia_mbt.ShaderDescriptor::linear_gradient(
       @skia_mbt.Point::new(0, 0),

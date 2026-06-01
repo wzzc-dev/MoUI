@@ -17,6 +17,7 @@ pub(all) enum RenderCommand {
     Point,
     Paint
   )
+  DrawCanvasShapedGlyphRunUtf8(Bytes, ShapedGlyphRunDescriptor, Point, Paint)
   DeclareRenderResource(RendererResourceDescriptor)
   PresentSurface
 } derive(Debug, Eq)
@@ -80,6 +81,16 @@ pub fn RenderCommand::draw_text_run_utf8(
 }
 
 ///|
+pub fn RenderCommand::draw_shaped_glyph_run_utf8(
+  text : Bytes,
+  glyph_run : ShapedGlyphRunDescriptor,
+  origin : Point,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasShapedGlyphRunUtf8(text, glyph_run, origin, paint)
+}
+
+///|
 pub fn RenderCommand::declare_resource(
   descriptor : RendererResourceDescriptor,
 ) -> RenderCommand {
@@ -92,7 +103,8 @@ pub fn RenderCommand::is_draw(self : RenderCommand) -> Bool {
   is (DrawCanvasRect(_, _)
   | DrawCanvasPath(_, _)
   | DrawCanvasTextUtf8(_, _, _)
-  | DrawCanvasTextRunUtf8(_, _, _, _, _))
+  | DrawCanvasTextRunUtf8(_, _, _, _, _)
+  | DrawCanvasShapedGlyphRunUtf8(_, _, _, _))
 }
 
 ///|
@@ -117,7 +129,10 @@ pub fn RenderCommand::is_present(self : RenderCommand) -> Bool {
 
 ///|
 pub fn RenderCommand::is_text(self : RenderCommand) -> Bool {
-  self is (DrawCanvasTextUtf8(_, _, _) | DrawCanvasTextRunUtf8(_, _, _, _, _))
+  self
+  is (DrawCanvasTextUtf8(_, _, _)
+  | DrawCanvasTextRunUtf8(_, _, _, _, _)
+  | DrawCanvasShapedGlyphRunUtf8(_, _, _, _))
 }
 
 ///|
@@ -132,6 +147,8 @@ pub fn RenderCommand::text_run_resource_key(
   match self {
     DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
       Some(descriptor.resource_key(text, font_key~))
+    DrawCanvasShapedGlyphRunUtf8(text, glyph_run, _, _) =>
+      Some(glyph_run.resource_key(text))
     _ => None
   }
 }
@@ -144,6 +161,8 @@ pub fn RenderCommand::resource_descriptor(
     DrawCanvasPath(path, _) => Some(path.resource_descriptor())
     DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
       Some(descriptor.resource_descriptor(text, font_key~))
+    DrawCanvasShapedGlyphRunUtf8(text, glyph_run, _, _) =>
+      Some(glyph_run.resource_descriptor(text))
     DeclareRenderResource(descriptor) => Some(descriptor)
     _ => None
   }
@@ -157,8 +176,25 @@ pub fn RenderCommand::resource_descriptors(
     DrawCanvasPath(path, _) => [path.resource_descriptor()]
     DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
       descriptor.resource_plan(text, font_key~).descriptors
+    DrawCanvasShapedGlyphRunUtf8(text, glyph_run, _, _) =>
+      glyph_run.resource_plan(text).descriptors
     DeclareRenderResource(descriptor) => [descriptor]
     _ => []
+  }
+}
+
+///|
+fn shaped_glyph_run_draw_bounds(
+  glyph_run : ShapedGlyphRunDescriptor,
+  origin : Point,
+) -> Rect? {
+  if !glyph_run.is_valid() {
+    None
+  } else {
+    let advance = glyph_run.shaped_run.advance
+    let right = origin.x + advance.x
+    let bottom = origin.y + advance.y
+    Some(Rect::new(origin.x, origin.y, right, bottom).sorted())
   }
 }
 
@@ -167,6 +203,8 @@ fn RenderCommand::draw_bounds(self : RenderCommand) -> Rect? {
   match self {
     DrawCanvasRect(rect, _) => Some(rect.sorted())
     DrawCanvasPath(path, _) => path.bounds()
+    DrawCanvasShapedGlyphRunUtf8(_, glyph_run, origin, _) =>
+      shaped_glyph_run_draw_bounds(glyph_run, origin)
     _ => None
   }
 }
@@ -345,6 +383,19 @@ pub fn RenderCommandList::draw_text_run_utf8(
       font_key~,
       paint~,
     ),
+  )
+}
+
+///|
+pub fn RenderCommandList::draw_shaped_glyph_run_utf8(
+  self : RenderCommandList,
+  text : Bytes,
+  glyph_run : ShapedGlyphRunDescriptor,
+  origin : Point,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(
+    RenderCommand::draw_shaped_glyph_run_utf8(text, glyph_run, origin, paint~),
   )
 }
 

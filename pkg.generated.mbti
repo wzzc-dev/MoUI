@@ -798,6 +798,7 @@ pub(all) enum RenderCommand {
   DrawCanvasPath(Path, Paint)
   DrawCanvasTextUtf8(Bytes, Point, Paint)
   DrawCanvasTextRunUtf8(Bytes, TextRunDescriptor, RendererResourceKey, Point, Paint)
+  DrawCanvasShapedGlyphRunUtf8(Bytes, ShapedGlyphRunDescriptor, Point, Paint)
   DeclareRenderResource(RendererResourceDescriptor)
   PresentSurface
 } derive(Eq, @debug.Debug)
@@ -806,6 +807,7 @@ pub fn RenderCommand::clip_rect(Rect, op? : ClipOp) -> Self
 pub fn RenderCommand::declare_resource(RendererResourceDescriptor) -> Self
 pub fn RenderCommand::draw_path(Path, paint? : Paint) -> Self
 pub fn RenderCommand::draw_rect(Rect, paint? : Paint) -> Self
+pub fn RenderCommand::draw_shaped_glyph_run_utf8(Bytes, ShapedGlyphRunDescriptor, Point, paint? : Paint) -> Self
 pub fn RenderCommand::draw_text_run_utf8(Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self
 pub fn RenderCommand::draw_text_utf8(Bytes, Point, paint? : Paint) -> Self
 pub fn RenderCommand::is_clear(Self) -> Bool
@@ -830,6 +832,7 @@ pub fn RenderCommandList::declare_resource(Self, RendererResourceDescriptor) -> 
 pub fn RenderCommandList::declare_resources(Self, Array[RendererResourceDescriptor]) -> Self
 pub fn RenderCommandList::draw_path(Self, Path, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_rect(Self, Rect, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_shaped_glyph_run_utf8(Self, Bytes, ShapedGlyphRunDescriptor, Point, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_text_run_utf8(Self, Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_text_utf8(Self, Bytes, Point, paint? : Paint) -> Self
 pub fn RenderCommandList::finish(Self) -> Self
