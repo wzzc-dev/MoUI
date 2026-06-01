@@ -49,6 +49,7 @@ fi
 default_stage_markers=(
   "native smoke surface descriptor backend" \
   "native smoke canvas state restored" \
+  "native smoke canvas clip device width" \
   "native smoke canvas replay commands" \
   "native smoke render resource plan count" \
   "native smoke render frame resource plan count" \
@@ -95,6 +96,7 @@ default_stage_markers=(
 )
 
 default_expected_stage_values=(
+  $'native smoke canvas clip device width\t4'
   $'native smoke render resource plan count\t9'
   $'native smoke render frame resource plan count\t9'
   $'native smoke render frame validation status\t1'
