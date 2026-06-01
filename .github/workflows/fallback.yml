@@ -144,6 +144,27 @@ jobs:
             > logs/fake-acceptance-good.log
           bash scripts/verify-acceptance-log.sh logs/fake-acceptance-good.log
           bash scripts/verify-acceptance-log.sh logs/fake-acceptance-good.log --require-commit
+          printf '%s\n' \
+            'Linux real Skia acceptance result:' \
+            '  not_smoke_status=0' \
+            '  native_smoke_marker=passed' \
+            '  native_pkg_restore=passed' \
+            > logs/fake-acceptance-prefixed-status.log
+          if bash scripts/verify-acceptance-log.sh logs/fake-acceptance-prefixed-status.log; then
+            echo "verify-acceptance-log unexpectedly accepted a prefixed smoke_status field" >&2
+            exit 1
+          fi
+          printf '%s\n' \
+            'Linux real Skia acceptance result:' \
+            '  smoke_status=0' \
+            '  native_smoke_marker=passed' \
+            '  native_pkg_restore=passed' \
+            '  not_skia_commit=0123456789abcdef0123456789abcdef01234567' \
+            > logs/fake-acceptance-prefixed-commit.log
+          if bash scripts/verify-acceptance-log.sh logs/fake-acceptance-prefixed-commit.log --require-commit; then
+            echo "verify-acceptance-log unexpectedly accepted a prefixed skia_commit field" >&2
+            exit 1
+          fi
           printf '%s\n' '0123456789abcdef0123456789abcdef01234567' > logs/fake-skia-revision.txt
           bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-skia-revision.txt
           printf '%s\n' 'main' > logs/fake-floating-skia-revision.txt
