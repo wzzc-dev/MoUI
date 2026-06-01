@@ -242,8 +242,9 @@ packages:
   are sent raw rather than wrapped in composer context.
 - The composer now shows a compact slash-command suggestion strip only when Pi
   has returned a command catalog and the user starts the prompt with `/`. The
-  strip filters `PiCommandInfo` commands by the typed query, lists up to three
-  matches near the prompt input, and each shortcut reuses the same
+  slash mode hides context/focus/steering controls because slash prompts are
+  sent raw, filters `PiCommandInfo` commands by the typed query, lists up to
+  three matches near the prompt input, and each shortcut reuses the same
   `InvokeCommand` / `SendUserInput` route while catalog-only refreshes do not
   add Activity command rows or focused-check presets.
 - Session selection refreshes Pi session stats through `get_session_stats`.

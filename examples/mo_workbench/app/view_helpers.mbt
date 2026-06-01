@@ -3181,9 +3181,12 @@ fn WorkbenchModel::composer_height(
 
 ///|
 fn WorkbenchModel::should_show_context_chip_row(self : WorkbenchModel) -> Bool {
-  self.has_composer_prompt() ||
-  self.active_agent_profile() is Some(_) ||
-  !self.context_is_default()
+  !self.is_composer_slash_prompt() &&
+  (
+    self.has_composer_prompt() ||
+    self.active_agent_profile() is Some(_) ||
+    !self.context_is_default()
+  )
 }
 
 ///|
@@ -3197,7 +3200,8 @@ fn WorkbenchModel::context_is_default(self : WorkbenchModel) -> Bool {
 fn WorkbenchModel::should_show_composer_agent_row(
   self : WorkbenchModel,
 ) -> Bool {
-  self.has_composer_prompt() || self.active_agent_profile() is Some(_)
+  !self.is_composer_slash_prompt() &&
+  (self.has_composer_prompt() || self.active_agent_profile() is Some(_))
 }
 
 ///|
@@ -3264,7 +3268,9 @@ fn WorkbenchModel::composer_action_row(
     )
   }
   controls.push(spacer(min_length=10.0, weight=1.0))
-  if self.has_composer_prompt() && self.should_show_composer_secondary_actions() {
+  if self.has_composer_prompt() &&
+    !self.is_composer_slash_prompt() &&
+    self.should_show_composer_secondary_actions() {
     controls.push(
       button(
         "引导",
@@ -3305,22 +3311,30 @@ fn WorkbenchModel::composer_action_row(
 fn WorkbenchModel::should_show_composer_action_row(
   self : WorkbenchModel,
 ) -> Bool {
-  self.should_show_composer_secondary_actions()
+  self.has_composer_prompt() || self.should_show_composer_secondary_actions()
 }
 
 ///|
 fn WorkbenchModel::should_show_composer_secondary_actions(
   self : WorkbenchModel,
 ) -> Bool {
-  self.has_composer_prompt() ||
-  self.pi_agent.steering_mode != "one-at-a-time" ||
-  self.pi_agent.follow_up_mode != "one-at-a-time" ||
-  self.pi_agent.queued_steering + self.pi_agent.queued_follow_up > 0
+  !self.is_composer_slash_prompt() &&
+  (
+    self.has_composer_prompt() ||
+    self.pi_agent.steering_mode != "one-at-a-time" ||
+    self.pi_agent.follow_up_mode != "one-at-a-time" ||
+    self.pi_agent.queued_steering + self.pi_agent.queued_follow_up > 0
+  )
 }
 
 ///|
 fn WorkbenchModel::has_composer_prompt(self : WorkbenchModel) -> Bool {
   self.prompt.trim().to_owned() != ""
+}
+
+///|
+fn WorkbenchModel::is_composer_slash_prompt(self : WorkbenchModel) -> Bool {
+  self.composer_slash_query() is Some(_)
 }
 
 ///|

@@ -2206,6 +2206,31 @@ test "workbench ingests Pi RPC get_commands response into command catalog" {
 }
 
 ///|
+test "workbench slash composer hides context and steering controls" {
+  let model = {
+    ..WorkbenchModel::new(),
+    prompt: "/",
+    command_catalog: [
+      PiCommandInfo::new(
+        name="review",
+        source="prompt",
+        description="Review current diff",
+        source_scope="project",
+        source_path=".pi/prompts/review.md",
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "命令"))
+  assert_true(draw_text_count_containing(commands, "/review") > 0)
+  assert_true(has_text(commands, "发送"))
+  assert_false(has_text(commands, "上下文"))
+  assert_false(has_text(commands, "焦点"))
+  assert_false(has_text(commands, "引导"))
+  assert_false(has_text(commands, "跟进"))
+}
+
+///|
 test "workbench ingests Pi RPC get_available_models response into model catalog" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(

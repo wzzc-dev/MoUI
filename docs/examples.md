@@ -269,9 +269,10 @@ sending `/<name>` through the same platform-neutral `SendUserInput` prompt
 path, so native transport does not need a command-specific bridge. Typed slash
 prompts such as `/review` are sent raw rather than wrapped in composer context.
 When command catalog entries are available and the prompt starts with `/`, the
-composer shows up to three filtered slash-command suggestions that reuse the
-same `InvokeCommand` / `SendUserInput` route while keeping the Activity digest
-free of catalog-only command rows or focused-check presets. Diagnostics
+composer hides context/focus/steering controls and shows up to three filtered
+slash-command suggestions plus the normal send action. Those suggestions reuse
+the same `InvokeCommand` / `SendUserInput` route while keeping the Activity
+digest free of catalog-only command rows or focused-check presets. Diagnostics
 collected from Pi stderr, RPC failures, structured diagnostic events, and bash results are
 surfaced in the workspace digest and can be cleared from shared app state.
 The model catalog summary can send platform-neutral `SetRpcModel` for the
