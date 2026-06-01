@@ -672,28 +672,41 @@ fn ShowcaseModel::dialog(
   theme : @core.Theme,
 ) -> @core.View[ShowcaseMsg] {
   ignore(self)
-  column(
-    [
-      text("Showcase dialog", width=240.0, height=30.0)
-      .font(theme.typography.control)
-      .foreground(theme.palette.foreground),
-      text(
-        "Dialogs, shortcuts, and semantics share the same view tree.",
-        width=280.0,
-        height=52.0,
-      )
-      .font(theme.typography.caption)
-      .foreground(theme.palette.muted),
-      button(
-        "Close",
-        on_click=HideDialog,
-        variant=@views.ButtonVariant::Primary,
-        theme~,
-        width=120.0,
-      ),
-    ],
-    spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Start,
+  @views.dialog(
+    "Showcase dialog",
+    content=column(
+      [
+        text(
+          "Dialogs, shortcuts, and semantics share the same view tree.",
+          width=300.0,
+          height=44.0,
+        ).foreground(theme.palette.foreground),
+        description_list(
+          [
+            description_item("Host", "view-level"),
+            description_item("Focus", "app-owned"),
+          ],
+          theme~,
+          width=300.0,
+          term_width=72.0,
+        ),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    ),
+    subtitle="Custom content shell",
+    primary_action=Some(
+      @views.StateViewAction::new(label="Close", message=HideDialog),
+    ),
+    secondary_action=Some(
+      @views.StateViewAction::new(label="Sheet", message=ShowSheet),
+    ),
+    dismiss_action=Some(
+      @views.StateViewAction::new(label="Dismiss", message=HideDialog),
+    ),
+    theme~,
+    width=360.0,
+    height=260.0,
   )
 }
 

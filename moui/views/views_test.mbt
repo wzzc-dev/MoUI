@@ -34,6 +34,81 @@ test "typed button dispatches message" {
 }
 
 ///|
+test "shortcut button renders hint and dispatches keyboard shortcut" {
+  let selected = Ref("")
+  let shortcut = @core.KeyboardShortcut::new(
+    key="s",
+    modifiers=@core.KeyModifiers::new(meta=true),
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.shortcut_button("Save", on_click="save", shortcut~, width=220.0),
+    size=@core.Size::new(width=260.0, height=90.0),
+    on_message=Some(message => selected.val = message),
+  )
+  let draw = runtime.draw_commands()
+  assert_true(has_text(draw, "Save"))
+  assert_true(has_text(draw, "Meta+s"))
+  guard find_semantics_label(runtime.semantics(), "Save, shortcut Meta+s")
+    is Some(node) else {
+    fail("expected shortcut button semantics")
+  }
+  inspect(node.description, content="Shortcut Meta+s")
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="s",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+    ),
+  )
+  inspect(selected.val, content="save")
+}
+
+///|
+test "focus ring exposes app owned focus state" {
+  let runtime = test_runtime(
+    @views.column([
+      @views.focus_ring(
+        @views.text("Name field", width=96.0, height=24.0),
+        focused=true,
+        label="Focus target: name",
+        width=140.0,
+        height=42.0,
+      ),
+      @views.focus_ring(
+        @views.text("Email field", width=96.0, height=24.0),
+        focused=false,
+        label="Focus target: email",
+        width=140.0,
+        height=42.0,
+      ),
+    ]),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Name field"))
+  assert_true(has_text(commands, "Email field"))
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, 2.0)
+    }),
+  )
+  let semantics = runtime.semantics()
+  guard find_semantics_label(semantics, "Focus target: name") is Some(name) else {
+    fail("expected focused ring semantics")
+  }
+  assert_true(name.state.selected)
+  inspect(name.description, content="Focused")
+  assert_true(
+    name.actions.any(action => action == @core.SemanticsAction::Focus),
+  )
+  guard find_semantics_label(semantics, "Focus target: email") is Some(email) else {
+    fail("expected unfocused ring semantics")
+  }
+  assert_false(email.state.selected)
+  inspect(email.description, content="Not focused")
+}
+
+///|
 test "view map lifts child message" {
   let seen = Ref("")
   let view = @views.button("Save", on_click="save").map(message => {
@@ -372,11 +447,31 @@ test "form field primitives build labels helper and errors" {
             error="Email is required",
             status=@views.FormFieldStatus::Invalid,
           ),
+          @views.form_validation_summary(
+            summary=@core.FormValidationSummary::from_errors([
+              { name: "email", message: "Email is required" },
+              { name: "token", message: "Token is expired" },
+            ]),
+            action=Some(
+              @views.StateViewAction::new(label="Focus first", message=()),
+            ),
+          ),
           @views.form_field(
             label="Token",
             child=@views.text_field("readonly", on_input=_value => ()),
             status=@views.FormFieldStatus::ReadOnly,
             layout=@views.FormFieldLayout::Horizontal,
+          ),
+          @views.form_actions(
+            primary=@views.StateViewAction::new(
+              label="Save changes",
+              message=(),
+            ),
+            secondary=Some(
+              @views.StateViewAction::new(label="Cancel", message=()),
+            ),
+            status="Submit disabled until Email is valid",
+            primary_enabled=false,
           ),
         ],
         title="Profile",
@@ -395,7 +490,87 @@ test "form field primitives build labels helper and errors" {
   assert_true(has_text(commands, "Name *"))
   assert_true(has_text(commands, "Shown on normal fields"))
   assert_true(has_text(commands, "Email is required"))
+  assert_true(has_text(commands, "Review required"))
+  assert_true(has_text(commands, "First invalid: email"))
+  assert_true(has_text(commands, "token: Token is expired"))
+  assert_true(has_text(commands, "Focus first"))
+  assert_true(has_text(commands, "Submit disabled until Email is valid"))
+  assert_true(has_text(commands, "Save changes"))
+  assert_true(has_text(commands, "Cancel"))
   assert_true(runtime.semantics().children.length() > 0)
+  guard find_semantics_label(runtime.semantics(), "Validation summary")
+    is Some(summary) else {
+    fail("expected validation summary semantics")
+  }
+  assert_true(summary.state.invalid)
+  guard find_semantics_label(runtime.semantics(), "Save changes") is Some(save) else {
+    fail("expected save action semantics")
+  }
+  assert_true(save.state.disabled)
+}
+
+///|
+test "form workflow bar links validation focus and keyboard action status" {
+  let focus_scope = @core.FocusScope::new(
+    items=[
+      @core.FocusScopeItem::new(id="name"),
+      @core.FocusScopeItem::new(id="email"),
+      @core.FocusScopeItem::new(id="archived", enabled=false),
+      @core.FocusScopeItem::new(id="submit", focusable=false),
+    ],
+    current=Some("name"),
+    default_action="submit",
+    dismiss_action="cancel",
+  )
+  let invalid_summary = @core.FormValidationSummary::from_errors([
+    { name: "email", message: "Email is required" },
+  ])
+  let invalid_runtime = @core.AppRuntime::new_view(
+    root=@views.form_workflow_bar(
+      summary=invalid_summary,
+      primary=@views.StateViewAction::new(label="Save", message=()),
+      secondary=Some(@views.StateViewAction::new(label="Cancel", message=())),
+      focus_scope=Some(focus_scope),
+      focus_invalid=Some(
+        @views.StateViewAction::new(label="Focus first", message=()),
+      ),
+      width=420.0,
+    ),
+    size=@core.Size::new(width=480.0, height=240.0),
+  )
+  let invalid_draw = invalid_runtime.draw_commands()
+  assert_true(has_text(invalid_draw, "Review required"))
+  assert_true(has_text(invalid_draw, "First invalid: email"))
+  assert_true(has_text(invalid_draw, "Focus first"))
+  assert_true(has_text(invalid_draw, "Fix email before submit"))
+  guard find_semantics_label(invalid_runtime.semantics(), "Form workflow")
+    is Some(workflow) else {
+    fail("expected form workflow semantics")
+  }
+  assert_true(workflow.state.invalid)
+  guard find_semantics_label(invalid_runtime.semantics(), "Save") is Some(save) else {
+    fail("expected disabled primary action")
+  }
+  assert_true(save.state.disabled)
+  let valid_runtime = @core.AppRuntime::new_view(
+    root=@views.form_workflow_bar(
+      summary=@core.FormValidationSummary::from_errors([]),
+      primary=@views.StateViewAction::new(label="Save", message=()),
+      secondary=Some(@views.StateViewAction::new(label="Cancel", message=())),
+      focus_scope=Some(focus_scope),
+      valid_message="All required fields pass",
+      width=420.0,
+    ),
+    size=@core.Size::new(width=480.0, height=220.0),
+  )
+  let valid_draw = valid_runtime.draw_commands()
+  assert_true(has_text(valid_draw, "All required fields pass"))
+  assert_true(has_text(valid_draw, "Enter: submit / Escape: cancel"))
+  guard find_semantics_label(valid_runtime.semantics(), "Save")
+    is Some(valid_save) else {
+    fail("expected enabled primary action")
+  }
+  assert_false(valid_save.state.disabled)
 }
 
 ///|
@@ -527,6 +702,9 @@ test "component semantics expose selection validation and expanded states" {
     @views.segmented_control(choices, selected="web", on_select=_id => ()),
     @views.tree_view(tree_items, expanded=["root"], selected="leaf"),
     @views.button_group(commands, selected="save"),
+    @views.button("Pressed action").semantics_pressed(),
+    @views.button("Disabled action").disabled(),
+    @views.inline_error("Sync failed"),
   ])
   let semantics = @core.AppRuntime::new_view(
     root~,
@@ -558,6 +736,20 @@ test "component semantics expose selection validation and expanded states" {
     fail("expected button group selected item")
   }
   assert_true(save.state.selected)
+  guard find_semantics_label(semantics, "Pressed action") is Some(pressed) else {
+    fail("expected pressed semantics")
+  }
+  assert_true(pressed.state.pressed)
+  guard find_semantics_label(semantics, "Disabled action") is Some(disabled) else {
+    fail("expected disabled semantics")
+  }
+  assert_true(disabled.state.disabled)
+  guard find_semantics_label(semantics, "Error: Sync failed")
+    is Some(inline_error) else {
+    fail("expected inline error semantics")
+  }
+  assert_true(inline_error.role == @core.SemanticsRole::Group)
+  assert_true(inline_error.state.invalid)
 }
 
 ///|
@@ -565,6 +757,23 @@ test "feedback and state components compose visible status surfaces" {
   let action = @views.StateViewAction::new(label="Retry", message=())
   let root : @core.View[Unit] = @views.column([
     @views.toast("Saved", tone=@views.FeedbackTone::Success),
+    @views.toast_stack(
+      [
+        @views.ToastStackItem::new(
+          id="sync",
+          message="Sync complete",
+          tone=@views.FeedbackTone::Success,
+          dismiss=Some(()),
+        ),
+        @views.ToastStackItem::new(
+          id="offline",
+          message="Offline retry queued",
+          tone=@views.FeedbackTone::Warning,
+          action=Some(action),
+        ),
+      ],
+      width=380.0,
+    ),
     @views.snackbar("Offline", action=Some(action)),
     @views.banner(
       "Heads up",
@@ -575,25 +784,111 @@ test "feedback and state components compose visible status surfaces" {
     @views.empty_state("No items", "Create a first item", action=Some(action)),
     @views.loading_state(),
     @views.error_state("Failed", "Try again", action=Some(action)),
+    @views.inline_error("Email is already used", action=Some(action)),
+    @views.progress_status(
+      "Export report",
+      value=0.64,
+      message="Preparing CSV rows",
+      status="Running",
+      action=Some(action),
+      width=380.0,
+    ),
     @views.row([
       @views.badge("Beta", tone=@views.BadgeTone::Accent),
+      @views.status_badge(
+        "Ready",
+        tone=@views.BadgeTone::Success,
+        detail="Sync pipeline ready",
+      ),
       @views.stat_card("Views", "128", caption="Today"),
     ]),
   ])
   let runtime = @core.AppRuntime::new_view(
     root~,
-    size=@core.Size::new(width=680.0, height=760.0),
+    size=@core.Size::new(width=680.0, height=880.0),
   )
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Saved"))
+  assert_true(has_text(commands, "Sync complete"))
+  assert_true(has_text(commands, "Offline retry queued"))
+  assert_true(has_text(commands, "Dismiss"))
   assert_true(has_text(commands, "Offline"))
   assert_true(has_text(commands, "Retry"))
   assert_true(has_text(commands, "Heads up"))
   assert_true(has_text(commands, "No items"))
   assert_true(has_text(commands, "Loading"))
   assert_true(has_text(commands, "Failed"))
+  assert_true(has_text(commands, "Email is already used"))
+  assert_true(has_text(commands, "Export report"))
+  assert_true(has_text(commands, "Preparing CSV rows"))
+  assert_true(has_text(commands, "Running"))
   assert_true(has_text(commands, "Beta"))
+  assert_true(has_text(commands, "Ready"))
   assert_true(has_text(commands, "128"))
+  guard find_semantics_label(runtime.semantics(), "Dismiss") is Some(dismiss) else {
+    fail("expected toast dismiss semantics")
+  }
+  assert_true(
+    dismiss.actions.any(action => action == @core.SemanticsAction::Dismiss),
+  )
+  guard find_semantics_label(runtime.semantics(), "Progress: Export report")
+    is Some(progress_status) else {
+    fail("expected progress status semantics")
+  }
+  assert_true(progress_status.role == @core.SemanticsRole::Group)
+  guard find_semantics_label(runtime.semantics(), "Progress")
+    is Some(progress_node) else {
+    fail("expected nested progress semantics")
+  }
+  assert_true(progress_node.role == @core.SemanticsRole::Progress)
+  guard find_semantics_label(runtime.semantics(), "Status: Ready")
+    is Some(status_badge) else {
+    fail("expected status badge semantics")
+  }
+  assert_true(status_badge.role == @core.SemanticsRole::Text)
+  inspect(status_badge.description, content="Sync pipeline ready")
+}
+
+///|
+test "progress status optional action dispatches typed message" {
+  let selected = Ref("")
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.progress_status(
+      "Upload bundle",
+      value=0.25,
+      status="Uploading",
+      action=Some(@views.StateViewAction::new(label="Cancel", message="cancel")),
+      width=360.0,
+    ),
+    size=@core.Size::new(width=420.0, height=180.0),
+    on_message=Some(message => selected.val = message),
+  )
+  guard text_frame(runtime.draw_commands(), "Cancel") is Some(cancel_frame) else {
+    fail("expected progress action")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=cancel_frame.origin.x + 4.0,
+          y=cancel_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=cancel_frame.origin.x + 4.0,
+          y=cancel_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.val, content="cancel")
 }
 
 ///|
@@ -630,6 +925,124 @@ test "popover dropdown combobox and autocomplete compose menu surfaces" {
   assert_true(has_text(commands, "One"))
   assert_true(has_text(commands, "Two"))
   assert_true(has_text(commands, "Open"))
+  let semantics = runtime.semantics()
+  guard find_semantics_label(semantics, "Mode: One") is Some(dropdown) else {
+    fail("expected dropdown anchor semantics")
+  }
+  assert_true(dropdown.role == @core.SemanticsRole::Menu)
+  assert_true(dropdown.state.expanded)
+  assert_true(
+    dropdown.actions.any(action => action == @core.SemanticsAction::Collapse),
+  )
+  guard find_semantics_label(semantics, "Mode options") is Some(options) else {
+    fail("expected dropdown menu semantics")
+  }
+  assert_true(options.role == @core.SemanticsRole::Menu)
+  guard find_semantics_label(semantics, "One") is Some(one) else {
+    fail("expected selected dropdown option")
+  }
+  assert_true(one.state.selected)
+  guard find_semantics_label(semantics, "Two") is Some(two) else {
+    fail("expected disabled dropdown option")
+  }
+  assert_true(two.state.disabled)
+}
+
+///|
+test "alert composes dialog content and actions" {
+  let primary = @views.StateViewAction::new(label="Confirm", message=())
+  let secondary = @views.StateViewAction::new(label="Cancel", message=())
+  let runtime = test_runtime(
+    @views.alert(
+      "Delete project",
+      "This action cannot be undone.",
+      primary_action=primary,
+      secondary_action=Some(secondary),
+      tone=@views.FeedbackTone::Danger,
+    ),
+  )
+  let draw = runtime.draw_commands()
+  assert_true(has_text(draw, "Delete project"))
+  assert_true(has_text(draw, "This action cannot be undone."))
+  assert_true(has_text(draw, "Confirm"))
+  assert_true(has_text(draw, "Cancel"))
+  guard find_semantics_label(runtime.semantics(), "Delete project")
+    is Some(alert) else {
+    fail("expected alert dialog semantics")
+  }
+  assert_true(alert.role == @core.SemanticsRole::Dialog)
+}
+
+///|
+test "dialog composes custom content dismiss and action messages" {
+  let selected = Ref("")
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.dialog(
+      "Edit project",
+      content=@views.description_list([
+        @views.description_item("Owner", "Mira"),
+        @views.description_item("Status", "Active"),
+      ]),
+      subtitle="Custom dialog content",
+      primary_action=Some(
+        @views.StateViewAction::new(label="Save", message="save"),
+      ),
+      secondary_action=Some(
+        @views.StateViewAction::new(label="Cancel", message="cancel"),
+      ),
+      dismiss_action=Some(
+        @views.StateViewAction::new(label="Close", message="close"),
+      ),
+      width=420.0,
+      height=260.0,
+    ),
+    size=@core.Size::new(width=480.0, height=320.0),
+    on_message=Some(message => selected.val = message),
+  )
+  let draw = runtime.draw_commands()
+  assert_true(has_text(draw, "Edit project"))
+  assert_true(has_text(draw, "Custom dialog content"))
+  assert_true(has_text(draw, "Owner"))
+  assert_true(has_text(draw, "Mira"))
+  assert_true(has_text(draw, "Save"))
+  assert_true(has_text(draw, "Cancel"))
+  guard find_semantics_label(runtime.semantics(), "Edit project")
+    is Some(dialog) else {
+    fail("expected custom dialog semantics")
+  }
+  assert_true(dialog.role == @core.SemanticsRole::Dialog)
+  guard find_semantics_label(runtime.semantics(), "Close") is Some(close) else {
+    fail("expected dismiss action semantics")
+  }
+  assert_true(
+    close.actions.any(action => action == @core.SemanticsAction::Dismiss),
+  )
+  guard text_frame(draw, "Save") is Some(save_frame) else {
+    fail("expected primary action")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=save_frame.origin.x + 4.0,
+          y=save_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=save_frame.origin.x + 4.0,
+          y=save_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.val, content="save")
 }
 
 ///|
@@ -637,6 +1050,27 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
   let nav_items = [
     @views.SidebarItem::new(id="home", label="Home", message=()),
     @views.SidebarItem::new(id="settings", label="Settings", message=()),
+  ]
+  let section_items = [
+    @views.SectionNavItem::new(
+      id="builder",
+      label="Builder",
+      summary="App setup",
+      message=(),
+    ),
+    @views.SectionNavItem::new(
+      id="runtime",
+      label="Runtime",
+      summary="Renderer and host state",
+      message=(),
+    ),
+    @views.SectionNavItem::new(
+      id="billing",
+      label="Billing",
+      summary="Disabled section",
+      message=(),
+      enabled=false,
+    ),
   ]
   let crumbs = [
     @views.BreadcrumbItem::new(id="root", label="Root", message=Some(())),
@@ -656,7 +1090,23 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
     ),
   ]
   let root : @core.View[Unit] = @views.column([
+    @views.route_header("Settings", subtitle="Manage workspace preferences", actions=[
+      @views.MenuItem::new(id="save", label="Save", message=()),
+      @views.MenuItem::new(
+        id="export",
+        label="Export",
+        message=(),
+        enabled=false,
+      ),
+    ]),
     @views.breadcrumb(crumbs),
+    @views.section_nav(
+      "Product Areas",
+      section_items,
+      selected="runtime",
+      orientation=@core.Axis::Vertical,
+      width=220.0,
+    ),
     @views.split_view(
       primary=@views.sidebar("Sections", nav_items, selected="settings"),
       detail=@views.master_detail(
@@ -677,8 +1127,16 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
     size=@core.Size::new(width=760.0, height=620.0),
   )
   let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Settings"))
+  assert_true(has_text(commands, "Manage workspace preferences"))
+  assert_true(has_text(commands, "Save"))
+  assert_true(has_text(commands, "Export"))
   assert_true(has_text(commands, "Root"))
   assert_true(has_text(commands, "Current"))
+  assert_true(has_text(commands, "Product Areas"))
+  assert_true(has_text(commands, "Builder"))
+  assert_true(has_text(commands, "Renderer and host state"))
+  assert_true(has_text(commands, "Disabled section"))
   assert_true(has_text(commands, "Sections"))
   assert_true(has_text(commands, "Home"))
   assert_true(has_text(commands, "Settings"))
@@ -687,6 +1145,81 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
   assert_true(has_text(commands, "First"))
   assert_true(has_text(commands, "Second"))
   assert_true(has_text(commands, "First content"))
+  guard find_semantics_label(
+      runtime.semantics(),
+      "Runtime, Renderer and host state",
+    )
+    is Some(runtime_section) else {
+    fail("expected selected section navigation item semantics")
+  }
+  assert_true(runtime_section.role == @core.SemanticsRole::ListItem)
+  assert_true(runtime_section.state.selected)
+  guard find_semantics_label(runtime.semantics(), "Billing, Disabled section")
+    is Some(disabled_section) else {
+    fail("expected disabled section navigation item semantics")
+  }
+  assert_true(disabled_section.state.disabled)
+}
+
+///|
+test "section nav dispatches selected item messages" {
+  let selected = Ref("")
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.section_nav(
+      "Areas",
+      [
+        @views.SectionNavItem::new(
+          id="builder",
+          label="Builder",
+          summary="App setup",
+          message="builder",
+        ),
+        @views.SectionNavItem::new(
+          id="runtime",
+          label="Runtime",
+          summary="Renderer host",
+          message="runtime",
+        ),
+        @views.SectionNavItem::new(
+          id="billing",
+          label="Billing",
+          summary="Disabled",
+          message="billing",
+          enabled=false,
+        ),
+      ],
+      selected="builder",
+      width=480.0,
+    ),
+    size=@core.Size::new(width=520.0, height=140.0),
+    on_message=Some(message => selected.val = message),
+  )
+  guard text_frame(runtime.draw_commands(), "Runtime") is Some(runtime_frame) else {
+    fail("expected runtime section item")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=runtime_frame.origin.x + 4.0,
+          y=runtime_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=runtime_frame.origin.x + 4.0,
+          y=runtime_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.val, content="runtime")
 }
 
 ///|
@@ -732,11 +1265,92 @@ test "data display components compose tables trees descriptions and avatars" {
       @views.description_item("Owner", "Mira"),
       @views.description_item("Status", "Active"),
     ]),
+    @views.data_filter_bar(
+      query="atlas",
+      on_query=_value => (),
+      filters=[
+        @views.data_filter(
+          id="active",
+          label="Active",
+          selected=true,
+          message=(),
+        ),
+        @views.data_filter(
+          id="paused",
+          label="Paused",
+          selected=false,
+          message=(),
+          enabled=false,
+        ),
+      ],
+      result_count=2,
+      on_clear=Some(()),
+      width=420.0,
+    ),
     @views.table(
       columns,
       [["Atlas", "Active"], ["Billing", "Review"]],
       selected_row=Some(1),
+      sort_column="state",
+      sort_ascending=false,
+      on_sort=Some(_id => ()),
     ),
+    @views.selectable_list(
+      [
+        @views.SelectableListItem::new(
+          id="pipeline",
+          title="Pipeline Alpha",
+          subtitle="Healthy",
+          detail="Owner Mira",
+          message=(),
+        ),
+        @views.SelectableListItem::new(
+          id="queue",
+          title="Queue Beta",
+          subtitle="Review required",
+          detail="Owner Noah",
+          message=(),
+        ),
+        @views.SelectableListItem::new(
+          id="archive",
+          title="Archive Locked",
+          subtitle="Read only",
+          detail="Owner Iris",
+          message=(),
+          enabled=false,
+        ),
+      ],
+      selected="queue",
+      width=420.0,
+      row_height=58.0,
+    ),
+    @views.selection_toolbar(
+      selected_count=2,
+      total_count=5,
+      actions=[
+        @views.MenuItem::new(id="archive", label="Archive", message=()),
+        @views.MenuItem::new(id="export", label="Export", message=()),
+      ],
+      on_clear=Some(()),
+      width=420.0,
+    ),
+    @views.column_visibility_panel(
+      columns,
+      visible=["name"],
+      locked=["name"],
+      on_toggle=(_id, _visible) => (),
+      width=420.0,
+    ),
+    @views.pagination(page=1, page_count=3, on_previous=(), on_next=()),
+    @views.detail_panel(
+      "Selected row",
+      [
+        @views.description_item("Project", "Billing"),
+        @views.description_item("Owner", "Noah"),
+      ],
+      subtitle="Compact detail panel",
+    ),
+    @views.selectable_list([], empty=Some(@views.text("No list items"))),
     @views.table(columns, [], empty=Some(@views.text("No data"))),
     @views.tree_view(tree, expanded=["root"], selected="leaf"),
     @views.avatar("Mira", size=32.0),
@@ -749,13 +1363,282 @@ test "data display components compose tables trees descriptions and avatars" {
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Owner"))
   assert_true(has_text(commands, "Mira"))
+  assert_true(has_text(commands, "atlas"))
+  assert_true(has_text(commands, "2 results"))
+  assert_true(has_text(commands, "Active"))
+  assert_true(has_text(commands, "Paused"))
+  assert_true(has_text(commands, "Clear"))
   assert_true(has_text(commands, "Name"))
+  assert_true(has_text(commands, "State v"))
   assert_true(has_text(commands, "Atlas"))
   assert_true(has_text(commands, "Billing"))
+  assert_true(has_text(commands, "Pipeline Alpha"))
+  assert_true(has_text(commands, "Review required"))
+  assert_true(has_text(commands, "Owner Noah"))
+  assert_true(has_text(commands, "Archive Locked"))
+  assert_true(has_text(commands, "2 of 5 selected"))
+  assert_true(has_text(commands, "Archive"))
+  assert_true(has_text(commands, "Export"))
+  assert_true(has_text(commands, "Column visibility"))
+  assert_true(has_text(commands, "1 of 2 columns visible"))
+  assert_true(has_text(commands, "Hidden"))
+  assert_true(has_text(commands, "Page 2 of 3"))
+  assert_true(has_text(commands, "Selected row"))
+  assert_true(has_text(commands, "Compact detail panel"))
+  assert_true(has_text(commands, "Noah"))
+  assert_true(has_text(commands, "No list items"))
   assert_true(has_text(commands, "No data"))
   assert_true(has_text(commands, "Root"))
   assert_true(has_text(commands, "Leaf"))
   assert_true(has_text(commands, "+1"))
+  let semantics = runtime.semantics()
+  guard find_semantics_label(semantics, "Selectable list") is Some(list) else {
+    fail("expected selectable list semantics")
+  }
+  assert_true(list.role == @core.SemanticsRole::List)
+  guard find_semantics_label(
+      semantics, "Queue Beta, Review required, Owner Noah",
+    )
+    is Some(selected_item) else {
+    fail("expected selected list item semantics")
+  }
+  assert_true(selected_item.role == @core.SemanticsRole::ListItem)
+  assert_true(selected_item.state.selected)
+  guard find_semantics_label(semantics, "Archive Locked, Read only, Owner Iris")
+    is Some(disabled_item) else {
+    fail("expected disabled list item semantics")
+  }
+  assert_true(disabled_item.state.disabled)
+}
+
+///|
+test "column visibility panel dispatches controlled column toggles" {
+  let toggled = Ref("")
+  let columns = [
+    @views.table_column(id="name", label="Name", width=120.0),
+    @views.table_column(id="status", label="Status", width=96.0),
+    @views.table_column(id="owner", label="Owner", width=112.0),
+  ]
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.column_visibility_panel(
+      columns,
+      visible=["name", "owner"],
+      locked=["name"],
+      on_toggle=(id, next_visible) => {
+        let state = if next_visible { "shown" } else { "hidden" }
+        id + ":" + state
+      },
+      width=360.0,
+    ),
+    size=@core.Size::new(width=400.0, height=220.0),
+    on_message=Some(message => toggled.val = message),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Column visibility"))
+  assert_true(has_text(commands, "2 of 3 columns visible"))
+  assert_true(has_text(commands, "Name"))
+  assert_true(has_text(commands, "Status"))
+  assert_true(has_text(commands, "Owner"))
+  assert_true(has_text(commands, "Shown"))
+  assert_true(has_text(commands, "Hidden"))
+  let semantics = runtime.semantics()
+  guard find_semantics_label(semantics, "Column visibility") is Some(panel) else {
+    fail("expected column visibility panel semantics")
+  }
+  assert_true(panel.role == @core.SemanticsRole::Group)
+  inspect(panel.description, content="2 of 3 columns visible")
+  guard find_semantics_label(semantics, "Name, Shown") is Some(name) else {
+    fail("expected locked visible column semantics")
+  }
+  assert_true(name.state.selected)
+  assert_true(name.state.disabled)
+  guard find_semantics_label(semantics, "Status, Hidden") is Some(status) else {
+    fail("expected hidden column semantics")
+  }
+  assert_false(status.state.selected)
+  guard text_frame(commands, "Status") is Some(status_frame) else {
+    fail("expected status column row")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=status_frame.origin.y + 4.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=status_frame.origin.y + 4.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(toggled.val, content="status:shown")
+}
+
+///|
+test "selectable list dispatches item messages" {
+  let selected = Ref("")
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.selectable_list(
+      [
+        @views.SelectableListItem::new(
+          id="alpha",
+          title="Pipeline Alpha",
+          subtitle="Healthy",
+          message="alpha",
+        ),
+        @views.SelectableListItem::new(
+          id="beta",
+          title="Queue Beta",
+          subtitle="Review required",
+          message="beta",
+        ),
+      ],
+      selected="alpha",
+      width=360.0,
+    ),
+    size=@core.Size::new(width=400.0, height=180.0),
+    on_message=Some(message => selected.val = message),
+  )
+  guard text_frame(runtime.draw_commands(), "Queue Beta") is Some(beta_frame) else {
+    fail("expected selectable list item")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=beta_frame.origin.x + 4.0,
+          y=beta_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=beta_frame.origin.x + 4.0,
+          y=beta_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.val, content="beta")
+}
+
+///|
+test "table row selection dispatches row index" {
+  let selected = Ref(-1)
+  let columns = [
+    @views.table_column(id="name", label="Name", width=120.0),
+    @views.table_column(id="state", label="State", width=96.0),
+  ]
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.table(
+      columns,
+      [["Atlas", "Active"], ["Billing", "Review"]],
+      on_row_select=Some(index => index),
+    ),
+    size=@core.Size::new(width=260.0, height=140.0),
+    on_message=Some(index => selected.val = index),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=88.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=88.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.val, content="1")
+}
+
+///|
+test "selection toolbar dispatches enabled bulk action and disables empty selection" {
+  let selected = Ref("")
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.selection_toolbar(
+      selected_count=2,
+      total_count=4,
+      actions=[
+        @views.MenuItem::new(id="archive", label="Archive", message="archive"),
+        @views.MenuItem::new(
+          id="delete",
+          label="Delete",
+          message="delete",
+          enabled=false,
+        ),
+      ],
+      on_clear=Some("clear"),
+      width=420.0,
+    ),
+    size=@core.Size::new(width=460.0, height=120.0),
+    on_message=Some(message => selected.val = message),
+  )
+  assert_true(has_text(runtime.draw_commands(), "2 of 4 selected"))
+  guard text_frame(runtime.draw_commands(), "Archive") is Some(archive_frame) else {
+    fail("expected enabled bulk action")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=archive_frame.origin.x + 4.0,
+          y=archive_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=archive_frame.origin.x + 4.0,
+          y=archive_frame.origin.y + 4.0,
+        ),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(selected.val, content="archive")
+  selected.val = ""
+  let empty_runtime = @core.AppRuntime::new_view(
+    root=@views.selection_toolbar(
+      selected_count=0,
+      actions=[
+        @views.MenuItem::new(id="archive", label="Archive", message="archive"),
+      ],
+      on_clear=Some("clear"),
+      width=420.0,
+    ),
+    size=@core.Size::new(width=460.0, height=120.0),
+    on_message=Some(message => selected.val = message),
+  )
+  assert_true(has_text(empty_runtime.draw_commands(), "No rows selected"))
+  guard find_semantics_label(empty_runtime.semantics(), "Selection toolbar")
+    is Some(toolbar) else {
+    fail("expected selection toolbar semantics")
+  }
+  assert_false(toolbar.state.selected)
+  guard find_semantics_label(empty_runtime.semantics(), "Archive")
+    is Some(empty_archive) else {
+    fail("expected disabled empty selection action")
+  }
+  assert_true(empty_archive.state.disabled)
 }
 
 ///|
@@ -1081,6 +1964,23 @@ test "menu bar and command menu render enabled disabled items" {
   assert_true(has_text(draw, "Edit"))
   assert_true(has_text(draw, "Save"))
   assert_true(has_text(draw, "Close"))
+  let semantics = runtime.semantics()
+  guard find_semantics_label(semantics, "Menu bar") is Some(menu_bar) else {
+    fail("expected menu bar semantics")
+  }
+  assert_true(menu_bar.role == @core.SemanticsRole::Menu)
+  guard find_semantics_label(semantics, "File") is Some(file) else {
+    fail("expected selected menu item")
+  }
+  assert_true(file.state.selected)
+  guard find_semantics_label(semantics, "Edit") is Some(edit) else {
+    fail("expected disabled menu item")
+  }
+  assert_true(edit.state.disabled)
+  guard find_semantics_label(semantics, "Command menu") is Some(command_menu) else {
+    fail("expected command menu semantics")
+  }
+  assert_true(command_menu.role == @core.SemanticsRole::Menu)
 }
 
 ///|
@@ -1183,8 +2083,35 @@ test "context menu region can render fallback view menu" {
   guard find_semantics_label(semantics, "Context menu region") is Some(node) else {
     fail("expected context menu region semantics")
   }
+  assert_true(node.state.expanded)
   assert_true(
-    node.actions.any(action => action == @core.SemanticsAction::Expand),
+    node.actions.any(action => action == @core.SemanticsAction::Collapse),
+  )
+  let hidden_runtime = test_runtime(
+    @views.context_menu_region(
+      child=@views.text("Region"),
+      menu=@views.command_menu(
+        [
+          @views.CommandMenuSection::new(title="Actions", commands=[
+            @core.ActionCommand::new(
+              intent=@core.CommandIntent::Copy,
+              label="Copy Item",
+            ),
+          ]),
+        ],
+        on_select=_intent => (),
+        width=240.0,
+      ),
+      visible=false,
+    ),
+  )
+  guard find_semantics_label(hidden_runtime.semantics(), "Context menu region")
+    is Some(hidden_node) else {
+    fail("expected hidden context menu region semantics")
+  }
+  assert_false(hidden_node.state.expanded)
+  assert_true(
+    hidden_node.actions.any(action => action == @core.SemanticsAction::Expand),
   )
 }
 

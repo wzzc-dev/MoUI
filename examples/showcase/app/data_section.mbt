@@ -7,10 +7,11 @@ fn ShowcaseModel::data_section(
   section_panel(
     theme,
     "Data",
-    "Tables, trees, avatars, and metadata views compose from existing primitives.",
+    "Tables, lists, pagination, selection detail, trees, avatars, and metadata views compose from existing primitives.",
     column(
       [
         self.data_table_card(theme, metrics.body_width),
+        self.data_selectable_list_card(theme, metrics.body_width),
         row(
           [
             self.data_tree_card(theme, metrics.body_width * 0.44),
@@ -50,6 +51,28 @@ fn ShowcaseModel::data_table_card(
           width=width - 32.0,
           height=28.0,
         ),
+        data_filter_bar(
+          query="atlas",
+          on_query=_value => FilterChanged("atlas"),
+          filters=[
+            data_filter(
+              id="active",
+              label="Active",
+              selected=true,
+              message=ToggleActive,
+            ),
+            data_filter(
+              id="review",
+              label="Review",
+              selected=false,
+              message=ToggleActive,
+            ),
+          ],
+          result_count=3,
+          on_clear=Some(ClearFilter),
+          theme~,
+          width=392.0,
+        ),
         table(
           columns,
           [
@@ -58,14 +81,122 @@ fn ShowcaseModel::data_table_card(
             ["Import Queue", "Paused", "Iris"],
           ],
           selected_row=Some(1),
+          on_row_select=Some(_row => ToggleActive),
+          sort_column="status",
+          sort_ascending=false,
+          on_sort=Some(_id => ToggleActive),
           theme~,
+        ),
+        column_visibility_panel(
+          columns,
+          visible=["name", "owner"],
+          locked=["name"],
+          on_toggle=(_id, _visible) => ToggleActive,
+          theme~,
+          width=392.0,
+        ),
+        selection_toolbar(
+          selected_count=2,
+          total_count=3,
+          actions=[
+            @views.MenuItem::new(
+              id="archive",
+              label="Archive",
+              message=ToggleActive,
+            ),
+            @views.MenuItem::new(
+              id="export",
+              label="Export",
+              message=ToggleActive,
+            ),
+          ],
+          on_clear=Some(ClearFilter),
+          theme~,
+          width=392.0,
+        ),
+        pagination(
+          page=1,
+          page_count=4,
+          on_previous=ToggleActive,
+          on_next=ToggleActive,
+          theme~,
+          width=392.0,
+        ),
+        detail_panel(
+          "Selected row",
+          [
+            description_item("Project", "Billing Flow"),
+            description_item("Owner", "Noah"),
+          ],
+          subtitle="Compact detail panel",
+          theme~,
+          width=392.0,
+          height=142.0,
         ),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,
     ),
     width=430.0,
-    height=194.0,
+    height=696.0,
+    padding=theme.spacing_scale.md,
+  )
+}
+
+///|
+fn ShowcaseModel::data_selectable_list_card(
+  self : ShowcaseModel,
+  theme : @core.Theme,
+  width : Double,
+) -> @core.View[ShowcaseMsg] {
+  ignore(self)
+  showcase_soft_card(
+    theme,
+    column(
+      [
+        text(
+          "Selectable List",
+          role=@views.TextRole::Control,
+          theme~,
+          width=width - 32.0,
+          height=28.0,
+        ),
+        selectable_list(
+          [
+            @views.SelectableListItem::new(
+              id="atlas",
+              title="Project Atlas",
+              subtitle="Healthy pipeline",
+              detail="Mira",
+              message=ToggleActive,
+            ),
+            @views.SelectableListItem::new(
+              id="billing",
+              title="Billing Flow",
+              subtitle="Review required",
+              detail="Noah",
+              message=ToggleActive,
+            ),
+            @views.SelectableListItem::new(
+              id="archive",
+              title="Archive Import",
+              subtitle="Disabled source",
+              detail="Iris",
+              message=ToggleActive,
+              enabled=false,
+            ),
+          ],
+          selected="billing",
+          theme~,
+          width=392.0,
+          row_height=58.0,
+        ),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    ),
+    width=430.0,
+    height=240.0,
     padding=theme.spacing_scale.md,
   )
 }

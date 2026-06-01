@@ -29,6 +29,24 @@ fn ShowcaseModel::feedback_section(
           spacing=theme.spacing_scale.md,
           align=@views.CrossAlign::Start,
         ),
+        toast_stack(
+          [
+            @views.ToastStackItem::new(
+              id="saved",
+              message="Workspace saved",
+              tone=@views.FeedbackTone::Success,
+              dismiss=Some(ToggleActive),
+            ),
+            @views.ToastStackItem::new(
+              id="queued",
+              message="Sync queued for retry",
+              tone=@views.FeedbackTone::Warning,
+              action=Some(action),
+            ),
+          ],
+          theme~,
+          width=520.0,
+        ),
         banner(
           "Connection interrupted",
           "Changes are queued until the host service reconnects.",
@@ -41,6 +59,23 @@ fn ShowcaseModel::feedback_section(
           "Tip",
           "Use callouts for contextual guidance without adding a modal.",
           tone=@views.FeedbackTone::Info,
+          theme~,
+          width=520.0,
+        ),
+        inline_error(
+          "Email is already used by another workspace member.",
+          action=Some(action),
+          theme~,
+          width=520.0,
+        ),
+        progress_status(
+          "Exporting report",
+          value=0.62,
+          message="Preparing CSV rows from the current filter.",
+          status="Running",
+          action=Some(
+            @views.StateViewAction::new(label="Cancel", message=ToggleActive),
+          ),
           theme~,
           width=520.0,
         ),
@@ -79,12 +114,34 @@ fn ShowcaseModel::feedback_section(
           row_spacing=theme.spacing_scale.md,
           column_spacing=theme.spacing_scale.md,
         ),
+        text(
+          "Status Badge",
+          role=@views.TextRole::Control,
+          theme~,
+          width=520.0,
+          height=24.0,
+        ),
         row(
           [
             @views.badge("Beta", tone=@views.BadgeTone::Accent, theme~),
-            @views.badge("Ready", tone=@views.BadgeTone::Success, theme~),
-            @views.badge("Queued", tone=@views.BadgeTone::Warning, theme~),
-            @views.badge("Failed", tone=@views.BadgeTone::Danger, theme~),
+            @views.status_badge(
+              "Ready",
+              tone=@views.BadgeTone::Success,
+              detail="Sync is healthy",
+              theme~,
+            ),
+            @views.status_badge(
+              "Queued",
+              tone=@views.BadgeTone::Warning,
+              detail="Waiting for host service",
+              theme~,
+            ),
+            @views.status_badge(
+              "Failed",
+              tone=@views.BadgeTone::Danger,
+              detail="Last operation failed",
+              theme~,
+            ),
           ],
           spacing=theme.spacing_scale.sm,
           align=@views.CrossAlign::Center,

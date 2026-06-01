@@ -47,31 +47,77 @@ moon test examples/settings/app --target native
 
 ## Data Tables
 
-Use `table` and `table_column` for display only. Filtering, sorting,
-pagination, row selection, and loading/error/empty states should live in the app
-model so the table stays renderer-neutral and predictable.
+Use `data_filter_bar`, `selection_toolbar`, `column_visibility_panel`, `table`,
+and `pagination` together for operational data surfaces. Filtering, sorting,
+visible columns, pagination, row selection, and loading/error/empty states
+should live in the app model so the table stays renderer-neutral and
+predictable.
 
 ```moonbit nocheck
-using @views {error_state, loading_state, table, table_column}
+using @views {
+  column,
+  column_visibility_panel,
+  data_filter,
+  data_filter_bar,
+  error_state,
+  loading_state,
+  pagination,
+  selection_toolbar,
+  table,
+  table_column,
+}
 
 fn project_table(
   rows : Array[Project],
+  query : String,
+  selected_count : Int,
+  visible_columns : Array[String],
   loading : Bool,
   error : String?,
 ) -> @core.View[Msg] {
+  let columns = [
+    table_column(id="name", label="Name", width=180.0),
+    table_column(id="status", label="Status", width=120.0),
+  ]
   if loading {
     loading_state("Loading projects")
   } else if error is Some(message) {
     error_state("Unable to load", message=message)
   } else {
-    table(
-      [
-        table_column(id="name", label="Name", width=180.0),
-        table_column(id="status", label="Status", width=120.0),
-      ],
-      rows.map(row => [row.name, row.status]),
-      empty=Some(@views.empty_state("No projects", "No projects match the current filter.")),
-    )
+    column([
+      data_filter_bar(
+        query~,
+        on_query=QueryChanged,
+        filters=[
+          data_filter(id="active", label="Active", selected=false, message=ToggleActiveFilter),
+        ],
+        result_count=rows.length(),
+        on_clear=Some(ClearFilters),
+      ),
+      column_visibility_panel(
+        columns,
+        visible=visible_columns,
+        locked=["name"],
+        on_toggle=(id, shown) => ToggleColumn(id, shown),
+      ),
+      selection_toolbar(
+        selected_count~,
+        total_count=rows.length(),
+        actions=[@views.MenuItem::new(id="export", label="Export", message=ExportRows)],
+        on_clear=Some(ClearSelection),
+      ),
+      table(
+        columns,
+        rows.map(row => [row.name, row.status]),
+        selected_row=None,
+        on_row_select=Some(index => SelectRow(index)),
+        sort_column="name",
+        on_sort=Some(id => SortBy(id)),
+        sortable_columns=["name", "status"],
+        empty=Some(@views.empty_state("No projects", "No projects match the current filter.")),
+      ),
+      pagination(page=0, page_count=1, on_previous=PreviousPage, on_next=NextPage),
+    ])
   }
 }
 ```

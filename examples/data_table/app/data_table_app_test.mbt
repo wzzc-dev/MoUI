@@ -9,6 +9,19 @@ test "data table filters by query and team" {
     .filtered_records()
   inspect(team_filtered.length(), content="2")
   inspect(team_filtered[0].team, content="platform")
+  let status_filtered = DataTableModel::new()
+    .update(ToggleStatusFilter("Active"))
+    .filtered_records()
+  inspect(status_filtered.length(), content="2")
+  inspect(status_filtered[0].status, content="Active")
+  let cleared = DataTableModel::new()
+    .update(QueryChanged("atlas"))
+    .update(TeamSelected("experience"))
+    .update(ToggleStatusFilter("Active"))
+    .update(ClearFilters)
+  inspect(cleared.query, content="")
+  inspect(cleared.selected_team, content="all")
+  inspect(cleared.selected_statuses.length(), content="0")
 }
 
 ///|
@@ -33,17 +46,44 @@ test "data table state transitions and tree toggle" {
   assert_true(ready.status is DataStatus::Ready)
   let collapsed = ready.update(ToggleTree("teams"))
   inspect(collapsed.expanded.length(), content="0")
+  let hidden_priority = ready.update(ToggleColumnVisibility("priority", false))
+  inspect(hidden_priority.visible_columns.length(), content="3")
+  let project_locked = hidden_priority.update(
+    ToggleColumnVisibility("project", false),
+  )
+  assert_true(project_locked.visible_columns.any(id => id == "project"))
+  let selected = ready.update(RowSelected(1))
+  inspect(selected.selected_rows.length(), content="2")
+  let cleared = selected.update(ClearSelection)
+  inspect(cleared.selected_rows.length(), content="0")
+  inspect(cleared.last_action, content="Selection cleared")
+  let exported = selected.update(ExportSelection)
+  inspect(exported.last_action, content="Export queued for 2 row(s)")
 }
 
 ///|
 test "data table runtime draws ready shell" {
-  let commands = @app.runtime(width=1020.0, height=680.0).draw_commands()
+  let commands = @app.runtime(width=1020.0, height=740.0).draw_commands()
   assert_true(has_text(commands, "Data Table"))
   assert_true(has_text(commands, "Teams"))
+  assert_true(has_text(commands, "Search projects"))
+  assert_true(has_text(commands, "6 results"))
+  assert_true(has_text(commands, "Active"))
+  assert_true(has_text(commands, "Review"))
+  assert_true(has_text(commands, "Clear"))
+  assert_true(has_text(commands, "Column visibility"))
+  assert_true(has_text(commands, "4 of 4 columns visible"))
+  assert_true(has_text(commands, "Priority"))
+  assert_true(has_text(commands, "1 of 6 selected"))
+  assert_true(has_text(commands, "Archive"))
+  assert_true(has_text(commands, "Export"))
+  assert_true(has_text(commands, "Project ^"))
   assert_true(has_text(commands, "Audit Trail"))
   assert_true(has_text(commands, "Billing Flow"))
   assert_true(has_text(commands, "Page 1 of 2"))
   assert_true(has_text(commands, "Rows: 6"))
+  assert_true(has_text(commands, "Selected: 1"))
+  assert_true(has_text(commands, "Columns: 4/4"))
 }
 
 ///|

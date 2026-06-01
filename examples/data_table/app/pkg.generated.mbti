@@ -48,13 +48,17 @@ pub(all) struct DataTableModel {
   records : Array[DataRecord]
   query : String
   selected_team : String
+  selected_statuses : Array[String]
   selected_row : Int
+  selected_rows : Array[Int]
+  visible_columns : Array[String]
   expanded : Array[String]
   page : Int
   page_size : Int
   sort_key : DataSortKey
   ascending : Bool
   status : DataStatus
+  last_action : String
 }
 pub fn DataTableModel::filtered_records(Self) -> Array[DataRecord]
 pub fn DataTableModel::new() -> Self
@@ -69,7 +73,13 @@ pub fn DataTableModel::visible_records(Self) -> Array[DataRecord]
 pub(all) enum DataTableMsg {
   QueryChanged(String)
   TeamSelected(String)
+  ToggleStatusFilter(String)
+  ClearFilters
   RowSelected(Int)
+  ClearSelection
+  ArchiveSelection
+  ExportSelection
+  ToggleColumnVisibility(String, Bool)
   ToggleTree(String)
   SortBy(DataSortKey)
   NextPage

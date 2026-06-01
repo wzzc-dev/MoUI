@@ -20,9 +20,9 @@ introducing a generator.
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
-| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
+| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, form validation workflow bars, toast stack/progress/status surfaces, `status_badge` feedback chips, table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
-| Data Table | Operational data browser pattern | `examples/data_table/app/` | Table, tree filters, search, loading/error/empty states, selected row summary, model-level sort and pagination |
+| Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, column visibility, sortable table headers, row selection, selection toolbar actions, tree filters, loading/error/empty states, public `pagination` and `detail_panel`, model-level sort and data slicing |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
@@ -99,8 +99,11 @@ development workflows:
 - `Text Diagnostics`: CJK mixed text, RTL/bidi samples, emoji status labels,
   fixed-width wrapping, a narrow `TextRun.frame` clipping sample, and a compact
   Markdown/rich text diagnostic.
-- `Interaction Lab`: tooltip, file-drop modifier wiring, focus/shortcut
-  affordances, button/text-field variants, and deterministic image lifecycle
+- `Interaction Lab`: tooltip, file-drop modifier wiring, FocusScope traversal,
+  first-invalid targeting, Enter/Escape command targets, shortcut affordances,
+  public `shortcut_button` dispatch, app-owned `focus_ring` affordances,
+  popover/dropdown expanded semantics, pressed/selected/disabled semantic state
+  examples, button/text-field variants, and deterministic image lifecycle
   states.
 - `Examples`: Counter and Todo reusable app patterns until the dedicated
   example apps cover those workflows.
@@ -123,9 +126,15 @@ host service.
 ## Data Table
 
 The Data Table example is also shared-app only. It models the data workflow that
-operational tools usually need before renderer-specific polish: controlled tree
-filters, text search, stable model-level sorting, page navigation, selected-row
-summary, plus empty/loading/error panels built from public `views` constructors.
+operational tools usually need before renderer-specific polish: controlled
+search/filter toolbar, status chips, column visibility, sortable table headers,
+tree filters, stable model-level sorting, page navigation, selected-row detail,
+plus empty/loading/error panels built from public `views` constructors.
+The app keeps filtering, sorting, and page slicing in its TEA model while using
+public `data_filter_bar`, table sort-header, row-selection,
+`column_visibility_panel`, `selection_toolbar`, `pagination`, and `detail_panel`
+helpers for reusable view structure. The selected row set, visible-column set,
+and bulk action effects remain app-owned.
 
 ## File Importer
 

@@ -193,6 +193,7 @@ fn render_modified_node(
     AccessibilityLabelModifier(_)
     | SemanticsRoleModifier(_)
     | SemanticsSelectedModifier(_)
+    | SemanticsPressedModifier(_)
     | SemanticsCheckedModifier(_)
     | SemanticsExpandedModifier(_)
     | SemanticsInvalidModifier(_)

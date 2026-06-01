@@ -131,6 +131,7 @@ test "semantics metadata modifiers merge role state actions and description" {
       .modified(SemanticsRoleModifier(SemanticsRole::FormField))
       .modified(SemanticsRequiredModifier(true))
       .modified(SemanticsInvalidModifier(true))
+      .modified(SemanticsPressedModifier(true))
       .modified(SemanticsDescriptionModifier("Email required"))
       .modified(SemanticsExpandedModifier(false)),
     size=Size::new(width=160.0, height=80.0),
@@ -141,6 +142,7 @@ test "semantics metadata modifiers merge role state actions and description" {
   inspect(tree.description, content="Email required")
   assert_true(tree.state.required)
   assert_true(tree.state.invalid)
+  assert_true(tree.state.pressed)
   assert_false(tree.state.expanded)
   assert_true(tree.actions.any(action => action == SemanticsAction::Expand))
 }

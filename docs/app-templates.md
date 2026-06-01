@@ -125,11 +125,14 @@ using @views {
   banner,
   button,
   column,
+  column_visibility_panel,
+  data_filter,
+  data_filter_bar,
   empty_state,
   error_state,
-  filter_chip,
+  pagination,
   row,
-  searchbar,
+  selection_toolbar,
   sidebar,
   split_view,
   stat_card,
@@ -156,7 +159,11 @@ pub(all) enum LoadState {
 pub(all) struct DashboardModel {
   route : String
   query : String
+  visible_columns : Array[String]
   selected_row : Int?
+  selected_count : Int
+  page : Int
+  page_count : Int
   load_state : LoadState
   rows : Array[Array[String]]
 }
@@ -165,7 +172,15 @@ pub(all) struct DashboardModel {
 pub(all) enum DashboardMsg {
   SelectRoute(String)
   QueryChanged(String)
+  ClearFilters
+  ToggleStatusFilter
+  ToggleColumn(String, Bool)
   SelectRow(Int)
+  SortBy(String)
+  ClearSelection
+  ExportRows
+  PreviousPage
+  NextPage
   RetryLoad
 }
 ```
@@ -175,6 +190,10 @@ View shell:
 ```moonbit
 ///|
 pub fn DashboardModel::view(self : DashboardModel) -> @core.View[DashboardMsg] {
+  let columns = [
+    table_column(id="name", label="Name", width=220.0),
+    table_column(id="status", label="Status", width=140.0),
+  ]
   split_view(
     primary=sidebar(
       "Dashboard",
@@ -189,8 +208,37 @@ pub fn DashboardModel::view(self : DashboardModel) -> @core.View[DashboardMsg] {
         stat_card("Open", "24"),
         stat_card("Blocked", "3", tone=@views.FeedbackTone::Warning),
       ]),
-      searchbar(self.query, on_input=QueryChanged, placeholder="Filter rows"),
-      self.table_body(),
+      data_filter_bar(
+        query=self.query,
+        on_query=QueryChanged,
+        filters=[
+          data_filter(id="blocked", label="Blocked", selected=false, message=ToggleStatusFilter),
+        ],
+        result_count=self.rows.length(),
+        on_clear=Some(ClearFilters),
+      ),
+      row([
+        column_visibility_panel(
+          columns,
+          visible=self.visible_columns,
+          locked=["name"],
+          on_toggle=(id, visible) => ToggleColumn(id, visible),
+          width=280.0,
+        ),
+        selection_toolbar(
+          selected_count=self.selected_count,
+          total_count=self.rows.length(),
+          actions=[@views.MenuItem::new(id="export", label="Export", message=ExportRows)],
+          on_clear=Some(ClearSelection),
+        ),
+      ], spacing=12.0),
+      self.table_body(columns),
+      pagination(
+        page=self.page,
+        page_count=self.page_count,
+        on_previous=PreviousPage,
+        on_next=NextPage,
+      ),
     ], spacing=12.0),
     primary_width=240.0,
     detail_width=640.0,
@@ -203,18 +251,22 @@ Table body:
 
 ```moonbit
 ///|
-fn DashboardModel::table_body(self : DashboardModel) -> @core.View[DashboardMsg] {
+fn DashboardModel::table_body(
+  self : DashboardModel,
+  columns : Array[@views.TableColumn],
+) -> @core.View[DashboardMsg] {
   match self.load_state {
     Loading => @views.loading_state("Loading rows")
     Empty => empty_state("No rows", "Try another filter.")
     Failed(message) => error_state("Load failed", message~)
     Ready => table(
-      [
-        table_column(id="name", label="Name", width=220.0),
-        table_column(id="status", label="Status", width=140.0),
-      ],
+      columns,
       self.rows,
       selected_row=self.selected_row,
+      on_row_select=Some(index => SelectRow(index)),
+      sort_column="name",
+      on_sort=Some(id => SortBy(id)),
+      sortable_columns=["name", "status"],
     )
   }
 }

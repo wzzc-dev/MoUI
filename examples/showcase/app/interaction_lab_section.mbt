@@ -135,6 +135,20 @@ fn ShowcaseModel::focus_shortcut_card(
   width : Double,
 ) -> @core.View[ShowcaseMsg] {
   ignore(self)
+  let focus_scope = @core.FocusScope::new(
+    current=Some("name"),
+    default_action="save",
+    dismiss_action="cancel",
+    items=[
+      @core.FocusScopeItem::new(id="name"),
+      @core.FocusScopeItem::new(id="archived", enabled=false),
+      @core.FocusScopeItem::new(id="email"),
+      @core.FocusScopeItem::new(id="save", focusable=false),
+    ],
+  )
+  let validation_summary = @core.FormValidationSummary::from_errors([
+    { name: "email", message: "Email required" },
+  ])
   showcase_soft_card(
     theme,
     column(
@@ -142,20 +156,119 @@ fn ShowcaseModel::focus_shortcut_card(
         text("Focus + Shortcut", width=width - 32.0, height=24.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.foreground),
-        button(
+        shortcut_button(
           "Focusable action",
-          variant=@views.ButtonVariant::Outline,
-          theme~,
-          width=180.0,
-        )
-        .focusable()
-        .keyboard_shortcut(
-          @core.KeyboardShortcut::new(
+          on_click=ToggleActive,
+          shortcut=@core.KeyboardShortcut::new(
             key="k",
             modifiers=@core.KeyModifiers::new(meta=true),
           ),
-        ),
+          variant=@views.ButtonVariant::Outline,
+          theme~,
+          width=260.0,
+        ).focusable(),
         text("Keyboard shortcut: Meta+K", width=width - 32.0, height=24.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        row(
+          [
+            focus_ring(
+              text("Name field", width=82.0, height=22.0)
+              .font(theme.typography.caption)
+              .foreground(theme.palette.foreground),
+              focused=true,
+              label="Focus target: name",
+              theme~,
+              width=126.0,
+              height=38.0,
+            ),
+            focus_ring(
+              text("Email field", width=82.0, height=22.0)
+              .font(theme.typography.caption)
+              .foreground(theme.palette.foreground),
+              focused=false,
+              label="Focus target: email",
+              theme~,
+              width=126.0,
+              height=38.0,
+            ),
+          ],
+          spacing=theme.spacing_scale.xs,
+          align=@views.CrossAlign::Center,
+        ),
+        text("Focus ring: name", width=width - 32.0, height=22.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        row(
+          [
+            button(
+              "Pressed",
+              variant=@views.ButtonVariant::Tonal,
+              theme~,
+              width=78.0,
+              height=32.0,
+            ).semantics_pressed(),
+            button(
+              "Selected",
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=82.0,
+              height=32.0,
+            ).semantics_selected(),
+            button(
+              "Disabled",
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=82.0,
+              height=32.0,
+            ).disabled(),
+          ],
+          spacing=6.0,
+          align=@views.CrossAlign::Center,
+        ),
+        text(
+          "Semantic states: pressed selected disabled",
+          width=width - 32.0,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        text("Focus order: name -> email", width=width - 32.0, height=22.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        text(
+          "Tab next: " + focus_scope.next().unwrap_or("none"),
+          width=width - 32.0,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        text(
+          "First invalid: " +
+          focus_scope.focus_first_invalid(validation_summary).unwrap_or("none"),
+          width=width - 32.0,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        text(
+          "Enter target: " +
+          focus_scope
+          .command_target(@core.CommandIntent::Submit)
+          .unwrap_or("none"),
+          width=width - 32.0,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        text(
+          "Escape target: " +
+          focus_scope
+          .command_target(@core.CommandIntent::Cancel)
+          .unwrap_or("none"),
+          width=width - 32.0,
+          height=22.0,
+        )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
       ],
@@ -163,9 +276,11 @@ fn ShowcaseModel::focus_shortcut_card(
       align=@views.CrossAlign::Start,
     ),
     width~,
-    height=136.0,
+    height=354.0,
     padding=theme.spacing_scale.md,
   )
+  .semantics_role(@core.SemanticsRole::Group)
+  .accessibility_label("Focus scope keyboard rules")
 }
 
 ///|
@@ -195,6 +310,13 @@ fn ShowcaseModel::popover_dropdown_card(
         text("Popover + Dropdown", width=width - 32.0, height=24.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.foreground),
+        text(
+          "Expanded semantics: selected + disabled options",
+          width=width - 32.0,
+          height=24.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
         dropdown(
           "Renderer",
           items,
@@ -247,7 +369,7 @@ fn ShowcaseModel::popover_dropdown_card(
       align=@views.CrossAlign::Start,
     ),
     width~,
-    height=310.0,
+    height=334.0,
     padding=theme.spacing_scale.md,
   )
 }

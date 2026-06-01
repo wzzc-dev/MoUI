@@ -9,6 +9,8 @@ import {
 // Values
 pub fn[Msg] accordion(Array[WizardStep[Msg]], expanded~ : Array[String], on_toggle~ : (String) -> Msg, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] alert(String, String, primary_action~ : StateViewAction[Msg], secondary_action? : StateViewAction[Msg]?, tone? : FeedbackTone, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] align(@core.View[Msg], alignment? : @core.Alignment) -> @core.View[Msg]
 
 pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
@@ -55,6 +57,8 @@ pub fn[Msg] collapsible_panel(String, content~ : @core.View[Msg], expanded~ : Bo
 
 pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
+pub fn[Msg] column_visibility_panel(Array[TableColumn], visible~ : Array[String], on_toggle~ : (String, Bool) -> Msg, locked? : Array[String], title? : String, summary? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], expanded~ : Bool, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] command_bar(Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
@@ -73,6 +77,10 @@ pub fn[Msg] custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ :
 
 pub fn dark_theme() -> @core.Theme
 
+pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message~ : Msg, enabled? : Bool) -> DataFilter[Msg]
+
+pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
@@ -80,6 +88,10 @@ pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode?
 pub fn description_item(String, String) -> DescriptionItem
 
 pub fn[Msg] description_list(Array[DescriptionItem], theme? : @core.Theme, width? : Double, term_width? : Double, row_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] detail_panel(String, Array[DescriptionItem], subtitle? : String, action? : StateViewAction[Msg]?, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] dialog(String, content~ : @core.View[Msg], subtitle? : String, primary_action? : StateViewAction[Msg]?, secondary_action? : StateViewAction[Msg]?, dismiss_action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool) -> @core.View[Msg]
 
@@ -107,7 +119,11 @@ pub fn[Msg] flexible(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
 pub fn[Msg] flow(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
 
+pub fn[Msg] focus_ring(@core.View[Msg], focused~ : Bool, label? : String, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double, radius? : Double) -> @core.View[Msg]
+
 pub fn[Msg] form(Array[@core.View[Msg]], spacing? : Double, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_actions(primary~ : StateViewAction[Msg], secondary? : StateViewAction[Msg]?, status? : String, primary_enabled? : Bool, secondary_enabled? : Bool, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] form_error(String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -119,11 +135,17 @@ pub fn[Msg] form_helper_text(String, theme? : @core.Theme, width? : Double) -> @
 
 pub fn[Msg] form_section(title? : String, Array[@core.View[Msg]], summary? : String, spacing? : Double, theme? : @core.Theme, width? : Double, padding? : Double) -> @core.View[Msg]
 
+pub fn[Msg] form_validation_summary(summary~ : @core.FormValidationSummary, title? : String, valid_message? : String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_workflow_bar(summary~ : @core.FormValidationSummary, primary~ : StateViewAction[Msg], secondary? : StateViewAction[Msg]?, focus_scope? : @core.FocusScope?, focus_invalid? : StateViewAction[Msg]?, valid_message? : String, invalid_title? : String, status? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.View[Msg]
+
+pub fn[Msg] inline_error(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] input_group(child~ : @core.View[Msg], prefix? : @core.View[Msg]?, suffix? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double) -> @core.View[Msg]
 
@@ -173,6 +195,8 @@ pub fn[Msg] padding_insets(@core.View[Msg], @core.Insets) -> @core.View[Msg]
 
 pub fn[Msg] padding_xy(@core.View[Msg], horizontal? : Double, vertical? : Double) -> @core.View[Msg]
 
+pub fn[Msg] pagination(page~ : Int, page_count~ : Int, on_previous~ : Msg, on_next~ : Msg, theme? : @core.Theme, width? : Double, previous_label? : String, next_label? : String) -> @core.View[Msg]
+
 pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool, on_toggle_reveal~ : Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] picker(Array[@core.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
@@ -184,6 +208,8 @@ pub fn picker_item(String, String) -> @core.PickerItem
 pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+
+pub fn[Msg] progress_status(String, value~ : Double, message? : String, status? : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
@@ -199,6 +225,8 @@ pub fn[Msg] rich_text_editor(String, (String) -> @core.RichTextDocument, on_inpu
 
 pub fn[Msg] rich_text_editor_binding(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
+pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] router_stack(@core.RouterState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
@@ -211,13 +239,21 @@ pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder?
 
 pub fn[Msg] searchbar_binding(query~ : @core.Binding[String], placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
 
+pub fn[Msg] section_nav(String, Array[SectionNavItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, item_width? : Double, item_height? : Double, orientation? : @core.Axis) -> @core.View[Msg]
+
 pub fn[T, Msg] sectioned_list(Array[SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, header? : (SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
 pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] selectable_list(Array[SelectableListItem[Msg]], selected? : String, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, row_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[MenuItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
 pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
 pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : Msg?) -> @core.View[Msg]
+
+pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardShortcut, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double, shortcut_width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] sidebar(String, Array[SidebarItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -235,6 +271,8 @@ pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
 
 pub fn[Msg] stat_card(String, String, caption? : String, tone? : FeedbackTone, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] status_badge(String, tone? : BadgeTone, detail? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] status_bar(Array[String], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] stepper(on_decrement~ : Msg, on_increment~ : Msg, label? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
@@ -247,7 +285,7 @@ pub fn[Msg] tab_view(String, Array[TabItem[Msg]], spacing? : Double, on_select~ 
 
 pub fn[Msg] tab_view_binding(@core.Binding[String], Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
 
-pub fn[Msg] table(Array[TableColumn], Array[Array[String]], selected_row? : Int?, cell? : ((Int, TableColumn, String) -> @core.View[Msg])?, empty? : @core.View[Msg]?, theme? : @core.Theme, row_height? : Double) -> @core.View[Msg]
+pub fn[Msg] table(Array[TableColumn], Array[Array[String]], selected_row? : Int?, on_row_select? : ((Int) -> Msg)?, sort_column? : String, sort_ascending? : Bool, on_sort? : ((String) -> Msg)?, sortable_columns? : Array[String], cell? : ((Int, TableColumn, String) -> @core.View[Msg])?, empty? : @core.View[Msg]?, theme? : @core.Theme, row_height? : Double) -> @core.View[Msg]
 
 pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColumn
 
@@ -262,6 +300,8 @@ pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeho
 pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale) -> @core.Theme
 
 pub fn[Msg] toast(String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] toast_stack(Array[ToastStackItem[Msg]], theme? : @core.Theme, width? : Double, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] toggle(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
@@ -341,6 +381,14 @@ pub(all) enum CrossAlign {
   End
   Stretch
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct DataFilter[Msg] {
+  id : String
+  label : String
+  selected : Bool
+  message : Msg
+  enabled : Bool
+}
 
 pub(all) struct DescriptionItem {
   term : String
@@ -437,10 +485,29 @@ pub(all) struct SectionListSection[T] {
 }
 pub fn[T] SectionListSection::new(id~ : String, title~ : String, items~ : Array[T]) -> Self[T]
 
+pub(all) struct SectionNavItem[Msg] {
+  id : String
+  label : String
+  summary : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] SectionNavItem::new(id~ : String, label~ : String, message~ : Msg, summary? : String, enabled? : Bool) -> Self[Msg]
+
 pub(all) enum SegmentedControlSize {
   Compact
   Regular
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SelectableListItem[Msg] {
+  id : String
+  title : String
+  subtitle : String
+  detail : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] SelectableListItem::new(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> Self[Msg]
 
 pub(all) struct SidebarItem[Msg] {
   id : String
@@ -487,6 +554,15 @@ pub(all) enum TextRole {
   Control
   Mono
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ToastStackItem[Msg] {
+  id : String
+  message : String
+  tone : FeedbackTone
+  action : StateViewAction[Msg]?
+  dismiss : Msg?
+}
+pub fn[Msg] ToastStackItem::new(id~ : String, message~ : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, dismiss? : Msg?) -> Self[Msg]
 
 pub(all) struct TreeItem {
   id : String

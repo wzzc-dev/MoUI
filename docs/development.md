@@ -39,6 +39,7 @@ members = [
   "./examples/data_table",
   "./examples/file_importer",
   "./examples/command_palette",
+  "./examples/mo_workbench",
 ]
 ```
 

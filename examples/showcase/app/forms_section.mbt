@@ -5,6 +5,17 @@ fn ShowcaseModel::forms_section(
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
   let field_width = if metrics.compact { metrics.body_width } else { 420.0 }
+  let profile_focus_scope = @core.FocusScope::new(
+    items=[
+      @core.FocusScopeItem::new(id="display_name"),
+      @core.FocusScopeItem::new(id="email"),
+      @core.FocusScopeItem::new(id="account_id", focusable=false),
+      @core.FocusScopeItem::new(id="save_profile", focusable=false),
+    ],
+    current=Some("display_name"),
+    default_action="save_profile",
+    dismiss_action="cancel_profile",
+  )
   section_panel(
     theme,
     "Forms",
@@ -52,6 +63,32 @@ fn ShowcaseModel::forms_section(
               helper="Read-only values can still be explained.",
               status=@views.FormFieldStatus::ReadOnly,
               layout=@views.FormFieldLayout::Horizontal,
+              theme~,
+              width=field_width,
+            ),
+            form_workflow_bar(
+              summary=@core.FormValidationSummary::from_errors([
+                { name: "email", message: "Email is required" },
+                {
+                  name: "display_name",
+                  message: "Display name must be at least 2 characters",
+                },
+              ]),
+              primary=@views.StateViewAction::new(
+                label="Save profile",
+                message=ToggleActive,
+              ),
+              secondary=Some(
+                @views.StateViewAction::new(label="Cancel", message=ClearFilter),
+              ),
+              focus_scope=Some(profile_focus_scope),
+              focus_invalid=Some(
+                @views.StateViewAction::new(
+                  label="Focus first",
+                  message=ToggleActive,
+                ),
+              ),
+              status="Submit disabled until Email is valid",
               theme~,
               width=field_width,
             ),

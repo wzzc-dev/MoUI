@@ -23,6 +23,7 @@ pub fn[Msg] menu_bar(
         height=34.0,
       )
       .disabled(disabled=!item.enabled)
+      .semantics_role(@core.SemanticsRole::Menu)
       .semantics_selected(selected~),
     )
   }
@@ -33,7 +34,9 @@ pub fn[Msg] menu_bar(
     variant=SurfaceVariant::Base,
     theme~,
     padding=theme.spacing_scale.xs,
-  ).semantics_role(@core.SemanticsRole::Menu)
+  )
+  .semantics_role(@core.SemanticsRole::Menu)
+  .accessibility_label("Menu bar")
 }
 
 ///|
@@ -90,7 +93,9 @@ pub fn[Msg] command_menu(
     variant=SurfaceVariant::Overlay,
     theme~,
     padding=theme.spacing_scale.md,
-  ).semantics_role(@core.SemanticsRole::Menu)
+  )
+  .semantics_role(@core.SemanticsRole::Menu)
+  .accessibility_label("Command menu")
 }
 
 ///|
@@ -114,7 +119,14 @@ pub fn[Msg] context_menu_region(
   .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label("Context menu region")
   .semantics_description("Context menu region")
-  .semantics_action(@core.SemanticsAction::Expand)
+  .semantics_expanded(expanded=visible)
+  .semantics_action(
+    if visible {
+      @core.SemanticsAction::Collapse
+    } else {
+      @core.SemanticsAction::Expand
+    },
+  )
 }
 
 ///|
