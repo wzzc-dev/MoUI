@@ -946,52 +946,59 @@ fn WorkbenchModel::top_bar(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let active = self.active_session()
-  surface(
-    row(
-      [
-        badge("当前会话", tone=Accent, theme~, width=86.0),
-        text(
-          active.title,
-          role=Control,
-          theme~,
-          width=layout.top_title_width,
-          height=30.0,
-        ),
-        text(
-          project_display_label(active.project_path),
-          role=Caption,
-          theme~,
-          width=layout.top_path_width,
-          height=28.0,
-        ),
-        spacer(min_length=10.0, weight=1.0),
-        badge(
-          session_status_label(active.status),
-          tone=session_status_tone(active.status),
-          theme~,
-          width=74.0,
-        ),
-        text(active.branch, role=Caption, theme~, width=120.0, height=28.0),
-        button(
-          "新会话",
-          on_click=NewSession,
-          variant=Outline,
-          theme~,
-          width=66.0,
-          height=34.0,
-        ),
-        button(
-          "刷新",
-          on_click=RefreshSession,
-          variant=Outline,
-          theme~,
-          width=54.0,
-          height=34.0,
-        ),
-      ],
-      spacing=6.0,
-      align=Center,
+  let controls : Array[@core.View[WorkbenchMsg]] = [
+    badge("当前会话", tone=Accent, theme~, width=86.0),
+    text(
+      active.title,
+      role=Control,
+      theme~,
+      width=layout.top_title_width,
+      height=30.0,
     ),
+    text(
+      project_display_label(active.project_path),
+      role=Caption,
+      theme~,
+      width=layout.top_path_width,
+      height=28.0,
+    ),
+    spacer(min_length=10.0, weight=1.0),
+  ]
+  if should_show_session_status_meta(active.status) {
+    controls.push(
+      badge(
+        session_status_label(active.status),
+        tone=session_status_tone(active.status),
+        theme~,
+        width=74.0,
+      ),
+    )
+  }
+  controls.push(
+    text(active.branch, role=Caption, theme~, width=120.0, height=28.0),
+  )
+  controls.push(
+    button(
+      "新会话",
+      on_click=NewSession,
+      variant=Outline,
+      theme~,
+      width=66.0,
+      height=34.0,
+    ),
+  )
+  controls.push(
+    button(
+      "刷新",
+      on_click=RefreshSession,
+      variant=Outline,
+      theme~,
+      width=54.0,
+      height=34.0,
+    ),
+  )
+  surface(
+    row(controls, spacing=6.0, align=Center),
     width=layout.content_width + layout.scrollbar_width,
     height=58.0,
     background=@core.Color::white(),
@@ -1003,9 +1010,18 @@ fn WorkbenchModel::top_bar(
 
 ///|
 fn sidebar_session_meta(session : WorkbenchSession) -> String {
-  match session.status {
-    "idle" => ""
-    _ => session_status_label(session.status)
+  if should_show_session_status_meta(session.status) {
+    session_status_label(session.status)
+  } else {
+    ""
+  }
+}
+
+///|
+fn should_show_session_status_meta(status : String) -> Bool {
+  match status {
+    "" | "active" | "idle" => false
+    _ => true
   }
 }
 

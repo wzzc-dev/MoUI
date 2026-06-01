@@ -3124,7 +3124,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Pi agent 桌面工作台"))
   assert_true(has_text(commands, "当前会话"))
   assert_true(has_text(commands, "MoUI"))
-  assert_true(has_text(commands, "活跃"))
+  assert_false(has_text(commands, "活跃"))
   assert_true(has_text(commands, "Pi RPC harness"))
   assert_false(has_text(commands, "排队"))
   assert_false(has_text(commands, "空闲"))
@@ -3220,6 +3220,31 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "修复"))
   assert_false(has_text(commands, "Research notebook"))
   assert_false(has_text(commands, "Skia native"))
+}
+
+///|
+test "workbench session chrome shows only signal-bearing status" {
+  let queued_model = {
+    ..WorkbenchModel::new(),
+    selected_session_id: "queued-slice",
+    sessions: [
+      WorkbenchSession::new(
+        id="queued-slice",
+        title="Queued validation",
+        project_path="/Volumes/Data/Code/moon/MoUI",
+        branch="codex/mo-workbench",
+        status="queued",
+        summary="Focused checks are waiting.",
+        active_task="",
+        unread_events=1,
+      ),
+    ],
+  }
+  let commands = queued_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(commands, "Queued validation"))
+  assert_true(has_text(commands, "排队"))
 }
 
 ///|

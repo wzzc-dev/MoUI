@@ -92,10 +92,11 @@ packages:
   The visible hierarchy uses quieter Chinese section labels (`当前会话`, `Pi 运行状态`,
   `会话记录`, `运行证据`, `工作区证据`) once their evidence exists while preserving
   Pi/RPC protocol nouns. The default chrome shows short project names and
-  localized session status labels, while full project paths remain in the shared
-  model and Pi transport commands. The default shell keeps only top-bar
-  refresh/new-session controls and composer send prominent, and inactive idle
-  session rows omit status meta instead of showing fake queue or idle labels.
+  signal-bearing localized session status labels, while full project paths
+  remain in the shared model and Pi transport commands. The default shell keeps
+  only top-bar refresh/new-session controls and composer send prominent, and
+  active/idle session rows omit status meta instead of showing fake active,
+  queue, or idle labels.
   Context chips, the idle Pi RPC footer, the `Pi 运行状态` panel, agent focus
   controls, advanced session actions, steering/follow-up composer controls, and
   focused-check presets stay collapsed until Pi state, typed input, non-default
