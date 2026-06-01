@@ -1587,6 +1587,62 @@ test "font fallback contracts normalize style family and language requests" {
   assert_true(match_plan.contains_key(match_key))
   assert_true(match_plan.contains_key(match_font.resource_key()))
   assert_true(match_plan.byte_size > match_resource.byte_size)
+  let resolution = request.resolution_descriptor(
+    b"Noto Sans CJK SC",
+    fallback_index=1,
+    synthetic=true,
+  )
+  assert_true(resolution.is_valid())
+  assert_true(resolution.matched_in_request())
+  assert_true(resolution.source_family() == Some(b"Noto Sans CJK SC"))
+  assert_true(resolution.resolved_match == match_descriptor)
+  let resolution_key = resolution.resource_key()
+  assert_true(resolution_key.kind == @skia_mbt.TypefaceResource)
+  assert_true(resolution_key != key)
+  assert_true(resolution_key != match_key)
+  assert_true(resolution_key == resolution.resource_key())
+  assert_true(
+    resolution_key !=
+    request
+    .resolution_descriptor(
+      b"Noto Sans CJK SC",
+      fallback_index=1,
+      synthetic=false,
+    )
+    .resource_key(),
+  )
+  assert_true(
+    resolution_key !=
+    request
+    .with_character(0x4F61)
+    .resolution_descriptor(
+      b"Noto Sans CJK SC",
+      fallback_index=1,
+      synthetic=true,
+    )
+    .resource_key(),
+  )
+  let resolution_font = resolution.font_descriptor(size=14.0, scale_x=1.1)
+  assert_true(resolution_font.typeface_key == resolution_key)
+  assert_true(resolution_font.resource_key().kind == @skia_mbt.FontResource)
+  let resolution_plan = resolution.resource_plan(size=14.0, scale_x=1.1)
+  assert_eq(resolution_plan.length(), 4)
+  assert_eq(resolution_plan.count_kind(@skia_mbt.TypefaceResource), 3)
+  assert_eq(resolution_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_true(resolution_plan.contains_key(key))
+  assert_true(resolution_plan.contains_key(match_key))
+  assert_true(resolution_plan.contains_key(resolution_key))
+  assert_true(resolution_plan.contains_key(resolution_font.resource_key()))
+  assert_true(resolution_plan.byte_size > match_plan.byte_size)
+  let normalized_resolution = @skia_mbt.FontFallbackResolutionDescriptor::new(
+    request=request.with_character(0x4F61),
+    resolved_match=match_descriptor,
+  )
+  assert_true(
+    normalized_resolution.resolved_match.request ==
+    normalized_resolution.request,
+  )
+  assert_true(normalized_resolution.resource_key() != resolution_key)
   let platform_match = request.match_descriptor(
     b"Platform Fallback",
     fallback_index=99,
@@ -1597,6 +1653,9 @@ test "font fallback contracts normalize style family and language requests" {
   let invalid_match = request.match_descriptor(b"")
   assert_true(!invalid_match.is_valid())
   assert_true(!invalid_match.resource_descriptor().is_cacheable())
+  assert_true(
+    !request.resolution_descriptor(b"").resource_descriptor().is_cacheable(),
+  )
 }
 
 ///|

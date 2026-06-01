@@ -117,8 +117,8 @@ variation, text measurement cache-key variation,
 text shaping resource planning, shaped-text result resource planning, UTF-8 text
 measurement, glyph count, glyph ID mapping, glyph advances, glyph positions,
 glyph bounds, text bounds measurement, font metrics, and font manager family
-enumeration, character fallback, fallback family metadata, and resolved fallback
-match resource planning.
+enumeration, character fallback, fallback family metadata, resolved fallback
+match resource planning, and fallback resolution metadata planning.
 
 The `--require-commit` checks are mandatory for the first source-built Linux
 acceptance because that run establishes the revision to pin. Existing-build
