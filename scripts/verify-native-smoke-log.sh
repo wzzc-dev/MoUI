@@ -58,6 +58,7 @@ default_stage_markers=(
   "native smoke render target identity validation" \
   "native smoke render target resource binding" \
   "native smoke render frame present count" \
+  "native smoke render frame missing present validation" \
   "native smoke render frame touched bounds width" \
   "native smoke render frame cache resources" \
   "native smoke render resource cache inserts" \
@@ -122,6 +123,7 @@ default_expected_stage_values=(
   $'native smoke render target identity validation\t1'
   $'native smoke render target resource binding\t1'
   $'native smoke render frame present count\t1'
+  $'native smoke render frame missing present validation\t1'
   $'native smoke render frame touched bounds width\t4'
   $'native smoke render frame cache resources\t9'
   $'native smoke render resource cache inserts\t9'
