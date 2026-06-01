@@ -1110,12 +1110,28 @@ pub fn ShaderDescriptor::radial_gradient(Point, Float, Color, Color, tile_mode? 
 pub fn ShaderDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn ShaderDescriptor::resource_key(Self) -> RendererResourceKey
 
+pub(all) struct ShapedGlyphRunDescriptor {
+  shaped_run : ShapedTextRunDescriptor
+  glyph_ids : Array[Int]
+  positions : Array[Point]
+  clusters : Array[Int]
+} derive(Eq, @debug.Debug)
+pub fn ShapedGlyphRunDescriptor::cluster_count(Self) -> Int
+pub fn ShapedGlyphRunDescriptor::glyph_count(Self) -> Int
+pub fn ShapedGlyphRunDescriptor::is_empty(Self) -> Bool
+pub fn ShapedGlyphRunDescriptor::is_valid(Self) -> Bool
+pub fn ShapedGlyphRunDescriptor::new(shaped_run? : ShapedTextRunDescriptor, glyph_ids? : Array[Int], positions? : Array[Point], clusters? : Array[Int]) -> Self
+pub fn ShapedGlyphRunDescriptor::resource_descriptor(Self, Bytes, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn ShapedGlyphRunDescriptor::resource_key(Self, Bytes) -> RendererResourceKey
+pub fn ShapedGlyphRunDescriptor::resource_plan(Self, Bytes, glyph_run_byte_size? : Int64, shaped_byte_size? : Int64, shaping_byte_size? : Int64, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
+
 pub(all) struct ShapedTextRunDescriptor {
   shaping : TextShapingDescriptor
   glyph_count : Int
   cluster_count : Int
   advance : Point
 } derive(Eq, @debug.Debug)
+pub fn ShapedTextRunDescriptor::glyph_run_descriptor(Self, glyph_ids? : Array[Int], positions? : Array[Point], clusters? : Array[Int]) -> ShapedGlyphRunDescriptor
 pub fn ShapedTextRunDescriptor::is_valid(Self) -> Bool
 pub fn ShapedTextRunDescriptor::new(shaping? : TextShapingDescriptor, glyph_count? : Int, cluster_count? : Int, advance? : Point) -> Self
 pub fn ShapedTextRunDescriptor::resource_descriptor(Self, Bytes, byte_size? : Int64) -> RendererResourceDescriptor

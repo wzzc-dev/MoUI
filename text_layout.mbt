@@ -1552,3 +1552,243 @@ pub fn ShapedTextRunDescriptor::resource_plan(
   }
   RendererResourcePlan::new(descriptors)
 }
+
+///|
+fn normalized_shaped_glyph_run_count(
+  glyph_ids : Array[Int],
+  positions : Array[Point],
+  clusters : Array[Int],
+) -> Int {
+  let mut count = glyph_ids.length()
+  if positions.length() < count {
+    count = positions.length()
+  }
+  if clusters.length() < count {
+    count = clusters.length()
+  }
+  count
+}
+
+///|
+fn normalized_shaped_glyph_ids(
+  glyph_ids : Array[Int],
+  count : Int,
+) -> Array[Int] {
+  let result : Array[Int] = Array::new(capacity=count)
+  for index in 0..<count {
+    result.push(Int::max(0, glyph_ids[index]))
+  }
+  result
+}
+
+///|
+fn normalized_shaped_glyph_positions(
+  positions : Array[Point],
+  count : Int,
+) -> Array[Point] {
+  let result : Array[Point] = Array::new(capacity=count)
+  for index in 0..<count {
+    let position = positions[index]
+    result.push(if position.is_finite() { position } else { Point::zero() })
+  }
+  result
+}
+
+///|
+fn normalized_shaped_glyph_clusters(
+  clusters : Array[Int],
+  count : Int,
+) -> Array[Int] {
+  let result : Array[Int] = Array::new(capacity=count)
+  for index in 0..<count {
+    result.push(Int::max(0, clusters[index]))
+  }
+  result
+}
+
+///|
+fn normalized_shaped_glyph_text_run(
+  shaped_run : ShapedTextRunDescriptor,
+  glyph_count : Int,
+  cluster_count : Int,
+) -> ShapedTextRunDescriptor {
+  ShapedTextRunDescriptor::new(
+    shaping=shaped_run.shaping,
+    glyph_count~,
+    cluster_count~,
+    advance=shaped_run.advance,
+  )
+}
+
+///|
+/// Detailed glyph IDs, positions, and clusters for a shaped text run.
+pub(all) struct ShapedGlyphRunDescriptor {
+  shaped_run : ShapedTextRunDescriptor
+  glyph_ids : Array[Int]
+  positions : Array[Point]
+  clusters : Array[Int]
+} derive(Debug, Eq)
+
+///|
+pub fn ShapedGlyphRunDescriptor::new(
+  shaped_run? : ShapedTextRunDescriptor = ShapedTextRunDescriptor::new(),
+  glyph_ids? : Array[Int] = [],
+  positions? : Array[Point] = [],
+  clusters? : Array[Int] = [],
+) -> ShapedGlyphRunDescriptor {
+  let count = normalized_shaped_glyph_run_count(glyph_ids, positions, clusters)
+  let glyph_ids = normalized_shaped_glyph_ids(glyph_ids, count)
+  let positions = normalized_shaped_glyph_positions(positions, count)
+  let clusters = normalized_shaped_glyph_clusters(clusters, count)
+  {
+    shaped_run: normalized_shaped_glyph_text_run(
+      shaped_run,
+      count,
+      clusters.length(),
+    ),
+    glyph_ids,
+    positions,
+    clusters,
+  }
+}
+
+///|
+pub fn ShapedTextRunDescriptor::glyph_run_descriptor(
+  self : ShapedTextRunDescriptor,
+  glyph_ids? : Array[Int] = [],
+  positions? : Array[Point] = [],
+  clusters? : Array[Int] = [],
+) -> ShapedGlyphRunDescriptor {
+  ShapedGlyphRunDescriptor::new(
+    shaped_run=self,
+    glyph_ids~,
+    positions~,
+    clusters~,
+  )
+}
+
+///|
+pub fn ShapedGlyphRunDescriptor::glyph_count(
+  self : ShapedGlyphRunDescriptor,
+) -> Int {
+  self.glyph_ids.length()
+}
+
+///|
+pub fn ShapedGlyphRunDescriptor::cluster_count(
+  self : ShapedGlyphRunDescriptor,
+) -> Int {
+  self.clusters.length()
+}
+
+///|
+pub fn ShapedGlyphRunDescriptor::is_empty(
+  self : ShapedGlyphRunDescriptor,
+) -> Bool {
+  self.glyph_ids.is_empty()
+}
+
+///|
+pub fn ShapedGlyphRunDescriptor::is_valid(
+  self : ShapedGlyphRunDescriptor,
+) -> Bool {
+  let glyph_count = self.glyph_count()
+  let mut valid = self.shaped_run.is_valid() &&
+    glyph_count > 0 &&
+    self.positions.length() == glyph_count &&
+    self.clusters.length() == glyph_count &&
+    self.shaped_run.glyph_count == glyph_count &&
+    self.shaped_run.cluster_count == self.cluster_count()
+  for glyph_id in self.glyph_ids {
+    if glyph_id < 0 {
+      valid = false
+    }
+  }
+  for position in self.positions {
+    if !position.is_finite() {
+      valid = false
+    }
+  }
+  for cluster in self.clusters {
+    if cluster < 0 {
+      valid = false
+    }
+  }
+  valid
+}
+
+///|
+fn ShapedGlyphRunDescriptor::resource_id(
+  self : ShapedGlyphRunDescriptor,
+  text : Bytes,
+) -> Bytes {
+  if !self.is_valid() {
+    b""
+  } else {
+    let mut id = b"skia_mbt:shaped-glyph-run:v1" +
+      text_run_cache_bytes(self.shaped_run.resource_key(text).id) +
+      text_run_cache_u64(self.glyph_count())
+    for glyph_id in self.glyph_ids {
+      id = id + text_run_cache_u64(glyph_id)
+    }
+    for position in self.positions {
+      id = id + position.x.to_be_bytes() + position.y.to_be_bytes()
+    }
+    for cluster in self.clusters {
+      id = id + text_run_cache_u64(cluster)
+    }
+    id
+  }
+}
+
+///|
+pub fn ShapedGlyphRunDescriptor::resource_key(
+  self : ShapedGlyphRunDescriptor,
+  text : Bytes,
+) -> RendererResourceKey {
+  RendererResourceKey::text_run(self.resource_id(text))
+}
+
+///|
+pub fn ShapedGlyphRunDescriptor::resource_descriptor(
+  self : ShapedGlyphRunDescriptor,
+  text : Bytes,
+  byte_size? : Int64 = -1L,
+) -> RendererResourceDescriptor {
+  let id = self.resource_id(text)
+  let measured_byte_size = if byte_size < 0L {
+    id.length().to_int64()
+  } else {
+    byte_size
+  }
+  RendererResourceDescriptor::text_run(id, byte_size=measured_byte_size)
+}
+
+///|
+pub fn ShapedGlyphRunDescriptor::resource_plan(
+  self : ShapedGlyphRunDescriptor,
+  text : Bytes,
+  glyph_run_byte_size? : Int64 = -1L,
+  shaped_byte_size? : Int64 = -1L,
+  shaping_byte_size? : Int64 = -1L,
+  text_byte_size? : Int64 = -1L,
+  font_byte_size? : Int64 = 0L,
+  fallback_byte_size? : Int64 = -1L,
+) -> RendererResourcePlan {
+  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  descriptors.push(
+    self.resource_descriptor(text, byte_size=glyph_run_byte_size),
+  )
+  for
+    descriptor in self.shaped_run.resource_plan(
+      text,
+      shaped_byte_size~,
+      shaping_byte_size~,
+      text_byte_size~,
+      font_byte_size~,
+      fallback_byte_size~,
+    ).descriptors {
+    descriptors.push(descriptor)
+  }
+  RendererResourcePlan::new(descriptors)
+}
