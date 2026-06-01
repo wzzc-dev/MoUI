@@ -259,10 +259,14 @@ if ($status.schema_version -ge 3) {
     "pipeline.frame-submission-resource-plan",
     "pipeline.frame-submission-cacheable-subplan",
     "pipeline.frame-submission-uncacheable-subplan",
+    "pipeline.frame-submission-preflight-missing",
+    "pipeline.frame-submission-preflight-cached",
     "pipeline.frame-submission-cache-resources",
     "pipeline.frame-finalization-resource-plan",
     "pipeline.frame-finalization-cacheable-subplan",
     "pipeline.frame-finalization-uncacheable-subplan",
+    "pipeline.frame-finalization-preflight-missing",
+    "pipeline.frame-finalization-preflight-cached",
     "pipeline.frame-finalization-cache-resources",
     "pipeline.frame-missing-present-validation",
     "pipeline.frame-missing-finalization-validation",
@@ -490,10 +494,14 @@ if ($status.schema_version -ge 3) {
       "native smoke render frame submission resource plan count" = "2"
       "native smoke render frame submission cacheable subplan count" = "1"
       "native smoke render frame submission uncacheable subplan count" = "1"
+      "native smoke render frame submission preflight missing count" = "1"
+      "native smoke render frame submission preflight cached count" = "1"
       "native smoke render frame submission cache resources" = "1"
       "native smoke render frame finalization resource plan count" = "2"
       "native smoke render frame finalization cacheable subplan count" = "1"
       "native smoke render frame finalization uncacheable subplan count" = "1"
+      "native smoke render frame finalization preflight missing count" = "1"
+      "native smoke render frame finalization preflight cached count" = "1"
       "native smoke render frame finalization cache resources" = "1"
       "native smoke render frame missing present validation" = "1"
       "native smoke render frame missing finalization validation" = "1"
