@@ -289,8 +289,16 @@ $defaultExpectedStageValues = @(
     Value = "2"
   }
 )
+$defaultConditionalStageMarkers = @(
+  [pscustomobject]@{
+    Marker = "native smoke shaped glyph count"
+    WhenMarker = "native smoke shaper availability"
+    WhenValue = "1"
+  }
+)
 $stageMarkers = $defaultStageMarkers
 $expectedStageValues = $defaultExpectedStageValues
+$conditionalStageMarkers = $defaultConditionalStageMarkers
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $statusFile = Join-Path $repoRoot "skia-platform-status.json"
 if (Test-Path -LiteralPath $statusFile -PathType Leaf) {
@@ -315,6 +323,21 @@ if (Test-Path -LiteralPath $statusFile -PathType Leaf) {
     })
   if ($statusExpectedStageValues.Count -gt 0) {
     $expectedStageValues = $statusExpectedStageValues
+  }
+  $statusConditionalStageMarkers = @($status.native_smoke_conditional_capabilities | ForEach-Object {
+      $marker = "$($_.marker)".Trim()
+      $whenMarker = "$($_.when_marker)".Trim()
+      $whenValue = "$($_.when_value)".Trim()
+      if ($marker -ne "" -and $whenMarker -ne "" -and $whenValue -ne "") {
+        [pscustomobject]@{
+          Marker = $marker
+          WhenMarker = $whenMarker
+          WhenValue = $whenValue
+        }
+      }
+    })
+  if ($statusConditionalStageMarkers.Count -gt 0) {
+    $conditionalStageMarkers = $statusConditionalStageMarkers
   }
 }
 foreach ($stageMarker in $stageMarkers) {
@@ -344,6 +367,16 @@ foreach ($expectedStageValue in $expectedStageValues) {
   $actualValue = Get-MarkerValue -Marker $expectedStageValue.Marker
   if ($actualValue -ne $expectedStageValue.Value) {
     throw "native smoke executable log has unexpected stage marker value: $($expectedStageValue.Marker) expected=$($expectedStageValue.Value) actual=$actualValue"
+  }
+}
+
+foreach ($conditionalStageMarker in $conditionalStageMarkers) {
+  $actualWhenValue = Get-MarkerValue -Marker $conditionalStageMarker.WhenMarker
+  if ($actualWhenValue -eq $conditionalStageMarker.WhenValue) {
+    if (!(Test-ExactLogLine -Expected $conditionalStageMarker.Marker)) {
+      throw "native smoke executable log is missing conditional stage marker: $($conditionalStageMarker.Marker) when_marker=$($conditionalStageMarker.WhenMarker) when_value=$($conditionalStageMarker.WhenValue)"
+    }
+    Get-MarkerValue -Marker $conditionalStageMarker.Marker | Out-Null
   }
 }
 

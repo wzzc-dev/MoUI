@@ -169,6 +169,10 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 status_file="$repo_root/skia-platform-status.json"
 stage_markers=("${default_stage_markers[@]}")
 expected_stage_values=("${default_expected_stage_values[@]}")
+default_conditional_stage_markers=(
+  $'native smoke shaped glyph count\tnative smoke shaper availability\t1'
+)
+conditional_stage_markers=("${default_conditional_stage_markers[@]}")
 if [[ -f "$status_file" ]]; then
   status_stage_markers="$(
     python3 - "$status_file" <<'PY'
@@ -215,6 +219,30 @@ PY
       fi
     done <<< "$status_expected_stage_values"
   fi
+  status_conditional_stage_markers="$(
+    python3 - "$status_file" <<'PY'
+import json
+import pathlib
+import sys
+
+status_path = pathlib.Path(sys.argv[1])
+status = json.loads(status_path.read_text(encoding="utf-8"))
+for conditional in status.get("native_smoke_conditional_capabilities", []):
+    marker = str(conditional.get("marker", "")).strip()
+    when_marker = str(conditional.get("when_marker", "")).strip()
+    when_value = str(conditional.get("when_value", "")).strip()
+    if marker and when_marker and when_value:
+        print(marker + "\t" + when_marker + "\t" + when_value)
+PY
+  )"
+  if [[ -n "$status_conditional_stage_markers" ]]; then
+    conditional_stage_markers=()
+    while IFS= read -r status_conditional_stage_marker; do
+      if [[ -n "$status_conditional_stage_marker" ]]; then
+        conditional_stage_markers+=("$status_conditional_stage_marker")
+      fi
+    done <<< "$status_conditional_stage_markers"
+  fi
 fi
 
 for stage_marker in "${stage_markers[@]}"; do
@@ -253,6 +281,20 @@ for expected_stage_value in "${expected_stage_values[@]}"; do
     echo "  expected=$expected_value" >&2
     echo "  actual=$actual_value" >&2
     exit 1
+  fi
+done
+
+for conditional_stage_marker in "${conditional_stage_markers[@]}"; do
+  IFS=$'\t' read -r marker when_marker when_value <<< "$conditional_stage_marker"
+  actual_when_value="$(marker_value "$when_marker")"
+  if [[ "$actual_when_value" == "$when_value" ]]; then
+    if ! has_exact_line "$marker"; then
+      echo "native smoke executable log is missing conditional stage marker: $marker" >&2
+      echo "  when_marker=$when_marker" >&2
+      echo "  when_value=$when_value" >&2
+      exit 1
+    fi
+    marker_value "$marker" >/dev/null
   fi
 done
 

@@ -35,12 +35,22 @@ expected_values = {
     for entry in status.get("native_smoke_expected_values", [])
     if entry.get("marker", "").strip() and str(entry.get("value", "")).strip()
 }
+marker_values = {}
 lines = []
 for capability in status["native_smoke_capabilities"]:
     marker = capability["marker"].strip()
     if marker:
+        value = expected_values.get(marker, "1")
+        marker_values[marker] = value
         lines.append(marker)
-        lines.append(expected_values.get(marker, "1"))
+        lines.append(value)
+for conditional in status.get("native_smoke_conditional_capabilities", []):
+    marker = conditional.get("marker", "").strip()
+    when_marker = conditional.get("when_marker", "").strip()
+    when_value = str(conditional.get("when_value", "")).strip()
+    if marker and marker_values.get(when_marker) == when_value:
+        lines.append(marker)
+        lines.append("1")
 lines.append("skia_mbt native smoke test passed")
 output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
