@@ -36,6 +36,7 @@ $defaultStageMarkers = @(
   "native smoke canvas state restored",
   "native smoke canvas clip device width",
   "native smoke canvas replay commands",
+  "native smoke render shaped glyph run command replay",
   "native smoke render resource plan count",
   "native smoke render frame resource plan count",
   "native smoke render frame validation status",
@@ -144,15 +145,19 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke canvas replay commands"
-    Value = "8"
+    Value = "9"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render shaped glyph run command replay"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke render resource plan count"
-    Value = "9"
+    Value = "12"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame resource plan count"
-    Value = "9"
+    Value = "12"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame validation status"
@@ -208,11 +213,11 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke render frame cache resources"
-    Value = "9"
+    Value = "12"
   }
   [pscustomobject]@{
     Marker = "native smoke render resource cache inserts"
-    Value = "9"
+    Value = "12"
   }
   [pscustomobject]@{
     Marker = "native smoke render resource cache plan coverage"

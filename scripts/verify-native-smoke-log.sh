@@ -51,6 +51,7 @@ default_stage_markers=(
   "native smoke canvas state restored" \
   "native smoke canvas clip device width" \
   "native smoke canvas replay commands" \
+  "native smoke render shaped glyph run command replay" \
   "native smoke render resource plan count" \
   "native smoke render frame resource plan count" \
   "native smoke render frame validation status" \
@@ -152,9 +153,10 @@ default_stage_markers=(
 default_expected_stage_values=(
   $'native smoke canvas clip device width\t4'
   $'native smoke canvas state restored\t1'
-  $'native smoke canvas replay commands\t8'
-  $'native smoke render resource plan count\t9'
-  $'native smoke render frame resource plan count\t9'
+  $'native smoke canvas replay commands\t9'
+  $'native smoke render shaped glyph run command replay\t1'
+  $'native smoke render resource plan count\t12'
+  $'native smoke render frame resource plan count\t12'
   $'native smoke render frame validation status\t1'
   $'native smoke render frame unbalanced validation\t1'
   $'native smoke render target identity validation\t1'
@@ -168,8 +170,8 @@ default_expected_stage_values=(
   $'native smoke render frame missing present validation\t1'
   $'native smoke render frame missing finalization validation\t1'
   $'native smoke render frame touched bounds width\t4'
-  $'native smoke render frame cache resources\t9'
-  $'native smoke render resource cache inserts\t9'
+  $'native smoke render frame cache resources\t12'
+  $'native smoke render resource cache inserts\t12'
   $'native smoke render resource cache plan coverage\t1'
   $'native smoke render resource cache evictions\t1'
   $'native smoke render resource cache hits\t1'
