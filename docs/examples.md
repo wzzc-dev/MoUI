@@ -196,7 +196,7 @@ platform-neutral warning event and nonzero process exits become
 child exits do not close the native owner; the next UI command batch restarts a
 fresh JSONL process, while explicit `Shutdown` remains the close path. The
 native encoder targets Pi's actual RPC command names: `get_state`,
-`new_session`, `prompt`, `get_available_models`, `get_messages`,
+`new_session`, `prompt`, `steer`, `follow_up`, `get_available_models`, `get_messages`,
 `get_fork_messages`, `fork`, `get_commands`, `get_session_stats`,
 `export_html`, `set_model`, `cycle_model`, `compact`, `cycle_thinking_level`,
 `set_steering_mode`, `set_follow_up_mode`, `set_session_name`, `bash`,
@@ -212,7 +212,8 @@ the expected in-memory `export_html` failure boundary, a
 `compact` offline failure boundary, a
 `cycle_thinking_level` acknowledgement,
 steering/follow-up mode acknowledgements, a `set_session_name`
-acknowledgement, and an `abort_bash` acknowledgement through `pi --mode rpc`,
+acknowledgement, steering/follow-up input acknowledgements, and an `abort_bash`
+acknowledgement through `pi --mode rpc`,
 so it validates the process protocol without requiring a successful model call.
 The shared
 app ingests
@@ -242,7 +243,9 @@ diagnostics.
 compact Thinking control and
 `PiAgentSnapshot` aligned. `set_steering_mode` and `set_follow_up_mode`
 responses acknowledge the compact composer controls, while `get_state` refreshes
-the source-of-truth modes from Pi. `set_session_name` responses and
+the source-of-truth modes from Pi. The composer can also send explicit
+platform-neutral steering and follow-up inputs that the native encoder maps to
+Pi RPC `steer` and `follow_up`. `set_session_name` responses and
 `session_info_changed` events keep the Workbench-to-Pi session binding display
 name in sync, while RPC failures become diagnostics without leaking native
 process details into the app model.
@@ -346,6 +349,12 @@ printf '{"type":"set_steering_mode","mode":"all"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"set_follow_up_mode","mode":"one-at-a-time"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"steer","message":"Prefer narrow edits"}\n' | \
+  pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-themes --offline
+printf '{"type":"follow_up","message":"Update docs"}\n' | \
   pi --mode rpc --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-themes --offline
 printf '{"type":"set_session_name","name":"Mo Workbench smoke"}\n' | \

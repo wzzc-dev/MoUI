@@ -33,6 +33,8 @@ pub(all) enum PiTransportCommand {
   SetRpcFollowUpMode(String, String)
   SetRpcSessionName(String, String)
   SendUserInput(String, String)
+  SendSteeringInput(String, String)
+  SendFollowUpInput(String, String)
   RunShellCommand(String, String)
   CancelShellCommand(String)
   CancelRpcRun(String)
@@ -188,6 +190,10 @@ pub fn PiTransportCommand::label(self : PiTransportCommand) -> String {
     SetRpcSessionName(session, name) =>
       "set rpc session name for " + session + ": " + name
     SendUserInput(session, text) => "send prompt for " + session + ": " + text
+    SendSteeringInput(session, text) =>
+      "send steering input for " + session + ": " + text
+    SendFollowUpInput(session, text) =>
+      "send follow-up input for " + session + ": " + text
     RunShellCommand(session, command) =>
       "run shell command for " + session + ": " + command
     CancelShellCommand(session) => "cancel shell command for " + session
