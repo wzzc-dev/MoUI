@@ -246,3 +246,26 @@ pub fn ResourceCache::insert_resource_plan(
   }
   inserted
 }
+
+///|
+pub fn ResourceCache::contains_resource_descriptor(
+  self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+  descriptor : RendererResourceDescriptor,
+) -> Bool {
+  self.peek(descriptor.key) == Some(descriptor)
+}
+
+///|
+pub fn ResourceCache::contains_resource_plan(
+  self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
+  plan : RendererResourcePlan,
+) -> Bool {
+  let mut covered = true
+  for descriptor in plan.descriptors {
+    if descriptor.is_cacheable() &&
+      !self.contains_resource_descriptor(descriptor) {
+      covered = false
+    }
+  }
+  covered
+}
