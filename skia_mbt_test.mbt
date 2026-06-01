@@ -866,10 +866,26 @@ test "resource cache inserts renderer resource plans" {
     @skia_mbt.RendererResourceDescriptor,
   ] = @skia_mbt.ResourceCache::new(max_bytes=10L)
   assert_true(!cache.contains_resource_plan(plan))
+  let cached_before = cache.cached_cacheable_resource_plan(plan)
+  let missing_before = cache.missing_cacheable_resource_plan(plan)
+  assert_true(cached_before.is_empty())
+  assert_eq(missing_before.length(), 2)
+  assert_eq(missing_before.byte_size, 10L)
+  assert_true(missing_before.contains_key(image.key))
+  assert_true(missing_before.contains_key(path.key))
+  assert_true(!missing_before.contains_key(scratch.key))
   assert_eq(cache.insert_resource_plan(plan), 2)
   assert_eq(cache.length(), 2)
   assert_eq(cache.byte_size(), 10L)
   assert_true(cache.contains_resource_plan(plan))
+  let cached_after = cache.cached_cacheable_resource_plan(plan)
+  let missing_after = cache.missing_cacheable_resource_plan(plan)
+  assert_eq(cached_after.length(), 2)
+  assert_eq(cached_after.byte_size, 10L)
+  assert_true(cached_after.contains_key(image.key))
+  assert_true(cached_after.contains_key(path.key))
+  assert_true(!cached_after.contains_key(scratch.key))
+  assert_true(missing_after.is_empty())
   assert_true(cache.contains_resource_descriptor(image))
   assert_true(cache.contains(image.key))
   assert_true(cache.contains(path.key))
@@ -879,9 +895,9 @@ test "resource cache inserts renderer resource plans" {
   let huge = @skia_mbt.RendererResourceDescriptor::image(b"huge", byte_size=99L)
   assert_true(!cache.insert_resource_descriptor(huge))
   assert_true(!cache.contains(huge.key))
-  assert_true(
-    !cache.contains_resource_plan(@skia_mbt.RendererResourcePlan::new([huge])),
-  )
+  let huge_plan = @skia_mbt.RendererResourcePlan::new([huge])
+  assert_eq(cache.missing_cacheable_resource_plan(huge_plan).length(), 1)
+  assert_true(!cache.contains_resource_plan(huge_plan))
 }
 
 ///|
