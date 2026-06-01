@@ -216,6 +216,11 @@
       "marker": "native smoke window frame pacing"
     },
     {
+      "id": "surface.window-frame-pacing-key",
+      "area": "Surface",
+      "marker": "native smoke window frame pacing key variation"
+    },
+    {
       "id": "surface.window-present-mode-key",
       "area": "Surface",
       "marker": "native smoke window present mode key variation"
@@ -575,6 +580,11 @@
       "id": "surface.window-frame-pacing",
       "marker": "native smoke window frame pacing",
       "value": "2"
+    },
+    {
+      "id": "surface.window-frame-pacing-key",
+      "marker": "native smoke window frame pacing key variation",
+      "value": "1"
     },
     {
       "id": "surface.window-present-mode-key",
