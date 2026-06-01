@@ -215,7 +215,20 @@ if ($status.schema_version -ge 3) {
   if ($missingIds.Count -gt 0) {
     throw "native smoke capability coverage is missing ids: $($missingIds -join ', ')"
   }
-  $requiredAreas = @("Surface", "Canvas", "GPU", "Shader", "Filter", "Path", "Image", "Text", "FontMgr")
+  $requiredAreas = @(
+    "Surface",
+    "Canvas",
+    "Pipeline",
+    "GPU",
+    "Shader",
+    "Filter",
+    "Path",
+    "Image",
+    "Codec",
+    "Bitmap",
+    "Text",
+    "FontMgr"
+  )
   $missingAreas = @($requiredAreas | Where-Object { !$seenAreas.ContainsKey($_) })
   if ($missingAreas.Count -gt 0) {
     throw "native smoke capability coverage is missing areas: $($missingAreas -join ', ')"
