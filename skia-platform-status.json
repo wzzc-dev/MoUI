@@ -351,6 +351,16 @@
       "marker": "native smoke text run range byte size"
     },
     {
+      "id": "text.measurement-resource-plan",
+      "area": "Text",
+      "marker": "native smoke text measurement resource plan count"
+    },
+    {
+      "id": "text.measurement-key",
+      "area": "Text",
+      "marker": "native smoke text measurement key variation"
+    },
+    {
       "id": "text.measure",
       "area": "Text",
       "marker": "native smoke measured text width"
@@ -695,6 +705,16 @@
       "id": "text.text-run-range",
       "marker": "native smoke text run range byte size",
       "value": "4"
+    },
+    {
+      "id": "text.measurement-resource-plan",
+      "marker": "native smoke text measurement resource plan count",
+      "value": "4"
+    },
+    {
+      "id": "text.measurement-key",
+      "marker": "native smoke text measurement key variation",
+      "value": "1"
     },
     {
       "id": "text.font-resource-plan",

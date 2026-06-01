@@ -678,6 +678,26 @@ fn main {
     replay_text_run_plan.byte_size <= 0L {
     fail_smoke("native text run resource plan did not include font and fallback dependencies")
   }
+  let replay_measurement = @skia.TextMeasurementDescriptor::new(
+    run=replay_descriptor,
+    font_key=@skia.RendererResourceKey::font(b"default:8"),
+    width=128.0,
+    shape=true,
+  )
+  let replay_measurement_plan = replay_measurement.resource_plan(b"hello")
+  if replay_measurement_plan.length() != 4 ||
+    replay_measurement_plan.count_kind(@skia.TextRunResource) != 2 ||
+    replay_measurement_plan.count_kind(@skia.FontResource) != 1 ||
+    replay_measurement_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    replay_measurement_plan.byte_size <= replay_text_run_plan.byte_size {
+    fail_smoke("native text measurement resource plan did not include measured run dependencies")
+  }
+  if replay_measurement.resource_key(b"hello") ==
+    replay_measurement.with_width(64.0).resource_key(b"hello") ||
+    replay_measurement.resource_key(b"hello") ==
+    replay_measurement.with_shape(false).resource_key(b"hello") {
+    fail_smoke("native text measurement resource key did not encode measurement inputs")
+  }
   let ranged_text_descriptor = @skia.TextRunDescriptor::new(
     range=@skia.TextRange::new(1, 5),
   )
@@ -791,6 +811,10 @@ fn main {
   println(replay_text_run_plan.length())
   println("native smoke text run range byte size")
   println(ranged_text_resource.byte_size)
+  println("native smoke text measurement resource plan count")
+  println(replay_measurement_plan.length())
+  println("native smoke text measurement key variation")
+  println(1)
   println("native smoke render frame resource plan count")
   println(replay_frame.resource_plan.length())
   println("native smoke render frame validation status")
