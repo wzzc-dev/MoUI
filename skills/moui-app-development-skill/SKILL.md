@@ -158,7 +158,11 @@ exit-after-first-present environment flag is set, so app runs and smoke evidence
 keep distinct text-resolution intent. Use
 `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke`
 for a local real-Skia renderer smoke plus first-frame Showcase and Markdown
-Editor check.
+Editor check. Use `scripts/macos-skia-renderer-smoke.sh --write-local-config`
+when direct local `moon run` commands need real Skia; in `auto` link mode that
+persistent setup prefers dynamic `libskia.dylib`, while temporary smoke/build
+setup prefers static `libskia.a` when available. Set
+`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode` to override.
 
 Native packaging helpers:
 

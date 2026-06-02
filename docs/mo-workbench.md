@@ -794,7 +794,14 @@ capability reporting, and add focused tests.
 
 Fallback compilation is not renderer readiness. Real native smoke still
 depends on local Skia link flags and should use the existing macOS Skia helper
-when validating presenter pixels.
+when validating presenter pixels. The helper's `--write-local-config` path now
+also writes `examples/mo_workbench/macos_skia/moon.pkg`, so direct local
+commands such as `moon run examples/mo_workbench/macos_skia --target native`
+can use real Skia after configuration. In `auto` mode that persistent direct-run
+setup prefers dynamic `libskia.dylib`; temporary smoke/build setup prefers
+static `libskia.a` when available. Set
+`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode dynamic|static`
+to override.
 
 ## Focused Validation
 
@@ -865,6 +872,7 @@ printf '{"type":"abort_bash"}\n' | \
 When real Skia is configured locally, also run:
 
 ```sh
+scripts/macos-skia-renderer-smoke.sh --write-local-config
 MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
   moon run examples/mo_workbench/macos_skia --target native
 ```

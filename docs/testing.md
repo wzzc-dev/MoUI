@@ -240,6 +240,10 @@ This renderer slice includes the native Skia raster package at
 On macOS, use `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 --run-markdown-smoke` when you need renderer pixels plus first-frame Showcase
 and Markdown Editor runtime evidence with temporary real-Skia link flags. Add
+`--link-mode dynamic|static` or set `SKIA_MBT_MACOS_LINK_MODE` when the
+default auto mode is not what you want; auto prefers static `libskia.a` for
+temporary smoke/build rewrites and dynamic `libskia.dylib` for
+`--write-local-config` direct-run setup when those files exist. Add
 explicit log paths and `--record-platform-evidence` when you want the helper to
 update the macOS `skiaEvidence` block in the platform evidence manifest after a
 successful run:
