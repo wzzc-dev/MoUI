@@ -127,6 +127,7 @@
         "native smoke invalid shaped glyph replay skipped",
         "native smoke canvas replay rrect path clips",
         "native smoke canvas replay clip path cache resources",
+        "native smoke empty path replay path cache resources",
         "native smoke canvas replay color paint fills",
         "native smoke canvas replay paint fill clipped",
         "native smoke canvas replay paint shader fills",

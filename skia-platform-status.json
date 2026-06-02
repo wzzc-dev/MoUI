@@ -198,6 +198,11 @@
       "marker": "native smoke canvas replay clip path cache resources"
     },
     {
+      "id": "canvas.empty-path-replay-cache-resources",
+      "area": "Canvas",
+      "marker": "native smoke empty path replay path cache resources"
+    },
+    {
       "id": "canvas.replay-color-paint-fills",
       "area": "Canvas",
       "marker": "native smoke canvas replay color paint fills"
@@ -1250,6 +1255,11 @@
       "id": "canvas.replay-clip-path-cache-resources",
       "marker": "native smoke canvas replay clip path cache resources",
       "value": "1"
+    },
+    {
+      "id": "canvas.empty-path-replay-cache-resources",
+      "marker": "native smoke empty path replay path cache resources",
+      "value": "0"
     },
     {
       "id": "canvas.replay-color-paint-fills",

@@ -2092,6 +2092,54 @@ fn main {
     0xff,
   )
 
+  let empty_replay_path = @skia.Path::new()
+  let empty_path_shader = @skia.ShaderDescriptor::color(@skia.Color::green())
+  let empty_path_commands = @skia.RenderCommandList::for_target(replay_target)
+    .clip_path(empty_replay_path)
+    .draw_path(
+      empty_replay_path,
+      paint=@skia.Paint::new(color=@skia.Color::blue()),
+    )
+    .draw_path_shader(empty_replay_path, empty_path_shader)
+  let empty_path_plan = empty_path_commands.resource_plan()
+  if !empty_replay_path.resource_key().is_empty() ||
+    empty_replay_path.resource_descriptor().is_cacheable() ||
+    empty_path_plan.length() != 2 ||
+    empty_path_plan.count_kind(@skia.SurfaceResource) != 1 ||
+    empty_path_plan.count_kind(@skia.PathResource) != 0 ||
+    empty_path_plan.count_kind(@skia.ShaderResource) != 1 {
+    fail_smoke("empty path replay resource plan is not cache-safe")
+  }
+  guard @native.Surface::raster_n32_premul(replay_size)
+    is Some(empty_path_surface) else {
+    fail_smoke("failed to create empty path replay surface")
+  }
+  guard empty_path_surface.canvas() is Some(empty_path_canvas) else {
+    fail_smoke("failed to create empty path replay canvas")
+  }
+  let empty_path_resources = @native.NativeReplayResources::new(
+    shader_max_bytes=1024L,
+    path_max_bytes=1024L,
+  )
+  let empty_path_stats = empty_path_canvas.replay_with_resources(
+    empty_path_commands,
+    empty_path_resources,
+  )
+  let empty_path_cache_stats = empty_path_resources.path_cache.stats()
+  if !empty_path_stats.is_complete() ||
+    empty_path_stats.command_count != empty_path_commands.length() ||
+    empty_path_stats.replayed_count != empty_path_commands.length() ||
+    empty_path_stats.skipped_count != 0 ||
+    empty_path_stats.clip_count != 1 ||
+    empty_path_stats.draw_count != 2 ||
+    empty_path_stats.path_resource_count != 3 ||
+    empty_path_resources.path_cache.length() != 0 ||
+    empty_path_cache_stats.misses != 0 ||
+    empty_path_cache_stats.hits != 0 ||
+    empty_path_resources.shader_cache.length() != 1 {
+    fail_smoke("empty path replay should not touch path cache")
+  }
+
   let replay_fill_commands = @skia.RenderCommandList::for_target(replay_target)
     .draw_color(@skia.Color::red(), blend_mode=@skia.Src)
     .clip_rect(@skia.Rect::from_xywh(2, 2, 3, 3))
@@ -2237,6 +2285,8 @@ fn main {
   println(replay_clip_stats.clip_count)
   println("native smoke canvas replay clip path cache resources")
   println(replay_clip_resources.path_cache.length())
+  println("native smoke empty path replay path cache resources")
+  println(empty_path_resources.path_cache.length())
   println("native smoke canvas replay color paint fills")
   println(replay_fill_stats.draw_count)
   println("native smoke canvas replay paint fill clipped")
