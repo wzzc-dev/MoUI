@@ -207,10 +207,8 @@ fn WorkbenchModel::app_sidebar(
     self.sidebar_brand(layout, theme),
     self.sidebar_section_label("任务历史", layout, theme),
     self.pinned_threads(layout, theme),
-    self.sidebar_section_label("工作区", layout, theme),
-    self.workspace_summary(layout, theme),
-    spacer(min_length=8.0, weight=1.0),
   ]
+  rows.push(spacer(min_length=8.0, weight=1.0))
   if self.should_show_sidebar_transport_footer() {
     rows.push(self.sidebar_footer(layout, theme))
   }
@@ -274,59 +272,6 @@ fn WorkbenchModel::pinned_threads(
     )
   }
   column(rows, spacing=2.0, align=Stretch)
-}
-
-///|
-fn WorkbenchModel::workspace_summary(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let active = self.active_session()
-  let pending = self.pending_transport_count()
-  let workspace_label_width = layout.sidebar_inner_width - 30.0
-  let rows : Array[@core.View[WorkbenchMsg]] = [
-    text(
-      end_ellipsis_label(
-        project_display_label(active.project_path),
-        max_chars=readable_line_char_limit(workspace_label_width),
-      ),
-      role=Control,
-      theme~,
-      width=workspace_label_width,
-      height=28.0,
-    ),
-    text(
-      middle_ellipsis_label(
-        active.branch,
-        max_chars=readable_line_char_limit(workspace_label_width),
-      ),
-      role=Caption,
-      theme~,
-      width=workspace_label_width,
-      height=24.0,
-    ),
-  ]
-  if pending > 0 {
-    rows.push(
-      text(
-        pending.to_string() + " 排队",
-        role=Caption,
-        theme~,
-        width=layout.sidebar_inner_width - 30.0,
-        height=24.0,
-      ),
-    )
-  }
-  surface(
-    column(rows, spacing=2.0, align=Start),
-    width=layout.sidebar_inner_width,
-    height=if pending > 0 { 104.0 } else { 74.0 },
-    background=ui_color(0.96, 0.96, 0.95),
-    corner_radius=8.0,
-    theme~,
-    padding=10.0,
-  ).border(workbench_hairline_border())
 }
 
 ///|
@@ -1017,7 +962,7 @@ fn WorkbenchModel::chat_empty_state(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let active = self.active_session()
+  ignore(self)
   let width = layout.content_width
   let body_width = workbench_clamp_double(width - 96.0, 220.0, 520.0)
   let height = self.main_scroll_height(layout)
@@ -1038,33 +983,11 @@ fn WorkbenchModel::chat_empty_state(
         width=body_width,
         height=24.0,
       ),
-      text(
-        empty_state_session_hint(active, body_width),
-        role=Caption,
-        theme~,
-        width=body_width,
-        height=24.0,
-      ),
       spacer(min_length=1.0, weight=1.0),
     ],
     spacing=2.0,
     align=Center,
   ).frame(width~, height~)
-}
-
-///|
-fn empty_state_session_hint(
-  session : WorkbenchSession,
-  width : Double,
-) -> String {
-  let project = project_display_label(session.project_path)
-  let branch = session.branch.trim().to_owned()
-  let max_chars = readable_line_char_limit(width)
-  if branch == "" {
-    middle_ellipsis_label(project, max_chars~)
-  } else {
-    middle_ellipsis_label(project + " · " + branch, max_chars~)
-  }
 }
 
 ///|

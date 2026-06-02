@@ -4185,7 +4185,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_true(has_text(commands, "Agent 桌面工作台"))
   assert_false(has_text(commands, "Pi agent 桌面工作台"))
   assert_true(has_text(commands, "当前会话"))
-  assert_true(has_text(commands, "MoUI"))
+  assert_true(draw_text_count_containing(commands, "MoUI") >= 1)
   assert_false(has_text(commands, "活跃"))
   assert_true(has_text(commands, "Agent 路由整理"))
   assert_false(has_text(commands, "Provider routing cleanup"))
@@ -4221,6 +4221,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "会话记录"))
   assert_false(has_text(commands, "运行证据"))
   assert_false(has_text(commands, "工作区证据"))
+  assert_false(has_text(commands, "工作区"))
   assert_false(has_text(commands, "Pi RPC"))
   assert_false(has_text(commands, "/Volumes/Data/Code/moon/MoUI"))
   assert_false(has_text(commands, "/Volumes/Data/Code/moon/pi"))
@@ -4341,15 +4342,21 @@ test "workbench default first screen stays within a quiet text budget" {
   let commands = WorkbenchModel::new()
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(draw_text_total(commands) <= 17)
+  assert_true(draw_text_total(commands) <= 13)
   inspect(draw_text_count(commands, "当前会话"), content="1")
   inspect(draw_text_count(commands, "准备开始这个会话"), content="1")
   inspect(draw_text_count(commands, "给 Agent 一个任务"), content="1")
+  assert_true(draw_text_count_containing(commands, "MoUI") <= 3)
+  inspect(
+    draw_text_count_containing(commands, "codex/mo-workbench"),
+    content="1",
+  )
   assert_true(draw_text_count_containing(commands, "Agent") <= 4)
   inspect(draw_text_count_containing(commands, "Pi"), content="0")
   inspect(draw_text_count_containing(commands, "RPC"), content="0")
   inspect(draw_text_count_containing(commands, "诊断"), content="0")
   inspect(draw_text_count_containing(commands, "证据"), content="0")
+  inspect(draw_text_count(commands, "工作区"), content="0")
 }
 
 ///|
