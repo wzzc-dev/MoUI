@@ -718,6 +718,11 @@ test "path api typechecks" {
       assert_true(path.is_last_contour_closed())
     }
   }
+  let non_finite_path = @skia.Path::new()
+    .move_to(@skia.Point::new(0, 0))
+    .line_to(@skia.Point::new(1.0 / 0.0, 1))
+  assert_true(!non_finite_path.is_finite())
+  assert_true(@native.Path::from_value(non_finite_path) is None)
   match @native.Path::new() {
     None => ()
     Some(path) => {

@@ -324,12 +324,16 @@ pub fn Path::new() -> Path? {
 
 ///|
 pub fn Path::from_value(path : @skia.Path) -> Path? {
-  match Path::new() {
-    None => None
-    Some(native_path) => {
-      native_path.set_fill_type(path.fill_type)
-      native_path.add_path_value(path)
-      Some(native_path)
+  if !path.is_finite() {
+    None
+  } else {
+    match Path::new() {
+      None => None
+      Some(native_path) => {
+        native_path.set_fill_type(path.fill_type)
+        native_path.add_path_value(path)
+        Some(native_path)
+      }
     }
   }
 }
