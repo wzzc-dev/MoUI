@@ -66,6 +66,10 @@ pub fn Canvas::local_clip_bounds(Self) -> @skia_mbt.Rect?
 pub fn Canvas::quick_reject_path(Self, Path) -> Bool
 pub fn Canvas::quick_reject_rect(Self, @skia_mbt.Rect) -> Bool
 pub fn Canvas::replay(Self, @skia_mbt.RenderCommandList, font? : Font?) -> CanvasReplayStats
+pub fn Canvas::replay_frame(Self, @skia_mbt.RenderFrameDescriptor, font? : Font?) -> CanvasReplayStats
+pub fn Canvas::replay_frame_with_resources(Self, @skia_mbt.RenderFrameDescriptor, NativeReplayResources, font? : Font?) -> CanvasReplayStats
+pub fn Canvas::replay_with_image_cache(Self, @skia_mbt.RenderCommandList, @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, Image], font? : Font?) -> CanvasReplayStats
+pub fn Canvas::replay_with_resources(Self, @skia_mbt.RenderCommandList, NativeReplayResources, font? : Font?) -> CanvasReplayStats
 pub fn Canvas::reset_matrix(Self) -> Unit
 pub fn Canvas::restore(Self) -> Unit
 pub fn Canvas::restore_to_count(Self, Int) -> Unit
@@ -206,6 +210,24 @@ pub(all) struct MaskFilter {
 }
 pub fn MaskFilter::blur(Float) -> Self?
 pub fn MaskFilter::is_available(Self) -> Bool
+
+pub(all) struct NativeReplayResources {
+  image_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, Image]
+  shader_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, Shader]
+  path_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, Path]
+  text_run_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, NativeReplayTextRun]
+  font_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, Font]
+  typeface_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, Typeface]
+  color_filter_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, ColorFilter]
+  image_filter_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, ImageFilter]
+  mask_filter_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, MaskFilter]
+}
+pub fn NativeReplayResources::new(image_max_bytes? : Int64, shader_max_bytes? : Int64, path_max_bytes? : Int64, text_run_max_bytes? : Int64, font_max_bytes? : Int64, typeface_max_bytes? : Int64, color_filter_max_bytes? : Int64, image_filter_max_bytes? : Int64, mask_filter_max_bytes? : Int64) -> Self
+
+pub(all) enum NativeReplayTextRun {
+  DirectTextRun(@skia_mbt.TextRunDescriptor)
+  ShapedTextRun(@skia_mbt.ShapedGlyphRunDescriptor)
+}
 
 pub(all) struct Path {
   // private fields

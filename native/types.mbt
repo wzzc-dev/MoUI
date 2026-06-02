@@ -216,3 +216,61 @@ pub fn CanvasReplayStats::empty() -> CanvasReplayStats {
 pub fn CanvasReplayStats::is_complete(self : CanvasReplayStats) -> Bool {
   self.skipped_count == 0
 }
+
+///|
+/// Native resource caches shared across one or more Canvas replay calls.
+pub(all) struct NativeReplayResources {
+  image_cache : @skia.ResourceCache[@skia.RendererResourceKey, Image]
+  shader_cache : @skia.ResourceCache[@skia.RendererResourceKey, Shader]
+  path_cache : @skia.ResourceCache[@skia.RendererResourceKey, Path]
+  text_run_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    NativeReplayTextRun,
+  ]
+  font_cache : @skia.ResourceCache[@skia.RendererResourceKey, Font]
+  typeface_cache : @skia.ResourceCache[@skia.RendererResourceKey, Typeface]
+  color_filter_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    ColorFilter,
+  ]
+  image_filter_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    ImageFilter,
+  ]
+  mask_filter_cache : @skia.ResourceCache[@skia.RendererResourceKey, MaskFilter]
+}
+
+///|
+pub(all) enum NativeReplayTextRun {
+  DirectTextRun(@skia.TextRunDescriptor)
+  ShapedTextRun(@skia.ShapedGlyphRunDescriptor)
+}
+
+///|
+pub fn NativeReplayResources::new(
+  image_max_bytes? : Int64 = 0L,
+  shader_max_bytes? : Int64 = 0L,
+  path_max_bytes? : Int64 = 0L,
+  text_run_max_bytes? : Int64 = 0L,
+  font_max_bytes? : Int64 = 0L,
+  typeface_max_bytes? : Int64 = 0L,
+  color_filter_max_bytes? : Int64 = 0L,
+  image_filter_max_bytes? : Int64 = 0L,
+  mask_filter_max_bytes? : Int64 = 0L,
+) -> NativeReplayResources {
+  {
+    image_cache: @skia.ResourceCache::new(max_bytes=image_max_bytes),
+    shader_cache: @skia.ResourceCache::new(max_bytes=shader_max_bytes),
+    path_cache: @skia.ResourceCache::new(max_bytes=path_max_bytes),
+    text_run_cache: @skia.ResourceCache::new(max_bytes=text_run_max_bytes),
+    font_cache: @skia.ResourceCache::new(max_bytes=font_max_bytes),
+    typeface_cache: @skia.ResourceCache::new(max_bytes=typeface_max_bytes),
+    color_filter_cache: @skia.ResourceCache::new(
+      max_bytes=color_filter_max_bytes,
+    ),
+    image_filter_cache: @skia.ResourceCache::new(
+      max_bytes=image_filter_max_bytes,
+    ),
+    mask_filter_cache: @skia.ResourceCache::new(max_bytes=mask_filter_max_bytes),
+  }
+}

@@ -1420,6 +1420,82 @@ fn Canvas::replay_text_utf8(
 }
 
 ///|
+fn native_replay_font(font : Font?) -> Font? {
+  match font {
+    Some(font) => Some(font)
+    None => Font::default()
+  }
+}
+
+///|
+fn native_replay_font_from_resources(
+  font_key : @skia.RendererResourceKey,
+  font : Font?,
+  resources : NativeReplayResources?,
+) -> Font? {
+  if font_key.kind != @skia.FontResource || font_key.is_empty() {
+    native_replay_font(font)
+  } else {
+    match resources {
+      None => native_replay_font(font)
+      Some(resources) =>
+        match resources.font_cache.get(font_key) {
+          Some(font) => Some(font)
+          None =>
+            match native_replay_font(font) {
+              None => None
+              Some(font) => {
+                ignore(resources.font_cache.insert(font_key, font))
+                Some(font)
+              }
+            }
+        }
+    }
+  }
+}
+
+///|
+fn native_replay_typeface_from_resources(
+  request : @skia.FontFallbackRequest,
+  resources : NativeReplayResources?,
+) -> Typeface? {
+  let key = request.resource_key()
+  if request.is_empty() || key.kind != @skia.TypefaceResource || key.is_empty() {
+    None
+  } else {
+    match resources {
+      None =>
+        match FontMgr::default() {
+          None => None
+          Some(font_mgr) => font_mgr.match_fallback_request(request)
+        }
+      Some(resources) =>
+        match resources.typeface_cache.get(key) {
+          Some(typeface) => Some(typeface)
+          None =>
+            match FontMgr::default() {
+              None => None
+              Some(font_mgr) =>
+                match font_mgr.match_fallback_request(request) {
+                  None => None
+                  Some(typeface) => {
+                    ignore(
+                      resources.typeface_cache.insert(
+                        key,
+                        typeface,
+                        byte_size=request.resource_descriptor().byte_size,
+                      ),
+                    )
+                    Some(typeface)
+                  }
+                }
+            }
+        }
+    }
+  }
+}
+
+///|
 fn shaped_glyph_run_native_glyph_ids(
   glyph_run : @skia.ShapedGlyphRunDescriptor,
 ) -> Array[GlyphId] {
@@ -1430,6 +1506,77 @@ fn shaped_glyph_run_native_glyph_ids(
     glyphs.push(GlyphId::new(glyph_id.clamp(min=0, max=65535).to_uint16()))
   }
   glyphs
+}
+
+///|
+fn native_text_run_from_resources(
+  text : Bytes,
+  descriptor : @skia.TextRunDescriptor,
+  font_key : @skia.RendererResourceKey,
+  font : Font,
+  resources : NativeReplayResources?,
+) -> NativeReplayTextRun {
+  let key = descriptor.resource_key(text, font_key~)
+  let shaping = @skia.TextShapingDescriptor::new(run=descriptor, font_key~)
+  match resources {
+    None =>
+      match font.shape_text_run_utf8(text, shaping) {
+        None => DirectTextRun(descriptor)
+        Some(glyph_run) => ShapedTextRun(glyph_run)
+      }
+    Some(resources) =>
+      match resources.text_run_cache.get(key) {
+        Some(replay_text_run) => replay_text_run
+        None => {
+          let replay_text_run = match font.shape_text_run_utf8(text, shaping) {
+            None => DirectTextRun(descriptor)
+            Some(glyph_run) => ShapedTextRun(glyph_run)
+          }
+          ignore(
+            resources.text_run_cache.insert(
+              key,
+              replay_text_run,
+              byte_size=descriptor.resource_descriptor(text, font_key~).byte_size,
+            ),
+          )
+          replay_text_run
+        }
+      }
+  }
+}
+
+///|
+fn Canvas::replay_text_run_utf8(
+  self : Canvas,
+  text : Bytes,
+  descriptor : @skia.TextRunDescriptor,
+  font_key : @skia.RendererResourceKey,
+  origin : @skia.Point,
+  paint : @skia.Paint,
+  font : Font?,
+  resources : NativeReplayResources?,
+) -> Bool {
+  ignore(native_replay_typeface_from_resources(descriptor.fallback, resources))
+  match native_replay_font_from_resources(font_key, font, resources) {
+    None => false
+    Some(font) =>
+      match
+        native_text_run_from_resources(
+          text, descriptor, font_key, font, resources,
+        ) {
+        DirectTextRun(_) => {
+          self.draw_text_utf8(text, origin, font, paint)
+          true
+        }
+        ShapedTextRun(glyph_run) =>
+          self.replay_shaped_glyph_run_utf8(
+            glyph_run,
+            origin,
+            paint,
+            Some(font),
+          )
+      }
+  }
 }
 
 ///|
@@ -1463,12 +1610,47 @@ fn Canvas::replay_shaped_glyph_run_utf8(
 }
 
 ///|
+fn native_path_from_value(
+  path : @skia.Path,
+  resources : NativeReplayResources?,
+) -> Path? {
+  match resources {
+    None => Path::from_value(path)
+    Some(resources) => {
+      let descriptor = path.resource_descriptor()
+      if !descriptor.is_cacheable() {
+        Path::from_value(path)
+      } else {
+        match resources.path_cache.get(descriptor.key) {
+          Some(native_path) => Some(native_path)
+          None =>
+            match Path::from_value(path) {
+              None => None
+              Some(native_path) => {
+                ignore(
+                  resources.path_cache.insert(
+                    descriptor.key,
+                    native_path,
+                    byte_size=descriptor.byte_size,
+                  ),
+                )
+                Some(native_path)
+              }
+            }
+        }
+      }
+    }
+  }
+}
+
+///|
 fn Canvas::replay_path_value(
   self : Canvas,
   path : @skia.Path,
   paint : @skia.Paint,
+  resources : NativeReplayResources?,
 ) -> Bool {
-  match Path::from_value(path) {
+  match native_path_from_value(path, resources) {
     None => false
     Some(native_path) => {
       self.draw_path(native_path, paint)
@@ -1478,10 +1660,368 @@ fn Canvas::replay_path_value(
 }
 
 ///|
+fn native_shader_from_descriptor(
+  descriptor : @skia.ShaderDescriptor,
+) -> Shader? {
+  match descriptor {
+    @skia.ColorShader(color) => Shader::color(color)
+    @skia.LinearGradientShader(start, end, start_color, end_color, tile_mode) =>
+      Shader::linear_gradient(start, end, start_color, end_color, tile_mode~)
+    @skia.RadialGradientShader(
+      center,
+      radius,
+      inner_color,
+      outer_color,
+      tile_mode
+    ) =>
+      Shader::radial_gradient(
+        center,
+        radius,
+        inner_color,
+        outer_color,
+        tile_mode~,
+      )
+  }
+}
+
+///|
+fn native_shader_from_resources(
+  descriptor : @skia.ShaderDescriptor,
+  resources : NativeReplayResources?,
+) -> Shader? {
+  match resources {
+    None => native_shader_from_descriptor(descriptor)
+    Some(resources) => {
+      let key = descriptor.resource_key()
+      match resources.shader_cache.get(key) {
+        Some(shader) => Some(shader)
+        None =>
+          match native_shader_from_descriptor(descriptor) {
+            None => None
+            Some(shader) => {
+              ignore(
+                resources.shader_cache.insert(
+                  key,
+                  shader,
+                  byte_size=descriptor.resource_descriptor().byte_size,
+                ),
+              )
+              Some(shader)
+            }
+          }
+      }
+    }
+  }
+}
+
+///|
+fn Canvas::replay_rect_shader(
+  self : Canvas,
+  rect : @skia.Rect,
+  shader_descriptor : @skia.ShaderDescriptor,
+  paint : @skia.Paint,
+  resources : NativeReplayResources?,
+) -> Bool {
+  match native_shader_from_resources(shader_descriptor, resources) {
+    None => false
+    Some(shader) => {
+      self.draw_rect_shader(rect, shader, paint)
+      true
+    }
+  }
+}
+
+///|
+fn Canvas::replay_round_rect_shader(
+  self : Canvas,
+  rect : @skia.Rect,
+  rx : Float,
+  ry : Float,
+  shader_descriptor : @skia.ShaderDescriptor,
+  paint : @skia.Paint,
+  resources : NativeReplayResources?,
+) -> Bool {
+  match native_shader_from_resources(shader_descriptor, resources) {
+    None => false
+    Some(shader) => {
+      self.draw_round_rect_shader(rect, rx, ry, shader, paint)
+      true
+    }
+  }
+}
+
+///|
+fn Canvas::replay_path_shader(
+  self : Canvas,
+  path : @skia.Path,
+  shader_descriptor : @skia.ShaderDescriptor,
+  paint : @skia.Paint,
+  resources : NativeReplayResources?,
+) -> Bool {
+  match native_path_from_value(path, resources) {
+    None => false
+    Some(native_path) =>
+      match native_shader_from_resources(shader_descriptor, resources) {
+        None => false
+        Some(shader) => {
+          self.draw_path_shader(native_path, shader, paint)
+          true
+        }
+      }
+  }
+}
+
+///|
+fn native_image_decode_descriptor(descriptor : @skia.ImageDescriptor) -> Image? {
+  match descriptor {
+    @skia.EncodedImage(bytes, _, _) => Image::from_encoded_bytes(bytes)
+  }
+}
+
+///|
+fn native_image_from_descriptor(
+  descriptor : @skia.ImageDescriptor,
+  resources : NativeReplayResources?,
+) -> Image? {
+  match resources {
+    None => native_image_decode_descriptor(descriptor)
+    Some(resources) => {
+      let key = descriptor.resource_key()
+      match resources.image_cache.get(key) {
+        Some(image) => Some(image)
+        None =>
+          match native_image_decode_descriptor(descriptor) {
+            None => None
+            Some(image) => {
+              ignore(
+                resources.image_cache.insert(
+                  key,
+                  image,
+                  byte_size=descriptor.byte_size(),
+                ),
+              )
+              Some(image)
+            }
+          }
+      }
+    }
+  }
+}
+
+///|
+fn Canvas::replay_image(
+  self : Canvas,
+  descriptor : @skia.ImageDescriptor,
+  top_left : @skia.Point,
+  resources : NativeReplayResources?,
+) -> Bool {
+  match native_image_from_descriptor(descriptor, resources) {
+    None => false
+    Some(image) => {
+      self.draw_image(image, top_left)
+      true
+    }
+  }
+}
+
+///|
+fn Canvas::replay_image_rect(
+  self : Canvas,
+  descriptor : @skia.ImageDescriptor,
+  src : @skia.Rect,
+  dst : @skia.Rect,
+  paint : @skia.Paint,
+  sampling : @skia.SamplingOptions,
+  resources : NativeReplayResources?,
+) -> Bool {
+  match native_image_from_descriptor(descriptor, resources) {
+    None => false
+    Some(image) => {
+      self.draw_image_rect(image, src, dst, paint, sampling~)
+      true
+    }
+  }
+}
+
+///|
+fn native_color_filter_from_descriptor(
+  descriptor : @skia.ColorFilterDescriptor,
+) -> ColorFilter? {
+  match descriptor {
+    @skia.ColorMatrixFilter(values) => ColorFilter::matrix(values)
+    @skia.SaturationFilter(amount) => ColorFilter::saturation(amount)
+    @skia.BrightnessFilter(amount) => ColorFilter::brightness(amount)
+    @skia.ContrastFilter(amount) => ColorFilter::contrast(amount)
+  }
+}
+
+///|
+fn native_color_filter_from_resources(
+  descriptor : @skia.ColorFilterDescriptor,
+  resources : NativeReplayResources?,
+) -> ColorFilter? {
+  match resources {
+    None => native_color_filter_from_descriptor(descriptor)
+    Some(resources) => {
+      let key = descriptor.resource_key()
+      match resources.color_filter_cache.get(key) {
+        Some(filter) => Some(filter)
+        None =>
+          match native_color_filter_from_descriptor(descriptor) {
+            None => None
+            Some(filter) => {
+              ignore(
+                resources.color_filter_cache.insert(
+                  key,
+                  filter,
+                  byte_size=descriptor.resource_descriptor().byte_size,
+                ),
+              )
+              Some(filter)
+            }
+          }
+      }
+    }
+  }
+}
+
+///|
+fn native_image_filter_from_descriptor(
+  descriptor : @skia.ImageFilterDescriptor,
+) -> ImageFilter? {
+  match descriptor {
+    @skia.BlurImageFilter(sigma_x, sigma_y) =>
+      ImageFilter::blur(sigma_x, sigma_y)
+  }
+}
+
+///|
+fn native_image_filter_from_resources(
+  descriptor : @skia.ImageFilterDescriptor,
+  resources : NativeReplayResources?,
+) -> ImageFilter? {
+  match resources {
+    None => native_image_filter_from_descriptor(descriptor)
+    Some(resources) => {
+      let key = descriptor.resource_key()
+      match resources.image_filter_cache.get(key) {
+        Some(filter) => Some(filter)
+        None =>
+          match native_image_filter_from_descriptor(descriptor) {
+            None => None
+            Some(filter) => {
+              ignore(
+                resources.image_filter_cache.insert(
+                  key,
+                  filter,
+                  byte_size=descriptor.resource_descriptor().byte_size,
+                ),
+              )
+              Some(filter)
+            }
+          }
+      }
+    }
+  }
+}
+
+///|
+fn native_mask_filter_from_descriptor(
+  descriptor : @skia.MaskFilterDescriptor,
+) -> MaskFilter? {
+  match descriptor {
+    @skia.BlurMaskFilter(sigma) => MaskFilter::blur(sigma)
+  }
+}
+
+///|
+fn native_mask_filter_from_resources(
+  descriptor : @skia.MaskFilterDescriptor,
+  resources : NativeReplayResources?,
+) -> MaskFilter? {
+  match resources {
+    None => native_mask_filter_from_descriptor(descriptor)
+    Some(resources) => {
+      let key = descriptor.resource_key()
+      match resources.mask_filter_cache.get(key) {
+        Some(filter) => Some(filter)
+        None =>
+          match native_mask_filter_from_descriptor(descriptor) {
+            None => None
+            Some(filter) => {
+              ignore(
+                resources.mask_filter_cache.insert(
+                  key,
+                  filter,
+                  byte_size=descriptor.resource_descriptor().byte_size,
+                ),
+              )
+              Some(filter)
+            }
+          }
+      }
+    }
+  }
+}
+
+///|
+fn Canvas::replay_save_layer(
+  self : Canvas,
+  bounds : @skia.Rect?,
+  paint : @skia.Paint,
+  color_filter : @skia.ColorFilterDescriptor?,
+  image_filter : @skia.ImageFilterDescriptor?,
+  mask_filter : @skia.MaskFilterDescriptor?,
+  resources : NativeReplayResources?,
+) -> Bool {
+  let mut failed = false
+  let mut color_filter_handle : ColorFilter? = None
+  match color_filter {
+    None => ()
+    Some(descriptor) =>
+      match native_color_filter_from_resources(descriptor, resources) {
+        None => failed = true
+        Some(filter) => color_filter_handle = Some(filter)
+      }
+  }
+  let mut image_filter_handle : ImageFilter? = None
+  match image_filter {
+    None => ()
+    Some(descriptor) =>
+      match native_image_filter_from_resources(descriptor, resources) {
+        None => failed = true
+        Some(filter) => image_filter_handle = Some(filter)
+      }
+  }
+  let mut mask_filter_handle : MaskFilter? = None
+  match mask_filter {
+    None => ()
+    Some(descriptor) =>
+      match native_mask_filter_from_resources(descriptor, resources) {
+        None => failed = true
+        Some(filter) => mask_filter_handle = Some(filter)
+      }
+  }
+  if failed {
+    false
+  } else {
+    self.save_layer(
+      bounds~,
+      paint~,
+      color_filter=color_filter_handle,
+      image_filter=image_filter_handle,
+      mask_filter=mask_filter_handle,
+    ) >
+    0
+  }
+}
+
+///|
 fn Canvas::replay_command(
   self : Canvas,
   command : @skia.RenderCommand,
   font : Font?,
+  resources : NativeReplayResources?,
 ) -> Bool {
   match command {
     @skia.SaveCanvas => {
@@ -1492,6 +2032,16 @@ fn Canvas::replay_command(
       self.restore()
       true
     }
+    @skia.SaveCanvasLayer(
+      bounds,
+      paint,
+      color_filter,
+      image_filter,
+      mask_filter
+    ) =>
+      self.replay_save_layer(
+        bounds, paint, color_filter, image_filter, mask_filter, resources,
+      )
     @skia.ClearCanvas(color) => {
       self.clear(color)
       true
@@ -1500,15 +2050,68 @@ fn Canvas::replay_command(
       self.clip_rect(rect, op~)
       true
     }
+    @skia.DrawCanvasPoint(point, paint) => {
+      self.draw_point(point, paint)
+      true
+    }
+    @skia.DrawCanvasLine(start, end, paint) => {
+      self.draw_line(start, end, paint)
+      true
+    }
+    @skia.DrawCanvasPoints(points, mode, paint) => {
+      self.draw_points(points, paint, mode~)
+      true
+    }
     @skia.DrawCanvasRect(rect, paint) => {
       self.draw_rect(rect, paint)
       true
     }
-    @skia.DrawCanvasPath(path, paint) => self.replay_path_value(path, paint)
+    @skia.DrawCanvasOval(oval, paint) => {
+      self.draw_oval(oval, paint)
+      true
+    }
+    @skia.DrawCanvasCircle(center, radius, paint) => {
+      self.draw_circle(center, radius, paint)
+      true
+    }
+    @skia.DrawCanvasArc(oval, start_angle, sweep_angle, use_center, paint) => {
+      self.draw_arc(oval, start_angle, sweep_angle, use_center, paint)
+      true
+    }
+    @skia.DrawCanvasRoundRect(rect, rx, ry, paint) => {
+      self.draw_round_rect(rect, rx, ry, paint)
+      true
+    }
+    @skia.DrawCanvasRRect(rrect, paint) => {
+      self.draw_rrect(rrect, paint)
+      true
+    }
+    @skia.DrawCanvasDRRect(outer, inner, paint) => {
+      self.draw_drrect(outer, inner, paint)
+      true
+    }
+    @skia.DrawCanvasRectShader(rect, shader_descriptor, paint) =>
+      self.replay_rect_shader(rect, shader_descriptor, paint, resources)
+    @skia.DrawCanvasRoundRectShader(rect, rx, ry, shader_descriptor, paint) =>
+      self.replay_round_rect_shader(
+        rect, rx, ry, shader_descriptor, paint, resources,
+      )
+    @skia.DrawCanvasPath(path, paint) =>
+      self.replay_path_value(path, paint, resources)
+    @skia.DrawCanvasPathShader(path, shader_descriptor, paint) =>
+      self.replay_path_shader(path, shader_descriptor, paint, resources)
+    @skia.DrawCanvasImage(image_descriptor, top_left) =>
+      self.replay_image(image_descriptor, top_left, resources)
+    @skia.DrawCanvasImageRect(image_descriptor, src, dst, paint, sampling) =>
+      self.replay_image_rect(
+        image_descriptor, src, dst, paint, sampling, resources,
+      )
     @skia.DrawCanvasTextUtf8(text, origin, paint) =>
       self.replay_text_utf8(text, origin, paint, font)
-    @skia.DrawCanvasTextRunUtf8(text, _, _, origin, paint) =>
-      self.replay_text_utf8(text, origin, paint, font)
+    @skia.DrawCanvasTextRunUtf8(text, descriptor, font_key, origin, paint) =>
+      self.replay_text_run_utf8(
+        text, descriptor, font_key, origin, paint, font, resources,
+      )
     @skia.DrawCanvasShapedGlyphRunUtf8(_, glyph_run, origin, paint) =>
       self.replay_shaped_glyph_run_utf8(glyph_run, origin, paint, font)
     @skia.DeclareRenderResource(_) => true
@@ -1517,11 +2120,11 @@ fn Canvas::replay_command(
 }
 
 ///|
-/// Replay the CPU Canvas subset of a value-layer render command list.
-pub fn Canvas::replay(
+fn Canvas::replay_internal(
   self : Canvas,
   commands : @skia.RenderCommandList,
-  font? : Font? = None,
+  font : Font?,
+  resources : NativeReplayResources?,
 ) -> CanvasReplayStats {
   let mut command_count = 0
   let mut replayed_count = 0
@@ -1540,7 +2143,7 @@ pub fn Canvas::replay(
     if command.is_present() {
       present_count += 1
     }
-    if self.replay_command(command, font) {
+    if self.replay_command(command, font, resources) {
       replayed_count += 1
     } else if !command.is_present() {
       skipped_count += 1
@@ -1554,4 +2157,118 @@ pub fn Canvas::replay(
     text_count,
     present_count,
   }
+}
+
+///|
+fn canvas_replay_skipped_stats(
+  commands : @skia.RenderCommandList,
+) -> CanvasReplayStats {
+  let mut command_count = 0
+  let mut skipped_count = 0
+  let mut draw_count = 0
+  let mut text_count = 0
+  let mut present_count = 0
+  for command in commands.commands {
+    command_count += 1
+    if command.is_draw() {
+      draw_count += 1
+    }
+    if command.is_text() {
+      text_count += 1
+    }
+    if command.is_present() {
+      present_count += 1
+    } else if !command.is_resource_declaration() {
+      skipped_count += 1
+    }
+  }
+  {
+    command_count,
+    replayed_count: 0,
+    skipped_count,
+    draw_count,
+    text_count,
+    present_count,
+  }
+}
+
+///|
+fn Canvas::replay_frame_internal(
+  self : Canvas,
+  frame : @skia.RenderFrameDescriptor,
+  font : Font?,
+  resources : NativeReplayResources?,
+) -> CanvasReplayStats {
+  if frame.is_ready() {
+    self.replay_internal(frame.command_list, font, resources)
+  } else {
+    canvas_replay_skipped_stats(frame.command_list)
+  }
+}
+
+///|
+/// Replay the CPU Canvas subset of a value-layer render command list.
+pub fn Canvas::replay(
+  self : Canvas,
+  commands : @skia.RenderCommandList,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  self.replay_internal(commands, font, None)
+}
+
+///|
+/// Replay a ready render frame, preserving frame validation as the native boundary.
+pub fn Canvas::replay_frame(
+  self : Canvas,
+  frame : @skia.RenderFrameDescriptor,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  self.replay_frame_internal(frame, font, None)
+}
+
+///|
+/// Replay render commands while reusing decoded native resources by key.
+pub fn Canvas::replay_with_resources(
+  self : Canvas,
+  commands : @skia.RenderCommandList,
+  resources : NativeReplayResources,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  self.replay_internal(commands, font, Some(resources))
+}
+
+///|
+/// Replay a ready render frame while reusing native resources by key.
+pub fn Canvas::replay_frame_with_resources(
+  self : Canvas,
+  frame : @skia.RenderFrameDescriptor,
+  resources : NativeReplayResources,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  self.replay_frame_internal(frame, font, Some(resources))
+}
+
+///|
+/// Replay render commands while reusing decoded native images by resource key.
+pub fn Canvas::replay_with_image_cache(
+  self : Canvas,
+  commands : @skia.RenderCommandList,
+  image_cache : @skia.ResourceCache[@skia.RendererResourceKey, Image],
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  self.replay_with_resources(
+    commands,
+    {
+      image_cache,
+      shader_cache: @skia.ResourceCache::new(),
+      path_cache: @skia.ResourceCache::new(),
+      text_run_cache: @skia.ResourceCache::new(),
+      font_cache: @skia.ResourceCache::new(),
+      typeface_cache: @skia.ResourceCache::new(),
+      color_filter_cache: @skia.ResourceCache::new(),
+      image_filter_cache: @skia.ResourceCache::new(),
+      mask_filter_cache: @skia.ResourceCache::new(),
+    },
+    font~,
+  )
 }
