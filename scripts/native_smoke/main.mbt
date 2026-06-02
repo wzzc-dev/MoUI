@@ -1512,14 +1512,31 @@ fn main {
   let replay_mask_filter_cache_stats = replay_native_resources.mask_filter_cache
     .stats()
   let replay_native_resource_stats = replay_native_resources.stats()
+  let replay_command_stats = replay_commands.stats()
   if replay_stats.command_count != replay_commands.length() ||
     replay_stats.draw_count != 16 ||
-    replay_stats.state_count != replay_commands.stats().state_count ||
-    replay_stats.transform_count != replay_commands.stats().transform_count ||
-    replay_stats.clip_count != replay_commands.stats().clip_count ||
-    replay_stats.clear_count != replay_commands.stats().clear_count ||
+    replay_stats.state_count != replay_command_stats.state_count ||
+    replay_stats.transform_count != replay_command_stats.transform_count ||
+    replay_stats.clip_count != replay_command_stats.clip_count ||
+    replay_stats.clear_count != replay_command_stats.clear_count ||
     replay_stats.text_count != 2 ||
-    replay_commands.stats().transform_count != 6 ||
+    replay_stats.resource_declaration_count !=
+    replay_command_stats.resource_declaration_count ||
+    replay_stats.image_resource_count !=
+    replay_command_stats.image_resource_count ||
+    replay_stats.shader_resource_count !=
+    replay_command_stats.shader_resource_count ||
+    replay_stats.filter_resource_count !=
+    replay_command_stats.filter_resource_count ||
+    replay_stats.path_resource_count != replay_command_stats.path_resource_count ||
+    replay_stats.text_resource_count != replay_command_stats.text_resource_count ||
+    replay_command_stats.transform_count != 6 ||
+    replay_command_stats.resource_declaration_count != 4 ||
+    replay_command_stats.image_resource_count != 0 ||
+    replay_command_stats.shader_resource_count != 4 ||
+    replay_command_stats.filter_resource_count != 6 ||
+    replay_command_stats.path_resource_count != 2 ||
+    replay_command_stats.text_resource_count != 9 ||
     replay_native_resource_stats.cache_count != 9 ||
     replay_native_resource_stats.resource_count != 9 ||
     replay_native_resource_stats.max_bytes != 8L * 1024L ||
@@ -1588,6 +1605,18 @@ fn main {
     !replay_frame_stats.is_complete() ||
     replay_frame_stats.status() != @native.CanvasReplayComplete ||
     !replay_frame_stats.status().is_complete() ||
+    replay_frame_stats.resource_declaration_count !=
+    replay_command_stats.resource_declaration_count ||
+    replay_frame_stats.image_resource_count !=
+    replay_command_stats.image_resource_count ||
+    replay_frame_stats.shader_resource_count !=
+    replay_command_stats.shader_resource_count ||
+    replay_frame_stats.filter_resource_count !=
+    replay_command_stats.filter_resource_count ||
+    replay_frame_stats.path_resource_count !=
+    replay_command_stats.path_resource_count ||
+    replay_frame_stats.text_resource_count !=
+    replay_command_stats.text_resource_count ||
     replay_frame_resources.shader_cache.length() != 1 ||
     replay_frame_resources.path_cache.length() != 2 ||
     replay_frame_resources.text_run_cache.length() != 1 ||
@@ -1666,6 +1695,18 @@ fn main {
     render_frame_finalization_plan.cacheable_count != 15 ||
     render_frame_finalization_plan.uncacheable_count != 1 ||
     render_frame_stats.replay.command_count != replay_commands.length() ||
+    render_frame_stats.replay.resource_declaration_count !=
+    replay_command_stats.resource_declaration_count ||
+    render_frame_stats.replay.image_resource_count !=
+    replay_command_stats.image_resource_count ||
+    render_frame_stats.replay.shader_resource_count !=
+    replay_command_stats.shader_resource_count ||
+    render_frame_stats.replay.filter_resource_count !=
+    replay_command_stats.filter_resource_count ||
+    render_frame_stats.replay.path_resource_count !=
+    replay_command_stats.path_resource_count ||
+    render_frame_stats.replay.text_resource_count !=
+    replay_command_stats.text_resource_count ||
     render_frame_resource_stats.cache_count != 9 ||
     render_frame_resource_stats.resource_count != 9 ||
     render_frame_resources.shader_cache.length() != 1 ||
@@ -1712,6 +1753,18 @@ fn main {
   println(replay_stats.transform_count)
   println("native smoke canvas replay state stats")
   println(4)
+  println("native smoke canvas replay resource declarations")
+  println(replay_stats.resource_declaration_count)
+  println("native smoke canvas replay image resources")
+  println(replay_stats.image_resource_count)
+  println("native smoke canvas replay shader resources")
+  println(replay_stats.shader_resource_count)
+  println("native smoke canvas replay filter resources")
+  println(replay_stats.filter_resource_count)
+  println("native smoke canvas replay path resources")
+  println(replay_stats.path_resource_count)
+  println("native smoke canvas replay text resources")
+  println(replay_stats.text_resource_count)
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
   println("native smoke surface render frame commands")

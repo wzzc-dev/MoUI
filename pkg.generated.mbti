@@ -861,6 +861,7 @@ pub fn RenderCommand::draw_rrect(RRect, paint? : Paint) -> Self
 pub fn RenderCommand::draw_shaped_glyph_run_utf8(Bytes, ShapedGlyphRunDescriptor, Point, paint? : Paint) -> Self
 pub fn RenderCommand::draw_text_run_utf8(Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self
 pub fn RenderCommand::draw_text_utf8(Bytes, Point, paint? : Paint) -> Self
+pub fn RenderCommand::filter_resource_count(Self) -> Int
 pub fn RenderCommand::is_clear(Self) -> Bool
 pub fn RenderCommand::is_clip(Self) -> Bool
 pub fn RenderCommand::is_draw(Self) -> Bool
@@ -870,12 +871,14 @@ pub fn RenderCommand::is_state(Self) -> Bool
 pub fn RenderCommand::is_text(Self) -> Bool
 pub fn RenderCommand::is_transform(Self) -> Bool
 pub fn RenderCommand::reset_matrix() -> Self
+pub fn RenderCommand::resource_count_for_kind(Self, RendererResourceKind) -> Int
 pub fn RenderCommand::resource_descriptor(Self) -> RendererResourceDescriptor?
 pub fn RenderCommand::resource_descriptors(Self) -> Array[RendererResourceDescriptor]
 pub fn RenderCommand::rotate(Float) -> Self
 pub fn RenderCommand::save_layer(bounds? : Rect?, paint? : Paint, color_filter? : ColorFilterDescriptor?, image_filter? : ImageFilterDescriptor?, mask_filter? : MaskFilterDescriptor?) -> Self
 pub fn RenderCommand::scale(Size) -> Self
 pub fn RenderCommand::skew(Point) -> Self
+pub fn RenderCommand::text_resource_count(Self) -> Int
 pub fn RenderCommand::text_run_resource_key(Self) -> RendererResourceKey?
 pub fn RenderCommand::translate(Point) -> Self
 
@@ -940,6 +943,12 @@ pub(all) struct RenderCommandStats {
   clear_count : Int
   present_count : Int
   text_count : Int
+  resource_declaration_count : Int
+  image_resource_count : Int
+  shader_resource_count : Int
+  filter_resource_count : Int
+  path_resource_count : Int
+  text_resource_count : Int
   max_save_depth : Int
   final_save_depth : Int
   unbalanced_restore_count : Int

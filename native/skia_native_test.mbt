@@ -6,6 +6,22 @@ fn native_test_assert_red_dominant_pixel(pixmap : @skia.Pixmap) -> Unit raise {
 }
 
 ///|
+fn native_test_assert_replay_resource_counts(
+  stats : @native.CanvasReplayStats,
+  command_stats : @skia.RenderCommandStats,
+) -> Unit raise {
+  assert_eq(
+    stats.resource_declaration_count,
+    command_stats.resource_declaration_count,
+  )
+  assert_eq(stats.image_resource_count, command_stats.image_resource_count)
+  assert_eq(stats.shader_resource_count, command_stats.shader_resource_count)
+  assert_eq(stats.filter_resource_count, command_stats.filter_resource_count)
+  assert_eq(stats.path_resource_count, command_stats.path_resource_count)
+  assert_eq(stats.text_resource_count, command_stats.text_resource_count)
+}
+
+///|
 test "native backend reports availability" {
   ignore(@native.skia_available())
 }
@@ -1239,6 +1255,7 @@ test "canvas replays render command lists" {
   }
   let replay_frame = commands.frame_descriptor(replay_target)
   let rejected_frame = commands.save().frame_descriptor(replay_target)
+  let command_stats = commands.stats()
   assert_true(replay_frame.is_ready())
   assert_true(!rejected_frame.is_ready())
   match @native.Surface::raster_n32_premul(@skia.ISize::new(32, 32)) {
@@ -1255,10 +1272,11 @@ test "canvas replays render command lists" {
           }
           assert_eq(stats.command_count, commands.length())
           assert_eq(stats.draw_count, expected_draw_count)
-          assert_eq(stats.state_count, commands.stats().state_count)
-          assert_eq(stats.transform_count, commands.stats().transform_count)
-          assert_eq(stats.clip_count, commands.stats().clip_count)
-          assert_eq(stats.clear_count, commands.stats().clear_count)
+          assert_eq(stats.state_count, command_stats.state_count)
+          assert_eq(stats.transform_count, command_stats.transform_count)
+          assert_eq(stats.clip_count, command_stats.clip_count)
+          assert_eq(stats.clear_count, command_stats.clear_count)
+          native_test_assert_replay_resource_counts(stats, command_stats)
           assert_eq(stats.text_count, 1)
           assert_eq(stats.present_count, 0)
           match font {
@@ -1294,13 +1312,11 @@ test "canvas replays render command lists" {
           let frame_stats = canvas.replay_frame(replay_frame, font~)
           assert_eq(frame_stats.command_count, commands.length())
           assert_eq(frame_stats.draw_count, expected_draw_count)
-          assert_eq(frame_stats.state_count, commands.stats().state_count)
-          assert_eq(
-            frame_stats.transform_count,
-            commands.stats().transform_count,
-          )
-          assert_eq(frame_stats.clip_count, commands.stats().clip_count)
-          assert_eq(frame_stats.clear_count, commands.stats().clear_count)
+          assert_eq(frame_stats.state_count, command_stats.state_count)
+          assert_eq(frame_stats.transform_count, command_stats.transform_count)
+          assert_eq(frame_stats.clip_count, command_stats.clip_count)
+          assert_eq(frame_stats.clear_count, command_stats.clear_count)
+          native_test_assert_replay_resource_counts(frame_stats, command_stats)
           assert_eq(frame_stats.text_count, 1)
           assert_eq(frame_stats.present_count, 0)
           match font {
@@ -1322,6 +1338,10 @@ test "canvas replays render command lists" {
             rejected_frame_stats.status() == @native.CanvasReplaySkippedCommands,
           )
           assert_true(!rejected_frame_stats.status().is_complete())
+          native_test_assert_replay_resource_counts(
+            rejected_frame_stats,
+            rejected_frame.command_list.stats(),
+          )
           match replay_image_descriptor {
             None => ()
             Some(_) => {
@@ -1343,13 +1363,16 @@ test "canvas replays render command lists" {
               )
               assert_true(cached_stats.is_complete())
               assert_eq(cached_stats.command_count, commands.length())
-              assert_eq(cached_stats.state_count, commands.stats().state_count)
+              assert_eq(cached_stats.state_count, command_stats.state_count)
               assert_eq(
                 cached_stats.transform_count,
-                commands.stats().transform_count,
+                command_stats.transform_count,
               )
-              assert_eq(cached_stats.clip_count, commands.stats().clip_count)
-              assert_eq(cached_stats.clear_count, commands.stats().clear_count)
+              assert_eq(cached_stats.clip_count, command_stats.clip_count)
+              assert_eq(cached_stats.clear_count, command_stats.clear_count)
+              native_test_assert_replay_resource_counts(
+                cached_stats, command_stats,
+              )
               let cached_again_stats = canvas.replay_with_resources(
                 commands,
                 replay_resources,
@@ -1369,19 +1392,19 @@ test "canvas replays render command lists" {
               assert_eq(cached_again_stats.command_count, commands.length())
               assert_eq(
                 cached_again_stats.state_count,
-                commands.stats().state_count,
+                command_stats.state_count,
               )
               assert_eq(
                 cached_again_stats.transform_count,
-                commands.stats().transform_count,
+                command_stats.transform_count,
               )
-              assert_eq(
-                cached_again_stats.clip_count,
-                commands.stats().clip_count,
-              )
+              assert_eq(cached_again_stats.clip_count, command_stats.clip_count)
               assert_eq(
                 cached_again_stats.clear_count,
-                commands.stats().clear_count,
+                command_stats.clear_count,
+              )
+              native_test_assert_replay_resource_counts(
+                cached_again_stats, command_stats,
               )
               assert_eq(replay_resource_stats.cache_count, 9)
               assert_eq(replay_resource_stats.resource_count, 10)
@@ -1439,19 +1462,19 @@ test "canvas replays render command lists" {
               assert_eq(frame_cached_stats.command_count, commands.length())
               assert_eq(
                 frame_cached_stats.state_count,
-                commands.stats().state_count,
+                command_stats.state_count,
               )
               assert_eq(
                 frame_cached_stats.transform_count,
-                commands.stats().transform_count,
+                command_stats.transform_count,
               )
-              assert_eq(
-                frame_cached_stats.clip_count,
-                commands.stats().clip_count,
-              )
+              assert_eq(frame_cached_stats.clip_count, command_stats.clip_count)
               assert_eq(
                 frame_cached_stats.clear_count,
-                commands.stats().clear_count,
+                command_stats.clear_count,
+              )
+              native_test_assert_replay_resource_counts(
+                frame_cached_stats, command_stats,
               )
               assert_eq(frame_resources.image_cache.length(), 1)
               assert_eq(frame_resources.shader_cache.length(), 2)
@@ -1508,6 +1531,10 @@ test "canvas replays render command lists" {
                 surface_frame_stats.replay.command_count,
                 commands.length(),
               )
+              native_test_assert_replay_resource_counts(
+                surface_frame_stats.replay,
+                command_stats,
+              )
               assert_eq(surface_resources.stats().cache_count, 9)
               assert_eq(surface_resources.stats().resource_count, 10)
               assert_eq(surface_resources.image_cache.length(), 1)
@@ -1539,6 +1566,10 @@ test "canvas replays render command lists" {
               assert_eq(mismatch_stats.finalization.frame_index, 0)
               assert_eq(mismatch_stats.replay.replayed_count, 0)
               assert_true(mismatch_stats.replay.skipped_count > 0)
+              native_test_assert_replay_resource_counts(
+                mismatch_stats.replay,
+                command_stats,
+              )
             }
           }
           assert_true(surface.flush_and_submit())
