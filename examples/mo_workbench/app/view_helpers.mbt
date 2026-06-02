@@ -2372,7 +2372,7 @@ fn WorkbenchModel::session_status_panel(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let active = self.active_session()
-  let binding = self.active_pi_session_binding()
+  let binding = self.active_agent_session_binding()
   let rows : Array[@core.View[WorkbenchMsg]] = [
     row(
       [
@@ -2426,7 +2426,7 @@ fn WorkbenchModel::session_status_panel(
     if capabilities.supports_model_catalog && self.model_catalog.length() > 0 {
       rows.push(model_catalog_row(self.model_catalog, layout, theme))
     }
-    if capabilities.uses_pi_transport && binding.has_visible_binding() {
+    if binding.has_visible_binding() {
       rows.push(session_binding_row(binding, layout, theme))
     }
     if self.has_session_panel_controls() {
@@ -2447,7 +2447,7 @@ fn WorkbenchModel::session_status_panel(
 ///|
 fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
   let active = self.active_session()
-  let binding = self.active_pi_session_binding()
+  let binding = self.active_agent_session_binding()
   let mut count = 1
   if active.active_task != "" {
     count = count + 1
@@ -2471,7 +2471,7 @@ fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
     if capabilities.supports_model_catalog && self.model_catalog.length() > 0 {
       count = count + 1
     }
-    if capabilities.uses_pi_transport && binding.has_visible_binding() {
+    if binding.has_visible_binding() {
       count = count + 1
     }
     if self.has_session_panel_controls() {
@@ -2503,7 +2503,7 @@ fn WorkbenchModel::should_show_session_detail_rows(
   self : WorkbenchModel,
 ) -> Bool {
   let capabilities = self.active_agent_backend_capabilities()
-  let binding = self.active_pi_session_binding()
+  let binding = self.active_agent_session_binding()
   self.composer_controls_expanded &&
   (
     (
@@ -2511,7 +2511,7 @@ fn WorkbenchModel::should_show_session_detail_rows(
       self.pi_session_stats.has_visible_metrics()
     ) ||
     (capabilities.supports_model_catalog && self.model_catalog.length() > 0) ||
-    (capabilities.uses_pi_transport && binding.has_visible_binding()) ||
+    binding.has_visible_binding() ||
     self.has_session_panel_controls()
   )
 }
@@ -3133,8 +3133,8 @@ fn WorkbenchModel::has_session_panel_controls(self : WorkbenchModel) -> Bool {
 ///|
 fn WorkbenchModel::has_advanced_session_controls(self : WorkbenchModel) -> Bool {
   let capabilities = self.active_agent_backend_capabilities()
-  let binding = self.active_pi_session_binding()
-  (capabilities.uses_pi_transport && binding.has_visible_binding()) ||
+  let binding = self.active_agent_session_binding()
+  binding.has_visible_binding() ||
   (capabilities.supports_fork && !self.transcript.is_empty()) ||
   (capabilities.supports_fork && !self.fork_messages.is_empty()) ||
   (
@@ -3229,9 +3229,9 @@ fn PiAgentSnapshot::has_active_signal(self : PiAgentSnapshot) -> Bool {
 }
 
 ///|
-fn PiSessionBinding::has_visible_binding(self : PiSessionBinding) -> Bool {
+fn AgentSessionBinding::has_visible_binding(self : AgentSessionBinding) -> Bool {
   self.status != "unbound" ||
-  self.rpc_session_id != "" ||
+  self.provider_session_id != "" ||
   self.session_file != "" ||
   self.session_name != "" ||
   self.model != "" ||
@@ -3240,7 +3240,7 @@ fn PiSessionBinding::has_visible_binding(self : PiSessionBinding) -> Bool {
 
 ///|
 fn session_binding_row(
-  binding : PiSessionBinding,
+  binding : AgentSessionBinding,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
@@ -3266,7 +3266,7 @@ fn session_binding_row(
 
 ///|
 fn session_binding_detail(
-  binding : PiSessionBinding,
+  binding : AgentSessionBinding,
   width : Double,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
@@ -3279,7 +3279,7 @@ fn session_binding_detail(
 }
 
 ///|
-fn session_binding_detail_label(binding : PiSessionBinding) -> String {
+fn session_binding_detail_label(binding : AgentSessionBinding) -> String {
   if binding.model != "" {
     "模型：" + binding.model
   } else if binding.session_file != "" {
@@ -3290,18 +3290,20 @@ fn session_binding_detail_label(binding : PiSessionBinding) -> String {
 }
 
 ///|
-fn PiSessionBinding::display_status_label(self : PiSessionBinding) -> String {
+fn AgentSessionBinding::display_status_label(
+  self : AgentSessionBinding,
+) -> String {
   if self.status == "unbound" {
     "未绑定"
   } else {
     let name = if self.session_name != "" {
       self.session_name
-    } else if self.rpc_session_id != "" {
-      self.rpc_session_id
+    } else if self.provider_session_id != "" {
+      self.provider_session_id
     } else if self.session_file != "" {
       self.session_file
     } else {
-      "Pi session"
+      "provider session"
     }
     pi_session_binding_status_label(self.status) + " · " + name
   }

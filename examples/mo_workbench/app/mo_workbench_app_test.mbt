@@ -129,6 +129,45 @@ test "workbench agent backend profiles expose Pi and fixture capabilities" {
 }
 
 ///|
+test "workbench exposes backend-neutral active agent session binding" {
+  let pi_binding = WorkbenchModel::new().active_agent_session_binding()
+  inspect(pi_binding.backend_id, content="pi")
+  inspect(pi_binding.workbench_session_id, content="moui-skia")
+  inspect(pi_binding.provider_session_id, content="")
+  inspect(pi_binding.status, content="unbound")
+
+  let fixture_binding = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .active_agent_session_binding()
+  inspect(fixture_binding.backend_id, content="fixture")
+  inspect(fixture_binding.workbench_session_id, content="moui-skia")
+  inspect(fixture_binding.provider_session_id, content="")
+  inspect(fixture_binding.session_file, content="")
+  inspect(fixture_binding.status, content="unbound")
+}
+
+///|
+test "workbench projects Pi session binding through agent-neutral contract" {
+  let model = WorkbenchModel::new().update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e7eb5","sessionName":"Mo Workbench smoke","sessionFile":"/tmp/mo-workbench-smoke.jsonl","messageCount":4,"pendingMessageCount":0}}
+        ),
+      ),
+    ),
+  )
+  let binding = model.active_agent_session_binding()
+  inspect(binding.backend_id, content="pi")
+  inspect(binding.workbench_session_id, content="moui-skia")
+  inspect(binding.provider_session_id, content="019e7eb5")
+  inspect(binding.session_name, content="Mo Workbench smoke")
+  inspect(binding.model, content="openai/gpt-5")
+  inspect(binding.status, content="bound")
+}
+
+///|
 test "workbench switches current session backend and resets provider state" {
   let model = WorkbenchModel::new()
     .update(ReceiveTransport(ProcessStarted("4242")))

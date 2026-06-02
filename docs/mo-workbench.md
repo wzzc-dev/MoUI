@@ -392,15 +392,15 @@ packages:
   entries, and command evidence. Tool execution results can attach stdout/log
   evidence to the matching command row while keeping stdout payload parsing out
   of the native transport package.
-- Workbench session ids now have explicit Pi session bindings. A
+- Workbench session ids now have explicit backend session bindings. A
   `WorkbenchSession` can carry a `pi_session_path`; selecting that session
   through an injected transport emits a platform-neutral `SwitchRpcSession`
   followed by a `get_state` refresh. `switch_session` and `get_state` responses
   update `PiSessionBinding` entries keyed by Workbench session id, recording the
   live Pi session id, session file, display name, model, and binding status.
-  Expanded secondary session details display the active binding as a compact
-  backend session row, including the live provider session name/id and model
-  when Pi has reported them.
+  The shared UI consumes the backend-neutral `AgentSessionBinding` projection,
+  so expanded secondary session details display a compact backend session row
+  with the live provider session name/id and model when Pi has reported them.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
 - The current-turn evidence card surfaces the latest non-duplicated diagnostic
