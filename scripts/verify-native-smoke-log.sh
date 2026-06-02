@@ -188,6 +188,7 @@ default_stage_markers=(
   "native smoke path verbs" \
   "native smoke non-finite path from-value rejected" \
   "native smoke non-finite path add skipped" \
+  "native smoke non-finite path direct mutations skipped" \
   "native smoke readback width" \
   "native smoke readback height" \
   "native smoke readback row_bytes" \
@@ -432,6 +433,7 @@ default_expected_stage_values=(
   $'native smoke filter finite validation\t1'
   $'native smoke non-finite path from-value rejected\t1'
   $'native smoke non-finite path add skipped\t2'
+  $'native smoke non-finite path direct mutations skipped\t7'
   $'native smoke text run resource plan count\t3'
   $'native smoke text run range byte size\t4'
   $'native smoke text run empty range resource plan count\t2'
