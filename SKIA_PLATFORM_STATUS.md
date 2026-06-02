@@ -83,8 +83,9 @@ these facts recorded in logs:
 - The native smoke log passed `scripts/verify-native-smoke-log.*`, including
   all required stage markers for readback dimensions, readback row bytes,
   bounded snapshots, PNG encode/decode dimensions, codec dimensions, decoded
-  bitmap readback dimensions, surface descriptor reporting, canvas state
-  restore, canvas clipping, canvas command replay, render resource planning,
+  bitmap readback dimensions, surface descriptor reporting, target-based raster
+  surface construction, predictable unsupported window/GPU surface targets,
+  canvas state restore, canvas clipping, canvas command replay, render resource planning,
   GPU context
   resource planning, GPU context identity variation, GPU frame context validation,
   GPU frame submission resource planning, GPU frame submission GPU-resource
@@ -113,7 +114,8 @@ these facts recorded in logs:
   measured-text result resource planning, measured-text result cache-key
   variation, text measurement cache-key variation, text shaping resource
   planning, shaped-text result resource planning, shaped glyph-run resource
-  planning, shaped glyph-run cache-key variation, UTF-8 text measurement, glyph count,
+  planning, shaped glyph-run cache-key variation, optional native shaped glyph
+  descriptor bridging, UTF-8 text measurement, glyph count,
   glyph ID mapping, glyph advances, glyph positions, glyph bounds, text bounds
   measurement, SkShaper availability reporting, optional native shaped-text
   metadata planning, default typeface availability,
@@ -121,7 +123,8 @@ these facts recorded in logs:
   family metadata, FontMgr character fallback, font fallback cache-key
   variation, font fallback family metadata, resolved fallback match cache-key
   variation, fallback match resource planning, fallback resolution cache-key
-  variation, fallback resolution resource planning, font fallback resource planning,
+  variation, fallback resolution resource planning, native fallback resolution
+  bridging, font fallback resource planning,
   and shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and

@@ -45,6 +45,25 @@ native MoonBit file to be assigned to a capability with matching fallback APIs,
 declared handle ownership, and either runtime smoke markers or an explicit
 non-smoke rationale.
 
+## Native capability release checklist
+
+When adding a Canvas, Path, Text, Shader, Filter, GPU, surface, or resource-cache
+capability, keep the release proof in the same patch as the API:
+
+- update native and unavailable MoonBit implementations together;
+- add C++ stubs only with explicit MoonBit borrow/owned annotations and matching
+  `ownership.json` entries for new handles;
+- add MoonBit tests plus native-smoke markers, or record a non-smoke rationale
+  in `native/capabilities.json`;
+- list new markers in `skia-platform-status.json` and keep both
+  `verify-native-smoke-log.*` fallback marker tables synchronized;
+- update `verify-platform-status.*` when a marker becomes required,
+  conditional, or expected-valued release evidence;
+- run `moon info` for public API changes and inspect `pkg.generated.mbti`;
+- accept Linux, macOS, or Windows platform status only through
+  `accept-platform-status.*` after downloaded real Skia artifacts pass native
+  smoke log, acceptance log, and real artifact verification.
+
 ## JetBrains/skia provider
 
 JetBrains/skia is the default binary provider for desktop real-smoke runs. The
@@ -199,7 +218,8 @@ the saved native executable log for `skia_mbt native smoke test passed`, and
 verifies that `native/moon.pkg` did not change. The smoke executable covers
 raster drawing, readback, snapshots, PNG encode/decode, bitmap decode, and
 canvas save/restore with clipping behavior. It also exercises shader-backed
-draws, native Canvas replay of value-layer render commands, render resource
+draws, target-based raster surface construction, predictable future window/GPU
+target rejection, native Canvas replay of value-layer render commands, render resource
 planning, shaped glyph-run render command replay, present descriptor validation,
 surface/GPU present resource planning, surface/GPU finalization resource
 planning, render-frame submission/finalization planning, render-frame
@@ -212,7 +232,9 @@ typeface, and font manager family enumeration/matching when the platform font
 manager is available. It also
 exercises native typeface family
 metadata and FontMgr character fallback through the value-layer
-`FontFallbackRequest`. Pixel assertions are reserved for deterministic
+`FontFallbackRequest`, native fallback resolution descriptor bridging, and
+optional native shaped glyph descriptor bridging when SkShaper is available.
+Pixel assertions are reserved for deterministic
 geometry and color operations so minimal CPU-only Skia builds do not fail only
 because their font manager differs. GPU, shader, and filter coverage also
 verifies that value-layer resource descriptors produce cacheable renderer
@@ -338,7 +360,8 @@ counts that prove specific resource dependencies, including render-frame
 submission/finalization resource planning, cache population, shaped glyph-run
 render command replay, and GPU-backed submission/finalization subplans,
 surface/GPU finalization planning, measured-text result metadata planning,
-shaped glyph-run planning, and fallback resolution metadata planning, and are
+shaped glyph-run planning, shaped glyph descriptor bridging, fallback resolution
+metadata planning, and fallback resolution bridging, and are
 used by the real-smoke workflows after the one-step helper runs.
 `scripts/verify-acceptance-log.sh` and `scripts/verify-acceptance-log.ps1` check
 the acceptance summary fields; the shell version can also require a full
