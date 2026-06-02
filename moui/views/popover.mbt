@@ -8,7 +8,7 @@ pub fn[Msg] popover(
   width? : Double = 240.0,
   height? : Double = 160.0,
 ) -> @core.View[Msg] {
-  if expanded {
+  let view = if expanded {
     stack([
       anchor,
       surface(
@@ -25,6 +25,9 @@ pub fn[Msg] popover(
   } else {
     anchor
   }
+  view
+  .semantics_expanded(expanded~)
+  .semantics_action(popover_toggle_action(expanded))
 }
 
 ///|
@@ -44,12 +47,16 @@ pub fn[Msg] dropdown(
     placeholder,
   )
   let anchor = button(
-    label + ": " + selected_label,
-    on_click=on_toggle,
-    variant=ButtonVariant::Tonal,
-    theme~,
-    width~,
-  )
+      label + ": " + selected_label,
+      on_click=on_toggle,
+      variant=ButtonVariant::Tonal,
+      theme~,
+      width~,
+    )
+    .semantics_role(@core.SemanticsRole::Menu)
+    .semantics_expanded(expanded=state.expanded)
+    .semantics_action(popover_toggle_action(state.expanded))
+    .accessibility_label(label + ": " + selected_label)
   popover(
     anchor~,
     content=dropdown_menu(
@@ -57,6 +64,8 @@ pub fn[Msg] dropdown(
       theme~,
       width=width - theme.spacing_scale.sm * 2.0,
       max_height~,
+      selected=state.selected,
+      label=label + " options",
     ),
     expanded=state.expanded,
     theme~,
@@ -93,6 +102,15 @@ pub fn[Msg] combobox(
         variant=ButtonVariant::Ghost,
         theme~,
         width=62.0,
+      )
+      .semantics_expanded(expanded~)
+      .semantics_action(popover_toggle_action(expanded))
+      .accessibility_label(
+        if expanded {
+          "Close options"
+        } else {
+          "Open options"
+        },
       ),
     ],
     spacing=theme.spacing_scale.xs,
@@ -138,6 +156,7 @@ pub fn[Msg] autocomplete(
       theme~,
       width=width - theme.spacing_scale.sm * 2.0,
       max_height~,
+      label="Autocomplete suggestions",
     ),
     expanded~,
     theme~,
@@ -152,6 +171,8 @@ fn[Msg] dropdown_menu(
   theme~ : @core.Theme,
   width~ : Double,
   max_height~ : Double,
+  selected? : String = "",
+  label? : String = "Menu options",
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
   for item in items {
@@ -167,7 +188,10 @@ fn[Msg] dropdown_menu(
         theme~,
         width~,
         height=34.0,
-      ).disabled(disabled=!item.enabled),
+      )
+      .disabled(disabled=!item.enabled)
+      .semantics_selected(selected=item.id == selected)
+      .accessibility_label(item.label),
     )
   }
   scroll_view(
@@ -175,6 +199,8 @@ fn[Msg] dropdown_menu(
     width~,
     height=max_height,
   )
+  .semantics_role(@core.SemanticsRole::Menu)
+  .accessibility_label(label)
 }
 
 ///|
@@ -198,5 +224,14 @@ fn popover_alignment(placement : PopoverPlacement) -> @core.Alignment {
     BottomEnd => @core.Alignment::new(x=1.0, y=1.0)
     TopStart => @core.Alignment::new(x=0.0, y=0.0)
     TopEnd => @core.Alignment::new(x=1.0, y=0.0)
+  }
+}
+
+///|
+fn popover_toggle_action(expanded : Bool) -> @core.SemanticsAction {
+  if expanded {
+    @core.SemanticsAction::Collapse
+  } else {
+    @core.SemanticsAction::Expand
   }
 }

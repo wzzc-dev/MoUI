@@ -1365,6 +1365,7 @@ pub(all) struct SemanticsState {
   focused : Bool
   disabled : Bool
   selected : Bool
+  pressed : Bool
   checked : Bool
   expanded : Bool
   invalid : Bool
@@ -1751,6 +1752,7 @@ pub fn[Msg] View::semantics_description(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::semantics_dismiss_action(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::semantics_expanded(Self[Msg], expanded? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_invalid(Self[Msg], invalid? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_pressed(Self[Msg], pressed? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_required(Self[Msg], required? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_role(Self[Msg], SemanticsRole) -> Self[Msg]
 pub fn[Msg] View::semantics_selected(Self[Msg], selected? : Bool) -> Self[Msg]

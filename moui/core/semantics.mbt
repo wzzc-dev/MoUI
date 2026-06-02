@@ -43,6 +43,7 @@ pub(all) struct SemanticsState {
   focused : Bool
   disabled : Bool
   selected : Bool
+  pressed : Bool
   checked : Bool
   expanded : Bool
   invalid : Bool
@@ -69,6 +70,7 @@ pub fn SemanticsState::default() -> SemanticsState {
     focused: false,
     disabled: false,
     selected: false,
+    pressed: false,
     checked: false,
     expanded: false,
     invalid: false,
@@ -108,6 +110,7 @@ fn ElementNode::build_semantics(
     focused: focused == Some(self.id),
     disabled: self.is_semantics_disabled(),
     selected: self.is_semantics_selected(),
+    pressed: self.is_semantics_pressed(),
     checked: self.is_semantics_checked(),
     expanded: self.is_semantics_expanded(),
     invalid: self.is_semantics_invalid(),
@@ -312,6 +315,8 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
       }
     SemanticsSelectedModifier(_) =>
       { role: Group, label: "", value: "", description: "", actions: [Select] }
+    SemanticsPressedModifier(_) =>
+      { role: Group, label: "", value: "", description: "", actions: [] }
     SemanticsCheckedModifier(_) =>
       { role: Group, label: "", value: "", description: "", actions: [] }
     SemanticsExpandedModifier(expanded) =>
@@ -520,9 +525,11 @@ fn ElementNode::is_semantics_passthrough(self : ElementNode) -> Bool {
 ///|
 fn ViewModifier::is_semantic_metadata_modifier(self : ViewModifier) -> Bool {
   match self {
-    AccessibilityLabelModifier(_)
+    DisabledModifier(_)
+    | AccessibilityLabelModifier(_)
     | SemanticsRoleModifier(_)
     | SemanticsSelectedModifier(_)
+    | SemanticsPressedModifier(_)
     | SemanticsCheckedModifier(_)
     | SemanticsExpandedModifier(_)
     | SemanticsInvalidModifier(_)
@@ -536,8 +543,10 @@ fn ViewModifier::is_semantic_metadata_modifier(self : ViewModifier) -> Bool {
 ///|
 fn ViewModifier::is_semantic_state_modifier(self : ViewModifier) -> Bool {
   match self {
-    AccessibilityLabelModifier(_)
+    DisabledModifier(_)
+    | AccessibilityLabelModifier(_)
     | SemanticsSelectedModifier(_)
+    | SemanticsPressedModifier(_)
     | SemanticsCheckedModifier(_)
     | SemanticsExpandedModifier(_)
     | SemanticsInvalidModifier(_)
@@ -570,6 +579,23 @@ fn ElementNode::is_semantics_checked(self : ElementNode) -> Bool {
         _ =>
           if self.children.length() > 0 {
             self.children[0].is_semantics_checked()
+          } else {
+            false
+          }
+      }
+    _ => false
+  }
+}
+
+///|
+fn ElementNode::is_semantics_pressed(self : ElementNode) -> Bool {
+  match self.spec {
+    ModifiedSpec(data) =>
+      match data.modifier {
+        SemanticsPressedModifier(pressed) => pressed
+        _ =>
+          if self.children.length() > 0 {
+            self.children[0].is_semantics_pressed()
           } else {
             false
           }

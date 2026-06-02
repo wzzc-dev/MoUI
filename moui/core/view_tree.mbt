@@ -347,6 +347,7 @@ priv enum ViewModifier {
   AccessibilityLabelModifier(String)
   SemanticsRoleModifier(SemanticsRole)
   SemanticsSelectedModifier(Bool)
+  SemanticsPressedModifier(Bool)
   SemanticsCheckedModifier(Bool)
   SemanticsExpandedModifier(Bool)
   SemanticsInvalidModifier(Bool)

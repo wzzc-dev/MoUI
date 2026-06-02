@@ -3,17 +3,22 @@ using @views {
   badge,
   button,
   column,
+  column_visibility_panel,
+  data_filter,
+  data_filter_bar,
+  description_item,
+  detail_panel,
   empty_state,
   error_state,
   loading_state,
+  pagination,
   row,
-  stat_card,
+  selection_toolbar,
   status_bar,
   surface,
   table,
   table_column,
   text,
-  text_field,
   tree_item,
   tree_view,
 }
@@ -52,20 +57,30 @@ pub(all) struct DataTableModel {
   records : Array[DataRecord]
   query : String
   selected_team : String
+  selected_statuses : Array[String]
   selected_row : Int
+  selected_rows : Array[Int]
+  visible_columns : Array[String]
   expanded : Array[String]
   page : Int
   page_size : Int
   sort_key : DataSortKey
   ascending : Bool
   status : DataStatus
+  last_action : String
 }
 
 ///|
 pub(all) enum DataTableMsg {
   QueryChanged(String)
   TeamSelected(String)
+  ToggleStatusFilter(String)
+  ClearFilters
   RowSelected(Int)
+  ClearSelection
+  ArchiveSelection
+  ExportSelection
+  ToggleColumnVisibility(String, Bool)
   ToggleTree(String)
   SortBy(DataSortKey)
   NextPage
@@ -98,13 +113,17 @@ pub fn DataTableModel::new() -> DataTableModel {
     records: sample_records(),
     query: "",
     selected_team: "all",
+    selected_statuses: [],
     selected_row: 0,
+    selected_rows: [0],
+    visible_columns: ["project", "status", "owner", "priority"],
     expanded: ["teams"],
     page: 0,
     page_size: 3,
     sort_key: DataSortKey::Project,
     ascending: true,
     status: DataStatus::Ready,
+    last_action: "Ready",
   }
 }
 
@@ -116,7 +135,48 @@ pub fn DataTableModel::update(
   match message {
     QueryChanged(value) => { ..self, query: value, page: 0 }
     TeamSelected(value) => { ..self, selected_team: value, page: 0 }
-    RowSelected(id) => { ..self, selected_row: id }
+    ToggleStatusFilter(status) =>
+      {
+        ..self,
+        selected_statuses: toggle_id(self.selected_statuses, status),
+        page: 0,
+      }
+    ClearFilters =>
+      {
+        ..self,
+        query: "",
+        selected_team: "all",
+        selected_statuses: [],
+        page: 0,
+      }
+    RowSelected(id) =>
+      {
+        ..self,
+        selected_row: id,
+        selected_rows: toggle_int_id(self.selected_rows, id),
+        last_action: "Selected row \{id}",
+      }
+    ClearSelection =>
+      { ..self, selected_rows: [], last_action: "Selection cleared" }
+    ArchiveSelection =>
+      {
+        ..self,
+        last_action: "Archive queued for \{self.selected_rows.length()} row(s)",
+      }
+    ExportSelection =>
+      {
+        ..self,
+        last_action: "Export queued for \{self.selected_rows.length()} row(s)",
+      }
+    ToggleColumnVisibility(id, visible) =>
+      {
+        ..self,
+        visible_columns: set_column_visibility(
+          self.visible_columns,
+          id,
+          visible,
+        ),
+      }
     ToggleTree(id) => { ..self, expanded: toggle_id(self.expanded, id) }
     SortBy(key) =>
       if self.sort_key == key {
@@ -146,12 +206,14 @@ pub fn DataTableModel::filtered_records(
   self.records.filter(record => {
     let team_match = self.selected_team == "all" ||
       record.team == self.selected_team
+    let status_match = self.selected_statuses.length() == 0 ||
+      self.selected_statuses.any(status => status == record.status)
     let query_match = needle == "" ||
       record.project.to_lower().contains(needle) ||
       record.owner.to_lower().contains(needle) ||
       record.status.to_lower().contains(needle) ||
       record.priority.to_lower().contains(needle)
-    team_match && query_match
+    team_match && status_match && query_match
   })
 }
 
@@ -225,10 +287,10 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
                 height=34.0,
               ),
               text(
-                "Filter, tree selection, pagination, and state panels.",
+                "Filter bar, column visibility, row selection, pagination, and state panels.",
                 role=@views.TextRole::Caption,
                 theme~,
-                width=420.0,
+                width=520.0,
                 height=24.0,
               ),
             ],
@@ -271,8 +333,11 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
       status_bar(
         [
           "Rows: \{self.filtered_records().length()}",
+          "Selected: \{self.selected_rows.length()}",
+          "Columns: \{self.visible_columns.length()}/4",
           "Page: \{self.page + 1}/\{self.page_count()}",
           "Sort: " + self.sort_label(),
+          self.last_action,
         ],
         theme~,
         width=928.0,
@@ -284,7 +349,7 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
   surface(
     shell,
     width=980.0,
-    height=620.0,
+    height=700.0,
     variant=@views.SurfaceVariant::Base,
     theme~,
     padding=theme.spacing_scale.lg,
@@ -295,7 +360,7 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
 pub fn DataTableApp::runtime(
   self : DataTableApp,
   width? : Double = 1020.0,
-  height? : Double = 680.0,
+  height? : Double = 740.0,
 ) -> @core.AppRuntime {
   ignore(self)
   runtime(width~, height~)
@@ -304,7 +369,7 @@ pub fn DataTableApp::runtime(
 ///|
 pub fn runtime(
   width? : Double = 1020.0,
-  height? : Double = 680.0,
+  height? : Double = 740.0,
 ) -> @core.AppRuntime {
   DataTableModel::new().runtime(width~, height~)
 }
@@ -313,7 +378,7 @@ pub fn runtime(
 pub fn DataTableModel::runtime(
   self : DataTableModel,
   width? : Double = 1020.0,
-  height? : Double = 680.0,
+  height? : Double = 740.0,
 ) -> @core.AppRuntime {
   @core.AppRuntime::new_program(
     program=@core.Program::simple(init=self, update~, view~),
@@ -359,7 +424,7 @@ fn DataTableModel::filter_tree(
       align=@views.CrossAlign::Start,
     ),
     width=250.0,
-    height=470.0,
+    height=540.0,
     variant=@views.SurfaceVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
@@ -376,79 +441,62 @@ fn DataTableModel::data_panel(
       [
         row(
           [
-            text_field(
-              self.query,
-              on_input=value => QueryChanged(value),
+            data_filter_bar(
+              query=self.query,
+              on_query=value => QueryChanged(value),
+              filters=self.data_filters(),
+              result_count=self.filtered_records().length(),
+              on_clear=Some(ClearFilters),
               placeholder="Search projects",
-              variant=@views.TextFieldVariant::Outline,
               theme~,
-              width=260.0,
-              height=38.0,
+              width=390.0,
             ),
-            button(
-              "Project",
-              on_click=SortBy(DataSortKey::Project),
-              variant=@views.ButtonVariant::Ghost,
+            column_visibility_panel(
+              data_table_columns(),
+              visible=self.visible_columns,
+              locked=["project"],
+              on_toggle=(id, visible) => ToggleColumnVisibility(id, visible),
               theme~,
-              width=88.0,
-              height=36.0,
-            ),
-            button(
-              "Owner",
-              on_click=SortBy(DataSortKey::Owner),
-              variant=@views.ButtonVariant::Ghost,
-              theme~,
-              width=76.0,
-              height=36.0,
-            ),
-            button(
-              "Status",
-              on_click=SortBy(DataSortKey::Status),
-              variant=@views.ButtonVariant::Ghost,
-              theme~,
-              width=82.0,
-              height=36.0,
-            ),
-          ],
-          spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Center,
-        ),
-        self.state_or_table(theme),
-        row(
-          [
-            button(
-              "Previous",
-              on_click=PreviousPage,
-              variant=@views.ButtonVariant::Outline,
-              theme~,
-              width=98.0,
-              height=36.0,
-            ),
-            text(
-              "Page \{self.page + 1} of \{self.page_count()}",
-              role=@views.TextRole::Caption,
-              theme~,
-              width=130.0,
-              height=28.0,
-            ),
-            button(
-              "Next",
-              on_click=NextPage,
-              variant=@views.ButtonVariant::Outline,
-              theme~,
-              width=82.0,
-              height=36.0,
+              width=238.0,
             ),
           ],
           spacing=theme.spacing_scale.sm,
-          align=@views.CrossAlign::Center,
+          align=@views.CrossAlign::Start,
+        ),
+        selection_toolbar(
+          selected_count=self.selected_rows.length(),
+          total_count=self.filtered_records().length(),
+          actions=[
+            @views.MenuItem::new(
+              id="archive",
+              label="Archive",
+              message=ArchiveSelection,
+            ),
+            @views.MenuItem::new(
+              id="export",
+              label="Export",
+              message=ExportSelection,
+            ),
+          ],
+          on_clear=Some(ClearSelection),
+          theme~,
+          width=640.0,
+        ),
+        self.state_or_table(theme),
+        pagination(
+          page=self.page,
+          page_count=self.page_count(),
+          on_previous=PreviousPage,
+          on_next=NextPage,
+          theme~,
+          width=340.0,
         ),
       ],
       spacing=theme.spacing_scale.md,
       align=@views.CrossAlign::Start,
     ),
     width=660.0,
-    height=470.0,
+    height=540.0,
     variant=@views.SurfaceVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
@@ -488,20 +536,18 @@ fn DataTableModel::table_view(
   theme : @core.Theme,
 ) -> @core.View[DataTableMsg] {
   let records = self.visible_records()
-  let columns = [
-    table_column(id="project", label="Project", width=180.0),
-    table_column(id="status", label="Status", width=104.0),
-    table_column(id="owner", label="Owner", width=128.0),
-    table_column(id="priority", label="Priority", width=110.0),
-  ]
+  let columns = self.visible_table_columns()
   table(
     columns,
-    records.map(record => {
-      [record.project, record.status, record.owner, record.priority]
-    }),
+    records.map(record => record_table_values(record, columns)),
     selected_row=selected_visible_index(records, self.selected_row),
+    on_row_select=Some(row_index => RowSelected(records[row_index].id)),
+    sort_column=self.sort_column_id(),
+    sort_ascending=self.ascending,
+    on_sort=Some(id => SortBy(data_sort_key_for_column(id))),
+    sortable_columns=["project", "owner", "status"],
     cell=Some((row_index, column, value) => {
-      let record = records[row_index]
+      ignore(row_index)
       let base : @core.View[DataTableMsg] = if column.id == "status" {
         badge(value, tone=status_tone(value), theme~, width=82.0, height=24.0)
       } else {
@@ -513,7 +559,7 @@ fn DataTableModel::table_view(
           height=30.0,
         )
       }
-      base.on_tap(RowSelected(record.id))
+      base
     }),
     empty=Some(
       empty_state(
@@ -532,18 +578,31 @@ fn DataTableModel::selected_summary(
   self : DataTableModel,
   theme : @core.Theme,
 ) -> @core.View[DataTableMsg] {
-  let selected = match self.selected_record() {
-    Some(record) => record.project + " - " + record.owner
-    None => "No row selected"
+  let items = match self.selected_record() {
+    Some(record) =>
+      [
+        description_item("Project", record.project),
+        description_item("Owner", record.owner),
+        description_item("Status", record.status),
+      ]
+    None => []
   }
-  stat_card(
+  detail_panel(
     "Selected",
-    selected,
-    caption="Click a table row",
-    tone=@views.FeedbackTone::Info,
+    items,
+    subtitle="Click a table row",
+    empty=Some(
+      text(
+        "No row selected",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=178.0,
+        height=28.0,
+      ),
+    ),
     theme~,
     width=210.0,
-    height=116.0,
+    height=188.0,
   )
 }
 
@@ -599,6 +658,97 @@ fn sample_records() -> Array[DataRecord] {
       priority="Medium",
     ),
   ]
+}
+
+///|
+fn data_table_columns() -> Array[@views.TableColumn] {
+  [
+    table_column(id="project", label="Project", width=180.0),
+    table_column(id="status", label="Status", width=104.0),
+    table_column(id="owner", label="Owner", width=128.0),
+    table_column(id="priority", label="Priority", width=110.0),
+  ]
+}
+
+///|
+fn DataTableModel::visible_table_columns(
+  self : DataTableModel,
+) -> Array[@views.TableColumn] {
+  let columns : Array[@views.TableColumn] = []
+  for column in data_table_columns() {
+    if self.visible_columns.any(id => id == column.id) {
+      columns.push(column)
+    }
+  }
+  if columns.length() == 0 {
+    columns.push(table_column(id="project", label="Project", width=180.0))
+  }
+  columns
+}
+
+///|
+fn record_table_values(
+  record : DataRecord,
+  columns : Array[@views.TableColumn],
+) -> Array[String] {
+  let values : Array[String] = []
+  for column in columns {
+    values.push(record_table_value(record, column.id))
+  }
+  values
+}
+
+///|
+fn record_table_value(record : DataRecord, column_id : String) -> String {
+  match column_id {
+    "status" => record.status
+    "owner" => record.owner
+    "priority" => record.priority
+    _ => record.project
+  }
+}
+
+///|
+fn DataTableModel::data_filters(
+  self : DataTableModel,
+) -> Array[@views.DataFilter[DataTableMsg]] {
+  let filters : Array[@views.DataFilter[DataTableMsg]] = []
+  if self.selected_team != "all" {
+    filters.push(
+      data_filter(
+        id="team",
+        label="Team: " + data_team_label(self.selected_team),
+        selected=true,
+        message=TeamSelected("all"),
+      ),
+    )
+  }
+  for status in data_status_filters() {
+    filters.push(
+      data_filter(
+        id=status.to_lower(),
+        label=status,
+        selected=self.selected_statuses.any(selected => selected == status),
+        message=ToggleStatusFilter(status),
+      ),
+    )
+  }
+  filters
+}
+
+///|
+fn data_status_filters() -> Array[String] {
+  ["Active", "Review", "Paused", "Blocked"]
+}
+
+///|
+fn data_team_label(team : String) -> String {
+  match team {
+    "experience" => "Experience"
+    "platform" => "Platform"
+    "operations" => "Operations"
+    _ => "All Teams"
+  }
 }
 
 ///|
@@ -722,6 +872,24 @@ fn DataTableModel::sort_label(self : DataTableModel) -> String {
 }
 
 ///|
+fn DataTableModel::sort_column_id(self : DataTableModel) -> String {
+  match self.sort_key {
+    Project => "project"
+    Owner => "owner"
+    Status => "status"
+  }
+}
+
+///|
+fn data_sort_key_for_column(id : String) -> DataSortKey {
+  match id {
+    "owner" => Owner
+    "status" => Status
+    _ => Project
+  }
+}
+
+///|
 fn toggle_id(values : Array[String], id : String) -> Array[String] {
   if values.any(value => value == id) {
     values.filter(value => value != id)
@@ -729,6 +897,43 @@ fn toggle_id(values : Array[String], id : String) -> Array[String] {
     let next = values.copy()
     next.push(id)
     next
+  }
+}
+
+///|
+fn toggle_int_id(values : Array[Int], id : Int) -> Array[Int] {
+  if values.any(value => value == id) {
+    values.filter(value => value != id)
+  } else {
+    let next = values.copy()
+    next.push(id)
+    next
+  }
+}
+
+///|
+fn set_column_visibility(
+  values : Array[String],
+  id : String,
+  visible : Bool,
+) -> Array[String] {
+  if id == "project" {
+    values
+  } else if visible {
+    if values.any(value => value == id) {
+      values
+    } else {
+      let next = values.copy()
+      next.push(id)
+      next
+    }
+  } else {
+    let next = values.filter(value => value != id)
+    if next.length() == 0 {
+      ["project"]
+    } else {
+      next
+    }
   }
 }
 

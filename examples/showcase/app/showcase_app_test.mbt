@@ -60,6 +60,10 @@ test "showcase navigation dialog and sheet state are wired" {
   let runtime = model.runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Showcase dialog"))
+  assert_true(has_text(commands, "Custom content shell"))
+  assert_true(has_text(commands, "Host"))
+  assert_true(has_text(commands, "view-level"))
+  assert_true(has_text(commands, "Dismiss"))
   assert_true(has_text(commands, "Showcase sheet"))
   assert_true(model.dialog_visible)
   assert_true(model.sheet_visible)
@@ -75,6 +79,13 @@ test "showcase navigation shell demos use public constructors" {
   assert_true(has_text(commands, "Navigation"))
   assert_true(has_text(commands, "Catalog"))
   assert_true(has_text(commands, "Navigation Shell"))
+  assert_true(has_text(commands, "Current route: navigation"))
+  assert_true(has_text(commands, "Section Nav"))
+  assert_true(has_text(commands, "Shell routes"))
+  assert_true(has_text(commands, "Native menu"))
+  assert_true(has_text(commands, "Host gap"))
+  assert_true(has_text(commands, "Dialog"))
+  assert_true(has_text(commands, "Sheet"))
   assert_true(has_text(commands, "Master Detail"))
   assert_true(has_text(commands, "Wizard Step: Profile"))
   assert_true(has_text(commands, "Permissions"))
@@ -162,6 +173,27 @@ test "showcase covers text media controls and layout sections" {
     .runtime(width=760.0, height=420.0)
   let control_commands = control_runtime.draw_commands()
   assert_true(has_text(control_commands, "Controls"))
+  assert_true(has_text(control_commands, "Preview Control Baseline"))
+  assert_true(
+    has_text(
+      control_commands, "Workflow | status | public surface | evidence | preview gap",
+    ),
+  )
+  assert_true(
+    has_text(
+      control_commands, "Forms | ready | form_workflow_bar + inputs | Showcase + Settings | app validation",
+    ),
+  )
+  assert_true(
+    has_text(
+      control_commands, "Dialogs/Menus | partial | dialog/popover/command_menu | Command Palette | no native menus/focus trap",
+    ),
+  )
+  assert_true(
+    has_text(
+      control_commands, "Input/A11y | partial | FocusScope/shortcuts/semantics | Interaction Lab | no platform bridge",
+    ),
+  )
   assert_true(has_text(control_commands, "Native WGPU"))
   assert_true(has_text(control_commands, "2026-5-21"))
   let form_commands = @app.ShowcaseModel::new()
@@ -183,6 +215,17 @@ test "showcase covers text media controls and layout sections" {
   assert_true(has_text(forms_commands, "Forms"))
   assert_true(has_text(forms_commands, "Profile"))
   assert_true(has_text(forms_commands, "Email is required"))
+  assert_true(has_text(forms_commands, "Review required"))
+  assert_true(has_text(forms_commands, "First invalid: email"))
+  assert_true(
+    has_text(
+      forms_commands, "display_name: Display name must be at least 2 characters",
+    ),
+  )
+  assert_true(has_text(forms_commands, "Focus first"))
+  assert_true(has_text(forms_commands, "Submit disabled until Email is valid"))
+  assert_true(has_text(forms_commands, "Save profile"))
+  assert_true(has_text(forms_commands, "Cancel"))
   assert_true(has_text(forms_commands, "Standalone error message"))
   assert_true(has_text(forms_commands, "Enhanced Inputs"))
   assert_true(has_text(forms_commands, "Clear"))
@@ -196,7 +239,24 @@ test "showcase covers text media controls and layout sections" {
     .draw_commands()
   assert_true(has_text(data_commands, "Data"))
   assert_true(has_text(data_commands, "Data Table"))
+  assert_true(has_text(data_commands, "3 results"))
+  assert_true(has_text(data_commands, "Clear"))
   assert_true(has_text(data_commands, "Project Atlas"))
+  assert_true(has_text(data_commands, "Status v"))
+  assert_true(has_text(data_commands, "Column visibility"))
+  assert_true(has_text(data_commands, "2 of 3 columns visible"))
+  assert_true(has_text(data_commands, "Hidden"))
+  assert_true(has_text(data_commands, "2 of 3 selected"))
+  assert_true(has_text(data_commands, "Archive"))
+  assert_true(has_text(data_commands, "Export"))
+  assert_true(has_text(data_commands, "Page 2 of 4"))
+  assert_true(has_text(data_commands, "Selected row"))
+  assert_true(has_text(data_commands, "Compact detail panel"))
+  assert_true(has_text(data_commands, "Selectable List"))
+  assert_true(has_text(data_commands, "Healthy pipeline"))
+  assert_true(has_text(data_commands, "Review required"))
+  assert_true(has_text(data_commands, "Archive Import"))
+  assert_true(has_text(data_commands, "Disabled source"))
   assert_true(has_text(data_commands, "Tree View"))
   assert_true(has_text(data_commands, "Workspace"))
   assert_true(has_text(data_commands, "Mira Chen"))
@@ -328,7 +388,25 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(interaction_commands, "Tooltip"))
   assert_true(has_text(interaction_commands, "File Drop"))
   assert_true(has_text(interaction_commands, "Focus + Shortcut"))
+  assert_true(has_text(interaction_commands, "Focusable action"))
+  assert_true(has_text(interaction_commands, "Meta+k"))
+  assert_true(has_text(interaction_commands, "Name field"))
+  assert_true(has_text(interaction_commands, "Email field"))
+  assert_true(has_text(interaction_commands, "Focus ring: name"))
+  assert_true(
+    has_text(interaction_commands, "Semantic states: pressed selected disabled"),
+  )
+  assert_true(has_text(interaction_commands, "Focus order: name -> email"))
+  assert_true(has_text(interaction_commands, "Tab next: email"))
+  assert_true(has_text(interaction_commands, "First invalid: email"))
+  assert_true(has_text(interaction_commands, "Enter target: save"))
+  assert_true(has_text(interaction_commands, "Escape target: cancel"))
   assert_true(has_text(interaction_commands, "Popover + Dropdown"))
+  assert_true(
+    has_text(
+      interaction_commands, "Expanded semantics: selected + disabled options",
+    ),
+  )
   assert_true(has_text(interaction_commands, "Renderer: Native"))
   assert_true(has_text(interaction_commands, "Inline popover"))
   assert_true(has_text(interaction_commands, "Popover content"))
@@ -340,11 +418,28 @@ test "showcase navigates to system gallery sections" {
     .draw_commands()
   assert_true(has_text(feedback_commands, "Feedback"))
   assert_true(has_text(feedback_commands, "Saved settings"))
+  assert_true(has_text(feedback_commands, "Workspace saved"))
+  assert_true(has_text(feedback_commands, "Sync queued for retry"))
+  assert_true(has_text(feedback_commands, "Dismiss"))
   assert_true(has_text(feedback_commands, "Connection interrupted"))
+  assert_true(
+    has_text(
+      feedback_commands, "Email is already used by another workspace member.",
+    ),
+  )
+  assert_true(has_text(feedback_commands, "Exporting report"))
+  assert_true(
+    has_text(feedback_commands, "Preparing CSV rows from the current filter."),
+  )
+  assert_true(has_text(feedback_commands, "Running"))
   assert_true(has_text(feedback_commands, "No files"))
   assert_true(has_text(feedback_commands, "Loading preview"))
   assert_true(has_text(feedback_commands, "Import failed"))
+  assert_true(has_text(feedback_commands, "Status Badge"))
   assert_true(has_text(feedback_commands, "Beta"))
+  assert_true(has_text(feedback_commands, "Ready"))
+  assert_true(has_text(feedback_commands, "Queued"))
+  assert_true(has_text(feedback_commands, "Failed"))
   assert_true(has_text(feedback_commands, "Disclosure Details"))
   assert_true(has_text(feedback_commands, "Inline Disclosure"))
   assert_true(has_text(feedback_commands, "Collapsible Panel"))

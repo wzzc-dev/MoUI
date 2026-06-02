@@ -10,6 +10,20 @@ fn ShowcaseModel::navigation_section(
     "Navigation stack, sidebar shells, breadcrumbs, wizard steps, dialog host, and sheet host are wired together.",
     column(
       [
+        route_header(
+          "Navigation Shell",
+          subtitle="Current route: " + self.selected_section,
+          actions=[
+            @views.MenuItem::new(
+              id="dialog",
+              label="Dialog",
+              message=ShowDialog,
+            ),
+            @views.MenuItem::new(id="sheet", label="Sheet", message=ShowSheet),
+          ],
+          theme~,
+          width=520.0,
+        ),
         breadcrumb(
           [
             @views.BreadcrumbItem::new(
@@ -23,6 +37,40 @@ fn ShowcaseModel::navigation_section(
             ),
           ],
           theme~,
+        ),
+        section_nav(
+          "Section Nav",
+          [
+            @views.SectionNavItem::new(
+              id="navigation",
+              label="Navigation",
+              summary="Shell routes",
+              message=SelectSection("navigation"),
+            ),
+            @views.SectionNavItem::new(
+              id="forms",
+              label="Forms",
+              summary="Validation",
+              message=SelectSection("forms"),
+            ),
+            @views.SectionNavItem::new(
+              id="data",
+              label="Data",
+              summary="Tables",
+              message=SelectSection("data"),
+            ),
+            @views.SectionNavItem::new(
+              id="native-menu",
+              label="Native menu",
+              summary="Host gap",
+              message=ToggleActive,
+              enabled=false,
+            ),
+          ],
+          selected=self.selected_section,
+          theme~,
+          width=520.0,
+          item_width=120.0,
         ),
         @views.tab_view(
           self.tab,

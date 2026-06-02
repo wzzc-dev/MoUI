@@ -1031,6 +1031,14 @@ pub fn[Msg] View::semantics_selected(
 }
 
 ///|
+pub fn[Msg] View::semantics_pressed(
+  self : View[Msg],
+  pressed? : Bool = true,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(SemanticsPressedModifier(pressed)))
+}
+
+///|
 pub fn[Msg] View::semantics_checked(
   self : View[Msg],
   checked? : Bool = true,

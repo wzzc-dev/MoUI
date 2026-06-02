@@ -113,6 +113,15 @@ pub(all) struct StateViewAction[Msg] {
 }
 
 ///|
+pub(all) struct ToastStackItem[Msg] {
+  id : String
+  message : String
+  tone : FeedbackTone
+  action : StateViewAction[Msg]?
+  dismiss : Msg?
+}
+
+///|
 pub(all) enum FileImportAvailability {
   Available
   Unavailable(String)
@@ -130,6 +139,17 @@ pub fn[Msg] StateViewAction::new(
   message~ : Msg,
 ) -> StateViewAction[Msg] {
   { label, message }
+}
+
+///|
+pub fn[Msg] ToastStackItem::new(
+  id~ : String,
+  message~ : String,
+  tone? : FeedbackTone = FeedbackTone::Neutral,
+  action? : StateViewAction[Msg]? = None,
+  dismiss? : Msg? = None,
+) -> ToastStackItem[Msg] {
+  { id, message, tone, action, dismiss }
 }
 
 ///|
@@ -273,6 +293,15 @@ pub(all) struct SidebarItem[Msg] {
 }
 
 ///|
+pub(all) struct SectionNavItem[Msg] {
+  id : String
+  label : String
+  summary : String
+  message : Msg
+  enabled : Bool
+}
+
+///|
 pub(all) struct BreadcrumbItem[Msg] {
   id : String
   label : String
@@ -296,6 +325,17 @@ pub fn[Msg] SidebarItem::new(
   enabled? : Bool = true,
 ) -> SidebarItem[Msg] {
   { id, label, message, enabled }
+}
+
+///|
+pub fn[Msg] SectionNavItem::new(
+  id~ : String,
+  label~ : String,
+  message~ : Msg,
+  summary? : String = "",
+  enabled? : Bool = true,
+) -> SectionNavItem[Msg] {
+  { id, label, summary, message, enabled }
 }
 
 ///|
@@ -332,6 +372,25 @@ pub(all) struct TableColumn {
 }
 
 ///|
+pub(all) struct DataFilter[Msg] {
+  id : String
+  label : String
+  selected : Bool
+  message : Msg
+  enabled : Bool
+}
+
+///|
+pub(all) struct SelectableListItem[Msg] {
+  id : String
+  title : String
+  subtitle : String
+  detail : String
+  message : Msg
+  enabled : Bool
+}
+
+///|
 pub(all) struct TreeItem {
   id : String
   label : String
@@ -350,6 +409,29 @@ pub fn table_column(
   width? : Double = 120.0,
 ) -> TableColumn {
   { id, label, width }
+}
+
+///|
+pub fn[Msg] data_filter(
+  id~ : String,
+  label~ : String,
+  selected~ : Bool,
+  message~ : Msg,
+  enabled? : Bool = true,
+) -> DataFilter[Msg] {
+  { id, label, selected, message, enabled }
+}
+
+///|
+pub fn[Msg] SelectableListItem::new(
+  id~ : String,
+  title~ : String,
+  message~ : Msg,
+  subtitle? : String = "",
+  detail? : String = "",
+  enabled? : Bool = true,
+) -> SelectableListItem[Msg] {
+  { id, title, subtitle, detail, message, enabled }
 }
 
 ///|

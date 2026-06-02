@@ -167,6 +167,7 @@ fn modified_intrinsic_size(
     | AccessibilityLabelModifier(_)
     | SemanticsRoleModifier(_)
     | SemanticsSelectedModifier(_)
+    | SemanticsPressedModifier(_)
     | SemanticsCheckedModifier(_)
     | SemanticsExpandedModifier(_)
     | SemanticsInvalidModifier(_)
