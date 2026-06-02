@@ -936,7 +936,7 @@ test "workbench runtime draws fork affordance after Pi fork candidates" {
     ),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "1 分叉"))
+  assert_false(has_text(commands, "会话记录"))
   assert_true(has_text(commands, "可分叉消息"))
   assert_true(has_text(commands, "Inspect the Skia route"))
   assert_true(has_text(commands, "分支"))
@@ -1135,9 +1135,11 @@ test "workbench ingests Pi RPC export_html response into workspace evidence" {
   inspect(model.last_status, content="Pi session exported")
   assert_true(model.events.any(event => event.title == "Pi session exported"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "1 文件"))
   assert_true(has_text(commands, "/tmp/mo-workbench-export.html"))
   assert_true(has_text(commands, "Pi session HTML export"))
+  assert_false(has_text(commands, "工作区证据"))
 }
 
 ///|
@@ -1912,16 +1914,12 @@ test "workbench runtime draws latest activity event" {
     ReceiveTransport(ProcessStarted("4242")),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  guard text_frame(commands, "运行证据") is Some(activity_title) else {
-    fail("expected activity title")
-  }
-  assert_true(activity_title.size.width > 450.0)
-  assert_true(has_text(commands, "1 事件"))
+  assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "Pi RPC process started"))
   assert_true(has_text(commands, "pid 4242"))
   assert_true(has_text(commands, "跟进"))
-  assert_false(has_text(commands, "0 运行"))
-  assert_false(has_text(commands, "0 命令"))
+  assert_false(has_text(commands, "运行证据"))
+  assert_false(has_text(commands, "工作区证据"))
 }
 
 ///|
@@ -2008,14 +2006,12 @@ test "workbench ingests Pi diagnostics files and diff jsonl" {
   inspect(model.last_status, content="Pi diff summary applied")
   assert_true(model.events.any(event => event.title == "Diff summary updated"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "1 文件"))
-  assert_true(has_text(commands, "1 诊断"))
-  assert_true(has_text(commands, "requires_review"))
-  assert_true(has_text(commands, "6 文件 · +180 -12"))
-  assert_true(has_text(commands, "聚焦"))
-  assert_true(has_text(commands, "审核"))
+  assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "清除"))
   assert_true(has_text(commands, "修复"))
+  assert_true(has_text(commands, "moon check"))
+  assert_true(has_text(commands, "unused variable in app.mbt"))
+  assert_false(has_text(commands, "工作区证据"))
 }
 
 ///|
@@ -2077,7 +2073,7 @@ test "workbench runtime draws diagnostic fix action" {
     ),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "1 诊断"))
+  assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "moon check"))
   assert_true(has_text(commands, "unused variable in app.mbt"))
   assert_true(has_text(commands, "清除"))
@@ -2163,7 +2159,7 @@ test "workbench runtime draws transcript follow-up action after Pi messages" {
     ),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "2 条"))
+  assert_false(has_text(commands, "会话记录"))
   assert_true(has_text(commands, "Inspect the Skia route"))
   assert_true(has_text(commands, "Skia route inspected"))
   assert_true(has_text(commands, "跟进"))
@@ -2270,16 +2266,18 @@ test "workbench ingests Pi RPC get_available_models response into model catalog"
 
 ///|
 test "workbench runtime draws Pi model catalog summary after refresh" {
-  let model = WorkbenchModel::new().update(
-    ReceiveTransport(
-      JsonLineReceived(
-        "moui-skia",
-        (
-          #|{"type":"response","command":"get_available_models","success":true,"data":{"models":[{"provider":"openai","id":"gpt-5","name":"GPT-5"},{"provider":"anthropic","id":"claude-sonnet-4.5","name":"Claude Sonnet 4.5"}]}}
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_available_models","success":true,"data":{"models":[{"provider":"openai","id":"gpt-5","name":"GPT-5"},{"provider":"anthropic","id":"claude-sonnet-4.5","name":"Claude Sonnet 4.5"}]}}
+          ),
         ),
       ),
-    ),
-  )
+    )
+    .update(ToggleComposerControls)
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "模型 2"))
   assert_true(has_text(commands, "GPT-5 (openai/gpt-5) +1"))
@@ -2634,16 +2632,18 @@ test "workbench active Pi binding keeps configured session path" {
 
 ///|
 test "workbench draws Pi session binding identity after get_state" {
-  let model = WorkbenchModel::new().update(
-    ReceiveTransport(
-      JsonLineReceived(
-        "moui-skia",
-        (
-          #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e7eb5","sessionName":"Mo Workbench smoke","sessionFile":"/tmp/mo-workbench-smoke.jsonl","messageCount":4,"pendingMessageCount":0}}
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e7eb5","sessionName":"Mo Workbench smoke","sessionFile":"/tmp/mo-workbench-smoke.jsonl","messageCount":4,"pendingMessageCount":0}}
+          ),
         ),
       ),
-    ),
-  )
+    )
+    .update(ToggleComposerControls)
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Pi 会话：已绑定 · Mo Workbench smoke"))
   assert_true(has_text(commands, "模型：openai/gpt-5"))
@@ -2825,9 +2825,10 @@ test "workbench ingests Pi RPC bash failure into command diagnostics" {
   inspect(model.last_status, content="Pi bash response applied")
   assert_true(model.events.any(event => event.title == "Pi bash completed"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "运行证据"))
+  assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "moon check"))
   assert_true(has_text(commands, "退出码 2"))
+  assert_false(has_text(commands, "运行证据"))
   assert_false(has_text(commands, "工作区证据"))
   assert_false(has_text(commands, "Pi bash"))
   assert_false(has_text(commands, "bash exited with code 2"))
@@ -2862,9 +2863,10 @@ test "workbench ingests Pi RPC bash cancellation into command diagnostics" {
   inspect(model.last_status, content="Pi bash response applied")
   assert_true(model.events.any(event => event.title == "Pi bash cancelled"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "运行证据"))
+  assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "moon check"))
   assert_true(has_text(commands, "已取消"))
+  assert_false(has_text(commands, "运行证据"))
   assert_false(has_text(commands, "工作区证据"))
   assert_false(has_text(commands, "Pi bash"))
   assert_false(has_text(commands, "bash command was cancelled"))
@@ -2955,26 +2957,20 @@ test "workbench activity draws recent command evidence" {
     ],
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  guard text_frame(commands, "运行证据") is Some(activity_title) else {
-    fail("expected activity title")
-  }
-  assert_true(activity_title.size.width > 700.0)
-  assert_true(has_text(commands, "4 运行"))
-  assert_true(has_text(commands, "native check"))
+  assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "wasm check"))
-  assert_true(has_text(commands, "skia build"))
   assert_true(has_text(commands, "输出 /tmp/wasm-check.log"))
   assert_true(has_text(commands, "退出码 2"))
-  assert_true(has_text(commands, "分析"))
   assert_true(has_text(commands, "修复"))
   assert_true(has_text(commands, "重跑"))
   assert_false(has_text(commands, "stale command"))
+  assert_false(has_text(commands, "native check"))
+  assert_true(has_text(commands, "skia build"))
+  assert_false(has_text(commands, "运行证据"))
   assert_false(has_text(commands, "常用检查"))
   assert_false(has_text(commands, "全部"))
   assert_false(has_text(commands, "Native"))
   assert_false(has_text(commands, "Wasm"))
-  assert_false(has_text(commands, "0 命令"))
-  assert_false(has_text(commands, "0 事件"))
 }
 
 ///|
@@ -3247,11 +3243,11 @@ test "workbench workspace still shows structured diagnostics beside failed comma
     ],
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "工作区证据"))
-  assert_true(has_text(commands, "1 诊断"))
+  assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "moon check"))
   assert_true(has_text(commands, "unused variable in app.mbt"))
   assert_true(has_text(commands, "修复失败命令"))
+  assert_false(has_text(commands, "工作区证据"))
   assert_false(has_text(commands, "常用检查"))
   assert_false(has_text(commands, "全部"))
   assert_false(has_text(commands, "Native"))
@@ -3346,20 +3342,16 @@ test "workbench wide shell renders workflow rail from live evidence" {
     ],
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "进度"))
-  assert_true(has_text(commands, "1/2 完成"))
-  assert_true(has_text(commands, "整理功能亮点"))
+  assert_true(has_text(commands, "状态"))
+  assert_true(has_text(commands, "下一步"))
+  assert_true(has_text(commands, "继续当前计划"))
   assert_true(has_text(commands, "合并最终输出"))
-  assert_true(has_text(commands, "执行"))
   assert_false(has_text(commands, "Agents"))
-  assert_true(has_text(commands, "计划所有者"))
-  assert_true(has_text(commands, "通用"))
-  assert_true(has_text(commands, "校验"))
-  assert_true(has_text(commands, "工作文件夹"))
-  assert_true(has_text(commands, "MoUI Skia renderer"))
-  assert_true(has_text(commands, "examples/mo_workbench/app/view_helpers.mbt"))
-  assert_true(has_text(commands, "Workflow rail view composition"))
-  assert_true(has_text(commands, "聚焦"))
+  assert_false(has_text(commands, "进度"))
+  assert_false(has_text(commands, "执行"))
+  assert_false(has_text(commands, "计划所有者"))
+  assert_false(has_text(commands, "工作文件夹"))
+  assert_false(has_text(commands, "整理功能亮点"))
 }
 
 ///|
@@ -3527,13 +3519,14 @@ test "workbench sidebar transport status appears only when useful" {
 }
 
 ///|
-test "workbench evidence panels mount only when content arrives" {
+test "workbench Codex evidence flow mounts only when content arrives" {
   let empty = WorkbenchModel::new()
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
   assert_false(has_text(empty, "会话记录"))
   assert_false(has_text(empty, "运行证据"))
   assert_false(has_text(empty, "工作区证据"))
+  assert_false(has_text(empty, "当前证据"))
   let transcript_model = {
     ..WorkbenchModel::new(),
     transcript: [
@@ -3549,10 +3542,13 @@ test "workbench evidence panels mount only when content arrives" {
   let transcript = transcript_model
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(transcript, "会话记录"))
+  assert_true(has_text(transcript, "当前任务"))
+  assert_true(has_text(transcript, "下一步"))
   assert_true(has_text(transcript, "Pi summarized the fix"))
+  assert_false(has_text(transcript, "会话记录"))
   assert_false(has_text(transcript, "运行证据"))
   assert_false(has_text(transcript, "工作区证据"))
+  assert_false(has_text(transcript, "当前证据"))
   let activity_model = {
     ..WorkbenchModel::new(),
     commands: [
@@ -3567,26 +3563,23 @@ test "workbench evidence panels mount only when content arrives" {
   let activity = activity_model
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  guard text_frame(activity, "运行证据") is Some(activity_title) else {
-    fail("expected activity title")
-  }
-  assert_true(activity_title.size.width > 700.0)
-  assert_true(has_text(activity, "1 运行"))
-  assert_true(has_text(activity, "运行证据"))
+  assert_true(has_text(activity, "当前证据"))
   assert_true(
     has_text(activity, "moon test examples/mo_workbench/app --target native"),
   )
   assert_false(has_text(activity, "会话记录"))
+  assert_false(has_text(activity, "运行证据"))
   assert_false(has_text(activity, "工作区证据"))
-  assert_false(has_text(activity, "0 命令"))
-  assert_false(has_text(activity, "0 事件"))
   let workspace_model = model_with_reviewable_diff()
   let workspace = workspace_model
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(workspace, "工作区证据"))
+  assert_true(has_text(workspace, "当前证据"))
   assert_true(has_text(workspace, "5 文件 · +160 -10"))
+  assert_true(has_text(workspace, "审核"))
   assert_false(has_text(workspace, "会话记录"))
+  assert_false(has_text(workspace, "运行证据"))
+  assert_false(has_text(workspace, "工作区证据"))
 }
 
 ///|

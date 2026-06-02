@@ -41,7 +41,7 @@ packages:
 - Header subtitle `Pi agent 桌面工作台`.
 - A Codex / Claude Code-style native shell with macOS chrome, a quiet
   task-history sidebar, a clean white main work canvas, readable transcript
-  blocks, on-demand evidence digests, and a floating composer.
+  blocks, current-turn evidence summaries, and a floating composer.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
@@ -84,42 +84,28 @@ packages:
   transport status, and the next prompt in one visible flow. The current shell
   is rebuilt from `ViewEnvironment.viewport_size()` instead of a fixed
   `1200x750` surface, so the macOS Skia runtime responds to window resize
-  events with adaptive sidebar, panel, scroll, and composer dimensions, including
-  narrower panel/composer widths when the main region is smaller than the old
-  fixed desktop frame. The right-side workflow is now a scrollable main canvas
-  with an explicit scrollbar, multi-line transcript message blocks for long Pi
-  replies, an on-demand current-state strip, and a centered floating composer.
-  The visible hierarchy uses quieter Chinese section labels (`当前会话`, `Pi 运行状态`,
-  `会话记录`, `运行证据`, `工作区证据`) once their evidence exists while preserving
-  Pi/RPC protocol nouns. The default chrome shows short project names and
-  signal-bearing localized session status labels, while full project paths
-  remain in the shared model and Pi transport commands. The default shell keeps
-  only top-bar refresh/new-session controls and the composer input prominent,
-  while typed input adds a compact `选项`/`发送` row instead of opening every
-  secondary control. Active/idle session rows omit status meta instead of
-  showing fake active, queue, or idle labels. Context chips, the idle Pi RPC
-  footer, the `Pi 运行状态` panel, agent focus controls, advanced session actions,
+  events with adaptive sidebar, scroll, and composer dimensions. The main
+  canvas now follows Codex's hierarchy: a compact `当前任务` strip for the
+  single next action, transcript rows as the primary conversation thread, and
+  at most one `当前证据` card for the most relevant command, event, diagnostic,
+  diff, or file signal. The old separate `会话记录`, `运行证据`, and `工作区证据`
+  panel titles no longer compete for attention once data arrives. The default
+  chrome shows short project names and signal-bearing localized session status
+  labels, while full project paths remain in the shared model and Pi transport
+  commands. The default shell keeps only top-bar refresh/new-session controls
+  and the composer input prominent, while typed input adds a compact
+  `选项`/`发送` row instead of opening every secondary control. Context chips,
+  agent focus controls, advanced session details, model/session stats,
   steering/follow-up composer controls, and focused-check presets stay collapsed
-  until Pi state, expanded composer options, non-default context, selected
-  focus, or actionable diagnostics without command evidence make them relevant.
-  It also avoids screenshot-only filler: the old validation transcript, hard-coded
-  shell command block, fake attachment cards, copy/vote toolbar, and
-  future-workflow placeholder session were replaced with compact panels driven
-  by `WorkbenchModel` state. The default fixture now leaves transcript,
+  until expanded options, non-default context, selected focus, or actionable
+  diagnostics make them relevant. The default fixture still leaves transcript,
   metrics, command catalog, file context, diff summary, command evidence, and
-  diagnostics empty until Pi or user command evidence arrives, and no longer
-  displays sample active-task text. Zero queues, unbound Pi state, idle
-  transport/agent state, and contextless actions render quietly instead of
-  placeholder punctuation; transcript/activity/workspace panels stay unmounted
-  while empty, Activity header badges only occupy space for nonzero run,
-  command-catalog, or event counts, and empty wide windows no longer reserve
-  space for workflow-rail placeholder cards.
-- Wide Workbench windows now add a screenshot-style right workflow rail beside
-  the conversation canvas only when there is live evidence to summarize. The
-  rail is still driven only by shared app state: `进度` summarizes live
-  `PlanStep` rows, `执行` reflects plan owners or recent activity events, and
-  `工作文件夹` shows the active project plus the latest file evidence. Empty or
-  compact windows collapse the rail and keep the conversation flow primary.
+  diagnostics empty until Pi or user command evidence arrives.
+- Wide Workbench windows now add a compact status rail beside the conversation
+  canvas only for high-priority live state. The rail shows the next action,
+  current plan step, and active tool/command instead of separate progress,
+  execution, and work-folder cards. Empty or compact windows collapse the rail
+  and keep the conversation flow primary.
 - Agent focus controls for `通用`, `编码`, and `校验` now live in the composer's
   optional `焦点` row instead of the default sidebar. They appear after opening
   composer options or when a focus is selected, keeping the idle shell closer to
@@ -129,10 +115,10 @@ packages:
   follow-up text context before the shared app emits the same platform-neutral
   `SendUserInput`, `SendSteeringInput`, or `SendFollowUpInput` commands.
 - Pi `plan_update` JSONL now fills the existing shared-app `PlanStep` model and
-  renders a compact `当前计划` row in the current session panel. The row shows
+  renders a compact `当前计划` row in the current task strip. The row shows
   the current active/open step, open-step count, and a `继续` action that reuses
   the platform-neutral follow-up prompt path.
-- The current session panel now derives one `下一步` row from live state when
+- The current task strip now derives one `下一步` row from live state when
   there is actionable evidence. It prioritizes cancelable Pi runs, failed
   command evidence, diagnostics, active plan steps, reviewable diffs, file
   context, transcript rows, and latest activity events,
@@ -141,7 +127,7 @@ packages:
   `FollowActivity`, `ReviewDiff`, `InspectFile`, `FollowTranscript`, or
   `InvokeCommand`. Failed-command next actions include a compact command label,
   exit code, and output path when Pi provided them, so the repair loop has the
-  same evidence as the Activity row without opening another panel.
+  same evidence as the current-turn evidence card without opening another panel.
 - Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for
   Pi through the existing platform-neutral `SendUserInput` path, so visible
   conversation evidence can become the next agent action without native-only
@@ -155,19 +141,19 @@ packages:
   `SendSteeringInput`, or `SendFollowUpInput` paths; no new transport command
   or native bridge is required, and users can turn all context chips off to send
   the raw text.
-- Activity timeline rows can queue a
+- Current-turn event rows can queue a
   `Follow up on <phase> activity: ...` prompt through the same
   `SendUserInput` path, so visible Pi RPC, stderr, tool, and stream events can
   become the next agent action without adding event-specific transport
   commands.
-- File context rows in the Workspace digest can queue an `Inspect <path>`
+- File context rows in the current-turn evidence card can queue an `Inspect <path>`
   prompt for Pi. The action reuses the platform-neutral `SendUserInput` command
   so file evidence becomes an agent workflow entrypoint without native-only
   transport.
-- The Workspace diff review control queues a `Review diff: ...` prompt through
+- The compact workspace summary queues a `Review diff: ...` prompt through
   the same path, making code review a first-class coding-agent action while
   keeping PiTransport platform-neutral.
-- Latest diagnostic rows in the Workspace digest can queue a
+- Latest diagnostic rows in the current-turn evidence card can queue a
   `Fix <severity> diagnostic from <source>: ...` prompt through
   `SendUserInput`, preserving the current context chips and selected agent
   focus while turning build/check failures into the next coding-agent task
@@ -182,50 +168,46 @@ packages:
   prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
   lets the native encoder emit `{"type":"bash","command":...}`. Successful
   bash responses preserve Pi's optional `fullOutputPath` on `CommandRun`, and
-  Activity rows display that output path when it is available.
-- Command evidence rows in the Activity digest can queue an
+  current-turn command rows display that output path when it is available.
+- Command evidence rows in the current-turn evidence card can queue an
   `Inspect command output for ...` prompt through `SendUserInput`, carrying the
   command text, status, exit code, cwd, and output path back into Pi without
   adding a native-only output-opening bridge. These prompts preserve the current
   context chips and selected agent focus, so evidence actions keep the same
-  repo, examples, and coding/verification intent as composer prompts. The digest
-  normally shows up to three recent command evidence rows, then expands to the
-  full focused-check batch when the newest command group matches those presets,
-  so the batch remains visible while the newest bash result is still easy to act
-  on.
+  repo, examples, and coding/verification intent as composer prompts. Outside a
+  focused-check batch, the card chooses the highest-priority command evidence:
+  failed first, active next, latest otherwise.
 - Failed command evidence rows use a `修复` primary action that queues a
   `Fix failed command ...` prompt through the same `SendUserInput` path,
   carrying the exit code and output path when Pi provided them plus the same
   context/focus wrapper as analysis prompts. This keeps the fix loop inside the
   shared app model instead of adding an output-opening bridge or native-only
-  command shortcut. The session-panel `下一步` row mirrors the latest failed
+  command shortcut. The `下一步` row mirrors the latest failed
   command's exit code and output path, keeping the next repair action
   self-contained. When a Pi bash failure or cancellation already has visible
-  command evidence, the Workspace digest suppresses that duplicate bash
-  diagnostic row and leaves the Activity row plus `下一步` repair action as the
+  command evidence, the evidence card suppresses that duplicate bash
+  diagnostic row and leaves the command row plus `下一步` repair action as the
   primary signal; unrelated structured diagnostics still surface normally.
-- Command evidence rows in the Activity digest can be rerun from the UI. The
+- Command evidence rows in the current-turn evidence card can be rerun from the UI. The
   action reuses the existing shared-app `QueueCommand` reducer and native Pi
   RPC `bash` encoder instead of adding a separate native shortcut.
-- The Activity digest exposes compact focused-check presets for the Workbench
+- The current-turn evidence card exposes compact focused-check presets for the Workbench
   app package native test, app package wasm-gc test, macOS Skia entrypoint
   build, and macOS Skia first-frame smoke only when actionable diagnostics need
   a validation entry and no command evidence is already displayed. Once command
-  evidence exists, the digest keeps the command rows primary and relies on their
+  evidence exists, the card keeps the command row primary and relies on its
   inline `分析`, `修复`, and `重跑` actions instead of adding another preset row.
   The presets use the same `QueueCommand` / Pi RPC `bash` path as manual command
   reruns, so validation evidence stays in the shared model.
   The `全部` action queues all four checks in one platform-neutral command
   batch, reusing a single session start and recording each check as its own
-  `CommandRun`; the Activity digest keeps those four recent command rows
+  `CommandRun`; the evidence card keeps those four focused-check rows
   visible together for inspection or rerun.
-- The Activity digest surfaces the latest shared-app timeline event, so Pi RPC,
+- The current-turn evidence card surfaces the latest shared-app timeline event when
+  no higher-priority command evidence is present, so Pi RPC,
   streaming agent, tool, and stderr progress stays visible next to command
   evidence without opening a separate log view. The visible event can also be
-  sent back as a follow-up prompt through the shared app command path. Its
-  title row keeps the `运行证据` label stable while omitting zero-value count
-  placeholders, so command-only and event-only evidence rows have more readable
-  horizontal space.
+  sent back as a follow-up prompt through the shared app command path.
 - Session selection now refreshes Pi messages after state binding. The shared
   app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
   records so the conversation surface can replay user, assistant, tool result,
@@ -240,8 +222,8 @@ packages:
   changing the platform-neutral transport contract.
 - Session selection and manual refresh also query Pi's available model catalog
   through `get_available_models`. The shared app normalizes provider/id/name
-  rows into `PiModelInfo` and shows a compact session-panel summary only when
-  models are reported, keeping no-model offline smoke quiet.
+  rows into `PiModelInfo` and shows the model controls only in expanded
+  secondary session details, keeping no-model offline smoke quiet.
 - The model catalog summary has compact use/cycle actions. The shared app emits
   platform-neutral `SetRpcModel` for the visible model and `CycleRpcModel` for
   Pi's scoped model cycle, ingests `set_model` and `cycle_model` responses, and
@@ -262,15 +244,16 @@ packages:
   sent raw, filters `PiCommandInfo` commands by the typed query, lists up to
   three matches near the prompt input, and each shortcut reuses the same
   `InvokeCommand` / `SendUserInput` route while catalog-only refreshes do not
-  add Activity command rows or focused-check presets.
+  add current-turn command rows or focused-check presets.
 - Session selection refreshes Pi session stats through `get_session_stats`.
   The shared app maps message counts, tool counts, token totals, cost, and
   optional context usage into `PiSessionStatsSnapshot`, then surfaces compact
-  metrics in the session status panel without adding native-only state.
+  metrics in expanded secondary session details without adding native-only
+  state.
 - The session panel can export the current Pi session through `export_html`.
   The shared app emits `ExportRpcSessionHtml`, ingests Pi's returned path as
-  `FileContext` evidence in the Workspace digest, and keeps the export artifact
-  in app state rather than adding a native file-opening bridge.
+  `FileContext` evidence in the current-turn evidence card, and keeps the export
+  artifact in app state rather than adding a native file-opening bridge.
 - The workbench can explicitly sync the selected Workbench session title into
   Pi through `set_session_name`. Pi's `session_info_changed` event updates the
   same `PiSessionBinding`, so user-visible Workbench session identity and Pi's
@@ -327,7 +310,7 @@ packages:
   Successful
   `get_session_stats` responses refresh `PiSessionStatsSnapshot` with message,
   tool, token, cost, and optional context counters. Successful `export_html`
-  responses add the returned HTML path as Workspace file evidence. Successful
+  responses add the returned HTML path as current-turn file evidence. Successful
   `set_model` responses update the active Workbench-to-Pi binding and session
   summary with Pi's selected model. Successful `cycle_model` responses do the
   same when Pi returns a new scoped model, or acknowledge that no alternate
@@ -366,15 +349,17 @@ packages:
   followed by a `get_state` refresh. `switch_session` and `get_state` responses
   update `PiSessionBinding` entries keyed by Workbench session id, recording the
   live Pi session id, session file, display name, model, and binding status.
-  The session status panel now displays the active binding as a compact Pi row,
-  including the live Pi session name/id and model when Pi has reported them.
+  Expanded secondary session details display the active binding as a compact Pi
+  row, including the live Pi session name/id and model when Pi has reported
+  them.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
-- The workspace digest surfaces the current visible diagnostics count and latest
-  non-duplicated diagnostic row, with a shared-app `ClearDiagnostics` action for
-  clearing visible Pi stderr/RPC/bash diagnostics without touching native
-  process state. Pi bash exit/cancel diagnostics stay in shared state but are
-  hidden from the digest when command evidence already shows the same failure.
+- The current-turn evidence card surfaces the latest non-duplicated diagnostic
+  row, with a shared-app `ClearDiagnostics` path still available from the
+  current task strip for clearing visible Pi stderr/RPC/bash diagnostics without
+  touching native process state. Pi bash exit/cancel diagnostics stay in shared
+  state but are hidden from the card when command evidence already shows the
+  same failure.
 - Nonzero native process exits now emit `TransportFailed` with the exit code and
   the last stderr line, clear pending transport commands, and leave the app in a
   failed transport state instead of silently disconnecting.
@@ -446,7 +431,7 @@ refreshes `PiSessionStatsSnapshot` with message/tool/token/context metrics and
 updates the Workbench-to-Pi binding from the reported `sessionId` and
 `sessionFile`. A successful
 `{"type":"response","command":"export_html","success":true,...}` line adds the
-returned HTML path as a Workspace file evidence row, so exported Pi sessions can
+returned HTML path as a current-turn file evidence row, so exported Pi sessions can
 become coding, documentation, or knowledge artifacts without native-only state.
 A successful
 `{"type":"response","command":"set_model","success":true,...}` line updates

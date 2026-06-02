@@ -31,7 +31,6 @@ priv struct WorkbenchLayout {
   row_badge_width : Double
   row_text_width : Double
   command_text_width : Double
-  diff_text_width : Double
   top_title_width : Double
   top_path_width : Double
   composer_width : Double
@@ -102,10 +101,6 @@ fn workbench_layout(
     1.0,
     panel_body_width - row_badge_width - 68.0 - 54.0 - 54.0 - 40.0,
   )
-  let diff_text_width = workbench_max_double(
-    1.0,
-    panel_body_width - 126.0 - 10.0,
-  )
   let composer_width = workbench_clamp_double(
     content_available_width,
     workbench_min_double(460.0, content_available_width),
@@ -145,7 +140,6 @@ fn workbench_layout(
     row_badge_width,
     row_text_width,
     command_text_width,
-    diff_text_width,
     top_title_width,
     top_path_width,
     composer_width,
@@ -533,17 +527,11 @@ fn WorkbenchModel::workflow_rail(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
-  if !self.plan.is_empty() {
-    rows.push(self.workflow_progress_card(layout, theme))
-    rows.push(self.workflow_agents_card(layout, theme))
-  } else if !self.events.is_empty() {
-    rows.push(self.workflow_agents_card(layout, theme))
-  }
-  if !self.files.is_empty() {
-    rows.push(self.workflow_folder_card(layout, theme))
-  }
-  column(rows, spacing=14.0, align=Stretch).frame(
+  column(
+    [self.compact_workflow_rail_card(layout, theme)],
+    spacing=14.0,
+    align=Stretch,
+  ).frame(
     width=layout.workflow_rail_width,
     height=workbench_max_double(
       1.0,
@@ -554,53 +542,88 @@ fn WorkbenchModel::workflow_rail(
 
 ///|
 fn WorkbenchModel::has_workflow_rail_evidence(self : WorkbenchModel) -> Bool {
-  !self.plan.is_empty() || !self.events.is_empty() || !self.files.is_empty()
+  self.next_action() is Some(_) ||
+  self.current_plan_action_step() is Some(_) ||
+  self.latest_active_command() is Some(_) ||
+  self.pi_agent.active_tool_name != ""
 }
 
 ///|
-fn WorkbenchModel::workflow_progress_card(
+fn WorkbenchModel::compact_workflow_rail_card(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let rows : Array[@core.View[WorkbenchMsg]] = []
-  if self.plan.is_empty() {
-    rows.push(workflow_note_row("等待 Pi 计划更新", layout, theme))
-  } else {
-    let limit = workbench_min_int(self.plan.length(), 3)
-    for index in 0..<limit {
-      rows.push(workflow_plan_step_row(self.plan[index], layout, theme))
-    }
+  match self.next_action() {
+    Some(action) => rows.push(workflow_next_action_row(action, layout, theme))
+    None => ()
+  }
+  match self.current_plan_action_step() {
+    Some(step) => rows.push(workflow_plan_step_row(step, layout, theme))
+    None => ()
+  }
+  match self.latest_active_command() {
+    Some(command) => rows.push(workflow_command_row(command, layout, theme))
+    None =>
+      if self.pi_agent.active_tool_name != "" {
+        rows.push(
+          workflow_agent_row(
+            "工具",
+            self.pi_agent.active_tool_name,
+            Accent,
+            layout,
+            theme,
+          ),
+        )
+      }
   }
   workflow_rail_card(
-    "进度",
-    workflow_plan_summary_label(self.plan),
+    "状态",
+    compact_workflow_summary(self),
     rows,
     layout,
     theme,
-    height=self.workflow_progress_card_height(),
+    height=66.0 + rows.length().to_double() * 46.0,
   )
 }
 
 ///|
-fn WorkbenchModel::workflow_progress_card_height(
-  self : WorkbenchModel,
-) -> Double {
-  if self.plan.is_empty() {
-    110.0
+fn compact_workflow_summary(model : WorkbenchModel) -> String {
+  if model.latest_failed_command() is Some(_) {
+    "需处理"
+  } else if model.latest_active_command() is Some(_) ||
+    model.pi_agent.active_tool_name != "" {
+    "运行中"
+  } else if model.current_plan_action_step() is Some(_) {
+    "计划"
   } else {
-    66.0 + workbench_min_int(self.plan.length(), 3).to_double() * 44.0
+    "下一步"
   }
 }
 
 ///|
-fn workflow_plan_summary_label(steps : Array[PlanStep]) -> String {
-  if steps.is_empty() {
-    ""
-  } else {
-    let done = steps.length() - plan_open_count(steps)
-    done.to_string() + "/" + steps.length().to_string() + " 完成"
-  }
+fn workflow_next_action_row(
+  action : WorkbenchNextAction,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  workflow_agent_row("下一步", action.title, action.tone, layout, theme)
+}
+
+///|
+fn workflow_command_row(
+  command : CommandRun,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  workflow_agent_row(
+    command_status_label(command.status),
+    command.command,
+    command_status_tone(command.status),
+    layout,
+    theme,
+  )
 }
 
 ///|
@@ -653,105 +676,6 @@ fn workflow_plan_step_badge(status : String) -> String {
 }
 
 ///|
-fn WorkbenchModel::workflow_agents_card(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
-  if !self.plan.is_empty() {
-    let limit = workbench_min_int(self.plan.length(), 3)
-    for index in 0..<limit {
-      rows.push(workflow_agent_plan_row(self.plan[index], layout, theme))
-    }
-  } else if !self.events.is_empty() {
-    let start = workbench_max_int(0, self.events.length() - 3)
-    for index in start..<self.events.length() {
-      rows.push(workflow_agent_event_row(self.events[index], layout, theme))
-    }
-  } else {
-    rows.push(self.workflow_agent_idle_row(layout, theme))
-  }
-  workflow_rail_card(
-    "执行",
-    workflow_agents_summary_label(self),
-    rows,
-    layout,
-    theme,
-    height=self.workflow_agents_card_height(),
-  )
-}
-
-///|
-fn WorkbenchModel::workflow_agents_card_height(self : WorkbenchModel) -> Double {
-  let row_count = if !self.plan.is_empty() {
-    workbench_min_int(self.plan.length(), 3)
-  } else if !self.events.is_empty() {
-    workbench_min_int(self.events.length(), 3)
-  } else {
-    1
-  }
-  66.0 + row_count.to_double() * 46.0
-}
-
-///|
-fn workflow_agents_summary_label(model : WorkbenchModel) -> String {
-  if !model.plan.is_empty() {
-    "计划所有者"
-  } else if !model.events.is_empty() {
-    "最近活动"
-  } else {
-    "等待活动"
-  }
-}
-
-///|
-fn workflow_agent_plan_row(
-  step : PlanStep,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let owner = if step.owner.trim().to_owned() == "" { "Pi" } else { step.owner }
-  workflow_agent_row(
-    owner,
-    step.title,
-    plan_step_tone(step.status),
-    layout,
-    theme,
-  )
-}
-
-///|
-fn workflow_agent_event_row(
-  event : AgentEvent,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  workflow_agent_row(
-    event_phase_label(event.phase),
-    event.title,
-    transcript_badge_tone(event.tone),
-    layout,
-    theme,
-  )
-}
-
-///|
-fn WorkbenchModel::workflow_agent_idle_row(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  workflow_agent_row(
-    "Pi",
-    self.pi_agent.display_status_label(),
-    Neutral,
-    layout,
-    theme,
-  )
-}
-
-///|
 fn workflow_agent_row(
   label : String,
   detail : String,
@@ -770,118 +694,6 @@ fn workflow_agent_row(
     ],
     spacing=8.0,
     align=Center,
-  )
-}
-
-///|
-fn WorkbenchModel::workflow_folder_card(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let active = self.active_session()
-  let rows : Array[@core.View[WorkbenchMsg]] = [
-    workflow_folder_project_row(active, layout, theme),
-  ]
-  if !self.files.is_empty() {
-    rows.push(
-      workflow_file_context_row(
-        self.files[self.files.length() - 1],
-        layout,
-        theme,
-      ),
-    )
-  }
-  workflow_rail_card(
-    "工作文件夹",
-    active.title,
-    rows,
-    layout,
-    theme,
-    height=154.0,
-  )
-}
-
-///|
-fn workflow_folder_project_row(
-  session : WorkbenchSession,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  column(
-    [
-      text(
-        "项目",
-        role=Caption,
-        theme~,
-        width=layout.workflow_rail_body_width,
-        height=20.0,
-      ),
-      text(
-        session.project_path,
-        role=Control,
-        theme~,
-        width=layout.workflow_rail_body_width,
-        height=24.0,
-      ),
-    ],
-    spacing=0.0,
-    align=Start,
-  )
-}
-
-///|
-fn workflow_file_context_row(
-  file : FileContext,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let text_width = workbench_max_double(
-    1.0,
-    layout.workflow_rail_body_width - 58.0 - 8.0,
-  )
-  row(
-    [
-      column(
-        [
-          text(file.path, role=Control, theme~, width=text_width, height=24.0),
-          text(
-            file.summary,
-            role=Caption,
-            theme~,
-            width=text_width,
-            height=20.0,
-          ),
-        ],
-        spacing=0.0,
-        align=Start,
-      ),
-      button(
-        "聚焦",
-        on_click=InspectFile(file.path),
-        variant=Outline,
-        theme~,
-        width=58.0,
-        height=32.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
-  )
-}
-
-///|
-fn workflow_note_row(
-  value : String,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  text(
-    value,
-    role=Caption,
-    theme~,
-    width=layout.workflow_rail_body_width,
-    height=28.0,
   )
 }
 
@@ -1059,11 +871,8 @@ fn WorkbenchModel::chat_transcript(
   if self.has_transcript_panel_content() {
     rows.push(self.transcript_panel(layout, theme))
   }
-  if self.has_activity_panel_content() {
-    rows.push(self.activity_panel(layout, theme))
-  }
-  if self.has_workspace_digest_content() {
-    rows.push(self.workspace_digest_panel(layout, theme))
+  if self.has_turn_evidence_card_content() {
+    rows.push(self.turn_evidence_card(layout, theme))
   }
   column(rows, spacing=10.0, align=Center)
 }
@@ -1079,18 +888,16 @@ fn WorkbenchModel::chat_content_height(
       session_status_panel_height(self.session_status_row_count())
   }
   if self.has_transcript_panel_content() {
-    height = height + 10.0 + self.transcript_panel_height(layout)
+    if height > 0.0 {
+      height = height + 10.0
+    }
+    height = height + self.transcript_panel_height(layout)
   }
-  if self.has_activity_panel_content() {
-    height = height + 10.0 + self.activity_panel_height()
-  }
-  if self.has_workspace_digest_content() {
-    height = height +
-      10.0 +
-      evidence_panel_height(
-        self.workspace_digest_panel_row_count(),
-        expanded=178.0,
-      )
+  if self.has_turn_evidence_card_content() {
+    if height > 0.0 {
+      height = height + 10.0
+    }
+    height = height + self.turn_evidence_card_height()
   }
   height
 }
@@ -1100,16 +907,12 @@ fn WorkbenchModel::has_session_status_panel_content(
   self : WorkbenchModel,
 ) -> Bool {
   let active = self.active_session()
-  let binding = self.active_pi_session_binding()
   active.active_task != "" ||
   self.pending_transport_count() > 0 ||
   !self.plan.is_empty() ||
-  self.pi_session_stats.has_visible_metrics() ||
-  self.model_catalog.length() > 0 ||
-  binding.has_visible_binding() ||
   self.has_runtime_signal() ||
   self.next_action() is Some(_) ||
-  self.has_session_panel_controls()
+  self.should_show_session_detail_rows()
 }
 
 ///|
@@ -1125,10 +928,305 @@ fn WorkbenchModel::has_activity_panel_content(self : WorkbenchModel) -> Bool {
 }
 
 ///|
+fn WorkbenchModel::has_turn_evidence_card_content(
+  self : WorkbenchModel,
+) -> Bool {
+  self.has_activity_panel_content() || self.has_workspace_digest_content()
+}
+
+///|
 fn WorkbenchModel::has_workspace_digest_content(self : WorkbenchModel) -> Bool {
   self.diff.has_context() ||
   !self.files.is_empty() ||
   self.visible_workspace_diagnostic_count() > 0
+}
+
+///|
+fn WorkbenchModel::turn_evidence_card(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    self.turn_evidence_header_row(layout, theme),
+  ]
+  if self.should_show_focused_check_presets() {
+    rows.push(focused_check_preset_row(layout, theme))
+  }
+  if self.commands_end_with_focused_check_batch(
+      workbench_check_presets().length(),
+    ) {
+    let command_start = self.visible_activity_command_start()
+    for index in command_start..<self.commands.length() {
+      rows.push(command_run_row(self.commands[index], layout, theme))
+    }
+  } else {
+    match self.primary_turn_evidence_command() {
+      Some(command) => rows.push(command_run_row(command, layout, theme))
+      None =>
+        if !self.events.is_empty() {
+          rows.push(
+            event_row(self.events[self.events.length() - 1], layout, theme),
+          )
+        }
+    }
+  }
+  match self.latest_visible_workspace_diagnostic() {
+    Some(diagnostic) => rows.push(diagnostic_row(diagnostic, layout, theme))
+    None =>
+      if self.diff.has_context() {
+        rows.push(self.workspace_summary_row(layout, theme))
+      } else if !self.files.is_empty() {
+        rows.push(
+          file_context_row(self.files[self.files.length() - 1], layout, theme),
+        )
+      }
+  }
+  surface(
+    column(rows, spacing=7.0, align=Start),
+    width=layout.panel_width,
+    height=self.turn_evidence_card_height(),
+    background=@core.Color::white(),
+    corner_radius=12.0,
+    theme~,
+    padding=12.0,
+  ).border(workbench_hairline_border())
+}
+
+///|
+fn WorkbenchModel::turn_evidence_header_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      text("当前证据", role=Control, theme~, width=104.0, height=28.0),
+      text(
+        self.turn_evidence_summary_label(),
+        role=Caption,
+        theme~,
+        width=workbench_max_double(1.0, layout.panel_body_width - 112.0),
+        height=28.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::turn_evidence_summary_label(self : WorkbenchModel) -> String {
+  match self.primary_turn_evidence_command() {
+    Some(command) => command_turn_summary(command)
+    None =>
+      match self.latest_visible_workspace_diagnostic() {
+        Some(diagnostic) => "诊断 · " + diagnostic_detail_label(diagnostic)
+        None =>
+          if self.diff.has_context() {
+            self.workspace_summary_label()
+          } else if !self.files.is_empty() {
+            self.workspace_summary_label()
+          } else if !self.events.is_empty() {
+            self.events[self.events.length() - 1].title
+          } else {
+            "等待证据"
+          }
+      }
+  }
+}
+
+///|
+fn command_turn_summary(command : CommandRun) -> String {
+  let parts : Array[String] = [
+    compact_label(command.command, max_chars=44),
+    command_status_label(command.status),
+  ]
+  match command.exit_code {
+    Some(code) => parts.push("退出码 " + code.to_string())
+    None => ()
+  }
+  if command.output_path != "" {
+    parts.push("输出可用")
+  }
+  parts.join(" · ")
+}
+
+///|
+fn WorkbenchModel::workspace_summary_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      badge("工作区", tone=Accent, theme~, width=layout.row_badge_width),
+      column(
+        [
+          text(
+            self.workspace_summary_label(),
+            role=Control,
+            theme~,
+            width=layout.row_text_width,
+            height=24.0,
+          ),
+          text(
+            self.workspace_summary_detail_label(),
+            role=Caption,
+            theme~,
+            width=layout.row_text_width,
+            height=22.0,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+      self.workspace_summary_action_button(theme),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::workspace_summary_label(self : WorkbenchModel) -> String {
+  let parts : Array[String] = []
+  if self.diff.has_context() {
+    parts.push(self.diff.changed_files.to_string() + " 文件")
+  } else if !self.files.is_empty() {
+    parts.push(self.files.length().to_string() + " 文件")
+  }
+  if self.diff.has_context() {
+    parts.push(
+      "+" +
+      self.diff.additions.to_string() +
+      " -" +
+      self.diff.deletions.to_string(),
+    )
+  }
+  let diagnostic_count = self.visible_workspace_diagnostic_count()
+  if diagnostic_count > 0 {
+    parts.push(diagnostic_count.to_string() + " 诊断")
+  }
+  if parts.is_empty() {
+    "工作区无新证据"
+  } else {
+    parts.join(" · ")
+  }
+}
+
+///|
+fn WorkbenchModel::workspace_summary_detail_label(
+  self : WorkbenchModel,
+) -> String {
+  if self.diff.has_context() {
+    self.diff.status_label()
+  } else if !self.files.is_empty() {
+    self.files[self.files.length() - 1].summary
+  } else {
+    "等待文件、变更或诊断"
+  }
+}
+
+///|
+fn WorkbenchModel::workspace_summary_action_button(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.diff.has_context() {
+    button(
+      "审核",
+      on_click=ReviewDiff,
+      variant=Outline,
+      theme~,
+      width=58.0,
+      height=32.0,
+    )
+  } else if !self.files.is_empty() {
+    let file = self.files[self.files.length() - 1]
+    button(
+      "聚焦",
+      on_click=InspectFile(file.path),
+      variant=Outline,
+      theme~,
+      width=58.0,
+      height=32.0,
+    )
+  } else {
+    blank_cell(width=58.0, height=32.0)
+  }
+}
+
+///|
+fn WorkbenchModel::turn_evidence_card_height(self : WorkbenchModel) -> Double {
+  let row_count = self.turn_evidence_card_row_count()
+  if row_count <= 1 {
+    54.0
+  } else {
+    52.0 + (row_count - 1).to_double() * 53.0
+  }
+}
+
+///|
+fn WorkbenchModel::turn_evidence_card_row_count(self : WorkbenchModel) -> Int {
+  let mut count = 1
+  if self.should_show_focused_check_presets() {
+    count = count + 1
+  }
+  count = count + self.turn_evidence_command_count()
+  if self.turn_evidence_command_count() == 0 && !self.events.is_empty() {
+    count = count + 1
+  }
+  if self.latest_visible_workspace_diagnostic() is Some(_) ||
+    self.diff.has_context() ||
+    !self.files.is_empty() {
+    count = count + 1
+  }
+  count
+}
+
+///|
+fn WorkbenchModel::turn_evidence_command_count(self : WorkbenchModel) -> Int {
+  if self.commands_end_with_focused_check_batch(
+      workbench_check_presets().length(),
+    ) {
+    self.visible_activity_command_count()
+  } else {
+    match self.primary_turn_evidence_command() {
+      Some(_) => 1
+      None => 0
+    }
+  }
+}
+
+///|
+fn WorkbenchModel::primary_turn_evidence_command(
+  self : WorkbenchModel,
+) -> CommandRun? {
+  match self.latest_failed_command() {
+    Some(command) => Some(command)
+    None =>
+      match self.latest_active_command() {
+        Some(command) => Some(command)
+        None =>
+          if self.commands.is_empty() {
+            None
+          } else {
+            Some(self.commands[self.commands.length() - 1])
+          }
+      }
+  }
+}
+
+///|
+fn WorkbenchModel::latest_active_command(self : WorkbenchModel) -> CommandRun? {
+  let mut active : CommandRun? = None
+  for command in self.commands {
+    if shell_command_status_is_active(command.status) {
+      active = Some(command)
+    }
+  }
+  active
 }
 
 ///|
@@ -1144,40 +1242,8 @@ fn WorkbenchModel::transcript_panel(
   for message in self.fork_messages {
     rows.push(fork_message_row(message, layout, theme))
   }
-  let panel_rows : Array[@core.View[WorkbenchMsg]] = [
-    row(
-      [
-        text(
-          "会话记录",
-          role=Control,
-          theme~,
-          width=workbench_max_double(1.0, layout.panel_body_width - 240.0),
-          height=28.0,
-        ),
-        count_badge(
-          self.transcript.length(),
-          label=self.transcript.length().to_string() + " 条",
-          tone=Neutral,
-          theme~,
-          width=112.0,
-        ),
-        count_badge(
-          self.fork_messages.length(),
-          label=self.fork_messages.length().to_string() + " 分叉",
-          tone=Accent,
-          theme~,
-          width=112.0,
-        ),
-      ],
-      spacing=8.0,
-      align=Center,
-    ),
-  ]
-  if !rows.is_empty() {
-    panel_rows.push(column(rows, spacing=8.0, align=Start))
-  }
   surface(
-    column(panel_rows, spacing=8.0, align=Start),
+    column(rows, spacing=8.0, align=Start),
     width=layout.panel_width,
     height=self.transcript_panel_height(layout),
     background=@core.Color::white(),
@@ -1193,9 +1259,9 @@ fn WorkbenchModel::transcript_panel_height(
   layout : WorkbenchLayout,
 ) -> Double {
   if self.transcript.is_empty() && self.fork_messages.is_empty() {
-    54.0
+    0.0
   } else {
-    let mut height = 24.0 + 28.0 + 8.0
+    let mut height = 24.0
     for item in self.transcript {
       height = height + transcript_row_height(item, layout) + 8.0
     }
@@ -1476,18 +1542,13 @@ fn WorkbenchModel::session_status_panel(
     row(
       [
         text(
-          "Pi 运行状态",
+          "当前任务",
           role=Control,
           theme~,
           width=workbench_max_double(1.0, layout.panel_body_width - 212.0),
           height=28.0,
         ),
-        badge(
-          session_status_label(active.status),
-          tone=session_status_tone(active.status),
-          theme~,
-          width=92.0,
-        ),
+        session_status_badge(active.status, theme),
         count_badge(
           self.pending_transport_count(),
           label=self.pending_transport_count().to_string() + " 排队",
@@ -1514,15 +1575,6 @@ fn WorkbenchModel::session_status_panel(
   if !self.plan.is_empty() {
     rows.push(plan_progress_row(self.plan, layout, theme))
   }
-  if self.pi_session_stats.has_visible_metrics() {
-    rows.push(session_stats_row(self.pi_session_stats, layout, theme))
-  }
-  if self.model_catalog.length() > 0 {
-    rows.push(model_catalog_row(self.model_catalog, layout, theme))
-  }
-  if binding.has_visible_binding() {
-    rows.push(session_binding_row(binding, layout, theme))
-  }
   if self.has_runtime_signal() {
     rows.push(self.runtime_signal_row(layout, theme))
   }
@@ -1530,8 +1582,19 @@ fn WorkbenchModel::session_status_panel(
     Some(action) => rows.push(next_action_row(action, layout, theme))
     None => ()
   }
-  if self.has_session_panel_controls() {
-    rows.push(self.session_controls_row(layout, theme))
+  if self.should_show_session_detail_rows() {
+    if self.pi_session_stats.has_visible_metrics() {
+      rows.push(session_stats_row(self.pi_session_stats, layout, theme))
+    }
+    if self.model_catalog.length() > 0 {
+      rows.push(model_catalog_row(self.model_catalog, layout, theme))
+    }
+    if binding.has_visible_binding() {
+      rows.push(session_binding_row(binding, layout, theme))
+    }
+    if self.has_session_panel_controls() {
+      rows.push(self.session_controls_row(layout, theme))
+    }
   }
   surface(
     column(rows, spacing=6.0, align=Start),
@@ -1555,15 +1618,6 @@ fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
   if !self.plan.is_empty() {
     count = count + 1
   }
-  if self.pi_session_stats.has_visible_metrics() {
-    count = count + 1
-  }
-  if self.model_catalog.length() > 0 {
-    count = count + 1
-  }
-  if binding.has_visible_binding() {
-    count = count + 1
-  }
   if self.has_runtime_signal() {
     count = count + 1
   }
@@ -1571,10 +1625,52 @@ fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
     Some(_) => count = count + 1
     None => ()
   }
-  if self.has_session_panel_controls() {
-    count = count + 1
+  if self.should_show_session_detail_rows() {
+    if self.pi_session_stats.has_visible_metrics() {
+      count = count + 1
+    }
+    if self.model_catalog.length() > 0 {
+      count = count + 1
+    }
+    if binding.has_visible_binding() {
+      count = count + 1
+    }
+    if self.has_session_panel_controls() {
+      count = count + 1
+    }
   }
   count
+}
+
+///|
+fn session_status_badge(
+  status : String,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if should_show_session_status_meta(status) {
+    badge(
+      session_status_label(status),
+      tone=session_status_tone(status),
+      theme~,
+      width=92.0,
+    )
+  } else {
+    blank_cell(width=92.0, height=24.0)
+  }
+}
+
+///|
+fn WorkbenchModel::should_show_session_detail_rows(
+  self : WorkbenchModel,
+) -> Bool {
+  let binding = self.active_pi_session_binding()
+  self.composer_controls_expanded &&
+  (
+    self.pi_session_stats.has_visible_metrics() ||
+    self.model_catalog.length() > 0 ||
+    binding.has_visible_binding() ||
+    self.has_session_panel_controls()
+  )
 }
 
 ///|
@@ -2477,116 +2573,6 @@ fn compact_percent(percent : Double) -> String {
 }
 
 ///|
-fn WorkbenchModel::activity_panel(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = [
-    self.activity_header_row(layout, theme),
-  ]
-  if self.should_show_focused_check_presets() {
-    rows.push(focused_check_preset_row(layout, theme))
-  }
-  if !self.events.is_empty() {
-    rows.push(event_row(self.events[self.events.length() - 1], layout, theme))
-  }
-  let command_start = self.visible_activity_command_start()
-  for index in command_start..<self.commands.length() {
-    rows.push(command_run_row(self.commands[index], layout, theme))
-  }
-  surface(
-    column(rows, spacing=7.0, align=Start),
-    width=layout.panel_width,
-    height=self.activity_panel_height(),
-    background=@core.Color::white(),
-    corner_radius=12.0,
-    theme~,
-    padding=12.0,
-  ).border(workbench_hairline_border())
-}
-
-///|
-fn WorkbenchModel::activity_header_row(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let controls : Array[@core.View[WorkbenchMsg]] = []
-  let mut badge_width = 0.0
-  let mut badge_count = 0
-  if !self.commands.is_empty() {
-    badge_width = badge_width + 94.0
-    badge_count = badge_count + 1
-  }
-  if !self.command_catalog.is_empty() {
-    badge_width = badge_width + 94.0
-    badge_count = badge_count + 1
-  }
-  if !self.events.is_empty() {
-    badge_width = badge_width + 102.0
-    badge_count = badge_count + 1
-  }
-  let spacing_width = badge_count.to_double() * 8.0
-  controls.push(
-    text(
-      "运行证据",
-      role=Control,
-      theme~,
-      width=workbench_max_double(
-        1.0,
-        layout.panel_body_width - badge_width - spacing_width,
-      ),
-      height=28.0,
-    ),
-  )
-  if !self.commands.is_empty() {
-    controls.push(
-      badge(
-        self.commands.length().to_string() + " 运行",
-        tone=Neutral,
-        theme~,
-        width=94.0,
-      ),
-    )
-  }
-  if !self.command_catalog.is_empty() {
-    controls.push(
-      badge(
-        self.command_catalog.length().to_string() + " 命令",
-        tone=Accent,
-        theme~,
-        width=94.0,
-      ),
-    )
-  }
-  if !self.events.is_empty() {
-    controls.push(
-      badge(
-        self.events.length().to_string() + " 事件",
-        tone=Neutral,
-        theme~,
-        width=102.0,
-      ),
-    )
-  }
-  row(controls, spacing=8.0, align=Center)
-}
-
-///|
-fn WorkbenchModel::activity_panel_row_count(self : WorkbenchModel) -> Int {
-  let mut count = 1
-  if self.should_show_focused_check_presets() {
-    count = count + 1
-  }
-  if !self.events.is_empty() {
-    count = count + 1
-  }
-  count = count + self.visible_activity_command_count()
-  count
-}
-
-///|
 fn WorkbenchModel::visible_activity_command_count(self : WorkbenchModel) -> Int {
   let focused_count = workbench_check_presets().length()
   if self.commands_end_with_focused_check_batch(focused_count) {
@@ -2626,16 +2612,6 @@ fn WorkbenchModel::should_show_focused_check_presets(
   self : WorkbenchModel,
 ) -> Bool {
   self.commands.is_empty() && self.visible_workspace_diagnostic_count() > 0
-}
-
-///|
-fn WorkbenchModel::activity_panel_height(self : WorkbenchModel) -> Double {
-  let row_count = self.activity_panel_row_count()
-  if row_count <= 1 {
-    54.0
-  } else {
-    52.0 + (row_count - 1).to_double() * 53.0
-  }
 }
 
 ///|
@@ -2941,85 +2917,6 @@ fn file_context_row(
 }
 
 ///|
-fn WorkbenchModel::workspace_digest_panel(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let diagnostic_count = self.visible_workspace_diagnostic_count()
-  let rows : Array[@core.View[WorkbenchMsg]] = [
-    row(
-      [
-        text(
-          "工作区证据",
-          role=Control,
-          theme~,
-          width=workbench_max_double(1.0, layout.panel_body_width - 302.0),
-          height=28.0,
-        ),
-        count_badge(
-          self.files.length(),
-          label=self.files.length().to_string() + " 文件",
-          tone=Neutral,
-          theme~,
-          width=86.0,
-        ),
-        count_badge(
-          diagnostic_count,
-          label=diagnostic_count.to_string() + " 诊断",
-          tone=diagnostic_count_tone(diagnostic_count),
-          theme~,
-          width=86.0,
-        ),
-        self.clear_diagnostics_button(diagnostic_count, theme),
-        self.review_diff_button(theme),
-      ],
-      spacing=8.0,
-      align=Center,
-    ),
-  ]
-  if self.diff.has_context() {
-    rows.push(diff_digest_row(self.diff, layout, theme))
-  }
-  if !self.files.is_empty() {
-    rows.push(file_context_row(self.files[0], layout, theme))
-  }
-  match self.latest_visible_workspace_diagnostic() {
-    Some(diagnostic) => rows.push(diagnostic_row(diagnostic, layout, theme))
-    None => ()
-  }
-  surface(
-    column(rows, spacing=7.0, align=Start),
-    width=layout.panel_width,
-    height=evidence_panel_height(
-      self.workspace_digest_panel_row_count(),
-      expanded=178.0,
-    ),
-    background=@core.Color::white(),
-    corner_radius=12.0,
-    theme~,
-    padding=12.0,
-  ).border(workbench_hairline_border())
-}
-
-///|
-fn WorkbenchModel::workspace_digest_panel_row_count(
-  self : WorkbenchModel,
-) -> Int {
-  let mut count = 1
-  if self.diff.has_context() {
-    count = count + 1
-  }
-  if !self.files.is_empty() {
-    count = count + 1
-  }
-  if self.visible_workspace_diagnostic_count() > 0 {
-    count = count + 1
-  }
-  count
-}
-
-///|
 fn WorkbenchModel::visible_workspace_diagnostic_count(
   self : WorkbenchModel,
 ) -> Int {
@@ -3067,94 +2964,6 @@ fn WorkbenchModel::has_failed_command(self : WorkbenchModel) -> Bool {
 ///|
 fn WorkbenchModel::has_cancelled_command(self : WorkbenchModel) -> Bool {
   self.commands.any(command => command.status == "cancelled")
-}
-
-///|
-fn evidence_panel_height(row_count : Int, expanded~ : Double) -> Double {
-  if row_count <= 1 {
-    54.0
-  } else {
-    expanded
-  }
-}
-
-///|
-fn diagnostic_count_tone(count : Int) -> @views.BadgeTone {
-  if count > 0 {
-    Warning
-  } else {
-    Neutral
-  }
-}
-
-///|
-fn WorkbenchModel::clear_diagnostics_button(
-  self : WorkbenchModel,
-  diagnostic_count : Int,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  ignore(self)
-  if diagnostic_count == 0 {
-    blank_cell(width=58.0, height=34.0)
-  } else {
-    button(
-      "清除",
-      on_click=ClearDiagnostics,
-      variant=Ghost,
-      theme~,
-      width=58.0,
-      height=34.0,
-    )
-  }
-}
-
-///|
-fn WorkbenchModel::review_diff_button(
-  self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  if self.diff.has_context() {
-    button(
-      "审核",
-      on_click=ReviewDiff,
-      variant=Outline,
-      theme~,
-      width=64.0,
-      height=34.0,
-    )
-  } else {
-    blank_cell(width=64.0, height=34.0)
-  }
-}
-
-///|
-fn diff_digest_row(
-  diff : DiffOverview,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  if diff.has_context() {
-    row(
-      [
-        badge(diff.status_label(), tone=Neutral, theme~, width=126.0),
-        text(
-          diff.changed_files.to_string() +
-          " 文件 · +" +
-          diff.additions.to_string() +
-          " -" +
-          diff.deletions.to_string(),
-          role=Caption,
-          theme~,
-          width=layout.diff_text_width,
-          height=28.0,
-        ),
-      ],
-      spacing=10.0,
-      align=Center,
-    )
-  } else {
-    blank_row(28.0)
-  }
 }
 
 ///|
