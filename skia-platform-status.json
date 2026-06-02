@@ -108,6 +108,11 @@
       "marker": "native smoke surface target factory unsupported"
     },
     {
+      "id": "surface.target-support-diagnostics",
+      "area": "Surface",
+      "marker": "native smoke surface target support diagnostics"
+    },
+    {
       "id": "canvas.state",
       "area": "Canvas",
       "marker": "native smoke canvas state restored"
@@ -916,6 +921,11 @@
     }
   ],
   "native_smoke_expected_values": [
+    {
+      "id": "surface.target-support-diagnostics",
+      "marker": "native smoke surface target support diagnostics",
+      "value": "2"
+    },
     {
       "id": "canvas.clip",
       "marker": "native smoke canvas clip device width",

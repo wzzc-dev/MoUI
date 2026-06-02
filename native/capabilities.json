@@ -63,6 +63,7 @@
         "native smoke surface descriptor backend",
         "native smoke surface target factory raster",
         "native smoke surface target factory unsupported",
+        "native smoke surface target support diagnostics",
         "native smoke surface target cache resources",
         "native smoke surface flush-and-submit",
         "native smoke surface render frame commands",
