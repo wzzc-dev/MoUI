@@ -1745,6 +1745,29 @@ test "canvas skips non-finite direct geometry" {
             Some(pixmap) =>
               native_test_assert_pixel(pixmap, 0xff, 0xff, 0xff, 0xff)
           }
+          let save_count = canvas.save_count()
+          let invalid_paint = @skia.Paint::new(
+            color=@skia.Color::blue(),
+            stroke_width=1.0 / 0.0,
+            stroke_miter=0.0 / 0.0,
+          )
+          ignore(
+            canvas.save_layer(
+              bounds=Some(@skia.Rect::new(0, 0, 1.0 / 0.0, 1)),
+              paint=invalid_paint,
+            ),
+          )
+          canvas.draw_line(
+            @skia.Point::new(0, 0),
+            @skia.Point::new(3, 0),
+            invalid_paint,
+          )
+          canvas.restore_to_count(save_count)
+          match surface.read_pixels(bounds=@skia.IRect::from_xywh(0, 0, 1, 1)) {
+            None => ()
+            Some(pixmap) =>
+              native_test_assert_pixel(pixmap, 0x00, 0x00, 0xff, 0xff)
+          }
         }
       }
   }

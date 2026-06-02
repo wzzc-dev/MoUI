@@ -636,6 +636,10 @@ pub fn Canvas::save_layer(
     Some(filter) => filter.handle
     None => native_mask_filter_null()
   }
+  let bounds = match bounds {
+    Some(rect) if rect.is_finite() => Some(rect)
+    _ => None
+  }
   match bounds {
     None =>
       native_canvas_save_layer(
@@ -649,8 +653,8 @@ pub fn Canvas::save_layer(
         paint.anti_alias,
         paint.dither,
         paint.style_ordinal(),
-        paint.stroke_width,
-        paint.stroke_miter,
+        native_canvas_paint_stroke_width(paint),
+        native_canvas_paint_stroke_miter(paint),
         paint.stroke_cap_ordinal(),
         paint.stroke_join_ordinal(),
         paint.blend_mode_ordinal(),
@@ -670,8 +674,8 @@ pub fn Canvas::save_layer(
         paint.anti_alias,
         paint.dither,
         paint.style_ordinal(),
-        paint.stroke_width,
-        paint.stroke_miter,
+        native_canvas_paint_stroke_width(paint),
+        native_canvas_paint_stroke_miter(paint),
         paint.stroke_cap_ordinal(),
         paint.stroke_join_ordinal(),
         paint.blend_mode_ordinal(),
@@ -700,6 +704,24 @@ pub fn Canvas::save_count(self : Canvas) -> Int {
 ///|
 fn native_canvas_scalar_is_finite(value : Float) -> Bool {
   value == value && value - value == 0.0
+}
+
+///|
+fn native_canvas_paint_stroke_width(paint : @skia.Paint) -> Float {
+  if native_canvas_scalar_is_finite(paint.stroke_width) {
+    paint.stroke_width
+  } else {
+    0.0
+  }
+}
+
+///|
+fn native_canvas_paint_stroke_miter(paint : @skia.Paint) -> Float {
+  if native_canvas_scalar_is_finite(paint.stroke_miter) {
+    paint.stroke_miter
+  } else {
+    4.0
+  }
 }
 
 ///|
@@ -916,8 +938,8 @@ pub fn Canvas::draw_paint(self : Canvas, paint : @skia.Paint) -> Unit {
     paint.anti_alias,
     paint.dither,
     paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
+    native_canvas_paint_stroke_width(paint),
+    native_canvas_paint_stroke_miter(paint),
     paint.stroke_cap_ordinal(),
     paint.stroke_join_ordinal(),
     paint.blend_mode_ordinal(),
@@ -939,8 +961,8 @@ pub fn Canvas::draw_point(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -966,8 +988,8 @@ pub fn Canvas::draw_line(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1015,8 +1037,8 @@ pub fn Canvas::draw_rect(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1041,8 +1063,8 @@ pub fn Canvas::draw_oval(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1069,8 +1091,8 @@ pub fn Canvas::draw_circle(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1103,8 +1125,8 @@ pub fn Canvas::draw_arc(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1135,8 +1157,8 @@ pub fn Canvas::draw_round_rect(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1169,8 +1191,8 @@ pub fn Canvas::draw_rrect(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1217,8 +1239,8 @@ pub fn Canvas::draw_drrect(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1239,8 +1261,8 @@ pub fn Canvas::draw_path(
     paint.anti_alias,
     paint.dither,
     paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
+    native_canvas_paint_stroke_width(paint),
+    native_canvas_paint_stroke_miter(paint),
     paint.stroke_cap_ordinal(),
     paint.stroke_join_ordinal(),
     paint.blend_mode_ordinal(),
@@ -1262,8 +1284,8 @@ pub fn Canvas::draw_path_shader(
     paint.anti_alias,
     paint.dither,
     paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
+    native_canvas_paint_stroke_width(paint),
+    native_canvas_paint_stroke_miter(paint),
     paint.stroke_cap_ordinal(),
     paint.stroke_join_ordinal(),
     paint.blend_mode_ordinal(),
@@ -1318,8 +1340,8 @@ pub fn Canvas::draw_image_rect(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1345,8 +1367,8 @@ pub fn Canvas::draw_paint_shader(
     paint.anti_alias,
     paint.dither,
     paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
+    native_canvas_paint_stroke_width(paint),
+    native_canvas_paint_stroke_miter(paint),
     paint.stroke_cap_ordinal(),
     paint.stroke_join_ordinal(),
     paint.blend_mode_ordinal(),
@@ -1372,8 +1394,8 @@ pub fn Canvas::draw_rect_shader(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1406,8 +1428,8 @@ pub fn Canvas::draw_round_rect_shader(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1434,8 +1456,8 @@ pub fn Canvas::draw_text_utf8(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),
@@ -1467,8 +1489,8 @@ pub fn Canvas::draw_glyphs(
       paint.anti_alias,
       paint.dither,
       paint.style_ordinal(),
-      paint.stroke_width,
-      paint.stroke_miter,
+      native_canvas_paint_stroke_width(paint),
+      native_canvas_paint_stroke_miter(paint),
       paint.stroke_cap_ordinal(),
       paint.stroke_join_ordinal(),
       paint.blend_mode_ordinal(),

@@ -87,7 +87,8 @@ these facts recorded in logs:
   surface construction, predictable unsupported window/GPU surface targets,
   canvas state restore, canvas clipping, canvas color/paint fill replay,
   undecodable/empty image replay skip and cache-safety proof,
-  non-finite direct Canvas geometry skip proof,
+  non-finite direct Canvas geometry skip proof, non-finite Canvas paint/layer
+  sanitization proof,
   canvas rrect/path clip replay, empty path replay zero-resource/miss/hit proof,
   non-finite path `from_value` rejection, non-finite path replay skip and
   zero-cache-touch proof, non-finite path append/direct mutation skip proof,
@@ -138,6 +139,7 @@ these facts recorded in logs:
   variation, fallback resolution resource planning, invalid fallback
   request/result cache safety, native fallback resolution bridging, font
   fallback resource planning, non-finite direct Canvas geometry skip proof,
+  non-finite Canvas paint/layer sanitization proof,
   empty path replay zero-resource/miss/hit proof,
   non-finite path `from_value` rejection, non-finite path replay skip and
   zero-cache-touch proof, non-finite path append/direct mutation skip proof,
