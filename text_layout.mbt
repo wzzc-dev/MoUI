@@ -797,12 +797,18 @@ pub fn FontFallbackMatchDescriptor::resource_plan(
   match_byte_size? : Int64 = -1L,
   font_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  RendererResourcePlan::new([
-    self.resource_descriptor(byte_size=match_byte_size),
-    self
-    .font_descriptor(size~, scale_x~, skew_x~)
-    .resource_descriptor(byte_size=font_byte_size),
-  ])
+  if self.is_valid() {
+    RendererResourcePlan::new([
+      self.resource_descriptor(byte_size=match_byte_size),
+      self
+      .font_descriptor(size~, scale_x~, skew_x~)
+      .resource_descriptor(byte_size=font_byte_size),
+    ])
+  } else {
+    RendererResourcePlan::new([
+      self.resource_descriptor(byte_size=match_byte_size),
+    ])
+  }
 }
 
 ///|
@@ -939,14 +945,20 @@ pub fn FontFallbackResolutionDescriptor::resource_plan(
   match_byte_size? : Int64 = -1L,
   font_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  RendererResourcePlan::new([
-    self.request.resource_descriptor(byte_size=request_byte_size),
-    self.resource_descriptor(byte_size=resolution_byte_size),
-    self.resolved_match.resource_descriptor(byte_size=match_byte_size),
-    self
-    .font_descriptor(size~, scale_x~, skew_x~)
-    .resource_descriptor(byte_size=font_byte_size),
-  ])
+  if self.is_valid() {
+    RendererResourcePlan::new([
+      self.request.resource_descriptor(byte_size=request_byte_size),
+      self.resource_descriptor(byte_size=resolution_byte_size),
+      self.resolved_match.resource_descriptor(byte_size=match_byte_size),
+      self
+      .font_descriptor(size~, scale_x~, skew_x~)
+      .resource_descriptor(byte_size=font_byte_size),
+    ])
+  } else {
+    RendererResourcePlan::new([
+      self.resource_descriptor(byte_size=resolution_byte_size),
+    ])
+  }
 }
 
 ///|

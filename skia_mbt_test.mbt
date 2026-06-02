@@ -2701,9 +2701,19 @@ test "font fallback contracts normalize style family and language requests" {
   let invalid_match = request.match_descriptor(b"")
   assert_true(!invalid_match.is_valid())
   assert_true(!invalid_match.resource_descriptor().is_cacheable())
+  let invalid_match_plan = invalid_match.resource_plan(size=14.0, scale_x=1.1)
+  assert_eq(invalid_match_plan.length(), 1)
+  assert_eq(invalid_match_plan.cacheable_count, 0)
+  assert_eq(invalid_match_plan.uncacheable_count, 1)
   assert_true(
     !request.resolution_descriptor(b"").resource_descriptor().is_cacheable(),
   )
+  let invalid_resolution_plan = request
+    .resolution_descriptor(b"")
+    .resource_plan(size=14.0, scale_x=1.1)
+  assert_eq(invalid_resolution_plan.length(), 1)
+  assert_eq(invalid_resolution_plan.cacheable_count, 0)
+  assert_eq(invalid_resolution_plan.uncacheable_count, 1)
 }
 
 ///|

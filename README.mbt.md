@@ -68,8 +68,8 @@ The current package exposes the first value-layer API surface:
   and font fallback, including deterministic byte-range text-run,
   text-measurement, measured-result, text-shaping, shaped-result, detailed
   shaped-glyph, font, fallback request, fallback match, and fallback resolution
-  resource keys, with invalid measured/shaped results kept uncacheable without
-  downstream cache dependencies, and
+  resource keys, with invalid measured/shaped/fallback-result metadata kept
+  uncacheable without downstream cache dependencies, and
   plans for backend measurement, shaping, font-handle, and typeface-resolution
   caches
 - portable paths: `Path`, `PathLine`, `PathRect`, `PathVerb`, `PathFillType`,
