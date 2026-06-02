@@ -153,6 +153,11 @@
       "marker": "native smoke canvas replay transforms"
     },
     {
+      "id": "canvas.replay-state-stats",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay state stats"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "area": "Canvas",
       "marker": "native smoke render frame replay rejected skipped"
@@ -1015,6 +1020,11 @@
       "id": "canvas.replay-transforms",
       "marker": "native smoke canvas replay transforms",
       "value": "6"
+    },
+    {
+      "id": "canvas.replay-state-stats",
+      "marker": "native smoke canvas replay state stats",
+      "value": "4"
     },
     {
       "id": "canvas.frame-replay-rejected-skipped",

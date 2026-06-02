@@ -112,6 +112,7 @@
         "native smoke canvas replay status contract",
         "native smoke canvas replay deferred present",
         "native smoke canvas replay transforms",
+        "native smoke canvas replay state stats",
         "native smoke render frame replay rejected skipped",
         "native smoke shader draws",
         "native smoke filter layer count",

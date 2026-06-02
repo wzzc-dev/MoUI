@@ -213,6 +213,10 @@ pub(all) struct CanvasReplayStats {
   replayed_count : Int
   skipped_count : Int
   draw_count : Int
+  state_count : Int
+  transform_count : Int
+  clip_count : Int
+  clear_count : Int
   text_count : Int
   present_count : Int
 } derive(Debug, Eq)
@@ -237,6 +241,10 @@ pub fn CanvasReplayStats::empty() -> CanvasReplayStats {
     replayed_count: 0,
     skipped_count: 0,
     draw_count: 0,
+    state_count: 0,
+    transform_count: 0,
+    clip_count: 0,
+    clear_count: 0,
     text_count: 0,
     present_count: 0,
   }
@@ -267,12 +275,28 @@ fn canvas_replay_skipped_stats(
   let mut command_count = 0
   let mut skipped_count = 0
   let mut draw_count = 0
+  let mut state_count = 0
+  let mut transform_count = 0
+  let mut clip_count = 0
+  let mut clear_count = 0
   let mut text_count = 0
   let mut present_count = 0
   for command in commands.commands {
     command_count += 1
     if command.is_draw() {
       draw_count += 1
+    }
+    if command.is_state() {
+      state_count += 1
+    }
+    if command.is_transform() {
+      transform_count += 1
+    }
+    if command.is_clip() {
+      clip_count += 1
+    }
+    if command.is_clear() {
+      clear_count += 1
     }
     if command.is_text() {
       text_count += 1
@@ -288,6 +312,10 @@ fn canvas_replay_skipped_stats(
     replayed_count: 0,
     skipped_count,
     draw_count,
+    state_count,
+    transform_count,
+    clip_count,
+    clear_count,
     text_count,
     present_count,
   }

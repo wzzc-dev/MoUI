@@ -536,6 +536,7 @@ if ($status.schema_version -ge 3) {
       "native smoke canvas replay status contract" = "3"
       "native smoke canvas replay deferred present" = "1"
       "native smoke canvas replay transforms" = "6"
+      "native smoke canvas replay state stats" = "4"
       "native smoke render frame replay rejected skipped" = "26"
       "native smoke surface render frame commands" = "29"
       "native smoke surface render frame finalized" = "1"

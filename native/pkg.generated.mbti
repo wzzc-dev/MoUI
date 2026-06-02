@@ -86,6 +86,10 @@ pub(all) struct CanvasReplayStats {
   replayed_count : Int
   skipped_count : Int
   draw_count : Int
+  state_count : Int
+  transform_count : Int
+  clip_count : Int
+  clear_count : Int
   text_count : Int
   present_count : Int
 } derive(Eq, @debug.Debug)
