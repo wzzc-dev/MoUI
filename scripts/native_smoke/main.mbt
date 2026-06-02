@@ -2139,6 +2139,53 @@ fn main {
     empty_path_resources.shader_cache.length() != 1 {
     fail_smoke("empty path replay should not touch path cache")
   }
+  let non_finite_replay_path = @skia.Path::new()
+    .move_to(@skia.Point::new(0, 0))
+    .line_to(@skia.Point::new(1.0 / 0.0, 1))
+  let non_finite_path_commands = @skia.RenderCommandList::for_target(
+      replay_target,
+    )
+    .clip_path(non_finite_replay_path)
+    .draw_path(
+      non_finite_replay_path,
+      paint=@skia.Paint::new(color=@skia.Color::blue()),
+    )
+  let non_finite_path_plan = non_finite_path_commands.resource_plan()
+  if non_finite_replay_path.is_finite() ||
+    !non_finite_replay_path.resource_key().is_empty() ||
+    non_finite_replay_path.resource_descriptor().is_cacheable() ||
+    non_finite_path_plan.length() != 1 ||
+    non_finite_path_plan.count_kind(@skia.SurfaceResource) != 1 ||
+    non_finite_path_plan.count_kind(@skia.PathResource) != 0 {
+    fail_smoke("non-finite path replay resource plan is not cache-safe")
+  }
+  guard @native.Surface::raster_n32_premul(replay_size)
+    is Some(non_finite_path_surface) else {
+    fail_smoke("failed to create non-finite path replay surface")
+  }
+  guard non_finite_path_surface.canvas() is Some(non_finite_path_canvas) else {
+    fail_smoke("failed to create non-finite path replay canvas")
+  }
+  let non_finite_path_resources = @native.NativeReplayResources::new(
+    path_max_bytes=1024L,
+  )
+  let non_finite_path_stats = non_finite_path_canvas.replay_with_resources(
+    non_finite_path_commands,
+    non_finite_path_resources,
+  )
+  let non_finite_path_cache_stats = non_finite_path_resources.path_cache.stats()
+  if non_finite_path_stats.is_complete() ||
+    non_finite_path_stats.command_count != non_finite_path_commands.length() ||
+    non_finite_path_stats.replayed_count != 0 ||
+    non_finite_path_stats.skipped_count != non_finite_path_commands.length() ||
+    non_finite_path_stats.clip_count != 1 ||
+    non_finite_path_stats.draw_count != 1 ||
+    non_finite_path_stats.path_resource_count != 2 ||
+    non_finite_path_resources.path_cache.length() != 0 ||
+    non_finite_path_cache_stats.misses != 0 ||
+    non_finite_path_cache_stats.hits != 0 {
+    fail_smoke("non-finite path replay should skip without touching path cache")
+  }
 
   let replay_fill_commands = @skia.RenderCommandList::for_target(replay_target)
     .draw_color(@skia.Color::red(), blend_mode=@skia.Src)
@@ -2293,6 +2340,16 @@ fn main {
   println(empty_path_cache_stats.misses)
   println("native smoke empty path replay path cache hits")
   println(empty_path_cache_stats.hits)
+  println("native smoke non-finite path replay skipped")
+  println(non_finite_path_stats.skipped_count)
+  println("native smoke non-finite path replay path resources")
+  println(non_finite_path_stats.path_resource_count)
+  println("native smoke non-finite path replay path cache resources")
+  println(non_finite_path_resources.path_cache.length())
+  println("native smoke non-finite path replay path cache misses")
+  println(non_finite_path_cache_stats.misses)
+  println("native smoke non-finite path replay path cache hits")
+  println(non_finite_path_cache_stats.hits)
   println("native smoke canvas replay color paint fills")
   println(replay_fill_stats.draw_count)
   println("native smoke canvas replay paint fill clipped")
