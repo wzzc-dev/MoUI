@@ -494,6 +494,15 @@ fn line_draw_bounds(start : Point, end : Point, paint : Paint) -> Rect? {
 }
 
 ///|
+let estimated_render_text_advance_per_byte : Float = 8.0
+
+///|
+let estimated_render_text_ascent : Float = 12.0
+
+///|
+let estimated_render_text_descent : Float = 4.0
+
+///|
 fn point_mode_draw_bounds(
   points : Array[Point],
   mode : PointMode,
@@ -516,6 +525,44 @@ fn point_mode_draw_bounds(
         points_draw_bounds(points, paint)
       }
   }
+}
+
+///|
+fn text_utf8_draw_bounds(
+  byte_count : Int,
+  origin : Point,
+  is_right_to_left? : Bool = false,
+) -> Rect? {
+  if byte_count <= 0 {
+    None
+  } else {
+    let width = Float::from_int(byte_count) *
+      estimated_render_text_advance_per_byte
+    let left = if is_right_to_left { origin.x - width } else { origin.x }
+    let right = if is_right_to_left { origin.x } else { origin.x + width }
+    Some(
+      Rect::new(
+        left,
+        origin.y - estimated_render_text_ascent,
+        right,
+        origin.y + estimated_render_text_descent,
+      ).sorted(),
+    )
+  }
+}
+
+///|
+fn text_run_draw_bounds(
+  text : Bytes,
+  descriptor : TextRunDescriptor,
+  origin : Point,
+) -> Rect? {
+  let range = descriptor.range.clamp_to_text(text)
+  text_utf8_draw_bounds(
+    range.length(),
+    origin,
+    is_right_to_left=descriptor.is_right_to_left(),
+  )
 }
 
 ///|
@@ -584,6 +631,10 @@ fn RenderCommand::draw_bounds(self : RenderCommand) -> Rect? {
     DrawCanvasPathShader(path, _, _) => path.bounds()
     DrawCanvasImage(image, top_left) => image_draw_bounds(image, top_left)
     DrawCanvasImageRect(_, _, dst, _, _) => Some(dst.sorted())
+    DrawCanvasTextUtf8(text, origin, _) =>
+      text_utf8_draw_bounds(text.length(), origin)
+    DrawCanvasTextRunUtf8(text, descriptor, _, origin, _) =>
+      text_run_draw_bounds(text, descriptor, origin)
     DrawCanvasShapedGlyphRunUtf8(_, glyph_run, origin, _) =>
       shaped_glyph_run_draw_bounds(glyph_run, origin)
     _ => None
