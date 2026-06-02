@@ -991,14 +991,20 @@ fn main {
     )
     .clear(@skia.Color::white())
     .draw_paint_shader(invalid_shader_descriptor)
-    .save_layer(color_filter=Some(invalid_color_filter_descriptor))
+    .save_layer(
+      color_filter=Some(invalid_color_filter_descriptor),
+      image_filter=Some(invalid_image_filter_descriptor),
+      mask_filter=Some(invalid_mask_filter_descriptor),
+    )
   let invalid_replay_plan = invalid_replay_commands.resource_plan()
   if invalid_replay_plan.length() != 1 ||
     invalid_replay_plan.cacheable_count != 1 ||
     invalid_replay_plan.uncacheable_count != 0 ||
     invalid_replay_plan.count_kind(@skia.SurfaceResource) != 1 ||
     invalid_replay_plan.count_kind(@skia.ShaderResource) != 0 ||
-    invalid_replay_plan.count_kind(@skia.ColorFilterResource) != 0 {
+    invalid_replay_plan.count_kind(@skia.ColorFilterResource) != 0 ||
+    invalid_replay_plan.count_kind(@skia.ImageFilterResource) != 0 ||
+    invalid_replay_plan.count_kind(@skia.MaskFilterResource) != 0 {
     fail_smoke("invalid shader/filter replay plan is not cache-safe")
   }
   guard @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4))
@@ -1011,6 +1017,8 @@ fn main {
   let invalid_replay_resources = @native.NativeReplayResources::new(
     shader_max_bytes=1024L,
     color_filter_max_bytes=1024L,
+    image_filter_max_bytes=1024L,
+    mask_filter_max_bytes=1024L,
   )
   let invalid_replay_stats = invalid_replay_canvas.replay_with_resources(
     invalid_replay_commands,
@@ -1020,6 +1028,12 @@ fn main {
   let invalid_color_filter_cache_stats = invalid_replay_resources
     .color_filter_cache
     .stats()
+  let invalid_image_filter_cache_stats = invalid_replay_resources
+    .image_filter_cache
+    .stats()
+  let invalid_mask_filter_cache_stats = invalid_replay_resources
+    .mask_filter_cache
+    .stats()
   if invalid_replay_stats.is_complete() ||
     invalid_replay_stats.command_count != 3 ||
     invalid_replay_stats.replayed_count != 1 ||
@@ -1028,13 +1042,19 @@ fn main {
     invalid_replay_stats.state_count != 1 ||
     invalid_replay_stats.clear_count != 1 ||
     invalid_replay_stats.shader_resource_count != 1 ||
-    invalid_replay_stats.filter_resource_count != 1 ||
+    invalid_replay_stats.filter_resource_count != 3 ||
     invalid_replay_resources.shader_cache.length() != 0 ||
     invalid_replay_resources.color_filter_cache.length() != 0 ||
+    invalid_replay_resources.image_filter_cache.length() != 0 ||
+    invalid_replay_resources.mask_filter_cache.length() != 0 ||
     invalid_shader_cache_stats.misses != 0 ||
     invalid_shader_cache_stats.hits != 0 ||
     invalid_color_filter_cache_stats.misses != 0 ||
-    invalid_color_filter_cache_stats.hits != 0 {
+    invalid_color_filter_cache_stats.hits != 0 ||
+    invalid_image_filter_cache_stats.misses != 0 ||
+    invalid_image_filter_cache_stats.hits != 0 ||
+    invalid_mask_filter_cache_stats.misses != 0 ||
+    invalid_mask_filter_cache_stats.hits != 0 {
     fail_smoke("invalid shader/filter descriptors should skip without caching")
   }
   println("native smoke invalid shader filter replay skipped")
@@ -1042,10 +1062,19 @@ fn main {
   println("native smoke invalid shader filter replay cache resources")
   println(
     invalid_replay_resources.shader_cache.length() +
-    invalid_replay_resources.color_filter_cache.length(),
+    invalid_replay_resources.color_filter_cache.length() +
+    invalid_replay_resources.image_filter_cache.length() +
+    invalid_replay_resources.mask_filter_cache.length(),
   )
   println("native smoke invalid shader filter replay cache misses")
-  println(invalid_shader_cache_stats.misses + invalid_color_filter_cache_stats.misses)
+  println(
+    invalid_shader_cache_stats.misses +
+    invalid_color_filter_cache_stats.misses +
+    invalid_image_filter_cache_stats.misses +
+    invalid_mask_filter_cache_stats.misses,
+  )
+  println("native smoke invalid shader filter replay filter resources")
+  println(invalid_replay_stats.filter_resource_count)
 
   guard @native.Path::new() is Some(native_path) else {
     fail_smoke("failed to create native path")
