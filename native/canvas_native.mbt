@@ -1712,27 +1712,30 @@ fn native_shader_from_resources(
   descriptor : @skia.ShaderDescriptor,
   resources : NativeReplayResources?,
 ) -> Shader? {
-  match resources {
-    None => native_shader_from_descriptor(descriptor)
-    Some(resources) => {
-      let key = descriptor.resource_key()
-      match resources.shader_cache.get(key) {
-        Some(shader) => Some(shader)
-        None =>
-          match native_shader_from_descriptor(descriptor) {
-            None => None
-            Some(shader) => {
-              ignore(
-                resources.shader_cache.insert(
-                  key,
-                  shader,
-                  byte_size=descriptor.resource_descriptor().byte_size,
-                ),
-              )
-              Some(shader)
+  let key = descriptor.resource_key()
+  if key.is_empty() || !descriptor.is_valid() {
+    native_shader_from_descriptor(descriptor)
+  } else {
+    match resources {
+      None => native_shader_from_descriptor(descriptor)
+      Some(resources) =>
+        match resources.shader_cache.get(key) {
+          Some(shader) => Some(shader)
+          None =>
+            match native_shader_from_descriptor(descriptor) {
+              None => None
+              Some(shader) => {
+                ignore(
+                  resources.shader_cache.insert(
+                    key,
+                    shader,
+                    byte_size=descriptor.resource_descriptor().byte_size,
+                  ),
+                )
+                Some(shader)
+              }
             }
-          }
-      }
+        }
     }
   }
 }
@@ -1899,27 +1902,30 @@ fn native_color_filter_from_resources(
   descriptor : @skia.ColorFilterDescriptor,
   resources : NativeReplayResources?,
 ) -> ColorFilter? {
-  match resources {
-    None => native_color_filter_from_descriptor(descriptor)
-    Some(resources) => {
-      let key = descriptor.resource_key()
-      match resources.color_filter_cache.get(key) {
-        Some(filter) => Some(filter)
-        None =>
-          match native_color_filter_from_descriptor(descriptor) {
-            None => None
-            Some(filter) => {
-              ignore(
-                resources.color_filter_cache.insert(
-                  key,
-                  filter,
-                  byte_size=descriptor.resource_descriptor().byte_size,
-                ),
-              )
-              Some(filter)
+  let key = descriptor.resource_key()
+  if key.is_empty() || !descriptor.is_valid() {
+    native_color_filter_from_descriptor(descriptor)
+  } else {
+    match resources {
+      None => native_color_filter_from_descriptor(descriptor)
+      Some(resources) =>
+        match resources.color_filter_cache.get(key) {
+          Some(filter) => Some(filter)
+          None =>
+            match native_color_filter_from_descriptor(descriptor) {
+              None => None
+              Some(filter) => {
+                ignore(
+                  resources.color_filter_cache.insert(
+                    key,
+                    filter,
+                    byte_size=descriptor.resource_descriptor().byte_size,
+                  ),
+                )
+                Some(filter)
+              }
             }
-          }
-      }
+        }
     }
   }
 }
@@ -1939,27 +1945,30 @@ fn native_image_filter_from_resources(
   descriptor : @skia.ImageFilterDescriptor,
   resources : NativeReplayResources?,
 ) -> ImageFilter? {
-  match resources {
-    None => native_image_filter_from_descriptor(descriptor)
-    Some(resources) => {
-      let key = descriptor.resource_key()
-      match resources.image_filter_cache.get(key) {
-        Some(filter) => Some(filter)
-        None =>
-          match native_image_filter_from_descriptor(descriptor) {
-            None => None
-            Some(filter) => {
-              ignore(
-                resources.image_filter_cache.insert(
-                  key,
-                  filter,
-                  byte_size=descriptor.resource_descriptor().byte_size,
-                ),
-              )
-              Some(filter)
+  let key = descriptor.resource_key()
+  if key.is_empty() || !descriptor.is_valid() {
+    native_image_filter_from_descriptor(descriptor)
+  } else {
+    match resources {
+      None => native_image_filter_from_descriptor(descriptor)
+      Some(resources) =>
+        match resources.image_filter_cache.get(key) {
+          Some(filter) => Some(filter)
+          None =>
+            match native_image_filter_from_descriptor(descriptor) {
+              None => None
+              Some(filter) => {
+                ignore(
+                  resources.image_filter_cache.insert(
+                    key,
+                    filter,
+                    byte_size=descriptor.resource_descriptor().byte_size,
+                  ),
+                )
+                Some(filter)
+              }
             }
-          }
-      }
+        }
     }
   }
 }
@@ -1978,27 +1987,30 @@ fn native_mask_filter_from_resources(
   descriptor : @skia.MaskFilterDescriptor,
   resources : NativeReplayResources?,
 ) -> MaskFilter? {
-  match resources {
-    None => native_mask_filter_from_descriptor(descriptor)
-    Some(resources) => {
-      let key = descriptor.resource_key()
-      match resources.mask_filter_cache.get(key) {
-        Some(filter) => Some(filter)
-        None =>
-          match native_mask_filter_from_descriptor(descriptor) {
-            None => None
-            Some(filter) => {
-              ignore(
-                resources.mask_filter_cache.insert(
-                  key,
-                  filter,
-                  byte_size=descriptor.resource_descriptor().byte_size,
-                ),
-              )
-              Some(filter)
+  let key = descriptor.resource_key()
+  if key.is_empty() || !descriptor.is_valid() {
+    native_mask_filter_from_descriptor(descriptor)
+  } else {
+    match resources {
+      None => native_mask_filter_from_descriptor(descriptor)
+      Some(resources) =>
+        match resources.mask_filter_cache.get(key) {
+          Some(filter) => Some(filter)
+          None =>
+            match native_mask_filter_from_descriptor(descriptor) {
+              None => None
+              Some(filter) => {
+                ignore(
+                  resources.mask_filter_cache.insert(
+                    key,
+                    filter,
+                    byte_size=descriptor.resource_descriptor().byte_size,
+                  ),
+                )
+                Some(filter)
+              }
             }
-          }
-      }
+        }
     }
   }
 }

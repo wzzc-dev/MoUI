@@ -333,6 +333,7 @@ if ($status.schema_version -ge 3) {
     "shader-filter.invalid-descriptor-resources",
     "shader-filter.invalid-replay-skipped",
     "shader-filter.invalid-replay-cache-resources",
+    "shader-filter.invalid-replay-cache-misses",
     "filter.layer",
     "filter.finite-validation",
     "filter.resource-plan",
@@ -682,6 +683,7 @@ if ($status.schema_version -ge 3) {
       "native smoke invalid shader filter descriptor resources" = "4"
       "native smoke invalid shader filter replay skipped" = "2"
       "native smoke invalid shader filter replay cache resources" = "0"
+      "native smoke invalid shader filter replay cache misses" = "0"
       "native smoke filter resource plan count" = "3"
       "native smoke filter finite validation" = "1"
       "native smoke text run resource plan count" = "3"

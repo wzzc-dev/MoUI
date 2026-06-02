@@ -171,6 +171,7 @@ default_stage_markers=(
   "native smoke invalid shader filter descriptor resources" \
   "native smoke invalid shader filter replay skipped" \
   "native smoke invalid shader filter replay cache resources" \
+  "native smoke invalid shader filter replay cache misses" \
   "native smoke filter layer count" \
   "native smoke filter finite validation" \
   "native smoke filter resource plan count" \
@@ -398,6 +399,7 @@ default_expected_stage_values=(
   $'native smoke invalid shader filter descriptor resources\t4'
   $'native smoke invalid shader filter replay skipped\t2'
   $'native smoke invalid shader filter replay cache resources\t0'
+  $'native smoke invalid shader filter replay cache misses\t0'
   $'native smoke filter resource plan count\t3'
   $'native smoke filter finite validation\t1'
   $'native smoke text run resource plan count\t3'
