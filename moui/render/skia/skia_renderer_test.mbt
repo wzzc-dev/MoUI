@@ -6,6 +6,8 @@ test "skia renderer backend info reflects native availability" {
   assert_true(info.description.contains("SurfaceTargetDescriptor"))
   assert_true(info.description.contains("finalization preflight"))
   assert_true(info.description.contains("text fallback/shaping descriptor"))
+  assert_true(info.description.contains("text maturity audit partial"))
+  assert_true(info.description.contains("full grapheme parity pending"))
   assert_true(info.description.contains("flush-and-submit finalization"))
   if skia_available() {
     assert_true(info.status == @render.RendererCapabilityStatus::Ready)
@@ -56,6 +58,46 @@ test "skia renderer fails explicitly when real skia is unavailable" {
       Err(SkiaRendererError::SkiaUnavailable) => ()
       _ => fail("expected explicit unavailable error")
     }
+  }
+}
+
+///|
+test "skia text system is directly available for diagnostic conformance" {
+  let system = skia_text_system()
+  assert_true(system.id() == "skia-raster-text-system")
+  let text = "abc אבג 👩‍💻"
+  let input = @core.TextLayoutInput::new(
+    text~,
+    font=@core.FontSpec::new(size=18.0, weight=500),
+  )
+  let layout = system.measure_text(input)
+  inspect(
+    layout.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  assert_true(layout.size.width > 0.0)
+  assert_true(layout.baseline > 0.0)
+  assert_true(skia_test_carets_are_monotonic(layout.caret_positions))
+  let clamped = system.measure_text(
+    @core.TextLayoutInput::new(text~, font=input.font, max_width=32.0),
+  )
+  inspect(
+    clamped.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  assert_true(clamped.size.width <= 32.0)
+  for caret in clamped.caret_positions {
+    assert_true(caret <= 32.0)
+  }
+}
+
+///|
+test "skia empty typeface text system remains opt-in and fallback-safe" {
+  let system = skia_text_system(resolution=SkiaFontResolution::EmptyTypeface)
+  if skia_available() {
+    assert_true(system.id() == "skia-raster-empty-typeface-text-system")
+  } else {
+    assert_true(system.id() == @core.TextSystem::fallback().id())
   }
 }
 
@@ -154,7 +196,8 @@ test "skia renderer descriptor exposes evidence-gated backend capabilities" {
       assert_true(transform.status == @render.RendererFeatureStatus::Ready)
       assert_true(shader.status == @render.RendererFeatureStatus::Ready)
       assert_true(image.note.contains("data URI"))
-      assert_true(image.note.contains("local PNG"))
+      assert_true(image.note.contains("JPEG/BMP"))
+      assert_true(image.note.contains("local PNG/JPEG/BMP"))
       assert_true(image.note.contains("failed-image placeholders"))
       assert_true(gradient.note.contains("fills and strokes"))
       assert_true(path.note.contains("quadratic and cubic"))
@@ -202,4 +245,17 @@ fn find_skia_descriptor_capability(
     }
   }
   None
+}
+
+///|
+fn skia_test_carets_are_monotonic(carets : Array[Double]) -> Bool {
+  if carets.length() <= 1 {
+    return true
+  }
+  for index in 1..<carets.length() {
+    if carets[index] < carets[index - 1] {
+      return false
+    }
+  }
+  true
 }

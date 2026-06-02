@@ -20,6 +20,16 @@ Options:
   --note <text>                        May be repeated.
   --web-presentation-manifest <path>   Derive the web entry from a validated
                                        web-runtime-presentation manifest.
+  --skia-status <passed|failed|pending>
+  --skia-set <observation=yes|no|pending>
+                                       Native Skia observations; may be repeated.
+  --skia-boundary <text>               Override the Skia evidence boundary note.
+  --skia-provider-command <command>    Override/add Skia provider command; may repeat.
+  --skia-runtime-smoke-command <command>
+                                       Override/add Skia runtime smoke command;
+                                       may repeat.
+  --skia-artifact <path>               Native Skia artifact; may be repeated.
+  --skia-note <text>                   Native Skia note; may be repeated.
 
 The script updates one platform entry in a platform runtime evidence manifest
 and then validates that platform with validate-platform-evidence-manifest.mjs.`);
@@ -27,6 +37,7 @@ and then validates that platform with validate-platform-evidence-manifest.mjs.`)
 
 const defaultPath = "artifacts/conformance/platform-runtime-evidence.json";
 const platforms = new Set(["web", "macos", "windows", "linux"]);
+const nativeSkiaPlatforms = new Set(["macos", "windows", "linux"]);
 const statuses = new Set(["passed", "failed", "pending"]);
 const observationKeys = new Set([
   "windowOpened",
@@ -42,7 +53,92 @@ const observationKeys = new Set([
   "monitorCursor",
   "cleanShutdown",
 ]);
+const skiaObservationKeys = new Set([
+  "providerPreflight",
+  "fallbackUnavailable",
+  "realRendererSmoke",
+  "showcaseFirstFrame",
+  "markdownFirstFrame",
+]);
 const observationValues = new Set(["yes", "no", "pending"]);
+
+const pendingSkiaObservations = () => ({
+  providerPreflight: "pending",
+  fallbackUnavailable: "pending",
+  realRendererSmoke: "pending",
+  showcaseFirstFrame: "pending",
+  markdownFirstFrame: "pending",
+});
+
+const defaultSkiaEvidence = platform => {
+  if (platform === "macos") {
+    return {
+      status: "pending",
+      boundary:
+        "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named macOS host and does not reuse skia_mbt dependency evidence.",
+      providerCommands: [
+        "moon test moui/render/skia --target native",
+        "moon test moui/backend/macos/skia --target native",
+      ],
+      runtimeSmokeCommands: [
+        "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log",
+      ],
+      observations: pendingSkiaObservations(),
+      artifacts: ["artifacts/platform-evidence/macos/README.md"],
+      notes: [
+        "macOS Skia runtime evidence is pending until the real-Skia renderer smoke and both first-frame Skia entrypoint logs are recorded as artifacts.",
+      ],
+    };
+  }
+
+  if (platform === "windows") {
+    return {
+      status: "pending",
+      boundary:
+        "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Windows/MSVC host and does not reuse skia_mbt dependency evidence.",
+      providerCommands: [
+        "moon test moui/render/skia --target native",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon test moui/backend/windows/skia --target native }\"",
+        "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
+        "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
+      ],
+      runtimeSmokeCommands: [
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; $env:MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT='1'; moon run examples/showcase/windows_skia --target native }\"",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; $env:MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT='1'; moon run examples/markdown_editor/windows_skia --target native }\"",
+      ],
+      observations: pendingSkiaObservations(),
+      artifacts: ["artifacts/platform-evidence/windows/README.md"],
+      notes: [
+        "Windows Skia runtime evidence remains matching-host pending until MSVC first-frame Showcase and Markdown Editor logs are recorded.",
+      ],
+    };
+  }
+
+  if (platform === "linux") {
+    return {
+      status: "pending",
+      boundary:
+        "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Linux Wayland host and does not reuse skia_mbt dependency evidence.",
+      providerCommands: [
+        "moon test moui/render/skia --target native",
+        "moon test moui/backend/linux/skia --target native",
+        "moon build examples/showcase/linux_skia --target native",
+        "moon build examples/markdown_editor/linux_skia --target native",
+      ],
+      runtimeSmokeCommands: [
+        "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/linux_skia --target native",
+        "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/markdown_editor/linux_skia --target native",
+      ],
+      observations: pendingSkiaObservations(),
+      artifacts: ["artifacts/platform-evidence/linux/README.md"],
+      notes: [
+        "Linux Skia runtime evidence remains matching-host pending until Wayland/Vulkan first-frame Showcase and Markdown Editor logs are recorded.",
+      ],
+    };
+  }
+
+  return undefined;
+};
 
 const args = process.argv.slice(2);
 if (args.length < 2 || args.includes("--help") || args.includes("-h")) {
@@ -66,6 +162,13 @@ const observations = new Map();
 const artifacts = [];
 const notes = [];
 let webPresentationManifest;
+let skiaStatus;
+let skiaBoundary;
+const skiaObservations = new Map();
+const skiaProviderCommands = [];
+const skiaRuntimeSmokeCommands = [];
+const skiaArtifacts = [];
+const skiaNotes = [];
 
 for (let i = 2; i < args.length; i += 1) {
   const arg = args[i];
@@ -109,6 +212,43 @@ for (let i = 2; i < args.length; i += 1) {
   } else if (arg === "--web-presentation-manifest") {
     webPresentationManifest = args[i + 1] ?? "";
     i += 1;
+  } else if (arg === "--skia-status") {
+    skiaStatus = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-set") {
+    const assignment = args[i + 1] ?? "";
+    i += 1;
+    const equalsIndex = assignment.indexOf("=");
+    if (equalsIndex <= 0) {
+      console.error(`Invalid --skia-set value: ${assignment}`);
+      process.exit(2);
+    }
+    const key = assignment.slice(0, equalsIndex);
+    const value = assignment.slice(equalsIndex + 1);
+    if (!skiaObservationKeys.has(key)) {
+      console.error(`Unknown Skia observation key: ${key}`);
+      process.exit(2);
+    }
+    if (!observationValues.has(value)) {
+      console.error(`Skia observation ${key} must be yes, no, or pending; got ${value}`);
+      process.exit(2);
+    }
+    skiaObservations.set(key, value);
+  } else if (arg === "--skia-boundary") {
+    skiaBoundary = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-provider-command") {
+    skiaProviderCommands.push(args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--skia-runtime-smoke-command") {
+    skiaRuntimeSmokeCommands.push(args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--skia-artifact") {
+    skiaArtifacts.push(args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--skia-note") {
+    skiaNotes.push(args[i + 1] ?? "");
+    i += 1;
   } else {
     console.error(`Unknown argument: ${arg}`);
     usage();
@@ -118,6 +258,23 @@ for (let i = 2; i < args.length; i += 1) {
 
 if (status && !statuses.has(status)) {
   console.error(`--status must be passed, failed, or pending; got ${status}`);
+  process.exit(2);
+}
+if (skiaStatus && !statuses.has(skiaStatus)) {
+  console.error(`--skia-status must be passed, failed, or pending; got ${skiaStatus}`);
+  process.exit(2);
+}
+
+const hasSkiaUpdate =
+  skiaStatus !== undefined ||
+  skiaBoundary !== undefined ||
+  skiaObservations.size > 0 ||
+  skiaProviderCommands.length > 0 ||
+  skiaRuntimeSmokeCommands.length > 0 ||
+  skiaArtifacts.length > 0 ||
+  skiaNotes.length > 0;
+if (hasSkiaUpdate && !nativeSkiaPlatforms.has(platform)) {
+  console.error("Skia evidence options can only update native Skia platform entries: macos, windows, or linux");
   process.exit(2);
 }
 
@@ -135,6 +292,11 @@ if (windowEvidenceCommand !== undefined) {
 if (consumerCommand !== undefined) nonEmpty(consumerCommand, "--consumer-command");
 artifacts.forEach((artifact, index) => nonEmpty(artifact, `--artifact ${index + 1}`));
 notes.forEach((note, index) => nonEmpty(note, `--note ${index + 1}`));
+if (skiaBoundary !== undefined) nonEmpty(skiaBoundary, "--skia-boundary");
+skiaProviderCommands.forEach((command, index) => nonEmpty(command, `--skia-provider-command ${index + 1}`));
+skiaRuntimeSmokeCommands.forEach((command, index) => nonEmpty(command, `--skia-runtime-smoke-command ${index + 1}`));
+skiaArtifacts.forEach((artifact, index) => nonEmpty(artifact, `--skia-artifact ${index + 1}`));
+skiaNotes.forEach((note, index) => nonEmpty(note, `--skia-note ${index + 1}`));
 if (webPresentationManifest !== undefined) {
   nonEmpty(webPresentationManifest, "--web-presentation-manifest");
   if (platform !== "web") {
@@ -147,10 +309,11 @@ if (webPresentationManifest !== undefined) {
     windowEvidenceCommand !== undefined ||
     consumerCommand !== undefined ||
     observations.size > 0 ||
-    artifacts.length > 0
+    artifacts.length > 0 ||
+    hasSkiaUpdate
   ) {
     console.error(
-      "--web-presentation-manifest derives status, host, consumer command, observations, and artifacts; do not combine it with --status, --host, --window-evidence-command, --consumer-command, --set, or --artifact",
+      "--web-presentation-manifest derives status, host, consumer command, observations, and artifacts; do not combine it with --status, --host, --window-evidence-command, --consumer-command, --set, --artifact, or Skia evidence options",
     );
     process.exit(2);
   }
@@ -291,6 +454,19 @@ for (const platformEntry of manifest.platforms) {
   if (platformEntry.observations.monitorCursor === undefined) {
     platformEntry.observations.monitorCursor = "pending";
   }
+  if (nativeSkiaPlatforms.has(platformEntry.name)) {
+    if (!platformEntry.skiaEvidence || typeof platformEntry.skiaEvidence !== "object" || Array.isArray(platformEntry.skiaEvidence)) {
+      platformEntry.skiaEvidence = defaultSkiaEvidence(platformEntry.name);
+    }
+    if (!platformEntry.skiaEvidence.observations || typeof platformEntry.skiaEvidence.observations !== "object" || Array.isArray(platformEntry.skiaEvidence.observations)) {
+      platformEntry.skiaEvidence.observations = {};
+    }
+    for (const [key, value] of Object.entries(pendingSkiaObservations())) {
+      if (platformEntry.skiaEvidence.observations[key] === undefined) {
+        platformEntry.skiaEvidence.observations[key] = value;
+      }
+    }
+  }
 }
 
 const entry = manifest.platforms.find(item => item && item.name === platform);
@@ -316,6 +492,37 @@ if (webPresentationManifest !== undefined) {
 
 for (const [key, value] of observations) {
   entry.observations[key] = value;
+}
+
+if (nativeSkiaPlatforms.has(platform)) {
+  if (!entry.skiaEvidence || typeof entry.skiaEvidence !== "object" || Array.isArray(entry.skiaEvidence)) {
+    entry.skiaEvidence = defaultSkiaEvidence(platform);
+  }
+  if (!entry.skiaEvidence.observations || typeof entry.skiaEvidence.observations !== "object" || Array.isArray(entry.skiaEvidence.observations)) {
+    entry.skiaEvidence.observations = pendingSkiaObservations();
+  }
+  for (const [key, value] of Object.entries(pendingSkiaObservations())) {
+    if (entry.skiaEvidence.observations[key] === undefined) {
+      entry.skiaEvidence.observations[key] = value;
+    }
+  }
+  if (skiaStatus !== undefined) entry.skiaEvidence.status = skiaStatus;
+  if (skiaBoundary !== undefined) entry.skiaEvidence.boundary = skiaBoundary;
+  if (skiaProviderCommands.length > 0) {
+    entry.skiaEvidence.providerCommands = skiaProviderCommands;
+  }
+  if (skiaRuntimeSmokeCommands.length > 0) {
+    entry.skiaEvidence.runtimeSmokeCommands = skiaRuntimeSmokeCommands;
+  }
+  for (const [key, value] of skiaObservations) {
+    entry.skiaEvidence.observations[key] = value;
+  }
+  if (skiaArtifacts.length > 0) {
+    entry.skiaEvidence.artifacts = skiaArtifacts;
+  }
+  if (skiaNotes.length > 0) {
+    entry.skiaEvidence.notes = skiaNotes;
+  }
 }
 
 if (artifacts.length > 0) {

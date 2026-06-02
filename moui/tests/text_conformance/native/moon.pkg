@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
   "wzzc-dev/moui/render/wgpu/cosmic_text",
   "wzzc-dev/moui/render/wgpu/directwrite",
   "wzzc-dev/moui/render/wgpu/fontconfig",

@@ -63,18 +63,27 @@ the platform host cores. Use
 `backend/<platform>/wgpu.run_app_with_options`. `PlatformDefault` composes the
 platform provider with Cosmic fallback; `MoonCosmic` selects the Cosmic provider
 directly. Showcase also has explicit `macos_cosmic`, `windows_cosmic`, and
-`linux_cosmic` entrypoints for comparing those paths. The separate Showcase
-`macos_skia`, `windows_skia`, and `linux_skia` entrypoints select Skia provider
-packages, not WGPU text-provider variants. By default, Skia basic text
+`linux_cosmic` entrypoints for comparing those paths. The separate Showcase and
+Markdown Editor `*_skia` entrypoints select Skia provider packages, not WGPU
+text-provider variants. By default, Skia basic text
 measurement and drawing
 resolve the MoUI `FontSpec` family stack, weight, and style through `skia_mbt`
-`FontMgr` and `Font`, and its `TextSystem` returns Skia font-metric
-baseline/height plus caret positions for basic input geometry. When
+`FontMgr` and `Font`. The system `FontMgr` path now builds a `FontFallbackRequest`
+with a representative coverage character, preferring emoji hints, then
+non-ASCII code points, then the first code point before falling back to regular
+family matching. Its `TextSystem` returns Skia font-metric baseline/height plus
+caret positions for basic input geometry. When
 `skia_mbt/native` is linked with SkShaper support, the Skia text system maps
 shaped-run source clusters back to MoUI's per-character caret array; otherwise
-it falls back to Skia-measured prefix carets. Rendering uses the same optional
-SkShaper shaped glyph runs when linked, and otherwise falls back to positioned
-glyph runs. Linux Skia resolves its default `FontMgr` through fontconfig/FreeType
+it falls back to Skia-measured prefix carets. Both caret paths apply
+representative combining-mark, Indic matra/virama, Arabic mark, Thai mark,
+Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T
+clusters, keycap,
+emoji-modifier, variation-selector,
+regional-indicator pairs, emoji tag-sequence flags, Unicode prepend marks, and
+ZWJ cluster interior stabilization. Rendering uses the
+same optional SkShaper shaped glyph runs when linked, and otherwise falls back
+to positioned glyph runs. Linux Skia resolves its default `FontMgr` through fontconfig/FreeType
 when those Skia port headers are available, with a directory font manager
 fallback over common system font directories. If the selected Skia font produces
 a blank or incomplete glyph run, the renderer retries measurement and drawing;
@@ -84,17 +93,36 @@ text remains visible and text-field caret positions stay aligned with the drawn
 glyphs. Skia drawing aligns the selected glyph run inside `TextRun.frame` and
 clips the canvas to that same frame before rasterization, so bounded text
 controls use the same platform-neutral frame for measurement, caret geometry,
-and native raster output. The macOS Skia provider currently starts with the safe
-`EmptyTypeface` font resolution mode, which avoids the system FontMgr, the emoji
-font retry, and SkShaper during early startup while still using that same
-default-font retry path. The fallback-safe Skia renderer tests also consume the
+and native raster output. The macOS, Windows, and Linux Skia providers default
+to the system `FontMgr` path, so normal native Skia entrypoints exercise
+platform font lookup, emoji retry, and optional SkShaper when linked. The
+renderer package also exposes `skia_text_system()` directly so the Skia
+measurement path can be included in native diagnostic text conformance without
+requiring a platform window or treating provider checks as runtime evidence.
+Those diagnostics assert monotonic caret coverage and max-width clamping for
+mixed CJK, emoji, ZWJ emoji, Indic mark, Arabic mark, Thai mark, Lao mark,
+Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo, and bidi samples,
+and they now
+inject `skia_text_system()` into a public `AppRuntime` text field to prove the
+Skia measurement path drives focused text-input composition caret geometry and
+selection highlight drawing. They do not claim visual bidi reordering,
+native-platform IME runtime behavior, or paragraph line-breaking parity. macOS
+first-frame smoke entrypoints still explicitly select
+`SkiaFontResolution::EmptyTypeface` when their exit-after-first-present
+environment flag is set; that keeps CLI smoke runs on the safer default-font
+retry path without changing the normal app default. The fallback-safe Skia
+renderer tests also consume the
 new `skia_mbt` `FontFallbackRequest`, `TextMeasurementDescriptor`,
 `TextShapingDescriptor`, `ShapedTextRunDescriptor`, and
 `ShapedGlyphRunDescriptor` resource plans through an internal descriptor
 preflight so font fallback and shaped-run cache keys stay auditable without
-requiring real Skia linkage. SkParagraph-style line breaking, bidi, mixed-script
-fallback runs, deterministic color emoji, grapheme shaping, and broader
-typography conformance remain follow-up work.
+requiring real Skia linkage. `backend_info()` also reports a fallback-safe
+`text maturity audit partial` summary: it counts the audited descriptor,
+fallback-request, representative shaped/fallback caret, emoji-hint, and
+empty-typeface retry boundaries separately from tracked gaps. SkParagraph-style
+line breaking, bidi, mixed-script per-glyph fallback runs, deterministic color
+emoji, full grapheme parity, and broader typography conformance remain follow-up
+work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
@@ -146,13 +174,20 @@ Remote font loading is intentionally outside the current backend contract.
   loading, Cosmic color swash preservation, provider-safe emoji layout mapping,
   and a CoreText AppleColorEmoji RGBA path covered by focused tests. Stable and
   diagnostic tests assert caret counts, monotonicity, clamping, editor selection
-  behavior, IME anchor geometry, and provider fallback safety across mixed bidi, CJK,
-  single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples;
+  behavior, IME anchor geometry, and provider fallback safety across mixed bidi,
+  CJK, single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples;
   Cosmic run-layout tests additionally assert glyph output plus caret coverage
   through the safe-mapped layout path. Skia renderer tests cover the same
-  representative emoji caret coverage, the system-FontMgr-only emoji font retry
-  boundary, and fallback-safe descriptor resource plans for text measurement and
-  shaping. They do not claim full Unicode shaping parity.
+  representative emoji caret coverage, shaped-run and fallback caret
+  stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark,
+  Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T
+  clusters, emoji-modifier, variation-selector, regional-indicator pairs, emoji
+  tag-sequence flags, Unicode prepend marks, and ZWJ cluster interiors, the system-FontMgr-only
+  emoji font retry boundary, and fallback-safe descriptor resource plans for
+  text measurement and shaping. Native diagnostic conformance also injects the
+  Skia text system into a text field runtime to validate composition caret
+  geometry and selection highlight drawing. They do not claim full Unicode
+  shaping parity.
 - Focused text inputs expose MoUI's default copy, cut, paste, undo, redo, and
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste
@@ -184,9 +219,11 @@ Focused checks for text-system work:
 ```sh
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
+moon test moui/tests/text_conformance/native --target native
 moon test moui/core --target native
 moon test moui/render/wgpu --target native
 moon test moui/render/wgpu/cosmic_text --target native
+moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 ```

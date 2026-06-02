@@ -58,15 +58,20 @@ const platforms = new Map([
         "examples/showcase/macos",
         "examples/showcase/macos_skia",
         "examples/markdown_editor/macos",
+        "examples/markdown_editor/macos_skia",
       ],
       routineTokens: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/macos --target native",
+        "moon build examples/showcase/macos_skia --target native",
         "moon build examples/markdown_editor/macos --target native",
+        "moon build examples/markdown_editor/macos_skia --target native",
       ],
       runtimeTokens: [
         "moon run examples/showcase/macos --target native",
+        "moon run examples/showcase/macos_skia --target native",
         "moon run examples/markdown_editor/macos --target native",
+        "moon run examples/markdown_editor/macos_skia --target native",
       ],
     },
   ],
@@ -78,15 +83,20 @@ const platforms = new Map([
         "examples/showcase/windows",
         "examples/showcase/windows_skia",
         "examples/markdown_editor/windows",
+        "examples/markdown_editor/windows_skia",
       ],
       routineTokens: [
         "moon test moui/backend/windows --target native",
         "build_windows_msvc.ps1",
         "package_windows_app_msvc.ps1",
+        "examples/showcase/windows_skia",
+        "examples/markdown_editor/windows_skia",
       ],
       runtimeTokens: [
         "moon run examples/showcase/windows --target native",
+        "moon run examples/showcase/windows_skia --target native",
         "moon run examples/markdown_editor/windows --target native",
+        "moon run examples/markdown_editor/windows_skia --target native",
       ],
     },
   ],
@@ -98,15 +108,18 @@ const platforms = new Map([
         "examples/showcase/linux",
         "examples/showcase/linux_cosmic",
         "examples/showcase/linux_skia",
+        "examples/markdown_editor/linux_skia",
       ],
       routineTokens: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux --target native",
         "moon build examples/showcase/linux_skia --target native",
+        "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeTokens: [
         "moon run examples/showcase/linux --target native",
         "moon run examples/showcase/linux_skia --target native",
+        "moon run examples/markdown_editor/linux_skia --target native",
       ],
     },
   ],
@@ -127,6 +140,66 @@ const observationKeys = [
   "cleanShutdown",
 ];
 
+const skiaObservationKeys = [
+  "providerPreflight",
+  "fallbackUnavailable",
+  "realRendererSmoke",
+  "showcaseFirstFrame",
+  "markdownFirstFrame",
+];
+
+const nativeSkiaEvidence = new Map([
+  [
+    "macos",
+    {
+      providerTokens: [
+        "moon test moui/render/skia --target native",
+        "moon test moui/backend/macos/skia --target native",
+      ],
+      runtimeTokens: [
+        "scripts/macos-skia-renderer-smoke.sh",
+        "--run-showcase-smoke",
+        "--run-markdown-smoke",
+      ],
+    },
+  ],
+  [
+    "windows",
+    {
+      providerTokens: [
+        "moon test moui/render/skia --target native",
+        "moon test moui/backend/windows/skia --target native",
+        "build_windows_msvc.ps1",
+        "examples/showcase/windows_skia",
+        "examples/markdown_editor/windows_skia",
+      ],
+      runtimeTokens: [
+        "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+        "MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+        "examples/showcase/windows_skia",
+        "examples/markdown_editor/windows_skia",
+      ],
+    },
+  ],
+  [
+    "linux",
+    {
+      providerTokens: [
+        "moon test moui/render/skia --target native",
+        "moon test moui/backend/linux/skia --target native",
+        "examples/showcase/linux_skia",
+        "examples/markdown_editor/linux_skia",
+      ],
+      runtimeTokens: [
+        "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
+        "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
+        "examples/showcase/linux_skia",
+        "examples/markdown_editor/linux_skia",
+      ],
+    },
+  ],
+]);
+
 const consumerObservationKeys = [
   "surface",
   "redraw",
@@ -137,6 +210,111 @@ const consumerObservationKeys = [
   "monitorCursor",
   "cleanShutdown",
 ];
+
+const validateSkiaEvidence = (entry, label, name, platformStatus) => {
+  const expected = nativeSkiaEvidence.get(name);
+  if (!expected) {
+    if (entry.skiaEvidence !== undefined) {
+      fail(`${label}.skiaEvidence is only supported for native Skia platforms`);
+    }
+    return;
+  }
+
+  const skiaEvidence = entry.skiaEvidence;
+  if (!skiaEvidence || typeof skiaEvidence !== "object" || Array.isArray(skiaEvidence)) {
+    fail(`${label}.skiaEvidence must be an object for native Skia evidence`);
+    return;
+  }
+
+  const status = requireString(skiaEvidence, "status", `${label}.skiaEvidence.status`);
+  if (!["passed", "failed", "pending"].includes(status)) {
+    fail(`${label}.skiaEvidence.status must be passed, failed, or pending`);
+  }
+
+  const boundary = requireString(skiaEvidence, "boundary", `${label}.skiaEvidence.boundary`);
+  if (!/provider/i.test(boundary) || !/runtime/i.test(boundary)) {
+    fail(`${label}.skiaEvidence.boundary must describe provider and runtime evidence boundaries`);
+  }
+
+  const providerCommands = requireArray(
+    skiaEvidence,
+    "providerCommands",
+    `${label}.skiaEvidence.providerCommands`,
+  );
+  const runtimeSmokeCommands = requireArray(
+    skiaEvidence,
+    "runtimeSmokeCommands",
+    `${label}.skiaEvidence.runtimeSmokeCommands`,
+  );
+  const artifacts = requireArray(
+    skiaEvidence,
+    "artifacts",
+    `${label}.skiaEvidence.artifacts`,
+  );
+  const notes = requireArray(skiaEvidence, "notes", `${label}.skiaEvidence.notes`);
+
+  assertStringArray(providerCommands, `${label}.skiaEvidence.providerCommands`);
+  assertStringArray(runtimeSmokeCommands, `${label}.skiaEvidence.runtimeSmokeCommands`);
+  assertStringArray(artifacts, `${label}.skiaEvidence.artifacts`);
+  assertStringArray(notes, `${label}.skiaEvidence.notes`);
+  if (notes.length === 0) {
+    fail(`${label}.skiaEvidence.notes must include at least one note`);
+  }
+
+  assertContainsTokens(
+    providerCommands,
+    expected.providerTokens,
+    `${label}.skiaEvidence.providerCommands`,
+  );
+  assertContainsTokens(
+    runtimeSmokeCommands,
+    expected.runtimeTokens,
+    `${label}.skiaEvidence.runtimeSmokeCommands`,
+  );
+
+  if (!skiaEvidence.observations || typeof skiaEvidence.observations !== "object" || Array.isArray(skiaEvidence.observations)) {
+    fail(`${label}.skiaEvidence.observations must be an object`);
+    return;
+  }
+
+  const observedValues = [];
+  for (const key of skiaObservationKeys) {
+    const value = skiaEvidence.observations[key];
+    if (!["yes", "no", "pending"].includes(value)) {
+      fail(`${label}.skiaEvidence.observations.${key} must be yes, no, or pending`);
+    }
+    observedValues.push(value);
+  }
+
+  for (const key of Object.keys(skiaEvidence.observations)) {
+    if (!skiaObservationKeys.includes(key)) {
+      fail(`${label}.skiaEvidence.observations contains unknown key '${key}'`);
+    }
+  }
+
+  if (status === "passed") {
+    const incompleteObservation = skiaObservationKeys.find(
+      key => skiaEvidence.observations[key] !== "yes",
+    );
+    if (incompleteObservation) {
+      fail(`${label}.skiaEvidence.observations.${incompleteObservation} must be yes when skiaEvidence.status is passed`);
+    }
+  }
+
+  if (status === "failed" && !observedValues.includes("no")) {
+    fail(`${label}.skiaEvidence.observations must include at least one no when skiaEvidence.status is failed`);
+  }
+
+  if (platformStatus === "passed" && status !== "passed") {
+    fail(`${label}.skiaEvidence.status must be passed when native platform status is passed`);
+  }
+
+  artifacts.forEach((artifact, artifactIndex) => {
+    if (!artifact.startsWith(`artifacts/platform-evidence/${name}/`)) {
+      fail(`${label}.skiaEvidence.artifacts[${artifactIndex}] must stay under artifacts/platform-evidence/${name}/`);
+    }
+  });
+};
 
 if (expectedPlatform && !platforms.has(expectedPlatform)) {
   console.error(`Unknown platform: ${expectedPlatform}`);
@@ -334,6 +512,8 @@ entries.forEach((entry, index) => {
   if (status === "failed" && !observedValues.includes("no")) {
     fail(`${label}.observations must include at least one no when status is failed`);
   }
+
+  validateSkiaEvidence(entry, label, name, status);
 
   artifacts.forEach((artifact, artifactIndex) => {
     if (!artifact.startsWith(`artifacts/platform-evidence/${name}/`)) {

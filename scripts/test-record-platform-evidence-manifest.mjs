@@ -52,6 +52,19 @@ const webPresentationObservations = value =>
 const webPlatformObservations = value =>
   Object.fromEntries(webPlatformObservationKeys.map(key => [key, value]));
 
+const skiaObservationKeys = [
+  "providerPreflight",
+  "fallbackUnavailable",
+  "realRendererSmoke",
+  "showcaseFirstFrame",
+  "markdownFirstFrame",
+];
+
+const passedSkiaObservationArgs = skiaObservationKeys.flatMap(key => [
+  "--skia-set",
+  `${key}=yes`,
+]);
+
 const baseEntry = ({
   name,
   host,
@@ -102,16 +115,21 @@ const validManifest = {
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/macos --target native",
+        "moon build examples/showcase/macos_skia --target native",
         "moon build examples/markdown_editor/macos --target native",
+        "moon build examples/markdown_editor/macos_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/macos --target native",
+        "moon run examples/showcase/macos_skia --target native",
         "moon run examples/markdown_editor/macos --target native",
+        "moon run examples/markdown_editor/macos_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/macos",
         "examples/showcase/macos_skia",
         "examples/markdown_editor/macos",
+        "examples/markdown_editor/macos_skia",
       ],
     }),
     baseEntry({
@@ -120,16 +138,21 @@ const validManifest = {
       routineCommands: [
         "moon test moui/backend/windows --target native",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/showcase/windows -BuildOnly",
+        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
+        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\package_windows_app_msvc.ps1 -Package examples/showcase/windows",
       ],
       runtimeEvidenceCommands: [
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }\"",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"",
       ],
       exampleTargets: [
         "examples/showcase/windows",
         "examples/showcase/windows_skia",
         "examples/markdown_editor/windows",
+        "examples/markdown_editor/windows_skia",
       ],
     }),
     baseEntry({
@@ -139,15 +162,18 @@ const validManifest = {
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux --target native",
         "moon build examples/showcase/linux_skia --target native",
+        "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/linux --target native",
         "moon run examples/showcase/linux_skia --target native",
+        "moon run examples/markdown_editor/linux_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/linux",
         "examples/showcase/linux_cosmic",
         "examples/showcase/linux_skia",
+        "examples/markdown_editor/linux_skia",
       ],
     }),
   ],
@@ -318,6 +344,17 @@ expectPass(
     "artifacts/platform-evidence/windows/showcase-run.log",
     "--note",
     "matching-host Windows evidence observed",
+    "--skia-status",
+    "passed",
+    ...passedSkiaObservationArgs,
+    "--skia-artifact",
+    "artifacts/platform-evidence/windows/skia-provider.log",
+    "--skia-artifact",
+    "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
+    "--skia-artifact",
+    "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
+    "--skia-note",
+    "matching-host Windows Skia first-frame evidence observed",
   ]),
 );
 const windowsManifest = JSON.parse(readFileSync(windowsPath, "utf8"));
@@ -325,7 +362,9 @@ const windowsEntry = windowsManifest.platforms.find(entry => entry.name === "win
 if (
   windowsEntry.status !== "passed" ||
   windowsEntry.observations.textInput !== "yes" ||
-  windowsEntry.observations.monitorCursor !== "yes"
+  windowsEntry.observations.monitorCursor !== "yes" ||
+  windowsEntry.skiaEvidence.status !== "passed" ||
+  windowsEntry.skiaEvidence.observations.showcaseFirstFrame !== "yes"
 ) {
   console.error("record windows passed evidence: manifest was not updated");
   process.exit(1);
@@ -388,9 +427,39 @@ const legacyManifest = JSON.parse(readFileSync(legacyPath, "utf8"));
 const legacyLinuxEntry = legacyManifest.platforms.find(entry => entry.name === "linux");
 if (
   legacyManifest.schemaVersion !== 2 ||
-  legacyLinuxEntry.observations.monitorCursor !== "pending"
+  legacyLinuxEntry.observations.monitorCursor !== "pending" ||
+  legacyLinuxEntry.skiaEvidence.status !== "pending" ||
+  legacyLinuxEntry.skiaEvidence.observations.showcaseFirstFrame !== "pending"
 ) {
   console.error("migrate legacy platform evidence manifest: schema was not upgraded");
+  process.exit(1);
+}
+
+const linuxSkiaFailedPath = writeManifest("linux-skia-failed.json");
+expectPass(
+  "record linux failed skia evidence",
+  runRecorder(linuxSkiaFailedPath, "linux", [
+    "--skia-status",
+    "failed",
+    "--skia-set",
+    "providerPreflight=yes",
+    "--skia-set",
+    "fallbackUnavailable=yes",
+    "--skia-set",
+    "realRendererSmoke=no",
+    "--skia-artifact",
+    "artifacts/platform-evidence/linux/skia-showcase-first-frame.log",
+    "--skia-note",
+    "Linux Skia first-frame run failed under the matching Wayland compositor",
+  ]),
+);
+const linuxSkiaFailedManifest = JSON.parse(readFileSync(linuxSkiaFailedPath, "utf8"));
+const linuxSkiaFailedEntry = linuxSkiaFailedManifest.platforms.find(entry => entry.name === "linux");
+if (
+  linuxSkiaFailedEntry.skiaEvidence.status !== "failed" ||
+  linuxSkiaFailedEntry.skiaEvidence.observations.realRendererSmoke !== "no"
+) {
+  console.error("record linux failed skia evidence: manifest was not updated");
   process.exit(1);
 }
 
@@ -461,6 +530,24 @@ expectFail(
     "failed",
   ]),
   "derives status, host, consumer command, observations, and artifacts",
+);
+
+expectFail(
+  "reject skia evidence on web",
+  runRecorder(writeManifest("web-skia-evidence.json"), "web", [
+    "--skia-status",
+    "pending",
+  ]),
+  "Skia evidence options can only update native Skia platform entries",
+);
+
+expectFail(
+  "reject unknown skia observation key",
+  runRecorder(writeManifest("bad-skia-key.json"), "linux", [
+    "--skia-set",
+    "firstFrame=yes",
+  ]),
+  "Unknown Skia observation key: firstFrame",
 );
 
 console.log("platform evidence manifest recorder tests: ok");

@@ -80,6 +80,15 @@ test "showcase navigation shell demos use public constructors" {
   assert_true(has_text(commands, "Catalog"))
   assert_true(has_text(commands, "Navigation Shell"))
   assert_true(has_text(commands, "Current route: navigation"))
+  assert_true(has_text(commands, "Deep link: navigation"))
+  assert_true(has_text(commands, "History: overview -> navigation"))
+  assert_true(has_text(commands, "Route transition: fade + slide"))
+  assert_true(has_text(commands, "Transition route: navigation"))
+  assert_true(
+    has_text(
+      commands, "Transition state: app-owned preview; host/browser history remains separate",
+    ),
+  )
   assert_true(has_text(commands, "Section Nav"))
   assert_true(has_text(commands, "Shell routes"))
   assert_true(has_text(commands, "Native menu"))
@@ -93,6 +102,37 @@ test "showcase navigation shell demos use public constructors" {
   assert_true(has_text(commands, "New"))
   assert_true(has_text(commands, "Archive"))
   assert_true(has_text(commands, "Renderer neutral"))
+}
+
+///|
+test "showcase route history keeps app owned deep link state" {
+  let linked = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("navigation"))
+    .update(@app.ShowcaseMsg::OpenRouteLink("navigation?panel=history"))
+    .update(@app.ShowcaseMsg::SelectSection("forms"))
+  inspect(linked.selected_section, content="forms")
+  inspect(linked.route_history.current_route(), content="forms")
+  assert_true(linked.route_history.can_go_back())
+  let back = linked.update(@app.ShowcaseMsg::RouteBack)
+  inspect(back.selected_section, content="navigation")
+  inspect(
+    back.route_history.current_route(),
+    content="navigation?panel=history",
+  )
+  assert_true(back.route_history.can_go_back())
+  assert_true(back.route_history.can_go_forward())
+  let forked = back.update(@app.ShowcaseMsg::SelectSection("data"))
+  inspect(forked.selected_section, content="data")
+  inspect(forked.route_history.current_route(), content="data")
+  assert_false(forked.route_history.can_go_forward())
+  let commands = back.runtime(width=980.0, height=720.0).draw_commands()
+  assert_true(has_text(commands, "Deep link: navigation?panel=history"))
+  assert_true(has_text(commands, "Transition route: navigation?panel=history"))
+  assert_true(
+    has_text(
+      commands, "History: overview -> navigation -> navigation?panel=history -> forms",
+    ),
+  )
 }
 
 ///|

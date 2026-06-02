@@ -53,6 +53,8 @@ pub(all) struct DataTableModel {
   selected_row : Int
   selected_rows : @views.SelectionState
   visible_columns : @views.ColumnVisibilityState
+  column_widths : @views.ColumnWidthState
+  column_order : @views.ColumnOrderState
   expanded : Array[String]
   pagination : @views.PaginationState
   sort : @views.DataSortState
@@ -79,6 +81,8 @@ pub(all) enum DataTableMsg {
   ArchiveSelection
   ExportSelection
   ToggleColumnVisibility(String, Bool)
+  ResizeColumn(String, Double)
+  MoveColumnBefore(String, String)
   ToggleTree(String)
   SortBy(DataSortKey)
   NextPage

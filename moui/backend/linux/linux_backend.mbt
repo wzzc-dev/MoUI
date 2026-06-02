@@ -44,6 +44,7 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
 ///|
 pub struct LinuxHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
+  priv exit_after_first_present : Bool
 }
 
 ///|
@@ -74,6 +75,7 @@ struct LinuxApp {
   platform_slots : LinuxWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
+  mut exit_after_first_present : Bool
 }
 
 ///|
@@ -93,8 +95,9 @@ priv struct LinuxWindowPlatformSlots {
 ///|
 pub fn LinuxHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  exit_after_first_present? : Bool = false,
 ) -> LinuxHostAppOptions {
-  { scene_resolver, }
+  { scene_resolver, exit_after_first_present }
 }
 
 ///|
@@ -556,6 +559,7 @@ pub fn run_app_with_renderer_provider(
     platform_slots: LinuxWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
+    exit_after_first_present: options.exit_after_first_present,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   event_loop.run_app(app)
@@ -925,7 +929,10 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn window_event(
       self.dispatch_window_event(window_id, event)
     @window_core.WindowEvent::ModifiersChanged(_) =>
       self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::RedrawRequested => self.redraw_window(window_id)
+    @window_core.WindowEvent::RedrawRequested =>
+      if self.redraw_window(window_id) {
+        event_loop.exit()
+      }
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -969,7 +976,7 @@ fn LinuxApp::pointer_is_in_client_titlebar(
 fn LinuxApp::redraw_window(
   self : LinuxApp,
   window_id : @host.HostWindowId,
-) -> Unit {
+) -> Bool {
   match
     (
       self.platform_slots.lookup_host(window_id),
@@ -988,8 +995,17 @@ fn LinuxApp::redraw_window(
       platform_slot.renderer.render(commands)
       runtime_slot.driver.finish_redraw()
       self.sync_text_input_session()
+      if self.exit_after_first_present &&
+        platform_slot.renderer.present_count() > 0 {
+        println("Linux renderer presented first frame; exiting by request")
+        self.exit_after_first_present = false
+        self.dispose_window(window_id)
+        true
+      } else {
+        false
+      }
     }
-    _ => ()
+    _ => false
   }
 }
 

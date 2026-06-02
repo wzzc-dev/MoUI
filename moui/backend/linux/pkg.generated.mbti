@@ -88,7 +88,7 @@ pub(all) struct LinuxBackendReadiness {
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, exit_after_first_present? : Bool) -> Self
 
 pub struct LinuxRendererProvider {
   // private fields

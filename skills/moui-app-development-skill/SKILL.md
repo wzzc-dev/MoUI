@@ -62,11 +62,19 @@ separate framework task using `moui-framework-development-skill`.
   entrypoints and is the smallest runnable app shape.
 - Some examples are shared-app only. Settings, Data Table, File Importer, and
   Command Palette intentionally exercise app patterns without platform
-  entrypoints.
+  entrypoints. Data Table covers operational table state such as filtering,
+  sorting, column visibility, app-owned column width/order, selection, and
+  pagination.
 - App UI should be built from public view constructors returning
   opaque `@core.View[Msg]`.
 - Keep state, reducers, data models, and view composition in the shared app
   package when the behavior should work across platforms.
+- Keep route and deep-link history in shared app state with
+  `@core.RouteHistoryState` when the app needs a serializable back/forward
+  shadow stack. Use `View::transition` with app-owned progress when a route
+  preview needs controlled fade/slide/scale motion. Browser history updates,
+  native URL/deep-link dispatch, and automatic transition scheduling remain
+  explicit app/host work rather than automatic platform behavior.
 - Prefer the TEA runtime helpers: use `@core.Program::simple` for pure
   model/update/view apps, `@core.Program::simple_with_environment` when the
   view needs `ViewEnvironment`, and `@core.Program::new` when `update` returns
@@ -81,9 +89,10 @@ separate framework task using `moui-framework-development-skill`.
   entrypoints.
 - Showcase also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic`
   entrypoints when an app task needs explicit Moon Cosmic text-provider
-  comparison. Showcase has `macos_skia`, `windows_skia`, and `linux_skia` entrypoints when
-  an app task needs explicit native Skia renderer selection. Markdown Editor has
-  `macos_skia` for explicit native Skia renderer selection.
+  comparison. Showcase has `macos_skia`, `windows_skia`, and `linux_skia`
+  entrypoints when an app task needs explicit native Skia renderer selection.
+  Markdown Editor has `macos_skia`, `windows_skia`, and `linux_skia` for
+  explicit native Skia renderer selection.
 - Treat Linux as a scaffold until the framework has a real Linux backend.
 
 ## Development Workflow
@@ -139,7 +148,17 @@ moon build examples/markdown_editor/macos --target native
 moon build examples/markdown_editor/macos_skia --target native
 moon build examples/markdown_editor/windows --target native
 moon build examples/markdown_editor/windows_cosmic --target native
+moon build examples/markdown_editor/windows_skia --target native
+moon build examples/markdown_editor/linux_skia --target native
 ```
+
+macOS Skia entrypoints use the renderer's system `FontMgr` path by default.
+First-frame smoke runs select `EmptyTypeface` only while their
+exit-after-first-present environment flag is set, so app runs and smoke evidence
+keep distinct text-resolution intent. Use
+`scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke`
+for a local real-Skia renderer smoke plus first-frame Showcase and Markdown
+Editor check.
 
 Native packaging helpers:
 

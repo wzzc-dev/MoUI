@@ -20,9 +20,9 @@ introducing a generator.
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
-| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with route focus restore evidence, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
+| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore evidence, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
-| Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
+| Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `runtime_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
@@ -109,8 +109,13 @@ development workflows:
   first-invalid focus targets, and submit-guard evidence for the form workflow
   bar.
 - `Navigation Shell`: route headers, section navigation, breadcrumbs, dialogs,
-  sheets, command metadata, and `RouteFocusStore` evidence showing which
-  `runtime.focus_key(...)` call should restore route focus after a route switch.
+  sheets, command metadata, app-owned route/deep-link history, a controlled
+  fade/slide route transition preview, a controlled drag-resizable split pane,
+  and `RouteFocusStore` evidence showing which `runtime.focus_key(...)` call
+  should restore route focus after a route switch. The visible route history is
+  a serializable shadow stack and the transition is sampled by app state;
+  browser history, automatic route-transition scheduling, and native deep-link
+  dispatch remain host/app follow-up work.
 - `Feedback`: toast/banner/callout/progress/inline-error surfaces plus a
   `ToastQueue` example that converts queued items into `toast_stack` rows while
   keeping timers in the app model.
@@ -136,15 +141,17 @@ host service.
 
 The Data Table example is also shared-app only. It models the data workflow that
 operational tools usually need before renderer-specific polish: controlled
-search/filter toolbar, status chips, column visibility, sortable table headers,
-tree filters, stable model-level sorting, page navigation, selected-row detail,
-plus empty/loading/error panels built from public `views` constructors.
+search/filter toolbar, status chips, column visibility, app-owned column width
+and order controls, sortable table headers, tree filters, stable model-level
+sorting, page navigation, selected-row detail, plus empty/loading/error panels
+built from public `views` constructors.
 The app keeps filtering, sorting, and page slicing in its TEA model while using
 public `DataSortState`, `PaginationState`, `ColumnVisibilityState`,
-`SelectionState`, `data_filter_bar`, table sort-header, row-selection,
-`column_visibility_panel`, `selection_toolbar`, `pagination`, and `detail_panel`
-helpers for reusable view structure. Filter predicates, async requests, and
-bulk action effects remain app-owned.
+`ColumnWidthState`, `ColumnOrderState`, `SelectionState`, `data_filter_bar`,
+table sort-header, row-selection, `column_visibility_panel`,
+`selection_toolbar`, `pagination`, and `detail_panel` helpers for reusable view
+structure. Filter predicates, async requests, pointer-specific header gestures,
+column width/order persistence, and bulk action effects remain app-owned.
 
 ## File Importer
 
@@ -547,7 +554,9 @@ moon build examples/mo_workbench/macos_skia --target native
 
 The `macos_skia` entrypoints select the native Skia raster renderer explicitly.
 They require the local Skia native link setup that makes `skia_mbt/native`
-available at runtime.
+available at runtime. Normal macOS Skia runs use the renderer's system
+`FontMgr` path; first-frame smoke runs explicitly select the `EmptyTypeface`
+fallback path through their exit-after-first-present environment flag.
 
 After configuring real Skia link flags, run the opt-in real-Skia check to verify
 both the binding smoke and MoUI renderer presenter pixels:
@@ -570,11 +579,14 @@ SkShaper module libraries; the helper then verifies the MoUI renderer smoke ran
 with the optional shaped-run path available.
 
 For a fuller local smoke, pass `--run-showcase-smoke`. The helper then launches
-the built `macos_skia` executable with a first-frame exit flag and verifies that
-the Skia renderer presents a frame before the app exits:
+the built Showcase `macos_skia` executable with a first-frame exit flag and
+verifies that the Skia renderer presents a frame before the app exits. Add
+`--run-markdown-smoke` to build and launch the Markdown Editor Skia entrypoint
+with the same first-frame marker:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 
 Use `--skia-provider existing` when you already have a local Skia build:
@@ -630,6 +642,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/markdown_editor/windows_cosmic `
   -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows_skia `
+  -BuildOnly
 ```
 
 To run an entrypoint directly, import the MSVC environment in the same
@@ -639,11 +654,16 @@ PowerShell process:
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
 `windows_skia` follows the same Skia availability rules as the backend provider:
 if `skia_mbt/native` is only in fallback mode, renderer creation reports a
 diagnostic instead of opening an empty HWND.
+Set `MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` or
+`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` in the same MSVC
+environment for matching-host first-frame smoke runs; those logs are runtime
+evidence only for the Windows host that produced them.
 
 For a reusable distributable folder with the built executable and runtime DLLs:
 
@@ -671,7 +691,13 @@ host with a Wayland compositor and renderer stack:
 moon run examples/showcase/linux --target native
 moon run examples/showcase/linux_cosmic --target native
 moon run examples/showcase/linux_skia --target native
+moon run examples/markdown_editor/linux_skia --target native
 ```
+
+Set `MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` or
+`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` before the Skia
+`moon run` command to collect matching-host first-frame logs on Wayland. Keep
+those logs separate from the `.local_repos/window` dependency smoke evidence.
 
 For build-only validation, use:
 
@@ -679,13 +705,15 @@ For build-only validation, use:
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
 moon build examples/showcase/linux_skia --target native
+moon build examples/markdown_editor/linux_skia --target native
 ```
 
 The `linux_cosmic` entrypoint selects the shared Moon Cosmic text provider
 explicitly. The platform-default Linux entrypoint composes the fontconfig
-provider scaffold with the same Cosmic fallback. The `linux_skia` entrypoint
-selects the native Skia raster renderer explicitly; configure real Skia link
-flags before relying on Skia-rendered pixels.
+provider scaffold with the same Cosmic fallback. The Showcase and Markdown
+Editor `linux_skia` entrypoints select the native Skia raster renderer
+explicitly; configure real Skia link flags before relying on Skia-rendered
+pixels.
 
 ## Example Validation
 

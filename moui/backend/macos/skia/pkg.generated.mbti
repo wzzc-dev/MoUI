@@ -8,6 +8,8 @@ import {
 }
 
 // Values
+pub fn macos_skia_provider_preflight_summary(options? : MacosSkiaAppOptions) -> String
+
 pub fn renderer_provider(options? : MacosSkiaAppOptions) -> @macos.MacosRendererProvider
 
 pub fn run_app(String, @core.AppRuntime) -> Unit

@@ -29,6 +29,7 @@ pub(all) struct ShowcaseModel {
   draft : String
   tab : String
   selected_section : String
+  route_history : @core.RouteHistoryState
   filter : String
   slider_value : Double
   picker_value : String
@@ -59,6 +60,9 @@ pub(all) enum ShowcaseMsg {
   ShowSheet
   HideSheet
   SelectSection(String)
+  RouteBack
+  RouteForward
+  OpenRouteLink(String)
   TabSelected(String)
   ClearFilter
   FilterChanged(String)

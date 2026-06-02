@@ -59,9 +59,12 @@ run_built_executable() {
 run sh scripts/check-local-deps.sh
 run node scripts/validate-guidance-consistency.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
+run node scripts/validate-skia-entrypoints.mjs
+run node scripts/test-validate-skia-entrypoints.mjs
 run node scripts/test-validate-conformance-capture-manifest.mjs
 run node scripts/test-validate-platform-evidence-manifest.mjs
 run node scripts/test-record-platform-evidence-manifest.mjs
+run node scripts/test-record-native-skia-evidence.mjs
 run node scripts/test-validate-web-runtime-handoff-manifest.mjs
 run node scripts/test-record-web-runtime-presentation.mjs
 run node scripts/test-validate-web-runtime-presentation-manifest.mjs
@@ -101,6 +104,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon build examples/showcase/macos --target native
         run moon build examples/showcase/macos_skia --target native
         run moon build examples/markdown_editor/macos --target native
+        run moon build examples/markdown_editor/macos_skia --target native
       fi
       ;;
     MINGW*|MSYS*|CYGWIN*)
@@ -115,6 +119,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon build examples/showcase/windows_cosmic --target native
         run moon build examples/showcase/windows_skia --target native
         run moon build examples/markdown_editor/windows --target native
+        run moon build examples/markdown_editor/windows_skia --target native
       fi
       ;;
     Linux)
@@ -128,6 +133,7 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon build examples/showcase/linux --target native
         run moon build examples/showcase/linux_cosmic --target native
         run moon build examples/showcase/linux_skia --target native
+        run moon build examples/markdown_editor/linux_skia --target native
       fi
       ;;
     *)

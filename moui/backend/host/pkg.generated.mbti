@@ -132,6 +132,7 @@ pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : Ho
 pub fn HostCapabilitySummary::has_required_app_basics(Self) -> Bool
 pub fn HostCapabilitySummary::input_count(Self) -> Int
 pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_ready? : Bool, ime_ready? : Bool, drag_drop_ready? : Bool, async_services? : Bool, native_accessibility_ready? : Bool, description? : String) -> Self
+pub fn HostCapabilitySummary::preflight_fields(Self) -> String
 pub fn HostCapabilitySummary::service_count(Self) -> Int
 pub fn HostCapabilitySummary::test_host(label? : String) -> Self
 pub fn HostCapabilitySummary::unavailable(label? : String, description? : String) -> Self

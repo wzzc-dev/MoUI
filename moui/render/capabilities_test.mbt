@@ -36,7 +36,17 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     image
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
-    .contains("local PNG"),
+    .contains("JPEG/BMP"),
+  )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("local PNG/JPEG/BMP"),
+  )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("contain/cover placement geometry"),
   )
   assert_true(
     image
@@ -251,6 +261,11 @@ test "renderer capability report tracks draw command support" {
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("nested layer/filter"),
   )
+  assert_true(
+    layer
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("renderer-local pixel tests"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::BlendMode)
     is Some(blend) else {
     fail("expected blend capability")
@@ -276,6 +291,11 @@ test "renderer capability report tracks draw command support" {
     blend
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("overlay"),
+  )
+  assert_true(
+    blend
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("renderer-local multiply pixel coverage"),
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::FilterEffect,
@@ -304,6 +324,16 @@ test "renderer capability report tracks draw command support" {
     filter
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("color matrix"),
+  )
+  assert_true(
+    filter
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("identity-normalized"),
+  )
+  assert_true(
+    filter
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("renderer-local saturation/color-matrix coverage"),
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::ShaderEffect,
@@ -338,6 +368,11 @@ test "renderer capability report tracks draw command support" {
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("vignette"),
   )
+  assert_true(
+    shader
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("renderer-local pixel tests"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::PathVector)
     is Some(path) else {
     fail("expected path capability")
@@ -358,6 +393,11 @@ test "renderer capability report tracks draw command support" {
     path
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("quadratic and cubic"),
+  )
+  assert_true(
+    path
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("renderer-local pixel tests"),
   )
   assert_true(
     path
@@ -394,10 +434,16 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(skia_text_note.contains("FontSpec"))
   assert_true(skia_text_note.contains("FontMgr"))
+  assert_true(skia_text_note.contains("FontFallbackRequest"))
+  assert_true(skia_text_note.contains("representative emoji/non-ASCII"))
   assert_true(skia_text_note.contains("weight"))
   assert_true(skia_text_note.contains("baseline"))
   assert_true(skia_text_note.contains("shaped-run cluster carets"))
   assert_true(skia_text_note.contains("prefix carets"))
+  assert_true(skia_text_note.contains("both caret paths"))
+  assert_true(skia_text_note.contains("combining-mark/Indic-matra/Arabic-mark"))
+  assert_true(skia_text_note.contains("keycap/emoji-modifier"))
+  assert_true(skia_text_note.contains("regional-indicator"))
   assert_true(skia_text_note.contains("emoji-family fonts"))
   assert_true(skia_text_note.contains("glyph-run drawing"))
   assert_true(skia_text_note.contains("SkShaper"))
@@ -429,7 +475,12 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(skia_emoji_note.contains("single-codepoint"))
   assert_true(skia_emoji_note.contains("variation-selector"))
+  assert_true(skia_emoji_note.contains("keycap"))
+  assert_true(skia_emoji_note.contains("emoji-modifier"))
   assert_true(skia_emoji_note.contains("ZWJ"))
+  assert_true(skia_emoji_note.contains("regional-indicator"))
+  assert_true(skia_emoji_note.contains("FontFallbackRequest"))
+  assert_true(skia_emoji_note.contains("cluster interior carets"))
   assert_true(skia_emoji_note.contains("platform emoji font candidates"))
   assert_true(skia_emoji_note.contains("default-font fallback"))
   assert_true(skia_emoji_note.contains("grapheme"))
@@ -459,6 +510,8 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(skia_image_note.contains("HostWindowRenderer"))
   assert_true(skia_image_note.contains("failed-image placeholder"))
+  assert_true(skia_image_note.contains("failed-cache snapshot"))
+  assert_true(skia_image_note.contains("local-file retry"))
   assert_true(skia_image_note.contains("dispose-record"))
   let web_image_note = async_image.note_for_backend(
     @render.RendererBackendKind::WebGpuWasm,

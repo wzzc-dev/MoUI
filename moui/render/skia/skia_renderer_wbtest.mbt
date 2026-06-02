@@ -63,6 +63,7 @@ test "skia text descriptor preflight consumes fallback and shaping resource plan
     "MoUI",
   )
   assert_true(preflight.family_count > 0)
+  inspect(preflight.fallback_character, content="77")
   assert_true(preflight.fallback_ready)
   inspect(preflight.fallback_resource_count, content="2")
   assert_true(preflight.measurement_ready)
@@ -76,6 +77,51 @@ test "skia text descriptor preflight consumes fallback and shaping resource plan
 }
 
 ///|
+test "skia font fallback request prefers emoji and non-ascii representative characters" {
+  inspect(skia_representative_fallback_codepoint(""), content="0")
+  inspect(skia_representative_fallback_codepoint("MoUI"), content="77")
+  inspect(skia_representative_fallback_codepoint("A你B"), content="20320")
+  inspect(
+    skia_representative_fallback_codepoint("A\u{1F642}B"),
+    content="128578",
+  )
+  inspect(
+    skia_representative_fallback_codepoint("A\u{2615}\u{FE0F}B"),
+    content="9749",
+  )
+  inspect(
+    skia_representative_fallback_codepoint("A\u{1F469}\u{200D}\u{1F373}B"),
+    content="128105",
+  )
+}
+
+///|
+test "skia font fallback request preserves family chain style and coverage character" {
+  let font = @core.FontSpec::new(
+    families=@core.FontFamilyStack::system_ui().with_fallback(
+      @core.FontFamily::Emoji,
+    ),
+    size=18.0,
+    weight=650,
+    style=@core.FontStyle::Italic,
+  )
+  let request = skia_font_fallback_request(font, "A\u{1F642}B")
+  inspect(request.character, content="128578")
+  assert_true(request.has_character())
+  assert_true(request.families.length() >= 2)
+  assert_true(request.families.family_at(0) == Some(b"Helvetica Neue"))
+  assert_true(request.families.contains_family(b"Apple Color Emoji"))
+  inspect(request.style.weight, content="650")
+  inspect(request.style.width, content="5")
+  inspect(request.style.slant, content="1")
+  assert_true(request.resource_key().kind == @skia_mbt.TypefaceResource)
+  assert_true(
+    request.font_descriptor(size=18.0).resource_key().kind ==
+    @skia_mbt.FontResource,
+  )
+}
+
+///|
 test "skia text descriptor preflight keeps empty text cacheable" {
   let preflight = skia_text_descriptor_preflight(
     @core.FontSpec::new(size=12.0, weight=400),
@@ -86,6 +132,27 @@ test "skia text descriptor preflight keeps empty text cacheable" {
   assert_true(preflight.shaping_ready)
   assert_true(preflight.shaped_run_ready)
   assert_true(preflight.glyph_run_ready)
+}
+
+///|
+test "skia text maturity preflight separates covered baseline from gaps" {
+  let preflight = skia_text_maturity_preflight()
+  assert_true(preflight.descriptor_ready)
+  assert_true(preflight.fallback_request_ready)
+  assert_true(preflight.shaped_cluster_caret_ready)
+  assert_true(preflight.fallback_cluster_caret_ready)
+  assert_true(preflight.emoji_hint_ready)
+  assert_true(preflight.empty_typeface_emoji_retry_disabled)
+  assert_false(preflight.bidi_reordering_ready)
+  assert_false(preflight.paragraph_line_breaking_ready)
+  assert_false(preflight.mixed_run_font_fallback_ready)
+  assert_false(preflight.deterministic_color_emoji_ready)
+  assert_false(preflight.full_grapheme_parity_ready)
+  inspect(preflight.ready_count, content="6")
+  inspect(preflight.gap_count, content="5")
+  assert_true(preflight.summary().contains("text maturity audit partial"))
+  assert_true(preflight.summary().contains("bidi"))
+  assert_true(preflight.summary().contains("full grapheme parity"))
 }
 
 ///|
@@ -200,6 +267,17 @@ fn skia_test_region_has_dark_pixel(
   frame : SkiaPixelFrame,
   rect : @core.Rect,
 ) -> Bool {
+  skia_test_region_has_matching_pixel(frame, rect, (r, g, b, a) => {
+    a > 0 && r < 210 && g < 210 && b < 210
+  })
+}
+
+///|
+fn skia_test_region_has_matching_pixel(
+  frame : SkiaPixelFrame,
+  rect : @core.Rect,
+  matches : (Int, Int, Int, Int) -> Bool,
+) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
   let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
@@ -215,7 +293,7 @@ fn skia_test_region_has_dark_pixel(
         let actual_g = frame.pixels[offset + 1].to_int()
         let actual_b = frame.pixels[offset + 2].to_int()
         let actual_a = frame.pixels[offset + 3].to_int()
-        if actual_a > 0 && actual_r < 210 && actual_g < 210 && actual_b < 210 {
+        if matches(actual_r, actual_g, actual_b, actual_a) {
           return true
         }
       }
@@ -226,14 +304,22 @@ fn skia_test_region_has_dark_pixel(
 
 ///|
 fn skia_test_font(font : @core.FontSpec) -> @skia_native.Font? {
-  skia_font_with_resolution(font, SkiaFontResolution::SystemFontMgr)
+  skia_font_with_resolution_for_text(
+    font,
+    "",
+    SkiaFontResolution::SystemFontMgr,
+  )
 }
 
 ///|
 test "skia empty typeface resolution avoids system font manager" {
   let font_spec = @core.FontSpec::new(size=14.0, weight=400)
   match
-    skia_font_with_resolution(font_spec, SkiaFontResolution::EmptyTypeface) {
+    skia_font_with_resolution_for_text(
+      font_spec,
+      "",
+      SkiaFontResolution::EmptyTypeface,
+    ) {
     None => assert_true(!skia_available())
     Some(font) => {
       assert_true(font.size() == 14.0)
@@ -314,6 +400,126 @@ fn skia_test_png_data_uri() -> String {
 }
 
 ///|
+fn skia_test_jpeg_data_uri() -> String {
+  "data:image/jpeg;base64," +
+  "/9j/4AAQSkZJRgABAQAAkACQAAD/4QCoRXhpZgAATU0AKgAAAAgABQEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAAExAAIAAAAJAAAAWodpAAQAAAABAAAAZAAAAAAAAACQAAAAAQAAAJAAAAABU25pcGFzdGUAAAADkoYABwAAABIAAACOoAIABAAAAAEAAAABoAMABAAAAAEAAAABAAAAAEFTQ0lJAAAAU2NyZWVuc2hvdP/tADhQaG90b3Nob3AgMy4wADhCSU0EBAAAAAAAADhCSU0EJQAAAAAAENQdjNmPALIE6YAJmOz4Qn7/4gIcSUNDX1BST0ZJTEUAAQEAAAIMYXBwbAQAAABtbnRyUkdCIFhZWiAH6gAFAB0ACgAMAAJhY3NwQVBQTAAAAABBUFBMAAAAAAAAAAAAAAAAAAAAAAAA9tYAAQAAAADTLWFwcGwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAApkZXNjAAAA/AAAADJjcHJ0AAABMAAAAFB3dHB0AAABgAAAABRyWFlaAAABlAAAABRnWFlaAAABqAAAABRiWFlaAAABvAAAABRyVFJDAAAB0AAAABBjaGFkAAAB4AAAACxiVFJDAAAB0AAAABBnVFJDAAAB0AAAABBtbHVjAAAAAAAAAAEAAAAMZW5VUwAAABYAAAAcADIANwBFADEATgA1ADUAMAAwAEwAQgAAbWx1YwAAAAAAAAABAAAADGVuVVMAAAA0AAAAHABDAG8AcAB5AHIAaQBnAGgAdAAgAEEAcABwAGwAZQAgAEkAbgBjAC4ALAAgADIAMAAyADZYWVogAAAAAAAA9tYAAQAAAADTLVhZWiAAAAAAAABuFAAAN20AAAH2WFlaIAAAAAAAAGJlAACzeQAAFbxYWVogAAAAAAAAJl0AABUZAAC7e3BhcmEAAAAAAAAAAAAB9gRzZjMyAAAAAAABC7cAAAWW///zVwAABykAAP3X///7t////aYAAAPaAADA9v/AABEIAAEAAQMBIgACEQEDEQH/xAAfAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgv/xAC1EAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+fr/xAAfAQADAQEBAQEBAQEBAAAAAAAAAQIDBAUGBwgJCgv/xAC1EQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2wBDAAICAgICAgMCAgMFAwMDBQYFBQUFBggGBgYGBggKCAgICAgICgoKCgoKCgoMDAwMDAwODg4ODg8PDw8PDw8PDw//2wBDAQICAgQEBAcEBAcQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/3QAEAAH/2gAMAwEAAhEDEQA/AP3MooorsOc//9k="
+}
+
+///|
+fn skia_test_bmp_data_uri() -> String {
+  "data:image/bmp;base64," +
+  "Qk0+AAAAAAAAADYAAAAoAAAAAgAAAAEAAAABACAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8AAP8="
+}
+
+///|
+test "skia renderer decodes jpeg and bmp data uris through encoded image api" {
+  guard skia_available() else { return () }
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    SkiaPresentTarget::new(description="test", present=_ => true),
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+
+  let jpeg_source = skia_test_jpeg_data_uri()
+  match renderer.skia_image_for_source(jpeg_source) {
+    None => fail("expected Skia JPEG data URI decode")
+    Some(image) => {
+      inspect(image.width(), content="1")
+      inspect(image.height(), content="1")
+    }
+  }
+  guard renderer.image_lifecycle.lookup(jpeg_source) is Some(jpeg_ready) else {
+    fail("expected ready JPEG image lifecycle record")
+  }
+  assert_true(jpeg_ready.status == @render.ImageResourceStatus::ImageReady)
+
+  let bmp_source = skia_test_bmp_data_uri()
+  match renderer.skia_image_for_source(bmp_source) {
+    None => fail("expected Skia BMP data URI decode")
+    Some(image) => {
+      inspect(image.width(), content="2")
+      inspect(image.height(), content="1")
+    }
+  }
+  guard renderer.image_lifecycle.lookup(bmp_source) is Some(bmp_ready) else {
+    fail("expected ready BMP image lifecycle record")
+  }
+  assert_true(bmp_ready.status == @render.ImageResourceStatus::ImageReady)
+  inspect(renderer.image_resources().length(), content="2")
+}
+
+///|
+test "skia renderer decodes jpeg and bmp local files through encoded image api" {
+  guard skia_available() else { return () }
+  let jpeg_path = "/private/tmp/moui-skia-local-image-fixture.jpg"
+  let bmp_path = "/private/tmp/moui-skia-local-image-fixture.bmp"
+  @fs.remove_file(jpeg_path) catch {
+    _ => ()
+  }
+  @fs.remove_file(bmp_path) catch {
+    _ => ()
+  }
+  match skia_image_data_uri_bytes(skia_test_jpeg_data_uri()) {
+    Some(bytes) =>
+      @fs.write_bytes_to_file(jpeg_path, bytes) catch {
+        _ => fail("expected local JPEG fixture write")
+      }
+    None => fail("expected embedded test JPEG bytes")
+  }
+  match skia_image_data_uri_bytes(skia_test_bmp_data_uri()) {
+    Some(bytes) =>
+      @fs.write_bytes_to_file(bmp_path, bytes) catch {
+        _ => fail("expected local BMP fixture write")
+      }
+    None => fail("expected embedded test BMP bytes")
+  }
+
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    SkiaPresentTarget::new(description="test", present=_ => true),
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+
+  match renderer.skia_image_for_source(jpeg_path) {
+    None => fail("expected Skia local JPEG decode")
+    Some(image) => {
+      inspect(image.width(), content="1")
+      inspect(image.height(), content="1")
+    }
+  }
+  guard renderer.image_lifecycle.lookup(jpeg_path) is Some(jpeg_ready) else {
+    fail("expected ready local JPEG image lifecycle record")
+  }
+  assert_true(jpeg_ready.status == @render.ImageResourceStatus::ImageReady)
+
+  match renderer.skia_image_for_source(bmp_path) {
+    None => fail("expected Skia local BMP decode")
+    Some(image) => {
+      inspect(image.width(), content="2")
+      inspect(image.height(), content="1")
+    }
+  }
+  guard renderer.image_lifecycle.lookup(bmp_path) is Some(bmp_ready) else {
+    fail("expected ready local BMP image lifecycle record")
+  }
+  assert_true(bmp_ready.status == @render.ImageResourceStatus::ImageReady)
+  inspect(renderer.image_resources().length(), content="2")
+
+  @fs.remove_file(jpeg_path) catch {
+    _ => ()
+  }
+  @fs.remove_file(bmp_path) catch {
+    _ => ()
+  }
+}
+
+///|
 test "skia renderer dispose clears cached image resources and records disposal" {
   guard skia_available() else { return () }
   let source = skia_test_png_data_uri()
@@ -348,6 +554,190 @@ test "skia renderer dispose clears cached image resources and records disposal" 
   }
   assert_true(disposed.status == @render.ImageResourceStatus::ImageDisposed)
   inspect(renderer.image_resources().length(), content="1")
+}
+
+///|
+test "skia renderer records failed image resources and reuses failed cache" {
+  guard skia_available() else { return () }
+  let missing_source = "moui-skia-missing-image-resource://not-a-file"
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: missing_source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err =>
+      fail("expected Skia missing-image placeholder render: \{err.message()}")
+  }
+  assert_true(renderer.image_cache.get(missing_source) is None)
+  guard renderer.image_lifecycle.lookup(missing_source) is Some(failed) else {
+    fail("expected failed image lifecycle record")
+  }
+  assert_true(failed.status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(failed.diagnostic.contains("unavailable"))
+  assert_true(renderer.failed_images.get(missing_source) is Some(_))
+  inspect(renderer.image_resources().length(), content="1")
+  inspect(renderer.present_count(), content="1")
+
+  let valid_source = skia_test_png_data_uri()
+  renderer.failed_images[valid_source] = "cached failure"
+  match renderer.skia_image_for_source(valid_source) {
+    Some(_) => fail("expected failed image cache to skip decode")
+    None => ()
+  }
+  assert_true(renderer.image_cache.get(valid_source) is None)
+  guard renderer.image_lifecycle.lookup(valid_source) is Some(cached) else {
+    fail("expected cached failed image lifecycle record")
+  }
+  assert_true(cached.status == @render.ImageResourceStatus::ImageFailed)
+  inspect(cached.diagnostic, content="cached failure")
+}
+
+///|
+test "skia renderer retries local image failures when the file appears" {
+  guard skia_available() else { return () }
+  let source = "/private/tmp/moui-skia-local-image-retry.png"
+  @fs.remove_file(source) catch {
+    _ => ()
+  }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+
+  renderer.render([
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err => fail("expected Skia placeholder render: \{err.message()}")
+  }
+  assert_true(renderer.image_cache.get(source) is None)
+  assert_true(renderer.failed_images.get(source) is Some(_))
+  guard renderer.image_lifecycle.lookup(source) is Some(failed) else {
+    fail("expected failed local image lifecycle record")
+  }
+  assert_true(failed.status == @render.ImageResourceStatus::ImageFailed)
+
+  match skia_image_data_uri_bytes(skia_test_png_data_uri()) {
+    Some(bytes) =>
+      @fs.write_bytes_to_file(source, bytes) catch {
+        _ => fail("expected local image retry fixture write")
+      }
+    None => fail("expected embedded test PNG bytes")
+  }
+  renderer.render([
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err => fail("expected Skia retry image render: \{err.message()}")
+  }
+  @fs.remove_file(source) catch {
+    _ => ()
+  }
+
+  assert_true(renderer.failed_images.get(source) is None)
+  assert_true(renderer.image_cache.get(source) is Some(_))
+  guard renderer.image_lifecycle.lookup(source) is Some(ready) else {
+    fail("expected ready local image lifecycle record after retry")
+  }
+  assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
+  inspect(ready.width, content="1")
+  inspect(ready.height, content="1")
+}
+
+///|
+test "skia image placement records contain and cover sampling geometry" {
+  let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
+
+  let wide_contain = skia_image_placement(
+    frame,
+    @core.Size::new(width=200.0, height=100.0),
+    @core.ImageFit::Contain,
+  )
+  inspect(wide_contain.frame.origin.x, content="10")
+  inspect(wide_contain.frame.origin.y, content="45")
+  inspect(wide_contain.frame.size.width, content="100")
+  inspect(wide_contain.frame.size.height, content="50")
+  inspect(wide_contain.u0, content="0")
+  inspect(wide_contain.v0, content="0")
+  inspect(wide_contain.u1, content="1")
+  inspect(wide_contain.v1, content="1")
+
+  let tall_contain = skia_image_placement(
+    frame,
+    @core.Size::new(width=100.0, height=200.0),
+    @core.ImageFit::Contain,
+  )
+  inspect(tall_contain.frame.origin.x, content="35")
+  inspect(tall_contain.frame.origin.y, content="20")
+  inspect(tall_contain.frame.size.width, content="50")
+  inspect(tall_contain.frame.size.height, content="100")
+  inspect(tall_contain.u0, content="0")
+  inspect(tall_contain.v0, content="0")
+  inspect(tall_contain.u1, content="1")
+  inspect(tall_contain.v1, content="1")
+
+  let wide_cover = skia_image_placement(
+    frame,
+    @core.Size::new(width=200.0, height=100.0),
+    @core.ImageFit::Cover,
+  )
+  inspect(wide_cover.frame.origin.x, content="10")
+  inspect(wide_cover.frame.origin.y, content="20")
+  inspect(wide_cover.frame.size.width, content="100")
+  inspect(wide_cover.frame.size.height, content="100")
+  inspect(wide_cover.u0, content="0.25")
+  inspect(wide_cover.v0, content="0")
+  inspect(wide_cover.u1, content="0.75")
+  inspect(wide_cover.v1, content="1")
+
+  let tall_cover = skia_image_placement(
+    frame,
+    @core.Size::new(width=100.0, height=200.0),
+    @core.ImageFit::Cover,
+  )
+  inspect(tall_cover.u0, content="0")
+  inspect(tall_cover.v0, content="0.25")
+  inspect(tall_cover.u1, content="1")
+  inspect(tall_cover.v1, content="0.75")
+
+  let degenerate = skia_image_placement(
+    frame,
+    @core.Size::new(width=0.0, height=200.0),
+    @core.ImageFit::Cover,
+  )
+  inspect(degenerate.frame.origin.x, content="10")
+  inspect(degenerate.frame.origin.y, content="20")
+  inspect(degenerate.frame.size.width, content="100")
+  inspect(degenerate.frame.size.height, content="100")
+  inspect(degenerate.u0, content="0")
+  inspect(degenerate.v0, content="0")
+  inspect(degenerate.u1, content="1")
+  inspect(degenerate.v1, content="1")
 }
 
 ///|
@@ -495,6 +885,71 @@ test "skia mismatched scope pop preserves the active scope" {
 }
 
 ///|
+test "skia unclosed scopes are counted and restored at frame boundary" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=12.0, height=8.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
+      @core.Color::black(),
+    ),
+  ]) catch {
+    err =>
+      fail("expected Skia renderer to restore unclosed clip: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="1")
+  guard renderer.last_frame() is Some(clipped_frame) else {
+    fail("expected clipped rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      clipped_frame,
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+  assert_false(
+    skia_test_region_has_dark_pixel(
+      clipped_frame,
+      @core.Rect::new(x=6.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
+      @core.Color::black(),
+    ),
+  ]) catch {
+    err =>
+      fail("expected next Skia frame after unclosed clip: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  inspect(renderer.present_count(), content="2")
+  guard renderer.last_frame() is Some(restored_frame) else {
+    fail("expected restored rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      restored_frame,
+      @core.Rect::new(x=6.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+}
+
+///|
 test "skia unsupported command diagnostics reset per frame" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
@@ -524,6 +979,380 @@ test "skia unsupported command diagnostics reset per frame" {
   }
   inspect(renderer.unsupported_command_count(), content="0")
   inspect(renderer.present_count(), content="2")
+}
+
+///|
+test "skia color matrix normalizes short and long payloads" {
+  let identity = skia_color_filter_matrix_values([])
+  inspect(identity.length(), content="20")
+  inspect(identity[0], content="1")
+  inspect(identity[6], content="1")
+  inspect(identity[12], content="1")
+  inspect(identity[18], content="1")
+  inspect(identity[1], content="0")
+  inspect(identity[19], content="0")
+
+  let short = skia_color_filter_matrix_values([0.25, 0.5])
+  inspect(short.length(), content="20")
+  inspect(short[0], content="0.25")
+  inspect(short[1], content="0.5")
+  inspect(short[6], content="1")
+  inspect(short[12], content="1")
+  inspect(short[18], content="1")
+
+  let long = skia_color_filter_matrix_values([
+    0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0,
+    15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0,
+  ])
+  inspect(long.length(), content="20")
+  inspect(long[0], content="0")
+  inspect(long[18], content="18")
+  inspect(long[19], content="19")
+}
+
+///|
+test "skia renderer composites masked opacity layer pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=24.0, height=24.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        opacity=0.5,
+        mask=@core.LayerMask::RectMask(
+          @core.Rect::new(x=4.0, y=4.0, width=12.0, height=12.0),
+        ),
+      ),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=24.0, height=24.0),
+      @core.Color::black(),
+    ),
+    @core.DrawCommand::PopLayer,
+  ]) catch {
+    err => fail("expected Skia masked layer render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  inspect(renderer.present_count(), content="1")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=8.0, y=8.0, width=4.0, height=4.0),
+      (r, g, b, a) => {
+        a > 0 && r > 80 && r < 220 && g > 80 && g < 220 && b > 80 && b < 220
+      },
+    ),
+  )
+  assert_false(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=0.0, y=0.0, width=3.0, height=3.0),
+    ),
+  )
+}
+
+///|
+test "skia renderer paints blend and saturation filter pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=32.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+      @core.Color::rgba(r=1.0, g=0.0, b=0.0),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(blend_mode=@core.BlendMode::Multiply),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+      @core.Color::rgba(r=0.0, g=0.0, b=1.0),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(0.0)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=16.0, y=0.0, width=16.0, height=16.0),
+      @core.Color::rgba(r=1.0, g=0.0, b=0.0),
+    ),
+    @core.DrawCommand::PopFilter,
+  ]) catch {
+    err => fail("expected Skia blend/filter render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  inspect(renderer.present_count(), content="1")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=4.0, y=4.0, width=8.0, height=8.0),
+      (r, g, b, a) => a > 0 && r < 80 && g < 80 && b < 80,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=20.0, y=4.0, width=8.0, height=8.0),
+      (r, g, b, a) => {
+        a > 0 && r > 25 && r < 120 && g > 25 && g < 120 && b > 25 && b < 120
+      },
+    ),
+  )
+}
+
+///|
+test "skia renderer paints path fill and stroke pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=40.0, height=40.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=6.0, y=6.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=32.0, y=6.0)),
+          @core.PathVerb::QuadTo(
+            @core.Point::new(x=36.0, y=18.0),
+            @core.Point::new(x=30.0, y=32.0),
+          ),
+          @core.PathVerb::CubicTo(
+            @core.Point::new(x=22.0, y=36.0),
+            @core.Point::new(x=12.0, y=34.0),
+            @core.Point::new(x=6.0, y=28.0),
+          ),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(@core.Color::rgba(r=0.95, g=0.08, b=0.08))),
+        stroke=Some(@core.Brush::solid(@core.Color::black())),
+        stroke_width=2.0,
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia path render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  inspect(renderer.present_count(), content="1")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=14.0, y=14.0, width=12.0, height=12.0),
+      (r, g, b, a) => a > 0 && r > 180 && g < 120 && b < 120,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=5.0, y=5.0, width=28.0, height=4.0),
+    ),
+  )
+}
+
+///|
+test "skia renderer paints path linear gradient pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=40.0, height=20.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=2.0, y=2.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=38.0, y=2.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=38.0, y=18.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=2.0, y=18.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(
+          @core.Brush::linear_gradient(
+            start=@core.Point::new(x=2.0, y=0.0),
+            end=@core.Point::new(x=38.0, y=0.0),
+            start_color=@core.Color::rgba(r=0.95, g=0.05, b=0.05),
+            end_color=@core.Color::rgba(r=0.05, g=0.10, b=0.95),
+          ),
+        ),
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia path gradient render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=5.0, y=8.0, width=6.0, height=4.0),
+      (r, g, b, a) => a > 0 && r > 150 && g < 140 && b < 120,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=29.0, y=8.0, width=6.0, height=4.0),
+      (r, g, b, a) => a > 0 && b > 150 && r < 120 && g < 140,
+    ),
+  )
+}
+
+///|
+test "skia renderer paints built-in shader effect pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=24.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="checker",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=24.0, height=16.0),
+        uniforms=[4.0],
+        fallback=@core.Brush::linear_gradient(
+          start=@core.Point::new(x=0.0, y=0.0),
+          end=@core.Point::new(x=24.0, y=0.0),
+          start_color=@core.Color::rgba(r=0.95, g=0.05, b=0.05),
+          end_color=@core.Color::rgba(r=0.05, g=0.20, b=0.95),
+        ),
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia shader effect render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=1.0, y=1.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && r > 180 && g < 100 && b < 100,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=7.0, y=1.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && r < 100 && g < 120 && b > 180,
+    ),
+  )
+}
+
+///|
+test "skia renderer paints shader gradient and vignette pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=48.0, height=24.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="linear-gradient-debug",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=24.0, height=24.0),
+        fallback=@core.Brush::linear_gradient(
+          start=@core.Point::new(x=0.0, y=0.0),
+          end=@core.Point::new(x=24.0, y=0.0),
+          start_color=@core.Color::rgba(r=0.95, g=0.05, b=0.05),
+          end_color=@core.Color::rgba(r=0.05, g=0.10, b=0.95),
+        ),
+      ),
+    ),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="vignette",
+        frame=@core.Rect::new(x=24.0, y=0.0, width=24.0, height=24.0),
+        uniforms=[1.0],
+        fallback=@core.Brush::solid(@core.Color::rgba(r=0.05, g=0.85, b=0.20)),
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia shader variant render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=2.0, y=10.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && r > 150 && g < 140 && b < 120,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=18.0, y=10.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && b > 150 && r < 120 && g < 140,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=34.0, y=10.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && g > 130 && r < 120 && b < 120,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=45.0, y=0.0, width=3.0, height=3.0),
+      (r, g, b, a) => a > 0 && r < 80 && g < 80 && b < 80,
+    ),
+  )
 }
 
 ///|
@@ -583,7 +1412,7 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
     text="你好 MoUI",
     font=@core.FontSpec::new(size=18.0, weight=400),
   )
-  let system = skia_text_system(SkiaFontResolution::EmptyTypeface)
+  let system = skia_text_system(resolution=SkiaFontResolution::EmptyTypeface)
   if !skia_available() {
     assert_true(system.id() == @core.TextSystem::fallback().id())
   } else {
@@ -854,6 +1683,529 @@ test "skia shaped caret mapping keeps emoji cluster caret coverage" {
 }
 
 ///|
+test "skia shaped caret mapping stabilizes Indic cluster interiors" {
+  let matra_run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(10),
+      @skia_native.GlyphId::new(11),
+      @skia_native.GlyphId::new(12),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(11.0, 0.0),
+      @skia_mbt.Point::new(24.0, 0.0),
+    ],
+    clusters: [0, 1, 7],
+    width: 32.0,
+  }
+  match skia_shaped_caret_positions("A\u{0915}\u{093F}B", matra_run) {
+    Some(carets) => {
+      inspect(carets.length(), content="5")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="11")
+      inspect(carets[2], content="11")
+      inspect(carets[3], content="24")
+      inspect(carets[4], content="32")
+      assert_true(skia_test_carets_are_monotonic(carets))
+    }
+    None => fail("expected Devanagari matra shaped caret mapping")
+  }
+
+  let virama_run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(20),
+      @skia_native.GlyphId::new(21),
+      @skia_native.GlyphId::new(22),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(10.0, 0.0),
+      @skia_mbt.Point::new(30.0, 0.0),
+    ],
+    clusters: [0, 1, 13],
+    width: 38.0,
+  }
+  match
+    skia_shaped_caret_positions(
+      "A\u{0915}\u{094D}\u{200D}\u{0937}B", virama_run,
+    ) {
+    Some(carets) => {
+      inspect(carets.length(), content="7")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="10")
+      inspect(carets[2], content="10")
+      inspect(carets[3], content="10")
+      inspect(carets[4], content="10")
+      inspect(carets[5], content="30")
+      inspect(carets[6], content="38")
+      assert_true(skia_test_carets_are_monotonic(carets))
+    }
+    None => fail("expected Devanagari virama ZWJ shaped caret mapping")
+  }
+}
+
+///|
+test "skia shaped caret mapping stabilizes Hangul Jamo cluster interiors" {
+  let hangul_run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(10),
+      @skia_native.GlyphId::new(11),
+      @skia_native.GlyphId::new(12),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(9.0, 0.0),
+      @skia_mbt.Point::new(26.0, 0.0),
+    ],
+    clusters: [0, 1, 10],
+    width: 34.0,
+  }
+  match skia_shaped_caret_positions("A\u{1100}\u{1161}\u{11A8}B", hangul_run) {
+    Some(carets) => {
+      inspect(carets.length(), content="6")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="9")
+      inspect(carets[2], content="9")
+      inspect(carets[3], content="9")
+      inspect(carets[4], content="26")
+      inspect(carets[5], content="34")
+      assert_true(skia_test_carets_are_monotonic(carets))
+    }
+    None => fail("expected Hangul Jamo shaped caret mapping")
+  }
+}
+
+///|
+test "skia shaped caret mapping stabilizes representative cluster interiors" {
+  let combining_run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(10),
+      @skia_native.GlyphId::new(11),
+      @skia_native.GlyphId::new(12),
+      @skia_native.GlyphId::new(13),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(7.0, 0.0),
+      @skia_mbt.Point::new(13.0, 0.0),
+      @skia_mbt.Point::new(16.0, 0.0),
+    ],
+    clusters: [0, 1, 2, 4],
+    width: 24.0,
+  }
+  match skia_shaped_caret_positions("Ae\u{0301}B", combining_run) {
+    Some(carets) => {
+      inspect(carets.length(), content="5")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="7")
+      inspect(carets[2], content="7")
+      inspect(carets[3], content="16")
+      inspect(carets[4], content="24")
+      assert_true(skia_test_carets_are_monotonic(carets))
+    }
+    None => fail("expected combining-mark shaped caret mapping")
+  }
+
+  let skin_tone_run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(20),
+      @skia_native.GlyphId::new(21),
+      @skia_native.GlyphId::new(22),
+      @skia_native.GlyphId::new(23),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(12.0, 0.0),
+      @skia_mbt.Point::new(18.0, 0.0),
+      @skia_mbt.Point::new(26.0, 0.0),
+    ],
+    clusters: [0, 1, 5, 9],
+    width: 34.0,
+  }
+  match skia_shaped_caret_positions("A\u{1F44B}\u{1F3FD}B", skin_tone_run) {
+    Some(carets) => {
+      inspect(carets.length(), content="5")
+      inspect(carets[0], content="0")
+      inspect(carets[1], content="12")
+      inspect(carets[2], content="12")
+      inspect(carets[3], content="26")
+      inspect(carets[4], content="34")
+      assert_true(skia_test_carets_are_monotonic(carets))
+    }
+    None => fail("expected emoji-modifier shaped caret mapping")
+  }
+}
+
+///|
+test "skia fallback caret stabilization keeps representative cluster interiors stable" {
+  let combining = skia_stabilize_grapheme_cluster_carets("Ae\u{0301}B", [
+    0.0, 7.0, 13.0, 16.0, 24.0,
+  ])
+  inspect(combining.length(), content="5")
+  inspect(combining[0], content="0")
+  inspect(combining[1], content="7")
+  inspect(combining[2], content="7")
+  inspect(combining[3], content="16")
+  inspect(combining[4], content="24")
+  assert_true(skia_test_carets_are_monotonic(combining))
+
+  let variation = skia_stabilize_grapheme_cluster_carets("A\u{2615}\u{FE0F}B", [
+    0.0, 10.0, 18.0, 22.0, 30.0,
+  ])
+  inspect(variation.length(), content="5")
+  inspect(variation[0], content="0")
+  inspect(variation[1], content="10")
+  inspect(variation[2], content="10")
+  inspect(variation[3], content="22")
+  inspect(variation[4], content="30")
+  assert_true(skia_test_carets_are_monotonic(variation))
+
+  let zwj = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1F469}\u{200D}\u{1F373}B",
+    [0.0, 14.0, 20.0, 22.0, 28.0, 34.0],
+  )
+  inspect(zwj.length(), content="6")
+  inspect(zwj[0], content="0")
+  inspect(zwj[1], content="14")
+  inspect(zwj[2], content="14")
+  inspect(zwj[3], content="14")
+  inspect(zwj[4], content="28")
+  inspect(zwj[5], content="34")
+  assert_true(skia_test_carets_are_monotonic(zwj))
+
+  let variation_zwj = skia_stabilize_grapheme_cluster_carets(
+    "A\u{2764}\u{FE0F}\u{200D}\u{1F525}B",
+    [0.0, 8.0, 12.0, 14.0, 16.0, 26.0, 30.0],
+  )
+  inspect(variation_zwj.length(), content="7")
+  inspect(variation_zwj[0], content="0")
+  inspect(variation_zwj[1], content="8")
+  inspect(variation_zwj[2], content="8")
+  inspect(variation_zwj[3], content="8")
+  inspect(variation_zwj[4], content="8")
+  inspect(variation_zwj[5], content="26")
+  inspect(variation_zwj[6], content="30")
+  assert_true(skia_test_carets_are_monotonic(variation_zwj))
+
+  let flag = skia_stabilize_grapheme_cluster_carets("A\u{1F1FA}\u{1F1F8}B", [
+    0.0, 11.0, 18.0, 27.0, 34.0,
+  ])
+  inspect(flag.length(), content="5")
+  inspect(flag[0], content="0")
+  inspect(flag[1], content="11")
+  inspect(flag[2], content="11")
+  inspect(flag[3], content="27")
+  inspect(flag[4], content="34")
+  assert_true(skia_test_carets_are_monotonic(flag))
+
+  let paired_flags = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1F1FA}\u{1F1F8}\u{1F1EF}\u{1F1F5}B",
+    [0.0, 9.0, 13.0, 21.0, 27.0, 35.0, 43.0],
+  )
+  inspect(paired_flags.length(), content="7")
+  inspect(paired_flags[0], content="0")
+  inspect(paired_flags[1], content="9")
+  inspect(paired_flags[2], content="9")
+  inspect(paired_flags[3], content="21")
+  inspect(paired_flags[4], content="21")
+  inspect(paired_flags[5], content="35")
+  inspect(paired_flags[6], content="43")
+  assert_true(skia_test_carets_are_monotonic(paired_flags))
+
+  let tag_flag = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
+    [0.0, 9.0, 11.0, 13.0, 15.0, 25.0, 33.0],
+  )
+  inspect(tag_flag.length(), content="7")
+  inspect(tag_flag[0], content="0")
+  inspect(tag_flag[1], content="9")
+  inspect(tag_flag[2], content="9")
+  inspect(tag_flag[3], content="9")
+  inspect(tag_flag[4], content="9")
+  inspect(tag_flag[5], content="25")
+  inspect(tag_flag[6], content="33")
+  assert_true(skia_test_carets_are_monotonic(tag_flag))
+
+  let keycap = skia_stabilize_grapheme_cluster_carets("A1\u{FE0F}\u{20E3}B", [
+    0.0, 9.0, 13.0, 15.0, 24.0, 31.0,
+  ])
+  inspect(keycap.length(), content="6")
+  inspect(keycap[0], content="0")
+  inspect(keycap[1], content="9")
+  inspect(keycap[2], content="9")
+  inspect(keycap[3], content="9")
+  inspect(keycap[4], content="24")
+  inspect(keycap[5], content="31")
+  assert_true(skia_test_carets_are_monotonic(keycap))
+
+  let skin_tone = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1F44B}\u{1F3FD}B",
+    [0.0, 12.0, 18.0, 26.0, 34.0],
+  )
+  inspect(skin_tone.length(), content="5")
+  inspect(skin_tone[0], content="0")
+  inspect(skin_tone[1], content="12")
+  inspect(skin_tone[2], content="12")
+  inspect(skin_tone[3], content="26")
+  inspect(skin_tone[4], content="34")
+  assert_true(skia_test_carets_are_monotonic(skin_tone))
+
+  let skin_tone_zwj = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1F9D1}\u{1F3FD}\u{200D}\u{1F4BB}B",
+    [0.0, 10.0, 14.0, 16.0, 18.0, 30.0, 38.0],
+  )
+  inspect(skin_tone_zwj.length(), content="7")
+  inspect(skin_tone_zwj[0], content="0")
+  inspect(skin_tone_zwj[1], content="10")
+  inspect(skin_tone_zwj[2], content="10")
+  inspect(skin_tone_zwj[3], content="10")
+  inspect(skin_tone_zwj[4], content="10")
+  inspect(skin_tone_zwj[5], content="30")
+  inspect(skin_tone_zwj[6], content="38")
+  assert_true(skia_test_carets_are_monotonic(skin_tone_zwj))
+}
+
+///|
+test "skia fallback caret stabilization keeps Indic and Arabic marks stable" {
+  assert_true(skia_codepoint_is_grapheme_prepend(0x0600))
+  assert_true(skia_codepoint_is_grapheme_prepend(0x070F))
+  assert_false(skia_codepoint_is_grapheme_prepend(0x0628))
+  assert_false(skia_codepoint_is_grapheme_extend(0x0915))
+  assert_true(skia_codepoint_is_grapheme_extend(0x093F))
+  assert_true(skia_codepoint_is_grapheme_extend(0x094D))
+  assert_true(skia_codepoint_is_virama(0x094D))
+  assert_false(skia_codepoint_is_grapheme_extend(0x0937))
+
+  let devanagari_matra = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0915}\u{093F}B",
+    [0.0, 8.0, 14.0, 22.0, 30.0],
+  )
+  inspect(devanagari_matra.length(), content="5")
+  inspect(devanagari_matra[0], content="0")
+  inspect(devanagari_matra[1], content="8")
+  inspect(devanagari_matra[2], content="8")
+  inspect(devanagari_matra[3], content="22")
+  inspect(devanagari_matra[4], content="30")
+  assert_true(skia_test_carets_are_monotonic(devanagari_matra))
+
+  let devanagari_conjunct = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0915}\u{094D}\u{200D}\u{0937}B",
+    [0.0, 10.0, 14.0, 16.0, 20.0, 30.0, 38.0],
+  )
+  inspect(devanagari_conjunct.length(), content="7")
+  inspect(devanagari_conjunct[0], content="0")
+  inspect(devanagari_conjunct[1], content="10")
+  inspect(devanagari_conjunct[2], content="10")
+  inspect(devanagari_conjunct[3], content="10")
+  inspect(devanagari_conjunct[4], content="10")
+  inspect(devanagari_conjunct[5], content="30")
+  inspect(devanagari_conjunct[6], content="38")
+  assert_true(skia_test_carets_are_monotonic(devanagari_conjunct))
+
+  let devanagari_no_zwj_conjunct = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0915}\u{094D}\u{0937}B",
+    [0.0, 10.0, 14.0, 20.0, 30.0, 38.0],
+  )
+  inspect(devanagari_no_zwj_conjunct.length(), content="6")
+  inspect(devanagari_no_zwj_conjunct[0], content="0")
+  inspect(devanagari_no_zwj_conjunct[1], content="10")
+  inspect(devanagari_no_zwj_conjunct[2], content="10")
+  inspect(devanagari_no_zwj_conjunct[3], content="10")
+  inspect(devanagari_no_zwj_conjunct[4], content="30")
+  inspect(devanagari_no_zwj_conjunct[5], content="38")
+  assert_true(skia_test_carets_are_monotonic(devanagari_no_zwj_conjunct))
+
+  let arabic_marks = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0646}\u{0651}\u{064E}B",
+    [0.0, 9.0, 13.0, 15.0, 24.0, 31.0],
+  )
+  inspect(arabic_marks.length(), content="6")
+  inspect(arabic_marks[0], content="0")
+  inspect(arabic_marks[1], content="9")
+  inspect(arabic_marks[2], content="9")
+  inspect(arabic_marks[3], content="9")
+  inspect(arabic_marks[4], content="24")
+  inspect(arabic_marks[5], content="31")
+  assert_true(skia_test_carets_are_monotonic(arabic_marks))
+
+  let arabic_prepend = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0600}\u{0628}\u{0651}B",
+    [0.0, 8.0, 11.0, 14.0, 23.0, 31.0],
+  )
+  inspect(arabic_prepend.length(), content="6")
+  inspect(arabic_prepend[0], content="0")
+  inspect(arabic_prepend[1], content="8")
+  inspect(arabic_prepend[2], content="8")
+  inspect(arabic_prepend[3], content="8")
+  inspect(arabic_prepend[4], content="23")
+  inspect(arabic_prepend[5], content="31")
+  assert_true(skia_test_carets_are_monotonic(arabic_prepend))
+}
+
+///|
+test "skia fallback caret stabilization keeps Southeast and South Asian marks stable" {
+  assert_true(skia_codepoint_is_grapheme_extend(0x0E34))
+  assert_true(skia_codepoint_is_grapheme_extend(0x0EB4))
+  assert_true(skia_codepoint_is_grapheme_extend(0x0DCF))
+  assert_true(skia_codepoint_is_grapheme_extend(0x0DCA))
+  assert_true(skia_codepoint_is_grapheme_extend(0x17B6))
+  assert_true(skia_codepoint_is_grapheme_extend(0x17D2))
+  assert_true(skia_codepoint_is_grapheme_extend(0x1039))
+  assert_true(skia_codepoint_is_grapheme_extend(0x103A))
+  assert_true(skia_codepoint_is_virama(0x0DCA))
+  assert_true(skia_codepoint_is_virama(0x17D2))
+  assert_true(skia_codepoint_is_virama(0x1039))
+
+  let thai_mark = skia_stabilize_grapheme_cluster_carets("A\u{0E01}\u{0E34}B", [
+    0.0, 8.0, 13.0, 21.0, 29.0,
+  ])
+  inspect(thai_mark.length(), content="5")
+  inspect(thai_mark[0], content="0")
+  inspect(thai_mark[1], content="8")
+  inspect(thai_mark[2], content="8")
+  inspect(thai_mark[3], content="21")
+  inspect(thai_mark[4], content="29")
+  assert_true(skia_test_carets_are_monotonic(thai_mark))
+
+  let lao_mark = skia_stabilize_grapheme_cluster_carets("A\u{0E81}\u{0EB4}B", [
+    0.0, 8.0, 13.0, 21.0, 29.0,
+  ])
+  inspect(lao_mark.length(), content="5")
+  inspect(lao_mark[0], content="0")
+  inspect(lao_mark[1], content="8")
+  inspect(lao_mark[2], content="8")
+  inspect(lao_mark[3], content="21")
+  inspect(lao_mark[4], content="29")
+  assert_true(skia_test_carets_are_monotonic(lao_mark))
+
+  let sinhala_vowel = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0D9A}\u{0DCF}B",
+    [0.0, 9.0, 15.0, 24.0, 31.0],
+  )
+  inspect(sinhala_vowel.length(), content="5")
+  inspect(sinhala_vowel[0], content="0")
+  inspect(sinhala_vowel[1], content="9")
+  inspect(sinhala_vowel[2], content="9")
+  inspect(sinhala_vowel[3], content="24")
+  inspect(sinhala_vowel[4], content="31")
+  assert_true(skia_test_carets_are_monotonic(sinhala_vowel))
+
+  let sinhala_virama = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0D9A}\u{0DCA}\u{0DBB}B",
+    [0.0, 9.0, 13.0, 18.0, 25.0, 32.0],
+  )
+  inspect(sinhala_virama.length(), content="6")
+  inspect(sinhala_virama[0], content="0")
+  inspect(sinhala_virama[1], content="9")
+  inspect(sinhala_virama[2], content="9")
+  inspect(sinhala_virama[3], content="9")
+  inspect(sinhala_virama[4], content="25")
+  inspect(sinhala_virama[5], content="32")
+  assert_true(skia_test_carets_are_monotonic(sinhala_virama))
+
+  let khmer_vowel = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1780}\u{17B6}B",
+    [0.0, 9.0, 15.0, 24.0, 31.0],
+  )
+  inspect(khmer_vowel.length(), content="5")
+  inspect(khmer_vowel[0], content="0")
+  inspect(khmer_vowel[1], content="9")
+  inspect(khmer_vowel[2], content="9")
+  inspect(khmer_vowel[3], content="24")
+  inspect(khmer_vowel[4], content="31")
+  assert_true(skia_test_carets_are_monotonic(khmer_vowel))
+
+  let khmer_coeng = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1780}\u{17D2}\u{179A}B",
+    [0.0, 9.0, 13.0, 18.0, 25.0, 32.0],
+  )
+  inspect(khmer_coeng.length(), content="6")
+  inspect(khmer_coeng[0], content="0")
+  inspect(khmer_coeng[1], content="9")
+  inspect(khmer_coeng[2], content="9")
+  inspect(khmer_coeng[3], content="9")
+  inspect(khmer_coeng[4], content="25")
+  inspect(khmer_coeng[5], content="32")
+  assert_true(skia_test_carets_are_monotonic(khmer_coeng))
+
+  let myanmar_conjunct = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1000}\u{1039}\u{1001}B",
+    [0.0, 10.0, 14.0, 18.0, 25.0, 32.0],
+  )
+  inspect(myanmar_conjunct.length(), content="6")
+  inspect(myanmar_conjunct[0], content="0")
+  inspect(myanmar_conjunct[1], content="10")
+  inspect(myanmar_conjunct[2], content="10")
+  inspect(myanmar_conjunct[3], content="10")
+  inspect(myanmar_conjunct[4], content="25")
+  inspect(myanmar_conjunct[5], content="32")
+  assert_true(skia_test_carets_are_monotonic(myanmar_conjunct))
+
+  let myanmar_mark = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1000}\u{103A}B",
+    [0.0, 10.0, 14.0, 22.0, 30.0],
+  )
+  inspect(myanmar_mark.length(), content="5")
+  inspect(myanmar_mark[0], content="0")
+  inspect(myanmar_mark[1], content="10")
+  inspect(myanmar_mark[2], content="10")
+  inspect(myanmar_mark[3], content="22")
+  inspect(myanmar_mark[4], content="30")
+  assert_true(skia_test_carets_are_monotonic(myanmar_mark))
+}
+
+///|
+test "skia fallback caret stabilization keeps Hangul Jamo clusters stable" {
+  assert_true(skia_codepoint_is_hangul_l(0x1100))
+  assert_true(skia_codepoint_is_hangul_l(0xA960))
+  assert_true(skia_codepoint_is_hangul_v(0x1161))
+  assert_true(skia_codepoint_is_hangul_v(0xD7B0))
+  assert_true(skia_codepoint_is_hangul_t(0x11A8))
+  assert_true(skia_codepoint_is_hangul_t(0xD7CB))
+  assert_true(skia_codepoint_is_hangul_lv(0xAC00))
+  assert_true(skia_codepoint_is_hangul_lvt(0xAC01))
+  assert_false(skia_codepoint_is_hangul_cluster_codepoint(0x3131))
+
+  let modern_jamo = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1100}\u{1161}\u{11A8}B",
+    [0.0, 9.0, 13.0, 18.0, 26.0, 34.0],
+  )
+  inspect(modern_jamo.length(), content="6")
+  inspect(modern_jamo[0], content="0")
+  inspect(modern_jamo[1], content="9")
+  inspect(modern_jamo[2], content="9")
+  inspect(modern_jamo[3], content="9")
+  inspect(modern_jamo[4], content="26")
+  inspect(modern_jamo[5], content="34")
+  assert_true(skia_test_carets_are_monotonic(modern_jamo))
+
+  let extended_jamo = skia_stabilize_grapheme_cluster_carets(
+    "A\u{A960}\u{D7B0}\u{D7CB}B",
+    [0.0, 8.0, 12.0, 17.0, 25.0, 33.0],
+  )
+  inspect(extended_jamo.length(), content="6")
+  inspect(extended_jamo[0], content="0")
+  inspect(extended_jamo[1], content="8")
+  inspect(extended_jamo[2], content="8")
+  inspect(extended_jamo[3], content="8")
+  inspect(extended_jamo[4], content="25")
+  inspect(extended_jamo[5], content="33")
+  assert_true(skia_test_carets_are_monotonic(extended_jamo))
+
+  let lv_plus_trailing = skia_stabilize_grapheme_cluster_carets(
+    "A\u{AC00}\u{11A8}B",
+    [0.0, 9.0, 14.0, 24.0, 31.0],
+  )
+  inspect(lv_plus_trailing.length(), content="5")
+  inspect(lv_plus_trailing[0], content="0")
+  inspect(lv_plus_trailing[1], content="9")
+  inspect(lv_plus_trailing[2], content="9")
+  inspect(lv_plus_trailing[3], content="24")
+  inspect(lv_plus_trailing[4], content="31")
+  assert_true(skia_test_carets_are_monotonic(lv_plus_trailing))
+}
+
+///|
 test "skia layout width follows caret source" {
   inspect(skia_layout_width_from_carets([0.0, 4.0, 9.0]), content="9")
   inspect(skia_layout_width_from_carets([]), content="0")
@@ -893,7 +2245,7 @@ test "skia text system keeps unicode caret coverage" {
 
 ///|
 test "skia text system keeps representative emoji caret coverage" {
-  let system = skia_text_system(SkiaFontResolution::SystemFontMgr)
+  let system = skia_text_system(resolution=SkiaFontResolution::SystemFontMgr)
   for text in ["\u{1F642}", "\u{2615}\u{FE0F}", "\u{1F469}\u{200D}\u{1F373}"] {
     let input = @core.TextLayoutInput::new(
       text~,

@@ -1184,6 +1184,34 @@ pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : Stri
 pub fn RouteFocusStore::restore(Self, AppRuntime, String) -> Bool
 pub fn RouteFocusStore::restore_location(Self, AppRuntime, RouteLocation) -> Bool
 
+pub(all) struct RouteHistoryEntry {
+  route : String
+  title : String
+  source : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteHistoryEntry::location(Self) -> RouteLocation
+pub fn RouteHistoryEntry::new(route~ : String, title? : String, source? : String) -> Self
+
+pub(all) struct RouteHistoryState {
+  entries : Array[RouteHistoryEntry]
+  cursor : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteHistoryState::back(Self) -> Self
+pub fn RouteHistoryState::can_go_back(Self) -> Bool
+pub fn RouteHistoryState::can_go_forward(Self) -> Bool
+pub fn RouteHistoryState::current(Self) -> RouteLocation
+pub fn RouteHistoryState::current_entry(Self) -> RouteHistoryEntry?
+pub fn RouteHistoryState::current_route(Self) -> String
+pub fn RouteHistoryState::forward(Self) -> Self
+pub fn RouteHistoryState::from_deep_link(String, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::from_routes(routes~ : Array[String], cursor? : Int, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::from_snapshot(RouterSnapshot, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::new(initial? : RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::push(Self, RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::replace(Self, RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::restore_router(Self, RouterState) -> Unit
+pub fn RouteHistoryState::router_snapshot(Self) -> RouterSnapshot
+
 pub(all) struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]

@@ -158,6 +158,27 @@ test "host capability summary combines service input and window readiness" {
   inspect(summary.async_services, content="true")
   inspect(summary.services.enabled_labels().length(), content="4")
   assert_true(summary.input.enabled_labels().any(label => label == "drag/drop"))
+  let preflight = summary.preflight_fields()
+  assert_true(preflight.contains("host=Web host"))
+  assert_true(
+    preflight.contains(
+      "host_services=clipboard,file dialogs,open URL,system theme",
+    ),
+  )
+  assert_true(preflight.contains("clipboard=ready"))
+  assert_true(preflight.contains("menu_service=gap"))
+  assert_true(preflight.contains("file_dialogs=ready"))
+  assert_true(preflight.contains("open_url=ready"))
+  assert_true(preflight.contains("system_theme=ready"))
+  assert_true(preflight.contains("async_services=ready"))
+  assert_true(preflight.contains("window_lifecycle=ready"))
+  assert_true(preflight.contains("multi_window=ready"))
+  assert_true(preflight.contains("text_input=ready"))
+  assert_true(preflight.contains("ime=gap"))
+  assert_true(preflight.contains("drag_drop=ready"))
+  assert_true(preflight.contains("native_context_menu=gap"))
+  assert_true(preflight.contains("host_modal=ready"))
+  assert_true(preflight.contains("native_accessibility=gap"))
 }
 
 ///|
@@ -168,6 +189,13 @@ test "host capability summary reports unavailable host" {
   inspect(summary.input_count(), content="0")
   inspect(summary.has_required_app_basics(), content="false")
   inspect(summary.services.enabled_labels().length(), content="0")
+  let preflight = summary.preflight_fields()
+  assert_true(preflight.contains("host=Unavailable host"))
+  assert_true(preflight.contains("host_services=none"))
+  assert_true(preflight.contains("host_input=none"))
+  assert_true(preflight.contains("clipboard=gap"))
+  assert_true(preflight.contains("window_lifecycle=gap"))
+  assert_true(preflight.contains("native_accessibility=gap"))
 }
 
 ///|

@@ -6,9 +6,7 @@ fn ShowcaseModel::catalog_shell(
   offset : Double,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
-  let router = @core.RouterState::new(
-    initial=@core.RouteLocation::new(path=self.selected_section),
-  )
+  let router = @core.RouterState::new(initial=self.route_history.current())
   split_view(
     primary=self.sidebar(theme, metrics),
     detail=@views.router_stack(

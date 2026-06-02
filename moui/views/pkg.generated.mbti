@@ -219,6 +219,8 @@ pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (Str
 
 pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double, on_drag? : ((Double) -> Msg)?) -> @core.View[Msg]
 
+pub fn[Msg] resizable_split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], primary_width~ : Double, detail_width? : Double, height? : Double, min_primary_width? : Double, max_primary_width? : Double, spacing? : Double, handle_width? : Double, theme? : @core.Theme, on_drag~ : (Double) -> Msg) -> @core.View[Msg]
+
 pub fn[Msg] responsive_grid(Array[@core.View[Msg]], width? : Double, min_column_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] rich_text_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
@@ -369,6 +371,14 @@ pub(all) struct ChoiceItem {
   label : String
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct ColumnOrderState {
+  order : Array[String]
+}
+pub fn ColumnOrderState::move_after(Self, String, String) -> Self
+pub fn ColumnOrderState::move_before(Self, String, String) -> Self
+pub fn ColumnOrderState::new(order? : Array[String]) -> Self
+pub fn ColumnOrderState::ordered_columns(Self, Array[TableColumn]) -> Array[TableColumn]
+
 pub(all) struct ColumnVisibilityState {
   visible : Array[String]
   locked : Array[String]
@@ -377,6 +387,16 @@ pub fn ColumnVisibilityState::is_locked(Self, String) -> Bool
 pub fn ColumnVisibilityState::is_visible(Self, String) -> Bool
 pub fn ColumnVisibilityState::new(visible~ : Array[String], locked? : Array[String]) -> Self
 pub fn ColumnVisibilityState::set_visible(Self, String, Bool) -> Self
+
+pub(all) struct ColumnWidthState {
+  widths : Array[TableColumn]
+  min_width : Double
+  max_width : Double
+}
+pub fn ColumnWidthState::apply(Self, Array[TableColumn]) -> Array[TableColumn]
+pub fn ColumnWidthState::new(widths? : Array[TableColumn], min_width? : Double, max_width? : Double) -> Self
+pub fn ColumnWidthState::resize(Self, String, Double) -> Self
+pub fn ColumnWidthState::width_for(Self, String, Double) -> Double
 
 pub(all) struct CommandMenuSection {
   title : String

@@ -12,8 +12,8 @@ paths, or abstractions that only preserve old shapes.
 ## Project Shape
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
-  draw command model, opaque public `View[Msg]`, typed events, `Program`, and
-  `Effect`.
+  draw command model, opaque public `View[Msg]`, typed events, app-owned
+  route/history helpers, `Program`, and `Effect`.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
@@ -46,7 +46,8 @@ paths, or abstractions that only preserve old shapes.
   `linux_cosmic` entrypoints for explicit Moon Cosmic text-provider comparison.
   Showcase has `macos_skia`, `windows_skia`, and `linux_skia` entrypoints for
   explicitly selecting the native Skia renderer. Markdown Editor has
-  `macos_skia` for its explicit native Skia renderer entrypoint.
+  `macos_skia`, `windows_skia`, and `linux_skia` for explicit native Skia
+  renderer entrypoints.
 
 ## Local Dependencies
 
@@ -209,7 +210,18 @@ proof until a matching host records passed observations and artifacts. The
 manifest is schema v2 and mirrors the local window recorder's monitor/cursor
 field as `monitorCursor`; native passed evidence must set it to `yes`, while
 Web browser evidence may leave it pending because CDP does not prove native
-monitor/current-monitor or cursor behavior. The Web runtime handoff validator
+monitor/current-monitor or cursor behavior. Native platform entries also carry
+`skiaEvidence`, which separately records Skia provider/preflight commands,
+fallback-unavailable checks, real-renderer smoke, and Showcase/Markdown
+first-frame status. A native platform entry cannot be marked `passed` unless
+that native Skia evidence is also `passed`; a passed `skiaEvidence` block is
+still Skia-route evidence, not full platform service/runtime proof by itself.
+Native Skia provider preflight summaries also audit the renderer-neutral
+`HostWindowRenderer` bridge used to forward Skia text-system, image-resource,
+present-count, and disposal diagnostics. Treat those bridge fields as
+provider/package evidence, not as proof that a matching platform window
+presented a frame.
+The Web runtime handoff validator
 checks static HTML/runtime/wasm delivery for Showcase and Markdown Editor, not
 browser WebGPU presentation. Use
 `scripts/record-web-runtime-presentation.mjs` and
@@ -254,10 +266,32 @@ temporarily wires the resolved link flags into the local `skia_mbt` and MoUI
 packages, runs the renderer pixel smoke, builds `examples/showcase/macos_skia`,
 and restores the package files. Pass `--run-showcase-smoke` to also launch the
 Showcase entrypoint, verify that the macOS Skia renderer presents its first
-frame, and exit automatically. Pass `--write-local-config` only when you want to
-persist local absolute Skia paths so direct commands such as
-`moon run examples/showcase/macos_skia --target native` use real Skia; keep those
-machine-local `moon.pkg` edits out of commits.
+frame, and exit automatically. Pass `--run-markdown-smoke` to add the same
+first-frame check for `examples/markdown_editor/macos_skia`. With explicit
+`--smoke-log`, `--showcase-log`, and `--markdown-log` paths under
+`artifacts/platform-evidence/macos/`, pass `--record-platform-evidence
+artifacts/conformance/platform-runtime-evidence.json` to update the macOS
+`skiaEvidence` block after a successful full smoke; that still records Skia
+route evidence only. Pass `--write-local-config` only when you want to persist
+local absolute Skia paths so direct commands such as
+`moon run examples/showcase/macos_skia --target native` or
+`moon run examples/markdown_editor/macos_skia --target native` use real Skia;
+keep those machine-local `moon.pkg` edits out of commits. Normal macOS Skia
+entrypoints default to the system `FontMgr` text path; first-frame smoke
+entrypoints explicitly select `EmptyTypeface` only while their
+exit-after-first-present flag is set.
+Windows/Linux Skia entrypoints expose matching-host first-frame flags
+(`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
+`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
+`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`, and
+`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`) and follow the same
+smoke-only `EmptyTypeface` switch; passed artifacts still belong to the
+matching host that produced them. After a matching host writes provider,
+fallback-unavailable, renderer-smoke, Showcase first-frame, and Markdown Editor
+first-frame logs under `artifacts/platform-evidence/<platform>/`, use
+`node scripts/record-native-skia-evidence.mjs` to validate those markers and
+update only the platform's `skiaEvidence` block; full platform runtime status
+still requires the broader platform observations.
 
 Windows native uses the MSVC WGPU toolchain path: Visual Studio C++ build
 tools, vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode with the official

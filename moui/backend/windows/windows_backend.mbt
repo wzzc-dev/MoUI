@@ -40,6 +40,7 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 ///|
 pub struct WindowsHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
+  priv exit_after_first_present : Bool
 }
 
 ///|
@@ -64,6 +65,7 @@ struct WindowsApp {
   platform_slots : WindowsWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
+  mut exit_after_first_present : Bool
 }
 
 ///|
@@ -82,8 +84,9 @@ priv struct WindowsWindowPlatformSlots {
 ///|
 pub fn WindowsHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  exit_after_first_present? : Bool = false,
 ) -> WindowsHostAppOptions {
-  { scene_resolver, }
+  { scene_resolver, exit_after_first_present }
 }
 
 ///|
@@ -125,6 +128,7 @@ pub fn run_app_with_renderer_provider(
     platform_slots: WindowsWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
+    exit_after_first_present: options.exit_after_first_present,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   event_loop.run_app(app)
@@ -523,7 +527,10 @@ pub impl @win.ApplicationHandler for WindowsApp with fn window_event(
       self.dispatch_window_event(window_id, event)
     @window_core.WindowEvent::ModifiersChanged(_) =>
       self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::RedrawRequested => self.redraw_window(window_id)
+    @window_core.WindowEvent::RedrawRequested =>
+      if self.redraw_window(window_id) {
+        event_loop.exit()
+      }
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -551,7 +558,7 @@ fn WindowsApp::dispatch_pointer_or_context_menu(
 fn WindowsApp::redraw_window(
   self : WindowsApp,
   window_id : @host.HostWindowId,
-) -> Unit {
+) -> Bool {
   match
     (
       self.platform_slots.lookup_host(window_id),
@@ -563,8 +570,17 @@ fn WindowsApp::redraw_window(
       platform_slot.renderer.render(runtime_slot.driver.draw_commands())
       runtime_slot.driver.finish_redraw()
       self.sync_text_input_session()
+      if self.exit_after_first_present &&
+        platform_slot.renderer.present_count() > 0 {
+        println("Windows renderer presented first frame; exiting by request")
+        self.exit_after_first_present = false
+        self.dispose_window(window_id)
+        true
+      } else {
+        false
+      }
     }
-    _ => ()
+    _ => false
   }
 }
 

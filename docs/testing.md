@@ -77,14 +77,58 @@ not part of every inner-loop check.
 Renderer provider packages are platform-specific. Use the current-host helper
 above for normal backend/provider validation instead of trying to run every
 `moui/backend/<platform>/{wgpu,skia}` test package on every machine.
+The macOS, Windows, and Linux Skia provider packages expose
+`macos_skia_provider_preflight_summary()`,
+`windows_skia_provider_preflight_summary()`, and
+`linux_skia_provider_preflight_summary()` for package-level audits of renderer
+availability, `skia_mbt/native` availability, selected font resolution, the
+presenter path, the renderer-neutral `HostWindowRenderer` bridge used to
+forward the Skia text system, image-resource diagnostics, present count, and
+disposal hooks, host service/input readiness, clipboard/menu/file-dialog/open
+URL/system-theme/async-service readiness, window/multi-window readiness,
+text-input/IME/drag-drop readiness, native context-menu readiness, host-modal
+file-dialog readiness, native accessibility status, and whether the
+matching-host first-frame smoke option is enabled. Their tests prove
+provider/preflight wiring only. macOS runtime
+presentation still requires the real-Skia renderer smoke or first-frame
+Showcase/Markdown Editor runs; Windows Skia tests require a Windows/MSVC host
+because the Win32 stubs include `windows.h`; Linux Skia tests can compile where
+the local Linux window package and toolchain are available, but real
+presentation still requires a matching Wayland runtime. Windows and Linux Skia
+entrypoints expose the same auto-exit path through
+`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`,
+`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`,
+`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1`, and
+`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1`; passed logs from
+those runs are matching-host runtime evidence, not provider evidence.
+`node scripts/validate-skia-entrypoints.mjs` statically audits the native Skia
+example entrypoint shape for Showcase, Markdown Editor, and Mo Workbench: each
+entrypoint must import `render/skia`, the matching `backend/<platform>/skia`
+provider, its shared app package, the smoke-only first-frame environment flag,
+and the `EmptyTypeface`/`SystemFontMgr` selection. That guard is package/wiring
+evidence only; runtime presentation still needs the smoke or matching-host
+commands above.
+After a matching host has produced provider, fallback-unavailable, renderer
+smoke, Showcase first-frame, and Markdown Editor first-frame logs under
+`artifacts/platform-evidence/<platform>/`, use
+`node scripts/record-native-skia-evidence.mjs` to validate those log markers and
+update only that platform's `skiaEvidence` block. The helper intentionally
+leaves the broader platform runtime `status` unchanged; use the full platform
+recorder below only after service/input/window observations have also been
+collected.
+The Skia renderer package also exposes `skia_text_system()` for diagnostic text
+contract checks; `moon test moui/tests/text_conformance/native --target native`
+includes that path as measurement evidence, not as platform-window runtime
+evidence.
 
-On Linux, the platform example build step covers both Showcase native
-entrypoints:
+On Linux, the platform example build step covers Showcase native entrypoints
+plus the Markdown Editor Skia entrypoint:
 
 ```sh
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
 moon build examples/showcase/linux_skia --target native
+moon build examples/markdown_editor/linux_skia --target native
 ```
 
 Runtime validation requires a Wayland compositor and Vulkan stack:
@@ -93,6 +137,7 @@ Runtime validation requires a Wayland compositor and Vulkan stack:
 moon run examples/showcase/linux --target native
 moon run examples/showcase/linux_cosmic --target native
 moon run examples/showcase/linux_skia --target native
+moon run examples/markdown_editor/linux_skia --target native
 ```
 
 ## Public API Review
@@ -139,6 +184,8 @@ node --check scripts/validate-platform-evidence-manifest.mjs
 node scripts/test-validate-platform-evidence-manifest.mjs
 node --check scripts/record-platform-evidence-manifest.mjs
 node scripts/test-record-platform-evidence-manifest.mjs
+node --check scripts/record-native-skia-evidence.mjs
+node scripts/test-record-native-skia-evidence.mjs
 node --check scripts/validate-web-runtime-handoff.mjs
 node scripts/test-validate-web-runtime-handoff.mjs
 node --check scripts/validate-web-runtime-handoff-manifest.mjs
@@ -190,6 +237,25 @@ moon build examples/showcase/web_wasm --target wasm-gc
 
 This renderer slice includes the native Skia raster package at
 `moui/render/skia`; real presenter pixels still require the opt-in Skia smoke.
+On macOS, use `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
+--run-markdown-smoke` when you need renderer pixels plus first-frame Showcase
+and Markdown Editor runtime evidence with temporary real-Skia link flags. Add
+explicit log paths and `--record-platform-evidence` when you want the helper to
+update the macOS `skiaEvidence` block in the platform evidence manifest after a
+successful run:
+
+```sh
+scripts/macos-skia-renderer-smoke.sh \
+  --run-showcase-smoke \
+  --run-markdown-smoke \
+  --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
+  --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
+  --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
+  --record-platform-evidence artifacts/conformance/platform-runtime-evidence.json
+```
+
+That manifest update records Skia route evidence only; keep the broader macOS
+platform entry pending until full platform-service observations are collected.
 
 ## Conformance Ownership Layers
 
@@ -232,9 +298,11 @@ before it grows broad platform claims:
   roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, async host-service completion, window lifecycle
-  registry behavior, devtool snapshots, render inspector scope diagnostics,
-  frame-profile counters, guidance freshness, and example builds. Showcase app
-  tests also assert that the Diagnostics route surfaces render command and
+  registry behavior, app-owned route history/deep-link state, devtool
+  snapshots, render inspector scope diagnostics, frame-profile counters,
+  guidance freshness, and example builds. Showcase app tests also assert that
+  the Navigation Shell surfaces route history state and app-sampled route
+  transition state, and that the Diagnostics route surfaces render command and
   render-scope inspector counters from the shared inspector snapshot.
 - Text system: stable fallback/provider/editor invariants for CJK, emoji,
   mixed bidi, caret positions, selection, and IME anchors, plus opt-in
@@ -268,9 +336,16 @@ macOS service tests on Darwin, runs Linux service tests only when the local
 window checkout has generated Wayland protocol sources available, and writes a
 validated platform runtime evidence manifest at
 `artifacts/conformance/platform-runtime-evidence.json`. That manifest is a
-matching-host evidence contract: pending entries are not runtime proof, and a
-passed Windows or Linux entry must name the matching host, commands, MoUI
-consumer run, observations, and artifacts. `--golden` builds the Showcase Web
+matching-host evidence contract for Showcase and Markdown Editor targets,
+including the native Skia entrypoints: pending entries are not runtime proof,
+and a passed Windows or Linux entry must name the matching host, commands, MoUI
+consumer run, observations, and artifacts. Native entries also include a
+`skiaEvidence` block for the Skia-first route: provider/preflight commands,
+fallback-unavailable checks, real renderer smoke, Showcase first-frame, and
+Markdown Editor first-frame. `skiaEvidence.status=passed` is native Skia route
+evidence, not full platform-service proof by itself; however a native platform
+entry cannot be marked `passed` unless its Skia evidence is also `passed`.
+`--golden` builds the Showcase Web
 wasm-gc target as the canonical screenshot source. `--bench` builds the heavier
 example targets, validates the Web runtime handoff for Showcase and Markdown
 Editor, and records the expected measurement set: startup, frame time,
@@ -308,7 +383,30 @@ set mirrors the local window fork's recorder fields, including native
 monitor/cursor evidence as `monitorCursor`. For native passed entries,
 `monitorCursor` must be `yes`; the Web browser-session path may keep it
 `pending` because CDP evidence does not prove native monitor/current-monitor or
-cursor probes.
+cursor probes. Native platform entries also carry `skiaEvidence`; use
+`--skia-status`, repeated `--skia-set`, `--skia-artifact`, and `--skia-note`
+when recording first-frame Skia smoke results. Keep the overall platform
+`status` pending when only the Skia first-frame route passed and broader
+platform-service observations are still pending.
+
+For Windows/Linux matching-host Skia route evidence, the convenience wrapper
+checks the expected log markers before delegating to the manifest recorder:
+
+```sh
+node scripts/record-native-skia-evidence.mjs \
+  artifacts/conformance/platform-runtime-evidence.json \
+  windows \
+  --host "Windows MSVC CI" \
+  --provider-preflight-log artifacts/platform-evidence/windows/skia-provider.log \
+  --fallback-unavailable-log artifacts/platform-evidence/windows/skia-fallback-unavailable.log \
+  --renderer-smoke-log artifacts/platform-evidence/windows/skia-renderer-smoke.log \
+  --showcase-log artifacts/platform-evidence/windows/showcase-skia-first-frame.log \
+  --markdown-log artifacts/platform-evidence/windows/markdown-skia-first-frame.log
+```
+
+Use `linux` plus the Linux artifact directory on a Wayland host. Supplying only
+some logs records a partial `skiaEvidence` block and leaves omitted Skia
+observations pending.
 
 When collecting release evidence on a configured host, update or regenerate the
 platform runtime evidence manifest with that host's results and validate it:
@@ -337,7 +435,17 @@ node scripts/record-platform-evidence-manifest.mjs \
   --set cleanShutdown=yes \
   --artifact artifacts/platform-evidence/windows/window-smoke.md \
   --artifact artifacts/platform-evidence/windows/showcase-run.log \
-  --note "matching-host Windows evidence observed"
+  --note "matching-host Windows evidence observed" \
+  --skia-status passed \
+  --skia-set providerPreflight=yes \
+  --skia-set fallbackUnavailable=yes \
+  --skia-set realRendererSmoke=yes \
+  --skia-set showcaseFirstFrame=yes \
+  --skia-set markdownFirstFrame=yes \
+  --skia-artifact artifacts/platform-evidence/windows/skia-provider.log \
+  --skia-artifact artifacts/platform-evidence/windows/showcase-skia-first-frame.log \
+  --skia-artifact artifacts/platform-evidence/windows/markdown-skia-first-frame.log \
+  --skia-note "matching-host Windows Skia first-frame evidence observed"
 node scripts/validate-platform-evidence-manifest.mjs \
   artifacts/conformance/platform-runtime-evidence.json
 node scripts/validate-platform-evidence-manifest.mjs \
@@ -376,7 +484,10 @@ Manual `workflow_dispatch` inputs add heavier coverage when needed:
 
 - `run_slow_native_examples` builds current-platform native examples in the
   macOS packaging and Linux platform jobs.
-- `run_real_skia_smoke` runs the opt-in macOS real Skia renderer smoke.
+- `run_real_skia_smoke` runs the opt-in macOS real Skia renderer smoke; use
+  the local helper's `--run-showcase-smoke --run-markdown-smoke` flags when a
+  handoff also needs current-host first-frame Showcase and Markdown Editor
+  runtime evidence.
 
 CI still does not run browser screenshot automation or pixel diffing; the
 golden job remains a build-and-capture handoff until a browser runner is added.

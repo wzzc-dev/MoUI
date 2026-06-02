@@ -61,6 +61,8 @@ pub(all) struct DataTableModel {
   selected_row : Int
   selected_rows : @views.SelectionState
   visible_columns : @views.ColumnVisibilityState
+  column_widths : @views.ColumnWidthState
+  column_order : @views.ColumnOrderState
   expanded : Array[String]
   pagination : @views.PaginationState
   sort : @views.DataSortState
@@ -79,6 +81,8 @@ pub(all) enum DataTableMsg {
   ArchiveSelection
   ExportSelection
   ToggleColumnVisibility(String, Bool)
+  ResizeColumn(String, Double)
+  MoveColumnBefore(String, String)
   ToggleTree(String)
   SortBy(DataSortKey)
   NextPage
@@ -118,6 +122,14 @@ pub fn DataTableModel::new() -> DataTableModel {
       visible=["project", "status", "owner", "priority"],
       locked=["project"],
     ),
+    column_widths: @views.ColumnWidthState::new(
+      widths=data_table_columns(),
+      min_width=86.0,
+      max_width=260.0,
+    ),
+    column_order: @views.ColumnOrderState::new(order=[
+      "project", "status", "owner", "priority",
+    ]),
     expanded: ["teams"],
     pagination: @views.PaginationState::new(page=0, page_size=3, total_count=6),
     sort: @views.DataSortState::new(column="project"),
@@ -175,6 +187,18 @@ pub fn DataTableModel::update(
       }
     ToggleColumnVisibility(id, visible) =>
       { ..self, visible_columns: self.visible_columns.set_visible(id, visible) }
+    ResizeColumn(id, width) =>
+      {
+        ..self,
+        column_widths: self.column_widths.resize(id, width),
+        last_action: "Resized column " + id,
+      }
+    MoveColumnBefore(id, before) =>
+      {
+        ..self,
+        column_order: self.column_order.move_before(id, before),
+        last_action: "Moved column " + id,
+      }
     ToggleTree(id) => { ..self, expanded: toggle_id(self.expanded, id) }
     SortBy(key) =>
       {
@@ -449,6 +473,7 @@ fn DataTableModel::data_panel(
   self : DataTableModel,
   theme : @core.Theme,
 ) -> @core.View[DataTableMsg] {
+  let project_width = self.column_widths.width_for("project", 180.0)
   surface(
     column(
       [
@@ -494,6 +519,35 @@ fn DataTableModel::data_panel(
           on_clear=Some(ClearSelection),
           theme~,
           width=640.0,
+        ),
+        row(
+          [
+            button(
+              "Widen Project",
+              on_click=ResizeColumn("project", project_width + 24.0),
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=136.0,
+              height=34.0,
+            ),
+            button(
+              "Priority first",
+              on_click=MoveColumnBefore("priority", "project"),
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=128.0,
+              height=34.0,
+            ),
+            text(
+              "Project width \{project_width}",
+              role=@views.TextRole::Caption,
+              theme~,
+              width=170.0,
+              height=28.0,
+            ),
+          ],
+          spacing=theme.spacing_scale.sm,
+          align=@views.CrossAlign::Center,
         ),
         self.state_or_table(theme),
         pagination(
@@ -687,14 +741,22 @@ fn data_table_columns() -> Array[@views.TableColumn] {
 fn DataTableModel::visible_table_columns(
   self : DataTableModel,
 ) -> Array[@views.TableColumn] {
+  let ordered_columns = self.column_order.ordered_columns(data_table_columns())
+  let sized_columns = self.column_widths.apply(ordered_columns)
   let columns : Array[@views.TableColumn] = []
-  for column in data_table_columns() {
+  for column in sized_columns {
     if self.visible_columns.is_visible(column.id) {
       columns.push(column)
     }
   }
   if columns.length() == 0 {
-    columns.push(table_column(id="project", label="Project", width=180.0))
+    columns.push(
+      table_column(
+        id="project",
+        label="Project",
+        width=self.column_widths.width_for("project", 180.0),
+      ),
+    )
   }
   columns
 }

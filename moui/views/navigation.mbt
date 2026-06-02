@@ -397,6 +397,53 @@ pub fn[Msg] split_view(
 }
 
 ///|
+pub fn[Msg] resizable_split_view(
+  primary~ : @core.View[Msg],
+  detail~ : @core.View[Msg],
+  primary_width~ : Double,
+  detail_width? : Double = 480.0,
+  height? : Double = 320.0,
+  min_primary_width? : Double = 160.0,
+  max_primary_width? : Double = 420.0,
+  spacing? : Double = @core.Theme::default().spacing_scale.sm,
+  handle_width? : Double = 8.0,
+  theme? : @core.Theme = @core.Theme::default(),
+  on_drag~ : (Double) -> Msg,
+) -> @core.View[Msg] {
+  let width = navigation_clamp_double(
+    primary_width, min_primary_width, max_primary_width,
+  )
+  let handle = surface(
+      empty(),
+      width=handle_width,
+      height~,
+      background=theme.palette.primary.multiply_alpha(0.38),
+      corner_radius=handle_width / 2.0,
+      theme~,
+      padding=0.0,
+    )
+    .accessibility_label("Split resize handle")
+    .on_drag(event => {
+      on_drag(
+        navigation_clamp_double(
+          width + event.translation.x,
+          min_primary_width,
+          max_primary_width,
+        ),
+      )
+    })
+  row(
+    [
+      primary.frame(width~, height~),
+      handle,
+      detail.frame(width=detail_width, height~),
+    ],
+    spacing~,
+    align=CrossAlign::Start,
+  ).semantics_role(@core.SemanticsRole::Group)
+}
+
+///|
 pub fn[Msg] master_detail(
   master~ : @core.View[Msg],
   detail~ : @core.View[Msg],
@@ -511,6 +558,21 @@ fn views_max_int(a : Int, b : Int) -> Int {
     a
   } else {
     b
+  }
+}
+
+///|
+fn navigation_clamp_double(
+  value : Double,
+  min : Double,
+  max : Double,
+) -> Double {
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
   }
 }
 

@@ -27,6 +27,79 @@ const passedObservations = Object.fromEntries(
   Object.keys(pendingObservations).map(key => [key, "yes"]),
 );
 
+const pendingSkiaObservations = {
+  providerPreflight: "pending",
+  fallbackUnavailable: "pending",
+  realRendererSmoke: "pending",
+  showcaseFirstFrame: "pending",
+  markdownFirstFrame: "pending",
+};
+
+const passedSkiaObservations = Object.fromEntries(
+  Object.keys(pendingSkiaObservations).map(key => [key, "yes"]),
+);
+
+const skiaEvidence = name => {
+  if (name === "macos") {
+    return {
+      status: "pending",
+      boundary:
+        "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named macOS host.",
+      providerCommands: [
+        "moon test moui/render/skia --target native",
+        "moon test moui/backend/macos/skia --target native",
+      ],
+      runtimeSmokeCommands: [
+        "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke",
+      ],
+      observations: { ...pendingSkiaObservations },
+      artifacts: ["artifacts/platform-evidence/macos/README.md"],
+      notes: ["macOS Skia runtime evidence pending"],
+    };
+  }
+  if (name === "windows") {
+    return {
+      status: "pending",
+      boundary:
+        "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Windows/MSVC host.",
+      providerCommands: [
+        "moon test moui/render/skia --target native",
+        "moon test moui/backend/windows/skia --target native",
+        "build_windows_msvc.ps1 -Package examples/showcase/windows_skia",
+        "build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia",
+      ],
+      runtimeSmokeCommands: [
+        "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/windows_skia --target native",
+        "MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/markdown_editor/windows_skia --target native",
+      ],
+      observations: { ...pendingSkiaObservations },
+      artifacts: ["artifacts/platform-evidence/windows/README.md"],
+      notes: ["Windows Skia runtime evidence matching-host pending"],
+    };
+  }
+  if (name === "linux") {
+    return {
+      status: "pending",
+      boundary:
+        "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Linux Wayland host.",
+      providerCommands: [
+        "moon test moui/render/skia --target native",
+        "moon test moui/backend/linux/skia --target native",
+        "moon build examples/showcase/linux_skia --target native",
+        "moon build examples/markdown_editor/linux_skia --target native",
+      ],
+      runtimeSmokeCommands: [
+        "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/linux_skia --target native",
+        "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/markdown_editor/linux_skia --target native",
+      ],
+      observations: { ...pendingSkiaObservations },
+      artifacts: ["artifacts/platform-evidence/linux/README.md"],
+      notes: ["Linux Skia runtime evidence matching-host pending"],
+    };
+  }
+  return undefined;
+};
+
 const baseEntry = ({
   name,
   host,
@@ -43,6 +116,7 @@ const baseEntry = ({
   windowEvidenceCommand: `.local_repos/window/scripts/record_moui_evidence.sh ${name} --status pending`,
   consumerCommand: "pending",
   observations: { ...pendingObservations },
+  ...(skiaEvidence(name) ? { skiaEvidence: skiaEvidence(name) } : {}),
   artifacts: [`artifacts/platform-evidence/${name}/README.md`],
   notes: ["matching-host runtime evidence pending"],
 });
@@ -77,16 +151,21 @@ const validManifest = {
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/macos --target native",
+        "moon build examples/showcase/macos_skia --target native",
         "moon build examples/markdown_editor/macos --target native",
+        "moon build examples/markdown_editor/macos_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/macos --target native",
+        "moon run examples/showcase/macos_skia --target native",
         "moon run examples/markdown_editor/macos --target native",
+        "moon run examples/markdown_editor/macos_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/macos",
         "examples/showcase/macos_skia",
         "examples/markdown_editor/macos",
+        "examples/markdown_editor/macos_skia",
       ],
     }),
     baseEntry({
@@ -95,16 +174,21 @@ const validManifest = {
       routineCommands: [
         "moon test moui/backend/windows --target native",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/showcase/windows -BuildOnly",
+        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
+        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\package_windows_app_msvc.ps1 -Package examples/showcase/windows",
       ],
       runtimeEvidenceCommands: [
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }\"",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"",
       ],
       exampleTargets: [
         "examples/showcase/windows",
         "examples/showcase/windows_skia",
         "examples/markdown_editor/windows",
+        "examples/markdown_editor/windows_skia",
       ],
     }),
     baseEntry({
@@ -114,15 +198,18 @@ const validManifest = {
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux --target native",
         "moon build examples/showcase/linux_skia --target native",
+        "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/linux --target native",
         "moon run examples/showcase/linux_skia --target native",
+        "moon run examples/markdown_editor/linux_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/linux",
         "examples/showcase/linux_cosmic",
         "examples/showcase/linux_skia",
+        "examples/markdown_editor/linux_skia",
       ],
     }),
   ],
@@ -184,6 +271,17 @@ const windowsPassed = {
             ".local_repos/window/scripts/record_moui_evidence.sh windows --status passed --host 'Windows MSVC CI'",
           consumerCommand: "moon run examples/showcase/windows --target native",
           observations: { ...passedObservations },
+          skiaEvidence: {
+            ...entry.skiaEvidence,
+            status: "passed",
+            observations: { ...passedSkiaObservations },
+            artifacts: [
+              "artifacts/platform-evidence/windows/skia-provider.log",
+              "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
+              "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
+            ],
+            notes: ["matching-host Windows Skia first-frame evidence observed"],
+          },
           artifacts: [
             "artifacts/platform-evidence/windows/window-smoke.md",
             "artifacts/platform-evidence/windows/showcase-run.log",
@@ -236,6 +334,45 @@ expectFail(
   "passed evidence requires all observations",
   runValidator(writeFixture("incomplete-passed.json", incompletePassed)),
   "observations.textInput must be yes when status is passed",
+);
+
+const missingSkiaEvidence = {
+  ...validManifest,
+  platforms: validManifest.platforms.map(entry =>
+    entry.name === "linux"
+      ? Object.fromEntries(
+          Object.entries(entry).filter(([key]) => key !== "skiaEvidence"),
+        )
+      : entry,
+  ),
+};
+expectFail(
+  "native entries require skia evidence",
+  runValidator(writeFixture("missing-skia-evidence.json", missingSkiaEvidence)),
+  "skiaEvidence must be an object for native Skia evidence",
+);
+
+const platformPassedWithoutSkiaPassed = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? {
+          ...entry,
+          skiaEvidence: {
+            ...entry.skiaEvidence,
+            status: "pending",
+            observations: { ...pendingSkiaObservations },
+          },
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "passed native platform requires passed skia evidence",
+  runValidator(
+    writeFixture("platform-passed-without-skia-passed.json", platformPassedWithoutSkiaPassed),
+  ),
+  "skiaEvidence.status must be passed when native platform status is passed",
 );
 
 const consumerWithoutCommand = {

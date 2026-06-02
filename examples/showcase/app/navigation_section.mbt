@@ -82,6 +82,8 @@ fn ShowcaseModel::navigation_section(
           theme~,
           padding=theme.spacing_scale.xs,
         ),
+        self.navigation_history_card(theme),
+        self.navigation_transition_card(theme),
         section_nav(
           "Section Nav",
           [
@@ -171,6 +173,131 @@ fn ShowcaseModel::navigation_section(
     ),
     metrics~,
   )
+}
+
+///|
+fn ShowcaseModel::navigation_history_card(
+  self : ShowcaseModel,
+  theme : @core.Theme,
+) -> @core.View[ShowcaseMsg] {
+  surface(
+    column(
+      [
+        row(
+          [
+            button(
+              "Back",
+              on_click=RouteBack,
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=88.0,
+              height=34.0,
+            ).disabled(disabled=!self.route_history.can_go_back()),
+            button(
+              "Forward",
+              on_click=RouteForward,
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=96.0,
+              height=34.0,
+            ).disabled(disabled=!self.route_history.can_go_forward()),
+            button(
+              "Open link",
+              on_click=OpenRouteLink("navigation?panel=history"),
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=116.0,
+              height=34.0,
+            ),
+          ],
+          spacing=theme.spacing_scale.sm,
+          align=@views.CrossAlign::Center,
+        ),
+        text(
+          "Deep link: " + self.route_history.current_route(),
+          role=@views.TextRole::Caption,
+          theme~,
+          width=500.0,
+          height=22.0,
+        ),
+        text(
+          "History: " + showcase_route_history_label(self.route_history),
+          role=@views.TextRole::Caption,
+          theme~,
+          width=500.0,
+          height=22.0,
+        ),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Start,
+    ),
+    width=520.0,
+    height=104.0,
+    variant=@views.SurfaceVariant::Base,
+    theme~,
+    padding=theme.spacing_scale.xs,
+  )
+}
+
+///|
+fn ShowcaseModel::navigation_transition_card(
+  self : ShowcaseModel,
+  theme : @core.Theme,
+) -> @core.View[ShowcaseMsg] {
+  let transition = @core.TransitionSpec::new(
+    from=@core.TransitionStyle::identity()
+      .with_opacity(0.72)
+      .with_offset(dx=-18.0, dy=0.0),
+    to=@core.TransitionStyle::identity()
+      .with_opacity(1.0)
+      .with_offset(dx=0.0, dy=0.0),
+    duration_ms=180.0,
+    easing=@core.Easing::EaseOut,
+  )
+  let progress = clamp_double(self.slider_value, 0.0, 1.0)
+  surface(
+    column(
+      [
+        text(
+          "Route transition: fade + slide",
+          role=@views.TextRole::Control,
+          theme~,
+          width=500.0,
+          height=24.0,
+        ),
+        text(
+          "Transition route: " + self.route_history.current_route(),
+          role=@views.TextRole::Caption,
+          theme~,
+          width=500.0,
+          height=22.0,
+        ),
+        text(
+          "Transition state: app-owned preview; host/browser history remains separate",
+          role=@views.TextRole::Caption,
+          theme~,
+          width=500.0,
+          height=22.0,
+        ),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Start,
+    ),
+    width=520.0,
+    height=88.0,
+    variant=@views.SurfaceVariant::Raised,
+    theme~,
+    padding=theme.spacing_scale.sm,
+  ).transition(spec=transition, progress~)
+}
+
+///|
+fn showcase_route_history_label(history : @core.RouteHistoryState) -> String {
+  let routes : Array[String] = []
+  for entry in history.entries {
+    routes.push(entry.route)
+  }
+  routes.join(" -> ")
 }
 
 ///|
@@ -312,7 +439,19 @@ fn ShowcaseModel::navigation_shell_card(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
-  ignore(metrics)
+  let min_master_width = 150.0
+  let max_master_width = 260.0
+  let master_range = max_master_width - min_master_width
+  let master_width = clamp_double(
+    min_master_width + self.slider_value * master_range,
+    min_master_width,
+    max_master_width,
+  )
+  let shell_width = min_showcase_double(metrics.body_width, 520.0)
+  let detail_width = max_showcase_double(
+    220.0,
+    shell_width - master_width - 8.0 - theme.spacing_scale.md * 2.0,
+  )
   let items = [
     @views.SidebarItem::new(
       id="overview",
@@ -331,13 +470,13 @@ fn ShowcaseModel::navigation_shell_card(
       enabled=false,
     ),
   ]
-  master_detail(
-    master=sidebar(
+  resizable_split_view(
+    primary=sidebar(
       "Navigation Shell",
       items,
       selected=self.selected_section,
       theme~,
-      width=190.0,
+      width=master_width,
       height=184.0,
     ),
     detail=surface(
@@ -367,10 +506,14 @@ fn ShowcaseModel::navigation_shell_card(
       theme~,
       padding=theme.spacing_scale.md,
     ),
-    master_width=190.0,
-    detail_width=300.0,
+    primary_width=master_width,
+    detail_width~,
     height=184.0,
+    min_primary_width=min_master_width,
+    max_primary_width=max_master_width,
     spacing=theme.spacing_scale.md,
+    theme~,
+    on_drag=width => SliderChanged((width - min_master_width) / master_range),
   )
 }
 

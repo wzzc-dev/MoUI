@@ -59,6 +59,42 @@ fn assert_diagnostic_native_text_matrix(
   assert_diagnostic_native_text_layout(system, "a你🙂b")
   assert_diagnostic_native_text_layout(system, "text 👩‍💻 🙂")
   assert_diagnostic_native_text_layout(system, "abc אבג def")
+  assert_diagnostic_native_text_layout(system, "กิ")
+  assert_diagnostic_native_text_layout(system, "ກິ")
+  assert_diagnostic_native_text_layout(system, "කා")
+  assert_diagnostic_native_text_layout(system, "កា")
+  assert_diagnostic_native_text_layout(system, "ក្រ")
+  assert_diagnostic_native_text_layout(system, "က်")
+  assert_diagnostic_native_text_layout(system, "က္ခ")
+}
+
+///|
+fn diagnostic_native_text_field_view(
+  value : @core.Binding[String],
+) -> @core.View[Unit] {
+  @core.View::text_field(
+    value~,
+    placeholder="Input",
+    size=@core.Size::new(width=180.0, height=40.0),
+    font=@core.FontSpec::new(size=18.0, weight=500),
+    foreground=@core.Color::black(),
+    placeholder_color=@core.Color::gray(),
+    background=@core.Brush::solid(@core.Color::white()),
+    cursor_color=@core.Color::blue(),
+    corner_radius=4.0,
+  )
+}
+
+///|
+fn focus_diagnostic_native_text_field(runtime : @core.AppRuntime) -> Unit {
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
 }
 
 ///|
@@ -72,6 +108,77 @@ test "diagnostic native cosmic engine matrix conforms" {
     @wgpu_renderer.native_text_system_with_engine(
       @cosmic_text.cosmic_text_engine(),
     ),
+  )
+}
+
+///|
+test "diagnostic native skia text system matrix conforms" {
+  assert_diagnostic_native_text_matrix(@skia_renderer.skia_text_system())
+}
+
+///|
+test "diagnostic native skia text system drives runtime text field geometry" {
+  let value = @core.State::new("")
+  let runtime = @core.AppRuntime::new_view(
+    root=diagnostic_native_text_field_view(value.binding()),
+    size=@core.Size::new(width=220.0, height=80.0),
+  )
+  let skia_system = @skia_renderer.skia_text_system()
+  runtime.set_text_system(skia_system)
+  focus_diagnostic_native_text_field(runtime)
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionStart),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(
+      @core.TextInputEvent::CompositionUpdate(
+        @core.CompositionUpdate::new(
+          text="你🙂a",
+          cursor=Some(@core.TextRange::new(start=2, end=2)),
+        ),
+      ),
+    ),
+  )
+  let composing = runtime.focused_text_input()
+  guard composing.composition is Some(composition) else {
+    fail("expected Skia-backed composition preview")
+  }
+  inspect(composition, content="你🙂a")
+  let font = @core.FontSpec::new(size=18.0, weight=500)
+  let layout = skia_system.measure_text(
+    @core.TextLayoutInput::new(text="你🙂a", font~, max_width=160.0),
+  )
+  assert_true(composing.caret_rect.origin.x > 10.0)
+  assert_true(composing.caret_rect.origin.x == 10.0 + layout.caret_positions[2])
+
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd("你🙂a")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="ArrowLeft",
+        modifiers=@core.KeyModifiers::new(shift=true),
+      ),
+    ),
+  )
+  let selected = runtime.focused_text_input()
+  guard selected.selection is Some(selection) else {
+    fail("expected Skia-backed text field selection")
+  }
+  inspect(selection.normalized().start, content="2")
+  inspect(selection.normalized().end, content="3")
+  let commands = runtime.draw_commands()
+  assert_true(
+    commands.any(command => {
+      match command {
+        @core.DrawCommand::FillRect(_, color) => color.a == 0.18
+        _ => false
+      }
+    }),
   )
 }
 

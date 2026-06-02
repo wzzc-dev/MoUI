@@ -19,7 +19,7 @@ pub struct MacosSkiaAppOptions {
 ///|
 pub fn MacosSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::EmptyTypeface,
+  font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   exit_after_first_present? : Bool = false,
 ) -> MacosSkiaAppOptions {
   { scene_resolver, font_resolution, exit_after_first_present }
@@ -93,6 +93,29 @@ pub fn renderer_provider(
 }
 
 ///|
+pub fn macos_skia_provider_preflight_summary(
+  options? : MacosSkiaAppOptions = MacosSkiaAppOptions::new(),
+) -> String {
+  let info = @skia_renderer.backend_info()
+  let render_status = if macos_skia_provider_ready() {
+    "ready"
+  } else {
+    "unavailable"
+  }
+  let font_resolution = match options.font_resolution {
+    @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
+    @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
+  }
+  let host_preflight = @macos_host.macos_capability_summary().preflight_fields()
+  "macOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{macos_skia_presenter_description()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=first-frame smoke required; unavailable=\"\{macos_skia_unavailable_message()}\""
+}
+
+///|
+fn skia_host_renderer_bridge_preflight() -> String {
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
+}
+
+///|
 fn create_renderer(
   window : @window_macos.Window,
   metrics : @host.HostSurfaceMetrics,
@@ -133,6 +156,11 @@ fn macos_skia_unavailable_message() -> String {
 }
 
 ///|
+fn macos_skia_presenter_description() -> String {
+  "macOS NSImageView Skia pixel presenter"
+}
+
+///|
 fn content_view_handle(window : @window_macos.Window) -> UInt64? {
   Some(window.content_view_handle()) catch {
     err => {
@@ -147,7 +175,7 @@ fn macos_skia_present_target(
   raw_content_view_handle : UInt64,
 ) -> @skia_renderer.SkiaPresentTarget {
   @skia_renderer.SkiaPresentTarget::new(
-    description="macOS NSImageView Skia pixel presenter",
+    description=macos_skia_presenter_description(),
     present=frame => {
       macos_present_skia_pixels_to_view(
         raw_content_view_handle,

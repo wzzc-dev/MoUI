@@ -236,6 +236,9 @@ Build the WYSIWYG Markdown editor with the same MSVC helper:
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/markdown_editor/windows `
   -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows_skia `
+  -BuildOnly
 ```
 
 To run a Windows entrypoint directly, import the MSVC environment in the same
@@ -245,6 +248,7 @@ PowerShell process:
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
 The MSVC package is written under `dist\windows-msvc\MoUIShowcase` and includes
@@ -266,10 +270,11 @@ compositor and renderer stack:
 moon run examples/showcase/linux --target native
 moon run examples/showcase/linux_cosmic --target native
 moon run examples/showcase/linux_skia --target native
+moon run examples/markdown_editor/linux_skia --target native
 ```
 
 For headless validation, use a compositor such as Weston headless and set
 `WAYLAND_DISPLAY` to its socket before running the examples. The default Linux
 text path composes the fontconfig provider scaffold with Moon Cosmic fallback;
 `linux_cosmic` selects Moon Cosmic directly. Configure real Skia link flags
-before relying on Skia-rendered pixels from `linux_skia`.
+before relying on Skia-rendered pixels from `linux_skia` entrypoints.

@@ -138,6 +138,14 @@ assertIncludes(
   "--web-presentation-manifest",
 );
 assertIncludes(
+  "scripts/record-native-skia-evidence.mjs",
+  "record-platform-evidence-manifest.mjs",
+);
+assertIncludes(
+  "scripts/record-native-skia-evidence.mjs",
+  "Skia route evidence",
+);
+assertIncludes(
   "scripts/conformance-check.sh",
   "validate-web-runtime-handoff.mjs",
 );
@@ -162,11 +170,16 @@ assertIncludes(
   "scripts/dev-check.sh",
   "node scripts/test-validate-web-runtime-presentation-manifest.mjs",
 );
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-record-native-skia-evidence.mjs",
+);
 assertIncludes("docs/testing.md", "node scripts/validate-guidance-consistency.mjs");
 assertIncludes("docs/testing.md", "validate-conformance-capture-manifest.mjs");
 assertIncludes("docs/testing.md", "markdown-editor-web-wasm");
 assertIncludes("docs/testing.md", "validate-platform-evidence-manifest.mjs");
 assertIncludes("docs/testing.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("docs/testing.md", "record-native-skia-evidence.mjs");
 assertIncludes("docs/testing.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("docs/testing.md", "test-validate-web-runtime-handoff.mjs");
 assertIncludes("docs/testing.md", "validate-web-runtime-handoff-manifest.mjs");
@@ -201,6 +214,10 @@ assertIncludes(
 assertIncludes(
   "docs/testing.md",
   "node scripts/test-record-platform-evidence-manifest.mjs",
+);
+assertIncludes(
+  "docs/testing.md",
+  "node scripts/test-record-native-skia-evidence.mjs",
 );
 assertIncludes(
   "scripts/dev-check.sh",
@@ -263,6 +280,7 @@ assertIncludes("docs/release-readiness.md", "verify-native-capability-contract.s
 assertIncludes("docs/release-readiness.md", "Wayland key/modifier mapping");
 assertIncludes("docs/release-readiness.md", "current button-event coordinates");
 assertIncludes("docs/release-readiness.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("docs/release-readiness.md", "record-native-skia-evidence.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff-manifest.mjs");
 assertIncludes("docs/release-readiness.md", "web-runtime-handoff.json");
@@ -304,6 +322,7 @@ assertIncludes("AGENTS.md", "native/capabilities.json");
 assertIncludes("AGENTS.md", "verify-native-capability-contract.sh");
 assertIncludes("AGENTS.md", "platform-runtime-evidence.json");
 assertIncludes("AGENTS.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("AGENTS.md", "record-native-skia-evidence.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("AGENTS.md", "test-validate-web-runtime-handoff.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff-manifest.mjs");
