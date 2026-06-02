@@ -63,6 +63,7 @@
         "native smoke surface descriptor backend",
         "native smoke surface target factory raster",
         "native smoke surface target factory unsupported",
+        "native smoke surface target cache resources",
         "native smoke surface flush-and-submit",
         "native smoke readback width",
         "native smoke bounded readback width",
@@ -129,8 +130,10 @@
         "native smoke first glyph id",
         "native smoke shaper availability",
         "native smoke shaped glyph descriptor bridge",
+        "native smoke shaped glyph descriptor bridge cache resources",
         "native smoke font family count",
         "native smoke font fallback resolution bridge",
+        "native smoke font fallback resolution bridge cache resources",
         "native smoke font fallback width"
       ],
       "non_smoke_rationale": ""

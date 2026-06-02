@@ -348,6 +348,11 @@
       "marker": "native smoke surface target resource plan count"
     },
     {
+      "id": "surface.target-cache-resources",
+      "area": "Surface",
+      "marker": "native smoke surface target cache resources"
+    },
+    {
       "id": "surface.window-target-resource-plan",
       "area": "Surface",
       "marker": "native smoke window target resource plan count"
@@ -663,6 +668,11 @@
       "marker": "native smoke font fallback resolution bridge"
     },
     {
+      "id": "fontmgr.fallback-resolution-bridge-cache-resources",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback resolution bridge cache resources"
+    },
+    {
       "id": "fontmgr.fallback-resource-plan",
       "area": "FontMgr",
       "marker": "native smoke font fallback resource plan count"
@@ -699,6 +709,13 @@
       "id": "text.shaped-glyph-descriptor-bridge",
       "area": "Text",
       "marker": "native smoke shaped glyph descriptor bridge",
+      "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.shaped-glyph-descriptor-bridge-cache-resources",
+      "area": "Text",
+      "marker": "native smoke shaped glyph descriptor bridge cache resources",
       "when_marker": "native smoke shaper availability",
       "when_value": "1"
     }
@@ -945,6 +962,11 @@
       "value": "2"
     },
     {
+      "id": "surface.target-cache-resources",
+      "marker": "native smoke surface target cache resources",
+      "value": "2"
+    },
+    {
       "id": "surface.window-target-resource-plan",
       "marker": "native smoke window target resource plan count",
       "value": "1"
@@ -1168,6 +1190,11 @@
       "id": "fontmgr.fallback-resolution-bridge",
       "marker": "native smoke font fallback resolution bridge",
       "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-bridge-cache-resources",
+      "marker": "native smoke font fallback resolution bridge cache resources",
+      "value": "4"
     },
     {
       "id": "fontmgr.fallback-resource-plan",
