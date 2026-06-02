@@ -50,6 +50,8 @@ $defaultStageMarkers = @(
   "native smoke canvas replay filter resources",
   "native smoke canvas replay path resources",
   "native smoke canvas replay text resources",
+  "native smoke canvas replay rrect path clips",
+  "native smoke canvas replay clip path cache resources",
   "native smoke render frame replay rejected skipped",
   "native smoke surface render frame commands",
   "native smoke surface render frame finalized",
@@ -268,6 +270,14 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke canvas replay text resources"
     Value = "9"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke canvas replay rrect path clips"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke canvas replay clip path cache resources"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame replay rejected skipped"

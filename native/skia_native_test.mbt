@@ -6,6 +6,20 @@ fn native_test_assert_red_dominant_pixel(pixmap : @skia.Pixmap) -> Unit raise {
 }
 
 ///|
+fn native_test_assert_pixel(
+  pixmap : @skia.Pixmap,
+  red : Byte,
+  green : Byte,
+  blue : Byte,
+  alpha : Byte,
+) -> Unit raise {
+  assert_eq(pixmap.pixels[0], red)
+  assert_eq(pixmap.pixels[1], green)
+  assert_eq(pixmap.pixels[2], blue)
+  assert_eq(pixmap.pixels[3], alpha)
+}
+
+///|
 fn native_test_assert_replay_resource_counts(
   stats : @native.CanvasReplayStats,
   command_stats : @skia.RenderCommandStats,
@@ -19,6 +33,62 @@ fn native_test_assert_replay_resource_counts(
   assert_eq(stats.filter_resource_count, command_stats.filter_resource_count)
   assert_eq(stats.path_resource_count, command_stats.path_resource_count)
   assert_eq(stats.text_resource_count, command_stats.text_resource_count)
+}
+
+///|
+test "canvas replays rounded and path clips" {
+  let replay_size = @skia.ISize::new(16, 16)
+  let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    replay_size,
+  )
+  let clip_path = @skia.Path::new().add_rect(@skia.Rect::from_xywh(4, 4, 4, 4))
+  let commands = @skia.RenderCommandList::for_target(replay_target)
+    .clip_rrect(
+      @skia.RRect::from_rect_xy(@skia.Rect::from_xywh(2, 2, 8, 8), 2.0, 2.0),
+    )
+    .clip_path(clip_path)
+    .draw_rect(
+      @skia.Rect::from_xywh(0, 0, 16, 16),
+      paint=@skia.Paint::new(color=@skia.Color::red()),
+    )
+  assert_true(
+    commands.touched_bounds() == Some(@skia.Rect::from_xywh(4, 4, 4, 4)),
+  )
+  let command_stats = commands.stats()
+  assert_eq(command_stats.command_count, 3)
+  assert_eq(command_stats.clip_count, 2)
+  assert_eq(command_stats.clear_count, 0)
+  assert_eq(command_stats.path_resource_count, 1)
+  assert_true(commands.resource_plan().contains_key(clip_path.resource_key()))
+  match @native.Surface::raster_n32_premul(replay_size) {
+    None => ()
+    Some(surface) =>
+      match surface.canvas() {
+        None => ()
+        Some(canvas) => {
+          canvas.clear(@skia.Color::white())
+          let resources = @native.NativeReplayResources::new(
+            path_max_bytes=1024L,
+          )
+          let stats = canvas.replay_with_resources(commands, resources)
+          assert_true(stats.is_complete())
+          assert_eq(stats.clip_count, 2)
+          assert_eq(stats.clear_count, 0)
+          assert_eq(stats.path_resource_count, 1)
+          assert_eq(resources.path_cache.length(), 1)
+          match surface.read_pixels(bounds=@skia.IRect::from_xywh(4, 4, 1, 1)) {
+            None => ()
+            Some(pixmap) =>
+              native_test_assert_pixel(pixmap, 0xff, 0x00, 0x00, 0xff)
+          }
+          match surface.read_pixels(bounds=@skia.IRect::from_xywh(1, 1, 1, 1)) {
+            None => ()
+            Some(pixmap) =>
+              native_test_assert_pixel(pixmap, 0xff, 0xff, 0xff, 0xff)
+          }
+        }
+      }
+  }
 }
 
 ///|
