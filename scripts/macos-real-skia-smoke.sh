@@ -26,6 +26,9 @@ Options:
   --extra-cc-flags STR  Extra C/C++ flags appended when linking the MoonBit stub.
   --extra-link-flags STR
                         Extra linker flags appended when linking the smoke binary.
+  --enable-asan         Forward AddressSanitizer flags to the native smoke
+                        helper. macOS disables leak detection by default unless
+                        ASAN_OPTIONS is already set.
   --build-log PATH      Write source-built Skia build output to PATH.
                         Relative paths are resolved from the repository root.
   --smoke-log PATH      Write the native smoke executable output to PATH.
@@ -40,6 +43,17 @@ This wrapper mirrors scripts/linux-real-skia-smoke.sh for macOS. It consumes
 JetBrains provider output and delegates final native/moon.pkg generation to
 scripts/macos-skia-smoke.sh.
 EOF
+}
+
+normalize_bool() {
+  case "$1" in
+    1|true|TRUE|yes|YES|on|ON) printf '1\n' ;;
+    ""|0|false|FALSE|no|NO|off|OFF) printf '0\n' ;;
+    *)
+      echo "unsupported boolean value for SKIA_MBT_ENABLE_ASAN: $1" >&2
+      exit 2
+      ;;
+  esac
 }
 
 work_dir=".skia-cache/macos"
@@ -62,6 +76,7 @@ jetbrains_cache_dir="${SKIA_MBT_JETBRAINS_CACHE_DIR:-.skia-cache/jetbrains}"
 extra_gn_args="${SKIA_MBT_EXTRA_GN_ARGS:-}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
+enable_asan="${SKIA_MBT_ENABLE_ASAN:-0}"
 extra_cc_flags_explicit=0
 extra_link_flags_explicit=0
 if [[ -n "${SKIA_MBT_EXTRA_CC_FLAGS:-}" ]]; then
@@ -130,6 +145,10 @@ while [[ $# -gt 0 ]]; do
       extra_link_flags_explicit=1
       shift 2
       ;;
+    --enable-asan)
+      enable_asan=1
+      shift
+      ;;
     --build-log)
       build_log="${2:-}"
       shift 2
@@ -161,6 +180,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+enable_asan="$(normalize_bool "$enable_asan")"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ $skia_rev_explicit -eq 0 && -f "$repo_root/skia-revision.txt" ]]; then
@@ -263,6 +284,9 @@ else
   echo "  work_dir=$resolved_work_dir"
   echo "  skia_rev=$skia_rev"
 fi
+if [[ $enable_asan -eq 1 ]]; then
+  echo "  asan=enabled"
+fi
 
 resolved_build_log=""
 if [[ -n "$build_log" ]]; then
@@ -316,6 +340,9 @@ fi
 if [[ -n "$extra_link_flags" ]]; then
   echo "  extra_link_flags=$extra_link_flags"
 fi
+if [[ $enable_asan -eq 1 ]]; then
+  echo "  asan_helper=macos-skia-smoke"
+fi
 if [[ -n "$build_log" ]]; then
   echo "  build_log=$build_log"
 fi
@@ -342,6 +369,9 @@ if [[ -n "$extra_cc_flags" ]]; then
 fi
 if [[ -n "$extra_link_flags" ]]; then
   smoke_args+=(--extra-link-flags "$extra_link_flags")
+fi
+if [[ $enable_asan -eq 1 ]]; then
+  smoke_args+=(--enable-asan)
 fi
 if [[ -n "$smoke_log" ]]; then
   smoke_args+=(--smoke-log "$smoke_log")
