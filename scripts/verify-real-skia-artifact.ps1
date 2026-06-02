@@ -59,7 +59,7 @@ function Assert-LogFieldLine {
   )
 
   if ($Content -notmatch "(?m)^\s*$([regex]::Escape($Field))") {
-    throw "$MessagePrefix: $Field"
+    throw "${MessagePrefix}: $Field"
   }
 }
 
@@ -74,7 +74,7 @@ function Assert-ExactLogLine {
   )
 
   if ($Content -notmatch "(?m)^\s*$([regex]::Escape($Line))\s*$") {
-    throw "$MessagePrefix: $Line"
+    throw "${MessagePrefix}: $Line"
   }
 }
 
