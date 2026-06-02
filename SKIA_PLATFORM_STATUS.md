@@ -119,7 +119,8 @@ these facts recorded in logs:
   byte-range text-run resource keys, empty text-run replay skip/cache safety,
   text measurement resource planning,
   measured-text result resource planning, measured-text result cache-key
-  variation, text measurement cache-key variation, text shaping resource
+  variation, invalid measured-text result cache safety,
+  text measurement cache-key variation, text shaping resource
   planning, shaped-text result resource planning, shaped glyph-run resource
   planning, shaped glyph-run cache-key variation, invalid shaped glyph-run
   plan/replay skip cache safety, optional native shaped glyph
