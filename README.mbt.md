@@ -88,6 +88,11 @@ The `native` subpackage contains the first opt-in native boundary:
 - `@native.skia_shaper_available()` reports whether the optional SkShaper
   boundary was compiled and linked;
 - `@native.Surface::raster_n32_premul(size)` is the first raster surface entry;
+- `@native.Surface::target_support_status(target)` reports whether a target can
+  be allocated as a native surface, including empty, unavailable Skia,
+  window-unsupported, and GPU-unsupported decisions;
+- `@native.Surface::for_target(target)` allocates supported raster targets from
+  value-layer `SurfaceTargetDescriptor` values;
 - `@native.Surface::descriptor()` reports the value-layer surface contract
   satisfied by the native raster surface;
 - `@native.Surface::image_snapshot()` returns an immutable `@native.Image`
