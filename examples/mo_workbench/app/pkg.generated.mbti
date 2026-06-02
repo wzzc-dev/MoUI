@@ -44,6 +44,19 @@ pub(all) struct AgentBackendProfile {
 } derive(Eq, @debug.Debug)
 pub fn AgentBackendProfile::new(id~ : String, label~ : String, description~ : String, capabilities~ : AgentBackendCapabilities) -> Self
 
+pub(all) struct AgentBackendStatus {
+  backend_id : String
+  label : String
+  status_label : String
+  pending_count : Int
+  failed : Bool
+  sidebar_visible : Bool
+  top_bar_visible : Bool
+} derive(Eq, @debug.Debug)
+pub fn AgentBackendStatus::has_sidebar_status(Self) -> Bool
+pub fn AgentBackendStatus::has_top_bar_chip(Self) -> Bool
+pub fn AgentBackendStatus::new(backend_id~ : String, label~ : String, status_label? : String, pending_count? : Int, failed? : Bool, sidebar_visible? : Bool, top_bar_visible? : Bool) -> Self
+
 pub(all) struct AgentCommandInfo {
   name : String
   source : String
@@ -382,6 +395,7 @@ pub(all) struct WorkbenchModel {
 }
 pub fn WorkbenchModel::active_agent_backend_capabilities(Self) -> AgentBackendCapabilities
 pub fn WorkbenchModel::active_agent_backend_profile(Self) -> AgentBackendProfile
+pub fn WorkbenchModel::active_agent_backend_status(Self) -> AgentBackendStatus
 pub fn WorkbenchModel::active_agent_fork_points_for_transcript_item(Self, TranscriptItem) -> Array[AgentForkPoint]
 pub fn WorkbenchModel::active_agent_input_settings(Self) -> AgentInputSettings
 pub fn WorkbenchModel::active_agent_model_catalog(Self) -> Array[AgentModelInfo]

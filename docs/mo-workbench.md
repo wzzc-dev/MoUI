@@ -64,6 +64,11 @@ packages:
   thinking level, input queue modes, shell commands, and session stats. Local
   keeps the prompt flow local and intentionally hides Pi-only controls, proving
   the shell can remain useful without looking like an RPC diagnostics panel.
+- Backend chrome consumes a small `AgentBackendStatus` projection. The sidebar
+  footer and top-bar backend chip decide from backend-neutral status instead of
+  raw Pi transport state, so normal Pi startup/running activity stays in the
+  compact task signal while non-default backends and provider failures remain
+  visible without turning the shell into a transport panel.
 - A Codex / Claude Code-style native shell with macOS chrome, a quiet
   task-history sidebar, a clean white main work canvas, readable compact
   transcript rows, current-turn evidence summaries, and a bottom composer.

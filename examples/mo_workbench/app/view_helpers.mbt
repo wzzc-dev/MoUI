@@ -278,11 +278,7 @@ fn WorkbenchModel::pinned_threads(
 fn WorkbenchModel::should_show_sidebar_transport_footer(
   self : WorkbenchModel,
 ) -> Bool {
-  match self.transport.status {
-    Disconnected => self.pending_transport_count() > 0
-    Failed(_) => true
-    _ => false
-  }
+  self.active_agent_backend_status().has_sidebar_status()
 }
 
 ///|
@@ -291,11 +287,11 @@ fn WorkbenchModel::sidebar_footer(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let backend = self.active_agent_backend_profile()
+  let status = self.active_agent_backend_status()
   row(
     [
-      text(backend.label, role=Control, theme~, width=56.0, height=28.0),
-      self.sidebar_transport_status_cell(layout, theme),
+      text("Agent", role=Control, theme~, width=56.0, height=28.0),
+      sidebar_backend_status_cell(status, layout, theme),
     ],
     spacing=8.0,
     align=Center,
@@ -303,17 +299,16 @@ fn WorkbenchModel::sidebar_footer(
 }
 
 ///|
-fn WorkbenchModel::sidebar_transport_status_cell(
-  self : WorkbenchModel,
+fn sidebar_backend_status_cell(
+  status : AgentBackendStatus,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let width = layout.sidebar_inner_width - 72.0
-  let pending = self.pending_transport_count()
-  if self.transport.status is Disconnected {
-    if pending > 0 {
+  if status.status_label == "" || status.status_label == "未连接" {
+    if status.pending_count > 0 {
       text(
-        pending.to_string() + " 排队",
+        status.pending_count.to_string() + " 排队",
         role=Caption,
         theme~,
         width~,
@@ -323,13 +318,7 @@ fn WorkbenchModel::sidebar_transport_status_cell(
       blank_cell(width~, height=28.0)
     }
   } else {
-    text(
-      self.transport.display_status_label(),
-      role=Caption,
-      theme~,
-      width~,
-      height=28.0,
-    )
+    text(status.status_label, role=Caption, theme~, width~, height=28.0)
   }
 }
 
@@ -760,8 +749,7 @@ fn top_bar_identity_width(
 fn WorkbenchModel::should_show_top_bar_backend_chip(
   self : WorkbenchModel,
 ) -> Bool {
-  let profile = self.active_agent_backend_profile()
-  profile.id != "pi" || self.transport.status is Failed(_)
+  self.active_agent_backend_status().has_top_bar_chip()
 }
 
 ///|
@@ -769,12 +757,8 @@ fn WorkbenchModel::active_agent_backend_chip(
   self : WorkbenchModel,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  badge(
-    "Agent " + self.active_agent_backend_profile().label,
-    tone=Neutral,
-    theme~,
-    width=82.0,
-  )
+  let status = self.active_agent_backend_status()
+  badge("Agent " + status.label, tone=Neutral, theme~, width=82.0)
 }
 
 ///|
@@ -2928,16 +2912,6 @@ pub fn WorkbenchModel::active_agent_runtime_signal(
       visible=self.transport.has_visible_signal(),
       active=self.transport.has_active_signal(),
     )
-  }
-}
-
-///|
-fn PiTransportState::display_status_label(self : PiTransportState) -> String {
-  match self.status {
-    Disconnected => "未连接"
-    Starting => "启动中"
-    Running => "运行中"
-    Failed(reason) => "失败：" + reason
   }
 }
 
