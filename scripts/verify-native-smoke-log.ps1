@@ -45,6 +45,7 @@ $defaultStageMarkers = @(
   "native smoke surface render frame finalized",
   "native smoke surface render frame cache resources",
   "native smoke surface render frame mismatch rejected",
+  "native smoke render frame pixmap sample proof",
   "native smoke render shaped glyph run command replay",
   "native smoke render shader cache resources",
   "native smoke render shader cache misses",
@@ -133,6 +134,7 @@ $defaultStageMarkers = @(
   "native smoke readback width",
   "native smoke readback height",
   "native smoke readback row_bytes",
+  "native smoke pixmap readback sample proof",
   "native smoke bounded readback width",
   "native smoke bounded readback height",
   "native smoke bounded snapshot width",
@@ -227,6 +229,10 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke surface render frame mismatch rejected"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame pixmap sample proof"
     Value = "1"
   }
   [pscustomobject]@{
@@ -560,6 +566,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke readback row_bytes"
     Value = "128"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke pixmap readback sample proof"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke bounded readback width"

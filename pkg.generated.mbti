@@ -671,9 +671,11 @@ pub fn Pixmap::contains(Self, IPoint) -> Bool
 pub fn Pixmap::dimensions(Self) -> ISize
 pub fn Pixmap::height(Self) -> Int
 pub fn Pixmap::is_empty(Self) -> Bool
+pub fn Pixmap::matches_sample(Self, IPoint, Bytes) -> Bool
 pub fn Pixmap::new(ImageInfo, Int, Bytes) -> Self?
 pub fn Pixmap::offset(Self, IPoint) -> Int?
 pub fn Pixmap::row_bytes(Self) -> Int
+pub fn Pixmap::sample(Self, IPoint) -> Bytes?
 pub fn Pixmap::shift_per_pixel(Self) -> Int
 pub fn Pixmap::width(Self) -> Int
 
