@@ -215,6 +215,24 @@ fn main {
   }
   println("native smoke surface target resource plan count")
   println(smoke_gpu_target_plan.length())
+  let smoke_gpu_target_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @skia.RendererResourceDescriptor,
+  ] = @skia.ResourceCache::new()
+  let smoke_gpu_target_missing_before = smoke_gpu_target_cache
+    .missing_cacheable_resource_plan(smoke_gpu_target_plan)
+  let smoke_gpu_target_cache_inserts = smoke_gpu_target_cache
+    .insert_resource_plan(smoke_gpu_target_plan)
+  let smoke_gpu_target_cached_after = smoke_gpu_target_cache
+    .cached_cacheable_resource_plan(smoke_gpu_target_plan)
+  if smoke_gpu_target_missing_before.length() != 2 ||
+    smoke_gpu_target_cache_inserts != 2 ||
+    smoke_gpu_target_cached_after.length() != 2 ||
+    !smoke_gpu_target_cache.contains_resource_plan(smoke_gpu_target_plan) {
+    fail_smoke("surface target resource plan did not populate the cache")
+  }
+  println("native smoke surface target cache resources")
+  println(smoke_gpu_target_cache_inserts)
   println("native smoke gpu context resource plan count")
   println(smoke_gpu_plan.length())
   println("native smoke gpu context key variation")
@@ -1671,6 +1689,28 @@ fn main {
     }
     println("native smoke shaped glyph descriptor bridge")
     println(1)
+    let shaped_smoke_bridge_cache : @skia.ResourceCache[
+      @skia.RendererResourceKey,
+      @skia.RendererResourceDescriptor,
+    ] = @skia.ResourceCache::new()
+    let shaped_smoke_bridge_missing_before = shaped_smoke_bridge_cache
+      .missing_cacheable_resource_plan(shaped_smoke_bridge_plan)
+    let shaped_smoke_bridge_cache_inserts = shaped_smoke_bridge_cache
+      .insert_resource_plan(shaped_smoke_bridge_plan)
+    let shaped_smoke_bridge_cached_after = shaped_smoke_bridge_cache
+      .cached_cacheable_resource_plan(shaped_smoke_bridge_plan)
+    if shaped_smoke_bridge_missing_before.length() !=
+      shaped_smoke_bridge_plan.length() ||
+      shaped_smoke_bridge_cache_inserts != shaped_smoke_bridge_plan.length() ||
+      shaped_smoke_bridge_cached_after.length() !=
+      shaped_smoke_bridge_plan.length() ||
+      !shaped_smoke_bridge_cache.contains_resource_plan(
+        shaped_smoke_bridge_plan,
+      ) {
+      fail_smoke("native shaped glyph descriptor bridge did not populate the cache")
+    }
+    println("native smoke shaped glyph descriptor bridge cache resources")
+    println(shaped_smoke_bridge_cache_inserts)
     println("native smoke shaped text native resource plan count")
     println(shaped_smoke_plan.length())
     println("native smoke shaped glyph run native resource plan count")
@@ -1930,6 +1970,24 @@ fn main {
   }
   println("native smoke font fallback resolution bridge")
   println(1)
+  let resolved_fallback_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @skia.RendererResourceDescriptor,
+  ] = @skia.ResourceCache::new()
+  let resolved_fallback_missing_before = resolved_fallback_cache
+    .missing_cacheable_resource_plan(resolved_fallback_plan)
+  let resolved_fallback_cache_inserts = resolved_fallback_cache
+    .insert_resource_plan(resolved_fallback_plan)
+  let resolved_fallback_cached_after = resolved_fallback_cache
+    .cached_cacheable_resource_plan(resolved_fallback_plan)
+  if resolved_fallback_missing_before.length() != 4 ||
+    resolved_fallback_cache_inserts != 4 ||
+    resolved_fallback_cached_after.length() != 4 ||
+    !resolved_fallback_cache.contains_resource_plan(resolved_fallback_plan) {
+    fail_smoke("native font fallback resolution bridge did not populate the cache")
+  }
+  println("native smoke font fallback resolution bridge cache resources")
+  println(resolved_fallback_cache_inserts)
   guard @native.Font::from_typeface(fallback_typeface, size=8.0)
     is Some(fallback_font) else {
     fail_smoke("failed to create native font from fallback request typeface")
