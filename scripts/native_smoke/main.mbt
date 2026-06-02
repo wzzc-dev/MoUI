@@ -1016,6 +1016,10 @@ fn main {
     invalid_replay_commands,
     invalid_replay_resources,
   )
+  let invalid_shader_cache_stats = invalid_replay_resources.shader_cache.stats()
+  let invalid_color_filter_cache_stats = invalid_replay_resources
+    .color_filter_cache
+    .stats()
   if invalid_replay_stats.is_complete() ||
     invalid_replay_stats.command_count != 3 ||
     invalid_replay_stats.replayed_count != 1 ||
@@ -1026,7 +1030,11 @@ fn main {
     invalid_replay_stats.shader_resource_count != 1 ||
     invalid_replay_stats.filter_resource_count != 1 ||
     invalid_replay_resources.shader_cache.length() != 0 ||
-    invalid_replay_resources.color_filter_cache.length() != 0 {
+    invalid_replay_resources.color_filter_cache.length() != 0 ||
+    invalid_shader_cache_stats.misses != 0 ||
+    invalid_shader_cache_stats.hits != 0 ||
+    invalid_color_filter_cache_stats.misses != 0 ||
+    invalid_color_filter_cache_stats.hits != 0 {
     fail_smoke("invalid shader/filter descriptors should skip without caching")
   }
   println("native smoke invalid shader filter replay skipped")
@@ -1036,6 +1044,8 @@ fn main {
     invalid_replay_resources.shader_cache.length() +
     invalid_replay_resources.color_filter_cache.length(),
   )
+  println("native smoke invalid shader filter replay cache misses")
+  println(invalid_shader_cache_stats.misses + invalid_color_filter_cache_stats.misses)
 
   guard @native.Path::new() is Some(native_path) else {
     fail_smoke("failed to create native path")
