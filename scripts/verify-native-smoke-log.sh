@@ -98,6 +98,7 @@ default_stage_markers=(
   "native smoke gpu frame submission resource plan count" \
   "native smoke gpu frame submission gpu resource count" \
   "native smoke surface target resource plan count" \
+  "native smoke surface target cache resources" \
   "native smoke window target resource plan count" \
   "native smoke window physical width" \
   "native smoke window frame pacing" \
@@ -160,6 +161,7 @@ default_stage_markers=(
   "native smoke font fallback resolution key variation" \
   "native smoke font fallback resolution resource plan count" \
   "native smoke font fallback resolution bridge" \
+  "native smoke font fallback resolution bridge cache resources" \
   "native smoke font fallback resource plan count" \
   "native smoke font fallback font resource plan count" \
   "native smoke font fallback width"
@@ -214,6 +216,7 @@ default_expected_stage_values=(
   $'native smoke gpu frame submission resource plan count\t3'
   $'native smoke gpu frame submission gpu resource count\t3'
   $'native smoke surface target resource plan count\t2'
+  $'native smoke surface target cache resources\t2'
   $'native smoke window target resource plan count\t1'
   $'native smoke window physical width\t16'
   $'native smoke window frame pacing\t2'
@@ -259,6 +262,7 @@ default_expected_stage_values=(
   $'native smoke font fallback resolution key variation\t1'
   $'native smoke font fallback resolution resource plan count\t4'
   $'native smoke font fallback resolution bridge\t1'
+  $'native smoke font fallback resolution bridge cache resources\t4'
   $'native smoke font fallback resource plan count\t1'
   $'native smoke font fallback font resource plan count\t2'
 )
@@ -272,6 +276,7 @@ default_conditional_stage_markers=(
   $'native smoke shaped text native resource plan count\tnative smoke shaper availability\t1'
   $'native smoke shaped glyph run native resource plan count\tnative smoke shaper availability\t1'
   $'native smoke shaped glyph descriptor bridge\tnative smoke shaper availability\t1'
+  $'native smoke shaped glyph descriptor bridge cache resources\tnative smoke shaper availability\t1'
 )
 conditional_stage_markers=("${default_conditional_stage_markers[@]}")
 if [[ -f "$status_file" ]]; then

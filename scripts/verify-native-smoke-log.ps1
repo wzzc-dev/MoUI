@@ -83,6 +83,7 @@ $defaultStageMarkers = @(
   "native smoke gpu frame submission resource plan count",
   "native smoke gpu frame submission gpu resource count",
   "native smoke surface target resource plan count",
+  "native smoke surface target cache resources",
   "native smoke window target resource plan count",
   "native smoke window physical width",
   "native smoke window frame pacing",
@@ -145,6 +146,7 @@ $defaultStageMarkers = @(
   "native smoke font fallback resolution key variation",
   "native smoke font fallback resolution resource plan count",
   "native smoke font fallback resolution bridge",
+  "native smoke font fallback resolution bridge cache resources",
   "native smoke font fallback resource plan count",
   "native smoke font fallback font resource plan count",
   "native smoke font fallback width"
@@ -343,6 +345,10 @@ $defaultExpectedStageValues = @(
     Value = "2"
   }
   [pscustomobject]@{
+    Marker = "native smoke surface target cache resources"
+    Value = "2"
+  }
+  [pscustomobject]@{
     Marker = "native smoke window target resource plan count"
     Value = "1"
   }
@@ -523,6 +529,10 @@ $defaultExpectedStageValues = @(
     Value = "1"
   }
   [pscustomobject]@{
+    Marker = "native smoke font fallback resolution bridge cache resources"
+    Value = "4"
+  }
+  [pscustomobject]@{
     Marker = "native smoke font fallback resource plan count"
     Value = "1"
   }
@@ -549,6 +559,11 @@ $defaultConditionalStageMarkers = @(
   }
   [pscustomobject]@{
     Marker = "native smoke shaped glyph descriptor bridge"
+    WhenMarker = "native smoke shaper availability"
+    WhenValue = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke shaped glyph descriptor bridge cache resources"
     WhenMarker = "native smoke shaper availability"
     WhenValue = "1"
   }
