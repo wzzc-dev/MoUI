@@ -2938,6 +2938,17 @@ test "text measurement descriptors track cache identity and dependencies" {
   )
   assert_eq(normalized_measured.advance, 0.0)
   assert_true(!normalized_measured.has_bounds())
+  let invalid_measured : @skia_mbt.MeasuredTextRunDescriptor = {
+    measurement,
+    advance: 0.0 / 0.0,
+    bounds: None,
+  }
+  assert_true(!invalid_measured.is_valid())
+  assert_true(!invalid_measured.resource_descriptor(b"xhelloz").is_cacheable())
+  let invalid_measured_plan = invalid_measured.resource_plan(b"xhelloz")
+  assert_eq(invalid_measured_plan.length(), 1)
+  assert_eq(invalid_measured_plan.cacheable_count, 0)
+  assert_eq(invalid_measured_plan.uncacheable_count, 1)
 
   let plain = @skia_mbt.TextMeasurementDescriptor::new(
     run=@skia_mbt.TextRunDescriptor::new(range=@skia_mbt.TextRange::new(0, 5)),

@@ -211,6 +211,8 @@ default_stage_markers=(
   "native smoke text measurement resource plan count" \
   "native smoke measured text resource plan count" \
   "native smoke measured text key variation" \
+  "native smoke invalid measured text resource plan count" \
+  "native smoke invalid measured text uncacheable count" \
   "native smoke text measurement key variation" \
   "native smoke text shaping resource plan count" \
   "native smoke shaped text resource plan count" \
@@ -403,6 +405,8 @@ default_expected_stage_values=(
   $'native smoke text measurement resource plan count\t4'
   $'native smoke measured text resource plan count\t5'
   $'native smoke measured text key variation\t1'
+  $'native smoke invalid measured text resource plan count\t1'
+  $'native smoke invalid measured text uncacheable count\t1'
   $'native smoke text measurement key variation\t1'
   $'native smoke text shaping resource plan count\t4'
   $'native smoke shaped text resource plan count\t5'
