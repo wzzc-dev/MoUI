@@ -177,6 +177,13 @@ assertIncludes("docs/testing.md", "--web-presentation-manifest");
 assertIncludes("docs/testing.md", "web-runtime-presentation.json");
 assertIncludes("docs/testing.md", "web-runtime-handoff.json");
 assertIncludes("docs/testing.md", "platform-runtime-evidence.json");
+assertIncludes("docs/testing.md", "monitorCursor");
+assertIncludes("docs/testing.md", "monitor/cursor");
+assertIncludes("scripts/validate-platform-evidence-manifest.mjs", "schemaVersion must be 2");
+assertIncludes("scripts/record-platform-evidence-manifest.mjs", "monitorCursor");
+assertIncludes("scripts/record-platform-evidence-manifest.mjs", "browserObservablePlatformObservationsPassed");
+assertIncludes("scripts/conformance-check.sh", '"schemaVersion": 2');
+assertIncludes("scripts/conformance-check.sh", '"monitorCursor": "pending"');
 assertIncludes(
   "docs/testing.md",
   "node scripts/test-validate-conformance-capture-manifest.mjs",
@@ -237,6 +244,7 @@ assertIncludes("docs/release-readiness.md", "web-runtime-presentation.json");
 assertIncludes("docs/release-readiness.md", "resize/input event-bridge");
 assertIncludes("docs/release-readiness.md", "Markdown Editor text input");
 assertIncludes("docs/release-readiness.md", "--web-presentation-manifest");
+assertIncludes("docs/release-readiness.md", "monitor/cursor");
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "scripts/record_moui_evidence.sh",
@@ -258,6 +266,7 @@ assertIncludes("AGENTS.md", "record-web-runtime-presentation.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-presentation-manifest.mjs");
 assertIncludes("AGENTS.md", "resize/input event-bridge");
 assertIncludes("AGENTS.md", "--web-presentation-manifest");
+assertIncludes("AGENTS.md", "monitor/cursor");
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "resize/input event-bridge delivery",
@@ -275,6 +284,7 @@ assertIncludes("moui/README.mbt.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("moui/README.mbt.md", "record-web-runtime-presentation.mjs");
 assertIncludes("moui/README.mbt.md", "resize/input");
 assertIncludes("moui/README.mbt.md", "--web-presentation-manifest");
+assertIncludes("moui/README.mbt.md", "monitor/cursor");
 assertIncludes("moui/README.mbt.md", "artifacts/conformance/");
 assertIncludes("scripts/record-web-runtime-presentation.mjs", "platformObservations");
 assertIncludes("scripts/record-web-runtime-presentation.mjs", "resizeEvent");

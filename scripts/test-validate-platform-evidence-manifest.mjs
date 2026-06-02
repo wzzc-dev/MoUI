@@ -19,6 +19,7 @@ const pendingObservations = {
   consumerInput: "pending",
   textInput: "pending",
   rendererHandle: "pending",
+  monitorCursor: "pending",
   cleanShutdown: "pending",
 };
 
@@ -47,7 +48,7 @@ const baseEntry = ({
 });
 
 const validManifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   mode: "platform-runtime-evidence",
   generatedBy: "scripts/conformance-check.sh --platform-services",
   windowEvidenceSource: ".local_repos/window/scripts/record_moui_evidence.sh",
@@ -234,7 +235,7 @@ const incompletePassed = {
 expectFail(
   "passed evidence requires all observations",
   runValidator(writeFixture("incomplete-passed.json", incompletePassed)),
-  "observations must all be yes when status is passed",
+  "observations.textInput must be yes when status is passed",
 );
 
 const consumerWithoutCommand = {

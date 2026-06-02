@@ -39,6 +39,7 @@ const observationKeys = new Set([
   "consumerInput",
   "textInput",
   "rendererHandle",
+  "monitorCursor",
   "cleanShutdown",
 ]);
 const observationValues = new Set(["yes", "no", "pending"]);
@@ -205,6 +206,7 @@ const webPlatformObservations = webManifest => {
       allTargetsObserved(webManifest, "cleanConsole")
         ? "yes"
         : "no",
+    monitorCursor: "pending",
     cleanShutdown: "pending",
   };
 };
@@ -236,11 +238,12 @@ const applyWebPresentationEvidence = (entry, path) => {
   const webManifest = JSON.parse(readFileSync(path, "utf8"));
   const allPassed = webManifest.overallStatus === "passed";
   const platformObservations = webPlatformObservations(webManifest);
-  const allPlatformObservationsPassed = Object.values(platformObservations).every(
-    value => value === "yes",
-  );
+  const browserObservablePlatformObservationsPassed = Object.entries(platformObservations)
+    .filter(([key]) => key !== "monitorCursor")
+    .every(([, value]) => value === "yes");
 
-  entry.status = allPassed && allPlatformObservationsPassed ? "passed" : "failed";
+  entry.status = allPassed && browserObservablePlatformObservationsPassed ? "passed" : "failed";
+  const webEvidencePassed = allPassed && browserObservablePlatformObservationsPassed;
   entry.host = `Web wasm-gc browser host (${webManifest.browser?.product ?? "unknown browser"})`;
   entry.consumerCommand =
     `node scripts/record-web-runtime-presentation.mjs --base-url ${webManifest.baseUrl} ` +
@@ -251,8 +254,8 @@ const applyWebPresentationEvidence = (entry, path) => {
   };
   entry.artifacts = copyWebPresentationArtifacts(webManifest, path);
   entry.notes = [
-    allPassed && allPlatformObservationsPassed
-      ? "Web browser presentation manifest passed with resize, input, text-input, and clean-shutdown observations."
+    webEvidencePassed
+      ? "Web browser presentation manifest passed with resize, input, text-input, and clean-shutdown observations; monitor/cursor remains pending because CDP evidence is browser-local."
       : "Web browser presentation manifest failed; do not claim passed Web runtime evidence from this browser session.",
     `Web presentation manifest: ${path}`,
     `Browser evidence boundary: ${webManifest.evidenceBoundary}`,
@@ -270,6 +273,24 @@ try {
 if (!Array.isArray(manifest.platforms)) {
   console.error(`${manifestPath}: field 'platforms' must be an array`);
   process.exit(1);
+}
+
+if (![1, 2].includes(manifest.schemaVersion)) {
+  console.error(`${manifestPath}: schemaVersion must be 1 or 2`);
+  process.exit(1);
+}
+
+manifest.schemaVersion = 2;
+for (const platformEntry of manifest.platforms) {
+  if (!platformEntry || typeof platformEntry !== "object" || Array.isArray(platformEntry)) {
+    continue;
+  }
+  if (!platformEntry.observations || typeof platformEntry.observations !== "object" || Array.isArray(platformEntry.observations)) {
+    platformEntry.observations = {};
+  }
+  if (platformEntry.observations.monitorCursor === undefined) {
+    platformEntry.observations.monitorCursor = "pending";
+  }
 }
 
 const entry = manifest.platforms.find(item => item && item.name === platform);

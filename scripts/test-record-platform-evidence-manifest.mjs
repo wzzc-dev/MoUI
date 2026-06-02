@@ -19,6 +19,7 @@ const pendingObservations = {
   consumerInput: "pending",
   textInput: "pending",
   rendererHandle: "pending",
+  monitorCursor: "pending",
   cleanShutdown: "pending",
 };
 
@@ -41,11 +42,15 @@ const webPresentationObservationKeys = [
   "targetClosed",
 ];
 
+const webPlatformObservationKeys = Object.keys(pendingObservations).filter(
+  key => key !== "monitorCursor",
+);
+
 const webPresentationObservations = value =>
   Object.fromEntries(webPresentationObservationKeys.map(key => [key, value]));
 
 const webPlatformObservations = value =>
-  Object.fromEntries(Object.keys(pendingObservations).map(key => [key, value]));
+  Object.fromEntries(webPlatformObservationKeys.map(key => [key, value]));
 
 const baseEntry = ({
   name,
@@ -68,7 +73,7 @@ const baseEntry = ({
 });
 
 const validManifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   mode: "platform-runtime-evidence",
   generatedBy: "scripts/conformance-check.sh --platform-services",
   windowEvidenceSource: ".local_repos/window/scripts/record_moui_evidence.sh",
@@ -151,6 +156,22 @@ const validManifest = {
 const writeManifest = name => {
   const path = join(tmp, name);
   writeFileSync(path, JSON.stringify(validManifest, null, 2));
+  return path;
+};
+
+const writeLegacyManifest = name => {
+  const path = join(tmp, name);
+  const legacyManifest = {
+    ...validManifest,
+    schemaVersion: 1,
+    platforms: validManifest.platforms.map(entry => ({
+      ...entry,
+      observations: Object.fromEntries(
+        Object.entries(entry.observations).filter(([key]) => key !== "monitorCursor"),
+      ),
+    })),
+  };
+  writeFileSync(path, JSON.stringify(legacyManifest, null, 2));
   return path;
 };
 
@@ -301,7 +322,11 @@ expectPass(
 );
 const windowsManifest = JSON.parse(readFileSync(windowsPath, "utf8"));
 const windowsEntry = windowsManifest.platforms.find(entry => entry.name === "windows");
-if (windowsEntry.status !== "passed" || windowsEntry.observations.textInput !== "yes") {
+if (
+  windowsEntry.status !== "passed" ||
+  windowsEntry.observations.textInput !== "yes" ||
+  windowsEntry.observations.monitorCursor !== "yes"
+) {
   console.error("record windows passed evidence: manifest was not updated");
   process.exit(1);
 }
@@ -349,6 +374,26 @@ if (linuxEntry.status !== "failed" || linuxEntry.observations.resizeRedraw !== "
   process.exit(1);
 }
 
+const legacyPath = writeLegacyManifest("legacy-v1-migrates.json");
+expectPass(
+  "migrate legacy platform evidence manifest",
+  runRecorder(legacyPath, "linux", [
+    "--status",
+    "pending",
+    "--note",
+    "legacy manifest updated after monitor/cursor evidence schema was added",
+  ]),
+);
+const legacyManifest = JSON.parse(readFileSync(legacyPath, "utf8"));
+const legacyLinuxEntry = legacyManifest.platforms.find(entry => entry.name === "linux");
+if (
+  legacyManifest.schemaVersion !== 2 ||
+  legacyLinuxEntry.observations.monitorCursor !== "pending"
+) {
+  console.error("migrate legacy platform evidence manifest: schema was not upgraded");
+  process.exit(1);
+}
+
 const webFailedPath = writeManifest("web-presentation-failed.json");
 expectPass(
   "record failed web presentation evidence",
@@ -385,6 +430,7 @@ if (
   webPassedEntry.observations.surface !== "yes" ||
   webPassedEntry.observations.cleanShutdown !== "yes" ||
   webPassedEntry.observations.representativeInput !== "yes" ||
+  webPassedEntry.observations.monitorCursor !== "pending" ||
   !webPassedEntry.consumerCommand.includes("--require-passed")
 ) {
   console.error("record passed web presentation evidence: manifest should be passed");
