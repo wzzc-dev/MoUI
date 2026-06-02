@@ -243,6 +243,61 @@ test "canvas skips invalid shader and filter descriptors" {
 }
 
 ///|
+test "canvas skips undecodable image descriptors" {
+  let replay_size = @skia.ISize::new(4, 4)
+  let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    replay_size,
+  )
+  guard @skia.ImageDescriptor::encoded(
+      b"not-a-real-png",
+      format=Some(@skia.PNG),
+      dimensions=Some(@skia.ISize::new(2, 2)),
+    )
+    is Some(image_descriptor) else {
+    fail("@skia.ImageDescriptor::encoded should accept non-empty bytes")
+  }
+  let commands = @skia.RenderCommandList::for_target(replay_target)
+    .clear(@skia.Color::white())
+    .draw_image(image_descriptor, @skia.Point::new(0, 0))
+    .draw_image_rect(
+      image_descriptor,
+      @skia.Rect::from_xywh(0, 0, 2, 2),
+      @skia.Rect::from_xywh(2, 0, 2, 2),
+    )
+  let resource_plan = commands.resource_plan()
+  assert_eq(resource_plan.length(), 2)
+  assert_eq(resource_plan.count_kind(@skia.SurfaceResource), 1)
+  assert_eq(resource_plan.count_kind(@skia.ImageResource), 1)
+  assert_eq(resource_plan.cacheable_count, 2)
+  assert_eq(resource_plan.uncacheable_count, 0)
+  assert_true(resource_plan.contains_key(image_descriptor.resource_key()))
+  match @native.Surface::raster_n32_premul(replay_size) {
+    None => ()
+    Some(surface) =>
+      match surface.canvas() {
+        None => ()
+        Some(canvas) => {
+          let resources = @native.NativeReplayResources::new(
+            image_max_bytes=1024L,
+          )
+          let stats = canvas.replay_with_resources(commands, resources)
+          let image_cache_stats = resources.image_cache.stats()
+          assert_true(!stats.is_complete())
+          assert_eq(stats.command_count, 3)
+          assert_eq(stats.replayed_count, 1)
+          assert_eq(stats.skipped_count, 2)
+          assert_eq(stats.draw_count, 2)
+          assert_eq(stats.clear_count, 1)
+          assert_eq(stats.image_resource_count, 2)
+          assert_eq(resources.image_cache.length(), 0)
+          assert_eq(image_cache_stats.misses, 2)
+          assert_eq(image_cache_stats.hits, 0)
+        }
+      }
+  }
+}
+
+///|
 test "native backend reports availability" {
   ignore(@native.skia_available())
 }
