@@ -197,6 +197,40 @@ test "workbench projects Pi model catalog entries through agent-neutral contract
 }
 
 ///|
+test "workbench projects Pi session stats through agent-neutral metrics" {
+  let model = {
+    ..WorkbenchModel::new(),
+    pi_session_stats: PiSessionStatsSnapshot::new(
+      session_id="019e7f62",
+      total_messages=10,
+      tool_calls=4,
+      tool_results=5,
+      token_total=1340,
+      context_percent=Some(16.0),
+    ),
+  }
+  let metrics = model.active_agent_session_metrics()
+  inspect(metrics.backend_id, content="pi")
+  inspect(metrics.workbench_session_id, content="moui-skia")
+  inspect(metrics.total_messages, content="10")
+  inspect(metrics.tool_calls, content="4")
+  inspect(metrics.tool_results, content="5")
+  inspect(metrics.token_total, content="1340")
+  inspect(metrics.has_visible_metrics(), content="true")
+  match metrics.context_percent {
+    Some(percent) => inspect(percent.to_int(), content="16")
+    None => fail("expected context percentage")
+  }
+
+  let fixture_metrics = model
+    .update(SwitchAgentBackend("fixture"))
+    .active_agent_session_metrics()
+  inspect(fixture_metrics.backend_id, content="fixture")
+  inspect(fixture_metrics.workbench_session_id, content="moui-skia")
+  inspect(fixture_metrics.has_visible_metrics(), content="false")
+}
+
+///|
 test "workbench switches current session backend and resets provider state" {
   let model = WorkbenchModel::new()
     .update(ReceiveTransport(ProcessStarted("4242")))

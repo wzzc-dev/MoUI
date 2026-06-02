@@ -2341,11 +2341,10 @@ fn WorkbenchModel::session_status_panel(
     None => ()
   }
   if self.should_show_session_detail_rows() {
-    let capabilities = self.active_agent_backend_capabilities()
     let models = self.active_agent_model_catalog()
-    if capabilities.supports_session_stats &&
-      self.pi_session_stats.has_visible_metrics() {
-      rows.push(session_stats_row(self.pi_session_stats, layout, theme))
+    let metrics = self.active_agent_session_metrics()
+    if metrics.has_visible_metrics() {
+      rows.push(session_stats_row(metrics, layout, theme))
     }
     if models.length() > 0 {
       rows.push(model_catalog_row(models, layout, theme))
@@ -2387,10 +2386,9 @@ fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
     None => ()
   }
   if self.should_show_session_detail_rows() {
-    let capabilities = self.active_agent_backend_capabilities()
     let models = self.active_agent_model_catalog()
-    if capabilities.supports_session_stats &&
-      self.pi_session_stats.has_visible_metrics() {
+    let metrics = self.active_agent_session_metrics()
+    if metrics.has_visible_metrics() {
       count = count + 1
     }
     if models.length() > 0 {
@@ -2427,14 +2425,10 @@ fn session_status_badge(
 fn WorkbenchModel::should_show_session_detail_rows(
   self : WorkbenchModel,
 ) -> Bool {
-  let capabilities = self.active_agent_backend_capabilities()
   let binding = self.active_agent_session_binding()
   self.composer_controls_expanded &&
   (
-    (
-      capabilities.supports_session_stats &&
-      self.pi_session_stats.has_visible_metrics()
-    ) ||
+    self.active_agent_session_metrics().has_visible_metrics() ||
     self.active_agent_model_catalog().length() > 0 ||
     binding.has_visible_binding() ||
     self.has_session_panel_controls()
@@ -3062,10 +3056,7 @@ fn WorkbenchModel::has_advanced_session_controls(self : WorkbenchModel) -> Bool 
   binding.has_visible_binding() ||
   (capabilities.supports_fork && !self.transcript.is_empty()) ||
   (capabilities.supports_fork && !self.fork_messages.is_empty()) ||
-  (
-    capabilities.supports_session_stats &&
-    self.pi_session_stats.has_visible_metrics()
-  ) ||
+  self.active_agent_session_metrics().has_visible_metrics() ||
   self.active_agent_model_catalog().length() > 0 ||
   (capabilities.supports_thinking_level && self.pi_agent.thinking_level != "") ||
   (capabilities.uses_pi_transport && self.transport.has_active_signal())
@@ -3258,7 +3249,7 @@ fn WorkbenchModel::thinking_level_label(self : WorkbenchModel) -> String {
 
 ///|
 fn session_stats_row(
-  stats : PiSessionStatsSnapshot,
+  metrics : AgentSessionMetrics,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
@@ -3266,11 +3257,11 @@ fn session_stats_row(
     1.0,
     layout.panel_body_width - 128.0 - 108.0 - 112.0 - 24.0,
   )
-  if stats.has_visible_metrics() {
+  if metrics.has_visible_metrics() {
     row(
       [
         text(
-          "消息 " + stats.total_messages.to_string(),
+          "消息 " + metrics.total_messages.to_string(),
           role=Caption,
           theme~,
           width=128.0,
@@ -3278,22 +3269,22 @@ fn session_stats_row(
         ),
         text(
           "工具 " +
-          stats.tool_calls.to_string() +
+          metrics.tool_calls.to_string() +
           "/" +
-          stats.tool_results.to_string(),
+          metrics.tool_results.to_string(),
           role=Caption,
           theme~,
           width=108.0,
           height=28.0,
         ),
         text(
-          "Token " + stats.token_total.to_string(),
+          "Token " + metrics.token_total.to_string(),
           role=Caption,
           theme~,
           width=token_width,
           height=28.0,
         ),
-        session_stats_context_cell(stats, theme),
+        session_stats_context_cell(metrics, theme),
       ],
       spacing=8.0,
       align=Center,
@@ -3304,28 +3295,11 @@ fn session_stats_row(
 }
 
 ///|
-fn PiSessionStatsSnapshot::has_visible_metrics(
-  self : PiSessionStatsSnapshot,
-) -> Bool {
-  if self.total_messages > 0 ||
-    self.tool_calls > 0 ||
-    self.tool_results > 0 ||
-    self.token_total > 0 {
-    true
-  } else {
-    match self.context_percent {
-      Some(_) => true
-      None => false
-    }
-  }
-}
-
-///|
 fn session_stats_context_cell(
-  stats : PiSessionStatsSnapshot,
+  metrics : AgentSessionMetrics,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  match stats.context_percent {
+  match metrics.context_percent {
     Some(percent) =>
       text(
         "上下文 " + compact_percent(percent),

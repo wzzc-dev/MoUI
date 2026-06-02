@@ -81,6 +81,18 @@ pub(all) struct AgentSessionBinding {
 } derive(Eq, @debug.Debug)
 pub fn AgentSessionBinding::new(backend_id~ : String, workbench_session_id~ : String, provider_session_id? : String, session_file? : String, session_name? : String, model? : String, status? : String, last_command? : String) -> Self
 
+pub(all) struct AgentSessionMetrics {
+  backend_id : String
+  workbench_session_id : String
+  total_messages : Int
+  tool_calls : Int
+  tool_results : Int
+  token_total : Int
+  context_percent : Double?
+} derive(Eq, @debug.Debug)
+pub fn AgentSessionMetrics::has_visible_metrics(Self) -> Bool
+pub fn AgentSessionMetrics::new(backend_id~ : String, workbench_session_id~ : String, total_messages? : Int, tool_calls? : Int, tool_results? : Int, token_total? : Int, context_percent? : Double?) -> Self
+
 pub(all) struct CommandRun {
   id : Int
   command : String
@@ -214,6 +226,7 @@ pub(all) struct PiSessionStatsSnapshot {
   context_window : Int
   context_percent : Double?
 } derive(Eq, @debug.Debug)
+pub fn PiSessionStatsSnapshot::as_agent_session_metrics(Self, backend_id? : String, workbench_session_id~ : String) -> AgentSessionMetrics
 pub fn PiSessionStatsSnapshot::new(session_file? : String, session_id? : String, user_messages? : Int, assistant_messages? : Int, tool_calls? : Int, tool_results? : Int, total_messages? : Int, token_input? : Int, token_output? : Int, token_cache_read? : Int, token_cache_write? : Int, token_total? : Int, cost? : Double, context_tokens? : Int?, context_window? : Int, context_percent? : Double?) -> Self
 
 pub(all) enum PiTransportCommand {
@@ -338,6 +351,7 @@ pub fn WorkbenchModel::active_agent_backend_capabilities(Self) -> AgentBackendCa
 pub fn WorkbenchModel::active_agent_backend_profile(Self) -> AgentBackendProfile
 pub fn WorkbenchModel::active_agent_model_catalog(Self) -> Array[AgentModelInfo]
 pub fn WorkbenchModel::active_agent_session_binding(Self) -> AgentSessionBinding
+pub fn WorkbenchModel::active_agent_session_metrics(Self) -> AgentSessionMetrics
 pub fn WorkbenchModel::active_pi_session_binding(Self) -> PiSessionBinding
 pub fn WorkbenchModel::active_session(Self) -> WorkbenchSession
 pub fn WorkbenchModel::new() -> Self
