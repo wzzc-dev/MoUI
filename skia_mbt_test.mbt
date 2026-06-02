@@ -1429,6 +1429,35 @@ test "render command touched bounds respect rectangular clips" {
     Some(@skia_mbt.Rect::from_xywh(4, 0, 4, 4)),
   )
 
+  let rounded_clip = @skia_mbt.RRect::from_rect_xy(
+    @skia_mbt.Rect::from_xywh(4, 4, 12, 12),
+    3.0,
+    3.0,
+  )
+  let path_clip = @skia_mbt.Path::new().add_rect(
+    @skia_mbt.Rect::from_xywh(6, 6, 6, 6),
+  )
+  let rounded_path_clip = @skia_mbt.RenderCommandList::for_target(target)
+    .clip_rrect(rounded_clip)
+    .clip_path(path_clip)
+    .draw_rect(@skia_mbt.Rect::from_xywh(0, 0, 16, 16))
+  let rounded_path_stats = rounded_path_clip.stats()
+  assert_eq(rounded_path_stats.clip_count, 2)
+  assert_eq(rounded_path_stats.path_resource_count, 1)
+  assert_true(rounded_path_clip.commands[0].is_clip())
+  assert_true(rounded_path_clip.commands[1].is_clip())
+  assert_true(
+    rounded_path_clip.commands[1].resource_descriptor() ==
+    Some(path_clip.resource_descriptor()),
+  )
+  assert_true(
+    rounded_path_clip.resource_plan().contains_key(path_clip.resource_key()),
+  )
+  assert_true(
+    rounded_path_clip.touched_bounds() ==
+    Some(@skia_mbt.Rect::from_xywh(6, 6, 6, 6)),
+  )
+
   let difference_clip = @skia_mbt.RenderCommandList::for_target(target)
     .clip_rect(@skia_mbt.Rect::from_xywh(4, 4, 8, 8), op=@skia_mbt.Difference)
     .draw_rect(@skia_mbt.Rect::from_xywh(0, 0, 16, 16))
