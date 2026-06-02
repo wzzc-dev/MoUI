@@ -59,6 +59,7 @@ default_stage_markers=(
   "native smoke render frame replay rejected skipped" \
   "native smoke surface render frame commands" \
   "native smoke surface render frame finalized" \
+  "native smoke surface render frame status contract" \
   "native smoke surface render frame cache resources" \
   "native smoke surface render frame mismatch rejected" \
   "native smoke render frame pixmap sample proof" \
@@ -217,6 +218,7 @@ default_expected_stage_values=(
   $'native smoke render frame replay rejected skipped\t20'
   $'native smoke surface render frame commands\t23'
   $'native smoke surface render frame finalized\t1'
+  $'native smoke surface render frame status contract\t2'
   $'native smoke surface render frame cache resources\t9'
   $'native smoke surface render frame mismatch rejected\t1'
   $'native smoke render frame pixmap sample proof\t1'

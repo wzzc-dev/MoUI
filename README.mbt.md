@@ -101,6 +101,9 @@ The `native` subpackage contains the first opt-in native boundary:
   surface rectangle;
 - `@native.Surface::flush_and_submit()` establishes an explicit finalization
   boundary for native surfaces; current raster surfaces treat it as a no-op;
+- `@native.Surface::render_frame(frame)` and `render_frame_with_resources(...)`
+  return `SurfaceFrameReplayStats`, whose `status()` classifies validation,
+  surface mismatch, replay skip, finalization failure, and complete outcomes;
 - `@native.Surface::read_pixels(bounds)` reads N32 premultiplied surface pixels
   into an owned `@skia_mbt.Pixmap`;
 - `@native.Image::encode_to_data(format, quality)` returns immutable
