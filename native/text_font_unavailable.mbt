@@ -180,6 +180,18 @@ pub fn Font::shape_text_utf8(
 }
 
 ///|
+pub fn Font::shape_text_run_utf8(
+  self : Font,
+  text : Bytes,
+  shaping : @skia.TextShapingDescriptor,
+) -> @skia.ShapedGlyphRunDescriptor? {
+  ignore(self)
+  ignore(text)
+  ignore(shaping)
+  None
+}
+
+///|
 pub fn ShapedTextRun::is_available(self : ShapedTextRun) -> Bool {
   ignore(self)
   false
@@ -323,6 +335,16 @@ pub fn FontMgr::match_fallback_request(
   self : FontMgr,
   request : @skia.FontFallbackRequest,
 ) -> Typeface? {
+  ignore(self)
+  ignore(request)
+  None
+}
+
+///|
+pub fn FontMgr::resolve_fallback_request(
+  self : FontMgr,
+  request : @skia.FontFallbackRequest,
+) -> ResolvedTypeface? {
   ignore(self)
   ignore(request)
   None
