@@ -820,6 +820,7 @@ pub(all) enum RenderCommand {
   ClipCanvasPath(Path, ClipOp)
   DrawCanvasColor(Color, BlendMode)
   DrawCanvasPaint(Paint)
+  DrawCanvasPaintShader(ShaderDescriptor, Paint)
   DrawCanvasPoint(Point, Paint)
   DrawCanvasLine(Point, Point, Paint)
   DrawCanvasPoints(Array[Point], PointMode, Paint)
@@ -857,6 +858,7 @@ pub fn RenderCommand::draw_image_rect(ImageDescriptor, Rect, Rect, paint? : Pain
 pub fn RenderCommand::draw_line(Point, Point, paint? : Paint) -> Self
 pub fn RenderCommand::draw_oval(Rect, paint? : Paint) -> Self
 pub fn RenderCommand::draw_paint(Paint) -> Self
+pub fn RenderCommand::draw_paint_shader(ShaderDescriptor, paint? : Paint) -> Self
 pub fn RenderCommand::draw_path(Path, paint? : Paint) -> Self
 pub fn RenderCommand::draw_path_shader(Path, ShaderDescriptor, paint? : Paint) -> Self
 pub fn RenderCommand::draw_point(Point, paint? : Paint) -> Self
@@ -911,6 +913,7 @@ pub fn RenderCommandList::draw_image_rect(Self, ImageDescriptor, Rect, Rect, pai
 pub fn RenderCommandList::draw_line(Self, Point, Point, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_oval(Self, Rect, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_paint(Self, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_paint_shader(Self, ShaderDescriptor, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_path(Self, Path, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_path_shader(Self, Path, ShaderDescriptor, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_point(Self, Point, paint? : Paint) -> Self

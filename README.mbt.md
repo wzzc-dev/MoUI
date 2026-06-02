@@ -47,7 +47,7 @@ The current package exposes the first value-layer API surface:
 - render command contracts: `RenderCommandList`, `RenderCommand`, and
   `RenderCommandStats` provide the backend-neutral command stream boundary a GUI
   renderer can validate before replaying into a native Canvas, including
-  current-clip color/paint fills, rounded-rectangle and path clipping,
+  current-clip color/paint and shader fills, rounded-rectangle and path clipping,
   cacheable text-run and shaped glyph-run draw commands, explicit
   shader/filter/image resource declarations, and target-bound resource plans
   for backend caches

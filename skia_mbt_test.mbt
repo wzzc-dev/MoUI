@@ -1313,6 +1313,24 @@ test "render command list records canvas fill commands" {
   assert_true(
     unclipped.touched_bounds() == Some(@skia_mbt.Rect::from_iwh(20, 20)),
   )
+
+  let shader = @skia_mbt.ShaderDescriptor::color(@skia_mbt.Color::cyan())
+  let shader_fill = @skia_mbt.RenderCommandList::for_target(target)
+    .clip_rect(@skia_mbt.Rect::from_xywh(5, 5, 6, 6))
+    .draw_paint_shader(shader)
+  let shader_fill_stats = shader_fill.stats()
+  assert_eq(shader_fill.length(), 2)
+  assert_eq(shader_fill_stats.draw_count, 1)
+  assert_eq(shader_fill_stats.clip_count, 1)
+  assert_eq(shader_fill_stats.shader_resource_count, 1)
+  assert_true(
+    shader_fill.commands[1].resource_descriptor() ==
+    Some(shader.resource_descriptor()),
+  )
+  assert_true(shader_fill.resource_plan().contains_key(shader.resource_key()))
+  assert_true(
+    shader_fill.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(5, 5, 6, 6)),
+  )
 }
 
 ///|
