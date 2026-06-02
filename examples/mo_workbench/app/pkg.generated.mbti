@@ -351,3 +351,4 @@ pub fn WorkbenchUpdate::new(WorkbenchModel, effect? : @core.Effect[WorkbenchMsg]
 // Type aliases
 
 // Traits
+
