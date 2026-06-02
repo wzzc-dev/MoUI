@@ -385,6 +385,7 @@ if schema_version >= 3:
         "fontmgr.fallback-match-resource-plan",
         "fontmgr.fallback-resolution-key",
         "fontmgr.fallback-resolution-resource-plan",
+        "fontmgr.fallback-resolution-bridge",
         "fontmgr.fallback-resource-plan",
         "fontmgr.fallback-font-resource-plan",
     }
@@ -444,6 +445,12 @@ if schema_version >= 3:
             "text.native-shaped-glyph-run-resource-plan": {
                 "area": "Text",
                 "marker": "native smoke shaped glyph run native resource plan count",
+                "when_marker": "native smoke shaper availability",
+                "when_value": "1",
+            },
+            "text.shaped-glyph-descriptor-bridge": {
+                "area": "Text",
+                "marker": "native smoke shaped glyph descriptor bridge",
                 "when_marker": "native smoke shaper availability",
                 "when_value": "1",
             },
@@ -581,6 +588,7 @@ if schema_version >= 3:
             "native smoke font fallback match resource plan count": "2",
             "native smoke font fallback resolution key variation": "1",
             "native smoke font fallback resolution resource plan count": "4",
+            "native smoke font fallback resolution bridge": "1",
             "native smoke font fallback resource plan count": "1",
             "native smoke font fallback font resource plan count": "2",
         }
