@@ -115,6 +115,7 @@ import {
 
 options(
   "native-stub": [
+    "skia_stub.cpp",
     "skia_stub_common.cpp",
     "skia_stub_surface_image_data.cpp",
     "skia_stub_canvas.cpp",
