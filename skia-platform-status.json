@@ -128,6 +128,11 @@
       "marker": "native smoke non-finite canvas direct geometry skipped"
     },
     {
+      "id": "canvas.non-finite-paint-layer-sanitized",
+      "area": "Canvas",
+      "marker": "native smoke non-finite canvas paint layer sanitized"
+    },
+    {
       "id": "canvas.command-replay",
       "area": "Canvas",
       "marker": "native smoke canvas replay commands"
@@ -1244,6 +1249,11 @@
     {
       "id": "canvas.non-finite-direct-geometry-skipped",
       "marker": "native smoke non-finite canvas direct geometry skipped",
+      "value": "1"
+    },
+    {
+      "id": "canvas.non-finite-paint-layer-sanitized",
+      "marker": "native smoke non-finite canvas paint layer sanitized",
       "value": "1"
     },
     {

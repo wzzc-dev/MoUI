@@ -1299,6 +1299,38 @@ fn main {
   )
   println("native smoke non-finite canvas direct geometry skipped")
   println(1)
+  let non_finite_canvas_save_count = non_finite_canvas.save_count()
+  let non_finite_paint = @skia.Paint::new(
+    color=@skia.Color::blue(),
+    stroke_width=1.0 / 0.0,
+    stroke_miter=0.0 / 0.0,
+  )
+  ignore(
+    non_finite_canvas.save_layer(
+      bounds=Some(@skia.Rect::new(0, 0, 1.0 / 0.0, 1)),
+      paint=non_finite_paint,
+    ),
+  )
+  non_finite_canvas.draw_line(
+    @skia.Point::new(0, 0),
+    @skia.Point::new(3, 0),
+    non_finite_paint,
+  )
+  non_finite_canvas.restore_to_count(non_finite_canvas_save_count)
+  guard non_finite_canvas_surface.read_pixels(bounds=@skia.IRect::from_xywh(0, 0, 1, 1))
+    is Some(non_finite_paint_pixmap) else {
+    fail_smoke("failed to read non-finite canvas paint guard pixel")
+  }
+  assert_pixel(
+    non_finite_paint_pixmap,
+    @skia.IPoint::new(0, 0),
+    0x00,
+    0x00,
+    0xff,
+    0xff,
+  )
+  println("native smoke non-finite canvas paint layer sanitized")
+  println(1)
 
   let replay_size = @skia.ISize::new(12, 12)
   guard @native.Surface::raster_n32_premul(replay_size) is Some(replay_surface) else {
