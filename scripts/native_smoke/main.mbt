@@ -945,6 +945,44 @@ fn main {
   }
   println("native smoke filter finite validation")
   println(1)
+  let invalid_shader_descriptor = @skia.LinearGradientShader(
+    @skia.Point::new(4, 4),
+    @skia.Point::new(4, 4),
+    @skia.Color::red(),
+    @skia.Color::blue(),
+    @skia.Clamp,
+  )
+  let invalid_color_filter_descriptor = @skia.ColorMatrixFilter(
+    invalid_filter_matrix,
+  )
+  let invalid_image_filter_descriptor = @skia.BlurImageFilter(
+    invalid_filter_scalar,
+    1.0,
+  )
+  let invalid_mask_filter_descriptor = @skia.BlurMaskFilter(
+    invalid_filter_scalar,
+  )
+  let invalid_descriptor_plan = @skia.RendererResourcePlan::new([
+    invalid_shader_descriptor.resource_descriptor(),
+    invalid_color_filter_descriptor.resource_descriptor(),
+    invalid_image_filter_descriptor.resource_descriptor(),
+    invalid_mask_filter_descriptor.resource_descriptor(),
+  ])
+  if invalid_shader_descriptor.is_valid() ||
+    invalid_color_filter_descriptor.is_valid() ||
+    invalid_image_filter_descriptor.is_valid() ||
+    invalid_mask_filter_descriptor.is_valid() ||
+    invalid_descriptor_plan.length() != 4 ||
+    invalid_descriptor_plan.cacheable_count != 0 ||
+    invalid_descriptor_plan.uncacheable_count != 4 ||
+    invalid_descriptor_plan.count_kind(@skia.ShaderResource) != 1 ||
+    invalid_descriptor_plan.count_kind(@skia.ColorFilterResource) != 1 ||
+    invalid_descriptor_plan.count_kind(@skia.ImageFilterResource) != 1 ||
+    invalid_descriptor_plan.count_kind(@skia.MaskFilterResource) != 1 {
+    fail_smoke("invalid shader/filter descriptors should be uncacheable")
+  }
+  println("native smoke invalid shader filter descriptor resources")
+  println(invalid_descriptor_plan.uncacheable_count)
 
   guard @native.Path::new() is Some(native_path) else {
     fail_smoke("failed to create native path")

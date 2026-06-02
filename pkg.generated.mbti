@@ -114,6 +114,7 @@ pub(all) enum ColorFilterDescriptor {
 } derive(Eq, @debug.Debug)
 pub fn ColorFilterDescriptor::brightness(Float) -> Self?
 pub fn ColorFilterDescriptor::contrast(Float) -> Self?
+pub fn ColorFilterDescriptor::is_valid(Self) -> Bool
 pub fn ColorFilterDescriptor::matrix(Array[Float]) -> Self?
 pub fn ColorFilterDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn ColorFilterDescriptor::resource_key(Self) -> RendererResourceKey
@@ -386,6 +387,7 @@ pub(all) enum ImageFilterDescriptor {
   BlurImageFilter(Float, Float)
 } derive(Eq, @debug.Debug)
 pub fn ImageFilterDescriptor::blur(Float, Float) -> Self?
+pub fn ImageFilterDescriptor::is_valid(Self) -> Bool
 pub fn ImageFilterDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn ImageFilterDescriptor::resource_key(Self) -> RendererResourceKey
 
@@ -425,6 +427,7 @@ pub(all) enum MaskFilterDescriptor {
   BlurMaskFilter(Float)
 } derive(Eq, @debug.Debug)
 pub fn MaskFilterDescriptor::blur(Float) -> Self?
+pub fn MaskFilterDescriptor::is_valid(Self) -> Bool
 pub fn MaskFilterDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
 pub fn MaskFilterDescriptor::resource_key(Self) -> RendererResourceKey
 
@@ -1232,6 +1235,7 @@ pub(all) enum ShaderDescriptor {
   RadialGradientShader(Point, Float, Color, Color, TileMode)
 } derive(Eq, @debug.Debug)
 pub fn ShaderDescriptor::color(Color) -> Self
+pub fn ShaderDescriptor::is_valid(Self) -> Bool
 pub fn ShaderDescriptor::linear_gradient(Point, Point, Color, Color, tile_mode? : TileMode) -> Self?
 pub fn ShaderDescriptor::radial_gradient(Point, Float, Color, Color, tile_mode? : TileMode) -> Self?
 pub fn ShaderDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor

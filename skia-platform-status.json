@@ -698,6 +698,11 @@
       "marker": "native smoke shader linear gradient validation"
     },
     {
+      "id": "shader-filter.invalid-descriptor-resources",
+      "area": "Shader",
+      "marker": "native smoke invalid shader filter descriptor resources"
+    },
+    {
       "id": "filter.layer",
       "area": "Filter",
       "marker": "native smoke filter layer count"
@@ -1745,6 +1750,11 @@
       "id": "shader.linear-gradient-validation",
       "marker": "native smoke shader linear gradient validation",
       "value": "1"
+    },
+    {
+      "id": "shader-filter.invalid-descriptor-resources",
+      "marker": "native smoke invalid shader filter descriptor resources",
+      "value": "4"
     },
     {
       "id": "filter.resource-plan",
