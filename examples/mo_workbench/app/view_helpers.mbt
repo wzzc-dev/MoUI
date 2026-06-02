@@ -1483,11 +1483,9 @@ fn WorkbenchModel::transcript_panel(
         }
       }
       rows.push(self.transcript_row(item, layout, theme))
-      let fork_messages = self.deduplicated_fork_messages_for_transcript_item(
-        item,
-      )
-      for message in fork_messages {
-        rows.push(fork_affordance_row(message, layout, theme))
+      let fork_points = self.active_agent_fork_points_for_transcript_item(item)
+      for point in fork_points {
+        rows.push(fork_affordance_row(point, layout, theme))
       }
     }
   }
@@ -1530,11 +1528,11 @@ fn WorkbenchModel::transcript_panel_height(
         }
         height = height + transcript_row_height(item, layout)
         row_count = row_count + 1
-        let fork_messages = self.deduplicated_fork_messages_for_transcript_item(
+        let fork_points = self.active_agent_fork_points_for_transcript_item(
           item,
         )
-        for message in fork_messages {
-          height = height + 4.0 + fork_affordance_row_height(message, layout)
+        for point in fork_points {
+          height = height + 4.0 + fork_affordance_row_height(point, layout)
           row_count = row_count + 1
         }
       }
@@ -1854,30 +1852,31 @@ fn WorkbenchModel::process_detail_lines(
 }
 
 ///|
-fn WorkbenchModel::fork_messages_for_transcript_item(
+fn WorkbenchModel::fork_points_for_transcript_item(
   self : WorkbenchModel,
   item : TranscriptItem,
-) -> Array[PiForkMessage] {
-  let messages : Array[PiForkMessage] = []
+) -> Array[AgentForkPoint] {
+  let points : Array[AgentForkPoint] = []
   if item.role == "assistant" {
     for message in self.fork_messages {
-      if self.assistant_transcript_item_id_for_fork_message(message) == item.id {
-        messages.push(message)
+      let point = message.as_agent_fork_point()
+      if self.assistant_transcript_item_id_for_fork_point(point) == item.id {
+        points.push(point)
       }
     }
   }
-  messages
+  points
 }
 
 ///|
-fn WorkbenchModel::assistant_transcript_item_id_for_fork_message(
+fn WorkbenchModel::assistant_transcript_item_id_for_fork_point(
   self : WorkbenchModel,
-  message : PiForkMessage,
+  point : AgentForkPoint,
 ) -> String {
   let mut matched_index = -1
   for index in 0..<self.transcript.length() {
     if matched_index == -1 &&
-      self.fork_message_matches_transcript_item(message, self.transcript[index]) {
+      self.fork_point_matches_transcript_item(point, self.transcript[index]) {
       matched_index = index
     }
   }
@@ -1897,35 +1896,37 @@ fn WorkbenchModel::assistant_transcript_item_id_for_fork_message(
 }
 
 ///|
-fn WorkbenchModel::deduplicated_fork_messages_for_transcript_item(
+pub fn WorkbenchModel::active_agent_fork_points_for_transcript_item(
   self : WorkbenchModel,
   item : TranscriptItem,
-) -> Array[PiForkMessage] {
-  let messages : Array[PiForkMessage] = []
+) -> Array[AgentForkPoint] {
+  let points : Array[AgentForkPoint] = []
+  if !self.active_agent_backend_capabilities().supports_fork {
+    return points
+  }
   let seen : Array[String] = []
-  for message in self.fork_messages_for_transcript_item(item) {
-    let key = message.entry_id + "\n" + message.text
+  for point in self.fork_points_for_transcript_item(item) {
+    let key = point.entry_id + "\n" + point.text
     if !seen.any(value => value == key) {
       seen.push(key)
-      messages.push(message)
+      points.push(point)
     }
   }
-  messages
+  points
 }
 
 ///|
-fn WorkbenchModel::fork_message_matches_transcript_item(
+fn WorkbenchModel::fork_point_matches_transcript_item(
   self : WorkbenchModel,
-  message : PiForkMessage,
+  point : AgentForkPoint,
   item : TranscriptItem,
 ) -> Bool {
   ignore(self)
-  message.entry_id == item.id ||
-  fork_message_text_matches_item(message.text, item)
+  point.entry_id == item.id || fork_point_text_matches_item(point.text, item)
 }
 
 ///|
-fn fork_message_text_matches_item(text : String, item : TranscriptItem) -> Bool {
+fn fork_point_text_matches_item(text : String, item : TranscriptItem) -> Bool {
   let clean = text.trim().to_owned()
   clean != "" &&
   (
@@ -2180,17 +2181,17 @@ fn workbench_min_int(a : Int, b : Int) -> Int {
 
 ///|
 fn fork_affordance_row_height(
-  message : PiForkMessage,
+  point : AgentForkPoint,
   layout : WorkbenchLayout,
 ) -> Double {
-  ignore(message)
+  ignore(point)
   ignore(layout)
   34.0
 }
 
 ///|
 fn fork_affordance_row(
-  message : PiForkMessage,
+  point : AgentForkPoint,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
@@ -2206,7 +2207,7 @@ fn fork_affordance_row(
           [
             button(
               "分叉",
-              on_click=ForkFromMessage(message.entry_id),
+              on_click=ForkFromMessage(point.entry_id),
               variant=Ghost,
               theme~,
               width=action_width,
@@ -2214,7 +2215,7 @@ fn fork_affordance_row(
             ),
             text(
               end_ellipsis_label(
-                fork_affordance_detail(message),
+                fork_affordance_detail(point),
                 max_chars=readable_line_char_limit(text_width),
               ),
               role=Caption,
@@ -2227,7 +2228,7 @@ fn fork_affordance_row(
           align=Center,
         ),
         width~,
-        height=fork_affordance_row_height(message, layout),
+        height=fork_affordance_row_height(point, layout),
         background=ui_color(0.980, 0.985, 0.990),
         corner_radius=6.0,
         theme~,
@@ -2240,11 +2241,11 @@ fn fork_affordance_row(
 }
 
 ///|
-fn fork_affordance_detail(message : PiForkMessage) -> String {
-  if message.text.trim().to_owned() == "" {
+fn fork_affordance_detail(point : AgentForkPoint) -> String {
+  if point.text.trim().to_owned() == "" {
     "从这条回复创建分支"
   } else {
-    message.text
+    point.text
   }
 }
 
