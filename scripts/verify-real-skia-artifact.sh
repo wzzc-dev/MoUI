@@ -142,7 +142,7 @@ require_acceptance_log_reference() {
     echo "acceptance log is missing required artifact log field: ${field}=" >&2
     exit 1
   fi
-  actual_name="$(basename "$actual_path")"
+  actual_name="$(basename "${actual_path//\\//}")"
   if [[ "$actual_name" != "$expected_name" ]]; then
     echo "acceptance log field ${field}= does not reference expected artifact log: $expected_name" >&2
     echo "  actual_${field}=$actual_path" >&2
