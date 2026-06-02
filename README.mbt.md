@@ -146,6 +146,8 @@ The `native` subpackage contains the first opt-in native boundary:
   caches;
 - native replay skips undecodable or empty encoded image draw commands without
   touching or populating image caches;
+- native replay keeps empty path draw, clip, and path-shader commands out of
+  path cache lookups while still replaying harmless empty native paths;
 - `@native.Path` supports the first path construction calls: `new`, `reset`,
   `rewind`,
   `set_fill_type`, `fill_type`, `move_to`, `line_to`, `quad_to`, `cubic_to`,

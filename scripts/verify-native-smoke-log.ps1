@@ -52,6 +52,7 @@ $defaultStageMarkers = @(
   "native smoke canvas replay text resources",
   "native smoke canvas replay rrect path clips",
   "native smoke canvas replay clip path cache resources",
+  "native smoke empty path replay path cache resources",
   "native smoke canvas replay color paint fills",
   "native smoke canvas replay paint fill clipped",
   "native smoke canvas replay paint shader fills",
@@ -847,6 +848,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke invalid shader filter replay filter resources"
     Value = "3"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke empty path replay path cache resources"
+    Value = "0"
   }
   [pscustomobject]@{
     Marker = "native smoke filter resource plan count"
