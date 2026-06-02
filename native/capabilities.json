@@ -68,6 +68,7 @@
         "native smoke surface flush-and-submit",
         "native smoke surface render frame commands",
         "native smoke surface render frame finalized",
+        "native smoke surface render frame status contract",
         "native smoke surface render frame cache resources",
         "native smoke surface render frame mismatch rejected",
         "native smoke render frame pixmap sample proof",
