@@ -72,6 +72,12 @@ packages:
 - A Codex / Claude Code-style native shell with macOS chrome, a quiet
   task-history sidebar, a clean white main work canvas, readable compact
   transcript rows, current-turn evidence summaries, and a bottom composer.
+  The sidebar now includes a default-visible `新对话` entry for backends that
+  support creating sessions, while the lower-level Pi `新会话` RPC control stays
+  in expanded composer options. New user prompts, local fixture replies, Pi
+  streaming/response events, and queued command evidence pin the main scroll to
+  the latest content so the conversation does not remain above the newest
+  message.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and

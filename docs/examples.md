@@ -195,7 +195,11 @@ one two-line identity block with shortened title, project, and branch labels,
 so long paths remain in shared state and transport commands without clipping
 the visible chrome. The transcript uses compact multi-line message rows for
 long Pi replies and draws an explicit scrollbar when the main workflow
-overflows. Message rows no longer expose a message-level `跟进` action.
+overflows. New prompts, local fixture replies, Pi response events, and queued
+command evidence pin that scroll area to the latest content. The sidebar also
+has a default-visible `新对话` action for backends that support fresh sessions,
+while the Pi-specific `新会话` RPC control remains in expanded composer options.
+Message rows no longer expose a message-level `跟进` action.
 Matching Pi fork candidates render as a small Codex-style `分叉` affordance
 directly under the corresponding assistant reply, including candidates whose
 `entryId` points at the preceding user message. Primary UI copy now follows the Codex-style hierarchy:
