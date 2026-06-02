@@ -31,8 +31,7 @@ priv struct WorkbenchLayout {
   row_badge_width : Double
   row_text_width : Double
   command_text_width : Double
-  top_title_width : Double
-  top_path_width : Double
+  top_identity_width : Double
   composer_width : Double
   composer_input_width : Double
   composer_height : Double
@@ -101,24 +100,18 @@ fn workbench_layout(
     1.0,
     panel_body_width - row_badge_width - 68.0 - 54.0 - 54.0 - 54.0 - 48.0,
   )
-  let composer_width = workbench_clamp_double(
-    content_available_width,
-    workbench_min_double(460.0, content_available_width),
-    860.0,
-  )
-  let composer_height = 84.0
-  let top_text_available = workbench_max_double(
+  let composer_width = workbench_max_double(
     1.0,
-    content_width - 86.0 - 74.0 - 120.0 - 66.0 - 54.0 - 42.0 - 24.0,
+    content_width + scrollbar_width,
   )
-  let top_title_width = workbench_clamp_double(
-    top_text_available * 0.45,
-    workbench_min_double(180.0, top_text_available * 0.45),
-    360.0,
+  let composer_height = 70.0
+  let top_inner_width = workbench_max_double(
+    1.0,
+    content_width + scrollbar_width - 24.0,
   )
-  let top_path_width = workbench_min_double(
-    420.0,
-    workbench_max_double(1.0, top_text_available - top_title_width),
+  let top_identity_width = workbench_max_double(
+    1.0,
+    top_inner_width - 74.0 - 66.0 - 54.0 - 32.0,
   )
   {
     viewport,
@@ -140,8 +133,7 @@ fn workbench_layout(
     row_badge_width,
     row_text_width,
     command_text_width,
-    top_title_width,
-    top_path_width,
+    top_identity_width,
     composer_width,
     composer_input_width: workbench_max_double(1.0, composer_width - 24.0),
     composer_height,
@@ -296,19 +288,26 @@ fn WorkbenchModel::workspace_summary(
 ) -> @core.View[WorkbenchMsg] {
   let active = self.active_session()
   let pending = self.pending_transport_count()
+  let workspace_label_width = layout.sidebar_inner_width - 30.0
   let rows : Array[@core.View[WorkbenchMsg]] = [
     text(
-      project_display_label(active.project_path),
+      end_ellipsis_label(
+        project_display_label(active.project_path),
+        max_chars=readable_line_char_limit(workspace_label_width),
+      ),
       role=Control,
       theme~,
-      width=layout.sidebar_inner_width - 30.0,
+      width=workspace_label_width,
       height=28.0,
     ),
     text(
-      active.branch,
+      middle_ellipsis_label(
+        active.branch,
+        max_chars=readable_line_char_limit(workspace_label_width),
+      ),
       role=Caption,
       theme~,
-      width=layout.sidebar_inner_width - 30.0,
+      width=workspace_label_width,
       height=24.0,
     ),
   ]
@@ -407,15 +406,19 @@ fn WorkbenchModel::thread_button(
   } else {
     ui_color(0.93, 0.94, 0.93)
   }
+  let label_width = layout.sidebar_inner_width - 72.0
   surface(
     row(
       [
         button(
-          label,
+          end_ellipsis_label(
+            label,
+            max_chars=readable_line_char_limit(label_width),
+          ),
           on_click=message,
           variant=Ghost,
           theme~,
-          width=layout.sidebar_inner_width - 72.0,
+          width=label_width,
           height=32.0,
         ),
         text(meta, role=Caption, theme~, width=54.0, height=28.0),
@@ -542,9 +545,9 @@ fn WorkbenchModel::workflow_rail(
 
 ///|
 fn WorkbenchModel::has_workflow_rail_evidence(self : WorkbenchModel) -> Bool {
-  self.next_action() is Some(_) ||
-  self.current_plan_action_step() is Some(_) ||
+  self.latest_failed_command() is Some(_) ||
   self.latest_active_command() is Some(_) ||
+  self.current_plan_action_step() is Some(_) ||
   self.pi_agent.active_tool_name != ""
 }
 
@@ -555,28 +558,36 @@ fn WorkbenchModel::compact_workflow_rail_card(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let rows : Array[@core.View[WorkbenchMsg]] = []
-  match self.next_action() {
-    Some(action) => rows.push(workflow_next_action_row(action, layout, theme))
-    None => ()
-  }
   match self.current_plan_action_step() {
     Some(step) => rows.push(workflow_plan_step_row(step, layout, theme))
     None => ()
   }
-  match self.latest_active_command() {
+  let failed_command = self.latest_failed_command()
+  match failed_command {
     Some(command) => rows.push(workflow_command_row(command, layout, theme))
-    None =>
-      if self.pi_agent.active_tool_name != "" {
-        rows.push(
-          workflow_agent_row(
-            "工具",
-            self.pi_agent.active_tool_name,
-            Accent,
-            layout,
-            theme,
-          ),
-        )
+    None => ()
+  }
+  match self.latest_active_command() {
+    Some(command) =>
+      match failed_command {
+        Some(failed) =>
+          if failed.id != command.id {
+            rows.push(workflow_command_row(command, layout, theme))
+          }
+        None => rows.push(workflow_command_row(command, layout, theme))
       }
+    None => ()
+  }
+  if self.pi_agent.active_tool_name != "" {
+    rows.push(
+      workflow_agent_row(
+        "工具",
+        self.pi_agent.active_tool_name,
+        Accent,
+        layout,
+        theme,
+      ),
+    )
   }
   workflow_rail_card(
     "状态",
@@ -598,17 +609,8 @@ fn compact_workflow_summary(model : WorkbenchModel) -> String {
   } else if model.current_plan_action_step() is Some(_) {
     "计划"
   } else {
-    "下一步"
+    "证据"
   }
-}
-
-///|
-fn workflow_next_action_row(
-  action : WorkbenchNextAction,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  workflow_agent_row("下一步", action.title, action.tone, layout, theme)
 }
 
 ///|
@@ -759,21 +761,7 @@ fn WorkbenchModel::top_bar(
 ) -> @core.View[WorkbenchMsg] {
   let active = self.active_session()
   let controls : Array[@core.View[WorkbenchMsg]] = [
-    badge("当前会话", tone=Accent, theme~, width=86.0),
-    text(
-      active.title,
-      role=Control,
-      theme~,
-      width=layout.top_title_width,
-      height=30.0,
-    ),
-    text(
-      project_display_label(active.project_path),
-      role=Caption,
-      theme~,
-      width=layout.top_path_width,
-      height=28.0,
-    ),
+    self.top_bar_identity(active, layout, theme),
     spacer(min_length=10.0, weight=1.0),
   ]
   if should_show_session_status_meta(active.status) {
@@ -786,9 +774,6 @@ fn WorkbenchModel::top_bar(
       ),
     )
   }
-  controls.push(
-    text(active.branch, role=Caption, theme~, width=120.0, height=28.0),
-  )
   controls.push(
     button(
       "新会话",
@@ -810,7 +795,7 @@ fn WorkbenchModel::top_bar(
     ),
   )
   surface(
-    row(controls, spacing=6.0, align=Center),
+    row(controls, spacing=8.0, align=Center),
     width=layout.content_width + layout.scrollbar_width,
     height=58.0,
     background=@core.Color::white(),
@@ -818,6 +803,74 @@ fn WorkbenchModel::top_bar(
     theme~,
     padding=12.0,
   ).border(workbench_hairline_border())
+}
+
+///|
+fn WorkbenchModel::top_bar_identity(
+  self : WorkbenchModel,
+  active : WorkbenchSession,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  ignore(self)
+  let title_width = workbench_max_double(
+    1.0,
+    layout.top_identity_width - 78.0 - 8.0,
+  )
+  let title_label = end_ellipsis_label(
+    active.title,
+    max_chars=readable_line_char_limit(title_width),
+  )
+  column(
+    [
+      row(
+        [
+          badge("当前会话", tone=Accent, theme~, width=78.0),
+          text(
+            title_label,
+            role=Control,
+            theme~,
+            width=title_width,
+            height=24.0,
+          ),
+        ],
+        spacing=8.0,
+        align=Center,
+      ),
+      text(
+        top_bar_session_meta_label(active, layout.top_identity_width),
+        role=Caption,
+        theme~,
+        width=layout.top_identity_width,
+        height=20.0,
+      ),
+    ],
+    spacing=0.0,
+    align=Start,
+  ).frame(width=layout.top_identity_width, height=46.0)
+}
+
+///|
+fn top_bar_session_meta_label(
+  session : WorkbenchSession,
+  width : Double,
+) -> String {
+  let project = project_display_label(session.project_path)
+  let branch = session.branch.trim().to_owned()
+  let max_chars = readable_line_char_limit(width)
+  if branch == "" {
+    middle_ellipsis_label(project, max_chars~)
+  } else {
+    let branch_limit = workbench_clamp_int(
+      (max_chars.to_double() * 0.42).to_int(),
+      12,
+      workbench_max_int(12, max_chars - 8),
+    )
+    let project_limit = workbench_max_int(8, max_chars - branch_limit - 3)
+    middle_ellipsis_label(project, max_chars=project_limit) +
+    " · " +
+    middle_ellipsis_label(branch, max_chars=branch_limit)
+  }
 }
 
 ///|
@@ -917,11 +970,19 @@ fn WorkbenchModel::has_session_status_panel_content(
 
 ///|
 fn WorkbenchModel::has_transcript_panel_content(self : WorkbenchModel) -> Bool {
-  !self.transcript.is_empty() || !self.fork_messages.is_empty()
+  self.transcript.any(item => transcript_item_is_visible_conversation(item))
 }
 
 ///|
 fn WorkbenchModel::has_activity_panel_content(self : WorkbenchModel) -> Bool {
+  self.has_raw_activity_panel_content() &&
+  !self.completed_process_should_collapse()
+}
+
+///|
+fn WorkbenchModel::has_raw_activity_panel_content(
+  self : WorkbenchModel,
+) -> Bool {
   self.should_show_focused_check_presets() ||
   !self.events.is_empty() ||
   !self.commands.is_empty()
@@ -950,25 +1011,27 @@ fn WorkbenchModel::turn_evidence_card(
   let rows : Array[@core.View[WorkbenchMsg]] = [
     self.turn_evidence_header_row(layout, theme),
   ]
-  if self.should_show_focused_check_presets() {
-    rows.push(focused_check_preset_row(layout, theme))
-  }
-  if self.commands_end_with_focused_check_batch(
-      workbench_check_presets().length(),
-    ) {
-    let command_start = self.visible_activity_command_start()
-    for index in command_start..<self.commands.length() {
-      rows.push(command_run_row(self.commands[index], layout, theme))
+  if self.has_activity_panel_content() {
+    if self.should_show_focused_check_presets() {
+      rows.push(focused_check_preset_row(layout, theme))
     }
-  } else {
-    match self.primary_turn_evidence_command() {
-      Some(command) => rows.push(command_run_row(command, layout, theme))
-      None =>
-        if !self.events.is_empty() {
-          rows.push(
-            event_row(self.events[self.events.length() - 1], layout, theme),
-          )
-        }
+    if self.commands_end_with_focused_check_batch(
+        workbench_check_presets().length(),
+      ) {
+      let command_start = self.visible_activity_command_start()
+      for index in command_start..<self.commands.length() {
+        rows.push(command_run_row(self.commands[index], layout, theme))
+      }
+    } else {
+      match self.primary_turn_evidence_command() {
+        Some(command) => rows.push(command_run_row(command, layout, theme))
+        None =>
+          if !self.events.is_empty() {
+            rows.push(
+              event_row(self.events[self.events.length() - 1], layout, theme),
+            )
+          }
+      }
     }
   }
   match self.latest_visible_workspace_diagnostic() {
@@ -1289,20 +1352,22 @@ fn WorkbenchModel::workspace_detail_panel_height(
 ///|
 fn WorkbenchModel::turn_evidence_card_height(self : WorkbenchModel) -> Double {
   let mut height = 24.0 + 28.0
-  if self.should_show_focused_check_presets() {
-    height = height + 7.0 + 30.0
-  }
-  if self.commands_end_with_focused_check_batch(
-      workbench_check_presets().length(),
-    ) {
-    let command_start = self.visible_activity_command_start()
-    for index in command_start..<self.commands.length() {
-      height = height + 7.0 + command_run_row_height(self.commands[index])
+  if self.has_activity_panel_content() {
+    if self.should_show_focused_check_presets() {
+      height = height + 7.0 + 30.0
     }
-  } else {
-    match self.primary_turn_evidence_command() {
-      Some(command) => height = height + 7.0 + command_run_row_height(command)
-      None => if !self.events.is_empty() { height = height + 7.0 + 46.0 }
+    if self.commands_end_with_focused_check_batch(
+        workbench_check_presets().length(),
+      ) {
+      let command_start = self.visible_activity_command_start()
+      for index in command_start..<self.commands.length() {
+        height = height + 7.0 + command_run_row_height(self.commands[index])
+      }
+    } else {
+      match self.primary_turn_evidence_command() {
+        Some(command) => height = height + 7.0 + command_run_row_height(command)
+        None => if !self.events.is_empty() { height = height + 7.0 + 46.0 }
+      }
     }
   }
   if self.latest_visible_workspace_diagnostic() is Some(_) {
@@ -1351,19 +1416,30 @@ fn WorkbenchModel::transcript_panel(
 ) -> @core.View[WorkbenchMsg] {
   let rows : Array[@core.View[WorkbenchMsg]] = []
   for item in self.transcript {
-    rows.push(transcript_row(item, layout, theme))
-  }
-  for message in self.fork_messages {
-    rows.push(fork_message_row(message, layout, theme))
+    if transcript_item_is_visible_conversation(item) {
+      if self.should_show_process_summary_before_item(item) {
+        rows.push(self.process_summary_row(layout, theme))
+        if self.should_show_expanded_process_details() {
+          rows.push(self.process_detail_panel(layout, theme))
+        }
+      }
+      rows.push(self.transcript_row(item, layout, theme))
+      let fork_messages = self.deduplicated_fork_messages_for_transcript_item(
+        item,
+      )
+      for message in fork_messages {
+        rows.push(fork_affordance_row(message, layout, theme))
+      }
+    }
   }
   surface(
-    column(rows, spacing=8.0, align=Start),
+    column(rows, spacing=4.0, align=Start),
     width=layout.panel_width,
     height=self.transcript_panel_height(layout),
     background=@core.Color::white(),
-    corner_radius=12.0,
+    corner_radius=10.0,
     theme~,
-    padding=12.0,
+    padding=8.0,
   ).border(workbench_hairline_border())
 }
 
@@ -1372,52 +1448,506 @@ fn WorkbenchModel::transcript_panel_height(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
 ) -> Double {
-  if self.transcript.is_empty() && self.fork_messages.is_empty() {
+  if !self.transcript.any(item => transcript_item_is_visible_conversation(item)) {
     0.0
   } else {
-    let mut height = 24.0
+    let mut height = 16.0
+    let mut row_count = 0
     for item in self.transcript {
-      height = height + transcript_row_height(item, layout) + 8.0
-    }
-    for message in self.fork_messages {
-      height = height + fork_message_row_height(message, layout) + 8.0
+      if transcript_item_is_visible_conversation(item) {
+        if row_count > 0 {
+          height = height + 4.0
+        }
+        if self.should_show_process_summary_before_item(item) {
+          height = height + process_summary_row_height()
+          row_count = row_count + 1
+          if self.should_show_expanded_process_details() {
+            height = height + 4.0 + self.process_detail_panel_height()
+            row_count = row_count + 1
+          }
+        }
+        if row_count > 0 {
+          height = height + 4.0
+        }
+        height = height + transcript_row_height(item, layout)
+        row_count = row_count + 1
+        let fork_messages = self.deduplicated_fork_messages_for_transcript_item(
+          item,
+        )
+        for message in fork_messages {
+          height = height + 4.0 + fork_affordance_row_height(message, layout)
+          row_count = row_count + 1
+        }
+      }
     }
     height
   }
 }
 
 ///|
-fn transcript_row(
+fn WorkbenchModel::should_show_process_summary_before_item(
+  self : WorkbenchModel,
+  item : TranscriptItem,
+) -> Bool {
+  self.completed_process_should_collapse() &&
+  item.role == "assistant" &&
+  self.latest_visible_assistant_transcript_item_id() == item.id
+}
+
+///|
+fn WorkbenchModel::completed_process_should_collapse(
+  self : WorkbenchModel,
+) -> Bool {
+  self.has_process_evidence() &&
+  !self.has_live_process_signal() &&
+  self.latest_visible_assistant_transcript_item_id() != ""
+}
+
+///|
+fn WorkbenchModel::should_show_expanded_process_details(
+  self : WorkbenchModel,
+) -> Bool {
+  self.workspace_details_expanded && self.completed_process_should_collapse()
+}
+
+///|
+fn WorkbenchModel::latest_visible_assistant_transcript_item_id(
+  self : WorkbenchModel,
+) -> String {
+  let mut id = ""
+  for item in self.transcript {
+    if item.role == "assistant" && transcript_item_is_visible_conversation(item) {
+      id = item.id
+    }
+  }
+  id
+}
+
+///|
+fn WorkbenchModel::has_process_evidence(self : WorkbenchModel) -> Bool {
+  !self.commands.is_empty() ||
+  self.transcript.any(item => transcript_item_is_process_evidence(item)) ||
+  self.events.any(event => event_is_process_evidence(event)) ||
+  self.pi_agent.message_preview != "" ||
+  self.pi_agent.active_tool_name != ""
+}
+
+///|
+fn WorkbenchModel::has_live_process_signal(self : WorkbenchModel) -> Bool {
+  self.pi_agent.has_active_signal() || self.latest_active_command() is Some(_)
+}
+
+///|
+fn event_is_process_evidence(event : AgentEvent) -> Bool {
+  event.phase == "tool" ||
+  event.title.contains("Pi agent") ||
+  event.title.contains("Pi turn") ||
+  event.title.contains("Pi message") ||
+  event.title.contains("Pi tool")
+}
+
+///|
+fn WorkbenchModel::process_summary_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let badge_width = transcript_compact_badge_width(layout)
+  let action_width = 58.0
+  let text_width = workbench_max_double(
+    1.0,
+    layout.panel_body_width - badge_width - action_width - 24.0,
+  )
+  surface(
+    row(
+      [
+        badge("过程", tone=Neutral, theme~, width=badge_width),
+        column(
+          [
+            text(
+              self.process_summary_title(),
+              role=Body,
+              theme~,
+              width=text_width,
+              height=20.0,
+            ),
+            text(
+              self.process_summary_detail(),
+              role=Caption,
+              theme~,
+              width=text_width,
+              height=18.0,
+            ),
+          ],
+          spacing=1.0,
+          align=Start,
+        ),
+        button(
+          if self.workspace_details_expanded {
+            "收起"
+          } else {
+            "展开"
+          },
+          on_click=ToggleWorkspaceDetails,
+          variant=Ghost,
+          theme~,
+          width=action_width,
+          height=28.0,
+        ),
+      ],
+      spacing=8.0,
+      align=Start,
+    ),
+    width=layout.panel_body_width,
+    height=process_summary_row_height(),
+    background=ui_color(0.975, 0.977, 0.972),
+    corner_radius=6.0,
+    theme~,
+    padding=7.0,
+  )
+}
+
+///|
+fn process_summary_row_height() -> Double {
+  14.0 + 39.0
+}
+
+///|
+fn WorkbenchModel::process_detail_panel(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let detail_width = layout.process_detail_text_width()
+  let lines = self.process_detail_lines(readable_line_char_limit(detail_width))
+  let views : Array[@core.View[WorkbenchMsg]] = []
+  for line in lines {
+    views.push(
+      text(line, role=Caption, theme~, width=detail_width, height=20.0),
+    )
+  }
+  row(
+    [
+      blank_cell(width=transcript_compact_badge_width(layout), height=1.0),
+      surface(
+        column(views, spacing=2.0, align=Start),
+        width=detail_width + 16.0,
+        height=self.process_detail_panel_height(),
+        background=ui_color(0.985, 0.986, 0.982),
+        corner_radius=6.0,
+        theme~,
+        padding=8.0,
+      ).border(workbench_hairline_border()),
+    ],
+    spacing=8.0,
+    align=Start,
+  )
+}
+
+///|
+fn WorkbenchLayout::process_detail_text_width(self : WorkbenchLayout) -> Double {
+  workbench_max_double(
+    1.0,
+    self.panel_body_width - transcript_compact_badge_width(self) - 24.0,
+  )
+}
+
+///|
+fn WorkbenchModel::process_detail_panel_height(self : WorkbenchModel) -> Double {
+  let line_count = self.process_detail_lines(72).length().max(1)
+  16.0 +
+  line_count.to_double() * 20.0 +
+  (line_count - 1).max(0).to_double() * 2.0
+}
+
+///|
+fn WorkbenchModel::process_summary_title(self : WorkbenchModel) -> String {
+  ignore(self)
+  "已处理"
+}
+
+///|
+fn WorkbenchModel::process_summary_detail(self : WorkbenchModel) -> String {
+  let parts : Array[String] = []
+  if !self.commands.is_empty() {
+    parts.push(self.commands.length().to_string() + " 命令")
+  }
+  let event_count = self.process_event_count()
+  if event_count > 0 {
+    parts.push(event_count.to_string() + " 事件")
+  }
+  if self.pi_agent.thinking_level != "" {
+    parts.push("思考 " + self.thinking_level_label())
+  }
+  let transcript_count = self.process_transcript_item_count()
+  if transcript_count > 0 {
+    parts.push(transcript_count.to_string() + " 工具")
+  }
+  if parts.is_empty() {
+    "过程已收起"
+  } else {
+    parts.join(" · ")
+  }
+}
+
+///|
+fn WorkbenchModel::process_transcript_item_count(self : WorkbenchModel) -> Int {
+  let mut count = 0
+  for item in self.transcript {
+    if transcript_item_is_process_evidence(item) {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
+fn WorkbenchModel::process_event_count(self : WorkbenchModel) -> Int {
+  let mut count = 0
+  for event in self.events {
+    if event_is_process_evidence(event) {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
+fn WorkbenchModel::process_detail_lines(
+  self : WorkbenchModel,
+  max_chars : Int,
+) -> Array[String] {
+  let max_lines = 8
+  let lines : Array[String] = []
+  if self.pi_agent.thinking_level != "" {
+    lines.push("思考等级 " + self.thinking_level_label())
+  }
+  if self.pi_agent.message_preview != "" && lines.length() < max_lines {
+    for
+      line in readable_text_lines(
+        "消息 " + self.pi_agent.message_preview,
+        max_chars,
+        max_lines=max_lines - lines.length(),
+      ) {
+      lines.push(line)
+    }
+  }
+  for item in self.transcript {
+    if lines.length() >= max_lines {
+      break
+    }
+    if transcript_item_is_process_evidence(item) {
+      for
+        line in readable_text_lines(
+          transcript_process_detail_label(item),
+          max_chars,
+          max_lines=max_lines - lines.length(),
+        ) {
+        lines.push(line)
+      }
+    }
+  }
+  let command_start = workbench_max_int(0, self.commands.length() - 4)
+  for index in command_start..<self.commands.length() {
+    if lines.length() >= max_lines {
+      break
+    }
+    let command = self.commands[index]
+    for
+      line in readable_text_lines(
+        "命令 " +
+        command_status_label(command.status) +
+        " · " +
+        command.command +
+        " · " +
+        command_detail_label(command),
+        max_chars,
+        max_lines=max_lines - lines.length(),
+      ) {
+      lines.push(line)
+    }
+  }
+  let event_start = workbench_max_int(0, self.events.length() - 6)
+  for index in event_start..<self.events.length() {
+    if lines.length() >= max_lines {
+      break
+    }
+    let event = self.events[index]
+    if event_is_process_evidence(event) {
+      for
+        line in readable_text_lines(
+          event_phase_label(event.phase) +
+          " · " +
+          event.title +
+          " · " +
+          event.detail,
+          max_chars,
+          max_lines=max_lines - lines.length(),
+        ) {
+        lines.push(line)
+      }
+    }
+  }
+  if lines.is_empty() {
+    lines.push("过程已收起，暂无可显示细节")
+  }
+  lines
+}
+
+///|
+fn WorkbenchModel::fork_messages_for_transcript_item(
+  self : WorkbenchModel,
+  item : TranscriptItem,
+) -> Array[PiForkMessage] {
+  let messages : Array[PiForkMessage] = []
+  if item.role == "assistant" {
+    for message in self.fork_messages {
+      if self.assistant_transcript_item_id_for_fork_message(message) == item.id {
+        messages.push(message)
+      }
+    }
+  }
+  messages
+}
+
+///|
+fn WorkbenchModel::assistant_transcript_item_id_for_fork_message(
+  self : WorkbenchModel,
+  message : PiForkMessage,
+) -> String {
+  let mut matched_index = -1
+  for index in 0..<self.transcript.length() {
+    if matched_index == -1 &&
+      self.fork_message_matches_transcript_item(message, self.transcript[index]) {
+      matched_index = index
+    }
+  }
+  if matched_index == -1 {
+    ""
+  } else if self.transcript[matched_index].role == "assistant" {
+    self.transcript[matched_index].id
+  } else {
+    for index in (matched_index + 1)..<self.transcript.length() {
+      if self.transcript[index].role == "assistant" &&
+        transcript_item_is_visible_conversation(self.transcript[index]) {
+        return self.transcript[index].id
+      }
+    }
+    ""
+  }
+}
+
+///|
+fn WorkbenchModel::deduplicated_fork_messages_for_transcript_item(
+  self : WorkbenchModel,
+  item : TranscriptItem,
+) -> Array[PiForkMessage] {
+  let messages : Array[PiForkMessage] = []
+  let seen : Array[String] = []
+  for message in self.fork_messages_for_transcript_item(item) {
+    let key = message.entry_id + "\n" + message.text
+    if !seen.any(value => value == key) {
+      seen.push(key)
+      messages.push(message)
+    }
+  }
+  messages
+}
+
+///|
+fn WorkbenchModel::fork_message_matches_transcript_item(
+  self : WorkbenchModel,
+  message : PiForkMessage,
+  item : TranscriptItem,
+) -> Bool {
+  ignore(self)
+  message.entry_id == item.id ||
+  fork_message_text_matches_item(message.text, item)
+}
+
+///|
+fn fork_message_text_matches_item(text : String, item : TranscriptItem) -> Bool {
+  let clean = text.trim().to_owned()
+  clean != "" &&
+  (
+    item.summary.trim().to_owned() == clean ||
+    item.detail.trim().to_owned() == clean
+  )
+}
+
+///|
+fn transcript_item_is_visible_conversation(item : TranscriptItem) -> Bool {
+  match item.role {
+    "assistantProcess" | "toolResult" | "bashExecution" => false
+    "assistant" =>
+      item.summary.trim().to_owned() != "" ||
+      item.detail.trim().to_owned() != ""
+    _ => true
+  }
+}
+
+///|
+fn transcript_item_is_process_evidence(item : TranscriptItem) -> Bool {
+  match item.role {
+    "assistantProcess" | "toolResult" | "bashExecution" => true
+    _ => false
+  }
+}
+
+///|
+fn transcript_process_detail_label(item : TranscriptItem) -> String {
+  let title = item.summary.trim().to_owned()
+  let detail = item.detail.trim().to_owned()
+  let label = match item.role {
+    "assistantProcess" => "Pi 过程"
+    "toolResult" => "工具结果"
+    "bashExecution" => "命令"
+    _ => transcript_role_label(item.role)
+  }
+  if title == "" && detail == "" {
+    label
+  } else if detail == "" || detail == title {
+    label + " · " + title
+  } else if title == "" {
+    label + " · " + detail
+  } else {
+    label + " · " + title + " · " + detail
+  }
+}
+
+///|
+fn WorkbenchModel::transcript_row(
+  self : WorkbenchModel,
   item : TranscriptItem,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let inner_width = workbench_max_double(1.0, layout.panel_body_width - 20.0)
-  let text_width = workbench_max_double(1.0, inner_width - 58.0 - 12.0)
+  ignore(self)
+  transcript_compact_row(
+    item,
+    layout,
+    theme,
+    badge_label=transcript_role_label(item.role),
+    tone=transcript_badge_tone(item.tone),
+    background=transcript_row_background(item.role),
+  )
+}
+
+///|
+fn transcript_compact_row(
+  item : TranscriptItem,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+  badge_label~ : String,
+  tone~ : @views.BadgeTone,
+  background~ : @core.Color,
+) -> @core.View[WorkbenchMsg] {
+  let badge_width = transcript_compact_badge_width(layout)
+  let text_width = transcript_row_text_width(layout)
   surface(
-    column(
+    row(
       [
-        row(
-          [
-            badge(
-              transcript_role_label(item.role),
-              tone=transcript_badge_tone(item.tone),
-              theme~,
-              width=layout.row_badge_width,
-            ),
-            spacer(min_length=8.0, weight=1.0),
-            button(
-              "跟进",
-              on_click=FollowTranscript(item.role, item.summary, item.detail),
-              variant=Outline,
-              theme~,
-              width=58.0,
-              height=32.0,
-            ),
-          ],
-          spacing=8.0,
-          align=Center,
-        ),
+        badge(badge_label, tone~, theme~, width=badge_width),
         transcript_text_block(item, text_width, theme),
       ],
       spacing=8.0,
@@ -1425,11 +1955,11 @@ fn transcript_row(
     ),
     width=layout.panel_body_width,
     height=transcript_row_height(item, layout),
-    background=transcript_row_background(item.role),
-    corner_radius=10.0,
+    background~,
+    corner_radius=8.0,
     theme~,
-    padding=10.0,
-  ).border(workbench_hairline_border())
+    padding=8.0,
+  )
 }
 
 ///|
@@ -1440,16 +1970,16 @@ fn transcript_text_block(
 ) -> @core.View[WorkbenchMsg] {
   let max_chars = readable_line_char_limit(width)
   let lines : Array[@core.View[WorkbenchMsg]] = []
-  for line in readable_text_lines(item.summary, max_chars, max_lines=3) {
-    lines.push(text(line, role=Body, theme~, width~, height=24.0))
+  for line in readable_text_lines(item.summary, max_chars, max_lines=2) {
+    lines.push(text(line, role=Body, theme~, width~, height=22.0))
   }
-  for line in readable_text_lines(item.detail, max_chars, max_lines=6) {
-    lines.push(text(line, role=Caption, theme~, width~, height=22.0))
+  for line in readable_text_lines(item.detail, max_chars, max_lines=4) {
+    lines.push(text(line, role=Caption, theme~, width~, height=20.0))
   }
   if lines.is_empty() {
-    lines.push(text("空消息", role=Caption, theme~, width~, height=22.0))
+    lines.push(text("空消息", role=Caption, theme~, width~, height=20.0))
   }
-  column(lines, spacing=2.0, align=Start)
+  column(lines, spacing=1.0, align=Start)
 }
 
 ///|
@@ -1457,19 +1987,41 @@ fn transcript_row_height(
   item : TranscriptItem,
   layout : WorkbenchLayout,
 ) -> Double {
-  let inner_width = workbench_max_double(1.0, layout.panel_body_width - 20.0)
-  let text_width = workbench_max_double(1.0, inner_width - 58.0 - 12.0)
-  20.0 + 32.0 + 8.0 + readable_text_block_height(item, text_width)
+  let text_width = transcript_row_text_width(layout)
+  16.0 +
+  workbench_max_double(28.0, readable_text_block_height(item, text_width))
 }
 
 ///|
 fn readable_text_block_height(item : TranscriptItem, width : Double) -> Double {
   let max_chars = readable_line_char_limit(width)
-  let line_count = readable_text_lines(item.summary, max_chars, max_lines=3).length() +
-    readable_text_lines(item.detail, max_chars, max_lines=6).length()
-  let safe_line_count = line_count.max(1)
-  safe_line_count.to_double() * 23.0 +
-  (safe_line_count - 1).max(0).to_double() * 2.0
+  let summary_count = readable_text_lines(item.summary, max_chars, max_lines=2).length()
+  let detail_count = readable_text_lines(item.detail, max_chars, max_lines=4).length()
+  let line_count = summary_count + detail_count
+  if line_count == 0 {
+    20.0
+  } else {
+    summary_count.to_double() * 22.0 +
+    detail_count.to_double() * 20.0 +
+    (line_count - 1).max(0).to_double() * 1.0
+  }
+}
+
+///|
+fn transcript_compact_badge_width(layout : WorkbenchLayout) -> Double {
+  if layout.panel_width < 620.0 {
+    60.0
+  } else {
+    72.0
+  }
+}
+
+///|
+fn transcript_row_text_width(layout : WorkbenchLayout) -> Double {
+  workbench_max_double(
+    1.0,
+    layout.panel_body_width - 16.0 - transcript_compact_badge_width(layout),
+  )
 }
 
 ///|
@@ -1514,6 +2066,37 @@ fn readable_text_lines(
 }
 
 ///|
+fn end_ellipsis_label(value : String, max_chars~ : Int) -> String {
+  let clean = value.trim().to_owned()
+  let chars = clean.to_array()
+  let limit = max_chars.max(4)
+  if chars.length() <= limit {
+    clean
+  } else {
+    let end = workbench_max_int(1, limit - 3)
+    String::from_array(chars[0:end]) + "..."
+  }
+}
+
+///|
+fn middle_ellipsis_label(value : String, max_chars~ : Int) -> String {
+  let clean = value.trim().to_owned()
+  let chars = clean.to_array()
+  let limit = max_chars.max(5)
+  if chars.length() <= limit {
+    clean
+  } else {
+    let available = workbench_max_int(2, limit - 3)
+    let head = workbench_max_int(1, (available.to_double() * 0.45).to_int())
+    let tail = workbench_max_int(1, available - head)
+    let tail_start = workbench_max_int(head, chars.length() - tail)
+    String::from_array(chars[0:head]) +
+    "..." +
+    String::from_array(chars[tail_start:])
+  }
+}
+
+///|
 fn workbench_clamp_int(value : Int, min : Int, max : Int) -> Int {
   workbench_min_int(max, workbench_max_int(min, value))
 }
@@ -1537,71 +2120,73 @@ fn workbench_min_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn fork_message_row_height(
+fn fork_affordance_row_height(
   message : PiForkMessage,
   layout : WorkbenchLayout,
 ) -> Double {
-  let item = TranscriptItem::new(
-    id=message.entry_id,
-    role="branchSummary",
-    summary="可分叉消息",
-    detail=message.text,
-    tone="info",
-  )
-  transcript_row_height(item, layout)
+  ignore(message)
+  ignore(layout)
+  34.0
 }
 
 ///|
-fn fork_message_item(message : PiForkMessage) -> TranscriptItem {
-  TranscriptItem::new(
-    id=message.entry_id,
-    role="branchSummary",
-    summary="可分叉消息",
-    detail=message.text,
-    tone="info",
-  )
-}
-
-///|
-fn fork_message_row(
+fn fork_affordance_row(
   message : PiForkMessage,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let item = fork_message_item(message)
-  let inner_width = workbench_max_double(1.0, layout.panel_body_width - 20.0)
-  let text_width = workbench_max_double(1.0, inner_width - 58.0 - 12.0)
-  surface(
-    column(
-      [
+  let indent = transcript_compact_badge_width(layout) + 8.0
+  let width = workbench_max_double(1.0, layout.panel_body_width - indent)
+  let action_width = 54.0
+  let text_width = workbench_max_double(1.0, width - action_width - 22.0)
+  row(
+    [
+      blank_cell(width=transcript_compact_badge_width(layout), height=1.0),
+      surface(
         row(
           [
-            badge("分叉", tone=Accent, theme~, width=layout.row_badge_width),
-            spacer(min_length=8.0, weight=1.0),
             button(
-              "分支",
+              "分叉",
               on_click=ForkFromMessage(message.entry_id),
-              variant=Outline,
+              variant=Ghost,
               theme~,
-              width=58.0,
-              height=32.0,
+              width=action_width,
+              height=26.0,
+            ),
+            text(
+              end_ellipsis_label(
+                fork_affordance_detail(message),
+                max_chars=readable_line_char_limit(text_width),
+              ),
+              role=Caption,
+              theme~,
+              width=text_width,
+              height=24.0,
             ),
           ],
           spacing=8.0,
           align=Center,
         ),
-        transcript_text_block(item, text_width, theme),
-      ],
-      spacing=8.0,
-      align=Start,
-    ),
-    width=layout.panel_body_width,
-    height=fork_message_row_height(message, layout),
-    background=ui_color(0.980, 0.985, 0.990),
-    corner_radius=10.0,
-    theme~,
-    padding=10.0,
-  ).border(workbench_hairline_border())
+        width~,
+        height=fork_affordance_row_height(message, layout),
+        background=ui_color(0.980, 0.985, 0.990),
+        corner_radius=6.0,
+        theme~,
+        padding=4.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Start,
+  )
+}
+
+///|
+fn fork_affordance_detail(message : PiForkMessage) -> String {
+  if message.text.trim().to_owned() == "" {
+    "从这条回复创建分支"
+  } else {
+    message.text
+  }
 }
 
 ///|
@@ -1893,30 +2478,6 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
       detail: file.path,
       primary_label: "聚焦",
       primary_message: InspectFile(file.path),
-      secondary_label: "",
-      secondary_message: None,
-      tone: Neutral,
-    })
-  }
-  if !self.transcript.is_empty() {
-    let item = self.transcript[self.transcript.length() - 1]
-    return Some({
-      title: "跟进最新消息",
-      detail: item.summary,
-      primary_label: "跟进",
-      primary_message: FollowTranscript(item.role, item.summary, item.detail),
-      secondary_label: "",
-      secondary_message: None,
-      tone: Neutral,
-    })
-  }
-  if !self.events.is_empty() {
-    let event = self.events[self.events.length() - 1]
-    return Some({
-      title: "跟进最新事件",
-      detail: event.title,
-      primary_label: "跟进",
-      primary_message: FollowActivity(event.phase, event.title, event.detail),
       secondary_label: "",
       secondary_message: None,
       tone: Neutral,
@@ -2776,6 +3337,10 @@ fn event_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  let text_width = workbench_max_double(
+    1.0,
+    layout.panel_body_width - layout.row_badge_width - 8.0,
+  )
   row(
     [
       badge(
@@ -2786,31 +3351,17 @@ fn event_row(
       ),
       column(
         [
-          text(
-            event.title,
-            role=Control,
-            theme~,
-            width=layout.row_text_width,
-            height=24.0,
-          ),
+          text(event.title, role=Control, theme~, width=text_width, height=24.0),
           text(
             event.detail,
             role=Caption,
             theme~,
-            width=layout.row_text_width,
+            width=text_width,
             height=22.0,
           ),
         ],
         spacing=0.0,
         align=Start,
-      ),
-      button(
-        "跟进",
-        on_click=FollowActivity(event.phase, event.title, event.detail),
-        variant=Outline,
-        theme~,
-        width=58.0,
-        height=32.0,
       ),
     ],
     spacing=8.0,
@@ -3334,7 +3885,7 @@ fn WorkbenchModel::composer(
       variant=Plain,
       theme~,
       width=layout.composer_input_width,
-      height=54.0,
+      height=42.0,
     ),
   ]
   if self.should_show_context_chip_row() {
@@ -3354,12 +3905,10 @@ fn WorkbenchModel::composer(
     width=layout.composer_width,
     height=self.composer_height(layout),
     background=@core.Color::white(),
-    corner_radius=14.0,
+    corner_radius=10.0,
     theme~,
-    padding=12.0,
-  )
-  .border(workbench_hairline_border())
-  .shadow(workbench_soft_shadow())
+    padding=10.0,
+  ).border(workbench_hairline_border())
 }
 
 ///|
@@ -3369,13 +3918,13 @@ fn WorkbenchModel::composer_height(
 ) -> Double {
   let mut height = layout.composer_height
   if self.should_show_context_chip_row() {
-    height = height + 38.0
+    height = height + 36.0
   }
   if self.should_show_composer_agent_row() {
-    height = height + 38.0
+    height = height + 36.0
   }
   if self.should_show_composer_command_row() {
-    height = height + 38.0
+    height = height + 36.0
   }
   if self.should_show_composer_action_row() {
     height = height + 42.0
@@ -3852,15 +4401,6 @@ fn workbench_clear_border() -> @core.BorderStyle {
   @core.BorderStyle::new(
     brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.0)),
     width=1.0,
-  )
-}
-
-///|
-fn workbench_soft_shadow() -> @core.ShadowStyle {
-  @core.ShadowStyle::new(
-    color=@core.Color::black().multiply_alpha(0.10),
-    offset=@core.Point::new(x=0.0, y=3.0),
-    blur_radius=18.0,
   )
 }
 

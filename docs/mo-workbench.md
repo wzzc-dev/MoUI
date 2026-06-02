@@ -40,8 +40,8 @@ packages:
 - A session-first desktop shell named `Mo Workbench`.
 - Header subtitle `Pi agent 桌面工作台`.
 - A Codex / Claude Code-style native shell with macOS chrome, a quiet
-  task-history sidebar, a clean white main work canvas, readable transcript
-  blocks, current-turn evidence summaries, and a floating composer.
+  task-history sidebar, a clean white main work canvas, readable compact
+  transcript rows, current-turn evidence summaries, and a bottom composer.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
@@ -90,10 +90,11 @@ packages:
   at most one `当前证据` card for the most relevant command, event, diagnostic,
   diff, or file signal. The old separate `会话记录`, `运行证据`, and `工作区证据`
   panel titles no longer compete for attention once data arrives. The default
-  chrome shows short project names and signal-bearing localized session status
+  chrome shows one two-line current-session identity with shortened title,
+  project, and branch labels plus signal-bearing localized session status
   labels, while full project paths remain in the shared model and Pi transport
   commands. The default shell keeps only top-bar refresh/new-session controls
-  and the composer input prominent, while typed input adds a compact
+  and the bottom composer input prominent, while typed input adds a compact
   `选项`/`发送` row instead of opening every secondary control. Context chips,
   agent focus controls, advanced session details, model/session stats,
   steering/follow-up composer controls, and focused-check presets stay collapsed
@@ -102,10 +103,26 @@ packages:
   metrics, command catalog, file context, diff summary, command evidence, and
   diagnostics empty until Pi or user command evidence arrives.
 - Wide Workbench windows now add a compact status rail beside the conversation
-  canvas only for high-priority live state. The rail shows the next action,
-  current plan step, and active tool/command instead of separate progress,
-  execution, and work-folder cards. Empty or compact windows collapse the rail
-  and keep the conversation flow primary.
+  canvas only for independent live state: current plan steps, failed or active
+  shell commands, and active tools. Generic next-action prompts stay in the
+  main task strip instead of being duplicated in the rail. Empty or compact
+  windows collapse the rail and keep the conversation flow primary.
+- Transcript rows no longer expose a message-level `跟进` action. Pi fork
+  candidates are still fetched and can still queue a `fork` RPC, but matching
+  candidates render as a compact Codex-style `分叉` affordance directly under
+  the corresponding assistant reply. When Pi returns a fork `entryId` for a
+  user message, the app attaches that fork action to the following assistant
+  reply instead of collecting fork rows at the end of the transcript.
+- Pi `message_end` and non-retry `agent_end` JSONL events merge assistant replies
+  into the local transcript immediately, then queue a lightweight
+  messages/forks/stats refresh to reconcile the formal RPC state.
+- While Pi is running, streaming agent events, active tools, and command
+  evidence remain visible. Once the final assistant reply completes, that
+  process evidence is collapsed into a compact `已处理` row beside the reply;
+  expanding it reveals the tool, command, and event trail without making the
+  final answer compete with the processing log. Assistant `thinking` /
+  `toolCall` blocks and Pi `toolResult` / bash transcript entries are kept as
+  process evidence instead of ordinary conversation rows.
 - Agent focus controls for `通用`, `编码`, and `校验` now live in the composer's
   optional `焦点` row instead of the default sidebar. They appear after opening
   composer options or when a focus is selected, keeping the idle shell closer to
@@ -121,17 +138,14 @@ packages:
 - The current task strip now derives one `下一步` row from live state when
   there is actionable evidence. It prioritizes cancelable Pi runs, failed
   command evidence, diagnostics, active plan steps, reviewable diffs, file
-  context, transcript rows, and latest activity events,
+  context, and other independent action signals,
   then routes the chosen button back through the existing shared-app messages
   such as `CancelRun`, `FixCommandRun`, `FixDiagnostic`, `InspectCommandRun`,
-  `FollowActivity`, `ReviewDiff`, `InspectFile`, `FollowTranscript`, or
-  `InvokeCommand`. Failed-command next actions include a compact command label,
+  `FollowActivity`, `ReviewDiff`, `InspectFile`, or `InvokeCommand`.
+  Generic transcript-only and event-only activity no longer creates a duplicate
+  `下一步` row. Failed-command next actions include a compact command label,
   exit code, and output path when Pi provided them, so the repair loop has the
   same evidence as the current-turn evidence card without opening another panel.
-- Transcript rows can queue a `Follow up on <role> transcript: ...` prompt for
-  Pi through the existing platform-neutral `SendUserInput` path, so visible
-  conversation evidence can become the next agent action without native-only
-  transport.
 - The composer now exposes explicit context chips for repository, examples,
   evidence, and Pi session scope after opening composer options, after
   selecting an agent focus, or after changing the default context. Direct
@@ -141,11 +155,9 @@ packages:
   `SendSteeringInput`, or `SendFollowUpInput` paths; no new transport command
   or native bridge is required, and users can turn all context chips off to send
   the raw text.
-- Current-turn event rows can queue a
-  `Follow up on <phase> activity: ...` prompt through the same
-  `SendUserInput` path, so visible Pi RPC, stderr, tool, and stream events can
-  become the next agent action without adding event-specific transport
-  commands.
+- Current-turn event rows are read-only process evidence in the shell. They
+  keep Pi RPC, stderr, tool, and stream state inspectable without adding
+  message-level follow-up controls or event-specific transport commands.
 - File context rows in the current-turn evidence card can queue an `Inspect <path>`
   prompt for Pi. The action reuses the platform-neutral `SendUserInput` command
   so file evidence becomes an agent workflow entrypoint without native-only
@@ -209,15 +221,12 @@ packages:
 - The current-turn evidence card surfaces the latest shared-app timeline event when
   no higher-priority command evidence is present, so Pi RPC,
   streaming agent, tool, and stderr progress stays visible next to command
-  evidence without opening a separate log view. The visible event can also be
-  sent back as a follow-up prompt through the shared app command path.
+  evidence without opening a separate log view. Event rows are read-only shell
+  evidence and no longer expose message-level follow-up controls.
 - Session selection now refreshes Pi messages after state binding. The shared
   app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
   records so the conversation surface can replay user, assistant, tool result,
   bash, compaction, branch summary, and future workflow messages.
-- Visible transcript rows can send a follow-up prompt through `SendUserInput`.
-  The action keeps the transcript model generic while letting coding-agent users
-  continue from a specific user, assistant, bash, or tool message.
 - Session selection also refreshes Pi's available command catalog through
   `get_commands`. The shared app maps prompt, extension, and skill commands
   into generic `PiCommandInfo` rows so coding-agent command discovery can later

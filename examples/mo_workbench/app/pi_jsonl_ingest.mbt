@@ -25,6 +25,30 @@ fn PiTransportEvent::session_replacement_refresh(
         )
       } else if json_line_is_uncancelled_success_response(line, "fork") {
         Some((session_id, "Pi fork refresh queued", "Pi fork refresh queued"))
+      } else if json_line_is_uncancelled_success_response(line, "prompt") {
+        Some(
+          (
+            session_id, "Pi transcript refresh queued", "Pi transcript refresh queued",
+          ),
+        )
+      } else if json_line_is_uncancelled_success_response(line, "steer") {
+        Some(
+          (
+            session_id, "Pi transcript refresh queued", "Pi transcript refresh queued",
+          ),
+        )
+      } else if json_line_is_uncancelled_success_response(line, "follow_up") {
+        Some(
+          (
+            session_id, "Pi transcript refresh queued", "Pi transcript refresh queued",
+          ),
+        )
+      } else if json_line_is_non_retry_agent_end(line) {
+        Some(
+          (
+            session_id, "Pi transcript refresh queued", "Pi transcript refresh queued",
+          ),
+        )
       } else {
         None
       }
@@ -49,6 +73,17 @@ fn json_line_is_uncancelled_success_response(
       json_bool(fields, "success").unwrap_or(false) &&
       !cancelled
     }
+    _ => false
+  }
+}
+
+///|
+fn json_line_is_non_retry_agent_end(line : String) -> Bool {
+  let parsed : Json? = Some(@json.parse(line)) catch { _ => None }
+  match parsed {
+    Some(Object(fields)) =>
+      json_string(fields, "type").unwrap_or("") == "agent_end" &&
+      !json_bool(fields, "willRetry").unwrap_or(false)
     _ => false
   }
 }
@@ -1176,7 +1211,9 @@ fn WorkbenchModel::ingest_agent_end(
     " messages" +
     retry_suffix
   let model = {
-    ..self.update_active_session_for_pi(
+    ..self
+    .merge_agent_end_transcript(fields)
+    .update_active_session_for_pi(
       status~,
       active_task=if will_retry {
         "Pi agent is preparing an automatic retry"
@@ -1350,7 +1387,9 @@ fn WorkbenchModel::ingest_message_end(
   let role = json_message_role(fields)
   let preview = json_message_preview(fields)
   let model = {
-    ..self.update_active_session_for_pi(
+    ..self
+    .merge_live_message_end_transcript(role, fields, preview)
+    .update_active_session_for_pi(
       status="active",
       active_task="Pi " + role + " message finished",
     ),
@@ -1370,6 +1409,102 @@ fn WorkbenchModel::ingest_message_end(
     ),
     status="Pi message completion applied",
   )
+}
+
+///|
+fn WorkbenchModel::merge_live_message_end_transcript(
+  self : WorkbenchModel,
+  role : String,
+  fields : Map[String, Json],
+  preview : String,
+) -> WorkbenchModel {
+  match json_object(fields, "message") {
+    Some(message) => self.merge_live_message_fields_transcript(role, message)
+    None => self.merge_live_message_transcript(role, preview)
+  }
+}
+
+///|
+fn WorkbenchModel::merge_agent_end_transcript(
+  self : WorkbenchModel,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  match json_array(fields, "messages") {
+    Some(messages) => {
+      let mut model = self
+      for message in messages {
+        match message {
+          Object(message_fields) => {
+            let role = json_string(message_fields, "role").unwrap_or("message")
+            model = model.merge_live_message_fields_transcript(
+              role, message_fields,
+            )
+          }
+          _ => ()
+        }
+      }
+      model
+    }
+    None => self
+  }
+}
+
+///|
+fn WorkbenchModel::merge_live_message_fields_transcript(
+  self : WorkbenchModel,
+  role : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  if role == "assistant" {
+    self
+    .merge_live_message_transcript(
+      role,
+      json_message_visible_content_summary(fields),
+    )
+    .merge_live_message_transcript(
+      "assistantProcess",
+      json_message_process_content_summary(fields),
+    )
+  } else {
+    self.merge_live_message_transcript(role, transcript_summary(role, fields))
+  }
+}
+
+///|
+fn WorkbenchModel::merge_live_message_transcript(
+  self : WorkbenchModel,
+  role : String,
+  summary : String,
+) -> WorkbenchModel {
+  let clean_summary = summary.trim().to_owned()
+  if clean_summary == "" || role == "user" {
+    self
+  } else {
+    let transcript = self.transcript.copy()
+    let mut found = false
+    for index in 0..<transcript.length() {
+      if !found &&
+        transcript[index].role == role &&
+        (
+          transcript[index].summary == clean_summary ||
+          transcript[index].detail == clean_summary
+        ) {
+        found = true
+      }
+    }
+    if !found {
+      transcript.push(
+        TranscriptItem::new(
+          id="local-" + role + "-" + transcript.length().to_string(),
+          role~,
+          summary=clean_summary,
+          detail=clean_summary,
+          tone=transcript_tone(role),
+        ),
+      )
+    }
+    { ..self, transcript, }
+  }
 }
 
 ///|
@@ -2351,7 +2486,9 @@ fn transcript_items_from_messages(
 ) -> Array[TranscriptItem] {
   let items : Array[TranscriptItem] = []
   for index, value in values {
-    items.push(transcript_item_from_json(index, value))
+    for item in transcript_items_from_json(index, value) {
+      items.push(item)
+    }
   }
   items
 }
@@ -2476,26 +2613,94 @@ fn pi_fork_message_from_json(index : Int, value : Json) -> PiForkMessage {
 }
 
 ///|
-fn transcript_item_from_json(index : Int, value : Json) -> TranscriptItem {
+fn transcript_items_from_json(
+  index : Int,
+  value : Json,
+) -> Array[TranscriptItem] {
   match value {
     Object(fields) => {
       let role = json_string(fields, "role").unwrap_or("message")
-      TranscriptItem::new(
-        id=json_string(fields, "id").unwrap_or(role + "-" + index.to_string()),
-        role~,
-        summary=transcript_summary(role, fields),
-        detail=transcript_detail(role, fields),
-        tone=transcript_tone(role),
+      let id = json_string(fields, "entryId").unwrap_or(
+        json_string(fields, "id").unwrap_or(role + "-" + index.to_string()),
       )
+      if role == "assistant" {
+        assistant_transcript_items_from_fields(id, fields)
+      } else {
+        [
+          TranscriptItem::new(
+            id~,
+            role~,
+            summary=transcript_summary(role, fields),
+            detail=transcript_detail(role, fields),
+            tone=transcript_tone(role),
+          ),
+        ]
+      }
     }
     _ =>
+      [
+        TranscriptItem::new(
+          id="message-" + index.to_string(),
+          role="message",
+          summary="Pi message",
+          detail=value.stringify(),
+          tone="neutral",
+        ),
+      ]
+  }
+}
+
+///|
+fn assistant_transcript_items_from_fields(
+  id : String,
+  fields : Map[String, Json],
+) -> Array[TranscriptItem] {
+  let items : Array[TranscriptItem] = []
+  let visible = json_message_visible_content_summary(fields).trim().to_owned()
+  let process = json_message_process_content_summary(fields).trim().to_owned()
+  if visible != "" {
+    items.push(
       TranscriptItem::new(
-        id="message-" + index.to_string(),
-        role="message",
-        summary="Pi message",
-        detail=value.stringify(),
-        tone="neutral",
-      )
+        id~,
+        role="assistant",
+        summary=visible,
+        detail=visible,
+        tone=transcript_tone("assistant"),
+      ),
+    )
+  }
+  if process != "" {
+    items.push(
+      TranscriptItem::new(
+        id=id + "-process",
+        role="assistantProcess",
+        summary=assistant_process_summary_label(process),
+        detail=process,
+        tone=transcript_tone("assistantProcess"),
+      ),
+    )
+  }
+  if items.is_empty() {
+    items.push(
+      TranscriptItem::new(
+        id~,
+        role="assistant",
+        summary="Assistant message",
+        detail="Assistant message",
+        tone=transcript_tone("assistant"),
+      ),
+    )
+  }
+  items
+}
+
+///|
+fn assistant_process_summary_label(process : String) -> String {
+  let clean = process.trim().to_owned()
+  if clean == "" {
+    "Assistant process"
+  } else {
+    clean
   }
 }
 
@@ -2504,7 +2709,11 @@ fn transcript_summary(role : String, fields : Map[String, Json]) -> String {
   match role {
     "user" => non_empty(json_message_content_summary(fields), "User message")
     "assistant" =>
-      non_empty(json_message_content_summary(fields), "Assistant message")
+      non_empty(
+        json_message_visible_content_summary(fields),
+        "Assistant message",
+      )
+    "assistantProcess" => "Assistant process"
     "toolResult" =>
       "Tool result: " + json_string(fields, "toolName").unwrap_or("tool")
     "bashExecution" =>
@@ -2538,7 +2747,7 @@ fn transcript_detail(role : String, fields : Map[String, Json]) -> String {
 fn transcript_tone(role : String) -> String {
   match role {
     "assistant" => "success"
-    "toolResult" | "bashExecution" => "warning"
+    "assistantProcess" | "toolResult" | "bashExecution" => "warning"
     "user" => "info"
     _ => "neutral"
   }
@@ -2738,6 +2947,26 @@ fn json_message_content_summary(message : Map[String, Json]) -> String {
 }
 
 ///|
+fn json_message_visible_content_summary(message : Map[String, Json]) -> String {
+  match message.get("content") {
+    Some(String(value)) => value
+    Some(Array(values)) => json_content_array_visible_summary(values)
+    _ =>
+      json_string(message, "display").unwrap_or(
+        json_string(message, "errorMessage").unwrap_or(""),
+      )
+  }
+}
+
+///|
+fn json_message_process_content_summary(message : Map[String, Json]) -> String {
+  match message.get("content") {
+    Some(Array(values)) => json_content_array_process_summary(values)
+    _ => ""
+  }
+}
+
+///|
 fn json_content_array_summary(values : Array[Json]) -> String {
   let segments : Array[String] = []
   for value in values {
@@ -2747,6 +2976,30 @@ fn json_content_array_summary(values : Array[Json]) -> String {
     }
   }
   segments.join("")
+}
+
+///|
+fn json_content_array_visible_summary(values : Array[Json]) -> String {
+  let segments : Array[String] = []
+  for value in values {
+    let segment = json_content_block_visible_summary(value)
+    if segment != "" {
+      segments.push(segment)
+    }
+  }
+  segments.join("")
+}
+
+///|
+fn json_content_array_process_summary(values : Array[Json]) -> String {
+  let segments : Array[String] = []
+  for value in values {
+    let segment = json_content_block_process_summary(value)
+    if segment != "" {
+      segments.push(segment)
+    }
+  }
+  segments.join(" · ")
 }
 
 ///|
@@ -2761,6 +3014,34 @@ fn json_content_block_summary(value : Json) -> String {
           "tool call: " + json_string(fields, "name").unwrap_or("tool")
         Some("image") => "[image]"
         _ => json_string(fields, "text").unwrap_or("")
+      }
+    _ => ""
+  }
+}
+
+///|
+fn json_content_block_visible_summary(value : Json) -> String {
+  match value {
+    String(text) => text
+    Object(fields) =>
+      match json_string(fields, "type") {
+        Some("text") => json_string(fields, "text").unwrap_or("")
+        Some("image") => "[image]"
+        _ => ""
+      }
+    _ => ""
+  }
+}
+
+///|
+fn json_content_block_process_summary(value : Json) -> String {
+  match value {
+    Object(fields) =>
+      match json_string(fields, "type") {
+        Some("thinking") => "thinking"
+        Some("toolCall") =>
+          "tool call: " + json_string(fields, "name").unwrap_or("tool")
+        _ => ""
       }
     _ => ""
   }

@@ -159,15 +159,21 @@ It is named `Mo Workbench` with the subtitle `Pi agent 桌面工作台`, and sta
 a Codex / Claude Code-style coding-agent workbench for project sessions,
 assistant transcripts, command evidence, diff/file context, and diagnostics.
 Its current UI keeps the first screen focused on the current task strip,
-the transcript thread, a single current-turn evidence card, and a centered
-floating composer instead of long placeholder validation text,
+the transcript thread, a single current-turn evidence card, and a bottom
+composer instead of long placeholder validation text,
 future-workflow filler, or hard-coded attachment cards. The shell now derives
 its sidebar, main canvas, scroll area, and composer dimensions from the runtime
 viewport instead of a fixed `1200x750` surface, so the macOS Skia entrypoint can
 be resized while preserving the session-first hierarchy, including narrower
-composer widths in smaller windows. The transcript uses multi-line
-message blocks for long Pi replies and draws an explicit scrollbar when the
-main workflow overflows. Primary UI copy now follows the Codex-style hierarchy:
+composer widths in smaller windows. The top bar renders the active session as
+one two-line identity block with shortened title, project, and branch labels,
+so long paths remain in shared state and transport commands without clipping
+the visible chrome. The transcript uses compact multi-line message rows for
+long Pi replies and draws an explicit scrollbar when the main workflow
+overflows. Message rows no longer expose a message-level `跟进` action.
+Matching Pi fork candidates render as a small Codex-style `分叉` affordance
+directly under the corresponding assistant reply, including candidates whose
+`entryId` points at the preceding user message. Primary UI copy now follows the Codex-style hierarchy:
 `当前任务` for the single next action and `当前证据` for the one compact evidence
 surface, with Pi/RPC left as protocol nouns. Default chrome uses short
 project names and signal-bearing localized session status labels while keeping
@@ -186,8 +192,9 @@ page. Pi bash exit/cancel diagnostics stay in shared state but are hidden from
 the card when command evidence already shows the same failure. When actionable
 evidence is present, the current task strip derives one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, failed command
-evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
-rows, and activity events. Failed-command next actions carry the compact command
+evidence, diagnostics, active plan steps, reviewable diffs, files, and other
+independent action signals. Generic transcript-only and event-only activity no
+longer creates a duplicate `下一步` row. Failed-command next actions carry the compact command
 label plus Pi's exit code and an output-available summary when available,
 keeping the repair loop actionable without opening another panel. Command rows
 default to collapsed summaries and mount stdout/log details only after
@@ -199,14 +206,22 @@ longer injects mock transcript, sample stats, command catalog rows, file rows,
 diff rows, command runs, diagnostic prose, or sample active-task copy. Zero
 queues, unbound Pi state, idle transport/agent state, and empty evidence actions
 stay visually quiet; transcript rows and the `当前证据` card stay unmounted until
-Pi, command, or workspace evidence arrives.
-On wide windows, the shell adds one compact status rail for the next action,
-current plan step, and active tool/command. The old progress/execution/work-folder
-multi-card rail is gone, and the rail still collapses on compact widths so the
+Pi, command, or workspace evidence arrives. While Pi is still streaming,
+runtime events, active tools, and command evidence stay visible; after the
+assistant reply is complete, that process evidence collapses into a compact
+`已处理` row that can be expanded to inspect the tool, command, and event trail
+without crowding the final reply. Assistant `thinking` / `toolCall` content and
+Pi `toolResult` / bash transcript entries are treated as process evidence, so
+they stay out of the main conversation rows unless `已处理` is expanded.
+On wide windows, the shell adds one compact status rail only for independent
+live evidence such as current plan steps, failed or active shell commands, and
+active tools. Generic `下一步` prompts stay in the main task strip instead of
+being duplicated in the rail. The old progress/execution/work-folder multi-card
+rail is gone, and the rail still collapses on compact widths so the
 conversation flow remains primary.
-Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
-the shared prompt transport, turning visible Pi conversation evidence into the
-next agent task. The default sidebar now stays focused on sessions and
+Pi `message_end` / `agent_end` JSONL updates merge assistant replies into the
+local transcript immediately, while a lightweight RPC refresh follows to
+reconcile the full message, fork, and stats state. The default sidebar now stays focused on sessions and
 workspace identity; lightweight `通用`, `编码`, and `校验` focus controls move
 into the composer's optional `焦点` row and appear only after opening composer
 options or when a focus is selected. Selecting one only appends an
@@ -216,9 +231,9 @@ The composer exposes repository, examples, evidence, and Pi session context
 chips after opening composer options, after selecting a focus, or after
 changing the default context; direct prompt, steering, and follow-up submits
 still prefix the selected scopes into the same platform-neutral text payloads,
-while turning all chips off sends the raw input. Current-turn event rows can queue a
-`Follow up on <phase> activity: ...` prompt the same way, so visible Pi RPC,
-stderr, tool, and stream events can become the next agent action. File context
+while turning all chips off sends the raw input. Current-turn event rows are
+read-only process evidence in the shell; they do not expose message-level
+follow-up controls. File context
 rows can queue an `Inspect <path>` prompt through the same platform-neutral
 prompt transport, turning Pi-provided file evidence into the next coding-agent
 action. The diff summary review button likewise queues a concise
