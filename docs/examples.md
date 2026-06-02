@@ -203,12 +203,12 @@ directly under the corresponding assistant reply, including candidates whose
 surface, with Pi/RPC left as provider/protocol nouns. The top bar keeps only
 session identity by default; the current-agent chip appears there only for
 non-default backends or provider failures, while normal Pi startup/running state
-is folded into the compact `Agent：...` task signal. The full backend selector
-appears inside expanded composer options so the default shell stays
-conversation-first. Selector descriptions are short product copy rather than
-provider/debug prose, and the top bar gives removed action-button space back to
-the current session title; hidden backend/status chips do not reserve width in
-quiet sessions. The default session can switch between Pi and Local without restarting the app. Switching
+is folded into the compact `Agent：...` task signal. Backend switching plus
+refresh/new-session actions share one compact `Agent` row inside expanded
+composer options so the default shell stays conversation-first. Provider
+descriptions stay out of that row instead of becoming debug prose, and the top
+bar gives removed action-button space back to the current session title; hidden
+backend/status chips do not reserve width in quiet sessions. The default session can switch between Pi and Local without restarting the app. Switching
 clears provider-specific transcript, catalog, fork, metrics, command,
 diagnostic, and transport state so evidence from one backend does not leak into
 another; the switch event is kept as control history and does not mount a
@@ -424,10 +424,10 @@ projection as a compact backend session row, so a coding-agent run can show the
 live provider session name/id and model without opening a separate diagnostics
 view.
 The current session can also be refreshed manually from the expanded composer
-session row using the same platform-neutral command batch, so the native UI can
+`Agent` row using the same platform-neutral command batch, so the native UI can
 resync Pi state, model catalog, transcript, fork affordances, command catalog,
 and stats without changing selection.
-That session row also includes a fresh-session control. It queues
+That row also includes a fresh-session control. It queues
 `NewRpcSession` first; after the `new_session` success response arrives,
 `ReceiveTransport` queues the state, model catalog, messages, fork candidates,
 commands, and stats refresh through the same platform-neutral transport model.

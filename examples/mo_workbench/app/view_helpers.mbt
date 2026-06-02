@@ -4017,11 +4017,8 @@ fn WorkbenchModel::composer(
   if self.should_show_context_chip_row() {
     content.push(self.context_chip_row(layout, theme))
   }
-  if self.should_show_backend_selector_row() {
-    content.push(self.backend_selector_row(layout, theme))
-  }
-  if self.should_show_session_control_row() {
-    content.push(self.session_control_row(layout, theme))
+  if self.should_show_agent_control_row() {
+    content.push(self.agent_control_row(theme))
   }
   if self.should_show_composer_agent_row() {
     content.push(self.composer_agent_row(layout, theme))
@@ -4049,10 +4046,7 @@ fn WorkbenchModel::composer_height(
   layout : WorkbenchLayout,
 ) -> Double {
   let mut height = layout.composer_height
-  if self.should_show_backend_selector_row() {
-    height = height + 36.0
-  }
-  if self.should_show_session_control_row() {
+  if self.should_show_agent_control_row() {
     height = height + 36.0
   }
   if self.should_show_context_chip_row() {
@@ -4071,58 +4065,27 @@ fn WorkbenchModel::composer_height(
 }
 
 ///|
-fn WorkbenchModel::should_show_backend_selector_row(
-  self : WorkbenchModel,
-) -> Bool {
-  self.composer_controls_expanded && !self.is_composer_slash_prompt()
-}
-
-///|
-fn WorkbenchModel::should_show_session_control_row(
-  self : WorkbenchModel,
-) -> Bool {
+fn WorkbenchModel::should_show_agent_control_row(self : WorkbenchModel) -> Bool {
   self.composer_controls_expanded &&
   !self.is_composer_slash_prompt() &&
   (
+    agent_backend_profiles().length() > 1 ||
     self.active_agent_backend_capabilities().supports_session_refresh ||
     self.active_agent_backend_capabilities().supports_new_session
   )
 }
 
 ///|
-fn WorkbenchModel::backend_selector_row(
+fn WorkbenchModel::agent_control_row(
   self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  row(
-    [
-      text("后端", role=Caption, theme~, width=42.0, height=30.0),
-      self.backend_selector_cell(theme),
-      spacer(min_length=8.0, weight=1.0),
-      text(
-        self.active_agent_backend_profile().description,
-        role=Caption,
-        theme~,
-        width=workbench_max_double(1.0, layout.composer_input_width - 196.0),
-        height=30.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
-  )
-}
-
-///|
-fn WorkbenchModel::session_control_row(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let capabilities = self.active_agent_backend_capabilities()
   let controls : Array[@core.View[WorkbenchMsg]] = [
-    text("会话", role=Caption, theme~, width=42.0, height=30.0),
+    text("Agent", role=Caption, theme~, width=42.0, height=30.0),
+    self.backend_selector_cell(theme),
   ]
+  controls.push(spacer(min_length=8.0, weight=1.0))
   if capabilities.supports_session_refresh {
     controls.push(
       button(
@@ -4147,16 +4110,6 @@ fn WorkbenchModel::session_control_row(
       ),
     )
   }
-  controls.push(spacer(min_length=8.0, weight=1.0))
-  controls.push(
-    text(
-      "按需同步当前 Agent 会话",
-      role=Caption,
-      theme~,
-      width=workbench_max_double(1.0, layout.composer_input_width - 190.0),
-      height=30.0,
-    ),
-  )
   row(controls, spacing=8.0, align=Center)
 }
 

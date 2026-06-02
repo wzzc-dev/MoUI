@@ -50,10 +50,10 @@ packages:
   normal Pi startup/running state stays in the compact `Agent：...` task signal.
   Hidden backend/status chips no longer reserve layout width, so quiet sessions
   give that space back to the current title and project line.
-  The full backend selector lives inside expanded composer options, with Pi as
-  the first real provider and Local as the UI/switching smoke provider;
-  selector descriptions stay short and product-facing instead of exposing
-  provider/debug prose.
+  The backend selector lives inside a compact expanded-composer `Agent` row with
+  refresh/new-session actions, with Pi as the first real provider and Local as
+  the UI/switching smoke provider; provider descriptions stay out of the row so
+  the expanded composer does not read like a backend configuration panel.
   Each Workbench session records a `backend_id`; switching the current session
   backend clears provider transcript, catalog, fork, metrics, command,
   diagnostic, and transport state so backend-specific evidence does not leak
@@ -128,8 +128,8 @@ packages:
   commands. The default shell keeps the top bar to identity, gives hidden chip
   and removed action-button space back to the session title, shows the
   current-agent chip there only when it carries non-default backend or failure
-  signal, and moves refresh/new-session controls into expanded composer options
-  with the backend selector. The bottom composer input stays
+  signal, and moves backend switching plus refresh/new-session controls into one
+  compact expanded-composer `Agent` row. The bottom composer input stays
   prominent, while typed input adds a compact `选项`/`发送` row instead of
   opening every secondary control. Context chips, agent focus controls,
   advanced session details, model/session stats,
@@ -220,7 +220,7 @@ packages:
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
 - The current session can be refreshed manually from the expanded composer
-  session row. The shared app reuses the same platform-neutral command batch as
+  `Agent` row. The shared app reuses the same platform-neutral command batch as
   session selection: state, messages, command catalog, and session stats.
 - Workbench command queue entries now use Pi RPC `bash` directly instead of
   prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
