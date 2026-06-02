@@ -56,6 +56,10 @@ default_stage_markers=(
   "native smoke render frame replay commands" \
   "native smoke render frame replay complete" \
   "native smoke render frame replay rejected skipped" \
+  "native smoke surface render frame commands" \
+  "native smoke surface render frame finalized" \
+  "native smoke surface render frame cache resources" \
+  "native smoke surface render frame mismatch rejected" \
   "native smoke render shaped glyph run command replay" \
   "native smoke render shader cache resources" \
   "native smoke render shader cache misses" \
@@ -207,6 +211,10 @@ default_expected_stage_values=(
   $'native smoke render frame replay commands\t23'
   $'native smoke render frame replay complete\t1'
   $'native smoke render frame replay rejected skipped\t20'
+  $'native smoke surface render frame commands\t23'
+  $'native smoke surface render frame finalized\t1'
+  $'native smoke surface render frame cache resources\t9'
+  $'native smoke surface render frame mismatch rejected\t1'
   $'native smoke render shaped glyph run command replay\t1'
   $'native smoke render shader cache resources\t1'
   $'native smoke render shader cache misses\t1'

@@ -311,7 +311,17 @@ pub fn Surface::image_snapshot(Self) -> Image?
 pub fn Surface::image_snapshot_with_bounds(Self, @skia_mbt.IRect) -> Image?
 pub fn Surface::raster_n32_premul(@skia_mbt.ISize) -> Self?
 pub fn Surface::read_pixels(Self, bounds? : @skia_mbt.IRect) -> @skia_mbt.Pixmap?
+pub fn Surface::render_frame(Self, @skia_mbt.RenderFrameDescriptor, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
+pub fn Surface::render_frame_with_resources(Self, @skia_mbt.RenderFrameDescriptor, NativeReplayResources, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
 pub fn Surface::width(Self) -> Int
+
+pub(all) struct SurfaceFrameReplayStats {
+  replay : CanvasReplayStats
+  validation_status : @skia_mbt.RenderFrameValidationStatus
+  surface_matches : Bool
+  finalized : Bool
+} derive(Eq, @debug.Debug)
+pub fn SurfaceFrameReplayStats::is_complete(Self) -> Bool
 
 pub(all) struct Typeface {
   // private fields
