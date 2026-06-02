@@ -190,6 +190,9 @@ $defaultStageMarkers = @(
   "native smoke font resource plan count",
   "native smoke text run resource plan count",
   "native smoke text run range byte size",
+  "native smoke text run empty range resource plan count",
+  "native smoke text run empty range skipped",
+  "native smoke text run empty range cache resources",
   "native smoke text measurement resource plan count",
   "native smoke measured text resource plan count",
   "native smoke measured text key variation",
@@ -827,6 +830,18 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke text run range byte size"
     Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke text run empty range resource plan count"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke text run empty range skipped"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke text run empty range cache resources"
+    Value = "0"
   }
   [pscustomobject]@{
     Marker = "native smoke text measurement resource plan count"
