@@ -128,7 +128,15 @@ esac
 [ "$(git -C "$SKIA_MBT_DIR" branch --show-current)" = "$SKIA_MBT_BRANCH" ] ||
   fail ".local_repos/skia_mbt must be on branch $SKIA_MBT_BRANCH"
 
-for pkg_file in moon.pkg pkg.generated.mbti native/moon.pkg native/pkg.generated.mbti; do
+for pkg_file in \
+  moon.pkg \
+  pkg.generated.mbti \
+  native/moon.pkg \
+  native/pkg.generated.mbti \
+  native/capabilities.json \
+  native/ownership.json \
+  scripts/native_smoke/main.mbt
+do
   [ -f "$SKIA_MBT_DIR/$pkg_file" ] || fail "missing .local_repos/skia_mbt/$pkg_file"
 done
 
@@ -159,5 +167,8 @@ done
 
 bash "$SKIA_MBT_DIR/scripts/verify-platform-status.sh" ||
   fail ".local_repos/skia_mbt platform status evidence did not validate"
+
+bash "$SKIA_MBT_DIR/scripts/verify-native-capability-contract.sh" ||
+  fail ".local_repos/skia_mbt native capability contract did not validate"
 
 printf 'Local dependency check passed.\n'

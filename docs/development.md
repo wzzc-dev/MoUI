@@ -75,12 +75,15 @@ Set `MOUI_SKIA_MBT_REMOTE` to override the clone URL. The default daily check
 validates fallback-safe Skia package tests and the binding checkout's platform
 status contract. `scripts/check-local-deps.sh` requires
 `skia-platform-status.json`, `skia-provider-lock.json`,
-`SKIA_PLATFORM_STATUS.md`, and the verifier scripts, then runs
-`.local_repos/skia_mbt/scripts/verify-platform-status.sh`. That proves the
-editable binding dependency still has a pinned real-Skia artifact/status
-contract and CI evidence wiring. It does not prove a MoUI platform entrypoint
-has rendered with real Skia; use `--skia-real-smoke` after configuring real
-Skia native link flags for that renderer-level proof.
+`SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
+and the verifier scripts, then runs
+`.local_repos/skia_mbt/scripts/verify-platform-status.sh` and
+`.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`. That
+proves the editable binding dependency still has a pinned real-Skia
+artifact/status contract, CI evidence wiring, fallback parity, FFI
+ownership/borrow coverage, and native smoke marker coverage. It does not prove
+a MoUI platform entrypoint has rendered with real Skia; use `--skia-real-smoke`
+after configuring real Skia native link flags for that renderer-level proof.
 
 `scripts/setup-local-deps.sh` configures the fork as `origin`, upstream as
 `upstream`, and fast-forwards the `moui-support` branch from `origin` when the
@@ -121,9 +124,11 @@ fallback-safe checks, guidance consistency checks, and Web wasm-gc example
 builds without invoking all-repository native or wasm-gc test targets.
 Fallback-safe Skia checks prove API shape and unavailable diagnostics; they do
 not mean a real Skia renderer is ready. The local dependency check also runs
-`.local_repos/skia_mbt/scripts/verify-platform-status.sh`, which validates the
-binding checkout's `skia-platform-status.json` and provider lock before the
-MoUI daily baseline can pass.
+`.local_repos/skia_mbt/scripts/verify-platform-status.sh` and
+`.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`, which
+validate the binding checkout's `skia-platform-status.json`, provider lock,
+native capability manifest, fallback parity, ownership, FFI borrow annotations,
+and native smoke marker coverage before the MoUI daily baseline can pass.
 
 Run the real Skia native smoke only after configuring local Skia link flags:
 

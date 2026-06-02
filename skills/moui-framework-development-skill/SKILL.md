@@ -166,11 +166,13 @@ not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
 The same local-dependency check also requires the `skia_mbt` binding checkout's
 `skia-platform-status.json`, `skia-provider-lock.json`,
-`SKIA_PLATFORM_STATUS.md`, and verifier scripts, then runs
-`.local_repos/skia_mbt/scripts/verify-platform-status.sh`. Treat that as
-binding-level Skia provider/status evidence; MoUI renderer pixels and platform
-runtime behavior still need the opt-in real-Skia smoke or matching-host example
-runs.
+`SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
+and verifier scripts, then runs
+`.local_repos/skia_mbt/scripts/verify-platform-status.sh` and
+`.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`. Treat
+that as binding-level Skia provider/status and native capability evidence; MoUI
+renderer pixels and platform runtime behavior still need the opt-in real-Skia
+smoke or matching-host example runs.
 For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
 the browser-session artifact, then fold it into
 `platform-runtime-evidence.json` with
