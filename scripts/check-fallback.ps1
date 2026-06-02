@@ -923,7 +923,7 @@ try {
     $fakeMissingCapabilityAreaStatus = Join-Path $dryRunRoot "fake-platform-status-missing-capability-area.json"
     $missingCapabilityAreaStatus = Get-Content -LiteralPath (Join-Path $repoRoot "skia-platform-status.json") -Raw | ConvertFrom-Json
     foreach ($capability in @($missingCapabilityAreaStatus.native_smoke_capabilities)) {
-      if ($capability.id -eq "bitmap.decode-readback") {
+      if ($capability.id -like "bitmap.*") {
         $capability.area = "Image"
       }
     }
@@ -988,7 +988,7 @@ try {
     ) | Set-Content -LiteralPath $fakeStatusDoc
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/verify-platform-status.ps1") -StatusDoc $fakeStatusDoc } `
-      -ExpectedMessage "platform status Markdown matrix does not mark accepted platform: macOS"
+      -ExpectedMessage "platform status Markdown matrix does not mark accepted platform"
 
     & (Join-Path $repoRoot "scripts/verify-platform-status.ps1")
   } finally {

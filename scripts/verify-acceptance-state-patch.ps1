@@ -21,6 +21,16 @@ function Resolve-RepoPath {
   return Join-Path $repoRoot $Path
 }
 
+function Convert-FileToLf {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $Path
+  )
+
+  $text = [System.IO.File]::ReadAllText($Path).Replace("`r`n", "`n")
+  [System.IO.File]::WriteAllText($Path, $text, [System.Text.UTF8Encoding]::new($false))
+}
+
 $resolvedPatchFile = Resolve-RepoPath $PatchFile
 $resolvedStatusFile = Resolve-RepoPath $StatusFile
 $resolvedRevisionFile = Resolve-RepoPath $RevisionFile
@@ -68,6 +78,8 @@ New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
 try {
   Copy-Item -LiteralPath $resolvedStatusFile -Destination (Join-Path $tempDir "skia-platform-status.json")
   Copy-Item -LiteralPath $resolvedRevisionFile -Destination (Join-Path $tempDir "skia-revision.txt")
+  Convert-FileToLf -Path (Join-Path $tempDir "skia-platform-status.json")
+  Convert-FileToLf -Path (Join-Path $tempDir "skia-revision.txt")
 
   git -C $tempDir -c core.autocrlf=false apply --check $resolvedPatchFile
   if ($LASTEXITCODE -ne 0) {
