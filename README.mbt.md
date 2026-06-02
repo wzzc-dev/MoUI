@@ -161,8 +161,8 @@ The `native` subpackage contains the first opt-in native boundary:
   `contains`, `bounds`, `compute_tight_bounds`, `add_path_value`, `add_poly`,
   `add_rect`, `add_oval`, `add_circle`, `add_round_rect`, `add_rrect`,
   `transform`, `offset`, and `is_empty`;
-- `@native.Path::from_value(path)` replays a portable `@skia_mbt.Path` into a
-  native path when Skia is linked;
+- `@native.Path::from_value(path)` replays a finite portable `@skia_mbt.Path`
+  into a native path when Skia is linked and rejects non-finite paths;
 - `@native.Canvas` supports `clear`, `draw_color`, `draw_paint`,
   `draw_point`, `draw_line`, `draw_points`, `draw_rect`, `draw_oval`, `draw_circle`,
   `draw_arc`, `draw_round_rect`, `draw_rrect`, `draw_drrect`, `draw_path`,

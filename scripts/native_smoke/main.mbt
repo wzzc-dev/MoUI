@@ -1125,6 +1125,13 @@ fn main {
     portable_path,
     @skia.Paint::new(color=@skia.Color::yellow()),
   )
+  let non_finite_portable_path = @skia.Path::new()
+    .move_to(@skia.Point::new(0, 0))
+    .line_to(@skia.Point::new(1.0 / 0.0, 1))
+  if non_finite_portable_path.is_finite() ||
+    @native.Path::from_value(non_finite_portable_path) is Some(_) {
+    fail_smoke("non-finite portable path should not replay into native path")
+  }
 
   guard @native.Path::new() is Some(appended_path) else {
     fail_smoke("failed to create native add-path target")
@@ -1147,6 +1154,8 @@ fn main {
   }
   println("native smoke path verbs")
   println(appended_path.count_verbs())
+  println("native smoke non-finite path from-value rejected")
+  println(1)
   canvas.draw_path(appended_path, @skia.Paint::new(color=@skia.Color::cyan()))
 
   let save_count_before_transform = canvas.save_count()
