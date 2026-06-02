@@ -129,6 +129,8 @@
         "native smoke shader draws",
         "native smoke shader linear gradient validation",
         "native smoke invalid shader filter descriptor resources",
+        "native smoke invalid shader filter replay skipped",
+        "native smoke invalid shader filter replay cache resources",
         "native smoke filter layer count",
         "native smoke filter finite validation",
         "native smoke render image command replay",
@@ -220,6 +222,8 @@
         "native smoke shader draws",
         "native smoke shader resource plan count",
         "native smoke invalid shader filter descriptor resources",
+        "native smoke invalid shader filter replay skipped",
+        "native smoke invalid shader filter replay cache resources",
         "native smoke filter layer count",
         "native smoke filter finite validation",
         "native smoke filter resource plan count"

@@ -187,6 +187,62 @@ test "canvas replays paint shader fills" {
 }
 
 ///|
+test "canvas skips invalid shader and filter descriptors" {
+  let replay_size = @skia.ISize::new(4, 4)
+  let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    replay_size,
+  )
+  let invalid_scalar : Float = 0.0 / 0.0
+  let invalid_shader = @skia.LinearGradientShader(
+    @skia.Point::new(1, 1),
+    @skia.Point::new(1, 1),
+    @skia.Color::red(),
+    @skia.Color::blue(),
+    @skia.Clamp,
+  )
+  let invalid_filter = @skia.ColorMatrixFilter([
+    invalid_scalar, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+  ])
+  let commands = @skia.RenderCommandList::for_target(replay_target)
+    .clear(@skia.Color::white())
+    .draw_paint_shader(invalid_shader)
+    .save_layer(color_filter=Some(invalid_filter))
+  let resource_plan = commands.resource_plan()
+  assert_eq(resource_plan.length(), 1)
+  assert_eq(resource_plan.count_kind(@skia.SurfaceResource), 1)
+  assert_eq(resource_plan.count_kind(@skia.ShaderResource), 0)
+  assert_eq(resource_plan.count_kind(@skia.ColorFilterResource), 0)
+  assert_eq(resource_plan.cacheable_count, 1)
+  assert_eq(resource_plan.uncacheable_count, 0)
+  match @native.Surface::raster_n32_premul(replay_size) {
+    None => ()
+    Some(surface) =>
+      match surface.canvas() {
+        None => ()
+        Some(canvas) => {
+          let resources = @native.NativeReplayResources::new(
+            shader_max_bytes=1024L,
+            color_filter_max_bytes=1024L,
+          )
+          let stats = canvas.replay_with_resources(commands, resources)
+          assert_true(!stats.is_complete())
+          assert_eq(stats.command_count, 3)
+          assert_eq(stats.replayed_count, 1)
+          assert_eq(stats.skipped_count, 2)
+          assert_eq(stats.draw_count, 1)
+          assert_eq(stats.state_count, 1)
+          assert_eq(stats.clear_count, 1)
+          assert_eq(stats.shader_resource_count, 1)
+          assert_eq(stats.filter_resource_count, 1)
+          assert_eq(resources.shader_cache.length(), 0)
+          assert_eq(resources.color_filter_cache.length(), 0)
+        }
+      }
+  }
+}
+
+///|
 test "native backend reports availability" {
   ignore(@native.skia_available())
 }
