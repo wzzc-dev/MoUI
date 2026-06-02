@@ -1,0 +1,228 @@
+#!/usr/bin/env node
+
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+
+const tmp = mkdtempSync(join(tmpdir(), "moui-web-runtime-presentation-manifest-"));
+const validator = "scripts/validate-web-runtime-presentation-manifest.mjs";
+
+const observationKeys = [
+  "pageLoaded",
+  "webGpuAvailable",
+  "adapterRequested",
+  "deviceRequested",
+  "wasmStarted",
+  "statusRunning",
+  "canvasCreated",
+  "canvasSized",
+  "nonblankScreenshot",
+  "cleanConsole",
+];
+
+const observations = value => Object.fromEntries(observationKeys.map(key => [key, value]));
+
+const target = ({ name, packagePath, path, status = "passed" }) => ({
+  name,
+  packagePath,
+  path,
+  url: `http://127.0.0.1:18080/${path}?debug=1`,
+  status,
+  title: name === "showcase-web-wasm"
+    ? "MoUI Showcase Wasm GC"
+    : "MoUI Markdown Editor Wasm GC",
+  statusText: status === "passed" ? "Running" : "Failed",
+  bodyFailed: status !== "passed",
+  navigatorGpu: status === "passed",
+  canvas: {
+    count: status === "passed" ? 1 : 0,
+    hostWidth: status === "passed" ? 1280 : 0,
+    hostHeight: status === "passed" ? 800 : 0,
+    canvasWidth: status === "passed" ? 1280 : 0,
+    canvasHeight: status === "passed" ? 800 : 0,
+    clientWidth: status === "passed" ? 1280 : 0,
+    clientHeight: status === "passed" ? 800 : 0,
+  },
+  runtimeSignals: {
+    adapterRequested: status === "passed",
+    deviceRequested: status === "passed",
+    wasmStarted: status === "passed",
+    running: status === "passed",
+  },
+  screenshot: {
+    artifact: `artifacts/conformance/web-runtime-presentation/${name}.png`,
+    width: status === "passed" ? 1280 : 0,
+    height: status === "passed" ? 800 : 0,
+    totalPixels: status === "passed" ? 1024000 : 0,
+    contentPixels: status === "passed" ? 50000 : 0,
+    distinctColorBuckets: status === "passed" ? 18 : 0,
+  },
+  observations: observations(status === "passed" ? "yes" : "no"),
+  consoleErrors: status === "passed" ? [] : ["Browser WebGPU is required"],
+  notes: status === "passed" ? ["browser evidence captured"] : ["navigator.gpu unavailable"],
+});
+
+const validManifest = {
+  schemaVersion: 1,
+  mode: "web-runtime-presentation",
+  generatedBy: "scripts/record-web-runtime-presentation.mjs",
+  baseUrl: "http://127.0.0.1:18080",
+  cdpUrl: "http://127.0.0.1:9223",
+  overallStatus: "passed",
+  evidenceBoundary:
+    "Browser-local WebGPU, wasm app startup, canvas sizing, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+  browser: {
+    product: "Chrome/148.0.7778.216",
+    userAgent: "Mozilla/5.0 HeadlessChrome/148.0.0.0",
+    protocolVersion: "1.3",
+  },
+  targets: [
+    target({
+      name: "showcase-web-wasm",
+      packagePath: "examples/showcase/web_wasm",
+      path: "examples/showcase/web_wasm/index.html",
+    }),
+    target({
+      name: "markdown-editor-web-wasm",
+      packagePath: "examples/markdown_editor/web_wasm",
+      path: "examples/markdown_editor/web_wasm/index.html",
+    }),
+  ],
+};
+
+const writeFixture = (name, manifest) => {
+  const path = join(tmp, name);
+  writeFileSync(path, JSON.stringify(manifest, null, 2));
+  return path;
+};
+
+const runValidator = (path, args = []) =>
+  spawnSync(process.execPath, [validator, path, ...args], { encoding: "utf8" });
+
+const expectPass = (label, result) => {
+  if (result.status !== 0) {
+    console.error(`${label}: expected validator to pass`);
+    console.error(result.stderr);
+    process.exit(1);
+  }
+};
+
+const expectFail = (label, result, expectedMessage) => {
+  if (result.status === 0) {
+    console.error(`${label}: expected validator to fail`);
+    process.exit(1);
+  }
+  if (!result.stderr.includes(expectedMessage)) {
+    console.error(`${label}: expected stderr to include '${expectedMessage}'`);
+    console.error(result.stderr);
+    process.exit(1);
+  }
+};
+
+expectPass(
+  "valid web runtime presentation manifest",
+  runValidator(writeFixture("valid.json", validManifest)),
+);
+
+expectPass(
+  "valid web runtime presentation manifest with require-passed",
+  runValidator(writeFixture("valid-require.json", validManifest), ["--require-passed"]),
+);
+
+expectFail(
+  "missing markdown target",
+  runValidator(
+    writeFixture("missing-markdown.json", {
+      ...validManifest,
+      targets: validManifest.targets.filter(target => target.name !== "markdown-editor-web-wasm"),
+    }),
+  ),
+  "targets must include 'markdown-editor-web-wasm'",
+);
+
+expectFail(
+  "passed target with console error",
+  runValidator(
+    writeFixture("console-error.json", {
+      ...validManifest,
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? { ...target, consoleErrors: ["adapter failed"] }
+          : target,
+      ),
+    }),
+  ),
+  "passed evidence must not contain console errors",
+);
+
+expectFail(
+  "passed target with blank screenshot",
+  runValidator(
+    writeFixture("blank-screenshot.json", {
+      ...validManifest,
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? {
+              ...target,
+              screenshot: {
+                ...target.screenshot,
+                contentPixels: 0,
+                distinctColorBuckets: 1,
+              },
+            }
+          : target,
+      ),
+    }),
+  ),
+  "passed evidence requires a nonblank screenshot",
+);
+
+expectFail(
+  "failed manifest with require-passed",
+  runValidator(
+    writeFixture("failed-require.json", {
+      ...validManifest,
+      overallStatus: "failed",
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? {
+              ...target,
+              status: "failed",
+              statusText: "Failed",
+              bodyFailed: true,
+              navigatorGpu: false,
+              observations: { ...target.observations, webGpuAvailable: "no" },
+              consoleErrors: ["No WebGPU adapter is available"],
+            }
+          : target,
+      ),
+    }),
+    ["--require-passed"],
+  ),
+  "overallStatus must be passed when --require-passed is used",
+);
+
+expectFail(
+  "weak evidence boundary",
+  runValidator(
+    writeFixture("weak-boundary.json", {
+      ...validManifest,
+      evidenceBoundary: "Browser smoke.",
+    }),
+  ),
+  "evidenceBoundary must include 'WebGPU'",
+);
+
+expectFail(
+  "nonlocal base url",
+  runValidator(
+    writeFixture("nonlocal-base-url.json", {
+      ...validManifest,
+      baseUrl: "https://example.com",
+    }),
+  ),
+  "baseUrl must be a local HTTP URL",
+);
+
+console.log("web runtime presentation manifest validator tests: ok");

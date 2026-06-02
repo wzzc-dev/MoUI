@@ -108,12 +108,31 @@ write_showcase_capture_manifest() {
   mode="$1"
   manifest_path="$2"
   mkdir -p "$(dirname "$manifest_path")"
+  benchmark_targets_json=""
+  if [ "$mode" = "benchmark" ]; then
+    benchmark_targets_json='  "benchmarkTargets": [
+    {
+      "name": "showcase-web-wasm",
+      "target": "examples/showcase/web_wasm",
+      "url": "http://127.0.0.1:18080/examples/showcase/web_wasm/",
+      "metricsPath": "artifacts/benchmarks/showcase-web-wasm.json"
+    },
+    {
+      "name": "markdown-editor-web-wasm",
+      "target": "examples/markdown_editor/web_wasm",
+      "url": "http://127.0.0.1:18080/examples/markdown_editor/web_wasm/",
+      "metricsPath": "artifacts/benchmarks/markdown-editor-web-wasm.json"
+    }
+  ],
+'
+  fi
   cat > "$manifest_path" <<EOF
 {
   "schemaVersion": 1,
   "mode": "$mode",
   "showcaseTarget": "examples/showcase/web_wasm",
   "url": "http://127.0.0.1:18080/examples/showcase/web_wasm/",
+${benchmark_targets_json}
   "renderInspectorSource": "Showcase Diagnostics inspector snapshot card backed by @core.RenderInspectorSnapshot",
   "renderInspectorCounters": [
     "command_count",
@@ -163,6 +182,193 @@ EOF
   printf 'Wrote capture manifest: %s\n' "$manifest_path"
 }
 
+validate_capture_manifest() {
+  mode="$1"
+  manifest_path="$2"
+  run node scripts/validate-conformance-capture-manifest.mjs "$manifest_path" --mode "$mode"
+}
+
+write_platform_evidence_manifest() {
+  manifest_path="$1"
+  mkdir -p "$(dirname "$manifest_path")"
+  cat > "$manifest_path" <<'EOF'
+{
+  "schemaVersion": 1,
+  "mode": "platform-runtime-evidence",
+  "generatedBy": "scripts/conformance-check.sh --platform-services",
+  "windowEvidenceSource": ".local_repos/window/scripts/record_moui_evidence.sh",
+  "platforms": [
+    {
+      "name": "web",
+      "status": "pending",
+      "host": "Web wasm-gc browser host pending",
+      "routineCommands": [
+        "moon test moui/backend/web --target wasm-gc",
+        "moon build examples/showcase/web_wasm --target wasm-gc",
+        "moon build examples/markdown_editor/web_wasm --target wasm-gc"
+      ],
+      "runtimeEvidenceCommands": [
+        "python3 -m http.server 18080 --bind 127.0.0.1",
+        "node scripts/record-web-runtime-presentation.mjs --base-url http://127.0.0.1:18080 --cdp-url http://127.0.0.1:9223 --manifest artifacts/conformance/web-runtime-presentation.json --require-passed # opens examples/showcase/web_wasm and examples/markdown_editor/web_wasm",
+        "node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json web --web-presentation-manifest artifacts/conformance/web-runtime-presentation.json"
+      ],
+      "exampleTargets": [
+        "examples/showcase/web_wasm",
+        "examples/markdown_editor/web_wasm"
+      ],
+      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh web --status pending",
+      "consumerCommand": "pending",
+      "observations": {
+        "windowOpened": "pending",
+        "resizeRedraw": "pending",
+        "representativeInput": "pending",
+        "cleanExit": "pending",
+        "surface": "pending",
+        "redraw": "pending",
+        "resizeScale": "pending",
+        "consumerInput": "pending",
+        "textInput": "pending",
+        "rendererHandle": "pending",
+        "cleanShutdown": "pending"
+      },
+      "artifacts": [
+        "artifacts/platform-evidence/web/README.md"
+      ],
+      "notes": [
+        "Web runtime evidence needs browser inspection of Showcase and Markdown Editor after the wasm-gc builds."
+      ]
+    },
+    {
+      "name": "macos",
+      "status": "pending",
+      "host": "macOS Darwin host pending",
+      "routineCommands": [
+        "sh scripts/dev-check.sh --platform-examples-test",
+        "moon build examples/showcase/macos --target native",
+        "moon build examples/markdown_editor/macos --target native"
+      ],
+      "runtimeEvidenceCommands": [
+        "moon run examples/showcase/macos --target native",
+        "moon run examples/markdown_editor/macos --target native"
+      ],
+      "exampleTargets": [
+        "examples/showcase/macos",
+        "examples/showcase/macos_skia",
+        "examples/markdown_editor/macos"
+      ],
+      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
+      "consumerCommand": "pending",
+      "observations": {
+        "windowOpened": "pending",
+        "resizeRedraw": "pending",
+        "representativeInput": "pending",
+        "cleanExit": "pending",
+        "surface": "pending",
+        "redraw": "pending",
+        "resizeScale": "pending",
+        "consumerInput": "pending",
+        "textInput": "pending",
+        "rendererHandle": "pending",
+        "cleanShutdown": "pending"
+      },
+      "artifacts": [
+        "artifacts/platform-evidence/macos/README.md"
+      ],
+      "notes": [
+        "macOS package tests are host-scoped; native app runtime evidence should name the local or CI host that launched the examples."
+      ]
+    },
+    {
+      "name": "windows",
+      "status": "pending",
+      "host": "Windows MSVC host pending",
+      "routineCommands": [
+        "moon test moui/backend/windows --target native",
+        "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows -BuildOnly",
+        "powershell -ExecutionPolicy Bypass -File scripts/windows/package_windows_app_msvc.ps1 -Package examples/showcase/windows"
+      ],
+      "runtimeEvidenceCommands": [
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }\""
+      ],
+      "exampleTargets": [
+        "examples/showcase/windows",
+        "examples/showcase/windows_skia",
+        "examples/markdown_editor/windows"
+      ],
+      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh windows --status pending",
+      "consumerCommand": "pending",
+      "observations": {
+        "windowOpened": "pending",
+        "resizeRedraw": "pending",
+        "representativeInput": "pending",
+        "cleanExit": "pending",
+        "surface": "pending",
+        "redraw": "pending",
+        "resizeScale": "pending",
+        "consumerInput": "pending",
+        "textInput": "pending",
+        "rendererHandle": "pending",
+        "cleanShutdown": "pending"
+      },
+      "artifacts": [
+        "artifacts/platform-evidence/windows/README.md"
+      ],
+      "notes": [
+        "Windows runtime evidence must come from an MSVC host after backend tests, Showcase build/package, and direct Showcase or Markdown Editor launch."
+      ]
+    },
+    {
+      "name": "linux",
+      "status": "pending",
+      "host": "Linux Wayland host pending",
+      "routineCommands": [
+        "sh scripts/dev-check.sh --platform-examples-test",
+        "moon build examples/showcase/linux --target native",
+        "moon build examples/showcase/linux_skia --target native"
+      ],
+      "runtimeEvidenceCommands": [
+        "moon run examples/showcase/linux --target native",
+        "moon run examples/showcase/linux_skia --target native"
+      ],
+      "exampleTargets": [
+        "examples/showcase/linux",
+        "examples/showcase/linux_cosmic",
+        "examples/showcase/linux_skia"
+      ],
+      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh linux --status pending",
+      "consumerCommand": "pending",
+      "observations": {
+        "windowOpened": "pending",
+        "resizeRedraw": "pending",
+        "representativeInput": "pending",
+        "cleanExit": "pending",
+        "surface": "pending",
+        "redraw": "pending",
+        "resizeScale": "pending",
+        "consumerInput": "pending",
+        "textInput": "pending",
+        "rendererHandle": "pending",
+        "cleanShutdown": "pending"
+      },
+      "artifacts": [
+        "artifacts/platform-evidence/linux/README.md"
+      ],
+      "notes": [
+        "Linux runtime evidence requires a matching Wayland compositor and Vulkan stack; keep unsupported service gaps explicit."
+      ]
+    }
+  ]
+}
+EOF
+  printf 'Wrote platform evidence manifest: %s\n' "$manifest_path"
+}
+
+validate_platform_evidence_manifest() {
+  manifest_path="$1"
+  run node scripts/validate-platform-evidence-manifest.mjs "$manifest_path"
+}
+
 if "$RUN_DEFAULT"; then
   run moon test moui/core --target native
   run moon test moui/backend/host --target native
@@ -191,14 +397,17 @@ fi
 if "$RUN_PLATFORM_SERVICES"; then
   run moon test moui/backend/host --target native
   run moon test moui/backend/web --target wasm-gc
-  if [ -f ".local_repos/window/linux/generated/xdg-decoration-protocol.c" ]; then
+  if [ -f ".local_repos/window/linux/generated/xdg-decoration-protocol.c" ] &&
+    [ -f ".local_repos/window/linux/generated/xdg-shell-protocol.c" ]; then
     run moon test moui/backend/linux --target native
   else
-    printf '\nSkipping backend/linux platform-service tests because .local_repos/window/linux/generated/xdg-decoration-protocol.c is missing.\n'
+    printf '\nSkipping backend/linux platform-service tests because .local_repos/window/linux/generated Wayland protocol sources are missing.\n'
   fi
   if [ "$(uname -s)" = "Darwin" ]; then
     run moon test moui/backend/macos --target native
   fi
+  write_platform_evidence_manifest "$CAPTURE_ARTIFACT_DIR/platform-runtime-evidence.json"
+  validate_platform_evidence_manifest "$CAPTURE_ARTIFACT_DIR/platform-runtime-evidence.json"
 fi
 
 if "$RUN_TEXT"; then
@@ -217,14 +426,17 @@ fi
 if "$RUN_GOLDEN"; then
   run moon build examples/showcase/web_wasm --target wasm-gc
   write_showcase_capture_manifest "golden" "$CAPTURE_ARTIFACT_DIR/showcase-golden-capture.json"
+  validate_capture_manifest "golden" "$CAPTURE_ARTIFACT_DIR/showcase-golden-capture.json"
   print_golden_capture_instructions
 fi
 
 if "$RUN_BENCH"; then
   run moon build examples/showcase/web_wasm --target wasm-gc
   run moon build examples/markdown_editor/web_wasm --target wasm-gc
+  run node scripts/validate-web-runtime-handoff.mjs --manifest "$CAPTURE_ARTIFACT_DIR/web-runtime-handoff.json"
   write_showcase_capture_manifest "benchmark" "$CAPTURE_ARTIFACT_DIR/showcase-benchmark-capture.json"
-  printf '\nBenchmark scaffold complete. Record startup, frame time, dirty-count, draw-command count, memory, and render inspector counters from the built examples.\n'
+  validate_capture_manifest "benchmark" "$CAPTURE_ARTIFACT_DIR/showcase-benchmark-capture.json"
+  printf '\nBenchmark scaffold complete. Record startup, frame time, dirty-count, draw-command count, memory, and render inspector counters for Showcase and Markdown Editor targets named in the manifest.\n'
 fi
 
 if "$RUN_PLATFORM"; then

@@ -699,15 +699,15 @@ export function createWebGpuImports(options = {}) {
         let step = vec2f(1.0) / max(dims, vec2f(1.0));
         let radius = max(amount, 1.0);
         var color = vec4f(0.0);
-        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0, -1.0)) * 0.0625;
-        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 0.0, -1.0)) * 0.125;
-        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0, -1.0)) * 0.0625;
-        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0,  0.0)) * 0.125;
-        color += textureSample(layerTexture, layerSampler, uv) * 0.25;
-        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0,  0.0)) * 0.125;
-        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0,  1.0)) * 0.0625;
-        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 0.0,  1.0)) * 0.125;
-        color += textureSample(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0,  1.0)) * 0.0625;
+        color += textureSampleLevel(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0, -1.0), 0.0) * 0.0625;
+        color += textureSampleLevel(layerTexture, layerSampler, uv + step * radius * vec2f( 0.0, -1.0), 0.0) * 0.125;
+        color += textureSampleLevel(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0, -1.0), 0.0) * 0.0625;
+        color += textureSampleLevel(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0,  0.0), 0.0) * 0.125;
+        color += textureSampleLevel(layerTexture, layerSampler, uv, 0.0) * 0.25;
+        color += textureSampleLevel(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0,  0.0), 0.0) * 0.125;
+        color += textureSampleLevel(layerTexture, layerSampler, uv + step * radius * vec2f(-1.0,  1.0), 0.0) * 0.0625;
+        color += textureSampleLevel(layerTexture, layerSampler, uv + step * radius * vec2f( 0.0,  1.0), 0.0) * 0.125;
+        color += textureSampleLevel(layerTexture, layerSampler, uv + step * radius * vec2f( 1.0,  1.0), 0.0) * 0.0625;
         return color;
       }
 
@@ -778,6 +778,7 @@ export function createWebGpuImports(options = {}) {
           sample = blur_sample(in.uv, filterAmount);
         }
         sample = apply_filter(sample, filterKind, filterAmount, in.matrix0, in.matrix1, in.matrix2, in.matrix3, in.matrix4);
+        let backdrop = textureSampleLevel(backdropTexture, layerSampler, in.uv, 0.0);
         var maskAlpha = 1.0;
         if (in.rectMask.w > 0.5) {
           let maskSize = in.rectMask.xy;
@@ -786,7 +787,6 @@ export function createWebGpuImports(options = {}) {
           maskAlpha = 1.0 - smoothstep(-0.5, 0.5, dist);
         }
         if (i32(in.meta0.y + 0.5) == 3) {
-          let backdrop = textureSample(backdropTexture, layerSampler, in.uv);
           let sourceAlpha = clamp(sample.a * opacity * maskAlpha, 0.0, 1.0);
           let blended = overlayRgb(backdrop.rgb, sample.rgb);
           let outRgb = mix(backdrop.rgb, blended, sourceAlpha);
@@ -2069,6 +2069,16 @@ export async function createWebGpuImportsAsync(options = {}) {
     adapter.requestDevice(),
     "requesting a WebGPU device",
   );
+  device.addEventListener?.("uncapturederror", event => {
+    const message = event?.error?.message || event?.error || "unknown WebGPU error";
+    globalThis.console?.error?.(`MoUI WebGPU uncaptured error: ${message}`);
+    report(`WebGPU uncaptured error: ${message}`);
+  });
+  device.lost?.then(info => {
+    const message = info?.message || info?.reason || "unknown reason";
+    globalThis.console?.error?.(`MoUI WebGPU device lost: ${message}`);
+    report(`WebGPU device lost: ${message}`);
+  });
   const format = navigator.gpu.getPreferredCanvasFormat();
   return createWebGpuImports({ ...options, device, format });
 }

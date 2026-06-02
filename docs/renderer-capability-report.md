@@ -33,7 +33,7 @@ Status meanings:
 | Filter effect | ready | ready | ready | Skia validates blur image filters plus saturation, brightness, contrast, and color matrix color filters in the real native renderer smoke. |
 | Path/vector | ready | ready | ready | Skia replays `PathSpec` into native paths with solid/gradient fill and stroke smoke coverage, plus quadratic and cubic curve verbs. |
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have real native renderer pixel smoke coverage; unknown names still use fallback paths. |
-| Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, and can draw optional SkShaper shaped glyph runs after linking; SkParagraph-style line breaking, bidi, and typography conformance remain follow-up work. |
+| Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, can draw optional SkShaper shaped glyph runs after linking, and audits `skia_mbt` fallback/measurement/shaping descriptor resource plans through fallback-safe tests; SkParagraph-style line breaking, bidi, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, and ZWJ emoji samples, keeps caret coverage stable, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path; deterministic color emoji, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
 | Async image | partial | partial | partial | Renderer-neutral lifecycle records are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; Skia records disposed cached image resources during renderer disposal; Web renderer/backend diagnostics were refreshed on 2026-05-31; late native/general async repaint policy remains follow-up work. |
 
@@ -154,11 +154,22 @@ so explicit Skia selection exits with a diagnostic instead of opening a blank
 window.
 
 When real Skia is linked, the renderer creates a CPU `raster_n32_premul` surface
-using physical pixels, scales the canvas by the host scale factor so MoUI
-commands remain in logical coordinates, draws the command stream, reads pixels
-back into `SkiaPixelFrame`, and calls the platform presenter. macOS presents the
-frame through a `CGImage` on a `CALayer`, Windows through a top-down BGRA DIB and
-`StretchDIBits`, and Linux through the local `window/linux` `wl_shm` presenter.
+using physical pixels through `skia_mbt`'s `SurfaceTargetDescriptor` and
+`Surface::for_target` value-layer surface contract, scales the canvas by the
+host scale factor so MoUI commands remain in logical coordinates, draws the
+command stream, finalizes the surface through `Surface::flush_and_submit`,
+reads pixels back into `SkiaPixelFrame`, and calls the platform presenter. The
+fallback-safe `raster_surface_preflight` diagnostic summarizes the same
+`skia_mbt` surface/frame/finalization resource plans so MoUI can audit the
+Skia raster target contract even when real native Skia is not linked. The
+fallback-safe `skia_text_descriptor_preflight` similarly consumes the
+`FontFallbackRequest`, `TextMeasurementDescriptor`, `TextShapingDescriptor`,
+`ShapedTextRunDescriptor`, and `ShapedGlyphRunDescriptor` resource plans as
+cache-key evidence for the current Skia text path; it does not replace the
+existing MoUI draw-command replay or prove full shaping parity. macOS presents
+the frame through a `CGImage` on a `CALayer`, Windows through a top-down BGRA
+DIB and `StretchDIBits`, and Linux through the local `window/linux`
+`Window::present_rgba_pixels` `wl_shm` presenter.
 
 The current real Skia smoke uses JetBrains Skia link flags to render and read
 back a representative frame through `SkiaRasterRenderer`. It validates clear,
@@ -183,11 +194,13 @@ renderer gaps are now narrower: complex text shaping. Basic text
 measurement/drawing uses Skia `FontMgr`/`Font` with `FontSpec` family, weight,
 style selection, Skia font metrics for baseline/height, shaped-run cluster
 carets when SkShaper is linked, Skia-measured prefix carets otherwise,
-SystemFontMgr-only emoji font retry for emoji-hint text, and optional SkShaper
-shaped glyph runs for rendering when linked. The renderer clips aligned text
-glyphs to each `TextRun.frame`; fallback-safe white-box tests cover the
-placement contract, and the opt-in real-Skia smoke verifies that long glyph runs
-do not leak outside narrow text frames when native Skia is linked.
+SystemFontMgr-only emoji font retry for emoji-hint text, optional SkShaper
+shaped glyph runs for rendering when linked, and fallback-safe descriptor
+preflight coverage for the Skia fallback, measurement, shaping, shaped-run, and
+shaped-glyph resource plans. The renderer clips aligned text glyphs to each
+`TextRun.frame`; fallback-safe white-box tests cover the placement contract, and
+the opt-in real-Skia smoke verifies that long glyph runs do not leak outside
+narrow text frames when native Skia is linked.
 SkParagraph-style line breaking, bidi, broader typography, deterministic color
 emoji, grapheme shaping, and cross-platform emoji fallback conformance remain
 partial and separate from the WGPU Moon Cosmic provider stack. The macOS Skia
@@ -234,7 +247,12 @@ wasm-gc host ABI. The browser runtime uses draw scopes, offscreen WebGPU
 textures, and an advanced composite shader for layer opacity, masks, filters,
 and built-in shader effects. Blend-mode coverage matches native: source-over,
 multiply, screen, darken, and lighten use WebGPU blend states, while overlay
-uses a backdrop-sampling WebGPU pass for exact semantics.
+uses a backdrop-sampling WebGPU pass for exact semantics. The advanced shader
+uses explicit-LOD texture sampling for blur and backdrop reads so Chrome's
+WGSL validator accepts filter and overlay paths whose command kind varies per
+fragment input, and the browser runtime forwards WebGPU uncaptured/device-lost
+errors into the page log so browser presentation evidence fails on shader or
+pipeline validation errors instead of silently relying on a nonblank screenshot.
 Arbitrary paths share the same MoonBit tessellation contract as native. The
 wasm-gc adapter serializes the tessellated `DrawPath` mesh into a compact host
 payload, and the browser runtime submits those vertices through the WebGPU

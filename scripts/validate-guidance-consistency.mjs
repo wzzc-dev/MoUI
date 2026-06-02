@@ -116,8 +116,139 @@ assertIncludes(
   "`moui/tests/skia_renderer_smoke/native`",
 );
 assertIncludes("scripts/conformance-check.sh", "moon test moui/render/skia --target native");
+assertIncludes(
+  "scripts/conformance-check.sh",
+  "validate-conformance-capture-manifest.mjs",
+);
+assertIncludes("scripts/conformance-check.sh", "markdown-editor-web-wasm");
+assertIncludes(
+  "scripts/conformance-check.sh",
+  "platform-runtime-evidence.json",
+);
+assertIncludes(
+  "scripts/conformance-check.sh",
+  "validate-platform-evidence-manifest.mjs",
+);
+assertIncludes(
+  "scripts/record-platform-evidence-manifest.mjs",
+  "validate-platform-evidence-manifest.mjs",
+);
+assertIncludes(
+  "scripts/record-platform-evidence-manifest.mjs",
+  "--web-presentation-manifest",
+);
+assertIncludes(
+  "scripts/conformance-check.sh",
+  "validate-web-runtime-handoff.mjs",
+);
+assertIncludes("scripts/conformance-check.sh", "web-runtime-handoff.json");
+assertIncludes("scripts/validate-web-runtime-handoff.mjs", "--manifest");
+assertIncludes(
+  "scripts/validate-web-runtime-handoff.mjs",
+  "validate-web-runtime-handoff-manifest.mjs",
+);
 assertIncludes("scripts/dev-check.sh", "node scripts/validate-guidance-consistency.mjs");
+assertIncludes("scripts/dev-check.sh", "node scripts/validate-web-runtime-handoff.mjs");
+assertIncludes("scripts/dev-check.sh", "node scripts/test-validate-web-runtime-handoff.mjs");
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-validate-web-runtime-handoff-manifest.mjs",
+);
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-validate-web-runtime-presentation-manifest.mjs",
+);
 assertIncludes("docs/testing.md", "node scripts/validate-guidance-consistency.mjs");
+assertIncludes("docs/testing.md", "validate-conformance-capture-manifest.mjs");
+assertIncludes("docs/testing.md", "markdown-editor-web-wasm");
+assertIncludes("docs/testing.md", "validate-platform-evidence-manifest.mjs");
+assertIncludes("docs/testing.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("docs/testing.md", "validate-web-runtime-handoff.mjs");
+assertIncludes("docs/testing.md", "test-validate-web-runtime-handoff.mjs");
+assertIncludes("docs/testing.md", "validate-web-runtime-handoff-manifest.mjs");
+assertIncludes("docs/testing.md", "test-validate-web-runtime-handoff-manifest.mjs");
+assertIncludes("docs/testing.md", "record-web-runtime-presentation.mjs");
+assertIncludes("docs/testing.md", "validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("docs/testing.md", "test-validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("docs/testing.md", "--web-presentation-manifest");
+assertIncludes("docs/testing.md", "web-runtime-presentation.json");
+assertIncludes("docs/testing.md", "web-runtime-handoff.json");
+assertIncludes("docs/testing.md", "platform-runtime-evidence.json");
+assertIncludes(
+  "docs/testing.md",
+  "node scripts/test-validate-conformance-capture-manifest.mjs",
+);
+assertIncludes(
+  "docs/testing.md",
+  "node scripts/test-validate-platform-evidence-manifest.mjs",
+);
+assertIncludes(
+  "docs/testing.md",
+  "node scripts/test-record-platform-evidence-manifest.mjs",
+);
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-validate-conformance-capture-manifest.mjs",
+);
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-validate-platform-evidence-manifest.mjs",
+);
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-record-platform-evidence-manifest.mjs",
+);
+assertIncludes("scripts/check-local-deps.sh", "docs/moui-integration-smoke.md");
+assertIncludes("scripts/check-local-deps.sh", "scripts/record_moui_evidence.sh");
+assertIncludes("scripts/check-local-deps.sh", "xdg-shell-protocol.c");
+assertIncludes("scripts/setup-local-deps.sh", "merge --ff-only");
+assertIncludes("docs/development.md", "fast-forwards existing clean checkouts");
+assertIncludes("scripts/conformance-check.sh", "xdg-shell-protocol.c");
+for (const path of [
+  "examples/counter/web_wasm/index.html",
+  "examples/showcase/web_wasm/index.html",
+  "examples/markdown_editor/web_wasm/index.html",
+]) {
+  assertIncludes(path, "../../../moui/backend/web/runtime.js");
+}
+assertIncludes("docs/testing.md", "scripts/record_moui_evidence.sh");
+assertIncludes("docs/testing.md", "generated Wayland protocol C sources");
+assertIncludes("docs/platform-notes.md", "check_moui_linux_smoke.sh");
+assertIncludes("docs/release-readiness.md", "platform-runtime-evidence.json");
+assertIncludes("docs/release-readiness.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff.mjs");
+assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff-manifest.mjs");
+assertIncludes("docs/release-readiness.md", "web-runtime-handoff.json");
+assertIncludes("docs/release-readiness.md", "record-web-runtime-presentation.mjs");
+assertIncludes("docs/release-readiness.md", "validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("docs/release-readiness.md", "web-runtime-presentation.json");
+assertIncludes("docs/release-readiness.md", "--web-presentation-manifest");
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "scripts/record_moui_evidence.sh",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "fast-forwards clean local dependency checkouts",
+);
+assertIncludes("AGENTS.md", "scripts/record_moui_evidence.sh");
+assertIncludes("AGENTS.md", "fast-forwards existing clean local dependency");
+assertIncludes("AGENTS.md", "platform-runtime-evidence.json");
+assertIncludes("AGENTS.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("AGENTS.md", "validate-web-runtime-handoff.mjs");
+assertIncludes("AGENTS.md", "test-validate-web-runtime-handoff.mjs");
+assertIncludes("AGENTS.md", "validate-web-runtime-handoff-manifest.mjs");
+assertIncludes("AGENTS.md", "record-web-runtime-presentation.mjs");
+assertIncludes("AGENTS.md", "validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("AGENTS.md", "--web-presentation-manifest");
+assertIncludes("moui/README.mbt.md", "sh scripts/dev-check.sh --platform-examples-test");
+assertIncludes("moui/README.mbt.md", "sh scripts/conformance-check.sh --platform-services");
+assertIncludes("moui/README.mbt.md", "platform-runtime-evidence.json");
+assertIncludes("moui/README.mbt.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("moui/README.mbt.md", "validate-web-runtime-handoff.mjs");
+assertIncludes("moui/README.mbt.md", "record-web-runtime-presentation.mjs");
+assertIncludes("moui/README.mbt.md", "--web-presentation-manifest");
+assertIncludes("moui/README.mbt.md", "artifacts/conformance/");
 
 if (failed) {
   process.exit(1);

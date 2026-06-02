@@ -59,6 +59,12 @@ run_built_executable() {
 run sh scripts/check-local-deps.sh
 run node scripts/validate-guidance-consistency.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
+run node scripts/test-validate-conformance-capture-manifest.mjs
+run node scripts/test-validate-platform-evidence-manifest.mjs
+run node scripts/test-record-platform-evidence-manifest.mjs
+run node scripts/test-validate-web-runtime-handoff.mjs
+run node scripts/test-validate-web-runtime-handoff-manifest.mjs
+run node scripts/test-validate-web-runtime-presentation-manifest.mjs
 
 run moon check
 
@@ -79,6 +85,7 @@ run moon test examples/markdown_editor/app --target native
 
 run moon build examples/showcase/web_wasm --target wasm-gc
 run moon build examples/markdown_editor/web_wasm --target wasm-gc
+run node scripts/validate-web-runtime-handoff.mjs
 
 if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
   case "$(uname -s)" in
