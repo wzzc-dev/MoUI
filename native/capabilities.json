@@ -129,6 +129,7 @@
         "native smoke shader draws",
         "native smoke shader linear gradient validation",
         "native smoke filter layer count",
+        "native smoke filter finite validation",
         "native smoke render image command replay",
         "native smoke render image command count",
         "native smoke render image resource plan count",
@@ -218,6 +219,7 @@
         "native smoke shader draws",
         "native smoke shader resource plan count",
         "native smoke filter layer count",
+        "native smoke filter finite validation",
         "native smoke filter resource plan count"
       ],
       "non_smoke_rationale": ""

@@ -79,7 +79,7 @@ fn ColorFilter::from_handle(handle : ColorFilterHandle) -> ColorFilter? {
 
 ///|
 pub fn ColorFilter::matrix(values : Array[Float]) -> ColorFilter? {
-  if values.length() != 20 {
+  if values.length() != 20 || !skia_float_array_is_finite(values) {
     None
   } else {
     ColorFilter::from_handle(native_color_filter_matrix(values))
@@ -278,4 +278,15 @@ pub fn Shader::is_available(self : Shader) -> Bool {
 ///|
 fn skia_scalar_is_finite(value : Float) -> Bool {
   value == value && value - value == 0.0
+}
+
+///|
+fn skia_float_array_is_finite(values : Array[Float]) -> Bool {
+  let mut finite = true
+  for value in values {
+    if !skia_scalar_is_finite(value) {
+      finite = false
+    }
+  }
+  finite
 }

@@ -928,6 +928,23 @@ fn main {
   }
   println("native smoke filter resource plan count")
   println(filter_resource_plan.length())
+  let invalid_filter_scalar : Float = 0.0 / 0.0
+  let invalid_filter_matrix : Array[Float] = [
+    invalid_filter_scalar, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+  ]
+  if @native.ColorFilter::matrix(invalid_filter_matrix) is Some(_) ||
+    @native.ColorFilter::saturation(invalid_filter_scalar) is Some(_) ||
+    @native.ImageFilter::blur(invalid_filter_scalar, 1.0) is Some(_) ||
+    @native.MaskFilter::blur(invalid_filter_scalar) is Some(_) ||
+    @skia.ColorFilterDescriptor::matrix(invalid_filter_matrix) is Some(_) ||
+    @skia.ColorFilterDescriptor::saturation(invalid_filter_scalar) is Some(_) ||
+    @skia.ImageFilterDescriptor::blur(invalid_filter_scalar, 1.0) is Some(_) ||
+    @skia.MaskFilterDescriptor::blur(invalid_filter_scalar) is Some(_) {
+    fail_smoke("non-finite filter inputs should be rejected")
+  }
+  println("native smoke filter finite validation")
+  println(1)
 
   guard @native.Path::new() is Some(native_path) else {
     fail_smoke("failed to create native path")

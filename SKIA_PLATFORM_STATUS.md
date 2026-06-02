@@ -87,7 +87,7 @@ these facts recorded in logs:
   surface construction, predictable unsupported window/GPU surface targets,
   canvas state restore, canvas clipping, canvas color/paint fill replay,
   canvas rrect/path clip replay, canvas command replay, linear-gradient shader
-  validation,
+  validation, non-finite filter input rejection,
   canvas replay resource-category stats, render resource planning,
   GPU context
   resource planning, GPU context identity variation, GPU frame context validation,
@@ -128,7 +128,8 @@ these facts recorded in logs:
   variation, fallback match resource planning, fallback resolution cache-key
   variation, fallback resolution resource planning, native fallback resolution
   bridging, font fallback resource planning, canvas paint-shader fill replay,
-  linear-gradient shader validation, and shader/filter resource planning.
+  linear-gradient shader validation, non-finite filter validation, and
+  shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.
