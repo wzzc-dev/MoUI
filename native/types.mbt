@@ -318,6 +318,47 @@ pub fn SurfaceFrameReplayStats::is_complete(
 }
 
 ///|
+/// Aggregate counters across the native replay resource caches.
+pub(all) struct NativeReplayResourceStats {
+  cache_count : Int
+  resource_count : Int
+  byte_size : Int64
+  max_bytes : Int64
+  hits : Int
+  misses : Int
+  evictions : Int
+} derive(Debug, Eq)
+
+///|
+fn native_replay_resource_stats_empty() -> NativeReplayResourceStats {
+  {
+    cache_count: 0,
+    resource_count: 0,
+    byte_size: 0L,
+    max_bytes: 0L,
+    hits: 0,
+    misses: 0,
+    evictions: 0,
+  }
+}
+
+///|
+fn native_replay_resource_stats_add_cache(
+  total : NativeReplayResourceStats,
+  stats : @skia.ResourceCacheStats,
+) -> NativeReplayResourceStats {
+  {
+    cache_count: total.cache_count + 1,
+    resource_count: total.resource_count + stats.count,
+    byte_size: total.byte_size + stats.byte_size,
+    max_bytes: total.max_bytes + stats.max_bytes,
+    hits: total.hits + stats.hits,
+    misses: total.misses + stats.misses,
+    evictions: total.evictions + stats.evictions,
+  }
+}
+
+///|
 /// Native resource caches shared across one or more Canvas replay calls.
 pub(all) struct NativeReplayResources {
   image_cache : @skia.ResourceCache[@skia.RendererResourceKey, Image]
@@ -373,4 +414,44 @@ pub fn NativeReplayResources::new(
     ),
     mask_filter_cache: @skia.ResourceCache::new(max_bytes=mask_filter_max_bytes),
   }
+}
+
+///|
+pub fn NativeReplayResources::stats(
+  self : NativeReplayResources,
+) -> NativeReplayResourceStats {
+  let stats = native_replay_resource_stats_empty()
+  let stats = native_replay_resource_stats_add_cache(
+    stats,
+    self.image_cache.stats(),
+  )
+  let stats = native_replay_resource_stats_add_cache(
+    stats,
+    self.shader_cache.stats(),
+  )
+  let stats = native_replay_resource_stats_add_cache(
+    stats,
+    self.path_cache.stats(),
+  )
+  let stats = native_replay_resource_stats_add_cache(
+    stats,
+    self.text_run_cache.stats(),
+  )
+  let stats = native_replay_resource_stats_add_cache(
+    stats,
+    self.font_cache.stats(),
+  )
+  let stats = native_replay_resource_stats_add_cache(
+    stats,
+    self.typeface_cache.stats(),
+  )
+  let stats = native_replay_resource_stats_add_cache(
+    stats,
+    self.color_filter_cache.stats(),
+  )
+  let stats = native_replay_resource_stats_add_cache(
+    stats,
+    self.image_filter_cache.stats(),
+  )
+  native_replay_resource_stats_add_cache(stats, self.mask_filter_cache.stats())
 }

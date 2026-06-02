@@ -1309,8 +1309,18 @@ test "canvas replays render command lists" {
               let color_filter_cache_stats = replay_resources.color_filter_cache.stats()
               let image_filter_cache_stats = replay_resources.image_filter_cache.stats()
               let mask_filter_cache_stats = replay_resources.mask_filter_cache.stats()
+              let replay_resource_stats = replay_resources.stats()
               assert_true(cached_again_stats.is_complete())
               assert_eq(cached_again_stats.command_count, commands.length())
+              assert_eq(replay_resource_stats.cache_count, 9)
+              assert_eq(replay_resource_stats.resource_count, 10)
+              assert_eq(
+                replay_resource_stats.max_bytes,
+                1024L * 1024L + 8L * 1024L,
+              )
+              assert_eq(replay_resource_stats.misses, 10)
+              assert_eq(replay_resource_stats.hits, 16)
+              assert_eq(replay_resource_stats.evictions, 0)
               assert_eq(replay_resources.image_cache.length(), 1)
               assert_eq(image_cache_stats.misses, 1)
               assert_eq(image_cache_stats.hits, 3)
@@ -1362,6 +1372,8 @@ test "canvas replays render command lists" {
               assert_eq(frame_resources.text_run_cache.length(), 1)
               assert_eq(frame_resources.font_cache.length(), 1)
               assert_eq(frame_resources.typeface_cache.length(), 1)
+              assert_eq(frame_resources.stats().cache_count, 9)
+              assert_eq(frame_resources.stats().resource_count, 10)
             }
           }
           match @native.Surface::raster_n32_premul(@skia.ISize::new(32, 32)) {
@@ -1398,6 +1410,8 @@ test "canvas replays render command lists" {
                 surface_frame_stats.replay.command_count,
                 commands.length(),
               )
+              assert_eq(surface_resources.stats().cache_count, 9)
+              assert_eq(surface_resources.stats().resource_count, 10)
               assert_eq(surface_resources.image_cache.length(), 1)
               match
                 frame_surface.read_pixels(
