@@ -91,6 +91,13 @@ pub(all) struct CanvasReplayStats {
 } derive(Eq, @debug.Debug)
 pub fn CanvasReplayStats::empty() -> Self
 pub fn CanvasReplayStats::is_complete(Self) -> Bool
+pub fn CanvasReplayStats::status(Self) -> CanvasReplayStatus
+
+pub(all) enum CanvasReplayStatus {
+  CanvasReplayComplete
+  CanvasReplaySkippedCommands
+} derive(Eq, @debug.Debug)
+pub fn CanvasReplayStatus::is_complete(Self) -> Bool
 
 pub(all) struct Codec {
   // private fields
