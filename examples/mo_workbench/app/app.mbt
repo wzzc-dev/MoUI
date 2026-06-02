@@ -1660,6 +1660,13 @@ fn WorkbenchModel::scroll_main_to(
 }
 
 ///|
+fn WorkbenchModel::scroll_main_to_latest(
+  self : WorkbenchModel,
+) -> WorkbenchModel {
+  { ..self, main_scroll_offset_y: 1000000000.0 }
+}
+
+///|
 fn WorkbenchModel::toggle_command_details(
   self : WorkbenchModel,
   id : Int,
@@ -2003,7 +2010,7 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
       } else {
         local_agent_prompt_status(backend)
       },
-    }
+    }.scroll_main_to_latest()
   }
 }
 
@@ -2058,7 +2065,7 @@ fn WorkbenchModel::dispatch_steering(self : WorkbenchModel) -> WorkbenchModel {
       events,
       transport: self.transport.enqueue_many(commands),
       last_status: "Queued steering input for Pi RPC",
-    }
+    }.scroll_main_to_latest()
   }
 }
 
@@ -2113,7 +2120,7 @@ fn WorkbenchModel::dispatch_follow_up(self : WorkbenchModel) -> WorkbenchModel {
       events,
       transport: self.transport.enqueue_many(commands),
       last_status: "Queued follow-up input for Pi RPC",
-    }
+    }.scroll_main_to_latest()
   }
 }
 
@@ -2336,7 +2343,7 @@ fn WorkbenchModel::queue_agent_prompt_action(
       events,
       transport: self.transport.enqueue_many(commands),
       last_status: pi_status,
-    }
+    }.scroll_main_to_latest()
   } else {
     {
       ..self,
@@ -2344,7 +2351,7 @@ fn WorkbenchModel::queue_agent_prompt_action(
       events,
       transcript: self.transcript_with_fixture_reply(payload, backend),
       last_status: local_agent_prompt_status(backend),
-    }
+    }.scroll_main_to_latest()
   }
 }
 
@@ -2745,7 +2752,7 @@ fn WorkbenchModel::queue_command(
     commands,
     transport: self.transport.enqueue_many(transport_commands),
     last_status: "Command queued for Pi RPC bash",
-  }
+  }.scroll_main_to_latest()
 }
 
 ///|
@@ -2795,7 +2802,7 @@ fn WorkbenchModel::queue_focused_checks(
     commands,
     transport: self.transport.enqueue_many(transport_commands),
     last_status: "Focused checks queued for Pi RPC bash",
-  }
+  }.scroll_main_to_latest()
 }
 
 ///|

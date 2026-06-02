@@ -7,6 +7,7 @@ test "workbench dispatch queues prompt for selected session" {
   inspect(model.prompt, content="")
   inspect(model.composer_controls_expanded, content="false")
   inspect(model.last_status, content="Queued prompt for Pi JSONL RPC")
+  assert_true(model.main_scroll_offset_y > 1000000.0)
   inspect(model.pending_transport_count(), content="2")
   inspect(model.transcript.length(), content="1")
   inspect(model.transcript[0].role, content="user")
@@ -31,6 +32,22 @@ test "workbench dispatch queues prompt for selected session" {
     }
     _ => fail("expected queued user input")
   }
+}
+
+///|
+test "workbench keeps new conversation content pinned to latest message" {
+  let pi_model = model_with_overflowing_transcript()
+    .update(MainScrollTo(24.0))
+    .update(PromptChanged("Continue at the bottom"))
+    .update(DispatchPrompt)
+  assert_true(pi_model.main_scroll_offset_y > 1000000.0)
+  let fixture_model = model_with_overflowing_transcript()
+    .update(SwitchAgentBackend("fixture"))
+    .update(MainScrollTo(24.0))
+    .update(PromptChanged("Keep local reply visible"))
+    .update(DispatchPrompt)
+  assert_true(fixture_model.main_scroll_offset_y > 1000000.0)
+  inspect(fixture_model.transcript.length(), content="2")
 }
 
 ///|
@@ -4503,6 +4520,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "协调"))
   assert_false(has_text(commands, "实现"))
   assert_false(has_text(commands, "检查"))
+  assert_true(has_text(commands, "新对话"))
   assert_false(has_text(commands, "新会话"))
   assert_false(has_text(commands, "刷新"))
   assert_false(has_text(commands, "Pi 运行状态"))
@@ -4605,6 +4623,7 @@ test "workbench backend and session controls appear only in expanded composer op
   assert_false(has_text(collapsed, "后端"))
   assert_false(has_text(collapsed, "本地"))
   assert_false(has_text(collapsed, "Fixture"))
+  assert_true(has_text(collapsed, "新对话"))
   assert_false(has_text(collapsed, "新会话"))
   assert_false(has_text(collapsed, "刷新"))
   let expanded = WorkbenchModel::new()
@@ -4627,6 +4646,8 @@ test "workbench backend and session controls appear only in expanded composer op
     .update(ToggleComposerControls)
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
+  assert_false(has_text(fixture_expanded, "新对话"))
+  assert_false(has_text(fixture_expanded, "新会话"))
   assert_false(has_text(fixture_expanded, "本地演练"))
   assert_false(has_text(fixture_expanded, "真实 Agent 后端"))
 }
@@ -4636,7 +4657,8 @@ test "workbench default first screen stays within a quiet text budget" {
   let commands = WorkbenchModel::new()
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(draw_text_total(commands) <= 13)
+  assert_true(draw_text_total(commands) <= 14)
+  inspect(draw_text_count(commands, "新对话"), content="1")
   inspect(draw_text_count(commands, "当前会话"), content="1")
   inspect(draw_text_count(commands, "准备开始这个会话"), content="1")
   inspect(draw_text_count(commands, "给 Agent 一个任务"), content="1")

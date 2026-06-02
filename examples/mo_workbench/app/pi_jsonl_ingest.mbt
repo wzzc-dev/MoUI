@@ -2240,7 +2240,7 @@ fn WorkbenchModel::append_ingested_event(
 ) -> WorkbenchModel {
   let events = self.events.copy()
   events.push(event)
-  { ..self, events, last_status: status }
+  { ..self, events, last_status: status }.scroll_main_to_latest()
 }
 
 ///|

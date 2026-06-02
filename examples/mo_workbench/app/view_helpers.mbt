@@ -205,6 +205,7 @@ fn WorkbenchModel::app_sidebar(
 ) -> @core.View[WorkbenchMsg] {
   let rows : Array[@core.View[WorkbenchMsg]] = [
     self.sidebar_brand(layout, theme),
+    self.sidebar_new_session_button(layout, theme),
     self.sidebar_section_label("任务历史", layout, theme),
     self.pinned_threads(layout, theme),
   ]
@@ -272,6 +273,26 @@ fn WorkbenchModel::pinned_threads(
     )
   }
   column(rows, spacing=2.0, align=Stretch)
+}
+
+///|
+fn WorkbenchModel::sidebar_new_session_button(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  if self.active_agent_backend_capabilities().supports_new_session {
+    button(
+      "新对话",
+      on_click=NewSession,
+      variant=Outline,
+      theme~,
+      width=layout.sidebar_inner_width,
+      height=34.0,
+    )
+  } else {
+    blank_cell(width=layout.sidebar_inner_width, height=1.0)
+  }
 }
 
 ///|
