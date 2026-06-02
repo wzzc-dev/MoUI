@@ -3,6 +3,10 @@ test "skia renderer backend info reflects native availability" {
   let info = backend_info()
   assert_true(info.backend == @render.RendererBackendKind::SkiaRasterNative)
   assert_true(info.owns_surface)
+  assert_true(info.description.contains("SurfaceTargetDescriptor"))
+  assert_true(info.description.contains("finalization preflight"))
+  assert_true(info.description.contains("text fallback/shaping descriptor"))
+  assert_true(info.description.contains("flush-and-submit finalization"))
   if skia_available() {
     assert_true(info.status == @render.RendererCapabilityStatus::Ready)
     assert_true(info.can_render)

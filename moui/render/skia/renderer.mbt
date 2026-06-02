@@ -34,6 +34,81 @@ pub(all) struct SkiaPresentTarget {
 }
 
 ///|
+priv struct SkiaRasterSurfacePreflight {
+  physical_width : Int
+  physical_height : Int
+  target_ready : Bool
+  frame_ready : Bool
+  finalization_ready : Bool
+  submission_ready : Bool
+  resource_count : Int
+  cacheable_resource_count : Int
+  uncacheable_resource_count : Int
+  gpu_backed_resource_count : Int
+  surface_resource_count : Int
+  byte_size : Int64
+}
+
+///|
+fn SkiaRasterSurfacePreflight::summary(
+  self : SkiaRasterSurfacePreflight,
+) -> String {
+  let dimensions_ready = self.physical_width > 0 && self.physical_height > 0
+  let ready = dimensions_ready &&
+    self.target_ready &&
+    self.frame_ready &&
+    self.finalization_ready &&
+    self.submission_ready &&
+    self.resource_count ==
+    self.cacheable_resource_count + self.uncacheable_resource_count &&
+    self.surface_resource_count > 0 &&
+    self.gpu_backed_resource_count == 0 &&
+    self.byte_size > 0L
+  if ready {
+    "SurfaceTargetDescriptor finalization preflight ready"
+  } else {
+    "SurfaceTargetDescriptor finalization preflight pending"
+  }
+}
+
+///|
+priv struct SkiaTextDescriptorPreflight {
+  family_count : Int
+  fallback_ready : Bool
+  fallback_resource_count : Int
+  measurement_ready : Bool
+  measurement_resource_count : Int
+  shaping_ready : Bool
+  shaping_resource_count : Int
+  shaped_run_ready : Bool
+  shaped_run_resource_count : Int
+  glyph_run_ready : Bool
+  glyph_run_resource_count : Int
+}
+
+///|
+fn SkiaTextDescriptorPreflight::summary(
+  self : SkiaTextDescriptorPreflight,
+) -> String {
+  let ready = self.family_count > 0 &&
+    self.fallback_ready &&
+    self.fallback_resource_count > 0 &&
+    self.measurement_ready &&
+    self.measurement_resource_count >= self.fallback_resource_count &&
+    self.shaping_ready &&
+    self.shaping_resource_count >= self.fallback_resource_count &&
+    self.shaped_run_ready &&
+    self.shaped_run_resource_count >= self.shaping_resource_count &&
+    self.glyph_run_ready &&
+    self.glyph_run_resource_count >= self.shaped_run_resource_count
+  if ready {
+    "text fallback/shaping descriptor preflight ready"
+  } else {
+    "text fallback/shaping descriptor preflight pending"
+  }
+}
+
+///|
 pub(all) enum SkiaFontResolution {
   SystemFontMgr
   EmptyTypeface
@@ -90,6 +165,15 @@ pub fn skia_available() -> Bool {
 ///|
 pub fn backend_info() -> @render.RendererBackendInfo {
   let available = skia_available()
+  let surface_preflight = raster_surface_preflight(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=1.0, height=1.0),
+    ),
+  )
+  let text_preflight = skia_text_descriptor_preflight(
+    @core.FontSpec::new(size=12.0, weight=400),
+    "MoUI",
+  )
   @render.RendererBackendInfo::new(
     backend=@render.RendererBackendKind::SkiaRasterNative,
     status=if available {
@@ -100,7 +184,11 @@ pub fn backend_info() -> @render.RendererBackendInfo {
     can_render=available,
     can_resize=available,
     owns_surface=true,
-    description="Native Skia raster renderer using skia_mbt/native CPU surfaces and platform pixel presenters.",
+    description="Native Skia raster renderer using skia_mbt/native CPU surfaces, " +
+      surface_preflight.summary() +
+      ", " +
+      text_preflight.summary() +
+      ", flush-and-submit finalization, and platform pixel presenters.",
   )
 }
 
@@ -158,13 +246,192 @@ pub fn create_with_present_target(
 fn create_surface(
   metrics : @render.RendererSurfaceMetrics,
 ) -> @skia_native.Surface raise SkiaRendererError {
-  let width = skia_dim_to_int(metrics.physical_size.width)
-  let height = skia_dim_to_int(metrics.physical_size.height)
-  match
-    @skia_native.Surface::raster_n32_premul(@skia_mbt.ISize::new(width, height)) {
+  let target = skia_raster_surface_target(metrics)
+  match @skia_native.Surface::for_target(target) {
     Some(surface) => surface
     None => raise SkiaRendererError::SurfaceUnavailable
   }
+}
+
+///|
+fn skia_raster_surface_target(
+  metrics : @render.RendererSurfaceMetrics,
+) -> @skia_mbt.SurfaceTargetDescriptor {
+  @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(
+      skia_dim_to_int(metrics.physical_size.width),
+      skia_dim_to_int(metrics.physical_size.height),
+    ),
+  )
+}
+
+///|
+fn raster_surface_preflight(
+  metrics : @render.RendererSurfaceMetrics,
+) -> SkiaRasterSurfacePreflight {
+  let target = skia_raster_surface_target(metrics)
+  let command_list = @skia_mbt.RenderCommandList::for_target(target).clear(
+    @skia_mbt.Color::transparent(),
+  )
+  let frame = command_list.frame_descriptor(target)
+  let finalization = frame.finalization_descriptor()
+  let submission = frame.submission_descriptor()
+  let resource_plan = finalization.resource_plan
+  SkiaRasterSurfacePreflight::{
+    physical_width: target.dimensions().width,
+    physical_height: target.dimensions().height,
+    target_ready: !target.resource_key().is_empty(),
+    frame_ready: frame.is_ready(),
+    finalization_ready: finalization.is_ready(),
+    submission_ready: submission.is_ready(),
+    resource_count: resource_plan.length(),
+    cacheable_resource_count: resource_plan.cacheable_count,
+    uncacheable_resource_count: resource_plan.uncacheable_count,
+    gpu_backed_resource_count: resource_plan.gpu_backed_count,
+    surface_resource_count: resource_plan.count_kind(@skia_mbt.SurfaceResource),
+    byte_size: resource_plan.byte_size,
+  }
+}
+
+///|
+fn skia_text_descriptor_preflight(
+  font : @core.FontSpec,
+  text : String,
+) -> SkiaTextDescriptorPreflight {
+  let families = skia_preflight_family_candidates(font)
+  let primary_family = if families.is_empty() {
+    b"system-ui"
+  } else {
+    @utf8.encode(families[0][:], bom=false)
+  }
+  let fallback_families : Array[Bytes] = []
+  if families.length() > 1 {
+    for index in 1..<families.length() {
+      fallback_families.push(@utf8.encode(families[index][:], bom=false))
+    }
+  }
+  let style = @skia_mbt.FontStyleRequest::new(
+    weight=font.weight,
+    width=5,
+    slant=skia_font_slant(font.style),
+  )
+  let fallback = @skia_mbt.FontFallbackRequest::new(
+    families=@skia_mbt.FontFallbackChain::new(
+      primary_family~,
+      fallback_families~,
+    ),
+    character=skia_first_codepoint_or_zero(text),
+    style~,
+  )
+  let font_key = fallback
+    .font_descriptor(size=Float::from_double(font.size))
+    .resource_key()
+  let text_bytes = @utf8.encode(text[:], bom=false)
+  let run = @skia_mbt.TextRunDescriptor::new(
+    range=@skia_mbt.TextRange::new(0, text_bytes.length()),
+    fallback~,
+  )
+  let measurement = @skia_mbt.TextMeasurementDescriptor::new(
+    run~,
+    font_key~,
+    width=Float::from_double(font.size * 32.0),
+    shape=true,
+  )
+  let shaping = @skia_mbt.TextShapingDescriptor::new(
+    run~,
+    font_key~,
+    width=Float::from_double(font.size * 32.0),
+  )
+  let glyph_count = skia_preflight_glyph_count(text)
+  let shaped_run = shaping.shaped_run_descriptor(
+    glyph_count~,
+    cluster_count=glyph_count,
+    advance=@skia_mbt.Point::new(Float::from_double(font.size), 0.0),
+  )
+  let glyph_run = shaped_run.glyph_run_descriptor(
+    glyph_ids=skia_preflight_glyph_ids(glyph_count),
+    positions=skia_preflight_glyph_positions(glyph_count),
+    clusters=skia_preflight_glyph_clusters(glyph_count),
+  )
+  let fallback_plan = fallback.resource_plan(size=Float::from_double(font.size))
+  let measurement_plan = measurement.resource_plan(text_bytes)
+  let shaping_plan = shaping.resource_plan(text_bytes)
+  let shaped_run_plan = shaped_run.resource_plan(text_bytes)
+  let glyph_run_plan = glyph_run.resource_plan(text_bytes)
+  SkiaTextDescriptorPreflight::{
+    family_count: families.length(),
+    fallback_ready: !fallback.is_empty(),
+    fallback_resource_count: fallback_plan.length(),
+    measurement_ready: measurement.is_shaped(),
+    measurement_resource_count: measurement_plan.length(),
+    shaping_ready: !shaping.resource_key(text_bytes).is_empty(),
+    shaping_resource_count: shaping_plan.length(),
+    shaped_run_ready: shaped_run.is_valid(),
+    shaped_run_resource_count: shaped_run_plan.length(),
+    glyph_run_ready: glyph_run.is_valid(),
+    glyph_run_resource_count: glyph_run_plan.length(),
+  }
+}
+
+///|
+fn skia_preflight_family_candidates(font : @core.FontSpec) -> Array[String] {
+  let candidates : Array[String] = []
+  for family in font.families.families {
+    for candidate in skia_font_family_candidates(family) {
+      if !candidates.contains(candidate) {
+        candidates.push(candidate)
+      }
+    }
+  }
+  if candidates.is_empty() {
+    skia_font_family_candidates(@core.FontFamily::SystemUi)
+  } else {
+    candidates
+  }
+}
+
+///|
+fn skia_first_codepoint_or_zero(text : String) -> Int {
+  for ch in text {
+    return ch.to_int()
+  }
+  0
+}
+
+///|
+fn skia_preflight_glyph_count(text : String) -> Int {
+  let mut count = 0
+  for _ in text {
+    count = count + 1
+  }
+  Int::max(1, count)
+}
+
+///|
+fn skia_preflight_glyph_ids(count : Int) -> Array[Int] {
+  let ids : Array[Int] = []
+  for index in 0..<count {
+    ids.push(index + 1)
+  }
+  ids
+}
+
+///|
+fn skia_preflight_glyph_positions(count : Int) -> Array[@skia_mbt.Point] {
+  let positions : Array[@skia_mbt.Point] = []
+  for index in 0..<count {
+    positions.push(@skia_mbt.Point::new(Float::from_int(index), 0.0))
+  }
+  positions
+}
+
+///|
+fn skia_preflight_glyph_clusters(count : Int) -> Array[Int] {
+  let clusters : Array[Int] = []
+  for index in 0..<count {
+    clusters.push(index)
+  }
+  clusters
 }
 
 ///|
@@ -197,6 +464,9 @@ pub fn SkiaRasterRenderer::render(
         self.render_command(canvas, command, canvas_scopes)
       }
       canvas.restore_to_count(saved)
+      if !self.surface.flush_and_submit() {
+        raise SkiaRendererError::SurfaceUnavailable
+      }
       let frame = self.read_frame()
       self.last_frame = Some(frame)
       if (self.target.present)(frame) {
