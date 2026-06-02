@@ -248,6 +248,7 @@ if ($status.schema_version -ge 3) {
     "surface.target-factory-unsupported",
     "canvas.state",
     "canvas.clip",
+    "canvas.non-finite-direct-geometry-skipped",
     "canvas.command-replay",
     "canvas.replay-status-contract",
     "canvas.replay-deferred-present",
@@ -563,6 +564,7 @@ if ($status.schema_version -ge 3) {
     $requiredExpectedValues = @{
       "native smoke canvas clip device width" = "4"
       "native smoke canvas state restored" = "1"
+      "native smoke non-finite canvas direct geometry skipped" = "1"
       "native smoke canvas replay commands" = "29"
       "native smoke render frame replay commands" = "29"
       "native smoke render frame replay complete" = "1"
