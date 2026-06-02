@@ -354,6 +354,9 @@ if ($status.schema_version -ge 3) {
     "image.render-command-cache-resources",
     "image.render-command-cache-misses",
     "image.render-command-cache-hits",
+    "image.empty-descriptor-command-plan",
+    "image.empty-descriptor-replay-skipped",
+    "image.empty-descriptor-cache-misses",
     "codec.metadata",
     "codec.width",
     "codec.height",
@@ -673,6 +676,9 @@ if ($status.schema_version -ge 3) {
       "native smoke render image decode failure skipped" = "2"
       "native smoke render image decode failure cache resources" = "0"
       "native smoke render image decode failure cache misses" = "2"
+      "native smoke empty image descriptor command plan count" = "1"
+      "native smoke empty image descriptor replay skipped" = "2"
+      "native smoke empty image descriptor cache misses" = "0"
       "native smoke codec width" = "32"
       "native smoke codec height" = "32"
       "native smoke decoded bitmap width" = "32"

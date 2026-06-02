@@ -1825,27 +1825,30 @@ fn native_image_from_descriptor(
   descriptor : @skia.ImageDescriptor,
   resources : NativeReplayResources?,
 ) -> Image? {
-  match resources {
-    None => native_image_decode_descriptor(descriptor)
-    Some(resources) => {
-      let key = descriptor.resource_key()
-      match resources.image_cache.get(key) {
-        Some(image) => Some(image)
-        None =>
-          match native_image_decode_descriptor(descriptor) {
-            None => None
-            Some(image) => {
-              ignore(
-                resources.image_cache.insert(
-                  key,
-                  image,
-                  byte_size=descriptor.byte_size(),
-                ),
-              )
-              Some(image)
+  let key = descriptor.resource_key()
+  if key.is_empty() {
+    native_image_decode_descriptor(descriptor)
+  } else {
+    match resources {
+      None => native_image_decode_descriptor(descriptor)
+      Some(resources) =>
+        match resources.image_cache.get(key) {
+          Some(image) => Some(image)
+          None =>
+            match native_image_decode_descriptor(descriptor) {
+              None => None
+              Some(image) => {
+                ignore(
+                  resources.image_cache.insert(
+                    key,
+                    image,
+                    byte_size=descriptor.byte_size(),
+                  ),
+                )
+                Some(image)
+              }
             }
-          }
-      }
+        }
     }
   }
 }

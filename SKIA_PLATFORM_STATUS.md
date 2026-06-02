@@ -86,7 +86,7 @@ these facts recorded in logs:
   bitmap readback dimensions, surface descriptor reporting, target-based raster
   surface construction, predictable unsupported window/GPU surface targets,
   canvas state restore, canvas clipping, canvas color/paint fill replay,
-  undecodable image replay skip and cache-safety proof,
+  undecodable/empty image replay skip and cache-safety proof,
   canvas rrect/path clip replay, canvas command replay, linear-gradient shader
   validation, invalid shader/filter descriptor cache safety,
   invalid shader/filter replay skip and zero-cache-touch proof,

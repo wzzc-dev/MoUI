@@ -292,6 +292,33 @@ test "canvas skips undecodable image descriptors" {
           assert_eq(resources.image_cache.length(), 0)
           assert_eq(image_cache_stats.misses, 2)
           assert_eq(image_cache_stats.hits, 0)
+          let empty_image_descriptor = @skia.EncodedImage(
+            b"",
+            Some(@skia.PNG),
+            None,
+          )
+          assert_true(empty_image_descriptor.resource_key().is_empty())
+          assert_true(
+            !empty_image_descriptor.resource_descriptor().is_cacheable(),
+          )
+          let empty_image_commands = @skia.RenderCommandList::for_target(
+              replay_target,
+            )
+            .clear(@skia.Color::white())
+            .draw_image(empty_image_descriptor, @skia.Point::new(0, 0))
+          let empty_image_resources = @native.NativeReplayResources::new(
+            image_max_bytes=1024L,
+          )
+          let empty_image_stats = canvas.replay_with_resources(
+            empty_image_commands, empty_image_resources,
+          )
+          let empty_image_cache_stats = empty_image_resources.image_cache.stats()
+          assert_true(!empty_image_stats.is_complete())
+          assert_eq(empty_image_stats.replayed_count, 1)
+          assert_eq(empty_image_stats.skipped_count, 1)
+          assert_eq(empty_image_resources.image_cache.length(), 0)
+          assert_eq(empty_image_cache_stats.misses, 0)
+          assert_eq(empty_image_cache_stats.hits, 0)
         }
       }
   }
