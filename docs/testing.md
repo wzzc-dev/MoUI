@@ -294,6 +294,13 @@ and artifact evidence references. That is Skia binding dependency evidence; it
 does not replace MoUI's opt-in real-Skia renderer smoke or matching-host
 Showcase/Markdown Editor runtime evidence.
 
+The platform runtime evidence manifest uses schema version 2. Its observation
+set mirrors the local window fork's recorder fields, including native
+monitor/cursor evidence as `monitorCursor`. For native passed entries,
+`monitorCursor` must be `yes`; the Web browser-session path may keep it
+`pending` because CDP evidence does not prove native monitor/current-monitor or
+cursor probes.
+
 When collecting release evidence on a configured host, update or regenerate the
 platform runtime evidence manifest with that host's results and validate it:
 
@@ -317,6 +324,7 @@ node scripts/record-platform-evidence-manifest.mjs \
   --set consumerInput=yes \
   --set textInput=yes \
   --set rendererHandle=yes \
+  --set monitorCursor=yes \
   --set cleanShutdown=yes \
   --artifact artifacts/platform-evidence/windows/window-smoke.md \
   --artifact artifacts/platform-evidence/windows/showcase-run.log \
@@ -475,10 +483,12 @@ from release claims; do not use the static handoff artifact as a substitute for
 passed browser presentation evidence. The platform recorder can also consume a
 failed presentation manifest; it then marks the Web platform entry failed and
 records the negative observations so release notes can cite a structured reason.
-When the presentation manifest passes with all platform observations set to
-`yes`, `record-platform-evidence-manifest.mjs ... web
+When the presentation manifest passes with all browser-observable platform
+observations set to `yes`, `record-platform-evidence-manifest.mjs ... web
 --web-presentation-manifest ...` records the Web platform entry as passed for
-that browser session.
+that browser session. The Web entry may keep `monitorCursor` pending because
+browser CDP evidence does not prove native monitor/current-monitor or cursor
+probes.
 
 ## Release-Oriented Checklist
 

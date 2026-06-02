@@ -123,6 +123,7 @@ const observationKeys = [
   "consumerInput",
   "textInput",
   "rendererHandle",
+  "monitorCursor",
   "cleanShutdown",
 ];
 
@@ -133,6 +134,7 @@ const consumerObservationKeys = [
   "consumerInput",
   "textInput",
   "rendererHandle",
+  "monitorCursor",
   "cleanShutdown",
 ];
 
@@ -199,8 +201,8 @@ const assertContainsTokens = (values, tokens, label) => {
   }
 };
 
-if (manifest.schemaVersion !== 1) {
-  fail("schemaVersion must be 1");
+if (manifest.schemaVersion !== 2) {
+  fail("schemaVersion must be 2");
 }
 
 const mode = requireString(manifest, "mode");
@@ -315,8 +317,14 @@ entries.forEach((entry, index) => {
   }
 
   if (status === "passed") {
-    if (observedValues.some(value => value !== "yes")) {
-      fail(`${label}.observations must all be yes when status is passed`);
+    const requiredPassedObservationKeys = name === "web"
+      ? observationKeys.filter(key => key !== "monitorCursor")
+      : observationKeys;
+    const incompleteObservation = requiredPassedObservationKeys.find(
+      key => entry.observations[key] !== "yes",
+    );
+    if (incompleteObservation) {
+      fail(`${label}.observations.${incompleteObservation} must be yes when status is passed`);
     }
     if (consumerCommand === "pending") {
       fail(`${label}.consumerCommand must not be pending when status is passed`);

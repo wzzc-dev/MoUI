@@ -94,7 +94,10 @@ sh scripts/conformance-check.sh --platform-services
 matching-host evidence contract for Web, macOS, Windows, and Linux runtime
 claims. Use `node scripts/record-platform-evidence-manifest.mjs` on a matching
 host to fill a platform entry with passed or failed observations before a
-preview handoff.
+preview handoff. Native passed entries include the window fork's monitor/cursor
+probe as `monitorCursor=yes`; Web browser-session evidence may leave that field
+pending because CDP does not prove native monitor/current-monitor or cursor
+behavior.
 
 For release-oriented screenshot and benchmark handoffs, use
 `sh scripts/conformance-check.sh --golden` and

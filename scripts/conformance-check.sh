@@ -193,7 +193,7 @@ write_platform_evidence_manifest() {
   mkdir -p "$(dirname "$manifest_path")"
   cat > "$manifest_path" <<'EOF'
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "mode": "platform-runtime-evidence",
   "generatedBy": "scripts/conformance-check.sh --platform-services",
   "windowEvidenceSource": ".local_repos/window/scripts/record_moui_evidence.sh",
@@ -229,6 +229,7 @@ write_platform_evidence_manifest() {
         "consumerInput": "pending",
         "textInput": "pending",
         "rendererHandle": "pending",
+        "monitorCursor": "pending",
         "cleanShutdown": "pending"
       },
       "artifacts": [
@@ -269,6 +270,7 @@ write_platform_evidence_manifest() {
         "consumerInput": "pending",
         "textInput": "pending",
         "rendererHandle": "pending",
+        "monitorCursor": "pending",
         "cleanShutdown": "pending"
       },
       "artifacts": [
@@ -309,6 +311,7 @@ write_platform_evidence_manifest() {
         "consumerInput": "pending",
         "textInput": "pending",
         "rendererHandle": "pending",
+        "monitorCursor": "pending",
         "cleanShutdown": "pending"
       },
       "artifacts": [
@@ -349,6 +352,7 @@ write_platform_evidence_manifest() {
         "consumerInput": "pending",
         "textInput": "pending",
         "rendererHandle": "pending",
+        "monitorCursor": "pending",
         "cleanShutdown": "pending"
       },
       "artifacts": [
