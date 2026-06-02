@@ -372,6 +372,16 @@ pub fn ISize::new(Int, Int) -> Self
 pub fn ISize::to_size(Self) -> Size
 pub impl Default for ISize
 
+pub(all) enum ImageDescriptor {
+  EncodedImage(Bytes, EncodedImageFormat?, ISize?)
+} derive(Eq, @debug.Debug)
+pub fn ImageDescriptor::byte_size(Self) -> Int64
+pub fn ImageDescriptor::dimensions(Self) -> ISize?
+pub fn ImageDescriptor::encoded(Bytes, format? : EncodedImageFormat?, dimensions? : ISize?) -> Self?
+pub fn ImageDescriptor::encoded_bytes(Self) -> Bytes
+pub fn ImageDescriptor::resource_descriptor(Self, byte_size? : Int64) -> RendererResourceDescriptor
+pub fn ImageDescriptor::resource_key(Self) -> RendererResourceKey
+
 pub(all) enum ImageFilterDescriptor {
   BlurImageFilter(Float, Float)
 } derive(Eq, @debug.Debug)
@@ -792,10 +802,25 @@ pub impl Default for Rect
 pub(all) enum RenderCommand {
   SaveCanvas
   RestoreCanvas
+  SaveCanvasLayer(Rect?, Paint, ColorFilterDescriptor?, ImageFilterDescriptor?, MaskFilterDescriptor?)
   ClearCanvas(Color)
   ClipCanvasRect(Rect, ClipOp)
+  DrawCanvasPoint(Point, Paint)
+  DrawCanvasLine(Point, Point, Paint)
+  DrawCanvasPoints(Array[Point], PointMode, Paint)
   DrawCanvasRect(Rect, Paint)
+  DrawCanvasOval(Rect, Paint)
+  DrawCanvasCircle(Point, Float, Paint)
+  DrawCanvasArc(Rect, Float, Float, Bool, Paint)
+  DrawCanvasRoundRect(Rect, Float, Float, Paint)
+  DrawCanvasRRect(RRect, Paint)
+  DrawCanvasDRRect(RRect, RRect, Paint)
+  DrawCanvasRectShader(Rect, ShaderDescriptor, Paint)
+  DrawCanvasRoundRectShader(Rect, Float, Float, ShaderDescriptor, Paint)
   DrawCanvasPath(Path, Paint)
+  DrawCanvasPathShader(Path, ShaderDescriptor, Paint)
+  DrawCanvasImage(ImageDescriptor, Point)
+  DrawCanvasImageRect(ImageDescriptor, Rect, Rect, Paint, SamplingOptions)
   DrawCanvasTextUtf8(Bytes, Point, Paint)
   DrawCanvasTextRunUtf8(Bytes, TextRunDescriptor, RendererResourceKey, Point, Paint)
   DrawCanvasShapedGlyphRunUtf8(Bytes, ShapedGlyphRunDescriptor, Point, Paint)
@@ -805,8 +830,22 @@ pub(all) enum RenderCommand {
 pub fn RenderCommand::clear(Color) -> Self
 pub fn RenderCommand::clip_rect(Rect, op? : ClipOp) -> Self
 pub fn RenderCommand::declare_resource(RendererResourceDescriptor) -> Self
+pub fn RenderCommand::draw_arc(Rect, Float, Float, Bool, paint? : Paint) -> Self
+pub fn RenderCommand::draw_circle(Point, Float, paint? : Paint) -> Self
+pub fn RenderCommand::draw_drrect(RRect, RRect, paint? : Paint) -> Self
+pub fn RenderCommand::draw_image(ImageDescriptor, Point) -> Self
+pub fn RenderCommand::draw_image_rect(ImageDescriptor, Rect, Rect, paint? : Paint, sampling? : SamplingOptions) -> Self
+pub fn RenderCommand::draw_line(Point, Point, paint? : Paint) -> Self
+pub fn RenderCommand::draw_oval(Rect, paint? : Paint) -> Self
 pub fn RenderCommand::draw_path(Path, paint? : Paint) -> Self
+pub fn RenderCommand::draw_path_shader(Path, ShaderDescriptor, paint? : Paint) -> Self
+pub fn RenderCommand::draw_point(Point, paint? : Paint) -> Self
+pub fn RenderCommand::draw_points(Array[Point], paint? : Paint, mode? : PointMode) -> Self
 pub fn RenderCommand::draw_rect(Rect, paint? : Paint) -> Self
+pub fn RenderCommand::draw_rect_shader(Rect, ShaderDescriptor, paint? : Paint) -> Self
+pub fn RenderCommand::draw_round_rect(Rect, Float, Float, paint? : Paint) -> Self
+pub fn RenderCommand::draw_round_rect_shader(Rect, Float, Float, ShaderDescriptor, paint? : Paint) -> Self
+pub fn RenderCommand::draw_rrect(RRect, paint? : Paint) -> Self
 pub fn RenderCommand::draw_shaped_glyph_run_utf8(Bytes, ShapedGlyphRunDescriptor, Point, paint? : Paint) -> Self
 pub fn RenderCommand::draw_text_run_utf8(Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self
 pub fn RenderCommand::draw_text_utf8(Bytes, Point, paint? : Paint) -> Self
@@ -819,6 +858,7 @@ pub fn RenderCommand::is_state(Self) -> Bool
 pub fn RenderCommand::is_text(Self) -> Bool
 pub fn RenderCommand::resource_descriptor(Self) -> RendererResourceDescriptor?
 pub fn RenderCommand::resource_descriptors(Self) -> Array[RendererResourceDescriptor]
+pub fn RenderCommand::save_layer(bounds? : Rect?, paint? : Paint, color_filter? : ColorFilterDescriptor?, image_filter? : ImageFilterDescriptor?, mask_filter? : MaskFilterDescriptor?) -> Self
 pub fn RenderCommand::text_run_resource_key(Self) -> RendererResourceKey?
 
 pub(all) struct RenderCommandList {
@@ -830,8 +870,22 @@ pub fn RenderCommandList::clear(Self, Color) -> Self
 pub fn RenderCommandList::clip_rect(Self, Rect, op? : ClipOp) -> Self
 pub fn RenderCommandList::declare_resource(Self, RendererResourceDescriptor) -> Self
 pub fn RenderCommandList::declare_resources(Self, Array[RendererResourceDescriptor]) -> Self
+pub fn RenderCommandList::draw_arc(Self, Rect, Float, Float, Bool, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_circle(Self, Point, Float, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_drrect(Self, RRect, RRect, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_image(Self, ImageDescriptor, Point) -> Self
+pub fn RenderCommandList::draw_image_rect(Self, ImageDescriptor, Rect, Rect, paint? : Paint, sampling? : SamplingOptions) -> Self
+pub fn RenderCommandList::draw_line(Self, Point, Point, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_oval(Self, Rect, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_path(Self, Path, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_path_shader(Self, Path, ShaderDescriptor, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_point(Self, Point, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_points(Self, Array[Point], paint? : Paint, mode? : PointMode) -> Self
 pub fn RenderCommandList::draw_rect(Self, Rect, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_rect_shader(Self, Rect, ShaderDescriptor, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_round_rect(Self, Rect, Float, Float, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_round_rect_shader(Self, Rect, Float, Float, ShaderDescriptor, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_rrect(Self, RRect, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_shaped_glyph_run_utf8(Self, Bytes, ShapedGlyphRunDescriptor, Point, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_text_run_utf8(Self, Bytes, Point, descriptor? : TextRunDescriptor?, font_key? : RendererResourceKey, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_text_utf8(Self, Bytes, Point, paint? : Paint) -> Self
@@ -848,6 +902,7 @@ pub fn RenderCommandList::resource_descriptors(Self) -> Array[RendererResourceDe
 pub fn RenderCommandList::resource_plan(Self) -> RendererResourcePlan
 pub fn RenderCommandList::restore(Self) -> Self
 pub fn RenderCommandList::save(Self) -> Self
+pub fn RenderCommandList::save_layer(Self, bounds? : Rect?, paint? : Paint, color_filter? : ColorFilterDescriptor?, image_filter? : ImageFilterDescriptor?, mask_filter? : MaskFilterDescriptor?) -> Self
 pub fn RenderCommandList::stats(Self) -> RenderCommandStats
 pub fn RenderCommandList::text_run_resource_keys(Self) -> Array[RendererResourceKey]
 pub fn RenderCommandList::touched_bounds(Self) -> Rect?

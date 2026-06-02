@@ -123,9 +123,144 @@
       "marker": "native smoke canvas replay commands"
     },
     {
+      "id": "canvas.frame-replay",
+      "area": "Canvas",
+      "marker": "native smoke render frame replay commands"
+    },
+    {
+      "id": "canvas.frame-replay-complete",
+      "area": "Canvas",
+      "marker": "native smoke render frame replay complete"
+    },
+    {
+      "id": "canvas.frame-replay-rejected-skipped",
+      "area": "Canvas",
+      "marker": "native smoke render frame replay rejected skipped"
+    },
+    {
       "id": "pipeline.shaped-glyph-run-command",
       "area": "Pipeline",
       "marker": "native smoke render shaped glyph run command replay"
+    },
+    {
+      "id": "pipeline.shader-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render shader cache resources"
+    },
+    {
+      "id": "pipeline.shader-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render shader cache misses"
+    },
+    {
+      "id": "pipeline.shader-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render shader cache hits"
+    },
+    {
+      "id": "pipeline.path-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render path cache resources"
+    },
+    {
+      "id": "pipeline.path-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render path cache misses"
+    },
+    {
+      "id": "pipeline.path-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render path cache hits"
+    },
+    {
+      "id": "pipeline.text-run-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render text run cache resources"
+    },
+    {
+      "id": "pipeline.text-run-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render text run cache misses"
+    },
+    {
+      "id": "pipeline.text-run-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render text run cache hits"
+    },
+    {
+      "id": "pipeline.font-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render font cache resources"
+    },
+    {
+      "id": "pipeline.font-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render font cache misses"
+    },
+    {
+      "id": "pipeline.font-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render font cache hits"
+    },
+    {
+      "id": "pipeline.typeface-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render typeface cache resources"
+    },
+    {
+      "id": "pipeline.typeface-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render typeface cache misses"
+    },
+    {
+      "id": "pipeline.typeface-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render typeface cache hits"
+    },
+    {
+      "id": "pipeline.color-filter-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render color filter cache resources"
+    },
+    {
+      "id": "pipeline.color-filter-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render color filter cache misses"
+    },
+    {
+      "id": "pipeline.color-filter-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render color filter cache hits"
+    },
+    {
+      "id": "pipeline.image-filter-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render image filter cache resources"
+    },
+    {
+      "id": "pipeline.image-filter-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render image filter cache misses"
+    },
+    {
+      "id": "pipeline.image-filter-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render image filter cache hits"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render mask filter cache resources"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render mask filter cache misses"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render mask filter cache hits"
     },
     {
       "id": "pipeline.resource-plan",
@@ -478,6 +613,36 @@
       "marker": "native smoke decoded image height"
     },
     {
+      "id": "image.render-command-replay",
+      "area": "Image",
+      "marker": "native smoke render image command replay"
+    },
+    {
+      "id": "image.render-command-count",
+      "area": "Image",
+      "marker": "native smoke render image command count"
+    },
+    {
+      "id": "image.render-command-resource-plan",
+      "area": "Image",
+      "marker": "native smoke render image resource plan count"
+    },
+    {
+      "id": "image.render-command-cache-resources",
+      "area": "Image",
+      "marker": "native smoke render image cache resources"
+    },
+    {
+      "id": "image.render-command-cache-misses",
+      "area": "Image",
+      "marker": "native smoke render image cache misses"
+    },
+    {
+      "id": "image.render-command-cache-hits",
+      "area": "Image",
+      "marker": "native smoke render image cache hits"
+    },
+    {
       "id": "codec.metadata",
       "area": "Codec",
       "marker": "native smoke codec encoded format PNG"
@@ -734,7 +899,22 @@
     {
       "id": "canvas.command-replay",
       "marker": "native smoke canvas replay commands",
-      "value": "9"
+      "value": "23"
+    },
+    {
+      "id": "canvas.frame-replay",
+      "marker": "native smoke render frame replay commands",
+      "value": "23"
+    },
+    {
+      "id": "canvas.frame-replay-complete",
+      "marker": "native smoke render frame replay complete",
+      "value": "1"
+    },
+    {
+      "id": "canvas.frame-replay-rejected-skipped",
+      "marker": "native smoke render frame replay rejected skipped",
+      "value": "20"
     },
     {
       "id": "pipeline.shaped-glyph-run-command",
@@ -742,14 +922,134 @@
       "value": "1"
     },
     {
+      "id": "pipeline.shader-cache-resources",
+      "marker": "native smoke render shader cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.shader-cache-misses",
+      "marker": "native smoke render shader cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.shader-cache-hits",
+      "marker": "native smoke render shader cache hits",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.path-cache-resources",
+      "marker": "native smoke render path cache resources",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.path-cache-misses",
+      "marker": "native smoke render path cache misses",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.path-cache-hits",
+      "marker": "native smoke render path cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.text-run-cache-resources",
+      "marker": "native smoke render text run cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.text-run-cache-misses",
+      "marker": "native smoke render text run cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.text-run-cache-hits",
+      "marker": "native smoke render text run cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.font-cache-resources",
+      "marker": "native smoke render font cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.font-cache-misses",
+      "marker": "native smoke render font cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.font-cache-hits",
+      "marker": "native smoke render font cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.typeface-cache-resources",
+      "marker": "native smoke render typeface cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.typeface-cache-misses",
+      "marker": "native smoke render typeface cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.typeface-cache-hits",
+      "marker": "native smoke render typeface cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.color-filter-cache-resources",
+      "marker": "native smoke render color filter cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.color-filter-cache-misses",
+      "marker": "native smoke render color filter cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.color-filter-cache-hits",
+      "marker": "native smoke render color filter cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.image-filter-cache-resources",
+      "marker": "native smoke render image filter cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.image-filter-cache-misses",
+      "marker": "native smoke render image filter cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.image-filter-cache-hits",
+      "marker": "native smoke render image filter cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-resources",
+      "marker": "native smoke render mask filter cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-misses",
+      "marker": "native smoke render mask filter cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-hits",
+      "marker": "native smoke render mask filter cache hits",
+      "value": "0"
+    },
+    {
       "id": "pipeline.resource-plan",
       "marker": "native smoke render resource plan count",
-      "value": "12"
+      "value": "15"
     },
     {
       "id": "pipeline.frame-resource-plan",
       "marker": "native smoke render frame resource plan count",
-      "value": "12"
+      "value": "15"
     },
     {
       "id": "pipeline.frame-validation",
@@ -759,7 +1059,7 @@
     {
       "id": "pipeline.frame-cacheable-subplan",
       "marker": "native smoke render frame cacheable subplan count",
-      "value": "12"
+      "value": "15"
     },
     {
       "id": "pipeline.frame-uncacheable-subplan",
@@ -869,22 +1169,22 @@
     {
       "id": "pipeline.frame-cache-resources",
       "marker": "native smoke render frame cache resources",
-      "value": "12"
+      "value": "15"
     },
     {
       "id": "pipeline.resource-cache",
       "marker": "native smoke render resource cache inserts",
-      "value": "12"
+      "value": "15"
     },
     {
       "id": "pipeline.resource-cache-preflight-missing",
       "marker": "native smoke render resource cache preflight missing count",
-      "value": "12"
+      "value": "15"
     },
     {
       "id": "pipeline.resource-cache-preflight-cached",
       "marker": "native smoke render resource cache preflight cached count",
-      "value": "12"
+      "value": "15"
     },
     {
       "id": "pipeline.resource-cache-plan-coverage",
@@ -1070,6 +1370,36 @@
       "id": "image.decode-height",
       "marker": "native smoke decoded image height",
       "value": "32"
+    },
+    {
+      "id": "image.render-command-replay",
+      "marker": "native smoke render image command replay",
+      "value": "1"
+    },
+    {
+      "id": "image.render-command-count",
+      "marker": "native smoke render image command count",
+      "value": "3"
+    },
+    {
+      "id": "image.render-command-resource-plan",
+      "marker": "native smoke render image resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "image.render-command-cache-resources",
+      "marker": "native smoke render image cache resources",
+      "value": "1"
+    },
+    {
+      "id": "image.render-command-cache-misses",
+      "marker": "native smoke render image cache misses",
+      "value": "1"
+    },
+    {
+      "id": "image.render-command-cache-hits",
+      "marker": "native smoke render image cache hits",
+      "value": "1"
     },
     {
       "id": "codec.width",

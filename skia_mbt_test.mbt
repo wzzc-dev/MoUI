@@ -1015,6 +1015,62 @@ test "filter descriptors produce typed resource keys" {
 }
 
 ///|
+test "image descriptors produce stable resource keys" {
+  assert_true(@skia_mbt.ImageDescriptor::encoded(b"") is None)
+  guard @skia_mbt.ImageDescriptor::encoded(
+      b"encoded-image-bytes",
+      format=Some(@skia_mbt.PNG),
+      dimensions=Some(@skia_mbt.ISize::new(2, 3)),
+    )
+    is Some(image) else {
+    fail("encoded image descriptor should be accepted")
+  }
+  guard @skia_mbt.ImageDescriptor::encoded(
+      b"encoded-image-bytes",
+      format=Some(@skia_mbt.PNG),
+      dimensions=Some(@skia_mbt.ISize::new(2, 3)),
+    )
+    is Some(same_image) else {
+    fail("same encoded image descriptor should be accepted")
+  }
+  guard @skia_mbt.ImageDescriptor::encoded(
+      b"encoded-image-bytes",
+      format=Some(@skia_mbt.JPEG),
+      dimensions=Some(@skia_mbt.ISize::new(2, 3)),
+    )
+    is Some(other_format) else {
+    fail("encoded image descriptor with another format should be accepted")
+  }
+  guard @skia_mbt.ImageDescriptor::encoded(
+      b"encoded-image-bytes",
+      format=Some(@skia_mbt.PNG),
+      dimensions=Some(@skia_mbt.ISize::new(3, 2)),
+    )
+    is Some(other_dimensions) else {
+    fail("encoded image descriptor with another size should be accepted")
+  }
+  guard @skia_mbt.ImageDescriptor::encoded(
+      b"encoded-image-bytes",
+      dimensions=Some(@skia_mbt.ISize::new(0, 3)),
+    )
+    is Some(unknown_dimensions) else {
+    fail("encoded image descriptor should normalize empty dimensions")
+  }
+  assert_true(image.resource_key() == same_image.resource_key())
+  assert_true(image.resource_key() != other_format.resource_key())
+  assert_true(image.resource_key() != other_dimensions.resource_key())
+  assert_true(unknown_dimensions.dimensions() is None)
+  assert_eq(image.byte_size(), 19L)
+  assert_eq(image.encoded_bytes(), b"encoded-image-bytes")
+  let descriptor = image.resource_descriptor()
+  assert_true(descriptor.key.kind == @skia_mbt.ImageResource)
+  assert_true(descriptor.key == image.resource_key())
+  assert_true(descriptor.is_cacheable())
+  assert_eq(descriptor.byte_size, 19L)
+  assert_eq(image.resource_descriptor(byte_size=64L).byte_size, 64L)
+}
+
+///|
 test "render pass descriptor clips clear and present boundaries" {
   let surface = @skia_mbt.SurfaceDescriptor::window_n32_premul(
     @skia_mbt.ISize::new(20, 10),
@@ -1191,6 +1247,99 @@ test "render command list tracks stats balance and touched bounds" {
   let unbalanced = @skia_mbt.RenderCommandList::for_target(target).restore()
   assert_true(!unbalanced.is_state_balanced())
   assert_eq(unbalanced.stats().unbalanced_restore_count, 1)
+}
+
+///|
+test "render command list records rounded geometry draw commands" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(32, 32),
+  )
+  let rrect = @skia_mbt.RRect::from_rect_xy(
+    @skia_mbt.Rect::from_xywh(12, 3, 8, 5),
+    2.0,
+    2.0,
+  )
+  let commands = @skia_mbt.RenderCommandList::for_target(target)
+    .draw_oval(@skia_mbt.Rect::from_xywh(2, 2, 6, 4))
+    .draw_circle(@skia_mbt.Point::new(12, 12), 3.0)
+    .draw_round_rect(@skia_mbt.Rect::from_xywh(4, 16, 9, 5), 2.0, 2.0)
+    .draw_rrect(rrect)
+    .draw_drrect(
+      @skia_mbt.RRect::from_rect_xy(
+        @skia_mbt.Rect::from_xywh(18, 18, 10, 10),
+        3.0,
+        3.0,
+      ),
+      @skia_mbt.RRect::from_rect_xy(
+        @skia_mbt.Rect::from_xywh(20, 20, 4, 4),
+        1.0,
+        1.0,
+      ),
+    )
+  let stats = commands.stats()
+  assert_eq(commands.length(), 5)
+  assert_eq(stats.draw_count, 5)
+  assert_eq(stats.text_count, 0)
+  assert_true(stats.is_state_balanced())
+  assert_true(
+    commands.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(2, 2, 26, 26)),
+  )
+}
+
+///|
+test "render command list records point line and arc draw commands" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(32, 32),
+  )
+  let stroke = @skia_mbt.Paint::new(
+    color=@skia_mbt.Color::green(),
+    style=@skia_mbt.Stroke,
+    stroke_width=2.0,
+  )
+  let commands = @skia_mbt.RenderCommandList::for_target(target)
+    .draw_point(@skia_mbt.Point::new(2, 2), paint=stroke)
+    .draw_line(
+      @skia_mbt.Point::new(6, 2),
+      @skia_mbt.Point::new(12, 2),
+      paint=stroke,
+    )
+    .draw_points(
+      [
+        @skia_mbt.Point::new(4, 12),
+        @skia_mbt.Point::new(10, 12),
+        @skia_mbt.Point::new(16, 12),
+      ],
+      paint=stroke,
+      mode=@skia_mbt.Polygon,
+    )
+    .draw_arc(
+      @skia_mbt.Rect::from_xywh(18, 18, 6, 6),
+      0.0,
+      180.0,
+      false,
+      paint=stroke,
+    )
+  let stats = commands.stats()
+  assert_eq(commands.length(), 4)
+  assert_eq(stats.draw_count, 4)
+  assert_eq(stats.text_count, 0)
+  assert_true(stats.is_state_balanced())
+  assert_true(
+    commands.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(1, 1, 24, 24)),
+  )
+
+  let line_pairs = @skia_mbt.RenderCommandList::for_target(target).draw_points(
+    [
+      @skia_mbt.Point::new(2, 2),
+      @skia_mbt.Point::new(6, 2),
+      @skia_mbt.Point::new(30, 30),
+    ],
+    paint=stroke,
+    mode=@skia_mbt.Lines,
+  )
+  assert_true(
+    line_pairs.touched_bounds() == Some(@skia_mbt.Rect::new(1, 1, 7, 3)),
+  )
 }
 
 ///|
@@ -1414,6 +1563,10 @@ test "render command list includes declared resource descriptors" {
   guard @skia_mbt.ColorFilterDescriptor::saturation(0.8) is Some(color_filter) else {
     fail("color filter descriptor should be accepted")
   }
+  guard @skia_mbt.ColorFilterDescriptor::brightness(1.1)
+    is Some(layer_color_filter) else {
+    fail("layer color filter descriptor should be accepted")
+  }
   guard @skia_mbt.ImageFilterDescriptor::blur(1.0, 2.0) is Some(image_filter) else {
     fail("image filter descriptor should be accepted")
   }
@@ -1422,8 +1575,22 @@ test "render command list includes declared resource descriptors" {
   }
   let shader_descriptor = shader.resource_descriptor()
   let color_filter_descriptor = color_filter.resource_descriptor()
+  let layer_color_filter_descriptor = layer_color_filter.resource_descriptor()
   let image_filter_descriptor = image_filter.resource_descriptor()
   let mask_filter_descriptor = mask_filter.resource_descriptor()
+  guard @skia_mbt.ImageDescriptor::encoded(
+      b"render-command-image",
+      format=Some(@skia_mbt.PNG),
+      dimensions=Some(@skia_mbt.ISize::new(2, 3)),
+    )
+    is Some(image) else {
+    fail("encoded image descriptor should be accepted")
+  }
+  let image_descriptor = image.resource_descriptor()
+  let shader_path = @skia_mbt.Path::new().add_rect(
+    @skia_mbt.Rect::from_xywh(6, 9, 3, 2),
+  )
+  let shader_path_descriptor = shader_path.resource_descriptor()
   let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
     @skia_mbt.ISize::new(16, 16),
   )
@@ -1433,43 +1600,124 @@ test "render command list includes declared resource descriptors" {
       color_filter_descriptor, image_filter_descriptor, mask_filter_descriptor, shader_descriptor,
     ])
     .declare_resource(@skia_mbt.RendererResourceDescriptor::shader(b""))
+    .save_layer(
+      bounds=Some(@skia_mbt.Rect::from_xywh(0, 0, 16, 16)),
+      color_filter=Some(layer_color_filter),
+      image_filter=Some(image_filter),
+      mask_filter=Some(mask_filter),
+    )
+    .draw_rect_shader(
+      @skia_mbt.Rect::from_xywh(8, 2, 4, 4),
+      shader,
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::white()),
+    )
+    .draw_round_rect_shader(
+      @skia_mbt.Rect::from_xywh(10, 8, 3, 3),
+      1.0,
+      1.0,
+      shader,
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::white()),
+    )
+    .draw_path_shader(
+      shader_path,
+      shader,
+      paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::white()),
+    )
+    .draw_image(image, @skia_mbt.Point::new(13, 1))
+    .draw_image_rect(
+      image,
+      @skia_mbt.Rect::from_xywh(0, 0, 2, 3),
+      @skia_mbt.Rect::from_xywh(11, 12, 3, 2),
+      sampling=@skia_mbt.SamplingOptions::linear(),
+    )
     .draw_rect(
       @skia_mbt.Rect::from_xywh(2, 2, 4, 4),
       paint=@skia_mbt.Paint::new(color=@skia_mbt.Color::green()),
     )
+    .restore()
 
   assert_true(
     @skia_mbt.RenderCommand::declare_resource(shader_descriptor).is_resource_declaration(),
   )
-  assert_eq(commands.length(), 6)
-  let stats = commands.stats()
-  assert_eq(stats.command_count, 6)
-  assert_eq(stats.draw_count, 1)
-  assert_eq(stats.state_count, 0)
-  assert_eq(stats.text_count, 0)
   assert_true(
-    commands.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(2, 2, 4, 4)),
+    @skia_mbt.RenderCommand::draw_rect_shader(
+      @skia_mbt.Rect::from_xywh(8, 2, 4, 4),
+      shader,
+    ).resource_descriptor() ==
+    Some(shader_descriptor),
+  )
+  assert_true(
+    @skia_mbt.RenderCommand::draw_round_rect_shader(
+      @skia_mbt.Rect::from_xywh(10, 8, 3, 3),
+      1.0,
+      1.0,
+      shader,
+    ).resource_descriptor() ==
+    Some(shader_descriptor),
+  )
+  let path_shader_command = @skia_mbt.RenderCommand::draw_path_shader(
+    shader_path, shader,
+  )
+  let path_shader_descriptors = path_shader_command.resource_descriptors()
+  assert_true(path_shader_command.resource_descriptor() is None)
+  assert_eq(path_shader_descriptors.length(), 2)
+  assert_true(path_shader_descriptors[0].key == shader_path_descriptor.key)
+  assert_true(path_shader_descriptors[1].key == shader_descriptor.key)
+  assert_true(
+    @skia_mbt.RenderCommand::draw_image(image, @skia_mbt.Point::new(13, 1)).resource_descriptor() ==
+    Some(image_descriptor),
+  )
+  assert_true(
+    @skia_mbt.RenderCommand::draw_image_rect(
+      image,
+      @skia_mbt.Rect::from_xywh(0, 0, 2, 3),
+      @skia_mbt.Rect::from_xywh(11, 12, 3, 2),
+    ).resource_descriptor() ==
+    Some(image_descriptor),
+  )
+  assert_eq(commands.length(), 13)
+  let stats = commands.stats()
+  assert_eq(stats.command_count, 13)
+  assert_eq(stats.draw_count, 6)
+  assert_eq(stats.state_count, 2)
+  assert_eq(stats.text_count, 0)
+  assert_eq(stats.max_save_depth, 1)
+  assert_true(stats.is_state_balanced())
+  assert_true(
+    commands.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(2, 1, 13, 13)),
   )
   let descriptors = commands.resource_descriptors()
-  assert_eq(descriptors.length(), 5)
+  assert_eq(descriptors.length(), 8)
   assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
   assert_true(descriptors[0].key == target.resource_key())
   assert_true(descriptors[0].key != target.surface.resource_key())
   let plan = commands.resource_plan()
-  assert_eq(plan.length(), 5)
-  assert_eq(plan.cacheable_count, 5)
+  assert_eq(plan.length(), 8)
+  assert_eq(plan.cacheable_count, 8)
   assert_eq(plan.uncacheable_count, 0)
   assert_eq(plan.gpu_backed_count, 0)
   let mut shader_seen = false
+  let mut shader_path_seen = false
+  let mut image_seen = false
   let mut color_filter_seen = false
+  let mut layer_color_filter_seen = false
   let mut image_filter_seen = false
   let mut mask_filter_seen = false
   for descriptor in descriptors {
     if descriptor.key == shader_descriptor.key {
       shader_seen = true
     }
+    if descriptor.key == shader_path_descriptor.key {
+      shader_path_seen = true
+    }
+    if descriptor.key == image_descriptor.key {
+      image_seen = true
+    }
     if descriptor.key == color_filter_descriptor.key {
       color_filter_seen = true
+    }
+    if descriptor.key == layer_color_filter_descriptor.key {
+      layer_color_filter_seen = true
     }
     if descriptor.key == image_filter_descriptor.key {
       image_filter_seen = true
@@ -1479,7 +1727,10 @@ test "render command list includes declared resource descriptors" {
     }
   }
   assert_true(shader_seen)
+  assert_true(shader_path_seen)
+  assert_true(image_seen)
   assert_true(color_filter_seen)
+  assert_true(layer_color_filter_seen)
   assert_true(image_filter_seen)
   assert_true(mask_filter_seen)
 }

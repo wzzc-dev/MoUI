@@ -1068,18 +1068,114 @@ fn main {
   let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
     replay_size,
   )
+  let replay_rrect = @skia.RRect::from_rect_xy(
+    @skia.Rect::from_xywh(1, 6, 3, 3),
+    1.0,
+    1.0,
+  )
+  let replay_command_shader = @skia.ShaderDescriptor::color(
+    @skia.Color::green(),
+  )
+  let replay_shader_path = @skia.Path::new().add_rect(
+    @skia.Rect::from_xywh(7, 2, 2, 2),
+  )
+  guard @skia.ColorFilterDescriptor::brightness(1.1)
+    is Some(replay_layer_color_filter) else {
+    fail_smoke("failed to create replay layer color filter descriptor")
+  }
   let replay_commands = @skia.RenderCommandList::for_target(
       replay_target,
     )
     .declare_resources(replay_resource_descriptors)
     .clear(@skia.Color::white())
-    .draw_rect(
-      @skia.Rect::from_xywh(1, 1, 4, 4),
-      paint=@skia.Paint::new(color=@skia.Color::red()),
+    .save_layer(
+      bounds=Some(@skia.Rect::from_xywh(0, 0, 12, 12)),
+      color_filter=Some(replay_layer_color_filter),
+      image_filter=Some(image_filter_descriptor),
+      mask_filter=Some(mask_filter_descriptor),
+    )
+    .draw_point(
+      @skia.Point::new(11, 1),
+      paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=1.0),
+    )
+    .draw_line(
+      @skia.Point::new(1, 11),
+      @skia.Point::new(5, 11),
+      paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=1.0),
+    )
+    .draw_points(
+      [
+        @skia.Point::new(6, 11),
+        @skia.Point::new(8, 11),
+        @skia.Point::new(10, 11),
+      ],
+      paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=1.0),
+      mode=@skia.Polygon,
+    )
+    .draw_oval(
+      @skia.Rect::from_xywh(6, 1, 4, 3),
+      paint=@skia.Paint::new(color=@skia.Color::green()),
+    )
+    .draw_circle(
+      @skia.Point::new(9, 8),
+      2.0,
+      paint=@skia.Paint::new(color=@skia.Color::blue()),
+    )
+    .draw_arc(
+      @skia.Rect::from_xywh(7, 7, 3, 3),
+      0.0,
+      180.0,
+      false,
+      paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=1.0),
+    )
+    .draw_rect_shader(
+      @skia.Rect::from_xywh(4, 4, 2, 2),
+      replay_command_shader,
+      paint=@skia.Paint::new(color=@skia.Color::white()),
+    )
+    .draw_round_rect_shader(
+      @skia.Rect::from_xywh(1, 9, 3, 2),
+      1.0,
+      1.0,
+      replay_command_shader,
+      paint=@skia.Paint::new(color=@skia.Color::white()),
+    )
+    .draw_round_rect(
+      @skia.Rect::from_xywh(1, 6, 4, 3),
+      1.0,
+      1.0,
+      paint=@skia.Paint::new(color=@skia.Color::cyan()),
+    )
+    .draw_rrect(
+      replay_rrect,
+      paint=@skia.Paint::new(color=@skia.Color::magenta()),
+    )
+    .draw_drrect(
+      @skia.RRect::from_rect_xy(
+        @skia.Rect::from_xywh(6, 6, 5, 5),
+        2.0,
+        2.0,
+      ),
+      @skia.RRect::from_rect_xy(
+        @skia.Rect::from_xywh(8, 8, 1, 1),
+        0.5,
+        0.5,
+      ),
+      paint=@skia.Paint::new(color=@skia.Color::yellow()),
     )
     .draw_path(
       @skia.Path::new().add_rect(@skia.Rect::from_xywh(6, 1, 4, 4)),
       paint=@skia.Paint::new(color=@skia.Color::blue()),
+    )
+    .draw_path_shader(
+      replay_shader_path,
+      replay_command_shader,
+      paint=@skia.Paint::new(color=@skia.Color::white()),
+    )
+    .restore()
+    .draw_rect(
+      @skia.Rect::from_xywh(1, 1, 4, 4),
+      paint=@skia.Paint::new(color=@skia.Color::red()),
     )
     .draw_text_run_utf8(
       b"hello",
@@ -1252,19 +1348,25 @@ fn main {
     ranged_text_resource.byte_size != 4L {
     fail_smoke("native text run resource key was not scoped to byte range")
   }
-  if replay_plan.length() != 12 ||
-    replay_plan.cacheable_count != 12 ||
+  if replay_plan.length() != 15 ||
+    replay_plan.cacheable_count != 15 ||
     replay_plan.uncacheable_count != 0 ||
     replay_plan.gpu_backed_count != 0 ||
     replay_plan.byte_size <= 0L ||
+    !replay_plan.contains_key(replay_command_shader.resource_key()) ||
+    !replay_plan.contains_key(replay_shader_path.resource_key()) ||
+    !replay_plan.contains_key(replay_layer_color_filter.resource_key()) ||
     !replay_plan.contains_key(replay_shaped_glyph_run.resource_key(b"hello")) {
     fail_smoke("native render resource plan did not match command list")
   }
   let replay_frame = replay_commands.frame_descriptor(replay_target)
   if !replay_frame.is_ready() ||
     replay_frame.validation_status() != @skia.FrameReady ||
-    replay_frame.resource_plan.length() != 12 ||
+    replay_frame.resource_plan.length() != 15 ||
     !replay_frame.resource_plan.contains_key(replay_target.resource_key()) ||
+    !replay_frame.resource_plan.contains_key(replay_command_shader.resource_key()) ||
+    !replay_frame.resource_plan.contains_key(replay_shader_path.resource_key()) ||
+    !replay_frame.resource_plan.contains_key(replay_layer_color_filter.resource_key()) ||
     !replay_frame.resource_plan.contains_key(
       replay_shaped_glyph_run.resource_key(b"hello"),
     ) ||
@@ -1276,9 +1378,9 @@ fn main {
     ) {
     fail_smoke("native render frame descriptor did not match target resource plan")
   }
-  let replay_unbalanced_frame = @skia.RenderCommandList::for_target(
+  let replay_unbalanced_frame = replay_commands.save().frame_descriptor(
     replay_target,
-  ).save().frame_descriptor(replay_target)
+  )
   if replay_unbalanced_frame.validation_status() != @skia.FrameUnbalancedState ||
     replay_unbalanced_frame.is_ready() {
     fail_smoke("native render frame validation did not report unbalanced state")
@@ -1347,13 +1449,63 @@ fn main {
     !lru_cache.contains(lru_path.key) {
     fail_smoke("native resource cache LRU budget behavior did not match expectations")
   }
-  let replay_stats = replay_canvas.replay(
+  let replay_native_resources = @native.NativeReplayResources::new(
+    shader_max_bytes=1024L,
+    path_max_bytes=1024L,
+    text_run_max_bytes=1024L,
+    font_max_bytes=1024L,
+    typeface_max_bytes=1024L,
+    color_filter_max_bytes=1024L,
+    image_filter_max_bytes=1024L,
+    mask_filter_max_bytes=1024L,
+  )
+  let replay_stats = replay_canvas.replay_with_resources(
     replay_commands,
+    replay_native_resources,
     font=Some(replay_font),
   )
+  let replay_shader_cache_stats = replay_native_resources.shader_cache.stats()
+  let replay_path_cache_stats = replay_native_resources.path_cache.stats()
+  let replay_text_run_cache_stats = replay_native_resources.text_run_cache
+    .stats()
+  let replay_font_cache_stats = replay_native_resources.font_cache.stats()
+  let replay_typeface_cache_stats = replay_native_resources.typeface_cache
+    .stats()
+  let replay_color_filter_cache_stats = replay_native_resources
+    .color_filter_cache
+    .stats()
+  let replay_image_filter_cache_stats = replay_native_resources
+    .image_filter_cache
+    .stats()
+  let replay_mask_filter_cache_stats = replay_native_resources.mask_filter_cache
+    .stats()
   if replay_stats.command_count != replay_commands.length() ||
-    replay_stats.draw_count != 4 ||
+    replay_stats.draw_count != 16 ||
     replay_stats.text_count != 2 ||
+    replay_native_resources.shader_cache.length() != 1 ||
+    replay_shader_cache_stats.misses != 1 ||
+    replay_shader_cache_stats.hits != 2 ||
+    replay_native_resources.path_cache.length() != 2 ||
+    replay_path_cache_stats.misses != 2 ||
+    replay_path_cache_stats.hits != 0 ||
+    replay_native_resources.text_run_cache.length() != 1 ||
+    replay_text_run_cache_stats.misses != 1 ||
+    replay_text_run_cache_stats.hits != 0 ||
+    replay_native_resources.font_cache.length() != 1 ||
+    replay_font_cache_stats.misses != 1 ||
+    replay_font_cache_stats.hits != 0 ||
+    replay_native_resources.typeface_cache.length() != 1 ||
+    replay_typeface_cache_stats.misses != 1 ||
+    replay_typeface_cache_stats.hits != 0 ||
+    replay_native_resources.color_filter_cache.length() != 1 ||
+    replay_color_filter_cache_stats.misses != 1 ||
+    replay_color_filter_cache_stats.hits != 0 ||
+    replay_native_resources.image_filter_cache.length() != 1 ||
+    replay_image_filter_cache_stats.misses != 1 ||
+    replay_image_filter_cache_stats.hits != 0 ||
+    replay_native_resources.mask_filter_cache.length() != 1 ||
+    replay_mask_filter_cache_stats.misses != 1 ||
+    replay_mask_filter_cache_stats.hits != 0 ||
     !replay_stats.is_complete() {
     fail_smoke("native canvas replay stats did not match command list")
   }
@@ -1362,10 +1514,119 @@ fn main {
     fail_smoke("failed to read replay smoke pixels")
   }
   assert_pixel(replay_pixmap, @skia.IPoint::new(0, 0), 0xff, 0x00, 0x00, 0xff)
+  guard @native.Surface::raster_n32_premul(replay_size)
+    is Some(replay_frame_surface) else {
+    fail_smoke("failed to create replay frame smoke surface")
+  }
+  guard replay_frame_surface.canvas() is Some(replay_frame_canvas) else {
+    fail_smoke("failed to create replay frame smoke canvas")
+  }
+  let replay_frame_resources = @native.NativeReplayResources::new(
+    shader_max_bytes=1024L,
+    path_max_bytes=1024L,
+    text_run_max_bytes=1024L,
+    font_max_bytes=1024L,
+    typeface_max_bytes=1024L,
+    color_filter_max_bytes=1024L,
+    image_filter_max_bytes=1024L,
+    mask_filter_max_bytes=1024L,
+  )
+  let replay_frame_stats = replay_frame_canvas.replay_frame_with_resources(
+    replay_frame,
+    replay_frame_resources,
+    font=Some(replay_font),
+  )
+  let replay_frame_rejected_stats = replay_frame_canvas.replay_frame(
+    replay_unbalanced_frame,
+    font=Some(replay_font),
+  )
+  if replay_frame_stats.command_count != replay_commands.length() ||
+    !replay_frame_stats.is_complete() ||
+    replay_frame_resources.shader_cache.length() != 1 ||
+    replay_frame_resources.path_cache.length() != 2 ||
+    replay_frame_resources.text_run_cache.length() != 1 ||
+    replay_frame_resources.font_cache.length() != 1 ||
+    replay_frame_resources.typeface_cache.length() != 1 ||
+    replay_frame_resources.color_filter_cache.length() != 1 ||
+    replay_frame_resources.image_filter_cache.length() != 1 ||
+    replay_frame_resources.mask_filter_cache.length() != 1 ||
+    replay_frame_rejected_stats.replayed_count != 0 ||
+    replay_frame_rejected_stats.skipped_count == 0 ||
+    replay_frame_rejected_stats.is_complete() {
+    fail_smoke("native render frame replay contract did not hold")
+  }
+  guard replay_frame_surface.read_pixels(
+      bounds=@skia.IRect::from_xywh(1, 1, 1, 1),
+    )
+    is Some(replay_frame_pixmap) else {
+    fail_smoke("failed to read replay frame smoke pixels")
+  }
+  assert_pixel(
+    replay_frame_pixmap,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0x00,
+    0x00,
+    0xff,
+  )
   println("native smoke canvas replay commands")
   println(replay_stats.command_count)
+  println("native smoke render frame replay commands")
+  println(replay_frame_stats.command_count)
+  println("native smoke render frame replay complete")
+  println(if replay_frame_stats.is_complete() { 1 } else { 0 })
+  println("native smoke render frame replay rejected skipped")
+  println(replay_frame_rejected_stats.skipped_count)
   println("native smoke render shaped glyph run command replay")
   println(1)
+  println("native smoke render shader cache resources")
+  println(replay_native_resources.shader_cache.length())
+  println("native smoke render shader cache misses")
+  println(replay_shader_cache_stats.misses)
+  println("native smoke render shader cache hits")
+  println(replay_shader_cache_stats.hits)
+  println("native smoke render path cache resources")
+  println(replay_native_resources.path_cache.length())
+  println("native smoke render path cache misses")
+  println(replay_path_cache_stats.misses)
+  println("native smoke render path cache hits")
+  println(replay_path_cache_stats.hits)
+  println("native smoke render text run cache resources")
+  println(replay_native_resources.text_run_cache.length())
+  println("native smoke render text run cache misses")
+  println(replay_text_run_cache_stats.misses)
+  println("native smoke render text run cache hits")
+  println(replay_text_run_cache_stats.hits)
+  println("native smoke render font cache resources")
+  println(replay_native_resources.font_cache.length())
+  println("native smoke render font cache misses")
+  println(replay_font_cache_stats.misses)
+  println("native smoke render font cache hits")
+  println(replay_font_cache_stats.hits)
+  println("native smoke render typeface cache resources")
+  println(replay_native_resources.typeface_cache.length())
+  println("native smoke render typeface cache misses")
+  println(replay_typeface_cache_stats.misses)
+  println("native smoke render typeface cache hits")
+  println(replay_typeface_cache_stats.hits)
+  println("native smoke render color filter cache resources")
+  println(replay_native_resources.color_filter_cache.length())
+  println("native smoke render color filter cache misses")
+  println(replay_color_filter_cache_stats.misses)
+  println("native smoke render color filter cache hits")
+  println(replay_color_filter_cache_stats.hits)
+  println("native smoke render image filter cache resources")
+  println(replay_native_resources.image_filter_cache.length())
+  println("native smoke render image filter cache misses")
+  println(replay_image_filter_cache_stats.misses)
+  println("native smoke render image filter cache hits")
+  println(replay_image_filter_cache_stats.hits)
+  println("native smoke render mask filter cache resources")
+  println(replay_native_resources.mask_filter_cache.length())
+  println("native smoke render mask filter cache misses")
+  println(replay_mask_filter_cache_stats.misses)
+  println("native smoke render mask filter cache hits")
+  println(replay_mask_filter_cache_stats.hits)
   println("native smoke render resource plan count")
   println(replay_plan.length())
   println("native smoke text run resource plan count")
@@ -1510,6 +1771,91 @@ fn main {
   println(decoded_pixmap.width())
   println("native smoke decoded bitmap height")
   println(decoded_pixmap.height())
+
+  guard @skia.ImageDescriptor::encoded(
+      encoded,
+      format=Some(@skia.PNG),
+      dimensions=Some(size),
+    )
+    is Some(render_image_descriptor) else {
+    fail_smoke("failed to create render image descriptor")
+  }
+  let render_image_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia.ISize::new(8, 4),
+  )
+  let render_image_commands = @skia.RenderCommandList::for_target(
+      render_image_target,
+    )
+    .clear(@skia.Color::white())
+    .draw_image(render_image_descriptor, @skia.Point::new(-4, -4))
+    .draw_image_rect(
+      render_image_descriptor,
+      @skia.Rect::from_xywh(4, 4, 4, 4),
+      @skia.Rect::from_xywh(4, 0, 4, 4),
+      sampling=@skia.SamplingOptions::new(),
+    )
+  let render_image_plan = render_image_commands.resource_plan()
+  if render_image_plan.length() != 2 ||
+    render_image_plan.count_kind(@skia.SurfaceResource) != 1 ||
+    render_image_plan.count_kind(@skia.ImageResource) != 1 ||
+    !render_image_plan.contains_key(render_image_descriptor.resource_key()) {
+    fail_smoke("native render image command resource plan is invalid")
+  }
+  guard @native.Surface::raster_n32_premul(@skia.ISize::new(8, 4))
+    is Some(render_image_surface) else {
+    fail_smoke("failed to create render image replay surface")
+  }
+  guard render_image_surface.canvas() is Some(render_image_canvas) else {
+    fail_smoke("failed to borrow render image replay canvas")
+  }
+  let render_image_cache : @skia.ResourceCache[
+    @skia.RendererResourceKey,
+    @native.Image,
+  ] = @skia.ResourceCache::new(max_bytes=encoded.length().to_int64() * 2L)
+  let render_image_stats = render_image_canvas.replay_with_image_cache(
+    render_image_commands,
+    render_image_cache,
+  )
+  let render_image_cache_stats = render_image_cache.stats()
+  if render_image_stats.command_count != render_image_commands.length() ||
+    render_image_stats.draw_count != 2 ||
+    !render_image_stats.is_complete() ||
+    render_image_cache.length() != 1 ||
+    render_image_cache_stats.misses != 1 ||
+    render_image_cache_stats.hits != 1 {
+    fail_smoke("native render image command replay stats did not match")
+  }
+  guard render_image_surface.read_pixels() is Some(render_image_pixmap) else {
+    fail_smoke("failed to read render image replay pixels")
+  }
+  assert_pixel(
+    render_image_pixmap,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0x00,
+    0x00,
+    0xff,
+  )
+  assert_pixel(
+    render_image_pixmap,
+    @skia.IPoint::new(4, 0),
+    0xff,
+    0x00,
+    0x00,
+    0xff,
+  )
+  println("native smoke render image command replay")
+  println(1)
+  println("native smoke render image command count")
+  println(render_image_stats.command_count)
+  println("native smoke render image resource plan count")
+  println(render_image_plan.length())
+  println("native smoke render image cache resources")
+  println(render_image_cache.length())
+  println("native smoke render image cache misses")
+  println(render_image_cache_stats.misses)
+  println("native smoke render image cache hits")
+  println(render_image_cache_stats.hits)
 
   guard @native.Font::default(size=10.0) is Some(font) else {
     fail_smoke("failed to create default native font")
