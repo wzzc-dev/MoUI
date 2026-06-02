@@ -140,28 +140,47 @@ pub fn ShaderDescriptor::radial_gradient(
 }
 
 ///|
-fn ShaderDescriptor::resource_id(self : ShaderDescriptor) -> Bytes {
+pub fn ShaderDescriptor::is_valid(self : ShaderDescriptor) -> Bool {
   match self {
-    ColorShader(color) =>
-      b"skia_mbt:shader:v1" +
-      shader_filter_resource_bytes(b"color") +
-      shader_filter_color_id(color)
-    LinearGradientShader(start, end, start_color, end_color, tile_mode) =>
-      b"skia_mbt:shader:v1" +
-      shader_filter_resource_bytes(b"linear-gradient") +
-      shader_filter_point_id(start) +
-      shader_filter_point_id(end) +
-      shader_filter_color_id(start_color) +
-      shader_filter_color_id(end_color) +
-      tile_mode.shader_filter_id()
-    RadialGradientShader(center, radius, inner_color, outer_color, tile_mode) =>
-      b"skia_mbt:shader:v1" +
-      shader_filter_resource_bytes(b"radial-gradient") +
-      shader_filter_point_id(center) +
-      shader_filter_float_id(radius) +
-      shader_filter_color_id(inner_color) +
-      shader_filter_color_id(outer_color) +
-      tile_mode.shader_filter_id()
+    ColorShader(_) => true
+    LinearGradientShader(start, end, _, _, _) =>
+      shader_filter_point_is_finite(start) &&
+      shader_filter_point_is_finite(end) &&
+      shader_filter_points_are_distinct(start, end)
+    RadialGradientShader(center, radius, _, _, _) =>
+      shader_filter_point_is_finite(center) &&
+      shader_filter_scalar_is_finite(radius) &&
+      radius > 0.0
+  }
+}
+
+///|
+fn ShaderDescriptor::resource_id(self : ShaderDescriptor) -> Bytes {
+  if !self.is_valid() {
+    b""
+  } else {
+    match self {
+      ColorShader(color) =>
+        b"skia_mbt:shader:v1" +
+        shader_filter_resource_bytes(b"color") +
+        shader_filter_color_id(color)
+      LinearGradientShader(start, end, start_color, end_color, tile_mode) =>
+        b"skia_mbt:shader:v1" +
+        shader_filter_resource_bytes(b"linear-gradient") +
+        shader_filter_point_id(start) +
+        shader_filter_point_id(end) +
+        shader_filter_color_id(start_color) +
+        shader_filter_color_id(end_color) +
+        tile_mode.shader_filter_id()
+      RadialGradientShader(center, radius, inner_color, outer_color, tile_mode) =>
+        b"skia_mbt:shader:v1" +
+        shader_filter_resource_bytes(b"radial-gradient") +
+        shader_filter_point_id(center) +
+        shader_filter_float_id(radius) +
+        shader_filter_color_id(inner_color) +
+        shader_filter_color_id(outer_color) +
+        tile_mode.shader_filter_id()
+    }
   }
 }
 
@@ -231,24 +250,39 @@ pub fn ColorFilterDescriptor::contrast(
 }
 
 ///|
-fn ColorFilterDescriptor::resource_id(self : ColorFilterDescriptor) -> Bytes {
+pub fn ColorFilterDescriptor::is_valid(self : ColorFilterDescriptor) -> Bool {
   match self {
     ColorMatrixFilter(values) =>
-      b"skia_mbt:color-filter:v1" +
-      shader_filter_resource_bytes(b"matrix") +
-      shader_filter_float_array_id(values)
-    SaturationFilter(amount) =>
-      b"skia_mbt:color-filter:v1" +
-      shader_filter_resource_bytes(b"saturation") +
-      shader_filter_float_id(amount)
-    BrightnessFilter(amount) =>
-      b"skia_mbt:color-filter:v1" +
-      shader_filter_resource_bytes(b"brightness") +
-      shader_filter_float_id(amount)
-    ContrastFilter(amount) =>
-      b"skia_mbt:color-filter:v1" +
-      shader_filter_resource_bytes(b"contrast") +
-      shader_filter_float_id(amount)
+      values.length() == 20 && shader_filter_float_array_is_finite(values)
+    SaturationFilter(amount)
+    | BrightnessFilter(amount)
+    | ContrastFilter(amount) => shader_filter_scalar_is_finite(amount)
+  }
+}
+
+///|
+fn ColorFilterDescriptor::resource_id(self : ColorFilterDescriptor) -> Bytes {
+  if !self.is_valid() {
+    b""
+  } else {
+    match self {
+      ColorMatrixFilter(values) =>
+        b"skia_mbt:color-filter:v1" +
+        shader_filter_resource_bytes(b"matrix") +
+        shader_filter_float_array_id(values)
+      SaturationFilter(amount) =>
+        b"skia_mbt:color-filter:v1" +
+        shader_filter_resource_bytes(b"saturation") +
+        shader_filter_float_id(amount)
+      BrightnessFilter(amount) =>
+        b"skia_mbt:color-filter:v1" +
+        shader_filter_resource_bytes(b"brightness") +
+        shader_filter_float_id(amount)
+      ContrastFilter(amount) =>
+        b"skia_mbt:color-filter:v1" +
+        shader_filter_resource_bytes(b"contrast") +
+        shader_filter_float_id(amount)
+    }
   }
 }
 
@@ -289,13 +323,28 @@ pub fn ImageFilterDescriptor::blur(
 }
 
 ///|
-fn ImageFilterDescriptor::resource_id(self : ImageFilterDescriptor) -> Bytes {
+pub fn ImageFilterDescriptor::is_valid(self : ImageFilterDescriptor) -> Bool {
   match self {
     BlurImageFilter(sigma_x, sigma_y) =>
-      b"skia_mbt:image-filter:v1" +
-      shader_filter_resource_bytes(b"blur") +
-      shader_filter_float_id(sigma_x) +
-      shader_filter_float_id(sigma_y)
+      shader_filter_scalar_is_finite(sigma_x) &&
+      shader_filter_scalar_is_finite(sigma_y) &&
+      sigma_x > 0.0 &&
+      sigma_y > 0.0
+  }
+}
+
+///|
+fn ImageFilterDescriptor::resource_id(self : ImageFilterDescriptor) -> Bytes {
+  if !self.is_valid() {
+    b""
+  } else {
+    match self {
+      BlurImageFilter(sigma_x, sigma_y) =>
+        b"skia_mbt:image-filter:v1" +
+        shader_filter_resource_bytes(b"blur") +
+        shader_filter_float_id(sigma_x) +
+        shader_filter_float_id(sigma_y)
+    }
   }
 }
 
@@ -330,12 +379,24 @@ pub fn MaskFilterDescriptor::blur(sigma : Float) -> MaskFilterDescriptor? {
 }
 
 ///|
-fn MaskFilterDescriptor::resource_id(self : MaskFilterDescriptor) -> Bytes {
+pub fn MaskFilterDescriptor::is_valid(self : MaskFilterDescriptor) -> Bool {
   match self {
     BlurMaskFilter(sigma) =>
-      b"skia_mbt:mask-filter:v1" +
-      shader_filter_resource_bytes(b"blur") +
-      shader_filter_float_id(sigma)
+      shader_filter_scalar_is_finite(sigma) && sigma > 0.0
+  }
+}
+
+///|
+fn MaskFilterDescriptor::resource_id(self : MaskFilterDescriptor) -> Bytes {
+  if !self.is_valid() {
+    b""
+  } else {
+    match self {
+      BlurMaskFilter(sigma) =>
+        b"skia_mbt:mask-filter:v1" +
+        shader_filter_resource_bytes(b"blur") +
+        shader_filter_float_id(sigma)
+    }
   }
 }
 

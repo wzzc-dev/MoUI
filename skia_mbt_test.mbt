@@ -930,6 +930,7 @@ test "resource cache inserts renderer resource plans" {
 test "shader descriptors produce stable resource keys" {
   let color = @skia_mbt.ShaderDescriptor::color(@skia_mbt.Color::red())
   let same_color = @skia_mbt.ShaderDescriptor::color(@skia_mbt.Color::red())
+  assert_true(color.is_valid())
   assert_true(color.resource_key() == same_color.resource_key())
   let color_descriptor = color.resource_descriptor()
   assert_true(color_descriptor.key.kind == @skia_mbt.ShaderResource)
@@ -946,6 +947,7 @@ test "shader descriptors produce stable resource keys" {
     is Some(linear) else {
     fail("finite linear gradient descriptor should be accepted")
   }
+  assert_true(linear.is_valid())
   guard @skia_mbt.ShaderDescriptor::linear_gradient(
       @skia_mbt.Point::new(0.0, 0.0),
       @skia_mbt.Point::new(12.0, 6.0),
@@ -965,6 +967,16 @@ test "shader descriptors produce stable resource keys" {
     )
     is None,
   )
+  let invalid_linear = @skia_mbt.LinearGradientShader(
+    @skia_mbt.Point::new(1.0, 1.0),
+    @skia_mbt.Point::new(1.0, 1.0),
+    @skia_mbt.Color::red(),
+    @skia_mbt.Color::blue(),
+    @skia_mbt.Clamp,
+  )
+  assert_true(!invalid_linear.is_valid())
+  assert_true(invalid_linear.resource_key().is_empty())
+  assert_true(!invalid_linear.resource_descriptor().is_cacheable())
 
   guard @skia_mbt.ShaderDescriptor::radial_gradient(
       @skia_mbt.Point::new(4.0, 5.0),
@@ -984,6 +996,15 @@ test "shader descriptors produce stable resource keys" {
     )
     is None,
   )
+  let invalid_radial = @skia_mbt.RadialGradientShader(
+    @skia_mbt.Point::new(4.0, 5.0),
+    0.0,
+    @skia_mbt.Color::cyan(),
+    @skia_mbt.Color::magenta(),
+    @skia_mbt.Clamp,
+  )
+  assert_true(!invalid_radial.is_valid())
+  assert_true(!invalid_radial.resource_descriptor().is_cacheable())
 
   let plan = @skia_mbt.RendererResourcePlan::new([
     color.resource_descriptor(),
@@ -1005,9 +1026,11 @@ test "filter descriptors produce typed resource keys" {
   guard @skia_mbt.ColorFilterDescriptor::matrix(matrix_values) is Some(matrix) else {
     fail("20-value color matrix descriptor should be accepted")
   }
+  assert_true(matrix.is_valid())
   guard @skia_mbt.ColorFilterDescriptor::saturation(0.8) is Some(saturation) else {
     fail("finite saturation descriptor should be accepted")
   }
+  assert_true(saturation.is_valid())
   guard @skia_mbt.ColorFilterDescriptor::brightness(1.2) is Some(brightness) else {
     fail("finite brightness descriptor should be accepted")
   }
@@ -1027,19 +1050,37 @@ test "filter descriptors produce typed resource keys" {
   assert_true(@skia_mbt.ColorFilterDescriptor::saturation(not_finite) is None)
   assert_true(@skia_mbt.ColorFilterDescriptor::brightness(infinite) is None)
   assert_true(@skia_mbt.ColorFilterDescriptor::contrast(not_finite) is None)
+  let invalid_matrix = @skia_mbt.ColorMatrixFilter([
+    not_finite, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+  ])
+  assert_true(!invalid_matrix.is_valid())
+  assert_true(invalid_matrix.resource_key().is_empty())
+  assert_true(!invalid_matrix.resource_descriptor().is_cacheable())
+  let invalid_saturation = @skia_mbt.SaturationFilter(not_finite)
+  assert_true(!invalid_saturation.is_valid())
+  assert_true(!invalid_saturation.resource_descriptor().is_cacheable())
   assert_true(matrix.resource_key() != saturation.resource_key())
   assert_true(brightness.resource_key() != contrast.resource_key())
 
   guard @skia_mbt.ImageFilterDescriptor::blur(2.0, 3.0) is Some(image_blur) else {
     fail("positive image blur descriptor should be accepted")
   }
+  assert_true(image_blur.is_valid())
   guard @skia_mbt.MaskFilterDescriptor::blur(2.0) is Some(mask_blur) else {
     fail("positive mask blur descriptor should be accepted")
   }
+  assert_true(mask_blur.is_valid())
   assert_true(@skia_mbt.ImageFilterDescriptor::blur(0.0, 3.0) is None)
   assert_true(@skia_mbt.ImageFilterDescriptor::blur(infinite, 3.0) is None)
   assert_true(@skia_mbt.MaskFilterDescriptor::blur(-1.0) is None)
   assert_true(@skia_mbt.MaskFilterDescriptor::blur(not_finite) is None)
+  let invalid_image_blur = @skia_mbt.BlurImageFilter(infinite, 3.0)
+  assert_true(!invalid_image_blur.is_valid())
+  assert_true(!invalid_image_blur.resource_descriptor().is_cacheable())
+  let invalid_mask_blur = @skia_mbt.BlurMaskFilter(not_finite)
+  assert_true(!invalid_mask_blur.is_valid())
+  assert_true(!invalid_mask_blur.resource_descriptor().is_cacheable())
 
   let color_descriptor = saturation.resource_descriptor()
   let image_descriptor = image_blur.resource_descriptor()
