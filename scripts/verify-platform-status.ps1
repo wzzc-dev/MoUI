@@ -69,6 +69,7 @@ if ($status.schema_version -ge 4) {
     "moonbit.all-target-check",
     "native.smoke-build",
     "native.smoke-capability-sync",
+    "native.capability-contract",
     "native.ownership",
     "native.ffi-borrows",
     "native.fallback-parity",

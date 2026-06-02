@@ -38,6 +38,12 @@ appear in `#borrow(...)` or `#owned(...)`.
 with a `native/*_unavailable.mbt` fallback and checks that `native/moon.pkg`
 maps native implementations to `native`/`llvm` and fallbacks to
 `wasm`/`wasm-gc`/`js`.
+`verify-native-capability-contract.*` is the higher-level gate for adding a
+native capability. It reads `../native/capabilities.json`, reruns the ownership,
+borrow, fallback, and smoke-marker checks, then requires every target-specific
+native MoonBit file to be assigned to a capability with matching fallback APIs,
+declared handle ownership, and either runtime smoke markers or an explicit
+non-smoke rationale.
 
 ## JetBrains/skia provider
 
