@@ -123,6 +123,8 @@
         "native smoke canvas replay clip path cache resources",
         "native smoke canvas replay color paint fills",
         "native smoke canvas replay paint fill clipped",
+        "native smoke canvas replay paint shader fills",
+        "native smoke canvas replay paint shader cache resources",
         "native smoke render frame replay rejected skipped",
         "native smoke shader draws",
         "native smoke filter layer count",

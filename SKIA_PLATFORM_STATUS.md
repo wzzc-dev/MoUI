@@ -126,7 +126,7 @@ these facts recorded in logs:
   variation, font fallback family metadata, resolved fallback match cache-key
   variation, fallback match resource planning, fallback resolution cache-key
   variation, fallback resolution resource planning, native fallback resolution
-  bridging, font fallback resource planning,
+  bridging, font fallback resource planning, canvas paint-shader fill replay,
   and shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
