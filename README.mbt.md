@@ -152,6 +152,8 @@ The `native` subpackage contains the first opt-in native boundary:
 - non-finite value-layer paths produce uncacheable resource descriptors, are
   filtered out of command-list resource plans, and skip native replay without
   touching path caches;
+- native path appends skip non-finite portable paths or matrices without
+  mutating existing `@native.Path` geometry;
 - `@native.Path` supports the first path construction calls: `new`, `reset`,
   `rewind`,
   `set_fill_type`, `fill_type`, `move_to`, `line_to`, `quad_to`, `cubic_to`,

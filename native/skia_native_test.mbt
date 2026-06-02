@@ -801,6 +801,22 @@ test "path api typechecks" {
       assert_eq(path.count_verbs(), 9)
       assert_eq(path.count_points(), 7)
       assert_true(path.contains(@skia.Point::new(18, 2)))
+      let finite_append_verbs = path.count_verbs()
+      let finite_append_points = path.count_points()
+      let finite_append_bounds = path.bounds()
+      path.add_path_value(non_finite_path)
+      assert_true(path.is_finite())
+      assert_eq(path.count_verbs(), finite_append_verbs)
+      assert_eq(path.count_points(), finite_append_points)
+      assert_true(path.bounds() == finite_append_bounds)
+      path.add_path_value(
+        portable_triangle,
+        matrix=@skia.Matrix::translate(1.0 / 0.0, 0),
+      )
+      assert_true(path.is_finite())
+      assert_eq(path.count_verbs(), finite_append_verbs)
+      assert_eq(path.count_points(), finite_append_points)
+      assert_true(path.bounds() == finite_append_bounds)
       path.rewind()
       path.add_rect(@skia.Rect::from_xywh(0, 0, 2, 2))
       path.add_path_value_offset(portable_triangle, @skia.Point::new(10, 0))

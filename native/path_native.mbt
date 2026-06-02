@@ -432,28 +432,33 @@ pub fn Path::add_path_value(
   matrix? : @skia.Matrix = @skia.Matrix::identity(),
   mode? : @skia.AddPathMode = @skia.Append,
 ) -> Unit {
-  let path = path.transform(matrix)
-  let start_index = if mode is @skia.Extend && !path.verbs.is_empty() {
-    match (self.last_point(), path.verbs[0]) {
-      (Some(_), @skia.MoveTo(point)) => {
-        self.line_to(point)
-        1
+  if path.is_finite() && matrix.is_finite() {
+    let path = path.transform(matrix)
+    if path.is_finite() {
+      let start_index = if mode is @skia.Extend && !path.verbs.is_empty() {
+        match (self.last_point(), path.verbs[0]) {
+          (Some(_), @skia.MoveTo(point)) => {
+            self.line_to(point)
+            1
+          }
+          _ => 0
+        }
+      } else {
+        0
       }
-      _ => 0
-    }
-  } else {
-    0
-  }
-  for i = start_index; i < path.verbs.length(); i = i + 1 {
-    let verb = path.verbs[i]
-    match verb {
-      @skia.MoveTo(point) => self.move_to(point)
-      @skia.LineTo(point) => self.line_to(point)
-      @skia.QuadTo(control, end) => self.quad_to(control, end)
-      @skia.ConicTo(control, end, weight) => self.conic_to(control, end, weight)
-      @skia.CubicTo(control0, control1, end) =>
-        self.cubic_to(control0, control1, end)
-      @skia.Close => self.close()
+      for i = start_index; i < path.verbs.length(); i = i + 1 {
+        let verb = path.verbs[i]
+        match verb {
+          @skia.MoveTo(point) => self.move_to(point)
+          @skia.LineTo(point) => self.line_to(point)
+          @skia.QuadTo(control, end) => self.quad_to(control, end)
+          @skia.ConicTo(control, end, weight) =>
+            self.conic_to(control, end, weight)
+          @skia.CubicTo(control0, control1, end) =>
+            self.cubic_to(control0, control1, end)
+          @skia.Close => self.close()
+        }
+      }
     }
   }
 }

@@ -1152,10 +1152,26 @@ fn main {
   if !appended_path.contains(@skia.Point::new(30, 27)) {
     fail_smoke("native add_path_value does not contain appended geometry")
   }
+  let appended_path_verbs = appended_path.count_verbs()
+  let appended_path_points = appended_path.count_points()
+  let appended_path_bounds = appended_path.bounds()
+  appended_path.add_path_value(non_finite_portable_path)
+  appended_path.add_path_value(
+    @skia.Path::new().add_rect(@skia.Rect::from_xywh(0, 0, 1, 1)),
+    matrix=@skia.Matrix::translate(1.0 / 0.0, 0),
+  )
+  if !appended_path.is_finite() ||
+    appended_path.count_verbs() != appended_path_verbs ||
+    appended_path.count_points() != appended_path_points ||
+    appended_path.bounds() != appended_path_bounds {
+    fail_smoke("native add_path_value should skip non-finite inputs")
+  }
   println("native smoke path verbs")
   println(appended_path.count_verbs())
   println("native smoke non-finite path from-value rejected")
   println(1)
+  println("native smoke non-finite path add skipped")
+  println(2)
   canvas.draw_path(appended_path, @skia.Paint::new(color=@skia.Color::cyan()))
 
   let save_count_before_transform = canvas.save_count()
