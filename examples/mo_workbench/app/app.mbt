@@ -42,6 +42,18 @@ pub(all) struct AgentBackendProfile {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct AgentSessionBinding {
+  backend_id : String
+  workbench_session_id : String
+  provider_session_id : String
+  session_file : String
+  session_name : String
+  model : String
+  status : String
+  last_command : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PlanStep {
   id : String
   title : String
@@ -355,6 +367,29 @@ pub fn AgentBackendProfile::new(
 }
 
 ///|
+pub fn AgentSessionBinding::new(
+  backend_id~ : String,
+  workbench_session_id~ : String,
+  provider_session_id? : String = "",
+  session_file? : String = "",
+  session_name? : String = "",
+  model? : String = "",
+  status? : String = "unbound",
+  last_command? : String = "",
+) -> AgentSessionBinding {
+  {
+    backend_id,
+    workbench_session_id,
+    provider_session_id,
+    session_file,
+    session_name,
+    model,
+    status,
+    last_command,
+  }
+}
+
+///|
 pub fn agent_backend_profiles() -> Array[AgentBackendProfile] {
   [
     AgentBackendProfile::new(
@@ -612,6 +647,23 @@ pub fn PiSessionBinding::status_label(self : PiSessionBinding) -> String {
     }
     self.status + " · " + name
   }
+}
+
+///|
+pub fn PiSessionBinding::as_agent_session_binding(
+  self : PiSessionBinding,
+  backend_id? : String = "pi",
+) -> AgentSessionBinding {
+  AgentSessionBinding::new(
+    backend_id~,
+    workbench_session_id=self.workbench_session_id,
+    provider_session_id=self.rpc_session_id,
+    session_file=self.session_file,
+    session_name=self.session_name,
+    model=self.model,
+    status=self.status,
+    last_command=self.last_command,
+  )
 }
 
 ///|
@@ -955,6 +1007,23 @@ pub fn WorkbenchModel::active_agent_backend_capabilities(
   self : WorkbenchModel,
 ) -> AgentBackendCapabilities {
   self.active_agent_backend_profile().capabilities
+}
+
+///|
+pub fn WorkbenchModel::active_agent_session_binding(
+  self : WorkbenchModel,
+) -> AgentSessionBinding {
+  let backend = self.active_agent_backend_profile()
+  if backend.capabilities.uses_pi_transport {
+    self
+    .active_pi_session_binding()
+    .as_agent_session_binding(backend_id=backend.id)
+  } else {
+    AgentSessionBinding::new(
+      backend_id=backend.id,
+      workbench_session_id=self.selected_session_id,
+    )
+  }
 }
 
 ///|
