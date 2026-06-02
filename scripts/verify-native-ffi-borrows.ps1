@@ -22,6 +22,7 @@ function Resolve-RepoPath {
 function Split-TopLevel {
   param(
     [Parameter(Mandatory = $true)]
+    [AllowEmptyString()]
     [string] $Text
   )
 
@@ -105,6 +106,7 @@ function Test-NonPrimitiveType {
 function Test-ExternBlock {
   param(
     [Parameter(Mandatory = $true)]
+    [AllowEmptyString()]
     [string] $Block,
     [Parameter(Mandatory = $true)]
     [string] $Path
