@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `runtime_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Multi-backend agent desktop dogfood app | `examples/mo_workbench/app/` | Codex-style conversation-first coding-agent shell, quiet Agent-branded default UI, signal-only current-agent top-bar chip, expanded-options backend selector, Pi and Local backend capabilities, capability-gated advanced controls, lightweight agent focus routing, composer slash-command suggestions, compact status rail, current task strip, single current-turn evidence card, backend-neutral backend-status/runtime-signal/session/model/metrics/fork/input-setting projections, platform-neutral Pi transport command/event model for the Pi provider, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Multi-backend agent desktop dogfood app | `examples/mo_workbench/app/` | Codex-style conversation-first coding-agent shell, quiet Agent-branded default UI, signal-only current-agent top-bar chip, expanded-options backend selector, Pi and Local backend capabilities, capability-gated advanced controls, lightweight agent focus routing, composer slash-command suggestions, wide three-panel inspector with context/run/diagnostic tabs, low-noise status bar, current task strip, compact current-turn evidence fallback on narrow layouts, backend-neutral backend-status/runtime-signal/session/model/metrics/fork/input-setting projections, platform-neutral Pi transport command/event model for the Pi provider, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -191,8 +191,8 @@ diagnostics. Pi RPC is the first real backend provider, while Local (`fixture`)
 is the smoke backend used to verify backend switching and keep the product shell
 agent-neutral.
 Its current UI keeps the first screen focused on the current task strip,
-the transcript thread, a single current-turn evidence card, and a bottom
-composer instead of long placeholder validation text,
+the transcript thread, a right-side workbench inspector on wide windows, and a
+bottom composer instead of long placeholder validation text,
 future-workflow filler, or hard-coded attachment cards. The shell now derives
 its sidebar, main canvas, scroll area, and composer dimensions from the runtime
 viewport instead of a fixed `1200x750` surface, so the macOS Skia entrypoint can
@@ -200,7 +200,11 @@ be resized while preserving the session-first hierarchy, including narrower
 composer widths in smaller windows. The top bar renders the active session as
 one two-line identity block with shortened title, project, and branch labels,
 so long paths remain in shared state and transport commands without clipping
-the visible chrome. The transcript uses compact multi-line message rows for
+the visible chrome. Wide layouts now separate `上下文`, `运行`, and `诊断` into a
+compact inspector with empty/error/loading states, expandable command output,
+file/diff context, diagnostic fix/clear actions, focused-check shortcuts, and a
+low-noise status bar; compact layouts keep the single `当前证据` card in the
+conversation flow. The transcript uses compact multi-line message rows for
 long Pi replies and draws an explicit scrollbar when the main workflow
 overflows. New prompts, local fixture replies, Pi response events, and queued
 command evidence pin that scroll area to the latest content. The sidebar also
@@ -268,12 +272,13 @@ assistant reply is complete, that process evidence collapses into a compact
 without crowding the final reply. Assistant `thinking` / `toolCall` content and
 Pi `toolResult` / bash transcript entries are treated as process evidence, so
 they stay out of the main conversation rows unless `已处理` is expanded.
-On wide windows, the shell adds one compact status rail only for independent
-live evidence such as current plan steps, failed or active shell commands, and
-active tools. Generic `下一步` prompts stay in the main task strip instead of
-being duplicated in the rail. The old progress/execution/work-folder multi-card
-rail is gone, and the rail still collapses on compact widths so the
-conversation flow remains primary.
+On wide windows, the shell uses one right inspector instead of the old
+progress/execution/work-folder multi-card rail. `上下文`, `运行`, and `诊断` tabs
+separate file/diff context, active tools and command output, and fixable
+diagnostics; the default tab follows the most actionable evidence while raw
+transport lifecycle events stay out of `当前证据`. The inspector collapses on
+compact widths so the conversation flow remains primary and the single evidence
+card remains the narrow-layout fallback.
 Pi `message_end` / `agent_end` JSONL updates merge assistant replies into the
 local transcript immediately, while a lightweight RPC refresh follows to
 reconcile the full message, fork, and stats state. The default sidebar now stays
