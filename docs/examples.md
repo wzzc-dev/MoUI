@@ -267,16 +267,14 @@ local transcript immediately, while a lightweight RPC refresh follows to
 reconcile the full message, fork, and stats state. The default sidebar now stays
 focused on brand and task history, while project and branch identity remain in
 the top bar instead of repeating as a workspace card or empty-state line.
-Lightweight `通用`, `编码`, and `校验` focus controls move into the composer's
-optional `焦点` row and appear only after opening composer options or when a
-focus is selected. Selecting one only appends an
-`agent focus: ...` hint to the existing platform-neutral prompt, steering, and
-follow-up text payloads.
-The composer exposes repository, examples, evidence, and backend session context
-chips after opening composer options, after selecting a focus, or after
-changing the default context; direct prompt, steering, and follow-up submits
-still prefix the selected scopes into the same platform-neutral text payloads,
-while turning all chips off sends the raw input. Current-turn event rows are
+Lightweight `通用`, `编码`, and `校验` focus controls now share one compact
+composer `范围` row with repository, examples, evidence, and backend session
+context chips. The row appears after opening composer options, after selecting a
+focus, or after changing the default context; direct prompt, steering, and
+follow-up submits still prefix the selected scopes into the same
+platform-neutral text payloads, while turning all chips off sends the raw input.
+Selecting a focus only appends an `agent focus: ...` hint to those same payloads.
+Current-turn event rows are
 read-only process evidence in the shell; they do not expose message-level
 follow-up controls. File context
 rows can queue an `Inspect <path>` prompt through the same platform-neutral
