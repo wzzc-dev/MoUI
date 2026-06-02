@@ -19,6 +19,76 @@ test "skia transform maps MoUI affine fields to Skia matrix members" {
 }
 
 ///|
+test "skia raster surface preflight consumes skia_mbt resource descriptors" {
+  let preflight = raster_surface_preflight(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=12.0, height=8.0),
+      scale_factor=2.0,
+    ),
+  )
+  inspect(preflight.physical_width, content="24")
+  inspect(preflight.physical_height, content="16")
+  assert_true(preflight.target_ready)
+  assert_true(preflight.frame_ready)
+  assert_true(preflight.finalization_ready)
+  assert_true(preflight.submission_ready)
+  inspect(preflight.resource_count, content="2")
+  inspect(preflight.cacheable_resource_count, content="1")
+  inspect(preflight.uncacheable_resource_count, content="1")
+  inspect(preflight.gpu_backed_resource_count, content="0")
+  inspect(preflight.surface_resource_count, content="2")
+  assert_true(preflight.byte_size > 0L)
+}
+
+///|
+test "skia raster surface preflight clamps empty physical targets" {
+  let preflight = raster_surface_preflight(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=0.0, height=8.0),
+      scale_factor=2.0,
+    ),
+  )
+  inspect(preflight.physical_width, content="1")
+  inspect(preflight.physical_height, content="16")
+  assert_true(preflight.target_ready)
+  assert_true(preflight.frame_ready)
+  assert_true(preflight.finalization_ready)
+  inspect(preflight.resource_count, content="2")
+}
+
+///|
+test "skia text descriptor preflight consumes fallback and shaping resource plans" {
+  let preflight = skia_text_descriptor_preflight(
+    @core.FontSpec::new(size=18.0, weight=600, style=@core.FontStyle::Italic),
+    "MoUI",
+  )
+  assert_true(preflight.family_count > 0)
+  assert_true(preflight.fallback_ready)
+  inspect(preflight.fallback_resource_count, content="2")
+  assert_true(preflight.measurement_ready)
+  inspect(preflight.measurement_resource_count, content="4")
+  assert_true(preflight.shaping_ready)
+  inspect(preflight.shaping_resource_count, content="4")
+  assert_true(preflight.shaped_run_ready)
+  inspect(preflight.shaped_run_resource_count, content="5")
+  assert_true(preflight.glyph_run_ready)
+  inspect(preflight.glyph_run_resource_count, content="6")
+}
+
+///|
+test "skia text descriptor preflight keeps empty text cacheable" {
+  let preflight = skia_text_descriptor_preflight(
+    @core.FontSpec::new(size=12.0, weight=400),
+    "",
+  )
+  assert_true(preflight.fallback_ready)
+  assert_true(preflight.measurement_ready)
+  assert_true(preflight.shaping_ready)
+  assert_true(preflight.shaped_run_ready)
+  assert_true(preflight.glyph_run_ready)
+}
+
+///|
 test "skia font resolver maps MoUI font families to platform candidates" {
   assert_true(
     skia_font_family_candidates(@core.FontFamily::Name("Acme Sans")) ==
