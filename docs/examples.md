@@ -342,10 +342,10 @@ collected from Pi stderr, RPC failures, structured diagnostic events, and
 non-duplicated bash results are surfaced in the current-turn evidence card and can be
 cleared from shared app state.
 The model catalog summary can send platform-neutral `SetRpcModel` for the
-visible model and `CycleRpcModel` for Pi's scoped model cycle; successful
-`set_model` and `cycle_model` responses update the active binding model when Pi
-returns one, while `cycle_model` `data:null` is treated as a no-op
-acknowledgement.
+visible `AgentModelInfo` projection and `CycleRpcModel` for Pi's scoped model
+cycle; successful `set_model` and `cycle_model` responses update the active
+binding model when Pi returns one, while `cycle_model` `data:null` is treated
+as a no-op acknowledgement.
 The session panel can send platform-neutral `CompactRpcSession`; successful
 `compact` responses append the returned summary to the transcript and update
 the active session summary, while offline/no-provider failures remain Pi RPC

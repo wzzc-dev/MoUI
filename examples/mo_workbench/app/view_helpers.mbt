@@ -2419,12 +2419,13 @@ fn WorkbenchModel::session_status_panel(
   }
   if self.should_show_session_detail_rows() {
     let capabilities = self.active_agent_backend_capabilities()
+    let models = self.active_agent_model_catalog()
     if capabilities.supports_session_stats &&
       self.pi_session_stats.has_visible_metrics() {
       rows.push(session_stats_row(self.pi_session_stats, layout, theme))
     }
-    if capabilities.supports_model_catalog && self.model_catalog.length() > 0 {
-      rows.push(model_catalog_row(self.model_catalog, layout, theme))
+    if models.length() > 0 {
+      rows.push(model_catalog_row(models, layout, theme))
     }
     if binding.has_visible_binding() {
       rows.push(session_binding_row(binding, layout, theme))
@@ -2464,11 +2465,12 @@ fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
   }
   if self.should_show_session_detail_rows() {
     let capabilities = self.active_agent_backend_capabilities()
+    let models = self.active_agent_model_catalog()
     if capabilities.supports_session_stats &&
       self.pi_session_stats.has_visible_metrics() {
       count = count + 1
     }
-    if capabilities.supports_model_catalog && self.model_catalog.length() > 0 {
+    if models.length() > 0 {
       count = count + 1
     }
     if binding.has_visible_binding() {
@@ -2510,7 +2512,7 @@ fn WorkbenchModel::should_show_session_detail_rows(
       capabilities.supports_session_stats &&
       self.pi_session_stats.has_visible_metrics()
     ) ||
-    (capabilities.supports_model_catalog && self.model_catalog.length() > 0) ||
+    self.active_agent_model_catalog().length() > 0 ||
     binding.has_visible_binding() ||
     self.has_session_panel_controls()
   )
@@ -2893,7 +2895,7 @@ fn plan_step_tone(status : String) -> @views.BadgeTone {
 
 ///|
 fn model_catalog_row(
-  models : Array[PiModelInfo],
+  models : Array[AgentModelInfo],
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
@@ -2940,7 +2942,7 @@ fn model_catalog_row(
 }
 
 ///|
-fn model_catalog_label(models : Array[PiModelInfo]) -> String {
+fn model_catalog_label(models : Array[AgentModelInfo]) -> String {
   if models.length() == 0 {
     ""
   } else if models.length() == 1 {
@@ -3141,7 +3143,7 @@ fn WorkbenchModel::has_advanced_session_controls(self : WorkbenchModel) -> Bool 
     capabilities.supports_session_stats &&
     self.pi_session_stats.has_visible_metrics()
   ) ||
-  (capabilities.supports_model_catalog && self.model_catalog.length() > 0) ||
+  self.active_agent_model_catalog().length() > 0 ||
   (capabilities.supports_thinking_level && self.pi_agent.thinking_level != "") ||
   (capabilities.uses_pi_transport && self.transport.has_active_signal())
 }

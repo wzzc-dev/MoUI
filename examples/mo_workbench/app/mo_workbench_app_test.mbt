@@ -168,6 +168,35 @@ test "workbench projects Pi session binding through agent-neutral contract" {
 }
 
 ///|
+test "workbench projects Pi model catalog entries through agent-neutral contract" {
+  let model = {
+    ..WorkbenchModel::new(),
+    model_catalog: [
+      PiModelInfo::new(provider="openai", id="gpt-5", name="GPT-5"),
+      PiModelInfo::new(
+        provider="anthropic",
+        id="claude-sonnet-4.5",
+        name="Claude Sonnet 4.5",
+      ),
+    ],
+  }
+  let models = model.active_agent_model_catalog()
+  inspect(models.length(), content="2")
+  inspect(models[0].provider, content="openai")
+  inspect(models[0].id, content="gpt-5")
+  inspect(models[0].label, content="GPT-5 (openai/gpt-5)")
+  inspect(
+    models[1].label,
+    content="Claude Sonnet 4.5 (anthropic/claude-sonnet-4.5)",
+  )
+
+  let fixture_models = model
+    .update(SwitchAgentBackend("fixture"))
+    .active_agent_model_catalog()
+  inspect(fixture_models.length(), content="0")
+}
+
+///|
 test "workbench switches current session backend and resets provider state" {
   let model = WorkbenchModel::new()
     .update(ReceiveTransport(ProcessStarted("4242")))
