@@ -1887,6 +1887,30 @@ test "render command list records shaped glyph run resources" {
   assert_true(
     frame.resource_plan.contains_key(glyph_run.resource_key(b"hello")),
   )
+
+  let invalid_glyph_run = shaping
+    .shaped_run_descriptor(glyph_count=0)
+    .glyph_run_descriptor()
+  assert_true(!invalid_glyph_run.is_valid())
+  assert_eq(invalid_glyph_run.resource_plan(b"hello").length(), 1)
+  assert_eq(invalid_glyph_run.resource_plan(b"hello").cacheable_count, 0)
+  assert_eq(invalid_glyph_run.resource_plan(b"hello").uncacheable_count, 1)
+  let invalid_commands = @skia_mbt.RenderCommandList::for_target(target).draw_shaped_glyph_run_utf8(
+    b"hello",
+    invalid_glyph_run,
+    @skia_mbt.Point::new(2.0, 3.0),
+  )
+  assert_true(invalid_commands.touched_bounds() is None)
+  assert_eq(invalid_commands.commands[0].resource_descriptors().length(), 1)
+  assert_eq(invalid_commands.resource_plan().length(), 1)
+  assert_eq(
+    invalid_commands.resource_plan().count_kind(@skia_mbt.SurfaceResource),
+    1,
+  )
+  assert_eq(
+    invalid_commands.resource_plan().count_kind(@skia_mbt.TextRunResource),
+    0,
+  )
 }
 
 ///|
@@ -3108,7 +3132,17 @@ test "text shaping descriptors track request and shaped run resources" {
   let invalid = shaping.shaped_run_descriptor(glyph_count=0)
   assert_true(!invalid.is_valid())
   assert_true(!invalid.resource_descriptor(b"xhelloz").is_cacheable())
+  let invalid_plan = invalid.resource_plan(b"xhelloz")
+  assert_eq(invalid_plan.length(), 1)
+  assert_eq(invalid_plan.cacheable_count, 0)
+  assert_eq(invalid_plan.uncacheable_count, 1)
   assert_true(!invalid.glyph_run_descriptor().is_valid())
+  let invalid_glyph_plan = invalid
+    .glyph_run_descriptor()
+    .resource_plan(b"xhelloz")
+  assert_eq(invalid_glyph_plan.length(), 1)
+  assert_eq(invalid_glyph_plan.cacheable_count, 0)
+  assert_eq(invalid_glyph_plan.uncacheable_count, 1)
   assert_true(
     !invalid
     .glyph_run_descriptor()

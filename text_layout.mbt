@@ -1540,15 +1540,17 @@ pub fn ShapedTextRunDescriptor::resource_plan(
 ) -> RendererResourcePlan {
   let descriptors : Array[RendererResourceDescriptor] = Array::new()
   descriptors.push(self.resource_descriptor(text, byte_size=shaped_byte_size))
-  for
-    descriptor in self.shaping.resource_plan(
-      text,
-      shaping_byte_size~,
-      text_byte_size~,
-      font_byte_size~,
-      fallback_byte_size~,
-    ).descriptors {
-    descriptors.push(descriptor)
+  if self.is_valid() {
+    for
+      descriptor in self.shaping.resource_plan(
+        text,
+        shaping_byte_size~,
+        text_byte_size~,
+        font_byte_size~,
+        fallback_byte_size~,
+      ).descriptors {
+      descriptors.push(descriptor)
+    }
   }
   RendererResourcePlan::new(descriptors)
 }
@@ -1779,16 +1781,18 @@ pub fn ShapedGlyphRunDescriptor::resource_plan(
   descriptors.push(
     self.resource_descriptor(text, byte_size=glyph_run_byte_size),
   )
-  for
-    descriptor in self.shaped_run.resource_plan(
-      text,
-      shaped_byte_size~,
-      shaping_byte_size~,
-      text_byte_size~,
-      font_byte_size~,
-      fallback_byte_size~,
-    ).descriptors {
-    descriptors.push(descriptor)
+  if self.is_valid() {
+    for
+      descriptor in self.shaped_run.resource_plan(
+        text,
+        shaped_byte_size~,
+        shaping_byte_size~,
+        text_byte_size~,
+        font_byte_size~,
+        fallback_byte_size~,
+      ).descriptors {
+      descriptors.push(descriptor)
+    }
   }
   RendererResourcePlan::new(descriptors)
 }

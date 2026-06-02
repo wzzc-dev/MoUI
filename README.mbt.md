@@ -166,7 +166,8 @@ The `native` subpackage contains the first opt-in native boundary:
   shaders, filters, paths, and text resources, UTF-8 text through
   `draw_text_utf8`, text-run replay that honors descriptor byte ranges and
   skips empty ranges without populating text caches, positioned glyph runs
-  through `draw_glyphs`, optional
+  through `draw_glyphs`, invalid shaped glyph replay skips without cacheable
+  dependency planning, optional
   shaped glyph runs through `Font::shape_text_utf8` when SkShaper is linked,
   shaped-run metadata through `TextShapingDescriptor` and
   `ShapedTextRunDescriptor`, detailed shaped glyph-run metadata through

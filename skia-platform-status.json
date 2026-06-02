@@ -938,6 +938,21 @@
       "marker": "native smoke shaped glyph run key variation"
     },
     {
+      "id": "text.invalid-shaped-glyph-resource-plan",
+      "area": "Text",
+      "marker": "native smoke invalid shaped glyph resource plan count"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-command-plan",
+      "area": "Text",
+      "marker": "native smoke invalid shaped glyph command plan count"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-replay-skipped",
+      "area": "Text",
+      "marker": "native smoke invalid shaped glyph replay skipped"
+    },
+    {
       "id": "text.measure",
       "area": "Text",
       "marker": "native smoke measured text width"
@@ -1904,6 +1919,21 @@
     {
       "id": "text.shaped-glyph-run-key",
       "marker": "native smoke shaped glyph run key variation",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-resource-plan",
+      "marker": "native smoke invalid shaped glyph resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-command-plan",
+      "marker": "native smoke invalid shaped glyph command plan count",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-replay-skipped",
+      "marker": "native smoke invalid shaped glyph replay skipped",
       "value": "1"
     },
     {
