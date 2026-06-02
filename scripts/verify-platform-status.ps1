@@ -296,6 +296,8 @@ if ($status.schema_version -ge 3) {
     "pipeline.frame-missing-finalization-validation",
     "pipeline.frame-touched-bounds",
     "pipeline.frame-cache-resources",
+    "pipeline.native-replay-resource-stats-caches",
+    "pipeline.native-replay-resource-stats-resources",
     "pipeline.resource-cache",
     "pipeline.resource-cache-preflight-missing",
     "pipeline.resource-cache-preflight-cached",
@@ -532,6 +534,8 @@ if ($status.schema_version -ge 3) {
       "native smoke surface render frame commands" = "23"
       "native smoke surface render frame finalized" = "1"
       "native smoke surface render frame cache resources" = "9"
+      "native smoke native replay resource stats caches" = "9"
+      "native smoke native replay resource stats resources" = "9"
       "native smoke surface render frame mismatch rejected" = "1"
       "native smoke render shaped glyph run command replay" = "1"
       "native smoke render shader cache resources" = "1"

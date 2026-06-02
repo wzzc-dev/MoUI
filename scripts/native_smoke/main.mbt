@@ -1490,9 +1490,16 @@ fn main {
     .stats()
   let replay_mask_filter_cache_stats = replay_native_resources.mask_filter_cache
     .stats()
+  let replay_native_resource_stats = replay_native_resources.stats()
   if replay_stats.command_count != replay_commands.length() ||
     replay_stats.draw_count != 16 ||
     replay_stats.text_count != 2 ||
+    replay_native_resource_stats.cache_count != 9 ||
+    replay_native_resource_stats.resource_count != 9 ||
+    replay_native_resource_stats.max_bytes != 8L * 1024L ||
+    replay_native_resource_stats.misses != 9 ||
+    replay_native_resource_stats.hits != 2 ||
+    replay_native_resource_stats.evictions != 0 ||
     replay_native_resources.shader_cache.length() != 1 ||
     replay_shader_cache_stats.misses != 1 ||
     replay_shader_cache_stats.hits != 2 ||
@@ -1600,6 +1607,7 @@ fn main {
     font=Some(replay_font),
     frame_index=7,
   )
+  let render_frame_resource_stats = render_frame_resources.stats()
   guard @native.Surface::raster_n32_premul(@skia.ISize::new(6, 6))
     is Some(mismatch_frame_surface) else {
     fail_smoke("failed to create native mismatched frame replay surface")
@@ -1614,6 +1622,8 @@ fn main {
     !render_frame_stats.surface_matches ||
     !render_frame_stats.finalized ||
     render_frame_stats.replay.command_count != replay_commands.length() ||
+    render_frame_resource_stats.cache_count != 9 ||
+    render_frame_resource_stats.resource_count != 9 ||
     render_frame_resources.shader_cache.length() != 1 ||
     render_frame_resources.path_cache.length() != 2 ||
     render_frame_resources.text_run_cache.length() != 1 ||
@@ -1661,16 +1671,11 @@ fn main {
   println("native smoke surface render frame status contract")
   println(2)
   println("native smoke surface render frame cache resources")
-  println(
-    render_frame_resources.shader_cache.length() +
-    render_frame_resources.path_cache.length() +
-    render_frame_resources.text_run_cache.length() +
-    render_frame_resources.font_cache.length() +
-    render_frame_resources.typeface_cache.length() +
-    render_frame_resources.color_filter_cache.length() +
-    render_frame_resources.image_filter_cache.length() +
-    render_frame_resources.mask_filter_cache.length(),
-  )
+  println(render_frame_resource_stats.resource_count)
+  println("native smoke native replay resource stats caches")
+  println(replay_native_resource_stats.cache_count)
+  println("native smoke native replay resource stats resources")
+  println(replay_native_resource_stats.resource_count)
   println("native smoke surface render frame mismatch rejected")
   println(if !render_frame_mismatch_stats.is_complete() { 1 } else { 0 })
   println("native smoke render shaped glyph run command replay")
