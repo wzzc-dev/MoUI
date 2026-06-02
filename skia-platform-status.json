@@ -798,6 +798,11 @@
       "marker": "native smoke non-finite path add skipped"
     },
     {
+      "id": "path.non-finite-direct-mutations-skipped",
+      "area": "Path",
+      "marker": "native smoke non-finite path direct mutations skipped"
+    },
+    {
       "id": "surface.readback",
       "area": "Surface",
       "marker": "native smoke readback width"
@@ -1895,6 +1900,11 @@
       "id": "path.non-finite-add-skipped",
       "marker": "native smoke non-finite path add skipped",
       "value": "2"
+    },
+    {
+      "id": "path.non-finite-direct-mutations-skipped",
+      "marker": "native smoke non-finite path direct mutations skipped",
+      "value": "7"
     },
     {
       "id": "image.decode",
