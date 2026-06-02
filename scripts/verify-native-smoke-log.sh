@@ -53,6 +53,7 @@ default_stage_markers=(
   "native smoke surface target support diagnostics" \
   "native smoke canvas state restored" \
   "native smoke canvas clip device width" \
+  "native smoke non-finite canvas direct geometry skipped" \
   "native smoke canvas replay commands" \
   "native smoke render frame replay commands" \
   "native smoke render frame replay complete" \
@@ -271,6 +272,7 @@ default_expected_stage_values=(
   $'native smoke surface target support diagnostics\t2'
   $'native smoke canvas clip device width\t4'
   $'native smoke canvas state restored\t1'
+  $'native smoke non-finite canvas direct geometry skipped\t1'
   $'native smoke canvas replay commands\t29'
   $'native smoke render frame replay commands\t29'
   $'native smoke render frame replay complete\t1'

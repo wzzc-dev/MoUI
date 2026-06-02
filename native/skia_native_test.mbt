@@ -1633,6 +1633,124 @@ test "canvas draw api typechecks" {
 }
 
 ///|
+test "canvas skips non-finite direct geometry" {
+  match @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4)) {
+    None => ()
+    Some(surface) =>
+      match surface.canvas() {
+        None => ()
+        Some(canvas) => {
+          let paint = @skia.Paint::new(color=@skia.Color::red())
+          canvas.clear(@skia.Color::white())
+          canvas.translate(@skia.Point::new(1.0 / 0.0, 0))
+          canvas.scale(@skia.Size::new(1, 0.0 / 0.0))
+          canvas.rotate(1.0 / 0.0)
+          canvas.skew(@skia.Point::new(0, 0.0 / 0.0))
+          canvas.concat(@skia.Matrix::translate(1.0 / 0.0, 0))
+          canvas.clip_rect(@skia.Rect::new(0, 0, 1.0 / 0.0, 1))
+          canvas.clip_rrect(
+            @skia.RRect::from_rect_xy(@skia.Rect::new(0, 0, 1.0 / 0.0, 1), 1, 1),
+          )
+          assert_true(
+            !canvas.quick_reject_rect(@skia.Rect::new(0, 0, 1.0 / 0.0, 1)),
+          )
+          canvas.draw_point(@skia.Point::new(0.0 / 0.0, 0), paint)
+          canvas.draw_line(
+            @skia.Point::new(0, 0),
+            @skia.Point::new(1.0 / 0.0, 1),
+            paint,
+          )
+          canvas.draw_points(
+            [@skia.Point::new(0, 0), @skia.Point::new(1.0 / 0.0, 1)],
+            paint,
+            mode=@skia.Lines,
+          )
+          canvas.draw_rect(@skia.Rect::new(0, 0, 1.0 / 0.0, 1), paint)
+          canvas.draw_oval(@skia.Rect::new(0, 0, 1, 0.0 / 0.0), paint)
+          canvas.draw_circle(@skia.Point::new(0, 0), 1.0 / 0.0, paint)
+          canvas.draw_arc(
+            @skia.Rect::from_xywh(0, 0, 1, 1),
+            0.0 / 0.0,
+            90,
+            false,
+            paint,
+          )
+          canvas.draw_round_rect(
+            @skia.Rect::from_xywh(0, 0, 1, 1),
+            0.0 / 0.0,
+            1,
+            paint,
+          )
+          canvas.draw_rrect(
+            @skia.RRect::from_rect_xy(@skia.Rect::new(0, 0, 1.0 / 0.0, 1), 1, 1),
+            paint,
+          )
+          canvas.draw_drrect(
+            @skia.RRect::from_rect_xy(@skia.Rect::from_xywh(0, 0, 1, 1), 1, 1),
+            @skia.RRect::from_rect_xy(@skia.Rect::new(0, 0, 1.0 / 0.0, 1), 1, 1),
+            paint,
+          )
+          match @native.Shader::color(@skia.Color::red()) {
+            None => ()
+            Some(shader) => {
+              canvas.draw_rect_shader(
+                @skia.Rect::new(0, 0, 1.0 / 0.0, 1),
+                shader,
+                paint,
+              )
+              canvas.draw_round_rect_shader(
+                @skia.Rect::from_xywh(0, 0, 1, 1),
+                0.0 / 0.0,
+                1,
+                shader,
+                paint,
+              )
+            }
+          }
+          match @native.Font::default(size=12.0) {
+            None => ()
+            Some(font) => {
+              canvas.draw_text_utf8(
+                b"x",
+                @skia.Point::new(0.0 / 0.0, 0),
+                font,
+                paint,
+              )
+              canvas.draw_glyphs(
+                [1],
+                [@skia.Point::new(0.0 / 0.0, 0)],
+                font,
+                paint,
+              )
+            }
+          }
+          match @native.Surface::raster_n32_premul(@skia.ISize::new(1, 1)) {
+            None => ()
+            Some(image_surface) =>
+              match image_surface.image_snapshot() {
+                None => ()
+                Some(image) => {
+                  canvas.draw_image(image, @skia.Point::new(0.0 / 0.0, 0))
+                  canvas.draw_image_rect(
+                    image,
+                    @skia.Rect::from_xywh(0, 0, 1, 1),
+                    @skia.Rect::new(0, 0, 1.0 / 0.0, 1),
+                    paint,
+                  )
+                }
+              }
+          }
+          match surface.read_pixels(bounds=@skia.IRect::from_xywh(0, 0, 1, 1)) {
+            None => ()
+            Some(pixmap) =>
+              native_test_assert_pixel(pixmap, 0xff, 0xff, 0xff, 0xff)
+          }
+        }
+      }
+  }
+}
+
+///|
 fn native_test_encoded_image_descriptor() -> @skia.ImageDescriptor? {
   match @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4)) {
     None => None

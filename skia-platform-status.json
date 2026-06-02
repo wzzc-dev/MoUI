@@ -123,6 +123,11 @@
       "marker": "native smoke canvas clip device width"
     },
     {
+      "id": "canvas.non-finite-direct-geometry-skipped",
+      "area": "Canvas",
+      "marker": "native smoke non-finite canvas direct geometry skipped"
+    },
+    {
       "id": "canvas.command-replay",
       "area": "Canvas",
       "marker": "native smoke canvas replay commands"
@@ -1234,6 +1239,11 @@
     {
       "id": "canvas.state",
       "marker": "native smoke canvas state restored",
+      "value": "1"
+    },
+    {
+      "id": "canvas.non-finite-direct-geometry-skipped",
+      "marker": "native smoke non-finite canvas direct geometry skipped",
       "value": "1"
     },
     {

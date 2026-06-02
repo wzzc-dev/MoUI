@@ -698,39 +698,74 @@ pub fn Canvas::save_count(self : Canvas) -> Int {
 }
 
 ///|
+fn native_canvas_scalar_is_finite(value : Float) -> Bool {
+  value == value && value - value == 0.0
+}
+
+///|
+fn native_canvas_rrect_is_finite(rrect : @skia.RRect) -> Bool {
+  rrect.rect.is_finite() &&
+  rrect.upper_left.is_finite() &&
+  rrect.upper_right.is_finite() &&
+  rrect.lower_right.is_finite() &&
+  rrect.lower_left.is_finite()
+}
+
+///|
+fn native_canvas_points_are_finite(points : Array[@skia.Point]) -> Bool {
+  let mut finite = true
+  for i = 0; i < points.length(); i = i + 1 {
+    if !points[i].is_finite() {
+      finite = false
+    }
+  }
+  finite
+}
+
+///|
 pub fn Canvas::translate(self : Canvas, delta : @skia.Point) -> Unit {
-  native_canvas_translate(self.handle, delta.x, delta.y)
+  if delta.is_finite() {
+    native_canvas_translate(self.handle, delta.x, delta.y)
+  }
 }
 
 ///|
 pub fn Canvas::scale(self : Canvas, scale : @skia.Size) -> Unit {
-  native_canvas_scale(self.handle, scale.width, scale.height)
+  if scale.is_finite() {
+    native_canvas_scale(self.handle, scale.width, scale.height)
+  }
 }
 
 ///|
 pub fn Canvas::rotate(self : Canvas, degrees : Float) -> Unit {
-  native_canvas_rotate(self.handle, degrees)
+  if native_canvas_scalar_is_finite(degrees) {
+    native_canvas_rotate(self.handle, degrees)
+  }
 }
 
 ///|
 pub fn Canvas::skew(self : Canvas, skew : @skia.Point) -> Unit {
-  native_canvas_skew(self.handle, skew.x, skew.y)
+  if skew.is_finite() {
+    native_canvas_skew(self.handle, skew.x, skew.y)
+  }
 }
 
 ///|
 pub fn Canvas::concat(self : Canvas, matrix : @skia.Matrix) -> Unit {
-  native_canvas_concat(
-    self.handle,
-    matrix.scale_x,
-    matrix.skew_x,
-    matrix.trans_x,
-    matrix.skew_y,
-    matrix.scale_y,
-    matrix.trans_y,
-    matrix.persp_0,
-    matrix.persp_1,
-    matrix.persp_2,
-  )
+  if matrix.is_finite() {
+    native_canvas_concat(
+      self.handle,
+      matrix.scale_x,
+      matrix.skew_x,
+      matrix.trans_x,
+      matrix.skew_y,
+      matrix.scale_y,
+      matrix.trans_y,
+      matrix.persp_0,
+      matrix.persp_1,
+      matrix.persp_2,
+    )
+  }
 }
 
 ///|
@@ -750,15 +785,17 @@ pub fn Canvas::clip_rect(
   op? : @skia.ClipOp = @skia.Intersect,
   anti_alias? : Bool = false,
 ) -> Unit {
-  native_canvas_clip_rect(
-    self.handle,
-    rect.left,
-    rect.top,
-    rect.right,
-    rect.bottom,
-    op.to_skia_ordinal(),
-    anti_alias,
-  )
+  if rect.is_finite() {
+    native_canvas_clip_rect(
+      self.handle,
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      op.to_skia_ordinal(),
+      anti_alias,
+    )
+  }
 }
 
 ///|
@@ -768,23 +805,25 @@ pub fn Canvas::clip_rrect(
   op? : @skia.ClipOp = @skia.Intersect,
   anti_alias? : Bool = false,
 ) -> Unit {
-  native_canvas_clip_rrect(
-    self.handle,
-    rrect.rect.left,
-    rrect.rect.top,
-    rrect.rect.right,
-    rrect.rect.bottom,
-    rrect.upper_left.width,
-    rrect.upper_left.height,
-    rrect.upper_right.width,
-    rrect.upper_right.height,
-    rrect.lower_right.width,
-    rrect.lower_right.height,
-    rrect.lower_left.width,
-    rrect.lower_left.height,
-    op.to_skia_ordinal(),
-    anti_alias,
-  )
+  if native_canvas_rrect_is_finite(rrect) {
+    native_canvas_clip_rrect(
+      self.handle,
+      rrect.rect.left,
+      rrect.rect.top,
+      rrect.rect.right,
+      rrect.rect.bottom,
+      rrect.upper_left.width,
+      rrect.upper_left.height,
+      rrect.upper_right.width,
+      rrect.upper_right.height,
+      rrect.lower_right.width,
+      rrect.lower_right.height,
+      rrect.lower_left.width,
+      rrect.lower_left.height,
+      op.to_skia_ordinal(),
+      anti_alias,
+    )
+  }
 }
 
 ///|
@@ -836,6 +875,7 @@ pub fn Canvas::device_clip_bounds(self : Canvas) -> @skia.IRect? {
 
 ///|
 pub fn Canvas::quick_reject_rect(self : Canvas, rect : @skia.Rect) -> Bool {
+  rect.is_finite() &&
   native_canvas_quick_reject_rect(
     self.handle,
     rect.left,
@@ -890,20 +930,22 @@ pub fn Canvas::draw_point(
   point : @skia.Point,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_point(
-    self.handle,
-    point.x,
-    point.y,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if point.is_finite() {
+    native_canvas_draw_point(
+      self.handle,
+      point.x,
+      point.y,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -913,22 +955,24 @@ pub fn Canvas::draw_line(
   end : @skia.Point,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_line(
-    self.handle,
-    start.x,
-    start.y,
-    end.x,
-    end.y,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if start.is_finite() && end.is_finite() {
+    native_canvas_draw_line(
+      self.handle,
+      start.x,
+      start.y,
+      end.x,
+      end.y,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -960,22 +1004,24 @@ pub fn Canvas::draw_rect(
   rect : @skia.Rect,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_rect(
-    self.handle,
-    rect.left,
-    rect.top,
-    rect.right,
-    rect.bottom,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if rect.is_finite() {
+    native_canvas_draw_rect(
+      self.handle,
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -984,22 +1030,24 @@ pub fn Canvas::draw_oval(
   oval : @skia.Rect,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_oval(
-    self.handle,
-    oval.left,
-    oval.top,
-    oval.right,
-    oval.bottom,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if oval.is_finite() {
+    native_canvas_draw_oval(
+      self.handle,
+      oval.left,
+      oval.top,
+      oval.right,
+      oval.bottom,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -1009,21 +1057,25 @@ pub fn Canvas::draw_circle(
   radius : Float,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_circle(
-    self.handle,
-    center.x,
-    center.y,
-    radius,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if center.is_finite() &&
+    native_canvas_scalar_is_finite(radius) &&
+    radius > 0.0 {
+    native_canvas_draw_circle(
+      self.handle,
+      center.x,
+      center.y,
+      radius,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -1035,25 +1087,29 @@ pub fn Canvas::draw_arc(
   use_center : Bool,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_arc(
-    self.handle,
-    oval.left,
-    oval.top,
-    oval.right,
-    oval.bottom,
-    start_angle,
-    sweep_angle,
-    use_center,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if oval.is_finite() &&
+    native_canvas_scalar_is_finite(start_angle) &&
+    native_canvas_scalar_is_finite(sweep_angle) {
+    native_canvas_draw_arc(
+      self.handle,
+      oval.left,
+      oval.top,
+      oval.right,
+      oval.bottom,
+      start_angle,
+      sweep_angle,
+      use_center,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -1064,24 +1120,28 @@ pub fn Canvas::draw_round_rect(
   ry : Float,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_round_rect(
-    self.handle,
-    rect.left,
-    rect.top,
-    rect.right,
-    rect.bottom,
-    rx,
-    ry,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if rect.is_finite() &&
+    native_canvas_scalar_is_finite(rx) &&
+    native_canvas_scalar_is_finite(ry) {
+    native_canvas_draw_round_rect(
+      self.handle,
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      rx,
+      ry,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -1090,30 +1150,32 @@ pub fn Canvas::draw_rrect(
   rrect : @skia.RRect,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_rrect(
-    self.handle,
-    rrect.rect.left,
-    rrect.rect.top,
-    rrect.rect.right,
-    rrect.rect.bottom,
-    rrect.upper_left.width,
-    rrect.upper_left.height,
-    rrect.upper_right.width,
-    rrect.upper_right.height,
-    rrect.lower_right.width,
-    rrect.lower_right.height,
-    rrect.lower_left.width,
-    rrect.lower_left.height,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if native_canvas_rrect_is_finite(rrect) {
+    native_canvas_draw_rrect(
+      self.handle,
+      rrect.rect.left,
+      rrect.rect.top,
+      rrect.rect.right,
+      rrect.rect.bottom,
+      rrect.upper_left.width,
+      rrect.upper_left.height,
+      rrect.upper_right.width,
+      rrect.upper_right.height,
+      rrect.lower_right.width,
+      rrect.lower_right.height,
+      rrect.lower_left.width,
+      rrect.lower_left.height,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -1123,42 +1185,45 @@ pub fn Canvas::draw_drrect(
   inner : @skia.RRect,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_drrect(
-    self.handle,
-    outer.rect.left,
-    outer.rect.top,
-    outer.rect.right,
-    outer.rect.bottom,
-    outer.upper_left.width,
-    outer.upper_left.height,
-    outer.upper_right.width,
-    outer.upper_right.height,
-    outer.lower_right.width,
-    outer.lower_right.height,
-    outer.lower_left.width,
-    outer.lower_left.height,
-    inner.rect.left,
-    inner.rect.top,
-    inner.rect.right,
-    inner.rect.bottom,
-    inner.upper_left.width,
-    inner.upper_left.height,
-    inner.upper_right.width,
-    inner.upper_right.height,
-    inner.lower_right.width,
-    inner.lower_right.height,
-    inner.lower_left.width,
-    inner.lower_left.height,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if native_canvas_rrect_is_finite(outer) &&
+    native_canvas_rrect_is_finite(inner) {
+    native_canvas_draw_drrect(
+      self.handle,
+      outer.rect.left,
+      outer.rect.top,
+      outer.rect.right,
+      outer.rect.bottom,
+      outer.upper_left.width,
+      outer.upper_left.height,
+      outer.upper_right.width,
+      outer.upper_right.height,
+      outer.lower_right.width,
+      outer.lower_right.height,
+      outer.lower_left.width,
+      outer.lower_left.height,
+      inner.rect.left,
+      inner.rect.top,
+      inner.rect.right,
+      inner.rect.bottom,
+      inner.upper_left.width,
+      inner.upper_left.height,
+      inner.upper_right.width,
+      inner.upper_right.height,
+      inner.lower_right.width,
+      inner.lower_right.height,
+      inner.lower_left.width,
+      inner.lower_left.height,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -1223,7 +1288,9 @@ pub fn Canvas::draw_image(
   image : Image,
   top_left : @skia.Point,
 ) -> Unit {
-  native_canvas_draw_image(self.handle, image.handle, top_left.x, top_left.y)
+  if top_left.is_finite() {
+    native_canvas_draw_image(self.handle, image.handle, top_left.x, top_left.y)
+  }
 }
 
 ///|
@@ -1235,32 +1302,34 @@ pub fn Canvas::draw_image_rect(
   paint : @skia.Paint,
   sampling? : @skia.SamplingOptions = @skia.SamplingOptions::new(),
 ) -> Unit {
-  native_canvas_draw_image_rect(
-    self.handle,
-    image.handle,
-    src.left,
-    src.top,
-    src.right,
-    src.bottom,
-    dst.left,
-    dst.top,
-    dst.right,
-    dst.bottom,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-    sampling.filter_ordinal(),
-    sampling.mipmap_ordinal(),
-    sampling.uses_cubic(),
-    sampling.cubic_b(),
-    sampling.cubic_c(),
-  )
+  if src.is_finite() && dst.is_finite() {
+    native_canvas_draw_image_rect(
+      self.handle,
+      image.handle,
+      src.left,
+      src.top,
+      src.right,
+      src.bottom,
+      dst.left,
+      dst.top,
+      dst.right,
+      dst.bottom,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+      sampling.filter_ordinal(),
+      sampling.mipmap_ordinal(),
+      sampling.uses_cubic(),
+      sampling.cubic_b(),
+      sampling.cubic_c(),
+    )
+  }
 }
 
 ///|
@@ -1291,23 +1360,25 @@ pub fn Canvas::draw_rect_shader(
   shader : Shader,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_rect_shader(
-    self.handle,
-    shader.handle,
-    rect.left,
-    rect.top,
-    rect.right,
-    rect.bottom,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if rect.is_finite() {
+    native_canvas_draw_rect_shader(
+      self.handle,
+      shader.handle,
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -1319,25 +1390,29 @@ pub fn Canvas::draw_round_rect_shader(
   shader : Shader,
   paint : @skia.Paint,
 ) -> Unit {
-  native_canvas_draw_round_rect_shader(
-    self.handle,
-    shader.handle,
-    rect.left,
-    rect.top,
-    rect.right,
-    rect.bottom,
-    rx,
-    ry,
-    paint.color_argb(),
-    paint.anti_alias,
-    paint.dither,
-    paint.style_ordinal(),
-    paint.stroke_width,
-    paint.stroke_miter,
-    paint.stroke_cap_ordinal(),
-    paint.stroke_join_ordinal(),
-    paint.blend_mode_ordinal(),
-  )
+  if rect.is_finite() &&
+    native_canvas_scalar_is_finite(rx) &&
+    native_canvas_scalar_is_finite(ry) {
+    native_canvas_draw_round_rect_shader(
+      self.handle,
+      shader.handle,
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      rx,
+      ry,
+      paint.color_argb(),
+      paint.anti_alias,
+      paint.dither,
+      paint.style_ordinal(),
+      paint.stroke_width,
+      paint.stroke_miter,
+      paint.stroke_cap_ordinal(),
+      paint.stroke_join_ordinal(),
+      paint.blend_mode_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -1348,7 +1423,7 @@ pub fn Canvas::draw_text_utf8(
   font : Font,
   paint : @skia.Paint,
 ) -> Unit {
-  if !text.is_empty() {
+  if !text.is_empty() && origin.is_finite() {
     native_canvas_draw_text_utf8(
       self.handle,
       text,
@@ -1377,7 +1452,10 @@ pub fn Canvas::draw_glyphs(
   paint : @skia.Paint,
   origin? : @skia.Point = @skia.Point::zero(),
 ) -> Unit {
-  if !glyphs.is_empty() && glyphs.length() == positions.length() {
+  if !glyphs.is_empty() &&
+    glyphs.length() == positions.length() &&
+    origin.is_finite() &&
+    native_canvas_points_are_finite(positions) {
     native_canvas_draw_glyphs(
       self.handle,
       glyphs,

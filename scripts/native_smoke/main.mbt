@@ -1255,6 +1255,51 @@ fn main {
   println("native smoke bounded readback height")
   println(red_pixmap.height())
 
+  guard @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4))
+    is Some(non_finite_canvas_surface) else {
+    fail_smoke("failed to create non-finite canvas guard surface")
+  }
+  guard non_finite_canvas_surface.canvas() is Some(non_finite_canvas) else {
+    fail_smoke("failed to create non-finite canvas guard canvas")
+  }
+  let invalid_canvas_paint = @skia.Paint::new(color=@skia.Color::red())
+  non_finite_canvas.clear(@skia.Color::white())
+  non_finite_canvas.translate(@skia.Point::new(1.0 / 0.0, 0))
+  non_finite_canvas.scale(@skia.Size::new(1, 0.0 / 0.0))
+  non_finite_canvas.rotate(1.0 / 0.0)
+  non_finite_canvas.skew(@skia.Point::new(0, 0.0 / 0.0))
+  non_finite_canvas.concat(@skia.Matrix::translate(1.0 / 0.0, 0))
+  non_finite_canvas.clip_rect(@skia.Rect::new(0, 0, 1.0 / 0.0, 1))
+  non_finite_canvas.draw_point(@skia.Point::new(0.0 / 0.0, 0), invalid_canvas_paint)
+  non_finite_canvas.draw_line(
+    @skia.Point::new(0, 0),
+    @skia.Point::new(1.0 / 0.0, 1),
+    invalid_canvas_paint,
+  )
+  non_finite_canvas.draw_rect(
+    @skia.Rect::new(0, 0, 1.0 / 0.0, 1),
+    invalid_canvas_paint,
+  )
+  non_finite_canvas.draw_circle(
+    @skia.Point::new(0, 0),
+    1.0 / 0.0,
+    invalid_canvas_paint,
+  )
+  guard non_finite_canvas_surface.read_pixels(bounds=@skia.IRect::from_xywh(0, 0, 1, 1))
+    is Some(non_finite_canvas_pixmap) else {
+    fail_smoke("failed to read non-finite canvas guard pixel")
+  }
+  assert_pixel(
+    non_finite_canvas_pixmap,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+  )
+  println("native smoke non-finite canvas direct geometry skipped")
+  println(1)
+
   let replay_size = @skia.ISize::new(12, 12)
   guard @native.Surface::raster_n32_premul(replay_size) is Some(replay_surface) else {
     fail_smoke("failed to create replay smoke surface")

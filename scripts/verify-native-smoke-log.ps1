@@ -38,6 +38,7 @@ $defaultStageMarkers = @(
   "native smoke surface target support diagnostics",
   "native smoke canvas state restored",
   "native smoke canvas clip device width",
+  "native smoke non-finite canvas direct geometry skipped",
   "native smoke canvas replay commands",
   "native smoke render frame replay commands",
   "native smoke render frame replay complete",
@@ -262,6 +263,10 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke canvas state restored"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke non-finite canvas direct geometry skipped"
     Value = "1"
   }
   [pscustomobject]@{

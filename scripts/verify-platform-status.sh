@@ -285,6 +285,7 @@ if schema_version >= 3:
         "surface.target-factory-unsupported",
         "canvas.state",
         "canvas.clip",
+        "canvas.non-finite-direct-geometry-skipped",
         "canvas.command-replay",
         "canvas.replay-status-contract",
         "canvas.replay-deferred-present",
@@ -580,6 +581,7 @@ if schema_version >= 3:
         required_expected_values = {
             "native smoke canvas clip device width": "4",
             "native smoke canvas state restored": "1",
+            "native smoke non-finite canvas direct geometry skipped": "1",
             "native smoke canvas replay commands": "29",
             "native smoke render frame replay commands": "29",
             "native smoke render frame replay complete": "1",

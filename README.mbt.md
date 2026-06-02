@@ -192,6 +192,8 @@ The `native` subpackage contains the first opt-in native boundary:
   `Font::glyph_bounds` / `Font::glyph_bounds_many`, text bounds through
   `Font::measure_text_bounds_utf8`, font metrics through `Font::metrics`, and
   color-shader paint through `draw_paint_shader` / `draw_rect_shader`;
+- direct Canvas geometry, clip, image placement, and text/glyph positioning
+  calls skip non-finite coordinates without mutating pixels;
 - `@native.Canvas` also exposes the first state and transform calls:
   `save`, `save_layer`, `restore`, `restore_to_count`, `save_count`,
   `translate`, `scale`, `rotate`, `skew`, `concat`, `reset_matrix`, and
