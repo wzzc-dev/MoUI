@@ -97,3 +97,36 @@ pub fn Pixmap::offset(self : Pixmap, point : IPoint) -> Int? {
     None
   }
 }
+
+///|
+/// Copy the stored channel bytes for one pixel.
+pub fn Pixmap::sample(self : Pixmap, point : IPoint) -> Bytes? {
+  match self.offset(point) {
+    None => None
+    Some(offset) => {
+      let bytes_per_pixel = self.bytes_per_pixel()
+      if bytes_per_pixel <= 0 || offset + bytes_per_pixel > self.pixels.length() {
+        None
+      } else {
+        let sample : Array[Byte] = Array::new(capacity=bytes_per_pixel)
+        for index in 0..<bytes_per_pixel {
+          sample.push(self.pixels[offset + index])
+        }
+        Some(Bytes::from_array(sample))
+      }
+    }
+  }
+}
+
+///|
+/// Check that one pixel has exactly the expected stored channel bytes.
+pub fn Pixmap::matches_sample(
+  self : Pixmap,
+  point : IPoint,
+  sample : Bytes,
+) -> Bool {
+  match self.sample(point) {
+    None => false
+    Some(actual) => actual == sample
+  }
+}
