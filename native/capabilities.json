@@ -157,6 +157,7 @@
         "native smoke invalid shader filter replay filter resources",
         "native smoke filter layer count",
         "native smoke filter finite validation",
+        "native smoke filter non-finite handle validation",
         "native smoke render image command replay",
         "native smoke render image command count",
         "native smoke render image resource plan count",
@@ -268,6 +269,7 @@
         "native smoke invalid shader filter replay filter resources",
         "native smoke filter layer count",
         "native smoke filter finite validation",
+        "native smoke filter non-finite handle validation",
         "native smoke filter resource plan count"
       ],
       "non_smoke_rationale": ""
