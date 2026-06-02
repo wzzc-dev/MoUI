@@ -913,6 +913,16 @@
       "marker": "native smoke measured text key variation"
     },
     {
+      "id": "text.invalid-measured-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke invalid measured text resource plan count"
+    },
+    {
+      "id": "text.invalid-measured-run-uncacheable",
+      "area": "Text",
+      "marker": "native smoke invalid measured text uncacheable count"
+    },
+    {
       "id": "text.measurement-key",
       "area": "Text",
       "marker": "native smoke text measurement key variation"
@@ -1894,6 +1904,16 @@
     {
       "id": "text.measured-run-key",
       "marker": "native smoke measured text key variation",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-measured-run-resource-plan",
+      "marker": "native smoke invalid measured text resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-measured-run-uncacheable",
+      "marker": "native smoke invalid measured text uncacheable count",
       "value": "1"
     },
     {

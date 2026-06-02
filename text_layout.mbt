@@ -1314,15 +1314,17 @@ pub fn MeasuredTextRunDescriptor::resource_plan(
 ) -> RendererResourcePlan {
   let descriptors : Array[RendererResourceDescriptor] = Array::new()
   descriptors.push(self.resource_descriptor(text, byte_size=measured_byte_size))
-  for
-    descriptor in self.measurement.resource_plan(
-      text,
-      measurement_byte_size~,
-      text_byte_size~,
-      font_byte_size~,
-      fallback_byte_size~,
-    ).descriptors {
-    descriptors.push(descriptor)
+  if self.is_valid() {
+    for
+      descriptor in self.measurement.resource_plan(
+        text,
+        measurement_byte_size~,
+        text_byte_size~,
+        font_byte_size~,
+        fallback_byte_size~,
+      ).descriptors {
+      descriptors.push(descriptor)
+    }
   }
   RendererResourcePlan::new(descriptors)
 }

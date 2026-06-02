@@ -1460,6 +1460,19 @@ fn main {
     ).resource_key(b"hello") {
     fail_smoke("native measured text run resource key did not encode result metadata")
   }
+  let invalid_measured_run : @skia.MeasuredTextRunDescriptor = {
+    measurement: replay_measurement,
+    advance: 0.0 / 0.0,
+    bounds: None,
+  }
+  let invalid_measured_run_plan = invalid_measured_run.resource_plan(b"hello")
+  if invalid_measured_run.is_valid() ||
+    invalid_measured_run_plan.length() != 1 ||
+    invalid_measured_run_plan.cacheable_count != 0 ||
+    invalid_measured_run_plan.uncacheable_count != 1 ||
+    invalid_measured_run_plan.count_kind(@skia.TextRunResource) != 1 {
+    fail_smoke("invalid measured text run resource plan should be uncacheable")
+  }
   let replay_shaping_plan = replay_shaping.resource_plan(b"hello")
   if replay_shaping_plan.length() != 4 ||
     replay_shaping_plan.count_kind(@skia.TextRunResource) != 2 ||
@@ -2279,6 +2292,10 @@ fn main {
   println(replay_measured_run_plan.length())
   println("native smoke measured text key variation")
   println(1)
+  println("native smoke invalid measured text resource plan count")
+  println(invalid_measured_run_plan.length())
+  println("native smoke invalid measured text uncacheable count")
+  println(invalid_measured_run_plan.uncacheable_count)
   println("native smoke text measurement key variation")
   println(1)
   println("native smoke render frame resource plan count")
