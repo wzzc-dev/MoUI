@@ -1394,6 +1394,7 @@ test "canvas replays render command lists" {
                 replay_frame,
                 surface_resources,
                 font~,
+                frame_index=5,
               )
               assert_true(surface_frame_stats.is_complete())
               assert_true(
@@ -1406,6 +1407,16 @@ test "canvas replays render command lists" {
               )
               assert_true(surface_frame_stats.surface_matches)
               assert_true(surface_frame_stats.finalized)
+              assert_true(surface_frame_stats.finalization_is_ready())
+              assert_eq(surface_frame_stats.finalization.frame_index, 5)
+              assert_true(
+                surface_frame_stats.finalization ==
+                replay_frame.finalization_descriptor(frame_index=5),
+              )
+              assert_true(
+                surface_frame_stats.finalization_resource_plan() ==
+                replay_frame.finalization_resource_plan(frame_index=5),
+              )
               assert_eq(
                 surface_frame_stats.replay.command_count,
                 commands.length(),
@@ -1442,6 +1453,8 @@ test "canvas replays render command lists" {
               assert_true(!mismatch_stats.status().is_complete())
               assert_true(!mismatch_stats.surface_matches)
               assert_true(!mismatch_stats.finalized)
+              assert_true(mismatch_stats.finalization_is_ready())
+              assert_eq(mismatch_stats.finalization.frame_index, 0)
               assert_eq(mismatch_stats.replay.replayed_count, 0)
               assert_true(mismatch_stats.replay.skipped_count > 0)
             }

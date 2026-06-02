@@ -1608,6 +1608,8 @@ fn main {
     frame_index=7,
   )
   let render_frame_resource_stats = render_frame_resources.stats()
+  let render_frame_finalization_plan = render_frame_stats
+    .finalization_resource_plan()
   guard @native.Surface::raster_n32_premul(@skia.ISize::new(6, 6))
     is Some(mismatch_frame_surface) else {
     fail_smoke("failed to create native mismatched frame replay surface")
@@ -1621,6 +1623,17 @@ fn main {
     render_frame_stats.validation_status != @skia.FrameReady ||
     !render_frame_stats.surface_matches ||
     !render_frame_stats.finalized ||
+    !render_frame_stats.finalization_is_ready() ||
+    render_frame_stats.finalization.frame_index != 7 ||
+    render_frame_stats.finalization != replay_frame.finalization_descriptor(
+      frame_index=7,
+    ) ||
+    render_frame_finalization_plan != replay_frame.finalization_resource_plan(
+      frame_index=7,
+    ) ||
+    render_frame_finalization_plan.length() != 16 ||
+    render_frame_finalization_plan.cacheable_count != 15 ||
+    render_frame_finalization_plan.uncacheable_count != 1 ||
     render_frame_stats.replay.command_count != replay_commands.length() ||
     render_frame_resource_stats.cache_count != 9 ||
     render_frame_resource_stats.resource_count != 9 ||
@@ -1670,6 +1683,14 @@ fn main {
   println(if render_frame_stats.finalized { 1 } else { 0 })
   println("native smoke surface render frame status contract")
   println(2)
+  println("native smoke surface render frame finalization frame index")
+  println(render_frame_stats.finalization.frame_index)
+  println("native smoke surface render frame finalization resource plan count")
+  println(render_frame_finalization_plan.length())
+  println("native smoke surface render frame finalization cacheable count")
+  println(render_frame_finalization_plan.cacheable_count)
+  println("native smoke surface render frame finalization uncacheable count")
+  println(render_frame_finalization_plan.uncacheable_count)
   println("native smoke surface render frame cache resources")
   println(render_frame_resource_stats.resource_count)
   println("native smoke native replay resource stats caches")

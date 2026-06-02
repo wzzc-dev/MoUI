@@ -60,6 +60,10 @@ default_stage_markers=(
   "native smoke surface render frame commands" \
   "native smoke surface render frame finalized" \
   "native smoke surface render frame status contract" \
+  "native smoke surface render frame finalization frame index" \
+  "native smoke surface render frame finalization resource plan count" \
+  "native smoke surface render frame finalization cacheable count" \
+  "native smoke surface render frame finalization uncacheable count" \
   "native smoke surface render frame cache resources" \
   "native smoke native replay resource stats caches" \
   "native smoke native replay resource stats resources" \
@@ -221,6 +225,10 @@ default_expected_stage_values=(
   $'native smoke surface render frame commands\t23'
   $'native smoke surface render frame finalized\t1'
   $'native smoke surface render frame status contract\t2'
+  $'native smoke surface render frame finalization frame index\t7'
+  $'native smoke surface render frame finalization resource plan count\t16'
+  $'native smoke surface render frame finalization cacheable count\t15'
+  $'native smoke surface render frame finalization uncacheable count\t1'
   $'native smoke surface render frame cache resources\t9'
   $'native smoke native replay resource stats caches\t9'
   $'native smoke native replay resource stats resources\t9'

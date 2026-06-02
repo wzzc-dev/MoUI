@@ -158,6 +158,26 @@
       "marker": "native smoke surface render frame status contract"
     },
     {
+      "id": "surface.frame-render-finalization-frame-index",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalization frame index"
+    },
+    {
+      "id": "surface.frame-render-finalization-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalization resource plan count"
+    },
+    {
+      "id": "surface.frame-render-finalization-cacheable",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalization cacheable count"
+    },
+    {
+      "id": "surface.frame-render-finalization-uncacheable",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalization uncacheable count"
+    },
+    {
       "id": "surface.frame-render-cache-resources",
       "area": "Surface",
       "marker": "native smoke surface render frame cache resources"
@@ -985,6 +1005,26 @@
       "id": "surface.frame-render-status-contract",
       "marker": "native smoke surface render frame status contract",
       "value": "2"
+    },
+    {
+      "id": "surface.frame-render-finalization-frame-index",
+      "marker": "native smoke surface render frame finalization frame index",
+      "value": "7"
+    },
+    {
+      "id": "surface.frame-render-finalization-resource-plan",
+      "marker": "native smoke surface render frame finalization resource plan count",
+      "value": "16"
+    },
+    {
+      "id": "surface.frame-render-finalization-cacheable",
+      "marker": "native smoke surface render frame finalization cacheable count",
+      "value": "15"
+    },
+    {
+      "id": "surface.frame-render-finalization-uncacheable",
+      "marker": "native smoke surface render frame finalization uncacheable count",
+      "value": "1"
     },
     {
       "id": "surface.frame-render-cache-resources",

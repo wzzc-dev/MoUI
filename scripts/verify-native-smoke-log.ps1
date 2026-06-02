@@ -45,6 +45,10 @@ $defaultStageMarkers = @(
   "native smoke surface render frame commands",
   "native smoke surface render frame finalized",
   "native smoke surface render frame status contract",
+  "native smoke surface render frame finalization frame index",
+  "native smoke surface render frame finalization resource plan count",
+  "native smoke surface render frame finalization cacheable count",
+  "native smoke surface render frame finalization uncacheable count",
   "native smoke surface render frame cache resources",
   "native smoke native replay resource stats caches",
   "native smoke native replay resource stats resources",
@@ -234,6 +238,22 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke surface render frame status contract"
     Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame finalization frame index"
+    Value = "7"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame finalization resource plan count"
+    Value = "16"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame finalization cacheable count"
+    Value = "15"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame finalization uncacheable count"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke surface render frame cache resources"
