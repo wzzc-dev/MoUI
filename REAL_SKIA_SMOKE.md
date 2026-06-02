@@ -337,8 +337,11 @@ record that in the workflow input or local command line.
 macOS helpers also accept `SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_LIB_DIR`,
 `SKIA_MBT_SKIA_LIB`, `SKIA_MBT_SKIA_REV`, `SKIA_MBT_EXTRA_GN_ARGS`,
 `SKIA_MBT_EXTRA_CC_FLAGS`, and `SKIA_MBT_EXTRA_LINK_FLAGS` as environment
-defaults. Workflow inputs and command-line options override those environment
-values.
+defaults. `SKIA_MBT_MACOS_LINK_MODE=auto|dynamic|static` controls whether the
+generated macOS native package links `libskia.dylib` or `libskia.a`; `auto`
+prefers dynamic for persistent direct-run package generation and static for
+temporary smoke/build package generation when the requested library exists.
+Workflow inputs and command-line options override those environment values.
 When you want a persistent macOS link configuration instead of a temporary
 smoke rewrite, use `scripts/configure-macos-native-pkg.sh` to preview, write, or
 check the generated `native/moon.pkg` contents for an existing Skia build.
