@@ -76,6 +76,16 @@ pub(all) struct AgentRuntimeSignal {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct AgentInputSettings {
+  backend_id : String
+  thinking_level : String
+  steering_mode : String
+  follow_up_mode : String
+  queued_steering : Int
+  queued_follow_up : Int
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PlanStep {
   id : String
   title : String
@@ -503,6 +513,46 @@ pub fn AgentRuntimeSignal::has_visible_signal(
 ///|
 pub fn AgentRuntimeSignal::has_active_signal(self : AgentRuntimeSignal) -> Bool {
   self.active
+}
+
+///|
+pub fn AgentInputSettings::new(
+  backend_id~ : String,
+  thinking_level? : String = "",
+  steering_mode? : String = "one-at-a-time",
+  follow_up_mode? : String = "one-at-a-time",
+  queued_steering? : Int = 0,
+  queued_follow_up? : Int = 0,
+) -> AgentInputSettings {
+  {
+    backend_id,
+    thinking_level,
+    steering_mode,
+    follow_up_mode,
+    queued_steering,
+    queued_follow_up,
+  }
+}
+
+///|
+pub fn AgentInputSettings::has_visible_thinking_level(
+  self : AgentInputSettings,
+) -> Bool {
+  self.thinking_level != ""
+}
+
+///|
+pub fn AgentInputSettings::queued_input_count(self : AgentInputSettings) -> Int {
+  self.queued_steering + self.queued_follow_up
+}
+
+///|
+pub fn AgentInputSettings::has_visible_input_modes(
+  self : AgentInputSettings,
+) -> Bool {
+  self.steering_mode != "one-at-a-time" ||
+  self.follow_up_mode != "one-at-a-time" ||
+  self.queued_input_count() > 0
 }
 
 ///|
@@ -1273,6 +1323,29 @@ pub fn WorkbenchModel::active_agent_session_metrics(
       backend_id=backend.id,
       workbench_session_id=self.selected_session_id,
     )
+  }
+}
+
+///|
+pub fn WorkbenchModel::active_agent_input_settings(
+  self : WorkbenchModel,
+) -> AgentInputSettings {
+  let backend = self.active_agent_backend_profile()
+  if backend.capabilities.uses_pi_transport &&
+    (
+      backend.capabilities.supports_thinking_level ||
+      backend.capabilities.supports_input_modes
+    ) {
+    AgentInputSettings::new(
+      backend_id=backend.id,
+      thinking_level=self.pi_agent.thinking_level,
+      steering_mode=self.pi_agent.steering_mode,
+      follow_up_mode=self.pi_agent.follow_up_mode,
+      queued_steering=self.pi_agent.queued_steering,
+      queued_follow_up=self.pi_agent.queued_follow_up,
+    )
+  } else {
+    AgentInputSettings::new(backend_id=backend.id)
   }
 }
 
