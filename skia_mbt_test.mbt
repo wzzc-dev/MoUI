@@ -1332,6 +1332,53 @@ test "render command list records transform commands" {
 }
 
 ///|
+test "render command touched bounds respect rectangular clips" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(32, 32),
+  )
+  let clipped = @skia_mbt.RenderCommandList::for_target(target)
+    .clip_rect(@skia_mbt.Rect::from_xywh(4, 4, 8, 8))
+    .draw_rect(@skia_mbt.Rect::from_xywh(0, 0, 16, 16))
+  assert_true(
+    clipped.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(4, 4, 8, 8)),
+  )
+
+  let empty_clip = @skia_mbt.RenderCommandList::for_target(target)
+    .clip_rect(@skia_mbt.Rect::from_xywh(20, 20, 4, 4))
+    .draw_rect(@skia_mbt.Rect::from_xywh(1, 1, 4, 4))
+  assert_true(empty_clip.touched_bounds() is None)
+
+  let restored_clip = @skia_mbt.RenderCommandList::for_target(target)
+    .clip_rect(@skia_mbt.Rect::from_xywh(4, 4, 8, 8))
+    .save()
+    .clip_rect(@skia_mbt.Rect::from_xywh(6, 6, 2, 2))
+    .draw_rect(@skia_mbt.Rect::from_xywh(0, 0, 16, 16))
+    .restore()
+    .draw_rect(@skia_mbt.Rect::from_xywh(0, 0, 16, 16))
+  assert_true(
+    restored_clip.touched_bounds() ==
+    Some(@skia_mbt.Rect::from_xywh(4, 4, 8, 8)),
+  )
+
+  let transformed_clip = @skia_mbt.RenderCommandList::for_target(target)
+    .translate(@skia_mbt.Point::new(4, 0))
+    .clip_rect(@skia_mbt.Rect::from_xywh(0, 0, 4, 4))
+    .draw_rect(@skia_mbt.Rect::from_xywh(0, 0, 8, 8))
+  assert_true(
+    transformed_clip.touched_bounds() ==
+    Some(@skia_mbt.Rect::from_xywh(4, 0, 4, 4)),
+  )
+
+  let difference_clip = @skia_mbt.RenderCommandList::for_target(target)
+    .clip_rect(@skia_mbt.Rect::from_xywh(4, 4, 8, 8), op=@skia_mbt.Difference)
+    .draw_rect(@skia_mbt.Rect::from_xywh(0, 0, 16, 16))
+  assert_true(
+    difference_clip.touched_bounds() ==
+    Some(@skia_mbt.Rect::from_xywh(0, 0, 16, 16)),
+  )
+}
+
+///|
 test "render command list records rounded geometry draw commands" {
   let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
     @skia_mbt.ISize::new(32, 32),
