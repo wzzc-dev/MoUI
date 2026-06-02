@@ -38,11 +38,32 @@ function targetKind(config) {
 }
 
 function shouldConfigureSkia(config) {
+  if (!skiaPrebuildEnabled(config)) {
+    return false;
+  }
   const kind = targetKind(config);
   if (!kind) {
     return true;
   }
   return !["wasm", "wasm32", "wasmgc", "wasm-gc", "js"].includes(kind);
+}
+
+function configEnvValue(config, key) {
+  return (
+    process.env[key] ||
+    config?.env?.[key] ||
+    config?.build?.env?.[key] ||
+    config?.build_info?.env?.[key] ||
+    null
+  );
+}
+
+function truthy(value) {
+  return /^(1|true|yes|on)$/i.test(String(value || "").trim());
+}
+
+function skiaPrebuildEnabled(config) {
+  return truthy(configEnvValue(config, "SKIA_MBT_ENABLE_PREBUILD_SKIA"));
 }
 
 function parseEnvLines(output) {
@@ -194,7 +215,7 @@ function platformFlags(values) {
 function main() {
   const config = readJsonFromStdin();
   if (!shouldConfigureSkia(config)) {
-    console.log(JSON.stringify({}));
+    console.log(JSON.stringify({ vars: { SKIA_MBT_STUB_CC_FLAGS: "" } }));
     return;
   }
 
