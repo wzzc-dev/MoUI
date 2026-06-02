@@ -2988,6 +2988,15 @@ fn main {
   }
   println("native smoke font fallback match resource plan count")
   println(fallback_match_plan.length())
+  let invalid_fallback_match = fallback_request.match_descriptor(b"")
+  let invalid_fallback_match_plan = invalid_fallback_match.resource_plan(size=8.0)
+  if invalid_fallback_match.is_valid() ||
+    invalid_fallback_match_plan.length() != 1 ||
+    invalid_fallback_match_plan.cacheable_count != 0 ||
+    invalid_fallback_match_plan.uncacheable_count != 1 ||
+    invalid_fallback_match_plan.count_kind(@skia.TypefaceResource) != 1 {
+    fail_smoke("invalid fallback match resource plan should be uncacheable")
+  }
   let fallback_resolution = fallback_request.resolution_descriptor(
     fallback_family,
     fallback_index=fallback_match_descriptor.fallback_index,
@@ -3019,6 +3028,20 @@ fn main {
   println(1)
   println("native smoke font fallback resolution resource plan count")
   println(fallback_resolution_plan.length())
+  let invalid_fallback_resolution = fallback_request.resolution_descriptor(b"")
+  let invalid_fallback_resolution_plan = invalid_fallback_resolution
+    .resource_plan(size=8.0)
+  if invalid_fallback_resolution.is_valid() ||
+    invalid_fallback_resolution_plan.length() != 1 ||
+    invalid_fallback_resolution_plan.cacheable_count != 0 ||
+    invalid_fallback_resolution_plan.uncacheable_count != 1 ||
+    invalid_fallback_resolution_plan.count_kind(@skia.TypefaceResource) != 1 {
+    fail_smoke("invalid fallback resolution resource plan should be uncacheable")
+  }
+  println("native smoke invalid fallback match resource plan count")
+  println(invalid_fallback_match_plan.length())
+  println("native smoke invalid fallback resolution resource plan count")
+  println(invalid_fallback_resolution_plan.length())
   guard font_mgr.resolve_fallback_request(fallback_request)
     is Some(resolved_fallback) else {
     fail_smoke("native font manager did not resolve fallback metadata")

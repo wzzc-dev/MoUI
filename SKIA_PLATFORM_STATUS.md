@@ -132,8 +132,9 @@ these facts recorded in logs:
   family metadata, FontMgr character fallback, font fallback cache-key
   variation, font fallback family metadata, resolved fallback match cache-key
   variation, fallback match resource planning, fallback resolution cache-key
-  variation, fallback resolution resource planning, native fallback resolution
-  bridging, font fallback resource planning, canvas paint-shader fill replay,
+  variation, fallback resolution resource planning, invalid fallback result
+  cache safety, native fallback resolution bridging, font fallback resource
+  planning, canvas paint-shader fill replay,
   linear-gradient shader validation, invalid shader/filter descriptor cache
   safety, invalid shader/filter replay skip proof, non-finite filter validation,
   and shader/filter resource planning.
