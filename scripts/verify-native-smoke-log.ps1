@@ -144,6 +144,7 @@ $defaultStageMarkers = @(
   "native smoke font fallback match resource plan count",
   "native smoke font fallback resolution key variation",
   "native smoke font fallback resolution resource plan count",
+  "native smoke font fallback resolution bridge",
   "native smoke font fallback resource plan count",
   "native smoke font fallback font resource plan count",
   "native smoke font fallback width"
@@ -518,6 +519,10 @@ $defaultExpectedStageValues = @(
     Value = "4"
   }
   [pscustomobject]@{
+    Marker = "native smoke font fallback resolution bridge"
+    Value = "1"
+  }
+  [pscustomobject]@{
     Marker = "native smoke font fallback resource plan count"
     Value = "1"
   }
@@ -539,6 +544,11 @@ $defaultConditionalStageMarkers = @(
   }
   [pscustomobject]@{
     Marker = "native smoke shaped glyph run native resource plan count"
+    WhenMarker = "native smoke shaper availability"
+    WhenValue = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke shaped glyph descriptor bridge"
     WhenMarker = "native smoke shaper availability"
     WhenValue = "1"
   }

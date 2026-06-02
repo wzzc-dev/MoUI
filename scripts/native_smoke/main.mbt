@@ -1651,6 +1651,26 @@ fn main {
       ) {
       fail_smoke("native shaped glyph run descriptor did not record SkShaper metadata")
     }
+    guard
+      font.shape_text_run_utf8(smoke_text_bytes(), shaped_smoke_shaping)
+      is Some(shaped_smoke_bridge) else {
+      fail_smoke("native shaped glyph descriptor bridge did not shape text")
+    }
+    let shaped_smoke_bridge_plan = shaped_smoke_bridge.resource_plan(
+      smoke_text_bytes(),
+    )
+    if !shaped_smoke_bridge.is_valid() ||
+      shaped_smoke_bridge.glyph_count() != shaped_glyph_count ||
+      shaped_smoke_bridge.cluster_count() != shaped_clusters.length() ||
+      shaped_smoke_bridge.resource_key(smoke_text_bytes()) !=
+      shaped_smoke_glyph_run.resource_key(smoke_text_bytes()) ||
+      shaped_smoke_bridge_plan.length() != shaped_smoke_glyph_run_plan.length() ||
+      shaped_smoke_bridge_plan.count_kind(@skia.TextRunResource) != 4 ||
+      shaped_smoke_bridge_plan.count_kind(@skia.FontResource) != 1 {
+      fail_smoke("native shaped glyph descriptor bridge metadata is invalid")
+    }
+    println("native smoke shaped glyph descriptor bridge")
+    println(1)
     println("native smoke shaped text native resource plan count")
     println(shaped_smoke_plan.length())
     println("native smoke shaped glyph run native resource plan count")
@@ -1886,6 +1906,30 @@ fn main {
   println(1)
   println("native smoke font fallback resolution resource plan count")
   println(fallback_resolution_plan.length())
+  guard font_mgr.resolve_fallback_request(fallback_request)
+    is Some(resolved_fallback) else {
+    fail_smoke("native font manager did not resolve fallback metadata")
+  }
+  let resolved_fallback_plan = resolved_fallback.resource_plan(size=8.0)
+  if !resolved_fallback.is_available() ||
+    !resolved_fallback.typeface.is_available() ||
+    !resolved_fallback.resolution.is_valid() ||
+    resolved_fallback.resolution.resource_key() !=
+    fallback_resolution.resource_key() ||
+    resolved_fallback_plan.length() != 4 ||
+    resolved_fallback_plan.count_kind(@skia.TypefaceResource) != 3 ||
+    resolved_fallback_plan.count_kind(@skia.FontResource) != 1 ||
+    !resolved_fallback_plan.contains_key(fallback_key) ||
+    !resolved_fallback_plan.contains_key(
+      fallback_match_descriptor.resource_key(),
+    ) ||
+    !resolved_fallback_plan.contains_key(
+      resolved_fallback.resolution.resource_key(),
+    ) {
+    fail_smoke("native font fallback resolution bridge metadata is invalid")
+  }
+  println("native smoke font fallback resolution bridge")
+  println(1)
   guard @native.Font::from_typeface(fallback_typeface, size=8.0)
     is Some(fallback_font) else {
     fail_smoke("failed to create native font from fallback request typeface")

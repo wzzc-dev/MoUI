@@ -533,8 +533,35 @@ test "font api typechecks" {
           assert_true(run.advance().x > 0.0)
         }
       }
+      let shaping = @skia.TextShapingDescriptor::new(
+        run=@skia.TextRunDescriptor::new(
+          range=@skia.TextRange::new(0, b"Skia".length()),
+        ),
+        font_key=@skia.RendererResourceKey::font(b"native-test-default"),
+      )
+      match font.shape_text_run_utf8(b"Skia", shaping) {
+        None => assert_true(!@native.skia_shaper_available())
+        Some(glyph_run) => {
+          assert_true(@native.skia_shaper_available())
+          assert_true(glyph_run.is_valid())
+          assert_true(glyph_run.glyph_count() > 0)
+          let glyph_run_plan = glyph_run.resource_plan(b"Skia")
+          assert_eq(glyph_run_plan.count_kind(@skia.TextRunResource), 4)
+          assert_eq(glyph_run_plan.count_kind(@skia.FontResource), 1)
+        }
+      }
       assert_true(font.shape_text_utf8(b"") is None)
       assert_true(font.shape_text_utf8(b"Skia", width=0.0) is None)
+      assert_true(font.shape_text_run_utf8(b"", shaping) is None)
+      assert_true(
+        font.shape_text_run_utf8(
+          b"Skia",
+          @skia.TextShapingDescriptor::new(
+            run=@skia.TextRunDescriptor::new(range=@skia.TextRange::new(0, 0)),
+          ),
+        )
+        is None,
+      )
       let metrics = font.metrics()
       assert_true(metrics.ascent <= 0.0)
       assert_true(metrics.descent >= 0.0)
@@ -607,6 +634,10 @@ test "font api typechecks" {
         is None,
       )
       assert_true(
+        font_mgr.resolve_fallback_request(@skia.FontFallbackRequest::new())
+        is None,
+      )
+      assert_true(
         @native.Typeface::from_font_mgr_family(
           font_mgr,
           b"",
@@ -650,6 +681,21 @@ test "font api typechecks" {
                   None => ()
                   Some(fallback_typeface) =>
                     assert_true(fallback_typeface.is_available())
+                }
+                match font_mgr.resolve_fallback_request(fallback_request) {
+                  None => ()
+                  Some(resolved) => {
+                    assert_true(resolved.is_available())
+                    assert_true(resolved.typeface.is_available())
+                    assert_true(resolved.resolution.is_valid())
+                    assert_true(!resolved.resolution.resource_key().is_empty())
+                    let resolved_plan = resolved.resource_plan(size=14.0)
+                    assert_eq(
+                      resolved_plan.count_kind(@skia.TypefaceResource),
+                      3,
+                    )
+                    assert_eq(resolved_plan.count_kind(@skia.FontResource), 1)
+                  }
                 }
                 let latin_fallback_request = @skia.FontFallbackRequest::new(
                   families=@skia.FontFallbackChain::new(

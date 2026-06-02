@@ -89,6 +89,50 @@ pub(all) struct Typeface {
 }
 
 ///|
+/// Native typeface plus the value-layer fallback metadata that resolved it.
+pub(all) struct ResolvedTypeface {
+  typeface : Typeface
+  resolution : @skia.FontFallbackResolutionDescriptor
+}
+
+///|
+pub fn ResolvedTypeface::is_available(self : ResolvedTypeface) -> Bool {
+  self.typeface.is_available() && self.resolution.is_valid()
+}
+
+///|
+pub fn ResolvedTypeface::font_descriptor(
+  self : ResolvedTypeface,
+  size? : Float = 12.0,
+  scale_x? : Float = 1.0,
+  skew_x? : Float = 0.0,
+) -> @skia.FontDescriptor {
+  self.resolution.font_descriptor(size~, scale_x~, skew_x~)
+}
+
+///|
+pub fn ResolvedTypeface::resource_plan(
+  self : ResolvedTypeface,
+  size? : Float = 12.0,
+  scale_x? : Float = 1.0,
+  skew_x? : Float = 0.0,
+  request_byte_size? : Int64 = -1L,
+  resolution_byte_size? : Int64 = -1L,
+  match_byte_size? : Int64 = -1L,
+  font_byte_size? : Int64 = -1L,
+) -> @skia.RendererResourcePlan {
+  self.resolution.resource_plan(
+    size~,
+    scale_x~,
+    skew_x~,
+    request_byte_size~,
+    resolution_byte_size~,
+    match_byte_size~,
+    font_byte_size~,
+  )
+}
+
+///|
 /// Native Skia font manager.
 #warnings("-struct_never_constructed-unused_field")
 pub(all) struct FontMgr {
