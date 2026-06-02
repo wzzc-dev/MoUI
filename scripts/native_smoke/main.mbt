@@ -138,6 +138,10 @@ fn main {
   )
   if @native.Surface::for_target(unsupported_window_target) is Some(_) ||
     @native.Surface::for_target(unsupported_gpu_target) is Some(_) ||
+    @native.Surface::target_support_status(unsupported_window_target) !=
+    @native.SurfaceTargetWindowUnsupported ||
+    @native.Surface::target_support_status(unsupported_gpu_target) !=
+    @native.SurfaceTargetGpuUnsupported ||
     unsupported_window_target.resource_plan().count_kind(@skia.SurfaceResource) != 1 ||
     unsupported_gpu_target.resource_plan().count_kind(@skia.GpuSurfaceResource) != 1 ||
     unsupported_gpu_target.resource_plan().count_kind(@skia.GpuContextResource) != 1 {
@@ -145,6 +149,8 @@ fn main {
   }
   println("native smoke surface target factory unsupported")
   println(1)
+  println("native smoke surface target support diagnostics")
+  println(2)
 
   let smoke_gpu_context = @skia.GpuContextDescriptor::mock(
     id=b"native-smoke-gpu-context",

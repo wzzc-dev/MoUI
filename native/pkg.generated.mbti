@@ -313,6 +313,7 @@ pub fn Surface::raster_n32_premul(@skia_mbt.ISize) -> Self?
 pub fn Surface::read_pixels(Self, bounds? : @skia_mbt.IRect) -> @skia_mbt.Pixmap?
 pub fn Surface::render_frame(Self, @skia_mbt.RenderFrameDescriptor, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
 pub fn Surface::render_frame_with_resources(Self, @skia_mbt.RenderFrameDescriptor, NativeReplayResources, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
+pub fn Surface::target_support_status(@skia_mbt.SurfaceTargetDescriptor) -> SurfaceTargetSupportStatus
 pub fn Surface::width(Self) -> Int
 
 pub(all) struct SurfaceFrameReplayStats {
@@ -322,6 +323,15 @@ pub(all) struct SurfaceFrameReplayStats {
   finalized : Bool
 } derive(Eq, @debug.Debug)
 pub fn SurfaceFrameReplayStats::is_complete(Self) -> Bool
+
+pub(all) enum SurfaceTargetSupportStatus {
+  SurfaceTargetSupported
+  SurfaceTargetEmpty
+  SurfaceTargetSkiaUnavailable
+  SurfaceTargetWindowUnsupported
+  SurfaceTargetGpuUnsupported
+} derive(Eq, @debug.Debug)
+pub fn SurfaceTargetSupportStatus::is_supported(Self) -> Bool
 
 pub(all) struct Typeface {
   // private fields
