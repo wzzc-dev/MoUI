@@ -1252,7 +1252,11 @@ test "canvas replays render command lists" {
           assert_eq(stats.present_count, 0)
           match font {
             None => assert_true(stats.skipped_count <= 1)
-            Some(_) => assert_true(stats.is_complete())
+            Some(_) => {
+              assert_true(stats.is_complete())
+              assert_true(stats.status() == @native.CanvasReplayComplete)
+              assert_true(stats.status().is_complete())
+            }
           }
           assert_true(
             stats.replayed_count + stats.skipped_count == commands.length(),
@@ -1264,7 +1268,10 @@ test "canvas replays render command lists" {
           assert_eq(frame_stats.present_count, 0)
           match font {
             None => assert_true(frame_stats.skipped_count <= 1)
-            Some(_) => assert_true(frame_stats.is_complete())
+            Some(_) => {
+              assert_true(frame_stats.is_complete())
+              assert_true(frame_stats.status() == @native.CanvasReplayComplete)
+            }
           }
           let rejected_frame_stats = canvas.replay_frame(rejected_frame, font~)
           assert_eq(
@@ -1274,6 +1281,10 @@ test "canvas replays render command lists" {
           assert_eq(rejected_frame_stats.replayed_count, 0)
           assert_true(rejected_frame_stats.skipped_count > 0)
           assert_true(!rejected_frame_stats.is_complete())
+          assert_true(
+            rejected_frame_stats.status() == @native.CanvasReplaySkippedCommands,
+          )
+          assert_true(!rejected_frame_stats.status().is_complete())
           match replay_image_descriptor {
             None => ()
             Some(_) => {

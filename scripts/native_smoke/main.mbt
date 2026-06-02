@@ -1560,6 +1560,8 @@ fn main {
   )
   if replay_frame_stats.command_count != replay_commands.length() ||
     !replay_frame_stats.is_complete() ||
+    replay_frame_stats.status() != @native.CanvasReplayComplete ||
+    !replay_frame_stats.status().is_complete() ||
     replay_frame_resources.shader_cache.length() != 1 ||
     replay_frame_resources.path_cache.length() != 2 ||
     replay_frame_resources.text_run_cache.length() != 1 ||
@@ -1570,7 +1572,10 @@ fn main {
     replay_frame_resources.mask_filter_cache.length() != 1 ||
     replay_frame_rejected_stats.replayed_count != 0 ||
     replay_frame_rejected_stats.skipped_count == 0 ||
-    replay_frame_rejected_stats.is_complete() {
+    replay_frame_rejected_stats.is_complete() ||
+    replay_frame_rejected_stats.status() !=
+    @native.CanvasReplaySkippedCommands ||
+    replay_frame_rejected_stats.status().is_complete() {
     fail_smoke("native render frame replay contract did not hold")
   }
   guard replay_frame_surface.read_pixels(
@@ -1675,6 +1680,8 @@ fn main {
   println(replay_frame_stats.command_count)
   println("native smoke render frame replay complete")
   println(if replay_frame_stats.is_complete() { 1 } else { 0 })
+  println("native smoke canvas replay status contract")
+  println(2)
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
   println("native smoke surface render frame commands")

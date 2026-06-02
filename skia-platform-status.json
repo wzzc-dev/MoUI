@@ -138,6 +138,11 @@
       "marker": "native smoke render frame replay complete"
     },
     {
+      "id": "canvas.replay-status-contract",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay status contract"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "area": "Canvas",
       "marker": "native smoke render frame replay rejected skipped"
@@ -985,6 +990,11 @@
       "id": "canvas.frame-replay-complete",
       "marker": "native smoke render frame replay complete",
       "value": "1"
+    },
+    {
+      "id": "canvas.replay-status-contract",
+      "marker": "native smoke canvas replay status contract",
+      "value": "2"
     },
     {
       "id": "canvas.frame-replay-rejected-skipped",

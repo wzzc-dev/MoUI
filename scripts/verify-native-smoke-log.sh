@@ -56,6 +56,7 @@ default_stage_markers=(
   "native smoke canvas replay commands" \
   "native smoke render frame replay commands" \
   "native smoke render frame replay complete" \
+  "native smoke canvas replay status contract" \
   "native smoke render frame replay rejected skipped" \
   "native smoke surface render frame commands" \
   "native smoke surface render frame finalized" \
@@ -221,6 +222,7 @@ default_expected_stage_values=(
   $'native smoke canvas replay commands\t23'
   $'native smoke render frame replay commands\t23'
   $'native smoke render frame replay complete\t1'
+  $'native smoke canvas replay status contract\t2'
   $'native smoke render frame replay rejected skipped\t20'
   $'native smoke surface render frame commands\t23'
   $'native smoke surface render frame finalized\t1'
