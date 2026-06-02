@@ -277,13 +277,44 @@ pub(all) struct SurfaceFrameReplayStats {
 } derive(Debug, Eq)
 
 ///|
+/// Coarse outcome for rendering a value-layer frame through a native surface.
+pub(all) enum SurfaceFrameReplayStatus {
+  SurfaceFrameReplayComplete
+  SurfaceFrameReplayValidationFailed(@skia.RenderFrameValidationStatus)
+  SurfaceFrameReplaySurfaceMismatch
+  SurfaceFrameReplaySkippedCommands
+  SurfaceFrameReplayFinalizationFailed
+} derive(Debug, Eq)
+
+///|
+pub fn SurfaceFrameReplayStatus::is_complete(
+  self : SurfaceFrameReplayStatus,
+) -> Bool {
+  self is SurfaceFrameReplayComplete
+}
+
+///|
+pub fn SurfaceFrameReplayStats::status(
+  self : SurfaceFrameReplayStats,
+) -> SurfaceFrameReplayStatus {
+  if !self.validation_status.is_ready() {
+    SurfaceFrameReplayValidationFailed(self.validation_status)
+  } else if !self.surface_matches {
+    SurfaceFrameReplaySurfaceMismatch
+  } else if !self.replay.is_complete() {
+    SurfaceFrameReplaySkippedCommands
+  } else if !self.finalized {
+    SurfaceFrameReplayFinalizationFailed
+  } else {
+    SurfaceFrameReplayComplete
+  }
+}
+
+///|
 pub fn SurfaceFrameReplayStats::is_complete(
   self : SurfaceFrameReplayStats,
 ) -> Bool {
-  self.validation_status.is_ready() &&
-  self.surface_matches &&
-  self.replay.is_complete() &&
-  self.finalized
+  self.status().is_complete()
 }
 
 ///|

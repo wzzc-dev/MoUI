@@ -323,6 +323,16 @@ pub(all) struct SurfaceFrameReplayStats {
   finalized : Bool
 } derive(Eq, @debug.Debug)
 pub fn SurfaceFrameReplayStats::is_complete(Self) -> Bool
+pub fn SurfaceFrameReplayStats::status(Self) -> SurfaceFrameReplayStatus
+
+pub(all) enum SurfaceFrameReplayStatus {
+  SurfaceFrameReplayComplete
+  SurfaceFrameReplayValidationFailed(@skia_mbt.RenderFrameValidationStatus)
+  SurfaceFrameReplaySurfaceMismatch
+  SurfaceFrameReplaySkippedCommands
+  SurfaceFrameReplayFinalizationFailed
+} derive(Eq, @debug.Debug)
+pub fn SurfaceFrameReplayStatus::is_complete(Self) -> Bool
 
 pub(all) enum SurfaceTargetSupportStatus {
   SurfaceTargetSupported

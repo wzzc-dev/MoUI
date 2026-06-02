@@ -1609,6 +1609,7 @@ fn main {
     font=Some(replay_font),
   )
   if !render_frame_stats.is_complete() ||
+    render_frame_stats.status() != @native.SurfaceFrameReplayComplete ||
     render_frame_stats.validation_status != @skia.FrameReady ||
     !render_frame_stats.surface_matches ||
     !render_frame_stats.finalized ||
@@ -1622,6 +1623,8 @@ fn main {
     render_frame_resources.image_filter_cache.length() != 1 ||
     render_frame_resources.mask_filter_cache.length() != 1 ||
     render_frame_mismatch_stats.is_complete() ||
+    render_frame_mismatch_stats.status() !=
+    @native.SurfaceFrameReplaySurfaceMismatch ||
     render_frame_mismatch_stats.surface_matches ||
     render_frame_mismatch_stats.finalized ||
     render_frame_mismatch_stats.replay.replayed_count != 0 {
@@ -1655,6 +1658,8 @@ fn main {
   println(render_frame_stats.replay.command_count)
   println("native smoke surface render frame finalized")
   println(if render_frame_stats.finalized { 1 } else { 0 })
+  println("native smoke surface render frame status contract")
+  println(2)
   println("native smoke surface render frame cache resources")
   println(
     render_frame_resources.shader_cache.length() +

@@ -44,6 +44,7 @@ $defaultStageMarkers = @(
   "native smoke render frame replay rejected skipped",
   "native smoke surface render frame commands",
   "native smoke surface render frame finalized",
+  "native smoke surface render frame status contract",
   "native smoke surface render frame cache resources",
   "native smoke surface render frame mismatch rejected",
   "native smoke render frame pixmap sample proof",
@@ -227,6 +228,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke surface render frame finalized"
     Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame status contract"
+    Value = "2"
   }
   [pscustomobject]@{
     Marker = "native smoke surface render frame cache resources"
