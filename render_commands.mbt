@@ -1174,6 +1174,19 @@ fn include_render_command_bounds(bounds : Rect?, next : Rect) -> Rect? {
 }
 
 ///|
+priv struct RenderCommandBoundsState {
+  matrix : Matrix
+  clip : Rect
+}
+
+///|
+fn RenderCommandBoundsState::new(
+  pass_bounds : Rect,
+) -> RenderCommandBoundsState {
+  { matrix: Matrix::identity(), clip: pass_bounds }
+}
+
+///|
 fn render_command_update_matrix(
   command : RenderCommand,
   current_matrix : Matrix,
@@ -1200,18 +1213,60 @@ fn render_command_update_matrix(
 }
 
 ///|
-fn render_command_transformed_bounds(
-  command : RenderCommand,
+fn render_command_clip_bounds(
+  rect : Rect,
   current_matrix : Matrix,
   pass_bounds : Rect,
 ) -> Rect? {
+  current_matrix.map_rect(rect).intersect(pass_bounds)
+}
+
+///|
+fn render_command_update_clip(
+  command : RenderCommand,
+  current_matrix : Matrix,
+  current_clip : Rect,
+  pass_bounds : Rect,
+  clip_stack : Array[Rect],
+) -> Rect {
   match command {
-    ClearCanvas(_) => Some(pass_bounds)
+    SaveCanvas | SaveCanvasLayer(_, _, _, _, _) => {
+      clip_stack.push(current_clip)
+      current_clip
+    }
+    RestoreCanvas =>
+      match clip_stack.pop() {
+        None => pass_bounds
+        Some(clip) => clip
+      }
+    ResetCanvasMatrix => current_clip
+    ClipCanvasRect(rect, Intersect) =>
+      match render_command_clip_bounds(rect, current_matrix, pass_bounds) {
+        None => Rect::empty()
+        Some(clip) =>
+          match current_clip.intersect(clip) {
+            None => Rect::empty()
+            Some(clip) => clip
+          }
+      }
+    ClipCanvasRect(_, Difference) => current_clip
+    _ => current_clip
+  }
+}
+
+///|
+fn render_command_transformed_bounds(
+  command : RenderCommand,
+  current_matrix : Matrix,
+  current_clip : Rect,
+) -> Rect? {
+  match command {
+    ClearCanvas(_) => Some(current_clip)
     command =>
       match command.draw_bounds() {
         None => None
         Some(draw_bounds) =>
-          current_matrix.map_rect(draw_bounds).intersect(pass_bounds)
+          current_matrix.map_rect(draw_bounds).intersect(current_clip)
       }
   }
 }
@@ -1224,17 +1279,35 @@ pub fn RenderCommandList::touched_bounds(self : RenderCommandList) -> Rect? {
   } else {
     let initial_bounds : Rect? = None
     let matrix_stack : Array[Matrix] = []
-    for bounds = initial_bounds, matrix = Matrix::identity(), i = 0
+    let clip_stack : Array[Rect] = []
+    for bounds = initial_bounds, state = RenderCommandBoundsState::new(
+            pass_bounds,
+          ), i = 0
         i < self.commands.length()
         i = i + 1 {
       let command = self.commands[i]
-      let next = render_command_transformed_bounds(command, matrix, pass_bounds)
+      let next = render_command_transformed_bounds(
+        command,
+        state.matrix,
+        state.clip,
+      )
       let bounds = match next {
         None => bounds
         Some(next) => include_render_command_bounds(bounds, next)
       }
-      let matrix = render_command_update_matrix(command, matrix, matrix_stack)
-      continue bounds, matrix, i + 1
+      let matrix = render_command_update_matrix(
+        command,
+        state.matrix,
+        matrix_stack,
+      )
+      let clip = render_command_update_clip(
+        command,
+        state.matrix,
+        state.clip,
+        pass_bounds,
+        clip_stack,
+      )
+      continue bounds, { matrix, clip }, i + 1
     } nobreak {
       bounds
     }
