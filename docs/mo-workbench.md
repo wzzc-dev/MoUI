@@ -416,6 +416,11 @@ packages:
   affordance consume that projection instead of reading Pi transport or
   `PiAgentSnapshot` directly, so fixture sessions stay quiet even if stale Pi
   provider state remains in memory.
+- Thinking level, steering mode, follow-up mode, and queued input counts flow
+  through `AgentInputSettings`. Session controls and composer secondary actions
+  consume that backend-neutral projection, keeping Pi queue details out of the
+  default product surface and preventing fixture sessions from inheriting stale
+  Pi input-mode UI.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
 - The current-turn evidence card surfaces the latest non-duplicated diagnostic

@@ -3000,8 +3000,10 @@ fn WorkbenchModel::session_controls_row(
 ) -> @core.View[WorkbenchMsg] {
   ignore(layout)
   let capabilities = self.active_agent_backend_capabilities()
+  let settings = self.active_agent_input_settings()
   let controls : Array[@core.View[WorkbenchMsg]] = []
-  if capabilities.supports_thinking_level && self.pi_agent.thinking_level != "" {
+  if capabilities.supports_thinking_level &&
+    settings.has_visible_thinking_level() {
     controls.push(self.thinking_level_cell(theme))
   }
   controls.push(spacer(min_length=4.0, weight=1.0))
@@ -3076,7 +3078,11 @@ fn WorkbenchModel::session_controls_row(
 ///|
 fn WorkbenchModel::has_session_panel_controls(self : WorkbenchModel) -> Bool {
   let capabilities = self.active_agent_backend_capabilities()
-  (capabilities.supports_thinking_level && self.pi_agent.thinking_level != "") ||
+  let settings = self.active_agent_input_settings()
+  (
+    capabilities.supports_thinking_level &&
+    settings.has_visible_thinking_level()
+  ) ||
   self.has_advanced_session_controls() ||
   self.has_cancel_target()
 }
@@ -3090,8 +3096,11 @@ fn WorkbenchModel::has_advanced_session_controls(self : WorkbenchModel) -> Bool 
   (capabilities.supports_fork && !self.fork_messages.is_empty()) ||
   self.active_agent_session_metrics().has_visible_metrics() ||
   self.active_agent_model_catalog().length() > 0 ||
-  (capabilities.supports_thinking_level && self.pi_agent.thinking_level != "") ||
-  (capabilities.uses_pi_transport && self.transport.has_active_signal())
+  (
+    capabilities.supports_thinking_level &&
+    self.active_agent_input_settings().has_visible_thinking_level()
+  ) ||
+  self.active_agent_runtime_signal().has_active_signal()
 }
 
 ///|
@@ -3269,12 +3278,12 @@ fn pi_session_binding_status_label(status : String) -> String {
 
 ///|
 fn WorkbenchModel::thinking_level_label(self : WorkbenchModel) -> String {
-  match self.pi_agent.thinking_level {
+  match self.active_agent_input_settings().thinking_level {
     "" | "default" => "默认"
     "low" => "低"
     "medium" => "中"
     "high" => "高"
-    _ => self.pi_agent.thinking_level
+    other => other
   }
 }
 
@@ -4304,14 +4313,10 @@ fn WorkbenchModel::should_show_composer_options_toggle(
 fn WorkbenchModel::should_show_composer_secondary_actions(
   self : WorkbenchModel,
 ) -> Bool {
+  let settings = self.active_agent_input_settings()
   !self.is_composer_slash_prompt() &&
   self.active_agent_backend_capabilities().supports_input_modes &&
-  (
-    self.composer_controls_expanded ||
-    self.pi_agent.steering_mode != "one-at-a-time" ||
-    self.pi_agent.follow_up_mode != "one-at-a-time" ||
-    self.pi_agent.queued_steering + self.pi_agent.queued_follow_up > 0
-  )
+  (self.composer_controls_expanded || settings.has_visible_input_modes())
 }
 
 ///|
@@ -4511,12 +4516,13 @@ fn context_display_label(id : String) -> String {
 
 ///|
 fn WorkbenchModel::steering_mode_label(self : WorkbenchModel) -> String {
-  "引导 " + mode_short_label(self.pi_agent.steering_mode)
+  "引导 " + mode_short_label(self.active_agent_input_settings().steering_mode)
 }
 
 ///|
 fn WorkbenchModel::follow_up_mode_label(self : WorkbenchModel) -> String {
-  "跟进 " + mode_short_label(self.pi_agent.follow_up_mode)
+  "跟进 " +
+  mode_short_label(self.active_agent_input_settings().follow_up_mode)
 }
 
 ///|

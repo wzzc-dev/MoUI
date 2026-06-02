@@ -274,6 +274,50 @@ test "workbench fixture runtime signal ignores stale Pi provider state" {
 }
 
 ///|
+test "workbench projects Pi input settings through agent-neutral contract" {
+  let model = {
+    ..WorkbenchModel::new(),
+    pi_agent: PiAgentSnapshot::new(
+      thinking_level="high",
+      steering_mode="all",
+      follow_up_mode="one-at-a-time",
+      queued_steering=2,
+      queued_follow_up=1,
+    ),
+  }
+  let settings = model.active_agent_input_settings()
+  inspect(settings.backend_id, content="pi")
+  inspect(settings.thinking_level, content="high")
+  inspect(settings.steering_mode, content="all")
+  inspect(settings.follow_up_mode, content="one-at-a-time")
+  inspect(settings.queued_input_count(), content="3")
+  inspect(settings.has_visible_thinking_level(), content="true")
+  inspect(settings.has_visible_input_modes(), content="true")
+}
+
+///|
+test "workbench fixture input settings ignore stale Pi modes" {
+  let model = {
+    ..WorkbenchModel::new().update(SwitchAgentBackend("fixture")),
+    pi_agent: PiAgentSnapshot::new(
+      thinking_level="high",
+      steering_mode="all",
+      follow_up_mode="all",
+      queued_steering=1,
+      queued_follow_up=1,
+    ),
+  }
+  let settings = model.active_agent_input_settings()
+  inspect(settings.backend_id, content="fixture")
+  inspect(settings.thinking_level, content="")
+  inspect(settings.steering_mode, content="one-at-a-time")
+  inspect(settings.follow_up_mode, content="one-at-a-time")
+  inspect(settings.queued_input_count(), content="0")
+  inspect(settings.has_visible_thinking_level(), content="false")
+  inspect(settings.has_visible_input_modes(), content="false")
+}
+
+///|
 test "workbench projects Pi fork candidates through agent-neutral fork points" {
   let assistant = TranscriptItem::new(
     id="entry-assistant-1",

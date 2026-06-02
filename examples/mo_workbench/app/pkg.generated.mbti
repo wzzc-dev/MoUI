@@ -67,6 +67,19 @@ pub(all) struct AgentForkPoint {
 } derive(Eq, @debug.Debug)
 pub fn AgentForkPoint::new(entry_id~ : String, text? : String) -> Self
 
+pub(all) struct AgentInputSettings {
+  backend_id : String
+  thinking_level : String
+  steering_mode : String
+  follow_up_mode : String
+  queued_steering : Int
+  queued_follow_up : Int
+} derive(Eq, @debug.Debug)
+pub fn AgentInputSettings::has_visible_input_modes(Self) -> Bool
+pub fn AgentInputSettings::has_visible_thinking_level(Self) -> Bool
+pub fn AgentInputSettings::new(backend_id~ : String, thinking_level? : String, steering_mode? : String, follow_up_mode? : String, queued_steering? : Int, queued_follow_up? : Int) -> Self
+pub fn AgentInputSettings::queued_input_count(Self) -> Int
+
 pub(all) struct AgentModelInfo {
   provider : String
   id : String
@@ -370,6 +383,7 @@ pub(all) struct WorkbenchModel {
 pub fn WorkbenchModel::active_agent_backend_capabilities(Self) -> AgentBackendCapabilities
 pub fn WorkbenchModel::active_agent_backend_profile(Self) -> AgentBackendProfile
 pub fn WorkbenchModel::active_agent_fork_points_for_transcript_item(Self, TranscriptItem) -> Array[AgentForkPoint]
+pub fn WorkbenchModel::active_agent_input_settings(Self) -> AgentInputSettings
 pub fn WorkbenchModel::active_agent_model_catalog(Self) -> Array[AgentModelInfo]
 pub fn WorkbenchModel::active_agent_runtime_signal(Self) -> AgentRuntimeSignal
 pub fn WorkbenchModel::active_agent_session_binding(Self) -> AgentSessionBinding
