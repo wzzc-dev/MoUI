@@ -87,6 +87,9 @@ pub fn PiTransportState::enqueue_many(
   self : PiTransportState,
   commands : Array[PiTransportCommand],
 ) -> PiTransportState {
+  if commands.is_empty() {
+    return self
+  }
   let command_queue = self.command_queue.copy()
   for command in commands {
     command_queue.push(command)

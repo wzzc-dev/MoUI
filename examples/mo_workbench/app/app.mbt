@@ -8,12 +8,37 @@ pub(all) struct WorkbenchSession {
   id : String
   title : String
   project_path : String
+  backend_id : String
   pi_session_path : String
   branch : String
   status : String
   summary : String
   active_task : String
   unread_events : Int
+} derive(Eq, Debug)
+
+///|
+pub(all) struct AgentBackendCapabilities {
+  uses_pi_transport : Bool
+  supports_session_refresh : Bool
+  supports_new_session : Bool
+  supports_model_catalog : Bool
+  supports_command_catalog : Bool
+  supports_fork : Bool
+  supports_html_export : Bool
+  supports_context_compaction : Bool
+  supports_thinking_level : Bool
+  supports_input_modes : Bool
+  supports_shell_commands : Bool
+  supports_session_stats : Bool
+} derive(Eq, Debug)
+
+///|
+pub(all) struct AgentBackendProfile {
+  id : String
+  label : String
+  description : String
+  capabilities : AgentBackendCapabilities
 } derive(Eq, Debug)
 
 ///|
@@ -217,6 +242,7 @@ pub(all) struct WorkbenchUpdate {
 pub(all) enum WorkbenchMsg {
   SelectSession(String)
   SelectPanel(String)
+  SwitchAgentBackend(String)
   SelectAgent(String)
   PromptChanged(String)
   ToggleComposerControls
@@ -265,6 +291,7 @@ pub fn WorkbenchSession::new(
   id~ : String,
   title~ : String,
   project_path~ : String,
+  backend_id? : String = "pi",
   pi_session_path? : String = "",
   branch~ : String,
   status~ : String,
@@ -276,6 +303,7 @@ pub fn WorkbenchSession::new(
     id,
     title,
     project_path,
+    backend_id,
     pi_session_path,
     branch,
     status,
@@ -283,6 +311,78 @@ pub fn WorkbenchSession::new(
     active_task,
     unread_events,
   }
+}
+
+///|
+pub fn AgentBackendCapabilities::new(
+  uses_pi_transport? : Bool = false,
+  supports_session_refresh? : Bool = false,
+  supports_new_session? : Bool = false,
+  supports_model_catalog? : Bool = false,
+  supports_command_catalog? : Bool = false,
+  supports_fork? : Bool = false,
+  supports_html_export? : Bool = false,
+  supports_context_compaction? : Bool = false,
+  supports_thinking_level? : Bool = false,
+  supports_input_modes? : Bool = false,
+  supports_shell_commands? : Bool = false,
+  supports_session_stats? : Bool = false,
+) -> AgentBackendCapabilities {
+  {
+    uses_pi_transport,
+    supports_session_refresh,
+    supports_new_session,
+    supports_model_catalog,
+    supports_command_catalog,
+    supports_fork,
+    supports_html_export,
+    supports_context_compaction,
+    supports_thinking_level,
+    supports_input_modes,
+    supports_shell_commands,
+    supports_session_stats,
+  }
+}
+
+///|
+pub fn AgentBackendProfile::new(
+  id~ : String,
+  label~ : String,
+  description~ : String,
+  capabilities~ : AgentBackendCapabilities,
+) -> AgentBackendProfile {
+  { id, label, description, capabilities }
+}
+
+///|
+pub fn agent_backend_profiles() -> Array[AgentBackendProfile] {
+  [
+    AgentBackendProfile::new(
+      id="pi",
+      label="Pi",
+      description="真实后端",
+      capabilities=AgentBackendCapabilities::new(
+        uses_pi_transport=true,
+        supports_session_refresh=true,
+        supports_new_session=true,
+        supports_model_catalog=true,
+        supports_command_catalog=true,
+        supports_fork=true,
+        supports_html_export=true,
+        supports_context_compaction=true,
+        supports_thinking_level=true,
+        supports_input_modes=true,
+        supports_shell_commands=true,
+        supports_session_stats=true,
+      ),
+    ),
+    AgentBackendProfile::new(
+      id="fixture",
+      label="本地",
+      description="本地演练",
+      capabilities=AgentBackendCapabilities::new(),
+    ),
+  ]
 }
 
 ///|
@@ -662,7 +762,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     pi_rpc: PiRpcSnapshot::new(),
     pi_agent: PiAgentSnapshot::new(),
     pi_session_bindings: [],
-    last_status: "Ready for Pi RPC",
+    last_status: "Ready for agent backend",
   }
 }
 
@@ -674,6 +774,7 @@ pub fn WorkbenchModel::update(
   match message {
     SelectSession(id) => self.select_session(id)
     SelectPanel(panel) => { ..self, selected_panel: panel }
+    SwitchAgentBackend(id) => self.switch_backend(id)
     SelectAgent(id) => self.select_agent(id)
     PromptChanged(value) => { ..self, prompt: value }
     ToggleComposerControls =>
@@ -837,6 +938,26 @@ pub fn WorkbenchModel::active_session(
 }
 
 ///|
+pub fn WorkbenchModel::active_agent_backend_profile(
+  self : WorkbenchModel,
+) -> AgentBackendProfile {
+  let id = self.active_session().backend_id
+  for profile in agent_backend_profiles() {
+    if profile.id == id {
+      return profile
+    }
+  }
+  agent_backend_profiles()[0]
+}
+
+///|
+pub fn WorkbenchModel::active_agent_backend_capabilities(
+  self : WorkbenchModel,
+) -> AgentBackendCapabilities {
+  self.active_agent_backend_profile().capabilities
+}
+
+///|
 pub fn WorkbenchModel::active_pi_session_binding(
   self : WorkbenchModel,
 ) -> PiSessionBinding {
@@ -940,6 +1061,94 @@ fn WorkbenchModel::select_session(
     selected_session_id: id,
     main_scroll_offset_y: 0.0,
     last_status: "Workbench session selected",
+  }.reset_active_session_surface()
+}
+
+///|
+fn WorkbenchModel::reset_active_session_surface(
+  self : WorkbenchModel,
+) -> WorkbenchModel {
+  {
+    ..self,
+    prompt: "",
+    composer_controls_expanded: false,
+    workspace_details_expanded: false,
+    plan: [],
+    events: [],
+    transcript: [],
+    command_catalog: [],
+    model_catalog: [],
+    fork_messages: [],
+    pi_session_stats: PiSessionStatsSnapshot::new(),
+    files: [],
+    diff: DiffOverview::new(
+      changed_files=0,
+      additions=0,
+      deletions=0,
+      status="",
+    ),
+    commands: [],
+    diagnostics: [],
+    transport: PiTransportState::new(),
+    pi_rpc: PiRpcSnapshot::new(),
+    pi_agent: PiAgentSnapshot::new(),
+    pi_session_bindings: [],
+  }
+}
+
+///|
+fn WorkbenchModel::switch_backend(
+  self : WorkbenchModel,
+  id : String,
+) -> WorkbenchModel {
+  let backend_id = id.trim().to_owned()
+  let mut profile : AgentBackendProfile? = None
+  for candidate in agent_backend_profiles() {
+    if candidate.id == backend_id {
+      profile = Some(candidate)
+    }
+  }
+  match profile {
+    None => { ..self, last_status: "Agent backend unavailable" }
+    Some(value) => {
+      let current = self.active_session()
+      if current.backend_id == value.id {
+        {
+          ..self,
+          last_status: "Agent backend already selected: " + value.label,
+        }
+      } else {
+        let sessions = self.sessions.map(session => {
+          if session.id == self.selected_session_id {
+            {
+              ..session,
+              backend_id: value.id,
+              status: "active",
+              active_task: "",
+              unread_events: 0,
+            }
+          } else {
+            session
+          }
+        })
+        let events : Array[AgentEvent] = []
+        events.push(
+          AgentEvent::new(
+            phase="control",
+            title="Agent backend switched",
+            detail=value.label,
+            tone="info",
+          ),
+        )
+        {
+          ..self.reset_active_session_surface(),
+          sessions,
+          events,
+          main_scroll_offset_y: 0.0,
+          last_status: "Agent backend switched: " + value.label,
+        }
+      }
+    }
   }
 }
 
@@ -1016,6 +1225,9 @@ fn WorkbenchModel::select_session_with_transport(
 
 ///|
 fn WorkbenchModel::refresh_session(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_session_refresh {
+    return { ..self, last_status: "Agent backend does not support refresh" }
+  }
   let session = self.active_session()
   let commands = self.commands_for_session_selection(session)
   let events = self.events.copy()
@@ -1050,6 +1262,12 @@ fn WorkbenchModel::refresh_session_with_transport(
 
 ///|
 fn WorkbenchModel::new_session(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_new_session {
+    return {
+      ..self,
+      last_status: "Agent backend does not support new sessions",
+    }
+  }
   let session = self.active_session()
   let commands = self.commands_for_new_session(session)
   let events = self.events.copy()
@@ -1086,6 +1304,9 @@ fn WorkbenchModel::new_session_with_transport(
 fn WorkbenchModel::refresh_fork_messages(
   self : WorkbenchModel,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_fork {
+    return { ..self, last_status: "Agent backend does not support forks" }
+  }
   let session = self.active_session()
   let commands = self.commands_with_session_start(
     session,
@@ -1129,6 +1350,9 @@ fn WorkbenchModel::fork_from_message(
   self : WorkbenchModel,
   entry_id : String,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_fork {
+    return { ..self, last_status: "Agent backend does not support forks" }
+  }
   let clean_entry_id = entry_id.trim().to_owned()
   if clean_entry_id == "" {
     { ..self, last_status: "Fork entry id is empty" }
@@ -1180,6 +1404,9 @@ fn WorkbenchModel::fork_from_message_with_transport(
 
 ///|
 fn WorkbenchModel::export_session_html(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_html_export {
+    return { ..self, last_status: "Agent backend does not support HTML export" }
+  }
   let session = self.active_session()
   let commands = self.commands_with_session_start(
     session,
@@ -1224,6 +1451,9 @@ fn WorkbenchModel::receive_transport_with_transport(
   event : PiTransportEvent,
   transport_runtime : PiTransportRuntime,
 ) -> WorkbenchUpdate {
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return WorkbenchUpdate::new(self)
+  }
   let model = self.receive_transport(event)
   match event.session_replacement_refresh() {
     Some((session_id, title, status)) => {
@@ -1266,6 +1496,7 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
   } else {
     let payload = self.dispatch_prompt_payload(prompt)
     let session = self.active_session()
+    let backend = self.active_agent_backend_profile()
     let events = self.events.copy()
     events.push(
       AgentEvent::new(
@@ -1277,7 +1508,11 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
     )
     let command = SendUserInput(session.id, payload)
     let commands = self.commands_with_session_start(session, command)
-    let transcript = self.transcript_with_local_user_message(payload)
+    let transcript = if backend.capabilities.uses_pi_transport {
+      self.transcript_with_local_user_message(payload)
+    } else {
+      self.transcript_with_fixture_reply(payload, backend)
+    }
     {
       ..self,
       prompt: "",
@@ -1286,7 +1521,11 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
       events,
       transcript,
       transport: self.transport.enqueue_many(commands),
-      last_status: "Queued prompt for Pi JSONL RPC",
+      last_status: if backend.capabilities.uses_pi_transport {
+        "Queued prompt for Pi JSONL RPC"
+      } else {
+        local_agent_prompt_status(backend)
+      },
     }
   }
 }
@@ -1315,6 +1554,9 @@ fn WorkbenchModel::dispatch_prompt_with_transport(
 
 ///|
 fn WorkbenchModel::dispatch_steering(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_input_modes {
+    return { ..self, last_status: "Agent backend does not support input modes" }
+  }
   let prompt = self.prompt.trim().to_owned()
   if prompt == "" {
     { ..self, last_status: "Prompt is empty" }
@@ -1367,6 +1609,9 @@ fn WorkbenchModel::dispatch_steering_with_transport(
 
 ///|
 fn WorkbenchModel::dispatch_follow_up(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_input_modes {
+    return { ..self, last_status: "Agent backend does not support input modes" }
+  }
   let prompt = self.prompt.trim().to_owned()
   if prompt == "" {
     { ..self, last_status: "Prompt is empty" }
@@ -1449,6 +1694,25 @@ fn WorkbenchModel::transcript_with_local_user_message(
 }
 
 ///|
+fn WorkbenchModel::transcript_with_fixture_reply(
+  self : WorkbenchModel,
+  payload : String,
+  backend : AgentBackendProfile,
+) -> Array[TranscriptItem] {
+  let transcript = self.transcript_with_local_user_message(payload)
+  transcript.push(
+    TranscriptItem::new(
+      id="fixture-agent-" + transcript.length().to_string(),
+      role="assistant",
+      summary=backend.label + " 已接收任务",
+      detail="本地后端会保持会话流转，不启动外部传输。",
+      tone="success",
+    ),
+  )
+  transcript
+}
+
+///|
 fn WorkbenchModel::dispatch_prompt_payload(
   self : WorkbenchModel,
   prompt : String,
@@ -1503,7 +1767,7 @@ fn context_prompt_label(id : String) -> String {
     "repo" => "repo"
     "examples" => "examples"
     "evidence" => "current evidence"
-    "session" => "Pi session"
+    "session" => "agent session"
     _ => id
   }
 }
@@ -1518,6 +1782,9 @@ fn WorkbenchModel::invoke_command(
   self : WorkbenchModel,
   name : String,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_command_catalog {
+    return { ..self, last_status: "Agent backend does not support commands" }
+  }
   let command_name = name.trim().to_owned()
   if command_name == "" {
     { ..self, last_status: "Pi command is empty" }
@@ -1569,6 +1836,47 @@ fn WorkbenchModel::invoke_command_with_transport(
 }
 
 ///|
+fn WorkbenchModel::queue_agent_prompt_action(
+  self : WorkbenchModel,
+  payload : String,
+  event_title~ : String,
+  event_detail~ : String,
+  tone~ : String,
+  pi_status~ : String,
+) -> WorkbenchModel {
+  let backend = self.active_agent_backend_profile()
+  let session = self.active_session()
+  let events = self.events.copy()
+  events.push(
+    AgentEvent::new(phase="user", title=event_title, detail=event_detail, tone~),
+  )
+  if backend.capabilities.uses_pi_transport {
+    let command = SendUserInput(session.id, payload)
+    let commands = self.commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transport: self.transport.enqueue_many(commands),
+      last_status: pi_status,
+    }
+  } else {
+    {
+      ..self,
+      prompt: "",
+      events,
+      transcript: self.transcript_with_fixture_reply(payload, backend),
+      last_status: local_agent_prompt_status(backend),
+    }
+  }
+}
+
+///|
+fn local_agent_prompt_status(backend : AgentBackendProfile) -> String {
+  "已交给" + backend.label + "后端"
+}
+
+///|
 fn WorkbenchModel::follow_transcript(
   self : WorkbenchModel,
   role : String,
@@ -1581,25 +1889,13 @@ fn WorkbenchModel::follow_transcript(
     { ..self, last_status: "Transcript item is empty" }
   } else {
     let prompt = transcript_follow_up_prompt(role, summary, detail)
-    let session = self.active_session()
-    let events = self.events.copy()
-    events.push(
-      AgentEvent::new(
-        phase="user",
-        title="Transcript follow-up queued",
-        detail=prompt,
-        tone="info",
-      ),
+    self.queue_agent_prompt_action(
+      prompt,
+      event_title="Transcript follow-up queued",
+      event_detail=prompt,
+      tone="info",
+      pi_status="Queued transcript follow-up for Pi RPC",
     )
-    let command = SendUserInput(session.id, prompt)
-    let commands = self.commands_with_session_start(session, command)
-    {
-      ..self,
-      prompt: "",
-      events,
-      transport: self.transport.enqueue_many(commands),
-      last_status: "Queued transcript follow-up for Pi RPC",
-    }
   }
 }
 
@@ -1662,25 +1958,13 @@ fn WorkbenchModel::follow_activity(
     { ..self, last_status: "Activity item is empty" }
   } else {
     let prompt = activity_follow_up_prompt(phase, title, detail)
-    let session = self.active_session()
-    let events = self.events.copy()
-    events.push(
-      AgentEvent::new(
-        phase="user",
-        title="Activity follow-up queued",
-        detail=prompt,
-        tone="info",
-      ),
+    self.queue_agent_prompt_action(
+      prompt,
+      event_title="Activity follow-up queued",
+      event_detail=prompt,
+      tone="info",
+      pi_status="Queued activity follow-up for Pi RPC",
     )
-    let command = SendUserInput(session.id, prompt)
-    let commands = self.commands_with_session_start(session, command)
-    {
-      ..self,
-      prompt: "",
-      events,
-      transport: self.transport.enqueue_many(commands),
-      last_status: "Queued activity follow-up for Pi RPC",
-    }
   }
 }
 
@@ -1740,25 +2024,13 @@ fn WorkbenchModel::inspect_file(
     { ..self, last_status: "File context is empty" }
   } else {
     let prompt = self.file_inspection_payload(file_path)
-    let session = self.active_session()
-    let events = self.events.copy()
-    events.push(
-      AgentEvent::new(
-        phase="user",
-        title="File context queued",
-        detail=file_path,
-        tone="info",
-      ),
+    self.queue_agent_prompt_action(
+      prompt,
+      event_title="File context queued",
+      event_detail=file_path,
+      tone="info",
+      pi_status="Queued file context for Pi RPC",
     )
-    let command = SendUserInput(session.id, prompt)
-    let commands = self.commands_with_session_start(session, command)
-    {
-      ..self,
-      prompt: "",
-      events,
-      transport: self.transport.enqueue_many(commands),
-      last_status: "Queued file context for Pi RPC",
-    }
   }
 }
 
@@ -1789,25 +2061,13 @@ fn WorkbenchModel::inspect_file_with_transport(
 fn WorkbenchModel::review_diff(self : WorkbenchModel) -> WorkbenchModel {
   if self.diff.has_context() {
     let prompt = self.diff_review_payload()
-    let session = self.active_session()
-    let events = self.events.copy()
-    events.push(
-      AgentEvent::new(
-        phase="user",
-        title="Diff review queued",
-        detail=prompt,
-        tone="info",
-      ),
+    self.queue_agent_prompt_action(
+      prompt,
+      event_title="Diff review queued",
+      event_detail=prompt,
+      tone="info",
+      pi_status="Queued diff review for Pi RPC",
     )
-    let command = SendUserInput(session.id, prompt)
-    let commands = self.commands_with_session_start(session, command)
-    {
-      ..self,
-      prompt: "",
-      events,
-      transport: self.transport.enqueue_many(commands),
-      last_status: "Queued diff review for Pi RPC",
-    }
   } else {
     { ..self, last_status: "Diff context is empty" }
   }
@@ -1890,25 +2150,13 @@ fn WorkbenchModel::fix_diagnostic(
     { ..self, last_status: "Diagnostic is empty" }
   } else {
     let prompt = self.diagnostic_fix_payload(source, severity, message)
-    let session = self.active_session()
-    let events = self.events.copy()
-    events.push(
-      AgentEvent::new(
-        phase="user",
-        title="Diagnostic fix queued",
-        detail=prompt,
-        tone="warning",
-      ),
+    self.queue_agent_prompt_action(
+      prompt,
+      event_title="Diagnostic fix queued",
+      event_detail=prompt,
+      tone="warning",
+      pi_status="Queued diagnostic fix for Pi RPC",
     )
-    let command = SendUserInput(session.id, prompt)
-    let commands = self.commands_with_session_start(session, command)
-    {
-      ..self,
-      prompt: "",
-      events,
-      transport: self.transport.enqueue_many(commands),
-      last_status: "Queued diagnostic fix for Pi RPC",
-    }
   }
 }
 
@@ -1972,6 +2220,9 @@ fn WorkbenchModel::receive_transport(
   self : WorkbenchModel,
   event : PiTransportEvent,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return self
+  }
   let events = self.events.copy()
   events.push(event.to_agent_event())
   let model = {
@@ -1992,6 +2243,12 @@ fn WorkbenchModel::queue_command(
   self : WorkbenchModel,
   command : String,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_shell_commands {
+    return {
+      ..self,
+      last_status: "Agent backend does not support shell commands",
+    }
+  }
   let session = self.active_session()
   let commands = self.commands.copy()
   let transport_commands = self.commands_with_session_start(
@@ -2037,6 +2294,12 @@ fn WorkbenchModel::queue_command_with_transport(
 fn WorkbenchModel::queue_focused_checks(
   self : WorkbenchModel,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_shell_commands {
+    return {
+      ..self,
+      last_status: "Agent backend does not support shell commands",
+    }
+  }
   let session = self.active_session()
   let commands = self.commands.copy()
   for preset in workbench_check_presets() {
@@ -2089,25 +2352,13 @@ fn WorkbenchModel::inspect_command_run(
     let prompt = self.command_evidence_payload(
       command, status, cwd, output_path,
     )
-    let session = self.active_session()
-    let events = self.events.copy()
-    events.push(
-      AgentEvent::new(
-        phase="user",
-        title="Command evidence queued",
-        detail=prompt,
-        tone="info",
-      ),
+    self.queue_agent_prompt_action(
+      prompt,
+      event_title="Command evidence queued",
+      event_detail=prompt,
+      tone="info",
+      pi_status="Queued command evidence for Pi RPC",
     )
-    let transport_command = SendUserInput(session.id, prompt)
-    let commands = self.commands_with_session_start(session, transport_command)
-    {
-      ..self,
-      prompt: "",
-      events,
-      transport: self.transport.enqueue_many(commands),
-      last_status: "Queued command evidence for Pi RPC",
-    }
   }
 }
 
@@ -2154,25 +2405,13 @@ fn WorkbenchModel::fix_command_run(
     { ..self, last_status: "Command evidence is empty" }
   } else {
     let prompt = self.command_fix_payload(command, status, cwd, output_path)
-    let session = self.active_session()
-    let events = self.events.copy()
-    events.push(
-      AgentEvent::new(
-        phase="user",
-        title="Command fix queued",
-        detail=prompt,
-        tone="warning",
-      ),
+    self.queue_agent_prompt_action(
+      prompt,
+      event_title="Command fix queued",
+      event_detail=prompt,
+      tone="warning",
+      pi_status="Queued command fix for Pi RPC",
     )
-    let transport_command = SendUserInput(session.id, prompt)
-    let commands = self.commands_with_session_start(session, transport_command)
-    {
-      ..self,
-      prompt: "",
-      events,
-      transport: self.transport.enqueue_many(commands),
-      last_status: "Queued command fix for Pi RPC",
-    }
   }
 }
 
@@ -2317,6 +2556,12 @@ fn WorkbenchModel::mark_command_complete(
 
 ///|
 fn WorkbenchModel::sync_session_name(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return {
+      ..self,
+      last_status: "Agent backend does not support session name sync",
+    }
+  }
   let session = self.active_session()
   let name = session.title
   let transport_commands = self.commands_with_session_start(
@@ -2363,6 +2608,12 @@ fn WorkbenchModel::set_model(
   id : String,
   label : String,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_model_catalog {
+    return {
+      ..self,
+      last_status: "Agent backend does not support model selection",
+    }
+  }
   let provider = provider.trim().to_owned()
   let id = id.trim().to_owned()
   if provider == "" || id == "" {
@@ -2419,6 +2670,12 @@ fn WorkbenchModel::set_model_with_transport(
 
 ///|
 fn WorkbenchModel::cycle_model(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_model_catalog {
+    return {
+      ..self,
+      last_status: "Agent backend does not support model selection",
+    }
+  }
   let session = self.active_session()
   let transport_commands = self.commands_with_session_start(
     session,
@@ -2459,6 +2716,9 @@ fn WorkbenchModel::cycle_model_with_transport(
 
 ///|
 fn WorkbenchModel::compact_session(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_context_compaction {
+    return { ..self, last_status: "Agent backend does not support compaction" }
+  }
   let session = self.active_session()
   let transport_commands = self.commands_with_session_start(
     session,
@@ -2501,6 +2761,12 @@ fn WorkbenchModel::compact_session_with_transport(
 fn WorkbenchModel::cycle_thinking_level(
   self : WorkbenchModel,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_thinking_level {
+    return {
+      ..self,
+      last_status: "Agent backend does not support thinking level",
+    }
+  }
   let session = self.active_session()
   let transport_commands = self.commands_with_session_start(
     session,
@@ -2543,6 +2809,9 @@ fn WorkbenchModel::cycle_thinking_level_with_transport(
 fn WorkbenchModel::toggle_steering_mode(
   self : WorkbenchModel,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_input_modes {
+    return { ..self, last_status: "Agent backend does not support input modes" }
+  }
   let session = self.active_session()
   let mode = next_agent_input_mode(self.pi_agent.steering_mode)
   let transport_commands = self.commands_with_session_start(
@@ -2580,6 +2849,9 @@ fn WorkbenchModel::toggle_steering_mode_with_transport(
 fn WorkbenchModel::toggle_follow_up_mode(
   self : WorkbenchModel,
 ) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().supports_input_modes {
+    return { ..self, last_status: "Agent backend does not support input modes" }
+  }
   let session = self.active_session()
   let mode = next_agent_input_mode(self.pi_agent.follow_up_mode)
   let transport_commands = self.commands_with_session_start(
@@ -2660,6 +2932,12 @@ fn next_agent_input_mode(mode : String) -> String {
 
 ///|
 fn WorkbenchModel::cancel_run(self : WorkbenchModel) -> WorkbenchModel {
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return {
+      ..self,
+      last_status: "Agent backend does not support cancellation",
+    }
+  }
   let session = self.active_session()
   let transport_command = self.cancel_transport_command(session)
   let shell_cancel = transport_command is CancelShellCommand(_)
@@ -2698,6 +2976,9 @@ fn WorkbenchModel::cancel_run_with_transport(
   self : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
 ) -> WorkbenchUpdate {
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return WorkbenchUpdate::new(self.cancel_run())
+  }
   let session = self.active_session()
   let commands = [self.cancel_transport_command(session)]
   WorkbenchUpdate::new(
@@ -2772,7 +3053,9 @@ fn WorkbenchModel::commands_for_session_selection(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
-  ignore(self)
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return []
+  }
   if session.pi_session_path == "" {
     [
       StartRpc(session.id, session.project_path),
@@ -2800,7 +3083,9 @@ fn WorkbenchModel::commands_for_new_session(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
-  ignore(self)
+  if !self.active_agent_backend_capabilities().supports_new_session {
+    return []
+  }
   [NewRpcSession(session.id)]
 }
 
@@ -2809,7 +3094,9 @@ fn WorkbenchModel::commands_for_session_replacement_refresh(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
-  ignore(self)
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return []
+  }
   let commands : Array[PiTransportCommand] = []
   commands.push(StartRpc(session.id, session.project_path))
   commands.push(FetchRpcAvailableModels(session.id))
@@ -2825,7 +3112,9 @@ fn WorkbenchModel::commands_for_conversation_refresh(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
-  ignore(self)
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return []
+  }
   [
     FetchRpcMessages(session.id),
     FetchRpcForkMessages(session.id),
@@ -2838,6 +3127,9 @@ fn WorkbenchModel::commands_for_focused_checks(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
+  if !self.active_agent_backend_capabilities().supports_shell_commands {
+    return []
+  }
   let commands : Array[PiTransportCommand] = []
   if self.transport.status is Disconnected {
     commands.push(StartRpc(session.id, session.project_path))
@@ -2854,6 +3146,9 @@ fn WorkbenchModel::commands_with_session_start(
   session : WorkbenchSession,
   command : PiTransportCommand,
 ) -> Array[PiTransportCommand] {
+  if !self.active_agent_backend_capabilities().uses_pi_transport {
+    return []
+  }
   let commands : Array[PiTransportCommand] = []
   if self.transport.status is Disconnected {
     commands.push(StartRpc(session.id, session.project_path))
