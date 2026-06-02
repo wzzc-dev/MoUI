@@ -369,6 +369,10 @@ decorations, `backend/linux` reserves a small titlebar band above the MoUI
 content, draws the window title and basic controls into the renderer command
 stream, and translates input coordinates so application views still receive a
 content-origin coordinate space.
+The same adapter consumes the window fork's Wayland key/modifier mapping and
+current pointer coordinates: Linux backend tests cover modifier propagation into
+shared keyboard events and button events using the position carried by the
+window event rather than stale pointer state.
 
 Linux runtime requirements are intentionally native:
 

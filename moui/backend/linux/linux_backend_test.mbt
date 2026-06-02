@@ -103,6 +103,66 @@ test "linux client decoration metrics and input stay in the content space" {
 }
 
 ///|
+test "linux backend carries tracked modifiers into keyboard events" {
+  let key_event = @window_core.KeyEvent::KeyEvent(
+    @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::KeyA),
+    @window_core.Key::Character("a"),
+    @window_core.Key::Character("a"),
+    @window_core.KeyLocation::Standard,
+    @window_core.ElementState::Pressed,
+    false,
+    Some("a"),
+    Some("A"),
+  )
+  let modifiers = @host.modifiers_to_core(
+    @window_core.Modifiers::Modifiers(true, true, false, false),
+  )
+  let event = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::KeyboardInput(None, key_event, false),
+    @core.Point::new(x=0.0, y=0.0),
+    modifiers,
+  )
+  match event {
+    Some(@host.HostEvent::Keyboard(event)) => {
+      inspect(event.key, content="a")
+      match event.text {
+        Some(text) => inspect(text, content="a")
+        None => fail("expected keyboard text")
+      }
+      inspect(event.pressed, content="true")
+      inspect(event.modifiers.shift, content="true")
+      inspect(event.modifiers.control, content="true")
+      inspect(event.modifiers.alt, content="false")
+    }
+    _ => fail("expected Linux keyboard host event")
+  }
+}
+
+///|
+test "linux backend uses Wayland button event coordinates" {
+  let event = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::PointerButton(
+      None,
+      @window_core.ElementState::Pressed,
+      @dpi.PhysicalPositionF64::PhysicalPositionF64(42.0, 64.0),
+      true,
+      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
+    ),
+    @core.Point::new(x=1.0, y=2.0),
+    @core.KeyModifiers::none(),
+  )
+  match event {
+    Some(@host.HostEvent::Pointer(event)) => {
+      inspect(event.position.x, content="42")
+      inspect(event.position.y, content="64")
+      assert_true(event.phase == @core.PointerPhase::Down)
+      inspect(event.button, content="0")
+    }
+    _ => fail("expected Linux pointer button host event")
+  }
+}
+
+///|
 test "linux capability summary exposes known service gaps" {
   let summary = linux_capability_summary()
   inspect(summary.label, content="Linux host")
