@@ -418,8 +418,20 @@ executing the smoke binary.
 The macOS helpers accept the same `SKIA_MBT_*` environment defaults as Linux:
 `SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_LIB_DIR`, `SKIA_MBT_SKIA_LIB`,
 `SKIA_MBT_SKIA_REV`, `SKIA_MBT_EXTRA_GN_ARGS`, `SKIA_MBT_EXTRA_CC_FLAGS`, and
-`SKIA_MBT_EXTRA_LINK_FLAGS`. Command-line arguments and workflow inputs override
-environment variables.
+`SKIA_MBT_EXTRA_LINK_FLAGS`. They also accept
+`SKIA_MBT_MACOS_LINK_MODE=auto|dynamic|static`; `auto` prefers
+`libskia.dylib` for persistent direct-run package generation and
+`libskia.a` for temporary smoke/build package generation when the requested
+library exists. Command-line arguments and workflow inputs override environment
+variables.
+
+The module-level prebuild hook uses the same environment names for direct
+`moon build`, `moon test`, and `moon run` commands. Native real-Skia
+configuration is enabled by default; set `SKIA_MBT_ENABLE_PREBUILD_SKIA=0` or
+`SKIA_MBT_DISABLE_PREBUILD_SKIA=1` to keep the fallback-unavailable native
+compile. On macOS, `SKIA_MBT_MACOS_LINK_MODE=auto` selects `libskia.dylib` when
+that file exists in `SKIA_MBT_SKIA_LIB_DIR`, otherwise it selects
+`libskia.a`.
 
 To generate a persistent `native/moon.pkg` for an existing macOS Skia build,
 preview the config first and then write it explicitly:
@@ -432,6 +444,7 @@ bash scripts/configure-macos-native-pkg.sh \
 bash scripts/configure-macos-native-pkg.sh \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static \
+  --link-mode static \
   --write
 ```
 

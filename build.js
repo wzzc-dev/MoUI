@@ -38,14 +38,11 @@ function targetKind(config) {
 }
 
 function shouldConfigureSkia(config) {
-  if (!skiaPrebuildEnabled(config)) {
+  const kind = targetKind(config);
+  if (kind && ["wasm", "wasm32", "wasmgc", "wasm-gc", "js"].includes(kind)) {
     return false;
   }
-  const kind = targetKind(config);
-  if (!kind) {
-    return true;
-  }
-  return !["wasm", "wasm32", "wasmgc", "wasm-gc", "js"].includes(kind);
+  return skiaPrebuildEnabled(config);
 }
 
 function configEnvValue(config, key) {
@@ -62,8 +59,20 @@ function truthy(value) {
   return /^(1|true|yes|on)$/i.test(String(value || "").trim());
 }
 
+function falsy(value) {
+  return /^(0|false|no|off)$/i.test(String(value || "").trim());
+}
+
 function skiaPrebuildEnabled(config) {
-  return truthy(configEnvValue(config, "SKIA_MBT_ENABLE_PREBUILD_SKIA"));
+  const disabled = configEnvValue(config, "SKIA_MBT_DISABLE_PREBUILD_SKIA");
+  if (truthy(disabled)) {
+    return false;
+  }
+  const enabled = configEnvValue(config, "SKIA_MBT_ENABLE_PREBUILD_SKIA");
+  if (enabled !== null && String(enabled).trim() !== "") {
+    return !falsy(enabled);
+  }
+  return true;
 }
 
 function parseEnvLines(output) {
@@ -178,7 +187,76 @@ function appendMissingFlags(base, flags) {
   return parts.join(" ");
 }
 
-function platformFlags(values) {
+function overlayEnvValues(config, values, keys) {
+  const merged = { ...values };
+  for (const key of keys) {
+    const value = configEnvValue(config, key);
+    if (value !== null && String(value).trim() !== "") {
+      merged[key] = value;
+    }
+  }
+  return merged;
+}
+
+function skiaValues(config) {
+  const keys = [
+    "SKIA_MBT_SKIA_INCLUDE",
+    "SKIA_MBT_SKIA_LIB_DIR",
+    "SKIA_MBT_SKIA_LIB",
+    "SKIA_MBT_EXTRA_CC_FLAGS",
+    "SKIA_MBT_EXTRA_LINK_FLAGS",
+  ];
+  const envValues = overlayEnvValues(config, {}, keys);
+  if (envValues.SKIA_MBT_SKIA_INCLUDE && envValues.SKIA_MBT_SKIA_LIB_DIR) {
+    return envValues;
+  }
+  return overlayEnvValues(config, fetchSkiaEnv(), keys);
+}
+
+function macosLinkMode(config) {
+  const mode = (
+    configEnvValue(config, "SKIA_MBT_MACOS_LINK_MODE") || "auto"
+  ).trim().toLowerCase();
+  if (!["auto", "dynamic", "static"].includes(mode)) {
+    throw new Error(`unsupported SKIA_MBT_MACOS_LINK_MODE: ${mode}`);
+  }
+  return mode;
+}
+
+function macosLibraryFlags(config, libPath, skiaLib) {
+  const staticLib = path.join(libPath, `lib${skiaLib}.a`);
+  const dynamicLib = path.join(libPath, `lib${skiaLib}.dylib`);
+  let mode = macosLinkMode(config);
+  if (mode === "auto") {
+    if (fs.existsSync(dynamicLib)) {
+      mode = "dynamic";
+    } else if (fs.existsSync(staticLib)) {
+      mode = "static";
+    } else {
+      throw new Error(
+        `Skia library lib${skiaLib}.dylib or lib${skiaLib}.a was not found in ${libPath}`,
+      );
+    }
+  }
+
+  if (mode === "dynamic") {
+    if (!fs.existsSync(dynamicLib)) {
+      throw new Error(
+        `SKIA_MBT_MACOS_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
+      );
+    }
+    return `${dynamicLib} -Wl,-rpath,${libPath}`;
+  }
+
+  if (!fs.existsSync(staticLib)) {
+    throw new Error(
+      `SKIA_MBT_MACOS_LINK_MODE=static requested, but ${staticLib} was not found`,
+    );
+  }
+  return staticLib;
+}
+
+function platformFlags(config, values) {
   const includePath = requireValue(values, "SKIA_MBT_SKIA_INCLUDE");
   const libPath = requireValue(values, "SKIA_MBT_SKIA_LIB_DIR");
   const skiaLib = values.SKIA_MBT_SKIA_LIB || "skia";
@@ -194,7 +272,7 @@ function platformFlags(values) {
     linkFlags = `${skiaLibFlag} user32.lib gdi32.lib ole32.lib opengl32.lib usp10.lib fontsub.lib imm32.lib winmm.lib version.lib dwrite.lib d2d1.lib dxgi.lib advapi32.lib shell32.lib`;
   } else if (process.platform === "darwin") {
     stubCcFlags = `-DSKIA_MBT_HAS_SKIA -std=c++17 -I${includePath}`;
-    linkFlags +=
+    linkFlags = macosLibraryFlags(config, libPath, skiaLib) +
       " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
   } else if (process.platform === "linux") {
     stubCcFlags = `-DSKIA_MBT_HAS_SKIA -std=c++17 -I${includePath}`;
@@ -215,14 +293,21 @@ function platformFlags(values) {
 function main() {
   const config = readJsonFromStdin();
   if (!shouldConfigureSkia(config)) {
-    console.log(JSON.stringify({ vars: { SKIA_MBT_STUB_CC_FLAGS: "" } }));
+    console.log(
+      JSON.stringify({
+        vars: {
+          SKIA_MBT_STUB_CC_FLAGS: "",
+          SKIA_MBT_CC_LINK_FLAGS: "",
+        },
+      }),
+    );
     return;
   }
 
   const moduleName = readModuleName();
   const nativePackageName = `${moduleName}/native`;
-  const values = fetchSkiaEnv();
-  const flags = platformFlags(values);
+  const values = skiaValues(config);
+  const flags = platformFlags(config, values);
 
   console.log(
     JSON.stringify({

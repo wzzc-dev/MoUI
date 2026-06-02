@@ -332,7 +332,20 @@ bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
 
 The macOS helper adds common CoreFoundation/CoreGraphics/CoreText/ImageIO
 frameworks by default; pass `--extra-link-flags` for additional Skia build
-dependencies.
+dependencies. Use `--link-mode dynamic|static` or
+`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` when you need to force
+`libskia.dylib` or `libskia.a`; `auto` chooses the mode based on the helper
+workflow and available library files.
+
+The package prebuild hook now enables native real-Skia configuration by
+default for native builds. Set `SKIA_MBT_ENABLE_PREBUILD_SKIA=0` or
+`SKIA_MBT_DISABLE_PREBUILD_SKIA=1` when you need the fallback-unavailable
+compile path. Environment values for `SKIA_MBT_SKIA_INCLUDE`,
+`SKIA_MBT_SKIA_LIB_DIR`, `SKIA_MBT_SKIA_LIB`,
+`SKIA_MBT_EXTRA_CC_FLAGS`, `SKIA_MBT_EXTRA_LINK_FLAGS`, and
+`SKIA_MBT_MACOS_LINK_MODE` take precedence over the JetBrains provider
+defaults. On macOS, `SKIA_MBT_MACOS_LINK_MODE=auto` chooses
+`libskia.dylib` when present and falls back to `libskia.a`.
 
 To build a small CPU-only Skia from source for the macOS smoke test, run:
 
