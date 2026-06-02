@@ -1255,7 +1255,7 @@ test "render command list tracks stats balance and touched bounds" {
   assert_true(commands.is_state_balanced())
   assert_true(commands.has_present())
   assert_true(
-    commands.touched_bounds() == Some(@skia_mbt.Rect::new(2, 2, 12, 7)),
+    commands.touched_bounds() == Some(@skia_mbt.Rect::new(2, 0, 12, 8)),
   )
   assert_true(commands.finish().length() == commands.length())
 
@@ -1274,6 +1274,60 @@ test "render command list tracks stats balance and touched bounds" {
   let unbalanced = @skia_mbt.RenderCommandList::for_target(target).restore()
   assert_true(!unbalanced.is_state_balanced())
   assert_eq(unbalanced.stats().unbalanced_restore_count, 1)
+}
+
+///|
+test "render command list estimates text touched bounds" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(80, 40),
+  )
+  let legacy = @skia_mbt.RenderCommandList::for_target(target).draw_text_utf8(
+    b"abc",
+    @skia_mbt.Point::new(4, 20),
+  )
+  assert_true(
+    legacy.touched_bounds() == Some(@skia_mbt.Rect::new(4, 8, 28, 24)),
+  )
+
+  let ltr_run = @skia_mbt.TextRunDescriptor::new(
+    range=@skia_mbt.TextRange::new(1, 4),
+  )
+  let ltr = @skia_mbt.RenderCommandList::for_target(target).draw_text_run_utf8(
+    b"abcde",
+    @skia_mbt.Point::new(10, 20),
+    descriptor=Some(ltr_run),
+  )
+  assert_true(ltr.touched_bounds() == Some(@skia_mbt.Rect::new(10, 8, 34, 24)))
+
+  let rtl_run = @skia_mbt.TextRunDescriptor::new(
+    range=@skia_mbt.TextRange::new(1, 4),
+    direction=@skia_mbt.RightToLeft,
+  )
+  let rtl = @skia_mbt.RenderCommandList::for_target(target).draw_text_run_utf8(
+    b"abcde",
+    @skia_mbt.Point::new(30, 20),
+    descriptor=Some(rtl_run),
+  )
+  assert_true(rtl.touched_bounds() == Some(@skia_mbt.Rect::new(6, 8, 30, 24)))
+
+  let clipped = @skia_mbt.RenderCommandList::for_target(target)
+    .translate(@skia_mbt.Point::new(10, 0))
+    .clip_rect(@skia_mbt.Rect::from_xywh(0, 0, 20, 16))
+    .draw_text_utf8(b"abcd", @skia_mbt.Point::new(0, 12))
+  assert_true(
+    clipped.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(10, 0, 20, 16)),
+  )
+
+  let empty = @skia_mbt.RenderCommandList::for_target(target)
+    .draw_text_utf8(b"", @skia_mbt.Point::new(4, 20))
+    .draw_text_run_utf8(
+      b"abc",
+      @skia_mbt.Point::new(10, 20),
+      descriptor=Some(
+        @skia_mbt.TextRunDescriptor::new(range=@skia_mbt.TextRange::new(3, 3)),
+      ),
+    )
+  assert_true(empty.touched_bounds() is None)
 }
 
 ///|
