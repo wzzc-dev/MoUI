@@ -47,6 +47,45 @@ capability must name its native and unavailable MoonBit files, list any owned
 handles from `ownership.json`, and either point to native-smoke markers or
 record why runtime smoke evidence is not applicable.
 
+## Capability Addition Checklist
+
+Use this checklist for every new public native Canvas, Path, Text, Shader,
+Filter, GPU, surface, or resource-cache API:
+
+- Add the MoonBit native implementation and the unavailable fallback
+  implementation in the same change. Their public API sets must match, and
+  `native/moon.pkg` must keep native files on `native`/`llvm` and unavailable
+  files on `wasm`/`wasm-gc`/`js`.
+- Annotate every non-primitive `extern "C"` parameter with `#borrow(...)` or
+  `#owned(...)`. If the API does not add externs or C++ stubs, say so in review
+  notes so the borrow gate result is easy to interpret.
+- If a new MoonBit handle or C++ wrapper is introduced, add the handle files,
+  wrapper struct, factory, finalizer, and ownership kind to `ownership.json` in
+  the same patch. Value-only MoonBit structs that hold existing handles do not
+  need a new ownership entry.
+- Add targeted MoonBit tests for the native path and the unavailable/fallback
+  behavior. For public API changes, run `moon info` and check that
+  `pkg.generated.mbti` changes only expose the intended API.
+- Add a native-smoke marker for the runtime behavior, or add an explicit
+  `non_smoke_rationale` in `native/capabilities.json` when runtime smoke
+  evidence is not meaningful. New conditional behavior, such as optional
+  SkShaper or future GPU backends, belongs in
+  `native_smoke_conditional_capabilities` with a stable availability marker.
+- Add the marker to `skia-platform-status.json`, synchronize
+  `verify-native-smoke-log.sh` and `verify-native-smoke-log.ps1`, and update
+  `verify-platform-status.*` when the marker becomes a required capability or
+  expected value.
+- Keep release status honest: platform acceptance can only be changed through
+  `accept-platform-status.*` after downloaded Linux, macOS, or Windows real
+  Skia artifacts pass the native smoke log verifier, acceptance log verifier,
+  and real artifact verifier.
+- Before committing, run the local gate set for the touched stage:
+  `moon check`, `moon test`, `moon check --target all`,
+  `moon -C scripts/native_smoke check`,
+  `moon -C scripts/native_smoke build --target native`, ownership, borrow,
+  fallback parity, smoke capability sync, platform status, capability contract,
+  and ASan smoke dry-run when FFI or native-stub behavior changed.
+
 ## Ownership Kinds
 
 - `owned_delete`: the MoonBit external object owns a heap allocation and its
