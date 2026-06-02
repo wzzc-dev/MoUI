@@ -1107,6 +1107,10 @@ test "filter descriptors produce typed resource keys" {
 ///|
 test "image descriptors produce stable resource keys" {
   assert_true(@skia_mbt.ImageDescriptor::encoded(b"") is None)
+  let empty_image = @skia_mbt.EncodedImage(b"", Some(@skia_mbt.PNG), None)
+  assert_true(empty_image.resource_key().is_empty())
+  assert_true(!empty_image.resource_descriptor().is_cacheable())
+  assert_eq(empty_image.resource_descriptor().byte_size, 0L)
   guard @skia_mbt.ImageDescriptor::encoded(
       b"encoded-image-bytes",
       format=Some(@skia_mbt.PNG),

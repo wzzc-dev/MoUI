@@ -89,11 +89,15 @@ pub fn ImageDescriptor::byte_size(self : ImageDescriptor) -> Int64 {
 fn ImageDescriptor::resource_id(self : ImageDescriptor) -> Bytes {
   match self {
     EncodedImage(bytes, format, dimensions) =>
-      b"skia_mbt:image:v1" +
-      image_descriptor_resource_bytes(b"encoded") +
-      image_descriptor_optional_format_id(format) +
-      image_descriptor_optional_size_id(dimensions) +
-      image_descriptor_resource_bytes(bytes)
+      if bytes.is_empty() {
+        b""
+      } else {
+        b"skia_mbt:image:v1" +
+        image_descriptor_resource_bytes(b"encoded") +
+        image_descriptor_optional_format_id(format) +
+        image_descriptor_optional_size_id(dimensions) +
+        image_descriptor_resource_bytes(bytes)
+      }
   }
 }
 
