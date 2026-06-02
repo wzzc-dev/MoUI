@@ -182,6 +182,9 @@ $defaultStageMarkers = @(
   "native smoke render image decode failure skipped",
   "native smoke render image decode failure cache resources",
   "native smoke render image decode failure cache misses",
+  "native smoke empty image descriptor command plan count",
+  "native smoke empty image descriptor replay skipped",
+  "native smoke empty image descriptor cache misses",
   "native smoke codec encoded format PNG",
   "native smoke codec width",
   "native smoke codec height",
@@ -783,6 +786,18 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke render image decode failure cache misses"
     Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke empty image descriptor command plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke empty image descriptor replay skipped"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke empty image descriptor cache misses"
+    Value = "0"
   }
   [pscustomobject]@{
     Marker = "native smoke codec width"
