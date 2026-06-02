@@ -1033,6 +1033,11 @@
       "marker": "native smoke font fallback width"
     },
     {
+      "id": "fontmgr.invalid-fallback-request-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke invalid fallback request resource plan count"
+    },
+    {
       "id": "fontmgr.fallback-key",
       "area": "FontMgr",
       "marker": "native smoke font fallback key variation"
@@ -1969,6 +1974,11 @@
     {
       "id": "text.font-resource-plan",
       "marker": "native smoke font resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.invalid-fallback-request-resource-plan",
+      "marker": "native smoke invalid fallback request resource plan count",
       "value": "1"
     },
     {

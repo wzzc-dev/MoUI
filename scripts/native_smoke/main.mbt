@@ -2926,6 +2926,22 @@ fn main {
     bcp47=[b"en"],
     character=0x53,
   )
+  let invalid_fallback_request = @skia.FontFallbackRequest::new()
+  let invalid_fallback_request_plan = invalid_fallback_request.resource_plan(
+    size=8.0,
+  )
+  if !invalid_fallback_request.is_empty() ||
+    !invalid_fallback_request.resource_key().is_empty() ||
+    invalid_fallback_request.resource_descriptor().is_cacheable() ||
+    invalid_fallback_request_plan.length() != 1 ||
+    invalid_fallback_request_plan.cacheable_count != 0 ||
+    invalid_fallback_request_plan.uncacheable_count != 1 ||
+    invalid_fallback_request_plan.count_kind(@skia.TypefaceResource) != 1 ||
+    font_mgr.match_fallback_request(invalid_fallback_request) is Some(_) {
+    fail_smoke("empty fallback request resource plan should be uncacheable")
+  }
+  println("native smoke invalid fallback request resource plan count")
+  println(invalid_fallback_request_plan.length())
   let fallback_key = fallback_request.resource_key()
   let fallback_language_key = @skia.FontFallbackRequest::new(
     families=@skia.FontFallbackChain::new(primary_family=first_family),

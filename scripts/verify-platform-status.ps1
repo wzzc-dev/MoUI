@@ -388,6 +388,7 @@ if ($status.schema_version -ge 3) {
     "fontmgr.family-name",
     "fontmgr.typeface-family",
     "fontmgr.character-fallback",
+    "fontmgr.invalid-fallback-request-resource-plan",
     "fontmgr.fallback-key",
     "fontmgr.fallback-family-name",
     "fontmgr.fallback-match-key",
@@ -698,6 +699,7 @@ if ($status.schema_version -ge 3) {
       "native smoke invalid shaped glyph command plan count" = "1"
       "native smoke invalid shaped glyph replay skipped" = "1"
       "native smoke font resource plan count" = "1"
+      "native smoke invalid fallback request resource plan count" = "1"
       "native smoke font fallback key variation" = "1"
       "native smoke font fallback match key variation" = "1"
       "native smoke font fallback match resource plan count" = "2"

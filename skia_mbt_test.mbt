@@ -2543,6 +2543,16 @@ test "font fallback contracts normalize style family and language requests" {
   assert_eq(extended.length(), 4)
   assert_true(extended.family_at(3) == Some(b"Apple Color Emoji"))
 
+  let empty_request = @skia_mbt.FontFallbackRequest::new()
+  assert_true(empty_request.is_empty())
+  assert_true(empty_request.resource_key().is_empty())
+  assert_true(!empty_request.resource_descriptor().is_cacheable())
+  let empty_request_plan = empty_request.resource_plan(size=14.0, scale_x=1.1)
+  assert_eq(empty_request_plan.length(), 1)
+  assert_eq(empty_request_plan.cacheable_count, 0)
+  assert_eq(empty_request_plan.uncacheable_count, 1)
+  assert_eq(empty_request_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+
   let request = @skia_mbt.FontFallbackRequest::new(
     families=extended,
     bcp47=[b"zh-Hans", b"", b"en", b"zh-Hans"],
