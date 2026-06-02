@@ -12,6 +12,12 @@ pub(all) enum RenderCommand {
     ImageFilterDescriptor?,
     MaskFilterDescriptor?
   )
+  TranslateCanvas(Point)
+  ScaleCanvas(Size)
+  RotateCanvas(Float)
+  SkewCanvas(Point)
+  ConcatCanvas(Matrix)
+  ResetCanvasMatrix
   ClearCanvas(Color)
   ClipCanvasRect(Rect, ClipOp)
   DrawCanvasPoint(Point, Paint)
@@ -69,6 +75,36 @@ pub fn RenderCommand::save_layer(
     Some(bounds) => Some(bounds.sorted())
   }
   SaveCanvasLayer(layer_bounds, paint, color_filter, image_filter, mask_filter)
+}
+
+///|
+pub fn RenderCommand::translate(delta : Point) -> RenderCommand {
+  TranslateCanvas(delta)
+}
+
+///|
+pub fn RenderCommand::scale(scale : Size) -> RenderCommand {
+  ScaleCanvas(scale)
+}
+
+///|
+pub fn RenderCommand::rotate(degrees : Float) -> RenderCommand {
+  RotateCanvas(degrees)
+}
+
+///|
+pub fn RenderCommand::skew(skew : Point) -> RenderCommand {
+  SkewCanvas(skew)
+}
+
+///|
+pub fn RenderCommand::concat(matrix : Matrix) -> RenderCommand {
+  ConcatCanvas(matrix)
+}
+
+///|
+pub fn RenderCommand::reset_matrix() -> RenderCommand {
+  ResetCanvasMatrix
 }
 
 ///|
@@ -288,7 +324,27 @@ pub fn RenderCommand::is_draw(self : RenderCommand) -> Bool {
 
 ///|
 pub fn RenderCommand::is_state(self : RenderCommand) -> Bool {
-  self is (SaveCanvas | RestoreCanvas | SaveCanvasLayer(_, _, _, _, _))
+  self
+  is (SaveCanvas
+  | RestoreCanvas
+  | SaveCanvasLayer(_, _, _, _, _)
+  | TranslateCanvas(_)
+  | ScaleCanvas(_)
+  | RotateCanvas(_)
+  | SkewCanvas(_)
+  | ConcatCanvas(_)
+  | ResetCanvasMatrix)
+}
+
+///|
+pub fn RenderCommand::is_transform(self : RenderCommand) -> Bool {
+  self
+  is (TranslateCanvas(_)
+  | ScaleCanvas(_)
+  | RotateCanvas(_)
+  | SkewCanvas(_)
+  | ConcatCanvas(_)
+  | ResetCanvasMatrix)
 }
 
 ///|
@@ -548,6 +604,7 @@ pub(all) struct RenderCommandStats {
   command_count : Int
   draw_count : Int
   state_count : Int
+  transform_count : Int
   clip_count : Int
   clear_count : Int
   present_count : Int
@@ -563,6 +620,7 @@ pub fn RenderCommandStats::empty() -> RenderCommandStats {
     command_count: 0,
     draw_count: 0,
     state_count: 0,
+    transform_count: 0,
     clip_count: 0,
     clear_count: 0,
     present_count: 0,
@@ -664,6 +722,53 @@ pub fn RenderCommandList::save_layer(
       mask_filter~,
     ),
   )
+}
+
+///|
+pub fn RenderCommandList::translate(
+  self : RenderCommandList,
+  delta : Point,
+) -> RenderCommandList {
+  self.append(RenderCommand::translate(delta))
+}
+
+///|
+pub fn RenderCommandList::scale(
+  self : RenderCommandList,
+  scale : Size,
+) -> RenderCommandList {
+  self.append(RenderCommand::scale(scale))
+}
+
+///|
+pub fn RenderCommandList::rotate(
+  self : RenderCommandList,
+  degrees : Float,
+) -> RenderCommandList {
+  self.append(RenderCommand::rotate(degrees))
+}
+
+///|
+pub fn RenderCommandList::skew(
+  self : RenderCommandList,
+  skew : Point,
+) -> RenderCommandList {
+  self.append(RenderCommand::skew(skew))
+}
+
+///|
+pub fn RenderCommandList::concat(
+  self : RenderCommandList,
+  matrix : Matrix,
+) -> RenderCommandList {
+  self.append(RenderCommand::concat(matrix))
+}
+
+///|
+pub fn RenderCommandList::reset_matrix(
+  self : RenderCommandList,
+) -> RenderCommandList {
+  self.append(RenderCommand::reset_matrix())
 }
 
 ///|
@@ -1016,6 +1121,7 @@ fn RenderCommandStats::record_command(
   }
   let draw_increment = if command.is_draw() { 1 } else { 0 }
   let state_increment = if command.is_state() { 1 } else { 0 }
+  let transform_increment = if command.is_transform() { 1 } else { 0 }
   let clip_increment = if command.is_clip() { 1 } else { 0 }
   let clear_increment = if command.is_clear() { 1 } else { 0 }
   let present_increment = if command.is_present() { 1 } else { 0 }
@@ -1025,6 +1131,7 @@ fn RenderCommandStats::record_command(
       command_count: self.command_count + 1,
       draw_count: self.draw_count + draw_increment,
       state_count: self.state_count + state_increment,
+      transform_count: self.transform_count + transform_increment,
       clip_count: self.clip_count + clip_increment,
       clear_count: self.clear_count + clear_increment,
       present_count: self.present_count + present_increment,
@@ -1067,26 +1174,70 @@ fn include_render_command_bounds(bounds : Rect?, next : Rect) -> Rect? {
 }
 
 ///|
+fn render_command_update_matrix(
+  command : RenderCommand,
+  current_matrix : Matrix,
+  matrix_stack : Array[Matrix],
+) -> Matrix {
+  match command {
+    SaveCanvas | SaveCanvasLayer(_, _, _, _, _) => {
+      matrix_stack.push(current_matrix)
+      current_matrix
+    }
+    RestoreCanvas =>
+      match matrix_stack.pop() {
+        None => Matrix::identity()
+        Some(matrix) => matrix
+      }
+    TranslateCanvas(delta) => current_matrix.post_translate(delta.x, delta.y)
+    ScaleCanvas(scale) => current_matrix.post_scale(scale.width, scale.height)
+    RotateCanvas(degrees) => {
+      ignore(degrees)
+      current_matrix
+    }
+    SkewCanvas(skew) => current_matrix.post_skew(skew.x, skew.y)
+    ConcatCanvas(matrix) => current_matrix.post_concat(matrix)
+    ResetCanvasMatrix => Matrix::identity()
+    _ => current_matrix
+  }
+}
+
+///|
+fn render_command_transformed_bounds(
+  command : RenderCommand,
+  current_matrix : Matrix,
+  pass_bounds : Rect,
+) -> Rect? {
+  match command {
+    ClearCanvas(_) => Some(pass_bounds)
+    command =>
+      match command.draw_bounds() {
+        None => None
+        Some(draw_bounds) =>
+          current_matrix.map_rect(draw_bounds).intersect(pass_bounds)
+      }
+  }
+}
+
+///|
 pub fn RenderCommandList::touched_bounds(self : RenderCommandList) -> Rect? {
   let pass_bounds = self.pass.bounds.to_rect()
   if pass_bounds.is_empty() {
     None
   } else {
     let initial_bounds : Rect? = None
-    for bounds = initial_bounds, i = 0; i < self.commands.length(); i = i + 1 {
-      let next = match self.commands[i] {
-        ClearCanvas(_) => Some(pass_bounds)
-        command =>
-          match command.draw_bounds() {
-            None => None
-            Some(draw_bounds) => draw_bounds.intersect(pass_bounds)
-          }
-      }
+    let matrix_stack : Array[Matrix] = []
+    for bounds = initial_bounds, matrix = Matrix::identity(), i = 0
+        i < self.commands.length()
+        i = i + 1 {
+      let command = self.commands[i]
+      let next = render_command_transformed_bounds(command, matrix, pass_bounds)
       let bounds = match next {
         None => bounds
         Some(next) => include_render_command_bounds(bounds, next)
       }
-      continue bounds, i + 1
+      let matrix = render_command_update_matrix(command, matrix, matrix_stack)
+      continue bounds, matrix, i + 1
     } nobreak {
       bounds
     }

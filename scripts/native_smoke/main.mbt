@@ -1120,6 +1120,11 @@ fn main {
       image_filter=Some(image_filter_descriptor),
       mask_filter=Some(mask_filter_descriptor),
     )
+    .translate(@skia.Point::new(1, 0))
+    .scale(@skia.Size::new(1, 1))
+    .rotate(0)
+    .skew(@skia.Point::new(0, 0))
+    .concat(@skia.Matrix::translate(-1, 0))
     .draw_point(
       @skia.Point::new(11, 1),
       paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=1.0),
@@ -1198,6 +1203,7 @@ fn main {
       replay_command_shader,
       paint=@skia.Paint::new(color=@skia.Color::white()),
     )
+    .reset_matrix()
     .restore()
     .draw_rect(
       @skia.Rect::from_xywh(1, 1, 4, 4),
@@ -1509,6 +1515,7 @@ fn main {
   if replay_stats.command_count != replay_commands.length() ||
     replay_stats.draw_count != 16 ||
     replay_stats.text_count != 2 ||
+    replay_commands.stats().transform_count != 6 ||
     replay_native_resource_stats.cache_count != 9 ||
     replay_native_resource_stats.resource_count != 9 ||
     replay_native_resource_stats.max_bytes != 8L * 1024L ||
@@ -1697,6 +1704,8 @@ fn main {
   println(if replay_frame_stats.is_complete() { 1 } else { 0 })
   println("native smoke canvas replay status contract")
   println(3)
+  println("native smoke canvas replay transforms")
+  println(replay_commands.stats().transform_count)
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
   println("native smoke surface render frame commands")

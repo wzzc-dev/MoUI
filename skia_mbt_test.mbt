@@ -1221,6 +1221,7 @@ test "render command list tracks stats balance and touched bounds" {
   assert_eq(stats.draw_count, 3)
   assert_eq(stats.clip_count, 1)
   assert_eq(stats.state_count, 2)
+  assert_eq(stats.transform_count, 0)
   assert_eq(stats.present_count, 1)
   assert_eq(stats.text_count, 1)
   assert_eq(stats.max_save_depth, 1)
@@ -1247,6 +1248,51 @@ test "render command list tracks stats balance and touched bounds" {
   let unbalanced = @skia_mbt.RenderCommandList::for_target(target).restore()
   assert_true(!unbalanced.is_state_balanced())
   assert_eq(unbalanced.stats().unbalanced_restore_count, 1)
+}
+
+///|
+test "render command list records transform commands" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(24, 24),
+  )
+  let commands = @skia_mbt.RenderCommandList::for_target(target)
+    .save()
+    .translate(@skia_mbt.Point::new(2, 3))
+    .scale(@skia_mbt.Size::new(2, 2))
+    .rotate(45)
+    .skew(@skia_mbt.Point::new(0.1, 0.2))
+    .concat(@skia_mbt.Matrix::translate(1, 2))
+    .reset_matrix()
+    .draw_rect(@skia_mbt.Rect::from_xywh(1, 1, 4, 4))
+    .restore()
+  let stats = commands.stats()
+  assert_eq(commands.length(), 9)
+  assert_eq(stats.command_count, 9)
+  assert_eq(stats.state_count, 8)
+  assert_eq(stats.transform_count, 6)
+  assert_eq(stats.draw_count, 1)
+  assert_eq(stats.max_save_depth, 1)
+  assert_true(stats.is_state_balanced())
+  assert_true(commands.commands[1].is_transform())
+  assert_true(commands.commands[6].is_transform())
+  assert_true(!commands.commands[7].is_transform())
+
+  let translated = @skia_mbt.RenderCommandList::for_target(target)
+    .translate(@skia_mbt.Point::new(10, 2))
+    .draw_rect(@skia_mbt.Rect::from_xywh(1, 1, 4, 4))
+  assert_true(
+    translated.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(11, 3, 4, 4)),
+  )
+
+  let restored = @skia_mbt.RenderCommandList::for_target(target)
+    .save()
+    .translate(@skia_mbt.Point::new(10, 2))
+    .draw_rect(@skia_mbt.Rect::from_xywh(1, 1, 4, 4))
+    .restore()
+    .draw_rect(@skia_mbt.Rect::from_xywh(1, 1, 4, 4))
+  assert_true(
+    restored.touched_bounds() == Some(@skia_mbt.Rect::new(1, 1, 15, 7)),
+  )
 }
 
 ///|

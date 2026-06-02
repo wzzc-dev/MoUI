@@ -148,6 +148,11 @@
       "marker": "native smoke canvas replay deferred present"
     },
     {
+      "id": "canvas.replay-transforms",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay transforms"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "area": "Canvas",
       "marker": "native smoke render frame replay rejected skipped"
@@ -984,12 +989,12 @@
     {
       "id": "canvas.command-replay",
       "marker": "native smoke canvas replay commands",
-      "value": "23"
+      "value": "29"
     },
     {
       "id": "canvas.frame-replay",
       "marker": "native smoke render frame replay commands",
-      "value": "23"
+      "value": "29"
     },
     {
       "id": "canvas.frame-replay-complete",
@@ -1007,14 +1012,19 @@
       "value": "1"
     },
     {
+      "id": "canvas.replay-transforms",
+      "marker": "native smoke canvas replay transforms",
+      "value": "6"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "marker": "native smoke render frame replay rejected skipped",
-      "value": "20"
+      "value": "26"
     },
     {
       "id": "surface.frame-render-commands",
       "marker": "native smoke surface render frame commands",
-      "value": "23"
+      "value": "29"
     },
     {
       "id": "surface.frame-render-finalized",

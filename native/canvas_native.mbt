@@ -2042,6 +2042,30 @@ fn Canvas::replay_command(
       self.replay_save_layer(
         bounds, paint, color_filter, image_filter, mask_filter, resources,
       )
+    @skia.TranslateCanvas(delta) => {
+      self.translate(delta)
+      true
+    }
+    @skia.ScaleCanvas(scale) => {
+      self.scale(scale)
+      true
+    }
+    @skia.RotateCanvas(degrees) => {
+      self.rotate(degrees)
+      true
+    }
+    @skia.SkewCanvas(skew) => {
+      self.skew(skew)
+      true
+    }
+    @skia.ConcatCanvas(matrix) => {
+      self.concat(matrix)
+      true
+    }
+    @skia.ResetCanvasMatrix => {
+      self.reset_matrix()
+      true
+    }
     @skia.ClearCanvas(color) => {
       self.clear(color)
       true
