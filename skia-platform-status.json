@@ -703,6 +703,16 @@
       "marker": "native smoke invalid shader filter descriptor resources"
     },
     {
+      "id": "shader-filter.invalid-replay-skipped",
+      "area": "Shader",
+      "marker": "native smoke invalid shader filter replay skipped"
+    },
+    {
+      "id": "shader-filter.invalid-replay-cache-resources",
+      "area": "Shader",
+      "marker": "native smoke invalid shader filter replay cache resources"
+    },
+    {
       "id": "filter.layer",
       "area": "Filter",
       "marker": "native smoke filter layer count"
@@ -1755,6 +1765,16 @@
       "id": "shader-filter.invalid-descriptor-resources",
       "marker": "native smoke invalid shader filter descriptor resources",
       "value": "4"
+    },
+    {
+      "id": "shader-filter.invalid-replay-skipped",
+      "marker": "native smoke invalid shader filter replay skipped",
+      "value": "2"
+    },
+    {
+      "id": "shader-filter.invalid-replay-cache-resources",
+      "marker": "native smoke invalid shader filter replay cache resources",
+      "value": "0"
     },
     {
       "id": "filter.resource-plan",
