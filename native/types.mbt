@@ -219,6 +219,12 @@ pub(all) struct CanvasReplayStats {
   clear_count : Int
   text_count : Int
   present_count : Int
+  resource_declaration_count : Int
+  image_resource_count : Int
+  shader_resource_count : Int
+  filter_resource_count : Int
+  path_resource_count : Int
+  text_resource_count : Int
 } derive(Debug, Eq)
 
 ///|
@@ -247,6 +253,12 @@ pub fn CanvasReplayStats::empty() -> CanvasReplayStats {
     clear_count: 0,
     text_count: 0,
     present_count: 0,
+    resource_declaration_count: 0,
+    image_resource_count: 0,
+    shader_resource_count: 0,
+    filter_resource_count: 0,
+    path_resource_count: 0,
+    text_resource_count: 0,
   }
 }
 
@@ -269,6 +281,46 @@ pub fn CanvasReplayStats::status(
 }
 
 ///|
+priv struct CanvasReplayCommandResourceCounts {
+  image_resource_count : Int
+  shader_resource_count : Int
+  filter_resource_count : Int
+  path_resource_count : Int
+  text_resource_count : Int
+}
+
+///|
+fn canvas_replay_command_resource_counts(
+  command : @skia.RenderCommand,
+) -> CanvasReplayCommandResourceCounts {
+  let mut image_resource_count = 0
+  let mut shader_resource_count = 0
+  let mut filter_resource_count = 0
+  let mut path_resource_count = 0
+  let mut text_resource_count = 0
+  for descriptor in command.resource_descriptors() {
+    match descriptor.key.kind {
+      @skia.ImageResource => image_resource_count += 1
+      @skia.ShaderResource => shader_resource_count += 1
+      @skia.PathResource => path_resource_count += 1
+      @skia.ColorFilterResource
+      | @skia.ImageFilterResource
+      | @skia.MaskFilterResource => filter_resource_count += 1
+      @skia.TypefaceResource | @skia.FontResource | @skia.TextRunResource =>
+        text_resource_count += 1
+      _ => ()
+    }
+  }
+  {
+    image_resource_count,
+    shader_resource_count,
+    filter_resource_count,
+    path_resource_count,
+    text_resource_count,
+  }
+}
+
+///|
 fn canvas_replay_skipped_stats(
   commands : @skia.RenderCommandList,
 ) -> CanvasReplayStats {
@@ -281,6 +333,12 @@ fn canvas_replay_skipped_stats(
   let mut clear_count = 0
   let mut text_count = 0
   let mut present_count = 0
+  let mut resource_declaration_count = 0
+  let mut image_resource_count = 0
+  let mut shader_resource_count = 0
+  let mut filter_resource_count = 0
+  let mut path_resource_count = 0
+  let mut text_resource_count = 0
   for command in commands.commands {
     command_count += 1
     if command.is_draw() {
@@ -301,6 +359,15 @@ fn canvas_replay_skipped_stats(
     if command.is_text() {
       text_count += 1
     }
+    if command.is_resource_declaration() {
+      resource_declaration_count += 1
+    }
+    let resource_counts = canvas_replay_command_resource_counts(command)
+    image_resource_count += resource_counts.image_resource_count
+    shader_resource_count += resource_counts.shader_resource_count
+    filter_resource_count += resource_counts.filter_resource_count
+    path_resource_count += resource_counts.path_resource_count
+    text_resource_count += resource_counts.text_resource_count
     if command.is_present() {
       present_count += 1
     } else if !command.is_resource_declaration() {
@@ -318,6 +385,12 @@ fn canvas_replay_skipped_stats(
     clear_count,
     text_count,
     present_count,
+    resource_declaration_count,
+    image_resource_count,
+    shader_resource_count,
+    filter_resource_count,
+    path_resource_count,
+    text_resource_count,
   }
 }
 

@@ -2160,6 +2160,12 @@ fn Canvas::replay_internal(
   let mut clear_count = 0
   let mut text_count = 0
   let mut present_count = 0
+  let mut resource_declaration_count = 0
+  let mut image_resource_count = 0
+  let mut shader_resource_count = 0
+  let mut filter_resource_count = 0
+  let mut path_resource_count = 0
+  let mut text_resource_count = 0
   for command in commands.commands {
     command_count += 1
     if command.is_draw() {
@@ -2180,6 +2186,15 @@ fn Canvas::replay_internal(
     if command.is_text() {
       text_count += 1
     }
+    if command.is_resource_declaration() {
+      resource_declaration_count += 1
+    }
+    let resource_counts = canvas_replay_command_resource_counts(command)
+    image_resource_count += resource_counts.image_resource_count
+    shader_resource_count += resource_counts.shader_resource_count
+    filter_resource_count += resource_counts.filter_resource_count
+    path_resource_count += resource_counts.path_resource_count
+    text_resource_count += resource_counts.text_resource_count
     if command.is_present() {
       present_count += 1
     }
@@ -2200,6 +2215,12 @@ fn Canvas::replay_internal(
     clear_count,
     text_count,
     present_count,
+    resource_declaration_count,
+    image_resource_count,
+    shader_resource_count,
+    filter_resource_count,
+    path_resource_count,
+    text_resource_count,
   }
 }
 

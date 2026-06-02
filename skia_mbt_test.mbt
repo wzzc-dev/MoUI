@@ -1250,6 +1250,12 @@ test "render command list tracks stats balance and touched bounds" {
   assert_eq(stats.transform_count, 0)
   assert_eq(stats.present_count, 1)
   assert_eq(stats.text_count, 1)
+  assert_eq(stats.resource_declaration_count, 0)
+  assert_eq(stats.image_resource_count, 0)
+  assert_eq(stats.shader_resource_count, 0)
+  assert_eq(stats.filter_resource_count, 0)
+  assert_eq(stats.path_resource_count, 1)
+  assert_eq(stats.text_resource_count, 0)
   assert_eq(stats.max_save_depth, 1)
   assert_true(stats.is_state_balanced())
   assert_true(commands.is_state_balanced())
@@ -1692,6 +1698,7 @@ test "render command list records shaped glyph run resources" {
   let command_descriptors = command.resource_descriptors()
   assert_eq(command_descriptors.length(), 6)
   assert_true(command_descriptors[0].key == glyph_run.resource_key(b"hello"))
+  assert_eq(command.text_resource_count(), 6)
 
   let commands = @skia_mbt.RenderCommandList::for_target(target).draw_shaped_glyph_run_utf8(
     b"hello",
@@ -1703,6 +1710,12 @@ test "render command list records shaped glyph run resources" {
   assert_eq(stats.command_count, 1)
   assert_eq(stats.draw_count, 1)
   assert_eq(stats.text_count, 1)
+  assert_eq(stats.resource_declaration_count, 0)
+  assert_eq(stats.image_resource_count, 0)
+  assert_eq(stats.shader_resource_count, 0)
+  assert_eq(stats.filter_resource_count, 0)
+  assert_eq(stats.path_resource_count, 0)
+  assert_eq(stats.text_resource_count, 6)
   assert_true(
     commands.text_run_resource_keys() == [glyph_run.resource_key(b"hello")],
   )
@@ -1846,6 +1859,16 @@ test "render command list includes declared resource descriptors" {
   assert_eq(path_shader_descriptors.length(), 2)
   assert_true(path_shader_descriptors[0].key == shader_path_descriptor.key)
   assert_true(path_shader_descriptors[1].key == shader_descriptor.key)
+  assert_eq(
+    path_shader_command.resource_count_for_kind(@skia_mbt.PathResource),
+    1,
+  )
+  assert_eq(
+    path_shader_command.resource_count_for_kind(@skia_mbt.ShaderResource),
+    1,
+  )
+  assert_eq(path_shader_command.filter_resource_count(), 0)
+  assert_eq(path_shader_command.text_resource_count(), 0)
   assert_true(
     @skia_mbt.RenderCommand::draw_image(image, @skia_mbt.Point::new(13, 1)).resource_descriptor() ==
     Some(image_descriptor),
@@ -1864,6 +1887,12 @@ test "render command list includes declared resource descriptors" {
   assert_eq(stats.draw_count, 6)
   assert_eq(stats.state_count, 2)
   assert_eq(stats.text_count, 0)
+  assert_eq(stats.resource_declaration_count, 5)
+  assert_eq(stats.image_resource_count, 2)
+  assert_eq(stats.shader_resource_count, 5)
+  assert_eq(stats.filter_resource_count, 6)
+  assert_eq(stats.path_resource_count, 1)
+  assert_eq(stats.text_resource_count, 0)
   assert_eq(stats.max_save_depth, 1)
   assert_true(stats.is_state_balanced())
   assert_true(
