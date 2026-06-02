@@ -1248,6 +1248,10 @@ test "canvas replays render command lists" {
           }
           assert_eq(stats.command_count, commands.length())
           assert_eq(stats.draw_count, expected_draw_count)
+          assert_eq(stats.state_count, commands.stats().state_count)
+          assert_eq(stats.transform_count, commands.stats().transform_count)
+          assert_eq(stats.clip_count, commands.stats().clip_count)
+          assert_eq(stats.clear_count, commands.stats().clear_count)
           assert_eq(stats.text_count, 1)
           assert_eq(stats.present_count, 0)
           match font {
@@ -1283,6 +1287,13 @@ test "canvas replays render command lists" {
           let frame_stats = canvas.replay_frame(replay_frame, font~)
           assert_eq(frame_stats.command_count, commands.length())
           assert_eq(frame_stats.draw_count, expected_draw_count)
+          assert_eq(frame_stats.state_count, commands.stats().state_count)
+          assert_eq(
+            frame_stats.transform_count,
+            commands.stats().transform_count,
+          )
+          assert_eq(frame_stats.clip_count, commands.stats().clip_count)
+          assert_eq(frame_stats.clear_count, commands.stats().clear_count)
           assert_eq(frame_stats.text_count, 1)
           assert_eq(frame_stats.present_count, 0)
           match font {
@@ -1325,6 +1336,13 @@ test "canvas replays render command lists" {
               )
               assert_true(cached_stats.is_complete())
               assert_eq(cached_stats.command_count, commands.length())
+              assert_eq(cached_stats.state_count, commands.stats().state_count)
+              assert_eq(
+                cached_stats.transform_count,
+                commands.stats().transform_count,
+              )
+              assert_eq(cached_stats.clip_count, commands.stats().clip_count)
+              assert_eq(cached_stats.clear_count, commands.stats().clear_count)
               let cached_again_stats = canvas.replay_with_resources(
                 commands,
                 replay_resources,
@@ -1342,6 +1360,22 @@ test "canvas replays render command lists" {
               let replay_resource_stats = replay_resources.stats()
               assert_true(cached_again_stats.is_complete())
               assert_eq(cached_again_stats.command_count, commands.length())
+              assert_eq(
+                cached_again_stats.state_count,
+                commands.stats().state_count,
+              )
+              assert_eq(
+                cached_again_stats.transform_count,
+                commands.stats().transform_count,
+              )
+              assert_eq(
+                cached_again_stats.clip_count,
+                commands.stats().clip_count,
+              )
+              assert_eq(
+                cached_again_stats.clear_count,
+                commands.stats().clear_count,
+              )
               assert_eq(replay_resource_stats.cache_count, 9)
               assert_eq(replay_resource_stats.resource_count, 10)
               assert_eq(
@@ -1396,6 +1430,22 @@ test "canvas replays render command lists" {
               )
               assert_true(frame_cached_stats.is_complete())
               assert_eq(frame_cached_stats.command_count, commands.length())
+              assert_eq(
+                frame_cached_stats.state_count,
+                commands.stats().state_count,
+              )
+              assert_eq(
+                frame_cached_stats.transform_count,
+                commands.stats().transform_count,
+              )
+              assert_eq(
+                frame_cached_stats.clip_count,
+                commands.stats().clip_count,
+              )
+              assert_eq(
+                frame_cached_stats.clear_count,
+                commands.stats().clear_count,
+              )
               assert_eq(frame_resources.image_cache.length(), 1)
               assert_eq(frame_resources.shader_cache.length(), 2)
               assert_eq(frame_resources.path_cache.length(), 1)

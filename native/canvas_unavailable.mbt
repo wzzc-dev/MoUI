@@ -450,12 +450,28 @@ pub fn Canvas::replay(
   let mut command_count = 0
   let mut skipped_count = 0
   let mut draw_count = 0
+  let mut state_count = 0
+  let mut transform_count = 0
+  let mut clip_count = 0
+  let mut clear_count = 0
   let mut text_count = 0
   let mut present_count = 0
   for command in commands.commands {
     command_count += 1
     if command.is_draw() {
       draw_count += 1
+    }
+    if command.is_state() {
+      state_count += 1
+    }
+    if command.is_transform() {
+      transform_count += 1
+    }
+    if command.is_clip() {
+      clip_count += 1
+    }
+    if command.is_clear() {
+      clear_count += 1
     }
     if command.is_text() {
       text_count += 1
@@ -471,6 +487,10 @@ pub fn Canvas::replay(
     replayed_count: 0,
     skipped_count,
     draw_count,
+    state_count,
+    transform_count,
+    clip_count,
+    clear_count,
     text_count,
     present_count,
   }

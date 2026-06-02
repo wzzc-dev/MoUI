@@ -1514,6 +1514,10 @@ fn main {
   let replay_native_resource_stats = replay_native_resources.stats()
   if replay_stats.command_count != replay_commands.length() ||
     replay_stats.draw_count != 16 ||
+    replay_stats.state_count != replay_commands.stats().state_count ||
+    replay_stats.transform_count != replay_commands.stats().transform_count ||
+    replay_stats.clip_count != replay_commands.stats().clip_count ||
+    replay_stats.clear_count != replay_commands.stats().clear_count ||
     replay_stats.text_count != 2 ||
     replay_commands.stats().transform_count != 6 ||
     replay_native_resource_stats.cache_count != 9 ||
@@ -1705,7 +1709,9 @@ fn main {
   println("native smoke canvas replay status contract")
   println(3)
   println("native smoke canvas replay transforms")
-  println(replay_commands.stats().transform_count)
+  println(replay_stats.transform_count)
+  println("native smoke canvas replay state stats")
+  println(4)
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
   println("native smoke surface render frame commands")
