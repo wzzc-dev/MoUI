@@ -2483,40 +2483,7 @@ fn WorkbenchModel::activity_panel(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let rows : Array[@core.View[WorkbenchMsg]] = [
-    row(
-      [
-        text(
-          "运行证据",
-          role=Control,
-          theme~,
-          width=workbench_max_double(1.0, layout.panel_body_width - 290.0),
-          height=28.0,
-        ),
-        count_badge(
-          self.commands.length(),
-          label=self.commands.length().to_string() + " 运行",
-          tone=Neutral,
-          theme~,
-          width=94.0,
-        ),
-        count_badge(
-          self.command_catalog.length(),
-          label=self.command_catalog.length().to_string() + " 命令",
-          tone=Accent,
-          theme~,
-          width=94.0,
-        ),
-        count_badge(
-          self.events.length(),
-          label=self.events.length().to_string() + " 事件",
-          tone=Neutral,
-          theme~,
-          width=102.0,
-        ),
-      ],
-      spacing=8.0,
-      align=Center,
-    ),
+    self.activity_header_row(layout, theme),
   ]
   if self.should_show_focused_check_presets() {
     rows.push(focused_check_preset_row(layout, theme))
@@ -2537,6 +2504,73 @@ fn WorkbenchModel::activity_panel(
     theme~,
     padding=12.0,
   ).border(workbench_hairline_border())
+}
+
+///|
+fn WorkbenchModel::activity_header_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let controls : Array[@core.View[WorkbenchMsg]] = []
+  let mut badge_width = 0.0
+  let mut badge_count = 0
+  if !self.commands.is_empty() {
+    badge_width = badge_width + 94.0
+    badge_count = badge_count + 1
+  }
+  if !self.command_catalog.is_empty() {
+    badge_width = badge_width + 94.0
+    badge_count = badge_count + 1
+  }
+  if !self.events.is_empty() {
+    badge_width = badge_width + 102.0
+    badge_count = badge_count + 1
+  }
+  let spacing_width = badge_count.to_double() * 8.0
+  controls.push(
+    text(
+      "运行证据",
+      role=Control,
+      theme~,
+      width=workbench_max_double(
+        1.0,
+        layout.panel_body_width - badge_width - spacing_width,
+      ),
+      height=28.0,
+    ),
+  )
+  if !self.commands.is_empty() {
+    controls.push(
+      badge(
+        self.commands.length().to_string() + " 运行",
+        tone=Neutral,
+        theme~,
+        width=94.0,
+      ),
+    )
+  }
+  if !self.command_catalog.is_empty() {
+    controls.push(
+      badge(
+        self.command_catalog.length().to_string() + " 命令",
+        tone=Accent,
+        theme~,
+        width=94.0,
+      ),
+    )
+  }
+  if !self.events.is_empty() {
+    controls.push(
+      badge(
+        self.events.length().to_string() + " 事件",
+        tone=Neutral,
+        theme~,
+        width=102.0,
+      ),
+    )
+  }
+  row(controls, spacing=8.0, align=Center)
 }
 
 ///|
