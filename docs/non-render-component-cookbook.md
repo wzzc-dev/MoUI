@@ -9,9 +9,13 @@ composition, use `core` helpers for runtime-neutral contracts, and cross into
 ## Forms
 
 Use `form`, `form_section`, and `form_field` for layout and status surfaces.
-Keep field values and validation display controlled by the app model, then use
-`@core.FormFieldState`, `required_field`, and `FormController` when multiple
-fields need shared validation or first-invalid-field routing.
+Keep field values, async validation state, and validation display controlled by
+the app model, then use `@core.FormFieldState`, `required_field`, and
+`FormController` when multiple fields need shared validation or
+first-invalid-field routing. When a field is checking a server or local rule,
+use `FormFieldStatus::Validating`; when submit should move focus, key the
+field view and call `AppRuntime::focus_key` from the app or host after the
+runtime is available.
 
 ```moonbit nocheck
 using @views {button, form, form_field, form_section, text_field}
@@ -25,15 +29,27 @@ fn profile_form(name : String, error : String?) -> @core.View[Msg] {
       [
         form_field(
           "Name",
-          text_field(name, on_input=NameChanged, placeholder="Display name"),
+          text_field(name, on_input=NameChanged, placeholder="Display name")
+            .key("profile-name"),
           required=true,
           error~,
           helper="Shown in shared workspaces.",
+        ),
+        form_field(
+          "Workspace slug",
+          text_field("", on_input=NameChanged, placeholder="workspace-slug")
+            .key("workspace-slug"),
+          status=@views.FormFieldStatus::Validating,
+          helper="Checking availability.",
         ),
         button("Save", on_click=Submit),
       ],
     ),
   ])
+}
+
+fn focus_first_invalid(runtime : @core.AppRuntime) -> Bool {
+  runtime.focus_key("profile-name")
 }
 ```
 
@@ -47,11 +63,12 @@ moon test examples/settings/app --target native
 
 ## Data Tables
 
-Use `data_filter_bar`, `selection_toolbar`, `column_visibility_panel`, `table`,
-and `pagination` together for operational data surfaces. Filtering, sorting,
-visible columns, pagination, row selection, and loading/error/empty states
-should live in the app model so the table stays renderer-neutral and
-predictable.
+Use `DataSortState`, `PaginationState`, `ColumnVisibilityState`,
+`SelectionState`, `data_filter_bar`, `selection_toolbar`,
+`column_visibility_panel`, `table`, and `pagination` together for operational
+data surfaces. Filtering, sorting predicates, visible columns, pagination, row
+selection, and loading/error/empty states should live in the app model so the
+table stays renderer-neutral and predictable.
 
 ```moonbit nocheck
 using @views {
@@ -71,7 +88,10 @@ fn project_table(
   rows : Array[Project],
   query : String,
   selected_count : Int,
-  visible_columns : Array[String],
+  sort : @views.DataSortState,
+  pagination_state : @views.PaginationState,
+  visible_columns : @views.ColumnVisibilityState,
+  selection : @views.SelectionState,
   loading : Bool,
   error : String?,
 ) -> @core.View[Msg] {
@@ -96,12 +116,12 @@ fn project_table(
       ),
       column_visibility_panel(
         columns,
-        visible=visible_columns,
-        locked=["name"],
+        visible=visible_columns.visible,
+        locked=visible_columns.locked,
         on_toggle=(id, shown) => ToggleColumn(id, shown),
       ),
       selection_toolbar(
-        selected_count~,
+        selected_count=selection.count(),
         total_count=rows.length(),
         actions=[@views.MenuItem::new(id="export", label="Export", message=ExportRows)],
         on_clear=Some(ClearSelection),
@@ -111,12 +131,18 @@ fn project_table(
         rows.map(row => [row.name, row.status]),
         selected_row=None,
         on_row_select=Some(index => SelectRow(index)),
-        sort_column="name",
+        sort_column=sort.column,
+        sort_ascending=sort.ascending,
         on_sort=Some(id => SortBy(id)),
         sortable_columns=["name", "status"],
         empty=Some(@views.empty_state("No projects", "No projects match the current filter.")),
       ),
-      pagination(page=0, page_count=1, on_previous=PreviousPage, on_next=NextPage),
+      pagination(
+        page=pagination_state.page,
+        page_count=pagination_state.page_count(),
+        on_previous=PreviousPage,
+        on_next=NextPage,
+      ),
     ])
   }
 }
@@ -134,7 +160,9 @@ moon test examples/data_table/app --target native
 Use `sidebar`, `breadcrumb`, `split_view`, `master_detail`, `wizard`, and
 `router_stack` to describe navigation structure. Keep the active route in the
 app model or in `@core.RouterState`; use `RouteLocation` query params when a
-route needs stable restoration.
+route needs stable restoration. For focus restoration, record a route-to-key
+mapping in `RouteFocusStore`, key the target focusable view, and call
+`store.restore(runtime, route)` after the route has rendered.
 
 ```moonbit nocheck
 using @views {master_detail, sidebar}
@@ -142,6 +170,9 @@ using @views {master_detail, sidebar}
 enum Msg { SelectSection(String) }
 
 fn settings_shell(current : String, detail : @core.View[Msg]) -> @core.View[Msg] {
+  let focus_store = @core.RouteFocusStore::new()
+  focus_store.remember(route="account", focus_key="sidebar-item-account")
+  focus_store.remember(route="appearance", focus_key="sidebar-item-appearance")
   master_detail(
     master=sidebar(
       "Settings",
@@ -153,6 +184,14 @@ fn settings_shell(current : String, detail : @core.View[Msg]) -> @core.View[Msg]
     ),
     detail~,
   )
+}
+
+fn restore_settings_focus(
+  store : @core.RouteFocusStore,
+  runtime : @core.AppRuntime,
+  route : String,
+) -> Bool {
+  store.restore(runtime, route)
 }
 ```
 
@@ -188,6 +227,18 @@ fn palette(commands : Array[@core.ActionCommand]) -> @core.View[Msg] {
 View-level menus are overlay compositions. Native context menus and focused text
 clipboard commands should go through `HostServiceBridge` and `HostAppServices`
 instead of `views`.
+
+```moonbit nocheck
+fn request_native_menu(
+  services : @host.HostAppServices,
+  commands : Array[@core.ActionCommand],
+) -> @core.Effect[Msg] {
+  @core.Effect::dispatch(dispatch => {
+    let response = services.show_context_menu(commands)
+    dispatch(HostMenuCompleted(response))
+  })
+}
+```
 
 Recommended checks:
 
@@ -241,6 +292,42 @@ Recommended checks:
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
 moon test examples/file_importer/app --target native
+```
+
+## Toast Queues
+
+Use `ToastQueue` and `ToastQueueItem` when an app needs predictable transient
+notification state but still wants to own timers, host notifications, and retry
+effects. The queue can convert directly to `toast_stack` items.
+
+```moonbit nocheck
+using @views {toast_stack}
+
+enum Msg { RetrySync; DismissToast(String) }
+
+fn notifications(now_ms : Double) -> @core.View[Msg] {
+  let queue = @views.ToastQueue::new(
+    items=[
+      @views.ToastQueueItem::new(
+        id="sync",
+        message="Sync queued for retry",
+        tone=@views.FeedbackTone::Warning,
+        action=Some(@views.StateViewAction::new(label="Retry", message=RetrySync)),
+        dismiss=Some(DismissToast("sync")),
+        created_at_ms=now_ms,
+        ttl_ms=5000.0,
+      ),
+    ],
+  )
+  toast_stack(queue.expire(now_ms).to_stack_items())
+}
+```
+
+Recommended checks:
+
+```sh
+moon test moui/views --target native
+moon test examples/showcase/app --target native
 ```
 
 ## Virtual Lists

@@ -24,6 +24,7 @@ pub fn[Msg] sheet_host(
   presented? : Bool = false,
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
   on_dismiss? : Msg? = None,
+  trap_focus? : Bool = true,
 ) -> @core.View[Msg] {
   if presented && sheet is Some(sheet_spec) {
     let theme = @core.Theme::default()
@@ -47,6 +48,11 @@ pub fn[Msg] sheet_host(
         .frame(max_height=500.0)
         .corner_radius(theme.radius_scale.lg)
         .align(alignment=@core.Alignment::new(x=0.5, y=1.0))
+    }
+    let aligned_sheet = if trap_focus {
+      aligned_sheet.focus_trap()
+    } else {
+      aligned_sheet
     }
     stack([child, scrim_with_tap, aligned_sheet])
   } else {

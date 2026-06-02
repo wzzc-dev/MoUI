@@ -236,6 +236,29 @@ fn ShowcaseModel::focus_shortcut_card(
         text("Focus order: name -> email", width=width - 32.0, height=22.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
+        row(
+          [
+            button(
+              "Trap A",
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=82.0,
+              height=32.0,
+            ).focusable(),
+            button(
+              "Trap B",
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=82.0,
+              height=32.0,
+            ).focusable(),
+          ],
+          spacing=6.0,
+          align=@views.CrossAlign::Center,
+        ).focus_trap(),
+        text("Runtime trap: active", width=width - 32.0, height=22.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
         text(
           "Tab next: " + focus_scope.next().unwrap_or("none"),
           width=width - 32.0,
@@ -276,7 +299,7 @@ fn ShowcaseModel::focus_shortcut_card(
       align=@views.CrossAlign::Start,
     ),
     width~,
-    height=354.0,
+    height=412.0,
     padding=theme.spacing_scale.md,
   )
   .semantics_role(@core.SemanticsRole::Group)

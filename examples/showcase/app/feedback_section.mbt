@@ -5,6 +5,25 @@ fn ShowcaseModel::feedback_section(
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
   let action = @views.StateViewAction::new(label="Retry", message=ToggleActive)
+  let toast_queue : @views.ToastQueue[ShowcaseMsg] = @views.ToastQueue::new(items=[
+    @views.ToastQueueItem::new(
+      id="saved",
+      message="Workspace saved",
+      tone=@views.FeedbackTone::Success,
+      dismiss=Some(ToggleActive),
+      created_at_ms=0.0,
+      ttl_ms=5000.0,
+    ),
+    @views.ToastQueueItem::new(
+      id="queued",
+      message="Sync queued for retry",
+      tone=@views.FeedbackTone::Warning,
+      action=Some(action),
+      created_at_ms=1000.0,
+      ttl_ms=0.0,
+    ),
+  ])
+  let toast_items = toast_queue.to_stack_items()
   section_panel(
     theme,
     "Feedback",
@@ -29,24 +48,14 @@ fn ShowcaseModel::feedback_section(
           spacing=theme.spacing_scale.md,
           align=@views.CrossAlign::Start,
         ),
-        toast_stack(
-          [
-            @views.ToastStackItem::new(
-              id="saved",
-              message="Workspace saved",
-              tone=@views.FeedbackTone::Success,
-              dismiss=Some(ToggleActive),
-            ),
-            @views.ToastStackItem::new(
-              id="queued",
-              message="Sync queued for retry",
-              tone=@views.FeedbackTone::Warning,
-              action=Some(action),
-            ),
-          ],
+        text(
+          "ToastQueue helper: \{toast_items.length()} active items; app timers own ttl",
+          role=@views.TextRole::Caption,
           theme~,
           width=520.0,
+          height=22.0,
         ),
+        toast_stack(toast_items, theme~, width=520.0),
         banner(
           "Connection interrupted",
           "Changes are queued until the host service reconnects.",

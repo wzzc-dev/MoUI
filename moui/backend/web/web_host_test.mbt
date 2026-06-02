@@ -241,4 +241,6 @@ test "web accessibility maps semantics to aria nodes" {
   inspect(aria.role, content="checkbox")
   inspect(aria.label, content="Done")
   assert_true(aria.checked == Some(true))
+  inspect(aria.disabled, content="false")
+  assert_true(aria.actions.any(action => action == "activate"))
 }

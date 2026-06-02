@@ -183,6 +183,11 @@ fn ViewSpec::focusable(self : ViewSpec, focusable? : Bool = true) -> ViewSpec {
 }
 
 ///|
+fn ViewSpec::focus_trap(self : ViewSpec, enabled? : Bool = true) -> ViewSpec {
+  self.modified(FocusTrapModifier(enabled))
+}
+
+///|
 fn ViewSpec::keyboard_shortcut(
   self : ViewSpec,
   shortcut : KeyboardShortcut,

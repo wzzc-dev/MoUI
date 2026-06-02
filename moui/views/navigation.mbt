@@ -519,19 +519,24 @@ pub fn[Msg] dialog_host(
   child : @core.View[Msg],
   dialog? : @core.View[Msg]? = None,
   presented? : Bool = false,
+  trap_focus? : Bool = true,
 ) -> @core.View[Msg] {
   if presented {
     match dialog {
-      Some(dialog) =>
-        stack([
-          child,
-          surface(
-            dialog.semantics_role(@core.SemanticsRole::Dialog),
-            width=360.0,
-            height=220.0,
-            variant=SurfaceVariant::Raised,
-          ).align(alignment=@core.Alignment::center()),
-        ])
+      Some(dialog) => {
+        let presented_dialog = surface(
+          dialog.semantics_role(@core.SemanticsRole::Dialog),
+          width=360.0,
+          height=220.0,
+          variant=SurfaceVariant::Raised,
+        ).align(alignment=@core.Alignment::center())
+        let presented_dialog = if trap_focus {
+          presented_dialog.focus_trap()
+        } else {
+          presented_dialog
+        }
+        stack([child, presented_dialog])
+      }
       None => child
     }
   } else {

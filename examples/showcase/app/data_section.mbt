@@ -35,6 +35,17 @@ fn ShowcaseModel::data_table_card(
   width : Double,
 ) -> @core.View[ShowcaseMsg] {
   ignore(self)
+  let sort = @views.DataSortState::new(column="status", ascending=false)
+  let visibility = @views.ColumnVisibilityState::new(
+    visible=["name", "owner"],
+    locked=["name"],
+  )
+  let selection = @views.SelectionState::new(selected=["atlas", "billing"])
+  let page_state = @views.PaginationState::new(
+    page=1,
+    page_size=3,
+    total_count=10,
+  ).clamped()
   let columns = [
     table_column(id="name", label="Name", width=150.0),
     table_column(id="status", label="Status", width=112.0),
@@ -50,6 +61,13 @@ fn ShowcaseModel::data_table_card(
           theme~,
           width=width - 32.0,
           height=28.0,
+        ),
+        text(
+          "Data helpers: sort=status desc, page \{page_state.page + 1}/\{page_state.page_count()}, selected \{selection.count()}",
+          role=@views.TextRole::Caption,
+          theme~,
+          width=392.0,
+          height=22.0,
         ),
         data_filter_bar(
           query="atlas",
@@ -80,23 +98,27 @@ fn ShowcaseModel::data_table_card(
             ["Billing Flow", "Review", "Noah"],
             ["Import Queue", "Paused", "Iris"],
           ],
-          selected_row=Some(1),
+          selected_row=if selection.contains("billing") {
+            Some(1)
+          } else {
+            None
+          },
           on_row_select=Some(_row => ToggleActive),
-          sort_column="status",
-          sort_ascending=false,
+          sort_column=sort.column,
+          sort_ascending=sort.ascending,
           on_sort=Some(_id => ToggleActive),
           theme~,
         ),
         column_visibility_panel(
           columns,
-          visible=["name", "owner"],
-          locked=["name"],
+          visible=visibility.visible,
+          locked=visibility.locked,
           on_toggle=(_id, _visible) => ToggleActive,
           theme~,
           width=392.0,
         ),
         selection_toolbar(
-          selected_count=2,
+          selected_count=selection.count(),
           total_count=3,
           actions=[
             @views.MenuItem::new(
@@ -115,8 +137,8 @@ fn ShowcaseModel::data_table_card(
           width=392.0,
         ),
         pagination(
-          page=1,
-          page_count=4,
+          page=page_state.page,
+          page_count=page_state.page_count(),
           on_previous=ToggleActive,
           on_next=ToggleActive,
           theme~,
@@ -138,7 +160,7 @@ fn ShowcaseModel::data_table_card(
       align=@views.CrossAlign::Start,
     ),
     width=430.0,
-    height=696.0,
+    height=724.0,
     padding=theme.spacing_scale.md,
   )
 }

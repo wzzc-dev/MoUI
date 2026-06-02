@@ -200,6 +200,11 @@ pub fn AppRuntime::focus_previous(self : AppRuntime) -> Bool {
 }
 
 ///|
+pub fn AppRuntime::focus_key(self : AppRuntime, key : String) -> Bool {
+  self.state.focus_key(key)
+}
+
+///|
 pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[DrawCommand] {
   self.state.build_draw_commands()
 }

@@ -20,11 +20,11 @@ introducing a generator.
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
-| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, form validation workflow bars, toast stack/progress/status surfaces, `status_badge` feedback chips, table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
+| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with route focus restore evidence, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
-| Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, column visibility, sortable table headers, row selection, selection toolbar actions, tree filters, loading/error/empty states, public `pagination` and `detail_panel`, model-level sort and data slicing |
+| Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
-| Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
+| Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `runtime_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Codex-style conversation-first coding-agent shell, lightweight agent focus routing, composer slash-command suggestions, compact status rail, current task strip, single current-turn evidence card, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
@@ -101,10 +101,19 @@ development workflows:
   Markdown/rich text diagnostic.
 - `Interaction Lab`: tooltip, file-drop modifier wiring, FocusScope traversal,
   first-invalid targeting, Enter/Escape command targets, shortcut affordances,
-  public `shortcut_button` dispatch, app-owned `focus_ring` affordances,
-  popover/dropdown expanded semantics, pressed/selected/disabled semantic state
-  examples, button/text-field variants, and deterministic image lifecycle
-  states.
+  runtime `View::focus_trap` containment, public `shortcut_button` dispatch,
+  app-owned `focus_ring` affordances, popover/dropdown expanded semantics,
+  pressed/selected/disabled semantic state examples, button/text-field
+  variants, and deterministic image lifecycle states.
+- `Forms`: validating/help/error/disabled/read-only field states, keyed
+  first-invalid focus targets, and submit-guard evidence for the form workflow
+  bar.
+- `Navigation Shell`: route headers, section navigation, breadcrumbs, dialogs,
+  sheets, command metadata, and `RouteFocusStore` evidence showing which
+  `runtime.focus_key(...)` call should restore route focus after a route switch.
+- `Feedback`: toast/banner/callout/progress/inline-error surfaces plus a
+  `ToastQueue` example that converts queued items into `toast_stack` rows while
+  keeping timers in the app model.
 - `Examples`: Counter and Todo reusable app patterns until the dedicated
   example apps cover those workflows.
 
@@ -131,10 +140,11 @@ search/filter toolbar, status chips, column visibility, sortable table headers,
 tree filters, stable model-level sorting, page navigation, selected-row detail,
 plus empty/loading/error panels built from public `views` constructors.
 The app keeps filtering, sorting, and page slicing in its TEA model while using
-public `data_filter_bar`, table sort-header, row-selection,
+public `DataSortState`, `PaginationState`, `ColumnVisibilityState`,
+`SelectionState`, `data_filter_bar`, table sort-header, row-selection,
 `column_visibility_panel`, `selection_toolbar`, `pagination`, and `detail_panel`
-helpers for reusable view structure. The selected row set, visible-column set,
-and bulk action effects remain app-owned.
+helpers for reusable view structure. Filter predicates, async requests, and
+bulk action effects remain app-owned.
 
 ## File Importer
 
@@ -159,7 +169,10 @@ The Command Palette example keeps command definitions in `ActionCommand`
 metadata, renders them through the public palette and command menu views, and
 uses `ActionCommandMap` for shortcut dispatch. Disabled commands stay visible
 for discoverability but do not dispatch through model actions or runtime command
-bindings.
+bindings. Its effect-capable `runtime_with_services` path demonstrates
+`HostAppServices::show_context_menu`, dispatching the selected native menu
+command back through the same typed message loop while preserving the view-level
+fallback context menu for hosts without native menu support.
 
 ## Mo Workbench
 

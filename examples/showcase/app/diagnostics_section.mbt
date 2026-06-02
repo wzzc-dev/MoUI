@@ -15,7 +15,7 @@ fn ShowcaseModel::diagnostics_section(
         grid(
           [
             self.diagnostics_route_card(
-              theme, "Interaction Lab", "Tooltip, file drop, focus, gestures, variants, image lifecycle",
+              theme, "Interaction Lab", "Tooltip, file drop, focus trap, gestures, variants, image lifecycle",
               "interaction-lab", card_width,
             ),
             self.diagnostics_route_card(

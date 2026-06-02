@@ -30,6 +30,17 @@ pub(all) struct RouterSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct RouteFocusEntry {
+  route : String
+  focus_key : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RouteFocusStore {
+  mut entries : Array[RouteFocusEntry]
+}
+
+///|
 pub(all) struct RouterState {
   navigation : NavigationState
 }
@@ -104,6 +115,88 @@ pub fn RouteDescriptor::new(
 ///|
 pub fn RouterSnapshot::new(routes~ : Array[String]) -> RouterSnapshot {
   { routes, }
+}
+
+///|
+pub fn RouteFocusEntry::new(
+  route~ : String,
+  focus_key~ : String,
+) -> RouteFocusEntry {
+  { route, focus_key }
+}
+
+///|
+pub fn RouteFocusStore::new(
+  entries? : Array[RouteFocusEntry] = [],
+) -> RouteFocusStore {
+  { entries: entries.copy() }
+}
+
+///|
+pub fn RouteFocusStore::remember(
+  self : RouteFocusStore,
+  route~ : String,
+  focus_key~ : String,
+) -> Unit {
+  self.entries = self.entries.filter(entry => entry.route != route)
+  self.entries.push(RouteFocusEntry::new(route~, focus_key~))
+}
+
+///|
+pub fn RouteFocusStore::remember_location(
+  self : RouteFocusStore,
+  location : RouteLocation,
+  focus_key~ : String,
+) -> Unit {
+  self.remember(route=location.to_route(), focus_key~)
+}
+
+///|
+pub fn RouteFocusStore::focus_key(
+  self : RouteFocusStore,
+  route : String,
+) -> String? {
+  for entry in self.entries {
+    if entry.route == route {
+      return Some(entry.focus_key)
+    }
+  }
+  None
+}
+
+///|
+pub fn RouteFocusStore::focus_key_for_location(
+  self : RouteFocusStore,
+  location : RouteLocation,
+) -> String? {
+  match self.focus_key(location.to_route()) {
+    Some(key) => Some(key)
+    None => self.focus_key(location.path)
+  }
+}
+
+///|
+pub fn RouteFocusStore::restore(
+  self : RouteFocusStore,
+  runtime : AppRuntime,
+  route : String,
+) -> Bool {
+  match self.focus_key(route) {
+    Some(key) => runtime.focus_key(key)
+    None => false
+  }
+}
+
+///|
+pub fn RouteFocusStore::restore_location(
+  self : RouteFocusStore,
+  runtime : AppRuntime,
+  location : RouteLocation,
+) -> Bool {
+  match self.focus_key_for_location(location) {
+    Some(key) => runtime.focus_key(key)
+    None => false
+  }
 }
 
 ///|

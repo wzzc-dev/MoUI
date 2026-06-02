@@ -93,7 +93,7 @@ pub fn[Msg] detail_panel(String, Array[DescriptionItem], subtitle? : String, act
 
 pub fn[Msg] dialog(String, content~ : @core.View[Msg], subtitle? : String, primary_action? : StateViewAction[Msg]?, secondary_action? : StateViewAction[Msg]?, dismiss_action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool) -> @core.View[Msg]
+pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -205,7 +205,7 @@ pub fn[Msg] picker_binding(Array[@core.PickerItem], selected~ : @core.Binding[St
 
 pub fn picker_item(String, String) -> @core.PickerItem
 
-pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
@@ -251,7 +251,7 @@ pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions
 
 pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
-pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : Msg?) -> @core.View[Msg]
+pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardShortcut, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double, shortcut_width? : Double) -> @core.View[Msg]
 
@@ -369,6 +369,15 @@ pub(all) struct ChoiceItem {
   label : String
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct ColumnVisibilityState {
+  visible : Array[String]
+  locked : Array[String]
+}
+pub fn ColumnVisibilityState::is_locked(Self, String) -> Bool
+pub fn ColumnVisibilityState::is_visible(Self, String) -> Bool
+pub fn ColumnVisibilityState::new(visible~ : Array[String], locked? : Array[String]) -> Self
+pub fn ColumnVisibilityState::set_visible(Self, String, Bool) -> Self
+
 pub(all) struct CommandMenuSection {
   title : String
   commands : Array[@core.ActionCommand]
@@ -389,6 +398,14 @@ pub(all) struct DataFilter[Msg] {
   message : Msg
   enabled : Bool
 }
+
+pub(all) struct DataSortState {
+  column : String
+  ascending : Bool
+}
+pub fn DataSortState::is_sorted(Self, String) -> Bool
+pub fn DataSortState::new(column? : String, ascending? : Bool) -> Self
+pub fn DataSortState::toggle(Self, String) -> Self
 
 pub(all) struct DescriptionItem {
   term : String
@@ -432,6 +449,7 @@ pub(all) enum FormFieldLayout {
 pub(all) enum FormFieldStatus {
   Normal
   Required
+  Validating
   Invalid
   Disabled
   ReadOnly
@@ -464,6 +482,19 @@ pub(all) struct NavigationDestination[Msg] {
   route : String
   view : @core.View[Msg]
 }
+
+pub(all) struct PaginationState {
+  page : Int
+  page_size : Int
+  total_count : Int
+}
+pub fn PaginationState::clamped(Self) -> Self
+pub fn PaginationState::end_index(Self) -> Int
+pub fn PaginationState::new(page? : Int, page_size? : Int, total_count? : Int) -> Self
+pub fn PaginationState::next(Self) -> Self
+pub fn PaginationState::page_count(Self) -> Int
+pub fn PaginationState::previous(Self) -> Self
+pub fn PaginationState::start_index(Self) -> Int
 
 pub(all) enum PopoverPlacement {
   BottomStart
@@ -508,6 +539,15 @@ pub(all) struct SelectableListItem[Msg] {
   enabled : Bool
 }
 pub fn[Msg] SelectableListItem::new(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> Self[Msg]
+
+pub(all) struct SelectionState {
+  selected : Array[String]
+}
+pub fn SelectionState::clear(Self) -> Self
+pub fn SelectionState::contains(Self, String) -> Bool
+pub fn SelectionState::count(Self) -> Int
+pub fn SelectionState::new(selected? : Array[String]) -> Self
+pub fn SelectionState::toggle(Self, String) -> Self
 
 pub(all) struct SidebarItem[Msg] {
   id : String
@@ -554,6 +594,26 @@ pub(all) enum TextRole {
   Control
   Mono
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ToastQueue[Msg] {
+  items : Array[ToastQueueItem[Msg]]
+}
+pub fn[Msg] ToastQueue::dismiss(Self[Msg], String) -> Self[Msg]
+pub fn[Msg] ToastQueue::expire(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] ToastQueue::new(items? : Array[ToastQueueItem[Msg]]) -> Self[Msg]
+pub fn[Msg] ToastQueue::push(Self[Msg], ToastQueueItem[Msg]) -> Self[Msg]
+pub fn[Msg] ToastQueue::to_stack_items(Self[Msg]) -> Array[ToastStackItem[Msg]]
+
+pub(all) struct ToastQueueItem[Msg] {
+  id : String
+  message : String
+  tone : FeedbackTone
+  action : StateViewAction[Msg]?
+  dismiss : Msg?
+  created_at_ms : Double
+  ttl_ms : Double
+}
+pub fn[Msg] ToastQueueItem::new(id~ : String, message~ : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, dismiss? : Msg?, created_at_ms? : Double, ttl_ms? : Double) -> Self[Msg]
 
 pub(all) struct ToastStackItem[Msg] {
   id : String

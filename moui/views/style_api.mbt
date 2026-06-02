@@ -51,6 +51,7 @@ pub(all) enum CrossAlign {
 pub(all) enum FormFieldStatus {
   Normal
   Required
+  Validating
   Invalid
   Disabled
   ReadOnly
@@ -122,6 +123,22 @@ pub(all) struct ToastStackItem[Msg] {
 }
 
 ///|
+pub(all) struct ToastQueueItem[Msg] {
+  id : String
+  message : String
+  tone : FeedbackTone
+  action : StateViewAction[Msg]?
+  dismiss : Msg?
+  created_at_ms : Double
+  ttl_ms : Double
+}
+
+///|
+pub(all) struct ToastQueue[Msg] {
+  items : Array[ToastQueueItem[Msg]]
+}
+
+///|
 pub(all) enum FileImportAvailability {
   Available
   Unavailable(String)
@@ -150,6 +167,71 @@ pub fn[Msg] ToastStackItem::new(
   dismiss? : Msg? = None,
 ) -> ToastStackItem[Msg] {
   { id, message, tone, action, dismiss }
+}
+
+///|
+pub fn[Msg] ToastQueueItem::new(
+  id~ : String,
+  message~ : String,
+  tone? : FeedbackTone = FeedbackTone::Neutral,
+  action? : StateViewAction[Msg]? = None,
+  dismiss? : Msg? = None,
+  created_at_ms? : Double = 0.0,
+  ttl_ms? : Double = 0.0,
+) -> ToastQueueItem[Msg] {
+  { id, message, tone, action, dismiss, created_at_ms, ttl_ms }
+}
+
+///|
+pub fn[Msg] ToastQueue::new(
+  items? : Array[ToastQueueItem[Msg]] = [],
+) -> ToastQueue[Msg] {
+  { items: items.copy() }
+}
+
+///|
+pub fn[Msg] ToastQueue::push(
+  self : ToastQueue[Msg],
+  item : ToastQueueItem[Msg],
+) -> ToastQueue[Msg] {
+  let items = self.items.filter(existing => existing.id != item.id)
+  items.push(item)
+  ToastQueue::new(items~)
+}
+
+///|
+pub fn[Msg] ToastQueue::dismiss(
+  self : ToastQueue[Msg],
+  id : String,
+) -> ToastQueue[Msg] {
+  ToastQueue::new(items=self.items.filter(item => item.id != id))
+}
+
+///|
+pub fn[Msg] ToastQueue::expire(
+  self : ToastQueue[Msg],
+  now_ms : Double,
+) -> ToastQueue[Msg] {
+  ToastQueue::new(
+    items=self.items.filter(item => {
+      item.ttl_ms <= 0.0 || now_ms - item.created_at_ms < item.ttl_ms
+    }),
+  )
+}
+
+///|
+pub fn[Msg] ToastQueue::to_stack_items(
+  self : ToastQueue[Msg],
+) -> Array[ToastStackItem[Msg]] {
+  self.items.map(item => {
+    ToastStackItem::new(
+      id=item.id,
+      message=item.message,
+      tone=item.tone,
+      action=item.action,
+      dismiss=item.dismiss,
+    )
+  })
 }
 
 ///|
@@ -372,6 +454,30 @@ pub(all) struct TableColumn {
 }
 
 ///|
+pub(all) struct DataSortState {
+  column : String
+  ascending : Bool
+}
+
+///|
+pub(all) struct PaginationState {
+  page : Int
+  page_size : Int
+  total_count : Int
+}
+
+///|
+pub(all) struct ColumnVisibilityState {
+  visible : Array[String]
+  locked : Array[String]
+}
+
+///|
+pub(all) struct SelectionState {
+  selected : Array[String]
+}
+
+///|
 pub(all) struct DataFilter[Msg] {
   id : String
   label : String
@@ -409,6 +515,172 @@ pub fn table_column(
   width? : Double = 120.0,
 ) -> TableColumn {
   { id, label, width }
+}
+
+///|
+pub fn DataSortState::new(
+  column? : String = "",
+  ascending? : Bool = true,
+) -> DataSortState {
+  { column, ascending }
+}
+
+///|
+pub fn DataSortState::toggle(
+  self : DataSortState,
+  column : String,
+) -> DataSortState {
+  if self.column == column {
+    { column, ascending: !self.ascending }
+  } else {
+    { column, ascending: true }
+  }
+}
+
+///|
+pub fn DataSortState::is_sorted(self : DataSortState, column : String) -> Bool {
+  self.column == column
+}
+
+///|
+pub fn PaginationState::new(
+  page? : Int = 0,
+  page_size? : Int = 25,
+  total_count? : Int = 0,
+) -> PaginationState {
+  {
+    page: views_max_int(0, page),
+    page_size: views_max_int(1, page_size),
+    total_count: views_max_int(0, total_count),
+  }
+}
+
+///|
+pub fn PaginationState::page_count(self : PaginationState) -> Int {
+  if self.total_count == 0 {
+    1
+  } else {
+    (self.total_count + self.page_size - 1) / self.page_size
+  }
+}
+
+///|
+pub fn PaginationState::clamped(self : PaginationState) -> PaginationState {
+  let page_count = self.page_count()
+  { ..self, page: views_min_int(views_max_int(0, self.page), page_count - 1) }
+}
+
+///|
+pub fn PaginationState::next(self : PaginationState) -> PaginationState {
+  { ..self, page: views_min_int(self.page + 1, self.page_count() - 1) }
+}
+
+///|
+pub fn PaginationState::previous(self : PaginationState) -> PaginationState {
+  { ..self, page: views_max_int(0, self.page - 1) }
+}
+
+///|
+pub fn PaginationState::start_index(self : PaginationState) -> Int {
+  self.clamped().page * self.page_size
+}
+
+///|
+pub fn PaginationState::end_index(self : PaginationState) -> Int {
+  views_min_int(self.total_count, self.start_index() + self.page_size)
+}
+
+///|
+pub fn ColumnVisibilityState::new(
+  visible~ : Array[String],
+  locked? : Array[String] = [],
+) -> ColumnVisibilityState {
+  { visible: visible.copy(), locked: locked.copy() }
+}
+
+///|
+pub fn ColumnVisibilityState::is_visible(
+  self : ColumnVisibilityState,
+  id : String,
+) -> Bool {
+  string_array_contains(self.visible, id)
+}
+
+///|
+pub fn ColumnVisibilityState::is_locked(
+  self : ColumnVisibilityState,
+  id : String,
+) -> Bool {
+  string_array_contains(self.locked, id)
+}
+
+///|
+pub fn ColumnVisibilityState::set_visible(
+  self : ColumnVisibilityState,
+  id : String,
+  visible : Bool,
+) -> ColumnVisibilityState {
+  if self.is_locked(id) {
+    self
+  } else {
+    { ..self, visible: set_string_selected(self.visible, id, visible) }
+  }
+}
+
+///|
+pub fn SelectionState::new(selected? : Array[String] = []) -> SelectionState {
+  { selected: selected.copy() }
+}
+
+///|
+pub fn SelectionState::contains(self : SelectionState, id : String) -> Bool {
+  string_array_contains(self.selected, id)
+}
+
+///|
+pub fn SelectionState::toggle(
+  self : SelectionState,
+  id : String,
+) -> SelectionState {
+  { selected: toggle_string_selected(self.selected, id) }
+}
+
+///|
+pub fn SelectionState::clear(self : SelectionState) -> SelectionState {
+  ignore(self)
+  { selected: [] }
+}
+
+///|
+pub fn SelectionState::count(self : SelectionState) -> Int {
+  self.selected.length()
+}
+
+///|
+fn set_string_selected(
+  selected : Array[String],
+  id : String,
+  enabled : Bool,
+) -> Array[String] {
+  if enabled {
+    if string_array_contains(selected, id) {
+      selected.copy()
+    } else {
+      let next = selected.copy()
+      next.push(id)
+      next
+    }
+  } else {
+    selected.filter(item => item != id)
+  }
+}
+
+///|
+fn toggle_string_selected(
+  selected : Array[String],
+  id : String,
+) -> Array[String] {
+  set_string_selected(selected, id, !string_array_contains(selected, id))
 }
 
 ///|

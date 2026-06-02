@@ -31,7 +31,7 @@ test "data table sorting and paging are stable" {
   let owner_desc = owner_sorted.update(SortBy(DataSortKey::Owner))
   inspect(owner_desc.sorted_records()[0].owner, content="Ren")
   let page_two = DataTableModel::new().update(NextPage)
-  inspect(page_two.page, content="1")
+  inspect(page_two.pagination.page, content="1")
   inspect(page_two.visible_records().length(), content="3")
   inspect(page_two.visible_records()[0].project, content="Import Queue")
 }
@@ -47,15 +47,15 @@ test "data table state transitions and tree toggle" {
   let collapsed = ready.update(ToggleTree("teams"))
   inspect(collapsed.expanded.length(), content="0")
   let hidden_priority = ready.update(ToggleColumnVisibility("priority", false))
-  inspect(hidden_priority.visible_columns.length(), content="3")
+  inspect(hidden_priority.visible_columns.visible.length(), content="3")
   let project_locked = hidden_priority.update(
     ToggleColumnVisibility("project", false),
   )
-  assert_true(project_locked.visible_columns.any(id => id == "project"))
+  assert_true(project_locked.visible_columns.is_visible("project"))
   let selected = ready.update(RowSelected(1))
-  inspect(selected.selected_rows.length(), content="2")
+  inspect(selected.selected_rows.count(), content="2")
   let cleared = selected.update(ClearSelection)
-  inspect(cleared.selected_rows.length(), content="0")
+  inspect(cleared.selected_rows.count(), content="0")
   inspect(cleared.last_action, content="Selection cleared")
   let exported = selected.update(ExportSelection)
   inspect(exported.last_action, content="Export queued for 2 row(s)")

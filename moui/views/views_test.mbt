@@ -180,6 +180,109 @@ test "controls and modifiers expose semantics" {
 }
 
 ///|
+test "focus trap modifier constrains public view focus traversal" {
+  let outside = @core.State::new("")
+  let first = @core.State::new("")
+  let second = @core.State::new("")
+  let after = @core.State::new("")
+  let runtime = test_runtime(
+    @views.column(
+      [
+        @views.text_field_binding(outside.binding(), width=120.0),
+        @views.column(
+          [
+            @views.text_field_binding(first.binding(), width=120.0),
+            @views.text_field_binding(second.binding(), width=120.0),
+          ],
+          spacing=8.0,
+        ).focus_trap(),
+        @views.text_field_binding(after.binding(), width=120.0),
+      ],
+      spacing=8.0,
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Tab")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("a")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Tab")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("b")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Tab")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("c")),
+  )
+  inspect(outside.get(), content="")
+  inspect(first.get(), content="ac")
+  inspect(second.get(), content="b")
+  inspect(after.get(), content="")
+}
+
+///|
+test "dialog sheet and popover can trap presentation focus" {
+  let outside = @core.State::new("")
+  let dialog_value = @core.State::new("")
+  let sheet_value = @core.State::new("")
+  let popover_value = @core.State::new("")
+  let dialog_runtime = test_runtime(
+    @views.dialog_host(
+      @views.text_field_binding(outside.binding(), width=120.0),
+      dialog=Some(
+        @views.text_field_binding(dialog_value.binding(), width=120.0),
+      ),
+      presented=true,
+    ),
+  )
+  dialog_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Tab")),
+  )
+  dialog_runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("d")),
+  )
+  let sheet_runtime = test_runtime(
+    @views.sheet_host(
+      child=@views.text_field_binding(outside.binding(), width=120.0),
+      sheet=Some(@views.text_field_binding(sheet_value.binding(), width=120.0)),
+      presented=true,
+    ),
+  )
+  sheet_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Tab")),
+  )
+  sheet_runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("s")),
+  )
+  let popover_runtime = test_runtime(
+    @views.column([
+      @views.text_field_binding(outside.binding(), width=120.0),
+      @views.popover(
+        anchor=@views.button("Open", on_click=()),
+        content=@views.text_field_binding(popover_value.binding(), width=120.0),
+        expanded=true,
+        trap_focus=true,
+      ),
+    ]),
+  )
+  popover_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Tab")),
+  )
+  popover_runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("p")),
+  )
+  inspect(outside.get(), content="")
+  inspect(dialog_value.get(), content="d")
+  inspect(sheet_value.get(), content="s")
+  inspect(popover_value.get(), content="p")
+}
+
+///|
 test "controlled and binding view facades build together" {
   let enabled = @core.State::new(false)
   let draft = @core.State::new("draft")
@@ -589,6 +692,29 @@ test "form validation display can hide support text" {
 }
 
 ///|
+test "form field validating state exposes preview semantics" {
+  let root : @core.View[Unit] = @views.form_field(
+    label="Workspace slug",
+    child=@views.text_field("", on_input=_value => ()),
+    helper="Checking availability.",
+    status=@views.FormFieldStatus::Validating,
+  )
+  let runtime = @core.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=480.0, height=160.0),
+  )
+  assert_true(
+    has_text(runtime.draw_commands(), "Checking availability. Validating..."),
+  )
+  guard find_semantics_label(runtime.semantics(), "Workspace slug, validating")
+    is Some(field) else {
+    fail("expected validating form field semantics")
+  }
+  assert_false(field.state.invalid)
+  inspect(field.description, content="Checking availability. Validating...")
+}
+
+///|
 test "form field state uses core validation errors" {
   let field = @core.FormFieldState::new(name="email", label="Email", rules=[
     @core.FormValidationRule::required(message="Email required"),
@@ -847,6 +973,55 @@ test "feedback and state components compose visible status surfaces" {
   }
   assert_true(status_badge.role == @core.SemanticsRole::Text)
   inspect(status_badge.description, content="Sync pipeline ready")
+}
+
+///|
+test "data and toast state helpers keep app owned workflow state predictable" {
+  let sort = @views.DataSortState::new(column="name")
+    .toggle("name")
+    .toggle("status")
+  inspect(sort.column, content="status")
+  inspect(sort.ascending, content="true")
+  let page = @views.PaginationState::new(page=3, page_size=10, total_count=24).clamped()
+  inspect(page.page, content="2")
+  inspect(page.start_index(), content="20")
+  inspect(page.end_index(), content="24")
+  let columns = @views.ColumnVisibilityState::new(visible=["name", "status"], locked=[
+    "name",
+  ])
+  inspect(
+    columns.set_visible("status", false).is_visible("status"),
+    content="false",
+  )
+  inspect(columns.set_visible("name", false).is_visible("name"), content="true")
+  let selection = @views.SelectionState::new()
+    .toggle("row-1")
+    .toggle("row-2")
+    .toggle("row-1")
+  inspect(selection.count(), content="1")
+  assert_true(selection.contains("row-2"))
+  let queue = @views.ToastQueue::new()
+    .push(
+      @views.ToastQueueItem::new(
+        id="saved",
+        message="Saved",
+        tone=@views.FeedbackTone::Success,
+        dismiss=Some("dismiss-saved"),
+        created_at_ms=0.0,
+        ttl_ms=100.0,
+      ),
+    )
+    .push(
+      @views.ToastQueueItem::new(
+        id="sticky",
+        message="Sticky",
+        created_at_ms=0.0,
+      ),
+    )
+    .expire(150.0)
+  let stack_items = queue.to_stack_items()
+  inspect(stack_items.length(), content="1")
+  inspect(stack_items[0].message, content="Sticky")
 }
 
 ///|

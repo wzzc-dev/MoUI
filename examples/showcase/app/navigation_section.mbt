@@ -4,6 +4,23 @@ fn ShowcaseModel::navigation_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
+  let route_focus_store = @core.RouteFocusStore::new()
+  route_focus_store.remember(
+    route="overview",
+    focus_key="sidebar-item-overview",
+  )
+  route_focus_store.remember(
+    route="navigation",
+    focus_key="section-nav-button-navigation",
+  )
+  route_focus_store.remember(
+    route="forms",
+    focus_key="section-nav-button-forms",
+  )
+  route_focus_store.remember(route="data", focus_key="section-nav-button-data")
+  let restore_key = route_focus_store
+    .focus_key(self.selected_section)
+    .unwrap_or("section-nav-button-overview")
   section_panel(
     theme,
     "Navigation",
@@ -37,6 +54,33 @@ fn ShowcaseModel::navigation_section(
             ),
           ],
           theme~,
+        ),
+        surface(
+          column(
+            [
+              text(
+                "Route focus restore: " + restore_key,
+                role=@views.TextRole::Caption,
+                theme~,
+                width=500.0,
+                height=22.0,
+              ),
+              text(
+                "Restore call: runtime.focus_key(\"" + restore_key + "\")",
+                role=@views.TextRole::Caption,
+                theme~,
+                width=500.0,
+                height=22.0,
+              ),
+            ],
+            spacing=0.0,
+            align=@views.CrossAlign::Start,
+          ),
+          width=520.0,
+          height=54.0,
+          variant=@views.SurfaceVariant::Base,
+          theme~,
+          padding=theme.spacing_scale.xs,
         ),
         section_nav(
           "Section Nav",

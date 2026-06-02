@@ -355,6 +355,7 @@ priv enum ViewModifier {
   SemanticsDescriptionModifier(String)
   SemanticsActionModifier(SemanticsAction)
   FocusableModifier(Bool)
+  FocusTrapModifier(Bool)
   OnTapModifier(ClickHandler)
   OnLongPressModifier(ClickHandler)
   OnDoubleTapModifier(ClickHandler)
