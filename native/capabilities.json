@@ -213,6 +213,8 @@
         "native smoke shaped glyph descriptor bridge",
         "native smoke shaped glyph descriptor bridge cache resources",
         "native smoke font family count",
+        "native smoke invalid fallback match resource plan count",
+        "native smoke invalid fallback resolution resource plan count",
         "native smoke font fallback resolution bridge",
         "native smoke font fallback resolution bridge cache resources",
         "native smoke font fallback width"
