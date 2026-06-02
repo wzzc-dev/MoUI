@@ -348,6 +348,7 @@ if ($status.schema_version -ge 3) {
     "filter.finite-validation",
     "filter.resource-plan",
     "path.geometry",
+    "path.non-finite-from-value-rejected",
     "surface.readback",
     "surface.readback-height",
     "surface.readback-row-bytes",
@@ -683,6 +684,7 @@ if ($status.schema_version -ge 3) {
       "native smoke bounded snapshot height" = "4"
       "native smoke filter layer count" = "1"
       "native smoke path verbs" = "9"
+      "native smoke non-finite path from-value rejected" = "1"
       "native smoke decoded image width" = "32"
       "native smoke decoded image height" = "32"
       "native smoke render image command replay" = "1"

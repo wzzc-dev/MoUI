@@ -788,6 +788,11 @@
       "marker": "native smoke path verbs"
     },
     {
+      "id": "path.non-finite-from-value-rejected",
+      "area": "Path",
+      "marker": "native smoke non-finite path from-value rejected"
+    },
+    {
       "id": "surface.readback",
       "area": "Surface",
       "marker": "native smoke readback width"
@@ -1875,6 +1880,11 @@
       "id": "path.geometry",
       "marker": "native smoke path verbs",
       "value": "9"
+    },
+    {
+      "id": "path.non-finite-from-value-rejected",
+      "marker": "native smoke non-finite path from-value rejected",
+      "value": "1"
     },
     {
       "id": "image.decode",
