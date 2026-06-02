@@ -98,4 +98,32 @@ for pkg_file in moon.pkg pkg.generated.mbti native/moon.pkg native/pkg.generated
   [ -f "$SKIA_MBT_DIR/$pkg_file" ] || fail "missing .local_repos/skia_mbt/$pkg_file"
 done
 
+for skia_evidence_file in \
+  skia-platform-status.json \
+  skia-provider-lock.json \
+  SKIA_PLATFORM_STATUS.md \
+  skia-revision.txt \
+  scripts/verify-platform-status.sh \
+  scripts/verify-platform-status.ps1 \
+  scripts/verify-native-capability-contract.sh \
+  scripts/verify-native-capability-contract.ps1 \
+  scripts/verify-native-smoke-capabilities.sh \
+  scripts/verify-native-smoke-capabilities.ps1 \
+  scripts/verify-native-fallback-parity.sh \
+  scripts/verify-native-fallback-parity.ps1 \
+  scripts/verify-native-ownership.sh \
+  scripts/verify-native-ownership.ps1 \
+  scripts/verify-native-ffi-borrows.sh \
+  scripts/verify-native-ffi-borrows.ps1 \
+  scripts/verify-real-skia-artifact.sh \
+  scripts/verify-real-skia-artifact.ps1 \
+  scripts/verify-native-smoke-log.sh \
+  scripts/verify-native-smoke-log.ps1
+do
+  [ -f "$SKIA_MBT_DIR/$skia_evidence_file" ] || fail "missing .local_repos/skia_mbt/$skia_evidence_file"
+done
+
+bash "$SKIA_MBT_DIR/scripts/verify-platform-status.sh" ||
+  fail ".local_repos/skia_mbt platform status evidence did not validate"
+
 printf 'Local dependency check passed.\n'

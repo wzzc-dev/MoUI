@@ -75,6 +75,13 @@ sh scripts/check-local-deps.sh
 sh scripts/dev-check.sh
 ```
 
+The local dependency check verifies the `window` fork's MoUI smoke/evidence
+surface and the `skia_mbt` binding checkout's platform status contract via
+`.local_repos/skia_mbt/scripts/verify-platform-status.sh`. That Skia status
+guard proves the provider lock and binding-level evidence wiring are present;
+renderer pixels and platform runtime behavior still come from the opt-in Skia
+smoke or matching-host example runs.
+
 For current-host backend/provider evidence, run:
 
 ```sh

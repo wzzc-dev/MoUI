@@ -70,6 +70,12 @@ and evidence files such as `docs/moui-integration-smoke.md`,
 `scripts/check_moui_*_smoke.sh`, and `scripts/record_moui_evidence.sh` are
 present. Treat those as dependency-level matching-host evidence entrypoints;
 they do not replace MoUI Showcase or Markdown Editor platform validation.
+It also verifies the Skia binding acceptance surface, including
+`skia-platform-status.json`, `skia-provider-lock.json`,
+`SKIA_PLATFORM_STATUS.md`, and `.local_repos/skia_mbt/scripts/verify-platform-status.sh`.
+That status proves the editable binding checkout has a pinned platform-status
+contract and CI evidence wiring; it does not replace MoUI real-Skia smoke or
+platform runtime evidence.
 
 When asked to update the repository, treat it as a multi-checkout update:
 update the main MoUI checkout, initialize/update any Git submodules such as
@@ -98,6 +104,11 @@ fallback-safe APIs that compile when real Skia link flags are absent. Keep
 missing Skia FFI surface area in `skia_mbt` instead of adding large private Skia
 stubs inside MoUI. A fallback compile is not renderer readiness:
 `skia_available() == false` must keep Skia renderer creation unavailable.
+The checkout owns its binding-level platform acceptance status in
+`skia-platform-status.json` and `SKIA_PLATFORM_STATUS.md`, validated by
+`scripts/verify-platform-status.sh`/`.ps1`. Treat those files as dependency
+evidence for the Skia binding and provider artifact lock, not as MoUI
+Showcase/Markdown Editor runtime evidence.
 
 When asked to merge upstream `window` changes, work inside `.local_repos/window`
 on `moui-support`, fetch `upstream`, and merge the upstream branch into the fork

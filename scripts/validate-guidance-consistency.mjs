@@ -204,8 +204,13 @@ assertIncludes(
 assertIncludes("scripts/check-local-deps.sh", "docs/moui-integration-smoke.md");
 assertIncludes("scripts/check-local-deps.sh", "scripts/record_moui_evidence.sh");
 assertIncludes("scripts/check-local-deps.sh", "xdg-shell-protocol.c");
+assertIncludes("scripts/check-local-deps.sh", "skia-platform-status.json");
+assertIncludes("scripts/check-local-deps.sh", "skia-provider-lock.json");
+assertIncludes("scripts/check-local-deps.sh", "verify-platform-status.sh");
 assertIncludes("scripts/setup-local-deps.sh", "merge --ff-only");
 assertIncludes("docs/development.md", "fast-forwards existing clean checkouts");
+assertIncludes("docs/development.md", "skia-platform-status.json");
+assertIncludes("docs/development.md", "verify-platform-status.sh");
 assertIncludes("scripts/conformance-check.sh", "xdg-shell-protocol.c");
 for (const path of [
   "examples/counter/web_wasm/index.html",
@@ -216,8 +221,12 @@ for (const path of [
 }
 assertIncludes("docs/testing.md", "scripts/record_moui_evidence.sh");
 assertIncludes("docs/testing.md", "generated Wayland protocol C sources");
+assertIncludes("docs/testing.md", "skia-platform-status.json");
+assertIncludes("docs/testing.md", "verify-platform-status.sh");
 assertIncludes("docs/platform-notes.md", "check_moui_linux_smoke.sh");
 assertIncludes("docs/release-readiness.md", "platform-runtime-evidence.json");
+assertIncludes("docs/release-readiness.md", "skia-platform-status.json");
+assertIncludes("docs/release-readiness.md", "verify-platform-status.sh");
 assertIncludes("docs/release-readiness.md", "record-platform-evidence-manifest.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff-manifest.mjs");
@@ -238,6 +247,8 @@ assertIncludes(
 );
 assertIncludes("AGENTS.md", "scripts/record_moui_evidence.sh");
 assertIncludes("AGENTS.md", "fast-forwards existing clean local dependency");
+assertIncludes("AGENTS.md", "skia-platform-status.json");
+assertIncludes("AGENTS.md", "verify-platform-status.sh");
 assertIncludes("AGENTS.md", "platform-runtime-evidence.json");
 assertIncludes("AGENTS.md", "record-platform-evidence-manifest.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff.mjs");
@@ -251,8 +262,13 @@ assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "resize/input event-bridge delivery",
 );
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "verify-platform-status.sh",
+);
 assertIncludes("moui/README.mbt.md", "sh scripts/dev-check.sh --platform-examples-test");
 assertIncludes("moui/README.mbt.md", "sh scripts/conformance-check.sh --platform-services");
+assertIncludes("moui/README.mbt.md", "verify-platform-status.sh");
 assertIncludes("moui/README.mbt.md", "platform-runtime-evidence.json");
 assertIncludes("moui/README.mbt.md", "record-platform-evidence-manifest.mjs");
 assertIncludes("moui/README.mbt.md", "validate-web-runtime-handoff.mjs");
