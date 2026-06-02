@@ -639,6 +639,19 @@ fn main {
     !smoke_window_missing_finalization_cache.is_empty() {
     fail_smoke("missing-present frame finalization descriptor was ready")
   }
+  guard surface.canvas() is Some(window_replay_canvas) else {
+    fail_smoke("failed to borrow native canvas for present replay")
+  }
+  let smoke_window_canvas_replay = window_replay_canvas.replay_frame(
+    smoke_window_frame,
+  )
+  if !smoke_window_canvas_replay.is_complete() ||
+    smoke_window_canvas_replay.status() != @native.CanvasReplayDeferredPresent ||
+    !smoke_window_canvas_replay.status().is_complete() ||
+    smoke_window_canvas_replay.present_count != 1 ||
+    smoke_window_canvas_replay.skipped_count != 0 {
+    fail_smoke("canvas replay did not defer present commands predictably")
+  }
   guard smoke_window_frame.touched_bounds is Some(smoke_window_touched_bounds) else {
     fail_smoke("render frame did not record touched bounds for window target")
   }
@@ -683,6 +696,8 @@ fn main {
   println(1)
   println("native smoke render frame touched bounds width")
   println(smoke_window_touched_bounds.width().round().to_int())
+  println("native smoke canvas replay deferred present")
+  println(smoke_window_canvas_replay.present_count)
 
   guard surface.canvas() is Some(canvas) else {
     fail_smoke("failed to borrow native canvas")
@@ -1681,7 +1696,7 @@ fn main {
   println("native smoke render frame replay complete")
   println(if replay_frame_stats.is_complete() { 1 } else { 0 })
   println("native smoke canvas replay status contract")
-  println(2)
+  println(3)
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
   println("native smoke surface render frame commands")

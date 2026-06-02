@@ -120,6 +120,7 @@ default_stage_markers=(
   "native smoke render frame missing present validation" \
   "native smoke render frame missing finalization validation" \
   "native smoke render frame touched bounds width" \
+  "native smoke canvas replay deferred present" \
   "native smoke render frame cache resources" \
   "native smoke render resource cache inserts" \
   "native smoke render resource cache preflight missing count" \
@@ -222,7 +223,7 @@ default_expected_stage_values=(
   $'native smoke canvas replay commands\t23'
   $'native smoke render frame replay commands\t23'
   $'native smoke render frame replay complete\t1'
-  $'native smoke canvas replay status contract\t2'
+  $'native smoke canvas replay status contract\t3'
   $'native smoke render frame replay rejected skipped\t20'
   $'native smoke surface render frame commands\t23'
   $'native smoke surface render frame finalized\t1'
@@ -286,6 +287,7 @@ default_expected_stage_values=(
   $'native smoke render frame missing present validation\t1'
   $'native smoke render frame missing finalization validation\t1'
   $'native smoke render frame touched bounds width\t4'
+  $'native smoke canvas replay deferred present\t1'
   $'native smoke render frame cache resources\t15'
   $'native smoke render resource cache inserts\t15'
   $'native smoke render resource cache preflight missing count\t15'

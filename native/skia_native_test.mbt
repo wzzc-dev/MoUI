@@ -1261,6 +1261,25 @@ test "canvas replays render command lists" {
           assert_true(
             stats.replayed_count + stats.skipped_count == commands.length(),
           )
+          let present_target = @skia.SurfaceTargetDescriptor::window_n32_premul(
+            @skia.ISize::new(32, 32),
+            target_id=b"native-canvas-present-status",
+          )
+          let present_frame = @skia.RenderCommandList::for_target(
+              present_target,
+            )
+            .draw_rect(@skia.Rect::from_xywh(1, 1, 2, 2))
+            .frame_descriptor(present_target)
+          assert_true(present_frame.is_ready())
+          assert_true(present_frame.has_present())
+          let present_stats = canvas.replay_frame(present_frame, font~)
+          assert_eq(present_stats.present_count, 1)
+          assert_eq(present_stats.skipped_count, 0)
+          assert_true(present_stats.is_complete())
+          assert_true(
+            present_stats.status() == @native.CanvasReplayDeferredPresent,
+          )
+          assert_true(present_stats.status().is_complete())
           let frame_stats = canvas.replay_frame(replay_frame, font~)
           assert_eq(frame_stats.command_count, commands.length())
           assert_eq(frame_stats.draw_count, expected_draw_count)

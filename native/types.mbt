@@ -221,12 +221,13 @@ pub(all) struct CanvasReplayStats {
 /// Coarse outcome for replaying commands into a native Canvas.
 pub(all) enum CanvasReplayStatus {
   CanvasReplayComplete
+  CanvasReplayDeferredPresent
   CanvasReplaySkippedCommands
 } derive(Debug, Eq)
 
 ///|
 pub fn CanvasReplayStatus::is_complete(self : CanvasReplayStatus) -> Bool {
-  self is CanvasReplayComplete
+  self is (CanvasReplayComplete | CanvasReplayDeferredPresent)
 }
 
 ///|
@@ -250,10 +251,12 @@ pub fn CanvasReplayStats::is_complete(self : CanvasReplayStats) -> Bool {
 pub fn CanvasReplayStats::status(
   self : CanvasReplayStats,
 ) -> CanvasReplayStatus {
-  if self.skipped_count == 0 {
-    CanvasReplayComplete
-  } else {
+  if self.skipped_count > 0 {
     CanvasReplaySkippedCommands
+  } else if self.present_count > 0 {
+    CanvasReplayDeferredPresent
+  } else {
+    CanvasReplayComplete
   }
 }
 
