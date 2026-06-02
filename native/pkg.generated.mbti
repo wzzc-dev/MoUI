@@ -137,6 +137,7 @@ pub fn Font::measure_text_bounds_utf8(Self, Bytes) -> @skia_mbt.Rect?
 pub fn Font::measure_text_utf8(Self, Bytes) -> Float
 pub fn Font::metrics(Self) -> FontMetrics
 pub fn Font::set_size(Self, Float) -> Unit
+pub fn Font::shape_text_run_utf8(Self, Bytes, @skia_mbt.TextShapingDescriptor) -> @skia_mbt.ShapedGlyphRunDescriptor?
 pub fn Font::shape_text_utf8(Self, Bytes, width? : Float, left_to_right? : Bool) -> ShapedTextRun?
 pub fn Font::size(Self) -> Float
 pub fn Font::spacing(Self) -> Float
@@ -174,6 +175,7 @@ pub fn FontMgr::match_fallback_request(Self, @skia_mbt.FontFallbackRequest) -> T
 pub fn FontMgr::match_family_style(Self, Bytes, weight? : Int, width? : Int, slant? : Int) -> Typeface?
 pub fn FontMgr::match_family_style_character(Self, Bytes, Array[Bytes], Int, style? : @skia_mbt.FontStyleRequest) -> Typeface?
 pub fn FontMgr::match_family_style_request(Self, Bytes, @skia_mbt.FontStyleRequest) -> Typeface?
+pub fn FontMgr::resolve_fallback_request(Self, @skia_mbt.FontFallbackRequest) -> ResolvedTypeface?
 
 pub(all) struct GlyphId(UInt16) derive(Eq, @debug.Debug)
 pub fn GlyphId::new(UInt16) -> Self
@@ -246,6 +248,14 @@ pub fn Path::rewind(Self) -> Unit
 pub fn Path::segment_masks(Self) -> @skia_mbt.PathSegmentMask
 pub fn Path::set_fill_type(Self, @skia_mbt.PathFillType) -> Unit
 pub fn Path::transform(Self, @skia_mbt.Matrix) -> Unit
+
+pub(all) struct ResolvedTypeface {
+  typeface : Typeface
+  resolution : @skia_mbt.FontFallbackResolutionDescriptor
+}
+pub fn ResolvedTypeface::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> @skia_mbt.FontDescriptor
+pub fn ResolvedTypeface::is_available(Self) -> Bool
+pub fn ResolvedTypeface::resource_plan(Self, size? : Float, scale_x? : Float, skew_x? : Float, request_byte_size? : Int64, resolution_byte_size? : Int64, match_byte_size? : Int64, font_byte_size? : Int64) -> @skia_mbt.RendererResourcePlan
 
 pub(all) struct Shader {
   // private fields

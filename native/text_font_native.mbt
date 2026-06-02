@@ -519,6 +519,70 @@ pub fn Font::shape_text_utf8(
 }
 
 ///|
+fn text_run_bytes_for_shaping(
+  text : Bytes,
+  run : @skia.TextRunDescriptor,
+) -> Bytes {
+  let text_length = text.length()
+  let start = run.range.start.clamp(min=0, max=text_length)
+  let end = run.range.end.clamp(min=start, max=text_length)
+  if end <= start {
+    b""
+  } else {
+    let bytes : Array[Byte] = Array::new(capacity=end - start)
+    for index in start..<end {
+      bytes.push(text[index])
+    }
+    Bytes::from_array(bytes)
+  }
+}
+
+///|
+pub fn Font::shape_text_run_utf8(
+  self : Font,
+  text : Bytes,
+  shaping : @skia.TextShapingDescriptor,
+) -> @skia.ShapedGlyphRunDescriptor? {
+  let run_text = text_run_bytes_for_shaping(text, shaping.run)
+  if run_text.is_empty() || shaping.run.is_empty() {
+    None
+  } else {
+    match
+      self.shape_text_utf8(
+        run_text,
+        width=shaping.width,
+        left_to_right=shaping.run.direction.is_left_to_right(),
+      ) {
+      None => None
+      Some(run) => {
+        let glyphs = run.glyphs()
+        let glyph_ids : Array[Int] = Array::new(capacity=glyphs.length())
+        for glyph in glyphs {
+          glyph_ids.push(glyph.to_int())
+        }
+        let positions = run.positions()
+        let clusters = run.clusters()
+        let shaped_run = shaping.shaped_run_descriptor(
+          glyph_count=run.glyph_count(),
+          cluster_count=clusters.length(),
+          advance=run.advance(),
+        )
+        let descriptor = shaped_run.glyph_run_descriptor(
+          glyph_ids~,
+          positions~,
+          clusters~,
+        )
+        if descriptor.is_valid() {
+          Some(descriptor)
+        } else {
+          None
+        }
+      }
+    }
+  }
+}
+
+///|
 pub fn ShapedTextRun::is_available(self : ShapedTextRun) -> Bool {
   !native_shaped_text_run_is_null(self.handle)
 }
@@ -806,6 +870,35 @@ pub fn FontMgr::match_fallback_request(
     }
   }
   matched
+}
+
+///|
+pub fn FontMgr::resolve_fallback_request(
+  self : FontMgr,
+  request : @skia.FontFallbackRequest,
+) -> ResolvedTypeface? {
+  if request.is_empty() {
+    None
+  } else {
+    match self.match_fallback_request(request) {
+      None => None
+      Some(typeface) =>
+        match typeface.family_name() {
+          None => None
+          Some(family_name) =>
+            if family_name.is_empty() {
+              None
+            } else {
+              let resolution = request.resolution_descriptor(family_name)
+              if resolution.is_valid() {
+                Some({ typeface, resolution })
+              } else {
+                None
+              }
+            }
+        }
+    }
+  }
 }
 
 ///|

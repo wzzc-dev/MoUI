@@ -128,7 +128,9 @@
         "native smoke text glyph count",
         "native smoke first glyph id",
         "native smoke shaper availability",
+        "native smoke shaped glyph descriptor bridge",
         "native smoke font family count",
+        "native smoke font fallback resolution bridge",
         "native smoke font fallback width"
       ],
       "non_smoke_rationale": ""
