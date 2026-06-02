@@ -883,6 +883,21 @@
       "marker": "native smoke text run range byte size"
     },
     {
+      "id": "text.text-run-empty-range-resource-plan",
+      "area": "Text",
+      "marker": "native smoke text run empty range resource plan count"
+    },
+    {
+      "id": "text.text-run-empty-range-skipped",
+      "area": "Text",
+      "marker": "native smoke text run empty range skipped"
+    },
+    {
+      "id": "text.text-run-empty-range-cache-resources",
+      "area": "Text",
+      "marker": "native smoke text run empty range cache resources"
+    },
+    {
       "id": "text.measurement-resource-plan",
       "area": "Text",
       "marker": "native smoke text measurement resource plan count"
@@ -1835,6 +1850,21 @@
       "id": "text.text-run-range",
       "marker": "native smoke text run range byte size",
       "value": "4"
+    },
+    {
+      "id": "text.text-run-empty-range-resource-plan",
+      "marker": "native smoke text run empty range resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "text.text-run-empty-range-skipped",
+      "marker": "native smoke text run empty range skipped",
+      "value": "1"
+    },
+    {
+      "id": "text.text-run-empty-range-cache-resources",
+      "marker": "native smoke text run empty range cache resources",
+      "value": "0"
     },
     {
       "id": "text.measurement-resource-plan",
