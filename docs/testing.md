@@ -283,8 +283,12 @@ needed by Linux backend package tests and its MoUI-oriented smoke/evidence
 surface: `docs/moui-integration-smoke.md`, `docs/platform-gaps.md`,
 `scripts/check_moui_readiness.sh`, `scripts/check_moui_evidence.sh`,
 `scripts/record_moui_evidence.sh`, and the macOS/Web/Linux/Windows
-`check_moui_*_smoke.sh` helpers. This is a dependency-readiness guard only; run
-the window smoke helpers on matching hosts before claiming runtime platform
+`check_moui_*_smoke.sh` helpers. It also checks the current smoke contract:
+the macOS helper still executes the AppKit smoke through `moon run`, the Web
+helpers build wasm-gc artifacts under the module-qualified
+`wzzc-dev/window/examples/...` paths, and the MoUI Web smoke page still emits
+the public consumer sentinel lines. This is a dependency-readiness guard only;
+run the window smoke helpers on matching hosts before claiming runtime platform
 evidence.
 The same local-dependency check requires `.local_repos/skia_mbt` to expose its
 binding-level platform acceptance surface: `skia-platform-status.json`,

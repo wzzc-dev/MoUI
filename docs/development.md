@@ -59,7 +59,11 @@ current upstream package is macOS-only.
 The local `window` checkout must declare `name = wzzc-dev/window` in `moon.mod`
 or `moon.mod.json`; otherwise MoUI imports resolve to the published package
 rather than the editable fork. `scripts/check-local-deps.sh` verifies this
-because the Linux Skia presenter lives behind the local `window/linux` API.
+because the Linux Skia presenter lives behind the local `window/linux` API. The
+same check also validates the fork's MoUI smoke contract: macOS smoke remains
+on the `moon run examples/moui_macos_smoke --target native` path, and the Web
+smoke pages/scripts point at module-qualified `wzzc-dev/window/examples/...`
+wasm-gc artifacts with the expected MoUI consumer sentinel lines.
 
 The Skia binding checkout is also editable:
 

@@ -217,11 +217,17 @@ assertIncludes(
 assertIncludes("scripts/check-local-deps.sh", "docs/moui-integration-smoke.md");
 assertIncludes("scripts/check-local-deps.sh", "scripts/record_moui_evidence.sh");
 assertIncludes("scripts/check-local-deps.sh", "xdg-shell-protocol.c");
+assertIncludes("scripts/check-local-deps.sh", "check_web_assets.sh");
+assertIncludes("scripts/check-local-deps.sh", "moon run \"$pkg\" --target native");
+assertIncludes("scripts/check-local-deps.sh", "wzzc-dev/window/examples/window_web/window_web.wasm");
+assertIncludes("scripts/check-local-deps.sh", "wzzc-dev/window/examples/moui_web_smoke/moui_web_smoke.wasm");
+assertIncludes("scripts/check-local-deps.sh", "MOUISmoke: surface canvas_id=moui-web-smoke-canvas size=640x360");
 assertIncludes("scripts/check-local-deps.sh", "skia-platform-status.json");
 assertIncludes("scripts/check-local-deps.sh", "skia-provider-lock.json");
 assertIncludes("scripts/check-local-deps.sh", "verify-platform-status.sh");
 assertIncludes("scripts/setup-local-deps.sh", "merge --ff-only");
 assertIncludes("docs/development.md", "fast-forwards existing clean checkouts");
+assertIncludes("docs/development.md", "module-qualified `wzzc-dev/window/examples/...`");
 assertIncludes("docs/development.md", "skia-platform-status.json");
 assertIncludes("docs/development.md", "verify-platform-status.sh");
 assertIncludes("scripts/conformance-check.sh", "xdg-shell-protocol.c");
@@ -234,6 +240,9 @@ for (const path of [
 }
 assertIncludes("docs/testing.md", "scripts/record_moui_evidence.sh");
 assertIncludes("docs/testing.md", "generated Wayland protocol C sources");
+assertIncludes("docs/testing.md", "the macOS helper still executes the AppKit smoke through `moon run`");
+assertIncludes("docs/testing.md", "module-qualified");
+assertIncludes("docs/testing.md", "public consumer sentinel lines");
 assertIncludes("docs/testing.md", "skia-platform-status.json");
 assertIncludes("docs/testing.md", "verify-platform-status.sh");
 assertIncludes("docs/platform-notes.md", "check_moui_linux_smoke.sh");
@@ -259,8 +268,18 @@ assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "fast-forwards clean local dependency checkouts",
 );
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "`moon run examples/moui_macos_smoke --target native`",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "module-qualified `wzzc-dev/window/examples/...`",
+);
 assertIncludes("AGENTS.md", "scripts/record_moui_evidence.sh");
 assertIncludes("AGENTS.md", "fast-forwards existing clean local dependency");
+assertIncludes("AGENTS.md", "`moon run examples/moui_macos_smoke --target native`");
+assertIncludes("AGENTS.md", "module-qualified `wzzc-dev/window/examples/...`");
 assertIncludes("AGENTS.md", "skia-platform-status.json");
 assertIncludes("AGENTS.md", "verify-platform-status.sh");
 assertIncludes("AGENTS.md", "platform-runtime-evidence.json");
