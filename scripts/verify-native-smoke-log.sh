@@ -167,6 +167,7 @@ default_stage_markers=(
   "native smoke surface flush-and-submit" \
   "native smoke shader draws" \
   "native smoke shader resource plan count" \
+  "native smoke shader linear gradient validation" \
   "native smoke filter layer count" \
   "native smoke filter resource plan count" \
   "native smoke path verbs" \
@@ -370,6 +371,7 @@ default_expected_stage_values=(
   $'native smoke decoded bitmap height\t32'
   $'native smoke shader draws\t3'
   $'native smoke shader resource plan count\t3'
+  $'native smoke shader linear gradient validation\t1'
   $'native smoke filter resource plan count\t3'
   $'native smoke text run resource plan count\t3'
   $'native smoke text run range byte size\t4'

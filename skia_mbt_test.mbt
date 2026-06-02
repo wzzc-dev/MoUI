@@ -956,6 +956,15 @@ test "shader descriptors produce stable resource keys" {
     fail("default linear gradient descriptor should be accepted")
   }
   assert_true(linear.resource_key() != clamp_linear.resource_key())
+  assert_true(
+    @skia_mbt.ShaderDescriptor::linear_gradient(
+      @skia_mbt.Point::new(1.0, 1.0),
+      @skia_mbt.Point::new(1.0, 1.0),
+      @skia_mbt.Color::red(),
+      @skia_mbt.Color::blue(),
+    )
+    is None,
+  )
 
   guard @skia_mbt.ShaderDescriptor::radial_gradient(
       @skia_mbt.Point::new(4.0, 5.0),

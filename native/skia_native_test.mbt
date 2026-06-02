@@ -1009,6 +1009,15 @@ test "shader api typechecks" {
     Some(shader) => assert_true(shader.is_available())
   }
   assert_true(
+    @native.Shader::linear_gradient(
+      @skia.Point::new(4, 4),
+      @skia.Point::new(4, 4),
+      @skia.Color::red(),
+      @skia.Color::blue(),
+    )
+    is None,
+  )
+  assert_true(
     @native.Shader::radial_gradient(
       @skia.Point::new(8, 8),
       0.0,

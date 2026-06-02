@@ -693,6 +693,11 @@
       "marker": "native smoke shader resource plan count"
     },
     {
+      "id": "shader.linear-gradient-validation",
+      "area": "Shader",
+      "marker": "native smoke shader linear gradient validation"
+    },
+    {
       "id": "filter.layer",
       "area": "Filter",
       "marker": "native smoke filter layer count"
@@ -1730,6 +1735,11 @@
       "id": "shader.resource-plan",
       "marker": "native smoke shader resource plan count",
       "value": "3"
+    },
+    {
+      "id": "shader.linear-gradient-validation",
+      "marker": "native smoke shader linear gradient validation",
+      "value": "1"
     },
     {
       "id": "filter.resource-plan",

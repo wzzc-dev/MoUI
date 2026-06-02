@@ -127,6 +127,7 @@
         "native smoke canvas replay paint shader cache resources",
         "native smoke render frame replay rejected skipped",
         "native smoke shader draws",
+        "native smoke shader linear gradient validation",
         "native smoke filter layer count",
         "native smoke render image command replay",
         "native smoke render image command count",

@@ -863,6 +863,24 @@ fn main {
   }
   println("native smoke shader resource plan count")
   println(shader_resource_plan.length())
+  if @native.Shader::linear_gradient(
+      @skia.Point::new(4, 4),
+      @skia.Point::new(4, 4),
+      @skia.Color::red(),
+      @skia.Color::blue(),
+    )
+    is Some(_) ||
+    @skia.ShaderDescriptor::linear_gradient(
+      @skia.Point::new(4, 4),
+      @skia.Point::new(4, 4),
+      @skia.Color::red(),
+      @skia.Color::blue(),
+    )
+    is Some(_) {
+    fail_smoke("degenerate linear gradient shaders should be rejected")
+  }
+  println("native smoke shader linear gradient validation")
+  println(1)
 
   guard @native.ColorFilter::saturation(0.8) is Some(color_filter) else {
     fail_smoke("failed to create native color filter")
