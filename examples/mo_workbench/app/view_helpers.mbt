@@ -4014,14 +4014,11 @@ fn WorkbenchModel::composer(
       height=42.0,
     ),
   ]
-  if self.should_show_context_chip_row() {
-    content.push(self.context_chip_row(layout, theme))
+  if self.should_show_composer_scope_row() {
+    content.push(self.composer_scope_row(layout, theme))
   }
   if self.should_show_agent_control_row() {
     content.push(self.agent_control_row(theme))
-  }
-  if self.should_show_composer_agent_row() {
-    content.push(self.composer_agent_row(layout, theme))
   }
   if self.should_show_composer_command_row() {
     content.push(self.composer_command_row(layout, theme))
@@ -4049,10 +4046,7 @@ fn WorkbenchModel::composer_height(
   if self.should_show_agent_control_row() {
     height = height + 36.0
   }
-  if self.should_show_context_chip_row() {
-    height = height + 36.0
-  }
-  if self.should_show_composer_agent_row() {
+  if self.should_show_composer_scope_row() {
     height = height + 36.0
   }
   if self.should_show_composer_command_row() {
@@ -4114,7 +4108,9 @@ fn WorkbenchModel::agent_control_row(
 }
 
 ///|
-fn WorkbenchModel::should_show_context_chip_row(self : WorkbenchModel) -> Bool {
+fn WorkbenchModel::should_show_composer_scope_row(
+  self : WorkbenchModel,
+) -> Bool {
   !self.is_composer_slash_prompt() &&
   (
     self.composer_controls_expanded ||
@@ -4131,45 +4127,40 @@ fn WorkbenchModel::context_is_default(self : WorkbenchModel) -> Bool {
 }
 
 ///|
-fn WorkbenchModel::should_show_composer_agent_row(
-  self : WorkbenchModel,
-) -> Bool {
-  !self.is_composer_slash_prompt() &&
-  (self.composer_controls_expanded || self.active_agent_profile() is Some(_))
-}
-
-///|
-fn WorkbenchModel::composer_agent_row(
+fn WorkbenchModel::composer_scope_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let profiles = workbench_agent_profiles()
-  let button_width = workbench_clamp_double(
-    (layout.composer_input_width - 42.0 - 16.0) / 3.0,
-    74.0,
-    118.0,
-  )
+  ignore(layout)
   let controls : Array[@core.View[WorkbenchMsg]] = [
-    text("焦点", role=Caption, theme~, width=42.0, height=30.0),
+    text("范围", role=Caption, theme~, width=42.0, height=30.0),
+    self.context_chip("仓库", "repo", theme, width=50.0),
+    self.context_chip("示例", "examples", theme, width=50.0),
+    self.context_chip("证据", "evidence", theme, width=50.0),
+    self.context_chip("会话", "session", theme, width=50.0),
   ]
-  for profile in profiles {
-    controls.push(
-      button(
-        profile.label,
-        on_click=SelectAgent(profile.id),
-        variant=if self.selected_agent_id == profile.id {
-          Outline
-        } else {
-          Ghost
-        },
-        theme~,
-        width=button_width,
-        height=30.0,
-      ),
-    )
+  if self.composer_controls_expanded || self.active_agent_profile() is Some(_) {
+    controls.push(spacer(min_length=8.0, weight=1.0))
+    for profile in workbench_agent_profiles() {
+      controls.push(
+        button(
+          profile.label,
+          on_click=SelectAgent(profile.id),
+          variant=if self.selected_agent_id == profile.id {
+            Outline
+          } else {
+            Ghost
+          },
+          theme~,
+          width=64.0,
+          height=30.0,
+        ),
+      )
+    }
+  } else {
+    controls.push(spacer(min_length=8.0, weight=1.0))
   }
-  controls.push(spacer(min_length=8.0, weight=1.0))
   row(controls, spacing=8.0, align=Center)
 }
 
@@ -4397,33 +4388,6 @@ fn compact_label(value : String, max_chars~ : Int) -> String {
 }
 
 ///|
-fn WorkbenchModel::context_chip_row(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  row(
-    [
-      text("上下文", role=Caption, theme~, width=52.0, height=30.0),
-      self.context_chip("仓库", "repo", theme, width=50.0),
-      self.context_chip("示例", "examples", theme, width=50.0),
-      self.context_chip("证据", "evidence", theme, width=50.0),
-      self.context_chip("会话", "session", theme, width=50.0),
-      spacer(min_length=8.0, weight=1.0),
-      text(
-        self.context_summary_label(),
-        role=Caption,
-        theme~,
-        width=workbench_max_double(1.0, layout.composer_input_width - 304.0),
-        height=30.0,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
-  )
-}
-
-///|
 fn WorkbenchModel::context_chip(
   self : WorkbenchModel,
   label : String,
@@ -4439,44 +4403,6 @@ fn WorkbenchModel::context_chip(
     width~,
     height=30.0,
   )
-}
-
-///|
-fn WorkbenchModel::context_summary_label(self : WorkbenchModel) -> String {
-  let labels : Array[String] = []
-  for id in ["repo", "examples", "evidence", "session"] {
-    if self.context_is_selected(id) {
-      labels.push(context_display_label(id))
-    }
-  }
-  for id in self.expanded_context {
-    if !known_context_id(id) {
-      labels.push(id)
-    }
-  }
-  match self.active_agent_profile() {
-    Some(profile) => labels.push("焦点 " + profile.label)
-    None => ()
-  }
-  if labels.is_empty() {
-    "不附加上下文"
-  } else {
-    match self.active_agent_profile() {
-      Some(_) => labels.join("、")
-      None => ""
-    }
-  }
-}
-
-///|
-fn context_display_label(id : String) -> String {
-  match id {
-    "repo" => "仓库"
-    "examples" => "示例"
-    "evidence" => "证据"
-    "session" => "会话"
-    _ => id
-  }
 }
 
 ///|

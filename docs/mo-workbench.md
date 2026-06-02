@@ -168,13 +168,14 @@ packages:
   final answer compete with the processing log. Assistant `thinking` /
   `toolCall` blocks and Pi `toolResult` / bash transcript entries are kept as
   process evidence instead of ordinary conversation rows.
-- Agent focus controls for `通用`, `编码`, and `校验` now live in the composer's
-  optional `焦点` row instead of the default sidebar. They appear after opening
-  composer options or when a focus is selected, keeping the idle shell closer to
-  Codex's session-first layout.
-  Selecting a role does not create a native-only worker or transport command;
-  it appends an `agent focus: ...` hint to the existing prompt, steering, and
-  follow-up text context before the shared app emits the same platform-neutral
+- Agent focus controls for `通用`, `编码`, and `校验` now share the composer's
+  compact `范围` row with repository, examples, evidence, and backend-session
+  context chips. That row appears after opening composer options, after
+  selecting a focus, or after changing the default context, keeping scope and
+  role selection to one quiet line instead of separate settings rows. Selecting
+  a role does not create a native-only worker or transport command; it appends
+  an `agent focus: ...` hint to the existing prompt, steering, and follow-up
+  text context before the shared app emits the same platform-neutral
   `SendUserInput`, `SendSteeringInput`, or `SendFollowUpInput` commands.
 - Pi `plan_update` JSONL now fills the existing shared-app `PlanStep` model and
   renders a compact `当前计划` row in the current task strip. The row shows
@@ -191,15 +192,11 @@ packages:
   `下一步` row. Failed-command next actions include a compact command label,
   exit code, and output path when Pi provided them, so the repair loop has the
   same evidence as the current-turn evidence card without opening another panel.
-- The composer now exposes explicit context chips for repository, examples,
-  evidence, and backend session scope after opening composer options, after
-  selecting an agent focus, or after changing the default context. Direct
-  prompt, steering, and follow-up submits prefix the selected context labels
-  into the text payload before it enters the existing platform-neutral
-  `SendUserInput`,
-  `SendSteeringInput`, or `SendFollowUpInput` paths; no new transport command
-  or native bridge is required, and users can turn all context chips off to send
-  the raw text.
+- Direct prompt, steering, and follow-up submits prefix the selected context
+  labels into the text payload before it enters the existing platform-neutral
+  `SendUserInput`, `SendSteeringInput`, or `SendFollowUpInput` paths; no new
+  transport command or native bridge is required, and users can turn all scope
+  chips off to send the raw text.
 - Current-turn event rows are read-only process evidence in the shell. They
   keep Pi RPC, stderr, tool, and stream state inspectable without adding
   message-level follow-up controls or event-specific transport commands.

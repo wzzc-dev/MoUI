@@ -4947,6 +4947,7 @@ test "workbench composer keeps ordinary prompts low noise" {
     .draw_commands()
   assert_true(has_text(commands, "选项"))
   assert_true(has_text(commands, "发送"))
+  assert_false(has_text(commands, "范围"))
   assert_false(has_text(commands, "上下文"))
   assert_false(has_text(commands, "焦点"))
   assert_false(has_text(commands, "引导 单条"))
@@ -4962,11 +4963,16 @@ test "workbench composer reveals secondary actions after options expand" {
     .update(ToggleComposerControls)
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(commands, "上下文"))
+  assert_true(has_text(commands, "范围"))
+  assert_false(has_text(commands, "上下文"))
+  assert_false(has_text(commands, "焦点"))
   assert_true(has_text(commands, "仓库"))
   assert_true(has_text(commands, "示例"))
   assert_true(has_text(commands, "证据"))
   assert_true(has_text(commands, "会话"))
+  assert_true(has_text(commands, "通用"))
+  assert_true(has_text(commands, "编码"))
+  assert_true(has_text(commands, "校验"))
   assert_true(has_text(commands, "引导 单条"))
   assert_true(has_text(commands, "跟进 单条"))
   assert_true(has_text(commands, "引导"))
@@ -4981,7 +4987,8 @@ test "workbench composer reveals context chips for non-default context" {
     .update(ToggleContext("evidence"))
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(commands, "上下文"))
+  assert_true(has_text(commands, "范围"))
+  assert_false(has_text(commands, "上下文"))
   assert_true(has_text(commands, "仓库"))
   assert_true(has_text(commands, "示例"))
   assert_true(has_text(commands, "证据"))
@@ -4995,7 +5002,8 @@ test "workbench composer reveals agent focus controls in options" {
     .update(ToggleComposerControls)
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(commands, "焦点"))
+  assert_true(has_text(commands, "范围"))
+  assert_false(has_text(commands, "焦点"))
   assert_true(has_text(commands, "Agent"))
   assert_false(has_text(commands, "真实 Agent 后端"))
   assert_true(has_text(commands, "通用"))
@@ -5140,10 +5148,12 @@ test "workbench shell adapts to runtime viewport resize" {
 }
 
 ///|
-test "workbench composer displays selected agent focus in context summary" {
+test "workbench composer displays selected agent focus in scope row" {
   let model = WorkbenchModel::new().update(SelectAgent("coding"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "仓库、示例、焦点 编码"))
+  assert_true(has_text(commands, "范围"))
+  assert_true(has_text(commands, "编码"))
+  assert_false(has_text(commands, "仓库、示例、焦点 编码"))
 }
 
 ///|
