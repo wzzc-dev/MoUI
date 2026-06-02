@@ -2389,6 +2389,76 @@ fn main {
   println("native smoke render image cache hits")
   println(render_image_cache_stats.hits)
 
+  guard @skia.ImageDescriptor::encoded(
+      b"not-a-real-png",
+      format=Some(@skia.PNG),
+      dimensions=Some(@skia.ISize::new(2, 2)),
+    )
+    is Some(render_image_decode_failure_descriptor) else {
+    fail_smoke("failed to create undecodable render image descriptor")
+  }
+  let render_image_decode_failure_commands = @skia.RenderCommandList::for_target(
+      @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(4, 4)),
+    )
+    .clear(@skia.Color::white())
+    .draw_image(
+      render_image_decode_failure_descriptor,
+      @skia.Point::new(0, 0),
+    )
+    .draw_image_rect(
+      render_image_decode_failure_descriptor,
+      @skia.Rect::from_xywh(0, 0, 2, 2),
+      @skia.Rect::from_xywh(2, 0, 2, 2),
+      sampling=@skia.SamplingOptions::new(),
+    )
+  let render_image_decode_failure_plan =
+    render_image_decode_failure_commands.resource_plan()
+  if render_image_decode_failure_plan.length() != 2 ||
+    render_image_decode_failure_plan.count_kind(@skia.SurfaceResource) != 1 ||
+    render_image_decode_failure_plan.count_kind(@skia.ImageResource) != 1 ||
+    !render_image_decode_failure_plan.contains_key(
+      render_image_decode_failure_descriptor.resource_key(),
+    ) {
+    fail_smoke("undecodable render image resource plan is invalid")
+  }
+  guard @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4))
+    is Some(render_image_decode_failure_surface) else {
+    fail_smoke("failed to create undecodable render image replay surface")
+  }
+  guard render_image_decode_failure_surface.canvas()
+    is Some(render_image_decode_failure_canvas) else {
+    fail_smoke("failed to borrow undecodable render image replay canvas")
+  }
+  let render_image_decode_failure_resources =
+    @native.NativeReplayResources::new(image_max_bytes=1024L)
+  let render_image_decode_failure_stats =
+    render_image_decode_failure_canvas.replay_with_resources(
+      render_image_decode_failure_commands,
+      render_image_decode_failure_resources,
+    )
+  let render_image_decode_failure_cache_stats =
+    render_image_decode_failure_resources.image_cache.stats()
+  if render_image_decode_failure_stats.is_complete() ||
+    render_image_decode_failure_stats.command_count !=
+    render_image_decode_failure_commands.length() ||
+    render_image_decode_failure_stats.replayed_count != 1 ||
+    render_image_decode_failure_stats.skipped_count != 2 ||
+    render_image_decode_failure_stats.draw_count != 2 ||
+    render_image_decode_failure_stats.image_resource_count != 2 ||
+    render_image_decode_failure_resources.image_cache.length() != 0 ||
+    render_image_decode_failure_cache_stats.misses != 2 ||
+    render_image_decode_failure_cache_stats.hits != 0 {
+    fail_smoke("undecodable render image replay stats did not match")
+  }
+  println("native smoke render image decode failure resource plan count")
+  println(render_image_decode_failure_plan.length())
+  println("native smoke render image decode failure skipped")
+  println(render_image_decode_failure_stats.skipped_count)
+  println("native smoke render image decode failure cache resources")
+  println(render_image_decode_failure_resources.image_cache.length())
+  println("native smoke render image decode failure cache misses")
+  println(render_image_decode_failure_cache_stats.misses)
+
   guard @native.Font::default(size=10.0) is Some(font) else {
     fail_smoke("failed to create default native font")
   }
