@@ -169,6 +169,7 @@ default_stage_markers=(
   "native smoke shader resource plan count" \
   "native smoke shader linear gradient validation" \
   "native smoke filter layer count" \
+  "native smoke filter finite validation" \
   "native smoke filter resource plan count" \
   "native smoke path verbs" \
   "native smoke readback width" \
@@ -373,6 +374,7 @@ default_expected_stage_values=(
   $'native smoke shader resource plan count\t3'
   $'native smoke shader linear gradient validation\t1'
   $'native smoke filter resource plan count\t3'
+  $'native smoke filter finite validation\t1'
   $'native smoke text run resource plan count\t3'
   $'native smoke text run range byte size\t4'
   $'native smoke text measurement resource plan count\t4'
