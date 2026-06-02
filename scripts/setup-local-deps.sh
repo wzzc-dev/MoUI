@@ -33,6 +33,34 @@ run() {
   "$@"
 }
 
+assert_clean_worktree() {
+  repo_dir="$1"
+  status="$(git -C "$repo_dir" status --porcelain)"
+  if [ -n "$status" ]; then
+    printf '%s has local changes. Commit, stash, or discard them before updating local dependencies.\n' "$repo_dir" >&2
+    exit 1
+  fi
+}
+
+checkout_and_fast_forward() {
+  repo_dir="$1"
+  branch="$2"
+
+  assert_clean_worktree "$repo_dir"
+  run git -C "$repo_dir" fetch origin "$branch" --prune
+
+  current_branch="$(git -C "$repo_dir" branch --show-current)"
+  if [ "$current_branch" != "$branch" ]; then
+    if git -C "$repo_dir" show-ref --verify --quiet "refs/heads/$branch"; then
+      run git -C "$repo_dir" checkout "$branch"
+    else
+      run git -C "$repo_dir" checkout -b "$branch" "origin/$branch"
+    fi
+  fi
+
+  run git -C "$repo_dir" merge --ff-only "origin/$branch"
+}
+
 mkdir -p "$ROOT_DIR/.local_repos"
 
 if [ ! -d "$WINDOW_DIR/.git" ]; then
@@ -58,16 +86,6 @@ case "$origin_url" in
     ;;
 esac
 
-current_branch="$(git branch --show-current)"
-if [ "$current_branch" != "$WINDOW_BRANCH" ]; then
-  run git fetch origin "$WINDOW_BRANCH"
-  if git show-ref --verify --quiet "refs/heads/$WINDOW_BRANCH"; then
-    run git checkout "$WINDOW_BRANCH"
-  else
-    run git checkout -b "$WINDOW_BRANCH" "origin/$WINDOW_BRANCH"
-  fi
-fi
-
 upstream_url="$(git remote get-url upstream 2>/dev/null || true)"
 case "$upstream_url" in
   "")
@@ -81,6 +99,8 @@ case "$upstream_url" in
     exit 1
     ;;
 esac
+
+checkout_and_fast_forward "$WINDOW_DIR" "$WINDOW_BRANCH"
 
 WINDOW_SUMMARY="window: $WINDOW_DIR on branch $WINDOW_BRANCH"
 
@@ -107,15 +127,7 @@ case "$skia_mbt_origin_url" in
     ;;
 esac
 
-skia_mbt_current_branch="$(git branch --show-current)"
-if [ "$skia_mbt_current_branch" != "$SKIA_MBT_BRANCH" ]; then
-  run git fetch origin "$SKIA_MBT_BRANCH"
-  if git show-ref --verify --quiet "refs/heads/$SKIA_MBT_BRANCH"; then
-    run git checkout "$SKIA_MBT_BRANCH"
-  else
-    run git checkout -b "$SKIA_MBT_BRANCH" "origin/$SKIA_MBT_BRANCH"
-  fi
-fi
+checkout_and_fast_forward "$SKIA_MBT_DIR" "$SKIA_MBT_BRANCH"
 
 printf '\nLocal dependencies are ready.\n'
 printf '%s\n' "$WINDOW_SUMMARY"

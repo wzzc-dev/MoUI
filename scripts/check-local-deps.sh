@@ -59,6 +59,28 @@ for pkg in core dpi web windows linux macos; do
   [ -f "$WINDOW_DIR/$pkg/moon.pkg" ] || fail "missing .local_repos/window/$pkg/moon.pkg"
 done
 
+for generated_file in \
+  linux/generated/xdg-decoration-protocol.c \
+  linux/generated/xdg-shell-protocol.c
+do
+  [ -f "$WINDOW_DIR/$generated_file" ] || fail "missing .local_repos/window/$generated_file"
+done
+
+for evidence_file in \
+  docs/moui-integration-smoke.md \
+  docs/platform-gaps.md \
+  scripts/check_moui_readiness.sh \
+  scripts/check_moui_evidence.sh \
+  scripts/record_moui_evidence.sh \
+  scripts/check_moui_macos_smoke.sh \
+  scripts/check_moui_web_smoke.sh \
+  scripts/check_moui_linux_smoke.sh \
+  scripts/check_moui_windows_smoke.sh \
+  scripts/smoke_runtime.sh
+do
+  [ -f "$WINDOW_DIR/$evidence_file" ] || fail "missing .local_repos/window/$evidence_file"
+done
+
 [ -d "$SKIA_MBT_DIR/.git" ] || fail "missing .local_repos/skia_mbt checkout; run sh scripts/setup-local-deps.sh"
 
 case "$(git -C "$SKIA_MBT_DIR" remote get-url origin 2>/dev/null || true)" in

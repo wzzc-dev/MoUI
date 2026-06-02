@@ -410,6 +410,17 @@ buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
 display flush. Keeping the `wl_shm` presenter in the window backend avoids
 duplicating Wayland registry and buffer ownership in MoUI.
 
+The local window fork carries a consumer-style Linux smoke for this dependency
+surface. On a matching Wayland host, run
+`.local_repos/window/scripts/check_moui_linux_smoke.sh --run` to exercise
+surface creation, public Wayland handles, `Window::present_rgba_pixels`, resize,
+redraw, and clean shutdown. Add `--require-input` or
+`WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` only when representative pointer/keyboard
+input is observed. Record dependency-level facts with
+`.local_repos/window/scripts/record_moui_evidence.sh`; keep the MoUI Showcase
+`linux`, `linux_cosmic`, and `linux_skia` runs as separate application-level
+evidence.
+
 `examples/showcase/linux_skia` selects this provider explicitly for Showcase.
 Configure real Skia link flags before relying on native Skia-rendered pixels.
 The default JetBrains Linux provider links fontconfig, FreeType, and HarfBuzz;

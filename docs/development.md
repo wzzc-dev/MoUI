@@ -17,6 +17,11 @@ sh scripts/setup-local-deps.sh
 sh scripts/check-local-deps.sh
 ```
 
+`scripts/setup-local-deps.sh` creates missing checkouts and safely
+fast-forwards existing clean checkouts to the expected branches. If either
+editable dependency has local changes, commit or stash them before rerunning
+setup; the helper will not overwrite work in `.local_repos/`.
+
 This keeps `wzzc-dev/window` and `wzzc-dev/skia_mbt` declared in
 `moui/moon.mod` and resolved through local workspace members in `moon.work`:
 
@@ -66,12 +71,13 @@ Set `MOUI_SKIA_MBT_REMOTE` to override the clone URL. The default daily check
 only validates fallback-safe Skia package tests. Use `--skia-real-smoke` after
 configuring real Skia native link flags.
 
-`scripts/setup-local-deps.sh` configures the fork as `origin` and upstream as
-`upstream`. When merging new upstream commits into the fork, fetch `upstream`
-inside `.local_repos/window` and merge into `moui-support`. Keep fork changes
-focused on the Web, Windows, and Linux platform packages when possible. Avoid
-touching macOS or shared window logic unless a task explicitly requires that
-broader change.
+`scripts/setup-local-deps.sh` configures the fork as `origin`, upstream as
+`upstream`, and fast-forwards the `moui-support` branch from `origin` when the
+checkout is clean. When merging new upstream commits into the fork, fetch
+`upstream` inside `.local_repos/window` and merge into `moui-support`. Keep
+fork changes focused on the Web, Windows, and Linux platform packages when
+possible. Avoid touching macOS or shared window logic unless a task explicitly
+requires that broader change.
 
 When updating this repository, update all Git checkouts that participate in the
 workspace, not just the root checkout. That includes the main MoUI repository,
