@@ -160,6 +160,13 @@ local `.local_repos/` edits.
 Treat those window smoke helpers as dependency-level matching-host evidence,
 not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
+The same local-dependency check also requires the `skia_mbt` binding checkout's
+`skia-platform-status.json`, `skia-provider-lock.json`,
+`SKIA_PLATFORM_STATUS.md`, and verifier scripts, then runs
+`.local_repos/skia_mbt/scripts/verify-platform-status.sh`. Treat that as
+binding-level Skia provider/status evidence; MoUI renderer pixels and platform
+runtime behavior still need the opt-in real-Skia smoke or matching-host example
+runs.
 For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
 the browser-session artifact, then fold it into
 `platform-runtime-evidence.json` with
