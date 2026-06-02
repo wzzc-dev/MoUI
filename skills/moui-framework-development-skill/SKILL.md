@@ -151,6 +151,22 @@ Daily check:
 sh scripts/dev-check.sh
 ```
 
+The daily check runs `sh scripts/check-local-deps.sh`, which verifies the local
+`window` fork, `skia_mbt` checkout, and the `window` fork's MoUI-oriented smoke
+and evidence files are present, including `scripts/record_moui_evidence.sh`.
+Run `sh scripts/setup-local-deps.sh` first when a checkout is missing or stale;
+it fast-forwards clean local dependency checkouts and refuses to overwrite
+local `.local_repos/` edits.
+Treat those window smoke helpers as dependency-level matching-host evidence,
+not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
+validation.
+For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
+the browser-session artifact, then fold it into
+`platform-runtime-evidence.json` with
+`record-platform-evidence-manifest.mjs ... web --web-presentation-manifest ...`.
+A passed presentation manifest is still partial Web platform evidence until
+resize/input/shutdown observations are recorded.
+
 Focused checks:
 
 ```sh
@@ -169,6 +185,8 @@ sh scripts/conformance-check.sh --render
 sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
+node scripts/validate-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json
+node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
 moon test examples/showcase/app --target native
 moon test examples/counter/app --target native
 moon test examples/markdown_editor/app --target native
@@ -176,6 +194,19 @@ moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build examples/markdown_editor/macos_skia --target native
+node --check scripts/validate-conformance-capture-manifest.mjs
+node scripts/test-validate-conformance-capture-manifest.mjs
+node --check scripts/validate-platform-evidence-manifest.mjs
+node scripts/test-validate-platform-evidence-manifest.mjs
+node --check scripts/record-platform-evidence-manifest.mjs
+node scripts/test-record-platform-evidence-manifest.mjs
+node --check scripts/validate-web-runtime-handoff.mjs
+node scripts/test-validate-web-runtime-handoff.mjs
+node --check scripts/validate-web-runtime-handoff-manifest.mjs
+node scripts/test-validate-web-runtime-handoff-manifest.mjs
+node --check scripts/record-web-runtime-presentation.mjs
+node --check scripts/validate-web-runtime-presentation-manifest.mjs
+node scripts/test-validate-web-runtime-presentation-manifest.mjs
 node --check scripts/validate-package-manifest.mjs
 ```
 

@@ -75,6 +75,38 @@ sh scripts/check-local-deps.sh
 sh scripts/dev-check.sh
 ```
 
+For current-host backend/provider evidence, run:
+
+```sh
+sh scripts/dev-check.sh --platform-examples-test
+sh scripts/conformance-check.sh --platform-services
+```
+
+`--platform-services` also writes and validates
+`artifacts/conformance/platform-runtime-evidence.json`, a pending
+matching-host evidence contract for Web, macOS, Windows, and Linux runtime
+claims. Use `node scripts/record-platform-evidence-manifest.mjs` on a matching
+host to fill a platform entry with passed or failed observations before a
+preview handoff.
+
+For release-oriented screenshot and benchmark handoffs, use
+`sh scripts/conformance-check.sh --golden` and
+`sh scripts/conformance-check.sh --bench`; these write validated capture
+manifests under `artifacts/conformance/`. The benchmark handoff also validates
+the static Web runtime delivery chain for Showcase and Markdown Editor with
+`node scripts/validate-web-runtime-handoff.mjs`, while browser WebGPU/canvas
+presentation evidence is collected separately with
+`node scripts/record-web-runtime-presentation.mjs` and validated with
+`node scripts/validate-web-runtime-presentation-manifest.mjs`. A passed
+`artifacts/conformance/web-runtime-presentation.json` proves the named browser
+session reached WebGPU startup, wasm app startup, sized canvas, clean console,
+and nonblank screenshot thresholds. Fold the browser artifact into
+`artifacts/conformance/platform-runtime-evidence.json` with
+`node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json web --web-presentation-manifest artifacts/conformance/web-runtime-presentation.json`
+so Web platform claims cite one validated evidence manifest. A failed browser
+manifest records failed Web platform evidence; a missing browser manifest keeps
+the Web platform entry pending.
+
 ## Web Wasm-GC
 
 Build and serve the visual showcase:

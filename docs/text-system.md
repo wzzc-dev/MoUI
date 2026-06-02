@@ -87,7 +87,12 @@ controls use the same platform-neutral frame for measurement, caret geometry,
 and native raster output. The macOS Skia provider currently starts with the safe
 `EmptyTypeface` font resolution mode, which avoids the system FontMgr, the emoji
 font retry, and SkShaper during early startup while still using that same
-default-font retry path. SkParagraph-style line breaking, bidi, mixed-script
+default-font retry path. The fallback-safe Skia renderer tests also consume the
+new `skia_mbt` `FontFallbackRequest`, `TextMeasurementDescriptor`,
+`TextShapingDescriptor`, `ShapedTextRunDescriptor`, and
+`ShapedGlyphRunDescriptor` resource plans through an internal descriptor
+preflight so font fallback and shaped-run cache keys stay auditable without
+requiring real Skia linkage. SkParagraph-style line breaking, bidi, mixed-script
 fallback runs, deterministic color emoji, grapheme shaping, and broader
 typography conformance remain follow-up work.
 
@@ -140,8 +145,9 @@ Remote font loading is intentionally outside the current backend contract.
   single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples;
   Cosmic run-layout tests additionally assert glyph output plus caret coverage
   through the safe-mapped layout path. Skia renderer tests cover the same
-  representative emoji caret coverage and the system-FontMgr-only emoji font
-  retry boundary. They do not claim full Unicode shaping parity.
+  representative emoji caret coverage, the system-FontMgr-only emoji font retry
+  boundary, and fallback-safe descriptor resource plans for text measurement and
+  shaping. They do not claim full Unicode shaping parity.
 - Focused text inputs expose MoUI's default copy, cut, paste, undo, redo, and
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste
