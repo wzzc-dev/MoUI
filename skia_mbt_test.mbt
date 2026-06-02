@@ -1283,6 +1283,39 @@ test "render command list tracks stats balance and touched bounds" {
 }
 
 ///|
+test "render command list records canvas fill commands" {
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(20, 20),
+  )
+  let paint = @skia_mbt.Paint::new(
+    color=@skia_mbt.Color::blue(),
+    blend_mode=@skia_mbt.Src,
+  )
+  let commands = @skia_mbt.RenderCommandList::for_target(target)
+    .clip_rect(@skia_mbt.Rect::from_xywh(4, 4, 8, 8))
+    .draw_color(@skia_mbt.Color::red(), blend_mode=@skia_mbt.Src)
+    .draw_paint(paint~)
+  let stats = commands.stats()
+  assert_eq(commands.length(), 3)
+  assert_eq(stats.draw_count, 2)
+  assert_eq(stats.clip_count, 1)
+  assert_eq(stats.clear_count, 0)
+  assert_eq(stats.resource_declaration_count, 0)
+  assert_true(commands.commands[1].is_draw())
+  assert_true(commands.commands[2].is_draw())
+  assert_true(
+    commands.touched_bounds() == Some(@skia_mbt.Rect::from_xywh(4, 4, 8, 8)),
+  )
+
+  let unclipped = @skia_mbt.RenderCommandList::for_target(target).draw_color(
+    @skia_mbt.Color::green(),
+  )
+  assert_true(
+    unclipped.touched_bounds() == Some(@skia_mbt.Rect::from_iwh(20, 20)),
+  )
+}
+
+///|
 test "render command list estimates text touched bounds" {
   let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
     @skia_mbt.ISize::new(80, 40),
