@@ -43,6 +43,7 @@ $defaultStageMarkers = @(
   "native smoke render frame replay complete",
   "native smoke canvas replay status contract",
   "native smoke canvas replay transforms",
+  "native smoke canvas replay state stats",
   "native smoke render frame replay rejected skipped",
   "native smoke surface render frame commands",
   "native smoke surface render frame finalized",
@@ -233,6 +234,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke canvas replay transforms"
     Value = "6"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke canvas replay state stats"
+    Value = "4"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame replay rejected skipped"
