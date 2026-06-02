@@ -134,7 +134,8 @@ The `native` subpackage contains the first opt-in native boundary:
   planning;
 - `@native.Shader::color(color)`, `linear_gradient(start, end, colors...)`,
   and `radial_gradient(center, radius, colors...)` create the first native
-  shader handles for shader-backed paint calls;
+  shader handles for shader-backed paint calls, with degenerate linear-gradient
+  inputs rejected before native replay/resource planning;
 - `@native.Path` supports the first path construction calls: `new`, `reset`,
   `rewind`,
   `set_fill_type`, `fill_type`, `move_to`, `line_to`, `quad_to`, `cubic_to`,

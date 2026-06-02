@@ -227,17 +227,23 @@ pub fn Shader::linear_gradient(
   end_color : @skia.Color,
   tile_mode? : @skia.TileMode = @skia.Clamp,
 ) -> Shader? {
-  Shader::from_handle(
-    native_shader_linear_gradient(
-      start.x,
-      start.y,
-      end.x,
-      end.y,
-      start_color.argb(),
-      end_color.argb(),
-      tile_mode.to_skia_ordinal(),
-    ),
-  )
+  if !start.is_finite() ||
+    !end.is_finite() ||
+    start.distance_to_squared(end) <= 0.0 {
+    None
+  } else {
+    Shader::from_handle(
+      native_shader_linear_gradient(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+        start_color.argb(),
+        end_color.argb(),
+        tile_mode.to_skia_ordinal(),
+      ),
+    )
+  }
 }
 
 ///|
