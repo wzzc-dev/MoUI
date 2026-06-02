@@ -108,6 +108,12 @@ pub(all) struct AgentModelInfo {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct AgentForkPoint {
+  entry_id : String
+  text : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PiCommandInfo {
   name : String
   source : String
@@ -545,6 +551,14 @@ pub fn AgentModelInfo::new(
 }
 
 ///|
+pub fn AgentForkPoint::new(
+  entry_id~ : String,
+  text? : String = "",
+) -> AgentForkPoint {
+  { entry_id, text }
+}
+
+///|
 pub fn PiCommandInfo::new(
   name~ : String,
   source~ : String,
@@ -616,6 +630,13 @@ fn agent_model_label(provider : String, id : String, name : String) -> String {
 ///|
 pub fn PiForkMessage::new(entry_id~ : String, text~ : String) -> PiForkMessage {
   { entry_id, text }
+}
+
+///|
+pub fn PiForkMessage::as_agent_fork_point(
+  self : PiForkMessage,
+) -> AgentForkPoint {
+  AgentForkPoint::new(entry_id=self.entry_id, text=self.text)
 }
 
 ///|

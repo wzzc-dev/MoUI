@@ -231,6 +231,42 @@ test "workbench projects Pi session stats through agent-neutral metrics" {
 }
 
 ///|
+test "workbench projects Pi fork candidates through agent-neutral fork points" {
+  let assistant = TranscriptItem::new(
+    id="entry-assistant-1",
+    role="assistant",
+    summary="Skia route inspected",
+    detail="",
+    tone="success",
+  )
+  let model = {
+    ..WorkbenchModel::new(),
+    transcript: [
+      TranscriptItem::new(
+        id="entry-user-1",
+        role="user",
+        summary="Inspect the Skia route",
+        detail="",
+        tone="info",
+      ),
+      assistant,
+    ],
+    fork_messages: [
+      PiForkMessage::new(entry_id="entry-user-1", text="Inspect the Skia route"),
+    ],
+  }
+  let points = model.active_agent_fork_points_for_transcript_item(assistant)
+  inspect(points.length(), content="1")
+  inspect(points[0].entry_id, content="entry-user-1")
+  inspect(points[0].text, content="Inspect the Skia route")
+
+  let fixture_points = model
+    .update(SwitchAgentBackend("fixture"))
+    .active_agent_fork_points_for_transcript_item(assistant)
+  inspect(fixture_points.length(), content="0")
+}
+
+///|
 test "workbench switches current session backend and resets provider state" {
   let model = WorkbenchModel::new()
     .update(ReceiveTransport(ProcessStarted("4242")))

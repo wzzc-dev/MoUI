@@ -319,9 +319,10 @@ packages:
   order.
 - The session panel can discover Pi fork points through `get_fork_messages`.
   The shared app stores Pi's `{entryId,text}` rows as `PiForkMessage` values,
-  shows a compact fork affordance in the transcript panel only when candidates
-  exist, and sends `ForkRpcSession(session, entryId)` for the selected user
-  message. After an uncancelled `fork` response, the app waits for the
+  projects them to backend-neutral `AgentForkPoint` rows, shows a compact fork
+  affordance in the transcript panel only when candidates exist, and sends
+  `ForkRpcSession(session, entryId)` for the selected user message. After an
+  uncancelled `fork` response, the app waits for the
   acknowledgement before refreshing state, messages, fork candidates, command
   catalog, and stats so Pi's new session file remains the source of truth.
 - The workbench can cycle Pi's thinking level from the session status panel.
@@ -352,8 +353,9 @@ packages:
   responses replace the visible transcript with normalized `TranscriptItem`
   rows. Successful `get_fork_messages` responses replace the visible fork
   candidate list with normalized `PiForkMessage` rows containing Pi's fork
-  `entryId` and display text. Successful `fork` responses mark the binding as
-  forking or cancelled; accepted forks then trigger the same chained refresh as
+  `entryId` and display text; the transcript consumes their `AgentForkPoint`
+  projection. Successful `fork` responses mark the binding as forking or
+  cancelled; accepted forks then trigger the same chained refresh as
   new-session creation. Successful `get_available_models` responses replace
   the provider model catalog with normalized `PiModelInfo` rows that preserve
   provider, id, name, and a display label; the session panel consumes their

@@ -61,6 +61,12 @@ pub(all) struct AgentEvent {
 } derive(Eq, @debug.Debug)
 pub fn AgentEvent::new(phase~ : String, title~ : String, detail~ : String, tone~ : String) -> Self
 
+pub(all) struct AgentForkPoint {
+  entry_id : String
+  text : String
+} derive(Eq, @debug.Debug)
+pub fn AgentForkPoint::new(entry_id~ : String, text? : String) -> Self
+
 pub(all) struct AgentModelInfo {
   provider : String
   id : String
@@ -168,6 +174,7 @@ pub(all) struct PiForkMessage {
   entry_id : String
   text : String
 } derive(Eq, @debug.Debug)
+pub fn PiForkMessage::as_agent_fork_point(Self) -> AgentForkPoint
 pub fn PiForkMessage::new(entry_id~ : String, text~ : String) -> Self
 
 pub(all) struct PiModelInfo {
@@ -349,6 +356,7 @@ pub(all) struct WorkbenchModel {
 }
 pub fn WorkbenchModel::active_agent_backend_capabilities(Self) -> AgentBackendCapabilities
 pub fn WorkbenchModel::active_agent_backend_profile(Self) -> AgentBackendProfile
+pub fn WorkbenchModel::active_agent_fork_points_for_transcript_item(Self, TranscriptItem) -> Array[AgentForkPoint]
 pub fn WorkbenchModel::active_agent_model_catalog(Self) -> Array[AgentModelInfo]
 pub fn WorkbenchModel::active_agent_session_binding(Self) -> AgentSessionBinding
 pub fn WorkbenchModel::active_agent_session_metrics(Self) -> AgentSessionMetrics

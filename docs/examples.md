@@ -435,10 +435,11 @@ The native encoder emits `{"type":"new_session"}`, and the chained `get_state`
 response becomes the source of truth for the new Pi `sessionId` and session file.
 This two-stage flow avoids relying on Pi's response order when multiple
 JSONL requests are batched. The session panel also discovers forkable
-user-message entry ids with `get_fork_messages`; selecting a visible fork
-candidate sends `{"type":"fork","entryId":...}` and, after an uncancelled
-acknowledgement, queues the same second-stage refresh before rebinding from
-Pi's next `get_state` response.
+user-message entry ids with `get_fork_messages`; the transcript consumes those
+Pi fork rows through the backend-neutral `AgentForkPoint` projection. Selecting
+a visible fork candidate sends `{"type":"fork","entryId":...}` and, after an
+uncancelled acknowledgement, queues the same second-stage refresh before
+rebinding from Pi's next `get_state` response.
 The session panel also has an HTML export action. It sends Pi RPC
 `export_html`, and a successful response appears as file evidence in the
 current-turn evidence card.
