@@ -703,6 +703,11 @@
       "marker": "native smoke filter layer count"
     },
     {
+      "id": "filter.finite-validation",
+      "area": "Filter",
+      "marker": "native smoke filter finite validation"
+    },
+    {
       "id": "filter.resource-plan",
       "area": "Filter",
       "marker": "native smoke filter resource plan count"
@@ -1745,6 +1750,11 @@
       "id": "filter.resource-plan",
       "marker": "native smoke filter resource plan count",
       "value": "3"
+    },
+    {
+      "id": "filter.finite-validation",
+      "marker": "native smoke filter finite validation",
+      "value": "1"
     },
     {
       "id": "text.text-run-resource-plan",

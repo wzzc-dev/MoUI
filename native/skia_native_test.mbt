@@ -213,8 +213,22 @@ test "filter api is fallback-safe" {
     assert_true(@native.MaskFilter::blur(2.0) is None)
   }
   assert_true(@native.ColorFilter::matrix([1.0, 0.0]) is None)
+  let not_finite : Float = 0.0 / 0.0
+  let infinite : Float = 1.0 / 0.0
+  assert_true(
+    @native.ColorFilter::matrix([
+      not_finite, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+    ])
+    is None,
+  )
+  assert_true(@native.ColorFilter::saturation(not_finite) is None)
+  assert_true(@native.ColorFilter::brightness(infinite) is None)
+  assert_true(@native.ColorFilter::contrast(not_finite) is None)
   assert_true(@native.ImageFilter::blur(0.0, 3.0) is None)
+  assert_true(@native.ImageFilter::blur(infinite, 3.0) is None)
   assert_true(@native.MaskFilter::blur(0.0) is None)
+  assert_true(@native.MaskFilter::blur(not_finite) is None)
 }
 
 ///|

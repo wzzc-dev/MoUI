@@ -331,6 +331,7 @@ if ($status.schema_version -ge 3) {
     "shader.resource-plan",
     "shader.linear-gradient-validation",
     "filter.layer",
+    "filter.finite-validation",
     "filter.resource-plan",
     "path.geometry",
     "surface.readback",
@@ -661,6 +662,7 @@ if ($status.schema_version -ge 3) {
       "native smoke shader resource plan count" = "3"
       "native smoke shader linear gradient validation" = "1"
       "native smoke filter resource plan count" = "3"
+      "native smoke filter finite validation" = "1"
       "native smoke text run resource plan count" = "3"
       "native smoke text run range byte size" = "4"
       "native smoke measured text resource plan count" = "5"
