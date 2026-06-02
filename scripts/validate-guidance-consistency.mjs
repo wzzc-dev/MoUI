@@ -170,6 +170,9 @@ assertIncludes("docs/testing.md", "test-validate-web-runtime-handoff-manifest.mj
 assertIncludes("docs/testing.md", "record-web-runtime-presentation.mjs");
 assertIncludes("docs/testing.md", "validate-web-runtime-presentation-manifest.mjs");
 assertIncludes("docs/testing.md", "test-validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("docs/testing.md", "resize/input event-bridge");
+assertIncludes("docs/testing.md", "Markdown Editor text input");
+assertIncludes("docs/testing.md", "clean target close");
 assertIncludes("docs/testing.md", "--web-presentation-manifest");
 assertIncludes("docs/testing.md", "web-runtime-presentation.json");
 assertIncludes("docs/testing.md", "web-runtime-handoff.json");
@@ -222,6 +225,8 @@ assertIncludes("docs/release-readiness.md", "web-runtime-handoff.json");
 assertIncludes("docs/release-readiness.md", "record-web-runtime-presentation.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-presentation-manifest.mjs");
 assertIncludes("docs/release-readiness.md", "web-runtime-presentation.json");
+assertIncludes("docs/release-readiness.md", "resize/input event-bridge");
+assertIncludes("docs/release-readiness.md", "Markdown Editor text input");
 assertIncludes("docs/release-readiness.md", "--web-presentation-manifest");
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
@@ -240,15 +245,27 @@ assertIncludes("AGENTS.md", "test-validate-web-runtime-handoff.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff-manifest.mjs");
 assertIncludes("AGENTS.md", "record-web-runtime-presentation.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("AGENTS.md", "resize/input event-bridge");
 assertIncludes("AGENTS.md", "--web-presentation-manifest");
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "resize/input event-bridge delivery",
+);
 assertIncludes("moui/README.mbt.md", "sh scripts/dev-check.sh --platform-examples-test");
 assertIncludes("moui/README.mbt.md", "sh scripts/conformance-check.sh --platform-services");
 assertIncludes("moui/README.mbt.md", "platform-runtime-evidence.json");
 assertIncludes("moui/README.mbt.md", "record-platform-evidence-manifest.mjs");
 assertIncludes("moui/README.mbt.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("moui/README.mbt.md", "record-web-runtime-presentation.mjs");
+assertIncludes("moui/README.mbt.md", "resize/input");
 assertIncludes("moui/README.mbt.md", "--web-presentation-manifest");
 assertIncludes("moui/README.mbt.md", "artifacts/conformance/");
+assertIncludes("scripts/record-web-runtime-presentation.mjs", "platformObservations");
+assertIncludes("scripts/record-web-runtime-presentation.mjs", "resizeEvent");
+assertIncludes("scripts/record-web-runtime-presentation.mjs", "targetClosed");
+assertIncludes("scripts/validate-web-runtime-presentation-manifest.mjs", "platformObservations");
+assertIncludes("scripts/record-platform-evidence-manifest.mjs", "webPlatformObservations");
+assertIncludes("moui/backend/web/browser_runtime.js", "__mouiWebRuntimeEvidence");
 
 if (failed) {
   process.exit(1);

@@ -16,6 +16,50 @@ export function createWindowWebImports(options = {}) {
   let nextEventTextId = 1;
   let dispatchEvent = null;
   let wasmExports = null;
+  const eventObserver =
+    typeof options.onEvent === "function"
+      ? options.onEvent
+      : globalThis.__mouiWebRuntimeEvidence?.recordEvent?.bind(
+          globalThis.__mouiWebRuntimeEvidence,
+        );
+
+  const eventName = kind => {
+    switch (kind | 0) {
+      case 1: return "animation_frame";
+      case 2: return "timeout";
+      case 3: return "proxy_wake";
+      case 10: return "resize";
+      case 11: return "focus";
+      case 12: return "blur";
+      case 20: return "pointer_enter";
+      case 21: return "pointer_move";
+      case 22: return "pointer_leave";
+      case 23: return "pointer_down";
+      case 24: return "pointer_up";
+      case 30: return "wheel";
+      case 40: return "key_down";
+      case 41: return "key_up";
+      case 42: return "ime_commit";
+      case 43: return "ime_start";
+      case 44: return "ime_preedit";
+      case 45: return "ime_delete_surrounding";
+      case 50: return "theme";
+      case 60: return "drag_enter";
+      case 61: return "drag_move";
+      case 62: return "drag_drop";
+      case 63: return "drag_leave";
+      default: return "unknown";
+    }
+  };
+
+  const observeEvent = event => {
+    if (!eventObserver) return;
+    try {
+      eventObserver(event);
+    } catch (error) {
+      globalThis.console?.error?.("MoUI Web runtime evidence observer failed", error);
+    }
+  };
 
   const resolveCanvasHost = () => {
     const host = options.canvasHost;
@@ -34,6 +78,16 @@ export function createWindowWebImports(options = {}) {
       eventTexts.set(textId, `${text ?? ""}`);
       try {
         dispatchEvent(kind, rawId, arg0, arg1, argd, textId);
+        observeEvent({
+          kind: kind | 0,
+          name: eventName(kind),
+          rawId: rawId | 0,
+          arg0: arg0 | 0,
+          arg1: arg1 | 0,
+          argd: Number(argd) || 0,
+          text: `${text ?? ""}`,
+          at: Number(globalThis.performance?.now?.() ?? Date.now()),
+        });
       } finally {
         eventTexts.delete(textId);
       }

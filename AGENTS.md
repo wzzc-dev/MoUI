@@ -189,13 +189,14 @@ runtime handoff validator checks static HTML/runtime/wasm delivery for Showcase
 and Markdown Editor, not browser WebGPU presentation. Use
 `scripts/record-web-runtime-presentation.mjs` and
 `scripts/validate-web-runtime-presentation-manifest.mjs` to collect passed
-browser-session WebGPU, wasm startup, canvas, console, and screenshot evidence;
-fold that artifact into `artifacts/conformance/platform-runtime-evidence.json`
-with `scripts/record-platform-evidence-manifest.mjs ... web
+browser-session WebGPU, wasm startup, canvas, resize/input event-bridge,
+Markdown Editor text input, clean target close, console, and screenshot
+evidence; fold that artifact into
+`artifacts/conformance/platform-runtime-evidence.json` with
+`scripts/record-platform-evidence-manifest.mjs ... web
 --web-presentation-manifest ...`. Failed or missing presentation manifests must
-stay out of passed Web runtime claims, and a passed presentation manifest is
-still partial platform evidence until resize/input/shutdown observations are
-recorded. Examples demonstrate workflows but should not be the only proof for a
+stay out of passed Web runtime claims. Examples demonstrate workflows but should
+not be the only proof for a
 shared contract.
 
 Run `moon info` after public API changes and review generated

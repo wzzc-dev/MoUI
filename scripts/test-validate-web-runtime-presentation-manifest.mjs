@@ -19,9 +19,32 @@ const observationKeys = [
   "canvasSized",
   "nonblankScreenshot",
   "cleanConsole",
+  "resizeEvent",
+  "resizedCanvas",
+  "pointerInput",
+  "keyboardInput",
+  "textInput",
+  "targetClosed",
+];
+
+const platformObservationKeys = [
+  "windowOpened",
+  "resizeRedraw",
+  "representativeInput",
+  "cleanExit",
+  "surface",
+  "redraw",
+  "resizeScale",
+  "consumerInput",
+  "textInput",
+  "rendererHandle",
+  "cleanShutdown",
 ];
 
 const observations = value => Object.fromEntries(observationKeys.map(key => [key, value]));
+
+const platformObservations = value =>
+  Object.fromEntries(platformObservationKeys.map(key => [key, value]));
 
 const target = ({ name, packagePath, path, status = "passed" }) => ({
   name,
@@ -58,7 +81,18 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
     contentPixels: status === "passed" ? 50000 : 0,
     distinctColorBuckets: status === "passed" ? 18 : 0,
   },
-  observations: observations(status === "passed" ? "yes" : "no"),
+  evidenceEvents: status === "passed"
+    ? [
+        { kind: 10, name: "resize" },
+        { kind: 23, name: "pointer_down" },
+        { kind: 40, name: "key_down" },
+        { kind: 42, name: "ime_commit" },
+      ]
+    : [],
+  observations: {
+    ...observations(status === "passed" ? "yes" : "no"),
+    textInput: name === "markdown-editor-web-wasm" && status === "passed" ? "yes" : "no",
+  },
   consoleErrors: status === "passed" ? [] : ["Browser WebGPU is required"],
   notes: status === "passed" ? ["browser evidence captured"] : ["navigator.gpu unavailable"],
 });
@@ -71,12 +105,13 @@ const validManifest = {
   cdpUrl: "http://127.0.0.1:9223",
   overallStatus: "passed",
   evidenceBoundary:
-    "Browser-local WebGPU, wasm app startup, canvas sizing, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+    "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
   browser: {
     product: "Chrome/148.0.7778.216",
     userAgent: "Mozilla/5.0 HeadlessChrome/148.0.0.0",
     protocolVersion: "1.3",
   },
+  platformObservations: platformObservations("yes"),
   targets: [
     target({
       name: "showcase-web-wasm",
@@ -212,6 +247,35 @@ expectFail(
     }),
   ),
   "evidenceBoundary must include 'WebGPU'",
+);
+
+expectFail(
+  "passed manifest with failed platform resize evidence",
+  runValidator(
+    writeFixture("failed-platform-resize.json", {
+      ...validManifest,
+      platformObservations: {
+        ...validManifest.platformObservations,
+        resizeRedraw: "no",
+      },
+    }),
+  ),
+  "platformObservations.resizeRedraw must be yes when overallStatus is passed",
+);
+
+expectFail(
+  "missing event bridge evidence",
+  runValidator(
+    writeFixture("missing-event-bridge.json", {
+      ...validManifest,
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? { ...target, observations: { ...target.observations, resizeEvent: "no" } }
+          : target,
+      ),
+    }),
+  ),
+  "targets[0].observations.resizeEvent must be yes for passed evidence",
 );
 
 expectFail(
