@@ -409,6 +409,19 @@ pub fn Surface::raster_n32_premul(size : @skia.ISize) -> Surface? {
 }
 
 ///|
+/// Allocate a native surface for a value-layer render target.
+///
+/// Raster targets are supported by the current CPU backend. Window and GPU
+/// targets return `None` until concrete native present/GPU backends are linked.
+pub fn Surface::for_target(target : @skia.SurfaceTargetDescriptor) -> Surface? {
+  if target.surface.is_raster() {
+    Surface::raster_n32_premul(target.dimensions())
+  } else {
+    None
+  }
+}
+
+///|
 pub fn Surface::width(self : Surface) -> Int {
   native_surface_width(self.handle)
 }
