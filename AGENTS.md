@@ -182,6 +182,7 @@ node scripts/test-validate-web-runtime-handoff.mjs
 node --check scripts/validate-web-runtime-handoff-manifest.mjs
 node scripts/test-validate-web-runtime-handoff-manifest.mjs
 node --check scripts/record-web-runtime-presentation.mjs
+node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
 node --check scripts/validate-package-manifest.mjs
@@ -213,6 +214,9 @@ evidence; fold that artifact into
 stay out of passed Web runtime claims. Examples demonstrate workflows but should
 not be the only proof for a
 shared contract.
+If CDP is unavailable during Web presentation startup, the recorder writes a
+validated failed manifest before exiting nonzero; use that artifact to document
+the environment limit without broadening it into passed Web runtime evidence.
 
 Run `moon info` after public API changes and review generated
 `pkg.generated.mbti` diffs.

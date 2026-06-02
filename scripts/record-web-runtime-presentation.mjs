@@ -77,6 +77,121 @@ const targets = [
 const normalizeBaseUrl = url => url.replace(/\/+$/, "");
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+const failedObservations = () => ({
+  pageLoaded: "no",
+  webGpuAvailable: "no",
+  adapterRequested: "no",
+  deviceRequested: "no",
+  wasmStarted: "no",
+  statusRunning: "no",
+  canvasCreated: "no",
+  canvasSized: "no",
+  nonblankScreenshot: "no",
+  cleanConsole: "no",
+  resizeEvent: "no",
+  resizedCanvas: "no",
+  pointerInput: "no",
+  keyboardInput: "no",
+  textInput: "no",
+  targetClosed: "no",
+});
+
+const failedPlatformObservations = () => ({
+  windowOpened: "no",
+  resizeRedraw: "no",
+  representativeInput: "no",
+  cleanExit: "no",
+  surface: "no",
+  redraw: "no",
+  resizeScale: "no",
+  consumerInput: "no",
+  textInput: "no",
+  rendererHandle: "no",
+  cleanShutdown: "no",
+});
+
+const evidenceBoundary =
+  "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.";
+
+const writeManifest = manifest => {
+  mkdirSync(dirname(manifestPath), { recursive: true });
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  console.log(`web runtime presentation manifest: ${manifestPath}`);
+};
+
+const validateManifest = () => {
+  const validationArgs = ["scripts/validate-web-runtime-presentation-manifest.mjs", manifestPath];
+  if (requirePassed) validationArgs.push("--require-passed");
+  const validation = spawnSync(process.execPath, validationArgs, { encoding: "utf8" });
+  if (validation.stdout) process.stdout.write(validation.stdout);
+  if (validation.stderr) process.stderr.write(validation.stderr);
+  if (validation.status !== 0) {
+    process.exit(validation.status ?? 1);
+  }
+};
+
+const writePreflightFailureManifest = error => {
+  const message = error?.message || String(error);
+  const targetResults = targets.map(target => ({
+    name: target.name,
+    packagePath: target.packagePath,
+    path: target.path,
+    url: `${normalizeBaseUrl(baseUrl)}/${target.path}?debug=1`,
+    status: "failed",
+    title: "unavailable",
+    statusText: "Failed",
+    bodyFailed: true,
+    navigatorGpu: false,
+    canvas: {
+      count: 0,
+      hostWidth: 0,
+      hostHeight: 0,
+      canvasWidth: 0,
+      canvasHeight: 0,
+      clientWidth: 0,
+      clientHeight: 0,
+    },
+    runtimeSignals: {
+      adapterRequested: false,
+      deviceRequested: false,
+      wasmStarted: false,
+      running: false,
+    },
+    evidenceEvents: [],
+    screenshot: {
+      artifact: join("artifacts/conformance/web-runtime-presentation", `${target.name}.png`),
+      width: 0,
+      height: 0,
+      totalPixels: 0,
+      contentPixels: 0,
+      distinctColorBuckets: 0,
+    },
+    observations: failedObservations(),
+    consoleErrors: [message],
+    notes: ["Browser/CDP preflight failed before page evidence could be collected"],
+  }));
+  const manifest = {
+    schemaVersion: 1,
+    mode: "web-runtime-presentation",
+    generatedBy: "scripts/record-web-runtime-presentation.mjs",
+    baseUrl: normalizeBaseUrl(baseUrl),
+    cdpUrl: normalizeBaseUrl(cdpUrl),
+    overallStatus: "failed",
+    evidenceBoundary,
+    browser: {
+      product: "unavailable",
+      userAgent: "unavailable",
+      protocolVersion: "unavailable",
+    },
+    platformObservations: failedPlatformObservations(),
+    targets: targetResults,
+  };
+  writeManifest(manifest);
+  validateManifest();
+  console.error(`web runtime presentation preflight failed: ${message}`);
+  process.exit(1);
+};
+
 const fetchJson = async url => {
   const response = await fetch(url);
   if (!response.ok) {
@@ -657,6 +772,7 @@ const probeTarget = async target => {
         running: false,
       },
       screenshot: fallbackScreenshot,
+      evidenceEvents: [],
       observations: {
         pageLoaded: "no",
         webGpuAvailable: "no",
@@ -734,7 +850,12 @@ const derivePlatformObservations = targetResults => ({
   cleanShutdown: allTargetsObserved(targetResults, "targetClosed") ? "yes" : "no",
 });
 
-const browserVersion = await fetchJson(`${normalizeBaseUrl(cdpUrl)}/json/version`);
+let browserVersion;
+try {
+  browserVersion = await fetchJson(`${normalizeBaseUrl(cdpUrl)}/json/version`);
+} catch (error) {
+  writePreflightFailureManifest(error);
+}
 const targetResults = [];
 
 for (const target of targets) {
@@ -755,8 +876,7 @@ const manifest = {
   baseUrl: normalizeBaseUrl(baseUrl),
   cdpUrl: normalizeBaseUrl(cdpUrl),
   overallStatus,
-  evidenceBoundary:
-    "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+  evidenceBoundary,
   browser: {
     product: browserVersion.Browser ?? "unknown",
     userAgent: browserVersion["User-Agent"] ?? "unknown",
@@ -766,18 +886,8 @@ const manifest = {
   targets: targetResults,
 };
 
-mkdirSync(dirname(manifestPath), { recursive: true });
-writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`web runtime presentation manifest: ${manifestPath}`);
-
-const validationArgs = ["scripts/validate-web-runtime-presentation-manifest.mjs", manifestPath];
-if (requirePassed) validationArgs.push("--require-passed");
-const validation = spawnSync(process.execPath, validationArgs, { encoding: "utf8" });
-if (validation.stdout) process.stdout.write(validation.stdout);
-if (validation.stderr) process.stderr.write(validation.stderr);
-if (validation.status !== 0) {
-  process.exit(validation.status ?? 1);
-}
+writeManifest(manifest);
+validateManifest();
 
 if (requirePassed && overallStatus !== "passed") {
   process.exit(1);

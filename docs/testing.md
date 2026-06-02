@@ -143,6 +143,7 @@ node scripts/test-validate-web-runtime-handoff.mjs
 node --check scripts/validate-web-runtime-handoff-manifest.mjs
 node scripts/test-validate-web-runtime-handoff-manifest.mjs
 node --check scripts/record-web-runtime-presentation.mjs
+node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
 node --check scripts/validate-renderer-provider-manifests.mjs
@@ -483,6 +484,10 @@ from release claims; do not use the static handoff artifact as a substitute for
 passed browser presentation evidence. The platform recorder can also consume a
 failed presentation manifest; it then marks the Web platform entry failed and
 records the negative observations so release notes can cite a structured reason.
+If the CDP browser is unavailable during recorder startup, the recorder still
+writes a failed `web-runtime-presentation.json` with negative observations for
+both targets before exiting nonzero; validate that artifact without
+`--require-passed` when documenting the environment limit.
 When the presentation manifest passes with all browser-observable platform
 observations set to `yes`, `record-platform-evidence-manifest.mjs ... web
 --web-presentation-manifest ...` records the Web platform entry as passed for
