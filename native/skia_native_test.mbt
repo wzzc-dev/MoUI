@@ -92,6 +92,52 @@ test "canvas replays rounded and path clips" {
 }
 
 ///|
+test "canvas replays color and paint fills" {
+  let replay_size = @skia.ISize::new(8, 8)
+  let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    replay_size,
+  )
+  let commands = @skia.RenderCommandList::for_target(replay_target)
+    .draw_color(@skia.Color::red(), blend_mode=@skia.Src)
+    .clip_rect(@skia.Rect::from_xywh(2, 2, 3, 3))
+    .draw_paint(
+      paint=@skia.Paint::new(color=@skia.Color::blue(), blend_mode=@skia.Src),
+    )
+  let command_stats = commands.stats()
+  assert_eq(command_stats.command_count, 3)
+  assert_eq(command_stats.draw_count, 2)
+  assert_eq(command_stats.clip_count, 1)
+  assert_eq(command_stats.clear_count, 0)
+  assert_true(
+    commands.touched_bounds() == Some(@skia.Rect::from_xywh(0, 0, 8, 8)),
+  )
+  match @native.Surface::raster_n32_premul(replay_size) {
+    None => ()
+    Some(surface) =>
+      match surface.canvas() {
+        None => ()
+        Some(canvas) => {
+          let stats = canvas.replay(commands)
+          assert_true(stats.is_complete())
+          assert_eq(stats.draw_count, 2)
+          assert_eq(stats.clip_count, 1)
+          assert_eq(stats.clear_count, 0)
+          match surface.read_pixels(bounds=@skia.IRect::from_xywh(0, 0, 1, 1)) {
+            None => ()
+            Some(pixmap) =>
+              native_test_assert_pixel(pixmap, 0xff, 0x00, 0x00, 0xff)
+          }
+          match surface.read_pixels(bounds=@skia.IRect::from_xywh(2, 2, 1, 1)) {
+            None => ()
+            Some(pixmap) =>
+              native_test_assert_pixel(pixmap, 0x00, 0x00, 0xff, 0xff)
+          }
+        }
+      }
+  }
+}
+
+///|
 test "native backend reports availability" {
   ignore(@native.skia_available())
 }

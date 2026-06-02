@@ -1805,6 +1805,58 @@ fn main {
     0xff,
     0xff,
   )
+
+  let replay_fill_commands = @skia.RenderCommandList::for_target(replay_target)
+    .draw_color(@skia.Color::red(), blend_mode=@skia.Src)
+    .clip_rect(@skia.Rect::from_xywh(2, 2, 3, 3))
+    .draw_paint(
+      paint=@skia.Paint::new(color=@skia.Color::blue(), blend_mode=@skia.Src),
+    )
+  guard @native.Surface::raster_n32_premul(replay_size)
+    is Some(replay_fill_surface) else {
+    fail_smoke("failed to create replay fill smoke surface")
+  }
+  guard replay_fill_surface.canvas() is Some(replay_fill_canvas) else {
+    fail_smoke("failed to create replay fill smoke canvas")
+  }
+  let replay_fill_stats = replay_fill_canvas.replay(replay_fill_commands)
+  if !replay_fill_stats.is_complete() ||
+    replay_fill_stats.command_count != 3 ||
+    replay_fill_stats.draw_count != 2 ||
+    replay_fill_stats.clip_count != 1 ||
+    replay_fill_stats.clear_count != 0 ||
+    replay_fill_commands.touched_bounds() !=
+    Some(@skia.Rect::from_xywh(0, 0, 12, 12)) {
+    fail_smoke("native canvas replay did not apply color/paint fill commands")
+  }
+  guard replay_fill_surface.read_pixels(
+      bounds=@skia.IRect::from_xywh(0, 0, 1, 1),
+    )
+    is Some(replay_fill_outside) else {
+    fail_smoke("failed to read replay fill outside pixel")
+  }
+  assert_pixel(
+    replay_fill_outside,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0x00,
+    0x00,
+    0xff,
+  )
+  guard replay_fill_surface.read_pixels(
+      bounds=@skia.IRect::from_xywh(2, 2, 1, 1),
+    )
+    is Some(replay_fill_inside) else {
+    fail_smoke("failed to read replay fill inside pixel")
+  }
+  assert_pixel(
+    replay_fill_inside,
+    @skia.IPoint::new(0, 0),
+    0x00,
+    0x00,
+    0xff,
+    0xff,
+  )
   println("native smoke render frame pixmap sample proof")
   println(1)
   println("native smoke canvas replay commands")
@@ -1835,6 +1887,10 @@ fn main {
   println(replay_clip_stats.clip_count)
   println("native smoke canvas replay clip path cache resources")
   println(replay_clip_resources.path_cache.length())
+  println("native smoke canvas replay color paint fills")
+  println(replay_fill_stats.draw_count)
+  println("native smoke canvas replay paint fill clipped")
+  println(1)
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
   println("native smoke surface render frame commands")

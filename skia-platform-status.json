@@ -198,6 +198,16 @@
       "marker": "native smoke canvas replay clip path cache resources"
     },
     {
+      "id": "canvas.replay-color-paint-fills",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay color paint fills"
+    },
+    {
+      "id": "canvas.replay-paint-fill-clipped",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay paint fill clipped"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "area": "Canvas",
       "marker": "native smoke render frame replay rejected skipped"
@@ -1104,6 +1114,16 @@
     {
       "id": "canvas.replay-clip-path-cache-resources",
       "marker": "native smoke canvas replay clip path cache resources",
+      "value": "1"
+    },
+    {
+      "id": "canvas.replay-color-paint-fills",
+      "marker": "native smoke canvas replay color paint fills",
+      "value": "2"
+    },
+    {
+      "id": "canvas.replay-paint-fill-clipped",
+      "marker": "native smoke canvas replay paint fill clipped",
       "value": "1"
     },
     {
