@@ -194,6 +194,8 @@ The `native` subpackage contains the first opt-in native boundary:
   color-shader paint through `draw_paint_shader` / `draw_rect_shader`;
 - direct Canvas geometry, clip, image placement, and text/glyph positioning
   calls skip non-finite coordinates without mutating pixels;
+- native Canvas paint forwarding sanitizes non-finite stroke scalars, and
+  `save_layer` treats non-finite bounds as an unbounded layer;
 - `@native.Canvas` also exposes the first state and transform calls:
   `save`, `save_layer`, `restore`, `restore_to_count`, `save_count`,
   `translate`, `scale`, `rotate`, `skew`, `concat`, `reset_matrix`, and
