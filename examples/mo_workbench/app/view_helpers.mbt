@@ -488,10 +488,11 @@ fn WorkbenchModel::workflow_rail(
 
 ///|
 fn WorkbenchModel::has_workflow_rail_evidence(self : WorkbenchModel) -> Bool {
+  let signal = self.active_agent_runtime_signal()
   self.latest_failed_command() is Some(_) ||
   self.latest_active_command() is Some(_) ||
   self.current_plan_action_step() is Some(_) ||
-  self.pi_agent.active_tool_name != ""
+  signal.active_tool_name != ""
 }
 
 ///|
@@ -521,11 +522,12 @@ fn WorkbenchModel::compact_workflow_rail_card(
       }
     None => ()
   }
-  if self.pi_agent.active_tool_name != "" {
+  let signal = self.active_agent_runtime_signal()
+  if signal.active_tool_name != "" {
     rows.push(
       workflow_agent_row(
         "工具",
-        self.pi_agent.active_tool_name,
+        signal.active_tool_name,
         Accent,
         layout,
         theme,
@@ -544,10 +546,11 @@ fn WorkbenchModel::compact_workflow_rail_card(
 
 ///|
 fn compact_workflow_summary(model : WorkbenchModel) -> String {
+  let signal = model.active_agent_runtime_signal()
   if model.latest_failed_command() is Some(_) {
     "需处理"
   } else if model.latest_active_command() is Some(_) ||
-    model.pi_agent.active_tool_name != "" {
+    signal.active_tool_name != "" {
     "运行中"
   } else if model.current_plan_action_step() is Some(_) {
     "计划"
@@ -1582,16 +1585,18 @@ fn WorkbenchModel::latest_visible_assistant_transcript_item_id(
 
 ///|
 fn WorkbenchModel::has_process_evidence(self : WorkbenchModel) -> Bool {
+  let signal = self.active_agent_runtime_signal()
   !self.commands.is_empty() ||
   self.transcript.any(item => transcript_item_is_process_evidence(item)) ||
   self.events.any(event => event_is_process_evidence(event)) ||
-  self.pi_agent.message_preview != "" ||
-  self.pi_agent.active_tool_name != ""
+  signal.message_preview != "" ||
+  signal.active_tool_name != ""
 }
 
 ///|
 fn WorkbenchModel::has_live_process_signal(self : WorkbenchModel) -> Bool {
-  self.pi_agent.has_active_signal() || self.latest_active_command() is Some(_)
+  self.active_agent_runtime_signal().has_active_signal() ||
+  self.latest_active_command() is Some(_)
 }
 
 ///|
@@ -1725,6 +1730,7 @@ fn WorkbenchModel::process_summary_title(self : WorkbenchModel) -> String {
 
 ///|
 fn WorkbenchModel::process_summary_detail(self : WorkbenchModel) -> String {
+  let signal = self.active_agent_runtime_signal()
   let parts : Array[String] = []
   if !self.commands.is_empty() {
     parts.push(self.commands.length().to_string() + " 命令")
@@ -1733,7 +1739,7 @@ fn WorkbenchModel::process_summary_detail(self : WorkbenchModel) -> String {
   if event_count > 0 {
     parts.push(event_count.to_string() + " 事件")
   }
-  if self.pi_agent.thinking_level != "" {
+  if signal.thinking_level != "" {
     parts.push("思考 " + self.thinking_level_label())
   }
   let transcript_count = self.process_transcript_item_count()
@@ -1774,15 +1780,16 @@ fn WorkbenchModel::process_detail_lines(
   self : WorkbenchModel,
   max_chars : Int,
 ) -> Array[String] {
+  let signal = self.active_agent_runtime_signal()
   let max_lines = 8
   let lines : Array[String] = []
-  if self.pi_agent.thinking_level != "" {
+  if signal.thinking_level != "" {
     lines.push("思考等级 " + self.thinking_level_label())
   }
-  if self.pi_agent.message_preview != "" && lines.length() < max_lines {
+  if signal.message_preview != "" && lines.length() < max_lines {
     for
       line in readable_text_lines(
-        "消息 " + self.pi_agent.message_preview,
+        "消息 " + signal.message_preview,
         max_chars,
         max_lines=max_lines - lines.length(),
       ) {
@@ -2893,10 +2900,34 @@ fn WorkbenchModel::runtime_signal_row(
 
 ///|
 fn WorkbenchModel::runtime_activity_label(self : WorkbenchModel) -> String {
+  self.active_agent_runtime_signal().status_label
+}
+
+///|
+pub fn WorkbenchModel::active_agent_runtime_signal(
+  self : WorkbenchModel,
+) -> AgentRuntimeSignal {
+  let backend = self.active_agent_backend_profile()
+  if !backend.capabilities.uses_pi_transport {
+    return AgentRuntimeSignal::new(backend_id=backend.id)
+  }
   if self.pi_agent.has_visible_signal() {
-    self.pi_agent.display_status_label()
+    AgentRuntimeSignal::new(
+      backend_id=backend.id,
+      status_label=self.pi_agent.display_status_label(),
+      active_tool_name=self.pi_agent.active_tool_name,
+      message_preview=self.pi_agent.message_preview,
+      thinking_level=self.pi_agent.thinking_level,
+      visible=true,
+      active=self.pi_agent.has_active_signal(),
+    )
   } else {
-    self.transport.agent_status_label()
+    AgentRuntimeSignal::new(
+      backend_id=backend.id,
+      status_label=self.transport.agent_status_label(),
+      visible=self.transport.has_visible_signal(),
+      active=self.transport.has_active_signal(),
+    )
   }
 }
 
@@ -3098,14 +3129,13 @@ fn WorkbenchModel::cancel_run_button(
 
 ///|
 fn WorkbenchModel::has_runtime_signal(self : WorkbenchModel) -> Bool {
-  self.transport.has_visible_signal() || self.pi_agent.has_visible_signal()
+  self.active_agent_runtime_signal().has_visible_signal()
 }
 
 ///|
 fn WorkbenchModel::has_cancel_target(self : WorkbenchModel) -> Bool {
   self.has_active_shell_command(self.active_session()) ||
-  self.transport.has_active_signal() ||
-  self.pi_agent.has_active_signal()
+  self.active_agent_runtime_signal().has_active_signal()
 }
 
 ///|
