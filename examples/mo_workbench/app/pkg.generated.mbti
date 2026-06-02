@@ -44,6 +44,15 @@ pub(all) struct AgentBackendProfile {
 } derive(Eq, @debug.Debug)
 pub fn AgentBackendProfile::new(id~ : String, label~ : String, description~ : String, capabilities~ : AgentBackendCapabilities) -> Self
 
+pub(all) struct AgentCommandInfo {
+  name : String
+  source : String
+  description : String
+  source_scope : String
+  source_path : String
+} derive(Eq, @debug.Debug)
+pub fn AgentCommandInfo::new(name~ : String, source~ : String, description~ : String, source_scope~ : String, source_path~ : String) -> Self
+
 pub(all) struct AgentEvent {
   phase : String
   title : String
@@ -132,6 +141,7 @@ pub(all) struct PiCommandInfo {
   source_scope : String
   source_path : String
 } derive(Eq, @debug.Debug)
+pub fn PiCommandInfo::as_agent_command_info(Self) -> AgentCommandInfo
 pub fn PiCommandInfo::new(name~ : String, source~ : String, description~ : String, source_scope~ : String, source_path~ : String) -> Self
 
 pub(all) struct PiForkMessage {

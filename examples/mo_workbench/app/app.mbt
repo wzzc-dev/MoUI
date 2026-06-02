@@ -80,6 +80,15 @@ pub(all) struct TranscriptItem {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct AgentCommandInfo {
+  name : String
+  source : String
+  description : String
+  source_scope : String
+  source_path : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PiCommandInfo {
   name : String
   source : String
@@ -453,6 +462,17 @@ pub fn TranscriptItem::new(
 }
 
 ///|
+pub fn AgentCommandInfo::new(
+  name~ : String,
+  source~ : String,
+  description~ : String,
+  source_scope~ : String,
+  source_path~ : String,
+) -> AgentCommandInfo {
+  { name, source, description, source_scope, source_path }
+}
+
+///|
 pub fn PiCommandInfo::new(
   name~ : String,
   source~ : String,
@@ -461,6 +481,19 @@ pub fn PiCommandInfo::new(
   source_path~ : String,
 ) -> PiCommandInfo {
   { name, source, description, source_scope, source_path }
+}
+
+///|
+pub fn PiCommandInfo::as_agent_command_info(
+  self : PiCommandInfo,
+) -> AgentCommandInfo {
+  AgentCommandInfo::new(
+    name=self.name,
+    source=self.source,
+    description=self.description,
+    source_scope=self.source_scope,
+    source_path=self.source_path,
+  )
 }
 
 ///|

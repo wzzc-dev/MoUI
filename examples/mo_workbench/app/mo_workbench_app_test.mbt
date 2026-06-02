@@ -2731,6 +2731,23 @@ test "workbench ingests Pi RPC get_commands response into command catalog" {
 }
 
 ///|
+test "workbench projects Pi command catalog entries through agent-neutral contract" {
+  let pi_command = PiCommandInfo::new(
+    name="review",
+    source="prompt",
+    description="Review current diff",
+    source_scope="project",
+    source_path=".pi/prompts/review.md",
+  )
+  let command = pi_command.as_agent_command_info()
+  inspect(command.name, content="review")
+  inspect(command.source, content="prompt")
+  inspect(command.description, content="Review current diff")
+  inspect(command.source_scope, content="project")
+  inspect(command.source_path, content=".pi/prompts/review.md")
+}
+
+///|
 test "workbench slash composer hides context and steering controls" {
   let model = {
     ..WorkbenchModel::new(),
