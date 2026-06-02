@@ -1251,17 +1251,17 @@
       "next_step": "Keep running real Skia smoke for this platform and verify each run against the accepted jetbrains Skia version m148-8967a2e80c."
     },
     "windows": {
-      "accepted": false,
-      "state": "ready_for_jetbrains_msvc_binary_acceptance",
+      "accepted": true,
+      "state": "accepted",
       "first_acceptance_platform": false,
       "source_build": false,
       "existing_build": true,
       "jetbrains_provider": true,
       "requires_pinned_revision": true,
-      "accepted_artifact": null,
-      "accepted_commit": null,
-      "accepted_provider": null,
-      "accepted_version": null,
+      "accepted_artifact": "github-actions:26802937992:windows-real-skia-acceptance",
+      "accepted_commit": "8967a2e80c71be363146da2395f503cab5f5fb9c",
+      "accepted_provider": "jetbrains",
+      "accepted_version": "m148-8967a2e80c",
       "required_artifact_logs": [
         "windows-real-skia-smoke-preflight.log",
         "windows-real-skia-smoke.log",
@@ -1269,7 +1269,7 @@
         "windows-real-skia-acceptance.log"
       ],
       "required_verifier": "scripts/verify-real-skia-artifact.ps1 -Platform windows -LogDir logs",
-      "next_step": "Run the Windows real smoke workflow with skia_provider=jetbrains and the MSVC helper. Existing MinGW-compatible smoke remains a diagnostic path."
+      "next_step": "Keep running real Skia smoke for this platform and verify each run against the accepted jetbrains Skia version m148-8967a2e80c."
     }
   }
 }
