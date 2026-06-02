@@ -116,6 +116,11 @@ The Web path stays on `wasm-gc + window/web + browser WebGPU host imports`.
 `backend/web` installs a browser Canvas-backed `TextSystem` and the WebGPU
 runtime draws text through a DPR-aware canvas-rasterized glyph atlas. Measurement
 and drawing use the same CSS `system-ui` stack generated from `FontSpec`.
+The Web host also routes browser IME composition events and accepts
+`TextInputSession` IME requests for focused text controls, including cursor
+geometry and surrounding-text updates. This covers browser input-method
+plumbing; broader shaping, bidi, and deterministic browser glyph rasterization
+remain tracked conformance topics rather than Web-host capability claims.
 
 The browser runtime assets live under `backend/web/*.js`; Web example packages
 should only supply app-specific entrypoints, wasm URLs, canvas hosts, and UI

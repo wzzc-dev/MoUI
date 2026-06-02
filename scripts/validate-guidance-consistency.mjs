@@ -260,6 +260,11 @@ assertIncludes("docs/release-readiness.md", "resize/input event-bridge");
 assertIncludes("docs/release-readiness.md", "Markdown Editor text input");
 assertIncludes("docs/release-readiness.md", "--web-presentation-manifest");
 assertIncludes("docs/release-readiness.md", "monitor/cursor");
+assertIncludes("docs/release-readiness.md", "Web host capability reporting now advertises browser IME plumbing");
+assertIncludes("docs/platform-notes.md", "The Web host now advertises IME readiness");
+assertIncludes("docs/text-system.md", "routes browser IME composition events");
+assertIncludes("moui/backend/web/web_host.mbt", "ime_ready=true");
+assertIncludes("examples/showcase/app/showcase_app_test.mbt", "web ime readiness");
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "scripts/record_moui_evidence.sh",

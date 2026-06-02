@@ -704,6 +704,34 @@ test "showcase renderer section clips long capability content" {
 }
 
 ///|
+test "showcase host capability card surfaces web ime readiness" {
+  let summary = @host.HostCapabilitySummary::new(
+    backend=@host.HostBackendKind::Web,
+    label="Web host",
+    input=@host.HostInputCapabilities::new(
+      pointer=false,
+      scroll=false,
+      keyboard=false,
+      focus=false,
+      text_input=true,
+      ime=true,
+      clipboard=false,
+      drag_drop=false,
+    ),
+    text_input_ready=true,
+    ime_ready=true,
+  )
+  let runtime = @app.ShowcaseModel::new()
+    .with_host_summary(summary)
+    .update(@app.ShowcaseMsg::SelectSection("runtime-renderer"))
+    .runtime(width=760.0, height=420.0)
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Web host / Web"))
+  assert_true(has_text(commands, "2/7"))
+  assert_true(has_text(commands, "text input, IME"))
+}
+
+///|
 test "showcase counter preview increments through shared runtime" {
   let model = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("examples"))
