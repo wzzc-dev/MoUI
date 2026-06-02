@@ -196,6 +196,8 @@ $defaultStageMarkers = @(
   "native smoke text measurement resource plan count",
   "native smoke measured text resource plan count",
   "native smoke measured text key variation",
+  "native smoke invalid measured text resource plan count",
+  "native smoke invalid measured text uncacheable count",
   "native smoke text measurement key variation",
   "native smoke text shaping resource plan count",
   "native smoke shaped text resource plan count",
@@ -856,6 +858,14 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke measured text key variation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke invalid measured text resource plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke invalid measured text uncacheable count"
     Value = "1"
   }
   [pscustomobject]@{
