@@ -843,6 +843,21 @@
       "marker": "native smoke render image decode failure cache misses"
     },
     {
+      "id": "image.empty-descriptor-command-plan",
+      "area": "Image",
+      "marker": "native smoke empty image descriptor command plan count"
+    },
+    {
+      "id": "image.empty-descriptor-replay-skipped",
+      "area": "Image",
+      "marker": "native smoke empty image descriptor replay skipped"
+    },
+    {
+      "id": "image.empty-descriptor-cache-misses",
+      "area": "Image",
+      "marker": "native smoke empty image descriptor cache misses"
+    },
+    {
       "id": "codec.metadata",
       "area": "Codec",
       "marker": "native smoke codec encoded format PNG"
@@ -1825,6 +1840,21 @@
       "id": "image.render-decode-failure-cache-misses",
       "marker": "native smoke render image decode failure cache misses",
       "value": "2"
+    },
+    {
+      "id": "image.empty-descriptor-command-plan",
+      "marker": "native smoke empty image descriptor command plan count",
+      "value": "1"
+    },
+    {
+      "id": "image.empty-descriptor-replay-skipped",
+      "marker": "native smoke empty image descriptor replay skipped",
+      "value": "2"
+    },
+    {
+      "id": "image.empty-descriptor-cache-misses",
+      "marker": "native smoke empty image descriptor cache misses",
+      "value": "0"
     },
     {
       "id": "codec.width",

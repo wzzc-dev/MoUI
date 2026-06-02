@@ -2594,6 +2594,65 @@ fn main {
   println("native smoke render image decode failure cache misses")
   println(render_image_decode_failure_cache_stats.misses)
 
+  let empty_render_image_descriptor = @skia.EncodedImage(
+    b"",
+    Some(@skia.PNG),
+    None,
+  )
+  let empty_render_image_commands = @skia.RenderCommandList::for_target(
+      @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(4, 4)),
+    )
+    .clear(@skia.Color::white())
+    .draw_image(empty_render_image_descriptor, @skia.Point::new(0, 0))
+    .draw_image_rect(
+      empty_render_image_descriptor,
+      @skia.Rect::from_xywh(0, 0, 2, 2),
+      @skia.Rect::from_xywh(2, 0, 2, 2),
+      sampling=@skia.SamplingOptions::new(),
+    )
+  let empty_render_image_plan = empty_render_image_commands.resource_plan()
+  if !empty_render_image_descriptor.resource_key().is_empty() ||
+    empty_render_image_descriptor.resource_descriptor().is_cacheable() ||
+    empty_render_image_plan.length() != 1 ||
+    empty_render_image_plan.count_kind(@skia.SurfaceResource) != 1 ||
+    empty_render_image_plan.count_kind(@skia.ImageResource) != 0 {
+    fail_smoke("empty render image descriptor resource plan is not cache-safe")
+  }
+  guard @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4))
+    is Some(empty_render_image_surface) else {
+    fail_smoke("failed to create empty render image replay surface")
+  }
+  guard empty_render_image_surface.canvas()
+    is Some(empty_render_image_canvas) else {
+    fail_smoke("failed to borrow empty render image replay canvas")
+  }
+  let empty_render_image_resources = @native.NativeReplayResources::new(
+    image_max_bytes=1024L,
+  )
+  let empty_render_image_stats = empty_render_image_canvas.replay_with_resources(
+    empty_render_image_commands,
+    empty_render_image_resources,
+  )
+  let empty_render_image_cache_stats = empty_render_image_resources.image_cache
+    .stats()
+  if empty_render_image_stats.is_complete() ||
+    empty_render_image_stats.command_count != empty_render_image_commands.length() ||
+    empty_render_image_stats.replayed_count != 1 ||
+    empty_render_image_stats.skipped_count != 2 ||
+    empty_render_image_stats.draw_count != 2 ||
+    empty_render_image_stats.image_resource_count != 2 ||
+    empty_render_image_resources.image_cache.length() != 0 ||
+    empty_render_image_cache_stats.misses != 0 ||
+    empty_render_image_cache_stats.hits != 0 {
+    fail_smoke("empty render image replay should skip without touching cache")
+  }
+  println("native smoke empty image descriptor command plan count")
+  println(empty_render_image_plan.length())
+  println("native smoke empty image descriptor replay skipped")
+  println(empty_render_image_stats.skipped_count)
+  println("native smoke empty image descriptor cache misses")
+  println(empty_render_image_cache_stats.misses)
+
   guard @native.Font::default(size=10.0) is Some(font) else {
     fail_smoke("failed to create default native font")
   }
