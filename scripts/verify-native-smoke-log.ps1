@@ -154,6 +154,8 @@ $defaultStageMarkers = @(
   "native smoke shader resource plan count",
   "native smoke shader linear gradient validation",
   "native smoke invalid shader filter descriptor resources",
+  "native smoke invalid shader filter replay skipped",
+  "native smoke invalid shader filter replay cache resources",
   "native smoke filter layer count",
   "native smoke filter finite validation",
   "native smoke filter resource plan count",
@@ -781,6 +783,14 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke invalid shader filter descriptor resources"
     Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke invalid shader filter replay skipped"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke invalid shader filter replay cache resources"
+    Value = "0"
   }
   [pscustomobject]@{
     Marker = "native smoke filter resource plan count"

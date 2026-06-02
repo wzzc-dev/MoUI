@@ -983,6 +983,59 @@ fn main {
   }
   println("native smoke invalid shader filter descriptor resources")
   println(invalid_descriptor_plan.uncacheable_count)
+  let invalid_replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia.ISize::new(4, 4),
+  )
+  let invalid_replay_commands = @skia.RenderCommandList::for_target(
+      invalid_replay_target,
+    )
+    .clear(@skia.Color::white())
+    .draw_paint_shader(invalid_shader_descriptor)
+    .save_layer(color_filter=Some(invalid_color_filter_descriptor))
+  let invalid_replay_plan = invalid_replay_commands.resource_plan()
+  if invalid_replay_plan.length() != 1 ||
+    invalid_replay_plan.cacheable_count != 1 ||
+    invalid_replay_plan.uncacheable_count != 0 ||
+    invalid_replay_plan.count_kind(@skia.SurfaceResource) != 1 ||
+    invalid_replay_plan.count_kind(@skia.ShaderResource) != 0 ||
+    invalid_replay_plan.count_kind(@skia.ColorFilterResource) != 0 {
+    fail_smoke("invalid shader/filter replay plan is not cache-safe")
+  }
+  guard @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4))
+    is Some(invalid_replay_surface) else {
+    fail_smoke("failed to create invalid descriptor replay surface")
+  }
+  guard invalid_replay_surface.canvas() is Some(invalid_replay_canvas) else {
+    fail_smoke("failed to borrow invalid descriptor replay canvas")
+  }
+  let invalid_replay_resources = @native.NativeReplayResources::new(
+    shader_max_bytes=1024L,
+    color_filter_max_bytes=1024L,
+  )
+  let invalid_replay_stats = invalid_replay_canvas.replay_with_resources(
+    invalid_replay_commands,
+    invalid_replay_resources,
+  )
+  if invalid_replay_stats.is_complete() ||
+    invalid_replay_stats.command_count != 3 ||
+    invalid_replay_stats.replayed_count != 1 ||
+    invalid_replay_stats.skipped_count != 2 ||
+    invalid_replay_stats.draw_count != 1 ||
+    invalid_replay_stats.state_count != 1 ||
+    invalid_replay_stats.clear_count != 1 ||
+    invalid_replay_stats.shader_resource_count != 1 ||
+    invalid_replay_stats.filter_resource_count != 1 ||
+    invalid_replay_resources.shader_cache.length() != 0 ||
+    invalid_replay_resources.color_filter_cache.length() != 0 {
+    fail_smoke("invalid shader/filter descriptors should skip without caching")
+  }
+  println("native smoke invalid shader filter replay skipped")
+  println(invalid_replay_stats.skipped_count)
+  println("native smoke invalid shader filter replay cache resources")
+  println(
+    invalid_replay_resources.shader_cache.length() +
+    invalid_replay_resources.color_filter_cache.length(),
+  )
 
   guard @native.Path::new() is Some(native_path) else {
     fail_smoke("failed to create native path")
