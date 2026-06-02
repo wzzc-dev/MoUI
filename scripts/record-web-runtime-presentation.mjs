@@ -169,9 +169,19 @@ const createPageTarget = async () => {
 
 const closePageTarget = async id => {
   try {
-    await fetch(`${normalizeBaseUrl(cdpUrl)}/json/close/${encodeURIComponent(id)}`);
+    const response = await fetch(`${normalizeBaseUrl(cdpUrl)}/json/close/${encodeURIComponent(id)}`);
+    if (!response.ok) return false;
+    const deadline = Date.now() + Math.min(timeoutMs, 2000);
+    while (Date.now() < deadline) {
+      await sleep(100);
+      const targets = await fetchJson(`${normalizeBaseUrl(cdpUrl)}/json/list`);
+      if (!targets.some(target => target?.id === id)) {
+        return true;
+      }
+    }
+    return false;
   } catch (_) {
-    // Best-effort cleanup only.
+    return false;
   }
 };
 
@@ -330,12 +340,120 @@ const collectPageState = async session => {
   })()`);
 };
 
+const collectEvidenceEvents = async session => {
+  return await evaluate(session, `(() => {
+    const events = globalThis.__mouiWebRuntimeEvidence?.events;
+    return Array.isArray(events) ? events : [];
+  })()`);
+};
+
+const canvasRectForInput = async session => {
+  return await evaluate(session, `(() => {
+    const canvas = document.querySelector("#canvas-host canvas") || document.querySelector("canvas");
+    const rect = canvas?.getBoundingClientRect?.();
+    return {
+      left: rect?.left || 0,
+      top: rect?.top || 0,
+      width: rect?.width || 0,
+      height: rect?.height || 0,
+    };
+  })()`);
+};
+
+const textInputPoint = target => {
+  if (target.name === "markdown-editor-web-wasm") {
+    return { x: 560, y: 300 };
+  }
+  return { x: 150, y: 185 };
+};
+
+const performInteractionProbe = async (session, target) => {
+  await session.send("Emulation.setDeviceMetricsOverride", {
+    width: 1120,
+    height: 720,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+  await evaluate(session, `window.dispatchEvent(new Event("resize"))`);
+  await sleep(350);
+
+  const rect = await canvasRectForInput(session);
+  const fallbackX = Math.max(20, Math.round(rect.left + rect.width / 2));
+  const fallbackY = Math.max(20, Math.round(rect.top + rect.height / 2));
+  const inputPoint = textInputPoint(target);
+  const x = rect.width > 0 ? Math.min(rect.left + rect.width - 12, Math.max(rect.left + 12, inputPoint.x)) : fallbackX;
+  const y = rect.height > 0 ? Math.min(rect.top + rect.height - 12, Math.max(rect.top + 12, inputPoint.y)) : fallbackY;
+
+  await session.send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y, button: "none" });
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x,
+    y,
+    button: "left",
+    buttons: 1,
+    clickCount: 1,
+  });
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    x,
+    y,
+    button: "left",
+    buttons: 0,
+    clickCount: 1,
+  });
+  await sleep(250);
+  await session.send("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    key: "a",
+    code: "KeyA",
+    text: "a",
+    unmodifiedText: "a",
+    windowsVirtualKeyCode: 65,
+    nativeVirtualKeyCode: 65,
+  });
+  await session.send("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: "a",
+    code: "KeyA",
+    windowsVirtualKeyCode: 65,
+    nativeVirtualKeyCode: 65,
+  });
+  await session.send("Input.insertText", { text: "moui" });
+  await sleep(550);
+};
+
 const runtimeSignalsFromLog = logText => ({
   adapterRequested: logText.includes("Requesting WebGPU adapter"),
   deviceRequested: logText.includes("Requesting WebGPU device"),
   wasmStarted: logText.includes("MoonBit app started") || logText.includes("MoonBit wasm-gc started"),
   running: logText.includes("MoonBit wasm-gc started") || logText.includes("Running"),
 });
+
+const hasEvent = (events, names) => events.some(event => names.includes(event?.name));
+
+const deriveTargetStatus = (target, observations) => {
+  const required = [
+    "pageLoaded",
+    "webGpuAvailable",
+    "adapterRequested",
+    "deviceRequested",
+    "wasmStarted",
+    "statusRunning",
+    "canvasCreated",
+    "canvasSized",
+    "nonblankScreenshot",
+    "cleanConsole",
+    "resizeEvent",
+    "resizedCanvas",
+    "pointerInput",
+    "keyboardInput",
+    "targetClosed",
+  ];
+  if (target.name === "markdown-editor-web-wasm") {
+    required.push("textInput");
+  }
+  return required.every(key => observations[key] === "yes") ? "passed" : "failed";
+};
 
 const consoleErrorsFor = events => {
   const messages = [];
@@ -380,6 +498,12 @@ const probeTarget = async target => {
     await session.send("Network.setCacheDisabled", { cacheDisabled: true });
     await session.send("Runtime.enable");
     await session.send("Log.enable");
+    await session.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `globalThis.__mouiWebRuntimeEvidence = {
+        events: [],
+        recordEvent(event) { this.events.push(event); }
+      };`,
+    });
     await session.send("Emulation.setDeviceMetricsOverride", {
       width: 1280,
       height: 800,
@@ -396,6 +520,7 @@ const probeTarget = async target => {
       await sleep(250);
     }
     await sleep(500);
+    await performInteractionProbe(session, target);
     state = await collectPageState(session);
 
     let screenshotError = "";
@@ -422,6 +547,7 @@ const probeTarget = async target => {
       screenshotError = `Screenshot capture failed: ${error.message}`;
     }
     const runtimeSignals = runtimeSignalsFromLog(state.logText);
+    const evidenceEvents = await collectEvidenceEvents(session);
     const errors = consoleErrorsFor(session.events);
     if (screenshotError) {
       errors.push(screenshotError);
@@ -445,6 +571,7 @@ const probeTarget = async target => {
       notes.push("screenshot did not meet nonblank content threshold");
     }
 
+    const targetClosed = await closePageTarget(pageTarget.id);
     const observations = {
       pageLoaded: "yes",
       webGpuAvailable: state.navigatorGpu ? "yes" : "no",
@@ -456,10 +583,26 @@ const probeTarget = async target => {
       canvasSized: state.canvas.canvasWidth > 0 && state.canvas.canvasHeight > 0 ? "yes" : "no",
       nonblankScreenshot: screenshot.contentPixels >= 500 && screenshot.distinctColorBuckets >= 6 ? "yes" : "no",
       cleanConsole: errors.length === 0 ? "yes" : "no",
+      resizeEvent: hasEvent(evidenceEvents, ["resize"]) ? "yes" : "no",
+      resizedCanvas: state.canvas.clientWidth === 1120 && state.canvas.clientHeight === 720 ? "yes" : "no",
+      pointerInput: hasEvent(evidenceEvents, ["pointer_down", "pointer_up", "pointer_move"]) ? "yes" : "no",
+      keyboardInput: hasEvent(evidenceEvents, ["key_down", "key_up"]) ? "yes" : "no",
+      textInput: hasEvent(evidenceEvents, ["ime_commit"]) ? "yes" : "no",
+      targetClosed: targetClosed ? "yes" : "no",
     };
-    const status = Object.values(observations).every(value => value === "yes")
-      ? "passed"
-      : "failed";
+    if (observations.resizeEvent !== "yes" || observations.resizedCanvas !== "yes") {
+      notes.push("resize evidence did not reach the wasm event bridge and resized canvas state");
+    }
+    if (observations.pointerInput !== "yes" || observations.keyboardInput !== "yes") {
+      notes.push("representative input evidence did not reach the wasm event bridge");
+    }
+    if (observations.textInput !== "yes") {
+      notes.push("text input commit was not observed for this target");
+    }
+    if (observations.targetClosed !== "yes") {
+      notes.push("CDP target did not close cleanly after evidence collection");
+    }
+    const status = deriveTargetStatus(target, observations);
 
     return {
       name: target.name,
@@ -473,6 +616,7 @@ const probeTarget = async target => {
       navigatorGpu: state.navigatorGpu,
       canvas: state.canvas,
       runtimeSignals,
+      evidenceEvents,
       screenshot,
       observations,
       consoleErrors: errors,
@@ -534,6 +678,62 @@ const probeTarget = async target => {
   }
 };
 
+const allTargetsObserved = (targets, key) =>
+  targets.length > 0 && targets.every(target => target?.observations?.[key] === "yes");
+
+const markdownTextInputObserved = targets =>
+  targets.some(target =>
+    target?.name === "markdown-editor-web-wasm" &&
+    target?.observations?.textInput === "yes"
+  );
+
+const derivePlatformObservations = targetResults => ({
+  windowOpened: allTargetsObserved(targetResults, "pageLoaded") ? "yes" : "no",
+  resizeRedraw:
+    allTargetsObserved(targetResults, "resizeEvent") &&
+    allTargetsObserved(targetResults, "resizedCanvas") &&
+    allTargetsObserved(targetResults, "nonblankScreenshot")
+      ? "yes"
+      : "no",
+  representativeInput:
+    allTargetsObserved(targetResults, "pointerInput") &&
+    allTargetsObserved(targetResults, "keyboardInput")
+      ? "yes"
+      : "no",
+  cleanExit: allTargetsObserved(targetResults, "targetClosed") ? "yes" : "no",
+  surface:
+    allTargetsObserved(targetResults, "webGpuAvailable") &&
+    allTargetsObserved(targetResults, "deviceRequested") &&
+    allTargetsObserved(targetResults, "canvasCreated") &&
+    allTargetsObserved(targetResults, "canvasSized")
+      ? "yes"
+      : "no",
+  redraw:
+    allTargetsObserved(targetResults, "statusRunning") &&
+    allTargetsObserved(targetResults, "nonblankScreenshot") &&
+    allTargetsObserved(targetResults, "cleanConsole")
+      ? "yes"
+      : "no",
+  resizeScale:
+    allTargetsObserved(targetResults, "resizeEvent") &&
+    allTargetsObserved(targetResults, "resizedCanvas")
+      ? "yes"
+      : "no",
+  consumerInput:
+    allTargetsObserved(targetResults, "pointerInput") &&
+    allTargetsObserved(targetResults, "keyboardInput")
+      ? "yes"
+      : "no",
+  textInput: markdownTextInputObserved(targetResults) ? "yes" : "no",
+  rendererHandle:
+    allTargetsObserved(targetResults, "deviceRequested") &&
+    allTargetsObserved(targetResults, "wasmStarted") &&
+    allTargetsObserved(targetResults, "cleanConsole")
+      ? "yes"
+      : "no",
+  cleanShutdown: allTargetsObserved(targetResults, "targetClosed") ? "yes" : "no",
+});
+
 const browserVersion = await fetchJson(`${normalizeBaseUrl(cdpUrl)}/json/version`);
 const targetResults = [];
 
@@ -541,9 +741,12 @@ for (const target of targets) {
   targetResults.push(await probeTarget(target));
 }
 
-const overallStatus = targetResults.every(target => target.status === "passed")
-  ? "passed"
-  : "failed";
+const platformObservations = derivePlatformObservations(targetResults);
+const overallStatus =
+  targetResults.every(target => target.status === "passed") &&
+  Object.values(platformObservations).every(value => value === "yes")
+    ? "passed"
+    : "failed";
 
 const manifest = {
   schemaVersion: 1,
@@ -553,12 +756,13 @@ const manifest = {
   cdpUrl: normalizeBaseUrl(cdpUrl),
   overallStatus,
   evidenceBoundary:
-    "Browser-local WebGPU, wasm app startup, canvas sizing, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+    "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
   browser: {
     product: browserVersion.Browser ?? "unknown",
     userAgent: browserVersion["User-Agent"] ?? "unknown",
     protocolVersion: browserVersion["Protocol-Version"] ?? "unknown",
   },
+  platformObservations,
   targets: targetResults,
 };
 

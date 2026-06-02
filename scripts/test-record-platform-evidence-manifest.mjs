@@ -33,10 +33,19 @@ const webPresentationObservationKeys = [
   "canvasSized",
   "nonblankScreenshot",
   "cleanConsole",
+  "resizeEvent",
+  "resizedCanvas",
+  "pointerInput",
+  "keyboardInput",
+  "textInput",
+  "targetClosed",
 ];
 
 const webPresentationObservations = value =>
   Object.fromEntries(webPresentationObservationKeys.map(key => [key, value]));
+
+const webPlatformObservations = value =>
+  Object.fromEntries(Object.keys(pendingObservations).map(key => [key, value]));
 
 const baseEntry = ({
   name,
@@ -185,7 +194,18 @@ const webPresentationTarget = ({
     contentPixels: status === "passed" ? 50000 : 0,
     distinctColorBuckets: status === "passed" ? 18 : 0,
   },
-  observations: webPresentationObservations(status === "passed" ? "yes" : "no"),
+  evidenceEvents: status === "passed"
+    ? [
+        { kind: 10, name: "resize" },
+        { kind: 23, name: "pointer_down" },
+        { kind: 40, name: "key_down" },
+        { kind: 42, name: "ime_commit" },
+      ]
+    : [],
+  observations: {
+    ...webPresentationObservations(status === "passed" ? "yes" : "no"),
+    textInput: name === "markdown-editor-web-wasm" && status === "passed" ? "yes" : "no",
+  },
   consoleErrors: status === "passed" ? [] : ["No WebGPU adapter is available"],
   notes: status === "passed" ? ["browser evidence captured"] : ["adapter unavailable"],
 });
@@ -201,12 +221,15 @@ const writeWebPresentationManifest = (name, overallStatus) => {
     cdpUrl: "http://127.0.0.1:9223",
     overallStatus,
     evidenceBoundary:
-      "Browser-local WebGPU, wasm app startup, canvas sizing, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+      "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
     browser: {
       product: "Chrome/148.0.7778.216",
       userAgent: "Mozilla/5.0 HeadlessChrome/148.0.0.0",
       protocolVersion: "1.3",
     },
+    platformObservations: webPlatformObservations(
+      overallStatus === "passed" ? "yes" : "no",
+    ),
     targets: [
       webPresentationTarget({
         name: "showcase-web-wasm",
@@ -348,7 +371,7 @@ if (
 
 const webPassedPath = writeManifest("web-presentation-passed.json");
 expectPass(
-  "record passed web presentation evidence as partial platform evidence",
+  "record passed web presentation evidence as passed platform evidence",
   runRecorder(webPassedPath, "web", [
     "--web-presentation-manifest",
     writeWebPresentationManifest("passed-web-runtime-presentation.json", "passed"),
@@ -357,13 +380,14 @@ expectPass(
 const webPassedManifest = JSON.parse(readFileSync(webPassedPath, "utf8"));
 const webPassedEntry = webPassedManifest.platforms.find(entry => entry.name === "web");
 if (
-  webPassedEntry.status !== "pending" ||
+  webPassedEntry.status !== "passed" ||
   webPassedEntry.observations.windowOpened !== "yes" ||
   webPassedEntry.observations.surface !== "yes" ||
-  webPassedEntry.observations.cleanShutdown !== "pending" ||
+  webPassedEntry.observations.cleanShutdown !== "yes" ||
+  webPassedEntry.observations.representativeInput !== "yes" ||
   !webPassedEntry.consumerCommand.includes("--require-passed")
 ) {
-  console.error("record passed web presentation evidence: manifest should stay partial");
+  console.error("record passed web presentation evidence: manifest should be passed");
   process.exit(1);
 }
 

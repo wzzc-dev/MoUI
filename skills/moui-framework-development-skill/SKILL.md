@@ -164,8 +164,10 @@ For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
 the browser-session artifact, then fold it into
 `platform-runtime-evidence.json` with
 `record-platform-evidence-manifest.mjs ... web --web-presentation-manifest ...`.
-A passed presentation manifest is still partial Web platform evidence until
-resize/input/shutdown observations are recorded.
+A passed presentation manifest must include WebGPU startup, wasm startup,
+canvas sizing, resize/input event-bridge delivery, Markdown Editor text input,
+clean target close, clean console, and nonblank screenshots for the named
+browser session before the Web platform entry can be marked passed.
 
 Focused checks:
 

@@ -450,21 +450,26 @@ node scripts/validate-platform-evidence-manifest.mjs \
 ```
 
 The presentation recorder opens Showcase and Markdown Editor through the named
-browser session, waits for the page status, records WebGPU/wasm/canvas signals,
-writes screenshots under `artifacts/conformance/web-runtime-presentation/`, and
-validates `artifacts/conformance/web-runtime-presentation.json`. A passed
-manifest is stronger than the handoff artifact because it proves browser-local
-WebGPU startup, wasm app startup, canvas sizing, clean console, and nonblank
-screenshot thresholds for that Chrome session. It is still not cross-browser
-coverage, deterministic pixel-golden proof, or native platform runtime evidence.
-If the local browser cannot create a WebGPU adapter or device, keep the manifest
-failed or omit it from release claims; do not use the static handoff artifact as
-a substitute for passed browser presentation evidence. The platform recorder can
-also consume a failed presentation manifest; it then marks the Web platform
-entry failed and records the negative observations so release notes can cite a
-structured reason. When the presentation manifest passes, the Web platform entry
-still remains pending until resize, representative input, text input, and clean
-shutdown evidence are recorded through a matching browser/runtime session.
+browser session, injects a read-only browser-runtime event observer, waits for
+the page status, records WebGPU/wasm/canvas signals, performs a viewport resize,
+representative pointer and keyboard input, Markdown Editor text input, closes
+the CDP targets, writes screenshots under
+`artifacts/conformance/web-runtime-presentation/`, and validates
+`artifacts/conformance/web-runtime-presentation.json`. A passed manifest is
+stronger than the handoff artifact because it proves browser-local WebGPU
+startup, wasm app startup, canvas sizing, resize/input event-bridge delivery,
+clean target close, clean console, and nonblank screenshot thresholds for that
+Chrome session. It is still not cross-browser coverage, deterministic
+pixel-golden proof, or native platform runtime evidence. If the local browser
+cannot create a WebGPU adapter or device, keep the manifest failed or omit it
+from release claims; do not use the static handoff artifact as a substitute for
+passed browser presentation evidence. The platform recorder can also consume a
+failed presentation manifest; it then marks the Web platform entry failed and
+records the negative observations so release notes can cite a structured reason.
+When the presentation manifest passes with all platform observations set to
+`yes`, `record-platform-evidence-manifest.mjs ... web
+--web-presentation-manifest ...` records the Web platform entry as passed for
+that browser session.
 
 ## Release-Oriented Checklist
 

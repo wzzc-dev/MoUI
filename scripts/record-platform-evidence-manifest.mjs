@@ -173,6 +173,42 @@ const allTargetsObserved = (webManifest, key) =>
   webManifest.targets.length > 0 &&
   webManifest.targets.every(target => target?.observations?.[key] === "yes");
 
+const webPlatformObservations = webManifest => {
+  const observations = webManifest.platformObservations;
+  if (observations && typeof observations === "object" && !Array.isArray(observations)) {
+    return observations;
+  }
+  return {
+    windowOpened: allTargetsObserved(webManifest, "pageLoaded") ? "yes" : "no",
+    resizeRedraw: "pending",
+    representativeInput: "pending",
+    cleanExit: "pending",
+    surface:
+      allTargetsObserved(webManifest, "webGpuAvailable") &&
+      allTargetsObserved(webManifest, "deviceRequested") &&
+      allTargetsObserved(webManifest, "canvasCreated") &&
+      allTargetsObserved(webManifest, "canvasSized")
+        ? "yes"
+        : "no",
+    redraw:
+      allTargetsObserved(webManifest, "statusRunning") &&
+      allTargetsObserved(webManifest, "nonblankScreenshot") &&
+      allTargetsObserved(webManifest, "cleanConsole")
+        ? "yes"
+        : "no",
+    resizeScale: "pending",
+    consumerInput: "pending",
+    textInput: "pending",
+    rendererHandle:
+      allTargetsObserved(webManifest, "deviceRequested") &&
+      allTargetsObserved(webManifest, "wasmStarted") &&
+      allTargetsObserved(webManifest, "cleanConsole")
+        ? "yes"
+        : "no",
+    cleanShutdown: "pending",
+  };
+};
+
 const copyWebPresentationArtifacts = (webManifest, sourcePath) => {
   const targetDir = "artifacts/platform-evidence/web";
   mkdirSync(targetDir, { recursive: true });
@@ -199,36 +235,24 @@ const applyWebPresentationEvidence = (entry, path) => {
   validateWebPresentationManifest(path);
   const webManifest = JSON.parse(readFileSync(path, "utf8"));
   const allPassed = webManifest.overallStatus === "passed";
-  const surfaceReady =
-    allTargetsObserved(webManifest, "webGpuAvailable") &&
-    allTargetsObserved(webManifest, "deviceRequested") &&
-    allTargetsObserved(webManifest, "canvasCreated") &&
-    allTargetsObserved(webManifest, "canvasSized");
-  const redrawReady =
-    allTargetsObserved(webManifest, "statusRunning") &&
-    allTargetsObserved(webManifest, "nonblankScreenshot") &&
-    allTargetsObserved(webManifest, "cleanConsole");
-  const rendererHandleReady =
-    allTargetsObserved(webManifest, "deviceRequested") &&
-    allTargetsObserved(webManifest, "wasmStarted") &&
-    allTargetsObserved(webManifest, "cleanConsole");
+  const platformObservations = webPlatformObservations(webManifest);
+  const allPlatformObservationsPassed = Object.values(platformObservations).every(
+    value => value === "yes",
+  );
 
-  entry.status = allPassed ? "pending" : "failed";
+  entry.status = allPassed && allPlatformObservationsPassed ? "passed" : "failed";
   entry.host = `Web wasm-gc browser host (${webManifest.browser?.product ?? "unknown browser"})`;
   entry.consumerCommand =
     `node scripts/record-web-runtime-presentation.mjs --base-url ${webManifest.baseUrl} ` +
     `--cdp-url ${webManifest.cdpUrl} --manifest ${path}${allPassed ? " --require-passed" : ""}`;
   entry.observations = {
     ...entry.observations,
-    windowOpened: allTargetsObserved(webManifest, "pageLoaded") ? "yes" : "no",
-    surface: surfaceReady ? "yes" : "no",
-    redraw: redrawReady ? "yes" : "no",
-    rendererHandle: rendererHandleReady ? "yes" : "no",
+    ...platformObservations,
   };
   entry.artifacts = copyWebPresentationArtifacts(webManifest, path);
   entry.notes = [
-    allPassed
-      ? "Web browser presentation manifest passed; platform entry remains pending until resize/input/shutdown evidence is recorded."
+    allPassed && allPlatformObservationsPassed
+      ? "Web browser presentation manifest passed with resize, input, text-input, and clean-shutdown observations."
       : "Web browser presentation manifest failed; do not claim passed Web runtime evidence from this browser session.",
     `Web presentation manifest: ${path}`,
     `Browser evidence boundary: ${webManifest.evidenceBoundary}`,

@@ -123,6 +123,26 @@ const observationKeys = [
   "canvasSized",
   "nonblankScreenshot",
   "cleanConsole",
+  "resizeEvent",
+  "resizedCanvas",
+  "pointerInput",
+  "keyboardInput",
+  "textInput",
+  "targetClosed",
+];
+
+const platformObservationKeys = [
+  "windowOpened",
+  "resizeRedraw",
+  "representativeInput",
+  "cleanExit",
+  "surface",
+  "redraw",
+  "resizeScale",
+  "consumerInput",
+  "textInput",
+  "rendererHandle",
+  "cleanShutdown",
 ];
 
 const localUrlPattern = /^http:\/\/(127\.0\.0\.1|localhost):\d+\//;
@@ -160,7 +180,7 @@ if (!localUrlPattern.test(`${cdpUrl.replace(/\/+$/, "")}/`)) {
 }
 
 const evidenceBoundary = requireString(manifest, "evidenceBoundary");
-for (const token of ["WebGPU", "wasm app startup", "screenshot", "not prove cross-browser"]) {
+for (const token of ["WebGPU", "wasm app startup", "resize/input", "target close", "screenshot", "not prove cross-browser"]) {
   if (!evidenceBoundary.includes(token)) {
     fail(`evidenceBoundary must include '${token}'`);
   }
@@ -235,6 +255,20 @@ targets.forEach((target, index) => {
     requireBoolean(runtimeSignals, key, `${label}.runtimeSignals.${key}`);
   }
 
+  const evidenceEvents = requireArray(
+    target,
+    "evidenceEvents",
+    `${label}.evidenceEvents`,
+  );
+  evidenceEvents.forEach((event, eventIndex) => {
+    if (!event || typeof event !== "object" || Array.isArray(event)) {
+      fail(`${label}.evidenceEvents[${eventIndex}] must be an object`);
+      return;
+    }
+    requireNumber(event, "kind", `${label}.evidenceEvents[${eventIndex}].kind`);
+    requireString(event, "name", `${label}.evidenceEvents[${eventIndex}].name`);
+  });
+
   const screenshot = requireObject(target, "screenshot", `${label}.screenshot`);
   const artifact = requireString(screenshot, "artifact", `${label}.screenshot.artifact`);
   if (!artifact.endsWith(".png")) {
@@ -287,6 +321,9 @@ targets.forEach((target, index) => {
       fail(`${label} passed evidence must not contain console errors`);
     }
     for (const key of observationKeys) {
+      if (key === "textInput" && name !== "markdown-editor-web-wasm") {
+        continue;
+      }
       if (observations[key] !== "yes") {
         fail(`${label}.observations.${key} must be yes for passed evidence`);
       }
@@ -308,11 +345,40 @@ if (targets.length !== expectedTargets.size) {
   fail(`targets must contain exactly ${expectedTargets.size} entries`);
 }
 
-if (overallStatus === "passed" && passedCount !== expectedTargets.size) {
-  fail("overallStatus passed requires all target entries to pass");
+const platformObservations = requireObject(
+  manifest,
+  "platformObservations",
+  "platformObservations",
+);
+for (const key of platformObservationKeys) {
+  const value = platformObservations[key];
+  if (!["yes", "no"].includes(value)) {
+    fail(`platformObservations.${key} must be yes or no`);
+  }
+}
+for (const key of Object.keys(platformObservations)) {
+  if (!platformObservationKeys.includes(key)) {
+    fail(`platformObservations contains unknown key '${key}'`);
+  }
+}
+
+if (overallStatus === "passed") {
+  if (passedCount !== expectedTargets.size) {
+    fail("overallStatus passed requires all target entries to pass");
+  }
+  for (const key of platformObservationKeys) {
+    if (platformObservations[key] !== "yes") {
+      fail(`platformObservations.${key} must be yes when overallStatus is passed`);
+    }
+  }
 }
 if (overallStatus === "failed" && passedCount === expectedTargets.size) {
-  fail("overallStatus failed requires at least one failed target entry");
+  const hasPlatformFailure = platformObservationKeys.some(
+    key => platformObservations[key] === "no",
+  );
+  if (!hasPlatformFailure) {
+    fail("overallStatus failed requires at least one failed target entry or platform observation");
+  }
 }
 
 if (failed) {

@@ -99,8 +99,9 @@ presentation evidence is collected separately with
 `node scripts/record-web-runtime-presentation.mjs` and validated with
 `node scripts/validate-web-runtime-presentation-manifest.mjs`. A passed
 `artifacts/conformance/web-runtime-presentation.json` proves the named browser
-session reached WebGPU startup, wasm app startup, sized canvas, clean console,
-and nonblank screenshot thresholds. Fold the browser artifact into
+session reached WebGPU startup, wasm app startup, sized canvas, resize/input
+event-bridge delivery, Markdown Editor text input, clean target close, clean
+console, and nonblank screenshot thresholds. Fold the browser artifact into
 `artifacts/conformance/platform-runtime-evidence.json` with
 `node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json web --web-presentation-manifest artifacts/conformance/web-runtime-presentation.json`
 so Web platform claims cite one validated evidence manifest. A failed browser
