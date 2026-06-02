@@ -59,6 +59,12 @@ default_stage_markers=(
   "native smoke canvas replay status contract" \
   "native smoke canvas replay transforms" \
   "native smoke canvas replay state stats" \
+  "native smoke canvas replay resource declarations" \
+  "native smoke canvas replay image resources" \
+  "native smoke canvas replay shader resources" \
+  "native smoke canvas replay filter resources" \
+  "native smoke canvas replay path resources" \
+  "native smoke canvas replay text resources" \
   "native smoke render frame replay rejected skipped" \
   "native smoke surface render frame commands" \
   "native smoke surface render frame finalized" \
@@ -228,6 +234,12 @@ default_expected_stage_values=(
   $'native smoke canvas replay status contract\t3'
   $'native smoke canvas replay transforms\t6'
   $'native smoke canvas replay state stats\t4'
+  $'native smoke canvas replay resource declarations\t4'
+  $'native smoke canvas replay image resources\t0'
+  $'native smoke canvas replay shader resources\t4'
+  $'native smoke canvas replay filter resources\t6'
+  $'native smoke canvas replay path resources\t2'
+  $'native smoke canvas replay text resources\t9'
   $'native smoke render frame replay rejected skipped\t26'
   $'native smoke surface render frame commands\t29'
   $'native smoke surface render frame finalized\t1'

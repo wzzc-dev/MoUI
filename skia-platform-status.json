@@ -158,6 +158,36 @@
       "marker": "native smoke canvas replay state stats"
     },
     {
+      "id": "canvas.replay-resource-declarations",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay resource declarations"
+    },
+    {
+      "id": "canvas.replay-image-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay image resources"
+    },
+    {
+      "id": "canvas.replay-shader-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay shader resources"
+    },
+    {
+      "id": "canvas.replay-filter-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay filter resources"
+    },
+    {
+      "id": "canvas.replay-path-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay path resources"
+    },
+    {
+      "id": "canvas.replay-text-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay text resources"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "area": "Canvas",
       "marker": "native smoke render frame replay rejected skipped"
@@ -1025,6 +1055,36 @@
       "id": "canvas.replay-state-stats",
       "marker": "native smoke canvas replay state stats",
       "value": "4"
+    },
+    {
+      "id": "canvas.replay-resource-declarations",
+      "marker": "native smoke canvas replay resource declarations",
+      "value": "4"
+    },
+    {
+      "id": "canvas.replay-image-resources",
+      "marker": "native smoke canvas replay image resources",
+      "value": "0"
+    },
+    {
+      "id": "canvas.replay-shader-resources",
+      "marker": "native smoke canvas replay shader resources",
+      "value": "4"
+    },
+    {
+      "id": "canvas.replay-filter-resources",
+      "marker": "native smoke canvas replay filter resources",
+      "value": "6"
+    },
+    {
+      "id": "canvas.replay-path-resources",
+      "marker": "native smoke canvas replay path resources",
+      "value": "2"
+    },
+    {
+      "id": "canvas.replay-text-resources",
+      "marker": "native smoke canvas replay text resources",
+      "value": "9"
     },
     {
       "id": "canvas.frame-replay-rejected-skipped",

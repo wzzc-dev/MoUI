@@ -92,6 +92,12 @@ pub(all) struct CanvasReplayStats {
   clear_count : Int
   text_count : Int
   present_count : Int
+  resource_declaration_count : Int
+  image_resource_count : Int
+  shader_resource_count : Int
+  filter_resource_count : Int
+  path_resource_count : Int
+  text_resource_count : Int
 } derive(Eq, @debug.Debug)
 pub fn CanvasReplayStats::empty() -> Self
 pub fn CanvasReplayStats::is_complete(Self) -> Bool
