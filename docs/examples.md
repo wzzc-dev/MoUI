@@ -197,8 +197,9 @@ the visible chrome. The transcript uses compact multi-line message rows for
 long Pi replies and draws an explicit scrollbar when the main workflow
 overflows. New prompts, local fixture replies, Pi response events, and queued
 command evidence pin that scroll area to the latest content. The sidebar also
-has a default-visible `新对话` action for backends that support fresh sessions,
-while the Pi-specific `新会话` RPC control remains in expanded composer options.
+has a default-visible `新对话` action that immediately creates and selects a new
+Workbench session in task history, while the Pi-specific `新会话` RPC control
+remains in expanded composer options for replacing the provider session binding.
 Message rows no longer expose a message-level `跟进` action.
 Matching Pi fork candidates render as a small Codex-style `分叉` affordance
 directly under the corresponding assistant reply, including candidates whose

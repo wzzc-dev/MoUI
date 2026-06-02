@@ -417,6 +417,7 @@ pub(all) enum WorkbenchMsg {
   SelectSession(String)
   SelectPanel(String)
   SwitchAgentBackend(String)
+  CreateConversation
   SelectAgent(String)
   PromptChanged(String)
   ToggleComposerControls

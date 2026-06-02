@@ -321,6 +321,7 @@ pub(all) enum WorkbenchMsg {
   SelectSession(String)
   SelectPanel(String)
   SwitchAgentBackend(String)
+  CreateConversation
   SelectAgent(String)
   PromptChanged(String)
   ToggleComposerControls
@@ -1138,6 +1139,7 @@ pub fn WorkbenchModel::update(
     SelectSession(id) => self.select_session(id)
     SelectPanel(panel) => { ..self, selected_panel: panel }
     SwitchAgentBackend(id) => self.switch_backend(id)
+    CreateConversation => self.create_conversation()
     SelectAgent(id) => self.select_agent(id)
     PromptChanged(value) => { ..self, prompt: value }
     ToggleComposerControls =>
@@ -1627,6 +1629,43 @@ fn WorkbenchModel::switch_backend(
       }
     }
   }
+}
+
+///|
+fn WorkbenchModel::create_conversation(self : WorkbenchModel) -> WorkbenchModel {
+  let current = self.active_session()
+  let index = self.next_conversation_index()
+  let session = WorkbenchSession::new(
+    id="conversation-" + index.to_string(),
+    title="新对话 " + index.to_string(),
+    project_path=current.project_path,
+    backend_id=current.backend_id,
+    branch=current.branch,
+    status="idle",
+    summary="等待任务",
+    active_task="",
+    unread_events=0,
+  )
+  let sessions : Array[WorkbenchSession] = [session]
+  sessions.append(self.sessions)
+  {
+    ..self,
+    selected_session_id: session.id,
+    sessions,
+    main_scroll_offset_y: 0.0,
+    last_status: "Workbench conversation created",
+  }.reset_active_session_surface()
+}
+
+///|
+fn WorkbenchModel::next_conversation_index(self : WorkbenchModel) -> Int {
+  let mut index = 1
+  while self.sessions.any(session => {
+          session.id == "conversation-" + index.to_string()
+        }) {
+    index = index + 1
+  }
+  index
 }
 
 ///|
