@@ -331,8 +331,11 @@ pub(all) struct SurfaceFrameReplayStats {
   replay : CanvasReplayStats
   validation_status : @skia_mbt.RenderFrameValidationStatus
   surface_matches : Bool
+  finalization : @skia_mbt.RenderFrameFinalizationDescriptor
   finalized : Bool
 } derive(Eq, @debug.Debug)
+pub fn SurfaceFrameReplayStats::finalization_is_ready(Self) -> Bool
+pub fn SurfaceFrameReplayStats::finalization_resource_plan(Self) -> @skia_mbt.RendererResourcePlan
 pub fn SurfaceFrameReplayStats::is_complete(Self) -> Bool
 pub fn SurfaceFrameReplayStats::status(Self) -> SurfaceFrameReplayStatus
 

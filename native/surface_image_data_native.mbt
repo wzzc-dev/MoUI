@@ -494,7 +494,7 @@ fn Surface::render_frame_internal(
     replay.is_complete() &&
     finalization.is_ready() &&
     self.flush_and_submit()
-  { replay, validation_status, surface_matches, finalized }
+  { replay, validation_status, surface_matches, finalization, finalized }
 }
 
 ///|

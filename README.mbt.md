@@ -104,6 +104,8 @@ The `native` subpackage contains the first opt-in native boundary:
 - `@native.Surface::render_frame(frame)` and `render_frame_with_resources(...)`
   return `SurfaceFrameReplayStats`, whose `status()` classifies validation,
   surface mismatch, replay skip, finalization failure, and complete outcomes;
+  the stats also expose the value-layer frame finalization descriptor and
+  resource plan used for the native flush/submit boundary;
 - `@native.NativeReplayResources::stats()` reports aggregate cache slots,
   resident resources, byte budgets, hits, misses, and evictions across the
   native replay caches used by Canvas and Surface frame replay;

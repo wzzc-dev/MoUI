@@ -268,11 +268,11 @@ pub fn Surface::render_frame(
 ) -> SurfaceFrameReplayStats {
   ignore(self)
   ignore(font)
-  ignore(frame_index)
   {
     replay: canvas_replay_skipped_stats(frame.command_list),
     validation_status: frame.validation_status(),
     surface_matches: false,
+    finalization: frame.finalization_descriptor(frame_index~),
     finalized: false,
   }
 }
