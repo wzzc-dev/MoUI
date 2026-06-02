@@ -453,6 +453,56 @@ pub fn Surface::flush_and_submit(self : Surface) -> Bool {
 }
 
 ///|
+fn Surface::render_frame_internal(
+  self : Surface,
+  frame : @skia.RenderFrameDescriptor,
+  font : Font?,
+  resources : NativeReplayResources?,
+  frame_index : Int,
+) -> SurfaceFrameReplayStats {
+  let validation_status = frame.validation_status()
+  let surface_matches = self.descriptor() == frame.target.surface
+  let replay = if validation_status.is_ready() && surface_matches {
+    match self.canvas() {
+      None => canvas_replay_skipped_stats(frame.command_list)
+      Some(canvas) => canvas.replay_frame_internal(frame, font, resources)
+    }
+  } else {
+    canvas_replay_skipped_stats(frame.command_list)
+  }
+  let finalization = frame.finalization_descriptor(frame_index~)
+  let finalized = validation_status.is_ready() &&
+    surface_matches &&
+    replay.is_complete() &&
+    finalization.is_ready() &&
+    self.flush_and_submit()
+  { replay, validation_status, surface_matches, finalized }
+}
+
+///|
+/// Replay a ready frame into this surface and flush/submit its finalization boundary.
+pub fn Surface::render_frame(
+  self : Surface,
+  frame : @skia.RenderFrameDescriptor,
+  font? : Font? = None,
+  frame_index? : Int = 0,
+) -> SurfaceFrameReplayStats {
+  self.render_frame_internal(frame, font, None, frame_index)
+}
+
+///|
+/// Replay a ready frame into this surface with native resource caches, then flush/submit.
+pub fn Surface::render_frame_with_resources(
+  self : Surface,
+  frame : @skia.RenderFrameDescriptor,
+  resources : NativeReplayResources,
+  font? : Font? = None,
+  frame_index? : Int = 0,
+) -> SurfaceFrameReplayStats {
+  self.render_frame_internal(frame, font, Some(resources), frame_index)
+}
+
+///|
 /// Snapshot current surface contents into an immutable image.
 pub fn Surface::image_snapshot(self : Surface) -> Image? {
   Image::from_handle(native_surface_image_snapshot(self.handle))

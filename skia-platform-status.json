@@ -138,6 +138,26 @@
       "marker": "native smoke render frame replay rejected skipped"
     },
     {
+      "id": "surface.frame-render-commands",
+      "area": "Surface",
+      "marker": "native smoke surface render frame commands"
+    },
+    {
+      "id": "surface.frame-render-finalized",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalized"
+    },
+    {
+      "id": "surface.frame-render-cache-resources",
+      "area": "Surface",
+      "marker": "native smoke surface render frame cache resources"
+    },
+    {
+      "id": "surface.frame-render-mismatch-rejected",
+      "area": "Surface",
+      "marker": "native smoke surface render frame mismatch rejected"
+    },
+    {
       "id": "pipeline.shaped-glyph-run-command",
       "area": "Pipeline",
       "marker": "native smoke render shaped glyph run command replay"
@@ -915,6 +935,26 @@
       "id": "canvas.frame-replay-rejected-skipped",
       "marker": "native smoke render frame replay rejected skipped",
       "value": "20"
+    },
+    {
+      "id": "surface.frame-render-commands",
+      "marker": "native smoke surface render frame commands",
+      "value": "23"
+    },
+    {
+      "id": "surface.frame-render-finalized",
+      "marker": "native smoke surface render frame finalized",
+      "value": "1"
+    },
+    {
+      "id": "surface.frame-render-cache-resources",
+      "marker": "native smoke surface render frame cache resources",
+      "value": "9"
+    },
+    {
+      "id": "surface.frame-render-mismatch-rejected",
+      "marker": "native smoke surface render frame mismatch rejected",
+      "value": "1"
     },
     {
       "id": "pipeline.shaped-glyph-run-command",

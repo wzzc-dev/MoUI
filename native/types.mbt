@@ -218,6 +218,58 @@ pub fn CanvasReplayStats::is_complete(self : CanvasReplayStats) -> Bool {
 }
 
 ///|
+fn canvas_replay_skipped_stats(
+  commands : @skia.RenderCommandList,
+) -> CanvasReplayStats {
+  let mut command_count = 0
+  let mut skipped_count = 0
+  let mut draw_count = 0
+  let mut text_count = 0
+  let mut present_count = 0
+  for command in commands.commands {
+    command_count += 1
+    if command.is_draw() {
+      draw_count += 1
+    }
+    if command.is_text() {
+      text_count += 1
+    }
+    if command.is_present() {
+      present_count += 1
+    } else if !command.is_resource_declaration() {
+      skipped_count += 1
+    }
+  }
+  {
+    command_count,
+    replayed_count: 0,
+    skipped_count,
+    draw_count,
+    text_count,
+    present_count,
+  }
+}
+
+///|
+/// Summary of rendering a value-layer frame through a native surface boundary.
+pub(all) struct SurfaceFrameReplayStats {
+  replay : CanvasReplayStats
+  validation_status : @skia.RenderFrameValidationStatus
+  surface_matches : Bool
+  finalized : Bool
+} derive(Debug, Eq)
+
+///|
+pub fn SurfaceFrameReplayStats::is_complete(
+  self : SurfaceFrameReplayStats,
+) -> Bool {
+  self.validation_status.is_ready() &&
+  self.surface_matches &&
+  self.replay.is_complete() &&
+  self.finalized
+}
+
+///|
 /// Native resource caches shared across one or more Canvas replay calls.
 pub(all) struct NativeReplayResources {
   image_cache : @skia.ResourceCache[@skia.RendererResourceKey, Image]

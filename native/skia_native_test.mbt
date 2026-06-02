@@ -1322,6 +1322,64 @@ test "canvas replays render command lists" {
               assert_eq(frame_resources.typeface_cache.length(), 1)
             }
           }
+          match @native.Surface::raster_n32_premul(@skia.ISize::new(32, 32)) {
+            None => ()
+            Some(frame_surface) => {
+              let surface_resources = @native.NativeReplayResources::new(
+                image_max_bytes=1024L * 1024L,
+                shader_max_bytes=1024L,
+                path_max_bytes=1024L,
+                text_run_max_bytes=1024L,
+                font_max_bytes=1024L,
+                typeface_max_bytes=1024L,
+                color_filter_max_bytes=1024L,
+                image_filter_max_bytes=1024L,
+                mask_filter_max_bytes=1024L,
+              )
+              let surface_frame_stats = frame_surface.render_frame_with_resources(
+                replay_frame,
+                surface_resources,
+                font~,
+              )
+              assert_true(surface_frame_stats.is_complete())
+              assert_true(
+                surface_frame_stats.validation_status == @skia.FrameReady,
+              )
+              assert_true(surface_frame_stats.surface_matches)
+              assert_true(surface_frame_stats.finalized)
+              assert_eq(
+                surface_frame_stats.replay.command_count,
+                commands.length(),
+              )
+              assert_eq(surface_resources.image_cache.length(), 1)
+              match
+                frame_surface.read_pixels(
+                  bounds=@skia.IRect::from_xywh(2, 2, 1, 1),
+                ) {
+                None => ()
+                Some(pixmap) => {
+                  assert_eq(pixmap.pixels[0], 0xff)
+                  assert_eq(pixmap.pixels[1], 0x00)
+                  assert_eq(pixmap.pixels[2], 0x00)
+                  assert_eq(pixmap.pixels[3], 0xff)
+                }
+              }
+            }
+          }
+          match @native.Surface::raster_n32_premul(@skia.ISize::new(16, 16)) {
+            None => ()
+            Some(mismatch_surface) => {
+              let mismatch_stats = mismatch_surface.render_frame(
+                replay_frame,
+                font~,
+              )
+              assert_true(!mismatch_stats.is_complete())
+              assert_true(!mismatch_stats.surface_matches)
+              assert_true(!mismatch_stats.finalized)
+              assert_eq(mismatch_stats.replay.replayed_count, 0)
+              assert_true(mismatch_stats.replay.skipped_count > 0)
+            }
+          }
           assert_true(surface.flush_and_submit())
           match surface.read_pixels(bounds=@skia.IRect::from_xywh(2, 2, 1, 1)) {
             None => ()

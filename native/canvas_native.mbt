@@ -2160,39 +2160,6 @@ fn Canvas::replay_internal(
 }
 
 ///|
-fn canvas_replay_skipped_stats(
-  commands : @skia.RenderCommandList,
-) -> CanvasReplayStats {
-  let mut command_count = 0
-  let mut skipped_count = 0
-  let mut draw_count = 0
-  let mut text_count = 0
-  let mut present_count = 0
-  for command in commands.commands {
-    command_count += 1
-    if command.is_draw() {
-      draw_count += 1
-    }
-    if command.is_text() {
-      text_count += 1
-    }
-    if command.is_present() {
-      present_count += 1
-    } else if !command.is_resource_declaration() {
-      skipped_count += 1
-    }
-  }
-  {
-    command_count,
-    replayed_count: 0,
-    skipped_count,
-    draw_count,
-    text_count,
-    present_count,
-  }
-}
-
-///|
 fn Canvas::replay_frame_internal(
   self : Canvas,
   frame : @skia.RenderFrameDescriptor,
