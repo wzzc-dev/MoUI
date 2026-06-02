@@ -89,6 +89,14 @@ pub(all) struct AgentCommandInfo {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct AgentModelInfo {
+  provider : String
+  id : String
+  name : String
+  label : String
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PiCommandInfo {
   name : String
   source : String
@@ -473,6 +481,21 @@ pub fn AgentCommandInfo::new(
 }
 
 ///|
+pub fn AgentModelInfo::new(
+  provider~ : String,
+  id~ : String,
+  name? : String = "",
+  label? : String = "",
+) -> AgentModelInfo {
+  let label = if label == "" {
+    agent_model_label(provider, id, name)
+  } else {
+    label
+  }
+  { provider, id, name, label }
+}
+
+///|
 pub fn PiCommandInfo::new(
   name~ : String,
   source~ : String,
@@ -504,11 +527,41 @@ pub fn PiModelInfo::new(
   label? : String = "",
 ) -> PiModelInfo {
   let label = if label == "" {
-    pi_model_label(provider, id, name)
+    agent_model_label(provider, id, name)
   } else {
     label
   }
   { provider, id, name, label }
+}
+
+///|
+pub fn PiModelInfo::as_agent_model_info(self : PiModelInfo) -> AgentModelInfo {
+  AgentModelInfo::new(
+    provider=self.provider,
+    id=self.id,
+    name=self.name,
+    label=self.label,
+  )
+}
+
+///|
+fn agent_model_label(provider : String, id : String, name : String) -> String {
+  let scoped = if provider == "" && id == "" {
+    ""
+  } else if provider == "" {
+    id
+  } else if id == "" {
+    provider
+  } else {
+    provider + "/" + id
+  }
+  if name == "" || name == id || name == scoped {
+    scoped
+  } else if scoped == "" {
+    name
+  } else {
+    name + " (" + scoped + ")"
+  }
 }
 
 ///|
@@ -1057,6 +1110,20 @@ pub fn WorkbenchModel::active_agent_session_binding(
       workbench_session_id=self.selected_session_id,
     )
   }
+}
+
+///|
+pub fn WorkbenchModel::active_agent_model_catalog(
+  self : WorkbenchModel,
+) -> Array[AgentModelInfo] {
+  let models : Array[AgentModelInfo] = []
+  if !self.active_agent_backend_capabilities().supports_model_catalog {
+    return models
+  }
+  for model in self.model_catalog {
+    models.push(model.as_agent_model_info())
+  }
+  models
 }
 
 ///|

@@ -3252,27 +3252,9 @@ fn json_model_label(fields : Map[String, Json]) -> String {
       if provider == "" && id == "" && name == "" {
         ""
       } else {
-        pi_model_label(provider, id, name)
+        agent_model_label(provider, id, name)
       }
     }
-  }
-}
-
-///|
-fn pi_model_label(provider : String, id : String, name : String) -> String {
-  let provider_id = if provider == "" {
-    id
-  } else if id == "" {
-    provider
-  } else {
-    provider + "/" + id
-  }
-  if name == "" || name == id || name == provider_id {
-    provider_id
-  } else if provider_id == "" {
-    name
-  } else {
-    name + " (" + provider_id + ")"
   }
 }
 

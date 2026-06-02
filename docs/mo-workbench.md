@@ -270,8 +270,9 @@ packages:
   knowledge workflows without changing the platform-neutral transport contract.
 - Session selection and manual refresh also query Pi's available model catalog
   through `get_available_models`. The shared app normalizes provider/id/name
-  rows into `PiModelInfo` and shows the model controls only in expanded
-  secondary session details, keeping no-model offline smoke quiet.
+  rows into Pi-provider `PiModelInfo`, then projects them to backend-neutral
+  `AgentModelInfo` values before the UI renders expanded secondary session
+  details, keeping no-model offline smoke quiet.
 - The model catalog summary has compact use/cycle actions. The shared app emits
   platform-neutral `SetRpcModel` for the visible model and `CycleRpcModel` for
   Pi's scoped model cycle, ingests `set_model` and `cycle_model` responses, and
@@ -351,8 +352,9 @@ packages:
   `entryId` and display text. Successful `fork` responses mark the binding as
   forking or cancelled; accepted forks then trigger the same chained refresh as
   new-session creation. Successful `get_available_models` responses replace
-  the visible model catalog with normalized `PiModelInfo` rows that preserve
-  provider, id, name, and a display label. Successful `get_commands` responses
+  the provider model catalog with normalized `PiModelInfo` rows that preserve
+  provider, id, name, and a display label; the session panel consumes their
+  `AgentModelInfo` projection. Successful `get_commands` responses
   replace the provider command catalog with normalized `PiCommandInfo` rows that
   preserve command name, kind, description, source scope, and source path; the
   composer consumes their `AgentCommandInfo` projection.
@@ -468,8 +470,9 @@ timeline event. A successful
 the visible transcript with normalized `TranscriptItem` rows while preserving
 the raw JSONL transport event. A successful
 `{"type":"response","command":"get_available_models","success":true,...}` line
-replaces the compact model catalog with normalized `PiModelInfo` rows and shows
-a session-panel model summary only when Pi reports at least one model. A
+replaces the provider model catalog with normalized `PiModelInfo` rows, then
+projects them to `AgentModelInfo` for the session-panel summary only when the
+active backend supports model catalogs and Pi reports at least one model. A
 successful
 `{"type":"response","command":"get_fork_messages","success":true,...}` line
 fills compact fork candidates from Pi's `messages[].entryId` and
