@@ -216,6 +216,9 @@ default_stage_markers=(
   "native smoke shaped text resource plan count" \
   "native smoke shaped glyph run resource plan count" \
   "native smoke shaped glyph run key variation" \
+  "native smoke invalid shaped glyph resource plan count" \
+  "native smoke invalid shaped glyph command plan count" \
+  "native smoke invalid shaped glyph replay skipped" \
   "native smoke measured text width" \
   "native smoke text glyph count" \
   "native smoke first glyph id" \
@@ -405,6 +408,9 @@ default_expected_stage_values=(
   $'native smoke shaped text resource plan count\t5'
   $'native smoke shaped glyph run resource plan count\t6'
   $'native smoke shaped glyph run key variation\t1'
+  $'native smoke invalid shaped glyph resource plan count\t1'
+  $'native smoke invalid shaped glyph command plan count\t1'
+  $'native smoke invalid shaped glyph replay skipped\t1'
   $'native smoke font resource plan count\t1'
   $'native smoke font fallback key variation\t1'
   $'native smoke font fallback match key variation\t1'

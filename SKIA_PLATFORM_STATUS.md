@@ -121,7 +121,8 @@ these facts recorded in logs:
   measured-text result resource planning, measured-text result cache-key
   variation, text measurement cache-key variation, text shaping resource
   planning, shaped-text result resource planning, shaped glyph-run resource
-  planning, shaped glyph-run cache-key variation, optional native shaped glyph
+  planning, shaped glyph-run cache-key variation, invalid shaped glyph-run
+  plan/replay skip cache safety, optional native shaped glyph
   descriptor bridging, UTF-8 text measurement, glyph count,
   glyph ID mapping, glyph advances, glyph positions, glyph bounds, text bounds
   measurement, SkShaper availability reporting, optional native shaped-text

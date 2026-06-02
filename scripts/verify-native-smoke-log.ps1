@@ -201,6 +201,9 @@ $defaultStageMarkers = @(
   "native smoke shaped text resource plan count",
   "native smoke shaped glyph run resource plan count",
   "native smoke shaped glyph run key variation",
+  "native smoke invalid shaped glyph resource plan count",
+  "native smoke invalid shaped glyph command plan count",
+  "native smoke invalid shaped glyph replay skipped",
   "native smoke measured text width",
   "native smoke text glyph count",
   "native smoke first glyph id",
@@ -873,6 +876,18 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke shaped glyph run key variation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke invalid shaped glyph resource plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke invalid shaped glyph command plan count"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke invalid shaped glyph replay skipped"
     Value = "1"
   }
   [pscustomobject]@{

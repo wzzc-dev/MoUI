@@ -1531,6 +1531,56 @@ fn main {
     ).resource_key(b"hello") {
     fail_smoke("native shaped glyph run key did not encode glyph metadata")
   }
+  let invalid_shaped_glyph_run = replay_shaping.shaped_run_descriptor(
+    glyph_count=0,
+  ).glyph_run_descriptor()
+  let invalid_shaped_glyph_plan = invalid_shaped_glyph_run.resource_plan(
+    b"hello",
+  )
+  if invalid_shaped_glyph_run.is_valid() ||
+    invalid_shaped_glyph_plan.length() != 1 ||
+    invalid_shaped_glyph_plan.cacheable_count != 0 ||
+    invalid_shaped_glyph_plan.uncacheable_count != 1 ||
+    invalid_shaped_glyph_plan.count_kind(@skia.TextRunResource) != 1 {
+    fail_smoke("invalid shaped glyph run resource plan should be uncacheable")
+  }
+  let invalid_shaped_glyph_commands = @skia.RenderCommandList::for_target(
+      @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(16, 16)),
+    )
+    .clear(@skia.Color::white())
+    .draw_shaped_glyph_run_utf8(
+      b"hello",
+      invalid_shaped_glyph_run,
+      @skia.Point::new(1, 12),
+      paint=@skia.Paint::new(color=@skia.Color::black()),
+    )
+  let invalid_shaped_glyph_command_plan =
+    invalid_shaped_glyph_commands.resource_plan()
+  if invalid_shaped_glyph_command_plan.length() != 1 ||
+    invalid_shaped_glyph_command_plan.count_kind(@skia.SurfaceResource) != 1 ||
+    invalid_shaped_glyph_command_plan.count_kind(@skia.TextRunResource) != 0 {
+    fail_smoke("invalid shaped glyph command resource plan is not cache-safe")
+  }
+  guard @native.Surface::raster_n32_premul(@skia.ISize::new(16, 16))
+    is Some(invalid_shaped_glyph_surface) else {
+    fail_smoke("failed to create invalid shaped glyph replay surface")
+  }
+  guard invalid_shaped_glyph_surface.canvas()
+    is Some(invalid_shaped_glyph_canvas) else {
+    fail_smoke("failed to borrow invalid shaped glyph replay canvas")
+  }
+  let invalid_shaped_glyph_stats = invalid_shaped_glyph_canvas.replay(
+    invalid_shaped_glyph_commands,
+  )
+  if invalid_shaped_glyph_stats.is_complete() ||
+    invalid_shaped_glyph_stats.command_count !=
+    invalid_shaped_glyph_commands.length() ||
+    invalid_shaped_glyph_stats.replayed_count != 1 ||
+    invalid_shaped_glyph_stats.skipped_count != 1 ||
+    invalid_shaped_glyph_stats.text_count != 1 ||
+    invalid_shaped_glyph_stats.text_resource_count != 1 {
+    fail_smoke("invalid shaped glyph replay should skip")
+  }
   println("native smoke text shaping resource plan count")
   println(replay_shaping_plan.length())
   println("native smoke shaped text resource plan count")
@@ -1539,6 +1589,12 @@ fn main {
   println(replay_shaped_glyph_run_plan.length())
   println("native smoke shaped glyph run key variation")
   println(1)
+  println("native smoke invalid shaped glyph resource plan count")
+  println(invalid_shaped_glyph_plan.length())
+  println("native smoke invalid shaped glyph command plan count")
+  println(invalid_shaped_glyph_command_plan.length())
+  println("native smoke invalid shaped glyph replay skipped")
+  println(invalid_shaped_glyph_stats.skipped_count)
   let ranged_text_descriptor = @skia.TextRunDescriptor::new(
     range=@skia.TextRange::new(1, 5),
   )

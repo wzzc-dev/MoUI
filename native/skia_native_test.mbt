@@ -343,6 +343,53 @@ test "canvas skips empty text run ranges" {
 }
 
 ///|
+test "canvas skips invalid shaped glyph runs" {
+  let replay_size = @skia.ISize::new(16, 16)
+  let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    replay_size,
+  )
+  let shaping = @skia.TextShapingDescriptor::new(
+    run=@skia.TextRunDescriptor::new(range=@skia.TextRange::new(0, 3)),
+  )
+  let invalid_glyph_run = shaping
+    .shaped_run_descriptor(glyph_count=0)
+    .glyph_run_descriptor()
+  assert_true(!invalid_glyph_run.is_valid())
+  assert_eq(invalid_glyph_run.resource_plan(b"abc").length(), 1)
+  assert_eq(invalid_glyph_run.resource_plan(b"abc").cacheable_count, 0)
+  let commands = @skia.RenderCommandList::for_target(replay_target)
+    .clear(@skia.Color::white())
+    .draw_shaped_glyph_run_utf8(
+      b"abc",
+      invalid_glyph_run,
+      @skia.Point::new(1, 12),
+      paint=@skia.Paint::new(color=@skia.Color::black()),
+    )
+  let resource_plan = commands.resource_plan()
+  assert_eq(resource_plan.length(), 1)
+  assert_eq(resource_plan.count_kind(@skia.SurfaceResource), 1)
+  assert_eq(resource_plan.count_kind(@skia.TextRunResource), 0)
+  match @native.Surface::raster_n32_premul(replay_size) {
+    None => ()
+    Some(surface) =>
+      match surface.canvas() {
+        None => ()
+        Some(canvas) => {
+          let stats = canvas.replay(commands)
+          assert_true(!stats.is_complete())
+          assert_eq(stats.command_count, 2)
+          assert_eq(stats.replayed_count, 1)
+          assert_eq(stats.skipped_count, 1)
+          assert_eq(stats.draw_count, 1)
+          assert_eq(stats.clear_count, 1)
+          assert_eq(stats.text_count, 1)
+          assert_eq(stats.text_resource_count, 1)
+        }
+      }
+  }
+}
+
+///|
 test "native backend reports availability" {
   ignore(@native.skia_available())
 }

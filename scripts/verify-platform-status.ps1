@@ -369,6 +369,9 @@ if ($status.schema_version -ge 3) {
     "text.measured-run-key",
     "text.shaped-glyph-run-resource-plan",
     "text.shaped-glyph-run-key",
+    "text.invalid-shaped-glyph-resource-plan",
+    "text.invalid-shaped-glyph-command-plan",
+    "text.invalid-shaped-glyph-replay-skipped",
     "text.measure",
     "text.glyph-count",
     "text.glyph-id",
@@ -685,6 +688,9 @@ if ($status.schema_version -ge 3) {
       "native smoke measured text key variation" = "1"
       "native smoke shaped glyph run resource plan count" = "6"
       "native smoke shaped glyph run key variation" = "1"
+      "native smoke invalid shaped glyph resource plan count" = "1"
+      "native smoke invalid shaped glyph command plan count" = "1"
+      "native smoke invalid shaped glyph replay skipped" = "1"
       "native smoke font resource plan count" = "1"
       "native smoke font fallback key variation" = "1"
       "native smoke font fallback match key variation" = "1"
