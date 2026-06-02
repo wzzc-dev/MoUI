@@ -231,6 +231,49 @@ test "workbench projects Pi session stats through agent-neutral metrics" {
 }
 
 ///|
+test "workbench projects Pi runtime state through agent-neutral signal" {
+  let model = {
+    ..WorkbenchModel::new(),
+    pi_agent: PiAgentSnapshot::new(
+      phase="tool",
+      active_tool_name="read",
+      message_preview="Inspecting renderer files",
+      thinking_level="high",
+    ),
+  }
+  let signal = model.active_agent_runtime_signal()
+  inspect(signal.backend_id, content="pi")
+  inspect(signal.status_label, content="工具中 · 工具 read")
+  inspect(signal.active_tool_name, content="read")
+  inspect(signal.message_preview, content="Inspecting renderer files")
+  inspect(signal.thinking_level, content="high")
+  inspect(signal.has_visible_signal(), content="true")
+  inspect(signal.has_active_signal(), content="true")
+}
+
+///|
+test "workbench fixture runtime signal ignores stale Pi provider state" {
+  let model = {
+    ..WorkbenchModel::new().update(SwitchAgentBackend("fixture")),
+    transport: PiTransportState::new().enqueue(FetchRpcMessages("stale")),
+    pi_agent: PiAgentSnapshot::new(
+      phase="tool",
+      active_tool_name="bash",
+      message_preview="stale provider detail",
+      thinking_level="high",
+    ),
+  }
+  let signal = model.active_agent_runtime_signal()
+  inspect(signal.backend_id, content="fixture")
+  inspect(signal.status_label, content="")
+  inspect(signal.active_tool_name, content="")
+  inspect(signal.message_preview, content="")
+  inspect(signal.thinking_level, content="")
+  inspect(signal.has_visible_signal(), content="false")
+  inspect(signal.has_active_signal(), content="false")
+}
+
+///|
 test "workbench projects Pi fork candidates through agent-neutral fork points" {
   let assistant = TranscriptItem::new(
     id="entry-assistant-1",

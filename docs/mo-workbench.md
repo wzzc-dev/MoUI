@@ -411,6 +411,11 @@ packages:
   The shared UI consumes the backend-neutral `AgentSessionBinding` projection,
   so expanded secondary session details display a compact backend session row
   with the live provider session name/id and model when Pi has reported them.
+- Runtime activity also flows through the backend-neutral `AgentRuntimeSignal`.
+  The compact task signal, workflow rail, process summary, and cancellation
+  affordance consume that projection instead of reading Pi transport or
+  `PiAgentSnapshot` directly, so fixture sessions stay quiet even if stale Pi
+  provider state remains in memory.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
 - The current-turn evidence card surfaces the latest non-duplicated diagnostic

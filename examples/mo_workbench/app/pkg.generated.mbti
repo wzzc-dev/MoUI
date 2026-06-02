@@ -75,6 +75,19 @@ pub(all) struct AgentModelInfo {
 } derive(Eq, @debug.Debug)
 pub fn AgentModelInfo::new(provider~ : String, id~ : String, name? : String, label? : String) -> Self
 
+pub(all) struct AgentRuntimeSignal {
+  backend_id : String
+  status_label : String
+  active_tool_name : String
+  message_preview : String
+  thinking_level : String
+  visible : Bool
+  active : Bool
+} derive(Eq, @debug.Debug)
+pub fn AgentRuntimeSignal::has_active_signal(Self) -> Bool
+pub fn AgentRuntimeSignal::has_visible_signal(Self) -> Bool
+pub fn AgentRuntimeSignal::new(backend_id~ : String, status_label? : String, active_tool_name? : String, message_preview? : String, thinking_level? : String, visible? : Bool, active? : Bool) -> Self
+
 pub(all) struct AgentSessionBinding {
   backend_id : String
   workbench_session_id : String
@@ -358,6 +371,7 @@ pub fn WorkbenchModel::active_agent_backend_capabilities(Self) -> AgentBackendCa
 pub fn WorkbenchModel::active_agent_backend_profile(Self) -> AgentBackendProfile
 pub fn WorkbenchModel::active_agent_fork_points_for_transcript_item(Self, TranscriptItem) -> Array[AgentForkPoint]
 pub fn WorkbenchModel::active_agent_model_catalog(Self) -> Array[AgentModelInfo]
+pub fn WorkbenchModel::active_agent_runtime_signal(Self) -> AgentRuntimeSignal
 pub fn WorkbenchModel::active_agent_session_binding(Self) -> AgentSessionBinding
 pub fn WorkbenchModel::active_agent_session_metrics(Self) -> AgentSessionMetrics
 pub fn WorkbenchModel::active_pi_session_binding(Self) -> PiSessionBinding

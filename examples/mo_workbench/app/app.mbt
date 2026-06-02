@@ -65,6 +65,17 @@ pub(all) struct AgentSessionMetrics {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct AgentRuntimeSignal {
+  backend_id : String
+  status_label : String
+  active_tool_name : String
+  message_preview : String
+  thinking_level : String
+  visible : Bool
+  active : Bool
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PlanStep {
   id : String
   title : String
@@ -459,6 +470,39 @@ pub fn AgentSessionMetrics::has_visible_metrics(
       None => false
     }
   }
+}
+
+///|
+pub fn AgentRuntimeSignal::new(
+  backend_id~ : String,
+  status_label? : String = "",
+  active_tool_name? : String = "",
+  message_preview? : String = "",
+  thinking_level? : String = "",
+  visible? : Bool = false,
+  active? : Bool = false,
+) -> AgentRuntimeSignal {
+  {
+    backend_id,
+    status_label,
+    active_tool_name,
+    message_preview,
+    thinking_level,
+    visible,
+    active,
+  }
+}
+
+///|
+pub fn AgentRuntimeSignal::has_visible_signal(
+  self : AgentRuntimeSignal,
+) -> Bool {
+  self.visible
+}
+
+///|
+pub fn AgentRuntimeSignal::has_active_signal(self : AgentRuntimeSignal) -> Bool {
+  self.active
 }
 
 ///|
