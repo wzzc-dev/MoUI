@@ -818,6 +818,8 @@ pub(all) enum RenderCommand {
   ClipCanvasRect(Rect, ClipOp)
   ClipCanvasRRect(RRect, ClipOp)
   ClipCanvasPath(Path, ClipOp)
+  DrawCanvasColor(Color, BlendMode)
+  DrawCanvasPaint(Paint)
   DrawCanvasPoint(Point, Paint)
   DrawCanvasLine(Point, Point, Paint)
   DrawCanvasPoints(Array[Point], PointMode, Paint)
@@ -848,11 +850,13 @@ pub fn RenderCommand::concat(Matrix) -> Self
 pub fn RenderCommand::declare_resource(RendererResourceDescriptor) -> Self
 pub fn RenderCommand::draw_arc(Rect, Float, Float, Bool, paint? : Paint) -> Self
 pub fn RenderCommand::draw_circle(Point, Float, paint? : Paint) -> Self
+pub fn RenderCommand::draw_color(Color, blend_mode? : BlendMode) -> Self
 pub fn RenderCommand::draw_drrect(RRect, RRect, paint? : Paint) -> Self
 pub fn RenderCommand::draw_image(ImageDescriptor, Point) -> Self
 pub fn RenderCommand::draw_image_rect(ImageDescriptor, Rect, Rect, paint? : Paint, sampling? : SamplingOptions) -> Self
 pub fn RenderCommand::draw_line(Point, Point, paint? : Paint) -> Self
 pub fn RenderCommand::draw_oval(Rect, paint? : Paint) -> Self
+pub fn RenderCommand::draw_paint(Paint) -> Self
 pub fn RenderCommand::draw_path(Path, paint? : Paint) -> Self
 pub fn RenderCommand::draw_path_shader(Path, ShaderDescriptor, paint? : Paint) -> Self
 pub fn RenderCommand::draw_point(Point, paint? : Paint) -> Self
@@ -900,11 +904,13 @@ pub fn RenderCommandList::declare_resource(Self, RendererResourceDescriptor) -> 
 pub fn RenderCommandList::declare_resources(Self, Array[RendererResourceDescriptor]) -> Self
 pub fn RenderCommandList::draw_arc(Self, Rect, Float, Float, Bool, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_circle(Self, Point, Float, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_color(Self, Color, blend_mode? : BlendMode) -> Self
 pub fn RenderCommandList::draw_drrect(Self, RRect, RRect, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_image(Self, ImageDescriptor, Point) -> Self
 pub fn RenderCommandList::draw_image_rect(Self, ImageDescriptor, Rect, Rect, paint? : Paint, sampling? : SamplingOptions) -> Self
 pub fn RenderCommandList::draw_line(Self, Point, Point, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_oval(Self, Rect, paint? : Paint) -> Self
+pub fn RenderCommandList::draw_paint(Self, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_path(Self, Path, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_path_shader(Self, Path, ShaderDescriptor, paint? : Paint) -> Self
 pub fn RenderCommandList::draw_point(Self, Point, paint? : Paint) -> Self

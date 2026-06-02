@@ -22,6 +22,8 @@ pub(all) enum RenderCommand {
   ClipCanvasRect(Rect, ClipOp)
   ClipCanvasRRect(RRect, ClipOp)
   ClipCanvasPath(Path, ClipOp)
+  DrawCanvasColor(Color, BlendMode)
+  DrawCanvasPaint(Paint)
   DrawCanvasPoint(Point, Paint)
   DrawCanvasLine(Point, Point, Paint)
   DrawCanvasPoints(Array[Point], PointMode, Paint)
@@ -54,6 +56,19 @@ pub(all) enum RenderCommand {
 ///|
 pub fn RenderCommand::clear(color : Color) -> RenderCommand {
   ClearCanvas(color)
+}
+
+///|
+pub fn RenderCommand::draw_color(
+  color : Color,
+  blend_mode? : BlendMode = SrcOver,
+) -> RenderCommand {
+  DrawCanvasColor(color, blend_mode)
+}
+
+///|
+pub fn RenderCommand::draw_paint(paint : Paint) -> RenderCommand {
+  DrawCanvasPaint(paint)
 }
 
 ///|
@@ -319,7 +334,9 @@ pub fn RenderCommand::declare_resource(
 ///|
 pub fn RenderCommand::is_draw(self : RenderCommand) -> Bool {
   self
-  is (DrawCanvasPoint(_, _)
+  is (DrawCanvasColor(_, _)
+  | DrawCanvasPaint(_)
+  | DrawCanvasPoint(_, _)
   | DrawCanvasLine(_, _, _)
   | DrawCanvasPoints(_, _, _)
   | DrawCanvasRect(_, _)
@@ -926,6 +943,23 @@ pub fn RenderCommandList::clear(
 }
 
 ///|
+pub fn RenderCommandList::draw_color(
+  self : RenderCommandList,
+  color : Color,
+  blend_mode? : BlendMode = SrcOver,
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_color(color, blend_mode~))
+}
+
+///|
+pub fn RenderCommandList::draw_paint(
+  self : RenderCommandList,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_paint(paint))
+}
+
+///|
 pub fn RenderCommandList::clip_rect(
   self : RenderCommandList,
   rect : Rect,
@@ -1470,6 +1504,7 @@ fn render_command_transformed_bounds(
 ) -> Rect? {
   match command {
     ClearCanvas(_) => Some(current_clip)
+    DrawCanvasColor(_, _) | DrawCanvasPaint(_) => Some(current_clip)
     command =>
       match command.draw_bounds() {
         None => None

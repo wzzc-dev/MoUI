@@ -85,8 +85,8 @@ these facts recorded in logs:
   bounded snapshots, PNG encode/decode dimensions, codec dimensions, decoded
   bitmap readback dimensions, surface descriptor reporting, target-based raster
   surface construction, predictable unsupported window/GPU surface targets,
-  canvas state restore, canvas clipping, canvas rrect/path clip replay,
-  canvas command replay,
+  canvas state restore, canvas clipping, canvas color/paint fill replay,
+  canvas rrect/path clip replay, canvas command replay,
   canvas replay resource-category stats, render resource planning,
   GPU context
   resource planning, GPU context identity variation, GPU frame context validation,

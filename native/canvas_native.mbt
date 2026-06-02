@@ -2086,6 +2086,14 @@ fn Canvas::replay_command(
       self.clear(color)
       true
     }
+    @skia.DrawCanvasColor(color, blend_mode) => {
+      self.draw_color(color, blend_mode~)
+      true
+    }
+    @skia.DrawCanvasPaint(paint) => {
+      self.draw_paint(paint)
+      true
+    }
     @skia.ClipCanvasRect(rect, op) => {
       self.clip_rect(rect, op~)
       true
