@@ -17,6 +17,11 @@ moonbit_skia_color_filter_matrix(MoonbitSkiaFloatArray* values) {
   if (values == nullptr || values->buffer == nullptr || values->length != 20) {
     return moonbit_skia_make_color_filter_wrapper(nullptr);
   }
+  for (int32_t i = 0; i < values->length; ++i) {
+    if (!std::isfinite(values->buffer[i])) {
+      return moonbit_skia_make_color_filter_wrapper(nullptr);
+    }
+  }
 #if defined(SKIA_MBT_HAS_SKIA) && \
   (defined(SKIA_MBT_HAS_LEGACY_COLOR_FILTER) || defined(SKIA_MBT_HAS_CORE_COLOR_FILTER))
   sk_sp<SkColorFilter> filter = SkColorFilters::Matrix(values->buffer);
@@ -41,7 +46,12 @@ moonbit_skia_image_filter_is_null(MoonbitSkiaImageFilter* wrapper) {
 
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaImageFilter*
 moonbit_skia_image_filter_blur(float sigma_x, float sigma_y) {
-  if (!(sigma_x > 0.0f) || !(sigma_y > 0.0f)) {
+  if (
+    !std::isfinite(sigma_x) ||
+    !std::isfinite(sigma_y) ||
+    sigma_x <= 0.0f ||
+    sigma_y <= 0.0f
+  ) {
     return moonbit_skia_make_image_filter_wrapper(nullptr);
   }
 #if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_IMAGE_FILTERS)
@@ -69,7 +79,7 @@ moonbit_skia_mask_filter_is_null(MoonbitSkiaMaskFilter* wrapper) {
 
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaMaskFilter*
 moonbit_skia_mask_filter_blur(float sigma) {
-  if (!(sigma > 0.0f)) {
+  if (!std::isfinite(sigma) || sigma <= 0.0f) {
     return moonbit_skia_make_mask_filter_wrapper(nullptr);
   }
 #if defined(SKIA_MBT_HAS_SKIA) && defined(SKIA_MBT_HAS_MASK_FILTER) && \

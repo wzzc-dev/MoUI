@@ -1010,6 +1010,19 @@ fn main {
   }
   println("native smoke filter finite validation")
   println(1)
+  let infinite_filter_scalar : Float = 1.0 / 0.0
+  if @native.ColorFilter::brightness(infinite_filter_scalar) is Some(_) ||
+    @native.ColorFilter::contrast(infinite_filter_scalar) is Some(_) ||
+    @native.ImageFilter::blur(infinite_filter_scalar, 1.0) is Some(_) ||
+    @native.MaskFilter::blur(infinite_filter_scalar) is Some(_) ||
+    @skia.ColorFilterDescriptor::brightness(infinite_filter_scalar) is Some(_) ||
+    @skia.ColorFilterDescriptor::contrast(infinite_filter_scalar) is Some(_) ||
+    @skia.ImageFilterDescriptor::blur(infinite_filter_scalar, 1.0) is Some(_) ||
+    @skia.MaskFilterDescriptor::blur(infinite_filter_scalar) is Some(_) {
+    fail_smoke("infinite filter inputs should be rejected")
+  }
+  println("native smoke filter non-finite handle validation")
+  println(1)
   let invalid_shader_descriptor = @skia.LinearGradientShader(
     @skia.Point::new(4, 4),
     @skia.Point::new(4, 4),

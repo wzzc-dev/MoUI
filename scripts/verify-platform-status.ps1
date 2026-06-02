@@ -351,6 +351,7 @@ if ($status.schema_version -ge 3) {
     "shader-filter.invalid-replay-filter-resources",
     "filter.layer",
     "filter.finite-validation",
+    "filter.non-finite-handle-validation",
     "filter.resource-plan",
     "path.geometry",
     "path.non-finite-from-value-rejected",
@@ -733,6 +734,7 @@ if ($status.schema_version -ge 3) {
       "native smoke invalid shader filter replay filter resources" = "3"
       "native smoke filter resource plan count" = "3"
       "native smoke filter finite validation" = "1"
+      "native smoke filter non-finite handle validation" = "1"
       "native smoke text run resource plan count" = "3"
       "native smoke text run range byte size" = "4"
       "native smoke text run empty range resource plan count" = "2"

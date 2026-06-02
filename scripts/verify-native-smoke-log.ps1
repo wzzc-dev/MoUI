@@ -174,6 +174,7 @@ $defaultStageMarkers = @(
   "native smoke invalid shader filter replay filter resources",
   "native smoke filter layer count",
   "native smoke filter finite validation",
+  "native smoke filter non-finite handle validation",
   "native smoke filter resource plan count",
   "native smoke path verbs",
   "native smoke non-finite path from-value rejected",
@@ -950,6 +951,10 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke filter finite validation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke filter non-finite handle validation"
     Value = "1"
   }
   [pscustomobject]@{
