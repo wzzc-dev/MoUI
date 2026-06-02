@@ -225,10 +225,26 @@ test "filter api is fallback-safe" {
   assert_true(@native.ColorFilter::saturation(not_finite) is None)
   assert_true(@native.ColorFilter::brightness(infinite) is None)
   assert_true(@native.ColorFilter::contrast(not_finite) is None)
+  let invalid_matrix_descriptor = @skia.ColorMatrixFilter([
+    not_finite, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+  ])
+  assert_true(!invalid_matrix_descriptor.is_valid())
+  assert_true(!invalid_matrix_descriptor.resource_descriptor().is_cacheable())
   assert_true(@native.ImageFilter::blur(0.0, 3.0) is None)
   assert_true(@native.ImageFilter::blur(infinite, 3.0) is None)
+  let invalid_image_filter_descriptor = @skia.BlurImageFilter(infinite, 3.0)
+  assert_true(!invalid_image_filter_descriptor.is_valid())
+  assert_true(
+    !invalid_image_filter_descriptor.resource_descriptor().is_cacheable(),
+  )
   assert_true(@native.MaskFilter::blur(0.0) is None)
   assert_true(@native.MaskFilter::blur(not_finite) is None)
+  let invalid_mask_filter_descriptor = @skia.BlurMaskFilter(not_finite)
+  assert_true(!invalid_mask_filter_descriptor.is_valid())
+  assert_true(
+    !invalid_mask_filter_descriptor.resource_descriptor().is_cacheable(),
+  )
 }
 
 ///|
