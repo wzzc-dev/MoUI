@@ -225,11 +225,16 @@ assertIncludes("scripts/check-local-deps.sh", "MOUISmoke: surface canvas_id=moui
 assertIncludes("scripts/check-local-deps.sh", "skia-platform-status.json");
 assertIncludes("scripts/check-local-deps.sh", "skia-provider-lock.json");
 assertIncludes("scripts/check-local-deps.sh", "verify-platform-status.sh");
+assertIncludes("scripts/check-local-deps.sh", "native/capabilities.json");
+assertIncludes("scripts/check-local-deps.sh", "native/ownership.json");
+assertIncludes("scripts/check-local-deps.sh", "verify-native-capability-contract.sh");
 assertIncludes("scripts/setup-local-deps.sh", "merge --ff-only");
 assertIncludes("docs/development.md", "fast-forwards existing clean checkouts");
 assertIncludes("docs/development.md", "module-qualified `wzzc-dev/window/examples/...`");
 assertIncludes("docs/development.md", "skia-platform-status.json");
 assertIncludes("docs/development.md", "verify-platform-status.sh");
+assertIncludes("docs/development.md", "native/capabilities.json");
+assertIncludes("docs/development.md", "verify-native-capability-contract.sh");
 assertIncludes("scripts/conformance-check.sh", "xdg-shell-protocol.c");
 for (const path of [
   "examples/counter/web_wasm/index.html",
@@ -245,10 +250,14 @@ assertIncludes("docs/testing.md", "module-qualified");
 assertIncludes("docs/testing.md", "public consumer sentinel lines");
 assertIncludes("docs/testing.md", "skia-platform-status.json");
 assertIncludes("docs/testing.md", "verify-platform-status.sh");
+assertIncludes("docs/testing.md", "native/capabilities.json");
+assertIncludes("docs/testing.md", "verify-native-capability-contract.sh");
 assertIncludes("docs/platform-notes.md", "check_moui_linux_smoke.sh");
 assertIncludes("docs/release-readiness.md", "platform-runtime-evidence.json");
 assertIncludes("docs/release-readiness.md", "skia-platform-status.json");
 assertIncludes("docs/release-readiness.md", "verify-platform-status.sh");
+assertIncludes("docs/release-readiness.md", "native/capabilities.json");
+assertIncludes("docs/release-readiness.md", "verify-native-capability-contract.sh");
 assertIncludes("docs/release-readiness.md", "record-platform-evidence-manifest.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff-manifest.mjs");
@@ -287,6 +296,8 @@ assertIncludes("AGENTS.md", "`moon run examples/moui_macos_smoke --target native
 assertIncludes("AGENTS.md", "module-qualified `wzzc-dev/window/examples/...`");
 assertIncludes("AGENTS.md", "skia-platform-status.json");
 assertIncludes("AGENTS.md", "verify-platform-status.sh");
+assertIncludes("AGENTS.md", "native/capabilities.json");
+assertIncludes("AGENTS.md", "verify-native-capability-contract.sh");
 assertIncludes("AGENTS.md", "platform-runtime-evidence.json");
 assertIncludes("AGENTS.md", "record-platform-evidence-manifest.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff.mjs");
@@ -309,11 +320,20 @@ assertIncludes(
 );
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
+  "native/capabilities.json",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "verify-native-capability-contract.sh",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
   "test-record-web-runtime-presentation.mjs",
 );
 assertIncludes("moui/README.mbt.md", "sh scripts/dev-check.sh --platform-examples-test");
 assertIncludes("moui/README.mbt.md", "sh scripts/conformance-check.sh --platform-services");
 assertIncludes("moui/README.mbt.md", "verify-platform-status.sh");
+assertIncludes("moui/README.mbt.md", "verify-native-capability-contract.sh");
 assertIncludes("moui/README.mbt.md", "platform-runtime-evidence.json");
 assertIncludes("moui/README.mbt.md", "record-platform-evidence-manifest.mjs");
 assertIncludes("moui/README.mbt.md", "validate-web-runtime-handoff.mjs");

@@ -127,6 +127,7 @@ sh -n scripts/conformance-check.sh
 sh -n scripts/setup-local-deps.sh
 sh -n scripts/check-local-deps.sh
 bash .local_repos/skia_mbt/scripts/verify-platform-status.sh
+bash .local_repos/skia_mbt/scripts/verify-native-capability-contract.sh
 sh -n scripts/preview-loop.sh
 sh -n scripts/package-macos-app.sh
 node --check scripts/validate-guidance-consistency.mjs
@@ -292,12 +293,15 @@ run the window smoke helpers on matching hosts before claiming runtime platform
 evidence.
 The same local-dependency check requires `.local_repos/skia_mbt` to expose its
 binding-level platform acceptance surface: `skia-platform-status.json`,
-`skia-provider-lock.json`, `SKIA_PLATFORM_STATUS.md`, and the native verifier
-scripts. It runs `.local_repos/skia_mbt/scripts/verify-platform-status.sh`,
-which checks the provider lock, CI gate wiring, native smoke capability markers,
-and artifact evidence references. That is Skia binding dependency evidence; it
-does not replace MoUI's opt-in real-Skia renderer smoke or matching-host
-Showcase/Markdown Editor runtime evidence.
+`skia-provider-lock.json`, `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`,
+`native/ownership.json`, and the native verifier scripts. It runs
+`.local_repos/skia_mbt/scripts/verify-platform-status.sh` and
+`.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`, which
+check the provider lock, CI gate wiring, native smoke capability markers,
+artifact evidence references, fallback parity, FFI ownership/borrow metadata,
+and native capability manifest coverage. That is Skia binding dependency
+evidence; it does not replace MoUI's opt-in real-Skia renderer smoke or
+matching-host Showcase/Markdown Editor runtime evidence.
 
 The platform runtime evidence manifest uses schema version 2. Its observation
 set mirrors the local window fork's recorder fields, including native
