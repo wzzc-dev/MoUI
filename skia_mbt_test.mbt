@@ -1,4 +1,30 @@
 ///|
+fn test_float_near(a : Float, b : Float) -> Bool {
+  (a - b).abs() <= 0.0001
+}
+
+///|
+fn test_point_near(a : @skia_mbt.Point, b : @skia_mbt.Point) -> Bool {
+  test_float_near(a.x, b.x) && test_float_near(a.y, b.y)
+}
+
+///|
+fn test_rect_near(a : @skia_mbt.Rect, b : @skia_mbt.Rect) -> Bool {
+  test_float_near(a.left, b.left) &&
+  test_float_near(a.top, b.top) &&
+  test_float_near(a.right, b.right) &&
+  test_float_near(a.bottom, b.bottom)
+}
+
+///|
+fn test_optional_rect_near(a : @skia_mbt.Rect?, b : @skia_mbt.Rect) -> Bool {
+  match a {
+    None => false
+    Some(a) => test_rect_near(a, b)
+  }
+}
+
+///|
 test "color packs argb channels" {
   let color = @skia_mbt.Color::from_argb(0x80, 0x11, 0x22, 0x33)
   assert_eq(color.argb(), 0x80112233U)
@@ -1292,6 +1318,16 @@ test "render command list records transform commands" {
     .draw_rect(@skia_mbt.Rect::from_xywh(1, 1, 4, 4))
   assert_true(
     restored.touched_bounds() == Some(@skia_mbt.Rect::new(1, 1, 15, 7)),
+  )
+
+  let rotated = @skia_mbt.RenderCommandList::for_target(target)
+    .rotate(90)
+    .draw_rect(@skia_mbt.Rect::from_xywh(1, -3, 4, 2))
+  assert_true(
+    test_optional_rect_near(
+      rotated.touched_bounds(),
+      @skia_mbt.Rect::new(1, 1, 3, 5),
+    ),
   )
 }
 
@@ -2880,6 +2916,28 @@ test "matrix composes, inverts, and maps rect bounds" {
     .post_scale(2, 3)
     .map_point(@skia_mbt.Point::new(1, 1)) ==
     @skia_mbt.Point::new(5, 3),
+  )
+  assert_true(
+    test_point_near(
+      @skia_mbt.Matrix::rotate_degrees(90).map_point(@skia_mbt.Point::new(2, 0)),
+      @skia_mbt.Point::new(0, 2),
+    ),
+  )
+  assert_true(
+    test_rect_near(
+      @skia_mbt.Matrix::identity()
+      .post_rotate_degrees(90)
+      .map_rect(@skia_mbt.Rect::from_xywh(1, 1, 4, 2)),
+      @skia_mbt.Rect::new(-3, 1, -1, 5),
+    ),
+  )
+  assert_true(
+    test_point_near(
+      @skia_mbt.Matrix::translate(10, 0)
+      .pre_rotate_degrees(90)
+      .map_point(@skia_mbt.Point::new(1, 0)),
+      @skia_mbt.Point::new(0, 11),
+    ),
   )
   assert_true(
     @skia_mbt.Matrix::translate(1, 2).map_points([

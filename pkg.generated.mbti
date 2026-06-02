@@ -466,13 +466,16 @@ pub fn Matrix::new_all(Float, Float, Float, Float, Float, Float, Float, Float, F
 pub fn Matrix::persp_x(Self) -> Float
 pub fn Matrix::persp_y(Self) -> Float
 pub fn Matrix::post_concat(Self, Self) -> Self
+pub fn Matrix::post_rotate_degrees(Self, Float) -> Self
 pub fn Matrix::post_scale(Self, Float, Float) -> Self
 pub fn Matrix::post_skew(Self, Float, Float) -> Self
 pub fn Matrix::post_translate(Self, Float, Float) -> Self
 pub fn Matrix::pre_concat(Self, Self) -> Self
+pub fn Matrix::pre_rotate_degrees(Self, Float) -> Self
 pub fn Matrix::pre_scale(Self, Float, Float) -> Self
 pub fn Matrix::pre_skew(Self, Float, Float) -> Self
 pub fn Matrix::pre_translate(Self, Float, Float) -> Self
+pub fn Matrix::rotate_degrees(Float) -> Self
 pub fn Matrix::scale(Float, Float) -> Self
 pub fn Matrix::scale_translate(Float, Float, Float, Float) -> Self
 pub fn Matrix::scale_x(Self) -> Float

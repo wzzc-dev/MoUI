@@ -88,6 +88,19 @@ pub fn Matrix::skew(kx : Scalar, ky : Scalar) -> Matrix {
 }
 
 ///|
+fn matrix_degrees_to_radians(degrees : Scalar) -> Scalar {
+  Float::from_double(degrees.to_double() * @math.PI / 180.0)
+}
+
+///|
+pub fn Matrix::rotate_degrees(degrees : Scalar) -> Matrix {
+  let radians = matrix_degrees_to_radians(degrees).to_double()
+  let c = Float::from_double(@math.cos(radians))
+  let s = Float::from_double(@math.sin(radians))
+  Matrix::new_all(c, -s, 0, s, c, 0, 0, 0, 1)
+}
+
+///|
 pub fn Matrix::is_identity(self : Matrix) -> Bool {
   self == Matrix::identity()
 }
@@ -312,6 +325,16 @@ pub fn Matrix::pre_skew(self : Matrix, kx : Scalar, ky : Scalar) -> Matrix {
 ///|
 pub fn Matrix::post_skew(self : Matrix, kx : Scalar, ky : Scalar) -> Matrix {
   self.post_concat(Matrix::skew(kx, ky))
+}
+
+///|
+pub fn Matrix::pre_rotate_degrees(self : Matrix, degrees : Scalar) -> Matrix {
+  self.pre_concat(Matrix::rotate_degrees(degrees))
+}
+
+///|
+pub fn Matrix::post_rotate_degrees(self : Matrix, degrees : Scalar) -> Matrix {
+  self.post_concat(Matrix::rotate_degrees(degrees))
 }
 
 ///|

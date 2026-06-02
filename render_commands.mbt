@@ -1191,10 +1191,7 @@ fn render_command_update_matrix(
       }
     TranslateCanvas(delta) => current_matrix.post_translate(delta.x, delta.y)
     ScaleCanvas(scale) => current_matrix.post_scale(scale.width, scale.height)
-    RotateCanvas(degrees) => {
-      ignore(degrees)
-      current_matrix
-    }
+    RotateCanvas(degrees) => current_matrix.post_rotate_degrees(degrees)
     SkewCanvas(skew) => current_matrix.post_skew(skew.x, skew.y)
     ConcatCanvas(matrix) => current_matrix.post_concat(matrix)
     ResetCanvasMatrix => Matrix::identity()

@@ -1122,7 +1122,7 @@ fn main {
     )
     .translate(@skia.Point::new(1, 0))
     .scale(@skia.Size::new(1, 1))
-    .rotate(0)
+    .rotate(360)
     .skew(@skia.Point::new(0, 0))
     .concat(@skia.Matrix::translate(-1, 0))
     .draw_point(
