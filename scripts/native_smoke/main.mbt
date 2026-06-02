@@ -1569,6 +1569,67 @@ fn main {
     0x00,
     0xff,
   )
+  guard @native.Surface::raster_n32_premul(replay_size)
+    is Some(render_frame_surface) else {
+    fail_smoke("failed to create native surface frame replay surface")
+  }
+  let render_frame_resources = @native.NativeReplayResources::new(
+    shader_max_bytes=1024L,
+    path_max_bytes=1024L,
+    text_run_max_bytes=1024L,
+    font_max_bytes=1024L,
+    typeface_max_bytes=1024L,
+    color_filter_max_bytes=1024L,
+    image_filter_max_bytes=1024L,
+    mask_filter_max_bytes=1024L,
+  )
+  let render_frame_stats = render_frame_surface.render_frame_with_resources(
+    replay_frame,
+    render_frame_resources,
+    font=Some(replay_font),
+    frame_index=7,
+  )
+  guard @native.Surface::raster_n32_premul(@skia.ISize::new(6, 6))
+    is Some(mismatch_frame_surface) else {
+    fail_smoke("failed to create native mismatched frame replay surface")
+  }
+  let render_frame_mismatch_stats = mismatch_frame_surface.render_frame(
+    replay_frame,
+    font=Some(replay_font),
+  )
+  if !render_frame_stats.is_complete() ||
+    render_frame_stats.validation_status != @skia.FrameReady ||
+    !render_frame_stats.surface_matches ||
+    !render_frame_stats.finalized ||
+    render_frame_stats.replay.command_count != replay_commands.length() ||
+    render_frame_resources.shader_cache.length() != 1 ||
+    render_frame_resources.path_cache.length() != 2 ||
+    render_frame_resources.text_run_cache.length() != 1 ||
+    render_frame_resources.font_cache.length() != 1 ||
+    render_frame_resources.typeface_cache.length() != 1 ||
+    render_frame_resources.color_filter_cache.length() != 1 ||
+    render_frame_resources.image_filter_cache.length() != 1 ||
+    render_frame_resources.mask_filter_cache.length() != 1 ||
+    render_frame_mismatch_stats.is_complete() ||
+    render_frame_mismatch_stats.surface_matches ||
+    render_frame_mismatch_stats.finalized ||
+    render_frame_mismatch_stats.replay.replayed_count != 0 {
+    fail_smoke("native surface render frame finalization contract did not hold")
+  }
+  guard render_frame_surface.read_pixels(
+      bounds=@skia.IRect::from_xywh(1, 1, 1, 1),
+    )
+    is Some(render_frame_pixmap) else {
+    fail_smoke("failed to read native surface render frame pixels")
+  }
+  assert_pixel(
+    render_frame_pixmap,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0x00,
+    0x00,
+    0xff,
+  )
   println("native smoke canvas replay commands")
   println(replay_stats.command_count)
   println("native smoke render frame replay commands")
@@ -1577,6 +1638,23 @@ fn main {
   println(if replay_frame_stats.is_complete() { 1 } else { 0 })
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
+  println("native smoke surface render frame commands")
+  println(render_frame_stats.replay.command_count)
+  println("native smoke surface render frame finalized")
+  println(if render_frame_stats.finalized { 1 } else { 0 })
+  println("native smoke surface render frame cache resources")
+  println(
+    render_frame_resources.shader_cache.length() +
+    render_frame_resources.path_cache.length() +
+    render_frame_resources.text_run_cache.length() +
+    render_frame_resources.font_cache.length() +
+    render_frame_resources.typeface_cache.length() +
+    render_frame_resources.color_filter_cache.length() +
+    render_frame_resources.image_filter_cache.length() +
+    render_frame_resources.mask_filter_cache.length(),
+  )
+  println("native smoke surface render frame mismatch rejected")
+  println(if !render_frame_mismatch_stats.is_complete() { 1 } else { 0 })
   println("native smoke render shaped glyph run command replay")
   println(1)
   println("native smoke render shader cache resources")

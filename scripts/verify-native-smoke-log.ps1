@@ -41,6 +41,10 @@ $defaultStageMarkers = @(
   "native smoke render frame replay commands",
   "native smoke render frame replay complete",
   "native smoke render frame replay rejected skipped",
+  "native smoke surface render frame commands",
+  "native smoke surface render frame finalized",
+  "native smoke surface render frame cache resources",
+  "native smoke surface render frame mismatch rejected",
   "native smoke render shaped glyph run command replay",
   "native smoke render shader cache resources",
   "native smoke render shader cache misses",
@@ -208,6 +212,22 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke render frame replay rejected skipped"
     Value = "20"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame commands"
+    Value = "23"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame finalized"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame cache resources"
+    Value = "9"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke surface render frame mismatch rejected"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke render shaped glyph run command replay"

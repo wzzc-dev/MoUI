@@ -248,6 +248,36 @@ pub fn Surface::flush_and_submit(self : Surface) -> Bool {
 }
 
 ///|
+pub fn Surface::render_frame(
+  self : Surface,
+  frame : @skia.RenderFrameDescriptor,
+  font? : Font? = None,
+  frame_index? : Int = 0,
+) -> SurfaceFrameReplayStats {
+  ignore(self)
+  ignore(font)
+  ignore(frame_index)
+  {
+    replay: canvas_replay_skipped_stats(frame.command_list),
+    validation_status: frame.validation_status(),
+    surface_matches: false,
+    finalized: false,
+  }
+}
+
+///|
+pub fn Surface::render_frame_with_resources(
+  self : Surface,
+  frame : @skia.RenderFrameDescriptor,
+  resources : NativeReplayResources,
+  font? : Font? = None,
+  frame_index? : Int = 0,
+) -> SurfaceFrameReplayStats {
+  ignore(resources)
+  self.render_frame(frame, font~, frame_index~)
+}
+
+///|
 /// Snapshot current surface contents into an immutable image.
 pub fn Surface::image_snapshot(self : Surface) -> Image? {
   ignore(self)
