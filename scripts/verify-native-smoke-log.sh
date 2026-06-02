@@ -69,6 +69,8 @@ default_stage_markers=(
   "native smoke canvas replay clip path cache resources" \
   "native smoke canvas replay color paint fills" \
   "native smoke canvas replay paint fill clipped" \
+  "native smoke canvas replay paint shader fills" \
+  "native smoke canvas replay paint shader cache resources" \
   "native smoke render frame replay rejected skipped" \
   "native smoke surface render frame commands" \
   "native smoke surface render frame finalized" \
@@ -248,6 +250,8 @@ default_expected_stage_values=(
   $'native smoke canvas replay clip path cache resources\t1'
   $'native smoke canvas replay color paint fills\t2'
   $'native smoke canvas replay paint fill clipped\t1'
+  $'native smoke canvas replay paint shader fills\t1'
+  $'native smoke canvas replay paint shader cache resources\t1'
   $'native smoke render frame replay rejected skipped\t26'
   $'native smoke surface render frame commands\t29'
   $'native smoke surface render frame finalized\t1'

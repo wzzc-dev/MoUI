@@ -564,6 +564,8 @@ if schema_version >= 3:
             "native smoke canvas replay clip path cache resources": "1",
             "native smoke canvas replay color paint fills": "2",
             "native smoke canvas replay paint fill clipped": "1",
+            "native smoke canvas replay paint shader fills": "1",
+            "native smoke canvas replay paint shader cache resources": "1",
             "native smoke render frame replay rejected skipped": "26",
             "native smoke surface render frame commands": "29",
             "native smoke surface render frame finalized": "1",

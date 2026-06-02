@@ -24,6 +24,7 @@ pub(all) enum RenderCommand {
   ClipCanvasPath(Path, ClipOp)
   DrawCanvasColor(Color, BlendMode)
   DrawCanvasPaint(Paint)
+  DrawCanvasPaintShader(ShaderDescriptor, Paint)
   DrawCanvasPoint(Point, Paint)
   DrawCanvasLine(Point, Point, Paint)
   DrawCanvasPoints(Array[Point], PointMode, Paint)
@@ -69,6 +70,14 @@ pub fn RenderCommand::draw_color(
 ///|
 pub fn RenderCommand::draw_paint(paint : Paint) -> RenderCommand {
   DrawCanvasPaint(paint)
+}
+
+///|
+pub fn RenderCommand::draw_paint_shader(
+  shader : ShaderDescriptor,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasPaintShader(shader, paint)
 }
 
 ///|
@@ -336,6 +345,7 @@ pub fn RenderCommand::is_draw(self : RenderCommand) -> Bool {
   self
   is (DrawCanvasColor(_, _)
   | DrawCanvasPaint(_)
+  | DrawCanvasPaintShader(_, _)
   | DrawCanvasPoint(_, _)
   | DrawCanvasLine(_, _, _)
   | DrawCanvasPoints(_, _, _)
@@ -493,6 +503,7 @@ pub fn RenderCommand::resource_descriptor(
   match self {
     DrawCanvasPath(path, _) => Some(path.resource_descriptor())
     ClipCanvasPath(path, _) => Some(path.resource_descriptor())
+    DrawCanvasPaintShader(shader, _) => Some(shader.resource_descriptor())
     DrawCanvasRectShader(_, shader, _) => Some(shader.resource_descriptor())
     DrawCanvasRoundRectShader(_, _, _, shader, _) =>
       Some(shader.resource_descriptor())
@@ -517,6 +528,7 @@ pub fn RenderCommand::resource_descriptors(
         color_filter, image_filter, mask_filter,
       )
     ClipCanvasPath(path, _) => [path.resource_descriptor()]
+    DrawCanvasPaintShader(shader, _) => [shader.resource_descriptor()]
     DrawCanvasPath(path, _) => [path.resource_descriptor()]
     DrawCanvasRectShader(_, shader, _) => [shader.resource_descriptor()]
     DrawCanvasRoundRectShader(_, _, _, shader, _) =>
@@ -957,6 +969,15 @@ pub fn RenderCommandList::draw_paint(
   paint? : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_paint(paint))
+}
+
+///|
+pub fn RenderCommandList::draw_paint_shader(
+  self : RenderCommandList,
+  shader : ShaderDescriptor,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_paint_shader(shader, paint~))
 }
 
 ///|
@@ -1505,6 +1526,7 @@ fn render_command_transformed_bounds(
   match command {
     ClearCanvas(_) => Some(current_clip)
     DrawCanvasColor(_, _) | DrawCanvasPaint(_) => Some(current_clip)
+    DrawCanvasPaintShader(_, _) => Some(current_clip)
     command =>
       match command.draw_bounds() {
         None => None
