@@ -330,6 +330,7 @@ if schema_version >= 3:
         "gpu.frame-submission-resource-plan",
         "gpu.frame-submission-gpu-resources",
         "surface.target-resource-plan",
+        "surface.target-cache-resources",
         "surface.window-target-resource-plan",
         "surface.window-physical-width",
         "surface.window-frame-pacing",
@@ -386,6 +387,7 @@ if schema_version >= 3:
         "fontmgr.fallback-resolution-key",
         "fontmgr.fallback-resolution-resource-plan",
         "fontmgr.fallback-resolution-bridge",
+        "fontmgr.fallback-resolution-bridge-cache-resources",
         "fontmgr.fallback-resource-plan",
         "fontmgr.fallback-font-resource-plan",
     }
@@ -451,6 +453,12 @@ if schema_version >= 3:
             "text.shaped-glyph-descriptor-bridge": {
                 "area": "Text",
                 "marker": "native smoke shaped glyph descriptor bridge",
+                "when_marker": "native smoke shaper availability",
+                "when_value": "1",
+            },
+            "text.shaped-glyph-descriptor-bridge-cache-resources": {
+                "area": "Text",
+                "marker": "native smoke shaped glyph descriptor bridge cache resources",
                 "when_marker": "native smoke shaper availability",
                 "when_value": "1",
             },
@@ -551,6 +559,7 @@ if schema_version >= 3:
             "native smoke gpu frame submission resource plan count": "3",
             "native smoke gpu frame submission gpu resource count": "3",
             "native smoke surface target resource plan count": "2",
+            "native smoke surface target cache resources": "2",
             "native smoke window target resource plan count": "1",
             "native smoke window physical width": "16",
             "native smoke window frame pacing": "2",
@@ -589,6 +598,7 @@ if schema_version >= 3:
             "native smoke font fallback resolution key variation": "1",
             "native smoke font fallback resolution resource plan count": "4",
             "native smoke font fallback resolution bridge": "1",
+            "native smoke font fallback resolution bridge cache resources": "4",
             "native smoke font fallback resource plan count": "1",
             "native smoke font fallback font resource plan count": "2",
         }
