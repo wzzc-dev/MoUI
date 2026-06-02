@@ -1,20 +1,24 @@
 # Mo Workbench
 
-Mo Workbench is a macOS Skia native-first Pi agent desktop prototype. Its first
-product target is a coding-agent workbench in the spirit of Codex or Claude
-Code desktop: project sessions, code understanding, task planning, execution
-feedback, diff and file context, command queues, and diagnostics all live in
-one session-first surface.
+Mo Workbench is a macOS Skia native-first, Codex-style agent desktop prototype.
+Its product target is a multi-backend coding-agent workbench in the spirit of
+Codex or Claude Code desktop: project sessions, code understanding, task
+planning, execution feedback, diff and file context, command queues, and
+diagnostics all live in one session-first surface.
 
-The visible subtitle is **Pi agent 桌面工作台**. The app is deliberately not
-modeled as only a code editor. The same session, transport event, context,
-plan, command, and diagnostic concepts should later support document workflows,
-research, automation runs, and knowledge organization.
+The visible subtitle is **Agent 桌面工作台**. The app is deliberately not modeled
+as a Pi-only client or only a code editor. Pi RPC is the first real backend
+provider, while the Local (`fixture`) smoke backend is used to verify backend
+switching and the quiet default UI. The same session, backend capability,
+transport event, context, plan, command, and diagnostic concepts should later
+support Codex, Claude, other local agents, document workflows, research,
+automation runs, and knowledge organization.
 
 ## Package Shape
 
 - `examples/mo_workbench/app` owns the shared TEA model, view composition,
-  sample fixtures, platform-neutral Pi transport event model, and injectable
+  sample fixtures, agent backend profiles and capabilities, platform-neutral Pi
+  transport event model for the Pi provider, and injectable
   `PiTransportRuntime` effect boundary.
 - `examples/mo_workbench/native_transport` owns the native
   `moonbitlang/async` process driver for JSONL stdin/stdout sessions. It
@@ -29,8 +33,10 @@ research, automation runs, and knowledge organization.
 - `examples/mo_workbench/macos_skia` is a thin entrypoint that selects
   `backend/macos/skia`, injects the owned native Pi transport runtime, and runs
   the shared app runtime with the macOS Skia async pump.
-- Future Web or other native entrypoints should reuse the same app package and
-  feed the same `PiTransportCommand` / `PiTransportEvent` model.
+- Future Web or other native entrypoints should reuse the same app package.
+  Pi-capable entrypoints feed the same `PiTransportCommand` / `PiTransportEvent`
+  model, while additional providers should plug in through the agent backend
+  profile/capability boundary instead of making the product shell Pi-only.
 
 ## Current Vertical Slice
 
@@ -38,14 +44,35 @@ The current slices establish the dogfood app without changing framework
 packages:
 
 - A session-first desktop shell named `Mo Workbench`.
-- Header subtitle `Pi agent 桌面工作台`.
+- Header subtitle `Agent 桌面工作台`.
+- The default top bar keeps only session identity; the current-agent chip
+  appears there only for non-default backends or provider failures, while
+  normal Pi startup/running state stays in the compact `Agent：...` task signal.
+  Hidden backend/status chips no longer reserve layout width, so quiet sessions
+  give that space back to the current title and project line.
+  The full backend selector lives inside expanded composer options, with Pi as
+  the first real provider and Local as the UI/switching smoke provider;
+  selector descriptions stay short and product-facing instead of exposing
+  provider/debug prose.
+  Each Workbench session records a `backend_id`; switching the current session
+  backend clears provider transcript, catalog, fork, metrics, command,
+  diagnostic, and transport state so backend-specific evidence does not leak
+  across providers. Backend switch events stay as control history and do not
+  create a `当前证据` card by themselves.
+- Agent backend capabilities gate advanced UI. Pi exposes session refresh, new
+  session, model and command catalogs, fork, HTML export, context compaction,
+  thinking level, input queue modes, shell commands, and session stats. Local
+  keeps the prompt flow local and intentionally hides Pi-only controls, proving
+  the shell can remain useful without looking like an RPC diagnostics panel.
 - A Codex / Claude Code-style native shell with macOS chrome, a quiet
   task-history sidebar, a clean white main work canvas, readable compact
   transcript rows, current-turn evidence summaries, and a bottom composer.
 - macOS Skia native entrypoint with first-frame exit support through
   `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
-  fixture transport kinds.
+  fixture transport kinds for the Pi provider path. Empty command batches no
+  longer mark the transport as starting, so non-Pi fixture backend actions can
+  remain local without fake transport activity.
 - Typed transport commands for starting RPC, sending prompts, running shell
   commands, refreshing Pi messages, model catalogs, and command catalogs,
   syncing Pi session names, refreshing Pi session stats, creating fresh Pi
@@ -81,7 +108,7 @@ packages:
   Pi transport worker cooperate on the same native async loop.
 - Conversation-first workbench UI that keeps session state, transcript,
   command evidence, command discovery, file context, diff review, diagnostics,
-  transport status, and the next prompt in one visible flow. The current shell
+  compact Agent status, and the next prompt in one visible flow. The current shell
   is rebuilt from `ViewEnvironment.viewport_size()` instead of a fixed
   `1200x750` surface, so the macOS Skia runtime responds to window resize
   events with adaptive sidebar, scroll, and composer dimensions. The main
@@ -93,15 +120,21 @@ packages:
   chrome shows one two-line current-session identity with shortened title,
   project, and branch labels plus signal-bearing localized session status
   labels, while full project paths remain in the shared model and Pi transport
-  commands. The default shell keeps only top-bar refresh/new-session controls
-  and the bottom composer input prominent, while typed input adds a compact
-  `选项`/`发送` row instead of opening every secondary control. Context chips,
-  agent focus controls, advanced session details, model/session stats,
+  commands. The default shell keeps the top bar to identity, gives hidden chip
+  and removed action-button space back to the session title, shows the
+  current-agent chip there only when it carries non-default backend or failure
+  signal, and moves refresh/new-session controls into expanded composer options
+  with the backend selector. The bottom composer input stays
+  prominent, while typed input adds a compact `选项`/`发送` row instead of
+  opening every secondary control. Context chips, agent focus controls,
+  advanced session details, model/session stats,
   steering/follow-up composer controls, and focused-check presets stay collapsed
   until expanded options, non-default context, selected focus, or actionable
   diagnostics make them relevant. The default fixture still leaves transcript,
   metrics, command catalog, file context, diff summary, command evidence, and
-  diagnostics empty until Pi or user command evidence arrives.
+  diagnostics empty until Pi or user command evidence arrives. When the main
+  conversation has no task, transcript, or evidence yet, it shows only a quiet
+  two-line session prompt instead of mounting fake task or evidence cards.
 - Wide Workbench windows now add a compact status rail beside the conversation
   canvas only for independent live state: current plan steps, failed or active
   shell commands, and active tools. Generic next-action prompts stay in the
@@ -147,7 +180,7 @@ packages:
   exit code, and output path when Pi provided them, so the repair loop has the
   same evidence as the current-turn evidence card without opening another panel.
 - The composer now exposes explicit context chips for repository, examples,
-  evidence, and Pi session scope after opening composer options, after
+  evidence, and backend session scope after opening composer options, after
   selecting an agent focus, or after changing the default context. Direct
   prompt, steering, and follow-up submits prefix the selected context labels
   into the text payload before it enters the existing platform-neutral
@@ -174,9 +207,9 @@ packages:
 - Pending transport command counts now drain as `JsonLineSent` events arrive
   and clear on process exit or failure, so the visible queue reflects work
   still waiting to be handed to Pi instead of a historical command log.
-- The current session can be refreshed manually from the top bar. The
-  shared app reuses the same platform-neutral command batch as session
-  selection: state, messages, command catalog, and session stats.
+- The current session can be refreshed manually from the expanded composer
+  session row. The shared app reuses the same platform-neutral command batch as
+  session selection: state, messages, command catalog, and session stats.
 - Workbench command queue entries now use Pi RPC `bash` directly instead of
   prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
   lets the native encoder emit `{"type":"bash","command":...}`. Successful
@@ -218,11 +251,13 @@ packages:
   batch, reusing a single session start and recording each check as its own
   `CommandRun`; the evidence card keeps those four focused-check rows
   visible together for inspection or rerun.
-- The current-turn evidence card surfaces the latest shared-app timeline event when
-  no higher-priority command evidence is present, so Pi RPC,
-  streaming agent, tool, and stderr progress stays visible next to command
-  evidence without opening a separate log view. Event rows are read-only shell
-  evidence and no longer expose message-level follow-up controls.
+- The current-turn evidence card ignores raw transport lifecycle events such as
+  process start and JSONL send/receive; normal backend activity is summarized as
+  a compact `Agent：...` task signal instead. It still surfaces actionable
+  agent/tool/diagnostic timeline events when no higher-priority command evidence
+  is present, so useful progress stays inspectable without turning the shell
+  back into a transport log. Event rows are read-only shell evidence and no
+  longer expose message-level follow-up controls.
 - Session selection now refreshes Pi messages after state binding. The shared
   app maps Pi RPC `get_messages` responses into generic `TranscriptItem`
   records so the conversation surface can replay user, assistant, tool result,
@@ -363,9 +398,9 @@ packages:
   followed by a `get_state` refresh. `switch_session` and `get_state` responses
   update `PiSessionBinding` entries keyed by Workbench session id, recording the
   live Pi session id, session file, display name, model, and binding status.
-  Expanded secondary session details display the active binding as a compact Pi
-  row, including the live Pi session name/id and model when Pi has reported
-  them.
+  Expanded secondary session details display the active binding as a compact
+  backend session row, including the live provider session name/id and model
+  when Pi has reported them.
 - Native stderr surfacing through platform-neutral `ProcessStderr` events,
   warning diagnostics, and timeline entries without parsing stderr as Pi JSONL.
 - The current-turn evidence card surfaces the latest non-duplicated diagnostic
@@ -511,7 +546,7 @@ Workbench session. This gives the macOS Skia UI a direct resync affordance while
 keeping process ownership in the native async transport and state ownership in
 the shared app package.
 
-The top bar's new-session control first queues:
+The expanded composer session row's new-session control first queues:
 
 ```json
 {"type":"new_session"}

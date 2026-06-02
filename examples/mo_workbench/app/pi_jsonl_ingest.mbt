@@ -486,8 +486,8 @@ fn WorkbenchModel::apply_cycle_model_success(
       )
       .update_active_session_for_pi(
         status=self.active_session().status,
-        active_task="Pi model: " + model_label,
-        summary=Some("Pi model switched to " + model_label),
+        active_task="模型：" + model_label,
+        summary=Some("模型已切换为 " + model_label),
       )
     {
       ..updated,
@@ -548,8 +548,8 @@ fn WorkbenchModel::apply_set_model_success(
       )
       .update_active_session_for_pi(
         status=self.active_session().status,
-        active_task="Pi model: " + model_label,
-        summary=Some("Pi model set to " + model_label),
+        active_task="模型：" + model_label,
+        summary=Some("模型已设为 " + model_label),
       )
     {
       ..updated,
@@ -604,7 +604,7 @@ fn WorkbenchModel::apply_compact_success(
     .update_pi_session_binding_command(session_id, last_command="compact")
     .update_active_session_for_pi(
       status="active",
-      active_task="Pi context compacted",
+      active_task="上下文已压缩",
       summary=Some(compact_session_summary(tokens_before)),
     ),
     transcript,
@@ -641,7 +641,7 @@ fn WorkbenchModel::apply_cycle_thinking_level_success(
     {
       ..self.update_active_session_for_pi(
         status=self.active_session().status,
-        active_task="Pi thinking level: " + level,
+        active_task="思考等级：" + level,
       ),
       pi_agent: { ..self.pi_agent, thinking_level: level },
       pi_rpc: PiRpcSnapshot::new(command="cycle_thinking_level", success=true),
@@ -761,7 +761,7 @@ fn WorkbenchModel::apply_bash_success(
       } else {
         "failed"
       },
-      active_task="Pi bash completed",
+      active_task="命令已完成",
     ),
     pi_rpc: PiRpcSnapshot::new(command="bash", success=true),
   }.append_ingested_event(
@@ -852,15 +852,15 @@ fn WorkbenchModel::apply_new_session_success(
   let updated = bound.update_active_session_for_pi(
     status=if cancelled { "active" } else { "running" },
     active_task=if cancelled {
-      "Pi new session cancelled"
+      "新会话已取消"
     } else {
-      "Pi new session requested"
+      "新会话已请求"
     },
     summary=Some(
       if cancelled {
-        "Pi kept the current session"
+        "保留当前会话"
       } else {
-        "Waiting for Pi new session state"
+        "等待新会话状态"
       },
     ),
   )
@@ -910,16 +910,12 @@ fn WorkbenchModel::apply_fork_success(
   )
   let updated = bound.update_active_session_for_pi(
     status=if cancelled { "active" } else { "running" },
-    active_task=if cancelled {
-      "Pi fork cancelled"
-    } else {
-      "Pi fork requested"
-    },
+    active_task=if cancelled { "分叉已取消" } else { "分叉已请求" },
     summary=Some(
       if cancelled {
-        "Pi kept the current session"
+        "保留当前会话"
       } else if text == "" {
-        "Waiting for Pi fork state"
+        "等待分叉状态"
       } else {
         "Forking before: " + text
       },
@@ -956,7 +952,7 @@ fn WorkbenchModel::update_session_from_rpc(
         } else {
           "running"
         },
-        summary: "Pi RPC session " + snapshot.session_id + " on " + model_label,
+        summary: "Agent session " + snapshot.session_id + " on " + model_label,
         unread_events: snapshot.pending_message_count,
       }
     } else {
@@ -1009,11 +1005,11 @@ fn WorkbenchModel::update_session_from_stats(
   workbench_session_id : String,
   stats : PiSessionStatsSnapshot,
 ) -> WorkbenchModel {
-  let summary = "Pi stats: " +
+  let summary = "会话统计：" +
     stats.total_messages.to_string() +
-    " messages, " +
+    " 消息，" +
     stats.tool_calls.to_string() +
-    " tools, " +
+    " 工具，" +
     stats.token_total.to_string() +
     " tokens"
   let sessions = self.sessions.map(session => {
@@ -1179,7 +1175,7 @@ fn WorkbenchModel::ingest_agent_start(
   let model = {
     ..self.update_active_session_for_pi(
       status="running",
-      active_task="Pi agent run in progress",
+      active_task="Agent 正在运行",
     ),
     pi_agent: { ..self.pi_agent, phase: "running", message_preview: "" },
   }
@@ -1216,9 +1212,9 @@ fn WorkbenchModel::ingest_agent_end(
     .update_active_session_for_pi(
       status~,
       active_task=if will_retry {
-        "Pi agent is preparing an automatic retry"
+        "Agent 准备自动重试"
       } else {
-        "Pi agent run completed"
+        "Agent 运行完成"
       },
     ),
     pi_agent: {
@@ -1255,7 +1251,7 @@ fn WorkbenchModel::ingest_turn_start(
   let model = {
     ..self.update_active_session_for_pi(
       status="running",
-      active_task="Pi agent turn " + turn_index.to_string() + " started",
+      active_task="Agent 回合 " + turn_index.to_string() + " 开始",
     ),
     pi_agent: { ..self.pi_agent, phase: "turn", turn_index },
   }
@@ -1291,7 +1287,7 @@ fn WorkbenchModel::ingest_turn_end(
   let model = {
     ..self.update_active_session_for_pi(
       status="active",
-      active_task="Pi agent turn " + turn_index.to_string() + " completed",
+      active_task="Agent 回合 " + turn_index.to_string() + " 完成",
     ),
     pi_agent: {
       ..self.pi_agent,
@@ -1322,7 +1318,7 @@ fn WorkbenchModel::ingest_message_start(
   let model = {
     ..self.update_active_session_for_pi(
       status="running",
-      active_task="Pi " + role + " message started",
+      active_task=agent_message_task_label(role, "started"),
     ),
     pi_agent: {
       ..self.pi_agent,
@@ -1354,7 +1350,7 @@ fn WorkbenchModel::ingest_message_update(
   let model = {
     ..self.update_active_session_for_pi(
       status="running",
-      active_task="Pi " + role + " message streaming",
+      active_task=agent_message_task_label(role, "streaming"),
     ),
     pi_agent: {
       ..self.pi_agent,
@@ -1391,7 +1387,7 @@ fn WorkbenchModel::ingest_message_end(
     .merge_live_message_end_transcript(role, fields, preview)
     .update_active_session_for_pi(
       status="active",
-      active_task="Pi " + role + " message finished",
+      active_task=agent_message_task_label(role, "finished"),
     ),
     pi_agent: {
       ..self.pi_agent,
@@ -1409,6 +1405,25 @@ fn WorkbenchModel::ingest_message_end(
     ),
     status="Pi message completion applied",
   )
+}
+
+///|
+fn agent_message_task_label(role : String, state : String) -> String {
+  if role == "assistant" {
+    match state {
+      "started" => "Agent 回复开始"
+      "streaming" => "Agent 回复中"
+      "finished" => "Agent 回复完成"
+      _ => "Agent 回复"
+    }
+  } else {
+    match state {
+      "started" => "Agent 消息开始"
+      "streaming" => "Agent 消息中"
+      "finished" => "Agent 消息完成"
+      _ => "Agent 消息"
+    }
+  }
 }
 
 ///|
@@ -1536,7 +1551,7 @@ fn WorkbenchModel::ingest_tool_execution_start(
   {
     ..model.update_active_session_for_pi(
       status="running",
-      active_task="Pi tool running: " + tool_name,
+      active_task="工具运行中：" + tool_name,
     ),
     pi_agent: {
       ..model.pi_agent,
@@ -1568,7 +1583,7 @@ fn WorkbenchModel::ingest_tool_execution_update(
   {
     ..self.update_active_session_for_pi(
       status="running",
-      active_task="Pi tool streaming: " + tool_name,
+      active_task="工具输出中：" + tool_name,
     ),
     pi_agent: {
       ..self.pi_agent,
@@ -1614,7 +1629,7 @@ fn WorkbenchModel::ingest_tool_execution_end(
   {
     ..model.update_active_session_for_pi(
       status=if is_error { "failed" } else { "active" },
-      active_task="Pi tool finished: " + tool_name,
+      active_task="工具已完成：" + tool_name,
     ),
     pi_agent: {
       ..model.pi_agent,
@@ -1650,9 +1665,9 @@ fn WorkbenchModel::ingest_queue_update(
     ..self.update_active_session_for_pi(
       status=if queued == 0 { "active" } else { "running" },
       active_task=if queued == 0 {
-        "Pi prompt queue drained"
+        "输入队列已清空"
       } else {
-        "Pi prompt queue has " + queued.to_string() + " pending inputs"
+        "输入队列有 " + queued.to_string() + " 条待处理"
       },
       unread_events=Some(queued),
     ),
@@ -1689,7 +1704,7 @@ fn WorkbenchModel::ingest_session_info_changed(
   fields : Map[String, Json],
 ) -> WorkbenchModel {
   let name = json_string(fields, "name").unwrap_or("")
-  let summary = if name == "" { None } else { Some("Pi session name: " + name) }
+  let summary = if name == "" { None } else { Some("会话名：" + name) }
   self
   .sync_pi_session_name_binding(
     session_id,
@@ -1699,9 +1714,9 @@ fn WorkbenchModel::ingest_session_info_changed(
   .update_active_session_for_pi(
     status=self.active_session().status,
     active_task=if name == "" {
-      "Pi session info changed"
+      "会话信息已更新"
     } else {
-      "Pi session renamed to " + name
+      "会话已重命名为 " + name
     },
     summary~,
   )
@@ -1726,7 +1741,7 @@ fn WorkbenchModel::ingest_thinking_level_changed(
   {
     ..self.update_active_session_for_pi(
       status=self.active_session().status,
-      active_task="Pi thinking level: " + level,
+      active_task="思考等级：" + level,
     ),
     pi_agent: { ..self.pi_agent, thinking_level: level },
   }.append_ingested_event(
@@ -1750,7 +1765,7 @@ fn WorkbenchModel::ingest_compaction_start(
   {
     ..self.update_active_session_for_pi(
       status="running",
-      active_task="Pi context compaction started",
+      active_task="上下文压缩开始",
     ),
     pi_agent: { ..self.pi_agent, phase: "compacting" },
   }.append_ingested_event(
@@ -1777,9 +1792,9 @@ fn WorkbenchModel::ingest_compaction_end(
     ..self.update_active_session_for_pi(
       status=if aborted || error != "" { "failed" } else { "active" },
       active_task=if will_retry {
-        "Pi compaction ended; retry scheduled"
+        "上下文压缩结束，准备重试"
       } else {
-        "Pi context compaction ended"
+        "上下文压缩结束"
       },
     ),
     pi_agent: {
@@ -1813,7 +1828,7 @@ fn WorkbenchModel::ingest_auto_retry_start(
   {
     ..self.update_active_session_for_pi(
       status="running",
-      active_task="Pi auto retry " +
+      active_task="自动重试 " +
         attempt.to_string() +
         "/" +
         max_attempts.to_string(),
@@ -1848,9 +1863,9 @@ fn WorkbenchModel::ingest_auto_retry_end(
     ..self.update_active_session_for_pi(
       status=if success { "active" } else { "failed" },
       active_task=if success {
-        "Pi auto retry recovered"
+        "自动重试已恢复"
       } else {
-        "Pi auto retry failed"
+        "自动重试失败"
       },
     ),
     pi_agent: {
@@ -2014,7 +2029,7 @@ fn WorkbenchModel::ingest_plan_update(
     ..self.update_active_session_for_pi(
       status=if plan_has_running_step(plan) { "running" } else { "active" },
       active_task=match active_step {
-        Some(step) => "Pi plan: " + step.title
+        Some(step) => "计划：" + step.title
         None => ""
       },
       unread_events=Some(plan_open_count(plan)),

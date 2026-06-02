@@ -113,6 +113,238 @@ test "workbench agent focus selection toggles and rejects unknown ids" {
 }
 
 ///|
+test "workbench agent backend profiles expose Pi and fixture capabilities" {
+  let profiles = agent_backend_profiles()
+  inspect(profiles.length(), content="2")
+  inspect(profiles[0].id, content="pi")
+  inspect(profiles[0].label, content="Pi")
+  inspect(profiles[0].capabilities.uses_pi_transport, content="true")
+  inspect(profiles[0].capabilities.supports_fork, content="true")
+  inspect(profiles[0].capabilities.supports_command_catalog, content="true")
+  inspect(profiles[1].id, content="fixture")
+  inspect(profiles[1].label, content="本地")
+  inspect(profiles[1].capabilities.uses_pi_transport, content="false")
+  inspect(profiles[1].capabilities.supports_fork, content="false")
+  inspect(profiles[1].capabilities.supports_input_modes, content="false")
+}
+
+///|
+test "workbench switches current session backend and resets provider state" {
+  let model = WorkbenchModel::new()
+    .update(ReceiveTransport(ProcessStarted("4242")))
+    .update(PromptChanged("stale prompt"))
+    .update(SwitchAgentBackend("fixture"))
+  inspect(model.active_session().backend_id, content="fixture")
+  inspect(model.active_agent_backend_profile().label, content="本地")
+  inspect(model.prompt, content="")
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Disconnected")
+  inspect(model.pi_session_bindings.length(), content="0")
+  inspect(model.transcript.length(), content="0")
+  inspect(model.last_status, content="Agent backend switched: 本地")
+  assert_false(
+    model.events.any(event => event.title == "Pi RPC process started"),
+  )
+  assert_true(
+    model.events.any(event => event.title == "Agent backend switched"),
+  )
+  let unknown = model.update(SwitchAgentBackend("missing"))
+  inspect(unknown.active_session().backend_id, content="fixture")
+  inspect(unknown.last_status, content="Agent backend unavailable")
+}
+
+///|
+test "workbench fixture backend ignores stale Pi transport events" {
+  let model = WorkbenchModel::new()
+    .update(ReceiveTransport(ProcessStarted("4242")))
+    .update(SwitchAgentBackend("fixture"))
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"agent_end","messages":[{"role":"assistant","content":[{"type":"text","text":"Stale Pi reply"}]}],"willRetry":false}
+          ),
+        ),
+      ),
+    )
+    .update(ReceiveTransport(ProcessStderr("moui-skia", "stale stderr")))
+  inspect(model.active_session().backend_id, content="fixture")
+  inspect(model.last_status, content="Agent backend switched: 本地")
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Disconnected")
+  inspect(model.transport.last_json_line, content="")
+  inspect(model.transcript.length(), content="0")
+  inspect(model.diagnostics.length(), content="0")
+  assert_false(model.events.any(event => event.detail.contains("Stale Pi")))
+  assert_false(model.events.any(event => event.title.contains("Pi stderr")))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "Agent 本地"))
+  assert_false(has_text(commands, "Stale Pi reply"))
+  assert_false(has_text(commands, "stale stderr"))
+  assert_false(has_text(commands, "当前证据"))
+}
+
+///|
+test "workbench fixture backend ignores stale Pi refresh effects" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let update = WorkbenchModel::new()
+    .update(ReceiveTransport(ProcessStarted("4242")))
+    .update(SwitchAgentBackend("fixture"))
+    .update_with_transport(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"prompt","success":true}
+          ),
+        ),
+      ),
+      transport,
+    )
+  let model = run_workbench_effect_with_transport(update, transport)
+  inspect(captured.val.length(), content="0")
+  inspect(model.active_session().backend_id, content="fixture")
+  inspect(model.last_status, content="Agent backend switched: 本地")
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Disconnected")
+  assert_false(
+    model.events.any(event => event.title == "Pi transcript refresh queued"),
+  )
+}
+
+///|
+test "workbench backend switch event does not create evidence chrome" {
+  let model = WorkbenchModel::new().update(SwitchAgentBackend("fixture"))
+  assert_true(
+    model.events.any(event => event.title == "Agent backend switched"),
+  )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "Agent 本地"))
+  assert_false(has_text(commands, "Agent backend switched"))
+  assert_false(has_text(commands, "当前证据"))
+}
+
+///|
+test "workbench fixture backend keeps prompt flow local" {
+  let model = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(PromptChanged("Sketch the clean UI"))
+    .update(DispatchPrompt)
+  inspect(model.active_session().backend_id, content="fixture")
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transcript.length(), content="2")
+  inspect(model.transcript[0].role, content="user")
+  inspect(model.transcript[1].role, content="assistant")
+  inspect(model.transcript[1].summary, content="本地 已接收任务")
+  inspect(
+    model.transcript[1].detail,
+    content="本地后端会保持会话流转，不启动外部传输。",
+  )
+  inspect(model.last_status, content="已交给本地后端")
+}
+
+///|
+test "workbench fixture backend keeps evidence prompts local" {
+  let transcript = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(FollowTranscript("assistant", "Clean UI", "Use quiet chrome"))
+  assert_fixture_prompt_action_stays_local(
+    transcript,
+    event_title="Transcript follow-up queued",
+  )
+
+  let activity = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(FollowActivity("assistant", "Plan ready", "Keep the shell calm"))
+  assert_fixture_prompt_action_stays_local(
+    activity,
+    event_title="Activity follow-up queued",
+  )
+
+  let file = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(InspectFile("examples/mo_workbench/app/app.mbt"))
+  assert_fixture_prompt_action_stays_local(
+    file,
+    event_title="File context queued",
+  )
+
+  let diff = {
+    ..WorkbenchModel::new().update(SwitchAgentBackend("fixture")),
+    diff: DiffOverview::new(
+      changed_files=5,
+      additions=160,
+      deletions=10,
+      status="ready for review",
+    ),
+  }.update(ReviewDiff)
+  assert_fixture_prompt_action_stays_local(
+    diff,
+    event_title="Diff review queued",
+  )
+
+  let diagnostic = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(FixDiagnostic("moon check", "error", "unused variable"))
+  assert_fixture_prompt_action_stays_local(
+    diagnostic,
+    event_title="Diagnostic fix queued",
+  )
+
+  let command_evidence = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(
+      InspectCommandRun("moon check", "failed", "/repo", "/tmp/mo-check.log"),
+    )
+  assert_fixture_prompt_action_stays_local(
+    command_evidence,
+    event_title="Command evidence queued",
+  )
+
+  let command_fix = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(FixCommandRun("moon check", "failed", "/repo", "/tmp/mo-check.log"))
+  assert_fixture_prompt_action_stays_local(
+    command_fix,
+    event_title="Command fix queued",
+  )
+}
+
+///|
+test "workbench fixture backend rejects Pi-only direct actions" {
+  let model = WorkbenchModel::new().update(SwitchAgentBackend("fixture"))
+  let command = model.update(InvokeCommand("review"))
+  inspect(command.pending_transport_count(), content="0")
+  inspect(
+    command.last_status,
+    content="Agent backend does not support commands",
+  )
+  let shell = model.update(QueueCommand("moon check"))
+  inspect(shell.commands.length(), content="0")
+  inspect(shell.pending_transport_count(), content="0")
+  inspect(
+    shell.last_status,
+    content="Agent backend does not support shell commands",
+  )
+  let model_select = model.update(SetModel("openai", "gpt-5", "GPT-5"))
+  inspect(model_select.pending_transport_count(), content="0")
+  inspect(
+    model_select.last_status,
+    content="Agent backend does not support model selection",
+  )
+  let thinking = model.update(CycleThinkingLevel)
+  inspect(thinking.pending_transport_count(), content="0")
+  inspect(
+    thinking.last_status,
+    content="Agent backend does not support thinking level",
+  )
+}
+
+///|
 test "workbench transport runtime effect dispatches prompt events" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, emit) => {
@@ -202,6 +434,36 @@ test "workbench dispatch queues steering and follow-up inputs" {
   }
   assert_true(
     follow_up.events.any(event => event.title == "Follow-up input queued"),
+  )
+
+  let fixture_steering = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(PromptChanged("Prefer the local route"))
+    .update(DispatchSteering)
+  inspect(
+    fixture_steering.last_status,
+    content="Agent backend does not support input modes",
+  )
+  inspect(fixture_steering.pending_transport_count(), content="0")
+  inspect(fixture_steering.transcript.length(), content="0")
+  assert_false(
+    fixture_steering.events.any(event => event.title == "Steering input queued"),
+  )
+
+  let fixture_follow_up = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(PromptChanged("Follow up locally"))
+    .update(DispatchFollowUp)
+  inspect(
+    fixture_follow_up.last_status,
+    content="Agent backend does not support input modes",
+  )
+  inspect(fixture_follow_up.pending_transport_count(), content="0")
+  inspect(fixture_follow_up.transcript.length(), content="0")
+  assert_false(
+    fixture_follow_up.events.any(event => {
+      event.title == "Follow-up input queued"
+    }),
   )
 }
 
@@ -1828,7 +2090,7 @@ test "workbench thinking cycle runtime effect updates Pi agent snapshot" {
   inspect(model.pending_transport_count(), content="0")
   inspect(model.pi_rpc.command, content="cycle_thinking_level")
   inspect(model.pi_agent.thinking_level, content="high")
-  inspect(model.active_session().active_task, content="Pi thinking level: high")
+  inspect(model.active_session().active_task, content="思考等级：high")
   inspect(model.last_status, content="Pi thinking level cycle acknowledged")
   assert_true(
     model.events.any(event => event.title == "Pi thinking level cycled"),
@@ -1949,6 +2211,23 @@ test "workbench cancel run falls back to agent abort without active shell comman
 }
 
 ///|
+test "workbench fixture backend rejects cancellation without Pi transport" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let update = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update_with_transport(CancelRun, transport)
+  inspect(
+    update.model.last_status,
+    content="Agent backend does not support cancellation",
+  )
+  inspect(update.model.pending_transport_count(), content="0")
+  inspect(captured.val.length(), content="0")
+}
+
+///|
 test "workbench cancel runtime effect dispatches Pi RPC abort_bash command" {
   let captured : Ref[Array[PiTransportCommand]] = Ref([])
   let transport = PiTransportRuntime::new(run=(commands, _emit) => {
@@ -1977,12 +2256,17 @@ test "workbench selection with transport switches Pi session then refreshes stat
   let transport = PiTransportRuntime::new(run=(commands, _emit) => {
     captured.val = commands
   })
-  let update = WorkbenchModel::new().update_with_transport(
-    SelectSession("pi-rpc"),
-    transport,
-  )
+  let update = WorkbenchModel::new()
+    .update(PromptChanged("stale Pi task"))
+    .update(DispatchPrompt)
+    .update(ReceiveTransport(ProcessStarted("4242")))
+    .update_with_transport(SelectSession("pi-rpc"), transport)
   inspect(update.model.selected_session_id, content="pi-rpc")
   inspect(update.model.pending_transport_count(), content="7")
+  inspect(update.model.prompt, content="")
+  inspect(update.model.transcript.length(), content="0")
+  inspect(update.model.events.length(), content="0")
+  inspect(update.model.transport.last_json_line, content="")
   let model = run_workbench_effect(update)
   inspect(captured.val.length(), content="7")
   match captured.val[0] {
@@ -2023,6 +2307,69 @@ test "workbench selection with transport switches Pi session then refreshes stat
 }
 
 ///|
+test "workbench selecting fixture session clears stale Pi surface without transport" {
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let stale = {
+      ..WorkbenchModel::new(),
+      selected_session_id: "pi-live",
+      sessions: [
+        WorkbenchSession::new(
+          id="pi-live",
+          title="Pi live task",
+          project_path="/repo/pi",
+          branch="main",
+          status="active",
+          summary="Old Pi run",
+          active_task="",
+          unread_events=0,
+        ),
+        WorkbenchSession::new(
+          id="local-clean",
+          title="Local clean task",
+          project_path="/repo/local",
+          backend_id="fixture",
+          branch="local",
+          status="idle",
+          summary="Quiet local session",
+          active_task="",
+          unread_events=0,
+        ),
+      ],
+    }
+    .update(PromptChanged("Old Pi prompt"))
+    .update(DispatchPrompt)
+    .update(ReceiveTransport(ProcessStarted("4242")))
+    .update(QueueCommand("moon check"))
+  let update = stale.update_with_transport(
+    SelectSession("local-clean"),
+    transport,
+  )
+  let model = run_workbench_effect_with_transport(update, transport)
+  inspect(captured.val.length(), content="0")
+  inspect(model.selected_session_id, content="local-clean")
+  inspect(model.active_agent_backend_profile().label, content="本地")
+  inspect(model.last_status, content="Workbench session selected")
+  inspect(model.prompt, content="")
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transport.status_label(), content="Disconnected")
+  inspect(model.transport.last_json_line, content="")
+  inspect(model.transcript.length(), content="0")
+  inspect(model.events.length(), content="0")
+  inspect(model.commands.length(), content="0")
+  inspect(model.diagnostics.length(), content="0")
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "Agent 本地"))
+  assert_true(has_text(commands, "Local clean task"))
+  assert_false(has_text(commands, "Old Pi prompt"))
+  assert_false(has_text(commands, "Pi RPC process started"))
+  assert_false(has_text(commands, "moon check"))
+  assert_false(has_text(commands, "当前证据"))
+}
+
+///|
 test "workbench applies transport events to model timeline" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(ProcessStarted("4242")),
@@ -2035,14 +2382,17 @@ test "workbench applies transport events to model timeline" {
 }
 
 ///|
-test "workbench runtime draws latest activity event" {
+test "workbench runtime keeps raw transport activity out of current evidence" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(ProcessStarted("4242")),
   )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "当前证据"))
-  assert_true(has_text(commands, "Pi RPC process started"))
-  assert_true(has_text(commands, "pid 4242"))
+  assert_true(has_text(commands, "当前任务"))
+  assert_true(has_text(commands, "Agent：运行中"))
+  assert_false(has_text(commands, "当前证据"))
+  assert_false(has_text(commands, "Pi RPC process started"))
+  assert_false(has_text(commands, "pid 4242"))
+  assert_false(has_text(commands, "通道：运行中"))
   assert_false(has_text(commands, "跟进"))
   assert_false(has_text(commands, "运行证据"))
   assert_false(has_text(commands, "工作区证据"))
@@ -2157,7 +2507,7 @@ test "workbench ingests Pi plan update jsonl into session plan evidence" {
   inspect(model.plan[1].title, content="Fix Skia smoke")
   inspect(model.plan[1].detail, content="Run focused checks")
   inspect(model.active_session().status, content="running")
-  inspect(model.active_session().active_task, content="Pi plan: Fix Skia smoke")
+  inspect(model.active_session().active_task, content="计划：Fix Skia smoke")
   inspect(model.active_session().unread_events, content="1")
   inspect(model.active_session().summary, content="1/2 plan steps complete")
   inspect(model.last_status, content="Pi plan updated")
@@ -2232,7 +2582,7 @@ test "workbench ingests Pi RPC get_state response jsonl" {
   let session = model.active_session()
   inspect(session.status, content="running")
   inspect(session.unread_events, content="1")
-  inspect(session.summary, content="Pi RPC session 019e7eb5 on openai/gpt-5")
+  inspect(session.summary, content="Agent session 019e7eb5 on openai/gpt-5")
   let binding = model.active_pi_session_binding()
   inspect(binding.workbench_session_id, content="moui-skia")
   inspect(binding.rpc_session_id, content="019e7eb5")
@@ -2483,11 +2833,11 @@ test "workbench set model runtime effect updates active Pi binding" {
   inspect(binding.last_command, content="set_model")
   inspect(
     model.active_session().active_task,
-    content="Pi model: GPT-5 (openai/gpt-5)",
+    content="模型：GPT-5 (openai/gpt-5)",
   )
   inspect(
     model.active_session().summary,
-    content="Pi model set to GPT-5 (openai/gpt-5)",
+    content="模型已设为 GPT-5 (openai/gpt-5)",
   )
   inspect(model.last_status, content="Pi model set")
   assert_true(model.events.any(event => event.title == "Pi model set"))
@@ -2548,10 +2898,10 @@ test "workbench model cycle runtime effect updates active Pi binding" {
   let binding = model.active_pi_session_binding()
   inspect(binding.model, content="openai/gpt-5")
   inspect(binding.last_command, content="cycle_model")
-  inspect(model.active_session().active_task, content="Pi model: openai/gpt-5")
+  inspect(model.active_session().active_task, content="模型：openai/gpt-5")
   inspect(
     model.active_session().summary,
-    content="Pi model switched to openai/gpt-5",
+    content="模型已切换为 openai/gpt-5",
   )
   inspect(model.last_status, content="Pi model changed")
   assert_true(model.events.any(event => event.title == "Pi model cycled"))
@@ -2631,7 +2981,7 @@ test "workbench compact runtime effect records compaction summary" {
   }
   inspect(model.pending_transport_count(), content="0")
   inspect(model.pi_rpc.command, content="compact")
-  inspect(model.active_session().active_task, content="Pi context compacted")
+  inspect(model.active_session().active_task, content="上下文已压缩")
   inspect(
     model.active_session().summary,
     content="Pi compacted context from 42000 tokens",
@@ -2693,7 +3043,7 @@ test "workbench ingests Pi RPC get_session_stats response into session metrics" 
   inspect(binding.last_command, content="get_session_stats")
   inspect(
     model.active_session().summary,
-    content="Pi stats: 10 messages, 4 tools, 1340 tokens",
+    content="会话统计：10 消息，4 工具，1340 tokens",
   )
   inspect(model.last_status, content="Pi session stats refreshed")
   assert_true(
@@ -2739,7 +3089,7 @@ test "workbench binds switched Pi session after get_state refresh" {
   inspect(binding.status_label(), content="bound · Mo Workbench smoke")
   let session = model.active_session()
   inspect(session.status, content="active")
-  inspect(session.summary, content="Pi RPC session 019e7ed4 on openai/gpt-5")
+  inspect(session.summary, content="Agent session 019e7ed4 on openai/gpt-5")
   inspect(model.last_status, content="Pi RPC response applied")
   assert_true(
     model.events.any(event => event.title == "Pi session switch accepted"),
@@ -2759,7 +3109,7 @@ test "workbench active Pi binding keeps configured session path" {
 }
 
 ///|
-test "workbench draws Pi session binding identity after get_state" {
+test "workbench draws backend session binding identity after get_state" {
   let model = WorkbenchModel::new()
     .update(
       ReceiveTransport(
@@ -2773,7 +3123,12 @@ test "workbench draws Pi session binding identity after get_state" {
     )
     .update(ToggleComposerControls)
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "Pi 会话：已绑定 · Mo Workbench smoke"))
+  assert_true(
+    has_text(commands, "后端会话：已绑定 · Mo Workbench smoke"),
+  )
+  assert_false(
+    has_text(commands, "Pi 会话：已绑定 · Mo Workbench smoke"),
+  )
   assert_true(has_text(commands, "模型：openai/gpt-5"))
 }
 
@@ -2793,7 +3148,7 @@ test "workbench ingests Pi session info changes into session binding" {
   inspect(binding.last_command, content="session_info_changed")
   inspect(
     model.active_session().summary,
-    content="Pi session name: Mo Workbench smoke",
+    content="会话名：Mo Workbench smoke",
   )
   inspect(model.last_status, content="Pi session info applied")
   assert_true(
@@ -2853,7 +3208,9 @@ test "workbench ingests Pi streaming message lifecycle jsonl" {
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
   assert_true(has_text(running_commands, "当前任务"))
-  assert_true(has_text(running_commands, "Pi assistant message streaming"))
+  assert_true(has_text(running_commands, "Agent 回复中"))
+  assert_false(has_text(running_commands, "Agent assistant message streaming"))
+  assert_false(has_text(running_commands, "Pi assistant message streaming"))
   assert_true(
     draw_text_count_containing(running_commands, "Inspecting renderer route") >=
     1,
@@ -2889,7 +3246,7 @@ test "workbench ingests Pi streaming message lifecycle jsonl" {
   inspect(model.transcript[0].summary, content="Renderer route inspected")
   let session = model.active_session()
   inspect(session.status, content="active")
-  inspect(session.active_task, content="Pi agent run completed")
+  inspect(session.active_task, content="Agent 运行完成")
   inspect(model.last_status, content="Pi agent completion applied")
   assert_true(model.events.any(event => event.title == "Pi agent started"))
   assert_true(
@@ -3615,7 +3972,8 @@ test "workbench active command still prioritizes cancellation before failed evid
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "下一步"))
-  assert_true(has_text(commands, "等待 Pi 完成当前运行"))
+  assert_true(has_text(commands, "等待 Agent 完成当前运行"))
+  assert_false(has_text(commands, "等待 Pi 完成当前运行"))
   assert_false(has_text(commands, "修复失败命令"))
 }
 
@@ -3739,11 +4097,21 @@ test "workbench compact shell keeps workflow rail collapsed" {
 test "workbench runtime draws agent desktop shell" {
   let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
-  assert_true(has_text(commands, "Pi agent 桌面工作台"))
+  assert_true(has_text(commands, "Agent 桌面工作台"))
+  assert_false(has_text(commands, "Pi agent 桌面工作台"))
   assert_true(has_text(commands, "当前会话"))
   assert_true(has_text(commands, "MoUI"))
   assert_false(has_text(commands, "活跃"))
-  assert_true(has_text(commands, "Pi RPC harness"))
+  assert_true(has_text(commands, "Agent 路由整理"))
+  assert_false(has_text(commands, "Provider routing cleanup"))
+  assert_false(has_text(commands, "Provider switching"))
+  assert_false(has_text(commands, "Backend smoke session"))
+  assert_false(has_text(commands, "Pi RPC harness"))
+  assert_false(has_text(commands, "Agent Pi"))
+  assert_true(has_text(commands, "准备开始这个会话"))
+  assert_true(has_text(commands, "告诉 Agent 你想推进的任务。"))
+  assert_false(has_text(commands, "本地"))
+  assert_false(has_text(commands, "Fixture"))
   assert_false(has_text(commands, "排队"))
   assert_false(has_text(commands, "空闲"))
   assert_false(has_text(commands, "Agents"))
@@ -3756,8 +4124,8 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "协调"))
   assert_false(has_text(commands, "实现"))
   assert_false(has_text(commands, "检查"))
-  assert_true(has_text(commands, "新会话"))
-  assert_true(has_text(commands, "刷新"))
+  assert_false(has_text(commands, "新会话"))
+  assert_false(has_text(commands, "刷新"))
   assert_false(has_text(commands, "Pi 运行状态"))
   assert_false(has_text(commands, "上下文"))
   assert_false(has_text(commands, "仓库"))
@@ -3799,6 +4167,7 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "代码修改、测试、重构"))
   assert_false(has_text(commands, "诊断、diff、文档收口"))
   assert_false(has_text(commands, "下一步"))
+  assert_false(has_text(commands, "等待证据"))
   assert_false(has_text(commands, "当前计划"))
   assert_false(has_text(commands, "Session"))
   assert_false(has_text(commands, "Pi transcript"))
@@ -3830,6 +4199,11 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "RPC 通道：未连接"))
   assert_false(has_text(commands, "Pi 运行：空闲"))
   assert_false(has_text(commands, "Pi RPC + macOS Skia dogfood."))
+  assert_false(
+    has_text(
+      commands, "JSONL stdin/stdout transport exercise for pi --mode rpc.",
+    ),
+  )
   assert_false(has_text(commands, "要求继续推进 Mo Workbench"))
   assert_false(has_text(commands, "Product"))
   assert_false(has_text(commands, "No description"))
@@ -3840,6 +4214,111 @@ test "workbench runtime draws agent desktop shell" {
   assert_false(has_text(commands, "修复"))
   assert_false(has_text(commands, "Research notebook"))
   assert_false(has_text(commands, "Skia native"))
+}
+
+///|
+test "workbench backend and session controls appear only in expanded composer options" {
+  let collapsed = WorkbenchModel::new()
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_false(has_text(collapsed, "Agent Pi"))
+  assert_false(has_text(collapsed, "后端"))
+  assert_false(has_text(collapsed, "本地"))
+  assert_false(has_text(collapsed, "Fixture"))
+  assert_false(has_text(collapsed, "新会话"))
+  assert_false(has_text(collapsed, "刷新"))
+  let expanded = WorkbenchModel::new()
+    .update(ToggleComposerControls)
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(expanded, "后端"))
+  assert_true(has_text(expanded, "Pi"))
+  assert_true(has_text(expanded, "本地"))
+  assert_false(has_text(expanded, "Fixture"))
+  assert_true(has_text(expanded, "真实后端"))
+  assert_false(has_text(expanded, "Pi RPC backend provider"))
+  assert_false(has_text(expanded, "Local fixture backend"))
+  assert_true(has_text(expanded, "会话"))
+  assert_true(has_text(expanded, "新会话"))
+  assert_true(has_text(expanded, "刷新"))
+  assert_true(has_text(expanded, "按需同步当前 Agent 会话"))
+  let fixture_expanded = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(ToggleComposerControls)
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(fixture_expanded, "本地演练"))
+  assert_false(has_text(fixture_expanded, "真实 Agent 后端"))
+}
+
+///|
+test "workbench default first screen stays within a quiet text budget" {
+  let commands = WorkbenchModel::new()
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(draw_text_total(commands) <= 17)
+  inspect(draw_text_count(commands, "当前会话"), content="1")
+  inspect(draw_text_count(commands, "准备开始这个会话"), content="1")
+  inspect(draw_text_count(commands, "给 Agent 一个任务"), content="1")
+  assert_true(draw_text_count_containing(commands, "Agent") <= 4)
+  inspect(draw_text_count_containing(commands, "Pi"), content="0")
+  inspect(draw_text_count_containing(commands, "RPC"), content="0")
+  inspect(draw_text_count_containing(commands, "诊断"), content="0")
+  inspect(draw_text_count_containing(commands, "证据"), content="0")
+}
+
+///|
+test "workbench top bar uses freed space for session identity" {
+  let title = "Mo Workbench routing cleanup keeps the top bar title readable without reserved hidden chips"
+  let model = {
+    ..WorkbenchModel::new(),
+    selected_session_id: "topbar-readable",
+    sessions: [
+      WorkbenchSession::new(
+        id="topbar-readable",
+        title~,
+        project_path="/Volumes/Data/Code/moon/MoUI",
+        branch="codex/mo-workbench",
+        status="active",
+        summary="Readable title smoke",
+        active_task="",
+        unread_events=0,
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, title))
+  assert_false(has_text(commands, "Agent Pi"))
+  assert_false(has_text(commands, "新会话"))
+  assert_false(has_text(commands, "刷新"))
+}
+
+///|
+test "workbench top bar backend chip stays quiet for default Pi runs" {
+  let default_commands = WorkbenchModel::new()
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_false(has_text(default_commands, "Agent Pi"))
+
+  let fixture_commands = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(fixture_commands, "Agent 本地"))
+  assert_false(has_text(fixture_commands, "Agent Fixture"))
+
+  let active_pi_commands = WorkbenchModel::new()
+    .update(ReceiveTransport(ProcessStarted("4242")))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_false(has_text(active_pi_commands, "Agent Pi"))
+  assert_true(has_text(active_pi_commands, "Agent：运行中"))
+
+  let failed_pi_commands = WorkbenchModel::new()
+    .update(ReceiveTransport(TransportFailed("pi unavailable")))
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(failed_pi_commands, "Agent Pi"))
 }
 
 ///|
@@ -3866,10 +4345,10 @@ test "workbench top bar shortens long session identity" {
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "当前会话"))
   assert_true(has_text(commands, "运行中"))
-  assert_false(has_text(commands, long_title))
+  assert_true(has_text(commands, long_title))
   assert_false(has_text(commands, long_branch))
   assert_false(has_text(commands, long_path))
-  assert_true(draw_text_count_containing(commands, "...") >= 2)
+  assert_true(draw_text_count_containing(commands, "...") >= 1)
   assert_true(draw_text_count_containing(commands, "long-name") >= 1)
 }
 
@@ -3909,18 +4388,104 @@ test "workbench sidebar transport status appears only when useful" {
     .update(QueueCommand("moon check"))
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(queued, "Pi RPC"))
-  assert_true(has_text(queued, "启动中"))
+  assert_false(has_text(queued, "Pi"))
+  assert_false(has_text(queued, "启动中"))
+  assert_true(has_text(queued, "Agent：准备中"))
+  assert_false(has_text(queued, "通道：启动中"))
   let running = WorkbenchModel::new()
     .update(ReceiveTransport(ProcessStarted("4242")))
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(running, "运行中"))
+  assert_true(has_text(running, "Agent：运行中"))
+  assert_false(has_text(running, "通道：运行中"))
+  assert_false(has_text(running, "Pi：空闲"))
+  assert_false(has_text(running, "Agent Pi"))
+  assert_false(has_text(running, "Pi RPC process started"))
   let failed = WorkbenchModel::new()
     .update(ReceiveTransport(TransportFailed("pi unavailable")))
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
   assert_true(has_text(failed, "失败：pi unavailable"))
+}
+
+///|
+test "workbench runtime signal keeps useful agent detail in one row" {
+  let model = {
+    ..WorkbenchModel::new(),
+    pi_agent: PiAgentSnapshot::new(phase="tool", active_tool_name="read"),
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "Agent：工具中 · 工具 read"))
+  assert_false(has_text(commands, "Pi：工具中"))
+  assert_false(has_text(commands, "通道："))
+}
+
+///|
+test "workbench fixture backend hides Pi-only controls" {
+  let model = {
+    ..WorkbenchModel::new().update(SwitchAgentBackend("fixture")),
+    composer_controls_expanded: true,
+    model_catalog: [PiModelInfo::new(provider="openai", id="gpt-5")],
+    fork_messages: [PiForkMessage::new(entry_id="entry-1", text="Fork me")],
+    pi_agent: PiAgentSnapshot::new(
+      thinking_level="high",
+      steering_mode="all",
+      follow_up_mode="all",
+    ),
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "本地"))
+  assert_false(has_text(commands, "Fixture"))
+  assert_false(has_text(commands, "模型 1"))
+  assert_false(has_text(commands, "分叉"))
+  assert_false(has_text(commands, "导出"))
+  assert_false(has_text(commands, "压缩"))
+  assert_false(has_text(commands, "思考"))
+  assert_false(has_text(commands, "同步名"))
+  assert_false(has_text(commands, "引导"))
+  assert_false(has_text(commands, "跟进"))
+  assert_false(has_text(commands, "Pi 会话"))
+}
+
+///|
+test "workbench conversation labels stay agent neutral on fixture backend" {
+  let transcript_model = {
+    ..WorkbenchModel::new().update(SwitchAgentBackend("fixture")),
+    events: [],
+    transcript: [
+      TranscriptItem::new(
+        id="assistant-neutral",
+        role="assistant",
+        summary="Ready to inspect the worktree",
+        detail="I will keep the session focused.",
+        tone="success",
+      ),
+    ],
+  }
+  let transcript = transcript_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(transcript, "Agent"))
+  assert_true(has_text(transcript, "Ready to inspect the worktree"))
+  assert_false(has_text(transcript, "Pi"))
+
+  let event_model = {
+    ..WorkbenchModel::new().update(SwitchAgentBackend("fixture")),
+    events: [
+      AgentEvent::new(
+        phase="assistant",
+        title="Planning next step",
+        detail="Keep the default shell quiet.",
+        tone="info",
+      ),
+    ],
+  }
+  let event_commands = event_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(event_commands, "Agent"))
+  assert_true(has_text(event_commands, "Planning next step"))
+  assert_false(has_text(event_commands, "Pi"))
 }
 
 ///|
@@ -4133,7 +4698,7 @@ test "workbench composer remains visible after scroll and resize" {
     width=960.0,
     height=640.0,
   )
-  guard text_frame(runtime.draw_commands(), "给 Pi 一个任务")
+  guard text_frame(runtime.draw_commands(), "给 Agent 一个任务")
     is Some(before) else {
     fail("expected composer placeholder before scroll")
   }
@@ -4152,7 +4717,7 @@ test "workbench composer remains visible after scroll and resize" {
       ),
     ),
   )
-  guard text_frame(runtime.draw_commands(), "给 Pi 一个任务")
+  guard text_frame(runtime.draw_commands(), "给 Agent 一个任务")
     is Some(after) else {
     fail("expected composer placeholder after scroll")
   }
@@ -4160,7 +4725,7 @@ test "workbench composer remains visible after scroll and resize" {
   runtime.dispatch_event(
     @core.AppEvent::Resize(@core.Size::new(width=1440.0, height=900.0)),
   )
-  guard text_frame(runtime.draw_commands(), "给 Pi 一个任务")
+  guard text_frame(runtime.draw_commands(), "给 Agent 一个任务")
     is Some(resized) else {
     fail("expected composer placeholder after resize")
   }
@@ -4192,6 +4757,21 @@ test "workbench composer displays selected agent focus in context summary" {
   let model = WorkbenchModel::new().update(SelectAgent("coding"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "仓库、示例、焦点 编码"))
+}
+
+///|
+fn assert_fixture_prompt_action_stays_local(
+  model : WorkbenchModel,
+  event_title~ : String,
+) -> Unit raise {
+  inspect(model.active_session().backend_id, content="fixture")
+  inspect(model.last_status, content="已交给本地后端")
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transcript.length(), content="2")
+  inspect(model.transcript[0].role, content="user")
+  inspect(model.transcript[1].role, content="assistant")
+  inspect(model.transcript[1].summary, content="本地 已接收任务")
+  assert_true(model.events.any(event => event.title == event_title))
 }
 
 ///|
@@ -4255,6 +4835,18 @@ fn draw_text_count(commands : Array[@core.DrawCommand], text : String) -> Int {
   for command in commands {
     match command {
       DrawText({ text: value, .. }) => if value == text { count = count + 1 }
+      _ => ()
+    }
+  }
+  count
+}
+
+///|
+fn draw_text_total(commands : Array[@core.DrawCommand]) -> Int {
+  let mut count = 0
+  for command in commands {
+    match command {
+      DrawText(_) => count = count + 1
       _ => ()
     }
   }

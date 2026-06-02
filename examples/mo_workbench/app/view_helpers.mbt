@@ -109,10 +109,6 @@ fn workbench_layout(
     1.0,
     content_width + scrollbar_width - 24.0,
   )
-  let top_identity_width = workbench_max_double(
-    1.0,
-    top_inner_width - 74.0 - 66.0 - 54.0 - 32.0,
-  )
   {
     viewport,
     sidebar_width,
@@ -133,7 +129,7 @@ fn workbench_layout(
     row_badge_width,
     row_text_width,
     command_text_width,
-    top_identity_width,
+    top_identity_width: top_inner_width,
     composer_width,
     composer_input_width: workbench_max_double(1.0, composer_width - 24.0),
     composer_height,
@@ -246,7 +242,7 @@ fn WorkbenchModel::sidebar_brand(
         height=34.0,
       ),
       text(
-        "Pi agent 桌面工作台",
+        "Agent 桌面工作台",
         role=Caption,
         theme~,
         width=layout.sidebar_inner_width,
@@ -339,7 +335,8 @@ fn WorkbenchModel::should_show_sidebar_transport_footer(
 ) -> Bool {
   match self.transport.status {
     Disconnected => self.pending_transport_count() > 0
-    _ => true
+    Failed(_) => true
+    _ => false
   }
 }
 
@@ -349,9 +346,10 @@ fn WorkbenchModel::sidebar_footer(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  let backend = self.active_agent_backend_profile()
   row(
     [
-      text("Pi RPC", role=Control, theme~, width=56.0, height=28.0),
+      text(backend.label, role=Control, theme~, width=56.0, height=28.0),
       self.sidebar_transport_status_cell(layout, theme),
     ],
     spacing=8.0,
@@ -760,11 +758,21 @@ fn WorkbenchModel::top_bar(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   let active = self.active_session()
+  let show_backend_chip = self.should_show_top_bar_backend_chip()
+  let show_status_meta = should_show_session_status_meta(active.status)
+  let identity_width = top_bar_identity_width(
+    layout,
+    show_backend_chip~,
+    show_status_meta~,
+  )
   let controls : Array[@core.View[WorkbenchMsg]] = [
-    self.top_bar_identity(active, layout, theme),
+    self.top_bar_identity(active, identity_width, theme),
     spacer(min_length=10.0, weight=1.0),
   ]
-  if should_show_session_status_meta(active.status) {
+  if show_backend_chip {
+    controls.push(self.active_agent_backend_chip(theme))
+  }
+  if show_status_meta {
     controls.push(
       badge(
         session_status_label(active.status),
@@ -774,26 +782,6 @@ fn WorkbenchModel::top_bar(
       ),
     )
   }
-  controls.push(
-    button(
-      "新会话",
-      on_click=NewSession,
-      variant=Outline,
-      theme~,
-      width=66.0,
-      height=34.0,
-    ),
-  )
-  controls.push(
-    button(
-      "刷新",
-      on_click=RefreshSession,
-      variant=Outline,
-      theme~,
-      width=54.0,
-      height=34.0,
-    ),
-  )
   surface(
     row(controls, spacing=8.0, align=Center),
     width=layout.content_width + layout.scrollbar_width,
@@ -806,17 +794,72 @@ fn WorkbenchModel::top_bar(
 }
 
 ///|
+fn top_bar_identity_width(
+  layout : WorkbenchLayout,
+  show_backend_chip~ : Bool,
+  show_status_meta~ : Bool,
+) -> Double {
+  let chip_count = (if show_backend_chip { 1 } else { 0 }) +
+    (if show_status_meta { 1 } else { 0 })
+  let chip_width = (if show_backend_chip { 82.0 } else { 0.0 }) +
+    (if show_status_meta { 74.0 } else { 0.0 })
+  let spacing = (chip_count + 1).to_double() * 8.0
+  let reserved = 10.0 + spacing + chip_width
+  workbench_max_double(1.0, layout.top_identity_width - reserved)
+}
+
+///|
+fn WorkbenchModel::should_show_top_bar_backend_chip(
+  self : WorkbenchModel,
+) -> Bool {
+  let profile = self.active_agent_backend_profile()
+  profile.id != "pi" || self.transport.status is Failed(_)
+}
+
+///|
+fn WorkbenchModel::active_agent_backend_chip(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  badge(
+    "Agent " + self.active_agent_backend_profile().label,
+    tone=Neutral,
+    theme~,
+    width=82.0,
+  )
+}
+
+///|
+fn WorkbenchModel::backend_selector_cell(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let active = self.active_agent_backend_profile()
+  let controls : Array[@core.View[WorkbenchMsg]] = []
+  for profile in agent_backend_profiles() {
+    controls.push(
+      button(
+        profile.label,
+        on_click=SwitchAgentBackend(profile.id),
+        variant=if profile.id == active.id { Outline } else { Ghost },
+        theme~,
+        width=64.0,
+        height=30.0,
+      ),
+    )
+  }
+  row(controls, spacing=4.0, align=Center)
+}
+
+///|
 fn WorkbenchModel::top_bar_identity(
   self : WorkbenchModel,
   active : WorkbenchSession,
-  layout : WorkbenchLayout,
+  identity_width : Double,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   ignore(self)
-  let title_width = workbench_max_double(
-    1.0,
-    layout.top_identity_width - 78.0 - 8.0,
-  )
+  let title_width = workbench_max_double(1.0, identity_width - 78.0 - 8.0)
   let title_label = end_ellipsis_label(
     active.title,
     max_chars=readable_line_char_limit(title_width),
@@ -838,16 +881,16 @@ fn WorkbenchModel::top_bar_identity(
         align=Center,
       ),
       text(
-        top_bar_session_meta_label(active, layout.top_identity_width),
+        top_bar_session_meta_label(active, identity_width),
         role=Caption,
         theme~,
-        width=layout.top_identity_width,
+        width=identity_width,
         height=20.0,
       ),
     ],
     spacing=0.0,
     align=Start,
-  ).frame(width=layout.top_identity_width, height=46.0)
+  ).frame(width=identity_width, height=46.0)
 }
 
 ///|
@@ -917,6 +960,9 @@ fn WorkbenchModel::chat_transcript(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  if self.should_show_chat_empty_state() {
+    return self.chat_empty_state(layout, theme)
+  }
   let rows : Array[@core.View[WorkbenchMsg]] = []
   if self.has_session_status_panel_content() {
     rows.push(self.session_status_panel(layout, theme))
@@ -935,6 +981,9 @@ fn WorkbenchModel::chat_content_height(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
 ) -> Double {
+  if self.should_show_chat_empty_state() {
+    return self.main_scroll_height(layout)
+  }
   let mut height = 0.0
   if self.has_session_status_panel_content() {
     height = height +
@@ -953,6 +1002,69 @@ fn WorkbenchModel::chat_content_height(
     height = height + self.turn_evidence_card_height()
   }
   height
+}
+
+///|
+fn WorkbenchModel::should_show_chat_empty_state(self : WorkbenchModel) -> Bool {
+  !self.has_session_status_panel_content() &&
+  !self.has_transcript_panel_content() &&
+  !self.has_turn_evidence_card_content()
+}
+
+///|
+fn WorkbenchModel::chat_empty_state(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let active = self.active_session()
+  let width = layout.content_width
+  let body_width = workbench_clamp_double(width - 96.0, 220.0, 520.0)
+  let height = self.main_scroll_height(layout)
+  column(
+    [
+      spacer(min_length=1.0, weight=1.0),
+      text(
+        "准备开始这个会话",
+        role=Control,
+        theme~,
+        width=body_width,
+        height=28.0,
+      ),
+      text(
+        "告诉 Agent 你想推进的任务。",
+        role=Caption,
+        theme~,
+        width=body_width,
+        height=24.0,
+      ),
+      text(
+        empty_state_session_hint(active, body_width),
+        role=Caption,
+        theme~,
+        width=body_width,
+        height=24.0,
+      ),
+      spacer(min_length=1.0, weight=1.0),
+    ],
+    spacing=2.0,
+    align=Center,
+  ).frame(width~, height~)
+}
+
+///|
+fn empty_state_session_hint(
+  session : WorkbenchSession,
+  width : Double,
+) -> String {
+  let project = project_display_label(session.project_path)
+  let branch = session.branch.trim().to_owned()
+  let max_chars = readable_line_char_limit(width)
+  if branch == "" {
+    middle_ellipsis_label(project, max_chars~)
+  } else {
+    middle_ellipsis_label(project + " · " + branch, max_chars~)
+  }
 }
 
 ///|
@@ -984,7 +1096,7 @@ fn WorkbenchModel::has_raw_activity_panel_content(
   self : WorkbenchModel,
 ) -> Bool {
   self.should_show_focused_check_presets() ||
-  !self.events.is_empty() ||
+  self.latest_visible_activity_event() is Some(_) ||
   !self.commands.is_empty()
 }
 
@@ -1026,10 +1138,9 @@ fn WorkbenchModel::turn_evidence_card(
       match self.primary_turn_evidence_command() {
         Some(command) => rows.push(command_run_row(command, layout, theme))
         None =>
-          if !self.events.is_empty() {
-            rows.push(
-              event_row(self.events[self.events.length() - 1], layout, theme),
-            )
+          match self.latest_visible_activity_event() {
+            Some(event) => rows.push(event_row(event, layout, theme))
+            None => ()
           }
       }
     }
@@ -1090,12 +1201,34 @@ fn WorkbenchModel::turn_evidence_summary_label(self : WorkbenchModel) -> String 
             self.workspace_summary_label()
           } else if !self.files.is_empty() {
             self.workspace_summary_label()
-          } else if !self.events.is_empty() {
-            self.events[self.events.length() - 1].title
           } else {
-            "等待证据"
+            match self.latest_visible_activity_event() {
+              Some(event) => event.title
+              None => "等待证据"
+            }
           }
       }
+  }
+}
+
+///|
+fn WorkbenchModel::latest_visible_activity_event(
+  self : WorkbenchModel,
+) -> AgentEvent? {
+  let mut visible : AgentEvent? = None
+  for event in self.events {
+    if event_is_visible_activity_evidence(event) {
+      visible = Some(event)
+    }
+  }
+  visible
+}
+
+///|
+fn event_is_visible_activity_evidence(event : AgentEvent) -> Bool {
+  match event.phase {
+    "user" | "control" | "transport" => false
+    _ => true
   }
 }
 
@@ -1366,7 +1499,10 @@ fn WorkbenchModel::turn_evidence_card_height(self : WorkbenchModel) -> Double {
     } else {
       match self.primary_turn_evidence_command() {
         Some(command) => height = height + 7.0 + command_run_row_height(command)
-        None => if !self.events.is_empty() { height = height + 7.0 + 46.0 }
+        None =>
+          if self.latest_visible_activity_event() is Some(_) {
+            height = height + 7.0 + 46.0
+          }
       }
     }
   }
@@ -1899,7 +2035,7 @@ fn transcript_process_detail_label(item : TranscriptItem) -> String {
   let title = item.summary.trim().to_owned()
   let detail = item.detail.trim().to_owned()
   let label = match item.role {
-    "assistantProcess" => "Pi 过程"
+    "assistantProcess" => "Agent 过程"
     "toolResult" => "工具结果"
     "bashExecution" => "命令"
     _ => transcript_role_label(item.role)
@@ -2204,7 +2340,7 @@ fn transcript_badge_tone(tone : String) -> @views.BadgeTone {
 fn transcript_role_label(role : String) -> String {
   match role {
     "user" => "用户"
-    "assistant" => "Pi"
+    "assistant" => "Agent"
     "toolResult" => "工具"
     "bashExecution" => "命令"
     "branchSummary" => "分支"
@@ -2282,13 +2418,15 @@ fn WorkbenchModel::session_status_panel(
     None => ()
   }
   if self.should_show_session_detail_rows() {
-    if self.pi_session_stats.has_visible_metrics() {
+    let capabilities = self.active_agent_backend_capabilities()
+    if capabilities.supports_session_stats &&
+      self.pi_session_stats.has_visible_metrics() {
       rows.push(session_stats_row(self.pi_session_stats, layout, theme))
     }
-    if self.model_catalog.length() > 0 {
+    if capabilities.supports_model_catalog && self.model_catalog.length() > 0 {
       rows.push(model_catalog_row(self.model_catalog, layout, theme))
     }
-    if binding.has_visible_binding() {
+    if capabilities.uses_pi_transport && binding.has_visible_binding() {
       rows.push(session_binding_row(binding, layout, theme))
     }
     if self.has_session_panel_controls() {
@@ -2325,13 +2463,15 @@ fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
     None => ()
   }
   if self.should_show_session_detail_rows() {
-    if self.pi_session_stats.has_visible_metrics() {
+    let capabilities = self.active_agent_backend_capabilities()
+    if capabilities.supports_session_stats &&
+      self.pi_session_stats.has_visible_metrics() {
       count = count + 1
     }
-    if self.model_catalog.length() > 0 {
+    if capabilities.supports_model_catalog && self.model_catalog.length() > 0 {
       count = count + 1
     }
-    if binding.has_visible_binding() {
+    if capabilities.uses_pi_transport && binding.has_visible_binding() {
       count = count + 1
     }
     if self.has_session_panel_controls() {
@@ -2362,12 +2502,16 @@ fn session_status_badge(
 fn WorkbenchModel::should_show_session_detail_rows(
   self : WorkbenchModel,
 ) -> Bool {
+  let capabilities = self.active_agent_backend_capabilities()
   let binding = self.active_pi_session_binding()
   self.composer_controls_expanded &&
   (
-    self.pi_session_stats.has_visible_metrics() ||
-    self.model_catalog.length() > 0 ||
-    binding.has_visible_binding() ||
+    (
+      capabilities.supports_session_stats &&
+      self.pi_session_stats.has_visible_metrics()
+    ) ||
+    (capabilities.supports_model_catalog && self.model_catalog.length() > 0) ||
+    (capabilities.uses_pi_transport && binding.has_visible_binding()) ||
     self.has_session_panel_controls()
   )
 }
@@ -2404,7 +2548,7 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
   let session = self.active_session()
   if self.has_cancel_target() {
     return Some({
-      title: "等待 Pi 完成当前运行",
+      title: "等待 Agent 完成当前运行",
       detail: current_run_detail(session, self.last_status),
       primary_label: "停止",
       primary_message: CancelRun,
@@ -2812,30 +2956,28 @@ fn WorkbenchModel::runtime_signal_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  let signal_width = workbench_max_double(
-    1.0,
-    (layout.panel_body_width - 8.0) / 2.0,
-  )
   row(
     [
       text(
-        "RPC 通道：" + self.transport.display_status_label(),
+        "Agent：" + self.runtime_activity_label(),
         role=Caption,
         theme~,
-        width=signal_width,
-        height=30.0,
-      ),
-      text(
-        "Pi 运行：" + self.pi_agent.display_status_label(),
-        role=Caption,
-        theme~,
-        width=signal_width,
+        width=layout.panel_body_width,
         height=30.0,
       ),
     ],
-    spacing=8.0,
+    spacing=0.0,
     align=Center,
   )
+}
+
+///|
+fn WorkbenchModel::runtime_activity_label(self : WorkbenchModel) -> String {
+  if self.pi_agent.has_visible_signal() {
+    self.pi_agent.display_status_label()
+  } else {
+    self.transport.agent_status_label()
+  }
 }
 
 ///|
@@ -2843,6 +2985,21 @@ fn PiTransportState::display_status_label(self : PiTransportState) -> String {
   match self.status {
     Disconnected => "未连接"
     Starting => "启动中"
+    Running => "运行中"
+    Failed(reason) => "失败：" + reason
+  }
+}
+
+///|
+fn PiTransportState::agent_status_label(self : PiTransportState) -> String {
+  match self.status {
+    Disconnected =>
+      if self.command_queue.length() > 0 {
+        "排队中"
+      } else {
+        "待命"
+      }
+    Starting => "准备中"
     Running => "运行中"
     Failed(reason) => "失败：" + reason
   }
@@ -2891,62 +3048,73 @@ fn WorkbenchModel::session_controls_row(
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
   ignore(layout)
+  let capabilities = self.active_agent_backend_capabilities()
   let controls : Array[@core.View[WorkbenchMsg]] = []
-  if self.pi_agent.thinking_level != "" {
+  if capabilities.supports_thinking_level && self.pi_agent.thinking_level != "" {
     controls.push(self.thinking_level_cell(theme))
   }
   controls.push(spacer(min_length=4.0, weight=1.0))
   if self.has_advanced_session_controls() {
-    controls.push(
-      button(
-        "找分叉",
-        on_click=RefreshForkMessages,
-        variant=Ghost,
-        theme~,
-        width=66.0,
-        height=34.0,
-      ),
-    )
-    controls.push(
-      button(
-        "导出",
-        on_click=ExportSessionHtml,
-        variant=Ghost,
-        theme~,
-        width=54.0,
-        height=34.0,
-      ),
-    )
-    controls.push(
-      button(
-        "压缩",
-        on_click=CompactSession,
-        variant=Ghost,
-        theme~,
-        width=54.0,
-        height=34.0,
-      ),
-    )
-    controls.push(
-      button(
-        "思考",
-        on_click=CycleThinkingLevel,
-        variant=Ghost,
-        theme~,
-        width=54.0,
-        height=34.0,
-      ),
-    )
-    controls.push(
-      button(
-        "同步名",
-        on_click=SyncSessionName,
-        variant=Ghost,
-        theme~,
-        width=66.0,
-        height=34.0,
-      ),
-    )
+    if capabilities.supports_fork {
+      controls.push(
+        button(
+          "分叉",
+          on_click=RefreshForkMessages,
+          variant=Ghost,
+          theme~,
+          width=54.0,
+          height=34.0,
+        ),
+      )
+    }
+    if capabilities.supports_html_export {
+      controls.push(
+        button(
+          "导出",
+          on_click=ExportSessionHtml,
+          variant=Ghost,
+          theme~,
+          width=54.0,
+          height=34.0,
+        ),
+      )
+    }
+    if capabilities.supports_context_compaction {
+      controls.push(
+        button(
+          "压缩",
+          on_click=CompactSession,
+          variant=Ghost,
+          theme~,
+          width=54.0,
+          height=34.0,
+        ),
+      )
+    }
+    if capabilities.supports_thinking_level {
+      controls.push(
+        button(
+          "思考",
+          on_click=CycleThinkingLevel,
+          variant=Ghost,
+          theme~,
+          width=54.0,
+          height=34.0,
+        ),
+      )
+    }
+    if capabilities.uses_pi_transport {
+      controls.push(
+        button(
+          "同步名",
+          on_click=SyncSessionName,
+          variant=Ghost,
+          theme~,
+          width=66.0,
+          height=34.0,
+        ),
+      )
+    }
   }
   if self.has_cancel_target() {
     controls.push(self.cancel_run_button(theme))
@@ -2956,21 +3124,26 @@ fn WorkbenchModel::session_controls_row(
 
 ///|
 fn WorkbenchModel::has_session_panel_controls(self : WorkbenchModel) -> Bool {
-  self.pi_agent.thinking_level != "" ||
+  let capabilities = self.active_agent_backend_capabilities()
+  (capabilities.supports_thinking_level && self.pi_agent.thinking_level != "") ||
   self.has_advanced_session_controls() ||
   self.has_cancel_target()
 }
 
 ///|
 fn WorkbenchModel::has_advanced_session_controls(self : WorkbenchModel) -> Bool {
+  let capabilities = self.active_agent_backend_capabilities()
   let binding = self.active_pi_session_binding()
-  binding.has_visible_binding() ||
-  !self.transcript.is_empty() ||
-  !self.fork_messages.is_empty() ||
-  self.pi_session_stats.has_visible_metrics() ||
-  self.model_catalog.length() > 0 ||
-  self.pi_agent.thinking_level != "" ||
-  self.transport.has_active_signal()
+  (capabilities.uses_pi_transport && binding.has_visible_binding()) ||
+  (capabilities.supports_fork && !self.transcript.is_empty()) ||
+  (capabilities.supports_fork && !self.fork_messages.is_empty()) ||
+  (
+    capabilities.supports_session_stats &&
+    self.pi_session_stats.has_visible_metrics()
+  ) ||
+  (capabilities.supports_model_catalog && self.model_catalog.length() > 0) ||
+  (capabilities.supports_thinking_level && self.pi_agent.thinking_level != "") ||
+  (capabilities.uses_pi_transport && self.transport.has_active_signal())
 }
 
 ///|
@@ -3078,7 +3251,7 @@ fn session_binding_row(
   row(
     [
       text(
-        "Pi 会话：" + binding.display_status_label(),
+        "后端会话：" + binding.display_status_label(),
         role=Caption,
         theme~,
         width=cell_width,
@@ -3373,8 +3546,8 @@ fn event_row(
 fn event_phase_label(phase : String) -> String {
   match phase {
     "user" => "用户"
-    "agent" => "Pi"
-    "assistant" => "Pi"
+    "agent" => "Agent"
+    "assistant" => "Agent"
     "tool" => "工具"
     "transport" => "传输"
     "diagnostic" => "诊断"
@@ -3881,7 +4054,7 @@ fn WorkbenchModel::composer(
       self.prompt,
       on_input=value => PromptChanged(value),
       on_submit=Some(DispatchPrompt),
-      placeholder="给 Pi 一个任务",
+      placeholder="给 Agent 一个任务",
       variant=Plain,
       theme~,
       width=layout.composer_input_width,
@@ -3890,6 +4063,12 @@ fn WorkbenchModel::composer(
   ]
   if self.should_show_context_chip_row() {
     content.push(self.context_chip_row(layout, theme))
+  }
+  if self.should_show_backend_selector_row() {
+    content.push(self.backend_selector_row(layout, theme))
+  }
+  if self.should_show_session_control_row() {
+    content.push(self.session_control_row(layout, theme))
   }
   if self.should_show_composer_agent_row() {
     content.push(self.composer_agent_row(layout, theme))
@@ -3917,6 +4096,12 @@ fn WorkbenchModel::composer_height(
   layout : WorkbenchLayout,
 ) -> Double {
   let mut height = layout.composer_height
+  if self.should_show_backend_selector_row() {
+    height = height + 36.0
+  }
+  if self.should_show_session_control_row() {
+    height = height + 36.0
+  }
   if self.should_show_context_chip_row() {
     height = height + 36.0
   }
@@ -3930,6 +4115,96 @@ fn WorkbenchModel::composer_height(
     height = height + 42.0
   }
   height
+}
+
+///|
+fn WorkbenchModel::should_show_backend_selector_row(
+  self : WorkbenchModel,
+) -> Bool {
+  self.composer_controls_expanded && !self.is_composer_slash_prompt()
+}
+
+///|
+fn WorkbenchModel::should_show_session_control_row(
+  self : WorkbenchModel,
+) -> Bool {
+  self.composer_controls_expanded &&
+  !self.is_composer_slash_prompt() &&
+  (
+    self.active_agent_backend_capabilities().supports_session_refresh ||
+    self.active_agent_backend_capabilities().supports_new_session
+  )
+}
+
+///|
+fn WorkbenchModel::backend_selector_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      text("后端", role=Caption, theme~, width=42.0, height=30.0),
+      self.backend_selector_cell(theme),
+      spacer(min_length=8.0, weight=1.0),
+      text(
+        self.active_agent_backend_profile().description,
+        role=Caption,
+        theme~,
+        width=workbench_max_double(1.0, layout.composer_input_width - 196.0),
+        height=30.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::session_control_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let capabilities = self.active_agent_backend_capabilities()
+  let controls : Array[@core.View[WorkbenchMsg]] = [
+    text("会话", role=Caption, theme~, width=42.0, height=30.0),
+  ]
+  if capabilities.supports_session_refresh {
+    controls.push(
+      button(
+        "刷新",
+        on_click=RefreshSession,
+        variant=Ghost,
+        theme~,
+        width=54.0,
+        height=30.0,
+      ),
+    )
+  }
+  if capabilities.supports_new_session {
+    controls.push(
+      button(
+        "新会话",
+        on_click=NewSession,
+        variant=Ghost,
+        theme~,
+        width=66.0,
+        height=30.0,
+      ),
+    )
+  }
+  controls.push(spacer(min_length=8.0, weight=1.0))
+  controls.push(
+    text(
+      "按需同步当前 Agent 会话",
+      role=Caption,
+      theme~,
+      width=workbench_max_double(1.0, layout.composer_input_width - 190.0),
+      height=30.0,
+    ),
+  )
+  row(controls, spacing=8.0, align=Center)
 }
 
 ///|
@@ -4098,6 +4373,7 @@ fn WorkbenchModel::should_show_composer_secondary_actions(
   self : WorkbenchModel,
 ) -> Bool {
   !self.is_composer_slash_prompt() &&
+  self.active_agent_backend_capabilities().supports_input_modes &&
   (
     self.composer_controls_expanded ||
     self.pi_agent.steering_mode != "one-at-a-time" ||
@@ -4161,6 +4437,9 @@ fn WorkbenchModel::composer_command_suggestions(
   self : WorkbenchModel,
 ) -> Array[PiCommandInfo] {
   let suggestions : Array[PiCommandInfo] = []
+  if !self.active_agent_backend_capabilities().supports_command_catalog {
+    return suggestions
+  }
   match self.composer_slash_query() {
     Some(query) =>
       for command in self.command_catalog {
@@ -4292,7 +4571,7 @@ fn context_display_label(id : String) -> String {
     "repo" => "仓库"
     "examples" => "示例"
     "evidence" => "证据"
-    "session" => "Pi 会话"
+    "session" => "会话"
     _ => id
   }
 }
