@@ -1228,7 +1228,11 @@ fn WorkbenchModel::receive_transport_with_transport(
   match event.session_replacement_refresh() {
     Some((session_id, title, status)) => {
       let session = model.session_for_id(session_id)
-      let commands = model.commands_for_session_replacement_refresh(session)
+      let commands = if status == "Pi transcript refresh queued" {
+        model.commands_for_conversation_refresh(session)
+      } else {
+        model.commands_for_session_replacement_refresh(session)
+      }
       let events = model.events.copy()
       events.push(
         AgentEvent::new(
@@ -1273,11 +1277,14 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
     )
     let command = SendUserInput(session.id, payload)
     let commands = self.commands_with_session_start(session, command)
+    let transcript = self.transcript_with_local_user_message(payload)
     {
       ..self,
       prompt: "",
       composer_controls_expanded: false,
+      workspace_details_expanded: false,
       events,
+      transcript,
       transport: self.transport.enqueue_many(commands),
       last_status: "Queued prompt for Pi JSONL RPC",
     }
@@ -1421,6 +1428,24 @@ fn WorkbenchModel::composer_prompt_payload(
   } else {
     "Context: " + context + "\n\nTask: " + prompt
   }
+}
+
+///|
+fn WorkbenchModel::transcript_with_local_user_message(
+  self : WorkbenchModel,
+  payload : String,
+) -> Array[TranscriptItem] {
+  let transcript = self.transcript.copy()
+  transcript.push(
+    TranscriptItem::new(
+      id="local-user-" + (transcript.length() + 1).to_string(),
+      role="user",
+      summary=payload,
+      detail=payload,
+      tone="info",
+    ),
+  )
+  transcript
 }
 
 ///|
@@ -2793,6 +2818,19 @@ fn WorkbenchModel::commands_for_session_replacement_refresh(
   commands.push(FetchRpcCommands(session.id))
   commands.push(FetchRpcSessionStats(session.id))
   commands
+}
+
+///|
+fn WorkbenchModel::commands_for_conversation_refresh(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> Array[PiTransportCommand] {
+  ignore(self)
+  [
+    FetchRpcMessages(session.id),
+    FetchRpcForkMessages(session.id),
+    FetchRpcSessionStats(session.id),
+  ]
 }
 
 ///|

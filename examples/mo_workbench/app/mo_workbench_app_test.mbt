@@ -8,6 +8,12 @@ test "workbench dispatch queues prompt for selected session" {
   inspect(model.composer_controls_expanded, content="false")
   inspect(model.last_status, content="Queued prompt for Pi JSONL RPC")
   inspect(model.pending_transport_count(), content="2")
+  inspect(model.transcript.length(), content="1")
+  inspect(model.transcript[0].role, content="user")
+  inspect(
+    model.transcript[0].summary,
+    content=context_task_payload("Inspect the Skia renderer route"),
+  )
   match model.transport.command_queue[0] {
     StartRpc(session, cwd) => {
       inspect(session, content="moui-skia")
@@ -114,21 +120,49 @@ test "workbench transport runtime effect dispatches prompt events" {
     emit(ProcessStarted("fixture-pid"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"get_state\"}"))
     emit(JsonLineSent("moui-skia", "{\"type\":\"prompt\"}"))
-    emit(JsonLineReceived("moui-skia", "{\"event\":\"done\"}"))
+    emit(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"prompt\",\"success\":true}",
+      ),
+    )
   })
   let update = WorkbenchModel::new()
     .update(PromptChanged("Summarize the staged diff"))
     .update_with_transport(DispatchPrompt, transport)
   inspect(captured.val.length(), content="0")
   inspect(update.model.pending_transport_count(), content="2")
-  let model = run_workbench_effect(update)
+  let accepted = run_workbench_effect(update)
   inspect(captured.val.length(), content="2")
-  inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
-  inspect(model.transport.last_json_line, content="{\"event\":\"done\"}")
-  assert_true(
-    model.events.any(event => event.title == "JSONL received: moui-skia"),
+  let refresh = accepted.update_with_transport(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia", "{\"type\":\"response\",\"command\":\"prompt\",\"success\":true}",
+      ),
+    ),
+    transport,
   )
+  let model = refresh.model
+  inspect(model.pending_transport_count(), content="3")
+  inspect(
+    model.transport.last_json_line,
+    content="{\"type\":\"response\",\"command\":\"prompt\",\"success\":true}",
+  )
+  inspect(model.last_status, content="Pi transcript refresh queued")
+  assert_true(
+    model.events.any(event => event.title == "Pi transcript refresh queued"),
+  )
+  match model.transport.command_queue[0] {
+    FetchRpcMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued message refresh")
+  }
+  match model.transport.command_queue[1] {
+    FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued fork refresh")
+  }
+  match model.transport.command_queue[2] {
+    FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued stats refresh")
+  }
 }
 
 ///|
@@ -925,21 +959,96 @@ test "workbench ingests Pi RPC fork candidates" {
 
 ///|
 test "workbench runtime draws fork affordance after Pi fork candidates" {
-  let model = WorkbenchModel::new().update(
-    ReceiveTransport(
-      JsonLineReceived(
-        "moui-skia",
-        (
-          #|{"type":"response","command":"get_fork_messages","success":true,"data":{"messages":[{"entryId":"entry-user-1","text":"Inspect the Skia route"}]}}
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_messages","success":true,"data":{"messages":[{"entryId":"entry-user-1","role":"user","content":"Inspect the Skia route","timestamp":1},{"entryId":"entry-assistant-1","role":"assistant","content":"Skia route inspected","timestamp":2}]}}
+          ),
         ),
       ),
-    ),
-  )
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_fork_messages","success":true,"data":{"messages":[{"entryId":"entry-user-1","text":"Inspect the Skia route"}]}}
+          ),
+        ),
+      ),
+    )
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_false(has_text(commands, "会话记录"))
-  assert_true(has_text(commands, "可分叉消息"))
   assert_true(has_text(commands, "Inspect the Skia route"))
-  assert_true(has_text(commands, "分支"))
+  assert_true(has_text(commands, "Skia route inspected"))
+  assert_true(has_text(commands, "分叉"))
+  assert_false(has_text(commands, "跟进这条消息"))
+  assert_false(has_text(commands, "可从此处分叉"))
+  assert_false(has_text(commands, "分支"))
+  assert_true(fork_affordance_follows_text(commands, "Skia route inspected"))
+}
+
+///|
+test "workbench unmatched fork candidates stay hidden until refresh matches them" {
+  let model = {
+    ..WorkbenchModel::new(),
+    transcript: [
+      TranscriptItem::new(
+        id="entry-user-1",
+        role="user",
+        summary="Inspect the Skia route",
+        detail="",
+        tone="info",
+      ),
+    ],
+    fork_messages: [
+      PiForkMessage::new(entry_id="missing-entry", text="Detached fork point"),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_false(has_text(commands, "未匹配分叉候选 · 1 条"))
+  assert_false(has_text(commands, "Detached fork point"))
+  assert_false(has_text(commands, "可从此处分叉"))
+  assert_false(has_text(commands, "分叉"))
+}
+
+///|
+test "workbench fork candidates anchor by matching text when ids differ" {
+  let model = {
+    ..WorkbenchModel::new(),
+    transcript: [
+      TranscriptItem::new(
+        id="user-0",
+        role="user",
+        summary="Context: repo, examples  Task: 你好",
+        detail="",
+        tone="info",
+      ),
+      TranscriptItem::new(
+        id="assistant-0",
+        role="assistant",
+        summary="你好，已检查上下文",
+        detail="",
+        tone="success",
+      ),
+    ],
+    fork_messages: [
+      PiForkMessage::new(
+        entry_id="entry-user-1",
+        text="Context: repo, examples  Task: 你好",
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_false(has_text(commands, "可从此处分叉"))
+  assert_true(has_text(commands, "分叉"))
+  assert_true(
+    fork_affordance_follows_text(commands, "你好，已检查上下文"),
+  )
+  assert_false(has_text(commands, "未匹配分叉候选 · 1 条"))
 }
 
 ///|
@@ -1934,7 +2043,7 @@ test "workbench runtime draws latest activity event" {
   assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "Pi RPC process started"))
   assert_true(has_text(commands, "pid 4242"))
-  assert_true(has_text(commands, "跟进"))
+  assert_false(has_text(commands, "跟进"))
   assert_false(has_text(commands, "运行证据"))
   assert_false(has_text(commands, "工作区证据"))
 }
@@ -2144,7 +2253,7 @@ test "workbench ingests Pi RPC get_messages response into transcript" {
       JsonLineReceived(
         "moui-skia",
         (
-          #|{"type":"response","command":"get_messages","success":true,"data":{"messages":[{"role":"user","content":"Inspect the Skia route","timestamp":1},{"role":"assistant","content":[{"type":"text","text":"Skia route inspected"}],"model":"gpt-5","timestamp":2},{"role":"bashExecution","command":"moon check","output":"ok","exitCode":0,"cancelled":false,"truncated":false,"timestamp":3}]}}
+          #|{"type":"response","command":"get_messages","success":true,"data":{"messages":[{"entryId":"entry-user-1","role":"user","content":"Inspect the Skia route","timestamp":1},{"entryId":"entry-assistant-1","role":"assistant","content":[{"type":"text","text":"Skia route inspected"}],"model":"gpt-5","timestamp":2},{"entryId":"entry-bash-1","role":"bashExecution","command":"moon check","output":"ok","exitCode":0,"cancelled":false,"truncated":false,"timestamp":3}]}}
         ),
       ),
     ),
@@ -2152,8 +2261,10 @@ test "workbench ingests Pi RPC get_messages response into transcript" {
   inspect(model.pi_rpc.command, content="get_messages")
   inspect(model.pi_rpc.message_count, content="3")
   inspect(model.transcript.length(), content="3")
+  inspect(model.transcript[0].id, content="entry-user-1")
   inspect(model.transcript[0].role, content="user")
   inspect(model.transcript[0].summary, content="Inspect the Skia route")
+  inspect(model.transcript[1].id, content="entry-assistant-1")
   inspect(model.transcript[1].role, content="assistant")
   inspect(model.transcript[1].detail, content="Skia route inspected")
   inspect(model.transcript[2].role, content="bashExecution")
@@ -2179,7 +2290,7 @@ test "workbench runtime draws transcript follow-up action after Pi messages" {
   assert_false(has_text(commands, "会话记录"))
   assert_true(has_text(commands, "Inspect the Skia route"))
   assert_true(has_text(commands, "Skia route inspected"))
-  assert_true(has_text(commands, "跟进"))
+  assert_false(has_text(commands, "跟进"))
 }
 
 ///|
@@ -2715,7 +2826,7 @@ test "workbench turns Pi RPC error responses into diagnostics" {
 
 ///|
 test "workbench ingests Pi streaming message lifecycle jsonl" {
-  let model = WorkbenchModel::new()
+  let running = WorkbenchModel::new()
     .update(
       ReceiveTransport(
         JsonLineReceived("moui-skia", "{\"type\":\"agent_start\"}"),
@@ -2738,6 +2849,17 @@ test "workbench ingests Pi streaming message lifecycle jsonl" {
         ),
       ),
     )
+  let running_commands = running
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(running_commands, "当前任务"))
+  assert_true(has_text(running_commands, "Pi assistant message streaming"))
+  assert_true(
+    draw_text_count_containing(running_commands, "Inspecting renderer route") >=
+    1,
+  )
+  assert_false(has_text(running_commands, "已处理"))
+  let model = running
     .update(
       ReceiveTransport(
         JsonLineReceived(
@@ -2762,6 +2884,9 @@ test "workbench ingests Pi streaming message lifecycle jsonl" {
   inspect(model.pi_agent.turn_index, content="2")
   inspect(model.pi_agent.message_role, content="assistant")
   inspect(model.pi_agent.message_preview, content="Renderer route inspected")
+  inspect(model.transcript.length(), content="1")
+  inspect(model.transcript[0].role, content="assistant")
+  inspect(model.transcript[0].summary, content="Renderer route inspected")
   let session = model.active_session()
   inspect(session.status, content="active")
   inspect(session.active_task, content="Pi agent run completed")
@@ -2770,6 +2895,166 @@ test "workbench ingests Pi streaming message lifecycle jsonl" {
   assert_true(
     model.events.any(event => event.title == "Pi message update: assistant"),
   )
+}
+
+///|
+test "workbench completed agent process collapses behind processed row" {
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived("moui-skia", "{\"type\":\"agent_start\"}"),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"tool_execution_start","toolCallId":"call-bash-1","toolName":"bash","args":{"command":"moon test examples/mo_workbench/app --target native","cwd":"/repo"}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"tool_execution_end","toolCallId":"call-bash-1","toolName":"bash","result":{"details":{"exitCode":0},"content":[{"type":"text","text":"ok"}]},"isError":false}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"message_end","message":{"role":"assistant","content":[{"type":"text","text":"Renderer route inspected"}]}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"agent_end","messages":[{"role":"assistant","content":[{"type":"text","text":"Renderer route inspected"}]}],"willRetry":false}
+          ),
+        ),
+      ),
+    )
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "Renderer route inspected"))
+  assert_true(has_text(commands, "已处理"))
+  assert_true(has_text(commands, "展开"))
+  assert_false(has_text(commands, "当前证据"))
+  assert_false(
+    has_text(
+      commands, "命令 通过 · moon test examples/mo_workbench/app --target native · 输出可用 · /repo",
+    ),
+  )
+  let expanded = model.update(ToggleWorkspaceDetails)
+  let expanded_commands = expanded
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(expanded_commands, "已处理"))
+  assert_true(has_text(expanded_commands, "收起"))
+  assert_true(
+    draw_text_count_containing(
+      expanded_commands, "moon test examples/mo_workbench/app --target native",
+    ) >=
+    1,
+  )
+  assert_true(draw_text_count_containing(expanded_commands, "Pi agent") >= 1)
+}
+
+///|
+test "workbench keeps tool transcript entries inside processed details" {
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_messages","success":true,"data":{"messages":[{"entryId":"entry-user-1","role":"user","content":"查看 readme 文件","timestamp":1},{"entryId":"entry-assistant-tool","role":"assistant","content":[{"type":"thinking"},{"type":"toolCall","name":"read"}],"timestamp":2},{"entryId":"entry-tool-1","role":"toolResult","toolName":"read","content":"# MoUI README 摘要","timestamp":3},{"entryId":"entry-assistant-final","role":"assistant","content":[{"type":"thinking"},{"type":"text","text":"## MoUI README 摘要"}],"timestamp":4}]}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived("moui-skia", "{\"type\":\"agent_start\"}"),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"agent_end","messages":[{"role":"assistant","content":[{"type":"text","text":"## MoUI README 摘要"}]}],"willRetry":false}
+          ),
+        ),
+      ),
+    )
+  inspect(model.transcript.length(), content="5")
+  inspect(model.transcript[1].role, content="assistantProcess")
+  inspect(model.transcript[2].role, content="toolResult")
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "查看 readme 文件"))
+  assert_true(has_text(commands, "## MoUI README 摘要"))
+  assert_true(has_text(commands, "已处理"))
+  assert_false(has_text(commands, "Tool result: read"))
+  assert_false(has_text(commands, "thinkingtool call: read"))
+  assert_false(has_text(commands, "# MoUI README 摘要"))
+  let expanded = model.update(ToggleWorkspaceDetails)
+  let expanded_commands = expanded
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(
+    draw_text_count_containing(expanded_commands, "tool call: read") >= 1,
+  )
+  assert_true(
+    draw_text_count_containing(expanded_commands, "Tool result: read") >= 1,
+  )
+  assert_true(
+    draw_text_count_containing(expanded_commands, "# MoUI README 摘要") >= 1,
+  )
+}
+
+///|
+test "workbench Pi agent completion queues transcript refresh and shows reply" {
+  let transport = PiTransportRuntime::new(run=(_commands, _emit) => ())
+  let update = WorkbenchModel::new().update_with_transport(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"agent_end","messages":[{"role":"assistant","content":[{"type":"text","text":"Renderer route inspected"}]}],"willRetry":false}
+        ),
+      ),
+    ),
+    transport,
+  )
+  let model = update.model
+  inspect(model.last_status, content="Pi transcript refresh queued")
+  inspect(model.pending_transport_count(), content="3")
+  inspect(model.transcript.length(), content="1")
+  inspect(model.transcript[0].role, content="assistant")
+  inspect(model.transcript[0].summary, content="Renderer route inspected")
+  match model.transport.command_queue[0] {
+    FetchRpcMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued message refresh")
+  }
+  match model.transport.command_queue[1] {
+    FetchRpcForkMessages(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued fork refresh")
+  }
+  match model.transport.command_queue[2] {
+    FetchRpcSessionStats(session) => inspect(session, content="moui-skia")
+    _ => fail("expected queued stats refresh")
+  }
 }
 
 ///|
@@ -3420,7 +3705,7 @@ test "workbench wide shell renders workflow rail from live evidence" {
   }
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "状态"))
-  assert_true(has_text(commands, "下一步"))
+  inspect(draw_text_count(commands, "下一步"), content="1")
   assert_true(has_text(commands, "继续当前计划"))
   assert_true(has_text(commands, "合并最终输出"))
   assert_false(has_text(commands, "Agents"))
@@ -3429,6 +3714,18 @@ test "workbench wide shell renders workflow rail from live evidence" {
   assert_false(has_text(commands, "计划所有者"))
   assert_false(has_text(commands, "工作文件夹"))
   assert_false(has_text(commands, "整理功能亮点"))
+}
+
+///|
+test "workbench workflow rail renders independent tool evidence" {
+  let model = {
+    ..WorkbenchModel::new(),
+    pi_agent: PiAgentSnapshot::new(phase="tool", active_tool_name="bash"),
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "状态"))
+  assert_true(has_text(commands, "工具"))
+  assert_true(has_text(commands, "bash"))
 }
 
 ///|
@@ -3546,6 +3843,37 @@ test "workbench runtime draws agent desktop shell" {
 }
 
 ///|
+test "workbench top bar shortens long session identity" {
+  let long_title = "Mo Workbench Skia renderer top bar should not clip session identity while Pi is busy"
+  let long_path = "/Volumes/Data/Code/moon/MoUI/examples/mo_workbench/very/deep/workspace"
+  let long_branch = "codex/mo-workbench/top-bar-shell-layout-cleanup-with-extra-long-name"
+  let model = {
+    ..WorkbenchModel::new(),
+    selected_session_id: "long-session",
+    sessions: [
+      WorkbenchSession::new(
+        id="long-session",
+        title=long_title,
+        project_path=long_path,
+        branch=long_branch,
+        status="running",
+        summary="Long identity smoke",
+        active_task="",
+        unread_events=0,
+      ),
+    ],
+  }
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "当前会话"))
+  assert_true(has_text(commands, "运行中"))
+  assert_false(has_text(commands, long_title))
+  assert_false(has_text(commands, long_branch))
+  assert_false(has_text(commands, long_path))
+  assert_true(draw_text_count_containing(commands, "...") >= 2)
+  assert_true(draw_text_count_containing(commands, "long-name") >= 1)
+}
+
+///|
 test "workbench session chrome shows only signal-bearing status" {
   let queued_model = {
     ..WorkbenchModel::new(),
@@ -3619,8 +3947,9 @@ test "workbench Codex evidence flow mounts only when content arrives" {
   let transcript = transcript_model
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_true(has_text(transcript, "当前任务"))
-  assert_true(has_text(transcript, "下一步"))
+  assert_false(has_text(transcript, "当前任务"))
+  assert_false(has_text(transcript, "下一步"))
+  assert_false(has_text(transcript, "状态"))
   assert_true(has_text(transcript, "Pi summarized the fix"))
   assert_false(has_text(transcript, "会话记录"))
   assert_false(has_text(transcript, "运行证据"))
@@ -3743,6 +4072,35 @@ test "workbench transcript renders long assistant replies as readable lines" {
 }
 
 ///|
+test "workbench transcript and fork rows stay compact and actionable" {
+  let long_fork_text = "Branchable payload alpha beta gamma delta epsilon zeta eta theta iota kappa lambda"
+  let model = {
+    ..WorkbenchModel::new(),
+    transcript: [
+      TranscriptItem::new(
+        id="fork-1",
+        role="assistant",
+        summary="Pi compact transcript row",
+        detail="Use one dense row with the follow-up affordance.",
+        tone="success",
+      ),
+    ],
+    fork_messages: [PiForkMessage::new(entry_id="fork-1", text=long_fork_text)],
+  }
+  let commands = model.runtime(width=960.0, height=640.0).draw_commands()
+  assert_true(has_text(commands, "Pi compact transcript row"))
+  assert_true(has_text(commands, "分叉"))
+  assert_false(has_text(commands, "跟进这条消息"))
+  assert_false(has_text(commands, "可从此处分叉"))
+  assert_false(has_text(commands, "分支"))
+  assert_false(has_text(commands, long_fork_text))
+  assert_true(draw_text_count_containing(commands, "Branchable payload") >= 1)
+  assert_true(
+    fork_affordance_follows_text(commands, "Pi compact transcript row"),
+  )
+}
+
+///|
 test "workbench main workflow shows and moves visible scrollbar" {
   let runtime = model_with_overflowing_transcript().runtime(
     width=960.0,
@@ -3767,6 +4125,46 @@ test "workbench main workflow shows and moves visible scrollbar" {
     fail("expected visible main scrollbar after scroll")
   }
   assert_true(after.origin.y > before.origin.y)
+}
+
+///|
+test "workbench composer remains visible after scroll and resize" {
+  let runtime = model_with_overflowing_transcript().runtime(
+    width=960.0,
+    height=640.0,
+  )
+  guard text_frame(runtime.draw_commands(), "给 Pi 一个任务")
+    is Some(before) else {
+    fail("expected composer placeholder before scroll")
+  }
+  guard main_scrollbar_thumb_frame(runtime.draw_commands()) is Some(thumb) else {
+    fail("expected visible main scrollbar")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(
+          x=thumb.origin.x - 80.0,
+          y=thumb.origin.y + 24.0,
+        ),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-240.0),
+      ),
+    ),
+  )
+  guard text_frame(runtime.draw_commands(), "给 Pi 一个任务")
+    is Some(after) else {
+    fail("expected composer placeholder after scroll")
+  }
+  assert_true(after.origin.y == before.origin.y)
+  runtime.dispatch_event(
+    @core.AppEvent::Resize(@core.Size::new(width=1440.0, height=900.0)),
+  )
+  guard text_frame(runtime.draw_commands(), "给 Pi 一个任务")
+    is Some(resized) else {
+    fail("expected composer placeholder after resize")
+  }
+  assert_true(resized.origin.y > after.origin.y)
 }
 
 ///|
@@ -3852,6 +4250,18 @@ fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
 }
 
 ///|
+fn draw_text_count(commands : Array[@core.DrawCommand], text : String) -> Int {
+  let mut count = 0
+  for command in commands {
+    match command {
+      DrawText({ text: value, .. }) => if value == text { count = count + 1 }
+      _ => ()
+    }
+  }
+  count
+}
+
+///|
 fn draw_text_count_containing(
   commands : Array[@core.DrawCommand],
   needle : String,
@@ -3902,6 +4312,24 @@ fn text_frame(
     }
   }
   None
+}
+
+///|
+fn fork_affordance_follows_text(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> Bool {
+  guard text_frame(commands, text) is Some(anchor) else { return false }
+  for command in commands {
+    match command {
+      DrawText({ text: value, frame, .. }) =>
+        if value == "分叉" && frame.origin.y > anchor.origin.y {
+          return true
+        }
+      _ => ()
+    }
+  }
+  false
 }
 
 ///|
