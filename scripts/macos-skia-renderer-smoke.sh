@@ -7,9 +7,10 @@ Usage: scripts/macos-skia-renderer-smoke.sh [options]
 
 Temporarily configures the local skia_mbt native package plus MoUI's Skia
 renderer smoke, examples/showcase/macos_skia, and
-examples/markdown_editor/macos_skia entrypoints. It runs the renderer pixel
-smoke, builds examples/showcase/macos_skia, optionally runs Showcase and
-Markdown Editor first-frame smokes, then restores all package files.
+examples/markdown_editor/macos_skia entrypoints, plus the Mo Workbench macOS
+Skia entrypoint for local direct runs. It runs the renderer pixel smoke, builds
+examples/showcase/macos_skia, optionally runs Showcase and Markdown Editor
+first-frame smokes, then restores all package files.
 Use --write-local-config when you want to keep the resolved local link flags so
 direct moon run/build commands can use the native Skia packages afterwards.
 
@@ -23,6 +24,11 @@ Options:
                          When supplied with --skia-lib-dir, selects existing.
   --skia-lib-dir PATH    Directory containing libskia.a or libskia.dylib.
   --skia-lib NAME        Library name without lib prefix, default: skia.
+  --link-mode auto|dynamic|static
+                         Select Skia library link mode. Default: auto.
+                         auto uses dynamic for --write-local-config/direct
+                         moon run setup, and static for temporary smoke/build
+                         setup when libskia.a exists.
   --skia-rev REV         Skia git revision, branch, or tag for source provider.
                          Default: .local_repos/skia_mbt/skia-revision.txt.
   --jetbrains-tag TAG    JetBrains/skia release tag. Default: m148-8967a2e80c.
@@ -65,9 +71,10 @@ Options:
                          rewriting package files or building executables.
   --write-local-config   Persistently write resolved link flags into the local
                          skia_mbt native, renderer smoke, Showcase macos_skia,
-                         and Markdown Editor macos_skia package files, then
-                         exit. Leaves machine-local moon.pkg edits; do not
-                         commit those path-specific package files.
+                         Markdown Editor macos_skia, and Mo Workbench
+                         macos_skia package files, then exit. Leaves
+                         machine-local moon.pkg edits; do not commit those
+                         path-specific package files.
   -h, --help             Show this help.
 
 Environment defaults:
@@ -75,8 +82,9 @@ Environment defaults:
   SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB, SKIA_MBT_SKIA_REV,
   SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_JETBRAINS_CONFIG,
   SKIA_MBT_JETBRAINS_CACHE_DIR, SKIA_MBT_EXTRA_GN_ARGS,
-  SKIA_MBT_EXTRA_CC_FLAGS, and SKIA_MBT_EXTRA_LINK_FLAGS are used when the
-  matching command-line option is omitted.
+  SKIA_MBT_MACOS_LINK_MODE, SKIA_MBT_EXTRA_CC_FLAGS, and
+  SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option is
+  omitted. Explicit command-line options still override environment defaults.
 EOF
 }
 
@@ -84,6 +92,7 @@ work_dir=".skia-cache/macos"
 skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
 skia_lib_dir="${SKIA_MBT_SKIA_LIB_DIR:-}"
 skia_lib="${SKIA_MBT_SKIA_LIB:-skia}"
+macos_link_mode="${SKIA_MBT_MACOS_LINK_MODE:-auto}"
 skia_provider="${SKIA_MBT_SKIA_PROVIDER:-${SKIA_MBT_PROVIDER:-}}"
 skia_provider_explicit=0
 if [[ -n "${SKIA_MBT_SKIA_PROVIDER:-}${SKIA_MBT_PROVIDER:-}" ]]; then
@@ -140,6 +149,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skia-lib)
       skia_lib="${2:-}"
+      shift 2
+      ;;
+    --link-mode)
+      macos_link_mode="${2:-}"
       shift 2
       ;;
     --skia-provider)
@@ -260,6 +273,8 @@ showcase_pkg="$repo_root/examples/showcase/macos_skia/moon.pkg"
 showcase_pkg_backup="$showcase_pkg.moui-smoke.bak"
 markdown_pkg="$repo_root/examples/markdown_editor/macos_skia/moon.pkg"
 markdown_pkg_backup="$markdown_pkg.moui-smoke.bak"
+workbench_pkg="$repo_root/examples/mo_workbench/macos_skia/moon.pkg"
+workbench_pkg_backup="$workbench_pkg.moui-smoke.bak"
 build_log=""
 smoke_log=""
 showcase_log=""
@@ -400,6 +415,10 @@ if [[ $dry_run_config -eq 1 && $write_local_config -eq 1 ]]; then
   echo "--dry-run-config and --write-local-config cannot be combined" >&2
   exit 2
 fi
+case "$macos_link_mode" in
+  auto|dynamic|static) ;;
+  *) echo "unsupported --link-mode: $macos_link_mode" >&2; exit 2 ;;
+esac
 
 if [[ $run_showcase_smoke -eq 1 && $write_local_config -eq 1 ]]; then
   echo "--write-local-config writes package files and exits; run the showcase smoke afterwards" >&2
@@ -491,6 +510,9 @@ if [[ -z "$include_path" || -z "$lib_path" || -z "$skia_lib" ]]; then
   exit 1
 fi
 
+static_lib="$lib_path/lib$skia_lib.a"
+dynamic_lib="$lib_path/lib$skia_lib.dylib"
+
 if [[ $dry_run_config -eq 0 ]]; then
   if [[ "$skia_provider" == "source" ]]; then
     if [[ -n "$build_log" ]]; then
@@ -512,12 +534,14 @@ if [[ $dry_run_config -eq 0 ]]; then
 
   include_path="$(resolve_existing_dir "Skia include path" "$include_path")"
   lib_path="$(resolve_existing_dir "Skia library path" "$lib_path")"
+  static_lib="$lib_path/lib$skia_lib.a"
+  dynamic_lib="$lib_path/lib$skia_lib.dylib"
   if [[ ! -f "$include_path/include/core/SkSurface.h" ]]; then
     echo "Skia include path does not look like a Skia checkout/root: $include_path" >&2
     exit 1
   fi
 
-  if [[ ! -f "$lib_path/lib$skia_lib.a" && ! -f "$lib_path/lib$skia_lib.dylib" ]]; then
+  if [[ ! -f "$static_lib" && ! -f "$dynamic_lib" ]]; then
     echo "Skia library lib$skia_lib.a or lib$skia_lib.dylib was not found in $lib_path" >&2
     exit 1
   fi
@@ -535,11 +559,68 @@ if [[ $dry_run_config -eq 0 ]]; then
   fi
 fi
 
+resolved_link_mode="$macos_link_mode"
+if [[ "$resolved_link_mode" == "auto" ]]; then
+  if [[ $write_local_config -eq 1 ]]; then
+    if [[ -f "$dynamic_lib" || $dry_run_config -eq 1 ]]; then
+      resolved_link_mode="dynamic"
+    else
+      resolved_link_mode="static"
+    fi
+  else
+    if [[ -f "$static_lib" || $dry_run_config -eq 1 ]]; then
+      resolved_link_mode="static"
+    else
+      resolved_link_mode="dynamic"
+    fi
+  fi
+fi
+
+case "$resolved_link_mode" in
+  dynamic)
+    if [[ $dry_run_config -eq 0 && ! -f "$dynamic_lib" ]]; then
+      echo "Requested dynamic Skia link mode, but $dynamic_lib was not found" >&2
+      exit 1
+    fi
+    skia_library_link_flag="$dynamic_lib"
+    skia_runtime_link_flags="-Wl,-rpath,$lib_path"
+    ;;
+  static)
+    if [[ $dry_run_config -eq 0 && ! -f "$static_lib" ]]; then
+      echo "Requested static Skia link mode, but $static_lib was not found" >&2
+      exit 1
+    fi
+    skia_library_link_flag="$static_lib"
+    skia_runtime_link_flags=""
+    ;;
+esac
+
 native_extra_cc_flags="$extra_cc_flags"
 native_extra_link_flags="$extra_link_flags"
 if [[ $enable_skshaper -eq 1 ]]; then
   native_extra_cc_flags="-DSKIA_MBT_HAS_SKSHAPER${native_extra_cc_flags:+ $native_extra_cc_flags}"
-  native_extra_link_flags="-lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu${native_extra_link_flags:+ $native_extra_link_flags}"
+  shaper_link_flags=""
+  for shaper_lib in skshaper skunicode_core skunicode_icu harfbuzz icu; do
+    shaper_static_lib="$lib_path/lib$shaper_lib.a"
+    shaper_dynamic_lib="$lib_path/lib$shaper_lib.dylib"
+    case "$resolved_link_mode" in
+      dynamic)
+        if [[ $dry_run_config -eq 0 && ! -f "$shaper_dynamic_lib" ]]; then
+          echo "Requested dynamic SkShaper link mode, but $shaper_dynamic_lib was not found" >&2
+          exit 1
+        fi
+        shaper_link_flags="$shaper_link_flags $shaper_dynamic_lib"
+        ;;
+      static)
+        if [[ $dry_run_config -eq 0 && ! -f "$shaper_static_lib" ]]; then
+          echo "Requested static SkShaper link mode, but $shaper_static_lib was not found" >&2
+          exit 1
+        fi
+        shaper_link_flags="$shaper_link_flags $shaper_static_lib"
+        ;;
+    esac
+  done
+  native_extra_link_flags="${shaper_link_flags# }${native_extra_link_flags:+ $native_extra_link_flags}"
 fi
 
 cc_flags="-DSKIA_MBT_HAS_SKIA -std=c++17 -I$include_path"
@@ -550,9 +631,12 @@ if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-skia_link_flags="-L$lib_path -l$skia_lib -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
+skia_link_flags="$skia_library_link_flag -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
 if [[ $enable_skshaper -eq 1 ]]; then
-  skia_link_flags="$skia_link_flags -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu"
+  skia_link_flags="$skia_link_flags $shaper_link_flags"
+fi
+if [[ -n "$skia_runtime_link_flags" ]]; then
+  skia_link_flags="$skia_link_flags $skia_runtime_link_flags"
 fi
 if [[ -n "$extra_link_flags" ]]; then
   skia_link_flags="$skia_link_flags $extra_link_flags"
@@ -588,6 +672,8 @@ fi
 echo "  skia_include=$include_path"
 echo "  skia_lib_dir=$lib_path"
 echo "  skia_lib=$skia_lib"
+echo "  requested_link_mode=$macos_link_mode"
+echo "  resolved_link_mode=$resolved_link_mode"
 if [[ $enable_skshaper -eq 1 ]]; then
   echo "  skshaper=enabled"
 fi
@@ -630,6 +716,7 @@ write_native_pkg_config() {
     --skia-include "$include_path" \
     --skia-lib-dir "$lib_path" \
     --skia-lib "$skia_lib" \
+    --link-mode "$resolved_link_mode" \
     --extra-cc-flags "$native_extra_cc_flags" \
     --extra-link-flags "$native_extra_link_flags" \
     --output "$native_pkg" \
@@ -707,6 +794,31 @@ options(
 EOF
 }
 
+write_workbench_pkg_config() {
+  cat > "$workbench_pkg" <<EOF
+import {
+  "moonbitlang/async",
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "examples/mo_workbench/app",
+  "examples/mo_workbench/native_transport",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$showcase_link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+EOF
+}
+
 if [[ $write_local_config -eq 1 ]]; then
   write_native_pkg_config
   echo "Wrote local skia_mbt/native/moon.pkg with macOS Skia link flags."
@@ -716,9 +828,12 @@ if [[ $write_local_config -eq 1 ]]; then
   echo "Wrote local macos_skia showcase package link flags."
   write_markdown_pkg_config
   echo "Wrote local markdown_editor/macos_skia package link flags."
+  write_workbench_pkg_config
+  echo "Wrote local mo_workbench/macos_skia package link flags."
   echo "Local macOS Skia configuration is ready. Direct run command:"
   echo "  moon run examples/showcase/macos_skia --target native"
   echo "  moon run examples/markdown_editor/macos_skia --target native"
+  echo "  moon run examples/mo_workbench/macos_skia --target native"
   echo "These package files contain machine-local paths; keep them out of commits."
   exit 0
 fi
@@ -753,6 +868,11 @@ restore_packages() {
     rm -f "$markdown_pkg_backup"
     echo "Restored examples/markdown_editor/macos_skia/moon.pkg after MoUI Skia renderer smoke."
   fi
+  if [[ -f "$workbench_pkg_backup" ]]; then
+    cp "$workbench_pkg_backup" "$workbench_pkg"
+    rm -f "$workbench_pkg_backup"
+    echo "Restored examples/mo_workbench/macos_skia/moon.pkg after MoUI Skia renderer smoke."
+  fi
 }
 trap restore_packages EXIT
 
@@ -760,6 +880,7 @@ cp "$native_pkg" "$native_pkg_backup"
 cp "$renderer_pkg" "$renderer_pkg_backup"
 cp "$showcase_pkg" "$showcase_pkg_backup"
 cp "$markdown_pkg" "$markdown_pkg_backup"
+cp "$workbench_pkg" "$workbench_pkg_backup"
 
 write_native_pkg_config
 echo "Wrote temporary skia_mbt/native/moon.pkg with macOS Skia link flags."
@@ -772,6 +893,9 @@ echo "Wrote temporary macos_skia showcase package link flags."
 
 write_markdown_pkg_config
 echo "Wrote temporary markdown_editor/macos_skia package link flags."
+
+write_workbench_pkg_config
+echo "Wrote temporary mo_workbench/macos_skia package link flags."
 
 cd "$repo_root"
 moon build moui/tests/skia_renderer_smoke/native --target native

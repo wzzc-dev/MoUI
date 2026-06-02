@@ -572,8 +572,8 @@ sh scripts/dev-check.sh --skia-real-smoke
 
 On macOS, the helper below resolves the pinned JetBrains Skia binary provider,
 temporarily wires the resulting include/library paths into `skia_mbt`, the MoUI
-renderer smoke, and `macos_skia`, then runs the renderer pixel smoke and builds
-the Showcase entrypoint:
+renderer smoke, Showcase, Markdown Editor, and Mo Workbench `macos_skia`
+packages, then runs the renderer pixel smoke and builds the Showcase entrypoint:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh
@@ -582,6 +582,12 @@ scripts/macos-skia-renderer-smoke.sh
 Pass `--enable-skshaper` when the selected Skia binary also provides the
 SkShaper module libraries; the helper then verifies the MoUI renderer smoke ran
 with the optional shaped-run path available.
+
+Use `--write-local-config` when you want direct local `moon run` commands to use
+real Skia. In `auto` link mode that persistent setup prefers dynamic
+`libskia.dylib`, while the helper's temporary smoke/build setup prefers static
+`libskia.a` when available. Set `SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or
+pass `--link-mode dynamic|static` to override the default.
 
 For a fuller local smoke, pass `--run-showcase-smoke`. The helper then launches
 the built Showcase `macos_skia` executable with a first-frame exit flag and

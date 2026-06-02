@@ -300,7 +300,13 @@ temporarily configures the local `skia_mbt` and MoUI Skia smoke packages, runs
 the renderer pixel smoke, optionally launches `examples/showcase/macos_skia` to
 verify its first presented frame, optionally launches
 `examples/markdown_editor/macos_skia` with `--run-markdown-smoke`, and restores
-touched `moon.pkg` files. With explicit artifact log paths,
+touched `moon.pkg` files. It also writes/restores
+`examples/mo_workbench/macos_skia` so direct local Mo Workbench runs can use
+the same real-Skia configuration. In `auto` link mode, persistent
+`--write-local-config` defaults to dynamic `libskia.dylib` flags for direct
+`moon run`, while temporary smoke/build setup defaults to static `libskia.a`
+flags when available; set `SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or pass
+`--link-mode dynamic|static` to override. With explicit artifact log paths,
 `--record-platform-evidence` updates only the macOS `skiaEvidence` block after a
 successful full smoke; it does not mark the broader platform-service entry
 passed. Normal macOS Skia entrypoints default to the system

@@ -154,8 +154,9 @@ scripts/macos-skia-renderer-smoke.sh
 
 The repository default package files intentionally stay fallback-safe and do not
 contain machine-local Skia paths. If you want direct local commands such as
-`moon run examples/showcase/macos_skia --target native` to use real Skia, first
-persist the resolved local link configuration:
+`moon run examples/showcase/macos_skia --target native` or
+`moon run examples/mo_workbench/macos_skia --target native` to use real Skia,
+first persist the resolved local link configuration:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --enable-skshaper --write-local-config
@@ -164,9 +165,16 @@ scripts/macos-skia-renderer-smoke.sh --enable-skshaper --write-local-config
 That command writes absolute paths into `.local_repos/skia_mbt/native/moon.pkg`,
 `moui/tests/skia_renderer_smoke/native/moon.pkg`, and
 `examples/showcase/macos_skia/moon.pkg`, and
-`examples/markdown_editor/macos_skia/moon.pkg`; keep those machine-local edits
-out of commits. Re-run the command after changing Skia provider options or
-after restoring those package files.
+`examples/markdown_editor/macos_skia/moon.pkg`, and
+`examples/mo_workbench/macos_skia/moon.pkg`; keep those machine-local edits out
+of commits. Re-run the command after changing Skia provider options or after
+restoring those package files. The helper's `auto` link mode defaults this
+persistent direct-run setup to `libskia.dylib` when a dylib is available, so
+`moon run` does not have to relink a large static Skia archive. Temporary smoke
+and build setup defaults to `libskia.a` when a static archive is available. Use
+`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or `--link-mode dynamic|static` to
+override those defaults; the explicit environment value wins over the helper's
+auto default, and a command-line `--link-mode` wins over the environment.
 
 Pass `--enable-skshaper` when the selected Skia library directory includes the
 SkShaper module libraries. The helper then configures `skia_mbt/native` with
@@ -214,9 +222,11 @@ scripts/macos-skia-renderer-smoke.sh \
 ```
 
 It temporarily configures `.local_repos/skia_mbt/native`,
-`moui/tests/skia_renderer_smoke/native`, and `examples/showcase/macos_skia`,
-runs the MoUI renderer pixel smoke, builds the macOS Skia Showcase entrypoint,
-and restores all touched `moon.pkg` files before exiting.
+`moui/tests/skia_renderer_smoke/native`, `examples/showcase/macos_skia`,
+`examples/markdown_editor/macos_skia`, and
+`examples/mo_workbench/macos_skia`, runs the MoUI renderer pixel smoke, builds
+the macOS Skia Showcase entrypoint, and restores all touched `moon.pkg` files
+before exiting.
 
 ## Preview Loop
 
