@@ -153,6 +153,11 @@
       "marker": "native smoke surface render frame finalized"
     },
     {
+      "id": "surface.frame-render-status-contract",
+      "area": "Surface",
+      "marker": "native smoke surface render frame status contract"
+    },
+    {
       "id": "surface.frame-render-cache-resources",
       "area": "Surface",
       "marker": "native smoke surface render frame cache resources"
@@ -965,6 +970,11 @@
       "id": "surface.frame-render-finalized",
       "marker": "native smoke surface render frame finalized",
       "value": "1"
+    },
+    {
+      "id": "surface.frame-render-status-contract",
+      "marker": "native smoke surface render frame status contract",
+      "value": "2"
     },
     {
       "id": "surface.frame-render-cache-resources",

@@ -1385,6 +1385,11 @@ test "canvas replays render command lists" {
               )
               assert_true(surface_frame_stats.is_complete())
               assert_true(
+                surface_frame_stats.status() ==
+                @native.SurfaceFrameReplayComplete,
+              )
+              assert_true(surface_frame_stats.status().is_complete())
+              assert_true(
                 surface_frame_stats.validation_status == @skia.FrameReady,
               )
               assert_true(surface_frame_stats.surface_matches)
@@ -1416,6 +1421,11 @@ test "canvas replays render command lists" {
                 font~,
               )
               assert_true(!mismatch_stats.is_complete())
+              assert_true(
+                mismatch_stats.status() ==
+                @native.SurfaceFrameReplaySurfaceMismatch,
+              )
+              assert_true(!mismatch_stats.status().is_complete())
               assert_true(!mismatch_stats.surface_matches)
               assert_true(!mismatch_stats.finalized)
               assert_eq(mismatch_stats.replay.replayed_count, 0)
