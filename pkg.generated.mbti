@@ -805,6 +805,12 @@ pub(all) enum RenderCommand {
   SaveCanvas
   RestoreCanvas
   SaveCanvasLayer(Rect?, Paint, ColorFilterDescriptor?, ImageFilterDescriptor?, MaskFilterDescriptor?)
+  TranslateCanvas(Point)
+  ScaleCanvas(Size)
+  RotateCanvas(Float)
+  SkewCanvas(Point)
+  ConcatCanvas(Matrix)
+  ResetCanvasMatrix
   ClearCanvas(Color)
   ClipCanvasRect(Rect, ClipOp)
   DrawCanvasPoint(Point, Paint)
@@ -831,6 +837,7 @@ pub(all) enum RenderCommand {
 } derive(Eq, @debug.Debug)
 pub fn RenderCommand::clear(Color) -> Self
 pub fn RenderCommand::clip_rect(Rect, op? : ClipOp) -> Self
+pub fn RenderCommand::concat(Matrix) -> Self
 pub fn RenderCommand::declare_resource(RendererResourceDescriptor) -> Self
 pub fn RenderCommand::draw_arc(Rect, Float, Float, Bool, paint? : Paint) -> Self
 pub fn RenderCommand::draw_circle(Point, Float, paint? : Paint) -> Self
@@ -858,10 +865,16 @@ pub fn RenderCommand::is_present(Self) -> Bool
 pub fn RenderCommand::is_resource_declaration(Self) -> Bool
 pub fn RenderCommand::is_state(Self) -> Bool
 pub fn RenderCommand::is_text(Self) -> Bool
+pub fn RenderCommand::is_transform(Self) -> Bool
+pub fn RenderCommand::reset_matrix() -> Self
 pub fn RenderCommand::resource_descriptor(Self) -> RendererResourceDescriptor?
 pub fn RenderCommand::resource_descriptors(Self) -> Array[RendererResourceDescriptor]
+pub fn RenderCommand::rotate(Float) -> Self
 pub fn RenderCommand::save_layer(bounds? : Rect?, paint? : Paint, color_filter? : ColorFilterDescriptor?, image_filter? : ImageFilterDescriptor?, mask_filter? : MaskFilterDescriptor?) -> Self
+pub fn RenderCommand::scale(Size) -> Self
+pub fn RenderCommand::skew(Point) -> Self
 pub fn RenderCommand::text_run_resource_key(Self) -> RendererResourceKey?
+pub fn RenderCommand::translate(Point) -> Self
 
 pub(all) struct RenderCommandList {
   pass : RenderPassDescriptor
@@ -870,6 +883,7 @@ pub(all) struct RenderCommandList {
 pub fn RenderCommandList::append(Self, RenderCommand) -> Self
 pub fn RenderCommandList::clear(Self, Color) -> Self
 pub fn RenderCommandList::clip_rect(Self, Rect, op? : ClipOp) -> Self
+pub fn RenderCommandList::concat(Self, Matrix) -> Self
 pub fn RenderCommandList::declare_resource(Self, RendererResourceDescriptor) -> Self
 pub fn RenderCommandList::declare_resources(Self, Array[RendererResourceDescriptor]) -> Self
 pub fn RenderCommandList::draw_arc(Self, Rect, Float, Float, Bool, paint? : Paint) -> Self
@@ -900,19 +914,25 @@ pub fn RenderCommandList::is_state_balanced(Self) -> Bool
 pub fn RenderCommandList::length(Self) -> Int
 pub fn RenderCommandList::new(RenderPassDescriptor) -> Self
 pub fn RenderCommandList::present(Self) -> Self
+pub fn RenderCommandList::reset_matrix(Self) -> Self
 pub fn RenderCommandList::resource_descriptors(Self) -> Array[RendererResourceDescriptor]
 pub fn RenderCommandList::resource_plan(Self) -> RendererResourcePlan
 pub fn RenderCommandList::restore(Self) -> Self
+pub fn RenderCommandList::rotate(Self, Float) -> Self
 pub fn RenderCommandList::save(Self) -> Self
 pub fn RenderCommandList::save_layer(Self, bounds? : Rect?, paint? : Paint, color_filter? : ColorFilterDescriptor?, image_filter? : ImageFilterDescriptor?, mask_filter? : MaskFilterDescriptor?) -> Self
+pub fn RenderCommandList::scale(Self, Size) -> Self
+pub fn RenderCommandList::skew(Self, Point) -> Self
 pub fn RenderCommandList::stats(Self) -> RenderCommandStats
 pub fn RenderCommandList::text_run_resource_keys(Self) -> Array[RendererResourceKey]
 pub fn RenderCommandList::touched_bounds(Self) -> Rect?
+pub fn RenderCommandList::translate(Self, Point) -> Self
 
 pub(all) struct RenderCommandStats {
   command_count : Int
   draw_count : Int
   state_count : Int
+  transform_count : Int
   clip_count : Int
   clear_count : Int
   present_count : Int
