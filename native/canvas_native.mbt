@@ -1731,6 +1731,22 @@ fn native_shader_from_resources(
 }
 
 ///|
+fn Canvas::replay_paint_shader(
+  self : Canvas,
+  shader_descriptor : @skia.ShaderDescriptor,
+  paint : @skia.Paint,
+  resources : NativeReplayResources?,
+) -> Bool {
+  match native_shader_from_resources(shader_descriptor, resources) {
+    None => false
+    Some(shader) => {
+      self.draw_paint_shader(shader, paint)
+      true
+    }
+  }
+}
+
+///|
 fn Canvas::replay_rect_shader(
   self : Canvas,
   rect : @skia.Rect,
@@ -2094,6 +2110,8 @@ fn Canvas::replay_command(
       self.draw_paint(paint)
       true
     }
+    @skia.DrawCanvasPaintShader(shader_descriptor, paint) =>
+      self.replay_paint_shader(shader_descriptor, paint, resources)
     @skia.ClipCanvasRect(rect, op) => {
       self.clip_rect(rect, op~)
       true

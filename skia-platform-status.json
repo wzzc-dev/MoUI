@@ -208,6 +208,16 @@
       "marker": "native smoke canvas replay paint fill clipped"
     },
     {
+      "id": "canvas.replay-paint-shader-fills",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay paint shader fills"
+    },
+    {
+      "id": "canvas.replay-paint-shader-cache-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay paint shader cache resources"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "area": "Canvas",
       "marker": "native smoke render frame replay rejected skipped"
@@ -1124,6 +1134,16 @@
     {
       "id": "canvas.replay-paint-fill-clipped",
       "marker": "native smoke canvas replay paint fill clipped",
+      "value": "1"
+    },
+    {
+      "id": "canvas.replay-paint-shader-fills",
+      "marker": "native smoke canvas replay paint shader fills",
+      "value": "1"
+    },
+    {
+      "id": "canvas.replay-paint-shader-cache-resources",
+      "marker": "native smoke canvas replay paint shader cache resources",
       "value": "1"
     },
     {

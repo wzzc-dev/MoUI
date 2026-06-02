@@ -1857,6 +1857,70 @@ fn main {
     0xff,
     0xff,
   )
+
+  let replay_paint_shader = @skia.ShaderDescriptor::color(@skia.Color::cyan())
+  let replay_paint_shader_commands = @skia.RenderCommandList::for_target(
+      replay_target,
+    )
+    .clear(@skia.Color::white())
+    .clip_rect(@skia.Rect::from_xywh(2, 2, 3, 3))
+    .draw_paint_shader(replay_paint_shader)
+  guard @native.Surface::raster_n32_premul(replay_size)
+    is Some(replay_paint_shader_surface) else {
+    fail_smoke("failed to create replay paint shader smoke surface")
+  }
+  guard replay_paint_shader_surface.canvas()
+    is Some(replay_paint_shader_canvas) else {
+    fail_smoke("failed to create replay paint shader smoke canvas")
+  }
+  let replay_paint_shader_resources = @native.NativeReplayResources::new(
+    shader_max_bytes=1024L,
+  )
+  let replay_paint_shader_stats = replay_paint_shader_canvas
+    .replay_with_resources(
+      replay_paint_shader_commands,
+      replay_paint_shader_resources,
+    )
+  if !replay_paint_shader_stats.is_complete() ||
+    replay_paint_shader_stats.command_count != 3 ||
+    replay_paint_shader_stats.draw_count != 1 ||
+    replay_paint_shader_stats.clip_count != 1 ||
+    replay_paint_shader_stats.clear_count != 1 ||
+    replay_paint_shader_stats.shader_resource_count != 1 ||
+    replay_paint_shader_resources.shader_cache.length() != 1 ||
+    replay_paint_shader_commands.resource_plan().count_kind(
+      @skia.ShaderResource,
+    ) != 1 {
+    fail_smoke("native canvas replay did not apply paint shader fill commands")
+  }
+  guard replay_paint_shader_surface.read_pixels(
+      bounds=@skia.IRect::from_xywh(0, 0, 1, 1),
+    )
+    is Some(replay_paint_shader_outside) else {
+    fail_smoke("failed to read replay paint shader outside pixel")
+  }
+  assert_pixel(
+    replay_paint_shader_outside,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+  )
+  guard replay_paint_shader_surface.read_pixels(
+      bounds=@skia.IRect::from_xywh(2, 2, 1, 1),
+    )
+    is Some(replay_paint_shader_inside) else {
+    fail_smoke("failed to read replay paint shader inside pixel")
+  }
+  assert_pixel(
+    replay_paint_shader_inside,
+    @skia.IPoint::new(0, 0),
+    0x00,
+    0xff,
+    0xff,
+    0xff,
+  )
   println("native smoke render frame pixmap sample proof")
   println(1)
   println("native smoke canvas replay commands")
@@ -1891,6 +1955,10 @@ fn main {
   println(replay_fill_stats.draw_count)
   println("native smoke canvas replay paint fill clipped")
   println(1)
+  println("native smoke canvas replay paint shader fills")
+  println(replay_paint_shader_stats.draw_count)
+  println("native smoke canvas replay paint shader cache resources")
+  println(replay_paint_shader_resources.shader_cache.length())
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
   println("native smoke surface render frame commands")
