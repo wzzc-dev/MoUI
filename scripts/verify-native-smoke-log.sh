@@ -68,6 +68,9 @@ default_stage_markers=(
   "native smoke canvas replay rrect path clips" \
   "native smoke canvas replay clip path cache resources" \
   "native smoke empty path replay path cache resources" \
+  "native smoke empty path replay path resources" \
+  "native smoke empty path replay path cache misses" \
+  "native smoke empty path replay path cache hits" \
   "native smoke canvas replay color paint fills" \
   "native smoke canvas replay paint fill clipped" \
   "native smoke canvas replay paint shader fills" \
@@ -410,6 +413,9 @@ default_expected_stage_values=(
   $'native smoke invalid shader filter replay cache misses\t0'
   $'native smoke invalid shader filter replay filter resources\t3'
   $'native smoke empty path replay path cache resources\t0'
+  $'native smoke empty path replay path resources\t3'
+  $'native smoke empty path replay path cache misses\t0'
+  $'native smoke empty path replay path cache hits\t0'
   $'native smoke filter resource plan count\t3'
   $'native smoke filter finite validation\t1'
   $'native smoke text run resource plan count\t3'
