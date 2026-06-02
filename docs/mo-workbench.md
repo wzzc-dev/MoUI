@@ -152,7 +152,8 @@ packages:
   transport.
 - The compact workspace summary queues a `Review diff: ...` prompt through
   the same path, making code review a first-class coding-agent action while
-  keeping PiTransport platform-neutral.
+  keeping PiTransport platform-neutral. It defaults to a one-line files, diff,
+  and diagnostic summary and expands the current diff details only on demand.
 - Latest diagnostic rows in the current-turn evidence card can queue a
   `Fix <severity> diagnostic from <source>: ...` prompt through
   `SendUserInput`, preserving the current context chips and selected agent
@@ -167,8 +168,10 @@ packages:
 - Workbench command queue entries now use Pi RPC `bash` directly instead of
   prompt text such as `run: ...`; the shared app keeps command/cwd evidence and
   lets the native encoder emit `{"type":"bash","command":...}`. Successful
-  bash responses preserve Pi's optional `fullOutputPath` on `CommandRun`, and
-  current-turn command rows display that output path when it is available.
+  bash responses preserve Pi's optional `fullOutputPath`, stdout preview, and
+  truncation flag on `CommandRun`. Current-turn command rows default to a compact
+  status/command/result summary; the log path and stdout detail are mounted only
+  after expanding that command row.
 - Command evidence rows in the current-turn evidence card can queue an
   `Inspect command output for ...` prompt through `SendUserInput`, carrying the
   command text, status, exit code, cwd, and output path back into Pi without
@@ -332,17 +335,19 @@ packages:
   `PiSessionBinding`. Successful `bash` responses mark the next queued/running
   Workbench command as passed, failed, or cancelled, preserving FIFO attribution
   for batched checks even when Pi's response only says `command: "bash"`, and
-  add diagnostics for nonzero, missing, truncated, or cancelled output. Visible
-  bash evidence can be sent back as a prompt for analysis through the same
-  app-layer command path. Failed RPC responses append a diagnostic without
-  involving the native transport layer.
+  add diagnostics for nonzero, missing, truncated, or cancelled output. The
+  shared app stores stdout and optional log paths on command evidence so the UI
+  can expand details locally; visible bash evidence can still be sent back as a
+  prompt for analysis through the same app-layer command path. Failed RPC
+  responses append a diagnostic without involving the native transport layer.
 - Pi RPC session event ingestion for the real streaming protocol. The shared
   app now recognizes `agent_start` / `agent_end`, `turn_start` / `turn_end`,
   `message_start` / `message_update` / `message_end`, `tool_execution_*`,
   `queue_update`, thinking-level changes, compaction, and auto-retry events.
   These update a small `PiAgentSnapshot`, selected-session status, timeline
-  entries, and command evidence while keeping stdout payload parsing out of the
-  native transport package.
+  entries, and command evidence. Tool execution results can attach stdout/log
+  evidence to the matching command row while keeping stdout payload parsing out
+  of the native transport package.
 - Workbench session ids now have explicit Pi session bindings. A
   `WorkbenchSession` can carry a `pi_session_path`; selecting that session
   through an injected transport emits a platform-neutral `SwitchRpcSession`
@@ -459,7 +464,8 @@ visible session name. A successful
 `{"type":"response","command":"bash","success":true,...}` line updates the
 latest queued/running command evidence for that Workbench session using Pi's
 `BashResult.exitCode`, `cancelled`, `truncated`, and optional
-`fullOutputPath` fields. A failed `response` line records a `Pi RPC`
+`fullOutputPath` fields, and stores the returned stdout on `CommandRun` for
+local expand/collapse details. A failed `response` line records a `Pi RPC`
 diagnostic and a failure timeline event. The native transport does not parse
 these payloads; it only delivers stdout JSONL as `JsonLineReceived`.
 

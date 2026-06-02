@@ -103,6 +103,9 @@ pub(all) struct CommandRun {
   exit_code : Int?
   tool_call_id : String
   output_path : String
+  output : String
+  output_truncated : Bool
+  details_expanded : Bool
 } derive(Eq, Debug)
 
 ///|
@@ -184,6 +187,7 @@ pub(all) struct WorkbenchModel {
   prompt : String
   composer_controls_expanded : Bool
   expanded_context : Array[String]
+  workspace_details_expanded : Bool
   sessions : Array[WorkbenchSession]
   plan : Array[PlanStep]
   events : Array[AgentEvent]
@@ -232,6 +236,8 @@ pub(all) enum WorkbenchMsg {
   ExportSessionHtml
   QueueCommand(String)
   QueueFocusedChecks
+  ToggleCommandDetails(Int)
+  ToggleWorkspaceDetails
   InspectCommandRun(String, String, String, String)
   FixCommandRun(String, String, String, String)
   MarkCommandComplete(Int, Int)
@@ -401,8 +407,22 @@ pub fn CommandRun::new(
   exit_code? : Int? = None,
   tool_call_id? : String = "",
   output_path? : String = "",
+  output? : String = "",
+  output_truncated? : Bool = false,
+  details_expanded? : Bool = false,
 ) -> CommandRun {
-  { id, command, cwd, status, exit_code, tool_call_id, output_path }
+  {
+    id,
+    command,
+    cwd,
+    status,
+    exit_code,
+    tool_call_id,
+    output_path,
+    output,
+    output_truncated,
+    details_expanded,
+  }
 }
 
 ///|
@@ -620,6 +640,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     prompt: "",
     composer_controls_expanded: false,
     expanded_context: ["repo", "examples"],
+    workspace_details_expanded: false,
     sessions: sample_sessions(),
     plan: [],
     events: [],
@@ -675,6 +696,8 @@ pub fn WorkbenchModel::update(
     ExportSessionHtml => self.export_session_html()
     QueueCommand(command) => self.queue_command(command)
     QueueFocusedChecks => self.queue_focused_checks()
+    ToggleCommandDetails(id) => self.toggle_command_details(id)
+    ToggleWorkspaceDetails => self.toggle_workspace_details()
     InspectCommandRun(command, status, cwd, output_path) =>
       self.inspect_command_run(command, status, cwd, output_path)
     FixCommandRun(command, status, cwd, output_path) =>
@@ -948,6 +971,32 @@ fn WorkbenchModel::scroll_main_to(
   offset_y : Double,
 ) -> WorkbenchModel {
   { ..self, main_scroll_offset_y: workbench_max_double(0.0, offset_y) }
+}
+
+///|
+fn WorkbenchModel::toggle_command_details(
+  self : WorkbenchModel,
+  id : Int,
+) -> WorkbenchModel {
+  let commands = self.commands.map(command => {
+    if command.id == id {
+      { ..command, details_expanded: !command.details_expanded }
+    } else {
+      command
+    }
+  })
+  { ..self, commands, last_status: "Command details toggled" }
+}
+
+///|
+fn WorkbenchModel::toggle_workspace_details(
+  self : WorkbenchModel,
+) -> WorkbenchModel {
+  {
+    ..self,
+    workspace_details_expanded: !self.workspace_details_expanded,
+    last_status: "Workspace evidence details toggled",
+  }
 }
 
 ///|

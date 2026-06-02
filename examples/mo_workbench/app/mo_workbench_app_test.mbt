@@ -1462,6 +1462,8 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
   let command = model.commands[model.commands.length() - 1]
   inspect(command.status, content="passed")
   inspect(command.output_path, content="/tmp/mo-workbench-bash.log")
+  inspect(command.output, content="ok")
+  assert_false(command.output_truncated)
   match command.exit_code {
     Some(code) => inspect(code, content="0")
     None => fail("expected command exit code")
@@ -1470,9 +1472,20 @@ test "workbench command runtime effect dispatches Pi RPC bash command" {
   inspect(model.last_status, content="Pi bash response applied")
   assert_true(model.events.any(event => event.title == "Pi bash completed"))
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
-  assert_true(has_text(commands, "输出 /tmp/mo-workbench-bash.log"))
+  assert_true(draw_text_count_containing(commands, "输出可用") >= 1)
+  assert_false(has_text(commands, "/tmp/mo-workbench-bash.log"))
+  assert_false(has_text(commands, "ok"))
+  assert_true(has_text(commands, "展开"))
   assert_true(has_text(commands, "分析"))
   assert_true(has_text(commands, "重跑"))
+  let expanded = model.update(ToggleCommandDetails(command.id))
+  let expanded_commands = expanded
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(expanded_commands, "收起"))
+  assert_true(has_text(expanded_commands, "日志 /tmp/mo-workbench-bash.log"))
+  assert_true(has_text(expanded_commands, "stdout"))
+  assert_true(has_text(expanded_commands, "ok"))
 }
 
 ///|
@@ -1549,18 +1562,21 @@ test "workbench focused check bash responses complete queued commands in order" 
   )
   inspect(model.commands[0].status, content="passed")
   inspect(model.commands[0].output_path, content="/tmp/mo-workbench-native.log")
+  inspect(model.commands[0].output, content="native ok")
   inspect(
     model.commands[1].command,
     content="moon test examples/mo_workbench/app --target wasm-gc",
   )
   inspect(model.commands[1].status, content="failed")
   inspect(model.commands[1].output_path, content="/tmp/mo-workbench-wasm.log")
+  inspect(model.commands[1].output, content="wasm failed")
   inspect(
     model.commands[2].command,
     content="moon build examples/mo_workbench/macos_skia --target native",
   )
   inspect(model.commands[2].status, content="passed")
   inspect(model.commands[2].output_path, content="/tmp/mo-workbench-skia.log")
+  inspect(model.commands[2].output, content="skia ok")
   inspect(
     model.commands[3].command,
     content="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
@@ -1570,6 +1586,7 @@ test "workbench focused check bash responses complete queued commands in order" 
     model.commands[3].output_path,
     content="/tmp/mo-workbench-first-frame.log",
   )
+  inspect(model.commands[3].output, content="first frame ok")
 }
 
 ///|
@@ -2773,7 +2790,7 @@ test "workbench ingests Pi tool execution jsonl into command evidence" {
         JsonLineReceived(
           "moui-skia",
           (
-            #|{"type":"tool_execution_end","toolCallId":"call-bash-1","toolName":"bash","result":{"details":{"exitCode":0},"content":[{"type":"text","text":"ok"}]},"isError":false}
+            #|{"type":"tool_execution_end","toolCallId":"call-bash-1","toolName":"bash","result":{"details":{"exitCode":0,"fullOutputPath":"/tmp/pi-tool-bash.log","truncated":true},"content":[{"type":"text","text":"ok"}]},"isError":false}
           ),
         ),
       ),
@@ -2786,6 +2803,9 @@ test "workbench ingests Pi tool execution jsonl into command evidence" {
   inspect(command.cwd, content="/Volumes/Data/Code/moon/MoUI")
   inspect(command.status, content="passed")
   inspect(command.tool_call_id, content="call-bash-1")
+  inspect(command.output, content="ok")
+  inspect(command.output_path, content="/tmp/pi-tool-bash.log")
+  assert_true(command.output_truncated)
   match command.exit_code {
     Some(code) => inspect(code, content="0")
     None => fail("expected Pi tool exit code")
@@ -2929,6 +2949,36 @@ test "workbench command completion updates command table state" {
 }
 
 ///|
+test "workbench command detail expansion toggles per command" {
+  let model = {
+    ..WorkbenchModel::new(),
+    commands: [
+      CommandRun::new(
+        id=1,
+        command="moon check",
+        cwd="/repo",
+        status="passed",
+        output="check ok",
+      ),
+      CommandRun::new(
+        id=2,
+        command="moon test",
+        cwd="/repo",
+        status="failed",
+        exit_code=Some(2),
+        output_path="/tmp/mo-test.log",
+        output="test failed",
+      ),
+    ],
+  }
+  let expanded = model.update(ToggleCommandDetails(2))
+  assert_false(expanded.commands[0].details_expanded)
+  assert_true(expanded.commands[1].details_expanded)
+  let collapsed = expanded.update(ToggleCommandDetails(2))
+  assert_false(collapsed.commands[1].details_expanded)
+}
+
+///|
 test "workbench activity draws recent command evidence" {
   let model = {
     ..WorkbenchModel::new(),
@@ -2959,8 +3009,10 @@ test "workbench activity draws recent command evidence" {
   let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "当前证据"))
   assert_true(has_text(commands, "wasm check"))
-  assert_true(has_text(commands, "输出 /tmp/wasm-check.log"))
+  assert_true(draw_text_count_containing(commands, "输出可用") >= 1)
+  assert_false(has_text(commands, "输出 /tmp/wasm-check.log"))
   assert_true(has_text(commands, "退出码 2"))
+  assert_true(has_text(commands, "展开"))
   assert_true(has_text(commands, "修复"))
   assert_true(has_text(commands, "重跑"))
   assert_false(has_text(commands, "stale command"))
@@ -2971,6 +3023,12 @@ test "workbench activity draws recent command evidence" {
   assert_false(has_text(commands, "全部"))
   assert_false(has_text(commands, "Native"))
   assert_false(has_text(commands, "Wasm"))
+  let expanded = model.update(ToggleCommandDetails(3))
+  let expanded_commands = expanded
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(expanded_commands, "收起"))
+  assert_true(has_text(expanded_commands, "日志 /tmp/wasm-check.log"))
 }
 
 ///|
@@ -3045,10 +3103,8 @@ test "workbench current session prioritizes failed command next action" {
     has_text(commands, "moon test examples/mo_workbench/app --target native"),
   )
   assert_true(draw_text_count_containing(commands, "退出码 1") >= 2)
-  assert_true(
-    draw_text_count_containing(commands, "输出 /tmp/mo-workbench-test.log") >=
-    2,
-  )
+  assert_true(draw_text_count_containing(commands, "输出可用") >= 2)
+  assert_false(has_text(commands, "输出 /tmp/mo-workbench-test.log"))
   assert_false(has_text(commands, "审核当前变更"))
 }
 
@@ -3208,10 +3264,8 @@ test "workbench current session prioritizes failed command over bash diagnostic"
     has_text(commands, "moon test examples/mo_workbench/app --target native"),
   )
   assert_true(draw_text_count_containing(commands, "退出码 2") >= 2)
-  assert_true(
-    draw_text_count_containing(commands, "输出 /tmp/mo-workbench-native.log") >=
-    2,
-  )
+  assert_true(draw_text_count_containing(commands, "输出可用") >= 2)
+  assert_false(has_text(commands, "输出 /tmp/mo-workbench-native.log"))
   assert_false(has_text(commands, "常用检查"))
   assert_false(has_text(commands, "全部"))
   assert_false(has_text(commands, "Native"))
@@ -3309,6 +3363,29 @@ test "workbench current session draws diff next action" {
   assert_true(has_text(commands, "下一步"))
   assert_true(has_text(commands, "审核当前变更"))
   assert_true(has_text(commands, "ready for review · 5 文件 · +160 -10"))
+}
+
+///|
+test "workbench workspace diff details expand on demand" {
+  let collapsed = model_with_reviewable_diff()
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(collapsed, "当前证据"))
+  assert_true(has_text(collapsed, "展开"))
+  assert_false(
+    has_text(collapsed, "diff ready for review · 5 文件 · +160 -10"),
+  )
+  let expanded_model = model_with_reviewable_diff().update(
+    ToggleWorkspaceDetails,
+  )
+  assert_true(expanded_model.workspace_details_expanded)
+  let expanded = expanded_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(expanded, "收起"))
+  assert_true(
+    has_text(expanded, "diff ready for review · 5 文件 · +160 -10"),
+  )
 }
 
 ///|
