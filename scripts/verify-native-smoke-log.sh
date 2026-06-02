@@ -53,7 +53,34 @@ default_stage_markers=(
   "native smoke canvas state restored" \
   "native smoke canvas clip device width" \
   "native smoke canvas replay commands" \
+  "native smoke render frame replay commands" \
+  "native smoke render frame replay complete" \
+  "native smoke render frame replay rejected skipped" \
   "native smoke render shaped glyph run command replay" \
+  "native smoke render shader cache resources" \
+  "native smoke render shader cache misses" \
+  "native smoke render shader cache hits" \
+  "native smoke render path cache resources" \
+  "native smoke render path cache misses" \
+  "native smoke render path cache hits" \
+  "native smoke render text run cache resources" \
+  "native smoke render text run cache misses" \
+  "native smoke render text run cache hits" \
+  "native smoke render font cache resources" \
+  "native smoke render font cache misses" \
+  "native smoke render font cache hits" \
+  "native smoke render typeface cache resources" \
+  "native smoke render typeface cache misses" \
+  "native smoke render typeface cache hits" \
+  "native smoke render color filter cache resources" \
+  "native smoke render color filter cache misses" \
+  "native smoke render color filter cache hits" \
+  "native smoke render image filter cache resources" \
+  "native smoke render image filter cache misses" \
+  "native smoke render image filter cache hits" \
+  "native smoke render mask filter cache resources" \
+  "native smoke render mask filter cache misses" \
+  "native smoke render mask filter cache hits" \
   "native smoke render resource plan count" \
   "native smoke render frame resource plan count" \
   "native smoke render frame validation status" \
@@ -124,6 +151,12 @@ default_stage_markers=(
   "native smoke encoded PNG bytes" \
   "native smoke decoded image width" \
   "native smoke decoded image height" \
+  "native smoke render image command replay" \
+  "native smoke render image command count" \
+  "native smoke render image resource plan count" \
+  "native smoke render image cache resources" \
+  "native smoke render image cache misses" \
+  "native smoke render image cache hits" \
   "native smoke codec encoded format PNG" \
   "native smoke codec width" \
   "native smoke codec height" \
@@ -170,12 +203,39 @@ default_stage_markers=(
 default_expected_stage_values=(
   $'native smoke canvas clip device width\t4'
   $'native smoke canvas state restored\t1'
-  $'native smoke canvas replay commands\t9'
+  $'native smoke canvas replay commands\t23'
+  $'native smoke render frame replay commands\t23'
+  $'native smoke render frame replay complete\t1'
+  $'native smoke render frame replay rejected skipped\t20'
   $'native smoke render shaped glyph run command replay\t1'
-  $'native smoke render resource plan count\t12'
-  $'native smoke render frame resource plan count\t12'
+  $'native smoke render shader cache resources\t1'
+  $'native smoke render shader cache misses\t1'
+  $'native smoke render shader cache hits\t2'
+  $'native smoke render path cache resources\t2'
+  $'native smoke render path cache misses\t2'
+  $'native smoke render path cache hits\t0'
+  $'native smoke render text run cache resources\t1'
+  $'native smoke render text run cache misses\t1'
+  $'native smoke render text run cache hits\t0'
+  $'native smoke render font cache resources\t1'
+  $'native smoke render font cache misses\t1'
+  $'native smoke render font cache hits\t0'
+  $'native smoke render typeface cache resources\t1'
+  $'native smoke render typeface cache misses\t1'
+  $'native smoke render typeface cache hits\t0'
+  $'native smoke render color filter cache resources\t1'
+  $'native smoke render color filter cache misses\t1'
+  $'native smoke render color filter cache hits\t0'
+  $'native smoke render image filter cache resources\t1'
+  $'native smoke render image filter cache misses\t1'
+  $'native smoke render image filter cache hits\t0'
+  $'native smoke render mask filter cache resources\t1'
+  $'native smoke render mask filter cache misses\t1'
+  $'native smoke render mask filter cache hits\t0'
+  $'native smoke render resource plan count\t15'
+  $'native smoke render frame resource plan count\t15'
   $'native smoke render frame validation status\t1'
-  $'native smoke render frame cacheable subplan count\t12'
+  $'native smoke render frame cacheable subplan count\t15'
   $'native smoke render frame uncacheable subplan count\t0'
   $'native smoke render frame unbalanced validation\t1'
   $'native smoke render target identity validation\t1'
@@ -197,10 +257,10 @@ default_expected_stage_values=(
   $'native smoke render frame missing present validation\t1'
   $'native smoke render frame missing finalization validation\t1'
   $'native smoke render frame touched bounds width\t4'
-  $'native smoke render frame cache resources\t12'
-  $'native smoke render resource cache inserts\t12'
-  $'native smoke render resource cache preflight missing count\t12'
-  $'native smoke render resource cache preflight cached count\t12'
+  $'native smoke render frame cache resources\t15'
+  $'native smoke render resource cache inserts\t15'
+  $'native smoke render resource cache preflight missing count\t15'
+  $'native smoke render resource cache preflight cached count\t15'
   $'native smoke render resource cache plan coverage\t1'
   $'native smoke render resource cache evictions\t1'
   $'native smoke render resource cache hits\t1'
@@ -238,6 +298,12 @@ default_expected_stage_values=(
   $'native smoke path verbs\t9'
   $'native smoke decoded image width\t32'
   $'native smoke decoded image height\t32'
+  $'native smoke render image command replay\t1'
+  $'native smoke render image command count\t3'
+  $'native smoke render image resource plan count\t2'
+  $'native smoke render image cache resources\t1'
+  $'native smoke render image cache misses\t1'
+  $'native smoke render image cache hits\t1'
   $'native smoke codec width\t32'
   $'native smoke codec height\t32'
   $'native smoke decoded bitmap width\t32'

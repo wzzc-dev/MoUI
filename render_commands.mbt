@@ -5,10 +5,31 @@
 pub(all) enum RenderCommand {
   SaveCanvas
   RestoreCanvas
+  SaveCanvasLayer(
+    Rect?,
+    Paint,
+    ColorFilterDescriptor?,
+    ImageFilterDescriptor?,
+    MaskFilterDescriptor?
+  )
   ClearCanvas(Color)
   ClipCanvasRect(Rect, ClipOp)
+  DrawCanvasPoint(Point, Paint)
+  DrawCanvasLine(Point, Point, Paint)
+  DrawCanvasPoints(Array[Point], PointMode, Paint)
   DrawCanvasRect(Rect, Paint)
+  DrawCanvasOval(Rect, Paint)
+  DrawCanvasCircle(Point, Float, Paint)
+  DrawCanvasArc(Rect, Float, Float, Bool, Paint)
+  DrawCanvasRoundRect(Rect, Float, Float, Paint)
+  DrawCanvasRRect(RRect, Paint)
+  DrawCanvasDRRect(RRect, RRect, Paint)
+  DrawCanvasRectShader(Rect, ShaderDescriptor, Paint)
+  DrawCanvasRoundRectShader(Rect, Float, Float, ShaderDescriptor, Paint)
   DrawCanvasPath(Path, Paint)
+  DrawCanvasPathShader(Path, ShaderDescriptor, Paint)
+  DrawCanvasImage(ImageDescriptor, Point)
+  DrawCanvasImageRect(ImageDescriptor, Rect, Rect, Paint, SamplingOptions)
   DrawCanvasTextUtf8(Bytes, Point, Paint)
   DrawCanvasTextRunUtf8(
     Bytes,
@@ -36,6 +57,47 @@ pub fn RenderCommand::clip_rect(
 }
 
 ///|
+pub fn RenderCommand::save_layer(
+  bounds? : Rect? = None,
+  paint? : Paint = Paint::new(),
+  color_filter? : ColorFilterDescriptor? = None,
+  image_filter? : ImageFilterDescriptor? = None,
+  mask_filter? : MaskFilterDescriptor? = None,
+) -> RenderCommand {
+  let layer_bounds : Rect? = match bounds {
+    None => None
+    Some(bounds) => Some(bounds.sorted())
+  }
+  SaveCanvasLayer(layer_bounds, paint, color_filter, image_filter, mask_filter)
+}
+
+///|
+pub fn RenderCommand::draw_point(
+  point : Point,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasPoint(point, paint)
+}
+
+///|
+pub fn RenderCommand::draw_line(
+  start : Point,
+  end : Point,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasLine(start, end, paint)
+}
+
+///|
+pub fn RenderCommand::draw_points(
+  points : Array[Point],
+  paint? : Paint = Paint::new(),
+  mode? : PointMode = Points,
+) -> RenderCommand {
+  DrawCanvasPoints(points.copy(), mode, paint)
+}
+
+///|
 pub fn RenderCommand::draw_rect(
   rect : Rect,
   paint? : Paint = Paint::new(),
@@ -44,11 +106,114 @@ pub fn RenderCommand::draw_rect(
 }
 
 ///|
+pub fn RenderCommand::draw_oval(
+  oval : Rect,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasOval(oval.sorted(), paint)
+}
+
+///|
+pub fn RenderCommand::draw_circle(
+  center : Point,
+  radius : Float,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasCircle(center, radius, paint)
+}
+
+///|
+pub fn RenderCommand::draw_arc(
+  oval : Rect,
+  start_angle : Float,
+  sweep_angle : Float,
+  use_center : Bool,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasArc(oval.sorted(), start_angle, sweep_angle, use_center, paint)
+}
+
+///|
+pub fn RenderCommand::draw_round_rect(
+  rect : Rect,
+  rx : Float,
+  ry : Float,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasRoundRect(rect.sorted(), rx, ry, paint)
+}
+
+///|
+pub fn RenderCommand::draw_rrect(
+  rrect : RRect,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasRRect(rrect, paint)
+}
+
+///|
+pub fn RenderCommand::draw_drrect(
+  outer : RRect,
+  inner : RRect,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasDRRect(outer, inner, paint)
+}
+
+///|
+pub fn RenderCommand::draw_rect_shader(
+  rect : Rect,
+  shader : ShaderDescriptor,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasRectShader(rect.sorted(), shader, paint)
+}
+
+///|
+pub fn RenderCommand::draw_round_rect_shader(
+  rect : Rect,
+  rx : Float,
+  ry : Float,
+  shader : ShaderDescriptor,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasRoundRectShader(rect.sorted(), rx, ry, shader, paint)
+}
+
+///|
 pub fn RenderCommand::draw_path(
   path : Path,
   paint? : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasPath(path, paint)
+}
+
+///|
+pub fn RenderCommand::draw_path_shader(
+  path : Path,
+  shader : ShaderDescriptor,
+  paint? : Paint = Paint::new(),
+) -> RenderCommand {
+  DrawCanvasPathShader(path, shader, paint)
+}
+
+///|
+pub fn RenderCommand::draw_image(
+  image : ImageDescriptor,
+  top_left : Point,
+) -> RenderCommand {
+  DrawCanvasImage(image, top_left)
+}
+
+///|
+pub fn RenderCommand::draw_image_rect(
+  image : ImageDescriptor,
+  src : Rect,
+  dst : Rect,
+  paint? : Paint = Paint::new(),
+  sampling? : SamplingOptions = SamplingOptions::new(),
+) -> RenderCommand {
+  DrawCanvasImageRect(image, src.sorted(), dst.sorted(), paint, sampling)
 }
 
 ///|
@@ -100,8 +265,22 @@ pub fn RenderCommand::declare_resource(
 ///|
 pub fn RenderCommand::is_draw(self : RenderCommand) -> Bool {
   self
-  is (DrawCanvasRect(_, _)
+  is (DrawCanvasPoint(_, _)
+  | DrawCanvasLine(_, _, _)
+  | DrawCanvasPoints(_, _, _)
+  | DrawCanvasRect(_, _)
+  | DrawCanvasOval(_, _)
+  | DrawCanvasCircle(_, _, _)
+  | DrawCanvasArc(_, _, _, _, _)
+  | DrawCanvasRoundRect(_, _, _, _)
+  | DrawCanvasRRect(_, _)
+  | DrawCanvasDRRect(_, _, _)
+  | DrawCanvasRectShader(_, _, _)
+  | DrawCanvasRoundRectShader(_, _, _, _, _)
   | DrawCanvasPath(_, _)
+  | DrawCanvasPathShader(_, _, _)
+  | DrawCanvasImage(_, _)
+  | DrawCanvasImageRect(_, _, _, _, _)
   | DrawCanvasTextUtf8(_, _, _)
   | DrawCanvasTextRunUtf8(_, _, _, _, _)
   | DrawCanvasShapedGlyphRunUtf8(_, _, _, _))
@@ -109,7 +288,7 @@ pub fn RenderCommand::is_draw(self : RenderCommand) -> Bool {
 
 ///|
 pub fn RenderCommand::is_state(self : RenderCommand) -> Bool {
-  self is (SaveCanvas | RestoreCanvas)
+  self is (SaveCanvas | RestoreCanvas | SaveCanvasLayer(_, _, _, _, _))
 }
 
 ///|
@@ -159,6 +338,11 @@ pub fn RenderCommand::resource_descriptor(
 ) -> RendererResourceDescriptor? {
   match self {
     DrawCanvasPath(path, _) => Some(path.resource_descriptor())
+    DrawCanvasRectShader(_, shader, _) => Some(shader.resource_descriptor())
+    DrawCanvasRoundRectShader(_, _, _, shader, _) =>
+      Some(shader.resource_descriptor())
+    DrawCanvasImage(image, _) => Some(image.resource_descriptor())
+    DrawCanvasImageRect(image, _, _, _, _) => Some(image.resource_descriptor())
     DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
       Some(descriptor.resource_descriptor(text, font_key~))
     DrawCanvasShapedGlyphRunUtf8(text, glyph_run, _, _) =>
@@ -173,13 +357,108 @@ pub fn RenderCommand::resource_descriptors(
   self : RenderCommand,
 ) -> Array[RendererResourceDescriptor] {
   match self {
+    SaveCanvasLayer(_, _, color_filter, image_filter, mask_filter) =>
+      render_filter_resource_descriptors(
+        color_filter, image_filter, mask_filter,
+      )
     DrawCanvasPath(path, _) => [path.resource_descriptor()]
+    DrawCanvasRectShader(_, shader, _) => [shader.resource_descriptor()]
+    DrawCanvasRoundRectShader(_, _, _, shader, _) =>
+      [shader.resource_descriptor()]
+    DrawCanvasPathShader(path, shader, _) =>
+      [path.resource_descriptor(), shader.resource_descriptor()]
+    DrawCanvasImage(image, _) => [image.resource_descriptor()]
+    DrawCanvasImageRect(image, _, _, _, _) => [image.resource_descriptor()]
     DrawCanvasTextRunUtf8(text, descriptor, font_key, _, _) =>
       descriptor.resource_plan(text, font_key~).descriptors
     DrawCanvasShapedGlyphRunUtf8(text, glyph_run, _, _) =>
       glyph_run.resource_plan(text).descriptors
     DeclareRenderResource(descriptor) => [descriptor]
     _ => []
+  }
+}
+
+///|
+fn render_filter_resource_descriptors(
+  color_filter : ColorFilterDescriptor?,
+  image_filter : ImageFilterDescriptor?,
+  mask_filter : MaskFilterDescriptor?,
+) -> Array[RendererResourceDescriptor] {
+  let descriptors : Array[RendererResourceDescriptor] = []
+  match color_filter {
+    None => ()
+    Some(descriptor) => descriptors.push(descriptor.resource_descriptor())
+  }
+  match image_filter {
+    None => ()
+    Some(descriptor) => descriptors.push(descriptor.resource_descriptor())
+  }
+  match mask_filter {
+    None => ()
+    Some(descriptor) => descriptors.push(descriptor.resource_descriptor())
+  }
+  descriptors
+}
+
+///|
+fn render_paint_stroke_radius(paint : Paint) -> Float {
+  let width : Float = if paint.stroke_width <= 0.0 {
+    1.0
+  } else {
+    paint.stroke_width
+  }
+  width / 2.0
+}
+
+///|
+fn point_draw_bounds(point : Point, paint : Paint) -> Rect {
+  let radius = render_paint_stroke_radius(paint)
+  Rect::from_xywh(
+    point.x - radius,
+    point.y - radius,
+    radius * 2.0,
+    radius * 2.0,
+  )
+}
+
+///|
+fn points_draw_bounds(points : Array[Point], paint : Paint) -> Rect? {
+  match Rect::from_points(points) {
+    None => None
+    Some(bounds) => {
+      let radius = render_paint_stroke_radius(paint)
+      Some(bounds.outset(radius, radius))
+    }
+  }
+}
+
+///|
+fn line_draw_bounds(start : Point, end : Point, paint : Paint) -> Rect? {
+  points_draw_bounds([start, end], paint)
+}
+
+///|
+fn point_mode_draw_bounds(
+  points : Array[Point],
+  mode : PointMode,
+  paint : Paint,
+) -> Rect? {
+  match mode {
+    Points => points_draw_bounds(points, paint)
+    Lines => {
+      let used : Array[Point] = []
+      for i = 0; i + 1 < points.length(); i = i + 2 {
+        used.push(points[i])
+        used.push(points[i + 1])
+      }
+      points_draw_bounds(used, paint)
+    }
+    Polygon =>
+      if points.length() < 2 {
+        None
+      } else {
+        points_draw_bounds(points, paint)
+      }
   }
 }
 
@@ -199,10 +478,56 @@ fn shaped_glyph_run_draw_bounds(
 }
 
 ///|
+fn image_draw_bounds(image : ImageDescriptor, top_left : Point) -> Rect? {
+  match image.dimensions() {
+    None => None
+    Some(dimensions) =>
+      Some(
+        Rect::from_xywh(
+          top_left.x,
+          top_left.y,
+          Float::from_int(dimensions.width),
+          Float::from_int(dimensions.height),
+        ),
+      )
+  }
+}
+
+///|
 fn RenderCommand::draw_bounds(self : RenderCommand) -> Rect? {
   match self {
+    DrawCanvasPoint(point, paint) => Some(point_draw_bounds(point, paint))
+    DrawCanvasLine(start, end, paint) => line_draw_bounds(start, end, paint)
+    DrawCanvasPoints(points, mode, paint) =>
+      point_mode_draw_bounds(points, mode, paint)
     DrawCanvasRect(rect, _) => Some(rect.sorted())
+    DrawCanvasOval(oval, _) => Some(oval.sorted())
+    DrawCanvasCircle(center, radius, _) =>
+      if radius <= 0.0 {
+        None
+      } else {
+        Some(
+          Rect::from_xywh(
+            center.x - radius,
+            center.y - radius,
+            radius * 2.0,
+            radius * 2.0,
+          ),
+        )
+      }
+    DrawCanvasArc(oval, _, _, _, paint) => {
+      let radius = render_paint_stroke_radius(paint)
+      Some(oval.sorted().outset(radius, radius))
+    }
+    DrawCanvasRoundRect(rect, _, _, _) => Some(rect.sorted())
+    DrawCanvasRRect(rrect, _) => Some(rrect.bounds())
+    DrawCanvasDRRect(outer, _, _) => Some(outer.bounds())
+    DrawCanvasRectShader(rect, _, _) => Some(rect.sorted())
+    DrawCanvasRoundRectShader(rect, _, _, _, _) => Some(rect.sorted())
     DrawCanvasPath(path, _) => path.bounds()
+    DrawCanvasPathShader(path, _, _) => path.bounds()
+    DrawCanvasImage(image, top_left) => image_draw_bounds(image, top_left)
+    DrawCanvasImageRect(_, _, dst, _, _) => Some(dst.sorted())
     DrawCanvasShapedGlyphRunUtf8(_, glyph_run, origin, _) =>
       shaped_glyph_run_draw_bounds(glyph_run, origin)
     _ => None
@@ -212,7 +537,7 @@ fn RenderCommand::draw_bounds(self : RenderCommand) -> Rect? {
 ///|
 fn RenderCommand::save_depth_delta(self : RenderCommand) -> Int {
   match self {
-    SaveCanvas => 1
+    SaveCanvas | SaveCanvasLayer(_, _, _, _, _) => 1
     RestoreCanvas => -1
     _ => 0
   }
@@ -322,6 +647,26 @@ pub fn RenderCommandList::restore(
 }
 
 ///|
+pub fn RenderCommandList::save_layer(
+  self : RenderCommandList,
+  bounds? : Rect? = None,
+  paint? : Paint = Paint::new(),
+  color_filter? : ColorFilterDescriptor? = None,
+  image_filter? : ImageFilterDescriptor? = None,
+  mask_filter? : MaskFilterDescriptor? = None,
+) -> RenderCommandList {
+  self.append(
+    RenderCommand::save_layer(
+      bounds~,
+      paint~,
+      color_filter~,
+      image_filter~,
+      mask_filter~,
+    ),
+  )
+}
+
+///|
 pub fn RenderCommandList::clear(
   self : RenderCommandList,
   color : Color,
@@ -339,6 +684,35 @@ pub fn RenderCommandList::clip_rect(
 }
 
 ///|
+pub fn RenderCommandList::draw_point(
+  self : RenderCommandList,
+  point : Point,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_point(point, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_line(
+  self : RenderCommandList,
+  start : Point,
+  end : Point,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_line(start, end, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_points(
+  self : RenderCommandList,
+  points : Array[Point],
+  paint? : Paint = Paint::new(),
+  mode? : PointMode = Points,
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_points(points, paint~, mode~))
+}
+
+///|
 pub fn RenderCommandList::draw_rect(
   self : RenderCommandList,
   rect : Rect,
@@ -348,12 +722,132 @@ pub fn RenderCommandList::draw_rect(
 }
 
 ///|
+pub fn RenderCommandList::draw_oval(
+  self : RenderCommandList,
+  oval : Rect,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_oval(oval, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_circle(
+  self : RenderCommandList,
+  center : Point,
+  radius : Float,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_circle(center, radius, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_arc(
+  self : RenderCommandList,
+  oval : Rect,
+  start_angle : Float,
+  sweep_angle : Float,
+  use_center : Bool,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(
+    RenderCommand::draw_arc(oval, start_angle, sweep_angle, use_center, paint~),
+  )
+}
+
+///|
+pub fn RenderCommandList::draw_round_rect(
+  self : RenderCommandList,
+  rect : Rect,
+  rx : Float,
+  ry : Float,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_round_rect(rect, rx, ry, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_rrect(
+  self : RenderCommandList,
+  rrect : RRect,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_rrect(rrect, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_drrect(
+  self : RenderCommandList,
+  outer : RRect,
+  inner : RRect,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_drrect(outer, inner, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_rect_shader(
+  self : RenderCommandList,
+  rect : Rect,
+  shader : ShaderDescriptor,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_rect_shader(rect, shader, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_round_rect_shader(
+  self : RenderCommandList,
+  rect : Rect,
+  rx : Float,
+  ry : Float,
+  shader : ShaderDescriptor,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(
+    RenderCommand::draw_round_rect_shader(rect, rx, ry, shader, paint~),
+  )
+}
+
+///|
 pub fn RenderCommandList::draw_path(
   self : RenderCommandList,
   path : Path,
   paint? : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_path(path, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_path_shader(
+  self : RenderCommandList,
+  path : Path,
+  shader : ShaderDescriptor,
+  paint? : Paint = Paint::new(),
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_path_shader(path, shader, paint~))
+}
+
+///|
+pub fn RenderCommandList::draw_image(
+  self : RenderCommandList,
+  image : ImageDescriptor,
+  top_left : Point,
+) -> RenderCommandList {
+  self.append(RenderCommand::draw_image(image, top_left))
+}
+
+///|
+pub fn RenderCommandList::draw_image_rect(
+  self : RenderCommandList,
+  image : ImageDescriptor,
+  src : Rect,
+  dst : Rect,
+  paint? : Paint = Paint::new(),
+  sampling? : SamplingOptions = SamplingOptions::new(),
+) -> RenderCommandList {
+  self.append(
+    RenderCommand::draw_image_rect(image, src, dst, paint~, sampling~),
+  )
 }
 
 ///|

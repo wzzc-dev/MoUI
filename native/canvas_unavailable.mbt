@@ -477,5 +477,51 @@ pub fn Canvas::replay(
 }
 
 ///|
+/// Replay frame is a counted no-op when the native Canvas target is unavailable.
+pub fn Canvas::replay_frame(
+  self : Canvas,
+  frame : @skia.RenderFrameDescriptor,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  self.replay(frame.command_list, font~)
+}
+
+///|
+/// Replay with an image cache is also a counted no-op on unavailable targets.
+pub fn Canvas::replay_with_image_cache(
+  self : Canvas,
+  commands : @skia.RenderCommandList,
+  image_cache : @skia.ResourceCache[@skia.RendererResourceKey, Image],
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  ignore(image_cache)
+  self.replay(commands, font~)
+}
+
+///|
+/// Replay with native resource caches is also a counted no-op on unavailable targets.
+pub fn Canvas::replay_with_resources(
+  self : Canvas,
+  commands : @skia.RenderCommandList,
+  resources : NativeReplayResources,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  ignore(resources)
+  self.replay(commands, font~)
+}
+
+///|
+/// Replay frame with native resource caches is also a counted no-op on unavailable targets.
+pub fn Canvas::replay_frame_with_resources(
+  self : Canvas,
+  frame : @skia.RenderFrameDescriptor,
+  resources : NativeReplayResources,
+  font? : Font? = None,
+) -> CanvasReplayStats {
+  ignore(resources)
+  self.replay_frame(frame, font~)
+}
+
+///|
 /// Allocate a raster N32 premultiplied surface.
 ///

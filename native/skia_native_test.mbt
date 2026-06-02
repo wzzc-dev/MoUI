@@ -1036,8 +1036,44 @@ test "canvas draw api typechecks" {
 }
 
 ///|
+fn native_test_encoded_image_descriptor() -> @skia.ImageDescriptor? {
+  match @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4)) {
+    None => None
+    Some(surface) =>
+      match surface.canvas() {
+        None => None
+        Some(canvas) => {
+          canvas.clear(@skia.Color::red())
+          match surface.image_snapshot() {
+            None => None
+            Some(image) =>
+              match image.encode_to_data(format=@skia.PNG, quality=100) {
+                None => None
+                Some(data) =>
+                  @skia.ImageDescriptor::encoded(
+                    data.to_bytes(),
+                    format=Some(@skia.PNG),
+                    dimensions=Some(@skia.ISize::new(4, 4)),
+                  )
+              }
+          }
+        }
+      }
+  }
+}
+
+///|
 test "canvas replays render command lists" {
   let path = @skia.Path::new().add_rect(@skia.Rect::from_xywh(10, 2, 4, 4))
+  let rrect = @skia.RRect::from_rect_xy(
+    @skia.Rect::from_xywh(10, 18, 6, 4),
+    2.0,
+    2.0,
+  )
+  let layer_color_filter = @skia.ColorFilterDescriptor::saturation(0.8)
+  let layer_image_filter = @skia.ImageFilterDescriptor::blur(1.0, 1.0)
+  let layer_mask_filter = @skia.MaskFilterDescriptor::blur(1.0)
+  let replay_image_descriptor = native_test_encoded_image_descriptor()
   let text_descriptor = @skia.TextRunDescriptor::new(
     range=@skia.TextRange::new(0, 5),
     fallback=@skia.FontFallbackRequest::new(
@@ -1046,16 +1082,87 @@ test "canvas replays render command lists" {
       character=0x68,
     ),
   )
-  let commands = @skia.RenderCommandList::for_target(
-      @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(16, 16)),
-    )
+  let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia.ISize::new(32, 32),
+  )
+  let base_commands = @skia.RenderCommandList::for_target(replay_target)
     .clear(@skia.Color::white())
-    .clip_rect(@skia.Rect::from_xywh(0, 0, 16, 16))
+    .clip_rect(@skia.Rect::from_xywh(0, 0, 32, 32))
+    .save_layer(
+      bounds=Some(@skia.Rect::from_xywh(0, 0, 32, 32)),
+      color_filter=layer_color_filter,
+      image_filter=layer_image_filter,
+      mask_filter=layer_mask_filter,
+    )
+    .draw_point(
+      @skia.Point::new(29, 2),
+      paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=2.0),
+    )
+    .draw_line(
+      @skia.Point::new(18, 8),
+      @skia.Point::new(28, 8),
+      paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=2.0),
+    )
+    .draw_points(
+      [
+        @skia.Point::new(18, 14),
+        @skia.Point::new(22, 14),
+        @skia.Point::new(26, 14),
+      ],
+      paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=2.0),
+      mode=@skia.Polygon,
+    )
     .draw_rect(
       @skia.Rect::from_xywh(2, 2, 4, 4),
       paint=@skia.Paint::new(color=@skia.Color::red()),
     )
+    .draw_oval(
+      @skia.Rect::from_xywh(18, 2, 6, 4),
+      paint=@skia.Paint::new(color=@skia.Color::green()),
+    )
+    .draw_circle(
+      @skia.Point::new(24, 12),
+      3.0,
+      paint=@skia.Paint::new(color=@skia.Color::blue()),
+    )
+    .draw_arc(
+      @skia.Rect::from_xywh(24, 18, 6, 6),
+      0.0,
+      180.0,
+      false,
+      paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=2.0),
+    )
+    .draw_rect_shader(
+      @skia.Rect::from_xywh(12, 24, 4, 4),
+      @skia.ShaderDescriptor::color(@skia.Color::green()),
+      paint=@skia.Paint::new(color=@skia.Color::white()),
+    )
+    .draw_round_rect_shader(
+      @skia.Rect::from_xywh(16, 24, 4, 4),
+      1.0,
+      1.0,
+      @skia.ShaderDescriptor::color(@skia.Color::cyan()),
+      paint=@skia.Paint::new(color=@skia.Color::white()),
+    )
+    .draw_round_rect(
+      @skia.Rect::from_xywh(2, 18, 6, 4),
+      2.0,
+      2.0,
+      paint=@skia.Paint::new(color=@skia.Color::cyan()),
+    )
+    .draw_rrect(rrect, paint=@skia.Paint::new(color=@skia.Color::magenta()))
+    .draw_drrect(
+      @skia.RRect::from_rect_xy(@skia.Rect::from_xywh(20, 20, 8, 8), 3.0, 3.0),
+      @skia.RRect::from_rect_xy(@skia.Rect::from_xywh(22, 22, 2, 2), 1.0, 1.0),
+      paint=@skia.Paint::new(color=@skia.Color::yellow()),
+    )
+    .restore()
     .draw_path(path, paint=@skia.Paint::new(color=@skia.Color::blue()))
+    .draw_path_shader(
+      path,
+      @skia.ShaderDescriptor::color(@skia.Color::green()),
+      paint=@skia.Paint::new(color=@skia.Color::white()),
+    )
     .draw_text_run_utf8(
       b"hello",
       @skia.Point::new(2, 12),
@@ -1063,8 +1170,29 @@ test "canvas replays render command lists" {
       font_key=@skia.RendererResourceKey::font(b"default:8"),
       paint=@skia.Paint::new(color=@skia.Color::black()),
     )
+  let commands = match replay_image_descriptor {
+    None => base_commands
+    Some(image) =>
+      base_commands
+      .draw_image(image, @skia.Point::new(20, 0))
+      .draw_image_rect(
+        image,
+        @skia.Rect::from_xywh(0, 0, 4, 4),
+        @skia.Rect::from_xywh(20, 4, 4, 4),
+        sampling=@skia.SamplingOptions::linear(),
+      )
+  }
   assert_eq(commands.text_run_resource_keys().length(), 1)
-  match @native.Surface::raster_n32_premul(@skia.ISize::new(16, 16)) {
+  match replay_image_descriptor {
+    None => ()
+    Some(image) =>
+      assert_true(commands.resource_plan().contains_key(image.resource_key()))
+  }
+  let replay_frame = commands.frame_descriptor(replay_target)
+  let rejected_frame = commands.save().frame_descriptor(replay_target)
+  assert_true(replay_frame.is_ready())
+  assert_true(!rejected_frame.is_ready())
+  match @native.Surface::raster_n32_premul(@skia.ISize::new(32, 32)) {
     None => ()
     Some(surface) =>
       match surface.canvas() {
@@ -1072,8 +1200,12 @@ test "canvas replays render command lists" {
         Some(canvas) => {
           let font = @native.Font::default(size=8.0)
           let stats = canvas.replay(commands, font~)
+          let expected_draw_count = match replay_image_descriptor {
+            None => 15
+            Some(_) => 17
+          }
           assert_eq(stats.command_count, commands.length())
-          assert_eq(stats.draw_count, 3)
+          assert_eq(stats.draw_count, expected_draw_count)
           assert_eq(stats.text_count, 1)
           assert_eq(stats.present_count, 0)
           match font {
@@ -1083,6 +1215,113 @@ test "canvas replays render command lists" {
           assert_true(
             stats.replayed_count + stats.skipped_count == commands.length(),
           )
+          let frame_stats = canvas.replay_frame(replay_frame, font~)
+          assert_eq(frame_stats.command_count, commands.length())
+          assert_eq(frame_stats.draw_count, expected_draw_count)
+          assert_eq(frame_stats.text_count, 1)
+          assert_eq(frame_stats.present_count, 0)
+          match font {
+            None => assert_true(frame_stats.skipped_count <= 1)
+            Some(_) => assert_true(frame_stats.is_complete())
+          }
+          let rejected_frame_stats = canvas.replay_frame(rejected_frame, font~)
+          assert_eq(
+            rejected_frame_stats.command_count,
+            rejected_frame.command_list.length(),
+          )
+          assert_eq(rejected_frame_stats.replayed_count, 0)
+          assert_true(rejected_frame_stats.skipped_count > 0)
+          assert_true(!rejected_frame_stats.is_complete())
+          match replay_image_descriptor {
+            None => ()
+            Some(_) => {
+              let replay_resources = @native.NativeReplayResources::new(
+                image_max_bytes=1024L * 1024L,
+                shader_max_bytes=1024L,
+                path_max_bytes=1024L,
+                text_run_max_bytes=1024L,
+                font_max_bytes=1024L,
+                typeface_max_bytes=1024L,
+                color_filter_max_bytes=1024L,
+                image_filter_max_bytes=1024L,
+                mask_filter_max_bytes=1024L,
+              )
+              let cached_stats = canvas.replay_with_resources(
+                commands,
+                replay_resources,
+                font~,
+              )
+              assert_true(cached_stats.is_complete())
+              assert_eq(cached_stats.command_count, commands.length())
+              let cached_again_stats = canvas.replay_with_resources(
+                commands,
+                replay_resources,
+                font~,
+              )
+              let image_cache_stats = replay_resources.image_cache.stats()
+              let shader_cache_stats = replay_resources.shader_cache.stats()
+              let path_cache_stats = replay_resources.path_cache.stats()
+              let text_run_cache_stats = replay_resources.text_run_cache.stats()
+              let font_cache_stats = replay_resources.font_cache.stats()
+              let typeface_cache_stats = replay_resources.typeface_cache.stats()
+              let color_filter_cache_stats = replay_resources.color_filter_cache.stats()
+              let image_filter_cache_stats = replay_resources.image_filter_cache.stats()
+              let mask_filter_cache_stats = replay_resources.mask_filter_cache.stats()
+              assert_true(cached_again_stats.is_complete())
+              assert_eq(cached_again_stats.command_count, commands.length())
+              assert_eq(replay_resources.image_cache.length(), 1)
+              assert_eq(image_cache_stats.misses, 1)
+              assert_eq(image_cache_stats.hits, 3)
+              assert_eq(replay_resources.shader_cache.length(), 2)
+              assert_eq(shader_cache_stats.misses, 2)
+              assert_eq(shader_cache_stats.hits, 4)
+              assert_eq(replay_resources.path_cache.length(), 1)
+              assert_eq(path_cache_stats.misses, 1)
+              assert_eq(path_cache_stats.hits, 3)
+              assert_eq(replay_resources.text_run_cache.length(), 1)
+              assert_eq(text_run_cache_stats.misses, 1)
+              assert_eq(text_run_cache_stats.hits, 1)
+              assert_eq(replay_resources.font_cache.length(), 1)
+              assert_eq(font_cache_stats.misses, 1)
+              assert_eq(font_cache_stats.hits, 1)
+              assert_eq(replay_resources.typeface_cache.length(), 1)
+              assert_eq(typeface_cache_stats.misses, 1)
+              assert_eq(typeface_cache_stats.hits, 1)
+              assert_eq(replay_resources.color_filter_cache.length(), 1)
+              assert_eq(color_filter_cache_stats.misses, 1)
+              assert_eq(color_filter_cache_stats.hits, 1)
+              assert_eq(replay_resources.image_filter_cache.length(), 1)
+              assert_eq(image_filter_cache_stats.misses, 1)
+              assert_eq(image_filter_cache_stats.hits, 1)
+              assert_eq(replay_resources.mask_filter_cache.length(), 1)
+              assert_eq(mask_filter_cache_stats.misses, 1)
+              assert_eq(mask_filter_cache_stats.hits, 1)
+              let frame_resources = @native.NativeReplayResources::new(
+                image_max_bytes=1024L * 1024L,
+                shader_max_bytes=1024L,
+                path_max_bytes=1024L,
+                text_run_max_bytes=1024L,
+                font_max_bytes=1024L,
+                typeface_max_bytes=1024L,
+                color_filter_max_bytes=1024L,
+                image_filter_max_bytes=1024L,
+                mask_filter_max_bytes=1024L,
+              )
+              let frame_cached_stats = canvas.replay_frame_with_resources(
+                replay_frame,
+                frame_resources,
+                font~,
+              )
+              assert_true(frame_cached_stats.is_complete())
+              assert_eq(frame_cached_stats.command_count, commands.length())
+              assert_eq(frame_resources.image_cache.length(), 1)
+              assert_eq(frame_resources.shader_cache.length(), 2)
+              assert_eq(frame_resources.path_cache.length(), 1)
+              assert_eq(frame_resources.text_run_cache.length(), 1)
+              assert_eq(frame_resources.font_cache.length(), 1)
+              assert_eq(frame_resources.typeface_cache.length(), 1)
+            }
+          }
           assert_true(surface.flush_and_submit())
           match surface.read_pixels(bounds=@skia.IRect::from_xywh(2, 2, 1, 1)) {
             None => ()

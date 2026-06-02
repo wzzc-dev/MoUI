@@ -38,7 +38,34 @@ $defaultStageMarkers = @(
   "native smoke canvas state restored",
   "native smoke canvas clip device width",
   "native smoke canvas replay commands",
+  "native smoke render frame replay commands",
+  "native smoke render frame replay complete",
+  "native smoke render frame replay rejected skipped",
   "native smoke render shaped glyph run command replay",
+  "native smoke render shader cache resources",
+  "native smoke render shader cache misses",
+  "native smoke render shader cache hits",
+  "native smoke render path cache resources",
+  "native smoke render path cache misses",
+  "native smoke render path cache hits",
+  "native smoke render text run cache resources",
+  "native smoke render text run cache misses",
+  "native smoke render text run cache hits",
+  "native smoke render font cache resources",
+  "native smoke render font cache misses",
+  "native smoke render font cache hits",
+  "native smoke render typeface cache resources",
+  "native smoke render typeface cache misses",
+  "native smoke render typeface cache hits",
+  "native smoke render color filter cache resources",
+  "native smoke render color filter cache misses",
+  "native smoke render color filter cache hits",
+  "native smoke render image filter cache resources",
+  "native smoke render image filter cache misses",
+  "native smoke render image filter cache hits",
+  "native smoke render mask filter cache resources",
+  "native smoke render mask filter cache misses",
+  "native smoke render mask filter cache hits",
   "native smoke render resource plan count",
   "native smoke render frame resource plan count",
   "native smoke render frame validation status",
@@ -109,6 +136,12 @@ $defaultStageMarkers = @(
   "native smoke encoded PNG bytes",
   "native smoke decoded image width",
   "native smoke decoded image height",
+  "native smoke render image command replay",
+  "native smoke render image command count",
+  "native smoke render image resource plan count",
+  "native smoke render image cache resources",
+  "native smoke render image cache misses",
+  "native smoke render image cache hits",
   "native smoke codec encoded format PNG",
   "native smoke codec width",
   "native smoke codec height",
@@ -162,19 +195,127 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke canvas replay commands"
-    Value = "9"
+    Value = "23"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame replay commands"
+    Value = "23"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame replay complete"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render frame replay rejected skipped"
+    Value = "20"
   }
   [pscustomobject]@{
     Marker = "native smoke render shaped glyph run command replay"
     Value = "1"
   }
   [pscustomobject]@{
+    Marker = "native smoke render shader cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render shader cache misses"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render shader cache hits"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render path cache resources"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render path cache misses"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render path cache hits"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render text run cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render text run cache misses"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render text run cache hits"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render font cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render font cache misses"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render font cache hits"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render typeface cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render typeface cache misses"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render typeface cache hits"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render color filter cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render color filter cache misses"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render color filter cache hits"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image filter cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image filter cache misses"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image filter cache hits"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render mask filter cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render mask filter cache misses"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render mask filter cache hits"
+    Value = "0"
+  }
+  [pscustomobject]@{
     Marker = "native smoke render resource plan count"
-    Value = "12"
+    Value = "15"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame resource plan count"
-    Value = "12"
+    Value = "15"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame validation status"
@@ -182,7 +323,7 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke render frame cacheable subplan count"
-    Value = "12"
+    Value = "15"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame uncacheable subplan count"
@@ -270,19 +411,19 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke render frame cache resources"
-    Value = "12"
+    Value = "15"
   }
   [pscustomobject]@{
     Marker = "native smoke render resource cache inserts"
-    Value = "12"
+    Value = "15"
   }
   [pscustomobject]@{
     Marker = "native smoke render resource cache preflight missing count"
-    Value = "12"
+    Value = "15"
   }
   [pscustomobject]@{
     Marker = "native smoke render resource cache preflight cached count"
-    Value = "12"
+    Value = "15"
   }
   [pscustomobject]@{
     Marker = "native smoke render resource cache plan coverage"
@@ -431,6 +572,30 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke decoded image height"
     Value = "32"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image command replay"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image command count"
+    Value = "3"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image resource plan count"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image cache resources"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image cache misses"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke render image cache hits"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke codec width"
