@@ -143,7 +143,8 @@ The `native` subpackage contains the first opt-in native boundary:
   linear-gradient inputs plus non-finite linear/radial-gradient geometry
   rejected before native replay/resource planning;
 - `@native.ColorFilter`, `ImageFilter`, and `MaskFilter` reject non-finite
-  parameters before native handle creation and value-layer resource planning;
+  parameters before native handle creation and value-layer resource planning,
+  with native FFI stubs also nulling non-finite matrix/sigma inputs;
 - direct invalid shader/filter descriptor variants produce uncacheable resource
   descriptors, preserving cache safety even when constructors are bypassed;
 - native replay skips invalid shader/filter descriptor commands without
