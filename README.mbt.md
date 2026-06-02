@@ -140,6 +140,8 @@ The `native` subpackage contains the first opt-in native boundary:
   parameters before native handle creation and value-layer resource planning;
 - direct invalid shader/filter descriptor variants produce uncacheable resource
   descriptors, preserving cache safety even when constructors are bypassed;
+- native replay skips invalid shader/filter descriptor commands without
+  populating shader/filter caches;
 - `@native.Path` supports the first path construction calls: `new`, `reset`,
   `rewind`,
   `set_fill_type`, `fill_type`, `move_to`, `line_to`, `quad_to`, `cubic_to`,
