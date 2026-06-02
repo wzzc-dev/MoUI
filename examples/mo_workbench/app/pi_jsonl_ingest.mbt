@@ -714,7 +714,7 @@ fn WorkbenchModel::apply_bash_success(
   let output = json_string(data, "output").unwrap_or("")
   let model = self
     .mark_next_shell_command_complete(
-      session_id, exit_code, cancelled, full_output_path,
+      session_id, exit_code, cancelled, full_output_path, output, truncated,
     )
     .append_bash_diagnostics(exit_code, cancelled, truncated, full_output_path)
   {
@@ -1470,8 +1470,11 @@ fn WorkbenchModel::ingest_tool_execution_end(
       0
     },
   )
+  let output = tool_result_summary(fields.get("result")).unwrap_or("")
+  let output_path = tool_result_output_path(fields.get("result"))
+  let output_truncated = tool_result_truncated(fields.get("result"))
   let model = self.mark_tool_command_complete(
-    tool_call_id, tool_name, exit_code, is_error,
+    tool_call_id, tool_name, exit_code, is_error, output, output_path, output_truncated,
   )
   {
     ..model.update_active_session_for_pi(
@@ -2149,13 +2152,23 @@ fn WorkbenchModel::mark_tool_command_complete(
   tool_name : String,
   exit_code : Int,
   is_error : Bool,
+  output : String,
+  output_path : String,
+  output_truncated : Bool,
 ) -> WorkbenchModel {
   let status = if is_error || exit_code != 0 { "failed" } else { "passed" }
   let mut found = false
   let commands = self.commands.map(command => {
     if tool_call_id != "" && command.tool_call_id == tool_call_id {
       found = true
-      { ..command, status, exit_code: Some(exit_code) }
+      {
+        ..command,
+        status,
+        exit_code: Some(exit_code),
+        output,
+        output_path,
+        output_truncated,
+      }
     } else {
       command
     }
@@ -2172,6 +2185,9 @@ fn WorkbenchModel::mark_tool_command_complete(
         status~,
         exit_code=Some(exit_code),
         tool_call_id~,
+        output~,
+        output_path~,
+        output_truncated~,
       ),
     )
     { ..self, commands: next }
@@ -2185,6 +2201,8 @@ fn WorkbenchModel::mark_next_shell_command_complete(
   exit_code : Int?,
   cancelled : Bool,
   output_path : String,
+  output : String,
+  output_truncated : Bool,
 ) -> WorkbenchModel {
   let session = self.session_for_id(session_id)
   let status = shell_command_status(exit_code, cancelled)
@@ -2198,7 +2216,14 @@ fn WorkbenchModel::mark_next_shell_command_complete(
     Some(id) => {
       let commands = self.commands.map(command => {
         if command.id == id {
-          { ..command, status, exit_code, output_path }
+          {
+            ..command,
+            status,
+            exit_code,
+            output_path,
+            output,
+            output_truncated,
+          }
         } else {
           command
         }
@@ -2214,6 +2239,8 @@ fn WorkbenchModel::mark_next_shell_command_complete(
           status~,
           exit_code~,
           output_path~,
+          output~,
+          output_truncated~,
         ),
       )
   }
@@ -2848,6 +2875,59 @@ fn tool_result_summary(result : Json?) -> String? {
     Some(String(value)) => Some(value)
     Some(value) => Some(value.stringify())
     None => None
+  }
+}
+
+///|
+fn tool_result_output_path(result : Json?) -> String {
+  match result {
+    Some(Object(fields)) =>
+      match json_string(fields, "fullOutputPath") {
+        Some(path) => path
+        None =>
+          match json_string(fields, "outputPath") {
+            Some(path) => path
+            None =>
+              match json_string(fields, "output_path") {
+                Some(path) => path
+                None =>
+                  match json_object(fields, "details") {
+                    Some(details) =>
+                      tool_result_output_path_from_fields(details)
+                    None => ""
+                  }
+              }
+          }
+      }
+    _ => ""
+  }
+}
+
+///|
+fn tool_result_output_path_from_fields(fields : Map[String, Json]) -> String {
+  match json_string(fields, "fullOutputPath") {
+    Some(path) => path
+    None =>
+      match json_string(fields, "outputPath") {
+        Some(path) => path
+        None => json_string(fields, "output_path").unwrap_or("")
+      }
+  }
+}
+
+///|
+fn tool_result_truncated(result : Json?) -> Bool {
+  match result {
+    Some(Object(fields)) =>
+      match json_bool(fields, "truncated") {
+        Some(value) => value
+        None =>
+          match json_object(fields, "details") {
+            Some(details) => json_bool(details, "truncated").unwrap_or(false)
+            None => false
+          }
+      }
+    _ => false
   }
 }
 

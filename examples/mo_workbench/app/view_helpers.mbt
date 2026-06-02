@@ -99,7 +99,7 @@ fn workbench_layout(
   )
   let command_text_width = workbench_max_double(
     1.0,
-    panel_body_width - row_badge_width - 68.0 - 54.0 - 54.0 - 40.0,
+    panel_body_width - row_badge_width - 68.0 - 54.0 - 54.0 - 54.0 - 48.0,
   )
   let composer_width = workbench_clamp_double(
     content_available_width,
@@ -1058,34 +1058,44 @@ fn WorkbenchModel::workspace_summary_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  row(
-    [
-      badge("工作区", tone=Accent, theme~, width=layout.row_badge_width),
-      column(
-        [
-          text(
-            self.workspace_summary_label(),
-            role=Control,
-            theme~,
-            width=layout.row_text_width,
-            height=24.0,
-          ),
-          text(
-            self.workspace_summary_detail_label(),
-            role=Caption,
-            theme~,
-            width=layout.row_text_width,
-            height=22.0,
-          ),
-        ],
-        spacing=0.0,
-        align=Start,
-      ),
-      self.workspace_summary_action_button(theme),
-    ],
-    spacing=8.0,
-    align=Center,
+  let summary_width = workbench_max_double(
+    1.0,
+    layout.panel_body_width - layout.row_badge_width - 124.0 - 16.0,
   )
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    row(
+      [
+        badge("工作区", tone=Accent, theme~, width=layout.row_badge_width),
+        column(
+          [
+            text(
+              self.workspace_summary_label(),
+              role=Control,
+              theme~,
+              width=summary_width,
+              height=24.0,
+            ),
+            text(
+              self.workspace_summary_detail_label(),
+              role=Caption,
+              theme~,
+              width=summary_width,
+              height=22.0,
+            ),
+          ],
+          spacing=0.0,
+          align=Start,
+        ),
+        self.workspace_summary_actions(theme),
+      ],
+      spacing=8.0,
+      align=Center,
+    ),
+  ]
+  if self.workspace_details_expanded {
+    rows.push(self.workspace_detail_panel(layout, theme))
+  }
+  column(rows, spacing=7.0, align=Start)
 }
 
 ///|
@@ -1129,6 +1139,32 @@ fn WorkbenchModel::workspace_summary_detail_label(
 }
 
 ///|
+fn WorkbenchModel::workspace_summary_actions(
+  self : WorkbenchModel,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  row(
+    [
+      button(
+        if self.workspace_details_expanded {
+          "收起"
+        } else {
+          "展开"
+        },
+        on_click=ToggleWorkspaceDetails,
+        variant=Ghost,
+        theme~,
+        width=58.0,
+        height=32.0,
+      ),
+      self.workspace_summary_action_button(theme),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
 fn WorkbenchModel::workspace_summary_action_button(
   self : WorkbenchModel,
   theme : @core.Theme,
@@ -1158,45 +1194,123 @@ fn WorkbenchModel::workspace_summary_action_button(
 }
 
 ///|
+fn WorkbenchModel::workspace_detail_panel(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let detail_width = workbench_max_double(
+    1.0,
+    layout.panel_body_width - layout.row_badge_width - 8.0,
+  )
+  let max_chars = readable_line_char_limit(detail_width)
+  let lines : Array[@core.View[WorkbenchMsg]] = []
+  for line in self.workspace_detail_lines(max_chars, max_lines=5) {
+    lines.push(
+      text(line, role=Caption, theme~, width=detail_width, height=22.0),
+    )
+  }
+  row(
+    [
+      blank_cell(width=layout.row_badge_width, height=1.0),
+      surface(
+        column(lines, spacing=2.0, align=Start),
+        width=detail_width,
+        height=self.workspace_detail_panel_height(),
+        background=ui_color(0.975, 0.977, 0.972),
+        corner_radius=8.0,
+        theme~,
+        padding=8.0,
+      ).border(workbench_hairline_border()),
+    ],
+    spacing=8.0,
+    align=Start,
+  )
+}
+
+///|
+fn WorkbenchModel::workspace_detail_lines(
+  self : WorkbenchModel,
+  max_chars : Int,
+  max_lines~ : Int,
+) -> Array[String] {
+  let lines : Array[String] = []
+  if self.diff.has_context() {
+    for
+      line in readable_text_lines(
+        "diff " + diff_next_action_detail(self.diff),
+        max_chars,
+        max_lines=2,
+      ) {
+      lines.push(line)
+    }
+  }
+  match self.latest_visible_workspace_diagnostic() {
+    Some(diagnostic) =>
+      if lines.length() < max_lines {
+        for
+          line in readable_text_lines(
+            "诊断 " + diagnostic_detail_label(diagnostic),
+            max_chars,
+            max_lines=max_lines - lines.length(),
+          ) {
+          lines.push(line)
+        }
+      }
+    None => ()
+  }
+  if !self.files.is_empty() && lines.length() < max_lines {
+    let file = self.files[self.files.length() - 1]
+    for
+      line in readable_text_lines(
+        "文件 " + file.path + " · " + file.summary,
+        max_chars,
+        max_lines=max_lines - lines.length(),
+      ) {
+      lines.push(line)
+    }
+  }
+  if lines.is_empty() {
+    lines.push("暂无工作区详情")
+  }
+  lines
+}
+
+///|
+fn WorkbenchModel::workspace_detail_panel_height(
+  self : WorkbenchModel,
+) -> Double {
+  let line_count = self.workspace_detail_lines(68, max_lines=5).length().max(1)
+  16.0 +
+  line_count.to_double() * 22.0 +
+  (line_count - 1).max(0).to_double() * 2.0
+}
+
+///|
 fn WorkbenchModel::turn_evidence_card_height(self : WorkbenchModel) -> Double {
-  let row_count = self.turn_evidence_card_row_count()
-  if row_count <= 1 {
-    54.0
-  } else {
-    52.0 + (row_count - 1).to_double() * 53.0
-  }
-}
-
-///|
-fn WorkbenchModel::turn_evidence_card_row_count(self : WorkbenchModel) -> Int {
-  let mut count = 1
+  let mut height = 24.0 + 28.0
   if self.should_show_focused_check_presets() {
-    count = count + 1
+    height = height + 7.0 + 30.0
   }
-  count = count + self.turn_evidence_command_count()
-  if self.turn_evidence_command_count() == 0 && !self.events.is_empty() {
-    count = count + 1
-  }
-  if self.latest_visible_workspace_diagnostic() is Some(_) ||
-    self.diff.has_context() ||
-    !self.files.is_empty() {
-    count = count + 1
-  }
-  count
-}
-
-///|
-fn WorkbenchModel::turn_evidence_command_count(self : WorkbenchModel) -> Int {
   if self.commands_end_with_focused_check_batch(
       workbench_check_presets().length(),
     ) {
-    self.visible_activity_command_count()
+    let command_start = self.visible_activity_command_start()
+    for index in command_start..<self.commands.length() {
+      height = height + 7.0 + command_run_row_height(self.commands[index])
+    }
   } else {
     match self.primary_turn_evidence_command() {
-      Some(_) => 1
-      None => 0
+      Some(command) => height = height + 7.0 + command_run_row_height(command)
+      None => if !self.events.is_empty() { height = height + 7.0 + 46.0 }
     }
   }
+  if self.latest_visible_workspace_diagnostic() is Some(_) {
+    height = height + 7.0 + 46.0
+  } else if self.diff.has_context() || !self.files.is_empty() {
+    height = height + 7.0 + self.workspace_summary_row_height()
+  }
+  height.max(54.0)
 }
 
 ///|
@@ -1856,8 +1970,8 @@ fn failed_command_next_action_detail(command : CommandRun) -> String {
     Some(code) => parts.push("退出码 " + code.to_string())
     None => ()
   }
-  if command.output_path != "" {
-    parts.push("输出 " + command.output_path)
+  if command_has_output_details(command) {
+    parts.push(command_output_available_label(command))
   }
   if parts.is_empty() {
     parts.push(command_status_label(command.status))
@@ -2727,6 +2841,21 @@ fn command_run_row(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    command_run_summary_row(command, layout, theme),
+  ]
+  if command.details_expanded {
+    rows.push(command_detail_panel(command, layout, theme))
+  }
+  column(rows, spacing=7.0, align=Start)
+}
+
+///|
+fn command_run_summary_row(
+  command : CommandRun,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
   row(
     [
       badge(
@@ -2763,6 +2892,18 @@ fn command_run_row(
         height=30.0,
       ),
       button(
+        if command.details_expanded {
+          "收起"
+        } else {
+          "展开"
+        },
+        on_click=ToggleCommandDetails(command.id),
+        variant=Ghost,
+        theme~,
+        width=54.0,
+        height=32.0,
+      ),
+      button(
         command_primary_action_label(command),
         on_click=command_primary_action_message(command),
         variant=Outline,
@@ -2781,6 +2922,41 @@ fn command_run_row(
     ],
     spacing=8.0,
     align=Center,
+  )
+}
+
+///|
+fn command_detail_panel(
+  command : CommandRun,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let detail_width = workbench_max_double(
+    1.0,
+    layout.panel_body_width - layout.row_badge_width - 8.0,
+  )
+  let max_chars = readable_line_char_limit(detail_width)
+  let lines : Array[@core.View[WorkbenchMsg]] = []
+  for line in command_detail_lines(command, max_chars, max_lines=7) {
+    lines.push(
+      text(line, role=Caption, theme~, width=detail_width, height=22.0),
+    )
+  }
+  row(
+    [
+      blank_cell(width=layout.row_badge_width, height=1.0),
+      surface(
+        column(lines, spacing=2.0, align=Start),
+        width=detail_width,
+        height=command_detail_panel_height(command),
+        background=ui_color(0.975, 0.977, 0.972),
+        corner_radius=8.0,
+        theme~,
+        padding=8.0,
+      ).border(workbench_hairline_border()),
+    ],
+    spacing=8.0,
+    align=Start,
   )
 }
 
@@ -2836,10 +3012,109 @@ fn command_exit_label(command : CommandRun) -> String {
 
 ///|
 fn command_detail_label(command : CommandRun) -> String {
-  if command.output_path == "" {
-    command.cwd
+  if command_has_output_details(command) {
+    command_output_available_label(command) + " · " + command.cwd
+  } else if command.cwd == "" {
+    "等待命令输出"
   } else {
-    "输出 " + command.output_path
+    command.cwd
+  }
+}
+
+///|
+fn command_has_output_details(command : CommandRun) -> Bool {
+  command.output.trim().to_owned() != "" || command.output_path != ""
+}
+
+///|
+fn command_output_available_label(command : CommandRun) -> String {
+  if command.output_truncated {
+    "输出可用 · 已截断"
+  } else {
+    "输出可用"
+  }
+}
+
+///|
+fn command_run_row_height(command : CommandRun) -> Double {
+  if command.details_expanded {
+    46.0 + 7.0 + command_detail_panel_height(command)
+  } else {
+    46.0
+  }
+}
+
+///|
+fn command_detail_panel_height(command : CommandRun) -> Double {
+  let line_count = command_detail_lines(command, 68, max_lines=7)
+    .length()
+    .max(1)
+  16.0 +
+  line_count.to_double() * 22.0 +
+  (line_count - 1).max(0).to_double() * 2.0
+}
+
+///|
+fn command_detail_lines(
+  command : CommandRun,
+  max_chars : Int,
+  max_lines~ : Int,
+) -> Array[String] {
+  let lines : Array[String] = []
+  if command.output_path != "" {
+    for
+      line in readable_text_lines(
+        "日志 " + command.output_path,
+        max_chars,
+        max_lines=2,
+      ) {
+      lines.push(line)
+    }
+  }
+  let output = command.output.trim().to_owned()
+  if output != "" && lines.length() < max_lines {
+    lines.push(
+      if command.output_truncated {
+        "stdout 已截断"
+      } else {
+        "stdout"
+      },
+    )
+    for raw_line in output.split("\n") {
+      if lines.length() >= max_lines {
+        break
+      }
+      let clean = raw_line.to_owned()
+      let wrapped = readable_text_lines(
+        if clean == "" {
+          " "
+        } else {
+          clean
+        },
+        max_chars,
+        max_lines=max_lines - lines.length(),
+      )
+      for line in wrapped {
+        if lines.length() < max_lines {
+          lines.push(line)
+        }
+      }
+    }
+  }
+  if lines.is_empty() {
+    lines.push("暂无详细输出")
+  }
+  lines
+}
+
+///|
+fn WorkbenchModel::workspace_summary_row_height(
+  self : WorkbenchModel,
+) -> Double {
+  if self.workspace_details_expanded {
+    46.0 + 7.0 + self.workspace_detail_panel_height()
+  } else {
+    46.0
   }
 }
 

@@ -188,8 +188,11 @@ evidence is present, the current task strip derives one quiet `下一步` row th
 to the next shared-app action, prioritizing cancelable Pi work, failed command
 evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
 rows, and activity events. Failed-command next actions carry the compact command
-label plus Pi's exit code and output path when available, keeping the repair
-loop actionable without opening another panel. Pi `plan_update` JSONL also
+label plus Pi's exit code and an output-available summary when available,
+keeping the repair loop actionable without opening another panel. Command rows
+default to collapsed summaries and mount stdout/log details only after
+expanding the row; workspace diff summaries follow the same pattern, with
+expanded diff details available on demand. Pi `plan_update` JSONL also
 feeds a compact `当前计划` row so the visible session state includes current
 planning evidence without opening a separate pane. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
@@ -302,8 +305,9 @@ process details into the app model.
 Workbench command queue actions now dispatch platform-neutral shell commands
 that the native encoder maps to Pi RPC `bash`, and successful `bash` responses
 mark command evidence as passed, failed, or cancelled inside the shared model
-while preserving Pi's optional `fullOutputPath` as command evidence. The
-current-turn evidence card displays that output path when present, so
+while preserving Pi's optional `fullOutputPath`, stdout preview, and truncation
+flag as command evidence. The current-turn evidence card keeps those command
+details collapsed by default and expands stdout/log lines only on demand, so
 long/truncated command output can stay discoverable without native-only state.
 Command rows can queue an `Inspect command output for ...` prompt from command
 status, cwd, exit code, and output path, turning bash evidence into the next Pi
