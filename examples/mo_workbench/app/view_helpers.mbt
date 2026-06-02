@@ -20,10 +20,11 @@ priv struct WorkbenchLayout {
   sidebar_inner_width : Double
   main_width : Double
   main_padding : Double
-  workflow_rail_visible : Bool
-  workflow_rail_width : Double
-  workflow_rail_gap : Double
-  workflow_rail_body_width : Double
+  workspace_body_height : Double
+  inspector_visible : Bool
+  inspector_width : Double
+  inspector_gap : Double
+  inspector_body_width : Double
   content_width : Double
   scrollbar_width : Double
   panel_width : Double
@@ -35,6 +36,7 @@ priv struct WorkbenchLayout {
   composer_width : Double
   composer_input_width : Double
   composer_height : Double
+  status_bar_height : Double
 }
 
 ///|
@@ -51,7 +53,7 @@ priv struct WorkbenchNextAction {
 ///|
 fn workbench_layout(
   viewport : @core.Size,
-  workflow_rail_requested : Bool,
+  inspector_requested : Bool,
 ) -> WorkbenchLayout {
   let viewport = @core.Size::new(
     width=workbench_max_double(1.0, viewport.width),
@@ -69,25 +71,26 @@ fn workbench_layout(
     1.0,
     main_width - main_padding * 2.0,
   )
-  let workflow_rail_visible = workflow_rail_requested &&
-    viewport.width >= 1180.0
-  let workflow_rail_gap = if workflow_rail_visible { 16.0 } else { 0.0 }
-  let workflow_rail_width = if workflow_rail_visible {
-    workbench_clamp_double(main_available_width * 0.28, 240.0, 276.0)
+  let status_bar_height = 30.0
+  let workspace_body_height = workbench_max_double(
+    280.0,
+    viewport.height - main_padding * 2.0 - status_bar_height - 10.0,
+  )
+  let inspector_visible = inspector_requested && viewport.width >= 1120.0
+  let inspector_gap = if inspector_visible { 14.0 } else { 0.0 }
+  let inspector_width = if inspector_visible {
+    workbench_clamp_double(main_available_width * 0.32, 286.0, 340.0)
   } else {
     0.0
   }
   let content_available_width = workbench_max_double(
     1.0,
-    main_available_width -
-    workflow_rail_width -
-    workflow_rail_gap -
-    scrollbar_width,
+    main_available_width - inspector_width - inspector_gap - scrollbar_width,
   )
   let content_width = workbench_clamp_double(
     content_available_width,
     workbench_min_double(460.0, content_available_width),
-    920.0,
+    860.0,
   )
   let panel_width = content_width
   let panel_body_width = workbench_max_double(1.0, panel_width - 24.0)
@@ -115,13 +118,11 @@ fn workbench_layout(
     sidebar_inner_width: workbench_max_double(160.0, sidebar_width - 36.0),
     main_width,
     main_padding,
-    workflow_rail_visible,
-    workflow_rail_width,
-    workflow_rail_gap,
-    workflow_rail_body_width: workbench_max_double(
-      1.0,
-      workflow_rail_width - 24.0,
-    ),
+    workspace_body_height,
+    inspector_visible,
+    inspector_width,
+    inspector_gap,
+    inspector_body_width: workbench_max_double(1.0, inspector_width - 24.0),
     content_width,
     scrollbar_width,
     panel_width,
@@ -133,6 +134,7 @@ fn workbench_layout(
     composer_width,
     composer_input_width: workbench_max_double(1.0, composer_width - 24.0),
     composer_height,
+    status_bar_height,
   }
 }
 
@@ -178,7 +180,7 @@ fn WorkbenchModel::view_for_size(
   viewport : @core.Size,
 ) -> @core.View[WorkbenchMsg] {
   let theme = @views.light_theme()
-  let layout = workbench_layout(viewport, self.has_workflow_rail_evidence())
+  let layout = workbench_layout(viewport, true)
   surface(
     row(
       [
@@ -439,17 +441,21 @@ fn WorkbenchModel::conversation_surface(
     spacing=14.0,
     align=Center,
   )
-  let content = if layout.workflow_rail_visible {
+  let workspace_body = if layout.inspector_visible {
     row(
-      [center_column, self.workflow_rail(layout, theme)],
-      spacing=layout.workflow_rail_gap,
+      [center_column, self.workspace_inspector(layout, theme)],
+      spacing=layout.inspector_gap,
       align=Start,
     )
   } else {
     center_column
   }
   surface(
-    content,
+    column(
+      [workspace_body, self.workspace_status_bar(layout, theme)],
+      spacing=10.0,
+      align=Center,
+    ),
     width=layout.main_width,
     height=layout.viewport.height,
     background=ui_color(0.975, 0.976, 0.970),
@@ -464,246 +470,11 @@ fn WorkbenchModel::main_scroll_height(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
 ) -> Double {
+  ignore(self)
   workbench_max_double(
     220.0,
-    layout.viewport.height -
-    layout.main_padding * 2.0 -
-    58.0 -
-    28.0 -
-    self.composer_height(layout),
+    layout.workspace_body_height - 58.0 - self.composer_height(layout) - 28.0,
   )
-}
-
-///|
-fn WorkbenchModel::workflow_rail(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  column(
-    [self.compact_workflow_rail_card(layout, theme)],
-    spacing=14.0,
-    align=Stretch,
-  ).frame(
-    width=layout.workflow_rail_width,
-    height=workbench_max_double(
-      1.0,
-      layout.viewport.height - layout.main_padding * 2.0,
-    ),
-  )
-}
-
-///|
-fn WorkbenchModel::has_workflow_rail_evidence(self : WorkbenchModel) -> Bool {
-  let signal = self.active_agent_runtime_signal()
-  self.latest_failed_command() is Some(_) ||
-  self.latest_active_command() is Some(_) ||
-  self.current_plan_action_step() is Some(_) ||
-  signal.active_tool_name != ""
-}
-
-///|
-fn WorkbenchModel::compact_workflow_rail_card(
-  self : WorkbenchModel,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
-  match self.current_plan_action_step() {
-    Some(step) => rows.push(workflow_plan_step_row(step, layout, theme))
-    None => ()
-  }
-  let failed_command = self.latest_failed_command()
-  match failed_command {
-    Some(command) => rows.push(workflow_command_row(command, layout, theme))
-    None => ()
-  }
-  match self.latest_active_command() {
-    Some(command) =>
-      match failed_command {
-        Some(failed) =>
-          if failed.id != command.id {
-            rows.push(workflow_command_row(command, layout, theme))
-          }
-        None => rows.push(workflow_command_row(command, layout, theme))
-      }
-    None => ()
-  }
-  let signal = self.active_agent_runtime_signal()
-  if signal.active_tool_name != "" {
-    rows.push(
-      workflow_agent_row(
-        "工具",
-        signal.active_tool_name,
-        Accent,
-        layout,
-        theme,
-      ),
-    )
-  }
-  workflow_rail_card(
-    "状态",
-    compact_workflow_summary(self),
-    rows,
-    layout,
-    theme,
-    height=66.0 + rows.length().to_double() * 46.0,
-  )
-}
-
-///|
-fn compact_workflow_summary(model : WorkbenchModel) -> String {
-  let signal = model.active_agent_runtime_signal()
-  if model.latest_failed_command() is Some(_) {
-    "需处理"
-  } else if model.latest_active_command() is Some(_) ||
-    signal.active_tool_name != "" {
-    "运行中"
-  } else if model.current_plan_action_step() is Some(_) {
-    "计划"
-  } else {
-    "证据"
-  }
-}
-
-///|
-fn workflow_command_row(
-  command : CommandRun,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  workflow_agent_row(
-    command_status_label(command.status),
-    command.command,
-    command_status_tone(command.status),
-    layout,
-    theme,
-  )
-}
-
-///|
-fn workflow_plan_step_row(
-  step : PlanStep,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let text_width = workbench_max_double(
-    1.0,
-    layout.workflow_rail_body_width - 52.0 - 8.0,
-  )
-  row(
-    [
-      badge(
-        workflow_plan_step_badge(step.status),
-        tone=plan_step_tone(step.status),
-        theme~,
-        width=52.0,
-      ),
-      column(
-        [
-          text(step.title, role=Control, theme~, width=text_width, height=24.0),
-          text(
-            plan_step_detail_label(step),
-            role=Caption,
-            theme~,
-            width=text_width,
-            height=20.0,
-          ),
-        ],
-        spacing=0.0,
-        align=Start,
-      ),
-    ],
-    spacing=8.0,
-    align=Center,
-  )
-}
-
-///|
-fn workflow_plan_step_badge(status : String) -> String {
-  match status {
-    "done" | "completed" => "完成"
-    "in_progress" | "running" | "active" => "进行"
-    "blocked" => "受阻"
-    "cancelled" | "skipped" => "跳过"
-    _ => "待办"
-  }
-}
-
-///|
-fn workflow_agent_row(
-  label : String,
-  detail : String,
-  tone : @views.BadgeTone,
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let text_width = workbench_max_double(
-    1.0,
-    layout.workflow_rail_body_width - 58.0 - 8.0,
-  )
-  row(
-    [
-      badge(label, tone~, theme~, width=58.0),
-      text(detail, role=Caption, theme~, width=text_width, height=28.0),
-    ],
-    spacing=8.0,
-    align=Center,
-  )
-}
-
-///|
-fn workflow_rail_card(
-  title : String,
-  summary : String,
-  rows : Array[@core.View[WorkbenchMsg]],
-  layout : WorkbenchLayout,
-  theme : @core.Theme,
-  height~ : Double,
-) -> @core.View[WorkbenchMsg] {
-  let content : Array[@core.View[WorkbenchMsg]] = [
-    row(
-      [
-        text(
-          title,
-          role=Control,
-          theme~,
-          width=workbench_max_double(
-            1.0,
-            layout.workflow_rail_body_width - 76.0,
-          ),
-          height=28.0,
-        ),
-        workflow_card_summary(summary, theme),
-      ],
-      spacing=8.0,
-      align=Center,
-    ),
-  ]
-  for row in rows {
-    content.push(row)
-  }
-  surface(
-    column(content, spacing=8.0, align=Start),
-    width=layout.workflow_rail_width,
-    height~,
-    background=@core.Color::white(),
-    corner_radius=12.0,
-    theme~,
-    padding=12.0,
-  ).border(workbench_hairline_border())
-}
-
-///|
-fn workflow_card_summary(
-  summary : String,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  if summary == "" {
-    blank_cell(width=68.0, height=28.0)
-  } else {
-    text(summary, role=Caption, theme~, width=68.0, height=28.0)
-  }
 }
 
 ///|
@@ -920,7 +691,7 @@ fn WorkbenchModel::chat_transcript(
   if self.has_transcript_panel_content() {
     rows.push(self.transcript_panel(layout, theme))
   }
-  if self.has_turn_evidence_card_content() {
+  if !layout.inspector_visible && self.has_turn_evidence_card_content() {
     rows.push(self.turn_evidence_card(layout, theme))
   }
   column(rows, spacing=10.0, align=Center)
@@ -945,7 +716,7 @@ fn WorkbenchModel::chat_content_height(
     }
     height = height + self.transcript_panel_height(layout)
   }
-  if self.has_turn_evidence_card_content() {
+  if !layout.inspector_visible && self.has_turn_evidence_card_content() {
     if height > 0.0 {
       height = height + 10.0
     }

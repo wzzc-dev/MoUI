@@ -154,11 +154,20 @@ packages:
   user command evidence arrives. When the main conversation has no task,
   transcript, or evidence yet, it shows only a quiet two-line session prompt
   instead of mounting fake task or evidence cards.
-- Wide Workbench windows now add a compact status rail beside the conversation
-  canvas only for independent live state: current plan steps, failed or active
-  shell commands, and active tools. Generic next-action prompts stay in the
-  main task strip instead of being duplicated in the rail. Empty or compact
-  windows collapse the rail and keep the conversation flow primary.
+- Wide Workbench windows now use a clear three-panel workbench shell: task
+  history sidebar, conversation/composer column, and a right inspector. The
+  inspector has compact `上下文`, `运行`, and `诊断` tabs, auto-selects the most
+  actionable panel for diagnostics, command/tool output, file/diff context, or
+  activity events, and keeps empty states quiet when no evidence has arrived.
+  The context tab shows session/project/branch scope plus file and diff cards,
+  the run tab shows active tools, activity events, focused-check batches, and
+  expandable command output, and the diagnostics tab shows fix/clear actions
+  plus focused-check shortcuts. Compact windows collapse the inspector and keep
+  the older single `当前证据` card inside the conversation flow.
+- The main workspace now has a low-noise bottom status bar. It reports the
+  latest user-facing reducer status and only mounts queue, context, diagnostic,
+  run, or file counters when they carry signal, avoiding default `0` value
+  chrome while still making interaction state verifiable.
 - Transcript rows no longer expose a message-level `跟进` action. Pi fork
   candidates are still fetched and can still queue a `fork` RPC, but matching
   candidates render as a compact Codex-style `分叉` affordance directly under
