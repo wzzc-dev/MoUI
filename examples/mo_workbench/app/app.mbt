@@ -42,6 +42,17 @@ pub(all) struct AgentBackendProfile {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct AgentBackendStatus {
+  backend_id : String
+  label : String
+  status_label : String
+  pending_count : Int
+  failed : Bool
+  sidebar_visible : Bool
+  top_bar_visible : Bool
+} derive(Eq, Debug)
+
+///|
 pub(all) struct AgentSessionBinding {
   backend_id : String
   workbench_session_id : String
@@ -419,6 +430,39 @@ pub fn AgentBackendProfile::new(
   capabilities~ : AgentBackendCapabilities,
 ) -> AgentBackendProfile {
   { id, label, description, capabilities }
+}
+
+///|
+pub fn AgentBackendStatus::new(
+  backend_id~ : String,
+  label~ : String,
+  status_label? : String = "",
+  pending_count? : Int = 0,
+  failed? : Bool = false,
+  sidebar_visible? : Bool = false,
+  top_bar_visible? : Bool = false,
+) -> AgentBackendStatus {
+  {
+    backend_id,
+    label,
+    status_label,
+    pending_count,
+    failed,
+    sidebar_visible,
+    top_bar_visible,
+  }
+}
+
+///|
+pub fn AgentBackendStatus::has_sidebar_status(
+  self : AgentBackendStatus,
+) -> Bool {
+  self.sidebar_visible
+}
+
+///|
+pub fn AgentBackendStatus::has_top_bar_chip(self : AgentBackendStatus) -> Bool {
+  self.top_bar_visible
 }
 
 ///|
@@ -1274,6 +1318,47 @@ pub fn WorkbenchModel::active_agent_backend_capabilities(
   self : WorkbenchModel,
 ) -> AgentBackendCapabilities {
   self.active_agent_backend_profile().capabilities
+}
+
+///|
+fn PiTransportState::display_status_label(self : PiTransportState) -> String {
+  match self.status {
+    Disconnected => "未连接"
+    Starting => "启动中"
+    Running => "运行中"
+    Failed(reason) => "失败：" + reason
+  }
+}
+
+///|
+pub fn WorkbenchModel::active_agent_backend_status(
+  self : WorkbenchModel,
+) -> AgentBackendStatus {
+  let backend = self.active_agent_backend_profile()
+  if backend.capabilities.uses_pi_transport {
+    let failed = self.transport.status is Failed(_)
+    let pending = self.pending_transport_count()
+    let sidebar_visible = match self.transport.status {
+      Disconnected => pending > 0
+      Failed(_) => true
+      _ => false
+    }
+    AgentBackendStatus::new(
+      backend_id=backend.id,
+      label=backend.label,
+      status_label=self.transport.display_status_label(),
+      pending_count=pending,
+      failed~,
+      sidebar_visible~,
+      top_bar_visible=failed,
+    )
+  } else {
+    AgentBackendStatus::new(
+      backend_id=backend.id,
+      label=backend.label,
+      top_bar_visible=true,
+    )
+  }
 }
 
 ///|

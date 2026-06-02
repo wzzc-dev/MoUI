@@ -129,6 +129,45 @@ test "workbench agent backend profiles expose Pi and fixture capabilities" {
 }
 
 ///|
+test "workbench projects backend status through agent-neutral contract" {
+  let idle = WorkbenchModel::new().active_agent_backend_status()
+  inspect(idle.backend_id, content="pi")
+  inspect(idle.label, content="Pi")
+  inspect(idle.status_label, content="未连接")
+  inspect(idle.pending_count, content="0")
+  inspect(idle.failed, content="false")
+  inspect(idle.has_sidebar_status(), content="false")
+  inspect(idle.has_top_bar_chip(), content="false")
+
+  let queued = WorkbenchModel::new()
+    .update(QueueCommand("moon check"))
+    .active_agent_backend_status()
+  inspect(queued.backend_id, content="pi")
+  inspect(queued.status_label, content="启动中")
+  inspect(queued.pending_count, content="2")
+  inspect(queued.failed, content="false")
+  inspect(queued.has_sidebar_status(), content="false")
+  inspect(queued.has_top_bar_chip(), content="false")
+
+  let failed = WorkbenchModel::new()
+    .update(ReceiveTransport(TransportFailed("pi unavailable")))
+    .active_agent_backend_status()
+  inspect(failed.status_label, content="失败：pi unavailable")
+  inspect(failed.failed, content="true")
+  inspect(failed.has_sidebar_status(), content="true")
+  inspect(failed.has_top_bar_chip(), content="true")
+
+  let fixture = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .active_agent_backend_status()
+  inspect(fixture.backend_id, content="fixture")
+  inspect(fixture.label, content="本地")
+  inspect(fixture.status_label, content="")
+  inspect(fixture.has_sidebar_status(), content="false")
+  inspect(fixture.has_top_bar_chip(), content="true")
+}
+
+///|
 test "workbench exposes backend-neutral active agent session binding" {
   let pi_binding = WorkbenchModel::new().active_agent_session_binding()
   inspect(pi_binding.backend_id, content="pi")
