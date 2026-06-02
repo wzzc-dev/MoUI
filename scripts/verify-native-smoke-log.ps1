@@ -56,6 +56,11 @@ $defaultStageMarkers = @(
   "native smoke empty path replay path resources",
   "native smoke empty path replay path cache misses",
   "native smoke empty path replay path cache hits",
+  "native smoke non-finite path replay skipped",
+  "native smoke non-finite path replay path resources",
+  "native smoke non-finite path replay path cache resources",
+  "native smoke non-finite path replay path cache misses",
+  "native smoke non-finite path replay path cache hits",
   "native smoke canvas replay color paint fills",
   "native smoke canvas replay paint fill clipped",
   "native smoke canvas replay paint shader fills",
@@ -866,6 +871,26 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke empty path replay path cache hits"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke non-finite path replay skipped"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke non-finite path replay path resources"
+    Value = "2"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke non-finite path replay path cache resources"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke non-finite path replay path cache misses"
+    Value = "0"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke non-finite path replay path cache hits"
     Value = "0"
   }
   [pscustomobject]@{
