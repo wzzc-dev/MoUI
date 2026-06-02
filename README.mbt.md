@@ -164,7 +164,9 @@ The `native` subpackage contains the first opt-in native boundary:
   complete Canvas work, deferred surface present commands, and skipped replay
   commands, plus command/resource category counters for declarations, images,
   shaders, filters, paths, and text resources, UTF-8 text through
-  `draw_text_utf8`, positioned glyph runs through `draw_glyphs`, optional
+  `draw_text_utf8`, text-run replay that honors descriptor byte ranges and
+  skips empty ranges without populating text caches, positioned glyph runs
+  through `draw_glyphs`, optional
   shaped glyph runs through `Font::shape_text_utf8` when SkShaper is linked,
   shaped-run metadata through `TextShapingDescriptor` and
   `ShapedTextRunDescriptor`, detailed shaped glyph-run metadata through

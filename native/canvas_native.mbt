@@ -1556,26 +1556,33 @@ fn Canvas::replay_text_run_utf8(
   font : Font?,
   resources : NativeReplayResources?,
 ) -> Bool {
-  ignore(native_replay_typeface_from_resources(descriptor.fallback, resources))
-  match native_replay_font_from_resources(font_key, font, resources) {
-    None => false
-    Some(font) =>
-      match
-        native_text_run_from_resources(
-          text, descriptor, font_key, font, resources,
-        ) {
-        DirectTextRun(_) => {
-          self.draw_text_utf8(text, origin, font, paint)
-          true
+  let run_text = text_run_bytes_for_shaping(text, descriptor)
+  if run_text.is_empty() || descriptor.is_empty() {
+    false
+  } else {
+    ignore(
+      native_replay_typeface_from_resources(descriptor.fallback, resources),
+    )
+    match native_replay_font_from_resources(font_key, font, resources) {
+      None => false
+      Some(font) =>
+        match
+          native_text_run_from_resources(
+            text, descriptor, font_key, font, resources,
+          ) {
+          DirectTextRun(_) => {
+            self.draw_text_utf8(run_text, origin, font, paint)
+            true
+          }
+          ShapedTextRun(glyph_run) =>
+            self.replay_shaped_glyph_run_utf8(
+              glyph_run,
+              origin,
+              paint,
+              Some(font),
+            )
         }
-        ShapedTextRun(glyph_run) =>
-          self.replay_shaped_glyph_run_utf8(
-            glyph_run,
-            origin,
-            paint,
-            Some(font),
-          )
-      }
+    }
   }
 }
 

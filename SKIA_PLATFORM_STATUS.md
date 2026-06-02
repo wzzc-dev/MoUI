@@ -116,7 +116,8 @@ these facts recorded in logs:
   cache-plan coverage,
   hit/miss accounting, byte-budget behavior, and LRU eviction, surface flush-and-submit, shader
   draws, native/portable path geometry, text-run dependency planning,
-  byte-range text-run resource keys, text measurement resource planning,
+  byte-range text-run resource keys, empty text-run replay skip/cache safety,
+  text measurement resource planning,
   measured-text result resource planning, measured-text result cache-key
   variation, text measurement cache-key variation, text shaping resource
   planning, shaped-text result resource planning, shaped glyph-run resource

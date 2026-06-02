@@ -362,6 +362,9 @@ if ($status.schema_version -ge 3) {
     "text.font-resource-plan",
     "text.text-run-resource-plan",
     "text.text-run-range",
+    "text.text-run-empty-range-resource-plan",
+    "text.text-run-empty-range-skipped",
+    "text.text-run-empty-range-cache-resources",
     "text.measured-run-resource-plan",
     "text.measured-run-key",
     "text.shaped-glyph-run-resource-plan",
@@ -675,6 +678,9 @@ if ($status.schema_version -ge 3) {
       "native smoke filter finite validation" = "1"
       "native smoke text run resource plan count" = "3"
       "native smoke text run range byte size" = "4"
+      "native smoke text run empty range resource plan count" = "2"
+      "native smoke text run empty range skipped" = "1"
+      "native smoke text run empty range cache resources" = "0"
       "native smoke measured text resource plan count" = "5"
       "native smoke measured text key variation" = "1"
       "native smoke shaped glyph run resource plan count" = "6"
