@@ -60,6 +60,7 @@ default_stage_markers=(
   "native smoke surface render frame finalized" \
   "native smoke surface render frame cache resources" \
   "native smoke surface render frame mismatch rejected" \
+  "native smoke render frame pixmap sample proof" \
   "native smoke render shaped glyph run command replay" \
   "native smoke render shader cache resources" \
   "native smoke render shader cache misses" \
@@ -148,6 +149,7 @@ default_stage_markers=(
   "native smoke readback width" \
   "native smoke readback height" \
   "native smoke readback row_bytes" \
+  "native smoke pixmap readback sample proof" \
   "native smoke bounded readback width" \
   "native smoke bounded readback height" \
   "native smoke bounded snapshot width" \
@@ -215,6 +217,7 @@ default_expected_stage_values=(
   $'native smoke surface render frame finalized\t1'
   $'native smoke surface render frame cache resources\t9'
   $'native smoke surface render frame mismatch rejected\t1'
+  $'native smoke render frame pixmap sample proof\t1'
   $'native smoke render shaped glyph run command replay\t1'
   $'native smoke render shader cache resources\t1'
   $'native smoke render shader cache misses\t1'
@@ -298,6 +301,7 @@ default_expected_stage_values=(
   $'native smoke readback width\t32'
   $'native smoke readback height\t32'
   $'native smoke readback row_bytes\t128'
+  $'native smoke pixmap readback sample proof\t1'
   $'native smoke bounded readback width\t4'
   $'native smoke bounded readback height\t4'
   $'native smoke bounded snapshot width\t4'

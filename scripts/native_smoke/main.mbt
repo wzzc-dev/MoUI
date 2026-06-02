@@ -24,13 +24,8 @@ fn assert_pixel(
   b2 : Byte,
   b3 : Byte,
 ) -> Unit {
-  guard pixmap.offset(point) is Some(offset) else {
-    fail_smoke("pixel is outside the smoke-test pixmap")
-  }
-  if pixmap.pixels[offset] != b0 ||
-    pixmap.pixels[offset + 1] != b1 ||
-    pixmap.pixels[offset + 2] != b2 ||
-    pixmap.pixels[offset + 3] != b3 {
+  let expected = Bytes::from_array([b0, b1, b2, b3])
+  if !pixmap.matches_sample(point, expected) {
     println(
       "unexpected pixel at " + point.x.to_string() + "," + point.y.to_string(),
     )
@@ -39,15 +34,23 @@ fn assert_pixel(
       b0.to_hex() + " " + b1.to_hex() + " " + b2.to_hex() + " " + b3.to_hex(),
     )
     println("actual")
-    println(
-      pixmap.pixels[offset].to_hex() +
-      " " +
-      pixmap.pixels[offset + 1].to_hex() +
-      " " +
-      pixmap.pixels[offset + 2].to_hex() +
-      " " +
-      pixmap.pixels[offset + 3].to_hex(),
-    )
+    match pixmap.sample(point) {
+      None => println("missing")
+      Some(actual) =>
+        if actual.length() >= 4 {
+          println(
+            actual[0].to_hex() +
+            " " +
+            actual[1].to_hex() +
+            " " +
+            actual[2].to_hex() +
+            " " +
+            actual[3].to_hex(),
+          )
+        } else {
+          println("short sample")
+        }
+    }
     fail_smoke("unexpected pixel value in native smoke test")
   }
 }
@@ -1001,6 +1004,8 @@ fn main {
   assert_pixel(pixmap, @skia.IPoint::new(18, 26), 0xff, 0x00, 0xff, 0xff)
   assert_pixel(pixmap, @skia.IPoint::new(13, 25), 0x00, 0xff, 0xff, 0xff)
   assert_pixel(pixmap, @skia.IPoint::new(23, 27), 0xff, 0xff, 0x00, 0xff)
+  println("native smoke pixmap readback sample proof")
+  println(1)
   println("native smoke readback width")
   println(pixmap.width())
   println("native smoke readback height")
@@ -1630,6 +1635,8 @@ fn main {
     0x00,
     0xff,
   )
+  println("native smoke render frame pixmap sample proof")
+  println(1)
   println("native smoke canvas replay commands")
   println(replay_stats.command_count)
   println("native smoke render frame replay commands")

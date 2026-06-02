@@ -158,6 +158,11 @@
       "marker": "native smoke surface render frame mismatch rejected"
     },
     {
+      "id": "surface.frame-render-pixmap-sample-proof",
+      "area": "Surface",
+      "marker": "native smoke render frame pixmap sample proof"
+    },
+    {
       "id": "pipeline.shaped-glyph-run-command",
       "area": "Pipeline",
       "marker": "native smoke render shaped glyph run command replay"
@@ -598,6 +603,11 @@
       "marker": "native smoke readback row_bytes"
     },
     {
+      "id": "surface.readback-pixmap-sample-proof",
+      "area": "Surface",
+      "marker": "native smoke pixmap readback sample proof"
+    },
+    {
       "id": "surface.bounded-readback",
       "area": "Surface",
       "marker": "native smoke bounded readback width"
@@ -954,6 +964,11 @@
     {
       "id": "surface.frame-render-mismatch-rejected",
       "marker": "native smoke surface render frame mismatch rejected",
+      "value": "1"
+    },
+    {
+      "id": "surface.frame-render-pixmap-sample-proof",
+      "marker": "native smoke render frame pixmap sample proof",
       "value": "1"
     },
     {
@@ -1370,6 +1385,11 @@
       "id": "surface.readback-row-bytes",
       "marker": "native smoke readback row_bytes",
       "value": "128"
+    },
+    {
+      "id": "surface.readback-pixmap-sample-proof",
+      "marker": "native smoke pixmap readback sample proof",
+      "value": "1"
     },
     {
       "id": "surface.bounded-readback",

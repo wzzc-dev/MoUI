@@ -2941,6 +2941,16 @@ test "pixmap validates copied pixel layout" {
   assert_eq(pixmap.byte_size64(), 16L)
   assert_true(pixmap.contains(@skia_mbt.IPoint::new(1, 1)))
   assert_true(pixmap.offset(@skia_mbt.IPoint::new(1, 1)) == Some(12))
+  assert_true(
+    pixmap.sample(@skia_mbt.IPoint::new(1, 1)) == Some(b"\x0c\x0d\x0e\x0f"),
+  )
+  assert_true(
+    pixmap.matches_sample(@skia_mbt.IPoint::new(1, 1), b"\x0c\x0d\x0e\x0f"),
+  )
+  assert_true(
+    !pixmap.matches_sample(@skia_mbt.IPoint::new(1, 1), b"\x0c\x0d\x0e\x10"),
+  )
+  assert_true(pixmap.sample(@skia_mbt.IPoint::new(2, 0)) is None)
   assert_true(@skia_mbt.Pixmap::new(info, 4, b"\x00") is None)
 }
 
