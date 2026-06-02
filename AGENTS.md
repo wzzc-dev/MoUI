@@ -68,8 +68,12 @@ changes in `.local_repos/`.
 The local-dependency check also verifies the window fork's MoUI-oriented smoke
 and evidence files such as `docs/moui-integration-smoke.md`,
 `scripts/check_moui_*_smoke.sh`, and `scripts/record_moui_evidence.sh` are
-present. Treat those as dependency-level matching-host evidence entrypoints;
-they do not replace MoUI Showcase or Markdown Editor platform validation.
+present and still wired to the expected smoke contract: macOS through
+`moon run examples/moui_macos_smoke --target native`, Web wasm-gc artifacts
+under module-qualified `wzzc-dev/window/examples/...` paths, and MoUI Web smoke
+consumer sentinel lines. Treat those as dependency-level matching-host evidence
+entrypoints; they do not replace MoUI Showcase or Markdown Editor platform
+validation.
 It also verifies the Skia binding acceptance surface, including
 `skia-platform-status.json`, `skia-provider-lock.json`,
 `SKIA_PLATFORM_STATUS.md`, and `.local_repos/skia_mbt/scripts/verify-platform-status.sh`.

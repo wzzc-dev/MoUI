@@ -12,6 +12,13 @@ fail() {
   exit 1
 }
 
+require_text() {
+  path="$1"
+  text="$2"
+  grep -F -q -- "$text" "$path" ||
+    fail "$path must contain expected text: $text"
+}
+
 [ -d "$WINDOW_DIR/.git" ] || fail "missing .local_repos/window checkout; run sh scripts/setup-local-deps.sh"
 
 case "$(git -C "$WINDOW_DIR" remote get-url origin 2>/dev/null || true)" in
@@ -76,10 +83,37 @@ for evidence_file in \
   scripts/check_moui_web_smoke.sh \
   scripts/check_moui_linux_smoke.sh \
   scripts/check_moui_windows_smoke.sh \
+  scripts/check_web_assets.sh \
   scripts/smoke_runtime.sh
 do
   [ -f "$WINDOW_DIR/$evidence_file" ] || fail "missing .local_repos/window/$evidence_file"
 done
+
+for evidence_file in \
+  examples/window_web/index.html \
+  examples/moui_web_smoke/index.html
+do
+  [ -f "$WINDOW_DIR/$evidence_file" ] || fail "missing .local_repos/window/$evidence_file"
+done
+
+require_text "$WINDOW_DIR/scripts/smoke_runtime.sh" \
+  'run_or_print macOS scripts/check_moui_macos_smoke.sh --run'
+require_text "$WINDOW_DIR/scripts/check_moui_macos_smoke.sh" \
+  'moon run "$pkg" --target native'
+require_text "$WINDOW_DIR/scripts/check_web_assets.sh" \
+  'moon --target-dir "$ROOT/_build" build examples/window_web --target wasm-gc'
+require_text "$WINDOW_DIR/scripts/check_web_assets.sh" \
+  'wzzc-dev/window/examples/window_web/window_web.wasm'
+require_text "$WINDOW_DIR/scripts/check_moui_web_smoke.sh" \
+  'moon --target-dir "$ROOT/_build" build examples/moui_web_smoke --target wasm-gc'
+require_text "$WINDOW_DIR/scripts/check_moui_web_smoke.sh" \
+  'wzzc-dev/window/examples/moui_web_smoke/moui_web_smoke.wasm'
+require_text "$WINDOW_DIR/examples/window_web/index.html" \
+  'wzzc-dev/window/examples/window_web/window_web.wasm'
+require_text "$WINDOW_DIR/examples/moui_web_smoke/index.html" \
+  'wzzc-dev/window/examples/moui_web_smoke/moui_web_smoke.wasm'
+require_text "$WINDOW_DIR/examples/moui_web_smoke/index.html" \
+  'MOUISmoke: surface canvas_id=moui-web-smoke-canvas size=640x360'
 
 [ -d "$SKIA_MBT_DIR/.git" ] || fail "missing .local_repos/skia_mbt checkout; run sh scripts/setup-local-deps.sh"
 
