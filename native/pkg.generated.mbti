@@ -211,6 +211,16 @@ pub(all) struct MaskFilter {
 pub fn MaskFilter::blur(Float) -> Self?
 pub fn MaskFilter::is_available(Self) -> Bool
 
+pub(all) struct NativeReplayResourceStats {
+  cache_count : Int
+  resource_count : Int
+  byte_size : Int64
+  max_bytes : Int64
+  hits : Int
+  misses : Int
+  evictions : Int
+} derive(Eq, @debug.Debug)
+
 pub(all) struct NativeReplayResources {
   image_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, Image]
   shader_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, Shader]
@@ -223,6 +233,7 @@ pub(all) struct NativeReplayResources {
   mask_filter_cache : @skia_mbt.ResourceCache[@skia_mbt.RendererResourceKey, MaskFilter]
 }
 pub fn NativeReplayResources::new(image_max_bytes? : Int64, shader_max_bytes? : Int64, path_max_bytes? : Int64, text_run_max_bytes? : Int64, font_max_bytes? : Int64, typeface_max_bytes? : Int64, color_filter_max_bytes? : Int64, image_filter_max_bytes? : Int64, mask_filter_max_bytes? : Int64) -> Self
+pub fn NativeReplayResources::stats(Self) -> NativeReplayResourceStats
 
 pub(all) enum NativeReplayTextRun {
   DirectTextRun(@skia_mbt.TextRunDescriptor)

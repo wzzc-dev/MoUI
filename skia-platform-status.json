@@ -163,6 +163,16 @@
       "marker": "native smoke surface render frame cache resources"
     },
     {
+      "id": "pipeline.native-replay-resource-stats-caches",
+      "area": "Pipeline",
+      "marker": "native smoke native replay resource stats caches"
+    },
+    {
+      "id": "pipeline.native-replay-resource-stats-resources",
+      "area": "Pipeline",
+      "marker": "native smoke native replay resource stats resources"
+    },
+    {
       "id": "surface.frame-render-mismatch-rejected",
       "area": "Surface",
       "marker": "native smoke surface render frame mismatch rejected"
@@ -979,6 +989,16 @@
     {
       "id": "surface.frame-render-cache-resources",
       "marker": "native smoke surface render frame cache resources",
+      "value": "9"
+    },
+    {
+      "id": "pipeline.native-replay-resource-stats-caches",
+      "marker": "native smoke native replay resource stats caches",
+      "value": "9"
+    },
+    {
+      "id": "pipeline.native-replay-resource-stats-resources",
+      "marker": "native smoke native replay resource stats resources",
       "value": "9"
     },
     {
