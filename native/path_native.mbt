@@ -375,12 +375,16 @@ pub fn Path::rewind(self : Path) -> Unit {
 
 ///|
 pub fn Path::move_to(self : Path, point : @skia.Point) -> Unit {
-  native_path_move_to(self.handle, point.x, point.y)
+  if point.is_finite() {
+    native_path_move_to(self.handle, point.x, point.y)
+  }
 }
 
 ///|
 pub fn Path::line_to(self : Path, point : @skia.Point) -> Unit {
-  native_path_line_to(self.handle, point.x, point.y)
+  if point.is_finite() {
+    native_path_line_to(self.handle, point.x, point.y)
+  }
 }
 
 ///|
@@ -389,7 +393,9 @@ pub fn Path::quad_to(
   control : @skia.Point,
   end : @skia.Point,
 ) -> Unit {
-  native_path_quad_to(self.handle, control.x, control.y, end.x, end.y)
+  if control.is_finite() && end.is_finite() {
+    native_path_quad_to(self.handle, control.x, control.y, end.x, end.y)
+  }
 }
 
 ///|
@@ -399,7 +405,18 @@ pub fn Path::conic_to(
   end : @skia.Point,
   weight : Float,
 ) -> Unit {
-  native_path_conic_to(self.handle, control.x, control.y, end.x, end.y, weight)
+  if control.is_finite() &&
+    end.is_finite() &&
+    native_path_scalar_is_finite(weight) {
+    native_path_conic_to(
+      self.handle,
+      control.x,
+      control.y,
+      end.x,
+      end.y,
+      weight,
+    )
+  }
 }
 
 ///|
@@ -409,20 +426,36 @@ pub fn Path::cubic_to(
   control1 : @skia.Point,
   end : @skia.Point,
 ) -> Unit {
-  native_path_cubic_to(
-    self.handle,
-    control0.x,
-    control0.y,
-    control1.x,
-    control1.y,
-    end.x,
-    end.y,
-  )
+  if control0.is_finite() && control1.is_finite() && end.is_finite() {
+    native_path_cubic_to(
+      self.handle,
+      control0.x,
+      control0.y,
+      control1.x,
+      control1.y,
+      end.x,
+      end.y,
+    )
+  }
 }
 
 ///|
 pub fn Path::close(self : Path) -> Unit {
   native_path_close(self.handle)
+}
+
+///|
+fn native_path_scalar_is_finite(value : Float) -> Bool {
+  value == value && value - value == 0.0
+}
+
+///|
+fn native_path_rrect_is_finite(rrect : @skia.RRect) -> Bool {
+  rrect.rect.is_finite() &&
+  rrect.upper_left.is_finite() &&
+  rrect.upper_right.is_finite() &&
+  rrect.lower_right.is_finite() &&
+  rrect.lower_left.is_finite()
 }
 
 ///|
@@ -493,7 +526,13 @@ pub fn Path::add_poly(
   points : Array[@skia.Point],
   close? : Bool = false,
 ) -> Unit {
-  if !points.is_empty() {
+  let mut finite = true
+  for i = 0; i < points.length(); i = i + 1 {
+    if !points[i].is_finite() {
+      finite = false
+    }
+  }
+  if finite && !points.is_empty() {
     self.move_to(points[0])
     for i = 1; i < points.length(); i = i + 1 {
       self.line_to(points[i])
@@ -510,14 +549,16 @@ pub fn Path::add_rect(
   rect : @skia.Rect,
   direction? : @skia.PathDirection = @skia.CW,
 ) -> Unit {
-  native_path_add_rect(
-    self.handle,
-    rect.left,
-    rect.top,
-    rect.right,
-    rect.bottom,
-    direction.to_skia_ordinal(),
-  )
+  if rect.is_finite() {
+    native_path_add_rect(
+      self.handle,
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      direction.to_skia_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -526,14 +567,16 @@ pub fn Path::add_oval(
   oval : @skia.Rect,
   direction? : @skia.PathDirection = @skia.CW,
 ) -> Unit {
-  native_path_add_oval(
-    self.handle,
-    oval.left,
-    oval.top,
-    oval.right,
-    oval.bottom,
-    direction.to_skia_ordinal(),
-  )
+  if oval.is_finite() {
+    native_path_add_oval(
+      self.handle,
+      oval.left,
+      oval.top,
+      oval.right,
+      oval.bottom,
+      direction.to_skia_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -543,13 +586,15 @@ pub fn Path::add_circle(
   radius : Float,
   direction? : @skia.PathDirection = @skia.CW,
 ) -> Unit {
-  native_path_add_circle(
-    self.handle,
-    center.x,
-    center.y,
-    radius,
-    direction.to_skia_ordinal(),
-  )
+  if center.is_finite() && native_path_scalar_is_finite(radius) && radius > 0.0 {
+    native_path_add_circle(
+      self.handle,
+      center.x,
+      center.y,
+      radius,
+      direction.to_skia_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -560,16 +605,20 @@ pub fn Path::add_round_rect(
   ry : Float,
   direction? : @skia.PathDirection = @skia.CW,
 ) -> Unit {
-  native_path_add_round_rect(
-    self.handle,
-    rect.left,
-    rect.top,
-    rect.right,
-    rect.bottom,
-    rx,
-    ry,
-    direction.to_skia_ordinal(),
-  )
+  if rect.is_finite() &&
+    native_path_scalar_is_finite(rx) &&
+    native_path_scalar_is_finite(ry) {
+    native_path_add_round_rect(
+      self.handle,
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      rx,
+      ry,
+      direction.to_skia_ordinal(),
+    )
+  }
 }
 
 ///|
@@ -578,43 +627,49 @@ pub fn Path::add_rrect(
   rrect : @skia.RRect,
   direction? : @skia.PathDirection = @skia.CW,
 ) -> Unit {
-  native_path_add_rrect(
-    self.handle,
-    rrect.rect.left,
-    rrect.rect.top,
-    rrect.rect.right,
-    rrect.rect.bottom,
-    rrect.upper_left.width,
-    rrect.upper_left.height,
-    rrect.upper_right.width,
-    rrect.upper_right.height,
-    rrect.lower_right.width,
-    rrect.lower_right.height,
-    rrect.lower_left.width,
-    rrect.lower_left.height,
-    direction.to_skia_ordinal(),
-  )
+  if native_path_rrect_is_finite(rrect) {
+    native_path_add_rrect(
+      self.handle,
+      rrect.rect.left,
+      rrect.rect.top,
+      rrect.rect.right,
+      rrect.rect.bottom,
+      rrect.upper_left.width,
+      rrect.upper_left.height,
+      rrect.upper_right.width,
+      rrect.upper_right.height,
+      rrect.lower_right.width,
+      rrect.lower_right.height,
+      rrect.lower_left.width,
+      rrect.lower_left.height,
+      direction.to_skia_ordinal(),
+    )
+  }
 }
 
 ///|
 pub fn Path::transform(self : Path, matrix : @skia.Matrix) -> Unit {
-  native_path_transform(
-    self.handle,
-    matrix.scale_x,
-    matrix.skew_x,
-    matrix.trans_x,
-    matrix.skew_y,
-    matrix.scale_y,
-    matrix.trans_y,
-    matrix.persp_0,
-    matrix.persp_1,
-    matrix.persp_2,
-  )
+  if matrix.is_finite() {
+    native_path_transform(
+      self.handle,
+      matrix.scale_x,
+      matrix.skew_x,
+      matrix.trans_x,
+      matrix.skew_y,
+      matrix.scale_y,
+      matrix.trans_y,
+      matrix.persp_0,
+      matrix.persp_1,
+      matrix.persp_2,
+    )
+  }
 }
 
 ///|
 pub fn Path::offset(self : Path, dx : Float, dy : Float) -> Unit {
-  native_path_offset(self.handle, dx, dy)
+  if native_path_scalar_is_finite(dx) && native_path_scalar_is_finite(dy) {
+    native_path_offset(self.handle, dx, dy)
+  }
 }
 
 ///|

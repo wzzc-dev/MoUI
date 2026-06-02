@@ -36,6 +36,19 @@ fn native_test_assert_replay_resource_counts(
 }
 
 ///|
+fn native_test_assert_path_snapshot(
+  path : @native.Path,
+  verbs : Int,
+  points : Int,
+  bounds : @skia.Rect?,
+) -> Unit raise {
+  assert_true(path.is_finite())
+  assert_eq(path.count_verbs(), verbs)
+  assert_eq(path.count_points(), points)
+  assert_true(path.bounds() == bounds)
+}
+
+///|
 test "canvas replays rounded and path clips" {
   let replay_size = @skia.ISize::new(16, 16)
   let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
@@ -865,6 +878,70 @@ test "path api typechecks" {
       assert_true(path.bounds() == Some(@skia.Rect::from_xywh(11, 22, 3, 4)))
       path.transform(@skia.Matrix::scale_translate(2, 3, 1, 2))
       assert_true(path.bounds() == Some(@skia.Rect::new(23, 68, 29, 80)))
+      let valid_mutation_verbs = path.count_verbs()
+      let valid_mutation_points = path.count_points()
+      let valid_mutation_bounds = path.bounds()
+      path.move_to(@skia.Point::new(0.0 / 0.0, 0))
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.line_to(@skia.Point::new(0, 1.0 / 0.0))
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.quad_to(@skia.Point::new(0, 0), @skia.Point::new(1.0 / 0.0, 0))
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.conic_to(@skia.Point::new(0, 0), @skia.Point::new(1, 1), 1.0 / 0.0)
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.cubic_to(
+        @skia.Point::new(0, 0),
+        @skia.Point::new(0.0 / 0.0, 1),
+        @skia.Point::new(1, 1),
+      )
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.add_poly(
+        [@skia.Point::new(0, 0), @skia.Point::new(1.0 / 0.0, 1)],
+        close=true,
+      )
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.add_rect(@skia.Rect::new(0, 0, 1.0 / 0.0, 1))
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.add_oval(@skia.Rect::new(0, 0, 1, 0.0 / 0.0))
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.add_circle(@skia.Point::new(0, 0), 1.0 / 0.0)
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.add_round_rect(@skia.Rect::from_xywh(0, 0, 1, 1), 0.0 / 0.0, 1)
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.add_rrect(
+        @skia.RRect::from_rect_xy(@skia.Rect::new(0, 0, 1.0 / 0.0, 1), 1, 1),
+      )
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.transform(@skia.Matrix::translate(1.0 / 0.0, 0))
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
+      path.offset(0.0 / 0.0, 0)
+      native_test_assert_path_snapshot(
+        path, valid_mutation_verbs, valid_mutation_points, valid_mutation_bounds,
+      )
       path.rewind()
       path.move_to(@skia.Point::new(0, 0))
       path.line_to(@skia.Point::new(10, 0))
