@@ -192,6 +192,10 @@ default_stage_markers=(
   "native smoke render image cache resources" \
   "native smoke render image cache misses" \
   "native smoke render image cache hits" \
+  "native smoke render image decode failure resource plan count" \
+  "native smoke render image decode failure skipped" \
+  "native smoke render image decode failure cache resources" \
+  "native smoke render image decode failure cache misses" \
   "native smoke codec encoded format PNG" \
   "native smoke codec width" \
   "native smoke codec height" \
@@ -369,6 +373,10 @@ default_expected_stage_values=(
   $'native smoke render image cache resources\t1'
   $'native smoke render image cache misses\t1'
   $'native smoke render image cache hits\t1'
+  $'native smoke render image decode failure resource plan count\t2'
+  $'native smoke render image decode failure skipped\t2'
+  $'native smoke render image decode failure cache resources\t0'
+  $'native smoke render image decode failure cache misses\t2'
   $'native smoke codec width\t32'
   $'native smoke codec height\t32'
   $'native smoke decoded bitmap width\t32'
