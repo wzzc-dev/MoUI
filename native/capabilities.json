@@ -109,6 +109,7 @@
         "native smoke canvas replay commands",
         "native smoke render frame replay commands",
         "native smoke render frame replay complete",
+        "native smoke canvas replay status contract",
         "native smoke render frame replay rejected skipped",
         "native smoke shader draws",
         "native smoke filter layer count",
