@@ -130,11 +130,14 @@ packages:
   advanced session details, model/session stats,
   steering/follow-up composer controls, and focused-check presets stay collapsed
   until expanded options, non-default context, selected focus, or actionable
-  diagnostics make them relevant. The default fixture still leaves transcript,
-  metrics, command catalog, file context, diff summary, command evidence, and
-  diagnostics empty until Pi or user command evidence arrives. When the main
-  conversation has no task, transcript, or evidence yet, it shows only a quiet
-  two-line session prompt instead of mounting fake task or evidence cards.
+  diagnostics make them relevant. The sidebar defaults to brand and task
+  history only; project and branch identity stay in the top bar instead of
+  repeating as a separate workspace card or empty-state line. The
+  default fixture still leaves transcript, metrics, command catalog, file
+  context, diff summary, command evidence, and diagnostics empty until Pi or
+  user command evidence arrives. When the main conversation has no task,
+  transcript, or evidence yet, it shows only a quiet two-line session prompt
+  instead of mounting fake task or evidence cards.
 - Wide Workbench windows now add a compact status rail beside the conversation
   canvas only for independent live state: current plan steps, failed or active
   shell commands, and active tools. Generic next-action prompts stay in the

@@ -264,10 +264,12 @@ rail is gone, and the rail still collapses on compact widths so the
 conversation flow remains primary.
 Pi `message_end` / `agent_end` JSONL updates merge assistant replies into the
 local transcript immediately, while a lightweight RPC refresh follows to
-reconcile the full message, fork, and stats state. The default sidebar now stays focused on sessions and
-workspace identity; lightweight `通用`, `编码`, and `校验` focus controls move
-into the composer's optional `焦点` row and appear only after opening composer
-options or when a focus is selected. Selecting one only appends an
+reconcile the full message, fork, and stats state. The default sidebar now stays
+focused on brand and task history, while project and branch identity remain in
+the top bar instead of repeating as a workspace card or empty-state line.
+Lightweight `通用`, `编码`, and `校验` focus controls move into the composer's
+optional `焦点` row and appear only after opening composer options or when a
+focus is selected. Selecting one only appends an
 `agent focus: ...` hint to the existing platform-neutral prompt, steering, and
 follow-up text payloads.
 The composer exposes repository, examples, evidence, and backend session context
