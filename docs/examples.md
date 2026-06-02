@@ -26,7 +26,7 @@ introducing a generator.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Conversation-first coding-agent shell, lightweight agent focus routing, composer slash-command suggestions, wide workflow rail for progress/execution/work folder evidence, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Pi agent desktop dogfood app | `examples/mo_workbench/app/` | Codex-style conversation-first coding-agent shell, lightweight agent focus routing, composer slash-command suggestions, compact status rail, current task strip, single current-turn evidence card, platform-neutral Pi transport command/event model, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 ## Counter
 
@@ -158,34 +158,33 @@ Mo Workbench is the real product-shaped dogfood app for the native Skia route.
 It is named `Mo Workbench` with the subtitle `Pi agent 桌面工作台`, and starts as
 a Codex / Claude Code-style coding-agent workbench for project sessions,
 assistant transcripts, command evidence, diff/file context, and diagnostics.
-Its current UI keeps the first screen focused on the current session row,
-on-demand transcript/activity/workspace evidence panels, and a
-centered floating composer instead of long placeholder validation text,
+Its current UI keeps the first screen focused on the current task strip,
+the transcript thread, a single current-turn evidence card, and a centered
+floating composer instead of long placeholder validation text,
 future-workflow filler, or hard-coded attachment cards. The shell now derives
 its sidebar, main canvas, scroll area, and composer dimensions from the runtime
 viewport instead of a fixed `1200x750` surface, so the macOS Skia entrypoint can
 be resized while preserving the session-first hierarchy, including narrower
-panel/composer widths in smaller windows. The transcript uses multi-line
+composer widths in smaller windows. The transcript uses multi-line
 message blocks for long Pi replies and draws an explicit scrollbar when the
-main workflow overflows. Primary section labels are quieter and consistently
-Chinese (`当前会话`, `Pi 运行状态`, `会话记录`, `运行证据`, `工作区证据`) once their
-evidence exists, with Pi/RPC left as protocol nouns. Default chrome uses short
+main workflow overflows. Primary UI copy now follows the Codex-style hierarchy:
+`当前任务` for the single next action and `当前证据` for the one compact evidence
+surface, with Pi/RPC left as protocol nouns. Default chrome uses short
 project names and signal-bearing localized session status labels while keeping
 full `project_path` values in the shared model and transport commands. The default
 shell keeps only top-bar refresh/new-session controls and the composer input
 prominent, while typed input adds a compact `选项`/`发送` row instead of opening
 every secondary control. Active/idle session rows omit status meta instead of
-showing fake active, queue, or idle labels; context chips, the idle Pi RPC
-footer, the `Pi 运行状态` panel, agent focus controls, advanced session actions,
-steering / follow-up composer controls, and focused-check presets appear once
-Pi state, expanded composer options, non-default context, selected focus, or
-actionable diagnostics without command evidence make them relevant. The workspace
-digest now includes file, diff, and latest non-duplicated diagnostic state with
-a short clear action so stderr/RPC/structured failures remain visible without
-adding a separate diagnostics page. Pi bash exit/cancel diagnostics stay in
-shared state but are hidden from the digest when Activity command evidence
-already shows the same failure. When actionable evidence is present, the current session panel
-derives one quiet `下一步` row that points
+showing fake active, queue, or idle labels; context chips, model/session stats,
+agent focus controls, advanced session actions, steering / follow-up composer
+controls, and focused-check presets appear once expanded composer options,
+non-default context, selected focus, or actionable diagnostics without command
+evidence make them relevant. The current-turn evidence card includes the
+highest-priority command evidence, latest actionable diagnostic or diff summary,
+file evidence, or latest timeline event without adding a separate diagnostics
+page. Pi bash exit/cancel diagnostics stay in shared state but are hidden from
+the card when command evidence already shows the same failure. When actionable
+evidence is present, the current task strip derives one quiet `下一步` row that points
 to the next shared-app action, prioritizing cancelable Pi work, failed command
 evidence, diagnostics, active plan steps, reviewable diffs, files, transcript
 rows, and activity events. Failed-command next actions carry the compact command
@@ -195,15 +194,13 @@ feeds a compact `当前计划` row so the visible session state includes current
 planning evidence without opening a separate pane. The default fixture no
 longer injects mock transcript, sample stats, command catalog rows, file rows,
 diff rows, command runs, diagnostic prose, or sample active-task copy. Zero
-queues, unbound Pi state, idle transport/agent state, and empty digest actions
-stay visually quiet; transcript/activity/workspace panels stay unmounted until
-Pi, command, or workspace evidence arrives, and Activity header count badges
-only reserve space for nonzero run, command-catalog, or event counts.
-On wide windows, the shell now mirrors the three-column desktop shape more
-closely with a right workflow rail for live progress, execution, and work-folder
-evidence. The rail reuses `PlanStep`, `AgentEvent`, session, and `FileContext`
-state from the shared app model, stays hidden when those evidence streams are
-empty, and collapses on compact widths so the conversation flow remains primary.
+queues, unbound Pi state, idle transport/agent state, and empty evidence actions
+stay visually quiet; transcript rows and the `当前证据` card stay unmounted until
+Pi, command, or workspace evidence arrives.
+On wide windows, the shell adds one compact status rail for the next action,
+current plan step, and active tool/command. The old progress/execution/work-folder
+multi-card rail is gone, and the rail still collapses on compact widths so the
+conversation flow remains primary.
 Transcript rows can queue a `Follow up on <role> transcript: ...` prompt through
 the shared prompt transport, turning visible Pi conversation evidence into the
 next agent task. The default sidebar now stays focused on sessions and
@@ -216,7 +213,7 @@ The composer exposes repository, examples, evidence, and Pi session context
 chips after opening composer options, after selecting a focus, or after
 changing the default context; direct prompt, steering, and follow-up submits
 still prefix the selected scopes into the same platform-neutral text payloads,
-while turning all chips off sends the raw input. Activity timeline rows can queue a
+while turning all chips off sends the raw input. Current-turn event rows can queue a
 `Follow up on <phase> activity: ...` prompt the same way, so visible Pi RPC,
 stderr, tool, and stream events can become the next agent action. File context
 rows can queue an `Inspect <path>` prompt through the same platform-neutral
@@ -269,7 +266,7 @@ model, `get_available_models` refreshes the compact model catalog,
 `get_fork_messages` refreshes forkable user-message entry ids, `get_commands`
 refreshes the available slash/prompt/extension/skill command catalog, and
 `get_session_stats` refreshes compact message/tool/token/context metrics.
-`export_html` success responses add the returned path as Workspace file
+`export_html` success responses add the returned path as current-turn file
 evidence, so exported sessions can become handoff, documentation, or knowledge
 artifacts without native-only state. Catalog entries can run a command by
 sending `/<name>` through the same platform-neutral `SendUserInput` prompt
@@ -278,10 +275,10 @@ prompts such as `/review` are sent raw rather than wrapped in composer context.
 When command catalog entries are available and the prompt starts with `/`, the
 composer hides context/focus/steering controls and shows up to three filtered
 slash-command suggestions plus the normal send action. Those suggestions reuse
-the same `InvokeCommand` / `SendUserInput` route while keeping the Activity
-digest free of catalog-only command rows or focused-check presets. Diagnostics
+the same `InvokeCommand` / `SendUserInput` route while keeping the current-turn
+evidence card free of catalog-only command rows or focused-check presets. Diagnostics
 collected from Pi stderr, RPC failures, structured diagnostic events, and
-non-duplicated bash results are surfaced in the workspace digest and can be
+non-duplicated bash results are surfaced in the current-turn evidence card and can be
 cleared from shared app state.
 The model catalog summary can send platform-neutral `SetRpcModel` for the
 visible model and `CycleRpcModel` for Pi's scoped model cycle; successful
@@ -305,43 +302,43 @@ process details into the app model.
 Workbench command queue actions now dispatch platform-neutral shell commands
 that the native encoder maps to Pi RPC `bash`, and successful `bash` responses
 mark command evidence as passed, failed, or cancelled inside the shared model
-while preserving Pi's optional `fullOutputPath` as command evidence. Activity
-rows display that output path when present, so long/truncated command output can
-stay discoverable without native-only state. Activity command rows can now queue
-an `Inspect command output for ...` prompt from the latest command status, cwd,
-exit code, and output path, turning bash evidence into the next Pi task through
-`SendUserInput` while preserving the current context chips and selected agent
-focus. The Activity digest normally keeps up to three recent command evidence
-rows, then expands to the full focused-check batch when the newest command group
-matches those presets, so the batch can be inspected as a group without a
-separate log page. Failed command rows use a `修复` primary action that queues a
+while preserving Pi's optional `fullOutputPath` as command evidence. The
+current-turn evidence card displays that output path when present, so
+long/truncated command output can stay discoverable without native-only state.
+Command rows can queue an `Inspect command output for ...` prompt from command
+status, cwd, exit code, and output path, turning bash evidence into the next Pi
+task through `SendUserInput` while preserving the current context chips and
+selected agent focus. Outside a focused-check batch, the card shows the
+highest-priority command evidence: failed first, active next, latest otherwise.
+Focused-check batches still expand to all four checks so the batch can be
+inspected as a group without a separate log page. Failed command rows use a
+`修复` primary action that queues a
 `Fix failed command ...` prompt with the command status, exit code, cwd, output
 path, and the same context/focus wrapper, turning a failed focused check
 directly into the next coding-agent task without adding native-only output
-handling. The current session `下一步` row mirrors the latest failed command's
+handling. The current task `下一步` row mirrors the latest failed command's
 exit code and output path so the fix entrypoint carries the same evidence as
-the Activity row. Matching Pi bash diagnostics remain available in shared state
-but no longer render as a duplicate Workspace digest row.
-The Activity digest can rerun a visible command evidence row through the same
+the command row. Matching Pi bash diagnostics remain available in shared state
+but no longer render as duplicate evidence.
+The current-turn evidence card can rerun a visible command evidence row through the same
 `QueueCommand` / `RunShellCommand` path, so common coding-agent checks can be
 replayed without introducing a native-only shortcut.
 It also exposes focused-check presets for the app native test, app wasm-gc test,
 macOS Skia build, and macOS Skia first-frame smoke only while actionable
 diagnostics need a validation entry and no command evidence is already visible.
-Once command evidence exists, the Activity digest keeps the command rows primary
-and relies on their inline analysis, fix, and rerun actions instead of adding a
+Once command evidence exists, the card keeps the command row primary and relies
+on inline analysis, fix, and rerun actions instead of adding a
 second preset row. Each preset uses the same `QueueCommand` /
 `RunShellCommand` path, so checks started from the UI become normal Pi bash
 evidence. The `全部` action batches all four focused checks through one
 platform-neutral queue operation while preserving separate `CommandRun`
-evidence rows in that recent-command digest. Generic Pi `bash` responses are
+evidence rows in that focused-check card. Generic Pi `bash` responses are
 applied to the next queued/running command, so batched focused-check evidence
 keeps the same FIFO order as the UI queue.
-It also surfaces the latest Pi/agent timeline event from shared app state, so
+It also surfaces the latest Pi/agent timeline event from shared app state when
+no higher-priority command evidence is present, so
 streaming transport, tool, and RPC progress is visible next to command evidence
-without adding a separate log view. The Activity title row keeps `运行证据`
-stable but omits zero-value count placeholders, leaving command-only and
-event-only evidence rows more horizontal space.
+without adding a separate log view.
 Cancelling while such a shell command is active now maps to Pi RPC `abort_bash`;
 prompt/agent cancellation still maps to Pi RPC `abort`.
 The shared app also ingests Pi's streaming session events such as
@@ -377,7 +374,7 @@ acknowledgement, queues the same second-stage refresh before rebinding from
 Pi's next `get_state` response.
 The session panel also has an HTML export action. It sends Pi RPC
 `export_html`, and a successful response appears as file evidence in the
-Workspace digest.
+current-turn evidence card.
 
 The first native entrypoint is macOS Skia:
 
