@@ -207,6 +207,7 @@ function main() {
     JSON.stringify({
       vars: {
         SKIA_MBT_STUB_CC_FLAGS: flags.stubCcFlags,
+        SKIA_MBT_CC_LINK_FLAGS: flags.linkFlags,
       },
       link_configs: [
         {

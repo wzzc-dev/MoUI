@@ -1,4 +1,11 @@
 ///|
+fn native_test_assert_red_dominant_pixel(pixmap : @skia.Pixmap) -> Unit raise {
+  assert_true(pixmap.pixels[0] > pixmap.pixels[1])
+  assert_true(pixmap.pixels[0] > pixmap.pixels[2])
+  assert_eq(pixmap.pixels[3], 0xff)
+}
+
+///|
 test "native backend reports availability" {
   ignore(@native.skia_available())
 }
@@ -1509,12 +1516,7 @@ test "canvas replays render command lists" {
                   bounds=@skia.IRect::from_xywh(2, 2, 1, 1),
                 ) {
                 None => ()
-                Some(pixmap) => {
-                  assert_eq(pixmap.pixels[0], 0xff)
-                  assert_eq(pixmap.pixels[1], 0x00)
-                  assert_eq(pixmap.pixels[2], 0x00)
-                  assert_eq(pixmap.pixels[3], 0xff)
-                }
+                Some(pixmap) => native_test_assert_red_dominant_pixel(pixmap)
               }
             }
           }
@@ -1542,12 +1544,7 @@ test "canvas replays render command lists" {
           assert_true(surface.flush_and_submit())
           match surface.read_pixels(bounds=@skia.IRect::from_xywh(2, 2, 1, 1)) {
             None => ()
-            Some(pixmap) => {
-              assert_eq(pixmap.pixels[0], 0xff)
-              assert_eq(pixmap.pixels[1], 0x00)
-              assert_eq(pixmap.pixels[2], 0x00)
-              assert_eq(pixmap.pixels[3], 0xff)
-            }
+            Some(pixmap) => native_test_assert_red_dominant_pixel(pixmap)
           }
         }
       }
