@@ -234,6 +234,7 @@ default_stage_markers=(
   "native smoke font family count" \
   "native smoke first font family bytes" \
   "native smoke typeface family bytes" \
+  "native smoke invalid fallback request resource plan count" \
   "native smoke font fallback key variation" \
   "native smoke font fallback family bytes" \
   "native smoke font fallback match key variation" \
@@ -418,6 +419,7 @@ default_expected_stage_values=(
   $'native smoke invalid shaped glyph command plan count\t1'
   $'native smoke invalid shaped glyph replay skipped\t1'
   $'native smoke font resource plan count\t1'
+  $'native smoke invalid fallback request resource plan count\t1'
   $'native smoke font fallback key variation\t1'
   $'native smoke font fallback match key variation\t1'
   $'native smoke font fallback match resource plan count\t2'

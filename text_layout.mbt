@@ -666,7 +666,11 @@ fn FontFallbackRequest::text_run_cache_id(self : FontFallbackRequest) -> Bytes {
 
 ///|
 fn FontFallbackRequest::resource_id(self : FontFallbackRequest) -> Bytes {
-  b"skia_mbt:font-fallback:v1" + self.text_run_cache_id()
+  if self.is_empty() {
+    b""
+  } else {
+    b"skia_mbt:font-fallback:v1" + self.text_run_cache_id()
+  }
 }
 
 ///|
@@ -740,12 +744,18 @@ pub fn FontFallbackRequest::resource_plan(
   fallback_byte_size? : Int64 = -1L,
   font_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  RendererResourcePlan::new([
-    self.resource_descriptor(byte_size=fallback_byte_size),
-    self
-    .font_descriptor(size~, scale_x~, skew_x~)
-    .resource_descriptor(byte_size=font_byte_size),
-  ])
+  if self.is_empty() {
+    RendererResourcePlan::new([
+      self.resource_descriptor(byte_size=fallback_byte_size),
+    ])
+  } else {
+    RendererResourcePlan::new([
+      self.resource_descriptor(byte_size=fallback_byte_size),
+      self
+      .font_descriptor(size~, scale_x~, skew_x~)
+      .resource_descriptor(byte_size=font_byte_size),
+    ])
+  }
 }
 
 ///|
