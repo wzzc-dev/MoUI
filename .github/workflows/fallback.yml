@@ -302,7 +302,7 @@ jobs:
           from pathlib import Path
           status = json.loads(Path('skia-platform-status.json').read_text())
           for capability in status['native_smoke_capabilities']:
-              if capability['id'] == 'bitmap.decode-readback':
+              if capability['id'].startswith('bitmap.'):
                   capability['area'] = 'Image'
           Path('logs/fake-platform-status-missing-capability-area.json').write_text(
               json.dumps(status, indent=2) + '\n'
