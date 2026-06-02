@@ -117,6 +117,117 @@ fn ElementNode::focusable_ids(
 }
 
 ///|
+fn ElementNode::focusable_key_target(
+  self : ElementNode,
+  key : String,
+) -> ElementId? {
+  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) {
+    None
+  } else if self.key == Some(Key::new(key)) {
+    self.first_focusable_descendant()
+  } else {
+    for child in self.children {
+      match child.focusable_key_target(key) {
+        Some(id) => return Some(id)
+        None => ()
+      }
+    }
+    None
+  }
+}
+
+///|
+fn ElementNode::first_focusable_descendant(self : ElementNode) -> ElementId? {
+  let ids : Array[ElementId] = []
+  self.focusable_ids(ids)
+  if ids.length() == 0 {
+    None
+  } else {
+    Some(ids[0])
+  }
+}
+
+///|
+fn ElementNode::contains_element_id(
+  self : ElementNode,
+  target : ElementId,
+) -> Bool {
+  if self.id == target {
+    true
+  } else {
+    for child in self.children {
+      if child.contains_element_id(target) {
+        return true
+      }
+    }
+    false
+  }
+}
+
+///|
+fn ElementNode::is_enabled_focus_trap(self : ElementNode) -> Bool {
+  self.spec is ModifiedSpec({ modifier: FocusTrapModifier(true), .. })
+}
+
+///|
+fn ElementNode::last_enabled_focus_trap(self : ElementNode) -> ElementNode? {
+  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) {
+    None
+  } else {
+    let mut result : ElementNode? = if self.is_enabled_focus_trap() {
+      Some(self)
+    } else {
+      None
+    }
+    for child in self.children {
+      match child.last_enabled_focus_trap() {
+        Some(scope) => result = Some(scope)
+        None => ()
+      }
+    }
+    result
+  }
+}
+
+///|
+fn ElementNode::deepest_enabled_focus_trap_containing(
+  self : ElementNode,
+  target : ElementId,
+) -> ElementNode? {
+  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) ||
+    !self.contains_element_id(target) {
+    None
+  } else {
+    let mut result : ElementNode? = None
+    for child in self.children {
+      match child.deepest_enabled_focus_trap_containing(target) {
+        Some(scope) => result = Some(scope)
+        None => ()
+      }
+    }
+    match result {
+      Some(_) => result
+      None => if self.is_enabled_focus_trap() { Some(self) } else { None }
+    }
+  }
+}
+
+///|
+fn ElementNode::active_focus_trap(
+  self : ElementNode,
+  current~ : ElementId?,
+) -> ElementNode? {
+  match current {
+    Some(current) =>
+      match self.deepest_enabled_focus_trap_containing(current) {
+        Some(scope) => Some(scope)
+        None => self.last_enabled_focus_trap()
+      }
+    None => self.last_enabled_focus_trap()
+  }
+}
+
+///|
 fn ElementNode::accepts_tab_input(
   self : ElementNode,
   target : ElementId,
@@ -137,7 +248,7 @@ fn ElementNode::accepts_tab_input(
 }
 
 ///|
-fn ElementNode::next_focus(
+fn ElementNode::next_focus_in_scope(
   self : ElementNode,
   current~ : ElementId?,
   reverse~ : Bool,
@@ -168,6 +279,56 @@ fn ElementNode::next_focus(
       }
       Some(ids[next])
     }
+  }
+}
+
+///|
+fn ElementNode::next_focus(
+  self : ElementNode,
+  current~ : ElementId?,
+  reverse~ : Bool,
+) -> ElementId? {
+  match self.active_focus_trap(current~) {
+    Some(scope) => scope.next_focus_in_scope(current~, reverse~)
+    None => self.next_focus_in_scope(current~, reverse~)
+  }
+}
+
+///|
+fn ElementNode::constrained_focus_target(
+  self : ElementNode,
+  target : ElementId?,
+  current~ : ElementId?,
+) -> ElementId? {
+  match self.active_focus_trap(current~) {
+    Some(scope) =>
+      match target {
+        Some(target) =>
+          if scope.contains_element_id(target) {
+            Some(target)
+          } else {
+            match current {
+              Some(current) =>
+                if scope.contains_element_id(current) {
+                  Some(current)
+                } else {
+                  scope.next_focus_in_scope(current=None, reverse=false)
+                }
+              None => scope.next_focus_in_scope(current=None, reverse=false)
+            }
+          }
+        None =>
+          match current {
+            Some(current) =>
+              if scope.contains_element_id(current) {
+                Some(current)
+              } else {
+                scope.next_focus_in_scope(current=None, reverse=false)
+              }
+            None => scope.next_focus_in_scope(current=None, reverse=false)
+          }
+      }
+    None => target
   }
 }
 

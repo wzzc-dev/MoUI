@@ -352,6 +352,7 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
     | OffsetModifier(_, _)
     | ClipModifier
     | ScaleModifier(_, _)
+    | FocusTrapModifier(_)
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
     | AlignModifier(_)

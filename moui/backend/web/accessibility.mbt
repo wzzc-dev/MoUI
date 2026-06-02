@@ -10,6 +10,8 @@ pub(all) struct AriaNode {
   invalid : Bool
   required : Bool
   focused : Bool
+  disabled : Bool
+  actions : Array[String]
   frame : @core.Rect
   children : Array[AriaNode]
 } derive(Eq, Debug, ToJson)
@@ -27,6 +29,8 @@ pub fn semantics_to_aria(node : @core.SemanticsNode) -> AriaNode {
     invalid: node.state.invalid,
     required: node.state.required,
     focused: node.state.focused,
+    disabled: node.state.disabled,
+    actions: node.actions.map(action => aria_action(action)),
     frame: node.frame,
     children: node.children.map(child => semantics_to_aria(child)),
   }
@@ -69,5 +73,20 @@ fn aria_checked(node : @core.SemanticsNode) -> Bool? {
     Some(node.state.checked)
   } else {
     None
+  }
+}
+
+///|
+fn aria_action(action : @core.SemanticsAction) -> String {
+  match action {
+    @core.SemanticsAction::Activate => "activate"
+    @core.SemanticsAction::Focus => "focus"
+    @core.SemanticsAction::SetText => "set-text"
+    @core.SemanticsAction::Submit => "submit"
+    @core.SemanticsAction::Scroll => "scroll"
+    @core.SemanticsAction::Select => "select"
+    @core.SemanticsAction::Expand => "expand"
+    @core.SemanticsAction::Collapse => "collapse"
+    @core.SemanticsAction::Dismiss => "dismiss"
   }
 }

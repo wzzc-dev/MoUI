@@ -154,6 +154,7 @@ pub fn AppRuntime::dispatch_event(Self, AppEvent) -> Unit
 pub fn AppRuntime::dispatch_focused_text_command(Self, CommandIntent, paste_text? : String?) -> TextCommandResult
 pub fn AppRuntime::draw_commands(Self) -> Array[DrawCommand]
 pub fn AppRuntime::environment(Self) -> Environment
+pub fn AppRuntime::focus_key(Self, String) -> Bool
 pub fn AppRuntime::focus_next(Self) -> Bool
 pub fn AppRuntime::focus_previous(Self) -> Bool
 pub fn AppRuntime::focused_text_input(Self) -> TextInputState
@@ -1166,6 +1167,23 @@ pub(all) struct RouteDescriptor {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
 
+pub(all) struct RouteFocusEntry {
+  route : String
+  focus_key : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteFocusEntry::new(route~ : String, focus_key~ : String) -> Self
+
+pub(all) struct RouteFocusStore {
+  mut entries : Array[RouteFocusEntry]
+}
+pub fn RouteFocusStore::focus_key(Self, String) -> String?
+pub fn RouteFocusStore::focus_key_for_location(Self, RouteLocation) -> String?
+pub fn RouteFocusStore::new(entries? : Array[RouteFocusEntry]) -> Self
+pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Unit
+pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Unit
+pub fn RouteFocusStore::restore(Self, AppRuntime, String) -> Bool
+pub fn RouteFocusStore::restore_location(Self, AppRuntime, RouteLocation) -> Bool
+
 pub(all) struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]
@@ -1715,6 +1733,7 @@ pub fn[Msg] View::environment(Self[Msg], Environment) -> Self[Msg]
 pub fn[Msg] View::expanded(Self[Msg], weight? : Double) -> Self[Msg]
 pub fn[Msg] View::flex(children~ : Array[Self[Msg]], axis~ : Axis, spacing? : Double, main_axis_alignment? : MainAxisAlignment, cross_axis_alignment? : CrossAxisAlignment) -> Self[Msg]
 pub fn[Msg] View::flexible(Self[Msg], weight? : Double) -> Self[Msg]
+pub fn[Msg] View::focus_trap(Self[Msg], enabled? : Bool) -> Self[Msg]
 pub fn[Msg] View::focusable(Self[Msg], focusable? : Bool) -> Self[Msg]
 pub fn[Msg] View::font(Self[Msg], FontSpec) -> Self[Msg]
 pub fn[Msg] View::foreground(Self[Msg], Color) -> Self[Msg]

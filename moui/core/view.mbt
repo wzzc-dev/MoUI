@@ -1100,6 +1100,14 @@ pub fn[Msg] View::focusable(
 }
 
 ///|
+pub fn[Msg] View::focus_trap(
+  self : View[Msg],
+  enabled? : Bool = true,
+) -> View[Msg] {
+  modify_view(self, PlainModifier(FocusTrapModifier(enabled)))
+}
+
+///|
 pub fn[Msg] View::on_tap(self : View[Msg], message : Msg) -> View[Msg] {
   modify_view(self, TapModifier(message))
 }

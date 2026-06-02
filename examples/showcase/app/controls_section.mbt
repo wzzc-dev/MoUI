@@ -207,10 +207,10 @@ fn control_ecosystem_baseline_card(
           theme, inner_width, "Forms | ready | form_workflow_bar + inputs | Showcase + Settings | app validation",
         ),
         baseline_row(
-          theme, inner_width, "Navigation | ready | sidebar/tabs/route_header | Showcase | app routes",
+          theme, inner_width, "Navigation | ready | sidebar/tabs/route_header + RouteFocusStore | Showcase | app routes",
         ),
         baseline_row(
-          theme, inner_width, "Dialogs/Menus | partial | dialog/popover/command_menu | Command Palette | no native menus/focus trap",
+          theme, inner_width, "Dialogs/Menus | ready | view dialog/popover + host menu preview | Command Palette | native modal/a11y follow-up",
         ),
         baseline_row(
           theme, inner_width, "Data Views | ready | table/filter/pagination | Data Table app | app data logic",
@@ -219,7 +219,7 @@ fn control_ecosystem_baseline_card(
           theme, inner_width, "Feedback | ready | toast/banner/progress | Showcase + File Importer | app queues",
         ),
         baseline_row(
-          theme, inner_width, "Input/A11y | partial | FocusScope/shortcuts/semantics | Interaction Lab | no platform bridge",
+          theme, inner_width, "Input/A11y | ready | focus_key/FocusScope/semantics | Interaction Lab | native adapters tracked",
         ),
       ],
       spacing=2.0,

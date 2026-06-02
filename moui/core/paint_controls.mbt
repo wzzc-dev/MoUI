@@ -201,6 +201,7 @@ fn render_modified_node(
     | SemanticsDescriptionModifier(_)
     | SemanticsActionModifier(_)
     | FocusableModifier(_)
+    | FocusTrapModifier(_)
     | OnTapModifier(_)
     | OnLongPressModifier(_)
     | OnDoubleTapModifier(_)

@@ -299,9 +299,13 @@ pub fn RuntimeState::dispatch_event(
       self.ensure_render_tree()
       if event.phase == PointerPhase::Down {
         let previous_focus = self.focused_element
-        self.focused_element = self.element_tree.root.find_focusable_at(
+        let candidate_focus = self.element_tree.root.find_focusable_at(
           event.position,
           self.render_tree.root,
+        )
+        self.focused_element = self.element_tree.root.constrained_focus_target(
+          candidate_focus,
+          current=previous_focus,
         )
         if previous_focus != self.focused_element {
           self.mark_dirty(self.element_tree.id())
@@ -339,8 +343,14 @@ pub fn RuntimeState::dispatch_event(
         self.rebuild_if_possible()
       } else if event.pressed && event.key == "Tab" {
         match self.focused_element {
-          Some(target) =>
-            if self.element_tree.root.accepts_tab_input(target) {
+          Some(target) => {
+            let constrained_target = self.element_tree.root.constrained_focus_target(
+              Some(target),
+              current=Some(target),
+            )
+            if constrained_target != Some(target) {
+              ignore(self.move_focus(reverse=event.modifiers.shift))
+            } else if self.element_tree.root.accepts_tab_input(target) {
               let result = self.element_tree.root.dispatch_keyboard(
                 target, event,
               )
@@ -357,6 +367,7 @@ pub fn RuntimeState::dispatch_event(
             } else {
               ignore(self.move_focus(reverse=event.modifiers.shift))
             }
+          }
           None => ignore(self.move_focus(reverse=event.modifiers.shift))
         }
       } else {
@@ -432,6 +443,30 @@ fn RuntimeState::move_focus(
     true
   } else {
     false
+  }
+}
+
+///|
+fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
+  self.ensure_render_tree()
+  match self.element_tree.root.focusable_key_target(key) {
+    Some(target) => {
+      let previous_focus = self.focused_element
+      let constrained = self.element_tree.root.constrained_focus_target(
+        Some(target),
+        current=previous_focus,
+      )
+      if constrained == Some(target) {
+        self.focused_element = Some(target)
+        if previous_focus != self.focused_element {
+          self.mark_dirty(self.element_tree.id())
+        }
+        true
+      } else {
+        false
+      }
+    }
+    None => false
   }
 }
 

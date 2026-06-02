@@ -175,6 +175,7 @@ fn modified_intrinsic_size(
     | SemanticsDescriptionModifier(_)
     | SemanticsActionModifier(_)
     | FocusableModifier(_)
+    | FocusTrapModifier(_)
     | OnTapModifier(_)
     | OnLongPressModifier(_)
     | OnDoubleTapModifier(_)

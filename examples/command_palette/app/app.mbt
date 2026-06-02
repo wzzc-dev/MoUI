@@ -30,6 +30,8 @@ pub(all) struct CommandPaletteModel {
 pub(all) enum CommandPaletteMsg {
   QueryChanged(String)
   CommandSelected(@core.CommandIntent)
+  ShowNativeMenu
+  HostMenuCompleted(@host.HostServiceResponse)
   ToggleContextMenu
   HideContextMenu
   ClearLog
@@ -58,9 +60,32 @@ pub fn CommandPaletteModel::update(
   match message {
     QueryChanged(value) => { ..self, query: value }
     CommandSelected(intent) => self.dispatch_intent(intent)
+    ShowNativeMenu =>
+      { ..self, last_result: "Native menu requires host services" }
+    HostMenuCompleted(response) => self.apply_host_menu_response(response)
     ToggleContextMenu => { ..self, context_visible: !self.context_visible }
     HideContextMenu => { ..self, context_visible: false }
     ClearLog => { ..self, dispatched: [], last_result: "No command dispatched" }
+  }
+}
+
+///|
+pub fn CommandPaletteModel::update_with_services(
+  self : CommandPaletteModel,
+  message : CommandPaletteMsg,
+  services : @host.HostAppServices,
+) -> (CommandPaletteModel, @core.Effect[CommandPaletteMsg]) {
+  match message {
+    ShowNativeMenu =>
+      (
+        { ..self, last_result: "Opening native menu" },
+        @core.Effect::dispatch(dispatch => {
+          dispatch(
+            HostMenuCompleted(services.show_context_menu(self.commands())),
+          )
+        }),
+      )
+    _ => (self.update(message), @core.Effect::none())
   }
 }
 
@@ -117,6 +142,20 @@ pub fn CommandPaletteModel::dispatch_intent(
         { ..self, last_result: "Disabled: " + command.display_label() }
       }
     None => { ..self, last_result: "Unknown command" }
+  }
+}
+
+///|
+fn CommandPaletteModel::apply_host_menu_response(
+  self : CommandPaletteModel,
+  response : @host.HostServiceResponse,
+) -> CommandPaletteModel {
+  match response {
+    @host.HostServiceResponse::MenuCommand(intent) =>
+      self.dispatch_intent(intent)
+    @host.HostServiceResponse::Unavailable(reason) =>
+      { ..self, last_result: "Native menu unavailable: " + reason }
+    _ => { ..self, last_result: "Native menu returned no command" }
   }
 }
 
@@ -186,6 +225,14 @@ pub fn CommandPaletteModel::view(
             height=36.0,
           ),
           button(
+            "Native Menu",
+            on_click=ShowNativeMenu,
+            variant=@views.ButtonVariant::Tonal,
+            theme~,
+            width=118.0,
+            height=36.0,
+          ),
+          button(
             "Submit",
             on_click=CommandSelected(@core.CommandIntent::Submit),
             variant=@views.ButtonVariant::Primary,
@@ -243,11 +290,31 @@ pub fn CommandPaletteApp::runtime(
 }
 
 ///|
+pub fn CommandPaletteApp::runtime_with_services(
+  self : CommandPaletteApp,
+  services : @host.HostAppServices,
+  width? : Double = 800.0,
+  height? : Double = 680.0,
+) -> @core.AppRuntime {
+  ignore(self)
+  runtime_with_services(services, width~, height~)
+}
+
+///|
 pub fn runtime(
   width? : Double = 800.0,
   height? : Double = 680.0,
 ) -> @core.AppRuntime {
   CommandPaletteModel::new().runtime(width~, height~)
+}
+
+///|
+pub fn runtime_with_services(
+  services : @host.HostAppServices,
+  width? : Double = 800.0,
+  height? : Double = 680.0,
+) -> @core.AppRuntime {
+  CommandPaletteModel::new().runtime_with_services(services, width~, height~)
 }
 
 ///|
@@ -258,6 +325,25 @@ pub fn CommandPaletteModel::runtime(
 ) -> @core.AppRuntime {
   let runtime = @core.AppRuntime::new_program(
     program=@core.Program::simple(init=self, update~, view~),
+    size=@core.Size::new(width~, height~),
+  )
+  runtime.set_action_commands(action_command_map())
+  runtime
+}
+
+///|
+pub fn CommandPaletteModel::runtime_with_services(
+  self : CommandPaletteModel,
+  services : @host.HostAppServices,
+  width? : Double = 800.0,
+  height? : Double = 680.0,
+) -> @core.AppRuntime {
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::new(
+      init=() => (self, @core.Effect::none()),
+      update=(model, message) => model.update_with_services(message, services),
+      view~,
+    ),
     size=@core.Size::new(width~, height~),
   )
   runtime.set_action_commands(action_command_map())

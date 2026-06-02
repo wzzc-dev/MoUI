@@ -131,7 +131,9 @@ pub fn[Msg] form_field(
     required=required || resolved_status == FormFieldStatus::Required,
   )
   .semantics_invalid(invalid=resolved_status == FormFieldStatus::Invalid)
-  .semantics_description(error)
+  .semantics_description(
+    form_field_semantics_description(resolved_status, helper, error),
+  )
   .accessibility_label(
     form_field_accessibility_label(label, resolved_status, error),
   )
@@ -588,6 +590,10 @@ fn[Msg] form_field_support_text(
     Always =>
       if error != "" {
         Some(form_error(error, theme~, width~))
+      } else if status == FormFieldStatus::Validating {
+        Some(
+          form_helper_text(form_field_validating_text(helper), theme~, width~),
+        )
       } else if helper != "" {
         Some(form_helper_text(helper, theme~, width~))
       } else {
@@ -596,6 +602,10 @@ fn[Msg] form_field_support_text(
     OnInvalid =>
       if status == FormFieldStatus::Invalid && error != "" {
         Some(form_error(error, theme~, width~))
+      } else if status == FormFieldStatus::Validating {
+        Some(
+          form_helper_text(form_field_validating_text(helper), theme~, width~),
+        )
       } else if helper != "" {
         Some(form_helper_text(helper, theme~, width~))
       } else {
@@ -611,9 +621,34 @@ fn form_field_label_color(
 ) -> @core.Color {
   match status {
     Invalid => form_error_color(theme)
+    Validating => theme.palette.primary
     Disabled => theme.palette.muted.multiply_alpha(0.68)
     ReadOnly => theme.palette.muted
     Normal | Required => theme.palette.foreground
+  }
+}
+
+///|
+fn form_field_validating_text(helper : String) -> String {
+  if helper == "" {
+    "Validating..."
+  } else {
+    helper + " Validating..."
+  }
+}
+
+///|
+fn form_field_semantics_description(
+  status : FormFieldStatus,
+  helper : String,
+  error : String,
+) -> String {
+  if error != "" {
+    error
+  } else if status == FormFieldStatus::Validating {
+    form_field_validating_text(helper)
+  } else {
+    helper
   }
 }
 
@@ -639,6 +674,7 @@ fn form_field_accessibility_label(
         label + ", invalid, " + error
       }
     Required => label + ", required"
+    Validating => label + ", validating"
     Disabled => label + ", disabled"
     ReadOnly => label + ", read only"
     Normal => label

@@ -59,13 +59,11 @@ pub(all) struct DataTableModel {
   selected_team : String
   selected_statuses : Array[String]
   selected_row : Int
-  selected_rows : Array[Int]
-  visible_columns : Array[String]
+  selected_rows : @views.SelectionState
+  visible_columns : @views.ColumnVisibilityState
   expanded : Array[String]
-  page : Int
-  page_size : Int
-  sort_key : DataSortKey
-  ascending : Bool
+  pagination : @views.PaginationState
+  sort : @views.DataSortState
   status : DataStatus
   last_action : String
 }
@@ -115,13 +113,14 @@ pub fn DataTableModel::new() -> DataTableModel {
     selected_team: "all",
     selected_statuses: [],
     selected_row: 0,
-    selected_rows: [0],
-    visible_columns: ["project", "status", "owner", "priority"],
+    selected_rows: @views.SelectionState::new(selected=["0"]),
+    visible_columns: @views.ColumnVisibilityState::new(
+      visible=["project", "status", "owner", "priority"],
+      locked=["project"],
+    ),
     expanded: ["teams"],
-    page: 0,
-    page_size: 3,
-    sort_key: DataSortKey::Project,
-    ascending: true,
+    pagination: @views.PaginationState::new(page=0, page_size=3, total_count=6),
+    sort: @views.DataSortState::new(column="project"),
     status: DataStatus::Ready,
     last_action: "Ready",
   }
@@ -133,13 +132,15 @@ pub fn DataTableModel::update(
   message : DataTableMsg,
 ) -> DataTableModel {
   match message {
-    QueryChanged(value) => { ..self, query: value, page: 0 }
-    TeamSelected(value) => { ..self, selected_team: value, page: 0 }
+    QueryChanged(value) =>
+      { ..self, query: value, pagination: self.first_page() }
+    TeamSelected(value) =>
+      { ..self, selected_team: value, pagination: self.first_page() }
     ToggleStatusFilter(status) =>
       {
         ..self,
         selected_statuses: toggle_id(self.selected_statuses, status),
-        page: 0,
+        pagination: self.first_page(),
       }
     ClearFilters =>
       {
@@ -147,46 +148,42 @@ pub fn DataTableModel::update(
         query: "",
         selected_team: "all",
         selected_statuses: [],
-        page: 0,
+        pagination: self.first_page(),
       }
     RowSelected(id) =>
       {
         ..self,
         selected_row: id,
-        selected_rows: toggle_int_id(self.selected_rows, id),
+        selected_rows: self.selected_rows.toggle(id.to_string()),
         last_action: "Selected row \{id}",
       }
     ClearSelection =>
-      { ..self, selected_rows: [], last_action: "Selection cleared" }
+      {
+        ..self,
+        selected_rows: self.selected_rows.clear(),
+        last_action: "Selection cleared",
+      }
     ArchiveSelection =>
       {
         ..self,
-        last_action: "Archive queued for \{self.selected_rows.length()} row(s)",
+        last_action: "Archive queued for \{self.selected_rows.count()} row(s)",
       }
     ExportSelection =>
       {
         ..self,
-        last_action: "Export queued for \{self.selected_rows.length()} row(s)",
+        last_action: "Export queued for \{self.selected_rows.count()} row(s)",
       }
     ToggleColumnVisibility(id, visible) =>
-      {
-        ..self,
-        visible_columns: set_column_visibility(
-          self.visible_columns,
-          id,
-          visible,
-        ),
-      }
+      { ..self, visible_columns: self.visible_columns.set_visible(id, visible) }
     ToggleTree(id) => { ..self, expanded: toggle_id(self.expanded, id) }
     SortBy(key) =>
-      if self.sort_key == key {
-        { ..self, ascending: !self.ascending, page: 0 }
-      } else {
-        { ..self, sort_key: key, ascending: true, page: 0 }
+      {
+        ..self,
+        sort: self.sort.toggle(data_sort_column_id_for_key(key)),
+        pagination: self.first_page(),
       }
-    NextPage =>
-      { ..self, page: data_min_int(self.page + 1, self.page_count() - 1) }
-    PreviousPage => { ..self, page: data_max_int(0, self.page - 1) }
+    NextPage => { ..self, pagination: self.pagination_state().next() }
+    PreviousPage => { ..self, pagination: self.pagination_state().previous() }
     SetLoading => { ..self, status: DataStatus::Loading }
     SetFailed(message) => { ..self, status: DataStatus::Failed(message) }
     SetReady => { ..self, status: DataStatus::Ready }
@@ -223,8 +220,8 @@ pub fn DataTableModel::sorted_records(
 ) -> Array[DataRecord] {
   sort_records(
     self.filtered_records(),
-    key=self.sort_key,
-    ascending=self.ascending,
+    key=data_sort_key_for_column(self.sort.column),
+    ascending=self.sort.ascending,
   )
 }
 
@@ -233,8 +230,9 @@ pub fn DataTableModel::visible_records(
   self : DataTableModel,
 ) -> Array[DataRecord] {
   let sorted = self.sorted_records()
-  let start = self.page * self.page_size
-  let end = data_min_int(sorted.length(), start + self.page_size)
+  let pagination = self.pagination_state()
+  let start = pagination.start_index()
+  let end = pagination.end_index()
   let rows : Array[DataRecord] = []
   if start >= sorted.length() {
     return rows
@@ -247,12 +245,27 @@ pub fn DataTableModel::visible_records(
 
 ///|
 pub fn DataTableModel::page_count(self : DataTableModel) -> Int {
-  let total = self.filtered_records().length()
-  if total == 0 {
-    1
-  } else {
-    (total + self.page_size - 1) / self.page_size
-  }
+  self.pagination_state().page_count()
+}
+
+///|
+fn DataTableModel::pagination_state(
+  self : DataTableModel,
+) -> @views.PaginationState {
+  @views.PaginationState::new(
+    page=self.pagination.page,
+    page_size=self.pagination.page_size,
+    total_count=self.filtered_records().length(),
+  ).clamped()
+}
+
+///|
+fn DataTableModel::first_page(self : DataTableModel) -> @views.PaginationState {
+  @views.PaginationState::new(
+    page=0,
+    page_size=self.pagination.page_size,
+    total_count=self.filtered_records().length(),
+  )
 }
 
 ///|
@@ -333,9 +346,9 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
       status_bar(
         [
           "Rows: \{self.filtered_records().length()}",
-          "Selected: \{self.selected_rows.length()}",
-          "Columns: \{self.visible_columns.length()}/4",
-          "Page: \{self.page + 1}/\{self.page_count()}",
+          "Selected: \{self.selected_rows.count()}",
+          "Columns: \{self.visible_columns.visible.length()}/4",
+          "Page: \{self.pagination_state().page + 1}/\{self.page_count()}",
           "Sort: " + self.sort_label(),
           self.last_action,
         ],
@@ -453,8 +466,8 @@ fn DataTableModel::data_panel(
             ),
             column_visibility_panel(
               data_table_columns(),
-              visible=self.visible_columns,
-              locked=["project"],
+              visible=self.visible_columns.visible,
+              locked=self.visible_columns.locked,
               on_toggle=(id, visible) => ToggleColumnVisibility(id, visible),
               theme~,
               width=238.0,
@@ -464,7 +477,7 @@ fn DataTableModel::data_panel(
           align=@views.CrossAlign::Start,
         ),
         selection_toolbar(
-          selected_count=self.selected_rows.length(),
+          selected_count=self.selected_rows.count(),
           total_count=self.filtered_records().length(),
           actions=[
             @views.MenuItem::new(
@@ -484,7 +497,7 @@ fn DataTableModel::data_panel(
         ),
         self.state_or_table(theme),
         pagination(
-          page=self.page,
+          page=self.pagination_state().page,
           page_count=self.page_count(),
           on_previous=PreviousPage,
           on_next=NextPage,
@@ -543,7 +556,7 @@ fn DataTableModel::table_view(
     selected_row=selected_visible_index(records, self.selected_row),
     on_row_select=Some(row_index => RowSelected(records[row_index].id)),
     sort_column=self.sort_column_id(),
-    sort_ascending=self.ascending,
+    sort_ascending=self.sort.ascending,
     on_sort=Some(id => SortBy(data_sort_key_for_column(id))),
     sortable_columns=["project", "owner", "status"],
     cell=Some((row_index, column, value) => {
@@ -676,7 +689,7 @@ fn DataTableModel::visible_table_columns(
 ) -> Array[@views.TableColumn] {
   let columns : Array[@views.TableColumn] = []
   for column in data_table_columns() {
-    if self.visible_columns.any(id => id == column.id) {
+    if self.visible_columns.is_visible(column.id) {
       columns.push(column)
     }
   }
@@ -863,8 +876,8 @@ fn status_tone(status : String) -> @views.BadgeTone {
 
 ///|
 fn DataTableModel::sort_label(self : DataTableModel) -> String {
-  let direction = if self.ascending { "Asc" } else { "Desc" }
-  match self.sort_key {
+  let direction = if self.sort.ascending { "Asc" } else { "Desc" }
+  match data_sort_key_for_column(self.sort.column) {
     Project => "Project " + direction
     Owner => "Owner " + direction
     Status => "Status " + direction
@@ -873,7 +886,12 @@ fn DataTableModel::sort_label(self : DataTableModel) -> String {
 
 ///|
 fn DataTableModel::sort_column_id(self : DataTableModel) -> String {
-  match self.sort_key {
+  self.sort.column
+}
+
+///|
+fn data_sort_column_id_for_key(key : DataSortKey) -> String {
+  match key {
     Project => "project"
     Owner => "owner"
     Status => "status"
@@ -897,60 +915,5 @@ fn toggle_id(values : Array[String], id : String) -> Array[String] {
     let next = values.copy()
     next.push(id)
     next
-  }
-}
-
-///|
-fn toggle_int_id(values : Array[Int], id : Int) -> Array[Int] {
-  if values.any(value => value == id) {
-    values.filter(value => value != id)
-  } else {
-    let next = values.copy()
-    next.push(id)
-    next
-  }
-}
-
-///|
-fn set_column_visibility(
-  values : Array[String],
-  id : String,
-  visible : Bool,
-) -> Array[String] {
-  if id == "project" {
-    values
-  } else if visible {
-    if values.any(value => value == id) {
-      values
-    } else {
-      let next = values.copy()
-      next.push(id)
-      next
-    }
-  } else {
-    let next = values.filter(value => value != id)
-    if next.length() == 0 {
-      ["project"]
-    } else {
-      next
-    }
-  }
-}
-
-///|
-fn data_min_int(left : Int, right : Int) -> Int {
-  if left < right {
-    left
-  } else {
-    right
-  }
-}
-
-///|
-fn data_max_int(left : Int, right : Int) -> Int {
-  if left > right {
-    left
-  } else {
-    right
   }
 }

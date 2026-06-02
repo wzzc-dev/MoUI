@@ -58,8 +58,49 @@ test "command palette runtime exposes command rows" {
   assert_true(has_text(commands, "Save Document"))
   assert_true(has_text(commands, "Meta+s"))
   assert_true(has_text(commands, "Archive Document"))
+  assert_true(has_text(commands, "Native Menu"))
   assert_true(has_text(commands, "Context menu fallback"))
   assert_true(has_text(commands, "Dispatch Log"))
+}
+
+///|
+test "command palette host menu service dispatches selected command" {
+  let saw_menu = Ref(false)
+  let services = @host.HostAppServices::new(
+    bridge=@host.HostServiceBridge::new(
+      capabilities=@host.HostServiceCapabilities::new(menus=true),
+      handle=request => {
+        match request {
+          @host.HostServiceRequest::ShowMenu(commands) => {
+            saw_menu.val = true
+            @host.HostServiceResponse::MenuCommand(commands[0].intent)
+          }
+          _ =>
+            @host.HostServiceResponse::Unavailable(
+              request.unavailable_message(),
+            )
+        }
+      },
+    ),
+  )
+  let (opening, effect) = CommandPaletteModel::new().update_with_services(
+    ShowNativeMenu,
+    services,
+  )
+  inspect(opening.last_result, content="Opening native menu")
+  let model = @core.State::new(opening)
+  match effect {
+    @core.Effect::Dispatch(run) =>
+      run(message => {
+        let (next, _effect) = model
+          .get()
+          .update_with_services(message, services)
+        model.set(next)
+      })
+    _ => fail("expected native menu effect")
+  }
+  assert_true(saw_menu.val)
+  inspect(model.get().last_result, content="Dispatched: Save Document")
 }
 
 ///|

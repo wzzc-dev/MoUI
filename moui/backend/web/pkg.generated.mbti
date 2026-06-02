@@ -69,6 +69,8 @@ pub(all) struct AriaNode {
   invalid : Bool
   required : Bool
   focused : Bool
+  disabled : Bool
+  actions : Array[String]
   frame : @wzzc-dev/moui/core.Rect
   children : Array[AriaNode]
 } derive(Eq, ToJson, @debug.Debug)

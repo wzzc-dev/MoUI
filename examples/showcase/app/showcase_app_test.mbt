@@ -186,12 +186,17 @@ test "showcase covers text media controls and layout sections" {
   )
   assert_true(
     has_text(
-      control_commands, "Dialogs/Menus | partial | dialog/popover/command_menu | Command Palette | no native menus/focus trap",
+      control_commands, "Navigation | ready | sidebar/tabs/route_header + RouteFocusStore | Showcase | app routes",
     ),
   )
   assert_true(
     has_text(
-      control_commands, "Input/A11y | partial | FocusScope/shortcuts/semantics | Interaction Lab | no platform bridge",
+      control_commands, "Dialogs/Menus | ready | view dialog/popover + host menu preview | Command Palette | native modal/a11y follow-up",
+    ),
+  )
+  assert_true(
+    has_text(
+      control_commands, "Input/A11y | ready | focus_key/FocusScope/semantics | Interaction Lab | native adapters tracked",
     ),
   )
   assert_true(has_text(control_commands, "Native WGPU"))
@@ -215,6 +220,8 @@ test "showcase covers text media controls and layout sections" {
   assert_true(has_text(forms_commands, "Forms"))
   assert_true(has_text(forms_commands, "Profile"))
   assert_true(has_text(forms_commands, "Email is required"))
+  assert_true(has_text(forms_commands, "Workspace slug"))
+  assert_true(has_text(forms_commands, "Checking availability. Validating..."))
   assert_true(has_text(forms_commands, "Review required"))
   assert_true(has_text(forms_commands, "First invalid: email"))
   assert_true(
@@ -239,6 +246,11 @@ test "showcase covers text media controls and layout sections" {
     .draw_commands()
   assert_true(has_text(data_commands, "Data"))
   assert_true(has_text(data_commands, "Data Table"))
+  assert_true(
+    has_text(
+      data_commands, "Data helpers: sort=status desc, page 2/4, selected 2",
+    ),
+  )
   assert_true(has_text(data_commands, "3 results"))
   assert_true(has_text(data_commands, "Clear"))
   assert_true(has_text(data_commands, "Project Atlas"))
@@ -397,6 +409,7 @@ test "showcase navigates to system gallery sections" {
     has_text(interaction_commands, "Semantic states: pressed selected disabled"),
   )
   assert_true(has_text(interaction_commands, "Focus order: name -> email"))
+  assert_true(has_text(interaction_commands, "Runtime trap: active"))
   assert_true(has_text(interaction_commands, "Tab next: email"))
   assert_true(has_text(interaction_commands, "First invalid: email"))
   assert_true(has_text(interaction_commands, "Enter target: save"))
@@ -418,6 +431,11 @@ test "showcase navigates to system gallery sections" {
     .draw_commands()
   assert_true(has_text(feedback_commands, "Feedback"))
   assert_true(has_text(feedback_commands, "Saved settings"))
+  assert_true(
+    has_text(
+      feedback_commands, "ToastQueue helper: 2 active items; app timers own ttl",
+    ),
+  )
   assert_true(has_text(feedback_commands, "Workspace saved"))
   assert_true(has_text(feedback_commands, "Sync queued for retry"))
   assert_true(has_text(feedback_commands, "Dismiss"))
@@ -453,6 +471,16 @@ test "showcase navigates to system gallery sections" {
     has_text(navigation_commands, "File - Persist local showcase state."),
   )
   assert_true(has_text(navigation_commands, "Close Overlay"))
+  assert_true(
+    has_text(
+      navigation_commands, "Route focus restore: section-nav-button-navigation",
+    ),
+  )
+  assert_true(
+    has_text(
+      navigation_commands, "Restore call: runtime.focus_key(\"section-nav-button-navigation\")",
+    ),
+  )
 }
 
 ///|

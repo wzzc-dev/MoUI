@@ -7,11 +7,10 @@ pub fn[Msg] popover(
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 240.0,
   height? : Double = 160.0,
+  trap_focus? : Bool = false,
 ) -> @core.View[Msg] {
   let view = if expanded {
-    stack([
-      anchor,
-      surface(
+    let panel = surface(
         content,
         width~,
         height~,
@@ -20,8 +19,9 @@ pub fn[Msg] popover(
         padding=theme.spacing_scale.sm,
       )
       .shadow(theme.shadow_scale.md)
-      .align(alignment=popover_alignment(placement)),
-    ])
+      .align(alignment=popover_alignment(placement))
+    let panel = if trap_focus { panel.focus_trap() } else { panel }
+    stack([anchor, panel])
   } else {
     anchor
   }
