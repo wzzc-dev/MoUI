@@ -818,6 +818,26 @@
       "marker": "native smoke render image cache hits"
     },
     {
+      "id": "image.render-decode-failure-resource-plan",
+      "area": "Image",
+      "marker": "native smoke render image decode failure resource plan count"
+    },
+    {
+      "id": "image.render-decode-failure-skipped",
+      "area": "Image",
+      "marker": "native smoke render image decode failure skipped"
+    },
+    {
+      "id": "image.render-decode-failure-cache-resources",
+      "area": "Image",
+      "marker": "native smoke render image decode failure cache resources"
+    },
+    {
+      "id": "image.render-decode-failure-cache-misses",
+      "area": "Image",
+      "marker": "native smoke render image decode failure cache misses"
+    },
+    {
       "id": "codec.metadata",
       "area": "Codec",
       "marker": "native smoke codec encoded format PNG"
@@ -1725,6 +1745,26 @@
       "id": "image.render-command-cache-hits",
       "marker": "native smoke render image cache hits",
       "value": "1"
+    },
+    {
+      "id": "image.render-decode-failure-resource-plan",
+      "marker": "native smoke render image decode failure resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "image.render-decode-failure-skipped",
+      "marker": "native smoke render image decode failure skipped",
+      "value": "2"
+    },
+    {
+      "id": "image.render-decode-failure-cache-resources",
+      "marker": "native smoke render image decode failure cache resources",
+      "value": "0"
+    },
+    {
+      "id": "image.render-decode-failure-cache-misses",
+      "marker": "native smoke render image decode failure cache misses",
+      "value": "2"
     },
     {
       "id": "codec.width",
