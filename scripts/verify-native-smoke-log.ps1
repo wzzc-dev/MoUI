@@ -154,6 +154,7 @@ $defaultStageMarkers = @(
   "native smoke shader resource plan count",
   "native smoke shader linear gradient validation",
   "native smoke filter layer count",
+  "native smoke filter finite validation",
   "native smoke filter resource plan count",
   "native smoke path verbs",
   "native smoke readback width",
@@ -779,6 +780,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke filter resource plan count"
     Value = "3"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke filter finite validation"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke text run resource plan count"

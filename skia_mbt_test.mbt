@@ -1015,6 +1015,18 @@ test "filter descriptors produce typed resource keys" {
     fail("finite contrast descriptor should be accepted")
   }
   assert_true(@skia_mbt.ColorFilterDescriptor::matrix([1.0, 0.0]) is None)
+  let not_finite : Float = 0.0 / 0.0
+  let infinite : Float = 1.0 / 0.0
+  assert_true(
+    @skia_mbt.ColorFilterDescriptor::matrix([
+      not_finite, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+    ])
+    is None,
+  )
+  assert_true(@skia_mbt.ColorFilterDescriptor::saturation(not_finite) is None)
+  assert_true(@skia_mbt.ColorFilterDescriptor::brightness(infinite) is None)
+  assert_true(@skia_mbt.ColorFilterDescriptor::contrast(not_finite) is None)
   assert_true(matrix.resource_key() != saturation.resource_key())
   assert_true(brightness.resource_key() != contrast.resource_key())
 
@@ -1025,7 +1037,9 @@ test "filter descriptors produce typed resource keys" {
     fail("positive mask blur descriptor should be accepted")
   }
   assert_true(@skia_mbt.ImageFilterDescriptor::blur(0.0, 3.0) is None)
+  assert_true(@skia_mbt.ImageFilterDescriptor::blur(infinite, 3.0) is None)
   assert_true(@skia_mbt.MaskFilterDescriptor::blur(-1.0) is None)
+  assert_true(@skia_mbt.MaskFilterDescriptor::blur(not_finite) is None)
 
   let color_descriptor = saturation.resource_descriptor()
   let image_descriptor = image_blur.resource_descriptor()
