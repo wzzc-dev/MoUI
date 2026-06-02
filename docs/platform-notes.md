@@ -138,6 +138,11 @@ and write selected text through a browser host import using the user-gesture
 through normal input events; app-level async clipboard reads use
 `navigator.clipboard.readText()` and complete through `HostServiceAsyncQueue`
 when browser permissions allow it.
+The Web host now advertises IME readiness because the local `window/web` bridge
+supports browser composition lifecycle events and accepts MoUI
+`TextInputSession` IME requests for enabling input, cursor-area updates, and
+surrounding-text updates. This is browser text-input evidence; it does not make
+browser text shaping deterministic across browsers.
 The active Web runtime now drains pending async service requests into browser
 callbacks. Clipboard reads complete through exported wasm callback functions.
 Open-file and directory dialogs use a hidden browser file input and return
