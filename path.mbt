@@ -947,7 +947,7 @@ fn PathVerb::resource_id(self : PathVerb) -> Bytes {
 
 ///|
 fn Path::resource_id(self : Path) -> Bytes {
-  if self.is_empty() {
+  if self.is_empty() || !self.is_finite() {
     b""
   } else {
     let mut id = b"skia_mbt:path:v1" +

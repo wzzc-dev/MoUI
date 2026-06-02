@@ -256,6 +256,11 @@ if ($status.schema_version -ge 3) {
     "canvas.empty-path-replay-path-resources",
     "canvas.empty-path-replay-cache-misses",
     "canvas.empty-path-replay-cache-hits",
+    "canvas.non-finite-path-replay-skipped",
+    "canvas.non-finite-path-replay-path-resources",
+    "canvas.non-finite-path-replay-cache-resources",
+    "canvas.non-finite-path-replay-cache-misses",
+    "canvas.non-finite-path-replay-cache-hits",
     "pipeline.shaped-glyph-run-command",
     "pipeline.shader-cache-resources",
     "pipeline.shader-cache-misses",
@@ -574,6 +579,11 @@ if ($status.schema_version -ge 3) {
       "native smoke empty path replay path resources" = "3"
       "native smoke empty path replay path cache misses" = "0"
       "native smoke empty path replay path cache hits" = "0"
+      "native smoke non-finite path replay skipped" = "2"
+      "native smoke non-finite path replay path resources" = "2"
+      "native smoke non-finite path replay path cache resources" = "0"
+      "native smoke non-finite path replay path cache misses" = "0"
+      "native smoke non-finite path replay path cache hits" = "0"
       "native smoke canvas replay color paint fills" = "2"
       "native smoke canvas replay paint fill clipped" = "1"
       "native smoke canvas replay paint shader fills" = "1"

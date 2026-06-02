@@ -218,6 +218,31 @@
       "marker": "native smoke empty path replay path cache hits"
     },
     {
+      "id": "canvas.non-finite-path-replay-skipped",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay skipped"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-path-resources",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay path resources"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-resources",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay path cache resources"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-misses",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay path cache misses"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-hits",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay path cache hits"
+    },
+    {
       "id": "canvas.replay-color-paint-fills",
       "area": "Canvas",
       "marker": "native smoke canvas replay color paint fills"
@@ -1289,6 +1314,31 @@
     {
       "id": "canvas.empty-path-replay-cache-hits",
       "marker": "native smoke empty path replay path cache hits",
+      "value": "0"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-skipped",
+      "marker": "native smoke non-finite path replay skipped",
+      "value": "2"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-path-resources",
+      "marker": "native smoke non-finite path replay path resources",
+      "value": "2"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-resources",
+      "marker": "native smoke non-finite path replay path cache resources",
+      "value": "0"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-misses",
+      "marker": "native smoke non-finite path replay path cache misses",
+      "value": "0"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-hits",
+      "marker": "native smoke non-finite path replay path cache hits",
       "value": "0"
     },
     {

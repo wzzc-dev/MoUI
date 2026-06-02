@@ -71,6 +71,11 @@ default_stage_markers=(
   "native smoke empty path replay path resources" \
   "native smoke empty path replay path cache misses" \
   "native smoke empty path replay path cache hits" \
+  "native smoke non-finite path replay skipped" \
+  "native smoke non-finite path replay path resources" \
+  "native smoke non-finite path replay path cache resources" \
+  "native smoke non-finite path replay path cache misses" \
+  "native smoke non-finite path replay path cache hits" \
   "native smoke canvas replay color paint fills" \
   "native smoke canvas replay paint fill clipped" \
   "native smoke canvas replay paint shader fills" \
@@ -416,6 +421,11 @@ default_expected_stage_values=(
   $'native smoke empty path replay path resources\t3'
   $'native smoke empty path replay path cache misses\t0'
   $'native smoke empty path replay path cache hits\t0'
+  $'native smoke non-finite path replay skipped\t2'
+  $'native smoke non-finite path replay path resources\t2'
+  $'native smoke non-finite path replay path cache resources\t0'
+  $'native smoke non-finite path replay path cache misses\t0'
+  $'native smoke non-finite path replay path cache hits\t0'
   $'native smoke filter resource plan count\t3'
   $'native smoke filter finite validation\t1'
   $'native smoke text run resource plan count\t3'

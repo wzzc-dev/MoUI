@@ -1621,29 +1621,33 @@ fn native_path_from_value(
   path : @skia.Path,
   resources : NativeReplayResources?,
 ) -> Path? {
-  match resources {
-    None => Path::from_value(path)
-    Some(resources) => {
-      let descriptor = path.resource_descriptor()
-      if !descriptor.is_cacheable() {
-        Path::from_value(path)
-      } else {
-        match resources.path_cache.get(descriptor.key) {
-          Some(native_path) => Some(native_path)
-          None =>
-            match Path::from_value(path) {
-              None => None
-              Some(native_path) => {
-                ignore(
-                  resources.path_cache.insert(
-                    descriptor.key,
-                    native_path,
-                    byte_size=descriptor.byte_size,
-                  ),
-                )
-                Some(native_path)
+  if !path.is_finite() {
+    None
+  } else {
+    match resources {
+      None => Path::from_value(path)
+      Some(resources) => {
+        let descriptor = path.resource_descriptor()
+        if !descriptor.is_cacheable() {
+          Path::from_value(path)
+        } else {
+          match resources.path_cache.get(descriptor.key) {
+            Some(native_path) => Some(native_path)
+            None =>
+              match Path::from_value(path) {
+                None => None
+                Some(native_path) => {
+                  ignore(
+                    resources.path_cache.insert(
+                      descriptor.key,
+                      native_path,
+                      byte_size=descriptor.byte_size,
+                    ),
+                  )
+                  Some(native_path)
+                }
               }
-            }
+          }
         }
       }
     }

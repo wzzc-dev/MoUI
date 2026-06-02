@@ -88,7 +88,8 @@ these facts recorded in logs:
   canvas state restore, canvas clipping, canvas color/paint fill replay,
   undecodable/empty image replay skip and cache-safety proof,
   canvas rrect/path clip replay, empty path replay zero-resource/miss/hit proof,
-  canvas command replay, linear-gradient shader
+  non-finite path replay skip and zero-cache-touch proof, canvas command replay,
+  linear-gradient shader
   validation, invalid shader/filter descriptor cache safety,
   invalid shader/filter replay skip and all-filter zero-cache-touch proof,
   non-finite filter input rejection,
@@ -136,6 +137,7 @@ these facts recorded in logs:
   variation, fallback resolution resource planning, invalid fallback
   request/result cache safety, native fallback resolution bridging, font
   fallback resource planning, empty path replay zero-resource/miss/hit proof,
+  non-finite path replay skip and zero-cache-touch proof,
   canvas paint-shader fill replay,
   linear-gradient shader validation, invalid shader/filter descriptor cache
   safety, invalid shader/filter replay skip and all-filter zero-cache-touch

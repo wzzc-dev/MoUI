@@ -3509,6 +3509,21 @@ test "path value layer records portable verbs" {
   assert_true(descriptor.byte_size > 0L)
   assert_true(descriptor.is_cacheable())
   assert_true(!@skia_mbt.Path::new().resource_descriptor().is_cacheable())
+  let non_finite_path = @skia_mbt.Path::new()
+    .move_to(@skia_mbt.Point::new(0, 0))
+    .line_to(@skia_mbt.Point::new(1.0 / 0.0, 1))
+  assert_true(!non_finite_path.is_finite())
+  assert_true(non_finite_path.resource_key().is_empty())
+  assert_true(!non_finite_path.resource_descriptor().is_cacheable())
+  let target = @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
+    @skia_mbt.ISize::new(16, 16),
+  )
+  let non_finite_commands = @skia_mbt.RenderCommandList::for_target(target)
+    .clip_path(non_finite_path)
+    .draw_path(non_finite_path)
+  let non_finite_plan = non_finite_commands.resource_plan()
+  assert_eq(non_finite_plan.count_kind(@skia_mbt.PathResource), 0)
+  assert_eq(non_finite_plan.count_kind(@skia_mbt.SurfaceResource), 1)
 }
 
 ///|
