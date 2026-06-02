@@ -105,6 +105,7 @@ $defaultStageMarkers = @(
   "native smoke render frame missing present validation",
   "native smoke render frame missing finalization validation",
   "native smoke render frame touched bounds width",
+  "native smoke canvas replay deferred present",
   "native smoke render frame cache resources",
   "native smoke render resource cache inserts",
   "native smoke render resource cache preflight missing count",
@@ -226,7 +227,7 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke canvas replay status contract"
-    Value = "2"
+    Value = "3"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame replay rejected skipped"
@@ -479,6 +480,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke render frame touched bounds width"
     Value = "4"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke canvas replay deferred present"
+    Value = "1"
   }
   [pscustomobject]@{
     Marker = "native smoke render frame cache resources"

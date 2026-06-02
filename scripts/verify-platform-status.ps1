@@ -250,6 +250,7 @@ if ($status.schema_version -ge 3) {
     "canvas.clip",
     "canvas.command-replay",
     "canvas.replay-status-contract",
+    "canvas.replay-deferred-present",
     "pipeline.shaped-glyph-run-command",
     "pipeline.shader-cache-resources",
     "pipeline.shader-cache-misses",
@@ -531,7 +532,8 @@ if ($status.schema_version -ge 3) {
       "native smoke canvas replay commands" = "23"
       "native smoke render frame replay commands" = "23"
       "native smoke render frame replay complete" = "1"
-      "native smoke canvas replay status contract" = "2"
+      "native smoke canvas replay status contract" = "3"
+      "native smoke canvas replay deferred present" = "1"
       "native smoke render frame replay rejected skipped" = "20"
       "native smoke surface render frame commands" = "23"
       "native smoke surface render frame finalized" = "1"

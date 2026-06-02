@@ -143,6 +143,11 @@
       "marker": "native smoke canvas replay status contract"
     },
     {
+      "id": "canvas.replay-deferred-present",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay deferred present"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "area": "Canvas",
       "marker": "native smoke render frame replay rejected skipped"
@@ -994,7 +999,12 @@
     {
       "id": "canvas.replay-status-contract",
       "marker": "native smoke canvas replay status contract",
-      "value": "2"
+      "value": "3"
+    },
+    {
+      "id": "canvas.replay-deferred-present",
+      "marker": "native smoke canvas replay deferred present",
+      "value": "1"
     },
     {
       "id": "canvas.frame-replay-rejected-skipped",
