@@ -1660,6 +1660,22 @@ fn Canvas::replay_path_value(
 }
 
 ///|
+fn Canvas::replay_clip_path(
+  self : Canvas,
+  path : @skia.Path,
+  op : @skia.ClipOp,
+  resources : NativeReplayResources?,
+) -> Bool {
+  match native_path_from_value(path, resources) {
+    None => false
+    Some(native_path) => {
+      self.clip_path(native_path, op~)
+      true
+    }
+  }
+}
+
+///|
 fn native_shader_from_descriptor(
   descriptor : @skia.ShaderDescriptor,
 ) -> Shader? {
@@ -2074,6 +2090,11 @@ fn Canvas::replay_command(
       self.clip_rect(rect, op~)
       true
     }
+    @skia.ClipCanvasRRect(rrect, op) => {
+      self.clip_rrect(rrect, op~)
+      true
+    }
+    @skia.ClipCanvasPath(path, op) => self.replay_clip_path(path, op, resources)
     @skia.DrawCanvasPoint(point, paint) => {
       self.draw_point(point, paint)
       true

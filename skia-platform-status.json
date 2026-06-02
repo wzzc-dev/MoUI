@@ -188,6 +188,16 @@
       "marker": "native smoke canvas replay text resources"
     },
     {
+      "id": "canvas.replay-rrect-path-clips",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay rrect path clips"
+    },
+    {
+      "id": "canvas.replay-clip-path-cache-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay clip path cache resources"
+    },
+    {
       "id": "canvas.frame-replay-rejected-skipped",
       "area": "Canvas",
       "marker": "native smoke render frame replay rejected skipped"
@@ -1085,6 +1095,16 @@
       "id": "canvas.replay-text-resources",
       "marker": "native smoke canvas replay text resources",
       "value": "9"
+    },
+    {
+      "id": "canvas.replay-rrect-path-clips",
+      "marker": "native smoke canvas replay rrect path clips",
+      "value": "2"
+    },
+    {
+      "id": "canvas.replay-clip-path-cache-resources",
+      "marker": "native smoke canvas replay clip path cache resources",
+      "value": "1"
     },
     {
       "id": "canvas.frame-replay-rejected-skipped",
