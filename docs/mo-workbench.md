@@ -72,9 +72,10 @@ packages:
 - A Codex / Claude Code-style native shell with macOS chrome, a quiet
   task-history sidebar, a clean white main work canvas, readable compact
   transcript rows, current-turn evidence summaries, and a bottom composer.
-  The sidebar now includes a default-visible `新对话` entry for backends that
-  support creating sessions, while the lower-level Pi `新会话` RPC control stays
-  in expanded composer options. New user prompts, local fixture replies, Pi
+  The sidebar now includes a default-visible `新对话` entry that creates and
+  selects a new Workbench session in task history immediately. The lower-level
+  Pi `新会话` RPC control stays in expanded composer options for replacing the
+  active provider session binding. New user prompts, local fixture replies, Pi
   streaming/response events, and queued command evidence pin the main scroll to
   the latest content so the conversation does not remain above the newest
   message.

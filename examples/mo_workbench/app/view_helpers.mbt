@@ -281,18 +281,15 @@ fn WorkbenchModel::sidebar_new_session_button(
   layout : WorkbenchLayout,
   theme : @core.Theme,
 ) -> @core.View[WorkbenchMsg] {
-  if self.active_agent_backend_capabilities().supports_new_session {
-    button(
-      "新对话",
-      on_click=NewSession,
-      variant=Outline,
-      theme~,
-      width=layout.sidebar_inner_width,
-      height=34.0,
-    )
-  } else {
-    blank_cell(width=layout.sidebar_inner_width, height=1.0)
-  }
+  ignore(self)
+  button(
+    "新对话",
+    on_click=CreateConversation,
+    variant=Outline,
+    theme~,
+    width=layout.sidebar_inner_width,
+    height=34.0,
+  )
 }
 
 ///|

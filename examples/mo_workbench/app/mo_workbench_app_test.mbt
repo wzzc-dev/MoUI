@@ -51,6 +51,43 @@ test "workbench keeps new conversation content pinned to latest message" {
 }
 
 ///|
+test "workbench creates a visible task history conversation" {
+  let model = WorkbenchModel::new().update(CreateConversation)
+  inspect(model.selected_session_id, content="conversation-1")
+  inspect(model.sessions.length(), content="3")
+  inspect(model.sessions[0].id, content="conversation-1")
+  inspect(model.sessions[0].title, content="新对话 1")
+  inspect(model.sessions[0].backend_id, content="pi")
+  inspect(
+    model.sessions[0].project_path,
+    content="/Volumes/Data/Code/moon/MoUI",
+  )
+  inspect(model.prompt, content="")
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transcript.length(), content="0")
+  inspect(model.last_status, content="Workbench conversation created")
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "新对话"))
+  assert_true(has_text(commands, "新对话 1"))
+  assert_true(has_text(commands, "准备开始这个会话"))
+}
+
+///|
+test "workbench new conversation keeps active backend profile" {
+  let model = WorkbenchModel::new()
+    .update(SwitchAgentBackend("fixture"))
+    .update(CreateConversation)
+  inspect(model.selected_session_id, content="conversation-1")
+  inspect(model.sessions[0].backend_id, content="fixture")
+  inspect(model.active_agent_backend_profile().label, content="本地")
+  inspect(model.pending_transport_count(), content="0")
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "新对话"))
+  assert_true(has_text(commands, "新对话 1"))
+  assert_true(has_text(commands, "Agent 本地"))
+}
+
+///|
 test "workbench ignores empty composer dispatch" {
   let model = WorkbenchModel::new().update(DispatchPrompt)
   inspect(model.last_status, content="Prompt is empty")
@@ -4646,7 +4683,7 @@ test "workbench backend and session controls appear only in expanded composer op
     .update(ToggleComposerControls)
     .runtime(width=1220.0, height=780.0)
     .draw_commands()
-  assert_false(has_text(fixture_expanded, "新对话"))
+  assert_true(has_text(fixture_expanded, "新对话"))
   assert_false(has_text(fixture_expanded, "新会话"))
   assert_false(has_text(fixture_expanded, "本地演练"))
   assert_false(has_text(fixture_expanded, "真实 Agent 后端"))
