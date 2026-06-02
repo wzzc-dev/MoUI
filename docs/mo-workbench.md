@@ -299,9 +299,9 @@ packages:
   add current-turn command rows or focused-check presets.
 - Session selection refreshes Pi session stats through `get_session_stats`.
   The shared app maps message counts, tool counts, token totals, cost, and
-  optional context usage into `PiSessionStatsSnapshot`, then surfaces compact
-  metrics in expanded secondary session details without adding native-only
-  state.
+  optional context usage into `PiSessionStatsSnapshot`, then projects them to
+  backend-neutral `AgentSessionMetrics` before the expanded secondary session
+  details render compact metrics without adding native-only state.
 - The session panel can export the current Pi session through `export_html`.
   The shared app emits `ExportRpcSessionHtml`, ingests Pi's returned path as
   `FileContext` evidence in the current-turn evidence card, and keeps the export
@@ -363,7 +363,8 @@ packages:
   composer consumes their `AgentCommandInfo` projection.
   Successful
   `get_session_stats` responses refresh `PiSessionStatsSnapshot` with message,
-  tool, token, cost, and optional context counters. Successful `export_html`
+  tool, token, cost, and optional context counters; the UI consumes their
+  `AgentSessionMetrics` projection. Successful `export_html`
   responses add the returned HTML path as current-turn file evidence. Successful
   `set_model` responses update the active Workbench-to-Pi binding and session
   summary with Pi's selected model. Successful `cycle_model` responses do the
@@ -485,9 +486,10 @@ the provider command catalog with normalized `PiCommandInfo` rows for prompt,
 extension, and skill commands, while the UI uses their `AgentCommandInfo`
 projection. A successful
 `{"type":"response","command":"get_session_stats","success":true,...}` line
-refreshes `PiSessionStatsSnapshot` with message/tool/token/context metrics and
-updates the Workbench-to-Pi binding from the reported `sessionId` and
-`sessionFile`. A successful
+refreshes `PiSessionStatsSnapshot` with message/tool/token/context metrics,
+projects it to `AgentSessionMetrics` for expanded session details, and updates
+the Workbench-to-Pi binding from the reported `sessionId` and `sessionFile`. A
+successful
 `{"type":"response","command":"export_html","success":true,...}` line adds the
 returned HTML path as a current-turn file evidence row, so exported Pi sessions can
 become coding, documentation, or knowledge artifacts without native-only state.

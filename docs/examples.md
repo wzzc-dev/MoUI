@@ -328,7 +328,9 @@ the current Workbench session snapshot, `get_messages` refreshes the transcript
 model, `get_available_models` refreshes the compact model catalog,
 `get_fork_messages` refreshes forkable user-message entry ids, `get_commands`
 refreshes the available slash/prompt/extension/skill command catalog, and
-`get_session_stats` refreshes compact message/tool/token/context metrics.
+`get_session_stats` refreshes compact message/tool/token/context metrics that
+the session panel consumes through the backend-neutral `AgentSessionMetrics`
+projection.
 `export_html` success responses add the returned path as current-turn file
 evidence, so exported sessions can become handoff, documentation, or knowledge
 artifacts without native-only state. Catalog entries can run a command by

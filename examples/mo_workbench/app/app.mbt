@@ -54,6 +54,17 @@ pub(all) struct AgentSessionBinding {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct AgentSessionMetrics {
+  backend_id : String
+  workbench_session_id : String
+  total_messages : Int
+  tool_calls : Int
+  tool_results : Int
+  token_total : Int
+  context_percent : Double?
+} derive(Eq, Debug)
+
+///|
 pub(all) struct PlanStep {
   id : String
   title : String
@@ -407,6 +418,44 @@ pub fn AgentSessionBinding::new(
 }
 
 ///|
+pub fn AgentSessionMetrics::new(
+  backend_id~ : String,
+  workbench_session_id~ : String,
+  total_messages? : Int = 0,
+  tool_calls? : Int = 0,
+  tool_results? : Int = 0,
+  token_total? : Int = 0,
+  context_percent? : Double? = None,
+) -> AgentSessionMetrics {
+  {
+    backend_id,
+    workbench_session_id,
+    total_messages,
+    tool_calls,
+    tool_results,
+    token_total,
+    context_percent,
+  }
+}
+
+///|
+pub fn AgentSessionMetrics::has_visible_metrics(
+  self : AgentSessionMetrics,
+) -> Bool {
+  if self.total_messages > 0 ||
+    self.tool_calls > 0 ||
+    self.tool_results > 0 ||
+    self.token_total > 0 {
+    true
+  } else {
+    match self.context_percent {
+      Some(_) => true
+      None => false
+    }
+  }
+}
+
+///|
 pub fn agent_backend_profiles() -> Array[AgentBackendProfile] {
   [
     AgentBackendProfile::new(
@@ -606,6 +655,23 @@ pub fn PiSessionStatsSnapshot::new(
     context_window,
     context_percent,
   }
+}
+
+///|
+pub fn PiSessionStatsSnapshot::as_agent_session_metrics(
+  self : PiSessionStatsSnapshot,
+  backend_id? : String = "pi",
+  workbench_session_id~ : String,
+) -> AgentSessionMetrics {
+  AgentSessionMetrics::new(
+    backend_id~,
+    workbench_session_id~,
+    total_messages=self.total_messages,
+    tool_calls=self.tool_calls,
+    tool_results=self.tool_results,
+    token_total=self.token_total,
+    context_percent=self.context_percent,
+  )
 }
 
 ///|
@@ -1124,6 +1190,25 @@ pub fn WorkbenchModel::active_agent_model_catalog(
     models.push(model.as_agent_model_info())
   }
   models
+}
+
+///|
+pub fn WorkbenchModel::active_agent_session_metrics(
+  self : WorkbenchModel,
+) -> AgentSessionMetrics {
+  let backend = self.active_agent_backend_profile()
+  if backend.capabilities.supports_session_stats &&
+    backend.capabilities.uses_pi_transport {
+    self.pi_session_stats.as_agent_session_metrics(
+      backend_id=backend.id,
+      workbench_session_id=self.selected_session_id,
+    )
+  } else {
+    AgentSessionMetrics::new(
+      backend_id=backend.id,
+      workbench_session_id=self.selected_session_id,
+    )
+  }
 }
 
 ///|
