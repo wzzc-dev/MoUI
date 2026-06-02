@@ -44,6 +44,11 @@ fn shader_filter_point_is_finite(point : Point) -> Bool {
 }
 
 ///|
+fn shader_filter_points_are_distinct(start : Point, end : Point) -> Bool {
+  start.distance_to_squared(end) > 0.0
+}
+
+///|
 fn shader_filter_resource_u64(value : Int) -> Bytes {
   Int::max(0, value).to_uint64().to_be_bytes()
 }
@@ -106,7 +111,9 @@ pub fn ShaderDescriptor::linear_gradient(
   end_color : Color,
   tile_mode? : TileMode = Clamp,
 ) -> ShaderDescriptor? {
-  if shader_filter_point_is_finite(start) && shader_filter_point_is_finite(end) {
+  if shader_filter_point_is_finite(start) &&
+    shader_filter_point_is_finite(end) &&
+    shader_filter_points_are_distinct(start, end) {
     Some(LinearGradientShader(start, end, start_color, end_color, tile_mode))
   } else {
     None
