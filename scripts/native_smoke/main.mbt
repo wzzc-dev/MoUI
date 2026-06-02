@@ -1166,12 +1166,30 @@ fn main {
     appended_path.bounds() != appended_path_bounds {
     fail_smoke("native add_path_value should skip non-finite inputs")
   }
+  appended_path.move_to(@skia.Point::new(0.0 / 0.0, 0))
+  appended_path.line_to(@skia.Point::new(0, 1.0 / 0.0))
+  appended_path.add_poly(
+    [@skia.Point::new(0, 0), @skia.Point::new(1.0 / 0.0, 1)],
+    close=true,
+  )
+  appended_path.add_rect(@skia.Rect::new(0, 0, 1.0 / 0.0, 1))
+  appended_path.add_circle(@skia.Point::new(0, 0), 1.0 / 0.0)
+  appended_path.transform(@skia.Matrix::translate(1.0 / 0.0, 0))
+  appended_path.offset(0.0 / 0.0, 0)
+  if !appended_path.is_finite() ||
+    appended_path.count_verbs() != appended_path_verbs ||
+    appended_path.count_points() != appended_path_points ||
+    appended_path.bounds() != appended_path_bounds {
+    fail_smoke("native path direct mutations should skip non-finite inputs")
+  }
   println("native smoke path verbs")
   println(appended_path.count_verbs())
   println("native smoke non-finite path from-value rejected")
   println(1)
   println("native smoke non-finite path add skipped")
   println(2)
+  println("native smoke non-finite path direct mutations skipped")
+  println(7)
   canvas.draw_path(appended_path, @skia.Paint::new(color=@skia.Color::cyan()))
 
   let save_count_before_transform = canvas.save_count()
