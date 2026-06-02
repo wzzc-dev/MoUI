@@ -208,6 +208,18 @@ pub fn Surface::raster_n32_premul(size : @skia.ISize) -> Surface? {
 }
 
 ///|
+/// Report why a value-layer render target cannot be allocated by this backend.
+pub fn Surface::target_support_status(
+  target : @skia.SurfaceTargetDescriptor,
+) -> SurfaceTargetSupportStatus {
+  if target.surface.is_empty() {
+    SurfaceTargetEmpty
+  } else {
+    SurfaceTargetSkiaUnavailable
+  }
+}
+
+///|
 pub fn Surface::for_target(target : @skia.SurfaceTargetDescriptor) -> Surface? {
   ignore(target)
   None

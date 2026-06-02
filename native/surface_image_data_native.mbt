@@ -409,12 +409,30 @@ pub fn Surface::raster_n32_premul(size : @skia.ISize) -> Surface? {
 }
 
 ///|
+/// Report whether a value-layer render target can be allocated by this backend.
+pub fn Surface::target_support_status(
+  target : @skia.SurfaceTargetDescriptor,
+) -> SurfaceTargetSupportStatus {
+  if target.surface.is_empty() {
+    SurfaceTargetEmpty
+  } else if !skia_available() {
+    SurfaceTargetSkiaUnavailable
+  } else if target.surface.is_raster() {
+    SurfaceTargetSupported
+  } else if target.surface.is_window() {
+    SurfaceTargetWindowUnsupported
+  } else {
+    SurfaceTargetGpuUnsupported
+  }
+}
+
+///|
 /// Allocate a native surface for a value-layer render target.
 ///
 /// Raster targets are supported by the current CPU backend. Window and GPU
 /// targets return `None` until concrete native present/GPU backends are linked.
 pub fn Surface::for_target(target : @skia.SurfaceTargetDescriptor) -> Surface? {
-  if target.surface.is_raster() {
+  if Surface::target_support_status(target).is_supported() {
     Surface::raster_n32_premul(target.dimensions())
   } else {
     None

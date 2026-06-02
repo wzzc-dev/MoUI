@@ -45,6 +45,13 @@ test "surface factory follows target descriptor support" {
   let raster_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(size)
   let raster_surface = @native.Surface::for_target(raster_target)
   if @native.skia_available() {
+    assert_true(
+      @native.Surface::target_support_status(raster_target) ==
+      @native.SurfaceTargetSupported,
+    )
+    assert_true(
+      @native.Surface::target_support_status(raster_target).is_supported(),
+    )
     match raster_surface {
       Some(surface) => {
         assert_true(surface.dimensions() == size)
@@ -53,8 +60,21 @@ test "surface factory follows target descriptor support" {
       None => fail("@native.Surface::for_target should create raster surfaces")
     }
   } else {
+    assert_true(
+      @native.Surface::target_support_status(raster_target) ==
+      @native.SurfaceTargetSkiaUnavailable,
+    )
+    assert_true(
+      !@native.Surface::target_support_status(raster_target).is_supported(),
+    )
     assert_true(raster_surface is None)
   }
+  assert_true(
+    @native.Surface::target_support_status(
+      @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(0, 16)),
+    ) ==
+    @native.SurfaceTargetEmpty,
+  )
   assert_true(
     @native.Surface::for_target(
       @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(0, 16)),
@@ -67,6 +87,17 @@ test "surface factory follows target descriptor support" {
     target_id=b"native-test-window",
   )
   assert_true(@native.Surface::for_target(window_target) is None)
+  if @native.skia_available() {
+    assert_true(
+      @native.Surface::target_support_status(window_target) ==
+      @native.SurfaceTargetWindowUnsupported,
+    )
+  } else {
+    assert_true(
+      @native.Surface::target_support_status(window_target) ==
+      @native.SurfaceTargetSkiaUnavailable,
+    )
+  }
   let window_plan = window_target.resource_plan()
   assert_eq(window_plan.count_kind(@skia.SurfaceResource), 1)
   assert_eq(window_plan.length(), 1)
@@ -79,6 +110,17 @@ test "surface factory follows target descriptor support" {
     gpu_context_key=Some(gpu_context.resource_key()),
   )
   assert_true(@native.Surface::for_target(gpu_target) is None)
+  if @native.skia_available() {
+    assert_true(
+      @native.Surface::target_support_status(gpu_target) ==
+      @native.SurfaceTargetGpuUnsupported,
+    )
+  } else {
+    assert_true(
+      @native.Surface::target_support_status(gpu_target) ==
+      @native.SurfaceTargetSkiaUnavailable,
+    )
+  }
   let gpu_plan = gpu_target.resource_plan()
   assert_eq(gpu_plan.count_kind(@skia.GpuSurfaceResource), 1)
   assert_eq(gpu_plan.count_kind(@skia.GpuContextResource), 1)

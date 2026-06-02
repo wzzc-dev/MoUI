@@ -35,6 +35,7 @@ $defaultStageMarkers = @(
   "native smoke surface descriptor backend",
   "native smoke surface target factory raster",
   "native smoke surface target factory unsupported",
+  "native smoke surface target support diagnostics",
   "native smoke canvas state restored",
   "native smoke canvas clip device width",
   "native smoke canvas replay commands",
@@ -191,6 +192,10 @@ $defaultStageMarkers = @(
   "native smoke font fallback width"
 )
 $defaultExpectedStageValues = @(
+  [pscustomobject]@{
+    Marker = "native smoke surface target support diagnostics"
+    Value = "2"
+  }
   [pscustomobject]@{
     Marker = "native smoke canvas clip device width"
     Value = "4"

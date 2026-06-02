@@ -182,6 +182,23 @@ pub(all) struct Surface {
 }
 
 ///|
+/// Native support decision for creating a surface from a value-layer target.
+pub(all) enum SurfaceTargetSupportStatus {
+  SurfaceTargetSupported
+  SurfaceTargetEmpty
+  SurfaceTargetSkiaUnavailable
+  SurfaceTargetWindowUnsupported
+  SurfaceTargetGpuUnsupported
+} derive(Debug, Eq)
+
+///|
+pub fn SurfaceTargetSupportStatus::is_supported(
+  self : SurfaceTargetSupportStatus,
+) -> Bool {
+  self is SurfaceTargetSupported
+}
+
+///|
 /// Canvas borrowed from a native surface.
 #warnings("-struct_never_constructed-unused_field")
 pub(all) struct Canvas {
