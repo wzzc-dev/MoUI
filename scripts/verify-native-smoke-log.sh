@@ -205,6 +205,9 @@ default_stage_markers=(
   "native smoke font resource plan count" \
   "native smoke text run resource plan count" \
   "native smoke text run range byte size" \
+  "native smoke text run empty range resource plan count" \
+  "native smoke text run empty range skipped" \
+  "native smoke text run empty range cache resources" \
   "native smoke text measurement resource plan count" \
   "native smoke measured text resource plan count" \
   "native smoke measured text key variation" \
@@ -391,6 +394,9 @@ default_expected_stage_values=(
   $'native smoke filter finite validation\t1'
   $'native smoke text run resource plan count\t3'
   $'native smoke text run range byte size\t4'
+  $'native smoke text run empty range resource plan count\t2'
+  $'native smoke text run empty range skipped\t1'
+  $'native smoke text run empty range cache resources\t0'
   $'native smoke text measurement resource plan count\t4'
   $'native smoke measured text resource plan count\t5'
   $'native smoke measured text key variation\t1'
