@@ -172,6 +172,7 @@ $defaultStageMarkers = @(
   "native smoke filter resource plan count",
   "native smoke path verbs",
   "native smoke non-finite path from-value rejected",
+  "native smoke non-finite path add skipped",
   "native smoke readback width",
   "native smoke readback height",
   "native smoke readback row_bytes",
@@ -753,6 +754,10 @@ $defaultExpectedStageValues = @(
   [pscustomobject]@{
     Marker = "native smoke non-finite path from-value rejected"
     Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke non-finite path add skipped"
+    Value = "2"
   }
   [pscustomobject]@{
     Marker = "native smoke decoded image width"

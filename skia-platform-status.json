@@ -793,6 +793,11 @@
       "marker": "native smoke non-finite path from-value rejected"
     },
     {
+      "id": "path.non-finite-add-skipped",
+      "area": "Path",
+      "marker": "native smoke non-finite path add skipped"
+    },
+    {
       "id": "surface.readback",
       "area": "Surface",
       "marker": "native smoke readback width"
@@ -1885,6 +1890,11 @@
       "id": "path.non-finite-from-value-rejected",
       "marker": "native smoke non-finite path from-value rejected",
       "value": "1"
+    },
+    {
+      "id": "path.non-finite-add-skipped",
+      "marker": "native smoke non-finite path add skipped",
+      "value": "2"
     },
     {
       "id": "image.decode",

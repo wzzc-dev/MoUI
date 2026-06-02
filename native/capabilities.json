@@ -202,7 +202,8 @@
       ],
       "smoke_markers": [
         "native smoke path verbs",
-        "native smoke non-finite path from-value rejected"
+        "native smoke non-finite path from-value rejected",
+        "native smoke non-finite path add skipped"
       ],
       "non_smoke_rationale": ""
     },
