@@ -64,6 +64,7 @@ run node scripts/test-validate-platform-evidence-manifest.mjs
 run node scripts/test-record-platform-evidence-manifest.mjs
 run node scripts/test-validate-web-runtime-handoff.mjs
 run node scripts/test-validate-web-runtime-handoff-manifest.mjs
+run node scripts/test-record-web-runtime-presentation.mjs
 run node scripts/test-validate-web-runtime-presentation-manifest.mjs
 
 run moon check

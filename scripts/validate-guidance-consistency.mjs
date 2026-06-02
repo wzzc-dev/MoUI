@@ -156,6 +156,10 @@ assertIncludes(
 );
 assertIncludes(
   "scripts/dev-check.sh",
+  "node scripts/test-record-web-runtime-presentation.mjs",
+);
+assertIncludes(
+  "scripts/dev-check.sh",
   "node scripts/test-validate-web-runtime-presentation-manifest.mjs",
 );
 assertIncludes("docs/testing.md", "node scripts/validate-guidance-consistency.mjs");
@@ -168,6 +172,8 @@ assertIncludes("docs/testing.md", "test-validate-web-runtime-handoff.mjs");
 assertIncludes("docs/testing.md", "validate-web-runtime-handoff-manifest.mjs");
 assertIncludes("docs/testing.md", "test-validate-web-runtime-handoff-manifest.mjs");
 assertIncludes("docs/testing.md", "record-web-runtime-presentation.mjs");
+assertIncludes("docs/testing.md", "test-record-web-runtime-presentation.mjs");
+assertIncludes("docs/testing.md", "CDP browser is unavailable");
 assertIncludes("docs/testing.md", "validate-web-runtime-presentation-manifest.mjs");
 assertIncludes("docs/testing.md", "test-validate-web-runtime-presentation-manifest.mjs");
 assertIncludes("docs/testing.md", "resize/input event-bridge");
@@ -263,7 +269,9 @@ assertIncludes("AGENTS.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("AGENTS.md", "test-validate-web-runtime-handoff.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff-manifest.mjs");
 assertIncludes("AGENTS.md", "record-web-runtime-presentation.mjs");
+assertIncludes("AGENTS.md", "test-record-web-runtime-presentation.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("AGENTS.md", "CDP is unavailable");
 assertIncludes("AGENTS.md", "resize/input event-bridge");
 assertIncludes("AGENTS.md", "--web-presentation-manifest");
 assertIncludes("AGENTS.md", "monitor/cursor");
@@ -274,6 +282,10 @@ assertIncludes(
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "verify-platform-status.sh",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "test-record-web-runtime-presentation.mjs",
 );
 assertIncludes("moui/README.mbt.md", "sh scripts/dev-check.sh --platform-examples-test");
 assertIncludes("moui/README.mbt.md", "sh scripts/conformance-check.sh --platform-services");
@@ -287,6 +299,7 @@ assertIncludes("moui/README.mbt.md", "--web-presentation-manifest");
 assertIncludes("moui/README.mbt.md", "monitor/cursor");
 assertIncludes("moui/README.mbt.md", "artifacts/conformance/");
 assertIncludes("scripts/record-web-runtime-presentation.mjs", "platformObservations");
+assertIncludes("scripts/record-web-runtime-presentation.mjs", "writePreflightFailureManifest");
 assertIncludes("scripts/record-web-runtime-presentation.mjs", "resizeEvent");
 assertIncludes("scripts/record-web-runtime-presentation.mjs", "targetClosed");
 assertIncludes("scripts/validate-web-runtime-presentation-manifest.mjs", "platformObservations");

@@ -217,6 +217,7 @@ node scripts/test-validate-web-runtime-handoff.mjs
 node --check scripts/validate-web-runtime-handoff-manifest.mjs
 node scripts/test-validate-web-runtime-handoff-manifest.mjs
 node --check scripts/record-web-runtime-presentation.mjs
+node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
 node --check scripts/validate-package-manifest.mjs
