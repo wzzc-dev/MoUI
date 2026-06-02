@@ -264,9 +264,10 @@ packages:
   bash, compaction, branch summary, and future workflow messages.
 - Session selection also refreshes Pi's available command catalog through
   `get_commands`. The shared app maps prompt, extension, and skill commands
-  into generic `PiCommandInfo` rows so coding-agent command discovery can later
-  grow into document, research, automation, and knowledge workflows without
-  changing the platform-neutral transport contract.
+  into Pi-provider `PiCommandInfo` rows, then projects them to backend-neutral
+  `AgentCommandInfo` values for composer filtering and display so coding-agent
+  command discovery can later grow into document, research, automation, and
+  knowledge workflows without changing the platform-neutral transport contract.
 - Session selection and manual refresh also query Pi's available model catalog
   through `get_available_models`. The shared app normalizes provider/id/name
   rows into `PiModelInfo` and shows the model controls only in expanded
@@ -288,7 +289,7 @@ packages:
 - The composer now shows a compact slash-command suggestion strip only when Pi
   has returned a command catalog and the user starts the prompt with `/`. The
   slash mode hides context/focus/steering controls because slash prompts are
-  sent raw, filters `PiCommandInfo` commands by the typed query, lists up to
+  sent raw, filters `AgentCommandInfo` commands by the typed query, lists up to
   three matches near the prompt input, and each shortcut reuses the same
   `InvokeCommand` / `SendUserInput` route while catalog-only refreshes do not
   add current-turn command rows or focused-check presets.
@@ -352,8 +353,9 @@ packages:
   new-session creation. Successful `get_available_models` responses replace
   the visible model catalog with normalized `PiModelInfo` rows that preserve
   provider, id, name, and a display label. Successful `get_commands` responses
-  replace the visible command catalog with normalized `PiCommandInfo` rows that
-  preserve command name, kind, description, source scope, and source path.
+  replace the provider command catalog with normalized `PiCommandInfo` rows that
+  preserve command name, kind, description, source scope, and source path; the
+  composer consumes their `AgentCommandInfo` projection.
   Successful
   `get_session_stats` responses refresh `PiSessionStatsSnapshot` with message,
   tool, token, cost, and optional context counters. Successful `export_html`
@@ -473,8 +475,9 @@ successful
 fills compact fork candidates from Pi's `messages[].entryId` and
 `messages[].text` values. A successful
 `{"type":"response","command":"get_commands","success":true,...}` line replaces
-the visible command catalog with normalized `PiCommandInfo` rows for prompt,
-extension, and skill commands. A successful
+the provider command catalog with normalized `PiCommandInfo` rows for prompt,
+extension, and skill commands, while the UI uses their `AgentCommandInfo`
+projection. A successful
 `{"type":"response","command":"get_session_stats","success":true,...}` line
 refreshes `PiSessionStatsSnapshot` with message/tool/token/context metrics and
 updates the Workbench-to-Pi binding from the reported `sessionId` and

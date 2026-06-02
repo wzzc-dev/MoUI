@@ -4437,16 +4437,17 @@ fn WorkbenchModel::should_show_composer_command_row(
 ///|
 fn WorkbenchModel::composer_command_suggestions(
   self : WorkbenchModel,
-) -> Array[PiCommandInfo] {
-  let suggestions : Array[PiCommandInfo] = []
+) -> Array[AgentCommandInfo] {
+  let suggestions : Array[AgentCommandInfo] = []
   if !self.active_agent_backend_capabilities().supports_command_catalog {
     return suggestions
   }
   match self.composer_slash_query() {
     Some(query) =>
       for command in self.command_catalog {
-        if command.matches_composer_query(query) {
-          suggestions.push(command)
+        let agent_command = command.as_agent_command_info()
+        if agent_command.matches_composer_query(query) {
+          suggestions.push(agent_command)
         }
       }
     None => ()
@@ -4466,8 +4467,8 @@ fn WorkbenchModel::composer_slash_query(self : WorkbenchModel) -> String? {
 }
 
 ///|
-fn PiCommandInfo::matches_composer_query(
-  self : PiCommandInfo,
+fn AgentCommandInfo::matches_composer_query(
+  self : AgentCommandInfo,
   query : String,
 ) -> Bool {
   query == "" ||
@@ -4477,8 +4478,8 @@ fn PiCommandInfo::matches_composer_query(
 }
 
 ///|
-fn PiCommandInfo::composer_label(
-  self : PiCommandInfo,
+fn AgentCommandInfo::composer_label(
+  self : AgentCommandInfo,
   width : Double,
 ) -> String {
   compact_label("/" + self.name, max_chars=readable_line_char_limit(width))
