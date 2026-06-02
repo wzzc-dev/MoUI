@@ -20,6 +20,8 @@ pub(all) enum RenderCommand {
   ResetCanvasMatrix
   ClearCanvas(Color)
   ClipCanvasRect(Rect, ClipOp)
+  ClipCanvasRRect(RRect, ClipOp)
+  ClipCanvasPath(Path, ClipOp)
   DrawCanvasPoint(Point, Paint)
   DrawCanvasLine(Point, Point, Paint)
   DrawCanvasPoints(Array[Point], PointMode, Paint)
@@ -60,6 +62,22 @@ pub fn RenderCommand::clip_rect(
   op? : ClipOp = Intersect,
 ) -> RenderCommand {
   ClipCanvasRect(rect.sorted(), op)
+}
+
+///|
+pub fn RenderCommand::clip_rrect(
+  rrect : RRect,
+  op? : ClipOp = Intersect,
+) -> RenderCommand {
+  ClipCanvasRRect(rrect, op)
+}
+
+///|
+pub fn RenderCommand::clip_path(
+  path : Path,
+  op? : ClipOp = Intersect,
+) -> RenderCommand {
+  ClipCanvasPath(path, op)
 }
 
 ///|
@@ -349,7 +367,7 @@ pub fn RenderCommand::is_transform(self : RenderCommand) -> Bool {
 
 ///|
 pub fn RenderCommand::is_clip(self : RenderCommand) -> Bool {
-  self is ClipCanvasRect(_, _)
+  self is (ClipCanvasRect(_, _) | ClipCanvasRRect(_, _) | ClipCanvasPath(_, _))
 }
 
 ///|
@@ -457,6 +475,7 @@ pub fn RenderCommand::resource_descriptor(
 ) -> RendererResourceDescriptor? {
   match self {
     DrawCanvasPath(path, _) => Some(path.resource_descriptor())
+    ClipCanvasPath(path, _) => Some(path.resource_descriptor())
     DrawCanvasRectShader(_, shader, _) => Some(shader.resource_descriptor())
     DrawCanvasRoundRectShader(_, _, _, shader, _) =>
       Some(shader.resource_descriptor())
@@ -480,6 +499,7 @@ pub fn RenderCommand::resource_descriptors(
       render_filter_resource_descriptors(
         color_filter, image_filter, mask_filter,
       )
+    ClipCanvasPath(path, _) => [path.resource_descriptor()]
     DrawCanvasPath(path, _) => [path.resource_descriptor()]
     DrawCanvasRectShader(_, shader, _) => [shader.resource_descriptor()]
     DrawCanvasRoundRectShader(_, _, _, shader, _) =>
@@ -912,6 +932,24 @@ pub fn RenderCommandList::clip_rect(
   op? : ClipOp = Intersect,
 ) -> RenderCommandList {
   self.append(RenderCommand::clip_rect(rect, op~))
+}
+
+///|
+pub fn RenderCommandList::clip_rrect(
+  self : RenderCommandList,
+  rrect : RRect,
+  op? : ClipOp = Intersect,
+) -> RenderCommandList {
+  self.append(RenderCommand::clip_rrect(rrect, op~))
+}
+
+///|
+pub fn RenderCommandList::clip_path(
+  self : RenderCommandList,
+  path : Path,
+  op? : ClipOp = Intersect,
+) -> RenderCommandList {
+  self.append(RenderCommand::clip_path(path, op~))
 }
 
 ///|
@@ -1393,7 +1431,33 @@ fn render_command_update_clip(
             Some(clip) => clip
           }
       }
-    ClipCanvasRect(_, Difference) => current_clip
+    ClipCanvasRRect(rrect, Intersect) =>
+      match
+        render_command_clip_bounds(rrect.bounds(), current_matrix, pass_bounds) {
+        None => Rect::empty()
+        Some(clip) =>
+          match current_clip.intersect(clip) {
+            None => Rect::empty()
+            Some(clip) => clip
+          }
+      }
+    ClipCanvasPath(path, Intersect) =>
+      match path.bounds() {
+        None => Rect::empty()
+        Some(bounds) =>
+          match
+            render_command_clip_bounds(bounds, current_matrix, pass_bounds) {
+            None => Rect::empty()
+            Some(clip) =>
+              match current_clip.intersect(clip) {
+                None => Rect::empty()
+                Some(clip) => clip
+              }
+          }
+      }
+    ClipCanvasRect(_, Difference)
+    | ClipCanvasRRect(_, Difference)
+    | ClipCanvasPath(_, Difference) => current_clip
     _ => current_clip
   }
 }

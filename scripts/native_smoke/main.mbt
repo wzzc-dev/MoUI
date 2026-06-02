@@ -1739,6 +1739,72 @@ fn main {
     0x00,
     0xff,
   )
+
+  let replay_clip_path = @skia.Path::new().add_rect(
+    @skia.Rect::from_xywh(3, 3, 4, 4),
+  )
+  let replay_clip_commands = @skia.RenderCommandList::for_target(replay_target)
+    .clip_rrect(
+      @skia.RRect::from_rect_xy(@skia.Rect::from_xywh(2, 2, 7, 7), 1.0, 1.0),
+    )
+    .clip_path(replay_clip_path)
+    .draw_rect(
+      @skia.Rect::from_xywh(0, 0, 12, 12),
+      paint=@skia.Paint::new(color=@skia.Color::red()),
+    )
+  guard @native.Surface::raster_n32_premul(replay_size)
+    is Some(replay_clip_surface) else {
+    fail_smoke("failed to create replay clip smoke surface")
+  }
+  guard replay_clip_surface.canvas() is Some(replay_clip_canvas) else {
+    fail_smoke("failed to create replay clip smoke canvas")
+  }
+  replay_clip_canvas.clear(@skia.Color::white())
+  let replay_clip_resources = @native.NativeReplayResources::new(
+    path_max_bytes=1024L,
+  )
+  let replay_clip_stats = replay_clip_canvas.replay_with_resources(
+    replay_clip_commands,
+    replay_clip_resources,
+  )
+  if !replay_clip_stats.is_complete() ||
+    replay_clip_stats.command_count != 3 ||
+    replay_clip_stats.clip_count != 2 ||
+    replay_clip_stats.clear_count != 0 ||
+    replay_clip_stats.path_resource_count != 1 ||
+    replay_clip_resources.path_cache.length() != 1 ||
+    replay_clip_commands.touched_bounds() !=
+    Some(@skia.Rect::from_xywh(3, 3, 4, 4)) {
+    fail_smoke("native canvas replay did not apply rounded/path clips")
+  }
+  guard replay_clip_surface.read_pixels(
+      bounds=@skia.IRect::from_xywh(3, 3, 1, 1),
+    )
+    is Some(replay_clip_inside) else {
+    fail_smoke("failed to read replay clip inside pixel")
+  }
+  assert_pixel(
+    replay_clip_inside,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0x00,
+    0x00,
+    0xff,
+  )
+  guard replay_clip_surface.read_pixels(
+      bounds=@skia.IRect::from_xywh(1, 1, 1, 1),
+    )
+    is Some(replay_clip_outside) else {
+    fail_smoke("failed to read replay clip outside pixel")
+  }
+  assert_pixel(
+    replay_clip_outside,
+    @skia.IPoint::new(0, 0),
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+  )
   println("native smoke render frame pixmap sample proof")
   println(1)
   println("native smoke canvas replay commands")
@@ -1765,6 +1831,10 @@ fn main {
   println(replay_stats.path_resource_count)
   println("native smoke canvas replay text resources")
   println(replay_stats.text_resource_count)
+  println("native smoke canvas replay rrect path clips")
+  println(replay_clip_stats.clip_count)
+  println("native smoke canvas replay clip path cache resources")
+  println(replay_clip_resources.path_cache.length())
   println("native smoke render frame replay rejected skipped")
   println(replay_frame_rejected_stats.skipped_count)
   println("native smoke surface render frame commands")

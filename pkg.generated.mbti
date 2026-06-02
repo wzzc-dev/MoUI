@@ -816,6 +816,8 @@ pub(all) enum RenderCommand {
   ResetCanvasMatrix
   ClearCanvas(Color)
   ClipCanvasRect(Rect, ClipOp)
+  ClipCanvasRRect(RRect, ClipOp)
+  ClipCanvasPath(Path, ClipOp)
   DrawCanvasPoint(Point, Paint)
   DrawCanvasLine(Point, Point, Paint)
   DrawCanvasPoints(Array[Point], PointMode, Paint)
@@ -839,7 +841,9 @@ pub(all) enum RenderCommand {
   PresentSurface
 } derive(Eq, @debug.Debug)
 pub fn RenderCommand::clear(Color) -> Self
+pub fn RenderCommand::clip_path(Path, op? : ClipOp) -> Self
 pub fn RenderCommand::clip_rect(Rect, op? : ClipOp) -> Self
+pub fn RenderCommand::clip_rrect(RRect, op? : ClipOp) -> Self
 pub fn RenderCommand::concat(Matrix) -> Self
 pub fn RenderCommand::declare_resource(RendererResourceDescriptor) -> Self
 pub fn RenderCommand::draw_arc(Rect, Float, Float, Bool, paint? : Paint) -> Self
@@ -888,7 +892,9 @@ pub(all) struct RenderCommandList {
 } derive(Eq, @debug.Debug)
 pub fn RenderCommandList::append(Self, RenderCommand) -> Self
 pub fn RenderCommandList::clear(Self, Color) -> Self
+pub fn RenderCommandList::clip_path(Self, Path, op? : ClipOp) -> Self
 pub fn RenderCommandList::clip_rect(Self, Rect, op? : ClipOp) -> Self
+pub fn RenderCommandList::clip_rrect(Self, RRect, op? : ClipOp) -> Self
 pub fn RenderCommandList::concat(Self, Matrix) -> Self
 pub fn RenderCommandList::declare_resource(Self, RendererResourceDescriptor) -> Self
 pub fn RenderCommandList::declare_resources(Self, Array[RendererResourceDescriptor]) -> Self

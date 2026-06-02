@@ -119,6 +119,8 @@
         "native smoke canvas replay filter resources",
         "native smoke canvas replay path resources",
         "native smoke canvas replay text resources",
+        "native smoke canvas replay rrect path clips",
+        "native smoke canvas replay clip path cache resources",
         "native smoke render frame replay rejected skipped",
         "native smoke shader draws",
         "native smoke filter layer count",
