@@ -2981,8 +2981,8 @@ fn WorkbenchModel::session_controls_row(
     controls.push(self.thinking_level_cell(theme))
   }
   controls.push(spacer(min_length=4.0, weight=1.0))
-  if self.has_advanced_session_controls() {
-    if capabilities.supports_fork {
+  if self.has_session_action_controls() {
+    if self.should_show_session_fork_action() {
       controls.push(
         button(
           "分叉",
@@ -2994,7 +2994,7 @@ fn WorkbenchModel::session_controls_row(
         ),
       )
     }
-    if capabilities.supports_html_export {
+    if self.should_show_session_export_action() {
       controls.push(
         button(
           "导出",
@@ -3006,7 +3006,7 @@ fn WorkbenchModel::session_controls_row(
         ),
       )
     }
-    if capabilities.supports_context_compaction {
+    if self.should_show_session_compact_action() {
       controls.push(
         button(
           "压缩",
@@ -3018,7 +3018,7 @@ fn WorkbenchModel::session_controls_row(
         ),
       )
     }
-    if capabilities.supports_thinking_level {
+    if self.should_show_session_thinking_action() {
       controls.push(
         button(
           "思考",
@@ -3030,7 +3030,7 @@ fn WorkbenchModel::session_controls_row(
         ),
       )
     }
-    if capabilities.uses_pi_transport {
+    if self.should_show_session_name_sync_action() {
       controls.push(
         button(
           "同步名",
@@ -3057,24 +3057,62 @@ fn WorkbenchModel::has_session_panel_controls(self : WorkbenchModel) -> Bool {
     capabilities.supports_thinking_level &&
     settings.has_visible_thinking_level()
   ) ||
-  self.has_advanced_session_controls() ||
+  self.has_session_action_controls() ||
   self.has_cancel_target()
 }
 
 ///|
-fn WorkbenchModel::has_advanced_session_controls(self : WorkbenchModel) -> Bool {
-  let capabilities = self.active_agent_backend_capabilities()
+fn WorkbenchModel::has_session_action_controls(self : WorkbenchModel) -> Bool {
+  self.should_show_session_fork_action() ||
+  self.should_show_session_export_action() ||
+  self.should_show_session_compact_action() ||
+  self.should_show_session_thinking_action() ||
+  self.should_show_session_name_sync_action()
+}
+
+///|
+fn WorkbenchModel::should_show_session_fork_action(
+  self : WorkbenchModel,
+) -> Bool {
+  self.active_agent_backend_capabilities().supports_fork &&
+  (!self.transcript.is_empty() || !self.fork_messages.is_empty())
+}
+
+///|
+fn WorkbenchModel::should_show_session_export_action(
+  self : WorkbenchModel,
+) -> Bool {
+  self.active_agent_backend_capabilities().supports_html_export &&
+  !self.transcript.is_empty()
+}
+
+///|
+fn WorkbenchModel::should_show_session_compact_action(
+  self : WorkbenchModel,
+) -> Bool {
+  self.active_agent_backend_capabilities().supports_context_compaction &&
+  self.active_agent_session_metrics().has_visible_metrics()
+}
+
+///|
+fn WorkbenchModel::should_show_session_thinking_action(
+  self : WorkbenchModel,
+) -> Bool {
+  self.active_agent_backend_capabilities().supports_thinking_level &&
+  self.active_agent_input_settings().has_visible_thinking_level()
+}
+
+///|
+fn WorkbenchModel::should_show_session_name_sync_action(
+  self : WorkbenchModel,
+) -> Bool {
   let binding = self.active_agent_session_binding()
-  binding.has_visible_binding() ||
-  (capabilities.supports_fork && !self.transcript.is_empty()) ||
-  (capabilities.supports_fork && !self.fork_messages.is_empty()) ||
-  self.active_agent_session_metrics().has_visible_metrics() ||
-  self.active_agent_model_catalog().length() > 0 ||
+  self.active_agent_backend_capabilities().uses_pi_transport &&
+  binding.has_visible_binding() &&
   (
-    capabilities.supports_thinking_level &&
-    self.active_agent_input_settings().has_visible_thinking_level()
-  ) ||
-  self.active_agent_runtime_signal().has_active_signal()
+    binding.session_name == "" ||
+    binding.session_name != self.active_session().title
+  )
 }
 
 ///|

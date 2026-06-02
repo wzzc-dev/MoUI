@@ -135,9 +135,13 @@ packages:
   advanced session details, model/session stats,
   steering/follow-up composer controls, and focused-check presets stay collapsed
   until expanded options, non-default context, selected focus, or actionable
-  diagnostics make them relevant. The sidebar defaults to brand and task
-  history only; project and branch identity stay in the top bar instead of
-  repeating as a separate workspace card or empty-state line. The
+  diagnostics make them relevant. Expanded session details separate information
+  rows from actions: binding, model, and metrics can render without fanning out
+  fork/export/compact/thinking/name-sync buttons, and each advanced action now
+  appears only with matching transcript, metrics, thinking, or name-mismatch
+  evidence. The sidebar defaults to brand and task history only; project and
+  branch identity stay in the top bar instead of repeating as a separate
+  workspace card or empty-state line. The
   default fixture still leaves transcript, metrics, command catalog, file
   context, diff summary, command evidence, and diagnostics empty until Pi or
   user command evidence arrives. When the main conversation has no task,
@@ -307,13 +311,15 @@ packages:
   optional context usage into `PiSessionStatsSnapshot`, then projects them to
   backend-neutral `AgentSessionMetrics` before the expanded secondary session
   details render compact metrics without adding native-only state.
-- The session panel can export the current Pi session through `export_html`.
-  The shared app emits `ExportRpcSessionHtml`, ingests Pi's returned path as
-  `FileContext` evidence in the current-turn evidence card, and keeps the export
-  artifact in app state rather than adding a native file-opening bridge.
+- The session panel can export the current Pi session through `export_html`
+  once transcript evidence exists. The shared app emits `ExportRpcSessionHtml`,
+  ingests Pi's returned path as `FileContext` evidence in the current-turn
+  evidence card, and keeps the export artifact in app state rather than adding a
+  native file-opening bridge.
 - The workbench can explicitly sync the selected Workbench session title into
-  Pi through `set_session_name`. Pi's `session_info_changed` event updates the
-  same `PiSessionBinding`, so user-visible Workbench session identity and Pi's
+  Pi through `set_session_name` when the provider name is missing or differs
+  from the Workbench title. Pi's `session_info_changed` event updates the same
+  `PiSessionBinding`, so user-visible Workbench session identity and Pi's
   runtime session display name stay aligned without native-only state.
 - The session panel can request a fresh Pi session through a platform-neutral
   `NewRpcSession` command. The native encoder emits `{"type":"new_session"}`,
@@ -330,10 +336,11 @@ packages:
   uncancelled `fork` response, the app waits for the
   acknowledgement before refreshing state, messages, fork candidates, command
   catalog, and stats so Pi's new session file remains the source of truth.
-- The workbench can cycle Pi's thinking level from the session status panel.
-  The shared app emits a platform-neutral `CycleRpcThinkingLevel` command,
-  ingests `cycle_thinking_level` responses and `thinking_level_changed` events,
-  and keeps `PiAgentSnapshot.thinking_level` visible without native-only state.
+- The workbench can cycle Pi's thinking level from the session status panel
+  after Pi reports a thinking-level state. The shared app emits a
+  platform-neutral `CycleRpcThinkingLevel` command, ingests
+  `cycle_thinking_level` responses and `thinking_level_changed` events, and
+  keeps `PiAgentSnapshot.thinking_level` visible without native-only state.
 - The composer exposes compact steering and follow-up mode controls only inside
   expanded composer options or when Pi reports non-default queue modes. The
   shared app emits platform-neutral `SetRpcSteeringMode` and

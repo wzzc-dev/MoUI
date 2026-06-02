@@ -3414,6 +3414,104 @@ test "workbench draws backend session binding identity after get_state" {
 }
 
 ///|
+test "workbench expanded session details do not fan out unrelated advanced actions" {
+  let model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5","provider":"openai"},"sessionId":"019e7eb5","sessionName":"MoUI Skia renderer","sessionFile":"/tmp/mo-workbench-smoke.jsonl","messageCount":4,"pendingMessageCount":0}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_available_models","success":true,"data":{"models":[{"provider":"openai","id":"gpt-5","name":"GPT-5"}]}}
+          ),
+        ),
+      ),
+    )
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_session_stats","success":true,"data":{"totalMessages":4,"toolCalls":1,"toolResults":1,"tokens":{"total":1200}}}
+          ),
+        ),
+      ),
+    )
+    .update(ToggleComposerControls)
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(
+    has_text(commands, "后端会话：已绑定 · MoUI Skia renderer"),
+  )
+  assert_true(has_text(commands, "模型 1"))
+  assert_true(has_text(commands, "消息 4"))
+  assert_false(has_text(commands, "分叉"))
+  assert_false(has_text(commands, "导出"))
+  assert_true(has_text(commands, "压缩"))
+  assert_false(has_text(commands, "思考"))
+  assert_false(has_text(commands, "同步名"))
+}
+
+///|
+test "workbench expanded session actions appear only with matching evidence" {
+  let transcript_model = {
+    ..WorkbenchModel::new(),
+    transcript: [
+      TranscriptItem::new(
+        id="entry-user-1",
+        role="user",
+        summary="Inspect the renderer path",
+        detail="",
+        tone="info",
+      ),
+    ],
+    composer_controls_expanded: true,
+  }
+  let transcript_commands = transcript_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(transcript_commands, "分叉"))
+  assert_true(has_text(transcript_commands, "导出"))
+  assert_false(has_text(transcript_commands, "压缩"))
+
+  let thinking_model = {
+    ..WorkbenchModel::new(),
+    pi_agent: PiAgentSnapshot::new(thinking_level="high"),
+    composer_controls_expanded: true,
+  }
+  let thinking_commands = thinking_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(thinking_commands, "思考：高"))
+  assert_true(has_text(thinking_commands, "思考"))
+
+  let sync_model = WorkbenchModel::new()
+    .update(
+      ReceiveTransport(
+        JsonLineReceived(
+          "moui-skia",
+          (
+            #|{"type":"response","command":"get_state","success":true,"data":{"sessionId":"019e7eb5","sessionName":"Out of date","sessionFile":"/tmp/mo-workbench-smoke.jsonl","messageCount":1,"pendingMessageCount":0}}
+          ),
+        ),
+      ),
+    )
+    .update(ToggleComposerControls)
+  let sync_commands = sync_model
+    .runtime(width=1220.0, height=780.0)
+    .draw_commands()
+  assert_true(has_text(sync_commands, "同步名"))
+}
+
+///|
 test "workbench ingests Pi session info changes into session binding" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(
