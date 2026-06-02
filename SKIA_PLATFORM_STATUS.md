@@ -70,7 +70,7 @@ commits to match `skia-revision.txt` and JetBrains commits/versions to match
 | --- | --- | --- | --- |
 | Linux | Accepted with JetBrains `m148-8967a2e80c` artifact | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, dependency checker, artifact verifier, guarded revision pin wrapper, workflow | Keep verifying refreshed Linux runs against the locked JetBrains provider; use the source-built path only when refreshing `skia-revision.txt` |
 | macOS | Accepted with JetBrains `m148-8967a2e80c` artifact | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, artifact verifier, workflow | Keep verifying refreshed macOS runs against the locked JetBrains provider |
-| Windows | Ready for JetBrains MSVC binary acceptance, not accepted yet | JetBrains fetch/cache provider, existing MinGW-compatible helper, MSVC smoke/acceptance helper, artifact verifier, workflow, persistent link-config generators | A real Windows MSVC artifact using the default JetBrains provider |
+| Windows | Accepted with JetBrains `m148-8967a2e80c` artifact | JetBrains fetch/cache provider, existing MinGW-compatible helper, MSVC smoke/acceptance helper, artifact verifier, workflow, persistent link-config generators | Keep verifying refreshed Windows MSVC runs against the locked JetBrains provider |
 
 ## Acceptance Evidence
 
@@ -181,9 +181,8 @@ JetBrains acceptance needs provider evidence:
 
 ## Next Acceptance Step
 
-The next concrete milestone is a Windows JetBrains-provider acceptance run
-through the real-smoke workflow. Linux and macOS are accepted with the locked
-JetBrains `m148-8967a2e80c` package and should continue to run as regression
+Linux, macOS, and Windows are accepted with the locked JetBrains
+`m148-8967a2e80c` package and should continue to run as real-Skia regression
 checks. The source-built Linux path remains the canonical fallback pin path when
 the repository needs to move `skia-revision.txt` away from `main`:
 
@@ -197,9 +196,6 @@ handled elsewhere. Keep `skia-revision.txt` as `main` for JetBrains-provider
 acceptance; pin it only after this source-built run produces a verified full
 Skia commit.
 
-After Linux pins the first known-good Skia revision, run Windows real-smoke
-against the same revision or explicitly document why a different revision is
-being evaluated; keep macOS JetBrains smoke green against the locked provider.
 For source-built Linux workflow runs, the uploaded
 `logs/linux-acceptance-state.patch` contains the `skia-revision.txt` and
 `skia-platform-status.json` changes produced by the guarded artifact-and-status
