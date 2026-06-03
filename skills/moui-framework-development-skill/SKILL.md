@@ -63,8 +63,10 @@ Use this skill when editing or reviewing:
   sources use `subscriptions=model => ...` with stable keys so callbacks
   re-enter the typed message loop without exposing runtime internals. Effect
   diagnostics stay platform-neutral through `Effect::plan_summary` and
-  program-runtime inspector counters; effect runners still own any concrete
-  async work outside `core`.
+  program-runtime inspector counters; subscription diagnostics stay
+  platform-neutral through `Subscription::plan_summary` and subscription
+  lifecycle/plan counters; effect runners and subscription adapters still own
+  any concrete async work outside `core`.
 - Platform packages normalize native events into `@host.HostEvent`.
 - Backends do not mutate element or render trees directly.
 - Renderers consume platform-neutral `@core.DrawCommand` values.

@@ -1080,6 +1080,8 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_dispatch_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
+  subscription_plan_count : Int
+  last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int
@@ -1327,6 +1329,8 @@ pub(all) struct RuntimeInspectorSnapshot {
   program_effect_dispatch_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
+  program_subscription_plan_count : Int
+  last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int
@@ -1587,6 +1591,7 @@ pub fn[Msg] Subscription::descriptors(Self[Msg]) -> Array[SubscriptionDescriptor
 pub fn[Msg] Subscription::listen(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg, NextMsg] Subscription::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Subscription::none() -> Self[Msg]
+pub fn[Msg] Subscription::plan_summary(Self[Msg]) -> SubscriptionPlanSummary
 pub fn[Msg] Subscription::run(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 
 pub(all) enum SubscriptionCancelReason {
@@ -1612,6 +1617,22 @@ pub(all) enum SubscriptionLifecycleStatus {
   SubscriptionActive
   SubscriptionCancelled
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SubscriptionPlanKind {
+  SubscriptionPlanNone
+  SubscriptionPlanBatch
+  SubscriptionPlanSource
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SubscriptionPlanSummary {
+  root_kind : SubscriptionPlanKind
+  none_count : Int
+  batch_count : Int
+  source_count : Int
+  duplicate_key_count : Int
+  max_depth : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionPlanSummary::empty() -> Self
 
 pub(all) enum SurfaceLevel {
   Base

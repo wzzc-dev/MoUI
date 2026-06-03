@@ -121,17 +121,19 @@ scheduled leaf count, and max depth, without running effect callbacks.
 `Program` constructors also accept
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
-callback. Existing keys are reused across model changes, missing keys are
-canceled, duplicate keys in one subscription batch are ignored after the first
-and reported in runtime diagnostics, and `Subscription::map` preserves child
+callback. `Subscription::plan_summary` exposes the declared none, batch,
+source, duplicate-key, and max-depth structure without starting sources.
+Existing keys are reused across model changes, missing keys are canceled,
+duplicate keys in one subscription batch are ignored after the first and
+reported in runtime diagnostics, and `Subscription::map` preserves child
 feature identity while lifting messages to a parent type. Dispatchers captured
 by canceled or destroyed subscriptions are ignored, so stale callbacks cannot
 re-enter the model loop after their subscription lifetime ends. Concrete timer,
 window, route, or host-service adapters remain outside `core`; the core
-subscription runtime only owns the platform-neutral lifecycle and typed
-dispatch contract. Environment-aware TEA apps should use the
-`*_with_environment` constructors instead of taking `BuildContext` in their view
-layer. In both cases event dispatch flows through typed messages instead of
+subscription runtime only owns the platform-neutral lifecycle, subscription plan
+diagnostics, and typed dispatch contract. Environment-aware TEA apps should use
+the `*_with_environment` constructors instead of taking `BuildContext` in their
+view layer. In both cases event dispatch flows through typed messages instead of
 exposing the internal view tree.
 
 ## Runtime Mental Model
@@ -167,9 +169,10 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   string, bool, and int state.
 - `AppRuntime` owns app-level `Program` diagnostics, including dispatch,
   update, effect plan, scheduled effect, effect-kind, active subscription,
-  start/reuse/cancel, and duplicate-key counters. It also keeps the latest
-  effect summary and the latest scheduled effect summary for inspector tooling.
-  This is separate from component-local `BuildContext::watch` and
+  subscription plan, start/reuse/cancel, and duplicate-key counters. It also
+  keeps the latest effect summary, latest scheduled effect summary, and latest
+  subscription plan summary for inspector tooling. This is separate from
+  component-local `BuildContext::watch` and
   `BuildContext::run_effect`; program subscriptions model ongoing app event
   sources, while build-context subscriptions model component-local state
   invalidation and lifecycle effects.
