@@ -503,7 +503,7 @@ test "showcase navigates to system gallery sections" {
   )
   assert_true(
     has_text(
-      diagnostics_commands, "TEA counters: messages 1; effect runs 1; subscription plans 2; active 1",
+      diagnostics_commands, "TEA subscriptions: messages 1; effect runs 1; subscription plans 2; active 2; kinds animation 1, host-event 1",
     ),
   )
   assert_true(

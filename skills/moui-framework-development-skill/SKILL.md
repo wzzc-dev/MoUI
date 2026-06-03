@@ -82,7 +82,8 @@ Use this skill when editing or reviewing:
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
   pass counters; subscription diagnostics stay platform-neutral through
   `Subscription::plan_summary`, planned and active subscription descriptors,
-  duplicate subscription-key counts/names in plan summaries plus aggregate
+  active subscription kind-count summaries, duplicate subscription-key
+  counts/names in plan summaries plus aggregate
   duplicate subscription-key counters/names on program-runtime and inspector
   snapshots, subscription lifecycle/plan counters, and ignored stale-dispatch
   counters for

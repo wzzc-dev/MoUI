@@ -1143,6 +1143,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   duplicate_subscription_keys : Array[String]
   ignored_subscription_dispatch_count : Int
   active_subscriptions : Array[SubscriptionDescriptor]
+  active_subscription_kind_counts : Array[SubscriptionKindCount]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -1413,6 +1414,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   duplicate_subscription_keys : Array[String]
   ignored_subscription_dispatch_count : Int
   active_subscriptions : Array[SubscriptionDescriptor]
+  active_subscription_kind_counts : Array[SubscriptionKindCount]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
   rebuild_reason : String
   dirty_reasons : Array[String]
@@ -1687,6 +1689,11 @@ pub(all) struct SubscriptionDescriptor {
   key : String
   kind : String
   label : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SubscriptionKindCount {
+  kind : String
+  count : Int
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SubscriptionLifecycleSnapshot {

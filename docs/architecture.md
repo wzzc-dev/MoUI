@@ -153,8 +153,9 @@ are ignored, so stale callbacks cannot re-enter the model loop after their
 subscription lifetime ends; program runtime and inspector snapshots count those
 ignored subscription dispatches separately from normal typed dispatch/update
 counters and expose planned subscription descriptors, active subscription
-descriptors, and lifecycle entries for tooling. Concrete timer, window, host,
-route, or host-service adapters remain outside `core`; the core
+descriptors, active subscription kind-count summaries, and lifecycle entries
+for tooling. Concrete timer, window, host, route, or host-service adapters
+remain outside `core`; the core
 subscription runtime only owns the platform-neutral lifecycle, subscription plan
 diagnostics, and typed dispatch contract. Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `BuildContext` in their
@@ -196,14 +197,16 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   update, message queue, effect plan, scheduled effect, effect-kind counters
   that distinguish send, anonymous dispatch, structured run, and cancellable
   task effects, active/completed/cancelled effect-task lifecycle counters,
-  active subscription, subscription plan, start/reuse/cancel, duplicate effect
-  descriptor-key counters/names, and duplicate subscription-key counters/names,
-  plus ignored effect-task and subscription dispatch counters for stale
+  active subscription counts/kind summaries, subscription plan,
+  start/reuse/cancel, duplicate effect descriptor-key counters/names, and
+  duplicate subscription-key counters/names, plus ignored effect-task and
+  subscription dispatch counters for stale
   callbacks from canceled or destroyed lifetimes. Program runtime and runtime
   inspector snapshots expose active effect-task descriptors, effect-task
-  lifecycle entries, active subscription descriptors, and subscription
-  lifecycle entries so tooling can identify which tasks and sources completed,
-  were reused, or were canceled without inspecting app messages. Structured
+  lifecycle entries, active subscription descriptors, active subscription
+  kind-count summaries, and subscription lifecycle entries so tooling can
+  identify which tasks and sources completed, were reused, or were canceled
+  without inspecting app messages. Structured
   effect descriptors from `Effect::run`, `Effect::host_service`,
   `Effect::task`, and `Effect::service_task` travel through effect summaries so
   tooling can identify planned host-service or service/task runners without
