@@ -597,7 +597,26 @@ pub fn[Msg] Effect::batch(Array[Self[Msg]]) -> Self[Msg]
 pub fn[Msg] Effect::dispatch(((Msg) -> Unit) -> Unit) -> Self[Msg]
 pub fn[Msg, NextMsg] Effect::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Effect::none() -> Self[Msg]
+pub fn[Msg] Effect::plan_summary(Self[Msg]) -> EffectPlanSummary
 pub fn[Msg] Effect::send(Msg) -> Self[Msg]
+
+pub(all) enum EffectPlanKind {
+  EffectPlanNone
+  EffectPlanBatch
+  EffectPlanSend
+  EffectPlanDispatch
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct EffectPlanSummary {
+  root_kind : EffectPlanKind
+  none_count : Int
+  batch_count : Int
+  send_count : Int
+  dispatch_count : Int
+  scheduled_count : Int
+  max_depth : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn EffectPlanSummary::empty() -> Self
 
 type ElementEventResult derive(Eq, ToJson, @debug.Debug)
 
@@ -1053,7 +1072,14 @@ pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Mo
 pub(all) struct ProgramRuntimeSnapshot {
   dispatched_count : Int
   update_count : Int
+  effect_plan_count : Int
   effect_count : Int
+  effect_none_count : Int
+  effect_batch_count : Int
+  effect_send_count : Int
+  effect_dispatch_count : Int
+  last_effect_summary : EffectPlanSummary
+  last_scheduled_effect_summary : EffectPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int
@@ -1293,7 +1319,14 @@ pub(all) struct RuntimeInspectorSnapshot {
   draw_command_count : Int
   program_dispatched_count : Int
   program_update_count : Int
+  program_effect_plan_count : Int
   program_effect_count : Int
+  program_effect_none_count : Int
+  program_effect_batch_count : Int
+  program_effect_send_count : Int
+  program_effect_dispatch_count : Int
+  last_effect_summary : EffectPlanSummary
+  last_scheduled_effect_summary : EffectPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int

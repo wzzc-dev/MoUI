@@ -237,6 +237,22 @@ enum ProgramEffectMsg {
 }
 
 ///|
+test "effect plan summary describes nested effect structure" {
+  let effect : Effect[String] = Effect::batch([
+    Effect::send("first"),
+    Effect::batch([Effect::none(), Effect::dispatch(_dispatch => ())]),
+  ])
+  let summary = effect.plan_summary()
+  assert_true(summary.root_kind == EffectPlanKind::EffectPlanBatch)
+  inspect(summary.batch_count, content="2")
+  inspect(summary.none_count, content="1")
+  inspect(summary.send_count, content="1")
+  inspect(summary.dispatch_count, content="1")
+  inspect(summary.scheduled_count, content="2")
+  inspect(summary.max_depth, content="3")
+}
+
+///|
 test "program initial effects run before first view build" {
   let program = Program::new(
     init=() => {
@@ -269,7 +285,25 @@ test "program initial effects run before first view build" {
   let program_snapshot = runtime.program_runtime_snapshot()
   inspect(program_snapshot.dispatched_count, content="2")
   inspect(program_snapshot.update_count, content="2")
+  inspect(program_snapshot.effect_plan_count, content="3")
   inspect(program_snapshot.effect_count, content="2")
+  inspect(program_snapshot.effect_batch_count, content="1")
+  inspect(program_snapshot.effect_send_count, content="1")
+  inspect(program_snapshot.effect_dispatch_count, content="1")
+  inspect(program_snapshot.effect_none_count, content="2")
+  assert_true(
+    program_snapshot.last_effect_summary.root_kind ==
+    EffectPlanKind::EffectPlanBatch,
+  )
+  inspect(program_snapshot.last_effect_summary.scheduled_count, content="2")
+  assert_true(
+    program_snapshot.last_scheduled_effect_summary.root_kind ==
+    EffectPlanKind::EffectPlanBatch,
+  )
+  inspect(
+    program_snapshot.last_scheduled_effect_summary.scheduled_count,
+    content="2",
+  )
 }
 
 ///|
@@ -322,6 +356,13 @@ test "program effects can dispatch typed follow-up messages" {
     ),
   )
   assert_true(has_draw_text(runtime.draw_commands(), "done"))
+  let snapshot = runtime.program_runtime_snapshot()
+  inspect(snapshot.effect_dispatch_count, content="1")
+  assert_true(
+    snapshot.last_scheduled_effect_summary.root_kind ==
+    EffectPlanKind::EffectPlanDispatch,
+  )
+  inspect(snapshot.last_scheduled_effect_summary.scheduled_count, content="1")
 }
 
 ///|
