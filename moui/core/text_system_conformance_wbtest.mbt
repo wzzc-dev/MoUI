@@ -51,6 +51,31 @@ fn assert_text_layout_invariants(
 }
 
 ///|
+fn assert_fallback_cluster_carets(
+  text : String,
+  start : Int,
+  end : Int,
+) -> Unit raise {
+  let font = FontSpec::new(size=16.0, weight=400)
+  let layout = TextSystem::fallback().measure_text(
+    TextLayoutInput::new(text~, font~),
+  )
+  inspect(
+    layout.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  assert_true(text_conformance_carets_are_monotonic(layout.caret_positions))
+  assert_true(start >= 0)
+  assert_true(end > start + 1)
+  assert_true(end < layout.caret_positions.length())
+  let anchor = layout.caret_positions[start]
+  for index in (start + 1)..<end {
+    assert_true(layout.caret_positions[index] == anchor)
+  }
+  assert_true(layout.caret_positions[end] > anchor)
+}
+
+///|
 fn fixed_advance_text_system(advance : Double) -> TextSystem {
   TextSystem::new(id="test-fixed-advance-conformance", measure=input => {
     let carets : Array[Double] = [0.0]
@@ -140,6 +165,23 @@ test "fallback text system conforms for unicode samples" {
   assert_text_layout_invariants(system, "a你🙂b", font)
   assert_text_layout_invariants(system, "text 👩‍💻 🙂", font)
   assert_text_layout_invariants(system, "abc אבג def", font)
+}
+
+///|
+test "fallback text system stabilizes representative cluster carets" {
+  assert_fallback_cluster_carets("e\u{0301}", 0, 2)
+  assert_fallback_cluster_carets("☕️", 0, 2)
+  assert_fallback_cluster_carets("👩‍💻", 0, 3)
+  assert_fallback_cluster_carets("👍🏽", 0, 2)
+  assert_fallback_cluster_carets("1️⃣", 0, 3)
+  assert_fallback_cluster_carets("\u{1F1FA}\u{1F1F8}", 0, 2)
+  assert_fallback_cluster_carets("\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}", 0, 4)
+  assert_fallback_cluster_carets("\u{0600}\u{0628}\u{0651}", 0, 3)
+  assert_fallback_cluster_carets("\u{0E01}\u{0E34}", 0, 2)
+  assert_fallback_cluster_carets("\u{0D9A}\u{0DCF}", 0, 2)
+  assert_fallback_cluster_carets("\u{1000}\u{1039}\u{1001}", 0, 3)
+  assert_fallback_cluster_carets("\u{1100}\u{1161}\u{11A8}", 0, 3)
+  assert_fallback_cluster_carets("A\u{1F1FA}\u{1F1F8}B", 1, 3)
 }
 
 ///|
