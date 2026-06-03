@@ -139,8 +139,9 @@ The `native` subpackage contains the first opt-in native boundary:
   planning;
 - `@native.Shader::color(color)`, `linear_gradient(start, end, colors...)`,
   and `radial_gradient(center, radius, colors...)` create the first native
-  shader handles for shader-backed paint calls, with degenerate linear-gradient
-  inputs rejected before native replay/resource planning;
+  shader handles for shader-backed paint calls, with degenerate
+  linear-gradient inputs and non-finite radial-gradient geometry rejected
+  before native replay/resource planning;
 - `@native.ColorFilter`, `ImageFilter`, and `MaskFilter` reject non-finite
   parameters before native handle creation and value-layer resource planning;
 - direct invalid shader/filter descriptor variants produce uncacheable resource

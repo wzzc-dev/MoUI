@@ -180,6 +180,7 @@ default_stage_markers=(
   "native smoke shader draws" \
   "native smoke shader resource plan count" \
   "native smoke shader linear gradient validation" \
+  "native smoke shader radial gradient validation" \
   "native smoke invalid shader filter descriptor resources" \
   "native smoke invalid shader filter replay skipped" \
   "native smoke invalid shader filter replay cache resources" \
@@ -426,6 +427,7 @@ default_expected_stage_values=(
   $'native smoke shader draws\t3'
   $'native smoke shader resource plan count\t3'
   $'native smoke shader linear gradient validation\t1'
+  $'native smoke shader radial gradient validation\t1'
   $'native smoke invalid shader filter descriptor resources\t4'
   $'native smoke invalid shader filter replay skipped\t2'
   $'native smoke invalid shader filter replay cache resources\t0'
