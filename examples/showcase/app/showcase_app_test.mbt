@@ -68,6 +68,14 @@ test "showcase navigation dialog and sheet state are wired" {
   assert_true(has_text(commands, "view-level"))
   assert_true(has_text(commands, "Dismiss"))
   assert_true(has_text(commands, "Showcase sheet"))
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::DrawShadow(_)),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, 1.5)
+    }),
+  )
   assert_true(model.dialog_visible)
   assert_true(model.sheet_visible)
   assert_true(model.selected_section == "navigation")

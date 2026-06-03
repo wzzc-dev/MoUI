@@ -1244,6 +1244,48 @@ test "dialog composes custom content dismiss and action messages" {
 }
 
 ///|
+test "dialog host dims background and keeps modal boundary visible" {
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.dialog_host(
+      @views.text("Background", width=180.0, height=32.0),
+      dialog=Some(
+        @views.dialog(
+          "Visible dialog",
+          content=@views.text("Bounded modal content", width=300.0, height=40.0),
+          subtitle="Clear boundary",
+          primary_action=Some(
+            @views.StateViewAction::new(label="Close", message=()),
+          ),
+          width=360.0,
+          height=260.0,
+        ),
+      ),
+      presented=true,
+    ),
+    size=@core.Size::new(width=640.0, height=480.0),
+  )
+  let draw = runtime.draw_commands()
+  assert_true(has_text(draw, "Visible dialog"))
+  assert_true(has_text(draw, "Bounded modal content"))
+  assert_true(has_text(draw, "Close"))
+  assert_true(
+    draw.any(command => {
+      command
+      is @core.DrawCommand::FillRoundedRectBrush(
+        _,
+        @core.Brush::Solid({ r: 0.0, g: 0.0, b: 0.0, a: 0.46 })
+      )
+    }),
+  )
+  assert_true(draw.any(command => command is @core.DrawCommand::DrawShadow(_)))
+  assert_true(
+    draw.any(command => {
+      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, 1.5)
+    }),
+  )
+}
+
+///|
 test "navigation shell components compose sidebar breadcrumb split and wizard" {
   let nav_items = [
     @views.SidebarItem::new(id="home", label="Home", message=()),
