@@ -395,6 +395,11 @@ fn Surface::from_handle(handle : SurfaceHandle) -> Surface? {
 }
 
 ///|
+fn Surface::contains_pixel_bounds(self : Surface, bounds : @skia.IRect) -> Bool {
+  self.image_info().bounds().contains_rect(bounds)
+}
+
+///|
 /// Allocate a raster N32 premultiplied surface.
 ///
 /// Returns `None` when the native Skia backend is not linked or the size is empty.
@@ -532,7 +537,7 @@ pub fn Surface::image_snapshot_with_bounds(
   self : Surface,
   bounds : @skia.IRect,
 ) -> Image? {
-  if bounds.is_empty() {
+  if !self.contains_pixel_bounds(bounds) {
     None
   } else {
     Image::from_handle(
@@ -553,7 +558,7 @@ pub fn Surface::read_pixels(
   self : Surface,
   bounds? : @skia.IRect = self.image_info().bounds(),
 ) -> @skia.Pixmap? {
-  if bounds.is_empty() {
+  if !self.contains_pixel_bounds(bounds) {
     None
   } else {
     let info = @skia.ImageInfo::n32_premul(bounds.size())

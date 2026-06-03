@@ -1254,6 +1254,10 @@ fn main {
   println(red_pixmap.width())
   println("native smoke bounded readback height")
   println(red_pixmap.height())
+  if surface.read_pixels(bounds=@skia.IRect::from_xywh(-1, 0, 4, 4)) is Some(_) ||
+    surface.read_pixels(bounds=@skia.IRect::from_xywh(30, 30, 4, 4)) is Some(_) {
+    fail_smoke("out-of-bounds surface readback should be rejected")
+  }
 
   guard @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4))
     is Some(non_finite_canvas_surface) else {
@@ -2641,6 +2645,12 @@ fn main {
   println(red_image.width())
   println("native smoke bounded snapshot height")
   println(red_image.height())
+  if surface.image_snapshot_with_bounds(@skia.IRect::from_xywh(-1, 0, 4, 4)) is Some(_) ||
+    surface.image_snapshot_with_bounds(@skia.IRect::from_xywh(30, 30, 4, 4)) is Some(_) {
+    fail_smoke("out-of-bounds surface snapshot should be rejected")
+  }
+  println("native smoke surface bounds rejected")
+  println(1)
   guard image.encode_to_data(format=@skia.PNG, quality=100) is Some(data) else {
     fail_smoke("failed to encode surface snapshot as PNG")
   }

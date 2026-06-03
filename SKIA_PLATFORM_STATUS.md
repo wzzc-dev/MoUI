@@ -82,7 +82,8 @@ these facts recorded in logs:
 - The native smoke executable printed `skia_mbt native smoke test passed`.
 - The native smoke log passed `scripts/verify-native-smoke-log.*`, including
   all required stage markers for readback dimensions, readback row bytes,
-  bounded snapshots, PNG encode/decode dimensions, codec dimensions, decoded
+  bounded snapshots, out-of-bounds surface rectangle rejection,
+  PNG encode/decode dimensions, codec dimensions, decoded
   bitmap readback dimensions, surface descriptor reporting, target-based raster
   surface construction, predictable unsupported window/GPU surface targets,
   canvas state restore, canvas clipping, canvas color/paint fill replay,
@@ -137,7 +138,8 @@ these facts recorded in logs:
   variation, font fallback family metadata, resolved fallback match cache-key
   variation, fallback match resource planning, fallback resolution cache-key
   variation, fallback resolution resource planning, invalid fallback
-  request/result cache safety, native fallback resolution bridging, font
+  request/result cache safety, out-of-bounds surface rectangle rejection,
+  native fallback resolution bridging, font
   fallback resource planning, non-finite direct Canvas geometry skip proof,
   non-finite Canvas paint/layer sanitization proof,
   empty path replay zero-resource/miss/hit proof,
