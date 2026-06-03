@@ -86,8 +86,9 @@ fallback-only command. The renderer-neutral SVG import path uses `mizchi/svg`
 as its parser frontend and lowers supported scene graph shapes into the same
 draw-command model while reporting unsupported SMIL animation and
 `foreignObject` usage. `render/capabilities.mbt` also exposes a command
-fallback planner that reports unbalanced pops and open advanced scopes while
-keeping visible `DrawPath` commands out of the fallback list. Native color glyph
+fallback planner that reports unbalanced pops and open clip, rounded-clip,
+transform, opacity, layer, and filter scopes while keeping visible `DrawPath`
+commands out of the fallback list. Native color glyph
 payloads can now flow through the provider protocol, glyph atlas, and text
 vertex shader marker as RGBA data; Cosmic loads platform emoji fallback font
 candidates when available, preserves color swash pixels, and safe-maps
