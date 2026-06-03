@@ -123,6 +123,13 @@ pub fn[Msg] empty() -> @core.View[Msg] {
 }
 
 ///|
+fn[Msg] modal_scrim(alpha~ : Double) -> @core.View[Msg] {
+  empty().background_brush(
+    @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha)),
+  )
+}
+
+///|
 pub fn[Msg] spacer(
   min_length? : Double = 0.0,
   weight? : Double = 1.0,

@@ -586,9 +586,7 @@ pub fn[Msg] dialog_host(
   if presented {
     match dialog {
       Some(dialog) => {
-        let scrim = surface(empty(), variant=SurfaceVariant::Base).background_brush(
-          @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.46)),
-        )
+        let scrim = modal_scrim(alpha=0.28)
         let presented_dialog = dialog
           .semantics_role(@core.SemanticsRole::Dialog)
           .align(alignment=@core.Alignment::center())

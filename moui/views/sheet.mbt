@@ -28,10 +28,7 @@ pub fn[Msg] sheet_host(
 ) -> @core.View[Msg] {
   if presented && sheet is Some(sheet_spec) {
     let theme = @core.Theme::default()
-    // Semi-transparent scrim background
-    let scrim = surface(empty(), variant=SurfaceVariant::Base).background_brush(
-      @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.5)),
-    )
+    let scrim = modal_scrim(alpha=0.28)
     let scrim_with_tap = match on_dismiss {
       Some(message) => scrim.on_tap(message)
       None => scrim
