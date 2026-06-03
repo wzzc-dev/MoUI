@@ -2923,6 +2923,24 @@ fn main {
   if font.size() != 11.0 {
     fail_smoke("native font size did not update")
   }
+  let invalid_font_scalar : Float = 0.0 / 0.0
+  let infinite_font_scalar : Float = 1.0 / 0.0
+  if @native.Font::default(size=invalid_font_scalar) is Some(_) ||
+    @native.Font::empty(size=infinite_font_scalar) is Some(_) {
+    fail_smoke("native font constructors accepted non-finite sizes")
+  }
+  font.set_size(invalid_font_scalar)
+  if font.size() != 11.0 {
+    fail_smoke("native font accepted a non-finite size mutation")
+  }
+  font.set_size(infinite_font_scalar)
+  if font.size() != 11.0 {
+    fail_smoke("native font accepted an infinite size mutation")
+  }
+  if font.shape_text_utf8(smoke_text_bytes(), width=infinite_font_scalar) is Some(_) ||
+    font.shape_text_utf8(smoke_text_bytes(), width=invalid_font_scalar) is Some(_) {
+    fail_smoke("native font shaped text with a non-finite width")
+  }
   let font_metrics = font.metrics()
   if font_metrics.ascent > 0.0 || font_metrics.descent < 0.0 {
     fail_smoke("native font metrics have unexpected ascent/descent signs")
@@ -2979,6 +2997,24 @@ fn main {
   }
   println("native smoke second glyph x position")
   println(glyph_x_positions[1])
+  let invalid_glyph_positions = font.text_glyph_positions_utf8(
+    smoke_text_bytes(),
+    origin=@skia.Point::new(invalid_font_scalar, infinite_font_scalar),
+  )
+  let invalid_glyph_x_positions = font.text_glyph_x_positions_utf8(
+    smoke_text_bytes(),
+    origin=invalid_font_scalar,
+  )
+  if invalid_glyph_positions.length() != glyphs.length() ||
+    invalid_glyph_x_positions.length() != glyphs.length() ||
+    invalid_glyph_positions[0] != @skia.Point::zero() ||
+    invalid_glyph_x_positions[0] != 0.0 ||
+    invalid_glyph_positions[1].x <= invalid_glyph_positions[0].x ||
+    invalid_glyph_x_positions[1] <= invalid_glyph_x_positions[0] {
+    fail_smoke("native font did not sanitize non-finite scalar inputs")
+  }
+  println("native smoke non-finite font scalars sanitized")
+  println(1)
   let glyph_bounds = font.glyph_bounds_many(glyphs)
   if glyph_bounds.length() != glyphs.length() ||
     glyph_bounds[0].width() <= 0.0 ||
