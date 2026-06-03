@@ -62,7 +62,11 @@ Use this skill when editing or reviewing:
   with `Effect::send`, `Effect::dispatch`, structured `Effect::run`, or
   one-shot cancellable `Effect::task`, and app-level ongoing event sources use
   `subscriptions=model => ...` with stable keys so callbacks re-enter the typed
-  message loop without exposing runtime internals. Effect diagnostics stay
+  message loop without exposing runtime internals. `Subscription::timer`,
+  `Subscription::animation_tick`, `Subscription::window_event`,
+  `Subscription::route_event`, and `Subscription::service_completion`
+  standardize common descriptor kinds while concrete event adapters remain
+  outside `core`. Effect diagnostics stay
   platform-neutral through `Effect::plan_summary`, distinct anonymous-dispatch
   vs structured-run/task counters, `Effect::run` / `Effect::task` descriptors,
   duplicate descriptor-key counts/names, active/completed/cancelled effect-task

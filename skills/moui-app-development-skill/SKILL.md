@@ -82,7 +82,12 @@ separate framework task using `moui-framework-development-skill`.
 - Use `subscriptions=model => ...` on `Program` when an app has ongoing typed
   event sources such as ticks, route/deep-link streams, or service completions
   that should be reused by stable key and canceled when the model no longer
-  declares them. Keep concrete timer or host adapters outside `core`.
+  declares them. Prefer `Subscription::timer`,
+  `Subscription::animation_tick`, `Subscription::window_event`,
+  `Subscription::route_event`, or `Subscription::service_completion` when a
+  source matches those standard descriptor categories; use
+  `Subscription::listen` / `Subscription::run` for custom kinds. Keep concrete
+  timer or host adapters outside `core`.
 - Keep host-service calls out of pure reducers. For app-owned clipboard, file
   dialog, URL, theme, or menu work, return `@core.Effect::run` with a stable
   diagnostic key that is unique within the returned effect batch, call
@@ -247,15 +252,19 @@ sh scripts/dev-check.sh --platform-examples-build
   diagnostics; `Effect::dispatch` remains available for anonymous one-off
   runners. When composing child features, lift child follow-up work with
   `Effect::map`; structured descriptors are preserved for parent diagnostics.
-- Use `Subscription::listen` / `Subscription::run` for app-level ongoing
-  sources that need lifecycle reuse and cleanup. Use `Subscription::map` when a
-  parent app embeds a child feature and wants to preserve typed message
-  composition and planned/active descriptor identity. Give sources stable
-  key/kind/label values because subscription plan diagnostics expose planned
-  descriptors before runtime reuse/cancel decisions, while active descriptors
-  report sources kept by the runtime. Do not retain and reuse old dispatchers
-  after a subscription key changes or the runtime is destroyed; stale callbacks
-  are ignored and counted in runtime diagnostics.
+- Use the standard `Subscription::timer`,
+  `Subscription::animation_tick`, `Subscription::window_event`,
+  `Subscription::route_event`, and `Subscription::service_completion` helpers
+  for common ongoing source kinds that need lifecycle reuse and cleanup; use
+  `Subscription::listen` / `Subscription::run` when a source needs a custom
+  diagnostic kind. Use `Subscription::map` when a parent app embeds a child
+  feature and wants to preserve typed message composition and planned/active
+  descriptor identity. Give sources stable key/label values because
+  subscription plan diagnostics expose planned descriptors before runtime
+  reuse/cancel decisions, while active descriptors report sources kept by the
+  runtime. Do not retain and reuse old dispatchers after a subscription key
+  changes or the runtime is destroyed; stale callbacks are ignored and counted
+  in runtime diagnostics.
 - Keep host-specific input conversion in backend packages out of app code.
 
 ### Add Platform Entry Points

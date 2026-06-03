@@ -14,7 +14,9 @@ paths, or abstractions that only preserve old shapes.
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
   draw command model, opaque public `View[Msg]`, typed events, app-owned
   route/history helpers, `Program`, `Effect`, `Subscription`, and TEA runtime
-  diagnostics.
+  diagnostics. Standard `Subscription` helpers may name common source
+  descriptor kinds, but concrete timer, host, window, or route adapters remain
+  outside `core`.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
