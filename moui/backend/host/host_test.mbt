@@ -151,6 +151,12 @@ test "host image repaint tracker routes revision changes per window" {
   )
   inspect(inspector_baseline.current_revision, content="0")
   inspect(tracker.tracked_count(), content="2")
+  let baseline_snapshot = tracker.snapshot()
+  inspect(baseline_snapshot.tracked_window_count, content="2")
+  assert_true(baseline_snapshot.tracked_windows[0].window_id == main_id)
+  inspect(baseline_snapshot.tracked_windows[0].revision, content="0")
+  assert_true(baseline_snapshot.tracked_windows[1].window_id == inspector_id)
+  inspect(baseline_snapshot.tracked_windows[1].revision, content="0")
   inspector_revision.val = 1
   let requested : Array[HostWindowId] = []
   let inspector_result = tracker.request_redraw_if_changed(
@@ -167,6 +173,12 @@ test "host image repaint tracker routes revision changes per window" {
   inspect(inspector_result.current_revision, content="1")
   inspect(requested.length(), content="1")
   assert_true(requested[0] == inspector_id)
+  let requested_snapshot = tracker.snapshot()
+  inspect(requested_snapshot.tracked_window_count, content="2")
+  assert_true(requested_snapshot.tracked_windows[0].window_id == main_id)
+  inspect(requested_snapshot.tracked_windows[0].revision, content="0")
+  assert_true(requested_snapshot.tracked_windows[1].window_id == inspector_id)
+  inspect(requested_snapshot.tracked_windows[1].revision, content="1")
   let unchanged = tracker.request_redraw_if_changed(
     inspector_id,
     inspector_renderer,
@@ -225,6 +237,9 @@ test "host image repaint tracker discards closed window changes" {
   inspect(redraws.val, content="0")
   inspect(snapshot_reads.val, content="1")
   inspect(tracker.tracked_count(), content="0")
+  let snapshot = tracker.snapshot()
+  inspect(snapshot.tracked_window_count, content="0")
+  inspect(snapshot.tracked_windows.length(), content="0")
 }
 
 ///|

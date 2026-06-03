@@ -15,6 +15,18 @@ pub(all) struct HostImageResourceRepaintResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostImageResourceTrackedWindow {
+  window_id : HostWindowId
+  revision : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostImageResourceRepaintSnapshot {
+  tracked_window_count : Int
+  tracked_windows : Array[HostImageResourceTrackedWindow]
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostImageResourceRepaintTracker {
   priv mut window_ids : Array[HostWindowId]
   priv mut revisions : Array[Int]
@@ -30,6 +42,25 @@ pub fn HostImageResourceRepaintTracker::tracked_count(
   self : HostImageResourceRepaintTracker,
 ) -> Int {
   self.window_ids.length()
+}
+
+///|
+pub fn HostImageResourceRepaintTracker::snapshot(
+  self : HostImageResourceRepaintTracker,
+) -> HostImageResourceRepaintSnapshot {
+  let tracked_windows : Array[HostImageResourceTrackedWindow] = []
+  for index, id in self.window_ids {
+    if index < self.revisions.length() {
+      tracked_windows.push(HostImageResourceTrackedWindow::{
+        window_id: id,
+        revision: self.revisions[index],
+      })
+    }
+  }
+  HostImageResourceRepaintSnapshot::{
+    tracked_window_count: tracked_windows.length(),
+    tracked_windows,
+  }
 }
 
 ///|
