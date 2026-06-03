@@ -254,7 +254,7 @@ pub fn Shader::radial_gradient(
   outer_color : @skia.Color,
   tile_mode? : @skia.TileMode = @skia.Clamp,
 ) -> Shader? {
-  if radius <= 0.0 {
+  if !center.is_finite() || !skia_scalar_is_finite(radius) || radius <= 0.0 {
     None
   } else {
     Shader::from_handle(

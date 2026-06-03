@@ -881,6 +881,39 @@ fn main {
   }
   println("native smoke shader linear gradient validation")
   println(1)
+  let invalid_shader_scalar : Float = 0.0 / 0.0
+  if @native.Shader::radial_gradient(
+      @skia.Point::new(invalid_shader_scalar, 4),
+      2.0,
+      @skia.Color::white(),
+      @skia.Color::black(),
+    )
+    is Some(_) ||
+    @native.Shader::radial_gradient(
+      @skia.Point::new(4, 4),
+      1.0 / 0.0,
+      @skia.Color::white(),
+      @skia.Color::black(),
+    )
+    is Some(_) ||
+    @skia.ShaderDescriptor::radial_gradient(
+      @skia.Point::new(invalid_shader_scalar, 4),
+      2.0,
+      @skia.Color::white(),
+      @skia.Color::black(),
+    )
+    is Some(_) ||
+    @skia.ShaderDescriptor::radial_gradient(
+      @skia.Point::new(4, 4),
+      1.0 / 0.0,
+      @skia.Color::white(),
+      @skia.Color::black(),
+    )
+    is Some(_) {
+    fail_smoke("non-finite radial gradient shaders should be rejected")
+  }
+  println("native smoke shader radial gradient validation")
+  println(1)
 
   guard @native.ColorFilter::saturation(0.8) is Some(color_filter) else {
     fail_smoke("failed to create native color filter")

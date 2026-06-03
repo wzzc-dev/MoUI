@@ -758,6 +758,11 @@
       "marker": "native smoke shader linear gradient validation"
     },
     {
+      "id": "shader.radial-gradient-validation",
+      "area": "Shader",
+      "marker": "native smoke shader radial gradient validation"
+    },
+    {
       "id": "shader-filter.invalid-descriptor-resources",
       "area": "Shader",
       "marker": "native smoke invalid shader filter descriptor resources"
@@ -2069,6 +2074,11 @@
     {
       "id": "shader.linear-gradient-validation",
       "marker": "native smoke shader linear gradient validation",
+      "value": "1"
+    },
+    {
+      "id": "shader.radial-gradient-validation",
+      "marker": "native smoke shader radial gradient validation",
       "value": "1"
     },
     {

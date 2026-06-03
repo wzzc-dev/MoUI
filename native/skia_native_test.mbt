@@ -1470,6 +1470,24 @@ test "shader api typechecks" {
     )
     is None,
   )
+  assert_true(
+    @native.Shader::radial_gradient(
+      @skia.Point::new(0.0 / 0.0, 8),
+      8.0,
+      @skia.Color::white(),
+      @skia.Color::black(),
+    )
+    is None,
+  )
+  assert_true(
+    @native.Shader::radial_gradient(
+      @skia.Point::new(8, 8),
+      1.0 / 0.0,
+      @skia.Color::white(),
+      @skia.Color::black(),
+    )
+    is None,
+  )
   match
     @native.Shader::radial_gradient(
       @skia.Point::new(8, 8),

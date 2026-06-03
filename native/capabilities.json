@@ -148,6 +148,7 @@
         "native smoke render frame replay rejected skipped",
         "native smoke shader draws",
         "native smoke shader linear gradient validation",
+        "native smoke shader radial gradient validation",
         "native smoke invalid shader filter descriptor resources",
         "native smoke invalid shader filter replay skipped",
         "native smoke invalid shader filter replay cache resources",
