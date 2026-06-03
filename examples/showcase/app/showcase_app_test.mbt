@@ -19,6 +19,7 @@ test "showcase app emits visual polish commands" {
   assert_true(
     renderer_commands.any(command => command is @core.DrawCommand::DrawPath(_)),
   )
+  assert_true(has_image_fit(renderer_commands, @core.ImageFit::ScaleDown))
   assert_true(
     commands.any(command => command is @core.DrawCommand::DrawImage(_)),
   )
@@ -848,6 +849,17 @@ fn has_text_containing(
   commands.any(command => {
     command is @core.DrawCommand::DrawText({ text: value, .. }) &&
     value.contains(text)
+  })
+}
+
+///|
+fn has_image_fit(
+  commands : Array[@core.DrawCommand],
+  fit : @core.ImageFit,
+) -> Bool {
+  commands.any(command => {
+    command is @core.DrawCommand::DrawImage({ fit: image_fit, .. }) &&
+    image_fit == fit
   })
 }
 

@@ -57,6 +57,7 @@ pub(all) enum ImageFit {
   Contain
   Cover
   Stretch
+  ScaleDown
 } derive(Eq, Debug, ToJson)
 
 ///|

@@ -476,7 +476,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.78,
           corner_radius=theme.radius_scale.md,
-          fit=@core.ImageFit::Cover,
+          fit=@core.ImageFit::ScaleDown,
         )
         .clip()
         .scale(sx=0.92, sy=0.92)
