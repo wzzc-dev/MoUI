@@ -833,6 +833,145 @@ test "markdown editor runtime ctrl heading shortcuts transform caret" {
 }
 
 ///|
+test "markdown editor runtime paragraph and quote shortcuts transform blocks" {
+  let meta_paragraph_app = MarkdownEditorApp::new()
+  meta_paragraph_app.set_document("# Title")
+  let meta_paragraph_runtime = meta_paragraph_app.runtime(
+    width=980.0,
+    height=640.0,
+  )
+  meta_paragraph_app.set_selection(3, None)
+  meta_paragraph_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="0",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+    ),
+  )
+  inspect(meta_paragraph_app.document(), content="Title")
+  let control_paragraph_app = MarkdownEditorApp::new()
+  control_paragraph_app.set_document("# Title\n> Quote")
+  let control_paragraph_runtime = control_paragraph_app.runtime(
+    width=980.0,
+    height=640.0,
+  )
+  control_paragraph_app.set_selection(
+    15,
+    Some(@core.TextRange::new(start=0, end=15)),
+  )
+  control_paragraph_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="0",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+    ),
+  )
+  inspect(control_paragraph_app.document(), content="Title\nQuote")
+  let quote_app = MarkdownEditorApp::new()
+  quote_app.set_document("First\nSecond")
+  let quote_runtime = quote_app.runtime(width=980.0, height=640.0)
+  quote_app.set_selection(12, Some(@core.TextRange::new(start=0, end=12)))
+  quote_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="9",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  inspect(quote_app.document(), content="> First\n> Second")
+  let shifted_quote_app = MarkdownEditorApp::new()
+  shifted_quote_app.set_document("First\nSecond")
+  let shifted_quote_runtime = shifted_quote_app.runtime(
+    width=980.0,
+    height=640.0,
+  )
+  shifted_quote_app.set_selection(
+    12,
+    Some(@core.TextRange::new(start=0, end=12)),
+  )
+  shifted_quote_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="(",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  inspect(shifted_quote_app.document(), content="> First\n> Second")
+}
+
+///|
+test "markdown editor runtime ctrl shift list shortcuts transform selection" {
+  let bullet_app = MarkdownEditorApp::new()
+  bullet_app.set_document("First\nSecond")
+  let bullet_runtime = bullet_app.runtime(width=980.0, height=640.0)
+  bullet_app.set_selection(12, Some(@core.TextRange::new(start=0, end=12)))
+  bullet_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="8",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  inspect(bullet_app.document(), content="- First\n- Second")
+  let shifted_bullet_app = MarkdownEditorApp::new()
+  shifted_bullet_app.set_document("First\nSecond")
+  let shifted_bullet_runtime = shifted_bullet_app.runtime(
+    width=980.0,
+    height=640.0,
+  )
+  shifted_bullet_app.set_selection(
+    12,
+    Some(@core.TextRange::new(start=0, end=12)),
+  )
+  shifted_bullet_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="*",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  inspect(shifted_bullet_app.document(), content="- First\n- Second")
+  let ordered_app = MarkdownEditorApp::new()
+  ordered_app.set_document("First\nSecond")
+  let ordered_runtime = ordered_app.runtime(width=980.0, height=640.0)
+  ordered_app.set_selection(12, Some(@core.TextRange::new(start=0, end=12)))
+  ordered_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="7",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  inspect(ordered_app.document(), content="1. First\n2. Second")
+  let shifted_ordered_app = MarkdownEditorApp::new()
+  shifted_ordered_app.set_document("First\nSecond")
+  let shifted_ordered_runtime = shifted_ordered_app.runtime(
+    width=980.0,
+    height=640.0,
+  )
+  shifted_ordered_app.set_selection(
+    12,
+    Some(@core.TextRange::new(start=0, end=12)),
+  )
+  shifted_ordered_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="&",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  inspect(shifted_ordered_app.document(), content="1. First\n2. Second")
+}
+
+///|
 test "markdown editor runtime enter continues bullet list" {
   let app = MarkdownEditorApp::new()
   app.set_document("- item")
