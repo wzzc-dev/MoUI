@@ -1667,6 +1667,7 @@ pub struct Subscription[Msg] {
 pub fn[Msg] Subscription::animation_tick(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::batch(Array[Self[Msg]]) -> Self[Msg]
 pub fn[Msg] Subscription::descriptors(Self[Msg]) -> Array[SubscriptionDescriptor]
+pub fn[Msg] Subscription::host_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::listen(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg, NextMsg] Subscription::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Subscription::none() -> Self[Msg]

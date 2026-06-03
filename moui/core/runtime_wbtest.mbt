@@ -756,6 +756,9 @@ test "subscription source helpers standardize diagnostic kinds" {
     Subscription::window_event(key="window:resize", label="Window resize", start=_dispatch => {
       None
     }),
+    Subscription::host_event(key="host:event", label="Host event", start=_dispatch => {
+      None
+    }),
     Subscription::route_event(key="route:deep-link", label="Deep link", start=_dispatch => {
       None
     }),
@@ -766,17 +769,18 @@ test "subscription source helpers standardize diagnostic kinds" {
     ),
   ])
   let summary = subscription.plan_summary()
-  inspect(summary.source_count, content="5")
+  inspect(summary.source_count, content="6")
   inspect(summary.descriptors[0].kind, content="timer")
   inspect(summary.descriptors[1].kind, content="animation")
   inspect(summary.descriptors[2].kind, content="window-event")
-  inspect(summary.descriptors[3].kind, content="route-event")
-  inspect(summary.descriptors[4].kind, content="host-service")
+  inspect(summary.descriptors[3].kind, content="host-event")
+  inspect(summary.descriptors[4].kind, content="route-event")
+  inspect(summary.descriptors[5].kind, content="host-service")
   let mapped = subscription.map(message => "parent:" + message)
   let mapped_summary = mapped.plan_summary()
   inspect(mapped_summary.descriptors[0].label, content="Refresh timer")
   inspect(
-    mapped_summary.descriptors[4].key,
+    mapped_summary.descriptors[5].key,
     content="host-service:completion:7",
   )
 }

@@ -66,9 +66,9 @@ Use this skill when editing or reviewing:
   `subscriptions=model => ...` with stable keys so callbacks re-enter the typed
   message loop without exposing runtime internals. `Subscription::timer`,
   `Subscription::animation_tick`, `Subscription::window_event`,
-  `Subscription::route_event`, and `Subscription::service_completion`
-  standardize common descriptor kinds while concrete event adapters remain
-  outside `core`. Effect diagnostics stay
+  `Subscription::host_event`, `Subscription::route_event`, and
+  `Subscription::service_completion` standardize common descriptor kinds while
+  concrete event adapters remain outside `core`. Effect diagnostics stay
   platform-neutral through `Effect::plan_summary`, distinct anonymous-dispatch
   vs structured-run/task counters, `Effect::run` / `Effect::host_service` /
   `Effect::service_task` / `Effect::task` descriptors,

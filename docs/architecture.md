@@ -138,7 +138,8 @@ and max-pending counters without requiring `Msg` values to be serializable.
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
 callback. `Subscription::timer`, `Subscription::animation_tick`,
-`Subscription::window_event`, `Subscription::route_event`, and
+`Subscription::window_event`, `Subscription::host_event`,
+`Subscription::route_event`, and
 `Subscription::service_completion` standardize descriptor kinds for common
 ongoing source categories without starting any concrete platform work in
 `core`. `Subscription::plan_summary` exposes the declared none, batch, source,
@@ -152,8 +153,8 @@ are ignored, so stale callbacks cannot re-enter the model loop after their
 subscription lifetime ends; program runtime and inspector snapshots count those
 ignored subscription dispatches separately from normal typed dispatch/update
 counters and expose planned subscription descriptors, active subscription
-descriptors, and lifecycle entries for tooling. Concrete timer, window, route, or
-host-service adapters remain outside `core`; the core
+descriptors, and lifecycle entries for tooling. Concrete timer, window, host,
+route, or host-service adapters remain outside `core`; the core
 subscription runtime only owns the platform-neutral lifecycle, subscription plan
 diagnostics, and typed dispatch contract. Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `BuildContext` in their
