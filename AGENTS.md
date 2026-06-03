@@ -296,8 +296,10 @@ matching host that produced them. After a matching host writes provider,
 fallback-unavailable, renderer-smoke, Showcase first-frame, and Markdown Editor
 first-frame logs under `artifacts/platform-evidence/<platform>/`, use
 `node scripts/record-native-skia-evidence.mjs` to validate those markers and
-update only the platform's `skiaEvidence` block; full platform runtime status
-still requires the broader platform observations.
+update only the platform's `skiaEvidence` block. Provider preflight logs must
+name the matching Skia provider package or preflight summary and include a
+passing preflight/test/build marker; generic passing test output is not enough.
+Full platform runtime status still requires the broader platform observations.
 
 Windows native uses the MSVC WGPU toolchain path: Visual Studio C++ build
 tools, vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode with the official

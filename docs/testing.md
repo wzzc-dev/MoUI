@@ -105,17 +105,21 @@ those runs are matching-host runtime evidence, not provider evidence.
 example entrypoint shape for Showcase, Markdown Editor, and Mo Workbench: each
 entrypoint must import `render/skia`, the matching `backend/<platform>/skia`
 provider, its shared app package, the smoke-only first-frame environment flag,
-and the `EmptyTypeface`/`SystemFontMgr` selection. That guard is package/wiring
+and the `EmptyTypeface`/`SystemFontMgr` selection. Showcase Skia entrypoints
+must also inject the matching platform capability summary so the host
+diagnostics card reports the selected host route. That guard is package/wiring
 evidence only; runtime presentation still needs the smoke or matching-host
 commands above.
 After a matching host has produced provider, fallback-unavailable, renderer
 smoke, Showcase first-frame, and Markdown Editor first-frame logs under
 `artifacts/platform-evidence/<platform>/`, use
 `node scripts/record-native-skia-evidence.mjs` to validate those log markers and
-update only that platform's `skiaEvidence` block. The helper intentionally
-leaves the broader platform runtime `status` unchanged; use the full platform
-recorder below only after service/input/window observations have also been
-collected.
+update only that platform's `skiaEvidence` block. Provider preflight logs must
+include both a platform Skia provider identity and a passing preflight, test, or
+build marker; a generic passing test summary is not enough. The helper
+intentionally leaves the broader platform runtime `status` unchanged; use the
+full platform recorder below only after service/input/window observations have
+also been collected.
 The Skia renderer package also exposes `skia_text_system()` for diagnostic text
 contract checks; `moon test moui/tests/text_conformance/native --target native`
 includes that path as measurement evidence, not as platform-window runtime
@@ -410,7 +414,8 @@ node scripts/record-native-skia-evidence.mjs \
 
 Use `linux` plus the Linux artifact directory on a Wayland host. Supplying only
 some logs records a partial `skiaEvidence` block and leaves omitted Skia
-observations pending.
+observations pending. The provider-preflight log still has to name the matching
+Skia provider package or preflight summary as well as a passing marker.
 
 When collecting release evidence on a configured host, update or regenerate the
 platform runtime evidence manifest with that host's results and validate it:

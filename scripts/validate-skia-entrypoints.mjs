@@ -12,6 +12,8 @@ const entries = [
     appImport: '"examples/showcase/app"',
     appConstructor: "@app.ShowcaseApp::new()",
     backendAlias: "@macos_skia_backend",
+    hostBackendImport: '"wzzc-dev/moui/backend/macos" @macos_backend',
+    hostSummaryCall: "@macos_backend.macos_capability_summary()",
     optionsType: "MacosSkiaAppOptions",
     runFunction: "run_app_with_options",
     envVar: "MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
@@ -24,6 +26,8 @@ const entries = [
     appImport: '"examples/showcase/app" @showcase_app',
     appConstructor: "@showcase_app.ShowcaseApp::new()",
     backendAlias: "@windows_skia_backend",
+    hostBackendImport: '"wzzc-dev/moui/backend/windows" @windows_backend',
+    hostSummaryCall: "@windows_backend.windows_capability_summary()",
     optionsType: "WindowsSkiaAppOptions",
     runFunction: "run_app_with_options",
     envVar: "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT",
@@ -35,6 +39,8 @@ const entries = [
     appImport: '"examples/showcase/app" @showcase_app',
     appConstructor: "@showcase_app.ShowcaseApp::new()",
     backendAlias: "@linux_skia_backend",
+    hostBackendImport: '"wzzc-dev/moui/backend/linux" @linux_backend',
+    hostSummaryCall: "@linux_backend.linux_capability_summary()",
     optionsType: "LinuxSkiaAppOptions",
     runFunction: "run_app_with_options",
     envVar: "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
@@ -126,6 +132,9 @@ for (const entry of entries) {
 
   assertContains(pkg, '"moonbitlang/core/env"', pkgPath);
   assertContains(pkg, platformBackendImport[entry.platform], pkgPath);
+  if (entry.hostBackendImport) {
+    assertContains(pkg, entry.hostBackendImport, pkgPath);
+  }
   assertContains(pkg, '"wzzc-dev/moui/render/skia" @skia_renderer', pkgPath);
   assertContains(pkg, entry.appImport, pkgPath);
   assertContains(pkg, 'supported_targets = "native"', pkgPath);
@@ -144,6 +153,10 @@ for (const entry of entries) {
   assertContains(main, "///|", mainPath);
   assertContains(main, "fn main", mainPath);
   assertContains(main, entry.appConstructor, mainPath);
+  if (entry.hostSummaryCall) {
+    assertContains(main, "runtime_with_host_summary", mainPath);
+    assertContains(main, entry.hostSummaryCall, mainPath);
+  }
   assertContains(main, entry.envVar, mainPath);
   assertContains(main, "==\n    Some(\"1\")", mainPath);
   assertContains(main, "let font_resolution = if exit_after_first_present", mainPath);

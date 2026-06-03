@@ -170,7 +170,7 @@ try {
   const providerLog = writeArtifact(
     "windows",
     "skia-provider.log",
-    "Total tests: 4, passed: 4, failed: 0.\n",
+    "moon test moui/backend/windows/skia --target native\nTotal tests: 4, passed: 4, failed: 0.\n",
   );
   const fallbackLog = writeArtifact(
     "windows",
@@ -243,6 +243,63 @@ try {
       badShowcaseLog,
     ]),
     "Showcase first-frame log is missing expected marker",
+  );
+
+  const genericProviderPath = writeManifest("generic-provider-log.json", "windows");
+  const genericProviderLog = writeArtifact(
+    "windows",
+    "generic-provider.log",
+    "Total tests: 4, passed: 4, failed: 0.\n",
+  );
+  expectFail(
+    "reject generic passing tests as provider evidence",
+    runRecorder([
+      genericProviderPath,
+      "windows",
+      "--host",
+      "Windows MSVC CI",
+      "--provider-preflight-log",
+      genericProviderLog,
+    ]),
+    "provider preflight log is missing expected marker",
+  );
+
+  const failedProviderPath = writeManifest("failed-provider-log.json", "windows");
+  const failedProviderLog = writeArtifact(
+    "windows",
+    "failed-provider.log",
+    "moon test moui/backend/windows/skia --target native\nTotal tests: 4, passed: 3, failed: 1.\n",
+  );
+  expectFail(
+    "reject failed provider package test",
+    runRecorder([
+      failedProviderPath,
+      "windows",
+      "--host",
+      "Windows MSVC CI",
+      "--provider-preflight-log",
+      failedProviderLog,
+    ]),
+    "provider preflight log is missing expected marker",
+  );
+
+  const preflightOnlyPath = writeManifest("preflight-only-log.json", "windows");
+  const preflightOnlyLog = writeArtifact(
+    "windows",
+    "preflight-only.log",
+    "Windows Skia provider preflight: renderer=unavailable; can_render=false\n",
+  );
+  expectFail(
+    "reject provider preflight without pass signal",
+    runRecorder([
+      preflightOnlyPath,
+      "windows",
+      "--host",
+      "Windows MSVC CI",
+      "--provider-preflight-log",
+      preflightOnlyLog,
+    ]),
+    "provider preflight log is missing expected marker",
   );
 
   expectFail(

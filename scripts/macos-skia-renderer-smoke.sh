@@ -752,6 +752,7 @@ write_showcase_pkg_config() {
   cat > "$showcase_pkg" <<EOF
 import {
   "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "wzzc-dev/moui/render/skia" @skia_renderer,
   "examples/showcase/app",

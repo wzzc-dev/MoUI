@@ -78,4 +78,21 @@ expectFail(
   "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
 );
 
+const badHostSummaryRoot = mkdtempSync(join(tmpdir(), "moui-skia-entrypoints-bad-host-summary-"));
+cpSync(tmp, badHostSummaryRoot, { recursive: true });
+const badShowcaseMain = join(badHostSummaryRoot, "examples/showcase/macos_skia/main.mbt");
+writeFileSync(
+  badShowcaseMain,
+  readFileSync(badShowcaseMain, "utf8")
+    .replace(
+      "app.runtime_with_host_summary(@macos_backend.macos_capability_summary())",
+      "app.runtime()",
+    ),
+);
+expectFail(
+  "reject missing Showcase Skia host summary",
+  badHostSummaryRoot,
+  "runtime_with_host_summary",
+);
+
 console.log("native Skia entrypoint validator tests: ok");
