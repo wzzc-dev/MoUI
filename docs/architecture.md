@@ -122,10 +122,12 @@ and label while leaving concrete async execution outside `core`.
 `Effect::host_service` is the standard structured-run helper for host-service
 bridges; it fixes the descriptor kind to `host-service` while the app/backend
 still owns the actual service call. `Effect::task` starts a one-shot
-cancellable task from an effect update: the runtime records an active task
-descriptor, completes it on the first typed dispatch, cancels an older active
-task when a new task with the same key starts, and cancels active tasks when
-the runtime is destroyed.
+cancellable task from an effect update, and `Effect::service_task` is the
+standard helper for service-like one-shot tasks that need the same runtime-owned
+cancellation lifecycle plus a stable `service` descriptor kind: the runtime
+records an active task descriptor, completes it on the first typed dispatch,
+cancels an older active task when a new task with the same key starts, and
+cancels active tasks when the runtime is destroyed.
 `Effect::plan_summary` exposes a platform-neutral diagnostic summary of the
 effect tree, including batch, send, anonymous dispatch, structured run, task,
 none, scheduled leaf count, max depth, structured effect descriptors, and
@@ -201,10 +203,11 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   entries, active subscription descriptors, and subscription lifecycle entries
   so tooling can identify which tasks and sources completed, were reused, or
   were canceled without inspecting app messages. Structured effect descriptors
-  from `Effect::run` and `Effect::task` travel through effect summaries so
-  tooling can identify planned host-service or task runners without inspecting
-  `Msg` values; duplicate descriptor-key counts/names make planned key conflicts
-  visible before execution. Runtime
+  from `Effect::run`, `Effect::host_service`, `Effect::task`, and
+  `Effect::service_task` travel through effect summaries so tooling can identify
+  planned host-service or service/task runners without inspecting `Msg` values;
+  duplicate descriptor-key counts/names make planned key conflicts visible
+  before execution. Runtime
   inspector snapshots also expose platform-neutral pipeline pass counters for
   rebuild, layout, paint, and draw-command building. It keeps
   the latest effect summary, latest scheduled effect summary, and latest

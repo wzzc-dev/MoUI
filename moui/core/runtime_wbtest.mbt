@@ -507,7 +507,7 @@ test "program effect tasks complete on first dispatch and ignore stale dispatche
     init=() => {
       (
         "pending",
-        Effect::task(key="task:load", kind="service", label="Load task", start=dispatch => {
+        Effect::service_task(key="task:load", label="Load task", start=dispatch => {
           task_dispatch.val = Some(dispatch)
           Some(() => cleanup_count.val = cleanup_count.val + 1)
         }),
@@ -543,6 +543,10 @@ test "program effect tasks complete on first dispatch and ignore stale dispatche
   inspect(
     initial.last_scheduled_effect_summary.descriptors[0].key,
     content="task:load",
+  )
+  inspect(
+    initial.last_scheduled_effect_summary.descriptors[0].kind,
+    content="service",
   )
   match task_dispatch.val {
     Some(dispatch) => dispatch(ProgramTaskFinished("done"))
@@ -585,7 +589,7 @@ test "program effect tasks cancel by key change and runtime destroy" {
     label : String,
     dispatch_ref : Ref[((ProgramTaskMsg) -> Unit)?],
   ) => {
-    Effect::task(key="task:replaceable", kind="service", label~, start=dispatch => {
+    Effect::service_task(key="task:replaceable", label~, start=dispatch => {
       dispatch_ref.val = Some(dispatch)
       Some(() => cleanup_log.push(label))
     })

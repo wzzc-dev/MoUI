@@ -260,10 +260,11 @@ theme, and native context menus. Effect-capable apps should return
 should carry a stable diagnostic key, call the service from the effect runner,
 and dispatch a typed completion message for `Unavailable`, synchronous
 responses, and pending async completions. Use `Effect::run` for custom
-structured effect kinds and `Effect::task` when a one-shot async task needs
-runtime-owned cancellation, completion, and stale-dispatch diagnostics. For
-pending app-owned services, store the pending request id in the model and
-declare `HostAppServices::completion_subscription` from
+structured effect kinds, `Effect::service_task` when a service-like one-shot
+async task needs runtime-owned cancellation, completion, and stale-dispatch
+diagnostics, and `Effect::task` for custom task descriptor kinds. For pending
+app-owned services, store the pending request id in the model and declare
+`HostAppServices::completion_subscription` from
 `subscriptions=model => ...` so the later host callback re-enters the same
 typed message loop and is canceled when the model no longer declares it.
 `views` should only emit messages such as `BrowseRequested` or
