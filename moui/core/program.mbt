@@ -80,6 +80,15 @@ pub fn[Msg] Effect::run(
 }
 
 ///|
+pub fn[Msg] Effect::host_service(
+  key~ : String,
+  run~ : ((Msg) -> Unit) -> Unit,
+  label? : String = "",
+) -> Effect[Msg] {
+  Effect::run(key~, run~, kind="host-service", label~)
+}
+
+///|
 pub fn[Msg] Effect::task(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,

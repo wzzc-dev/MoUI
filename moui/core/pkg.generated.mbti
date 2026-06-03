@@ -597,6 +597,7 @@ pub(all) enum Effect[Msg] {
 }
 pub fn[Msg] Effect::batch(Array[Self[Msg]]) -> Self[Msg]
 pub fn[Msg] Effect::dispatch(((Msg) -> Unit) -> Unit) -> Self[Msg]
+pub fn[Msg] Effect::host_service(key~ : String, run~ : ((Msg) -> Unit) -> Unit, label? : String) -> Self[Msg]
 pub fn[Msg, NextMsg] Effect::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Effect::none() -> Self[Msg]
 pub fn[Msg] Effect::plan_summary(Self[Msg]) -> EffectPlanSummary

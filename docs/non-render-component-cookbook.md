@@ -233,9 +233,8 @@ fn request_native_menu(
   services : @host.HostAppServices,
   commands : Array[@core.ActionCommand],
 ) -> @core.Effect[Msg] {
-  @core.Effect::run(
+  @core.Effect::host_service(
     key="host:context-menu",
-    kind="host-service",
     label="Show context menu",
     run=dispatch => {
       let response = services.show_context_menu(commands)
@@ -257,10 +256,11 @@ moon test examples/command_palette/app --target native
 
 Use `@host.HostAppServices` for clipboard, file dialogs, URL opening, system
 theme, and native context menus. Effect-capable apps should return
-`Effect::run` from `Program::new` updates when the runner should carry a stable
-diagnostic key, call the service from the effect runner, and dispatch a typed
-completion message for `Unavailable`, synchronous responses, and pending async
-completions. Use `Effect::task` instead when a one-shot async task needs
+`Effect::host_service` from `Program::new` updates when the host-service runner
+should carry a stable diagnostic key, call the service from the effect runner,
+and dispatch a typed completion message for `Unavailable`, synchronous
+responses, and pending async completions. Use `Effect::run` for custom
+structured effect kinds and `Effect::task` when a one-shot async task needs
 runtime-owned cancellation, completion, and stale-dispatch diagnostics. For
 pending app-owned services, store the pending request id in the model and
 declare `HostAppServices::completion_subscription` from
@@ -277,9 +277,8 @@ message loop.
 fn request_browse(
   services : @host.HostAppServices,
 ) -> @core.Effect[ImportMsg] {
-  @core.Effect::run(
+  @core.Effect::host_service(
     key="host:file-import",
-    kind="host-service",
     label="Import files",
     run=dispatch => {
       let response = services.open_file(title="Import files", filters=["csv", "json"])
