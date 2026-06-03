@@ -204,9 +204,11 @@ sessions, assistant transcripts, command evidence, diff/file context, and
 diagnostics. Pi RPC is the first real backend provider, while Local (`fixture`)
 is the smoke backend used to verify backend switching and keep the product shell
 agent-neutral.
-Its current UI keeps the first screen focused on the current task strip,
-the transcript thread, a right-side workbench inspector on wide windows, and a
-bottom composer instead of long placeholder validation text,
+Its current UI uses a compact Codex-like desktop chrome with a lower-left
+settings entry for light/dark appearance and workbench preferences, and keeps
+the first screen focused on the current task strip, the transcript thread, a
+right-side workbench inspector on wide windows, and a bottom composer instead
+of long placeholder validation text,
 future-workflow filler, or hard-coded attachment cards. The shell now derives
 its sidebar, main canvas, scroll area, and composer dimensions from the runtime
 viewport instead of a fixed `1200x750` surface, so the macOS Skia entrypoint can

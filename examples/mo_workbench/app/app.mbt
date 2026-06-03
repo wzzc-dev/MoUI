@@ -286,6 +286,7 @@ pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
   selected_agent_id : String
+  appearance_mode : String
   main_scroll_offset_y : Double
   prompt : String
   composer_controls_expanded : Bool
@@ -320,6 +321,7 @@ pub(all) struct WorkbenchUpdate {
 pub(all) enum WorkbenchMsg {
   SelectSession(String)
   SelectPanel(String)
+  SetAppearanceMode(String)
   SwitchAgentBackend(String)
   CreateConversation
   SelectAgent(String)
@@ -1100,6 +1102,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     selected_session_id: "moui-skia",
     selected_panel: "agent",
     selected_agent_id: "",
+    appearance_mode: "system",
     main_scroll_offset_y: 0.0,
     prompt: "",
     composer_controls_expanded: false,
@@ -1138,6 +1141,7 @@ pub fn WorkbenchModel::update(
   match message {
     SelectSession(id) => self.select_session(id)
     SelectPanel(panel) => { ..self, selected_panel: panel }
+    SetAppearanceMode(mode) => self.set_appearance_mode(mode)
     SwitchAgentBackend(id) => self.switch_backend(id)
     CreateConversation => self.create_conversation()
     SelectAgent(id) => self.select_agent(id)
@@ -1194,6 +1198,23 @@ pub fn WorkbenchModel::update(
 ///|
 pub fn update(model : WorkbenchModel, message : WorkbenchMsg) -> WorkbenchModel {
   model.update(message)
+}
+
+///|
+fn WorkbenchModel::set_appearance_mode(
+  self : WorkbenchModel,
+  mode : String,
+) -> WorkbenchModel {
+  let normalized = mode.trim().to_owned()
+  match normalized {
+    "system" | "light" | "dark" =>
+      {
+        ..self,
+        appearance_mode: normalized,
+        last_status: "Appearance mode changed",
+      }
+    _ => { ..self, last_status: "Appearance mode unavailable" }
+  }
 }
 
 ///|
@@ -1521,6 +1542,7 @@ fn WorkbenchModel::select_session(
   {
     ..self,
     selected_session_id: id,
+    selected_panel: "agent",
     main_scroll_offset_y: 0.0,
     last_status: "Workbench session selected",
   }.reset_active_session_surface()
@@ -1533,6 +1555,7 @@ fn WorkbenchModel::reset_active_session_surface(
   {
     ..self,
     prompt: "",
+    selected_panel: "agent",
     composer_controls_expanded: false,
     workspace_details_expanded: false,
     plan: [],
