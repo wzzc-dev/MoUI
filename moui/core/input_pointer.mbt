@@ -195,8 +195,15 @@ fn ElementNode::dispatch_sheet_pointer(
           handler()
           { changed: true, activated: true, focused: child_result.focused }
         }
-        None => child_result
+        None =>
+          if render.frame.contains(event.position) {
+            { changed: true, activated: false, focused: child_result.focused }
+          } else {
+            child_result
+          }
       }
+    } else if render.frame.contains(event.position) {
+      { changed: true, activated: false, focused: child_result.focused }
     } else {
       child_result
     }

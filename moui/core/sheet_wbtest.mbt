@@ -68,3 +68,28 @@ test "sheet dismisses only when pointer up is outside content" {
   )
   inspect(dismiss_count.val, content="1")
 }
+
+///|
+test "sheet consumes inert content clicks before scrim" {
+  let scrim_count = Ref(0)
+  let runtime = RuntimeState::new_spec(
+    root=ViewSpec::StackSpec({
+      key: None,
+      children: [
+        ViewSpec::EmptySpec
+        .background(Color::black())
+        .on_tap(() => scrim_count.val = scrim_count.val + 1),
+        sheet_test_spec(),
+      ],
+    }),
+    size=Size::new(width=200.0, height=160.0),
+  )
+  let position = Point::new(x=40.0, y=120.0)
+  runtime.dispatch_event(
+    Pointer(PointerEvent::new(position~, phase=PointerPhase::Down)),
+  )
+  runtime.dispatch_event(
+    Pointer(PointerEvent::new(position~, phase=PointerPhase::Up)),
+  )
+  inspect(scrim_count.val, content="0")
+}
