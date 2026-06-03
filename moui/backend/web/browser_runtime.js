@@ -607,24 +607,13 @@ export function createWindowWebImports(options = {}) {
       let lastButtonEventAt = 0;
       let suppressMouseFallback = null;
       let suppressClickFallback = null;
+      const fallbackDedupWindowMs = 250;
       const add = (target, type, handler, options) => {
         target.addEventListener(type, handler, options);
         handlers.push([target, type, handler, options]);
       };
-      const pointerSignature = event => ({
-        type: event.type,
-        button: Number.isFinite(event.button) ? event.button | 0 : 0,
-        x: Number.isFinite(event.clientX) ? Math.round(event.clientX) : 0,
-        y: Number.isFinite(event.clientY) ? Math.round(event.clientY) : 0,
-      });
-      const samePointerSignature = (event, signature) => {
-        if (!signature) return false;
-        const current = pointerSignature(event);
-        return current.type === signature.type &&
-          current.button === signature.button &&
-          current.x === signature.x &&
-          current.y === signature.y;
-      };
+      const sameEventType = (event, signature) =>
+        !!signature && event.type === signature.type;
       const compatibilityMouseType = type => {
         switch (type) {
           case "pointerenter": return "mouseenter";
@@ -639,31 +628,31 @@ export function createWindowWebImports(options = {}) {
         lastPointerEventAt = Date.now();
         const mouseType = compatibilityMouseType(event.type);
         suppressMouseFallback = mouseType
-          ? { ...pointerSignature(event), type: mouseType }
+          ? { type: mouseType }
           : null;
       };
       const markButtonEvent = event => {
         lastButtonEventAt = Date.now();
         if (event.type === "pointerup" || event.type === "mouseup") {
-          suppressClickFallback = { ...pointerSignature(event), type: "click" };
+          suppressClickFallback = { type: "click" };
         } else if (event.type === "pointerdown" || event.type === "mousedown") {
           suppressClickFallback = null;
         }
       };
       const shouldUseMouseFallback = event => {
-        if (samePointerSignature(event, suppressMouseFallback)) {
+        if (sameEventType(event, suppressMouseFallback)) {
           suppressMouseFallback = null;
           return false;
         }
-        return Date.now() - lastPointerEventAt > 250;
+        return Date.now() - lastPointerEventAt > fallbackDedupWindowMs;
       };
       const shouldUseClickFallback = event => {
-        if (samePointerSignature(event, suppressClickFallback)) {
+        if (sameEventType(event, suppressClickFallback)) {
           suppressClickFallback = null;
           return false;
         }
         suppressClickFallback = null;
-        return Date.now() - lastButtonEventAt > 250;
+        return Date.now() - lastButtonEventAt > fallbackDedupWindowMs;
       };
       const hostHasFocus = () => textInputHostHasFocus(textState);
       const acceptFileDrag = event => {

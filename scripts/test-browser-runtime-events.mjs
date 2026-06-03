@@ -190,6 +190,31 @@ withMockClock(tick => {
 
 withMockClock(tick => {
   const { canvas, events } = createRuntime();
+  canvas.dispatch("pointerdown", { clientX: 34, clientY: 46 });
+  canvas.dispatch("pointerup", { clientX: 34, clientY: 46 });
+  tick(1200);
+  canvas.dispatch("click", { clientX: 36, clientY: 48 });
+  expectKinds(
+    "pointer release suppresses delayed drifted click fallback",
+    events,
+    [23, 24],
+  );
+});
+
+withMockClock(tick => {
+  const { canvas, events } = createRuntime();
+  canvas.dispatch("pointermove", { clientX: 12, clientY: 18 });
+  tick(1200);
+  canvas.dispatch("mousemove", { clientX: 13, clientY: 19 });
+  expectKinds(
+    "pointer movement suppresses delayed drifted mouse fallback",
+    events,
+    [21],
+  );
+});
+
+withMockClock(tick => {
+  const { canvas, events } = createRuntime();
   canvas.dispatch("mousedown", { clientX: 52, clientY: 64 });
   canvas.dispatch("mouseup", { clientX: 52, clientY: 64 });
   tick(400);
