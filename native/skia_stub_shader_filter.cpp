@@ -114,6 +114,15 @@ moonbit_skia_shader_linear_gradient(
   uint32_t color1_argb,
   int32_t tile_mode
 ) {
+  if (
+    !std::isfinite(x0) ||
+    !std::isfinite(y0) ||
+    !std::isfinite(x1) ||
+    !std::isfinite(y1) ||
+    (x0 == x1 && y0 == y1)
+  ) {
+    return moonbit_skia_make_shader_wrapper(nullptr);
+  }
 #if defined(SKIA_MBT_HAS_SKIA)
   SkPoint points[2] = {
     SkPoint::Make(x0, y0),

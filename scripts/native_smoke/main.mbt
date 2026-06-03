@@ -863,6 +863,7 @@ fn main {
   }
   println("native smoke shader resource plan count")
   println(shader_resource_plan.length())
+  let invalid_shader_scalar : Float = 0.0 / 0.0
   if @native.Shader::linear_gradient(
       @skia.Point::new(4, 4),
       @skia.Point::new(4, 4),
@@ -881,7 +882,38 @@ fn main {
   }
   println("native smoke shader linear gradient validation")
   println(1)
-  let invalid_shader_scalar : Float = 0.0 / 0.0
+  if @native.Shader::linear_gradient(
+      @skia.Point::new(invalid_shader_scalar, 4),
+      @skia.Point::new(8, 4),
+      @skia.Color::red(),
+      @skia.Color::blue(),
+    )
+    is Some(_) ||
+    @native.Shader::linear_gradient(
+      @skia.Point::new(4, 4),
+      @skia.Point::new(1.0 / 0.0, 4),
+      @skia.Color::red(),
+      @skia.Color::blue(),
+    )
+    is Some(_) ||
+    @skia.ShaderDescriptor::linear_gradient(
+      @skia.Point::new(invalid_shader_scalar, 4),
+      @skia.Point::new(8, 4),
+      @skia.Color::red(),
+      @skia.Color::blue(),
+    )
+    is Some(_) ||
+    @skia.ShaderDescriptor::linear_gradient(
+      @skia.Point::new(4, 4),
+      @skia.Point::new(1.0 / 0.0, 4),
+      @skia.Color::red(),
+      @skia.Color::blue(),
+    )
+    is Some(_) {
+    fail_smoke("non-finite linear gradient shaders should be rejected")
+  }
+  println("native smoke shader linear gradient finite validation")
+  println(1)
   if @native.Shader::radial_gradient(
       @skia.Point::new(invalid_shader_scalar, 4),
       2.0,

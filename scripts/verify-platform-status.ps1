@@ -342,6 +342,7 @@ if ($status.schema_version -ge 3) {
     "shader.draw",
     "shader.resource-plan",
     "shader.linear-gradient-validation",
+    "shader.linear-gradient-finite-validation",
     "shader.radial-gradient-validation",
     "shader-filter.invalid-descriptor-resources",
     "shader-filter.invalid-replay-skipped",
@@ -723,6 +724,7 @@ if ($status.schema_version -ge 3) {
       "native smoke shader draws" = "3"
       "native smoke shader resource plan count" = "3"
       "native smoke shader linear gradient validation" = "1"
+      "native smoke shader linear gradient finite validation" = "1"
       "native smoke shader radial gradient validation" = "1"
       "native smoke invalid shader filter descriptor resources" = "4"
       "native smoke invalid shader filter replay skipped" = "2"
