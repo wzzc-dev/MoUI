@@ -1658,13 +1658,18 @@ pub fn StateSubscription::is_active(Self) -> Bool
 pub struct Subscription[Msg] {
   // private fields
 }
+pub fn[Msg] Subscription::animation_tick(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::batch(Array[Self[Msg]]) -> Self[Msg]
 pub fn[Msg] Subscription::descriptors(Self[Msg]) -> Array[SubscriptionDescriptor]
 pub fn[Msg] Subscription::listen(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg, NextMsg] Subscription::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Subscription::none() -> Self[Msg]
 pub fn[Msg] Subscription::plan_summary(Self[Msg]) -> SubscriptionPlanSummary
+pub fn[Msg] Subscription::route_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::run(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
+pub fn[Msg] Subscription::service_completion(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
+pub fn[Msg] Subscription::timer(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
+pub fn[Msg] Subscription::window_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 
 pub(all) enum SubscriptionCancelReason {
   SubscriptionKeyChanged

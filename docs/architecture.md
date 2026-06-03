@@ -132,12 +132,15 @@ and max-pending counters without requiring `Msg` values to be serializable.
 `Program` constructors also accept
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
-callback. `Subscription::plan_summary` exposes the declared none, batch,
-source, duplicate-key counts/names, max-depth, and declared source descriptor
-structure without starting sources. Existing keys are reused across model
-changes, missing keys are canceled, duplicate keys in one subscription batch are
-ignored after the first and reported in runtime diagnostics, and
-`Subscription::map`
+callback. `Subscription::timer`, `Subscription::animation_tick`,
+`Subscription::window_event`, `Subscription::route_event`, and
+`Subscription::service_completion` standardize descriptor kinds for common
+ongoing source categories without starting any concrete platform work in
+`core`. `Subscription::plan_summary` exposes the declared none, batch, source,
+duplicate-key counts/names, max-depth, and declared source descriptor structure
+without starting sources. Existing keys are reused across model changes,
+missing keys are canceled, duplicate keys in one subscription batch are ignored
+after the first and reported in runtime diagnostics, and `Subscription::map`
 preserves child feature message and descriptor identity while lifting messages
 to a parent type. Dispatchers captured by canceled or destroyed subscriptions
 are ignored, so stale callbacks cannot re-enter the model loop after their

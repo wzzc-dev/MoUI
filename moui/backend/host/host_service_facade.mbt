@@ -239,12 +239,17 @@ pub fn[Msg] HostAppServices::completion_subscription(
   } else {
     key
   }
-  @core.Subscription::run(key=subscription_key, kind~, label~, start=dispatch => {
+  let start = dispatch => {
     let (_, cleanup) = self.on_completed_with_cleanup(id, completion => {
       dispatch(map(completion))
     })
     cleanup
-  })
+  }
+  if kind == "host-service" {
+    @core.Subscription::service_completion(key=subscription_key, label~, start~)
+  } else {
+    @core.Subscription::run(key=subscription_key, kind~, label~, start~)
+  }
 }
 
 ///|

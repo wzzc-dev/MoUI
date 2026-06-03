@@ -681,7 +681,7 @@ test "subscription descriptors and map preserve feature composition" {
   let child_dispatch : Ref[((String) -> Unit)?] = Ref(None)
   let child = Subscription::batch([
     Subscription::none(),
-    Subscription::run(key="child-tick", kind="timer", label="Child tick", start=dispatch => {
+    Subscription::timer(key="child-tick", label="Child tick", start=dispatch => {
       child_dispatch.val = Some(dispatch)
       None
     }),
@@ -743,6 +743,43 @@ test "subscription descriptors and map preserve feature composition" {
 }
 
 ///|
+test "subscription source helpers standardize diagnostic kinds" {
+  let subscription : Subscription[String] = Subscription::batch([
+    Subscription::timer(key="timer:refresh", label="Refresh timer", start=_dispatch => {
+      None
+    }),
+    Subscription::animation_tick(key="animation:frame", label="Frame tick", start=_dispatch => {
+      None
+    }),
+    Subscription::window_event(key="window:resize", label="Window resize", start=_dispatch => {
+      None
+    }),
+    Subscription::route_event(key="route:deep-link", label="Deep link", start=_dispatch => {
+      None
+    }),
+    Subscription::service_completion(
+      key="host-service:completion:7",
+      label="Host completion",
+      start=_dispatch => None,
+    ),
+  ])
+  let summary = subscription.plan_summary()
+  inspect(summary.source_count, content="5")
+  inspect(summary.descriptors[0].kind, content="timer")
+  inspect(summary.descriptors[1].kind, content="animation")
+  inspect(summary.descriptors[2].kind, content="window-event")
+  inspect(summary.descriptors[3].kind, content="route-event")
+  inspect(summary.descriptors[4].kind, content="host-service")
+  let mapped = subscription.map(message => "parent:" + message)
+  let mapped_summary = mapped.plan_summary()
+  inspect(mapped_summary.descriptors[0].label, content="Refresh timer")
+  inspect(
+    mapped_summary.descriptors[4].key,
+    content="host-service:completion:7",
+  )
+}
+
+///|
 enum ProgramSubscriptionMsg {
   ProgramSubscriptionToggle
   ProgramSubscriptionTick
@@ -781,19 +818,14 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
     },
     view=model => runtime_test_label("\{model.channel}:\{model.ticks}"),
     subscriptions=model => {
-      Subscription::run(
-        key="timer:\{model.channel}",
-        kind="timer",
-        label=model.channel,
-        start=dispatch => {
-          if model.channel == "alpha" {
-            alpha_dispatch.val = Some(dispatch)
-          } else {
-            beta_dispatch.val = Some(dispatch)
-          }
-          Some(() => cleanup_log.push(model.channel))
-        },
-      )
+      Subscription::timer(key="timer:\{model.channel}", label=model.channel, start=dispatch => {
+        if model.channel == "alpha" {
+          alpha_dispatch.val = Some(dispatch)
+        } else {
+          beta_dispatch.val = Some(dispatch)
+        }
+        Some(() => cleanup_log.push(model.channel))
+      })
     },
   )
   let runtime = AppRuntime::new_program(
@@ -922,20 +954,15 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
     view=model => runtime_test_label("\{model.channel}:\{model.ticks}"),
     subscriptions=_model => {
       Subscription::batch([
-        Subscription::listen(key="instant", kind="timer", label="Instant", start=dispatch => {
+        Subscription::timer(key="instant", label="Instant", start=dispatch => {
           start_count.val = start_count.val + 1
           dispatch(ProgramSubscriptionTick)
           None
         }),
-        Subscription::listen(
-          key="instant",
-          kind="timer",
-          label="Duplicate ignored",
-          start=_dispatch => {
-            start_count.val = start_count.val + 1
-            None
-          },
-        ),
+        Subscription::timer(key="instant", label="Duplicate ignored", start=_dispatch => {
+          start_count.val = start_count.val + 1
+          None
+        }),
       ])
     },
   )

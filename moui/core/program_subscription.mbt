@@ -215,6 +215,51 @@ pub fn[Msg] Subscription::listen(
 }
 
 ///|
+pub fn[Msg] Subscription::timer(
+  key~ : String,
+  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
+  label? : String = "",
+) -> Subscription[Msg] {
+  Subscription::listen(key~, start~, kind="timer", label~)
+}
+
+///|
+pub fn[Msg] Subscription::animation_tick(
+  key~ : String,
+  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
+  label? : String = "",
+) -> Subscription[Msg] {
+  Subscription::listen(key~, start~, kind="animation", label~)
+}
+
+///|
+pub fn[Msg] Subscription::window_event(
+  key~ : String,
+  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
+  label? : String = "",
+) -> Subscription[Msg] {
+  Subscription::listen(key~, start~, kind="window-event", label~)
+}
+
+///|
+pub fn[Msg] Subscription::route_event(
+  key~ : String,
+  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
+  label? : String = "",
+) -> Subscription[Msg] {
+  Subscription::listen(key~, start~, kind="route-event", label~)
+}
+
+///|
+pub fn[Msg] Subscription::service_completion(
+  key~ : String,
+  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
+  label? : String = "",
+) -> Subscription[Msg] {
+  Subscription::listen(key~, start~, kind="host-service", label~)
+}
+
+///|
 pub fn[Msg, NextMsg] Subscription::map(
   self : Subscription[Msg],
   map : (Msg) -> NextMsg,

@@ -353,15 +353,13 @@ fn diagnostics_inspector_sample_program(
     subscriptions=model => {
       if model.event_count > 0 {
         @core.Subscription::batch([
-          @core.Subscription::run(
+          @core.Subscription::animation_tick(
             key="diagnostics:tick",
-            kind="animation",
             label="Inspector tick",
             start=_dispatch => Some(() => ()),
           ),
-          @core.Subscription::run(
+          @core.Subscription::animation_tick(
             key="diagnostics:tick",
-            kind="animation",
             label="Duplicate tick ignored",
             start=_dispatch => Some(() => ()),
           ),
