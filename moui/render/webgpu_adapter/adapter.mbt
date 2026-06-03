@@ -1375,6 +1375,7 @@ fn image_fit_host_code(fit : @core.ImageFit) -> Int {
   match fit {
     @core.ImageFit::Contain => 0
     @core.ImageFit::Cover => 1
+    @core.ImageFit::Stretch => 2
   }
 }
 

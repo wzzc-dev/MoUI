@@ -725,6 +725,20 @@ test "skia image placement records contain and cover sampling geometry" {
   inspect(tall_cover.u1, content="1")
   inspect(tall_cover.v1, content="0.75")
 
+  let stretch = skia_image_placement(
+    frame,
+    @core.Size::new(width=200.0, height=100.0),
+    @core.ImageFit::Stretch,
+  )
+  inspect(stretch.frame.origin.x, content="10")
+  inspect(stretch.frame.origin.y, content="20")
+  inspect(stretch.frame.size.width, content="100")
+  inspect(stretch.frame.size.height, content="100")
+  inspect(stretch.u0, content="0")
+  inspect(stretch.v0, content="0")
+  inspect(stretch.u1, content="1")
+  inspect(stretch.v1, content="1")
+
   let degenerate = skia_image_placement(
     frame,
     @core.Size::new(width=0.0, height=200.0),

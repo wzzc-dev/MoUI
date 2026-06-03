@@ -48,6 +48,7 @@ fn calculate_image_placement(
   let frame_ratio = frame.size.width / frame.size.height
 
   match fit {
+    @core.ImageFit::Stretch => { frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
     @core.ImageFit::Contain =>
       if image_ratio > frame_ratio {
         let scaled_height = frame.size.width / image_ratio
