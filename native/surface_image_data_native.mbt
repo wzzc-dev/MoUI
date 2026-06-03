@@ -307,14 +307,34 @@ pub fn Image::from_encoded_bytes(bytes : Bytes) -> Image? {
 }
 
 ///|
+fn native_image_encode_format_is_supported(
+  format : @skia.EncodedImageFormat,
+) -> Bool {
+  format is (@skia.PNG | @skia.JPEG | @skia.WEBP)
+}
+
+///|
+fn native_image_encode_quality(quality : Int) -> Int {
+  quality.clamp(min=0, max=100)
+}
+
+///|
 pub fn Image::encode_to_data(
   self : Image,
   format? : @skia.EncodedImageFormat = @skia.PNG,
   quality? : Int = 100,
 ) -> Data? {
-  Data::from_handle(
-    native_image_encode_to_data(self.handle, format.to_skia_ordinal(), quality),
-  )
+  if !native_image_encode_format_is_supported(format) {
+    None
+  } else {
+    Data::from_handle(
+      native_image_encode_to_data(
+        self.handle,
+        format.to_skia_ordinal(),
+        native_image_encode_quality(quality),
+      ),
+    )
+  }
 }
 
 ///|
