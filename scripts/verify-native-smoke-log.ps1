@@ -165,6 +165,7 @@ $defaultStageMarkers = @(
   "native smoke shader draws",
   "native smoke shader resource plan count",
   "native smoke shader linear gradient validation",
+  "native smoke shader radial gradient validation",
   "native smoke invalid shader filter descriptor resources",
   "native smoke invalid shader filter replay skipped",
   "native smoke invalid shader filter replay cache resources",
@@ -876,6 +877,10 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke shader linear gradient validation"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke shader radial gradient validation"
     Value = "1"
   }
   [pscustomobject]@{
