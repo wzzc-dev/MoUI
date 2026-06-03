@@ -233,10 +233,15 @@ fn request_native_menu(
   services : @host.HostAppServices,
   commands : Array[@core.ActionCommand],
 ) -> @core.Effect[Msg] {
-  @core.Effect::dispatch(dispatch => {
-    let response = services.show_context_menu(commands)
-    dispatch(HostMenuCompleted(response))
-  })
+  @core.Effect::run(
+    key="host:context-menu",
+    kind="host-service",
+    label="Show context menu",
+    run=dispatch => {
+      let response = services.show_context_menu(commands)
+      dispatch(HostMenuCompleted(response))
+    },
+  )
 }
 ```
 
@@ -252,9 +257,10 @@ moon test examples/command_palette/app --target native
 
 Use `@host.HostAppServices` for clipboard, file dialogs, URL opening, system
 theme, and native context menus. Effect-capable apps should return
-`Effect::dispatch` from `Program::new` updates, call the service from the effect
-runner, and dispatch a typed completion message for `Unavailable`, synchronous
-responses, and pending async completions. For pending app-owned services,
+`Effect::run` from `Program::new` updates when the runner should carry a stable
+diagnostic key, call the service from the effect runner, and dispatch a typed
+completion message for `Unavailable`, synchronous responses, and pending async
+completions. For pending app-owned services,
 register `HostAppServices::on_completed` with the pending request id so the
 later host callback re-enters the same typed message loop. `views` should only
 emit messages such as `BrowseRequested` or `RecordFileDrop(paths)`. When a
@@ -266,19 +272,24 @@ update so the parent still owns the top-level message loop.
 fn request_browse(
   services : @host.HostAppServices,
 ) -> @core.Effect[ImportMsg] {
-  @core.Effect::dispatch(dispatch => {
-    let response = services.open_file(title="Import files", filters=["csv", "json"])
-    dispatch(HostCompleted(file_dialog_completion(response)))
-    match response {
-      @host.HostServiceResponse::Pending(id) =>
-        ignore(
-          services.on_completed(id, completion => {
-            dispatch(HostCompleted(completion))
-          }),
-        )
-      _ => ()
-    }
-  })
+  @core.Effect::run(
+    key="host:file-import",
+    kind="host-service",
+    label="Import files",
+    run=dispatch => {
+      let response = services.open_file(title="Import files", filters=["csv", "json"])
+      dispatch(HostCompleted(file_dialog_completion(response)))
+      match response {
+        @host.HostServiceResponse::Pending(id) =>
+          ignore(
+            services.on_completed(id, completion => {
+              dispatch(HostCompleted(completion))
+            }),
+          )
+        _ => ()
+      }
+    },
+  )
 }
 ```
 

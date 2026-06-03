@@ -240,7 +240,15 @@ enum ProgramEffectMsg {
 test "effect plan summary describes nested effect structure" {
   let effect : Effect[String] = Effect::batch([
     Effect::send("first"),
-    Effect::batch([Effect::none(), Effect::dispatch(_dispatch => ())]),
+    Effect::batch([
+      Effect::none(),
+      Effect::run(
+        key="host:load",
+        kind="host-service",
+        label="Load host data",
+        run=_dispatch => (),
+      ),
+    ]),
   ])
   let summary = effect.plan_summary()
   assert_true(summary.root_kind == EffectPlanKind::EffectPlanBatch)
@@ -250,6 +258,14 @@ test "effect plan summary describes nested effect structure" {
   inspect(summary.dispatch_count, content="1")
   inspect(summary.scheduled_count, content="2")
   inspect(summary.max_depth, content="3")
+  inspect(summary.descriptors.length(), content="1")
+  inspect(summary.descriptors[0].key, content="host:load")
+  inspect(summary.descriptors[0].kind, content="host-service")
+  inspect(summary.descriptors[0].label, content="Load host data")
+  let mapped = effect.map(message => "parent:" + message)
+  let mapped_summary = mapped.plan_summary()
+  inspect(mapped_summary.descriptors.length(), content="1")
+  inspect(mapped_summary.descriptors[0].key, content="host:load")
 }
 
 ///|
@@ -319,10 +335,15 @@ test "program effects can dispatch typed follow-up messages" {
         ProgramEffectStart =>
           (
             "running",
-            Effect::dispatch(dispatch => {
-              dispatch(ProgramEffectBoot("queued"))
-              dispatch(ProgramEffectFinished("done"))
-            }),
+            Effect::run(
+              key="effect:program-follow-up",
+              kind="task",
+              label="Program follow-up",
+              run=dispatch => {
+                dispatch(ProgramEffectBoot("queued"))
+                dispatch(ProgramEffectFinished("done"))
+              },
+            ),
           )
         ProgramEffectBoot(value) => (value, Effect::none())
         ProgramEffectFinished(value) => (value, Effect::none())
@@ -376,6 +397,18 @@ test "program effects can dispatch typed follow-up messages" {
     EffectPlanKind::EffectPlanDispatch,
   )
   inspect(snapshot.last_scheduled_effect_summary.scheduled_count, content="1")
+  inspect(
+    snapshot.last_scheduled_effect_summary.descriptors.length(),
+    content="1",
+  )
+  inspect(
+    snapshot.last_scheduled_effect_summary.descriptors[0].key,
+    content="effect:program-follow-up",
+  )
+  inspect(
+    snapshot.last_scheduled_effect_summary.descriptors[0].kind,
+    content="task",
+  )
 }
 
 ///|

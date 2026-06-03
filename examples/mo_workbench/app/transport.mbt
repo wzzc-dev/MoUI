@@ -248,9 +248,12 @@ pub fn[Msg] PiTransportRuntime::effect(
   if commands.is_empty() {
     @core.Effect::none()
   } else {
-    @core.Effect::dispatch(dispatch => {
-      self.dispatch(commands, event => dispatch(map(event)))
-    })
+    @core.Effect::run(
+      key="pi-transport:dispatch",
+      kind="transport",
+      label="Pi transport dispatch",
+      run=dispatch => self.dispatch(commands, event => dispatch(map(event))),
+    )
   }
 }
 

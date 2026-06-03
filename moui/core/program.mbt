@@ -1,9 +1,17 @@
 ///|
+pub(all) struct EffectDescriptor {
+  key : String
+  kind : String
+  label : String
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum Effect[Msg] {
   NoEffect
   Batch(Array[Effect[Msg]])
   Send(Msg)
   Dispatch(((Msg) -> Unit) -> Unit)
+  Run(EffectDescriptor, ((Msg) -> Unit) -> Unit)
 }
 
 ///|
@@ -23,6 +31,7 @@ pub(all) struct EffectPlanSummary {
   dispatch_count : Int
   scheduled_count : Int
   max_depth : Int
+  descriptors : Array[EffectDescriptor]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -54,6 +63,16 @@ pub fn[Msg] Effect::dispatch(run : ((Msg) -> Unit) -> Unit) -> Effect[Msg] {
 }
 
 ///|
+pub fn[Msg] Effect::run(
+  key~ : String,
+  run~ : ((Msg) -> Unit) -> Unit,
+  kind? : String = "custom",
+  label? : String = "",
+) -> Effect[Msg] {
+  Run({ key, kind, label }, run)
+}
+
+///|
 pub fn[Msg] Effect::plan_summary(self : Effect[Msg]) -> EffectPlanSummary {
   effect_plan_summary(self, depth=1)
 }
@@ -69,6 +88,8 @@ pub fn[Msg, NextMsg] Effect::map(
     Send(message) => Send(map(message))
     Dispatch(run) =>
       Dispatch(dispatch => run(message => dispatch(map(message))))
+    Run(descriptor, run) =>
+      Run(descriptor, dispatch => run(message => dispatch(map(message))))
   }
 }
 
@@ -82,6 +103,7 @@ pub fn EffectPlanSummary::empty() -> EffectPlanSummary {
     dispatch_count: 0,
     scheduled_count: 0,
     max_depth: 0,
+    descriptors: [],
   }
 }
 
@@ -150,6 +172,7 @@ fn[Msg] effect_plan_summary(
         dispatch_count: 0,
         scheduled_count: 0,
         max_depth: depth,
+        descriptors: [],
       }
     Send(_) =>
       {
@@ -160,6 +183,7 @@ fn[Msg] effect_plan_summary(
         dispatch_count: 0,
         scheduled_count: 1,
         max_depth: depth,
+        descriptors: [],
       }
     Dispatch(_) =>
       {
@@ -170,6 +194,18 @@ fn[Msg] effect_plan_summary(
         dispatch_count: 1,
         scheduled_count: 1,
         max_depth: depth,
+        descriptors: [],
+      }
+    Run(descriptor, _) =>
+      {
+        root_kind: EffectPlanKind::EffectPlanDispatch,
+        none_count: 0,
+        batch_count: 0,
+        send_count: 0,
+        dispatch_count: 1,
+        scheduled_count: 1,
+        max_depth: depth,
+        descriptors: [descriptor],
       }
     Batch(effects) => {
       let mut none_count = 0
@@ -178,6 +214,7 @@ fn[Msg] effect_plan_summary(
       let mut dispatch_count = 0
       let mut scheduled_count = 0
       let mut max_depth = depth
+      let descriptors : Array[EffectDescriptor] = []
       for child in effects {
         let child_summary = effect_plan_summary(child, depth=depth + 1)
         none_count = none_count + child_summary.none_count
@@ -188,6 +225,7 @@ fn[Msg] effect_plan_summary(
         if child_summary.max_depth > max_depth {
           max_depth = child_summary.max_depth
         }
+        descriptors.append(child_summary.descriptors)
       }
       {
         root_kind: EffectPlanKind::EffectPlanBatch,
@@ -197,6 +235,7 @@ fn[Msg] effect_plan_summary(
         dispatch_count,
         scheduled_count,
         max_depth,
+        descriptors,
       }
     }
   }
@@ -218,6 +257,10 @@ fn[Msg] run_effect(effect : Effect[Msg], dispatch : (Msg) -> Unit) -> Int {
       1
     }
     Dispatch(run) => {
+      run(dispatch)
+      1
+    }
+    Run(_descriptor, run) => {
       run(dispatch)
       1
     }

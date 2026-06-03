@@ -292,21 +292,26 @@ fn FileImporterModel::request_file_dialog(
       last_event: "Waiting for file picker",
       availability_reason: "",
     },
-    effect=@core.Effect::dispatch(dispatch => {
-      let response = services.open_file(title="Import files", filters=[
-        "csv", "json", "txt",
-      ])
-      dispatch(HostCompleted(file_dialog_completion_for_response(response)))
-      match response {
-        @host.HostServiceResponse::Pending(id) =>
-          ignore(
-            services.on_completed(id, completion => {
-              dispatch(HostCompleted(completion))
-            }),
-          )
-        _ => ()
-      }
-    }),
+    effect=@core.Effect::run(
+      key="host:file-import",
+      kind="host-service",
+      label="Import files",
+      run=dispatch => {
+        let response = services.open_file(title="Import files", filters=[
+          "csv", "json", "txt",
+        ])
+        dispatch(HostCompleted(file_dialog_completion_for_response(response)))
+        match response {
+          @host.HostServiceResponse::Pending(id) =>
+            ignore(
+              services.on_completed(id, completion => {
+                dispatch(HostCompleted(completion))
+              }),
+            )
+          _ => ()
+        }
+      },
+    ),
   )
 }
 

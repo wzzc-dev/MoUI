@@ -79,11 +79,16 @@ pub fn CommandPaletteModel::update_with_services(
     ShowNativeMenu =>
       (
         { ..self, last_result: "Opening native menu" },
-        @core.Effect::dispatch(dispatch => {
-          dispatch(
-            HostMenuCompleted(services.show_context_menu(self.commands())),
-          )
-        }),
+        @core.Effect::run(
+          key="host:command-menu",
+          kind="host-service",
+          label="Show command menu",
+          run=dispatch => {
+            dispatch(
+              HostMenuCompleted(services.show_context_menu(self.commands())),
+            )
+          },
+        ),
       )
     _ => (self.update(message), @core.Effect::none())
   }

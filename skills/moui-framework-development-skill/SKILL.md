@@ -59,11 +59,12 @@ Use this skill when editing or reviewing:
 - `Program`, `Effect[Msg]`, and `Subscription[Msg]` are the default app model
   surface: pure apps use `Program::simple`, environment-aware apps use the
   `*_with_environment` constructors, effect-capable apps use `Program::new`
-  with `Effect::send` or `Effect::dispatch`, and app-level ongoing event
-  sources use `subscriptions=model => ...` with stable keys so callbacks
+  with `Effect::send`, `Effect::dispatch`, or structured `Effect::run`, and
+  app-level ongoing event sources use `subscriptions=model => ...` with stable keys so callbacks
   re-enter the typed message loop without exposing runtime internals. Effect
-  diagnostics stay platform-neutral through `Effect::plan_summary` and
-  program-runtime inspector counters; message queue diagnostics stay
+  diagnostics stay platform-neutral through `Effect::plan_summary`,
+  `Effect::run` descriptors, and program-runtime inspector counters; message
+  queue diagnostics stay
   platform-neutral through enqueue/drain/pending counters; pipeline cost
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
   pass counters; subscription diagnostics stay platform-neutral through
@@ -379,8 +380,9 @@ moon info
 - Use `HostServiceAsyncQueue` for permission- or callback-driven services
   instead of pretending browser/platform async work completed synchronously.
 - For app-owned pending services, expose a typed completion path through
-  `HostAppServices::on_completed` so callbacks re-enter `Effect::dispatch`
-  instead of teaching `HostRuntimeDriver` about app messages.
+  `HostAppServices::on_completed` so callbacks re-enter an app `Effect::run`
+  or `Effect::dispatch` runner instead of teaching `HostRuntimeDriver` about
+  app messages.
 - Run the affected backend package tests.
 - Update `docs/platform-notes.md` when constraints or setup change.
 
