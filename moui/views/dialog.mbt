@@ -66,18 +66,12 @@ pub fn[Msg] alert(
     ),
     width~,
     height=158.0,
-    variant=SurfaceVariant::Base,
+    variant=SurfaceVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
-  .border(
-    @core.BorderStyle::new(
-      brush=@core.Brush::solid(
-        feedback_accent(tone, theme).multiply_alpha(0.52),
-      ),
-      width=1.0,
-    ),
-  )
+  .border(dialog_border(theme, accent=Some(feedback_accent(tone, theme))))
+  .shadow(theme.shadow_scale.lg)
   .semantics_role(@core.SemanticsRole::Dialog)
   .accessibility_label(title)
 }
@@ -151,19 +145,27 @@ pub fn[Msg] dialog(
     column(body_rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
     width~,
     height~,
-    variant=SurfaceVariant::Base,
+    variant=SurfaceVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
-  .border(
-    @core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.64)),
-      width=1.0,
-    ),
-  )
+  .border(dialog_border(theme))
+  .shadow(theme.shadow_scale.lg)
   .semantics_role(@core.SemanticsRole::Dialog)
   .semantics_description(subtitle)
   .accessibility_label(title)
+}
+
+///|
+fn dialog_border(
+  theme : @core.Theme,
+  accent? : @core.Color? = None,
+) -> @core.BorderStyle {
+  let color = match accent {
+    Some(color) => color.multiply_alpha(0.84)
+    None => theme.palette.outline
+  }
+  @core.BorderStyle::new(brush=@core.Brush::solid(color), width=1.5)
 }
 
 ///|
