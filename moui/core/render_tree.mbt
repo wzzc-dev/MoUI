@@ -3,14 +3,30 @@ fn RenderNode::collect_draw_commands(
   self : RenderNode,
   commands : Array[DrawCommand],
 ) -> Unit {
+  let overlays : Array[DrawCommand] = []
+  self.collect_draw_commands_with_overlays(commands, overlays)
+  for command in overlays {
+    commands.push(command)
+  }
+}
+
+///|
+fn RenderNode::collect_draw_commands_with_overlays(
+  self : RenderNode,
+  commands : Array[DrawCommand],
+  overlays : Array[DrawCommand],
+) -> Unit {
   for command in self.paint_commands {
     commands.push(command)
   }
   for child in self.children {
-    child.collect_draw_commands(commands)
+    child.collect_draw_commands_with_overlays(commands, overlays)
   }
   for command in self.post_paint_commands {
     commands.push(command)
+  }
+  for command in self.overlay_paint_commands {
+    overlays.push(command)
   }
 }
 

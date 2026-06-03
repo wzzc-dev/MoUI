@@ -206,6 +206,7 @@ fn render_modified_node(
     | OnLongPressModifier(_)
     | OnDoubleTapModifier(_)
     | OnDragModifier(_)
+    | OnDragWithFrameModifier(_)
     | OnFileDropModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)

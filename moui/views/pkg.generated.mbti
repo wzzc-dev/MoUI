@@ -259,7 +259,7 @@ pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardS
 
 pub fn[Msg] sidebar(String, Array[SidebarItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
 
 pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 

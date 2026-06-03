@@ -81,6 +81,26 @@ fn ElementNode::dispatch_pointer_to_children(
   render : RenderNode,
   text_system~ : TextSystem,
 ) -> ElementEventResult {
+  let popup_result = self.dispatch_pointer_to_popup_children(
+    event,
+    render,
+    text_system~,
+  )
+  if popup_result.changed ||
+    popup_result.activated ||
+    popup_result.focused is Some(_) {
+    return popup_result
+  }
+  self.dispatch_pointer_to_child_frames(event, render, text_system~)
+}
+
+///|
+fn ElementNode::dispatch_pointer_to_popup_children(
+  self : ElementNode,
+  event : PointerEvent,
+  render : RenderNode,
+  text_system~ : TextSystem,
+) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
   let mut focused : ElementId? = None
@@ -89,9 +109,44 @@ fn ElementNode::dispatch_pointer_to_children(
     if index < render.children.length() {
       let child = self.children[index]
       let child_render = render.children[index]
-      if child_render.frame.contains(event.position) ||
-        child.expanded_popup_contains(event.position, child_render.frame) ||
+      if child.expanded_popup_contains(event.position, child_render.frame) ||
         child.has_active_pointer_capture(event.phase) {
+        let result = child.dispatch_pointer(event, child_render, text_system~)
+        changed = result.changed
+        activated = result.activated
+        match result.focused {
+          Some(_) => focused = result.focused
+          None => ()
+        }
+        if result.changed || result.activated || result.focused is Some(_) {
+          break
+        }
+      }
+    }
+    index = index - 1
+  }
+  if changed {
+    self.dirty.mark_paint()
+  }
+  { changed, activated, focused }
+}
+
+///|
+fn ElementNode::dispatch_pointer_to_child_frames(
+  self : ElementNode,
+  event : PointerEvent,
+  render : RenderNode,
+  text_system~ : TextSystem,
+) -> ElementEventResult {
+  let mut changed = false
+  let mut activated = false
+  let mut focused : ElementId? = None
+  let mut index = self.children.length() - 1
+  while index >= 0 {
+    if index < render.children.length() {
+      let child = self.children[index]
+      let child_render = render.children[index]
+      if child_render.frame.contains(event.position) {
         let result = child.dispatch_pointer(event, child_render, text_system~)
         changed = result.changed
         activated = result.activated
@@ -305,38 +360,58 @@ fn ElementNode::dispatch_modified_pointer(
         }
       }
     }
-    OnDragModifier(handler) => {
-      let child_result = self.dispatch_pointer_to_children(
-        event,
-        render,
-        text_system~,
-      )
-      if child_result.activated {
-        child_result
-      } else {
-        let result = self.control.drag_gesture.update(
-          event,
-          inside=render.frame.contains(event.position),
-        )
-        self.control.drag_gesture = result.state
-        match result.event {
-          Some(drag_event) => handler(drag_event)
-          None => ()
-        }
-        let activated = result.event is Some(_)
-        if activated {
-          self.dirty.mark_paint()
-        }
-        {
-          changed: child_result.changed ||
-          event.phase != PointerPhase::Move ||
-          activated,
-          activated,
-          focused: child_result.focused,
-        }
-      }
-    }
+    OnDragModifier(handler) =>
+      self.dispatch_drag_modifier_pointer(event, render, text_system~, handler=(
+        drag_event,
+        _frame,
+      ) => handler(drag_event))
+    OnDragWithFrameModifier(handler) =>
+      self.dispatch_drag_modifier_pointer(event, render, text_system~, handler~)
     _ => self.dispatch_pointer_to_children(event, render, text_system~)
+  }
+}
+
+///|
+fn ElementNode::dispatch_drag_modifier_pointer(
+  self : ElementNode,
+  event : PointerEvent,
+  render : RenderNode,
+  text_system~ : TextSystem,
+  handler~ : (DragGestureEvent, Rect) -> Unit,
+) -> ElementEventResult {
+  let child_result = self.dispatch_pointer_to_children(
+    event,
+    render,
+    text_system~,
+  )
+  if child_result.activated {
+    child_result
+  } else {
+    let content_frame = if render.children.length() > 0 {
+      render.children[0].frame
+    } else {
+      render.frame
+    }
+    let result = self.control.drag_gesture.update(
+      event,
+      inside=render.frame.contains(event.position),
+    )
+    self.control.drag_gesture = result.state
+    match result.event {
+      Some(drag_event) => handler(drag_event, content_frame)
+      None => ()
+    }
+    let activated = result.event is Some(_)
+    if activated {
+      self.dirty.mark_paint()
+    }
+    {
+      changed: child_result.changed ||
+      event.phase != PointerPhase::Move ||
+      activated,
+      activated,
+      focused: child_result.focused,
+    }
   }
 }
 

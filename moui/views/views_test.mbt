@@ -1463,6 +1463,78 @@ test "resizable split view drag handle emits controlled primary width" {
 }
 
 ///|
+test "slider drag emits controlled value" {
+  let last_value = Ref(0.0)
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.slider(0.4, width=200.0, on_change=Some(value => value)),
+    size=@core.Size::new(width=240.0, height=80.0),
+    on_message=Some(value => last_value.val = value),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=80.0, y=14.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=140.0, y=14.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  assert_true(last_value.val >= 0.69)
+  assert_true(last_value.val <= 0.71)
+}
+
+///|
+test "slider drag remains stable across program rebuilds" {
+  let seen = Ref(0.4)
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=0.4,
+      update=(_model, message) => {
+        seen.val = message
+        message
+      },
+      view=value => {
+        @views.slider(value, width=200.0, on_change=Some(next => next))
+      },
+    ),
+    size=@core.Size::new(width=240.0, height=80.0),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=80.0, y=14.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=140.0, y=14.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=180.0, y=14.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  assert_true(seen.val >= 0.89)
+  assert_true(seen.val <= 0.91)
+}
+
+///|
 test "section nav dispatches selected item messages" {
   let selected = Ref("")
   let runtime = @core.AppRuntime::new_view(

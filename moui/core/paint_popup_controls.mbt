@@ -1,6 +1,7 @@
 ///|
 fn append_picker_commands(
   commands : Array[DrawCommand],
+  overlay_commands : Array[DrawCommand],
   element : ElementNode,
   data : PickerViewSpec,
   frame : Rect,
@@ -68,7 +69,7 @@ fn append_picker_commands(
       rect=list_frame,
       radius=data.cornerRadius,
     )
-    commands.push(
+    overlay_commands.push(
       DrawShadow(
         ShadowSpec::new(
           rect=list_rounded,
@@ -79,7 +80,7 @@ fn append_picker_commands(
         ),
       ),
     )
-    commands.push(FillRoundedRectBrush(list_rounded, data.background))
+    overlay_commands.push(FillRoundedRectBrush(list_rounded, data.background))
     for i, item in data.items {
       let index = i.to_double()
       let item_frame = Rect::new(
@@ -90,7 +91,7 @@ fn append_picker_commands(
       )
       let is_selected = item.id == data.selected.get()
       if is_selected {
-        commands.push(
+        overlay_commands.push(
           FillRoundedRectBrush(
             RoundedRect::new(
               rect=item_frame.inset(
@@ -102,7 +103,7 @@ fn append_picker_commands(
           ),
         )
       }
-      commands.push(
+      overlay_commands.push(
         DrawText(
           TextRun::new(
             text=item.label,
@@ -129,6 +130,7 @@ fn append_picker_commands(
 ///|
 fn append_datepicker_commands(
   commands : Array[DrawCommand],
+  overlay_commands : Array[DrawCommand],
   element : ElementNode,
   data : DatePickerViewSpec,
   frame : Rect,
@@ -189,7 +191,7 @@ fn append_datepicker_commands(
       height=panel_height,
     )
     let panel_rounded = RoundedRect::new(rect=panel_frame, radius=8.0)
-    commands.push(
+    overlay_commands.push(
       DrawShadow(
         ShadowSpec::new(
           rect=panel_rounded,
@@ -200,7 +202,7 @@ fn append_datepicker_commands(
         ),
       ),
     )
-    commands.push(FillRoundedRectBrush(panel_rounded, data.background))
+    overlay_commands.push(FillRoundedRectBrush(panel_rounded, data.background))
 
     // 绘制标题和导航
     let header_height = 50.0
@@ -212,7 +214,7 @@ fn append_datepicker_commands(
     )
     let view_date = element.control.datepicker_view
     let header_text = "\{view_date.year}年\{view_date.month}月"
-    commands.push(
+    overlay_commands.push(
       DrawText(
         TextRun::new(
           text=header_text,
@@ -237,7 +239,7 @@ fn append_datepicker_commands(
       width=button_size,
       height=button_size,
     )
-    commands.push(
+    overlay_commands.push(
       DrawText(
         TextRun::new(
           text="◀",
@@ -247,7 +249,7 @@ fn append_datepicker_commands(
         ),
       ),
     )
-    commands.push(
+    overlay_commands.push(
       DrawText(
         TextRun::new(
           text="▶",
@@ -271,7 +273,7 @@ fn append_datepicker_commands(
         width=day_cell_width,
         height=day_header_height,
       )
-      commands.push(
+      overlay_commands.push(
         DrawText(
           TextRun::new(
             text=day,
@@ -322,7 +324,9 @@ fn append_datepicker_commands(
       )
 
       if is_selected {
-        commands.push(FillRoundedRect(cell_rounded, theme.palette.primary))
+        overlay_commands.push(
+          FillRoundedRect(cell_rounded, theme.palette.primary),
+        )
       }
 
       let day_color = if is_selected {
@@ -333,7 +337,7 @@ fn append_datepicker_commands(
         data.foreground
       }
 
-      commands.push(
+      overlay_commands.push(
         DrawText(
           TextRun::new(
             text="\{day}",
