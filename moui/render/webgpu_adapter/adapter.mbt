@@ -406,6 +406,13 @@ pub fn WebGpuWasmRenderer::image_resources(
 }
 
 ///|
+pub fn WebGpuWasmRenderer::image_resource_snapshot(
+  self : WebGpuWasmRenderer,
+) -> @render.ImageResourceSnapshot {
+  self.image_lifecycle.snapshot_with_revision()
+}
+
+///|
 fn WebGpuWasmRenderer::record_web_image_commands(
   self : WebGpuWasmRenderer,
   commands : Array[@core.DrawCommand],

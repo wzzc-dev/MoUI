@@ -820,12 +820,16 @@ test "shader registry resolves builtins and reports fallback" {
 ///|
 test "image lifecycle records loading ready failure and eviction" {
   let lifecycle = @render.ImageResourceLifecycle::new()
+  inspect(lifecycle.revision(), content="0")
   ignore(lifecycle.mark_loading("a.png"))
+  inspect(lifecycle.revision(), content="1")
   match lifecycle.lookup("a.png") {
     Some(record) =>
       assert_true(record.status == @render.ImageResourceStatus::ImageLoading)
     None => fail("expected loading record")
   }
+  ignore(lifecycle.mark_ready("a.png", width=24, height=12))
+  inspect(lifecycle.revision(), content="2")
   ignore(lifecycle.mark_ready("a.png", width=24, height=12))
   match lifecycle.lookup("a.png") {
     Some(record) => {
@@ -836,6 +840,7 @@ test "image lifecycle records loading ready failure and eviction" {
     None => fail("expected ready record")
   }
   ignore(lifecycle.mark_failed("b.png", diagnostic="decode failed"))
+  inspect(lifecycle.revision(), content="3")
   match lifecycle.lookup("b.png") {
     Some(record) => {
       assert_true(record.status == @render.ImageResourceStatus::ImageFailed)
@@ -844,11 +849,40 @@ test "image lifecycle records loading ready failure and eviction" {
     None => fail("expected failed record")
   }
   ignore(lifecycle.dispose("a.png"))
+  inspect(lifecycle.revision(), content="4")
   inspect(lifecycle.evict_disposed(), content="1")
+  inspect(lifecycle.revision(), content="5")
   match lifecycle.lookup("a.png") {
     Some(_) => fail("expected disposed record eviction")
     None => ()
   }
+}
+
+///|
+test "image lifecycle exposes revisioned change snapshots" {
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  let initial = lifecycle.snapshot_with_revision()
+  inspect(initial.revision, content="0")
+  inspect(initial.records.length(), content="0")
+  inspect(lifecycle.changed_since(initial.revision), content="false")
+  ignore(lifecycle.mark_loading("late.png"))
+  let loading = lifecycle.snapshot_with_revision()
+  inspect(loading.revision, content="1")
+  inspect(loading.records.length(), content="1")
+  inspect(lifecycle.changed_since(initial.revision), content="true")
+  inspect(lifecycle.changed_since(loading.revision), content="false")
+  inspect(lifecycle.changed_since(99), content="false")
+  ignore(lifecycle.mark_loading("late.png"))
+  inspect(lifecycle.revision(), content="1")
+  ignore(lifecycle.mark_ready("late.png", width=64, height=32))
+  let ready = lifecycle.snapshot_with_revision()
+  inspect(ready.revision, content="2")
+  assert_true(
+    ready.records.any(record => {
+      record.source == "late.png" &&
+      record.status == @render.ImageResourceStatus::ImageReady
+    }),
+  )
 }
 
 ///|

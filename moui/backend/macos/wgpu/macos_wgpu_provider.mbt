@@ -208,6 +208,7 @@ fn host_renderer_from_wgpu(
     render=commands => renderer.render(commands),
     text_system=() => renderer.text_system(),
     image_resources=() => renderer.image_resources(),
+    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
   )

@@ -79,6 +79,9 @@ test "host window renderer forwards lifecycle closures" {
     render=commands => rendered.val = commands.length(),
     text_system=() => @core.TextSystem::fallback(),
     image_resources=() => image_records,
+    image_resource_snapshot=Some(() => {
+      @render.ImageResourceSnapshot::new(revision=7, records=image_records)
+    }),
     present_count=() => presenter.val,
     dispose=() => disposed.val = disposed.val + 1,
   )
@@ -99,6 +102,9 @@ test "host window renderer forwards lifecycle closures" {
   inspect(resources[0].width, content="32")
   assert_true(resources[1].status == @render.ImageResourceStatus::ImageFailed)
   assert_true(resources[1].diagnostic.contains("decode"))
+  let image_snapshot = renderer.image_resource_snapshot()
+  inspect(image_snapshot.revision, content="7")
+  inspect(image_snapshot.records.length(), content="2")
   inspect(renderer.present_count(), content="3")
   renderer.dispose()
   inspect(disposed.val, content="1")
@@ -110,6 +116,9 @@ test "host window renderer image resource diagnostics default empty" {
     @core.TextSystem::fallback()
   })
   inspect(renderer.image_resources().length(), content="0")
+  let image_snapshot = renderer.image_resource_snapshot()
+  inspect(image_snapshot.revision, content="0")
+  inspect(image_snapshot.records.length(), content="0")
 }
 
 ///|

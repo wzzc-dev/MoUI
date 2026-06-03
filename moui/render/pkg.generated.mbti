@@ -46,7 +46,9 @@ pub fn tessellate_path(@core.PathSpec) -> PathMesh
 // Types and methods
 pub(all) struct ImageResourceLifecycle {
   mut records : Map[String, ImageResourceRecord]
+  mut revision : Int
 } derive(Eq, @debug.Debug)
+pub fn ImageResourceLifecycle::changed_since(Self, Int) -> Bool
 pub fn ImageResourceLifecycle::dispose(Self, String) -> ImageResourceRecord
 pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int
 pub fn ImageResourceLifecycle::lookup(Self, String) -> ImageResourceRecord?
@@ -54,7 +56,9 @@ pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -
 pub fn ImageResourceLifecycle::mark_loading(Self, String) -> ImageResourceRecord
 pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int, height~ : Int) -> ImageResourceRecord
 pub fn ImageResourceLifecycle::new() -> Self
+pub fn ImageResourceLifecycle::revision(Self) -> Int
 pub fn ImageResourceLifecycle::snapshot(Self) -> Array[ImageResourceRecord]
+pub fn ImageResourceLifecycle::snapshot_with_revision(Self) -> ImageResourceSnapshot
 
 pub(all) struct ImageResourceRecord {
   source : String
@@ -67,6 +71,14 @@ pub fn ImageResourceRecord::disposed(String) -> Self
 pub fn ImageResourceRecord::failed(String, diagnostic~ : String) -> Self
 pub fn ImageResourceRecord::loading(String) -> Self
 pub fn ImageResourceRecord::ready(String, width~ : Int, height~ : Int) -> Self
+
+pub(all) struct ImageResourceSnapshot {
+  revision : Int
+  records : Array[ImageResourceRecord]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ImageResourceSnapshot::empty() -> Self
+pub fn ImageResourceSnapshot::from_records(Array[ImageResourceRecord]) -> Self
+pub fn ImageResourceSnapshot::new(revision~ : Int, records~ : Array[ImageResourceRecord]) -> Self
 
 pub(all) enum ImageResourceStatus {
   ImageLoading

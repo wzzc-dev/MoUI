@@ -372,11 +372,11 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     renderer_feature_capability_entry(
       RendererFeature::AsyncImage,
       RendererFeatureStatus::Partial,
-      "Renderer-neutral image lifecycle state models loading, ready, failed, disposed, and eviction; native WgpuRenderer exposes renderer-local image resource snapshots, native WGPU providers forward them through HostWindowRenderer, and synchronous decode paths mark ready or failed.",
+      "Renderer-neutral image lifecycle state models loading, ready, failed, disposed, eviction, and a monotonic revision/change signal; native WgpuRenderer exposes renderer-local image resource records plus revisioned snapshots, native WGPU providers forward revisioned snapshots through HostWindowRenderer, and synchronous decode paths mark ready or failed.",
       RendererFeatureStatus::Partial,
-      "Skia raster image lifecycle uses the same renderer-neutral records, native Skia providers forward snapshots through HostWindowRenderer, immutable failed sources are cached with diagnostics before placeholder drawing, local-file failures retry once the file appears, and real Skia evidence covers PNG/JPEG/BMP data URI decode, PNG/JPEG/BMP local-file decode, failed-image placeholder, failed-cache snapshot, local-file retry, and dispose-record diagnostics; late async repaint remains follow-up work.",
+      "Skia raster image lifecycle uses the same renderer-neutral records and revisioned snapshot contract, native Skia providers forward snapshots through HostWindowRenderer, immutable failed sources are cached with diagnostics before placeholder drawing, local-file failures retry once the file appears, and real Skia evidence covers PNG/JPEG/BMP data URI decode, PNG/JPEG/BMP local-file decode, failed-image placeholder, failed-cache snapshot, local-file retry, and dispose-record diagnostics; host-routed late async repaint remains follow-up work.",
       RendererFeatureStatus::Partial,
-      "Renderer-neutral image lifecycle state matches the browser async loading cache contract; WebGpuWasmRenderer and the backend WebRenderer facade expose app-visible image resource snapshots, refresh loading, ready, or failed records from the browser cache after host submission, and the canonical Web boot path schedules a redraw when Image.onload or Image.onerror reports a resource change.",
+      "Renderer-neutral image lifecycle state matches the browser async loading cache contract; WebGpuWasmRenderer and the backend WebRenderer facade expose app-visible image resource records plus revisioned snapshots, refresh loading, ready, or failed records from the browser cache after host submission, and the canonical Web boot path schedules a redraw when Image.onload or Image.onerror reports a resource change.",
     ),
   ]
 }

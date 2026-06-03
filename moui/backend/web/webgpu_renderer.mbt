@@ -65,6 +65,13 @@ pub fn WebRenderer::image_resources(
 }
 
 ///|
+pub fn WebRenderer::image_resource_snapshot(
+  self : WebRenderer,
+) -> @render.ImageResourceSnapshot {
+  self.renderer.image_resource_snapshot()
+}
+
+///|
 pub fn WebRenderer::dispose(self : WebRenderer) -> Unit {
   self.renderer.dispose()
 }

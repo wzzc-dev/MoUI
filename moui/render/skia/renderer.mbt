@@ -1912,6 +1912,13 @@ pub fn SkiaRasterRenderer::image_resources(
 }
 
 ///|
+pub fn SkiaRasterRenderer::image_resource_snapshot(
+  self : SkiaRasterRenderer,
+) -> @render.ImageResourceSnapshot {
+  self.image_lifecycle.snapshot_with_revision()
+}
+
+///|
 pub fn SkiaRasterRenderer::dispose(self : SkiaRasterRenderer) -> Unit {
   for source, _ in self.image_cache {
     ignore(self.image_lifecycle.dispose(source))

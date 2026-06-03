@@ -64,6 +64,9 @@ test "web renderer exposes app-visible ready image resource snapshots" {
   assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
   inspect(resources[0].width, content="80")
   inspect(resources[0].height, content="40")
+  let snapshot = renderer.image_resource_snapshot()
+  inspect(snapshot.revision, content="2")
+  inspect(snapshot.records.length(), content="1")
 }
 
 ///|

@@ -476,8 +476,9 @@ pub struct HostWindowRenderer {
   // private fields
 }
 pub fn HostWindowRenderer::dispose(Self) -> Unit
+pub fn HostWindowRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
 pub fn HostWindowRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
-pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], present_count? : () -> Int, dispose? : () -> Unit) -> Self
+pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, present_count? : () -> Int, dispose? : () -> Unit) -> Self
 pub fn HostWindowRenderer::present_count(Self) -> Int
 pub fn HostWindowRenderer::render(Self, Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit
 pub fn HostWindowRenderer::resize(Self, HostSurfaceMetrics) -> Unit

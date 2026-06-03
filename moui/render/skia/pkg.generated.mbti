@@ -66,6 +66,7 @@ pub(all) struct SkiaRasterRenderer {
 pub fn SkiaRasterRenderer::backend_info(Self) -> @render.RendererBackendInfo
 pub fn SkiaRasterRenderer::backend_kind(Self) -> @render.RendererBackendKind
 pub fn SkiaRasterRenderer::dispose(Self) -> Unit
+pub fn SkiaRasterRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
 pub fn SkiaRasterRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
 pub fn SkiaRasterRenderer::last_frame(Self) -> SkiaPixelFrame?
 pub fn SkiaRasterRenderer::present_count(Self) -> Int
