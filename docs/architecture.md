@@ -178,9 +178,10 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   string, bool, and int state.
 - `AppRuntime` owns app-level `Program` diagnostics, including dispatch,
   update, message queue, effect plan, scheduled effect, effect-kind, active
-  subscription, subscription plan, start/reuse/cancel, and duplicate-key
-  counters, plus ignored subscription dispatch counters for stale callbacks
-  from canceled or destroyed subscription lifetimes. Program runtime and
+  subscription, subscription plan, start/reuse/cancel, duplicate effect
+  descriptor-key, and duplicate subscription-key counters, plus ignored
+  subscription dispatch counters for stale callbacks from canceled or destroyed
+  subscription lifetimes. Program runtime and
   runtime inspector snapshots expose active subscription descriptors and
   lifecycle entries so tooling can identify which sources were reused or
   canceled without inspecting app messages. Structured effect descriptors from

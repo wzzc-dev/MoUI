@@ -77,6 +77,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_batch_count : Int
   effect_send_count : Int
   effect_dispatch_count : Int
+  duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
   subscription_plan_count : Int
@@ -115,6 +116,7 @@ priv struct ProgramRuntimeDiagnostics {
   mut effect_batch_count : Int
   mut effect_send_count : Int
   mut effect_dispatch_count : Int
+  mut duplicate_effect_descriptor_key_count : Int
   mut last_effect_summary : EffectPlanSummary
   mut last_scheduled_effect_summary : EffectPlanSummary
   mut subscription_plan_count : Int
@@ -311,6 +313,7 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     effect_batch_count: 0,
     effect_send_count: 0,
     effect_dispatch_count: 0,
+    duplicate_effect_descriptor_key_count: 0,
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
     subscription_plan_count: 0,
@@ -398,6 +401,8 @@ fn ProgramRuntimeDiagnostics::record_effects(
   self.effect_send_count = self.effect_send_count + summary.send_count
   self.effect_dispatch_count = self.effect_dispatch_count +
     summary.dispatch_count
+  self.duplicate_effect_descriptor_key_count = self.duplicate_effect_descriptor_key_count +
+    summary.duplicate_descriptor_key_count
   self.last_effect_summary = summary
   if summary.scheduled_count > 0 {
     self.last_scheduled_effect_summary = summary
@@ -556,6 +561,7 @@ fn ProgramRuntimeDiagnostics::snapshot(
     effect_batch_count: self.effect_batch_count,
     effect_send_count: self.effect_send_count,
     effect_dispatch_count: self.effect_dispatch_count,
+    duplicate_effect_descriptor_key_count: self.duplicate_effect_descriptor_key_count,
     last_effect_summary: self.last_effect_summary,
     last_scheduled_effect_summary: self.last_scheduled_effect_summary,
     subscription_plan_count: self.subscription_plan_count,
@@ -590,6 +596,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     effect_batch_count: 0,
     effect_send_count: 0,
     effect_dispatch_count: 0,
+    duplicate_effect_descriptor_key_count: 0,
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
     subscription_plan_count: 0,

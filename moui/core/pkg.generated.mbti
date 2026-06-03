@@ -1092,6 +1092,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_batch_count : Int
   effect_send_count : Int
   effect_dispatch_count : Int
+  duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
   subscription_plan_count : Int
@@ -1350,6 +1351,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   program_effect_batch_count : Int
   program_effect_send_count : Int
   program_effect_dispatch_count : Int
+  duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
   program_subscription_plan_count : Int
