@@ -9,6 +9,10 @@ pub(all) struct RuntimeInspectorSnapshot {
   draw_command_count : Int
   program_dispatched_count : Int
   program_update_count : Int
+  program_message_enqueue_count : Int
+  program_message_drain_count : Int
+  program_pending_message_count : Int
+  program_max_pending_message_count : Int
   program_effect_plan_count : Int
   program_effect_count : Int
   program_effect_none_count : Int
@@ -153,6 +157,10 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     draw_command_count: runtime.draw_commands().length(),
     program_dispatched_count: program.dispatched_count,
     program_update_count: program.update_count,
+    program_message_enqueue_count: program.message_enqueue_count,
+    program_message_drain_count: program.message_drain_count,
+    program_pending_message_count: program.pending_message_count,
+    program_max_pending_message_count: program.max_pending_message_count,
     program_effect_plan_count: program.effect_plan_count,
     program_effect_count: program.effect_count,
     program_effect_none_count: program.effect_none_count,

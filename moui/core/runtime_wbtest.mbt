@@ -285,6 +285,10 @@ test "program initial effects run before first view build" {
   let program_snapshot = runtime.program_runtime_snapshot()
   inspect(program_snapshot.dispatched_count, content="2")
   inspect(program_snapshot.update_count, content="2")
+  inspect(program_snapshot.message_enqueue_count, content="2")
+  inspect(program_snapshot.message_drain_count, content="2")
+  inspect(program_snapshot.pending_message_count, content="0")
+  inspect(program_snapshot.max_pending_message_count, content="1")
   inspect(program_snapshot.effect_plan_count, content="3")
   inspect(program_snapshot.effect_count, content="2")
   inspect(program_snapshot.effect_batch_count, content="1")
@@ -315,7 +319,10 @@ test "program effects can dispatch typed follow-up messages" {
         ProgramEffectStart =>
           (
             "running",
-            Effect::dispatch(dispatch => dispatch(ProgramEffectFinished("done"))),
+            Effect::dispatch(dispatch => {
+              dispatch(ProgramEffectBoot("queued"))
+              dispatch(ProgramEffectFinished("done"))
+            }),
           )
         ProgramEffectBoot(value) => (value, Effect::none())
         ProgramEffectFinished(value) => (value, Effect::none())
@@ -357,6 +364,12 @@ test "program effects can dispatch typed follow-up messages" {
   )
   assert_true(has_draw_text(runtime.draw_commands(), "done"))
   let snapshot = runtime.program_runtime_snapshot()
+  inspect(snapshot.dispatched_count, content="3")
+  inspect(snapshot.update_count, content="3")
+  inspect(snapshot.message_enqueue_count, content="3")
+  inspect(snapshot.message_drain_count, content="1")
+  inspect(snapshot.pending_message_count, content="0")
+  inspect(snapshot.max_pending_message_count, content="2")
   inspect(snapshot.effect_dispatch_count, content="1")
   assert_true(
     snapshot.last_scheduled_effect_summary.root_kind ==
@@ -576,6 +589,10 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   assert_true(has_draw_text(runtime.draw_commands(), "instant:1"))
   let snapshot = runtime.program_runtime_snapshot()
   inspect(start_count.val, content="1")
+  inspect(snapshot.message_enqueue_count, content="1")
+  inspect(snapshot.message_drain_count, content="1")
+  inspect(snapshot.pending_message_count, content="0")
+  inspect(snapshot.max_pending_message_count, content="1")
   inspect(snapshot.subscription_plan_count, content="2")
   inspect(snapshot.last_subscription_plan_summary.source_count, content="2")
   inspect(
