@@ -376,6 +376,13 @@ test "subscription descriptors and map preserve feature composition" {
     }),
   ])
   let parent = child.map(message => "parent:" + message)
+  let plan = parent.plan_summary()
+  assert_true(plan.root_kind == SubscriptionPlanKind::SubscriptionPlanBatch)
+  inspect(plan.batch_count, content="1")
+  inspect(plan.none_count, content="1")
+  inspect(plan.source_count, content="1")
+  inspect(plan.duplicate_key_count, content="0")
+  inspect(plan.max_depth, content="2")
   let descriptors = parent.descriptors()
   inspect(descriptors.length(), content="1")
   inspect(descriptors[0].key, content="child-tick")
@@ -459,6 +466,12 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
   )
   assert_true(has_draw_text(runtime.draw_commands(), "alpha:0"))
   let initial = runtime.program_runtime_snapshot()
+  inspect(initial.subscription_plan_count, content="1")
+  assert_true(
+    initial.last_subscription_plan_summary.root_kind ==
+    SubscriptionPlanKind::SubscriptionPlanSource,
+  )
+  inspect(initial.last_subscription_plan_summary.source_count, content="1")
   inspect(initial.active_subscription_count, content="1")
   inspect(initial.started_subscription_count, content="1")
   inspect(initial.active_subscriptions[0].key, content="timer:alpha")
@@ -563,6 +576,12 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   assert_true(has_draw_text(runtime.draw_commands(), "instant:1"))
   let snapshot = runtime.program_runtime_snapshot()
   inspect(start_count.val, content="1")
+  inspect(snapshot.subscription_plan_count, content="2")
+  inspect(snapshot.last_subscription_plan_summary.source_count, content="2")
+  inspect(
+    snapshot.last_subscription_plan_summary.duplicate_key_count,
+    content="1",
+  )
   inspect(snapshot.started_subscription_count, content="1")
   inspect(snapshot.reused_subscription_count, content="1")
   inspect(snapshot.duplicate_subscription_key_count, content="2")
@@ -570,6 +589,11 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   inspect(snapshot.active_subscriptions[0].label, content="Instant")
   inspect(snapshot.dispatched_count, content="1")
   let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  inspect(inspector.program_subscription_plan_count, content="2")
+  inspect(
+    inspector.last_subscription_plan_summary.duplicate_key_count,
+    content="1",
+  )
   inspect(inspector.reused_subscription_count, content="1")
   inspect(inspector.duplicate_subscription_key_count, content="2")
 }

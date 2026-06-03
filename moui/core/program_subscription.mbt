@@ -26,6 +26,23 @@ pub(all) struct SubscriptionDescriptor {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum SubscriptionPlanKind {
+  SubscriptionPlanNone
+  SubscriptionPlanBatch
+  SubscriptionPlanSource
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct SubscriptionPlanSummary {
+  root_kind : SubscriptionPlanKind
+  none_count : Int
+  batch_count : Int
+  source_count : Int
+  duplicate_key_count : Int
+  max_depth : Int
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum SubscriptionLifecycleStatus {
   SubscriptionActive
   SubscriptionCancelled
@@ -58,6 +75,8 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_dispatch_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
+  subscription_plan_count : Int
+  last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int
@@ -89,6 +108,8 @@ priv struct ProgramRuntimeDiagnostics {
   mut effect_dispatch_count : Int
   mut last_effect_summary : EffectPlanSummary
   mut last_scheduled_effect_summary : EffectPlanSummary
+  mut subscription_plan_count : Int
+  mut last_subscription_plan_summary : SubscriptionPlanSummary
   mut started_subscription_count : Int
   mut reused_subscription_count : Int
   mut cancelled_subscription_count : Int
@@ -158,6 +179,26 @@ pub fn[Msg] Subscription::descriptors(
 }
 
 ///|
+pub fn[Msg] Subscription::plan_summary(
+  self : Subscription[Msg],
+) -> SubscriptionPlanSummary {
+  let summary = subscription_plan_summary(self, depth=1)
+  { ..summary, duplicate_key_count: self.duplicate_key_count() }
+}
+
+///|
+pub fn SubscriptionPlanSummary::empty() -> SubscriptionPlanSummary {
+  {
+    root_kind: SubscriptionPlanKind::SubscriptionPlanNone,
+    none_count: 0,
+    batch_count: 0,
+    source_count: 0,
+    duplicate_key_count: 0,
+    max_depth: 0,
+  }
+}
+
+///|
 fn[Msg] Subscription::sources(
   self : Subscription[Msg],
 ) -> Array[SubscriptionSource[Msg]] {
@@ -171,6 +212,70 @@ fn[Msg] Subscription::sources(
       sources
     }
     SubscriptionSource(source) => [source]
+  }
+}
+
+///|
+fn[Msg] Subscription::duplicate_key_count(self : Subscription[Msg]) -> Int {
+  let seen_keys : Array[String] = []
+  let mut duplicate_count = 0
+  for source in self.sources() {
+    if seen_keys.any(key => key == source.key) {
+      duplicate_count = duplicate_count + 1
+    } else {
+      seen_keys.push(source.key)
+    }
+  }
+  duplicate_count
+}
+
+///|
+fn[Msg] subscription_plan_summary(
+  subscription : Subscription[Msg],
+  depth~ : Int,
+) -> SubscriptionPlanSummary {
+  match subscription.node {
+    SubscriptionNone =>
+      {
+        root_kind: SubscriptionPlanKind::SubscriptionPlanNone,
+        none_count: 1,
+        batch_count: 0,
+        source_count: 0,
+        duplicate_key_count: 0,
+        max_depth: depth,
+      }
+    SubscriptionSource(_) =>
+      {
+        root_kind: SubscriptionPlanKind::SubscriptionPlanSource,
+        none_count: 0,
+        batch_count: 0,
+        source_count: 1,
+        duplicate_key_count: 0,
+        max_depth: depth,
+      }
+    SubscriptionBatch(subscriptions) => {
+      let mut none_count = 0
+      let mut batch_count = 1
+      let mut source_count = 0
+      let mut max_depth = depth
+      for child in subscriptions {
+        let child_summary = subscription_plan_summary(child, depth=depth + 1)
+        none_count = none_count + child_summary.none_count
+        batch_count = batch_count + child_summary.batch_count
+        source_count = source_count + child_summary.source_count
+        if child_summary.max_depth > max_depth {
+          max_depth = child_summary.max_depth
+        }
+      }
+      {
+        root_kind: SubscriptionPlanKind::SubscriptionPlanBatch,
+        none_count,
+        batch_count,
+        source_count,
+        duplicate_key_count: 0,
+        max_depth,
+      }
+    }
   }
 }
 
@@ -194,6 +299,8 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     effect_dispatch_count: 0,
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
+    subscription_plan_count: 0,
+    last_subscription_plan_summary: SubscriptionPlanSummary::empty(),
     started_subscription_count: 0,
     reused_subscription_count: 0,
     cancelled_subscription_count: 0,
@@ -237,11 +344,21 @@ fn ProgramRuntimeDiagnostics::record_effects(
 }
 
 ///|
+fn ProgramRuntimeDiagnostics::record_subscription_plan(
+  self : ProgramRuntimeDiagnostics,
+  summary : SubscriptionPlanSummary,
+) -> Unit {
+  self.subscription_plan_count = self.subscription_plan_count + 1
+  self.last_subscription_plan_summary = summary
+}
+
+///|
 fn[Msg] ProgramRuntimeDiagnostics::sync_subscriptions(
   self : ProgramRuntimeDiagnostics,
   subscription : Subscription[Msg],
   dispatch : (Msg) -> Unit,
 ) -> Unit {
+  self.record_subscription_plan(subscription.plan_summary())
   let next : Array[ActiveProgramSubscription] = []
   let seen_keys : Array[String] = []
   for active in self.active_subscriptions {
@@ -362,6 +479,8 @@ fn ProgramRuntimeDiagnostics::snapshot(
     effect_dispatch_count: self.effect_dispatch_count,
     last_effect_summary: self.last_effect_summary,
     last_scheduled_effect_summary: self.last_scheduled_effect_summary,
+    subscription_plan_count: self.subscription_plan_count,
+    last_subscription_plan_summary: self.last_subscription_plan_summary,
     active_subscription_count: self.active_subscriptions.length(),
     started_subscription_count: self.started_subscription_count,
     reused_subscription_count: self.reused_subscription_count,
@@ -389,6 +508,8 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     effect_dispatch_count: 0,
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
+    subscription_plan_count: 0,
+    last_subscription_plan_summary: SubscriptionPlanSummary::empty(),
     active_subscription_count: 0,
     started_subscription_count: 0,
     reused_subscription_count: 0,
