@@ -7,6 +7,7 @@ test "skia renderer backend info reflects native availability" {
   assert_true(info.description.contains("finalization preflight"))
   assert_true(info.description.contains("text fallback/shaping descriptor"))
   assert_true(info.description.contains("text maturity audit partial"))
+  assert_true(info.description.contains("mixed-run fallback ready"))
   assert_true(info.description.contains("full grapheme parity pending"))
   assert_true(info.description.contains("flush-and-submit finalization"))
   if skia_available() {

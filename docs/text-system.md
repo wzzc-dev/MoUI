@@ -119,10 +119,10 @@ preflight so font fallback and shaped-run cache keys stay auditable without
 requiring real Skia linkage. `backend_info()` also reports a fallback-safe
 `text maturity audit partial` summary: it counts the audited descriptor,
 fallback-request, representative shaped/fallback caret, emoji-hint, and
-empty-typeface retry boundaries separately from tracked gaps. SkParagraph-style
-line breaking, bidi, mixed-script per-glyph fallback runs, deterministic color
-emoji, full grapheme parity, and broader typography conformance remain follow-up
-work.
+empty-typeface retry boundaries plus the Skia mixed-run fallback segment path
+separately from tracked gaps. SkParagraph-style line breaking, bidi,
+deterministic color emoji, full grapheme parity, and broader typography
+conformance remain follow-up work.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
