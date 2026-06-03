@@ -271,6 +271,62 @@ test "host image repaint tracker snapshots lifecycle status counts" {
 }
 
 ///|
+test "host image repaint tracker ignores stale snapshot revisions" {
+  let tracker = HostImageResourceRepaintTracker::new()
+  let window_id = HostWindowId::new(6)
+  let revision = Ref(5)
+  let records : Ref[Array[@render.ImageResourceRecord]] = Ref([
+    @render.ImageResourceRecord::ready("ready.png", width=64, height=48),
+  ])
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => {
+      @render.ImageResourceSnapshot::new(
+        revision=revision.val,
+        records=records.val,
+      )
+    }),
+  )
+  let baseline = tracker.record_presented(window_id, renderer)
+  inspect(baseline.current_revision, content="5")
+  revision.val = 3
+  records.val = [@render.ImageResourceRecord::disposed("ready.png")]
+  let redraws = Ref(0)
+  let stale = tracker.request_redraw_if_changed(
+    window_id,
+    renderer,
+    window_open=true,
+    request_redraw=_id => redraws.val = redraws.val + 1,
+  )
+  assert_true(
+    stale.status == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+  )
+  inspect(stale.previous_revision, content="5")
+  inspect(stale.current_revision, content="5")
+  inspect(redraws.val, content="0")
+  let stale_snapshot = tracker.snapshot()
+  inspect(stale_snapshot.tracked_windows[0].revision, content="5")
+  let stale_counts = stale_snapshot.tracked_windows[0].status_counts
+  inspect(stale_counts.ready_count, content="1")
+  inspect(stale_counts.disposed_count, content="0")
+  revision.val = 6
+  let fresh = tracker.request_redraw_if_changed(
+    window_id,
+    renderer,
+    window_open=true,
+    request_redraw=_id => redraws.val = redraws.val + 1,
+  )
+  assert_true(
+    fresh.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+  )
+  inspect(fresh.previous_revision, content="5")
+  inspect(fresh.current_revision, content="6")
+  inspect(redraws.val, content="1")
+}
+
+///|
 test "host image repaint tracker discards closed window changes" {
   let tracker = HostImageResourceRepaintTracker::new()
   let window_id = HostWindowId::new(7)
