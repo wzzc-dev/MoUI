@@ -129,12 +129,11 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
           status: HostImageResourceRepaintStatus::ImageRepaintRequested,
         }
       } else if snapshot.revision < previous_revision {
-        self.set_snapshot(window_id, snapshot)
         HostImageResourceRepaintResult::{
           window_id,
           previous_revision,
-          current_revision: snapshot.revision,
-          status: HostImageResourceRepaintStatus::ImageRepaintRecorded,
+          current_revision: previous_revision,
+          status: HostImageResourceRepaintStatus::ImageRepaintUnchanged,
         }
       } else {
         self.set_snapshot(window_id, snapshot)

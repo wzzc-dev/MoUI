@@ -139,11 +139,13 @@ image commands are marked loading until the native cache can resolve them;
 successful synchronous decode/cache upload marks records ready with dimensions,
 and failed decodes mark records failed with a diagnostic. The shared host
 `HostImageResourceRepaintTracker` records the last presented revision for each
-window, routes repaint requests only to the matching open window when a newer
-revision is observed, exposes a diagnostic snapshot of tracked window
-revisions and lifecycle status counts, and discards closed-window image changes
-while removing the closed window from the tracked repaint table. Native async loader/notifier trigger
-sources remain follow-up work. Skia renderer-local
+window, treats that revision as a high-water mark so stale lower revision
+snapshots cannot roll back status diagnostics or trigger a redraw, routes
+repaint requests only to the matching open window when a newer revision is
+observed, exposes a diagnostic snapshot of tracked window revisions and
+lifecycle status counts, and discards closed-window image changes while
+removing the closed window from the tracked repaint table. Native async
+loader/notifier trigger sources remain follow-up work. Skia renderer-local
 tests also pin `ImageFit::Contain` letterboxing,
 `ImageFit::Cover` UV crop geometry, `ImageFit::Stretch` full-frame sampling,
 `ImageFit::ScaleDown` natural-size-or-contain placement, and
